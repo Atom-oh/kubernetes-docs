@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Multi-cluster",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Cross-cluster request path",
+        "focus": [
+          "app1",
+          "gw1",
+          "gw2",
+          "app2"
+        ],
+        "note": "Service A goes through the source gateway, reaches the target gateway over mTLS, and is forwarded to the mirrored service."
+      },
+      {
+        "id": "control-planes",
+        "label": "Per-cluster control planes",
+        "focus": [
+          "cp1",
+          "cp2"
+        ],
+        "note": "Each cluster runs its own independent Linkerd control plane."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cp1",
+      "type": "backend",
+      "label": "Linkerd Control Plane",
+      "sublabel": "Source cluster",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Original service",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gw1",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "Source cluster",
+      "pos": [
+        310,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cp2",
+      "type": "backend",
+      "label": "Linkerd Control Plane",
+      "sublabel": "Target cluster",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gw2",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "Target cluster",
+      "pos": [
+        620,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Service A Mirror",
+      "sublabel": "Mirrored service",
+      "pos": [
+        850,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Source cluster",
+      "wraps": [
+        "cp1",
+        "app1",
+        "gw1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Target cluster",
+      "wraps": [
+        "cp2",
+        "gw2",
+        "app2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-to-gw1",
+      "from": "app1",
+      "to": "gw1",
+      "label": "Route through",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw1-to-gw2",
+      "from": "gw1",
+      "to": "gw2",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "gw2-to-app2",
+      "from": "gw2",
+      "to": "app2",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Linkerd multi-cluster traits",
+      "items": [
+        "Service discovery: mirror services",
+        "mTLS: cross-cluster encryption through the gateway",
+        "Network requirement: gateway (no flat network needed)"
+      ]
+    }
+  ]
+}

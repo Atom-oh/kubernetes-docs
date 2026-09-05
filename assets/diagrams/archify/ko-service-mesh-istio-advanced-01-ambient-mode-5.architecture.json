@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Waypoint 역할",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      320
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "ztunnel (L4 노드 프록시)"
+        },
+        "backend": {
+          "label": "Waypoint L7 기능"
+        },
+        "external": {
+          "label": "대상 서비스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "L4 노드 프록시",
+      "pos": [
+        30,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "l7-routing",
+      "type": "backend",
+      "label": "L7 Routing",
+      "sublabel": "Path, Header",
+      "pos": [
+        250,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "retry",
+      "type": "backend",
+      "label": "Retry / Timeout",
+      "sublabel": "재시도 · 타임아웃",
+      "pos": [
+        415,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "circuit-breaker",
+      "type": "backend",
+      "label": "Circuit Breaker",
+      "sublabel": "서킷 브레이커",
+      "pos": [
+        580,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "fault-injection",
+      "type": "backend",
+      "label": "Fault Injection",
+      "sublabel": "폴트 인젝션",
+      "pos": [
+        745,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "header-manip",
+      "type": "backend",
+      "label": "Header 조작",
+      "sublabel": "요청 · 응답 헤더",
+      "pos": [
+        910,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "external",
+      "label": "Target Service",
+      "sublabel": "대상 서비스",
+      "pos": [
+        1100,
+        130
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Waypoint 기능",
+      "wraps": [
+        "l7-routing",
+        "retry",
+        "circuit-breaker",
+        "fault-injection",
+        "header-manip"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ztunnel-to-l7",
+      "from": "ztunnel",
+      "to": "l7-routing",
+      "label": "L7 필요 시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l7-to-retry",
+      "from": "l7-routing",
+      "to": "retry"
+    },
+    {
+      "id": "retry-to-cb",
+      "from": "retry",
+      "to": "circuit-breaker"
+    },
+    {
+      "id": "cb-to-fault",
+      "from": "circuit-breaker",
+      "to": "fault-injection"
+    },
+    {
+      "id": "fault-to-header",
+      "from": "fault-injection",
+      "to": "header-manip"
+    },
+    {
+      "id": "header-to-target",
+      "from": "header-manip",
+      "to": "target",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Waypoint 특징",
+      "items": [
+        "Service Account별 또는 Namespace별 배포",
+        "Envoy 프록시 기반",
+        "모든 L7 Istio 기능 지원",
+        "필요한 서비스만 선택적 사용"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Architecture Overview",
+    "locale": "en",
+    "output": "en-service-mesh-02-istio-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "config-push",
+        "label": "Config push",
+        "focus": [
+          "istiod",
+          "envoy-a",
+          "envoy-b",
+          "envoy-c"
+        ],
+        "note": "istiod handles service discovery, configuration and certificate management, and pushes configuration to every sidecar."
+      },
+      {
+        "id": "mtls-traffic",
+        "label": "Sidecar-to-sidecar mTLS",
+        "focus": [
+          "envoy-a",
+          "envoy-b",
+          "envoy-c"
+        ],
+        "note": "Envoy sidecars exchange mTLS-encrypted traffic directly with one another."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Service discovery · Config management · Certificate management",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "frontend",
+      "label": "App Container",
+      "sublabel": "Application",
+      "pos": [
+        80,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "envoy-a",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        80,
+        260
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "frontend",
+      "label": "App Container",
+      "sublabel": "Application",
+      "pos": [
+        500,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "envoy-b",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        500,
+        260
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "app-c",
+      "type": "frontend",
+      "label": "App Container",
+      "sublabel": "Application",
+      "pos": [
+        920,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "envoy-c",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        920,
+        260
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "app-a",
+        "envoy-a",
+        "app-b",
+        "envoy-b",
+        "app-c",
+        "envoy-c"
+      ],
+      "pad": 60
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod A",
+      "wraps": [
+        "app-a",
+        "envoy-a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod B",
+      "wraps": [
+        "app-b",
+        "envoy-b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod C",
+      "wraps": [
+        "app-c",
+        "envoy-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-a",
+      "from": "istiod",
+      "to": "envoy-a",
+      "label": "Config push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "push-b",
+      "from": "istiod",
+      "to": "envoy-b",
+      "label": "Config push",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "push-c",
+      "from": "istiod",
+      "to": "envoy-c",
+      "label": "Config push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls-ab",
+      "from": "envoy-a",
+      "to": "envoy-b",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-bc",
+      "from": "envoy-b",
+      "to": "envoy-c",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-ac",
+      "from": "envoy-a",
+      "to": "envoy-c",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          40,
+          288
+        ],
+        [
+          40,
+          480
+        ],
+        [
+          1120,
+          480
+        ],
+        [
+          1120,
+          288
+        ]
+      ],
+      "labelAt": [
+        580,
+        472
+      ]
+    }
+  ]
+}

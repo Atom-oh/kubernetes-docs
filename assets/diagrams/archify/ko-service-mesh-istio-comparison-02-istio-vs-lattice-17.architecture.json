@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio + VPC Lattice 하이브리드 아키텍처",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inside-cluster",
+        "label": "클러스터 내부: Istio",
+        "focus": [
+          "frontend",
+          "frontend-proxy",
+          "backend-proxy",
+          "backend"
+        ],
+        "note": "EKS 클러스터 안에서는 Envoy 사이드카 사이의 Istio mTLS로 통신한다."
+      },
+      {
+        "id": "outside-cluster",
+        "label": "클러스터 외부: VPC Lattice",
+        "focus": [
+          "backend",
+          "service-network",
+          "payment-service",
+          "notification-service",
+          "payment",
+          "notification"
+        ],
+        "note": "Backend는 Egress Gateway를 거쳐 VPC Lattice Service Network로 나가 ECS와 Lambda에 도달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "포드",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "frontend-proxy",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Frontend 사이드카",
+      "pos": [
+        220,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "backend-proxy",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Backend 사이드카",
+      "pos": [
+        410,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend",
+      "sublabel": "포드",
+      "pos": [
+        600,
+        140
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "service-network",
+      "type": "cloud",
+      "label": "Service Network",
+      "sublabel": "VPC Lattice",
+      "pos": [
+        1060,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "payment-service",
+      "type": "cloud",
+      "label": "Payment Service",
+      "sublabel": "Lattice 서비스",
+      "pos": [
+        860,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "notification-service",
+      "type": "cloud",
+      "label": "Notification Service",
+      "sublabel": "Lattice 서비스",
+      "pos": [
+        1130,
+        320
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "ECS Task",
+      "pos": [
+        860,
+        520
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification",
+      "sublabel": "Lambda",
+      "pos": [
+        1130,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC 1 · EKS 클러스터 (Istio Mesh)",
+      "wraps": [
+        "frontend",
+        "frontend-proxy",
+        "backend-proxy",
+        "backend"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC Lattice",
+      "wraps": [
+        "service-network",
+        "payment-service",
+        "notification-service"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC 2 · ECS",
+      "wraps": [
+        "payment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC 3 · Lambda",
+      "wraps": [
+        "notification"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend-to-proxy",
+      "from": "frontend",
+      "to": "frontend-proxy"
+    },
+    {
+      "id": "mtls",
+      "from": "frontend-proxy",
+      "to": "backend-proxy",
+      "label": "Istio mTLS",
+      "variant": "security",
+      "labelDy": -24
+    },
+    {
+      "id": "proxy-to-backend",
+      "from": "backend-proxy",
+      "to": "backend"
+    },
+    {
+      "id": "egress",
+      "from": "backend",
+      "to": "service-network",
+      "label": "Egress Gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "net-to-payment-service",
+      "from": "service-network",
+      "to": "payment-service",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-to-notification-service",
+      "from": "service-network",
+      "to": "notification-service",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "payment-service-to-ecs",
+      "from": "payment-service",
+      "to": "payment"
+    },
+    {
+      "id": "notification-service-to-lambda",
+      "from": "notification-service",
+      "to": "notification"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "클러스터 내부: Istio",
+      "items": [
+        "Envoy 사이드카 간 mTLS로 풍부한 트래픽 제어 기능 활용"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "클러스터 간/외부: VPC Lattice",
+      "items": [
+        "Egress Gateway로 Service Network에 연결",
+        "다른 VPC의 ECS Task와 Lambda에 간편하게 도달"
+      ]
+    }
+  ]
+}

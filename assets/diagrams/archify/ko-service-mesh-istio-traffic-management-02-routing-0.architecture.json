@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VirtualService 라우팅",
+    "output": "ko-service-mesh-istio-traffic-management-02-routing-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "들어오는 요청"
+        },
+        "backend": {
+          "label": "match + route 규칙"
+        },
+        "cloud": {
+          "label": "대상 Service"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "api-v1",
+        "label": "규칙 1 · URI",
+        "focus": [
+          "request",
+          "rule1",
+          "svc-api"
+        ],
+        "note": "uri prefix \"/api/v1\"에 일치하는 요청은 첫 규칙에서 api-v1로 라우팅된다."
+      },
+      {
+        "id": "mobile",
+        "label": "규칙 2 · Header",
+        "focus": [
+          "request",
+          "rule2",
+          "svc-mobile"
+        ],
+        "note": "user-agent 헤더가 Mobile 정규식에 일치하면 mobile-app으로 라우팅된다."
+      },
+      {
+        "id": "default",
+        "label": "규칙 3 · 기본 폴백",
+        "focus": [
+          "request",
+          "rule3",
+          "svc-web"
+        ],
+        "note": "match가 없는 마지막 규칙이 나머지 모든 요청을 web-app으로 보낸다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "들어오는 요청",
+      "sublabel": "myapp.example.com",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rule1",
+      "type": "backend",
+      "label": "Match 조건 1",
+      "sublabel": "uri prefix \"/api/v1\"",
+      "tag": "규칙 1",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "rule2",
+      "type": "backend",
+      "label": "Match 조건 2",
+      "sublabel": "headers user-agent ~ Mobile",
+      "tag": "규칙 2",
+      "pos": [
+        300,
+        250
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "rule3",
+      "type": "backend",
+      "label": "Match 조건 3 · 기본값",
+      "sublabel": "match 없음 (catch-all)",
+      "tag": "규칙 3",
+      "pos": [
+        300,
+        410
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "svc-api",
+      "type": "cloud",
+      "label": "api-v1",
+      "sublabel": "API v1 Service",
+      "pos": [
+        680,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-mobile",
+      "type": "cloud",
+      "label": "mobile-app",
+      "sublabel": "Mobile App Service",
+      "pos": [
+        680,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-web",
+      "type": "cloud",
+      "label": "web-app",
+      "sublabel": "Web App Service",
+      "pos": [
+        680,
+        410
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VirtualService 라우팅 규칙 (위 → 아래 순서로 평가)",
+      "wraps": [
+        "rule1",
+        "rule2",
+        "rule3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "req-rule1",
+      "from": "request",
+      "to": "rule1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "req-rule2",
+      "from": "request",
+      "to": "rule2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "req-rule3",
+      "from": "request",
+      "to": "rule3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rule1-api",
+      "from": "rule1",
+      "to": "svc-api",
+      "label": "일치 → route"
+    },
+    {
+      "id": "rule2-mobile",
+      "from": "rule2",
+      "to": "svc-mobile",
+      "label": "일치 → route"
+    },
+    {
+      "id": "rule3-web",
+      "from": "rule3",
+      "to": "svc-web",
+      "label": "기본 route"
+    }
+  ]
+}

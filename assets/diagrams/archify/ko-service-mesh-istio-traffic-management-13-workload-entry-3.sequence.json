@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ServiceEntry 통합 동작 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      600
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "resolve",
+        "label": "가상 IP 조회",
+        "focus": [
+          "pod",
+          "dns"
+        ],
+        "note": "파드가 api.legacy.internal을 조회하면 Istio DNS가 ServiceEntry의 addresses 값인 가상 IP를 돌려준다."
+      },
+      {
+        "id": "match",
+        "label": "WorkloadEntry 매칭",
+        "focus": [
+          "pod",
+          "envoy"
+        ],
+        "note": "Envoy가 ServiceEntry의 workloadSelector 레이블(app: legacy-api)로 등록된 WorkloadEntry를 찾는다."
+      },
+      {
+        "id": "connect",
+        "label": "VM으로 mTLS 연결",
+        "focus": [
+          "envoy",
+          "vm",
+          "pod"
+        ],
+        "note": "찾아낸 WorkloadEntry 주소 192.168.1.100:8080으로 mTLS 연결을 맺고 응답을 파드에 돌려준다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Kubernetes 파드",
+      "sublabel": "호출 측 워크로드"
+    },
+    {
+      "id": "dns",
+      "type": "cloud",
+      "label": "Istio DNS",
+      "sublabel": "DNS 프록시"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카"
+    },
+    {
+      "id": "vm",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "WorkloadEntry · 192.168.1.100"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 250,
+      "label": "1. DNS 조회"
+    },
+    {
+      "from": 270,
+      "to": 365,
+      "label": "2. ServiceEntry workloadSelector로 WorkloadEntry 매칭"
+    },
+    {
+      "from": 380,
+      "to": 525,
+      "label": "3. mTLS 연결과 응답"
+    }
+  ],
+  "messages": [
+    {
+      "id": "lookup",
+      "from": "pod",
+      "to": "dns",
+      "y": 190,
+      "label": "api.legacy.internal 조회"
+    },
+    {
+      "id": "vip",
+      "from": "dns",
+      "to": "pod",
+      "y": 232,
+      "label": "240.240.1.1 (가상 IP)",
+      "variant": "return"
+    },
+    {
+      "id": "http",
+      "from": "pod",
+      "to": "envoy",
+      "y": 292,
+      "label": "HTTP 요청 240.240.1.1:8080 → workloadSelector 매칭",
+      "variant": "emphasis",
+      "note": "Envoy: ServiceEntry 조회 · workloadSelector 매칭"
+    },
+    {
+      "id": "mtls",
+      "from": "envoy",
+      "to": "vm",
+      "y": 400,
+      "label": "mTLS 연결 192.168.1.100:8080",
+      "variant": "security",
+      "note": "WorkloadEntry 발견 · 192.168.1.100"
+    },
+    {
+      "id": "vmres",
+      "from": "vm",
+      "to": "envoy",
+      "y": 450,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "podres",
+      "from": "envoy",
+      "to": "pod",
+      "y": 500,
+      "label": "응답",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "pod",
+      "from": 185,
+      "to": 507,
+      "type": "backend"
+    },
+    {
+      "participant": "dns",
+      "from": 185,
+      "to": 238,
+      "type": "cloud"
+    },
+    {
+      "participant": "envoy",
+      "from": 287,
+      "to": 507,
+      "type": "security"
+    },
+    {
+      "participant": "vm",
+      "from": 395,
+      "to": 457,
+      "type": "external"
+    }
+  ]
+}

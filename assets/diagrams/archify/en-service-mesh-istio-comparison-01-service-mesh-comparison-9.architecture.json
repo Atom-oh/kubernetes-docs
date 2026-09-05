@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cross-Zone Service Discovery",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Global CP"
+        },
+        "backend": {
+          "label": "Zone CP / api"
+        },
+        "database": {
+          "label": "database"
+        },
+        "frontend": {
+          "label": "Application"
+        },
+        "security": {
+          "label": "Kuma DP"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "register",
+        "label": "Registration and aggregation",
+        "focus": [
+          "svc1",
+          "svc2",
+          "svc3",
+          "zcp1",
+          "zcp2",
+          "zcp3",
+          "registry"
+        ],
+        "note": "Services in each zone register with their Zone CP, which sends the service info up to the Global CP's unified registry."
+      },
+      {
+        "id": "distribute",
+        "label": "Unified service map distribution",
+        "focus": [
+          "registry",
+          "zcp1",
+          "zcp2",
+          "zcp3"
+        ],
+        "note": "The Global CP merges every zone's services into one unified service map and distributes it back to each Zone CP."
+      },
+      {
+        "id": "route",
+        "label": "Local-first routing",
+        "focus": [
+          "app",
+          "dp",
+          "zcp1",
+          "svc1",
+          "svc2"
+        ],
+        "note": "Kuma DP gets the endpoints from Zone CP 1, prefers the same-zone api (80%) and sends the rest cross-zone to Zone 2."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "registry",
+      "type": "cloud",
+      "label": "Unified Service Registry",
+      "sublabel": "api: [Zone1, Zone2] · database: [Zone3]",
+      "pos": [
+        455,
+        40
+      ],
+      "size": [
+        300,
+        70
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "issues requests",
+      "pos": [
+        300,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "sidecar proxy",
+      "pos": [
+        520,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp1",
+      "type": "backend",
+      "label": "Zone CP 1",
+      "sublabel": "Zone Control Plane",
+      "pos": [
+        520,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service: api",
+      "sublabel": "Tag: version=v1",
+      "pos": [
+        800,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp2",
+      "type": "backend",
+      "label": "Zone CP 2",
+      "sublabel": "Zone Control Plane",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service: api",
+      "sublabel": "Tag: version=v2",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "zcp3",
+      "type": "backend",
+      "label": "Zone CP 3",
+      "sublabel": "Zone Control Plane",
+      "pos": [
+        1060,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "database",
+      "label": "Service: database",
+      "sublabel": "Tag: tier=primary",
+      "pos": [
+        1060,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Global Control Plane",
+      "wraps": [
+        "registry"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 1 - AWS",
+      "wraps": [
+        "app",
+        "dp",
+        "zcp1",
+        "svc1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Client (Zone 1)",
+      "wraps": [
+        "app",
+        "dp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 2 - GCP",
+      "wraps": [
+        "zcp2",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone 3 - On-Prem",
+      "wraps": [
+        "zcp3",
+        "svc3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "svc1-register",
+      "from": "svc1",
+      "to": "zcp1",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          885,
+          250
+        ]
+      ],
+      "label": "Register"
+    },
+    {
+      "id": "svc2-register",
+      "from": "svc2",
+      "to": "zcp2",
+      "variant": "dashed",
+      "label": "Register"
+    },
+    {
+      "id": "svc3-register",
+      "from": "svc3",
+      "to": "zcp3",
+      "variant": "dashed",
+      "label": "Register"
+    },
+    {
+      "id": "zcp1-report",
+      "from": "zcp1",
+      "to": "registry",
+      "labelDx": -70,
+      "label": "Send service info",
+      "labelDy": -42
+    },
+    {
+      "id": "zcp2-report",
+      "from": "zcp2",
+      "to": "registry"
+    },
+    {
+      "id": "zcp3-report",
+      "from": "zcp3",
+      "to": "registry"
+    },
+    {
+      "id": "registry-map1",
+      "from": "registry",
+      "to": "zcp1",
+      "variant": "dashed"
+    },
+    {
+      "id": "registry-map2",
+      "from": "registry",
+      "to": "zcp2",
+      "variant": "dashed"
+    },
+    {
+      "id": "registry-map3",
+      "from": "registry",
+      "to": "zcp3",
+      "variant": "dashed",
+      "labelSegment": 0,
+      "labelDy": -16,
+      "label": "Distribute unified service map"
+    },
+    {
+      "id": "app-to-dp",
+      "from": "app",
+      "to": "dp"
+    },
+    {
+      "id": "dp-query",
+      "from": "dp",
+      "to": "zcp1",
+      "labelDx": -70,
+      "label": "1. Request api service",
+      "labelDy": -57
+    },
+    {
+      "id": "zcp1-endpoints",
+      "from": "zcp1",
+      "to": "dp",
+      "variant": "dashed",
+      "labelDx": 62,
+      "labelDy": 83,
+      "label": "2. Return endpoints"
+    },
+    {
+      "id": "dp-local",
+      "from": "dp",
+      "to": "svc1",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        745,
+        438
+      ],
+      "label": "3. Local-first 80%"
+    },
+    {
+      "id": "dp-cross",
+      "from": "dp",
+      "to": "svc2",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          605,
+          530
+        ],
+        [
+          125,
+          530
+        ]
+      ],
+      "labelAt": [
+        365,
+        518
+      ],
+      "label": "4. Cross-zone 20%"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Service discovery features",
+      "items": [
+        "Automatic registration: services in each zone register with their Zone CP",
+        "Global view: the Global CP integrates services from all zones",
+        "Local-first: routes to services in the same zone first",
+        "Automatic failover: switches to another zone when the local service fails",
+        "Tag-based routing: fine-grained routing control using service tags"
+      ]
+    }
+  ]
+}

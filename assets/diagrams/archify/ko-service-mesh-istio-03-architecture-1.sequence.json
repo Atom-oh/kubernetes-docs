@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "mTLS 인증서 발급과 갱신 흐름 (Citadel 기능)",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      700
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "issue",
+        "label": "최초 발급",
+        "focus": [
+          "envoy",
+          "istiod",
+          "spiffe"
+        ],
+        "note": "Envoy의 CSR을 받은 Istiod가 SPIFFE Identity를 검증·서명해 X.509 인증서를 발급한다."
+      },
+      {
+        "id": "renew",
+        "label": "mTLS 사용 중 만료 전 갱신",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "mTLS 통신에 쓰던 인증서가 만료되기 전에 같은 절차로 새 인증서를 받는다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "sidecar proxy"
+    },
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Certificate Authority"
+    },
+    {
+      "id": "spiffe",
+      "type": "external",
+      "label": "SPIFFE",
+      "sublabel": "ServiceAccount Identity"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 370,
+      "label": "최초 발급"
+    },
+    {
+      "from": 395,
+      "to": 545,
+      "label": "mTLS 사용 중 만료 전 갱신"
+    }
+  ],
+  "messages": [
+    {
+      "id": "csr",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 195,
+      "label": "CSR 요청",
+      "variant": "default"
+    },
+    {
+      "id": "verify",
+      "from": "istiod",
+      "to": "spiffe",
+      "y": 240,
+      "label": "Identity 검증 (ServiceAccount)",
+      "variant": "security"
+    },
+    {
+      "id": "verified",
+      "from": "spiffe",
+      "to": "istiod",
+      "y": 285,
+      "label": "검증 완료",
+      "variant": "return"
+    },
+    {
+      "id": "issue-cert",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 340,
+      "label": "서명된 X.509 인증서 발급 (TTL 24h)",
+      "variant": "emphasis",
+      "note": "Istiod가 서명한 뒤 발급"
+    },
+    {
+      "id": "renew-req",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 440,
+      "label": "갱신 요청 (만료 전)",
+      "variant": "default",
+      "note": "발급된 인증서로 mTLS 통신"
+    },
+    {
+      "id": "renew-cert",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 510,
+      "label": "새 X.509 인증서 발급",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "istiod",
+      "from": 190,
+      "to": 345,
+      "type": "security"
+    },
+    {
+      "participant": "spiffe",
+      "from": 235,
+      "to": 290,
+      "type": "external"
+    },
+    {
+      "participant": "istiod",
+      "from": 435,
+      "to": 515,
+      "type": "security"
+    }
+  ]
+}

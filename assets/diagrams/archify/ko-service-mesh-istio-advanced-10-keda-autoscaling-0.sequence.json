@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "메트릭 기반 스케일링 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      680
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "스케일 결정"
+        },
+        "dashed": {
+          "label": "비동기 Pod 생성"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "collect",
+        "label": "메트릭 수집",
+        "focus": [
+          "app",
+          "envoy",
+          "prom"
+        ],
+        "note": "Envoy 사이드카가 만든 Istio 메트릭을 Prometheus가 수집·저장한다."
+      },
+      {
+        "id": "poll",
+        "label": "KEDA 폴링",
+        "focus": [
+          "keda",
+          "prom"
+        ],
+        "note": "pollingInterval마다 PromQL을 실행해 현재 RPS를 가져온다."
+      },
+      {
+        "id": "scale",
+        "label": "스케일 아웃",
+        "focus": [
+          "keda",
+          "hpa",
+          "k8s",
+          "app"
+        ],
+        "note": "임계값을 넘으면 HPA 목표치를 갱신하고 새 Pod가 생성된다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application Pod",
+      "sublabel": "워크로드"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": "istio-proxy"
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": ":9090"
+    },
+    {
+      "id": "keda",
+      "type": "cloud",
+      "label": "KEDA Operator",
+      "sublabel": "ScaledObject"
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "autoscaling/v2"
+    },
+    {
+      "id": "k8s",
+      "type": "security",
+      "label": "Kubernetes API",
+      "sublabel": "ReplicaSet"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 262,
+      "label": "메트릭 생성·수집·저장"
+    },
+    {
+      "from": 285,
+      "to": 385,
+      "label": "pollingInterval마다 실행"
+    },
+    {
+      "from": 405,
+      "to": 560,
+      "label": "임계값 1,000 RPS 초과 → 스케일 아웃 · cooldownPeriod 후 재평가"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http",
+      "from": "app",
+      "to": "envoy",
+      "y": 190,
+      "label": "HTTP 요청 처리"
+    },
+    {
+      "id": "expose",
+      "from": "envoy",
+      "to": "prom",
+      "y": 240,
+      "label": "메트릭 노출 :15090/stats/prometheus",
+      "note": "istio_requests_total · istio_request_duration_milliseconds"
+    },
+    {
+      "id": "query",
+      "from": "keda",
+      "to": "prom",
+      "y": 315,
+      "label": "PromQL rate(istio_requests_total[1m])"
+    },
+    {
+      "id": "rps",
+      "from": "prom",
+      "to": "keda",
+      "y": 362,
+      "label": "현재 RPS 반환 (예: 1,500)",
+      "variant": "return"
+    },
+    {
+      "id": "desired",
+      "from": "keda",
+      "to": "hpa",
+      "y": 440,
+      "label": "목표 레플리카 갱신 10 → 15",
+      "variant": "emphasis",
+      "note": "threshold 1,000 < 현재 1,500 → 스케일 아웃 필요"
+    },
+    {
+      "id": "rs",
+      "from": "hpa",
+      "to": "k8s",
+      "y": 490,
+      "label": "ReplicaSet 업데이트"
+    },
+    {
+      "id": "pods",
+      "from": "k8s",
+      "to": "app",
+      "y": 538,
+      "label": "새 Pod 5개 생성",
+      "variant": "dashed",
+      "note": "cooldownPeriod 대기 후 다음 스케일링 평가"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 185,
+      "to": 246,
+      "type": "backend"
+    },
+    {
+      "participant": "prom",
+      "from": 235,
+      "to": 368,
+      "type": "database"
+    },
+    {
+      "participant": "keda",
+      "from": 310,
+      "to": 446,
+      "type": "cloud"
+    },
+    {
+      "participant": "hpa",
+      "from": 435,
+      "to": 496,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 485,
+      "to": 544,
+      "type": "security"
+    }
+  ]
+}

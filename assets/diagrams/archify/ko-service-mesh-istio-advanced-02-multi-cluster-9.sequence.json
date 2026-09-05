@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Istio + VPC Lattice 트래픽 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      920,
+      660
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Cluster 1",
+      "sublabel": "Service A"
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Istio 사이드카 · 로컬 메트릭 수집"
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "AWS 관리형 서비스 디스커버리"
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Cluster 2",
+      "sublabel": "Service B · Istio가 메트릭 수집"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 360,
+      "label": "클러스터 간 호출 — 요청"
+    },
+    {
+      "from": 380,
+      "to": 540,
+      "label": "클러스터 간 호출 — 응답"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "app1",
+      "to": "envoy1",
+      "y": 190,
+      "label": "1. HTTP 요청",
+      "variant": "default",
+      "note": "Istio가 로컬에서 메트릭 수집"
+    },
+    {
+      "id": "m2",
+      "from": "envoy1",
+      "to": "lattice",
+      "y": 255,
+      "label": "2. VPC Lattice DNS로 라우팅",
+      "variant": "emphasis",
+      "note": "AWS가 관리하는 서비스 디스커버리"
+    },
+    {
+      "id": "m3",
+      "from": "lattice",
+      "to": "app2",
+      "y": 320,
+      "label": "3. Cluster 2의 서비스로 전달",
+      "variant": "emphasis",
+      "note": "Cluster 2에서 Istio가 메트릭 수집"
+    },
+    {
+      "id": "m4",
+      "from": "app2",
+      "to": "lattice",
+      "y": 410,
+      "label": "4. 응답",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "lattice",
+      "to": "envoy1",
+      "y": 465,
+      "label": "5. 응답 전달",
+      "variant": "return"
+    },
+    {
+      "id": "m6",
+      "from": "envoy1",
+      "to": "app1",
+      "y": 520,
+      "label": "6. 응답",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy1",
+      "from": 185,
+      "to": 528,
+      "type": "security"
+    },
+    {
+      "participant": "lattice",
+      "from": 250,
+      "to": 472,
+      "type": "cloud"
+    },
+    {
+      "participant": "app2",
+      "from": 315,
+      "to": 418,
+      "type": "backend"
+    }
+  ]
+}

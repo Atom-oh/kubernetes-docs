@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Request Authentication Flow",
+    "output": "en-service-mesh-istio-security-02-authentication-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "End user",
+      "pos": [
+        120,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "idp",
+      "type": "security",
+      "label": "OAuth/OIDC Provider",
+      "sublabel": "Issues JWT tokens",
+      "pos": [
+        420,
+        90
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "reqauth",
+      "type": "security",
+      "label": "Request Authentication",
+      "sublabel": "JWT verification",
+      "pos": [
+        420,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "pos": [
+        780,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Auth Provider",
+      "wraps": [
+        "idp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio Gateway",
+      "wraps": [
+        "reqauth"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Services",
+      "wraps": [
+        "app"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "login",
+      "from": "user",
+      "to": "idp",
+      "label": "1. Login",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "token",
+      "from": "idp",
+      "to": "user",
+      "label": "2. JWT token",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "request",
+      "from": "user",
+      "to": "reqauth",
+      "label": "3. Request with JWT",
+      "variant": "emphasis"
+    },
+    {
+      "id": "success",
+      "from": "reqauth",
+      "to": "app",
+      "label": "4. Verification success",
+      "variant": "emphasis"
+    },
+    {
+      "id": "failure",
+      "from": "reqauth",
+      "to": "user",
+      "label": "Verification failure",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ]
+}

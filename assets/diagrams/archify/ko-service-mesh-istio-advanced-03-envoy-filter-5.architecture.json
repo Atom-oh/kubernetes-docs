@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "선택적 앱별 IP 제한 아키텍처 개요",
+    "output": "ko-service-mesh-istio-advanced-03-envoy-filter-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      720
+    ],
+    "views": [
+      {
+        "id": "xff-path",
+        "label": "XFF 전달 경로",
+        "focus": [
+          "client1",
+          "client2",
+          "alb",
+          "envoy"
+        ],
+        "note": "ALB가 XFF에 자기 IP를 덧붙이고, Gateway Envoy는 신뢰 hop 1개를 제외해 원본 IP를 추출한다."
+      },
+      {
+        "id": "open-apps",
+        "label": "제한 없는 앱",
+        "focus": [
+          "envoy",
+          "appA",
+          "appB",
+          "appC"
+        ],
+        "note": "AuthorizationPolicy가 없는 앱은 원본 IP와 무관하게 모든 클라이언트를 허용한다."
+      },
+      {
+        "id": "restricted-apps",
+        "label": "IP 제한 앱",
+        "focus": [
+          "envoy",
+          "appF",
+          "appG"
+        ],
+        "note": "App F, G만 AuthorizationPolicy로 회사 NAT IP(203.0.113.0/24)를 허용하고 1.2.3.4는 거부한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client1",
+      "type": "external",
+      "label": "일반 사용자",
+      "sublabel": "1.2.3.4",
+      "pos": [
+        250,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "client2",
+      "type": "external",
+      "label": "회사 사용자",
+      "sublabel": "203.0.113.10",
+      "pos": [
+        740,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "AWS ALB",
+      "pos": [
+        480,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy · XFF 처리",
+      "sublabel": "xff_num_trusted_hops: 1",
+      "pos": [
+        470,
+        350
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "appA",
+      "type": "backend",
+      "label": "App A",
+      "pos": [
+        80,
+        560
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "appB",
+      "type": "backend",
+      "label": "App B",
+      "pos": [
+        240,
+        560
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "appC",
+      "type": "backend",
+      "label": "App C",
+      "pos": [
+        400,
+        560
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "appF",
+      "type": "security",
+      "label": "App F",
+      "sublabel": "AuthorizationPolicy",
+      "pos": [
+        740,
+        560
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "appG",
+      "type": "security",
+      "label": "App G",
+      "sublabel": "AuthorizationPolicy",
+      "pos": [
+        940,
+        560
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "인터넷",
+      "wraps": [
+        "client1",
+        "client2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "envoy",
+        "appA",
+        "appB",
+        "appC",
+        "appF",
+        "appG"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Istio Gateway",
+      "wraps": [
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "제한 없는 앱",
+      "wraps": [
+        "appA",
+        "appB",
+        "appC"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "IP 제한 앱",
+      "wraps": [
+        "appF",
+        "appG"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1-alb",
+      "from": "client1",
+      "to": "alb",
+      "label": "XFF: 1.2.3.4",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c2-alb",
+      "from": "client2",
+      "to": "alb",
+      "label": "XFF: 203.0.113.10",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "alb-envoy",
+      "from": "alb",
+      "to": "envoy",
+      "label": "XFF: 원본 IP, ALB_IP",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "envoy-appA",
+      "from": "envoy",
+      "to": "appA",
+      "label": "원본 IP 무관 허용"
+    },
+    {
+      "id": "envoy-appB",
+      "from": "envoy",
+      "to": "appB"
+    },
+    {
+      "id": "envoy-appC",
+      "from": "envoy",
+      "to": "appC",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-appF",
+      "from": "envoy",
+      "to": "appF",
+      "label": "회사 IP만 허용",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-appG",
+      "from": "envoy",
+      "to": "appG",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Gateway의 역할 (모든 앱 공통)",
+      "items": [
+        "XFF 헤더에서 원본 클라이언트 IP 추출",
+        "xff_num_trusted_hops로 신뢰 hop(ALB) 제외",
+        "접근 제어는 하지 않고 IP만 정확히 식별"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "AuthorizationPolicy의 역할 (선택 적용)",
+      "items": [
+        "Gateway가 추출한 원본 IP 기반 접근 제어",
+        "selector로 App F, G만 대상 지정",
+        "정책이 없는 앱은 모든 클라이언트 허용"
+      ]
+    }
+  ]
+}

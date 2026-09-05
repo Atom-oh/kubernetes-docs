@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zone Aware Routing 개요",
+    "output": "ko-service-mesh-istio-resilience-03-zone-aware-routing-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "클라이언트 Pod",
+      "sublabel": "Zone A",
+      "pos": [
+        140,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service Pod 1",
+      "sublabel": "Zone A",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service Pod 2",
+      "sublabel": "Zone A",
+      "pos": [
+        240,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Service Pod 3",
+      "sublabel": "Zone B",
+      "pos": [
+        520,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc4",
+      "type": "backend",
+      "label": "Service Pod 4",
+      "sublabel": "Zone B",
+      "pos": [
+        520,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc5",
+      "type": "backend",
+      "label": "Service Pod 5",
+      "sublabel": "Zone C",
+      "pos": [
+        800,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Availability Zone A",
+      "wraps": [
+        "client",
+        "svc1",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone B",
+      "wraps": [
+        "svc3",
+        "svc4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone C",
+      "wraps": [
+        "svc5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-svc1",
+      "from": "client",
+      "to": "svc1",
+      "label": "80% 같은 AZ 우선 · 무료",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "client-svc2",
+      "from": "client",
+      "to": "svc2",
+      "label": "80% 같은 AZ 우선 · 무료",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "client-svc3",
+      "from": "client",
+      "to": "svc3",
+      "label": "10% 장애조치 · 크로스 AZ 비용",
+      "variant": "dashed",
+      "labelDx": -80,
+      "labelDy": 14
+    },
+    {
+      "id": "client-svc5",
+      "from": "client",
+      "to": "svc5",
+      "label": "10% 장애조치 · 크로스 AZ 비용",
+      "variant": "dashed",
+      "labelSegment": 0,
+      "labelDx": 110
+    }
+  ]
+}

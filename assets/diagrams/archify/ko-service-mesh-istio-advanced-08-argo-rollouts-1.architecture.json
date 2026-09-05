@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts + Istio 전체 아키텍처",
+    "output": "ko-service-mesh-istio-advanced-08-argo-rollouts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "traffic-path",
+        "label": "트래픽 경로",
+        "focus": [
+          "gateway",
+          "vs",
+          "dr",
+          "services",
+          "pods"
+        ],
+        "note": "외부 요청이 Gateway → VirtualService → DestinationRule subset → Service → 포드로 전달되는 데이터 플레인 경로."
+      },
+      {
+        "id": "rollouts-control",
+        "label": "Rollouts 제어",
+        "focus": [
+          "argocd",
+          "rollouts",
+          "vs",
+          "pods"
+        ],
+        "note": "ArgoCD가 배포한 Argo Rollouts가 VirtualService weight와 stable/canary ReplicaSet을 관리한다."
+      },
+      {
+        "id": "analysis-loop",
+        "label": "분석 피드백",
+        "focus": [
+          "pods",
+          "prometheus",
+          "analysisrun",
+          "rollouts"
+        ],
+        "note": "포드 메트릭을 Prometheus가 수집하고 AnalysisRun이 검증해 성공/실패를 Rollouts에 돌려준다."
+      },
+      {
+        "id": "istiod-sync",
+        "label": "Istiod 설정 동기화",
+        "focus": [
+          "istiod",
+          "gateway",
+          "vs"
+        ],
+        "note": "Istiod가 Gateway에 xDS 설정을, VirtualService/DestinationRule 변경을 데이터 플레인에 동기화한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Istio Control Plane",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "GitOps 배포",
+      "pos": [
+        270,
+        50
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rollouts",
+      "type": "backend",
+      "label": "Argo Rollouts",
+      "sublabel": "Controller",
+      "pos": [
+        500,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "analysisrun",
+      "type": "backend",
+      "label": "AnalysisRun",
+      "sublabel": "메트릭 검증",
+      "pos": [
+        790,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        1020,
+        50
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "external",
+      "label": "Gateway",
+      "sublabel": "외부 트래픽",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService",
+      "sublabel": "라우팅 규칙 (test)",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "cloud",
+      "label": "DestinationRule",
+      "sublabel": "Subsets",
+      "pos": [
+        500,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "services",
+      "type": "cloud",
+      "label": "Service",
+      "sublabel": "test-stable / test-canary",
+      "pos": [
+        790,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Rollout 관리 포드",
+      "sublabel": "Stable v1 / Canary v2",
+      "pos": [
+        1020,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "istiod",
+        "argocd",
+        "rollouts"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "옵저버빌리티",
+      "wraps": [
+        "analysisrun",
+        "prometheus"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "gateway",
+        "vs",
+        "dr",
+        "services",
+        "pods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "deploy",
+      "from": "argocd",
+      "to": "rollouts",
+      "label": "배포"
+    },
+    {
+      "id": "weight",
+      "from": "rollouts",
+      "to": "vs",
+      "label": "VirtualService weight 조정",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          460,
+          80
+        ],
+        [
+          460,
+          200
+        ],
+        [
+          345,
+          200
+        ]
+      ],
+      "labelDy": 22
+    },
+    {
+      "id": "manage",
+      "from": "rollouts",
+      "to": "pods",
+      "label": "ReplicaSet 관리",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          585,
+          215
+        ],
+        [
+          980,
+          215
+        ],
+        [
+          980,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "create",
+      "from": "rollouts",
+      "to": "analysisrun",
+      "label": "AnalysisRun 생성",
+      "labelDy": 56
+    },
+    {
+      "id": "ingress",
+      "from": "gateway",
+      "to": "vs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-dr",
+      "from": "vs",
+      "to": "dr",
+      "label": "90% stable / 10% canary",
+      "variant": "emphasis",
+      "labelDy": -31
+    },
+    {
+      "id": "dr-svc",
+      "from": "dr",
+      "to": "services",
+      "label": "subset",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-pods",
+      "from": "services",
+      "to": "pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds",
+      "from": "istiod",
+      "to": "gateway",
+      "label": "xDS Config",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "sync-vs",
+      "from": "istiod",
+      "to": "vs",
+      "label": "VS / DR 설정 동기화",
+      "variant": "dashed"
+    },
+    {
+      "id": "metrics",
+      "from": "pods",
+      "to": "prometheus",
+      "label": "메트릭",
+      "variant": "dashed"
+    },
+    {
+      "id": "query",
+      "from": "prometheus",
+      "to": "analysisrun",
+      "label": "쿼리"
+    },
+    {
+      "id": "result",
+      "from": "analysisrun",
+      "to": "rollouts",
+      "label": "성공/실패",
+      "variant": "dashed",
+      "labelDy": 65
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Argo Rollouts가 관리하는 것",
+      "items": [
+        "VirtualService: 지정한 route의 weight 자동 조정",
+        "stable/canary ReplicaSet과 AnalysisRun 생성",
+        "DestinationRule과 Service는 수동으로 미리 생성"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "메트릭 기반 자동 진행/롤백",
+      "items": [
+        "포드 메트릭을 Prometheus가 수집",
+        "AnalysisRun이 쿼리 결과를 검증",
+        "성공이면 다음 step, 실패면 자동 롤백"
+      ]
+    }
+  ]
+}

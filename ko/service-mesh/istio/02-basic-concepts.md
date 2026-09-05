@@ -23,7 +23,9 @@
 
 2010년대 초반, 기업들은 모놀리식 애플리케이션을 마이크로서비스로 분해하기 시작했습니다.
 
-![하나의 프로세스로 동작하던 모놀리식 애플리케이션이 서비스 A부터 E까지 서로 호출하는 여러 마이크로서비스로 분해되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-0.svg)
+![하나의 프로세스로 동작하던 모놀리식 애플리케이션이 서비스 A부터 E까지 서로 호출하는 여러 마이크로서비스로 분해되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-0.html)
 
 **새로운 문제들**:
 
@@ -43,7 +45,9 @@
 - 업데이트 시 모든 서비스 재배포
 - 버전 관리 복잡
 
-![Java, Go, Python 서비스가 각각 Hystrix, 자체 라이브러리, Requests+Retry처럼 서로 다른 장애 처리 라이브러리를 애플리케이션 코드에 결합해 사용해 파편화가 발생한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-1.svg)
+![Java, Go, Python 서비스가 각각 Hystrix, 자체 라이브러리, Requests+Retry처럼 서로 다른 장애 처리 라이브러리를 애플리케이션 코드에 결합해 사용해 파편화가 발생한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-1.html)
 
 **Service Mesh의 아이디어**: 네트워킹 로직을 애플리케이션에서 분리하여 인프라 레이어로 이동
 
@@ -66,7 +70,9 @@
 
 **Envoy가 해결한 문제들**:
 
-![기존 프록시가 겪던 정적 설정, 제한적 메트릭, 복잡한 재시작, 단순한 라우팅 문제를 Envoy가 동적 API, 풍부한 통계, Hot Restart, 고급 L7 라우팅으로 각각 해결한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-2.svg)
+![기존 프록시가 겪던 정적 설정, 제한적 메트릭, 복잡한 재시작, 단순한 라우팅 문제를 Envoy가 동적 API(xDS), 풍부한 통계/추적, Hot Restart, 고급 L7 라우팅으로 각각 해결하는 대응 관계를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-2.html)
 
 **Envoy의 핵심 특징**:
 
@@ -89,7 +95,9 @@
 
 **2017년 5월**, Google, IBM, Lyft가 협력하여 Istio를 발표했습니다.
 
-![Google과 IBM의 경험이 Istio Control Plane으로, Lyft의 Envoy Proxy가 Data Plane으로 이어져 Istio Service Mesh를 이루었다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-3.svg)
+![Google과 IBM의 경험이 Istio Control Plane으로, Lyft의 Envoy Proxy가 Data Plane으로 이어져 Istio Service Mesh를 이루었음을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-3.html)
 
 **각 회사의 기여**:
 
@@ -103,7 +111,9 @@
 
 **주요 마일스톤**:
 
-![2017년 0.1 발표 이후 2018년 1.0 GA, 2020년 1.5 Istiod 통합, 2023년 Ambient Mode 도입을 거쳐 2025년 1.28에 이르는 Istio의 주요 버전 역사를 시간순으로 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-4.svg)
+![2017년 0.1 발표 이후 2018년 1.0 GA, 2020년 1.5 Istiod 통합, 2023년 Ambient Mode 도입을 거쳐 2025년 1.28에 이르는 Istio의 주요 버전 역사를 시간순으로 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-4.html)
 
 **1.5 버전 (2020년 3월) - 중요한 전환점**:
 
@@ -138,7 +148,9 @@ Kubernetes는 컨테이너 오케스트레이션을 제공하지만, 마이크�
 
 ### 마이크로서비스의 과제
 
-![트래픽 관리, 보안, 관찰성, 복원력이라는 공통 과제를 Istio 없이는 애플리케이션 코드에 직접 구현해 비일관적으로 대응하지만, Istio를 사용하면 인프라 레벨에서 선언적이고 일관되게 해결한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-5.svg)
+![트래픽 관리, 보안, 관찰성, 복원력이라는 공통 과제를 Istio 없이는 애플리케이션 코드에 직접 구현해 비일관적으로 대응하지만, Istio를 사용하면 인프라 레벨에서 선언적이고 일관되게 해결한다는 것을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-5.html)
 
 ### Istio가 제공하는 핵심 가치
 
@@ -321,7 +333,9 @@ Istio는 두 가지 배포 모드를 지원합니다: **Sidecar Mode**와 **Ambi
 
 각 애플리케이션 파드에 Envoy 프록시를 사이드카 컨테이너로 주입합니다.
 
-![파드 안의 애플리케이션 컨테이너와 Envoy 사이드카가 로컬 통신을 주고받고, Envoy가 외부 요청을 받아 애플리케이션에 전달하고 애플리케이션의 외부 호출도 다시 대상 서비스로 중계한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-6.svg)
+![파드 안의 애플리케이션 컨테이너와 Envoy 사이드카가 로컬 통신을 주고받고, Envoy가 외부 요청을 받아 애플리케이션에 전달하고 애플리케이션의 외부 호출도 다시 대상 서비스로 중계하는 Sidecar Mode 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-6.html)
 
 **장점:**
 - 성숙하고 안정적
@@ -337,7 +351,9 @@ Istio는 두 가지 배포 모드를 지원합니다: **Sidecar Mode**와 **Ambi
 
 사이드카 없이 노드 레벨에서 트래픽을 처리합니다.
 
-![사이드카가 없는 두 파드의 트래픽이 노드당 하나씩 존재하는 ztunnel로 투명하게 리다이렉트되고, L7 기능이 필요할 때만 선택적인 Waypoint Proxy로 전달된다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-7.svg)
+![사이드카가 없는 두 파드의 트래픽이 노드당 하나씩 존재하는 ztunnel L4 프록시로 투명하게 리다이렉트되고, L7 기능이 필요할 때만 선택적인 Waypoint Proxy로 전달되는 Ambient Mode 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-7.html)
 
 **장점:**
 - 낮은 리소스 사용 (노드당 1개)
@@ -572,7 +588,9 @@ spec:
 
 ### 트래픽 라우팅 흐름
 
-![클라이언트의 HTTP 요청이 Gateway로 들어와 VirtualService의 라우팅 규칙과 DestinationRule의 서브셋 선택을 거쳐 Kubernetes Service를 통해 v1, v2 파드로 각각 라우팅된다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-8.svg)
+![클라이언트의 HTTP 요청이 Gateway로 들어와 VirtualService의 라우팅 규칙과 DestinationRule의 서브셋 선택을 거쳐 Kubernetes Service를 통해 v1, v2 파드로 각각 라우팅되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-8.html)
 
 ### 트래픽 분할 (Canary 배포)
 
@@ -625,7 +643,9 @@ spec:
 
 Istio는 서비스 간 통신을 자동으로 암호화합니다.
 
-![Pod A와 Pod B의 앱은 각자의 Envoy와 평문으로 통신하고, 두 Envoy 사이의 트래픽은 istiod Citadel이 발급한 인증서를 이용해 mTLS로 암호화된다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-9.svg)
+![Pod A와 Pod B의 앱이 각자의 Envoy 사이드카와 평문으로 통신하고, 두 Envoy 사이의 트래픽은 istiod Citadel이 발급한 인증서로 mTLS 암호화되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-9.html)
 
 **mTLS 모드**:
 - **STRICT**: mTLS만 허용
@@ -664,7 +684,9 @@ Istio는 자동으로 메트릭, 로그, 트레이스를 생성합니다.
 
 ### 자동 생성되는 메트릭
 
-![파드의 Envoy Proxy가 메트릭은 Prometheus, 트레이스는 Jaeger, 로그는 로깅 시스템으로 보내고, Prometheus는 Grafana 대시보드로, Jaeger는 Jaeger UI로 이어지며 Kiali는 Prometheus를 조회해 서비스 메시를 시각화한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-10.svg)
+![파드의 Envoy Proxy가 메트릭은 Prometheus, 트레이스는 Jaeger, 로그는 로깅 시스템으로 보내고, Prometheus는 Grafana 대시보드로, Jaeger는 Jaeger UI로 이어지며 Kiali가 Prometheus를 쿼리해 서비스 메시를 시각화하는 Istio 관찰성 구성을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-10.html)
 
 ### 주요 메트릭
 
@@ -752,7 +774,9 @@ Istio는 Kubernetes 파드뿐만 아니라 **Virtual Machine (VM) 워크로드**
 
 ### VM 워크로드가 필요한 이유
 
-![레거시 VM이 처음에는 신규 앱과 직접 통신하지만 메시에 등록된 뒤에는 mTLS와 정책이 적용되며, istiod가 파드의 Envoy뿐 아니라 VM에도 구성을 전달한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-11.svg)
+![레거시 VM이 처음에는 신규 앱과 직접 통신하지만 메시에 등록된 뒤에는 mTLS와 정책이 적용되며, istiod가 파드의 Envoy뿐 아니라 VM에도 구성을 전달하는 모습을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-11.html)
 
 **사용 시나리오**:
 - 레거시 애플리케이션의 점진적 마이그레이션
@@ -762,7 +786,9 @@ Istio는 Kubernetes 파드뿐만 아니라 **Virtual Machine (VM) 워크로드**
 
 ### VM 등록 아키텍처
 
-![VM과 Kubernetes 파드 각각에서 애플리케이션이 자신의 Envoy Sidecar와 로컬로 통신하고, 두 Envoy는 istiod가 배포한 xDS 구성과 인증서를 이용해 서로 mTLS로 통신한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-12.svg)
+![VM과 Kubernetes 파드 각각에서 애플리케이션이 자신의 Envoy Sidecar와 로컬로 통신하고, 두 Envoy는 istiod가 배포한 xDS 구성과 인증서를 이용해 서로 mTLS로 통신한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-12.html)
 
 ### WorkloadEntry 리소스
 
@@ -843,7 +869,9 @@ spec:
 
 #### 1. 점진적 마이그레이션
 
-![레거시 모놀리스 VM이 메시에 등록된 뒤 일부 기능만 Kubernetes로 옮겨 VM과 신규 마이크로서비스가 mTLS로 통신하는 하이브리드 단계를 거쳐 완전한 마이크로서비스 전환에 이른다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-13.svg)
+![레거시 모놀리스 VM을 Envoy와 함께 메시에 등록한 뒤 일부 기능만 Kubernetes로 옮겨 남은 VM 모듈과 신규 마이크로서비스가 mTLS로 통신하는 하이브리드 단계를 거쳐 완전한 마이크로서비스 전환에 이르는 4단계 점진적 마이그레이션을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-13.html)
 
 **이점**:
 - 기존 VM 애플리케이션을 수정하지 않고 메시에 통합
@@ -977,7 +1005,9 @@ spec:
 
 ### 워크로드 등록 비교 요약
 
-![Kubernetes 파드, Multi-Cluster, Virtual Machine이라는 서로 다른 워크로드 유형 모두가 mTLS 암호화, 트래픽 관리, 보안 정책, 메트릭과 추적이라는 동일한 공통 기능을 제공받는다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-02-basic-concepts-14.svg)
+![Kubernetes 파드, Multi-Cluster, Virtual Machine이라는 서로 다른 워크로드 유형이 모두 Istio 서비스 메시에 등록되어 mTLS 암호화, 트래픽 관리, 보안 정책, 메트릭과 추적이라는 동일한 공통 기능을 제공받는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-14.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-14.html)
 
 Istio의 유연한 워크로드 등록 기능을 통해:
 - **Kubernetes 파드**: 클라우드 네이티브 애플리케이션

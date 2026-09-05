@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "L7 Processing Flow through the Node Envoy",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      720
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-leg",
+        "label": "Request leg",
+        "focus": [
+          "client",
+          "ebpf",
+          "envoy"
+        ],
+        "note": "eBPF checks the L4 policy and redirects only requests that need L7 policy to the node Envoy."
+      },
+      {
+        "id": "server-hop",
+        "label": "Server hop",
+        "focus": [
+          "ebpf",
+          "server"
+        ],
+        "note": "The processed packet is delivered to the destination Server Pod, which returns the HTTP response."
+      },
+      {
+        "id": "response-leg",
+        "label": "Response leg",
+        "focus": [
+          "server",
+          "ebpf",
+          "envoy",
+          "client"
+        ],
+        "note": "The response also passes through Envoy only when L7 policy is required, then reaches the Client Pod."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Pod",
+      "sublabel": "workload"
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF Datapath",
+      "sublabel": "kernel"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Node Envoy",
+      "sublabel": "L7 proxy"
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "Server Pod",
+      "sublabel": "workload"
+    }
+  ],
+  "segments": [
+    {
+      "from": 215,
+      "to": 325,
+      "label": "OPT — L7 policy required (request)"
+    },
+    {
+      "from": 445,
+      "to": 555,
+      "label": "OPT — L7 policy required (response)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "ebpf",
+      "y": 185,
+      "label": "HTTP request",
+      "variant": "default",
+      "note": "L4 policy check"
+    },
+    {
+      "id": "redirect-request",
+      "from": "ebpf",
+      "to": "envoy",
+      "y": 245,
+      "label": "redirect to proxy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "processed-request",
+      "from": "envoy",
+      "to": "ebpf",
+      "y": 300,
+      "label": "processed request",
+      "variant": "return",
+      "note": "HTTP parsing · L7 policy · header manipulation"
+    },
+    {
+      "id": "deliver-packet",
+      "from": "ebpf",
+      "to": "server",
+      "y": 365,
+      "label": "deliver packet",
+      "variant": "default"
+    },
+    {
+      "id": "http-response",
+      "from": "server",
+      "to": "ebpf",
+      "y": 410,
+      "label": "HTTP response",
+      "variant": "return"
+    },
+    {
+      "id": "redirect-response",
+      "from": "ebpf",
+      "to": "envoy",
+      "y": 475,
+      "label": "redirect response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "processed-response",
+      "from": "envoy",
+      "to": "ebpf",
+      "y": 530,
+      "label": "processed response",
+      "variant": "return"
+    },
+    {
+      "id": "deliver-response",
+      "from": "ebpf",
+      "to": "client",
+      "y": 600,
+      "label": "deliver response",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ebpf",
+      "from": 180,
+      "to": 605,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 240,
+      "to": 305,
+      "type": "security"
+    },
+    {
+      "participant": "server",
+      "from": 360,
+      "to": 415,
+      "type": "external"
+    },
+    {
+      "participant": "envoy",
+      "from": 470,
+      "to": 535,
+      "type": "security"
+    }
+  ]
+}

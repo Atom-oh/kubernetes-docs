@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ztunnel Role",
+    "output": "en-service-mesh-istio-advanced-01-ambient-mode-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      320
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Pod",
+      "pos": [
+        30,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "DaemonSet",
+      "pos": [
+        210,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "mtls",
+      "type": "security",
+      "label": "mTLS",
+      "sublabel": "Encryption",
+      "pos": [
+        400,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "telemetry",
+      "type": "backend",
+      "label": "L4 Telemetry",
+      "sublabel": "Metrics collection",
+      "pos": [
+        570,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "Service Account",
+      "pos": [
+        740,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "l4lb",
+      "type": "backend",
+      "label": "L4 Load Balancing",
+      "pos": [
+        910,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "backend",
+      "label": "Target Service",
+      "pos": [
+        1090,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ztunnel Features",
+      "wraps": [
+        "mtls",
+        "telemetry",
+        "identity",
+        "l4lb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-ztunnel",
+      "from": "app",
+      "to": "ztunnel",
+      "label": "TCP connection",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "ztunnel-to-mtls",
+      "from": "ztunnel",
+      "to": "mtls"
+    },
+    {
+      "id": "mtls-to-telemetry",
+      "from": "mtls",
+      "to": "telemetry"
+    },
+    {
+      "id": "telemetry-to-identity",
+      "from": "telemetry",
+      "to": "identity"
+    },
+    {
+      "id": "identity-to-l4lb",
+      "from": "identity",
+      "to": "l4lb"
+    },
+    {
+      "id": "l4lb-to-target",
+      "from": "l4lb",
+      "to": "target",
+      "label": "Transmit",
+      "variant": "emphasis",
+      "labelDy": -24,
+      "labelDx": 40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "ztunnel Characteristics",
+      "items": [
+        "Written in Rust (performance optimized)",
+        "Deployed as a DaemonSet on every node",
+        "Integrated with the CNI plugin, eBPF-based traffic redirection"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "PeerAuthentication 모드 불일치로 인한 mTLS 연결 실패",
+    "output": "ko-service-mesh-istio-troubleshooting-common-errors-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "Client Service",
+      "sublabel": "PeerAuthentication: STRICT",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server Service",
+      "sublabel": "PeerAuthentication: DISABLE",
+      "pos": [
+        640,
+        180
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "error",
+      "type": "security",
+      "label": "503 Service Unavailable",
+      "sublabel": "upstream connect error",
+      "pos": [
+        640,
+        420
+      ],
+      "size": [
+        240,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-server",
+      "from": "client",
+      "to": "server",
+      "label": "mTLS 연결 시도",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-to-client",
+      "from": "server",
+      "to": "client",
+      "label": "평문 연결 필요",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          760,
+          90
+        ],
+        [
+          180,
+          90
+        ]
+      ]
+    },
+    {
+      "id": "server-to-error",
+      "from": "server",
+      "to": "error",
+      "label": "연결 실패",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ]
+}

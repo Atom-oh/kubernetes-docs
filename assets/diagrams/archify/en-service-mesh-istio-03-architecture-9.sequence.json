@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How the DNS Proxy Works",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      700
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "capture",
+        "label": "DNS capture",
+        "focus": [
+          "app",
+          "iptables",
+          "envoy"
+        ],
+        "note": "iptables redirects the UDP 53 DNS query to Envoy's DNS proxy on port 15053."
+      },
+      {
+        "id": "mesh",
+        "label": "In-mesh service",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "For an Istio service, Envoy asks Istiod over xDS and receives the ClusterIP."
+      },
+      {
+        "id": "external",
+        "label": "External domain",
+        "focus": [
+          "envoy",
+          "coredns"
+        ],
+        "note": "For a domain outside the mesh, Envoy delegates to CoreDNS and receives the IP."
+      },
+      {
+        "id": "answer",
+        "label": "Answer",
+        "focus": [
+          "envoy",
+          "app"
+        ],
+        "note": "Either way, Envoy returns the final IP to the application."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "DNS client"
+    },
+    {
+      "id": "iptables",
+      "type": "security",
+      "label": "iptables",
+      "sublabel": "UDP 53 redirect"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "DNS proxy · 15053"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "Istiod",
+      "sublabel": "xDS · mesh services"
+    },
+    {
+      "id": "coredns",
+      "type": "external",
+      "label": "CoreDNS",
+      "sublabel": "External domain"
+    }
+  ],
+  "segments": [
+    {
+      "from": 300,
+      "to": 400,
+      "label": "alt — Istio service"
+    },
+    {
+      "from": 420,
+      "to": 520,
+      "label": "else — external domain"
+    }
+  ],
+  "messages": [
+    {
+      "id": "dns-query",
+      "from": "app",
+      "to": "iptables",
+      "y": 190,
+      "label": "DNS query (UDP 53)",
+      "variant": "default"
+    },
+    {
+      "id": "redirect",
+      "from": "iptables",
+      "to": "envoy",
+      "y": 240,
+      "label": "redirect to 15053",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds-lookup",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 325,
+      "label": "Service lookup (xDS)",
+      "variant": "default"
+    },
+    {
+      "id": "clusterip",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 375,
+      "label": "ClusterIP",
+      "variant": "return"
+    },
+    {
+      "id": "coredns-query",
+      "from": "envoy",
+      "to": "coredns",
+      "y": 445,
+      "label": "DNS query",
+      "variant": "dashed"
+    },
+    {
+      "id": "coredns-ip",
+      "from": "coredns",
+      "to": "envoy",
+      "y": 495,
+      "label": "return IP",
+      "variant": "return"
+    },
+    {
+      "id": "answer",
+      "from": "envoy",
+      "to": "app",
+      "y": 560,
+      "label": "return IP",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 240,
+      "to": 565,
+      "type": "backend"
+    },
+    {
+      "participant": "istiod",
+      "from": 320,
+      "to": 380,
+      "type": "cloud"
+    },
+    {
+      "participant": "coredns",
+      "from": 440,
+      "to": 500,
+      "type": "external"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ALB와 Istio mTLS 통합",
+    "output": "ko-service-mesh-istio-security-01-mtls-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1120, 400],
+    "views": [
+      { "id": "client-alb", "label": "클라이언트 인증서 검증", "focus": ["client", "alb"], "note": "ALB가 Trust Store의 CA로 클라이언트 인증서를 검증하고 mTLS를 종료한다." },
+      { "id": "alb-gateway", "label": "ALB → Istio Gateway", "focus": ["alb", "gateway"], "note": "ALB가 이미 mTLS 검증을 마쳤으므로 Gateway는 tls.mode SIMPLE로 TLS를 받는다." },
+      { "id": "mesh", "label": "메시 내부 mTLS", "focus": ["gateway", "service"], "note": "Gateway에서 백엔드 서비스까지는 Envoy 사이드카 간 mTLS로 다시 암호화된다." }
+    ]
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "클라이언트", "sublabel": "Client Cert", "pos": [40, 170], "size": [160, 64] },
+    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "mTLS Termination", "pos": [320, 170], "size": [170, 64], "tag": "Trust Store · verify" },
+    { "id": "gateway", "type": "security", "label": "Istio Gateway", "sublabel": "TLS (mode: SIMPLE)", "pos": [600, 170], "size": [180, 64] },
+    { "id": "service", "type": "backend", "label": "Backend Service", "sublabel": "Envoy mTLS", "pos": [880, 170], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS", "wraps": ["alb", "gateway", "service"] },
+    { "kind": "security-group", "label": "EKS 클러스터 · Istio 메시", "wraps": ["gateway", "service"] }
+  ],
+  "connections": [
+    { "id": "client-alb", "from": "client", "to": "alb", "label": "mTLS", "variant": "security" },
+    { "id": "alb-gateway", "from": "alb", "to": "gateway", "label": "TLS", "variant": "emphasis" },
+    { "id": "gateway-service", "from": "gateway", "to": "service", "label": "mTLS", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "ALB (1단계)", "items": ["CA 인증서 번들을 Trust Store로 등록", "리스너 mutual-authentication Mode=verify로 클라이언트 인증서 검증"] },
+    { "dot": "cyan", "title": "Istio Gateway (3단계)", "items": ["ALB가 mTLS 검증을 마쳤으므로 tls.mode: SIMPLE", "credentialName: gateway-cert로 서버 인증서 제공"] },
+    { "dot": "emerald", "title": "Backend Service", "items": ["PeerAuthentication STRICT로 메시 내부 Envoy 간 mTLS 강제"] }
+  ]
+}

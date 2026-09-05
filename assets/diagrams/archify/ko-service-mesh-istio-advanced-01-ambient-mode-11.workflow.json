@@ -1,0 +1,92 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio 데이터 플레인 진화",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "레거시"
+        },
+        "cloud": {
+          "label": "베타"
+        },
+        "security": {
+          "label": "안정 (GA)"
+        }
+      }
+    },
+    "viewBox": [
+      1040,
+      300
+    ]
+  },
+  "lanes": [
+    {
+      "id": "dataplane",
+      "label": "Istio 데이터 플레인"
+    }
+  ],
+  "phases": [
+    {
+      "id": "evolution",
+      "label": "Istio 진화",
+      "fromCol": 0,
+      "toCol": 2
+    }
+  ],
+  "mainPath": [
+    "v1",
+    "v2",
+    "v3"
+  ],
+  "nodes": [
+    {
+      "id": "v1",
+      "lane": "dataplane",
+      "col": 0,
+      "type": "frontend",
+      "label": "Istio 1.0 · 2018",
+      "sublabel": "Sidecar Mode",
+      "width": 140
+    },
+    {
+      "id": "v2",
+      "lane": "dataplane",
+      "col": 1,
+      "type": "cloud",
+      "label": "Istio 1.15 · 2022",
+      "sublabel": "Ambient Beta",
+      "width": 140
+    },
+    {
+      "id": "v3",
+      "lane": "dataplane",
+      "col": 2,
+      "type": "security",
+      "label": "Istio 1.28 · 2024",
+      "sublabel": "Ambient Stable",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "id": "v1-to-v2",
+      "from": "v1",
+      "to": "v2",
+      "label": "리소스 최적화",
+      "role": "main"
+    },
+    {
+      "id": "v2-to-v3",
+      "from": "v2",
+      "to": "v3",
+      "label": "안정화",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ]
+}

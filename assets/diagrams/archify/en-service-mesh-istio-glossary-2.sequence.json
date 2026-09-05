@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How SigV4 Works — Envoy Signs AWS Requests on Your Behalf",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      600
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "calling application"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "istio-proxy · aws_request_signing"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS Service",
+      "sublabel": "e.g. S3, DynamoDB"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "Inside Envoy: load AWS Credentials → generate SigV4 signature (HMAC-SHA256)"
+    },
+    {
+      "from": 320,
+      "to": 480,
+      "label": "Inside AWS: verify signature → respond"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "envoy",
+      "y": 190,
+      "label": "HTTP request",
+      "variant": "default"
+    },
+    {
+      "id": "signed-request",
+      "from": "envoy",
+      "to": "aws",
+      "y": 265,
+      "label": "Add Authorization header · AWS4-HMAC-SHA256",
+      "variant": "security",
+      "note": "Load credentials → derive Signing Key → compute Signature, attach to header"
+    },
+    {
+      "id": "aws-response",
+      "from": "aws",
+      "to": "envoy",
+      "y": 380,
+      "label": "Response",
+      "variant": "return",
+      "note": "AWS verifies the signature, then responds"
+    },
+    {
+      "id": "client-response",
+      "from": "envoy",
+      "to": "client",
+      "y": 455,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 185,
+      "to": 462,
+      "type": "security"
+    },
+    {
+      "participant": "aws",
+      "from": 260,
+      "to": 388,
+      "type": "cloud"
+    }
+  ]
+}

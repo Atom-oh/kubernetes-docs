@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio + VPC Lattice 함께 사용하기",
+    "output": "ko-service-mesh-istio-04-aws-integration-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inside-cluster",
+        "label": "클러스터 내부: Istio",
+        "focus": [
+          "istiod",
+          "svc-a",
+          "svc-b"
+        ],
+        "note": "istiod가 Envoy 사이드카를 구성하고, 서비스 간 트래픽은 내부 mTLS로 보호된다."
+      },
+      {
+        "id": "cross-account",
+        "label": "크로스 계정: VPC Lattice",
+        "focus": [
+          "svc-a",
+          "lattice",
+          "svc-c",
+          "lambda"
+        ],
+        "note": "Istio 클러스터에서 나가는 트래픽은 VPC Lattice Service Network가 다른 계정의 서비스와 Lambda로 라우팅한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "istiod",
+      "sublabel": "control plane",
+      "pos": [
+        160,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "+ Envoy 사이드카",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "+ Envoy 사이드카",
+      "pos": [
+        280,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "Service Network",
+      "pos": [
+        560,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "사이드카 없음",
+      "pos": [
+        850,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lambda",
+      "type": "external",
+      "label": "Lambda 함수",
+      "sublabel": "사이드카 없음",
+      "pos": [
+        850,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 계정 1 · EKS 클러스터 1 (Istio)",
+      "wraps": [
+        "istiod",
+        "svc-a",
+        "svc-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 계정 2",
+      "wraps": [
+        "svc-c",
+        "lambda"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "EKS 클러스터 2",
+      "wraps": [
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istiod-svc-b",
+      "from": "istiod",
+      "to": "svc-b",
+      "label": "구성",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-svc-a",
+      "from": "istiod",
+      "to": "svc-a",
+      "label": "구성",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-a-svc-b",
+      "from": "svc-a",
+      "to": "svc-b",
+      "label": "내부 mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "svc-a-lattice",
+      "from": "svc-a",
+      "to": "lattice",
+      "label": "VPC Lattice",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lattice-svc-c",
+      "from": "lattice",
+      "to": "svc-c",
+      "label": "라우팅"
+    },
+    {
+      "id": "lattice-lambda",
+      "from": "lattice",
+      "to": "lambda",
+      "label": "라우팅"
+    }
+  ]
+}

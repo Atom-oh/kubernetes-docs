@@ -24,17 +24,23 @@ Service Mesh는 마이크로서비스 간의 통신을 관리하는 인프라 �
 
 #### Service Mesh의 기본 개념
 
-![Service Mesh 도입 전에는 서비스가 직접 통신하며 재시도·암호화·메트릭을 각자 구현하지만, 도입 후에는 사이드카 프록시와 컨트롤 플레인이 mTLS와 정책을 자동으로 처리한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.svg)
+![Service Mesh 도입 전에는 서비스가 직접 통신하며 재시도·암호화·메트릭을 각자 구현하지만, 도입 후에는 사이드카 프록시와 컨트롤 플레인이 mTLS와 정책을 자동으로 처리하는 차이를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.html)
 
 #### 아키텍처 패턴 비교
 
-![Istio, Linkerd, Consul, Kong Mesh 네 솔루션의 컨트롤 플레인과 데이터 플레인 구조를 한 화면에서 비교한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-1.svg)
+![Istio, Linkerd, Consul, Kong Mesh 네 솔루션이 컨트롤 플레인에서 파드와 VM의 데이터 플레인 프록시로 설정을 내려주는 구조를 나란히 비교해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-1.html)
 
 ### 상세 아키텍처
 
 #### Istio
 
-![Istiod 단일 컨트롤 플레인이 두 파드의 Envoy 사이드카에 xDS 설정을 배포하고, 두 Envoy는 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.svg)
+![Istiod 단일 컨트롤 플레인이 VirtualService, PeerAuthentication 같은 Kubernetes CRD 설정을 읽어 두 파드의 Envoy 사이드카에 xDS API로 배포하고, 두 Envoy는 mTLS로 통신하는 Istio 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.html)
 
 **특징**:
 
@@ -52,7 +58,9 @@ Service Mesh는 마이크로서비스 간의 통신을 관리하는 인프라 �
 
 ### Linkerd
 
-![Destination, Identity, Proxy Injector 세 컨트롤 플레인 컴포넌트가 각 파드의 Rust 프록시에 서비스 정보·인증서를 제공하고, 프록시끼리 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.svg)
+![Destination, Identity, Proxy Injector 세 컨트롤 플레인 컴포넌트가 각 파드의 Linkerd2-proxy(Rust)에 엔드포인트·인증서를 제공하고 사이드카를 주입하며, 두 프록시가 mTLS로 통신하는 Linkerd 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.html)
 
 **특징**:
 
@@ -70,7 +78,9 @@ Service Mesh는 마이크로서비스 간의 통신을 관리하는 인프라 �
 
 ### Kong Mesh
 
-![Zone Control Plane이 Kubernetes 파드와 VM 위의 Kuma DP(Envoy)에 동일하게 설정을 배포하며, 모든 데이터 플레인이 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.svg)
+![선택 사항인 Global Control Plane이 Zone Control Plane에 정책을 동기화하고, Zone Control Plane이 Kubernetes 파드와 VM 위의 Kuma DP(Envoy)에 동일하게 설정을 배포하며, 모든 데이터 플레인이 mTLS로 통신하는 Kong Mesh 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.html)
 
 **특징**:
 
@@ -92,7 +102,9 @@ Kong Mesh는 Kuma를 기반으로 하는 Universal Service Mesh로, 멀티 존 �
 
 **Multi-Zone 배포 아키텍처**
 
-![Global Control Plane이 두 Zone Control Plane에 정책을 동기화하고, 각 Zone의 Kuma DP는 로컬 트래픽을 처리하며 Zone 간 mTLS로 연결된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-5.svg)
+![Global Control Plane이 AWS EKS, GCP GKE, On-Premises 세 Zone의 Zone Control Plane에 정책을 동기화하고, 각 Zone CP가 파드와 VM의 Kuma DP에 xDS 설정을 배포하며 Zone 간 트래픽은 mTLS로 암호화되는 Kong Mesh Multi-Zone 배포 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-5.html)
 
 **주요 특징**:
 
@@ -103,11 +115,15 @@ Kong Mesh는 Kuma를 기반으로 하는 Universal Service Mesh로, 멀티 존 �
 
 **서비스 연결 및 트래픽 흐름**
 
-![애플리케이션의 요청이 로컬 Kuma DP를 거쳐 상대 Zone의 DP와 mTLS로 암호화 통신한 뒤 대상 서비스에 도달하고, 응답과 메트릭이 같은 경로로 되돌아온다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.svg)
+![Global CP가 두 Zone CP에 정책을 동기화하고 각 Zone CP가 xDS로 Kuma DP를 설정한 뒤, 애플리케이션의 요청을 로컬 Kuma DP가 서비스 디스커버리로 Zone 2 엔드포인트를 확인하고 mTLS로 암호화해 상대 Zone의 DP를 거쳐 대상 서비스에 전달하며, 응답은 같은 경로로 돌아오고 메트릭은 Zone CP를 거쳐 Global CP에서 집계된다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.html)
 
 **정책 전파 메커니즘**
 
-![정책을 적용하면 스코프에 따라 Global CP 또는 Zone CP에 저장되고, 두 경로 모두 최종적으로 Data Plane의 xDS 설정을 갱신해 Envoy에 실시간으로 반영된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-7.svg)
+![kubectl로 적용한 정책이 스코프에 따라 Global CP에 저장돼 모든 Zone CP로 동기화되거나 해당 Zone CP에만 저장되고, 두 경로 모두 Data Plane의 xDS 설정을 갱신해 Envoy에 실시간 반영되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-7.html)
 
 **정책 유형별 전파 범위**:
 
@@ -121,11 +137,15 @@ Kong Mesh는 Kuma를 기반으로 하는 Universal Service Mesh로, 멀티 존 �
 
 **데이터 플레인 라이프사이클**
 
-![데이터 플레인은 초기화와 설정 수신을 거쳐 런타임에서 트래픽을 처리하고, 변경 감지 시 무중단으로 업데이트를 반복하며 SIGTERM 수신 시에만 드레이닝 후 종료한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-8.svg)
+![Kuma 데이터 플레인이 토큰으로 Zone CP에 등록해 xDS 설정을 받고, 런타임에서 mTLS 트래픽을 프록시하며 변경 감지 시 Hot Reload로 무중단 갱신을 반복하다가 SIGTERM 수신 시 드레이닝 후 등록 해제·종료하는 라이프사이클을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-8.html)
 
 **Zone 간 서비스 디스커버리**
 
-![각 Zone Control Plane이 등록한 서비스 정보가 Global Control Plane의 통합 레지스트리에 모이고, 클라이언트는 이 레지스트리를 통해 로컬 Zone을 우선 라우팅한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-9.svg)
+![각 Zone의 서비스가 Zone Control Plane에 등록되고 Global Control Plane의 통합 서비스 레지스트리로 모이며, 클라이언트의 Kuma DP는 Zone CP에서 받은 Endpoints로 로컬 Zone의 api를 80% 우선 라우팅하고 20%는 Cross-Zone으로 보내는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-9.html)
 
 **서비스 디스커버리 특징**:
 
@@ -248,7 +268,9 @@ spec:
 
 ### Consul Connect
 
-![Consul 서버 클러스터가 Kubernetes 파드 두 개와 VM 위의 Envoy 프록시에 서비스 디스커버리 정보를 제공하고, 모든 데이터 플레인이 mTLS로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-10.svg)
+![Consul Server 클러스터가 Kubernetes 파드 두 개와 VM의 Consul Client로부터 서비스 등록을 받아 각 Envoy 프록시에 서비스 디스커버리 정보를 내려 주고, Envoy 프록시들이 mTLS로 통신하는 Consul Connect 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-10.html)
 
 **특징**:
 
@@ -268,7 +290,9 @@ spec:
 
 ### Latency 오버헤드
 
-![Baseline 대비 각 Service Mesh 프록시가 추가하는 지연 시간을 비교하면 Linkerd가 가장 낮고 Istio·Consul이 가장 높다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-11.svg)
+![Baseline(Direct K8s Service 0.1ms) 대비 각 Service Mesh 데이터 플레인 프록시가 추가하는 지연 시간 범위를 비교하면 Linkerd가 가장 낮고 Kong Mesh가 중간, Istio·Consul이 가장 높음을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-11.html)
 
 **벤치마크 결과** (P99 Latency 증가, 1000 RPS):
 
@@ -303,7 +327,9 @@ spec:
 
 **최대 RPS (Requests Per Second)**:
 
-![Baseline 대비 처리 가능한 최대 RPS 비율을 랭킹으로 보여주며 Linkerd가 가장 높고 Istio·Consul이 가장 낮다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-12.svg)
+![메시 없는 Baseline 대비 각 Service Mesh가 유지하는 최대 RPS 비율을 비교하며 Linkerd가 가장 높고 Kong Mesh가 중간, Istio·Consul이 가장 낮음을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-12.html)
 
 **결론**:
 
@@ -753,19 +779,27 @@ ui_config {
 
 **Istio Multi-Primary**:
 
-![두 클러스터가 각자 Istiod를 운영하며 서로 서비스 디스커버리를 교환하고, 애플리케이션 간에는 클러스터 경계를 넘어 mTLS로 직접 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-13.svg)
+![두 클러스터가 각자 Istiod를 운영하며 서로 서비스 디스커버리를 교환하고, 애플리케이션 간에는 클러스터 경계를 넘어 mTLS로 직접 통신하는 Istio Multi-Primary 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-13.html)
 
 **Linkerd Multi-cluster**:
 
-![소스 클러스터의 서비스가 자신의 Gateway를 거쳐 타깃 클러스터 Gateway로 mTLS 연결되고, 그 뒤에서 미러링된 서비스로 라우팅된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-14.svg)
+![소스 클러스터의 Service A가 자신의 Gateway를 거쳐 타깃 클러스터 Gateway로 mTLS 연결되고, 그 뒤에서 미러링된 Service A Mirror로 라우팅되는 Linkerd 멀티 클러스터 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-14.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-14.html)
 
 **Kong Mesh Multi-zone**:
 
-![Global Control Plane이 세 Zone에 정책을 동기화하고, 각 Zone의 서비스는 Zone 경계를 넘어 서로 통신한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-15.svg)
+![Kong Mesh Global Control Plane이 AWS, Azure, On-prem 세 Zone의 Zone CP에 정책을 동기화하고, 각 Zone의 서비스는 Zone 경계를 넘어 서로 통신하는 Kong Mesh Multi-zone 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-15.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-15.html)
 
 **Consul Multi-datacenter**:
 
-![두 데이터센터가 각자 Consul 서버를 두고 WAN Gossip으로 서로를 인지하며, Mesh Gateway를 통해 데이터센터 간 트래픽이 오간다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.svg)
+![두 데이터센터가 각자 Consul 서버를 두고 WAN Gossip으로 서로를 인지하며, Mesh Gateway를 통해 데이터센터 간 트래픽이 오가고 각 서비스는 자기 데이터센터의 Consul 서버에서 서비스 디스커버리를 수행하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.html)
 
 ### 멀티 클러스터 기능 비교
 
@@ -900,7 +934,9 @@ kubectl logs <pod> -c consul-connect-envoy-sidecar
 
 ### 학습 곡선
 
-![Linkerd는 쉬운 학습 곡선으로 빠른 시작에, Kong Mesh와 Consul은 중간 난이도로 중간 규모에, Istio는 가장 높은 난이도로 대규모 엔터프라이즈에 적합하다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-17.svg)
+![Linkerd는 쉬운 학습 곡선으로 빠른 시작에, Kong Mesh와 Consul은 중간 난이도로 중간 규모에, Istio는 가장 높은 난이도로 대규모 엔터프라이즈에 적합하다는 학습 곡선 대응을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-17.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-17.html)
 
 ## 비용 분석
 
@@ -1125,7 +1161,9 @@ istioctl install --set profile=demo \
 
 ### 의사 결정 트리
 
-![팀의 경험 수준, 리소스 제약, 플랫폼 요구(K8s 전용 또는 K8s+VM)를 따라가면 Linkerd, Kong Mesh/Consul, Istio 중 적합한 Service Mesh로 귀결된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-01-service-mesh-comparison-18.svg)
+![팀 경험, 리소스 제약, 플랫폼(K8s 전용 또는 K8s+VM), 기능 요구를 차례로 따라가 Linkerd, Istio, Kong Mesh, Consul 중 적합한 Service Mesh에 도달하는 의사 결정 트리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-18.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-18.html)
 
 ### 빠른 추천 가이드
 

@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "W3C Trace Context 전파와 스팬 내보내기",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      720
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "주 요청 경로"
+        },
+        "default": {
+          "label": "동기 호출 (traceparent 전파)"
+        },
+        "dashed": {
+          "label": "비동기 스팬 내보내기"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "프론트엔드"
+    },
+    {
+      "id": "envoy-a",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Service A 사이드카"
+    },
+    {
+      "id": "app-a",
+      "type": "backend",
+      "label": "App A",
+      "sublabel": "Service A 컨테이너"
+    },
+    {
+      "id": "envoy-b",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Service B 사이드카"
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "App B",
+      "sublabel": "Service B 컨테이너"
+    },
+    {
+      "id": "jaeger",
+      "type": "messagebus",
+      "label": "Jaeger Collector",
+      "sublabel": "Tracing Backend"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 400,
+      "label": "traceparent 헤더로 trace context 전파"
+    },
+    {
+      "from": 420,
+      "to": 590,
+      "label": "스팬 내보내기 (비동기, 요청 경로 차단 없음)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req",
+      "from": "client",
+      "to": "envoy-a",
+      "y": 190,
+      "label": "HTTP 요청",
+      "variant": "emphasis",
+      "note": "Envoy가 Trace ID + Span ID 생성"
+    },
+    {
+      "id": "fwd-a",
+      "from": "envoy-a",
+      "to": "app-a",
+      "y": 250,
+      "label": "traceparent 헤더와 함께 전달",
+      "note": "App A가 context 추출 → 자식 스팬 생성"
+    },
+    {
+      "id": "call-b",
+      "from": "app-a",
+      "to": "envoy-b",
+      "y": 310,
+      "label": "traceparent 포함 HTTP 요청",
+      "variant": "emphasis",
+      "note": "Envoy가 부모 context 추출 → 새 스팬 생성"
+    },
+    {
+      "id": "fwd-b",
+      "from": "envoy-b",
+      "to": "app-b",
+      "y": 370,
+      "label": "갱신된 traceparent와 함께 전달"
+    },
+    {
+      "id": "exp-envoy-a",
+      "from": "envoy-a",
+      "to": "jaeger",
+      "y": 450,
+      "label": "스팬 내보내기",
+      "variant": "dashed"
+    },
+    {
+      "id": "exp-envoy-b",
+      "from": "envoy-b",
+      "to": "jaeger",
+      "y": 485,
+      "label": "스팬 내보내기",
+      "variant": "dashed"
+    },
+    {
+      "id": "exp-app-a",
+      "from": "app-a",
+      "to": "jaeger",
+      "y": 520,
+      "label": "스팬 내보내기 (선택)",
+      "variant": "dashed"
+    },
+    {
+      "id": "exp-app-b",
+      "from": "app-b",
+      "to": "jaeger",
+      "y": 555,
+      "label": "스팬 내보내기 (선택)",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy-a",
+      "from": 185,
+      "to": 258,
+      "type": "security"
+    },
+    {
+      "participant": "app-a",
+      "from": 245,
+      "to": 318,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy-b",
+      "from": 305,
+      "to": 378,
+      "type": "security"
+    },
+    {
+      "participant": "app-b",
+      "from": 365,
+      "to": 400,
+      "type": "backend"
+    },
+    {
+      "participant": "jaeger",
+      "from": 445,
+      "to": 562,
+      "type": "messagebus"
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Observability Concepts",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "In-pod workload / sidecar"
+        },
+        "database": {
+          "label": "Telemetry collection backends"
+        },
+        "frontend": {
+          "label": "Visualization / dashboards"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics",
+        "label": "Metrics path",
+        "focus": [
+          "envoy",
+          "prometheus",
+          "grafana",
+          "kiali"
+        ],
+        "note": "Envoy auto-generates metrics such as istio_requests_total; Prometheus collects them and Grafana and Kiali query them."
+      },
+      {
+        "id": "traces",
+        "label": "Distributed tracing path",
+        "focus": [
+          "envoy",
+          "jaeger",
+          "jaegerui"
+        ],
+        "note": "Traces enabled via meshConfig.enableTracing are sent by Envoy to the Jaeger collector (:9411) and analyzed in the Jaeger UI."
+      },
+      {
+        "id": "logs",
+        "label": "Logs path",
+        "focus": [
+          "envoy",
+          "logging"
+        ],
+        "note": "Logs emitted by Envoy are shipped to a separate logging system."
+      }
+    ],
+    "viewBox": [
+      900,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "Business container",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        60,
+        310
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metric collection",
+      "pos": [
+        360,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger",
+      "sublabel": "Distributed tracing",
+      "pos": [
+        360,
+        310
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "logging",
+      "type": "database",
+      "label": "Logging System",
+      "sublabel": "Log collection",
+      "pos": [
+        360,
+        450
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "Service mesh dashboard",
+      "pos": [
+        660,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Dashboard",
+      "pos": [
+        660,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "jaegerui",
+      "type": "frontend",
+      "label": "Jaeger UI",
+      "sublabel": "Trace analysis",
+      "pos": [
+        660,
+        310
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "Traffic",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "envoy-prometheus",
+      "from": "envoy",
+      "to": "prometheus",
+      "label": "Metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-jaeger",
+      "from": "envoy",
+      "to": "jaeger",
+      "label": "Traces",
+      "labelDx": 40
+    },
+    {
+      "id": "envoy-logging",
+      "from": "envoy",
+      "to": "logging",
+      "label": "Logs"
+    },
+    {
+      "id": "prometheus-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "Visualization",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jaeger-jaegerui",
+      "from": "jaeger",
+      "to": "jaegerui",
+      "label": "Analysis"
+    },
+    {
+      "id": "kiali-prometheus",
+      "from": "kiali",
+      "to": "prometheus",
+      "label": "Query",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Key auto-generated metrics",
+      "items": [
+        "istio_requests_total — total request count",
+        "istio_request_duration_milliseconds — request latency",
+        "istio_request_bytes / istio_response_bytes — request and response size",
+        "istio_tcp_connections_opened_total — TCP connection count"
+      ]
+    }
+  ]
+}

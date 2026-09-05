@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Google, IBM, Lyft Collaboration",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      480
+    ]
+  },
+  "components": [
+    {
+      "id": "google",
+      "type": "external",
+      "label": "Google",
+      "sublabel": "Kubernetes experience",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ibm",
+      "type": "external",
+      "label": "IBM",
+      "sublabel": "Enterprise requirements",
+      "pos": [
+        60,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lyft",
+      "type": "external",
+      "label": "Lyft",
+      "sublabel": "Envoy Proxy",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "control-plane",
+      "type": "backend",
+      "label": "Control Plane",
+      "sublabel": "Google led",
+      "pos": [
+        600,
+        145
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "data-plane",
+      "type": "backend",
+      "label": "Data Plane",
+      "sublabel": "Envoy-based",
+      "pos": [
+        600,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Participating Companies",
+      "wraps": [
+        "google",
+        "ibm",
+        "lyft"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio Service Mesh",
+      "wraps": [
+        "control-plane",
+        "data-plane"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "google-to-cp",
+      "from": "google",
+      "to": "control-plane",
+      "label": "Control Plane design",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ibm-to-cp",
+      "from": "ibm",
+      "to": "control-plane",
+      "label": "Enterprise features"
+    },
+    {
+      "id": "lyft-to-dp",
+      "from": "lyft",
+      "to": "data-plane",
+      "label": "Provides Envoy Proxy",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Contributions from Each Company (announced May 2017)",
+      "items": [
+        "Google: Control Plane design, drawing on Borg and Kubernetes experience",
+        "IBM: Enterprise features driven by enterprise customer requirements",
+        "Lyft: Production-proven Envoy Proxy as the Data Plane"
+      ]
+    }
+  ]
+}

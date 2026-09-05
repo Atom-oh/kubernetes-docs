@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Injection 방식",
+    "output": "ko-service-mesh-istio-03-architecture-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "admission", "label": "Admission 경로", "focus": ["user", "apiserver", "webhook"], "note": "Deployment 생성 요청이 API Server의 admission 단계에서 Mutating Webhook을 호출한다." },
+      { "id": "inject", "label": "Spec 수정", "focus": ["webhook", "injector"], "note": "Sidecar Injector가 Pod Spec에 istio-init과 istio-proxy를 추가해 되돌려 준다." },
+      { "id": "pod", "label": "생성된 파드", "focus": ["apiserver", "init", "app", "proxy"], "note": "수정된 Spec으로 init 컨테이너와 사이드카가 포함된 파드가 만들어진다." }
+    ]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "Deployment 생성", "sublabel": "kubectl apply", "pos": [40, 120], "size": [170, 64] },
+    { "id": "apiserver", "type": "backend", "label": "API Server", "sublabel": "admission chain", "pos": [300, 120], "size": [170, 64] },
+    { "id": "webhook", "type": "backend", "label": "Mutating Webhook", "sublabel": "sidecar-injector.istio.io", "pos": [560, 120], "size": [200, 64] },
+    { "id": "injector", "type": "backend", "label": "Sidecar Injector", "sublabel": "Istio 구성 요소", "pos": [900, 120], "size": [180, 64] },
+    { "id": "app", "type": "backend", "label": "애플리케이션", "sublabel": "container", "pos": [40, 380], "size": [170, 64] },
+    { "id": "init", "type": "backend", "label": "istio-init", "sublabel": "init container", "pos": [300, 380], "size": [170, 64] },
+    { "id": "proxy", "type": "backend", "label": "istio-proxy", "sublabel": "sidecar container", "pos": [560, 380], "size": [200, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Kubernetes", "wraps": ["apiserver", "webhook"] },
+    { "kind": "region", "label": "생성된 파드", "wraps": ["app", "init", "proxy"] }
+  ],
+  "connections": [
+    { "id": "c1-post", "from": "user", "to": "apiserver", "label": "1 · POST", "variant": "emphasis" },
+    { "id": "c2-call", "from": "apiserver", "to": "webhook", "label": "2 · 호출", "variant": "emphasis", "labelDy": -12 },
+    { "id": "c3-request", "from": "webhook", "to": "injector", "label": "3 · 요청", "variant": "emphasis", "labelDy": -12 },
+    { "id": "c4-spec", "from": "injector", "to": "webhook", "label": "4 · Pod Spec 수정", "variant": "dashed", "labelDy": 12 },
+    { "id": "c5-return", "from": "webhook", "to": "apiserver", "label": "5 · 반환", "variant": "dashed", "labelDy": 12 },
+    { "id": "c6-create", "from": "apiserver", "to": "init", "label": "6 · 파드 생성", "variant": "emphasis", "labelAt": [385, 282] },
+    { "id": "c7-app", "from": "init", "to": "app", "label": "7 · init 완료" },
+    { "id": "c7-proxy", "from": "init", "to": "proxy", "label": "7 · init 완료" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "istio-init", "items": ["istio-iptables로 트래픽 리다이렉션 규칙 설정", "NET_ADMIN, NET_RAW capability 필요"] },
+    { "dot": "cyan", "title": "istio-proxy", "items": ["istio/proxyv2 이미지의 Envoy 사이드카", "sidecar.istio.io/status annotation으로 주입 결과 기록"] }
+  ]
+}

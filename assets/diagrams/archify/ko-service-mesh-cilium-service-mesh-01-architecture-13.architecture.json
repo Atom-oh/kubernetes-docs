@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "지연 시간 분석: Istio 사이드카 vs Cilium",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1120, 500],
+    "views": [
+      { "id": "istio-path", "label": "Istio 사이드카 경로", "focus": ["i1", "i2", "i3", "i4", "i5"], "note": "요청이 양쪽 Envoy 사이드카(사용자 공간)를 거치며 홉마다 지연이 쌓여 합계 약 1.5ms에 이른다." },
+      { "id": "cilium-path", "label": "Cilium eBPF 경로", "focus": ["c1", "c2", "c3", "c4", "c5"], "note": "L4 처리가 커널 eBPF에서 끝나 프록시 구간이 짧고 합계 약 0.24ms에 그친다." },
+      { "id": "network-same", "label": "네트워크 전송은 동일", "focus": ["i3", "c3"], "note": "노드 간 네트워크 전송(~0.1ms)은 두 모델에서 같다. 차이는 프록시 처리 구간에서만 생긴다." }
+    ]
+  },
+  "components": [
+    { "id": "i1", "type": "frontend", "label": "앱 → 사이드카", "sublabel": "~0.2ms", "pos": [40, 100], "size": [150, 60] },
+    { "id": "i2", "type": "backend", "label": "사이드카 처리", "sublabel": "~0.5ms", "tag": "사용자 공간", "pos": [250, 100], "size": [150, 60] },
+    { "id": "i3", "type": "cloud", "label": "네트워크", "sublabel": "~0.1ms", "pos": [460, 100], "size": [150, 60] },
+    { "id": "i4", "type": "backend", "label": "사이드카 처리", "sublabel": "~0.5ms", "tag": "사용자 공간", "pos": [670, 100], "size": [150, 60] },
+    { "id": "i5", "type": "frontend", "label": "사이드카 → 앱", "sublabel": "~0.2ms", "pos": [880, 100], "size": [150, 60] },
+    { "id": "c1", "type": "frontend", "label": "앱 → eBPF", "sublabel": "~0.02ms", "pos": [40, 320], "size": [150, 60] },
+    { "id": "c2", "type": "backend", "label": "eBPF 처리", "sublabel": "~0.05ms", "tag": "커널", "pos": [250, 320], "size": [150, 60] },
+    { "id": "c3", "type": "cloud", "label": "네트워크", "sublabel": "~0.1ms", "pos": [460, 320], "size": [150, 60] },
+    { "id": "c4", "type": "backend", "label": "eBPF 처리", "sublabel": "~0.05ms", "tag": "커널", "pos": [670, 320], "size": [150, 60] },
+    { "id": "c5", "type": "frontend", "label": "eBPF → 앱", "sublabel": "~0.02ms", "pos": [880, 320], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Istio 지연 시간 구성요소 (합계 ~1.5ms)", "wraps": ["i1", "i2", "i3", "i4", "i5"] },
+    { "kind": "region", "label": "Cilium 지연 시간 구성요소 (합계 ~0.24ms)", "wraps": ["c1", "c2", "c3", "c4", "c5"] }
+  ],
+  "connections": [
+    { "id": "i1-i2", "from": "i1", "to": "i2" },
+    { "id": "i2-i3", "from": "i2", "to": "i3" },
+    { "id": "i3-i4", "from": "i3", "to": "i4" },
+    { "id": "i4-i5", "from": "i4", "to": "i5" },
+    { "id": "c1-c2", "from": "c1", "to": "c2", "variant": "emphasis" },
+    { "id": "c2-c3", "from": "c2", "to": "c3", "variant": "emphasis" },
+    { "id": "c3-c4", "from": "c3", "to": "c4", "variant": "emphasis" },
+    { "id": "c4-c5", "from": "c4", "to": "c5", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "slate", "title": "Istio 사이드카", "items": ["요청이 양쪽 Pod의 Envoy 사이드카를 거쳐 사용자 공간에서 두 번 처리된다", "홉별 합계 약 1.5ms (비교 표 기준 1-3ms)"] },
+    { "dot": "emerald", "title": "Cilium (노드 Envoy)", "items": ["L4 처리는 커널 eBPF에서 끝나고, 노드 Envoy는 L7 처리가 필요할 때만 개입한다", "홉별 합계 약 0.24ms (비교 표 기준 0.1-0.5ms)"] }
+  ]
+}

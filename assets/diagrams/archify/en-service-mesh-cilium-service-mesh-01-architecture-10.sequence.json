@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pod-to-Pod Communication (Same Node)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      520
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "podA",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "source pod"
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF (TC)",
+      "sublabel": "veth TC hook"
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "CT + Policy Maps",
+      "sublabel": "eBPF maps"
+    },
+    {
+      "id": "podB",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "destination pod"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 320,
+      "label": "Connection and policy check inside the kernel"
+    },
+    {
+      "from": 340,
+      "to": 440,
+      "label": "Direct delivery without the network stack"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "podA",
+      "to": "ebpf",
+      "y": 190,
+      "label": "send packet (veth)"
+    },
+    {
+      "id": "lookup",
+      "from": "ebpf",
+      "to": "maps",
+      "y": 240,
+      "label": "lookup connection · policy",
+      "variant": "security"
+    },
+    {
+      "id": "allow",
+      "from": "maps",
+      "to": "ebpf",
+      "y": 290,
+      "label": "allowed",
+      "variant": "return"
+    },
+    {
+      "id": "deliver",
+      "from": "ebpf",
+      "to": "podB",
+      "y": 400,
+      "label": "deliver directly",
+      "variant": "emphasis",
+      "note": "In-kernel direct path · bypasses the network stack"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ebpf",
+      "from": 185,
+      "to": 405,
+      "type": "backend"
+    },
+    {
+      "participant": "maps",
+      "from": 235,
+      "to": 295,
+      "type": "database"
+    }
+  ]
+}

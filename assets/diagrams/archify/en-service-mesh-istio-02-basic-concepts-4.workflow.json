@@ -1,0 +1,212 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio Major Version History",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Release"
+        },
+        "cloud": {
+          "label": "Milestone"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "early",
+        "label": "Birth and GA (2017–2019)",
+        "focus": [
+          "v0_1",
+          "v1_0",
+          "v1_1"
+        ],
+        "note": "Google, IBM and Lyft announced 0.1 in May 2017; 1.0 in July 2018 was the production-ready release."
+      },
+      {
+        "id": "istiod",
+        "label": "istiod merge (2020–2022)",
+        "focus": [
+          "v1_1",
+          "v1_5",
+          "v1_10",
+          "v1_13"
+        ],
+        "note": "In 1.5, Mixer, Pilot, Citadel and Galley were consolidated into the single istiod binary — the key turning point."
+      },
+      {
+        "id": "ambient",
+        "label": "Ambient Mode (2023–2025)",
+        "focus": [
+          "v1_13",
+          "v1_20",
+          "v1_22",
+          "v1_28"
+        ],
+        "note": "1.20 introduced Ambient Mode; 1.28 is the current version."
+      }
+    ],
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "y17",
+      "label": "2017–2019"
+    },
+    {
+      "id": "y20",
+      "label": "2020–2021"
+    },
+    {
+      "id": "y22",
+      "label": "2022–2023"
+    },
+    {
+      "id": "y24",
+      "label": "2024–2025"
+    }
+  ],
+  "mainPath": [
+    "v0_1",
+    "v1_0",
+    "v1_1",
+    "v1_5",
+    "v1_10",
+    "v1_13",
+    "v1_20",
+    "v1_22",
+    "v1_28"
+  ],
+  "nodes": [
+    {
+      "id": "v0_1",
+      "lane": "y17",
+      "col": 0,
+      "type": "backend",
+      "label": "Istio 0.1",
+      "sublabel": "Announced · 2017-05",
+      "width": 164
+    },
+    {
+      "id": "v1_0",
+      "lane": "y17",
+      "col": 1,
+      "type": "cloud",
+      "label": "Istio 1.0",
+      "sublabel": "Production GA · 2018-07",
+      "width": 164
+    },
+    {
+      "id": "v1_1",
+      "lane": "y17",
+      "col": 2,
+      "type": "backend",
+      "label": "Istio 1.1",
+      "sublabel": "Performance · 2019-03",
+      "width": 164
+    },
+    {
+      "id": "v1_5",
+      "lane": "y20",
+      "col": 2,
+      "type": "cloud",
+      "label": "Istio 1.5",
+      "sublabel": "istiod consolidation · 2020-03",
+      "width": 164
+    },
+    {
+      "id": "v1_10",
+      "lane": "y20",
+      "col": 3,
+      "type": "backend",
+      "label": "Istio 1.10",
+      "sublabel": "Discovery Selectors · 2021-05",
+      "width": 164
+    },
+    {
+      "id": "v1_13",
+      "lane": "y22",
+      "col": 3,
+      "type": "backend",
+      "label": "Istio 1.13",
+      "sublabel": "Gateway API · 2022-02",
+      "width": 164
+    },
+    {
+      "id": "v1_20",
+      "lane": "y22",
+      "col": 4,
+      "type": "cloud",
+      "label": "Istio 1.20",
+      "sublabel": "Ambient Mode · 2023-11",
+      "width": 164
+    },
+    {
+      "id": "v1_22",
+      "lane": "y24",
+      "col": 4,
+      "type": "backend",
+      "label": "Istio 1.22",
+      "sublabel": "Stability · 2024-05",
+      "width": 164
+    },
+    {
+      "id": "v1_28",
+      "lane": "y24",
+      "col": 5,
+      "type": "backend",
+      "label": "Istio 1.28",
+      "sublabel": "Current version · 2025-01",
+      "width": 164
+    }
+  ],
+  "edges": [
+    {
+      "from": "v0_1",
+      "to": "v1_0"
+    },
+    {
+      "from": "v1_0",
+      "to": "v1_1"
+    },
+    {
+      "from": "v1_1",
+      "to": "v1_5"
+    },
+    {
+      "from": "v1_5",
+      "to": "v1_10"
+    },
+    {
+      "from": "v1_10",
+      "to": "v1_13"
+    },
+    {
+      "from": "v1_13",
+      "to": "v1_20"
+    },
+    {
+      "from": "v1_20",
+      "to": "v1_22"
+    },
+    {
+      "from": "v1_22",
+      "to": "v1_28"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "1.5 turning point: istiod consolidation",
+      "items": [
+        "Four components — Mixer, Pilot, Citadel, Galley — consolidated into the single istiod binary",
+        "Mixer removed completely; its functionality moved into Envoy",
+        "Reduced complexity, 50% latency reduction from removing Mixer, simpler operations"
+      ]
+    }
+  ]
+}

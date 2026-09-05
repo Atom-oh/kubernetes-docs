@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Canary 트래픽 흐름 — Argo Rollouts와 Istio",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1600,
+      900
+    ],
+    "views": [
+      {
+        "id": "weight",
+        "label": "가중치 설정",
+        "focus": [
+          "rollouts",
+          "vs"
+        ],
+        "note": "초기 상태 v1 100%에서 setWeight: 10으로 stable 90% / canary 10%를 만든다."
+      },
+      {
+        "id": "routing",
+        "label": "요청 라우팅",
+        "focus": [
+          "user",
+          "gateway",
+          "vs",
+          "stable",
+          "canary"
+        ],
+        "note": "요청마다 가중치에 따라 stable 또는 canary subset 중 하나로만 전달된다."
+      },
+      {
+        "id": "analysis",
+        "label": "Analysis와 판정",
+        "focus": [
+          "stable",
+          "canary",
+          "rollouts",
+          "prom"
+        ],
+        "note": "Prometheus 메트릭으로 Canary 성공률을 검증해 자동 진행 또는 자동 롤백을 결정한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자"
+    },
+    {
+      "id": "gateway",
+      "type": "frontend",
+      "label": "Istio Gateway"
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "VirtualService"
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable Pod (v1)"
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary Pod (v2)"
+    },
+    {
+      "id": "rollouts",
+      "type": "cloud",
+      "label": "Argo Rollouts"
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 224,
+      "label": "초기 상태 v1 100% → 가중치 설정"
+    },
+    {
+      "from": 240,
+      "to": 518,
+      "label": "요청 라우팅 — stable 90% / canary 10% 중 하나로"
+    },
+    {
+      "from": 534,
+      "to": 680,
+      "label": "메트릭 수집과 Analysis"
+    },
+    {
+      "from": 696,
+      "to": 792,
+      "label": "판정 — 자동 진행 또는 자동 롤백"
+    }
+  ],
+  "messages": [
+    {
+      "id": "set-weight-10",
+      "from": "rollouts",
+      "to": "vs",
+      "y": 196,
+      "label": "setWeight: 10 (stable 90%, canary 10%)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "http-request",
+      "from": "user",
+      "to": "gateway",
+      "y": 262,
+      "label": "HTTP 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "forward",
+      "from": "gateway",
+      "to": "vs",
+      "y": 296,
+      "label": "트래픽 전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-stable",
+      "from": "vs",
+      "to": "stable",
+      "y": 332,
+      "label": "90% → subset: stable",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stable-resp",
+      "from": "stable",
+      "to": "vs",
+      "y": 364,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "to-canary",
+      "from": "vs",
+      "to": "canary",
+      "y": 402,
+      "label": "10% → subset: canary",
+      "variant": "dashed",
+      "note": "요청 하나는 두 경로 중 하나만 탄다"
+    },
+    {
+      "id": "canary-resp",
+      "from": "canary",
+      "to": "vs",
+      "y": 438,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "vs-resp",
+      "from": "vs",
+      "to": "gateway",
+      "y": 472,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "gw-resp",
+      "from": "gateway",
+      "to": "user",
+      "y": 504,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "stable-metrics",
+      "from": "stable",
+      "to": "prom",
+      "y": 556,
+      "label": "메트릭 (성공률, 레이턴시)",
+      "variant": "dashed"
+    },
+    {
+      "id": "canary-metrics",
+      "from": "canary",
+      "to": "prom",
+      "y": 590,
+      "label": "메트릭 (성공률, 레이턴시)",
+      "variant": "dashed"
+    },
+    {
+      "id": "analysis-query",
+      "from": "rollouts",
+      "to": "prom",
+      "y": 628,
+      "label": "Analysis 쿼리 — Canary 성공률 >= 95%?",
+      "variant": "default"
+    },
+    {
+      "id": "metric-result",
+      "from": "prom",
+      "to": "rollouts",
+      "y": 662,
+      "label": "메트릭 결과",
+      "variant": "return"
+    },
+    {
+      "id": "set-weight-50",
+      "from": "rollouts",
+      "to": "vs",
+      "y": 722,
+      "label": "성공률 >= 95% → setWeight: 50 (자동 진행)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "set-weight-0",
+      "from": "rollouts",
+      "to": "vs",
+      "y": 772,
+      "label": "성공률 < 95% → setWeight: 0 (자동 롤백)",
+      "variant": "security"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "vs",
+      "from": 191,
+      "to": 478,
+      "type": "backend"
+    },
+    {
+      "participant": "stable",
+      "from": 327,
+      "to": 370,
+      "type": "backend"
+    },
+    {
+      "participant": "canary",
+      "from": 397,
+      "to": 444,
+      "type": "backend"
+    },
+    {
+      "participant": "rollouts",
+      "from": 623,
+      "to": 778,
+      "type": "cloud"
+    },
+    {
+      "participant": "prom",
+      "from": 551,
+      "to": 668,
+      "type": "database"
+    }
+  ]
+}

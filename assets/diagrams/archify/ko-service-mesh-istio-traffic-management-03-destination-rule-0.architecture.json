@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VirtualService와 DestinationRule의 역할 분리",
+    "output": "ko-service-mesh-istio-traffic-management-03-destination-rule-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      560
+    ],
+    "views": [
+      {
+        "id": "where",
+        "label": "어디로? (VirtualService)",
+        "focus": [
+          "client",
+          "route"
+        ],
+        "note": "VirtualService가 요청을 어느 subset으로 보낼지 결정한다 (weight 90 / 10)."
+      },
+      {
+        "id": "how",
+        "label": "어떻게? (DestinationRule)",
+        "focus": [
+          "policy",
+          "v1",
+          "v2"
+        ],
+        "note": "DestinationRule이 subset 정의와 로드 밸런싱·연결 풀 등 트래픽 정책을 적용한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트 요청",
+      "sublabel": "HTTP 요청",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "라우팅 결정",
+      "sublabel": "어디로?",
+      "pos": [
+        270,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "트래픽 정책",
+      "sublabel": "어떻게?",
+      "pos": [
+        510,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Version 1",
+      "sublabel": "subset: v1",
+      "pos": [
+        770,
+        130
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "subset: v2",
+      "pos": [
+        770,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VirtualService",
+      "wraps": [
+        "route"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "DestinationRule",
+      "wraps": [
+        "policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "서비스",
+      "wraps": [
+        "v1",
+        "v2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-route",
+      "from": "client",
+      "to": "route",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-policy",
+      "from": "route",
+      "to": "policy",
+      "label": "weight 90% / 10%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-v1",
+      "from": "policy",
+      "to": "v1",
+      "label": "정책 적용"
+    },
+    {
+      "id": "policy-v2",
+      "from": "policy",
+      "to": "v2",
+      "label": "정책 적용"
+    }
+  ]
+}

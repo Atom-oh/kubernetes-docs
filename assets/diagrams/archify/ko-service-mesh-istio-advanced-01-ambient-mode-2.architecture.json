@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ambient Mode 아키텍처",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      460
+    ]
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "App Pod 1",
+      "sublabel": "Sidecar 없음",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "App Pod 2",
+      "sublabel": "Sidecar 없음",
+      "pos": [
+        70,
+        190
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "app3",
+      "type": "frontend",
+      "label": "App Pod 3",
+      "sublabel": "Sidecar 없음",
+      "pos": [
+        70,
+        290
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "L4 프록시 · mTLS, 텔레메트리",
+      "pos": [
+        360,
+        186
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "노드당 1개"
+    },
+    {
+      "id": "waypoint",
+      "type": "backend",
+      "label": "Waypoint",
+      "sublabel": "L7 프록시 · 고급 라우팅",
+      "pos": [
+        640,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "service",
+      "type": "cloud",
+      "label": "Service",
+      "sublabel": "대상 서비스",
+      "pos": [
+        900,
+        186
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 노드",
+      "wraps": [
+        "app1",
+        "app2",
+        "app3",
+        "ztunnel"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "애플리케이션 파드",
+      "wraps": [
+        "app1",
+        "app2",
+        "app3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Waypoint Proxy (선택)",
+      "wraps": [
+        "waypoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-ztunnel",
+      "from": "app1",
+      "to": "ztunnel"
+    },
+    {
+      "id": "app2-ztunnel",
+      "from": "app2",
+      "to": "ztunnel",
+      "label": "투명 캡처",
+      "labelDx": -40
+    },
+    {
+      "id": "app3-ztunnel",
+      "from": "app3",
+      "to": "ztunnel"
+    },
+    {
+      "id": "ztunnel-service",
+      "from": "ztunnel",
+      "to": "service",
+      "label": "L4 전용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ztunnel-waypoint",
+      "from": "ztunnel",
+      "to": "waypoint",
+      "label": "L7 필요 시",
+      "variant": "dashed"
+    },
+    {
+      "id": "waypoint-service",
+      "from": "waypoint",
+      "to": "service"
+    }
+  ]
+}

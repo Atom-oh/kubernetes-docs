@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "W3C Trace Context Propagation and Span Export",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      720
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "Main path"
+        },
+        "default": {
+          "label": "Sync call (traceparent propagation)"
+        },
+        "dashed": {
+          "label": "Async span export"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "Frontend"
+    },
+    {
+      "id": "envoy-a",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Service A sidecar"
+    },
+    {
+      "id": "app-a",
+      "type": "backend",
+      "label": "App A",
+      "sublabel": "Service A container"
+    },
+    {
+      "id": "envoy-b",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Service B sidecar"
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "App B",
+      "sublabel": "Service B container"
+    },
+    {
+      "id": "jaeger",
+      "type": "messagebus",
+      "label": "Jaeger Collector",
+      "sublabel": "Tracing Backend"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 400,
+      "label": "Trace context propagation via traceparent header"
+    },
+    {
+      "from": 420,
+      "to": 590,
+      "label": "Span export (async, does not block the request path)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req",
+      "from": "client",
+      "to": "envoy-a",
+      "y": 190,
+      "label": "HTTP request",
+      "variant": "emphasis",
+      "note": "Envoy generates Trace ID + Span ID"
+    },
+    {
+      "id": "fwd-a",
+      "from": "envoy-a",
+      "to": "app-a",
+      "y": 250,
+      "label": "Forward with traceparent header",
+      "note": "App A extracts context → creates child span"
+    },
+    {
+      "id": "call-b",
+      "from": "app-a",
+      "to": "envoy-b",
+      "y": 310,
+      "label": "HTTP request with traceparent",
+      "variant": "emphasis",
+      "note": "Envoy extracts parent context → creates new span"
+    },
+    {
+      "id": "fwd-b",
+      "from": "envoy-b",
+      "to": "app-b",
+      "y": 370,
+      "label": "Forward with updated traceparent"
+    },
+    {
+      "id": "exp-envoy-a",
+      "from": "envoy-a",
+      "to": "jaeger",
+      "y": 450,
+      "label": "Export span",
+      "variant": "dashed"
+    },
+    {
+      "id": "exp-envoy-b",
+      "from": "envoy-b",
+      "to": "jaeger",
+      "y": 485,
+      "label": "Export span",
+      "variant": "dashed"
+    },
+    {
+      "id": "exp-app-a",
+      "from": "app-a",
+      "to": "jaeger",
+      "y": 520,
+      "label": "Export span (optional)",
+      "variant": "dashed"
+    },
+    {
+      "id": "exp-app-b",
+      "from": "app-b",
+      "to": "jaeger",
+      "y": 555,
+      "label": "Export span (optional)",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy-a",
+      "from": 185,
+      "to": 258,
+      "type": "security"
+    },
+    {
+      "participant": "app-a",
+      "from": 245,
+      "to": 318,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy-b",
+      "from": 305,
+      "to": 378,
+      "type": "security"
+    },
+    {
+      "participant": "app-b",
+      "from": 365,
+      "to": 400,
+      "type": "backend"
+    },
+    {
+      "participant": "jaeger",
+      "from": 445,
+      "to": 562,
+      "type": "messagebus"
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh 의사 결정 트리",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-18.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "결정 분기"
+        },
+        "cloud": {
+          "label": "권장 선택"
+        },
+        "external": {
+          "label": "대안 선택"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "new-team",
+        "label": "Service Mesh 처음인 팀",
+        "focus": [
+          "start",
+          "q1",
+          "q2",
+          "linkerd",
+          "kong_simple"
+        ],
+        "note": "리소스 효율이 중요하면 Linkerd, 기능이 더 필요하면 Kong Mesh 또는 Consul로 간다."
+      },
+      {
+        "id": "k8s-only",
+        "label": "경험 있음 · K8s 전용",
+        "focus": [
+          "q1",
+          "q3",
+          "q4",
+          "istio",
+          "kong_adv"
+        ],
+        "note": "최대 기능이 필요하면 Istio, 기능과 복잡도의 균형을 원하면 Kong Mesh를 고른다."
+      },
+      {
+        "id": "hybrid",
+        "label": "경험 있음 · K8s + VM",
+        "focus": [
+          "q1",
+          "q3",
+          "q5",
+          "consul",
+          "kong"
+        ],
+        "note": "VM 중심 환경은 Consul, K8s 중심 하이브리드는 Kong Mesh가 적합하다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "start",
+      "type": "frontend",
+      "label": "Service Mesh 선택",
+      "sublabel": "의사 결정 시작",
+      "pos": [
+        492,
+        30
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q1",
+      "type": "backend",
+      "label": "팀 경험?",
+      "sublabel": "Service Mesh 운영 경험",
+      "pos": [
+        492,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "backend",
+      "label": "리소스 제약?",
+      "sublabel": "CPU / 메모리 효율",
+      "pos": [
+        180,
+        290
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "backend",
+      "label": "플랫폼?",
+      "sublabel": "K8s 전용 또는 VM 포함",
+      "pos": [
+        805,
+        290
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q4",
+      "type": "backend",
+      "label": "기능 요구?",
+      "sublabel": "필요한 기능 범위",
+      "pos": [
+        650,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q5",
+      "type": "backend",
+      "label": "VM 중심?",
+      "sublabel": "워크로드 무게 중심",
+      "pos": [
+        960,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "linkerd",
+      "type": "cloud",
+      "label": "Linkerd",
+      "sublabel": "낮은 오버헤드",
+      "tag": "권장",
+      "pos": [
+        115,
+        430
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "kong_simple",
+      "type": "external",
+      "label": "Kong Mesh / Consul",
+      "sublabel": "기능 우선",
+      "pos": [
+        265,
+        430
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "cloud",
+      "label": "Istio",
+      "sublabel": "최고 수준 기능",
+      "tag": "권장",
+      "pos": [
+        585,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "kong_adv",
+      "type": "external",
+      "label": "Kong Mesh",
+      "sublabel": "기능 · 복잡도 균형",
+      "pos": [
+        735,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "consul",
+      "type": "cloud",
+      "label": "Consul",
+      "sublabel": "VM 우선 지원",
+      "tag": "권장",
+      "pos": [
+        895,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "kong",
+      "type": "cloud",
+      "label": "Kong Mesh",
+      "sublabel": "K8s 중심 하이브리드",
+      "tag": "권장",
+      "pos": [
+        1045,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "간단한 솔루션",
+      "wraps": [
+        "q2",
+        "linkerd",
+        "kong_simple"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "고급 기능",
+      "wraps": [
+        "q3",
+        "q4",
+        "q5",
+        "istio",
+        "kong_adv",
+        "consul",
+        "kong"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Kong / Consul 하이브리드",
+      "wraps": [
+        "q5",
+        "consul",
+        "kong"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "start-q1",
+      "from": "start",
+      "to": "q1",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q1-q2",
+      "from": "q1",
+      "to": "q2",
+      "label": "Service Mesh 처음",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q1-q3",
+      "from": "q1",
+      "to": "q3",
+      "label": "경험 있음",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q2-linkerd",
+      "from": "q2",
+      "to": "linkerd",
+      "label": "Yes · 효율 중요",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -36
+    },
+    {
+      "id": "q2-kong",
+      "from": "q2",
+      "to": "kong_simple",
+      "label": "No · 기능 필요",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 36
+    },
+    {
+      "id": "q3-q4",
+      "from": "q3",
+      "to": "q4",
+      "label": "K8s만",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q3-q5",
+      "from": "q3",
+      "to": "q5",
+      "label": "K8s + VM",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q4-istio",
+      "from": "q4",
+      "to": "istio",
+      "label": "최대 기능",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q4-kong",
+      "from": "q4",
+      "to": "kong_adv",
+      "label": "균형",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q5-consul",
+      "from": "q5",
+      "to": "consul",
+      "label": "Yes · VM 중심",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q5-kong",
+      "from": "q5",
+      "to": "kong",
+      "label": "No · K8s 중심",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istio",
+      "items": [
+        "대규모 엔터프라이즈, 풍부한 기능이 필요할 때",
+        "팀에 Service Mesh 경험이 있을 때",
+        "단점: 가파른 학습 곡선, 높은 리소스 사용"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Linkerd",
+      "items": [
+        "간단함 우선, 소규모 팀, 빠른 시작",
+        "낮은 오버헤드, 자동 mTLS",
+        "단점: 기능 제한적, VM 미지원"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Kong Mesh / Consul Connect",
+      "items": [
+        "하이브리드 환경(K8s + VM), 레거시 통합",
+        "VM 우선 지원, 강력한 Service Discovery",
+        "단점: 상용 기능 유료, 커뮤니티 크기"
+      ]
+    }
+  ]
+}

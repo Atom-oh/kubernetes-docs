@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pod-to-Pod 통신 (동일 노드)",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      520
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "podA",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "송신 파드"
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF (TC)",
+      "sublabel": "veth TC 훅"
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "CT + Policy Maps",
+      "sublabel": "eBPF 맵"
+    },
+    {
+      "id": "podB",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "수신 파드"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 320,
+      "label": "커널 안에서 연결·정책 확인"
+    },
+    {
+      "from": 340,
+      "to": 440,
+      "label": "네트워크 스택을 거치지 않는 직접 전달"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "podA",
+      "to": "ebpf",
+      "y": 190,
+      "label": "패킷 전송 (veth)"
+    },
+    {
+      "id": "lookup",
+      "from": "ebpf",
+      "to": "maps",
+      "y": 240,
+      "label": "연결 · 정책 조회",
+      "variant": "security"
+    },
+    {
+      "id": "allow",
+      "from": "maps",
+      "to": "ebpf",
+      "y": 290,
+      "label": "허용",
+      "variant": "return"
+    },
+    {
+      "id": "deliver",
+      "from": "ebpf",
+      "to": "podB",
+      "y": 400,
+      "label": "직접 전달",
+      "variant": "emphasis",
+      "note": "커널 내 직접 경로 · 네트워크 스택 우회"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ebpf",
+      "from": 185,
+      "to": 405,
+      "type": "backend"
+    },
+    {
+      "participant": "maps",
+      "from": 235,
+      "to": 295,
+      "type": "database"
+    }
+  ]
+}

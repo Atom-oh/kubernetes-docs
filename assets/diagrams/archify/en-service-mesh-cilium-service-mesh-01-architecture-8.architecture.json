@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Identity",
+    "output": "en-service-mesh-cilium-service-mesh-01-architecture-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "assignment",
+        "label": "Identity assignment flow",
+        "focus": [
+          "pod",
+          "labels",
+          "identity",
+          "secctx"
+        ],
+        "note": "Pod labels are turned into a numeric Identity, and that Identity becomes the basis for policy evaluation."
+      },
+      {
+        "id": "components",
+        "label": "Identity components",
+        "focus": [
+          "namespace",
+          "serviceaccount",
+          "podlabels",
+          "identity"
+        ],
+        "note": "Namespace, service account, and pod labels combine into a single Cilium Identity."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "workload",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "labels",
+      "type": "backend",
+      "label": "Labels",
+      "sublabel": "pod attributes",
+      "pos": [
+        260,
+        80
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Cilium Identity",
+      "sublabel": "numeric ID",
+      "pos": [
+        520,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "secctx",
+      "type": "security",
+      "label": "Security Context",
+      "sublabel": "policy evaluation basis",
+      "pos": [
+        780,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "namespace",
+      "type": "backend",
+      "label": "Namespace",
+      "sublabel": "io.kubernetes.pod.namespace",
+      "pos": [
+        280,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "serviceaccount",
+      "type": "backend",
+      "label": "Service Account",
+      "sublabel": "serviceaccount",
+      "pos": [
+        520,
+        290
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "podlabels",
+      "type": "backend",
+      "label": "Pod Labels",
+      "sublabel": "user labels such as app",
+      "pos": [
+        760,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Identity assignment",
+      "wraps": [
+        "pod",
+        "labels",
+        "identity",
+        "secctx"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Identity components",
+      "wraps": [
+        "namespace",
+        "serviceaccount",
+        "podlabels"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-labels",
+      "from": "pod",
+      "to": "labels",
+      "variant": "emphasis"
+    },
+    {
+      "id": "labels-identity",
+      "from": "labels",
+      "to": "identity",
+      "label": "derive ID",
+      "variant": "emphasis"
+    },
+    {
+      "id": "identity-secctx",
+      "from": "identity",
+      "to": "secctx",
+      "label": "policy basis",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ns-identity",
+      "from": "namespace",
+      "to": "identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sa-identity",
+      "from": "serviceaccount",
+      "to": "identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pl-identity",
+      "from": "podlabels",
+      "to": "identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Identity example",
+      "items": [
+        "12345 = k8s:app=frontend, k8s:io.kubernetes.pod.namespace=default",
+        "Reserved identities: 1 reserved:host, 2 reserved:world, 3 reserved:health"
+      ]
+    }
+  ]
+}

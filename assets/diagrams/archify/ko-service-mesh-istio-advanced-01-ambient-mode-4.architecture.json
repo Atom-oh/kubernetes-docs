@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Waypoint 배포 단위",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      540
+    ]
+  },
+  "components": [
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "노드 레벨 L4 프록시",
+      "pos": [
+        40,
+        243
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "wp-frontend",
+      "type": "backend",
+      "label": "Waypoint",
+      "sublabel": "frontend 전용",
+      "pos": [
+        340,
+        111
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "wp-backend",
+      "type": "backend",
+      "label": "Waypoint",
+      "sublabel": "backend 전용",
+      "pos": [
+        340,
+        371
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "fe-pod-1",
+      "type": "frontend",
+      "label": "Frontend 파드 1",
+      "pos": [
+        650,
+        60
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "fe-pod-2",
+      "type": "frontend",
+      "label": "Frontend 파드 2",
+      "pos": [
+        650,
+        170
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "be-pod-1",
+      "type": "frontend",
+      "label": "Backend 파드 1",
+      "pos": [
+        650,
+        320
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "be-pod-2",
+      "type": "frontend",
+      "label": "Backend 파드 2",
+      "pos": [
+        650,
+        430
+      ],
+      "size": [
+        150,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Namespace: production",
+      "wraps": [
+        "wp-frontend",
+        "wp-backend",
+        "fe-pod-1",
+        "fe-pod-2",
+        "be-pod-1",
+        "be-pod-2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "ServiceAccount: frontend",
+      "wraps": [
+        "fe-pod-1",
+        "fe-pod-2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "ServiceAccount: backend",
+      "wraps": [
+        "be-pod-1",
+        "be-pod-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ztunnel-to-wp-frontend",
+      "from": "ztunnel",
+      "to": "wp-frontend",
+      "label": "L7 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ztunnel-to-wp-backend",
+      "from": "ztunnel",
+      "to": "wp-backend",
+      "label": "L7 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wp-frontend-to-fe-pod-1",
+      "from": "wp-frontend",
+      "to": "fe-pod-1"
+    },
+    {
+      "id": "wp-frontend-to-fe-pod-2",
+      "from": "wp-frontend",
+      "to": "fe-pod-2"
+    },
+    {
+      "id": "wp-backend-to-be-pod-1",
+      "from": "wp-backend",
+      "to": "be-pod-1"
+    },
+    {
+      "id": "wp-backend-to-be-pod-2",
+      "from": "wp-backend",
+      "to": "be-pod-2"
+    }
+  ]
+}

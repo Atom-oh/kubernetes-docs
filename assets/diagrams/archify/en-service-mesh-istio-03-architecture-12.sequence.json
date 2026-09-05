@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "xDS Communication Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      700
+    ],
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "Connect and authenticate",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "When the pod starts, Envoy connects to Istiod over gRPC and completes mTLS authentication."
+      },
+      {
+        "id": "xds-loop",
+        "label": "xDS resource loop",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "Envoy requests LDS, CDS, EDS, RDS and SDS resources in turn until its initial configuration is complete."
+      },
+      {
+        "id": "push",
+        "label": "Detect change and push",
+        "focus": [
+          "k8s",
+          "istiod",
+          "envoy"
+        ],
+        "note": "Istiod detects a Service change from the Kubernetes API and pushes the new endpoints to Envoy."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "Istiod",
+      "sublabel": "xDS Server"
+    },
+    {
+      "id": "k8s",
+      "type": "external",
+      "label": "Kubernetes API",
+      "sublabel": "watch events"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "Pod start · connect"
+    },
+    {
+      "from": 295,
+      "to": 435,
+      "label": "loop — LDS·CDS·EDS·RDS·SDS"
+    },
+    {
+      "from": 455,
+      "to": 610,
+      "label": "After configuration — change push"
+    }
+  ],
+  "messages": [
+    {
+      "id": "connect",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 200,
+      "label": "connect (gRPC :15012)",
+      "variant": "default",
+      "note": "Envoy initiates the connection at pod start"
+    },
+    {
+      "id": "mtls",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 250,
+      "label": "mTLS authentication",
+      "variant": "security"
+    },
+    {
+      "id": "xds-req",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 330,
+      "label": "request resource",
+      "variant": "default"
+    },
+    {
+      "id": "xds-res",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 390,
+      "label": "return resource",
+      "variant": "return",
+      "note": "Loop done: configured, ready for traffic"
+    },
+    {
+      "id": "svc-change",
+      "from": "k8s",
+      "to": "istiod",
+      "y": 500,
+      "label": "Service change detected",
+      "variant": "default"
+    },
+    {
+      "id": "eds-push",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 555,
+      "label": "EDS push (new endpoints)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "istiod",
+      "from": 195,
+      "to": 398,
+      "type": "cloud"
+    },
+    {
+      "participant": "istiod",
+      "from": 495,
+      "to": 563,
+      "type": "cloud"
+    }
+  ]
+}

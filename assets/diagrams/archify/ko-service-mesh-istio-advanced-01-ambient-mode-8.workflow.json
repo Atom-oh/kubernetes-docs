@@ -1,0 +1,168 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sidecar Mode에서 Ambient Mode로 단계별 마이그레이션",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-01-ambient-mode-8.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "prepare",
+        "label": "Ambient 컴포넌트 준비",
+        "focus": [
+          "start",
+          "install"
+        ],
+        "note": "Sidecar Mode를 운영 중인 클러스터에 ambient 프로파일로 ztunnel과 CNI를 먼저 설치합니다."
+      },
+      {
+        "id": "switch",
+        "label": "Namespace 전환",
+        "focus": [
+          "install",
+          "label",
+          "remove"
+        ],
+        "note": "Namespace에 istio.io/dataplane-mode=ambient 레이블을 붙이고 파드를 재시작해 Sidecar를 제거합니다."
+      },
+      {
+        "id": "finish",
+        "label": "Waypoint와 완전 전환",
+        "focus": [
+          "remove",
+          "waypoint",
+          "done"
+        ],
+        "note": "L7 기능이 필요한 경우에만 Waypoint를 배포하고 Ambient Mode 전환을 마무리합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "워크로드 상태"
+        },
+        "cloud": {
+          "label": "Istio 컴포넌트"
+        },
+        "security": {
+          "label": "Namespace 설정"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "state",
+      "label": "데이터 플레인 상태"
+    },
+    {
+      "id": "system",
+      "label": "istio-system"
+    },
+    {
+      "id": "app",
+      "label": "애플리케이션 Namespace"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "install",
+    "label",
+    "remove",
+    "waypoint",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "state",
+      "col": 0,
+      "type": "backend",
+      "label": "Sidecar Mode 운영 중",
+      "sublabel": "istio-proxy 주입 상태",
+      "width": 212
+    },
+    {
+      "id": "install",
+      "lane": "system",
+      "col": 1,
+      "type": "cloud",
+      "label": "Ambient 컴포넌트 설치",
+      "sublabel": "profile=ambient · ztunnel + CNI",
+      "width": 226
+    },
+    {
+      "id": "label",
+      "lane": "app",
+      "col": 2,
+      "type": "security",
+      "label": "Namespace Label 추가",
+      "sublabel": "istio.io/dataplane-mode=ambient",
+      "width": 216
+    },
+    {
+      "id": "remove",
+      "lane": "app",
+      "col": 3,
+      "type": "backend",
+      "label": "Sidecar 제거",
+      "sublabel": "kubectl rollout restart",
+      "width": 176
+    },
+    {
+      "id": "waypoint",
+      "lane": "app",
+      "col": 4,
+      "type": "cloud",
+      "label": "Waypoint 배포",
+      "sublabel": "istioctl x waypoint apply",
+      "tag": "L7 필요 시",
+      "width": 180
+    },
+    {
+      "id": "done",
+      "lane": "state",
+      "col": 5,
+      "type": "backend",
+      "label": "Ambient Mode 완전 전환",
+      "sublabel": "ztunnel mTLS 적용",
+      "width": 190
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "install",
+      "label": "1단계",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "install",
+      "to": "label",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "label",
+      "to": "remove",
+      "label": "4단계",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "remove",
+      "to": "waypoint",
+      "label": "5단계",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "waypoint",
+      "to": "done",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

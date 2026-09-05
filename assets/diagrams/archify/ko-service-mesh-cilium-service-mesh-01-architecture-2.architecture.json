@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF 훅 포인트와 패킷 경로",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      480
+    ],
+    "views": [
+      {
+        "id": "rx-path",
+        "label": "수신 경로 (RX)",
+        "focus": [
+          "nic",
+          "xdp",
+          "tc-ingress",
+          "netstack",
+          "socket",
+          "app"
+        ],
+        "note": "NIC로 들어온 패킷이 XDP, TC Ingress 훅을 지나 네트워크 스택과 소켓 계층을 거쳐 애플리케이션에 도달한다."
+      },
+      {
+        "id": "tx-path",
+        "label": "송신 경로 (TX)",
+        "focus": [
+          "app",
+          "tc-egress",
+          "nic"
+        ],
+        "note": "애플리케이션이 보낸 패킷은 TC Egress 훅을 거쳐 NIC로 나간다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "nic",
+      "type": "external",
+      "label": "NIC",
+      "sublabel": "하드웨어 (RX / TX)",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "xdp",
+      "type": "security",
+      "label": "XDP 훅",
+      "sublabel": "NIC 드라이버",
+      "pos": [
+        250,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "eBPF"
+    },
+    {
+      "id": "tc-ingress",
+      "type": "security",
+      "label": "TC Ingress 훅",
+      "sublabel": "네트워크 스택 진입점",
+      "pos": [
+        460,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "eBPF"
+    },
+    {
+      "id": "netstack",
+      "type": "backend",
+      "label": "네트워크 스택",
+      "sublabel": "커널 L3/L4",
+      "pos": [
+        690,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "socket",
+      "type": "security",
+      "label": "소켓 계층",
+      "sublabel": "Socket Operations",
+      "pos": [
+        900,
+        110
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "eBPF"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "파드 프로세스",
+      "pos": [
+        1110,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "tc-egress",
+      "type": "security",
+      "label": "TC Egress 훅",
+      "sublabel": "네트워크 스택 진출점",
+      "pos": [
+        460,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "eBPF"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Linux 커널",
+      "wraps": [
+        "xdp",
+        "tc-ingress",
+        "netstack",
+        "socket",
+        "tc-egress"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "nic-xdp",
+      "from": "nic",
+      "to": "xdp",
+      "label": "수신 (RX)",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "xdp-tc",
+      "from": "xdp",
+      "to": "tc-ingress",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tc-netstack",
+      "from": "tc-ingress",
+      "to": "netstack",
+      "variant": "emphasis"
+    },
+    {
+      "id": "netstack-socket",
+      "from": "netstack",
+      "to": "socket",
+      "variant": "emphasis"
+    },
+    {
+      "id": "socket-app",
+      "from": "socket",
+      "to": "app",
+      "variant": "emphasis"
+    },
+    {
+      "id": "app-tc-egress",
+      "from": "app",
+      "to": "tc-egress",
+      "label": "송신 (TX)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "tc-egress-nic",
+      "from": "tc-egress",
+      "to": "nic",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cilium이 사용하는 eBPF 훅 포인트",
+      "items": [
+        "XDP: NIC 드라이버에서 초고속 패킷 처리, DDoS 방어",
+        "TC: 네트워크 스택 진입점에서 패킷 필터링, 리다이렉션",
+        "Socket Operations: 소켓 레벨에서 연결 가속"
+      ]
+    }
+  ]
+}

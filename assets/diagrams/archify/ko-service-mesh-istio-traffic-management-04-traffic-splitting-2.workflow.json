@@ -1,0 +1,234 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Canary 배포 흐름",
+    "output": "public/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "progressive-shift",
+        "label": "단계적 트래픽 전환",
+        "focus": [
+          "start",
+          "step1",
+          "step2",
+          "step3",
+          "step4",
+          "complete"
+        ],
+        "note": "메트릭이 정상이면 v2 가중치를 10% → 25% → 50% → 75%로 올리고 마지막에 v2 100%로 승격합니다."
+      },
+      {
+        "id": "auto-rollback",
+        "label": "자동 롤백",
+        "focus": [
+          "step1",
+          "step2",
+          "step3",
+          "step4",
+          "rollback"
+        ],
+        "note": "어느 단계에서든 에러율·지연시간·메트릭 실패 조건에 걸리면 v1 100%로 되돌립니다."
+      }
+    ],
+    "viewBox": [
+      1120,
+      408
+    ]
+  },
+  "lanes": [
+    {
+      "id": "rollout",
+      "label": "점진적 롤아웃 · Argo Rollouts + Istio"
+    },
+    {
+      "id": "exceptions",
+      "label": "메트릭 기반 자동 롤백",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "step1",
+    "step2",
+    "step3",
+    "step4",
+    "complete"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "complete",
+      "rollback"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "complete"
+      },
+      {
+        "from": "step1",
+        "to": "rollback"
+      },
+      {
+        "from": "step4",
+        "to": "rollback"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "rollout",
+      "col": 0,
+      "type": "backend",
+      "label": "시작",
+      "sublabel": "v1: 100%",
+      "tag": "STABLE",
+      "width": 110
+    },
+    {
+      "id": "step1",
+      "lane": "rollout",
+      "col": 1,
+      "type": "backend",
+      "label": "1단계",
+      "sublabel": "v1: 90% · v2: 10%",
+      "width": 124
+    },
+    {
+      "id": "step2",
+      "lane": "rollout",
+      "col": 2,
+      "type": "backend",
+      "label": "2단계",
+      "sublabel": "v1: 75% · v2: 25%",
+      "width": 124
+    },
+    {
+      "id": "step3",
+      "lane": "rollout",
+      "col": 3,
+      "type": "backend",
+      "label": "3단계",
+      "sublabel": "v1: 50% · v2: 50%",
+      "width": 124
+    },
+    {
+      "id": "step4",
+      "lane": "rollout",
+      "col": 4,
+      "type": "backend",
+      "label": "4단계",
+      "sublabel": "v1: 25% · v2: 75%",
+      "width": 124
+    },
+    {
+      "id": "complete",
+      "lane": "rollout",
+      "col": 5,
+      "type": "cloud",
+      "label": "완료",
+      "sublabel": "v2: 100%",
+      "tag": "PROMOTED",
+      "width": 110
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 3,
+      "type": "security",
+      "label": "자동 롤백",
+      "sublabel": "v1: 100%",
+      "tag": "ABORT",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "step1",
+      "label": "메트릭 OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step1",
+      "to": "step2",
+      "label": "메트릭 OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step2",
+      "to": "step3",
+      "label": "메트릭 OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step3",
+      "to": "step4",
+      "label": "메트릭 OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step4",
+      "to": "complete",
+      "label": "메트릭 OK",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step1",
+      "to": "rollback",
+      "label": "에러율 > 5%",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "step2",
+      "to": "rollback",
+      "label": "지연시간 > 500ms",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "step3",
+      "to": "rollback",
+      "label": "메트릭 실패",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "step4",
+      "to": "rollback",
+      "label": "메트릭 실패",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Rollout 단계 정의",
+      "items": [
+        "steps: setWeight 10 → 25 → 50 → 75, 각 단계 뒤 pause 2m",
+        "가중치는 Istio VirtualService(reviews-vsvc)와 DestinationRule(canary/stable subset)로 반영"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "롤백 조건",
+      "items": [
+        "AnalysisTemplate: 성공률 < 0.95(에러율 > 5%) 또는 P95 지연시간 > 500ms",
+        "30s 간격 4회 측정, failureLimit 2회 초과 시 자동 롤백 → v1 100%"
+      ]
+    }
+  ]
+}

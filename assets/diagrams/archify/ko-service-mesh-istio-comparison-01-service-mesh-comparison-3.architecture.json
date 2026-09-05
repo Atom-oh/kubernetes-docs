@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd 아키텍처",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      760
+    ],
+    "views": [
+      {
+        "id": "inject",
+        "label": "사이드카 자동 주입",
+        "focus": [
+          "injector",
+          "proxy1",
+          "proxy2"
+        ],
+        "note": "Proxy Injector Webhook이 파드 생성 시 Linkerd2-proxy 사이드카를 자동으로 주입한다."
+      },
+      {
+        "id": "control",
+        "label": "인증서와 엔드포인트",
+        "focus": [
+          "identity",
+          "destination",
+          "proxy1",
+          "proxy2"
+        ],
+        "note": "Identity가 mTLS 인증서를 발급하고, Destination이 서비스 디스커버리와 라우팅 정책을 제공한다."
+      },
+      {
+        "id": "mtls",
+        "label": "프록시 간 mTLS",
+        "focus": [
+          "app1",
+          "proxy1",
+          "proxy2",
+          "app2"
+        ],
+        "note": "애플리케이션 트래픽은 각 파드의 Rust 프록시를 거쳐 프록시끼리 mTLS로 암호화된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "Service Discovery",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "Certificate Authority",
+      "pos": [
+        430,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "Webhook",
+      "pos": [
+        430,
+        280
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "proxy1",
+      "type": "backend",
+      "label": "Linkerd2-proxy",
+      "sublabel": "Rust",
+      "pos": [
+        60,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        60,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "proxy2",
+      "type": "backend",
+      "label": "Linkerd2-proxy",
+      "sublabel": "Rust",
+      "pos": [
+        800,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        800,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "destination",
+        "identity",
+        "injector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "proxy1",
+        "app1",
+        "proxy2",
+        "app2"
+      ],
+      "pad": 60
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "proxy1",
+        "app1"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "proxy2",
+        "app2"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "inject-1",
+      "from": "injector",
+      "to": "proxy1",
+      "label": "Inject",
+      "variant": "dashed",
+      "labelSegment": 0
+    },
+    {
+      "id": "inject-2",
+      "from": "injector",
+      "to": "proxy2",
+      "label": "Inject",
+      "variant": "dashed",
+      "labelSegment": 0
+    },
+    {
+      "id": "cert-1",
+      "from": "identity",
+      "to": "proxy1",
+      "label": "Certificates",
+      "variant": "security",
+      "labelSegment": 0
+    },
+    {
+      "id": "cert-2",
+      "from": "identity",
+      "to": "proxy2",
+      "label": "Certificates",
+      "variant": "security",
+      "labelSegment": 0
+    },
+    {
+      "id": "endpoints-1",
+      "from": "destination",
+      "to": "proxy1",
+      "label": "Endpoints",
+      "labelSegment": 0
+    },
+    {
+      "id": "endpoints-2",
+      "from": "destination",
+      "to": "proxy2",
+      "label": "Endpoints",
+      "labelSegment": 0
+    },
+    {
+      "id": "app-1",
+      "from": "app1",
+      "to": "proxy1"
+    },
+    {
+      "id": "app-2",
+      "from": "app2",
+      "to": "proxy2"
+    },
+    {
+      "id": "mtls",
+      "from": "proxy1",
+      "to": "proxy2",
+      "label": "mTLS (양방향)",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "핵심 구성 요소",
+      "items": [
+        "Destination: Service Discovery 및 라우팅 정책",
+        "Identity: 자동 mTLS 인증서 발급",
+        "Proxy Injector: 자동 Sidecar 주입"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "특징",
+      "items": [
+        "프록시: Linkerd2-proxy (Rust, 맞춤 제작)",
+        "아키텍처: 마이크로서비스 컨트롤 플레인",
+        "강점: 초경량, 쉬운 설치 및 운영, 빠른 성능",
+        "약점: 기능 제한적, VM 지원 없음"
+      ]
+    }
+  ]
+}

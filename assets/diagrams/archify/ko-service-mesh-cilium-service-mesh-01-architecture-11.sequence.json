@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pod-to-Pod 통신 (다른 노드)",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      560
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "pod-a",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "Node 1"
+    },
+    {
+      "id": "ebpf-1",
+      "type": "security",
+      "label": "eBPF",
+      "sublabel": "Node 1"
+    },
+    {
+      "id": "tunnel",
+      "type": "messagebus",
+      "label": "Tunnel / Native",
+      "sublabel": "VXLAN/Geneve/native"
+    },
+    {
+      "id": "ebpf-2",
+      "type": "security",
+      "label": "eBPF",
+      "sublabel": "Node 2"
+    },
+    {
+      "id": "pod-b",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "Node 2"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "송신 노드 (Node 1)"
+    },
+    {
+      "from": 295,
+      "to": 415,
+      "label": "수신 노드 (Node 2)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "pod-a",
+      "to": "ebpf-1",
+      "y": 195,
+      "label": "패킷 전송"
+    },
+    {
+      "id": "encap",
+      "from": "ebpf-1",
+      "to": "tunnel",
+      "y": 250,
+      "label": "캡슐화 · VXLAN/Geneve 전송",
+      "variant": "security",
+      "note": "Node 1 eBPF: 정책 평가 · 터널 캡슐화"
+    },
+    {
+      "id": "receive",
+      "from": "tunnel",
+      "to": "ebpf-2",
+      "y": 325,
+      "label": "패킷 수신 · 디캡슐화",
+      "variant": "security",
+      "note": "Node 2 eBPF: 정책 평가 · 터널 디캡슐화"
+    },
+    {
+      "id": "deliver",
+      "from": "ebpf-2",
+      "to": "pod-b",
+      "y": 390,
+      "label": "패킷 전달",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ebpf-1",
+      "from": 190,
+      "to": 258,
+      "type": "security"
+    },
+    {
+      "participant": "ebpf-2",
+      "from": 320,
+      "to": 398,
+      "type": "security"
+    }
+  ]
+}

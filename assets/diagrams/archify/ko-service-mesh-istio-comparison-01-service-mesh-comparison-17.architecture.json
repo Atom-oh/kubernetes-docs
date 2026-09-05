@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "서비스 메시 학습 곡선",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-17.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      820,
+      500
+    ]
+  },
+  "components": [
+    {
+      "id": "easy",
+      "type": "frontend",
+      "label": "쉬움",
+      "sublabel": "Linkerd",
+      "pos": [
+        70,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "medium",
+      "type": "backend",
+      "label": "중간",
+      "sublabel": "Kong Mesh · Consul",
+      "pos": [
+        70,
+        210
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "hard",
+      "type": "security",
+      "label": "어려움",
+      "sublabel": "Istio",
+      "pos": [
+        70,
+        350
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "use-quick",
+      "type": "cloud",
+      "label": "빠른 시작",
+      "pos": [
+        530,
+        70
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "use-medium",
+      "type": "cloud",
+      "label": "중간 규모",
+      "pos": [
+        530,
+        210
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "use-enterprise",
+      "type": "cloud",
+      "label": "대규모 엔터프라이즈",
+      "pos": [
+        530,
+        350
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "학습 난이도",
+      "wraps": [
+        "easy",
+        "medium",
+        "hard"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "easy-to-quick",
+      "from": "easy",
+      "to": "use-quick",
+      "label": "기본 기능만",
+      "variant": "emphasis"
+    },
+    {
+      "id": "medium-to-medium",
+      "from": "medium",
+      "to": "use-medium",
+      "label": "균형 잡힌 기능"
+    },
+    {
+      "id": "hard-to-enterprise",
+      "from": "hard",
+      "to": "use-enterprise",
+      "label": "모든 기능"
+    }
+  ]
+}

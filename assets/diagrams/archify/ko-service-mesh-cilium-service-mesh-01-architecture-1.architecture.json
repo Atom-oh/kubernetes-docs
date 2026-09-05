@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "전통적인 네트워킹 vs eBPF 네트워킹",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      600
+    ],
+    "views": [
+      {
+        "id": "traditional",
+        "label": "전통적인 경로",
+        "focus": [
+          "app1",
+          "kstack1",
+          "nic1"
+        ],
+        "note": "애플리케이션 패킷이 항상 커널 네트워크 스택을 거쳐 NIC로 나간다."
+      },
+      {
+        "id": "ebpf",
+        "label": "eBPF 경로",
+        "focus": [
+          "app2",
+          "ebpf",
+          "kstack2",
+          "nic2"
+        ],
+        "note": "커널에 연결된 eBPF 프로그램이 패킷을 먼저 처리하고, 필요 시 네트워크 스택을 우회한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "사용자 공간",
+      "pos": [
+        80,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kstack1",
+      "type": "backend",
+      "label": "Kernel",
+      "sublabel": "네트워크 스택",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nic1",
+      "type": "cloud",
+      "label": "NIC",
+      "sublabel": "네트워크 인터페이스",
+      "pos": [
+        80,
+        410
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "사용자 공간",
+      "pos": [
+        560,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "security",
+      "label": "eBPF Programs",
+      "sublabel": "커널 내 샌드박스 프로그램",
+      "pos": [
+        560,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kstack2",
+      "type": "backend",
+      "label": "Kernel",
+      "sublabel": "네트워크 스택",
+      "pos": [
+        560,
+        310
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nic2",
+      "type": "cloud",
+      "label": "NIC",
+      "sublabel": "네트워크 인터페이스",
+      "pos": [
+        560,
+        420
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "전통적인 네트워킹",
+      "wraps": [
+        "app1",
+        "kstack1",
+        "nic1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "eBPF 네트워킹",
+      "wraps": [
+        "app2",
+        "ebpf",
+        "kstack2",
+        "nic2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-kstack1",
+      "from": "app1",
+      "to": "kstack1",
+      "label": "패킷",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        205,
+        200
+      ]
+    },
+    {
+      "id": "kstack1-nic1",
+      "from": "kstack1",
+      "to": "nic1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-ebpf",
+      "from": "app2",
+      "to": "ebpf",
+      "label": "패킷",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        695,
+        175
+      ]
+    },
+    {
+      "id": "ebpf-kstack2",
+      "from": "ebpf",
+      "to": "kstack2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kstack2-nic2",
+      "from": "kstack2",
+      "to": "nic2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ebpf-bypass",
+      "from": "ebpf",
+      "to": "nic2",
+      "label": "스택 우회",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelAt": [
+        800,
+        365
+      ]
+    }
+  ]
+}

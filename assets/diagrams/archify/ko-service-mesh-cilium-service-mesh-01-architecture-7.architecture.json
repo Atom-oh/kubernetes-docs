@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Agent의 4대 역할",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      500
+    ]
+  },
+  "components": [
+    {
+      "id": "k8s-api",
+      "type": "external",
+      "label": "K8s API",
+      "sublabel": "control-plane",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "backend",
+      "label": "네트워크 관리",
+      "sublabel": "IPAM · 라우팅 · LB",
+      "pos": [
+        80,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "정책 관리",
+      "sublabel": "정책 컴파일 · ID · 엔드포인트",
+      "pos": [
+        410,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "프록시 관리",
+      "sublabel": "Envoy 설정 · 동기화 · L7",
+      "pos": [
+        740,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "observability",
+      "type": "database",
+      "label": "관찰성",
+      "sublabel": "Flow 로그 · 메트릭 · 이벤트",
+      "pos": [
+        410,
+        370
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cilium Agent",
+      "wraps": [
+        "network",
+        "policy",
+        "proxy",
+        "observability"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-network",
+      "from": "k8s-api",
+      "to": "network",
+      "label": "sync",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-policy",
+      "from": "k8s-api",
+      "to": "policy",
+      "label": "sync",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "api-proxy",
+      "from": "k8s-api",
+      "to": "proxy",
+      "label": "sync",
+      "variant": "emphasis"
+    },
+    {
+      "id": "network-observability",
+      "from": "network",
+      "to": "observability",
+      "label": "Flow 로그"
+    },
+    {
+      "id": "policy-observability",
+      "from": "policy",
+      "to": "observability",
+      "label": "정책 이벤트",
+      "labelDy": 24
+    }
+  ]
+}

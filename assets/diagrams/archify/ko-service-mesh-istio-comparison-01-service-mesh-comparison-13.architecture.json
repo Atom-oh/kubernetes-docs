@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Multi-Primary 멀티 클러스터",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "istiod1", "type": "backend", "label": "Istiod", "sublabel": "클러스터 1 컨트롤 플레인", "pos": [80, 70], "size": [200, 60] },
+    { "id": "app1", "type": "frontend", "label": "Service A v1", "sublabel": "애플리케이션", "pos": [80, 200], "size": [200, 60] },
+    { "id": "app2", "type": "frontend", "label": "Service B", "sublabel": "애플리케이션", "pos": [80, 330], "size": [200, 60] },
+    { "id": "istiod2", "type": "backend", "label": "Istiod", "sublabel": "클러스터 2 컨트롤 플레인", "pos": [640, 70], "size": [200, 60] },
+    { "id": "app3", "type": "frontend", "label": "Service A v2", "sublabel": "애플리케이션", "pos": [640, 200], "size": [200, 60] },
+    { "id": "app4", "type": "frontend", "label": "Service C", "sublabel": "애플리케이션", "pos": [640, 330], "size": [200, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Cluster 1 (us-west)", "wraps": ["istiod1", "app1", "app2"] },
+    { "kind": "region", "label": "Cluster 2 (us-east)", "wraps": ["istiod2", "app3", "app4"] }
+  ],
+  "connections": [
+    { "id": "discovery", "from": "istiod1", "to": "istiod2", "label": "Service Discovery 교환", "variant": "dashed" },
+    { "id": "mtls-a", "from": "app1", "to": "app3", "label": "Cross-cluster mTLS", "variant": "security" },
+    { "id": "mtls-b", "from": "app2", "to": "app4", "label": "Cross-cluster mTLS", "variant": "security" }
+  ]
+}

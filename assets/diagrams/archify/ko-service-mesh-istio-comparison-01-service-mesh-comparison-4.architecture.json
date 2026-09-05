@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kong Mesh 아키텍처",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "global-cp",
+          "zone-cp"
+        ],
+        "note": "선택 사항인 Global Control Plane이 멀티 존 정책을 Zone Control Plane에 동기화한다."
+      },
+      {
+        "id": "config",
+        "label": "설정 배포",
+        "focus": [
+          "zone-cp",
+          "dp1",
+          "dp2",
+          "dp-vm"
+        ],
+        "note": "Zone Control Plane이 Kubernetes 파드와 VM의 Kuma DP에 동일하게 설정을 배포한다."
+      },
+      {
+        "id": "mtls",
+        "label": "mTLS 통신",
+        "focus": [
+          "dp1",
+          "dp2",
+          "dp-vm"
+        ],
+        "note": "파드와 VM을 가리지 않고 모든 데이터 플레인이 mTLS로 통신한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "global-cp",
+      "type": "backend",
+      "label": "Kong Mesh Global Control Plane",
+      "sublabel": "선택 · 멀티 존 정책",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "zone-cp",
+      "type": "backend",
+      "label": "Kong Mesh Zone Control Plane",
+      "sublabel": "로컬 데이터 플레인 관리",
+      "pos": [
+        430,
+        180
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "dp1",
+      "type": "security",
+      "label": "Envoy / Kuma DP",
+      "sublabel": "사이드카",
+      "pos": [
+        460,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 1",
+      "pos": [
+        460,
+        480
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dp2",
+      "type": "security",
+      "label": "Envoy / Kuma DP",
+      "sublabel": "사이드카",
+      "pos": [
+        90,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 2",
+      "pos": [
+        90,
+        480
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dp-vm",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "VM 데이터 플레인",
+      "pos": [
+        830,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app-vm",
+      "type": "frontend",
+      "label": "Legacy App",
+      "sublabel": "VM",
+      "pos": [
+        830,
+        480
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "global-cp",
+        "zone-cp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인 (Kubernetes + VM)",
+      "wraps": [
+        "dp2",
+        "app2",
+        "dp1",
+        "app1",
+        "dp-vm",
+        "app-vm"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "dp2",
+        "app2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "dp1",
+        "app1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "VM",
+      "wraps": [
+        "dp-vm",
+        "app-vm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sync-policies",
+      "from": "global-cp",
+      "to": "zone-cp",
+      "label": "정책 동기화",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        560,
+        140
+      ]
+    },
+    {
+      "id": "config-dp1",
+      "from": "zone-cp",
+      "to": "dp1",
+      "label": "설정 배포",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        560,
+        300
+      ]
+    },
+    {
+      "id": "config-dp2",
+      "from": "zone-cp",
+      "to": "dp2",
+      "label": "설정 배포",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "config-dpvm",
+      "from": "zone-cp",
+      "to": "dp-vm",
+      "label": "설정 배포",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "mtls-1-2",
+      "from": "dp1",
+      "to": "dp2",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "mtls-1-vm",
+      "from": "dp1",
+      "to": "dp-vm",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "dp1-app1",
+      "from": "dp1",
+      "to": "app1"
+    },
+    {
+      "id": "dp2-app2",
+      "from": "dp2",
+      "to": "app2"
+    },
+    {
+      "id": "dpvm-appvm",
+      "from": "dp-vm",
+      "to": "app-vm"
+    }
+  ]
+}

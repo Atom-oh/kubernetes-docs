@@ -63,7 +63,9 @@
 
 ### Istio 아키텍처
 
-![Kubernetes 클러스터 안에서 Istiod가 Envoy 사이드카에 xDS 설정을 배포하고, frontend와 backend 파드가 사이드카를 거쳐 mTLS로 통신하며 Prometheus·Jaeger·Kiali로 메트릭과 트레이스를 보내는 Istio 아키텍처를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.svg)
+![Kubernetes 클러스터 안에서 Istiod가 Envoy 사이드카에 xDS 설정을 배포하고, frontend와 backend 파드가 사이드카를 거쳐 mTLS로 통신하며 Prometheus·Jaeger·Kiali로 메트릭과 트레이스를 보내는 Istio 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.html)
 
 **특징**:
 
@@ -74,7 +76,9 @@
 
 ### VPC Lattice 아키텍처
 
-![사이드카 없는 EKS 파드, ECS 태스크, Lambda 함수, EC2 인스턴스가 VPC Lattice의 Service Network와 Service, Target Group을 거쳐 PrivateLink로 연결되는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.svg)
+![사이드카 없는 EKS 파드, ECS 태스크, Lambda 함수, EC2 인스턴스가 VPC Lattice의 Service Network와 Service, Target Group을 거쳐 PrivateLink로 연결되는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.html)
 
 **특징**:
 
@@ -788,7 +792,9 @@ Istio는 강력한 기능을 제공하지만, 프로덕션 환경에서 운영�
 
 #### 주요 운영 과제
 
-![사이드카 관리, 업그레이드 복잡도, 리소스 오버헤드, 트러블슈팅, 설정 검증, 인증서 관리라는 여섯 운영 과제가 운영 비용 증가, 장애 위험 증가, 배포 시간 증가로 이어지는 인과관계를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.svg)
+![사이드카 관리, 업그레이드 복잡도, 리소스 오버헤드, 트러블슈팅, 설정 검증, 인증서 관리라는 여섯 운영 과제가 운영 비용 증가, 장애 위험 증가, 배포 시간 증가로 이어지는 인과관계를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.html)
 
 ### 설치 및 초기 설정
 
@@ -1542,7 +1548,9 @@ Ambient Mode로 전환 시 절감 효과:
 
 ### Istio 멀티 클라우드
 
-![AWS EKS, Google Cloud GKE, Azure AKS 각각의 Istiod가 서비스 디스커버리 정보를 교환하고 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신하는 Istio 멀티 클라우드 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.svg)
+![AWS EKS, Google Cloud GKE, Azure AKS 각각의 Istiod가 서비스 디스커버리 정보를 교환하고 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신하는 Istio 멀티 클라우드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.html)
 
 **장점**:
 
@@ -1565,7 +1573,9 @@ Ambient Mode로 전환 시 절감 효과:
 
 ### Istio + VPC Lattice 함께 사용
 
-![EKS 클러스터 내부는 Envoy 사이드카를 거친 Istio mTLS로 통신하고, Backend가 Egress Gateway로 VPC Lattice Service Network에 나가 ECS Payment와 Lambda Notification에 도달하는 하이브리드 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.svg)
+![EKS 클러스터 내부는 Envoy 사이드카를 거친 Istio mTLS로 통신하고, Backend가 Egress Gateway로 VPC Lattice Service Network에 나가 ECS Payment와 Lambda Notification에 도달하는 하이브리드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.html)
 
 **사용 사례**:
 
@@ -1611,7 +1621,9 @@ spec:
 
 ### 의사 결정 트리
 
-![멀티 클라우드면 Istio, AWS 전용이면 워크로드 유형과 기능 요구, 운영 리소스를 순서대로 따져 Istio 또는 VPC Lattice를 추천하는 의사 결정 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.svg)
+![멀티 클라우드면 Istio, AWS 전용이면 워크로드 유형과 기능 요구, 운영 리소스를 순서대로 따져 Istio 또는 VPC Lattice를 추천하는 의사 결정 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.html)
 
 ### 사용 사례별 권장
 

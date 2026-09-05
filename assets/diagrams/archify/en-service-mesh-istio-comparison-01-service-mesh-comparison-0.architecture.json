@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Basic Concepts of Service Mesh",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Service"
+        },
+        "security": {
+          "label": "Sidecar"
+        },
+        "cloud": {
+          "label": "Control"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "without-mesh",
+        "label": "Without Service Mesh",
+        "focus": [
+          "svc-a1",
+          "svc-b1",
+          "svc-c1"
+        ],
+        "note": "Services call each other directly and each implements retries, encryption and metrics on its own."
+      },
+      {
+        "id": "with-mesh",
+        "label": "With Service Mesh",
+        "focus": [
+          "app-a",
+          "proxy-a",
+          "app-b",
+          "proxy-b",
+          "app-c",
+          "proxy-c",
+          "control"
+        ],
+        "note": "Sidecar proxies handle mTLS traffic while the control plane distributes configuration."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "svc-a1",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "svc-b1",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "svc-c1",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        60,
+        410
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "control",
+      "type": "cloud",
+      "label": "Control Plane",
+      "sublabel": "Policy management",
+      "pos": [
+        670,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        420,
+        420
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "proxy-a",
+      "type": "security",
+      "label": "Sidecar Proxy",
+      "pos": [
+        420,
+        290
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        670,
+        420
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "proxy-b",
+      "type": "security",
+      "label": "Sidecar Proxy",
+      "pos": [
+        670,
+        290
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "app-c",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        920,
+        420
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "proxy-c",
+      "type": "security",
+      "label": "Sidecar Proxy",
+      "pos": [
+        920,
+        290
+      ],
+      "size": [
+        140,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without Service Mesh",
+      "wraps": [
+        "svc-a1",
+        "svc-b1",
+        "svc-c1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With Service Mesh",
+      "wraps": [
+        "control",
+        "app-a",
+        "proxy-a",
+        "app-b",
+        "proxy-b",
+        "app-c",
+        "proxy-c"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod A",
+      "wraps": [
+        "app-a",
+        "proxy-a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod B",
+      "wraps": [
+        "app-b",
+        "proxy-b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod C",
+      "wraps": [
+        "app-c",
+        "proxy-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a1-to-b1",
+      "from": "svc-a1",
+      "to": "svc-b1",
+      "label": "Direct call",
+      "labelDy": 24
+    },
+    {
+      "id": "b1-to-c1",
+      "from": "svc-b1",
+      "to": "svc-c1",
+      "label": "Direct call",
+      "labelDy": 24
+    },
+    {
+      "id": "app-a-proxy",
+      "from": "app-a",
+      "to": "proxy-a"
+    },
+    {
+      "id": "app-b-proxy",
+      "from": "app-b",
+      "to": "proxy-b"
+    },
+    {
+      "id": "app-c-proxy",
+      "from": "app-c",
+      "to": "proxy-c"
+    },
+    {
+      "id": "proxy-a-b",
+      "from": "proxy-a",
+      "to": "proxy-b",
+      "label": "mTLS auto encryption",
+      "variant": "security"
+    },
+    {
+      "id": "proxy-b-c",
+      "from": "proxy-b",
+      "to": "proxy-c",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "cp-proxy-a",
+      "from": "control",
+      "to": "proxy-a",
+      "label": "Config distribution",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-proxy-b",
+      "from": "control",
+      "to": "proxy-b",
+      "variant": "dashed"
+    },
+    {
+      "id": "cp-proxy-c",
+      "from": "control",
+      "to": "proxy-c",
+      "label": "Config distribution",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Problems without a mesh",
+      "items": [
+        "Retry logic implemented in each service",
+        "Manual encryption setup between services",
+        "Inconsistent metrics collection",
+        "Difficult traffic control"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Benefits with a mesh",
+      "items": [
+        "Automatic retry and timeout",
+        "Automatic mTLS encryption",
+        "Unified metrics and tracing",
+        "Fine-grained traffic control"
+      ]
+    }
+  ]
+}

@@ -27,7 +27,9 @@ WorkloadEntry는 Istio Custom Resource Definition (CRD)으로, 메시 외부에 
 
 ### 사용 시나리오
 
-![레거시 VM과 베어메탈 서버가 WorkloadEntry로 istiod에 등록되고, istiod가 Kubernetes 파드의 Envoy에 구성을 전달하여 VM과 파드가 mTLS로 통신하는 하이브리드 아키텍처를 보여주는 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-0.svg)
+![레거시 VM과 베어메탈 서버가 WorkloadEntry로 istiod에 등록되고, istiod가 Kubernetes 파드의 Envoy 사이드카에 구성을 전달하여 VM과 파드 워크로드가 mTLS로 통신하는 하이브리드 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-0.html)
 
 **주요 사용 사례**:
 1. **점진적 마이그레이션**: 레거시 애플리케이션을 단계적으로 Kubernetes로 이전
@@ -53,13 +55,17 @@ WorkloadEntry는 Istio Custom Resource Definition (CRD)으로, 메시 외부에 
 
 ### 트래픽 흐름 비교
 
-![Kubernetes 파드 경로는 Service가 자동으로 디스커버리·라우팅을 처리하는 반면, WorkloadEntry 경로는 ServiceEntry로 수동 등록해야 함을 나란히 비교하는 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-1.svg)
+![클라이언트 요청이 Kubernetes 파드 경로에서는 Service의 자동 디스커버리로 Pod에 도달하고, WorkloadEntry 경로에서는 수동 등록한 ServiceEntry를 거쳐 VM의 WorkloadEntry에 도달하는 두 흐름을 나란히 비교해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-1.html)
 
 ## 아키텍처
 
 ### VM 워크로드 아키텍처
 
-![VM에 수동 설치된 Envoy와 파드에 자동 주입된 Envoy가 mTLS로 통신하고, istiod가 양쪽에 xDS 구성을 배포하며 VM 측에는 인증서까지 별도로 발급하는 아키텍처를 보여주는 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-2.svg)
+![VM에 수동 설치된 Envoy와 파드에 자동 주입된 Envoy가 mTLS로 통신하고, istiod가 양쪽에 xDS 구성을 배포하며 VM 측에는 인증서까지 별도로 발급하는 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-2.html)
 
 ### 주요 구성 요소
 
@@ -212,7 +218,9 @@ spec:
 
 ### 동작 흐름
 
-![Kubernetes 파드가 DNS로 가상 IP를 조회한 뒤 Envoy가 ServiceEntry의 workloadSelector로 WorkloadEntry를 찾아 VM으로 mTLS 연결을 맺고 응답을 돌려주는 순서를 보여주는 시퀀스 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-3.svg)
+![Kubernetes 파드가 Istio DNS로 가상 IP를 조회한 뒤 Envoy가 ServiceEntry의 workloadSelector로 WorkloadEntry를 찾아 VM으로 mTLS 연결을 맺고 응답을 돌려주는 순서를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-3.html)
 
 ### 로드 밸런싱
 
@@ -1058,7 +1066,9 @@ kubectl apply -f serviceentries-backup.yaml
 
 ### 7. 점진적 마이그레이션 전략
 
-![VM 메시 등록부터 VM 제거까지, WorkloadEntry를 이용한 5단계 점진적 마이그레이션 흐름을 보여주며 4단계 트래픽 전환이 핵심 지점으로 강조되어 있다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-13-workload-entry-4.svg)
+![WorkloadEntry로 메시에 등록한 VM 워크로드를 5단계에 걸쳐 Kubernetes로 옮기는 점진적 마이그레이션 흐름을, 4단계 트래픽 전환을 핵심 지점으로 강조해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-13-workload-entry-4.html)
 
 **1단계: VM 메시 등록**
 ```yaml

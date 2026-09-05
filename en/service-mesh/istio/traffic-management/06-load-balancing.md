@@ -21,7 +21,9 @@ Istio provides various load balancing algorithms through Envoy to efficiently di
 
 Load balancing distributes traffic across multiple instances to improve overall system throughput and stability.
 
-![Without load balancing, all requests hit one service until it is fully loaded while two others sit idle; with a load balancer in front, the same requests are split evenly so every service carries a similar share of the load.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-06-load-balancing-0.svg)
+![Without load balancing, all requests hit one service until it is fully loaded while two others sit idle; with a load balancer in front, the same requests are split evenly so every service carries a similar share of the load.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-0.html)
 
 ### Key Benefits
 
@@ -35,7 +37,9 @@ Load balancing distributes traffic across multiple instances to improve overall 
 
 ## Load Balancing Overview
 
-![A client request reaches Istio's load balancing algorithm, which picks one of three pods with different current loads using round robin, least request, or random selection.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-06-load-balancing-1.svg)
+![A client request reaches Istio's load balancing algorithm, which picks one of three pods with different current loads using round robin, least request, or random selection.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-1.html)
 
 ## Load Balancing Algorithms
 
@@ -55,7 +59,9 @@ Istio provides the following load balancing algorithms.
 
 Distributes requests sequentially to each endpoint.
 
-![Four sequential client requests are routed by the load balancer to pod 1, pod 2, pod 3, and then back to pod 1, cycling through the endpoints in order under the ROUND_ROBIN algorithm.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-06-load-balancing-2.svg)
+![Four sequential client requests are routed by the load balancer to pod 1, pod 2, pod 3, and then back to pod 1, cycling through the endpoints in order under the ROUND_ROBIN algorithm.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-2.html)
 
 **Configuration Example:**
 
@@ -88,7 +94,9 @@ spec:
 
 Routes to the endpoint with the fewest active requests.
 
-![Before routing a new request, the load balancer checks the active request count on every pod and sends the request to the one with the fewest active requests.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-06-load-balancing-3.svg)
+![Before routing a new request, the load balancer checks the active request count on every pod and sends the request to the one with the fewest active requests.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-3.html)
 
 **Configuration Example:**
 
@@ -220,7 +228,9 @@ Consistent Hash routes to the same endpoint based on specific attributes to ensu
 
 ### Consistent Hash Operation Principle
 
-![Each request's key is hashed to a fixed value that always maps to the same pod on the ring, so the same cookie from User A lands on Pod 1 both times while a different cookie from User B lands on Pod 2.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-06-load-balancing-4.svg)
+![Each request's key is hashed to a fixed value that always maps to the same pod on the ring, so the same cookie from User A lands on Pod 1 both times while a different cookie from User B lands on Pod 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-4.html)
 
 ### 1. HTTP Header-based
 
@@ -371,7 +381,9 @@ spec:
 
 #### 1. Imbalance Risk
 
-![When too many users hash to the same range, one pod can end up carrying most of the traffic while the others stay nearly empty — a risk specific to consistent-hash load balancing.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-06-load-balancing-5.svg)
+![When too many users hash to the same range, one pod can end up carrying most of the traffic while the others stay nearly empty — a risk specific to consistent-hash load balancing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-5.html)
 
 **Cause**: Traffic concentration on specific hash values
 
@@ -760,7 +772,9 @@ spec:
 
 ### Decision Tree
 
-![Choosing a load-balancing algorithm by asking, in order, whether session persistence, very high traffic, or geographic distribution is required, and whether the workload is a TCP proxy, falling through to ROUND_ROBIN by default.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-06-load-balancing-6.svg)
+![Decision tree asking in turn about session persistence, very high traffic, variable response times, geographic distribution, and TCP proxying to pick CONSISTENT_HASH, RANDOM, LEAST_REQUEST, PASSTHROUGH, or the ROUND_ROBIN default.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-6.html)
 
 ### Recommended Algorithms by Service Type
 

@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh Decision Tree",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-18.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "backend": {
+          "label": "Decision point"
+        },
+        "cloud": {
+          "label": "Recommended pick"
+        },
+        "external": {
+          "label": "Alternative pick"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "new-team",
+        "label": "Team new to Service Mesh",
+        "focus": [
+          "start",
+          "q1",
+          "q2",
+          "linkerd",
+          "kong_simple"
+        ],
+        "note": "Pick Linkerd when resource efficiency matters; go to Kong Mesh or Consul when more features are needed."
+      },
+      {
+        "id": "k8s-only",
+        "label": "Experienced · K8s only",
+        "focus": [
+          "q1",
+          "q3",
+          "q4",
+          "istio",
+          "kong_adv"
+        ],
+        "note": "Choose Istio for maximum features, Kong Mesh for a balance of features and complexity."
+      },
+      {
+        "id": "hybrid",
+        "label": "Experienced · K8s + VM",
+        "focus": [
+          "q1",
+          "q3",
+          "q5",
+          "consul",
+          "kong"
+        ],
+        "note": "VM-centric environments suit Consul; a K8s-centric hybrid suits Kong Mesh."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "start",
+      "type": "frontend",
+      "label": "Service Mesh Selection",
+      "sublabel": "start of the decision",
+      "pos": [
+        492,
+        30
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q1",
+      "type": "backend",
+      "label": "Team experience?",
+      "sublabel": "prior mesh experience",
+      "pos": [
+        492,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "backend",
+      "label": "Resource constraints?",
+      "sublabel": "CPU / memory efficiency",
+      "pos": [
+        180,
+        290
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "backend",
+      "label": "Platform?",
+      "sublabel": "K8s only or with VMs",
+      "pos": [
+        805,
+        290
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q4",
+      "type": "backend",
+      "label": "Feature requirements?",
+      "sublabel": "required feature scope",
+      "pos": [
+        650,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "q5",
+      "type": "backend",
+      "label": "VM-centric?",
+      "sublabel": "where workloads run",
+      "pos": [
+        960,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "linkerd",
+      "type": "cloud",
+      "label": "Linkerd",
+      "sublabel": "low overhead",
+      "tag": "recommended",
+      "pos": [
+        115,
+        430
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "kong_simple",
+      "type": "external",
+      "label": "Kong Mesh / Consul",
+      "sublabel": "features first",
+      "pos": [
+        265,
+        430
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "cloud",
+      "label": "Istio",
+      "sublabel": "best-in-class features",
+      "tag": "recommended",
+      "pos": [
+        585,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "kong_adv",
+      "type": "external",
+      "label": "Kong Mesh",
+      "sublabel": "balanced features",
+      "pos": [
+        735,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "consul",
+      "type": "cloud",
+      "label": "Consul",
+      "sublabel": "VM-first support",
+      "tag": "recommended",
+      "pos": [
+        895,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "kong",
+      "type": "cloud",
+      "label": "Kong Mesh",
+      "sublabel": "K8s-centric hybrid",
+      "tag": "recommended",
+      "pos": [
+        1045,
+        570
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Simple Solution",
+      "wraps": [
+        "q2",
+        "linkerd",
+        "kong_simple"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Advanced Features",
+      "wraps": [
+        "q3",
+        "q4",
+        "q5",
+        "istio",
+        "kong_adv",
+        "consul",
+        "kong"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Kong / Consul hybrid",
+      "wraps": [
+        "q5",
+        "consul",
+        "kong"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "start-q1",
+      "from": "start",
+      "to": "q1",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q1-q2",
+      "from": "q1",
+      "to": "q2",
+      "label": "New to Service Mesh",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q1-q3",
+      "from": "q1",
+      "to": "q3",
+      "label": "Experienced",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q2-linkerd",
+      "from": "q2",
+      "to": "linkerd",
+      "label": "Yes · efficiency first",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -36
+    },
+    {
+      "id": "q2-kong",
+      "from": "q2",
+      "to": "kong_simple",
+      "label": "No · features needed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 36
+    },
+    {
+      "id": "q3-q4",
+      "from": "q3",
+      "to": "q4",
+      "label": "K8s only",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q3-q5",
+      "from": "q3",
+      "to": "q5",
+      "label": "K8s + VM",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q4-istio",
+      "from": "q4",
+      "to": "istio",
+      "label": "Maximum features",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q4-kong",
+      "from": "q4",
+      "to": "kong_adv",
+      "label": "Balanced",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q5-consul",
+      "from": "q5",
+      "to": "consul",
+      "label": "Yes · VM-centric",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q5-kong",
+      "from": "q5",
+      "to": "kong",
+      "label": "No · K8s-centric",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istio",
+      "items": [
+        "Large enterprise, rich feature set needed",
+        "Team already has Service Mesh experience",
+        "Cons: steep learning curve, high resource usage"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Linkerd",
+      "items": [
+        "Simplicity first, small team, quick start",
+        "Low overhead, automatic mTLS",
+        "Cons: limited features, no VM support"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Kong Mesh / Consul Connect",
+      "items": [
+        "Hybrid environment (K8s + VM), legacy integration",
+        "VM-first support, strong Service Discovery",
+        "Cons: commercial features are paid, smaller community"
+      ]
+    }
+  ]
+}

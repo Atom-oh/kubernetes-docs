@@ -24,7 +24,9 @@
 
 Istio는 W3C Trace Context 표준을 지원하여 표준화된 trace 전파를 보장합니다.
 
-![클라이언트 요청이 Service A와 Service B의 Envoy 프록시·애플리케이션을 거치며 traceparent 헤더로 trace context가 전파되고, 각 홉이 생성한 스팬을 Jaeger Collector로 비동기 내보내는 분산 추적 흐름을 보여주는 시퀀스 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-observability-02-tracing-0.svg)
+![클라이언트 요청이 Service A와 Service B의 Envoy 프록시·애플리케이션을 거치며 traceparent 헤더로 trace context가 전파되고, 각 홉이 생성한 스팬을 Jaeger Collector로 비동기 내보내는 분산 추적 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-02-tracing-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-observability-02-tracing-0.html)
 
 ### 핵심 개념
 

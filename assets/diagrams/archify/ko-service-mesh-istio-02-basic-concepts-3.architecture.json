@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Google, IBM, Lyft의 협력",
+    "output": "ko-service-mesh-istio-02-basic-concepts-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [900, 480]
+  },
+  "components": [
+    { "id": "google", "type": "external", "label": "Google", "sublabel": "Kubernetes 경험", "pos": [60, 80], "size": [170, 60] },
+    { "id": "ibm", "type": "external", "label": "IBM", "sublabel": "엔터프라이즈 요구사항", "pos": [60, 210], "size": [170, 60] },
+    { "id": "lyft", "type": "external", "label": "Lyft", "sublabel": "Envoy Proxy", "pos": [60, 340], "size": [170, 60] },
+    { "id": "control-plane", "type": "backend", "label": "Control Plane", "sublabel": "Google 주도", "pos": [600, 145], "size": [180, 60] },
+    { "id": "data-plane", "type": "backend", "label": "Data Plane", "sublabel": "Envoy 기반", "pos": [600, 340], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "참여 기업", "wraps": ["google", "ibm", "lyft"] },
+    { "kind": "region", "label": "Istio Service Mesh", "wraps": ["control-plane", "data-plane"] }
+  ],
+  "connections": [
+    { "id": "google-to-cp", "from": "google", "to": "control-plane", "label": "Control Plane 설계", "variant": "emphasis" },
+    { "id": "ibm-to-cp", "from": "ibm", "to": "control-plane", "label": "엔터프라이즈 기능" },
+    { "id": "lyft-to-dp", "from": "lyft", "to": "data-plane", "label": "Envoy Proxy 제공", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "각 회사의 기여 (2017년 5월 발표)", "items": [
+      "Google: Borg, Kubernetes 경험을 바탕으로 Control Plane 설계",
+      "IBM: 기업 고객 요구사항을 반영한 엔터프라이즈 기능",
+      "Lyft: 프로덕션에서 검증된 Envoy Proxy를 Data Plane으로 제공"
+    ] }
+  ]
+}

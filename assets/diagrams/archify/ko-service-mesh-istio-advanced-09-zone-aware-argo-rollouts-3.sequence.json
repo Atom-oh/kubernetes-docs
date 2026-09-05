@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Failover 시나리오 — Zone A → Zone B",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      700
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Zone-local 시도"
+        },
+        "emphasis": {
+          "label": "요청 경로"
+        },
+        "dashed": {
+          "label": "오류 응답 (timeout/5xx)"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "visible": false
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "local-attempts",
+        "label": "Zone-local 시도",
+        "focus": [
+          "client",
+          "envoy",
+          "podA"
+        ],
+        "note": "같은 Zone A의 Pod A로 3회 시도하지만 모두 timeout/5xx 오류가 반환된다."
+      },
+      {
+        "id": "outlier-detection",
+        "label": "Outlier Detection",
+        "focus": [
+          "envoy",
+          "podA"
+        ],
+        "note": "consecutiveErrors: 3에 도달하면 Pod A를 baseEjectionTime(30s) 동안 엔드포인트에서 제외한다."
+      },
+      {
+        "id": "cross-zone-failover",
+        "label": "Cross-zone failover",
+        "focus": [
+          "envoy",
+          "podB",
+          "client"
+        ],
+        "note": "DestinationRule failover 규칙(us-east-1a → us-east-1b)에 따라 Zone B의 Pod B가 요청을 처리한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client A",
+      "sublabel": "Zone A (us-east-1a)"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "Zone A (us-east-1a)"
+    },
+    {
+      "id": "podA",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "zone=a · Unhealthy"
+    },
+    {
+      "id": "podB",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "Zone B (us-east-1b) · zone=b"
+    }
+  ],
+  "segments": [
+    {
+      "from": 168,
+      "to": 418,
+      "label": "Zone-local 시도 — 3회 연속 실패"
+    },
+    {
+      "from": 438,
+      "to": 620,
+      "label": "Pod A 30s 제외 → failover us-east-1a → us-east-1b"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-api",
+      "from": "client",
+      "to": "envoy",
+      "y": 188,
+      "label": "GET /api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "attempt-1",
+      "from": "envoy",
+      "to": "podA",
+      "y": 224,
+      "label": "Attempt 1"
+    },
+    {
+      "id": "error-1",
+      "from": "podA",
+      "to": "envoy",
+      "y": 254,
+      "label": "Error (timeout/5xx)",
+      "variant": "dashed"
+    },
+    {
+      "id": "attempt-2",
+      "from": "envoy",
+      "to": "podA",
+      "y": 292,
+      "label": "Attempt 2"
+    },
+    {
+      "id": "error-2",
+      "from": "podA",
+      "to": "envoy",
+      "y": 322,
+      "label": "Error (timeout/5xx)",
+      "variant": "dashed"
+    },
+    {
+      "id": "attempt-3",
+      "from": "envoy",
+      "to": "podA",
+      "y": 360,
+      "label": "Attempt 3"
+    },
+    {
+      "id": "error-3",
+      "from": "podA",
+      "to": "envoy",
+      "y": 390,
+      "label": "Error (timeout/5xx) · consecutiveErrors: 3",
+      "variant": "dashed",
+      "note": "consecutiveErrors: 3 → Pod A 제외 (baseEjectionTime 30s)"
+    },
+    {
+      "id": "failover-request",
+      "from": "envoy",
+      "to": "podB",
+      "y": 478,
+      "label": "Request (failover to Zone B)",
+      "variant": "emphasis",
+      "note": "Cross-zone 트래픽 · from: us-east-1a → to: us-east-1b"
+    },
+    {
+      "id": "podb-response",
+      "from": "podB",
+      "to": "envoy",
+      "y": 548,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "client-response",
+      "from": "envoy",
+      "to": "client",
+      "y": 590,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 182,
+      "to": 596,
+      "type": "security"
+    },
+    {
+      "participant": "podA",
+      "from": 219,
+      "to": 259,
+      "type": "backend"
+    },
+    {
+      "participant": "podA",
+      "from": 287,
+      "to": 327,
+      "type": "backend"
+    },
+    {
+      "participant": "podA",
+      "from": 355,
+      "to": 395,
+      "type": "backend"
+    },
+    {
+      "participant": "podB",
+      "from": 473,
+      "to": 553,
+      "type": "backend"
+    }
+  ]
+}

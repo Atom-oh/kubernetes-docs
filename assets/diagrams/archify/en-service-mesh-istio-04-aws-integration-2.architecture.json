@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio vs VPC Lattice Architecture Comparison",
+    "locale": "en",
+    "output": "en-service-mesh-istio-04-aws-integration-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      440
+    ],
+    "views": [
+      {
+        "id": "istio-side",
+        "label": "Istio Architecture",
+        "focus": [
+          "istiod",
+          "istio-app-a",
+          "istio-app-b"
+        ],
+        "note": "istiod configures the Envoy sidecar in each pod; pod-to-pod traffic is mTLS negotiated directly between the sidecars."
+      },
+      {
+        "id": "lattice-side",
+        "label": "VPC Lattice Architecture",
+        "focus": [
+          "lattice-sn",
+          "lattice-app-a",
+          "lattice-app-b"
+        ],
+        "note": "Sidecar-free applications send plain HTTP to the managed Service Network, which routes it to the target application."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        190,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istio-app-a",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "+ Envoy sidecar",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istio-app-b",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "+ Envoy sidecar",
+      "pos": [
+        320,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lattice-sn",
+      "type": "cloud",
+      "label": "Service Network",
+      "sublabel": "AWS managed service",
+      "pos": [
+        790,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "lattice-app-a",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "No sidecar",
+      "pos": [
+        670,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lattice-app-b",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "No sidecar",
+      "pos": [
+        930,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Architecture",
+      "wraps": [
+        "istiod",
+        "istio-app-a",
+        "istio-app-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC Lattice Architecture",
+      "wraps": [
+        "lattice-sn",
+        "lattice-app-a",
+        "lattice-app-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istiod-config-a",
+      "from": "istiod",
+      "to": "istio-app-a",
+      "label": "Config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-config-b",
+      "from": "istiod",
+      "to": "istio-app-b",
+      "label": "Config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istio-mtls",
+      "from": "istio-app-a",
+      "to": "istio-app-b",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "lattice-http",
+      "from": "lattice-app-a",
+      "to": "lattice-sn",
+      "label": "HTTP",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "lattice-routing",
+      "from": "lattice-sn",
+      "to": "lattice-app-b",
+      "label": "Routing",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istio",
+      "items": [
+        "Self-managed; sidecar required (Sidecar or Ambient)",
+        "High resource overhead: an Envoy per pod",
+        "Automatic mTLS, fine-grained traffic control"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "VPC Lattice",
+      "items": [
+        "AWS-managed (fully-managed); no sidecar required",
+        "Low resource overhead; basic traffic management",
+        "Not Kubernetes-only (EC2, Lambda, etc.)"
+      ]
+    }
+  ]
+}

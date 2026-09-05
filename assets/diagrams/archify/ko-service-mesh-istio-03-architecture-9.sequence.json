@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "DNS Proxy 동작 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      700
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "capture",
+        "label": "DNS 캡처",
+        "focus": [
+          "app",
+          "iptables",
+          "envoy"
+        ],
+        "note": "UDP 53 DNS 쿼리를 iptables가 Envoy DNS Proxy(15053)로 리다이렉트합니다."
+      },
+      {
+        "id": "mesh",
+        "label": "메시 내부 서비스",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "Istio 서비스면 Envoy가 xDS로 Istiod에 조회해 ClusterIP를 받습니다."
+      },
+      {
+        "id": "external",
+        "label": "외부 도메인",
+        "focus": [
+          "envoy",
+          "coredns"
+        ],
+        "note": "메시에 없는 도메인은 Envoy가 CoreDNS에 위임해 IP를 받습니다."
+      },
+      {
+        "id": "answer",
+        "label": "응답 반환",
+        "focus": [
+          "envoy",
+          "app"
+        ],
+        "note": "어느 분기든 Envoy가 최종 IP를 애플리케이션에 돌려줍니다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "DNS 클라이언트"
+    },
+    {
+      "id": "iptables",
+      "type": "security",
+      "label": "iptables",
+      "sublabel": "UDP 53 리다이렉트"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "DNS Proxy · 15053"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "Istiod",
+      "sublabel": "xDS · 메시 서비스"
+    },
+    {
+      "id": "coredns",
+      "type": "external",
+      "label": "CoreDNS",
+      "sublabel": "외부 도메인"
+    }
+  ],
+  "segments": [
+    {
+      "from": 300,
+      "to": 400,
+      "label": "alt — Istio 서비스인 경우"
+    },
+    {
+      "from": 420,
+      "to": 520,
+      "label": "else — 외부 도메인인 경우"
+    }
+  ],
+  "messages": [
+    {
+      "id": "dns-query",
+      "from": "app",
+      "to": "iptables",
+      "y": 190,
+      "label": "DNS 쿼리 (UDP 53)",
+      "variant": "default"
+    },
+    {
+      "id": "redirect",
+      "from": "iptables",
+      "to": "envoy",
+      "y": 240,
+      "label": "15053으로 리다이렉트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds-lookup",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 325,
+      "label": "Service 조회 (xDS)",
+      "variant": "default"
+    },
+    {
+      "id": "clusterip",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 375,
+      "label": "ClusterIP 반환",
+      "variant": "return"
+    },
+    {
+      "id": "coredns-query",
+      "from": "envoy",
+      "to": "coredns",
+      "y": 445,
+      "label": "DNS 쿼리",
+      "variant": "dashed"
+    },
+    {
+      "id": "coredns-ip",
+      "from": "coredns",
+      "to": "envoy",
+      "y": 495,
+      "label": "IP 반환",
+      "variant": "return"
+    },
+    {
+      "id": "answer",
+      "from": "envoy",
+      "to": "app",
+      "y": 560,
+      "label": "IP 반환",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 240,
+      "to": 565,
+      "type": "backend"
+    },
+    {
+      "participant": "istiod",
+      "from": 320,
+      "to": 380,
+      "type": "cloud"
+    },
+    {
+      "participant": "coredns",
+      "from": 440,
+      "to": 500,
+      "type": "external"
+    }
+  ]
+}

@@ -17,7 +17,9 @@ Zone Aware Routing은 Kubernetes 가용 영역(Availability Zone)을 인식하�
 
 Zone Aware Routing은 다음과 같은 이점을 제공합니다:
 
-![클라이언트 파드가 같은 가용 영역의 서비스 파드로 트래픽의 80%를 무료로 우선 전송하고, 나머지 10%씩은 장애조치 목적으로 비용이 드는 크로스 AZ 경로를 통해 다른 두 영역으로 보내는 모습을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-03-zone-aware-routing-0.svg)
+![클라이언트 파드가 같은 가용 영역의 서비스 파드로 트래픽의 80%를 무료로 우선 전송하고, 나머지 10%씩은 장애조치 목적으로 비용이 드는 크로스 AZ 경로를 통해 다른 두 영역으로 보내는 모습을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-03-zone-aware-routing-0.html)
 
 ### 이점
 
@@ -31,7 +33,9 @@ Zone Aware Routing은 다음과 같은 이점을 제공합니다:
 
 ### Locality Load Balancing 알고리즘
 
-![요청이 도착하면 같은 Zone에 정상 파드가 있는지 먼저 확인해 있으면 그 Zone으로, 없으면 인접 Zone을 확인해 있으면 그곳으로, 둘 다 없으면 다른 Region으로 라우팅하는 단계적 판단 과정을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-03-zone-aware-routing-1.svg)
+![요청이 도착하면 같은 Zone에 정상 파드가 있는지 먼저 확인해 있으면 그 Zone으로, 없으면 인접 Zone을 확인해 있으면 그곳으로, 둘 다 없으면 다른 Region으로 라우팅하는 단계적 판단 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-03-zone-aware-routing-1.html)
 
 ### Locality 계층 구조
 
@@ -57,7 +61,9 @@ us-west-2/us-west-2a/*
 
 #### 동작 방식
 
-![Pod 자체에는 Zone 레이블이 없어도, Istiod의 Service Discovery가 Pod가 실행 중인 Node의 topology 레이블을 조회해 Locality를 파악하고 이를 EDS로 만들어 Envoy Proxy에 xDS로 전달하는 과정을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-03-zone-aware-routing-2.svg)
+![Pod 자체에는 Zone 레이블이 없어도, Istiod의 Service Discovery가 Pod가 실행 중인 Node의 topology 레이블을 조회해 Locality를 파악하고 이를 EDS로 만들어 Envoy Proxy에 xDS로 전달하는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-03-zone-aware-routing-2.html)
 
 #### 단계별 프로세스
 

@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 인증서 계층 구조",
+    "output": "ko-service-mesh-istio-security-01-mtls-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      840,
+      500
+    ]
+  },
+  "components": [
+    {
+      "id": "root-ca",
+      "type": "security",
+      "label": "Root CA",
+      "sublabel": "자체 서명 · 최상위 신뢰 앵커",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "intermediate-ca",
+      "type": "security",
+      "label": "Intermediate CA",
+      "sublabel": "워크로드 인증서 발급",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "mTLS 인증서",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "mTLS 인증서",
+      "pos": [
+        620,
+        222
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "mTLS 인증서",
+      "pos": [
+        620,
+        364
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Istio CA (istiod)",
+      "wraps": [
+        "root-ca",
+        "intermediate-ca"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워크로드",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-signs-intermediate",
+      "from": "root-ca",
+      "to": "intermediate-ca",
+      "label": "서명",
+      "variant": "security"
+    },
+    {
+      "id": "issue-a",
+      "from": "intermediate-ca",
+      "to": "svc-a",
+      "label": "발급",
+      "variant": "emphasis"
+    },
+    {
+      "id": "issue-b",
+      "from": "intermediate-ca",
+      "to": "svc-b",
+      "label": "발급",
+      "variant": "emphasis",
+      "labelDx": 25
+    },
+    {
+      "id": "issue-c",
+      "from": "intermediate-ca",
+      "to": "svc-c",
+      "label": "발급",
+      "variant": "emphasis"
+    }
+  ]
+}

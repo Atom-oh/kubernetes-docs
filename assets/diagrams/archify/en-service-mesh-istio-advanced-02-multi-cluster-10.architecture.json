@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Global E-commerce Architecture (Multi-Primary + VPC Lattice)",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-02-multi-cluster-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "intra-cluster",
+        "label": "Intra-cluster: Istio",
+        "focus": [
+          "frontend1",
+          "cart1",
+          "order1",
+          "frontend2",
+          "cart2",
+          "order2"
+        ],
+        "note": "Frontend <-> Cart <-> Order stay inside each cluster on Istio: frequent calls that need Circuit Breaker."
+      },
+      {
+        "id": "cross-cluster",
+        "label": "Cross-cluster: VPC Lattice",
+        "focus": [
+          "order1",
+          "order2",
+          "lattice",
+          "payment"
+        ],
+        "note": "Order -> Payment is a simple call, so it is routed over a VPC Lattice service network instead of an East-West Gateway."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "frontend1",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "Service",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "cart1",
+      "type": "backend",
+      "label": "Cart",
+      "sublabel": "Service",
+      "pos": [
+        260,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "order1",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "Service",
+      "pos": [
+        480,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "frontend2",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "Service",
+      "pos": [
+        680,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "cart2",
+      "type": "backend",
+      "label": "Cart",
+      "sublabel": "Service",
+      "pos": [
+        900,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "order2",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "Service",
+      "pos": [
+        1120,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "Service Network",
+      "pos": [
+        550,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment",
+      "sublabel": "Service",
+      "pos": [
+        760,
+        540
+      ],
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "US Region us-east-1 · EKS Cluster 1 (Istiod)",
+      "wraps": [
+        "frontend1",
+        "cart1",
+        "order1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Europe Region eu-west-1 · EKS Cluster 2 (Istiod)",
+      "wraps": [
+        "frontend2",
+        "cart2",
+        "order2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Payment Service ap-northeast-2 · EKS Cluster 3 (Istiod)",
+      "wraps": [
+        "payment"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend1-cart1",
+      "from": "frontend1",
+      "to": "cart1",
+      "label": "Istio internal call"
+    },
+    {
+      "id": "cart1-order1",
+      "from": "cart1",
+      "to": "order1",
+      "label": "Istio"
+    },
+    {
+      "id": "frontend2-cart2",
+      "from": "frontend2",
+      "to": "cart2",
+      "label": "Istio internal call"
+    },
+    {
+      "id": "cart2-order2",
+      "from": "cart2",
+      "to": "order2",
+      "label": "Istio"
+    },
+    {
+      "id": "order1-lattice",
+      "from": "order1",
+      "to": "lattice",
+      "label": "VPC Lattice",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order2-lattice",
+      "from": "order2",
+      "to": "lattice",
+      "label": "VPC Lattice",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "lattice-payment",
+      "from": "lattice",
+      "to": "payment",
+      "label": "Routing",
+      "variant": "emphasis",
+      "toSide": "left",
+      "via": [
+        [
+          640,
+          570
+        ]
+      ],
+      "labelDx": -28,
+      "fromSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Intra-cluster (Frontend <-> Cart <-> Order): Istio",
+      "items": [
+        "Frequent calls and complex routing",
+        "Istio features such as Circuit Breaker"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Cross-cluster (Order -> Payment): VPC Lattice",
+      "items": [
+        "Relatively simple calls",
+        "AWS IAM authentication, simple management"
+      ]
+    }
+  ]
+}

@@ -40,7 +40,9 @@ Ambient Mode solutions:
 
 ### Core Concepts
 
-![Diagram contrasting the sidecar model, where each pod pairs an application with its own Envoy proxy, against ambient mode, where application pods talk transparently to a shared node-level ztunnel that only escalates to an optional waypoint proxy when L7 features are needed.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-0.svg)
+![Diagram contrasting Sidecar Mode, where each pod pairs its application with an Envoy sidecar, against Ambient Mode, where pods send traffic transparently to a node-level ztunnel that escalates to a Waypoint Proxy only when L7 features are needed.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-0.html)
 
 ### Advantages of Ambient Mode
 
@@ -55,7 +57,9 @@ Ambient Mode solutions:
 
 #### Sidecar Mode
 
-![Architecture diagram showing three pods, each pairing an application container with its own Envoy sidecar proxy, with mutual TLS negotiated directly between every pair of sidecars.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-1.svg)
+![Architecture diagram showing three pods, each pairing an application container with its own Envoy sidecar proxy, with mutual TLS negotiated directly between the sidecars.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-1.html)
 
 **Characteristics**:
 - Envoy proxy injected into each pod
@@ -65,7 +69,9 @@ Ambient Mode solutions:
 
 #### Ambient Mode
 
-![Architecture diagram showing many application pods sending traffic transparently to one node-level ztunnel, which serves the target service directly for L4 traffic and hands off to an optional waypoint proxy only when L7 routing is needed.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-2.svg)
+![Architecture diagram showing many application pods sending traffic transparently to one node-level ztunnel, which serves the target service directly for L4 traffic and hands off to an optional waypoint proxy only when L7 routing is needed.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-2.html)
 
 **Characteristics**:
 - One ztunnel per node
@@ -137,7 +143,9 @@ ztunnel is the core component of Ambient Mode, a **lightweight L4 proxy running 
 
 #### ztunnel Role
 
-![Flowchart showing a single TCP connection moving through ztunnel's built-in pipeline of mTLS encryption, telemetry collection, identity verification, and load balancing before reaching the target service.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-3.svg)
+![Diagram showing a TCP connection from an application pod passing through ztunnel's built-in mTLS encryption, L4 telemetry collection, identity verification, and L4 load balancing before reaching the target service.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-3.html)
 
 **ztunnel Characteristics**:
 - Written in Rust (performance optimized)
@@ -198,7 +206,9 @@ Waypoint is an **optional proxy used when L7 features are needed**. As shown in 
 
 #### Waypoint Deployment Units
 
-![Architecture diagram showing one shared ztunnel routing L7 traffic to two separate waypoint proxies, one scoped to the frontend service account and one to the backend service account within the production namespace.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-4.svg)
+![Architecture diagram showing one shared ztunnel routing L7 traffic to two separate waypoint proxies, one scoped to the frontend service account and one to the backend service account within the production namespace.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-4.html)
 
 **Deployment Options**:
 - **ServiceAccount-based**: Only pods with specific SA use the corresponding Waypoint
@@ -207,7 +217,9 @@ Waypoint is an **optional proxy used when L7 features are needed**. As shown in 
 
 #### Waypoint Role
 
-![Flowchart showing traffic handed off from ztunnel to the waypoint proxy, which applies L7 routing, retry and circuit-breaking policy, fault injection, and header manipulation in sequence before delivering the request to the target service.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-5.svg)
+![Flowchart showing traffic handed off from ztunnel to the waypoint proxy, which applies L7 routing, retry and circuit-breaking policy, fault injection, and header manipulation in sequence before delivering the request to the target service.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-5.html)
 
 **Waypoint Characteristics**:
 - Deployed per Service Account or per Namespace
@@ -235,7 +247,9 @@ spec:
 
 The following is a comprehensive diagram showing how traffic flows in Ambient Mode **without Sidecars**:
 
-![Sequence diagram tracing a request from an unsidecarred client app through client and server ztunnels for the plain L4 path, and, in an optional branch, through a waypoint proxy for L7 routing before reaching the server app.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-6.svg)
+![Sequence diagram tracing a request from an unsidecarred client app through client and server ztunnels for the plain L4 path, and, in an optional branch, through a waypoint proxy for L7 routing before reaching the server app.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-6.html)
 
 **Traffic Flow Analysis**:
 
@@ -264,7 +278,9 @@ The following is a comprehensive diagram showing how traffic flows in Ambient Mo
 - **Efficient**: Minimal overhead
 - **Firewall friendly**: Uses standard HTTP/2 ports
 
-![Flowchart showing plain TCP traffic from an application getting encapsulated into an HTTP/2, mTLS-secured HBONE tunnel by the source ztunnel, carried across the network, and decapsulated back to plain TCP by the destination ztunnel before reaching the target app.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-7.svg)
+![Diagram showing plain TCP traffic from an application wrapped into an HTTP/2 mTLS HBONE tunnel by the source ztunnel, carried across the network, and unwrapped back to plain TCP by the destination ztunnel before reaching the target app.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-7.html)
 
 ## Installation and Configuration
 
@@ -385,7 +401,9 @@ spec:
 
 #### Step-by-step Migration
 
-![Flowchart of a five-step migration path from sidecar mode in production, through installing ambient components, labeling the namespace, removing sidecars, and deploying waypoint proxies, to a completed zero-downtime ambient mode.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-8.svg)
+![Workflow of the five-step migration from sidecar mode in production through installing ambient components, labeling the namespace, removing sidecars, and deploying a waypoint to a complete ambient mode.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-8.html)
 
 #### Step 1: Install Ambient Components
 
@@ -480,7 +498,9 @@ The graph above shows official Istio performance test results, demonstrating tha
 
 ### Resource Usage Visualization
 
-![Comparison diagram showing sidecar mode's five gigabytes of memory and ten vCPU across a hundred pods reduced to about 700 megabytes and 1.5 vCPU under ambient mode, an 85 to 86 percent resource saving.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-9.svg)
+![Comparison of a 100-pod cluster running in Sidecar Mode (5GB memory, 10 vCPU) versus Ambient Mode (about 700MB, 1.5 vCPU), showing the resulting memory, CPU and cost savings.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-9.html)
 
 ### Resource Savings Calculation
 
@@ -504,7 +524,9 @@ cpu_saved = sidecar_cpu - ambient_cpu          # 8.5 vCPU (~85%)
 
 ### When Should You Choose Ambient Mode?
 
-![Decision-tree flowchart routing from resource constraints through telemetry and L7 needs to one of three outcomes: L4-only ambient mode, ambient mode with selective waypoint proxies, or full sidecar mode.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-10.svg)
+![Decision tree routing from resource constraints through security, telemetry and L7 needs to one of three outcomes: L4-only Ambient Mode with ztunnel, Ambient Mode with selective Waypoint proxies, or full Sidecar Mode.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-10.html)
 
 **Recommended scenarios for Ambient Mode**:
 - Hundreds or more microservices
@@ -631,7 +653,9 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### Comparison Resources
 
-![Timeline showing Istio's progression from sidecar-only mode in 2018 (1.0), through an ambient mode beta in 2022 (1.15), to ambient mode reaching general availability in 2024 (1.28).](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-01-ambient-mode-11.svg)
+![Timeline showing Istio's progression from sidecar-only mode in 2018 (1.0), through an ambient mode beta in 2022 (1.15), to ambient mode reaching general availability in 2024 (1.28).](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-11.html)
 
 **Production Usage Status** (as of 2024):
 - Solo.io: Migrated entire internal clusters to Ambient Mode

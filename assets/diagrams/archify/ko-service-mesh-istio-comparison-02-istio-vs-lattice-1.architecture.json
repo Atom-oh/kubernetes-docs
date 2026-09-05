@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VPC Lattice 아키텍처",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1300, 620],
+    "views": [
+      { "id": "entry-path", "label": "PrivateLink 진입 경로", "focus": ["frontend", "service-network"], "note": "사이드카 없는 Frontend 파드가 AWS PrivateLink로 Service Network에 접속한다." },
+      { "id": "service-a", "label": "Service A → ECS · Lambda", "focus": ["service-network", "service-a", "tg-ecs", "tg-lambda", "ecs", "lambda"], "note": "Service A는 Target Group을 통해 VPC 2의 ECS 태스크와 Lambda 함수로 라우팅한다." },
+      { "id": "service-b", "label": "Service B → EC2", "focus": ["service-network", "service-b", "tg-ec2", "ec2"], "note": "Service B는 Target Group을 통해 VPC 3의 EC2 레거시 서비스로 라우팅한다." }
+    ]
+  },
+  "components": [
+    { "id": "frontend", "type": "frontend", "label": "Frontend Pod", "sublabel": "No Sidecar", "pos": [40, 300], "size": [170, 60] },
+    { "id": "service-network", "type": "cloud", "label": "Service Network", "sublabel": "VPC Association 진입점", "pos": [300, 300], "size": [180, 60] },
+    { "id": "service-a", "type": "cloud", "label": "Service A", "pos": [570, 200], "size": [150, 60] },
+    { "id": "service-b", "type": "cloud", "label": "Service B", "pos": [570, 400], "size": [150, 60] },
+    { "id": "tg-ecs", "type": "cloud", "label": "Target Group", "sublabel": "ECS", "pos": [810, 120], "size": [160, 60] },
+    { "id": "tg-lambda", "type": "cloud", "label": "Target Group", "sublabel": "Lambda", "pos": [810, 280], "size": [160, 60] },
+    { "id": "tg-ec2", "type": "cloud", "label": "Target Group", "sublabel": "EC2", "pos": [810, 480], "size": [160, 60] },
+    { "id": "ecs", "type": "backend", "label": "ECS Task", "sublabel": "Backend Service", "pos": [1070, 120], "size": [170, 60] },
+    { "id": "lambda", "type": "backend", "label": "Lambda Function", "sublabel": "Payment Service", "pos": [1070, 280], "size": [170, 60] },
+    { "id": "ec2", "type": "backend", "label": "EC2 Instance", "sublabel": "Legacy Service", "pos": [1070, 480], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "VPC 1 · EKS Cluster", "wraps": ["frontend"] },
+    { "kind": "region", "label": "VPC Lattice (AWS 관리형)", "wraps": ["service-network", "service-a", "service-b", "tg-ecs", "tg-lambda", "tg-ec2"] },
+    { "kind": "region", "label": "VPC 2", "wraps": ["ecs", "lambda"] },
+    { "kind": "region", "label": "VPC 3", "wraps": ["ec2"] }
+  ],
+  "connections": [
+    { "id": "frontend-to-sn", "from": "frontend", "to": "service-network", "label": "PrivateLink", "variant": "emphasis" },
+    { "id": "sn-to-a", "from": "service-network", "to": "service-a" },
+    { "id": "sn-to-b", "from": "service-network", "to": "service-b" },
+    { "id": "a-to-tg-ecs", "from": "service-a", "to": "tg-ecs" },
+    { "id": "a-to-tg-lambda", "from": "service-a", "to": "tg-lambda" },
+    { "id": "b-to-tg-ec2", "from": "service-b", "to": "tg-ec2" },
+    { "id": "tg-ecs-to-ecs", "from": "tg-ecs", "to": "ecs" },
+    { "id": "tg-lambda-to-lambda", "from": "tg-lambda", "to": "lambda" },
+    { "id": "tg-ec2-to-ec2", "from": "tg-ec2", "to": "ec2" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "Managed Service", "items": ["AWS가 네트워크 인프라를 운영하는 완전 관리형 서비스", "애플리케이션 파드에 사이드카 컨테이너를 추가하지 않음", "설정: AWS Console, CLI, CloudFormation, Terraform"] },
+    { "dot": "cyan", "title": "데이터 경로", "items": ["App → AWS PrivateLink → VPC Lattice → Target", "VPC 1, VPC 2, VPC 3은 각각 VPC Association으로 하나의 Service Network에 연결", "EKS 파드, ECS 태스크, Lambda 함수, EC2 인스턴스를 같은 Service Network에서 연결"] }
+  ]
+}

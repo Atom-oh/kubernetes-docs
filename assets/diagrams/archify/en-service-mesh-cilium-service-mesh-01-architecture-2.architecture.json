@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF Hook Points and Packet Path",
+    "output": "en-service-mesh-cilium-service-mesh-01-architecture-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      480
+    ],
+    "views": [
+      {
+        "id": "rx-path",
+        "label": "Ingress path (RX)",
+        "focus": [
+          "nic",
+          "xdp",
+          "tc-ingress",
+          "netstack",
+          "socket",
+          "app"
+        ],
+        "note": "A packet arriving at the NIC passes the XDP and TC Ingress hooks, then the network stack and socket layer, before reaching the application."
+      },
+      {
+        "id": "tx-path",
+        "label": "Egress path (TX)",
+        "focus": [
+          "app",
+          "tc-egress",
+          "nic"
+        ],
+        "note": "Packets sent by the application leave through the TC Egress hook to the NIC."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "nic",
+      "type": "external",
+      "label": "NIC",
+      "sublabel": "hardware (RX / TX)",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "xdp",
+      "type": "security",
+      "label": "XDP Hook",
+      "sublabel": "NIC driver",
+      "pos": [
+        250,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "eBPF"
+    },
+    {
+      "id": "tc-ingress",
+      "type": "security",
+      "label": "TC Ingress Hook",
+      "sublabel": "network stack entry",
+      "pos": [
+        460,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "eBPF"
+    },
+    {
+      "id": "netstack",
+      "type": "backend",
+      "label": "Network Stack",
+      "sublabel": "kernel L3/L4",
+      "pos": [
+        690,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "socket",
+      "type": "security",
+      "label": "Socket Layer",
+      "sublabel": "Socket Operations",
+      "pos": [
+        900,
+        110
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "eBPF"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "pod process",
+      "pos": [
+        1110,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "tc-egress",
+      "type": "security",
+      "label": "TC Egress Hook",
+      "sublabel": "network stack exit",
+      "pos": [
+        460,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "eBPF"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Linux kernel",
+      "wraps": [
+        "xdp",
+        "tc-ingress",
+        "netstack",
+        "socket",
+        "tc-egress"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "nic-xdp",
+      "from": "nic",
+      "to": "xdp",
+      "label": "ingress (RX)",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "xdp-tc",
+      "from": "xdp",
+      "to": "tc-ingress",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tc-netstack",
+      "from": "tc-ingress",
+      "to": "netstack",
+      "variant": "emphasis"
+    },
+    {
+      "id": "netstack-socket",
+      "from": "netstack",
+      "to": "socket",
+      "variant": "emphasis"
+    },
+    {
+      "id": "socket-app",
+      "from": "socket",
+      "to": "app",
+      "variant": "emphasis"
+    },
+    {
+      "id": "app-tc-egress",
+      "from": "app",
+      "to": "tc-egress",
+      "label": "egress (TX)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "tc-egress-nic",
+      "from": "tc-egress",
+      "to": "nic",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "eBPF hook points used by Cilium",
+      "items": [
+        "XDP: ultra-fast packet processing and DDoS protection in the NIC driver",
+        "TC: packet filtering and redirection at the network stack entry",
+        "Socket Operations: connection acceleration at the socket level"
+      ]
+    }
+  ]
+}

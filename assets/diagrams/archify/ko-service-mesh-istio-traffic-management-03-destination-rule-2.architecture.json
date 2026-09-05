@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Subset의 본질",
+    "output": "ko-service-mesh-istio-traffic-management-03-destination-rule-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Service"
+        },
+        "cloud": {
+          "label": "Subset"
+        },
+        "backend": {
+          "label": "파드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "subset-definition",
+        "label": "Subset 정의",
+        "focus": [
+          "service",
+          "subset-v1",
+          "subset-v2"
+        ],
+        "note": "DestinationRule은 reviews 서비스 안에 version 레이블 기준으로 v1, v2 두 Subset을 정의한다."
+      },
+      {
+        "id": "label-matching",
+        "label": "레이블 매칭",
+        "focus": [
+          "subset-v1",
+          "subset-v2",
+          "pod-v1-abc",
+          "pod-v1-def",
+          "pod-v2-xyz"
+        ],
+        "note": "각 Subset은 labels 조건과 일치하는 파드만 포함한다. version=v1 파드 두 개는 v1에, version=v2 파드는 v2에 속한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "service",
+      "type": "frontend",
+      "label": "Kubernetes Service",
+      "sublabel": "reviews",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "subset-v1",
+      "type": "cloud",
+      "label": "Subset: v1",
+      "sublabel": "labels: version=v1",
+      "pos": [
+        340,
+        150
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "subset-v2",
+      "type": "cloud",
+      "label": "Subset: v2",
+      "sublabel": "labels: version=v2",
+      "pos": [
+        340,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod-v1-abc",
+      "type": "backend",
+      "label": "reviews-v1-abc",
+      "sublabel": "version=v1",
+      "pos": [
+        680,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pod-v1-def",
+      "type": "backend",
+      "label": "reviews-v1-def",
+      "sublabel": "version=v1",
+      "pos": [
+        680,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pod-v2-xyz",
+      "type": "backend",
+      "label": "reviews-v2-xyz",
+      "sublabel": "version=v2",
+      "pos": [
+        680,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "DestinationRule Subset 정의",
+      "wraps": [
+        "subset-v1",
+        "subset-v2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "실제 파드",
+      "wraps": [
+        "pod-v1-abc",
+        "pod-v1-def",
+        "pod-v2-xyz"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "service-to-v1",
+      "from": "service",
+      "to": "subset-v1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "service-to-v2",
+      "from": "service",
+      "to": "subset-v2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "v1-to-abc",
+      "from": "subset-v1",
+      "to": "pod-v1-abc",
+      "label": "레이블 매칭",
+      "variant": "dashed"
+    },
+    {
+      "id": "v1-to-def",
+      "from": "subset-v1",
+      "to": "pod-v1-def",
+      "label": "레이블 매칭",
+      "variant": "dashed"
+    },
+    {
+      "id": "v2-to-xyz",
+      "from": "subset-v2",
+      "to": "pod-v2-xyz",
+      "label": "레이블 매칭",
+      "variant": "dashed"
+    }
+  ]
+}

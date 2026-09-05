@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 관찰성 개념",
+    "output": "ko-service-mesh-istio-02-basic-concepts-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "파드 내 워크로드 / 사이드카"
+        },
+        "database": {
+          "label": "텔레메트리 수집 백엔드"
+        },
+        "frontend": {
+          "label": "시각화 / 대시보드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "metrics",
+        "label": "메트릭 경로",
+        "focus": [
+          "envoy",
+          "prometheus",
+          "grafana",
+          "kiali"
+        ],
+        "note": "Envoy가 자동 생성한 istio_requests_total 등 메트릭을 Prometheus가 수집하고 Grafana와 Kiali가 조회한다."
+      },
+      {
+        "id": "traces",
+        "label": "분산 추적 경로",
+        "focus": [
+          "envoy",
+          "jaeger",
+          "jaegerui"
+        ],
+        "note": "meshConfig.enableTracing으로 켠 트레이스를 Envoy가 Jaeger collector(:9411)로 보내고 Jaeger UI에서 분석한다."
+      },
+      {
+        "id": "logs",
+        "label": "로그 경로",
+        "focus": [
+          "envoy",
+          "logging"
+        ],
+        "note": "Envoy가 남기는 로그는 별도의 로깅 시스템으로 전달된다."
+      }
+    ],
+    "viewBox": [
+      900,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "비즈니스 컨테이너",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카",
+      "pos": [
+        60,
+        310
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        360,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger",
+      "sublabel": "분산 추적",
+      "pos": [
+        360,
+        310
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "logging",
+      "type": "database",
+      "label": "로깅 시스템",
+      "sublabel": "로그 수집",
+      "pos": [
+        360,
+        450
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "서비스 메시 대시보드",
+      "pos": [
+        660,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "대시보드",
+      "pos": [
+        660,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "jaegerui",
+      "type": "frontend",
+      "label": "Jaeger UI",
+      "sublabel": "트레이스 분석",
+      "pos": [
+        660,
+        310
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "파드",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "트래픽",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "envoy-prometheus",
+      "from": "envoy",
+      "to": "prometheus",
+      "label": "메트릭",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-jaeger",
+      "from": "envoy",
+      "to": "jaeger",
+      "label": "트레이스",
+      "labelDx": 40
+    },
+    {
+      "id": "envoy-logging",
+      "from": "envoy",
+      "to": "logging",
+      "label": "로그"
+    },
+    {
+      "id": "prometheus-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "시각화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jaeger-jaegerui",
+      "from": "jaeger",
+      "to": "jaegerui",
+      "label": "분석"
+    },
+    {
+      "id": "kiali-prometheus",
+      "from": "kiali",
+      "to": "prometheus",
+      "label": "쿼리",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "자동 생성되는 주요 메트릭",
+      "items": [
+        "istio_requests_total — 총 요청 수",
+        "istio_request_duration_milliseconds — 요청 지연 시간",
+        "istio_request_bytes / istio_response_bytes — 요청·응답 크기",
+        "istio_tcp_connections_opened_total — TCP 연결 수"
+      ]
+    }
+  ]
+}

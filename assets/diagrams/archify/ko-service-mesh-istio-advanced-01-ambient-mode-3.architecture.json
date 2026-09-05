@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ztunnel 역할",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      320
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Pod",
+      "pos": [
+        30,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "DaemonSet",
+      "pos": [
+        210,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "mtls",
+      "type": "security",
+      "label": "mTLS",
+      "sublabel": "암호화",
+      "pos": [
+        400,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "telemetry",
+      "type": "backend",
+      "label": "L4 Telemetry",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        570,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "Service Account",
+      "pos": [
+        740,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "l4lb",
+      "type": "backend",
+      "label": "L4 Load Balancing",
+      "pos": [
+        910,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "backend",
+      "label": "Target Service",
+      "pos": [
+        1090,
+        110
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ztunnel 기능",
+      "wraps": [
+        "mtls",
+        "telemetry",
+        "identity",
+        "l4lb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-ztunnel",
+      "from": "app",
+      "to": "ztunnel",
+      "label": "TCP 연결",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "ztunnel-to-mtls",
+      "from": "ztunnel",
+      "to": "mtls"
+    },
+    {
+      "id": "mtls-to-telemetry",
+      "from": "mtls",
+      "to": "telemetry"
+    },
+    {
+      "id": "telemetry-to-identity",
+      "from": "telemetry",
+      "to": "identity"
+    },
+    {
+      "id": "identity-to-l4lb",
+      "from": "identity",
+      "to": "l4lb"
+    },
+    {
+      "id": "l4lb-to-target",
+      "from": "l4lb",
+      "to": "target",
+      "label": "전송",
+      "variant": "emphasis",
+      "labelDy": -24,
+      "labelDx": 40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "ztunnel 특징",
+      "items": [
+        "Rust로 작성 (성능 최적화)",
+        "노드마다 DaemonSet으로 배포",
+        "CNI 플러그인과 통합, eBPF 기반 트래픽 리다이렉션"
+      ]
+    }
+  ]
+}

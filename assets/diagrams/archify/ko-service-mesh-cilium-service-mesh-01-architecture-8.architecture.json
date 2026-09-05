@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Identity",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "assignment",
+        "label": "Identity 할당 흐름",
+        "focus": [
+          "pod",
+          "labels",
+          "identity",
+          "secctx"
+        ],
+        "note": "Pod의 레이블이 숫자 Identity로 변환되고, 그 Identity가 정책 평가의 기준이 된다."
+      },
+      {
+        "id": "components",
+        "label": "Identity 구성 요소",
+        "focus": [
+          "namespace",
+          "serviceaccount",
+          "podlabels",
+          "identity"
+        ],
+        "note": "네임스페이스, 서비스 어카운트, Pod 레이블이 결합되어 하나의 Cilium Identity를 만든다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "워크로드",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "labels",
+      "type": "backend",
+      "label": "Labels",
+      "sublabel": "Pod 속성",
+      "pos": [
+        260,
+        80
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Cilium Identity",
+      "sublabel": "숫자 ID",
+      "pos": [
+        520,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "secctx",
+      "type": "security",
+      "label": "Security Context",
+      "sublabel": "정책 평가 기준",
+      "pos": [
+        780,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "namespace",
+      "type": "backend",
+      "label": "Namespace",
+      "sublabel": "io.kubernetes.pod.namespace",
+      "pos": [
+        280,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "serviceaccount",
+      "type": "backend",
+      "label": "Service Account",
+      "sublabel": "serviceaccount",
+      "pos": [
+        520,
+        290
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "podlabels",
+      "type": "backend",
+      "label": "Pod Labels",
+      "sublabel": "app 등 사용자 레이블",
+      "pos": [
+        760,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Identity 할당",
+      "wraps": [
+        "pod",
+        "labels",
+        "identity",
+        "secctx"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Identity 구성 요소",
+      "wraps": [
+        "namespace",
+        "serviceaccount",
+        "podlabels"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-labels",
+      "from": "pod",
+      "to": "labels",
+      "variant": "emphasis"
+    },
+    {
+      "id": "labels-identity",
+      "from": "labels",
+      "to": "identity",
+      "label": "ID 변환",
+      "variant": "emphasis"
+    },
+    {
+      "id": "identity-secctx",
+      "from": "identity",
+      "to": "secctx",
+      "label": "정책 기준",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ns-identity",
+      "from": "namespace",
+      "to": "identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sa-identity",
+      "from": "serviceaccount",
+      "to": "identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pl-identity",
+      "from": "podlabels",
+      "to": "identity",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Identity 예시",
+      "items": [
+        "12345 = k8s:app=frontend, k8s:io.kubernetes.pod.namespace=default",
+        "예약 Identity: 1 reserved:host, 2 reserved:world, 3 reserved:health"
+      ]
+    }
+  ]
+}

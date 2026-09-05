@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Primary-Remote 토폴로지",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "단일 Control Plane",
+        "focus": [
+          "istiod",
+          "service-b",
+          "service-c"
+        ],
+        "note": "Primary 클러스터의 Istiod 하나가 Remote 클러스터의 Data Plane에 구성을 푸시한다."
+      },
+      {
+        "id": "data-plane",
+        "label": "mTLS Data Plane",
+        "focus": [
+          "service-a",
+          "service-b",
+          "service-c"
+        ],
+        "note": "클러스터 경계를 넘어도 서비스 간 통신은 mTLS로 보호된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Control Plane",
+      "tag": "단일 장애점",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Data Plane",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Data Plane",
+      "pos": [
+        500,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Data Plane",
+      "pos": [
+        760,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Primary Cluster · us-east-1",
+      "wraps": [
+        "istiod",
+        "service-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Remote Cluster · us-west-2",
+      "wraps": [
+        "service-b",
+        "service-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-b",
+      "from": "istiod",
+      "to": "service-b",
+      "label": "구성 푸시",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "push-c",
+      "from": "istiod",
+      "to": "service-c",
+      "label": "구성 푸시",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "mtls-a-b",
+      "from": "service-a",
+      "to": "service-b",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "mtls-b-c",
+      "from": "service-b",
+      "to": "service-c",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Primary-Remote 특징",
+      "items": [
+        "하나의 Control Plane (Primary)",
+        "여러 Data Plane (Remote)",
+        "간단한 관리",
+        "단일 장애점 (Primary)"
+      ]
+    }
+  ]
+}

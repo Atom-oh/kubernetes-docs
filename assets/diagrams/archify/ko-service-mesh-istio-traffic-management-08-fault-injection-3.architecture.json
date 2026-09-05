@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "마이크로서비스 Cascade Failure 테스트",
+    "output": "ko-service-mesh-istio-traffic-management-08-fault-injection-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "정상 요청 경로",
+        "focus": [
+          "frontend",
+          "order",
+          "payment",
+          "inventory"
+        ],
+        "note": "프론트엔드 요청이 주문 서비스를 거쳐 결제·재고 서비스로 전달된다."
+      },
+      {
+        "id": "fault",
+        "label": "장애 주입",
+        "focus": [
+          "payment",
+          "order"
+        ],
+        "note": "VirtualService fault.abort로 결제 서비스 요청의 30%가 HTTP 503으로 실패한다."
+      },
+      {
+        "id": "breaker",
+        "label": "Circuit Breaker",
+        "focus": [
+          "order",
+          "frontend",
+          "inventory"
+        ],
+        "note": "DestinationRule outlierDetection이 작동해 프론트엔드에 안전하게 전파되고 재고 서비스는 영향받지 않는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "프론트엔드",
+      "sublabel": "사용자 메시지 표시",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "주문 서비스",
+      "sublabel": "order-service",
+      "pos": [
+        380,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "Circuit Breaker"
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "결제 서비스",
+      "sublabel": "payment-service",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "Fault Injection"
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "재고 서비스",
+      "sublabel": "inventory-service",
+      "pos": [
+        720,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend-to-order",
+      "from": "frontend",
+      "to": "order",
+      "label": "주문 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "order-to-payment",
+      "from": "order",
+      "to": "payment",
+      "label": "결제 호출",
+      "fromSide": "top",
+      "toSide": "left",
+      "labelDx": -50
+    },
+    {
+      "id": "order-to-inventory",
+      "from": "order",
+      "to": "inventory",
+      "label": "재고 확인",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "payment-fails",
+      "from": "payment",
+      "to": "order",
+      "label": "30% 실패 (503)",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelDx": 64,
+      "labelDy": 34
+    },
+    {
+      "id": "order-breaker",
+      "from": "order",
+      "to": "frontend",
+      "label": "Circuit Breaker",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "장애 주입 (VirtualService)",
+      "items": [
+        "payment-service 요청의 30%를 abort",
+        "httpStatus 503 반환"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Circuit Breaker (DestinationRule)",
+      "items": [
+        "outlierDetection consecutiveErrors 5",
+        "interval 30s / baseEjectionTime 30s"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "테스트 목표",
+      "items": [
+        "결제 실패를 주문 서비스가 graceful하게 처리하는가",
+        "재고 서비스는 정상 작동하는가",
+        "프론트엔드에 적절한 사용자 메시지가 표시되는가"
+      ]
+    }
+  ]
+}

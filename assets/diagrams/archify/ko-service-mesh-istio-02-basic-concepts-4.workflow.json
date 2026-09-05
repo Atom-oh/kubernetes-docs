@@ -1,0 +1,211 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio 주요 버전 역사",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "릴리스"
+        },
+        "cloud": {
+          "label": "마일스톤"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "early",
+        "label": "탄생과 GA (2017–2019)",
+        "focus": [
+          "v0_1",
+          "v1_0",
+          "v1_1"
+        ],
+        "note": "2017년 5월 Google·IBM·Lyft가 0.1을 발표하고, 2018년 7월 1.0으로 프로덕션 준비를 마쳤다."
+      },
+      {
+        "id": "istiod",
+        "label": "Istiod 통합 (2020–2022)",
+        "focus": [
+          "v1_1",
+          "v1_5",
+          "v1_10",
+          "v1_13"
+        ],
+        "note": "1.5에서 Mixer·Pilot·Citadel·Galley가 단일 바이너리 Istiod로 통합된 중요한 전환점이다."
+      },
+      {
+        "id": "ambient",
+        "label": "Ambient Mode 이후 (2023–2025)",
+        "focus": [
+          "v1_13",
+          "v1_20",
+          "v1_22",
+          "v1_28"
+        ],
+        "note": "1.20에서 Ambient Mode가 도입되었고, 현재 버전은 1.28이다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "y17",
+      "label": "2017–2019"
+    },
+    {
+      "id": "y20",
+      "label": "2020–2021"
+    },
+    {
+      "id": "y22",
+      "label": "2022–2023"
+    },
+    {
+      "id": "y24",
+      "label": "2024–2025"
+    }
+  ],
+  "mainPath": [
+    "v0_1",
+    "v1_0",
+    "v1_1",
+    "v1_5",
+    "v1_10",
+    "v1_13",
+    "v1_20",
+    "v1_22",
+    "v1_28"
+  ],
+  "nodes": [
+    {
+      "id": "v0_1",
+      "lane": "y17",
+      "col": 0,
+      "type": "backend",
+      "label": "Istio 0.1",
+      "sublabel": "최초 발표 · 2017-05",
+      "width": 164
+    },
+    {
+      "id": "v1_0",
+      "lane": "y17",
+      "col": 1,
+      "type": "cloud",
+      "label": "Istio 1.0",
+      "sublabel": "GA · 프로덕션 준비 · 2018-07",
+      "width": 164
+    },
+    {
+      "id": "v1_1",
+      "lane": "y17",
+      "col": 2,
+      "type": "backend",
+      "label": "Istio 1.1",
+      "sublabel": "성능 개선 · 2019-03",
+      "width": 164
+    },
+    {
+      "id": "v1_5",
+      "lane": "y20",
+      "col": 2,
+      "type": "cloud",
+      "label": "Istio 1.5",
+      "sublabel": "Istiod 통합 · 2020-03",
+      "width": 164
+    },
+    {
+      "id": "v1_10",
+      "lane": "y20",
+      "col": 3,
+      "type": "backend",
+      "label": "Istio 1.10",
+      "sublabel": "Discovery Selectors · 2021-05",
+      "width": 164
+    },
+    {
+      "id": "v1_13",
+      "lane": "y22",
+      "col": 3,
+      "type": "backend",
+      "label": "Istio 1.13",
+      "sublabel": "Gateway API · 2022-02",
+      "width": 164
+    },
+    {
+      "id": "v1_20",
+      "lane": "y22",
+      "col": 4,
+      "type": "cloud",
+      "label": "Istio 1.20",
+      "sublabel": "Ambient Mode · 2023-11",
+      "width": 164
+    },
+    {
+      "id": "v1_22",
+      "lane": "y24",
+      "col": 4,
+      "type": "backend",
+      "label": "Istio 1.22",
+      "sublabel": "안정성 개선 · 2024-05",
+      "width": 164
+    },
+    {
+      "id": "v1_28",
+      "lane": "y24",
+      "col": 5,
+      "type": "backend",
+      "label": "Istio 1.28",
+      "sublabel": "현재 버전 · 2025-01",
+      "width": 164
+    }
+  ],
+  "edges": [
+    {
+      "from": "v0_1",
+      "to": "v1_0"
+    },
+    {
+      "from": "v1_0",
+      "to": "v1_1"
+    },
+    {
+      "from": "v1_1",
+      "to": "v1_5"
+    },
+    {
+      "from": "v1_5",
+      "to": "v1_10"
+    },
+    {
+      "from": "v1_10",
+      "to": "v1_13"
+    },
+    {
+      "from": "v1_13",
+      "to": "v1_20"
+    },
+    {
+      "from": "v1_20",
+      "to": "v1_22"
+    },
+    {
+      "from": "v1_22",
+      "to": "v1_28"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "1.5 전환점: Istiod 통합",
+      "items": [
+        "Mixer·Pilot·Citadel·Galley 4개 컴포넌트가 단일 바이너리 Istiod로 통합",
+        "Mixer는 완전히 제거되고 기능이 Envoy로 이동",
+        "복잡도 감소, Mixer 제거로 지연 시간 50% 감소, 운영 단순화"
+      ]
+    }
+  ]
+}

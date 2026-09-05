@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Log Layers",
+    "locale": "en",
+    "output": "en-service-mesh-istio-observability-03-logging-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Workload "
+        },
+        "cloud": {
+          "label": "Control plane "
+        },
+        "messagebus": {
+          "label": "Collector "
+        },
+        "database": {
+          "label": "Log store "
+        },
+        "frontend": {
+          "label": "Dashboard "
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "access-log-path",
+        "label": "Access log collection path",
+        "focus": [
+          "app",
+          "envoy",
+          "promtail",
+          "fluentbit",
+          "otelcol"
+        ],
+        "note": "Promtail, Fluent Bit, and the OpenTelemetry Collector pick up the access logs the Envoy sidecar emits."
+      },
+      {
+        "id": "storage-query",
+        "label": "Storage and query",
+        "focus": [
+          "promtail",
+          "fluentbit",
+          "otelcol",
+          "loki",
+          "es",
+          "grafana"
+        ],
+        "note": "Collected logs land in Loki and Elasticsearch and are queried from Grafana."
+      },
+      {
+        "id": "control-path",
+        "label": "Log configuration control path",
+        "focus": [
+          "telemetry",
+          "istiod",
+          "envoy"
+        ],
+        "note": "istiod pushes the log configuration declared through the Telemetry API down to the Envoy proxies."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Container",
+      "sublabel": "handles HTTP/TCP requests",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar",
+      "pos": [
+        310,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "emits access logs"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "pushes Envoy config",
+      "pos": [
+        700,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "telemetry",
+      "type": "cloud",
+      "label": "Telemetry API",
+      "sublabel": "declares log config",
+      "pos": [
+        940,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "promtail",
+      "type": "messagebus",
+      "label": "Promtail Agent",
+      "sublabel": "DaemonSet",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "otelcol",
+      "type": "messagebus",
+      "label": "OpenTelemetry Collector",
+      "sublabel": "OTLP receiver",
+      "pos": [
+        310,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "messagebus",
+      "label": "Fluent Bit",
+      "sublabel": "DaemonSet",
+      "pos": [
+        700,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Grafana Loki",
+      "sublabel": "LogQL",
+      "pos": [
+        310,
+        410
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "es",
+      "type": "database",
+      "label": "Elasticsearch",
+      "sublabel": "Query DSL",
+      "pos": [
+        700,
+        410
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "log dashboards",
+      "pos": [
+        310,
+        580
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application Pod",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio control plane",
+      "wraps": [
+        "istiod",
+        "telemetry"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Log Collection",
+      "wraps": [
+        "promtail",
+        "otelcol",
+        "fluentbit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Log storage & query",
+      "wraps": [
+        "loki",
+        "es"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Visualization",
+      "wraps": [
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "traffic"
+    },
+    {
+      "id": "envoy-promtail",
+      "from": "envoy",
+      "to": "promtail",
+      "label": "Access Log",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-otelcol",
+      "from": "envoy",
+      "to": "otelcol",
+      "label": "OTLP logs",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "envoy-fluentbit",
+      "from": "envoy",
+      "to": "fluentbit",
+      "label": "Access Log",
+      "variant": "emphasis"
+    },
+    {
+      "id": "istiod-envoy",
+      "from": "istiod",
+      "to": "envoy",
+      "label": "configure"
+    },
+    {
+      "id": "telemetry-istiod",
+      "from": "telemetry",
+      "to": "istiod",
+      "label": "apply config",
+      "variant": "dashed"
+    },
+    {
+      "id": "promtail-loki",
+      "from": "promtail",
+      "to": "loki"
+    },
+    {
+      "id": "otelcol-loki",
+      "from": "otelcol",
+      "to": "loki"
+    },
+    {
+      "id": "fluentbit-es",
+      "from": "fluentbit",
+      "to": "es"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "label": "LogQL query",
+      "labelDy": 24
+    },
+    {
+      "id": "es-grafana",
+      "from": "es",
+      "to": "grafana",
+      "label": "Query DSL query"
+    }
+  ]
+}

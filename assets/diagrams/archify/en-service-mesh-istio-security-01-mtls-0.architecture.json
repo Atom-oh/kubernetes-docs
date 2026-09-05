@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio mTLS Communication and Certificate Issuance",
+    "locale": "en",
+    "output": "en-service-mesh-istio-security-01-mtls-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1140,
+      470
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Application container"
+        },
+        "security": {
+          "label": "Envoy sidecar (mTLS termination)"
+        },
+        "cloud": {
+          "label": "Istio control plane"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cert-issuance",
+        "label": "Certificate issuance",
+        "focus": [
+          "istiod",
+          "envoy1",
+          "envoy2"
+        ],
+        "note": "istiod issues SPIFFE-ID-based X.509 certificates; the Istio Agent delivers them to each Envoy via SDS."
+      },
+      {
+        "id": "mtls-path",
+        "label": "mTLS traffic path",
+        "focus": [
+          "app1",
+          "envoy1",
+          "envoy2",
+          "app2"
+        ],
+        "note": "Traffic inside a pod stays plaintext; between pods, Envoy encrypts it with mTLS."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "App container",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Certificate issuance",
+      "tag": "CA",
+      "pos": [
+        490,
+        100
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        710,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "App container",
+      "pos": [
+        930,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod A",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod B",
+      "wraps": [
+        "envoy2",
+        "app2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-to-envoy1",
+      "from": "app1",
+      "to": "envoy1",
+      "label": "Plaintext"
+    },
+    {
+      "id": "envoy1-to-envoy2",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS encrypted (both ways)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy2-to-app2",
+      "from": "envoy2",
+      "to": "app2",
+      "label": "Plaintext"
+    },
+    {
+      "id": "istiod-to-envoy1",
+      "from": "istiod",
+      "to": "envoy1",
+      "label": "Certificate",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-to-envoy2",
+      "from": "istiod",
+      "to": "envoy2",
+      "label": "Certificate",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Identity provisioning",
+      "items": [
+        "Istio Agent sends a CSR to istiod",
+        "istiod issues an X.509 certificate based on the SPIFFE ID",
+        "Agent delivers the certificate to Envoy over the SDS protocol",
+        "Automatic certificate renewal (default TTL: 24 hours)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Traffic path",
+      "items": [
+        "Application-to-sidecar traffic is local plaintext inside the pod",
+        "Traffic between Envoy sidecars is automatically encrypted and authenticated with mTLS",
+        "SPIFFE ID: spiffe://cluster.local/ns/<ns>/sa/<sa>"
+      ]
+    }
+  ]
+}

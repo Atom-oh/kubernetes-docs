@@ -31,7 +31,9 @@ Argo Rollouts is a Progressive Delivery controller for Kubernetes that provides 
 
 ### Benefits of Istio Integration
 
-![Side-by-side comparison showing that without Argo Rollouts, two static Deployments require a person to hand-edit the VirtualService, while with Argo Rollouts and Istio a single Rollout resource drives automatic, metric-verified traffic adjustment through an Analysis step.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-08-argo-rollouts-0.svg)
+![Side-by-side comparison of hand-editing the VirtualService for two static Deployments versus Argo Rollouts with Istio, where a Rollout drives automatic, metric-verified traffic adjustment through an Analysis step.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-0.html)
 
 **Key Benefits**:
 - ✅ **Automated Canary deployment**: Automatic VirtualService weight adjustment
@@ -52,11 +54,15 @@ Argo Rollouts is a Progressive Delivery controller for Kubernetes that provides 
 
 ### Overall Architecture
 
-![End-to-end architecture showing Argo Rollouts as the automation hub that adjusts VirtualService weights and pod counts, Istiod syncing config into the data plane, traffic flowing Gateway to VirtualService to DestinationRule to stable/canary services and pods, and Prometheus/AnalysisRun closing the feedback loop back to Rollouts.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-08-argo-rollouts-1.svg)
+![Overall architecture in which Argo Rollouts, deployed by ArgoCD, adjusts VirtualService weights and stable/canary pods, Istiod syncs config into the data plane, traffic flows Gateway to VirtualService to DestinationRule to Services and pods, and Prometheus and AnalysisRun feed success/failure back to Rollouts.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-1.html)
 
 ### Traffic Flow
 
-![Sequence diagram of one request during a 90/10 canary split: Argo Rollouts sets the VirtualService weight, a user request is routed by the Gateway and VirtualService to either the stable or canary pod inside an alt fragment, the response returns, and pod metrics feed back into Rollouts' decision to progress or roll back the weight.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-08-argo-rollouts-2.svg)
+![Sequence of one request during a 90/10 canary split: Argo Rollouts sets the VirtualService weight, the Gateway and VirtualService route the request to the stable or canary pod, and Prometheus metrics drive Rollouts to auto progress or roll back.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-2.html)
 
 ## Core Concepts
 
@@ -225,7 +231,9 @@ spec:
 ```
 
 **AnalysisRun**:
-![Flowchart of an AnalysisRun's decision loop: it waits and measures success rate repeatedly, checking whether the rate is at least 95 percent and whether five measurements are complete before proceeding, or counting failures toward an automatic rollback after two consecutive misses.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-08-argo-rollouts-3.svg)
+![AnalysisRun decision flow: success rate is measured every 30 seconds, a result at or above 95 percent moves on to the next measurement, five passes proceed to the next step, and hitting the failureLimit of two failures triggers an automatic rollback.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-3.html)
 
 ## Setup and Configuration
 
@@ -444,7 +452,9 @@ spec:
 ```
 
 **Traffic transition graph**:
-![Linear progression of six canary weight steps from 0% to 100%, each holding for a wait window before the next weight increase.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-08-argo-rollouts-4.svg)
+![Linear progression of six canary weight steps from 0% to 100%, each holding for a 5- or 10-minute wait before the next increase, with the 50% step marked as the current stage.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-4.html)
 
 ### 2. Header-based Routing
 
@@ -639,7 +649,9 @@ spec:
 ```
 
 **Behavior**:
-![Flowchart showing rollout step 2 launching a background AnalysisRun that samples every 30 seconds and can trigger an immediate rollback, while the main rollout path continues on to step 3 independently.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-08-argo-rollouts-5.svg)
+![Workflow showing the Rollout advancing from step 1 to step 3 while a background AnalysisRun started at step 2 measures every 30 seconds and triggers an immediate rollback on failure.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-5.html)
 
 ### 3. Composite Metric Analysis
 
@@ -803,7 +815,9 @@ spec:
 ```
 
 **Operation flow**:
-![Flowchart of a blue/green deployment: a new version is smoke-tested in Preview, gated by manual approval, switched from blue to green, verified by a comprehensive post-analysis, and either rolled back or completed with delayed cleanup of the old version.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-08-argo-rollouts-6.svg)
+![Blue/green rollout flow: a new version is smoke-tested in Preview, gated by manual approval, switched from Blue to Green, checked by a comprehensive post-analysis, then either rolled back or completed after delayed cleanup of the old version.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-08-argo-rollouts-6.html)
 
 ### 2. Canary with Experiment
 

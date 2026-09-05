@@ -1,0 +1,281 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Multi-cluster Decision Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-advanced-02-multi-cluster-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Start of review"
+        },
+        "security": {
+          "label": "Decision question"
+        },
+        "backend": {
+          "label": "Self-managed Istio"
+        },
+        "cloud": {
+          "label": "AWS managed"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cluster-region",
+        "label": "Clusters and regions",
+        "focus": [
+          "start",
+          "q1",
+          "q2",
+          "single"
+        ],
+        "note": "With a single cluster or no need for regional separation, single-cluster Istio is the simplest choice."
+      },
+      {
+        "id": "dr-l7-ops",
+        "label": "DR, L7, and ops capacity",
+        "focus": [
+          "q3",
+          "q4",
+          "q5",
+          "lattice"
+        ],
+        "note": "If DR/HA or strong L7 features are not required, or the team cannot absorb the operational complexity, choose AWS-managed VPC Lattice."
+      },
+      {
+        "id": "hybrid-option",
+        "label": "Recommended mix and option",
+        "focus": [
+          "q5",
+          "hybrid",
+          "multi"
+        ],
+        "note": "Passing all five questions leads to the recommended Istio + Lattice hybrid, with multi-cluster Istio kept as an option for full control."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "questions",
+      "label": "Five questions"
+    },
+    {
+      "id": "choices",
+      "label": "Choices"
+    },
+    {
+      "id": "option",
+      "label": "Optional alternative"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q1",
+    "q2",
+    "q3",
+    "q4",
+    "q5",
+    "hybrid"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "single",
+      "lattice",
+      "multi"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "hybrid"
+      },
+      {
+        "from": "start",
+        "to": "single"
+      },
+      {
+        "from": "start",
+        "to": "lattice"
+      },
+      {
+        "from": "hybrid",
+        "to": "multi"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "questions",
+      "col": 0,
+      "type": "frontend",
+      "label": "Multi-cluster review",
+      "sublabel": "Review before adoption",
+      "width": 168
+    },
+    {
+      "id": "q1",
+      "lane": "questions",
+      "col": 1,
+      "type": "security",
+      "label": "Already multi-cluster?",
+      "width": 176
+    },
+    {
+      "id": "q2",
+      "lane": "questions",
+      "col": 2,
+      "type": "security",
+      "label": "Multi-region needed?",
+      "width": 150
+    },
+    {
+      "id": "q3",
+      "lane": "questions",
+      "col": 3,
+      "type": "security",
+      "label": "DR/HA required?",
+      "width": 140
+    },
+    {
+      "id": "q4",
+      "lane": "questions",
+      "col": 4,
+      "type": "security",
+      "label": "Strong L7 needed?",
+      "width": 150
+    },
+    {
+      "id": "q5",
+      "lane": "questions",
+      "col": 5,
+      "type": "security",
+      "label": "Ops capacity enough?",
+      "width": 176
+    },
+    {
+      "id": "single",
+      "lane": "choices",
+      "col": 1,
+      "type": "backend",
+      "label": "Single-cluster Istio",
+      "sublabel": "Simplest",
+      "width": 166
+    },
+    {
+      "id": "lattice",
+      "lane": "choices",
+      "col": 3,
+      "type": "cloud",
+      "label": "AWS VPC Lattice",
+      "sublabel": "AWS managed",
+      "width": 140
+    },
+    {
+      "id": "hybrid",
+      "lane": "choices",
+      "col": 5,
+      "type": "backend",
+      "label": "Hybrid: Istio + Lattice",
+      "sublabel": "Best of both",
+      "tag": "Recommended",
+      "width": 176
+    },
+    {
+      "id": "multi",
+      "lane": "option",
+      "col": 5,
+      "type": "backend",
+      "label": "Multi-cluster Istio",
+      "sublabel": "Full control",
+      "width": 166
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q1",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q1",
+      "to": "q2",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q2",
+      "to": "q3",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q3",
+      "to": "q4",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q4",
+      "to": "q5",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q5",
+      "to": "hybrid",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q1",
+      "to": "single",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "single",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "lattice",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q4",
+      "to": "lattice",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q5",
+      "to": "lattice",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "hybrid",
+      "to": "multi",
+      "label": "Option",
+      "role": "async",
+      "variant": "dashed"
+    }
+  ]
+}

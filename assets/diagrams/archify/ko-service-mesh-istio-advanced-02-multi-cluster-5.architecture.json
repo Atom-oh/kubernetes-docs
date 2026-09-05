@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "패턴 2: VPC Lattice만 사용",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1000, 520]
+  },
+  "components": [
+    { "id": "app1", "type": "backend", "label": "App Services", "sublabel": "VPC 1 워크로드", "pos": [60, 120], "size": [160, 60] },
+    { "id": "app2", "type": "backend", "label": "App Services", "sublabel": "VPC 2 워크로드", "pos": [60, 340], "size": [160, 60] },
+    { "id": "svc1", "type": "cloud", "label": "Service 1", "sublabel": "Lattice Service", "pos": [420, 120], "size": [160, 60] },
+    { "id": "svc2", "type": "cloud", "label": "Service 2", "sublabel": "Lattice Service", "pos": [420, 340], "size": [160, 60] },
+    { "id": "sn", "type": "cloud", "label": "Service Network", "sublabel": "VPC 간 라우팅", "pos": [720, 230], "size": [180, 60], "tag": "관리형" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "VPC 1 · us-east-1", "wraps": ["app1"] },
+    { "kind": "region", "label": "VPC 2 · us-west-2", "wraps": ["app2"] },
+    { "kind": "region", "label": "AWS VPC Lattice", "wraps": ["svc1", "svc2", "sn"] }
+  ],
+  "connections": [
+    { "id": "app1-register", "from": "app1", "to": "svc1", "label": "등록", "variant": "emphasis" },
+    { "id": "app2-register", "from": "app2", "to": "svc2", "label": "등록", "variant": "emphasis" },
+    { "id": "svc1-route", "from": "svc1", "to": "sn", "label": "라우팅" },
+    { "id": "svc2-route", "from": "svc2", "to": "sn", "label": "라우팅" }
+  ]
+}

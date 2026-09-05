@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "자동 주소 할당 동작",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      660
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "prealloc",
+        "label": "가상 IP 사전 할당",
+        "focus": [
+          "istiod",
+          "envoy"
+        ],
+        "note": "ServiceEntry가 등록되면 Istiod가 xDS로 가상 IP 구성을 Envoy에 미리 푸시한다."
+      },
+      {
+        "id": "dns",
+        "label": "DNS 쿼리 응답",
+        "focus": [
+          "app",
+          "envoy"
+        ],
+        "note": "Envoy DNS Proxy가 외부 조회 없이 240.240.0.0/16 대역의 가상 IP로 즉시 응답한다."
+      },
+      {
+        "id": "http",
+        "label": "실제 호스트로 전달",
+        "focus": [
+          "app",
+          "envoy",
+          "external"
+        ],
+        "note": "가상 IP로 들어온 HTTP 요청을 실제 호스트에 매핑해 실제 IP로 전달하고 응답을 돌려준다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "앱 컨테이너"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy DNS Proxy",
+      "sublabel": "사이드카 · :15053"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "Istiod",
+      "sublabel": "컨트롤 플레인"
+    },
+    {
+      "id": "external",
+      "type": "external",
+      "label": "api.example.com",
+      "sublabel": "실제 서버"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 222,
+      "label": "ServiceEntry 등록 시 사전 할당"
+    },
+    {
+      "from": 240,
+      "to": 325,
+      "label": "DNS 쿼리 → 가상 IP 응답"
+    },
+    {
+      "from": 343,
+      "to": 595,
+      "label": "HTTP 요청 → 실제 호스트로 전달"
+    }
+  ],
+  "messages": [
+    {
+      "id": "xds-push",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 195,
+      "label": "xDS 구성 푸시 (가상 IP 할당)",
+      "variant": "dashed"
+    },
+    {
+      "id": "dns-query",
+      "from": "app",
+      "to": "envoy",
+      "y": 262,
+      "label": "DNS 쿼리 · api.example.com",
+      "note": "Envoy가 가상 IP 240.240.0.1 조회"
+    },
+    {
+      "id": "dns-reply",
+      "from": "envoy",
+      "to": "app",
+      "y": 305,
+      "label": "DNS 응답 · 240.240.0.1",
+      "variant": "return"
+    },
+    {
+      "id": "http-req",
+      "from": "app",
+      "to": "envoy",
+      "y": 365,
+      "label": "HTTP 요청 · 240.240.0.1:443",
+      "variant": "emphasis",
+      "note": "가상 IP → 실제 호스트 api.example.com 매핑"
+    },
+    {
+      "id": "real-dns",
+      "from": "envoy",
+      "to": "external",
+      "y": 410,
+      "label": "DNS 조회 (실제 IP)"
+    },
+    {
+      "id": "real-ip",
+      "from": "external",
+      "to": "envoy",
+      "y": 450,
+      "label": "203.0.113.10",
+      "variant": "return"
+    },
+    {
+      "id": "http-fwd",
+      "from": "envoy",
+      "to": "external",
+      "y": 495,
+      "label": "HTTP 요청 · 203.0.113.10:443",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ext-resp",
+      "from": "external",
+      "to": "envoy",
+      "y": 532,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "app-resp",
+      "from": "envoy",
+      "to": "app",
+      "y": 570,
+      "label": "응답",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 190,
+      "to": 205,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 257,
+      "to": 310,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 360,
+      "to": 575,
+      "type": "backend"
+    },
+    {
+      "participant": "external",
+      "from": 405,
+      "to": 538,
+      "type": "external"
+    }
+  ]
+}

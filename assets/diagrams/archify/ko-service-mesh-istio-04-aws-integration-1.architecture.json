@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ALB 아키텍처",
+    "output": "ko-service-mesh-istio-04-aws-integration-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "브라우저 / 외부 요청",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "Layer 7 · HTTP/HTTPS",
+      "pos": [
+        320,
+        228
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "gw1",
+      "type": "backend",
+      "label": "Gateway Pod 1",
+      "sublabel": "istio-ingressgateway",
+      "pos": [
+        720,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gw2",
+      "type": "backend",
+      "label": "Gateway Pod 2",
+      "sublabel": "istio-ingressgateway",
+      "pos": [
+        720,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "애플리케이션 파드",
+      "pos": [
+        1080,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "애플리케이션 파드",
+      "pos": [
+        1080,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "alb",
+        "gw1",
+        "gw2",
+        "svc-a",
+        "svc-b"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "gw1",
+        "gw2",
+        "svc-a",
+        "svc-b"
+      ],
+      "pad": 36
+    },
+    {
+      "kind": "region",
+      "label": "Istio Ingress Gateway",
+      "wraps": [
+        "gw1",
+        "gw2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "애플리케이션",
+      "wraps": [
+        "svc-a",
+        "svc-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-alb",
+      "from": "client",
+      "to": "alb",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-gw1",
+      "from": "alb",
+      "to": "gw1",
+      "label": "HTTP/2"
+    },
+    {
+      "id": "alb-gw2",
+      "from": "alb",
+      "to": "gw2",
+      "label": "HTTP/2"
+    },
+    {
+      "id": "gw1-a",
+      "from": "gw1",
+      "to": "svc-a",
+      "label": "내부 라우팅"
+    },
+    {
+      "id": "gw2-b",
+      "from": "gw2",
+      "to": "svc-b",
+      "label": "내부 라우팅"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "ALB (Layer 7)",
+      "items": [
+        "Ingress 리소스(ingressClassName: alb)로 생성, target-type: ip",
+        "ACM 인증서로 HTTPS 종료, HTTP 80은 443으로 리다이렉트",
+        "헬스 체크: 15021 포트 /healthz/ready"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Istio Ingress Gateway",
+      "items": [
+        "istio-ingressgateway Service :80 이 ALB 백엔드",
+        "Gateway Pod 1/2 모두 Service A/B로 내부 라우팅"
+      ]
+    }
+  ]
+}

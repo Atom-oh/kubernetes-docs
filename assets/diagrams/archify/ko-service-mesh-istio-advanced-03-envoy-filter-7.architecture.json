@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "정적 응답 개요",
+    "output": "ko-service-mesh-istio-advanced-03-envoy-filter-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      370
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "HTTP 요청 발신",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "directResponse / EnvoyFilter",
+      "pos": [
+        400,
+        150
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "조건 매칭"
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "백엔드 서비스",
+      "sublabel": "조건 불일치 시에만 도달",
+      "pos": [
+        760,
+        150
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-envoy",
+      "from": "client",
+      "to": "envoy",
+      "label": "HTTP 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-static-response",
+      "from": "envoy",
+      "to": "client",
+      "label": "조건 일치 시 정적 응답",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-proxy-backend",
+      "from": "envoy",
+      "to": "backend",
+      "label": "조건 불일치 시 프록시",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "정적 응답 사용 사례",
+      "items": [
+        "유지보수 모드: 503 Service Unavailable 반환",
+        "헬스체크 엔드포인트: 200 OK 반환",
+        "커스텀 에러 페이지: JSON 또는 HTML 응답",
+        "빠른 거부: 인증 실패 시 401 Unauthorized 즉시 반환"
+      ]
+    }
+  ]
+}

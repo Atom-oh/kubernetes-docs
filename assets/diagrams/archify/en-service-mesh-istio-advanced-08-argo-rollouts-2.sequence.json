@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Canary Traffic Flow — Argo Rollouts and Istio",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1600,
+      900
+    ],
+    "views": [
+      {
+        "id": "weight",
+        "label": "Weight setup",
+        "focus": [
+          "rollouts",
+          "vs"
+        ],
+        "note": "From the initial v1 100% state, setWeight: 10 produces stable 90% / canary 10%."
+      },
+      {
+        "id": "routing",
+        "label": "Request routing",
+        "focus": [
+          "user",
+          "gateway",
+          "vs",
+          "stable",
+          "canary"
+        ],
+        "note": "Each request is routed by weight to exactly one subset: stable or canary."
+      },
+      {
+        "id": "analysis",
+        "label": "Analysis and decision",
+        "focus": [
+          "stable",
+          "canary",
+          "rollouts",
+          "prom"
+        ],
+        "note": "Prometheus metrics verify the canary success rate and decide auto progress or auto rollback."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User"
+    },
+    {
+      "id": "gateway",
+      "type": "frontend",
+      "label": "Istio Gateway"
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "VirtualService"
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable Pod (v1)"
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary Pod (v2)"
+    },
+    {
+      "id": "rollouts",
+      "type": "cloud",
+      "label": "Argo Rollouts"
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 224,
+      "label": "Initial state v1 100% → weight setup"
+    },
+    {
+      "from": 240,
+      "to": 518,
+      "label": "Request routing — one of stable 90% / canary 10%"
+    },
+    {
+      "from": 534,
+      "to": 680,
+      "label": "Metrics collection and Analysis"
+    },
+    {
+      "from": 696,
+      "to": 792,
+      "label": "Decision — auto progress or auto rollback"
+    }
+  ],
+  "messages": [
+    {
+      "id": "set-weight-10",
+      "from": "rollouts",
+      "to": "vs",
+      "y": 196,
+      "label": "setWeight: 10 (stable 90%, canary 10%)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "http-request",
+      "from": "user",
+      "to": "gateway",
+      "y": 262,
+      "label": "HTTP request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "forward",
+      "from": "gateway",
+      "to": "vs",
+      "y": 296,
+      "label": "Traffic forwarding",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-stable",
+      "from": "vs",
+      "to": "stable",
+      "y": 332,
+      "label": "90% → subset: stable",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stable-resp",
+      "from": "stable",
+      "to": "vs",
+      "y": 364,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "to-canary",
+      "from": "vs",
+      "to": "canary",
+      "y": 402,
+      "label": "10% → subset: canary",
+      "variant": "dashed",
+      "note": "A single request takes only one of the two paths"
+    },
+    {
+      "id": "canary-resp",
+      "from": "canary",
+      "to": "vs",
+      "y": 438,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "vs-resp",
+      "from": "vs",
+      "to": "gateway",
+      "y": 472,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "gw-resp",
+      "from": "gateway",
+      "to": "user",
+      "y": 504,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "stable-metrics",
+      "from": "stable",
+      "to": "prom",
+      "y": 556,
+      "label": "Metrics (success rate, latency)",
+      "variant": "dashed"
+    },
+    {
+      "id": "canary-metrics",
+      "from": "canary",
+      "to": "prom",
+      "y": 590,
+      "label": "Metrics (success rate, latency)",
+      "variant": "dashed"
+    },
+    {
+      "id": "analysis-query",
+      "from": "rollouts",
+      "to": "prom",
+      "y": 628,
+      "label": "Analysis query — canary success rate >= 95%?",
+      "variant": "default"
+    },
+    {
+      "id": "metric-result",
+      "from": "prom",
+      "to": "rollouts",
+      "y": 662,
+      "label": "Metric result",
+      "variant": "return"
+    },
+    {
+      "id": "set-weight-50",
+      "from": "rollouts",
+      "to": "vs",
+      "y": 722,
+      "label": "Success rate >= 95% → setWeight: 50 (auto progress)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "set-weight-0",
+      "from": "rollouts",
+      "to": "vs",
+      "y": 772,
+      "label": "Success rate < 95% → setWeight: 0 (auto rollback)",
+      "variant": "security"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "vs",
+      "from": 191,
+      "to": 478,
+      "type": "backend"
+    },
+    {
+      "participant": "stable",
+      "from": 327,
+      "to": 370,
+      "type": "backend"
+    },
+    {
+      "participant": "canary",
+      "from": 397,
+      "to": 444,
+      "type": "backend"
+    },
+    {
+      "participant": "rollouts",
+      "from": 623,
+      "to": 778,
+      "type": "cloud"
+    },
+    {
+      "participant": "prom",
+      "from": 551,
+      "to": 668,
+      "type": "database"
+    }
+  ]
+}

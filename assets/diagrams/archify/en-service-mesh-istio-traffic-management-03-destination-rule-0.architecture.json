@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Separation of Roles: VirtualService and DestinationRule",
+    "output": "en-service-mesh-istio-traffic-management-03-destination-rule-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      560
+    ],
+    "views": [
+      {
+        "id": "where",
+        "label": "Where? (VirtualService)",
+        "focus": [
+          "client",
+          "route"
+        ],
+        "note": "VirtualService decides which subset a request goes to (weight 90 / 10)."
+      },
+      {
+        "id": "how",
+        "label": "How? (DestinationRule)",
+        "focus": [
+          "policy",
+          "v1",
+          "v2"
+        ],
+        "note": "DestinationRule defines subsets and applies traffic policy such as load balancing and connection pools."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Request",
+      "sublabel": "HTTP request",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "Routing Decision",
+      "sublabel": "Where?",
+      "pos": [
+        270,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Traffic Policy",
+      "sublabel": "How?",
+      "pos": [
+        510,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Version 1",
+      "sublabel": "subset: v1",
+      "pos": [
+        770,
+        130
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "subset: v2",
+      "pos": [
+        770,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VirtualService",
+      "wraps": [
+        "route"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "DestinationRule",
+      "wraps": [
+        "policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Services",
+      "wraps": [
+        "v1",
+        "v2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-route",
+      "from": "client",
+      "to": "route",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-policy",
+      "from": "route",
+      "to": "policy",
+      "label": "weight 90% / 10%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-v1",
+      "from": "policy",
+      "to": "v1",
+      "label": "apply policy"
+    },
+    {
+      "id": "policy-v2",
+      "from": "policy",
+      "to": "v2",
+      "label": "apply policy"
+    }
+  ]
+}

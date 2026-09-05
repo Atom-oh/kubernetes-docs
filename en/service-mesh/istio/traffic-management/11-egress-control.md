@@ -12,7 +12,9 @@ Egress control is a feature that manages outbound traffic from the mesh and enha
 
 ## Egress Overview
 
-![A pod inside the Istio service mesh sends outbound traffic through its Envoy sidecar proxy to the egress gateway, the single controlled exit point, which forwards the request on to an external service outside the mesh.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-11-egress-control-0.svg)
+![A pod's outbound traffic passes through its Envoy sidecar and the Istio egress gateway inside the service mesh before reaching the external service api.external.com.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-11-egress-control-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-11-egress-control-0.html)
 
 ## ServiceEntry Configuration
 

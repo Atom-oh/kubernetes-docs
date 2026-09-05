@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-Primary 토폴로지",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1000, 420]
+  },
+  "components": [
+    { "id": "istiod1", "type": "backend", "label": "Istiod", "sublabel": "Control Plane", "tag": "Primary", "pos": [80, 90], "size": [180, 64] },
+    { "id": "svc1", "type": "backend", "label": "Service A", "sublabel": "us-east-1 인스턴스", "pos": [80, 250], "size": [180, 64] },
+    { "id": "istiod2", "type": "backend", "label": "Istiod", "sublabel": "Control Plane", "tag": "Primary", "pos": [740, 90], "size": [180, 64] },
+    { "id": "svc2", "type": "backend", "label": "Service A", "sublabel": "us-west-2 인스턴스", "pos": [740, 250], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Cluster 1 · us-east-1", "wraps": ["istiod1", "svc1"] },
+    { "kind": "region", "label": "Cluster 2 · us-west-2", "wraps": ["istiod2", "svc2"] }
+  ],
+  "connections": [
+    { "id": "sync", "from": "istiod1", "to": "istiod2", "label": "동기화 (양방향)", "variant": "dashed" },
+    { "id": "lb", "from": "svc1", "to": "svc2", "label": "로드 밸런싱 (양방향)", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "Multi-Primary 특징", "items": ["여러 Control Plane — 클러스터마다 독립적인 Istiod", "고가용성 — 단일 장애점 없음", "복잡한 관리", "리전별 자율성"] }
+  ]
+}

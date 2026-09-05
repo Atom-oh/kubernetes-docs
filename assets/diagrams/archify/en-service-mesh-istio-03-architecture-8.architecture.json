@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Envoy's DNS Processing",
+    "output": "en-service-mesh-istio-03-architecture-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      920,
+      360
+    ],
+    "views": [
+      {
+        "id": "intercept",
+        "label": "Connection interception",
+        "focus": [
+          "app",
+          "listener",
+          "dnsfilter"
+        ],
+        "note": "iptables captures the application's TCP connection into the 15001 Listener; the DNS Filter reads the target name from the Host header."
+      },
+      {
+        "id": "resolve",
+        "label": "Route and cluster selection",
+        "focus": [
+          "dnsfilter",
+          "route",
+          "cluster"
+        ],
+        "note": "Without calling CoreDNS, Route Match resolves the name and selects the outbound cluster."
+      },
+      {
+        "id": "eds",
+        "label": "EDS endpoint lookup",
+        "focus": [
+          "cluster",
+          "endpoint",
+          "xds"
+        ],
+        "note": "Pod IPs for the selected cluster arrive dynamically over the gRPC stream (EDS) with the Istiod xDS Server."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "Application",
+      "sublabel": "curl reviews:9080",
+      "pos": [
+        30,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "listener",
+      "type": "backend",
+      "label": "Listener",
+      "sublabel": ":15001",
+      "pos": [
+        260,
+        70
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dnsfilter",
+      "type": "backend",
+      "label": "DNS Filter",
+      "sublabel": "inspect Host header",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "Route Match",
+      "sublabel": "name resolution",
+      "pos": [
+        720,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "backend",
+      "label": "Cluster",
+      "sublabel": "outbound:9080",
+      "pos": [
+        720,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "endpoint",
+      "type": "backend",
+      "label": "Endpoint Discovery",
+      "sublabel": "pod IP list",
+      "pos": [
+        480,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "xds",
+      "type": "cloud",
+      "label": "xDS Server",
+      "sublabel": "Istiod",
+      "pos": [
+        30,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Envoy Proxy (istio-proxy)",
+      "wraps": [
+        "listener",
+        "dnsfilter",
+        "route",
+        "cluster",
+        "endpoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-listener",
+      "from": "app",
+      "to": "listener",
+      "label": "1. TCP conn",
+      "variant": "emphasis"
+    },
+    {
+      "id": "listener-dns",
+      "from": "listener",
+      "to": "dnsfilter",
+      "label": "2. Host header"
+    },
+    {
+      "id": "dns-route",
+      "from": "dnsfilter",
+      "to": "route",
+      "label": "3. resolve"
+    },
+    {
+      "id": "route-cluster",
+      "from": "route",
+      "to": "cluster",
+      "label": "4. select",
+      "labelDy": 24
+    },
+    {
+      "id": "cluster-endpoint",
+      "from": "cluster",
+      "to": "endpoint",
+      "label": "5. query"
+    },
+    {
+      "id": "endpoint-xds",
+      "from": "endpoint",
+      "to": "xds",
+      "label": "6. EDS API (gRPC)",
+      "variant": "dashed"
+    }
+  ]
+}

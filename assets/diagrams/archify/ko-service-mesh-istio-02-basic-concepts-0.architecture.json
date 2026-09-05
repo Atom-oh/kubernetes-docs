@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "모놀리식에서 마이크로서비스로",
+    "output": "ko-service-mesh-istio-02-basic-concepts-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      540
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "애플리케이션 / 서비스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "monolith-era",
+        "label": "모놀리식 시대",
+        "focus": [
+          "monolith"
+        ],
+        "note": "애플리케이션 전체가 하나의 프로세스로 동작한다."
+      },
+      {
+        "id": "microservices-era",
+        "label": "마이크로서비스 시대",
+        "focus": [
+          "svc-a",
+          "svc-b",
+          "svc-c",
+          "svc-d",
+          "svc-e"
+        ],
+        "note": "작은 서비스들이 네트워크로 서로 호출하며 서비스 D로 호출이 모인다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "monolith",
+      "type": "backend",
+      "label": "모놀리식 애플리케이션",
+      "sublabel": "하나의 프로세스",
+      "pos": [
+        40,
+        222
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "서비스 A",
+      "pos": [
+        330,
+        224
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "서비스 B",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "서비스 C",
+      "pos": [
+        560,
+        350
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-d",
+      "type": "backend",
+      "label": "서비스 D",
+      "pos": [
+        790,
+        224
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-e",
+      "type": "backend",
+      "label": "서비스 E",
+      "pos": [
+        1000,
+        224
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "모놀리식 시대",
+      "wraps": [
+        "monolith"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "마이크로서비스 시대",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c",
+        "svc-d",
+        "svc-e"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "transition",
+      "from": "monolith",
+      "to": "svc-a",
+      "label": "전환",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-to-b",
+      "from": "svc-a",
+      "to": "svc-b"
+    },
+    {
+      "id": "a-to-c",
+      "from": "svc-a",
+      "to": "svc-c"
+    },
+    {
+      "id": "b-to-d",
+      "from": "svc-b",
+      "to": "svc-d"
+    },
+    {
+      "id": "c-to-d",
+      "from": "svc-c",
+      "to": "svc-d"
+    },
+    {
+      "id": "d-to-e",
+      "from": "svc-d",
+      "to": "svc-e",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "분해 이후 생긴 새로운 문제",
+      "items": [
+        "서비스 간 통신: 네트워크 호출 증가로 지연과 장애 전파",
+        "Observability: 분산 추적이 없으면 디버깅이 어려움",
+        "보안: 서비스 간 인증과 암호화(mTLS) 구현 복잡도",
+        "트래픽 제어와 장애 처리를 서비스마다 코드로 구현"
+      ]
+    }
+  ]
+}

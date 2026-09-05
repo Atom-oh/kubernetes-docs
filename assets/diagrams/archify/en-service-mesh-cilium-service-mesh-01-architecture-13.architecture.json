@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Latency Analysis: Istio Sidecar vs Cilium",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-01-architecture-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      500
+    ],
+    "views": [
+      {
+        "id": "istio-path",
+        "label": "Istio sidecar path",
+        "focus": [
+          "i1",
+          "i2",
+          "i3",
+          "i4",
+          "i5"
+        ],
+        "note": "The request passes through an Envoy sidecar (user space) on both ends; latency accumulates per hop to roughly 1.5ms in total."
+      },
+      {
+        "id": "cilium-path",
+        "label": "Cilium eBPF path",
+        "focus": [
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5"
+        ],
+        "note": "L4 handling finishes in kernel eBPF, so the proxy stages are short and the total stays around 0.24ms."
+      },
+      {
+        "id": "network-same",
+        "label": "Network hop is identical",
+        "focus": [
+          "i3",
+          "c3"
+        ],
+        "note": "The node-to-node network hop (~0.1ms) is the same in both models; the difference comes only from the proxy stages."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "i1",
+      "type": "frontend",
+      "label": "App → Sidecar",
+      "sublabel": "~0.2ms",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "i2",
+      "type": "backend",
+      "label": "Sidecar Processing",
+      "sublabel": "~0.5ms",
+      "tag": "user space",
+      "pos": [
+        250,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "i3",
+      "type": "cloud",
+      "label": "Network",
+      "sublabel": "~0.1ms",
+      "pos": [
+        460,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "i4",
+      "type": "backend",
+      "label": "Sidecar Processing",
+      "sublabel": "~0.5ms",
+      "tag": "user space",
+      "pos": [
+        670,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "i5",
+      "type": "frontend",
+      "label": "Sidecar → App",
+      "sublabel": "~0.2ms",
+      "pos": [
+        880,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "frontend",
+      "label": "App → eBPF",
+      "sublabel": "~0.02ms",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "eBPF Processing",
+      "sublabel": "~0.05ms",
+      "tag": "kernel",
+      "pos": [
+        250,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "Network",
+      "sublabel": "~0.1ms",
+      "pos": [
+        460,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "c4",
+      "type": "backend",
+      "label": "eBPF Processing",
+      "sublabel": "~0.05ms",
+      "tag": "kernel",
+      "pos": [
+        670,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "c5",
+      "type": "frontend",
+      "label": "eBPF → App",
+      "sublabel": "~0.02ms",
+      "pos": [
+        880,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Latency Components (total ~1.5ms)",
+      "wraps": [
+        "i1",
+        "i2",
+        "i3",
+        "i4",
+        "i5"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cilium Latency Components (total ~0.24ms)",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "i1-i2",
+      "from": "i1",
+      "to": "i2"
+    },
+    {
+      "id": "i2-i3",
+      "from": "i2",
+      "to": "i3"
+    },
+    {
+      "id": "i3-i4",
+      "from": "i3",
+      "to": "i4"
+    },
+    {
+      "id": "i4-i5",
+      "from": "i4",
+      "to": "i5"
+    },
+    {
+      "id": "c1-c2",
+      "from": "c1",
+      "to": "c2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2-c3",
+      "from": "c2",
+      "to": "c3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c3-c4",
+      "from": "c3",
+      "to": "c4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c4-c5",
+      "from": "c4",
+      "to": "c5",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Istio Sidecar",
+      "items": [
+        "Each request is processed twice in user space, by the Envoy sidecar of both Pods",
+        "Per-hop total about 1.5ms (1-3ms in the comparison table)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cilium (Node Envoy)",
+      "items": [
+        "L4 handling finishes in kernel eBPF; the node Envoy steps in only when L7 processing is required",
+        "Per-hop total about 0.24ms (0.1-0.5ms in the comparison table)"
+      ]
+    }
+  ]
+}

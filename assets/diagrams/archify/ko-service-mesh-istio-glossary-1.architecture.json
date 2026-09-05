@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ingress Gateway - 외부 요청",
+    "output": "ko-service-mesh-istio-glossary-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      320
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "외부 클라이언트",
+      "sublabel": "Downstream (요청을 보내는 쪽)",
+      "tag": "Downstream",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Ingress Gateway",
+      "sublabel": "Envoy Proxy",
+      "tag": "Envoy",
+      "pos": [
+        450,
+        120
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "내부 서비스",
+      "sublabel": "Upstream (요청을 받는 쪽)",
+      "tag": "Upstream",
+      "pos": [
+        860,
+        120
+      ],
+      "size": [
+        200,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio 메시 (클러스터 내부)",
+      "wraps": [
+        "gateway",
+        "service"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTP 요청 (Downstream → Envoy)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-service",
+      "from": "gateway",
+      "to": "service",
+      "label": "라우팅 (Envoy → Upstream)",
+      "variant": "emphasis"
+    }
+  ]
+}

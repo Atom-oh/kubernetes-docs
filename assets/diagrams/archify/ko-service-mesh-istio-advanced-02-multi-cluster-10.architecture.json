@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "글로벌 전자상거래 아키텍처 (Multi-Primary + VPC Lattice)",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "intra-cluster",
+        "label": "클러스터 내부: Istio",
+        "focus": [
+          "frontend1",
+          "cart1",
+          "order1",
+          "frontend2",
+          "cart2",
+          "order2"
+        ],
+        "note": "Frontend ↔ Cart ↔ Order는 빈번한 호출과 Circuit Breaker가 필요해 각 클러스터 안에서 Istio로 연결한다."
+      },
+      {
+        "id": "cross-cluster",
+        "label": "클러스터 간: VPC Lattice",
+        "focus": [
+          "order1",
+          "order2",
+          "lattice",
+          "payment"
+        ],
+        "note": "Order → Payment는 단순한 호출이라 East-West Gateway 대신 VPC Lattice Service Network로 라우팅한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "frontend1",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "Service",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "cart1",
+      "type": "backend",
+      "label": "Cart",
+      "sublabel": "Service",
+      "pos": [
+        260,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "order1",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "Service",
+      "pos": [
+        480,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "frontend2",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "Service",
+      "pos": [
+        680,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "cart2",
+      "type": "backend",
+      "label": "Cart",
+      "sublabel": "Service",
+      "pos": [
+        900,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "order2",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "Service",
+      "pos": [
+        1120,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "Service Network",
+      "pos": [
+        550,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment",
+      "sublabel": "Service",
+      "pos": [
+        760,
+        540
+      ],
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "미국 리전 us-east-1 · EKS Cluster 1 (Istiod)",
+      "wraps": [
+        "frontend1",
+        "cart1",
+        "order1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "유럽 리전 eu-west-1 · EKS Cluster 2 (Istiod)",
+      "wraps": [
+        "frontend2",
+        "cart2",
+        "order2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "결제 서비스 ap-northeast-2 · EKS Cluster 3 (Istiod)",
+      "wraps": [
+        "payment"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend1-cart1",
+      "from": "frontend1",
+      "to": "cart1",
+      "label": "Istio 내부 호출"
+    },
+    {
+      "id": "cart1-order1",
+      "from": "cart1",
+      "to": "order1",
+      "label": "Istio"
+    },
+    {
+      "id": "frontend2-cart2",
+      "from": "frontend2",
+      "to": "cart2",
+      "label": "Istio 내부 호출"
+    },
+    {
+      "id": "cart2-order2",
+      "from": "cart2",
+      "to": "order2",
+      "label": "Istio"
+    },
+    {
+      "id": "order1-lattice",
+      "from": "order1",
+      "to": "lattice",
+      "label": "VPC Lattice",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order2-lattice",
+      "from": "order2",
+      "to": "lattice",
+      "label": "VPC Lattice",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "lattice-payment",
+      "from": "lattice",
+      "to": "payment",
+      "label": "라우팅",
+      "variant": "emphasis",
+      "toSide": "left",
+      "via": [
+        [
+          640,
+          570
+        ]
+      ],
+      "labelDx": -28,
+      "fromSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "클러스터 내부 (Frontend ↔ Cart ↔ Order): Istio",
+      "items": [
+        "빈번한 호출과 복잡한 라우팅",
+        "Circuit Breaker 등 Istio 기능 활용"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "클러스터 간 (Order → Payment): VPC Lattice",
+      "items": [
+        "비교적 단순한 호출",
+        "AWS IAM 인증 활용, 간단한 관리"
+      ]
+    }
+  ]
+}

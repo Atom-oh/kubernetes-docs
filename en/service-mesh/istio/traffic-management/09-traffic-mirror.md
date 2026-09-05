@@ -12,7 +12,9 @@ Traffic Mirroring (or Shadow Traffic) is a technique that replicates production 
 
 ## Traffic Mirroring Overview
 
-![A client sends a request that Version 1 answers on the live path, while the same request is replicated to Version 2 in a shadow copy whose response is discarded and never reaches the client.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.svg)
+![A client sends a request that Version 1 answers on the live path, while the same request is replicated to Version 2 in a shadow copy whose response is discarded and never reaches the client.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.html)
 
 ## Basic Configuration
 

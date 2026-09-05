@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 로그 계층",
+    "output": "ko-service-mesh-istio-observability-03-logging-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "워크로드 / 프록시"
+        },
+        "cloud": {
+          "label": "Istio 컨트롤 플레인"
+        },
+        "messagebus": {
+          "label": "로그 수집기"
+        },
+        "database": {
+          "label": "로그 저장 · 조회"
+        },
+        "frontend": {
+          "label": "시각화"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "access-log-path",
+        "label": "Access Log 수집 경로",
+        "focus": [
+          "app",
+          "envoy",
+          "promtail",
+          "fluentbit",
+          "otelcol"
+        ],
+        "note": "Envoy 사이드카가 남긴 Access Log를 Promtail, Fluent Bit, OpenTelemetry Collector가 수집한다."
+      },
+      {
+        "id": "storage-query",
+        "label": "저장과 조회",
+        "focus": [
+          "promtail",
+          "fluentbit",
+          "otelcol",
+          "loki",
+          "es",
+          "grafana"
+        ],
+        "note": "수집된 로그는 Loki와 Elasticsearch에 저장되고 Grafana에서 조회한다."
+      },
+      {
+        "id": "control-path",
+        "label": "로그 설정 제어 경로",
+        "focus": [
+          "telemetry",
+          "istiod",
+          "envoy"
+        ],
+        "note": "Telemetry API로 선언한 로그 설정을 istiod가 Envoy 프록시에 내려준다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션 컨테이너",
+      "sublabel": "HTTP/TCP 요청 처리",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카",
+      "pos": [
+        310,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "Access Log 생성"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Envoy 설정 배포",
+      "pos": [
+        700,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "telemetry",
+      "type": "cloud",
+      "label": "Telemetry API",
+      "sublabel": "로그 설정 선언",
+      "pos": [
+        940,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "promtail",
+      "type": "messagebus",
+      "label": "Promtail Agent",
+      "sublabel": "DaemonSet",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "otelcol",
+      "type": "messagebus",
+      "label": "OpenTelemetry Collector",
+      "sublabel": "OTLP 수신",
+      "pos": [
+        310,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "messagebus",
+      "label": "Fluent Bit",
+      "sublabel": "DaemonSet",
+      "pos": [
+        700,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Grafana Loki",
+      "sublabel": "LogQL",
+      "pos": [
+        310,
+        410
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "es",
+      "type": "database",
+      "label": "Elasticsearch",
+      "sublabel": "Query DSL",
+      "pos": [
+        700,
+        410
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "로그 대시보드",
+      "pos": [
+        310,
+        580
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "애플리케이션 파드",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio 컨트롤 플레인",
+      "wraps": [
+        "istiod",
+        "telemetry"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로그 수집",
+      "wraps": [
+        "promtail",
+        "otelcol",
+        "fluentbit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로그 저장 · 조회",
+      "wraps": [
+        "loki",
+        "es"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "시각화",
+      "wraps": [
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "트래픽"
+    },
+    {
+      "id": "envoy-promtail",
+      "from": "envoy",
+      "to": "promtail",
+      "label": "Access Log",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-otelcol",
+      "from": "envoy",
+      "to": "otelcol",
+      "label": "OTLP 로그",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "envoy-fluentbit",
+      "from": "envoy",
+      "to": "fluentbit",
+      "label": "Access Log",
+      "variant": "emphasis"
+    },
+    {
+      "id": "istiod-envoy",
+      "from": "istiod",
+      "to": "envoy",
+      "label": "설정 배포"
+    },
+    {
+      "id": "telemetry-istiod",
+      "from": "telemetry",
+      "to": "istiod",
+      "label": "설정 적용",
+      "variant": "dashed"
+    },
+    {
+      "id": "promtail-loki",
+      "from": "promtail",
+      "to": "loki"
+    },
+    {
+      "id": "otelcol-loki",
+      "from": "otelcol",
+      "to": "loki"
+    },
+    {
+      "id": "fluentbit-es",
+      "from": "fluentbit",
+      "to": "es"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "label": "LogQL 조회",
+      "labelDy": 24
+    },
+    {
+      "id": "es-grafana",
+      "from": "es",
+      "to": "grafana",
+      "label": "Query DSL 조회"
+    }
+  ]
+}

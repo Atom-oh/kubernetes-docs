@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts + Istio 아키텍처",
+    "output": "ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      830
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Argo Rollouts"
+        },
+        "cloud": {
+          "label": "Istio 리소스"
+        },
+        "frontend": {
+          "label": "워크로드 파드"
+        },
+        "external": {
+          "label": "모니터링"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "split-control",
+        "label": "트래픽 분할 제어",
+        "focus": [
+          "rollout",
+          "vs",
+          "dr",
+          "stable",
+          "canary"
+        ],
+        "note": "Rollout이 VirtualService 가중치를 갱신하고, DestinationRule 서브셋으로 Stable/Canary 파드를 구분한다."
+      },
+      {
+        "id": "analysis-gate",
+        "label": "메트릭 기반 승인/거부",
+        "focus": [
+          "analysis",
+          "prom",
+          "rollout",
+          "stable",
+          "canary"
+        ],
+        "note": "AnalysisTemplate이 Prometheus를 조회해 Rollout 단계 진행을 승인하거나 롤백한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "rollout",
+      "type": "backend",
+      "label": "Rollout 리소스",
+      "sublabel": "배포 전략 정의",
+      "pos": [
+        110,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "backend",
+      "label": "AnalysisTemplate",
+      "sublabel": "메트릭 분석",
+      "pos": [
+        110,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService",
+      "sublabel": "트래픽 분할",
+      "pos": [
+        510,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "cloud",
+      "label": "DestinationRule",
+      "sublabel": "서브셋 정의",
+      "pos": [
+        510,
+        430
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "frontend",
+      "label": "Stable Pods",
+      "sublabel": "v1",
+      "pos": [
+        910,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "frontend",
+      "label": "Canary Pods",
+      "sublabel": "v2",
+      "pos": [
+        910,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "external",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        910,
+        560
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "external",
+      "label": "Grafana",
+      "sublabel": "시각화",
+      "pos": [
+        910,
+        670
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Argo Rollouts Controller",
+      "wraps": [
+        "rollout",
+        "analysis"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio Service Mesh",
+      "wraps": [
+        "vs",
+        "dr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes",
+      "wraps": [
+        "stable",
+        "canary"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모니터링",
+      "wraps": [
+        "prom",
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rollout-vs",
+      "from": "rollout",
+      "to": "vs",
+      "label": "가중치 업데이트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rollout-dr",
+      "from": "rollout",
+      "to": "dr",
+      "label": "서브셋 레이블 갱신",
+      "labelSegment": 2
+    },
+    {
+      "id": "rollout-stable",
+      "from": "rollout",
+      "to": "stable",
+      "label": "관리"
+    },
+    {
+      "id": "rollout-canary",
+      "from": "rollout",
+      "to": "canary",
+      "label": "관리"
+    },
+    {
+      "id": "vs-stable",
+      "from": "vs",
+      "to": "stable",
+      "label": "90% 트래픽",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-canary",
+      "from": "vs",
+      "to": "canary",
+      "label": "10% 트래픽",
+      "variant": "emphasis"
+    },
+    {
+      "id": "analysis-prom",
+      "from": "analysis",
+      "to": "prom",
+      "label": "메트릭 쿼리"
+    },
+    {
+      "id": "analysis-rollout",
+      "from": "analysis",
+      "to": "rollout",
+      "label": "승인/거부"
+    },
+    {
+      "id": "stable-prom",
+      "from": "stable",
+      "to": "prom",
+      "label": "메트릭 전송",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1150,
+          92
+        ],
+        [
+          1150,
+          592
+        ]
+      ]
+    },
+    {
+      "id": "canary-prom",
+      "from": "canary",
+      "to": "prom",
+      "label": "메트릭 전송",
+      "variant": "dashed",
+      "labelDy": 60
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prom",
+      "to": "grafana",
+      "label": "시각화",
+      "variant": "dashed",
+      "labelDy": 26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Rollout이 하는 일",
+      "items": [
+        "VirtualService의 weight 값만 자동 업데이트 (리소스는 미리 생성)",
+        "DestinationRule 서브셋에 rollouts-pod-template-hash 레이블을 런타임에 관리"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "AnalysisTemplate",
+      "items": [
+        "Prometheus 쿼리로 성공률·지연시간 측정 (예: 성공률 95% 이상)",
+        "failureLimit 초과 시 자동 롤백"
+      ]
+    }
+  ]
+}

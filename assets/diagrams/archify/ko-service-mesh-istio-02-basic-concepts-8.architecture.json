@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "트래픽 라우팅 흐름",
+    "output": "ko-service-mesh-istio-02-basic-concepts-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingress",
+        "label": "진입과 라우팅 규칙",
+        "focus": [
+          "client",
+          "gateway",
+          "vs"
+        ],
+        "note": "Gateway가 외부 트래픽의 진입점이 되고, VirtualService가 라우팅 규칙을 적용한다."
+      },
+      {
+        "id": "subset",
+        "label": "서브셋 선택",
+        "focus": [
+          "vs",
+          "dr",
+          "svc"
+        ],
+        "note": "DestinationRule이 서브셋(v1, v2)과 트래픽 정책을 정의하고 Kubernetes Service로 전달한다."
+      },
+      {
+        "id": "endpoints",
+        "label": "엔드포인트 라우팅",
+        "focus": [
+          "svc",
+          "pod-v1",
+          "pod-v2"
+        ],
+        "note": "Service가 서브셋에 해당하는 Pod 엔드포인트로 요청을 전달한다."
+      }
+    ],
+    "viewBox": [
+      1320,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "외부 사용자",
+      "pos": [
+        30,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "Ingress 진입점",
+      "pos": [
+        295,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "VirtualService",
+      "sublabel": "라우팅 규칙",
+      "pos": [
+        570,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "backend",
+      "label": "DestinationRule",
+      "sublabel": "서브셋 · 트래픽 정책",
+      "pos": [
+        855,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Kubernetes Service",
+      "sublabel": "엔드포인트 선택",
+      "pos": [
+        855,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod-v1",
+      "type": "backend",
+      "label": "Pod v1",
+      "sublabel": "subset: v1",
+      "pos": [
+        1150,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pod-v2",
+      "type": "backend",
+      "label": "Pod v2",
+      "sublabel": "subset: v2",
+      "pos": [
+        1150,
+        500
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio 트래픽 관리 리소스",
+      "wraps": [
+        "gateway",
+        "vs",
+        "dr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 리소스",
+      "wraps": [
+        "svc",
+        "pod-v1",
+        "pod-v2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "1. HTTP 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-vs",
+      "from": "gateway",
+      "to": "vs",
+      "label": "2. 라우팅 규칙 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-dr",
+      "from": "vs",
+      "to": "dr",
+      "label": "3. 대상 결정",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dr-svc",
+      "from": "dr",
+      "to": "svc",
+      "label": "4. 서브셋 선택",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        940,
+        232
+      ]
+    },
+    {
+      "id": "svc-pod-v1",
+      "from": "svc",
+      "to": "pod-v1",
+      "label": "5. 엔드포인트 라우팅"
+    },
+    {
+      "id": "svc-pod-v2",
+      "from": "svc",
+      "to": "pod-v2",
+      "label": "5. 엔드포인트 라우팅"
+    }
+  ]
+}

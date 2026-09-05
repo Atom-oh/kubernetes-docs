@@ -1,0 +1,229 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How RPS-based KEDA Scaling Works",
+    "output": "public/archmaps/en-service-mesh-istio-advanced-10-keda-autoscaling-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "KEDA polling"
+        },
+        "database": {
+          "label": "PromQL query"
+        },
+        "security": {
+          "label": "Threshold check"
+        },
+        "cloud": {
+          "label": "HPA scaling"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "scale-out",
+        "label": "Scale-out path",
+        "focus": [
+          "collect",
+          "query",
+          "check",
+          "scaleOut",
+          "wait"
+        ],
+        "note": "When RPS exceeds the threshold of 100, replicas are increased and KEDA waits out the cooldownPeriod."
+      },
+      {
+        "id": "scale-in",
+        "label": "Scale-in path",
+        "focus": [
+          "check",
+          "check2",
+          "scaleIn",
+          "wait"
+        ],
+        "note": "When RPS drops below the activationThreshold of 50, replicas are decreased; in between, it simply waits."
+      },
+      {
+        "id": "loop",
+        "label": "Polling loop",
+        "focus": [
+          "wait",
+          "collect"
+        ],
+        "note": "Every pollingInterval (30 s) metrics are collected again and the same evaluation repeats."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1240,
+      560
+    ]
+  },
+  "lanes": [
+    {
+      "id": "poll",
+      "label": "KEDA polling loop"
+    },
+    {
+      "id": "decide",
+      "label": "Threshold check"
+    },
+    {
+      "id": "scale",
+      "label": "HPA replica adjustment"
+    }
+  ],
+  "mainPath": [
+    "collect",
+    "query",
+    "check",
+    "scaleOut",
+    "wait"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "collect"
+    ],
+    "requiredPaths": [
+      {
+        "from": "collect",
+        "to": "scaleOut"
+      },
+      {
+        "from": "collect",
+        "to": "scaleIn"
+      },
+      {
+        "from": "wait",
+        "to": "collect"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "collect",
+      "lane": "poll",
+      "col": 0,
+      "type": "backend",
+      "label": "Collect metrics",
+      "sublabel": "every 30 s",
+      "width": 150
+    },
+    {
+      "id": "query",
+      "lane": "poll",
+      "col": 1,
+      "type": "database",
+      "label": "Execute PromQL query",
+      "sublabel": "sum(rate(...[1m]))",
+      "width": 170
+    },
+    {
+      "id": "wait",
+      "lane": "poll",
+      "col": 5,
+      "type": "backend",
+      "label": "Wait",
+      "sublabel": "cooldownPeriod 300s",
+      "width": 150
+    },
+    {
+      "id": "check",
+      "lane": "decide",
+      "col": 2,
+      "type": "security",
+      "label": "RPS > 100?",
+      "tag": "threshold",
+      "width": 120
+    },
+    {
+      "id": "check2",
+      "lane": "decide",
+      "col": 3,
+      "type": "security",
+      "label": "RPS < 50?",
+      "tag": "activationThreshold",
+      "width": 120
+    },
+    {
+      "id": "scaleOut",
+      "lane": "scale",
+      "col": 3,
+      "type": "cloud",
+      "label": "Increase replicas",
+      "sublabel": "scale out · max 20",
+      "width": 170
+    },
+    {
+      "id": "scaleIn",
+      "lane": "scale",
+      "col": 4,
+      "type": "cloud",
+      "label": "Decrease replicas",
+      "sublabel": "scale in · min 2",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "collect",
+      "to": "query",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "query",
+      "to": "check",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "check",
+      "to": "scaleOut",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "check",
+      "to": "check2",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "check2",
+      "to": "scaleIn",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "check2",
+      "to": "wait",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "scaleOut",
+      "to": "wait",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "scaleIn",
+      "to": "wait",
+      "role": "branch"
+    },
+    {
+      "from": "wait",
+      "to": "collect",
+      "label": "re-evaluate after 30 s",
+      "role": "return",
+      "variant": "dashed",
+      "toSide": "top"
+    }
+  ]
+}
