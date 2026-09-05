@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Permission Boundary 개념",
+    "output": "ko-eks-05-eks-security-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "concept", "label": "유효 권한 계산", "focus": ["policy", "boundary", "effective"], "note": "유효 권한 = IAM 정책 ∩ 권한 경계. 두 쪽 모두 허용한 작업만 실제로 허용된다." },
+      { "id": "example", "label": "예시", "focus": ["policy-ex", "boundary-ex", "effective-ex"], "note": "정책이 S3·DynamoDB·EC2를 부여해도 경계가 S3·DynamoDB만 허용하면 EC2는 사용할 수 없다." }
+    ]
+  },
+  "components": [
+    { "id": "policy", "type": "security", "label": "IAM 정책", "sublabel": "역할/사용자에 연결", "pos": [40, 60], "size": [180, 64] },
+    { "id": "boundary", "type": "security", "label": "권한 경계", "sublabel": "최대 권한 정의", "pos": [40, 240], "size": [180, 64] },
+    { "id": "effective", "type": "backend", "label": "유효 권한", "sublabel": "정책 ∩ 경계", "pos": [320, 150], "size": [180, 64] },
+    { "id": "policy-ex", "type": "security", "label": "정책", "sublabel": "S3, DynamoDB, EC2 권한 부여", "pos": [620, 60], "size": [220, 64] },
+    { "id": "boundary-ex", "type": "security", "label": "경계", "sublabel": "S3, DynamoDB만 허용", "pos": [620, 240], "size": [220, 64] },
+    { "id": "effective-ex", "type": "backend", "label": "유효 권한", "sublabel": "S3, DynamoDB만 사용 가능", "pos": [940, 150], "size": [220, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "유효 권한 계산", "wraps": ["policy", "boundary", "effective"] },
+    { "kind": "region", "label": "예시", "wraps": ["policy-ex", "boundary-ex", "effective-ex"] }
+  ],
+  "connections": [
+    { "id": "policy-and", "from": "policy", "to": "effective", "label": "AND", "variant": "emphasis" },
+    { "id": "boundary-and", "from": "boundary", "to": "effective", "label": "AND", "variant": "emphasis" },
+    { "id": "policy-ex-inter", "from": "policy-ex", "to": "effective-ex", "label": "교집합" },
+    { "id": "boundary-ex-inter", "from": "boundary-ex", "to": "effective-ex", "label": "교집합" }
+  ]
+}

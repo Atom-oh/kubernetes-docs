@@ -8,7 +8,9 @@ In this document, we will learn about services, load balancing, and network poli
 
 Kubernetes provides the following service types:
 
-![Four Kubernetes Service types — ClusterIP, NodePort, LoadBalancer, and ExternalName — each mapped one-to-one to the access method it enables, from internal-only cluster access to an external load balancer or DNS CNAME.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-0.svg)
+![Four Kubernetes Service types — ClusterIP, NodePort, LoadBalancer, and ExternalName — each mapped one-to-one to the access method it enables, from internal-only cluster access to an external load balancer or DNS CNAME.](../.gitbook/assets/en-eks-03-eks-networking-part2-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-0.html)
 
 1. **ClusterIP**: Service accessible only within the cluster
 2. **NodePort**: Service accessible through a specific port on all nodes
@@ -88,7 +90,9 @@ spec:
 
 EKS integrates Kubernetes services with AWS load balancers to make applications accessible from outside.
 
-![Users reach a Classic, Network, or Application Load Balancer; the CLB and NLB attach directly to a LoadBalancer Service while the ALB routes through an Ingress resource to a NodePort Service, and both services forward traffic into the cluster's pods.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-1.svg)
+![Users reach a Classic, Network, or Application Load Balancer; the CLB and NLB attach directly to a LoadBalancer Service while the ALB routes through an Ingress resource to a NodePort Service, and both services forward traffic into the cluster's pods.](../.gitbook/assets/en-eks-03-eks-networking-part2-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-1.html)
 
 ### Classic Load Balancer (CLB)
 
@@ -150,7 +154,9 @@ metadata:
 
 To use ALB, you need to install the AWS Load Balancer Controller and use Ingress resources:
 
-![Internet traffic reaches an ALB in the VPC's public subnet, which is driven by the AWS Load Balancer Controller and an Ingress resource in the private-subnet EKS cluster to route to Service 1 and Service 2 and their backing pods.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-2.svg)
+![Internet traffic reaches an Application Load Balancer in the public subnet, which the AWS Load Balancer Controller creates and configures from the Ingress resource in the private-subnet EKS cluster, and the Ingress routes to Service 1 and Service 2 and their backing pods.](../.gitbook/assets/en-eks-03-eks-networking-part2-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-2.html)
 
 1. Install AWS Load Balancer Controller:
 
@@ -230,7 +236,9 @@ metadata:
 
 ### Service and Load Balancer Best Practices
 
-![Five best practices for choosing and configuring Kubernetes Services and load balancers on EKS, branching from a single root recommendation: default to internal traffic, go external deliberately, choose ALB for L7 needs, choose NLB for L4 needs, and tune load balancer attributes.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-3.svg)
+![Seven best practices for Services and load balancers on EKS branching from one root: use ClusterIP for internal services, LoadBalancer or Ingress for external ones, ALB for path routing, SSL termination and auth, NLB for TCP/UDP, high performance and static IPs, internal load balancers for cluster-internal access, cross-zone load balancing for high availability, and the right ip or instance target type.](../.gitbook/assets/en-eks-03-eks-networking-part2-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-3.html)
 
 1. **Use ClusterIP for internal services**: Use ClusterIP type for services accessed only within the cluster.
 2. **Use LoadBalancer or Ingress for external services**: Use LoadBalancer type or Ingress resources for services that need external access.
@@ -244,7 +252,9 @@ metadata:
 
 Network policies are used to control pod-to-pod communication. To use network policies in EKS, you need to install a CNI plugin that supports network policies (e.g., Calico, Cilium).
 
-![Four network policies govern traffic in an EKS cluster: namespace isolation reaches both namespaces, a pod-communication policy allows the frontend pod to reach the backend pod, an external-traffic policy scopes what reaches the frontend pod, and an egress policy scopes what the backend pod may reach, while the backend pod also talks to a database pod in a second namespace.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-4.svg)
+![Four network policies govern traffic in an EKS cluster: an external-traffic policy scopes what reaches the frontend pod, a pod-communication policy allows only frontend-to-backend traffic on TCP 80, an egress policy limits the backend pod to the database pod on TCP 5432 and external HTTPS on 443, and a namespace-isolation policy applies to every pod in both namespaces.](../.gitbook/assets/en-eks-03-eks-networking-part2-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-4.html)
 
 ### Installing Calico
 
@@ -372,7 +382,9 @@ spec:
 
 ### Network Policy Best Practices
 
-![Five best practices for Kubernetes network policies branching from a single root: default-deny, namespace isolation, least privilege, restrict egress, and test policies before rollout.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-5.svg)
+![Five best practices for Kubernetes network policies branching from a single root: apply a default deny policy, namespace isolation, least privilege, restrict egress traffic, and test policies before rollout.](../.gitbook/assets/en-eks-03-eks-networking-part2-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-5.html)
 
 1. **Apply default deny policy**: Deny all traffic by default and explicitly allow only necessary traffic.
 2. **Namespace isolation**: Enhance security by restricting communication between namespaces.
@@ -391,7 +403,9 @@ spec:
 
 Gateway API is Kubernetes' next-generation service networking API that overcomes the limitations of traditional Ingress resources and provides richer routing capabilities. AWS Load Balancer Controller supports Gateway API, enabling L4 (NLB) and L7 (ALB) routing configuration through Gateway resources.
 
-![A GatewayClass configures a Gateway, which fans out to an HTTPRoute for L7 traffic through an ALB and a TCPRoute for L4 traffic through an NLB; the HTTPRoute distributes to Service A and Service B, and the TCPRoute forwards to Service C.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-6.svg)
+![A GatewayClass configures a Gateway, which fans out to an HTTPRoute for L7 traffic through an ALB and a TCPRoute for L4 traffic through an NLB; the HTTPRoute distributes to Service A and Service B, and the TCPRoute forwards to Service C.](../.gitbook/assets/en-eks-03-eks-networking-part2-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-6.html)
 
 ### Prerequisites
 

@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "제로 트러스트 아키텍처",
+    "output": "ko-eks-05-eks-security-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      648
+    ]
+  },
+  "components": [
+    {
+      "id": "p-encrypt",
+      "type": "security",
+      "label": "모든 통신 암호화",
+      "sublabel": "서비스 간 통신 보호",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "p-least-priv",
+      "type": "security",
+      "label": "최소 권한 원칙",
+      "sublabel": "필요한 권한만 부여",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "p-verify",
+      "type": "security",
+      "label": "지속적인 검증",
+      "sublabel": "기본 신뢰 없음",
+      "pos": [
+        60,
+        280
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "p-access",
+      "type": "security",
+      "label": "세분화된 접근 제어",
+      "sublabel": "정책 기반 제어",
+      "pos": [
+        60,
+        390
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "p-inspect",
+      "type": "security",
+      "label": "모든 트래픽 검사",
+      "sublabel": "필요한 통신만 허용",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "i-mesh",
+      "type": "backend",
+      "label": "서비스 메시 (Istio)",
+      "sublabel": "서비스 간 mTLS",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "i-irsa",
+      "type": "cloud",
+      "label": "IAM Roles for Service Accounts",
+      "sublabel": "IRSA · 세분화된 권한 관리",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "i-sechub",
+      "type": "cloud",
+      "label": "AWS Security Hub",
+      "sublabel": "보안 상태 모니터링",
+      "pos": [
+        560,
+        280
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "i-opa",
+      "type": "backend",
+      "label": "OPA/Gatekeeper",
+      "sublabel": "정책 기반 접근 제어",
+      "pos": [
+        560,
+        390
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "i-netpol",
+      "type": "backend",
+      "label": "네트워크 정책",
+      "sublabel": "기본 거부 정책",
+      "pos": [
+        560,
+        500
+      ],
+      "size": [
+        240,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "제로 트러스트 원칙",
+      "wraps": [
+        "p-encrypt",
+        "p-least-priv",
+        "p-verify",
+        "p-access",
+        "p-inspect"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 구현 방법",
+      "wraps": [
+        "i-mesh",
+        "i-irsa",
+        "i-sechub",
+        "i-opa",
+        "i-netpol"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "encrypt-to-mesh",
+      "from": "p-encrypt",
+      "to": "i-mesh",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "least-priv-to-irsa",
+      "from": "p-least-priv",
+      "to": "i-irsa"
+    },
+    {
+      "id": "verify-to-sechub",
+      "from": "p-verify",
+      "to": "i-sechub"
+    },
+    {
+      "id": "access-to-opa",
+      "from": "p-access",
+      "to": "i-opa"
+    },
+    {
+      "id": "inspect-to-netpol",
+      "from": "p-inspect",
+      "to": "i-netpol"
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Compute Cost Optimization Strategies",
+    "locale": "en",
+    "output": "en-eks-07-eks-cost-optimization-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      500
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Cost component"
+        },
+        "cloud": {
+          "label": "AWS compute option"
+        },
+        "backend": {
+          "label": "K8s autoscaler"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "instance-type",
+        "label": "Instance Type Optimization",
+        "focus": [
+          "compute-cost",
+          "instance-type"
+        ],
+        "note": "Pick the instance family that fits the workload, size it from measured usage, and prefer the newest generation (M6i/M6g etc.)."
+      },
+      {
+        "id": "spot",
+        "label": "Spot Instance Utilization",
+        "focus": [
+          "compute-cost",
+          "spot-instances"
+        ],
+        "note": "Up to 90% cheaper than on-demand. Fits stateless, fault-tolerant, batch and CI/CD workloads; provision via managed node groups or Karpenter."
+      },
+      {
+        "id": "savings-plans",
+        "label": "Savings Plans and Reserved Instances",
+        "focus": [
+          "compute-cost",
+          "savings-plans"
+        ],
+        "note": "Compute Savings Plans, EC2 Instance Savings Plans and Reserved Instances give commitment discounts on predictable usage."
+      },
+      {
+        "id": "autoscaling",
+        "label": "Auto Scaling Optimization",
+        "focus": [
+          "compute-cost",
+          "autoscaling"
+        ],
+        "note": "Scale nodes with Cluster Autoscaler or Karpenter and pods with HPA and VPA to match demand and cut idle capacity."
+      },
+      {
+        "id": "fargate-vs-ec2",
+        "label": "Fargate vs EC2",
+        "focus": [
+          "compute-cost",
+          "fargate-vs-ec2"
+        ],
+        "note": "Fargate bills per vCPU and memory used, EC2 per node instance, so compare cost against the workload pattern."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "compute-cost",
+      "type": "external",
+      "label": "Compute Cost Optimization",
+      "sublabel": "Largest EKS cluster cost component",
+      "pos": [
+        580,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "instance-type",
+      "type": "cloud",
+      "label": "Instance Type Optimization",
+      "sublabel": "Family · Size · Generation",
+      "pos": [
+        35,
+        260
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "spot-instances",
+      "type": "cloud",
+      "label": "Spot Instance Utilization",
+      "sublabel": "Workloads · MNG · Karpenter · Interruptions",
+      "pos": [
+        295,
+        260
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "savings-plans",
+      "type": "cloud",
+      "label": "Savings Plans and Reserved Instances",
+      "sublabel": "Compute SP · EC2 Instance SP · RI",
+      "pos": [
+        575,
+        260
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "autoscaling",
+      "type": "backend",
+      "label": "Auto Scaling Optimization",
+      "sublabel": "CA · Karpenter · HPA · VPA",
+      "pos": [
+        855,
+        260
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "fargate-vs-ec2",
+      "type": "cloud",
+      "label": "Fargate vs EC2 Cost Comparison",
+      "sublabel": "vCPU/memory billing vs node billing",
+      "pos": [
+        1115,
+        260
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cost-to-instance-type",
+      "from": "compute-cost",
+      "to": "instance-type"
+    },
+    {
+      "id": "cost-to-spot",
+      "from": "compute-cost",
+      "to": "spot-instances"
+    },
+    {
+      "id": "cost-to-savings-plans",
+      "from": "compute-cost",
+      "to": "savings-plans",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cost-to-autoscaling",
+      "from": "compute-cost",
+      "to": "autoscaling"
+    },
+    {
+      "id": "cost-to-fargate",
+      "from": "compute-cost",
+      "to": "fargate-vs-ec2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Spot Instance Utilization",
+      "items": [
+        "Suitable workload types: stateless, fault-tolerant, batch processing, CI/CD",
+        "Managed node groups (eksctl --spot) or Karpenter NodePool (capacity-type: spot)",
+        "Interruption handling: spread across instance types and AZs, AWS Node Termination Handler"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Savings Plans and Reserved Instances",
+      "items": [
+        "Compute Savings Plans",
+        "EC2 Instance Savings Plans",
+        "Reserved Instances"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Auto Scaling Optimization",
+      "items": [
+        "Cluster Autoscaler",
+        "Karpenter",
+        "Horizontal Pod Autoscaler",
+        "Vertical Pod Autoscaler"
+      ]
+    }
+  ]
+}

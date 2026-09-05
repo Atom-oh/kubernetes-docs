@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Cost Optimization",
+    "locale": "en",
+    "output": "en-eks-04-eks-storage-part3-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "AWS storage service"
+        },
+        "backend": {
+          "label": "Optimization strategy"
+        },
+        "cloud": {
+          "label": "Cost monitoring"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ebs-path",
+        "label": "EBS optimization",
+        "focus": [
+          "ebs",
+          "volume-opt",
+          "lifecycle",
+          "cost-monitoring"
+        ],
+        "note": "EBS spans two strategies: volume optimization (e.g. gp3 migration) and lifecycle management (snapshots, PV reclaim)."
+      },
+      {
+        "id": "file-storage",
+        "label": "EFS · FSx optimization",
+        "focus": [
+          "efs",
+          "efs-opt",
+          "fsx",
+          "fsx-opt",
+          "cost-monitoring"
+        ],
+        "note": "File storage cuts cost through service-specific settings such as throughput mode and deployment type."
+      },
+      {
+        "id": "s3-tiering",
+        "label": "S3 data tiering",
+        "focus": [
+          "s3",
+          "lifecycle",
+          "cost-monitoring"
+        ],
+        "note": "Infrequently accessed data is tiered down to S3 or S3 Glacier."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "Amazon EBS",
+      "sublabel": "Block storage",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "Object storage",
+      "pos": [
+        40,
+        185
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "database",
+      "label": "Amazon EFS",
+      "sublabel": "File storage",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "Amazon FSx for Lustre",
+      "sublabel": "High-performance file storage",
+      "pos": [
+        40,
+        415
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "volume-opt",
+      "type": "backend",
+      "label": "Volume Optimization",
+      "sublabel": "Volume type · size optimization · gp3 migration",
+      "pos": [
+        340,
+        70
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "lifecycle",
+      "type": "backend",
+      "label": "Lifecycle Management",
+      "sublabel": "Data tiering · automated snapshots · PV reclaim policy",
+      "pos": [
+        340,
+        185
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "efs-opt",
+      "type": "backend",
+      "label": "EFS Optimization",
+      "sublabel": "Throughput mode · IA class · access points",
+      "pos": [
+        340,
+        300
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "fsx-opt",
+      "type": "backend",
+      "label": "FSx Optimization",
+      "sublabel": "Deployment type · compression · S3 integration",
+      "pos": [
+        340,
+        415
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "cost-monitoring",
+      "type": "cloud",
+      "label": "Cost monitoring",
+      "sublabel": "Cost Explorer · cost allocation · anomaly detection",
+      "pos": [
+        720,
+        242
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Storage Types",
+      "wraps": [
+        "ebs",
+        "efs",
+        "fsx",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cost Optimization Strategies",
+      "wraps": [
+        "volume-opt",
+        "efs-opt",
+        "fsx-opt",
+        "lifecycle"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-volume",
+      "from": "ebs",
+      "to": "volume-opt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebs-lifecycle",
+      "from": "ebs",
+      "to": "lifecycle",
+      "label": "snapshots · PV reclaim",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "efs-efsopt",
+      "from": "efs",
+      "to": "efs-opt"
+    },
+    {
+      "id": "fsx-fsxopt",
+      "from": "fsx",
+      "to": "fsx-opt"
+    },
+    {
+      "id": "s3-lifecycle",
+      "from": "s3",
+      "to": "lifecycle",
+      "label": "data tiering"
+    },
+    {
+      "id": "volume-cost",
+      "from": "volume-opt",
+      "to": "cost-monitoring",
+      "variant": "emphasis"
+    },
+    {
+      "id": "efs-cost",
+      "from": "efs-opt",
+      "to": "cost-monitoring"
+    },
+    {
+      "id": "fsx-cost",
+      "from": "fsx-opt",
+      "to": "cost-monitoring"
+    },
+    {
+      "id": "lifecycle-cost",
+      "from": "lifecycle",
+      "to": "cost-monitoring"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Volume · Lifecycle",
+      "items": [
+        "gp3 for general workloads, st1 for throughput-intensive, sc1 for infrequent access",
+        "Tier infrequently accessed data to S3 / S3 Glacier",
+        "Delete reclaim policy for temporary data, Retain for important data"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "EFS · FSx",
+      "items": [
+        "Provisioned throughput for predictable workloads, Bursting for variable ones",
+        "Lifecycle policy moves files to the IA class after 30 days",
+        "SCRATCH_2 for temporary workloads, PERSISTENT_1/2 for long-term, plus LZ4 compression"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cost monitoring",
+      "items": [
+        "Analyze storage cost trends and per-resource cost with AWS Cost Explorer",
+        "Allocate Kubernetes cost by namespace and label (e.g. Kubecost)",
+        "Detect abnormal cost increases with AWS Budgets and alerts"
+      ]
+    }
+  ]
+}

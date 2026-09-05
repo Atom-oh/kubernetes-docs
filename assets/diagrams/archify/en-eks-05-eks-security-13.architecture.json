@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Encryption Options and Secrets Management",
+    "output": "en-eks-05-eks-security-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      640
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "kms",
+      "type": "cloud",
+      "label": "AWS KMS Encryption",
+      "sublabel": "Customer-managed KMS key",
+      "pos": [
+        70,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd Default Encryption",
+      "sublabel": "Stores Kubernetes Secrets",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "aws-store",
+      "type": "cloud",
+      "label": "AWS Secrets Manager / Parameter Store",
+      "sublabel": "Encrypted storage · Access control",
+      "tag": "Secrets Manager: versioning",
+      "pos": [
+        70,
+        220
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "vault",
+      "type": "external",
+      "label": "HashiCorp Vault",
+      "sublabel": "Encrypted storage · Versioning · Access control",
+      "pos": [
+        70,
+        360
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "sops",
+      "type": "external",
+      "label": "Mozilla SOPS",
+      "sublabel": "Encrypted secrets in Git repos",
+      "pos": [
+        70,
+        480
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "eso",
+      "type": "backend",
+      "label": "External Secrets Operator",
+      "sublabel": "ESO",
+      "pos": [
+        430,
+        190
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "ascp",
+      "type": "backend",
+      "label": "ASCP",
+      "sublabel": "AWS Secrets and Configuration Provider",
+      "pos": [
+        430,
+        290
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "backend",
+      "label": "Secrets Store CSI Driver",
+      "sublabel": "CSI volume",
+      "pos": [
+        430,
+        390
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "security",
+      "label": "Kubernetes Secrets",
+      "sublabel": "Encrypted at rest in etcd",
+      "pos": [
+        720,
+        290
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Consumed by Pods",
+      "sublabel": "Mount · Env vars · Init container",
+      "tag": "Usage pattern",
+      "pos": [
+        960,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Encryption Options",
+      "wraps": [
+        "kms",
+        "etcd",
+        "aws-store",
+        "vault",
+        "sops",
+        "eso",
+        "ascp",
+        "csi",
+        "k8s"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "etcd Encryption",
+      "wraps": [
+        "kms",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Secrets Management Solutions",
+      "wraps": [
+        "aws-store",
+        "vault",
+        "sops"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Integration Tools",
+      "wraps": [
+        "eso",
+        "ascp",
+        "csi"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kms-etcd",
+      "from": "kms",
+      "to": "etcd",
+      "label": "Extra encryption layer",
+      "variant": "security"
+    },
+    {
+      "id": "store-eso",
+      "from": "aws-store",
+      "to": "eso"
+    },
+    {
+      "id": "store-ascp",
+      "from": "aws-store",
+      "to": "ascp"
+    },
+    {
+      "id": "vault-csi",
+      "from": "vault",
+      "to": "csi"
+    },
+    {
+      "id": "eso-k8s",
+      "from": "eso",
+      "to": "k8s",
+      "label": "Sync Secrets"
+    },
+    {
+      "id": "ascp-k8s",
+      "from": "ascp",
+      "to": "k8s"
+    },
+    {
+      "id": "csi-k8s",
+      "from": "csi",
+      "to": "k8s"
+    },
+    {
+      "id": "k8s-pod",
+      "from": "k8s",
+      "to": "pod",
+      "label": "Inject",
+      "variant": "emphasis"
+    }
+  ]
+}

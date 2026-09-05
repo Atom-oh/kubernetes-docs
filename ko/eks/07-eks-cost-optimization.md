@@ -20,7 +20,9 @@ Amazon EKS(Elastic Kubernetes Service)를 사용하면 컨테이너화된 애플
 
 Amazon EKS를 사용할 때 발생하는 비용은 다음과 같은 구성 요소로 이루어집니다:
 
-![EKS 총 비용이 컨트롤 플레인, 컴퓨팅, 스토리지, 네트워킹, 기타 비용의 다섯 갈래로 나뉘고 각 갈래가 세부 항목(EC2/Fargate, EBS/EFS/S3 등)으로 이어지는 트리 다이어그램](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-0.svg)
+![EKS 총 비용이 컨트롤 플레인($0.10/시간), 컴퓨팅(EC2 인스턴스, Fargate), 스토리지(EBS, EFS, S3), 네트워킹(데이터 전송, 로드 밸런서, NAT 게이트웨이), 기타(CloudWatch, ECR, 기타 AWS 서비스)의 다섯 갈래로 나뉘는 비용 구성 요소 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-0.html)
 
 ## FinOps 원칙과 EKS
 
@@ -28,7 +30,9 @@ FinOps(Financial Operations)는 클라우드 비용 관리를 위한 운영 모�
 
 ### FinOps 프레임워크의 핵심 원칙
 
-![FinOps의 여섯 가지 핵심 원칙 각각이 태깅, 비용 할당, 모니터링, 거버넌스, 자동화 같은 EKS 구현 방법으로 연결되는 대응 관계도로, 비용 모니터링 도구가 예측 및 계획과 실시간 의사 결정 두 원칙 모두와 연결되는 허브 역할을 한다](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-1.svg)
+![FinOps의 여섯 가지 핵심 원칙 각각이 태깅, 비용 할당, 모니터링, 거버넌스, 자동화 같은 EKS 구현 방법으로 연결되는 대응 관계도로, 비용 모니터링 도구가 예측 및 계획과 실시간 의사 결정 두 원칙 모두와 연결되는 허브 역할을 한다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-1.html)
 
 ### EKS에 FinOps 적용하기
 
@@ -100,7 +104,9 @@ EKS 클러스터의 네트워킹과 관련된 비용:
 
 컴퓨팅 비용은 일반적으로 EKS 클러스터의 가장 큰 비용 구성 요소입니다. 다음과 같은 전략을 사용하여 컴퓨팅 비용을 최적화할 수 있습니다.
 
-![컴퓨팅 비용 최적화가 인스턴스 유형 최적화, 스팟 인스턴스 활용, Savings Plans/예약 인스턴스, 자동 스케일링 최적화, Fargate vs EC2 비교의 다섯 전략으로 나뉘는 트리 다이어그램](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-2.svg)
+![컴퓨팅 비용 최적화가 인스턴스 유형 최적화, 스팟 인스턴스 활용, Savings Plans 및 예약 인스턴스, 자동 스케일링 최적화, Fargate vs EC2 비용 비교의 다섯 전략으로 나뉘고 각 전략의 세부 항목(패밀리·크기·세대, MNG·Karpenter·중단 처리, Compute SP·EC2 Instance SP·RI, CA·Karpenter·HPA·VPA)을 함께 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-2.html)
 
 ### 적절한 인스턴스 유형 선택
 
@@ -424,7 +430,9 @@ VPA 모드:
 
 스토리지는 EKS 클러스터의 중요한 비용 구성 요소입니다. 다음과 같은 전략을 사용하여 스토리지 비용을 최적화할 수 있습니다.
 
-![스토리지 비용 최적화가 EBS 볼륨 최적화, EFS 비용 최적화, S3 비용 최적화 세 갈래로 나뉘고 각각 볼륨/스토리지 클래스 선택과 수명 주기 관리로 이어지는 트리 다이어그램](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-3.svg)
+![스토리지 비용 최적화가 EBS 볼륨 최적화, EFS 비용 최적화, S3 비용 최적화 세 갈래로 나뉘고, EBS는 볼륨 유형 선택(gp3 마이그레이션)·볼륨 크기 최적화·볼륨 수명 주기 관리, EFS는 처리량 모드 선택·수명 주기 관리·액세스 패턴 최적화, S3는 스토리지 클래스 최적화(수명 주기 정책)·요청 최적화로 이어지는 아키텍처 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-3.html)
 
 ### EBS 볼륨 최적화
 
@@ -572,7 +580,9 @@ S3 요청 비용을 최적화합니다:
 
 네트워킹 비용은 특히 대규모 데이터 전송이 있는 경우 상당할 수 있습니다. 다음과 같은 전략을 사용하여 네트워킹 비용을 최적화할 수 있습니다.
 
-![네트워킹 비용 최적화가 데이터 전송 최적화, 로드 밸런서 최적화, NAT 게이트웨이 최적화 세 갈래로 나뉘며, NAT 게이트웨이 최적화 아래 VPC 엔드포인트 사용이 가장 많은 세부 항목을 갖는 허브로 강조된 트리 다이어그램](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-4.svg)
+![네트워킹 비용 최적화가 데이터 전송 최적화, 로드 밸런서 최적화, NAT 게이트웨이 최적화 세 갈래로 나뉘고 각 영역 아래 리전 내 통신·가용 영역 인식 라우팅·압축, LB 유형 선택·공유·유휴 LB 제거, NAT 게이트웨이 공유·VPC 엔드포인트 사용·아웃바운드 트래픽 최적화 세 가지 세부 전략이 이어지며 VPC 엔드포인트 경로가 강조된 트리 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-4.html)
 
 ### 데이터 전송 최적화
 
@@ -728,7 +738,9 @@ NAT 게이트웨이를 통과하는 아웃바운드 트래픽을 최적화합니
 
 효과적인 리소스 관리 및 거버넌스는 EKS 클러스터의 비용을 제어하는 데 중요합니다. 다음과 같은 전략을 사용하여 리소스를 효과적으로 관리할 수 있습니다.
 
-![리소스 관리 및 거버넌스가 리소스 요청/제한 최적화, 네임스페이스 및 리소스 쿼터, 비용 할당 및 태깅 세 갈래로 나뉘는 트리 다이어그램](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-5.svg)
+![리소스 관리 및 거버넌스가 리소스 요청 및 제한 최적화, 네임스페이스 및 리소스 쿼터, 비용 할당 및 태깅 세 영역으로 나뉘고 각 영역 아래에 요청/제한 설정, 네임스페이스 분리·ResourceQuota·LimitRange, 리소스 태깅·Kubernetes 레이블·Kubecost 항목이 이어지는 트리 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-5.html)
 
 ### 리소스 요청 및 제한 최적화
 
@@ -901,7 +913,9 @@ Kubecost는 다음과 같은 기능을 제공합니다:
 
 비용을 효과적으로 최적화하려면 비용을 지속적으로 모니터링하고 분석해야 합니다. 다음과 같은 도구와 전략을 사용하여 EKS 클러스터의 비용을 모니터링하고 분석할 수 있습니다.
 
-![비용 모니터링 및 분석이 AWS Cost Explorer, Kubecost, CloudWatch Container Insights, 사용자 정의 비용 대시보드 네 도구로 나뉘는 트리 다이어그램](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-6.svg)
+![비용 모니터링 및 분석을 중심으로 AWS Cost Explorer, Kubecost, CloudWatch Container Insights, 사용자 정의 비용 대시보드 네 도구와 각 도구의 세부 기능(비용 분석·이상 탐지·예산 설정, Kubecost 대시보드·알림, 리소스 사용량 모니터링·비용 최적화 인사이트, Grafana 대시보드·비용 최적화 점수)이 연결된 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-6.html)
 
 ### AWS Cost Explorer
 
@@ -1100,7 +1114,9 @@ Prometheus 및 Grafana를 사용하여 사용자 정의 비용 대시보드를 �
 
 EKS 클러스터의 비용을 최적화하기 위한 모범 사례를 살펴보겠습니다.
 
-![비용 최적화 모범 사례가 일반적인 모범 사례, 워크로드별 최적화, 금융 서비스를 위한 비용 최적화 세 갈래로 나뉘고, 일반적인 모범 사례 아래에는 측정→분석→최적화→모니터링→반복으로 이어지는 지속적 최적화 순환 루프가 있는 트리 다이어그램](../../assets/diagrams/rendered/ko-eks-07-eks-cost-optimization-7.svg)
+![비용 최적화 모범 사례가 일반적인 모범 사례, 워크로드별 최적화, 금융 서비스를 위한 비용 최적화 세 갈래로 나뉘고, 일반적인 모범 사례 아래에는 측정→분석→최적화→모니터링→반복으로 이어지는 지속적 비용 최적화 순환 루프가 있는 다이어그램를 보여준다.](../.gitbook/assets/ko-eks-07-eks-cost-optimization-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-07-eks-cost-optimization-7.html)
 
 ### 일반적인 모범 사례
 

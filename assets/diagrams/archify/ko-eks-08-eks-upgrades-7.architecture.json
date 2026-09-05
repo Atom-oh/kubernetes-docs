@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "업그레이드 모범 사례",
+    "output": "ko-eks-08-eks-upgrades-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1180, 430],
+    "views": [
+      { "id": "categories", "label": "세 범주", "focus": ["root", "general", "large", "financial"], "note": "모범 사례는 일반, 대규모 클러스터, 금융 서비스 세 범주로 나뉩니다." },
+      { "id": "general-stages", "label": "일반 모범 사례 4단계", "focus": ["general", "planning", "preparation", "execution", "post"], "note": "일반 모범 사례는 계획 → 준비 → 수행 → 업그레이드 후 네 단계로 세분화됩니다." },
+      { "id": "industry", "label": "산업별 추가 사례", "focus": ["large", "financial"], "note": "대규모 클러스터와 금융 서비스 환경에는 추가 모범 사례가 적용됩니다." }
+    ]
+  },
+  "components": [
+    { "id": "root", "type": "cloud", "label": "업그레이드 모범 사례", "sublabel": "EKS 클러스터 업그레이드", "pos": [470, 40], "size": [240, 60] },
+    { "id": "general", "type": "backend", "label": "일반적인 모범 사례", "sublabel": "계획 · 준비 · 수행 · 후속", "pos": [25, 170], "size": [270, 64] },
+    { "id": "large", "type": "cloud", "label": "대규모 클러스터를 위한 모범 사례", "sublabel": "카나리 배포 · 자동화 · 롤백 자동화", "pos": [455, 170], "size": [270, 64] },
+    { "id": "financial", "type": "security", "label": "금융 서비스를 위한 모범 사례", "sublabel": "규제 준수 · 위험 평가 · 변경 관리", "pos": [880, 170], "size": [270, 64] },
+    { "id": "planning", "type": "backend", "label": "업그레이드 계획", "sublabel": "버전 선택 · 일정 · 단계적 접근 · 롤백 계획", "pos": [30, 330], "size": [260, 64] },
+    { "id": "preparation", "type": "backend", "label": "업그레이드 준비", "sublabel": "백업 · 리소스 확보 · 호환성 · 중단 API 식별", "pos": [315, 330], "size": [260, 64] },
+    { "id": "execution", "type": "backend", "label": "업그레이드 수행", "sublabel": "컨트롤 플레인 → 애드온 → 노드 (점진적)", "pos": [600, 330], "size": [260, 64] },
+    { "id": "post", "type": "backend", "label": "업그레이드 후", "sublabel": "검증 · 모니터링 · 문서화 · 학습", "pos": [885, 330], "size": [260, 64] }
+  ],
+  "connections": [
+    { "id": "root-general", "from": "root", "to": "general", "variant": "emphasis" },
+    { "id": "root-large", "from": "root", "to": "large" },
+    { "id": "root-financial", "from": "root", "to": "financial" },
+    { "id": "general-planning", "from": "general", "to": "planning", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "general-preparation", "from": "general", "to": "preparation", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "general-execution", "from": "general", "to": "execution", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "general-post", "from": "general", "to": "post", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "일반적인 모범 사례", "items": ["계획: 버전 선택, 업그레이드 일정, 단계적 접근, 롤백 계획", "준비: 백업, 리소스 확보, 호환성 확인, 사용 중단된 API 식별", "수행: 컨트롤 플레인 먼저, 애드온 다음, 노드 마지막, 점진적 노드 업그레이드", "업그레이드 후: 검증, 모니터링, 문서화, 학습"] },
+    { "dot": "orange", "title": "대규모 클러스터", "items": ["카나리 배포", "자동화", "모니터링 강화", "통신 계획", "롤백 자동화"] },
+    { "dot": "rose", "title": "금융 서비스", "items": ["규제 준수", "위험 평가", "변경 관리", "테스트 강화", "문서화 강화"] }
+  ]
+}

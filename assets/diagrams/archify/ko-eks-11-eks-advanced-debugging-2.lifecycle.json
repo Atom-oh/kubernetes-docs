@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "파드 상태 흐름도",
+    "output": "ko-eks-11-eks-advanced-debugging-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      566
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "정상 경로"
+    },
+    {
+      "id": "failure",
+      "label": "실패 경로"
+    }
+  ],
+  "states": [
+    {
+      "id": "pending",
+      "type": "start",
+      "label": "Pending",
+      "sublabel": "스케줄링 대기",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "creating",
+      "type": "active",
+      "label": "ContainerCreating",
+      "sublabel": "이미지 풀 · 볼륨 마운트",
+      "lane": "main",
+      "col": 1
+    },
+    {
+      "id": "running",
+      "type": "active",
+      "label": "Running",
+      "sublabel": "컨테이너 실행 중",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "succeeded",
+      "type": "success",
+      "label": "Succeeded",
+      "sublabel": "정상 종료",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "failed",
+      "type": "failure",
+      "label": "Failed",
+      "sublabel": "OOMKilled · CrashLoopBackOff",
+      "lane": "failure",
+      "col": 0
+    }
+  ],
+  "transitions": [
+    {
+      "from": "pending",
+      "to": "creating",
+      "label": "이미지 풀",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "creating",
+      "to": "running",
+      "label": "성공",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "running",
+      "to": "succeeded",
+      "label": "완료",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "creating",
+      "to": "failed",
+      "label": "실패",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "running",
+      "to": "failed",
+      "label": "크래시",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "from": "failed",
+      "to": "pending",
+      "label": "재시작 정책",
+      "variant": "dashed",
+      "labelSegment": 0,
+      "labelDy": 16,
+      "route": "left-channel",
+      "fromSide": "left",
+      "toSide": "left",
+      "channelX": 16
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "주요 실패 원인",
+      "items": [
+        "Pending — 리소스 부족, 스케줄링 실패",
+        "ContainerCreating — 이미지 풀 실패, 볼륨 마운트 실패",
+        "Failed — OOMKilled, CrashLoopBackOff"
+      ]
+    }
+  ]
+}

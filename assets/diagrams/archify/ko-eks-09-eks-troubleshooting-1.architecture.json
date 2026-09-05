@@ -1,0 +1,453 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "클러스터 생성 및 관리 문제",
+    "output": "ko-eks-09-eks-troubleshooting-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "문제 분류"
+        },
+        "cloud": {
+          "label": "AWS 측 원인"
+        },
+        "backend": {
+          "label": "K8s 구성 원인"
+        },
+        "external": {
+          "label": "그 외 원인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "view-creation",
+        "label": "클러스터 생성 실패",
+        "focus": [
+          "root",
+          "creation",
+          "iam-perm",
+          "quota",
+          "network-config",
+          "name-conflict",
+          "svc-availability"
+        ],
+        "note": "IAM 권한, 할당량, 네트워크, 이름 충돌, AWS 서비스 가용성 순으로 원인을 좁혀 갑니다."
+      },
+      {
+        "id": "view-endpoint",
+        "label": "엔드포인트 접근 문제",
+        "focus": [
+          "root",
+          "endpoint",
+          "network-restriction",
+          "auth",
+          "kubeconfig",
+          "apiserver-availability"
+        ],
+        "note": "네트워크 접근 제한, 인증, kubeconfig, API 서버 가용성 중 어디서 막히는지 확인합니다."
+      },
+      {
+        "id": "view-deletion",
+        "label": "클러스터 삭제 문제",
+        "focus": [
+          "root",
+          "deletion",
+          "resource-dependency",
+          "iam-perm-delete",
+          "deletion-failure"
+        ],
+        "note": "의존 리소스가 남아 있는지, 삭제 권한이 있는지, 리소스 삭제가 실패했는지 확인합니다."
+      }
+    ],
+    "viewBox": [
+      1680,
+      590
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "frontend",
+      "label": "클러스터 생성 및 관리 문제",
+      "pos": [
+        680,
+        30
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "creation",
+      "type": "frontend",
+      "label": "클러스터 생성 실패",
+      "pos": [
+        30,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "endpoint",
+      "type": "frontend",
+      "label": "엔드포인트 접근 문제",
+      "pos": [
+        590,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "deletion",
+      "type": "frontend",
+      "label": "클러스터 삭제 문제",
+      "pos": [
+        1150,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "iam-perm",
+      "type": "cloud",
+      "label": "IAM 권한 부족",
+      "pos": [
+        260,
+        250
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "quota",
+      "type": "cloud",
+      "label": "서비스 할당량 초과",
+      "pos": [
+        260,
+        302
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "network-config",
+      "type": "cloud",
+      "label": "네트워크 구성 문제",
+      "pos": [
+        260,
+        354
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "name-conflict",
+      "type": "external",
+      "label": "리소스 이름 충돌",
+      "pos": [
+        260,
+        406
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "svc-availability",
+      "type": "cloud",
+      "label": "AWS 서비스 가용성 문제",
+      "pos": [
+        260,
+        458
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "network-restriction",
+      "type": "external",
+      "label": "네트워크 접근 제한",
+      "pos": [
+        820,
+        250
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "external",
+      "label": "인증 문제",
+      "pos": [
+        820,
+        302
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "kubeconfig",
+      "type": "backend",
+      "label": "kubeconfig 구성 오류",
+      "pos": [
+        820,
+        354
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "apiserver-availability",
+      "type": "cloud",
+      "label": "API 서버 가용성 문제",
+      "pos": [
+        820,
+        406
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "resource-dependency",
+      "type": "cloud",
+      "label": "리소스 의존성",
+      "pos": [
+        1380,
+        250
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "iam-perm-delete",
+      "type": "cloud",
+      "label": "IAM 권한 부족",
+      "pos": [
+        1380,
+        302
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "deletion-failure",
+      "type": "external",
+      "label": "리소스 삭제 실패",
+      "pos": [
+        1380,
+        354
+      ],
+      "size": [
+        230,
+        44
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "클러스터 생성 실패 — 일반적인 원인",
+      "wraps": [
+        "creation",
+        "iam-perm",
+        "quota",
+        "network-config",
+        "name-conflict",
+        "svc-availability"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "엔드포인트 접근 문제 — 일반적인 원인",
+      "wraps": [
+        "endpoint",
+        "network-restriction",
+        "auth",
+        "kubeconfig",
+        "apiserver-availability"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클러스터 삭제 문제 — 일반적인 원인",
+      "wraps": [
+        "deletion",
+        "resource-dependency",
+        "iam-perm-delete",
+        "deletion-failure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-creation",
+      "from": "root",
+      "to": "creation",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-endpoint",
+      "from": "root",
+      "to": "endpoint",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-deletion",
+      "from": "root",
+      "to": "deletion",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "creation-iam-perm",
+      "from": "creation",
+      "to": "iam-perm",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-quota",
+      "from": "creation",
+      "to": "quota",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-network-config",
+      "from": "creation",
+      "to": "network-config",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-name-conflict",
+      "from": "creation",
+      "to": "name-conflict",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-svc-availability",
+      "from": "creation",
+      "to": "svc-availability",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-network-restriction",
+      "from": "endpoint",
+      "to": "network-restriction",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-auth",
+      "from": "endpoint",
+      "to": "auth",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-kubeconfig",
+      "from": "endpoint",
+      "to": "kubeconfig",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-apiserver-availability",
+      "from": "endpoint",
+      "to": "apiserver-availability",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "deletion-resource-dependency",
+      "from": "deletion",
+      "to": "resource-dependency",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "deletion-iam-perm-delete",
+      "from": "deletion",
+      "to": "iam-perm-delete",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "deletion-deletion-failure",
+      "from": "deletion",
+      "to": "deletion-failure",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "클러스터 생성 실패",
+      "items": [
+        "문제 해결 단계: IAM 권한 → 서비스 할당량 → 네트워크 구성 → CloudTrail 로그 → AWS 서비스 상태 확인",
+        "일반적인 해결 방법: IAM 권한 추가, 서비스 할당량 증가 요청, 네트워크 구성 수정, 다른 리전에서 시도"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "클러스터 엔드포인트 접근 문제",
+      "items": [
+        "문제 해결 단계: 클러스터 엔드포인트 → 엔드포인트 접근 정책 → kubeconfig 구성 → 인증 확인",
+        "일반적인 해결 방법: 엔드포인트 접근 정책 수정, kubeconfig 재생성, IAM 인증(aws-auth) 구성, VPC 엔드포인트 생성, CloudShell 원클릭 접속 활용"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "클러스터 삭제 문제",
+      "items": [
+        "문제 해결 단계: 클러스터 상태 → 노드 그룹·Fargate 프로필·애드온 → CloudTrail 로그 확인",
+        "일반적인 해결 방법: 의존 리소스 삭제, eksctl 강제 삭제, 수동 리소스 정리, AWS 리소스(ELB·보안 그룹) 정리"
+      ]
+    }
+  ]
+}

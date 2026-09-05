@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 비용 최적화",
+    "output": "ko-eks-04-eks-storage-part3-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "AWS 스토리지 서비스"
+        },
+        "backend": {
+          "label": "최적화 전략"
+        },
+        "cloud": {
+          "label": "비용 모니터링"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ebs-path",
+        "label": "EBS 최적화",
+        "focus": [
+          "ebs",
+          "volume-opt",
+          "lifecycle",
+          "cost-monitoring"
+        ],
+        "note": "EBS는 볼륨 최적화(gp3 전환 등)와 수명 주기 관리(스냅샷·PV 재확보) 두 전략에 걸쳐 있다."
+      },
+      {
+        "id": "file-storage",
+        "label": "EFS · FSx 최적화",
+        "focus": [
+          "efs",
+          "efs-opt",
+          "fsx",
+          "fsx-opt",
+          "cost-monitoring"
+        ],
+        "note": "파일 스토리지는 서비스별 전용 설정(처리량 모드, 배포 유형 등)으로 비용을 줄인다."
+      },
+      {
+        "id": "s3-tiering",
+        "label": "S3 데이터 계층화",
+        "focus": [
+          "s3",
+          "lifecycle",
+          "cost-monitoring"
+        ],
+        "note": "자주 액세스하지 않는 데이터는 S3 또는 S3 Glacier로 계층화한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "Amazon EBS",
+      "sublabel": "블록 스토리지",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "객체 스토리지",
+      "pos": [
+        40,
+        185
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "database",
+      "label": "Amazon EFS",
+      "sublabel": "파일 스토리지",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "Amazon FSx for Lustre",
+      "sublabel": "고성능 파일 스토리지",
+      "pos": [
+        40,
+        415
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "volume-opt",
+      "type": "backend",
+      "label": "볼륨 최적화",
+      "sublabel": "볼륨 유형 선택 · 크기 최적화 · gp3 전환",
+      "pos": [
+        340,
+        70
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "lifecycle",
+      "type": "backend",
+      "label": "수명 주기 관리",
+      "sublabel": "데이터 계층화 · 자동 스냅샷 · PV 재확보 정책",
+      "pos": [
+        340,
+        185
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "efs-opt",
+      "type": "backend",
+      "label": "EFS 최적화",
+      "sublabel": "처리량 모드 · IA 스토리지 클래스 · 액세스 포인트",
+      "pos": [
+        340,
+        300
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "fsx-opt",
+      "type": "backend",
+      "label": "FSx 최적화",
+      "sublabel": "배포 유형 · 데이터 압축 · S3 통합",
+      "pos": [
+        340,
+        415
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "cost-monitoring",
+      "type": "cloud",
+      "label": "비용 모니터링",
+      "sublabel": "Cost Explorer · 비용 할당 · 이상 탐지",
+      "pos": [
+        720,
+        242
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "스토리지 유형",
+      "wraps": [
+        "ebs",
+        "efs",
+        "fsx",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "비용 최적화 전략",
+      "wraps": [
+        "volume-opt",
+        "efs-opt",
+        "fsx-opt",
+        "lifecycle"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-volume",
+      "from": "ebs",
+      "to": "volume-opt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebs-lifecycle",
+      "from": "ebs",
+      "to": "lifecycle",
+      "label": "스냅샷 · PV 재확보",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "efs-efsopt",
+      "from": "efs",
+      "to": "efs-opt"
+    },
+    {
+      "id": "fsx-fsxopt",
+      "from": "fsx",
+      "to": "fsx-opt"
+    },
+    {
+      "id": "s3-lifecycle",
+      "from": "s3",
+      "to": "lifecycle",
+      "label": "데이터 계층화"
+    },
+    {
+      "id": "volume-cost",
+      "from": "volume-opt",
+      "to": "cost-monitoring",
+      "variant": "emphasis"
+    },
+    {
+      "id": "efs-cost",
+      "from": "efs-opt",
+      "to": "cost-monitoring"
+    },
+    {
+      "id": "fsx-cost",
+      "from": "fsx-opt",
+      "to": "cost-monitoring"
+    },
+    {
+      "id": "lifecycle-cost",
+      "from": "lifecycle",
+      "to": "cost-monitoring"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "볼륨 · 수명 주기",
+      "items": [
+        "일반 워크로드는 gp3, 처리량 중심은 st1, 드문 액세스는 sc1",
+        "자주 액세스하지 않는 데이터는 S3 / S3 Glacier로 계층화",
+        "임시 데이터는 Delete, 중요 데이터는 Retain 재확보 정책"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "EFS · FSx",
+      "items": [
+        "예측 가능한 워크로드는 프로비저닝, 가변 워크로드는 버스팅 처리량",
+        "30일 후 IA 클래스로 자동 이동(수명 주기 정책)",
+        "임시 워크로드는 SCRATCH_2, 장기 워크로드는 PERSISTENT_1/2 + LZ4 압축"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "비용 모니터링",
+      "items": [
+        "AWS Cost Explorer로 스토리지 비용 추세와 리소스별 비용 분석",
+        "네임스페이스·레이블 기반 Kubernetes 비용 할당(Kubecost 등)",
+        "AWS 예산·알림으로 비정상적인 비용 증가 탐지"
+      ]
+    }
+  ]
+}

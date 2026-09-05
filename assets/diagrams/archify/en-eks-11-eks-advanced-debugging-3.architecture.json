@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "4-Layer Detection Pipeline",
+    "locale": "en",
+    "output": "en-eks-11-eks-advanced-debugging-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Data Sources"
+        },
+        "backend": {
+          "label": "Collection layer"
+        },
+        "cloud": {
+          "label": "Analysis layer"
+        },
+        "messagebus": {
+          "label": "Alerting channels"
+        }
+      }
+    },
+    "viewBox": [
+      1160,
+      400
+    ]
+  },
+  "components": [
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "Data Sources",
+      "sublabel": "Metrics · Logs · Traces · Events",
+      "tag": "01 · Sources",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        480,
+        72
+      ]
+    },
+    {
+      "id": "collection",
+      "type": "backend",
+      "label": "Collection",
+      "sublabel": "CloudWatch Agent · Fluent Bit · ADOT Collector · Prometheus",
+      "tag": "02 · Collection",
+      "pos": [
+        620,
+        50
+      ],
+      "size": [
+        480,
+        72
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "cloud",
+      "label": "Analysis",
+      "sublabel": "CloudWatch Logs Insights · Metric Alarms · Anomaly Detection · Composite Alarms",
+      "tag": "03 · Analysis",
+      "pos": [
+        620,
+        250
+      ],
+      "size": [
+        480,
+        72
+      ]
+    },
+    {
+      "id": "alerting",
+      "type": "messagebus",
+      "label": "Alerting",
+      "sublabel": "SNS · Slack · PagerDuty · EventBridge",
+      "tag": "04 · Alerting",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        480,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sources-to-collection",
+      "from": "sources",
+      "to": "collection",
+      "label": "collect telemetry",
+      "variant": "emphasis",
+      "labelDy": -30
+    },
+    {
+      "id": "collection-to-analysis",
+      "from": "collection",
+      "to": "analysis",
+      "label": "store · query · evaluate alarms",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "analysis-to-alerting",
+      "from": "analysis",
+      "to": "alerting",
+      "label": "notify on anomaly",
+      "variant": "emphasis",
+      "labelDy": -30
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Reference Architecture 1: AWS Native",
+      "items": [
+        "Fluent Bit ships container logs to CloudWatch Logs (/aws/eks/my-cluster/containers)",
+        "ADOT Collector exports traces to X-Ray and metrics to CloudWatch EMF and Prometheus remote write"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Reference Architecture 2: Open Source Stack",
+      "items": [
+        "Prometheus + Alertmanager + Grafana",
+        "Alertmanager routing: severity=critical → PagerDuty, severity=warning → Slack"
+      ]
+    }
+  ]
+}

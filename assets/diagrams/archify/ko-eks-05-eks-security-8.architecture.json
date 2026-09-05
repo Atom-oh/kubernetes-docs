@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 네트워크 보안 아키텍처",
+    "output": "ko-eks-05-eks-security-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      780
+    ],
+    "views": [
+      {
+        "id": "entry",
+        "label": "인터넷 진입 경로",
+        "focus": [
+          "internet",
+          "alb",
+          "bastion",
+          "nodes"
+        ],
+        "note": "ALB와 Bastion 호스트만 퍼블릭 서브넷에서 트래픽을 받고, 워커 노드는 프라이빗 서브넷에 머무른다."
+      },
+      {
+        "id": "control",
+        "label": "클러스터 내부 제어",
+        "focus": [
+          "cp",
+          "nodes",
+          "netpol"
+        ],
+        "note": "컨트롤 플레인이 노드를 관리하고, 네트워크 정책이 파드 간 통신을 제어한다."
+      },
+      {
+        "id": "private",
+        "label": "AWS 서비스 프라이빗 접근",
+        "focus": [
+          "nodes",
+          "endpoints"
+        ],
+        "note": "노드는 인터넷 게이트웨이 대신 VPC 엔드포인트로 ECR, S3, STS에 접근한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "외부 트래픽",
+      "pos": [
+        520,
+        30
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "퍼블릭 진입점",
+      "pos": [
+        200,
+        230
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "bastion",
+      "type": "cloud",
+      "label": "Bastion 호스트",
+      "sublabel": "관리자 접근",
+      "pos": [
+        830,
+        230
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "EKS 컨트롤 플레인",
+      "sublabel": "API 서버",
+      "pos": [
+        510,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "backend",
+      "label": "워커 노드 × 3",
+      "sublabel": "프라이빗 서브넷",
+      "pos": [
+        510,
+        600
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "netpol",
+      "type": "security",
+      "label": "네트워크 정책",
+      "sublabel": "기본 거부 + 앱 허용",
+      "pos": [
+        150,
+        600
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "endpoints",
+      "type": "cloud",
+      "label": "VPC 엔드포인트",
+      "sublabel": "ECR API / ECR DKR / S3 / STS",
+      "pos": [
+        900,
+        600
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon VPC",
+      "wraps": [
+        "alb",
+        "bastion",
+        "cp",
+        "nodes",
+        "netpol",
+        "endpoints"
+      ],
+      "pad": 90
+    },
+    {
+      "kind": "region",
+      "label": "퍼블릭 서브넷",
+      "wraps": [
+        "alb",
+        "bastion"
+      ],
+      "pad": 50
+    },
+    {
+      "kind": "region",
+      "label": "프라이빗 서브넷 · EKS 클러스터",
+      "wraps": [
+        "cp",
+        "nodes",
+        "netpol"
+      ],
+      "pad": 50
+    },
+    {
+      "kind": "security-group",
+      "label": "ALB 보안 그룹",
+      "wraps": [
+        "alb"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "Bastion 보안 그룹",
+      "wraps": [
+        "bastion"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "컨트롤 플레인 보안 그룹",
+      "wraps": [
+        "cp"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "노드 보안 그룹",
+      "wraps": [
+        "nodes"
+      ],
+      "pad": 22
+    }
+  ],
+  "connections": [
+    {
+      "id": "internet-alb",
+      "from": "internet",
+      "to": "alb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "internet-bastion",
+      "from": "internet",
+      "to": "bastion"
+    },
+    {
+      "id": "alb-nodes",
+      "from": "alb",
+      "to": "nodes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "bastion-nodes",
+      "from": "bastion",
+      "to": "nodes"
+    },
+    {
+      "id": "cp-nodes",
+      "from": "cp",
+      "to": "nodes",
+      "label": "관리",
+      "labelDy": 50
+    },
+    {
+      "id": "netpol-nodes",
+      "from": "netpol",
+      "to": "nodes",
+      "label": "적용",
+      "variant": "security",
+      "labelDx": -40
+    },
+    {
+      "id": "nodes-endpoints",
+      "from": "nodes",
+      "to": "endpoints",
+      "label": "프라이빗 접근",
+      "variant": "dashed",
+      "labelDx": 55
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "보안 그룹",
+      "items": [
+        "클러스터 보안 그룹: 컨트롤 플레인 ↔ 워커 노드 통신 허용",
+        "포트 443(API 서버), 10250(kubelet), 1025-65535(노드 간)",
+        "노드 보안 그룹: 인바운드는 클러스터 보안 그룹만 허용"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "네트워크 정책",
+      "items": [
+        "default-deny: podSelector {} 로 Ingress/Egress 모두 차단",
+        "api-allow: frontend → api 파드 TCP 8080만 허용",
+        "Amazon VPC CNI, Calico, Cilium 으로 구현"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "VPC 엔드포인트",
+      "items": [
+        "ecr.api, ecr.dkr, s3, logs, sts 권장",
+        "인터넷 게이트웨이를 거치지 않는 프라이빗 액세스"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Add-on Upgrade",
+    "locale": "en",
+    "output": "en-eks-08-eks-upgrades-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1272,
+      500
+    ],
+    "views": [
+      {
+        "id": "managed",
+        "label": "AWS Managed Add-ons",
+        "focus": [
+          "root",
+          "managed",
+          "managed-check",
+          "managed-upgrade"
+        ],
+        "note": "Check versions with list-addons/describe-addon, then upgrade with update-addon or eksctl."
+      },
+      {
+        "id": "self-managed",
+        "label": "Self-managed Add-ons",
+        "focus": [
+          "root",
+          "self-managed"
+        ],
+        "note": "Upgrade self-managed add-ons with Helm or kubectl apply."
+      },
+      {
+        "id": "guides",
+        "label": "Key Add-on Guides",
+        "focus": [
+          "root",
+          "guides",
+          "coredns",
+          "kube-proxy",
+          "vpc-cni"
+        ],
+        "note": "Individual upgrade guides for the three core add-ons: CoreDNS, kube-proxy and VPC CNI."
+      },
+      {
+        "id": "troubleshooting",
+        "label": "Troubleshooting",
+        "focus": [
+          "root",
+          "troubleshooting",
+          "common-issues",
+          "steps"
+        ],
+        "note": "Diagnose config conflicts, compatibility and resource constraints by checking status, logs, then events."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Add-on Upgrade",
+      "sublabel": "EKS cluster add-ons",
+      "pos": [
+        536,
+        36
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "managed",
+      "type": "cloud",
+      "label": "AWS Managed Add-ons",
+      "sublabel": "AWS CLI · eksctl · Console",
+      "pos": [
+        36,
+        176
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "managed-check",
+      "type": "cloud",
+      "label": "Check Versions",
+      "sublabel": "list-addons · describe-addon",
+      "pos": [
+        36,
+        316
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "managed-upgrade",
+      "type": "cloud",
+      "label": "Upgrade Managed Add-ons",
+      "sublabel": "update-addon · eksctl",
+      "pos": [
+        36,
+        416
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "self-managed",
+      "type": "backend",
+      "label": "Self-managed Add-ons",
+      "sublabel": "Helm · kubectl",
+      "pos": [
+        280,
+        176
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "guides",
+      "type": "backend",
+      "label": "Key Add-on Upgrade Guides",
+      "sublabel": "core kube-system add-ons",
+      "pos": [
+        524,
+        176
+      ],
+      "size": [
+        356,
+        60
+      ]
+    },
+    {
+      "id": "coredns",
+      "type": "backend",
+      "label": "CoreDNS",
+      "sublabel": "DNS service",
+      "pos": [
+        524,
+        316
+      ],
+      "size": [
+        112,
+        56
+      ]
+    },
+    {
+      "id": "kube-proxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "service networking",
+      "pos": [
+        646,
+        316
+      ],
+      "size": [
+        112,
+        56
+      ]
+    },
+    {
+      "id": "vpc-cni",
+      "type": "backend",
+      "label": "VPC CNI",
+      "sublabel": "pod networking",
+      "pos": [
+        768,
+        316
+      ],
+      "size": [
+        112,
+        56
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "type": "security",
+      "label": "Add-on Upgrade Troubleshooting",
+      "sublabel": "issues during upgrades",
+      "pos": [
+        924,
+        176
+      ],
+      "size": [
+        312,
+        60
+      ]
+    },
+    {
+      "id": "common-issues",
+      "type": "security",
+      "label": "Common Issues",
+      "sublabel": "config · compat · resources",
+      "pos": [
+        924,
+        316
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "steps",
+      "type": "security",
+      "label": "Troubleshooting Steps",
+      "sublabel": "status → logs → events",
+      "pos": [
+        1086,
+        316
+      ],
+      "size": [
+        150,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Managed Add-ons",
+      "wraps": [
+        "managed",
+        "managed-check",
+        "managed-upgrade"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Self-managed Add-ons",
+      "wraps": [
+        "self-managed"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Key Add-on Upgrade Guides",
+      "wraps": [
+        "guides",
+        "coredns",
+        "kube-proxy",
+        "vpc-cni"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Troubleshooting",
+      "wraps": [
+        "troubleshooting",
+        "common-issues",
+        "steps"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-managed",
+      "from": "root",
+      "to": "managed",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-self",
+      "from": "root",
+      "to": "self-managed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-guides",
+      "from": "root",
+      "to": "guides",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-troubleshooting",
+      "from": "root",
+      "to": "troubleshooting",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "managed-to-check",
+      "from": "managed",
+      "to": "managed-check",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "check-to-upgrade",
+      "from": "managed-check",
+      "to": "managed-upgrade",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "guides-coredns",
+      "from": "guides",
+      "to": "coredns",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "guides-kube-proxy",
+      "from": "guides",
+      "to": "kube-proxy",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "guides-vpc-cni",
+      "from": "guides",
+      "to": "vpc-cni",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ts-common",
+      "from": "troubleshooting",
+      "to": "common-issues",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ts-steps",
+      "from": "troubleshooting",
+      "to": "steps",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS Managed Add-on Procedure",
+      "items": [
+        "List installed managed add-ons with aws eks list-addons",
+        "Check current and available versions with describe-addon / describe-addon-versions",
+        "Upgrade with aws eks update-addon --resolve-conflicts PRESERVE or eksctl update addon --preserve"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Common Issues",
+      "items": [
+        "Configuration conflicts: custom configuration vs. the new version",
+        "Compatibility issues: add-on vs. Kubernetes version",
+        "Resource constraints: not enough resources for the upgrade"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Troubleshooting Steps",
+      "items": [
+        "Check add-on status with aws eks describe-addon",
+        "Check add-on logs with kubectl logs -n kube-system",
+        "Check events with kubectl get events -n kube-system"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Node Group Upgrade",
+    "locale": "en",
+    "output": "en-eks-08-eks-upgrades-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1090,
+      560
+    ],
+    "views": [
+      {
+        "id": "sections",
+        "label": "Five branches",
+        "focus": [
+          "root",
+          "strategies",
+          "managed-ng",
+          "self-managed-ng",
+          "fargate-upgrade",
+          "monitoring"
+        ],
+        "note": "Node group upgrades split into five branches: strategies, managed, self-managed, Fargate, and monitoring and validation."
+      },
+      {
+        "id": "strategy-detail",
+        "label": "Strategy breakdown",
+        "focus": [
+          "strategies",
+          "managed-strategy",
+          "self-managed-strategy",
+          "fargate-strategy"
+        ],
+        "note": "Strategies break down further into managed, self-managed, and Fargate approaches."
+      },
+      {
+        "id": "validation",
+        "label": "Monitoring and validation",
+        "focus": [
+          "monitoring"
+        ],
+        "note": "After the upgrade, check node versions, node status, and pod deployment."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "external",
+      "label": "Node Group Upgrade",
+      "sublabel": "After control plane upgrade",
+      "pos": [
+        30,
+        244
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "strategies",
+      "type": "backend",
+      "label": "Node Group Upgrade Strategies",
+      "sublabel": "Managed · Self-managed · Fargate",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "managed-ng",
+      "type": "cloud",
+      "label": "Managed Node Group Upgrade",
+      "sublabel": "Check version · Console / CLI / eksctl · Config",
+      "pos": [
+        300,
+        142
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "self-managed-ng",
+      "type": "backend",
+      "label": "Self-managed Node Group Upgrade",
+      "sublabel": "Blue/green · Rolling · In-place",
+      "pos": [
+        300,
+        244
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "fargate-upgrade",
+      "type": "cloud",
+      "label": "Fargate Node Upgrade",
+      "sublabel": "Latest platform version applied on rescheduling",
+      "pos": [
+        300,
+        346
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "monitoring",
+      "type": "security",
+      "label": "Node Upgrade Monitoring and Validation",
+      "sublabel": "Check node version · node status · pod deployment",
+      "pos": [
+        300,
+        448
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "managed-strategy",
+      "type": "cloud",
+      "label": "Managed Node Groups",
+      "sublabel": "Rolling upgrade · Auto draining · Version tracking",
+      "pos": [
+        750,
+        40
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "self-managed-strategy",
+      "type": "backend",
+      "label": "Self-managed Node Groups",
+      "sublabel": "Blue/green · Rolling upgrade · In-place",
+      "pos": [
+        750,
+        142
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "fargate-strategy",
+      "type": "cloud",
+      "label": "Fargate",
+      "sublabel": "Managed by AWS, no separate upgrade needed",
+      "pos": [
+        750,
+        244
+      ],
+      "size": [
+        290,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Strategy breakdown",
+      "wraps": [
+        "managed-strategy",
+        "self-managed-strategy",
+        "fargate-strategy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-strategies",
+      "from": "root",
+      "to": "strategies",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-managed",
+      "from": "root",
+      "to": "managed-ng"
+    },
+    {
+      "id": "root-self",
+      "from": "root",
+      "to": "self-managed-ng"
+    },
+    {
+      "id": "root-fargate",
+      "from": "root",
+      "to": "fargate-upgrade"
+    },
+    {
+      "id": "root-monitoring",
+      "from": "root",
+      "to": "monitoring"
+    },
+    {
+      "id": "strat-managed",
+      "from": "strategies",
+      "to": "managed-strategy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "strat-self",
+      "from": "strategies",
+      "to": "self-managed-strategy"
+    },
+    {
+      "id": "strat-fargate",
+      "from": "strategies",
+      "to": "fargate-strategy"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Managed Node Groups",
+      "items": [
+        "Rolling upgrade: nodes are replaced one by one to minimize workload disruption",
+        "Auto draining: pods move to other nodes automatically",
+        "Version tracking: automatically selects a node AMI compatible with the control plane",
+        "Run via Console / AWS CLI / eksctl; configure behavior with maxUnavailable and PDB"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Self-managed Node Groups",
+      "items": [
+        "Blue/green deployment: create a new node group, then migrate workloads",
+        "Rolling upgrade: drain and terminate nodes one by one, replacing them with new nodes",
+        "In-place upgrade: upgrade kubelet and the container runtime on existing nodes"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Fargate and validation",
+      "items": [
+        "Fargate pods automatically use the latest platform version when newly scheduled",
+        "Existing Fargate pods keep their current platform version until restarted",
+        "After the upgrade, check node version, node status, and pod deployment"
+      ]
+    }
+  ]
+}

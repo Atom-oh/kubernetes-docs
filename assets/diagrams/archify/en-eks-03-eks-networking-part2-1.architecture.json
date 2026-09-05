@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AWS Load Balancer Integration",
+    "locale": "en",
+    "output": "en-eks-03-eks-networking-part2-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "lb-service-path",
+        "label": "LoadBalancer Service path",
+        "focus": [
+          "users",
+          "clb",
+          "nlb",
+          "svc-lb",
+          "pod1",
+          "pod2"
+        ],
+        "note": "CLB and NLB attach directly to a type: LoadBalancer Service, which forwards traffic to the pods."
+      },
+      {
+        "id": "ingress-path",
+        "label": "ALB · Ingress path",
+        "focus": [
+          "users",
+          "alb",
+          "ingress",
+          "svc-nodeport",
+          "pod3"
+        ],
+        "note": "The ALB routes through an Ingress resource to a NodePort Service."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Users",
+      "sublabel": "Internet",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "clb",
+      "type": "cloud",
+      "label": "Classic Load Balancer",
+      "sublabel": "default · no longer recommended",
+      "pos": [
+        140,
+        190
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Network Load Balancer",
+      "sublabel": "aws-load-balancer-type: nlb",
+      "pos": [
+        470,
+        190
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "AWS Load Balancer Controller",
+      "pos": [
+        860,
+        190
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "svc-lb",
+      "type": "backend",
+      "label": "LoadBalancer Service",
+      "sublabel": "type: LoadBalancer",
+      "pos": [
+        300,
+        380
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "svc-nodeport",
+      "type": "backend",
+      "label": "NodePort Service",
+      "sublabel": "type: NodePort",
+      "pos": [
+        620,
+        380
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "Ingress Resource",
+      "sublabel": "path-based routing",
+      "pos": [
+        875,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "pos": [
+        245,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "pos": [
+        445,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "pos": [
+        640,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Load Balancers",
+      "wraps": [
+        "clb",
+        "nlb",
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Services",
+      "wraps": [
+        "svc-lb",
+        "svc-nodeport",
+        "ingress"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pods",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-clb",
+      "from": "users",
+      "to": "clb"
+    },
+    {
+      "id": "users-nlb",
+      "from": "users",
+      "to": "nlb"
+    },
+    {
+      "id": "users-alb",
+      "from": "users",
+      "to": "alb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "clb-svc",
+      "from": "clb",
+      "to": "svc-lb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "nlb-svc",
+      "from": "nlb",
+      "to": "svc-lb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "alb-ingress",
+      "from": "alb",
+      "to": "ingress",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-nodeport",
+      "from": "ingress",
+      "to": "svc-nodeport",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-pod1",
+      "from": "svc-lb",
+      "to": "pod1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-pod2",
+      "from": "svc-lb",
+      "to": "pod2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "nodeport-pod3",
+      "from": "svc-nodeport",
+      "to": "pod3",
+      "variant": "emphasis"
+    }
+  ]
+}
