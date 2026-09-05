@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ambient Mode Architecture",
+    "output": "en-service-mesh-istio-advanced-01-ambient-mode-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      460
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "App Pod 1",
+      "sublabel": "No sidecar",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "App Pod 2",
+      "sublabel": "No sidecar",
+      "pos": [
+        70,
+        190
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "app3",
+      "type": "frontend",
+      "label": "App Pod 3",
+      "sublabel": "No sidecar",
+      "pos": [
+        70,
+        290
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "L4 proxy · mTLS, telemetry",
+      "pos": [
+        360,
+        186
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "1 per node"
+    },
+    {
+      "id": "waypoint",
+      "type": "backend",
+      "label": "Waypoint",
+      "sublabel": "L7 proxy · advanced routing",
+      "pos": [
+        640,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "service",
+      "type": "cloud",
+      "label": "Service",
+      "sublabel": "Target service",
+      "pos": [
+        900,
+        186
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Node",
+      "wraps": [
+        "app1",
+        "app2",
+        "app3",
+        "ztunnel"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Application Pods",
+      "wraps": [
+        "app1",
+        "app2",
+        "app3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Waypoint Proxy (optional)",
+      "wraps": [
+        "waypoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-ztunnel",
+      "from": "app1",
+      "to": "ztunnel"
+    },
+    {
+      "id": "app2-ztunnel",
+      "from": "app2",
+      "to": "ztunnel",
+      "label": "Transparent",
+      "labelDx": -40
+    },
+    {
+      "id": "app3-ztunnel",
+      "from": "app3",
+      "to": "ztunnel"
+    },
+    {
+      "id": "ztunnel-service",
+      "from": "ztunnel",
+      "to": "service",
+      "label": "L4 only",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ztunnel-waypoint",
+      "from": "ztunnel",
+      "to": "waypoint",
+      "label": "L7 needed",
+      "variant": "dashed"
+    },
+    {
+      "id": "waypoint-service",
+      "from": "waypoint",
+      "to": "service"
+    }
+  ]
+}

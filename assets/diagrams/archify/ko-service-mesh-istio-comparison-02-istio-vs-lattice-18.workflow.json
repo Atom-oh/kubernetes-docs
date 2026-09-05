@@ -1,0 +1,217 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio vs VPC Lattice 의사 결정 트리",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "multicloud",
+        "label": "멀티 클라우드면 Istio",
+        "focus": [
+          "start",
+          "q_platform",
+          "istio_multicloud"
+        ],
+        "note": "VPC Lattice는 AWS 전용이므로 멀티 클라우드 전략이면 곧바로 Istio를 선택한다."
+      },
+      {
+        "id": "aws_simple",
+        "label": "AWS 전용의 간단한 경로",
+        "focus": [
+          "q_platform",
+          "q_workload",
+          "lattice_mixed",
+          "q_feature",
+          "lattice_basic"
+        ],
+        "note": "EKS+ECS+Lambda 혼합이거나 기본 기능만 필요하면 VPC Lattice로 충분하다."
+      },
+      {
+        "id": "ops_tradeoff",
+        "label": "고급 기능과 운영 리소스",
+        "focus": [
+          "q_feature",
+          "q_ops",
+          "istio_advanced",
+          "lattice_practical"
+        ],
+        "note": "고급 기능이 필요해도 운영 리소스가 부족하면 현실적으로 VPC Lattice를 권장한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "security": {
+          "label": "결정 질문"
+        },
+        "backend": {
+          "label": "Istio 권장"
+        },
+        "cloud": {
+          "label": "VPC Lattice 권장"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "istio",
+      "label": "Istio 권장"
+    },
+    {
+      "id": "decision",
+      "label": "의사 결정 질문"
+    },
+    {
+      "id": "lattice",
+      "label": "VPC Lattice 권장"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_platform",
+    "q_workload",
+    "q_feature",
+    "q_ops",
+    "istio_advanced"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decision",
+      "col": 0,
+      "type": "frontend",
+      "label": "솔루션 선택",
+      "sublabel": "서비스 네트워킹"
+    },
+    {
+      "id": "q_platform",
+      "lane": "decision",
+      "col": 1,
+      "type": "security",
+      "label": "플랫폼?",
+      "sublabel": "AWS / 멀티 클라우드"
+    },
+    {
+      "id": "q_workload",
+      "lane": "decision",
+      "col": 2,
+      "type": "security",
+      "label": "워크로드 유형?",
+      "sublabel": "K8s / 혼합"
+    },
+    {
+      "id": "q_feature",
+      "lane": "decision",
+      "col": 3,
+      "type": "security",
+      "label": "기능 요구?",
+      "sublabel": "기본 / 고급"
+    },
+    {
+      "id": "q_ops",
+      "lane": "decision",
+      "col": 4,
+      "type": "security",
+      "label": "운영 리소스?",
+      "sublabel": "충분 / 부족"
+    },
+    {
+      "id": "istio_multicloud",
+      "lane": "istio",
+      "col": 1,
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "클라우드 중립"
+    },
+    {
+      "id": "istio_advanced",
+      "lane": "istio",
+      "col": 4,
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "세밀한 트래픽 제어"
+    },
+    {
+      "id": "lattice_mixed",
+      "lane": "lattice",
+      "col": 2,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "EKS+ECS+Lambda"
+    },
+    {
+      "id": "lattice_basic",
+      "lane": "lattice",
+      "col": 3,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "기본 기능 충족"
+    },
+    {
+      "id": "lattice_practical",
+      "lane": "lattice",
+      "col": 4,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "운영 부담 최소"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q_platform"
+    },
+    {
+      "from": "q_platform",
+      "to": "q_workload",
+      "label": "AWS 전용"
+    },
+    {
+      "from": "q_platform",
+      "to": "istio_multicloud",
+      "label": "멀티 클라우드",
+      "role": "branch"
+    },
+    {
+      "from": "q_workload",
+      "to": "q_feature",
+      "label": "K8s 전용",
+      "route": "straight"
+    },
+    {
+      "from": "q_workload",
+      "to": "lattice_mixed",
+      "label": "EKS+ECS+Lambda",
+      "role": "branch"
+    },
+    {
+      "from": "q_feature",
+      "to": "q_ops",
+      "label": "고급 기능",
+      "route": "straight"
+    },
+    {
+      "from": "q_feature",
+      "to": "lattice_basic",
+      "label": "기본 기능",
+      "role": "branch"
+    },
+    {
+      "from": "q_ops",
+      "to": "istio_advanced",
+      "label": "충분함",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q_ops",
+      "to": "lattice_practical",
+      "label": "부족함",
+      "role": "branch"
+    }
+  ]
+}

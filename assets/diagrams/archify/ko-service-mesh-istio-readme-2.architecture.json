@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "단순한 아키텍처: Service Mesh가 불필요한 경우",
+    "output": "ko-service-mesh-istio-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      340
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "브라우저 / 클라이언트",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "로드 밸런서",
+      "sublabel": "Ingress Controller",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "모놀리식 애플리케이션",
+      "sublabel": "단일 서비스",
+      "pos": [
+        520,
+        120
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "DB",
+      "sublabel": "데이터베이스",
+      "pos": [
+        790,
+        120
+      ],
+      "size": [
+        130,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "lb",
+        "app"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-lb",
+      "from": "user",
+      "to": "lb",
+      "label": "HTTP 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-app",
+      "from": "lb",
+      "to": "app",
+      "label": "라우팅"
+    },
+    {
+      "id": "app-to-db",
+      "from": "app",
+      "to": "db",
+      "label": "조회 / 저장"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "대신 사용",
+      "items": [
+        "Kubernetes Ingress Controller (NGINX, Traefik)",
+        "간단한 로드 밸런서",
+        "Application-level 구현"
+      ]
+    }
+  ]
+}

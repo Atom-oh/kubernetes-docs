@@ -30,7 +30,9 @@ Linkerd is a CNCF (Cloud Native Computing Foundation) graduated project and a li
 
 ## Linkerd Architecture Overview
 
-![Diagram showing how Linkerd's control plane components (Destination, Identity, Proxy Injector) configure and secure the linkerd-proxy sidecars injected into application pods, which exchange traffic over mutual TLS, while the Viz extension observes both proxies.](../../.gitbook/assets/en-service-mesh-linkerd-README-0.png)
+![Linkerd's control plane (Destination, Identity, Proxy Injector) configures and secures the linkerd-proxy sidecars injected into pods, which talk over mTLS while the Viz extension observes both proxies.](../../.gitbook/assets/en-service-mesh-linkerd-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-readme-0.html)
 
 ## Service Mesh Comparison
 

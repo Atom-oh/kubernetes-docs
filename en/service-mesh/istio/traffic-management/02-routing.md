@@ -19,7 +19,9 @@ Istio's advanced routing features allow fine-grained control over traffic based 
 
 VirtualService routing rules consist of **Match conditions** and **Route destinations**.
 
-![Diagram showing how an incoming request is evaluated against ordered match conditions in an Istio VirtualService and routed to the corresponding destination service, with a default fallback rule applied when no earlier condition matches.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-02-routing-0.svg)
+![Diagram showing how an incoming request is evaluated against ordered match conditions in an Istio VirtualService and routed to the corresponding destination service, with a default fallback rule applied when no earlier condition matches.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-02-routing-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-02-routing-0.html)
 
 ### Basic Structure
 

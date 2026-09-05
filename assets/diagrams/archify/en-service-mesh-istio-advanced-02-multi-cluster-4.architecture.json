@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pattern 1: Istio Multi-cluster Only",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-02-multi-cluster-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane-sync",
+        "label": "Service discovery sync",
+        "focus": [
+          "istiod1",
+          "istiod2"
+        ],
+        "note": "The two Istiod instances keep service discovery in sync with each other."
+      },
+      {
+        "id": "cross-region-traffic",
+        "label": "Cross-region traffic",
+        "focus": [
+          "app1",
+          "ewg1",
+          "ewg2",
+          "app2"
+        ],
+        "note": "Envoy in App Services reaches the other region's App Services over mTLS through the East-West Gateways."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Istiod (Control Plane)"
+        },
+        "cloud": {
+          "label": "East-West Gateway"
+        },
+        "backend": {
+          "label": "App Services"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "istiod1",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "App Services",
+      "sublabel": "Envoy sidecar",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ewg1",
+      "type": "cloud",
+      "label": "East-West Gateway",
+      "sublabel": "mTLS entry point",
+      "pos": [
+        300,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ewg2",
+      "type": "cloud",
+      "label": "East-West Gateway",
+      "sublabel": "mTLS entry point",
+      "pos": [
+        640,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "App Services",
+      "sublabel": "Envoy sidecar",
+      "pos": [
+        900,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "istiod2",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        900,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster 1 · us-east-1",
+      "wraps": [
+        "istiod1",
+        "app1",
+        "ewg1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster 2 · us-west-2",
+      "wraps": [
+        "ewg2",
+        "app2",
+        "istiod2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "discovery-sync",
+      "from": "istiod1",
+      "to": "istiod2",
+      "label": "Service discovery sync",
+      "variant": "dashed"
+    },
+    {
+      "id": "app1-to-ewg1",
+      "from": "app1",
+      "to": "ewg1",
+      "label": "Envoy"
+    },
+    {
+      "id": "cross-region-mtls",
+      "from": "ewg1",
+      "to": "ewg2",
+      "label": "mTLS · Cross-region",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ewg2-to-app2",
+      "from": "ewg2",
+      "to": "app2",
+      "label": "Envoy"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Pros",
+      "items": [
+        "Full Istio features",
+        "Unified observability",
+        "Fine-grained control"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Cons",
+      "items": [
+        "East-West Gateway management required",
+        "High complexity",
+        "Cross-region data transfer costs"
+      ]
+    }
+  ]
+}

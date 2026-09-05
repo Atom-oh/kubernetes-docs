@@ -1,0 +1,245 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "DNS Proxy 단계적 롤아웃",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-04-dns-cache-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작 · 완료"
+        },
+        "backend": {
+          "label": "적용 단계"
+        },
+        "security": {
+          "label": "검증 게이트"
+        },
+        "cloud": {
+          "label": "프로덕션 적용"
+        },
+        "messagebus": {
+          "label": "롤백"
+        },
+        "external": {
+          "label": "문제 해결"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "test-gate",
+        "label": "테스트 검증",
+        "focus": [
+          "start",
+          "enable",
+          "validate",
+          "debug"
+        ],
+        "note": "테스트 환경에서 DNS Proxy를 활성화하고 검증에 실패하면 문제를 해결한 뒤 다시 활성화합니다."
+      },
+      {
+        "id": "staging-gate",
+        "label": "스테이징 모니터링",
+        "focus": [
+          "validate",
+          "stage",
+          "monitor",
+          "rollback"
+        ],
+        "note": "검증을 통과하면 스테이징에 적용하고, 모니터링에 이상이 있으면 롤백합니다."
+      },
+      {
+        "id": "prod-rollout",
+        "label": "프로덕션 점진 적용",
+        "focus": [
+          "monitor",
+          "prod",
+          "complete"
+        ],
+        "note": "모니터링이 정상이면 프로덕션에 점진적으로 적용해 롤아웃을 완료합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "test",
+      "label": "테스트 환경"
+    },
+    {
+      "id": "staging",
+      "label": "스테이징 환경"
+    },
+    {
+      "id": "prod",
+      "label": "프로덕션"
+    },
+    {
+      "id": "exceptions",
+      "label": "문제 해결 · 롤백",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "enable",
+    "validate",
+    "stage",
+    "monitor",
+    "prod",
+    "complete"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "complete"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "complete"
+      },
+      {
+        "from": "rollback",
+        "to": "enable"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "test",
+      "col": 0,
+      "type": "frontend",
+      "label": "시작"
+    },
+    {
+      "id": "enable",
+      "lane": "test",
+      "col": 1,
+      "type": "backend",
+      "label": "DNS Proxy 활성화",
+      "sublabel": "테스트 환경",
+      "width": 160
+    },
+    {
+      "id": "validate",
+      "lane": "test",
+      "col": 2,
+      "type": "security",
+      "label": "검증",
+      "sublabel": "성공?",
+      "width": 124
+    },
+    {
+      "id": "stage",
+      "lane": "staging",
+      "col": 3,
+      "type": "backend",
+      "label": "스테이징 적용",
+      "width": 160
+    },
+    {
+      "id": "monitor",
+      "lane": "staging",
+      "col": 4,
+      "type": "security",
+      "label": "모니터링",
+      "sublabel": "정상?",
+      "width": 180
+    },
+    {
+      "id": "prod",
+      "lane": "prod",
+      "col": 4,
+      "type": "cloud",
+      "label": "프로덕션 적용",
+      "sublabel": "점진적 적용",
+      "width": 180
+    },
+    {
+      "id": "complete",
+      "lane": "prod",
+      "col": 5,
+      "type": "frontend",
+      "label": "완료"
+    },
+    {
+      "id": "debug",
+      "lane": "exceptions",
+      "col": 2,
+      "type": "external",
+      "label": "문제 해결",
+      "width": 134
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "messagebus",
+      "label": "롤백",
+      "width": 110
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "enable"
+    },
+    {
+      "from": "enable",
+      "to": "validate"
+    },
+    {
+      "from": "validate",
+      "to": "stage",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "stage",
+      "to": "monitor"
+    },
+    {
+      "from": "monitor",
+      "to": "prod",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "prod",
+      "to": "complete"
+    },
+    {
+      "from": "validate",
+      "to": "debug",
+      "label": "No",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "debug",
+      "to": "enable",
+      "label": "재시도",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "monitor",
+      "to": "rollback",
+      "label": "No",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "rollback",
+      "to": "debug",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 트래픽 흐름",
+    "output": "ko-service-mesh-istio-traffic-management-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1300, 520],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": { "label": "외부 사용자" },
+        "cloud": { "label": "Ingress Gateway" },
+        "backend": { "label": "라우팅 규칙 / 워크로드" },
+        "security": { "label": "트래픽 정책" }
+      }
+    },
+    "views": [
+      { "id": "ingress", "label": "진입과 라우팅", "focus": ["user", "gateway", "vs"], "note": "외부 요청이 Gateway(포트 80/443)로 들어와 VirtualService의 Path · Header · Weight 규칙으로 목적지가 정해진다." },
+      { "id": "policy", "label": "DestinationRule 정책", "focus": ["vs", "dr"], "note": "VirtualService가 고른 subset에 로드 밸런싱, Circuit Breaker, Connection Pool 정책이 적용된다." },
+      { "id": "delivery", "label": "파드 전달", "focus": ["dr", "pod-v1-1", "pod-v1-2", "pod-v2-1"], "note": "정책을 통과한 요청이 subset v1(2개) 또는 v2(1개) 파드 가운데 하나로 전달된다." }
+    ]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "사용자", "sublabel": "외부 요청", "pos": [40, 230], "size": [130, 60] },
+    { "id": "gateway", "type": "cloud", "label": "Gateway", "sublabel": "포트 80/443", "tag": "Ingress", "pos": [230, 228], "size": [150, 64] },
+    { "id": "vs", "type": "backend", "label": "VirtualService 라우팅", "sublabel": "Path 매칭 · Header 매칭 · Weight 분배", "tag": "규칙 3개", "pos": [440, 220], "size": [250, 80] },
+    { "id": "dr", "type": "security", "label": "DestinationRule 정책", "sublabel": "로드 밸런싱 · Circuit Breaker · Connection Pool", "tag": "정책 3개", "pos": [750, 220], "size": [270, 80] },
+    { "id": "pod-v1-1", "type": "backend", "label": "파드 v1-1", "sublabel": "subset v1", "pos": [1140, 110], "size": [120, 56] },
+    { "id": "pod-v1-2", "type": "backend", "label": "파드 v1-2", "sublabel": "subset v1", "pos": [1140, 232], "size": [120, 56] },
+    { "id": "pod-v2-1", "type": "backend", "label": "파드 v2-1", "sublabel": "subset v2", "pos": [1140, 354], "size": [120, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "파드", "wraps": ["pod-v1-1", "pod-v1-2", "pod-v2-1"] }
+  ],
+  "connections": [
+    { "id": "user-to-gateway", "from": "user", "to": "gateway", "label": "요청", "variant": "emphasis" },
+    { "id": "gateway-to-vs", "from": "gateway", "to": "vs" },
+    { "id": "vs-to-dr", "from": "vs", "to": "dr", "label": "subset 지정", "labelDy": -34 },
+    { "id": "dr-to-pod-v1-1", "from": "dr", "to": "pod-v1-1" },
+    { "id": "dr-to-pod-v1-2", "from": "dr", "to": "pod-v1-2" },
+    { "id": "dr-to-pod-v2-1", "from": "dr", "to": "pod-v2-1" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "VirtualService 라우팅", "items": ["Path 매칭 — URI 조건으로 라우트 선택", "Header 매칭 — x-dev-user 같은 헤더로 새 버전 노출", "Weight 분배 — v1 95% / v2 5% 같은 Canary 비율"] },
+    { "dot": "orange", "title": "DestinationRule 정책", "items": ["로드 밸런싱 — subset 안의 파드 사이 분배", "Circuit Breaker — outlierDetection으로 장애 파드 격리", "Connection Pool — 최대 연결 수와 대기 요청 제한"] },
+    { "dot": "emerald", "title": "파드", "items": ["subset v1 파드 2개, subset v2 파드 1개 (총 3 replicas)", "요청은 정책을 통과한 뒤 이 중 하나로 전달된다"] }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "mTLS Connection Failure from a PeerAuthentication Mode Mismatch",
+    "locale": "en",
+    "output": "en-service-mesh-istio-troubleshooting-common-errors-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "Client Service",
+      "sublabel": "PeerAuthentication: STRICT",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server Service",
+      "sublabel": "PeerAuthentication: DISABLE",
+      "pos": [
+        640,
+        180
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "error",
+      "type": "security",
+      "label": "503 Service Unavailable",
+      "sublabel": "upstream connect error",
+      "pos": [
+        640,
+        420
+      ],
+      "size": [
+        240,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-server",
+      "from": "client",
+      "to": "server",
+      "label": "mTLS connection attempt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-to-client",
+      "from": "server",
+      "to": "client",
+      "label": "Requires plaintext connection",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          760,
+          90
+        ],
+        [
+          180,
+          90
+        ]
+      ]
+    },
+    {
+      "id": "server-to-error",
+      "from": "server",
+      "to": "error",
+      "label": "connection fails",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ]
+}

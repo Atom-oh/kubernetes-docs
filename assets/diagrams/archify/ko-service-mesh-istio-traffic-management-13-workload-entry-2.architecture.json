@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VM 워크로드 아키텍처",
+    "output": "ko-service-mesh-istio-traffic-management-13-workload-entry-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "VM 레거시 애플리케이션"
+        },
+        "backend": {
+          "label": "파드 애플리케이션"
+        },
+        "security": {
+          "label": "Envoy 사이드카"
+        },
+        "cloud": {
+          "label": "Istio 컨트롤 플레인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "local",
+        "label": "로컬 통신",
+        "focus": [
+          "vm-app",
+          "vm-envoy",
+          "pod-app",
+          "pod-envoy"
+        ],
+        "note": "VM과 파드 모두 애플리케이션은 자기 옆의 Envoy와만 로컬로 통신한다."
+      },
+      {
+        "id": "mtls",
+        "label": "mTLS 트래픽",
+        "focus": [
+          "vm-envoy",
+          "pod-envoy"
+        ],
+        "note": "수동 설치된 VM Envoy와 자동 주입된 파드 Envoy가 mTLS로 직접 통신한다."
+      },
+      {
+        "id": "control",
+        "label": "istiod 구성 배포",
+        "focus": [
+          "istiod",
+          "vm-envoy",
+          "pod-envoy"
+        ],
+        "note": "istiod가 양쪽 Envoy에 xDS 구성을 배포하고, VM 측에는 Service Account 기반 인증서까지 발급한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "vm-app",
+      "type": "external",
+      "label": "레거시 애플리케이션",
+      "sublabel": "Port 8080",
+      "pos": [
+        100,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "vm-envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "수동 설치",
+      "pos": [
+        100,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod-app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "pos": [
+        760,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod-envoy",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "자동 주입",
+      "pos": [
+        760,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        460,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Virtual Machine",
+      "wraps": [
+        "vm-app",
+        "vm-envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "pod-app",
+        "pod-envoy",
+        "istiod"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "파드",
+      "wraps": [
+        "pod-app",
+        "pod-envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vm-local",
+      "from": "vm-app",
+      "to": "vm-envoy",
+      "label": "로컬 통신",
+      "labelAt": [
+        190,
+        327
+      ]
+    },
+    {
+      "id": "pod-local",
+      "from": "pod-app",
+      "to": "pod-envoy",
+      "label": "로컬 통신",
+      "labelAt": [
+        850,
+        327
+      ]
+    },
+    {
+      "id": "mtls",
+      "from": "vm-envoy",
+      "to": "pod-envoy",
+      "label": "mTLS 트래픽",
+      "variant": "emphasis",
+      "labelAt": [
+        520,
+        230
+      ]
+    },
+    {
+      "id": "xds-vm",
+      "from": "istiod",
+      "to": "vm-envoy",
+      "label": "xDS 구성 (ServiceEntry, DestinationRule)",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          50,
+          72
+        ],
+        [
+          50,
+          242
+        ]
+      ],
+      "labelAt": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "xds-pod",
+      "from": "istiod",
+      "to": "pod-envoy",
+      "label": "xDS 구성",
+      "variant": "dashed",
+      "toSide": "top"
+    },
+    {
+      "id": "cert-vm",
+      "from": "istiod",
+      "to": "vm-envoy",
+      "label": "인증서 발급 (Service Account)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          550,
+          150
+        ],
+        [
+          190,
+          150
+        ]
+      ],
+      "labelAt": [
+        370,
+        138
+      ]
+    }
+  ]
+}

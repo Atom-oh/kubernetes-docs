@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh Latency 오버헤드 비교",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "baseline",
+      "type": "external",
+      "label": "Baseline",
+      "sublabel": "Direct K8s Service · 0.1ms",
+      "pos": [
+        60,
+        248
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "linkerd",
+      "type": "backend",
+      "label": "Linkerd",
+      "sublabel": "Linkerd2-proxy · +0.5-1ms",
+      "pos": [
+        520,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kong",
+      "type": "backend",
+      "label": "Kong Mesh",
+      "sublabel": "Kuma DP · +1-2.5ms",
+      "pos": [
+        520,
+        185
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "backend",
+      "label": "Istio",
+      "sublabel": "Envoy Proxy · +1-3ms",
+      "pos": [
+        520,
+        310
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "consul",
+      "type": "backend",
+      "label": "Consul",
+      "sublabel": "Envoy/Built-in · +1-3ms",
+      "pos": [
+        520,
+        435
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh 데이터 플레인 프록시",
+      "wraps": [
+        "linkerd",
+        "kong",
+        "istio",
+        "consul"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "baseline-linkerd",
+      "from": "baseline",
+      "to": "linkerd",
+      "label": "경량 프록시",
+      "variant": "emphasis",
+      "labelSegment": 2
+    },
+    {
+      "id": "baseline-kong",
+      "from": "baseline",
+      "to": "kong",
+      "label": "중간",
+      "labelSegment": 2
+    },
+    {
+      "id": "baseline-istio",
+      "from": "baseline",
+      "to": "istio",
+      "label": "기능 풍부",
+      "labelSegment": 2
+    },
+    {
+      "id": "baseline-consul",
+      "from": "baseline",
+      "to": "consul",
+      "label": "중간",
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "결론",
+      "items": [
+        "Linkerd: 가장 낮은 오버헤드, 경량 프록시",
+        "Istio / Consul: 더 많은 기능으로 인한 약간 높은 오버헤드",
+        "Kong Mesh: 중간 수준의 성능"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "테스트 환경",
+      "items": [
+        "3-node EKS 1.28, m5.xlarge",
+        "100 services, 1000 RPS"
+      ]
+    }
+  ]
+}

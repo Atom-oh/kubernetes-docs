@@ -31,7 +31,9 @@ Argo Rollouts는 Kubernetes를 위한 Progressive Delivery 컨트롤러로, 고�
 
 ### Istio 통합의 장점
 
-![VirtualService를 직접 수정하는 수동 트래픽 조정 방식과, Argo Rollouts가 메트릭을 검증하며 자동으로 트래픽을 전환하는 방식을 좌우로 대비하는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-08-argo-rollouts-0.svg)
+![VirtualService를 직접 수정하는 수동 트래픽 조정 방식과, Argo Rollouts가 Analysis로 메트릭을 검증하며 트래픽을 자동 전환하는 방식을 좌우로 대비해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-0.html)
 
 **주요 이점**:
 - ✅ **자동화된 Canary 배포**: VirtualService weight 자동 조정
@@ -52,11 +54,15 @@ Argo Rollouts는 Kubernetes를 위한 Progressive Delivery 컨트롤러로, 고�
 
 ### 전체 아키텍처
 
-![ArgoCD가 배포한 Argo Rollouts 컨트롤러가 VirtualService 가중치와 Pod를 관리하며, Istiod가 데이터 플레인 설정을 동기화하고, Prometheus 메트릭을 AnalysisRun이 검증해 Rollouts에 성공/실패를 되돌려주는 흐름을 보여주는 아키텍처.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-08-argo-rollouts-1.svg)
+![ArgoCD가 배포한 Argo Rollouts 컨트롤러가 VirtualService weight와 stable/canary 파드를 관리하고, Istiod가 데이터 플레인 설정을 동기화하며, 파드 메트릭을 Prometheus가 수집해 AnalysisRun이 검증한 성공/실패를 Rollouts에 되돌려주는 전체 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-1.html)
 
 ### 트래픽 흐름
 
-![Argo Rollouts가 VirtualService 가중치를 조정해 요청을 Stable/Canary Pod로 나눠 보내고, Pod가 보낸 메트릭을 Prometheus가 집계해 Rollouts에 돌려주면 성공률에 따라 자동으로 진행하거나 롤백하는 시퀀스.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-08-argo-rollouts-2.svg)
+![Argo Rollouts가 VirtualService 가중치를 setWeight로 조정해 요청을 Stable/Canary 파드로 나눠 보내고, 파드 메트릭을 Prometheus에 Analysis 쿼리로 확인해 성공률 95% 기준으로 자동 진행하거나 롤백하는 시퀀스를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-2.html)
 
 ## 핵심 개념
 
@@ -225,7 +231,9 @@ spec:
 ```
 
 **AnalysisRun**:
-![AnalysisRun이 30초마다 성공률을 반복 측정하며, 모든 측정이 통과하면 다음 단계로 진행하고 실패가 임계치(2회)에 도달하면 자동 롤백하는 판정 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-08-argo-rollouts-3.svg)
+![AnalysisRun이 30초마다 성공률을 측정해 95% 이상이면 다음 측정으로 넘어가고 5회 모두 통과하면 다음 단계로 진행하며, 실패가 failureLimit 2회에 도달하면 자동 롤백하는 판정 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-3.html)
 
 ## 설정 및 구성
 
@@ -444,7 +452,9 @@ spec:
 ```
 
 **트래픽 전환 그래프**:
-![Canary 트래픽 비중이 0%에서 시작해 10%, 30%, 50%, 80%를 거쳐 대기 시간을 두고 100%까지 단계적으로 전환되는 흐름을 보여주는 다이어그램. 50% 단계가 현재 진행 지점으로 강조되어 있다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-08-argo-rollouts-4.svg)
+![Argo Rollouts 기본 Canary 전략에서 트래픽 비중이 0%에서 10%, 30%, 50%, 80%를 거쳐 단계별 대기 시간을 두고 100%까지 전환되며 50% 단계가 현재 진행 지점인 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-4.html)
 
 ### 2. Header 기반 라우팅
 
@@ -639,7 +649,9 @@ spec:
 ```
 
 **동작**:
-![2단계에서 시작된 백그라운드 Analysis가 이후 Canary 단계들과 나란히 30초마다 계속 측정하며, 실패 시 즉시 롤백하는 병행 구조를 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-08-argo-rollouts-5.svg)
+![2단계에서 시작된 백그라운드 Analysis가 이후 Canary 단계들과 나란히 30초마다 계속 측정하며, 실패 시 즉시 롤백하는 병행 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-5.html)
 
 ### 3. 복합 메트릭 분석
 
@@ -803,7 +815,9 @@ spec:
 ```
 
 **동작 흐름**:
-![새 버전을 Preview 환경에 배포해 사전 분석을 통과한 뒤 수동 승인으로 Active Service를 Blue에서 Green으로 전환하고, 사후 분석 결과에 따라 이전 버전을 정리하거나 롤백하는 배포 승인 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-08-argo-rollouts-6.svg)
+![새 버전을 Preview 환경에 배포해 사전 분석을 통과한 뒤 수동 승인으로 Active Service를 Blue에서 Green으로 전환하고, 사후 분석 결과에 따라 이전 버전을 정리하거나 롤백하는 배포 승인 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-6.html)
 
 ### 2. Canary with Experiment
 

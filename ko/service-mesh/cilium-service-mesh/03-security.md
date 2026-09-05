@@ -25,7 +25,7 @@ Cilium 보안에서는 다음 세 계층을 분리해야 합니다.
 
 Cilium mutual authentication은 연결 허용 전에 두 endpoint의 identity를 검증하지만, 기존 구현의 인증 handshake는 애플리케이션 데이터 경로와 분리되어 있습니다. 즉 `authentication.mode: required`만으로 기존 데이터 연결의 payload가 TLS 암호화된다고 가정하면 안 됩니다. 데이터 기밀성이 필요하면 [WireGuard 또는 IPsec](https://docs.cilium.io/en/stable/security/network/encryption/)을 함께 구성합니다.
 
-![Pod A의 연결 요청이 Cilium Agent와 SPIRE의 SVID 인증, out-of-band 인증 handshake를 거쳐 정책 허용 후 데이터 연결로 이어지는 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-1.png)
+![파드 A의 연결 요청이 Cilium Agent와 SPIRE의 SVID 인증, out-of-band 인증 handshake를 거쳐 정책 허용 후 데이터 연결로 이어지는 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-1.html)
 
@@ -490,7 +490,7 @@ encryption:
 
 Cilium은 IP 대신 ID를 기반으로 보안 정책을 적용합니다:
 
-![Pod 레이블 집합이 hash를 거쳐 숫자 Identity로 변환되고, 이 Identity로 eBPF Policy Map을 조회해 Allow/Deny가 결정되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-3.png)
+![파드 레이블 집합이 hash를 거쳐 숫자 Identity로 변환되고, 이 Identity로 eBPF Policy Map을 조회해 Allow/Deny가 결정되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-3.html)
 
@@ -555,7 +555,7 @@ spec:
 
 ### IP vs Identity 비교
 
-![IP 기반 보안은 Pod IP가 바뀔 때마다 정책 업데이트가 필요하지만, Identity 기반 보안은 IP 변경에 영향받지 않는다는 차이를 비교한다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-4.png)
+![IP 기반 보안은 파드 IP가 바뀔 때마다 정책 업데이트가 필요하지만, Identity 기반 보안은 IP 변경에 영향받지 않는다는 차이를 비교한다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-4.html)
 

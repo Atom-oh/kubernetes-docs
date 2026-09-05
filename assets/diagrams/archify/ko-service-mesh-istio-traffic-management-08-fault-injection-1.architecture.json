@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Circuit Breaker와 Timeout 설정 검증",
+    "output": "ko-service-mesh-istio-traffic-management-08-fault-injection-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "요청과 장애 응답",
+        "focus": [
+          "service-a",
+          "service-b"
+        ],
+        "note": "서비스 A의 요청에 Fault Injection이 적용된 서비스 B가 지연 또는 실패 응답을 돌려준다."
+      },
+      {
+        "id": "verify",
+        "label": "Circuit Breaker 확인",
+        "focus": [
+          "service-a",
+          "monitoring"
+        ],
+        "note": "장애 응답이 누적된 뒤 Circuit Breaker가 실제로 작동했는지 모니터링으로 확인한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "service-a",
+      "type": "backend",
+      "label": "서비스 A",
+      "sublabel": "호출 측 (Circuit Breaker 적용)",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "service-b",
+      "type": "backend",
+      "label": "의존 서비스 B",
+      "sublabel": "VirtualService fault (delay / abort)",
+      "tag": "Fault Injection",
+      "pos": [
+        460,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "monitoring",
+      "type": "cloud",
+      "label": "모니터링",
+      "sublabel": "Circuit Breaker 작동 지표",
+      "pos": [
+        460,
+        340
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "service-a",
+      "to": "service-b",
+      "label": "1. 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "fault-response",
+      "from": "service-b",
+      "to": "service-a",
+      "label": "2. 지연 또는 실패",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -130
+    },
+    {
+      "id": "verify",
+      "from": "service-a",
+      "to": "monitoring",
+      "label": "3. Circuit Breaker 작동 확인"
+    }
+  ]
+}

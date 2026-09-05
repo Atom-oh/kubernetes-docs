@@ -23,7 +23,9 @@ Istio의 트래픽 관리 기능은 서비스 메시 내에서 트래픽 흐름�
 
 ### 주요 기능
 
-![클라이언트 요청이 Gateway, VirtualService, DestinationRule을 차례로 거쳐 세 개의 서비스 버전으로 분배되며, 90%는 주 트래픽, 10%는 Canary, 나머지는 Mirror로 전달되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-README-0.png)
+![클라이언트 요청이 Gateway, VirtualService, DestinationRule을 차례로 거쳐 세 개의 서비스 버전으로 분배되며, 90%는 주 트래픽, 10%는 Canary, 나머지는 Mirror로 전달되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-readme-0.html)
 
 ### 1. 지능형 라우팅
 
@@ -241,7 +243,9 @@ spec:
 
 ## 트래픽 흐름
 
-![사용자 요청이 Ingress Gateway를 지나 VirtualService의 라우팅 단계(Path/Header/Weight 매칭)와 DestinationRule의 정책 단계(로드 밸런싱/Circuit Breaker/Connection Pool)를 차례로 통과한 뒤 파드로 전달되는 5단계 파이프라인을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-README-1.png)
+![사용자 요청이 Ingress Gateway를 지나 VirtualService의 라우팅 단계(Path/Header/Weight 매칭)와 DestinationRule의 정책 단계(로드 밸런싱/Circuit Breaker/Connection Pool)를 차례로 통과한 뒤 subset v1·v2 파드 3개 중 하나로 전달되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-readme-1.html)
 
 ## 학습 순서
 

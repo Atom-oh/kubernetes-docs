@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "From Monolith to Microservices",
+    "output": "en-service-mesh-istio-02-basic-concepts-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      540
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Application / service"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "monolith-era",
+        "label": "Monolithic era",
+        "focus": [
+          "monolith"
+        ],
+        "note": "The whole application runs as a single process."
+      },
+      {
+        "id": "microservices-era",
+        "label": "Microservices era",
+        "focus": [
+          "svc-a",
+          "svc-b",
+          "svc-c",
+          "svc-d",
+          "svc-e"
+        ],
+        "note": "Small services call one another over the network, converging on Service D."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "monolith",
+      "type": "backend",
+      "label": "Monolithic application",
+      "sublabel": "Single process",
+      "pos": [
+        40,
+        222
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        330,
+        224
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        560,
+        350
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-d",
+      "type": "backend",
+      "label": "Service D",
+      "pos": [
+        790,
+        224
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-e",
+      "type": "backend",
+      "label": "Service E",
+      "pos": [
+        1000,
+        224
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Monolithic era",
+      "wraps": [
+        "monolith"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Microservices era",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c",
+        "svc-d",
+        "svc-e"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "transition",
+      "from": "monolith",
+      "to": "svc-a",
+      "label": "Transition",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-to-b",
+      "from": "svc-a",
+      "to": "svc-b"
+    },
+    {
+      "id": "a-to-c",
+      "from": "svc-a",
+      "to": "svc-c"
+    },
+    {
+      "id": "b-to-d",
+      "from": "svc-b",
+      "to": "svc-d"
+    },
+    {
+      "id": "c-to-d",
+      "from": "svc-c",
+      "to": "svc-d"
+    },
+    {
+      "id": "d-to-e",
+      "from": "svc-d",
+      "to": "svc-e",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "New problems after the split",
+      "items": [
+        "Inter-service communication: more network calls, latency and failure propagation",
+        "Observability: debugging is hard without distributed tracing",
+        "Security: service-to-service authentication and encryption (mTLS) complexity",
+        "Traffic control and failure handling implemented in code per service"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Microservices Challenges",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Challenges"
+        },
+        "backend": {
+          "label": "Application code"
+        },
+        "cloud": {
+          "label": "Istio infra level"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "problems",
+        "label": "Common challenges",
+        "focus": [
+          "problems"
+        ],
+        "note": "Traffic management, security, observability and resilience are challenges every microservices system faces."
+      },
+      {
+        "id": "without",
+        "label": "Without Istio",
+        "focus": [
+          "problems",
+          "w1",
+          "w2",
+          "w3",
+          "w4"
+        ],
+        "note": "The traditional approach implements them in each service's application code: duplicated, inconsistent and hard to maintain."
+      },
+      {
+        "id": "with",
+        "label": "Using Istio",
+        "focus": [
+          "problems",
+          "i1",
+          "i2",
+          "i3",
+          "i4"
+        ],
+        "note": "Istio handles them automatically at the infrastructure level with declarative, centrally managed, consistent policy and no code changes."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "problems",
+      "type": "external",
+      "label": "Microservices Challenges",
+      "sublabel": "Traffic · Security · Observability · Resilience",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        260,
+        72
+      ]
+    },
+    {
+      "id": "w1",
+      "type": "backend",
+      "label": "Implemented in code",
+      "sublabel": "Application code",
+      "pos": [
+        340,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "w2",
+      "type": "backend",
+      "label": "Duplicate code",
+      "sublabel": "Repeated in each service",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "w3",
+      "type": "backend",
+      "label": "Inconsistent implementation",
+      "sublabel": "Varies per service",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "w4",
+      "type": "backend",
+      "label": "Difficult maintenance",
+      "sublabel": "Rising cost of change",
+      "pos": [
+        1060,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "i1",
+      "type": "cloud",
+      "label": "Automatic at infra level",
+      "sublabel": "Sidecar / mesh",
+      "pos": [
+        340,
+        420
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "i2",
+      "type": "cloud",
+      "label": "Declarative config",
+      "sublabel": "Centrally managed YAML",
+      "pos": [
+        580,
+        420
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "i3",
+      "type": "cloud",
+      "label": "Consistent policy",
+      "sublabel": "Same for every service",
+      "pos": [
+        820,
+        420
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "i4",
+      "type": "cloud",
+      "label": "No code changes needed",
+      "sublabel": "Canary · mTLS · tracing",
+      "pos": [
+        1060,
+        420
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without Istio",
+      "wraps": [
+        "w1",
+        "w2",
+        "w3",
+        "w4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Using Istio",
+      "wraps": [
+        "i1",
+        "i2",
+        "i3",
+        "i4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "problems-w1",
+      "from": "problems",
+      "to": "w1",
+      "label": "Traditional approach",
+      "variant": "dashed"
+    },
+    {
+      "id": "problems-i1",
+      "from": "problems",
+      "to": "i1",
+      "label": "Istio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "w1-w2",
+      "from": "w1",
+      "to": "w2",
+      "variant": "dashed"
+    },
+    {
+      "id": "w2-w3",
+      "from": "w2",
+      "to": "w3",
+      "variant": "dashed"
+    },
+    {
+      "id": "w3-w4",
+      "from": "w3",
+      "to": "w4",
+      "variant": "dashed"
+    },
+    {
+      "id": "i1-i2",
+      "from": "i1",
+      "to": "i2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i2-i3",
+      "from": "i2",
+      "to": "i3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "i3-i4",
+      "from": "i3",
+      "to": "i4",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Microservices challenges",
+      "items": [
+        "Traffic management: shift traffic safely to a new version",
+        "Security: encrypt and authenticate inter-service communication",
+        "Observability: trace request flow across dozens of services",
+        "Resilience: one service's failure propagates to the whole system"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Without Istio",
+      "items": [
+        "Implemented directly in each service's application code",
+        "The same logic is duplicated per service and implemented inconsistently",
+        "Maintenance becomes difficult as a result"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Using Istio",
+      "items": [
+        "Canary deployment via VirtualService, no code changes",
+        "Automatic mTLS via PeerAuthentication STRICT",
+        "Metrics and distributed tracing generated automatically",
+        "Circuit Breaker configured via DestinationRule"
+      ]
+    }
+  ]
+}

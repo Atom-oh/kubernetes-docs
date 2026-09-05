@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Viz 대시보드 뷰 탐색 구조",
+    "output": "ko-service-mesh-linkerd-05-observability-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1000, 560],
+    "legend": {
+      "entries": {
+        "external": { "label": "진입 지점 (Namespace)" },
+        "backend": { "label": "대시보드 뷰" }
+      }
+    },
+    "views": [
+      { "id": "drilldown", "label": "네임스페이스 → 배포 드릴다운", "focus": ["ns", "deploy"], "note": "Namespace Overview에서 메시 상태를 확인한 뒤 Deployments 뷰로 좁혀 들어간다." },
+      { "id": "detail", "label": "배포별 세부 뷰", "focus": ["deploy", "pods", "routes", "tap"], "note": "Deployments에서 Pod 상태, ServiceProfile 라우트별 메트릭, 실시간 Tap 요청 스트림으로 갈라진다." },
+      { "id": "topology", "label": "토폴로지 뷰", "focus": ["ns", "topo"], "note": "네임스페이스 수준에서 서비스 간 통신을 시각화하는 Topology 뷰로 바로 이동한다." }
+    ]
+  },
+  "components": [
+    { "id": "ns", "type": "external", "label": "Namespace Overview", "sublabel": "네임스페이스별 메시 상태", "pos": [400, 40], "size": [210, 64] },
+    { "id": "topo", "type": "backend", "label": "Topology", "sublabel": "서비스 간 통신 시각화", "pos": [90, 210], "size": [190, 64] },
+    { "id": "deploy", "type": "backend", "label": "Deployments", "sublabel": "배포별 성공률·RPS·지연 시간", "pos": [400, 210], "size": [210, 64] },
+    { "id": "pods", "type": "backend", "label": "Pods", "sublabel": "Pod별 상세 메트릭", "pos": [160, 390], "size": [180, 64] },
+    { "id": "routes", "type": "backend", "label": "Routes", "sublabel": "ServiceProfile 라우트별 메트릭", "pos": [400, 390], "size": [210, 64] },
+    { "id": "tap", "type": "backend", "label": "Tap", "sublabel": "실시간 요청 스트림", "pos": [680, 390], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Dashboard Views", "wraps": ["ns", "topo", "deploy", "pods", "routes", "tap"] }
+  ],
+  "connections": [
+    { "id": "ns-deploy", "from": "ns", "to": "deploy", "label": "드릴다운", "variant": "emphasis", "labelAt": [505, 157] },
+    { "id": "ns-topo", "from": "ns", "to": "topo" },
+    { "id": "deploy-pods", "from": "deploy", "to": "pods" },
+    { "id": "deploy-routes", "from": "deploy", "to": "routes" },
+    { "id": "deploy-tap", "from": "deploy", "to": "tap" }
+  ]
+}

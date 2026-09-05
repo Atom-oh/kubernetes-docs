@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "HBONE Protocol Tunneling Flow",
+    "output": "en-service-mesh-istio-advanced-01-ambient-mode-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      300
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Plain TCP",
+      "pos": [
+        30,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel-src",
+      "type": "security",
+      "label": "Source ztunnel",
+      "sublabel": "HBONE encapsulation",
+      "pos": [
+        280,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "Network",
+      "sublabel": "HBONE / HTTP/2 · mTLS",
+      "pos": [
+        540,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel-dst",
+      "type": "security",
+      "label": "Destination ztunnel",
+      "sublabel": "HBONE decapsulation",
+      "pos": [
+        810,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "frontend",
+      "label": "Target App",
+      "sublabel": "Plain TCP",
+      "pos": [
+        1070,
+        110
+      ],
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-src",
+      "from": "app",
+      "to": "ztunnel-src",
+      "label": "Plain"
+    },
+    {
+      "id": "src-to-net",
+      "from": "ztunnel-src",
+      "to": "network",
+      "label": "HBONE tunnel",
+      "variant": "security"
+    },
+    {
+      "id": "net-to-dst",
+      "from": "network",
+      "to": "ztunnel-dst",
+      "label": "HBONE tunnel",
+      "variant": "security"
+    },
+    {
+      "id": "dst-to-target",
+      "from": "ztunnel-dst",
+      "to": "target",
+      "label": "Plain"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "HBONE Characteristics",
+      "items": [
+        "HTTP/2 based: compatible with existing infrastructure",
+        "Built-in mTLS: secure communication",
+        "Efficient: minimal overhead",
+        "Firewall friendly: uses standard HTTP/2 ports"
+      ]
+    }
+  ]
+}

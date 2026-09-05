@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio + VPC Lattice Hybrid Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-02-istio-vs-lattice-17.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inside-cluster",
+        "label": "Within cluster: Istio",
+        "focus": [
+          "frontend",
+          "frontend-proxy",
+          "backend-proxy",
+          "backend"
+        ],
+        "note": "Inside the EKS cluster, traffic flows over Istio mTLS between Envoy sidecars."
+      },
+      {
+        "id": "outside-cluster",
+        "label": "Outside cluster: VPC Lattice",
+        "focus": [
+          "backend",
+          "service-network",
+          "payment-service",
+          "notification-service",
+          "payment",
+          "notification"
+        ],
+        "note": "Backend exits through the Egress Gateway into the VPC Lattice service network to reach ECS and Lambda."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "Pod",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "frontend-proxy",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Frontend sidecar",
+      "pos": [
+        220,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "backend-proxy",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Backend sidecar",
+      "pos": [
+        410,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend",
+      "sublabel": "Pod",
+      "pos": [
+        600,
+        140
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "service-network",
+      "type": "cloud",
+      "label": "Service Network",
+      "sublabel": "VPC Lattice",
+      "pos": [
+        1060,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "payment-service",
+      "type": "cloud",
+      "label": "Payment Service",
+      "sublabel": "Lattice service",
+      "pos": [
+        860,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "notification-service",
+      "type": "cloud",
+      "label": "Notification Service",
+      "sublabel": "Lattice service",
+      "pos": [
+        1130,
+        320
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "ECS Task",
+      "pos": [
+        860,
+        520
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification",
+      "sublabel": "Lambda",
+      "pos": [
+        1130,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC 1 · EKS Cluster (Istio Mesh)",
+      "wraps": [
+        "frontend",
+        "frontend-proxy",
+        "backend-proxy",
+        "backend"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC Lattice",
+      "wraps": [
+        "service-network",
+        "payment-service",
+        "notification-service"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC 2 · ECS",
+      "wraps": [
+        "payment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC 3 · Lambda",
+      "wraps": [
+        "notification"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend-to-proxy",
+      "from": "frontend",
+      "to": "frontend-proxy"
+    },
+    {
+      "id": "mtls",
+      "from": "frontend-proxy",
+      "to": "backend-proxy",
+      "label": "Istio mTLS",
+      "variant": "security",
+      "labelDy": -24
+    },
+    {
+      "id": "proxy-to-backend",
+      "from": "backend-proxy",
+      "to": "backend"
+    },
+    {
+      "id": "egress",
+      "from": "backend",
+      "to": "service-network",
+      "label": "Egress Gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "net-to-payment-service",
+      "from": "service-network",
+      "to": "payment-service",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-to-notification-service",
+      "from": "service-network",
+      "to": "notification-service",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "payment-service-to-ecs",
+      "from": "payment-service",
+      "to": "payment"
+    },
+    {
+      "id": "notification-service-to-lambda",
+      "from": "notification-service",
+      "to": "notification"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Within cluster: Istio",
+      "items": [
+        "mTLS between Envoy sidecars with rich traffic-control features"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Between clusters/external: VPC Lattice",
+      "items": [
+        "Egress Gateway connects to the Service Network",
+        "Simple connectivity to ECS Tasks and Lambda in other VPCs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Waypoint Role",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-01-ambient-mode-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      320
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "ztunnel (L4 node proxy)"
+        },
+        "backend": {
+          "label": "Waypoint L7 features"
+        },
+        "external": {
+          "label": "Target service"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "L4 node proxy",
+      "pos": [
+        30,
+        130
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "l7-routing",
+      "type": "backend",
+      "label": "L7 Routing",
+      "sublabel": "Path, Header",
+      "pos": [
+        250,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "retry",
+      "type": "backend",
+      "label": "Retry / Timeout",
+      "sublabel": "retries · timeouts",
+      "pos": [
+        415,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "circuit-breaker",
+      "type": "backend",
+      "label": "Circuit Breaker",
+      "sublabel": "circuit breaking",
+      "pos": [
+        580,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "fault-injection",
+      "type": "backend",
+      "label": "Fault Injection",
+      "sublabel": "fault injection",
+      "pos": [
+        745,
+        130
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "header-manip",
+      "type": "backend",
+      "label": "Header Manipulation",
+      "sublabel": "request · response headers",
+      "pos": [
+        910,
+        130
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "external",
+      "label": "Target Service",
+      "sublabel": "Target service",
+      "pos": [
+        1100,
+        130
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Waypoint Features",
+      "wraps": [
+        "l7-routing",
+        "retry",
+        "circuit-breaker",
+        "fault-injection",
+        "header-manip"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ztunnel-to-l7",
+      "from": "ztunnel",
+      "to": "l7-routing",
+      "label": "When L7 needed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l7-to-retry",
+      "from": "l7-routing",
+      "to": "retry"
+    },
+    {
+      "id": "retry-to-cb",
+      "from": "retry",
+      "to": "circuit-breaker"
+    },
+    {
+      "id": "cb-to-fault",
+      "from": "circuit-breaker",
+      "to": "fault-injection"
+    },
+    {
+      "id": "fault-to-header",
+      "from": "fault-injection",
+      "to": "header-manip"
+    },
+    {
+      "id": "header-to-target",
+      "from": "header-manip",
+      "to": "target",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Waypoint Characteristics",
+      "items": [
+        "Deployed per Service Account or per Namespace",
+        "Based on Envoy proxy",
+        "Supports all L7 Istio features",
+        "Selective use for required services only"
+      ]
+    }
+  ]
+}

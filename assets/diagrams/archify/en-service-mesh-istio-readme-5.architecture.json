@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Architecture: Control Plane and Data Plane",
+    "locale": "en",
+    "output": "en-service-mesh-istio-readme-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-push",
+        "label": "Control Plane push",
+        "focus": [
+          "pilot",
+          "citadel",
+          "galley",
+          "envoy1",
+          "envoy2"
+        ],
+        "note": "istiod's Pilot pushes routing configuration and Citadel issues certificates to every Envoy sidecar."
+      },
+      {
+        "id": "mtls",
+        "label": "mTLS between Envoys",
+        "focus": [
+          "envoy1",
+          "envoy2",
+          "envoy3"
+        ],
+        "note": "All traffic between pods is automatically encrypted with mTLS by the Envoy sidecars."
+      },
+      {
+        "id": "request",
+        "label": "Application requests",
+        "focus": [
+          "app1",
+          "envoy1",
+          "app2",
+          "envoy2",
+          "app3",
+          "envoy3"
+        ],
+        "note": "Applications send requests without code changes; the Envoy in the same pod intercepts all traffic."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pilot",
+      "type": "backend",
+      "label": "Pilot",
+      "sublabel": "service discovery · routing rules",
+      "pos": [
+        140,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "citadel",
+      "type": "security",
+      "label": "Citadel",
+      "sublabel": "certificate issuance · mTLS",
+      "pos": [
+        480,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "galley",
+      "type": "backend",
+      "label": "Galley",
+      "sublabel": "config validation · distribution",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar",
+      "pos": [
+        160,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 1",
+      "pos": [
+        160,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar",
+      "pos": [
+        500,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 2",
+      "pos": [
+        500,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy3",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar",
+      "pos": [
+        840,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app3",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 3",
+      "pos": [
+        840,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane (istiod)",
+      "wraps": [
+        "pilot",
+        "citadel",
+        "galley"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "envoy1",
+        "app1",
+        "envoy2",
+        "app2",
+        "envoy3",
+        "app3"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "envoy1",
+        "app1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "envoy2",
+        "app2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 3",
+      "wraps": [
+        "envoy3",
+        "app3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pilot-config",
+      "from": "pilot",
+      "to": "envoy1",
+      "label": "push config · all Envoys",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "citadel-cert",
+      "from": "citadel",
+      "to": "envoy2",
+      "label": "issue certs · all Envoys",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "mtls-1-2",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-2-3",
+      "from": "envoy2",
+      "to": "envoy3",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "req1",
+      "from": "app1",
+      "to": "envoy1",
+      "label": "request",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "req2",
+      "from": "app2",
+      "to": "envoy2",
+      "label": "request",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "req3",
+      "from": "app3",
+      "to": "envoy3",
+      "label": "request",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Control Plane (istiod)",
+      "items": [
+        "Pilot: service discovery, traffic routing rule management",
+        "Citadel: certificate generation and management, mTLS enablement",
+        "Galley: configuration validation and distribution"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Data Plane",
+      "items": [
+        "Envoy Proxy: deployed as a sidecar in each pod, intercepting and controlling all network traffic"
+      ]
+    }
+  ]
+}

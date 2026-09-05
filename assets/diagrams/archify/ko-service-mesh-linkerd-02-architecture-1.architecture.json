@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Destination Controller",
+    "output": "ko-service-mesh-linkerd-02-architecture-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": { "label": "Kubernetes 리소스" },
+        "backend": { "label": "컨트롤러 컴포넌트" },
+        "external": { "label": "프록시" }
+      }
+    }
+  },
+  "components": [
+    { "id": "svc-ep", "type": "cloud", "label": "Services / Endpoints", "sublabel": "서비스 · 엔드포인트", "pos": [40, 120], "size": [200, 60] },
+    { "id": "sp-ts", "type": "cloud", "label": "SP / TrafficSplit", "sublabel": "ServiceProfile · TrafficSplit", "pos": [40, 300], "size": [200, 60] },
+    { "id": "discovery", "type": "backend", "label": "Service Discovery", "sublabel": "엔드포인트 조회", "pos": [340, 80], "size": [180, 60] },
+    { "id": "profile", "type": "backend", "label": "ServiceProfile", "sublabel": "라우팅 정보", "pos": [340, 210], "size": [180, 60] },
+    { "id": "split", "type": "backend", "label": "TrafficSplit", "sublabel": "트래픽 분할", "pos": [340, 340], "size": [180, 60] },
+    { "id": "dest-api", "type": "backend", "label": "Destination API", "sublabel": "gRPC 서버", "pos": [640, 210], "size": [170, 60] },
+    { "id": "proxies", "type": "external", "label": "linkerd-proxy", "sublabel": "Proxy 1 · Proxy 2", "pos": [930, 210], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Kubernetes", "wraps": ["svc-ep", "sp-ts"] },
+    { "kind": "region", "label": "Destination Controller", "wraps": ["discovery", "profile", "split", "dest-api"] },
+    { "kind": "region", "label": "데이터 플레인", "wraps": ["proxies"] }
+  ],
+  "connections": [
+    { "id": "svc-to-discovery", "from": "svc-ep", "to": "discovery", "label": "감시" },
+    { "id": "spts-to-profile", "from": "sp-ts", "to": "profile", "label": "감시" },
+    { "id": "spts-to-split", "from": "sp-ts", "to": "split" },
+    { "id": "discovery-to-api", "from": "discovery", "to": "dest-api" },
+    { "id": "profile-to-api", "from": "profile", "to": "dest-api" },
+    { "id": "split-to-api", "from": "split", "to": "dest-api" },
+    { "id": "api-to-proxies", "from": "dest-api", "to": "proxies", "label": "gRPC 스트림", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "주요 기능", "items": [
+      "서비스 디스커버리: Kubernetes 서비스와 엔드포인트를 모니터링해 프록시에 실시간 업데이트",
+      "정책 배포: ServiceProfile, TrafficSplit 등 정책을 프록시에 전달",
+      "로드 밸런싱 정보: EWMA 기반 로드 밸런싱을 위한 엔드포인트 가중치",
+      "서비스 프로파일: 라우트별 재시도, 타임아웃, 메트릭 설정"
+    ] }
+  ]
+}

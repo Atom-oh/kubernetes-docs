@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Ingress & Gateway Architecture",
+    "output": "en-service-mesh-cilium-service-mesh-05-ingress-gateway-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "entry",
+        "label": "External entry path",
+        "focus": [
+          "client",
+          "lb",
+          "gw"
+        ],
+        "note": "An external client request passes through the cloud load balancer (NLB/ALB) to reach the Gateway or Ingress resource."
+      },
+      {
+        "id": "l7",
+        "label": "L7 routing",
+        "focus": [
+          "gw",
+          "envoy",
+          "svca",
+          "svcb",
+          "svcc"
+        ],
+        "note": "The Cilium Envoy L7 proxy distributes requests to backend services by host and path rules."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "External Client",
+      "sublabel": "Internet users",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Cloud Load Balancer",
+      "sublabel": "NLB / ALB",
+      "pos": [
+        240,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "backend",
+      "label": "Gateway / Ingress",
+      "sublabel": "Gateway API or Ingress resource",
+      "pos": [
+        470,
+        250
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Cilium Envoy",
+      "sublabel": "L7 Proxy",
+      "pos": [
+        720,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svca",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Backend",
+      "pos": [
+        960,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svcb",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Backend",
+      "pos": [
+        960,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svcc",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Backend",
+      "pos": [
+        960,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "External",
+      "wraps": [
+        "client",
+        "lb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "gw",
+        "envoy",
+        "svca",
+        "svcb",
+        "svcc"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "region",
+      "label": "Cilium Ingress / Gateway",
+      "wraps": [
+        "gw",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backend Services",
+      "wraps": [
+        "svca",
+        "svcb",
+        "svcc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "HTTPS request",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "lb-gw",
+      "from": "lb",
+      "to": "gw",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-envoy",
+      "from": "gw",
+      "to": "envoy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-svca",
+      "from": "envoy",
+      "to": "svca"
+    },
+    {
+      "id": "envoy-svcb",
+      "from": "envoy",
+      "to": "svcb"
+    },
+    {
+      "id": "envoy-svcc",
+      "from": "envoy",
+      "to": "svcc"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Entry point",
+      "items": [
+        "Native support for the Cilium Ingress Controller and the Gateway API",
+        "A LoadBalancer-type Service fronts it with an EKS NLB (shared / dedicated mode)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "L7 handling",
+      "items": [
+        "The Cilium Envoy proxy performs L7 routing, TLS termination, and load balancing",
+        "Requests are distributed to backend services by host and path rules"
+      ]
+    }
+  ]
+}

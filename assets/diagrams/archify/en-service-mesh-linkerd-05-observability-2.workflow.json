@@ -1,0 +1,306 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Linkerd Troubleshooting Workflow",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-linkerd-05-observability-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Start / End"
+        },
+        "backend": {
+          "label": "linkerd viz command"
+        },
+        "messagebus": {
+          "label": "Decision"
+        },
+        "security": {
+          "label": "Root-cause check"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "success-path",
+        "label": "Low success rate",
+        "focus": [
+          "stat",
+          "check",
+          "top",
+          "tap",
+          "logs"
+        ],
+        "note": "When success rate is low, find the busiest paths with viz top, watch live requests with tap, then check the proxy logs."
+      },
+      {
+        "id": "latency-path",
+        "label": "High latency",
+        "focus": [
+          "check",
+          "latency",
+          "routes",
+          "tap"
+        ],
+        "note": "When success is fine but latency is high, inspect per-ServiceProfile route metrics with viz routes and continue with tap."
+      },
+      {
+        "id": "mtls-path",
+        "label": "mTLS check",
+        "focus": [
+          "latency",
+          "edges",
+          "check_tls",
+          "cert",
+          "end"
+        ],
+        "note": "When both look normal, check service-to-service connections with viz edges and inspect certificates if mTLS is the problem."
+      }
+    ],
+    "viewBox": [
+      1184,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "detect",
+      "label": "Issue detected"
+    },
+    {
+      "id": "success",
+      "label": "Low success rate"
+    },
+    {
+      "id": "latency",
+      "label": "High latency"
+    },
+    {
+      "id": "mtls",
+      "label": "mTLS check and resolution"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "stat",
+    "check",
+    "top",
+    "tap",
+    "logs",
+    "end"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "end"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "end"
+      },
+      {
+        "from": "routes",
+        "to": "tap"
+      },
+      {
+        "from": "cert",
+        "to": "end"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "detect",
+      "col": 0,
+      "type": "external",
+      "label": "Issue Detected",
+      "width": 148
+    },
+    {
+      "id": "stat",
+      "lane": "detect",
+      "col": 1,
+      "type": "backend",
+      "label": "linkerd viz stat",
+      "sublabel": "success rate, RPS, latency",
+      "tag": "CLI",
+      "width": 156
+    },
+    {
+      "id": "check",
+      "lane": "detect",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Low success rate?",
+      "width": 170
+    },
+    {
+      "id": "top",
+      "lane": "success",
+      "col": 3,
+      "type": "backend",
+      "label": "linkerd viz top",
+      "sublabel": "most active paths",
+      "tag": "CLI",
+      "width": 148
+    },
+    {
+      "id": "tap",
+      "lane": "success",
+      "col": 4,
+      "type": "backend",
+      "label": "linkerd viz tap",
+      "sublabel": "live request stream",
+      "tag": "CLI",
+      "width": 148
+    },
+    {
+      "id": "logs",
+      "lane": "success",
+      "col": 5,
+      "type": "security",
+      "label": "Check Proxy Logs",
+      "width": 170
+    },
+    {
+      "id": "latency",
+      "lane": "latency",
+      "col": 2,
+      "type": "messagebus",
+      "label": "High latency?",
+      "width": 150
+    },
+    {
+      "id": "routes",
+      "lane": "latency",
+      "col": 3,
+      "type": "backend",
+      "label": "linkerd viz routes",
+      "sublabel": "per-route metrics",
+      "tag": "CLI",
+      "width": 164
+    },
+    {
+      "id": "edges",
+      "lane": "mtls",
+      "col": 2,
+      "type": "backend",
+      "label": "linkerd viz edges",
+      "sublabel": "service-to-service links",
+      "tag": "CLI",
+      "width": 160
+    },
+    {
+      "id": "check_tls",
+      "lane": "mtls",
+      "col": 3,
+      "type": "messagebus",
+      "label": "mTLS issue?",
+      "width": 140
+    },
+    {
+      "id": "cert",
+      "lane": "mtls",
+      "col": 4,
+      "type": "security",
+      "label": "Check Certificates",
+      "width": 176
+    },
+    {
+      "id": "end",
+      "lane": "mtls",
+      "col": 5,
+      "type": "external",
+      "label": "Issue Resolved",
+      "width": 148
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "stat",
+      "role": "main"
+    },
+    {
+      "from": "stat",
+      "to": "check",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "top",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "latency",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "top",
+      "to": "tap",
+      "role": "main"
+    },
+    {
+      "from": "tap",
+      "to": "logs",
+      "role": "main"
+    },
+    {
+      "from": "latency",
+      "to": "routes",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "latency",
+      "to": "edges",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "routes",
+      "to": "tap",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "edges",
+      "to": "check_tls",
+      "role": "branch"
+    },
+    {
+      "from": "check_tls",
+      "to": "cert",
+      "label": "Yes",
+      "variant": "security",
+      "role": "branch"
+    },
+    {
+      "from": "check_tls",
+      "to": "end",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "logs",
+      "to": "end",
+      "role": "main"
+    },
+    {
+      "from": "cert",
+      "to": "end",
+      "role": "branch"
+    }
+  ]
+}

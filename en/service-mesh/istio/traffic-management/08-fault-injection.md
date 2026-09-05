@@ -24,7 +24,9 @@ In microservice architecture, numerous services depend on each other, and **a si
 
 Chaos Engineering, which originated from Netflix's Chaos Monkey, aims to **experience failures proactively in production environments** and discover system weaknesses.
 
-![Comparison flowchart showing how traditional testing only surfaces failures in production, while chaos engineering continuously injects faults to discover weaknesses and build a resilient system.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-0.svg)
+![Side-by-side workflow showing how traditional testing moves from dev and staging into a production failure, while Chaos Engineering continuously injects faults to discover weaknesses, fix them proactively, and reach a resilient system.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-0.html)
 
 #### 2. **Reproducing Real Production Scenarios**
 
@@ -42,7 +44,9 @@ In production environments, the following problems can occur:
 
 Without Fault Injection, it's **difficult to confirm whether Circuit Breaker and Timeout settings actually work**.
 
-![Flowchart showing a service sending a request into a fault-injected dependency, receiving delay or failure back, and reporting to monitoring to confirm the circuit breaker activated.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-1.svg)
+![Diagram showing Service A sending a request to fault-injected Dependent Service B, receiving a delayed or failed response, and confirming Circuit Breaker activation through monitoring.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-1.html)
 
 #### 4. **Validating Safe Deployments**
 
@@ -271,7 +275,9 @@ spec:
 
 ## Fault Injection Overview
 
-![Flowchart showing a client's request split into a delay path that reaches the service slowly and an abort path that returns an immediate error, both defined inside a fault injection zone.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-2.svg)
+![Diagram showing a client's request either delayed 3 seconds inside the Fault Injection zone before reaching the service slowly, or aborted so an HTTP 503 error returns straight to the client.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-2.html)
 
 ## Delay Injection
 
@@ -541,7 +547,9 @@ spec:
 
 **Situation**: Verify if one service failure propagates to other services
 
-![Flowchart showing a request path from frontend through order service to a fault-injected payment service, where a 30% failure rate trips a circuit breaker that protects the frontend and lets inventory service keep operating normally.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-3.svg)
+![Cascade failure test showing a request path from frontend through order service to a fault-injected payment service, where a 30% failure rate trips a circuit breaker that protects the frontend and lets inventory service keep operating normally.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-3.html)
 
 ```yaml
 # Inject faults into payment service
@@ -687,7 +695,9 @@ spec:
 
 Gradually increase fault rate to find system limits:
 
-![Flowchart showing four escalating fault-injection stages, each proceeding to the next once monitoring is clean, and each rolling back to a shared fix-and-improve step whenever an issue is found.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-4.svg)
+![Workflow showing four escalating fault-injection stages from 1% to 50%, each advancing to the next once monitoring is clean, with every stage falling back to a shared fix-and-improve step whenever an issue is found.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-4.html)
 
 **Step-by-step execution**:
 

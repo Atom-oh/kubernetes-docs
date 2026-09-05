@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Why VM Workloads Are Needed",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "before-migration",
+        "label": "Before migration",
+        "focus": [
+          "vm-legacy",
+          "app1"
+        ],
+        "note": "The legacy VM app talks to the new app directly, outside the mesh."
+      },
+      {
+        "id": "after-registration",
+        "label": "After mesh registration",
+        "focus": [
+          "app1",
+          "envoy1",
+          "vm-legacy",
+          "istiod"
+        ],
+        "note": "Once the VM joins the mesh, mTLS and policy apply and istiod delivers configuration to the VM too."
+      },
+      {
+        "id": "config-delivery",
+        "label": "Configuration delivery",
+        "focus": [
+          "istiod",
+          "envoy1",
+          "envoy2",
+          "vm-legacy"
+        ],
+        "note": "istiod delivers configuration to the pod sidecars and to the registered VM."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "vm-legacy",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "Legacy App",
+      "pos": [
+        50,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm-db",
+      "type": "database",
+      "label": "VM",
+      "sublabel": "Database",
+      "pos": [
+        50,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm-ext",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "External Service",
+      "pos": [
+        50,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "New App",
+      "sublabel": "Application container",
+      "pos": [
+        480,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Sidecar proxy",
+      "pos": [
+        670,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Microservice",
+      "sublabel": "Application container",
+      "pos": [
+        480,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Sidecar proxy",
+      "pos": [
+        670,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        980,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Legacy Environment",
+      "wraps": [
+        "vm-legacy",
+        "vm-db",
+        "vm-ext"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "app1",
+        "envoy1",
+        "app2",
+        "envoy2"
+      ],
+      "pad": 48
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "app2",
+        "envoy2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "direct-before",
+      "from": "vm-legacy",
+      "to": "app1",
+      "label": "Direct traffic before migration",
+      "variant": "emphasis",
+      "labelDy": -24,
+      "labelDx": 20
+    },
+    {
+      "id": "mesh-after",
+      "from": "app1",
+      "to": "vm-legacy",
+      "label": "mTLS + policy after mesh registration",
+      "variant": "security",
+      "labelDy": 24,
+      "labelDx": -90
+    },
+    {
+      "id": "config-envoy1",
+      "from": "istiod",
+      "to": "envoy1",
+      "label": "Configuration delivery",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-envoy2",
+      "from": "istiod",
+      "to": "envoy2",
+      "label": "Configuration delivery",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-vm",
+      "from": "istiod",
+      "to": "vm-legacy",
+      "label": "VM can also be registered",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Usage Scenarios",
+      "items": [
+        "Gradual migration of legacy applications",
+        "Including database servers in the mesh",
+        "Integration of services outside the cluster",
+        "Hybrid cloud environment configuration"
+      ]
+    }
+  ]
+}

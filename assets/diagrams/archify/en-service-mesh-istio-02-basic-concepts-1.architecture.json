@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Early Solution: Per-Language Libraries",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      400
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Application Code"
+        },
+        "external": {
+          "label": "Failure-Handling Library"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "java-app",
+      "type": "backend",
+      "label": "Application Code",
+      "sublabel": "Java",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "java-lib",
+      "type": "external",
+      "label": "Hystrix",
+      "sublabel": "Netflix OSS",
+      "pos": [
+        70,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "go-app",
+      "type": "backend",
+      "label": "Application Code",
+      "sublabel": "Go",
+      "pos": [
+        400,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "go-lib",
+      "type": "external",
+      "label": "Go Library",
+      "sublabel": "separately developed",
+      "pos": [
+        400,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "py-app",
+      "type": "backend",
+      "label": "Application Code",
+      "sublabel": "Python",
+      "pos": [
+        730,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "py-lib",
+      "type": "external",
+      "label": "Requests + Retry",
+      "sublabel": "Python library",
+      "pos": [
+        730,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Java Service",
+      "wraps": [
+        "java-app",
+        "java-lib"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Go Service",
+      "wraps": [
+        "go-app",
+        "go-lib"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Python Service",
+      "wraps": [
+        "py-app",
+        "py-lib"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "java-couple",
+      "from": "java-app",
+      "to": "java-lib",
+      "label": "tightly coupled",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "go-couple",
+      "from": "go-app",
+      "to": "go-lib",
+      "label": "tightly coupled",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "py-couple",
+      "from": "py-app",
+      "to": "py-lib",
+      "label": "tightly coupled",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Problems with the Library Approach",
+      "items": [
+        "A separate library must be developed for each language",
+        "Tightly coupled to the application code",
+        "Every update requires redeploying all services",
+        "Version management becomes complex"
+      ]
+    }
+  ]
+}

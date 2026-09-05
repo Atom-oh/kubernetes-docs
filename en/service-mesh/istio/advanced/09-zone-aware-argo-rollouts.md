@@ -22,7 +22,9 @@ This document explains how to set up independent Argo Rollouts Canary deployment
 
 **Problem Scenario**:
 
-![Before a Spot Instance interruption, three zones each run 3 pods and the PodDisruptionBudget requires 6 of 9 pods; after Zone C is fully lost, only Zone A and B remain and the same 6-pod minimum now equals 100% of remaining capacity, breaking the budget's safety margin.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.svg)
+![Before and after a Spot Instance interruption wipes out all 3 pods in Zone C, the shared 33% PodDisruptionBudget that requires 6 pods goes from 6/9 to 6/6 = 100%, leaving no headroom across the remaining zones.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.html)
 
 **Why Zone-specific Rollouts are Needed?**
 
@@ -122,7 +124,9 @@ spec:
 
 ### Overall Structure
 
-![Clients call a single VirtualService, which locality-aware routing (via a DestinationRule) splits into per-zone stable/canary weights, while each zone's own Argo Rollout independently manages only its own zone's route weights on that shared VirtualService.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.svg)
+![Clients call a single VirtualService (test.default), which locality-aware routing via a DestinationRule splits into per-zone stable/canary weights, while each zone's own Argo Rollout independently manages only its zone's route weights.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.html)
 
 ### Key Components
 
@@ -650,15 +654,21 @@ spec:
 
 ### Normal State (Zone-local Traffic)
 
-![In the default state, a client's request is handled entirely within its own zone by the local Envoy sidecar and pod, while the pod in a neighboring zone sits idle and is not called.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.svg)
+![In the default state, a client's request is handled entirely within its own zone by the local Envoy sidecar and pod, while the pod in a neighboring zone sits idle and is not called.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.html)
 
 ### Failover Scenario
 
-![After three consecutive errors from the local Zone A pod, Envoy's outlier detection ejects that pod for 30 seconds and reroutes the request cross-zone to a healthy Zone B pod, which serves the response instead.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.svg)
+![Sequence diagram of the failover scenario: after Pod A in Zone A returns three consecutive timeout/5xx errors (consecutiveErrors: 3), the Envoy sidecar's outlier detection ejects Pod A for 30 seconds (baseEjectionTime) and, following the DestinationRule failover rule us-east-1a → us-east-1b, routes the request to Pod B in Zone B, which returns the response to Client A.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.html)
 
 ### Traffic Flow During Canary Deployment
 
-![The VirtualService splits each client request by weight, sending most traffic to the stable pod and a small fraction to the canary pod, while Argo Rollouts gradually raises the canary weight from 10% toward 100%.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.svg)
+![The VirtualService splits each client request by weight, sending most traffic to the stable pod and a small fraction to the canary pod, while Argo Rollouts gradually raises the canary weight from 10% toward 100%.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.html)
 
 ## Troubleshooting
 

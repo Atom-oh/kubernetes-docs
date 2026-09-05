@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "VPC Lattice 트러블슈팅 예시 — Health Check 경로 오류 복구",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      650
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "detect",
+        "label": "이상 감지",
+        "focus": [
+          "engineer",
+          "console",
+          "cloudwatch"
+        ],
+        "note": "CloudWatch 메트릭에서 UnhealthyTargetCount: 2를 확인한다."
+      },
+      {
+        "id": "fix",
+        "label": "원인 확인·수정",
+        "focus": [
+          "engineer",
+          "console"
+        ],
+        "note": "Target Group의 Health Check Path가 /health로 잘못돼 있어 /healthz로 수정한다."
+      },
+      {
+        "id": "recover",
+        "label": "자동 복구",
+        "focus": [
+          "console",
+          "lattice",
+          "cloudwatch"
+        ],
+        "note": "Target이 Healthy로 전환되고 UnhealthyTargetCount가 0으로 돌아온다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "engineer",
+      "type": "external",
+      "label": "엔지니어",
+      "sublabel": "운영 담당"
+    },
+    {
+      "id": "console",
+      "type": "frontend",
+      "label": "AWS Console",
+      "sublabel": "VPC Lattice 콘솔"
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "AWS/VPCLattice 메트릭"
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "Service · Target Group"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 270,
+      "label": "이상 감지"
+    },
+    {
+      "from": 283,
+      "to": 450,
+      "label": "원인 확인 · 수정"
+    },
+    {
+      "from": 463,
+      "to": 575,
+      "label": "자동 복구"
+    }
+  ],
+  "messages": [
+    {
+      "id": "open-console",
+      "from": "engineer",
+      "to": "console",
+      "y": 180,
+      "label": "1. 콘솔 열기"
+    },
+    {
+      "id": "check-metrics",
+      "from": "engineer",
+      "to": "cloudwatch",
+      "y": 222,
+      "label": "2. 메트릭 확인",
+      "note": "RequestCount 정상 · UnhealthyTargetCount: 2"
+    },
+    {
+      "id": "select-tg",
+      "from": "engineer",
+      "to": "console",
+      "y": 305,
+      "label": "3. Target Group 선택",
+      "note": "Target 2개 Unhealthy · Health check 실패"
+    },
+    {
+      "id": "check-hc",
+      "from": "engineer",
+      "to": "console",
+      "y": 362,
+      "label": "4. Health Check 확인",
+      "variant": "emphasis",
+      "note": "Path: /health (잘못됨) → 올바른 Path: /healthz"
+    },
+    {
+      "id": "save-path",
+      "from": "engineer",
+      "to": "console",
+      "y": 422,
+      "label": "5. 경로 수정 후 저장",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apply",
+      "from": "console",
+      "to": "lattice",
+      "y": 485,
+      "label": "6. Health Check 재시도 → Healthy 전환",
+      "variant": "dashed"
+    },
+    {
+      "id": "recheck",
+      "from": "engineer",
+      "to": "cloudwatch",
+      "y": 540,
+      "label": "7. 메트릭 재확인",
+      "variant": "emphasis",
+      "note": "UnhealthyTargetCount: 0 · 트래픽 정상"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "console",
+      "from": 175,
+      "to": 490,
+      "type": "frontend"
+    },
+    {
+      "participant": "cloudwatch",
+      "from": 217,
+      "to": 252,
+      "type": "cloud"
+    },
+    {
+      "participant": "lattice",
+      "from": 480,
+      "to": 520,
+      "type": "cloud"
+    },
+    {
+      "participant": "cloudwatch",
+      "from": 535,
+      "to": 570,
+      "type": "cloud"
+    }
+  ]
+}

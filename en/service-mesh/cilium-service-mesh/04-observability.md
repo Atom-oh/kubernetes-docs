@@ -9,7 +9,9 @@ Cilium Service Mesh provides powerful network observability through Hubble. Hubb
 
 ## Hubble Architecture
 
-![Diagram showing each cluster node's eBPF programs feeding the Cilium Agent and Hubble Observer, which forwards flow data to Hubble Relay for the UI and CLI, and separately to Prometheus and Grafana for metrics dashboards.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-04-observability-0.svg)
+![Diagram showing each cluster node's eBPF programs feeding the Cilium Agent and Hubble Observer, which forwards flow data to Hubble Relay for the UI and CLI, and separately to Prometheus and Grafana for metrics dashboards.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-0.html)
 
 ### Components
 
@@ -215,7 +217,9 @@ hubble observe --http-method "POST|PUT"
 
 Hubble UI visually shows service dependencies:
 
-![Diagram showing Hubble UI's service map: the frontend calls the backend and a CDN for static assets, while the backend reads and writes to a database and a Redis cache.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-04-observability-1.svg)
+![Diagram showing Hubble UI's service map: the frontend calls the backend and a CDN for static assets, while the backend reads and writes to a database and a Redis cache.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-1.html)
 
 ### UI Features
 
@@ -463,13 +467,17 @@ hubble observe --namespace production -o json | \
 
 ### Service Map Example
 
-![Diagram showing traffic flowing from an ingress controller through the frontend and API gateway to the User and Order services, with Order Service as the busiest fan-out point into Postgres, Kafka, and the Payment Service, alongside per-service RPS and P99 latency figures.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-04-observability-2.svg)
+![Diagram showing traffic flowing from an ingress controller through the frontend and API gateway to the User and Order services, with Order Service as the busiest fan-out point into Postgres, Kafka, and the Payment Service, alongside per-service RPS and P99 latency figures.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-2.html)
 
 ## Golden Signals Monitoring
 
 ### Four Golden Signals
 
-![Diagram presenting the four golden signals of monitoring side by side: latency (response time), traffic (throughput), errors (error rate), and saturation (resource usage).](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-04-observability-3.svg)
+![Diagram presenting the four golden signals of monitoring side by side: latency (response time), traffic (throughput), errors (error rate), and saturation (resource usage).](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-04-observability-3.html)
 
 ### PromQL Queries
 

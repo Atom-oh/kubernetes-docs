@@ -19,7 +19,9 @@ NLB는 Layer 4 (TCP/UDP) 로드 밸런서로, 높은 성능과 낮은 지연시�
 
 #### NLB 아키텍처
 
-![클라이언트의 HTTPS 요청이 Network Load Balancer를 거쳐 Istio Ingress Gateway 두 파드로 분산되고, 각 게이트웨이가 클러스터 내부 서비스로 라우팅되는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-04-aws-integration-0.svg)
+![클라이언트의 HTTPS 요청이 Network Load Balancer를 거쳐 Istio Ingress Gateway 두 Pod로 분산되고, 각 게이트웨이가 클러스터 내부 서비스로 라우팅되는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-04-aws-integration-0.html)
 
 #### NLB 설정
 
@@ -153,7 +155,9 @@ ALB는 Layer 7 (HTTP/HTTPS) 로드 밸런서로, 고급 라우팅 기능이 필�
 
 #### ALB 아키텍처
 
-![클라이언트의 HTTPS 요청이 Application Load Balancer를 거쳐 Istio Ingress Gateway 두 파드로 분산되고, 각 게이트웨이가 클러스터 내부 서비스로 라우팅되는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-04-aws-integration-1.svg)
+![클라이언트의 HTTPS 요청이 Application Load Balancer를 거쳐 Istio Ingress Gateway 두 Pod로 분산되고, 각 게이트웨이가 클러스터 내부 서비스로 라우팅되는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-04-aws-integration-1.html)
 
 #### ALB 설정
 
@@ -279,7 +283,9 @@ VPC Lattice는 AWS의 관리형 애플리케이션 네트워킹 서비스입니�
 
 #### 아키텍처 비교
 
-![Istio는 istiod가 사이드카 Envoy를 구성해 파드 간 mTLS를 직접 맺는 구조이고, VPC Lattice는 사이드카 없이 관리형 Service Network가 애플리케이션 간 트래픽을 중계하는 구조임을 대비해서 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-04-aws-integration-2.svg)
+![Istio는 istiod가 사이드카 Envoy를 구성해 Pod 간 mTLS를 직접 맺는 구조이고, VPC Lattice는 사이드카 없이 관리형 Service Network가 애플리케이션 간 트래픽을 중계하는 구조임을 대비해서 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-04-aws-integration-2.html)
 
 #### 기능 비교
 
@@ -396,7 +402,9 @@ spec:
 
 두 솔루션은 상호 배타적이지 않으며, 함께 사용할 수 있습니다:
 
-![AWS 계정 1의 EKS 클러스터에서는 istiod가 사이드카를 구성해 서비스 간 mTLS를 맺고, 이 클러스터가 VPC Lattice Service Network를 통해 다른 계정의 사이드카 없는 서비스 및 Lambda 함수로 라우팅되는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-04-aws-integration-3.svg)
+![AWS 계정 1의 EKS 클러스터에서는 istiod가 사이드카를 구성해 서비스 간 mTLS를 맺고, 이 클러스터가 VPC Lattice Service Network를 통해 다른 계정의 사이드카 없는 서비스 및 Lambda 함수로 라우팅되는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-04-aws-integration-3.html)
 
 **사용 사례:**
 

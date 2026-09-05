@@ -1,0 +1,231 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KEDA 메트릭 선택 가이드",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-10-keda-autoscaling-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "stateful-path",
+        "label": "Stateful 워크로드",
+        "focus": [
+          "start",
+          "stateless",
+          "latencyScale"
+        ],
+        "note": "Stateless가 아닌 서비스는 추가 질문 없이 바로 Latency 기반 스케일링(P95 Latency)으로 갑니다."
+      },
+      {
+        "id": "stateless-path",
+        "label": "Stateless 워크로드",
+        "focus": [
+          "stateless",
+          "traffic",
+          "predictive",
+          "latency",
+          "rpsScale"
+        ],
+        "note": "트래픽이 예측되면 예측 + Cron, 아니면 지연 시간 민감도에 따라 Latency 또는 RPS 기반을 고릅니다."
+      },
+      {
+        "id": "composite",
+        "label": "복합 메트릭",
+        "focus": [
+          "rpsScale",
+          "latencyScale",
+          "composite"
+        ],
+        "note": "RPS와 Latency 트리거를 함께 두어 주 메트릭과 보조 메트릭으로 스케일링합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "판단 질문"
+        },
+        "backend": {
+          "label": "단일 메트릭 전략"
+        },
+        "cloud": {
+          "label": "예측 + Cron 전략"
+        },
+        "messagebus": {
+          "label": "복합 메트릭 전략"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "워크로드 특성 판단"
+    },
+    {
+      "id": "stateless_strategy",
+      "label": "예측 · RPS 기반 전략"
+    },
+    {
+      "id": "latency_strategy",
+      "label": "Latency 기반 전략 · 조합"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "stateless",
+    "traffic",
+    "latency",
+    "rpsScale"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "predictive",
+      "composite"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "composite"
+      },
+      {
+        "from": "start",
+        "to": "predictive"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "security",
+      "label": "워크로드 특성",
+      "sublabel": "판단 시작",
+      "width": 206
+    },
+    {
+      "id": "stateless",
+      "lane": "decide",
+      "col": 1,
+      "type": "security",
+      "label": "Stateless 서비스?",
+      "sublabel": "상태 유무",
+      "width": 168
+    },
+    {
+      "id": "traffic",
+      "lane": "decide",
+      "col": 2,
+      "type": "security",
+      "label": "트래픽 패턴 예측 가능?",
+      "sublabel": "업무 시간·주기성",
+      "width": 232
+    },
+    {
+      "id": "latency",
+      "lane": "decide",
+      "col": 3,
+      "type": "security",
+      "label": "지연 시간 민감?",
+      "sublabel": "P95 목표 유무",
+      "width": 156
+    },
+    {
+      "id": "predictive",
+      "lane": "stateless_strategy",
+      "col": 2,
+      "type": "cloud",
+      "label": "예측 스케일링 + Cron",
+      "sublabel": "cron 트리거",
+      "width": 212
+    },
+    {
+      "id": "latencyScale",
+      "lane": "latency_strategy",
+      "col": 3,
+      "type": "backend",
+      "label": "Latency 기반 스케일링",
+      "sublabel": "P95 Latency",
+      "width": 196
+    },
+    {
+      "id": "rpsScale",
+      "lane": "stateless_strategy",
+      "col": 4,
+      "type": "backend",
+      "label": "RPS 기반 스케일링",
+      "sublabel": "istio_requests_total",
+      "width": 172
+    },
+    {
+      "id": "composite",
+      "lane": "latency_strategy",
+      "col": 5,
+      "type": "messagebus",
+      "label": "복합 메트릭 스케일링",
+      "sublabel": "주 메트릭 + 보조 메트릭",
+      "width": 212
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "stateless",
+      "role": "main"
+    },
+    {
+      "from": "stateless",
+      "to": "traffic",
+      "label": "Yes",
+      "role": "main"
+    },
+    {
+      "from": "stateless",
+      "to": "latencyScale",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "traffic",
+      "to": "predictive",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "traffic",
+      "to": "latency",
+      "label": "No",
+      "role": "main"
+    },
+    {
+      "from": "latency",
+      "to": "latencyScale",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "latency",
+      "to": "rpsScale",
+      "label": "No",
+      "role": "main"
+    },
+    {
+      "from": "rpsScale",
+      "to": "composite",
+      "label": "조합",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "from": "latencyScale",
+      "to": "composite",
+      "label": "조합",
+      "variant": "dashed",
+      "role": "async"
+    }
+  ]
+}

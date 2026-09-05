@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 상세 아키텍처",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "컨트롤 플레인"
+        },
+        "frontend": {
+          "label": "애플리케이션 컨테이너"
+        },
+        "security": {
+          "label": "Envoy 사이드카"
+        },
+        "database": {
+          "label": "Kubernetes CRD"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "config",
+        "label": "설정 → Istiod",
+        "focus": [
+          "cfg-traffic",
+          "cfg-security",
+          "istiod"
+        ],
+        "note": "VirtualService·DestinationRule 같은 CRD를 Istiod가 감시해 프록시 설정으로 변환한다."
+      },
+      {
+        "id": "xds",
+        "label": "xDS 설정 배포",
+        "focus": [
+          "istiod",
+          "envoy1",
+          "envoy2"
+        ],
+        "note": "Istiod 하나가 모든 Envoy 사이드카에 xDS API로 설정을 배포한다."
+      },
+      {
+        "id": "mtls",
+        "label": "포드 간 mTLS",
+        "focus": [
+          "app1",
+          "envoy1",
+          "envoy2",
+          "app2"
+        ],
+        "note": "애플리케이션 트래픽은 사이드카를 거치며, Envoy 사이에서 mTLS로 암호화된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cfg-traffic",
+      "type": "database",
+      "label": "트래픽 관리 CRD",
+      "sublabel": "VirtualService · DestinationRule · Gateway",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "cfg-security",
+      "type": "database",
+      "label": "보안 CRD",
+      "sublabel": "PeerAuthentication · AuthorizationPolicy",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "통합 컨트롤 플레인 (Pilot + Citadel + Galley)",
+      "pos": [
+        560,
+        120
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "비즈니스 로직",
+      "pos": [
+        420,
+        480
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카",
+      "pos": [
+        420,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "비즈니스 로직",
+      "pos": [
+        820,
+        480
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카",
+      "pos": [
+        820,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Configuration (Kubernetes CRD)",
+      "wraps": [
+        "cfg-traffic",
+        "cfg-security"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "app1",
+        "envoy1",
+        "app2",
+        "envoy2"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "app2",
+        "envoy2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "traffic-crd-to-istiod",
+      "from": "cfg-traffic",
+      "to": "istiod",
+      "label": "CRD 감시",
+      "variant": "dashed"
+    },
+    {
+      "id": "security-crd-to-istiod",
+      "from": "cfg-security",
+      "to": "istiod",
+      "variant": "dashed"
+    },
+    {
+      "id": "istiod-to-envoy1",
+      "from": "istiod",
+      "to": "envoy1",
+      "label": "xDS 설정",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-to-envoy2",
+      "from": "istiod",
+      "to": "envoy2",
+      "label": "xDS 설정",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app1-to-envoy1",
+      "from": "app1",
+      "to": "envoy1"
+    },
+    {
+      "id": "app2-to-envoy2",
+      "from": "app2",
+      "to": "envoy2"
+    },
+    {
+      "id": "envoy-mtls",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istiod",
+      "items": [
+        "Pilot + Citadel + Galley를 하나로 통합한 컨트롤 플레인",
+        "Kubernetes CRD(VirtualService, DestinationRule 등)로 설정"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Envoy 데이터 플레인",
+      "items": [
+        "C++ Envoy 프록시가 사이드카로 주입된다",
+        "Envoy 사이 통신은 mTLS로 자동 암호화된다"
+      ]
+    }
+  ]
+}

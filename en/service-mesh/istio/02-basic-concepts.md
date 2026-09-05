@@ -23,7 +23,9 @@ This document explains Istio's core concepts and architecture. Understanding the
 
 In the early 2010s, companies began breaking down monolithic applications into microservices.
 
-![Diagram contrasting a single monolithic application with a microservices era where several small services call one another, converging on a shared downstream service.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-0.svg)
+![Diagram contrasting a single monolithic application with a microservices era where several small services call one another, converging on a shared downstream service.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-0.html)
 
 **New Problems**:
 
@@ -44,7 +46,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 * Requires redeployment of all services for updates
 * Complex version management
 
-![Diagram showing three services in different languages, each tightly bundling its application code with its own networking library — Hystrix for Java, a Go library, and Requests for Python.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-1.svg)
+![Diagram showing three services in different languages, each tightly bundling its application code with its own networking library — Hystrix for Java, a Go library, and Requests for Python.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-1.html)
 
 **Service Mesh Idea**: Move networking logic out of the application to an infrastructure layer
 
@@ -67,7 +71,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **Problems Envoy Solved**:
 
-![Diagram pairing four limitations of pre-Envoy proxies — static file-based configuration, limited metrics, complex restarts, simple routing — with the Envoy capability that solved each one.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-2.svg)
+![Diagram pairing four limitations of pre-Envoy proxies — static file-based configuration, limited metrics, complex restarts, simple routing — with the Envoy capability that solved each one.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-2.html)
 
 **Key Features of Envoy**:
 
@@ -91,7 +97,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **In May 2017**, Google, IBM, and Lyft collaborated to announce Istio.
 
-![Diagram showing Google and IBM contributing to Istio's control plane and Lyft contributing its Envoy proxy as the data plane, announced jointly in May 2017.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-3.svg)
+![Diagram showing Google and IBM contributing to Istio's control plane and Lyft contributing its Envoy proxy as the data plane, announced jointly in May 2017.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-3.html)
 
 **Contributions from Each Company**:
 
@@ -105,7 +113,9 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **Major Milestones**:
 
-![Timeline of Istio's major releases from the 0.1 announcement in May 2017 through version 1.28 in January 2025, marking the 1.0 production-ready release, the 1.5 istiod consolidation, and the 1.20 introduction of Ambient Mode as major milestones.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-4.svg)
+![Timeline of Istio's major releases from the 0.1 announcement in May 2017 through version 1.28 in November 2025, marking the 1.0 production-ready release, the 1.5 istiod consolidation, and the 1.18 alpha introduction of Ambient Mode as major milestones.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-4.html)
 
 **Version 1.5 (March 2020) - Important Turning Point**:
 
@@ -143,7 +153,9 @@ Kubernetes provides container orchestration, but has limitations in managing com
 
 ### Microservices Challenges
 
-![Diagram showing four microservices challenges — traffic management, security, observability, resilience — leading either to a traditional chain of duplicated, inconsistent, hard-to-maintain application code, or to Istio's infrastructure-level automatic handling with central, consistent, code-free policy.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-5.svg)
+![Four shared microservices challenges — traffic management, security, observability, resilience — are met without Istio by duplicated, inconsistent code in every service, and with Istio by consistent, declarative policy at the infrastructure level.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-5.html)
 
 ### Core Values Provided by Istio
 
@@ -331,7 +343,9 @@ Istio supports two deployment modes: **Sidecar Mode** and **Ambient Mode**.
 
 Injects an Envoy proxy as a sidecar container into each application pod.
 
-![Diagram showing an external request entering an Envoy sidecar proxy inside a pod, which forwards traffic locally to the application container; the application's outbound calls return through the same sidecar out to a target service.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-6.svg)
+![Diagram showing an external request entering an Envoy sidecar proxy inside a pod, which forwards traffic locally to the application container; the application's outbound calls return through the same sidecar out to a target service.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-6.html)
 
 **Advantages:**
 
@@ -349,7 +363,9 @@ Injects an Envoy proxy as a sidecar container into each application pod.
 
 Handles traffic at the node level without sidecars.
 
-![Diagram showing two sidecar-less pods on a worker node transparently redirected to a shared per-node ztunnel L4 proxy, which forwards to an optional Waypoint L7 proxy only when L7 features are needed.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-7.svg)
+![Diagram showing two sidecar-less pods on a worker node transparently redirected to a shared per-node ztunnel L4 proxy, which forwards to an optional Waypoint L7 proxy only when L7 features are needed.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-7.html)
 
 **Advantages:**
 
@@ -592,7 +608,9 @@ spec:
 
 ### Traffic Routing Flow
 
-![Diagram showing a client request passing through the Istio Gateway, VirtualService routing rules, and DestinationRule subset selection before the Kubernetes Service distributes it across the v1 and v2 pod endpoints.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-8.svg)
+![Diagram showing a client HTTP request entering through the Istio Gateway, passing VirtualService routing rules and DestinationRule subset selection, then reaching the v1 and v2 pods through the Kubernetes Service.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-8.html)
 
 ### Traffic Splitting (Canary Deployment)
 
@@ -645,7 +663,9 @@ spec:
 
 Istio automatically encrypts inter-service communication.
 
-![Diagram showing plaintext traffic from an application flowing to its Envoy sidecar, which exchanges mutually-encrypted mTLS traffic with the peer pod's Envoy sidecar, while istiod's Citadel component issues certificates to both sidecars.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-9.svg)
+![Diagram showing each app in Pod A and Pod B talking in plaintext to its own Envoy sidecar, the two sidecars exchanging mTLS-encrypted traffic, and istiod Citadel issuing certificates to both sidecars.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-9.html)
 
 **mTLS Modes**:
 
@@ -685,7 +705,9 @@ Istio automatically generates metrics, logs, and traces.
 
 ### Automatically Generated Metrics
 
-![Diagram showing an application's traffic passing through its Envoy sidecar, which emits metrics to Prometheus, traces to Jaeger, and entries to a logging system, feeding Grafana dashboards, the Jaeger UI, and Kiali's service mesh dashboard.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-10.svg)
+![Diagram showing an application's traffic passing through its Envoy sidecar, which emits metrics to Prometheus, traces to Jaeger, and entries to a logging system, feeding Grafana dashboards, the Jaeger UI, and Kiali's service mesh dashboard.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-10.html)
 
 ### Key Metrics
 
@@ -773,7 +795,9 @@ Istio can register not only Kubernetes pods but also **Virtual Machine (VM) work
 
 ### Why VM Workloads Are Needed
 
-![Diagram showing a legacy virtual machine linked to a new Kubernetes application as it migrates into the mesh, while istiod delivers configuration and certificates to sidecars and to the registered VM.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-11.svg)
+![Diagram showing a legacy VM that first talks directly to a new Kubernetes app and, once registered in the mesh, gets mTLS and policy applied, while istiod delivers configuration to the pod Envoy sidecars and to the registered VM.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-11.html)
 
 **Usage Scenarios**:
 
@@ -784,7 +808,9 @@ Istio can register not only Kubernetes pods but also **Virtual Machine (VM) work
 
 ### VM Registration Architecture
 
-![Diagram showing a manually installed Envoy sidecar on a virtual machine exchanging mTLS traffic with a pod's Envoy sidecar in the Kubernetes cluster, with istiod delivering xDS configuration and certificates to both sidecars.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-12.svg)
+![Diagram showing a manually installed Envoy sidecar on a virtual machine exchanging mTLS traffic with a pod's Envoy sidecar in the Kubernetes cluster, with istiod delivering xDS configuration and certificates to both sidecars.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-12.html)
 
 ### WorkloadEntry Resource
 
@@ -866,7 +892,9 @@ spec:
 
 #### 1. Gradual Migration
 
-![Diagram showing a four-phase migration: a standalone legacy VM, the same VM registered into the mesh with Envoy, a hybrid phase where the remaining legacy VM module talks over mTLS to new Kubernetes microservices, and a final phase fully migrated to Kubernetes.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-13.svg)
+![Four-phase gradual migration: a standalone legacy VM monolith, the same VM registered into the mesh with Envoy, a hybrid phase where the remaining VM module talks over mTLS to new Kubernetes microservices, and a final phase fully on Kubernetes.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-13.html)
 
 **Benefits**:
 
@@ -1002,7 +1030,9 @@ spec:
 
 ### Workload Registration Comparison Summary
 
-![Diagram showing three workload types — Kubernetes pods, multi-cluster workloads, and virtual machines — all connecting into the same set of common mesh features: mTLS encryption, traffic management, security policy, and metrics and tracing.](../../../assets/diagrams/rendered/en-service-mesh-istio-02-basic-concepts-14.svg)
+![Diagram showing three workload types — Kubernetes pods, multi-cluster workloads, and virtual machines — all registered into the Istio service mesh and receiving the same common features: mTLS encryption, traffic management, security policy, and metrics and tracing.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-14.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-14.html)
 
 Through Istio's flexible workload registration capabilities:
 

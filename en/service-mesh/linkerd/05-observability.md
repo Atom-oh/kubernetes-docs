@@ -9,7 +9,9 @@ Linkerd provides powerful observability features out of the box. Without any ins
 
 ## Observability Architecture
 
-![Data-plane proxies export metrics to the Viz extension's Prometheus, which feeds Grafana and the web dashboard while forwarding to an optional external Prometheus/Grafana pair, and proxies also stream spans directly to Jaeger for distributed tracing.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-05-observability-0.svg)
+![Linkerd observability architecture: the Linkerd Proxy in the data plane exposes metrics on :4191 that Prometheus in the Viz extension scrapes and stores; Prometheus feeds Grafana and, via the Metrics API, the Web Dashboard, while the Tap API streams live requests to the dashboard; optionally, metrics can be forwarded to an external Prometheus/Grafana pair and tracing spans sent to Jaeger.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-05-observability-0.html)
 
 ## Golden Metrics
 
@@ -67,7 +69,9 @@ linkerd viz dashboard --address 0.0.0.0
 
 ### Dashboard Features
 
-![From the Namespace Overview, operators drill into the Deployments view, which branches to per-Pod status, per-route metrics, and the live Tap request stream, while the namespace level also links directly to the service Topology view.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-05-observability-1.svg)
+![From the Namespace Overview, operators drill into the Deployments view, which branches to per-Pod status, per-route metrics, and the live Tap request stream, while the namespace level also links directly to the service Topology view.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-05-observability-1.html)
 
 **Dashboard Views:**
 
@@ -739,7 +743,9 @@ spec:
 
 ### Troubleshooting Workflow
 
-![Starting from a detected issue, checking success rate routes to viz top then a shared tap-and-logs step for low success, or on to a latency check, edge check, and mTLS/certificate check when success is normal, all converging on Issue Resolved.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-05-observability-2.svg)
+![Starting from a detected issue, checking success rate routes to viz top then a shared tap-and-logs step for low success, or on to a latency check, edge check, and mTLS/certificate check when success is normal, all converging on Issue Resolved.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-05-observability-2.html)
 
 ## Next Steps
 

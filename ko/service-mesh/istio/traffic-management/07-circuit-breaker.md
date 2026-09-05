@@ -21,7 +21,9 @@ Circuit Breaker는 장애가 발생한 서비스를 자동으로 격리하여 �
 
 마이크로서비스 아키텍처에서 한 서비스의 장애가 다른 서비스로 전파되는 것을 방지합니다.
 
-![Circuit Breaker가 없으면 서비스 A의 장애가 서비스 B, C, D로 연쇄 전파되어 모두 장애 상태가 되지만, Circuit Breaker를 사용하면 서비스 A가 장애 서비스 B를 향해 빠르게 실패 처리하고 서비스 C, D는 정상 동작을 유지한다는 것을 비교해서 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-07-circuit-breaker-0.svg)
+![Circuit Breaker가 없으면 장애 서비스 B를 향한 서비스 A의 타임아웃이 누적되어 리소스 고갈과 서비스 C, D의 연쇄 장애로 이어지지만, Circuit Breaker를 사용하면 B 호출은 빠르게 실패 처리되고 서비스 C, D는 정상 동작을 유지한다는 것을 비교해서 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-07-circuit-breaker-0.html)
 
 ### 주요 이점
 
@@ -34,7 +36,9 @@ Circuit Breaker는 장애가 발생한 서비스를 자동으로 격리하여 �
 
 ## Circuit Breaker 개요
 
-![Circuit Breaker는 정상 상태인 Closed에서 연속 에러가 임계값을 넘으면 즉시 실패하는 Open 상태로 전환되고, 대기 시간이 지나면 제한된 요청만 허용하는 HalfOpen을 거쳐 요청이 성공하면 Closed로 복귀하고 다시 실패하면 Open으로 돌아간다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-07-circuit-breaker-1.svg)
+![Circuit Breaker는 정상 상태인 Closed에서 연속 에러가 임계값을 넘으면 즉시 실패하는 Open 상태로 전환되고, 대기 시간이 지나면 제한된 요청만 허용하는 HalfOpen을 거쳐 요청이 성공하면 Closed로 복귀하고 다시 실패하면 Open으로 돌아가는 상태 전이를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-07-circuit-breaker-1.html)
 
 ## Connection Pool 설정
 
@@ -570,11 +574,15 @@ istioctl proxy-config cluster <pod-name> -o json | \
 
 #### Circuit Breaker의 역할과 한계
 
-![Circuit Breaker는 장애 서비스 격리, 연쇄 장애 방지, 리소스 보호, 자동 복구 시도를 담당하지만, 중복 요청 방지, 데이터 정합성 보장, 트랜잭션 관리, 멱등성 보장은 담당하지 않는다는 역할과 한계를 좌우로 대비해서 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-07-circuit-breaker-2.svg)
+![Circuit Breaker는 장애 서비스 격리, 연쇄 장애 방지, 리소스 보호, 자동 복구 시도를 담당하지만, 중복 요청 방지, 데이터 정합성 보장, 트랜잭션 관리, 멱등성 보장은 담당하지 않는다는 역할과 한계를 좌우로 대비해서 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-07-circuit-breaker-2.html)
 
 #### 문제 시나리오: Retry + Circuit Breaker
 
-![결제 요청이 타임아웃으로 3번 재시도되는 동안 매번 실제로는 결제가 성공해 데이터베이스에 3건이 중복 기록되지만, Circuit Breaker는 5번 연속 에러가 나야 작동하기 때문에 재시도 도중의 중복은 막지 못한다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-07-circuit-breaker-3.svg)
+![결제 요청이 타임아웃으로 3번 재시도되는 동안 매번 실제로는 결제가 성공해 데이터베이스에 3건이 중복 기록되지만, Circuit Breaker는 5번 연속 에러가 나야 작동하기 때문에 재시도 도중의 중복은 막지 못한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-07-circuit-breaker-3.html)
 
 **문제**: Circuit Breaker가 작동하기 전(5번 연속 에러)에 이미 **3번의 중복 결제**가 발생했습니다.
 

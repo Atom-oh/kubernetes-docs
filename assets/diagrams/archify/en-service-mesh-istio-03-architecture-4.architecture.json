@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Injection Process",
+    "locale": "en",
+    "output": "en-service-mesh-istio-03-architecture-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "admission",
+        "label": "Admission path",
+        "focus": [
+          "user",
+          "apiserver",
+          "webhook"
+        ],
+        "note": "The Deployment creation request reaches the API Server, whose admission stage calls the Mutating Webhook."
+      },
+      {
+        "id": "inject",
+        "label": "Spec mutation",
+        "focus": [
+          "webhook",
+          "injector"
+        ],
+        "note": "The Sidecar Injector adds istio-init and istio-proxy to the Pod spec and returns it."
+      },
+      {
+        "id": "pod",
+        "label": "Created Pod",
+        "focus": [
+          "apiserver",
+          "init",
+          "app",
+          "proxy"
+        ],
+        "note": "The mutated spec produces a pod that carries the init container and the sidecar."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Create Deployment",
+      "sublabel": "kubectl apply",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "admission chain",
+      "pos": [
+        300,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "Mutating Webhook",
+      "sublabel": "sidecar-injector.istio.io",
+      "pos": [
+        560,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Sidecar Injector",
+      "sublabel": "Istio component",
+      "pos": [
+        900,
+        120
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "container",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "init",
+      "type": "backend",
+      "label": "istio-init",
+      "sublabel": "init container",
+      "pos": [
+        300,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "istio-proxy",
+      "sublabel": "sidecar container",
+      "pos": [
+        560,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes",
+      "wraps": [
+        "apiserver",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Created Pod",
+      "wraps": [
+        "app",
+        "init",
+        "proxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1-post",
+      "from": "user",
+      "to": "apiserver",
+      "label": "1 · POST",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2-call",
+      "from": "apiserver",
+      "to": "webhook",
+      "label": "2 · call",
+      "variant": "emphasis",
+      "labelDy": -12
+    },
+    {
+      "id": "c3-request",
+      "from": "webhook",
+      "to": "injector",
+      "label": "3 · request",
+      "variant": "emphasis",
+      "labelDy": -12
+    },
+    {
+      "id": "c4-spec",
+      "from": "injector",
+      "to": "webhook",
+      "label": "4 · mutated spec",
+      "variant": "dashed",
+      "labelDy": 12
+    },
+    {
+      "id": "c5-return",
+      "from": "webhook",
+      "to": "apiserver",
+      "label": "5 · return",
+      "variant": "dashed",
+      "labelDy": 12
+    },
+    {
+      "id": "c6-create",
+      "from": "apiserver",
+      "to": "init",
+      "label": "6 · create Pod",
+      "variant": "emphasis",
+      "labelAt": [
+        385,
+        282
+      ]
+    },
+    {
+      "id": "c7-app",
+      "from": "init",
+      "to": "app",
+      "label": "7 · after init"
+    },
+    {
+      "id": "c7-proxy",
+      "from": "init",
+      "to": "proxy",
+      "label": "7 · after init"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "istio-init",
+      "items": [
+        "Sets traffic redirection rules with istio-iptables",
+        "Requires the NET_ADMIN and NET_RAW capabilities"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "istio-proxy",
+      "items": [
+        "Envoy sidecar from the istio/proxyv2 image",
+        "Injection result recorded in the sidecar.istio.io/status annotation"
+      ]
+    }
+  ]
+}

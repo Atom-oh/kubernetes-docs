@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      760
+    ],
+    "views": [
+      {
+        "id": "inject",
+        "label": "Automatic sidecar injection",
+        "focus": [
+          "injector",
+          "proxy1",
+          "proxy2"
+        ],
+        "note": "The Proxy Injector webhook automatically injects the Linkerd2-proxy sidecar when a pod is created."
+      },
+      {
+        "id": "control",
+        "label": "Certificates and endpoints",
+        "focus": [
+          "identity",
+          "destination",
+          "proxy1",
+          "proxy2"
+        ],
+        "note": "Identity issues mTLS certificates while Destination provides service discovery and routing policy."
+      },
+      {
+        "id": "mtls",
+        "label": "Proxy-to-proxy mTLS",
+        "focus": [
+          "app1",
+          "proxy1",
+          "proxy2",
+          "app2"
+        ],
+        "note": "Application traffic passes through each pod's Rust proxy and is encrypted with mTLS between the proxies."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "Service Discovery",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "Certificate Authority",
+      "pos": [
+        430,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "Webhook",
+      "pos": [
+        430,
+        280
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "proxy1",
+      "type": "backend",
+      "label": "Linkerd2-proxy",
+      "sublabel": "Rust",
+      "pos": [
+        60,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "Application container",
+      "pos": [
+        60,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "proxy2",
+      "type": "backend",
+      "label": "Linkerd2-proxy",
+      "sublabel": "Rust",
+      "pos": [
+        800,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "Application container",
+      "pos": [
+        800,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "destination",
+        "identity",
+        "injector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "proxy1",
+        "app1",
+        "proxy2",
+        "app2"
+      ],
+      "pad": 60
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "proxy1",
+        "app1"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "proxy2",
+        "app2"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "inject-1",
+      "from": "injector",
+      "to": "proxy1",
+      "label": "Inject",
+      "variant": "dashed",
+      "labelSegment": 0
+    },
+    {
+      "id": "inject-2",
+      "from": "injector",
+      "to": "proxy2",
+      "label": "Inject",
+      "variant": "dashed",
+      "labelSegment": 0
+    },
+    {
+      "id": "cert-1",
+      "from": "identity",
+      "to": "proxy1",
+      "label": "Certificates",
+      "variant": "security",
+      "labelSegment": 0
+    },
+    {
+      "id": "cert-2",
+      "from": "identity",
+      "to": "proxy2",
+      "label": "Certificates",
+      "variant": "security",
+      "labelSegment": 0
+    },
+    {
+      "id": "endpoints-1",
+      "from": "destination",
+      "to": "proxy1",
+      "label": "Endpoints",
+      "labelSegment": 0
+    },
+    {
+      "id": "endpoints-2",
+      "from": "destination",
+      "to": "proxy2",
+      "label": "Endpoints",
+      "labelSegment": 0
+    },
+    {
+      "id": "app-1",
+      "from": "app1",
+      "to": "proxy1"
+    },
+    {
+      "id": "app-2",
+      "from": "app2",
+      "to": "proxy2"
+    },
+    {
+      "id": "mtls",
+      "from": "proxy1",
+      "to": "proxy2",
+      "label": "mTLS (bidirectional)",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Core Components",
+      "items": [
+        "Destination: service discovery and routing policies",
+        "Identity: automatic mTLS certificate issuance",
+        "Proxy Injector: automatic sidecar injection"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Features",
+      "items": [
+        "Proxy: Linkerd2-proxy (Rust, custom-built)",
+        "Architecture: microservice control plane",
+        "Strengths: ultra-lightweight, easy installation and operation, fast performance",
+        "Weaknesses: limited features, no VM support"
+      ]
+    }
+  ]
+}

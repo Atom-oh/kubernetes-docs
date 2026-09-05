@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Problems Envoy Solved",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Existing Proxy Problems"
+        },
+        "backend": {
+          "label": "Envoy's Solutions"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "p1",
+      "type": "external",
+      "label": "Static Configuration",
+      "sublabel": "File-based",
+      "pos": [
+        50,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "external",
+      "label": "Limited Metrics",
+      "sublabel": "Lack of observability",
+      "pos": [
+        50,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "external",
+      "label": "Complex Restarts",
+      "sublabel": "Downtime on config change",
+      "pos": [
+        50,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "p4",
+      "type": "external",
+      "label": "Simple Routing",
+      "sublabel": "Limited advanced features",
+      "pos": [
+        50,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "Dynamic API",
+      "sublabel": "xDS Protocol",
+      "pos": [
+        530,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "Rich Statistics / Tracing",
+      "sublabel": "Metrics · tracing",
+      "pos": [
+        530,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "Hot Restart",
+      "sublabel": "Zero downtime",
+      "pos": [
+        530,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "Advanced L7 Routing",
+      "sublabel": "HTTP/2 · gRPC",
+      "pos": [
+        530,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Existing Proxy Problems",
+      "wraps": [
+        "p1",
+        "p2",
+        "p3",
+        "p4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Envoy's Solutions",
+      "wraps": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "p1-s1",
+      "from": "p1",
+      "to": "s1",
+      "label": "Solved",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p2-s2",
+      "from": "p2",
+      "to": "s2",
+      "label": "Solved",
+      "variant": "dashed"
+    },
+    {
+      "id": "p3-s3",
+      "from": "p3",
+      "to": "s3",
+      "label": "Solved",
+      "variant": "dashed"
+    },
+    {
+      "id": "p4-s4",
+      "from": "p4",
+      "to": "s4",
+      "label": "Solved",
+      "variant": "dashed"
+    }
+  ]
+}

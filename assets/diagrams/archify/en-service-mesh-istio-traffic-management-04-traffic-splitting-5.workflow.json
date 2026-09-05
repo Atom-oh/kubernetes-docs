@@ -1,0 +1,217 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "A/B Testing Flow",
+    "output": "en-service-mesh-istio-traffic-management-04-traffic-splitting-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "split",
+        "label": "User Segmentation",
+        "focus": [
+          "users",
+          "groupA",
+          "groupB",
+          "versionA",
+          "versionB"
+        ],
+        "note": "All users are split 50/50 and shown the existing UI (Version A) or the new UI (Version B)."
+      },
+      {
+        "id": "measure",
+        "label": "Metric Collection & Analysis",
+        "focus": [
+          "versionA",
+          "versionB",
+          "analysis"
+        ],
+        "note": "Conversion rate, click rate and time on site from both versions feed the A/B test analysis."
+      },
+      {
+        "id": "decide",
+        "label": "Decision",
+        "focus": [
+          "analysis",
+          "decision",
+          "keepA",
+          "adoptB"
+        ],
+        "note": "The better version is decided: keep A or adopt B."
+      }
+    ],
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "laneA",
+      "label": "Group A (50%)"
+    },
+    {
+      "id": "common",
+      "label": "Shared"
+    },
+    {
+      "id": "laneB",
+      "label": "Group B (50%)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "segmentation",
+      "label": "User Segmentation",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "versions",
+      "label": "Versions",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "metrics",
+      "label": "Metric Collection & Analysis",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "users",
+    "groupB",
+    "versionB",
+    "analysis",
+    "decision",
+    "adoptB"
+  ],
+  "nodes": [
+    {
+      "id": "users",
+      "lane": "common",
+      "col": 0,
+      "type": "external",
+      "label": "All Users"
+    },
+    {
+      "id": "groupA",
+      "lane": "laneA",
+      "col": 1,
+      "type": "frontend",
+      "label": "Group A",
+      "sublabel": "50%"
+    },
+    {
+      "id": "groupB",
+      "lane": "laneB",
+      "col": 1,
+      "type": "frontend",
+      "label": "Group B",
+      "sublabel": "50%"
+    },
+    {
+      "id": "versionA",
+      "lane": "laneA",
+      "col": 2,
+      "type": "backend",
+      "label": "Version A",
+      "sublabel": "Existing UI"
+    },
+    {
+      "id": "versionB",
+      "lane": "laneB",
+      "col": 2,
+      "type": "backend",
+      "label": "Version B",
+      "sublabel": "New UI"
+    },
+    {
+      "id": "analysis",
+      "lane": "common",
+      "col": 3,
+      "type": "database",
+      "label": "A/B Test Analysis",
+      "sublabel": "conversion · clicks · time on site",
+      "width": 190
+    },
+    {
+      "id": "decision",
+      "lane": "common",
+      "col": 4,
+      "type": "security",
+      "label": "Which version is better?",
+      "sublabel": "Decision",
+      "width": 210
+    },
+    {
+      "id": "keepA",
+      "lane": "laneA",
+      "col": 5,
+      "type": "frontend",
+      "label": "Keep A",
+      "sublabel": "existing UI wins"
+    },
+    {
+      "id": "adoptB",
+      "lane": "laneB",
+      "col": 5,
+      "type": "frontend",
+      "label": "Adopt B",
+      "sublabel": "new UI wins"
+    }
+  ],
+  "edges": [
+    {
+      "id": "users-groupA",
+      "from": "users",
+      "to": "groupA",
+      "role": "branch"
+    },
+    {
+      "id": "users-groupB",
+      "from": "users",
+      "to": "groupB"
+    },
+    {
+      "id": "groupA-versionA",
+      "from": "groupA",
+      "to": "versionA",
+      "role": "branch"
+    },
+    {
+      "id": "groupB-versionB",
+      "from": "groupB",
+      "to": "versionB"
+    },
+    {
+      "id": "versionA-analysis",
+      "from": "versionA",
+      "to": "analysis",
+      "role": "branch"
+    },
+    {
+      "id": "versionB-analysis",
+      "from": "versionB",
+      "to": "analysis"
+    },
+    {
+      "id": "analysis-decision",
+      "from": "analysis",
+      "to": "decision"
+    },
+    {
+      "id": "decision-keepA",
+      "from": "decision",
+      "to": "keepA",
+      "label": "A is better",
+      "role": "branch"
+    },
+    {
+      "id": "decision-adoptB",
+      "from": "decision",
+      "to": "adoptB",
+      "label": "B is better"
+    }
+  ]
+}

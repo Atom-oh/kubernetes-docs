@@ -63,7 +63,9 @@
 
 ### Istio 아키텍처
 
-![Kubernetes 클러스터 안에서 Istiod가 Envoy 사이드카에 xDS 설정을 배포하고, frontend와 backend 파드가 사이드카를 거쳐 mTLS로 통신하며 Prometheus·Jaeger·Kiali로 메트릭과 트레이스를 보내는 Istio 아키텍처를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.svg)
+![Kubernetes 클러스터 안에서 Istiod가 Envoy 사이드카에 xDS 설정을 배포하고, frontend와 backend 파드가 사이드카를 거쳐 mTLS로 통신하며 Prometheus·Jaeger·Kiali로 메트릭과 트레이스를 보내는 Istio 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.html)
 
 **특징**:
 
@@ -74,7 +76,9 @@
 
 ### VPC Lattice 아키텍처
 
-![사이드카 없는 EKS 파드, ECS 태스크, Lambda 함수, EC2 인스턴스가 VPC Lattice의 Service Network와 Service, Target Group을 거쳐 PrivateLink로 연결되는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.svg)
+![사이드카 없는 EKS 파드, ECS 태스크, Lambda 함수, EC2 인스턴스가 VPC Lattice의 Service Network와 Service, Target Group을 거쳐 PrivateLink로 연결되는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.html)
 
 **특징**:
 
@@ -534,7 +538,9 @@ spec:
 
 ### 보안 기능 종합 비교
 
-![Istio는 자동 mTLS·L7 Authorization·JWT·External CA·Rate Limiting을, VPC Lattice는 ACM 기반 TLS·IAM·SigV4·PrivateLink·WAF를 제공한다는 보안 기능을 나란히 비교한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-2.svg)
+![Istio Security의 자동 인증서 mTLS·L7 Authorization·JWT 인증·External CA·EnvoyFilter Rate Limiting과 VPC Lattice Security의 ACM 통합 TLS·IAM 기반 인증·SigV4·AWS PrivateLink·WAF 통합을 두 영역으로 나누어 나란히 비교하는 보안 기능 종합 비교를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-2.html)
 
 **결론**: 보안 측면에서 **Istio가 더 세밀한 제어 제공**, VPC Lattice는 AWS IAM 통합에서 강점
 
@@ -788,7 +794,9 @@ Istio는 강력한 기능을 제공하지만, 프로덕션 환경에서 운영�
 
 #### 주요 운영 과제
 
-![사이드카 관리, 업그레이드 복잡도, 리소스 오버헤드, 트러블슈팅, 설정 검증, 인증서 관리라는 여섯 운영 과제가 운영 비용 증가, 장애 위험 증가, 배포 시간 증가로 이어지는 인과관계를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.svg)
+![사이드카 관리, 업그레이드 복잡도, 리소스 오버헤드, 트러블슈팅, 설정 검증, 인증서 관리라는 여섯 운영 과제가 운영 비용 증가, 장애 위험 증가, 배포 시간 증가로 이어지는 인과관계를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.html)
 
 ### 설치 및 초기 설정
 
@@ -890,13 +898,17 @@ aws vpc-lattice create-listener \
 
 Istio 업그레이드는 프로덕션 환경에서 가장 위험하고 복잡한 작업 중 하나입니다.
 
-![새 Control Plane Revision 설치, 두 버전 동시 실행, 네임스페이스별 파드 재시작과 트래픽 검증을 거쳐 모두 완료되면 정리하고 문제가 있으면 롤백하는 Istio 업그레이드 절차를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-4.svg)
+![새 Control Plane Revision 설치, 두 버전 동시 실행, 네임스페이스별 파드 재시작과 트래픽 검증을 거쳐 모두 완료되면 정리하고 문제가 있으면 롤백하는 Istio 업그레이드 절차를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-4.html)
 
 #### Istio Revision 기반 Canary 업그레이드
 
 **업그레이드 아키텍처**:
 
-![기존 Istiod 1.23.0과 새 Istiod 1.24.0이 각각 production, staging 네임스페이스 파드에 xDS를 배포하며 동시에 실행되고, 순차 전환 단계와 리소스·연결 끊김·설정 호환성 리스크를 함께 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-5.svg)
+![기존 Istiod 1.23.0과 새 Istiod 1.24.0이 각각 production, staging 네임스페이스 파드에 xDS를 배포하며 동시에 실행되고, 순차 전환 단계와 리소스·연결 끊김·설정 호환성 리스크를 함께 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-5.html)
 
 **전체 프로세스** (프로덕션 환경 기준):
 
@@ -1024,7 +1036,9 @@ istioctl proxy-status
 
 **업그레이드 복잡도 비교**:
 
-![Istio 업그레이드는 사전 준비부터 정리까지 총 6-10시간이 걸리지만 VPC Lattice는 AWS가 자동으로 업그레이드해 총 0시간이 걸린다는 것을 대조한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-6.svg)
+![Istio 업그레이드는 사전 준비, Control Plane 설치, Canary 전환, 검증, 정리를 수동으로 거쳐 총 6-10시간이 걸리지만 VPC Lattice는 AWS가 자동으로 업그레이드해 사용자 작업과 다운타임 없이 총 0시간이 걸린다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-6.html)
 
 **주요 과제**:
 
@@ -1046,7 +1060,9 @@ istioctl proxy-status
 
 #### Sidecar 모델의 문제점
 
-![Istio 없이는 애플리케이션 컨테이너만 필요하지만 Envoy 사이드카를 붙이면 리소스 2배 증가, 파드 시작 시간 증가, 네트워크 홉 지연, 트러블슈팅 복잡화라는 네 영향이 생긴다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-7.svg)
+![Istio 없이는 애플리케이션 컨테이너만 필요하지만 Envoy 사이드카를 붙이면 리소스 2배 증가, 파드 시작 시간 증가, 네트워크 홉 지연, 트러블슈팅 복잡화라는 네 영향이 생긴다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-7.html)
 
 #### 실제 리소스 오버헤드
 
@@ -1101,11 +1117,15 @@ Istio 1.24+ 부터 **Ambient Mode**가 정식 지원되어, Sidecar 없이도 Se
 
 **아키텍처 비교 (상세)**:
 
-![Sidecar Mode는 파드마다 Envoy가 붙어 리소스가 파드 수만큼 늘어나지만, Ambient Mode는 노드당 하나의 ztunnel이 eBPF로 mTLS를 처리하고 필요할 때만 Waypoint를 거쳐 메모리 사용량이 97% 줄어든다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-8.svg)
+![Sidecar Mode는 파드마다 Envoy가 붙어 리소스가 파드 수만큼 늘어나지만, Ambient Mode는 노드당 하나의 ztunnel이 eBPF로 mTLS를 처리하고 필요할 때만 Waypoint를 거쳐 메모리 사용량이 97% 줄어든다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-8.html)
 
 **Ambient Mode 트래픽 흐름 (eBPF 기반)**:
 
-![애플리케이션 파드의 패킷을 eBPF가 ztunnel로 리다이렉트하며, mTLS·메트릭만 필요하면 곧바로 대상으로 보내지만 L7 처리가 필요하면 Waypoint Proxy를 거쳤다가 다시 대상으로 전송한다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-9.svg)
+![애플리케이션 파드의 패킷을 eBPF가 ztunnel로 리다이렉트하며, mTLS·메트릭만 필요하면 곧바로 대상으로 보내지만 L7 처리가 필요하면 Waypoint Proxy를 거쳤다가 다시 대상으로 전송한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-9.html)
 
 **Ambient Mode 리소스 비교**:
 
@@ -1175,11 +1195,15 @@ istioctl waypoint apply --namespace default
 
 **문제 발생 시 확인해야 할 레이어**:
 
-![503 오류 발생 시 Application, Sidecar, Control Plane, Network, CRD 설정 순으로 다섯 레이어를 점검하고 원인이 없으면 Support 티켓으로 넘어가는 Istio 트러블슈팅 절차를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.svg)
+![503 오류 발생 시 Application, Sidecar, Control Plane, Network, CRD 설정 순으로 다섯 레이어를 점검하고 원인이 없으면 Support 티켓으로 넘어가는 Istio 트러블슈팅 절차를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.html)
 
 **실제 트러블슈팅 예시**:
 
-![엔지니어가 애플리케이션 로그부터 사이드카, Istiod, Service 상태까지 확인해 Backend 배포가 0개 레플리카로 스케일된 것을 발견하고 복구한 뒤 트래픽이 정상화되는 실제 디버깅 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-11.svg)
+![엔지니어가 애플리케이션 로그부터 사이드카, Istiod, Service 상태까지 확인해 Backend 배포가 0개 레플리카로 스케일된 것을 발견하고 복구한 뒤 트래픽이 정상화되는 실제 디버깅 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-11.html)
 
 **Istio 트러블슈팅 명령어**:
 
@@ -1250,11 +1274,15 @@ kubectl exec <pod> -c istio-proxy -- tcpdump -i any -w /tmp/capture.pcap
 
 **문제 발생 시 확인 레이어 (3단계만)**:
 
-![VPC Lattice에서 트래픽 실패 시 Target 헬스, Service 설정, 네트워크라는 세 레이어만 확인하면 되고 CloudWatch·AWS Console·VPC Reachability Analyzer로 바로 해결한다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-12.svg)
+![VPC Lattice에서 트래픽 실패 시 Target 헬스, Service 설정, 네트워크라는 세 레이어만 확인하면 되고 CloudWatch·AWS Console·VPC Reachability Analyzer로 바로 해결한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-12.html)
 
 **실제 트러블슈팅 예시 (VPC Lattice)**:
 
-![엔지니어가 CloudWatch에서 UnhealthyTargetCount 이상을 확인하고 잘못된 Health Check 경로를 AWS Console에서 수정하면 Auto Healing이 Target을 정상화해 트래픽이 회복되는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-13.svg)
+![엔지니어가 CloudWatch에서 UnhealthyTargetCount 이상을 확인하고 잘못된 Health Check 경로를 AWS Console에서 수정하면 Auto Healing이 Target을 정상화해 트래픽이 회복되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-13.html)
 
 **VPC Lattice 트러블슈팅 명령어** (간단함):
 
@@ -1331,7 +1359,9 @@ aws ec2 start-network-insights-analysis \
 
 ### 운영 복잡도 종합 비교
 
-![Istio는 초기 설정부터 전문 인력까지 여섯 항목 모두 부담이 커 연간 약 3만1600달러로, VPC Lattice는 같은 여섯 항목이 모두 가벼워 연간 약 7608달러로 귀결된다는 것을 대조한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-14.svg)
+![Istio는 초기 설정부터 전문 인력까지 여섯 항목 모두 부담이 커 연간 약 3만1600달러로, VPC Lattice는 같은 여섯 항목이 모두 가벼워 연간 약 7608달러로 귀결된다는 것을 대조해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-14.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-14.html)
 
 #### 운영 복잡도 상세 비교
 
@@ -1464,7 +1494,9 @@ Ambient Mode로 전환 시 절감 효과:
 
 ### 비용 비교 종합
 
-![Istio Sidecar는 연간 $49,500, Ambient Mode는 $46,380, VPC Lattice는 연간 $7,608이 들어 5년 TCO 기준 Istio $297,500 대 VPC Lattice $38,040으로 약 87% 비용 차이가 난다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-15.svg)
+![Istio Sidecar는 연간 $49,500, Ambient Mode는 $46,380, VPC Lattice는 연간 $7,608이 들어 5년 TCO 기준 Istio $297,500 대 VPC Lattice $38,040으로 약 87% 비용 차이가 난다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-15.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-15.html)
 
 #### 비용 비교 상세표
 
@@ -1542,7 +1574,9 @@ Ambient Mode로 전환 시 절감 효과:
 
 ### Istio 멀티 클라우드
 
-![AWS EKS, Google Cloud GKE, Azure AKS 각각의 Istiod가 서비스 디스커버리 정보를 교환하고 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신하는 Istio 멀티 클라우드 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.svg)
+![AWS EKS, Google Cloud GKE, Azure AKS 각각의 Istiod가 서비스 디스커버리 정보를 교환하고 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신하는 Istio 멀티 클라우드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.html)
 
 **장점**:
 
@@ -1565,7 +1599,9 @@ Ambient Mode로 전환 시 절감 효과:
 
 ### Istio + VPC Lattice 함께 사용
 
-![EKS 클러스터 내부는 Envoy 사이드카를 거친 Istio mTLS로 통신하고, Backend가 Egress Gateway로 VPC Lattice Service Network에 나가 ECS Payment와 Lambda Notification에 도달하는 하이브리드 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.svg)
+![EKS 클러스터 내부는 Envoy 사이드카를 거친 Istio mTLS로 통신하고, Backend가 Egress Gateway로 VPC Lattice Service Network에 나가 ECS Payment와 Lambda Notification에 도달하는 하이브리드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.html)
 
 **사용 사례**:
 
@@ -1611,7 +1647,9 @@ spec:
 
 ### 의사 결정 트리
 
-![멀티 클라우드면 Istio, AWS 전용이면 워크로드 유형과 기능 요구, 운영 리소스를 순서대로 따져 Istio 또는 VPC Lattice를 추천하는 의사 결정 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.svg)
+![멀티 클라우드면 Istio, AWS 전용이면 워크로드 유형과 기능 요구, 운영 리소스를 순서대로 따져 Istio 또는 VPC Lattice를 추천하는 의사 결정 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.html)
 
 ### 사용 사례별 권장
 
@@ -1757,7 +1795,9 @@ spec:
 
 ### 핵심 요약
 
-![Istio는 풍부한 기능, 세밀한 제어, 강력한 관찰성, 멀티 클라우드에서 강점을 갖고 VPC Lattice는 운영 간편성, 낮은 비용, 빠른 시작, AWS 통합에서 강점을 갖는다는 핵심 요약을 나란히 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-19.svg)
+![Istio는 풍부한 기능, 세밀한 제어, 강력한 관찰성, 멀티 클라우드에서 강점을 갖고 VPC Lattice는 운영 간편성, 낮은 비용, 빠른 시작, AWS 통합에서 강점을 갖는다는 핵심 요약을 나란히 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-19.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-19.html)
 
 ### 언제 무엇을 선택할까?
 
@@ -1946,7 +1986,9 @@ spec:
 
 **최종 권장사항**:
 
-![예산과 인력이 충분하면 멀티 클라우드 여부에 따라 Istio 또는 VPC Lattice를, 제한적이면 AWS 여부에 따라 VPC Lattice 또는 Linkerd를 선택하라는 최종 권장 결정 트리를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-comparison-02-istio-vs-lattice-20.svg)
+![예산과 인력이 충분하면 멀티 클라우드 여부에 따라 Istio 또는 VPC Lattice를, 제한적이면 AWS 여부에 따라 VPC Lattice 또는 Linkerd를 선택하라는 최종 권장 결정 트리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-20.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-20.html)
 
 **관련 문서**:
 

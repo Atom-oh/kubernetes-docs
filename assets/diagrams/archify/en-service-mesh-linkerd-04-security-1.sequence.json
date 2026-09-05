@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How mTLS Works",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      640
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "upgrade",
+        "label": "Plain HTTP → mTLS upgrade",
+        "focus": [
+          "app-a",
+          "proxy-a",
+          "proxy-b"
+        ],
+        "note": "Proxy A checks that the destination is in the mesh, initializes TLS with its certificate, and mutually verifies SPIFFE IDs with Proxy B."
+      },
+      {
+        "id": "deliver",
+        "label": "Encrypt, then terminate TLS",
+        "focus": [
+          "proxy-a",
+          "proxy-b",
+          "app-b"
+        ],
+        "note": "The request is encrypted only between the proxies; Proxy B terminates TLS and forwards plain HTTP to Application B."
+      },
+      {
+        "id": "response",
+        "label": "Response path",
+        "focus": [
+          "app-b",
+          "proxy-b",
+          "proxy-a",
+          "app-a"
+        ],
+        "note": "The response travels back the same way, encrypted only between the two proxies."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app-a",
+      "type": "frontend",
+      "label": "Application A",
+      "sublabel": "speaks plain HTTP only"
+    },
+    {
+      "id": "proxy-a",
+      "type": "security",
+      "label": "Proxy A",
+      "sublabel": "linkerd-proxy sidecar"
+    },
+    {
+      "id": "proxy-b",
+      "type": "security",
+      "label": "Proxy B",
+      "sublabel": "linkerd-proxy sidecar"
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "Application B",
+      "sublabel": "speaks plain HTTP only"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 295,
+      "label": "mTLS setup · mesh check, then TLS init with certificate"
+    },
+    {
+      "from": 310,
+      "to": 400,
+      "label": "Encrypted transport"
+    },
+    {
+      "from": 415,
+      "to": 555,
+      "label": "Response"
+    }
+  ],
+  "messages": [
+    {
+      "id": "plain-req",
+      "from": "app-a",
+      "to": "proxy-a",
+      "y": 190,
+      "label": "Plain HTTP",
+      "note": "Check destination is in mesh → initialize TLS with certificate"
+    },
+    {
+      "id": "handshake",
+      "from": "proxy-a",
+      "to": "proxy-b",
+      "y": 260,
+      "label": "mTLS Handshake · mutual SPIFFE ID verification",
+      "variant": "security",
+      "note": "Mutual SPIFFE ID verification"
+    },
+    {
+      "id": "enc-req",
+      "from": "proxy-a",
+      "to": "proxy-b",
+      "y": 330,
+      "label": "Encrypted Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plain-fwd",
+      "from": "proxy-b",
+      "to": "app-b",
+      "y": 380,
+      "label": "Plain HTTP (after TLS termination)",
+      "note": "Proxy B terminates TLS, forwards plaintext"
+    },
+    {
+      "id": "plain-resp",
+      "from": "app-b",
+      "to": "proxy-b",
+      "y": 440,
+      "label": "Plain HTTP Response",
+      "variant": "return"
+    },
+    {
+      "id": "enc-resp",
+      "from": "proxy-b",
+      "to": "proxy-a",
+      "y": 490,
+      "label": "Encrypted Response",
+      "variant": "return"
+    },
+    {
+      "id": "plain-resp-a",
+      "from": "proxy-a",
+      "to": "app-a",
+      "y": 540,
+      "label": "Plain HTTP Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "proxy-a",
+      "from": 185,
+      "to": 545,
+      "type": "security"
+    },
+    {
+      "participant": "proxy-b",
+      "from": 255,
+      "to": 495,
+      "type": "security"
+    },
+    {
+      "participant": "app-b",
+      "from": 375,
+      "to": 445,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WorkloadEntry Use Scenarios",
+    "output": "en-service-mesh-istio-traffic-management-13-workload-entry-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "mesh-registration",
+        "label": "Mesh registration",
+        "focus": [
+          "vm1",
+          "vm2",
+          "bm",
+          "istiod"
+        ],
+        "note": "VMs and the bare-metal server register with istiod through WorkloadEntry."
+      },
+      {
+        "id": "config-delivery",
+        "label": "Config delivery",
+        "focus": [
+          "istiod",
+          "envoy1",
+          "envoy2"
+        ],
+        "note": "istiod delivers configuration to the Envoy sidecars injected into the Pods."
+      },
+      {
+        "id": "mtls-traffic",
+        "label": "mTLS traffic",
+        "focus": [
+          "vm1",
+          "app1",
+          "vm2",
+          "app2"
+        ],
+        "note": "The legacy app and database talk to the Pod workloads over mTLS."
+      }
+    ],
+    "viewBox": [
+      1040,
+      540
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "vm1",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "Legacy App",
+      "pos": [
+        80,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm2",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "Database",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "bm",
+      "type": "external",
+      "label": "Bare Metal",
+      "sublabel": "High-Performance Server",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        460,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "New App",
+      "sublabel": "Container",
+      "pos": [
+        780,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Sidecar",
+      "pos": [
+        780,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Microservice",
+      "sublabel": "Container",
+      "pos": [
+        780,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Sidecar",
+      "pos": [
+        780,
+        310
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Legacy Environment",
+      "wraps": [
+        "vm1",
+        "vm2",
+        "bm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "app1",
+        "envoy1",
+        "app2",
+        "envoy2"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "envoy2",
+        "app2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vm1-register",
+      "from": "vm1",
+      "to": "istiod",
+      "label": "Mesh registration",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "bm-register",
+      "from": "bm",
+      "to": "istiod",
+      "label": "Mesh registration",
+      "variant": "dashed"
+    },
+    {
+      "id": "vm2-register",
+      "from": "vm2",
+      "to": "istiod",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "config-envoy1",
+      "from": "istiod",
+      "to": "envoy1",
+      "label": "Config delivery",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-envoy2",
+      "from": "istiod",
+      "to": "envoy2",
+      "variant": "dashed"
+    },
+    {
+      "id": "mtls-app1",
+      "from": "vm1",
+      "to": "app1",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls-app2",
+      "from": "vm2",
+      "to": "app2",
+      "label": "mTLS",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Primary Use Cases",
+      "items": [
+        "Gradual migration: move legacy applications to Kubernetes step by step",
+        "Hybrid architecture: run VMs and containers side by side",
+        "Database integration: bring external databases into the mesh",
+        "High-performance workloads: use specialized hardware such as GPU servers"
+      ]
+    }
+  ]
+}

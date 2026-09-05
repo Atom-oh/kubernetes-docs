@@ -17,7 +17,9 @@ Outlier Detection is a form of the Circuit Breaker pattern that automatically de
 
 Outlier Detection automatically removes instances in the following situations:
 
-![An Envoy proxy load balancer sends traffic to two healthy pods, stops sending traffic to a slow, error-prone pod by ejecting it, and periodically retries the ejected pod to check whether it has recovered.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-01-outlier-detection-0.svg)
+![An Envoy proxy load balancer sends traffic to two healthy pods, stops sending traffic to a slow, error-prone pod by ejecting it, and periodically retries the ejected pod to check whether it has recovered.](../../../.gitbook/assets/en-service-mesh-istio-resilience-01-outlier-detection-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-01-outlier-detection-0.html)
 
 ### Key Features
 
@@ -29,7 +31,9 @@ Outlier Detection automatically removes instances in the following situations:
 
 ### Outlier Detection Process
 
-![Each request is checked for an error; errors increment a counter, and once the counter crosses a threshold the instance is ejected, waits out an ejection period, and is retried, looping back into the same request-checking cycle.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-01-outlier-detection-1.svg)
+![Each request is checked for an error; errors increment a counter, and once the counter crosses the consecutiveErrors threshold the instance is ejected, waits out baseEjectionTime, and is retried, looping back into the same request-checking cycle.](../../../.gitbook/assets/en-service-mesh-istio-resilience-01-outlier-detection-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-01-outlier-detection-1.html)
 
 ### Detection Methods
 
@@ -240,7 +244,9 @@ Register external APIs or legacy systems as ServiceEntry and apply Outlier Detec
 
 ### External API Protection Architecture
 
-![An application pod's Envoy sidecar applies outlier detection to three external API instances registered as a ServiceEntry, continuing to send traffic to the two healthy instances while ejecting the one returning errors.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-01-outlier-detection-2.svg)
+![An application pod's Envoy sidecar applies outlier detection to three external API instances registered as a ServiceEntry, continuing to send traffic to the two healthy instances while ejecting the one returning errors.](../../../.gitbook/assets/en-service-mesh-istio-resilience-01-outlier-detection-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-01-outlier-detection-2.html)
 
 ### Example 1: Single External API (DNS Based)
 

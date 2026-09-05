@@ -1,0 +1,230 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kong Mesh 정책 전파 메커니즘",
+    "output": "public/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-7.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "global-scope",
+        "label": "Global 스코프 경로",
+        "focus": [
+          "decide",
+          "globalStore",
+          "sync",
+          "zoneRecv"
+        ],
+        "note": "Mesh·TrafficRoute·TrafficPermission 같은 Global 정책은 Global CP에 저장된 뒤 모든 Zone CP로 동기화됩니다."
+      },
+      {
+        "id": "zone-scope",
+        "label": "Zone 스코프 경로",
+        "focus": [
+          "decide",
+          "zoneStore",
+          "dpUpdate"
+        ],
+        "note": "HealthCheck·ProxyTemplate 같은 Zone 정책은 해당 Zone CP에만 저장되어 그 Zone의 Data Plane만 갱신합니다."
+      },
+      {
+        "id": "enforce",
+        "label": "Data Plane 반영",
+        "focus": [
+          "zoneRecv",
+          "dpUpdate",
+          "envoy"
+        ],
+        "note": "두 경로 모두 Zone CP가 xDS로 Data Plane을 갱신하고, Envoy가 새 설정을 실시간 트래픽 제어에 적용합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "운영자 작업"
+        },
+        "security": {
+          "label": "스코프 분기"
+        },
+        "backend": {
+          "label": "Global Control Plane"
+        },
+        "cloud": {
+          "label": "Zone Control Plane"
+        },
+        "messagebus": {
+          "label": "Data Plane (Envoy)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "operator",
+      "label": "운영자"
+    },
+    {
+      "id": "global",
+      "label": "Global Control Plane"
+    },
+    {
+      "id": "zone",
+      "label": "Zone Control Plane"
+    },
+    {
+      "id": "dataplane",
+      "label": "Data Plane"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "apply",
+    "decide",
+    "globalStore",
+    "sync",
+    "zoneRecv",
+    "dpUpdate",
+    "envoy"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "operator",
+      "col": 0,
+      "type": "frontend",
+      "label": "정책 생성/수정",
+      "sublabel": "policy.yaml 작성",
+      "width": 160
+    },
+    {
+      "id": "apply",
+      "lane": "operator",
+      "col": 1,
+      "type": "frontend",
+      "label": "kubectl apply",
+      "sublabel": "-f policy.yaml",
+      "width": 124
+    },
+    {
+      "id": "decide",
+      "lane": "operator",
+      "col": 2,
+      "type": "security",
+      "label": "Global CP 적용?",
+      "sublabel": "정책 스코프 판단",
+      "tag": "분기",
+      "width": 176
+    },
+    {
+      "id": "globalStore",
+      "lane": "global",
+      "col": 3,
+      "type": "backend",
+      "label": "Global CP 정책 저장",
+      "sublabel": "Global 스코프",
+      "width": 160
+    },
+    {
+      "id": "sync",
+      "lane": "global",
+      "col": 4,
+      "type": "backend",
+      "label": "Policy Sync",
+      "sublabel": "모든 Zone으로 전파",
+      "width": 130
+    },
+    {
+      "id": "zoneStore",
+      "lane": "zone",
+      "col": 3,
+      "type": "cloud",
+      "label": "Zone CP 로컬 정책 저장",
+      "sublabel": "해당 Zone CP만 적용",
+      "width": 168
+    },
+    {
+      "id": "zoneRecv",
+      "lane": "zone",
+      "col": 4,
+      "type": "cloud",
+      "label": "Zone CP 수신",
+      "sublabel": "Zone CP 1·2·3 각각",
+      "width": 156
+    },
+    {
+      "id": "dpUpdate",
+      "lane": "dataplane",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Data Plane",
+      "sublabel": "xDS 업데이트",
+      "width": 130
+    },
+    {
+      "id": "envoy",
+      "lane": "dataplane",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Envoy 설정 적용",
+      "sublabel": "실시간 트래픽 제어",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "apply",
+      "role": "main"
+    },
+    {
+      "from": "apply",
+      "to": "decide",
+      "role": "main"
+    },
+    {
+      "from": "decide",
+      "to": "globalStore",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "decide",
+      "to": "zoneStore",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "globalStore",
+      "to": "sync",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "sync",
+      "to": "zoneRecv",
+      "label": "sync",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "zoneStore",
+      "to": "dpUpdate",
+      "label": "local",
+      "role": "branch"
+    },
+    {
+      "from": "zoneRecv",
+      "to": "dpUpdate",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "dpUpdate",
+      "to": "envoy",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

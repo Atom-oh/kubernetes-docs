@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Observability Stack Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-observability-04-dashboards-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "Metrics path",
+        "focus": [
+          "envoy",
+          "prometheus",
+          "kiali",
+          "grafana"
+        ],
+        "note": "Prometheus scrapes Envoy sidecar metrics, which the Kiali service graph and the Grafana metrics dashboards query."
+      },
+      {
+        "id": "logs-path",
+        "label": "Logs path",
+        "focus": [
+          "envoy",
+          "loki",
+          "grafana-logs"
+        ],
+        "note": "Envoy access logs are stored in Loki and analyzed in the Grafana log dashboards."
+      },
+      {
+        "id": "traces-path",
+        "label": "Traces path",
+        "focus": [
+          "envoy",
+          "jaeger",
+          "tempo",
+          "jaeger-ui",
+          "grafana"
+        ],
+        "note": "Envoy spans are sent to Jaeger or Tempo; distributed traces are viewed in Jaeger UI and Grafana."
+      },
+      {
+        "id": "config-path",
+        "label": "Config validation",
+        "focus": [
+          "istiod",
+          "kiali"
+        ],
+        "note": "Kiali reads Istio configuration from istiod to validate CRDs such as VirtualService and DestinationRule."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Istio config",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": "Injected into every pod (×N)",
+      "pos": [
+        610,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metrics collection & query",
+      "pos": [
+        280,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "Trace storage",
+      "pos": [
+        500,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "Log storage",
+      "pos": [
+        720,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger",
+      "sublabel": "Trace storage",
+      "pos": [
+        940,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "Service graph",
+      "pos": [
+        280,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Metrics dashboard",
+      "pos": [
+        500,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana-logs",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Log dashboard",
+      "pos": [
+        720,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "jaeger-ui",
+      "type": "frontend",
+      "label": "Jaeger UI",
+      "sublabel": "Distributed tracing",
+      "pos": [
+        940,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Metrics Backend",
+      "wraps": [
+        "prometheus",
+        "tempo",
+        "loki",
+        "jaeger"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Visualization",
+      "wraps": [
+        "kiali",
+        "grafana",
+        "grafana-logs",
+        "jaeger-ui"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "envoy-metrics",
+      "from": "envoy",
+      "to": "prometheus",
+      "label": "Metrics",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-traces-tempo",
+      "from": "envoy",
+      "to": "tempo",
+      "label": "Traces",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-logs",
+      "from": "envoy",
+      "to": "loki",
+      "label": "Logs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-traces-jaeger",
+      "from": "envoy",
+      "to": "jaeger",
+      "label": "Traces",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-kiali",
+      "from": "prometheus",
+      "to": "kiali",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prometheus",
+      "to": "grafana"
+    },
+    {
+      "id": "tempo-grafana",
+      "from": "tempo",
+      "to": "grafana"
+    },
+    {
+      "id": "loki-grafana-logs",
+      "from": "loki",
+      "to": "grafana-logs"
+    },
+    {
+      "id": "jaeger-ui-link",
+      "from": "jaeger",
+      "to": "jaeger-ui"
+    },
+    {
+      "id": "istiod-config",
+      "from": "istiod",
+      "to": "kiali",
+      "label": "Istio config",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Kiali",
+      "items": [
+        "Service topology, traffic analysis, configuration validation",
+        "Data sources: Prometheus, Istio Config"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Grafana",
+      "items": [
+        "Metrics visualization, alerting, log analysis",
+        "Data sources: Prometheus, Loki, Tempo"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Prometheus / Jaeger",
+      "items": [
+        "Prometheus: collects and queries Envoy and istiod metrics",
+        "Jaeger: distributed trace analysis from Envoy spans"
+      ]
+    }
+  ]
+}

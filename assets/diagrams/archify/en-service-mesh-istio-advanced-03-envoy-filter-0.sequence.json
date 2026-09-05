@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "X-Forwarded-For Overview — XFF Header Accumulating per Hop",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      520
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "XFF processing"
+        },
+        "default": {
+          "label": "hop forwarding"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "IP 203.0.113.5"
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "IP 10.0.1.100"
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Istio Gateway",
+      "sublabel": "IP 10.0.2.50"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "IP 10.244.1.10"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "final receiver"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "client",
+      "to": "lb",
+      "y": 200,
+      "label": "HTTP request",
+      "note": "Load balancer records the client IP 203.0.113.5 in XFF"
+    },
+    {
+      "id": "m2",
+      "from": "lb",
+      "to": "gateway",
+      "y": 270,
+      "label": "X-Forwarded-For: 203.0.113.5",
+      "note": "Gateway appends its downstream address 10.0.1.100"
+    },
+    {
+      "id": "m3",
+      "from": "gateway",
+      "to": "envoy",
+      "y": 340,
+      "label": "X-Forwarded-For: 203.0.113.5, 10.0.1.100",
+      "variant": "emphasis",
+      "note": "XFF handling determined by the use_remote_address setting"
+    },
+    {
+      "id": "m4",
+      "from": "envoy",
+      "to": "app",
+      "y": 410,
+      "label": "X-Forwarded-For header passed on"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lb",
+      "from": 195,
+      "to": 275,
+      "type": "cloud"
+    },
+    {
+      "participant": "gateway",
+      "from": 265,
+      "to": 345,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 335,
+      "to": 415,
+      "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "use_remote_address",
+      "items": [
+        "The Envoy sidecar decides how to handle XFF based on the use_remote_address setting"
+      ]
+    }
+  ]
+}

@@ -31,7 +31,9 @@ Istio automatically collects Golden Signals following Google's SRE principles:
 
 ### Metrics Collection Architecture
 
-![Diagram showing an application pod's Envoy sidecar exporting metrics that istiod's control plane configures, which flow into Prometheus and an OpenTelemetry Collector, and from there into Grafana and Kiali for visualization.](../../../../assets/diagrams/rendered/en-service-mesh-istio-observability-01-metrics-0.svg)
+![Diagram showing an application pod's Envoy sidecar exporting metrics that istiod's control plane configures, which flow into Prometheus and an OpenTelemetry Collector, and from there into Grafana and Kiali for visualization.](../../../.gitbook/assets/en-service-mesh-istio-observability-01-metrics-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-observability-01-metrics-0.html)
 
 ## Istio Standard Metrics
 

@@ -1,0 +1,316 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio 업그레이드 절차 (Revision 기반 Canary)",
+    "output": "public/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "install",
+        "label": "새 Revision 설치",
+        "focus": [
+          "start",
+          "installRev",
+          "dualRun"
+        ],
+        "note": "istioctl install --revision=1-24-0 으로 새 Control Plane을 올려 1-23-0과 동시에 실행한다."
+      },
+      {
+        "id": "canary",
+        "label": "네임스페이스별 전환",
+        "focus": [
+          "dualRun",
+          "nsSwitch",
+          "podRestart",
+          "verify"
+        ],
+        "note": "istio.io/rev 레이블 변경 후 파드를 재시작하고 트래픽을 검증하는 과정을 dev → staging → production 순으로 반복한다."
+      },
+      {
+        "id": "finish",
+        "label": "정리 또는 롤백",
+        "focus": [
+          "verify",
+          "allDone",
+          "cleanup",
+          "rollback",
+          "manualFix"
+        ],
+        "note": "모든 네임스페이스가 전환되면 이전 버전을 제거하고, 문제가 있으면 이전 Revision으로 되돌린다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작 · 판정 · 완료"
+        },
+        "backend": {
+          "label": "수동 작업 단계"
+        },
+        "security": {
+          "label": "위험 · 롤백"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "cp",
+      "label": "Control Plane · istio-system"
+    },
+    {
+      "id": "ns",
+      "label": "네임스페이스별 Canary 전환"
+    },
+    {
+      "id": "finish",
+      "label": "완료 판정 · 정리"
+    },
+    {
+      "id": "exceptions",
+      "label": "롤백",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "prepare",
+      "label": "새 버전 설치",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "canaryPhase",
+      "label": "Canary 전환 (네임스페이스별 반복)",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "cleanupPhase",
+      "label": "정리",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "installRev",
+    "dualRun",
+    "nsSwitch",
+    "podRestart",
+    "verify",
+    "allDone",
+    "cleanup"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "cleanup",
+      "manualFix"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "cleanup"
+      },
+      {
+        "from": "allDone",
+        "to": "manualFix"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "cp",
+      "col": 0,
+      "type": "frontend",
+      "label": "업그레이드 시작",
+      "sublabel": "백업 · precheck",
+      "width": 116
+    },
+    {
+      "id": "installRev",
+      "lane": "cp",
+      "col": 1,
+      "type": "backend",
+      "label": "새 Revision 설치",
+      "sublabel": "--revision=1-24-0",
+      "tag": "수동",
+      "width": 124
+    },
+    {
+      "id": "dualRun",
+      "lane": "cp",
+      "col": 2,
+      "type": "backend",
+      "label": "Control Plane 동시 실행",
+      "sublabel": "1-23-0 + 1-24-0",
+      "width": 170
+    },
+    {
+      "id": "nsSwitch",
+      "lane": "ns",
+      "col": 2,
+      "type": "backend",
+      "label": "네임스페이스별 전환",
+      "sublabel": "istio.io/rev 레이블",
+      "width": 150
+    },
+    {
+      "id": "podRestart",
+      "lane": "ns",
+      "col": 3,
+      "type": "security",
+      "label": "파드 재시작",
+      "sublabel": "다운타임 발생",
+      "tag": "위험",
+      "width": 110
+    },
+    {
+      "id": "verify",
+      "lane": "ns",
+      "col": 4,
+      "type": "backend",
+      "label": "검증",
+      "sublabel": "트래픽 정상?",
+      "tag": "수동",
+      "width": 110
+    },
+    {
+      "id": "allDone",
+      "lane": "finish",
+      "col": 4,
+      "type": "frontend",
+      "label": "모두 완료?",
+      "sublabel": "전 네임스페이스 전환",
+      "width": 126
+    },
+    {
+      "id": "cleanup",
+      "lane": "finish",
+      "col": 5,
+      "type": "frontend",
+      "label": "이전 버전 제거",
+      "sublabel": "업그레이드 완료",
+      "width": 132
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "security",
+      "label": "롤백 필요",
+      "sublabel": "이전 Revision 복귀",
+      "width": 126
+    },
+    {
+      "id": "manualFix",
+      "lane": "exceptions",
+      "col": 5,
+      "type": "security",
+      "label": "수동 복구",
+      "sublabel": "1-24-0 제거",
+      "width": 110
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "installRev",
+      "role": "main"
+    },
+    {
+      "from": "installRev",
+      "to": "dualRun",
+      "role": "main"
+    },
+    {
+      "from": "dualRun",
+      "to": "nsSwitch",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "nsSwitch",
+      "to": "podRestart",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "podRestart",
+      "to": "verify",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "verify",
+      "to": "nsSwitch",
+      "label": "다음 NS",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "verify",
+      "to": "allDone",
+      "role": "main"
+    },
+    {
+      "from": "allDone",
+      "to": "cleanup",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allDone",
+      "to": "rollback",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "rollback",
+      "to": "manualFix",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "수동 단계",
+      "items": [
+        "새 Revision 설치와 네임스페이스별 전환 · 검증은 모두 사람이 수행",
+        "전체 소요 시간 6-10시간 (네임스페이스 수에 따라 증가)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "위험 구간",
+      "items": [
+        "파드 재시작 시 다운타임 발생",
+        "두 버전 Control Plane 동시 실행으로 리소스 2배",
+        "이전 버전 제거 후에는 롤백 불가"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "롤백",
+      "items": [
+        "문제 네임스페이스를 istio.io/rev=1-23-0 으로 되돌리고 재시작",
+        "istioctl uninstall --revision 1-24-0"
+      ]
+    }
+  ]
+}

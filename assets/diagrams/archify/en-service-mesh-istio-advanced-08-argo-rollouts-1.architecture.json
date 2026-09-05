@@ -1,0 +1,372 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts + Istio Overall Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-08-argo-rollouts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "traffic-path",
+        "label": "Traffic path",
+        "focus": [
+          "gateway",
+          "vs",
+          "dr",
+          "services",
+          "pods"
+        ],
+        "note": "Data-plane path: an external request flows Gateway → VirtualService → DestinationRule subset → Service → pods."
+      },
+      {
+        "id": "rollouts-control",
+        "label": "Rollouts control",
+        "focus": [
+          "argocd",
+          "rollouts",
+          "vs",
+          "pods"
+        ],
+        "note": "Argo Rollouts, deployed by ArgoCD, manages the VirtualService weight and the stable/canary ReplicaSets."
+      },
+      {
+        "id": "analysis-loop",
+        "label": "Analysis feedback",
+        "focus": [
+          "pods",
+          "prometheus",
+          "analysisrun",
+          "rollouts"
+        ],
+        "note": "Prometheus collects pod metrics, AnalysisRun verifies them and returns success/failure to Rollouts."
+      },
+      {
+        "id": "istiod-sync",
+        "label": "Istiod config sync",
+        "focus": [
+          "istiod",
+          "gateway",
+          "vs"
+        ],
+        "note": "Istiod pushes xDS config to the Gateway and syncs VirtualService/DestinationRule changes into the data plane."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Istio Control Plane",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "GitOps deployment",
+      "pos": [
+        270,
+        50
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rollouts",
+      "type": "backend",
+      "label": "Argo Rollouts",
+      "sublabel": "Controller",
+      "pos": [
+        500,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "analysisrun",
+      "type": "backend",
+      "label": "AnalysisRun",
+      "sublabel": "Metric verification",
+      "pos": [
+        790,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metric collection",
+      "pos": [
+        1020,
+        50
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "external",
+      "label": "Gateway",
+      "sublabel": "External traffic",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService",
+      "sublabel": "Routing rules (test)",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "cloud",
+      "label": "DestinationRule",
+      "sublabel": "Subsets",
+      "pos": [
+        500,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "services",
+      "type": "cloud",
+      "label": "Service",
+      "sublabel": "test-stable / test-canary",
+      "pos": [
+        790,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Rollout-managed Pods",
+      "sublabel": "Stable v1 / Canary v2",
+      "pos": [
+        1020,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod",
+        "argocd",
+        "rollouts"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability",
+      "wraps": [
+        "analysisrun",
+        "prometheus"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "gateway",
+        "vs",
+        "dr",
+        "services",
+        "pods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "deploy",
+      "from": "argocd",
+      "to": "rollouts",
+      "label": "deploy"
+    },
+    {
+      "id": "weight",
+      "from": "rollouts",
+      "to": "vs",
+      "label": "VirtualService weight adjustment",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          460,
+          80
+        ],
+        [
+          460,
+          200
+        ],
+        [
+          345,
+          200
+        ]
+      ],
+      "labelDy": 22
+    },
+    {
+      "id": "manage",
+      "from": "rollouts",
+      "to": "pods",
+      "label": "ReplicaSet management",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          585,
+          215
+        ],
+        [
+          980,
+          215
+        ],
+        [
+          980,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "create",
+      "from": "rollouts",
+      "to": "analysisrun",
+      "label": "create AnalysisRun",
+      "labelDy": 56
+    },
+    {
+      "id": "ingress",
+      "from": "gateway",
+      "to": "vs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-dr",
+      "from": "vs",
+      "to": "dr",
+      "label": "90% stable / 10% canary",
+      "variant": "emphasis",
+      "labelDy": -31
+    },
+    {
+      "id": "dr-svc",
+      "from": "dr",
+      "to": "services",
+      "label": "subset",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-pods",
+      "from": "services",
+      "to": "pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds",
+      "from": "istiod",
+      "to": "gateway",
+      "label": "xDS Config",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "sync-vs",
+      "from": "istiod",
+      "to": "vs",
+      "label": "VS / DR config sync",
+      "variant": "dashed"
+    },
+    {
+      "id": "metrics",
+      "from": "pods",
+      "to": "prometheus",
+      "label": "metrics",
+      "variant": "dashed"
+    },
+    {
+      "id": "query",
+      "from": "prometheus",
+      "to": "analysisrun",
+      "label": "query"
+    },
+    {
+      "id": "result",
+      "from": "analysisrun",
+      "to": "rollouts",
+      "label": "success / failure",
+      "variant": "dashed",
+      "labelDy": 65
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "What Argo Rollouts manages",
+      "items": [
+        "VirtualService: automatic weight adjustment of the named route",
+        "stable/canary ReplicaSets and AnalysisRun creation",
+        "DestinationRule and Services must be created manually beforehand"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Metric-based automatic progression/rollback",
+      "items": [
+        "Prometheus collects pod metrics",
+        "AnalysisRun verifies the query results",
+        "Success advances to the next step, failure rolls back automatically"
+      ]
+    }
+  ]
+}

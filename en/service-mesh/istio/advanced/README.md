@@ -21,7 +21,9 @@ This section covers advanced Istio features and in-depth topics needed for produ
 
 ### Key Topics
 
-![Map of advanced Istio topics: sidecar and ambient deployment modes both feed into EnvoyFilter customization, which unlocks gRPC/WebSocket protocol support; multi-cluster topology and Argo Rollouts integration are related but separate concerns, with Argo Rollouts triggering sidecar-based canary pods.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-0.png)
+![Map of advanced Istio topics: sidecar and ambient deployment modes both feed into EnvoyFilter customization, which extends to gRPC/WebSocket protocol support; the multi-cluster primary pushes config to a remote cluster, and Argo Rollouts integration depends on sidecar injection.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-0.html)
 
 ## 1. Ambient Mode
 
@@ -39,7 +41,9 @@ A new data plane architecture introduced in Istio 1.28+.
 
 ### Ambient Mode Architecture
 
-![A sidecar-free application pod sends traffic transparently to the node-level ztunnel, which forwards L4 traffic directly to the service and only detours through an optional waypoint proxy when L7 routing is required.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-1.png)
+![A sidecar-free application pod sends traffic transparently to the node-level ztunnel, which forwards L4 traffic directly to the service and only detours through an optional waypoint proxy when L7 routing is required.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-1.html)
 
 **More details**: [Ambient Mode Detailed Guide](01-ambient-mode.md)
 
@@ -49,7 +53,9 @@ Connect multiple Kubernetes clusters as a single service mesh.
 
 ### Multi-cluster Topology
 
-![The primary cluster's control plane pushes configuration to two remote clusters while Service A communicates directly across the mesh with the service in each remote cluster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-2.png)
+![The primary cluster's control plane pushes configuration to two remote clusters while Service A communicates directly across the mesh with the service in each remote cluster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-2.html)
 
 **Use Cases**:
 - Multi-region deployment
@@ -191,7 +197,9 @@ Covers sidecar proxy injection mechanisms and customization.
 
 ### Injection Methods
 
-![Flowchart showing that a new pod's namespace label determines whether the Envoy sidecar is injected or skipped before the pod is deployed.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-3.png)
+![Flowchart showing that when a pod is created the injection webhook checks the namespace's istio-injection label, either injects the Envoy sidecar or skips it, and both paths merge into pod deployment.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-3.html)
 
 **More details**: [Sidecar Injection Guide](07-sidecar-injection.md)
 
@@ -249,7 +257,9 @@ Implement Istio metrics-based autoscaling using KEDA.
 
 ### KEDA Architecture
 
-![Envoy's metrics flow through Prometheus and CloudWatch to KEDA, which reads a ScaledObject policy and manages the HPA that scales the mesh service back up, closing the autoscaling loop.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-4.png)
+![Envoy's metrics flow through Prometheus and CloudWatch to KEDA, which reads a ScaledObject policy and manages the HPA that scales the mesh service back up, closing the autoscaling loop.](../../../.gitbook/assets/en-service-mesh-istio-advanced-readme-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-readme-4.html)
 
 ### Key Scaling Strategies
 

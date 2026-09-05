@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 멀티 클라우드",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "mtls-path",
+        "label": "워크로드 mTLS 통신",
+        "focus": [
+          "eks",
+          "gke",
+          "aks"
+        ],
+        "note": "EKS, GKE, AKS 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신한다."
+      },
+      {
+        "id": "discovery",
+        "label": "Istiod Service Discovery",
+        "focus": [
+          "istiod-aws",
+          "istiod-gcp",
+          "istiod-azure"
+        ],
+        "note": "클라우드별 Istiod가 Service Discovery 정보를 서로 교환한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "backend",
+      "label": "EKS Cluster 1",
+      "sublabel": "워크로드",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "istiod-aws",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "gke",
+      "type": "backend",
+      "label": "GKE Cluster",
+      "sublabel": "워크로드",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "istiod-gcp",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        400,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "aks",
+      "type": "backend",
+      "label": "AKS Cluster",
+      "sublabel": "워크로드",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "istiod-azure",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        740,
+        230
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "eks",
+        "istiod-aws"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Google Cloud",
+      "wraps": [
+        "gke",
+        "istiod-gcp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Azure",
+      "wraps": [
+        "aks",
+        "istiod-azure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-gke-mtls",
+      "from": "eks",
+      "to": "gke",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gke-aks-mtls",
+      "from": "gke",
+      "to": "aks",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "aws-gcp-discovery",
+      "from": "istiod-aws",
+      "to": "istiod-gcp",
+      "label": "Service Discovery",
+      "variant": "dashed"
+    },
+    {
+      "id": "gcp-azure-discovery",
+      "from": "istiod-gcp",
+      "to": "istiod-azure",
+      "label": "Service Discovery",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istio 멀티 클라우드 장점",
+      "items": [
+        "클라우드 중립적",
+        "일관된 정책 및 관찰성",
+        "자동 Service Discovery",
+        "페더레이션된 ID"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "VPC Lattice 멀티 클라우드",
+      "items": [
+        "불가능: VPC Lattice는 AWS 전용",
+        "대안: AWS Transit Gateway + VPN, 애플리케이션 레벨 통합, API Gateway"
+      ]
+    }
+  ]
+}

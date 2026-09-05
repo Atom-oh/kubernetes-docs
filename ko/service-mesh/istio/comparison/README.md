@@ -69,7 +69,9 @@ Istio 내부에서 sidecar 모드와 ambient 모드 중 무엇을 선택할지, 
 
 ### Service Mesh 선택 기준
 
-![플랫폼과 요구사항에 따라 Service Mesh 솔루션을 선택하는 두 개의 의사결정 트리로, 왼쪽은 Kubernetes 환경에서 Istio·Linkerd·Consul/Kong Mesh 중 선택하는 경로를, 오른쪽은 AWS 중심 아키텍처에서 VPC Lattice·Istio on EKS·Istio Multi-cluster·리전별 솔루션 중 선택하는 경로를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-README-0.png)
+![플랫폼과 요구사항에 따라 Service Mesh를 고르는 두 갈래 의사결정 흐름으로, Kubernetes 플랫폼 경로는 Istio·Linkerd·Consul/Kong Mesh 중에서, AWS 중심 경로는 VPC Lattice·Istio on EKS·Istio Multi-cluster·리전별 솔루션 중에서 선택하는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-readme-0.html)
 
 ### 사용 사례별 권장 사항
 

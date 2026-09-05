@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pod-to-Pod Communication (Same Node)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      540
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "podA",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "source pod"
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "eBPF Ingress (TC)",
+      "sublabel": "Pod A veth hook"
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "CT + Policy Maps",
+      "sublabel": "eBPF maps"
+    },
+    {
+      "id": "egress",
+      "type": "backend",
+      "label": "eBPF Egress (TC)",
+      "sublabel": "Pod B veth hook"
+    },
+    {
+      "id": "podB",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "destination pod"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 320,
+      "label": "Connection and policy check inside the kernel"
+    },
+    {
+      "from": 340,
+      "to": 460,
+      "label": "Direct delivery without the network stack"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "podA",
+      "to": "ingress",
+      "y": 190,
+      "label": "send packet (veth)"
+    },
+    {
+      "id": "lookup",
+      "from": "ingress",
+      "to": "maps",
+      "y": 240,
+      "label": "lookup connection · policy",
+      "variant": "security"
+    },
+    {
+      "id": "allow",
+      "from": "maps",
+      "to": "ingress",
+      "y": 290,
+      "label": "allowed",
+      "variant": "return"
+    },
+    {
+      "id": "forward",
+      "from": "ingress",
+      "to": "egress",
+      "y": 370,
+      "label": "forward directly",
+      "variant": "emphasis",
+      "note": "In-kernel direct path · bypasses the network stack"
+    },
+    {
+      "id": "receive",
+      "from": "egress",
+      "to": "podB",
+      "y": 425,
+      "label": "receive packet (veth)"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ingress",
+      "from": 185,
+      "to": 375,
+      "type": "backend"
+    },
+    {
+      "participant": "maps",
+      "from": 235,
+      "to": 295,
+      "type": "database"
+    },
+    {
+      "participant": "egress",
+      "from": 365,
+      "to": 430,
+      "type": "backend"
+    }
+  ]
+}

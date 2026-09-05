@@ -34,7 +34,9 @@ HTTP 503 Service Unavailable
 
 ### 발생 원인
 
-![쿠버네티스가 파드 종료 시 애플리케이션과 Envoy 사이드카에 동시에 SIGTERM을 보내면 Envoy가 애플리케이션보다 먼저 종료되어, 아직 처리 중인 클라이언트 요청이 연결 거부로 실패하는 문제를 보여주는 시퀀스 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-troubleshooting-common-errors-0.svg)
+![Pod 종료 시 Kubernetes가 애플리케이션과 Envoy 사이드카에 동시에 SIGTERM을 보내면 Envoy가 먼저 종료되어, 아직 실행 중인 애플리케이션으로 향한 클라이언트 요청이 Connection refused로 실패하고 30초 뒤 SIGKILL로 강제 종료되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-0.html)
 
 **근본 원인**:
 1. Envoy와 애플리케이션이 동시에 SIGTERM을 받음
@@ -69,7 +71,9 @@ spec:
 ```
 
 **동작 방식**:
-![Envoy에 terminationDrainDuration을 설정하면 SIGTERM 이후 새 연결만 거부하고 기존 연결은 유지하는 Drain 모드로 진입해, 진행 중인 요청이 정상 응답을 받은 뒤 애플리케이션과 Envoy가 함께 정상 종료됨을 보여주는 시퀀스 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-troubleshooting-common-errors-1.svg)
+![Envoy에 terminationDrainDuration을 설정하면 SIGTERM 이후 새 연결만 거부하고 기존 연결은 유지하는 Drain 모드로 진입해, Pod 종료 중 들어온 요청이 정상 응답을 받은 뒤 Envoy와 애플리케이션이 함께 정상 종료됨을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-1.html)
 
 #### 방법 2: Pod Annotation으로 Envoy 종료 동작 제어
 
@@ -300,7 +304,9 @@ SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
 
 ### 원인 1: PeerAuthentication 모드 불일치
 
-![mTLS STRICT 모드인 클라이언트 서비스가 mTLS DISABLE 모드인 서버 서비스로 연결을 시도하면 서버가 평문 연결을 요구하며 실패하고 결국 503 업스트림 연결 오류로 이어지는 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-troubleshooting-common-errors-2.svg)
+![PeerAuthentication STRICT 모드인 Client Service가 DISABLE 모드인 Server Service로 mTLS 연결을 시도하면 서버가 평문 연결을 요구해 연결이 실패하고 503 upstream connect error로 이어지는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-2.html)
 
 **해결**:
 

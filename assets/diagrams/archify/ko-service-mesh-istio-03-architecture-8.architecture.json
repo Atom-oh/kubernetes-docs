@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Envoy의 DNS 처리",
+    "output": "ko-service-mesh-istio-03-architecture-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      920,
+      360
+    ],
+    "views": [
+      {
+        "id": "intercept",
+        "label": "연결 가로채기",
+        "focus": [
+          "app",
+          "listener",
+          "dnsfilter"
+        ],
+        "note": "애플리케이션의 TCP 연결은 iptables로 15001 Listener에 잡히고, DNS Filter가 Host 헤더로 대상 이름을 읽는다."
+      },
+      {
+        "id": "resolve",
+        "label": "라우트·클러스터 선택",
+        "focus": [
+          "dnsfilter",
+          "route",
+          "cluster"
+        ],
+        "note": "CoreDNS를 호출하지 않고 Route Match가 이름을 해석해 outbound 클러스터를 선택한다."
+      },
+      {
+        "id": "eds",
+        "label": "EDS 엔드포인트 조회",
+        "focus": [
+          "cluster",
+          "endpoint",
+          "xds"
+        ],
+        "note": "선택된 클러스터의 파드 IP는 Istiod xDS Server와의 gRPC 스트림(EDS)에서 동적으로 받아온다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "애플리케이션",
+      "sublabel": "curl reviews:9080",
+      "pos": [
+        30,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "listener",
+      "type": "backend",
+      "label": "Listener",
+      "sublabel": ":15001",
+      "pos": [
+        260,
+        70
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dnsfilter",
+      "type": "backend",
+      "label": "DNS Filter",
+      "sublabel": "Host 헤더 확인",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "Route Match",
+      "sublabel": "이름 해석",
+      "pos": [
+        720,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "backend",
+      "label": "Cluster",
+      "sublabel": "outbound:9080",
+      "pos": [
+        720,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "endpoint",
+      "type": "backend",
+      "label": "Endpoint Discovery",
+      "sublabel": "파드 IP 목록",
+      "pos": [
+        480,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "xds",
+      "type": "cloud",
+      "label": "xDS Server",
+      "sublabel": "Istiod",
+      "pos": [
+        30,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Envoy Proxy (istio-proxy)",
+      "wraps": [
+        "listener",
+        "dnsfilter",
+        "route",
+        "cluster",
+        "endpoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-listener",
+      "from": "app",
+      "to": "listener",
+      "label": "1. TCP 연결",
+      "variant": "emphasis"
+    },
+    {
+      "id": "listener-dns",
+      "from": "listener",
+      "to": "dnsfilter",
+      "label": "2. Host 헤더"
+    },
+    {
+      "id": "dns-route",
+      "from": "dnsfilter",
+      "to": "route",
+      "label": "3. 해석"
+    },
+    {
+      "id": "route-cluster",
+      "from": "route",
+      "to": "cluster",
+      "label": "4. 선택",
+      "labelDy": 24
+    },
+    {
+      "id": "cluster-endpoint",
+      "from": "cluster",
+      "to": "endpoint",
+      "label": "5. 조회"
+    },
+    {
+      "id": "endpoint-xds",
+      "from": "endpoint",
+      "to": "xds",
+      "label": "6. EDS API (gRPC)",
+      "variant": "dashed"
+    }
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Security Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-04-security-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Cert chain"
+        },
+        "backend": {
+          "label": "Controllers"
+        },
+        "frontend": {
+          "label": "mTLS proxies"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cert-chain",
+        "label": "Certificate Chain",
+        "focus": [
+          "ta",
+          "ii",
+          "wc"
+        ],
+        "note": "The Trust Anchor (root CA) signs the Identity Issuer (intermediate CA), which issues each proxy's workload certificate."
+      },
+      {
+        "id": "control-to-data",
+        "label": "Control Plane → Data Plane",
+        "focus": [
+          "id",
+          "pol",
+          "p1",
+          "p2"
+        ],
+        "note": "The Identity Controller issues certificates and the Policy Controller pushes authorization policies to both proxies."
+      },
+      {
+        "id": "mtls",
+        "label": "Proxy-to-proxy mTLS",
+        "focus": [
+          "p1",
+          "p2"
+        ],
+        "note": "The two proxies authenticate each other and act as the mTLS termination points that encrypt traffic."
+      }
+    ],
+    "viewBox": [
+      940,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "ta",
+      "type": "security",
+      "label": "Trust Anchor",
+      "sublabel": "Root CA",
+      "pos": [
+        80,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ii",
+      "type": "security",
+      "label": "Identity Issuer",
+      "sublabel": "Intermediate CA",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wc",
+      "type": "security",
+      "label": "Workload Certs",
+      "sublabel": "Per-proxy certificates",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "id",
+      "type": "backend",
+      "label": "Identity Controller",
+      "sublabel": "Certificate issuance",
+      "pos": [
+        80,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pol",
+      "type": "backend",
+      "label": "Policy Controller",
+      "sublabel": "Authorization policies",
+      "pos": [
+        80,
+        440
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "frontend",
+      "label": "Proxy 1",
+      "sublabel": "mTLS termination",
+      "pos": [
+        340,
+        305
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "frontend",
+      "label": "Proxy 2",
+      "sublabel": "mTLS termination",
+      "pos": [
+        650,
+        305
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Certificate Chain",
+      "wraps": [
+        "ta",
+        "ii",
+        "wc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "id",
+        "pol"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "p1",
+        "p2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ta-ii",
+      "from": "ta",
+      "to": "ii",
+      "label": "signs",
+      "variant": "security"
+    },
+    {
+      "id": "ii-wc",
+      "from": "ii",
+      "to": "wc",
+      "label": "issues",
+      "variant": "security"
+    },
+    {
+      "id": "id-p1",
+      "from": "id",
+      "to": "p1",
+      "label": "identity certs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          165,
+          270
+        ],
+        [
+          425,
+          270
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "id": "id-p2",
+      "from": "id",
+      "to": "p2",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          735,
+          210
+        ]
+      ]
+    },
+    {
+      "id": "pol-p1",
+      "from": "pol",
+      "to": "p1",
+      "label": "Authorization policies",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          165,
+          405
+        ],
+        [
+          425,
+          405
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "id": "pol-p2",
+      "from": "pol",
+      "to": "p2",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          735,
+          470
+        ]
+      ]
+    },
+    {
+      "id": "p1-p2",
+      "from": "p1",
+      "to": "p2",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ]
+}

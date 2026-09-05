@@ -1,0 +1,239 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Outlier Detection Process",
+    "output": "public/archmaps/en-service-mesh-istio-resilience-01-outlier-detection-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "detect",
+        "label": "Error detection",
+        "focus": [
+          "start",
+          "check",
+          "count",
+          "threshold"
+        ],
+        "note": "Each request is checked for an error and the consecutive error count is compared with the consecutiveErrors threshold."
+      },
+      {
+        "id": "eject-recover",
+        "label": "Ejection and recovery",
+        "focus": [
+          "threshold",
+          "eject",
+          "wait",
+          "retry",
+          "start"
+        ],
+        "note": "An instance over the threshold is ejected for baseEjectionTime, then retried and returned to the request cycle."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Request entry"
+        },
+        "backend": {
+          "label": "Processing step"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "external": {
+          "label": "Ejected from pool"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "Request evaluation"
+    },
+    {
+      "id": "healthy",
+      "label": "Normal processing"
+    },
+    {
+      "id": "ejection",
+      "label": "Ejection · recovery",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "check",
+    "count",
+    "threshold",
+    "eject",
+    "wait",
+    "retry"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "normal"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "normal"
+      },
+      {
+        "from": "threshold",
+        "to": "retry"
+      },
+      {
+        "from": "retry",
+        "to": "start"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request Start",
+      "width": 124
+    },
+    {
+      "id": "check",
+      "lane": "request",
+      "col": 1,
+      "type": "security",
+      "label": "Error Check",
+      "tag": "decision",
+      "width": 124
+    },
+    {
+      "id": "count",
+      "lane": "request",
+      "col": 2,
+      "type": "backend",
+      "label": "Increment Count",
+      "sublabel": "error count",
+      "width": 156
+    },
+    {
+      "id": "threshold",
+      "lane": "request",
+      "col": 3,
+      "type": "security",
+      "label": "Over Threshold?",
+      "sublabel": "consecutiveErrors",
+      "tag": "decision",
+      "width": 144
+    },
+    {
+      "id": "normal",
+      "lane": "healthy",
+      "col": 5,
+      "type": "backend",
+      "label": "Normal Processing",
+      "width": 160
+    },
+    {
+      "id": "eject",
+      "lane": "ejection",
+      "col": 3,
+      "type": "external",
+      "label": "Eject Instance",
+      "sublabel": "eject",
+      "width": 130
+    },
+    {
+      "id": "wait",
+      "lane": "ejection",
+      "col": 4,
+      "type": "backend",
+      "label": "Wait Period",
+      "sublabel": "baseEjectionTime",
+      "width": 116
+    },
+    {
+      "id": "retry",
+      "lane": "ejection",
+      "col": 5,
+      "type": "backend",
+      "label": "Try Recovery",
+      "sublabel": "retry",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "check",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "count",
+      "label": "Error",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "normal",
+      "label": "Success",
+      "role": "branch",
+      "route": "up-channel"
+    },
+    {
+      "from": "count",
+      "to": "threshold",
+      "role": "main"
+    },
+    {
+      "from": "threshold",
+      "to": "normal",
+      "label": "No",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "threshold",
+      "to": "eject",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        640,
+        250
+      ]
+    },
+    {
+      "from": "eject",
+      "to": "wait",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "wait",
+      "to": "retry",
+      "role": "main"
+    },
+    {
+      "from": "retry",
+      "to": "start",
+      "label": "re-enter request cycle",
+      "variant": "dashed",
+      "role": "return",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "labelDy": 10
+    }
+  ]
+}

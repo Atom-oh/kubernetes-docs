@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "트래픽 분할 개요",
+    "output": "ko-service-mesh-istio-traffic-management-04-traffic-splitting-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      620
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 요청",
+      "sublabel": "100%",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "split",
+      "type": "backend",
+      "label": "트래픽 분할",
+      "sublabel": "weight 기반 route",
+      "pos": [
+        440,
+        190
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Version 1",
+      "sublabel": "subset: v1 · 90%",
+      "pos": [
+        200,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "subset: v2 · 10%",
+      "pos": [
+        680,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "result1",
+      "type": "external",
+      "label": "90명의 사용자",
+      "sublabel": "기존 버전 이용",
+      "pos": [
+        200,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "result2",
+      "type": "external",
+      "label": "10명의 사용자",
+      "sublabel": "새 버전 이용",
+      "pos": [
+        680,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VirtualService",
+      "wraps": [
+        "split"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "서비스 버전",
+      "wraps": [
+        "v1",
+        "v2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-split",
+      "from": "user",
+      "to": "split",
+      "label": "100%",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "split-v1",
+      "from": "split",
+      "to": "v1",
+      "label": "90%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "split-v2",
+      "from": "split",
+      "to": "v2",
+      "label": "10%",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "v1-result1",
+      "from": "v1",
+      "to": "result1",
+      "label": "안정적",
+      "labelDy": 24
+    },
+    {
+      "id": "v2-result2",
+      "from": "v2",
+      "to": "result2",
+      "label": "새 기능",
+      "labelDy": 24
+    }
+  ]
+}

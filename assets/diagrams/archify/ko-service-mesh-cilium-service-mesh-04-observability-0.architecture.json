@@ -1,0 +1,373 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hubble 아키텍처",
+    "output": "ko-service-mesh-cilium-service-mesh-04-observability-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "node-collection",
+        "label": "노드별 흐름 수집",
+        "focus": [
+          "ebpf1",
+          "agent1",
+          "observer1",
+          "ebpf2",
+          "agent2",
+          "observer2"
+        ],
+        "note": "각 노드의 eBPF 프로그램이 관찰한 네트워크 흐름을 Cilium Agent에 내장된 Hubble Observer가 수집한다."
+      },
+      {
+        "id": "flow-aggregation",
+        "label": "클러스터 전체 흐름 집계",
+        "focus": [
+          "observer1",
+          "observer2",
+          "relay",
+          "ui",
+          "cli"
+        ],
+        "note": "Hubble Relay가 모든 노드의 Observer를 집계해 Hubble UI와 Hubble CLI에 클러스터 전체 뷰를 제공한다."
+      },
+      {
+        "id": "metrics-path",
+        "label": "메트릭 경로",
+        "focus": [
+          "observer1",
+          "observer2",
+          "prometheus",
+          "grafana"
+        ],
+        "note": "Hubble Metrics는 Relay를 거치지 않고 노드별로 Prometheus에 노출되며 Grafana 대시보드로 시각화된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ebpf1",
+      "type": "security",
+      "label": "eBPF Programs",
+      "sublabel": "커널 데이터패스",
+      "pos": [
+        50,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "agent1",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "노드 데몬",
+      "pos": [
+        240,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "observer1",
+      "type": "backend",
+      "label": "Hubble Observer",
+      "sublabel": "Cilium Agent 내장",
+      "pos": [
+        430,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebpf2",
+      "type": "security",
+      "label": "eBPF Programs",
+      "sublabel": "커널 데이터패스",
+      "pos": [
+        50,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "agent2",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "노드 데몬",
+      "pos": [
+        240,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "observer2",
+      "type": "backend",
+      "label": "Hubble Observer",
+      "sublabel": "Cilium Agent 내장",
+      "pos": [
+        430,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "relay",
+      "type": "backend",
+      "label": "Hubble Relay",
+      "sublabel": "클러스터 전체 흐름 집계",
+      "pos": [
+        430,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Hubble UI",
+      "sublabel": "시각화 대시보드",
+      "pos": [
+        680,
+        190
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "external",
+      "label": "Hubble CLI",
+      "sublabel": "로컬 설치",
+      "pos": [
+        900,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Hubble Metrics 수집",
+      "pos": [
+        1120,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "메트릭 대시보드",
+      "pos": [
+        1120,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "ebpf1",
+        "agent1",
+        "observer1",
+        "ebpf2",
+        "agent2",
+        "observer2",
+        "relay",
+        "ui"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Node 1",
+      "wraps": [
+        "ebpf1",
+        "agent1",
+        "observer1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Node 2",
+      "wraps": [
+        "ebpf2",
+        "agent2",
+        "observer2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클러스터 외부",
+      "wraps": [
+        "cli",
+        "prometheus",
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebpf1-agent1",
+      "from": "ebpf1",
+      "to": "agent1",
+      "label": "흐름 이벤트",
+      "labelDy": -24
+    },
+    {
+      "id": "agent1-observer1",
+      "from": "agent1",
+      "to": "observer1"
+    },
+    {
+      "id": "ebpf2-agent2",
+      "from": "ebpf2",
+      "to": "agent2",
+      "label": "흐름 이벤트",
+      "labelDy": -24
+    },
+    {
+      "id": "agent2-observer2",
+      "from": "agent2",
+      "to": "observer2"
+    },
+    {
+      "id": "observer1-relay",
+      "from": "observer1",
+      "to": "relay",
+      "label": "흐름 데이터",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "observer2-relay",
+      "from": "observer2",
+      "to": "relay",
+      "variant": "emphasis"
+    },
+    {
+      "id": "relay-ui",
+      "from": "relay",
+      "to": "ui",
+      "label": "집계된 흐름",
+      "variant": "emphasis"
+    },
+    {
+      "id": "relay-cli",
+      "from": "relay",
+      "to": "cli",
+      "label": "hubble observe"
+    },
+    {
+      "id": "observer1-prometheus",
+      "from": "observer1",
+      "to": "prometheus",
+      "label": "메트릭",
+      "variant": "dashed",
+      "toSide": "top"
+    },
+    {
+      "id": "observer2-prometheus",
+      "from": "observer2",
+      "to": "prometheus",
+      "variant": "dashed",
+      "toSide": "left",
+      "fromSide": "right",
+      "via": [
+        [
+          1080,
+          420
+        ],
+        [
+          1080,
+          280
+        ]
+      ]
+    },
+    {
+      "id": "prometheus-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "대시보드 쿼리",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "흐름 경로",
+      "items": [
+        "Hubble Observer는 Cilium Agent에 내장되어 노드별 흐름을 수집한다",
+        "Hubble Relay(Deployment)가 클러스터 전체 흐름을 집계한다",
+        "Hubble UI(Deployment)와 로컬 설치형 Hubble CLI가 집계 결과를 보여준다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "메트릭 경로",
+      "items": [
+        "Hubble Metrics도 Cilium Agent에 내장되어 Prometheus 메트릭을 노출한다",
+        "dns · drop · tcp · flow · icmp · http 메트릭을 Helm values로 활성화한다",
+        "Prometheus가 수집한 메트릭을 Grafana 대시보드로 시각화한다"
+      ]
+    }
+  ]
+}

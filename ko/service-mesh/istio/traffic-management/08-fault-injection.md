@@ -24,7 +24,9 @@ Fault Injection은 시스템의 복원력을 테스트하기 위해 의도적으
 
 Netflix의 Chaos Monkey에서 시작된 Chaos Engineering은 **프로덕션 환경에서 장애를 사전에 경험**하고 시스템의 약점을 발견하는 것을 목표로 합니다.
 
-![전통적인 테스트는 프로덕션에서 장애를 만나지만, Chaos Engineering은 지속적인 장애 주입으로 약점을 사전에 발견하고 수정해 복원력 있는 시스템을 만든다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-08-fault-injection-0.svg)
+![전통적인 테스트는 개발·스테이징을 거쳐 프로덕션에서 장애를 만나지만, Chaos Engineering은 지속적인 장애 주입으로 약점을 사전에 발견·수정해 복원력 있는 시스템에 이르는 두 흐름을 나란히 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-0.html)
 
 #### 2. **실제 프로덕션 시나리오 재현**
 
@@ -42,7 +44,9 @@ Netflix의 Chaos Monkey에서 시작된 Chaos Engineering은 **프로덕션 환�
 
 Fault Injection 없이는 Circuit Breaker와 Timeout 설정이 **실제로 작동하는지 확인하기 어렵습니다**.
 
-![서비스 A가 의존 서비스 B에 요청을 보내고, 장애 주입으로 지연되거나 실패한 응답을 받으면 Circuit Breaker 작동을 모니터링으로 확인한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-08-fault-injection-1.svg)
+![서비스 A가 Fault Injection이 적용된 의존 서비스 B에 요청을 보내 지연 또는 실패 응답을 받고, Circuit Breaker가 실제로 작동했는지 모니터링으로 확인하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-1.html)
 
 #### 4. **안전한 배포 검증**
 
@@ -271,7 +275,9 @@ spec:
 
 ## Fault Injection 개요
 
-![클라이언트의 요청이 Fault Injection 구간에서 지연되어 서비스에 느리게 전달되거나, 중단되어 클라이언트에 바로 에러가 반환된다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-08-fault-injection-2.svg)
+![클라이언트 요청이 Fault Injection 구간에서 3초 지연되어 서비스에 느리게 전달되거나, 중단되어 HTTP 503 에러가 클라이언트에 바로 반환되는 두 경로를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-2.html)
 
 ## Delay 주입
 
@@ -541,7 +547,9 @@ spec:
 
 **상황**: 한 서비스의 장애가 다른 서비스로 전파되는지 확인
 
-![결제 서비스에 주입된 장애로 30% 요청이 실패하면 주문 서비스가 이를 흡수하고, Circuit Breaker로 프론트엔드에 안전하게 전파해 재고 서비스는 영향받지 않는지 확인한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-08-fault-injection-3.svg)
+![결제 서비스에 주입된 장애로 30% 요청이 503으로 실패하면 주문 서비스가 이를 흡수하고, Circuit Breaker로 프론트엔드에 안전하게 전파해 재고 서비스는 영향받지 않는지 확인하는 Cascade Failure 테스트 구성을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-3.html)
 
 ```yaml
 # 결제 서비스에 장애 주입
@@ -687,7 +695,9 @@ spec:
 
 점진적으로 장애 비율을 증가시켜 시스템의 한계를 찾습니다:
 
-![1%에서 50%까지 장애 비율을 단계적으로 늘리며 모니터링 결과가 정상이면 다음 단계로 진행하고, 문제가 발견되면 즉시 수정 및 개선 단계로 이동한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-08-fault-injection-4.svg)
+![1%에서 50%까지 장애 비율을 네 단계로 늘리며 모니터링이 정상이면 다음 단계로 넘어가고, 어느 단계에서든 문제가 발견되면 수정 및 개선 단계로 돌아가는 점진적 카오스 엔지니어링 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-4.html)
 
 **단계별 실행**:
 

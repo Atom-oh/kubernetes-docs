@@ -1,0 +1,252 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Ingress Selection Guide: Cilium Gateway vs AWS Load Balancer Controller",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-cilium-service-mesh-05-ingress-gateway-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start / Done"
+        },
+        "security": {
+          "label": "Decision question"
+        },
+        "cloud": {
+          "label": "AWS load balancer"
+        },
+        "backend": {
+          "label": "Cilium data plane"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "aws-native",
+        "label": "AWS-native path",
+        "focus": [
+          "q1",
+          "q2",
+          "alb"
+        ],
+        "note": "If you need both AWS-native integration and WAF/Shield, the answer is an ALB via the AWS LB Controller."
+      },
+      {
+        "id": "l4-perf",
+        "label": "High-performance L4 path",
+        "focus": [
+          "q2",
+          "q3",
+          "nlb"
+        ],
+        "note": "If WAF/Shield is not needed but high-performance L4 is, pair Cilium with an NLB in front."
+      },
+      {
+        "id": "cilium-only",
+        "label": "Cilium-only path",
+        "focus": [
+          "q1",
+          "q3",
+          "cilium"
+        ],
+        "note": "If AWS-native integration or L4 performance is not required, Cilium Gateway alone is enough."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "ciliumPath",
+      "label": "Cilium-only path"
+    },
+    {
+      "id": "decision",
+      "label": "Requirement decisions"
+    },
+    {
+      "id": "awsPath",
+      "label": "AWS load balancer path"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q1",
+    "q2",
+    "q3",
+    "cilium",
+    "done"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "done"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "alb"
+      },
+      {
+        "from": "start",
+        "to": "nlb"
+      },
+      {
+        "from": "start",
+        "to": "cilium"
+      },
+      {
+        "from": "alb",
+        "to": "done"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decision",
+      "col": 0,
+      "type": "frontend",
+      "label": "Start",
+      "sublabel": "Choose ingress approach",
+      "width": 140
+    },
+    {
+      "id": "q1",
+      "lane": "decision",
+      "col": 1,
+      "type": "security",
+      "label": "Need AWS-native integration?",
+      "width": 224
+    },
+    {
+      "id": "q2",
+      "lane": "decision",
+      "col": 2,
+      "type": "security",
+      "label": "Need WAF/Shield?",
+      "width": 156
+    },
+    {
+      "id": "q3",
+      "lane": "decision",
+      "col": 3,
+      "type": "security",
+      "label": "Need high-perf L4?",
+      "width": 156
+    },
+    {
+      "id": "alb",
+      "lane": "awsPath",
+      "col": 2,
+      "type": "cloud",
+      "label": "AWS ALB",
+      "sublabel": "AWS LB Controller",
+      "tag": "WAF/Shield",
+      "width": 126
+    },
+    {
+      "id": "nlb",
+      "lane": "awsPath",
+      "col": 3,
+      "type": "cloud",
+      "label": "NLB + Cilium",
+      "sublabel": "L4 NLB in front",
+      "tag": "high-perf L4",
+      "width": 136
+    },
+    {
+      "id": "cilium",
+      "lane": "ciliumPath",
+      "col": 4,
+      "type": "backend",
+      "label": "Cilium Gateway",
+      "sublabel": "Envoy L7 / eBPF L4",
+      "tag": "Gateway API",
+      "width": 138
+    },
+    {
+      "id": "done",
+      "lane": "decision",
+      "col": 5,
+      "type": "frontend",
+      "label": "Done",
+      "sublabel": "Selection confirmed"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q1",
+      "role": "main"
+    },
+    {
+      "from": "q1",
+      "to": "q2",
+      "label": "Yes",
+      "role": "main"
+    },
+    {
+      "from": "q1",
+      "to": "cilium",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "alb",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "q3",
+      "label": "No",
+      "role": "main"
+    },
+    {
+      "from": "q3",
+      "to": "nlb",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "cilium",
+      "label": "No",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "alb",
+      "to": "done",
+      "role": "branch",
+      "route": "bottom-channel"
+    },
+    {
+      "from": "nlb",
+      "to": "done",
+      "role": "branch"
+    },
+    {
+      "from": "cilium",
+      "to": "done",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Comparison table highlights",
+      "items": [
+        "Cilium Ingress/Gateway: Envoy-based L7, eBPF-based L4, native mTLS, full Gateway API support",
+        "AWS LB Controller: ALB-based L7, NLB-based L4, mTLS via ACM integration, limited Gateway API",
+        "Cost: Cilium uses node resources only; AWS LB Controller adds load balancer cost"
+      ]
+    }
+  ]
+}

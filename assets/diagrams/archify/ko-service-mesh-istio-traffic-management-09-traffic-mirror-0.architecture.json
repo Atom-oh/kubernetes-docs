@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traffic Mirroring 개요",
+    "output": "ko-service-mesh-istio-traffic-management-09-traffic-mirror-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      560
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "요청 발신",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Version 1",
+      "sublabel": "실제 응답",
+      "tag": "subset: v1",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "응답 무시",
+      "tag": "subset: v2",
+      "pos": [
+        560,
+        400
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "프로덕션",
+      "wraps": [
+        "v1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Shadow (미러)",
+      "wraps": [
+        "v2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "v1",
+      "label": "요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDy": -40
+    },
+    {
+      "id": "response",
+      "from": "v1",
+      "to": "client",
+      "label": "응답",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -150
+    },
+    {
+      "id": "replicate",
+      "from": "client",
+      "to": "v2",
+      "label": "복제",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDy": 40
+    },
+    {
+      "id": "ignored",
+      "from": "v2",
+      "to": "client",
+      "label": "무시",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDx": -150
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "실선: 실제 요청/응답 트래픽",
+      "items": [
+        "route.destination subset v1이 클라이언트에 실제 응답을 돌려준다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "점선: 미러링된 트래픽",
+      "items": [
+        "mirror.host subset v2로 동일 요청을 복제하되 응답은 버린다",
+        "mirrorPercentage로 복제 비율 조절 (100% 또는 10%)"
+      ]
+    }
+  ]
+}

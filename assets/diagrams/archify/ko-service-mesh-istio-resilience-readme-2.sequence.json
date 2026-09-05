@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Retry 작동 방식 — 실패한 Pod에서 다른 Pod로 재시도",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      560
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "first-try",
+        "label": "1차 시도 실패",
+        "focus": [
+          "client",
+          "envoy",
+          "pod1"
+        ],
+        "note": "클라이언트 요청을 받은 Envoy가 Pod 1로 보내지만 503으로 실패한다."
+      },
+      {
+        "id": "retry",
+        "label": "다른 Pod로 재시도",
+        "focus": [
+          "envoy",
+          "pod2"
+        ],
+        "note": "retryOn 조건(5xx)에 해당하므로 Envoy가 같은 요청을 Pod 2로 다시 보낸다."
+      },
+      {
+        "id": "success",
+        "label": "클라이언트에는 성공만",
+        "focus": [
+          "pod2",
+          "envoy",
+          "client"
+        ],
+        "note": "Pod 2의 200 OK가 클라이언트로 전달되며, 중간의 실패는 클라이언트에 노출되지 않는다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "retries 정책 적용"
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "실패"
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "성공"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 300,
+      "label": "1차 시도"
+    },
+    {
+      "from": 320,
+      "to": 470,
+      "label": "재시도 (attempts: 3 이내)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "envoy",
+      "y": 195,
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "try1",
+      "from": "envoy",
+      "to": "pod1",
+      "y": 240,
+      "label": "시도 1"
+    },
+    {
+      "id": "fail503",
+      "from": "pod1",
+      "to": "envoy",
+      "y": 285,
+      "label": "503 Service Unavailable",
+      "variant": "return",
+      "note": "retryOn: 5xx 조건 충족 → 다른 Pod로 재시도"
+    },
+    {
+      "id": "try2",
+      "from": "envoy",
+      "to": "pod2",
+      "y": 375,
+      "label": "시도 2 (같은 요청)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ok200",
+      "from": "pod2",
+      "to": "envoy",
+      "y": 415,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "respond",
+      "from": "envoy",
+      "to": "client",
+      "y": 455,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 190,
+      "to": 462,
+      "type": "backend"
+    },
+    {
+      "participant": "pod1",
+      "from": 235,
+      "to": 292,
+      "type": "backend"
+    },
+    {
+      "participant": "pod2",
+      "from": 370,
+      "to": 422,
+      "type": "backend"
+    }
+  ]
+}

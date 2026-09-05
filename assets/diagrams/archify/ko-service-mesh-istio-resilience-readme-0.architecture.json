@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "핵심 복원력 패턴",
+    "output": "ko-service-mesh-istio-resilience-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pipeline",
+        "label": "요청 처리 순서",
+        "focus": [
+          "client",
+          "outlier",
+          "ratelimit",
+          "zone"
+        ],
+        "note": "클라이언트 요청은 Outlier Detection, Rate Limiting, Zone Aware Routing을 차례로 거친다."
+      },
+      {
+        "id": "ejection",
+        "label": "비정상 인스턴스 제외",
+        "focus": [
+          "outlier",
+          "pod3"
+        ],
+        "note": "연속 오류가 감지된 Pod는 트래픽 풀에서 자동으로 제외되고 이후 복구된다."
+      },
+      {
+        "id": "locality",
+        "label": "지역 우선 라우팅",
+        "focus": [
+          "zone",
+          "pod1",
+          "pod2"
+        ],
+        "note": "같은 AZ의 Pod를 우선하고, 장애 시 다른 AZ로 자동 장애조치한다."
+      }
+    ],
+    "viewBox": [
+      1220,
+      470
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트 요청",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "outlier",
+      "type": "backend",
+      "label": "Outlier Detection",
+      "sublabel": "비정상 인스턴스 제외",
+      "pos": [
+        260,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ratelimit",
+      "type": "backend",
+      "label": "Rate Limiting",
+      "sublabel": "요청 속도 제한",
+      "pos": [
+        510,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "zone",
+      "type": "backend",
+      "label": "Zone Aware Routing",
+      "sublabel": "지역 우선 라우팅",
+      "pos": [
+        740,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "에러 발생",
+      "pos": [
+        255,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "Zone A",
+      "pos": [
+        740,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "Zone B",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Resilience 패턴",
+      "wraps": [
+        "outlier",
+        "ratelimit",
+        "zone"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "비정상 Pod",
+      "wraps": [
+        "pod3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "정상 Pod",
+      "wraps": [
+        "pod1",
+        "pod2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-outlier",
+      "from": "client",
+      "to": "outlier",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "outlier-to-ratelimit",
+      "from": "outlier",
+      "to": "ratelimit"
+    },
+    {
+      "id": "ratelimit-to-zone",
+      "from": "ratelimit",
+      "to": "zone"
+    },
+    {
+      "id": "outlier-eject",
+      "from": "outlier",
+      "to": "pod3",
+      "label": "제외",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 96
+    },
+    {
+      "id": "zone-primary",
+      "from": "zone",
+      "to": "pod1",
+      "label": "우선",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 96,
+      "labelDx": -14
+    },
+    {
+      "id": "zone-failover",
+      "from": "zone",
+      "to": "pod2",
+      "label": "장애조치",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Outlier Detection",
+      "items": [
+        "연속된 오류 감지 (consecutiveErrors)",
+        "자동 제외 및 복구 (baseEjectionTime)",
+        "Circuit Breaker와 함께 작동"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Rate Limiting",
+      "items": [
+        "Token Bucket 알고리즘",
+        "로컬 및 글로벌 Rate Limiting",
+        "클라이언트별, 경로별 제한"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Zone Aware Routing",
+      "items": [
+        "같은 AZ 내 트래픽 우선 (localityLbSetting)",
+        "크로스 AZ 비용 절감",
+        "장애 시 자동 장애조치"
+      ]
+    }
+  ]
+}

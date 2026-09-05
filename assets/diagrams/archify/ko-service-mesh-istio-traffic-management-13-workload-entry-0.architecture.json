@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WorkloadEntry 사용 시나리오",
+    "output": "ko-service-mesh-istio-traffic-management-13-workload-entry-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "mesh-registration",
+        "label": "메시 등록",
+        "focus": [
+          "vm1",
+          "vm2",
+          "bm",
+          "istiod"
+        ],
+        "note": "VM과 베어메탈 서버가 WorkloadEntry로 istiod에 등록된다."
+      },
+      {
+        "id": "config-delivery",
+        "label": "구성 전달",
+        "focus": [
+          "istiod",
+          "envoy1",
+          "envoy2"
+        ],
+        "note": "istiod가 파드에 주입된 Envoy 사이드카에 구성을 전달한다."
+      },
+      {
+        "id": "mtls-traffic",
+        "label": "mTLS 통신",
+        "focus": [
+          "vm1",
+          "app1",
+          "vm2",
+          "app2"
+        ],
+        "note": "레거시 앱·데이터베이스와 파드 워크로드가 mTLS로 통신한다."
+      }
+    ],
+    "viewBox": [
+      1040,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "vm1",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "레거시 앱",
+      "pos": [
+        80,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm2",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "데이터베이스",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "bm",
+      "type": "external",
+      "label": "베어메탈",
+      "sublabel": "고성능 서버",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        460,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "신규 앱",
+      "sublabel": "컨테이너",
+      "pos": [
+        780,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "사이드카",
+      "pos": [
+        780,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "마이크로서비스",
+      "sublabel": "컨테이너",
+      "pos": [
+        780,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "사이드카",
+      "pos": [
+        780,
+        310
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "레거시 환경",
+      "wraps": [
+        "vm1",
+        "vm2",
+        "bm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "app1",
+        "envoy1",
+        "app2",
+        "envoy2"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "파드",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "파드",
+      "wraps": [
+        "envoy2",
+        "app2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vm1-register",
+      "from": "vm1",
+      "to": "istiod",
+      "label": "메시 등록",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "bm-register",
+      "from": "bm",
+      "to": "istiod",
+      "label": "메시 등록",
+      "variant": "dashed"
+    },
+    {
+      "id": "vm2-register",
+      "from": "vm2",
+      "to": "istiod",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "config-envoy1",
+      "from": "istiod",
+      "to": "envoy1",
+      "label": "구성 전달",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-envoy2",
+      "from": "istiod",
+      "to": "envoy2",
+      "variant": "dashed"
+    },
+    {
+      "id": "mtls-app1",
+      "from": "vm1",
+      "to": "app1",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls-app2",
+      "from": "vm2",
+      "to": "app2",
+      "label": "mTLS",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "주요 사용 사례",
+      "items": [
+        "점진적 마이그레이션: 레거시 앱을 단계적으로 Kubernetes로 이전",
+        "하이브리드 아키텍처: VM과 컨테이너를 동시에 운영",
+        "데이터베이스 통합: 외부 데이터베이스를 메시에 포함",
+        "고성능 워크로드: GPU 서버 등 특수 하드웨어 활용"
+      ]
+    }
+  ]
+}
