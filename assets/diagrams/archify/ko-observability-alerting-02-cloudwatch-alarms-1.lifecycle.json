@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "CloudWatch Alarm 알림 상태 전이",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "threshold",
+        "label": "임계값 평가",
+        "focus": [
+          "created",
+          "ok",
+          "alarm"
+        ],
+        "note": "임계값을 넘으면 ALARM으로 전이해 액션을 실행하고, 정상 범위로 돌아오면 다시 OK가 된다."
+      },
+      {
+        "id": "missing",
+        "label": "데이터 부족",
+        "focus": [
+          "ok",
+          "alarm",
+          "insufficient"
+        ],
+        "note": "어느 상태에서든 데이터가 끊기면 INSUFFICIENT_DATA로 빠지고, 데이터가 다시 들어오면 값에 따라 OK 또는 ALARM으로 복귀한다."
+      }
+    ],
+    "viewBox": [
+      980,
+      566
+    ],
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "시작"
+        },
+        "success": {
+          "label": "OK"
+        },
+        "failure": {
+          "label": "ALARM"
+        },
+        "waiting": {
+          "label": "데이터 부족"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "임계값 평가"
+    },
+    {
+      "id": "nodata",
+      "label": "데이터 부족"
+    }
+  ],
+  "states": [
+    {
+      "id": "created",
+      "type": "start",
+      "label": "알람 생성",
+      "sublabel": "평가 시작",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "ok",
+      "type": "success",
+      "label": "OK",
+      "sublabel": "메트릭이 정상 범위",
+      "lane": "main",
+      "col": 1,
+      "tag": "정상"
+    },
+    {
+      "id": "alarm",
+      "type": "failure",
+      "label": "ALARM",
+      "sublabel": "임계값 초과, 액션 실행",
+      "lane": "main",
+      "col": 3,
+      "tag": "액션 실행",
+      "width": 150
+    },
+    {
+      "id": "insufficient",
+      "type": "waiting",
+      "label": "INSUFFICIENT_DATA",
+      "sublabel": "평가에 필요한 데이터 부족",
+      "lane": "nodata",
+      "col": 1,
+      "tag": "데이터 없음",
+      "width": 160
+    }
+  ],
+  "transitions": [
+    {
+      "from": "created",
+      "to": "ok",
+      "label": "임계값 이내",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "ok",
+      "to": "alarm",
+      "label": "임계값 초과",
+      "variant": "emphasis",
+      "route": "top-channel"
+    },
+    {
+      "from": "alarm",
+      "to": "ok",
+      "label": "정상 복귀",
+      "route": "straight",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "from": "ok",
+      "to": "insufficient",
+      "label": "데이터 없음",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "alarm",
+      "to": "insufficient",
+      "label": "데이터 없음",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "insufficient",
+      "to": "ok",
+      "label": "데이터 수신",
+      "route": "left-channel",
+      "channelX": 171
+    },
+    {
+      "from": "insufficient",
+      "to": "alarm",
+      "label": "데이터 수신 + 임계값 초과",
+      "variant": "emphasis",
+      "route": "right-channel",
+      "labelSegment": 1,
+      "labelDx": 48,
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "treat-missing-data",
+      "items": [
+        "데이터가 없을 때의 처리 방식을 알람마다 지정",
+        "notBreaching / breaching / ignore / missing 중 선택",
+        "기본 알람 예시는 notBreaching으로 설정"
+      ]
+    }
+  ]
+}

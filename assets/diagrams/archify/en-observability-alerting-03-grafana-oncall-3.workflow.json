@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Escalation Chain Structure",
+    "output": "public/archmaps/en-observability-alerting-03-grafana-oncall-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "first-responder",
+        "label": "First response",
+        "focus": [
+          "alert",
+          "step1",
+          "resolved"
+        ],
+        "note": "When an alert fires, the current on-call from the schedule is notified first and given 15 minutes (wait 900s) to respond."
+      },
+      {
+        "id": "escalation-steps",
+        "label": "Step-by-step escalation",
+        "focus": [
+          "step1",
+          "step2",
+          "step3",
+          "step4"
+        ],
+        "note": "With no response within 15 minutes, the chain moves on to the secondary on-call, the team lead, and finally the entire team."
+      },
+      {
+        "id": "resolution",
+        "label": "Resolution path",
+        "focus": [
+          "step1",
+          "step2",
+          "step3",
+          "resolved"
+        ],
+        "note": "A response within 15 minutes at any step stops the escalation and resolves the alert."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "Alert event"
+        },
+        "backend": {
+          "label": "Notify step"
+        },
+        "external": {
+          "label": "End state"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "chain",
+      "label": "Escalation steps (wait 900s per step)"
+    },
+    {
+      "id": "done",
+      "label": "Resolution"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "step1",
+    "step2",
+    "step3",
+    "step4"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "alert"
+    ],
+    "allowedTerminals": [
+      "step4",
+      "resolved"
+    ],
+    "requiredPaths": [
+      {
+        "from": "alert",
+        "to": "step4"
+      },
+      {
+        "from": "alert",
+        "to": "resolved"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "chain",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Alert Fired",
+      "width": 140
+    },
+    {
+      "id": "step1",
+      "lane": "chain",
+      "col": 1,
+      "type": "backend",
+      "label": "Current On-Call",
+      "tag": "STEP 1",
+      "width": 156
+    },
+    {
+      "id": "step2",
+      "lane": "chain",
+      "col": 2,
+      "type": "backend",
+      "label": "Secondary On-Call",
+      "tag": "STEP 2",
+      "width": 156
+    },
+    {
+      "id": "step3",
+      "lane": "chain",
+      "col": 3,
+      "type": "backend",
+      "label": "Team Lead",
+      "tag": "STEP 3",
+      "width": 156
+    },
+    {
+      "id": "step4",
+      "lane": "chain",
+      "col": 4,
+      "type": "backend",
+      "label": "Entire Team",
+      "tag": "STEP 4",
+      "width": 156
+    },
+    {
+      "id": "resolved",
+      "lane": "done",
+      "col": 5,
+      "type": "external",
+      "label": "Alert Resolved",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "step1",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step1",
+      "to": "step2",
+      "label": "No response in 15 min",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step2",
+      "to": "step3",
+      "label": "No response in 15 min",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step3",
+      "to": "step4",
+      "label": "No response in 15 min",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step1",
+      "to": "resolved",
+      "label": "Response in 15 min",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "step2",
+      "to": "resolved",
+      "label": "Response in 15 min",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "step3",
+      "to": "resolved",
+      "label": "Response in 15 min",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Chain configuration (escalation_policies)",
+      "items": [
+        "position 0 · notify_on_call_from_schedule · important: true",
+        "position 1 · wait · duration 900 (15 minutes)",
+        "position 2 · notify_persons · secondary responder list"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "How it behaves",
+      "items": [
+        "Each step waits 15 minutes (wait 900s) for a response before moving on",
+        "A confirmed response at any step resolves the alert and stops the chain",
+        "If even the last step (entire team) gets no response, the chain ends"
+      ]
+    }
+  ]
+}

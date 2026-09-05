@@ -1,0 +1,194 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PagerDuty/OpsGenie에서 Grafana OnCall로 마이그레이션 결정 흐름",
+    "output": "public/archmaps/ko-observability-alerting-03-grafana-oncall-8.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "검토 질문"
+        },
+        "cloud": {
+          "label": "마이그레이션 결정"
+        },
+        "external": {
+          "label": "기존 온콜 도구"
+        }
+      }
+    },
+    "viewBox": [
+      1230,
+      652
+    ]
+  },
+  "lanes": [
+    {
+      "id": "current",
+      "label": "현재 사용 중"
+    },
+    {
+      "id": "consider",
+      "label": "Grafana OnCall 고려 시"
+    },
+    {
+      "id": "keep",
+      "label": "결정 · 현재 유지",
+      "variant": "exception"
+    },
+    {
+      "id": "decision",
+      "label": "결정 · 마이그레이션"
+    }
+  ],
+  "mainPath": [
+    "current_tool",
+    "cost",
+    "stack",
+    "selfhost",
+    "features",
+    "migrate"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "current_tool"
+    ],
+    "allowedTerminals": [
+      "migrate",
+      "keep_current"
+    ],
+    "requiredPaths": [
+      {
+        "from": "current_tool",
+        "to": "migrate"
+      },
+      {
+        "from": "current_tool",
+        "to": "keep_current"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "current_tool",
+      "lane": "current",
+      "col": 0,
+      "type": "external",
+      "label": "PagerDuty / OpsGenie",
+      "sublabel": "현재 온콜 도구",
+      "width": 150
+    },
+    {
+      "id": "cost",
+      "lane": "consider",
+      "col": 1,
+      "type": "backend",
+      "label": "비용 절감 필요?",
+      "width": 224
+    },
+    {
+      "id": "stack",
+      "lane": "consider",
+      "col": 2,
+      "type": "backend",
+      "label": "Grafana 스택 사용?",
+      "width": 184
+    },
+    {
+      "id": "selfhost",
+      "lane": "consider",
+      "col": 3,
+      "type": "backend",
+      "label": "자체 호스팅 선호?",
+      "width": 180
+    },
+    {
+      "id": "features",
+      "lane": "consider",
+      "col": 4,
+      "type": "backend",
+      "label": "기본 기능으로 충분?",
+      "width": 214
+    },
+    {
+      "id": "migrate",
+      "lane": "decision",
+      "col": 5,
+      "type": "cloud",
+      "label": "OnCall로 마이그레이션",
+      "sublabel": "Grafana OnCall 도입",
+      "width": 156
+    },
+    {
+      "id": "keep_current",
+      "lane": "keep",
+      "col": 3,
+      "type": "external",
+      "label": "현재 유지",
+      "sublabel": "PagerDuty / OpsGenie 계속 사용",
+      "width": 156
+    }
+  ],
+  "edges": [
+    {
+      "from": "current_tool",
+      "to": "cost",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "cost",
+      "to": "stack",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "stack",
+      "to": "selfhost",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "selfhost",
+      "to": "features",
+      "label": "예 / 아니오",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "features",
+      "to": "migrate",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "cost",
+      "to": "keep_current",
+      "label": "아니오",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "stack",
+      "to": "keep_current",
+      "label": "아니오",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "features",
+      "to": "keep_current",
+      "label": "아니오",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ]
+}

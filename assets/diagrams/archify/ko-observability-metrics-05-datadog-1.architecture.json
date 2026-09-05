@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 통합 아키텍처",
+    "output": "ko-observability-metrics-05-datadog-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1230,
+      600
+    ],
+    "views": [
+      {
+        "id": "collect",
+        "label": "수집",
+        "focus": [
+          "app",
+          "agent",
+          "cca",
+          "metrics",
+          "logs",
+          "apm",
+          "prof"
+        ],
+        "note": "노드별 Datadog Agent(DaemonSet)가 메트릭·로그·트레이스·프로파일을, Cluster Agent가 클러스터 메트릭과 이벤트를 수집한다."
+      },
+      {
+        "id": "visualize",
+        "label": "대시보드",
+        "focus": [
+          "metrics",
+          "logs",
+          "apm",
+          "dash"
+        ],
+        "note": "메트릭, 로그, APM 트레이스가 하나의 대시보드로 모인다."
+      },
+      {
+        "id": "alert",
+        "label": "알림",
+        "focus": [
+          "watchdog",
+          "monitors"
+        ],
+        "note": "Watchdog AI가 자동으로 이상을 탐지해 모니터 알림으로 이어진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cca",
+      "type": "backend",
+      "label": "Cluster Agent",
+      "sublabel": "클러스터 레벨 수집",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Datadog Agent",
+      "sublabel": "DaemonSet · 노드별 수집",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Applications",
+      "sublabel": "파드 워크로드",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics",
+      "pos": [
+        430,
+        80
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "database",
+      "label": "Logs",
+      "pos": [
+        430,
+        200
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "apm",
+      "type": "database",
+      "label": "APM Traces",
+      "pos": [
+        430,
+        320
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "prof",
+      "type": "database",
+      "label": "Profiling",
+      "pos": [
+        430,
+        440
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "dash",
+      "type": "frontend",
+      "label": "Dashboards",
+      "sublabel": "통합 시각화",
+      "pos": [
+        740,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "watchdog",
+      "type": "cloud",
+      "label": "Watchdog AI",
+      "sublabel": "자동 이상 탐지",
+      "pos": [
+        740,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "monitors",
+      "type": "frontend",
+      "label": "Monitors",
+      "sublabel": "알림",
+      "pos": [
+        1030,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Cluster · Worker Nodes",
+      "wraps": [
+        "cca",
+        "agent",
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Datadog Platform",
+      "wraps": [
+        "metrics",
+        "logs",
+        "apm",
+        "prof",
+        "dash",
+        "watchdog",
+        "monitors"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-agent",
+      "from": "app",
+      "to": "agent",
+      "label": "계측",
+      "variant": "dashed"
+    },
+    {
+      "id": "agent-metrics",
+      "from": "agent",
+      "to": "metrics",
+      "label": "메트릭",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-logs",
+      "from": "agent",
+      "to": "logs",
+      "label": "로그",
+      "labelSegment": 2
+    },
+    {
+      "id": "agent-apm",
+      "from": "agent",
+      "to": "apm",
+      "label": "트레이스",
+      "labelSegment": 2
+    },
+    {
+      "id": "agent-prof",
+      "from": "agent",
+      "to": "prof",
+      "label": "프로파일"
+    },
+    {
+      "id": "cca-metrics",
+      "from": "cca",
+      "to": "metrics",
+      "label": "클러스터 메트릭 · 이벤트"
+    },
+    {
+      "id": "metrics-dash",
+      "from": "metrics",
+      "to": "dash"
+    },
+    {
+      "id": "logs-dash",
+      "from": "logs",
+      "to": "dash"
+    },
+    {
+      "id": "apm-dash",
+      "from": "apm",
+      "to": "dash"
+    },
+    {
+      "id": "watchdog-monitors",
+      "from": "watchdog",
+      "to": "monitors",
+      "label": "이상 감지"
+    }
+  ]
+}

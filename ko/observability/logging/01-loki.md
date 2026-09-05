@@ -59,7 +59,9 @@ Loki는 "Prometheus처럼 로그를 다룬다"는 철학으로 설계되었습�
 
 ### 컴포넌트 개요
 
-![로그 수집 에이전트가 Distributor를 거쳐 Ingester에 데이터를 쓰고, Grafana의 쿼리가 Query Frontend와 Scheduler를 거쳐 Querier에서 Ingester·S3·캐시를 조회해 결과를 병합하며, Compactor가 S3의 데이터를 최적화하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-01-loki-0.svg)
+![로그 수집 에이전트가 Distributor를 거쳐 Ingester에 데이터를 쓰고, Grafana의 쿼리가 Query Frontend와 Scheduler를 거쳐 Querier에서 Ingester·S3·캐시를 조회해 결과를 병합하며, Compactor가 S3의 데이터를 최적화하는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-01-loki-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-01-loki-0.html)
 
 ### 컴포넌트 상세
 
@@ -830,7 +832,9 @@ labels:
 
 ### 카디널리티 관리
 
-![라벨 수와 라벨값 종류가 곱해져 총 스트림 수를 만들고, 그 스트림 수가 인덱스 크기·쿼리 성능·메모리 사용량을 함께 좌우한다는 것을 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-01-loki-1.svg)
+![라벨 수와 라벨값 종류가 곱해져 총 스트림 수를 만들고, 그 스트림 수가 인덱스 크기·쿼리 성능·메모리 사용량을 함께 좌우한다는 것을 보여준다.](../../.gitbook/assets/ko-observability-logging-01-loki-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-01-loki-1.html)
 
 **스트림 수 계산:**
 ```

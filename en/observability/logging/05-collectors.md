@@ -19,7 +19,9 @@ Various tools exist for collecting logs in Kubernetes environments. This documen
 
 ### Log Collector Role
 
-![Diagram showing container stdout, log files, and the systemd journal all feeding a single log-collector pipeline of input, processing, and output stages, which fans out to Loki, OpenSearch, CloudWatch, and S3.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-0.svg)
+![Diagram showing container stdout, log files, and the systemd journal all feeding a single log-collector pipeline of input, processing, and output stages, which fans out to Loki, OpenSearch, CloudWatch, and S3.](../../.gitbook/assets/en-observability-logging-05-collectors-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-0.html)
 
 ### Core Functions
 
@@ -52,7 +54,9 @@ FluentBit is a CNCF project, a lightweight log processor written in C. It starte
 
 ### Architecture
 
-![Diagram of FluentBit's five sequential plugin stages: input plugins, parser, filter plugins, buffer, and output plugins, each shown with its representative plugin names.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-1.svg)
+![Diagram of FluentBit's five sequential plugin stages: input plugins, parser, filter plugins, buffer, and output plugins, each shown with its representative plugin names.](../../.gitbook/assets/en-observability-logging-05-collectors-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-1.html)
 
 ### Complete Configuration Example
 
@@ -468,7 +472,9 @@ Promtail is a log collection agent developed by Grafana Labs specifically for Lo
 
 ### Architecture
 
-![Diagram of Promtail's four-stage pipeline: service discovery, scrape targets, pipeline stages, and push to Loki, ending in Loki as the only destination.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-2.svg)
+![Promtail architecture: service discovery finds targets, Pod logs, Journal and Syslog are scraped, then parsing, labels and timestamp, and output pipeline stages run before a batched push to the Loki API as the only destination.](../../.gitbook/assets/en-observability-logging-05-collectors-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-2.html)
 
 ### Complete Configuration Example
 
@@ -951,7 +957,9 @@ OpenTelemetry Collector uses OTLP (OpenTelemetry Protocol) Proto encoding. Compa
 
 ### Architecture
 
-![Diagram of the OpenTelemetry Collector's three-stage pipeline: receivers, processors, and exporters, each listing representative component names.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-3.svg)
+![Diagram of the OpenTelemetry Collector's three-stage pipeline: receivers, processors, and exporters, each listing representative component names.](../../.gitbook/assets/en-observability-logging-05-collectors-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-3.html)
 
 ### Complete Configuration Example
 
@@ -1344,7 +1352,9 @@ OTEL Collector recommended:
 
 ### Decision Flow
 
-![Decision flowchart for choosing a log collector, routing through Loki-only-destination, existing-tooling, and AWS-environment questions to recommend Promtail, Grafana Alloy, FluentBit, or the OpenTelemetry Collector.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-4.svg)
+![Decision flow for choosing a log collector that asks whether the destination is Loki-only, whether Promtail already exists, whether it is an AWS environment, and whether the OTEL standard is needed, then recommends Promtail, Grafana Alloy, FluentBit, or the OTEL Collector.](../../.gitbook/assets/en-observability-logging-05-collectors-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-05-collectors-4.html)
 
 ---
 

@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenTelemetry의 탄생과 구성 요소",
+    "output": "ko-observability-tracing-03-opentelemetry-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "선행 프로젝트"
+        },
+        "cloud": {
+          "label": "통합 프로젝트"
+        },
+        "backend": {
+          "label": "핵심 구성 요소"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "merge",
+        "label": "프로젝트 통합",
+        "focus": [
+          "opentracing",
+          "opencensus",
+          "opentelemetry"
+        ],
+        "note": "OpenTracing과 OpenCensus 프로젝트가 합쳐져 2019년 OpenTelemetry가 탄생했다."
+      },
+      {
+        "id": "components",
+        "label": "핵심 구성 요소",
+        "focus": [
+          "opentelemetry",
+          "spec",
+          "sdk",
+          "collector",
+          "protocol"
+        ],
+        "note": "OpenTelemetry는 Specification, SDKs, Collector, Protocol 네 가지 핵심 구성 요소로 이어진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "opentracing",
+      "type": "external",
+      "label": "OpenTracing",
+      "sublabel": "2016",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "opencensus",
+      "type": "external",
+      "label": "OpenCensus",
+      "sublabel": "2017",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "opentelemetry",
+      "type": "cloud",
+      "label": "OpenTelemetry",
+      "sublabel": "2019 · 통합",
+      "pos": [
+        300,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Specification",
+      "sublabel": "API · 시맨틱 규약",
+      "pos": [
+        640,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "sdk",
+      "type": "backend",
+      "label": "SDKs",
+      "sublabel": "언어별 구현",
+      "pos": [
+        640,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "collector",
+      "type": "backend",
+      "label": "Collector",
+      "sublabel": "수집 · 처리 · 내보내기",
+      "pos": [
+        640,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "protocol",
+      "type": "backend",
+      "label": "Protocol",
+      "sublabel": "OTLP",
+      "pos": [
+        640,
+        360
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "역사",
+      "wraps": [
+        "opentracing",
+        "opencensus",
+        "opentelemetry"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "구성 요소",
+      "wraps": [
+        "spec",
+        "sdk",
+        "collector",
+        "protocol"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ot-to-otel",
+      "from": "opentracing",
+      "to": "opentelemetry",
+      "label": "통합",
+      "variant": "emphasis"
+    },
+    {
+      "id": "oc-to-otel",
+      "from": "opencensus",
+      "to": "opentelemetry",
+      "label": "통합",
+      "variant": "emphasis"
+    },
+    {
+      "id": "otel-to-spec",
+      "from": "opentelemetry",
+      "to": "spec"
+    },
+    {
+      "id": "otel-to-sdk",
+      "from": "opentelemetry",
+      "to": "sdk"
+    },
+    {
+      "id": "otel-to-collector",
+      "from": "opentelemetry",
+      "to": "collector"
+    },
+    {
+      "id": "otel-to-protocol",
+      "from": "opentelemetry",
+      "to": "protocol"
+    }
+  ]
+}

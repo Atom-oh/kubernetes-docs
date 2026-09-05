@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Composite Alarm 개념",
+    "output": "ko-observability-alerting-02-cloudwatch-alarms-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "high-cpu",
+      "type": "cloud",
+      "label": "High CPU Alarm",
+      "sublabel": "HighCPU · CPUUtilization > 80%",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "high-memory",
+      "type": "cloud",
+      "label": "High Memory Alarm",
+      "sublabel": "HighMemory · mem_used_percent > 85%",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "high-disk",
+      "type": "cloud",
+      "label": "High Disk Alarm",
+      "sublabel": "HighDisk · disk_used_percent > 90%",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "composite",
+      "type": "security",
+      "label": "Server Resource Critical Alarm",
+      "sublabel": "ServerResourceCritical",
+      "pos": [
+        420,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "rule",
+      "type": "backend",
+      "label": "규칙: (CPU AND Memory) OR Disk",
+      "sublabel": "alarm-rule",
+      "pos": [
+        420,
+        320
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "action",
+      "type": "messagebus",
+      "label": "SNS / Lambda",
+      "sublabel": "alarm-actions",
+      "pos": [
+        800,
+        190
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Metric Alarms",
+      "wraps": [
+        "high-cpu",
+        "high-memory",
+        "high-disk"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Composite Alarm",
+      "wraps": [
+        "composite",
+        "rule"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cpu-to-composite",
+      "from": "high-cpu",
+      "to": "composite"
+    },
+    {
+      "id": "memory-to-composite",
+      "from": "high-memory",
+      "to": "composite"
+    },
+    {
+      "id": "disk-to-composite",
+      "from": "high-disk",
+      "to": "composite"
+    },
+    {
+      "id": "rule-to-composite",
+      "from": "rule",
+      "to": "composite",
+      "label": "조건 평가",
+      "variant": "dashed"
+    },
+    {
+      "id": "composite-to-action",
+      "from": "composite",
+      "to": "action",
+      "label": "알림 발송",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Composite Alarm 규칙",
+      "items": [
+        "ALARM(HighCPU) AND ALARM(HighMemory) OR ALARM(HighDisk)",
+        "알림 액션은 Composite Alarm에만 연결한다 (alarm-actions: critical-alerts, ok-actions: alerts)"
+      ]
+    }
+  ]
+}

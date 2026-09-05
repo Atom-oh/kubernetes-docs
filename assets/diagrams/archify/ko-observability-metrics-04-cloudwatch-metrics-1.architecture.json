@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Container Insights 아키텍처",
+    "output": "ko-observability-metrics-04-cloudwatch-metrics-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Applications",
+      "sublabel": "파드 워크로드",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cwagent",
+      "type": "backend",
+      "label": "CloudWatch Agent",
+      "sublabel": "DaemonSet",
+      "pos": [
+        270,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "DaemonSet",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ci",
+      "type": "cloud",
+      "label": "Container Insights",
+      "sublabel": "메트릭",
+      "pos": [
+        580,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cwlogs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "컨테이너 로그",
+      "pos": [
+        580,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pm",
+      "type": "cloud",
+      "label": "Performance Monitoring",
+      "sublabel": "통합 조회",
+      "pos": [
+        840,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터 · 워커 노드",
+      "wraps": [
+        "app",
+        "cwagent",
+        "fluentbit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CloudWatch",
+      "wraps": [
+        "ci",
+        "cwlogs",
+        "pm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-expose",
+      "from": "app",
+      "to": "cwagent",
+      "label": "expose",
+      "variant": "dashed"
+    },
+    {
+      "id": "app-stdout",
+      "from": "app",
+      "to": "fluentbit",
+      "label": "stdout/stderr",
+      "variant": "dashed"
+    },
+    {
+      "id": "agent-metrics",
+      "from": "cwagent",
+      "to": "ci",
+      "label": "메트릭",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fluentbit-logs",
+      "from": "fluentbit",
+      "to": "cwlogs",
+      "label": "로그",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ci-pm",
+      "from": "ci",
+      "to": "pm"
+    },
+    {
+      "id": "logs-pm",
+      "from": "cwlogs",
+      "to": "pm"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "수집 경로",
+      "items": [
+        "CloudWatch Agent DaemonSet이 노드·파드·컨테이너 메트릭을 수집한다",
+        "Fluent Bit DaemonSet이 컨테이너 stdout/stderr 로그를 CloudWatch Logs로 보낸다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "수집되는 메트릭",
+      "items": [
+        "클러스터 수준: cluster_node_count, cluster_cpu_utilization",
+        "노드 수준: node_cpu_utilization, node_memory_utilization",
+        "파드/컨테이너 수준: pod_cpu_utilization, container_memory_utilization"
+      ]
+    }
+  ]
+}

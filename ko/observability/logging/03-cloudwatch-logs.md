@@ -30,7 +30,9 @@ Amazon CloudWatch Logs는 AWS의 완전관리형 로그 모니터링 서비스�
 
 ### 핵심 개념
 
-![EKS·애플리케이션·Lambda의 로그가 하나의 CloudWatch Log Group으로 모이고, 여기서 Log Streams 저장, Logs Insights 조회, Metric Filter 기반 알람 생성, Subscription Filters를 통한 S3·Kinesis Firehose(→OpenSearch)·Lambda로의 실시간 전달까지 네 갈래로 분기하는 로그 파이프라인 구조를 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-03-cloudwatch-logs-0.svg)
+![EKS·애플리케이션·Lambda의 로그가 하나의 CloudWatch Log Group으로 모이고, 여기서 Log Streams 저장, Logs Insights 조회, Metric Filter 기반 알람 생성, Subscription Filters를 통한 S3·Kinesis Firehose(→OpenSearch)·Lambda로의 실시간 전달까지 네 갈래로 분기하는 로그 파이프라인 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-03-cloudwatch-logs-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-03-cloudwatch-logs-0.html)
 
 ### 용어 정리
 

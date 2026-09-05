@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Alarms 비용 최적화 전략",
+    "output": "ko-observability-alerting-02-cloudwatch-alarms-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      700
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "최적화 목표"
+        },
+        "backend": {
+          "label": "전략"
+        },
+        "external": {
+          "label": "실행 항목"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "v-count",
+        "label": "알림 수 최소화",
+        "focus": [
+          "goal",
+          "min-count",
+          "dedupe",
+          "replace-composite"
+        ],
+        "note": "중복 알림을 통합하고 Composite Alarm으로 대체해 알림 개수 자체를 줄인다."
+      },
+      {
+        "id": "v-res",
+        "label": "해상도 적정화",
+        "focus": [
+          "goal",
+          "resolution",
+          "res-by-priority",
+          "min-high-res"
+        ],
+        "note": "중요도에 따라 period를 다르게 두고 High Resolution 알림은 최소화한다."
+      },
+      {
+        "id": "v-comp",
+        "label": "Composite Alarm 활용",
+        "focus": [
+          "goal",
+          "composite",
+          "combine"
+        ],
+        "note": "여러 Metric Alarm을 하나의 Composite Alarm으로 묶는다."
+      },
+      {
+        "id": "v-remove",
+        "label": "불필요한 알림 제거",
+        "focus": [
+          "goal",
+          "remove",
+          "delete-unused",
+          "review"
+        ],
+        "note": "사용하지 않는 알림을 삭제하고 정기적으로 리뷰한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "goal",
+      "type": "cloud",
+      "label": "비용 최적화",
+      "sublabel": "CloudWatch Alarms",
+      "pos": [
+        40,
+        293
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "min-count",
+      "type": "backend",
+      "label": "알림 수 최소화",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "resolution",
+      "type": "backend",
+      "label": "해상도 적정화",
+      "pos": [
+        400,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "composite",
+      "type": "backend",
+      "label": "Composite Alarm 활용",
+      "pos": [
+        400,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "remove",
+      "type": "backend",
+      "label": "불필요한 알림 제거",
+      "pos": [
+        400,
+        530
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dedupe",
+      "type": "external",
+      "label": "중복 알림 통합",
+      "pos": [
+        800,
+        30
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "replace-composite",
+      "type": "external",
+      "label": "Composite Alarm으로 대체",
+      "pos": [
+        800,
+        100
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "res-by-priority",
+      "type": "external",
+      "label": "중요도별 해상도 설정",
+      "pos": [
+        800,
+        200
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "min-high-res",
+      "type": "external",
+      "label": "High Resolution 최소화",
+      "pos": [
+        800,
+        270
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "combine",
+      "type": "external",
+      "label": "여러 Metric Alarm을 하나의 Composite로",
+      "pos": [
+        800,
+        384
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "delete-unused",
+      "type": "external",
+      "label": "사용하지 않는 알림 삭제",
+      "pos": [
+        800,
+        500
+      ],
+      "size": [
+        270,
+        52
+      ]
+    },
+    {
+      "id": "review",
+      "type": "external",
+      "label": "정기적 리뷰",
+      "pos": [
+        800,
+        570
+      ],
+      "size": [
+        270,
+        52
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "goal-to-min-count",
+      "from": "goal",
+      "to": "min-count",
+      "variant": "emphasis"
+    },
+    {
+      "id": "goal-to-resolution",
+      "from": "goal",
+      "to": "resolution",
+      "variant": "emphasis"
+    },
+    {
+      "id": "goal-to-composite",
+      "from": "goal",
+      "to": "composite",
+      "variant": "emphasis"
+    },
+    {
+      "id": "goal-to-remove",
+      "from": "goal",
+      "to": "remove",
+      "variant": "emphasis"
+    },
+    {
+      "id": "min-count-to-dedupe",
+      "from": "min-count",
+      "to": "dedupe"
+    },
+    {
+      "id": "min-count-to-replace-composite",
+      "from": "min-count",
+      "to": "replace-composite"
+    },
+    {
+      "id": "resolution-to-res-by-priority",
+      "from": "resolution",
+      "to": "res-by-priority"
+    },
+    {
+      "id": "resolution-to-min-high-res",
+      "from": "resolution",
+      "to": "min-high-res"
+    },
+    {
+      "id": "composite-to-combine",
+      "from": "composite",
+      "to": "combine"
+    },
+    {
+      "id": "remove-to-delete-unused",
+      "from": "remove",
+      "to": "delete-unused"
+    },
+    {
+      "id": "remove-to-review",
+      "from": "remove",
+      "to": "review"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "비용 요소 (월)",
+      "items": [
+        "Standard Resolution 알림(60초): $0.10/알림",
+        "High Resolution 알림(10초): $0.30/알림",
+        "Anomaly Detection: $0.30/메트릭",
+        "Composite Alarm: $0.50/알림"
+      ]
+    }
+  ]
+}

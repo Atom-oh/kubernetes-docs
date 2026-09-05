@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ClickHouse 클러스터 아키텍처",
+    "output": "ko-observability-logging-04-clickhouse-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingest",
+        "label": "로그 적재 경로",
+        "focus": [
+          "collectors",
+          "kafka",
+          "shard1",
+          "shard2",
+          "shard3"
+        ],
+        "note": "수집기가 보낸 로그가 Kafka Topic(선택)을 거쳐 3개 샤드에 분산 적재된다."
+      },
+      {
+        "id": "replication",
+        "label": "복제 조정",
+        "focus": [
+          "keeper",
+          "shard1",
+          "shard2",
+          "shard3"
+        ],
+        "note": "ZooKeeper/ClickHouse Keeper가 모든 샤드의 Replica 1과 Replica 2 사이 복제를 조정한다."
+      },
+      {
+        "id": "storage",
+        "label": "Hot/Cold 스토리지",
+        "focus": [
+          "shard1",
+          "shard2",
+          "shard3",
+          "ebs",
+          "s3"
+        ],
+        "note": "샤드는 EBS(Hot)에 쓰고, TTL 정책에 따라 오래된 데이터를 S3(Cold)로 이동한다."
+      },
+      {
+        "id": "query",
+        "label": "시각화 쿼리",
+        "focus": [
+          "grafana",
+          "superset",
+          "shard1",
+          "shard3"
+        ],
+        "note": "Grafana와 Apache Superset이 SQL로 클러스터를 조회한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "collectors",
+      "type": "external",
+      "label": "수집기",
+      "sublabel": "FluentBit / Vector / OTEL Collector",
+      "pos": [
+        545,
+        40
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "대시보드",
+      "pos": [
+        340,
+        170
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka Topic",
+      "sublabel": "메시지 큐 (선택)",
+      "pos": [
+        585,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "superset",
+      "type": "frontend",
+      "label": "Apache Superset",
+      "sublabel": "BI 분석",
+      "pos": [
+        820,
+        170
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "shard1",
+      "type": "database",
+      "label": "Shard 1",
+      "sublabel": "Replica 1 · Replica 2",
+      "pos": [
+        340,
+        350
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "shard2",
+      "type": "database",
+      "label": "Shard 2",
+      "sublabel": "Replica 1 · Replica 2",
+      "pos": [
+        580,
+        350
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "shard3",
+      "type": "database",
+      "label": "Shard 3",
+      "sublabel": "Replica 1 · Replica 2",
+      "pos": [
+        820,
+        350
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "keeper",
+      "type": "backend",
+      "label": "ZooKeeper / ClickHouse Keeper",
+      "sublabel": "복제 조정",
+      "pos": [
+        1060,
+        350
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS",
+      "sublabel": "Hot Data",
+      "pos": [
+        590,
+        530
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "Cold Data",
+      "pos": [
+        820,
+        530
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ClickHouse 클러스터",
+      "wraps": [
+        "shard1",
+        "shard2",
+        "shard3",
+        "keeper"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지",
+      "wraps": [
+        "ebs",
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "collect-to-kafka",
+      "from": "collectors",
+      "to": "kafka",
+      "label": "로그 전송",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "kafka-to-shard1",
+      "from": "kafka",
+      "to": "shard1"
+    },
+    {
+      "id": "kafka-to-shard2",
+      "from": "kafka",
+      "to": "shard2",
+      "label": "적재",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "kafka-to-shard3",
+      "from": "kafka",
+      "to": "shard3"
+    },
+    {
+      "id": "keeper-shard3",
+      "from": "keeper",
+      "to": "shard3",
+      "label": "복제 조정 (전체 샤드)",
+      "variant": "dashed",
+      "labelDy": 56
+    },
+    {
+      "id": "shard1-to-ebs",
+      "from": "shard1",
+      "to": "ebs"
+    },
+    {
+      "id": "shard2-to-ebs",
+      "from": "shard2",
+      "to": "ebs",
+      "label": "쓰기",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "shard3-to-ebs",
+      "from": "shard3",
+      "to": "ebs",
+      "toSide": "top"
+    },
+    {
+      "id": "ebs-to-s3",
+      "from": "ebs",
+      "to": "s3",
+      "label": "TTL 이동"
+    },
+    {
+      "id": "grafana-shard1",
+      "from": "grafana",
+      "to": "shard1",
+      "label": "SQL 쿼리",
+      "labelDy": 24
+    },
+    {
+      "id": "superset-shard3",
+      "from": "superset",
+      "to": "shard3",
+      "label": "SQL 쿼리",
+      "labelDy": 24
+    }
+  ]
+}

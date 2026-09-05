@@ -1,0 +1,349 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "High Availability Observability Stack Configuration",
+    "locale": "en",
+    "output": "en-observability-09-observability-optimization-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingest",
+        "label": "Ingest and distribution",
+        "focus": [
+          "fb1",
+          "fb2",
+          "fb3",
+          "lb",
+          "otel1",
+          "otel2"
+        ],
+        "note": "Fluent Bit on every node fans into the redundant OTel Collectors through the Load Balancer."
+      },
+      {
+        "id": "logs",
+        "label": "Log write path",
+        "focus": [
+          "otel1",
+          "otel2",
+          "loki1",
+          "loki2",
+          "s3"
+        ],
+        "note": "Both Loki Write replicas receive logs and persist them to the shared S3 Bucket."
+      },
+      {
+        "id": "metrics",
+        "label": "Metrics write path",
+        "focus": [
+          "otel1",
+          "otel2",
+          "vm1",
+          "vm2",
+          "vms"
+        ],
+        "note": "Both vminsert replicas receive metrics and write them to the three vmstorage nodes."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "fb1",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "Node 1",
+      "pos": [
+        40,
+        160
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "fb2",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "Node 2",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "fb3",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "Node N",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "spreads collectors",
+      "pos": [
+        260,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "otel1",
+      "type": "backend",
+      "label": "OTel Collector 1",
+      "sublabel": "redundant pair",
+      "pos": [
+        470,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "otel2",
+      "type": "backend",
+      "label": "OTel Collector 2",
+      "sublabel": "redundant pair",
+      "pos": [
+        470,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "loki1",
+      "type": "backend",
+      "label": "Loki Write 1",
+      "sublabel": "log write",
+      "tag": "Loki HA",
+      "pos": [
+        700,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm1",
+      "type": "backend",
+      "label": "vminsert 1",
+      "sublabel": "metrics write",
+      "tag": "VictoriaMetrics HA",
+      "pos": [
+        700,
+        180
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vms",
+      "type": "database",
+      "label": "vmstorage x3",
+      "sublabel": "metrics storage",
+      "tag": "VictoriaMetrics HA",
+      "pos": [
+        700,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm2",
+      "type": "backend",
+      "label": "vminsert 2",
+      "sublabel": "metrics write",
+      "tag": "VictoriaMetrics HA",
+      "pos": [
+        700,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "loki2",
+      "type": "backend",
+      "label": "Loki Write 2",
+      "sublabel": "log write",
+      "tag": "Loki HA",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 Bucket",
+      "sublabel": "shared storage",
+      "pos": [
+        950,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Data Collection Layer (HA)",
+      "wraps": [
+        "fb1",
+        "fb2",
+        "fb3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Collector Layer (HA)",
+      "wraps": [
+        "lb",
+        "otel1",
+        "otel2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage Layer (HA)",
+      "wraps": [
+        "loki1",
+        "vm1",
+        "vms",
+        "vm2",
+        "loki2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Shared Storage",
+      "wraps": [
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fb1-lb",
+      "from": "fb1",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fb2-lb",
+      "from": "fb2",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fb3-lb",
+      "from": "fb3",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-otel1",
+      "from": "lb",
+      "to": "otel1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-otel2",
+      "from": "lb",
+      "to": "otel2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "otel1-loki1",
+      "from": "otel1",
+      "to": "loki1",
+      "label": "logs"
+    },
+    {
+      "id": "otel1-vm1",
+      "from": "otel1",
+      "to": "vm1",
+      "label": "metrics"
+    },
+    {
+      "id": "otel2-vm2",
+      "from": "otel2",
+      "to": "vm2",
+      "label": "metrics"
+    },
+    {
+      "id": "otel2-loki2",
+      "from": "otel2",
+      "to": "loki2",
+      "label": "logs"
+    },
+    {
+      "id": "loki1-s3",
+      "from": "loki1",
+      "to": "s3"
+    },
+    {
+      "id": "loki2-s3",
+      "from": "loki2",
+      "to": "s3"
+    },
+    {
+      "id": "vm1-vms",
+      "from": "vm1",
+      "to": "vms"
+    },
+    {
+      "id": "vm2-vms",
+      "from": "vm2",
+      "to": "vms"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Read components of the storage layer",
+      "items": [
+        "Loki Read 1 · Loki Read 2 — serve log queries, separate from the Loki Write path",
+        "vmselect 1 · vmselect 2 — serve metric queries by reading from vmstorage"
+      ]
+    }
+  ]
+}

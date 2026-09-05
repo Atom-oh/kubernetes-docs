@@ -154,7 +154,9 @@ http_request_duration_seconds{quantile="0.99"}           # p99 latency (direct q
 
 There are two main models for metrics collection:
 
-![Diagram comparing the pull model, where a Prometheus server scrapes /metrics endpoints from applications over HTTP GET, against the push model, where applications send metrics via HTTP POST to a central collector such as Datadog or CloudWatch.](../../../assets/diagrams/rendered/metrics-pull-push-model.svg)
+![Diagram comparing the pull model, where a Prometheus server scrapes /metrics endpoints from applications over HTTP GET, against the push model, where applications send metrics via HTTP POST to a central collector such as Datadog or CloudWatch.](../../.gitbook/assets/en-observability-metrics-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-readme-0.html)
 
 ### Pull Model
 
@@ -304,7 +306,9 @@ count(count by (endpoint)(http_requests_total))
 
 Prometheus is an excellent real-time monitoring tool but has limitations for long-term data storage:
 
-![Diagram showing Prometheus, with 15-30 day retention, serving real-time alerts, recent trends, and immediate debugging directly, while also forwarding data via remote_write into long-term storage such as VictoriaMetrics, Mimir, or Thanos, which retains a year or more for capacity planning, annual trends, compliance, and cost analysis.](../../../assets/diagrams/rendered/metrics-retention-tiers.svg)
+![Diagram showing Prometheus, with 15-30 day retention, serving real-time alerts, recent trends, and immediate debugging directly, while forwarding data via remote_write into long-term storage (VictoriaMetrics, Mimir, or Thanos) kept 1+ year for capacity planning, annual trends, compliance, and cost analysis.](../../.gitbook/assets/en-observability-metrics-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-readme-1.html)
 
 **Problems with Prometheus long-term storage**:
 
@@ -379,13 +383,17 @@ remote_write:
 
 ### Selection Guide
 
-![Decision tree for picking a metrics stack: starting from team size and operational capability, it branches on AWS environment for small teams, cost priority for medium teams, and multi-cloud need for large/expert teams, ending at CloudWatch, Datadog, VictoriaMetrics, Amazon Managed Prometheus, or an AMP + Grafana managed setup.](../../../assets/diagrams/rendered/metrics-solution-decision-tree.svg)
+![Decision tree for picking a metrics stack: starting from team size and operational capability, it branches on AWS environment for small teams, cost priority for medium teams, and multi-cloud need for large/expert teams, ending at CloudWatch, Datadog, VictoriaMetrics, Amazon Managed Prometheus, or an AMP + Grafana managed setup.](../../.gitbook/assets/en-observability-metrics-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-readme-2.html)
 
 ## Metrics Collection Architecture
 
 ### Kubernetes Environment Metrics Collection Structure
 
-![Diagram showing node-exporter, kube-state-metrics, cAdvisor, and application /metrics endpoints all scraped by Prometheus or vmagent, which writes into short-term Prometheus TSDB and, via remote_write, into long-term VictoriaMetrics storage; both feed Grafana for visualization, and Prometheus TSDB also feeds Alertmanager.](../../../assets/diagrams/rendered/metrics-collection-architecture.svg)
+![Diagram showing node-exporter, kube-state-metrics, cAdvisor, and application /metrics endpoints scraped by Prometheus or vmagent, which writes to short-term Prometheus TSDB and via remote_write to long-term VictoriaMetrics; both feed Grafana, and TSDB feeds Alertmanager.](../../.gitbook/assets/en-observability-metrics-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-readme-3.html)
 
 ### Key Metric Sources
 

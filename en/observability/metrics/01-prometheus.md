@@ -46,7 +46,9 @@ Prometheus is an open-source systems monitoring and alerting toolkit originally 
 
 ## Architecture
 
-![Prometheus architecture diagram showing service discovery feeding the Retrieval component, which scrapes exporters and Pushgateway targets and writes into the TSDB; the TSDB serves the HTTP query API out to Grafana, API clients, and the Prometheus UI, and feeds alert rule evaluation into Alertmanager, which routes to email, Slack, and PagerDuty.](../../../assets/diagrams/rendered/en-observability-metrics-01-prometheus-0.svg)
+![Prometheus architecture: service discovery feeds Retrieval, which scrapes targets into the TSDB; the HTTP Server exposes the PromQL query API to visualization tools, and Alert Rules route alerts through Alertmanager to notification channels.](../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-0.html)
 
 ### Data Flow
 
@@ -407,7 +409,9 @@ Prometheus Operator is a controller for declaratively managing Prometheus in Kub
 
 ### Custom Resource Definitions (CRDs)
 
-![Hierarchy diagram of Prometheus Operator custom resources, showing the Operator managing Prometheus, Alertmanager, and ThanosRuler, with Prometheus in turn governing ServiceMonitor, PodMonitor, PrometheusRule, ScrapeConfig, and Probe, and Alertmanager governing AlertmanagerConfig.](../../../assets/diagrams/rendered/en-observability-metrics-01-prometheus-1.svg)
+![Prometheus Operator custom-resource hierarchy: the Operator creates and reconciles Prometheus, Alertmanager, and ThanosRuler, while Prometheus selects monitor and rule CRDs such as ServiceMonitor and Alertmanager selects AlertmanagerConfig.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-1.html)
 
 ### ServiceMonitor
 

@@ -1,0 +1,246 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Log Collector Decision Flow",
+    "output": "public/archmaps/en-observability-logging-05-collectors-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Start"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "backend": {
+          "label": "Recommended"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "loki-only",
+        "label": "Loki-only destination",
+        "focus": [
+          "start",
+          "q1",
+          "q2",
+          "promtail",
+          "alloy"
+        ],
+        "note": "If Loki is the only destination, keep an existing Promtail; for a new setup choose Grafana Alloy."
+      },
+      {
+        "id": "other-destinations",
+        "label": "Other destinations",
+        "focus": [
+          "start",
+          "q1",
+          "q3",
+          "q4",
+          "fluentbit",
+          "otel"
+        ],
+        "note": "AWS environments go to FluentBit, an OTEL-standard requirement to the OTEL Collector, and everything else to FluentBit."
+      }
+    ],
+    "viewBox": [
+      1240,
+      780
+    ],
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "alloyLane",
+      "label": "Loki-only · new setup"
+    },
+    {
+      "id": "lokiLane",
+      "label": "Loki-only · existing setup"
+    },
+    {
+      "id": "startLane",
+      "label": "Start"
+    },
+    {
+      "id": "otherLane",
+      "label": "Other destinations"
+    },
+    {
+      "id": "awsLane",
+      "label": "AWS · no OTEL requirement"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q1",
+    "q3",
+    "q4",
+    "otel"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "promtail",
+      "alloy",
+      "fluentbit",
+      "otel"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "promtail"
+      },
+      {
+        "from": "start",
+        "to": "alloy"
+      },
+      {
+        "from": "start",
+        "to": "fluentbit"
+      },
+      {
+        "from": "start",
+        "to": "otel"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "startLane",
+      "col": 0,
+      "type": "external",
+      "label": "Choose Log Collector",
+      "width": 190
+    },
+    {
+      "id": "q1",
+      "lane": "startLane",
+      "col": 1,
+      "type": "security",
+      "label": "Loki-only destination?",
+      "width": 200
+    },
+    {
+      "id": "q2",
+      "lane": "lokiLane",
+      "col": 2,
+      "type": "security",
+      "label": "Existing Promtail?",
+      "width": 180
+    },
+    {
+      "id": "promtail",
+      "lane": "lokiLane",
+      "col": 3,
+      "type": "backend",
+      "label": "Keep Promtail",
+      "width": 150
+    },
+    {
+      "id": "alloy",
+      "lane": "alloyLane",
+      "col": 3,
+      "type": "backend",
+      "label": "Grafana Alloy",
+      "width": 150
+    },
+    {
+      "id": "q3",
+      "lane": "otherLane",
+      "col": 2,
+      "type": "security",
+      "label": "AWS environment?",
+      "width": 150
+    },
+    {
+      "id": "q4",
+      "lane": "otherLane",
+      "col": 3,
+      "type": "security",
+      "label": "Need OTEL standard?",
+      "width": 170
+    },
+    {
+      "id": "otel",
+      "lane": "otherLane",
+      "col": 4,
+      "type": "backend",
+      "label": "OTEL Collector",
+      "width": 150
+    },
+    {
+      "id": "fluentbit",
+      "lane": "awsLane",
+      "col": 3,
+      "type": "backend",
+      "label": "FluentBit",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q1",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q1",
+      "to": "q2",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "q1",
+      "to": "q3",
+      "label": "No",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q2",
+      "to": "promtail",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "alloy",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "fluentbit",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "q4",
+      "label": "No",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q4",
+      "to": "otel",
+      "label": "Yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q4",
+      "to": "fluentbit",
+      "label": "No",
+      "role": "branch"
+    }
+  ]
+}

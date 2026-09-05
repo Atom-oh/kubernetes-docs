@@ -1,0 +1,148 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SRE 온콜 로테이션",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1000,
+      660
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "현재 온콜 담당 주"
+        },
+        "backend": {
+          "label": "예정된 온콜 주"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "eng_a",
+      "label": "Engineer A"
+    },
+    {
+      "id": "eng_b",
+      "label": "Engineer B"
+    },
+    {
+      "id": "eng_c",
+      "label": "Engineer C"
+    },
+    {
+      "id": "eng_d",
+      "label": "Engineer D"
+    }
+  ],
+  "phases": [
+    {
+      "id": "w1",
+      "label": "02-17",
+      "fromCol": 0,
+      "toCol": 0,
+      "variant": "emphasis"
+    },
+    {
+      "id": "w2",
+      "label": "02-24",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "w3",
+      "label": "03-03",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "w4",
+      "label": "03-10",
+      "fromCol": 3,
+      "toCol": 3
+    }
+  ],
+  "mainPath": [
+    "shift_a",
+    "shift_b",
+    "shift_c",
+    "shift_d"
+  ],
+  "nodes": [
+    {
+      "id": "shift_a",
+      "lane": "eng_a",
+      "col": 0,
+      "type": "frontend",
+      "label": "온콜 담당",
+      "sublabel": "7일",
+      "tag": "현재"
+    },
+    {
+      "id": "shift_b",
+      "lane": "eng_b",
+      "col": 1,
+      "type": "backend",
+      "label": "온콜 담당",
+      "sublabel": "7일"
+    },
+    {
+      "id": "shift_c",
+      "lane": "eng_c",
+      "col": 2,
+      "type": "backend",
+      "label": "온콜 담당",
+      "sublabel": "7일"
+    },
+    {
+      "id": "shift_d",
+      "lane": "eng_d",
+      "col": 3,
+      "type": "backend",
+      "label": "온콜 담당",
+      "sublabel": "7일"
+    }
+  ],
+  "edges": [
+    {
+      "from": "shift_a",
+      "to": "shift_b",
+      "label": "핸드오프"
+    },
+    {
+      "from": "shift_b",
+      "to": "shift_c",
+      "label": "핸드오프"
+    },
+    {
+      "from": "shift_c",
+      "to": "shift_d",
+      "label": "핸드오프"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "로테이션",
+      "items": [
+        "SRE 엔지니어 네 명이 하나의 온콜 로테이션을 나눠 맡는다",
+        "각 교대는 7일 동안 이어진 뒤 다음 담당자에게 인계된다",
+        "교대는 4주에 걸쳐 순차적으로 진행된다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "권장 하이브리드 구성",
+      "items": [
+        "Prometheus + Alertmanager: 메트릭 수집 및 1차 알림 처리",
+        "CloudWatch: AWS 서비스 메트릭 수집",
+        "Grafana OnCall 또는 PagerDuty: 온콜 관리 및 에스컬레이션",
+        "Slack: 실시간 알림 및 협업"
+      ]
+    }
+  ]
+}

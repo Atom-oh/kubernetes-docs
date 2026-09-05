@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenTelemetry Collector Pipeline Architecture",
+    "output": "en-observability-logging-05-collectors-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Receivers"
+        },
+        "backend": {
+          "label": "Processors"
+        },
+        "cloud": {
+          "label": "Exporters"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "receive",
+        "label": "Ingest (Receivers)",
+        "focus": [
+          "otlp",
+          "filelog",
+          "k8sevents",
+          "syslog",
+          "memory_limiter"
+        ],
+        "note": "Receivers accept OTLP, container log files, Kubernetes events, and syslog, then hand them to the processor stage."
+      },
+      {
+        "id": "process",
+        "label": "Process (Processors)",
+        "focus": [
+          "memory_limiter",
+          "k8sattributes",
+          "filter",
+          "transform",
+          "batch"
+        ],
+        "note": "memory_limiter guards first, k8s metadata is attached, then filter and transform run before batch groups the output."
+      },
+      {
+        "id": "export",
+        "label": "Export (Exporters)",
+        "focus": [
+          "memory_limiter",
+          "batch",
+          "loki",
+          "otlphttp",
+          "debug"
+        ],
+        "note": "Batched logs go to Loki and an OTLP/HTTP backend. debug sits on a separate logs/debug pipeline, fed straight from memory_limiter."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "otlp",
+      "type": "external",
+      "label": "otlp",
+      "sublabel": "gRPC 4317 / HTTP 4318",
+      "pos": [
+        60,
+        105
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "filelog",
+      "type": "external",
+      "label": "filelog",
+      "sublabel": "/var/log/pods/*.log",
+      "pos": [
+        60,
+        195
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "k8sevents",
+      "type": "external",
+      "label": "k8sevents",
+      "sublabel": "Kubernetes events",
+      "pos": [
+        60,
+        285
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "syslog",
+      "type": "external",
+      "label": "syslog",
+      "sublabel": "System logs",
+      "pos": [
+        60,
+        375
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "memory_limiter",
+      "type": "backend",
+      "label": "memory_limiter",
+      "sublabel": "Memory guard",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "k8sattributes",
+      "type": "backend",
+      "label": "k8sattributes",
+      "sublabel": "Attach Pod metadata",
+      "pos": [
+        470,
+        150
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "filter",
+      "sublabel": "Drop unneeded logs",
+      "pos": [
+        470,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "transform",
+      "type": "backend",
+      "label": "transform",
+      "sublabel": "Severity + JSON parsing",
+      "pos": [
+        470,
+        330
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "batch",
+      "type": "backend",
+      "label": "batch",
+      "sublabel": "Group into batches",
+      "pos": [
+        470,
+        420
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "cloud",
+      "label": "loki",
+      "sublabel": "Loki backend",
+      "pos": [
+        880,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "otlphttp",
+      "type": "cloud",
+      "label": "otlphttp",
+      "sublabel": "OTLP/HTTP backend",
+      "pos": [
+        880,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "debug",
+      "type": "cloud",
+      "label": "debug",
+      "sublabel": "Debug output",
+      "pos": [
+        880,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Receivers",
+      "wraps": [
+        "otlp",
+        "filelog",
+        "k8sevents",
+        "syslog"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Processors",
+      "wraps": [
+        "memory_limiter",
+        "k8sattributes",
+        "filter",
+        "transform",
+        "batch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Exporters",
+      "wraps": [
+        "loki",
+        "otlphttp",
+        "debug"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "otlp-in",
+      "from": "otlp",
+      "to": "memory_limiter"
+    },
+    {
+      "id": "filelog-in",
+      "from": "filelog",
+      "to": "memory_limiter",
+      "variant": "emphasis"
+    },
+    {
+      "id": "k8sevents-in",
+      "from": "k8sevents",
+      "to": "memory_limiter"
+    },
+    {
+      "id": "syslog-in",
+      "from": "syslog",
+      "to": "memory_limiter"
+    },
+    {
+      "id": "p1",
+      "from": "memory_limiter",
+      "to": "k8sattributes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p2",
+      "from": "k8sattributes",
+      "to": "filter",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p3",
+      "from": "filter",
+      "to": "transform",
+      "variant": "emphasis"
+    },
+    {
+      "id": "p4",
+      "from": "transform",
+      "to": "batch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "out-loki",
+      "from": "batch",
+      "to": "loki",
+      "variant": "emphasis"
+    },
+    {
+      "id": "out-otlphttp",
+      "from": "batch",
+      "to": "otlphttp"
+    },
+    {
+      "id": "out-debug",
+      "from": "memory_limiter",
+      "to": "debug",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Processor order",
+      "items": [
+        "memory_limiter goes first to protect Collector memory",
+        "k8sattributes attaches Pod and namespace metadata",
+        "batch comes last, after filter and transform, to group the send unit"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "OTLP Proto encoding",
+      "items": [
+        "Field names become numeric tags: 40-60% smaller than JSON on the wire",
+        "1,000 events ≈ 7 messages (150 per batch), far fewer messages"
+      ]
+    }
+  ]
+}

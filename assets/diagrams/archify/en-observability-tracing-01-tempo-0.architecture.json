@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana Tempo Architecture",
+    "locale": "en",
+    "output": "en-observability-tracing-01-tempo-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "write-path",
+        "label": "Write path",
+        "focus": [
+          "app",
+          "otel",
+          "dist",
+          "ing",
+          "s3"
+        ],
+        "note": "Application traces pass through the OTEL Collector into Distributor→Ingester and are written to S3 as blocks."
+      },
+      {
+        "id": "read-path",
+        "label": "Read path",
+        "focus": [
+          "grafana",
+          "qfront",
+          "querier",
+          "s3",
+          "cache"
+        ],
+        "note": "The Query Frontend splits Grafana's TraceQL queries and the Querier searches S3 and the cache."
+      },
+      {
+        "id": "background",
+        "label": "Metrics & compaction",
+        "focus": [
+          "ing",
+          "metrics",
+          "grafana",
+          "compact",
+          "s3"
+        ],
+        "note": "The Metrics Generator derives RED metrics from traces; the Compactor compacts stored blocks and enforces retention."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "Applications",
+      "sublabel": "trace sources",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OTEL Collector",
+      "sublabel": "collect & forward",
+      "pos": [
+        270,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dist",
+      "type": "backend",
+      "label": "Distributor",
+      "sublabel": "receive, validate, hash",
+      "pos": [
+        490,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ing",
+      "type": "backend",
+      "label": "Ingester",
+      "sublabel": "buffer, build blocks",
+      "pos": [
+        710,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics Generator",
+      "sublabel": "derives RED metrics",
+      "pos": [
+        490,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "compact",
+      "type": "backend",
+      "label": "Compactor",
+      "sublabel": "compaction & retention",
+      "pos": [
+        930,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "qfront",
+      "type": "backend",
+      "label": "Query Frontend",
+      "sublabel": "split, cache, queue",
+      "pos": [
+        710,
+        370
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "querier",
+      "type": "backend",
+      "label": "Querier",
+      "sublabel": "search traces",
+      "pos": [
+        930,
+        370
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 / Object Storage",
+      "sublabel": "trace blocks",
+      "pos": [
+        1150,
+        230
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Memcached / Redis",
+      "sublabel": "query cache",
+      "pos": [
+        1150,
+        510
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "TraceQL & dashboards",
+      "pos": [
+        710,
+        510
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Data Ingestion",
+      "wraps": [
+        "app",
+        "otel"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tempo Cluster",
+      "wraps": [
+        "dist",
+        "ing",
+        "metrics",
+        "compact",
+        "qfront",
+        "querier"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage",
+      "wraps": [
+        "s3",
+        "cache"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Visualization",
+      "wraps": [
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-otel",
+      "from": "app",
+      "to": "otel",
+      "label": "OTLP · Jaeger · Zipkin",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "otel-dist",
+      "from": "otel",
+      "to": "dist",
+      "label": "OTLP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dist-ing",
+      "from": "dist",
+      "to": "ing",
+      "label": "by hash",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ing-s3",
+      "from": "ing",
+      "to": "s3",
+      "label": "block storage",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ing-metrics",
+      "from": "ing",
+      "to": "metrics",
+      "label": "metric generation"
+    },
+    {
+      "id": "metrics-grafana",
+      "from": "metrics",
+      "to": "grafana",
+      "label": "RED metrics"
+    },
+    {
+      "id": "grafana-qfront",
+      "from": "grafana",
+      "to": "qfront",
+      "label": "TraceQL",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "qfront-querier",
+      "from": "qfront",
+      "to": "querier",
+      "label": "query splitting"
+    },
+    {
+      "id": "querier-s3",
+      "from": "querier",
+      "to": "s3",
+      "label": "search"
+    },
+    {
+      "id": "querier-cache",
+      "from": "querier",
+      "to": "cache",
+      "label": "cache"
+    },
+    {
+      "id": "compact-s3",
+      "from": "compact",
+      "to": "s3",
+      "label": "compaction",
+      "variant": "dashed",
+      "labelDy": 16
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Write path",
+      "items": [
+        "Distributor: receives trace data, validates and hashes it (scales horizontally)",
+        "Ingester: buffers in memory, builds blocks and writes them to S3 (scales horizontally with replication)"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Read path",
+      "items": [
+        "Query Frontend: query splitting, caching, queue management (scales horizontally)",
+        "Querier: searches traces in storage and cache (scales horizontally)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Background components",
+      "items": [
+        "Metrics Generator: generates RED metrics from traces (scales horizontally)",
+        "Compactor: block compaction, retention policy enforcement (single instance)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,245 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "로그 수집기 선택 의사결정 플로우",
+    "output": "public/archmaps/ko-observability-logging-05-collectors-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작"
+        },
+        "security": {
+          "label": "분기 질문"
+        },
+        "backend": {
+          "label": "권장 수집기"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "loki-only",
+        "label": "Loki 전용 목적지",
+        "focus": [
+          "start",
+          "q1",
+          "q2",
+          "promtail",
+          "alloy"
+        ],
+        "note": "목적지가 Loki뿐이면 기존 Promtail은 유지하고, 새로 구성한다면 Grafana Alloy를 선택합니다."
+      },
+      {
+        "id": "other-destinations",
+        "label": "Loki 외 목적지",
+        "focus": [
+          "start",
+          "q1",
+          "q3",
+          "q4",
+          "fluentbit",
+          "otel"
+        ],
+        "note": "AWS 환경이면 FluentBit, OTEL 표준이 필요하면 OTEL Collector, 둘 다 아니면 FluentBit로 갑니다."
+      }
+    ],
+    "viewBox": [
+      1240,
+      780
+    ]
+  },
+  "lanes": [
+    {
+      "id": "alloyLane",
+      "label": "Loki 전용 · 새 구성"
+    },
+    {
+      "id": "lokiLane",
+      "label": "Loki 전용 · 기존 구성"
+    },
+    {
+      "id": "startLane",
+      "label": "선택 시작"
+    },
+    {
+      "id": "otherLane",
+      "label": "Loki 외 목적지"
+    },
+    {
+      "id": "awsLane",
+      "label": "AWS 환경 · OTEL 불필요"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q1",
+    "q3",
+    "q4",
+    "otel"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "promtail",
+      "alloy",
+      "fluentbit",
+      "otel"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "promtail"
+      },
+      {
+        "from": "start",
+        "to": "alloy"
+      },
+      {
+        "from": "start",
+        "to": "fluentbit"
+      },
+      {
+        "from": "start",
+        "to": "otel"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "startLane",
+      "col": 0,
+      "type": "external",
+      "label": "로그 수집기 선택",
+      "width": 190
+    },
+    {
+      "id": "q1",
+      "lane": "startLane",
+      "col": 1,
+      "type": "security",
+      "label": "목적지가 Loki 전용?",
+      "width": 200
+    },
+    {
+      "id": "q2",
+      "lane": "lokiLane",
+      "col": 2,
+      "type": "security",
+      "label": "기존 Promtail 사용?",
+      "width": 180
+    },
+    {
+      "id": "promtail",
+      "lane": "lokiLane",
+      "col": 3,
+      "type": "backend",
+      "label": "Promtail 유지",
+      "width": 150
+    },
+    {
+      "id": "alloy",
+      "lane": "alloyLane",
+      "col": 3,
+      "type": "backend",
+      "label": "Grafana Alloy",
+      "width": 150
+    },
+    {
+      "id": "q3",
+      "lane": "otherLane",
+      "col": 2,
+      "type": "security",
+      "label": "AWS 환경?",
+      "width": 150
+    },
+    {
+      "id": "q4",
+      "lane": "otherLane",
+      "col": 3,
+      "type": "security",
+      "label": "OTEL 표준 필요?",
+      "width": 170
+    },
+    {
+      "id": "otel",
+      "lane": "otherLane",
+      "col": 4,
+      "type": "backend",
+      "label": "OTEL Collector",
+      "width": 150
+    },
+    {
+      "id": "fluentbit",
+      "lane": "awsLane",
+      "col": 3,
+      "type": "backend",
+      "label": "FluentBit",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q1",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q1",
+      "to": "q2",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "q1",
+      "to": "q3",
+      "label": "아니오",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q2",
+      "to": "promtail",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "alloy",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "fluentbit",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "q4",
+      "label": "아니오",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q4",
+      "to": "otel",
+      "label": "예",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "q4",
+      "to": "fluentbit",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ]
+}

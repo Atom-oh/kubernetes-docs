@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Alert Lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "detection",
+        "label": "Detection",
+        "focus": [
+          "inactive",
+          "pending",
+          "firing"
+        ],
+        "note": "A rule whose condition exceeds its threshold enters Pending; it fires only after the for: duration elapses."
+      },
+      {
+        "id": "notification",
+        "label": "Notification",
+        "focus": [
+          "firing",
+          "notified",
+          "acknowledged"
+        ],
+        "note": "The firing alert is routed to receivers, then a responder confirms it."
+      },
+      {
+        "id": "resolution",
+        "label": "Resolution",
+        "focus": [
+          "acknowledged",
+          "in_progress",
+          "resolved",
+          "inactive"
+        ],
+        "note": "Resolution is manual once the responder fixes the problem, or automatic when the metric returns to its normal range."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "inactive"
+        },
+        "waiting": {
+          "label": "waiting"
+        },
+        "failure": {
+          "label": "firing"
+        },
+        "active": {
+          "label": "handled"
+        },
+        "success": {
+          "label": "resolved"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Detection + notification"
+    },
+    {
+      "id": "respond",
+      "label": "Responder action"
+    },
+    {
+      "id": "terminal",
+      "label": "Outcome"
+    }
+  ],
+  "states": [
+    {
+      "id": "inactive",
+      "type": "start",
+      "label": "Inactive",
+      "sublabel": "condition not met",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "pending",
+      "type": "waiting",
+      "label": "Pending",
+      "sublabel": "held for the for: duration",
+      "lane": "main",
+      "col": 1,
+      "tag": "for: 5m"
+    },
+    {
+      "id": "firing",
+      "type": "failure",
+      "label": "Firing",
+      "sublabel": "waiting on receivers",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "notified",
+      "type": "waiting",
+      "label": "Notified",
+      "sublabel": "Slack, Email, PagerDuty",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "acknowledged",
+      "type": "active",
+      "label": "Acknowledged",
+      "sublabel": "responder confirmed",
+      "lane": "main",
+      "col": 4
+    },
+    {
+      "id": "in_progress",
+      "type": "active",
+      "label": "In Progress",
+      "sublabel": "responder fixing the problem",
+      "lane": "respond",
+      "col": 2
+    },
+    {
+      "id": "resolved",
+      "type": "success",
+      "label": "Resolved",
+      "sublabel": "problem solved",
+      "lane": "terminal",
+      "col": 2
+    }
+  ],
+  "transitions": [
+    {
+      "from": "inactive",
+      "to": "pending",
+      "label": "Threshold exceeded",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "pending",
+      "to": "firing",
+      "label": "Wait elapsed",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "firing",
+      "to": "notified",
+      "label": "Alert sent",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "notified",
+      "to": "acknowledged",
+      "label": "Responder confirmed",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "acknowledged",
+      "to": "in_progress",
+      "label": "Action in progress",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "in_progress",
+      "to": "resolved",
+      "label": "Problem solved",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "pending",
+      "to": "inactive",
+      "label": "Returns within threshold",
+      "variant": "dashed",
+      "route": "bottom-channel",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "from": "firing",
+      "to": "inactive",
+      "label": "Auto-resolved",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          402,
+          78
+        ],
+        [
+          20,
+          78
+        ],
+        [
+          20,
+          157
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Detection",
+      "items": [
+        "Threshold, rate-of-change, anomaly or log-pattern based",
+        "for: keeps the alert Pending until the condition persists"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Notification",
+      "items": [
+        "Route to the right receivers by alert type",
+        "Group related alerts and deduplicate repeats"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Resolution",
+      "items": [
+        "Manual: responder closes the alert after the fix",
+        "Auto: closes when metrics return to the normal range",
+        "Send a resolution notification"
+      ]
+    }
+  ]
+}

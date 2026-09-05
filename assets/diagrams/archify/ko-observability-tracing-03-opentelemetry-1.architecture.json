@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenTelemetry 세 가지 신호",
+    "output": "ko-observability-tracing-03-opentelemetry-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "관측성 프레임워크"
+        },
+        "messagebus": {
+          "label": "텔레메트리 신호"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "signal-generation",
+        "label": "신호 생성",
+        "focus": [
+          "otel",
+          "traces",
+          "metrics",
+          "logs"
+        ],
+        "note": "OpenTelemetry가 Traces, Metrics, Logs 세 가지 신호를 생성한다."
+      },
+      {
+        "id": "signal-correlation",
+        "label": "신호 간 연결",
+        "focus": [
+          "traces",
+          "metrics",
+          "logs"
+        ],
+        "note": "Traces와 Logs는 TraceID로, Metrics와 Traces는 Exemplar로 서로 연결된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OpenTelemetry",
+      "sublabel": "벤더 중립 관측성 프레임워크",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "messagebus",
+      "label": "Metrics",
+      "sublabel": "Counter · Gauge · Histogram",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        240,
+        72
+      ],
+      "tag": "수치 측정값"
+    },
+    {
+      "id": "traces",
+      "type": "messagebus",
+      "label": "Traces",
+      "sublabel": "Span · SpanContext · Links",
+      "pos": [
+        410,
+        230
+      ],
+      "size": [
+        240,
+        72
+      ],
+      "tag": "분산 요청 추적"
+    },
+    {
+      "id": "logs",
+      "type": "messagebus",
+      "label": "Logs",
+      "sublabel": "LogRecord · Severity · Body",
+      "pos": [
+        760,
+        230
+      ],
+      "size": [
+        240,
+        72
+      ],
+      "tag": "이벤트 기록"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OpenTelemetry 신호",
+      "wraps": [
+        "metrics",
+        "traces",
+        "logs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "otel-traces",
+      "from": "otel",
+      "to": "traces",
+      "variant": "emphasis"
+    },
+    {
+      "id": "otel-metrics",
+      "from": "otel",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "otel-logs",
+      "from": "otel",
+      "to": "logs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "metrics-traces",
+      "from": "metrics",
+      "to": "traces",
+      "label": "Exemplar",
+      "variant": "dashed"
+    },
+    {
+      "id": "traces-logs",
+      "from": "traces",
+      "to": "logs",
+      "label": "TraceID 연결",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Traces",
+      "items": [
+        "분산 요청 추적",
+        "사용 사례: 지연 시간 분석, 의존성 매핑"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Metrics",
+      "items": [
+        "수치 측정값",
+        "사용 사례: 리소스 사용량, SLI/SLO"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Logs",
+      "items": [
+        "이벤트 기록",
+        "사용 사례: 디버깅, 감사"
+      ]
+    }
+  ]
+}

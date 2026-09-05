@@ -19,7 +19,9 @@ AWS X-Ray는 분산 애플리케이션의 요청을 추적하고 분석하는 AW
 
 ## 아키텍처
 
-![EKS 클러스터의 애플리케이션 Pod가 X-Ray Daemon과 ADOT Collector를 통해 세그먼트를 전송하고, Lambda 등 다른 AWS 서비스의 자동 계측 데이터와 함께 AWS X-Ray로 모여 CloudWatch, ServiceLens, X-Ray Insights로 전달되는 트레이싱 아키텍처를 보여준다.](../../../assets/diagrams/rendered/ko-observability-tracing-02-xray-0.svg)
+![EKS 클러스터의 애플리케이션 Pod가 X-Ray Daemon과 ADOT Collector를 통해 세그먼트를 전송하고, Lambda 등 다른 AWS 서비스의 자동 계측 데이터와 함께 AWS X-Ray로 모여 CloudWatch, ServiceLens, X-Ray Insights로 전달되는 트레이싱 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-tracing-02-xray-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-02-xray-0.html)
 
 ## X-Ray Daemon 배포
 
@@ -677,7 +679,9 @@ aws xray get-sampling-statistic-summaries
 
 ### X-Ray 콘솔에서 서비스 맵 활용
 
-![클라이언트 요청이 API Gateway를 거쳐 Auth Service와 Order Service로 분기되고, Order Service가 Payment Service·DynamoDB·ElastiCache를 호출하는 각 경로의 응답 시간과 Payment Service의 오류율을 보여주는 X-Ray 서비스 맵.](../../../assets/diagrams/rendered/ko-observability-tracing-02-xray-1.svg)
+![클라이언트 요청이 API Gateway를 거쳐 Auth Service와 Order Service로 분기되고, Order Service가 Payment Service·ElastiCache·DynamoDB를 호출하는 각 경로의 응답 시간과 Payment Service의 오류율 2%를 함께 표시한 X-Ray 서비스 맵을 보여준다.](../../.gitbook/assets/ko-observability-tracing-02-xray-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-02-xray-1.html)
 
 ### 프로그래밍 방식으로 서비스 맵 조회
 

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "관측성 3대 축에서 알림의 위치",
+    "output": "ko-observability-alerting-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": { "label": "관측성 축(데이터 소스)" },
+        "backend": { "label": "알림 규칙 엔진" },
+        "messagebus": { "label": "알림 전송 채널" },
+        "external": { "label": "대응 담당자" }
+      }
+    },
+    "views": [
+      { "id": "pillars", "label": "관측성 3대 축", "focus": ["metrics", "logs", "traces", "rules"], "note": "메트릭, 로그, 트레이스는 알림 규칙이 평가하는 세 가지 데이터 소스입니다." },
+      { "id": "pipeline", "label": "알림 파이프라인", "focus": ["rules", "notifications", "escalation"], "note": "감지된 이상 상태를 담당자에게 통보하고, 응답이 없으면 에스컬레이션합니다." }
+    ]
+  },
+  "components": [
+    { "id": "metrics", "type": "database", "label": "메트릭(Metrics)", "sublabel": "CPU, 메모리, 요청 수", "pos": [40, 60], "size": [170, 60] },
+    { "id": "logs", "type": "database", "label": "로그(Logs)", "sublabel": "이벤트 상세 기록", "pos": [40, 190], "size": [170, 60] },
+    { "id": "traces", "type": "database", "label": "트레이스(Traces)", "sublabel": "분산 요청 흐름", "pos": [40, 320], "size": [170, 60] },
+    { "id": "rules", "type": "backend", "label": "알림 규칙", "sublabel": "이상 상태 감지", "pos": [340, 190], "size": [170, 60], "tag": "핵심" },
+    { "id": "notifications", "type": "messagebus", "label": "알림 전송", "sublabel": "Slack, Email, SMS, PagerDuty", "pos": [600, 190], "size": [190, 60] },
+    { "id": "escalation", "type": "external", "label": "에스컬레이션", "sublabel": "다음 담당자", "pos": [880, 190], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "관측성(Observability)", "wraps": ["metrics", "logs", "traces"] },
+    { "kind": "region", "label": "알림(Alerting)", "wraps": ["rules", "notifications", "escalation"] }
+  ],
+  "connections": [
+    { "id": "metrics-to-rules", "from": "metrics", "to": "rules", "variant": "emphasis" },
+    { "id": "logs-to-rules", "from": "logs", "to": "rules", "label": "평가", "variant": "emphasis", "labelDx": -40 },
+    { "id": "traces-to-rules", "from": "traces", "to": "rules", "variant": "emphasis" },
+    { "id": "rules-to-notifications", "from": "rules", "to": "notifications", "label": "통보", "variant": "emphasis" },
+    { "id": "notifications-to-escalation", "from": "notifications", "to": "escalation", "label": "상향", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "관측성 3대 축", "items": ["메트릭: 시스템의 정량적 상태 (CPU, 메모리, 요청 수 등)", "로그: 이벤트의 상세한 기록", "트레이스: 분산 시스템에서의 요청 흐름"] },
+    { "dot": "orange", "title": "알림", "items": ["세 가지 데이터 소스를 기반으로 이상 상태를 감지", "적시에 담당자에게 통보", "응답이 없으면 다음 담당자에게 에스컬레이션"] }
+  ]
+}

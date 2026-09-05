@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FluentBit Architecture",
+    "locale": "en",
+    "output": "en-observability-logging-05-collectors-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Input stage"
+        },
+        "backend": {
+          "label": "Processing stage"
+        },
+        "database": {
+          "label": "Buffer"
+        },
+        "cloud": {
+          "label": "Output stage"
+        }
+      }
+    },
+    "viewBox": [
+      1060,
+      440
+    ],
+    "views": [
+      {
+        "id": "collect",
+        "label": "Collect and parse",
+        "focus": [
+          "input",
+          "parser"
+        ],
+        "note": "Input plugins such as tail and systemd read raw logs; the Parser interprets them as json, regex, docker, or cri to structure each record."
+      },
+      {
+        "id": "filter",
+        "label": "Filter and transform",
+        "focus": [
+          "parser",
+          "filter"
+        ],
+        "note": "The Filter plugins, the key stage, enrich records with Kubernetes metadata, drop unwanted logs, and transform fields."
+      },
+      {
+        "id": "deliver",
+        "label": "Buffer and output",
+        "focus": [
+          "filter",
+          "buffer",
+          "output"
+        ],
+        "note": "Records wait in a Memory or Filesystem buffer and are then shipped to destinations such as loki, opensearch, cloudwatch_logs, s3, and kafka."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "input",
+      "type": "frontend",
+      "label": "Input Plugins",
+      "sublabel": "tail · syslog · tcp · systemd",
+      "pos": [
+        50,
+        80
+      ],
+      "size": [
+        290,
+        72
+      ]
+    },
+    {
+      "id": "parser",
+      "type": "backend",
+      "label": "Parser",
+      "sublabel": "json · regex · docker · cri",
+      "pos": [
+        380,
+        80
+      ],
+      "size": [
+        290,
+        72
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "Filter Plugins",
+      "sublabel": "kubernetes · modify · grep · lua · multiline",
+      "pos": [
+        710,
+        80
+      ],
+      "size": [
+        290,
+        72
+      ],
+      "tag": "Key stage"
+    },
+    {
+      "id": "buffer",
+      "type": "database",
+      "label": "Buffer",
+      "sublabel": "Memory · Filesystem",
+      "pos": [
+        710,
+        260
+      ],
+      "size": [
+        290,
+        72
+      ]
+    },
+    {
+      "id": "output",
+      "type": "cloud",
+      "label": "Output Plugins",
+      "sublabel": "loki · opensearch · cloudwatch_logs · s3 · kafka",
+      "pos": [
+        380,
+        260
+      ],
+      "size": [
+        290,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "FluentBit pipeline",
+      "wraps": [
+        "input",
+        "parser",
+        "filter",
+        "buffer",
+        "output"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "input-parser",
+      "from": "input",
+      "to": "parser",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "parser-filter",
+      "from": "parser",
+      "to": "filter",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "filter-buffer",
+      "from": "filter",
+      "to": "buffer",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "buffer-output",
+      "from": "buffer",
+      "to": "output",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Collect / Parse",
+      "items": [
+        "Input: tail, syslog, tcp, systemd",
+        "Parser: json, regex, docker, cri"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Filter / Transform (key stage)",
+      "items": [
+        "Filter: kubernetes, modify, grep, lua, multiline",
+        "Add Kubernetes metadata, drop noise, transform fields"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Buffer / Output",
+      "items": [
+        "Buffer: Memory, Filesystem",
+        "Output: loki, opensearch, cloudwatch_logs, s3, kafka"
+      ]
+    }
+  ]
+}

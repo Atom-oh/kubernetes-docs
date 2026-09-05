@@ -33,7 +33,9 @@ Datadog은 클라우드 규모의 인프라, 애플리케이션, 로그를 모�
 
 ### Datadog vs 오픈소스 vs CloudWatch
 
-![Datadog, CloudWatch, 오픈소스(Prometheus+Grafana) 세 가지 모니터링 방식을 통합 플랫폼 여부, AI 분석, 통합 범위, 과금 방식 네 가지 기준으로 나란히 비교하는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-05-datadog-0.svg)
+![Datadog, CloudWatch, 오픈소스(Prometheus+Grafana) 세 가지 모니터링 방식을 통합 플랫폼 여부, AI 분석, 통합 범위, 과금 방식 등 네 가지 특성 기준으로 세 열에 나란히 비교해 보여준다.](../../.gitbook/assets/ko-observability-metrics-05-datadog-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-05-datadog-0.html)
 
 | 항목 | Datadog | CloudWatch | Prometheus+Grafana |
 |------|---------|------------|-------------------|
@@ -49,7 +51,9 @@ Datadog은 클라우드 규모의 인프라, 애플리케이션, 로그를 모�
 
 ### 전체 아키텍처
 
-![EKS 클러스터의 Datadog Agent와 Cluster Agent가 메트릭, 로그, 트레이스를 Datadog 플랫폼으로 전송하고, 플랫폼은 이를 대시보드로 모으며 Watchdog AI가 이상을 감지해 모니터로 알림을 보내는 흐름을 보여주는 아키텍처 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-05-datadog-1.svg)
+![EKS 클러스터의 Datadog Agent와 Cluster Agent가 메트릭, 로그, 트레이스를 Datadog 플랫폼으로 전송하고, 플랫폼은 이를 대시보드로 모으며 Watchdog AI가 이상을 감지해 모니터로 알림을 보내는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-metrics-05-datadog-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-05-datadog-1.html)
 
 ### 구성 요소
 
@@ -800,7 +804,9 @@ APM (50개 서비스): 50 × $31 = $1,550/월
 
 ### 비용 최적화 전략
 
-![Datadog 비용 최적화가 메트릭 최적화, 로그 최적화, APM 최적화 세 갈래로 나뉘고 각 갈래마다 세부 실행 방법이 딸린 트리 구조를 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-05-datadog-2.svg)
+![Datadog 비용 최적화가 메트릭 최적화, 로그 최적화, APM 최적화 세 갈래로 나뉘고 각 갈래마다 세부 실행 방법 세 가지가 딸린 트리 구조를 보여준다.](../../.gitbook/assets/ko-observability-metrics-05-datadog-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-05-datadog-2.html)
 
 #### 1. 메트릭 최적화
 
