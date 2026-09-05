@@ -5060,11 +5060,11 @@
         <text data-detail="fine" x="173.5" y="208" class="t-dim" font-size="7">대상이 메시 내부인지 확인 → 인증서로 TLS 초기화</text>
         </g>
 
-        <g data-edge-from="proxy-a" data-edge-to="proxy-b" data-edge-label="mTLS Handshake" data-edge-key="1" data-edge-id="handshake">
+        <g data-edge-from="proxy-a" data-edge-to="proxy-b" data-edge-label="mTLS Handshake · SPIFFE ID 상호 검증" data-edge-key="1" data-edge-id="handshake">
           <path data-composition-edge-from="proxy-a" data-composition-edge-to="proxy-b" data-composition-edge-id="handshake" data-composition-points="385.83333333333337,260;596.1666666666667,260" d="M 385.83333333333337 260 L 596.1666666666667 260" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <g data-detail="context">
-          <rect x="448.6000000000001" y="240" width="84.8" height="16" rx="3" class="c-mask"/>
-          <text x="491.00000000000006" y="250" class="t-security" font-size="9" text-anchor="middle">mTLS Handshake</text>
+          <rect x="391.40000000000003" y="240" width="199.20000000000002" height="16" rx="3" class="c-mask"/>
+          <text x="491.00000000000006" y="250" class="t-security" font-size="9" text-anchor="middle">mTLS Handshake · SPIFFE ID 상호 검증</text>
         </g>
         <text data-detail="fine" x="397.83333333333337" y="278" class="t-dim" font-size="7">SPIFFE ID 상호 검증</text>
         </g>
@@ -5077,11 +5077,11 @@
         </g>
         </g>
 
-        <g data-edge-from="proxy-b" data-edge-to="app-b" data-edge-label="Plain HTTP" data-edge-key="3" data-edge-id="plain-fwd">
+        <g data-edge-from="proxy-b" data-edge-to="app-b" data-edge-label="Plain HTTP (TLS 종료 후)" data-edge-key="3" data-edge-id="plain-fwd">
           <path data-composition-edge-from="proxy-b" data-composition-edge-to="app-b" data-composition-edge-id="plain-fwd" data-composition-points="610.1666666666667,380;820.5,380" d="M 610.1666666666667 380 L 820.5 380" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="683.3333333333334" y="360" width="64" height="16" rx="3" class="c-mask"/>
-          <text x="715.3333333333334" y="370" class="t-backend" font-size="9" text-anchor="middle">Plain HTTP</text>
+          <rect x="646.9333333333334" y="360" width="136.8" height="16" rx="3" class="c-mask"/>
+          <text x="715.3333333333334" y="370" class="t-backend" font-size="9" text-anchor="middle">Plain HTTP (TLS 종료 후)</text>
         </g>
         <text data-detail="fine" x="622.1666666666667" y="398" class="t-dim" font-size="7">Proxy B가 TLS 종료 후 평문 전달</text>
         </g>
@@ -5112,8 +5112,8 @@
 
         <!-- Segment Labels -->
         <g data-graph-role="segment-label" data-segment-id="0">
-          <rect x="56" y="143" width="60.800000000000004" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">mTLS 수립</text>
+          <rect x="56" y="143" width="294.8" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">mTLS 수립 · 메시 내부 대상 확인 후 인증서로 TLS 초기화</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="1">
           <rect x="56" y="288" width="71.2" height="18" rx="3" class="c-mask"/>

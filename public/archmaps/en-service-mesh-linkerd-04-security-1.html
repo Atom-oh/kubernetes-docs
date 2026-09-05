@@ -5060,11 +5060,11 @@
         <text data-detail="fine" x="173.5" y="208" class="t-dim" font-size="7">Check destination is in mesh → initialize TLS with certificate</text>
         </g>
 
-        <g data-edge-from="proxy-a" data-edge-to="proxy-b" data-edge-label="mTLS Handshake" data-edge-key="1" data-edge-id="handshake">
+        <g data-edge-from="proxy-a" data-edge-to="proxy-b" data-edge-label="mTLS Handshake · mutual SPIFFE ID verification" data-edge-key="1" data-edge-id="handshake">
           <path data-composition-edge-from="proxy-a" data-composition-edge-to="proxy-b" data-composition-edge-id="handshake" data-composition-points="385.83333333333337,260;596.1666666666667,260" d="M 385.83333333333337 260 L 596.1666666666667 260" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <g data-detail="context">
-          <rect x="448.6000000000001" y="240" width="84.8" height="16" rx="3" class="c-mask"/>
-          <text x="491.00000000000006" y="250" class="t-security" font-size="9" text-anchor="middle">mTLS Handshake</text>
+          <rect x="365.40000000000003" y="240" width="251.20000000000002" height="16" rx="3" class="c-mask"/>
+          <text x="491.00000000000006" y="250" class="t-security" font-size="9" text-anchor="middle">mTLS Handshake · mutual SPIFFE ID verification</text>
         </g>
         <text data-detail="fine" x="397.83333333333337" y="278" class="t-dim" font-size="7">Mutual SPIFFE ID verification</text>
         </g>
@@ -5077,11 +5077,11 @@
         </g>
         </g>
 
-        <g data-edge-from="proxy-b" data-edge-to="app-b" data-edge-label="Plain HTTP" data-edge-key="3" data-edge-id="plain-fwd">
+        <g data-edge-from="proxy-b" data-edge-to="app-b" data-edge-label="Plain HTTP (after TLS termination)" data-edge-key="3" data-edge-id="plain-fwd">
           <path data-composition-edge-from="proxy-b" data-composition-edge-to="app-b" data-composition-edge-id="plain-fwd" data-composition-points="610.1666666666667,380;820.5,380" d="M 610.1666666666667 380 L 820.5 380" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="683.3333333333334" y="360" width="64" height="16" rx="3" class="c-mask"/>
-          <text x="715.3333333333334" y="370" class="t-backend" font-size="9" text-anchor="middle">Plain HTTP</text>
+          <rect x="620.9333333333334" y="360" width="188.8" height="16" rx="3" class="c-mask"/>
+          <text x="715.3333333333334" y="370" class="t-backend" font-size="9" text-anchor="middle">Plain HTTP (after TLS termination)</text>
         </g>
         <text data-detail="fine" x="622.1666666666667" y="398" class="t-dim" font-size="7">Proxy B terminates TLS, forwards plaintext</text>
         </g>
@@ -5112,8 +5112,8 @@
 
         <!-- Segment Labels -->
         <g data-graph-role="segment-label" data-segment-id="0">
-          <rect x="56" y="143" width="66" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">mTLS setup</text>
+          <rect x="56" y="143" width="300" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">mTLS setup · mesh check, then TLS init with certificate</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="1">
           <rect x="56" y="288" width="112.8" height="18" rx="3" class="c-mask"/>

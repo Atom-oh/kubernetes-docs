@@ -21,7 +21,9 @@ Linkerd는 컨트롤 플레인과 데이터 플레인으로 구성된 서비스 
 
 Destination 컨트롤러는 서비스 디스커버리와 정책 배포를 담당하는 핵심 컴포넌트입니다.
 
-![Kubernetes의 서비스/엔드포인트와 라우팅 리소스를 감시해 Destination API가 gRPC 스트림으로 프록시에 전달하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-1.svg)
+![Kubernetes의 서비스/엔드포인트와 라우팅 리소스를 감시해 Destination API가 gRPC 스트림으로 프록시에 전달하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-1.html)
 
 **주요 기능:**
 
@@ -50,7 +52,9 @@ service Destination {
 
 Identity 컨트롤러는 mTLS를 위한 인증서 발급과 관리를 담당합니다.
 
-![linkerd-proxy가 CSR을 보내 Identity Controller가 Trust Anchor로 서명을 받아 워크로드 인증서를 발급하고 만료 전 자동 갱신하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-2.svg)
+![linkerd-proxy가 CSR을 보내면 Identity Controller가 Pod의 ServiceAccount를 검증한 뒤 Trust Anchor로 서명을 받아 워크로드 인증서를 발급하고, 만료 전 자동 갱신하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-2.html)
 
 **인증서 발급 프로세스:**
 
@@ -85,7 +89,9 @@ data:
 
 Proxy Injector는 Kubernetes Admission Webhook으로 동작하여 Pod에 사이드카를 자동 주입합니다.
 
-![kubectl의 Pod 생성 요청이 API 서버의 Admission Review를 거쳐 Proxy Injector가 주입 조건을 확인하고, 활성화 시 사이드카 컨테이너를 추가해 Mutated Pod Spec을 반환하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-3.svg)
+![kubectl의 Pod 생성 요청이 API 서버의 Admission Review를 거쳐 Proxy Injector가 linkerd.io/inject 주입 조건을 확인하고, 활성화 시 linkerd-proxy·linkerd-init 컨테이너와 볼륨/환경변수를 추가해 Mutated Pod Spec을, 비활성화 시 원본 Pod Spec을 그대로 반환한 뒤 API 서버가 Pod를 생성하는 시퀀스 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-3.html)
 
 **주입 조건:**
 
@@ -163,7 +169,9 @@ spec:
 
 Linkerd의 데이터 플레인 프록시는 Rust로 작성된 초경량 마이크로 프록시입니다.
 
-![Pod 안의 linkerd-proxy가 인바운드 트래픽을 TLS 종료 후 애플리케이션에 전달하고, 애플리케이션의 아웃바운드 트래픽을 로드밸런싱과 TLS 처리를 거쳐 다시 내보내는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-4.svg)
+![Pod 안의 linkerd-proxy가 인바운드 트래픽을 :4143 리스너에서 받아 TLS 종료 후 애플리케이션에 전달하고, 애플리케이션의 아웃바운드 트래픽을 :4140 리스너, EWMA 로드밸런싱, TLS 발신을 거쳐 밖으로 내보내며 Admin 서버가 메트릭을 노출하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-4.html)
 
 **프록시 특성:**
 
@@ -190,7 +198,9 @@ Linkerd의 데이터 플레인 프록시는 Rust로 작성된 초경량 마이�
 
 ### 프록시 트래픽 흐름
 
-![클라이언트 프록시가 대상을 조회하고 로드밸런싱과 mTLS 핸드셰이크를 마친 뒤 암호화된 요청을 서버 프록시로 전달하고, 서버 프록시가 검증과 정책 확인 후 애플리케이션에 전달하는 왕복 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-5.svg)
+![클라이언트 프록시가 대상을 조회하고 로드밸런싱과 mTLS 핸드셰이크를 마친 뒤 암호화된 요청을 서버 프록시로 전달하고, 서버 프록시가 검증과 정책 확인 후 애플리케이션에 전달하는 왕복 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-5.html)
 
 ### linkerd-init (Init Container)
 
@@ -272,7 +282,9 @@ Linkerd는 계층적 PKI(Public Key Infrastructure)를 사용하여 mTLS를 구�
 
 ### 인증서 계층 구조
 
-![Trust Anchor(루트 CA)가 Identity Issuer(중간 CA)에게 서명 권한을 위임하고, Identity Issuer가 24시간짜리 워크로드 인증서 여러 개를 발급하는 계층적 PKI 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-6.svg)
+![Trust Anchor(루트 CA)가 Identity Issuer(중간 CA)에게 서명 권한을 위임하고, Identity Issuer가 24시간짜리 워크로드 인증서 여러 개를 발급하는 계층적 PKI 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-6.html)
 
 ### Trust Anchor (Root CA)
 
@@ -359,7 +371,9 @@ data:
 
 각 프록시는 고유한 워크로드 인증서를 받습니다.
 
-![linkerd-proxy가 ServiceAccount 토큰과 CSR을 Identity Controller에 보내 SPIFFE ID가 검증된 24시간짜리 인증서를 발급받고, 만료 2시간 전 자동으로 갱신하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-7.svg)
+![linkerd-proxy가 Pod 시작 시 ServiceAccount 토큰과 SPIFFE ID를 담은 CSR을 Identity Controller에 보내 검증과 Issuer 키 서명을 거친 24시간짜리 워크로드 인증서를 발급받고, 만료 전 자동으로 갱신하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-7.html)
 
 **SPIFFE ID 형식:**
 
@@ -412,7 +426,9 @@ kubectl rollout restart deploy -n my-app
 
 ### 주입 워크플로우
 
-![Pod 생성 요청이 Admission Webhook과 주입 조건 확인(네임스페이스/Pod 주석/워크로드 타입)을 거쳐 사이드카가 주입된 뒤 Pod가 생성되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-8.svg)
+![Pod 생성 요청이 Admission Webhook과 주입 조건 확인(네임스페이스/Pod 주석/워크로드 타입)을 거쳐 사이드카가 주입된 뒤 Pod가 생성되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-8.html)
 
 ### 주입 어노테이션
 
@@ -466,7 +482,9 @@ readinessProbe:
 
 ## 컴포넌트 간 통신
 
-![데이터 플레인 프록시들이 gRPC로 Destination·Identity·Policy와 통신하고, API 서버가 Webhook Config를 통해 Proxy Injector의 Admission Webhook을 호출하는 통신 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-9.svg)
+![데이터 플레인 프록시들이 gRPC로 Destination·Identity·Policy와 통신하고, 세 컨트롤러가 각각 Service/Endpoint, ServiceAccount, Server/ServerAuthorization을 API 서버에서 감시하며, API 서버가 Webhook Config를 통해 Proxy Injector의 Admission Webhook을 호출하는 통신 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-9.html)
 
 **포트 정리:**
 
@@ -484,7 +502,9 @@ readinessProbe:
 
 ### 컨트롤 플레인 비교
 
-![Linkerd는 세 개로 분산된 컨트롤 플레인 컴포넌트와 경량 Rust 프록시를 쓰고, Istio는 통합된 istiod와 무거운 Envoy 프록시를 쓰는 구조적 차이를 나란히 비교해 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-10.svg)
+![Linkerd는 Destination·Identity·Proxy Injector로 분산된 컨트롤 플레인이 경량 Rust 프록시(linkerd-proxy)를 gRPC로 설정하고, Istio는 통합된 istiod가 무거운 C++ Envoy 프록시를 xDS로 설정하는 구조적 차이를 나란히 비교해 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-10.html)
 
 | 특성 | Linkerd | Istio |
 |------|---------|-------|

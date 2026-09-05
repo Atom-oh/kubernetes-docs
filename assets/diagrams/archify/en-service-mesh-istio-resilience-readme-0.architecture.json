@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Core Resilience Patterns",
+    "locale": "en",
+    "output": "en-service-mesh-istio-resilience-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pipeline",
+        "label": "Request processing order",
+        "focus": [
+          "client",
+          "outlier",
+          "ratelimit",
+          "zone"
+        ],
+        "note": "A client request passes through Outlier Detection, Rate Limiting, and Zone Aware Routing in turn."
+      },
+      {
+        "id": "ejection",
+        "label": "Unhealthy instance ejection",
+        "focus": [
+          "outlier",
+          "pod3"
+        ],
+        "note": "A pod with consecutive errors is ejected from the traffic pool automatically and later recovered."
+      },
+      {
+        "id": "locality",
+        "label": "Locality-first routing",
+        "focus": [
+          "zone",
+          "pod1",
+          "pod2"
+        ],
+        "note": "Pods in the same AZ are preferred, with automatic failover to another AZ on failure."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Request",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "outlier",
+      "type": "security",
+      "label": "Outlier Detection",
+      "sublabel": "Unhealthy instance ejection",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ratelimit",
+      "type": "backend",
+      "label": "Rate Limiting",
+      "sublabel": "Request rate limiting",
+      "pos": [
+        330,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "zone",
+      "type": "backend",
+      "label": "Zone Aware Routing",
+      "sublabel": "Locality-first routing",
+      "pos": [
+        600,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "Errors occurring",
+      "pos": [
+        40,
+        470
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "Zone A",
+      "pos": [
+        540,
+        470
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "Zone B",
+      "pos": [
+        740,
+        470
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Resilience Patterns",
+      "wraps": [
+        "outlier",
+        "ratelimit",
+        "zone"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Unhealthy instance",
+      "wraps": [
+        "pod3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Healthy instances",
+      "wraps": [
+        "pod1",
+        "pod2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-outlier",
+      "from": "client",
+      "to": "outlier",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "outlier-to-ratelimit",
+      "from": "outlier",
+      "to": "ratelimit"
+    },
+    {
+      "id": "ratelimit-to-zone",
+      "from": "ratelimit",
+      "to": "zone"
+    },
+    {
+      "id": "outlier-eject",
+      "from": "outlier",
+      "to": "pod3",
+      "label": "eject",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "zone-primary",
+      "from": "zone",
+      "to": "pod1",
+      "label": "prefer",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "zone-failover",
+      "from": "zone",
+      "to": "pod2",
+      "label": "failover",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Outlier Detection",
+      "items": [
+        "Consecutive error detection (consecutiveErrors)",
+        "Automatic ejection and recovery (baseEjectionTime)",
+        "Works with Circuit Breaker"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Rate Limiting",
+      "items": [
+        "Token Bucket algorithm",
+        "Local and global rate limiting",
+        "Per-client and per-path limits"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Zone Aware Routing",
+      "items": [
+        "Prioritize same-AZ traffic (localityLbSetting)",
+        "Reduce cross-AZ costs",
+        "Automatic failover on failure"
+      ]
+    }
+  ]
+}

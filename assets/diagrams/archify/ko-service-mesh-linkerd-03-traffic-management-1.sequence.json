@@ -40,7 +40,7 @@
     {
       "from": 355,
       "to": 545,
-      "label": "재시도 — Client는 200 OK만 본다"
+      "label": "재시도 — isRetryable: true · 예산 여유 확인 후 재전송, Client는 200 OK만 본다"
     }
   ],
   "messages": [

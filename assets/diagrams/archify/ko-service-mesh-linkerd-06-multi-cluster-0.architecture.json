@@ -29,7 +29,7 @@
           "gw_w",
           "gw_e"
         ],
-        "note": "클러스터 간 트래픽은 두 Gateway 사이의 mTLS 연결로만 오간다."
+        "note": "클러스터 간 트래픽은 mTLS로 암호화되어 상대 클러스터의 Gateway를 통해 들어온다."
       },
       {
         "id": "routing",
@@ -50,11 +50,11 @@
       "label": "Multicluster Extension",
       "sublabel": "linkerd-multicluster",
       "pos": [
-        100,
+        85,
         90
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -62,13 +62,13 @@
       "id": "sm_w",
       "type": "backend",
       "label": "Service Mirror Controller",
-      "sublabel": "내보낸 서비스 관리",
+      "sublabel": "linkerd-multicluster",
       "pos": [
-        100,
+        85,
         200
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -78,11 +78,11 @@
       "label": "web-service",
       "sublabel": "production ns",
       "pos": [
-        100,
+        85,
         370
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -92,11 +92,11 @@
       "label": "linkerd-proxy",
       "sublabel": "사이드카 프록시",
       "pos": [
-        100,
+        85,
         480
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -162,11 +162,11 @@
       "label": "web-service-west",
       "sublabel": "미러 서비스",
       "pos": [
-        1000,
+        985,
         370
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -176,11 +176,11 @@
       "label": "Service Mirror Controller",
       "sublabel": "West 감시 · 미러 생성",
       "pos": [
-        1000,
+        985,
         200
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -190,11 +190,11 @@
       "label": "Multicluster Extension",
       "sublabel": "linkerd-multicluster",
       "pos": [
-        1000,
+        985,
         90
       ],
       "size": [
-        170,
+        200,
         60
       ]
     }

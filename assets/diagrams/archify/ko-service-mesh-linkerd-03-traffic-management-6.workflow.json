@@ -5,6 +5,22 @@
     "title": "Flagger 배포 흐름",
     "animation": "trace",
     "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Flagger 단계"
+        },
+        "database": {
+          "label": "메트릭 분석"
+        },
+        "security": {
+          "label": "판정 · 롤백"
+        },
+        "cloud": {
+          "label": "트래픽 전환"
+        }
+      }
+    },
     "views": [
       {
         "id": "happy_path",
@@ -193,7 +209,7 @@
       "items": [
         "request-success-rate 99% 이상",
         "request-duration p99 500ms 이하",
-        "threshold 5회 연속 성공 후 다음 단계",
+        "threshold 5 (프로모션 전 필요한 성공 횟수)",
         "stepWeight 10 · maxWeight 50"
       ]
     }

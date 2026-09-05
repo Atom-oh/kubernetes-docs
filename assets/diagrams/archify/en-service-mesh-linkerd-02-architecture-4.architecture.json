@@ -119,7 +119,7 @@
       "sublabel": "Application container",
       "pos": [
         510,
-        480
+        640
       ],
       "size": [
         170,
@@ -232,7 +232,7 @@
       "dot": "amber",
       "title": "Proxy processing",
       "items": [
-        "Retries, timeouts and circuit breaking (CB) applied automatically by the proxy",
+        "Retries, timeouts and circuit breaking (CB) handled in the proxy",
         "EWMA load balancing picks the lowest-latency endpoint"
       ]
     },

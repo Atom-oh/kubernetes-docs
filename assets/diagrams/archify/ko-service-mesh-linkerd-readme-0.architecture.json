@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd 아키텍처 개요",
+    "output": "ko-service-mesh-linkerd-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      540
+    ],
+    "views": [
+      {
+        "id": "control",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "destination",
+          "identity",
+          "injector",
+          "poda",
+          "podb"
+        ],
+        "note": "Proxy Injector가 사이드카를 주입하고, 프록시는 Destination에서 서비스 정보를, Identity에서 인증서를 받는다."
+      },
+      {
+        "id": "dataplane",
+        "label": "데이터 플레인 mTLS",
+        "focus": [
+          "poda",
+          "podb"
+        ],
+        "note": "Pod 안의 linkerd-proxy 사이드카 두 개가 자동 mTLS로 통신한다."
+      },
+      {
+        "id": "extensions",
+        "label": "확장 기능",
+        "focus": [
+          "viz",
+          "jaeger",
+          "multicluster",
+          "poda",
+          "podb"
+        ],
+        "note": "Viz가 두 프록시의 메트릭을 수집하고, Jaeger·Multicluster는 선택적으로 설치한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "서비스 디스커버리",
+      "pos": [
+        40,
+        114
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "사이드카 주입",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "인증서 발급 (CA)",
+      "pos": [
+        40,
+        354
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "poda",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "app + linkerd-proxy",
+      "tag": "~10MB · <1ms p99",
+      "pos": [
+        430,
+        110
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "podb",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "app + linkerd-proxy",
+      "tag": "~10MB · <1ms p99",
+      "pos": [
+        430,
+        350
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "viz",
+      "type": "external",
+      "label": "Viz",
+      "sublabel": "대시보드 / 메트릭",
+      "pos": [
+        840,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "external",
+      "label": "Jaeger",
+      "sublabel": "분산 추적",
+      "pos": [
+        840,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "multicluster",
+      "type": "external",
+      "label": "Multicluster",
+      "sublabel": "다중 클러스터",
+      "pos": [
+        840,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "destination",
+        "identity",
+        "injector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "poda",
+        "podb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "확장 기능",
+      "wraps": [
+        "viz",
+        "jaeger",
+        "multicluster"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "inject-a",
+      "from": "injector",
+      "to": "poda",
+      "variant": "dashed"
+    },
+    {
+      "id": "inject-b",
+      "from": "injector",
+      "to": "podb",
+      "variant": "dashed",
+      "label": "사이드카 주입"
+    },
+    {
+      "id": "lookup",
+      "from": "poda",
+      "to": "destination",
+      "label": "서비스 조회"
+    },
+    {
+      "id": "cert",
+      "from": "podb",
+      "to": "identity",
+      "label": "인증서 요청",
+      "variant": "security",
+      "labelDy": 26
+    },
+    {
+      "id": "mtls",
+      "from": "poda",
+      "to": "podb",
+      "label": "mTLS",
+      "variant": "emphasis",
+      "labelAt": [
+        530,
+        266
+      ]
+    },
+    {
+      "id": "viz-a",
+      "from": "viz",
+      "to": "poda",
+      "label": "메트릭 수집",
+      "labelSegment": 2
+    },
+    {
+      "id": "viz-b",
+      "from": "viz",
+      "to": "podb"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인",
+      "items": [
+        "Destination: 서비스 디스커버리와 라우팅 정보 제공",
+        "Identity: 프록시에 mTLS 인증서 발급 (CA)",
+        "Proxy Injector: Pod 생성 시 linkerd-proxy 사이드카 자동 주입"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "데이터 플레인",
+      "items": [
+        "Rust로 작성된 linkerd-proxy 마이크로 프록시 (~10MB 메모리)",
+        "설정 없이 자동 mTLS, p99 지연 1ms 미만"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "확장 기능",
+      "items": [
+        "Viz: 대시보드와 메트릭",
+        "Jaeger: 분산 추적",
+        "Multicluster: 서비스 미러링 기반 다중 클러스터"
+      ]
+    }
+  ]
+}

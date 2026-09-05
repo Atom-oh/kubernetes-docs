@@ -23,7 +23,7 @@
       "id": "ebpf-1",
       "type": "security",
       "label": "eBPF",
-      "sublabel": "Node 1"
+      "sublabel": "Node 1 · policy eval"
     },
     {
       "id": "tunnel",
@@ -35,7 +35,7 @@
       "id": "ebpf-2",
       "type": "security",
       "label": "eBPF",
-      "sublabel": "Node 2"
+      "sublabel": "Node 2 · policy eval"
     },
     {
       "id": "pod-b",
@@ -69,7 +69,7 @@
       "from": "ebpf-1",
       "to": "tunnel",
       "y": 250,
-      "label": "encapsulate · send over VXLAN/Geneve",
+      "label": "encapsulate · VXLAN/Geneve",
       "variant": "security",
       "note": "Node 1 eBPF: policy evaluation · tunnel encapsulation"
     },

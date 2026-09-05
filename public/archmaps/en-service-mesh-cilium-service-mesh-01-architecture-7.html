@@ -5036,8 +5036,8 @@
         <path data-edge-from="k8s-api" data-edge-to="network" data-edge-label="sync" data-edge-key="0" data-edge-id="api-network" data-composition-points="440,70;370,70;370,225;300,225" d="M 440 70 L 378 70 Q 370 70 370 78 L 370 217 Q 370 225 362 225 L 300 225" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="k8s-api" data-edge-to="policy" data-edge-label="sync" data-edge-key="1" data-edge-id="api-policy" data-composition-points="520,100;520,200" d="M 520 100 L 520 200" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="k8s-api" data-edge-to="proxy" data-edge-label="sync" data-edge-key="2" data-edge-id="api-proxy" data-composition-points="600,70;670,70;670,232;740,232" d="M 600 70 L 662 70 Q 670 70 670 78 L 670 224 Q 670 232 678 232 L 740 232" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="network" data-edge-to="observability" data-edge-label="flow logs" data-edge-key="3" data-edge-id="network-observability" data-composition-points="300,239;355,239;355,402;410,402" d="M 300 239 L 347 239 Q 355 239 355 247 L 355 394 Q 355 402 363 402 L 410 402" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="policy" data-edge-to="observability" data-edge-label="policy events" data-edge-key="4" data-edge-id="policy-observability" data-composition-points="520,264;520,370" d="M 520 264 L 520 370" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="network" data-edge-to="observability" data-edge-label="metrics" data-edge-key="3" data-edge-id="network-observability" data-composition-points="300,239;355,239;355,402;410,402" d="M 300 239 L 347 239 Q 355 239 355 247 L 355 394 Q 355 402 363 402 L 410 402" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="policy" data-edge-to="observability" data-edge-label="flow logs" data-edge-key="4" data-edge-id="policy-observability" data-composition-points="520,264;520,370" d="M 520 264 L 520 370" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
         <g id="node-k8s-api" data-node-id="k8s-api" data-node-label="K8s API" tabindex="0" role="button" aria-label="Focus K8s API, control-plane, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="control-plane" data-node-context="Architecture component">
@@ -5111,13 +5111,13 @@
           <rect x="655" y="131" width="30" height="14" rx="3" class="c-mask"/>
           <text x="670" y="141" class="t-backend" font-size="8" text-anchor="middle">sync</text>
         </g>
-        <g data-detail="context" data-edge-from="network" data-edge-to="observability" data-edge-label="flow logs" data-edge-key="3" data-edge-id="network-observability">
-          <rect x="328.4" y="300.5" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="355" y="310.5" class="t-muted" font-size="8" text-anchor="middle">flow logs</text>
+        <g data-detail="context" data-edge-from="network" data-edge-to="observability" data-edge-label="metrics" data-edge-key="3" data-edge-id="network-observability">
+          <rect x="333.2" y="300.5" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="355" y="310.5" class="t-muted" font-size="8" text-anchor="middle">metrics</text>
         </g>
-        <g data-detail="context" data-edge-from="policy" data-edge-to="observability" data-edge-label="policy events" data-edge-key="4" data-edge-id="policy-observability">
-          <rect x="483.8" y="268" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="520" y="278" class="t-muted" font-size="8" text-anchor="middle">policy events</text>
+        <g data-detail="context" data-edge-from="policy" data-edge-to="observability" data-edge-label="flow logs" data-edge-key="4" data-edge-id="policy-observability">
+          <rect x="493.4" y="268" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="520" y="278" class="t-muted" font-size="8" text-anchor="middle">flow logs</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

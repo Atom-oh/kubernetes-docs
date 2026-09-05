@@ -56,7 +56,7 @@
     {
       "from": 165,
       "to": 370,
-      "label": "Pod 시작 — 최초 발급"
+      "label": "Pod 시작 — CSR · ServiceAccount 검증 · 최초 발급"
     },
     {
       "from": 395,
@@ -79,9 +79,9 @@
       "from": "identity",
       "to": "ca",
       "y": 260,
-      "label": "인증서 서명 요청",
+      "label": "ServiceAccount 검증 후 서명 요청",
       "variant": "default",
-      "note": "Pod의 ServiceAccount 검증 후 서명 요청"
+      "note": "Identity Controller가 Pod의 ServiceAccount를 검증한 뒤 Trust Anchor에 서명을 요청"
     },
     {
       "id": "signed",

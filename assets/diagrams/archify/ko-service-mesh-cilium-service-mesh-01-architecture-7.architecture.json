@@ -122,13 +122,13 @@
       "id": "network-observability",
       "from": "network",
       "to": "observability",
-      "label": "Flow 로그"
+      "label": "메트릭"
     },
     {
       "id": "policy-observability",
       "from": "policy",
       "to": "observability",
-      "label": "정책 이벤트",
+      "label": "Flow 로그",
       "labelDy": 24
     }
   ]

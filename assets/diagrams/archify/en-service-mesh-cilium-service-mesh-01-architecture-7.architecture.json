@@ -123,13 +123,13 @@
       "id": "network-observability",
       "from": "network",
       "to": "observability",
-      "label": "flow logs"
+      "label": "metrics"
     },
     {
       "id": "policy-observability",
       "from": "policy",
       "to": "observability",
-      "label": "policy events",
+      "label": "flow logs",
       "labelDy": 24
     }
   ]

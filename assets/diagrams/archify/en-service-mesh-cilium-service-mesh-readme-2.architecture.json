@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Resource Usage Comparison",
+    "output": "en-service-mesh-cilium-service-mesh-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      660
+    ],
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "external": {
+          "label": "Workload"
+        },
+        "backend": {
+          "label": "Proxy"
+        },
+        "cloud": {
+          "label": "Total mesh memory"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cilium",
+        "label": "Cilium Service Mesh",
+        "focus": [
+          "cluster",
+          "cilium-proxy",
+          "cilium-total"
+        ],
+        "note": "One shared Envoy per node keeps a 100-pod cluster at roughly 500MB in total."
+      },
+      {
+        "id": "istio",
+        "label": "Istio",
+        "focus": [
+          "cluster",
+          "istio-proxy",
+          "istio-total"
+        ],
+        "note": "An Envoy sidecar (~50MB) in every pod adds up to roughly 5GB across 100 pods."
+      },
+      {
+        "id": "linkerd",
+        "label": "Linkerd",
+        "focus": [
+          "cluster",
+          "linkerd-proxy",
+          "linkerd-total"
+        ],
+        "note": "A linkerd2-proxy (~20MB) in every pod adds up to roughly 2GB across 100 pods."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "cluster",
+      "type": "external",
+      "label": "100-Pod Cluster",
+      "sublabel": "same workload for all three",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "cilium-proxy",
+      "type": "backend",
+      "label": "Shared Envoy per Node",
+      "sublabel": "~100MB per node · L7 only",
+      "pos": [
+        400,
+        90
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "tag": "sidecarless"
+    },
+    {
+      "id": "cilium-total",
+      "type": "cloud",
+      "label": "Total ~500MB",
+      "sublabel": "node count × ~100MB",
+      "pos": [
+        720,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "istio-proxy",
+      "type": "backend",
+      "label": "Envoy Sidecar per Pod",
+      "sublabel": "~50MB per Pod",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "tag": "sidecar"
+    },
+    {
+      "id": "istio-total",
+      "type": "cloud",
+      "label": "Total ~5GB",
+      "sublabel": "100 Pods × ~50MB",
+      "pos": [
+        720,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "linkerd-proxy",
+      "type": "backend",
+      "label": "linkerd2-proxy per Pod",
+      "sublabel": "~20MB per Pod",
+      "pos": [
+        400,
+        510
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "tag": "sidecar"
+    },
+    {
+      "id": "linkerd-total",
+      "type": "cloud",
+      "label": "Total ~2GB",
+      "sublabel": "100 Pods × ~20MB",
+      "pos": [
+        720,
+        510
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cilium Service Mesh (eBPF + node Envoy)",
+      "wraps": [
+        "cilium-proxy",
+        "cilium-total"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio (sidecar Envoy)",
+      "wraps": [
+        "istio-proxy",
+        "istio-total"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Linkerd (sidecar linkerd2-proxy)",
+      "wraps": [
+        "linkerd-proxy",
+        "linkerd-total"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cluster-cilium",
+      "from": "cluster",
+      "to": "cilium-proxy",
+      "label": "eBPF hands off L7 only",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "cilium-sum",
+      "from": "cilium-proxy",
+      "to": "cilium-total",
+      "label": "× node count",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-istio",
+      "from": "cluster",
+      "to": "istio-proxy",
+      "label": "injected per Pod"
+    },
+    {
+      "id": "istio-sum",
+      "from": "istio-proxy",
+      "to": "istio-total",
+      "label": "× 100 Pods"
+    },
+    {
+      "id": "cluster-linkerd",
+      "from": "cluster",
+      "to": "linkerd-proxy",
+      "label": "injected per Pod",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "linkerd-sum",
+      "from": "linkerd-proxy",
+      "to": "linkerd-total",
+      "label": "× 100 Pods"
+    }
+  ]
+}

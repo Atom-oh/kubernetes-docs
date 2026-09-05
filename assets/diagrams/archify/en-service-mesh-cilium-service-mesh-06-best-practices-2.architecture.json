@@ -36,7 +36,7 @@
           "p2-l7",
           "p2-l34"
         ],
-        "note": "Transition period: L7 policies move workload by workload to CiliumNetworkPolicy while Cilium and Istio share L7."
+        "note": "Transition period: L7 policies move namespace by namespace to CiliumNetworkPolicy/CiliumEnvoyConfig while Cilium and Istio share L7."
       },
       {
         "id": "phase3",
@@ -97,7 +97,7 @@
       "id": "p2-l7",
       "type": "backend",
       "label": "L7: Cilium + Istio mixed",
-      "sublabel": "Per-workload migration",
+      "sublabel": "Per-namespace migration",
       "pos": [
         380,
         230

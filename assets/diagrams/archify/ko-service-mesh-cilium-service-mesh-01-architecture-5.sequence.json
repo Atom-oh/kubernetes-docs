@@ -54,13 +54,13 @@
       "id": "ebpf",
       "type": "backend",
       "label": "eBPF Datapath",
-      "sublabel": "커널"
+      "sublabel": "커널 · L4 정책 확인"
     },
     {
       "id": "envoy",
       "type": "security",
       "label": "Node Envoy",
-      "sublabel": "L7 프록시"
+      "sublabel": "HTTP 파싱 · L7 정책 적용 · 헤더 조작"
     },
     {
       "id": "server",

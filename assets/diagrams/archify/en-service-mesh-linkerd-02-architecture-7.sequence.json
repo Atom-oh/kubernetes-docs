@@ -39,7 +39,14 @@
         ],
         "note": "Before expiry (by default at 70% of the lifetime) the proxy sends a new CSR to renew its certificate."
       }
-    ]
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "initial issuance"
+        }
+      }
+    }
   },
   "participants": [
     {

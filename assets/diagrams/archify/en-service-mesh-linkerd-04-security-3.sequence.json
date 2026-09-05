@@ -42,12 +42,12 @@
     {
       "from": 165,
       "to": 300,
-      "label": "Pod starts — obtain token and prepare CSR"
+      "label": "Pod starts — obtain SA token, build CSR with SPIFFE ID"
     },
     {
       "from": 320,
       "to": 470,
-      "label": "Identity Controller validation and signing"
+      "label": "Identity Controller — validate SA token and Pod info, generate SPIFFE ID, request signing"
     },
     {
       "from": 490,
@@ -68,7 +68,7 @@
       "from": "pod",
       "to": "id",
       "y": 265,
-      "label": "Send CSR + SA token",
+      "label": "Send CSR (SPIFFE ID) + SA token",
       "variant": "emphasis",
       "note": "Pod generates a CSR containing its SPIFFE ID"
     },
@@ -77,7 +77,7 @@
       "from": "id",
       "to": "ca",
       "y": 375,
-      "label": "Certificate signing request",
+      "label": "Validate, then request signing",
       "variant": "security",
       "note": "Validate SA token · validate Pod info · generate SPIFFE ID"
     },

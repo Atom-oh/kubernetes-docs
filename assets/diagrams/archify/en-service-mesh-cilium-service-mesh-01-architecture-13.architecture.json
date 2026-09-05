@@ -45,7 +45,20 @@
         ],
         "note": "The node-to-node network hop (~0.1ms) is the same in both models; the difference comes only from the proxy stages."
       }
-    ]
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "App ↔ proxy"
+        },
+        "backend": {
+          "label": "Proxy processing"
+        },
+        "cloud": {
+          "label": "Network transfer (same)"
+        }
+      }
+    }
   },
   "components": [
     {

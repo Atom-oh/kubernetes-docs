@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Security Architecture Layers",
+    "locale": "en",
+    "output": "en-service-mesh-istio-security-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control plane distribution",
+        "focus": [
+          "ca",
+          "config",
+          "envoy-a",
+          "envoy-b"
+        ],
+        "note": "The istiod CA issues certificates and the Configuration API pushes security policy to the sidecars."
+      },
+      {
+        "id": "mtls-path",
+        "label": "mTLS path",
+        "focus": [
+          "app-a",
+          "envoy-a",
+          "envoy-b",
+          "app-b"
+        ],
+        "note": "Applications talk in plaintext; only the hop between the two Envoy sidecars is encrypted with mTLS."
+      },
+      {
+        "id": "layers",
+        "label": "Security layer order",
+        "focus": [
+          "l1",
+          "l2",
+          "l3",
+          "l4",
+          "l5"
+        ],
+        "note": "Five security layers apply in order, from SPIFFE identity to access control."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "Certificate Authority",
+      "sublabel": "X.509 cert issuance",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "config",
+      "type": "backend",
+      "label": "Configuration API",
+      "sublabel": "Security policy push",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "Plaintext traffic",
+      "pos": [
+        330,
+        160
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "envoy-a",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "mTLS termination · policy",
+      "pos": [
+        530,
+        160
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "envoy-b",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "mTLS termination · policy",
+      "pos": [
+        800,
+        160
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "Plaintext traffic",
+      "pos": [
+        1030,
+        160
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "security",
+      "label": "1. Identity",
+      "sublabel": "SPIFFE ID based",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "security",
+      "label": "2. Cert Mgmt",
+      "sublabel": "Auto issue / renew",
+      "pos": [
+        275,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l3",
+      "type": "security",
+      "label": "3. Peer Auth",
+      "sublabel": "Service-to-service mTLS",
+      "pos": [
+        510,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l4",
+      "type": "security",
+      "label": "4. Req Auth",
+      "sublabel": "End-user JWT",
+      "pos": [
+        745,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l5",
+      "type": "security",
+      "label": "5. Authorization",
+      "sublabel": "Access control",
+      "pos": [
+        980,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane (istiod)",
+      "wraps": [
+        "ca",
+        "config"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane (Envoy Proxy)",
+      "wraps": [
+        "app-a",
+        "envoy-a",
+        "envoy-b",
+        "app-b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod A",
+      "wraps": [
+        "app-a",
+        "envoy-a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod B",
+      "wraps": [
+        "envoy-b",
+        "app-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Security layer order (5 steps)",
+      "wraps": [
+        "l1",
+        "l2",
+        "l3",
+        "l4",
+        "l5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ca-cert",
+      "from": "ca",
+      "to": "envoy-a",
+      "label": "Issue certificates",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-policy",
+      "from": "config",
+      "to": "envoy-b",
+      "label": "Push policy",
+      "variant": "dashed",
+      "labelDy": 17
+    },
+    {
+      "id": "app-a-envoy",
+      "from": "app-a",
+      "to": "envoy-a"
+    },
+    {
+      "id": "mtls",
+      "from": "envoy-a",
+      "to": "envoy-b",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-app-b",
+      "from": "envoy-b",
+      "to": "app-b"
+    },
+    {
+      "id": "l1-l2",
+      "from": "l1",
+      "to": "l2"
+    },
+    {
+      "id": "l2-l3",
+      "from": "l2",
+      "to": "l3"
+    },
+    {
+      "id": "l3-l4",
+      "from": "l3",
+      "to": "l4"
+    },
+    {
+      "id": "l4-l5",
+      "from": "l4",
+      "to": "l5"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Identity Management",
+      "items": [
+        "Workload identity based on the SPIFFE standard",
+        "Integrated with Kubernetes ServiceAccount",
+        "Automatic certificate renewal (default 24 hours)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Policy Engine",
+      "items": [
+        "Declarative security policies (CRD-based)",
+        "Fine-grained access control (RBAC)",
+        "Audit logging support"
+      ]
+    }
+  ]
+}

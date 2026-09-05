@@ -41,12 +41,12 @@
     {
       "from": 165,
       "to": 300,
-      "label": "Pod 시작 — 토큰 획득과 CSR 준비"
+      "label": "Pod 시작 — SA 토큰 획득, SPIFFE ID를 담은 CSR 생성"
     },
     {
       "from": 320,
       "to": 470,
-      "label": "Identity Controller 검증 및 서명"
+      "label": "Identity Controller — SA 토큰·Pod 정보 검증 후 SPIFFE ID 생성, 서명 요청"
     },
     {
       "from": 490,
@@ -67,7 +67,7 @@
       "from": "pod",
       "to": "id",
       "y": 265,
-      "label": "CSR + SA 토큰 전송",
+      "label": "CSR(SPIFFE ID) + SA 토큰 전송",
       "variant": "emphasis",
       "note": "Pod가 SPIFFE ID를 담은 CSR 생성"
     },
@@ -76,7 +76,7 @@
       "from": "id",
       "to": "ca",
       "y": 375,
-      "label": "인증서 서명 요청",
+      "label": "검증 후 인증서 서명 요청",
       "variant": "security",
       "note": "SA 토큰 검증 · Pod 정보 검증 · SPIFFE ID 생성"
     },

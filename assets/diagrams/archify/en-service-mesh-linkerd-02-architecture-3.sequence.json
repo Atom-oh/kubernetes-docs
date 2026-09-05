@@ -8,7 +8,7 @@
     "column_fit": "spread",
     "viewBox": [
       1000,
-      640
+      720
     ],
     "animation": "trace"
   },
@@ -49,6 +49,11 @@
       "from": 312,
       "to": 478,
       "label": "ALT [injection enabled] — linkerd.io/inject: enabled"
+    },
+    {
+      "from": 524,
+      "to": 570,
+      "label": "ELSE [injection disabled] — linkerd.io/inject: disabled"
     }
   ],
   "messages": [
@@ -109,10 +114,19 @@
       "variant": "return"
     },
     {
+      "id": "orig",
+      "from": "injector",
+      "to": "apiserver",
+      "y": 548,
+      "label": "Original Pod Spec",
+      "variant": "return",
+      "note": "returned unchanged, no injection"
+    },
+    {
       "id": "created",
       "from": "apiserver",
       "to": "pod",
-      "y": 530,
+      "y": 616,
       "label": "create Pod",
       "variant": "emphasis"
     }
@@ -121,13 +135,13 @@
     {
       "participant": "apiserver",
       "from": 185,
-      "to": 538,
+      "to": 624,
       "type": "backend"
     },
     {
       "participant": "injector",
       "from": 231,
-      "to": 476,
+      "to": 554,
       "type": "security"
     },
     {

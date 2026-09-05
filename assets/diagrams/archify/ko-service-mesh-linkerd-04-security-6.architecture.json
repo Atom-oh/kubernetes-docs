@@ -8,7 +8,7 @@
     "animation": "trace",
     "viewBox": [860, 460],
     "views": [
-      { "id": "network-level", "label": "네트워크 레벨 (Linkerd)", "focus": ["mtls", "authz", "identity"], "note": "Linkerd 프록시가 설정 없이 자동으로 적용하는 방어선이다." },
+      { "id": "network-level", "label": "네트워크 레벨 (Linkerd)", "focus": ["mtls", "authz", "identity"], "note": "Linkerd 프록시가 담당하는 방어선이다. mTLS와 워크로드 ID는 자동 적용되고, 서비스 인가는 ServerAuthorization으로 명시적으로 설정한다." },
       { "id": "application-level", "label": "애플리케이션 레벨", "focus": ["jwt", "rbac", "input"], "note": "애플리케이션이 직접 구현해야 하는 방어선이다." },
       { "id": "defense-in-depth", "label": "심층 방어", "focus": ["mtls", "authz", "identity", "jwt", "rbac", "input"], "note": "네트워크 레벨 제어와 애플리케이션 레벨 제어가 짝을 이루어 심층 방어를 구성한다." }
     ]

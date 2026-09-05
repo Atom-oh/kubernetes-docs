@@ -18,7 +18,7 @@
           "web",
           "graf"
         ],
-        "note": "Metrics exposed by the proxies are stored in Prometheus and surfaced through the Metrics API to the dashboard and Grafana."
+        "note": "Proxy metrics are stored in Prometheus, shown directly in Grafana, and aggregated through the Metrics API for the Web Dashboard."
       },
       {
         "id": "tap-stream",

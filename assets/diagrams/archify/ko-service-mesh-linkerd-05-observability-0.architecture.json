@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "metrics-path", "label": "메트릭 수집 경로", "focus": ["proxy", "prom", "metrics", "web", "graf"], "note": "프록시가 노출한 메트릭이 Prometheus에 저장되고 Metrics API를 거쳐 대시보드와 Grafana에 표시된다." },
+      { "id": "metrics-path", "label": "메트릭 수집 경로", "focus": ["proxy", "prom", "metrics", "web", "graf"], "note": "프록시가 노출한 메트릭이 Prometheus에 저장되어 Grafana에 직접 표시되고, Metrics API를 거쳐 Web Dashboard에 집계된다." },
       { "id": "tap-stream", "label": "Tap 실시간 스트림", "focus": ["tap", "web"], "note": "Tap API는 실시간 요청 스트림을 Web Dashboard의 Tap 뷰로 전달한다." },
       { "id": "external", "label": "외부 연동 (선택)", "focus": ["prom", "ext-prom", "ext-graf", "proxy", "jaeger"], "note": "기존 Prometheus/Grafana로 메트릭을 넘기거나 Jaeger로 분산 추적 스팬을 보낼 수 있다." }
     ]

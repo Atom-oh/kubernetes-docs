@@ -43,7 +43,7 @@
       "id": "start",
       "type": "start",
       "label": "시작",
-      "sublabel": "엔드포인트 등록",
+      "sublabel": "초기 상태",
       "lane": "main",
       "col": 0
     },
@@ -103,7 +103,8 @@
       "from": "halfopen",
       "to": "closed",
       "label": "프로브 성공",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "toSide": "bottom"
     },
     {
       "id": "t-retrip",

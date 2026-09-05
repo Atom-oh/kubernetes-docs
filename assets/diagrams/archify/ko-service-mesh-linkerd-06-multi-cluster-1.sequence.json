@@ -63,7 +63,7 @@
       "from": "mirror",
       "to": "gateway",
       "y": 270,
-      "label": "mTLS 연결",
+      "label": "Gateway IP 해석 후 mTLS 연결",
       "variant": "security",
       "note": "미러 서비스가 Gateway IP로 주소를 해석해 연결"
     },
@@ -72,7 +72,7 @@
       "from": "gateway",
       "to": "target",
       "y": 350,
-      "label": "요청 전달",
+      "label": "신원 검증 후 요청 전달",
       "variant": "emphasis",
       "note": "Gateway가 신원을 검증한 뒤 전달"
     },

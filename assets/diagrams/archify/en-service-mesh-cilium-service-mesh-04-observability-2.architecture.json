@@ -92,7 +92,7 @@
       "sublabel": "RPS 500 · P99 80ms",
       "pos": [
         690,
-        140
+        180
       ],
       "size": [
         160,
@@ -106,7 +106,7 @@
       "sublabel": "RPS 300 · P99 120ms",
       "pos": [
         690,
-        460
+        430
       ],
       "size": [
         160,
@@ -117,10 +117,9 @@
       "id": "redis",
       "type": "database",
       "label": "Redis",
-      "sublabel": "cache",
       "pos": [
         920,
-        60
+        90
       ],
       "size": [
         140,
@@ -148,7 +147,7 @@
       "sublabel": "RPS 100 · P99 200ms",
       "pos": [
         920,
-        460
+        430
       ],
       "size": [
         160,
@@ -159,10 +158,9 @@
       "id": "kafka",
       "type": "messagebus",
       "label": "Kafka",
-      "sublabel": "event stream",
       "pos": [
         920,
-        620
+        560
       ],
       "size": [
         140,
@@ -230,8 +228,7 @@
     {
       "id": "orders-kafka",
       "from": "orders",
-      "to": "kafka",
-      "label": "publish events"
+      "to": "kafka"
     },
     {
       "id": "orders-payments",

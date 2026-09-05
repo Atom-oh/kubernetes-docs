@@ -57,7 +57,7 @@
     {
       "from": 165,
       "to": 370,
-      "label": "Pod startup — initial issuance"
+      "label": "Pod startup — CSR · ServiceAccount validation · initial issuance"
     },
     {
       "from": 395,
@@ -80,9 +80,9 @@
       "from": "identity",
       "to": "ca",
       "y": 260,
-      "label": "certificate signing request",
+      "label": "signing request after ServiceAccount validation",
       "variant": "default",
-      "note": "requested after validating the Pod's ServiceAccount"
+      "note": "the Identity Controller validates the Pod ServiceAccount, then asks the Trust Anchor to sign"
     },
     {
       "id": "signed",

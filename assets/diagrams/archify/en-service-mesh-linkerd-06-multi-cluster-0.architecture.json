@@ -29,7 +29,7 @@
           "gw_w",
           "gw_e"
         ],
-        "note": "Cross-cluster traffic only travels over the mTLS link between the two Gateways."
+        "note": "Cross-cluster traffic enters the remote cluster through its Gateway over mTLS."
       },
       {
         "id": "routing",
@@ -51,11 +51,11 @@
       "label": "Multicluster Extension",
       "sublabel": "linkerd-multicluster",
       "pos": [
-        100,
+        85,
         90
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -63,13 +63,13 @@
       "id": "sm_w",
       "type": "backend",
       "label": "Service Mirror Controller",
-      "sublabel": "manages exported services",
+      "sublabel": "linkerd-multicluster",
       "pos": [
-        100,
+        85,
         200
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -79,11 +79,11 @@
       "label": "web-service",
       "sublabel": "production ns",
       "pos": [
-        100,
+        85,
         370
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -93,11 +93,11 @@
       "label": "linkerd-proxy",
       "sublabel": "sidecar proxy",
       "pos": [
-        100,
+        85,
         480
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -163,11 +163,11 @@
       "label": "web-service-west",
       "sublabel": "mirror service",
       "pos": [
-        1000,
+        985,
         370
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -177,11 +177,11 @@
       "label": "Service Mirror Controller",
       "sublabel": "watches West · creates mirrors",
       "pos": [
-        1000,
+        985,
         200
       ],
       "size": [
-        170,
+        200,
         60
       ]
     },
@@ -191,11 +191,11 @@
       "label": "Multicluster Extension",
       "sublabel": "linkerd-multicluster",
       "pos": [
-        1000,
+        985,
         90
       ],
       "size": [
-        170,
+        200,
         60
       ]
     }

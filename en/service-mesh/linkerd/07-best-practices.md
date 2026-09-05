@@ -621,7 +621,9 @@ linkerd diagnostics proxy-metrics deploy/my-service -n my-app
 
 ### Migration Strategy
 
-![An eight-step migration path from Istio to Linkerd grouped into three phases: preparation (analyze the Istio environment, build a test environment, review feature mapping), parallel operation (migrate by namespace, verify traffic, integrate monitoring), and completion (remove Istio, then optimize Linkerd), with the Istio-removal step highlighted as the key milestone.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-07-best-practices-0.svg)
+![An eight-step Istio-to-Linkerd migration workflow in three phases: preparation, parallel operation migrated namespace by namespace, and completion with Istio removal and Linkerd optimization.](../../.gitbook/assets/en-service-mesh-linkerd-07-best-practices-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-07-best-practices-0.html)
 
 ### Feature Mapping
 

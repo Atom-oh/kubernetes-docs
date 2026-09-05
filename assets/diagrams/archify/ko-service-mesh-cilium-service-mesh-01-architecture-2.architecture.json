@@ -29,10 +29,12 @@
         "label": "송신 경로 (TX)",
         "focus": [
           "app",
+          "socket",
+          "netstack",
           "tc-egress",
           "nic"
         ],
-        "note": "애플리케이션이 보낸 패킷은 TC Egress 훅을 거쳐 NIC로 나간다."
+        "note": "애플리케이션이 보낸 패킷은 소켓 계층과 네트워크 스택을 거쳐 TC Egress 훅을 지나 NIC로 나간다."
       }
     ]
   },
@@ -187,13 +189,29 @@
       "variant": "emphasis"
     },
     {
-      "id": "app-tc-egress",
+      "id": "app-socket-tx",
       "from": "app",
-      "to": "tc-egress",
+      "to": "socket",
       "label": "송신 (TX)",
       "variant": "dashed",
       "fromSide": "bottom",
-      "toSide": "right"
+      "toSide": "bottom"
+    },
+    {
+      "id": "socket-netstack-tx",
+      "from": "socket",
+      "to": "netstack",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "netstack-tc-egress",
+      "from": "netstack",
+      "to": "tc-egress",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "tc-egress-nic",

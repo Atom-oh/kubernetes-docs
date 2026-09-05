@@ -138,7 +138,6 @@
       "col": 5,
       "type": "backend",
       "label": "Linkerd 최적화",
-      "tag": "완료 목표",
       "width": 140
     }
   ],

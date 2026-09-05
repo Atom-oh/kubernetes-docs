@@ -41,7 +41,7 @@
     {
       "from": 355,
       "to": 545,
-      "label": "Retry — the Client only sees 200 OK"
+      "label": "Retry — after checking isRetryable: true · budget available, the Client only sees 200 OK"
     }
   ],
   "messages": [

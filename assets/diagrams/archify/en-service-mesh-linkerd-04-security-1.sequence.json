@@ -75,7 +75,7 @@
     {
       "from": 165,
       "to": 295,
-      "label": "mTLS setup"
+      "label": "mTLS setup · mesh check, then TLS init with certificate"
     },
     {
       "from": 310,
@@ -102,7 +102,7 @@
       "from": "proxy-a",
       "to": "proxy-b",
       "y": 260,
-      "label": "mTLS Handshake",
+      "label": "mTLS Handshake · mutual SPIFFE ID verification",
       "variant": "security",
       "note": "Mutual SPIFFE ID verification"
     },
@@ -119,7 +119,7 @@
       "from": "proxy-b",
       "to": "app-b",
       "y": 380,
-      "label": "Plain HTTP",
+      "label": "Plain HTTP (after TLS termination)",
       "note": "Proxy B terminates TLS, forwards plaintext"
     },
     {

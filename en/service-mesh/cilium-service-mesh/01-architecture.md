@@ -19,7 +19,9 @@ The architecture of Cilium Service Mesh is fundamentally different from traditio
 
 eBPF (extended Berkeley Packet Filter) is a technology that enables running sandboxed programs within the Linux kernel. It allows implementing networking, security, and observability features without modifying the kernel.
 
-![Diagram contrasting a traditional application-to-NIC path that always traverses the kernel network stack with an eBPF-based path where kernel-attached programs process packets directly and can bypass the stack.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-1.svg)
+![Diagram contrasting a traditional application-to-NIC path that always traverses the kernel network stack with an eBPF-based path where kernel-attached programs process packets directly and can bypass the stack.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-1.html)
 
 ### eBPF Hook Points
 
@@ -32,13 +34,17 @@ Cilium utilizes multiple eBPF hook points:
 | **Socket Operations** | Socket Level | Socket connection acceleration |
 | **cgroup** | Process Group | Resource control, policy enforcement |
 
-![Diagram showing a packet's ingress path from the NIC through the XDP and TC eBPF hooks up to the application, and the mirrored egress path back down through the TC hook to the NIC.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-2.svg)
+![Diagram showing a packet's ingress path from the NIC through the XDP and TC Ingress eBPF hooks, the network stack and socket layer up to the application, and the egress path back down through the TC Egress hook to the NIC.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-2.html)
 
 ### L3/L4 Processing
 
 L3/L4 processing in eBPF works as follows:
 
-![Sequence diagram showing a packet moving from a source pod through the TC eBPF hook and connection tracker, which either evaluates the service and policy maps for a new connection or reuses a cached decision, before the packet is delivered to the destination pod.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-3.svg)
+![Sequence diagram showing a packet from the source pod entering the TC eBPF hook, which looks up the CT map, evaluates policy only for a new connection or reuses the cached decision, then delivers the packet to the destination pod.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-3.html)
 
 #### eBPF Map Structure
 
@@ -100,7 +106,9 @@ loadBalancer:
 
 ### Sidecar vs Node Proxy
 
-![Side-by-side diagram contrasting the sidecar model, where each pod runs its own 50MB Envoy proxy, with the node proxy model, where three pods on a node share a single 100MB Envoy instance.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-4.svg)
+![Side-by-side diagram contrasting the sidecar model, where each pod runs its own 50MB Envoy proxy, with the node proxy model, where three pods on a node share a single 100MB Envoy instance.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-4.html)
 
 ### Envoy Deployment Method
 
@@ -117,7 +125,9 @@ cilium-envoy   3         3         3       3            3
 
 ### L7 Processing Flow
 
-![Sequence diagram showing a client HTTP request passing through the eBPF datapath, which conditionally redirects traffic to the node Envoy for L7 policy enforcement on both the request and response legs before the response reaches the client.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-5.svg)
+![Sequence diagram showing a client HTTP request passing through the eBPF datapath, which conditionally redirects traffic to the node Envoy for L7 policy enforcement on both the request and response legs before the response reaches the client.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-5.html)
 
 ### Envoy Resource Configuration
 
@@ -150,7 +160,9 @@ envoy:
 
 ### Cilium CRD Structure
 
-![Architecture diagram grouping Cilium's custom resources into network policy, Envoy configuration, and service mesh CRDs, all of which resolve down to a per-pod CiliumEndpoint identity record alongside the cluster-wide CiliumIdentity.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-6.svg)
+![Architecture diagram grouping Cilium CRDs into network policy, Envoy configuration, service mesh, and identity groups, with the policy and Envoy configuration CRDs all resolving to the per-pod CiliumEndpoint beside CiliumIdentity.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-6.html)
 
 ### CiliumEnvoyConfig
 
@@ -281,7 +293,9 @@ spec:
 
 ### Cilium Agent Role
 
-![Architecture diagram showing the Kubernetes API server driving the Cilium Agent's network management, policy management, and proxy management responsibilities, with policy and network state feeding the agent's observability output.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-7.svg)
+![Architecture diagram showing the Kubernetes API server syncing into the Cilium Agent's network management, policy management, and proxy management groups, with network management feeding metrics and policy management feeding flow logs into the agent's observability output.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-7.html)
 
 ### Agent Configuration
 
@@ -321,7 +335,9 @@ data:
 
 Cilium assigns a unique identity to each workload:
 
-![Diagram showing a pod's labels combining with its namespace and service account to derive a numeric Cilium Identity, which in turn sets the workload's security context.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-8.svg)
+![Diagram showing a pod's labels combining with its namespace and service account to derive a numeric Cilium Identity, which in turn sets the workload's security context.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-8.html)
 
 ### Identity-based Policy
 
@@ -357,7 +373,9 @@ ID      LABELS
 
 Workload identity through SPIFFE (Secure Production Identity Framework for Everyone):
 
-![Diagram showing a workload requesting identity through the SPIRE agent and server, which uses a certificate authority to issue an X.509 SVID that is delivered back to the workload.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-9.svg)
+![Diagram showing a workload requesting identity through the SPIRE agent and server, which uses a certificate authority to issue an X.509 SVID that is delivered back to the workload.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-9.html)
 
 ```yaml
 # SPIRE integration configuration
@@ -383,15 +401,21 @@ spiffe://cluster.local/ns/<namespace>/sa/<service-account>
 
 ### Pod-to-Pod Communication (Same Node)
 
-![Sequence diagram showing a packet moving entirely inside the kernel from a source pod's veth ingress hook, through connection-tracking and policy maps, to the destination pod's egress hook on the same node, bypassing the network stack.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-10.svg)
+![Sequence diagram showing a packet moving entirely inside the kernel from a source pod's veth eBPF ingress TC hook, through the connection-tracking and policy maps, to the eBPF egress TC hook on the destination pod's veth on the same node, bypassing the network stack.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-10.html)
 
 ### Pod-to-Pod Communication (Different Nodes)
 
-![Sequence diagram showing a packet leaving a pod on one node, being policy-evaluated and tunnel-encapsulated by eBPF, carried over VXLAN, Geneve, or native routing, then decapsulated and policy-evaluated again by eBPF on the destination node before delivery.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-11.svg)
+![A packet leaves a pod on one node, is policy-evaluated and encapsulated by that node's eBPF, crosses a VXLAN, Geneve, or native route, then is decapsulated and policy-evaluated by eBPF on the destination node before reaching the target pod.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-11.html)
 
 ### When L7 Processing is Required
 
-![Sequence diagram showing a client request that requires L7 policy enforcement being redirected by the client-side eBPF hook to the node Envoy proxy, forwarded to the server through the server-side eBPF hook, and the response taking the same detour back through Envoy to the client.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-12.svg)
+![Sequence diagram of an L7-policy request redirected by the client-side eBPF hook to the node Envoy for HTTP parsing, policy enforcement and metrics, forwarded via the server-side eBPF hook, with the response taking the same detour back.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-12.html)
 
 ## Comparison with Istio Sidecar Architecture
 
@@ -412,13 +436,17 @@ spiffe://cluster.local/ns/<namespace>/sa/<service-account>
 
 ### Latency Analysis
 
-![Diagram breaking down end-to-end request latency into per-hop components, showing Istio's sidecar model spending roughly 1.5 milliseconds across two userspace proxy hops versus Cilium's eBPF model completing the same round trip in about a quarter of a millisecond, with the network hop itself costing the same in both.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-13.svg)
+![Per-hop latency breakdown showing Istio's sidecar path accumulating about 1.5 ms across two user-space Envoy hops, while Cilium's eBPF path completes the same round trip in about 0.24 ms with the network hop costing the same in both.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-13.html)
 
 ### Resource Efficiency Analysis
 
 For a 100 Pod cluster:
 
-![Diagram comparing Istio and Cilium resource consumption on a 100-pod cluster: Istio's per-pod sidecars total roughly 5GB of memory with high aggregate CPU overhead, while Cilium's five node-level Envoy proxies total about 500MB with low CPU overhead.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-14.svg)
+![Diagram comparing resource use on a 100-pod cluster: Istio's per-pod sidecars total about 5GB of memory with high CPU overhead, while Cilium's five node-level Envoy proxies total about 500MB with low CPU overhead.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-14.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-14.html)
 
 ## Scalability Considerations
 

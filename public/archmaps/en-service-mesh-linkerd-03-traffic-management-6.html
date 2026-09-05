@@ -5176,21 +5176,21 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="20" y="552" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent logic" data-legend-x="20" data-legend-baseline="572" data-legend-width="91">
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Flagger step" data-legend-x="20" data-legend-baseline="572" data-legend-width="96">
             <rect x="20" y="564" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="42" y="572" class="t-muted" font-size="7.5" font-weight="500">Agent logic</text>
+            <text x="42" y="572" class="t-muted" font-size="7.5" font-weight="500">Flagger step</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Policy" data-legend-x="118" data-legend-baseline="572" data-legend-width="70">
-            <rect x="118" y="564" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="140" y="572" class="t-muted" font-size="7.5" font-weight="500">Policy</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Decision · rollback" data-legend-x="123" data-legend-baseline="572" data-legend-width="126">
+            <rect x="123" y="564" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="145" y="572" class="t-muted" font-size="7.5" font-weight="500">Decision · rollback</text>
           </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Context / trace" data-legend-x="195" data-legend-baseline="572" data-legend-width="109">
-            <rect x="195" y="564" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-            <text x="217" y="572" class="t-muted" font-size="7.5" font-weight="500">Context / trace</text>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Metric analysis" data-legend-x="256" data-legend-baseline="572" data-legend-width="109">
+            <rect x="256" y="564" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="278" y="572" class="t-muted" font-size="7.5" font-weight="500">Metric analysis</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Cloud service" data-legend-x="311" data-legend-baseline="572" data-legend-width="100">
-            <rect x="311" y="564" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-            <text x="333" y="572" class="t-muted" font-size="7.5" font-weight="500">Cloud service</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Traffic shift" data-legend-x="372" data-legend-baseline="572" data-legend-width="100">
+            <rect x="372" y="564" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="394" y="572" class="t-muted" font-size="7.5" font-weight="500">Traffic shift</text>
           </g>
         </g>
       </svg>
@@ -5387,7 +5387,7 @@
         <ul>
           <li>&bull; request-success-rate at least 99%</li>
           <li>&bull; request-duration p99 at most 500ms</li>
-          <li>&bull; threshold: 5 consecutive successes before the next step</li>
+          <li>&bull; threshold 5 (required successful iterations before promotion)</li>
           <li>&bull; stepWeight 10 · maxWeight 50</li>
         </ul>
       </div>

@@ -22,7 +22,7 @@
       "id": "ebpf-1",
       "type": "security",
       "label": "eBPF",
-      "sublabel": "Node 1"
+      "sublabel": "Node 1 · 정책 평가"
     },
     {
       "id": "tunnel",
@@ -34,7 +34,7 @@
       "id": "ebpf-2",
       "type": "security",
       "label": "eBPF",
-      "sublabel": "Node 2"
+      "sublabel": "Node 2 · 정책 평가"
     },
     {
       "id": "pod-b",

@@ -9,7 +9,9 @@ Linkerd는 강력한 관찰성 기능을 기본으로 제공합니다. 별도의
 
 ## 관찰성 아키텍처
 
-![데이터 플레인 프록시가 수집한 메트릭이 Viz 확장의 Prometheus에 모이고, 이를 통해 Grafana와 Web Dashboard가 시각화되며, 선택적으로 외부 Prometheus/Grafana 및 Jaeger 분산 추적으로 확장되는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-05-observability-0.svg)
+![Linkerd 관찰성 아키텍처: Data Plane의 Linkerd Proxy가 :4191 포트로 노출한 메트릭이 Viz 확장의 Prometheus에 저장되어 Grafana에 표시되고 Metrics API를 거쳐 Web Dashboard에 집계되며, Tap API가 실시간 스트림을 대시보드에 공급하고, 선택적으로 External Prometheus/Grafana로 메트릭을 넘기거나 Jaeger로 분산 추적 스팬을 보낼 수 있다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-05-observability-0.html)
 
 ## 골든 메트릭
 
@@ -67,7 +69,9 @@ linkerd viz dashboard --address 0.0.0.0
 
 ### 대시보드 기능
 
-![Namespace Overview에서 시작해 Deployments 뷰로 좁혀지고, 다시 Pods·Routes·Tap 세부 뷰와 Topology 뷰로 갈라지는 Viz 대시보드의 탐색 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-05-observability-1.svg)
+![Namespace Overview에서 시작해 Deployments 뷰로 좁혀지고, 다시 Pods·Routes·Tap 세부 뷰와 Topology 뷰로 갈라지는 Viz 대시보드의 탐색 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-05-observability-1.html)
 
 **대시보드 뷰:**
 
@@ -739,7 +743,9 @@ spec:
 
 ### 문제 해결 워크플로우
 
-![성공률과 지연 시간을 차례로 점검해 top·tap·routes·edges 명령으로 원인을 좁혀가고, mTLS 문제 여부를 확인해 최종적으로 문제를 해결하는 진단 절차를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-05-observability-2.svg)
+![성공률과 지연 시간을 차례로 점검해 top·tap·routes·edges 명령으로 원인을 좁혀가고, mTLS 문제 여부를 확인해 최종적으로 문제를 해결하는 진단 절차를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-05-observability-2.html)
 
 ## 다음 단계
 

@@ -76,7 +76,7 @@
     {
       "from": 288,
       "to": 388,
-      "label": "mTLS-encrypted hop — inbound verification and policy check"
+      "label": "mTLS hop — inbound verification · policy check"
     },
     {
       "from": 398,
@@ -108,7 +108,8 @@
       "to": "server_proxy",
       "y": 305,
       "label": "Encrypted Request",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "note": "iptables redirect (port 4143)"
     },
     {
       "id": "fwd_req",
@@ -116,7 +117,7 @@
       "to": "server_app",
       "y": 360,
       "label": "HTTP Request",
-      "note": "forward after mTLS verification → policy check (port 4143)"
+      "note": "forward after mTLS verification → policy check"
     },
     {
       "id": "http_resp",

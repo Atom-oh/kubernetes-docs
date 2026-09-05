@@ -621,7 +621,9 @@ linkerd diagnostics proxy-metrics deploy/my-service -n my-app
 
 ### 마이그레이션 전략
 
-![준비, 병행 운영, 완료의 3단계로 진행되는 Istio에서 Linkerd로의 점진적 마이그레이션 절차를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-07-best-practices-0.svg)
+![준비, 병행 운영, 완료의 3단계로 진행되는 Istio에서 Linkerd로의 점진적 마이그레이션 절차를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-07-best-practices-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-07-best-practices-0.html)
 
 ### 기능 매핑
 

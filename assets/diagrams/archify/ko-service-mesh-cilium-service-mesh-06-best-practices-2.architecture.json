@@ -9,37 +9,207 @@
     "legend": {
       "mode": "auto",
       "entries": {
-        "security": { "label": "L3/L4 네트워크 정책 (Cilium)" },
-        "backend": { "label": "L7 라우팅 / 서비스 메시" }
+        "security": {
+          "label": "L3/L4 네트워크 정책 (Cilium)"
+        },
+        "backend": {
+          "label": "L7 라우팅 / 서비스 메시"
+        }
       }
     },
     "views": [
-      { "id": "phase1", "label": "Phase 1 · L3/L4만 Cilium", "focus": ["p1-l34", "p1-l7"], "note": "Cilium을 L3/L4 CNI로만 쓰고 envoy.enabled: false로 Cilium L7을 끈 상태. L7 라우팅은 Istio가 그대로 담당한다." },
-      { "id": "phase2", "label": "Phase 2 · L7 혼합", "focus": ["p1-l7", "p2-l7", "p2-l34"], "note": "L7 정책을 워크로드 단위로 CiliumNetworkPolicy로 옮기며 Cilium과 Istio가 L7을 함께 처리하는 과도기." },
-      { "id": "phase3", "label": "Phase 3 · 목표", "focus": ["p2-l7", "p3-l7", "p3-l34"], "note": "L3/L4와 L7을 모두 Cilium이 담당하는 최종 상태. Istio 사이드카가 더 이상 필요 없다." }
+      {
+        "id": "phase1",
+        "label": "Phase 1 · L3/L4만 Cilium",
+        "focus": [
+          "p1-l34",
+          "p1-l7"
+        ],
+        "note": "Cilium을 L3/L4 CNI로만 쓰고 envoy.enabled: false로 Cilium L7을 끈 상태. L7 라우팅은 Istio가 그대로 담당한다."
+      },
+      {
+        "id": "phase2",
+        "label": "Phase 2 · L7 혼합",
+        "focus": [
+          "p1-l7",
+          "p2-l7",
+          "p2-l34"
+        ],
+        "note": "L7 정책을 네임스페이스 단위로 CiliumNetworkPolicy/CiliumEnvoyConfig로 옮기며 Cilium과 Istio가 L7을 함께 처리하는 과도기."
+      },
+      {
+        "id": "phase3",
+        "label": "Phase 3 · 목표",
+        "focus": [
+          "p2-l7",
+          "p3-l7",
+          "p3-l34"
+        ],
+        "note": "L3/L4와 L7을 모두 Cilium이 담당하는 최종 상태. Istio 사이드카가 더 이상 필요 없다."
+      }
     ]
   },
   "components": [
-    { "id": "p1-l34", "type": "security", "label": "L3/L4: Cilium", "sublabel": "네트워크 정책", "pos": [60, 90], "size": [180, 60] },
-    { "id": "p1-l7", "type": "backend", "label": "L7: Istio", "sublabel": "사이드카 서비스 메시", "pos": [60, 230], "size": [180, 60] },
-    { "id": "p2-l34", "type": "security", "label": "L3/L4: Cilium", "sublabel": "네트워크 정책", "pos": [380, 90], "size": [180, 60] },
-    { "id": "p2-l7", "type": "backend", "label": "L7: Cilium + Istio 혼합", "sublabel": "워크로드별 전환", "pos": [380, 230], "size": [180, 60] },
-    { "id": "p3-l34", "type": "security", "label": "L3/L4: Cilium", "sublabel": "네트워크 정책", "pos": [700, 90], "size": [180, 60] },
-    { "id": "p3-l7", "type": "backend", "label": "L7: Cilium", "sublabel": "Envoy 내장 프록시", "pos": [700, 230], "size": [180, 60], "tag": "목표" }
+    {
+      "id": "p1-l34",
+      "type": "security",
+      "label": "L3/L4: Cilium",
+      "sublabel": "네트워크 정책",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p1-l7",
+      "type": "backend",
+      "label": "L7: Istio",
+      "sublabel": "사이드카 서비스 메시",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2-l34",
+      "type": "security",
+      "label": "L3/L4: Cilium",
+      "sublabel": "네트워크 정책",
+      "pos": [
+        380,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2-l7",
+      "type": "backend",
+      "label": "L7: Cilium + Istio 혼합",
+      "sublabel": "네임스페이스별 전환",
+      "pos": [
+        380,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p3-l34",
+      "type": "security",
+      "label": "L3/L4: Cilium",
+      "sublabel": "네트워크 정책",
+      "pos": [
+        700,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p3-l7",
+      "type": "backend",
+      "label": "L7: Cilium",
+      "sublabel": "Envoy 내장 프록시",
+      "pos": [
+        700,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "목표"
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Phase 1", "wraps": ["p1-l34", "p1-l7"] },
-    { "kind": "region", "label": "Phase 2", "wraps": ["p2-l34", "p2-l7"] },
-    { "kind": "region", "label": "Phase 3", "wraps": ["p3-l34", "p3-l7"] }
+    {
+      "kind": "region",
+      "label": "Phase 1",
+      "wraps": [
+        "p1-l34",
+        "p1-l7"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 2",
+      "wraps": [
+        "p2-l34",
+        "p2-l7"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 3",
+      "wraps": [
+        "p3-l34",
+        "p3-l7"
+      ]
+    }
   ],
   "connections": [
-    { "id": "l34-keep-1", "from": "p1-l34", "to": "p2-l34", "label": "Cilium 유지", "variant": "dashed" },
-    { "id": "l34-keep-2", "from": "p2-l34", "to": "p3-l34", "label": "Cilium 유지", "variant": "dashed" },
-    { "id": "l7-handoff-1", "from": "p1-l7", "to": "p2-l7", "label": "L7 이관", "variant": "emphasis" },
-    { "id": "l7-handoff-2", "from": "p2-l7", "to": "p3-l7", "label": "L7 이관", "variant": "emphasis" }
+    {
+      "id": "l34-keep-1",
+      "from": "p1-l34",
+      "to": "p2-l34",
+      "label": "Cilium 유지",
+      "variant": "dashed"
+    },
+    {
+      "id": "l34-keep-2",
+      "from": "p2-l34",
+      "to": "p3-l34",
+      "label": "Cilium 유지",
+      "variant": "dashed"
+    },
+    {
+      "id": "l7-handoff-1",
+      "from": "p1-l7",
+      "to": "p2-l7",
+      "label": "L7 이관",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l7-handoff-2",
+      "from": "p2-l7",
+      "to": "p3-l7",
+      "label": "L7 이관",
+      "variant": "emphasis"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Phase 1 시작점", "items": ["Cilium을 L3/L4 CNI로만 사용", "values.yaml에서 envoy.enabled: false로 Cilium L7 비활성화", "L7 라우팅은 Istio 유지"] },
-    { "dot": "amber", "title": "롤백 계획", "items": ["CiliumNetworkPolicy 삭제로 Cilium L7 정책 비활성화", "네임스페이스에 istio-injection=enabled 재적용", "Deployment rollout restart로 Pod 재시작"] }
+    {
+      "dot": "cyan",
+      "title": "Phase 1 시작점",
+      "items": [
+        "Cilium을 L3/L4 CNI로만 사용",
+        "values.yaml에서 envoy.enabled: false로 Cilium L7 비활성화",
+        "L7 라우팅은 Istio 유지"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "롤백 계획",
+      "items": [
+        "CiliumNetworkPolicy 삭제로 Cilium L7 정책 비활성화",
+        "네임스페이스에 istio-injection=enabled 재적용",
+        "Deployment rollout restart로 Pod 재시작"
+      ]
+    }
   ]
 }

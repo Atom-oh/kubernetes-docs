@@ -44,12 +44,14 @@
       },
       {
         "id": "watch-path",
-        "label": "Service discovery",
+        "label": "API server watches",
         "focus": [
           "destination",
+          "identity",
+          "policy",
           "apiserver"
         ],
-        "note": "Destination watches Service/Endpoint changes on the API server and streams them to proxies."
+        "note": "All three controllers are API-server clients: Destination reads Services/Endpoints, Identity ServiceAccounts, Policy the policy CRDs."
       }
     ]
   },
@@ -226,6 +228,22 @@
       "label": "watch Services/Endpoints",
       "fromSide": "top",
       "toSide": "left"
+    },
+    {
+      "id": "identity-apiserver",
+      "from": "identity",
+      "to": "apiserver",
+      "label": "validate ServiceAccount",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "policy-apiserver",
+      "from": "policy",
+      "to": "apiserver",
+      "label": "watch Server/ServerAuthorization",
+      "fromSide": "top",
+      "toSide": "top"
     }
   ],
   "cards": [

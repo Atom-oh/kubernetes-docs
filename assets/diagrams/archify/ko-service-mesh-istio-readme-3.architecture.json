@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh (Istio) vs CNI (Cilium) 비교",
+    "output": "ko-service-mesh-istio-readme-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      540
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "L7 프록시 계층 · Istio"
+        },
+        "security": {
+          "label": "eBPF 커널 계층 · Cilium"
+        },
+        "external": {
+          "label": "사용 시나리오"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "istio-side",
+        "label": "Service Mesh (Istio)",
+        "focus": [
+          "istio-proxy",
+          "istio-traffic",
+          "istio-l7"
+        ],
+        "note": "Envoy Sidecar가 애플리케이션 레벨에서 트래픽을 제어하고 Retry, Timeout 같은 L7 기능을 제공한다."
+      },
+      {
+        "id": "cilium-side",
+        "label": "CNI (Cilium)",
+        "focus": [
+          "cilium-ebpf",
+          "cilium-policy",
+          "cilium-perf"
+        ],
+        "note": "eBPF가 커널 레벨에서 네트워크 정책을 적용하므로 오버헤드가 낮고 성능이 높다."
+      },
+      {
+        "id": "scenarios",
+        "label": "사용 시나리오",
+        "focus": [
+          "istio-l7",
+          "cilium-perf",
+          "sc-mesh",
+          "sc-cilium",
+          "sc-both"
+        ],
+        "note": "복잡한 L7 로직은 Service Mesh, 정책과 성능은 Cilium, 대규모 엔터프라이즈는 둘 다 사용한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istio-proxy",
+      "type": "backend",
+      "label": "L7 프록시 기반",
+      "sublabel": "Envoy Sidecar",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "istio-traffic",
+      "type": "backend",
+      "label": "애플리케이션 레벨 트래픽 제어",
+      "sublabel": "VirtualService · DestinationRule",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "istio-l7",
+      "type": "backend",
+      "label": "풍부한 L7 기능",
+      "sublabel": "Retry · Timeout",
+      "pos": [
+        580,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cilium-ebpf",
+      "type": "security",
+      "label": "eBPF 기반",
+      "sublabel": "커널 레벨",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cilium-policy",
+      "type": "security",
+      "label": "네트워크 레벨 정책 적용",
+      "sublabel": "L3/L4 NetworkPolicy",
+      "pos": [
+        300,
+        340
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "cilium-perf",
+      "type": "security",
+      "label": "높은 성능",
+      "sublabel": "낮은 오버헤드",
+      "pos": [
+        580,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sc-mesh",
+      "type": "external",
+      "label": "Service Mesh",
+      "sublabel": "복잡한 L7 로직",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sc-both",
+      "type": "external",
+      "label": "둘 다 사용",
+      "sublabel": "대규모 엔터프라이즈",
+      "pos": [
+        960,
+        215
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sc-cilium",
+      "type": "external",
+      "label": "Cilium",
+      "sublabel": "정책 · 성능",
+      "pos": [
+        960,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh (Istio)",
+      "wraps": [
+        "istio-proxy",
+        "istio-traffic",
+        "istio-l7"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CNI (Cilium)",
+      "wraps": [
+        "cilium-ebpf",
+        "cilium-policy",
+        "cilium-perf"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "사용 시나리오",
+      "wraps": [
+        "sc-mesh",
+        "sc-both",
+        "sc-cilium"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istio-to-mesh",
+      "from": "istio-l7",
+      "to": "sc-mesh",
+      "label": "L7 로직이 복잡할 때",
+      "variant": "emphasis"
+    },
+    {
+      "id": "istio-to-both",
+      "from": "istio-l7",
+      "to": "sc-both",
+      "variant": "dashed"
+    },
+    {
+      "id": "cilium-to-cilium",
+      "from": "cilium-perf",
+      "to": "sc-cilium",
+      "label": "정책 · 성능이 핵심일 때",
+      "variant": "security",
+      "labelDy": 18
+    },
+    {
+      "id": "cilium-to-both",
+      "from": "cilium-perf",
+      "to": "sc-both",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Cilium이 더 적합한 경우",
+      "items": [
+        "L3/L4 네트워크 정책이 주요 목적",
+        "높은 성능이 핵심 요구사항",
+        "Service Mesh 운영 부담 회피",
+        "간단한 mTLS 및 관찰성만 필요"
+      ]
+    }
+  ]
+}

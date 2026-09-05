@@ -5,49 +5,204 @@
     "title": "L7 처리가 필요한 경우 — 노드 Envoy 왕복 경로",
     "quality_profile": "showcase",
     "column_fit": "spread",
-    "viewBox": [960, 720],
+    "viewBox": [
+      960,
+      620
+    ],
     "animation": "trace",
     "views": [
-      { "id": "request-path", "label": "요청 경로", "focus": ["client", "ebpf-client", "envoy", "ebpf-server", "server"], "note": "L7 정책이 감지된 요청만 eBPF가 노드 Envoy로 리다이렉트한 뒤 서버 Pod에 전달한다." },
-      { "id": "response-path", "label": "응답 경로", "focus": ["server", "ebpf-server", "envoy", "ebpf-client", "client"], "note": "응답도 같은 경로로 Envoy를 거쳐 메트릭을 갱신한 뒤 클라이언트 Pod에 도착한다." }
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "client",
+          "ebpf-client",
+          "envoy",
+          "ebpf-server",
+          "server"
+        ],
+        "note": "L7 정책이 감지된 요청만 eBPF가 노드 Envoy로 리다이렉트한 뒤 서버 Pod에 전달한다."
+      },
+      {
+        "id": "response-path",
+        "label": "응답 경로",
+        "focus": [
+          "server",
+          "ebpf-server",
+          "envoy",
+          "ebpf-client",
+          "client"
+        ],
+        "note": "응답도 같은 경로로 Envoy를 거쳐 메트릭을 갱신한 뒤 클라이언트 Pod에 도착한다."
+      }
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
-        "default": { "label": "내부 프록시 홉" },
-        "emphasis": { "label": "클라이언트 측 HTTP" },
-        "return": { "label": "응답" }
+        "default": {
+          "label": "내부 프록시 홉"
+        },
+        "emphasis": {
+          "label": "클라이언트 측 HTTP"
+        },
+        "return": {
+          "label": "응답"
+        }
       }
     }
   },
   "participants": [
-    { "id": "client", "type": "frontend", "label": "Client Pod", "sublabel": "요청 시작" },
-    { "id": "ebpf-client", "type": "security", "label": "eBPF (Client)", "sublabel": "클라이언트 측 훅" },
-    { "id": "envoy", "type": "backend", "label": "Node Envoy", "sublabel": "L7 프록시" },
-    { "id": "ebpf-server", "type": "security", "label": "eBPF (Server)", "sublabel": "서버 측 훅" },
-    { "id": "server", "type": "frontend", "label": "Server Pod", "sublabel": "응답 생성" }
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client Pod",
+      "sublabel": "요청 시작"
+    },
+    {
+      "id": "ebpf-client",
+      "type": "security",
+      "label": "eBPF (Client)",
+      "sublabel": "클라이언트 측 훅"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Node Envoy",
+      "sublabel": "L7 프록시 · HTTP 파싱 · 정책"
+    },
+    {
+      "id": "ebpf-server",
+      "type": "security",
+      "label": "eBPF (Server)",
+      "sublabel": "서버 측 훅"
+    },
+    {
+      "id": "server",
+      "type": "frontend",
+      "label": "Server Pod",
+      "sublabel": "응답 생성"
+    }
   ],
   "segments": [
-    { "from": 165, "to": 385, "label": "요청 — Envoy로 리다이렉트" },
-    { "from": 405, "to": 600, "label": "응답 — 같은 경로로 되돌아감" }
+    {
+      "from": 160,
+      "to": 335,
+      "label": "요청 — Envoy로 리다이렉트"
+    },
+    {
+      "from": 350,
+      "to": 515,
+      "label": "응답 — 같은 경로로 되돌아감"
+    }
   ],
   "messages": [
-    { "id": "http-request", "from": "client", "to": "ebpf-client", "y": 200, "label": "HTTP 요청", "variant": "emphasis", "note": "L7 정책 감지" },
-    { "id": "redirect-proxy", "from": "ebpf-client", "to": "envoy", "y": 250, "label": "프록시로 리다이렉트", "note": "HTTP 파싱 · L7 정책 적용 · 메트릭 · 트레이싱" },
-    { "id": "forward-request", "from": "envoy", "to": "ebpf-server", "y": 305, "label": "요청 전달" },
-    { "id": "deliver-request", "from": "ebpf-server", "to": "server", "y": 350, "label": "패킷 전달" },
-    { "id": "http-response", "from": "server", "to": "ebpf-server", "y": 435, "label": "HTTP 응답", "variant": "return" },
-    { "id": "forward-response", "from": "ebpf-server", "to": "envoy", "y": 480, "label": "응답 전달", "variant": "return", "note": "응답 처리 · 메트릭 업데이트" },
-    { "id": "return-response", "from": "envoy", "to": "ebpf-client", "y": 530, "label": "응답 전달", "variant": "return" },
-    { "id": "deliver-response", "from": "ebpf-client", "to": "client", "y": 575, "label": "패킷 전달", "variant": "emphasis" }
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "ebpf-client",
+      "y": 190,
+      "label": "HTTP 요청 — L7 정책 감지",
+      "variant": "emphasis",
+      "note": "L7 정책 감지"
+    },
+    {
+      "id": "redirect-proxy",
+      "from": "ebpf-client",
+      "to": "envoy",
+      "y": 230,
+      "label": "프록시로 리다이렉트 — 메트릭 · 트레이싱",
+      "note": "HTTP 파싱 · L7 정책 적용 · 메트릭 · 트레이싱"
+    },
+    {
+      "id": "forward-request",
+      "from": "envoy",
+      "to": "ebpf-server",
+      "y": 270,
+      "label": "요청 전달"
+    },
+    {
+      "id": "deliver-request",
+      "from": "ebpf-server",
+      "to": "server",
+      "y": 310,
+      "label": "패킷 전달"
+    },
+    {
+      "id": "http-response",
+      "from": "server",
+      "to": "ebpf-server",
+      "y": 380,
+      "label": "HTTP 응답",
+      "variant": "return"
+    },
+    {
+      "id": "forward-response",
+      "from": "ebpf-server",
+      "to": "envoy",
+      "y": 420,
+      "label": "응답 전달 · 메트릭 업데이트",
+      "variant": "return",
+      "note": "응답 처리 · 메트릭 업데이트"
+    },
+    {
+      "id": "return-response",
+      "from": "envoy",
+      "to": "ebpf-client",
+      "y": 460,
+      "label": "응답 전달",
+      "variant": "return"
+    },
+    {
+      "id": "deliver-response",
+      "from": "ebpf-client",
+      "to": "client",
+      "y": 500,
+      "label": "패킷 전달",
+      "variant": "emphasis"
+    }
   ],
   "activations": [
-    { "participant": "ebpf-client", "from": 195, "to": 258, "type": "security" },
-    { "participant": "envoy", "from": 245, "to": 312, "type": "backend" },
-    { "participant": "ebpf-server", "from": 300, "to": 356, "type": "security" },
-    { "participant": "server", "from": 345, "to": 440, "type": "frontend" },
-    { "participant": "ebpf-server", "from": 430, "to": 486, "type": "security" },
-    { "participant": "envoy", "from": 475, "to": 536, "type": "backend" },
-    { "participant": "ebpf-client", "from": 525, "to": 580, "type": "security" }
+    {
+      "participant": "ebpf-client",
+      "from": 185,
+      "to": 236,
+      "type": "security"
+    },
+    {
+      "participant": "envoy",
+      "from": 225,
+      "to": 276,
+      "type": "backend"
+    },
+    {
+      "participant": "ebpf-server",
+      "from": 265,
+      "to": 316,
+      "type": "security"
+    },
+    {
+      "participant": "server",
+      "from": 305,
+      "to": 386,
+      "type": "frontend"
+    },
+    {
+      "participant": "ebpf-server",
+      "from": 375,
+      "to": 426,
+      "type": "security"
+    },
+    {
+      "participant": "envoy",
+      "from": 415,
+      "to": 466,
+      "type": "backend"
+    },
+    {
+      "participant": "ebpf-client",
+      "from": 455,
+      "to": 506,
+      "type": "security"
+    }
   ]
 }

@@ -139,7 +139,6 @@
       "col": 5,
       "type": "backend",
       "label": "Optimize Linkerd",
-      "tag": "completion goal",
       "width": 140
     }
   ],

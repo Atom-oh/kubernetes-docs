@@ -20,7 +20,7 @@
           "authz",
           "identity"
         ],
-        "note": "Defenses the Linkerd proxy applies automatically, with no configuration."
+        "note": "Defenses handled by the Linkerd proxy: mTLS and workload identity are automatic; authorization is set explicitly via ServerAuthorization."
       },
       {
         "id": "application-level",

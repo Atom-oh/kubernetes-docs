@@ -1,0 +1,306 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Service Mesh Selection Criteria",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "k8s-path",
+        "label": "Kubernetes platform path",
+        "focus": [
+          "need",
+          "platform",
+          "complexity",
+          "basic_svc",
+          "consul_kong",
+          "istio",
+          "linkerd"
+        ],
+        "note": "Ask in order: need a mesh, multi-platform, can absorb complexity — then pick Istio, Linkerd, or Consul/Kong Mesh."
+      },
+      {
+        "id": "aws-path",
+        "label": "AWS-centric path",
+        "focus": [
+          "aws_centric",
+          "serverless",
+          "multicloud",
+          "lattice",
+          "istio_eks",
+          "istio_mc",
+          "regional"
+        ],
+        "note": "AWS-centric: VPC Lattice or Istio on EKS by serverless need; otherwise Istio Multi-cluster or a regional solution by multi-cloud need."
+      },
+      {
+        "id": "recommended",
+        "label": "Recommended solutions",
+        "focus": [
+          "complexity",
+          "istio",
+          "serverless",
+          "lattice"
+        ],
+        "note": "Istio is recommended when rich features are needed; VPC Lattice when AWS-native, serverless-first operation matters most."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Decision"
+        },
+        "frontend": {
+          "label": "No mesh"
+        },
+        "external": {
+          "label": "Kubernetes Service Mesh"
+        },
+        "cloud": {
+          "label": "AWS solution"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "k8s_q",
+      "label": "Kubernetes platform path · questions"
+    },
+    {
+      "id": "k8s_out",
+      "label": "Kubernetes platform path · outcomes"
+    },
+    {
+      "id": "aws_q",
+      "label": "AWS-centric path · questions"
+    },
+    {
+      "id": "aws_out",
+      "label": "AWS-centric path · outcomes"
+    }
+  ],
+  "mainPath": [
+    "need",
+    "platform",
+    "complexity",
+    "istio"
+  ],
+  "nodes": [
+    {
+      "id": "need",
+      "lane": "k8s_q",
+      "col": 0,
+      "width": 172,
+      "type": "backend",
+      "label": "Need Service Mesh?",
+      "sublabel": "mTLS · traffic control"
+    },
+    {
+      "id": "platform",
+      "lane": "k8s_q",
+      "col": 1,
+      "width": 172,
+      "type": "backend",
+      "label": "Platform?",
+      "sublabel": "K8s-only vs multi-platform"
+    },
+    {
+      "id": "complexity",
+      "lane": "k8s_q",
+      "col": 2,
+      "width": 172,
+      "type": "backend",
+      "label": "Accept complexity?",
+      "sublabel": "ops complexity vs features"
+    },
+    {
+      "id": "basic_svc",
+      "lane": "k8s_out",
+      "col": 0,
+      "width": 172,
+      "type": "frontend",
+      "label": "Basic K8s Service",
+      "sublabel": "Service + Ingress suffice"
+    },
+    {
+      "id": "consul_kong",
+      "lane": "k8s_out",
+      "col": 1,
+      "width": 172,
+      "type": "external",
+      "label": "Consul / Kong Mesh",
+      "sublabel": "VM workloads · multi-platform"
+    },
+    {
+      "id": "istio",
+      "lane": "k8s_out",
+      "col": 2,
+      "width": 172,
+      "type": "external",
+      "label": "Choose Istio",
+      "sublabel": "rich features · enterprise",
+      "tag": "recommended"
+    },
+    {
+      "id": "linkerd",
+      "lane": "k8s_out",
+      "col": 3,
+      "width": 172,
+      "type": "external",
+      "label": "Choose Linkerd",
+      "sublabel": "simplicity · low overhead"
+    },
+    {
+      "id": "aws_centric",
+      "lane": "aws_q",
+      "col": 0,
+      "width": 172,
+      "type": "backend",
+      "label": "AWS-centric?",
+      "sublabel": "EKS · ECS · Lambda mix"
+    },
+    {
+      "id": "serverless",
+      "lane": "aws_q",
+      "col": 1,
+      "width": 172,
+      "type": "backend",
+      "label": "Serverless / simple?",
+      "sublabel": "minimize ops overhead"
+    },
+    {
+      "id": "multicloud",
+      "lane": "aws_q",
+      "col": 2,
+      "width": 172,
+      "type": "backend",
+      "label": "Multi-cloud?",
+      "sublabel": "cloud-neutral needs"
+    },
+    {
+      "id": "lattice",
+      "lane": "aws_out",
+      "col": 1,
+      "width": 172,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "sublabel": "fully managed · AWS native",
+      "tag": "recommended"
+    },
+    {
+      "id": "istio_eks",
+      "lane": "aws_out",
+      "col": 0,
+      "width": 172,
+      "type": "cloud",
+      "label": "Istio on EKS",
+      "sublabel": "richer features needed"
+    },
+    {
+      "id": "istio_mc",
+      "lane": "aws_out",
+      "col": 2,
+      "width": 172,
+      "type": "cloud",
+      "label": "Istio Multi-cluster",
+      "sublabel": "multi-cluster federation"
+    },
+    {
+      "id": "regional",
+      "lane": "aws_out",
+      "col": 3,
+      "width": 172,
+      "type": "cloud",
+      "label": "Regional solution",
+      "sublabel": "single cloud · per region"
+    }
+  ],
+  "edges": [
+    {
+      "id": "need-platform",
+      "from": "need",
+      "to": "platform",
+      "label": "yes"
+    },
+    {
+      "id": "need-basic",
+      "from": "need",
+      "to": "basic_svc",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "platform-complexity",
+      "from": "platform",
+      "to": "complexity",
+      "label": "K8s-only"
+    },
+    {
+      "id": "platform-consul",
+      "from": "platform",
+      "to": "consul_kong",
+      "label": "multi-platform",
+      "role": "branch"
+    },
+    {
+      "id": "complexity-istio",
+      "from": "complexity",
+      "to": "istio",
+      "label": "yes · rich features",
+      "variant": "emphasis"
+    },
+    {
+      "id": "complexity-linkerd",
+      "from": "complexity",
+      "to": "linkerd",
+      "label": "no · simplicity",
+      "role": "branch"
+    },
+    {
+      "id": "aws-serverless",
+      "from": "aws_centric",
+      "to": "serverless",
+      "label": "yes"
+    },
+    {
+      "id": "aws-multicloud",
+      "from": "aws_centric",
+      "to": "multicloud",
+      "label": "no",
+      "role": "branch",
+      "route": "up-channel",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "serverless-lattice",
+      "from": "serverless",
+      "to": "lattice",
+      "label": "yes · serverless",
+      "variant": "emphasis"
+    },
+    {
+      "id": "serverless-istio-eks",
+      "from": "serverless",
+      "to": "istio_eks",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "multicloud-istio-mc",
+      "from": "multicloud",
+      "to": "istio_mc",
+      "label": "yes · multi-cloud"
+    },
+    {
+      "id": "multicloud-regional",
+      "from": "multicloud",
+      "to": "regional",
+      "label": "no",
+      "role": "branch"
+    }
+  ]
+}

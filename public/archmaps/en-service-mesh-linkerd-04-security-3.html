@@ -5059,20 +5059,20 @@
         </g>
         </g>
 
-        <g data-edge-from="pod" data-edge-to="id" data-edge-label="Send CSR + SA token" data-edge-key="1" data-edge-id="send-csr">
+        <g data-edge-from="pod" data-edge-to="id" data-edge-label="Send CSR (SPIFFE ID) + SA token" data-edge-key="1" data-edge-id="send-csr">
           <path data-composition-edge-from="pod" data-composition-edge-to="id" data-composition-edge-id="send-csr" data-composition-points="154,265;558.6666666666667,265" d="M 154 265 L 558.6666666666667 265" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="300.9333333333334" y="245" width="110.8" height="16" rx="3" class="c-mask"/>
-          <text x="356.33333333333337" y="255" class="t-backend" font-size="9" text-anchor="middle">Send CSR + SA token</text>
+          <rect x="269.73333333333335" y="245" width="173.20000000000002" height="16" rx="3" class="c-mask"/>
+          <text x="356.33333333333337" y="255" class="t-backend" font-size="9" text-anchor="middle">Send CSR (SPIFFE ID) + SA token</text>
         </g>
         <text data-detail="fine" x="166" y="283" class="t-dim" font-size="7">Pod generates a CSR containing its SPIFFE ID</text>
         </g>
 
-        <g data-edge-from="id" data-edge-to="ca" data-edge-label="Certificate signing request" data-edge-key="2" data-edge-id="sign-req">
+        <g data-edge-from="id" data-edge-to="ca" data-edge-label="Validate, then request signing" data-edge-key="2" data-edge-id="sign-req">
           <path data-composition-edge-from="id" data-composition-edge-to="ca" data-composition-edge-id="sign-req" data-composition-points="572.6666666666667,375;768,375" d="M 572.6666666666667 375 L 768 375" class="a-security" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <g data-detail="context">
-          <rect x="594.1333333333333" y="355" width="152.4" height="16" rx="3" class="c-mask"/>
-          <text x="670.3333333333334" y="365" class="t-security" font-size="9" text-anchor="middle">Certificate signing request</text>
+          <rect x="586.3333333333334" y="355" width="168" height="16" rx="3" class="c-mask"/>
+          <text x="670.3333333333334" y="365" class="t-security" font-size="9" text-anchor="middle">Validate, then request signing</text>
         </g>
         <text data-detail="fine" x="584.6666666666667" y="393" class="t-dim" font-size="7">Validate SA token · validate Pod info · generate SPIFFE ID</text>
         </g>
@@ -5096,12 +5096,12 @@
 
         <!-- Segment Labels -->
         <g data-graph-role="segment-label" data-segment-id="0">
-          <rect x="56" y="143" width="227.20000000000002" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">Pod starts — obtain token and prepare CSR</text>
+          <rect x="56" y="143" width="294.8" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">Pod starts — obtain SA token, build CSR with SPIFFE ID</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="1">
-          <rect x="56" y="298" width="232.4" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="311" class="t-dim" font-size="9" font-weight="600">Identity Controller validation and signing</text>
+          <rect x="56" y="298" width="476.8" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="311" class="t-dim" font-size="9" font-weight="600">Identity Controller — validate SA token and Pod info, generate SPIFFE ID, request signing</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="2">
           <rect x="56" y="468" width="164.8" height="18" rx="3" class="c-mask"/>

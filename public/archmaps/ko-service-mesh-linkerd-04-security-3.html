@@ -5059,20 +5059,20 @@
         </g>
         </g>
 
-        <g data-edge-from="pod" data-edge-to="id" data-edge-label="CSR + SA 토큰 전송" data-edge-key="1" data-edge-id="send-csr">
+        <g data-edge-from="pod" data-edge-to="id" data-edge-label="CSR(SPIFFE ID) + SA 토큰 전송" data-edge-key="1" data-edge-id="send-csr">
           <path data-composition-edge-from="pod" data-composition-edge-to="id" data-composition-edge-id="send-csr" data-composition-points="154,265;558.6666666666667,265" d="M 154 265 L 558.6666666666667 265" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="303.53333333333336" y="245" width="105.60000000000001" height="16" rx="3" class="c-mask"/>
-          <text x="356.33333333333337" y="255" class="t-backend" font-size="9" text-anchor="middle">CSR + SA 토큰 전송</text>
+          <rect x="274.9333333333334" y="245" width="162.8" height="16" rx="3" class="c-mask"/>
+          <text x="356.33333333333337" y="255" class="t-backend" font-size="9" text-anchor="middle">CSR(SPIFFE ID) + SA 토큰 전송</text>
         </g>
         <text data-detail="fine" x="166" y="283" class="t-dim" font-size="7">Pod가 SPIFFE ID를 담은 CSR 생성</text>
         </g>
 
-        <g data-edge-from="id" data-edge-to="ca" data-edge-label="인증서 서명 요청" data-edge-key="2" data-edge-id="sign-req">
+        <g data-edge-from="id" data-edge-to="ca" data-edge-label="검증 후 인증서 서명 요청" data-edge-key="2" data-edge-id="sign-req">
           <path data-composition-edge-from="id" data-composition-edge-to="ca" data-composition-edge-id="sign-req" data-composition-points="572.6666666666667,375;768,375" d="M 572.6666666666667 375 L 768 375" class="a-security" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <g data-detail="context">
-          <rect x="622.7333333333333" y="355" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="670.3333333333334" y="365" class="t-security" font-size="9" text-anchor="middle">인증서 서명 요청</text>
+          <rect x="601.9333333333334" y="355" width="136.8" height="16" rx="3" class="c-mask"/>
+          <text x="670.3333333333334" y="365" class="t-security" font-size="9" text-anchor="middle">검증 후 인증서 서명 요청</text>
         </g>
         <text data-detail="fine" x="584.6666666666667" y="393" class="t-dim" font-size="7">SA 토큰 검증 · Pod 정보 검증 · SPIFFE ID 생성</text>
         </g>
@@ -5096,12 +5096,12 @@
 
         <!-- Segment Labels -->
         <g data-graph-role="segment-label" data-segment-id="0">
-          <rect x="56" y="143" width="175.20000000000002" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">Pod 시작 — 토큰 획득과 CSR 준비</text>
+          <rect x="56" y="143" width="274" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="156" class="t-dim" font-size="9" font-weight="600">Pod 시작 — SA 토큰 획득, SPIFFE ID를 담은 CSR 생성</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="1">
-          <rect x="56" y="298" width="180.4" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="311" class="t-dim" font-size="9" font-weight="600">Identity Controller 검증 및 서명</text>
+          <rect x="56" y="298" width="388.40000000000003" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="311" class="t-dim" font-size="9" font-weight="600">Identity Controller — SA 토큰·Pod 정보 검증 후 SPIFFE ID 생성, 서명 요청</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="2">
           <rect x="56" y="468" width="118" height="18" rx="3" class="c-mask"/>

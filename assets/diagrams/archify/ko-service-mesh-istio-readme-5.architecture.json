@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 아키텍처: Control Plane과 Data Plane",
+    "output": "ko-service-mesh-istio-readme-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-push",
+        "label": "Control Plane 배포",
+        "focus": [
+          "pilot",
+          "citadel",
+          "galley",
+          "envoy1",
+          "envoy2"
+        ],
+        "note": "istiod의 Pilot이 라우팅 구성을, Citadel이 인증서를 각 Envoy 사이드카에 내려보낸다."
+      },
+      {
+        "id": "mtls",
+        "label": "Envoy 간 mTLS",
+        "focus": [
+          "envoy1",
+          "envoy2",
+          "envoy3"
+        ],
+        "note": "파드 사이의 모든 통신은 Envoy 사이드카가 자동으로 mTLS로 암호화한다."
+      },
+      {
+        "id": "request",
+        "label": "애플리케이션 요청",
+        "focus": [
+          "app1",
+          "envoy1",
+          "app2",
+          "envoy2",
+          "app3",
+          "envoy3"
+        ],
+        "note": "애플리케이션은 코드 수정 없이 요청을 보내고, 같은 파드의 Envoy가 모든 트래픽을 가로챈다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pilot",
+      "type": "backend",
+      "label": "Pilot",
+      "sublabel": "서비스 디스커버리 · 라우팅 규칙",
+      "pos": [
+        140,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "citadel",
+      "type": "security",
+      "label": "Citadel",
+      "sublabel": "인증서 생성 · mTLS",
+      "pos": [
+        480,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "galley",
+      "type": "backend",
+      "label": "Galley",
+      "sublabel": "구성 검증 · 배포",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar",
+      "pos": [
+        160,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "Pod 1",
+      "pos": [
+        160,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar",
+      "pos": [
+        500,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "Pod 2",
+      "pos": [
+        500,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy3",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar",
+      "pos": [
+        840,
+        290
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app3",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "Pod 3",
+      "pos": [
+        840,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane (istiod)",
+      "wraps": [
+        "pilot",
+        "citadel",
+        "galley"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "envoy1",
+        "app1",
+        "envoy2",
+        "app2",
+        "envoy3",
+        "app3"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "envoy1",
+        "app1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "envoy2",
+        "app2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 3",
+      "wraps": [
+        "envoy3",
+        "app3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pilot-config",
+      "from": "pilot",
+      "to": "envoy1",
+      "label": "구성 전달 · 모든 Envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "citadel-cert",
+      "from": "citadel",
+      "to": "envoy2",
+      "label": "인증서 발급 · 모든 Envoy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "mtls-1-2",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-2-3",
+      "from": "envoy2",
+      "to": "envoy3",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "req1",
+      "from": "app1",
+      "to": "envoy1",
+      "label": "요청",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "req2",
+      "from": "app2",
+      "to": "envoy2",
+      "label": "요청",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "req3",
+      "from": "app3",
+      "to": "envoy3",
+      "label": "요청",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Control Plane (istiod)",
+      "items": [
+        "Pilot: 서비스 디스커버리, 트래픽 라우팅 규칙 관리",
+        "Citadel: 인증서 생성 및 관리, mTLS 활성화",
+        "Galley: 구성 검증 및 배포"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Data Plane",
+      "items": [
+        "Envoy Proxy: 각 파드에 사이드카로 배포되어 모든 네트워크 트래픽을 가로채고 제어"
+      ]
+    }
+  ]
+}

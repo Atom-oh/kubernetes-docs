@@ -148,7 +148,7 @@
     {
       "id": "allWorkloads",
       "lane": "complete",
-      "col": 0,
+      "col": 3,
       "type": "backend",
       "label": "Convert all workloads",
       "width": 192
@@ -156,7 +156,7 @@
     {
       "id": "removeMesh",
       "lane": "complete",
-      "col": 1,
+      "col": 4,
       "type": "external",
       "label": "Remove Istio/Linkerd",
       "width": 188
@@ -164,7 +164,7 @@
     {
       "id": "cleanup",
       "lane": "complete",
-      "col": 2,
+      "col": 5,
       "type": "backend",
       "label": "Cleanup and optimize",
       "width": 184
@@ -202,7 +202,6 @@
     {
       "from": "l7Policy",
       "to": "allWorkloads",
-      "label": "all namespaces converted",
       "variant": "emphasis",
       "role": "main"
     },

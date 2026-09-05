@@ -6,6 +6,22 @@
     "locale": "en",
     "animation": "trace",
     "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Flagger step"
+        },
+        "database": {
+          "label": "Metric analysis"
+        },
+        "security": {
+          "label": "Decision · rollback"
+        },
+        "cloud": {
+          "label": "Traffic shift"
+        }
+      }
+    },
     "views": [
       {
         "id": "happy_path",
@@ -194,7 +210,7 @@
       "items": [
         "request-success-rate at least 99%",
         "request-duration p99 at most 500ms",
-        "threshold: 5 consecutive successes before the next step",
+        "threshold 5 (required successful iterations before promotion)",
         "stepWeight 10 · maxWeight 50"
       ]
     }

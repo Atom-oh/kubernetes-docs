@@ -43,12 +43,14 @@
       },
       {
         "id": "watch-path",
-        "label": "서비스 디스커버리",
+        "label": "API 서버 감시",
         "focus": [
           "destination",
+          "identity",
+          "policy",
           "apiserver"
         ],
-        "note": "Destination은 API 서버에서 Service/Endpoint 변화를 감시해 프록시에 스트리밍한다."
+        "note": "세 컨트롤러 모두 API 서버의 클라이언트다. Destination은 Service/Endpoint, Identity는 ServiceAccount, Policy는 Server/ServerAuthorization CRD를 읽는다."
       }
     ]
   },
@@ -225,6 +227,22 @@
       "label": "Service/Endpoint 감시",
       "fromSide": "top",
       "toSide": "left"
+    },
+    {
+      "id": "identity-apiserver",
+      "from": "identity",
+      "to": "apiserver",
+      "label": "ServiceAccount 검증",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "policy-apiserver",
+      "from": "policy",
+      "to": "apiserver",
+      "label": "Server/ServerAuthorization 감시",
+      "fromSide": "top",
+      "toSide": "top"
     }
   ],
   "cards": [

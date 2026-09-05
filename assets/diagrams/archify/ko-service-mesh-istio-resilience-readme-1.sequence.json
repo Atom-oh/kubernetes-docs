@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Circuit Breaker 작동 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      600
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "호출 측"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "connectionPool 적용"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "서비스",
+      "sublabel": "myapp"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 335,
+      "label": "정상 — 연결 수 제한 이내"
+    },
+    {
+      "from": 360,
+      "to": 490,
+      "label": "연결 수 제한 도달 — Fail Fast"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req-normal",
+      "from": "client",
+      "to": "envoy",
+      "y": 190,
+      "label": "요청 1~100 (정상)"
+    },
+    {
+      "id": "forward",
+      "from": "envoy",
+      "to": "service",
+      "y": 230,
+      "label": "전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-resp",
+      "from": "service",
+      "to": "envoy",
+      "y": 272,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "cli-resp",
+      "from": "envoy",
+      "to": "client",
+      "y": 312,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "req-over",
+      "from": "client",
+      "to": "envoy",
+      "y": 400,
+      "label": "요청 101 (제한 초과)",
+      "note": "maxConnections: 100 도달 — 새 연결 차단"
+    },
+    {
+      "id": "reject",
+      "from": "envoy",
+      "to": "client",
+      "y": 462,
+      "label": "503 (Circuit Breaker Open)",
+      "variant": "security"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 185,
+      "to": 318,
+      "type": "security"
+    },
+    {
+      "participant": "service",
+      "from": 225,
+      "to": 278,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 395,
+      "to": 468,
+      "type": "security"
+    }
+  ]
+}

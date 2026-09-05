@@ -5044,12 +5044,12 @@
         <path data-edge-from="start" data-edge-to="closed" data-edge-label="Normal state" data-edge-key="0" data-edge-id="t-init" data-composition-points="153,157;189,157" d="M 153 157 L 189 157" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.1" marker-end="url(#arrowhead)"/>
         <path data-edge-from="closed" data-edge-to="open" data-edge-label="Consecutive failures exceed threshold" data-edge-key="1" data-edge-id="t-trip" data-composition-points="307,157;497,157" d="M 307 157 L 497 157" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="open" data-edge-to="halfopen" data-edge-label="Backoff time elapsed" data-edge-key="2" data-edge-id="t-backoff" data-composition-points="615,157;631,157;631,300;647,300" d="M 615 157 L 623 157 Q 631 157 631 165 L 631 292 Q 631 300 639 300 L 647 300" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.1" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="halfopen" data-edge-to="closed" data-edge-label="Probe succeeds" data-edge-key="3" data-edge-id="t-recover" data-composition-points="647,314;477,314;477,157;307,157" d="M 647 314 L 487 314 Q 477 314 477 304 L 477 167 Q 477 157 467 157 L 307 157" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="2" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="halfopen" data-edge-to="closed" data-edge-label="Probe succeeds" data-edge-key="3" data-edge-id="t-recover" data-composition-points="647,314;248,314;248,188" d="M 647 314 L 258 314 Q 248 314 248 304 L 248 188" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="2" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="halfopen" data-edge-to="open" data-edge-label="Probe fails" data-edge-key="4" data-edge-id="t-retrip" data-composition-points="773,307;809,307;809,157;615,157" d="M 773 307 L 799 307 Q 809 307 809 297 L 809 167 Q 809 157 799 157 L 615 157" class="a-security" data-animate="edge" style="--step:4" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
 
         <!-- States -->
-        <g id="node-start" data-node-id="start" data-node-label="Start" tabindex="0" role="button" aria-label="Focus Start, endpoint registered, Endpoint request forwarding state" aria-pressed="false" data-node-kind="start" data-node-sublabel="endpoint registered" data-node-context="Endpoint request forwarding state">
-          <title>Start · endpoint registered · Endpoint request forwarding state</title>
+        <g id="node-start" data-node-id="start" data-node-label="Start" tabindex="0" role="button" aria-label="Focus Start, initial state, Endpoint request forwarding state" aria-pressed="false" data-node-kind="start" data-node-sublabel="initial state" data-node-context="Endpoint request forwarding state">
+          <title>Start · initial state · Endpoint request forwarding state</title>
           <rect x="35" y="126" width="118" height="62" rx="7" class="c-mask"/>
           <rect x="35" y="126" width="118" height="62" rx="7" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="start" class="semantic-sigil s-frontend" transform="translate(136 132) scale(0.6875)">
@@ -5057,7 +5057,7 @@
             <path d="m7 5.4 3.6 2.6L7 10.6Z" class="sigil-fill"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="94" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Start</text>
-          <text data-detail="context" x="94" y="163" class="t-muted" font-size="7" text-anchor="middle">endpoint registered</text>
+          <text data-detail="context" x="94" y="163" class="t-muted" font-size="7" text-anchor="middle">initial state</text>
         </g>
 
         <g id="node-closed" data-node-id="closed" data-node-label="Closed" tabindex="0" role="button" aria-label="Focus Closed, all requests forwarded, Endpoint request forwarding state" aria-pressed="false" data-node-kind="active" data-node-sublabel="all requests forwarded" data-node-tag="normal" data-node-context="Endpoint request forwarding state">
@@ -5111,8 +5111,8 @@
           <text x="631" y="218.5" class="t-messagebus" font-size="8" text-anchor="middle">Backoff time elapsed</text>
         </g>
         <g data-detail="context" data-edge-from="halfopen" data-edge-to="closed" data-edge-label="Probe succeeds" data-edge-key="3" data-edge-id="t-recover">
-          <rect x="436.7" y="214.5" width="80.60000000000001" height="16" rx="4" class="c-mask"/>
-          <text x="477" y="225.5" class="t-backend" font-size="8" text-anchor="middle">Probe succeeds</text>
+          <rect x="207.7" y="230" width="80.60000000000001" height="16" rx="4" class="c-mask"/>
+          <text x="248" y="241" class="t-backend" font-size="8" text-anchor="middle">Probe succeeds</text>
         </g>
         <g data-detail="context" data-edge-from="halfopen" data-edge-to="open" data-edge-label="Probe fails" data-edge-key="4" data-edge-id="t-retrip">
           <rect x="776.05" y="211" width="65.9" height="16" rx="4" class="c-mask"/>

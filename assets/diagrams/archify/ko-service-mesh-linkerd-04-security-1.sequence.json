@@ -20,15 +20,15 @@
     { "id": "app-b", "type": "backend", "label": "Application B", "sublabel": "평문 HTTP만 인식" }
   ],
   "segments": [
-    { "from": 165, "to": 295, "label": "mTLS 수립" },
+    { "from": 165, "to": 295, "label": "mTLS 수립 · 메시 내부 대상 확인 후 인증서로 TLS 초기화" },
     { "from": 310, "to": 400, "label": "암호화 전송" },
     { "from": 415, "to": 555, "label": "응답" }
   ],
   "messages": [
     { "id": "plain-req", "from": "app-a", "to": "proxy-a", "y": 190, "label": "Plain HTTP", "note": "대상이 메시 내부인지 확인 → 인증서로 TLS 초기화" },
-    { "id": "handshake", "from": "proxy-a", "to": "proxy-b", "y": 260, "label": "mTLS Handshake", "variant": "security", "note": "SPIFFE ID 상호 검증" },
+    { "id": "handshake", "from": "proxy-a", "to": "proxy-b", "y": 260, "label": "mTLS Handshake · SPIFFE ID 상호 검증", "variant": "security", "note": "SPIFFE ID 상호 검증" },
     { "id": "enc-req", "from": "proxy-a", "to": "proxy-b", "y": 330, "label": "Encrypted Request", "variant": "emphasis" },
-    { "id": "plain-fwd", "from": "proxy-b", "to": "app-b", "y": 380, "label": "Plain HTTP", "note": "Proxy B가 TLS 종료 후 평문 전달" },
+    { "id": "plain-fwd", "from": "proxy-b", "to": "app-b", "y": 380, "label": "Plain HTTP (TLS 종료 후)", "note": "Proxy B가 TLS 종료 후 평문 전달" },
     { "id": "plain-resp", "from": "app-b", "to": "proxy-b", "y": 440, "label": "Plain HTTP Response", "variant": "return" },
     { "id": "enc-resp", "from": "proxy-b", "to": "proxy-a", "y": 490, "label": "Encrypted Response", "variant": "return" },
     { "id": "plain-resp-a", "from": "proxy-a", "to": "app-a", "y": 540, "label": "Plain HTTP Response", "variant": "return" }

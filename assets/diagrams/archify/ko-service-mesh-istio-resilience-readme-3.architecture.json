@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "복원력 아키텍처",
+    "output": "ko-service-mesh-istio-resilience-readme-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      600
+    ],
+    "views": [
+      {
+        "id": "ingress-path",
+        "label": "요청 진입과 Rate Limiting",
+        "focus": [
+          "client",
+          "gw",
+          "rl",
+          "od"
+        ],
+        "note": "클라이언트 요청은 Ingress Gateway에서 100 req/s Rate Limiting을 통과한 뒤 Outlier Detection 단계로 넘어간다."
+      },
+      {
+        "id": "outlier-detection",
+        "label": "Outlier Detection",
+        "focus": [
+          "od",
+          "a1",
+          "a2",
+          "a3"
+        ],
+        "note": "비정상 Pod A3는 제외되고 정상 파드 A1, A2에만 트래픽이 전달된다."
+      },
+      {
+        "id": "zone-aware",
+        "label": "Zone Aware Routing",
+        "focus": [
+          "a1",
+          "a2",
+          "b1",
+          "b2",
+          "za"
+        ],
+        "note": "Service A에서 Service B로 호출할 때 같은 Zone의 파드(A→A, B→B)를 우선한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "pos": [
+        20,
+        290
+      ],
+      "size": [
+        110,
+        56
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "Ingress Gateway",
+      "pos": [
+        160,
+        288
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "rl",
+      "type": "security",
+      "label": "Rate Limiting",
+      "sublabel": "100 req/s",
+      "pos": [
+        160,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "od",
+      "type": "security",
+      "label": "Outlier Detection",
+      "sublabel": "A3 제외됨",
+      "pos": [
+        360,
+        288
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "a1",
+      "type": "backend",
+      "label": "Pod A1",
+      "sublabel": "Zone A · 정상",
+      "pos": [
+        760,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "backend",
+      "label": "Pod A2",
+      "sublabel": "Zone B · 정상",
+      "pos": [
+        760,
+        288
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "backend",
+      "label": "Pod A3",
+      "sublabel": "Zone A · 비정상",
+      "pos": [
+        760,
+        456
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "Pod B1",
+      "sublabel": "Zone A",
+      "pos": [
+        1020,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "backend",
+      "label": "Pod B2",
+      "sublabel": "Zone B",
+      "pos": [
+        1020,
+        288
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "za",
+      "type": "security",
+      "label": "Zone Aware",
+      "sublabel": "A → B 같은 Zone",
+      "pos": [
+        1240,
+        204
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service A",
+      "wraps": [
+        "a1",
+        "a2",
+        "a3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Service B",
+      "wraps": [
+        "b1",
+        "b2"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gw",
+      "from": "client",
+      "to": "gw",
+      "label": "요청",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "rl-gw",
+      "from": "rl",
+      "to": "gw",
+      "label": "적용",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "gw-od",
+      "from": "gw",
+      "to": "od",
+      "label": "Rate 제한 통과",
+      "variant": "emphasis",
+      "labelDy": -30
+    },
+    {
+      "id": "od-a1",
+      "from": "od",
+      "to": "a1",
+      "label": "정상 파드만",
+      "variant": "emphasis"
+    },
+    {
+      "id": "od-a2",
+      "from": "od",
+      "to": "a2",
+      "label": "정상 파드만",
+      "variant": "emphasis",
+      "labelAt": [
+        595,
+        282
+      ]
+    },
+    {
+      "id": "od-a3",
+      "from": "od",
+      "to": "a3",
+      "label": "제외",
+      "variant": "dashed"
+    },
+    {
+      "id": "a1-b1",
+      "from": "a1",
+      "to": "b1",
+      "label": "Zone A → Zone A 우선",
+      "labelDy": 54
+    },
+    {
+      "id": "a2-b2",
+      "from": "a2",
+      "to": "b2",
+      "label": "Zone B → Zone B 우선",
+      "labelDy": 54
+    },
+    {
+      "id": "za-b1",
+      "from": "za",
+      "to": "b1",
+      "label": "영향",
+      "variant": "dashed"
+    },
+    {
+      "id": "za-b2",
+      "from": "za",
+      "to": "b2",
+      "label": "영향",
+      "variant": "dashed"
+    }
+  ]
+}

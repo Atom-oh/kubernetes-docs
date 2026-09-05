@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh (Istio) vs CNI (Cilium) Comparison",
+    "output": "en-service-mesh-istio-readme-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      540
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "L7 proxy layer · Istio"
+        },
+        "security": {
+          "label": "eBPF kernel layer · Cilium"
+        },
+        "external": {
+          "label": "Usage Scenarios"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "istio-side",
+        "label": "Service Mesh (Istio)",
+        "focus": [
+          "istio-proxy",
+          "istio-traffic",
+          "istio-l7"
+        ],
+        "note": "Envoy sidecars control traffic at the application level and provide L7 features such as Retry and Timeout."
+      },
+      {
+        "id": "cilium-side",
+        "label": "CNI (Cilium)",
+        "focus": [
+          "cilium-ebpf",
+          "cilium-policy",
+          "cilium-perf"
+        ],
+        "note": "eBPF enforces network policy at the kernel level, giving low overhead and high performance."
+      },
+      {
+        "id": "scenarios",
+        "label": "Usage Scenarios",
+        "focus": [
+          "istio-l7",
+          "cilium-perf",
+          "sc-mesh",
+          "sc-cilium",
+          "sc-both"
+        ],
+        "note": "Complex L7 logic calls for a Service Mesh, policy and performance for Cilium, and large enterprises use both."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "istio-proxy",
+      "type": "backend",
+      "label": "L7 proxy-based",
+      "sublabel": "Envoy Sidecar",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "istio-traffic",
+      "type": "backend",
+      "label": "Application-level traffic control",
+      "sublabel": "VirtualService · DestinationRule",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "istio-l7",
+      "type": "backend",
+      "label": "Rich L7 features",
+      "sublabel": "Retry · Timeout",
+      "pos": [
+        580,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cilium-ebpf",
+      "type": "security",
+      "label": "eBPF-based",
+      "sublabel": "Kernel level",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cilium-policy",
+      "type": "security",
+      "label": "Network-level policy enforcement",
+      "sublabel": "L3/L4 NetworkPolicy",
+      "pos": [
+        300,
+        340
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "cilium-perf",
+      "type": "security",
+      "label": "High performance",
+      "sublabel": "Low overhead",
+      "pos": [
+        580,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sc-mesh",
+      "type": "external",
+      "label": "Service Mesh",
+      "sublabel": "complex L7 logic",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sc-both",
+      "type": "external",
+      "label": "Use both",
+      "sublabel": "large enterprise",
+      "pos": [
+        960,
+        215
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sc-cilium",
+      "type": "external",
+      "label": "Cilium",
+      "sublabel": "policy · performance",
+      "pos": [
+        960,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh (Istio)",
+      "wraps": [
+        "istio-proxy",
+        "istio-traffic",
+        "istio-l7"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CNI (Cilium)",
+      "wraps": [
+        "cilium-ebpf",
+        "cilium-policy",
+        "cilium-perf"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Usage Scenarios",
+      "wraps": [
+        "sc-mesh",
+        "sc-both",
+        "sc-cilium"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "istio-to-mesh",
+      "from": "istio-l7",
+      "to": "sc-mesh",
+      "label": "complex L7 logic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "istio-to-both",
+      "from": "istio-l7",
+      "to": "sc-both",
+      "variant": "dashed"
+    },
+    {
+      "id": "cilium-to-cilium",
+      "from": "cilium-perf",
+      "to": "sc-cilium",
+      "label": "policy · performance first",
+      "variant": "security",
+      "labelDy": 18
+    },
+    {
+      "id": "cilium-to-both",
+      "from": "cilium-perf",
+      "to": "sc-both",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "When Cilium is More Suitable",
+      "items": [
+        "L3/L4 network policies are the main purpose",
+        "High performance is a core requirement",
+        "Avoiding Service Mesh operational burden",
+        "Only simple mTLS and observability needed"
+      ]
+    }
+  ]
+}

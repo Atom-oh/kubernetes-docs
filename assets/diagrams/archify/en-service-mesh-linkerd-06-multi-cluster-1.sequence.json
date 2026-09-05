@@ -64,7 +64,7 @@
       "from": "mirror",
       "to": "gateway",
       "y": 270,
-      "label": "mTLS connection",
+      "label": "Resolve Gateway IP, mTLS connection",
       "variant": "security",
       "note": "Mirror service resolves the Gateway IP, then connects"
     },
@@ -73,7 +73,7 @@
       "from": "gateway",
       "to": "target",
       "y": 350,
-      "label": "Forward request",
+      "label": "Verify identity, forward request",
       "variant": "emphasis",
       "note": "Gateway verifies identity, then forwards"
     },

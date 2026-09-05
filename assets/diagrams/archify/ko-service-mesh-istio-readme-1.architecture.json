@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "복잡한 마이크로서비스 환경: Service Mesh 없이 vs 사용",
+    "output": "ko-service-mesh-istio-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without-mesh",
+        "label": "Service Mesh 없이",
+        "focus": [
+          "a1",
+          "b1",
+          "c1",
+          "d1"
+        ],
+        "note": "각 서비스가 mTLS·재시도·로깅/메트릭·Circuit Breaker를 직접 구현해 중복 코드가 늘어난다."
+      },
+      {
+        "id": "with-mesh",
+        "label": "Service Mesh 사용",
+        "focus": [
+          "a2",
+          "b2",
+          "c2",
+          "d2"
+        ],
+        "note": "같은 네 서비스 사이의 통신을 메시가 자동으로 처리한다."
+      },
+      {
+        "id": "mesh-control",
+        "label": "메시 제어",
+        "focus": [
+          "mesh",
+          "a2",
+          "b2",
+          "c2",
+          "d2"
+        ],
+        "note": "Service Mesh가 자동 mTLS·중앙 집중식 정책·통합 관찰성으로 네 서비스를 제어한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "a1",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        220,
+        40
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        400,
+        210
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "backend",
+      "label": "Service D",
+      "pos": [
+        220,
+        380
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        860,
+        40
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        640,
+        210
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        1080,
+        210
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "d2",
+      "type": "backend",
+      "label": "Service D",
+      "pos": [
+        860,
+        380
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "mesh",
+      "type": "security",
+      "label": "Service Mesh",
+      "sublabel": "mTLS · 정책 · 관찰성 자동화",
+      "pos": [
+        810,
+        206
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh 없이",
+      "wraps": [
+        "a1",
+        "b1",
+        "c1",
+        "d1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Service Mesh 사용",
+      "wraps": [
+        "a2",
+        "b2",
+        "c2",
+        "d2",
+        "mesh"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a1-b1",
+      "from": "a1",
+      "to": "b1",
+      "label": "수동 구현",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a1-c1",
+      "from": "a1",
+      "to": "c1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b1-d1",
+      "from": "b1",
+      "to": "d1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c1-d1",
+      "from": "c1",
+      "to": "d1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a2-b2",
+      "from": "a2",
+      "to": "b2",
+      "label": "자동 처리",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a2-c2",
+      "from": "a2",
+      "to": "c2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b2-d2",
+      "from": "b2",
+      "to": "d2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c2-d2",
+      "from": "c2",
+      "to": "d2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mesh-a2",
+      "from": "mesh",
+      "to": "a2",
+      "label": "제어",
+      "variant": "security"
+    },
+    {
+      "id": "mesh-b2",
+      "from": "mesh",
+      "to": "b2",
+      "variant": "security"
+    },
+    {
+      "id": "mesh-c2",
+      "from": "mesh",
+      "to": "c2",
+      "variant": "security"
+    },
+    {
+      "id": "mesh-d2",
+      "from": "mesh",
+      "to": "d2",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Service Mesh 없이 — 각 서비스마다",
+      "items": [
+        "수동 mTLS 구현",
+        "재시도 로직",
+        "로깅/메트릭",
+        "Circuit Breaker",
+        "중복 코드 증가"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Service Mesh 사용",
+      "items": [
+        "자동 mTLS",
+        "중앙 집중식 정책",
+        "통합 관찰성",
+        "표준화된 보안"
+      ]
+    }
+  ]
+}

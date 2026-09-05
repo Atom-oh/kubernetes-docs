@@ -7,7 +7,7 @@
     "column_fit": "spread",
     "viewBox": [
       900,
-      520
+      540
     ],
     "animation": "trace"
   },
@@ -19,16 +19,22 @@
       "sublabel": "송신 파드"
     },
     {
-      "id": "ebpf",
+      "id": "ingress",
       "type": "backend",
-      "label": "eBPF (TC)",
-      "sublabel": "veth TC 훅"
+      "label": "eBPF Ingress (TC)",
+      "sublabel": "Pod A veth 훅"
     },
     {
       "id": "maps",
       "type": "database",
       "label": "CT + Policy Maps",
       "sublabel": "eBPF 맵"
+    },
+    {
+      "id": "egress",
+      "type": "backend",
+      "label": "eBPF Egress (TC)",
+      "sublabel": "Pod B veth 훅"
     },
     {
       "id": "podB",
@@ -45,7 +51,7 @@
     },
     {
       "from": 340,
-      "to": 440,
+      "to": 460,
       "label": "네트워크 스택을 거치지 않는 직접 전달"
     }
   ],
@@ -53,13 +59,13 @@
     {
       "id": "send",
       "from": "podA",
-      "to": "ebpf",
+      "to": "ingress",
       "y": 190,
       "label": "패킷 전송 (veth)"
     },
     {
       "id": "lookup",
-      "from": "ebpf",
+      "from": "ingress",
       "to": "maps",
       "y": 240,
       "label": "연결 · 정책 조회",
@@ -68,26 +74,33 @@
     {
       "id": "allow",
       "from": "maps",
-      "to": "ebpf",
+      "to": "ingress",
       "y": 290,
       "label": "허용",
       "variant": "return"
     },
     {
-      "id": "deliver",
-      "from": "ebpf",
-      "to": "podB",
-      "y": 400,
+      "id": "forward",
+      "from": "ingress",
+      "to": "egress",
+      "y": 370,
       "label": "직접 전달",
       "variant": "emphasis",
       "note": "커널 내 직접 경로 · 네트워크 스택 우회"
+    },
+    {
+      "id": "receive",
+      "from": "egress",
+      "to": "podB",
+      "y": 425,
+      "label": "패킷 수신 (veth)"
     }
   ],
   "activations": [
     {
-      "participant": "ebpf",
+      "participant": "ingress",
       "from": 185,
-      "to": 405,
+      "to": 375,
       "type": "backend"
     },
     {
@@ -95,6 +108,12 @@
       "from": 235,
       "to": 295,
       "type": "database"
+    },
+    {
+      "participant": "egress",
+      "from": 365,
+      "to": 430,
+      "type": "backend"
     }
   ]
 }

@@ -55,13 +55,13 @@
       "id": "ebpf",
       "type": "backend",
       "label": "eBPF Datapath",
-      "sublabel": "kernel"
+      "sublabel": "kernel · L4 policy check"
     },
     {
       "id": "envoy",
       "type": "security",
       "label": "Node Envoy",
-      "sublabel": "L7 proxy"
+      "sublabel": "HTTP parse · L7 policy · headers"
     },
     {
       "id": "server",

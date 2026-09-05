@@ -8,7 +8,7 @@
     "column_fit": "spread",
     "viewBox": [
       960,
-      720
+      620
     ],
     "animation": "trace",
     "views": [
@@ -38,7 +38,7 @@
       }
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "default": {
           "label": "Internal proxy hop"
@@ -69,7 +69,7 @@
       "id": "envoy",
       "type": "backend",
       "label": "Node Envoy",
-      "sublabel": "L7 proxy"
+      "sublabel": "L7 proxy · HTTP parsing · policy"
     },
     {
       "id": "ebpf-server",
@@ -86,13 +86,13 @@
   ],
   "segments": [
     {
-      "from": 165,
-      "to": 385,
+      "from": 160,
+      "to": 335,
       "label": "Request — redirected to Envoy"
     },
     {
-      "from": 405,
-      "to": 600,
+      "from": 350,
+      "to": 515,
       "label": "Response — same path back"
     }
   ],
@@ -101,8 +101,8 @@
       "id": "http-request",
       "from": "client",
       "to": "ebpf-client",
-      "y": 200,
-      "label": "HTTP request",
+      "y": 190,
+      "label": "HTTP request — L7 policy detected",
       "variant": "emphasis",
       "note": "L7 policy detected"
     },
@@ -110,29 +110,29 @@
       "id": "redirect-proxy",
       "from": "ebpf-client",
       "to": "envoy",
-      "y": 250,
-      "label": "redirect to proxy",
+      "y": 230,
+      "label": "redirect to proxy — metrics · tracing",
       "note": "HTTP parsing · L7 policy enforcement · metrics · tracing"
     },
     {
       "id": "forward-request",
       "from": "envoy",
       "to": "ebpf-server",
-      "y": 305,
+      "y": 270,
       "label": "forward request"
     },
     {
       "id": "deliver-request",
       "from": "ebpf-server",
       "to": "server",
-      "y": 350,
+      "y": 310,
       "label": "deliver packet"
     },
     {
       "id": "http-response",
       "from": "server",
       "to": "ebpf-server",
-      "y": 435,
+      "y": 380,
       "label": "HTTP response",
       "variant": "return"
     },
@@ -140,8 +140,8 @@
       "id": "forward-response",
       "from": "ebpf-server",
       "to": "envoy",
-      "y": 480,
-      "label": "forward response",
+      "y": 420,
+      "label": "forward response · update metrics",
       "variant": "return",
       "note": "process response · update metrics"
     },
@@ -149,7 +149,7 @@
       "id": "return-response",
       "from": "envoy",
       "to": "ebpf-client",
-      "y": 530,
+      "y": 460,
       "label": "forward response",
       "variant": "return"
     },
@@ -157,7 +157,7 @@
       "id": "deliver-response",
       "from": "ebpf-client",
       "to": "client",
-      "y": 575,
+      "y": 500,
       "label": "deliver packet",
       "variant": "emphasis"
     }
@@ -165,44 +165,44 @@
   "activations": [
     {
       "participant": "ebpf-client",
-      "from": 195,
-      "to": 258,
+      "from": 185,
+      "to": 236,
       "type": "security"
     },
     {
       "participant": "envoy",
-      "from": 245,
-      "to": 312,
+      "from": 225,
+      "to": 276,
       "type": "backend"
     },
     {
       "participant": "ebpf-server",
-      "from": 300,
-      "to": 356,
+      "from": 265,
+      "to": 316,
       "type": "security"
     },
     {
       "participant": "server",
-      "from": 345,
-      "to": 440,
+      "from": 305,
+      "to": 386,
       "type": "frontend"
     },
     {
       "participant": "ebpf-server",
-      "from": 430,
-      "to": 486,
+      "from": 375,
+      "to": 426,
       "type": "security"
     },
     {
       "participant": "envoy",
-      "from": 475,
-      "to": 536,
+      "from": 415,
+      "to": 466,
       "type": "backend"
     },
     {
       "participant": "ebpf-client",
-      "from": 525,
-      "to": 580,
+      "from": 455,
+      "to": 506,
       "type": "security"
     }
   ]

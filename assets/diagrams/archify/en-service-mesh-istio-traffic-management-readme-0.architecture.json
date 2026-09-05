@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Traffic Management Key Features",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "Sends request",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "External traffic entry",
+      "pos": [
+        260,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "virtualservice",
+      "type": "backend",
+      "label": "VirtualService",
+      "sublabel": "Routing rules",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "destinationrule",
+      "type": "backend",
+      "label": "DestinationRule",
+      "sublabel": "Traffic policy",
+      "pos": [
+        710,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "10% · Canary",
+      "pos": [
+        1000,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Version 1",
+      "sublabel": "90% · Main traffic",
+      "pos": [
+        1000,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v3",
+      "type": "backend",
+      "label": "Version 3",
+      "sublabel": "Mirror · Testing",
+      "pos": [
+        1000,
+        480
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Traffic Management",
+      "wraps": [
+        "gateway",
+        "virtualservice",
+        "destinationrule"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Services",
+      "wraps": [
+        "v1",
+        "v2",
+        "v3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-vs",
+      "from": "gateway",
+      "to": "virtualservice",
+      "label": "Routing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-to-dr",
+      "from": "virtualservice",
+      "to": "destinationrule",
+      "label": "Policy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dr-to-v1",
+      "from": "destinationrule",
+      "to": "v1",
+      "label": "90% main traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dr-to-v2",
+      "from": "destinationrule",
+      "to": "v2",
+      "label": "10% Canary",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "dr-to-v3",
+      "from": "destinationrule",
+      "to": "v3",
+      "label": "Mirroring",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ]
+}

@@ -41,7 +41,7 @@
           "q3",
           "nlb"
         ],
-        "note": "WAF/Shield는 불필요하지만 고성능 L4가 필요하면 NLB 앞단에 Cilium을 결합합니다."
+        "note": "WAF/Shield는 불필요하지만 고성능 L4가 필요하면 Cilium 앞단에 NLB를 두어 결합합니다."
       },
       {
         "id": "cilium-only",
@@ -153,7 +153,7 @@
       "col": 3,
       "type": "cloud",
       "label": "NLB + Cilium",
-      "sublabel": "L4 NLB 앞단",
+      "sublabel": "앞단 L4 NLB",
       "tag": "고성능 L4",
       "width": 136
     },

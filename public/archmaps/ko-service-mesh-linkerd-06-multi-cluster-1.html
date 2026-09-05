@@ -5057,20 +5057,20 @@
         </g>
         </g>
 
-        <g data-edge-from="mirror" data-edge-to="gateway" data-edge-label="mTLS 연결" data-edge-key="1" data-edge-id="mtls">
+        <g data-edge-from="mirror" data-edge-to="gateway" data-edge-label="Gateway IP 해석 후 mTLS 연결" data-edge-key="1" data-edge-id="mtls">
           <path data-composition-edge-from="mirror" data-composition-edge-to="gateway" data-composition-edge-id="mtls" data-composition-points="385.83333333333337,270;596.1666666666667,270" d="M 385.83333333333337 270 L 596.1666666666667 270" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <g data-detail="context">
-          <rect x="461.6000000000001" y="250" width="58.800000000000004" height="16" rx="3" class="c-mask"/>
-          <text x="491.00000000000006" y="260" class="t-security" font-size="9" text-anchor="middle">mTLS 연결</text>
+          <rect x="412.20000000000005" y="250" width="157.6" height="16" rx="3" class="c-mask"/>
+          <text x="491.00000000000006" y="260" class="t-security" font-size="9" text-anchor="middle">Gateway IP 해석 후 mTLS 연결</text>
         </g>
         <text data-detail="fine" x="397.83333333333337" y="288" class="t-dim" font-size="7">미러 서비스가 Gateway IP로 주소를 해석해 연결</text>
         </g>
 
-        <g data-edge-from="gateway" data-edge-to="target" data-edge-label="요청 전달" data-edge-key="2" data-edge-id="forward">
+        <g data-edge-from="gateway" data-edge-to="target" data-edge-label="신원 검증 후 요청 전달" data-edge-key="2" data-edge-id="forward">
           <path data-composition-edge-from="gateway" data-composition-edge-to="target" data-composition-edge-id="forward" data-composition-points="610.1666666666667,350;820.5,350" d="M 610.1666666666667 350 L 820.5 350" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="685.9333333333334" y="330" width="58.800000000000004" height="16" rx="3" class="c-mask"/>
-          <text x="715.3333333333334" y="340" class="t-backend" font-size="9" text-anchor="middle">요청 전달</text>
+          <rect x="652.1333333333333" y="330" width="126.4" height="16" rx="3" class="c-mask"/>
+          <text x="715.3333333333334" y="340" class="t-backend" font-size="9" text-anchor="middle">신원 검증 후 요청 전달</text>
         </g>
         <text data-detail="fine" x="622.1666666666667" y="368" class="t-dim" font-size="7">Gateway가 신원을 검증한 뒤 전달</text>
         </g>

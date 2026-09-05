@@ -1,0 +1,150 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sidecar Injection 방식",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "decision",
+        "label": "라벨 검사",
+        "focus": [
+          "create",
+          "check"
+        ],
+        "note": "파드가 생성되면 Webhook이 해당 Namespace의 istio-injection 라벨을 확인해 자동 주입 여부를 결정한다."
+      },
+      {
+        "id": "inject",
+        "label": "Sidecar 주입 경로",
+        "focus": [
+          "check",
+          "inject",
+          "deploy"
+        ],
+        "note": "istio-injection=enabled인 Namespace에서는 Envoy 프록시 컨테이너가 자동으로 주입된 뒤 파드가 배포된다."
+      },
+      {
+        "id": "skip",
+        "label": "주입 생략 경로",
+        "focus": [
+          "check",
+          "skip",
+          "deploy"
+        ],
+        "note": "라벨이 없으면 주입을 생략하고 파드가 Sidecar 없이 그대로 배포된다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "파드 생명주기"
+        },
+        "backend": {
+          "label": "자동 주입 (Webhook)"
+        },
+        "external": {
+          "label": "주입 생략"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "pod",
+      "label": "애플리케이션 파드"
+    },
+    {
+      "id": "injector",
+      "label": "Istio Sidecar Injector (Webhook)"
+    }
+  ],
+  "mainPath": [
+    "create",
+    "check",
+    "inject",
+    "deploy"
+  ],
+  "nodes": [
+    {
+      "id": "create",
+      "lane": "pod",
+      "col": 0,
+      "width": 160,
+      "type": "cloud",
+      "label": "파드 생성",
+      "sublabel": "새 파드 요청"
+    },
+    {
+      "id": "check",
+      "lane": "injector",
+      "col": 0,
+      "width": 176,
+      "type": "backend",
+      "label": "Namespace 라벨 확인",
+      "sublabel": "istio-injection=enabled?"
+    },
+    {
+      "id": "inject",
+      "lane": "injector",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Sidecar 주입",
+      "sublabel": "Envoy 프록시 추가"
+    },
+    {
+      "id": "skip",
+      "lane": "pod",
+      "col": 1,
+      "width": 160,
+      "type": "external",
+      "label": "주입 생략",
+      "sublabel": "Sidecar 없음"
+    },
+    {
+      "id": "deploy",
+      "lane": "pod",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "파드 배포",
+      "sublabel": "두 경로 모두 합류"
+    }
+  ],
+  "edges": [
+    {
+      "id": "create-check",
+      "from": "create",
+      "to": "check"
+    },
+    {
+      "id": "check-inject",
+      "from": "check",
+      "to": "inject",
+      "label": "enabled",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-skip",
+      "from": "check",
+      "to": "skip",
+      "label": "라벨 없음",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "inject-deploy",
+      "from": "inject",
+      "to": "deploy"
+    },
+    {
+      "id": "skip-deploy",
+      "from": "skip",
+      "to": "deploy",
+      "role": "branch"
+    }
+  ]
+}

@@ -5056,11 +5056,11 @@
         </g>
         </g>
 
-        <g data-edge-from="ebpf-1" data-edge-to="tunnel" data-edge-label="encapsulate · send over VXLAN/Geneve" data-edge-key="1" data-edge-id="encap">
+        <g data-edge-from="ebpf-1" data-edge-to="tunnel" data-edge-label="encapsulate · VXLAN/Geneve" data-edge-key="1" data-edge-id="encap">
           <path data-composition-edge-from="ebpf-1" data-composition-edge-to="tunnel" data-composition-edge-id="encap" data-composition-points="301.25,250;454,250" d="M 301.25 250 L 454 250" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <g data-detail="context">
-          <rect x="278.025" y="230" width="199.20000000000002" height="16" rx="3" class="c-mask"/>
-          <text x="377.625" y="240" class="t-security" font-size="9" text-anchor="middle">encapsulate · send over VXLAN/Geneve</text>
+          <rect x="304.025" y="230" width="147.20000000000002" height="16" rx="3" class="c-mask"/>
+          <text x="377.625" y="240" class="t-security" font-size="9" text-anchor="middle">encapsulate · VXLAN/Geneve</text>
         </g>
         <text data-detail="fine" x="313.25" y="268" class="t-dim" font-size="7">Node 1 eBPF: policy evaluation · tunnel encapsulation</text>
         </g>
@@ -5107,8 +5107,8 @@
           <text data-detail="context" x="127.5" y="111" class="t-muted" font-size="7" text-anchor="middle">Node 1</text>
         </g>
 
-        <g id="node-ebpf-1" data-node-id="ebpf-1" data-node-label="eBPF" tabindex="0" role="button" aria-label="Focus eBPF, Node 1, Sequence participant" aria-pressed="false" data-node-kind="security" data-node-sublabel="Node 1" data-node-context="Sequence participant">
-          <title>eBPF · Node 1 · Sequence participant</title>
+        <g id="node-ebpf-1" data-node-id="ebpf-1" data-node-label="eBPF" tabindex="0" role="button" aria-label="Focus eBPF, Node 1 · policy eval, Sequence participant" aria-pressed="false" data-node-kind="security" data-node-sublabel="Node 1 · policy eval" data-node-context="Sequence participant">
+          <title>eBPF · Node 1 · policy eval · Sequence participant</title>
           <rect x="228.75" y="72" width="131" height="54" rx="6" class="c-mask"/>
           <rect x="228.75" y="72" width="131" height="54" rx="6" class="c-security" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(234.75 78) scale(0.6875)">
@@ -5116,7 +5116,7 @@
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="294.25" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">eBPF</text>
-          <text data-detail="context" x="294.25" y="111" class="t-muted" font-size="7" text-anchor="middle">Node 1</text>
+          <text data-detail="context" x="294.25" y="111" class="t-muted" font-size="7" text-anchor="middle">Node 1 · policy eval</text>
         </g>
 
         <g id="node-tunnel" data-node-id="tunnel" data-node-label="Tunnel / Native" tabindex="0" role="button" aria-label="Focus Tunnel / Native, VXLAN/Geneve/native, Sequence participant" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="VXLAN/Geneve/native" data-node-context="Sequence participant">
@@ -5133,8 +5133,8 @@
           <text data-detail="context" x="461" y="111" class="t-muted" font-size="7" text-anchor="middle">VXLAN/Geneve/native</text>
         </g>
 
-        <g id="node-ebpf-2" data-node-id="ebpf-2" data-node-label="eBPF" tabindex="0" role="button" aria-label="Focus eBPF, Node 2, Sequence participant" aria-pressed="false" data-node-kind="security" data-node-sublabel="Node 2" data-node-context="Sequence participant">
-          <title>eBPF · Node 2 · Sequence participant</title>
+        <g id="node-ebpf-2" data-node-id="ebpf-2" data-node-label="eBPF" tabindex="0" role="button" aria-label="Focus eBPF, Node 2 · policy eval, Sequence participant" aria-pressed="false" data-node-kind="security" data-node-sublabel="Node 2 · policy eval" data-node-context="Sequence participant">
+          <title>eBPF · Node 2 · policy eval · Sequence participant</title>
           <rect x="562.25" y="72" width="131" height="54" rx="6" class="c-mask"/>
           <rect x="562.25" y="72" width="131" height="54" rx="6" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(568.25 78) scale(0.6875)">
@@ -5142,7 +5142,7 @@
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="627.75" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">eBPF</text>
-          <text data-detail="context" x="627.75" y="111" class="t-muted" font-size="7" text-anchor="middle">Node 2</text>
+          <text data-detail="context" x="627.75" y="111" class="t-muted" font-size="7" text-anchor="middle">Node 2 · policy eval</text>
         </g>
 
         <g id="node-pod-b" data-node-id="pod-b" data-node-label="Pod B" tabindex="0" role="button" aria-label="Focus Pod B, Node 2, Sequence participant" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Node 2" data-node-context="Sequence participant">

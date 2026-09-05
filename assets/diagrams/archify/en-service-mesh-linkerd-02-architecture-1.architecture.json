@@ -9,13 +9,13 @@
     "legend": {
       "entries": {
         "cloud": {
-          "label": "Kubernetes resources"
+          "label": "K8s resources"
         },
         "backend": {
-          "label": "Controller components"
+          "label": "Controller"
         },
         "external": {
-          "label": "Data-plane proxies"
+          "label": "Proxies"
         }
       }
     },

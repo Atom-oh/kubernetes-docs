@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 트래픽 관리 주요 기능",
+    "output": "ko-service-mesh-istio-traffic-management-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "요청 발생",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "외부 트래픽 진입",
+      "pos": [
+        260,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "virtualservice",
+      "type": "backend",
+      "label": "VirtualService",
+      "sublabel": "라우팅 규칙",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "destinationrule",
+      "type": "backend",
+      "label": "DestinationRule",
+      "sublabel": "트래픽 정책",
+      "pos": [
+        710,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "10% · Canary",
+      "pos": [
+        1000,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "backend",
+      "label": "Version 1",
+      "sublabel": "90% · 주 트래픽",
+      "pos": [
+        1000,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "v3",
+      "type": "backend",
+      "label": "Version 3",
+      "sublabel": "Mirror · 테스트",
+      "pos": [
+        1000,
+        480
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Traffic Management",
+      "wraps": [
+        "gateway",
+        "virtualservice",
+        "destinationrule"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "서비스",
+      "wraps": [
+        "v1",
+        "v2",
+        "v3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-vs",
+      "from": "gateway",
+      "to": "virtualservice",
+      "label": "라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-to-dr",
+      "from": "virtualservice",
+      "to": "destinationrule",
+      "label": "정책",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dr-to-v1",
+      "from": "destinationrule",
+      "to": "v1",
+      "label": "90% 주 트래픽",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dr-to-v2",
+      "from": "destinationrule",
+      "to": "v2",
+      "label": "10% Canary",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "dr-to-v3",
+      "from": "destinationrule",
+      "to": "v3",
+      "label": "미러링",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ]
+}

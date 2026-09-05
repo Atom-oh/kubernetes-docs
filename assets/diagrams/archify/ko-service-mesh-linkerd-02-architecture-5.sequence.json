@@ -107,7 +107,8 @@
       "to": "server_proxy",
       "y": 305,
       "label": "Encrypted Request",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "note": "iptables 리다이렉트 (포트 4143)"
     },
     {
       "id": "fwd_req",
@@ -115,7 +116,7 @@
       "to": "server_app",
       "y": 360,
       "label": "HTTP Request",
-      "note": "mTLS 검증 → 정책 확인 통과 후 전달 (포트 4143)"
+      "note": "mTLS 검증 → 정책 확인 통과 후 전달"
     },
     {
       "id": "http_resp",

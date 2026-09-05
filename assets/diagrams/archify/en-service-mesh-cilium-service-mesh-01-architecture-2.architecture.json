@@ -29,10 +29,12 @@
         "label": "Egress path (TX)",
         "focus": [
           "app",
+          "socket",
+          "netstack",
           "tc-egress",
           "nic"
         ],
-        "note": "Packets sent by the application leave through the TC Egress hook to the NIC."
+        "note": "Packets sent by the application pass through the socket layer and network stack, then the TC Egress hook, before leaving via the NIC."
       }
     ],
     "locale": "en"
@@ -188,13 +190,29 @@
       "variant": "emphasis"
     },
     {
-      "id": "app-tc-egress",
+      "id": "app-socket-tx",
       "from": "app",
-      "to": "tc-egress",
+      "to": "socket",
       "label": "egress (TX)",
       "variant": "dashed",
       "fromSide": "bottom",
-      "toSide": "right"
+      "toSide": "bottom"
+    },
+    {
+      "id": "socket-netstack-tx",
+      "from": "socket",
+      "to": "netstack",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "netstack-tc-egress",
+      "from": "netstack",
+      "to": "tc-egress",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "tc-egress-nic",
