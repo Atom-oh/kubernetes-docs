@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VPN 연결을 통한 Private 클러스터 접근",
+    "output": "ko-eks-05-eks-security-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      340
+    ]
+  },
+  "components": [
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "관리자",
+      "sublabel": "kubectl 워크스테이션",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpn",
+      "type": "security",
+      "label": "AWS VPN",
+      "sublabel": "Site-to-Site / Client VPN",
+      "pos": [
+        270,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "endpoint",
+      "type": "cloud",
+      "label": "Private Endpoint",
+      "sublabel": "endpointPrivateAccess=true",
+      "pos": [
+        540,
+        110
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "Kubernetes API 서버",
+      "pos": [
+        820,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS VPC",
+      "wraps": [
+        "endpoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-to-vpn",
+      "from": "admin",
+      "to": "vpn",
+      "label": "VPN 터널",
+      "variant": "security"
+    },
+    {
+      "id": "vpn-to-endpoint",
+      "from": "vpn",
+      "to": "endpoint",
+      "label": "VPC 내부 진입",
+      "variant": "emphasis"
+    },
+    {
+      "id": "endpoint-to-cp",
+      "from": "endpoint",
+      "to": "cp",
+      "label": "kubectl",
+      "variant": "emphasis"
+    }
+  ]
+}

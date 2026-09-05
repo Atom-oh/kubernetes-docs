@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 데이터플레인 옵션",
+    "output": "ko-networking-calico-06-ebpf-dataplane-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [760, 300]
+  },
+  "components": [
+    {
+      "id": "iptables",
+      "type": "backend",
+      "label": "iptables 모드",
+      "sublabel": "전통적, 안정적",
+      "tag": "기본 데이터플레인",
+      "pos": [70, 110],
+      "size": [220, 72]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF 모드",
+      "sublabel": "고성능, 현대적",
+      "tag": "kube-proxy 대체",
+      "pos": [470, 110],
+      "size": [220, 72]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "데이터플레인 옵션",
+      "wraps": ["iptables", "ebpf"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "migration",
+      "from": "iptables",
+      "to": "ebpf",
+      "label": "마이그레이션",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "iptables 모드의 문제점",
+      "items": [
+        "선형 검색: 규칙이 많아질수록 성능 저하",
+        "서비스/엔드포인트 수에 비례한 규칙 폭발",
+        "체인 순회 오버헤드로 높은 지연",
+        "kube-proxy NAT 규칙의 복잡성"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF 모드의 장점",
+      "items": [
+        "BPF Map 기반 O(1) 검색",
+        "정책, NAT, 라우팅을 단일 처리 경로에서 처리",
+        "커널 내 최적화 실행으로 낮은 지연",
+        "kube-proxy 없이 내장 서비스 처리"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "마이그레이션 요건",
+      "items": [
+        "Linux Kernel 5.3+, BTF 지원, /sys/fs/bpf 마운트",
+        "모든 노드 동일 커널 버전 + 테스트 환경 검증",
+        "FelixConfiguration에서 bpfEnabled: true 활성화",
+        "백업 및 롤백 계획 수립"
+      ]
+    }
+  ]
+}

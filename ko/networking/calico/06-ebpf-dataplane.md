@@ -8,7 +8,9 @@ Calico는 전통적인 iptables 기반 데이터플레인과 함께 현대적인
 
 이 문서에서는 eBPF의 기본 개념부터 Calico에서의 활용, 마이그레이션 방법, 그리고 성능 최적화까지 심층적으로 다룹니다.
 
-![iptables 모드와 eBPF 모드 두 가지 데이터플레인 옵션과 그 사이의 마이그레이션 경로를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-0.svg)
+![Calico의 두 가지 데이터플레인 옵션인 iptables 모드(전통적, 안정적)와 eBPF 모드(고성능, 현대적)를 나란히 놓고 iptables 모드에서 eBPF 모드로 향하는 마이그레이션 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-0.html)
 
 ## eBPF 기본 개념
 
@@ -16,7 +18,9 @@ Calico는 전통적인 iptables 기반 데이터플레인과 함께 현대적인
 
 eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 프로그램을 실행할 수 있게 해주는 기술입니다. 커널을 수정하거나 모듈을 로드하지 않고도 커널의 동작을 확장할 수 있습니다.
 
-![사용자 공간의 eBPF 프로그램이 libbpf를 통해 커널로 로드되어 Verifier 검증과 JIT 컴파일을 거쳐 eBPF VM에서 실행되고, Hook Point와 BPF Map으로 연결되는 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-1.svg)
+![사용자 공간에서 C/Rust로 작성된 eBPF 프로그램이 libbpf/BCC 로더를 통해 bpf() 호출로 커널에 로드되어 eBPF Verifier의 안전성 검증과 JIT Compiler의 네이티브 코드 변환을 거쳐 eBPF VM에서 실행되고, XDP·TC·Socket Ops·Kprobes 같은 Hook Point에 연결되며 BPF Maps를 통해 사용자 공간 애플리케이션과 상태를 공유하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-1.html)
 
 ### eBPF 핵심 구성 요소
 
@@ -30,7 +34,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ### eBPF Hook Points
 
-![패킷이 NIC에서 XDP, TC Ingress, Socket Filter를 거쳐 라우팅된 뒤 Socket Ops와 TC Egress를 지나 다시 나가는 eBPF Hook Point 파이프라인을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-2.svg)
+![패킷이 NIC에서 XDP, TC Ingress, Socket Filter를 거쳐 라우팅된 뒤 Socket Ops와 TC Egress를 지나 다시 NIC로 나가는 eBPF Hook Point 파이프라인을 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-2.html)
 
 **Hook Point별 특징:**
 
@@ -50,7 +56,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ### iptables 모드 아키텍처
 
-![Pod의 패킷이 veth를 지나 raw, mangle, nat, filter 네 개의 iptables 테이블을 순서대로 통과한 뒤 라우팅 테이블을 거쳐 eth0로 나가는 iptables 모드의 선형 처리 경로를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-3.svg)
+![Pod의 패킷이 veth를 지나 raw, mangle, nat, filter 네 개의 iptables 테이블을 순서대로 통과한 뒤 라우팅 테이블을 거쳐 eth0로 나가는 iptables 모드의 선형 처리 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-3.html)
 
 **iptables 모드의 문제점:**
 
@@ -61,7 +69,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ### eBPF 모드 아키텍처
 
-![Pod의 패킷이 veth를 지나 하나의 TC eBPF 프로그램에서 Policy·NAT·CT 맵을 조회해 정책, NAT, 라우팅을 한 번에 처리한 뒤 eth0로 나가는 eBPF 모드의 단일 처리 경로를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-4.svg)
+![Pod의 패킷이 veth pair를 지나 Host Network Stack의 TC eBPF 프로그램 하나에서 Policy Map, NAT Map, CT Map을 O(1) 해시 조회로 참조해 정책, NAT, 라우팅을 한 번에 처리한 뒤 eth0로 나가는 eBPF 모드의 단일 처리 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-4.html)
 
 **eBPF 모드의 장점:**
 
@@ -126,7 +136,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 Calico는 다양한 eBPF 프로그램을 사용하여 네트워킹 기능을 구현합니다:
 
-![TC Programs, XDP 프로그램, Socket Programs 세 그룹의 eBPF 프로그램이 각각 Policy Map, NAT Backend Map, NAT Frontend Map, Conntrack Map을 참조하며 NAT Frontend Map이 TC와 Socket 양쪽에서 공유되는 중심 데이터임을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-5.svg)
+![TC Programs(from_host, to_host, to_workload, from_workload), Socket Programs(connect4/6, sendmsg4/6), XDP 프로그램이 각각 Policy Map, NAT Backend Map, NAT Frontend Map, Conntrack Map을 조회하며 NAT Frontend Map은 TC와 Socket 양쪽이 함께 참조하는 서비스 VIP 맵임을 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-5.html)
 
 ### BPF Map 구조
 
@@ -164,7 +176,9 @@ DSR은 로드밸런서 응답 트래픽이 로드밸런서를 거치지 않고 �
 
 ### DSR 동작 원리
 
-![일반 모드에서는 백엔드 Pod의 응답이 로드밸런서 노드를 거쳐 SNAT된 뒤 클라이언트로 돌아가지만 DSR 모드에서는 로드밸런서를 거치지 않고 백엔드 Pod가 응답을 클라이언트에 직접 전송하는 과정을 비교한 시퀀스 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-6.svg)
+![일반 모드에서는 백엔드 Pod의 응답이 LB 노드를 거쳐 SNAT된 뒤 클라이언트로 돌아가지만 DSR 모드에서는 LB 노드를 거치지 않고 백엔드 Pod가 소스 IP를 VIP로 설정해 클라이언트에 직접 응답하는 과정을 비교한 시퀀스 다이어그램를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-6.html)
 
 ### DSR 모드 비교
 
@@ -201,7 +215,9 @@ spec:
 
 ### 동작 원리
 
-![애플리케이션이 VIP로 connect를 호출하면 eBPF 프로그램이 소켓 계층에서 NAT Map을 조회해 백엔드를 선택하고 목적지를 바꿔치기해 돌려주므로 이후 패킷은 NAT 없이 백엔드 Pod와 곧바로 TCP 연결되는 Connect-Time Load Balancing 과정을 보여주는 시퀀스 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-7.svg)
+![kube-proxy 방식에서는 SYN, DATA, FIN 패킷마다 iptables DNAT과 conntrack 조회를 거쳐 Pod A로 전달되지만, eBPF Connect-Time Load Balancing에서는 애플리케이션이 VIP로 connect를 호출할 때 소켓 계층의 cgroup/connect4 훅에서 eBPF 프로그램이 NAT Map을 조회해 백엔드 Pod B를 한 번만 선택하고 목적지를 재작성하므로 이후 모든 패킷이 패킷 레벨 NAT 없이 Pod B와 직접 연결되는 과정을 비교하는 시퀀스 다이어그램를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-7.html)
 
 **Connect-Time LB의 장점:**
 
@@ -566,7 +582,9 @@ Calico eBPF는 kube-proxy의 모든 기능을 대체할 수 있습니다:
 
 ### 서비스 처리 흐름
 
-![Client Pod가 보낸 ClusterIP 패킷을 eBPF 프로그램이 NAT Map에서 백엔드를 조회해 해시로 선택하고 DNAT한 뒤 Backend Pod로 전달하며, 응답이 오면 역방향 NAT을 적용해 클라이언트에게 그대로 돌려주는 kube-proxy 없는 서비스 처리 경로를 보여주는 시퀀스 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-8.svg)
+![Client Pod가 보낸 ClusterIP 패킷을 eBPF 프로그램이 NAT Map에서 백엔드를 조회해 해시로 선택하고 DNAT한 뒤 Backend Pod로 전달하며, 응답이 오면 역방향 NAT을 적용해 클라이언트에게 그대로 돌려주는 kube-proxy 없는 서비스 처리 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-8.html)
 
 ### 설정 예시
 

@@ -42,7 +42,9 @@ Calico typically uses ASNs in the `64512-65534` range for cluster-internal BGP.
 
 When a BGP speaker receives multiple routes to the same destination, it selects the best route using the following criteria (in order):
 
-![A BGP speaker with multiple routes to the same destination evaluates seven tie-breaking criteria in order, moving to the next criterion on a tie, until one route is selected as best.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg)
+![A BGP speaker receiving multiple routes to the same destination compares eleven attributes in order, from Weight through LOCAL_PREF, AS_PATH, Origin, MED, eBGP over iBGP and IGP metric down to Router ID and Neighbor IP, moving to the next attribute on a tie until the first difference selects the best route.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-2.html)
 
 ### iBGP vs eBGP Behavior
 
@@ -66,7 +68,9 @@ When a BGP speaker receives multiple routes to the same destination, it selects 
 
 Calico uses BIRD (BIRD Internet Routing Daemon) as its BGP implementation. BIRD runs as part of the `calico-node` DaemonSet on every node.
 
-![Inside each calico-node pod, the Calico API feeds confd which configures BIRD, BIRD programs the routing table and peers over BGP with external routers and other Calico nodes, while Felix independently programs the iptables/eBPF dataplane.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
+![Inside each calico-node pod, the Calico API feeds confd which configures BIRD, BIRD programs the routing table and peers over BGP with external routers and other Calico nodes, while Felix independently programs the iptables/eBPF dataplane.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-1.html)
 
 ### BGP Topology Options
 
@@ -83,7 +87,9 @@ Calico supports two primary BGP topologies:
 
 In the default full-mesh configuration, every Calico node establishes a BGP peering session with every other node in the cluster.
 
-![In the default full-mesh configuration every Calico node peers with every other node, shown from Node 1's perspective connecting to the four others; the same holds symmetrically for all five nodes, producing 10 total BGP sessions.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg)
+![In the default full-mesh configuration every one of the five Calico nodes (AS 64512) peers directly with every other node; the sessions are enumerated as Node 1 to four peers, Node 2 to three, Node 3 to two and Node 4 to one, totalling N×(N-1)/2 = 10 iBGP sessions.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-3.html)
 
 ### Session Count Formula
 
@@ -136,7 +142,9 @@ spec:
 
 Route Reflectors (RRs) solve the iBGP scalability problem by allowing a subset of nodes to reflect routes to other nodes. This eliminates the need for a full mesh.
 
-![Two route reflectors peer with each other and with every client node, letting client nodes learn routes without peering directly with one another, eliminating the need for a full mesh.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg)
+![Two route reflectors sharing one Cluster ID peer with each other in an RR mesh, and six client nodes (1–3 and 4–6) each hold iBGP sessions only with the two route reflectors, so routes are reflected to every node without a client-to-client full mesh.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-4.html)
 
 ### Route Reflector Key Attributes
 
@@ -231,11 +239,15 @@ spec:
 
 **Pattern 1: Dual Route Reflectors (Small/Medium Clusters)**
 
-![Each availability zone hosts one route reflector, and every node in both zones peers with both route reflectors, so the loss of one zone's route reflector does not isolate any node.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
+![Each availability zone hosts one route reflector, and every node in both zones peers with both route reflectors, so the loss of one zone's route reflector does not isolate any node.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-11.html)
 
 **Pattern 2: Hierarchical Route Reflectors (Large Clusters)**
 
-![A two-tier route-reflector hierarchy: two global route reflectors peer with each other and with every rack-level route reflector, and each rack's nodes peer only with their rack's route reflector, keeping session counts flat as the cluster grows.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
+![A two-tier route-reflector hierarchy: two global route reflectors peer with each other and with every rack-level route reflector, and each rack's nodes peer only with their rack's route reflector, keeping session counts flat as the cluster grows.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-10.html)
 
 ***
 
@@ -642,7 +654,9 @@ policy-options {
 
 ### Spine-Leaf Architecture Integration
 
-![In a spine-leaf fabric each leaf switch peers with both spine switches for redundancy, and the Kubernetes nodes in each rack peer only with their rack's leaf switch, so BGP routes flow from nodes up through the leaf and spine layers.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg)
+![In a spine-leaf fabric each leaf switch peers with both spine switches for redundancy, and the Kubernetes nodes in each rack peer only with their rack's leaf switch, so BGP routes flow from nodes up through the leaf and spine layers.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-5.html)
 
 Calico configuration for spine-leaf:
 
@@ -949,7 +963,9 @@ ip route show | grep bird
 
 ### Multi-Rack with Route Reflectors
 
-![Two route reflectors in a management rack peer with each other and with every compute rack, so each compute rack's nodes reach every other rack's routes without a full mesh, and losing one route reflector does not isolate any rack.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
+![Two route reflectors in a management rack peer with each other and with every compute rack, so each compute rack's nodes reach every other rack's routes without a full mesh, and losing one route reflector does not isolate any rack.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-7.html)
 
 ### Multi-Datacenter BGP Design
 

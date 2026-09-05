@@ -19,7 +19,9 @@ Amazon EKS 클러스터를 운영하다 보면 다양한 문제가 발생할 수
 
 ## 문제 해결 기본 사항
 
-![EKS 문제 해결의 접근 방식, 필수 도구, 로그 수집, 진단 정보 수집이라는 네 가지 기본 축을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-0.svg)
+![EKS 문제 해결 기본 사항 다이어그램: 문제 식별부터 문서화까지 이어지는 6단계 문제 해결 접근 방식과, 2단계 정보 수집에 쓰이는 필수 도구·로그 수집·진단 정보 수집의 세 축을 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-0.html)
 
 ### 문제 해결 접근 방식
 
@@ -218,7 +220,9 @@ kubectl exec -it netshoot -- traceroute <target-ip>
 
 ## 클러스터 생성 및 관리 문제
 
-![클러스터 생성 실패, 엔드포인트 접근 문제, 삭제 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-1.svg)
+![클러스터 생성 실패, 엔드포인트 접근 문제, 삭제 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-1.html)
 
 ### 클러스터 생성 실패
 
@@ -524,7 +528,9 @@ aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<clus
 
 EKS 클러스터에서 네트워킹 문제는 가장 흔하게 발생하는 문제 중 하나입니다. 이 섹션에서는 일반적인 네트워킹 문제와 그 해결 방법을 다룹니다.
 
-![파드 간 통신, 서비스 접근, 로드 밸런서, DNS, VPC CNI 다섯 갈래의 네트워킹 문제와 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-2.svg)
+![네트워킹 문제가 파드 간 통신, 서비스 접근, 로드 밸런서, DNS, VPC CNI 다섯 갈래로 나뉘고, 앞의 세 갈래는 각각 다섯 가지 일반적인 원인으로 이어지는 것을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-2.html)
 
 ### 파드 간 통신 문제
 
@@ -1109,7 +1115,9 @@ aws iam attach-role-policy \
 
 ## 노드 및 파드 문제
 
-![노드 상태 문제, 파드 문제, 자동 스케일링 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-3.svg)
+![노드 및 파드 문제를 노드 상태 문제, 파드 문제, 자동 스케일링 문제 세 갈래로 나누고 각 갈래마다 일반적인 원인, 문제 해결 단계, 일반적인 해결 방법으로 이어지는 흐름과 다섯 가지 주요 원인 목록을 보여주는 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-3.html)
 
 ### 노드 상태 문제
 
@@ -1450,7 +1458,9 @@ EOF
 ```
 ## IAM 및 인증 문제
 
-![IAM 인증 문제와 RBAC 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-4.svg)
+![EKS 접근 장애를 IAM 인증 문제(aws-auth ConfigMap, IAM 역할 권한, OIDC 공급자, CLI 자격 증명, kubeconfig)와 RBAC 문제(권한, 역할 바인딩, 네임스페이스 범위, 서비스 계정, 클러스터 역할)의 두 갈래로 나눠 진단하는 구조를 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-4.html)
 
 ### IAM 인증 문제
 

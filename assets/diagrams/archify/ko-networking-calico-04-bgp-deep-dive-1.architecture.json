@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "클러스터 노드 iBGP와 ToR eBGP",
+    "output": "ko-networking-calico-04-bgp-deep-dive-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ibgp-mesh",
+        "label": "iBGP full-mesh",
+        "focus": [
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "note": "같은 AS 64512 안의 노드끼리는 iBGP로 서로 완전 연결(full-mesh)된다."
+      },
+      {
+        "id": "ebgp-peering",
+        "label": "eBGP 피어링",
+        "focus": [
+          "n1",
+          "n2",
+          "n3",
+          "tor"
+        ],
+        "note": "각 노드는 다른 AS 64513의 ToR 스위치와 개별 eBGP 세션을 맺는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "10.0.1.1",
+      "pos": [
+        80,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "10.0.1.2",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "10.0.1.3",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "tor",
+      "type": "external",
+      "label": "ToR Switch",
+      "sublabel": "10.0.0.1",
+      "pos": [
+        600,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AS 64512 (Kubernetes 클러스터)",
+      "wraps": [
+        "n1",
+        "n2",
+        "n3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AS 64513 (네트워크 인프라)",
+      "wraps": [
+        "tor"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ibgp-n1-n2",
+      "from": "n1",
+      "to": "n2",
+      "label": "iBGP",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ibgp-n2-n3",
+      "from": "n2",
+      "to": "n3",
+      "label": "iBGP",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ibgp-n1-n3",
+      "from": "n1",
+      "to": "n3",
+      "label": "iBGP",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          40,
+          90
+        ],
+        [
+          40,
+          430
+        ]
+      ]
+    },
+    {
+      "id": "ebgp-n1",
+      "from": "n1",
+      "to": "tor",
+      "label": "eBGP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebgp-n2",
+      "from": "n2",
+      "to": "tor",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebgp-n3",
+      "from": "n3",
+      "to": "tor",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "iBGP (Internal BGP)",
+      "items": [
+        "동일 AS 내 피어링, 클러스터 내부용",
+        "Full-mesh 또는 Route Reflector 필요",
+        "TTL 255, Next-hop 변경 없음, AD 200"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "eBGP (External BGP)",
+      "items": [
+        "서로 다른 AS 간 피어링, 외부 라우터 연결용",
+        "경로 자동 전파",
+        "TTL 1 (멀티홉 필요), Next-hop 자신으로 변경, AD 20"
+      ]
+    }
+  ]
+}

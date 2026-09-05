@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 핵심 기능",
+    "output": "ko-networking-calico-01-introduction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [860, 580],
+    "views": [
+      { "id": "networking", "label": "네트워킹", "focus": ["net", "workload"], "note": "순수 Layer 3 접근으로 Pod 연결성을 제공하며 BGP 또는 IPIP/VXLAN 캡슐화를 선택할 수 있다." },
+      { "id": "security", "label": "보안", "focus": ["sec", "workload"], "note": "Kubernetes 표준 NetworkPolicy와 Calico 확장 정책으로 워크로드 트래픽을 제어한다." },
+      { "id": "observability", "label": "관측성", "focus": ["obs", "workload"], "note": "Flow Logs로 워크로드 간 트래픽 흐름을 기록한다." },
+      { "id": "ipam", "label": "IPAM", "focus": ["ipam", "workload"], "note": "IPPool 기반으로 Pod IP 주소를 할당하고 관리한다." }
+    ]
+  },
+  "components": [
+    { "id": "net", "type": "backend", "label": "네트워킹", "sublabel": "Pod 연결성", "tag": "NET", "pos": [60, 60], "size": [200, 64] },
+    { "id": "sec", "type": "security", "label": "보안", "sublabel": "Network Policy", "tag": "SEC", "pos": [60, 190], "size": [200, 64] },
+    { "id": "obs", "type": "backend", "label": "관측성", "sublabel": "Flow Logs", "tag": "OBS", "pos": [60, 320], "size": [200, 64] },
+    { "id": "ipam", "type": "database", "label": "IPAM", "sublabel": "IP 주소 관리", "tag": "IPAM", "pos": [60, 450], "size": [200, 64] },
+    { "id": "workload", "type": "external", "label": "프로덕션 워크로드", "sublabel": "production traffic", "pos": [560, 255], "size": [220, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Calico 핵심 기능", "wraps": ["net", "sec", "obs", "ipam"] }
+  ],
+  "connections": [
+    { "id": "net-to-workload", "from": "net", "to": "workload", "variant": "emphasis" },
+    { "id": "sec-to-workload", "from": "sec", "to": "workload", "variant": "security" },
+    { "id": "obs-to-workload", "from": "obs", "to": "workload" },
+    { "id": "ipam-to-workload", "from": "ipam", "to": "workload" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "네트워킹 · IPAM", "items": ["BGP 기반 라우팅으로 오버레이 없는 네트워킹", "필요시 IPIP/VXLAN 캡슐화 지원", "IPPool로 Pod IP 주소 할당 및 관리"] },
+    { "dot": "rose", "title": "보안", "items": ["Kubernetes 표준 NetworkPolicy 완전 지원", "Ingress/Egress, CIDR, 포트, Label selector 기반 필터링", "GlobalNetworkPolicy 등 Calico 확장 정책"] },
+    { "dot": "emerald", "title": "관측성", "items": ["Flow Logs로 워크로드 트래픽 흐름 기록", "네 기능 모두 프로덕션 워크로드를 지원"] }
+  ]
+}

@@ -64,7 +64,9 @@ Container networking models define how containers communicate with each other. E
 
 ### Cilium Networking Modes
 
-![Diagram grouping Cilium's networking modes into overlay, native routing, and cloud integration, showing that skipping encapsulation with native routing yields the best performance while overlay modes trade some performance for portability.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-0.svg)
+![Diagram grouping Cilium's networking modes into overlay (VXLAN, Geneve), native routing (direct routing, BGP), and cloud integration (AWS ENI, Azure IPAM, GKE), showing that overlay modes carry encapsulation overhead, native routing skips encapsulation for the best performance, and cloud integration yields cloud-native optimized performance.](../../.gitbook/assets/en-networking-cilium-03-networking-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-03-networking-0.html)
 
 ## VXLAN Technology Deep Dive
 
@@ -115,7 +117,9 @@ data:
 
 This configuration instructs Cilium to set up inter-pod communication within the cluster using VXLAN tunneling. Each node acts as a VTEP and encapsulates pod traffic into VXLAN packets for transmission to other nodes.
 
-![Layer stack showing a VXLAN-encapsulated packet from the outer Ethernet header down through the outer IP header and the VXLAN header carrying the VNI, to the original inner Ethernet frame it wraps.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-1.svg)
+![Diagram of a VXLAN-encapsulated packet as four nested layers, from the outer Ethernet header through the outer IP header (usually IPv4, over UDP port 8472) and the VXLAN header carrying the VNI, to the original inner Ethernet frame it wraps.](../../.gitbook/assets/en-networking-cilium-03-networking-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-03-networking-1.html)
 
 ### How VXLAN Works:
 
@@ -139,7 +143,9 @@ Cilium uses VXLAN by default to implement overlay networking, but also supports 
 
 ### Cilium Overlay Network Architecture:
 
-![Architecture diagram showing a container on Host A reaching a container on Host B through each host's eBPF datapath and VTEP, which exchange VXLAN-encapsulated traffic over the shared physical network.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-2.svg)
+![Cilium overlay network architecture in which a packet from Container A (10.0.0.1) on Host A passes through eBPF policy enforcement and VXLAN encapsulation at VTEP 192.168.1.1, crosses the physical network, and is decapsulated at Host B's VTEP 192.168.1.2 before eBPF delivers it to Container B (10.0.0.2).](../../.gitbook/assets/en-networking-cilium-03-networking-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-03-networking-2.html)
 
 ### How Cilium Overlay Networking Works:
 

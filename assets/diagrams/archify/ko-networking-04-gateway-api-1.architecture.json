@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Gateway API 리소스 모델",
+    "output": "ko-networking-04-gateway-api-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "infra-layer",
+        "label": "GatewayClass → Gateway",
+        "focus": [
+          "gc",
+          "gw"
+        ],
+        "note": "인프라 제공자가 정의한 GatewayClass를 클러스터 운영자가 Gateway의 gatewayClassName으로 참조합니다."
+      },
+      {
+        "id": "route-layer",
+        "label": "Route 연결",
+        "focus": [
+          "gw",
+          "httproute",
+          "grpcroute",
+          "tcproute",
+          "tlsroute",
+          "udproute"
+        ],
+        "note": "애플리케이션 개발자가 만든 Route가 parentRefs로 Gateway에 연결됩니다."
+      },
+      {
+        "id": "backend-layer",
+        "label": "백엔드 전달",
+        "focus": [
+          "httproute",
+          "grpcroute",
+          "tcproute",
+          "tlsroute",
+          "udproute",
+          "svc-a",
+          "svc-b",
+          "svc-c"
+        ],
+        "note": "각 Route는 backendRefs로 지정한 Service에 트래픽을 전달합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gc",
+      "type": "cloud",
+      "label": "GatewayClass",
+      "sublabel": "인프라 템플릿",
+      "pos": [
+        500,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "로드밸런서 인스턴스",
+      "pos": [
+        500,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "httproute",
+      "type": "cloud",
+      "label": "HTTPRoute",
+      "sublabel": "L7",
+      "pos": [
+        150,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "grpcroute",
+      "type": "cloud",
+      "label": "GRPCRoute",
+      "sublabel": "L7",
+      "pos": [
+        325,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tcproute",
+      "type": "cloud",
+      "label": "TCPRoute",
+      "sublabel": "L4",
+      "pos": [
+        500,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tlsroute",
+      "type": "cloud",
+      "label": "TLSRoute",
+      "sublabel": "L4",
+      "pos": [
+        675,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "udproute",
+      "type": "cloud",
+      "label": "UDPRoute",
+      "sublabel": "L4",
+      "pos": [
+        850,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        240,
+        550
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        490,
+        550
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        740,
+        550
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "인프라 제공자",
+      "wraps": [
+        "gc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클러스터 운영자",
+      "wraps": [
+        "gw"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "애플리케이션 개발자",
+      "wraps": [
+        "httproute",
+        "grpcroute",
+        "tcproute",
+        "tlsroute",
+        "udproute"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "백엔드",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gc-gw",
+      "from": "gc",
+      "to": "gw",
+      "label": "gatewayClassName",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        660,
+        180
+      ]
+    },
+    {
+      "id": "gw-http",
+      "from": "gw",
+      "to": "httproute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-grpc",
+      "from": "gw",
+      "to": "grpcroute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-tcp",
+      "from": "gw",
+      "to": "tcproute",
+      "label": "parentRefs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        630,
+        370
+      ]
+    },
+    {
+      "id": "gw-tls",
+      "from": "gw",
+      "to": "tlsroute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-udp",
+      "from": "gw",
+      "to": "udproute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "http-a",
+      "from": "httproute",
+      "to": "svc-a",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "http-b",
+      "from": "httproute",
+      "to": "svc-b",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "grpc-b",
+      "from": "grpcroute",
+      "to": "svc-b",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tcp-c",
+      "from": "tcproute",
+      "to": "svc-c",
+      "label": "backendRefs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        520,
+        475
+      ]
+    },
+    {
+      "id": "tls-c",
+      "from": "tlsroute",
+      "to": "svc-c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "udp-c",
+      "from": "udproute",
+      "to": "svc-c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "역할 분리",
+      "items": [
+        "인프라 제공자: GatewayClass로 기본 인프라 구성 정의",
+        "클러스터 운영자: Gateway로 로드밸런서 프로비저닝",
+        "애플리케이션 개발자: HTTPRoute, GRPCRoute 등으로 라우팅 규칙 정의"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Route 종류",
+      "items": [
+        "L7: HTTPRoute, GRPCRoute",
+        "L4: TCPRoute, TLSRoute, UDPRoute"
+      ]
+    }
+  ]
+}

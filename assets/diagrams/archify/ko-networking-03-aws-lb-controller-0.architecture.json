@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AWS Load Balancer Controller 아키텍처",
+    "output": "ko-networking-03-aws-lb-controller-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingress-alb",
+        "label": "Ingress → ALB",
+        "focus": [
+          "ing",
+          "ctrl",
+          "alb",
+          "tg1",
+          "pods"
+        ],
+        "note": "Ingress 리소스가 컨트롤러를 트리거하면 HTTP/HTTPS(L7)용 ALB와 Target Group이 만들어져 Pod로 트래픽을 전달한다."
+      },
+      {
+        "id": "service-nlb",
+        "label": "Service → NLB",
+        "focus": [
+          "svc",
+          "ctrl",
+          "nlb",
+          "tg2",
+          "pods"
+        ],
+        "note": "Service 리소스가 컨트롤러를 트리거하면 TCP/UDP(L4)용 NLB와 Target Group이 만들어진다."
+      },
+      {
+        "id": "tgb",
+        "label": "TargetGroupBinding",
+        "focus": [
+          "tgb",
+          "tg1",
+          "pods"
+        ],
+        "note": "TargetGroupBinding은 이미 존재하는 Target Group을 Kubernetes Service와 직접 연결한다."
+      }
+    ],
+    "viewBox": [
+      1120,
+      470
+    ]
+  },
+  "components": [
+    {
+      "id": "ing",
+      "type": "backend",
+      "label": "Ingress",
+      "sublabel": "Ingress 리소스",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "Service 리소스",
+      "pos": [
+        250,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "tgb",
+      "type": "backend",
+      "label": "TargetGroupBinding",
+      "sublabel": "기존 Target Group 연결",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Pods",
+      "sublabel": "워크로드",
+      "pos": [
+        900,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "AWS Load Balancer Controller",
+      "sublabel": "K8s 리소스 감시",
+      "pos": [
+        90,
+        250
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "HTTP/HTTPS L7",
+      "pos": [
+        440,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Network Load Balancer",
+      "sublabel": "TCP/UDP L4",
+      "pos": [
+        440,
+        330
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "tg1",
+      "type": "cloud",
+      "label": "Target Group 1",
+      "sublabel": "ALB 타겟",
+      "pos": [
+        720,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "tg2",
+      "type": "cloud",
+      "label": "Target Group 2",
+      "sublabel": "NLB 타겟",
+      "pos": [
+        720,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "ing",
+        "svc",
+        "tgb",
+        "pods"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "LB Controller",
+      "wraps": [
+        "ctrl"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로드 밸런서",
+      "wraps": [
+        "alb",
+        "nlb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Target Group",
+      "wraps": [
+        "tg1",
+        "tg2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ing-ctrl",
+      "from": "ing",
+      "to": "ctrl",
+      "label": "트리거",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-ctrl",
+      "from": "svc",
+      "to": "ctrl",
+      "label": "트리거",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-alb",
+      "from": "ctrl",
+      "to": "alb",
+      "label": "생성/관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-nlb",
+      "from": "ctrl",
+      "to": "nlb",
+      "label": "생성/관리"
+    },
+    {
+      "id": "alb-tg1",
+      "from": "alb",
+      "to": "tg1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nlb-tg2",
+      "from": "nlb",
+      "to": "tg2"
+    },
+    {
+      "id": "tg1-pods",
+      "from": "tg1",
+      "to": "pods",
+      "label": "타겟 등록",
+      "variant": "emphasis",
+      "labelDx": -70
+    },
+    {
+      "id": "tg2-pods",
+      "from": "tg2",
+      "to": "pods"
+    },
+    {
+      "id": "tgb-tg1",
+      "from": "tgb",
+      "to": "tg1",
+      "label": "직접 연결",
+      "variant": "dashed"
+    }
+  ]
+}

@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico eBPF 프로그램 구조",
+    "output": "ko-networking-calico-06-ebpf-dataplane-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "policy-path",
+        "label": "정책 적용 경로",
+        "focus": [
+          "from_host",
+          "to_host",
+          "pol_map"
+        ],
+        "note": "호스트 ↔ Pod 방향의 TC 프로그램이 Policy Map에서 네트워크 정책 규칙을 조회한다."
+      },
+      {
+        "id": "service-nat",
+        "label": "서비스 NAT 경로",
+        "focus": [
+          "from_wl",
+          "to_wl",
+          "connect",
+          "nat_map",
+          "be_map"
+        ],
+        "note": "NAT Frontend Map은 TC(from_workload)와 Socket(connect4/6) 양쪽이 함께 참조하는 서비스 VIP 맵이다."
+      },
+      {
+        "id": "xdp-ct",
+        "label": "XDP 조기 처리",
+        "focus": [
+          "xdp",
+          "ct_map"
+        ],
+        "note": "XDP 프로그램은 NIC 드라이버 단계에서 Conntrack Map을 조회해 패킷을 조기 처리한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "from_host",
+      "type": "backend",
+      "label": "from_host",
+      "sublabel": "호스트 → Pod",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "to_host",
+      "type": "backend",
+      "label": "to_host",
+      "sublabel": "Pod → 호스트",
+      "pos": [
+        200,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "to_wl",
+      "type": "backend",
+      "label": "to_workload",
+      "sublabel": "워크로드 수신",
+      "pos": [
+        360,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "from_wl",
+      "type": "backend",
+      "label": "from_workload",
+      "sublabel": "워크로드 송신",
+      "pos": [
+        520,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "connect",
+      "type": "backend",
+      "label": "connect4/6",
+      "sublabel": "연결 시간 LB",
+      "pos": [
+        740,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sendmsg",
+      "type": "backend",
+      "label": "sendmsg4/6",
+      "sublabel": "UDP LB",
+      "pos": [
+        900,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "xdp",
+      "type": "backend",
+      "label": "XDP 프로그램",
+      "sublabel": "조기 패킷 처리",
+      "pos": [
+        1120,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pol_map",
+      "type": "database",
+      "label": "Policy Map",
+      "sublabel": "네트워크 정책 규칙",
+      "pos": [
+        120,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "be_map",
+      "type": "database",
+      "label": "NAT Backend Map",
+      "sublabel": "백엔드 엔드포인트",
+      "pos": [
+        355,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "nat_map",
+      "type": "database",
+      "label": "NAT Frontend Map",
+      "sublabel": "서비스 VIP 매핑",
+      "pos": [
+        625,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ct_map",
+      "type": "database",
+      "label": "Conntrack Map",
+      "sublabel": "연결 추적",
+      "pos": [
+        1115,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "TC Programs",
+      "wraps": [
+        "from_host",
+        "to_host",
+        "to_wl",
+        "from_wl"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Socket Programs",
+      "wraps": [
+        "connect",
+        "sendmsg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "XDP Programs",
+      "wraps": [
+        "xdp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "BPF Maps",
+      "wraps": [
+        "pol_map",
+        "be_map",
+        "nat_map",
+        "ct_map"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fh-pol",
+      "from": "from_host",
+      "to": "pol_map",
+      "label": "정책 조회",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "th-pol",
+      "from": "to_host",
+      "to": "pol_map",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "twl-be",
+      "from": "to_wl",
+      "to": "be_map",
+      "label": "백엔드 조회",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "fwl-nat",
+      "from": "from_wl",
+      "to": "nat_map",
+      "label": "VIP 조회",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "connect-nat",
+      "from": "connect",
+      "to": "nat_map",
+      "label": "연결 시 VIP 조회",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "xdp-ct",
+      "from": "xdp",
+      "to": "ct_map",
+      "label": "연결 추적 조회",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "eBPF 프로그램",
+      "items": [
+        "TC Programs: from_host, to_host, from_workload, to_workload 훅",
+        "Socket Programs: connect4/6는 연결 시간 LB, sendmsg4/6는 UDP LB",
+        "XDP 프로그램: NIC 드라이버 단계의 조기 패킷 처리"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "BPF Maps",
+      "items": [
+        "Policy Map: (src_ip, dst_ip, protocol, port) → action",
+        "NAT Frontend Map: (vip, port, protocol) → backend_count",
+        "NAT Backend Map: (service_id, backend_id) → pod_ip, port",
+        "Conntrack Map: 5-tuple → state, nat_info"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "보조 Maps",
+      "items": [
+        "Affinity Map: (client_ip, service_id) → backend_id 세션 어피니티",
+        "Route Map: destination_cidr → next_hop 라우팅 정보"
+      ]
+    }
+  ]
+}

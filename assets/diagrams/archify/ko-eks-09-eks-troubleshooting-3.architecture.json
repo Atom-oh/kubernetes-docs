@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "노드 및 파드 문제",
+    "output": "ko-eks-09-eks-troubleshooting-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "원인"
+        },
+        "cloud": {
+          "label": "해결 방법"
+        },
+        "backend": {
+          "label": "범주 · 해결 단계"
+        },
+        "external": {
+          "label": "상위 범주"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "external",
+      "label": "노드 및 파드 문제",
+      "sublabel": "EKS 트러블슈팅 범주",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "branch-a",
+      "type": "backend",
+      "label": "노드 상태 문제",
+      "sublabel": "리소스 · kubelet · 네트워크 · 인증",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "a-causes",
+      "type": "security",
+      "label": "일반적인 원인",
+      "sublabel": "5가지 주요 원인",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "a-steps",
+      "type": "backend",
+      "label": "문제 해결 단계",
+      "sublabel": "kubectl describe node · kubelet 로그",
+      "pos": [
+        60,
+        400
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "a-solutions",
+      "type": "cloud",
+      "label": "일반적인 해결 방법",
+      "sublabel": "kubelet 재시작 · 드레이닝",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "branch-b",
+      "type": "backend",
+      "label": "파드 문제",
+      "sublabel": "리소스 · 이미지 · 구성 · 권한",
+      "pos": [
+        400,
+        170
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "b-causes",
+      "type": "security",
+      "label": "일반적인 원인",
+      "sublabel": "5가지 주요 원인",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "b-steps",
+      "type": "backend",
+      "label": "문제 해결 단계",
+      "sublabel": "kubectl describe pod · 로그 확인",
+      "pos": [
+        400,
+        400
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "b-solutions",
+      "type": "cloud",
+      "label": "일반적인 해결 방법",
+      "sublabel": "리소스 · 이미지 · 구성 수정",
+      "pos": [
+        400,
+        500
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "branch-c",
+      "type": "backend",
+      "label": "자동 스케일링 문제",
+      "sublabel": "HPA / 노드 그룹 스케일링",
+      "pos": [
+        740,
+        170
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "c-causes",
+      "type": "security",
+      "label": "일반적인 원인",
+      "sublabel": "5가지 주요 원인",
+      "pos": [
+        740,
+        300
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "c-steps",
+      "type": "backend",
+      "label": "문제 해결 단계",
+      "sublabel": "HPA · 메트릭 서버 상태 확인",
+      "pos": [
+        740,
+        400
+      ],
+      "size": [
+        240,
+        56
+      ]
+    },
+    {
+      "id": "c-solutions",
+      "type": "cloud",
+      "label": "일반적인 해결 방법",
+      "sublabel": "HPA · 노드 그룹 구성 수정",
+      "pos": [
+        740,
+        500
+      ],
+      "size": [
+        240,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "노드 상태 문제",
+      "wraps": [
+        "branch-a",
+        "a-causes",
+        "a-steps",
+        "a-solutions"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드 문제",
+      "wraps": [
+        "branch-b",
+        "b-causes",
+        "b-steps",
+        "b-solutions"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "자동 스케일링 문제",
+      "wraps": [
+        "branch-c",
+        "c-causes",
+        "c-steps",
+        "c-solutions"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-to-a",
+      "from": "root",
+      "to": "branch-a",
+      "variant": "default"
+    },
+    {
+      "id": "branch-a-to-a-causes",
+      "from": "branch-a",
+      "to": "a-causes"
+    },
+    {
+      "id": "a-causes-to-a-steps",
+      "from": "a-causes",
+      "to": "a-steps"
+    },
+    {
+      "id": "a-steps-to-a-solutions",
+      "from": "a-steps",
+      "to": "a-solutions"
+    },
+    {
+      "id": "root-to-b",
+      "from": "root",
+      "to": "branch-b",
+      "variant": "emphasis"
+    },
+    {
+      "id": "branch-b-to-b-causes",
+      "from": "branch-b",
+      "to": "b-causes"
+    },
+    {
+      "id": "b-causes-to-b-steps",
+      "from": "b-causes",
+      "to": "b-steps"
+    },
+    {
+      "id": "b-steps-to-b-solutions",
+      "from": "b-steps",
+      "to": "b-solutions"
+    },
+    {
+      "id": "root-to-c",
+      "from": "root",
+      "to": "branch-c",
+      "variant": "default"
+    },
+    {
+      "id": "branch-c-to-c-causes",
+      "from": "branch-c",
+      "to": "c-causes"
+    },
+    {
+      "id": "c-causes-to-c-steps",
+      "from": "c-causes",
+      "to": "c-steps"
+    },
+    {
+      "id": "c-steps-to-c-solutions",
+      "from": "c-steps",
+      "to": "c-solutions"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "노드 상태 문제의 일반적인 원인",
+      "items": [
+        "리소스 부족: CPU, 메모리 또는 디스크 공간 부족",
+        "kubelet 문제: kubelet 서비스 중단 또는 구성 오류",
+        "네트워크 연결 문제: 노드와 컨트롤 플레인 간 연결",
+        "인증 문제: 노드 인증서 만료 또는 인증 실패",
+        "시스템 문제: 커널 또는 운영 체제 문제"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "파드 문제의 일반적인 원인",
+      "items": [
+        "리소스 제약: CPU, 메모리 또는 스토리지 제약",
+        "이미지 문제: 이미지를 찾을 수 없거나 액세스 불가",
+        "구성 오류: 파드 구성 오류",
+        "권한 문제: 서비스 계정 또는 보안 컨텍스트 문제",
+        "노드 문제: 노드 리소스 부족 또는 상태 문제"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "자동 스케일링 문제의 일반적인 원인",
+      "items": [
+        "메트릭 문제: 메트릭 서버 또는 메트릭 수집 문제",
+        "HPA 구성 오류: HPA(Horizontal Pod Autoscaler) 구성 오류",
+        "리소스 제약: 클러스터 리소스 제약으로 스케일링 제한",
+        "노드 그룹 구성 오류: 노드 그룹 자동 스케일링 구성 오류",
+        "쿨다운 기간: 스케일링 작업 간 쿨다운 기간"
+      ]
+    }
+  ]
+}

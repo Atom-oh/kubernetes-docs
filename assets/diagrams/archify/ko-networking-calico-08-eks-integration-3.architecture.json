@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "계층형 보안 모델: Security Group과 Calico Policy",
+    "output": "ko-networking-calico-08-eks-integration-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      560
+    ],
+    "views": [
+      {
+        "id": "aws-layer",
+        "label": "Layer 1: AWS 레벨",
+        "focus": [
+          "internet",
+          "nacl",
+          "sg"
+        ],
+        "note": "VPC 외부 트래픽과 서브넷 간 통신은 Network ACL과 Security Group이 먼저 제어한다."
+      },
+      {
+        "id": "k8s-layer",
+        "label": "Layer 2: Kubernetes 레벨",
+        "focus": [
+          "sg",
+          "cnp",
+          "gnp"
+        ],
+        "note": "Pod-to-Pod 통신, 네임스페이스 격리, 레이블 기반 정책은 Calico NetworkPolicy와 GlobalNetworkPolicy가 담당한다."
+      },
+      {
+        "id": "app-layer",
+        "label": "Layer 3: Application 레벨",
+        "focus": [
+          "gnp",
+          "mtls",
+          "authz",
+          "app"
+        ],
+        "note": "네트워크 정책을 통과한 트래픽은 서비스 간 mTLS와 애플리케이션 Authorization을 거쳐 도달한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "트래픽 진입점"
+        },
+        "cloud": {
+          "label": "AWS 계층"
+        },
+        "security": {
+          "label": "보안 정책"
+        },
+        "backend": {
+          "label": "애플리케이션"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "외부 트래픽",
+      "pos": [
+        160,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "nacl",
+      "type": "cloud",
+      "label": "Network ACL",
+      "sublabel": "서브넷 레벨",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "cloud",
+      "label": "Security Group",
+      "sublabel": "ENI 레벨",
+      "pos": [
+        680,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cnp",
+      "type": "security",
+      "label": "Calico NetworkPolicy",
+      "sublabel": "Pod 레벨",
+      "pos": [
+        680,
+        230
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "gnp",
+      "type": "security",
+      "label": "GlobalNetworkPolicy",
+      "sublabel": "클러스터 레벨",
+      "pos": [
+        400,
+        230
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "mtls",
+      "type": "security",
+      "label": "mTLS",
+      "sublabel": "서비스 간",
+      "pos": [
+        680,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "Authorization",
+      "sublabel": "애플리케이션",
+      "pos": [
+        400,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "최종 도달",
+      "pos": [
+        160,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Layer 1: AWS 레벨",
+      "wraps": [
+        "nacl",
+        "sg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Layer 2: Kubernetes 레벨",
+      "wraps": [
+        "cnp",
+        "gnp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Layer 3: Application 레벨",
+      "wraps": [
+        "mtls",
+        "authz"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "internet-nacl",
+      "from": "internet",
+      "to": "nacl",
+      "label": "인바운드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nacl-sg",
+      "from": "nacl",
+      "to": "sg"
+    },
+    {
+      "id": "sg-cnp",
+      "from": "sg",
+      "to": "cnp"
+    },
+    {
+      "id": "cnp-gnp",
+      "from": "cnp",
+      "to": "gnp"
+    },
+    {
+      "id": "gnp-mtls",
+      "from": "gnp",
+      "to": "mtls",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mtls-authz",
+      "from": "mtls",
+      "to": "authz"
+    },
+    {
+      "id": "authz-app",
+      "from": "authz",
+      "to": "app",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Security Group",
+      "items": [
+        "인스턴스 / ENI 단위, IP와 포트 기반(L3-L4)",
+        "VPC 외부 트래픽과 서브넷 간 통신 제어에 권장",
+        "감사: CloudTrail"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Calico Policy",
+      "items": [
+        "Pod / 네임스페이스 / 클러스터 단위, 레이블 셀렉터 기반",
+        "Pod-to-Pod 통신, 네임스페이스 격리, 레이블 기반 정책에 권장",
+        "감사: Flow Logs"
+      ]
+    }
+  ]
+}

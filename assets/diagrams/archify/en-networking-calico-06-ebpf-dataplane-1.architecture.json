@@ -1,0 +1,317 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF Architecture",
+    "locale": "en",
+    "output": "en-networking-calico-06-ebpf-dataplane-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "User-space components"
+        },
+        "security": {
+          "label": "Safety verification"
+        },
+        "backend": {
+          "label": "Kernel components"
+        },
+        "database": {
+          "label": "State store"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "load-path",
+        "label": "Load path",
+        "focus": [
+          "prog",
+          "lib",
+          "verifier",
+          "jit",
+          "vm"
+        ],
+        "note": "An eBPF program written in C/Rust is loaded into the kernel through libbpf, checked by the Verifier and JIT-compiled before it runs."
+      },
+      {
+        "id": "hook-points",
+        "label": "Hook Points",
+        "focus": [
+          "vm",
+          "xdp",
+          "tc",
+          "sk",
+          "kp"
+        ],
+        "note": "Verified programs attach to kernel hook points such as XDP, TC, Socket Ops and Kprobes, where they execute."
+      },
+      {
+        "id": "maps",
+        "label": "BPF Maps",
+        "focus": [
+          "app",
+          "vm",
+          "maps"
+        ],
+        "note": "BPF Maps are the store through which kernel eBPF programs and user-space applications share state."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prog",
+      "type": "frontend",
+      "label": "eBPF Program",
+      "sublabel": "C/Rust source",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "lib",
+      "type": "frontend",
+      "label": "libbpf / BCC",
+      "sublabel": "Loader",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "User-space process",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "verifier",
+      "type": "security",
+      "label": "eBPF Verifier",
+      "sublabel": "Safety verification",
+      "pos": [
+        330,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "jit",
+      "type": "backend",
+      "label": "JIT Compiler",
+      "sublabel": "Native code translation",
+      "pos": [
+        570,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "vm",
+      "type": "backend",
+      "label": "eBPF VM",
+      "sublabel": "Program execution",
+      "pos": [
+        810,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "BPF Maps",
+      "sublabel": "State store",
+      "pos": [
+        810,
+        440
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "xdp",
+      "type": "backend",
+      "label": "XDP",
+      "sublabel": "Network driver",
+      "pos": [
+        1090,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "tc",
+      "type": "backend",
+      "label": "TC",
+      "sublabel": "Traffic Control",
+      "pos": [
+        1090,
+        190
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "sk",
+      "type": "backend",
+      "label": "Socket Ops",
+      "sublabel": "Socket level",
+      "pos": [
+        1090,
+        300
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "kp",
+      "type": "backend",
+      "label": "Kprobes",
+      "sublabel": "Kernel function tracing",
+      "pos": [
+        1090,
+        410
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "User Space",
+      "wraps": [
+        "prog",
+        "lib",
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kernel Space",
+      "wraps": [
+        "verifier",
+        "jit",
+        "vm",
+        "maps",
+        "xdp",
+        "tc",
+        "sk",
+        "kp"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Hook Points",
+      "wraps": [
+        "xdp",
+        "tc",
+        "sk",
+        "kp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "prog-to-lib",
+      "from": "prog",
+      "to": "lib"
+    },
+    {
+      "id": "lib-to-verifier",
+      "from": "lib",
+      "to": "verifier",
+      "label": "bpf() load",
+      "variant": "emphasis"
+    },
+    {
+      "id": "verifier-to-jit",
+      "from": "verifier",
+      "to": "jit",
+      "label": "Valid",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-to-vm",
+      "from": "jit",
+      "to": "vm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-to-xdp",
+      "from": "vm",
+      "to": "xdp"
+    },
+    {
+      "id": "vm-to-tc",
+      "from": "vm",
+      "to": "tc"
+    },
+    {
+      "id": "vm-to-sk",
+      "from": "vm",
+      "to": "sk"
+    },
+    {
+      "id": "vm-to-kp",
+      "from": "vm",
+      "to": "kp"
+    },
+    {
+      "id": "vm-maps",
+      "from": "vm",
+      "to": "maps",
+      "label": "read / write",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "app-maps",
+      "from": "app",
+      "to": "maps",
+      "label": "shared state",
+      "variant": "dashed"
+    }
+  ]
+}

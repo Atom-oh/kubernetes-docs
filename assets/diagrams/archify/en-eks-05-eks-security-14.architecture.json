@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Compliance and Auditing",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      700
+    ],
+    "views": [
+      {
+        "id": "audit-pipeline",
+        "label": "Audit log pipeline",
+        "focus": [
+          "cp-logs",
+          "audit-logs",
+          "cloudtrail",
+          "fluentbit",
+          "cloudwatch",
+          "storage-analysis",
+          "securityhub",
+          "alerting-reporting"
+        ],
+        "note": "Control-plane and audit logs land in CloudWatch, are stored and analyzed, and flow through Security Hub into alerting and reporting."
+      },
+      {
+        "id": "compliance-check",
+        "label": "Compliance evaluation",
+        "focus": [
+          "config",
+          "inspector",
+          "cis",
+          "standards",
+          "securityhub"
+        ],
+        "note": "AWS Config rules and Inspector findings are evaluated against the CIS Kubernetes Benchmark to confirm compliance with regulatory standards."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cp-logs",
+      "type": "backend",
+      "label": "Control Plane Logs",
+      "sublabel": "api · authenticator · scheduler",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "audit-logs",
+      "type": "backend",
+      "label": "Audit Logs",
+      "sublabel": "audit (every API call)",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "cloudtrail",
+      "type": "cloud",
+      "label": "AWS CloudTrail",
+      "sublabel": "AWS API call history",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "node · application logs",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "Amazon CloudWatch",
+      "sublabel": "log collection",
+      "pos": [
+        300,
+        195
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "storage-analysis",
+      "type": "database",
+      "label": "Log Storage · Analysis",
+      "sublabel": "CloudWatch Logs Insights",
+      "pos": [
+        560,
+        195
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "securityhub",
+      "type": "security",
+      "label": "AWS Security Hub",
+      "sublabel": "central security posture",
+      "pos": [
+        800,
+        195
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alerting-reporting",
+      "type": "external",
+      "label": "Alerting · Reporting",
+      "sublabel": "Alerting / Reporting",
+      "pos": [
+        1020,
+        195
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "config",
+      "type": "cloud",
+      "label": "AWS Config",
+      "sublabel": "eks-* rule evaluation",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "inspector",
+      "type": "cloud",
+      "label": "Amazon Inspector",
+      "sublabel": "vulnerability findings",
+      "pos": [
+        40,
+        570
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "cis",
+      "type": "security",
+      "label": "CIS Kubernetes Benchmark",
+      "sublabel": "industry-standard checks",
+      "pos": [
+        560,
+        510
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "standards",
+      "type": "external",
+      "label": "Regulatory Standards",
+      "sublabel": "PCI DSS · HIPAA · GDPR · SOC 2 · ISO 27001",
+      "pos": [
+        1020,
+        510
+      ],
+      "size": [
+        260,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Logging and Monitoring",
+      "wraps": [
+        "cp-logs",
+        "audit-logs",
+        "cloudtrail",
+        "fluentbit",
+        "cloudwatch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Audit Workflow",
+      "wraps": [
+        "storage-analysis",
+        "securityhub",
+        "alerting-reporting"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Compliance Tools",
+      "wraps": [
+        "config",
+        "inspector",
+        "cis"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Compliance Standards",
+      "wraps": [
+        "standards"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-to-cw",
+      "from": "cp-logs",
+      "to": "cloudwatch"
+    },
+    {
+      "id": "audit-to-cw",
+      "from": "audit-logs",
+      "to": "cloudwatch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trail-to-cw",
+      "from": "cloudtrail",
+      "to": "cloudwatch"
+    },
+    {
+      "id": "fb-to-cw",
+      "from": "fluentbit",
+      "to": "cloudwatch"
+    },
+    {
+      "id": "cw-to-storage",
+      "from": "cloudwatch",
+      "to": "storage-analysis",
+      "label": "store",
+      "variant": "emphasis"
+    },
+    {
+      "id": "storage-to-hub",
+      "from": "storage-analysis",
+      "to": "securityhub",
+      "label": "findings",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hub-to-alert",
+      "from": "securityhub",
+      "to": "alerting-reporting",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hub-to-cis",
+      "from": "securityhub",
+      "to": "cis",
+      "label": "checks compliance",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "config-to-cis",
+      "from": "config",
+      "to": "cis",
+      "label": "rule evaluation"
+    },
+    {
+      "id": "inspector-to-cis",
+      "from": "inspector",
+      "to": "cis"
+    },
+    {
+      "id": "cis-to-standards",
+      "from": "cis",
+      "to": "standards",
+      "label": "compliance status",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EKS Audit Logging",
+      "items": [
+        "Enable control plane logs with update-cluster-config",
+        "Log types: api, audit, authenticator, controllerManager, scheduler",
+        "Audit logs record every API call made in the cluster"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "AWS Config Rules",
+      "items": [
+        "eks-cluster-logging-enabled",
+        "eks-cluster-oldest-supported-version",
+        "eks-endpoint-no-public-access",
+        "eks-secrets-encrypted"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Security Hub",
+      "items": [
+        "Centrally manage and monitor EKS security posture",
+        "Checks compliance against standards such as the CIS Kubernetes Benchmark"
+      ]
+    }
+  ]
+}

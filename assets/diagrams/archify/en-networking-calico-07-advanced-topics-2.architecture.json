@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WireGuard Node-to-Node Encryption Path",
+    "locale": "en",
+    "output": "en-networking-calico-07-advanced-topics-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Pod"
+        },
+        "security": {
+          "label": "WireGuard"
+        },
+        "cloud": {
+          "label": "Node NIC"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "encrypt",
+        "label": "Sending node: encrypt",
+        "focus": [
+          "pod-a",
+          "wg1",
+          "eth1"
+        ],
+        "note": "Pod A's plaintext packet is encrypted at the wireguard.cali interface before leaving via eth0."
+      },
+      {
+        "id": "tunnel",
+        "label": "Node-to-node WireGuard tunnel",
+        "focus": [
+          "eth1",
+          "eth2"
+        ],
+        "note": "Only encrypted packets cross the underlay network through the UDP 51820 tunnel."
+      },
+      {
+        "id": "decrypt",
+        "label": "Receiving node: decrypt",
+        "focus": [
+          "eth2",
+          "wg2",
+          "pod-b"
+        ],
+        "note": "Node 2's wireguard.cali interface decrypts the packet and delivers plaintext to Pod B."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "10.244.0.5",
+      "pos": [
+        110,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wg1",
+      "type": "security",
+      "label": "WireGuard Interface",
+      "sublabel": "wireguard.cali",
+      "pos": [
+        110,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "eth1",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "192.168.1.10",
+      "pos": [
+        110,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "10.244.1.10",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wg2",
+      "type": "security",
+      "label": "WireGuard Interface",
+      "sublabel": "wireguard.cali",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "eth2",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "192.168.1.11",
+      "pos": [
+        640,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node 1",
+      "wraps": [
+        "pod-a",
+        "wg1",
+        "eth1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2",
+      "wraps": [
+        "pod-b",
+        "wg2",
+        "eth2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-plain",
+      "from": "pod-a",
+      "to": "wg1",
+      "label": "plaintext",
+      "labelDy": 24
+    },
+    {
+      "id": "a-encrypt",
+      "from": "wg1",
+      "to": "eth1",
+      "label": "encrypt",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "tunnel",
+      "from": "eth1",
+      "to": "eth2",
+      "label": "WireGuard tunnel · UDP 51820",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-decrypt",
+      "from": "eth2",
+      "to": "wg2",
+      "label": "decrypt",
+      "variant": "security"
+    },
+    {
+      "id": "b-plain",
+      "from": "wg2",
+      "to": "pod-b",
+      "label": "plaintext"
+    }
+  ]
+}

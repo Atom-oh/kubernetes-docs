@@ -429,7 +429,9 @@ Tiers provide hierarchical policy evaluation, enabling separation of concerns be
 
 ### Policy Evaluation Order
 
-![Flowchart showing traffic passing in order through the Security, Platform, and Application tiers, where each tier can deny the packet, allow it, or pass it to the next tier, ending in an implicit deny if no tier matches.](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-1.svg)
+![Workflow showing traffic passing in order through the Security (100), Platform (200), Application (500), and Default (1000) tiers, where each tier can allow the packet, deny and drop it, or pass it to the next tier, ending in an implicit deny if no rule in the Default tier matches.](../../.gitbook/assets/en-networking-calico-05-network-policy-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-05-network-policy-1.html)
 
 ### Creating Tiers
 

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AS-per-Rack 멀티 데이터센터 BGP 설계",
+    "output": "ko-networking-calico-04-bgp-deep-dive-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1160, 520],
+    "views": [
+      { "id": "dc1-fabric", "label": "DC1 AS-per-Rack", "focus": ["dc1-spine1", "dc1-spine2", "dc1-rack1", "dc1-rack2"], "note": "랙마다 별도 AS(64510, 64511)를 두고 Spine(AS 64500)과 eBGP로 피어링한다." },
+      { "id": "dc2-fabric", "label": "DC2 AS-per-Rack", "focus": ["dc2-spine1", "dc2-spine2", "dc2-rack1"], "note": "DC2도 같은 패턴 — Rack 1(AS 64610)이 Spine(AS 64600)과 eBGP로 연결된다." },
+      { "id": "inter-dc", "label": "DC 간 WAN 연결", "focus": ["dc1-spine1", "wan", "dc2-spine1"], "note": "두 데이터센터의 Spine 1이 공통 WAN 라우터(AS 64000)와 eBGP로 피어링해 서로 연결된다." }
+    ]
+  },
+  "components": [
+    { "id": "dc1-spine2", "type": "cloud", "label": "Spine 2", "sublabel": "AS 64500", "pos": [70, 120], "size": [150, 60] },
+    { "id": "dc1-spine1", "type": "cloud", "label": "Spine 1", "sublabel": "AS 64500", "pos": [270, 120], "size": [150, 60] },
+    { "id": "dc1-rack2", "type": "backend", "label": "Rack 2 노드", "sublabel": "Node 3 · Node 4 · AS 64511", "pos": [70, 320], "size": [150, 60] },
+    { "id": "dc1-rack1", "type": "backend", "label": "Rack 1 노드", "sublabel": "Node 1 · Node 2 · AS 64510", "pos": [270, 320], "size": [150, 60] },
+    { "id": "wan", "type": "external", "label": "WAN Router", "sublabel": "AS 64000", "pos": [505, 120], "size": [150, 60] },
+    { "id": "dc2-spine1", "type": "cloud", "label": "Spine 1", "sublabel": "AS 64600", "pos": [740, 120], "size": [150, 60] },
+    { "id": "dc2-spine2", "type": "cloud", "label": "Spine 2", "sublabel": "AS 64600", "pos": [940, 120], "size": [150, 60] },
+    { "id": "dc2-rack1", "type": "backend", "label": "Rack 1 노드", "sublabel": "Node 5 · Node 6 · AS 64610", "pos": [740, 320], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "데이터센터 1", "wraps": ["dc1-spine1", "dc1-spine2", "dc1-rack1", "dc1-rack2"] },
+    { "kind": "region", "label": "데이터센터 2", "wraps": ["dc2-spine1", "dc2-spine2", "dc2-rack1"] },
+    { "kind": "region", "label": "WAN / Internet", "wraps": ["wan"] }
+  ],
+  "connections": [
+    { "id": "dc1-spine-mesh", "from": "dc1-spine1", "to": "dc1-spine2" },
+    { "id": "dc1-spine1-rack1", "from": "dc1-spine1", "to": "dc1-rack1", "label": "eBGP", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "dc1-spine1-rack2", "from": "dc1-spine1", "to": "dc1-rack2", "variant": "dashed" },
+    { "id": "dc1-spine2-rack2", "from": "dc1-spine2", "to": "dc1-rack2", "label": "eBGP", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "dc1-to-wan", "from": "dc1-spine1", "to": "wan", "label": "eBGP", "variant": "emphasis" },
+    { "id": "wan-to-dc2", "from": "wan", "to": "dc2-spine1", "label": "eBGP", "variant": "emphasis" },
+    { "id": "dc2-spine-mesh", "from": "dc2-spine1", "to": "dc2-spine2" },
+    { "id": "dc2-spine1-rack1", "from": "dc2-spine1", "to": "dc2-rack1", "label": "eBGP", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
+  ]
+}

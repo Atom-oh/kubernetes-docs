@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Pod State Flow Diagram",
+    "output": "en-eks-11-eks-advanced-debugging-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      980,
+      566
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Happy path"
+    },
+    {
+      "id": "failure",
+      "label": "Failure path"
+    }
+  ],
+  "states": [
+    {
+      "id": "pending",
+      "type": "start",
+      "label": "Pending",
+      "sublabel": "waiting for scheduling",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "creating",
+      "type": "active",
+      "label": "ContainerCreating",
+      "sublabel": "image pull · volume mount",
+      "lane": "main",
+      "col": 1
+    },
+    {
+      "id": "running",
+      "type": "active",
+      "label": "Running",
+      "sublabel": "containers running",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "succeeded",
+      "type": "success",
+      "label": "Succeeded",
+      "sublabel": "exited normally",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "failed",
+      "type": "failure",
+      "label": "Failed",
+      "sublabel": "OOMKilled · CrashLoopBackOff",
+      "lane": "failure",
+      "col": 0
+    }
+  ],
+  "transitions": [
+    {
+      "from": "pending",
+      "to": "creating",
+      "label": "Image pull",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "creating",
+      "to": "running",
+      "label": "Success",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "running",
+      "to": "succeeded",
+      "label": "Completed",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "creating",
+      "to": "failed",
+      "label": "Failure",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "running",
+      "to": "failed",
+      "label": "Crash",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "from": "failed",
+      "to": "pending",
+      "label": "Restart policy",
+      "variant": "dashed",
+      "labelSegment": 0,
+      "labelDy": 16,
+      "route": "left-channel",
+      "fromSide": "left",
+      "toSide": "left",
+      "channelX": 16
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Major Failure Causes",
+      "items": [
+        "Pending — resource shortage, scheduling failure",
+        "ContainerCreating — image pull failure, volume mount failure",
+        "Failed — OOMKilled, CrashLoopBackOff"
+      ]
+    }
+  ]
+}

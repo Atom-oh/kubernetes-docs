@@ -1,0 +1,441 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Security",
+    "output": "en-eks-04-eks-storage-part3-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "encryption",
+        "label": "Data Encryption",
+        "focus": [
+          "ebs-fsx",
+          "efs",
+          "s3",
+          "at-rest",
+          "in-transit",
+          "kms"
+        ],
+        "note": "At-rest and in-transit encryption for EBS, EFS, FSx, and S3 all converge on AWS KMS keys."
+      },
+      {
+        "id": "access",
+        "label": "Access Control",
+        "focus": [
+          "ebs-fsx",
+          "efs",
+          "s3",
+          "sg",
+          "iam",
+          "rbac",
+          "opa-kyverno"
+        ],
+        "note": "Security groups and IAM restrict AWS-side access; RBAC plus OPA Gatekeeper/Kyverno govern PV and PVC access."
+      },
+      {
+        "id": "pod",
+        "label": "Pod Security",
+        "focus": [
+          "pod-security",
+          "pss"
+        ],
+        "note": "Read-only root filesystem, limited privileges, and SELinux/AppArmor/seccomp profiles enforced via Pod Security Standards."
+      }
+    ],
+    "viewBox": [
+      1240,
+      700
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "ebs-fsx",
+      "type": "cloud",
+      "label": "EBS · FSx Security",
+      "sublabel": "Encryption · security groups",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "cloud",
+      "label": "EFS Security",
+      "sublabel": "Encryption · SG · IAM",
+      "pos": [
+        340,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 Security",
+      "sublabel": "Encryption · IAM",
+      "pos": [
+        640,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "at-rest",
+      "type": "security",
+      "label": "Data at Rest Encryption",
+      "sublabel": "encrypted: \"true\"",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "in-transit",
+      "type": "security",
+      "label": "Data in Transit Encryption",
+      "sublabel": "EFS tls · S3 SSE",
+      "pos": [
+        600,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "cloud",
+      "label": "AWS KMS Key Management",
+      "sublabel": "kmsKeyId",
+      "pos": [
+        340,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "cloud",
+      "label": "Security Groups",
+      "sublabel": "Allow only required ports",
+      "pos": [
+        190,
+        470
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "cloud",
+      "label": "IAM Roles and Policies",
+      "sublabel": "Least privilege · IRSA",
+      "pos": [
+        490,
+        470
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "backend",
+      "label": "Kubernetes RBAC",
+      "sublabel": "Restrict PV · PVC access",
+      "pos": [
+        490,
+        590
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "opa-kyverno",
+      "type": "backend",
+      "label": "OPA Gatekeeper / Kyverno",
+      "sublabel": "Policy enforcement",
+      "pos": [
+        760,
+        590
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod-security",
+      "type": "security",
+      "label": "Pod Security Context",
+      "sublabel": "Read-only FS · non-root · seccomp",
+      "pos": [
+        990,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pss",
+      "type": "backend",
+      "label": "Pod Security Standards",
+      "sublabel": "Policy enforcement",
+      "pos": [
+        990,
+        590
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Storage Services",
+      "wraps": [
+        "ebs-fsx",
+        "efs",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Encryption",
+      "wraps": [
+        "at-rest",
+        "in-transit",
+        "kms"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Access Control",
+      "wraps": [
+        "sg",
+        "iam",
+        "rbac"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Security Policy Enforcement",
+      "wraps": [
+        "opa-kyverno",
+        "pss"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-at-rest",
+      "from": "ebs-fsx",
+      "to": "at-rest",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "emphasis"
+    },
+    {
+      "id": "efs-at-rest",
+      "from": "efs",
+      "to": "at-rest",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          430,
+          290
+        ],
+        [
+          130,
+          290
+        ]
+      ]
+    },
+    {
+      "id": "s3-at-rest",
+      "from": "s3",
+      "to": "at-rest",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          880,
+          360
+        ],
+        [
+          880,
+          40
+        ],
+        [
+          130,
+          40
+        ]
+      ]
+    },
+    {
+      "id": "efs-in-transit",
+      "from": "efs",
+      "to": "in-transit",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          560,
+          360
+        ],
+        [
+          560,
+          280
+        ],
+        [
+          690,
+          280
+        ]
+      ]
+    },
+    {
+      "id": "s3-in-transit",
+      "from": "s3",
+      "to": "in-transit",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          730,
+          280
+        ],
+        [
+          690,
+          280
+        ]
+      ]
+    },
+    {
+      "id": "at-rest-kms",
+      "from": "at-rest",
+      "to": "kms",
+      "label": "KMS key",
+      "variant": "emphasis"
+    },
+    {
+      "id": "in-transit-kms",
+      "from": "in-transit",
+      "to": "kms",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          560,
+          200
+        ],
+        [
+          560,
+          130
+        ]
+      ]
+    },
+    {
+      "id": "ebs-sg",
+      "from": "ebs-fsx",
+      "to": "sg",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          130,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "efs-sg",
+      "from": "efs",
+      "to": "sg",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          430,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "efs-iam",
+      "from": "efs",
+      "to": "iam",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          430,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "s3-iam",
+      "from": "s3",
+      "to": "iam",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          730,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "iam-rbac",
+      "from": "iam",
+      "to": "rbac",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rbac-policy",
+      "from": "rbac",
+      "to": "opa-kyverno"
+    },
+    {
+      "id": "pod-pss",
+      "from": "pod-security",
+      "to": "pss",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

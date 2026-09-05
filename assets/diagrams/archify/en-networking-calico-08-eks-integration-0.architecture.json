@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VPC CNI + Calico Integration Architecture",
+    "output": "en-networking-calico-08-eks-integration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "pos": [
+        90,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "AWS managed"
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "AWS managed"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Container",
+      "pos": [
+        90,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "application workload"
+    },
+    {
+      "id": "pause",
+      "type": "backend",
+      "label": "Pause Container",
+      "pos": [
+        90,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "holds the pod network namespace"
+    },
+    {
+      "id": "ipamd",
+      "type": "backend",
+      "label": "aws-node (IPAMD)",
+      "pos": [
+        330,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "IP address management"
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI Plugin",
+      "pos": [
+        510,
+        420
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "pod networking setup"
+    },
+    {
+      "id": "felix",
+      "type": "security",
+      "label": "Felix",
+      "pos": [
+        750,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Policy Agent"
+    },
+    {
+      "id": "ipt",
+      "type": "security",
+      "label": "iptables / eBPF Rules",
+      "pos": [
+        750,
+        420
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Network Policy enforcement"
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "EC2 ENI",
+      "pos": [
+        330,
+        580
+      ],
+      "size": [
+        280,
+        60
+      ],
+      "sublabel": "Secondary IP"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "pos": [
+        1020,
+        580
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "Subnet CIDR"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane (AWS managed)",
+      "wraps": [
+        "api",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Worker Node (customer managed)",
+      "wraps": [
+        "app",
+        "pause",
+        "ipamd",
+        "cni",
+        "felix",
+        "ipt",
+        "eni"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "app",
+        "pause"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "VPC CNI",
+      "wraps": [
+        "ipamd",
+        "cni"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Calico",
+      "wraps": [
+        "felix",
+        "ipt"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-pause",
+      "from": "app",
+      "to": "pause",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pause-eni",
+      "from": "pause",
+      "to": "eni",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "ipamd-eni",
+      "from": "ipamd",
+      "to": "eni",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cni-eni",
+      "from": "cni",
+      "to": "eni",
+      "label": "attach pod interface",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "felix-ipt",
+      "from": "felix",
+      "to": "ipt",
+      "label": "program rules",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ipt-eni",
+      "from": "ipt",
+      "to": "eni",
+      "label": "enforce policy",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelDy": 24
+    },
+    {
+      "id": "eni-vpc",
+      "from": "eni",
+      "to": "vpc",
+      "label": "VPC routing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-ipamd",
+      "from": "api",
+      "to": "ipamd",
+      "label": "watch",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-felix",
+      "from": "api",
+      "to": "felix",
+      "label": "policy watch",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

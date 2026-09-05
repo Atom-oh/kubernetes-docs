@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "IAM 및 인증 문제",
+    "output": "ko-eks-09-eks-troubleshooting-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      700
+    ],
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "security": {
+          "label": "문제 분류"
+        },
+        "cloud": {
+          "label": "AWS 측 원인"
+        },
+        "backend": {
+          "label": "Kubernetes 측 원인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "iam-auth",
+        "label": "IAM 인증 문제",
+        "focus": [
+          "root",
+          "iam-auth",
+          "aws-auth-cm",
+          "iam-role-perm",
+          "oidc-provider",
+          "cli-creds",
+          "kubeconfig"
+        ],
+        "note": "aws-auth ConfigMap, IAM 역할, OIDC 공급자, AWS CLI 자격 증명, kubeconfig 순으로 확인한다."
+      },
+      {
+        "id": "rbac",
+        "label": "RBAC 문제",
+        "focus": [
+          "root",
+          "rbac",
+          "insufficient-perm",
+          "rolebinding",
+          "namespace-scope",
+          "sa-config",
+          "clusterrole"
+        ],
+        "note": "kubectl auth can-i로 권한을 확인하고 Role/RoleBinding, ClusterRole, ServiceAccount 구성을 점검한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "security",
+      "label": "IAM 및 인증 문제",
+      "sublabel": "EKS 접근 관련 장애",
+      "pos": [
+        30,
+        308
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "iam-auth",
+      "type": "security",
+      "label": "IAM 인증 문제",
+      "sublabel": "AWS 자격 증명 → 클러스터 인증",
+      "pos": [
+        475,
+        230
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC 문제",
+      "sublabel": "클러스터 내부 권한 부여",
+      "pos": [
+        475,
+        390
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "aws-auth-cm",
+      "type": "backend",
+      "label": "aws-auth ConfigMap 오류",
+      "pos": [
+        170,
+        70
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "iam-role-perm",
+      "type": "cloud",
+      "label": "IAM 역할 권한 부족",
+      "pos": [
+        370,
+        70
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "oidc-provider",
+      "type": "cloud",
+      "label": "OIDC 공급자 문제",
+      "pos": [
+        570,
+        70
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "cli-creds",
+      "type": "cloud",
+      "label": "AWS CLI 자격 증명 문제",
+      "pos": [
+        770,
+        70
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "kubeconfig",
+      "type": "backend",
+      "label": "kubeconfig 문제",
+      "pos": [
+        970,
+        70
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "insufficient-perm",
+      "type": "backend",
+      "label": "권한 부족",
+      "pos": [
+        170,
+        558
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "rolebinding",
+      "type": "backend",
+      "label": "역할 바인딩 문제",
+      "pos": [
+        370,
+        558
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "namespace-scope",
+      "type": "backend",
+      "label": "네임스페이스 범위 문제",
+      "pos": [
+        570,
+        558
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "sa-config",
+      "type": "backend",
+      "label": "서비스 계정 구성 오류",
+      "pos": [
+        770,
+        558
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "clusterrole",
+      "type": "backend",
+      "label": "클러스터 역할 문제",
+      "pos": [
+        970,
+        558
+      ],
+      "size": [
+        180,
+        52
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "IAM 인증 문제 · 일반적인 원인",
+      "wraps": [
+        "aws-auth-cm",
+        "iam-role-perm",
+        "oidc-provider",
+        "cli-creds",
+        "kubeconfig"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "RBAC 문제 · 일반적인 원인",
+      "wraps": [
+        "insufficient-perm",
+        "rolebinding",
+        "namespace-scope",
+        "sa-config",
+        "clusterrole"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-iam",
+      "from": "root",
+      "to": "iam-auth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-rbac",
+      "from": "root",
+      "to": "rbac",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iam-c1",
+      "from": "iam-auth",
+      "to": "aws-auth-cm",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "iam-c2",
+      "from": "iam-auth",
+      "to": "iam-role-perm",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "iam-c3",
+      "from": "iam-auth",
+      "to": "oidc-provider",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "iam-c4",
+      "from": "iam-auth",
+      "to": "cli-creds",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "iam-c5",
+      "from": "iam-auth",
+      "to": "kubeconfig",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "rbac-c1",
+      "from": "rbac",
+      "to": "insufficient-perm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rbac-c2",
+      "from": "rbac",
+      "to": "rolebinding",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rbac-c3",
+      "from": "rbac",
+      "to": "namespace-scope",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rbac-c4",
+      "from": "rbac",
+      "to": "sa-config",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rbac-c5",
+      "from": "rbac",
+      "to": "clusterrole",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "IAM 인증 문제 해결",
+      "items": [
+        "확인: aws-auth ConfigMap, IAM 역할·정책, OIDC 공급자, aws sts get-caller-identity, kubeconfig",
+        "해결: aws-auth ConfigMap 수정, IAM 역할 권한 추가, OIDC 공급자 생성, AWS CLI 자격 증명 업데이트, kubeconfig 재생성"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "RBAC 문제 해결",
+      "items": [
+        "확인: kubectl auth can-i 권한 확인, Role/RoleBinding, ClusterRole/ClusterRoleBinding, ServiceAccount, 액세스 검토",
+        "해결: Role·RoleBinding 생성, ClusterRole·ClusterRoleBinding 생성, ServiceAccount 생성"
+      ]
+    }
+  ]
+}

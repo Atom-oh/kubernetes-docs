@@ -1,0 +1,349 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Alerting and Event Management Flow",
+    "locale": "en",
+    "output": "en-eks-06-eks-monitoring-logging-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      700
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "AWS service"
+        },
+        "backend": {
+          "label": "Kubernetes / OSS"
+        },
+        "messagebus": {
+          "label": "Event · message bus"
+        },
+        "external": {
+          "label": "External notification channel"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "aws-native",
+        "label": "AWS-native path",
+        "focus": [
+          "src-cloudwatch",
+          "src-aws-events",
+          "cw-alarms",
+          "eventbridge",
+          "sns",
+          "lambda"
+        ],
+        "note": "CloudWatch metrics and logs reach SNS through CloudWatch Alarms; AWS events reach SNS and Lambda through EventBridge."
+      },
+      {
+        "id": "prometheus",
+        "label": "Prometheus path",
+        "focus": [
+          "src-prometheus",
+          "alertmanager",
+          "chat-paging"
+        ],
+        "note": "Alertmanager routes and groups Prometheus/custom metric and Loki log alerts to Slack and PagerDuty receivers."
+      },
+      {
+        "id": "event-router",
+        "label": "Event router path",
+        "focus": [
+          "src-k8s-events",
+          "event-router",
+          "opsgenie"
+        ],
+        "note": "A custom event router forwards Kubernetes/application events and OpenSearch log alerts to OpsGenie."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src-cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch Metrics · Logs",
+      "sublabel": "metric- and log-based",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "src-aws-events",
+      "type": "cloud",
+      "label": "AWS Events",
+      "sublabel": "event-based",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "src-prometheus",
+      "type": "backend",
+      "label": "Prometheus Metrics · Loki Logs",
+      "sublabel": "incl. custom metrics",
+      "pos": [
+        40,
+        410
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "src-k8s-events",
+      "type": "backend",
+      "label": "Kubernetes · Application Events",
+      "sublabel": "incl. OpenSearch logs",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "cw-alarms",
+      "type": "cloud",
+      "label": "CloudWatch Alarms",
+      "sublabel": "alarm on threshold breach",
+      "pos": [
+        470,
+        110
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "eventbridge",
+      "type": "messagebus",
+      "label": "Amazon EventBridge",
+      "sublabel": "AWS event bus",
+      "pos": [
+        470,
+        260
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Prometheus Alertmanager",
+      "sublabel": "route · group · receiver",
+      "pos": [
+        470,
+        410
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "event-router",
+      "type": "backend",
+      "label": "Event Router",
+      "sublabel": "custom routing",
+      "pos": [
+        470,
+        560
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "Amazon SNS",
+      "sublabel": "fan-out to Email · SQS subscriptions",
+      "pos": [
+        900,
+        110
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "lambda",
+      "type": "cloud",
+      "label": "AWS Lambda",
+      "sublabel": "custom handler",
+      "pos": [
+        900,
+        260
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "chat-paging",
+      "type": "external",
+      "label": "Slack · PagerDuty",
+      "sublabel": "Alertmanager receivers",
+      "pos": [
+        900,
+        410
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "opsgenie",
+      "type": "external",
+      "label": "OpsGenie",
+      "sublabel": "on-call alerting",
+      "pos": [
+        900,
+        560
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Alert Sources",
+      "wraps": [
+        "src-cloudwatch",
+        "src-aws-events",
+        "src-prometheus",
+        "src-k8s-events"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Alert Processing",
+      "wraps": [
+        "cw-alarms",
+        "eventbridge",
+        "alertmanager",
+        "event-router"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Notification Channels",
+      "wraps": [
+        "sns",
+        "lambda",
+        "chat-paging",
+        "opsgenie"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cloudwatch-to-alarms",
+      "from": "src-cloudwatch",
+      "to": "cw-alarms",
+      "variant": "emphasis"
+    },
+    {
+      "id": "aws-events-to-eventbridge",
+      "from": "src-aws-events",
+      "to": "eventbridge"
+    },
+    {
+      "id": "prometheus-to-alertmanager",
+      "from": "src-prometheus",
+      "to": "alertmanager"
+    },
+    {
+      "id": "k8s-events-to-router",
+      "from": "src-k8s-events",
+      "to": "event-router"
+    },
+    {
+      "id": "alarms-to-sns",
+      "from": "cw-alarms",
+      "to": "sns",
+      "label": "alarm-actions",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eventbridge-to-lambda",
+      "from": "eventbridge",
+      "to": "lambda"
+    },
+    {
+      "id": "eventbridge-to-sns",
+      "from": "eventbridge",
+      "to": "sns",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          585,
+          220
+        ],
+        [
+          1005,
+          220
+        ]
+      ]
+    },
+    {
+      "id": "alertmanager-to-chat",
+      "from": "alertmanager",
+      "to": "chat-paging"
+    },
+    {
+      "id": "router-to-opsgenie",
+      "from": "event-router",
+      "to": "opsgenie"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "CloudWatch Alarms",
+      "items": [
+        "Threshold alarms on ContainerInsights metrics such as pod_cpu_utilization",
+        "--alarm-actions delivers notifications to an SNS topic"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Prometheus Alertmanager",
+      "items": [
+        "route groups alerts via group_by · group_wait · repeat_interval",
+        "receiver config routes to channels such as Slack"
+      ]
+    }
+  ]
+}

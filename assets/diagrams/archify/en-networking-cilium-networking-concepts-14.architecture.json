@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium eBPF-based Load Balancing",
+    "locale": "en",
+    "output": "en-networking-cilium-networking-concepts-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      360
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "Client",
+      "pos": [
+        0,
+        150
+      ],
+      "size": [
+        100,
+        64
+      ]
+    },
+    {
+      "id": "intercept",
+      "type": "backend",
+      "label": "1. Packet Intercept",
+      "sublabel": "in-kernel",
+      "pos": [
+        240,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "lookup",
+      "type": "database",
+      "label": "2. Service Map Lookup",
+      "sublabel": "eBPF map",
+      "pos": [
+        450,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "select",
+      "type": "backend",
+      "label": "3. Backend Selection",
+      "sublabel": "load balancing algorithm",
+      "pos": [
+        660,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "forward",
+      "type": "backend",
+      "label": "4. Packet Forwarding",
+      "sublabel": "DNAT to backend",
+      "pos": [
+        870,
+        150
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "Server",
+      "pos": [
+        1220,
+        150
+      ],
+      "size": [
+        100,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kernel + eBPF Program (kube-proxy replacement)",
+      "wraps": [
+        "intercept",
+        "lookup",
+        "select",
+        "forward"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-intercept",
+      "from": "pod-a",
+      "to": "intercept",
+      "label": "sent to Service IP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "intercept-to-lookup",
+      "from": "intercept",
+      "to": "lookup",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lookup-to-select",
+      "from": "lookup",
+      "to": "select",
+      "variant": "emphasis"
+    },
+    {
+      "id": "select-to-forward",
+      "from": "select",
+      "to": "forward",
+      "variant": "emphasis"
+    },
+    {
+      "id": "forward-to-b",
+      "from": "forward",
+      "to": "pod-b",
+      "label": "delivered straight to Pod IP",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "eBPF-based Load Balancing",
+      "items": [
+        "kube-proxy replacement: service load balancing directly in the kernel",
+        "Performance: lower latency by bypassing the network stack",
+        "Scalability: supports large numbers of Services and endpoints",
+        "Connection tracking optimization: efficient state management"
+      ]
+    }
+  ]
+}

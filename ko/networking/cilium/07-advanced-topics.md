@@ -55,7 +55,9 @@ Cilium의 성능을 최적화하고 일반적인 문제를 해결하는 방법�
 
 ### 성능 튜닝 아키텍처
 
-![Cilium 성능 최적화라는 중심 목표가 커널 매개변수, eBPF 맵, 리소스 할당, 네트워킹 모드라는 네 가지 튜닝 영역으로 나뉘고, 각 영역에 구체적인 조정 항목들이 속해 있는 구조를 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-networking-cilium-07-advanced-topics-0.svg)
+![Cilium 성능 최적화라는 중심 목표가 커널 매개변수, eBPF 맵, 리소스 할당, 네트워킹 모드라는 네 가지 튜닝 영역으로 나뉘고, 각 영역에 구체적인 조정 항목들이 속해 있는 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-07-advanced-topics-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-07-advanced-topics-0.html)
 
 ### 성능 튜닝 영역:
 

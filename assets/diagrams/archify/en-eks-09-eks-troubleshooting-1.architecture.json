@@ -1,0 +1,454 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cluster Creation and Management Issues",
+    "locale": "en",
+    "output": "en-eks-09-eks-troubleshooting-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Category"
+        },
+        "cloud": {
+          "label": "AWS-side cause"
+        },
+        "backend": {
+          "label": "K8s config cause"
+        },
+        "external": {
+          "label": "Other cause"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "view-creation",
+        "label": "Cluster Creation Failure",
+        "focus": [
+          "root",
+          "creation",
+          "iam-perm",
+          "quota",
+          "network-config",
+          "name-conflict",
+          "svc-availability"
+        ],
+        "note": "Narrow down the cause: IAM permissions, quotas, networking, name conflicts, then AWS service availability."
+      },
+      {
+        "id": "view-endpoint",
+        "label": "Endpoint Access Issues",
+        "focus": [
+          "root",
+          "endpoint",
+          "network-restriction",
+          "auth",
+          "kubeconfig",
+          "apiserver-availability"
+        ],
+        "note": "Find where access is blocked: network restriction, authentication, kubeconfig, or API server availability."
+      },
+      {
+        "id": "view-deletion",
+        "label": "Cluster Deletion Issues",
+        "focus": [
+          "root",
+          "deletion",
+          "resource-dependency",
+          "iam-perm-delete",
+          "deletion-failure"
+        ],
+        "note": "Check whether dependent resources remain, deletion permissions exist, and resource deletion failed."
+      }
+    ],
+    "viewBox": [
+      1680,
+      590
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "frontend",
+      "label": "Cluster Creation and Management Issues",
+      "pos": [
+        680,
+        30
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "creation",
+      "type": "frontend",
+      "label": "Cluster Creation Failure",
+      "pos": [
+        30,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "endpoint",
+      "type": "frontend",
+      "label": "Endpoint Access Issues",
+      "pos": [
+        590,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "deletion",
+      "type": "frontend",
+      "label": "Cluster Deletion Issues",
+      "pos": [
+        1150,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "iam-perm",
+      "type": "cloud",
+      "label": "Insufficient IAM Permissions",
+      "pos": [
+        260,
+        250
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "quota",
+      "type": "cloud",
+      "label": "Service Quota Exceeded",
+      "pos": [
+        260,
+        302
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "network-config",
+      "type": "cloud",
+      "label": "Network Configuration Issues",
+      "pos": [
+        260,
+        354
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "name-conflict",
+      "type": "external",
+      "label": "Resource Name Conflict",
+      "pos": [
+        260,
+        406
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "svc-availability",
+      "type": "cloud",
+      "label": "AWS Service Availability Issues",
+      "pos": [
+        260,
+        458
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "network-restriction",
+      "type": "external",
+      "label": "Network Access Restriction",
+      "pos": [
+        820,
+        250
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "external",
+      "label": "Authentication Issues",
+      "pos": [
+        820,
+        302
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "kubeconfig",
+      "type": "backend",
+      "label": "kubeconfig Configuration Error",
+      "pos": [
+        820,
+        354
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "apiserver-availability",
+      "type": "cloud",
+      "label": "API Server Availability Issues",
+      "pos": [
+        820,
+        406
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "resource-dependency",
+      "type": "cloud",
+      "label": "Resource Dependencies",
+      "pos": [
+        1380,
+        250
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "iam-perm-delete",
+      "type": "cloud",
+      "label": "Insufficient IAM Permissions",
+      "pos": [
+        1380,
+        302
+      ],
+      "size": [
+        230,
+        44
+      ]
+    },
+    {
+      "id": "deletion-failure",
+      "type": "external",
+      "label": "Resource Deletion Failure",
+      "pos": [
+        1380,
+        354
+      ],
+      "size": [
+        230,
+        44
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster Creation Failure — Common Causes",
+      "wraps": [
+        "creation",
+        "iam-perm",
+        "quota",
+        "network-config",
+        "name-conflict",
+        "svc-availability"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Endpoint Access Issues — Common Causes",
+      "wraps": [
+        "endpoint",
+        "network-restriction",
+        "auth",
+        "kubeconfig",
+        "apiserver-availability"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster Deletion Issues — Common Causes",
+      "wraps": [
+        "deletion",
+        "resource-dependency",
+        "iam-perm-delete",
+        "deletion-failure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-creation",
+      "from": "root",
+      "to": "creation",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-endpoint",
+      "from": "root",
+      "to": "endpoint",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-deletion",
+      "from": "root",
+      "to": "deletion",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "creation-iam-perm",
+      "from": "creation",
+      "to": "iam-perm",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-quota",
+      "from": "creation",
+      "to": "quota",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-network-config",
+      "from": "creation",
+      "to": "network-config",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-name-conflict",
+      "from": "creation",
+      "to": "name-conflict",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "creation-svc-availability",
+      "from": "creation",
+      "to": "svc-availability",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-network-restriction",
+      "from": "endpoint",
+      "to": "network-restriction",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-auth",
+      "from": "endpoint",
+      "to": "auth",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-kubeconfig",
+      "from": "endpoint",
+      "to": "kubeconfig",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "endpoint-apiserver-availability",
+      "from": "endpoint",
+      "to": "apiserver-availability",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "deletion-resource-dependency",
+      "from": "deletion",
+      "to": "resource-dependency",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "deletion-iam-perm-delete",
+      "from": "deletion",
+      "to": "iam-perm-delete",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "deletion-deletion-failure",
+      "from": "deletion",
+      "to": "deletion-failure",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Cluster Creation Failure",
+      "items": [
+        "Troubleshooting steps: check IAM permissions → service quotas → network configuration → CloudTrail logs → AWS service status",
+        "Common solutions: add IAM permissions, request a quota increase, fix network configuration, try a different region"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Cluster Endpoint Access Issues",
+      "items": [
+        "Troubleshooting steps: check the cluster endpoint → endpoint access policy → kubeconfig → authentication",
+        "Common solutions: modify endpoint access policy, regenerate kubeconfig, configure IAM auth (aws-auth), create a VPC endpoint, use CloudShell one-click access"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Cluster Deletion Issues",
+      "items": [
+        "Troubleshooting steps: check cluster status → node groups, Fargate profiles, add-ons → CloudTrail logs",
+        "Common solutions: delete dependent resources, force delete with eksctl, manual resource cleanup, AWS resource cleanup (ELB, security groups)"
+      ]
+    }
+  ]
+}

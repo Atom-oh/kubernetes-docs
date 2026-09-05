@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS and VPC Lattice Integration Architecture",
+    "locale": "en",
+    "output": "en-networking-02-vpc-lattice-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "resource-mapping",
+        "label": "Resource mapping",
+        "focus": [
+          "controller",
+          "gwapi",
+          "k8ssvc",
+          "pod",
+          "latticesvc",
+          "targetgroup"
+        ],
+        "note": "The Gateway API Controller transforms Gateway API resources into a VPC Lattice service and target group, registering the pods."
+      },
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "servicenetwork",
+          "latticesvc",
+          "targetgroup",
+          "pod"
+        ],
+        "note": "An application in another VPC sends requests to the VPC Lattice service in the service network and reaches the EKS pod."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Gateway API Controller",
+      "sublabel": "AWS Gateway API Controller",
+      "pos": [
+        80,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "gwapi",
+      "type": "backend",
+      "label": "Gateway API Resources",
+      "sublabel": "Gateway / HTTPRoute",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "k8ssvc",
+      "type": "backend",
+      "label": "Kubernetes Service",
+      "sublabel": "Service",
+      "pos": [
+        80,
+        370
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Kubernetes Pod",
+      "sublabel": "Workload",
+      "pos": [
+        80,
+        510
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "servicenetwork",
+      "type": "cloud",
+      "label": "VPC Lattice Service Network",
+      "sublabel": "Network the EKS cluster connects to",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "latticesvc",
+      "type": "cloud",
+      "label": "VPC Lattice Service",
+      "sublabel": "Mapped to Kubernetes Service",
+      "pos": [
+        640,
+        300
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "targetgroup",
+      "type": "cloud",
+      "label": "VPC Lattice Target Group",
+      "sublabel": "Mapped to Kubernetes Pods",
+      "pos": [
+        640,
+        510
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Application",
+      "sublabel": "Requests via service DNS name",
+      "pos": [
+        1000,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Cluster",
+      "wraps": [
+        "controller",
+        "gwapi",
+        "k8ssvc",
+        "pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Client in Another VPC",
+      "wraps": [
+        "client"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "controller-gwapi",
+      "from": "controller",
+      "to": "gwapi",
+      "label": "Transform",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "gwapi-k8ssvc",
+      "from": "gwapi",
+      "to": "k8ssvc",
+      "label": "Reference",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "k8ssvc-pod",
+      "from": "k8ssvc",
+      "to": "pod",
+      "label": "Select",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "controller-latticesvc",
+      "from": "controller",
+      "to": "latticesvc",
+      "label": "Create / Manage"
+    },
+    {
+      "id": "servicenetwork-latticesvc",
+      "from": "servicenetwork",
+      "to": "latticesvc",
+      "label": "Contains",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    },
+    {
+      "id": "latticesvc-targetgroup",
+      "from": "latticesvc",
+      "to": "targetgroup",
+      "label": "Routing",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    },
+    {
+      "id": "targetgroup-pod",
+      "from": "targetgroup",
+      "to": "pod",
+      "label": "Register",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-latticesvc",
+      "from": "client",
+      "to": "latticesvc",
+      "label": "Request",
+      "variant": "emphasis"
+    }
+  ]
+}

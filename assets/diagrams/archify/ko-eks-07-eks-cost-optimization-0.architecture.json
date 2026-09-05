@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 비용 구성 요소",
+    "output": "ko-eks-07-eks-cost-optimization-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1328,
+      330
+    ]
+  },
+  "components": [
+    {
+      "id": "eks-cost",
+      "type": "external",
+      "label": "EKS 총 비용",
+      "sublabel": "다섯 갈래로 구성",
+      "pos": [
+        564,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "control-plane",
+      "type": "backend",
+      "label": "EKS 컨트롤 플레인",
+      "sublabel": "$0.10/시간",
+      "pos": [
+        20,
+        220
+      ],
+      "size": [
+        248,
+        64
+      ]
+    },
+    {
+      "id": "compute",
+      "type": "cloud",
+      "label": "컴퓨팅 비용",
+      "sublabel": "EC2 인스턴스 · Fargate",
+      "pos": [
+        280,
+        220
+      ],
+      "size": [
+        248,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "스토리지 비용",
+      "sublabel": "EBS 볼륨 · EFS · S3",
+      "pos": [
+        540,
+        220
+      ],
+      "size": [
+        248,
+        64
+      ]
+    },
+    {
+      "id": "networking",
+      "type": "cloud",
+      "label": "네트워킹 비용",
+      "sublabel": "데이터 전송 · 로드 밸런서 · NAT 게이트웨이",
+      "pos": [
+        800,
+        220
+      ],
+      "size": [
+        248,
+        64
+      ]
+    },
+    {
+      "id": "others",
+      "type": "cloud",
+      "label": "기타 비용",
+      "sublabel": "CloudWatch · ECR · 기타 AWS 서비스",
+      "pos": [
+        1060,
+        220
+      ],
+      "size": [
+        248,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cost-control-plane",
+      "from": "eks-cost",
+      "to": "control-plane",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cost-compute",
+      "from": "eks-cost",
+      "to": "compute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cost-storage",
+      "from": "eks-cost",
+      "to": "storage",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cost-networking",
+      "from": "eks-cost",
+      "to": "networking",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cost-others",
+      "from": "eks-cost",
+      "to": "others",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

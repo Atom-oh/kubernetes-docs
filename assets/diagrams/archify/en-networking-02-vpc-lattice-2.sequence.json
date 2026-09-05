@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "VPC Lattice Traffic Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      600
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "lattice",
+          "service",
+          "tg",
+          "target"
+        ],
+        "note": "A request sent to the service DNS name passes through listener rules and the target group to reach the EKS pod."
+      },
+      {
+        "id": "response-path",
+        "label": "Response path",
+        "focus": [
+          "target",
+          "tg",
+          "service",
+          "lattice",
+          "client"
+        ],
+        "note": "The response produced by the target travels the same path in reverse back to the client."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "lattice",
+      "type": "cloud",
+      "label": "VPC Lattice"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "listener rules"
+    },
+    {
+      "id": "tg",
+      "type": "backend",
+      "label": "Target Group"
+    },
+    {
+      "id": "target",
+      "type": "backend",
+      "label": "Target",
+      "sublabel": "EKS Pod"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 330,
+      "label": "Request"
+    },
+    {
+      "from": 350,
+      "to": 520,
+      "label": "Response"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req-in",
+      "from": "client",
+      "to": "lattice",
+      "y": 185,
+      "label": "Request (service-name.vpc-lattice-svcs.region.on.aws)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "req-rules",
+      "from": "lattice",
+      "to": "service",
+      "y": 225,
+      "label": "Process request and apply listener rules"
+    },
+    {
+      "id": "req-route",
+      "from": "service",
+      "to": "tg",
+      "y": 265,
+      "label": "Route to appropriate target group"
+    },
+    {
+      "id": "req-forward",
+      "from": "tg",
+      "to": "target",
+      "y": 305,
+      "label": "Forward request to target"
+    },
+    {
+      "id": "res-target",
+      "from": "target",
+      "to": "tg",
+      "y": 375,
+      "label": "Return response",
+      "variant": "return"
+    },
+    {
+      "id": "res-tg",
+      "from": "tg",
+      "to": "service",
+      "y": 415,
+      "label": "Forward response",
+      "variant": "return"
+    },
+    {
+      "id": "res-service",
+      "from": "service",
+      "to": "lattice",
+      "y": 455,
+      "label": "Process response",
+      "variant": "return"
+    },
+    {
+      "id": "res-out",
+      "from": "lattice",
+      "to": "client",
+      "y": 495,
+      "label": "Return response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lattice",
+      "from": 180,
+      "to": 500,
+      "type": "cloud"
+    },
+    {
+      "participant": "service",
+      "from": 220,
+      "to": 460,
+      "type": "backend"
+    },
+    {
+      "participant": "tg",
+      "from": 260,
+      "to": 420,
+      "type": "backend"
+    },
+    {
+      "participant": "target",
+      "from": 300,
+      "to": 380,
+      "type": "backend"
+    }
+  ]
+}

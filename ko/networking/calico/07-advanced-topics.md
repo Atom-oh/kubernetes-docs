@@ -13,7 +13,9 @@
 
 Calico의 IPAM(IP Address Management)은 블록 기반 할당 방식을 사용하여 효율적인 IP 주소 관리를 제공합니다.
 
-![IPPool 내에서 각 노드가 자신에게 할당된 IP 블록에 친화성을 갖고, 여유 IP가 소진되면 새 블록을 추가로 할당받아 확장하는 Block 기반 IPAM 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-07-advanced-topics-0.svg)
+![데이터스토어가 IPPool 10.244.0.0/16에서 /26 블록을 각 노드에 할당하고, 노드는 자신에게 친화성이 있는 블록(소진 시 추가 블록으로 확장) 안에서 Pod IP를 개별 배정하는 Block 기반 IPAM 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-0.html)
 
 ### IP Block Affinity
 
@@ -45,7 +47,9 @@ spec:
 
 Calico IPAM의 IP 할당 알고리즘:
 
-![Pod 생성 시 노드의 블록 친화성과 여유 IP 여부를 확인해 기존 블록을 재사용하거나 새 블록을 할당한 뒤 IP를 배정하는 IPAM 할당 알고리즘의 결정 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-07-advanced-topics-1.svg)
+![Pod 생성 시 Calico IPAM이 노드 친화 블록의 여유 IP를 먼저 쓰고, 없으면 IPPool에서 새 블록을 할당하고, 그것도 없으면 다른 노드 블록에서 IP를 차용하며, 어디에도 여유 IP가 없을 때만 할당이 실패하는 IP 할당 알고리즘의 결정 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-1.html)
 
 **blockSize 권장 사항:**
 
@@ -294,7 +298,9 @@ kubectl get blockaffinities -o json | jq -r \
 
 WireGuard는 현대적이고 고성능인 VPN 프로토콜로, Calico에서 노드 간 트래픽을 암호화하는 데 사용됩니다.
 
-![Pod A의 평문 트래픽이 Node 1의 WireGuard 인터페이스에서 암호화되어 eth0을 통해 터널로 전달되고, Node 2에서 복호화되어 Pod B에 평문으로 도달하는 노드 간 WireGuard 암호화 경로를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-07-advanced-topics-2.svg)
+![Pod A의 평문 트래픽이 Node 1의 WireGuard 인터페이스(wireguard.cali)에서 암호화되어 eth0을 통해 UDP 51820 WireGuard 터널로 Node 2에 전달되고, Node 2의 WireGuard 인터페이스에서 복호화되어 Pod B에 평문으로 도달하는 노드 간 암호화 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-2.html)
 
 ### WireGuard 설정
 
@@ -406,7 +412,9 @@ kubectl exec -n calico-system -it <calico-node-pod> -- \
 
 Egress Gateway는 특정 워크로드의 외부 트래픽이 지정된 게이트웨이 노드를 통해 나가도록 하여, 고정된 소스 IP를 제공합니다.
 
-![보안 네임스페이스의 Pod들은 지정된 Egress Gateway 노드를 거쳐 고정된 소스 IP로 외부 서비스에 나가고, 일반 Pod는 직접 외부로 나가는 경로 차이를 통해 컴플라이언스 요구사항을 충족하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-07-advanced-topics-3.svg)
+![보안 네임스페이스의 Pod들은 지정된 Egress Gateway 노드를 거쳐 고정된 소스 IP로 외부 서비스에 나가고, 일반 Pod는 직접 외부로 나가는 경로 차이를 통해 컴플라이언스 요구사항을 충족하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-3.html)
 
 ### Egress Gateway 설정
 
@@ -510,7 +518,9 @@ spec:
 
 대규모 멀티 클러스터 환경에서 Typha를 활용한 페더레이션:
 
-![각 클러스터의 Felix 에이전트가 자신의 Typha 인스턴스에 연결되고, 두 클러스터의 대표 Typha가 하나의 Federation Controller로 상태를 취합하는 Typha 기반 멀티 클러스터 페더레이션 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-07-advanced-topics-4.svg)
+![각 클러스터의 Felix 에이전트가 자신의 Typha 인스턴스에 연결되고, 두 클러스터의 대표 Typha가 하나의 Federation Controller로 상태를 취합하는 Typha 기반 멀티 클러스터 페더레이션 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-4.html)
 
 ### 크로스 클러스터 정책
 
@@ -602,7 +612,9 @@ spec:
 
 ### HNS (Host Networking Service) 통합
 
-![Windows 노드에서 컨테이너와 Calico Node 서비스의 트래픽이 모두 HNS로 모여 VFP를 거쳐 물리 NIC로 나가는 Calico Windows의 HNS 통합 경로를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-07-advanced-topics-5.svg)
+![Windows 노드에서 컨테이너와 Calico Node 서비스의 트래픽이 모두 HNS로 모여 VFP를 거쳐 물리 NIC로 나가는 Calico Windows의 HNS 통합 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-5.html)
 
 ## Calico Enterprise / Tigera 개요
 
@@ -713,7 +725,9 @@ spec:
 
 1000+ 노드에서는 full-mesh BGP 대신 Route Reflector 토폴로지를 사용합니다:
 
-![Tier 1의 세 Route Reflector가 서로 풀메시로 피어링하고, 각각 자신이 담당하는 랙 RR과 워커 노드 그룹으로 라우트를 전달하는 1000+ 노드용 Route Reflector 계층 토폴로지를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-07-advanced-topics-6.svg)
+![Tier 1의 세 Route Reflector가 서로 iBGP 풀메시로 피어링하고, 각각 자신이 담당하는 랙 RR과 워커 노드 그룹으로 라우트를 반영하는 1000+ 노드용 Route Reflector 계층 토폴로지를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-07-advanced-topics-6.html)
 
 ```yaml
 # Route Reflector 노드 설정

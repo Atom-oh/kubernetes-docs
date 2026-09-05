@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium 성능 튜닝 아키텍처",
+    "output": "ko-networking-cilium-07-advanced-topics-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "성능 최적화 목표"
+        },
+        "security": {
+          "label": "커널 매개변수"
+        },
+        "database": {
+          "label": "eBPF 맵"
+        },
+        "cloud": {
+          "label": "리소스 할당"
+        },
+        "messagebus": {
+          "label": "네트워킹 모드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "overview",
+        "label": "전체 구조",
+        "focus": [
+          "perf",
+          "kernel",
+          "ebpf",
+          "resources",
+          "netmode"
+        ],
+        "note": "성능 최적화라는 하나의 목표가 네 가지 튜닝 영역으로 나뉩니다."
+      },
+      {
+        "id": "kernel-view",
+        "label": "커널 매개변수",
+        "focus": [
+          "perf",
+          "kernel"
+        ],
+        "note": "TCP 매개변수, 연결 추적(conntrack), ARP 캐시, 메모리 관리 관련 sysctl 값을 조정합니다."
+      },
+      {
+        "id": "ebpf-view",
+        "label": "eBPF 맵",
+        "focus": [
+          "perf",
+          "ebpf"
+        ],
+        "note": "연결 추적 맵, NAT 맵, 정책 맵, 엔드포인트 맵의 크기를 조정합니다."
+      },
+      {
+        "id": "resources-view",
+        "label": "리소스 할당",
+        "focus": [
+          "perf",
+          "resources"
+        ],
+        "note": "CPU 제한, 메모리 제한, Pod 우선순위, 노드 어피니티로 Cilium 컴포넌트의 리소스를 배분합니다."
+      },
+      {
+        "id": "netmode-view",
+        "label": "네트워킹 모드",
+        "focus": [
+          "perf",
+          "netmode"
+        ],
+        "note": "직접 라우팅 또는 오버레이, kube-proxy 대체, XDP 가속화를 선택합니다."
+      }
+    ],
+    "viewBox": [
+      1160,
+      380
+    ]
+  },
+  "components": [
+    {
+      "id": "perf",
+      "type": "backend",
+      "label": "성능 최적화",
+      "sublabel": "Cilium 성능 튜닝 목표",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "kernel",
+      "type": "security",
+      "label": "커널 매개변수",
+      "sublabel": "TCP 매개변수 · 연결 추적 · ARP 캐시 · 메모리 관리",
+      "pos": [
+        30,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "database",
+      "label": "eBPF 맵",
+      "sublabel": "연결 추적 맵 · NAT 맵 · 정책 맵 · 엔드포인트 맵",
+      "pos": [
+        310,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    },
+    {
+      "id": "resources",
+      "type": "cloud",
+      "label": "리소스 할당",
+      "sublabel": "CPU 제한 · 메모리 제한 · Pod 우선순위 · 노드 어피니티",
+      "pos": [
+        590,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    },
+    {
+      "id": "netmode",
+      "type": "messagebus",
+      "label": "네트워킹 모드",
+      "sublabel": "직접 라우팅 · 오버레이 · kube-proxy 대체 · XDP 가속화",
+      "pos": [
+        870,
+        230
+      ],
+      "size": [
+        260,
+        68
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cilium 성능 튜닝 영역",
+      "wraps": [
+        "kernel",
+        "ebpf",
+        "resources",
+        "netmode"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "perf-kernel",
+      "from": "perf",
+      "to": "kernel",
+      "label": "sysctl 조정",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "perf-ebpf",
+      "from": "perf",
+      "to": "ebpf",
+      "label": "맵 크기 조정",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "perf-resources",
+      "from": "perf",
+      "to": "resources",
+      "label": "요청 / 제한 설정",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 16
+    },
+    {
+      "id": "perf-netmode",
+      "from": "perf",
+      "to": "netmode",
+      "label": "모드 선택",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

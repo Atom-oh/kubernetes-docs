@@ -19,13 +19,17 @@ Gateway API는 Kubernetes의 차세대 인그레스 API로, 기존 Ingress API�
 
 ### Gateway API의 장점
 
-![표현력, 역할 기반 권한 분리, 이식성, 확장성이 순서대로 이어지며 Gateway API가 기존 Ingress API의 한계를 보완하는 네 가지 특징을 보여준다.](../../assets/diagrams/rendered/ko-networking-04-gateway-api-0.svg)
+![표현력, 역할 기반 권한 분리, 이식성, 확장성이 순서대로 이어지며 Gateway API가 기존 Ingress API의 한계를 보완하는 네 가지 특징을 보여준다.](../.gitbook/assets/ko-networking-04-gateway-api-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-04-gateway-api-0.html)
 
 ## 리소스 모델
 
 Gateway API는 계층화된 리소스 모델을 사용합니다.
 
-![인프라 제공자가 만드는 GatewayClass에서 클러스터 운영자의 Gateway, 애플리케이션 개발자가 정의하는 HTTPRoute·GRPCRoute·TCPRoute·TLSRoute·UDPRoute를 거쳐 백엔드 Service A/B/C까지 이어지는 Gateway API의 계층화된 리소스 모델과 역할 분리를 보여준다.](../../assets/diagrams/rendered/ko-networking-04-gateway-api-1.svg)
+![인프라 제공자가 만드는 GatewayClass에서 클러스터 운영자의 Gateway, 애플리케이션 개발자가 정의하는 HTTPRoute·GRPCRoute·TCPRoute·TLSRoute·UDPRoute를 거쳐 백엔드 Service A/B/C까지 이어지는 Gateway API의 계층화된 리소스 모델과 역할 분리를 보여준다.](../.gitbook/assets/ko-networking-04-gateway-api-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-04-gateway-api-1.html)
 
 ### 역할 분리
 

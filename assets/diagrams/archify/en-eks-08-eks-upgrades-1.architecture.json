@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Upgrade Planning and Preparation",
+    "locale": "en",
+    "output": "en-eks-08-eks-upgrades-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      460
+    ],
+    "views": [
+      {
+        "id": "assessment",
+        "label": "Upgrade Assessment",
+        "focus": [
+          "planning",
+          "assessment",
+          "compatibility",
+          "resources",
+          "schedule"
+        ],
+        "note": "Assess three areas: target-version compatibility, resource requirements, and schedule."
+      },
+      {
+        "id": "preparation",
+        "label": "Pre-upgrade Preparation",
+        "focus": [
+          "planning",
+          "preparation",
+          "cluster-state",
+          "backup",
+          "test-upgrade",
+          "documentation"
+        ],
+        "note": "Check cluster state, back up, test in non-production, and document before starting the upgrade."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "planning",
+      "type": "cloud",
+      "label": "Upgrade Planning and Preparation",
+      "sublabel": "Step 1 of an EKS cluster upgrade",
+      "pos": [
+        507,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "assessment",
+      "type": "backend",
+      "label": "Upgrade Assessment",
+      "sublabel": "Compatibility · Resource · Timing",
+      "pos": [
+        230,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "preparation",
+      "type": "backend",
+      "label": "Pre-upgrade Preparation",
+      "sublabel": "Check · Backup · Test · Docs",
+      "pos": [
+        845,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "compatibility",
+      "type": "backend",
+      "label": "Version Compatibility Check",
+      "sublabel": "Deprecated API · Feature · Add-on",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "resources",
+      "type": "backend",
+      "label": "Resource Requirements",
+      "sublabel": "Capacity · Downtime · Rollback",
+      "pos": [
+        230,
+        330
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "schedule",
+      "type": "backend",
+      "label": "Upgrade Schedule Planning",
+      "sublabel": "Window · Phased · Rollback",
+      "pos": [
+        420,
+        330
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "cluster-state",
+      "type": "backend",
+      "label": "Check Cluster State",
+      "sublabel": "Nodes · Pods · Events",
+      "pos": [
+        620,
+        330
+      ],
+      "size": [
+        150,
+        70
+      ]
+    },
+    {
+      "id": "backup",
+      "type": "database",
+      "label": "Create Backup",
+      "sublabel": "etcd · Velero",
+      "pos": [
+        780,
+        330
+      ],
+      "size": [
+        150,
+        70
+      ]
+    },
+    {
+      "id": "test-upgrade",
+      "type": "backend",
+      "label": "Test Upgrade",
+      "sublabel": "Non-production environment",
+      "pos": [
+        940,
+        330
+      ],
+      "size": [
+        150,
+        70
+      ]
+    },
+    {
+      "id": "documentation",
+      "type": "backend",
+      "label": "Upgrade Documentation",
+      "sublabel": "Steps · Owners · Rollback",
+      "pos": [
+        1100,
+        330
+      ],
+      "size": [
+        150,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "planning-assessment",
+      "from": "planning",
+      "to": "assessment",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "planning-preparation",
+      "from": "planning",
+      "to": "preparation",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "assessment-compatibility",
+      "from": "assessment",
+      "to": "compatibility",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "assessment-resources",
+      "from": "assessment",
+      "to": "resources",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "assessment-schedule",
+      "from": "assessment",
+      "to": "schedule",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "preparation-cluster-state",
+      "from": "preparation",
+      "to": "cluster-state",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "preparation-backup",
+      "from": "preparation",
+      "to": "backup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "preparation-test-upgrade",
+      "from": "preparation",
+      "to": "test-upgrade",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "preparation-documentation",
+      "from": "preparation",
+      "to": "documentation",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

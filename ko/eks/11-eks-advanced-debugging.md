@@ -101,7 +101,9 @@ echo "아카이브: $OUTPUT_DIR.tar.gz"
 
 ### 신속한 문제 식별을 위한 의사결정 트리
 
-![서비스 접근 가능 여부에서 시작해 컨트롤 플레인, 노드, 워크로드 상태를 순서대로 확인하며 장애 원인을 여덟 갈래 진단 범주로 좁혀가는 초기 트리아지 의사결정 트리.](../../assets/diagrams/rendered/ko-eks-11-eks-advanced-debugging-0.svg)
+![장애 감지 후 서비스 접근 가능 여부를 먼저 묻고, 접근 불가면 kubectl 작동, 노드 Ready, 파드 Running 순으로 컨트롤 플레인·노드·스케줄링·앱 설정 문제를, 접근 가능하면 응답 지연과 간헐적 오류 여부로 워크로드·클러스터 전반·네트워크/DNS 문제를 가려내는 초기 트리아지 의사결정 트리.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-11-eks-advanced-debugging-0.html)
 
 ---
 
@@ -379,7 +381,9 @@ aws eks update-addon \
 
 ### NotReady 노드 의사결정 트리
 
-![EC2 상태부터 kubelet, 네트워크, 디스크/메모리 압력, 컨테이너 런타임까지 단계적으로 점검해 노드가 NotReady가 된 원인을 좁혀가는 체크리스트형 의사결정 트리.](../../assets/diagrams/rendered/ko-eks-11-eks-advanced-debugging-1.svg)
+![EC2 상태부터 kubelet, 네트워크, 디스크/메모리 압력, 컨테이너 런타임까지 단계적으로 점검해 노드가 NotReady가 된 원인을 좁혀가는 체크리스트형 의사결정 트리.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-11-eks-advanced-debugging-1.html)
 
 ### SSM을 통한 kubelet/containerd 디버깅
 
@@ -579,7 +583,9 @@ data:
 
 ### 파드 상태 흐름도
 
-![파드가 Pending에서 이미지 풀과 실행을 거쳐 Succeeded로 끝나거나 Failed를 통해 재시작 정책에 따라 다시 Pending으로 돌아가는 생명주기와, 각 단계에서 흔히 발생하는 실패 원인을 보여주는 상태 다이어그램.](../../assets/diagrams/rendered/ko-eks-11-eks-advanced-debugging-2.svg)
+![파드가 Pending에서 이미지 풀과 실행을 거쳐 Succeeded로 끝나거나 Failed를 통해 재시작 정책에 따라 다시 Pending으로 돌아가는 생명주기와, 각 단계에서 흔히 발생하는 실패 원인을 보여주는 상태 다이어그램.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-11-eks-advanced-debugging-2.html)
 
 ### 기본 진단 명령어
 
@@ -1455,7 +1461,9 @@ spec:
 
 ### 4계층 감지 파이프라인
 
-![메트릭·로그·트레이스·이벤트 등 데이터 소스가 수집 계층을 거쳐 분석 계층에서 이상을 판정하고 SNS·Slack·PagerDuty·EventBridge로 알림이 전달되는 4단계 장애 감지 파이프라인.](../../assets/diagrams/rendered/ko-eks-11-eks-advanced-debugging-3.svg)
+![메트릭·로그·트레이스·이벤트 등 데이터 소스가 수집 계층(CloudWatch Agent, Fluent Bit, ADOT Collector, Prometheus)을 거쳐 분석 계층(CloudWatch Logs Insights, 메트릭 알림, Anomaly Detection, Composite Alarms)에서 이상을 판정하고 SNS·Slack·PagerDuty·EventBridge로 알림이 전달되는 4단계 장애 감지 파이프라인.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-11-eks-advanced-debugging-3.html)
 
 ### 레퍼런스 아키텍처 1: AWS 네이티브
 

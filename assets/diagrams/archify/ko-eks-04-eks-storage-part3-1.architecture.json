@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 문제 해결",
+    "output": "ko-eks-04-eks-storage-part3-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "증상 (문제)"
+        },
+        "backend": {
+          "label": "진단 → 해결 조치"
+        },
+        "security": {
+          "label": "두 문제가 공유하는 진단 지점"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "provisioning",
+        "label": "볼륨 프로비저닝 문제",
+        "focus": [
+          "pvc-pending",
+          "prov-fail",
+          "check-csi",
+          "check-iam",
+          "check-sc"
+        ],
+        "note": "PVC Pending과 프로비저닝 실패는 CSI 드라이버, IAM 권한, 스토리지 클래스라는 같은 세 지점을 점검한다."
+      },
+      {
+        "id": "mount",
+        "label": "볼륨 마운트 문제",
+        "focus": [
+          "mount-issue",
+          "check-pod",
+          "check-node",
+          "check-sg"
+        ],
+        "note": "ContainerCreating에 멈춘 파드는 파드 이벤트, 노드 kubelet 로그, EFS/FSx 보안 그룹 순으로 확인한다."
+      },
+      {
+        "id": "performance",
+        "label": "성능 문제",
+        "focus": [
+          "perf-issue",
+          "check-metrics",
+          "check-fs",
+          "check-node"
+        ],
+        "note": "느린 I/O는 CloudWatch 볼륨 지표와 dd 파일 시스템 테스트로 원인을 가른 뒤 볼륨·인스턴스 유형을 바꾸거나 파일 시스템을 최적화한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pvc-pending",
+      "type": "external",
+      "label": "PVC Pending",
+      "sublabel": "PVC 상태 확인 (describe pvc)",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "prov-fail",
+      "type": "external",
+      "label": "볼륨 프로비저닝 실패",
+      "sublabel": "프로비저너(CSI) 로그 확인",
+      "pos": [
+        620,
+        150
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "check-csi",
+      "type": "security",
+      "label": "CSI 드라이버 로그 확인",
+      "sublabel": "→ CSI 드라이버 재설치",
+      "pos": [
+        320,
+        50
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-iam",
+      "type": "security",
+      "label": "IAM 권한 확인",
+      "sublabel": "→ IAM 권한 추가",
+      "pos": [
+        320,
+        145
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-sc",
+      "type": "security",
+      "label": "스토리지 클래스 확인",
+      "sublabel": "→ 스토리지 클래스 수정",
+      "pos": [
+        320,
+        240
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "mount-issue",
+      "type": "external",
+      "label": "볼륨 마운트 문제",
+      "sublabel": "ContainerCreating 멈춤",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "perf-issue",
+      "type": "external",
+      "label": "성능 문제",
+      "sublabel": "느린 I/O",
+      "pos": [
+        620,
+        530
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "check-pod",
+      "type": "backend",
+      "label": "파드 상태 확인",
+      "sublabel": "→ 파드 재시작",
+      "pos": [
+        320,
+        400
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-node",
+      "type": "security",
+      "label": "노드 상태 확인",
+      "sublabel": "kubelet 로그 (journalctl)",
+      "pos": [
+        320,
+        495
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-sg",
+      "type": "backend",
+      "label": "보안 그룹·네트워크 확인",
+      "sublabel": "→ 보안 그룹 규칙 추가",
+      "pos": [
+        320,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-metrics",
+      "type": "backend",
+      "label": "성능 지표 확인",
+      "sublabel": "→ 볼륨·인스턴스 유형 변경",
+      "pos": [
+        900,
+        470
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-fs",
+      "type": "backend",
+      "label": "파일 시스템 테스트",
+      "sublabel": "→ 파일 시스템 최적화",
+      "pos": [
+        900,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "볼륨 프로비저닝 문제",
+      "wraps": [
+        "pvc-pending",
+        "prov-fail",
+        "check-csi",
+        "check-iam",
+        "check-sc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "볼륨 마운트 · 성능 문제",
+      "wraps": [
+        "mount-issue",
+        "perf-issue",
+        "check-pod",
+        "check-node",
+        "check-sg",
+        "check-metrics",
+        "check-fs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pvc-to-sc",
+      "from": "pvc-pending",
+      "to": "check-sc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-to-csi",
+      "from": "pvc-pending",
+      "to": "check-csi"
+    },
+    {
+      "id": "pvc-to-iam",
+      "from": "pvc-pending",
+      "to": "check-iam"
+    },
+    {
+      "id": "prov-to-csi",
+      "from": "prov-fail",
+      "to": "check-csi"
+    },
+    {
+      "id": "prov-to-iam",
+      "from": "prov-fail",
+      "to": "check-iam"
+    },
+    {
+      "id": "prov-to-sc",
+      "from": "prov-fail",
+      "to": "check-sc"
+    },
+    {
+      "id": "mount-to-pod",
+      "from": "mount-issue",
+      "to": "check-pod"
+    },
+    {
+      "id": "mount-to-node",
+      "from": "mount-issue",
+      "to": "check-node"
+    },
+    {
+      "id": "mount-to-sg",
+      "from": "mount-issue",
+      "to": "check-sg"
+    },
+    {
+      "id": "perf-to-metrics",
+      "from": "perf-issue",
+      "to": "check-metrics"
+    },
+    {
+      "id": "perf-to-fs",
+      "from": "perf-issue",
+      "to": "check-fs"
+    },
+    {
+      "id": "perf-to-node",
+      "from": "perf-issue",
+      "to": "check-node"
+    }
+  ]
+}

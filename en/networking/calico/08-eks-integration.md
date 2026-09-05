@@ -6,7 +6,9 @@
 
 This chapter covers Calico integration with Amazon EKS, including architecture patterns, installation methods, and EKS-specific optimizations. Learn how to leverage Calico's network policy capabilities alongside AWS VPC CNI for optimal EKS networking.
 
-![The EKS API server reaches into two worker nodes, where the VPC CNI handles pod networking and Calico enforces network policy on the same pods.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
+![Inside an EKS worker node, the Pod (application + pause container), VPC CNI (aws-node IPAMD + CNI plugin) and Calico (Felix + iptables/eBPF rules) all converge on the EC2 ENI secondary IP, which routes into the AWS VPC subnet, while aws-node and Felix watch the AWS-managed control plane API server in this VPC CNI + Calico hybrid.](../../.gitbook/assets/en-networking-calico-08-eks-integration-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-0.html)
 
 ## VPC CNI + Calico Architecture
 
@@ -459,7 +461,9 @@ spec:
 
 ### Comparison
 
-![AWS security groups enforce coarse instance and ENI-level L3-L4 rules, while Calico's GlobalNetworkPolicy, namespace NetworkPolicy, and HostEndpointPolicy all converge on the same pod, which also exchanges traffic directly with its peer pod.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
+![Inbound traffic from the Internet passes in turn through AWS-level Network ACL and Security Group, Kubernetes-level Calico NetworkPolicy and GlobalNetworkPolicy, and application-level mTLS and Authorization before reaching the application, illustrating the layered security model.](../../.gitbook/assets/en-networking-calico-08-eks-integration-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-3.html)
 
 | Aspect          | Security Groups | Calico Policy         |
 | --------------- | --------------- | --------------------- |

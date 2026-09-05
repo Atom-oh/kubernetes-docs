@@ -17,6 +17,16 @@
 //   ARCHMAP_CHROME        Chromium/headless_shell binary (default: playwright's chromium_headless_shell)
 //   PLAYWRIGHT_CORE_DIR   a directory whose node_modules holds playwright-core
 //   FONTCONFIG_FILE       forwarded to Chromium (deterministic CJK font selection)
+//
+// Why `--font-render-hinting=none`: the Google-served JetBrains Mono TTF carries
+// bytecode hints, and Linux headless Chromium (hintfull by default) rounds each
+// hinted advance to a whole device pixel. At the viewer's 0.96 stage scale a
+// 10px glyph (5.76 device px) becomes 6 device px = 6.24 user units, while the
+// legend layout assumes the unhinted 6.0, so count badges land on the last
+// glyph of every Latin label ("Kubernetes nod[3]"). CJK/CFF faces are not
+// rounded, which is why the ko renders never showed it. Disabling hinting makes
+// the rendered advance match the measured one; this does not change the
+// delivered HTML, only the PNG fallback.
 import { createRequire } from 'node:module';
 import { existsSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
@@ -105,7 +115,7 @@ const jobs = parseArgs(process.argv.slice(2));
 const { chromium } = loadPlaywright();
 const browser = await chromium.launch({
   executablePath: chromePath(),
-  args: ['--no-sandbox', '--disable-gpu', '--force-prefers-reduced-motion', '--hide-scrollbars'],
+  args: ['--no-sandbox', '--disable-gpu', '--force-prefers-reduced-motion', '--hide-scrollbars', '--font-render-hinting=none'],
   env: { ...process.env },
 });
 let failed = 0;

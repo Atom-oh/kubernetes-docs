@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Port Address Translation (PAT)",
+    "output": "en-networking-cilium-networking-concepts-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      520
+    ],
+    "views": [
+      {
+        "id": "host-a-path",
+        "label": "Host A path",
+        "focus": [
+          "hostA",
+          "pat",
+          "server"
+        ],
+        "note": "10.0.0.2:1234 is translated to port 5000 of the public IP 198.51.100.1 before reaching the server."
+      },
+      {
+        "id": "host-b-path",
+        "label": "Host B path",
+        "focus": [
+          "hostB",
+          "pat",
+          "server"
+        ],
+        "note": "10.0.0.3:1234 is translated to a different port, 5001, of the same public IP, keeping it distinct from Host A."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "hostA",
+      "type": "frontend",
+      "label": "Host A",
+      "sublabel": "10.0.0.2:1234",
+      "pos": [
+        60,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "hostB",
+      "type": "frontend",
+      "label": "Host B",
+      "sublabel": "10.0.0.3:1234",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pat",
+      "type": "security",
+      "label": "198.51.100.1",
+      "sublabel": "IP:port translation",
+      "pos": [
+        430,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "Server",
+      "sublabel": "203.0.113.5:80",
+      "pos": [
+        880,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Internal Network",
+      "wraps": [
+        "hostA",
+        "hostB"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "NAT Router (PAT)",
+      "wraps": [
+        "pat"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Internet",
+      "wraps": [
+        "server"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "hostA-to-pat",
+      "from": "hostA",
+      "to": "pat",
+      "label": "10.0.0.2:1234",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hostB-to-pat",
+      "from": "hostB",
+      "to": "pat",
+      "label": "10.0.0.3:1234"
+    },
+    {
+      "id": "pat-to-server-a",
+      "from": "pat",
+      "to": "server",
+      "label": "198.51.100.1:5000",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pat-to-server-b",
+      "from": "pat",
+      "to": "server",
+      "label": "198.51.100.1:5001",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          525,
+          330
+        ],
+        [
+          970,
+          330
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "How PAT works",
+      "items": [
+        "Translates each internal host's IP:port pair to a different port on a single public IP",
+        "Multiple internal hosts share one public IP, distinguished by port number",
+        "Limited by the number of available ports (about 65,000)"
+      ]
+    }
+  ]
+}

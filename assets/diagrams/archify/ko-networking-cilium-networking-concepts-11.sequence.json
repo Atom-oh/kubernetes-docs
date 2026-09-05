@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Kubernetes DNS 서비스 디스커버리 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [860, 520],
+    "animation": "trace"
+  },
+  "participants": [
+    { "id": "pod-a", "type": "frontend", "label": "포드 A", "sublabel": "클라이언트" },
+    { "id": "coredns", "type": "backend", "label": "CoreDNS", "sublabel": "클러스터 DNS" },
+    { "id": "service-b", "type": "cloud", "label": "서비스 B", "sublabel": "ClusterIP: 10.0.0.1" }
+  ],
+  "messages": [
+    { "id": "query", "from": "pod-a", "to": "coredns", "y": 205, "label": "1. service-b 조회", "variant": "emphasis", "note": "service-b.<namespace>.svc.cluster.local" },
+    { "id": "resolve", "from": "coredns", "to": "service-b", "y": 265, "label": "2. service-b 확인" },
+    { "id": "select", "from": "service-b", "to": "coredns", "y": 325, "label": "3. 백엔드 포드 선택", "variant": "return", "note": "백엔드: 포드 B1, B2, B3" },
+    { "id": "answer", "from": "coredns", "to": "pod-a", "y": 395, "label": "4. 10.0.0.1 수신", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "coredns", "from": 200, "to": 400, "type": "backend" },
+    { "participant": "service-b", "from": 260, "to": 330, "type": "cloud" }
+  ]
+}
