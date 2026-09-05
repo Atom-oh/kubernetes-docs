@@ -57,7 +57,12 @@
     },
     {
       "id": "injector",
-      "label": "Istio Sidecar Injector (Webhook)"
+      "label": "Sidecar Injector Webhook"
+    },
+    {
+      "id": "skiplane",
+      "label": "주입 생략 경로",
+      "variant": "exception"
     }
   ],
   "mainPath": [
@@ -96,7 +101,7 @@
     },
     {
       "id": "skip",
-      "lane": "pod",
+      "lane": "skiplane",
       "col": 1,
       "width": 160,
       "type": "external",
@@ -117,7 +122,9 @@
     {
       "id": "create-check",
       "from": "create",
-      "to": "check"
+      "to": "check",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "check-inject",
@@ -131,9 +138,7 @@
       "from": "check",
       "to": "skip",
       "label": "라벨 없음",
-      "role": "branch",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "role": "branch"
     },
     {
       "id": "inject-deploy",

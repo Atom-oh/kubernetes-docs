@@ -141,7 +141,7 @@
       "width": 172,
       "type": "external",
       "label": "Choose Istio",
-      "sublabel": "rich features · enterprise",
+      "sublabel": "recommended · rich features",
       "tag": "recommended"
     },
     {
@@ -187,7 +187,7 @@
       "width": 172,
       "type": "cloud",
       "label": "VPC Lattice",
-      "sublabel": "fully managed · AWS native",
+      "sublabel": "recommended · AWS native",
       "tag": "recommended"
     },
     {

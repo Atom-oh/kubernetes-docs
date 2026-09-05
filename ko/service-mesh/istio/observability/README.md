@@ -31,7 +31,9 @@ Istio의 관찰성 기능은 **Zero Instrumentation** 원칙을 따릅니다:
 
 ### 관찰성의 3요소
 
-![메트릭, 분산 추적, 로깅이라는 관찰성의 3요소가 각자의 도구로 데이터를 수집한 뒤 Grafana·Kiali·Alertmanager로 구성된 통합 관찰성 계층으로 모이는 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-observability-README-0.png)
+![Envoy 사이드카가 만든 메트릭·Span·Access Log가 각각 Prometheus, Jaeger/Zipkin, Loki에 수집된 뒤 Grafana 대시보드·Kiali 토폴로지·Alertmanager 알림으로 구성된 통합 관찰성 계층으로 모이는 관찰성의 3요소 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-observability-readme-0.html)
 
 ### 1. 메트릭 (Metrics)
 
@@ -79,7 +81,9 @@ Istio의 관찰성 기능은 **Zero Instrumentation** 원칙을 따릅니다:
 
 ### 전체 아키텍처
 
-![Envoy 사이드카가 애플리케이션 트래픽에서 메트릭·트레이스·액세스 로그를 수집해 Prometheus, Jaeger, Fluentd/Loki 백엔드로 전달하고 이들이 다시 Grafana와 Kiali로 모여 시각화되며, istiod가 사이드카에 설정을 전파하는 관찰성 아키텍처를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-observability-README-1.png)
+![Envoy 사이드카가 있는 포드의 메트릭·트레이스·액세스 로그가 Prometheus, Jaeger, Fluentd/Loki 백엔드로 흘러가 Grafana와 Kiali에서 시각화되고, istiod가 사이드카에 텔레메트리 설정을 전파하는 Istio 관찰성 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-observability-readme-1.html)
 
 ### 데이터 흐름
 

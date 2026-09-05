@@ -49,23 +49,6 @@
         "note": "Fluentd/Fluent Bit collect Envoy access logs into Loki, which Grafana queries."
       }
     ],
-    "legend": {
-      "mode": "all",
-      "entries": {
-        "cloud": {
-          "label": "Control plane"
-        },
-        "backend": {
-          "label": "Envoy sidecar"
-        },
-        "database": {
-          "label": "Backends"
-        },
-        "frontend": {
-          "label": "Visual layer"
-        }
-      }
-    },
     "locale": "en"
   },
   "components": [

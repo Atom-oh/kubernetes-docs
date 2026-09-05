@@ -48,24 +48,7 @@
         ],
         "note": "Envoy Access Log를 Fluentd/Fluent Bit이 수집해 Loki에 저장하고 Grafana에서 쿼리한다."
       }
-    ],
-    "legend": {
-      "mode": "all",
-      "entries": {
-        "cloud": {
-          "label": "컨트롤 플레인"
-        },
-        "backend": {
-          "label": "Envoy 사이드카"
-        },
-        "database": {
-          "label": "텔레메트리 백엔드"
-        },
-        "frontend": {
-          "label": "시각화"
-        }
-      }
-    }
+    ]
   },
   "components": [
     {

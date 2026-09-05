@@ -140,7 +140,7 @@
       "width": 172,
       "type": "external",
       "label": "Istio 선택",
-      "sublabel": "풍부한 기능·엔터프라이즈",
+      "sublabel": "권장 · 풍부한 기능·엔터프라이즈",
       "tag": "권장"
     },
     {
@@ -186,7 +186,7 @@
       "width": 172,
       "type": "cloud",
       "label": "VPC Lattice",
-      "sublabel": "완전 관리형·AWS 네이티브",
+      "sublabel": "권장 · AWS 네이티브·완전 관리형",
       "tag": "권장"
     },
     {

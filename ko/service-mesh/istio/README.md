@@ -78,13 +78,17 @@ Istio를 적용하면 각 마이크로서비스에 Envoy Proxy가 Sidecar 컨테
 
 ### 의사결정 흐름
 
-![마이크로서비스 규모, 트래픽·보안·관찰성 요구, 운영 리소스를 차례로 점검해 서비스 메시 도입 여부를 판단하는 의사결정 흐름도.](../../.gitbook/assets/ko-service-mesh-istio-README-0.png)
+![마이크로서비스 구조, 10개 이상 서비스, 트래픽·보안·관찰성 요구, 운영 리소스를 차례로 점검해 Service Mesh 권장, 불필요, 대안 솔루션, 신중한 검토 중 어느 결론에 이르는지 판단하는 의사결정 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-readme-0.html)
 
 ### Service Mesh가 필요한 경우 ✅
 
 #### 1. 복잡한 마이크로서비스 환경
 
-![서비스 메시 없이 각 서비스가 mTLS·재시도·관찰성을 직접 구현하는 구조와, 중앙 컨트롤 플레인이 네 서비스의 통신을 자동으로 제어하는 구조를 나란히 비교한 아키텍처 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-1.png)
+![서비스 메시 없이 네 서비스가 mTLS·재시도·로깅을 각자 수동으로 구현하는 구조와, Service Mesh가 같은 네 서비스의 통신을 자동으로 처리하고 제어하는 구조를 나란히 비교해 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-readme-1.html)
 
 **권장 기준**:
 
@@ -152,7 +156,9 @@ spec:
 
 #### 1. 단순한 아키텍처
 
-![사용자가 로드 밸런서를 거쳐 단일 모놀리식 애플리케이션과 데이터베이스에 접근하는 단순한 구조에서는 Ingress만으로 충분해 서비스 메시가 불필요함을 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-2.png)
+![사용자가 로드 밸런서(Ingress Controller)를 거쳐 단일 모놀리식 애플리케이션과 DB에 접근하는 단순한 구조에서는 Ingress만으로 충분해 Service Mesh가 불필요함을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-readme-2.html)
 
 **대신 사용**:
 
@@ -232,7 +238,9 @@ spec:
 
 Cilium은 eBPF 기반으로 **네트워크 레벨**에서 많은 기능을 제공합니다:
 
-![L7 프록시 기반의 Istio 서비스 메시와 eBPF 커널 레벨의 Cilium CNI 각각의 특징을 나열하고, 두 접근을 언제 쓰는지 사용 시나리오로 정리한 비교표.](../../.gitbook/assets/ko-service-mesh-istio-README-3.png)
+![L7 프록시 기반 Istio 서비스 메시와 eBPF 커널 레벨 Cilium CNI의 특징을 나열하고, 복잡한 L7 로직은 Service Mesh, 정책과 성능은 Cilium, 대규모 엔터프라이즈는 둘 다 쓰는 사용 시나리오로 연결한 비교도를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-readme-3.html)
 
 **Cilium이 더 적합한 경우**:
 
@@ -287,7 +295,9 @@ Cilium은 eBPF 기반으로 **네트워크 레벨**에서 많은 기능을 제�
 
 Service Mesh가 필요하다고 판단되면, 점진적으로 도입하세요:
 
-![관찰성 확보, mTLS 보안 적용, Canary 트래픽 관리, 전체 기능 활용까지 4단계로 서비스 메시를 점진적으로 도입하는 순서를 보여주는 프로세스 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-4.png)
+![관찰성 확보, mTLS 보안 적용, Canary 트래픽 관리, 전체 기능 활용까지 4단계로 Service Mesh를 단계마다 검증을 거쳐 점진적으로 도입하는 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-readme-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-readme-4.html)
 
 **권장 순서**:
 
@@ -335,7 +345,9 @@ Service Mesh가 필요하다고 판단되면, 점진적으로 도입하세요:
 
 Istio는 Control Plane과 Data Plane으로 구성됩니다:
 
-![istiod의 Pilot·Citadel·Galley가 설정과 인증서를 각 파드의 Envoy 사이드카에 배포하고, 세 Envoy가 서로 mTLS로 암호화 통신하며 애플리케이션의 요청을 가로채는 Istio 아키텍처를 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-5.png)
+![istiod의 Pilot이 라우팅 구성을, Citadel이 인증서를 각 파드의 Envoy 사이드카에 내려보내고, 애플리케이션 요청을 가로챈 Envoy들이 서로 mTLS로 암호화 통신하는 Istio의 Control Plane과 Data Plane 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-readme-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-readme-5.html)
 
 **Control Plane (istiod)**:
 

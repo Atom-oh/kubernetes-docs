@@ -22,7 +22,9 @@ Istio의 복원력(Resilience) 기능은 서비스 메시가 장애 상황에서
 
 ### 핵심 복원력 패턴
 
-![클라이언트 요청이 Outlier Detection, Rate Limiting, Zone Aware Routing을 차례로 거쳐 정상 Pod로 우선 전달되고 비정상 Pod는 제외되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-0.png)
+![클라이언트 요청이 Outlier Detection, Rate Limiting, Zone Aware Routing을 차례로 거쳐 정상 Pod로 우선 전달되고 비정상 Pod는 제외되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-readme-0.html)
 
 ### 1. Outlier Detection (이상 감지)
 
@@ -133,7 +135,9 @@ spec:
 ```
 
 **작동 방식**:
-![Envoy 프록시가 정상 요청은 서비스로 전달하다가 연결 수 제한에 도달하면 이후 요청을 즉시 503으로 거부하는 Circuit Breaker의 동작 순서를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-1.png)
+![Envoy 프록시가 정상 요청은 서비스로 전달하다가 연결 수 제한에 도달하면 이후 요청을 즉시 503으로 거부하는 Circuit Breaker의 동작 순서를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-readme-1.html)
 
 **주요 기능**:
 - TCP 연결 수 제한
@@ -182,7 +186,9 @@ retries:
 ```
 
 **작동 방식**:
-![Envoy 프록시가 실패한 Pod 1에서 503을 받은 뒤 재시도 조건을 확인하고 다른 Pod 2로 요청을 재전송해 최종적으로 성공 응답을 클라이언트에 전달하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-2.png)
+![Envoy 프록시가 실패한 Pod 1에서 503을 받은 뒤 재시도 조건을 확인하고 다른 Pod 2로 요청을 재전송해 최종적으로 성공 응답을 클라이언트에 전달하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-readme-2.html)
 
 ### 6. Timeout (타임아웃)
 
@@ -397,7 +403,9 @@ spec:
 
 ## 복원력 아키텍처
 
-![클라이언트 요청이 Gateway의 Rate Limiting을 지나 Outlier Detection으로 비정상 Pod A3를 제외하고 정상 Pod만 Service B로 전달하며, Zone Aware Routing이 같은 가용 영역으로 우선 라우팅하는 전체 복원력 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-3.png)
+![클라이언트 요청이 Rate Limiting이 적용된 Ingress Gateway를 지나 Outlier Detection에서 비정상 Pod A3를 제외한 정상 파드로만 전달되고, Service A에서 Service B로는 Zone Aware Routing으로 같은 Zone의 파드를 우선하는 복원력 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-readme-3.html)
 
 ## 복원력 메트릭
 

@@ -37,6 +37,10 @@
         ],
         "note": "같은 AZ의 Pod를 우선하고, 장애 시 다른 AZ로 자동 장애조치한다."
       }
+    ],
+    "viewBox": [
+      1220,
+      470
     ]
   },
   "components": [
@@ -46,21 +50,21 @@
       "label": "클라이언트 요청",
       "pos": [
         40,
-        60
+        70
       ],
       "size": [
         160,
-        60
+        64
       ]
     },
     {
       "id": "outlier",
-      "type": "security",
+      "type": "backend",
       "label": "Outlier Detection",
       "sublabel": "비정상 인스턴스 제외",
       "pos": [
-        40,
-        240
+        260,
+        70
       ],
       "size": [
         190,
@@ -73,8 +77,8 @@
       "label": "Rate Limiting",
       "sublabel": "요청 속도 제한",
       "pos": [
-        330,
-        240
+        510,
+        70
       ],
       "size": [
         170,
@@ -87,8 +91,8 @@
       "label": "Zone Aware Routing",
       "sublabel": "지역 우선 라우팅",
       "pos": [
-        600,
-        240
+        740,
+        70
       ],
       "size": [
         200,
@@ -101,11 +105,11 @@
       "label": "Pod 3",
       "sublabel": "에러 발생",
       "pos": [
-        40,
-        470
+        255,
+        300
       ],
       "size": [
-        150,
+        200,
         60
       ]
     },
@@ -115,11 +119,11 @@
       "label": "Pod 1",
       "sublabel": "Zone A",
       "pos": [
-        540,
-        470
+        740,
+        300
       ],
       "size": [
-        150,
+        200,
         60
       ]
     },
@@ -129,11 +133,11 @@
       "label": "Pod 2",
       "sublabel": "Zone B",
       "pos": [
-        740,
-        470
+        960,
+        300
       ],
       "size": [
-        150,
+        200,
         60
       ]
     }
@@ -150,14 +154,14 @@
     },
     {
       "kind": "region",
-      "label": "비정상 인스턴스",
+      "label": "비정상 Pod",
       "wraps": [
         "pod3"
       ]
     },
     {
       "kind": "region",
-      "label": "정상 인스턴스",
+      "label": "정상 Pod",
       "wraps": [
         "pod1",
         "pod2"
@@ -170,8 +174,8 @@
       "from": "client",
       "to": "outlier",
       "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "fromSide": "right",
+      "toSide": "left"
     },
     {
       "id": "outlier-to-ratelimit",
@@ -190,7 +194,8 @@
       "label": "제외",
       "variant": "dashed",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelDy": 96
     },
     {
       "id": "zone-primary",
@@ -199,7 +204,9 @@
       "label": "우선",
       "variant": "emphasis",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelDy": 96,
+      "labelDx": -14
     },
     {
       "id": "zone-failover",

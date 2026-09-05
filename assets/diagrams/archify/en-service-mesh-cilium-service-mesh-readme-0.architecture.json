@@ -20,7 +20,7 @@
           "label": "Kernel eBPF datapath"
         },
         "backend": {
-          "label": "Per-node shared Envoy (L7)"
+          "label": "Per-node Envoy (L7)"
         }
       }
     },

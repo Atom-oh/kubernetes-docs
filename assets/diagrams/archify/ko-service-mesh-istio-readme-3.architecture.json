@@ -13,10 +13,10 @@
     "legend": {
       "entries": {
         "backend": {
-          "label": "L7 프록시 계층 · Istio"
+          "label": "Istio"
         },
         "security": {
-          "label": "eBPF 커널 계층 · Cilium"
+          "label": "Cilium"
         },
         "external": {
           "label": "사용 시나리오"

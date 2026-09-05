@@ -58,7 +58,12 @@
     },
     {
       "id": "injector",
-      "label": "Istio sidecar injector (webhook)"
+      "label": "Sidecar injector webhook"
+    },
+    {
+      "id": "skiplane",
+      "label": "Skip path",
+      "variant": "exception"
     }
   ],
   "mainPath": [
@@ -97,7 +102,7 @@
     },
     {
       "id": "skip",
-      "lane": "pod",
+      "lane": "skiplane",
       "col": 1,
       "width": 160,
       "type": "external",
@@ -118,7 +123,9 @@
     {
       "id": "create-check",
       "from": "create",
-      "to": "check"
+      "to": "check",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "check-inject",
@@ -132,9 +139,7 @@
       "from": "check",
       "to": "skip",
       "label": "no label",
-      "role": "branch",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "role": "branch"
     },
     {
       "id": "inject-deploy",

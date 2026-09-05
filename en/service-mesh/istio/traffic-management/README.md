@@ -23,7 +23,9 @@ Traffic management is one of Istio's core features, enabling the following opera
 
 ### Key Features
 
-![A client request enters through the Gateway, is routed by the VirtualService, has traffic policy applied by the DestinationRule, and is then split across three service versions: the main version, a canary, and a mirrored copy for shadow testing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-README-0.png)
+![A client request enters through the Gateway, is routed by the VirtualService, has traffic policy applied by the DestinationRule, and is then split across three service versions: the main version, a canary, and a mirrored copy for shadow testing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-0.html)
 
 ### 1. Intelligent Routing
 
@@ -241,7 +243,9 @@ spec:
 
 ## Traffic Flow
 
-![A user request enters the ingress Gateway, passes through VirtualService routing (path, header, then weight matching), is shaped by DestinationRule policies (load balancing, circuit breaking, connection pooling), and is finally delivered to one of three backing pods.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-README-1.png)
+![A user request enters the ingress Gateway, passes through VirtualService routing (path, header, then weight matching), is shaped by DestinationRule policies (load balancing, circuit breaking, connection pooling), and is finally delivered to one of three backing pods.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-readme-1.html)
 
 ## Learning Path
 

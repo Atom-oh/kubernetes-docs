@@ -13,13 +13,13 @@
     "legend": {
       "entries": {
         "backend": {
-          "label": "L7 proxy layer · Istio"
+          "label": "Istio"
         },
         "security": {
-          "label": "eBPF kernel layer · Cilium"
+          "label": "Cilium"
         },
         "external": {
-          "label": "Usage Scenarios"
+          "label": "Scenarios"
         }
       }
     },

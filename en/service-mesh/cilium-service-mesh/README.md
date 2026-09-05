@@ -19,11 +19,15 @@ The core value of Cilium Service Mesh is a **unified networking and service mesh
 
 ## Sidecar vs Sidecarless Architecture
 
-![Comparison showing traditional sidecar proxies handling every pod-to-pod hop versus Cilium routing pod traffic through the kernel eBPF datapath, which calls out to a single shared node-level Envoy only for L7 processing.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-README-0.png)
+![Comparison showing traditional sidecar proxies handling every pod-to-pod hop versus Cilium routing pod traffic through the kernel eBPF datapath, which calls out to a single shared node-level Envoy only for L7 processing.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-readme-0.html)
 
 ### Architecture Comparison Diagram
 
-![Comparison showing a request crossing the network between two per-pod Envoy sidecars in Istio, versus the same request passing through two lightweight eBPF hops into one shared, node-level Envoy proxy that performs L7 processing only in Cilium.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-README-1.png)
+![Comparison showing a request crossing the network between two per-Pod Envoy sidecars in Istio, versus the same request passing through two kernel eBPF hops into one shared, node-level Envoy proxy that performs L7 processing only in Cilium.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-readme-1.html)
 
 ## Service Mesh Comparison
 
@@ -45,7 +49,9 @@ The core value of Cilium Service Mesh is a **unified networking and service mesh
 
 ### Resource Usage Comparison
 
-![Bar chart comparing total mesh memory overhead across a 100-pod cluster: Cilium Service Mesh at roughly 500MB total using one shared proxy per node, versus Istio at roughly 5GB and Linkerd at roughly 2GB, both driven by a proxy running in every pod.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-README-2.png)
+![Total mesh memory in a 100-pod cluster: Cilium Service Mesh stays around 500MB with one shared Envoy per node, while Istio's per-pod sidecars add up to about 5GB and Linkerd's to about 2GB.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-readme-2.html)
 
 ## When to Choose Cilium Service Mesh
 

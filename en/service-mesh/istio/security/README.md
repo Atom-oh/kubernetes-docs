@@ -24,7 +24,9 @@ Istio implements a **Zero Trust security model** to protect all communication wi
 
 ### Security Architecture Layers
 
-![Diagram showing Istiod distributing certificates and policy to Envoy sidecars in two pods, which terminate mutual TLS between plaintext application traffic, framed above a five-step security-layer chain from identity to authorization.](../../../.gitbook/assets/en-service-mesh-istio-security-README-0.png)
+![Diagram showing the istiod Certificate Authority and Configuration API distributing certificates and policy to the Envoy sidecars in two pods, which encrypt only the sidecar-to-sidecar hop with mTLS, above a five-step security-layer chain from identity to authorization.](../../../.gitbook/assets/en-service-mesh-istio-security-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-readme-0.html)
 
 **Core Architecture Components**:
 
