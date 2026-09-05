@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "노드 그룹 업그레이드",
+    "output": "ko-eks-08-eks-upgrades-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1090, 560],
+    "views": [
+      { "id": "sections", "label": "다섯 갈래", "focus": ["root", "strategies", "managed-ng", "self-managed-ng", "fargate-upgrade", "monitoring"], "note": "노드 그룹 업그레이드는 전략, 관리형, 자체 관리형, Fargate, 모니터링·검증 다섯 갈래로 나뉩니다." },
+      { "id": "strategy-detail", "label": "전략 세분화", "focus": ["strategies", "managed-strategy", "self-managed-strategy", "fargate-strategy"], "note": "전략은 관리형 · 자체 관리형 · Fargate 세 방식으로 더 세분화됩니다." },
+      { "id": "validation", "label": "모니터링 및 검증", "focus": ["monitoring"], "note": "업그레이드 후 노드 버전, 노드 상태, 파드 배포를 확인합니다." }
+    ]
+  },
+  "components": [
+    { "id": "root", "type": "external", "label": "노드 그룹 업그레이드", "sublabel": "컨트롤 플레인 업그레이드 이후", "pos": [30, 244], "size": [200, 64] },
+    { "id": "strategies", "type": "backend", "label": "노드 그룹 업그레이드 전략", "sublabel": "관리형 · 자체 관리형 · Fargate", "pos": [300, 40], "size": [300, 64] },
+    { "id": "managed-ng", "type": "cloud", "label": "관리형 노드 그룹 업그레이드", "sublabel": "버전 확인 · Console / CLI / eksctl · 구성", "pos": [300, 142], "size": [300, 64] },
+    { "id": "self-managed-ng", "type": "backend", "label": "자체 관리형 노드 그룹 업그레이드", "sublabel": "블루/그린 · 롤링 · 인플레이스", "pos": [300, 244], "size": [300, 64] },
+    { "id": "fargate-upgrade", "type": "cloud", "label": "Fargate 노드 업그레이드", "sublabel": "재예약 시 최신 플랫폼 버전 자동 적용", "pos": [300, 346], "size": [300, 64] },
+    { "id": "monitoring", "type": "security", "label": "노드 업그레이드 모니터링 및 검증", "sublabel": "노드 버전 · 노드 상태 · 파드 배포 확인", "pos": [300, 448], "size": [300, 64] },
+    { "id": "managed-strategy", "type": "cloud", "label": "관리형 노드 그룹", "sublabel": "롤링 업그레이드 · 자동 드레이닝 · 버전 추적", "pos": [750, 40], "size": [290, 64] },
+    { "id": "self-managed-strategy", "type": "backend", "label": "자체 관리형 노드 그룹", "sublabel": "블루/그린 배포 · 롤링 업그레이드 · 인플레이스", "pos": [750, 142], "size": [290, 64] },
+    { "id": "fargate-strategy", "type": "cloud", "label": "Fargate", "sublabel": "AWS가 관리, 별도 업그레이드 불필요", "pos": [750, 244], "size": [290, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "전략 세분화", "wraps": ["managed-strategy", "self-managed-strategy", "fargate-strategy"] }
+  ],
+  "connections": [
+    { "id": "root-strategies", "from": "root", "to": "strategies", "variant": "emphasis" },
+    { "id": "root-managed", "from": "root", "to": "managed-ng" },
+    { "id": "root-self", "from": "root", "to": "self-managed-ng" },
+    { "id": "root-fargate", "from": "root", "to": "fargate-upgrade" },
+    { "id": "root-monitoring", "from": "root", "to": "monitoring" },
+    { "id": "strat-managed", "from": "strategies", "to": "managed-strategy", "variant": "emphasis" },
+    { "id": "strat-self", "from": "strategies", "to": "self-managed-strategy" },
+    { "id": "strat-fargate", "from": "strategies", "to": "fargate-strategy" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "관리형 노드 그룹", "items": ["롤링 업그레이드: 노드를 하나씩 교체해 워크로드 중단 최소화", "자동 드레이닝: 파드가 다른 노드로 자동 이동", "버전 추적: 컨트롤 플레인과 호환되는 노드 AMI 자동 선택", "Console / AWS CLI / eksctl로 수행, maxUnavailable · PDB로 동작 구성"] },
+    { "dot": "cyan", "title": "자체 관리형 노드 그룹", "items": ["블루/그린 배포: 새 노드 그룹 생성 후 워크로드 마이그레이션", "롤링 업그레이드: 노드를 하나씩 드레이닝·종료 후 새 노드로 교체", "인플레이스 업그레이드: 기존 노드의 kubelet · 컨테이너 런타임 업그레이드"] },
+    { "dot": "emerald", "title": "Fargate 및 검증", "items": ["Fargate 파드는 새로 예약될 때 최신 플랫폼 버전을 자동 사용", "기존 Fargate 파드는 재시작될 때까지 현재 플랫폼 버전 유지", "업그레이드 후 노드 버전 · 노드 상태 · 파드 배포 확인"] }
+  ]
+}

@@ -17,7 +17,9 @@ Keeping your Amazon EKS cluster up to date is important for security, stability,
 
 ## EKS Upgrade Overview
 
-![Tree diagram showing the four pillars of an EKS upgrade: version management policy, the components that get upgraded, the required version-by-version upgrade path, and the recommended upgrade order.](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-0.svg)
+![Tree diagram of the four pillars of an EKS upgrade: version management policy, the components that get upgraded (control plane, node groups, add-ons, self-managed components), the one-minor-version-at-a-time upgrade path versus an unsupported version skip, and the five-step upgrade order.](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-0.html)
 
 ### EKS Version Management
 
@@ -60,7 +62,9 @@ The general upgrade order is as follows:
 
 ## Upgrade Planning and Preparation
 
-![Tree diagram showing upgrade planning split into an assessment phase (compatibility, resource, and schedule checks) and a pre-upgrade preparation phase (cluster state, backup, test, documentation).](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-1.svg)
+![Tree diagram showing upgrade planning and preparation split into an upgrade assessment branch (version compatibility check, resource requirements, upgrade schedule planning) and a pre-upgrade preparation branch (check cluster state, create backup, test upgrade, upgrade documentation).](../.gitbook/assets/en-eks-08-eks-upgrades-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-1.html)
 
 ### Upgrade Assessment
 
@@ -151,7 +155,9 @@ Document the upgrade process:
 
 ## EKS Control Plane Upgrade
 
-![Tree diagram showing the four stages of a control plane upgrade: preparation, execution via console/CLI/eksctl, monitoring, and troubleshooting common issues.](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-2.svg)
+![Diagram of an EKS control plane upgrade split into four stages, preparation, execution, monitoring, and troubleshooting, each grouping its steps: version checks and planning, Console/CLI/eksctl, status, cluster state and CloudWatch monitoring, and common issues with troubleshooting steps.](../.gitbook/assets/en-eks-08-eks-upgrades-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-2.html)
 
 ### Control Plane Upgrade Preparation
 
@@ -268,7 +274,9 @@ Common issues that may occur during control plane upgrade:
 
 After upgrading the control plane, you need to upgrade the node groups. There are several strategies for node group upgrades, each with advantages and disadvantages.
 
-![Tree diagram showing node group upgrade strategies for managed and self-managed node groups, Fargate's automatic upgrade model, and post-upgrade monitoring and validation steps.](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-3.svg)
+![Diagram showing node group upgrades split into five branches, strategies, managed, self-managed, Fargate, and monitoring and validation, with the strategies branch broken down into managed, self-managed, and Fargate approaches.](../.gitbook/assets/en-eks-08-eks-upgrades-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-3.html)
 
 ### Node Group Upgrade Strategies
 
@@ -491,7 +499,9 @@ kubectl get pods --all-namespaces -o wide | grep -v Running
 
 EKS clusters include several add-ons that also need to be upgraded.
 
-![Tree diagram showing how AWS managed add-ons, self-managed add-ons, key add-on guides (CoreDNS, kube-proxy, VPC CNI), and add-on troubleshooting fit together in the upgrade process.](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-4.svg)
+![Diagram showing how add-on upgrades split into AWS managed add-ons (check versions, then upgrade with update-addon or eksctl), self-managed add-ons (Helm or kubectl), key add-on guides (CoreDNS, kube-proxy, VPC CNI), and troubleshooting (common issues and troubleshooting steps).](../.gitbook/assets/en-eks-08-eks-upgrades-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-4.html)
 
 ### AWS Managed Add-ons
 
@@ -648,7 +658,9 @@ kubectl get events -n kube-system --sort-by='.lastTimestamp'
 
 After the upgrade is complete, you need to validate that the cluster is operating normally and resolve any issues that may occur.
 
-![Tree diagram showing post-upgrade validation across cluster state, workload, and functional testing, alongside troubleshooting of common upgrade issues and the rollback procedure.](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-5.svg)
+![Tree diagram splitting post-upgrade work into Upgrade Validation (cluster version, cluster state, workload validation, functional testing) and Upgrade Troubleshooting (common upgrade issues, troubleshooting steps, rollback procedure).](../.gitbook/assets/en-eks-08-eks-upgrades-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-5.html)
 
 ### Upgrade Validation
 
@@ -837,7 +849,9 @@ aws eks update-addon \
 
 In large-scale environments, automating the upgrade process is important. You can automate EKS upgrades using the following tools and methods.
 
-![Tree diagram showing three automation approaches for EKS upgrades -- eksctl, AWS CLI scripts, and GitOps -- alongside the automation best practices that apply across all of them.](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-6.svg)
+![Diagram of EKS upgrade automation branching into three paths -- eksctl, AWS CLI scripts, and GitOps -- each with its ordered cluster, add-on, and node group upgrade steps, plus the automation best practices that apply across all of them.](../.gitbook/assets/en-eks-08-eks-upgrades-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-6.html)
 
 ### Automation Using eksctl
 
@@ -1002,7 +1016,9 @@ Best practices for EKS upgrade automation:
 
 Let's look at best practices for EKS cluster upgrades.
 
-![Tree diagram showing general EKS upgrade best practices across planning, preparation, execution, and post-upgrade, plus additional practices for large clusters and for financial-services compliance.](../../assets/diagrams/rendered/en-eks-08-eks-upgrades-7.svg)
+![Tree diagram showing general EKS upgrade best practices across planning, preparation, execution, and post-upgrade, plus additional practices for large clusters and for financial-services compliance.](../.gitbook/assets/en-eks-08-eks-upgrades-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-08-eks-upgrades-7.html)
 
 ### General Best Practices
 

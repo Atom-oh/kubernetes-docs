@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 보안 아키텍처",
+    "output": "ko-eks-05-eks-security-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      650
+    ]
+  },
+  "components": [
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "인증 / 인가",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "EKS 컨트롤 플레인",
+      "sublabel": "AWS 관리형",
+      "pos": [
+        380,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "클러스터 상태 저장",
+      "pos": [
+        680,
+        50
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "security",
+      "label": "AWS KMS",
+      "sublabel": "Secrets 봉투 암호화",
+      "pos": [
+        680,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "wn",
+      "type": "cloud",
+      "label": "워커 노드",
+      "sublabel": "EC2 / 노드 그룹",
+      "pos": [
+        380,
+        370
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "파드 / 컨테이너",
+      "sublabel": "워크로드",
+      "pos": [
+        680,
+        370
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "security",
+      "label": "보안 그룹",
+      "sublabel": "노드 네트워크 제어",
+      "pos": [
+        380,
+        530
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sa",
+      "type": "security",
+      "label": "서비스 계정",
+      "sublabel": "RBAC / IRSA",
+      "pos": [
+        600,
+        530
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "np",
+      "type": "security",
+      "label": "네트워크 정책",
+      "sublabel": "파드 간 트래픽 제어",
+      "pos": [
+        810,
+        530
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "secrets",
+      "type": "database",
+      "label": "Kubernetes Secrets",
+      "sublabel": "민감 정보",
+      "pos": [
+        1010,
+        530
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 책임",
+      "wraps": [
+        "iam",
+        "cp",
+        "etcd",
+        "kms"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "고객 책임",
+      "wraps": [
+        "wn",
+        "pods",
+        "sg",
+        "sa",
+        "np",
+        "secrets"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "iam-cp",
+      "from": "iam",
+      "to": "cp",
+      "label": "인증 / 인가",
+      "variant": "security"
+    },
+    {
+      "id": "cp-etcd",
+      "from": "cp",
+      "to": "etcd",
+      "label": "암호화된 통신"
+    },
+    {
+      "id": "cp-kms",
+      "from": "cp",
+      "to": "kms",
+      "label": "관리"
+    },
+    {
+      "id": "cp-wn",
+      "from": "cp",
+      "to": "wn",
+      "label": "암호화된 통신",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "wn-pods",
+      "from": "wn",
+      "to": "pods",
+      "label": "실행",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wn-sg",
+      "from": "wn",
+      "to": "sg",
+      "label": "적용",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "pods-sa",
+      "from": "pods",
+      "to": "sa",
+      "label": "사용",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "pods-np",
+      "from": "pods",
+      "to": "np",
+      "label": "적용",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "pods-secrets",
+      "from": "pods",
+      "to": "secrets",
+      "label": "사용",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS 책임",
+      "items": [
+        "EKS 컨트롤 플레인과 etcd의 보안을 AWS가 관리한다",
+        "AWS KMS로 etcd에 저장되는 Secrets를 암호화한다",
+        "AWS IAM 자격 증명으로 Kubernetes API 서버에 인증한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "고객 책임",
+      "items": [
+        "워커 노드, 컨테이너, 애플리케이션의 보안",
+        "보안 그룹과 네트워크 정책으로 트래픽을 제어한다",
+        "서비스 계정(RBAC, IRSA)과 Secrets 관리"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 암호화 옵션과 비밀 관리",
+    "output": "ko-eks-05-eks-security-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "kms",
+      "type": "cloud",
+      "label": "AWS KMS 암호화",
+      "sublabel": "고객 관리형 KMS 키",
+      "pos": [
+        70,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd 기본 암호화",
+      "sublabel": "Kubernetes Secrets 저장",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "aws-store",
+      "type": "cloud",
+      "label": "AWS Secrets Manager / Parameter Store",
+      "sublabel": "암호화 저장 · 액세스 제어",
+      "tag": "Secrets Manager: 버전 관리",
+      "pos": [
+        70,
+        220
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "vault",
+      "type": "external",
+      "label": "HashiCorp Vault",
+      "sublabel": "암호화 저장 · 버전 관리 · 액세스 제어",
+      "pos": [
+        70,
+        360
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "sops",
+      "type": "external",
+      "label": "Mozilla SOPS",
+      "sublabel": "Git 저장소에 암호화 저장",
+      "pos": [
+        70,
+        480
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "eso",
+      "type": "backend",
+      "label": "External Secrets Operator",
+      "sublabel": "ESO",
+      "pos": [
+        430,
+        190
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "ascp",
+      "type": "backend",
+      "label": "ASCP",
+      "sublabel": "AWS Secrets and Configuration Provider",
+      "pos": [
+        430,
+        290
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "backend",
+      "label": "Secrets Store CSI Driver",
+      "sublabel": "CSI 볼륨",
+      "pos": [
+        430,
+        390
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "security",
+      "label": "Kubernetes Secrets",
+      "sublabel": "etcd에 암호화 저장",
+      "pos": [
+        720,
+        290
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "파드에서 사용",
+      "sublabel": "마운트 · 환경 변수 · init 컨테이너",
+      "tag": "사용 패턴",
+      "pos": [
+        960,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 암호화 옵션",
+      "wraps": [
+        "kms",
+        "etcd",
+        "aws-store",
+        "vault",
+        "sops",
+        "eso",
+        "ascp",
+        "csi",
+        "k8s"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "etcd 암호화",
+      "wraps": [
+        "kms",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "비밀 관리 솔루션",
+      "wraps": [
+        "aws-store",
+        "vault",
+        "sops"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "통합 도구",
+      "wraps": [
+        "eso",
+        "ascp",
+        "csi"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kms-etcd",
+      "from": "kms",
+      "to": "etcd",
+      "label": "추가 암호화 계층",
+      "variant": "security"
+    },
+    {
+      "id": "store-eso",
+      "from": "aws-store",
+      "to": "eso"
+    },
+    {
+      "id": "store-ascp",
+      "from": "aws-store",
+      "to": "ascp"
+    },
+    {
+      "id": "vault-csi",
+      "from": "vault",
+      "to": "csi"
+    },
+    {
+      "id": "eso-k8s",
+      "from": "eso",
+      "to": "k8s",
+      "label": "Secret 동기화"
+    },
+    {
+      "id": "ascp-k8s",
+      "from": "ascp",
+      "to": "k8s"
+    },
+    {
+      "id": "csi-k8s",
+      "from": "csi",
+      "to": "k8s"
+    },
+    {
+      "id": "k8s-pod",
+      "from": "k8s",
+      "to": "pod",
+      "label": "주입",
+      "variant": "emphasis"
+    }
+  ]
+}

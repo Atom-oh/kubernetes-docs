@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 보안",
+    "output": "ko-eks-04-eks-storage-part3-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "encryption",
+        "label": "데이터 암호화",
+        "focus": [
+          "ebs-fsx",
+          "efs",
+          "s3",
+          "at-rest",
+          "in-transit",
+          "kms"
+        ],
+        "note": "EBS·EFS·FSx·S3의 저장·전송 암호화가 모두 AWS KMS 키로 모인다."
+      },
+      {
+        "id": "access",
+        "label": "액세스 제어",
+        "focus": [
+          "ebs-fsx",
+          "efs",
+          "s3",
+          "sg",
+          "iam",
+          "rbac",
+          "opa-kyverno"
+        ],
+        "note": "보안 그룹·IAM으로 AWS 측 접근을 제한하고, RBAC과 OPA Gatekeeper/Kyverno로 PV·PVC 접근을 통제한다."
+      },
+      {
+        "id": "pod",
+        "label": "파드 보안",
+        "focus": [
+          "pod-security",
+          "pss"
+        ],
+        "note": "읽기 전용 루트 파일 시스템·권한 제한·SELinux/AppArmor/seccomp 설정을 Pod Security Standards로 강제한다."
+      }
+    ],
+    "viewBox": [
+      1240,
+      700
+    ]
+  },
+  "components": [
+    {
+      "id": "ebs-fsx",
+      "type": "cloud",
+      "label": "EBS · FSx 보안",
+      "sublabel": "저장 암호화 · 보안 그룹",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "cloud",
+      "label": "EFS 보안",
+      "sublabel": "암호화 · 보안 그룹 · IAM",
+      "pos": [
+        340,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 보안",
+      "sublabel": "암호화 · IAM",
+      "pos": [
+        640,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "at-rest",
+      "type": "security",
+      "label": "저장 데이터 암호화",
+      "sublabel": "encrypted: \"true\"",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "in-transit",
+      "type": "security",
+      "label": "전송 중 데이터 암호화",
+      "sublabel": "EFS tls · S3 SSE",
+      "pos": [
+        600,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "cloud",
+      "label": "AWS KMS 키 관리",
+      "sublabel": "kmsKeyId",
+      "pos": [
+        340,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "cloud",
+      "label": "보안 그룹",
+      "sublabel": "필요한 포트만 허용",
+      "pos": [
+        190,
+        470
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "cloud",
+      "label": "IAM 역할 및 정책",
+      "sublabel": "최소 권한 · IRSA",
+      "pos": [
+        490,
+        470
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "backend",
+      "label": "Kubernetes RBAC",
+      "sublabel": "PV · PVC 접근 제한",
+      "pos": [
+        490,
+        590
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "opa-kyverno",
+      "type": "backend",
+      "label": "OPA Gatekeeper / Kyverno",
+      "sublabel": "정책 적용",
+      "pos": [
+        760,
+        590
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod-security",
+      "type": "security",
+      "label": "파드 보안 컨텍스트",
+      "sublabel": "읽기 전용 루트 FS · 권한 제한 · seccomp",
+      "pos": [
+        990,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pss",
+      "type": "backend",
+      "label": "Pod Security Standards",
+      "sublabel": "정책 적용",
+      "pos": [
+        990,
+        590
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "스토리지 서비스",
+      "wraps": [
+        "ebs-fsx",
+        "efs",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 암호화",
+      "wraps": [
+        "at-rest",
+        "in-transit",
+        "kms"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "액세스 제어",
+      "wraps": [
+        "sg",
+        "iam",
+        "rbac"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "보안 정책 적용",
+      "wraps": [
+        "opa-kyverno",
+        "pss"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-at-rest",
+      "from": "ebs-fsx",
+      "to": "at-rest",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "emphasis"
+    },
+    {
+      "id": "efs-at-rest",
+      "from": "efs",
+      "to": "at-rest",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          430,
+          290
+        ],
+        [
+          130,
+          290
+        ]
+      ]
+    },
+    {
+      "id": "s3-at-rest",
+      "from": "s3",
+      "to": "at-rest",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          880,
+          360
+        ],
+        [
+          880,
+          40
+        ],
+        [
+          130,
+          40
+        ]
+      ]
+    },
+    {
+      "id": "efs-in-transit",
+      "from": "efs",
+      "to": "in-transit",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          560,
+          360
+        ],
+        [
+          560,
+          280
+        ],
+        [
+          690,
+          280
+        ]
+      ]
+    },
+    {
+      "id": "s3-in-transit",
+      "from": "s3",
+      "to": "in-transit",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          730,
+          280
+        ],
+        [
+          690,
+          280
+        ]
+      ]
+    },
+    {
+      "id": "at-rest-kms",
+      "from": "at-rest",
+      "to": "kms",
+      "label": "KMS 키",
+      "variant": "emphasis"
+    },
+    {
+      "id": "in-transit-kms",
+      "from": "in-transit",
+      "to": "kms",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          560,
+          200
+        ],
+        [
+          560,
+          130
+        ]
+      ]
+    },
+    {
+      "id": "ebs-sg",
+      "from": "ebs-fsx",
+      "to": "sg",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          130,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "efs-sg",
+      "from": "efs",
+      "to": "sg",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          430,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "efs-iam",
+      "from": "efs",
+      "to": "iam",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          430,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "s3-iam",
+      "from": "s3",
+      "to": "iam",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          730,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "iam-rbac",
+      "from": "iam",
+      "to": "rbac",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rbac-policy",
+      "from": "rbac",
+      "to": "opa-kyverno"
+    },
+    {
+      "id": "pod-pss",
+      "from": "pod-security",
+      "to": "pss",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

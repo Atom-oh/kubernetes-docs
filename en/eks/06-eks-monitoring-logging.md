@@ -32,7 +32,9 @@ Monitoring and logging in Amazon EKS clusters are important for the following re
 
 A comprehensive monitoring and logging architecture for an EKS cluster consists of the following components:
 
-![Architecture diagram showing EKS control-plane logs, pod logs, and node metrics flowing through Fluent Bit and Prometheus into CloudWatch Logs/Metrics, Amazon OpenSearch, and Grafana/Alertmanager.](../../assets/diagrams/rendered/en-eks-06-eks-monitoring-logging-0.svg)
+![Architecture diagram showing EKS control-plane logs, pod logs, and node metrics flowing through Fluent Bit and Prometheus into CloudWatch Logs/Metrics, Amazon OpenSearch, and Grafana/Alertmanager.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-0.html)
 
 ### Monitoring and Logging Strategy
 
@@ -143,7 +145,9 @@ Container logs provide important information for diagnosing and resolving applic
 
 A typical container logging architecture in EKS looks like this:
 
-![Architecture diagram showing container stdout/stderr picked up by kubelet, read by a log agent, and fanned out to CloudWatch Logs, Amazon OpenSearch, and Amazon S3.](../../assets/diagrams/rendered/en-eks-06-eks-monitoring-logging-1.svg)
+![Architecture diagram showing container stdout/stderr picked up by kubelet, read by a log agent, and fanned out to CloudWatch Logs, Amazon OpenSearch, and Amazon S3.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-1.html)
 
 ### Log Collection with Fluent Bit
 
@@ -322,7 +326,9 @@ Configuration for log parsing in Fluent Bit:
 
 Effective cluster monitoring is essential for tracking the status, performance, and resource usage of your EKS cluster. This section explores various tools and techniques for monitoring EKS clusters.
 
-![Diagram mapping monitoring solutions (CloudWatch Container Insights, the Prometheus stack, and distributed tracing) to the control-plane, node, and pod telemetry they cover in an EKS cluster.](../../assets/diagrams/rendered/en-eks-06-eks-monitoring-logging-2.svg)
+![Diagram mapping monitoring solutions (CloudWatch Container Insights with AMP/AMG, the Prometheus stack with kube-state-metrics, Node Exporter and Grafana, and X-Ray/OpenTelemetry tracing) to the cluster-, node-, and pod-level telemetry they cover in an EKS cluster.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-2.html)
 
 ### CloudWatch Container Insights
 
@@ -736,7 +742,9 @@ Create custom dashboards in Grafana to visualize application metrics:
 
 Effective alerting and event management are essential for rapidly detecting and responding to issues in your EKS cluster. This section explores various tools and techniques for managing alerts and events in EKS clusters.
 
-![Data-flow diagram showing AWS-native and Kubernetes/OSS alert signals routed through CloudWatch Alarms, EventBridge, Prometheus Alertmanager, and an event router to SNS, Lambda, and chat/paging channels.](../../assets/diagrams/rendered/en-eks-06-eks-monitoring-logging-3.svg)
+![Architecture diagram showing CloudWatch metrics and logs, AWS events, Prometheus metrics and Loki logs, and Kubernetes and application events routed through CloudWatch Alarms, EventBridge, Prometheus Alertmanager, and an event router to SNS (Email and SQS subscriptions), Lambda, Slack and PagerDuty, and OpsGenie.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-3.html)
 
 ### CloudWatch Alarms
 
@@ -1127,7 +1135,9 @@ Implement strategies to reduce alert fatigue:
 
 Log analysis and visualization play an important role in diagnosing and resolving issues occurring in your EKS cluster. This section explores various tools and techniques for analyzing and visualizing logs in EKS clusters.
 
-![Data-flow diagram showing EKS log sources passing through shared log collectors into four storage backends, each paired with its own analysis and visualization tool: CloudWatch, OpenSearch, S3/Athena, and Grafana Loki.](../../assets/diagrams/rendered/en-eks-06-eks-monitoring-logging-4.svg)
+![Architecture diagram of the log analysis and visualization pipeline: control plane and AWS service logs go directly to CloudWatch Logs, container and application logs pass through log collectors (Fluent Bit, Fluentd, Vector, CloudWatch Agent) into four stores (CloudWatch Logs, Amazon OpenSearch, Amazon S3, Grafana Loki), and each store feeds its paired analysis and visualization tool: CloudWatch Logs Insights, OpenSearch Dashboards, Athena with QuickSight, and Grafana Explore with dashboards.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-4.html)
 
 ### CloudWatch Logs Insights
 
@@ -1605,7 +1615,9 @@ Implement cost-effective storage tiering:
 
 Let's explore various techniques for troubleshooting and debugging issues in EKS clusters.
 
-![Diagram mapping three EKS troubleshooting areas (cluster issues, workload issues, common failure patterns) to three debugging tool families: Kubernetes CLI tools, AWS tools, and network diagnostic tools.](../../assets/diagrams/rendered/en-eks-06-eks-monitoring-logging-5.svg)
+![Diagram mapping three EKS troubleshooting areas (cluster issues, workload issues, common problems) to three debugging tool families: Kubernetes kubectl tools, AWS tools, and network diagnostic tools, with the kubectl tools at the center used by all three areas.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-06-eks-monitoring-logging-5.html)
 
 ### Cluster Troubleshooting
 

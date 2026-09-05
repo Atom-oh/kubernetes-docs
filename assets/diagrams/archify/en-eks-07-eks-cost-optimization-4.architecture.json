@@ -1,0 +1,331 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Networking Cost Optimization",
+    "locale": "en",
+    "output": "en-eks-07-eks-cost-optimization-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1390,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Optimization area"
+        },
+        "backend": {
+          "label": "Tactic"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "data-transfer",
+        "label": "Data Transfer Optimization",
+        "focus": [
+          "network-cost",
+          "data-transfer",
+          "regional-comm",
+          "az-routing",
+          "compression"
+        ],
+        "note": "Cut inter-region and inter-AZ transfer, and shrink the volume itself with compression."
+      },
+      {
+        "id": "load-balancer",
+        "label": "Load Balancer Optimization",
+        "focus": [
+          "network-cost",
+          "load-balancer",
+          "lb-type",
+          "lb-sharing",
+          "idle-lb"
+        ],
+        "note": "Pick the right type for the workload, share via Ingress, and remove idle load balancers."
+      },
+      {
+        "id": "nat-gateway",
+        "label": "NAT Gateway Optimization",
+        "focus": [
+          "network-cost",
+          "nat-gateway",
+          "nat-sharing",
+          "vpc-endpoints",
+          "outbound-traffic"
+        ],
+        "note": "NAT gateways bill hourly plus per GB processed, so bypassing them with VPC endpoints is the key lever."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "network-cost",
+      "type": "cloud",
+      "label": "Networking Cost Optimization",
+      "sublabel": "EKS networking spend",
+      "pos": [
+        575,
+        160
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "data-transfer",
+      "type": "cloud",
+      "label": "Data Transfer Optimization",
+      "sublabel": "Inter-region / inter-AZ transfer",
+      "pos": [
+        330,
+        162
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "load-balancer",
+      "type": "cloud",
+      "label": "Load Balancer Optimization",
+      "sublabel": "Type · sharing · idle cleanup",
+      "pos": [
+        850,
+        162
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "nat-gateway",
+      "type": "cloud",
+      "label": "NAT Gateway Optimization",
+      "sublabel": "Hourly + data processing charges",
+      "pos": [
+        590,
+        360
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "regional-comm",
+      "type": "backend",
+      "label": "Utilize Intra-region Communication",
+      "sublabel": "Cluster and AWS services in one region",
+      "pos": [
+        20,
+        100
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "az-routing",
+      "type": "backend",
+      "label": "Availability Zone Aware Routing",
+      "sublabel": "topology-aware-hints",
+      "pos": [
+        20,
+        180
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "compression",
+      "type": "backend",
+      "label": "Use Compression",
+      "sublabel": "API responses · logs/metrics · static assets",
+      "pos": [
+        20,
+        260
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "lb-type",
+      "type": "backend",
+      "label": "Select Appropriate Load Balancer Type",
+      "sublabel": "NLB · ALB · CLB",
+      "pos": [
+        1110,
+        100
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "lb-sharing",
+      "type": "backend",
+      "label": "Load Balancer Sharing",
+      "sublabel": "Expose many services via ALB Ingress",
+      "pos": [
+        1110,
+        180
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "idle-lb",
+      "type": "backend",
+      "label": "Remove Idle Load Balancers",
+      "sublabel": "Monitor and clean up LBs with no traffic",
+      "pos": [
+        1110,
+        260
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "nat-sharing",
+      "type": "backend",
+      "label": "NAT Gateway Sharing",
+      "sublabel": "One per AZ, shared across subnets",
+      "pos": [
+        850,
+        350
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "vpc-endpoints",
+      "type": "backend",
+      "label": "Use VPC Endpoints",
+      "sublabel": "S3 · DynamoDB · ECR · CloudWatch Logs · STS",
+      "pos": [
+        850,
+        430
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "outbound-traffic",
+      "type": "backend",
+      "label": "Outbound Traffic Optimization",
+      "sublabel": "Fewer external API calls · off-peak transfers",
+      "pos": [
+        850,
+        510
+      ],
+      "size": [
+        260,
+        56
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-dt",
+      "from": "network-cost",
+      "to": "data-transfer"
+    },
+    {
+      "id": "root-lb",
+      "from": "network-cost",
+      "to": "load-balancer"
+    },
+    {
+      "id": "root-nat",
+      "from": "network-cost",
+      "to": "nat-gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dt-regional",
+      "from": "data-transfer",
+      "to": "regional-comm"
+    },
+    {
+      "id": "dt-az",
+      "from": "data-transfer",
+      "to": "az-routing"
+    },
+    {
+      "id": "dt-compression",
+      "from": "data-transfer",
+      "to": "compression"
+    },
+    {
+      "id": "lb-type-edge",
+      "from": "load-balancer",
+      "to": "lb-type"
+    },
+    {
+      "id": "lb-sharing-edge",
+      "from": "load-balancer",
+      "to": "lb-sharing"
+    },
+    {
+      "id": "lb-idle-edge",
+      "from": "load-balancer",
+      "to": "idle-lb"
+    },
+    {
+      "id": "nat-sharing-edge",
+      "from": "nat-gateway",
+      "to": "nat-sharing"
+    },
+    {
+      "id": "nat-vpce-edge",
+      "from": "nat-gateway",
+      "to": "vpc-endpoints",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nat-outbound-edge",
+      "from": "nat-gateway",
+      "to": "outbound-traffic"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Load balancer types",
+      "items": [
+        "NLB: TCP/UDP traffic, low latency",
+        "ALB: HTTP/HTTPS traffic, path-based routing",
+        "CLB: legacy workloads"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Commonly used VPC endpoints",
+      "items": [
+        "S3, DynamoDB",
+        "ECR, CloudWatch Logs, STS",
+        "Private access cuts NAT gateway data processing charges"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Permission Boundary Concept",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "concept",
+        "label": "Effective Permission Calculation",
+        "focus": [
+          "policy",
+          "boundary",
+          "effective"
+        ],
+        "note": "Effective Permissions = Identity Policy ∩ Permission Boundary. Only actions allowed by both are actually allowed."
+      },
+      {
+        "id": "example",
+        "label": "Example",
+        "focus": [
+          "policy-ex",
+          "boundary-ex",
+          "effective-ex"
+        ],
+        "note": "The policy grants s3:*, ec2:*, rds:*, but the boundary only allows s3:* and ec2:Describe*, so rds:* is unusable."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Identity-Based Policy",
+      "sublabel": "attached to role/user",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "boundary",
+      "type": "security",
+      "label": "Permission Boundary",
+      "sublabel": "defines maximum permissions",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "effective",
+      "type": "backend",
+      "label": "Effective Permissions",
+      "sublabel": "policy ∩ boundary",
+      "pos": [
+        320,
+        150
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "policy-ex",
+      "type": "security",
+      "label": "Identity Policy",
+      "sublabel": "allows s3:*, ec2:*, rds:*",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "boundary-ex",
+      "type": "security",
+      "label": "Permission Boundary",
+      "sublabel": "allows s3:*, ec2:Describe*",
+      "pos": [
+        620,
+        240
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "effective-ex",
+      "type": "backend",
+      "label": "Effective Permissions",
+      "sublabel": "s3:*, ec2:Describe* only",
+      "pos": [
+        940,
+        150
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Effective Permission Calculation",
+      "wraps": [
+        "policy",
+        "boundary",
+        "effective"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Example",
+      "wraps": [
+        "policy-ex",
+        "boundary-ex",
+        "effective-ex"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "policy-and",
+      "from": "policy",
+      "to": "effective",
+      "label": "AND",
+      "variant": "emphasis"
+    },
+    {
+      "id": "boundary-and",
+      "from": "boundary",
+      "to": "effective",
+      "label": "AND",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-ex-inter",
+      "from": "policy-ex",
+      "to": "effective-ex",
+      "label": "intersection"
+    },
+    {
+      "id": "boundary-ex-inter",
+      "from": "boundary-ex",
+      "to": "effective-ex",
+      "label": "intersection"
+    }
+  ]
+}

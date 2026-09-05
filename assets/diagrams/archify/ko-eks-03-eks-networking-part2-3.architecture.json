@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "서비스 및 로드 밸런서 모범 사례",
+    "output": "ko-eks-03-eks-networking-part2-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      470
+    ],
+    "views": [
+      {
+        "id": "service-type",
+        "label": "Service 유형 선택",
+        "focus": [
+          "root",
+          "clusterip",
+          "lb-ingress"
+        ],
+        "note": "내부 전용 서비스는 ClusterIP, 외부에서 접근해야 하는 서비스는 LoadBalancer 또는 Ingress를 사용한다."
+      },
+      {
+        "id": "lb-type",
+        "label": "로드 밸런서 유형 선택",
+        "focus": [
+          "root",
+          "alb",
+          "nlb",
+          "internal-lb"
+        ],
+        "note": "L7 기능이 필요하면 ALB, TCP/UDP·고성능·정적 IP가 필요하면 NLB, 클러스터 내부 전용이면 내부 로드 밸런서를 사용한다."
+      },
+      {
+        "id": "lb-tuning",
+        "label": "로드 밸런서 설정",
+        "focus": [
+          "root",
+          "cross-zone",
+          "target-type"
+        ],
+        "note": "고가용성을 위해 교차 영역 로드 밸런싱을 활성화하고, ip 또는 instance 대상 유형을 적절히 선택한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "서비스 및 로드 밸런서 모범 사례",
+      "sublabel": "EKS 워크로드 노출 시 지켜야 할 7가지 원칙",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        380,
+        64
+      ]
+    },
+    {
+      "id": "clusterip",
+      "type": "backend",
+      "label": "ClusterIP 사용",
+      "sublabel": "클러스터 내부 전용 서비스",
+      "pos": [
+        10,
+        260
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "lb-ingress",
+      "type": "backend",
+      "label": "LoadBalancer / Ingress",
+      "sublabel": "외부에서 접근하는 서비스",
+      "pos": [
+        170,
+        260
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB 사용",
+      "sublabel": "경로 라우팅 · SSL 종료 · 인증",
+      "pos": [
+        350,
+        260
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "NLB 사용",
+      "sublabel": "TCP/UDP · 고성능 · 정적 IP",
+      "pos": [
+        530,
+        260
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "internal-lb",
+      "type": "cloud",
+      "label": "내부 로드 밸런서 사용",
+      "sublabel": "클러스터 내부 전용 접근",
+      "pos": [
+        720,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "cross-zone",
+      "type": "cloud",
+      "label": "교차 영역 로드 밸런싱",
+      "sublabel": "고가용성을 위해 활성화",
+      "pos": [
+        890,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "target-type",
+      "type": "cloud",
+      "label": "적절한 대상 유형 선택",
+      "sublabel": "ip 또는 instance",
+      "pos": [
+        1060,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-clusterip",
+      "from": "root",
+      "to": "clusterip",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-lb-ingress",
+      "from": "root",
+      "to": "lb-ingress",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-alb",
+      "from": "root",
+      "to": "alb",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-nlb",
+      "from": "root",
+      "to": "nlb",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-internal-lb",
+      "from": "root",
+      "to": "internal-lb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-cross-zone",
+      "from": "root",
+      "to": "cross-zone",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-target-type",
+      "from": "root",
+      "to": "target-type",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

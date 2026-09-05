@@ -19,7 +19,9 @@ When operating Amazon EKS clusters, various issues can arise. This document prov
 
 ## Troubleshooting Basics
 
-![Tree diagram showing the EKS troubleshooting basics branching into the six-step diagnostic approach, essential CLI tools, log sources, and diagnostic-info collection.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-0.svg)
+![EKS troubleshooting basics diagram showing the six-step approach from identifying the problem to documenting it, fed at the collect-information step by the three pillars of essential tools, log collection, and diagnostic information collection.](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-0.html)
 
 ### Troubleshooting Approach
 
@@ -218,7 +220,9 @@ kubectl exec -it netshoot -- traceroute <target-ip>
 
 ## Cluster Creation and Management Issues
 
-![Tree diagram showing cluster creation, endpoint access, and deletion issues each branching into their most common root causes.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-1.svg)
+![Tree diagram showing cluster creation, endpoint access, and deletion issues each branching into their most common root causes.](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-1.html)
 
 ### Cluster Creation Failure
 
@@ -525,7 +529,9 @@ aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<clus
 
 Networking issues are among the most common problems in EKS clusters. This section covers common networking issues and their solutions.
 
-![Tree diagram showing pod-to-pod communication, service access, and load balancer issues each branching into their most common root causes, alongside DNS and VPC CNI issue categories.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-2.svg)
+![Tree diagram showing networking issues split into pod-to-pod communication, service access, load balancer, DNS, and VPC CNI branches, with the first three each leading to five common root causes.](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-2.html)
 
 ### Pod-to-Pod Communication Issues
 
@@ -1112,7 +1118,9 @@ aws iam attach-role-policy \
 
 ## Node and Pod Issues
 
-![Tree diagram showing Node NotReady and Pod Not Running issues each branching into their most common root causes, alongside resource-constraint and node-group issue categories.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-3.svg)
+![Diagram splitting Node and Pod Issues into Node NotReady, Pod Not Running and Resource Constraint issues, each flowing through Common Causes, Troubleshooting Steps and Common Solutions, with the five most common causes listed per category.](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-3.html)
 
 ### Node NotReady Issues
 
