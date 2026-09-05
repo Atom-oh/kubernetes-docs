@@ -1,33 +1,33 @@
-# Kubernetes Cluster Administration
+# Administración de clústeres de Kubernetes
 
-> **Versiones compatibles**: Kubernetes 1.34 (Publicado 2025-11-24)
-> **Última actualización**: February 23, 2026
+> **Versiones compatibles**: Kubernetes 1.34 (Publicado el 2025-11-24)
+> **Última actualización**: 23 de febrero de 2026
 
-La administración de clústeres de Kubernetes es una tarea importante que incluye la configuración, el mantenimiento, la monitorización, la resolución de problemas y las actualizaciones del clúster. En este capítulo, exploraremos diversos aspectos de la administración de clústeres de Kubernetes y las mejores prácticas para la gestión de clústeres en Amazon EKS.
+La administración de clústeres de Kubernetes es una tarea importante que incluye la configuración, el mantenimiento, la supervisión, la resolución de problemas y las actualizaciones del clúster. En este capítulo, exploraremos diversos aspectos de la administración de clústeres de Kubernetes y las prácticas recomendadas para la gestión de clústeres en Amazon EKS.
 
-## Core Concepts
+## Conceptos básicos
 
-- **Gestión del ciclo de vida del clúster**: Todo el proceso desde la creación del clúster hasta su retirada
-- **Gestión del control plane**: Gestión de componentes principales como el API server, scheduler y controller manager
-- **Gestión de Node**: Adición, eliminación y mantenimiento de worker nodes
-- **Asignación de recursos**: Configuración de la asignación de recursos y límites para CPU, memoria, almacenamiento, etc.
-- **Estrategia de actualización**: Estrategias de actualización del clúster y las aplicaciones para minimizar el tiempo de inactividad
+- **Gestión del ciclo de vida del clúster**: Todo el proceso, desde la creación del clúster hasta su retirada
+- **Gestión del plano de control**: Gestión de componentes principales como el servidor de API, el scheduler y el controller manager
+- **Gestión de nodos**: Incorporación, eliminación y mantenimiento de nodos de trabajo
+- **Asignación de recursos**: Configuración de la asignación y los límites de recursos para CPU, memoria, almacenamiento, etc.
+- **Estrategia de actualización**: Estrategias de actualización del clúster y de las aplicaciones para minimizar el tiempo de inactividad
 
-## Table of Contents
-1. [Cluster Administration Overview](#cluster-administration-overview)
-2. [Cluster Component Management](#cluster-component-management)
-3. [Resource Management](#resource-management)
-4. [Cluster Networking](#cluster-networking)
-5. [Authentication and Authorization Management](#authentication-and-authorization-management)
-6. [Cluster Upgrades](#cluster-upgrades)
-7. [Backup and Recovery](#backup-and-recovery)
-8. [Monitoring and Logging](#monitoring-and-logging)
-9. [Troubleshooting](#troubleshooting)
-10. [Amazon EKS Cluster Administration](#amazon-eks-cluster-administration)
-11. [Cluster Administration Best Practices](#cluster-administration-best-practices)
-12. [Conclusion](#conclusion)
+## Tabla de contenido
+1. [Descripción general de la administración de clústeres](#cluster-administration-overview)
+2. [Gestión de componentes del clúster](#cluster-component-management)
+3. [Gestión de recursos](#resource-management)
+4. [Redes del clúster](#cluster-networking)
+5. [Gestión de autenticación y autorización](#authentication-and-authorization-management)
+6. [Actualizaciones del clúster](#cluster-upgrades)
+7. [Copia de seguridad y recuperación](#backup-and-recovery)
+8. [Supervisión y registro](#monitoring-and-logging)
+9. [Resolución de problemas](#troubleshooting)
+10. [Administración de clústeres de Amazon EKS](#amazon-eks-cluster-administration)
+11. [Prácticas recomendadas para la administración de clústeres](#cluster-administration-best-practices)
+12. [Conclusión](#conclusion)
 
-## Environment Setup
+## Configuración del entorno
 
 Las siguientes herramientas son necesarias para la administración del clúster:
 
@@ -47,48 +47,31 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 curl -sS https://webinstall.dev/k9s | bash
 ```
 
-## Cluster Administration Overview
+## Descripción general de la administración de clústeres
 
-La administración de clústeres de Kubernetes es el proceso de gestionar todo el ciclo de vida de un clúster. Esto incluye las siguientes áreas principales:
+La administración de clústeres de Kubernetes es el proceso de gestionar todo el ciclo de vida de un clúster. Incluye las siguientes áreas principales:
 
-1. **Configuración y preparación del clúster**: Creación del clúster, adición de Node, configuración de red, configuración de almacenamiento, etc.
-2. **Gestión de operaciones**: Monitorización de recursos, optimización del rendimiento, planificación de capacidad, resolución de problemas
-3. **Gestión de seguridad**: Autenticación, autorización, network policies, security contexts, etc.
+1. **Configuración y ajuste del clúster**: Creación del clúster, incorporación de nodos, configuración de redes, configuración de almacenamiento, etc.
+2. **Gestión de operaciones**: Supervisión de recursos, optimización del rendimiento, planificación de capacidad, resolución de problemas
+3. **Gestión de seguridad**: Autenticación, autorización, políticas de red, contextos de seguridad, etc.
 4. **Actualizaciones y parches**: Actualizaciones de versión del clúster, aplicación de parches de seguridad
-5. **Backup y recuperación**: Backup de datos del clúster, planificación de recuperación ante desastres
+5. **Copia de seguridad y recuperación**: Copia de seguridad de datos del clúster, planificación de recuperación ante desastres
 
 El siguiente diagrama muestra las áreas principales de la administración de clústeres de Kubernetes y las herramientas relacionadas:
 
-## Cluster Component Management
+## Gestión de componentes del clúster
 
-Un clúster de Kubernetes consta de componentes del control plane y componentes de Node. Gestionar cada componente es fundamental para la estabilidad y el rendimiento del clúster.
+Un clúster de Kubernetes consta de componentes del plano de control y componentes de nodo. Gestionar cada componente es fundamental para la estabilidad y el rendimiento del clúster.
 
-### Control Plane Component Management
+### Gestión de componentes del plano de control
 
-```mermaid
-graph TD
-    A[Control Plane] --> B[API Server]
-    A --> C[etcd]
-    A --> D[Scheduler]
-    A --> E[Controller Manager]
-    A --> F[Cloud Controller Manager]
+![Diagrama de árbol que muestra el plano de control de Kubernetes ramificándose en sus cinco componentes (servidor de API, etcd, scheduler, controller manager y cloud controller manager), cada uno junto con la responsabilidad operativa que asume: autenticación y autorización, copia de seguridad de datos, políticas de planificación, supervisión del estado de los controladores y gestión de recursos de la nube.](../.gitbook/assets/en-core-09-cluster-administration-0.png)
 
-    B --> G[Authentication and Authorization]
-    C --> H[Data Backup]
-    D --> I[Scheduling Policies]
-    E --> J[Controller State Monitoring]
-    F --> K[Cloud Resource Management]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-0.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef operation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+#### Gestión del servidor de API
 
-    class A,B,C,D,E,F k8sComponent;
-    class G,H,I,J,K operation;
-```
-
-#### API Server Management
-
-El API server es un componente central del control plane que expone la API de Kubernetes.
+El servidor de API es un componente central del plano de control que expone la API de Kubernetes.
 
 ```bash
 # Check API server logs
@@ -101,9 +84,9 @@ sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
 kubectl get --raw='/healthz'
 ```
 
-#### etcd Management
+#### Gestión de etcd
 
-etcd es un almacén clave-valor distribuido que guarda todos los datos del clúster para Kubernetes.
+etcd es un almacén distribuido de clave-valor que guarda todos los datos del clúster de Kubernetes.
 
 ```bash
 # etcd backup
@@ -121,9 +104,9 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
   endpoint health
 ```
 
-### Node Management
+### Gestión de nodos
 
-Los Node son máquinas de trabajo que ejecutan aplicaciones en contenedores.
+Los nodos son máquinas de trabajo que ejecutan aplicaciones en contenedores.
 
 ```bash
 # List nodes
@@ -142,7 +125,7 @@ kubectl drain <node-name> --ignore-daemonsets
 kubectl uncordon <node-name>
 ```
 
-### Component Status Monitoring
+### Supervisión del estado de los componentes
 
 ```bash
 # Check control plane component status
@@ -155,96 +138,46 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-```mermaid
-flowchart TD
-    Admin[Cluster Administrator] --> Setup[Cluster Setup and Configuration]
-    Admin --> Operations[Operations Management]
-    Admin --> Security[Security Management]
-    Admin --> Upgrade[Upgrades and Patches]
-    Admin --> Backup[Backup and Recovery]
+![Diagrama que muestra las cinco áreas de responsabilidad de un administrador de clústeres, cada una asociada con las herramientas utilizadas para llevarla a cabo.](../.gitbook/assets/en-core-09-cluster-administration-1.png)
 
-    Setup --> |Tools| SetupTools[kubeadm, kops, eksctl]
-    Operations --> |Tools| OpsTools[kubectl, Prometheus, Grafana]
-    Security --> |Tools| SecTools[RBAC, NetworkPolicy, PodSecurityPolicy]
-    Upgrade --> |Tools| UpgradeTools[kubeadm upgrade, EKS update]
-    Backup --> |Tools| BackupTools[etcd snapshot, Velero]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-1.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+### Herramientas de administración de clústeres
 
-    class Admin userApp;
-    class Setup,Operations,Security,Upgrade,Backup k8sComponent;
-    class SetupTools,OpsTools,SecTools,UpgradeTools,BackupTools default;
-```
-
-### Cluster Administration Tools
-
-Existen diversas herramientas disponibles para la administración de clústeres de Kubernetes:
+Hay diversas herramientas disponibles para la administración de clústeres de Kubernetes:
 
 1. **kubectl**: Herramienta de línea de comandos para interactuar con clústeres de Kubernetes
 2. **kubeadm**: Herramienta para crear y gestionar clústeres de Kubernetes
 3. **kops**: Herramienta para crear, actualizar y gestionar clústeres de Kubernetes
 4. **eksctl**: Herramienta para crear y gestionar clústeres de Amazon EKS
 5. **Helm**: Gestor de paquetes de aplicaciones de Kubernetes
-6. **Kubernetes Dashboard**: Interfaz de usuario web para Kubernetes
-7. **Prometheus & Grafana**: Herramientas de monitorización y alertas
-8. **Fluentd & Elasticsearch**: Herramientas de logging
+6. **Kubernetes Dashboard**: Interfaz de usuario web de Kubernetes
+7. **Prometheus & Grafana**: Herramientas de supervisión y alertas
+8. **Fluentd & Elasticsearch**: Herramientas de registro
 
-## Cluster Component Management
+## Gestión de componentes del clúster
 
-Un clúster de Kubernetes consta de múltiples componentes, y gestionarlos eficazmente es importante.
+Un clúster de Kubernetes consta de varios componentes, y gestionarlos de forma eficaz es importante.
 
-### Control Plane Components
+### Componentes del plano de control
 
-Los componentes del control plane gestionan el estado general del clúster:
+Los componentes del plano de control gestionan el estado general del clúster:
 
 1. **kube-apiserver**: Componente que expone la API de Kubernetes
-2. **etcd**: Almacén clave-valor que guarda los datos del clúster
-3. **kube-scheduler**: Componente que programa Pods en Nodes
-4. **kube-controller-manager**: Componente que ejecuta controllers
-5. **cloud-controller-manager**: Componente que interactúa con proveedores cloud
+2. **etcd**: Almacén de clave-valor que guarda los datos del clúster
+3. **kube-scheduler**: Componente que programa pods en nodos
+4. **kube-controller-manager**: Componente que ejecuta controladores
+5. **cloud-controller-manager**: Componente que interactúa con proveedores de nube
 
-El siguiente diagrama muestra los componentes del control plane de Kubernetes y sus interacciones:
+El siguiente diagrama muestra los componentes del plano de control de Kubernetes y sus interacciones:
 
-```mermaid
-flowchart TD
-    API[kube-apiserver] <--> ETCD[(etcd)]
-    API <--> SCH[kube-scheduler]
-    API <--> CM[kube-controller-manager]
-    API <--> CCM[cloud-controller-manager]
-    API <--> Kubelet[kubelet]
+![Diagrama de arquitectura que muestra etcd, kube-scheduler, kube-controller-manager y cloud-controller-manager comunicándose bidireccionalmente con kube-apiserver en el centro, y el kubelet de un nodo de trabajo comunicándose bidireccionalmente con el servidor de API mientras gestiona kube-proxy y el runtime de contenedores.](../.gitbook/assets/en-core-09-cluster-administration-2.png)
 
-    subgraph "Control Plane"
-        API
-        ETCD
-        SCH
-        CM
-        CCM
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-2.html)
 
-    subgraph "Worker Node"
-        Kubelet
-        Proxy[kube-proxy]
-        CRI[Container Runtime]
-    end
+#### Supervisión de componentes del plano de control
 
-    Kubelet --> CRI
-    Kubelet --> Proxy
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,SCH,CM,CCM,Kubelet,Proxy,CRI k8sComponent;
-    class ETCD dataStore;
-```
-
-#### Control Plane Component Monitoring
-
-Es importante monitorizar el estado de los componentes del control plane:
+Es importante supervisar el estado de los componentes del plano de control:
 
 ```bash
 # Check control plane component status
@@ -257,9 +190,9 @@ kubectl logs -n kube-system kube-apiserver-<node-name>
 kubectl exec -it -n kube-system etcd-<node-name> -- etcdctl endpoint health
 ```
 
-#### Control Plane Component Configuration
+#### Configuración de componentes del plano de control
 
-Cómo gestionar la configuración de los componentes del control plane:
+Cómo gestionar la configuración de los componentes del plano de control:
 
 ```yaml
 # kube-apiserver configuration example
@@ -279,8 +212,8 @@ spec:
     - --enable-admission-plugins=NodeRestriction
     - --enable-bootstrap-token-auth=true
     - --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
-    - --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt
-    - --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key
+    - --etcd-certfile=/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt
+    - --etcd-keyfile=/etc/kubernetes/pki/etcd/apiserver-etcd-client.key
     - --etcd-servers=https://127.0.0.1:2379
     - --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt
     - --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key
@@ -294,17 +227,17 @@ spec:
     name: kube-apiserver
 ```
 
-### Node Components
+### Componentes de nodo
 
-Los componentes de Node se ejecutan en cada Node y gestionan Pods:
+Los componentes de nodo se ejecutan en cada nodo y gestionan pods:
 
-1. **kubelet**: Agente que se ejecuta en cada Node y garantiza que Pods y contenedores estén ejecutándose
+1. **kubelet**: Agente que se ejecuta en cada nodo y garantiza que los pods y contenedores estén en ejecución
 2. **kube-proxy**: Mantiene reglas de red y gestiona el reenvío de conexiones
 3. **Container Runtime**: Software que ejecuta contenedores (Docker, containerd, CRI-O, etc.)
 
-#### Node Management
+#### Gestión de nodos
 
-Comandos clave para la gestión de Node:
+Comandos principales para la gestión de nodos:
 
 ```bash
 # List nodes
@@ -326,9 +259,9 @@ kubectl cordon <node-name>
 kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
 ```
 
-#### Node Troubleshooting
+#### Resolución de problemas de nodos
 
-Comandos para la resolución de problemas de Node:
+Comandos para resolver problemas de nodos:
 
 ```bash
 # Check node status
@@ -345,13 +278,13 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
-## Resource Management
+## Gestión de recursos
 
 Gestionar eficazmente los recursos en un clúster de Kubernetes es importante para mantener la estabilidad y el rendimiento del clúster.
 
-### Resource Quotas
+### Cuotas de recursos
 
-Las resource quotas limitan el uso de recursos por namespace:
+Las cuotas de recursos limitan el uso de recursos por namespace:
 
 ```yaml
 apiVersion: v1
@@ -368,11 +301,11 @@ spec:
     pods: "10"
 ```
 
-En el ejemplo anterior, el namespace `dev` puede tener un máximo de 10 Pods, requests de 1 CPU y 1Gi de memoria, y limits de 2 CPU y 2Gi de memoria.
+En el ejemplo anterior, el namespace `dev` puede tener un máximo de 10 pods, solicitudes de 1 CPU y 1Gi de memoria, y límites de 2 CPU y 2Gi de memoria.
 
-### Limit Ranges
+### Rangos de límites
 
-Los limit ranges establecen valores predeterminados y límites para recursos individuales dentro de un namespace:
+Los rangos de límites establecen valores predeterminados y límites para los recursos individuales dentro de un namespace:
 
 ```yaml
 apiVersion: v1
@@ -397,11 +330,11 @@ spec:
     type: Container
 ```
 
-En el ejemplo anterior, todos los contenedores del namespace `dev` tienen limits predeterminados de 500m de CPU y 512Mi de memoria, requests predeterminados de 200m de CPU y 256Mi de memoria, un máximo de 1 CPU y 1Gi de memoria, y un mínimo de 100m de CPU y 128Mi de memoria.
+En el ejemplo anterior, todos los contenedores del namespace `dev` tienen límites predeterminados de 500m de CPU y 512Mi de memoria, solicitudes predeterminadas de 200m de CPU y 256Mi de memoria, un máximo de 1 CPU y 1Gi de memoria, y un mínimo de 100m de CPU y 128Mi de memoria.
 
 ### Horizontal Pod Autoscaler (HPA)
 
-HPA ajusta automáticamente el número de Pods según el uso de CPU o métricas personalizadas:
+HPA ajusta automáticamente el número de pods según el uso de CPU o métricas personalizadas:
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -424,11 +357,11 @@ spec:
         averageUtilization: 80
 ```
 
-En el ejemplo anterior, el Deployment `frontend` escala hacia fuera automáticamente cuando la utilización de CPU supera el 80% y escala hacia dentro cuando está por debajo del 80%. Mantiene un mínimo de 2 y un máximo de 10 réplicas.
+En el ejemplo anterior, el Deployment `frontend` escala horizontalmente de forma automática cuando la utilización de CPU supera el 80 % y se reduce cuando está por debajo del 80 %. Mantiene un mínimo de 2 y un máximo de 10 réplicas.
 
 ### Vertical Pod Autoscaler (VPA)
 
-VPA ajusta automáticamente las requests de CPU y memoria de los Pods:
+VPA ajusta automáticamente las solicitudes de CPU y memoria de los pods:
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -444,65 +377,38 @@ spec:
     updateMode: "Auto"
 ```
 
-En el ejemplo anterior, los Pods del Deployment `frontend` tienen sus requests de CPU y memoria ajustadas automáticamente según el uso real de recursos.
-## Cluster Networking
+En el ejemplo anterior, las solicitudes de CPU y memoria de los pods del Deployment `frontend` se ajustan automáticamente según el uso real de recursos.
+## Redes del clúster
 
-La red del clúster de Kubernetes gestiona la comunicación entre Pods, Services y Nodes.
+Las redes del clúster de Kubernetes gestionan la comunicación entre pods, servicios y nodos.
 
-### Cluster Network Model
+### Modelo de red del clúster
 
 Requisitos básicos del modelo de red de Kubernetes:
 
-1. Todos los Pods pueden comunicarse con todos los demás Pods sin NAT
-2. Los agentes de Node (kubelet) pueden comunicarse con todos los Pods en ese Node
-3. Los Pods que se ejecutan en modo NAT pueden comunicarse con el exterior
+1. Todos los pods pueden comunicarse con todos los demás pods sin NAT
+2. Los agentes de nodo (kubelet) pueden comunicarse con todos los pods de ese nodo
+3. Los pods que se ejecutan en modo NAT pueden comunicarse con el exterior
 
 El siguiente diagrama muestra los componentes de red de Kubernetes y los flujos de comunicación:
 
-```mermaid
-flowchart LR
-    Client[Client] --> Ingress[Ingress]
-    Ingress --> SVC[Service]
-    SVC --> Pod1[Pod 1]
-    SVC --> Pod2[Pod 2]
+![Diagrama de arquitectura que muestra el tráfico de cliente entrando a través de Ingress a un Service que equilibra la carga entre dos pods en nodos independientes, los cuales se comunican entre sí y acceden a un servicio externo.](../.gitbook/assets/en-core-09-cluster-administration-3.png)
 
-    subgraph "Cluster Internal"
-        Ingress
-        SVC
-        subgraph "Node 1"
-            Pod1
-        end
-        subgraph "Node 2"
-            Pod2
-        end
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-3.html)
 
-    Pod1 <--> Pod2
-    Pod1 --> ExtSvc[External Service]
-    Pod2 --> ExtSvc
+### Plugins de CNI (Container Network Interface)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+Kubernetes implementa las redes mediante plugins de CNI. Plugins de CNI comunes:
 
-    class Ingress,SVC k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Client,ExtSvc default;
-```
-
-### CNI (Container Network Interface) Plugins
-
-Kubernetes implementa la red mediante plugins CNI. Plugins CNI comunes:
-
-1. **Calico**: CNI con funciones mejoradas de network policy y seguridad
-2. **Flannel**: Proporciona una red overlay sencilla
-3. **Cilium**: Solución de red y seguridad basada en eBPF
+1. **Calico**: CNI con funciones mejoradas de políticas de red y seguridad
+2. **Flannel**: Proporciona redes superpuestas sencillas
+3. **Cilium**: Solución de redes y seguridad basada en eBPF
 4. **AWS VPC CNI**: CNI integrado con AWS VPC
-5. **Weave Net**: Solución de red de contenedores multi-host
+5. **Weave Net**: Solución de redes de contenedores multi-host
 
-#### CNI Plugin Installation and Configuration
+#### Instalación y configuración de plugins de CNI
 
-Ejemplo de instalación de plugin CNI (Calico):
+Ejemplo de instalación de un plugin de CNI (Calico):
 
 ```bash
 # Install Calico
@@ -512,25 +418,25 @@ kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 kubectl get pods -n kube-system -l k8s-app=calico-node
 ```
 
-### Service Networking
+### Redes de Service
 
-Los Services de Kubernetes proporcionan endpoints estables para conjuntos de Pods:
+Los servicios de Kubernetes proporcionan endpoints estables para conjuntos de pods:
 
 1. **ClusterIP**: Service accesible solo dentro del clúster
-2. **NodePort**: Service accesible mediante un puerto específico en todos los Nodes
-3. **LoadBalancer**: Service accesible mediante un load balancer externo
-4. **ExternalName**: Proporciona un registro CNAME para Services externos
+2. **NodePort**: Service accesible mediante un puerto específico en todos los nodos
+3. **LoadBalancer**: Service accesible mediante un balanceador de carga externo
+4. **ExternalName**: Proporciona un registro CNAME para servicios externos
 
-#### Service CIDR Configuration
+#### Configuración de CIDR de Service
 
-Service CIDR define el rango de direcciones IP de Service:
+El CIDR de Service define el rango de direcciones IP del servicio:
 
 ```bash
 # Set service CIDR in kube-apiserver configuration
 --service-cluster-ip-range=10.96.0.0/12
 ```
 
-### CoreDNS Management
+### Gestión de CoreDNS
 
 CoreDNS proporciona servicios DNS para Kubernetes:
 
@@ -572,9 +478,9 @@ data:
     }
 ```
 
-### Network Policies
+### Políticas de red
 
-Las network policies controlan la comunicación entre Pods:
+Las políticas de red controlan la comunicación entre pods:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -607,65 +513,29 @@ spec:
       port: 9090
 ```
 
-En el ejemplo anterior, los Pods con la etiqueta `role=db` solo permiten tráfico entrante TCP en el puerto 3306 desde Pods con la etiqueta `role=frontend` y tráfico saliente TCP en el puerto 9090 hacia Pods con la etiqueta `role=monitoring`.
+En el ejemplo anterior, los pods con la etiqueta `role=db` solo permiten tráfico entrante TCP por el puerto 3306 desde pods con la etiqueta `role=frontend` y tráfico saliente TCP por el puerto 9090 hacia pods con la etiqueta `role=monitoring`.
 
-## Authentication and Authorization Management
+## Gestión de autenticación y autorización
 
 La gestión de autenticación y autorización de Kubernetes es un elemento central de la seguridad del clúster.
 
 El siguiente diagrama muestra el flujo de autenticación y autorización de Kubernetes:
 
-```mermaid
-flowchart TD
-    User[User/Service Account] --> Auth[Authentication]
-    Auth --> Authz[Authorization]
-    Authz --> Admit[Admission Control]
-    Admit --> API[API Server]
+![Diagrama de arquitectura que muestra una solicitud pasando por autenticación, autorización y control de admisión antes de llegar al servidor de API, junto con los métodos concretos de autenticación y los modos de autorización que admite cada etapa.](../.gitbook/assets/en-core-09-cluster-administration-4.png)
 
-    subgraph "Authentication Methods"
-        Cert[X.509 Certificates]
-        Token[Service Account Tokens]
-        OIDC[OpenID Connect]
-        Webhook[Webhook Token Auth]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-4.html)
 
-    subgraph "Authorization Modes"
-        RBAC[RBAC]
-        ABAC[ABAC]
-        Node[Node]
-        WebhookAuthz[Webhook]
-    end
-
-    Auth --> Cert
-    Auth --> Token
-    Auth --> OIDC
-    Auth --> Webhook
-
-    Authz --> RBAC
-    Authz --> ABAC
-    Authz --> Node
-    Authz --> WebhookAuthz
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Auth,Authz,Admit,API k8sComponent;
-    class User userApp;
-    class Cert,Token,OIDC,Webhook,RBAC,ABAC,Node,WebhookAuthz default;
-```
-
-### Authentication
+### Autenticación
 
 Kubernetes admite diversos métodos de autenticación:
 
-1. **X.509 Certificates**: Autenticación mediante certificados de cliente
-2. **Service Account Tokens**: Tokens JWT asociados a service accounts
+1. **Certificados X.509**: Autenticación mediante certificados de cliente
+2. **Tokens de Service Account**: Tokens JWT asociados con cuentas de servicio
 3. **OpenID Connect (OIDC)**: Autenticación mediante proveedores de identidad externos
-4. **Webhook Token Authentication**: Verificación de tokens mediante servicios externos
-5. **Authentication Proxy**: Procesamiento de solicitudes mediante un proxy de autenticación
+4. **Autenticación de tokens mediante Webhook**: Verificación de tokens mediante servicios externos
+5. **Proxy de autenticación**: Procesamiento de solicitudes mediante proxy de autenticación
 
-#### X.509 Certificate Management
+#### Gestión de certificados X.509
 
 Creación y gestión de certificados X.509:
 
@@ -693,7 +563,7 @@ kubectl certificate approve user-csr
 kubectl get csr user-csr -o jsonpath='{.status.certificate}' | base64 --decode > user.crt
 ```
 
-#### OIDC Authentication Configuration
+#### Configuración de autenticación OIDC
 
 Ejemplo de configuración de autenticación OIDC:
 
@@ -705,16 +575,16 @@ Ejemplo de configuración de autenticación OIDC:
 --oidc-groups-claim=groups
 ```
 
-### Authorization
+### Autorización
 
 Kubernetes admite diversos modos de autorización:
 
 1. **RBAC (Role-Based Access Control)**: Control de acceso basado en roles
 2. **ABAC (Attribute-Based Access Control)**: Control de acceso basado en atributos
-3. **Node**: Autorización de Node
+3. **Node**: Autorización de nodo
 4. **Webhook**: Autorización mediante servicios externos
 
-#### RBAC Configuration
+#### Configuración de RBAC
 
 RBAC es el mecanismo de autorización más común:
 
@@ -746,9 +616,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-En el ejemplo anterior, `user` tiene permiso para ver Pods en el namespace `default`.
+En el ejemplo anterior, `user` tiene permiso para ver pods en el namespace `default`.
 
-#### ClusterRole and ClusterRoleBinding
+#### ClusterRole y ClusterRoleBinding
 
 Gestiona permisos para recursos de todo el clúster:
 
@@ -778,11 +648,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-En el ejemplo anterior, `user` tiene permiso para ver todos los Nodes del clúster.
+En el ejemplo anterior, `user` tiene permiso para ver todos los nodos del clúster.
 
-### Service Account Management
+### Gestión de Service Account
 
-Los service accounts son utilizados por los Pods para comunicarse con el API server:
+Las cuentas de servicio son utilizadas por los pods para comunicarse con el servidor de API:
 
 ```yaml
 # Create service account
@@ -819,9 +689,9 @@ spec:
     image: nginx
 ```
 
-### Security Context
+### Contexto de seguridad
 
-Security context define permisos y control de acceso para Pods y contenedores:
+El contexto de seguridad define permisos y control de acceso para pods y contenedores:
 
 ```yaml
 apiVersion: v1
@@ -844,52 +714,31 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
-En el ejemplo anterior, el Pod se ejecuta con UID 1000 y GID 3000, y el contenedor no puede escalar privilegios, tiene todas las capabilities de Linux eliminadas y tiene el filesystem root montado como solo lectura.
+En el ejemplo anterior, el pod se ejecuta con UID 1000 y GID 3000, y el contenedor no puede escalar privilegios, tiene eliminadas todas las capacidades de Linux y tiene el sistema de archivos raíz montado como de solo lectura.
 
-## Cluster Upgrades
+## Actualizaciones del clúster
 
-Las actualizaciones de clústeres de Kubernetes son necesarias para aplicar nuevas funciones, mejoras de rendimiento y parches de seguridad.
+Las actualizaciones del clúster de Kubernetes son necesarias para aplicar nuevas funciones, mejoras de rendimiento y parches de seguridad.
 
 El siguiente diagrama muestra el proceso de actualización de un clúster de Kubernetes:
 
-```mermaid
-flowchart TD
-    Start[Upgrade Planning] --> Plan[Check Version Compatibility]
-    Plan --> Backup[etcd Backup]
-    Backup --> CP1[Upgrade First Control Plane Node]
-    CP1 --> CPTest[Test Control Plane Functions]
-    CPTest --> CP2[Upgrade Additional Control Plane Nodes]
-    CP2 --> Worker[Upgrade Worker Nodes]
-    Worker --> Validate[Cluster Validation]
-    Validate --> End[Upgrade Complete]
+![Diagrama de flujo de una actualización de clúster de Kubernetes: planificación y comprobación de compatibilidad de versiones, copia de seguridad de etcd, actualización y prueba funcional del primer nodo del plano de control, actualización de los nodos restantes del plano de control y de trabajo, y validación del clúster que termina con la actualización completa, con una ruta de reversión que restaura desde la copia de seguridad cuando la validación detecta un problema.](../.gitbook/assets/en-core-09-cluster-administration-5.png)
 
-    Validate -- Problem Occurs --> Rollback[Rollback]
-    Rollback --> RestoreBackup[Restore from Backup]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-5.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CP1,CP2,Worker,Validate k8sComponent;
-    class Backup,RestoreBackup dataStore;
-    class Rollback alerting;
-    class Start,Plan,CPTest,End default;
-```
-
-### Upgrade Planning
+### Planificación de actualizaciones
 
 Consideraciones al planificar actualizaciones del clúster:
 
-1. **Compatibilidad de versiones**: Comprobar la compatibilidad entre versiones de Kubernetes
-2. **Ruta de actualización**: Comprobar las rutas de actualización compatibles
-3. **Tiempo de inactividad**: Planificar el tiempo de inactividad esperado durante la actualización
-4. **Plan de rollback**: Desarrollar un plan de rollback en caso de problemas
-5. **Impacto en aplicaciones**: Evaluar el impacto de las actualizaciones en las aplicaciones
+1. **Compatibilidad de versiones**: Compruebe la compatibilidad entre versiones de Kubernetes
+2. **Ruta de actualización**: Compruebe las rutas de actualización admitidas
+3. **Tiempo de inactividad**: Planifique el tiempo de inactividad esperado durante la actualización
+4. **Plan de reversión**: Desarrolle un plan de reversión en caso de problemas
+5. **Impacto en las aplicaciones**: Evalúe el impacto de las actualizaciones en las aplicaciones
 
-### Control Plane Upgrade
+### Actualización del plano de control
 
-Actualización del control plane usando kubeadm:
+Actualización del plano de control mediante kubeadm:
 
 ```bash
 # Check upgrade plan
@@ -913,9 +762,9 @@ sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 ```
 
-### Worker Node Upgrade
+### Actualización de nodos de trabajo
 
-Proceso de actualización de worker node:
+Proceso de actualización de nodos de trabajo:
 
 ```bash
 # Drain node
@@ -938,9 +787,9 @@ sudo systemctl restart kubelet
 kubectl uncordon <node-name>
 ```
 
-### Upgrade Verification
+### Verificación de actualización
 
-Verificar el estado del clúster después de la actualización:
+Verifique el estado del clúster después de la actualización:
 
 ```bash
 # Check node versions
@@ -957,45 +806,19 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
-## Backup and Recovery
+## Copia de seguridad y recuperación
 
-El backup y la recuperación de clústeres de Kubernetes son una parte importante de la planificación de recuperación ante desastres.
+La copia de seguridad y recuperación de clústeres de Kubernetes es una parte importante de la planificación de recuperación ante desastres.
 
-El siguiente diagrama muestra el proceso de backup y recuperación de un clúster de Kubernetes:
+El siguiente diagrama muestra el proceso de copia de seguridad y recuperación de un clúster de Kubernetes:
 
-```mermaid
-flowchart TD
-    subgraph "Backup Process"
-        Schedule[Set Backup Schedule] --> ETCDBackup[Create etcd Snapshot]
-        Schedule --> ResourceBackup[Backup Resource YAMLs]
-        ETCDBackup --> Store[Backup Storage]
-        ResourceBackup --> Store
-    end
+![Diagrama de arquitectura que muestra snapshots programados de etcd y copias de seguridad de YAML de recursos llegando al almacenamiento de copias de seguridad, que posteriormente alimenta una restauración de etcd y una restauración de recursos durante la recuperación ante desastres.](../.gitbook/assets/en-core-09-cluster-administration-6.png)
 
-    subgraph "Recovery Process"
-        Disaster[Disaster Occurs] --> RestoreETCD[Restore etcd]
-        RestoreETCD --> RestartServices[Restart Kubernetes Services]
-        RestartServices --> ValidateCluster[Validate Cluster]
-        ValidateCluster --> RestoreResources[Restore Resources]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-6.html)
 
-    Store -.-> RestoreETCD
-    Store -.-> RestoreResources
+### Copia de seguridad de etcd
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ETCDBackup,ResourceBackup,RestoreETCD,RestartServices,ValidateCluster,RestoreResources k8sComponent;
-    class Store dataStore;
-    class Disaster alerting;
-    class Schedule default;
-```
-
-### etcd Backup
-
-etcd guarda toda la información de estado del clúster de Kubernetes, por lo que los backups regulares son importantes:
+etcd almacena toda la información de estado del clúster de Kubernetes, por lo que las copias de seguridad periódicas son importantes:
 
 ```bash
 # Create etcd snapshot
@@ -1009,9 +832,9 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
 ETCDCTL_API=3 etcdctl --write-out=table snapshot status /backup/etcd-snapshot-2023-01-01-12-00-00.db
 ```
 
-### etcd Recovery
+### Recuperación de etcd
 
-Restaurar desde snapshot de etcd:
+Restauración desde un snapshot de etcd:
 
 ```bash
 # Stop all Kubernetes services
@@ -1039,9 +862,9 @@ sudo systemctl start etcd
 sudo systemctl start kubelet kube-apiserver kube-controller-manager kube-scheduler
 ```
 
-### Resource Backup
+### Copia de seguridad de recursos
 
-Realizar backup de recursos de Kubernetes como archivos YAML:
+Realice copias de seguridad de recursos de Kubernetes como archivos YAML:
 
 ```bash
 # Backup all resources in all namespaces
@@ -1059,9 +882,9 @@ for resource in $(kubectl api-resources --namespaced=false -o name); do
 done
 ```
 
-### Backup Automation
+### Automatización de copias de seguridad
 
-Automatizar tareas de backup con CronJob:
+Automatice las tareas de copia de seguridad con CronJob:
 
 ```yaml
 apiVersion: batch/v1
@@ -1104,51 +927,19 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
-## Monitoring and Logging
+## Supervisión y registro
 
-La monitorización y el logging eficaces son un elemento central de la administración de clústeres.
+La supervisión y el registro eficaces son elementos centrales de la administración de clústeres.
 
-El siguiente diagrama muestra la arquitectura de monitorización y logging de un clúster de Kubernetes:
+El siguiente diagrama muestra la arquitectura de supervisión y registro de clústeres de Kubernetes:
 
-```mermaid
-flowchart LR
-    subgraph "Monitoring Stack"
-        Prom[Prometheus] --> Alert[Alertmanager]
-        Prom --> Grafana[Grafana]
-        KSM[kube-state-metrics] --> Prom
-        NE[Node Exporter] --> Prom
-        Alert --> Notify[Notification Channels]
-    end
+![Diagrama de arquitectura que muestra métricas del servidor de API y de nodos que fluyen mediante kube-state-metrics y Node Exporter hacia Prometheus, luego a Alertmanager y Grafana, mientras que los logs de los pods fluyen mediante Fluentd/Fluent Bit hacia Elasticsearch con Kibana y hacia Loki, que también alimenta a Grafana.](../.gitbook/assets/en-core-09-cluster-administration-7.png)
 
-    subgraph "Logging Stack"
-        Fluentd[Fluentd/Fluent Bit] --> ES[(Elasticsearch)]
-        ES --> Kibana[Kibana]
-        Fluentd --> Loki[(Loki)]
-        Loki --> Grafana
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-7.html)
 
-    subgraph "Kubernetes Cluster"
-        API[API Server] --> KSM
-        Node[Node] --> NE
-        Pod[Pod] --> Fluentd
-    end
+### Herramientas de supervisión
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,Node,Pod k8sComponent;
-    class ES,Loki dataStore;
-    class Prom,Alert,KSM,NE prometheusComponent;
-    class Grafana,Kibana grafana;
-    class Fluentd,Notify default;
-```
-
-### Monitoring Tools
-
-Herramientas para la monitorización de clústeres de Kubernetes:
+Herramientas para la supervisión de clústeres de Kubernetes:
 
 1. **Prometheus**: Recopilación y almacenamiento de métricas
 2. **Grafana**: Visualización de métricas
@@ -1156,9 +947,9 @@ Herramientas para la monitorización de clústeres de Kubernetes:
 4. **kube-state-metrics**: Generación de métricas de objetos de Kubernetes
 5. **metrics-server**: Proporciona métricas de uso de recursos
 
-#### Prometheus and Grafana Installation
+#### Instalación de Prometheus y Grafana
 
-Instalar Prometheus y Grafana usando Helm:
+Instale Prometheus y Grafana mediante Helm:
 
 ```bash
 # Add Helm repository
@@ -1171,19 +962,19 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --create-namespace
 ```
 
-#### Key Monitoring Metrics
+#### Métricas de supervisión clave
 
-Métricas clave que monitorizar:
+Métricas clave que se deben supervisar:
 
-1. **Node Metrics**: CPU, memoria, disco, uso de red
-2. **Pod Metrics**: CPU, uso de memoria, recuento de reinicios
-3. **Container Metrics**: CPU, uso de memoria, uso de filesystem
-4. **API Server Metrics**: Latencia de solicitudes, recuento de solicitudes, tasa de errores
-5. **etcd Metrics**: I/O de disco, cambios de leader, latencia de commit
+1. **Métricas de nodo**: Uso de CPU, memoria, disco y red
+2. **Métricas de Pod**: Uso de CPU y memoria, número de reinicios
+3. **Métricas de contenedor**: Uso de CPU, memoria y sistema de archivos
+4. **Métricas del servidor de API**: Latencia de solicitudes, número de solicitudes, tasa de errores
+5. **Métricas de etcd**: E/S de disco, cambios de líder, latencia de confirmación
 
-### Logging Tools
+### Herramientas de registro
 
-Herramientas para el logging de clústeres de Kubernetes:
+Herramientas para el registro de clústeres de Kubernetes:
 
 1. **Elasticsearch**: Almacenamiento y búsqueda de logs
 2. **Fluentd/Fluent Bit**: Recopilación y reenvío de logs
@@ -1191,9 +982,9 @@ Herramientas para el logging de clústeres de Kubernetes:
 4. **Loki**: Sistema de agregación de logs
 5. **Grafana**: Visualización de logs
 
-#### EFK (Elasticsearch, Fluentd, Kibana) Stack Installation
+#### Instalación de la pila EFK (Elasticsearch, Fluentd, Kibana)
 
-Instalar el stack EFK usando Helm:
+Instale la pila EFK mediante Helm:
 
 ```bash
 # Install Elasticsearch
@@ -1211,7 +1002,7 @@ helm install kibana elastic/kibana \
   --set service.type=LoadBalancer
 ```
 
-#### Log Collection Configuration
+#### Configuración de recopilación de logs
 
 Ejemplo de configuración de Fluentd:
 
@@ -1251,13 +1042,13 @@ data:
     </match>
 ```
 
-## Troubleshooting
+## Resolución de problemas
 
 La resolución de problemas de clústeres de Kubernetes es una parte importante de la administración de clústeres.
 
-### Pod Troubleshooting
+### Resolución de problemas de Pods
 
-Comandos para la resolución de problemas de Pod:
+Comandos para resolver problemas de pods:
 
 ```bash
 # Check pod status
@@ -1275,9 +1066,9 @@ kubectl logs <pod-name> --previous  # Logs from previous container
 kubectl exec -it <pod-name> -- /bin/sh
 ```
 
-### Node Troubleshooting
+### Resolución de problemas de nodos
 
-Comandos para la resolución de problemas de Node:
+Comandos para resolver problemas de nodos:
 
 ```bash
 # Check node status
@@ -1301,9 +1092,9 @@ df -h
 free -m
 ```
 
-### Networking Troubleshooting
+### Resolución de problemas de redes
 
-Comandos para la resolución de problemas de red:
+Comandos para resolver problemas de redes:
 
 ```bash
 # Check service status
@@ -1326,9 +1117,9 @@ kubectl get networkpolicy
 kubectl describe networkpolicy <policy-name>
 ```
 
-### Control Plane Troubleshooting
+### Resolución de problemas del plano de control
 
-Comandos para la resolución de problemas del control plane:
+Comandos para resolver problemas del plano de control:
 
 ```bash
 # Check component status
@@ -1347,49 +1138,19 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 kubectl logs -n kube-system etcd-<node-name>
 ```
 
-## Amazon EKS Cluster Administration
+## Administración de clústeres de Amazon EKS
 
-Amazon EKS es un servicio gestionado de Kubernetes que automatiza muchos aspectos de la administración de clústeres.
+Amazon EKS es un servicio administrado de Kubernetes que automatiza muchos aspectos de la administración de clústeres.
 
-El siguiente diagrama muestra la arquitectura de clústeres de Amazon EKS y los componentes de gestión:
+El siguiente diagrama muestra la arquitectura del clúster de Amazon EKS y los componentes de gestión:
 
-```mermaid
-flowchart TD
-    User[User] --> |Manage| AWS[AWS Management Console/CLI/API]
-    AWS --> |Manage| EKS[Amazon EKS]
+![Diagrama de arquitectura que muestra a un usuario gestionando Amazon EKS mediante la consola, la CLI o la API de AWS, con EKS ejecutando un plano de control más grupos de nodos administrados y Fargate, el plano de control utilizando AWS IAM, VPC y CloudWatch, y los complementos VPC CNI, CoreDNS y kube-proxy.](../.gitbook/assets/en-core-09-cluster-administration-8.png)
 
-    subgraph "AWS Cloud"
-        EKS --> CP[EKS Control Plane]
-        EKS --> NG[EKS Node Groups]
-        EKS --> Fargate[EKS Fargate]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-8.html)
 
-        CP --> |Uses| AWSIAM[AWS IAM]
-        CP --> |Uses| AWSVPC[AWS VPC]
-        CP --> |Logging| CW[CloudWatch]
+### Configuración del clúster de EKS
 
-        NG --> |Uses| EC2[EC2 Instances]
-        Fargate --> |Uses| FargateProfile[Fargate Profiles]
-    end
-
-    subgraph "Add-ons"
-        EKS --> CNI[Amazon VPC CNI]
-        EKS --> CoreDNS[CoreDNS]
-        EKS --> KubeProxy[kube-proxy]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CP,NG,Fargate,CNI,CoreDNS,KubeProxy k8sComponent;
-    class AWS,EKS,AWSIAM,AWSVPC,CW,EC2,FargateProfile awsService;
-    class User userApp;
-```
-
-### EKS Cluster Configuration
-
-Gestión de configuración de clústeres EKS:
+Gestión de la configuración del clúster de EKS:
 
 ```bash
 # Check EKS cluster information
@@ -1406,9 +1167,9 @@ aws eks update-cluster-version \
   --kubernetes-version 1.22
 ```
 
-### EKS Node Group Management
+### Gestión de grupos de nodos de EKS
 
-Gestión de node groups de EKS:
+Gestión de grupos de nodos de EKS:
 
 ```bash
 # Check node group information
@@ -1428,9 +1189,9 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-### EKS Add-on Management
+### Gestión de complementos de EKS
 
-Gestión de add-ons de EKS:
+Gestión de complementos de EKS:
 
 ```bash
 # Check available add-ons
@@ -1455,18 +1216,18 @@ aws eks delete-addon \
   --addon-name vpc-cni
 ```
 
-### EKS Cluster Upgrade
+### Actualización del clúster de EKS
 
-Proceso de actualización de clústeres EKS:
+Proceso de actualización del clúster de EKS:
 
-1. **Control Plane Upgrade**:
+1. **Actualización del plano de control**:
    ```bash
    aws eks update-cluster-version \
      --name my-cluster \
      --kubernetes-version 1.22
    ```
 
-2. **Add-on Upgrade**:
+2. **Actualización de complementos**:
    ```bash
    aws eks update-addon \
      --cluster-name my-cluster \
@@ -1474,23 +1235,23 @@ Proceso de actualización de clústeres EKS:
      --addon-version v1.10.2-eksbuild.1
    ```
 
-3. **Node Group Upgrade**:
+3. **Actualización del grupo de nodos**:
    ```bash
    aws eks update-nodegroup-version \
      --cluster-name my-cluster \
      --nodegroup-name my-nodegroup
    ```
 
-### EKS Cluster Monitoring
+### Supervisión del clúster de EKS
 
-Herramientas de monitorización de clústeres EKS:
+Herramientas de supervisión del clúster de EKS:
 
 1. **Amazon CloudWatch**: Métricas, logs, alertas
-2. **AWS CloudTrail**: Logging de llamadas de API
+2. **AWS CloudTrail**: Registro de llamadas a la API
 3. **Amazon Managed Grafana**: Visualización de métricas
 4. **Amazon Managed Service for Prometheus**: Recopilación y almacenamiento de métricas
 
-Habilitar CloudWatch Container Insights:
+Habilite CloudWatch Container Insights:
 
 ```bash
 # Enable Container Insights
@@ -1500,86 +1261,71 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
-## Cluster Administration Best Practices
+## Prácticas recomendadas para la administración de clústeres
 
-Mejores prácticas para la administración de clústeres de Kubernetes y EKS:
+Prácticas recomendadas para la administración de clústeres de Kubernetes y EKS:
 
-### Cluster Configuration Best Practices
+### Prácticas recomendadas para la configuración del clúster
 
-1. **Infrastructure as Code (IaC)**: Gestionar la configuración del clúster usando Terraform, AWS CDK, eksctl, etc.
-2. **Version Control**: Almacenar la configuración del clúster en sistemas de control de versiones
-3. **Multiple Environments**: Separar entornos de desarrollo, staging y producción
-4. **Network Separation**: Configurar separación de red y security groups adecuados
-5. **Least Privilege Principle**: Conceder solo los permisos mínimos necesarios
+1. **Infrastructure as Code (IaC)**: Gestione la configuración del clúster mediante Terraform, AWS CDK, eksctl, etc.
+2. **Control de versiones**: Almacene la configuración del clúster en sistemas de control de versiones
+3. **Varios entornos**: Separe los entornos de desarrollo, staging y producción
+4. **Separación de red**: Configure una separación de red y grupos de seguridad adecuados
+5. **Principio de mínimo privilegio**: Conceda solo los permisos mínimos necesarios
 
-### Operations Best Practices
+### Prácticas recomendadas de operaciones
 
-1. **Regular Backups**: Backup regular de etcd y recursos importantes
-2. **Monitoring and Alerting**: Construir sistemas integrales de monitorización y alertas
-3. **Centralized Logging**: Centralizar y analizar logs
-4. **Automation**: Automatizar tareas repetitivas
-5. **Disaster Recovery Planning**: Establecer y probar planes claros de recuperación ante desastres
+1. **Copias de seguridad periódicas**: Realice copias de seguridad periódicas de etcd y de recursos importantes
+2. **Supervisión y alertas**: Cree sistemas integrales de supervisión y alertas
+3. **Registro centralizado**: Centralice y analice los logs
+4. **Automatización**: Automatice tareas repetitivas
+5. **Planificación de recuperación ante desastres**: Establezca y pruebe planes claros de recuperación ante desastres
 
-### Security Best Practices
+### Prácticas recomendadas de seguridad
 
-1. **Regular Updates**: Actualizaciones regulares del clúster y los Nodes
-2. **Network Policies**: Configurar network policies adecuadas
-3. **Encryption**: Cifrar datos en reposo y en tránsito
-4. **Security Context**: Configurar security contexts adecuados
-5. **Image Scanning**: Escanear imágenes de contenedor en busca de vulnerabilidades
+1. **Actualizaciones periódicas**: Actualice periódicamente el clúster y los nodos
+2. **Políticas de red**: Configure políticas de red adecuadas
+3. **Cifrado**: Cifre los datos en reposo y en tránsito
+4. **Contexto de seguridad**: Configure contextos de seguridad adecuados
+5. **Escaneo de imágenes**: Analice imágenes de contenedor en busca de vulnerabilidades
 
-### Resource Management Best Practices
+### Prácticas recomendadas para la gestión de recursos
 
-1. **Resource Requests and Limits**: Establecer resource requests y limits adecuados para todos los Pods
-2. **Namespace Separation**: Separar workloads por namespace
-3. **Resource Quotas**: Establecer resource quotas por namespace
-4. **HPA and VPA**: Configurar autoscaling
-5. **Node Affinity and Taints**: Optimizar la colocación de workloads
+1. **Solicitudes y límites de recursos**: Configure solicitudes y límites de recursos adecuados para todos los pods
+2. **Separación por namespace**: Separe las cargas de trabajo por namespace
+3. **Cuotas de recursos**: Configure cuotas de recursos por namespace
+4. **HPA y VPA**: Configure el autoescalado
+5. **Afinidad de nodos y taints**: Optimice la ubicación de cargas de trabajo
 
-### EKS-Specific Best Practices
+### Prácticas recomendadas específicas de EKS
 
-1. **Managed Node Groups**: Usar managed node groups cuando sea posible
-2. **Fargate**: Usar Fargate para workloads serverless
-3. **EKS Add-ons**: Usar add-ons oficiales de EKS
-4. **IAM Roles for Service Accounts (IRSA)**: Gestionar permisos de IAM por Pod
-5. **VPC CNI Customization**: Configurar VPC CNI según los requisitos de red
+1. **Grupos de nodos administrados**: Use grupos de nodos administrados cuando sea posible
+2. **Fargate**: Use Fargate para cargas de trabajo sin servidor
+3. **Complementos de EKS**: Use complementos oficiales de EKS
+4. **IAM Roles for Service Accounts (IRSA)**: Gestione permisos de IAM por pod
+5. **Personalización de VPC CNI**: Configure VPC CNI conforme a los requisitos de red
 
-## Conclusion
+## Conclusión
 
-La administración de clústeres de Kubernetes desempeña un papel importante en el mantenimiento de la estabilidad, seguridad y rendimiento del clúster. Este capítulo cubrió diversos aspectos de la administración de clústeres, incluida la gestión de componentes del clúster, gestión de recursos, redes, gestión de autenticación y autorización, actualizaciones, backup y recuperación, monitorización y logging, y resolución de problemas.
+La administración de clústeres de Kubernetes desempeña un papel importante en el mantenimiento de la estabilidad, la seguridad y el rendimiento del clúster. Este capítulo abarcó diversos aspectos de la administración de clústeres, incluida la gestión de componentes del clúster, la gestión de recursos, las redes, la gestión de autenticación y autorización, las actualizaciones, la copia de seguridad y recuperación, la supervisión y el registro, y la resolución de problemas.
 
-Usar Amazon EKS reduce la complejidad de la gestión del control plane de Kubernetes y simplifica la administración de clústeres mediante la integración con servicios de AWS. Sin embargo, comprender los conceptos fundamentales de Kubernetes y las mejores prácticas sigue siendo importante para una gestión eficaz del clúster.
+El uso de Amazon EKS reduce la complejidad de la gestión del plano de control de Kubernetes y simplifica la administración de clústeres mediante la integración con servicios de AWS. Sin embargo, comprender los conceptos fundamentales y las prácticas recomendadas de Kubernetes sigue siendo importante para una gestión eficaz del clúster.
 
-La administración de clústeres es un proceso continuo que debe ajustarse de forma permanente según los requisitos del clúster y las características de los workloads. Es importante usar herramientas de monitorización para hacer seguimiento del estado del clúster, minimizar tareas repetitivas mediante automatización y seguir mejores prácticas para mantener la estabilidad y seguridad del clúster.
+La administración de clústeres es un proceso continuo que debe ajustarse constantemente según los requisitos del clúster y las características de las cargas de trabajo. Es importante utilizar herramientas de supervisión para rastrear el estado del clúster, minimizar las tareas repetitivas mediante automatización y seguir las prácticas recomendadas para mantener la estabilidad y seguridad del clúster.
 
-## Cluster Networking
+## Redes del clúster
 
-La red del clúster de Kubernetes gestiona la comunicación de Pod a Pod, el descubrimiento de Services y el acceso externo.
+Las redes del clúster de Kubernetes gestionan la comunicación entre pods, el descubrimiento de servicios y el acceso externo.
 
-### Network Architecture
+### Arquitectura de red
 
-```mermaid
-graph TD
-    A[Cluster Networking] --> B[Pod Network]
-    A --> C[Service Network]
-    A --> D[Ingress]
-    A --> E[Network Policies]
+![Diagrama de arquitectura que muestra las redes del clúster divididas en red de pods, red de servicios, ingress y políticas de red, implementadas respectivamente por un plugin de CNI, tipos de Service (ClusterIP, NodePort, LoadBalancer), un controlador de ingress y seguridad de red.](../.gitbook/assets/en-core-09-cluster-administration-9.png)
 
-    B --> F[CNI Plugin]
-    C --> G[ClusterIP, NodePort, LoadBalancer]
-    D --> H[Ingress Controller]
-    E --> I[Network Security]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-9.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef networkComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### Gestión de plugins de CNI
 
-    class A,B,C,D,E k8sComponent;
-    class F,G,H,I networkComponent;
-```
-
-### CNI Plugin Management
-
-Los plugins CNI (Container Network Interface) gestionan la red para los clústeres de Kubernetes.
+Los plugins de CNI (Container Network Interface) gestionan las redes de los clústeres de Kubernetes.
 
 ```bash
 # Install Calico CNI
@@ -1593,17 +1339,17 @@ helm repo add cilium https://helm.cilium.io/
 helm install cilium cilium/cilium --version 1.14.0 --namespace kube-system
 ```
 
-### CNI Plugin Comparison
+### Comparación de plugins de CNI
 
-| CNI Plugin | Network Model | Network Policy Support | Performance | Features |
+| Plugin de CNI | Modelo de red | Compatibilidad con políticas de red | Rendimiento | Funciones |
 |-----------|---------------|----------------------|-------------|----------|
-| **Calico** | BGP | Yes | High | Strong in network policies, routing-based |
-| **Flannel** | VXLAN/host-gateway | No | Medium | Simple setup, limited features |
-| **Cilium** | eBPF | Yes | Very High | L3-L7 policies, high performance |
-| **Weave Net** | VXLAN | Yes | Medium | Encryption support, multi-cluster |
-| **AWS VPC CNI** | AWS VPC | No | High | Optimized for AWS EKS |
+| **Calico** | BGP | Sí | Alto | Potente en políticas de red, basado en enrutamiento |
+| **Flannel** | VXLAN/host-gateway | No | Medio | Configuración sencilla, funciones limitadas |
+| **Cilium** | eBPF | Sí | Muy alto | Políticas L3-L7, alto rendimiento |
+| **Weave Net** | VXLAN | Sí | Medio | Compatibilidad con cifrado, multiclúster |
+| **AWS VPC CNI** | AWS VPC | No | Alto | Optimizado para AWS EKS |
 
-### Network Troubleshooting
+### Resolución de problemas de red
 
 ```bash
 # Test pod network connectivity
@@ -1625,21 +1371,21 @@ kubectl get endpoints <service-name>
 # Check network policies
 kubectl describe networkpolicy -n <namespace>
 ```
-## Authentication and Authorization Management
+## Gestión de autenticación y autorización
 
-La gestión de autenticación y autorización de Kubernetes es un elemento central de la seguridad del clúster. RBAC (Role-Based Access Control) se utiliza para gestionar permisos de usuarios y service accounts.
+La gestión de autenticación y autorización de Kubernetes es un elemento central de la seguridad del clúster. RBAC (Role-Based Access Control) se utiliza para gestionar permisos de usuarios y cuentas de servicio.
 
-### Authentication Methods
+### Métodos de autenticación
 
 Kubernetes admite diversos métodos de autenticación:
 
-1. **X.509 Certificates**: Autenticación mediante certificados de cliente
-2. **Service Account Tokens**: Se usan para el acceso al API server dentro de Pods
+1. **Certificados X.509**: Autenticación mediante certificados de cliente
+2. **Tokens de Service Account**: Se utilizan para acceder al servidor de API desde los pods
 3. **OpenID Connect (OIDC)**: Integración con proveedores de identidad externos
-4. **Webhook Token Authentication**: Integración con servicios de autenticación externos
-5. **Authentication Proxy**: Autenticación mediante proxy
+4. **Autenticación de tokens mediante Webhook**: Integración con servicios de autenticación externos
+5. **Proxy de autenticación**: Autenticación mediante proxy
 
-### RBAC Configuration
+### Configuración de RBAC
 
 ```yaml
 # role.yaml - namespace-scoped role
@@ -1699,7 +1445,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### User Certificate Creation
+### Creación de certificados de usuario
 
 ```bash
 # Generate private key
@@ -1720,7 +1466,7 @@ kubectl config set-credentials jane --client-certificate=jane.crt --client-key=j
 kubectl config set-context jane-context --cluster=kubernetes --user=jane
 ```
 
-### Service Account Management
+### Gestión de Service Account
 
 ```bash
 # Create service account
@@ -1735,7 +1481,7 @@ kubectl create rolebinding app-service-account-binding \
 kubectl describe serviceaccount app-service-account
 ```
 
-### Permission Verification
+### Verificación de permisos
 
 ```bash
 # Check user permissions
@@ -1744,40 +1490,25 @@ kubectl auth can-i get pods --as jane
 # Check permissions in a specific namespace
 kubectl auth can-i create deployments --as jane --namespace production
 ```
-## Cluster Upgrades
+## Actualizaciones del clúster
 
-Las actualizaciones de clústeres de Kubernetes son necesarias para aplicar nuevas funciones, parches de seguridad y correcciones de errores. Las actualizaciones deben planificarse y ejecutarse cuidadosamente.
+Las actualizaciones del clúster de Kubernetes son necesarias para aplicar nuevas funciones, parches de seguridad y correcciones de errores. Las actualizaciones deben planificarse y ejecutarse cuidadosamente.
 
-### Upgrade Planning
+### Planificación de actualizaciones
 
-```mermaid
-graph TD
-    A[Upgrade Planning] --> B[Check Version Compatibility]
-    A --> C[Create Backup]
-    A --> D[Choose Upgrade Strategy]
-    A --> E[Plan Downtime]
+![Diagrama de árbol que muestra la planificación de actualizaciones dividida en cuatro tareas: comprobar la compatibilidad de versiones, crear una copia de seguridad, elegir una estrategia de actualización y planificar el tiempo de inactividad; cada una conduce a una acción concreta: revisar los cambios de API, una copia de seguridad de etcd, in-place frente a blue/green y comunicación con los usuarios.](../.gitbook/assets/en-core-09-cluster-administration-10.png)
 
-    B --> F[Review API Changes]
-    C --> G[etcd Backup]
-    D --> H[In-place vs Blue/Green]
-    E --> I[User Communication]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-10.html)
 
-    classDef planning fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### Comparación de estrategias de actualización
 
-    class A,B,C,D,E planning;
-    class F,G,H,I action;
-```
-
-### Upgrade Strategy Comparison
-
-| Strategy | Description | Advantages | Disadvantages | Suitable Environment |
+| Estrategia | Descripción | Ventajas | Desventajas | Entorno adecuado |
 |----------|-------------|------------|---------------|---------------------|
-| **In-place Upgrade** | Directly upgrade existing cluster | Resource efficient, simple procedure | Complex rollback, potential downtime | Development, test environments |
-| **Blue/Green Deployment** | Create new version cluster and switch | Safe rollback, verifiable | Resource duplication, increased cost | Production environments |
-| **Canary Deployment** | Move only some workloads to new cluster | Gradual verification, reduced risk | Complex management, dual operation | Critical production environments |
+| **Actualización in-place** | Actualiza directamente el clúster existente | Uso eficiente de recursos, procedimiento simple | Reversión compleja, posible tiempo de inactividad | Entornos de desarrollo y prueba |
+| **Despliegue blue/green** | Crea un clúster con la nueva versión y cambia a él | Reversión segura, verificable | Duplicación de recursos, mayor costo | Entornos de producción |
+| **Despliegue canary** | Traslada solo algunas cargas de trabajo al nuevo clúster | Verificación gradual, menor riesgo | Gestión compleja, operación dual | Entornos de producción críticos |
 
-### Upgrade Using kubeadm
+### Actualización mediante kubeadm
 
 ```bash
 # Check current version
@@ -1814,7 +1545,7 @@ sudo systemctl restart kubelet
 kubectl uncordon <node-name>
 ```
 
-### Post-Upgrade Verification
+### Verificación posterior a la actualización
 
 ```bash
 # Check cluster version
@@ -1829,13 +1560,13 @@ kubectl get componentstatuses
 # Check workload status
 kubectl get pods -A
 ```
-## Backup and Recovery
+## Copia de seguridad y recuperación
 
-El backup y la recuperación de clústeres de Kubernetes son una parte importante de la planificación de recuperación ante desastres. Los principales objetivos de backup son la base de datos etcd, los datos de persistent volumes y las definiciones de recursos de Kubernetes.
+La copia de seguridad y recuperación de clústeres de Kubernetes es una parte importante de la planificación de recuperación ante desastres. Los principales objetivos de la copia de seguridad son la base de datos etcd, los datos de volúmenes persistentes y las definiciones de recursos de Kubernetes.
 
-### etcd Backup and Recovery
+### Copia de seguridad y recuperación de etcd
 
-etcd es un componente central que guarda toda la información de estado del clúster.
+etcd es un componente central que almacena toda la información de estado del clúster.
 
 ```bash
 # etcd backup
@@ -1867,7 +1598,7 @@ sudo mv /var/lib/etcd-restore /var/lib/etcd
 sudo systemctl start kubelet
 ```
 
-### Kubernetes Resource Backup
+### Copia de seguridad de recursos de Kubernetes
 
 ```bash
 # Backup all resources in all namespaces
@@ -1882,9 +1613,9 @@ for resource in deployments services configmaps secrets; do
 done
 ```
 
-### Backup and Recovery Using Velero
+### Copia de seguridad y recuperación mediante Velero
 
-Velero es una herramienta para realizar backups y recuperar recursos de clústeres de Kubernetes y persistent volumes.
+Velero es una herramienta para realizar copias de seguridad y recuperar recursos de clústeres de Kubernetes y volúmenes persistentes.
 
 ```bash
 # Install Velero (using AWS S3 backup storage)
@@ -1909,45 +1640,25 @@ velero backup describe full-cluster-backup
 velero restore create --from-backup full-cluster-backup
 ```
 
-### Backup Strategy Comparison
+### Comparación de estrategias de copia de seguridad
 
-| Backup Method | Backup Target | Advantages | Disadvantages | Recovery Time |
+| Método de copia de seguridad | Objetivo de la copia | Ventajas | Desventajas | Tiempo de recuperación |
 |--------------|---------------|------------|---------------|---------------|
-| **etcd Snapshot** | Cluster state | Built-in feature, complete state preservation | Volume data not included, manual process | Medium |
-| **Resource YAML Backup** | Kubernetes objects | Simple implementation, selective restore | Volume data not included, relationship complexity | Slow |
-| **Velero** | Resources and volumes | Automation, scheduling, volume snapshots | Additional tool installation required | Fast |
-| **Cloud Provider Snapshots** | Entire cluster | Complete recovery, cloud integration | Cloud dependency, cost | Very Fast |
-## Monitoring and Logging
+| **Snapshot de etcd** | Estado del clúster | Función integrada, preservación completa del estado | No incluye datos de volúmenes, proceso manual | Medio |
+| **Copia de seguridad de YAML de recursos** | Objetos de Kubernetes | Implementación sencilla, restauración selectiva | No incluye datos de volúmenes, complejidad de relaciones | Lento |
+| **Velero** | Recursos y volúmenes | Automatización, programación, snapshots de volúmenes | Requiere instalación de herramienta adicional | Rápido |
+| **Snapshots del proveedor de nube** | Clúster completo | Recuperación completa, integración con la nube | Dependencia de la nube, costo | Muy rápido |
+## Supervisión y registro
 
-La gestión eficaz del clúster requiere un sistema integral de monitorización y logging. Esto permite detectar y resolver problemas de forma temprana.
+La gestión eficaz de clústeres requiere un sistema integral de supervisión y registro. Esto permite detectar y resolver problemas con antelación.
 
-### Monitoring Architecture
+### Arquitectura de supervisión
 
-```mermaid
-graph TD
-    A[Kubernetes Monitoring] --> B[Metric Collection]
-    A --> C[Log Collection]
-    A --> D[Alerting]
-    A --> E[Visualization]
+![Diagrama de arquitectura que muestra la supervisión de Kubernetes dividida en recopilación de métricas, recopilación de logs, alertas y visualización, gestionadas respectivamente por Prometheus con kube-state-metrics y node-exporter, Fluentd/Fluent Bit enviando logs a Elasticsearch y Kibana, Alertmanager y Grafana.](../.gitbook/assets/en-core-09-cluster-administration-11.png)
 
-    B --> F[Prometheus]
-    C --> G[Fluentd/Fluent Bit]
-    D --> H[Alertmanager]
-    E --> I[Grafana]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-11.html)
 
-    F --> J[kube-state-metrics]
-    F --> K[node-exporter]
-    G --> L[Elasticsearch]
-    L --> M[Kibana]
-
-    classDef monitoring fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,C,D,E monitoring;
-    class F,G,H,I,J,K,L,M component;
-```
-
-### Prometheus and Grafana Installation
+### Instalación de Prometheus y Grafana
 
 ```bash
 # Install Prometheus and Grafana using Helm
@@ -1968,7 +1679,7 @@ kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 # Default username: admin, default password: prom-operator
 ```
 
-### EFK Stack Installation (Elasticsearch, Fluentd, Kibana)
+### Instalación de la pila EFK (Elasticsearch, Fluentd, Kibana)
 
 ```bash
 # Install Elasticsearch and Kibana
@@ -1989,16 +1700,16 @@ helm install kibana elastic/kibana \
 kubectl apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
 ```
 
-### Key Monitoring Metrics
+### Métricas de supervisión clave
 
-| Metric Type | Description | Key Metrics | Monitoring Tools |
+| Tipo de métrica | Descripción | Métricas clave | Herramientas de supervisión |
 |-------------|-------------|-------------|-----------------|
-| **Node Metrics** | Node-level resource usage | CPU, memory, disk, network | node-exporter, Prometheus |
-| **Pod Metrics** | Container resource usage | CPU, memory usage, limits | cAdvisor, Prometheus |
-| **Cluster Metrics** | Cluster state and resources | Pod count, node status, events | kube-state-metrics |
-| **Application Metrics** | Custom application metrics | Request count, latency, error rate | Prometheus client libraries |
+| **Métricas de nodo** | Uso de recursos a nivel de nodo | CPU, memoria, disco, red | node-exporter, Prometheus |
+| **Métricas de Pod** | Uso de recursos de contenedor | Uso y límites de CPU y memoria | cAdvisor, Prometheus |
+| **Métricas de clúster** | Estado y recursos del clúster | Número de pods, estado de nodos, eventos | kube-state-metrics |
+| **Métricas de aplicación** | Métricas personalizadas de aplicaciones | Número de solicitudes, latencia, tasa de errores | Bibliotecas de cliente de Prometheus |
 
-### Log Collection and Analysis
+### Recopilación y análisis de logs
 
 ```bash
 # Check logs for a specific pod
@@ -2017,9 +1728,9 @@ kubectl logs -f <pod-name> -n <namespace>
 kubectl logs -l app=nginx -n <namespace>
 ```
 
-### Alert Configuration
+### Configuración de alertas
 
-Puedes configurar alertas usando Prometheus Alertmanager:
+Puede configurar alertas mediante Prometheus Alertmanager:
 
 ```yaml
 # alertmanager-config.yaml
@@ -2049,42 +1760,27 @@ data:
         title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
         text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
 ```
-## Troubleshooting
+## Resolución de problemas
 
-La resolución de problemas de clústeres de Kubernetes es una habilidad importante para administradores de sistemas y operadores. Se requiere un enfoque sistemático para una resolución de problemas eficaz.
+La resolución de problemas de clústeres de Kubernetes es una habilidad importante para administradores y operadores de sistemas. Para resolver problemas de forma eficaz se requiere un enfoque sistemático.
 
-### Troubleshooting Methodology
+### Metodología de resolución de problemas
 
-```mermaid
-graph TD
-    A[Problem Identification] --> B[Information Gathering]
-    B --> C[Root Cause Analysis]
-    C --> D[Apply Solution]
-    D --> E[Verification]
-    E --> F[Documentation]
+![Diagrama de flujo que muestra la secuencia de seis pasos para la resolución de problemas, desde la identificación del problema hasta la documentación, donde el paso de recopilación de información se ramifica en comprobaciones de logs, eventos y estado de recursos.](../.gitbook/assets/en-core-09-cluster-administration-12.png)
 
-    B --> G[Check Logs]
-    B --> H[Check Events]
-    B --> I[Check Resource Status]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-12.html)
 
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### Problemas y soluciones comunes
 
-    class A,B,C,D,E,F process;
-    class G,H,I action;
-```
-
-### Common Problems and Solutions
-
-| Problem Type | Symptoms | Diagnostic Commands | Common Solutions |
+| Tipo de problema | Síntomas | Comandos de diagnóstico | Soluciones comunes |
 |-------------|----------|---------------------|-----------------|
-| **Pod Not Starting** | Pod in Pending or ContainerCreating state | `kubectl describe pod <pod-name>` | Check resource constraints, image availability, volume mounts |
-| **Service Connection Issues** | Cannot access pods through service | `kubectl describe svc <service-name>`, `kubectl get endpoints <service-name>` | Check label selectors, pod status, network policies |
-| **Node Issues** | Node in NotReady state | `kubectl describe node <node-name>`, `kubectl get events` | Check kubelet status, system resources, network connectivity |
-| **DNS Issues** | Cannot connect by service name | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | Check CoreDNS pods, kube-dns service, network policies |
-| **Authentication Issues** | API server access denied | `kubectl auth can-i <verb> <resource>` | Check RBAC settings, certificate validity, service account |
+| **Pod no se inicia** | Pod en estado Pending o ContainerCreating | `kubectl describe pod <pod-name>` | Compruebe restricciones de recursos, disponibilidad de imagen y montajes de volúmenes |
+| **Problemas de conexión de Service** | No se puede acceder a los pods mediante el servicio | `kubectl describe svc <service-name>`, `kubectl get endpoints <service-name>` | Compruebe selectores de etiquetas, estado de pods y políticas de red |
+| **Problemas de nodo** | Nodo en estado NotReady | `kubectl describe node <node-name>`, `kubectl get events` | Compruebe el estado de kubelet, los recursos del sistema y la conectividad de red |
+| **Problemas de DNS** | No se puede conectar por el nombre de servicio | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | Compruebe los pods de CoreDNS, el servicio kube-dns y las políticas de red |
+| **Problemas de autenticación** | Acceso al servidor de API denegado | `kubectl auth can-i <verb> <resource>` | Compruebe la configuración de RBAC, la validez del certificado y la cuenta de servicio |
 
-### Pod Troubleshooting
+### Resolución de problemas de Pods
 
 ```bash
 # Check pod status
@@ -2104,7 +1800,7 @@ kubectl exec -it <pod-name> -- /bin/sh
 kubectl get events --field-selector involvedObject.name=<pod-name>
 ```
 
-### Node Troubleshooting
+### Resolución de problemas de nodos
 
 ```bash
 # Check node status
@@ -2121,7 +1817,7 @@ ssh <node-ip> 'sudo journalctl -u kubelet'
 ssh <node-ip> 'sudo systemctl status kubelet'
 ```
 
-### Networking Troubleshooting
+### Resolución de problemas de redes
 
 ```bash
 # Check service and endpoints
@@ -2141,41 +1837,17 @@ ping <target-ip>
 traceroute <target-ip>
 curl <service-name>:<port>
 ```
-## Amazon EKS Cluster Administration
+## Administración de clústeres de Amazon EKS
 
-Amazon EKS (Elastic Kubernetes Service) es un servicio gestionado de Kubernetes en AWS donde AWS gestiona el control plane. Sin embargo, la gestión de Nodes, redes, seguridad, etc. es responsabilidad del usuario.
+Amazon EKS (Elastic Kubernetes Service) es un servicio administrado de Kubernetes en AWS donde AWS gestiona el plano de control. Sin embargo, la gestión de nodos, redes, seguridad, etc. es responsabilidad del usuario.
 
-### EKS Cluster Architecture
+### Arquitectura del clúster de EKS
 
-```mermaid
-graph TD
-    A[Amazon EKS Cluster] --> B[Control Plane]
-    A --> C[Data Plane]
-    A --> D[Networking]
-    A --> E[Security]
+![Diagrama de arquitectura que muestra un clúster de Amazon EKS dividido en un plano de control administrado por AWS (servidor de API, etcd, scheduler) y un área de responsabilidad del cliente que cubre el plano de datos (grupos de nodos administrados con grupos de EC2 Auto Scaling, nodos autogestionados y Fargate), las redes (VPC CNI y AWS VPC) y la seguridad (autenticación de IAM con roles y políticas de IAM).](../.gitbook/assets/en-core-09-cluster-administration-13.png)
 
-    B --> F[AWS Managed Components]
-    C --> G[Managed Node Groups]
-    C --> H[Self-Managed Nodes]
-    C --> I[Fargate]
-    D --> J[VPC CNI]
-    E --> K[IAM Authentication]
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-13.html)
 
-    F --> L[API Server, etcd, Scheduler]
-    G --> M[EC2 Auto Scaling Groups]
-    J --> N[AWS VPC]
-    K --> O[IAM Roles and Policies]
-
-    classDef awsManaged fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userManaged fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef network fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,F,L awsManaged;
-    class C,G,H,I,E,K,O userManaged;
-    class D,J,N network;
-```
-
-### EKS Cluster Creation
+### Creación de clústeres de EKS
 
 ```bash
 # Create cluster using eksctl
@@ -2197,7 +1869,7 @@ aws eks create-cluster \
   --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345
 ```
 
-### Node Group Management
+### Gestión de grupos de nodos
 
 ```bash
 # Create managed node group
@@ -2225,7 +1897,7 @@ eksctl update nodegroup \
   --max-pods-per-node 110
 ```
 
-### EKS Cluster Upgrade
+### Actualización del clúster de EKS
 
 ```bash
 # Check cluster version
@@ -2242,7 +1914,7 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-### EKS Cluster Authentication and Authorization
+### Autenticación y autorización del clúster de EKS
 
 ```bash
 # Map IAM user/role to cluster RBAC
@@ -2256,7 +1928,7 @@ eksctl create iamidentitymapping \
 kubectl describe configmap aws-auth -n kube-system
 ```
 
-### EKS Cluster Monitoring
+### Supervisión del clúster de EKS
 
 ```bash
 # Enable CloudWatch Container Insights
@@ -2271,84 +1943,84 @@ aws eks create-addon \
   --addon-name amazon-cloudwatch-observability \
   --addon-version v1.1.1-eksbuild.1
 ```
-## Cluster Administration Best Practices
+## Prácticas recomendadas para la administración de clústeres
 
-Las mejores prácticas para una gestión eficaz de clústeres de Kubernetes son importantes para garantizar estabilidad, seguridad y rendimiento.
+Las prácticas recomendadas para una gestión eficaz de clústeres de Kubernetes son importantes para garantizar la estabilidad, la seguridad y el rendimiento.
 
-### Cluster Setup Best Practices
+### Prácticas recomendadas para la configuración del clúster
 
-1. **Multi-Availability Zone Configuration**: Distribuir Nodes entre múltiples availability zones para alta disponibilidad
-2. **Appropriate Sizing**: Seleccionar tipos y cantidades de Node apropiados para los workloads
-3. **Autoscaling Configuration**: Habilitar cluster autoscaler y horizontal pod autoscaler
-4. **Apply Network Policies**: Comenzar con una política deny predeterminada y permitir solo la comunicación necesaria
-5. **Set Resource Quotas**: Establecer límites de recursos por namespace
+1. **Configuración de múltiples zonas de disponibilidad**: Distribuya nodos entre varias zonas de disponibilidad para obtener alta disponibilidad
+2. **Dimensionamiento adecuado**: Seleccione tipos y cantidades de nodos adecuados para las cargas de trabajo
+3. **Configuración de autoescalado**: Habilite el autoscaler de clúster y el Horizontal Pod Autoscaler
+4. **Aplicar políticas de red**: Comience con una política predeterminada de denegación y permita solo la comunicación necesaria
+5. **Configurar cuotas de recursos**: Configure límites de recursos por namespace
 
-### Operations Best Practices
+### Prácticas recomendadas de operaciones
 
-1. **Use Declarative Configuration**: Definir todos los recursos como archivos YAML y gestionarlos con control de versiones
-2. **Adopt GitOps**: Usar Git como única fuente de verdad y construir pipelines de despliegue automatizados
-3. **Regular Backups**: Backup regular de datos de etcd y datos de persistent volumes
-4. **Monitoring and Alerting**: Construir sistemas de monitorización integrales y establecer alertas para métricas clave
-5. **Centralized Logging**: Recopilar todos los logs en un sistema de logging central para facilitar el análisis
+1. **Usar configuración declarativa**: Defina todos los recursos como archivos YAML y contrólelos por versiones
+2. **Adoptar GitOps**: Use Git como única fuente de verdad y cree pipelines de despliegue automatizados
+3. **Copias de seguridad periódicas**: Realice copias de seguridad periódicas de datos de etcd y de volúmenes persistentes
+4. **Supervisión y alertas**: Cree sistemas integrales de supervisión y establezca alertas para métricas clave
+5. **Registro centralizado**: Recopile todos los logs en un sistema de registro central para facilitar el análisis
 
-### Security Best Practices
+### Prácticas recomendadas de seguridad
 
-1. **Least Privilege Principle**: Conceder solo los permisos mínimos necesarios usando RBAC
-2. **Network Segmentation**: Limitar la comunicación de Pod a Pod usando network policies
-3. **Image Scanning**: Implementar escaneo de imágenes de contenedor para detectar vulnerabilidades
-4. **Secret Management**: Usar herramientas externas de gestión de secrets (por ejemplo, AWS Secrets Manager, HashiCorp Vault)
-5. **Regular Security Audits**: Realizar auditorías regulares de configuración y permisos del clúster
+1. **Principio de mínimo privilegio**: Conceda solo los permisos mínimos necesarios mediante RBAC
+2. **Segmentación de red**: Limite la comunicación entre pods mediante políticas de red
+3. **Escaneo de imágenes**: Implemente el escaneo de imágenes de contenedor para detectar vulnerabilidades
+4. **Gestión de secretos**: Use herramientas externas de gestión de secretos (por ejemplo, AWS Secrets Manager, HashiCorp Vault)
+5. **Auditorías de seguridad periódicas**: Realice auditorías periódicas de la configuración y los permisos del clúster
 
-### Upgrade Best Practices
+### Prácticas recomendadas para actualizaciones
 
-1. **Gradual Upgrades**: Actualizar de forma gradual en lugar de todo a la vez
-2. **Test Environment First**: Verificar las actualizaciones en entornos de prueba antes de producción
-3. **Create Backups**: Realizar backups completos antes de las actualizaciones
-4. **Rollback Plan**: Desarrollar un plan para volver a versiones anteriores en caso de problemas
-5. **Set Upgrade Windows**: Realizar actualizaciones durante períodos de bajo uso
+1. **Actualizaciones graduales**: Actualice gradualmente en lugar de hacerlo todo de una vez
+2. **Primero el entorno de prueba**: Verifique las actualizaciones en entornos de prueba antes de producción
+3. **Crear copias de seguridad**: Realice copias de seguridad completas antes de las actualizaciones
+4. **Plan de reversión**: Desarrolle un plan para volver a versiones anteriores en caso de problemas
+5. **Establecer ventanas de actualización**: Realice actualizaciones durante períodos de poco uso
 
-### Cost Optimization Best Practices
+### Prácticas recomendadas de optimización de costos
 
-1. **Select Appropriate Node Sizes**: Seleccionar tipos de Node óptimos para los workloads
-2. **Utilize Spot Instances**: Usar spot instances para workloads no críticos
-3. **Configure Autoscaling**: Configurar escalado automático hacia arriba y hacia abajo según la demanda
-4. **Optimize Resource Requests and Limits**: Establecer resource requests y limits según el uso real
-5. **Identify Idle Resources**: Identificar y eliminar regularmente recursos inactivos
+1. **Seleccionar tamaños de nodo adecuados**: Seleccione tipos de nodo óptimos para las cargas de trabajo
+2. **Utilizar instancias Spot**: Use instancias Spot para cargas de trabajo no críticas
+3. **Configurar autoescalado**: Configure el escalado automático ascendente y descendente según la demanda
+4. **Optimizar solicitudes y límites de recursos**: Configure solicitudes y límites de recursos según el uso real
+5. **Identificar recursos inactivos**: Identifique y elimine periódicamente recursos inactivos
 
-### Documentation Best Practices
+### Prácticas recomendadas de documentación
 
-1. **Document Architecture**: Documentar la arquitectura del clúster, redes y configuraciones de seguridad
-2. **Document Operations Procedures**: Documentar tareas operativas comunes, procedimientos de resolución de problemas y planes de respuesta ante emergencias
-3. **Change Management**: Registrar y hacer seguimiento de todos los cambios del clúster
-4. **Create Runbooks**: Proporcionar guías paso a paso para escenarios comunes
-5. **Knowledge Sharing**: Realizar sesiones regulares de intercambio de conocimientos y formación dentro del equipo
-## Conclusion
+1. **Documentar la arquitectura**: Documente la arquitectura del clúster y la configuración de redes y seguridad
+2. **Documentar procedimientos operativos**: Documente tareas operativas comunes, procedimientos de resolución de problemas y planes de respuesta ante emergencias
+3. **Gestión de cambios**: Registre y haga seguimiento de todos los cambios del clúster
+4. **Crear runbooks**: Proporcione guías paso a paso para escenarios comunes
+5. **Intercambio de conocimientos**: Realice sesiones periódicas de intercambio de conocimientos y capacitación dentro del equipo
+## Conclusión
 
-La administración de clústeres de Kubernetes es una tarea compleja que incluye diversos aspectos. Se requiere un enfoque sistemático desde la configuración del clúster hasta la operación, monitorización, resolución de problemas y actualizaciones.
+La administración de clústeres de Kubernetes es una tarea compleja que incluye diversos aspectos. Se requiere un enfoque sistemático desde la configuración del clúster hasta la operación, supervisión, resolución de problemas y actualizaciones.
 
-Para una administración eficaz del clúster, céntrate en las siguientes áreas clave:
+Para una administración eficaz de clústeres, concéntrese en las siguientes áreas clave:
 
-1. **Cluster Component Management**: Operación estable de los componentes del control plane y Node
-2. **Resource Management**: Asignación y uso eficientes de recursos
-3. **Networking**: Configuración de red segura y eficiente
-4. **Security**: Gestión adecuada de autenticación y autorización
-5. **Backup and Recovery**: Prevención de pérdida de datos y planificación de recuperación ante desastres
-6. **Monitoring and Logging**: Monitorización del estado y rendimiento del clúster
-7. **Troubleshooting**: Enfoque sistemático de resolución de problemas
+1. **Gestión de componentes del clúster**: Operación estable de los componentes del plano de control y de nodo
+2. **Gestión de recursos**: Asignación y uso eficientes de los recursos
+3. **Redes**: Configuración de red segura y eficiente
+4. **Seguridad**: Gestión adecuada de autenticación y autorización
+5. **Copia de seguridad y recuperación**: Prevención de pérdida de datos y planificación de recuperación ante desastres
+6. **Supervisión y registro**: Supervisión del estado y rendimiento del clúster
+7. **Resolución de problemas**: Enfoque sistemático para la resolución de problemas
 
-Al usar servicios gestionados de Kubernetes como Amazon EKS, es importante comprender el modelo de responsabilidad compartida entre el proveedor del servicio y el usuario. Aunque AWS gestiona el control plane, la gestión de Nodes, redes, seguridad, etc. sigue siendo responsabilidad del usuario.
+Al utilizar servicios administrados de Kubernetes como Amazon EKS, es importante comprender el modelo de responsabilidad compartida entre el proveedor de servicios y el usuario. Aunque AWS gestiona el plano de control, la gestión de nodos, redes, seguridad, etc. sigue siendo responsabilidad del usuario.
 
-Siguiendo mejores prácticas y utilizando herramientas adecuadas, puedes operar un clúster de Kubernetes estable, seguro y eficiente. Es importante el aprendizaje y la mejora continuos para fortalecer las capacidades de gestión del clúster.
+Al seguir las prácticas recomendadas y utilizar las herramientas adecuadas, puede operar un clúster de Kubernetes estable, seguro y eficiente. El aprendizaje y la mejora continuos para mejorar las capacidades de gestión de clústeres son importantes.
 
 ---
 
 > **Referencias**:
-> - [Kubernetes Official Documentation: Cluster Administration](https://kubernetes.io/docs/tasks/administer-cluster/)
-> - [Amazon EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
-> - [Kubernetes Best Practices: Cluster Administration](https://kubernetes.io/docs/setup/best-practices/)
-> - [etcd Documentation: Backup and Recovery](https://etcd.io/docs/v3.5/op-guide/recovery/)
-> - [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
+> - [Documentación oficial de Kubernetes: Administración de clústeres](https://kubernetes.io/docs/tasks/administer-cluster/)
+> - [Guía del usuario de Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
+> - [Prácticas recomendadas de Kubernetes: Administración de clústeres](https://kubernetes.io/docs/setup/best-practices/)
+> - [Documentación de etcd: Copia de seguridad y recuperación](https://etcd.io/docs/v3.5/op-guide/recovery/)
+> - [Documentación de Prometheus](https://prometheus.io/docs/introduction/overview/)
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta el [Cluster Administration Quiz](../quizzes/core/09-cluster-administration-quiz.md).
+Para comprobar lo aprendido en este capítulo, pruebe el [Cuestionario de administración de clústeres](../quizzes/core/09-cluster-administration-quiz.md).

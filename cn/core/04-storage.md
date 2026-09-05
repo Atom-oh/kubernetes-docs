@@ -3,16 +3,16 @@
 > **支持的版本**: Kubernetes 1.32, 1.33, 1.34
 > **最后更新**: February 19, 2026
 
-在 Kubernetes 中，存储是为容器化应用程序存放和管理数据的重要组成部分。在本章中，我们将详细探讨 Kubernetes 存储概念，包括 Volumes（卷）、Persistent Volumes（持久卷）、Persistent Volume Claims（持久卷声明）和 Storage Classes（存储类）。
+在 Kubernetes 中，存储是为容器化应用存储和管理数据的重要组成部分。本章将详细介绍 Kubernetes 存储概念，包括 Volumes、Persistent Volumes、Persistent Volume Claims 和 Storage Classes。
 
 ## 实验环境设置
 
-要跟随本文档中的示例进行操作，你需要以下工具和环境：
+要跟随本文档中的示例，需要以下工具和环境：
 
-### 必需工具
+### 必备工具
 - kubectl v1.34 或更高版本
-- 可用的 Kubernetes cluster（EKS、minikube、kind 等）
-- Storage provisioner（EKS 的 EBS CSI driver）
+- 可正常运行的 Kubernetes 集群（EKS、minikube、kind 等）
+- 存储预配器（适用于 EKS 的 EBS CSI driver）
 
 ### 存储示例设置
 
@@ -57,95 +57,50 @@ kubectl -n storage-demo get pvc,pod
 
 ## 目录
 
-1. [Volumes（卷）](#volumes)
-2. [Persistent Volumes（持久卷）](#persistent-volumes)
-3. [Persistent Volume Claims（持久卷声明）](#persistent-volume-claims)
-4. [Storage Classes（存储类）](#storage-classes)
-5. [动态供应](#dynamic-provisioning)
-6. [Volume Snapshots（卷快照）](#volume-snapshots)
-7. [Volume Expansion（卷扩容）](#volume-expansion)
-8. [Projected Volumes（投射卷）](#projected-volumes)
-9. [Generic Ephemeral Volumes（通用临时卷）](#generic-ephemeral-volumes)
-10. [Block Volume Mode（块卷模式）](#block-volume-mode)
-11. [Volume Cloning（卷克隆）](#volume-cloning)
-12. [Storage ResourceQuota](#storage-resourcequota)
+1. [Volumes](#volumes)
+2. [Persistent Volumes](#persistent-volumes)
+3. [Persistent Volume Claims](#persistent-volume-claims)
+4. [Storage Classes](#storage-classes)
+5. [动态预配](#dynamic-provisioning)
+6. [Volume Snapshots](#volume-snapshots)
+7. [Volume 扩容](#volume-expansion)
+8. [Projected Volumes](#projected-volumes)
+9. [通用临时 Volumes](#generic-ephemeral-volumes)
+10. [块 Volume 模式](#block-volume-mode)
+11. [Volume 克隆](#volume-cloning)
+12. [存储 ResourceQuota](#storage-resourcequota)
 13. [EKS 中的存储选项](#storage-options-in-eks)
 
-## Volumes（卷）
+## Volumes
 
-> **关键概念**: Kubernetes Volumes 是 Pod 中的容器可以存储和共享数据的目录，即使容器重启也能保留数据。
+> **核心概念**：Kubernetes Volumes 是 Pod 内的容器可用于存储和共享数据的目录，即使容器重启，数据仍可保留。
 
-Kubernetes Volumes 是 Pod 中的容器可以存储和共享数据的目录。Volumes 与 Pod 的生命周期绑定，当 Pod 被删除时，volume 也会被删除（某些 volume 类型除外）。
+Kubernetes Volumes 是 Pod 内的容器可用于存储和共享数据的目录。Volumes 与 Pod 的生命周期绑定；当 Pod 被删除时，Volume 也会被删除（某些 Volume 类型除外）。
 
 ### Kubernetes 存储架构
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes Storage Architecture"
-        subgraph "Application Layer"
-            Pod1[Pod]
-            Pod2[Pod]
-            Pod3[Pod]
+![Pods 通过 PersistentVolumeClaim 申请存储，该声明会绑定由 StorageClass 预配的 PersistentVolume；CSI Driver 将该 Volume 挂载到下层云端、本地或 NFS 后端存储。](../.gitbook/assets/en-core-04-storage-0.png)
 
-            Pod1 --> PVC1[PersistentVolumeClaim]
-            Pod2 --> PVC2[PersistentVolumeClaim]
-            Pod3 --> PVC3[PersistentVolumeClaim]
-        end
-
-        subgraph "Storage Abstraction Layer"
-            PVC1 --> PV1[PersistentVolume]
-            PVC2 --> PV2[PersistentVolume]
-            PVC3 --> PV3[PersistentVolume]
-
-            SC[StorageClass] --> PV1
-            SC --> PV2
-            SC --> PV3
-        end
-
-        subgraph "Physical Storage Layer"
-            PV1 --> CSI[CSI Driver]
-            PV2 --> CSI
-            PV3 --> CSI
-
-            CSI --> Cloud[Cloud Storage\nEBS, EFS, Azure Disk, etc.]
-            CSI --> Local[Local Storage]
-            CSI --> NFS[NFS Server]
-        end
-    end
-
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pvc fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pv fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef sc fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef driver fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    classDef storage fill:#28a745,stroke:#333,stroke-width:1px,color:white;
-
-    class Pod1,Pod2,Pod3 pod;
-    class PVC1,PVC2,PVC3 pvc;
-    class PV1,PV2,PV3 pv;
-    class SC sc;
-    class CSI driver;
-    class Cloud,Local,NFS storage;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-0.html)
 
 ### 为什么需要 Volumes
 
-1. **容器重启时的数据持久性**: 当容器重启时，其文件系统会被重置，但使用 volumes 可以让数据保留下来。
-2. **容器之间的数据共享**: 同一个 Pod 中的多个容器可以通过 volumes 共享数据。
+1. **容器重启时的数据持久化**：容器重启时，其文件系统会被重置；但使用 Volumes 可以保留数据。
+2. **容器之间的数据共享**：同一 Pod 中的多个容器可以通过 Volumes 共享数据。
 
-### 主要 Volume 类型比较
+### 主要 Volume 类型对比
 
-| Volume Type | Lifecycle | Data Persistence | Use Case | Features |
+| Volume 类型 | 生命周期 | 数据持久性 | 使用场景 | 特性 |
 |------------|----------|-----------------|----------|----------|
-| **emptyDir** | Pod | 临时 | 临时数据、缓存、检查点 | Pod 被删除时数据会被删除 |
-| **hostPath** | Node | Node 级别 | 访问 Node 文件系统、监控 | 存在安全风险 - 请谨慎使用 |
-| **configMap** | 配置 | 配置数据 | 应用程序配置 | 将配置数据作为 volume 挂载 |
-| **secret** | 配置 | 敏感数据 | 证书、密码 | 将敏感数据作为 volume 挂载 |
-| **persistentVolumeClaim** | Cluster | 永久 | 数据库、文件存储 | Pod 重启和重新调度后数据仍会保留 |
+| **emptyDir** | Pod | 临时 | 临时数据、缓存、检查点 | Pod 删除时数据被删除 |
+| **hostPath** | Node | Node 级别 | Node 文件系统访问、监控 | 存在安全风险，请谨慎使用 |
+| **configMap** | 配置 | 配置数据 | 应用配置 | 将配置数据作为 Volume 挂载 |
+| **secret** | 配置 | 敏感数据 | 证书、密码 | 将敏感数据作为 Volume 挂载 |
+| **persistentVolumeClaim** | 集群 | 永久 | 数据库、文件存储 | Pod 重启和重新调度后数据仍会保留 |
 
 ### emptyDir
 
-当 Pod 被分配到某个 node 时，会创建 `emptyDir` volume，并且在该 Pod 在该 node 上运行期间一直存在。当 Pod 从该 node 移除时，`emptyDir` 中的数据会被永久删除。
+当 Pod 被分配到 Node 时，会创建 `emptyDir` Volume，并在 Pod 于该 Node 上运行期间持续存在。当 Pod 从 Node 中移除时，`emptyDir` 中的数据将被永久删除。
 
 ```yaml
 apiVersion: v1
@@ -166,7 +121,7 @@ spec:
 
 ### hostPath
 
-`hostPath` volume 会将 node 文件系统中的文件或目录挂载到 Pod。这对需要访问 node 文件系统的 Pods 很有用，但由于存在安全风险，应谨慎使用。
+`hostPath` Volume 会将 Node 文件系统中的文件或目录挂载到 Pod。对于需要访问 Node 文件系统的 Pod，这非常有用；但由于存在安全风险，应谨慎使用。
 
 ```yaml
 apiVersion: v1
@@ -208,7 +163,7 @@ spec:
 
 #### configMap
 
-`configMap` volume 会将 ConfigMap 数据挂载到 Pod。ConfigMaps 用于以键值对形式存储配置数据。
+`configMap` Volume 会将 ConfigMap 数据挂载到 Pod。ConfigMaps 用于以键值对形式存储配置数据。
 
 ```yaml
 apiVersion: v1
@@ -233,7 +188,7 @@ spec:
 
 #### secret
 
-`secret` volume 会将 Secret 数据挂载到 Pod。Secrets 用于存储密码、令牌和密钥等敏感信息。
+`secret` Volume 会将 Secret 数据挂载到 Pod。Secrets 用于存储密码、token 和密钥等敏感信息。
 
 ```yaml
 apiVersion: v1
@@ -259,7 +214,7 @@ spec:
 
 #### nfs
 
-`nfs` volume 会将现有的 NFS (Network File System) 共享挂载到 Pod。
+`nfs` Volume 会将现有的 NFS (Network File System) 共享挂载到 Pod。
 
 ```yaml
 apiVersion: v1
@@ -282,7 +237,7 @@ spec:
 
 #### persistentVolumeClaim
 
-`persistentVolumeClaim` volume 会将 PersistentVolumeClaim 挂载到 Pod。这是最常用的 volume 类型之一。
+`persistentVolumeClaim` Volume 会将 PersistentVolumeClaim 挂载到 Pod。这是最常用的 Volume 类型之一。
 
 ```yaml
 apiVersion: v1
@@ -304,7 +259,7 @@ spec:
 
 #### CSI (Container Storage Interface)
 
-CSI volumes 在 Kubernetes 和外部存储系统之间提供标准接口。使用 CSI，存储供应商可以在不修改 Kubernetes 代码的情况下开发自己的存储驱动程序。
+CSI Volumes 为 Kubernetes 与外部存储系统之间提供标准接口。借助 CSI，存储供应商无需修改 Kubernetes 代码即可开发自己的存储 driver。
 
 ```yaml
 apiVersion: v1
@@ -328,31 +283,13 @@ spec:
         name: csi-secret
 ```
 
-## Persistent Volumes（持久卷）
+## Persistent Volumes
 
-Persistent Volume (PV) 是由管理员预置或使用 Storage Class 动态预置的 cluster 存储。PV 的生命周期独立于 Pods，即使 Pods 被删除，PV 也会保留。
+Persistent Volume (PV) 是由管理员预配或使用 Storage Class 动态预配的集群存储。PVs 的生命周期独立于 Pods，即使 Pods 被删除，PVs 仍会保留。
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| PV[Persistent Volume]
-    User[User] -->|Creates| PVC[Persistent Volume Claim]
-    PVC -->|Binds| PV
-    Pod[Pod] -->|Uses| PVC
-    PV -->|Connects| Storage[(Physical Storage)]
+![在静态预配流程中，集群管理员创建连接物理存储的 PersistentVolume，用户的 PersistentVolumeClaim 绑定到该 Volume，Pod 将该声明用作其 Volume。](../.gitbook/assets/en-core-04-storage-1.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Admin,User user;
-    class PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-1.html)
 
 ### PV 创建
 
@@ -377,35 +314,35 @@ spec:
     server: 172.17.0.2
 ```
 
-### PV Access Modes
+### PV 访问模式
 
-PVs 支持以下 access modes：
+PVs 支持以下访问模式：
 
-- **ReadWriteOnce (RWO)**: Volume 可以被单个 node 以读写方式挂载。
-- **ReadOnlyMany (ROX)**: Volume 可以被多个 nodes 以只读方式挂载。
-- **ReadWriteMany (RWX)**: Volume 可以被多个 nodes 以读写方式挂载。
-- **ReadWriteOncePod (RWOP)**: Volume 可以被单个 Pod 以读写方式挂载（Kubernetes 1.22+）。
+- **ReadWriteOnce (RWO)**：Volume 可由单个 Node 以读写方式挂载。
+- **ReadOnlyMany (ROX)**：Volume 可由多个 Nodes 以只读方式挂载。
+- **ReadWriteMany (RWX)**：Volume 可由多个 Nodes 以读写方式挂载。
+- **ReadWriteOncePod (RWOP)**：Volume 可由单个 Pod 以读写方式挂载（Kubernetes 1.22+）。
 
-### PV Reclaim Policies
+### PV 回收策略
 
-PVs 可以具有以下 reclaim policies：
+PVs 可以具有以下回收策略：
 
-- **Retain**: PVC 被删除时，PV 和数据会保留。管理员必须手动清理。
-- **Delete**: PVC 被删除时，PV 和外部存储资产会自动删除。
-- **Recycle**: PVC 被删除时，PV 中的数据会被删除，PV 重新变为可用（已弃用）。
+- **Retain**：PVC 删除时，PV 和数据会保留。管理员必须手动清理。
+- **Delete**：PVC 删除时，PV 和外部存储资产会自动删除。
+- **Recycle**：PVC 删除时，PV 中的数据会被删除，PV 会再次变为可用状态（已弃用）。
 
 ### PV 状态
 
 PVs 可以具有以下状态：
 
-- **Available**: 资源可用，尚未绑定到 claim。
-- **Bound**: 已绑定到 claim。
-- **Released**: Claim 已被删除，但资源尚未被 cluster 回收。
-- **Failed**: 自动回收失败。
+- **Available**：可用但尚未绑定到声明的资源。
+- **Bound**：已绑定到声明。
+- **Released**：声明已删除，但资源尚未被集群回收。
+- **Failed**：自动回收失败。
 
-## Persistent Volume Claims（持久卷声明）
+## Persistent Volume Claims
 
-Persistent Volume Claim (PVC) 是用户的存储请求。PVCs 类似于 PVs，但 PVCs 是用户请求存储的方式，而 PVs 是管理员提供存储的方式。
+Persistent Volume Claim (PVC) 是用户的存储请求。PVCs 与 PVs 类似，但 PVCs 是用户请求存储的方式，而 PVs 是管理员提供存储的方式。
 
 ### PVC 创建
 
@@ -431,11 +368,11 @@ spec:
 
 ### PVC 和 PV 绑定
 
-创建 PVC 时，Kubernetes 会查找并绑定满足 PVC 要求（存储大小、access modes、storage class、selector 等）的 PV。如果没有合适的 PV，PVC 会保持 Pending 状态。
+创建 PVC 时，Kubernetes 会查找并绑定满足 PVC 要求（存储大小、访问模式、存储类、selector 等）的 PV。如果不存在合适的 PV，PVC 将保持 Pending 状态。
 
 ### 使用 PVC
 
-PVCs 可以作为 volumes 在 Pods 中使用：
+PVCs 可以作为 Pods 中的 Volumes 使用：
 
 ```yaml
 apiVersion: v1
@@ -455,33 +392,13 @@ spec:
         claimName: myclaim
 ```
 
-## Storage Classes（存储类）
+## Storage Classes
 
-Storage Classes 描述管理员提供的存储“类别”。Storage Classes 用于动态预置 PVs。
+Storage Classes 描述管理员提供的存储“类别”。Storage Classes 用于动态预配 PVs。
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| SC[Storage Class]
-    User[User] -->|Creates| PVC[Persistent Volume Claim]
-    PVC -->|References| SC
-    SC -->|Dynamic Provisioning| PV[Persistent Volume]
-    PVC -->|Binds| PV
-    Pod[Pod] -->|Uses| PVC
-    PV -->|Connects| Storage[(Physical Storage)]
+![用户的 PersistentVolumeClaim 引用 StorageClass，后者动态预配一个 PersistentVolume；该声明与之绑定，Pod 使用该 Volume，并最终连接到物理存储。](../.gitbook/assets/en-core-04-storage-2.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Admin,User user;
-    class SC,PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-2.html)
 
 ### Storage Class 创建
 
@@ -499,31 +416,31 @@ allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-此示例创建了一个用于预置 AWS EBS gp3 volumes 的 storage class。
+此示例创建了一个预配 AWS EBS gp3 Volumes 的存储类。
 
 ### Provisioners
 
-Storage classes 指定用于预置 volumes 的 provisioner。常见 provisioners 包括：
+Storage Classes 指定用于预配 Volumes 的 provisioner。常见的 provisioner 包括：
 
-- `kubernetes.io/aws-ebs`: AWS EBS volumes
-- `kubernetes.io/gce-pd`: GCE Persistent Disks
-- `kubernetes.io/azure-disk`: Azure Disks
-- `kubernetes.io/azure-file`: Azure File
-- `kubernetes.io/cinder`: OpenStack Cinder volumes
-- `kubernetes.io/glusterfs`: GlusterFS volumes
-- `kubernetes.io/rbd`: Ceph RBD volumes
-- `kubernetes.io/nfs`: NFS volumes
+- `kubernetes.io/aws-ebs`：AWS EBS Volumes
+- `kubernetes.io/gce-pd`：GCE Persistent Disks
+- `kubernetes.io/azure-disk`：Azure Disks
+- `kubernetes.io/azure-file`：Azure File
+- `kubernetes.io/cinder`：OpenStack Cinder Volumes
+- `kubernetes.io/glusterfs`：GlusterFS Volumes
+- `kubernetes.io/rbd`：Ceph RBD Volumes
+- `kubernetes.io/nfs`：NFS Volumes
 
-### Volume Binding Modes
+### Volume 绑定模式
 
-Storage classes 支持以下 volume binding modes：
+Storage Classes 支持以下 Volume 绑定模式：
 
-- **Immediate**: 默认值，创建 PVC 时立即预置 volumes。
-- **WaitForFirstConsumer**: 延迟 volume 预置，直到某个 Pod 尝试使用该 PVC。这有助于确保 volumes 与 Pods 位于同一区域。
+- **Immediate**：默认模式，创建 PVC 时立即预配 Volumes。
+- **WaitForFirstConsumer**：延迟 Volume 预配，直到 Pod 尝试使用 PVC。这有助于确保 Volumes 在与 Pods 相同的可用区中预配。
 
-### Default Storage Class
+### 默认 Storage Class
 
-可以为 cluster 设置默认 storage class。如果 PVC 中未指定 storage class，则会使用默认 storage class。
+可以为集群设置默认 Storage Class。如果 PVC 中未指定 Storage Class，则会使用默认 Storage Class。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -537,11 +454,11 @@ parameters:
   type: gp3
 ```
 
-## 动态供应
+## 动态预配
 
-动态供应是一项在创建 PVCs 时自动创建 PVs 的功能。这允许用户在需要时请求存储，而无需管理员预先创建 PVs。
+动态预配是一项在创建 PVC 时自动创建 PVs 的功能。这样，用户可以按需请求存储，而无需管理员预先创建 PVs。
 
-### 动态供应示例
+### 动态预配示例
 
 1. 创建 Storage Class：
 
@@ -592,33 +509,13 @@ spec:
         claimName: myclaim
 ```
 
-## Volume Snapshots（卷快照）
+## Volume Snapshots
 
-Kubernetes 支持 volume snapshots，用于创建 PVs 的时间点副本。这对备份和恢复场景很有用。
+Kubernetes 支持 Volume Snapshots，可创建 PVs 的时间点副本。这对于备份和恢复场景非常有用。
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| VSC[Volume Snapshot Class]
-    User[User] -->|Creates| VS[Volume Snapshot]
-    VS -->|References| VSC
-    VS -->|Creates Snapshot| PVC1[Existing PVC]
-    User -->|Creates| PVC2[New PVC]
-    PVC2 -->|Uses as Data Source| VS
-    PVC2 -->|Binds| PV2[New PV]
-    PV2 -->|Restores from Snapshot| Storage[(Physical Storage)]
+![Volume Snapshot 引用 Volume Snapshot Class 并捕获现有 PersistentVolumeClaim；使用该 Snapshot 作为数据源的新 PVC 会绑定到从该 Snapshot 恢复的新 PV。](../.gitbook/assets/en-core-04-storage-3.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Admin,User user;
-    class VSC,VS,PVC1,PVC2,PV2 k8sComponent;
-    class Storage storage;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-3.html)
 
 ### Volume Snapshot Class
 
@@ -664,31 +561,13 @@ spec:
       storage: 10Gi
 ```
 
-## Volume Expansion（卷扩容）
+## Volume 扩容
 
-Kubernetes 支持扩展 PVCs 大小的能力。为此，必须在 storage class 中设置 `allowVolumeExpansion: true`。
+Kubernetes 支持扩展 PVCs 的大小。为此，必须在 Storage Class 中设置 `allowVolumeExpansion: true`。
 
-```mermaid
-graph TD
-    User[User] -->|Request PVC Size Increase| PVC[Persistent Volume Claim]
-    PVC -->|Expansion Request| SC[Storage Class]
-    SC -->|Check allowVolumeExpansion: true| PV[Persistent Volume]
-    PV -->|Expand Volume Size| Storage[(Physical Storage)]
-    PV -->|Expand File System| Pod[Pod]
+![用户扩大 PersistentVolumeClaim 的请求会通过 StorageClass；它会检查 allowVolumeExpansion 是否已启用，之后 PersistentVolume 扩展底层磁盘和 Pod 的文件系统。](../.gitbook/assets/en-core-04-storage-4.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class User user;
-    class SC,PVC,PV k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-4.html)
 
 ### PVC 扩容
 
@@ -706,16 +585,16 @@ spec:
   storageClassName: standard
 ```
 
-## Projected Volumes（投射卷）
+## Projected Volumes
 
-Projected volumes 允许你将多个 volume sources 合并到一个 volume mount 中。当你需要在单个目录中一起暴露 secrets、configMaps、downwardAPI 和 serviceAccountToken 时，这很有用。
+Projected Volumes 允许将多个 Volume 源合并为单个 Volume 挂载。当需要在一个目录中同时公开 secrets、configMaps、downwardAPI 和 serviceAccountToken 时，这非常有用。
 
-### 支持的来源
+### 支持的源
 
-- **secret**: 挂载 secret 数据
-- **configMap**: 挂载配置数据
-- **downwardAPI**: 暴露 pod 和 container 元数据
-- **serviceAccountToken**: 挂载带有可配置过期时间的 service account tokens
+- **secret**：挂载 secret 数据
+- **configMap**：挂载配置数据
+- **downwardAPI**：公开 Pod 和容器元数据
+- **serviceAccountToken**：挂载具有可配置过期时间的 service account tokens
 
 ### Projected Volume 示例
 
@@ -764,15 +643,15 @@ spec:
           audience: api
 ```
 
-此配置会在 `/etc/projected` 创建一个单一 volume，其中包含：
+此配置会在 `/etc/projected` 创建一个包含以下内容的单个 Volume：
 - 来自 secret 的 `/etc/projected/db/username` 和 `/etc/projected/db/password`
 - 来自 configMap 的 `/etc/projected/config/app.yaml`
 - 来自 downwardAPI 的 `/etc/projected/labels` 和 `/etc/projected/cpu-request`
-- 位于 `/etc/projected/token` 的自动轮换 service account token
+- 包含自动轮换 service account token 的 `/etc/projected/token`
 
-### Service Account Token Projection
+### Service Account Token 投影
 
-Service account token projection 提供具有受限生命周期和 audience 的 tokens：
+Service account token 投影提供具有受限生命周期和 audience 的 tokens：
 
 ```yaml
 apiVersion: v1
@@ -797,22 +676,22 @@ spec:
           audience: my-api-service
 ```
 
-## Generic Ephemeral Volumes（通用临时卷）
+## 通用临时 Volumes
 
-Generic ephemeral volumes 提供类似 PVC 的存储，并与 pod 的生命周期绑定。与 emptyDir 不同，它们使用 PVCs 和 StorageClasses 的完整能力，包括动态供应。
+通用临时 Volumes 提供与 PVC 类似、且与 Pod 生命周期绑定的存储。与 emptyDir 不同，它们会使用 PVCs 和 StorageClasses 的完整功能，包括动态预配。
 
 ### 与 emptyDir 的差异
 
-| Feature | emptyDir | Generic Ephemeral Volume |
+| 特性 | emptyDir | 通用临时 Volume |
 |---------|----------|--------------------------|
-| **Storage backend** | Node 本地存储或内存 | 任意 CSI driver |
-| **Provisioning** | 自动、简单 | 使用 StorageClass，动态供应 |
-| **Size limits** | sizeLimit（软限制） | 完整 PVC 容量管理 |
+| **存储后端** | Node 本地存储或内存 | 任意 CSI driver |
+| **预配** | 自动、简单 | 使用 StorageClass、动态预配 |
+| **大小限制** | sizeLimit（软限制） | 完整 PVC 容量管理 |
 | **Snapshots** | 不支持 | 支持（如果 CSI driver 支持） |
-| **Storage features** | 基础 | 完整 CSI 功能（加密、IOPS 等） |
-| **Persistence** | pod 删除时丢失 | pod 删除时丢失 |
+| **存储功能** | 基础 | 完整 CSI 功能（加密、IOPS 等） |
+| **持久性** | Pod 删除时丢失 | Pod 删除时丢失 |
 
-### Generic Ephemeral Volume 示例
+### 通用临时 Volume 示例
 
 ```yaml
 apiVersion: v1
@@ -845,12 +724,12 @@ spec:
 
 ### 使用场景
 
-1. **CI/CD pipelines**: 具有有保证存储容量的临时构建产物
-2. **数据处理**: 具有特定性能要求的 scratch space
-3. **测试**: 具有 CSI 功能的临时数据库或缓存
-4. **机器学习**: 使用高性能存储的临时模型检查点
+1. **CI/CD pipelines**：具有保证存储容量的临时构建产物
+2. **数据处理**：具有特定性能要求的暂存空间
+3. **测试**：具有 CSI 功能的临时数据库或缓存
+4. **机器学习**：具有高性能存储的临时模型检查点
 
-### 使用 Generic Ephemeral Volumes 的 Deployment
+### 使用通用临时 Volumes 的 Deployment
 
 ```yaml
 apiVersion: apps/v1
@@ -886,21 +765,21 @@ spec:
                   storage: 50Gi
 ```
 
-## Block Volume Mode（块卷模式）
+## 块 Volume 模式
 
-除了 filesystem volumes 之外，Kubernetes 还支持 raw block volumes。Block volumes 会将存储呈现为没有文件系统的原始块设备，适用于自行管理数据布局的应用程序。
+除文件系统 Volumes 外，Kubernetes 还支持原始块 Volumes。块 Volumes 将存储呈现为不带文件系统的原始块设备，适用于自行管理数据布局的应用程序。
 
-### Filesystem vs Block Mode
+### 文件系统与块模式
 
-| Aspect | Filesystem (default) | Block |
+| 方面 | Filesystem（默认） | Block |
 |--------|---------------------|-------|
 | **volumeMode** | `Filesystem` | `Block` |
-| **Mount type** | 作为目录挂载 | 作为设备文件暴露 |
-| **Filesystem** | ext4、xfs 等 | 无（raw） |
-| **Access in pod** | `/mnt/data/` | `/dev/xvda` |
-| **Use case** | 通用应用程序 | 数据库、专用应用程序 |
+| **挂载类型** | 挂载为目录 | 公开为设备文件 |
+| **文件系统** | ext4、xfs 等 | 无（原始） |
+| **在 Pod 中的访问方式** | `/mnt/data/` | `/dev/xvda` |
+| **使用场景** | 通用应用程序 | 数据库、专用应用程序 |
 
-### Block Volume PV 和 PVC
+### 块 Volume PV 和 PVC
 
 ```yaml
 # PersistentVolume with Block mode
@@ -935,7 +814,7 @@ spec:
       storage: 100Gi
 ```
 
-### 在 Pods 中使用 Block Volumes
+### 在 Pods 中使用块 Volumes
 
 ```yaml
 apiVersion: v1
@@ -955,23 +834,23 @@ spec:
       claimName: block-pvc
 ```
 
-注意：Block volumes 使用 `volumeDevices` 和 `devicePath`，而不是 `volumeMounts` 和 `mountPath`。
+注意：块 Volumes 使用 `volumeDevices` 和 `devicePath`，而不是 `volumeMounts` 和 `mountPath`。
 
-### Block Volumes 的使用场景
+### 块 Volumes 的使用场景
 
-1. **数据库**: MySQL、PostgreSQL 或 MongoDB，它们可从原始磁盘访问中受益
-2. **自定义文件系统**: 使用 ZFS 或 LVM 等专用文件系统的应用程序
-3. **高性能存储**: 需要直接 I/O 且不希望有文件系统开销的应用程序
-4. **存储虚拟化**: 软件定义存储解决方案
+1. **数据库**：受益于原始磁盘访问的 MySQL、PostgreSQL 或 MongoDB
+2. **自定义文件系统**：使用 ZFS 或 LVM 等专用文件系统的应用程序
+3. **高性能存储**：需要直接 I/O 且不承受文件系统开销的应用程序
+4. **存储虚拟化**：软件定义存储解决方案
 
-## Volume Cloning（卷克隆）
+## Volume 克隆
 
-Volume cloning 会创建一个包含现有 PVC 内容的新 PVC。这对创建测试环境、复制数据或迁移工作负载很有用。
+Volume 克隆会使用现有 PVC 的内容创建新的 PVC。这对于创建测试环境、复制数据或迁移工作负载非常有用。
 
-### 先决条件
+### 前提条件
 
-- CSI driver 必须支持 volume cloning
-- 源 PVC 和目标 PVC 必须位于同一个 namespace
+- CSI driver 必须支持 Volume 克隆
+- 源 PVC 和目标 PVC 必须位于同一 namespace
 - 源和目标必须使用相同的 StorageClass
 - 源和目标必须具有相同的 volumeMode
 
@@ -1010,15 +889,15 @@ spec:
     name: source-pvc
 ```
 
-### 克隆 vs Snapshots
+### 克隆与 Snapshots 对比
 
-| Feature | Volume Cloning | Volume Snapshots |
+| 特性 | Volume 克隆 | Volume Snapshots |
 |---------|---------------|------------------|
-| **Result** | 带有数据的新 PVC | Snapshot 对象 |
-| **Use case** | 复制 live volume | 时间点备份 |
-| **Performance** | 可能较慢（完整复制） | 通常更快（copy-on-write） |
-| **Cross-namespace** | 否 | 否 |
-| **Storage overhead** | 完整副本 | 增量 |
+| **结果** | 包含数据的新 PVC | Snapshot 对象 |
+| **使用场景** | 复制活动 Volume | 时间点备份 |
+| **性能** | 可能较慢（完整复制） | 通常更快（copy-on-write） |
+| **跨 namespace** | 否 | 否 |
+| **存储开销** | 完整复制 | 增量 |
 
 ### 用于测试的克隆
 
@@ -1057,15 +936,15 @@ spec:
       claimName: test-db-clone
 ```
 
-## Storage ResourceQuota
+## 存储 ResourceQuota
 
-ResourceQuota 可以限制 namespace 内的存储消耗，包括 PVCs 数量和总存储容量。
+ResourceQuota 可以限制 namespace 内的存储消耗，包括 PVCs 的数量和总存储容量。
 
-### 与存储相关的 Quota 字段
+### 存储相关配额字段
 
-| Field | Description |
+| 字段 | 描述 |
 |-------|-------------|
-| **persistentvolumeclaims** | 允许的 PVCs 总数 |
+| **persistentvolumeclaims** | 允许的 PVC 总数 |
 | **requests.storage** | 所有 PVCs 的总存储容量 |
 | **\<storage-class\>.storageclass.storage.k8s.io/requests.storage** | 特定 StorageClass 的存储容量 |
 | **\<storage-class\>.storageclass.storage.k8s.io/persistentvolumeclaims** | 特定 StorageClass 的 PVC 数量 |
@@ -1108,7 +987,7 @@ status:
     requests.storage: "150Gi"
 ```
 
-### 存储的 LimitRange
+### 用于存储的 LimitRange
 
 LimitRange 可以为 PVC 存储请求设置默认值和限制值：
 
@@ -1129,52 +1008,22 @@ spec:
       storage: 10Gi
 ```
 
-这会确保：
+这可确保：
 - 最小 PVC 大小为 1Gi
 - 最大 PVC 大小为 100Gi
-- 默认大小（如果未指定）为 10Gi
+- 默认大小（未指定时）为 10Gi
 
 ## EKS 中的存储选项
 
-Amazon EKS 中提供了多种存储选项。每种选项都有不同的使用场景和性能特征，因此为应用程序需求选择合适的存储非常重要。
+Amazon EKS 提供多种存储选项。每种选项的使用场景和性能特征各不相同，因此为应用程序的需求选择合适的存储非常重要。
 
-```mermaid
-graph TD
-    EKS["Amazon EKS"] --> EBS["Amazon EBS"]
-    EKS --> EFS["Amazon EFS"]
-    EKS --> FSx["Amazon FSx for Lustre"]
+![Amazon EKS Pods 使用来自 EBS 的块存储、来自 EFS 的共享文件存储以及来自 FSx for Lustre 的高性能并行存储；每种存储均通过各自的 CSI driver、StorageClass 和 PersistentVolume 进行预配。](../.gitbook/assets/en-core-04-storage-5.png)
 
-    EBS --> EBS_CSI["EBS CSI Driver"]
-    EFS --> EFS_CSI["EFS CSI Driver"]
-    FSx --> FSx_CSI["FSx CSI Driver"]
-
-    EBS_CSI --> EBS_SC["EBS Storage Class"]
-    EFS_CSI --> EFS_SC["EFS Storage Class"]
-    FSx_CSI --> FSx_SC["FSx Storage Class"]
-
-    EBS_SC --> EBS_PV["EBS Persistent Volume"]
-    EFS_SC --> EFS_PV["EFS Persistent Volume"]
-    FSx_SC --> FSx_PV["FSx Persistent Volume"]
-
-    EBS_PV --> Pod1["Pod (RWO)"]
-    EFS_PV --> Pod2["Pod (RWX)"]
-    FSx_PV --> Pod3["Pod (RWX, High Performance)"]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    %% Apply classes
-    class EKS,EBS_CSI,EFS_CSI,FSx_CSI,EBS_SC,EFS_SC,FSx_SC,EBS_PV,EFS_PV,FSx_PV k8sComponent
-    class Pod1,Pod2,Pod3 userApp
-    class EBS,EFS,FSx awsService
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-5.html)
 
 ### Amazon EBS
 
-Amazon EBS (Elastic Block Store) 提供可附加到 EC2 instances 的 block storage volumes。在 EKS 中，你可以使用 EBS CSI driver 将 EBS volumes 挂载到 Kubernetes Pods。
+Amazon EBS (Elastic Block Store) 提供可附加到 EC2 instances 的块存储 Volumes。在 EKS 中，可以使用 EBS CSI driver 将 EBS Volumes 挂载到 Kubernetes Pods。
 
 #### EBS CSI Driver 安装
 
@@ -1199,15 +1048,15 @@ volumeBindingMode: WaitForFirstConsumer
 
 #### EBS Volume 类型
 
-Amazon EBS 提供多种 volume 类型：
+Amazon EBS 提供多种 Volume 类型：
 
-1. **gp3**: 适用于大多数 workloads 的通用 SSD volumes。提供基线 3,000 IOPS 和 125MB/s 吞吐量，并可通过额外成本扩展到最高 16,000 IOPS 和 1,000MB/s。
+1. **gp3**：适用于大多数工作负载的通用 SSD Volumes。提供基准 3,000 IOPS 和 125MB/s 吞吐量，额外付费后可扩展到 16,000 IOPS 和 1,000MB/s。
 
-2. **io2**: 适用于需要高 IOPS 的 workloads 的高性能 SSD volumes。每 GiB 最多提供 500 IOPS，并可扩展到最高 64,000 IOPS。
+2. **io2**：适用于需要高 IOPS 工作负载的高性能 SSD Volumes。每 GiB 最多可提供 500 IOPS，并可扩展至 64,000 IOPS。
 
-3. **st1**: 吞吐优化型 HDD volumes，适用于大数据、数据仓库和日志处理等吞吐密集型 workloads。
+3. **st1**：针对吞吐量优化的 HDD Volumes，适用于大数据、数据仓库和日志处理等吞吐量密集型工作负载。
 
-4. **sc1**: 冷 HDD volumes，适用于不常访问的数据。
+4. **sc1**：适用于不经常访问数据的冷 HDD Volumes。
 
 #### EBS Storage Class 示例 (gp3)
 
@@ -1243,7 +1092,7 @@ volumeBindingMode: WaitForFirstConsumer
 
 ### Amazon EFS
 
-Amazon EFS (Elastic File System) 提供可由多个 EC2 instances 同时访问的可扩展文件存储。EFS 支持 ReadWriteMany access mode，因此当多个 Pods 需要共享同一个 volume 时非常有用。
+Amazon EFS (Elastic File System) 提供可由多个 EC2 instances 同时访问的可扩展文件存储。EFS 支持 ReadWriteMany 访问模式，因此在多个 Pods 需要共享同一个 Volume 时非常有用。
 
 #### EFS CSI Driver 安装
 
@@ -1253,7 +1102,7 @@ kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernete
 
 #### 创建 EFS File System
 
-要创建 EFS file system，你可以使用 AWS Management Console、AWS CLI 或 AWS CloudFormation。
+要创建 EFS file system，可以使用 AWS Management Console、AWS CLI 或 AWS CloudFormation。
 
 AWS CLI 示例：
 
@@ -1292,7 +1141,7 @@ parameters:
   directoryPerms: "700"
 ```
 
-#### 使用 PV 和 PVC 的 EFS Access Point
+#### 带有 PV 和 PVC 的 EFS Access Point
 
 ```yaml
 # Persistent Volume
@@ -1326,27 +1175,27 @@ spec:
       storage: 5Gi
 ```
 
-#### EFS Performance Modes
+#### EFS 性能模式
 
-EFS 提供两种 performance modes：
+EFS 提供两种性能模式：
 
-1. **General Purpose**: 默认模式，推荐用于大多数 file system workloads。提供低延迟。
+1. **General Purpose**：推荐用于大多数 file system 工作负载的默认模式。提供低延迟。
 
-2. **Max I/O**: 适用于需要高吞吐量和并行处理的 workloads。延迟略高，但提供更高吞吐量。
+2. **Max I/O**：适用于需要高吞吐量和并行处理的工作负载。延迟略高，但可提供更高吞吐量。
 
-#### EFS Throughput Modes
+#### EFS 吞吐量模式
 
-EFS 提供三种 throughput modes：
+EFS 提供三种吞吐量模式：
 
-1. **Bursting**: 基础吞吐量根据 file system 大小分配，burst credits 可临时提供更高吞吐量。
+1. **Bursting**：根据 file system 大小分配基础吞吐量，突增积分可在短时间内提供更高吞吐量。
 
-2. **Provisioned**: 无论 file system 大小如何，都提供指定吞吐量。
+2. **Provisioned**：无论 file system 大小如何，均提供指定的吞吐量。
 
-3. **Elastic**: 根据 workload 自动上下扩展吞吐量。
+3. **Elastic**：根据工作负载自动扩展或缩减吞吐量。
 
 ### Amazon FSx for Lustre
 
-Amazon FSx for Lustre 为高性能计算 workloads 提供高性能 file systems。FSx for Lustre 适用于大规模数据处理、机器学习和分析 workloads。
+Amazon FSx for Lustre 为高性能计算工作负载提供高性能 file systems。FSx for Lustre 适用于大规模数据处理、机器学习和分析工作负载。
 
 #### FSx for Lustre CSI Driver 安装
 
@@ -1386,30 +1235,30 @@ parameters:
   weeklyMaintenanceStartTime: "7:09:00"
 ```
 
-#### FSx for Lustre Deployment Types
+#### FSx for Lustre 部署类型
 
-FSx for Lustre 提供三种 deployment types：
+FSx for Lustre 提供三种部署类型：
 
-1. **SCRATCH_1**: 临时存储和短期处理的最便宜选项。没有数据复制，因此持久性较低。
+1. **SCRATCH_1**：用于临时存储和短期处理的最低成本选项。没有数据复制，因此持久性较低。
 
-2. **SCRATCH_2**: 相比 SCRATCH_1 提供更高的 burst throughput，并在服务器故障时自动恢复数据。
+2. **SCRATCH_2**：比 SCRATCH_1 提供更高的突增吞吐量，并会在服务器故障时自动恢复数据。
 
-3. **PERSISTENT**: 适用于需要长期存储和吞吐量的 workloads。提供数据复制和自动恢复。
+3. **PERSISTENT**：适用于需要长期存储和吞吐量的工作负载。提供数据复制和自动恢复。
 
 #### FSx for Lustre 存储容量和吞吐量
 
-FSx for Lustre 存储容量和吞吐量配置如下：
+FSx for Lustre 的存储容量和吞吐量配置如下：
 
-- **Storage Capacity**: 最低从 1.2 TiB 开始，以 2.4 TiB 为增量增加。
-- **Throughput**: 由 deployment type 和 storage capacity 决定。
-  - SCRATCH_2: 每 TiB 存储 200 MB/s 或 1,000 MB/s
-  - PERSISTENT: 每 TiB 存储 50 MB/s、100 MB/s 或 200 MB/s
+- **存储容量**：最小为 1.2 TiB，以 2.4 TiB 为增量增加。
+- **吞吐量**：由部署类型和存储容量决定。
+  - SCRATCH_2：每 TiB 存储 200 MB/s 或 1,000 MB/s
+  - PERSISTENT：每 TiB 存储 50 MB/s、100 MB/s 或 200 MB/s
 
-### vLLM Workloads 的 FSx for Lustre 配置
+### 用于 vLLM 工作负载的 FSx for Lustre 配置
 
-像 vLLM (Vector Language Model) 这样的大规模 AI model workloads 需要高吞吐量和低延迟的存储。FSx for Lustre 是满足这些要求的理想解决方案。
+vLLM (Vector Language Model) 等大规模 AI 模型工作负载需要高吞吐量和低延迟的存储。FSx for Lustre 是满足这些要求的理想解决方案。
 
-#### vLLM 的 FSx for Lustre Storage Class
+#### 用于 vLLM 的 FSx for Lustre Storage Class
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1428,7 +1277,7 @@ reclaimPolicy: Retain
 volumeBindingMode: Immediate
 ```
 
-#### vLLM Workloads 的 PVC
+#### 用于 vLLM 工作负载的 PVC
 
 ```yaml
 apiVersion: v1
@@ -1484,61 +1333,61 @@ spec:
 
 #### vLLM 性能优化提示
 
-1. **选择合适的吞吐量**: 对于 vLLM workloads，建议选择每 TiB 至少 200 MB/s 的吞吐量。
+1. **选择合适的吞吐量**：对于 vLLM 工作负载，建议选择每 TiB 至少 200 MB/s 的吞吐量。
 
-2. **优化存储容量**: 考虑模型大小和数据集大小，分配足够的存储容量。
+2. **优化存储容量**：根据模型大小和数据集大小分配充足的存储容量。
 
-3. **网络优化**: 确保 FSx for Lustre file system 和 EKS nodes 位于同一个 availability zone。
+3. **网络优化**：确保 FSx for Lustre file system 和 EKS Nodes 位于同一可用区。
 
-4. **Instance Type 选择**: 使用 GPU instances（例如 g5.12xlarge）来优化 vLLM workload 性能。
+4. **Instance 类型选择**：使用 GPU instances（例如 g5.12xlarge）来优化 vLLM 工作负载性能。
 
-5. **内存配置**: 根据模型大小分配足够的内存。
+5. **内存配置**：根据模型大小分配足够的内存。
 
-6. **File System 挂载选项**: 使用合适的 mount options 以获得最佳性能。
+6. **File System 挂载选项**：使用合适的挂载选项以获得最佳性能。
 
    ```bash
    mount -t lustre -o noatime,flock fs-1234abcd.fsx.us-west-2.amazonaws.com@tcp:/fsx /mnt/fsx
    ```
 
-### 存储选项比较
+### 存储选项对比
 
-| Storage Option | Access Mode | Use Case | Performance | Cost | Scalability |
+| 存储选项 | 访问模式 | 使用场景 | 性能 | 成本 | 可扩展性 |
 |---------------|-------------|----------|-------------|------|-------------|
-| Amazon EBS | ReadWriteOnce | 单个 Pod 的 block storage | 中-高 | 中 | 有限（单个 Node） |
-| Amazon EFS | ReadWriteMany | 多个 Pods 共享的 file storage | 中 | 中-高 | 高（多个 Nodes） |
-| Amazon FSx for Lustre | ReadWriteMany | HPC、ML、分析 | 非常高 | 高 | 非常高（并行访问） |
+| Amazon EBS | ReadWriteOnce | 单个 Pod 的块存储 | 中高 | 中等 | 有限（单个 Node） |
+| Amazon EFS | ReadWriteMany | 多个 Pods 共享的文件存储 | 中等 | 中高 | 高（多个 Nodes） |
+| Amazon FSx for Lustre | ReadWriteMany | HPC、ML、分析 | 极高 | 高 | 极高（并行访问） |
 
 ### EKS 存储选择指南
 
-1. **需要单个 Pod 的 block storage 时**: Amazon EBS
+1. **需要单个 Pod 的块存储时**：Amazon EBS
    - 数据库
-   - 有状态应用程序
-   - 在单个 node 上运行的 workloads
+   - Stateful 应用程序
+   - 在单个 Node 上运行的工作负载
 
-2. **需要多个 Pods 共享的 file storage 时**: Amazon EFS
+2. **需要多个 Pods 共享的文件存储时**：Amazon EFS
    - Web server 内容
    - 共享配置文件
    - 中等规模数据处理
 
-3. **需要高性能 file storage 时**: Amazon FSx for Lustre
+3. **需要高性能文件存储时**：Amazon FSx for Lustre
    - 大规模数据处理
-   - 机器学习和 AI workloads（vLLM 等）
+   - 机器学习和 AI 工作负载（vLLM 等）
    - 高性能计算 (HPC)
    - 大数据分析
 
 ## 总结
 
-在本章中，我们学习了 Kubernetes 存储概念。Volumes 为 Pod 中的容器提供了存储和共享数据的方式，而 Persistent Volumes 和 Persistent Volume Claims 提供了生命周期独立于 Pods 的存储。Storage Classes 通过动态供应让用户能够在需要时请求存储。
+本章学习了 Kubernetes 存储概念。Volumes 为 Pod 内的容器提供了存储和共享数据的方式，而 Persistent Volumes 和 Persistent Volume Claims 则提供了生命周期独立于 Pods 的存储。Storage Classes 让用户能够通过动态预配按需请求存储。
 
-在 EKS 中，有多种存储选项可用，包括 Amazon EBS、Amazon EFS 和 Amazon FSx for Lustre，每种选项都有不同的使用场景和性能特征。对于像 vLLM 这样的大规模 AI model workloads，FSx for Lustre 凭借其高吞吐量和低延迟，是一个理想选择。FSx for Lustre 是一个并行 file system，允许从多个 nodes 同时访问数据，因此适合大规模模型训练和推理任务。
+在 EKS 中，Amazon EBS、Amazon EFS 和 Amazon FSx for Lustre 等提供了多种存储选项，每种选项都有不同的使用场景和性能特征。对于 vLLM 等大规模 AI 模型工作负载，具有高吞吐量和低延迟的 FSx for Lustre 是理想之选。FSx for Lustre 是并行 file system，允许多个 Nodes 同时访问数据，因此适合大规模模型训练和推理任务。
 
-为应用程序的需求选择合适的存储选项非常重要。当需要单个 Pod 的 block storage 时选择 Amazon EBS，当需要多个 Pods 共享的 file storage 时选择 Amazon EFS，当需要高性能 file storage 时选择 Amazon FSx for Lustre。
+为应用程序的需求选择合适的存储选项非常重要。当需要单个 Pod 的块存储时选择 Amazon EBS；需要多个 Pods 共享的文件存储时选择 Amazon EFS；需要高性能文件存储时选择 Amazon FSx for Lustre。
 
-在下一章中，我们将学习 Kubernetes 配置和 secrets。
+下一章将学习 Kubernetes 配置和 secrets。
 
 ## 测验
 
-要测试你在本章学到的内容，请尝试 [Storage 测验](../quizzes/core/04-storage-quiz.md)。
+要测试在本章中学到的内容，请尝试[存储测验](../quizzes/core/04-storage-quiz.md)。
 
 ## 参考资料
 
@@ -1549,5 +1398,5 @@ spec:
 - [AWS EBS CSI Driver](https://github.com/kubernetes-sigs/aws-ebs-csi-driver)
 - [AWS EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 - [AWS FSx for Lustre CSI Driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
-- [AWS Blog - Scaling your LLM inference workloads: Multi-node deployment with TensorRT-LLM and Triton on Amazon EKS](https://aws.amazon.com/ko/blogs/hpc/scaling-your-llm-inference-workloads-multi-node-deployment-with-tensorrt-llm-and-triton-on-amazon-eks/)
+- [AWS 博客 - 扩展 LLM 推理工作负载：在 Amazon EKS 上使用 TensorRT-LLM 和 Triton 进行多 Node 部署](https://aws.amazon.com/ko/blogs/hpc/scaling-your-llm-inference-workloads-multi-node-deployment-with-tensorrt-llm-and-triton-on-amazon-eks/)
 - [AWS Workshop - GenAI FSx EKS](https://catalog.workshops.aws/genaifsxeks/en-US/200-module2-genai/210-deploy)

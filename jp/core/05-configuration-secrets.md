@@ -1,19 +1,19 @@
-# Configuration and Secrets
+# 設定と Secret
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **サポート対象バージョン**: Kubernetes 1.32, 1.33, 1.34
 > **最終更新**: February 22, 2026
 
-Kubernetes において、configuration management は application settings を code から分離して管理するための重要な要素です。この章では、ConfigMaps、Secrets、environment variables、volumes を通じた configuration の mount など、Kubernetes configuration management の方法を詳しく見ていきます。
+Kubernetes では、設定管理はアプリケーション設定をコードから分離して管理するうえで重要な要素です。この章では、ConfigMap、Secret、環境変数、Volume を通じた設定のマウントなど、Kubernetes の設定管理方法を詳しく説明します。
 
-## Lab Environment Setup
+## Lab 環境のセットアップ
 
-このドキュメントの例を試すには、次のツールと環境が必要です。
+このドキュメントの例に沿って進めるには、次のツールと環境が必要です。
 
-### Required Tools
-- kubectl v1.34 以上
-- 稼働中の Kubernetes cluster（EKS、minikube、kind など）
+### 必要なツール
+- kubectl v1.34 以降
+- 動作する Kubernetes クラスター（EKS、minikube、kind など）
 
-### Configuration Example Setup
+### 設定例のセットアップ
 
 ```bash
 # Create namespace
@@ -60,88 +60,44 @@ EOF
 kubectl -n config-demo logs config-test-pod
 ```
 
-## Configuration Management at a Glance
+## 設定管理の概要
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Configuration Management"
-        subgraph "Configuration Sources"
-            Admin[Cluster Administrator]
-            GitOps[GitOps Pipeline]
-            ExtSys[External System]
+![クラスター管理者、GitOps パイプライン、外部システムが ConfigMap と Secret を作成し、Pod はそれらを環境変数、Volume マウント、image pull secret として使用します。また、高度な機能として ConfigMap は sidecar の自動リロードに、Secret は KSOPS 暗号化および Vault Injector の動的インジェクションに使用されます。](../.gitbook/assets/en-core-05-configuration-secrets-0.png)
 
-            Admin -->|Creates| CM[ConfigMap]
-            Admin -->|Creates| Secret[Secret]
-            GitOps -->|Automates| CM
-            GitOps -->|Automates| Secret
-            ExtSys -->|Integrates| CM
-            ExtSys -->|Integrates| Secret
-        end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-0.html)
 
-        subgraph "Configuration Consumption"
-            CM -->|Environment Variables| EnvPod[Pod]
-            Secret -->|Environment Variables| EnvPod
-
-            CM -->|Volume Mount| VolPod[Pod]
-            Secret -->|Volume Mount| VolPod
-
-            Secret -->|Image Pull Secret| ImgPod[Pod]
-
-            subgraph "Advanced Features"
-                CM -->|Auto Reload| Sidecar[Sidecar]
-                Secret -->|Encryption| KSOPS[KSOPS]
-                Secret -->|Dynamic Injection| Vault[Vault Injector]
-            end
-        end
-    end
-
-    %% Style definitions
-    classDef admin fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef config fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef advanced fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef integration fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Admin,GitOps,ExtSys admin;
-    class CM,Secret config;
-    class EnvPod,VolPod,ImgPod pod;
-    class Sidecar,KSOPS,Vault advanced;
-    class GitOps,ExtSys integration;
-```
-
-## Table of Contents
+## 目次
 
 1. [ConfigMap](#configmap)
 2. [Secret](#secret)
-3. [Environment Variables](#environment-variables)
-4. [Mounting Configuration Through Volumes](#mounting-configuration-through-volumes)
-5. [Configuration Best Practices](#configuration-best-practices)
-6. [External Configuration Management Tools](#external-configuration-management-tools)
+3. [環境変数](#environment-variables)
+4. [Volume を通じた設定のマウント](#mounting-configuration-through-volumes)
+5. [設定のベストプラクティス](#configuration-best-practices)
+6. [外部設定管理ツール](#external-configuration-management-tools)
 
 ## ConfigMap
 
-> **Key Concept**: ConfigMaps は configuration data を key-value pairs として保存し、application code と configuration を分離します。
+> **重要な概念**: ConfigMap は設定データをキーと値のペアで保存し、アプリケーションコードと設定を分離します。
 
-ConfigMaps は configuration data を key-value pairs として保存する API objects です。ConfigMaps を使用すると、configuration data を container images から分離できるため、applications の portability が高まります。
+ConfigMap は、設定データをキーと値のペアで保存する API オブジェクトです。ConfigMap を使用すると、設定データをコンテナイメージから分離でき、アプリケーションの可搬性が向上します。
 
-### ConfigMap vs Secret Comparison
+### ConfigMap と Secret の比較
 
-| Feature | ConfigMap | Secret |
+| 機能 | ConfigMap | Secret |
 |---------|-----------|--------|
-| **Purpose** | General configuration data | Sensitive configuration data |
-| **Storage Format** | Plain text | Base64 encoded (default) |
-| **Size Limit** | 1MB | 1MB |
-| **Encryption** | None by default | etcd encryption support |
-| **Volume Type** | configMap | secret |
-| **Use Cases** | Environment variables, config files | Passwords, tokens, certificates |
-| **Auto Update** | Possible delay when volume mounted | Possible delay when volume mounted |
+| **目的** | 一般的な設定データ | 機密性の高い設定データ |
+| **保存形式** | プレーンテキスト | Base64 エンコード（デフォルト） |
+| **サイズ上限** | 1MB | 1MB |
+| **暗号化** | デフォルトではなし | etcd 暗号化をサポート |
+| **Volume タイプ** | configMap | secret |
+| **ユースケース** | 環境変数、設定ファイル | パスワード、トークン、証明書 |
+| **自動更新** | Volume としてマウント時に遅延する可能性あり | Volume としてマウント時に遅延する可能性あり |
 
-### ConfigMap Creation Methods
+### ConfigMap の作成方法
 
-ConfigMaps はさまざまな方法で作成できます。
+ConfigMap はさまざまな方法で作成できます。
 
-1. **Imperative creation**:
+1. **命令型の作成**:
 
 ```bash
 # Create from literal values
@@ -154,7 +110,7 @@ kubectl create configmap my-config --from-file=config.properties
 kubectl create configmap my-config --from-file=config-dir/
 ```
 
-2. **Declarative creation**:
+2. **宣言型の作成**:
 
 ```yaml
 apiVersion: v1
@@ -176,11 +132,11 @@ data:
       enabled: true
 ```
 
-### ConfigMap Usage Methods
+### ConfigMap の使用方法
 
-ConfigMaps は次の方法で使用できます。
+ConfigMap は次の方法で使用できます。
 
-1. **Use as environment variables**:
+1. **環境変数として使用**:
 
 ```yaml
 apiVersion: v1
@@ -204,54 +160,15 @@ spec:
         name: my-config
 ```
 
-```mermaid
-flowchart TD
-    CM[ConfigMap] -->|Environment Variables| Pod1[Pod]
-    CM -->|Volume Mount| Pod2[Pod]
-    CM -->|Command Line Arguments| Pod3[Pod]
+![ConfigMap のキーと値のデータ（key1、key2、config.properties）は、環境変数、マウントされた Volume、コマンドライン引数という 3 つの方法で Pod により使用されます。環境変数のパスは env.key1/env.key2 に、Volume のパスはコンテナ内の /etc/config 配下のファイルに解決されます。](../.gitbook/assets/en-core-05-configuration-secrets-1.png)
 
-    subgraph "ConfigMap Data"
-        CMData1["key1: value1"]
-        CMData2["key2: value2"]
-        CMData3["config.properties: file contents"]
-    end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-1.html)
 
-    subgraph "Environment Variable Usage"
-        Env1["env.key1 = value1"]
-        Env2["env.key2 = value2"]
-    end
+### ConfigMap の作成
 
-    subgraph "Volume Mount Usage"
-        Vol1["/etc/config/key1"]
-        Vol2["/etc/config/key2"]
-        Vol3["/etc/config/config.properties"]
-    end
+ConfigMap はさまざまな方法で作成できます。
 
-    CM --- CMData1
-    CM --- CMData2
-    CM --- CMData3
-
-    Pod1 --- Env1
-    Pod1 --- Env2
-
-    Pod2 --- Vol1
-    Pod2 --- Vol2
-    Pod2 --- Vol3
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class CM k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-```
-
-### ConfigMap Creation
-
-ConfigMaps はさまざまな方法で作成できます。
-
-#### Imperative
+#### 命令型
 
 ```bash
 # Create from literal values
@@ -264,7 +181,7 @@ kubectl create configmap my-config --from-file=config.properties
 kubectl create configmap my-config --from-file=config-dir/
 ```
 
-#### Declarative
+#### 宣言型
 
 ```yaml
 apiVersion: v1
@@ -287,11 +204,11 @@ data:
     }
 ```
 
-### ConfigMap Usage
+### ConfigMap の使用
 
-ConfigMaps は Pods で次の方法で使用できます。
+ConfigMap は Pod 内で次の方法により使用できます。
 
-#### Use as Environment Variables
+#### 環境変数として使用
 
 ```yaml
 apiVersion: v1
@@ -317,7 +234,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Mount as Volume
+#### Volume としてマウント
 
 ```yaml
 apiVersion: v1
@@ -339,7 +256,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Mount Only Specific Keys
+#### 特定のキーのみをマウント
 
 ```yaml
 apiVersion: v1
@@ -364,9 +281,9 @@ spec:
   restartPolicy: Never
 ```
 
-### ConfigMap Updates
+### ConfigMap の更新
 
-ConfigMap が更新されると、volume として mount された ConfigMap の内容は自動的に更新されます。ただし、environment variables として使用されている ConfigMaps を更新するには Pod の restart が必要です。
+ConfigMap が更新されると、Volume としてマウントされた ConfigMap の内容は自動的に更新されます。ただし、環境変数として使用された ConfigMap を更新するには Pod の再起動が必要です。
 
 ```bash
 kubectl edit configmap my-config
@@ -390,63 +307,30 @@ kubectl apply -f updated-configmap.yaml
 
 ## Secret
 
-Secrets は、passwords、OAuth tokens、SSH keys などの sensitive information を保存する API objects です。Secrets は ConfigMaps に似ていますが、sensitive data を保存するための追加の security features を提供します。
+Secret は、パスワード、OAuth トークン、SSH キーなどの機密情報を保存する API オブジェクトです。Secret は ConfigMap と似ていますが、機密データの保存に追加のセキュリティ機能を提供します。
 
-```mermaid
-graph LR
-    Secret[Secret] -->|Environment Variables| Pod1[Pod]
-    Secret -->|Volume Mount| Pod2[Pod]
-    Secret -->|Image Pull Secret| Pod3[Pod]
+![Kubernetes Secret のサポートタイプ（Opaque、TLS、dockerconfigjson、basic-auth）、その Base64 エンコードとオプションの etcd 暗号化ストレージ、そして Pod が環境変数、マウントされた Volume、image pull secret として使用する 3 つの方法を示しています。](../.gitbook/assets/en-core-05-configuration-secrets-2.png)
 
-    subgraph "Secret Types"
-        ST1["Opaque (Default)"]
-        ST2["kubernetes.io/tls"]
-        ST3["kubernetes.io/dockerconfigjson"]
-        ST4["kubernetes.io/basic-auth"]
-    end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-2.html)
 
-    subgraph "Storage Method"
-        Store1["base64 encoding"]
-        Store2["etcd encryption (optional)"]
-    end
+### Secret のタイプ
 
-    Secret --- ST1
-    Secret --- ST2
-    Secret --- ST3
-    Secret --- ST4
+Kubernetes はさまざまなタイプの Secret を提供しています。
 
-    Secret --- Store1
-    Secret --- Store2
+- **Opaque**: デフォルトタイプで、任意のユーザー定義データを保存します。
+- **kubernetes.io/service-account-token**: ServiceAccount トークンを保存します。
+- **kubernetes.io/dockercfg**: `.dockercfg` ファイルのシリアライズ形式を保存します。
+- **kubernetes.io/dockerconfigjson**: `.docker/config.json` ファイルのシリアライズ形式を保存します。
+- **kubernetes.io/basic-auth**: Basic 認証の認証情報を保存します。
+- **kubernetes.io/ssh-auth**: SSH 認証の認証情報を保存します。
+- **kubernetes.io/tls**: TLS 証明書とキーを保存します。
+- **bootstrap.kubernetes.io/token**: Bootstrap トークンデータを保存します。
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+### Secret の作成
 
-    %% Apply classes
-    class Secret k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-    class Store1,Store2 dataStore;
-```
+Secret はさまざまな方法で作成できます。
 
-### Secret Types
-
-Kubernetes はさまざまな types の secrets を提供します。
-
-- **Opaque**: default type で、任意の user-defined data を保存します。
-- **kubernetes.io/service-account-token**: service account tokens を保存します。
-- **kubernetes.io/dockercfg**: `.dockercfg` file の serialized form を保存します。
-- **kubernetes.io/dockerconfigjson**: `.docker/config.json` file の serialized form を保存します。
-- **kubernetes.io/basic-auth**: basic authentication の credentials を保存します。
-- **kubernetes.io/ssh-auth**: SSH authentication の credentials を保存します。
-- **kubernetes.io/tls**: TLS certificates と keys を保存します。
-- **bootstrap.kubernetes.io/token**: bootstrap token data を保存します。
-
-### Secret Creation
-
-Secrets はさまざまな方法で作成できます。
-
-#### Imperative
+#### 命令型
 
 ```bash
 # Create from literal values
@@ -466,7 +350,7 @@ kubectl create secret docker-registry my-registry-secret \
   --docker-email=DOCKER_EMAIL
 ```
 
-#### Declarative
+#### 宣言型
 
 ```yaml
 apiVersion: v1
@@ -480,7 +364,7 @@ data:
   password: c2VjcmV0  # secret
 ```
 
-または、`stringData` field を使用して unencoded values を指定できます。
+または、`stringData` フィールドを使用してエンコードされていない値を指定できます。
 
 ```yaml
 apiVersion: v1
@@ -494,11 +378,11 @@ stringData:
   password: secret
 ```
 
-### Secret Usage
+### Secret の使用
 
-Secrets は Pods で次の方法で使用できます。
+Secret は Pod 内で次の方法により使用できます。
 
-#### Use as Environment Variables
+#### 環境変数として使用
 
 ```yaml
 apiVersion: v1
@@ -524,7 +408,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Mount as Volume
+#### Volume としてマウント
 
 ```yaml
 apiVersion: v1
@@ -546,7 +430,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Image Pull Secrets
+#### Image Pull Secret
 
 ```yaml
 apiVersion: v1
@@ -561,16 +445,16 @@ spec:
   - name: my-registry-secret
 ```
 
-### Secret Security Considerations
+### Secret のセキュリティに関する考慮事項
 
-Secrets は default で base64 encoded されますが、これは encryption ではありません。secret security を強化するには、次の方法を検討してください。
+Secret はデフォルトで Base64 エンコードされていますが、これは暗号化ではありません。Secret のセキュリティを強化するには、次の方法を検討してください。
 
-1. **etcd Encryption**: etcd に保存される secrets を encrypt します。
-2. **RBAC**: secrets への access を制限します。
-3. **Network Policies**: secrets に access できる Pods を制限します。
-4. **External Secret Management Tools**: AWS Secrets Manager、HashiCorp Vault などの external secret management tools を使用します。
+1. **etcd 暗号化**: etcd に保存される Secret を暗号化します。
+2. **RBAC**: Secret へのアクセスを制限します。
+3. **NetworkPolicy**: Secret にアクセスできる Pod を制限します。
+4. **外部 Secret 管理ツール**: AWS Secrets Manager、HashiCorp Vault などの外部 Secret 管理ツールを使用します。
 
-#### etcd Encryption Configuration
+#### etcd 暗号化の設定
 
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
@@ -586,40 +470,15 @@ resources:
     - identity: {}
 ```
 
-## Environment Variables
+## 環境変数
 
-Environment variables は configuration information を containers に渡すための簡単な方法です。Kubernetes は environment variables を設定するための複数の方法を提供しています。
+環境変数は、設定情報をコンテナに渡すシンプルな方法です。Kubernetes は環境変数を設定する複数の方法を提供しています。
 
-```mermaid
-graph TD
-    Pod[Pod] -->|Contains| Container[Container]
+![Kubernetes が Container の環境変数を設定できる 4 つのソース、すなわち直接指定する静的値、ConfigMap のキーまたは完全な envFrom 参照、Secret のキーまたは完全な envFrom 参照、そして Downward API のフィールドまたはリソース参照を示しています。](../.gitbook/assets/en-core-05-configuration-secrets-3.png)
 
-    subgraph "Environment Variable Sources"
-        Direct["Direct Setting"]
-        CM["ConfigMap"]
-        Secret["Secret"]
-        DownAPI["Downward API"]
-    end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-3.html)
 
-    Direct -->|env| Container
-    CM -->|valueFrom.configMapKeyRef| Container
-    CM -->|envFrom.configMapRef| Container
-    Secret -->|valueFrom.secretKeyRef| Container
-    Secret -->|envFrom.secretRef| Container
-    DownAPI -->|valueFrom.fieldRef| Container
-    DownAPI -->|valueFrom.resourceFieldRef| Container
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pod,Container userApp;
-    class CM,Secret,DownAPI k8sComponent;
-    class Direct k8sComponent;
-```
-
-### Direct Setting
+### 直接設定
 
 ```yaml
 apiVersion: v1
@@ -639,7 +498,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Setting from ConfigMap
+### ConfigMap から設定
 
 ```yaml
 apiVersion: v1
@@ -660,7 +519,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Setting from Secret
+### Secret から設定
 
 ```yaml
 apiVersion: v1
@@ -681,9 +540,9 @@ spec:
   restartPolicy: Never
 ```
 
-### Setting through Downward API
+### Downward API を通じた設定
 
-Downward API を使用すると、Pod と container の information を environment variables として公開できます。
+Downward API を使用すると、Pod とコンテナの情報を環境変数として公開できます。
 
 ```yaml
 apiVersion: v1
@@ -722,45 +581,13 @@ spec:
   restartPolicy: Never
 ```
 
-## Mounting Configuration Through Volumes
+## Volume を通じた設定のマウント
 
-Configuration files を volumes を通じて containers に mount すると、environment variables よりも柔軟な configuration management method を提供できます。
+Volume を通じて設定ファイルをコンテナにマウントする方法は、環境変数よりも柔軟な設定管理方法を提供します。
 
-```mermaid
-graph TD
-    Pod[Pod] -->|Contains| Container[Container]
-    Pod -->|Defines| Volumes[Volumes]
-    Container -->|Mounts| VolumeMounts[Volume Mounts]
-    VolumeMounts -->|References| Volumes
+![Pod は ConfigMap または Secret をバックエンドとする Volume を定義し、その Container はそれらの Volume を参照する Volume Mount を介してマウントします。完全な Volume マウント、特定のキーのみ（items）、読み取り専用（readOnly）、subPath マウントという 4 つのマウントオプションがあります。](../.gitbook/assets/en-core-05-configuration-secrets-4.png)
 
-    subgraph "Volume Sources"
-        CM["ConfigMap"]
-        Secret["Secret"]
-    end
-
-    Volumes -->|configMap| CM
-    Volumes -->|secret| Secret
-
-    subgraph "Mount Options"
-        MO1["Full Volume Mount"]
-        MO2["Mount Specific Keys Only"]
-        MO3["Read-only Mount"]
-        MO4["SubPath Mount"]
-    end
-
-    VolumeMounts --- MO1
-    VolumeMounts --- MO2
-    VolumeMounts --- MO3
-    VolumeMounts --- MO4
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pod,Container userApp;
-    class Volumes,VolumeMounts,CM,Secret k8sComponent;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-4.html)
 
 ### ConfigMap Volume
 
@@ -806,7 +633,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Specific File Mount
+### 特定ファイルのマウント
 
 ```yaml
 apiVersion: v1
@@ -831,7 +658,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Read-only Mount
+### 読み取り専用マウント
 
 ```yaml
 apiVersion: v1
@@ -854,7 +681,7 @@ spec:
   restartPolicy: Never
 ```
 
-### SubPath Mount
+### SubPath マウント
 
 ```yaml
 apiVersion: v1
@@ -877,17 +704,17 @@ spec:
   restartPolicy: Never
 ```
 
-## Configuration Best Practices
+## 設定のベストプラクティス
 
-Kubernetes で configuration を管理するときは、次の best practices を考慮してください。
+Kubernetes で設定を管理するときは、次のベストプラクティスを検討してください。
 
-### 1. Separate Configuration from Code
+### 1. 設定をコードから分離する
 
-Application code と configuration は分離して管理します。これにより、configuration を変更するときに application を rebuild する必要がなくなります。
+アプリケーションコードと設定を別々に管理します。これにより、設定変更時にアプリケーションを再ビルドする必要がなくなります。
 
-### 2. Environment-Specific Configuration Management
+### 2. 環境別の設定管理
 
-Development、testing、production など、environment ごとに configuration を分離して管理します。namespaces を使用して environments を分離し、environment ごとに異なる ConfigMaps と Secrets を使用できます。
+開発、テスト、本番など、異なる環境の設定を別々に管理します。namespace を使用して環境を分離し、環境ごとに異なる ConfigMap と Secret を使用できます。
 
 ```yaml
 apiVersion: v1
@@ -909,13 +736,13 @@ data:
   log_level: INFO
 ```
 
-### 3. Use Secrets for Sensitive Information
+### 3. 機密情報には Secret を使用する
 
-Passwords、API keys、certificates などの sensitive information を保存する場合は、常に Secrets を使用してください。ConfigMaps は non-sensitive configuration data のみに使用してください。
+パスワード、API キー、証明書などの機密情報を保存するには、常に Secret を使用してください。ConfigMap は機密でない設定データにのみ使用します。
 
-### 4. Maintain Immutability
+### 4. イミュータビリティを維持する
 
-Configuration を変更するときは、既存のものを変更するのではなく、新しい version を作成します。これにより rollback が容易になり、configuration change history を tracking できます。
+設定を変更する場合は、既存のものを変更するのではなく新しいバージョンを作成します。これによりロールバックが容易になり、設定変更履歴を追跡できます。
 
 ```yaml
 apiVersion: v1
@@ -933,90 +760,35 @@ data:
   # Updated configuration data
 ```
 
-### 5. Restart Pods on Configuration Changes
+### 5. 設定変更時に Pod を再起動する
 
-Environment variables として使用されている configuration を更新するには Pod の restart が必要です。Deployments を使用して rolling updates を実行します。
+環境変数として使用する設定を更新するには、Pod の再起動が必要です。Deployment を使用してローリングアップデートを実行してください。
 
 ```bash
 kubectl rollout restart deployment/my-deployment
 ```
 
-### 6. Validate Configuration
+### 6. 設定を検証する
 
-Configuration を適用する前に validate してください。無効な configuration は application failures を引き起こす可能性があります。
+適用する前に設定を検証します。無効な設定はアプリケーションの障害を引き起こす可能性があります。
 
-### 7. Document Configuration
+### 7. 設定を文書化する
 
-Configuration options とその effects を document します。これにより、team members が configuration を理解し管理しやすくなります。
+設定オプションとその影響を文書化します。これはチームメンバーが設定を理解し、管理するのに役立ちます。
 
-## Configuration Management in Amazon EKS
+## Amazon EKS における設定管理
 
-Amazon EKS では、Kubernetes の基本的な configuration management features に加えて、AWS のさまざまな services を使用して configuration と secrets を管理できます。この section では、EKS で configuration を管理するさまざまな方法と AWS services との integration を扱います。
+Amazon EKS では、Kubernetes の基本的な設定管理機能に加えて、AWS のさまざまなサービスを使用し、設定と Secret を管理できます。このセクションでは、EKS で設定を管理するさまざまな方法と AWS サービスとの統合について説明します。
 
-```mermaid
-graph TD
-    EKS[Amazon EKS] -->|Uses| K8s[Kubernetes Configuration]
-    EKS -->|Integrates| AWS[AWS Services]
+![Amazon EKS クラスターでは、ネイティブ Kubernetes ConfigMap と Secret を使用するとともに、AWS Secrets Manager、Parameter Store、AppConfig、KMS、IAM と統合します。External Secrets Operator、ASCP、IRSA、ACK などの統合ツールは Secret を作成またはマウントし、KMS で暗号化して、Pod にスコープを限定した IAM 権限を付与します。](../.gitbook/assets/en-core-05-configuration-secrets-5.png)
 
-    subgraph "Kubernetes Configuration"
-        CM["ConfigMap"]
-        Secret["Secret"]
-    end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-5.html)
 
-    subgraph "AWS Services"
-        SM["AWS Secrets Manager"]
-        PS["AWS Parameter Store"]
-        AC["AWS AppConfig"]
-        KMS["AWS KMS"]
-        IAM["AWS IAM"]
-    end
+### AWS Secrets Manager との統合
 
-    subgraph "Integration Tools"
-        ESO["External Secrets Operator"]
-        ASCP["AWS Secrets and Configuration Provider"]
-        IRSA["IAM Roles for Service Accounts"]
-        ACK["AWS Controllers for Kubernetes"]
-    end
+AWS Secrets Manager は、データベース認証情報、API キー、その他の機密情報を安全に保存および管理できるサービスです。EKS では、External Secrets Operator または AWS Secrets and Configuration Provider（ASCP）を使用して、AWS Secrets Manager の Secret を Kubernetes Secret に同期できます。
 
-    K8s --- CM
-    K8s --- Secret
-
-    AWS --- SM
-    AWS --- PS
-    AWS --- AC
-    AWS --- KMS
-    AWS --- IAM
-
-    SM -->|Integrates| ESO
-    PS -->|Integrates| ASCP
-    IAM -->|Integrates| IRSA
-    AWS -->|Integrates| ACK
-
-    ESO -->|Creates| Secret
-    ASCP -->|Mounts| Secret
-    IRSA -->|Grants Permissions| Pod[Pod]
-    ACK -->|Manages| AWS
-
-    KMS -->|Encrypts| Secret
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef integrationTool fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class EKS,K8s,CM,Secret k8sComponent;
-    class Pod userApp;
-    class AWS,SM,PS,AC,KMS,IAM awsService;
-    class ESO,ASCP,IRSA,ACK integrationTool;
-```
-
-### AWS Secrets Manager Integration
-
-AWS Secrets Manager は、database credentials、API keys、その他の secret information を secure に保存および管理できる service です。EKS では、External Secrets Operator または AWS Secrets and Configuration Provider (ASCP) を使用して、AWS Secrets Manager から Kubernetes secrets へ secrets を synchronize できます。
-
-#### External Secrets Operator Installation
+#### External Secrets Operator のインストール
 
 ```bash
 # Install External Secrets Operator using Helm
@@ -1026,7 +798,7 @@ helm install external-secrets external-secrets/external-secrets \
   --create-namespace
 ```
 
-#### Create SecretStore
+#### SecretStore を作成する
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -1045,7 +817,7 @@ spec:
             name: my-serviceaccount
 ```
 
-#### Create ExternalSecret
+#### ExternalSecret を作成する
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -1071,9 +843,9 @@ spec:
       property: password
 ```
 
-#### IRSA (IAM Roles for Service Accounts) Setup
+#### IRSA（IAM Roles for Service Accounts）のセットアップ
 
-External Secrets Operator が AWS Secrets Manager に access するには、適切な IAM permissions が必要です。IRSA を使用して IAM roles を Kubernetes service accounts に関連付けることができます。
+External Secrets Operator には AWS Secrets Manager にアクセスするための適切な IAM 権限が必要です。IRSA を使用して、IAM ロールを Kubernetes ServiceAccount に関連付けられます。
 
 ```bash
 # Create OIDC provider
@@ -1090,11 +862,11 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### Using AWS Parameter Store
+### AWS Parameter Store の使用
 
-AWS Systems Manager Parameter Store は、configuration data と secret values を階層的に保存および管理できる service です。Parameter Store は Secrets Manager よりも低コストで、simple configuration values の保存に適しています。
+AWS Systems Manager Parameter Store は、設定データと Secret 値を階層的に保存および管理できるサービスです。Parameter Store は Secrets Manager より低コストで、シンプルな設定値の保存に適しています。
 
-#### ASCP (AWS Secrets and Configuration Provider) Installation
+#### ASCP（AWS Secrets and Configuration Provider）のインストール
 
 ```bash
 # Install ASCP
@@ -1106,7 +878,7 @@ helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver
 kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
 ```
 
-#### Create SecretProviderClass
+#### SecretProviderClass を作成する
 
 ```yaml
 apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -1124,7 +896,7 @@ spec:
         objectType: ssmparameter
 ```
 
-#### Using Parameter Store Values in Pods
+#### Pod で Parameter Store の値を使用する
 
 ```yaml
 apiVersion: v1
@@ -1149,11 +921,11 @@ spec:
         secretProviderClass: aws-parameters
 ```
 
-### Dynamic Configuration with AWS AppConfig
+### AWS AppConfig による動的設定
 
-AWS AppConfig は application configuration を管理および deploy する service です。AppConfig を使用すると、applications を redeploy せずに configuration を dynamically update できます。
+AWS AppConfig はアプリケーション設定を管理およびデプロイするサービスです。AppConfig を使用すると、アプリケーションを再デプロイせずに設定を動的に更新できます。
 
-#### AppConfig Agent Sidecar Pattern
+#### AppConfig Agent の Sidecar パターン
 
 ```yaml
 apiVersion: apps/v1
@@ -1199,9 +971,9 @@ spec:
         emptyDir: {}
 ```
 
-### Configuration with EKS Fargate Profiles
+### EKS Fargate Profile による設定
 
-EKS Fargate を使用すると、nodes を管理せずに Kubernetes Pods を実行できます。Fargate profiles を使用して Pod execution environment を configure できます。
+EKS Fargate を使用すると、ノードを管理せずに Kubernetes Pod を実行できます。Fargate Profile を使用して Pod 実行環境を設定できます。
 
 ```yaml
 apiVersion: eks.amazonaws.com/v1beta1
@@ -1221,11 +993,11 @@ spec:
   - subnet-0abcdef1234567890
 ```
 
-### Secret Encryption with AWS KMS
+### AWS KMS による Secret の暗号化
 
-Kubernetes secrets は default で base64 encoded されますが、これは encryption ではありません。AWS KMS (Key Management Service) を使用して EKS cluster 内の secrets を encrypt できます。
+Kubernetes Secret はデフォルトで Base64 エンコードされますが、これは暗号化ではありません。AWS KMS（Key Management Service）を使用して、EKS クラスターの Secret を暗号化できます。
 
-#### Create KMS Key
+#### KMS キーを作成する
 
 ```bash
 # Create KMS key
@@ -1238,7 +1010,7 @@ KEY_ID=$(aws kms create-key --query KeyMetadata.KeyId --output text)
 aws kms create-alias --alias-name alias/eks-secrets --target-key-id $KEY_ID
 ```
 
-#### Apply Encryption Configuration to EKS Cluster
+#### EKS クラスターに暗号化設定を適用する
 
 ```bash
 # Apply encryption configuration
@@ -1247,11 +1019,11 @@ aws eks update-cluster-config \
   --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:us-west-2:123456789012:key/'$KEY_ID'"}}]'
 ```
 
-### Secret Access Control with AWS IAM
+### AWS IAM による Secret アクセス制御
 
-IRSA (IAM Roles for Service Accounts) を使用して IAM roles を Kubernetes service accounts に関連付けることで、Pods は AWS services に secure に access できます。
+IRSA（IAM Roles for Service Accounts）を使用して IAM ロールを Kubernetes ServiceAccount に関連付けると、Pod は AWS サービスに安全にアクセスできます。
 
-#### Create Service Account
+#### ServiceAccount を作成する
 
 ```yaml
 apiVersion: v1
@@ -1263,7 +1035,7 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-iam-role
 ```
 
-#### Using Service Account in Pods
+#### Pod で ServiceAccount を使用する
 
 ```yaml
 apiVersion: v1
@@ -1278,31 +1050,31 @@ spec:
     image: my-app:latest
 ```
 
-### EKS Configuration Best Practices
+### EKS 設定のベストプラクティス
 
-EKS で configuration を管理するときは、次の best practices を考慮してください。
+EKS で設定を管理するときは、次のベストプラクティスを検討してください。
 
-1. **Use IRSA**: AWS services に access するときは、Pods に minimum permissions を付与するために常に IRSA を使用してください。
+1. **IRSA を使用する**: AWS サービスにアクセスする際は、常に IRSA を使用して Pod に最小限の権限を付与します。
 
-2. **Encrypt Secrets**: EKS cluster 内の secrets を encrypt するために KMS を使用します。
+2. **Secret を暗号化する**: KMS を使用して EKS クラスター内の Secret を暗号化します。
 
-3. **External Secret Management**: Sensitive information を管理するために、AWS Secrets Manager や Parameter Store などの external secret management services を使用します。
+3. **外部 Secret 管理**: AWS Secrets Manager や Parameter Store などの外部 Secret 管理サービスを使用して機密情報を管理します。
 
-4. **Configuration Version Management**: Configuration versions を管理するために AWS AppConfig または Parameter Store を使用します。
+4. **設定のバージョン管理**: AWS AppConfig または Parameter Store を使用して設定バージョンを管理します。
 
-5. **Environment-Specific Configuration Separation**: Development、testing、production environments ごとに configuration を分離して管理します。Kubernetes namespaces と AWS resource tags を使用します。
+5. **環境別の設定分離**: 開発、テスト、本番環境の設定を別々に管理します。Kubernetes namespace と AWS リソースタグを使用します。
 
-6. **Minimize IAM Policies**: AWS services に access するときは least privilege の原則に従います。
+6. **IAM ポリシーを最小化する**: AWS サービスへアクセスする際は、最小権限の原則に従います。
 
-7. **Configuration Automation**: Configuration management を automate するために、AWS CloudFormation、AWS CDK、Terraform などの tools を使用します。
+7. **設定の自動化**: AWS CloudFormation、AWS CDK、Terraform などのツールを使用して設定管理を自動化します。
 
-### EKS Configuration Management Tools
+### EKS 設定管理ツール
 
-EKS で configuration を管理するのに役立つ tools を見てみましょう。
+EKS で設定を管理するのに役立つツールを見ていきましょう。
 
-#### AWS Controllers for Kubernetes (ACK)
+#### AWS Controllers for Kubernetes（ACK）
 
-ACK は、Kubernetes から AWS resources を管理できる tool です。ACK を使用すると、Kubernetes manifests を通じて AWS resources を作成および管理できます。
+ACK は Kubernetes から AWS リソースを管理できるツールです。ACK を使用すると、Kubernetes マニフェストを通じて AWS リソースを作成および管理できます。
 
 ```yaml
 apiVersion: secretsmanager.services.k8s.aws/v1alpha1
@@ -1322,7 +1094,7 @@ spec:
 
 #### eksctl
 
-eksctl は EKS clusters を作成および管理するための command-line tool です。eksctl を使用して cluster configuration を管理できます。
+eksctl は EKS クラスターを作成および管理するためのコマンドラインツールです。eksctl を使用してクラスター設定を管理できます。
 
 ```yaml
 # cluster.yaml
@@ -1341,7 +1113,7 @@ eksctl create cluster -f cluster.yaml
 
 #### AWS CDK
 
-AWS CDK (Cloud Development Kit) は、programming languages を使用して AWS resources を定義するための tool です。CDK を使用して EKS clusters と関連 resources を定義できます。
+AWS CDK（Cloud Development Kit）は、プログラミング言語を使用して AWS リソースを定義するためのツールです。CDK を使用して EKS クラスターと関連リソースを定義できます。
 
 ```typescript
 import * as cdk from 'aws-cdk-lib';
@@ -1369,33 +1141,33 @@ serviceAccount.role.addManagedPolicy(
 );
 ```
 
-## Conclusion
+## まとめ
 
-この章では、Kubernetes configuration management methods について学びました。ConfigMaps と Secrets は application configuration を管理するための基本的な方法を提供し、この configuration を environment variables と volumes を通じて containers に渡すことができます。また、configuration management best practices と external configuration management tools についても扱いました。
+この章では、Kubernetes の設定管理方法について学びました。ConfigMap と Secret はアプリケーション設定を管理する基本的な方法を提供し、この設定を環境変数と Volume を通じてコンテナに渡すことができます。また、設定管理のベストプラクティスと外部設定管理ツールについても説明しました。
 
-Amazon EKS environments では、Kubernetes の基本的な configuration management features と併せて AWS services を使用することで、より強力で secure な configuration management を実現できます。AWS Secrets Manager、Parameter Store、KMS、IAM などの services と integrate することで secrets を secure に管理でき、IRSA を通じて Pods に minimum permissions を付与できます。さらに、AWS AppConfig を使用すると、applications を redeploy せずに configuration を dynamically update できます。
+Amazon EKS 環境では、Kubernetes の基本的な設定管理機能と AWS サービスを併用することで、より強力で安全な設定管理を実現できます。AWS Secrets Manager、Parameter Store、KMS、IAM などのサービスと統合して Secret を安全に管理し、IRSA を通じて Pod に最小限の権限を付与できます。さらに、AWS AppConfig を使用すると、アプリケーションを再デプロイせずに設定を動的に更新できます。
 
-Effective configuration management は、Kubernetes applications の maintainability、scalability、security を向上させるために重要です。application の requirements に適した configuration management strategy を選択し、best practices に従うことが重要です。EKS environments では、AWS services との integration を通じて、より強力な configuration management solutions を構築できます。
+効果的な設定管理は、Kubernetes アプリケーションの保守性、スケーラビリティ、セキュリティを向上させるうえで重要です。アプリケーションの要件に適した設定管理戦略を選択し、ベストプラクティスに従うことが重要です。EKS 環境では、AWS サービスとの統合を通じて、より強力な設定管理ソリューションを構築できます。
 
-次の章では、Kubernetes security について学びます。
+次の章では、Kubernetes のセキュリティについて学びます。
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するには、[Configuration and Secrets Quiz](../quizzes/core/05-configuration-secrets-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[設定と Secret のクイズ](../quizzes/core/05-configuration-secrets-quiz.md)に挑戦してください。
 
-## References
+## 参考資料
 
-- [Kubernetes Official Documentation - ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)
-- [Kubernetes Official Documentation - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Kubernetes Official Documentation - Environment Variables](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/)
-- [Kubernetes Official Documentation - Configure a Pod to Use a ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
-- [Kubernetes Official Documentation - Distribute Credentials Securely Using Secrets](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/)
-- [Helm Official Documentation](https://helm.sh/docs/)
-- [Kustomize Official Documentation](https://kustomize.io/)
-- [External Secrets Operator Official Documentation](https://external-secrets.io/latest/)
-- [AWS Secrets Manager Official Documentation](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
-- [AWS Systems Manager Parameter Store Official Documentation](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
-- [AWS AppConfig Official Documentation](https://docs.aws.amazon.com/appconfig/latest/userguide/what-is-appconfig.html)
-- [EKS Official Documentation - IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [EKS Official Documentation - Secrets Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
-- [AWS Controllers for Kubernetes (ACK) Official Documentation](https://aws-controllers-k8s.github.io/community/)
+- [Kubernetes 公式ドキュメント - ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/)
+- [Kubernetes 公式ドキュメント - Secret](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [Kubernetes 公式ドキュメント - 環境変数](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/)
+- [Kubernetes 公式ドキュメント - ConfigMap を使用するよう Pod を設定する](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
+- [Kubernetes 公式ドキュメント - Secret を使用して認証情報を安全に配布する](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/)
+- [Helm 公式ドキュメント](https://helm.sh/docs/)
+- [Kustomize 公式ドキュメント](https://kustomize.io/)
+- [External Secrets Operator 公式ドキュメント](https://external-secrets.io/latest/)
+- [AWS Secrets Manager 公式ドキュメント](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
+- [AWS Systems Manager Parameter Store 公式ドキュメント](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
+- [AWS AppConfig 公式ドキュメント](https://docs.aws.amazon.com/appconfig/latest/userguide/what-is-appconfig.html)
+- [EKS 公式ドキュメント - IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+- [EKS 公式ドキュメント - Secret の暗号化](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
+- [AWS Controllers for Kubernetes（ACK）公式ドキュメント](https://aws-controllers-k8s.github.io/community/)
