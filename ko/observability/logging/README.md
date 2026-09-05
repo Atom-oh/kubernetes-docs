@@ -456,7 +456,7 @@ ClickHouse (자체 호스팅):
 
 ### 의사결정 플로우차트
 
-![기존 Grafana 스택 보유 여부, 전문 검색 필요성, AWS 네이티브 선호도, 분석 복잡성, 비용과 기능의 우선순위를 차례로 물어 Loki·OpenSearch·CloudWatch Logs 중 하나를 추천하는 로그 저장소 의사결정 플로우차트를 보여준다.](../../.gitbook/assets/ko-observability-logging-readme-1.png)
+![기존 Grafana 스택 보유 여부, 전문 검색 필요성, AWS 네이티브 선호도, 비용과 기능의 우선순위, 분석 복잡성, SQL 선호와 대규모 분석 여부를 차례로 물어 Loki, OpenSearch, ClickHouse, CloudWatch Logs 중 하나를 추천하는 로그 저장소 의사결정 플로우차트를 보여준다.](../../.gitbook/assets/ko-observability-logging-readme-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-readme-1.html)
 

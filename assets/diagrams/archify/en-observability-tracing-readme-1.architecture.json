@@ -16,7 +16,7 @@
           "label": "Service span"
         },
         "external": {
-          "label": "Total trace duration"
+          "label": "Critical-path duration"
         }
       }
     },
@@ -34,15 +34,15 @@
         "note": "The request enters at the API Gateway, fans out to User and Order, and Order calls Payment and Notification."
       },
       {
-        "id": "trace-total",
-        "label": "Summing durations",
+        "id": "critical-path",
+        "label": "Critical-path duration",
         "focus": [
-          "user",
+          "gateway",
+          "order",
           "payment",
-          "notification",
           "total"
         ],
-        "note": "The span durations combine into one trace totalling 500ms."
+        "note": "The longest chain — API Gateway → Order → Payment — sets the 650ms trace duration; sibling spans run in parallel and add nothing."
       }
     ]
   },
@@ -120,8 +120,8 @@
     {
       "id": "total",
       "type": "external",
-      "label": "Total duration",
-      "sublabel": "500ms",
+      "label": "Root span duration",
+      "sublabel": "650ms · critical path",
       "pos": [
         900,
         310
@@ -176,22 +176,22 @@
       "variant": "emphasis"
     },
     {
-      "id": "user-total",
-      "from": "user",
+      "id": "gw-total",
+      "from": "gateway",
       "to": "total",
-      "label": "sum durations",
+      "variant": "dashed"
+    },
+    {
+      "id": "order-total",
+      "from": "order",
+      "to": "total",
       "variant": "dashed"
     },
     {
       "id": "payment-total",
       "from": "payment",
       "to": "total",
-      "variant": "dashed"
-    },
-    {
-      "id": "notification-total",
-      "from": "notification",
-      "to": "total",
+      "label": "critical path",
       "variant": "dashed"
     }
   ]

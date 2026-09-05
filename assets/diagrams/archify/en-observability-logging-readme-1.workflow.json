@@ -25,10 +25,12 @@
           "q_grafana",
           "q_aws",
           "q_complex",
+          "q_sql",
           "cloudwatch",
+          "clickhouse",
           "opensearch"
         ],
-        "note": "Without Grafana, an AWS-native preference leads to analysis complexity: CloudWatch Logs for simple analysis, OpenSearch for complex."
+        "note": "Without Grafana, an AWS-native preference checks complexity: CloudWatch Logs if simple; if complex, ClickHouse for SQL, else OpenSearch."
       },
       {
         "id": "cost-path",
@@ -141,6 +143,15 @@
       "width": 176
     },
     {
+      "id": "q_sql",
+      "lane": "no",
+      "col": 4,
+      "type": "backend",
+      "label": "SQL-based analytics?",
+      "sublabel": "large-scale · yes / no",
+      "width": 176
+    },
+    {
       "id": "loki",
       "lane": "result",
       "col": 3,
@@ -160,11 +171,20 @@
     },
     {
       "id": "cloudwatch",
-      "lane": "result",
+      "lane": "aws",
       "col": 5,
       "type": "cloud",
       "label": "CloudWatch Logs",
       "sublabel": "AWS-native · simple operations",
+      "width": 176
+    },
+    {
+      "id": "clickhouse",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "ClickHouse",
+      "sublabel": "SQL queries · large-scale analytics",
       "width": 176
     }
   ],
@@ -229,10 +249,24 @@
       "role": "branch"
     },
     {
-      "id": "complex-opensearch",
+      "id": "complex-sql",
       "from": "q_complex",
-      "to": "opensearch",
+      "to": "q_sql",
       "label": "complex",
+      "role": "branch"
+    },
+    {
+      "id": "sql-clickhouse",
+      "from": "q_sql",
+      "to": "clickhouse",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "id": "sql-opensearch",
+      "from": "q_sql",
+      "to": "opensearch",
+      "label": "no",
       "role": "branch"
     },
     {

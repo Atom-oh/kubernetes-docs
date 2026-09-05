@@ -25,10 +25,12 @@
           "q_grafana",
           "q_aws",
           "q_complex",
+          "q_sql",
           "cloudwatch",
+          "clickhouse",
           "opensearch"
         ],
-        "note": "Grafana 스택이 없고 AWS 네이티브를 선호하면 분석 복잡성을 본다. 단순 분석은 CloudWatch Logs, 복잡한 분석은 OpenSearch가 적합하다."
+        "note": "Grafana 스택이 없고 AWS 네이티브를 선호하면 분석 복잡성을 본다. 단순 분석은 CloudWatch Logs, 복잡한 분석은 SQL 선호·대규모 분석이면 ClickHouse, 아니면 OpenSearch가 적합하다."
       },
       {
         "id": "cost-path",
@@ -140,6 +142,15 @@
       "width": 176
     },
     {
+      "id": "q_sql",
+      "lane": "no",
+      "col": 4,
+      "type": "backend",
+      "label": "SQL 선호 / 대규모 분석?",
+      "sublabel": "예 / 아니오",
+      "width": 176
+    },
+    {
       "id": "loki",
       "lane": "result",
       "col": 3,
@@ -159,11 +170,20 @@
     },
     {
       "id": "cloudwatch",
-      "lane": "result",
+      "lane": "aws",
       "col": 5,
       "type": "cloud",
       "label": "CloudWatch Logs",
       "sublabel": "AWS 네이티브 · 간편한 운영",
+      "width": 176
+    },
+    {
+      "id": "clickhouse",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "ClickHouse",
+      "sublabel": "SQL 쿼리 · 대규모 분석",
       "width": 176
     }
   ],
@@ -228,10 +248,24 @@
       "role": "branch"
     },
     {
-      "id": "complex-opensearch",
+      "id": "complex-sql",
       "from": "q_complex",
-      "to": "opensearch",
+      "to": "q_sql",
       "label": "복잡",
+      "role": "branch"
+    },
+    {
+      "id": "sql-clickhouse",
+      "from": "q_sql",
+      "to": "clickhouse",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "sql-opensearch",
+      "from": "q_sql",
+      "to": "opensearch",
+      "label": "아니오",
       "role": "branch"
     },
     {

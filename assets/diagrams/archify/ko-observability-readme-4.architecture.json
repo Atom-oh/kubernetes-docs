@@ -5,7 +5,21 @@
     "title": "계층별 관측성",
     "output": "ko-observability-readme-4.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "AWS 인프라 · 서비스"
+        },
+        "backend": {
+          "label": "클러스터 · 애플리케이션 계층"
+        },
+        "database": {
+          "label": "관측성 백엔드"
+        }
+      }
+    }
   },
   "components": [
     {

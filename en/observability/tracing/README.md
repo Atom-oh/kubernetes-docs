@@ -27,7 +27,7 @@ In microservices environments, traditional logging and metrics alone cannot answ
 
 A Trace represents the complete journey of a single request. It is the collection of all operations generated as a request passes through the system.
 
-![Architecture diagram showing one trace as the full journey of a single request from an API gateway through user, order, payment, and notification service spans, whose durations sum to a total of 500 milliseconds.](../../.gitbook/assets/en-observability-tracing-readme-1.png)
+![One trace as the full journey of a request from an API gateway into user, order, payment, and notification spans, where the longest chain of gateway, order and payment sets the 650 ms trace duration.](../../.gitbook/assets/en-observability-tracing-readme-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-1.html)
 

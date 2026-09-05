@@ -467,7 +467,7 @@ ClickHouse (self-hosted):
 
 ### Decision Flowchart
 
-![A decision flowchart for choosing a log storage backend that branches on an existing Grafana stack, need for full-text search, AWS-native preference, analysis complexity, and cost versus features, converging on Loki, OpenSearch, or CloudWatch Logs.](../../.gitbook/assets/en-observability-logging-readme-1.png)
+![A decision flowchart for choosing a log storage backend that branches on an existing Grafana stack, full-text search, AWS-native preference, cost versus features, analysis complexity, and SQL-based large-scale analytics, ending at Loki, OpenSearch, ClickHouse, or CloudWatch Logs.](../../.gitbook/assets/en-observability-logging-readme-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-readme-1.html)
 

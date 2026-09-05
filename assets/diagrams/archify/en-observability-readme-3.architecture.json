@@ -62,7 +62,6 @@
       "id": "auto",
       "type": "backend",
       "label": "Auto-instrumentation",
-      "sublabel": "auto-instrumentation",
       "pos": [
         290,
         120
@@ -76,7 +75,6 @@
       "id": "manual",
       "type": "backend",
       "label": "Manual instrumentation",
-      "sublabel": "manual instrumentation",
       "pos": [
         290,
         340

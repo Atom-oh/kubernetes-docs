@@ -27,7 +27,7 @@
 
 Trace는 단일 요청의 전체 여정을 나타냅니다. 하나의 요청이 시스템을 통과하면서 생성되는 모든 작업의 집합입니다.
 
-![API Gateway에서 시작한 하나의 요청이 User·Order·Payment·Notification 서비스로 분기되며 각 구간(Span)의 소요 시간이 합산되어 총 500ms의 Trace를 이루는 과정을 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-1.png)
+![API Gateway에서 시작한 하나의 요청이 User·Order·Payment·Notification 서비스 Span으로 갈라지고, 가장 긴 호출 사슬인 API Gateway→Order→Payment 임계 경로가 Trace 전체 소요 시간 650ms를 결정하는 과정을 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-1.html)
 
