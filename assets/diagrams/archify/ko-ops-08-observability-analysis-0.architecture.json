@@ -40,7 +40,24 @@
         ],
         "note": "Grafana가 세 저장소를 조회하고, exemplar와 trace_id로 메트릭·로그가 Tempo의 트레이스와 연결된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
   },
   "components": [
     {

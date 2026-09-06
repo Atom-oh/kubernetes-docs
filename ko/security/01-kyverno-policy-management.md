@@ -41,7 +41,9 @@ Kyverno는 Kubernetes 리소스로 정책을 정의하고 관리할 수 있는 �
 
 ### Kyverno 아키텍처 및 작동 방식
 
-![kyverno\_architecture](../.gitbook/assets/kyverno_architecture.svg)
+![사용자 요청이 Kubernetes API 서버와 Kyverno Admission Controller를 거쳐 정책 엔진에서 검증·변형·생성·정리 정책으로 평가되고, 백그라운드 스캐너와 보고서 컨트롤러가 기존 리소스를 검사해 PolicyReport로 남기는 Kyverno 아키텍처를 보여준다.](../.gitbook/assets/ko-security-01-kyverno-policy-management-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-01-kyverno-policy-management-0.html)
 
 ### Kyverno vs OPA Gatekeeper
 
@@ -184,7 +186,9 @@ EKS 클러스터에서 Kyverno를 활용하면 보안, 비용 최적화, 규정 
 
 다음 다이어그램은 EKS 클러스터에서 Kyverno가 어떻게 통합되어 작동하는지 보여줍니다:
 
-![eks\_kyverno\_integration](../.gitbook/assets/eks_kyverno_integration.svg)
+![EKS 클러스터에서 사용자/CI/CD 요청이 API 서버를 거쳐 Kyverno Admission Webhook과 컨트롤러로 전달되고, 정책 리포터가 정책 위반 사항을 CloudWatch로 전송하는 EKS와 Kyverno 통합 아키텍처를 보여준다.](../.gitbook/assets/ko-security-01-kyverno-policy-management-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-01-kyverno-policy-management-1.html)
 
 이 아키텍처에서 Kyverno는 EKS 클러스터 내에서 Admission Webhook으로 작동하여 API 서버로 들어오는 모든 요청을 가로채고 정의된 정책에 따라 처리합니다. 정책 위반 사항은 CloudWatch로 전송되어 모니터링 및 알림에 활용될 수 있습니다.
 
@@ -369,7 +373,9 @@ Kyverno는 정책을 테스트하고 검증하기 위한 도구를 제공합니�
 
 다음 다이어그램은 Kyverno 정책의 일반적인 개발 및 적용 워크플로우를 보여줍니다:
 
-![kyverno\_policy\_workflow](../.gitbook/assets/kyverno_policy_workflow.svg)
+![Kyverno 정책을 작성·테스트·검증한 뒤 Audit 모드로 배포해 위반 사항을 모니터링하고 영향을 평가하며, 준비가 끝나면 Enforce 모드로 전환해 메트릭을 모니터링하고 정기 검토에서 업데이트가 필요하면 정책 작성으로 되돌아가는 정책 적용 워크플로우를 보여준다.](../.gitbook/assets/ko-security-01-kyverno-policy-management-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-01-kyverno-policy-management-2.html)
 
 ### 정책 시뮬레이션
 

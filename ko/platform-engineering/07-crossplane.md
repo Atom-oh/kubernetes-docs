@@ -688,7 +688,7 @@ spec:
 
 Composition은 Crossplane의 가장 강력한 기능입니다. 플랫폼 엔지니어가 복잡한 인프라를 **단순한 API**로 추상화하여, 개발자가 클라우드 리소스의 세부 사항을 몰라도 인프라를 프로비저닝할 수 있게 합니다.
 
-![플랫폼 팀이 정의한 하나의 XRD 아래 dev/prod 두 Composition을 두고, 개발팀의 각 Claim이 compositionRef로 원하는 Composition을 참조해 RDS Instance, SecurityGroup, SubnetGroup 등 서로 다른 사양의 리소스 묶음이 자동 생성되는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-2.png)
+![플랫폼 팀이 정의한 하나의 XRD 아래 dev/prod 두 Composition을 두고, 개발팀의 각 Claim이 compositionRef로 원하는 Composition을 참조해 RDS Instance, SecurityGroup, SubnetGroup 등 서로 다른 사양의 리소스 묶음이 자동 생성되는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-07-crossplane-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-2.html)
 

@@ -2486,7 +2486,7 @@ kubectl get vpa -n data-production
 
 VPA 추천을 수동으로 적용하는 대신, CI/CD 파이프라인을 통해 추천값을 PR로 생성하고 리뷰 후 적용하는 자동화 워크플로우를 구축합니다.
 
-![자동 리소스 조정 파이프라인 시퀀스 다이어그램: 매주 실행되는 CronJob이 VPA 추천값을 조회하고, 라이트사이징 스크립트가 추천값을 현재 requests와 비교해 20% 이상 변경 건에 대해 PR을 생성한다. Git/CI가 린트 검증을 거쳐 팀 리더에게 리뷰를 요청하고, 승인·머지 후 ArgoCD가 머지된 매니페스트를 동기화한다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-2.png)
+![자동 리소스 조정 파이프라인 시퀀스 다이어그램: 매주 실행되는 CronJob이 VPA 추천값을 조회하고, 라이트사이징 스크립트가 추천값을 현재 requests와 비교해 20% 이상 변경 건에 대해 PR을 생성한다. Git/CI가 린트 검증을 거쳐 팀 리더에게 리뷰를 요청하고, 승인·머지 후 ArgoCD가 머지된 매니페스트를 동기화하는 흐름을 보여준다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-13-finops-cost-platform-2.html)
 

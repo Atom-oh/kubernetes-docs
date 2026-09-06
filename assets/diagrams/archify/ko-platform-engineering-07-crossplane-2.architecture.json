@@ -27,7 +27,7 @@
           "sg_a",
           "sub_a"
         ],
-        "note": "my-db Claim이 dev Composition을 참조해 t3.medium 사양의 리소스 묶음을 만든다."
+        "note": "my-db Claim이 dev Composition을 참조해 db.t3.medium · 20GB · Single-AZ 사양의 리소스 묶음을 만든다."
       },
       {
         "id": "prod-path",
@@ -39,7 +39,7 @@
           "sg_b",
           "sub_b"
         ],
-        "note": "order-db Claim이 prod Composition을 참조해 r6g.xlarge Multi-AZ 리소스 묶음을 만든다."
+        "note": "order-db Claim이 prod Composition을 참조해 db.r6g.xlarge · 100GB+ · Multi-AZ 리소스 묶음을 만든다."
       }
     ],
     "viewBox": [
@@ -80,13 +80,13 @@
       "id": "xrd",
       "type": "backend",
       "label": "XRD",
-      "sublabel": "CompositeResourceDefinition · API 스키마 정의",
+      "sublabel": "CompositeResourceDefinition · API 스키마",
       "pos": [
         420,
         225
       ],
       "size": [
-        240,
+        280,
         64
       ]
     },
@@ -94,13 +94,13 @@
       "id": "comp_dev",
       "type": "backend",
       "label": "Composition (dev)",
-      "sublabel": "t3.medium · 20GB · Single-AZ",
+      "sublabel": "db.t3.medium · 20GB · Single-AZ",
       "pos": [
         420,
         110
       ],
       "size": [
-        240,
+        280,
         64
       ]
     },
@@ -108,13 +108,13 @@
       "id": "comp_prod",
       "type": "backend",
       "label": "Composition (prod)",
-      "sublabel": "r6g.xlarge · 100GB · Multi-AZ · 암호화",
+      "sublabel": "db.r6g.xlarge · 100GB+ · Multi-AZ",
       "pos": [
         420,
         340
       ],
       "size": [
-        240,
+        280,
         64
       ]
     },
@@ -122,7 +122,7 @@
       "id": "rds_a",
       "type": "database",
       "label": "RDS Instance",
-      "sublabel": "t3.medium",
+      "sublabel": "db.t3.medium",
       "pos": [
         900,
         56
@@ -162,7 +162,7 @@
       "id": "rds_b",
       "type": "database",
       "label": "RDS Instance",
-      "sublabel": "r6g.xlarge",
+      "sublabel": "db.r6g.xlarge",
       "pos": [
         900,
         286

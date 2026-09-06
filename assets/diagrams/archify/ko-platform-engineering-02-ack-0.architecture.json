@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ACK 아키텍처",
+    "output": "ko-platform-engineering-02-ack-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "declare",
+        "label": "선언",
+        "focus": [
+          "user",
+          "cr"
+        ],
+        "note": "사용자가 YAML 매니페스트로 AWS 리소스를 Kubernetes 사용자 정의 리소스로 선언한다."
+      },
+      {
+        "id": "reconcile",
+        "label": "조정 루프",
+        "focus": [
+          "cr",
+          "controller",
+          "awsapi",
+          "awsres"
+        ],
+        "note": "컨트롤러가 CR 변경을 감지하고 AWS API를 호출해 실제 리소스를 생성, 업데이트, 삭제한다."
+      },
+      {
+        "id": "status",
+        "label": "상태 반영",
+        "focus": [
+          "awsapi",
+          "controller",
+          "cr"
+        ],
+        "note": "컨트롤러가 AWS 리소스 상태를 모니터링하여 Kubernetes 리소스 상태를 업데이트한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Kubernetes 사용자 / 운영자",
+      "sublabel": "kubectl apply",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cr",
+      "type": "backend",
+      "label": "Custom Resources",
+      "sublabel": "AWS 리소스 인스턴스",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "crd",
+      "type": "backend",
+      "label": "Custom Resource Definitions",
+      "sublabel": "AWS 리소스의 Kubernetes API 정의",
+      "pos": [
+        530,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "ACK 서비스 컨트롤러",
+      "sublabel": "AWS 서비스별 전용 컨트롤러",
+      "pos": [
+        540,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "awsapi",
+      "type": "cloud",
+      "label": "AWS API",
+      "sublabel": "서비스 API 호출",
+      "pos": [
+        920,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "awsres",
+      "type": "cloud",
+      "label": "AWS 리소스",
+      "sublabel": "S3, RDS, DynamoDB 등",
+      "pos": [
+        920,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "cr",
+        "crd",
+        "controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "awsapi",
+        "awsres"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apply-yaml",
+      "from": "user",
+      "to": "cr",
+      "label": "YAML 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "cr",
+      "to": "controller",
+      "label": "감시(Watch)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reconcile",
+      "from": "controller",
+      "to": "crd",
+      "label": "조정(Reconcile)",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "cud",
+      "from": "controller",
+      "to": "awsapi",
+      "label": "생성 / 업데이트 / 삭제",
+      "variant": "emphasis"
+    },
+    {
+      "id": "manage",
+      "from": "awsapi",
+      "to": "awsres",
+      "label": "관리",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 54
+    },
+    {
+      "id": "status",
+      "from": "awsapi",
+      "to": "controller",
+      "label": "상태 모니터링",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "주요 구성 요소",
+      "items": [
+        "서비스 컨트롤러: 각 AWS 서비스에 대한 전용 컨트롤러",
+        "CRD: AWS 리소스를 Kubernetes API로 정의",
+        "CR: AWS 리소스의 인스턴스",
+        "조정 루프: 원하는 상태와 실제 상태의 차이를 감지하고 해결"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "작동 방식",
+      "items": [
+        "1. 사용자가 YAML 매니페스트를 적용하여 AWS 리소스를 정의",
+        "2. ACK 컨트롤러가 CR 변경 사항을 감지",
+        "3. 컨트롤러가 AWS API를 호출하여 리소스를 생성, 업데이트, 삭제",
+        "4. 컨트롤러가 AWS 리소스 상태를 모니터링하고 Kubernetes 리소스 상태를 업데이트"
+      ]
+    }
+  ]
+}

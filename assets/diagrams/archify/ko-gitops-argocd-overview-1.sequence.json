@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ArgoCD 데이터 흐름 — Application 동기화 시퀀스",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1085,
+      660
+    ],
+    "views": [
+      {
+        "id": "request",
+        "label": "요청 접수",
+        "focus": [
+          "user",
+          "api",
+          "ctrl"
+        ],
+        "note": "사용자의 Application 생성/수정이 API Server를 거쳐 Application Controller에 이벤트로 전달된다."
+      },
+      {
+        "id": "render-compare",
+        "label": "렌더링과 비교",
+        "focus": [
+          "ctrl",
+          "repo",
+          "k8s"
+        ],
+        "note": "Repo Server가 Git 소스를 렌더링하고, 컨트롤러가 Kubernetes 라이브 상태와 차이를 비교한다."
+      },
+      {
+        "id": "sync",
+        "label": "동기화와 결과",
+        "focus": [
+          "ctrl",
+          "k8s",
+          "api",
+          "user"
+        ],
+        "note": "차이가 있으면 동기화를 적용하고 결과가 상태 업데이트로 사용자에게 돌아온다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "CLI / Web UI"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "gRPC/REST, 인증/인가"
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "App Controller",
+      "sublabel": "상태 모니터링·동기화"
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repo Server",
+      "sublabel": "매니페스트 렌더링"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "대상 클러스터"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 240,
+      "label": "요청"
+    },
+    {
+      "from": 255,
+      "to": 405,
+      "label": "렌더링 · 비교"
+    },
+    {
+      "from": 420,
+      "to": 575,
+      "label": "동기화 · 결과"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "user",
+      "to": "api",
+      "y": 190,
+      "label": "Application 생성/수정"
+    },
+    {
+      "id": "event",
+      "from": "api",
+      "to": "ctrl",
+      "y": 228,
+      "label": "이벤트"
+    },
+    {
+      "id": "manifest-req",
+      "from": "ctrl",
+      "to": "repo",
+      "y": 275,
+      "label": "매니페스트 요청"
+    },
+    {
+      "id": "rendered",
+      "from": "repo",
+      "to": "ctrl",
+      "y": 315,
+      "label": "렌더링 결과",
+      "variant": "return",
+      "note": "Git fetch 후 매니페스트 렌더링"
+    },
+    {
+      "id": "live-req",
+      "from": "ctrl",
+      "to": "k8s",
+      "y": 355,
+      "label": "현재 상태 조회"
+    },
+    {
+      "id": "live",
+      "from": "k8s",
+      "to": "ctrl",
+      "y": 393,
+      "label": "라이브 상태",
+      "variant": "return",
+      "note": "원하는 상태와 차이점 비교"
+    },
+    {
+      "id": "sync",
+      "from": "ctrl",
+      "to": "k8s",
+      "y": 445,
+      "label": "동기화 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "result",
+      "from": "k8s",
+      "to": "ctrl",
+      "y": 485,
+      "label": "결과",
+      "variant": "return"
+    },
+    {
+      "id": "status",
+      "from": "ctrl",
+      "to": "api",
+      "y": 525,
+      "label": "상태 업데이트"
+    },
+    {
+      "id": "done",
+      "from": "api",
+      "to": "user",
+      "y": 563,
+      "label": "동기화 완료",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 185,
+      "to": 568,
+      "type": "backend"
+    },
+    {
+      "participant": "ctrl",
+      "from": 223,
+      "to": 530,
+      "type": "backend"
+    },
+    {
+      "participant": "repo",
+      "from": 270,
+      "to": 320,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 350,
+      "to": 398,
+      "type": "cloud"
+    },
+    {
+      "participant": "k8s",
+      "from": 440,
+      "to": 490,
+      "type": "cloud"
+    }
+  ]
+}

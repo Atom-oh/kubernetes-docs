@@ -5,18 +5,94 @@
     "title": "컨테이너 레지스트리의 역할",
     "output": "ko-container-registry-readme-0.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "cicd", "type": "external", "label": "CI/CD 파이프라인", "sublabel": "Build · Test · Push", "pos": [40, 80], "size": [220, 72] },
-    { "id": "registry", "type": "database", "label": "컨테이너 레지스트리", "sublabel": "Store · Version · Scan", "pos": [400, 80], "size": [220, 72], "tag": "핵심 인프라" },
-    { "id": "cluster", "type": "cloud", "label": "Kubernetes 클러스터", "sublabel": "Pull · Run · Scale", "pos": [760, 80], "size": [220, 72] }
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI/CD 파이프라인",
+      "sublabel": "Build · Test · Push",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "컨테이너 레지스트리",
+      "sublabel": "Store · Version · Scan",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        220,
+        72
+      ],
+      "tag": "핵심 인프라"
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "Kubernetes 클러스터",
+      "sublabel": "Pull · Run · Scale",
+      "pos": [
+        760,
+        80
+      ],
+      "size": [
+        220,
+        72
+      ]
+    }
   ],
   "connections": [
-    { "id": "push", "from": "cicd", "to": "registry", "label": "이미지 push", "variant": "emphasis" },
-    { "id": "pull", "from": "registry", "to": "cluster", "label": "이미지 pull", "variant": "emphasis" }
+    {
+      "id": "push",
+      "from": "cicd",
+      "to": "registry",
+      "label": "이미지 push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pull",
+      "from": "registry",
+      "to": "cluster",
+      "label": "이미지 pull",
+      "variant": "emphasis"
+    }
   ],
   "cards": [
-    { "dot": "orange", "title": "레지스트리 핵심 기능", "items": ["이미지 저장: 컨테이너 이미지 레이어를 효율적으로 저장", "버전 관리: 태그를 통한 이미지 버전 관리", "접근 제어: 인증/인가를 통한 보안 관리", "취약점 스캐닝: 이미지 내 보안 취약점 탐지", "복제/미러링: 고가용성 및 지역 분산 배포"] }
+    {
+      "dot": "orange",
+      "title": "레지스트리 핵심 기능",
+      "items": [
+        "이미지 저장: 컨테이너 이미지 레이어를 효율적으로 저장",
+        "버전 관리: 태그를 통한 이미지 버전 관리",
+        "접근 제어: 인증/인가를 통한 보안 관리",
+        "취약점 스캐닝: 이미지 내 보안 취약점 탐지",
+        "복제/미러링: 고가용성 및 지역 분산 배포"
+      ]
+    }
   ]
 }

@@ -37,7 +37,21 @@
         ],
         "note": "발급된 인증서는 spec.secretName에 지정한 Secret에 tls.crt와 tls.key로 저장된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

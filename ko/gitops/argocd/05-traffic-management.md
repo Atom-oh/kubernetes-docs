@@ -213,7 +213,7 @@ kubectl argo rollouts retry rollout my-app-bluegreen -n production
 
 카나리 배포는 새 버전에 점진적으로 트래픽을 이동시켜 위험을 최소화합니다.
 
-![로드 밸런서가 클라이언트 요청을 분배하여 80%는 my-app-stable Service를 거쳐 안정 버전 v1.0.0 파드 4개로, 20%는 my-app-canary Service를 거쳐 카나리 버전 v2.0.0 파드 1개로 전달되는 구조를 보여주는 다이어그램입니다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-2.png)
+![로드 밸런서가 클라이언트 요청을 분배하여 80%는 my-app-stable Service를 거쳐 안정 버전 v1.0.0 파드 4개로, 20%는 my-app-canary Service를 거쳐 카나리 버전 v2.0.0 파드 1개로 전달되는 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-05-traffic-management-2.html)
 

@@ -41,7 +41,27 @@
         ],
         "note": "리스크 점수를 계산하고 심각도·우선순위를 매긴 뒤 -o 옵션에 따라 원하는 형식으로 출력한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "database": {
+          "label": "데이터"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

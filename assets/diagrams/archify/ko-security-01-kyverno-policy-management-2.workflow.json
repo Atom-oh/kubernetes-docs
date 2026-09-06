@@ -1,0 +1,302 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kyverno 정책 적용 워크플로우",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "develop",
+        "label": "정책 작성과 검증",
+        "focus": [
+          "author",
+          "test",
+          "validate",
+          "fix"
+        ],
+        "note": "정책을 작성하고 kyverno test로 검증하며, 실패하면 수정 후 다시 테스트한다."
+      },
+      {
+        "id": "audit",
+        "label": "Audit 모드 검증",
+        "focus": [
+          "validate",
+          "audit_deploy",
+          "monitor_violations",
+          "assess_impact",
+          "adjust"
+        ],
+        "note": "Audit 모드로 먼저 배포해 위반 사항을 관찰하고 영향을 평가한 뒤 필요하면 정책을 조정한다."
+      },
+      {
+        "id": "enforce",
+        "label": "Enforce 전환과 정기 검토",
+        "focus": [
+          "assess_impact",
+          "enforce",
+          "monitor_metrics",
+          "review",
+          "author"
+        ],
+        "note": "준비가 끝나면 Enforce 모드로 전환하고 메트릭을 모니터링하며, 정기 검토에서 업데이트가 필요하면 정책 작성으로 돌아간다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "dev",
+      "label": "정책 개발 · 테스트"
+    },
+    {
+      "id": "audit",
+      "label": "Audit 모드 배포"
+    },
+    {
+      "id": "ops",
+      "label": "Enforce 모드 운영"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p_dev",
+      "label": "작성 + 테스트",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "p_audit",
+      "label": "검증 + Audit 배포",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p_ops",
+      "label": "Enforce + 운영",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "author",
+    "test",
+    "validate",
+    "audit_deploy",
+    "monitor_violations",
+    "assess_impact",
+    "enforce",
+    "monitor_metrics",
+    "review"
+  ],
+  "nodes": [
+    {
+      "id": "author",
+      "lane": "dev",
+      "col": 0,
+      "type": "frontend",
+      "label": "정책 작성",
+      "sublabel": "ClusterPolicy YAML"
+    },
+    {
+      "id": "test",
+      "lane": "dev",
+      "col": 1,
+      "type": "backend",
+      "label": "정책 테스트",
+      "sublabel": "kyverno test"
+    },
+    {
+      "id": "validate",
+      "lane": "dev",
+      "col": 2,
+      "type": "security",
+      "label": "정책 검증",
+      "sublabel": "성공 → Audit 배포",
+      "tag": "결정"
+    },
+    {
+      "id": "audit_deploy",
+      "lane": "audit",
+      "col": 2,
+      "type": "cloud",
+      "label": "Audit 모드로 배포",
+      "sublabel": "차단 없이 기록",
+      "width": 136
+    },
+    {
+      "id": "monitor_violations",
+      "lane": "audit",
+      "col": 3,
+      "type": "backend",
+      "label": "위반 사항 모니터링",
+      "sublabel": "PolicyReport",
+      "width": 140
+    },
+    {
+      "id": "assess_impact",
+      "lane": "audit",
+      "col": 4,
+      "type": "security",
+      "label": "영향 평가",
+      "sublabel": "준비 완료 / 조정 필요",
+      "tag": "결정"
+    },
+    {
+      "id": "enforce",
+      "lane": "ops",
+      "col": 4,
+      "type": "cloud",
+      "label": "Enforce 모드로 전환",
+      "sublabel": "위반 요청 차단",
+      "width": 148
+    },
+    {
+      "id": "monitor_metrics",
+      "lane": "ops",
+      "col": 5,
+      "type": "backend",
+      "label": "메트릭 모니터링",
+      "sublabel": "Prometheus",
+      "width": 120
+    },
+    {
+      "id": "review",
+      "lane": "dev",
+      "col": 5,
+      "type": "security",
+      "label": "정기적인 정책 검토",
+      "sublabel": "업데이트 필요? 예 → 작성",
+      "tag": "결정",
+      "width": 140
+    },
+    {
+      "id": "fix",
+      "lane": "audit",
+      "col": 1,
+      "type": "messagebus",
+      "label": "정책 수정",
+      "sublabel": "검증 실패 시"
+    },
+    {
+      "id": "adjust",
+      "lane": "ops",
+      "col": 3,
+      "type": "messagebus",
+      "label": "정책 조정",
+      "sublabel": "영향 평가 후"
+    }
+  ],
+  "edges": [
+    {
+      "from": "author",
+      "to": "test"
+    },
+    {
+      "from": "test",
+      "to": "validate"
+    },
+    {
+      "from": "validate",
+      "to": "audit_deploy",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "audit_deploy",
+      "to": "monitor_violations"
+    },
+    {
+      "from": "monitor_violations",
+      "to": "assess_impact"
+    },
+    {
+      "from": "assess_impact",
+      "to": "enforce",
+      "label": "준비 완료",
+      "variant": "emphasis"
+    },
+    {
+      "from": "enforce",
+      "to": "monitor_metrics"
+    },
+    {
+      "from": "monitor_metrics",
+      "to": "review"
+    },
+    {
+      "from": "validate",
+      "to": "fix",
+      "label": "실패",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "fix",
+      "to": "test",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "assess_impact",
+      "to": "adjust",
+      "label": "조정 필요",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "adjust",
+      "to": "audit_deploy",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "review",
+      "to": "author",
+      "variant": "dashed",
+      "role": "return",
+      "route": "up-channel",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "from": "review",
+      "to": "monitor_metrics",
+      "label": "아니오",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "테스트와 검증",
+      "items": [
+        "kyverno test ./policy.yaml --resource=./resource.yaml 로 정책을 시뮬레이션",
+        "kubectl kyverno apply ./policy.yaml --cluster 로 클러스터 대상 검증",
+        "검증 실패 시 정책을 수정하고 다시 테스트"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Audit 모드 먼저",
+      "items": [
+        "Audit 모드는 위반을 기록만 하고 차단하지 않음",
+        "ClusterPolicyReport / PolicyReport 로 위반 사항 확인",
+        "영향 평가 후 준비가 끝나면 Enforce 모드로 전환"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "운영과 정기 검토",
+      "items": [
+        "Kyverno Prometheus 메트릭으로 정책 위반 모니터링",
+        "정기 검토에서 업데이트가 필요하면 정책 작성으로 복귀",
+        "업데이트가 필요 없으면 메트릭 모니터링을 계속"
+      ]
+    }
+  ]
+}

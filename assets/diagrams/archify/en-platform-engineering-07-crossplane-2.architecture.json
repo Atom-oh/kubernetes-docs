@@ -28,7 +28,7 @@
           "sg_a",
           "sub_a"
         ],
-        "note": "The my-db Claim references the dev Composition and gets a t3.medium resource bundle."
+        "note": "The my-db Claim references the dev Composition and gets a db.t4g.small, 50GB resource bundle."
       },
       {
         "id": "prod-path",
@@ -40,7 +40,7 @@
           "sg_b",
           "sub_b"
         ],
-        "note": "The order-db Claim references the prod Composition and gets an r6g.xlarge Multi-AZ bundle."
+        "note": "The order-db Claim references the prod Composition and gets a db.r6g.large, 200GB Multi-AZ bundle."
       }
     ],
     "viewBox": [
@@ -81,13 +81,13 @@
       "id": "xrd",
       "type": "backend",
       "label": "XRD",
-      "sublabel": "CompositeResourceDefinition · defines the API schema",
+      "sublabel": "CompositeResourceDefinition · API schema",
       "pos": [
         420,
         225
       ],
       "size": [
-        240,
+        280,
         64
       ]
     },
@@ -95,13 +95,13 @@
       "id": "comp_dev",
       "type": "backend",
       "label": "Composition (dev)",
-      "sublabel": "t3.medium · 20GB · Single-AZ",
+      "sublabel": "db.t4g.small · 50GB",
       "pos": [
         420,
         110
       ],
       "size": [
-        240,
+        280,
         64
       ]
     },
@@ -109,13 +109,13 @@
       "id": "comp_prod",
       "type": "backend",
       "label": "Composition (prod)",
-      "sublabel": "r6g.xlarge · 100GB · Multi-AZ · encrypted",
+      "sublabel": "db.r6g.large · 200GB · Multi-AZ",
       "pos": [
         420,
         340
       ],
       "size": [
-        240,
+        280,
         64
       ]
     },
@@ -123,7 +123,7 @@
       "id": "rds_a",
       "type": "database",
       "label": "RDS Instance",
-      "sublabel": "t3.medium",
+      "sublabel": "db.t4g.small",
       "pos": [
         900,
         56
@@ -163,7 +163,7 @@
       "id": "rds_b",
       "type": "database",
       "label": "RDS Instance",
-      "sublabel": "r6g.xlarge",
+      "sublabel": "db.r6g.large",
       "pos": [
         900,
         286

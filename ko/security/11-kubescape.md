@@ -526,7 +526,7 @@ Dangerous Role Bindings:
 
 ### 지속적 스캔 아키텍처
 
-![클러스터 안에서 CronJob이 Operator Controller를 트리거하면 Controller가 Configuration·Vulnerability·RBAC 스캐너를 실행해 Deployments·Pods·Services·Secrets·ServiceAccounts를 검사하고, Node Agent의 eBPF 이벤트도 Controller로 모인다. Controller는 스캔 결과를 CRD로 저장하고 Baseline과 비교하며, 결과는 Kubescape Cloud로 게시되고 변경 탐지 시 외부 Alerting과 SIEM/SOAR로 이어지는 구조.](../.gitbook/assets/ko-security-11-kubescape-2.png)
+![클러스터 안에서 CronJob이 Operator Controller를 트리거하면 Controller가 Configuration·Vulnerability·RBAC 스캐너를 실행해 Deployments·Pods·Services·Secrets·ServiceAccounts를 검사하고, Node Agent의 eBPF 이벤트도 Controller로 모인다. Controller는 스캔 결과를 CRD로 저장하고 Baseline과 비교하며, 결과는 Kubescape Cloud로 게시되고 변경 탐지 시 외부 Alerting과 SIEM/SOAR로 이어지는 구조를 보여준다.](../.gitbook/assets/ko-security-11-kubescape-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-2.html)
 
@@ -731,7 +731,7 @@ Priority 3 - Medium (Within 1 Week):
 
 ### CI/CD 워크플로우
 
-![Kubescape CI/CD 워크플로우: 코드 변경과 Git Commit이 CI 트리거를 거쳐 이미지 빌드, Kubescape 스캔(framework nsa, mitre)으로 이어지고, 보안 게이트의 임계값 검사에서 점수가 임계값 이하면 Pass 후 클러스터에 배포하며, 임계값을 초과하면 Fail로 배포를 차단(exit 1)하고 PR 코멘트 또는 알림을 발송한다.](../.gitbook/assets/ko-security-11-kubescape-3.png)
+![Kubescape CI/CD 워크플로우: 코드 변경과 Git Commit이 CI 트리거를 거쳐 이미지 빌드, Kubescape 스캔(framework nsa, mitre)으로 이어지고, 보안 게이트의 임계값 검사에서 점수가 임계값 이하면 Pass 후 클러스터에 배포하며, 임계값을 초과하면 Fail로 배포를 차단(exit 1)하고 PR 코멘트 또는 알림을 발송하는 흐름을 보여준다.](../.gitbook/assets/ko-security-11-kubescape-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-3.html)
 

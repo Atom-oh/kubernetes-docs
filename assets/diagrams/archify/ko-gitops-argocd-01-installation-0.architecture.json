@@ -38,7 +38,24 @@
         ],
         "note": "Master 1개, Replica 2개, Sentinel 3개로 구성되며 Sentinel이 장애를 감지해 자동 페일오버한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

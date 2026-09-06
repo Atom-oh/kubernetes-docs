@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Backstage Software Catalog Entity Model",
+    "title": "Software Catalog Entity Graph — payments example",
     "locale": "en",
     "output": "en-platform-engineering-06-backstage-idp-1.html",
     "quality_profile": "showcase",

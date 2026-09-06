@@ -7,41 +7,206 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "deploy-dark", "label": "배포와 릴리스 분리", "focus": ["deploy", "canary"], "note": "Feature Flag OFF 상태로 코드를 먼저 배포하고, 1% 카나리 트래픽으로 새 버전을 검증한다." },
-      { "id": "ring-rollout", "label": "링 기반 단계적 노출", "focus": ["ring1", "ring2", "ring3"], "note": "Flag를 켜서 내부 사용자 → 베타 사용자 10% → 전체 사용자 100% 순으로 기능을 노출한다." },
-      { "id": "cleanup", "label": "Flag 제거", "focus": ["ring3", "cleanup"], "note": "100% 롤아웃이 끝난 Flag는 코드에서 제거해 기술 부채를 해소한다." }
-    ]
+      {
+        "id": "deploy-dark",
+        "label": "배포와 릴리스 분리",
+        "focus": [
+          "deploy",
+          "canary"
+        ],
+        "note": "Feature Flag OFF 상태로 코드를 먼저 배포하고, 1% 카나리 트래픽으로 새 버전을 검증한다."
+      },
+      {
+        "id": "ring-rollout",
+        "label": "링 기반 단계적 노출",
+        "focus": [
+          "ring1",
+          "ring2",
+          "ring3"
+        ],
+        "note": "Flag를 켜서 내부 사용자 → 베타 사용자 10% → 전체 사용자 100% 순으로 기능을 노출한다."
+      },
+      {
+        "id": "cleanup",
+        "label": "Flag 제거",
+        "focus": [
+          "ring3",
+          "cleanup"
+        ],
+        "note": "100% 롤아웃이 끝난 Flag는 코드에서 제거해 기술 부채를 해소한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
-    { "id": "deploy", "label": "코드 배포" },
-    { "id": "canary", "label": "카나리 릴리스" },
-    { "id": "rings", "label": "링 기반 롤아웃" },
-    { "id": "cleanup", "label": "정리" }
+    {
+      "id": "deploy",
+      "label": "코드 배포"
+    },
+    {
+      "id": "canary",
+      "label": "카나리 릴리스"
+    },
+    {
+      "id": "rings",
+      "label": "링 기반 롤아웃"
+    },
+    {
+      "id": "cleanup",
+      "label": "정리"
+    }
   ],
   "phases": [
-    { "id": "p-deploy", "label": "배포 (Flag OFF)", "fromCol": 0, "toCol": 1 },
-    { "id": "p-release", "label": "릴리스 (Flag ON)", "fromCol": 2, "toCol": 4, "variant": "emphasis" },
-    { "id": "p-cleanup", "label": "정리", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+    {
+      "id": "p-deploy",
+      "label": "배포 (Flag OFF)",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "p-release",
+      "label": "릴리스 (Flag ON)",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-cleanup",
+      "label": "정리",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
   ],
-  "mainPath": ["deploy", "canary", "ring1", "ring2", "ring3", "cleanup"],
+  "mainPath": [
+    "deploy",
+    "canary",
+    "ring1",
+    "ring2",
+    "ring3",
+    "cleanup"
+  ],
   "nodes": [
-    { "id": "deploy", "lane": "deploy", "col": 0, "type": "backend", "label": "코드 배포", "sublabel": "Feature Flag OFF" },
-    { "id": "canary", "lane": "canary", "col": 1, "type": "cloud", "label": "카나리 릴리스", "sublabel": "1% 트래픽" },
-    { "id": "ring1", "lane": "rings", "col": 2, "width": 128, "type": "frontend", "label": "링 1: 내부 사용자", "sublabel": "Feature Flag ON" },
-    { "id": "ring2", "lane": "rings", "col": 3, "width": 128, "type": "frontend", "label": "링 2: 베타 사용자", "sublabel": "10% 롤아웃" },
-    { "id": "ring3", "lane": "rings", "col": 4, "width": 128, "type": "frontend", "label": "링 3: 전체 사용자", "sublabel": "100% 롤아웃", "tag": "전체 노출" },
-    { "id": "cleanup", "lane": "cleanup", "col": 5, "type": "security", "label": "Flag 제거", "sublabel": "기술 부채 해소" }
+    {
+      "id": "deploy",
+      "lane": "deploy",
+      "col": 0,
+      "type": "backend",
+      "label": "코드 배포",
+      "sublabel": "Feature Flag OFF"
+    },
+    {
+      "id": "canary",
+      "lane": "canary",
+      "col": 1,
+      "type": "cloud",
+      "label": "카나리 릴리스",
+      "sublabel": "1% 트래픽"
+    },
+    {
+      "id": "ring1",
+      "lane": "rings",
+      "col": 2,
+      "width": 128,
+      "type": "frontend",
+      "label": "링 1: 내부 사용자",
+      "sublabel": "Feature Flag ON"
+    },
+    {
+      "id": "ring2",
+      "lane": "rings",
+      "col": 3,
+      "width": 128,
+      "type": "frontend",
+      "label": "링 2: 베타 사용자",
+      "sublabel": "10% 롤아웃"
+    },
+    {
+      "id": "ring3",
+      "lane": "rings",
+      "col": 4,
+      "width": 128,
+      "type": "frontend",
+      "label": "링 3: 전체 사용자",
+      "sublabel": "100% 롤아웃",
+      "tag": "전체 노출"
+    },
+    {
+      "id": "cleanup",
+      "lane": "cleanup",
+      "col": 5,
+      "type": "security",
+      "label": "Flag 제거",
+      "sublabel": "기술 부채 해소"
+    }
   ],
   "edges": [
-    { "from": "deploy", "to": "canary" },
-    { "from": "canary", "to": "ring1", "label": "Flag ON" },
-    { "from": "ring1", "to": "ring2" },
-    { "from": "ring2", "to": "ring3" },
-    { "from": "ring3", "to": "cleanup", "label": "롤아웃 완료" }
+    {
+      "from": "deploy",
+      "to": "canary"
+    },
+    {
+      "from": "canary",
+      "to": "ring1",
+      "label": "Flag ON"
+    },
+    {
+      "from": "ring1",
+      "to": "ring2"
+    },
+    {
+      "from": "ring2",
+      "to": "ring3"
+    },
+    {
+      "from": "ring3",
+      "to": "cleanup",
+      "label": "롤아웃 완료"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "배포와 릴리스 분리", "items": ["코드는 Feature Flag OFF 상태로 먼저 프로덕션에 배포", "카나리 1% 트래픽으로 새 버전의 안정성 검증", "기능 노출 시점은 Flag 값으로 별도 제어"] },
-    { "dot": "amber", "title": "링 기반 롤아웃", "items": ["링 1: 내부 사용자에게만 Flag ON", "링 2: 베타 사용자 10%로 확대", "링 3: 전체 사용자 100% 롤아웃"] },
-    { "dot": "slate", "title": "Flag 정리", "items": ["목적을 달성한 Flag는 코드에서 제거", "남겨둔 Flag는 기술 부채로 누적", "Release Flag는 단기(일~주) 수명을 전제로 관리"] }
+    {
+      "dot": "cyan",
+      "title": "배포와 릴리스 분리",
+      "items": [
+        "코드는 Feature Flag OFF 상태로 먼저 프로덕션에 배포",
+        "카나리 1% 트래픽으로 새 버전의 안정성 검증",
+        "기능 노출 시점은 Flag 값으로 별도 제어"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "링 기반 롤아웃",
+      "items": [
+        "링 1: 내부 사용자에게만 Flag ON",
+        "링 2: 베타 사용자 10%로 확대",
+        "링 3: 전체 사용자 100% 롤아웃"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Flag 정리",
+      "items": [
+        "목적을 달성한 Flag는 코드에서 제거",
+        "남겨둔 Flag는 기술 부채로 누적",
+        "Release Flag는 단기(일~주) 수명을 전제로 관리"
+      ]
+    }
   ]
 }

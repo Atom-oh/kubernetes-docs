@@ -7,26 +7,147 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "pull", "label": "Pull Replication", "focus": ["ext-registry", "harbor-local"], "note": "외부 레지스트리의 이미지를 Harbor로 가져와 미러링·캐싱한다." },
-      { "id": "push", "label": "Push Replication", "focus": ["harbor-src", "remote-registry"], "note": "Harbor의 이미지를 외부 레지스트리로 내보내 배포·DR에 사용한다." }
-    ]
+      {
+        "id": "pull",
+        "label": "Pull Replication",
+        "focus": [
+          "ext-registry",
+          "harbor-local"
+        ],
+        "note": "외부 레지스트리의 이미지를 Harbor로 가져와 미러링·캐싱한다."
+      },
+      {
+        "id": "push",
+        "label": "Push Replication",
+        "focus": [
+          "harbor-src",
+          "remote-registry"
+        ],
+        "note": "Harbor의 이미지를 외부 레지스트리로 내보내 배포·DR에 사용한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "ext-registry", "type": "external", "label": "External Registry", "sublabel": "Docker Hub / ECR", "pos": [60, 90], "size": [220, 64] },
-    { "id": "harbor-local", "type": "backend", "label": "Harbor (Local)", "sublabel": "로컬 미러", "pos": [520, 90], "size": [220, 64] },
-    { "id": "harbor-src", "type": "backend", "label": "Harbor (Source)", "sublabel": "소스 레지스트리", "pos": [60, 300], "size": [220, 64] },
-    { "id": "remote-registry", "type": "external", "label": "Remote Registry", "sublabel": "ECR / Harbor DR", "pos": [520, 300], "size": [220, 64] }
+    {
+      "id": "ext-registry",
+      "type": "external",
+      "label": "External Registry",
+      "sublabel": "Docker Hub / ECR",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "harbor-local",
+      "type": "backend",
+      "label": "Harbor (Local)",
+      "sublabel": "로컬 미러",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "harbor-src",
+      "type": "backend",
+      "label": "Harbor (Source)",
+      "sublabel": "소스 레지스트리",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "remote-registry",
+      "type": "external",
+      "label": "Remote Registry",
+      "sublabel": "ECR / Harbor DR",
+      "pos": [
+        520,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Pull Replication (미러링)", "wraps": ["ext-registry", "harbor-local"] },
-    { "kind": "region", "label": "Push Replication (배포/DR)", "wraps": ["harbor-src", "remote-registry"] }
+    {
+      "kind": "region",
+      "label": "Pull Replication (미러링)",
+      "wraps": [
+        "ext-registry",
+        "harbor-local"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Push Replication (배포/DR)",
+      "wraps": [
+        "harbor-src",
+        "remote-registry"
+      ]
+    }
   ],
   "connections": [
-    { "id": "pull-flow", "from": "ext-registry", "to": "harbor-local", "label": "Pull", "variant": "emphasis" },
-    { "id": "push-flow", "from": "harbor-src", "to": "remote-registry", "label": "Push", "variant": "emphasis" }
+    {
+      "id": "pull-flow",
+      "from": "ext-registry",
+      "to": "harbor-local",
+      "label": "Pull",
+      "variant": "emphasis"
+    },
+    {
+      "id": "push-flow",
+      "from": "harbor-src",
+      "to": "remote-registry",
+      "label": "Push",
+      "variant": "emphasis"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Pull 모드", "items": ["방향: 외부 → Harbor", "외부 이미지를 Harbor로 복제", "사용 사례: 미러링, 캐싱"] },
-    { "dot": "orange", "title": "Push 모드", "items": ["방향: Harbor → 외부", "Harbor 이미지를 외부로 복제", "사용 사례: 배포, DR"] }
+    {
+      "dot": "cyan",
+      "title": "Pull 모드",
+      "items": [
+        "방향: 외부 → Harbor",
+        "외부 이미지를 Harbor로 복제",
+        "사용 사례: 미러링, 캐싱"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Push 모드",
+      "items": [
+        "방향: Harbor → 외부",
+        "Harbor 이미지를 외부로 복제",
+        "사용 사례: 배포, DR"
+      ]
+    }
   ]
 }

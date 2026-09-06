@@ -30,7 +30,18 @@
     "viewBox": [
       680,
       540
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "기본 흐름"
+        },
+        "emphasis": {
+          "label": "핵심 흐름"
+        }
+      }
+    }
   },
   "stages": [
     {

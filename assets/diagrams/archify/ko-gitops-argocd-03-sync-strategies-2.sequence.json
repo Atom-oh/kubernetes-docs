@@ -39,7 +39,21 @@
         ],
         "note": "selfHeal: true이므로 클러스터를 Git에 선언된 값으로 되돌린다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

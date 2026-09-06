@@ -7,30 +7,228 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "sync-path", "label": "동기화 경로", "focus": ["git", "repo", "ctrl", "k8s"], "note": "Git 저장소의 매니페스트를 Repo Server가 가져오고 Application Controller가 클러스터에 적용한다." },
-      { "id": "api-hub", "label": "API Server 허브", "focus": ["ui", "dex", "api", "redis", "ctrl"], "note": "Web UI와 Dex SSO 요청이 API Server로 모이고, 상태는 Redis에 캐시된다." }
-    ]
+      {
+        "id": "sync-path",
+        "label": "동기화 경로",
+        "focus": [
+          "git",
+          "repo",
+          "ctrl",
+          "k8s"
+        ],
+        "note": "Git 저장소의 매니페스트를 Repo Server가 가져오고 Application Controller가 클러스터에 적용한다."
+      },
+      {
+        "id": "api-hub",
+        "label": "API Server 허브",
+        "focus": [
+          "ui",
+          "dex",
+          "api",
+          "redis",
+          "ctrl"
+        ],
+        "note": "Web UI와 Dex SSO 요청이 API Server로 모이고, 상태는 Redis에 캐시된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "git", "type": "external", "label": "Git Repository", "sublabel": "매니페스트 소스", "pos": [30, 320], "size": [150, 60] },
-    { "id": "ui", "type": "frontend", "label": "Web UI", "sublabel": "argocd UI", "pos": [240, 40], "size": [150, 60] },
-    { "id": "dex", "type": "security", "label": "Dex", "sublabel": "SSO (OIDC)", "pos": [660, 40], "size": [150, 60] },
-    { "id": "api", "type": "backend", "label": "API Server", "sublabel": "중심 허브", "pos": [450, 170], "size": [150, 60] },
-    { "id": "repo", "type": "backend", "label": "Repo Server", "sublabel": "매니페스트 생성", "pos": [240, 320], "size": [150, 60] },
-    { "id": "ctrl", "type": "backend", "label": "Application Controller", "sublabel": "상태 조정", "pos": [660, 320], "size": [190, 60] },
-    { "id": "redis", "type": "database", "label": "Redis Cache", "sublabel": "캐시", "pos": [240, 170], "size": [150, 60] },
-    { "id": "k8s", "type": "external", "label": "Kubernetes Cluster", "sublabel": "대상 클러스터", "pos": [920, 320], "size": [170, 60] }
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "매니페스트 소스",
+      "pos": [
+        30,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Web UI",
+      "sublabel": "argocd UI",
+      "pos": [
+        240,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dex",
+      "type": "security",
+      "label": "Dex",
+      "sublabel": "SSO (OIDC)",
+      "pos": [
+        660,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "중심 허브",
+      "pos": [
+        450,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repo Server",
+      "sublabel": "매니페스트 생성",
+      "pos": [
+        240,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Application Controller",
+      "sublabel": "상태 조정",
+      "pos": [
+        660,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis Cache",
+      "sublabel": "캐시",
+      "pos": [
+        240,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "external",
+      "label": "Kubernetes Cluster",
+      "sublabel": "대상 클러스터",
+      "pos": [
+        920,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "ArgoCD", "wraps": ["ui", "dex", "api", "repo", "ctrl", "redis"] }
+    {
+      "kind": "region",
+      "label": "ArgoCD",
+      "wraps": [
+        "ui",
+        "dex",
+        "api",
+        "repo",
+        "ctrl",
+        "redis"
+      ]
+    }
   ],
   "connections": [
-    { "id": "git-to-repo", "from": "git", "to": "repo", "label": "동기화", "variant": "emphasis" },
-    { "id": "repo-to-ctrl", "from": "repo", "to": "ctrl", "label": "매니페스트", "variant": "emphasis" },
-    { "id": "ctrl-to-k8s", "from": "ctrl", "to": "k8s", "label": "적용", "variant": "emphasis" },
-    { "id": "ui-to-api", "from": "ui", "to": "api", "label": "HTTPS", "fromSide": "bottom", "toSide": "top" },
-    { "id": "dex-to-api", "from": "dex", "to": "api", "label": "SSO", "variant": "security" },
-    { "id": "api-to-ctrl", "from": "api", "to": "ctrl", "label": "상태" },
-    { "id": "api-to-redis", "from": "api", "to": "redis", "label": "캐시", "variant": "dashed" }
+    {
+      "id": "git-to-repo",
+      "from": "git",
+      "to": "repo",
+      "label": "동기화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "repo-to-ctrl",
+      "from": "repo",
+      "to": "ctrl",
+      "label": "매니페스트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-to-k8s",
+      "from": "ctrl",
+      "to": "k8s",
+      "label": "적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ui-to-api",
+      "from": "ui",
+      "to": "api",
+      "label": "HTTPS",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dex-to-api",
+      "from": "dex",
+      "to": "api",
+      "label": "SSO",
+      "variant": "security"
+    },
+    {
+      "id": "api-to-ctrl",
+      "from": "api",
+      "to": "ctrl",
+      "label": "상태"
+    },
+    {
+      "id": "api-to-redis",
+      "from": "api",
+      "to": "redis",
+      "label": "캐시",
+      "variant": "dashed"
+    }
   ]
 }

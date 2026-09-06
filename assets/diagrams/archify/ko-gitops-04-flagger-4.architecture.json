@@ -37,7 +37,18 @@
         ],
         "note": "검증을 통과하면 트래픽을 한 번에 Green v2로 전환하고 Blue v1은 대기 상태가 된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

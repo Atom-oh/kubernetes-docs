@@ -31,7 +31,21 @@
         ],
         "note": "이전 매니페스트를 Kubernetes에 적용하고 사용자에게 성공을 알린다. Git 저장소는 그대로다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

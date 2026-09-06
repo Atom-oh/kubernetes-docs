@@ -43,7 +43,30 @@
         ],
         "note": "TTL 만료 또는 수동 삭제로 Deleting에 진입하고 정리가 끝나면 종료된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "active": {
+          "label": "진행 중"
+        },
+        "failure": {
+          "label": "실패 · 복구"
+        },
+        "neutral": {
+          "label": "중립 상태"
+        },
+        "start": {
+          "label": "시작"
+        },
+        "success": {
+          "label": "성공 · 완료"
+        },
+        "waiting": {
+          "label": "대기"
+        }
+      }
+    }
   },
   "lanes": [
     {

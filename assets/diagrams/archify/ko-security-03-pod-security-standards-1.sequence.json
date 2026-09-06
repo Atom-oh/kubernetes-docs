@@ -43,7 +43,24 @@
         ],
         "note": "enforce 모드에서 위반한 Pod는 거부되고 403 Forbidden으로 응답한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

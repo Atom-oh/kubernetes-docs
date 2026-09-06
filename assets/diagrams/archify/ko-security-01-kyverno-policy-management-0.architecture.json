@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kyverno 아키텍처 및 작동 방식",
+    "output": "ko-security-01-kyverno-policy-management-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      640
+    ],
+    "views": [
+      {
+        "id": "admission-path",
+        "label": "요청 처리 경로",
+        "focus": [
+          "user",
+          "apiserver",
+          "admission",
+          "engine",
+          "store"
+        ],
+        "note": "사용자 요청이 API 서버를 거쳐 Admission Controller와 정책 엔진으로 전달되는 주 경로를 따라간다."
+      },
+      {
+        "id": "policy-types",
+        "label": "정책 유형",
+        "focus": [
+          "store",
+          "validate",
+          "mutate",
+          "generate",
+          "cleanup"
+        ],
+        "note": "정책 저장소에 정의된 검증·변형·생성·정리 네 가지 정책 유형을 본다."
+      },
+      {
+        "id": "background-report",
+        "label": "백그라운드 스캔과 보고",
+        "focus": [
+          "engine",
+          "scanner",
+          "apiserver",
+          "reporter",
+          "report"
+        ],
+        "note": "기존 리소스를 주기적으로 스캔하고 정책 위반 사항을 보고서로 남기는 경로를 본다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "kubectl / CI 파이프라인",
+      "pos": [
+        30,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "admission",
+      "type": "security",
+      "label": "Admission Controller",
+      "sublabel": "웹훅으로 요청 가로채기",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "정책 엔진",
+      "sublabel": "정책 평가·적용",
+      "pos": [
+        740,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "정책 저장소",
+      "sublabel": "ClusterPolicy / Policy",
+      "pos": [
+        740,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scanner",
+      "type": "backend",
+      "label": "백그라운드 스캐너",
+      "sublabel": "기존 리소스 준수 검사",
+      "pos": [
+        480,
+        470
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "reporter",
+      "type": "backend",
+      "label": "보고서 컨트롤러",
+      "sublabel": "위반 사항 집계",
+      "pos": [
+        740,
+        470
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "report",
+      "type": "database",
+      "label": "정책 보고서",
+      "sublabel": "PolicyReport",
+      "pos": [
+        990,
+        470
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "validate",
+      "type": "security",
+      "label": "검증 정책",
+      "sublabel": "Validate",
+      "pos": [
+        1000,
+        60
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "mutate",
+      "type": "security",
+      "label": "변형 정책",
+      "sublabel": "Mutate",
+      "pos": [
+        1000,
+        140
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "generate",
+      "type": "security",
+      "label": "생성 정책",
+      "sublabel": "Generate",
+      "pos": [
+        1000,
+        220
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "cleanup",
+      "type": "security",
+      "label": "정리 정책",
+      "sublabel": "Clean up",
+      "pos": [
+        1000,
+        300
+      ],
+      "size": [
+        150,
+        50
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kyverno",
+      "wraps": [
+        "admission",
+        "engine",
+        "store",
+        "scanner",
+        "reporter"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "정책 유형",
+      "wraps": [
+        "validate",
+        "mutate",
+        "generate",
+        "cleanup"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "리소스 요청",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "api-to-admission",
+      "from": "apiserver",
+      "to": "admission",
+      "label": "Admission 웹훅",
+      "variant": "emphasis",
+      "labelDy": -17
+    },
+    {
+      "id": "admission-to-engine",
+      "from": "admission",
+      "to": "engine",
+      "label": "정책 평가",
+      "variant": "emphasis"
+    },
+    {
+      "id": "engine-to-store",
+      "from": "engine",
+      "to": "store",
+      "label": "정책 조회",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "store-validate",
+      "from": "store",
+      "to": "validate",
+      "variant": "dashed"
+    },
+    {
+      "id": "store-mutate",
+      "from": "store",
+      "to": "mutate",
+      "variant": "dashed"
+    },
+    {
+      "id": "store-generate",
+      "from": "store",
+      "to": "generate",
+      "variant": "dashed"
+    },
+    {
+      "id": "store-cleanup",
+      "from": "store",
+      "to": "cleanup",
+      "variant": "dashed"
+    },
+    {
+      "id": "engine-to-scanner",
+      "from": "engine",
+      "to": "scanner",
+      "label": "주기적 스캔"
+    },
+    {
+      "id": "scanner-to-api",
+      "from": "scanner",
+      "to": "apiserver",
+      "label": "기존 리소스 조회",
+      "variant": "dashed"
+    },
+    {
+      "id": "engine-to-reporter",
+      "from": "engine",
+      "to": "reporter",
+      "label": "평가 결과",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "reporter-to-report",
+      "from": "reporter",
+      "to": "report",
+      "label": "위반 사항 기록"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Admission 경로",
+      "items": [
+        "Kyverno는 Admission Controller로 동작해 API 서버로 들어오는 요청을 가로챈다",
+        "정책 엔진이 정의된 정책에 따라 검증·변형·생성·정리를 수행한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "정책 유형",
+      "items": [
+        "검증(Validate): 리소스가 정책을 준수하는지 확인",
+        "변형(Mutate): 리소스를 자동으로 수정",
+        "생성(Generate): 관련 리소스를 자동 생성",
+        "정리(Clean up): 불필요한 리소스를 자동 삭제"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "백그라운드와 보고",
+      "items": [
+        "백그라운드 스캐너가 기존 리소스의 정책 준수 여부를 확인한다",
+        "보고서 컨트롤러가 정책 위반 사항을 PolicyReport로 보고한다"
+      ]
+    }
+  ]
+}

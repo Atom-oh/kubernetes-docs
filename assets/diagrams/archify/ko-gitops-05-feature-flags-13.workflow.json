@@ -32,7 +32,27 @@
         ],
         "note": "Flag가 켜지면 새 검색 엔진을 goroutine으로 비동기 실행하고 결과는 비교용으로만 씁니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "database": {
+          "label": "데이터"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

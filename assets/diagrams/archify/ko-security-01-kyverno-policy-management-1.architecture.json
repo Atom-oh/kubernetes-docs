@@ -1,0 +1,359 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS와 Kyverno 통합 아키텍처",
+    "output": "ko-security-01-kyverno-policy-management-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      760
+    ],
+    "views": [
+      {
+        "id": "admission-path",
+        "label": "Admission 경로",
+        "focus": [
+          "user",
+          "apiserver",
+          "webhook",
+          "kyverno-ctrl"
+        ],
+        "note": "API 서버로 들어오는 요청을 Kyverno Admission Webhook이 가로채 정책에 따라 처리한다."
+      },
+      {
+        "id": "reporting",
+        "label": "정책 리포트",
+        "focus": [
+          "kyverno-ctrl",
+          "reporter",
+          "cloudwatch"
+        ],
+        "note": "정책 위반 사항은 정책 리포터를 거쳐 CloudWatch로 전송되어 모니터링·알림에 활용된다."
+      },
+      {
+        "id": "control-plane",
+        "label": "EKS 컨트롤 플레인",
+        "focus": [
+          "apiserver",
+          "ctrlmgr",
+          "scheduler",
+          "etcd",
+          "workers",
+          "iam"
+        ],
+        "note": "EKS 관리형 컨트롤 플레인과 워커 노드, 그리고 AWS IAM 연동."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 / CI/CD",
+      "sublabel": "kubectl · 파이프라인",
+      "pos": [
+        70,
+        270
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        290,
+        270
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ctrlmgr",
+      "type": "backend",
+      "label": "컨트롤러 매니저",
+      "sublabel": "kube-controller-manager",
+      "pos": [
+        290,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "스케줄러",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        510,
+        90
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "클러스터 상태 저장소",
+      "pos": [
+        720,
+        90
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "워커 노드",
+      "sublabel": "노드 1 · 2 · 3",
+      "pos": [
+        290,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Admission Webhook",
+      "sublabel": "요청 가로채기",
+      "pos": [
+        560,
+        450
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kyverno-ctrl",
+      "type": "security",
+      "label": "Kyverno 컨트롤러",
+      "sublabel": "정책 평가·적용",
+      "pos": [
+        810,
+        450
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "reporter",
+      "type": "security",
+      "label": "정책 리포터",
+      "sublabel": "PolicyReport",
+      "pos": [
+        1060,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "cloud",
+      "label": "IAM",
+      "sublabel": "AWS 자격 증명 관리",
+      "pos": [
+        290,
+        610
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "모니터링 · 알림",
+      "pos": [
+        1060,
+        610
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "apiserver",
+        "ctrlmgr",
+        "scheduler",
+        "etcd",
+        "workers",
+        "webhook",
+        "kyverno-ctrl",
+        "reporter",
+        "iam",
+        "cloudwatch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "apiserver",
+        "ctrlmgr",
+        "scheduler",
+        "etcd",
+        "workers",
+        "webhook",
+        "kyverno-ctrl",
+        "reporter"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "ctrlmgr",
+        "scheduler",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "데이터 플레인",
+      "wraps": [
+        "workers"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Kyverno",
+      "wraps": [
+        "webhook",
+        "kyverno-ctrl",
+        "reporter"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "리소스 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-webhook",
+      "from": "apiserver",
+      "to": "webhook",
+      "label": "AdmissionReview",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-to-ctrl",
+      "from": "webhook",
+      "to": "kyverno-ctrl",
+      "label": "정책 평가",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-to-reporter",
+      "from": "kyverno-ctrl",
+      "to": "reporter"
+    },
+    {
+      "id": "reporter-to-cw",
+      "from": "reporter",
+      "to": "cloudwatch",
+      "label": "정책 위반 사항",
+      "variant": "emphasis",
+      "labelDy": 44
+    },
+    {
+      "id": "api-to-ctrlmgr",
+      "from": "apiserver",
+      "to": "ctrlmgr",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-to-scheduler",
+      "from": "apiserver",
+      "to": "scheduler"
+    },
+    {
+      "id": "api-to-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "label": "상태 저장"
+    },
+    {
+      "id": "api-to-workers",
+      "from": "apiserver",
+      "to": "workers",
+      "label": "파드 실행",
+      "labelDy": 44
+    },
+    {
+      "id": "iam-to-workers",
+      "from": "iam",
+      "to": "workers",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Kyverno 동작",
+      "items": [
+        "API 서버로 들어오는 모든 요청을 Admission Webhook으로 가로챈다",
+        "검증(Validation)·변형(Mutation)·생성(Generation) 정책을 적용한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "모니터링",
+      "items": [
+        "정책 위반 사항은 CloudWatch로 전송된다",
+        "모니터링 및 알림에 활용한다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "EKS 클러스터",
+      "items": [
+        "컨트롤 플레인(API 서버·컨트롤러 매니저·스케줄러·etcd)",
+        "데이터 플레인 워커 노드 1~3"
+      ]
+    }
+  ]
+}

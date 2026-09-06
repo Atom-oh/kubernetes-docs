@@ -10,45 +10,180 @@
       {
         "id": "create-path",
         "label": "생성 경로",
-        "focus": ["prOpen", "gaCreate", "vcCreate", "deployComment"],
+        "focus": [
+          "prOpen",
+          "gaCreate",
+          "vcCreate",
+          "deployComment"
+        ],
         "note": "PR이 열리면 GitHub Actions가 pr-42 vCluster를 만들고 앱을 배포한 뒤 프리뷰 URL을 PR 댓글로 남깁니다."
       },
       {
         "id": "delete-path",
         "label": "삭제 경로",
-        "focus": ["prClose", "gaDelete", "vcDelete"],
+        "focus": [
+          "prClose",
+          "gaDelete",
+          "vcDelete"
+        ],
         "note": "PR이 머지되거나 닫히면 같은 워크플로가 pr-42 vCluster를 삭제해 프리뷰 환경을 정리합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "create",
+      "label": "생성 · PR 열림"
+    },
+    {
+      "id": "delete",
+      "label": "삭제 · PR 머지/닫힘",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "prOpen",
+    "gaCreate",
+    "vcCreate",
+    "deployComment"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "prOpen",
+      "prClose"
+    ],
+    "allowedTerminals": [
+      "deployComment",
+      "vcDelete"
+    ],
+    "requiredPaths": [
+      {
+        "from": "prOpen",
+        "to": "deployComment"
+      },
+      {
+        "from": "prClose",
+        "to": "vcDelete"
       }
     ]
   },
-  "lanes": [
-    { "id": "create", "label": "생성 · PR 열림" },
-    { "id": "delete", "label": "삭제 · PR 머지/닫힘", "variant": "exception" }
-  ],
-  "mainPath": ["prOpen", "gaCreate", "vcCreate", "deployComment"],
-  "semanticChecks": {
-    "allowedRoots": ["prOpen", "prClose"],
-    "allowedTerminals": ["deployComment", "vcDelete"],
-    "requiredPaths": [
-      { "from": "prOpen", "to": "deployComment" },
-      { "from": "prClose", "to": "vcDelete" }
-    ]
-  },
   "nodes": [
-    { "id": "prOpen", "lane": "create", "col": 0, "type": "frontend", "label": "PR #42", "sublabel": "feature/new-api", "tag": "CREATE", "width": 132 },
-    { "id": "gaCreate", "lane": "create", "col": 1, "type": "backend", "label": "GitHub Actions", "sublabel": "pull_request opened", "width": 150 },
-    { "id": "vcCreate", "lane": "create", "col": 2, "type": "cloud", "label": "vCluster 생성", "sublabel": "pr-42", "tag": "FOCAL", "width": 140 },
-    { "id": "deployComment", "lane": "create", "col": 3, "type": "external", "label": "앱 배포 → PR 댓글", "sublabel": "프리뷰 URL 공유", "width": 168 },
-    { "id": "prClose", "lane": "delete", "col": 0, "type": "frontend", "label": "PR Merge/Close", "tag": "DELETE", "width": 132 },
-    { "id": "gaDelete", "lane": "delete", "col": 1, "type": "backend", "label": "GitHub Actions", "sublabel": "pull_request closed", "width": 150 },
-    { "id": "vcDelete", "lane": "delete", "col": 2, "type": "cloud", "label": "vCluster 삭제", "sublabel": "pr-42", "width": 140 }
+    {
+      "id": "prOpen",
+      "lane": "create",
+      "col": 0,
+      "type": "frontend",
+      "label": "PR #42",
+      "sublabel": "feature/new-api",
+      "tag": "CREATE",
+      "width": 132
+    },
+    {
+      "id": "gaCreate",
+      "lane": "create",
+      "col": 1,
+      "type": "backend",
+      "label": "GitHub Actions",
+      "sublabel": "pull_request opened",
+      "width": 150
+    },
+    {
+      "id": "vcCreate",
+      "lane": "create",
+      "col": 2,
+      "type": "cloud",
+      "label": "vCluster 생성",
+      "sublabel": "pr-42",
+      "tag": "FOCAL",
+      "width": 140
+    },
+    {
+      "id": "deployComment",
+      "lane": "create",
+      "col": 3,
+      "type": "external",
+      "label": "앱 배포 → PR 댓글",
+      "sublabel": "프리뷰 URL 공유",
+      "width": 168
+    },
+    {
+      "id": "prClose",
+      "lane": "delete",
+      "col": 0,
+      "type": "frontend",
+      "label": "PR Merge/Close",
+      "tag": "DELETE",
+      "width": 132
+    },
+    {
+      "id": "gaDelete",
+      "lane": "delete",
+      "col": 1,
+      "type": "backend",
+      "label": "GitHub Actions",
+      "sublabel": "pull_request closed",
+      "width": 150
+    },
+    {
+      "id": "vcDelete",
+      "lane": "delete",
+      "col": 2,
+      "type": "cloud",
+      "label": "vCluster 삭제",
+      "sublabel": "pr-42",
+      "width": 140
+    }
   ],
   "edges": [
-    { "from": "prOpen", "to": "gaCreate", "label": "워크플로 트리거", "role": "main" },
-    { "from": "gaCreate", "to": "vcCreate", "label": "vcluster create", "variant": "emphasis", "role": "main" },
-    { "from": "vcCreate", "to": "deployComment", "label": "kubectl apply", "role": "main" },
-    { "from": "prClose", "to": "gaDelete", "label": "워크플로 트리거", "role": "branch" },
-    { "from": "gaDelete", "to": "vcDelete", "label": "vcluster delete", "variant": "security", "role": "error" }
+    {
+      "from": "prOpen",
+      "to": "gaCreate",
+      "label": "워크플로 트리거",
+      "role": "main"
+    },
+    {
+      "from": "gaCreate",
+      "to": "vcCreate",
+      "label": "vcluster create",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "vcCreate",
+      "to": "deployComment",
+      "label": "kubectl apply",
+      "role": "main"
+    },
+    {
+      "from": "prClose",
+      "to": "gaDelete",
+      "label": "워크플로 트리거",
+      "role": "branch"
+    },
+    {
+      "from": "gaDelete",
+      "to": "vcDelete",
+      "label": "vcluster delete",
+      "variant": "security",
+      "role": "error"
+    }
   ],
   "cards": [
     {

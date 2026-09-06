@@ -1607,7 +1607,7 @@ TechDocs는 Backstage의 "docs-as-code" 솔루션으로, MkDocs를 기반으로 
 
 ### TechDocs 워크플로우
 
-![TechDocs 워크플로우: 개발자가 Markdown을 작성해 Git 리포지토리(docs/ + mkdocs.yml)에 커밋하면 CI에서 MkDocs 빌드가 실행되어 정적 HTML을 S3 버킷에 업로드하고, Backstage TechDocs UI가 이를 렌더링해 개발자가 문서를 열람하는 흐름.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png)
+![TechDocs 워크플로우: 개발자가 Markdown을 작성해 Git 리포지토리(docs/ + mkdocs.yml)에 커밋하면 CI에서 MkDocs 빌드가 실행되어 정적 HTML을 S3 버킷에 업로드하고, Backstage TechDocs UI가 이를 렌더링해 개발자가 문서를 열람하는 흐름을 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-06-backstage-idp-2.html)
 

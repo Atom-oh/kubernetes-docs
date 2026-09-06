@@ -42,7 +42,21 @@
         ],
         "note": "배포 상태가 Backstage에 반영되고 개발자는 kubeconfig로 바로 접속한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

@@ -71,9 +71,9 @@ spec:
 
 ArgoCD는 Kubernetes 컨트롤러 패턴을 따르며, 여러 구성 요소로 이루어져 있습니다:
 
-![외부 Git·Helm·OCI 저장소와 Identity Provider가 ArgoCD의 Repo Server·Application Controller·API Server·Dex·Redis·ApplicationSet/Notifications 컨트롤러를 거쳐 여러 Kubernetes 클러스터로 동기화되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-0.png)
+![외부 Git·Helm·OCI 저장소와 Identity Provider가 ArgoCD의 Repo Server·Application Controller·API Server·Dex·Redis·ApplicationSet/Notifications 컨트롤러를 거쳐 여러 Kubernetes 클러스터로 동기화되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-overview-0.png)
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-0.html)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-overview-0.html)
 
 ### 핵심 컴포넌트
 
@@ -89,9 +89,9 @@ ArgoCD는 Kubernetes 컨트롤러 패턴을 따르며, 여러 구성 요소로 �
 
 ### 데이터 흐름
 
-![사용자의 Application 생성/수정 요청이 API 서버와 애플리케이션 컨트롤러를 거쳐 리포 서버에서 Git 소스를 렌더링하고, Kubernetes의 현재 상태와 비교한 뒤 동기화를 적용하고 결과가 사용자에게 돌아오는 과정을 시간 순으로 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-1.png)
+![사용자의 Application 생성/수정 요청이 API 서버와 애플리케이션 컨트롤러를 거쳐 리포 서버에서 Git 소스를 렌더링하고, Kubernetes의 현재 상태와 비교한 뒤 동기화를 적용하고 결과가 사용자에게 돌아오는 과정을 시간 순으로 보여준다.](../../.gitbook/assets/ko-gitops-argocd-overview-1.png)
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-1.html)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-overview-1.html)
 
 ## 핵심 개념
 
@@ -236,7 +236,7 @@ spec:
 
 ### Kubernetes 호환성
 
-![ArgoCD 2.11, 2.12, 2.13 세 버전의 Kubernetes 지원 기간이 순차적으로 이어지다가 2024년 3분기에 세 버전 모두 겹치는 구간을 거친 뒤 2.11과 2.12가 차례로 종료되고 2.13만 지원이 지속되는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-2.png)
+![Argo CD 2.11, 2.12, 2.13의 Kubernetes 지원 범위를 예시로 삼아 세 릴리스의 지원 기간이 한동안 겹친 뒤 오래된 순서로 종료되고 표의 마지막 항목인 2.13만 지원이 유지되는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-2.html)
 

@@ -43,7 +43,21 @@
         ],
         "note": "호스트의 Pod 상태가 Syncer를 거쳐 가상 클러스터로 반영되어 개발자에게 보인다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

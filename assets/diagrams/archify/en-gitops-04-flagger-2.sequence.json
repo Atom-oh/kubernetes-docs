@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "Flagger Control Loop — Detection to Promotion or Rollback",
+    "title": "Canary Analysis with Prometheus Metrics — Detection to Promotion or Rollback",
     "locale": "en",
     "quality_profile": "showcase",
     "column_fit": "spread",

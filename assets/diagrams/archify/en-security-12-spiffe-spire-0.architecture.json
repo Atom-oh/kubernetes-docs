@@ -68,7 +68,7 @@
       "sublabel": "Watches ClusterSPIFFEID",
       "pos": [
         300,
-        30
+        20
       ],
       "size": [
         210,
@@ -82,7 +82,7 @@
       "sublabel": "SQLite / PostgreSQL",
       "pos": [
         40,
-        180
+        160
       ],
       "size": [
         170,
@@ -96,7 +96,7 @@
       "sublabel": "Registration API · Node Attestation",
       "pos": [
         320,
-        176
+        156
       ],
       "size": [
         170,
@@ -110,7 +110,7 @@
       "sublabel": "Signs SVIDs",
       "pos": [
         570,
-        180
+        160
       ],
       "size": [
         200,
@@ -124,7 +124,7 @@
       "sublabel": "Workload API · SVID cache",
       "pos": [
         180,
-        350
+        310
       ],
       "size": [
         170,
@@ -138,7 +138,7 @@
       "sublabel": "Workload API · SVID cache",
       "pos": [
         610,
-        350
+        310
       ],
       "size": [
         170,
@@ -151,7 +151,7 @@
       "label": "Workload Pod A",
       "pos": [
         90,
-        500
+        440
       ],
       "size": [
         150,
@@ -164,7 +164,7 @@
       "label": "Workload Pod B",
       "pos": [
         290,
-        500
+        440
       ],
       "size": [
         150,
@@ -177,7 +177,7 @@
       "label": "Workload Pod C",
       "pos": [
         520,
-        500
+        440
       ],
       "size": [
         150,
@@ -190,7 +190,7 @@
       "label": "Workload Pod D",
       "pos": [
         720,
-        500
+        440
       ],
       "size": [
         150,

@@ -6,30 +6,169 @@
     "output": "ko-gitops-readme-3.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1040, 300],
+    "viewBox": [
+      1040,
+      300
+    ],
     "views": [
-      { "id": "watch", "label": "Git 감시", "focus": ["git", "agent"], "note": "클러스터 내부의 에이전트가 Git 저장소를 스스로 폴링·감시한다." },
-      { "id": "apply", "label": "클러스터 반영", "focus": ["agent", "apiserver", "app"], "note": "변경을 발견하면 API Server에 적용해 애플리케이션을 배포한다." }
-    ]
+      {
+        "id": "watch",
+        "label": "Git 감시",
+        "focus": [
+          "git",
+          "agent"
+        ],
+        "note": "클러스터 내부의 에이전트가 Git 저장소를 스스로 폴링·감시한다."
+      },
+      {
+        "id": "apply",
+        "label": "클러스터 반영",
+        "focus": [
+          "agent",
+          "apiserver",
+          "app"
+        ],
+        "note": "변경을 발견하면 API Server에 적용해 애플리케이션을 배포한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "git", "type": "external", "label": "Git 저장소", "sublabel": "source of truth", "pos": [40, 90], "size": [160, 64] },
-    { "id": "agent", "type": "backend", "label": "GitOps Agent", "sublabel": "ArgoCD / FluxCD", "tag": "in-cluster", "pos": [330, 90], "size": [170, 64] },
-    { "id": "apiserver", "type": "backend", "label": "API Server", "sublabel": "control plane", "pos": [590, 90], "size": [160, 64] },
-    { "id": "app", "type": "backend", "label": "애플리케이션", "sublabel": "배포된 워크로드", "pos": [840, 90], "size": [160, 64] }
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git 저장소",
+      "sublabel": "source of truth",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "GitOps Agent",
+      "sublabel": "ArgoCD / FluxCD",
+      "tag": "in-cluster",
+      "pos": [
+        330,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "control plane",
+      "pos": [
+        590,
+        90
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "배포된 워크로드",
+      "pos": [
+        840,
+        90
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "외부 시스템", "wraps": ["git"] },
-    { "kind": "region", "label": "Kubernetes 클러스터", "wraps": ["agent", "apiserver", "app"] }
+    {
+      "kind": "region",
+      "label": "외부 시스템",
+      "wraps": [
+        "git"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "agent",
+        "apiserver",
+        "app"
+      ]
+    }
   ],
   "connections": [
-    { "id": "agent-poll-git", "from": "agent", "to": "git", "label": "poll / watch", "variant": "emphasis" },
-    { "id": "agent-apply", "from": "agent", "to": "apiserver", "label": "apply", "variant": "emphasis" },
-    { "id": "api-deploy-app", "from": "apiserver", "to": "app", "label": "배포" }
+    {
+      "id": "agent-poll-git",
+      "from": "agent",
+      "to": "git",
+      "label": "poll / watch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-apply",
+      "from": "agent",
+      "to": "apiserver",
+      "label": "apply",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-deploy-app",
+      "from": "apiserver",
+      "to": "app",
+      "label": "배포"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "특징", "items": ["클러스터 내부의 에이전트가 Git을 모니터링", "자격 증명이 클러스터 내부에만 존재", "ArgoCD, FluxCD가 대표적인 Pull 기반 도구"] },
-    { "dot": "emerald", "title": "장점", "items": ["향상된 보안", "자동 드리프트 감지 및 수정", "자체 치유 기능", "감사 추적"] },
-    { "dot": "amber", "title": "단점", "items": ["추가 인프라 필요 (GitOps 에이전트)", "학습 곡선"] }
+    {
+      "dot": "cyan",
+      "title": "특징",
+      "items": [
+        "클러스터 내부의 에이전트가 Git을 모니터링",
+        "자격 증명이 클러스터 내부에만 존재",
+        "ArgoCD, FluxCD가 대표적인 Pull 기반 도구"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "장점",
+      "items": [
+        "향상된 보안",
+        "자동 드리프트 감지 및 수정",
+        "자체 치유 기능",
+        "감사 추적"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "단점",
+      "items": [
+        "추가 인프라 필요 (GitOps 에이전트)",
+        "학습 곡선"
+      ]
+    }
   ]
 }

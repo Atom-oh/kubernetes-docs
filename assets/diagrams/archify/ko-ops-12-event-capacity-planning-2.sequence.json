@@ -43,7 +43,21 @@
         ],
         "note": "메트릭 트리거가 목표를 250으로 올리고, 추가 Pending 50개를 위해 Node 5대만 더 확보한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

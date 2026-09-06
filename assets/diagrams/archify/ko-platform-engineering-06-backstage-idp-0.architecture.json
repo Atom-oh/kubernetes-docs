@@ -82,7 +82,7 @@
         200
       ],
       "size": [
-        240,
+        260,
         60
       ]
     },
@@ -96,7 +96,7 @@
         330
       ],
       "size": [
-        240,
+        260,
         64
       ]
     },
@@ -110,7 +110,7 @@
         200
       ],
       "size": [
-        250,
+        300,
         60
       ]
     },
@@ -124,7 +124,7 @@
         330
       ],
       "size": [
-        250,
+        300,
         64
       ]
     },
@@ -134,7 +134,7 @@
       "label": "PostgreSQL",
       "sublabel": "Amazon RDS · Catalog 데이터",
       "pos": [
-        950,
+        990,
         40
       ],
       "size": [
@@ -148,7 +148,7 @@
       "label": "S3",
       "sublabel": "TechDocs 산출물",
       "pos": [
-        950,
+        990,
         130
       ],
       "size": [
@@ -162,7 +162,7 @@
       "label": "GitHub / GitLab",
       "sublabel": "Catalog · Scaffolder 연동",
       "pos": [
-        950,
+        990,
         250
       ],
       "size": [
@@ -176,7 +176,7 @@
       "label": "EKS Cluster",
       "sublabel": "Kubernetes 플러그인",
       "pos": [
-        950,
+        990,
         340
       ],
       "size": [
@@ -190,7 +190,7 @@
       "label": "ArgoCD",
       "sublabel": "Kubernetes 플러그인 · GitOps",
       "pos": [
-        950,
+        990,
         430
       ],
       "size": [
@@ -204,7 +204,7 @@
       "label": "Cognito / Okta",
       "sublabel": "Auth 플러그인 · OIDC",
       "pos": [
-        950,
+        990,
         520
       ],
       "size": [

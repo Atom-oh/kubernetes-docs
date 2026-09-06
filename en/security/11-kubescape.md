@@ -481,7 +481,7 @@ RBAC analysis capabilities:
 
 ### Continuous Scanning Architecture
 
-![Inside the cluster a CronJob triggers the Operator Controller, which runs the Configuration, Vulnerability and RBAC scanners against Deployments, Pods, Services, Secrets and ServiceAccounts while Node Agent eBPF events also flow into the Controller. The Controller stores scan results as CRDs and compares them with the Baseline; results are published to Kubescape Cloud and detected changes go to external Alerting and SIEM/SOAR.](../.gitbook/assets/en-security-11-kubescape-2.png)
+![A CronJob triggers the Kubescape Operator Controller to run the configuration, vulnerability and RBAC scanners plus node-agent eBPF events, store results as CRDs, compare them with the baseline and publish to Kubescape Cloud, alerting and SIEM/SOAR.](../.gitbook/assets/en-security-11-kubescape-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-2.html)
 

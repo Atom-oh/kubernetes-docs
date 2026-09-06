@@ -40,7 +40,27 @@
         ],
         "note": "네 가지 조치 모두 캐시·미러 또는 인증된 pull로 Docker Hub Rate Limit에 걸리지 않는 안정적인 pull 경로로 수렴합니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

@@ -18,9 +18,9 @@ ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes. It auto
 
 As a CNCF graduated project, ArgoCD has become the de facto standard for GitOps-based Kubernetes deployments, used by thousands of organizations worldwide.
 
-![Architecture diagram showing ArgoCD's control plane fetching manifests from Git, Helm, and OCI sources through its Repo Server, with the Application Controller reconciling and syncing them into managed Kubernetes clusters, while users reach the API Server through the web UI, CLI, or gRPC API.](../../.gitbook/assets/en-gitops-argocd-readme-0.png)
+![Architecture diagram showing ArgoCD's control plane fetching manifests from Git, Helm, and OCI sources through its Repo Server, with the Application Controller reconciling and syncing them into managed Kubernetes clusters, while users reach the API Server through the web UI, CLI, or gRPC API.](../../.gitbook/assets/en-gitops-argocd-overview-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-readme-0.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-0.html)
 
 ## Key Benefits
 
@@ -67,9 +67,9 @@ As a CNCF graduated project, ArgoCD has become the de facto standard for GitOps-
 
 ### Data Flow
 
-![Sequence diagram showing a user creating an ArgoCD application through the API Server, which renders manifests via the Repo Server, followed by the Application Controller repeatedly comparing desired and actual state against Kubernetes and applying changes on drift in a reconciliation loop.](../../.gitbook/assets/en-gitops-argocd-readme-1.png)
+![Sequence diagram showing a user creating an ArgoCD application through the API Server, which renders manifests via the Repo Server, followed by the Application Controller repeatedly comparing desired and actual state against Kubernetes and applying changes on drift in a reconciliation loop.](../../.gitbook/assets/en-gitops-argocd-overview-1.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-readme-1.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-overview-1.html)
 
 ## Core Concepts
 

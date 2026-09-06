@@ -39,7 +39,21 @@
         ],
         "note": "배포 시 cosign verify로 서명을 확인하고 Kyverno 정책이 허용/차단을 결정한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

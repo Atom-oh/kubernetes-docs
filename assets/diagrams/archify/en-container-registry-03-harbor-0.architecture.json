@@ -63,7 +63,7 @@
       "sublabel": "API · AuthN/AuthZ · projects",
       "pos": [
         500,
-        190
+        170
       ],
       "size": [
         200,
@@ -78,7 +78,7 @@
       "sublabel": "Docker Distribution (registry:2)",
       "pos": [
         120,
-        340
+        300
       ],
       "size": [
         220,
@@ -92,7 +92,7 @@
       "sublabel": "Replication · GC · scan",
       "pos": [
         880,
-        340
+        300
       ],
       "size": [
         200,
@@ -106,7 +106,7 @@
       "sublabel": "Metadata",
       "pos": [
         400,
-        520
+        460
       ],
       "size": [
         180,
@@ -120,7 +120,7 @@
       "sublabel": "Cache · job queue",
       "pos": [
         620,
-        520
+        460
       ],
       "size": [
         180,
@@ -134,7 +134,7 @@
       "sublabel": "Vulnerability scanning",
       "pos": [
         880,
-        520
+        460
       ],
       "size": [
         200,
@@ -148,7 +148,7 @@
       "sublabel": "Image signing (optional)",
       "pos": [
         880,
-        620
+        560
       ],
       "size": [
         200,

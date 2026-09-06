@@ -146,7 +146,7 @@ Docker Hub Free → Docker Hub Team → ECR Basic → ECR Enhanced → Harbor + 
 
 ## 의사결정 플로우차트
 
-![컨테이너 레지스트리 선택 의사결정 플로우차트. 에어갭/폐쇄망 지원이 필요하면 자체 호스팅 Harbor, 인터넷이 연결된 AWS/EKS 워크로드면 Amazon ECR, 그 외 환경에서 규제 준수가 필요한 프로덕션이면 Harbor 또는 Docker Hub Business, 나머지는 Docker Hub Free/Pro를 권장한다.](../.gitbook/assets/ko-container-registry-readme-1.png)
+![컨테이너 레지스트리 선택 의사결정 플로우차트. 에어갭/폐쇄망 지원이 필요하면 자체 호스팅 Harbor, 인터넷이 연결된 AWS/EKS 워크로드면 Amazon ECR, 그 외 환경에서 규제 준수가 필요한 프로덕션이면 Harbor 또는 Docker Hub Business, 나머지는 Docker Hub Free/Pro를 권장하는 의사결정 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-readme-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-readme-1.html)
 

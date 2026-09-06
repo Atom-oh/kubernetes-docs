@@ -96,7 +96,7 @@ OpenFeature SDK는 애플리케이션과 Feature Flag 백엔드 사이의 추상
 
 Provider는 OpenFeature SDK와 구체적인 Feature Flag 백엔드를 연결하는 어댑터입니다. Provider를 교체하는 것만으로 전체 Feature Flag 시스템을 변경할 수 있습니다.
 
-![OpenFeature SDK의 API 계층이 SetProvider()로 환경에 따라 flagd(개발/스테이징), LaunchDarkly(프로덕션), In-Memory(테스트) Provider 중 하나에 연결되는 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-gitops-05-feature-flags-2.png)
+![OpenFeature SDK의 API 계층이 SetProvider()로 환경에 따라 flagd(개발/스테이징), LaunchDarkly(프로덕션), In-Memory(테스트) Provider 중 하나에 연결되는 구조를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-2.html)
 

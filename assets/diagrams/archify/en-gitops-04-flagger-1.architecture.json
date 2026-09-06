@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Flagger Core Components",
+    "title": "Flagger Control Loop — Core Components",
     "locale": "en",
     "output": "en-gitops-04-flagger-1.html",
     "quality_profile": "showcase",

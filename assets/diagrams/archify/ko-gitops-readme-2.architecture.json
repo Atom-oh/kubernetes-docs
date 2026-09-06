@@ -6,27 +6,137 @@
     "output": "ko-gitops-readme-2.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [960, 330],
+    "viewBox": [
+      960,
+      330
+    ],
     "views": [
-      { "id": "push-path", "label": "Push 배포 경로", "focus": ["cicd", "apiserver", "app"], "note": "외부 CI/CD가 클러스터 자격 증명을 들고 API Server에 직접 kubectl apply를 실행한다." }
-    ]
+      {
+        "id": "push-path",
+        "label": "Push 배포 경로",
+        "focus": [
+          "cicd",
+          "apiserver",
+          "app"
+        ],
+        "note": "외부 CI/CD가 클러스터 자격 증명을 들고 API Server에 직접 kubectl apply를 실행한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "cicd", "type": "external", "label": "CI/CD 파이프라인", "sublabel": "Jenkins, GitHub Actions 등", "pos": [40, 110], "size": [200, 64], "tag": "클러스터 자격 증명 보유" },
-    { "id": "apiserver", "type": "backend", "label": "API Server", "sublabel": "control plane", "pos": [420, 110], "size": [180, 64] },
-    { "id": "app", "type": "backend", "label": "애플리케이션", "sublabel": "Deployment / Pod", "pos": [720, 110], "size": [180, 64] }
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI/CD 파이프라인",
+      "sublabel": "Jenkins, GitHub Actions 등",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "클러스터 자격 증명 보유"
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "control plane",
+      "pos": [
+        420,
+        110
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "Deployment / Pod",
+      "pos": [
+        720,
+        110
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "외부 시스템", "wraps": ["cicd"] },
-    { "kind": "region", "label": "Kubernetes 클러스터", "wraps": ["apiserver", "app"] }
+    {
+      "kind": "region",
+      "label": "외부 시스템",
+      "wraps": [
+        "cicd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "apiserver",
+        "app"
+      ]
+    }
   ],
   "connections": [
-    { "id": "cicd-apply", "from": "cicd", "to": "apiserver", "label": "kubectl apply (직접 배포)", "variant": "emphasis" },
-    { "id": "api-app", "from": "apiserver", "to": "app", "label": "리소스 생성 / 갱신" }
+    {
+      "id": "cicd-apply",
+      "from": "cicd",
+      "to": "apiserver",
+      "label": "kubectl apply (직접 배포)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-app",
+      "from": "apiserver",
+      "to": "app",
+      "label": "리소스 생성 / 갱신"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "특징", "items": ["CI/CD 시스템이 클러스터에 직접 배포", "클러스터 자격 증명이 외부에 노출", "Jenkins, GitHub Actions 등 전통적인 CI/CD 방식"] },
-    { "dot": "emerald", "title": "장점", "items": ["단순한 구현", "기존 CI/CD 파이프라인과 쉬운 통합"] },
-    { "dot": "rose", "title": "단점", "items": ["보안 위험 (자격 증명 노출)", "드리프트 감지 어려움", "자체 치유 기능 없음"] }
+    {
+      "dot": "cyan",
+      "title": "특징",
+      "items": [
+        "CI/CD 시스템이 클러스터에 직접 배포",
+        "클러스터 자격 증명이 외부에 노출",
+        "Jenkins, GitHub Actions 등 전통적인 CI/CD 방식"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "장점",
+      "items": [
+        "단순한 구현",
+        "기존 CI/CD 파이프라인과 쉬운 통합"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "단점",
+      "items": [
+        "보안 위험 (자격 증명 노출)",
+        "드리프트 감지 어려움",
+        "자체 치유 기능 없음"
+      ]
+    }
   ]
 }

@@ -4,7 +4,7 @@
   "meta": {
     "title": "ArgoCD Architecture Overview",
     "locale": "en",
-    "output": "en-gitops-argocd-readme-0.html",
+    "output": "en-gitops-argocd-overview-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [

@@ -10,16 +10,16 @@
       "mode": "auto",
       "entries": {
         "external": {
-          "label": "대기 상태"
+          "label": "Waiting state"
         },
         "backend": {
-          "label": "평가 상태"
+          "label": "Evaluating state"
         },
         "security": {
-          "label": "발생 상태"
+          "label": "Firing state"
         },
         "cloud": {
-          "label": "종료 상태"
+          "label": "Resolved state"
         }
       }
     },
@@ -28,7 +28,7 @@
   "lanes": [
     {
       "id": "state",
-      "label": "알림 상태"
+      "label": "Notifying state"
     }
   ],
   "mainPath": [
@@ -53,7 +53,7 @@
       "col": 1,
       "type": "backend",
       "label": "Pending",
-      "sublabel": "waiting out for",
+      "sublabel": "waiting out the for duration",
       "width": 165
     },
     {
@@ -86,7 +86,7 @@
       "id": "t2",
       "from": "pending",
       "to": "firing",
-      "label": "for elapsed"
+      "label": "for duration elapsed"
     },
     {
       "id": "t3",
@@ -124,7 +124,7 @@
     },
     {
       "dot": "emerald",
-      "title": "What the for duration buys",
+      "title": "What the for duration buys you",
       "items": [
         "It stops a transient spike from paging anyone",
         "If the condition clears inside the window, the alert returns to Inactive without ever firing",

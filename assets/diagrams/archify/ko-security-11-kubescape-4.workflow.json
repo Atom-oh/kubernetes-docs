@@ -45,7 +45,30 @@
         ],
         "note": "허용 가능한 위험은 예외로 등록해 종료하고, 재스캔 실패는 코드 수정으로 되돌아간다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        },
+        "messagebus": {
+          "label": "메시지"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

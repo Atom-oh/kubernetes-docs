@@ -39,7 +39,21 @@
         ],
         "note": "발급된 SVID가 Envoy로 돌아오고, Envoy가 이 인증서로 워크로드 간 mTLS를 맺는다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

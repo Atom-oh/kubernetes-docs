@@ -7,32 +7,206 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "source-types", "label": "소스 유형", "focus": ["git", "helm", "oci", "app"], "note": "spec.source.repoURL로 Git 저장소, Helm 저장소, OCI 레지스트리 중 하나를 매니페스트 소스로 지정한다." },
-      { "id": "destination", "label": "배포 대상", "focus": ["app", "cluster", "ns"], "note": "spec.destination의 server(또는 name)와 namespace가 매니페스트가 배포되는 클러스터와 네임스페이스를 결정한다." }
-    ]
+      {
+        "id": "source-types",
+        "label": "소스 유형",
+        "focus": [
+          "git",
+          "helm",
+          "oci",
+          "app"
+        ],
+        "note": "spec.source.repoURL로 Git 저장소, Helm 저장소, OCI 레지스트리 중 하나를 매니페스트 소스로 지정한다."
+      },
+      {
+        "id": "destination",
+        "label": "배포 대상",
+        "focus": [
+          "app",
+          "cluster",
+          "ns"
+        ],
+        "note": "spec.destination의 server(또는 name)와 namespace가 매니페스트가 배포되는 클러스터와 네임스페이스를 결정한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "git", "type": "external", "label": "Git Repository", "sublabel": "repoURL + path", "pos": [40, 80], "size": [170, 60] },
-    { "id": "helm", "type": "external", "label": "Helm Repository", "sublabel": "repoURL + chart", "pos": [40, 240], "size": [170, 60] },
-    { "id": "oci", "type": "external", "label": "OCI Registry", "sublabel": "oci:// (예: ECR)", "pos": [40, 400], "size": [170, 60] },
-    { "id": "app", "type": "backend", "label": "Application CRD", "sublabel": "spec / status", "tag": "argocd 네임스페이스", "pos": [420, 240], "size": [200, 60] },
-    { "id": "cluster", "type": "cloud", "label": "Kubernetes Cluster", "sublabel": "destination.server / name", "pos": [820, 160], "size": [190, 60] },
-    { "id": "ns", "type": "cloud", "label": "Namespace", "sublabel": "destination.namespace", "pos": [820, 320], "size": [190, 60] }
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "repoURL + path",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "helm",
+      "type": "external",
+      "label": "Helm Repository",
+      "sublabel": "repoURL + chart",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "oci",
+      "type": "external",
+      "label": "OCI Registry",
+      "sublabel": "oci:// (예: ECR)",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application CRD",
+      "sublabel": "spec / status",
+      "tag": "argocd 네임스페이스",
+      "pos": [
+        420,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "Kubernetes Cluster",
+      "sublabel": "destination.server / name",
+      "pos": [
+        820,
+        160
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ns",
+      "type": "cloud",
+      "label": "Namespace",
+      "sublabel": "destination.namespace",
+      "pos": [
+        820,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "소스 (spec.source)", "wraps": ["git", "helm", "oci"] },
-    { "kind": "region", "label": "대상 (spec.destination)", "wraps": ["cluster", "ns"] }
+    {
+      "kind": "region",
+      "label": "소스 (spec.source)",
+      "wraps": [
+        "git",
+        "helm",
+        "oci"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "대상 (spec.destination)",
+      "wraps": [
+        "cluster",
+        "ns"
+      ]
+    }
   ],
   "connections": [
-    { "id": "git-to-app", "from": "git", "to": "app", "label": "매니페스트", "variant": "emphasis" },
-    { "id": "helm-to-app", "from": "helm", "to": "app" },
-    { "id": "oci-to-app", "from": "oci", "to": "app" },
-    { "id": "app-to-cluster", "from": "app", "to": "cluster", "label": "동기화", "variant": "emphasis" },
-    { "id": "app-to-ns", "from": "app", "to": "ns" }
+    {
+      "id": "git-to-app",
+      "from": "git",
+      "to": "app",
+      "label": "매니페스트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "helm-to-app",
+      "from": "helm",
+      "to": "app"
+    },
+    {
+      "id": "oci-to-app",
+      "from": "oci",
+      "to": "app"
+    },
+    {
+      "id": "app-to-cluster",
+      "from": "app",
+      "to": "cluster",
+      "label": "동기화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "app-to-ns",
+      "from": "app",
+      "to": "ns"
+    }
   ],
   "cards": [
-    { "dot": "slate", "title": "소스 유형", "items": ["Git 저장소의 일반 YAML, Helm 차트, Kustomize, Jsonnet 디렉토리", "Helm 저장소의 차트(chart + targetRevision)", "OCI 레지스트리(ECR 등)의 Helm 차트나 매니페스트"] },
-    { "dot": "orange", "title": "Application CRD", "items": ["항상 argocd 네임스페이스에 생성", "spec: project, source, destination, syncPolicy, ignoreDifferences", "status: sync, health, history, resources"] },
-    { "dot": "cyan", "title": "배포 대상", "items": ["server(https://kubernetes.default.svc 또는 외부 클러스터 URL) 또는 name(in-cluster)", "namespace: 매니페스트가 배포되는 대상 네임스페이스"] }
+    {
+      "dot": "slate",
+      "title": "소스 유형",
+      "items": [
+        "Git 저장소의 일반 YAML, Helm 차트, Kustomize, Jsonnet 디렉토리",
+        "Helm 저장소의 차트(chart + targetRevision)",
+        "OCI 레지스트리(ECR 등)의 Helm 차트나 매니페스트"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Application CRD",
+      "items": [
+        "항상 argocd 네임스페이스에 생성",
+        "spec: project, source, destination, syncPolicy, ignoreDifferences",
+        "status: sync, health, history, resources"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "배포 대상",
+      "items": [
+        "server(https://kubernetes.default.svc 또는 외부 클러스터 URL) 또는 name(in-cluster)",
+        "namespace: 매니페스트가 배포되는 대상 네임스페이스"
+      ]
+    }
   ]
 }

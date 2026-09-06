@@ -29,7 +29,21 @@
         ],
         "note": "TriggerBinding이 페이로드에서 파라미터를 추출하고 TriggerTemplate이 그 값으로 새 PipelineRun을 생성한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

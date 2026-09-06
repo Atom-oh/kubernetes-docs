@@ -67,7 +67,7 @@
       "sublabel": "ClusterSPIFFEID 감시",
       "pos": [
         300,
-        30
+        20
       ],
       "size": [
         210,
@@ -81,7 +81,7 @@
       "sublabel": "SQLite / PostgreSQL",
       "pos": [
         40,
-        180
+        160
       ],
       "size": [
         170,
@@ -95,7 +95,7 @@
       "sublabel": "Registration API · Node Attestation",
       "pos": [
         320,
-        176
+        156
       ],
       "size": [
         170,
@@ -109,7 +109,7 @@
       "sublabel": "SVID 서명",
       "pos": [
         570,
-        180
+        160
       ],
       "size": [
         200,
@@ -123,7 +123,7 @@
       "sublabel": "Workload API · SVID 캐싱",
       "pos": [
         180,
-        350
+        310
       ],
       "size": [
         170,
@@ -137,7 +137,7 @@
       "sublabel": "Workload API · SVID 캐싱",
       "pos": [
         610,
-        350
+        310
       ],
       "size": [
         170,
@@ -150,7 +150,7 @@
       "label": "워크로드 A",
       "pos": [
         90,
-        500
+        440
       ],
       "size": [
         150,
@@ -163,7 +163,7 @@
       "label": "워크로드 B",
       "pos": [
         290,
-        500
+        440
       ],
       "size": [
         150,
@@ -176,7 +176,7 @@
       "label": "워크로드 C",
       "pos": [
         520,
-        500
+        440
       ],
       "size": [
         150,
@@ -189,7 +189,7 @@
       "label": "워크로드 D",
       "pos": [
         720,
-        500
+        440
       ],
       "size": [
         150,

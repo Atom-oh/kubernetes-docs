@@ -32,7 +32,21 @@
         ],
         "note": "세 값 중 최댓값 하나만 HPA의 desiredReplicas로 반영되어 실제 Pod 스케일링이 일어난다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {
