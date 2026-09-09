@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubescape Continuous Scanning Architecture",
+    "output": "en-security-11-kubescape-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scan-pipeline",
+        "label": "Scheduled scan pipeline",
+        "focus": [
+          "cron",
+          "ctrl",
+          "config",
+          "vuln",
+          "rbac",
+          "targets"
+        ],
+        "note": "A CronJob wakes the Operator Controller, which runs the three scanners against cluster resources."
+      },
+      {
+        "id": "results-baseline",
+        "label": "Results storage and Baseline comparison",
+        "focus": [
+          "ctrl",
+          "crd",
+          "baseline"
+        ],
+        "note": "The Operator Controller stores scan results as CRDs and compares them with the Baseline to detect changes."
+      },
+      {
+        "id": "runtime-external",
+        "label": "Runtime detection and external integrations",
+        "focus": [
+          "nodeagent",
+          "ctrl",
+          "crd",
+          "cloud",
+          "alert",
+          "siem"
+        ],
+        "note": "Node Agent eBPF events flow into the Controller; detected changes go to Alerting, SIEM/SOAR and Kubescape Cloud."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1160,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "cron",
+      "type": "backend",
+      "label": "CronJob Trigger",
+      "sublabel": "Schedule trigger",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Operator Controller",
+      "sublabel": "Scan coordination · CRD management",
+      "pos": [
+        280,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nodeagent",
+      "type": "security",
+      "label": "Node Agent",
+      "sublabel": "DaemonSet · eBPF runtime detection",
+      "pos": [
+        280,
+        50
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "config",
+      "type": "security",
+      "label": "Configuration Scanner",
+      "sublabel": "Configuration checks",
+      "pos": [
+        40,
+        370
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vuln",
+      "type": "security",
+      "label": "Vulnerability Scanner",
+      "sublabel": "Kubevuln · image vulnerabilities",
+      "pos": [
+        280,
+        370
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC Scanner",
+      "sublabel": "Permission analysis",
+      "pos": [
+        510,
+        370
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "targets",
+      "type": "backend",
+      "label": "Scan Targets",
+      "sublabel": "Deployments · Pods · Services · Secrets · ServiceAccounts",
+      "pos": [
+        190,
+        530
+      ],
+      "size": [
+        370,
+        64
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "database",
+      "label": "Baseline",
+      "sublabel": "Comparison baseline",
+      "pos": [
+        580,
+        50
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "crd",
+      "type": "database",
+      "label": "Scan Results CRDs",
+      "sublabel": "Scan results storage",
+      "pos": [
+        580,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "cloud",
+      "label": "Kubescape Cloud",
+      "sublabel": "Central dashboard",
+      "pos": [
+        940,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alert",
+      "type": "external",
+      "label": "Alerting",
+      "sublabel": "Change detection alerts",
+      "pos": [
+        940,
+        370
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "siem",
+      "type": "external",
+      "label": "SIEM / SOAR",
+      "sublabel": "Security operations integration",
+      "pos": [
+        940,
+        530
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "cron",
+        "ctrl",
+        "nodeagent",
+        "config",
+        "vuln",
+        "rbac",
+        "targets",
+        "baseline",
+        "crd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "External Integrations",
+      "wraps": [
+        "cloud",
+        "alert",
+        "siem"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cron-to-ctrl",
+      "from": "cron",
+      "to": "ctrl",
+      "label": "Schedule trigger",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-to-config",
+      "from": "ctrl",
+      "to": "config"
+    },
+    {
+      "id": "ctrl-to-vuln",
+      "from": "ctrl",
+      "to": "vuln",
+      "label": "Run scans",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-to-rbac",
+      "from": "ctrl",
+      "to": "rbac"
+    },
+    {
+      "id": "nodeagent-to-ctrl",
+      "from": "nodeagent",
+      "to": "ctrl",
+      "label": "eBPF events",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-to-crd",
+      "from": "ctrl",
+      "to": "crd",
+      "label": "Store scan results as CRDs",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "config-to-targets",
+      "from": "config",
+      "to": "targets",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "vuln-to-targets",
+      "from": "vuln",
+      "to": "targets"
+    },
+    {
+      "id": "rbac-to-targets",
+      "from": "rbac",
+      "to": "targets",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "baseline-to-crd",
+      "from": "baseline",
+      "to": "crd",
+      "label": "Compare",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "crd-to-cloud",
+      "from": "crd",
+      "to": "cloud",
+      "label": "Publish results"
+    },
+    {
+      "id": "crd-to-alert",
+      "from": "crd",
+      "to": "alert",
+      "label": "Change detected",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alert-to-siem",
+      "from": "alert",
+      "to": "siem"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Scan targets per scanner",
+      "items": [
+        "Configuration Scanner: Deployments · Pods · Services",
+        "Vulnerability Scanner: container images of Pods",
+        "RBAC Scanner: ServiceAccounts · Secrets"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Operator component resources",
+      "items": [
+        "Operator 256Mi / 200m — scan coordination, CRD management",
+        "Kubevuln 512Mi / 500m — image vulnerability scanning",
+        "Node Agent 500Mi / 500m per node — eBPF runtime detection",
+        "Storage 1Gi PVC, Gateway 128Mi / 100m — Cloud integration, API"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Scan schedule (ConfigMap)",
+      "items": [
+        "scanSchedule 0 */6 * * * — configuration scan every 6 hours",
+        "vulnerabilityScanSchedule 0 2 * * * — vulnerability scan daily at 02:00",
+        "frameworks nsa, mitre · severityThreshold medium · continuousScanning true"
+      ]
+    }
+  ]
+}

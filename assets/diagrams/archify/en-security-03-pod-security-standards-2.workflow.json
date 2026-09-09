@@ -1,0 +1,214 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PSP → PSS Migration Path",
+    "locale": "en",
+    "output": "en-security-03-pod-security-standards-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1228,
+      652
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Analysis / remediation work"
+        },
+        "security": {
+          "label": "PSS mode application"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "Steps 1-3: Prepare",
+        "focus": [
+          "analyze",
+          "map_profile",
+          "validate_test"
+        ],
+        "note": "Analyze existing PSPs, map them to PSS profiles, and validate first in a test namespace using warn mode."
+      },
+      {
+        "id": "rollout",
+        "label": "Steps 4-5: Gradual rollout",
+        "focus": [
+          "validate_test",
+          "warn_audit",
+          "fix_workloads"
+        ],
+        "note": "Surface violations with warn/audit mode, then fix workloads while watching warnings and audit logs."
+      },
+      {
+        "id": "enforce",
+        "label": "Steps 6-7: Enforce",
+        "focus": [
+          "fix_workloads",
+          "enforce_mode",
+          "remove_psp"
+        ],
+        "note": "Once violations are resolved, switch to enforce mode and finally remove PSP."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prepare",
+      "label": "Prepare · analyze and validate"
+    },
+    {
+      "id": "rollout",
+      "label": "Gradual rollout"
+    },
+    {
+      "id": "cutover",
+      "label": "Switch to enforce"
+    },
+    {
+      "id": "cleanup",
+      "label": "PSP cleanup"
+    }
+  ],
+  "mainPath": [
+    "analyze",
+    "map_profile",
+    "validate_test",
+    "warn_audit",
+    "fix_workloads",
+    "enforce_mode",
+    "remove_psp"
+  ],
+  "nodes": [
+    {
+      "id": "analyze",
+      "lane": "prepare",
+      "col": 0,
+      "type": "backend",
+      "label": "1. Analyze Current State",
+      "sublabel": "kubectl get psp",
+      "width": 212
+    },
+    {
+      "id": "map_profile",
+      "lane": "prepare",
+      "col": 1,
+      "type": "backend",
+      "label": "2. Map to PSS Profiles",
+      "sublabel": "Privileged / Baseline / Restricted",
+      "width": 200
+    },
+    {
+      "id": "validate_test",
+      "lane": "prepare",
+      "col": 2,
+      "type": "security",
+      "label": "3. Validate in Test Environment",
+      "sublabel": "pss-test namespace, warn mode",
+      "width": 260
+    },
+    {
+      "id": "warn_audit",
+      "lane": "rollout",
+      "col": 2,
+      "type": "security",
+      "label": "4. Apply with warn/audit Mode",
+      "sublabel": "enforce unchanged, monitor only",
+      "width": 260
+    },
+    {
+      "id": "fix_workloads",
+      "lane": "rollout",
+      "col": 3,
+      "type": "backend",
+      "label": "5. Modify Workloads",
+      "sublabel": "harden securityContext",
+      "width": 220
+    },
+    {
+      "id": "enforce_mode",
+      "lane": "cutover",
+      "col": 3,
+      "type": "security",
+      "label": "6. Switch to enforce Mode",
+      "sublabel": "enforce: restricted, blocking",
+      "width": 220
+    },
+    {
+      "id": "remove_psp",
+      "lane": "cleanup",
+      "col": 3,
+      "type": "backend",
+      "label": "7. Remove PSP",
+      "sublabel": "delete PodSecurityPolicy",
+      "width": 220
+    }
+  ],
+  "edges": [
+    {
+      "from": "analyze",
+      "to": "map_profile"
+    },
+    {
+      "from": "map_profile",
+      "to": "validate_test"
+    },
+    {
+      "from": "validate_test",
+      "to": "warn_audit",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "warn_audit",
+      "to": "fix_workloads"
+    },
+    {
+      "from": "fix_workloads",
+      "to": "enforce_mode",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "enforce_mode",
+      "to": "remove_psp",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "PSP → PSS Mapping Rules",
+      "items": [
+        "privileged: true → Privileged",
+        "privileged: false + allowPrivilegeEscalation: true → Baseline",
+        "allowPrivilegeEscalation: false + MustRunAsNonRoot → Restricted (drop all capabilities)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Step 4 Gradual Rollout Order",
+      "items": [
+        "Phase 1: enforce privileged, audit/warn baseline (monitoring only)",
+        "Phase 2: enforce baseline, audit/warn restricted",
+        "Phase 3: enforce restricted"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Restricted-Compliant Workload Fixes",
+      "items": [
+        "runAsNonRoot: true, seccompProfile RuntimeDefault",
+        "allowPrivilegeEscalation: false, capabilities drop ALL",
+        "readOnlyRootFilesystem: true"
+      ]
+    }
+  ]
+}

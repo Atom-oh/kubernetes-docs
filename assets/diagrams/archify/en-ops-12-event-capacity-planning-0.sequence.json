@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How Pause Pods Work — Reserve at D-7, Evict on D-Day",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      640
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "pm",
+      "type": "external",
+      "label": "PM",
+      "sublabel": "PM/Planner"
+    },
+    {
+      "id": "ops",
+      "type": "security",
+      "label": "Infra Team",
+      "sublabel": "Ops"
+    },
+    {
+      "id": "workload",
+      "type": "frontend",
+      "label": "Real Workloads",
+      "sublabel": "event service Pods"
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "scheduler"
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "Node provisioning"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 350,
+      "label": "D-7 — Pre-warm Nodes with Pause Pods"
+    },
+    {
+      "from": 370,
+      "to": 520,
+      "label": "D-Day — Real workloads evict Pause Pods"
+    }
+  ],
+  "messages": [
+    {
+      "id": "d7-info",
+      "from": "pm",
+      "to": "ops",
+      "y": 190,
+      "label": "D-7: Share event details"
+    },
+    {
+      "id": "deploy-pause",
+      "from": "ops",
+      "to": "k8s",
+      "y": 230,
+      "label": "Deploy Pause Pods (replicas: 20)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pending",
+      "from": "k8s",
+      "to": "karpenter",
+      "y": 270,
+      "label": "Detect Pending Pods"
+    },
+    {
+      "id": "provision",
+      "from": "karpenter",
+      "to": "k8s",
+      "y": 310,
+      "label": "Provision 20 Nodes",
+      "variant": "return",
+      "note": "Pause Pods hold the Nodes while waiting"
+    },
+    {
+      "id": "dday-start",
+      "from": "pm",
+      "to": "ops",
+      "y": 400,
+      "label": "D-Day: Event starts"
+    },
+    {
+      "id": "scale-up",
+      "from": "workload",
+      "to": "k8s",
+      "y": 440,
+      "label": "Workloads scale up",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evict",
+      "from": "k8s",
+      "to": "workload",
+      "y": 490,
+      "label": "Evict Pause Pods, schedule",
+      "variant": "return",
+      "note": "Low-PriorityClass Pause Pods are preempted; new Pods schedule instantly"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "k8s",
+      "from": 225,
+      "to": 320,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 265,
+      "to": 315,
+      "type": "cloud"
+    },
+    {
+      "participant": "k8s",
+      "from": 435,
+      "to": 500,
+      "type": "backend"
+    }
+  ]
+}

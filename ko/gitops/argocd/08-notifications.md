@@ -16,7 +16,9 @@
 
 ArgoCD Notifications Controller는 Application 이벤트를 다양한 서비스로 전송합니다.
 
-![ArgoCD Application에서 발생한 이벤트를 Notifications Controller가 받아 Slack, Microsoft Teams, Email, Webhook, GitHub 등 다섯 개의 알림 서비스로 동시에 전달하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-08-notifications-0.svg)
+![ArgoCD Application에서 발생한 이벤트를 Notifications Controller가 받아 Slack, Microsoft Teams, Email, Webhook, GitHub 등 다섯 개의 알림 서비스로 동시에 전달하는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-08-notifications-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-08-notifications-0.html)
 
 ### 아키텍처
 

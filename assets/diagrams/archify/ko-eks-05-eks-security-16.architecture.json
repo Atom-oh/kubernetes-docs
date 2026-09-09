@@ -7,34 +7,267 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "traffic-path", "label": "트래픽 경로", "focus": ["internet", "waf", "alb", "apppods", "secpods"], "note": "인터넷 트래픽은 AWS WAF와 ALB를 거쳐 프라이빗 서브넷의 애플리케이션 파드에 도달한다." },
-      { "id": "monitoring", "label": "보안 모니터링", "focus": ["sectools", "eks"], "note": "GuardDuty, Security Hub, AWS Config, CloudTrail이 EKS 클러스터를 지속적으로 모니터링한다." },
-      { "id": "data-protection", "label": "데이터 보호", "focus": ["apppods", "data", "kms"], "note": "저장 데이터는 AWS KMS 키로 암호화된 RDS, S3, DynamoDB에 보관된다." }
-    ]
+      {
+        "id": "traffic-path",
+        "label": "트래픽 경로",
+        "focus": [
+          "internet",
+          "waf",
+          "alb",
+          "apppods",
+          "secpods"
+        ],
+        "note": "인터넷 트래픽은 AWS WAF와 ALB를 거쳐 프라이빗 서브넷의 애플리케이션 파드에 도달한다."
+      },
+      {
+        "id": "monitoring",
+        "label": "보안 모니터링",
+        "focus": [
+          "sectools",
+          "eks"
+        ],
+        "note": "GuardDuty, Security Hub, AWS Config, CloudTrail이 EKS 클러스터를 지속적으로 모니터링한다."
+      },
+      {
+        "id": "data-protection",
+        "label": "데이터 보호",
+        "focus": [
+          "apppods",
+          "data",
+          "kms"
+        ],
+        "note": "저장 데이터는 AWS KMS 키로 암호화된 RDS, S3, DynamoDB에 보관된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "internet", "type": "external", "label": "인터넷", "sublabel": "외부 사용자", "pos": [40, 280], "size": [130, 60] },
-    { "id": "waf", "type": "security", "label": "AWS WAF", "sublabel": "웹 요청 필터링", "pos": [220, 280], "size": [150, 60] },
-    { "id": "alb", "type": "cloud", "label": "Application Load Balancer", "sublabel": "TLS 종단", "pos": [410, 280], "size": [180, 60] },
-    { "id": "sectools", "type": "security", "label": "보안 모니터링", "sublabel": "GuardDuty · Security Hub · Config · CloudTrail", "pos": [340, 140], "size": [230, 64] },
-    { "id": "eks", "type": "backend", "label": "EKS 클러스터", "sublabel": "컨트롤 플레인 / 노드", "pos": [670, 140], "size": [170, 60] },
-    { "id": "apppods", "type": "backend", "label": "애플리케이션 파드", "sublabel": "비즈니스 워크로드", "pos": [670, 280], "size": [170, 60] },
-    { "id": "secpods", "type": "security", "label": "보안 사이드카", "sublabel": "파드 내 보안 에이전트", "pos": [670, 420], "size": [170, 60] },
-    { "id": "data", "type": "database", "label": "데이터 서비스", "sublabel": "Amazon RDS · S3 · DynamoDB (암호화)", "pos": [900, 280], "size": [210, 64] },
-    { "id": "kms", "type": "security", "label": "AWS KMS", "sublabel": "저장 데이터 암호화 키", "pos": [900, 440], "size": [210, 60] }
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "외부 사용자",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "waf",
+      "type": "security",
+      "label": "AWS WAF",
+      "sublabel": "웹 요청 필터링",
+      "pos": [
+        220,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "TLS 종단",
+      "pos": [
+        410,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sectools",
+      "type": "security",
+      "label": "보안 모니터링",
+      "sublabel": "GuardDuty · Security Hub · Config · CloudTrail",
+      "pos": [
+        340,
+        140
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "backend",
+      "label": "EKS 클러스터",
+      "sublabel": "컨트롤 플레인 / 노드",
+      "pos": [
+        670,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "apppods",
+      "type": "backend",
+      "label": "애플리케이션 파드",
+      "sublabel": "비즈니스 워크로드",
+      "pos": [
+        670,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "secpods",
+      "type": "security",
+      "label": "보안 사이드카",
+      "sublabel": "파드 내 보안 에이전트",
+      "pos": [
+        670,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "data",
+      "type": "database",
+      "label": "데이터 서비스",
+      "sublabel": "Amazon RDS · S3 · DynamoDB (암호화)",
+      "pos": [
+        900,
+        280
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "security",
+      "label": "AWS KMS",
+      "sublabel": "저장 데이터 암호화 키",
+      "pos": [
+        900,
+        440
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "금융 서비스 VPC", "wraps": ["waf", "alb", "sectools", "eks", "apppods", "secpods", "data", "kms"] },
-    { "kind": "security-group", "label": "프라이빗 서브넷", "wraps": ["eks", "apppods", "secpods"] }
+    {
+      "kind": "region",
+      "label": "금융 서비스 VPC",
+      "wraps": [
+        "waf",
+        "alb",
+        "sectools",
+        "eks",
+        "apppods",
+        "secpods",
+        "data",
+        "kms"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "프라이빗 서브넷",
+      "wraps": [
+        "eks",
+        "apppods",
+        "secpods"
+      ]
+    }
   ],
   "connections": [
-    { "id": "internet-to-waf", "from": "internet", "to": "waf", "label": "HTTPS", "variant": "emphasis" },
-    { "id": "waf-to-alb", "from": "waf", "to": "alb", "variant": "emphasis" },
-    { "id": "alb-to-pods", "from": "alb", "to": "apppods", "variant": "emphasis" },
-    { "id": "eks-to-pods", "from": "eks", "to": "apppods", "fromSide": "bottom", "toSide": "top" },
-    { "id": "pods-to-sidecar", "from": "apppods", "to": "secpods", "fromSide": "bottom", "toSide": "top" },
-    { "id": "monitoring", "from": "sectools", "to": "eks", "label": "모니터링", "variant": "dashed" },
-    { "id": "pods-to-data", "from": "apppods", "to": "data", "label": "데이터 접근" },
-    { "id": "kms-to-data", "from": "kms", "to": "data", "label": "암호화 키 관리", "variant": "security", "fromSide": "top", "toSide": "bottom" }
+    {
+      "id": "internet-to-waf",
+      "from": "internet",
+      "to": "waf",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "waf-to-alb",
+      "from": "waf",
+      "to": "alb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-to-pods",
+      "from": "alb",
+      "to": "apppods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eks-to-pods",
+      "from": "eks",
+      "to": "apppods",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pods-to-sidecar",
+      "from": "apppods",
+      "to": "secpods",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "monitoring",
+      "from": "sectools",
+      "to": "eks",
+      "label": "모니터링",
+      "variant": "dashed"
+    },
+    {
+      "id": "pods-to-data",
+      "from": "apppods",
+      "to": "data",
+      "label": "데이터 접근"
+    },
+    {
+      "id": "kms-to-data",
+      "from": "kms",
+      "to": "data",
+      "label": "암호화 키 관리",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
   ]
 }

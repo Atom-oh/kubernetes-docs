@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Matrix Generator Visualization",
+    "locale": "en",
+    "output": "en-gitops-argocd-04-applicationsets-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [960, 600],
+    "legend": {
+      "entries": {
+        "cloud": { "label": "Generator 1 element: cluster" },
+        "external": { "label": "Generator 2 element: app" },
+        "backend": { "label": "Generated Application" }
+      }
+    },
+    "views": [
+      { "id": "clusters", "label": "Generator 1: Clusters", "focus": ["c1", "c2", "c3"], "note": "First matrix input: clusters selected by environment=production (one row per cluster)." },
+      { "id": "apps", "label": "Generator 2: Apps", "focus": ["a1", "a2", "a3"], "note": "Second matrix input: app directories from the git repo (one column per app)." },
+      { "id": "pair", "label": "One cluster x app pair", "focus": ["c1", "a1", "r1"], "note": "Each pair becomes one Application named {{name}}-{{path.basename}}." }
+    ]
+  },
+  "components": [
+    { "id": "a1", "type": "external", "label": "frontend", "sublabel": "apps/frontend", "pos": [290, 60], "size": [180, 56] },
+    { "id": "a2", "type": "external", "label": "backend", "sublabel": "apps/backend", "pos": [500, 60], "size": [180, 56] },
+    { "id": "a3", "type": "external", "label": "api", "sublabel": "apps/api", "pos": [710, 60], "size": [180, 56] },
+
+    { "id": "c1", "type": "cloud", "label": "prod-us-west", "sublabel": "environment: production", "pos": [40, 220], "size": [170, 60] },
+    { "id": "c2", "type": "cloud", "label": "prod-us-east", "sublabel": "environment: production", "pos": [40, 340], "size": [170, 60] },
+    { "id": "c3", "type": "cloud", "label": "prod-eu-west", "sublabel": "environment: production", "pos": [40, 460], "size": [170, 60] },
+
+    { "id": "r1", "type": "backend", "label": "prod-us-west-frontend", "pos": [290, 220], "size": [180, 60], "tag": "example pair" },
+    { "id": "r2", "type": "backend", "label": "prod-us-west-backend", "pos": [500, 220], "size": [180, 60] },
+    { "id": "r3", "type": "backend", "label": "prod-us-west-api", "pos": [710, 220], "size": [180, 60] },
+    { "id": "r4", "type": "backend", "label": "prod-us-east-frontend", "pos": [290, 340], "size": [180, 60] },
+    { "id": "r5", "type": "backend", "label": "prod-us-east-backend", "pos": [500, 340], "size": [180, 60] },
+    { "id": "r6", "type": "backend", "label": "prod-us-east-api", "pos": [710, 340], "size": [180, 60] },
+    { "id": "r7", "type": "backend", "label": "prod-eu-west-frontend", "pos": [290, 460], "size": [180, 60] },
+    { "id": "r8", "type": "backend", "label": "prod-eu-west-backend", "pos": [500, 460], "size": [180, 60] },
+    { "id": "r9", "type": "backend", "label": "prod-eu-west-api", "pos": [710, 460], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Generator 1: Clusters", "wraps": ["c1", "c2", "c3"] },
+    { "kind": "region", "label": "Generator 2: Apps", "wraps": ["a1", "a2", "a3"] },
+    { "kind": "region", "label": "Generated Applications (3 x 3 = 9)", "wraps": ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9"] }
+  ],
+  "connections": [
+    { "id": "c1-row", "from": "c1", "to": "r1", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "c2-row", "from": "c2", "to": "r4", "fromSide": "right", "toSide": "left" },
+    { "id": "c3-row", "from": "c3", "to": "r7", "fromSide": "right", "toSide": "left" },
+    { "id": "a1-col", "from": "a1", "to": "r1", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "a2-col", "from": "a2", "to": "r2", "fromSide": "bottom", "toSide": "top" },
+    { "id": "a3-col", "from": "a3", "to": "r3", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Matrix generator",
+      "items": [
+        "Combines two child generators into a Cartesian product",
+        "Generator 1: clusters with label environment=production",
+        "Generator 2: git directories matching apps/*"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Template per pair",
+      "items": [
+        "name: {{name}}-{{path.basename}}",
+        "destination server: {{server}}",
+        "namespace and path: {{path.basename}} / {{path}}"
+      ]
+    }
+  ]
+}

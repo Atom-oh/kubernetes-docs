@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "공유 비용 분배 흐름",
+    "output": "ko-ops-13-finops-cost-platform-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      560
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "총 클러스터 비용"
+        },
+        "backend": {
+          "label": "직접 비용"
+        },
+        "messagebus": {
+          "label": "공유 비용"
+        },
+        "external": {
+          "label": "유휴 비용 (최적화 대상)"
+        },
+        "frontend": {
+          "label": "팀별 배분 결과"
+        },
+        "security": {
+          "label": "팀별 합산"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "split",
+        "label": "비용 분류",
+        "focus": [
+          "total",
+          "direct",
+          "shared",
+          "idle"
+        ],
+        "note": "월 $10,000의 클러스터 비용을 직접 65% · 공유 25% · 유휴 10%로 나눈다."
+      },
+      {
+        "id": "shared-dist",
+        "label": "공유 비용 분배",
+        "focus": [
+          "shared",
+          "alloc",
+          "team-a",
+          "team-b",
+          "team-c"
+        ],
+        "note": "kube-system·모니터링 등 공유 인프라 $2,500을 가중치 방식으로 팀에 배분한다."
+      },
+      {
+        "id": "idle-dist",
+        "label": "유휴 비용 배분",
+        "focus": [
+          "idle",
+          "alloc",
+          "team-a",
+          "team-b",
+          "team-c"
+        ],
+        "note": "미사용 노드 리소스 $1,000은 노드별 가중치로 배분하며 최적화 대상으로 추적한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "total",
+      "type": "cloud",
+      "label": "총 클러스터 비용",
+      "sublabel": "$10,000 / 월",
+      "pos": [
+        40,
+        248
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "backend",
+      "label": "직접 비용",
+      "sublabel": "$6,500 (65%)",
+      "pos": [
+        290,
+        78
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "shared",
+      "type": "messagebus",
+      "label": "공유 비용",
+      "sublabel": "$2,500 (25%)",
+      "pos": [
+        290,
+        248
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "idle",
+      "type": "external",
+      "label": "유휴 비용",
+      "sublabel": "$1,000 (10%)",
+      "pos": [
+        290,
+        418
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "최적화 대상"
+    },
+    {
+      "id": "alloc",
+      "type": "security",
+      "label": "팀별 비용 합산",
+      "sublabel": "직접 비용 + 공유·유휴 분배분",
+      "pos": [
+        540,
+        248
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "team-a",
+      "type": "frontend",
+      "label": "팀 A",
+      "sublabel": "$3,000 + $800 + $320 = $4,120",
+      "pos": [
+        800,
+        78
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "team-b",
+      "type": "frontend",
+      "label": "팀 B",
+      "sublabel": "$2,000 + $600 + $240 = $2,840",
+      "pos": [
+        800,
+        248
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "team-c",
+      "type": "frontend",
+      "label": "팀 C",
+      "sublabel": "$1,500 + $1,100 + $440 = $3,040",
+      "pos": [
+        800,
+        418
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "비용 분류",
+      "wraps": [
+        "direct",
+        "shared",
+        "idle"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "팀별 배분 (Showback)",
+      "wraps": [
+        "team-a",
+        "team-b",
+        "team-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "total-direct",
+      "from": "total",
+      "to": "direct",
+      "variant": "emphasis"
+    },
+    {
+      "id": "total-shared",
+      "from": "total",
+      "to": "shared",
+      "variant": "emphasis"
+    },
+    {
+      "id": "total-idle",
+      "from": "total",
+      "to": "idle",
+      "variant": "emphasis"
+    },
+    {
+      "id": "direct-alloc",
+      "from": "direct",
+      "to": "alloc"
+    },
+    {
+      "id": "shared-alloc",
+      "from": "shared",
+      "to": "alloc"
+    },
+    {
+      "id": "idle-alloc",
+      "from": "idle",
+      "to": "alloc",
+      "variant": "dashed"
+    },
+    {
+      "id": "alloc-a",
+      "from": "alloc",
+      "to": "team-a",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alloc-b",
+      "from": "alloc",
+      "to": "team-b",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alloc-c",
+      "from": "alloc",
+      "to": "team-c",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "직접 비용 $6,500",
+      "items": [
+        "팀 워크로드가 직접 사용한 CPU·메모리·스토리지 비용",
+        "팀 A $3,000 · 팀 B $2,000 · 팀 C $1,500"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "공유 비용 $2,500",
+      "items": [
+        "컨트롤 플레인(kube-system)·서비스 메시: CPU 비용 가중치",
+        "모니터링(Prometheus, Grafana, Loki): 총 비용 가중치",
+        "네트워킹·보안(ALB Controller, cert-manager, OPA): 균등 분배"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "유휴 비용 $1,000",
+      "items": [
+        "미사용 노드 리소스는 노드별 가중치로 배분",
+        "팀 합계 $4,120 + $2,840 + $3,040 = $10,000"
+      ]
+    }
+  ]
+}

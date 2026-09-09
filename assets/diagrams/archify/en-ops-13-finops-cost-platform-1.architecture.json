@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "locale": "en",
+    "title": "Shared Cost Distribution Flow",
+    "output": "en-ops-13-finops-cost-platform-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      560
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Total cost"
+        },
+        "backend": {
+          "label": "Direct costs"
+        },
+        "messagebus": {
+          "label": "Shared costs"
+        },
+        "external": {
+          "label": "Idle costs (optimize)"
+        },
+        "frontend": {
+          "label": "Team allocation"
+        },
+        "security": {
+          "label": "Per-team aggregation"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "split",
+        "label": "Cost breakdown",
+        "focus": [
+          "total",
+          "direct",
+          "shared",
+          "idle"
+        ],
+        "note": "The $10,000/month cluster bill splits into 65% direct, 25% shared and 10% idle cost."
+      },
+      {
+        "id": "shared-dist",
+        "label": "Shared cost distribution",
+        "focus": [
+          "shared",
+          "alloc",
+          "team-a",
+          "team-b",
+          "team-c"
+        ],
+        "note": "$2,500 of shared infrastructure (kube-system, monitoring, ...) is distributed to teams by weighting rules."
+      },
+      {
+        "id": "idle-dist",
+        "label": "Idle cost distribution",
+        "focus": [
+          "idle",
+          "alloc",
+          "team-a",
+          "team-b",
+          "team-c"
+        ],
+        "note": "$1,000 of unused node capacity is distributed by node weight and tracked as an optimization target."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "total",
+      "type": "cloud",
+      "label": "Total Cluster Cost",
+      "sublabel": "$10,000 / month",
+      "pos": [
+        40,
+        248
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "backend",
+      "label": "Direct Costs",
+      "sublabel": "$6,500 (65%)",
+      "pos": [
+        290,
+        78
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "shared",
+      "type": "messagebus",
+      "label": "Shared Costs",
+      "sublabel": "$2,500 (25%)",
+      "pos": [
+        290,
+        248
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "idle",
+      "type": "external",
+      "label": "Idle Costs",
+      "sublabel": "$1,000 (10%)",
+      "pos": [
+        290,
+        418
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "optimization target"
+    },
+    {
+      "id": "alloc",
+      "type": "security",
+      "label": "Aggregate per Team",
+      "sublabel": "direct + distributed shared/idle",
+      "pos": [
+        540,
+        248
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "team-a",
+      "type": "frontend",
+      "label": "Team A",
+      "sublabel": "$3,000 + $800 + $320 = $4,120",
+      "pos": [
+        800,
+        78
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "team-b",
+      "type": "frontend",
+      "label": "Team B",
+      "sublabel": "$2,000 + $600 + $240 = $2,840",
+      "pos": [
+        800,
+        248
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "team-c",
+      "type": "frontend",
+      "label": "Team C",
+      "sublabel": "$1,500 + $1,100 + $440 = $3,040",
+      "pos": [
+        800,
+        418
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cost categories",
+      "wraps": [
+        "direct",
+        "shared",
+        "idle"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Per-team allocation (Showback)",
+      "wraps": [
+        "team-a",
+        "team-b",
+        "team-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "total-direct",
+      "from": "total",
+      "to": "direct",
+      "variant": "emphasis"
+    },
+    {
+      "id": "total-shared",
+      "from": "total",
+      "to": "shared",
+      "variant": "emphasis"
+    },
+    {
+      "id": "total-idle",
+      "from": "total",
+      "to": "idle",
+      "variant": "emphasis"
+    },
+    {
+      "id": "direct-alloc",
+      "from": "direct",
+      "to": "alloc"
+    },
+    {
+      "id": "shared-alloc",
+      "from": "shared",
+      "to": "alloc"
+    },
+    {
+      "id": "idle-alloc",
+      "from": "idle",
+      "to": "alloc",
+      "variant": "dashed"
+    },
+    {
+      "id": "alloc-a",
+      "from": "alloc",
+      "to": "team-a",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alloc-b",
+      "from": "alloc",
+      "to": "team-b",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alloc-c",
+      "from": "alloc",
+      "to": "team-c",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Direct costs $6,500",
+      "items": [
+        "CPU, memory and storage consumed directly by team workloads",
+        "Team A $3,000 · Team B $2,000 · Team C $1,500"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Shared costs $2,500",
+      "items": [
+        "Control plane (kube-system) and service mesh: weighted by CPU cost",
+        "Monitoring (Prometheus, Grafana, Loki): weighted by total cost",
+        "Networking and security (ALB Controller, cert-manager, OPA): even split"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Idle costs $1,000",
+      "items": [
+        "Unused node capacity is distributed by per-node weight",
+        "Team totals $4,120 + $2,840 + $3,040 = $10,000"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Image Automation + Canary Automation Pipeline",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [960, 640],
+    "views": [
+      { "id": "image-automation", "label": "Image automation", "focus": ["cicd", "ecr", "flux", "git"], "note": "Flux scans ECR for the new image tag and commits it to Git" },
+      { "id": "gitops-sync", "label": "GitOps sync", "focus": ["git", "flux", "k8s"], "note": "Flux detects the Git change and the Kustomize Controller applies the Deployment" },
+      { "id": "canary-rollout", "label": "Canary rollout", "focus": ["k8s", "flagger"], "note": "Flagger detects the Deployment change, shifts traffic step by step, then promotes or rolls back" }
+    ]
+  },
+  "participants": [
+    { "id": "cicd", "type": "external", "label": "CI Pipeline", "sublabel": "build & push image" },
+    { "id": "ecr", "type": "cloud", "label": "Amazon ECR", "sublabel": "image registry" },
+    { "id": "flux", "type": "backend", "label": "Flux", "sublabel": "Image Automation" },
+    { "id": "git", "type": "database", "label": "Git Repository", "sublabel": "fleet-infra" },
+    { "id": "k8s", "type": "cloud", "label": "Kubernetes", "sublabel": "Deployment" },
+    { "id": "flagger", "type": "security", "label": "Flagger", "sublabel": "Canary controller" }
+  ],
+  "segments": [
+    { "from": 165, "to": 330, "label": "Image automation" },
+    { "from": 338, "to": 418, "label": "GitOps sync" },
+    { "from": 426, "to": 520, "label": "Canary rollout" }
+  ],
+  "messages": [
+    { "id": "push-image", "from": "cicd", "to": "ecr", "y": 185, "label": "1 · push web-app:v2.0.0", "variant": "emphasis" },
+    { "id": "scan-tags", "from": "flux", "to": "ecr", "y": 228, "label": "2 · scan image tags", "note": "ImageRepository interval 5m · provider aws · ImagePolicy semver >=1.0.0" },
+    { "id": "commit-tag", "from": "flux", "to": "git", "y": 270, "label": "3 · commit updated tag", "variant": "emphasis", "note": "ImageUpdateAutomation · Setters strategy · deployment.yaml" },
+    { "id": "detect-git", "from": "git", "to": "flux", "y": 312, "label": "4 · detect Git change", "variant": "return" },
+    { "id": "update-deploy", "from": "flux", "to": "k8s", "y": 355, "label": "5 · apply updated Deployment", "variant": "emphasis", "note": "Kustomize Controller · Kustomization web-app" },
+    { "id": "detect-pod", "from": "k8s", "to": "flagger", "y": 398, "label": "6 · detect Deployment change" },
+    { "id": "start-canary", "from": "flagger", "to": "k8s", "y": 445, "label": "7 · start progressive canary rollout", "variant": "emphasis", "note": "canary Deployment · stepWeight 10 → maxWeight 50 · interval 1m" },
+    { "id": "finish-or-rollback", "from": "flagger", "to": "k8s", "y": 495, "label": "8 · promote to primary or roll back", "variant": "return", "note": "metrics analysis · request-success-rate ≥ 99%" }
+  ],
+  "activations": [
+    { "participant": "flux", "from": 222, "to": 362, "type": "backend" },
+    { "participant": "k8s", "from": 350, "to": 502, "type": "cloud" },
+    { "participant": "flagger", "from": 392, "to": 500, "type": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Flux Image Automation",
+      "items": [
+        "ImageRepository scans the ECR repository every 5m (provider: aws)",
+        "ImagePolicy selects the latest tag matching semver range \">=1.0.0\"",
+        "ImageUpdateAutomation commits \"Automated image update\" to main using the Setters strategy on the # {\"$imagepolicy\": ...} marker"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Flagger Canary Analysis",
+      "items": [
+        "On a Deployment change Flagger shifts traffic in stepWeight 10 increments up to maxWeight 50",
+        "Every interval 1m it checks request-success-rate ≥ 99% and request-duration ≤ 500ms; threshold 5 failures triggers rollback",
+        "The Kustomization ships deployment.yaml, service.yaml, hpa.yaml, canary.yaml and alert-providers.yaml into the production namespace"
+      ]
+    }
+  ]
+}

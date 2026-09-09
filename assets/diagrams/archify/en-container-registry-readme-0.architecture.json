@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Role of the Container Registry",
+    "output": "en-container-registry-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI/CD Pipeline",
+      "sublabel": "Build · Test · Push",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Container Registry",
+      "sublabel": "Store · Version · Scan",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        220,
+        72
+      ],
+      "tag": "core infrastructure"
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "Kubernetes Cluster",
+      "sublabel": "Pull · Run · Scale",
+      "pos": [
+        760,
+        80
+      ],
+      "size": [
+        220,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push",
+      "from": "cicd",
+      "to": "registry",
+      "label": "image push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pull",
+      "from": "registry",
+      "to": "cluster",
+      "label": "image pull",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Core registry capabilities",
+      "items": [
+        "Image storage: efficient storage of container image layers",
+        "Versioning: image versions managed through tags",
+        "Access control: authentication and authorization",
+        "Vulnerability scanning: detecting security flaws inside images",
+        "Replication / mirroring: high availability and geo-distributed delivery"
+      ]
+    }
+  ]
+}

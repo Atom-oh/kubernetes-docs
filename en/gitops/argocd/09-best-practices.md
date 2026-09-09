@@ -127,7 +127,9 @@ gitops-root/
 
 ### Git Branch Strategy
 
-![Git branches develop, staging, and main are merged in sequence, each triggering a deploy to its matching environment: develop to the Dev Cluster, staging to the Staging Cluster, and main to the Production Cluster.](../../../assets/diagrams/rendered/en-gitops-argocd-09-best-practices-0.svg)
+![Diagram comparing a monorepo, where one Git repository holds the app-a, app-b, and infra directories, with a polyrepo, where the same components are split into three independent Git repositories: app-a-repo, app-b-repo, and infra-repo.](../../.gitbook/assets/en-gitops-argocd-09-best-practices-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-09-best-practices-0.html)
 
 ### Directory-Based Promotion
 

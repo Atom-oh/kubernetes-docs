@@ -1,0 +1,174 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Composition Workflow Overview",
+    "locale": "en",
+    "output": "en-platform-engineering-07-crossplane-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "platform-side",
+        "label": "Platform team prepares the API",
+        "focus": [
+          "xrd",
+          "composition"
+        ],
+        "note": "The platform team publishes the PostgreSQLDatabase API (XRD) and the Composition blueprint behind it."
+      },
+      {
+        "id": "developer-side",
+        "label": "Developer self-service",
+        "focus": [
+          "claim",
+          "xr"
+        ],
+        "note": "A namespaced Claim is all the developer writes; Crossplane turns it into a cluster-scoped Composite Resource."
+      },
+      {
+        "id": "provisioning",
+        "label": "Composition to AWS",
+        "focus": [
+          "xr",
+          "mrs",
+          "provider"
+        ],
+        "note": "The Composition maps the XR to Managed Resources that the provider reconciles into real AWS resources."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "platform",
+      "label": "Platform Team"
+    },
+    {
+      "id": "developer",
+      "label": "Developer"
+    },
+    {
+      "id": "crossplane",
+      "label": "Crossplane"
+    }
+  ],
+  "phases": [
+    {
+      "id": "define",
+      "label": "Define the API",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "consume",
+      "label": "Self-service",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "provision",
+      "label": "Provision",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "xrd",
+    "composition",
+    "claim",
+    "xr",
+    "mrs",
+    "provider"
+  ],
+  "nodes": [
+    {
+      "id": "xrd",
+      "lane": "platform",
+      "col": 0,
+      "type": "security",
+      "label": "Define XRD",
+      "sublabel": "PostgreSQLDatabase API",
+      "width": 140
+    },
+    {
+      "id": "composition",
+      "lane": "platform",
+      "col": 1,
+      "type": "backend",
+      "label": "Write Composition",
+      "sublabel": "reusable blueprint",
+      "width": 152
+    },
+    {
+      "id": "claim",
+      "lane": "developer",
+      "col": 2,
+      "type": "frontend",
+      "label": "Create Claim",
+      "sublabel": "namespaced request",
+      "width": 140
+    },
+    {
+      "id": "xr",
+      "lane": "crossplane",
+      "col": 3,
+      "type": "backend",
+      "label": "Create XR",
+      "sublabel": "Composite Resource",
+      "tag": "cluster-scoped",
+      "width": 140
+    },
+    {
+      "id": "mrs",
+      "lane": "crossplane",
+      "col": 4,
+      "type": "backend",
+      "label": "Map to MRs",
+      "sublabel": "SG, SubnetGroup, RDS",
+      "width": 140
+    },
+    {
+      "id": "provider",
+      "lane": "crossplane",
+      "col": 5,
+      "type": "cloud",
+      "label": "Provision AWS",
+      "sublabel": "provider-aws family",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "xrd",
+      "to": "composition"
+    },
+    {
+      "from": "composition",
+      "to": "claim",
+      "label": "publishes API",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "claim",
+      "to": "xr",
+      "label": "kubectl apply",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "xr",
+      "to": "mrs"
+    },
+    {
+      "from": "mrs",
+      "to": "provider"
+    }
+  ]
+}

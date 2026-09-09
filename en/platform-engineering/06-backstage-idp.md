@@ -83,7 +83,9 @@ After completing this document, you will be able to:
 
 ### High-Level Architecture
 
-![Architecture diagram showing browser traffic reaching the Backstage backend, which fans out to core and integration plugins, a PostgreSQL store, TechDocs storage in S3, and external systems including GitHub, EKS, ArgoCD, and an OIDC identity provider.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-0.svg)
+![Backstage catalog entity diagram in which payments-domain contains order-system and payment-system, their components provide or consume APIs and depend on resources, and platform-team and backend-team own the two systems.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-1.html)
 
 ### Core Concepts
 
@@ -567,7 +569,9 @@ export const authModuleOidc = createBackendModule({
 
 The Backstage Software Catalog uses a well-defined entity model to represent your organization's software ecosystem. Understanding this model is essential for effective catalog management.
 
-![Entity-relationship diagram showing a Domain owning a System, which is built from Components that expose APIs and depend on Resources, with a Group owning the System and Component and a User belonging to that Group.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-1.svg)
+![Backstage Software Catalog entity model: a Domain groups a System that is built from Components, which provide APIs and depend on Resources, while a Group owns the System and Component and a User is a member of that Group.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-11.html)
 
 ### Entity Types
 
@@ -1828,7 +1832,9 @@ export const KedaScalingCard = () => {
 
 Backstage includes a built-in permission framework that controls access to catalog entities, templates, and plugin features. The permission system is policy-based and integrates with the catalog's ownership model.
 
-![Flowchart showing a user request evaluated against a permission policy — informed by catalog ownership and group membership — that allows the action, denies it with a 403, or conditionally filters the results.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-2.svg)
+![Flowchart showing a user request evaluated against a permission policy — informed by catalog ownership and group membership — that allows the action, denies it with a 403, or conditionally filters the results.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-10.html)
 
 ### Enabling the Permission Framework
 

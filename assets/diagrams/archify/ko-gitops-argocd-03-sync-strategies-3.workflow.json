@@ -1,0 +1,239 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "동기화 웨이브(Sync Wave) 적용 순서",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "foundation",
+        "label": "기반 리소스 (Wave -1, 0)",
+        "focus": [
+          "ns",
+          "sa",
+          "cm",
+          "secret"
+        ],
+        "note": "Namespace와 ServiceAccount가 가장 먼저 생성되고, 이어서 설정(ConfigMap, Secret)이 적용된다."
+      },
+      {
+        "id": "workload",
+        "label": "워크로드 (Wave 1)",
+        "focus": [
+          "cm",
+          "secret",
+          "deploy",
+          "svc"
+        ],
+        "note": "설정이 준비된 뒤 Deployment와 Service가 같은 웨이브에서 병렬로 적용된다."
+      },
+      {
+        "id": "exposure",
+        "label": "노출·확장 (Wave 2)",
+        "focus": [
+          "deploy",
+          "svc",
+          "ingress",
+          "hpa"
+        ],
+        "note": "워크로드가 Healthy 상태가 된 후 Ingress와 HPA가 마지막으로 생성된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "네임스페이스"
+        },
+        "security": {
+          "label": "RBAC · 시크릿"
+        },
+        "database": {
+          "label": "설정 데이터"
+        },
+        "backend": {
+          "label": "워크로드 · 스케일링"
+        },
+        "messagebus": {
+          "label": "서비스 네트워킹"
+        },
+        "external": {
+          "label": "외부 진입점"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "primary",
+      "label": "웨이브 어노테이션 예시 리소스"
+    },
+    {
+      "id": "parallel",
+      "label": "동일 웨이브 병렬 적용 리소스"
+    }
+  ],
+  "phases": [
+    {
+      "id": "w_minus1",
+      "label": "Wave -1",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "w0",
+      "label": "Wave 0 (기본값)",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "w1",
+      "label": "Wave 1",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "w2",
+      "label": "Wave 2",
+      "fromCol": 3,
+      "toCol": 3
+    }
+  ],
+  "mainPath": [
+    "ns",
+    "cm",
+    "deploy",
+    "ingress"
+  ],
+  "nodes": [
+    {
+      "id": "ns",
+      "lane": "primary",
+      "col": 0,
+      "type": "cloud",
+      "label": "Namespace",
+      "sublabel": "가장 먼저 생성",
+      "tag": "sync-wave: \"-1\"",
+      "width": 150
+    },
+    {
+      "id": "sa",
+      "lane": "parallel",
+      "col": 0,
+      "type": "security",
+      "label": "ServiceAccount",
+      "sublabel": "RBAC 주체",
+      "width": 150
+    },
+    {
+      "id": "cm",
+      "lane": "primary",
+      "col": 1,
+      "type": "database",
+      "label": "ConfigMap",
+      "sublabel": "애플리케이션 설정",
+      "tag": "sync-wave: \"0\"",
+      "width": 150
+    },
+    {
+      "id": "secret",
+      "lane": "parallel",
+      "col": 1,
+      "type": "security",
+      "label": "Secret",
+      "sublabel": "민감 설정",
+      "width": 150
+    },
+    {
+      "id": "deploy",
+      "lane": "primary",
+      "col": 2,
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "워크로드 실행",
+      "tag": "sync-wave: \"1\"",
+      "width": 150
+    },
+    {
+      "id": "svc",
+      "lane": "parallel",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Service",
+      "sublabel": "클러스터 내부 노출",
+      "width": 150
+    },
+    {
+      "id": "ingress",
+      "lane": "primary",
+      "col": 3,
+      "type": "external",
+      "label": "Ingress",
+      "sublabel": "외부 트래픽 진입",
+      "tag": "sync-wave: \"2\"",
+      "width": 150
+    },
+    {
+      "id": "hpa",
+      "lane": "parallel",
+      "col": 3,
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "오토스케일링",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "ns",
+      "to": "cm",
+      "variant": "emphasis"
+    },
+    {
+      "from": "cm",
+      "to": "deploy",
+      "variant": "emphasis"
+    },
+    {
+      "from": "deploy",
+      "to": "ingress",
+      "label": "Healthy 후 진행",
+      "variant": "emphasis"
+    },
+    {
+      "from": "sa",
+      "to": "secret"
+    },
+    {
+      "from": "secret",
+      "to": "svc"
+    },
+    {
+      "from": "svc",
+      "to": "hpa"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "웨이브 동작 규칙",
+      "items": [
+        "낮은 웨이브 번호부터 순차적으로 적용",
+        "동일 웨이브 내 리소스는 병렬 적용",
+        "각 웨이브는 이전 웨이브가 완료된 후 시작",
+        "웨이브 내 리소스가 Healthy 상태가 되어야 다음 웨이브 진행"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "웨이브 어노테이션",
+      "items": [
+        "argocd.argoproj.io/sync-wave: \"<정수>\"",
+        "어노테이션이 없으면 기본값 0",
+        "음수 값으로 Namespace 등 선행 리소스를 앞당길 수 있음"
+      ]
+    }
+  ]
+}

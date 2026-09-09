@@ -1,0 +1,165 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ECR Pull-Through Cache Flow",
+    "locale": "en",
+    "output": "en-container-registry-02-amazon-ecr-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "cache-hit",
+        "label": "Cache Hit",
+        "focus": [
+          "pull",
+          "endpoint",
+          "serve"
+        ],
+        "note": "An image already cached in ECR is served instantly without touching the upstream registry."
+      },
+      {
+        "id": "cache-miss",
+        "label": "Cache Miss",
+        "focus": [
+          "pull",
+          "endpoint",
+          "upstream",
+          "cache",
+          "serve"
+        ],
+        "note": "The first request pulls from the upstream registry, caches it in an ECR repository, then serves it."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "kubelet step"
+        },
+        "cloud": {
+          "label": "ECR endpoint"
+        },
+        "database": {
+          "label": "ECR cache repository"
+        },
+        "external": {
+          "label": "Upstream registry"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "node",
+      "label": "EKS node (kubelet)"
+    },
+    {
+      "id": "ecr",
+      "label": "Amazon ECR"
+    },
+    {
+      "id": "external",
+      "label": "Upstream registry"
+    }
+  ],
+  "mainPath": [
+    "pull",
+    "endpoint",
+    "upstream",
+    "cache",
+    "serve"
+  ],
+  "nodes": [
+    {
+      "id": "pull",
+      "lane": "node",
+      "col": 0,
+      "type": "backend",
+      "label": "Image pull request",
+      "sublabel": "kubelet → ECR",
+      "width": 170
+    },
+    {
+      "id": "endpoint",
+      "lane": "ecr",
+      "col": 1,
+      "type": "cloud",
+      "label": "ECR Endpoint",
+      "sublabel": "cache lookup",
+      "width": 170
+    },
+    {
+      "id": "upstream",
+      "lane": "external",
+      "col": 2,
+      "type": "external",
+      "label": "Pull from upstream",
+      "sublabel": "Docker Hub, Quay, ghcr, ...",
+      "width": 170
+    },
+    {
+      "id": "cache",
+      "lane": "ecr",
+      "col": 3,
+      "type": "database",
+      "label": "Cache in ECR",
+      "sublabel": "pull-through cache repository",
+      "width": 170
+    },
+    {
+      "id": "serve",
+      "lane": "node",
+      "col": 4,
+      "type": "backend",
+      "label": "Serve image",
+      "sublabel": "cached image served instantly",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "id": "pull-to-endpoint",
+      "from": "pull",
+      "to": "endpoint",
+      "toSide": "left"
+    },
+    {
+      "id": "hit",
+      "from": "endpoint",
+      "to": "serve",
+      "label": "Cache Hit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "miss",
+      "from": "endpoint",
+      "to": "upstream",
+      "label": "Cache Miss",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "upstream-to-cache",
+      "from": "upstream",
+      "to": "cache",
+      "fromSide": "right"
+    },
+    {
+      "id": "cache-to-serve",
+      "from": "cache",
+      "to": "serve"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Pull-Through Cache Benefits",
+      "items": [
+        "Removes dependency on external registry availability",
+        "Reduces image pull latency",
+        "Avoids Docker Hub rate limits"
+      ]
+    }
+  ]
+}

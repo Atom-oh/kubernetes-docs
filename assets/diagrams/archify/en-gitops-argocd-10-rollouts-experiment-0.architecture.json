@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Experiment resources created by a Rollout",
+    "locale": "en",
+    "output": "en-gitops-argocd-10-rollouts-experiment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Created resource"
+        },
+        "cloud": {
+          "label": "Experiment (central)"
+        },
+        "external": {
+          "label": "Referenced template"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "creation-chain",
+        "label": "Creation chain",
+        "focus": [
+          "rollout",
+          "experiment",
+          "rs-baseline",
+          "rs-canary",
+          "analysisrun"
+        ],
+        "note": "Rollout creates the Experiment; the Experiment creates ReplicaSets per spec.templates and AnalysisRuns per spec.analyses."
+      },
+      {
+        "id": "analysis-reference",
+        "label": "Analysis template reference",
+        "focus": [
+          "analysistemplate",
+          "analysisrun"
+        ],
+        "note": "The AnalysisRun is a run instance that copies the metric definitions of the AnalysisTemplate it references by templateName."
+      }
+    ],
+    "viewBox": [
+      1180,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "rollout",
+      "type": "backend",
+      "label": "Rollout",
+      "sublabel": "experiment step in canary steps",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "experiment",
+      "type": "cloud",
+      "label": "Experiment",
+      "sublabel": "spec.templates · spec.analyses",
+      "pos": [
+        345,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rs-baseline",
+      "type": "backend",
+      "label": "ReplicaSet",
+      "sublabel": "baseline",
+      "pos": [
+        120,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "rs-canary",
+      "type": "backend",
+      "label": "ReplicaSet",
+      "sublabel": "canary",
+      "pos": [
+        360,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "analysisrun",
+      "type": "backend",
+      "label": "AnalysisRun",
+      "sublabel": "measures and judges metrics",
+      "pos": [
+        600,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "analysistemplate",
+      "type": "external",
+      "label": "AnalysisTemplate",
+      "sublabel": "metric definitions",
+      "pos": [
+        940,
+        380
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Resources created by the Experiment",
+      "wraps": [
+        "rs-baseline",
+        "rs-canary",
+        "analysisrun"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rollout-creates-experiment",
+      "from": "rollout",
+      "to": "experiment",
+      "label": "creates",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "experiment-rs-baseline",
+      "from": "experiment",
+      "to": "rs-baseline",
+      "label": "spec.templates",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "experiment-rs-canary",
+      "from": "experiment",
+      "to": "rs-canary",
+      "label": "spec.templates",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 90
+    },
+    {
+      "id": "experiment-analysisrun",
+      "from": "experiment",
+      "to": "analysisrun",
+      "label": "spec.analyses",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "template-ref",
+      "from": "analysistemplate",
+      "to": "analysisrun",
+      "label": "templateName reference",
+      "variant": "dashed"
+    }
+  ]
+}

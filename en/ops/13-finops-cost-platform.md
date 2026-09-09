@@ -34,7 +34,9 @@ This guide builds a complete FinOps cost visibility platform on Kubernetes using
 
 ### 1.1 Inform, Optimize, Operate Cycle
 
-![Cyclic diagram of the FinOps operating loop: Inform builds cost visibility and allocation, which feeds Optimize's rightsizing and savings work, which feeds Operate's budget governance and automation, which then feeds back into Inform.](../../assets/diagrams/rendered/en-ops-13-finops-cost-platform-0.svg)
+![Cyclic diagram of the FinOps operating loop: Inform builds cost visibility and allocation, which feeds Optimize's rightsizing and savings work, which feeds Operate's budget governance and automation, which then feeds back into Inform.](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-0.html)
 
 **Inform Phase**: Establish visibility by deploying cost monitoring tools, implementing a label strategy, and building showback dashboards. This is the foundation all optimization efforts build on.
 
@@ -577,7 +579,9 @@ spec:
 
 ### 3.3 Shared Cost Distribution
 
-![Flowchart showing total cluster cost split into direct team costs, shared platform costs, and idle costs, where the shared costs (kube-system, monitoring, ingress-nginx) and idle costs are each distributed back to teams using a different weighting method (CPU, total cost, even split, or weighted distribution).](../../assets/diagrams/rendered/en-ops-13-finops-cost-platform-1.svg)
+![Flow diagram showing a $10,000/month total cluster cost split into direct (65%), shared (25%) and idle (10%) costs, then passed through distribution rules to allocate $4,120 to Team A, $2,840 to Team B and $3,040 to Team C.](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-1.html)
 
 | Distribution Method | When to Use | Pros | Cons |
 |-------------------|-------------|------|------|
@@ -1201,7 +1205,9 @@ kubectl get namespaces -l goldilocks.fairwinds.com/enabled=true
 
 For mature organizations, VPA recommendations can flow into an automated pipeline that creates pull requests for review.
 
-![Flowchart showing VPA recommendations collected on a schedule, compared to current requests, and — when the change exceeds 20% — turned into a pull request that a team reviews before ArgoCD syncs it; smaller changes are skipped.](../../assets/diagrams/rendered/en-ops-13-finops-cost-platform-2.svg)
+![Sequence diagram of the automated resource adjustment pipeline: a weekly CronJob queries VPA recommendations, the rightsizing script compares them with current requests and opens a PR for changes over 20%. Git/CI runs lint checks and requests review from the team lead; after approval and merge, ArgoCD syncs the merged manifests.](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-2.html)
 
 ```yaml
 # rightsizing-pipeline-cronjob.yaml

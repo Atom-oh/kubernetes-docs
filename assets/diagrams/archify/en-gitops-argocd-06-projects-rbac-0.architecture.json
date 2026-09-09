@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Namespace-per-Team",
+    "output": "en-gitops-argocd-06-projects-rbac-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ownership",
+        "label": "Team owns its project",
+        "focus": [
+          "team-frontend",
+          "team-backend",
+          "team-platform",
+          "proj-frontend",
+          "proj-backend",
+          "proj-platform"
+        ],
+        "note": "Each team SSO group owns its own AppProject."
+      },
+      {
+        "id": "destinations",
+        "label": "Destination restrictions",
+        "focus": [
+          "proj-frontend",
+          "proj-backend",
+          "proj-platform",
+          "ns-frontend",
+          "ns-backend",
+          "ns-platform"
+        ],
+        "note": "AppProject destinations restrict which namespaces a project can deploy into."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "team-frontend",
+      "type": "external",
+      "label": "Team A",
+      "sublabel": "group: team-a-admins",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "team-backend",
+      "type": "external",
+      "label": "Team B",
+      "sublabel": "group: team-b-admins",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "team-platform",
+      "type": "external",
+      "label": "Platform Team",
+      "sublabel": "group: myorg:platform-team",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "proj-frontend",
+      "type": "security",
+      "label": "Project: team-a",
+      "sublabel": "sourceRepos: team-a-*",
+      "pos": [
+        340,
+        70
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "proj-backend",
+      "type": "security",
+      "label": "Project: team-b",
+      "sublabel": "sourceRepos: team-b-*",
+      "pos": [
+        340,
+        210
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "proj-platform",
+      "type": "security",
+      "label": "Project: platform",
+      "sublabel": "cluster-wide resources allowed",
+      "pos": [
+        340,
+        350
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "ns-frontend",
+      "type": "backend",
+      "label": "Namespace: team-a",
+      "sublabel": "team-a apps only",
+      "pos": [
+        720,
+        70
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "ns-backend",
+      "type": "backend",
+      "label": "Namespace: team-b",
+      "sublabel": "team-b apps only",
+      "pos": [
+        720,
+        210
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "ns-platform",
+      "type": "backend",
+      "label": "monitoring · logging",
+      "sublabel": "shared platform namespaces",
+      "pos": [
+        720,
+        350
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Teams (SSO groups)",
+      "wraps": [
+        "team-frontend",
+        "team-backend",
+        "team-platform"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "ArgoCD · AppProject",
+      "wraps": [
+        "proj-frontend",
+        "proj-backend",
+        "proj-platform"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "ns-frontend",
+        "ns-backend",
+        "ns-platform"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "own-frontend",
+      "from": "team-frontend",
+      "to": "proj-frontend",
+      "label": "owns",
+      "variant": "emphasis"
+    },
+    {
+      "id": "own-backend",
+      "from": "team-backend",
+      "to": "proj-backend",
+      "label": "owns"
+    },
+    {
+      "id": "own-platform",
+      "from": "team-platform",
+      "to": "proj-platform",
+      "label": "owns"
+    },
+    {
+      "id": "deploy-frontend",
+      "from": "proj-frontend",
+      "to": "ns-frontend",
+      "label": "can deploy to",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deploy-backend",
+      "from": "proj-backend",
+      "to": "ns-backend",
+      "label": "can deploy to"
+    },
+    {
+      "id": "deploy-platform",
+      "from": "proj-platform",
+      "to": "ns-platform",
+      "label": "can deploy to"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "What an AppProject does",
+      "items": [
+        "Groups Applications logically",
+        "Restricts source repos, target clusters/namespaces, and resource kinds",
+        "Defines project-specific roles and permissions"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Default project",
+      "items": [
+        "Allows every repo, destination, and resource",
+        "Not recommended for production"
+      ]
+    }
+  ]
+}

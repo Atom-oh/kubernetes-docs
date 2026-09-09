@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cert-manager Components",
+    "output": "en-security-10-cert-manager-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "issuance",
+        "label": "Issuance path",
+        "focus": [
+          "controller",
+          "cert",
+          "certreq",
+          "issuer",
+          "external",
+          "secret"
+        ],
+        "note": "The controller watches Certificates, creates a CertificateRequest, gets it signed by the Issuer's CA, and stores it in a Secret."
+      },
+      {
+        "id": "admission",
+        "label": "Webhook & CA inject",
+        "focus": [
+          "webhook",
+          "cainjector",
+          "cert",
+          "issuer"
+        ],
+        "note": "The webhook validates and mutates cert-manager resources; cainjector injects the CA bundle into the webhook configuration."
+      },
+      {
+        "id": "acme",
+        "label": "ACME issuance",
+        "focus": [
+          "certreq",
+          "order",
+          "external"
+        ],
+        "note": "ACME issuers such as Let's Encrypt prove domain ownership through Order and Challenge resources."
+      },
+      {
+        "id": "consume",
+        "label": "TLS Secret use",
+        "focus": [
+          "secret",
+          "ingress"
+        ],
+        "note": "Ingress and Gateway API resources reference the issued tls.crt/tls.key Secret to terminate TLS."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "cert-manager Control Plane"
+        },
+        "cloud": {
+          "label": "Custom Resources (CRDs)"
+        },
+        "external": {
+          "label": "External CAs"
+        },
+        "database": {
+          "label": "Kubernetes Secret"
+        },
+        "frontend": {
+          "label": "TLS termination resources"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "cert-manager-controller",
+      "sublabel": "Certificate lifecycle management",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "cert-manager-webhook",
+      "sublabel": "Validates / mutates resources",
+      "pos": [
+        390,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cainjector",
+      "type": "backend",
+      "label": "cert-manager-cainjector",
+      "sublabel": "Automatic CA bundle injection",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cert",
+      "type": "cloud",
+      "label": "Certificate",
+      "sublabel": "Desired certificate spec",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "certreq",
+      "type": "cloud",
+      "label": "CertificateRequest",
+      "sublabel": "Auto-created issuance request",
+      "pos": [
+        390,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "issuer",
+      "type": "cloud",
+      "label": "Issuer / ClusterIssuer",
+      "sublabel": "Defines how to issue",
+      "pos": [
+        720,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "cloud",
+      "label": "Order / Challenge",
+      "sublabel": "ACME domain validation",
+      "pos": [
+        1050,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "external",
+      "type": "external",
+      "label": "External CAs",
+      "sublabel": "Let's Encrypt · Vault · AWS PCA · Self-Signed",
+      "pos": [
+        720,
+        400
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "secret",
+      "type": "database",
+      "label": "Secret",
+      "sublabel": "tls.crt · tls.key",
+      "pos": [
+        60,
+        570
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "frontend",
+      "label": "Ingress / Gateway",
+      "sublabel": "TLS termination resources",
+      "pos": [
+        720,
+        570
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "cert-manager Control Plane",
+      "wraps": [
+        "controller",
+        "webhook",
+        "cainjector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Custom Resources",
+      "wraps": [
+        "cert",
+        "certreq",
+        "issuer",
+        "order"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Resources",
+      "wraps": [
+        "secret",
+        "ingress"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "controller-cert",
+      "from": "controller",
+      "to": "cert",
+      "label": "watches / reconciles",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "cert-certreq",
+      "from": "cert",
+      "to": "certreq",
+      "label": "creates request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "certreq-issuer",
+      "from": "certreq",
+      "to": "issuer",
+      "label": "issuerRef",
+      "variant": "emphasis"
+    },
+    {
+      "id": "issuer-external",
+      "from": "issuer",
+      "to": "external",
+      "label": "signing request",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cert-secret",
+      "from": "cert",
+      "to": "secret",
+      "label": "stores certificate",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 120
+    },
+    {
+      "id": "certreq-order",
+      "from": "certreq",
+      "to": "order",
+      "label": "ACME issuers only",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "webhook-cert",
+      "from": "webhook",
+      "to": "cert",
+      "label": "validates",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cainjector-webhook",
+      "from": "cainjector",
+      "to": "webhook",
+      "label": "injects CA bundle",
+      "variant": "security"
+    },
+    {
+      "id": "ingress-secret",
+      "from": "ingress",
+      "to": "secret",
+      "label": "references TLS Secret",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control plane components",
+      "items": [
+        "controller: watches Certificate and Issuer resources and manages the certificate lifecycle",
+        "webhook: validates CRDs, sets defaults, converts versions",
+        "cainjector: injects CA bundles into ValidatingWebhookConfiguration and MutatingWebhookConfiguration"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Issuance flow",
+      "items": [
+        "Issued automatically when a Certificate CR is created; renewed 30 days before expiry",
+        "Multiple issuers: Let's Encrypt, Vault, AWS Private CA, Self-Signed",
+        "Result stored as a Secret holding tls.crt and tls.key"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "OpenFeature Hooks — Flag 평가 라이프사이클",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      660
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "before",
+        "label": "Before Hook",
+        "focus": [
+          "app",
+          "client",
+          "hook"
+        ],
+        "note": "Provider 호출 전에 컨텍스트를 검증·로깅하고, 필요하면 Evaluation Context를 보정한다."
+      },
+      {
+        "id": "evaluate",
+        "label": "Provider 평가",
+        "focus": [
+          "client",
+          "provider"
+        ],
+        "note": "SDK Client가 Provider에 Flag 평가를 위임하고 결과를 받는다."
+      },
+      {
+        "id": "after",
+        "label": "After / Error / Finally",
+        "focus": [
+          "client",
+          "hook",
+          "app"
+        ],
+        "note": "결과 메트릭 수집, 오류 시 알림, 정리 작업 후 최종 결과를 반환한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "Flag 평가 요청"
+        },
+        "dashed": {
+          "label": "오류 발생 시에만 (opt)"
+        },
+        "return": {
+          "label": "결과 반환"
+        },
+        "default": {
+          "label": "Hook 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "BooleanValue() 호출"
+    },
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "OpenFeature Client",
+      "sublabel": "SDK 평가 로직"
+    },
+    {
+      "id": "hook",
+      "type": "security",
+      "label": "Hook",
+      "sublabel": "Before · After · Error · Finally"
+    },
+    {
+      "id": "provider",
+      "type": "external",
+      "label": "Provider",
+      "sublabel": "예: flagd"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 290,
+      "label": "Before Hook"
+    },
+    {
+      "from": 302,
+      "to": 378,
+      "label": "Provider 평가"
+    },
+    {
+      "from": 390,
+      "to": 578,
+      "label": "After Hook → Error Hook(오류 발생 시) → Finally Hook"
+    }
+  ],
+  "messages": [
+    {
+      "id": "request",
+      "from": "app",
+      "to": "client",
+      "y": 200,
+      "label": "Flag 평가 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "before",
+      "from": "client",
+      "to": "hook",
+      "y": 238,
+      "label": "Before Hook",
+      "variant": "default",
+      "note": "컨텍스트 검증, 로깅"
+    },
+    {
+      "id": "before-ctx",
+      "from": "hook",
+      "to": "client",
+      "y": 276,
+      "label": "Evaluation Context",
+      "variant": "return"
+    },
+    {
+      "id": "evaluate",
+      "from": "client",
+      "to": "provider",
+      "y": 322,
+      "label": "Flag 평가 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "result",
+      "from": "provider",
+      "to": "client",
+      "y": 362,
+      "label": "평가 결과",
+      "variant": "return"
+    },
+    {
+      "id": "after",
+      "from": "client",
+      "to": "hook",
+      "y": 412,
+      "label": "After Hook",
+      "variant": "default",
+      "note": "메트릭 수집, 텔레메트리"
+    },
+    {
+      "id": "error",
+      "from": "client",
+      "to": "hook",
+      "y": 466,
+      "label": "Error Hook (opt · 오류 발생 시)",
+      "variant": "dashed",
+      "note": "오류 로깅, 알림"
+    },
+    {
+      "id": "finally",
+      "from": "client",
+      "to": "hook",
+      "y": 518,
+      "label": "Finally Hook",
+      "variant": "default",
+      "note": "정리 작업"
+    },
+    {
+      "id": "return",
+      "from": "client",
+      "to": "app",
+      "y": 566,
+      "label": "최종 결과 반환",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "client",
+      "from": 195,
+      "to": 572,
+      "type": "backend"
+    },
+    {
+      "participant": "hook",
+      "from": 233,
+      "to": 281,
+      "type": "security"
+    },
+    {
+      "participant": "provider",
+      "from": 317,
+      "to": 368,
+      "type": "external"
+    },
+    {
+      "participant": "hook",
+      "from": 407,
+      "to": 524,
+      "type": "security"
+    }
+  ]
+}

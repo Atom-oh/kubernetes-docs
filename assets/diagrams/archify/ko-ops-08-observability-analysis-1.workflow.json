@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "상관 분석 워크플로우",
+    "output": "public/archmaps/ko-ops-08-observability-analysis-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "messagebus": {
+          "label": "알림 발생(시작)"
+        },
+        "frontend": {
+          "label": "대시보드 확인"
+        },
+        "security": {
+          "label": "판단 분기"
+        },
+        "backend": {
+          "label": "트레이스 · 원인 분석 단계"
+        },
+        "database": {
+          "label": "로그 조회"
+        },
+        "external": {
+          "label": "해결 조치(종료)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "alert-to-trace",
+        "label": "알림에서 트레이스로",
+        "focus": [
+          "alert",
+          "metric",
+          "exemplar",
+          "trace_lookup",
+          "trace_search"
+        ],
+        "note": "Exemplar가 있으면 trace_id로 바로 조회하고, 없으면 시간 범위로 트레이스를 검색한다."
+      },
+      {
+        "id": "trace-to-log",
+        "label": "트레이스에서 로그로",
+        "focus": [
+          "trace_lookup",
+          "trace_search",
+          "span",
+          "log"
+        ],
+        "note": "지연·오류 span을 식별한 뒤 같은 trace_id로 로그를 필터링해 상세 컨텍스트를 확인한다."
+      },
+      {
+        "id": "resolution",
+        "label": "원인 파악과 조치",
+        "focus": [
+          "log",
+          "root_cause",
+          "fix"
+        ],
+        "note": "수집한 메트릭·트레이스·로그를 종합해 근본 원인을 도출하고 해결 조치로 마무리한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "metrics",
+      "label": "메트릭 · Prometheus / Grafana"
+    },
+    {
+      "id": "traces",
+      "label": "트레이스 · Tempo"
+    },
+    {
+      "id": "logs",
+      "label": "로그 · Loki"
+    },
+    {
+      "id": "resolve",
+      "label": "조치"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "metric",
+    "exemplar",
+    "trace_lookup",
+    "span",
+    "log",
+    "root_cause",
+    "fix"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "alert"
+    ],
+    "allowedTerminals": [
+      "fix"
+    ],
+    "requiredPaths": [
+      {
+        "from": "alert",
+        "to": "fix"
+      },
+      {
+        "from": "trace_search",
+        "to": "span"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "metrics",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Alert 발생",
+      "sublabel": "Prometheus 알림 트리거",
+      "tag": "시작",
+      "width": 150
+    },
+    {
+      "id": "metric",
+      "lane": "metrics",
+      "col": 1,
+      "type": "frontend",
+      "label": "Metric 확인",
+      "sublabel": "대시보드 이상 패턴",
+      "width": 140
+    },
+    {
+      "id": "exemplar",
+      "lane": "metrics",
+      "col": 2,
+      "type": "security",
+      "label": "Exemplar 있음?",
+      "sublabel": "trace_id 첨부 여부",
+      "tag": "판단",
+      "width": 150
+    },
+    {
+      "id": "trace_search",
+      "lane": "traces",
+      "col": 2,
+      "type": "backend",
+      "label": "시간 범위 Trace 검색",
+      "sublabel": "알림 시각 전후",
+      "width": 160
+    },
+    {
+      "id": "trace_lookup",
+      "lane": "traces",
+      "col": 3,
+      "type": "backend",
+      "label": "Trace 조회",
+      "sublabel": "exemplar의 trace_id",
+      "width": 150
+    },
+    {
+      "id": "span",
+      "lane": "traces",
+      "col": 4,
+      "type": "backend",
+      "label": "Span 분석",
+      "sublabel": "지연·오류 구간 식별",
+      "width": 150
+    },
+    {
+      "id": "log",
+      "lane": "logs",
+      "col": 4,
+      "type": "database",
+      "label": "관련 Log 조회",
+      "sublabel": "trace_id로 필터링",
+      "width": 150
+    },
+    {
+      "id": "root_cause",
+      "lane": "logs",
+      "col": 5,
+      "type": "backend",
+      "label": "근본 원인 파악",
+      "sublabel": "수집 정보 종합",
+      "width": 140
+    },
+    {
+      "id": "fix",
+      "lane": "resolve",
+      "col": 5,
+      "type": "external",
+      "label": "해결 조치",
+      "tag": "종료",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "metric",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "metric",
+      "to": "exemplar",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "exemplar",
+      "to": "trace_lookup",
+      "label": "있음",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "exemplar",
+      "to": "trace_search",
+      "label": "없음",
+      "role": "branch",
+      "variant": "dashed"
+    },
+    {
+      "from": "trace_search",
+      "to": "span",
+      "role": "branch"
+    },
+    {
+      "from": "trace_lookup",
+      "to": "span",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "span",
+      "to": "log",
+      "label": "trace_id",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "log",
+      "to": "root_cause",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "root_cause",
+      "to": "fix",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "상관 연결 키",
+      "items": [
+        "Metric → Trace: 히스토그램 exemplar에 담긴 trace_id",
+        "Trace → Log: 구조화 로그(JSON)의 trace_id · span_id 필드",
+        "Exemplar가 없으면 알림 시각 기준 시간 범위로 Tempo에서 검색"
+      ]
+    }
+  ]
+}

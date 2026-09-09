@@ -358,7 +358,9 @@ spec:
 
 #### Matrix Visualization
 
-![Diagram showing an ArgoCD ApplicationSet's matrix generator combining a cluster list and an app list so every cluster-app pair produces one generated Application, three clusters by three apps yielding nine Applications.](../../../assets/diagrams/rendered/en-gitops-argocd-04-applicationsets-0.svg)
+![Diagram showing an ArgoCD ApplicationSet's matrix generator combining a cluster list and an app list so every cluster-app pair produces one generated Application, three clusters by three apps yielding nine Applications.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-0.html)
 
 ### 6. Merge Generator
 
@@ -753,7 +755,9 @@ spec:
 
 ### Progressive Sync Flow
 
-![Diagram showing a progressive-rollout ApplicationSet strategy that promotes a change through a canary cluster, a manual approval gate, a 25% rollout to two production clusters, and finally a full rollout to all six production clusters.](../../../assets/diagrams/rendered/en-gitops-argocd-04-applicationsets-1.svg)
+![Diagram of a three-step Progressive Sync rollout that promotes myapp-dev, then myapp-staging, then myapp-prod-ap and myapp-prod-us, with the prod step constrained to maxUpdate: 1.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-1.html)
 
 ## Multi-Cluster Patterns
 

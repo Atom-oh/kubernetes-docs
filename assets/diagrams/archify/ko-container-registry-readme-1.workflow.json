@@ -1,0 +1,211 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "컨테이너 레지스트리 선택 의사결정 플로우차트",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1226,
+      404
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "판단 기준"
+        },
+        "cloud": {
+          "label": "AWS/EKS 환경의 기본 선택"
+        },
+        "external": {
+          "label": "권장 레지스트리"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "airgap",
+        "label": "에어갭 여부",
+        "focus": [
+          "q_airgap",
+          "harbor"
+        ],
+        "note": "에어갭/폐쇄망 환경이면 다른 조건을 따지지 않고 자체 호스팅 Harbor를 선택한다."
+      },
+      {
+        "id": "aws",
+        "label": "AWS/EKS 여부",
+        "focus": [
+          "q_airgap",
+          "q_aws",
+          "ecr"
+        ],
+        "note": "인터넷 연결이 되는 AWS/EKS 워크로드는 IAM과 통합되는 관리형 Amazon ECR이 기본 선택이다."
+      },
+      {
+        "id": "others",
+        "label": "그 외 환경",
+        "focus": [
+          "q_aws",
+          "q_compliance",
+          "harbor_business",
+          "dockerhub"
+        ],
+        "note": "AWS 외 환경에서는 규제 준수가 필요한 프로덕션이면 Harbor 또는 Docker Hub Business, 아니면 Docker Hub Free/Pro로 시작한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "판단 기준"
+    },
+    {
+      "id": "result",
+      "label": "권장 레지스트리"
+    }
+  ],
+  "mainPath": [
+    "q_airgap",
+    "q_aws",
+    "ecr"
+  ],
+  "nodes": [
+    {
+      "id": "q_airgap",
+      "lane": "decide",
+      "col": 0,
+      "type": "backend",
+      "label": "에어갭/폐쇄망 지원 필요?",
+      "sublabel": "인터넷 연결 없는 환경",
+      "width": 190
+    },
+    {
+      "id": "q_aws",
+      "lane": "decide",
+      "col": 1,
+      "type": "backend",
+      "label": "AWS/EKS에서 운영?",
+      "sublabel": "AWS 단일 클라우드",
+      "width": 200
+    },
+    {
+      "id": "q_compliance",
+      "lane": "decide",
+      "col": 2,
+      "type": "backend",
+      "label": "규제 준수가 필요한 프로덕션?",
+      "sublabel": "감사 · 접근 제어 요구",
+      "width": 260
+    },
+    {
+      "id": "harbor",
+      "lane": "result",
+      "col": 0,
+      "type": "external",
+      "label": "Harbor",
+      "sublabel": "자체 호스팅 · 에어갭 완전 지원",
+      "width": 190
+    },
+    {
+      "id": "ecr",
+      "lane": "result",
+      "col": 1,
+      "type": "cloud",
+      "label": "Amazon ECR",
+      "sublabel": "관리형 · IAM 통합",
+      "width": 200
+    },
+    {
+      "id": "harbor_business",
+      "lane": "result",
+      "col": 2,
+      "type": "external",
+      "label": "Harbor 또는 Docker Hub Business",
+      "sublabel": "RBAC · 스캐닝 · 감사",
+      "width": 260
+    },
+    {
+      "id": "dockerhub",
+      "lane": "result",
+      "col": 3,
+      "type": "external",
+      "label": "Docker Hub Free/Pro",
+      "sublabel": "개인 · 소규모 팀 · 오픈소스",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "id": "airgap-yes",
+      "from": "q_airgap",
+      "to": "harbor",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "airgap-no",
+      "from": "q_airgap",
+      "to": "q_aws",
+      "label": "아니오"
+    },
+    {
+      "id": "aws-yes",
+      "from": "q_aws",
+      "to": "ecr",
+      "label": "예",
+      "variant": "emphasis"
+    },
+    {
+      "id": "aws-no",
+      "from": "q_aws",
+      "to": "q_compliance",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "compliance-yes",
+      "from": "q_compliance",
+      "to": "harbor_business",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "compliance-no",
+      "from": "q_compliance",
+      "to": "dockerhub",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "팀 규모별 권장",
+      "items": [
+        "1-5명: Docker Hub Pro — 간편함, 낮은 비용",
+        "5-50명: Amazon ECR — 관리형, 확장성",
+        "50명+: ECR 또는 Harbor — 거버넌스, 멀티팀 지원"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "보안 요구 수준",
+      "items": [
+        "기본: Docker Hub Team — RBAC, 스캐닝",
+        "중간: ECR Enhanced — Inspector 통합, IAM",
+        "고급: Harbor — 서명, 감사, 에어갭"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "클라우드 전략별 권장",
+      "items": [
+        "AWS 단일 클라우드: Amazon ECR",
+        "멀티 클라우드: Harbor(중앙) + 클라우드별 캐시",
+        "하이브리드: Harbor(온프레미스) + ECR(AWS)",
+        "에어갭: Harbor"
+      ]
+    }
+  ]
+}

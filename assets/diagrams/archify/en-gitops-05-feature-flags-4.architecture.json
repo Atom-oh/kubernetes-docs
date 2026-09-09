@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "flagd Sidecar Mode",
+    "locale": "en",
+    "output": "en-gitops-05-feature-flags-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [960, 420],
+    "views": [
+      { "id": "evaluation-path", "label": "Flag evaluation path", "focus": ["app", "flagd"], "note": "The app SDK evaluates flags against the flagd sidecar over localhost:8013 inside the same pod." },
+      { "id": "flag-sync", "label": "Flag sync from CRD", "focus": ["flagd", "crd"], "note": "The sidecar watches the FeatureFlag custom resource and picks up changes without a redeploy." },
+      { "id": "injection", "label": "Sidecar injection", "focus": ["operator", "flagd"], "note": "The OpenFeature Operator's mutating webhook adds the flagd container when the pod annotation is present." }
+    ]
+  },
+  "components": [
+    { "id": "app", "type": "backend", "label": "App Container", "sublabel": "calls OpenFeature SDK", "pos": [60, 200], "size": [170, 64] },
+    { "id": "flagd", "type": "backend", "label": "flagd Sidecar", "sublabel": "localhost :8013", "pos": [340, 200], "size": [170, 64], "tag": "focal" },
+    { "id": "crd", "type": "database", "label": "FeatureFlag CRD", "sublabel": "cluster resource", "pos": [720, 200], "size": [180, 64] },
+    { "id": "operator", "type": "cloud", "label": "OpenFeature Operator", "sublabel": "mutating webhook", "pos": [340, 40], "size": [190, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Application Pod", "wraps": ["app", "flagd"] }
+  ],
+  "connections": [
+    { "id": "app-to-flagd", "from": "app", "to": "flagd", "label": ":8013", "variant": "emphasis" },
+    { "id": "flagd-watch-crd", "from": "flagd", "to": "crd", "label": "watch CRD", "variant": "dashed" },
+    { "id": "operator-injects", "from": "operator", "to": "flagd", "label": "injects sidecar", "variant": "dashed", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "Sidecar mode", "items": ["Lowest latency: app talks to flagd over localhost", "One flagd per pod; failures are isolated per pod", "Scales together with the application pods"] },
+    { "dot": "slate", "title": "Configuration", "items": ["Injected automatically via the Operator pod annotation", "flagd reads flags from the FeatureFlag CR and syncs on change"] }
+  ]
+}

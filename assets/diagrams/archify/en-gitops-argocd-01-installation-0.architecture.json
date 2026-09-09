@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ArgoCD HA Architecture",
+    "output": "en-gitops-argocd-01-installation-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "UI / API request path",
+        "focus": [
+          "alb",
+          "api",
+          "redis-master"
+        ],
+        "note": "The load balancer spreads requests across API Server replicas, which cache state in Redis."
+      },
+      {
+        "id": "reconcile-path",
+        "label": "Controllers and Repo Server",
+        "focus": [
+          "ctrl-leader",
+          "ctrl-standby",
+          "repo",
+          "redis-master"
+        ],
+        "note": "The leader Application Controller pulls manifests from the Repo Server, compares state, and caches results in Redis."
+      },
+      {
+        "id": "redis-ha",
+        "label": "Redis HA",
+        "focus": [
+          "redis-master",
+          "redis-replica",
+          "sentinel"
+        ],
+        "note": "One Master, two Replicas, and three Sentinels; Sentinel detects failures and fails over automatically."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "ALB / Ingress",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "argocd-server · 2+ replicas",
+      "pos": [
+        330,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ctrl-standby",
+      "type": "backend",
+      "label": "Application Controller 2",
+      "sublabel": "standby",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ctrl-leader",
+      "type": "backend",
+      "label": "Application Controller 1",
+      "sublabel": "leader (active)",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "tag": "Leader"
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repo Server",
+      "sublabel": "argocd-repo-server · 2+ replicas",
+      "pos": [
+        940,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "redis-master",
+      "type": "database",
+      "label": "Redis Master",
+      "sublabel": "single writer",
+      "pos": [
+        620,
+        480
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "redis-replica",
+      "type": "database",
+      "label": "Redis Replica ×2",
+      "sublabel": "replicated from Master",
+      "pos": [
+        620,
+        640
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "sentinel",
+      "type": "security",
+      "label": "Sentinel ×3",
+      "sublabel": "failure detection · auto failover",
+      "pos": [
+        940,
+        640
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ArgoCD HA (argocd namespace)",
+      "wraps": [
+        "api",
+        "ctrl-standby",
+        "ctrl-leader",
+        "repo",
+        "redis-master",
+        "redis-replica",
+        "sentinel"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Application Controllers (leader election)",
+      "wraps": [
+        "ctrl-standby",
+        "ctrl-leader"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Redis HA",
+      "wraps": [
+        "redis-master",
+        "redis-replica",
+        "sentinel"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "alb-to-api",
+      "from": "alb",
+      "to": "api",
+      "label": "HTTPS fan-out",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-redis",
+      "from": "api",
+      "to": "redis-master",
+      "label": "cache"
+    },
+    {
+      "id": "ctrl-to-repo",
+      "from": "ctrl-leader",
+      "to": "repo",
+      "label": "manifest request"
+    },
+    {
+      "id": "ctrl-to-redis",
+      "from": "ctrl-leader",
+      "to": "redis-master",
+      "label": "app state cache",
+      "labelAt": [
+        725,
+        372
+      ]
+    },
+    {
+      "id": "repo-to-redis",
+      "from": "repo",
+      "to": "redis-master",
+      "label": "manifest cache"
+    },
+    {
+      "id": "master-to-replica",
+      "from": "redis-master",
+      "to": "redis-replica",
+      "label": "replication",
+      "labelAt": [
+        725,
+        592
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Application Controller",
+      "items": [
+        "Runs with leader election; set the replica count via ARGOCD_CONTROLLER_REPLICAS",
+        "Large clusters shard with controller.sharding.algorithm: round-robin"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Repo Server",
+      "items": [
+        "Generates manifests, so scale out by adding replicas",
+        "ARGOCD_REPO_SERVER_PARALLELISM_LIMIT caps parallel generation"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Redis HA",
+      "items": [
+        "redis-ha subchart: redis 3 · sentinel 3 · haproxy 3 replicas",
+        "Disable the single Redis (redis.enabled: false) in favor of the HA setup"
+      ]
+    }
+  ]
+}

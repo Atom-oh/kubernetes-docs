@@ -1,0 +1,164 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ECR Pull-through Cache 동작 흐름",
+    "output": "ko-container-registry-02-amazon-ecr-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "cache-hit",
+        "label": "Cache Hit",
+        "focus": [
+          "pull",
+          "endpoint",
+          "serve"
+        ],
+        "note": "ECR에 이미 캐시된 이미지는 upstream을 거치지 않고 즉시 제공된다."
+      },
+      {
+        "id": "cache-miss",
+        "label": "Cache Miss",
+        "focus": [
+          "pull",
+          "endpoint",
+          "upstream",
+          "cache",
+          "serve"
+        ],
+        "note": "첫 요청은 upstream 레지스트리에서 가져와 ECR 리포지토리에 캐시한 뒤 제공한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "kubelet 단계"
+        },
+        "cloud": {
+          "label": "ECR 엔드포인트"
+        },
+        "database": {
+          "label": "ECR 캐시 리포지토리"
+        },
+        "external": {
+          "label": "Upstream 레지스트리"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "node",
+      "label": "EKS 노드 (kubelet)"
+    },
+    {
+      "id": "ecr",
+      "label": "Amazon ECR"
+    },
+    {
+      "id": "external",
+      "label": "Upstream 레지스트리"
+    }
+  ],
+  "mainPath": [
+    "pull",
+    "endpoint",
+    "upstream",
+    "cache",
+    "serve"
+  ],
+  "nodes": [
+    {
+      "id": "pull",
+      "lane": "node",
+      "col": 0,
+      "type": "backend",
+      "label": "이미지 Pull 요청",
+      "sublabel": "kubelet → ECR",
+      "width": 170
+    },
+    {
+      "id": "endpoint",
+      "lane": "ecr",
+      "col": 1,
+      "type": "cloud",
+      "label": "ECR Endpoint",
+      "sublabel": "캐시 조회",
+      "width": 170
+    },
+    {
+      "id": "upstream",
+      "lane": "external",
+      "col": 2,
+      "type": "external",
+      "label": "Upstream에서 Pull",
+      "sublabel": "Docker Hub, Quay, ghcr 등",
+      "width": 170
+    },
+    {
+      "id": "cache",
+      "lane": "ecr",
+      "col": 3,
+      "type": "database",
+      "label": "ECR에 캐시 저장",
+      "sublabel": "pull-through cache 리포지토리",
+      "width": 170
+    },
+    {
+      "id": "serve",
+      "lane": "node",
+      "col": 4,
+      "type": "backend",
+      "label": "이미지 제공",
+      "sublabel": "캐시된 이미지 즉시 제공",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "id": "pull-to-endpoint",
+      "from": "pull",
+      "to": "endpoint",
+      "toSide": "left"
+    },
+    {
+      "id": "hit",
+      "from": "endpoint",
+      "to": "serve",
+      "label": "Cache Hit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "miss",
+      "from": "endpoint",
+      "to": "upstream",
+      "label": "Cache Miss",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "upstream-to-cache",
+      "from": "upstream",
+      "to": "cache",
+      "fromSide": "right"
+    },
+    {
+      "id": "cache-to-serve",
+      "from": "cache",
+      "to": "serve"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Pull-through Cache 효과",
+      "items": [
+        "외부 레지스트리 의존성 감소",
+        "이미지 pull 성능 향상",
+        "Docker Hub rate limit 우회"
+      ]
+    }
+  ]
+}

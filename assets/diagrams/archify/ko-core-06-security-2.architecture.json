@@ -42,7 +42,21 @@
         ],
         "note": "Role/ClusterRole이 권한을 정의하고 RoleBinding/ClusterRoleBinding이 대상에 할당한다"
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

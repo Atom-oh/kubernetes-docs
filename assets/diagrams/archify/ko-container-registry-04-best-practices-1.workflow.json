@@ -1,0 +1,167 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Build-Push-Scan-Deploy 파이프라인",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "통과 경로",
+        "focus": [
+          "commit",
+          "build",
+          "push",
+          "scan",
+          "deploy"
+        ],
+        "note": "커밋에서 빌드·푸시·스캔을 거쳐 Kubernetes 배포까지 이어지는 정상 경로."
+      },
+      {
+        "id": "gate",
+        "label": "스캔 게이트",
+        "focus": [
+          "scan",
+          "deploy",
+          "block"
+        ],
+        "note": "Trivy가 HIGH/CRITICAL 취약점을 찾으면 exit code 1로 배포를 차단하고 알림을 보낸다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "소스 커밋"
+        },
+        "backend": {
+          "label": "빌드 단계"
+        },
+        "security": {
+          "label": "보안 게이트 / 차단"
+        },
+        "cloud": {
+          "label": "ECR / Kubernetes"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ci",
+      "label": "CI 파이프라인 (GitHub Actions / GitLab CI)"
+    },
+    {
+      "id": "ecr",
+      "label": "Amazon ECR"
+    },
+    {
+      "id": "exceptions",
+      "label": "차단 / 알림",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "commit",
+    "build",
+    "push",
+    "scan",
+    "deploy"
+  ],
+  "nodes": [
+    {
+      "id": "commit",
+      "lane": "ci",
+      "col": 0,
+      "type": "frontend",
+      "label": "Code Commit",
+      "sublabel": "git push / tag"
+    },
+    {
+      "id": "build",
+      "lane": "ci",
+      "col": 1,
+      "type": "backend",
+      "label": "Build Image",
+      "sublabel": "docker build"
+    },
+    {
+      "id": "push",
+      "lane": "ecr",
+      "col": 2,
+      "type": "cloud",
+      "label": "Push to ECR",
+      "sublabel": "docker push :sha"
+    },
+    {
+      "id": "scan",
+      "lane": "ci",
+      "col": 3,
+      "type": "security",
+      "label": "Scan (Trivy)",
+      "sublabel": "HIGH,CRITICAL 검사",
+      "tag": "게이트"
+    },
+    {
+      "id": "deploy",
+      "lane": "ci",
+      "col": 4,
+      "type": "cloud",
+      "label": "Deploy to K8s",
+      "sublabel": "kubectl set image"
+    },
+    {
+      "id": "block",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "security",
+      "label": "Alert / Block",
+      "sublabel": "HIGH/CRITICAL 발견"
+    }
+  ],
+  "edges": [
+    {
+      "from": "commit",
+      "to": "build"
+    },
+    {
+      "from": "build",
+      "to": "push"
+    },
+    {
+      "from": "push",
+      "to": "scan"
+    },
+    {
+      "from": "scan",
+      "to": "deploy",
+      "label": "통과",
+      "variant": "emphasis"
+    },
+    {
+      "from": "scan",
+      "to": "block",
+      "label": "실패: HIGH/CRITICAL",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "스캔 게이트",
+      "items": [
+        "trivy image --exit-code 1 --severity HIGH,CRITICAL 로 취약 이미지를 차단",
+        "GitLab CI에서는 allow_failure: false 로 scan 단계 실패 시 파이프라인 중단"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "이미지 태그",
+      "items": [
+        "빌드 시 커밋 SHA 태그로 ECR에 푸시",
+        "릴리스 태그(vX.Y.Z)에서만 재태깅 후 kubectl set image 로 배포"
+      ]
+    }
+  ]
+}

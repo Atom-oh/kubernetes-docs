@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Backstage Software Catalog Entity Model",
+    "output": "en-platform-engineering-06-backstage-idp-11.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Software entity"
+        },
+        "database": {
+          "label": "Infrastructure resource"
+        },
+        "external": {
+          "label": "Organization entity"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "software-hierarchy",
+        "label": "Software hierarchy",
+        "focus": [
+          "domain",
+          "system",
+          "component",
+          "api",
+          "resource"
+        ],
+        "note": "A Domain groups Systems; a System is built from Components that provide APIs and depend on Resources."
+      },
+      {
+        "id": "ownership",
+        "label": "Ownership",
+        "focus": [
+          "user",
+          "group",
+          "system",
+          "component"
+        ],
+        "note": "Users belong to a Group, and the Group owns Systems and Components via spec.owner."
+      }
+    ],
+    "viewBox": [
+      1040,
+      488
+    ]
+  },
+  "components": [
+    {
+      "id": "group",
+      "type": "external",
+      "label": "Group",
+      "sublabel": "Team",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "Person",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "domain",
+      "type": "backend",
+      "label": "Domain",
+      "sublabel": "Business area",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "system",
+      "type": "backend",
+      "label": "System",
+      "sublabel": "Product / platform",
+      "pos": [
+        440,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "spec.system"
+    },
+    {
+      "id": "component",
+      "type": "backend",
+      "label": "Component",
+      "sublabel": "Service / library",
+      "pos": [
+        790,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "gRPC / REST / Event",
+      "pos": [
+        790,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "resource",
+      "type": "database",
+      "label": "Resource",
+      "sublabel": "DB / Queue / Bucket",
+      "pos": [
+        440,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "domain-system",
+      "from": "domain",
+      "to": "system",
+      "label": "groups",
+      "variant": "emphasis"
+    },
+    {
+      "id": "system-component",
+      "from": "system",
+      "to": "component",
+      "label": "built from",
+      "variant": "emphasis"
+    },
+    {
+      "id": "system-api",
+      "from": "system",
+      "to": "api"
+    },
+    {
+      "id": "system-resource",
+      "from": "system",
+      "to": "resource",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "component-api",
+      "from": "component",
+      "to": "api",
+      "label": "providesApis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "component-resource",
+      "from": "component",
+      "to": "resource",
+      "label": "dependsOn",
+      "labelDx": -45
+    },
+    {
+      "id": "group-owns-system",
+      "from": "group",
+      "to": "system",
+      "label": "owns",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "group-owns-component",
+      "from": "group",
+      "to": "component",
+      "label": "owns",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          990,
+          70
+        ],
+        [
+          990,
+          390
+        ]
+      ]
+    },
+    {
+      "id": "user-group",
+      "from": "user",
+      "to": "group",
+      "label": "memberOf"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Software entities",
+      "items": [
+        "Domain: business domain grouping related systems (e.g. commerce)",
+        "System: collection of components forming a product (e.g. order-platform)",
+        "Component: service, website or library (e.g. order-service)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Interfaces and dependencies",
+      "items": [
+        "API: interface exposed by a component (order-api, payment-grpc)",
+        "Resource: infrastructure dependency (order-db, events-queue)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Organization",
+      "items": [
+        "Group: team or org unit set as spec.owner",
+        "User: individual person, memberOf a Group"
+      ]
+    }
+  ]
+}

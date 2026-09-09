@@ -14,7 +14,9 @@ A container registry provides:
 - **Distribution**: Efficient image layer caching and distribution to container runtimes
 - **Lifecycle Management**: Automated cleanup and retention policies for storage optimization
 
-![Flowchart showing a container image moving from the CI/CD pipeline (build, test, push) through a container registry (store, version, scan) into a Kubernetes cluster (pull, run, scale).](../.gitbook/assets/en-container-registry-README-0.png)
+![Flowchart showing a container image moving from the CI/CD pipeline (build, test, push) through a container registry (store, version, scan) into a Kubernetes cluster (pull, run, scale).](../.gitbook/assets/en-container-registry-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-readme-0.html)
 
 ## Registry Comparison
 
@@ -148,7 +150,9 @@ This section covers container registry concepts and implementation in depth:
 
 ## Quick Start Decision Tree
 
-![Decision tree for choosing a container registry: air-gapped environments route to Harbor; connected AWS/EKS workloads route to Amazon ECR; other production workloads with compliance needs route to Harbor or Docker Hub Business; everything else uses Docker Hub Free/Pro.](../.gitbook/assets/en-container-registry-README-1.png)
+![Decision tree for choosing a container registry: air-gapped environments route to self-hosted Harbor; connected AWS/EKS workloads route to Amazon ECR; other production workloads with compliance needs route to Harbor or Docker Hub Business; everything else uses Docker Hub Free/Pro.](../.gitbook/assets/en-container-registry-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-readme-1.html)
 
 ## Summary
 

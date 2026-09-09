@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FluxCD HelmRelease + Flagger Canary 워크플로우",
+    "output": "ko-gitops-04-flagger-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Git 선언 상태"
+        },
+        "backend": {
+          "label": "컨트롤러 / 워크로드"
+        },
+        "frontend": {
+          "label": "트래픽 라우팅"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gitops-path",
+        "label": "GitOps 배포 경로",
+        "focus": [
+          "helmrelease",
+          "source-controller",
+          "helm-controller",
+          "deployment"
+        ],
+        "note": "Git의 HelmRelease를 FluxCD가 가져와 Deployment로 적용한다."
+      },
+      {
+        "id": "progressive-delivery",
+        "label": "Flagger 점진적 배포",
+        "focus": [
+          "canary-crd",
+          "flagger",
+          "deployment",
+          "primary-service",
+          "canary-service",
+          "service-mesh"
+        ],
+        "note": "Canary CRD를 감시하는 Flagger가 Primary/Canary Service와 메시 라우팅을 제어한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "helmrelease",
+      "type": "external",
+      "label": "HelmRelease YAML",
+      "sublabel": "canary values 포함",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "source-controller",
+      "type": "backend",
+      "label": "Source Controller",
+      "sublabel": "HelmRepository 가져오기",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "helm-controller",
+      "type": "backend",
+      "label": "Helm Controller",
+      "sublabel": "HelmRelease 조정",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "canary-crd",
+      "type": "backend",
+      "label": "Canary CRD",
+      "sublabel": "대상 Deployment 지정",
+      "pos": [
+        560,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger",
+      "sublabel": "점진적 배포 컨트롤러",
+      "pos": [
+        560,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "focal"
+    },
+    {
+      "id": "deployment",
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "Helm 차트로 생성",
+      "pos": [
+        560,
+        410
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "primary-service",
+      "type": "frontend",
+      "label": "Primary Service",
+      "sublabel": "안정 버전 트래픽",
+      "pos": [
+        840,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "canary-service",
+      "type": "frontend",
+      "label": "Canary Service",
+      "sublabel": "신규 버전 트래픽",
+      "pos": [
+        840,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-mesh",
+      "type": "frontend",
+      "label": "Service Mesh",
+      "sublabel": "트래픽 가중치 조정",
+      "pos": [
+        840,
+        410
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Git 저장소",
+      "wraps": [
+        "helmrelease"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "FluxCD",
+      "wraps": [
+        "source-controller",
+        "helm-controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "canary-crd",
+        "flagger",
+        "deployment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "점진적 배포",
+      "wraps": [
+        "primary-service",
+        "canary-service",
+        "service-mesh"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "hr-to-source",
+      "from": "helmrelease",
+      "to": "source-controller",
+      "label": "Git 동기화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "source-to-helm",
+      "from": "source-controller",
+      "to": "helm-controller",
+      "label": "차트 아티팩트",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "helm-to-deployment",
+      "from": "helm-controller",
+      "to": "deployment",
+      "label": "릴리스 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "crd-to-flagger",
+      "from": "canary-crd",
+      "to": "flagger",
+      "label": "감시",
+      "labelDy": 24
+    },
+    {
+      "id": "flagger-to-deployment",
+      "from": "flagger",
+      "to": "deployment",
+      "label": "primary 복제 · 제어",
+      "labelDy": 24
+    },
+    {
+      "id": "flagger-to-primary",
+      "from": "flagger",
+      "to": "primary-service"
+    },
+    {
+      "id": "flagger-to-canary",
+      "from": "flagger",
+      "to": "canary-service"
+    },
+    {
+      "id": "flagger-to-mesh",
+      "from": "flagger",
+      "to": "service-mesh",
+      "label": "가중치 라우팅"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Flux가 관리",
+      "items": [
+        "Flagger 자체도 flagger-system 네임스페이스에 HelmRelease로 설치",
+        "애플리케이션 HelmRelease가 Deployment를 생성·갱신"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Flagger가 관리",
+      "items": [
+        "Canary CRD가 대상 Deployment와 분석 조건을 지정",
+        "Primary/Canary Service와 메시(meshProvider: istio) 라우팅 조정"
+      ]
+    }
+  ]
+}

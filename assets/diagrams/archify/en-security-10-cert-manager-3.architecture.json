@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "istio-csr Architecture",
+    "locale": "en",
+    "output": "en-security-10-cert-manager-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "csr-path",
+        "label": "1-2. CSR request",
+        "focus": [
+          "envoy",
+          "csr-agent",
+          "cm-controller",
+          "cert-request"
+        ],
+        "note": "The Envoy sidecar sends a CSR to istio-csr, which creates a CertificateRequest in cert-manager."
+      },
+      {
+        "id": "issue-path",
+        "label": "3-4. Issuance",
+        "focus": [
+          "cert-request",
+          "cluster-issuer",
+          "ca-backend",
+          "svid"
+        ],
+        "note": "The CertificateRequest is signed through the ClusterIssuer (istio-ca) by the external PKI, producing a SPIFFE SVID certificate."
+      },
+      {
+        "id": "return-path",
+        "label": "5. Return and mTLS",
+        "focus": [
+          "svid",
+          "envoy",
+          "app"
+        ],
+        "note": "The issued SVID returns to Envoy, which uses it to establish mTLS between workloads."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "app container",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "workload proxy",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "csr-agent",
+      "type": "backend",
+      "label": "istio-csr Agent",
+      "sublabel": "gRPC CA server",
+      "pos": [
+        280,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cm-controller",
+      "type": "backend",
+      "label": "cert-manager Controller",
+      "sublabel": "processes CertificateRequest",
+      "pos": [
+        610,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cert-request",
+      "type": "backend",
+      "label": "CertificateRequest",
+      "sublabel": "cert-manager.io/v1",
+      "pos": [
+        610,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cluster-issuer",
+      "type": "security",
+      "label": "ClusterIssuer",
+      "sublabel": "istio-ca",
+      "pos": [
+        890,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ca-backend",
+      "type": "external",
+      "label": "External PKI",
+      "sublabel": "CA / Vault PKI / AWS PCA",
+      "pos": [
+        1120,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "svid",
+      "type": "security",
+      "label": "SVID Certificate",
+      "sublabel": "spiffe://cluster.local/ns/.../sa/...",
+      "pos": [
+        890,
+        60
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Workload Pod",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "istio-csr",
+      "wraps": [
+        "csr-agent"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "cert-manager",
+      "wraps": [
+        "cm-controller",
+        "cert-request"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Issuer",
+      "wraps": [
+        "cluster-issuer",
+        "ca-backend"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "envoy-to-csr",
+      "from": "envoy",
+      "to": "csr-agent",
+      "label": "1. CSR request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "csr-to-cm",
+      "from": "csr-agent",
+      "to": "cm-controller",
+      "label": "2. Create CertificateRequest",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cm-to-cr",
+      "from": "cm-controller",
+      "to": "cert-request",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cr-to-issuer",
+      "from": "cert-request",
+      "to": "cluster-issuer",
+      "label": "3. Issuance request",
+      "variant": "emphasis",
+      "labelDy": 54
+    },
+    {
+      "id": "issuer-to-ca",
+      "from": "cluster-issuer",
+      "to": "ca-backend",
+      "label": "sign"
+    },
+    {
+      "id": "ca-to-svid",
+      "from": "ca-backend",
+      "to": "svid",
+      "label": "4. Issue SVID",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "svid-to-envoy",
+      "from": "svid",
+      "to": "envoy",
+      "label": "5. Return certificate",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-to-app",
+      "from": "envoy",
+      "to": "app",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ]
+}
