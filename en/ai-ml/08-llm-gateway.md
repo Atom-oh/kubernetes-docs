@@ -96,6 +96,44 @@ Rules that follow from it
   • A fallback that switches provider mid-conversation is a cold cache. Surface it in a header and an audit field.
 ```
 
+### 2.4 Many Clients, One Entry Point — When the Protocols Differ
+
+Even inside one organization, developers use different coding agents. Claude Code speaks Anthropic Messages, Codex speaks OpenAI Responses (by default) or Chat Completions, Hermes Agent speaks OpenAI-compatible Chat Completions, and OpenCode speaks either, depending on its provider configuration. For the gateway to be a *single* entry point it must **accept each client's wire protocol as-is**, and everything behind the ingress must run once, independent of protocol.
+
+![Claude Code, Codex CLI, OpenCode, Hermes Agent, and custom apps enter the gateway through their own wire protocols (Anthropic Messages, OpenAI Responses, OpenAI Chat, Bedrock passthrough), collapse into a canonical request (Anthropic-superset schema), pass once through the protocol-agnostic core (auth, RBAC, routing, pre-check, filters, egress, settle, audit), and leave verbatim or converted toward Anthropic, Bedrock, vLLM, or OpenAI-compatible providers; a matrix shows which ingress × egress pairs forward verbatim, and a panel lists per-client quirks.](../../assets/llm-gateway-multi-client.svg)
+
+**How each client points at the gateway, and what the gateway must absorb**
+
+| Client | Native protocol | Pointing it at the gateway | What the gateway must handle |
+|--------|-----------------|----------------------------|------------------------------|
+| **Claude Code** | Anthropic Messages (`/v1/messages`, `count_tokens`) | `ANTHROPIC_BASE_URL`, virtual key as the auth token | `count_tokens` must never return non-200. The harness system prompt and `cache_control` breakpoints must be preserved byte-for-byte |
+| **Codex CLI** | OpenAI Responses (default) or Chat Completions (`wire_api = "chat"`) | `model_providers.<id>.base_url` in `~/.codex/config.toml` | The Responses event stream is framed differently from Chat SSE; tool calls arrive as function items. Without a Responses ingress, set `wire_api = "chat"` |
+| **OpenCode** | Anthropic or OpenAI-compatible, chosen per provider entry | provider `baseURL` in `opencode.json` | One process may hit two ingresses at once; the same virtual key must resolve to the same team on both |
+| **Hermes Agent** | OpenAI-compatible Chat Completions | `base_url` + `api_key` in the agent config | Function-calling tools; tool results come back as `role=tool` messages, not `tool_result` blocks |
+| **Your app / AWS SDK** | any of the above, or direct Bedrock SDK calls | SDK base URL or Bedrock endpoint override | The Bedrock passthrough ingress (`/model/{id}/invoke`) lets SDK clients transit the gateway unchanged |
+
+**How it works — the three-stage ingress / canonical / egress structure**
+
+1. **Protocol ingress**: one per protocol, parses the request and keeps the RawBody.
+2. **Canonical request**: an Anthropic-superset schema. Only fields the pipeline interprets (model, system, messages, tools, `cache_control`, `thinking`) are typed; everything else is preserved verbatim in `Extra`. The schema's invariant is that a same-protocol round trip is lossless.
+3. **Protocol-agnostic core** (auth → RBAC → routing → PreCheck → filters → egress → settle → audit) runs once per request, identically for every client. The client's protocol never changes *who may use what* or *what it costs*.
+4. **Protocol egress** matches the provider. Same protocol as the ingress ⇒ RawBody verbatim (the cache invariant of section 2.3); different ⇒ convert through the canonical schema.
+
+**Ingress × egress matrix — when does the body go out verbatim?**
+
+| Client protocol ↓ / provider → | Anthropic | Bedrock (Claude) | Bedrock (other models) | OpenAI-compatible |
+|---|---|---|---|---|
+| Anthropic Messages (Claude Code, OpenCode) | **verbatim** | **verbatim*** | convert | convert |
+| OpenAI Chat (Codex chat, Hermes, OpenCode) | convert | convert | convert | **verbatim** |
+| OpenAI Responses (Codex default) | convert | convert | convert | convert† |
+| Bedrock passthrough (AWS SDK) | convert | **verbatim** | **verbatim** | convert |
+
+\* Only the top-level model id is rewritten, cache-safely; the rest is byte-identical. † Verbatim only if the upstream itself speaks the Responses API.
+
+Every "convert" path is a **cache-cold path**, because the prompt cache lives on the provider side. Even a lossless conversion has a different cost profile, so which client is paired with which provider must be visible in headers and audit fields. The simplest cache optimization is a team policy that **matches client protocol to provider protocol**: "Codex users go to the OpenAI-compatible GPU pool, Claude Code users go to Anthropic/Bedrock."
+
+**One person, several clients.** Virtual keys are issued to users, not to clients. When the same user alternates between Claude Code and Codex, both requests resolve to the same `Principal`, share the same budget, rate limits, and model allow-list, and appear as the same user in the audit chain. The client type is an attribute on the audit record (User-Agent, ingress kind), never a policy subject.
+
 ---
 
 ## 3. Two-Phase Governance — Denying Before You Know the Cost

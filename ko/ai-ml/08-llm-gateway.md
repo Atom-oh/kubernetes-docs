@@ -96,6 +96,44 @@ Anthropic 프롬프트 캐시나 vLLM 프리픽스 캐시는 **요청 본문의 
   • 대화 중간에 제공자를 바꾸는 폴백은 "콜드 캐시"다. 헤더와 감사 필드로 드러내야 한다.
 ```
 
+### 2.4 여러 클라이언트, 하나의 진입점 — 프로토콜이 다를 때
+
+같은 조직 안에서도 개발자마다 쓰는 코딩 에이전트가 다릅니다. Claude Code는 Anthropic Messages, Codex는 OpenAI Responses(기본) 또는 Chat Completions, Hermes Agent는 OpenAI 호환 Chat Completions, OpenCode는 제공자 설정에 따라 둘 다 씁니다. 게이트웨이가 "단일 진입점"이 되려면 **클라이언트의 와이어 프로토콜을 그대로 받아들이고**, 그 뒤의 거버넌스는 프로토콜과 무관하게 한 번만 돌아가야 합니다.
+
+![Claude Code, Codex CLI, OpenCode, Hermes Agent, 자체 앱이 각자의 와이어 프로토콜(Anthropic Messages, OpenAI Responses, OpenAI Chat, Bedrock passthrough)로 게이트웨이 ingress에 들어오고, 정규 요청(Anthropic 상위집합 스키마)으로 접혀 프로토콜 무관 코어(인증·RBAC·라우팅·사전검사·필터·egress·정산·감사)를 한 번 통과한 뒤, 제공자 프로토콜에 맞춰 원문 그대로 또는 변환되어 Anthropic, Bedrock, vLLM, OpenAI 호환 제공자로 나가는 구조와, ingress×egress 조합별 원문 전달 여부 매트릭스, 클라이언트별 특이점을 보여준다.](../../assets/llm-gateway-multi-client.svg)
+
+**클라이언트별로 게이트웨이를 가리키는 방법과 게이트웨이가 흡수해야 할 특이점**
+
+| 클라이언트 | 네이티브 프로토콜 | 게이트웨이 지정 | 게이트웨이가 신경 써야 할 점 |
+|-----------|----------------|--------------|--------------------------|
+| **Claude Code** | Anthropic Messages (`/v1/messages`, `count_tokens`) | `ANTHROPIC_BASE_URL`, 가상 키를 인증 토큰으로 | `count_tokens`는 절대 non-200 금지. 하네스 시스템 프롬프트와 `cache_control` 브레이크포인트를 바이트 그대로 보존 |
+| **Codex CLI** | OpenAI Responses (기본) 또는 Chat Completions (`wire_api = "chat"`) | `~/.codex/config.toml`의 `model_providers.<id>.base_url` | Responses 이벤트 스트림은 Chat SSE와 프레임 구조가 다름. 도구 호출이 function 아이템으로 옴. 게이트웨이에 Responses ingress가 없으면 `wire_api = "chat"`으로 우회 |
+| **OpenCode** | Anthropic 또는 OpenAI 호환 — 제공자 항목별로 선택 | `opencode.json`의 provider `baseURL` | 한 프로세스가 두 ingress를 동시에 쓸 수 있음. 같은 가상 키가 두 ingress에서 같은 팀으로 해석되어야 함 |
+| **Hermes Agent** | OpenAI 호환 Chat Completions | 에이전트 설정의 `base_url` + `api_key` | function calling 기반 도구 호출. 도구 결과가 `tool_result` 블록이 아닌 `role=tool` 메시지로 돌아옴 |
+| **자체 앱 / AWS SDK** | 위 중 하나, 또는 Bedrock SDK 직접 호출 | SDK의 base URL 또는 Bedrock 엔드포인트 오버라이드 | Bedrock passthrough ingress(`/model/{id}/invoke`)로 SDK를 바꾸지 않고 게이트웨이를 경유 |
+
+**동작 원리 — ingress, 정규 스키마, egress의 3단 구조**
+
+1. **Protocol ingress**는 프로토콜별로 하나씩 존재하며 요청을 파싱하되 RawBody를 보존합니다.
+2. **정규 요청(canonical request)**은 Anthropic 상위집합 스키마입니다. 파이프라인이 해석하는 필드(모델, 시스템, 메시지, 도구, `cache_control`, `thinking`)만 타입을 갖고, 나머지는 `Extra`로 원문 보존됩니다. 같은 프로토콜로 왕복하면 손실이 없어야 한다는 것이 이 스키마의 불변식입니다.
+3. **프로토콜 무관 코어**(인증 → RBAC → 라우팅 → 사전 검사 → 필터 → egress → 정산 → 감사)는 요청당 한 번, 어떤 클라이언트든 동일하게 돌아갑니다. 클라이언트의 프로토콜은 *누가 무엇을 쓸 수 있는지*와 *얼마인지*를 절대 바꾸지 않습니다.
+4. **Protocol egress**는 제공자 프로토콜에 맞춥니다. ingress와 같으면 RawBody를 그대로(2.3절 캐시 불변식), 다르면 정규 스키마를 거쳐 변환합니다.
+
+**ingress × egress 매트릭스 — 언제 원문 그대로 나가는가**
+
+| 클라이언트 프로토콜 ↓ / 제공자 → | Anthropic | Bedrock (Claude) | Bedrock (기타 모델) | OpenAI 호환 |
+|---|---|---|---|---|
+| Anthropic Messages (Claude Code, OpenCode) | **원문** | **원문*** | 변환 | 변환 |
+| OpenAI Chat (Codex chat, Hermes, OpenCode) | 변환 | 변환 | 변환 | **원문** |
+| OpenAI Responses (Codex 기본) | 변환 | 변환 | 변환 | 변환† |
+| Bedrock passthrough (AWS SDK) | 변환 | **원문** | **원문** | 변환 |
+
+\* 최상위 모델 ID만 캐시에 안전하게 재작성, 나머지는 바이트 동일. † 업스트림이 Responses API를 직접 지원하는 경우만 원문.
+
+"변환" 경로는 프롬프트 캐시가 제공자 측에 있으므로 **캐시 콜드 경로**입니다. 정규 스키마가 손실 없이 변환하더라도 캐시 관점에서는 비용이 다르므로, 어떤 클라이언트가 어떤 제공자와 짝지어지는지를 헤더와 감사 필드로 드러내야 합니다. 팀 정책에서 "Codex 사용자는 OpenAI 호환 GPU 풀로, Claude Code 사용자는 Anthropic/Bedrock으로"처럼 **클라이언트 프로토콜과 제공자 프로토콜을 맞춰 두는 것**이 가장 단순한 캐시 최적화입니다.
+
+**한 사람, 여러 클라이언트.** 가상 키는 클라이언트가 아니라 사용자에게 발급됩니다. 같은 사용자가 Claude Code와 Codex를 번갈아 쓰더라도 두 요청은 같은 `Principal`로 해석되어 같은 예산·레이트·모델 허용 목록에 묶이고, 감사 체인에서도 같은 사용자로 보입니다. 클라이언트 종류는 감사 레코드의 속성(User-Agent, ingress 종류)일 뿐 정책 주체가 아닙니다.
+
 ---
 
 ## 3. 2단계 거버넌스 — 비용을 모르는 상태에서 거부하기
