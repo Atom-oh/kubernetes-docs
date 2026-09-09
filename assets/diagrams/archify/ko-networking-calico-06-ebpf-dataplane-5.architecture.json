@@ -38,7 +38,18 @@
         ],
         "note": "XDP 프로그램은 NIC 드라이버 단계에서 Conntrack Map을 조회해 패킷을 조기 처리한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
     {

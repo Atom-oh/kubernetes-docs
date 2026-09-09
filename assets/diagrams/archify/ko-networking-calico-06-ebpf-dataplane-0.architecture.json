@@ -6,7 +6,18 @@
     "output": "ko-networking-calico-06-ebpf-dataplane-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [760, 300]
+    "viewBox": [
+      760,
+      300
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {
@@ -15,8 +26,14 @@
       "label": "iptables 모드",
       "sublabel": "전통적, 안정적",
       "tag": "기본 데이터플레인",
-      "pos": [70, 110],
-      "size": [220, 72]
+      "pos": [
+        70,
+        110
+      ],
+      "size": [
+        220,
+        72
+      ]
     },
     {
       "id": "ebpf",
@@ -24,15 +41,24 @@
       "label": "eBPF 모드",
       "sublabel": "고성능, 현대적",
       "tag": "kube-proxy 대체",
-      "pos": [470, 110],
-      "size": [220, 72]
+      "pos": [
+        470,
+        110
+      ],
+      "size": [
+        220,
+        72
+      ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
       "label": "데이터플레인 옵션",
-      "wraps": ["iptables", "ebpf"]
+      "wraps": [
+        "iptables",
+        "ebpf"
+      ]
     }
   ],
   "connections": [

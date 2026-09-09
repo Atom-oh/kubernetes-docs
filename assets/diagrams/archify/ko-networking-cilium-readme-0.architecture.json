@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium 아키텍처",
+    "output": "ko-networking-cilium-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "apiserver",
+          "operator",
+          "agent"
+        ],
+        "note": "Cilium Operator가 Cilium API Server를 통해 클러스터 수준 리소스를 관리하고 각 노드의 Cilium Agent를 제어한다."
+      },
+      {
+        "id": "data-plane",
+        "label": "데이터 플레인",
+        "focus": [
+          "agent",
+          "ebpf"
+        ],
+        "note": "각 노드의 Cilium Agent가 eBPF 프로그램을 커널에 로드해 패킷 처리와 네트워크 정책 시행을 맡긴다."
+      },
+      {
+        "id": "observability",
+        "label": "관찰성 (Hubble)",
+        "focus": [
+          "agent",
+          "hubble-server",
+          "hubble-relay",
+          "hubble-ui"
+        ],
+        "note": "노드별 Hubble Server의 메트릭을 Hubble Relay가 클러스터 전체로 집계하고 Hubble UI가 시각화한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Cilium API Server",
+      "sublabel": "API",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Cilium Operator",
+      "sublabel": "클러스터 수준 컨트롤러",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "security",
+      "label": "eBPF Programs",
+      "sublabel": "커널 · 정책 시행",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "노드별 실행",
+      "pos": [
+        340,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hubble-server",
+      "type": "backend",
+      "label": "Hubble Server",
+      "sublabel": "노드별",
+      "pos": [
+        780,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hubble-relay",
+      "type": "backend",
+      "label": "Hubble Relay",
+      "sublabel": "클러스터 전체 집계",
+      "pos": [
+        780,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hubble-ui",
+      "type": "frontend",
+      "label": "Hubble UI",
+      "sublabel": "대시보드",
+      "pos": [
+        780,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "operator"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "ebpf",
+        "agent"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "관찰성 (Hubble)",
+      "wraps": [
+        "hubble-server",
+        "hubble-relay",
+        "hubble-ui"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-operator",
+      "from": "apiserver",
+      "to": "operator",
+      "label": "API"
+    },
+    {
+      "id": "operator-manages-agent",
+      "from": "operator",
+      "to": "agent",
+      "label": "관리",
+      "variant": "emphasis",
+      "labelAt": [
+        430,
+        250
+      ]
+    },
+    {
+      "id": "agent-loads-ebpf",
+      "from": "agent",
+      "to": "ebpf",
+      "label": "eBPF 로드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-metrics",
+      "from": "agent",
+      "to": "hubble-server",
+      "label": "메트릭",
+      "variant": "dashed"
+    },
+    {
+      "id": "server-to-relay",
+      "from": "hubble-server",
+      "to": "hubble-relay",
+      "label": "집계",
+      "labelAt": [
+        870,
+        190
+      ]
+    },
+    {
+      "id": "relay-to-ui",
+      "from": "hubble-relay",
+      "to": "hubble-ui",
+      "label": "시각화",
+      "labelAt": [
+        870,
+        350
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인",
+      "items": [
+        "Cilium Operator는 클러스터 수준의 리소스와 작업을 관리한다",
+        "Cilium CLI로 Cilium과 Hubble을 관리한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "데이터 플레인",
+      "items": [
+        "Cilium Agent는 각 노드에서 실행되며 eBPF 프로그램을 로드하고 관리한다",
+        "eBPF 프로그램은 커널에 로드되어 패킷 처리와 정책 시행을 담당한다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "관찰성",
+      "items": [
+        "Hubble이 네트워크 흐름 모니터링과 관찰성을 제공한다",
+        "Hubble Server(노드별) → Hubble Relay(클러스터 전체) → Hubble UI"
+      ]
+    }
+  ]
+}

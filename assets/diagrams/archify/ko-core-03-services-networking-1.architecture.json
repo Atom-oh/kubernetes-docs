@@ -36,7 +36,10 @@
         ],
         "note": "host/path 규칙에 따라 서비스 A 또는 B로 분기되고, 각 서비스가 자신의 백엔드 파드로 부하를 분산한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

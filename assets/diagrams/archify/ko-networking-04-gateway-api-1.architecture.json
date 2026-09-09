@@ -44,6 +44,21 @@
         ],
         "note": "각 Route는 backendRefs로 지정한 Service에 트래픽을 전달합니다."
       }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    },
+    "viewBox": [
+      1131,
+      698
     ]
   },
   "components": [

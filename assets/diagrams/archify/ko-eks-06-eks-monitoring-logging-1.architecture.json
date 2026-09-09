@@ -28,7 +28,18 @@
         ],
         "note": "로그 에이전트가 CloudWatch Logs, Amazon OpenSearch, Amazon S3로 로그를 분산 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

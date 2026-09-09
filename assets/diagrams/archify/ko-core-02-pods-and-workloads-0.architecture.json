@@ -44,7 +44,10 @@
         ],
         "note": "파드 내 컨테이너가 공유하는 볼륨은 emptyDir·configMap·secret·persistentVolumeClaim 등으로 정의한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Felix 내부 워크플로우",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1085,
+      666
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": "Datastore/Typha",
+      "sublabel": "정책·엔드포인트 상태"
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "정책 에이전트"
+    },
+    {
+      "id": "iptables",
+      "type": "security",
+      "label": "iptables/eBPF",
+      "sublabel": "방화벽 규칙"
+    },
+    {
+      "id": "routing",
+      "type": "backend",
+      "label": "Routing Table",
+      "sublabel": "커널 라우트"
+    },
+    {
+      "id": "netif",
+      "type": "external",
+      "label": "Network Interface",
+      "sublabel": "veth · 터널"
+    }
+  ],
+  "segments": [
+    {
+      "from": 144,
+      "to": 288,
+      "label": "초기 동기화"
+    },
+    {
+      "from": 310,
+      "to": 405,
+      "label": "Watch Loop — 변경 이벤트 감지 시"
+    },
+    {
+      "from": 428,
+      "to": 580,
+      "label": "Pod 생성 시"
+    }
+  ],
+  "messages": [
+    {
+      "id": "connect",
+      "from": "felix",
+      "to": "datastore",
+      "y": 166,
+      "label": "연결·동기화 시작"
+    },
+    {
+      "id": "initial-state",
+      "from": "datastore",
+      "to": "felix",
+      "y": 200,
+      "label": "초기 상태 수신",
+      "variant": "return"
+    },
+    {
+      "id": "program-rules",
+      "from": "felix",
+      "to": "iptables",
+      "y": 238,
+      "label": "규칙 프로그래밍",
+      "variant": "emphasis",
+      "note": "정책 계산 후 규칙 생성"
+    },
+    {
+      "id": "update-routes",
+      "from": "felix",
+      "to": "routing",
+      "y": 272,
+      "label": "라우팅 업데이트"
+    },
+    {
+      "id": "change-event",
+      "from": "datastore",
+      "to": "felix",
+      "y": 340,
+      "label": "변경 이벤트 (정책·엔드포인트·IPPool)",
+      "variant": "dashed"
+    },
+    {
+      "id": "refresh-rules",
+      "from": "felix",
+      "to": "iptables",
+      "y": 380,
+      "label": "규칙·라우트 갱신",
+      "variant": "emphasis",
+      "note": "델타 계산 후 반영"
+    },
+    {
+      "id": "cni-add",
+      "from": "netif",
+      "to": "felix",
+      "y": 457,
+      "label": "CNI 호출 (ADD)"
+    },
+    {
+      "id": "create-veth",
+      "from": "felix",
+      "to": "netif",
+      "y": 493,
+      "label": "veth pair 생성"
+    },
+    {
+      "id": "add-route-policy",
+      "from": "felix",
+      "to": "routing",
+      "y": 529,
+      "label": "라우트·정책 규칙 추가"
+    },
+    {
+      "id": "return-ip",
+      "from": "felix",
+      "to": "netif",
+      "y": 565,
+      "label": "IP 주소 반환",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "felix",
+      "from": 162,
+      "to": 277,
+      "type": "backend"
+    },
+    {
+      "participant": "felix",
+      "from": 336,
+      "to": 385,
+      "type": "backend"
+    },
+    {
+      "participant": "felix",
+      "from": 453,
+      "to": 571,
+      "type": "backend"
+    }
+  ]
+}

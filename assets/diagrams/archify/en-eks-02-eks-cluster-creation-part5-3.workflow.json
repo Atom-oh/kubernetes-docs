@@ -10,10 +10,10 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "준비 · 검증"
+          "label": "Prep · verify"
         },
         "cloud": {
-          "label": "업그레이드 대상"
+          "label": "Upgrade target"
         }
       }
     },
@@ -22,11 +22,11 @@
   "lanes": [
     {
       "id": "plan",
-      "label": "계획과 컨트롤 플레인"
+      "label": "Plan and control plane"
     },
     {
       "id": "after",
-      "label": "노드와 검증"
+      "label": "Nodes and verification"
     }
   ],
   "mainPath": [

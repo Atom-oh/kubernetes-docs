@@ -42,7 +42,10 @@
         ],
         "note": "포드는 네임스페이스에 적용된 Privileged·Baseline·Restricted 세 수준 중 하나를 준수해야 한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

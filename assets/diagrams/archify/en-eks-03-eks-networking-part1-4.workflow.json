@@ -28,11 +28,11 @@
   "lanes": [
     {
       "id": "plan",
-      "label": "CIDR 계획"
+      "label": "CIDR Planning"
     },
     {
       "id": "risk",
-      "label": "중복 검사",
+      "label": "Overlap Check",
       "variant": "exception"
     }
   ],
@@ -58,7 +58,7 @@
       "lane": "plan",
       "col": 1,
       "type": "backend",
-      "label": "Calculate IP demand",
+      "label": "IP demand",
       "sublabel": "nodes × max pods",
       "width": 150
     },
@@ -76,7 +76,7 @@
       "lane": "plan",
       "col": 3,
       "type": "security",
-      "label": "Check existing networks",
+      "label": "Existing networks",
       "sublabel": "On-premises · peering",
       "width": 165
     },

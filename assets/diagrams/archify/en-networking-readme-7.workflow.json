@@ -1,0 +1,250 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "CNI Selection Decision Flowchart",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "backend": {
+          "label": "Decision point"
+        },
+        "cloud": {
+          "label": "AWS-managed CNI"
+        },
+        "external": {
+          "label": "Open-source CNI"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "eks_path",
+        "label": "EKS path",
+        "focus": [
+          "start",
+          "eks_q",
+          "policy_q",
+          "vpc_cni",
+          "calico",
+          "cilium"
+        ],
+        "note": "On EKS the fork is the Network Policy depth you need: none means VPC CNI, basic policy means Calico, L7 policy means Cilium."
+      },
+      {
+        "id": "non_eks_path",
+        "label": "Non-EKS path",
+        "focus": [
+          "start",
+          "eks_q",
+          "env_q",
+          "flannel",
+          "calico",
+          "cilium"
+        ],
+        "note": "Off EKS, choose by environment: simple setups take Flannel, multi-cloud takes Calico, BGP plus Service Mesh takes Cilium."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "Environment check"
+    },
+    {
+      "id": "eks",
+      "label": "EKS environment"
+    },
+    {
+      "id": "shared",
+      "label": "Shared recommendations"
+    },
+    {
+      "id": "noneks",
+      "label": "Non-EKS environment"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "eks_q",
+    "policy_q",
+    "vpc_cni"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "frontend",
+      "label": "CNI selection",
+      "sublabel": "check cluster environment",
+      "width": 136
+    },
+    {
+      "id": "eks_q",
+      "lane": "decide",
+      "col": 1,
+      "type": "backend",
+      "label": "Using AWS EKS?",
+      "sublabel": "YES / NO",
+      "tag": "decision",
+      "width": 150
+    },
+    {
+      "id": "policy_q",
+      "lane": "eks",
+      "col": 2,
+      "type": "backend",
+      "label": "Policy level?",
+      "sublabel": "Network Policy requirement",
+      "tag": "decision",
+      "width": 150
+    },
+    {
+      "id": "env_q",
+      "lane": "noneks",
+      "col": 2,
+      "type": "backend",
+      "label": "Environment?",
+      "sublabel": "scale, cloud, routing",
+      "tag": "decision",
+      "width": 150
+    },
+    {
+      "id": "vpc_cni",
+      "lane": "eks",
+      "col": 3,
+      "type": "cloud",
+      "label": "AWS VPC CNI",
+      "sublabel": "ENI, basic L3-L4",
+      "tag": "recommended",
+      "width": 124
+    },
+    {
+      "id": "flannel",
+      "lane": "noneks",
+      "col": 3,
+      "type": "external",
+      "label": "Flannel",
+      "sublabel": "VXLAN, low complexity",
+      "tag": "recommended",
+      "width": 124
+    },
+    {
+      "id": "calico",
+      "lane": "shared",
+      "col": 4,
+      "type": "external",
+      "label": "Calico",
+      "sublabel": "L3-L4 policy, BGP",
+      "tag": "recommended",
+      "width": 124
+    },
+    {
+      "id": "cilium",
+      "lane": "shared",
+      "col": 5,
+      "type": "external",
+      "label": "Cilium",
+      "sublabel": "eBPF, L7, Mesh",
+      "tag": "recommended",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_start",
+      "from": "start",
+      "to": "eks_q"
+    },
+    {
+      "id": "e_yes",
+      "from": "eks_q",
+      "to": "policy_q",
+      "label": "YES",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e_no",
+      "from": "eks_q",
+      "to": "env_q",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "e_none",
+      "from": "policy_q",
+      "to": "vpc_cni",
+      "label": "not needed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e_basic",
+      "from": "policy_q",
+      "to": "calico",
+      "label": "basic (L3-L4)",
+      "role": "branch"
+    },
+    {
+      "id": "e_l7",
+      "from": "policy_q",
+      "to": "cilium",
+      "label": "L7",
+      "role": "branch",
+      "bias": 0.85
+    },
+    {
+      "id": "e_simple",
+      "from": "env_q",
+      "to": "flannel",
+      "label": "simple",
+      "role": "branch"
+    },
+    {
+      "id": "e_multi",
+      "from": "env_q",
+      "to": "calico",
+      "label": "multi-cloud",
+      "role": "branch"
+    },
+    {
+      "id": "e_bgp",
+      "from": "env_q",
+      "to": "cilium",
+      "label": "BGP + Service Mesh",
+      "role": "branch",
+      "bias": 0.85
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS EKS production",
+      "items": [
+        "Recommended: AWS VPC CNI + Calico (Network Policy)",
+        "Set enableNetworkPolicy: \"true\" on the vpc-cni add-on"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Advanced security / Service Mesh",
+      "items": [
+        "Recommended: Cilium — L7 Network Policy, DNS-based policy",
+        "WireGuard encryption; sidecar-less Service Mesh can replace Istio/Envoy"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "On-premises / Dev-test",
+      "items": [
+        "On-prem/bare-metal: Calico in BGP mode, peering with ToR switches",
+        "Dev/test: Flannel — simple install and low resource usage"
+      ]
+    }
+  ]
+}

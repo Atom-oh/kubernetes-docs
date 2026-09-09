@@ -14,7 +14,9 @@ Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다.
 
 EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항이 필요합니다:
 
-![EKS 클러스터 사전 요구 사항](../.gitbook/assets/eks_cluster_prerequisites.svg)
+![AWS 계정과 IAM 권한에서 시작해 AWS CLI, kubectl, eksctl 도구 설치와 서로 다른 가용 영역의 서브넷 2개 이상 및 태그 지정이 필요한 VPC까지, EKS 클러스터 생성 전 사전 요구 사항을 보여준다.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part1-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part1-10.html)
 
 ### 1. AWS 계정
 

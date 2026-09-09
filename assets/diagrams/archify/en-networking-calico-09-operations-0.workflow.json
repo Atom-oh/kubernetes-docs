@@ -1,0 +1,215 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico Operations Lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start / end"
+        },
+        "backend": {
+          "label": "Operational step"
+        },
+        "security": {
+          "label": "Shared hub"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "install",
+        "label": "Install and configure",
+        "focus": [
+          "install",
+          "config"
+        ],
+        "note": "Deploy Calico (Tigera Operator, manifests or Helm), then tune the Installation resource: IP pools, encapsulation, MTU, dataplane."
+      },
+      {
+        "id": "observe",
+        "label": "Monitor and troubleshoot",
+        "focus": [
+          "config",
+          "monitor",
+          "troubleshoot"
+        ],
+        "note": "Felix, BIRD and Typha metrics plus log analysis drive troubleshooting of pod IP, connectivity, policy and BGP issues."
+      },
+      {
+        "id": "feedback",
+        "label": "Feedback to the hub",
+        "focus": [
+          "troubleshoot",
+          "upgrade",
+          "config"
+        ],
+        "note": "Fixes and post-upgrade retuning both land back in the shared configuration hub."
+      },
+      {
+        "id": "protect",
+        "label": "Backup and DR",
+        "focus": [
+          "config",
+          "backup"
+        ],
+        "note": "Export Calico resources and the Installation CR with calicoctl/kubectl so the configuration can be restored in dependency order."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "setup",
+      "label": "Setup"
+    },
+    {
+      "id": "ops",
+      "label": "Day-2 operations"
+    },
+    {
+      "id": "protect",
+      "label": "Data protection"
+    }
+  ],
+  "mainPath": [
+    "install",
+    "config",
+    "monitor",
+    "troubleshoot"
+  ],
+  "nodes": [
+    {
+      "id": "install",
+      "lane": "setup",
+      "col": 0,
+      "type": "frontend",
+      "label": "Installation",
+      "sublabel": "deploy Calico",
+      "width": 124
+    },
+    {
+      "id": "config",
+      "lane": "setup",
+      "col": 1,
+      "type": "security",
+      "label": "Configuration",
+      "sublabel": "tune settings",
+      "tag": "shared hub",
+      "width": 130
+    },
+    {
+      "id": "monitor",
+      "lane": "ops",
+      "col": 2,
+      "type": "backend",
+      "label": "Monitoring",
+      "sublabel": "metrics & logs",
+      "width": 124
+    },
+    {
+      "id": "troubleshoot",
+      "lane": "ops",
+      "col": 3,
+      "type": "backend",
+      "label": "Troubleshooting",
+      "sublabel": "debug issues",
+      "width": 130
+    },
+    {
+      "id": "upgrade",
+      "lane": "ops",
+      "col": 4,
+      "type": "backend",
+      "label": "Upgrades",
+      "sublabel": "version updates",
+      "width": 124
+    },
+    {
+      "id": "backup",
+      "lane": "protect",
+      "col": 5,
+      "type": "frontend",
+      "label": "Backup & DR",
+      "sublabel": "data protection",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "id": "install-config",
+      "from": "install",
+      "to": "config",
+      "label": "deployed"
+    },
+    {
+      "id": "config-monitor",
+      "from": "config",
+      "to": "monitor"
+    },
+    {
+      "id": "monitor-troubleshoot",
+      "from": "monitor",
+      "to": "troubleshoot"
+    },
+    {
+      "id": "monitor-upgrade",
+      "from": "monitor",
+      "to": "upgrade",
+      "role": "branch"
+    },
+    {
+      "id": "config-backup",
+      "from": "config",
+      "to": "backup",
+      "role": "branch"
+    },
+    {
+      "id": "troubleshoot-config",
+      "from": "troubleshoot",
+      "to": "config",
+      "label": "fix applied",
+      "variant": "emphasis",
+      "role": "return"
+    },
+    {
+      "id": "upgrade-config",
+      "from": "upgrade",
+      "to": "config",
+      "label": "retuned",
+      "variant": "emphasis",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Installation",
+      "items": [
+        "Tigera Operator is the recommended production method",
+        "Manifest and Helm installs are also supported",
+        "Installation resource sets IP pools, encapsulation, MTU and dataplane"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Monitoring & troubleshooting",
+      "items": [
+        "Felix, BIRD and Typha expose Prometheus metrics",
+        "Alert rules and Grafana dashboards watch dataplane health",
+        "Common issues: pod IPs, communication failures, policy, BGP peering"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Upgrades & backup",
+      "items": [
+        "Pre-upgrade checklist, then Operator or Helm upgrade with rollback",
+        "Back up Calico resources (IP pools, BGP config, policies, Felix config) and the Installation CR",
+        "Restore procedure returns the cluster to the saved configuration"
+      ]
+    }
+  ]
+}

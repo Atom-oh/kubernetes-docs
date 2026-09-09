@@ -22,11 +22,11 @@
   "lanes": [
     {
       "id": "check",
-      "label": "VPC 사전 요구 사항"
+      "label": "VPC prerequisites"
     },
     {
       "id": "egress",
-      "label": "인터넷 액세스 경로"
+      "label": "Internet access path"
     }
   ],
   "mainPath": [
@@ -78,7 +78,7 @@
       "lane": "check",
       "col": 5,
       "type": "backend",
-      "label": "Ready to create cluster",
+      "label": "Ready to create",
       "sublabel": "Requirements met",
       "width": 155
     },

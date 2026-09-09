@@ -1,0 +1,248 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Auto-Upgrade Behavior at Version End of Support",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "EKS version support state"
+        },
+        "security": {
+          "label": "Decision point"
+        },
+        "backend": {
+          "label": "Deprecation notice"
+        },
+        "frontend": {
+          "label": "User-controlled upgrade"
+        },
+        "external": {
+          "label": "Forced by AWS"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "extended",
+        "label": "Extended support path",
+        "focus": [
+          "eol",
+          "ext_q",
+          "ext_continue",
+          "ext_ends"
+        ],
+        "note": "With extended support enabled the cluster keeps running for 12 more months at $0.60/cluster/hr, then extended support also ends."
+      },
+      {
+        "id": "notice",
+        "label": "60-day deprecation notice",
+        "focus": [
+          "ext_q",
+          "ext_ends",
+          "notice",
+          "upgrade_q"
+        ],
+        "note": "Whether standard or extended support ended, EKS issues a 60-day deprecation notice before acting."
+      },
+      {
+        "id": "user",
+        "label": "User upgrades in time",
+        "focus": [
+          "upgrade_q",
+          "new_version"
+        ],
+        "note": "Upgrading before the deadline keeps the target version and timing under your control."
+      },
+      {
+        "id": "forced",
+        "label": "Deadline missed",
+        "focus": [
+          "upgrade_q",
+          "auto_upgrade",
+          "oldest_supported"
+        ],
+        "note": "If the deadline passes, AWS force-upgrades the control plane to the oldest supported version; nodes and add-ons stay on your side."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "support",
+      "label": "Version Support"
+    },
+    {
+      "id": "deprecation",
+      "label": "Deprecation Window"
+    },
+    {
+      "id": "user",
+      "label": "User-Controlled Upgrade"
+    },
+    {
+      "id": "forced",
+      "label": "Forced Upgrade by AWS",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "eol",
+    "ext_q",
+    "notice",
+    "upgrade_q",
+    "new_version"
+  ],
+  "nodes": [
+    {
+      "id": "eol",
+      "lane": "support",
+      "col": 0,
+      "type": "cloud",
+      "label": "Approaching EOL",
+      "sublabel": "standard support ending",
+      "width": 160
+    },
+    {
+      "id": "ext_q",
+      "lane": "support",
+      "col": 1,
+      "type": "security",
+      "label": "Extended Support?",
+      "width": 176
+    },
+    {
+      "id": "ext_continue",
+      "lane": "support",
+      "col": 2,
+      "type": "cloud",
+      "label": "Stay on Extended",
+      "sublabel": "$0.60/cluster/hr",
+      "tag": "+12 months",
+      "width": 144
+    },
+    {
+      "id": "ext_ends",
+      "lane": "support",
+      "col": 3,
+      "type": "cloud",
+      "label": "Support Ends",
+      "width": 152
+    },
+    {
+      "id": "notice",
+      "lane": "deprecation",
+      "col": 3,
+      "type": "backend",
+      "label": "Deprecation Notice",
+      "width": 176,
+      "tag": "60 days"
+    },
+    {
+      "id": "upgrade_q",
+      "lane": "deprecation",
+      "col": 4,
+      "type": "security",
+      "label": "Upgraded in Time?",
+      "width": 176
+    },
+    {
+      "id": "new_version",
+      "lane": "user",
+      "col": 5,
+      "type": "frontend",
+      "label": "On New Version",
+      "sublabel": "user-controlled",
+      "width": 156
+    },
+    {
+      "id": "auto_upgrade",
+      "lane": "forced",
+      "col": 4,
+      "type": "external",
+      "label": "Auto-Upgrade",
+      "sublabel": "forced by AWS",
+      "width": 156
+    },
+    {
+      "id": "oldest_supported",
+      "lane": "forced",
+      "col": 5,
+      "type": "external",
+      "label": "Oldest Supported Version",
+      "sublabel": "control plane only",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "from": "eol",
+      "to": "ext_q"
+    },
+    {
+      "from": "ext_q",
+      "to": "ext_continue",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "from": "ext_continue",
+      "to": "ext_ends"
+    },
+    {
+      "from": "ext_ends",
+      "to": "notice"
+    },
+    {
+      "from": "ext_q",
+      "to": "notice",
+      "label": "no",
+      "variant": "emphasis"
+    },
+    {
+      "from": "notice",
+      "to": "upgrade_q"
+    },
+    {
+      "from": "upgrade_q",
+      "to": "new_version",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "upgrade_q",
+      "to": "auto_upgrade",
+      "label": "no",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "auto_upgrade",
+      "to": "oldest_supported",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Extended Support Cost",
+      "items": [
+        "$0.60/cluster/hr vs $0.10/cluster/hr standard (6x)",
+        "About $4,380 extra per cluster per year ($5,256 vs $876)",
+        "Security patches and critical bug fixes only"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Forced Upgrade Scope",
+      "items": [
+        "Auto-upgrade moves only the control plane",
+        "Node groups, add-ons, and self-managed components stay on the old version",
+        "Mismatched versions can disrupt workloads"
+      ]
+    }
+  ]
+}

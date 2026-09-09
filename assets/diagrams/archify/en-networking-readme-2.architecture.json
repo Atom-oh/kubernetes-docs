@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traffic Entry by Service Type",
+    "output": "en-networking-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Service / workload"
+        },
+        "cloud": {
+          "label": "cloud LB integration"
+        },
+        "external": {
+          "label": "traffic source"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "cluster-internal",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "External traffic",
+      "sublabel": "internet",
+      "pos": [
+        370,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "in-cluster workload",
+      "pos": [
+        700,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "clusterip",
+      "type": "backend",
+      "label": "ClusterIP",
+      "sublabel": "internal-only",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodeport",
+      "type": "backend",
+      "label": "NodePort",
+      "sublabel": "node port 30000-32767",
+      "pos": [
+        260,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "loadbalancer",
+      "type": "cloud",
+      "label": "LoadBalancer",
+      "sublabel": "external LB (e.g. NLB)",
+      "pos": [
+        480,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "externalname",
+      "type": "backend",
+      "label": "ExternalName",
+      "sublabel": "external DNS mapping",
+      "pos": [
+        700,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service types",
+      "wraps": [
+        "clusterip",
+        "nodeport",
+        "loadbalancer",
+        "externalname"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-clusterip",
+      "from": "client",
+      "to": "clusterip",
+      "label": "internal call",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 86
+    },
+    {
+      "id": "internet-nodeport",
+      "from": "internet",
+      "to": "nodeport",
+      "label": "node IP:NodePort",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "internet-lb",
+      "from": "internet",
+      "to": "loadbalancer",
+      "label": "via external LB",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app-externalname",
+      "from": "app",
+      "to": "externalname",
+      "label": "DNS CNAME",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 86
+    }
+  ]
+}

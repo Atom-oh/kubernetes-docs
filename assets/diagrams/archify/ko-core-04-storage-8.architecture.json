@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage ResourceQuota",
+    "output": "ko-core-04-storage-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "limits",
+        "label": "제한 항목",
+        "focus": [
+          "ns",
+          "rq",
+          "pvc-count",
+          "total-storage",
+          "gp3-storage"
+        ],
+        "note": "dev-team 네임스페이스에 적용된 storage-quota가 PVC 수, 총 요청 용량, gp3 클래스별 용량을 제한한다."
+      },
+      {
+        "id": "usage",
+        "label": "사용량 추적",
+        "focus": [
+          "rq",
+          "used",
+          "remaining"
+        ],
+        "note": "kubectl describe resourcequota로 Used/Hard 열을 확인하면 현재 사용량과 남은 여유를 알 수 있다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ns",
+      "type": "external",
+      "label": "Namespace: dev-team",
+      "sublabel": "쿼터 적용 대상",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rq",
+      "type": "security",
+      "label": "ResourceQuota",
+      "sublabel": "storage-quota",
+      "tag": "spec.hard",
+      "pos": [
+        300,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pvc-count",
+      "type": "database",
+      "label": "PVC 수: 10개",
+      "sublabel": "persistentvolumeclaims",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "total-storage",
+      "type": "database",
+      "label": "총 용량: 500Gi",
+      "sublabel": "requests.storage",
+      "pos": [
+        300,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gp3-storage",
+      "type": "database",
+      "label": "gp3 클래스: 200Gi / 5개",
+      "sublabel": "gp3.storageclass.storage.k8s.io",
+      "pos": [
+        550,
+        360
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "used",
+      "type": "backend",
+      "label": "현재: 5 PVC, 100Gi",
+      "sublabel": "Used 열",
+      "pos": [
+        900,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "remaining",
+      "type": "backend",
+      "label": "남은: 5 PVC, 400Gi",
+      "sublabel": "Hard - Used",
+      "pos": [
+        900,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ResourceQuota 적용",
+      "wraps": [
+        "ns",
+        "rq",
+        "pvc-count",
+        "total-storage",
+        "gp3-storage"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "현재 사용량",
+      "wraps": [
+        "used",
+        "remaining"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ns-rq",
+      "from": "ns",
+      "to": "rq",
+      "label": "적용",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "rq-pvc-count",
+      "from": "rq",
+      "to": "pvc-count",
+      "label": "제한",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rq-total",
+      "from": "rq",
+      "to": "total-storage",
+      "label": "제한",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 84
+    },
+    {
+      "id": "rq-gp3",
+      "from": "rq",
+      "to": "gp3-storage",
+      "label": "제한",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rq-used",
+      "from": "rq",
+      "to": "used",
+      "label": "kubectl describe",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "used-remaining",
+      "from": "used",
+      "to": "remaining",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "제한 항목 (spec.hard)",
+      "items": [
+        "persistentvolumeclaims: 10",
+        "requests.storage: 500Gi",
+        "gp3.storageclass.storage.k8s.io/requests.storage: 200Gi",
+        "gp3.storageclass.storage.k8s.io/persistentvolumeclaims: 5"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "사용량 확인",
+      "items": [
+        "kubectl describe resourcequota storage-quota -n dev-team",
+        "Used 5 / Hard 10 PVC, 100Gi / 500Gi",
+        "gp3: 3 / 5 PVC, 75Gi / 200Gi"
+      ]
+    }
+  ]
+}

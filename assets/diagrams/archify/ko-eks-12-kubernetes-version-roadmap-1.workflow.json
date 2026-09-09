@@ -1,0 +1,240 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubernetes 연간 릴리스 사이클",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "Freeze 게이트"
+        },
+        "backend": {
+          "label": "테스트 및 안정화"
+        },
+        "cloud": {
+          "label": "공식 릴리스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "one-cycle",
+        "label": "한 릴리스 주기 (약 15주)",
+        "focus": [
+          "r1_ef",
+          "r1_cf",
+          "r1_test",
+          "r1_rel"
+        ],
+        "note": "Enhancement Freeze → Code Freeze → 테스트 및 안정화 → 릴리스. 한 주기는 약 15주(약 4개월)입니다."
+      },
+      {
+        "id": "three-per-year",
+        "label": "연 3회 반복",
+        "focus": [
+          "r1_rel",
+          "r2_ef",
+          "r2_rel",
+          "r3_ef",
+          "r3_rel"
+        ],
+        "note": "릴리스가 끝나면 다음 주기가 시작되어 매년 3회 릴리스됩니다."
+      }
+    ],
+    "viewBox": [
+      1240,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "r1",
+      "label": "릴리스 1 (1월~4월)"
+    },
+    {
+      "id": "r2",
+      "label": "릴리스 2 (5월~8월)"
+    },
+    {
+      "id": "r3",
+      "label": "릴리스 3 (9월~12월)"
+    }
+  ],
+  "mainPath": [
+    "r1_ef",
+    "r1_cf",
+    "r1_test",
+    "r1_rel"
+  ],
+  "nodes": [
+    {
+      "id": "r1_ef",
+      "lane": "r1",
+      "col": 0,
+      "type": "security",
+      "label": "Enhancement Freeze",
+      "sublabel": "포함할 KEP 확정",
+      "width": 168
+    },
+    {
+      "id": "r1_cf",
+      "lane": "r1",
+      "col": 1,
+      "type": "security",
+      "label": "Code Freeze",
+      "sublabel": "버그 수정만 병합",
+      "width": 168
+    },
+    {
+      "id": "r1_test",
+      "lane": "r1",
+      "col": 3,
+      "type": "backend",
+      "label": "테스트 및 안정화",
+      "sublabel": "Test Freeze → RC 검증",
+      "width": 168
+    },
+    {
+      "id": "r1_rel",
+      "lane": "r1",
+      "col": 4,
+      "type": "cloud",
+      "label": "릴리스",
+      "sublabel": "Week 15 공식 릴리스",
+      "width": 168
+    },
+    {
+      "id": "r2_ef",
+      "lane": "r2",
+      "col": 0,
+      "type": "security",
+      "label": "Enhancement Freeze",
+      "sublabel": "포함할 KEP 확정",
+      "width": 168
+    },
+    {
+      "id": "r2_cf",
+      "lane": "r2",
+      "col": 1,
+      "type": "security",
+      "label": "Code Freeze",
+      "sublabel": "버그 수정만 병합",
+      "width": 168
+    },
+    {
+      "id": "r2_test",
+      "lane": "r2",
+      "col": 3,
+      "type": "backend",
+      "label": "테스트 및 안정화",
+      "sublabel": "Test Freeze → RC 검증",
+      "width": 168
+    },
+    {
+      "id": "r2_rel",
+      "lane": "r2",
+      "col": 4,
+      "type": "cloud",
+      "label": "릴리스",
+      "sublabel": "Week 15 공식 릴리스",
+      "width": 168
+    },
+    {
+      "id": "r3_ef",
+      "lane": "r3",
+      "col": 0,
+      "type": "security",
+      "label": "Enhancement Freeze",
+      "sublabel": "포함할 KEP 확정",
+      "width": 168
+    },
+    {
+      "id": "r3_cf",
+      "lane": "r3",
+      "col": 1,
+      "type": "security",
+      "label": "Code Freeze",
+      "sublabel": "버그 수정만 병합",
+      "width": 168
+    },
+    {
+      "id": "r3_test",
+      "lane": "r3",
+      "col": 3,
+      "type": "backend",
+      "label": "테스트 및 안정화",
+      "sublabel": "Test Freeze → RC 검증",
+      "width": 168
+    },
+    {
+      "id": "r3_rel",
+      "lane": "r3",
+      "col": 4,
+      "type": "cloud",
+      "label": "릴리스",
+      "sublabel": "Week 15 공식 릴리스",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "r1_ef",
+      "to": "r1_cf"
+    },
+    {
+      "from": "r1_cf",
+      "to": "r1_test"
+    },
+    {
+      "from": "r1_test",
+      "to": "r1_rel"
+    },
+    {
+      "from": "r1_rel",
+      "to": "r2_ef",
+      "label": "다음 주기 시작",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "r2_ef",
+      "to": "r2_cf"
+    },
+    {
+      "from": "r2_cf",
+      "to": "r2_test"
+    },
+    {
+      "from": "r2_test",
+      "to": "r2_rel"
+    },
+    {
+      "from": "r2_rel",
+      "to": "r3_ef",
+      "label": "다음 주기 시작",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "r3_ef",
+      "to": "r3_cf"
+    },
+    {
+      "from": "r3_cf",
+      "to": "r3_test"
+    },
+    {
+      "from": "r3_test",
+      "to": "r3_rel"
+    }
+  ]
+}

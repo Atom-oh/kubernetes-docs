@@ -41,7 +41,10 @@
         ],
         "note": "GuardDuty EKS 위협 탐지가 워커 노드 런타임을 모니터링한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

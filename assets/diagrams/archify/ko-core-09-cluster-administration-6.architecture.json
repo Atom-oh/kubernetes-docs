@@ -40,7 +40,21 @@
         ],
         "note": "백업 저장소의 etcd 스냅샷은 etcd 복구에, 리소스 YAML은 리소스 복구에 쓰인다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

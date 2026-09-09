@@ -41,7 +41,18 @@
         ],
         "note": "tunl0가 외부 헤더를 벗기고 Felix가 정책을 확인한 뒤 Pod B로 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

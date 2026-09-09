@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Packet Flow Comparison: Direct vs IPIP vs VXLAN",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": { "label": "Pod (workload endpoint)" },
+        "backend": { "label": "Physical network via node eth0" }
+      }
+    },
+    "views": [
+      { "id": "direct", "label": "Direct mode", "focus": ["d_poda", "d_net", "d_podb"], "note": "Pod IPs are routed natively on the wire (BGP or VPC routes): no tunnel interface, 0 bytes overhead, pod MTU 1500." },
+      { "id": "ipip", "label": "IPIP mode", "focus": ["i_poda", "i_net", "i_podb"], "note": "tunl0 wraps the pod packet in an outer IP header (IP protocol 4, +20 bytes) before eth0; the peer's tunl0 strips it." },
+      { "id": "vxlan", "label": "VXLAN mode", "focus": ["v_poda", "v_net", "v_podb"], "note": "The VTEP wraps the pod frame in UDP port 4789 (+50 bytes) before eth0; the peer's VTEP strips it. Default on EKS." }
+    ]
+  },
+  "lanes": [
+    { "id": "direct", "label": "Direct mode (no overlay)" },
+    { "id": "ipip", "label": "IPIP mode" },
+    { "id": "vxlan", "label": "VXLAN mode" }
+  ],
+  "mainPath": ["d_poda", "d_net", "d_podb"],
+  "nodes": [
+    { "id": "d_poda", "lane": "direct", "col": 0, "type": "frontend", "label": "Pod A", "sublabel": "pod MTU 1500" },
+    { "id": "d_net", "lane": "direct", "col": 3, "type": "backend", "width": 144, "label": "Physical Network", "sublabel": "eth0 · native IP", "tag": "0 B overhead" },
+    { "id": "d_podb", "lane": "direct", "col": 5, "type": "frontend", "label": "Pod B" },
+    { "id": "i_poda", "lane": "ipip", "col": 0, "type": "frontend", "label": "Pod A", "sublabel": "pod MTU 1480" },
+    { "id": "i_net", "lane": "ipip", "col": 3, "type": "backend", "width": 144, "label": "Physical Network", "sublabel": "eth0 · IP protocol 4", "tag": "+20 B" },
+    { "id": "i_podb", "lane": "ipip", "col": 5, "type": "frontend", "label": "Pod B" },
+    { "id": "v_poda", "lane": "vxlan", "col": 0, "type": "frontend", "label": "Pod A", "sublabel": "pod MTU 1450" },
+    { "id": "v_net", "lane": "vxlan", "col": 3, "type": "backend", "width": 144, "label": "Physical Network", "sublabel": "eth0 · UDP 4789", "tag": "+50 B" },
+    { "id": "v_podb", "lane": "vxlan", "col": 5, "type": "frontend", "label": "Pod B" }
+  ],
+  "edges": [
+    { "from": "d_poda", "to": "d_net", "label": "no encap", "variant": "emphasis" },
+    { "from": "d_net", "to": "d_podb", "variant": "emphasis" },
+    { "from": "i_poda", "to": "i_net", "label": "tunl0 encap" },
+    { "from": "i_net", "to": "i_podb", "label": "tunl0 decap" },
+    { "from": "v_poda", "to": "v_net", "label": "VTEP encap" },
+    { "from": "v_net", "to": "v_podb", "label": "VTEP decap" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Direct", "items": ["Throughput 9.41 Gbps, p99 latency 45 µs", "2.1% CPU per Gbps", "Needs L2 adjacency or BGP peering"] },
+    { "dot": "orange", "title": "IPIP", "items": ["Throughput 9.12 Gbps, p99 latency 52 µs", "2.8% CPU per Gbps", "Firewalls may need IP protocol 4 allowed"] },
+    { "dot": "cyan", "title": "VXLAN", "items": ["Throughput 8.89 Gbps, p99 latency 61 µs", "3.4% CPU per Gbps", "UDP pass-through, better hardware offload"] }
+  ]
+}

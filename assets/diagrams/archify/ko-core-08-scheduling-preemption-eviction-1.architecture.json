@@ -38,7 +38,21 @@
         ],
         "note": "가장 높은 점수의 노드를 선택해 API 서버에 바인딩을 요청하면 포드가 노드에 배치됩니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {

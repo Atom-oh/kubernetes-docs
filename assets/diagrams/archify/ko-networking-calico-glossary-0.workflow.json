@@ -1,0 +1,198 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico Tier 정책 평가 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "트래픽 진입"
+        },
+        "security": {
+          "label": "Tier 평가 (Pass/Deny)"
+        },
+        "cloud": {
+          "label": "허용 경로 종착 (Pod)"
+        },
+        "database": {
+          "label": "Drop (패킷 차단)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "allow-path",
+        "label": "허용 경로",
+        "focus": [
+          "traffic",
+          "security",
+          "platform",
+          "application",
+          "pod"
+        ],
+        "note": "낮은 order의 Tier가 먼저 평가되며, 각 Tier에서 Pass 시 다음 Tier로 넘어가 최종적으로 Pod에 도달합니다."
+      },
+      {
+        "id": "deny-path",
+        "label": "차단 경로",
+        "focus": [
+          "security",
+          "platform",
+          "application",
+          "drop"
+        ],
+        "note": "어느 Tier에서든 Deny로 평가되면 이후 Tier를 거치지 않고 패킷이 즉시 Drop됩니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "tiers",
+      "label": "트래픽 → Tier 평가 (order 오름차순)"
+    },
+    {
+      "id": "allow",
+      "label": "허용"
+    },
+    {
+      "id": "deny",
+      "label": "차단",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "traffic",
+    "security",
+    "platform",
+    "application",
+    "pod"
+  ],
+  "nodes": [
+    {
+      "id": "traffic",
+      "lane": "tiers",
+      "col": 0,
+      "type": "external",
+      "label": "트래픽",
+      "sublabel": "Pod로 향하는 패킷",
+      "width": 120
+    },
+    {
+      "id": "security",
+      "lane": "tiers",
+      "col": 1,
+      "type": "security",
+      "label": "Security Tier",
+      "sublabel": "order: 100",
+      "width": 128
+    },
+    {
+      "id": "platform",
+      "lane": "tiers",
+      "col": 2,
+      "type": "security",
+      "label": "Platform Tier",
+      "sublabel": "order: 200",
+      "width": 128
+    },
+    {
+      "id": "application",
+      "lane": "tiers",
+      "col": 3,
+      "type": "security",
+      "label": "Application Tier",
+      "sublabel": "order: 300",
+      "width": 136
+    },
+    {
+      "id": "pod",
+      "lane": "allow",
+      "col": 4,
+      "type": "cloud",
+      "label": "Pod",
+      "sublabel": "모든 Tier 통과",
+      "width": 112
+    },
+    {
+      "id": "drop",
+      "lane": "deny",
+      "col": 2,
+      "type": "database",
+      "label": "Drop",
+      "sublabel": "패킷 차단",
+      "width": 112
+    }
+  ],
+  "edges": [
+    {
+      "id": "traffic-security",
+      "from": "traffic",
+      "to": "security"
+    },
+    {
+      "id": "security-platform",
+      "from": "security",
+      "to": "platform",
+      "label": "Pass",
+      "route": "straight"
+    },
+    {
+      "id": "platform-application",
+      "from": "platform",
+      "to": "application",
+      "label": "Pass",
+      "route": "straight"
+    },
+    {
+      "id": "application-pod",
+      "from": "application",
+      "to": "pod",
+      "label": "Allow",
+      "variant": "emphasis"
+    },
+    {
+      "id": "security-drop",
+      "from": "security",
+      "to": "drop",
+      "label": "Deny",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "platform-drop",
+      "from": "platform",
+      "to": "drop",
+      "label": "Deny",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "application-drop",
+      "from": "application",
+      "to": "drop",
+      "label": "Deny",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Tier",
+      "items": [
+        "정책 평가 계층으로, 여러 Tier를 정의해 정책을 계층화할 수 있다",
+        "낮은 order의 Tier가 먼저 평가된다 (100 → 200 → 300)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "action 필드",
+      "items": [
+        "Calico NetworkPolicy는 action 필드로 Allow, Deny, Log, Pass를 지원한다",
+        "Pass는 다음 Tier로 평가를 넘기고, Deny는 패킷을 즉시 차단한다"
+      ]
+    }
+  ]
+}

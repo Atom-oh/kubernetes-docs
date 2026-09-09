@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Architecture",
+    "output": "en-networking-cilium-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control Plane",
+        "focus": [
+          "apiserver",
+          "operator",
+          "agent"
+        ],
+        "note": "The Cilium Operator manages cluster-level resources through the Cilium API Server and controls the Cilium Agent on every node."
+      },
+      {
+        "id": "data-plane",
+        "label": "Data Plane",
+        "focus": [
+          "agent",
+          "ebpf"
+        ],
+        "note": "The per-node Cilium Agent loads eBPF programs into the kernel, which handle packet processing and network policy enforcement."
+      },
+      {
+        "id": "observability",
+        "label": "Observability (Hubble)",
+        "focus": [
+          "agent",
+          "hubble-server",
+          "hubble-relay",
+          "hubble-ui"
+        ],
+        "note": "Hubble Relay aggregates per-node Hubble Server metrics cluster-wide, and Hubble UI visualizes them."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Cilium API Server",
+      "sublabel": "API",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Cilium Operator",
+      "sublabel": "cluster-level controller",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "security",
+      "label": "eBPF Programs",
+      "sublabel": "kernel · policy enforcement",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "runs on every node",
+      "pos": [
+        340,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hubble-server",
+      "type": "backend",
+      "label": "Hubble Server",
+      "sublabel": "per node",
+      "pos": [
+        780,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hubble-relay",
+      "type": "backend",
+      "label": "Hubble Relay",
+      "sublabel": "cluster-wide aggregation",
+      "pos": [
+        780,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hubble-ui",
+      "type": "frontend",
+      "label": "Hubble UI",
+      "sublabel": "dashboard",
+      "pos": [
+        780,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "apiserver",
+        "operator"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "ebpf",
+        "agent"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability (Hubble)",
+      "wraps": [
+        "hubble-server",
+        "hubble-relay",
+        "hubble-ui"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-operator",
+      "from": "apiserver",
+      "to": "operator",
+      "label": "API"
+    },
+    {
+      "id": "operator-manages-agent",
+      "from": "operator",
+      "to": "agent",
+      "label": "manages",
+      "variant": "emphasis",
+      "labelAt": [
+        430,
+        250
+      ]
+    },
+    {
+      "id": "agent-loads-ebpf",
+      "from": "agent",
+      "to": "ebpf",
+      "label": "loads eBPF",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-metrics",
+      "from": "agent",
+      "to": "hubble-server",
+      "label": "metrics",
+      "variant": "dashed"
+    },
+    {
+      "id": "server-to-relay",
+      "from": "hubble-server",
+      "to": "hubble-relay",
+      "label": "aggregates",
+      "labelAt": [
+        870,
+        190
+      ]
+    },
+    {
+      "id": "relay-to-ui",
+      "from": "hubble-relay",
+      "to": "hubble-ui",
+      "label": "visualizes",
+      "labelAt": [
+        870,
+        350
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control Plane",
+      "items": [
+        "Cilium Operator manages cluster-level resources and operations",
+        "Cilium CLI is the command-line tool for managing Cilium and Hubble"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data Plane",
+      "items": [
+        "Cilium Agent runs on each node and loads and manages eBPF programs",
+        "eBPF programs are loaded into the kernel for packet processing and policy enforcement"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Observability",
+      "items": [
+        "Hubble provides network flow monitoring and observability",
+        "Hubble Server (per node) → Hubble Relay (cluster-wide) → Hubble UI"
+      ]
+    }
+  ]
+}

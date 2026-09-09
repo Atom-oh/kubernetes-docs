@@ -459,7 +459,9 @@ kubectl annotate serviceaccount my-app-sa \
 
 ### Pod Identity Architecture Diagram
 
-![Architecture diagram showing two namespaces each associating a service account with its own IAM role, while pods in both namespaces request credentials from a shared Pod Identity Agent and Pod Identity Service before accessing AWS services.](../../assets/diagrams/rendered/en-eks-05-eks-security-5.svg)
+![Architecture diagram showing two namespaces each associating a service account with its own IAM role, while pods in both namespaces request credentials from a shared Pod Identity Agent and Pod Identity Service before accessing AWS services.](../.gitbook/assets/en-eks-05-eks-security-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-05-eks-security-5.html)
 
 ## Cluster Endpoint Access Control
 

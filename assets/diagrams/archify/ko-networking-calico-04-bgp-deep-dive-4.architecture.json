@@ -31,7 +31,18 @@
         ],
         "note": "각 클라이언트 노드는 두 RR과만 피어링한다. 노드 간 full-mesh 없이도 RR이 경로를 반사해 모든 노드에 전파한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

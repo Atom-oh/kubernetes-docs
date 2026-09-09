@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "kube-controllers에 포함된 컨트롤러",
+    "output": "ko-networking-calico-02-architecture-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      600
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "k8s",
+      "type": "external",
+      "label": "Kubernetes 리소스",
+      "sublabel": "NetworkPolicy · Namespace · SA · Pod · Node",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "backend",
+      "label": "Policy Controller",
+      "sublabel": "NetworkPolicy → Calico Policy 변환",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "namespace",
+      "type": "backend",
+      "label": "Namespace Controller",
+      "sublabel": "네임스페이스 라벨 기반 프로필 관리",
+      "pos": [
+        440,
+        170
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "serviceaccount",
+      "type": "backend",
+      "label": "ServiceAccount Controller",
+      "sublabel": "SA 라벨을 프로필에 반영",
+      "pos": [
+        440,
+        280
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "workloadendpoint",
+      "type": "backend",
+      "label": "WorkloadEndpoint Controller",
+      "sublabel": "삭제된 Pod의 엔드포인트 정리",
+      "pos": [
+        440,
+        390
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "Node Controller",
+      "sublabel": "노드 정보 동기화, 제거된 노드 정리",
+      "pos": [
+        440,
+        500
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "calico",
+      "type": "database",
+      "label": "Calico 데이터스토어",
+      "sublabel": "Policy · Profile · WorkloadEndpoint · Node",
+      "pos": [
+        860,
+        280
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "calico-kube-controllers Pod",
+      "wraps": [
+        "policy",
+        "namespace",
+        "serviceaccount",
+        "workloadendpoint",
+        "node"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-policy",
+      "from": "k8s",
+      "to": "policy",
+      "label": "NetworkPolicy Watch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-calico",
+      "from": "policy",
+      "to": "calico",
+      "label": "Calico Policy 쓰기",
+      "variant": "emphasis"
+    },
+    {
+      "id": "k8s-namespace",
+      "from": "k8s",
+      "to": "namespace"
+    },
+    {
+      "id": "namespace-calico",
+      "from": "namespace",
+      "to": "calico"
+    },
+    {
+      "id": "k8s-serviceaccount",
+      "from": "k8s",
+      "to": "serviceaccount"
+    },
+    {
+      "id": "serviceaccount-calico",
+      "from": "serviceaccount",
+      "to": "calico"
+    },
+    {
+      "id": "k8s-workloadendpoint",
+      "from": "k8s",
+      "to": "workloadendpoint"
+    },
+    {
+      "id": "workloadendpoint-calico",
+      "from": "workloadendpoint",
+      "to": "calico"
+    },
+    {
+      "id": "k8s-node",
+      "from": "k8s",
+      "to": "node"
+    },
+    {
+      "id": "node-calico",
+      "from": "node",
+      "to": "calico"
+    }
+  ]
+}

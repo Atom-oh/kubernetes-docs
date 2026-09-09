@@ -36,7 +36,21 @@
         ],
         "note": "클러스터 상태 확인, 백업, 비프로덕션 테스트, 문서화를 마친 뒤 업그레이드를 시작한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
     {

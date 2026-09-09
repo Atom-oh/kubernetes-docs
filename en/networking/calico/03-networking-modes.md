@@ -51,7 +51,9 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 CrossSubnet is an optimization that only encapsulates traffic crossing L3 boundaries:
 
-![Two nodes on the same subnet route directly to each other with no encapsulation, while traffic crossing into the other subnet is IPIP-encapsulated only for that cross-subnet hop.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-1.svg)
+![Two nodes on the same subnet route directly to each other with no encapsulation, while traffic crossing into the other subnet is IPIP-encapsulated only for that cross-subnet hop.](../../.gitbook/assets/en-networking-calico-03-networking-modes-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-1.html)
 
 ### IPIP IPPool Configuration
 
@@ -333,7 +335,9 @@ CPU Usage (% per Gbps):
 
 ### Packet Flow Comparison
 
-![Three lanes trace the same Pod A to Pod B hop under Direct, IPIP, and VXLAN mode, showing that only the encapsulation step at the physical network boundary differs between them.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-5.svg)
+![Three lanes trace the same Pod A to Pod B hop under Direct, IPIP, and VXLAN mode, showing that only the encapsulation step at the physical network boundary differs between them.](../../.gitbook/assets/en-networking-calico-03-networking-modes-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-5.html)
 
 ## Cloud Provider Compatibility
 

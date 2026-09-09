@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How CNI Works — ADD / DEL Calls",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      680
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "add",
+        "label": "Pod creation (ADD)",
+        "focus": [
+          "kubelet",
+          "cni",
+          "net"
+        ],
+        "note": "On the kubelet's ADD call the CNI plugin creates the interface, allocates an IP, sets up routing, and returns the IP."
+      },
+      {
+        "id": "del",
+        "label": "Pod deletion (DEL)",
+        "focus": [
+          "kubelet",
+          "cni",
+          "net"
+        ],
+        "note": "When the pod is deleted, the DEL call cleans up the network resources and reports completion."
+      }
+    ],
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "node agent"
+    },
+    {
+      "id": "cni",
+      "type": "cloud",
+      "label": "CNI Plugin",
+      "sublabel": "network plugin"
+    },
+    {
+      "id": "net",
+      "type": "external",
+      "label": "Network",
+      "sublabel": "node network stack"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 400,
+      "label": "Pod creation — ADD"
+    },
+    {
+      "from": 425,
+      "to": 580,
+      "label": "Pod deletion — DEL"
+    }
+  ],
+  "messages": [
+    {
+      "id": "add-call",
+      "from": "kubelet",
+      "to": "cni",
+      "y": 190,
+      "label": "ADD call",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iface",
+      "from": "cni",
+      "to": "net",
+      "y": 235,
+      "label": "create network interface"
+    },
+    {
+      "id": "ip",
+      "from": "cni",
+      "to": "net",
+      "y": 280,
+      "label": "allocate IP address"
+    },
+    {
+      "id": "route",
+      "from": "cni",
+      "to": "net",
+      "y": 325,
+      "label": "configure routing"
+    },
+    {
+      "id": "ip-return",
+      "from": "cni",
+      "to": "kubelet",
+      "y": 375,
+      "label": "return IP",
+      "variant": "return"
+    },
+    {
+      "id": "del-call",
+      "from": "kubelet",
+      "to": "cni",
+      "y": 455,
+      "label": "DEL call",
+      "variant": "emphasis",
+      "note": "after the pod ran, on deletion"
+    },
+    {
+      "id": "cleanup",
+      "from": "cni",
+      "to": "net",
+      "y": 505,
+      "label": "clean up resources"
+    },
+    {
+      "id": "done",
+      "from": "cni",
+      "to": "kubelet",
+      "y": 555,
+      "label": "done",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "cni",
+      "from": 185,
+      "to": 382,
+      "type": "cloud"
+    },
+    {
+      "participant": "cni",
+      "from": 450,
+      "to": 562,
+      "type": "cloud"
+    }
+  ]
+}

@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "구성 단계"
+          "label": "Setup step"
         },
         "security": {
-          "label": "권한"
+          "label": "Permissions"
         },
         "cloud": {
-          "label": "AWS 설정"
+          "label": "AWS configuration"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "auth",
-      "label": "인증 구성"
+      "label": "Authentication setup"
     },
     {
       "id": "authz",
-      "label": "인가와 검증"
+      "label": "Authorization & verification"
     }
   ],
   "mainPath": [

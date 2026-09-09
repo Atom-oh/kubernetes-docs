@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VPC CNI의 ENI-Pod IP 매핑",
+    "output": "ko-networking-readme-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "eth0",
+      "type": "cloud",
+      "label": "Primary ENI",
+      "sublabel": "eth0",
+      "tag": "Secondary IP 할당",
+      "pos": [
+        130,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "eth1",
+      "type": "cloud",
+      "label": "Secondary ENI",
+      "sublabel": "eth1",
+      "tag": "Secondary IP 할당",
+      "pos": [
+        130,
+        240
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "eth2",
+      "type": "cloud",
+      "label": "Secondary ENI",
+      "sublabel": "eth2 · 여유 용량(대기)",
+      "tag": "여유 용량 (대기)",
+      "pos": [
+        130,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "Secondary IP",
+      "pos": [
+        670,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "Secondary IP",
+      "pos": [
+        670,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "Secondary IP",
+      "pos": [
+        670,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod4",
+      "type": "backend",
+      "label": "Pod 4",
+      "sublabel": "Secondary IP",
+      "pos": [
+        670,
+        380
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EC2 인스턴스 (Worker Node)",
+      "wraps": [
+        "eth0",
+        "eth1",
+        "eth2",
+        "pod1",
+        "pod2",
+        "pod3",
+        "pod4"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Pods",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3",
+        "pod4"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "eth0-pod1",
+      "from": "eth0",
+      "to": "pod1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eth0-pod2",
+      "from": "eth0",
+      "to": "pod2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eth1-pod3",
+      "from": "eth1",
+      "to": "pod3"
+    },
+    {
+      "id": "eth1-pod4",
+      "from": "eth1",
+      "to": "pod4"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "VPC CNI 동작 방식",
+      "items": [
+        "각 Pod는 VPC의 실제 IP 주소(ENI의 Secondary IP)를 받는다",
+        "eth2는 아직 Pod에 할당되지 않은 여유 용량으로 대기한다",
+        "인스턴스 유형별 최대 ENI 수와 ENI당 IPv4 수가 노드의 최대 Pod 수를 결정한다"
+      ]
+    }
+  ]
+}

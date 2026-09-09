@@ -30,7 +30,21 @@
         ],
         "note": "kubelet은 kube-apiserver와 양방향으로 통신하며 kube-proxy와 컨테이너 런타임을 관리한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -1,0 +1,265 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Project History: From Project Calico to Tigera",
+    "locale": "en",
+    "output": "public/archmaps/en-networking-calico-01-introduction-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "openstack-to-k8s",
+        "label": "OpenStack to Kubernetes",
+        "focus": [
+          "founded",
+          "cni",
+          "v30"
+        ],
+        "note": "OpenStack networking in 2014, Kubernetes CNI support in 2016, Kubernetes-native datastore with Calico 3.0 in 2018."
+      },
+      {
+        "id": "tigera-commercial",
+        "label": "Tigera commercial arm",
+        "focus": [
+          "founded",
+          "tigera",
+          "enterprise",
+          "cloud"
+        ],
+        "note": "Tigera founded in 2016 as the commercial arm; Calico Enterprise GA in 2020, Calico Cloud SaaS in 2021."
+      },
+      {
+        "id": "modern-data-plane",
+        "label": "Modern data plane",
+        "focus": [
+          "v30",
+          "ebpf",
+          "nftables",
+          "v329"
+        ],
+        "note": "eBPF data plane GA in 2022, nftables backend in 2024, full eBPF feature parity with Calico 3.29 in 2025."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Open-source milestone"
+        },
+        "database": {
+          "label": "Datastore release"
+        },
+        "security": {
+          "label": "Data plane release"
+        },
+        "cloud": {
+          "label": "Tigera commercial"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "oss",
+      "label": "Project Calico (open source)"
+    },
+    {
+      "id": "tigera",
+      "label": "Tigera (commercial)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "origins",
+      "label": "OpenStack origins",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "k8s",
+      "label": "Kubernetes adoption",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "modern",
+      "label": "Enterprise + modern data plane",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "founded",
+    "cni",
+    "v30",
+    "ebpf",
+    "nftables",
+    "v329"
+  ],
+  "nodes": [
+    {
+      "id": "founded",
+      "lane": "oss",
+      "col": 0,
+      "type": "backend",
+      "label": "Calico founded",
+      "sublabel": "2014 · OpenStack networking",
+      "tag": "2014",
+      "width": 150
+    },
+    {
+      "id": "cni",
+      "lane": "oss",
+      "col": 1,
+      "type": "backend",
+      "label": "K8s CNI support",
+      "sublabel": "2016 · container orchestration",
+      "tag": "2016",
+      "width": 150
+    },
+    {
+      "id": "v30",
+      "lane": "oss",
+      "col": 2,
+      "type": "database",
+      "label": "Calico 3.0",
+      "sublabel": "2018 · K8s-native datastore",
+      "tag": "2018",
+      "width": 150
+    },
+    {
+      "id": "ebpf",
+      "lane": "oss",
+      "col": 3,
+      "type": "security",
+      "label": "eBPF data plane GA",
+      "sublabel": "2022 · modern data plane",
+      "tag": "2022",
+      "width": 150
+    },
+    {
+      "id": "nftables",
+      "lane": "oss",
+      "col": 4,
+      "type": "security",
+      "label": "nftables backend",
+      "sublabel": "2024 · next-gen Linux firewall",
+      "tag": "2024",
+      "width": 150
+    },
+    {
+      "id": "v329",
+      "lane": "oss",
+      "col": 5,
+      "type": "security",
+      "label": "Calico 3.29",
+      "sublabel": "2025 · full eBPF feature parity",
+      "tag": "2025",
+      "width": 150
+    },
+    {
+      "id": "tigera",
+      "lane": "tigera",
+      "col": 1,
+      "type": "cloud",
+      "label": "Tigera founded",
+      "sublabel": "2016 · commercial backing",
+      "tag": "2016",
+      "width": 150
+    },
+    {
+      "id": "enterprise",
+      "lane": "tigera",
+      "col": 3,
+      "type": "cloud",
+      "label": "Calico Enterprise GA",
+      "sublabel": "2020 · enterprise feature set",
+      "tag": "2020",
+      "width": 150
+    },
+    {
+      "id": "cloud",
+      "lane": "tigera",
+      "col": 4,
+      "type": "cloud",
+      "label": "Calico Cloud",
+      "sublabel": "2021 · SaaS offering",
+      "tag": "2021",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "founded",
+      "to": "cni"
+    },
+    {
+      "from": "cni",
+      "to": "v30"
+    },
+    {
+      "from": "v30",
+      "to": "ebpf"
+    },
+    {
+      "from": "ebpf",
+      "to": "nftables"
+    },
+    {
+      "from": "nftables",
+      "to": "v329",
+      "variant": "emphasis"
+    },
+    {
+      "from": "founded",
+      "to": "tigera",
+      "label": "commercial arm",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "tigera",
+      "to": "enterprise",
+      "label": "enterprise features",
+      "role": "branch"
+    },
+    {
+      "from": "enterprise",
+      "to": "cloud",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Open-Source Roots",
+      "items": [
+        "Founded in 2014 as networking for OpenStack",
+        "Kubernetes CNI support in 2016 expanded it to container orchestration",
+        "Calico 3.0 (2018) added Kubernetes-native datastore support"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Commercial Backing",
+      "items": [
+        "Tigera founded in 2016 as the commercial arm",
+        "Calico Enterprise GA in 2020 with the full enterprise feature set",
+        "Calico Cloud launched as a SaaS offering in 2021"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Modern Data Plane",
+      "items": [
+        "eBPF data plane GA in 2022",
+        "nftables backend in 2024 for next-gen Linux firewall support",
+        "Calico 3.29 (2025) reaches full eBPF feature parity"
+      ]
+    }
+  ]
+}

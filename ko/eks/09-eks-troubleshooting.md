@@ -1679,7 +1679,9 @@ kubectl create serviceaccount <serviceaccount-name> -n <namespace>
 ```
 ## 스토리지 문제
 
-![EBS 볼륨 문제와 EFS 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-5.svg)
+![스토리지 문제를 EBS 볼륨 문제와 EFS 문제 두 갈래로 나누고, 볼륨 한도·권한·AZ 불일치·스토리지클래스·CSI 드라이버와 마운트 대상·보안 그룹·권한·CSI 드라이버·네트워크 등 각 갈래의 다섯 가지 주요 원인을 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-5.html)
 
 ### EBS 볼륨 문제
 
@@ -1978,7 +1980,9 @@ EOF
 ```
 ## 로깅 및 모니터링 문제
 
-![CloudWatch 로그 문제와 모니터링 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-6.svg)
+![CloudWatch 로그 문제와 모니터링 문제 두 갈래로 나누어 로그 그룹 권한, Fluent Bit 구성 오류, 로그 볼륨 제한, IAM 역할 권한과 메트릭 서버, Prometheus, Container Insights, 리소스, 네트워크 등 각 갈래의 다섯 가지 일반적인 원인을 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-6.html)
 
 ### CloudWatch 로그 문제
 
@@ -2204,7 +2208,9 @@ kubectl patch deployment -n grafana grafana -p '{"spec":{"template":{"spec":{"co
 ```
 ## 성능 문제
 
-![노드 성능, 파드 성능, 네트워크 성능 세 갈래의 성능 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-7.svg)
+![노드 성능, 파드 성능, 네트워크 성능 세 갈래로 나뉘는 EKS 성능 문제와 각 갈래의 일반적인 원인 다섯 가지를 트리 형태로 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-7.html)
 
 ### 노드 성능 문제
 
@@ -2572,7 +2578,9 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/
 ```
 ## 업그레이드 문제
 
-![클러스터, 노드 그룹, 애드온 업그레이드 세 갈래의 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-8.svg)
+![클러스터, 노드 그룹, 애드온 업그레이드 세 갈래의 문제와 각각의 주요 원인 다섯 가지를 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-8.html)
 
 ### 클러스터 업그레이드 문제
 
@@ -2927,7 +2935,9 @@ kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master
 
 ## 일반적인 오류 메시지 및 해결 방법
 
-![클러스터, 노드/파드, 네트워킹, IAM/인증, 스토리지 다섯 영역별 대표 오류 메시지를 정리한 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-9.svg)
+![클러스터, 노드/파드, 네트워킹, IAM/인증, 스토리지 다섯 영역별 대표 오류 메시지를 정리한 트리 다이어그램을 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-9.html)
 
 ### 클러스터 생성 및 관리 오류
 

@@ -45,7 +45,10 @@
         ],
         "note": "OPA Gatekeeper와 Kyverno가 어드미션 웹훅을 통해 클러스터 전체에 정책을 적용한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

@@ -1,0 +1,241 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubernetes Annual Release Cycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "Freeze gate"
+        },
+        "backend": {
+          "label": "Test & stabilize"
+        },
+        "cloud": {
+          "label": "Official release"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "one-cycle",
+        "label": "One release cycle (~15 weeks)",
+        "focus": [
+          "r1_ef",
+          "r1_cf",
+          "r1_test",
+          "r1_rel"
+        ],
+        "note": "Enhancement Freeze → Code Freeze → test & stabilize → release. One cycle takes about 15 weeks (roughly four months)."
+      },
+      {
+        "id": "three-per-year",
+        "label": "Three times a year",
+        "focus": [
+          "r1_rel",
+          "r2_ef",
+          "r2_rel",
+          "r3_ef",
+          "r3_rel"
+        ],
+        "note": "After each release the next cycle begins, yielding three releases per year."
+      }
+    ],
+    "viewBox": [
+      1240,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "r1",
+      "label": "Release 1 (Jan–Apr)"
+    },
+    {
+      "id": "r2",
+      "label": "Release 2 (May–Aug)"
+    },
+    {
+      "id": "r3",
+      "label": "Release 3 (Sep–Dec)"
+    }
+  ],
+  "mainPath": [
+    "r1_ef",
+    "r1_cf",
+    "r1_test",
+    "r1_rel"
+  ],
+  "nodes": [
+    {
+      "id": "r1_ef",
+      "lane": "r1",
+      "col": 0,
+      "type": "security",
+      "label": "Enhancement Freeze",
+      "sublabel": "KEPs locked in",
+      "width": 168
+    },
+    {
+      "id": "r1_cf",
+      "lane": "r1",
+      "col": 1,
+      "type": "security",
+      "label": "Code Freeze",
+      "sublabel": "bug fixes only",
+      "width": 168
+    },
+    {
+      "id": "r1_test",
+      "lane": "r1",
+      "col": 3,
+      "type": "backend",
+      "label": "Test & stabilize",
+      "sublabel": "Test Freeze → RC",
+      "width": 168
+    },
+    {
+      "id": "r1_rel",
+      "lane": "r1",
+      "col": 4,
+      "type": "cloud",
+      "label": "Release",
+      "sublabel": "official release, week 15",
+      "width": 168
+    },
+    {
+      "id": "r2_ef",
+      "lane": "r2",
+      "col": 0,
+      "type": "security",
+      "label": "Enhancement Freeze",
+      "sublabel": "KEPs locked in",
+      "width": 168
+    },
+    {
+      "id": "r2_cf",
+      "lane": "r2",
+      "col": 1,
+      "type": "security",
+      "label": "Code Freeze",
+      "sublabel": "bug fixes only",
+      "width": 168
+    },
+    {
+      "id": "r2_test",
+      "lane": "r2",
+      "col": 3,
+      "type": "backend",
+      "label": "Test & stabilize",
+      "sublabel": "Test Freeze → RC",
+      "width": 168
+    },
+    {
+      "id": "r2_rel",
+      "lane": "r2",
+      "col": 4,
+      "type": "cloud",
+      "label": "Release",
+      "sublabel": "official release, week 15",
+      "width": 168
+    },
+    {
+      "id": "r3_ef",
+      "lane": "r3",
+      "col": 0,
+      "type": "security",
+      "label": "Enhancement Freeze",
+      "sublabel": "KEPs locked in",
+      "width": 168
+    },
+    {
+      "id": "r3_cf",
+      "lane": "r3",
+      "col": 1,
+      "type": "security",
+      "label": "Code Freeze",
+      "sublabel": "bug fixes only",
+      "width": 168
+    },
+    {
+      "id": "r3_test",
+      "lane": "r3",
+      "col": 3,
+      "type": "backend",
+      "label": "Test & stabilize",
+      "sublabel": "Test Freeze → RC",
+      "width": 168
+    },
+    {
+      "id": "r3_rel",
+      "lane": "r3",
+      "col": 4,
+      "type": "cloud",
+      "label": "Release",
+      "sublabel": "official release, week 15",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "r1_ef",
+      "to": "r1_cf"
+    },
+    {
+      "from": "r1_cf",
+      "to": "r1_test"
+    },
+    {
+      "from": "r1_test",
+      "to": "r1_rel"
+    },
+    {
+      "from": "r1_rel",
+      "to": "r2_ef",
+      "label": "next cycle begins",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "r2_ef",
+      "to": "r2_cf"
+    },
+    {
+      "from": "r2_cf",
+      "to": "r2_test"
+    },
+    {
+      "from": "r2_test",
+      "to": "r2_rel"
+    },
+    {
+      "from": "r2_rel",
+      "to": "r3_ef",
+      "label": "next cycle begins",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "r3_ef",
+      "to": "r3_cf"
+    },
+    {
+      "from": "r3_cf",
+      "to": "r3_test"
+    },
+    {
+      "from": "r3_test",
+      "to": "r3_rel"
+    }
+  ]
+}

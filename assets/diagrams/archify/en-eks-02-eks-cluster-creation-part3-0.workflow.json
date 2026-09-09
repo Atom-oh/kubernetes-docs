@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "external": {
-          "label": "사용자 작업"
+          "label": "User action"
         },
         "cloud": {
-          "label": "콘솔 화면"
+          "label": "Console screen"
         },
         "backend": {
-          "label": "결과"
+          "label": "Result"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "cluster",
-      "label": "클러스터 생성"
+      "label": "Cluster creation"
     },
     {
       "id": "nodes",
-      "label": "노드 그룹과 연결"
+      "label": "Node group & connect"
     }
   ],
   "mainPath": [

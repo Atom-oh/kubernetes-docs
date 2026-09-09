@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 클러스터 엔드포인트 구성 옵션",
+    "output": "ko-eks-05-eks-security-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "public-only",
+        "label": "Public Only",
+        "focus": [
+          "internet1",
+          "vpc1",
+          "public1",
+          "cp1"
+        ],
+        "note": "인터넷과 VPC 내 노드 모두 Public Endpoint로 컨트롤 플레인에 접근한다. 개발/테스트 환경, 빠른 시작에 적합하다."
+      },
+      {
+        "id": "private-only",
+        "label": "Private Only",
+        "focus": [
+          "vpc2",
+          "vpn2",
+          "private2",
+          "cp2"
+        ],
+        "note": "VPC 내부에서만 접근할 수 있고 관리자는 VPN/Direct Connect가 필요하다. 프로덕션, 금융/의료 워크로드에 적합하다."
+      },
+      {
+        "id": "public-private",
+        "label": "Public + Private",
+        "focus": [
+          "internet3",
+          "vpc3",
+          "public3",
+          "private3",
+          "cp3"
+        ],
+        "note": "노드는 Private Endpoint, 외부는 CIDR 제한된 Public Endpoint를 사용한다. 하이브리드 접근, CI/CD 통합에 적합하다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "internet1",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "외부 클라이언트",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpc1",
+      "type": "backend",
+      "label": "VPC 내 노드",
+      "sublabel": "워커 노드",
+      "pos": [
+        270,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "public1",
+      "type": "cloud",
+      "label": "Public Endpoint",
+      "sublabel": "endpointPublicAccess=true",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cp1",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "Kubernetes API 서버",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpc2",
+      "type": "backend",
+      "label": "VPC 내 노드",
+      "sublabel": "워커 노드",
+      "pos": [
+        480,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpn2",
+      "type": "security",
+      "label": "VPN / Direct Connect",
+      "sublabel": "관리자 접근 경로",
+      "pos": [
+        720,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "private2",
+      "type": "cloud",
+      "label": "Private Endpoint",
+      "sublabel": "endpointPrivateAccess=true",
+      "pos": [
+        480,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cp2",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "Kubernetes API 서버",
+      "pos": [
+        480,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "internet3",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "외부 클라이언트",
+      "pos": [
+        950,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpc3",
+      "type": "backend",
+      "label": "VPC 내 노드",
+      "sublabel": "워커 노드",
+      "pos": [
+        1160,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "public3",
+      "type": "cloud",
+      "label": "Public Endpoint",
+      "sublabel": "publicAccessCidrs",
+      "pos": [
+        950,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "private3",
+      "type": "cloud",
+      "label": "Private Endpoint",
+      "sublabel": "endpointPrivateAccess=true",
+      "pos": [
+        1160,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cp3",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "Kubernetes API 서버",
+      "pos": [
+        950,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Public Only",
+      "wraps": [
+        "internet1",
+        "vpc1",
+        "public1",
+        "cp1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Private Only",
+      "wraps": [
+        "vpc2",
+        "vpn2",
+        "private2",
+        "cp2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Public + Private",
+      "wraps": [
+        "internet3",
+        "vpc3",
+        "public3",
+        "private3",
+        "cp3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "internet1-to-public1",
+      "from": "internet1",
+      "to": "public1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vpc1-to-public1",
+      "from": "vpc1",
+      "to": "public1",
+      "label": "인터넷 경유"
+    },
+    {
+      "id": "public1-to-cp1",
+      "from": "public1",
+      "to": "cp1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vpc2-to-private2",
+      "from": "vpc2",
+      "to": "private2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vpn2-to-private2",
+      "from": "vpn2",
+      "to": "private2",
+      "label": "관리자 kubectl",
+      "variant": "security"
+    },
+    {
+      "id": "private2-to-cp2",
+      "from": "private2",
+      "to": "cp2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "internet3-to-public3",
+      "from": "internet3",
+      "to": "public3",
+      "label": "CIDR 제한",
+      "variant": "security",
+      "labelDy": 36
+    },
+    {
+      "id": "vpc3-to-private3",
+      "from": "vpc3",
+      "to": "private3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "public3-to-cp3",
+      "from": "public3",
+      "to": "cp3"
+    },
+    {
+      "id": "private3-to-cp3",
+      "from": "private3",
+      "to": "cp3",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          1235,
+          370
+        ]
+      ]
+    }
+  ]
+}

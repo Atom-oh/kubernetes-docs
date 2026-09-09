@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "messagebus": {
-          "label": "클레임"
+          "label": "Claims"
         },
         "backend": {
-          "label": "스냅샷 객체"
+          "label": "Snapshot objects"
         },
         "cloud": {
-          "label": "AWS 스냅샷"
+          "label": "AWS snapshot"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "snap",
-      "label": "스냅샷 생성"
+      "label": "Snapshot creation"
     },
     {
       "id": "restore",
-      "label": "복원"
+      "label": "Restore"
     }
   ],
   "mainPath": [

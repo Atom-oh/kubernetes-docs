@@ -490,7 +490,9 @@ EKS 클러스터의 Kubernetes API 서버 엔드포인트에 대한 접근을 �
 
 EKS는 세 가지 엔드포인트 구성을 지원합니다:
 
-![EKS API 서버를 Public Only, Private Only, Public+Private 세 가지 방식으로 구성했을 때 인터넷과 VPC 내부 노드가 각각 어떤 경로로 컨트롤 플레인에 도달하는지 비교한다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-5.svg)
+![EKS API 서버를 Public Only, Private Only, Public+Private 세 가지 방식으로 구성했을 때 인터넷, VPC 내 노드, VPN/Direct Connect를 거치는 관리자가 각각 어떤 엔드포인트로 컨트롤 플레인에 도달하는지 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-05-eks-security-5.html)
 
 | 구성 | Public | Private | 사용 사례 |
 |------|--------|---------|-----------|
@@ -818,7 +820,9 @@ Bottlerocket은 AWS에서 개발한 컨테이너 워크로드 전용 Linux 운�
 
 ### Bottlerocket 특성
 
-![Bottlerocket 운영체제가 API 기반 구성·SELinux·dm-verity·읽기 전용 루트로 구성된 보안 특성, 자동 업데이트/롤백/A-B 파티션 방식의 업데이트 전략, SSH·패키지 관리자·불필요 서비스를 제거한 최소화 전략으로 불변 인프라를 구현함을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-10.svg)
+![Bottlerocket 운영체제가 API 기반 구성·SELinux·dm-verity·읽기 전용 루트로 구성된 보안 특성, 자동 업데이트/롤백/A-B 파티션 방식의 업데이트 전략, SSH·패키지 관리자·불필요 서비스를 제거한 최소화 전략으로 불변 인프라를 구현함을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-05-eks-security-10.html)
 
 #### API 기반 구성
 

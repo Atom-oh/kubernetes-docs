@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Felix Responsibilities",
+    "locale": "en",
+    "output": "en-networking-calico-02-architecture-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      600
+    ],
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Datastore"
+        },
+        "backend": {
+          "label": "Felix internal module"
+        },
+        "security": {
+          "label": "Policy enforcement module"
+        },
+        "cloud": {
+          "label": "Node kernel object"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": "Datastore",
+      "sublabel": "Typha / API Server",
+      "pos": [
+        40,
+        258
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "watcher",
+      "type": "backend",
+      "label": "Datastore Watcher",
+      "sublabel": "receives change events",
+      "pos": [
+        290,
+        258
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "route-mgr",
+      "type": "backend",
+      "label": "Route Manager",
+      "sublabel": "pod CIDR routes",
+      "pos": [
+        540,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "acl-mgr",
+      "type": "security",
+      "label": "ACL Manager",
+      "sublabel": "network policy rules",
+      "pos": [
+        540,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "iface-mgr",
+      "type": "backend",
+      "label": "Interface Manager",
+      "sublabel": "workload endpoints",
+      "pos": [
+        540,
+        310
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "health",
+      "type": "backend",
+      "label": "Health Reporting",
+      "sublabel": "healthPort 9099",
+      "pos": [
+        290,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "routing-table",
+      "type": "cloud",
+      "label": "Routing Table",
+      "sublabel": "pod routes",
+      "pos": [
+        830,
+        90
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "cloud",
+      "label": "Firewall Rules",
+      "sublabel": "iptables / eBPF",
+      "pos": [
+        830,
+        200
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "interfaces",
+      "type": "cloud",
+      "label": "Network Interfaces",
+      "sublabel": "veth pair setup",
+      "pos": [
+        830,
+        310
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Felix agent (DaemonSet on every node)",
+      "wraps": [
+        "watcher",
+        "route-mgr",
+        "acl-mgr",
+        "iface-mgr",
+        "health"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node kernel data plane",
+      "wraps": [
+        "routing-table",
+        "rules",
+        "interfaces"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ds-watch",
+      "from": "datastore",
+      "to": "watcher",
+      "label": "watch changes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch-route",
+      "from": "watcher",
+      "to": "route-mgr"
+    },
+    {
+      "id": "watch-acl",
+      "from": "watcher",
+      "to": "acl-mgr"
+    },
+    {
+      "id": "watch-iface",
+      "from": "watcher",
+      "to": "iface-mgr"
+    },
+    {
+      "id": "route-table",
+      "from": "route-mgr",
+      "to": "routing-table",
+      "label": "pod routes"
+    },
+    {
+      "id": "acl-rules",
+      "from": "acl-mgr",
+      "to": "rules",
+      "label": "NetworkPolicy",
+      "variant": "security"
+    },
+    {
+      "id": "iface-veth",
+      "from": "iface-mgr",
+      "to": "interfaces",
+      "label": "configure veth"
+    },
+    {
+      "id": "health-report",
+      "from": "health",
+      "to": "datastore",
+      "label": "health report",
+      "variant": "dashed"
+    }
+  ]
+}

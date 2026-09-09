@@ -13,7 +13,9 @@ Calico는 Kubernetes, 가상 머신, 베어메탈 워크로드를 위한 업계 
 
 ### Calico를 선택해야 하는 이유
 
-![고성능, 강력한 보안, 대규모 확장성, 유연성이라는 Calico의 4가지 핵심 가치가 모두 엔터프라이즈 프로덕션 환경이라는 하나의 결과로 모이는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-README-0.png)
+![고성능, 강력한 보안, 대규모 확장성, 유연성이라는 Calico의 4가지 핵심 가치가 모두 엔터프라이즈 프로덕션 환경이라는 하나의 결과로 모이는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-readme-0.html)
 
 **핵심 장점:**
 
@@ -64,7 +66,9 @@ Calico는 Kubernetes, 가상 머신, 베어메탈 워크로드를 위한 업계 
 
 ## 아키텍처 개요
 
-![Control Plane의 API Server·Tigera Operator·kube-controllers가 Calico Datastore에 기록하고, 각 노드의 Typha·Felix·BIRD가 이를 받아 정책을 적용하며 BIRD가 BGP로 외부 ToR 스위치·네트워크와 통신하는 Calico 아키텍처 구조.](../../.gitbook/assets/ko-networking-calico-README-1.png)
+![Control Plane의 API Server·Tigera Operator·kube-controllers가 Calico Datastore에 기록하고, 각 노드의 Typha·Felix·BIRD가 이를 받아 정책을 적용하며 BIRD가 BGP로 외부 ToR 스위치·네트워크와 통신하는 Calico 아키텍처 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-readme-1.html)
 
 ### 컴포넌트 역할 요약
 
@@ -90,7 +94,9 @@ Calico는 다양한 환경에 맞는 여러 네트워킹 모드를 지원합니�
 | **Direct** | 없음 | 0 bytes | 1500 | BGP 가능 환경, 온프레미스 |
 | **CrossSubnet** | 조건부 | 가변 | 가변 | 하이브리드 환경 |
 
-![BGP 사용 가능 여부, 클라우드 환경, 서브넷 일치 여부를 순서대로 물어 Direct·VXLAN·CrossSubnet·IPIP 중 적합한 Calico 네트워킹 모드를 안내하며, BGP가 가능한 Direct 모드가 최고 성능의 권장 경로임을 보여주는 의사결정 트리.](../../.gitbook/assets/ko-networking-calico-README-2.png)
+![BGP 사용 가능 여부, 클라우드 환경, 서브넷 일치 여부를 순서대로 물어 Direct·VXLAN·CrossSubnet·IPIP 중 적합한 Calico 네트워킹 모드를 안내하며, BGP가 가능한 Direct 모드가 최고 성능의 권장 경로임을 보여준다.](../../.gitbook/assets/ko-networking-calico-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-readme-2.html)
 
 ## EKS 통합 빠른 시작
 
@@ -292,7 +298,9 @@ calicoctl get globalnetworkpolicy
 - Hubble 기반 고급 관측성이 필수인 경우
 - 최신 eBPF 기능을 적극 활용하려는 경우
 
-![Windows 워크로드, L7 정책 필요 여부, BGP 필수 여부, 관측성 우선순위를 차례로 물어 CNI를 선택하는 트리로, 대부분의 경로가 Calico로 모이고 오픈소스 L7 정책이나 Hubble 관측성이 꼭 필요할 때만 Cilium으로 향함을 보여준다.](../../.gitbook/assets/ko-networking-calico-README-3.png)
+![Windows 워크로드, L7 정책 필요 여부, BGP 필수 여부, 관측성 우선순위를 차례로 물어 CNI를 선택하는 트리로, 대부분의 경로가 Calico로 모이고 오픈소스 L7 정책이나 Hubble 관측성이 꼭 필요할 때만 Cilium으로 향함을 보여준다.](../../.gitbook/assets/ko-networking-calico-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-readme-3.html)
 
 ## 참고 자료
 

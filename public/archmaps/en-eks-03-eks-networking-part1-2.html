@@ -5031,13 +5031,13 @@
 
         <!-- Swimlanes -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1124" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 인바운드 트래픽</text>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / Inbound Traffic</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="1124" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / 아웃바운드 트래픽</text>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Outbound Traffic</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="1124" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / 컨트롤 플레인 통신</text>
+        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / Control Plane Communication</text>
 
         <!-- Phase headers -->
 
@@ -5054,8 +5054,8 @@
         <path data-edge-from="workers" data-edge-to="ekscp" data-edge-label="6 API calls (443)" data-edge-key="5" data-edge-id="e6" data-composition-points="866,145;866,228;986,228;986,341" d="M 866 145 L 866 228 L 986 228 L 986 341" class="a-default" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead)"/>
 
         <!-- Nodes -->
-        <g id="node-internet" data-node-id="internet" data-node-label="Internet" tabindex="0" role="button" aria-label="Focus Internet, Client requests, 인바운드 트래픽" aria-pressed="false" data-node-kind="external" data-node-sublabel="Client requests" data-node-context="인바운드 트래픽">
-          <title>Internet · Client requests · 인바운드 트래픽</title>
+        <g id="node-internet" data-node-id="internet" data-node-label="Internet" tabindex="0" role="button" aria-label="Focus Internet, Client requests, Inbound Traffic" aria-pressed="false" data-node-kind="external" data-node-sublabel="Client requests" data-node-context="Inbound Traffic">
+          <title>Internet · Client requests · Inbound Traffic</title>
           <rect x="48" y="93" width="140" height="52" rx="6" class="c-mask"/>
           <rect x="48" y="93" width="140" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 99) scale(0.6875)">
@@ -5066,8 +5066,8 @@
           <text data-detail="context" x="118" y="131" class="t-muted" font-size="8" text-anchor="middle">Client requests</text>
         </g>
 
-        <g id="node-igw" data-node-id="igw" data-node-label="Internet Gateway" tabindex="0" role="button" aria-label="Focus Internet Gateway, VPC entry point, 인바운드 트래픽" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="VPC entry point" data-node-context="인바운드 트래픽">
-          <title>Internet Gateway · VPC entry point · 인바운드 트래픽</title>
+        <g id="node-igw" data-node-id="igw" data-node-label="Internet Gateway" tabindex="0" role="button" aria-label="Focus Internet Gateway, VPC entry point, Inbound Traffic" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="VPC entry point" data-node-context="Inbound Traffic">
+          <title>Internet Gateway · VPC entry point · Inbound Traffic</title>
           <rect x="244.39999999999998" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="244.39999999999998" y="93" width="150" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(250.39999999999998 99) scale(0.6875)">
@@ -5077,8 +5077,8 @@
           <text data-detail="context" x="319.4" y="131" class="t-muted" font-size="8" text-anchor="middle">VPC entry point</text>
         </g>
 
-        <g id="node-pubsub" data-node-id="pubsub" data-node-label="Public Subnet" tabindex="0" role="button" aria-label="Focus Public Subnet, ALB / NLB, 인바운드 트래픽" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="ALB / NLB" data-node-context="인바운드 트래픽">
-          <title>Public Subnet · ALB / NLB · 인바운드 트래픽</title>
+        <g id="node-pubsub" data-node-id="pubsub" data-node-label="Public Subnet" tabindex="0" role="button" aria-label="Focus Public Subnet, ALB / NLB, Inbound Traffic" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="ALB / NLB" data-node-context="Inbound Traffic">
+          <title>Public Subnet · ALB / NLB · Inbound Traffic</title>
           <rect x="532.4" y="93" width="140" height="52" rx="6" class="c-mask"/>
           <rect x="532.4" y="93" width="140" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(538.4 99) scale(0.6875)">
@@ -5088,8 +5088,8 @@
           <text data-detail="context" x="602.4" y="131" class="t-muted" font-size="8" text-anchor="middle">ALB / NLB</text>
         </g>
 
-        <g id="node-workers" data-node-id="workers" data-node-label="Worker Nodes" tabindex="0" role="button" aria-label="Focus Worker Nodes, Private subnet, 인바운드 트래픽" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Private subnet" data-node-context="인바운드 트래픽">
-          <title>Worker Nodes · Private subnet · 인바운드 트래픽</title>
+        <g id="node-workers" data-node-id="workers" data-node-label="Worker Nodes" tabindex="0" role="button" aria-label="Focus Worker Nodes, Private subnet, Inbound Traffic" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Private subnet" data-node-context="Inbound Traffic">
+          <title>Worker Nodes · Private subnet · Inbound Traffic</title>
           <rect x="796" y="93" width="140" height="52" rx="6" class="c-mask"/>
           <rect x="796" y="93" width="140" height="52" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(802 99) scale(0.6875)">
@@ -5099,8 +5099,8 @@
           <text data-detail="context" x="866" y="131" class="t-muted" font-size="8" text-anchor="middle">Private subnet</text>
         </g>
 
-        <g id="node-natgw" data-node-id="natgw" data-node-label="NAT Gateway" tabindex="0" role="button" aria-label="Focus NAT Gateway, SNAT translation, 아웃바운드 트래픽" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="SNAT translation" data-node-context="아웃바운드 트래픽">
-          <title>NAT Gateway · SNAT translation · 아웃바운드 트래픽</title>
+        <g id="node-natgw" data-node-id="natgw" data-node-label="NAT Gateway" tabindex="0" role="button" aria-label="Focus NAT Gateway, SNAT translation, Outbound Traffic" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="SNAT translation" data-node-context="Outbound Traffic">
+          <title>NAT Gateway · SNAT translation · Outbound Traffic</title>
           <rect x="527.4" y="217" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="527.4" y="217" width="150" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:8" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(533.4 223) scale(0.6875)">
@@ -5110,8 +5110,8 @@
           <text data-detail="context" x="602.4" y="255" class="t-muted" font-size="8" text-anchor="middle">SNAT translation</text>
         </g>
 
-        <g id="node-ekscp" data-node-id="ekscp" data-node-label="EKS Control Plane" tabindex="0" role="button" aria-label="Focus EKS Control Plane, AWS-managed account, 컨트롤 플레인 통신" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="AWS-managed account" data-node-context="컨트롤 플레인 통신">
-          <title>EKS Control Plane · AWS-managed account · 컨트롤 플레인 통신</title>
+        <g id="node-ekscp" data-node-id="ekscp" data-node-label="EKS Control Plane" tabindex="0" role="button" aria-label="Focus EKS Control Plane, AWS-managed account, Control Plane Communication" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="AWS-managed account" data-node-context="Control Plane Communication">
+          <title>EKS Control Plane · AWS-managed account · Control Plane Communication</title>
           <rect x="906" y="341" width="160" height="52" rx="6" class="c-mask"/>
           <rect x="906" y="341" width="160" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:9" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(912 347) scale(0.6875)">

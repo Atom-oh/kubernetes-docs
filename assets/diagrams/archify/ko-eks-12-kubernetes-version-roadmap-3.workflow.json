@@ -1,0 +1,217 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS 버전 지원 정책 개요",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "EKS 지원 단계"
+        },
+        "backend": {
+          "label": "운영자 조치"
+        },
+        "security": {
+          "label": "AWS 자동 동작"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "stages",
+        "label": "3단계 지원 흐름",
+        "focus": [
+          "standard",
+          "extended",
+          "eol"
+        ],
+        "note": "EKS 릴리스 후 14개월의 Standard Support, 추가 12개월의 Extended Support를 거쳐 지원이 종료됩니다."
+      },
+      {
+        "id": "cost",
+        "label": "비용 차이",
+        "focus": [
+          "standard",
+          "extended",
+          "plan"
+        ],
+        "note": "Extended Support는 $0.60/cluster/hour로 Standard의 6배이므로 진입 전에 업그레이드 계획을 세우는 것이 권장됩니다."
+      },
+      {
+        "id": "eol",
+        "label": "지원 종료 동작",
+        "focus": [
+          "extended",
+          "notice",
+          "eol",
+          "autoupgrade"
+        ],
+        "note": "종료 60일 전부터 알림이 오고, 종료일에는 컨트롤 플레인만 자동 업그레이드되며 노드 그룹은 수동으로 올려야 합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "support",
+      "label": "EKS 버전 지원 단계"
+    },
+    {
+      "id": "ops",
+      "label": "운영자 조치"
+    },
+    {
+      "id": "aws",
+      "label": "AWS 자동 동작"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p_standard",
+      "label": "Standard Support · 14개월",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "p_extended",
+      "label": "Extended Support · +12개월",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p_eol",
+      "label": "End of Life",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "standard",
+    "extended",
+    "eol"
+  ],
+  "nodes": [
+    {
+      "id": "standard",
+      "lane": "support",
+      "col": 0,
+      "type": "cloud",
+      "label": "Standard Support",
+      "sublabel": "14개월 · $0.10/cluster/hour",
+      "width": 208
+    },
+    {
+      "id": "extended",
+      "lane": "support",
+      "col": 2,
+      "type": "cloud",
+      "label": "Extended Support",
+      "sublabel": "+12개월 · $0.60/cluster/hour",
+      "width": 216
+    },
+    {
+      "id": "eol",
+      "lane": "support",
+      "col": 4,
+      "type": "cloud",
+      "label": "지원 종료",
+      "sublabel": "End of Life",
+      "width": 152
+    },
+    {
+      "id": "plan",
+      "lane": "ops",
+      "col": 1,
+      "type": "backend",
+      "label": "업그레이드 계획 수립",
+      "sublabel": "Extended 진입 전 권장",
+      "width": 184
+    },
+    {
+      "id": "notice",
+      "lane": "aws",
+      "col": 3,
+      "type": "security",
+      "label": "60일 사전 알림",
+      "sublabel": "AWS가 단계적으로 통지",
+      "width": 192
+    },
+    {
+      "id": "autoupgrade",
+      "lane": "aws",
+      "col": 5,
+      "type": "security",
+      "label": "컨트롤 플레인 자동 업그레이드",
+      "sublabel": "노드 그룹은 수동 업그레이드",
+      "width": 232
+    }
+  ],
+  "edges": [
+    {
+      "id": "standard-extended",
+      "from": "standard",
+      "to": "extended",
+      "label": "14개월 경과"
+    },
+    {
+      "id": "extended-eol",
+      "from": "extended",
+      "to": "eol",
+      "label": "12개월 경과"
+    },
+    {
+      "id": "standard-plan",
+      "from": "standard",
+      "to": "plan",
+      "label": "권장",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "extended-notice",
+      "from": "extended",
+      "to": "notice",
+      "label": "종료 60일 전",
+      "role": "branch"
+    },
+    {
+      "id": "eol-autoupgrade",
+      "from": "eol",
+      "to": "autoupgrade",
+      "label": "종료일",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Standard Support",
+      "items": [
+        "$0.10/cluster/hour (월 약 $73)",
+        "정규 보안 패치와 버그 수정",
+        "매니지드 애드온 업데이트, AWS 기술 지원"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Extended Support",
+      "items": [
+        "$0.60/cluster/hour, Standard 대비 6배 비용",
+        "중요 보안 패치와 핵심 버그 수정만 제공",
+        "제한된 애드온 업데이트, 업그레이드 유예 기간"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "지원 종료 (End of Life)",
+      "items": [
+        "종료 60일 전부터 AWS가 단계적으로 알림",
+        "종료일에 컨트롤 플레인만 자동 업그레이드",
+        "노드 그룹·애드온은 운영자가 직접 업그레이드"
+      ]
+    }
+  ]
+}

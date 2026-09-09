@@ -41,7 +41,10 @@
         ],
         "note": "TCPRoute가 NLB를 통해 TCP 트래픽을 L4 레벨에서 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

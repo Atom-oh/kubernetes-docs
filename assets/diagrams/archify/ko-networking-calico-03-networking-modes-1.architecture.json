@@ -40,7 +40,21 @@
         ],
         "note": "eth0가 받은 패킷을 tunl0에서 디캡슐화해 원본 패킷을 Pod B로 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

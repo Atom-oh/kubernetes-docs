@@ -47,7 +47,10 @@
         ],
         "note": "권한 부여 단계는 RBAC, ABAC, Node, Webhook 모드를 지원합니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

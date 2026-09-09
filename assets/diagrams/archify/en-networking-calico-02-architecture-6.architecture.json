@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Why Typha?",
+    "locale": "en",
+    "output": "en-networking-calico-02-architecture-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without-typha",
+        "label": "Without Typha",
+        "focus": [
+          "api-small",
+          "felix-1",
+          "felix-2",
+          "felix-3"
+        ],
+        "note": "In a small cluster every Felix agent opens its own watch on the Kubernetes API server."
+      },
+      {
+        "id": "with-typha",
+        "label": "With Typha",
+        "focus": [
+          "api-large",
+          "typha-1",
+          "typha-2",
+          "felix-a",
+          "felix-b"
+        ],
+        "note": "In a large cluster only Typha watches the API server and fans cached updates out to hundreds of Felix agents."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api-small",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "API server",
+      "pos": [
+        220,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "felix-1",
+      "type": "backend",
+      "label": "Felix 1",
+      "sublabel": "node agent",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "felix-2",
+      "type": "backend",
+      "label": "Felix 2",
+      "sublabel": "node agent",
+      "pos": [
+        230,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "felix-3",
+      "type": "backend",
+      "label": "Felix 3",
+      "sublabel": "node agent",
+      "pos": [
+        420,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "api-large",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "API server",
+      "pos": [
+        860,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "typha-1",
+      "type": "messagebus",
+      "label": "Typha 1",
+      "sublabel": "fan-out proxy, cache",
+      "pos": [
+        700,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha-2",
+      "type": "messagebus",
+      "label": "Typha 2",
+      "sublabel": "fan-out proxy, cache",
+      "pos": [
+        1010,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-a",
+      "type": "backend",
+      "label": "Felix 1-100",
+      "sublabel": "node agents",
+      "pos": [
+        700,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-b",
+      "type": "backend",
+      "label": "Felix 101-200",
+      "sublabel": "node agents",
+      "pos": [
+        1010,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without Typha - small cluster",
+      "wraps": [
+        "api-small",
+        "felix-1",
+        "felix-2",
+        "felix-3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With Typha - large cluster",
+      "wraps": [
+        "api-large",
+        "typha-1",
+        "typha-2",
+        "felix-a",
+        "felix-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "small-watch-1",
+      "from": "api-small",
+      "to": "felix-1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "small-watch-2",
+      "from": "api-small",
+      "to": "felix-2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "small-watch-3",
+      "from": "api-small",
+      "to": "felix-3",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "watch",
+      "labelAt": [
+        522,
+        330
+      ]
+    },
+    {
+      "id": "large-watch-1",
+      "from": "api-large",
+      "to": "typha-1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "large-watch-2",
+      "from": "api-large",
+      "to": "typha-2",
+      "label": "watch",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1128,
+        215
+      ]
+    },
+    {
+      "id": "fanout-1",
+      "from": "typha-1",
+      "to": "felix-a",
+      "label": "fan-out",
+      "labelDy": 40,
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fanout-2",
+      "from": "typha-2",
+      "to": "felix-b",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Without Typha",
+      "items": [
+        "Every Felix agent watches the Kubernetes API server directly",
+        "API server load grows with the number of nodes"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "With Typha",
+      "items": [
+        "Typha sits between the API server and Felix agents",
+        "Caches datastore updates and fans them out to hundreds of Felix agents",
+        "Replicas = max(3, ceil(nodes / 200))"
+      ]
+    }
+  ]
+}

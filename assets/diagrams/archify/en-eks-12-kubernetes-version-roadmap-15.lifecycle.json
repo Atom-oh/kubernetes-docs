@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Kubernetes 1.35 \"Timbernetes\" — Enhancements by Maturity Stage",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "stable-focus",
+        "label": "Stable (GA)",
+        "focus": [
+          "stable"
+        ],
+        "note": "17 enhancements graduated to GA, led by In-Place Pod Vertical Scaling."
+      },
+      {
+        "id": "graduation-path",
+        "label": "Graduation path",
+        "focus": [
+          "alpha",
+          "beta",
+          "stable"
+        ],
+        "note": "Enhancements enter as Alpha, mature through Beta, and graduate to Stable."
+      }
+    ],
+    "viewBox": [
+      1060,
+      680
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Alpha — entry stage (December 2025)"
+    },
+    {
+      "id": "beta",
+      "label": "Beta — maturing"
+    },
+    {
+      "id": "terminal",
+      "label": "Graduated to Stable (GA)"
+    }
+  ],
+  "states": [
+    {
+      "id": "alpha",
+      "type": "start",
+      "label": "Alpha",
+      "sublabel": "22 enhancements",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "beta",
+      "type": "active",
+      "label": "Beta",
+      "sublabel": "19 enhancements",
+      "lane": "beta",
+      "col": 2,
+      "step": "02"
+    },
+    {
+      "id": "stable",
+      "type": "success",
+      "label": "Stable (GA)",
+      "sublabel": "17 enhancements",
+      "lane": "terminal",
+      "col": 2,
+      "step": "03"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "alpha",
+      "to": "beta",
+      "label": "matures to Beta"
+    },
+    {
+      "from": "beta",
+      "to": "stable",
+      "label": "graduates to GA",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Stable (GA) — 17",
+      "items": [
+        "In-Place Pod Vertical Scaling (resize CPU/memory without restart)",
+        "CRDValidationRatcheting, DeviceHealthConditions",
+        "PodLifecycleSleepActionGracePeriod, ContextualLogging"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Beta — 19",
+      "items": [
+        "KYAML (enabled by default)",
+        "Gang Scheduling (Alpha moving to Beta)",
+        "AnonymousAuthConfigurableEndpoints, InPlacePodVerticalScalingAllocatedStatus, SELinuxMount, NodeInclusionPolicyInPodTopologySpread"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Alpha — 22",
+      "items": [
+        "PodLevelInPlaceScaling (pod-level aggregate resize)",
+        "LeaderMigration, SchedulerQueueingHints",
+        "RecoverVolumeExpansionFailure"
+      ]
+    }
+  ]
+}

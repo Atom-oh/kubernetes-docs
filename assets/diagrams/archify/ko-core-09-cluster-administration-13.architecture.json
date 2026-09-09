@@ -40,7 +40,21 @@
         ],
         "note": "VPC CNI가 파드를 AWS VPC에 연결하고, IAM 역할과 정책으로 클러스터 접근을 인증합니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

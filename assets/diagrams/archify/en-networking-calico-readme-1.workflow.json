@@ -1,0 +1,263 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Networking Mode Selection Guide",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Start"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "Encapsulated mode"
+        },
+        "backend": {
+          "label": "Unencapsulated mode"
+        },
+        "database": {
+          "label": "IPPool configuration"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "bgp",
+        "label": "BGP availability",
+        "focus": [
+          "start",
+          "bgp",
+          "vxlan"
+        ],
+        "note": "Without a BGP peer, Calico falls back to VXLAN encapsulation (UDP 4789, MTU 1450)."
+      },
+      {
+        "id": "l2",
+        "label": "L2 adjacency",
+        "focus": [
+          "bgp",
+          "l2",
+          "direct"
+        ],
+        "note": "BGP with L2-adjacent nodes allows Direct mode: no encapsulation, full 1500-byte MTU."
+      },
+      {
+        "id": "xsub",
+        "label": "Cross-subnet traffic",
+        "focus": [
+          "l2",
+          "xsub",
+          "ipip",
+          "direct"
+        ],
+        "note": "Nodes in different subnets use IPIP CrossSubnet (MTU 1480); same-subnet nodes still route directly."
+      },
+      {
+        "id": "apply",
+        "label": "Apply the mode",
+        "focus": [
+          "vxlan",
+          "ipip",
+          "direct",
+          "ippool"
+        ],
+        "note": "Every branch ends by setting the chosen encapsulation on the IPPool."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "Mode decision"
+    },
+    {
+      "id": "mode",
+      "label": "Selected networking mode"
+    },
+    {
+      "id": "apply",
+      "label": "Apply configuration"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "bgp",
+    "l2",
+    "direct",
+    "ippool"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "external",
+      "label": "Choose Mode",
+      "sublabel": "by infrastructure",
+      "width": 132
+    },
+    {
+      "id": "bgp",
+      "lane": "decide",
+      "col": 1,
+      "type": "security",
+      "label": "BGP available?",
+      "sublabel": "BGP peer present",
+      "width": 120
+    },
+    {
+      "id": "l2",
+      "lane": "decide",
+      "col": 2,
+      "type": "security",
+      "label": "L2 adjacency?",
+      "sublabel": "nodes on one L2 segment",
+      "width": 140
+    },
+    {
+      "id": "xsub",
+      "lane": "decide",
+      "col": 3,
+      "type": "security",
+      "label": "Cross-subnet?",
+      "sublabel": "nodes span subnets",
+      "width": 120
+    },
+    {
+      "id": "vxlan",
+      "lane": "mode",
+      "col": 0,
+      "type": "cloud",
+      "label": "VXLAN Mode",
+      "sublabel": "no BGP peer · UDP 4789",
+      "width": 180
+    },
+    {
+      "id": "ipip",
+      "lane": "mode",
+      "col": 3,
+      "type": "cloud",
+      "label": "IPIP CrossSubnet",
+      "sublabel": "encapsulated · MTU 1480",
+      "width": 150
+    },
+    {
+      "id": "direct",
+      "lane": "mode",
+      "col": 2,
+      "type": "backend",
+      "label": "Direct Mode",
+      "sublabel": "native routing · MTU 1500",
+      "tag": "performance",
+      "width": 150
+    },
+    {
+      "id": "ippool",
+      "lane": "apply",
+      "col": 4,
+      "type": "database",
+      "label": "Configure IPPool",
+      "sublabel": "apply chosen mode",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-bgp",
+      "from": "start",
+      "to": "bgp"
+    },
+    {
+      "id": "bgp-l2",
+      "from": "bgp",
+      "to": "l2",
+      "label": "yes"
+    },
+    {
+      "id": "bgp-vxlan",
+      "from": "bgp",
+      "to": "vxlan",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "l2-direct",
+      "from": "l2",
+      "to": "direct",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l2-xsub",
+      "from": "l2",
+      "to": "xsub",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "xsub-ipip",
+      "from": "xsub",
+      "to": "ipip",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "id": "xsub-direct",
+      "from": "xsub",
+      "to": "direct",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "vxlan-ippool",
+      "from": "vxlan",
+      "to": "ippool",
+      "role": "branch"
+    },
+    {
+      "id": "ipip-ippool",
+      "from": "ipip",
+      "to": "ippool",
+      "role": "branch"
+    },
+    {
+      "id": "direct-ippool",
+      "from": "direct",
+      "to": "ippool"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "IPIP Mode (default)",
+      "items": [
+        "IP-in-IP encapsulation for cross-subnet traffic",
+        "MTU: 1480 bytes",
+        "Best for: cloud environments, simple setup"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "VXLAN Mode",
+      "items": [
+        "VXLAN encapsulation (UDP port 4789)",
+        "MTU: 1450 bytes",
+        "Best for: environments requiring a standard overlay protocol"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Direct / Unencapsulated Mode",
+      "items": [
+        "No encapsulation, native routing",
+        "MTU: 1500 bytes (full)",
+        "Best for: on-premises with BGP, performance-critical workloads"
+      ]
+    }
+  ]
+}

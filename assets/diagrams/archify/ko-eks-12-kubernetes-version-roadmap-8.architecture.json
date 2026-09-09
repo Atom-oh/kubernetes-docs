@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.31 Enhancement 분포",
+    "output": "ko-eks-12-kubernetes-version-roadmap-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "릴리스"
+        },
+        "backend": {
+          "label": "성숙도 단계"
+        },
+        "external": {
+          "label": "페이지에서 다루는 대표 기능"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "breakdown",
+        "label": "성숙도별 분포",
+        "focus": [
+          "release",
+          "stable",
+          "beta",
+          "alpha"
+        ],
+        "note": "전체 45개 Enhancement가 Stable(GA) 11개, Beta 22개, Alpha 12개로 나뉜다."
+      },
+      {
+        "id": "ga",
+        "label": "핵심 GA 기능",
+        "focus": [
+          "release",
+          "stable",
+          "apparmor",
+          "pv-transition"
+        ],
+        "note": "AppArmor 프로필 필드와 PV lastPhaseTransitionTime이 GA로 승격되었다."
+      },
+      {
+        "id": "beta-alpha",
+        "label": "Beta · Alpha 기능",
+        "focus": [
+          "beta",
+          "dra",
+          "traffic-dist",
+          "alpha",
+          "image-volume"
+        ],
+        "note": "DRA 구조화 파라미터와 Traffic Distribution은 Beta, Image Volume Source는 Alpha 단계다."
+      }
+    ],
+    "viewBox": [
+      1160,
+      700
+    ]
+  },
+  "components": [
+    {
+      "id": "release",
+      "type": "cloud",
+      "label": "Kubernetes 1.31 \"Elli\"",
+      "sublabel": "2024년 8월 · Enhancement 45개",
+      "tag": "보안 강화 중심",
+      "pos": [
+        30,
+        320
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable (GA)",
+      "sublabel": "Enhancement 11개",
+      "pos": [
+        330,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "beta",
+      "type": "backend",
+      "label": "Beta",
+      "sublabel": "Enhancement 22개",
+      "pos": [
+        330,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alpha",
+      "type": "backend",
+      "label": "Alpha",
+      "sublabel": "Enhancement 12개",
+      "pos": [
+        330,
+        550
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "apparmor",
+      "type": "external",
+      "label": "AppArmor 지원 GA",
+      "sublabel": "KEP-24 · securityContext.appArmorProfile",
+      "pos": [
+        600,
+        90
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "pv-transition",
+      "type": "external",
+      "label": "PV Last Phase Transition Time GA",
+      "sublabel": "KEP-3762 · status.lastPhaseTransitionTime",
+      "pos": [
+        600,
+        170
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "dra",
+      "type": "external",
+      "label": "DRA Structured Parameters",
+      "sublabel": "KEP-4381 · ResourceClaim / DeviceClass",
+      "pos": [
+        600,
+        320
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "traffic-dist",
+      "type": "external",
+      "label": "Traffic Distribution for Services",
+      "sublabel": "Service 트래픽 분배 제어",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "image-volume",
+      "type": "external",
+      "label": "Image Volume Source",
+      "sublabel": "OCI 이미지를 볼륨으로 마운트",
+      "pos": [
+        600,
+        550
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Stable (GA) · 11개",
+      "wraps": [
+        "stable",
+        "apparmor",
+        "pv-transition"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Beta · 22개",
+      "wraps": [
+        "beta",
+        "dra",
+        "traffic-dist"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Alpha · 12개",
+      "wraps": [
+        "alpha",
+        "image-volume"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "release-stable",
+      "from": "release",
+      "to": "stable",
+      "variant": "emphasis"
+    },
+    {
+      "id": "release-beta",
+      "from": "release",
+      "to": "beta"
+    },
+    {
+      "id": "release-alpha",
+      "from": "release",
+      "to": "alpha"
+    },
+    {
+      "id": "stable-apparmor",
+      "from": "stable",
+      "to": "apparmor",
+      "variant": "dashed"
+    },
+    {
+      "id": "stable-pv",
+      "from": "stable",
+      "to": "pv-transition",
+      "variant": "dashed"
+    },
+    {
+      "id": "beta-dra",
+      "from": "beta",
+      "to": "dra",
+      "variant": "dashed"
+    },
+    {
+      "id": "beta-traffic",
+      "from": "beta",
+      "to": "traffic-dist",
+      "variant": "dashed"
+    },
+    {
+      "id": "alpha-image-volume",
+      "from": "alpha",
+      "to": "image-volume",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Stable (GA) 11개",
+      "items": [
+        "AppArmor 프로필을 Pod 스펙의 GA 필드로 직접 지정 (어노테이션 방식 대체)",
+        "PV의 마지막 phase 전환 시간을 status에 기록"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Beta 22개",
+      "items": [
+        "DRA 구조화 파라미터로 GPU 등 특수 하드웨어를 체계적으로 요청",
+        "Traffic Distribution for Services (Service 트래픽 분배 제어)"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Alpha 12개",
+      "items": [
+        "Image Volume Source: OCI 이미지를 볼륨으로 마운트"
+      ]
+    }
+  ]
+}

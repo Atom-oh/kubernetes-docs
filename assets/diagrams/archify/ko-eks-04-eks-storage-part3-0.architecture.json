@@ -44,7 +44,10 @@
         ],
         "note": "볼륨 사용량 익스포터 DaemonSet이 PVC 사용량 지표와 사용자 정의 알림을 제공한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

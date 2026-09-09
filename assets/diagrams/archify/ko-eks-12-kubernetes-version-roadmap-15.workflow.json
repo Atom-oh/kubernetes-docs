@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "인트리 볼륨 플러그인 제거 타임라인",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [1240, 800],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": { "label": "CSI Migration GA" },
+        "security": { "label": "Deprecated" },
+        "database": { "label": "In-tree Removed" }
+      }
+    },
+    "views": [
+      { "id": "csi-first", "label": "CSI 마이그레이션 선행", "focus": ["ebs_ga", "ebs_removed", "gce_ga", "gce_removed"], "note": "AWS EBS와 GCE PD는 2022-12 CSI Migration GA 이후 인트리 코드가 먼저 제거되었다." },
+      { "id": "removal-wave", "label": "1.30~1.32 제거 물결", "focus": ["ceph_deprecated", "ceph_removed", "azure_deprecated", "azure_removed"], "note": "1.30에서 Deprecated된 CephFS/RBD는 1.31에서, Azure File/Disk는 1.32에서 제거되어 CSI 드라이버가 필수가 된다." },
+      { "id": "vsphere-ongoing", "label": "vSphere 진행 중", "focus": ["vsphere_ga", "vsphere_deprecated"], "note": "vSphere는 2024-04 CSI Migration GA 이후 인트리 플러그인이 Deprecated 상태로 유지되고 있다." }
+    ]
+  },
+  "lanes": [
+    { "id": "ebs", "label": "AWS EBS" },
+    { "id": "gce", "label": "GCE PD" },
+    { "id": "ceph", "label": "CephFS/RBD" },
+    { "id": "azure", "label": "Azure File/Disk" },
+    { "id": "vsphere", "label": "vSphere" }
+  ],
+  "phases": [
+    { "id": "y2023", "label": "2022-12 ~ 2023-08", "fromCol": 0, "toCol": 2 },
+    { "id": "y2024", "label": "2024-04 ~ 2024-08", "fromCol": 3, "toCol": 4, "variant": "emphasis" },
+    { "id": "y2025", "label": "2024-12 ~", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["ebs_ga", "ebs_removed"],
+  "nodes": [
+    { "id": "ebs_ga", "lane": "ebs", "col": 0, "type": "cloud", "width": 150, "label": "CSI Migration GA", "sublabel": "2022-12" },
+    { "id": "ebs_removed", "lane": "ebs", "col": 1, "type": "database", "width": 150, "label": "In-tree Removed", "sublabel": "2023-04" },
+    { "id": "gce_ga", "lane": "gce", "col": 0, "type": "cloud", "width": 150, "label": "CSI Migration GA", "sublabel": "2022-12" },
+    { "id": "gce_removed", "lane": "gce", "col": 2, "type": "database", "width": 150, "label": "In-tree Removed", "sublabel": "2023-08" },
+    { "id": "ceph_deprecated", "lane": "ceph", "col": 3, "type": "security", "width": 150, "label": "Deprecated", "sublabel": "2024-04", "tag": "1.30" },
+    { "id": "ceph_removed", "lane": "ceph", "col": 4, "type": "database", "width": 150, "label": "Removed", "sublabel": "2024-08", "tag": "1.31" },
+    { "id": "azure_deprecated", "lane": "azure", "col": 3, "type": "security", "width": 150, "label": "Deprecated", "sublabel": "2024-04 ~ 2024-12" },
+    { "id": "azure_removed", "lane": "azure", "col": 5, "type": "database", "width": 150, "label": "Removed", "sublabel": "2024-12", "tag": "1.32" },
+    { "id": "vsphere_ga", "lane": "vsphere", "col": 3, "type": "cloud", "width": 150, "label": "CSI Migration GA", "sublabel": "2024-04" },
+    { "id": "vsphere_deprecated", "lane": "vsphere", "col": 4, "type": "security", "width": 150, "label": "In-tree Deprecated", "sublabel": "2024-08 ~ 진행 중" }
+  ],
+  "edges": [
+    { "from": "ebs_ga", "to": "ebs_removed", "variant": "emphasis" },
+    { "from": "gce_ga", "to": "gce_removed" },
+    { "from": "ceph_deprecated", "to": "ceph_removed", "label": "CSI 드라이버 필수" },
+    { "from": "azure_deprecated", "to": "azure_removed", "label": "CSI 드라이버 필수" },
+    { "from": "vsphere_ga", "to": "vsphere_deprecated", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "CSI 마이그레이션 순서", "items": ["CSI Migration GA가 먼저 오고, 그 다음 인트리 코드가 Deprecated → Removed 단계를 거친다", "AWS EBS와 GCE PD는 2022-12 GA 후 2023년에 인트리 코드가 제거되었다", "1.29~1.36 사이에 대부분의 인트리 플러그인 제거가 완료된다"] },
+    { "dot": "rose", "title": "1.30 ~ 1.32 제거 사항", "items": ["1.30: CephFS, RBD 인트리 볼륨 플러그인 Deprecated", "1.31: CephFS/RBD 인트리 플러그인 Removed — CSI 드라이버 필수", "1.32: Azure File/Disk 인트리 플러그인 Removed — CSI 드라이버 필수"] },
+    { "dot": "amber", "title": "대응 방법", "items": ["EKS에서는 EBS CSI 매니지드 애드온으로 전환 (호환 버전은 애드온 매트릭스 참고)", "pluto detect-all-in-cluster 로 제거 예정 API/리소스 스캔", "Deprecated 상태에서도 동작하지만 제거 전 마이그레이션 강력 권장"] }
+  ]
+}

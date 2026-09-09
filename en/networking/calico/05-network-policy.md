@@ -16,7 +16,9 @@ This deep dive covers both Kubernetes standard policies and Calico's extended ca
 
 Kubernetes NetworkPolicy is a namespace-scoped resource that controls traffic to and from pods based on labels, namespaces, and IP blocks.
 
-![Comparison showing that without a NetworkPolicy every pod can reach every other pod freely, while a NetworkPolicy narrows that mesh down to one explicitly allowed path and blocks the rest.](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-0.svg)
+![Comparison showing that without a NetworkPolicy every pod can reach every other pod freely, while a NetworkPolicy narrows that mesh down to one explicitly allowed path and blocks the rest.](../../.gitbook/assets/en-networking-calico-05-network-policy-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-05-network-policy-0.html)
 
 ### Basic NetworkPolicy Structure
 

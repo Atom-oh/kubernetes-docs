@@ -20,11 +20,15 @@ Amazon EKS uses AWS VPC CNI by default for pod networking. Calico can be added f
 
 ### Architecture Deep Dive
 
-![A pod's traffic crosses a veth pair onto a VPC CNI-managed secondary ENI while Calico's Felix agent programs iptables/eBPF rules on that same path, before the primary ENI carries traffic to the VPC subnet and internet gateway.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
+![An outbound packet from the Source Pod is policy-evaluated by Calico Felix through iptables; if allowed it travels via the VPC ENI and AWS VPC routing to the destination, and if denied iptables drops it back to the pod.](../../.gitbook/assets/en-networking-calico-08-eks-integration-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-1.html)
 
 ### Traffic Flow with VPC CNI + Calico
 
-![Pod A's egress traffic is evaluated by Calico on its node before the VPC CNI routes it across the AWS VPC to the destination node, where Calico evaluates ingress policy before delivering the packet to Pod B.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
+![A Kubernetes NetworkPolicy is enforced by either the VPC CNI's Network Policy Controller (NPC) or Calico's Felix, while Calico-only policies such as GlobalNetworkPolicy are handled by Felix alone, so enabling both engines at once causes conflicts.](../../.gitbook/assets/en-networking-calico-08-eks-integration-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-2.html)
 
 ## Installation Methods Comparison
 

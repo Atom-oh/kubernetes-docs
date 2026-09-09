@@ -10,16 +10,16 @@
       "mode": "auto",
       "entries": {
         "frontend": {
-          "label": "워크로드"
+          "label": "Workload"
         },
         "messagebus": {
-          "label": "요청 객체"
+          "label": "Request Object"
         },
         "backend": {
-          "label": "제어 객체"
+          "label": "Control Object"
         },
         "cloud": {
-          "label": "AWS 스토리지"
+          "label": "AWS Storage"
         }
       }
     },
@@ -28,11 +28,11 @@
   "lanes": [
     {
       "id": "req",
-      "label": "스토리지 요청"
+      "label": "Storage Request"
     },
     {
       "id": "prov",
-      "label": "동적 프로비저닝"
+      "label": "Dynamic Provisioning"
     }
   ],
   "mainPath": [

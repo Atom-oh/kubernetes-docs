@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Identity Architecture",
+    "output": "en-eks-05-eks-security-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "views": [
+      {
+        "id": "associations",
+        "label": "Associations",
+        "focus": [
+          "sa1",
+          "role1",
+          "sa2",
+          "role2"
+        ],
+        "note": "A Pod Identity Association maps each namespace's service account to its own IAM role."
+      },
+      {
+        "id": "credentials",
+        "label": "Credential path",
+        "focus": [
+          "pod1",
+          "pod2",
+          "pia",
+          "svc",
+          "role1",
+          "role2"
+        ],
+        "note": "Pods in both namespaces ask the shared Pod Identity Agent, which calls the EKS Pod Identity Service to assume the mapped role."
+      },
+      {
+        "id": "access",
+        "label": "AWS access",
+        "focus": [
+          "pod1",
+          "s3",
+          "pod2",
+          "ddb"
+        ],
+        "note": "With the temporary credentials, each pod accesses only the AWS services its role allows."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Backend services"
+        },
+        "cloud": {
+          "label": "Cloud services"
+        },
+        "security": {
+          "label": "Security components"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Application Pod",
+      "sublabel": "ns: app-1",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "sa1",
+      "type": "backend",
+      "label": "ServiceAccount: app-sa",
+      "sublabel": "ns: app-1",
+      "pos": [
+        340,
+        190
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sa2",
+      "type": "backend",
+      "label": "ServiceAccount: app-sa",
+      "sublabel": "ns: app-2",
+      "pos": [
+        840,
+        190
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Application Pod",
+      "sublabel": "ns: app-2",
+      "pos": [
+        1120,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pia",
+      "type": "security",
+      "label": "Pod Identity Agent",
+      "sublabel": "DaemonSet",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "cloud",
+      "label": "EKS Pod Identity Service",
+      "sublabel": "EKS Auth API",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "role1",
+      "type": "security",
+      "label": "IAM Role: App1Role",
+      "pos": [
+        340,
+        530
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "role2",
+      "type": "security",
+      "label": "IAM Role: App2Role",
+      "pos": [
+        840,
+        530
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "pos": [
+        60,
+        660
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ddb",
+      "type": "cloud",
+      "label": "Amazon DynamoDB",
+      "pos": [
+        1120,
+        660
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Cluster",
+      "wraps": [
+        "pod1",
+        "sa1",
+        "sa2",
+        "pod2",
+        "pia"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "region",
+      "label": "Namespace: app-1",
+      "wraps": [
+        "pod1",
+        "sa1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Namespace: app-2",
+      "wraps": [
+        "sa2",
+        "pod2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "svc",
+        "role1",
+        "role2",
+        "s3",
+        "ddb"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "IAM",
+      "wraps": [
+        "role1",
+        "role2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Services",
+      "wraps": [
+        "s3",
+        "ddb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sa1-to-role1",
+      "from": "sa1",
+      "to": "role1",
+      "label": "Association",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          280,
+          220
+        ],
+        [
+          280,
+          560
+        ]
+      ],
+      "labelAt": [
+        280,
+        330
+      ]
+    },
+    {
+      "id": "sa2-to-role2",
+      "from": "sa2",
+      "to": "role2",
+      "label": "Association",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1070,
+          220
+        ],
+        [
+          1070,
+          560
+        ]
+      ],
+      "labelAt": [
+        1070,
+        330
+      ]
+    },
+    {
+      "id": "pod1-to-pia",
+      "from": "pod1",
+      "to": "pia",
+      "label": "credential request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod2-to-pia",
+      "from": "pod2",
+      "to": "pia",
+      "label": "credential request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pia-to-svc",
+      "from": "pia",
+      "to": "svc",
+      "label": "AssumeRoleForPodIdentity",
+      "variant": "security",
+      "labelAt": [
+        690,
+        330
+      ]
+    },
+    {
+      "id": "svc-to-role1",
+      "from": "svc",
+      "to": "role1",
+      "label": "assume",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          430,
+          430
+        ]
+      ]
+    },
+    {
+      "id": "svc-to-role2",
+      "from": "svc",
+      "to": "role2",
+      "label": "assume",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          930,
+          430
+        ]
+      ]
+    },
+    {
+      "id": "pod1-to-s3",
+      "from": "pod1",
+      "to": "s3",
+      "label": "Access",
+      "labelAt": [
+        140,
+        330
+      ]
+    },
+    {
+      "id": "pod2-to-ddb",
+      "from": "pod2",
+      "to": "ddb",
+      "label": "Access",
+      "labelAt": [
+        1200,
+        330
+      ]
+    }
+  ]
+}

@@ -11,7 +11,7 @@
       700
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "security": {
           "label": "문제 분류"

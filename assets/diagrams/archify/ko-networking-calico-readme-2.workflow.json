@@ -1,0 +1,229 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico 네트워킹 모드 선택 의사결정 트리",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작"
+        },
+        "security": {
+          "label": "판단 질문"
+        },
+        "backend": {
+          "label": "권장 모드 (최고 성능)"
+        },
+        "cloud": {
+          "label": "환경별 대안 모드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "bgp-path",
+        "label": "BGP 가능 → Direct",
+        "focus": [
+          "start",
+          "bgp",
+          "direct"
+        ],
+        "note": "BGP 피어링이 가능한 온프레미스 환경이면 캡슐화 없는 Direct 모드가 최고 성능의 권장 경로다."
+      },
+      {
+        "id": "cloud-path",
+        "label": "클라우드 환경 → VXLAN",
+        "focus": [
+          "bgp",
+          "cloud",
+          "vxlan"
+        ],
+        "note": "BGP를 쓸 수 없고 Azure 또는 방화벽 환경이라면 광범위하게 호환되는 VXLAN 모드를 택한다."
+      },
+      {
+        "id": "subnet-path",
+        "label": "서브넷 일치 → CrossSubnet / IPIP",
+        "focus": [
+          "cloud",
+          "subnet",
+          "crosssubnet",
+          "ipip"
+        ],
+        "note": "AWS/GCP에서는 노드가 같은 서브넷이면 CrossSubnet(조건부 캡슐화), 아니면 IPIP 모드로 효율적으로 캡슐화한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "diagnose",
+      "label": "환경 진단"
+    },
+    {
+      "id": "modes",
+      "label": "선택 모드"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "bgp",
+    "direct"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "diagnose",
+      "col": 0,
+      "type": "external",
+      "label": "시작",
+      "sublabel": "네트워킹 모드 선택",
+      "width": 120
+    },
+    {
+      "id": "bgp",
+      "lane": "diagnose",
+      "col": 1,
+      "type": "security",
+      "label": "BGP 사용 가능?",
+      "sublabel": "온프레미스 라우터 피어링",
+      "width": 136
+    },
+    {
+      "id": "cloud",
+      "lane": "diagnose",
+      "col": 2,
+      "type": "security",
+      "label": "클라우드 환경?",
+      "sublabel": "Azure vs AWS/GCP",
+      "width": 136
+    },
+    {
+      "id": "subnet",
+      "lane": "diagnose",
+      "col": 3,
+      "type": "security",
+      "label": "같은 서브넷?",
+      "sublabel": "노드 간 서브넷 일치",
+      "width": 136
+    },
+    {
+      "id": "direct",
+      "lane": "modes",
+      "col": 2,
+      "type": "backend",
+      "label": "Direct 모드",
+      "sublabel": "캡슐화 없음 · MTU 1500",
+      "tag": "최고 성능",
+      "width": 136
+    },
+    {
+      "id": "vxlan",
+      "lane": "modes",
+      "col": 3,
+      "type": "cloud",
+      "label": "VXLAN 모드",
+      "sublabel": "UDP/VXLAN 50 bytes · MTU 1450",
+      "tag": "광범위 호환",
+      "width": 164
+    },
+    {
+      "id": "crosssubnet",
+      "lane": "modes",
+      "col": 4,
+      "type": "cloud",
+      "label": "CrossSubnet 모드",
+      "sublabel": "조건부 캡슐화 · MTU 가변",
+      "tag": "하이브리드",
+      "width": 164
+    },
+    {
+      "id": "ipip",
+      "lane": "modes",
+      "col": 5,
+      "type": "cloud",
+      "label": "IPIP 모드",
+      "sublabel": "IP-in-IP 20 bytes · MTU 1480",
+      "tag": "효율적 캡슐화",
+      "width": 164
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-bgp",
+      "from": "start",
+      "to": "bgp"
+    },
+    {
+      "id": "bgp-direct",
+      "from": "bgp",
+      "to": "direct",
+      "label": "YES",
+      "variant": "emphasis"
+    },
+    {
+      "id": "bgp-cloud",
+      "from": "bgp",
+      "to": "cloud",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "cloud-vxlan",
+      "from": "cloud",
+      "to": "vxlan",
+      "label": "Azure",
+      "role": "branch"
+    },
+    {
+      "id": "cloud-subnet",
+      "from": "cloud",
+      "to": "subnet",
+      "label": "AWS / GCP",
+      "role": "branch"
+    },
+    {
+      "id": "subnet-crosssubnet",
+      "from": "subnet",
+      "to": "crosssubnet",
+      "label": "YES",
+      "role": "branch"
+    },
+    {
+      "id": "subnet-ipip",
+      "from": "subnet",
+      "to": "ipip",
+      "label": "NO",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Direct (BGP)",
+      "items": [
+        "캡슐화 없음, 오버헤드 0 bytes, MTU 1500",
+        "BGP 가능 환경·온프레미스에서 최고 성능",
+        "BIRD가 BGP 피어링과 라우트 교환을 담당"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "VXLAN · IPIP 캡슐화",
+      "items": [
+        "VXLAN: UDP/VXLAN 50 bytes 오버헤드, MTU 1450, Azure·방화벽 환경",
+        "IPIP: IP-in-IP 20 bytes 오버헤드, MTU 1480, 클라우드·L3 네트워크",
+        "캡슐화 오버헤드만큼 Pod MTU를 낮춰야 한다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "CrossSubnet 하이브리드",
+      "items": [
+        "같은 서브넷 노드 간에는 캡슐화 없이 직접 라우팅",
+        "서브넷을 넘어갈 때만 조건부로 캡슐화",
+        "오버헤드·MTU가 트래픽 경로에 따라 가변"
+      ]
+    }
+  ]
+}

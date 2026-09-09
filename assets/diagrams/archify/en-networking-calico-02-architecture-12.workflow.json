@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Ingress Packet Flow (Pod-to-Pod, Same Node)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": { "label": "Pod workload" },
+        "backend": { "label": "veth interface" },
+        "security": { "label": "Policy check" }
+      }
+    }
+  },
+  "lanes": [
+    { "id": "pod_a_ns", "label": "Pod A network namespace" },
+    { "id": "host_ns", "label": "Host network namespace" },
+    { "id": "pod_b_ns", "label": "Pod B network namespace" }
+  ],
+  "phases": [
+    { "id": "single_node", "label": "Single node", "fromCol": 0, "toCol": 4, "variant": "dashed" }
+  ],
+  "mainPath": ["pod_a", "veth_a", "policy", "veth_b", "pod_b"],
+  "nodes": [
+    { "id": "pod_a", "lane": "pod_a_ns", "col": 0, "type": "frontend", "label": "Pod A", "sublabel": "192.168.1.10" },
+    { "id": "veth_a", "lane": "host_ns", "col": 1, "type": "backend", "label": "veth", "sublabel": "caliXXXXXX" },
+    { "id": "policy", "lane": "host_ns", "col": 2, "type": "security", "label": "iptables / eBPF", "sublabel": "Felix-programmed rules", "tag": "policy", "width": 150 },
+    { "id": "veth_b", "lane": "host_ns", "col": 3, "type": "backend", "label": "veth", "sublabel": "caliYYYYYY" },
+    { "id": "pod_b", "lane": "pod_b_ns", "col": 4, "type": "frontend", "label": "Pod B", "sublabel": "192.168.1.11" }
+  ],
+  "edges": [
+    { "from": "pod_a", "to": "veth_a", "label": "send", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "veth_a", "to": "policy", "label": "enter host ns" },
+    { "from": "policy", "to": "veth_b", "label": "policy" },
+    { "from": "veth_b", "to": "pod_b", "label": "deliver" }
+  ]
+}

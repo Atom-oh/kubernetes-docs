@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Architecture Overview",
+    "locale": "en",
+    "output": "en-networking-calico-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-path",
+        "label": "Control plane and datastore",
+        "focus": [
+          "kube-controllers",
+          "calico-apiserver",
+          "k8s-api",
+          "etcd",
+          "typha"
+        ],
+        "note": "kube-controllers and the Calico API Server reconcile against the Kubernetes API; Typha caches it for the nodes."
+      },
+      {
+        "id": "node-path",
+        "label": "Per-node data plane",
+        "focus": [
+          "typha",
+          "felix",
+          "confd",
+          "bird",
+          "dataplane",
+          "peer-bird"
+        ],
+        "note": "Typha fans state out to every node, where Felix programs the data plane and confd drives BIRD."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "kube-controllers",
+      "type": "backend",
+      "label": "kube-controllers",
+      "sublabel": "syncs k8s resources with Calico",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "calico-apiserver",
+      "type": "backend",
+      "label": "Calico API Server",
+      "sublabel": "API aggregation layer",
+      "pos": [
+        310,
+        50
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "alternative datastore",
+      "tag": "optional",
+      "pos": [
+        60,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "k8s-api",
+      "type": "database",
+      "label": "Kubernetes API",
+      "sublabel": "datastore (source of truth)",
+      "pos": [
+        310,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "typha",
+      "type": "backend",
+      "label": "Typha",
+      "sublabel": "caching proxy",
+      "tag": "dedicated pods",
+      "pos": [
+        590,
+        210
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "programs routes + ACLs",
+      "pos": [
+        590,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "confd",
+      "type": "backend",
+      "label": "confd",
+      "sublabel": "generates BIRD config",
+      "pos": [
+        830,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "dataplane",
+      "type": "security",
+      "label": "iptables / eBPF",
+      "sublabel": "packet data plane",
+      "pos": [
+        590,
+        540
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "bird",
+      "type": "backend",
+      "label": "BIRD",
+      "sublabel": "BGP daemon",
+      "pos": [
+        830,
+        540
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "peer-bird",
+      "type": "external",
+      "label": "BIRD on other nodes",
+      "sublabel": "BGP peers",
+      "pos": [
+        1070,
+        540
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control plane",
+      "wraps": [
+        "kube-controllers",
+        "calico-apiserver"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Datastore",
+      "wraps": [
+        "etcd",
+        "k8s-api"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Every node (calico-node)",
+      "wraps": [
+        "felix",
+        "confd",
+        "dataplane",
+        "bird"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kc-watches",
+      "from": "kube-controllers",
+      "to": "k8s-api",
+      "label": "watches / syncs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "apiserver-aggregates",
+      "from": "calico-apiserver",
+      "to": "k8s-api",
+      "label": "aggregates",
+      "labelDy": 24
+    },
+    {
+      "id": "etcd-alt",
+      "from": "k8s-api",
+      "to": "etcd",
+      "label": "or etcd",
+      "variant": "dashed"
+    },
+    {
+      "id": "typha-watch",
+      "from": "k8s-api",
+      "to": "typha",
+      "label": "watch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "typha-felix",
+      "from": "typha",
+      "to": "felix",
+      "label": "fan-out",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "typha-confd",
+      "from": "typha",
+      "to": "confd",
+      "label": "fan-out"
+    },
+    {
+      "id": "felix-dataplane",
+      "from": "felix",
+      "to": "dataplane",
+      "label": "programs",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "confd-bird",
+      "from": "confd",
+      "to": "bird",
+      "label": "BIRD config",
+      "labelDy": 24
+    },
+    {
+      "id": "bird-peers",
+      "from": "bird",
+      "to": "peer-bird",
+      "label": "BGP routes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control plane",
+      "items": [
+        "kube-controllers syncs Kubernetes resources with Calico",
+        "Calico API Server exposes Calico resources via Kubernetes API aggregation",
+        "Typha (dedicated pods) caches datastore state to reduce API server load"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Every node",
+      "items": [
+        "Felix programs routes and ACLs on each host",
+        "confd watches the datastore and generates BIRD config",
+        "BIRD distributes routes to peers over BGP"
+      ]
+    }
+  ]
+}
