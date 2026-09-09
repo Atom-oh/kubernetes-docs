@@ -63,7 +63,7 @@ Karpenter는 Kubernetes 컨트롤러로 작동하며, 스케줄링할 수 없는
 ### 주요 구성 요소
 
 1. **Karpenter 컨트롤러**: 스케줄링할 수 없는 파드를 감지하고 노드 프로비저닝을 관리
-2. **CRD CEL 검증**: NodePool·EC2NodeClass는 CRD의 CEL 검증 규칙으로 유효성을 검사한다 (어드미션·변환 웹훅은 Karpenter 1.1에서 제거됨)
+2. **CRD CEL 검증**: NodePool·EC2NodeClass를 CRD의 CEL 검증 규칙으로 유효성 검사 (어드미션·변환 웹훅은 Karpenter 1.1에서 제거)
 3. **NodePool CRD**: 노드 프로비저닝 정책을 정의
 4. **EC2NodeClass CRD**: 프로비저닝할 노드의 구성을 정의
 5. **클라우드 제공업체 통합**: 클라우드 제공업체의 API와 통합하여 컴퓨팅 리소스 관리
