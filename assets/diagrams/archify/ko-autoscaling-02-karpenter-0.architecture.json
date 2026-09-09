@@ -25,7 +25,7 @@
           "provisioner",
           "nodetemplate"
         ],
-        "note": "웹훅이 검증한 NodePool·EC2NodeClass CRD 구성에 따라 적절한 노드 유형을 결정한다."
+        "note": "CEL 규칙으로 검증된 NodePool·EC2NodeClass 구성에 따라 적절한 노드 유형을 결정한다."
       },
       {
         "id": "provision",
@@ -78,8 +78,8 @@
     {
       "id": "webhook",
       "type": "security",
-      "label": "Karpenter Webhook",
-      "sublabel": "리소스 유효성 검사",
+      "label": "CRD CEL 검증",
+      "sublabel": "CRD 내장 규칙",
       "pos": [
         330,
         40

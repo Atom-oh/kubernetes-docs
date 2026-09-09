@@ -1,7 +1,7 @@
 # Karpenter
 
-> **Supported Versions**: Karpenter 1.6 - 1.14, Kubernetes 1.29+ (as of v1.14)
-> **Last Updated**: August 24, 2026
+> **Supported Versions**: Karpenter 1.6 - 1.14, Kubernetes 1.30+ (as of v1.14)
+> **Last Updated**: September 9, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -48,7 +48,7 @@ Karpenter is an open-source cluster autoscaler that automates node provisioning 
 
 Karpenter operates as a Kubernetes controller, detecting unschedulable pods and provisioning appropriate nodes.
 
-![Architecture diagram showing the Karpenter controller in a Kubernetes cluster watching unschedulable pods, using the webhook-validated NodePool and EC2NodeClass CRDs, and calling the Kubernetes API and the cloud provider Instance API to provision compute instances.](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
+![Architecture diagram showing the Karpenter controller in a Kubernetes cluster watching unschedulable pods, using the CEL-validated NodePool and EC2NodeClass CRDs, and calling the Kubernetes API and the cloud provider Instance API to provision compute instances.](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-0.html)
 
@@ -63,7 +63,7 @@ The following diagram shows how Karpenter works in an EKS cluster:
 ### Key Components
 
 1. **Karpenter Controller**: Detects unschedulable pods and manages node provisioning
-2. **Karpenter Webhook**: Validates Karpenter resources
+2. **CRD CEL validation**: NodePool and EC2NodeClass are validated by CEL rules in the CRDs (the admission/conversion webhooks were removed in Karpenter 1.1)
 3. **NodePool CRD**: Defines node provisioning policies
 4. **EC2NodeClass CRD**: Defines the configuration of nodes to be provisioned
 5. **Cloud Provider Integration**: Integrates with cloud provider APIs to manage compute resources
@@ -81,7 +81,7 @@ The following diagram shows how Karpenter works in an EKS cluster:
 
 ### Prerequisites
 
-- Kubernetes cluster (v1.29 or higher)
+- Kubernetes cluster (v1.30 or higher — see the Karpenter compatibility matrix; Kubernetes 1.36 requires Karpenter 1.13+)
 - kubectl configured
 - Cloud provider credentials and permissions
 - Helm (optional)
@@ -755,7 +755,7 @@ spec:
         karpenter.sh/discovery: "true"
 ```
 
-#### 3. Launch Templates
+#### 3. Replacing Launch Templates (EC2NodeClass)
 
 Karpenter v1 does not accept user-supplied EC2 launch templates (the legacy `launchTemplate` field was removed). Karpenter generates and manages launch templates itself from the EC2NodeClass, so settings you would have put in a launch template are expressed directly in the EC2NodeClass:
 
@@ -763,7 +763,7 @@ Karpenter v1 does not accept user-supplied EC2 launch templates (the legacy `lau
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
-  name: custom-launch-template
+  name: node-config
 spec:
   role: KarpenterNodeRole
   subnetSelectorTerms:

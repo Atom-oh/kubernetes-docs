@@ -1,7 +1,7 @@
 # Karpenter
 
-> **지원 버전**: Karpenter 1.6 ~ 1.14, Kubernetes 1.29+ (v1.14 기준)  
-> **마지막 업데이트**: 2026년 8월 24일
+> **지원 버전**: Karpenter 1.6 ~ 1.14, Kubernetes 1.30+ (v1.14 기준)  
+> **마지막 업데이트**: 2026년 9월 9일
 
 ## 목차
 - [소개](#소개)
@@ -48,7 +48,7 @@ Karpenter는 Kubernetes 클러스터의 노드 프로비저닝을 자동화하�
 
 Karpenter는 Kubernetes 컨트롤러로 작동하며, 스케줄링할 수 없는 파드를 감지하고 적절한 노드를 프로비저닝합니다.
 
-![Karpenter 컨트롤러가 Kubernetes 클러스터 안에서 스케줄링되지 못한 파드를 감시하고 웹훅이 검증한 NodePool·EC2NodeClass CRD를 참조해, Kubernetes API와 클라우드 제공업체 Instance API를 호출하여 컴퓨트 인스턴스를 프로비저닝하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-0.png)
+![Karpenter 컨트롤러가 Kubernetes 클러스터 안에서 스케줄링되지 못한 파드를 감시하고 CRD CEL 규칙으로 검증된 NodePool·EC2NodeClass를 참조해, Kubernetes API와 클라우드 제공업체 Instance API를 호출하여 컴퓨트 인스턴스를 프로비저닝하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-02-karpenter-0.html)
 
@@ -63,7 +63,7 @@ Karpenter는 Kubernetes 컨트롤러로 작동하며, 스케줄링할 수 없는
 ### 주요 구성 요소
 
 1. **Karpenter 컨트롤러**: 스케줄링할 수 없는 파드를 감지하고 노드 프로비저닝을 관리
-2. **Karpenter 웹훅**: Karpenter 리소스의 유효성을 검사
+2. **CRD CEL 검증**: NodePool·EC2NodeClass는 CRD의 CEL 검증 규칙으로 유효성을 검사한다 (어드미션·변환 웹훅은 Karpenter 1.1에서 제거됨)
 3. **NodePool CRD**: 노드 프로비저닝 정책을 정의
 4. **EC2NodeClass CRD**: 프로비저닝할 노드의 구성을 정의
 5. **클라우드 제공업체 통합**: 클라우드 제공업체의 API와 통합하여 컴퓨팅 리소스 관리
@@ -81,7 +81,7 @@ Karpenter는 Kubernetes 컨트롤러로 작동하며, 스케줄링할 수 없는
 
 ### 사전 요구 사항
 
-- Kubernetes 클러스터 (v1.29 이상)
+- Kubernetes 클러스터 (v1.30 이상 — Karpenter 호환성 매트릭스 참조, Kubernetes 1.36은 Karpenter 1.13+ 필요)
 - kubectl 설정
 - 클라우드 제공업체 자격 증명 및 권한
 - Helm (선택 사항)
@@ -317,17 +317,18 @@ Karpenter v1.13(2026년 6월 릴리스)부터 Kubernetes DRA(Dynamic Resource Al
 노드 만료 설정은 Karpenter가 노드를 제거하는 시기를 정의합니다:
 
 ```yaml
-template:
-  spec:
-    # 노드 생성 후 제거하기까지의 최대 시간
-    expireAfter: 720h  # 30일
+spec:
+  template:
+    spec:
+      # 노드 생성 후 제거하기까지의 최대 시간
+      expireAfter: 720h  # 30일 (만료를 끄려면 "Never")
 
-disruption:
-  # 노드가 비어 있을 때 통합(제거)
-  consolidationPolicy: WhenEmpty
+  disruption:
+    # 노드가 비어 있을 때 통합(제거)
+    consolidationPolicy: WhenEmpty
 
-  # 노드가 비어 있은 후 통합(제거)까지의 시간
-  consolidateAfter: 30s
+    # 노드가 비어 있은 후 통합(제거)까지의 시간
+    consolidateAfter: 30s
 ```
 
 ### NodeReadinessController를 통한 초기화 Taint 자동 무시 (v1.13)
@@ -408,7 +409,7 @@ spec:
 
 ### 서브넷 및 보안 그룹 선택
 
-서브넷과 보안 그룹은 태그 기반 선택 조건(selector terms)을 사용하여 선택할 수 있습니다:
+서브넷과 보안 그룹은 태그 기반 선택 조건(selector terms)을 사용하여 선택할 수 있습니다. 여러 term은 OR로, 하나의 term 안의 태그는 AND로 평가됩니다:
 
 ```yaml
 # 서브넷 선택
@@ -758,7 +759,7 @@ spec:
         karpenter.sh/discovery: "true"
 ```
 
-#### 3. 시작 템플릿
+#### 3. Launch Template 대체 (EC2NodeClass)
 
 Karpenter v1에서는 사용자가 만든 EC2 시작 템플릿을 직접 참조하는 `launchTemplate` 필드가 제거되었습니다. 대신 Karpenter가 `EC2NodeClass`의 `amiSelectorTerms`, `blockDeviceMappings`, `userData`, `metadataOptions`, `tags` 등을 바탕으로 시작 템플릿을 자동 생성·관리합니다. 기존 시작 템플릿에 담겨 있던 설정은 해당 `EC2NodeClass` 필드로 옮겨 표현하세요:
 
@@ -766,7 +767,7 @@ Karpenter v1에서는 사용자가 만든 EC2 시작 템플릿을 직접 참조�
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
-  name: custom-launch-template
+  name: node-config
 spec:
   role: KarpenterNodeRole
   subnetSelectorTerms:
