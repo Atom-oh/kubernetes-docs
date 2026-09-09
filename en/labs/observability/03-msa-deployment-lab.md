@@ -1,6 +1,6 @@
 # Part 3: MSA Deployment and Canary
 
-> **Difficulty**: Advanced **Estimated Time**: 60 minutes **Last Updated**: February 23, 2026
+> **Difficulty**: Advanced **Estimated Time**: 60 minutes **Last Updated**: September 9, 2026
 
 ## Learning Objectives
 
