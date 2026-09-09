@@ -205,7 +205,7 @@
       "items": [
         "Top lane: upstream Kubernetes release month for 1.33 through 1.36",
         "Bottom lane: when the same version became available on Amazon EKS",
-        "Plotted releases lag upstream by about 1-2 months; the section text cites approximately 2-4 months"
+        "EKS availability lags the upstream release by about 1-2 months"
       ]
     },
     {

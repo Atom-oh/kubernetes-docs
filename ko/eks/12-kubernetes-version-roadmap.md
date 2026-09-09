@@ -198,7 +198,7 @@ Amazon EKS는 Kubernetes 업스트림 릴리스를 기반으로 매니지드 환
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-3.html)
 
-### 3.2 현재 지원 버전 상태 (2026년 6월 기준)
+### 3.2 현재 지원 버전 상태 (2026년 9월 기준)
 
 | Kubernetes 버전 | EKS 릴리스 날짜 | Standard Support 종료 | Extended Support 종료 | 현재 상태 |
 |:---:|:---:|:---:|:---:|:---:|
@@ -217,7 +217,7 @@ Amazon EKS는 Kubernetes 업스트림 릴리스를 기반으로 매니지드 환
 
 ### 3.3 버전 라이프사이클 다이어그램
 
-![Kubernetes 1.29부터 1.36까지 EKS 각 버전의 Standard Support와 Extended Support 종료 시점, 그리고 2026년 6월 기준 지원 상태를 버전 순서대로 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-4.png)
+![Kubernetes 1.29부터 1.36까지 EKS 각 버전의 Standard Support와 Extended Support 종료 시점, 그리고 2026년 9월 기준 지원 상태를 버전 순서대로 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-4.html)
 

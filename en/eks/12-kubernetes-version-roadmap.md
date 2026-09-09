@@ -181,7 +181,7 @@ The table below tracks each Kubernetes version supported by EKS, including upstr
 
 Source: [Amazon EKS Kubernetes release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html); status column as of September 2026.
 
-> **Note**: EKS release dates typically lag upstream Kubernetes releases by 2-4 months. AWS uses this time to validate the release, integrate with EKS-managed add-ons, and ensure compatibility with AWS services.
+> **Note**: EKS release dates typically lag upstream Kubernetes releases by 1-2 months. AWS uses this time to validate the release, integrate with EKS-managed add-ons, and ensure compatibility with AWS services.
 
 ### Auto-Upgrade Behavior
 
@@ -2327,7 +2327,7 @@ Use this table to verify that your manifests are compatible with the target Kube
 
 ### EKS Version Lag vs. Upstream
 
-EKS releases lag behind upstream Kubernetes by approximately 2-4 months. This lag provides:
+EKS releases lag behind upstream Kubernetes by approximately 1-2 months. This lag provides:
 
 | Benefit | Description |
 |---------|-------------|
