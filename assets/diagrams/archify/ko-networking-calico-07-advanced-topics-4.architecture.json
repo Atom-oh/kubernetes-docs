@@ -5,7 +5,18 @@
     "title": "Typha 기반 멀티 클러스터 페더레이션",
     "output": "ko-networking-calico-07-advanced-topics-4.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {

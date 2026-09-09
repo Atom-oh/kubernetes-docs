@@ -37,7 +37,24 @@
         ],
         "note": "NAT 테이블의 POSTROUTING은 cali-POSTROUTING을 거쳐 cali-nat-outgoing 규칙으로 연결된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -5,7 +5,18 @@
     "title": "Calico 아키텍처",
     "output": "ko-networking-calico-02-architecture-0.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -32,7 +32,21 @@
         ],
         "note": "다른 VPC의 애플리케이션이 서비스 네트워크에 포함된 VPC Lattice 서비스로 요청을 보내 EKS 파드에 도달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

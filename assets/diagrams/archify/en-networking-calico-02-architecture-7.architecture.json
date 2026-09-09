@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Typha Fan-out Architecture",
+    "locale": "en",
+    "output": "en-networking-calico-02-architecture-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      500
+    ],
+    "views": [
+      {
+        "id": "watch",
+        "label": "API server watch streams",
+        "focus": [
+          "ws1",
+          "ws2",
+          "typha1",
+          "typha2"
+        ],
+        "note": "Only the Typha pods hold watch streams against the Kubernetes API server, not every Felix."
+      },
+      {
+        "id": "fanout",
+        "label": "Fan-out to Felix",
+        "focus": [
+          "typha1",
+          "cache1",
+          "felix1",
+          "typha2",
+          "cache2",
+          "felix2"
+        ],
+        "note": "Each Typha caches datastore updates locally and distributes them to roughly one hundred Felix agents in its node group."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ws1",
+      "type": "backend",
+      "label": "Watch Stream 1",
+      "sublabel": "API server watch",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ws2",
+      "type": "backend",
+      "label": "Watch Stream 2",
+      "sublabel": "API server watch",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha1",
+      "type": "backend",
+      "label": "Typha Pod 1",
+      "sublabel": "fan-out proxy",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "TCP :5473"
+    },
+    {
+      "id": "typha2",
+      "type": "backend",
+      "label": "Typha Pod 2",
+      "sublabel": "fan-out proxy",
+      "pos": [
+        340,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "TCP :5473"
+    },
+    {
+      "id": "cache1",
+      "type": "database",
+      "label": "Local Cache",
+      "sublabel": "datastore updates",
+      "pos": [
+        580,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cache2",
+      "type": "database",
+      "label": "Local Cache",
+      "sublabel": "datastore updates",
+      "pos": [
+        580,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix1",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "node group 1, x100",
+      "pos": [
+        880,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix2",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "node group 2, x100",
+      "pos": [
+        880,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes API Server",
+      "wraps": [
+        "ws1",
+        "ws2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Typha Layer",
+      "wraps": [
+        "typha1",
+        "typha2",
+        "cache1",
+        "cache2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Worker Nodes",
+      "wraps": [
+        "felix1",
+        "felix2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ws1-typha1",
+      "from": "ws1",
+      "to": "typha1",
+      "label": "watch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ws2-typha2",
+      "from": "ws2",
+      "to": "typha2",
+      "label": "watch"
+    },
+    {
+      "id": "typha1-cache1",
+      "from": "typha1",
+      "to": "cache1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "typha2-cache2",
+      "from": "typha2",
+      "to": "cache2"
+    },
+    {
+      "id": "cache1-felix1",
+      "from": "cache1",
+      "to": "felix1",
+      "label": "distribute",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cache2-felix2",
+      "from": "cache2",
+      "to": "felix2",
+      "label": "distribute"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Why Typha",
+      "items": [
+        "Fan-out proxy between the Kubernetes API server and Felix agents",
+        "Reduces API server load by caching and distributing datastore updates"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Sizing",
+      "items": [
+        "Typha Replicas = max(3, ceil(Nodes / 200))",
+        "Deployment example: 3 replicas, port 5473, connection rebalancing mode kubernetes"
+      ]
+    }
+  ]
+}

@@ -40,7 +40,21 @@
         ],
         "note": "응답은 원래 ClusterIP로 되돌려져 클라이언트에게 그대로 전달된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

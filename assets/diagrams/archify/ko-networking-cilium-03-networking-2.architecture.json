@@ -41,7 +41,10 @@
         ],
         "note": "호스트 B의 VTEP이 VXLAN 헤더를 제거하고, eBPF가 패킷을 처리한 뒤 컨테이너 B로 전달합니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

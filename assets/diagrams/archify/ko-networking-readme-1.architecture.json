@@ -9,7 +9,15 @@
     "viewBox": [
       1000,
       520
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

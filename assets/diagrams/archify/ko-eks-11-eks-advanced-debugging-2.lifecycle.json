@@ -9,7 +9,24 @@
     "viewBox": [
       980,
       566
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "active": {
+          "label": "진행 중"
+        },
+        "failure": {
+          "label": "실패 · 복구"
+        },
+        "start": {
+          "label": "시작"
+        },
+        "success": {
+          "label": "성공 · 완료"
+        }
+      }
+    }
   },
   "lanes": [
     {

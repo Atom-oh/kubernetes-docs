@@ -31,7 +31,21 @@
         ],
         "note": "Pod가 삭제되면 DEL 호출로 네트워크 리소스를 정리하고 완료를 알린다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

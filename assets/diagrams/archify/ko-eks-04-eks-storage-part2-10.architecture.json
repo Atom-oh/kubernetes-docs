@@ -6,31 +6,192 @@
     "output": "ko-eks-04-eks-storage-part2-10.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [840, 490],
+    "viewBox": [
+      840,
+      490
+    ],
     "views": [
-      { "id": "datasource-ref", "label": "dataSource 참조", "focus": ["src-pvc", "clone-pvc"], "note": "클론 PVC는 spec.dataSource로 기존 소스 PVC를 가리킨다." },
-      { "id": "bg-copy", "label": "백그라운드 데이터 복사", "focus": ["src-ebs", "clone-ebs"], "note": "EBS 볼륨 데이터가 백그라운드에서 새 클론 볼륨으로 직접 복사된다." }
-    ]
+      {
+        "id": "datasource-ref",
+        "label": "dataSource 참조",
+        "focus": [
+          "src-pvc",
+          "clone-pvc"
+        ],
+        "note": "클론 PVC는 spec.dataSource로 기존 소스 PVC를 가리킨다."
+      },
+      {
+        "id": "bg-copy",
+        "label": "백그라운드 데이터 복사",
+        "focus": [
+          "src-ebs",
+          "clone-ebs"
+        ],
+        "note": "EBS 볼륨 데이터가 백그라운드에서 새 클론 볼륨으로 직접 복사된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "src-pvc", "type": "frontend", "label": "소스 PVC", "sublabel": "ebs-source", "tag": "PVC", "pos": [110, 70], "size": [160, 60] },
-    { "id": "src-pv", "type": "backend", "label": "소스 PV", "sublabel": "바인딩된 PV", "tag": "PV", "pos": [110, 210], "size": [160, 60] },
-    { "id": "src-ebs", "type": "database", "label": "소스 EBS 볼륨", "sublabel": "기존 데이터", "tag": "EBS", "pos": [110, 350], "size": [160, 60] },
-    { "id": "clone-pvc", "type": "frontend", "label": "클론 PVC", "sublabel": "ebs-clone", "tag": "PVC", "pos": [590, 70], "size": [160, 60] },
-    { "id": "clone-pv", "type": "backend", "label": "클론 PV", "sublabel": "새로 프로비저닝", "tag": "PV", "pos": [590, 210], "size": [160, 60] },
-    { "id": "clone-ebs", "type": "database", "label": "클론 EBS 볼륨", "sublabel": "새 EBS 볼륨", "tag": "EBS", "pos": [590, 350], "size": [160, 60] }
+    {
+      "id": "src-pvc",
+      "type": "frontend",
+      "label": "소스 PVC",
+      "sublabel": "ebs-source",
+      "tag": "PVC",
+      "pos": [
+        110,
+        70
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "src-pv",
+      "type": "backend",
+      "label": "소스 PV",
+      "sublabel": "바인딩된 PV",
+      "tag": "PV",
+      "pos": [
+        110,
+        210
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "src-ebs",
+      "type": "database",
+      "label": "소스 EBS 볼륨",
+      "sublabel": "기존 데이터",
+      "tag": "EBS",
+      "pos": [
+        110,
+        350
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "clone-pvc",
+      "type": "frontend",
+      "label": "클론 PVC",
+      "sublabel": "ebs-clone",
+      "tag": "PVC",
+      "pos": [
+        590,
+        70
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "clone-pv",
+      "type": "backend",
+      "label": "클론 PV",
+      "sublabel": "새로 프로비저닝",
+      "tag": "PV",
+      "pos": [
+        590,
+        210
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "clone-ebs",
+      "type": "database",
+      "label": "클론 EBS 볼륨",
+      "sublabel": "새 EBS 볼륨",
+      "tag": "EBS",
+      "pos": [
+        590,
+        350
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "소스", "wraps": ["src-pvc", "src-pv", "src-ebs"] },
-    { "kind": "region", "label": "클론", "wraps": ["clone-pvc", "clone-pv", "clone-ebs"] }
+    {
+      "kind": "region",
+      "label": "소스",
+      "wraps": [
+        "src-pvc",
+        "src-pv",
+        "src-ebs"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클론",
+      "wraps": [
+        "clone-pvc",
+        "clone-pv",
+        "clone-ebs"
+      ]
+    }
   ],
   "connections": [
-    { "id": "datasource", "from": "src-pvc", "to": "clone-pvc", "label": "dataSource 참조", "variant": "emphasis" },
-    { "id": "src-bind", "from": "src-pvc", "to": "src-pv" },
-    { "id": "src-backing", "from": "src-pv", "to": "src-ebs" },
-    { "id": "clone-bind", "from": "clone-pvc", "to": "clone-pv" },
-    { "id": "clone-backing", "from": "clone-pv", "to": "clone-ebs" },
-    { "id": "data-copy", "from": "src-ebs", "to": "clone-ebs", "label": "백그라운드 데이터 복사", "variant": "dashed" }
+    {
+      "id": "datasource",
+      "from": "src-pvc",
+      "to": "clone-pvc",
+      "label": "dataSource 참조",
+      "variant": "emphasis"
+    },
+    {
+      "id": "src-bind",
+      "from": "src-pvc",
+      "to": "src-pv"
+    },
+    {
+      "id": "src-backing",
+      "from": "src-pv",
+      "to": "src-ebs"
+    },
+    {
+      "id": "clone-bind",
+      "from": "clone-pvc",
+      "to": "clone-pv"
+    },
+    {
+      "id": "clone-backing",
+      "from": "clone-pv",
+      "to": "clone-ebs"
+    },
+    {
+      "id": "data-copy",
+      "from": "src-ebs",
+      "to": "clone-ebs",
+      "label": "백그라운드 데이터 복사",
+      "variant": "dashed"
+    }
   ],
   "cards": [
     {

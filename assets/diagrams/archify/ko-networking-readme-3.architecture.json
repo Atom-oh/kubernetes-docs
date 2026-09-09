@@ -5,30 +5,202 @@
     "title": "Ingress를 통한 트래픽 분산",
     "output": "ko-networking-readme-3.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "internet", "type": "external", "label": "인터넷", "sublabel": "외부 HTTP/HTTPS 요청", "pos": [40, 300], "size": [150, 60] },
-    { "id": "ingress", "type": "backend", "label": "Ingress Controller", "sublabel": "L7 라우팅 (host / path 규칙)", "pos": [260, 300], "size": [180, 60] },
-    { "id": "svc-a", "type": "backend", "label": "Service A", "sublabel": "ClusterIP", "pos": [520, 130], "size": [150, 60] },
-    { "id": "svc-b", "type": "backend", "label": "Service B", "sublabel": "ClusterIP", "pos": [520, 300], "size": [150, 60] },
-    { "id": "svc-c", "type": "backend", "label": "Service C", "sublabel": "ClusterIP", "pos": [520, 470], "size": [150, 60] },
-    { "id": "pod-a1", "type": "backend", "label": "Pod A1", "pos": [760, 60], "size": [140, 60] },
-    { "id": "pod-a2", "type": "backend", "label": "Pod A2", "pos": [760, 200], "size": [140, 60] },
-    { "id": "pod-b1", "type": "backend", "label": "Pod B1", "pos": [760, 300], "size": [140, 60] },
-    { "id": "pod-c1", "type": "backend", "label": "Pod C1", "pos": [760, 470], "size": [140, 60] }
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "외부 HTTP/HTTPS 요청",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "Ingress Controller",
+      "sublabel": "L7 라우팅 (host / path 규칙)",
+      "pos": [
+        260,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "ClusterIP",
+      "pos": [
+        520,
+        130
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "ClusterIP",
+      "pos": [
+        520,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "ClusterIP",
+      "pos": [
+        520,
+        470
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod-a1",
+      "type": "backend",
+      "label": "Pod A1",
+      "pos": [
+        760,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pod-a2",
+      "type": "backend",
+      "label": "Pod A2",
+      "pos": [
+        760,
+        200
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pod-b1",
+      "type": "backend",
+      "label": "Pod B1",
+      "pos": [
+        760,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pod-c1",
+      "type": "backend",
+      "label": "Pod C1",
+      "pos": [
+        760,
+        470
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "클러스터", "wraps": ["ingress", "svc-a", "svc-b", "svc-c", "pod-a1", "pod-a2", "pod-b1", "pod-c1"] }
+    {
+      "kind": "region",
+      "label": "클러스터",
+      "wraps": [
+        "ingress",
+        "svc-a",
+        "svc-b",
+        "svc-c",
+        "pod-a1",
+        "pod-a2",
+        "pod-b1",
+        "pod-c1"
+      ]
+    }
   ],
   "connections": [
-    { "id": "internet-to-ingress", "from": "internet", "to": "ingress", "label": "HTTP", "variant": "emphasis" },
-    { "id": "ingress-to-svc-a", "from": "ingress", "to": "svc-a", "label": "호스트/경로 규칙" },
-    { "id": "ingress-to-svc-b", "from": "ingress", "to": "svc-b" },
-    { "id": "ingress-to-svc-c", "from": "ingress", "to": "svc-c" },
-    { "id": "svc-a-to-pod-a1", "from": "svc-a", "to": "pod-a1" },
-    { "id": "svc-a-to-pod-a2", "from": "svc-a", "to": "pod-a2" },
-    { "id": "svc-b-to-pod-b1", "from": "svc-b", "to": "pod-b1" },
-    { "id": "svc-c-to-pod-c1", "from": "svc-c", "to": "pod-c1" }
+    {
+      "id": "internet-to-ingress",
+      "from": "internet",
+      "to": "ingress",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-to-svc-a",
+      "from": "ingress",
+      "to": "svc-a",
+      "label": "호스트/경로 규칙"
+    },
+    {
+      "id": "ingress-to-svc-b",
+      "from": "ingress",
+      "to": "svc-b"
+    },
+    {
+      "id": "ingress-to-svc-c",
+      "from": "ingress",
+      "to": "svc-c"
+    },
+    {
+      "id": "svc-a-to-pod-a1",
+      "from": "svc-a",
+      "to": "pod-a1"
+    },
+    {
+      "id": "svc-a-to-pod-a2",
+      "from": "svc-a",
+      "to": "pod-a2"
+    },
+    {
+      "id": "svc-b-to-pod-b1",
+      "from": "svc-b",
+      "to": "pod-b1"
+    },
+    {
+      "id": "svc-c-to-pod-c1",
+      "from": "svc-c",
+      "to": "pod-c1"
+    }
   ]
 }

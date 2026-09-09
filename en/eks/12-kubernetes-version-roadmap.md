@@ -160,7 +160,9 @@ Amazon EKS provides two tiers of version support:
 
 ### Version Lifecycle Diagram
 
-![Timeline showing the standard and extended support windows for Amazon EKS Kubernetes versions 1.29 through 1.36, each with 14 months of standard support followed by 12 months of extended support at six times the price, with the current date marked.](../../assets/diagrams/rendered/eks-version-lifecycle.svg)
+![Diagram of the Amazon EKS version lifecycle: 14 months of standard support then 12 months of extended support at six times the price, with versions 1.29 to 1.36 grouped by release year and their release and support end dates.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-3.html)
 
 ### Detailed Version Support Matrix
 
@@ -1107,7 +1109,9 @@ User namespaces advanced to beta, providing stronger security isolation where co
 
 **Release Stats**: 58 enhancements -- 23 Stable, 22 Beta, 13 Alpha
 
-![Bar chart showing the 58 enhancements in Kubernetes 1.34 "Of Wind & Will" split into 23 Stable, 22 Beta, and 13 Alpha, with Stable highlighted.](../../assets/diagrams/rendered/k8s-134-breakdown.svg)
+![Diagram showing the 58 enhancements in Kubernetes 1.34 "Of Wind & Will" split by maturity stage into 23 Stable (GA), 22 Beta, and 13 Alpha, with the graduated-to-GA path emphasized, Beta enabled by default, and Alpha requiring a feature gate.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-12.html)
 
 #### Key Graduated Features (GA)
 
@@ -2689,7 +2693,9 @@ echo "=== Alignment Check Complete ==="
 
 ### Upgrade Execution Workflow
 
-![Flowchart showing the five-phase EKS cluster upgrade workflow -- assessment, staging test, preparation, execution, and validation -- each retrying on failure, with control-plane health as the one hard gate during execution that routes to contacting AWS support on failure.](../../assets/diagrams/rendered/upgrade-execution-workflow.svg)
+![Workflow diagram of the five-phase EKS cluster upgrade -- assessment, staging test, preparation, execution, and validation -- with staging and validation retried on failure, and API server health as the one hard gate during execution that routes to contacting AWS Support on failure.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-18.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-18.html)
 
 ### Rollback Strategy
 

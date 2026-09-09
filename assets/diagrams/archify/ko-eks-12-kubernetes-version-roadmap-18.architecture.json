@@ -41,7 +41,10 @@
         ],
         "note": "Gateway API가 Ingress를 대체하고, WASM이 서버리스와 Edge 런타임으로 확장된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

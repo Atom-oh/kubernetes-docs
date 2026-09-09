@@ -28,7 +28,18 @@
         ],
         "note": "각 노드는 다른 AS 64513의 ToR 스위치와 개별 eBGP 세션을 맺는다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

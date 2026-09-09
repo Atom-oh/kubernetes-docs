@@ -7,36 +7,217 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "rr-peering", "label": "RR 간 피어링", "focus": ["rr1", "rr2"], "note": "Route Reflector 두 대가 서로 iBGP로 피어링해 각자 받은 라우트를 반사한다." },
-      { "id": "clients", "label": "클라이언트 → RR", "focus": ["node1", "node2", "nodeN", "node3", "node4", "rr1", "rr2"], "note": "각 노드는 전체 메시 대신 Route Reflector에만 iBGP 세션을 맺는다." }
-    ]
+      {
+        "id": "rr-peering",
+        "label": "RR 간 피어링",
+        "focus": [
+          "rr1",
+          "rr2"
+        ],
+        "note": "Route Reflector 두 대가 서로 iBGP로 피어링해 각자 받은 라우트를 반사한다."
+      },
+      {
+        "id": "clients",
+        "label": "클라이언트 → RR",
+        "focus": [
+          "node1",
+          "node2",
+          "nodeN",
+          "node3",
+          "node4",
+          "rr1",
+          "rr2"
+        ],
+        "note": "각 노드는 전체 메시 대신 Route Reflector에만 iBGP 세션을 맺는다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "rr1", "type": "backend", "label": "Route Reflector 1", "sublabel": "Cluster ID 244.0.0.1", "tag": "RR", "pos": [240, 70], "size": [180, 64] },
-    { "id": "rr2", "type": "backend", "label": "Route Reflector 2", "sublabel": "Cluster ID 244.0.0.2", "tag": "RR", "pos": [660, 70], "size": [180, 64] },
-    { "id": "node1", "type": "backend", "label": "Node 1", "sublabel": "BIRD", "pos": [50, 290], "size": [140, 60] },
-    { "id": "node2", "type": "backend", "label": "Node 2", "sublabel": "BIRD", "pos": [230, 290], "size": [140, 60] },
-    { "id": "nodeN", "type": "backend", "label": "Node N...", "sublabel": "BIRD", "pos": [410, 290], "size": [140, 60] },
-    { "id": "node3", "type": "backend", "label": "Node 3", "sublabel": "BIRD", "pos": [610, 290], "size": [140, 60] },
-    { "id": "node4", "type": "backend", "label": "Node 4", "sublabel": "BIRD", "pos": [790, 290], "size": [140, 60] }
+    {
+      "id": "rr1",
+      "type": "backend",
+      "label": "Route Reflector 1",
+      "sublabel": "Cluster ID 244.0.0.1",
+      "tag": "RR",
+      "pos": [
+        240,
+        70
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "rr2",
+      "type": "backend",
+      "label": "Route Reflector 2",
+      "sublabel": "Cluster ID 244.0.0.2",
+      "tag": "RR",
+      "pos": [
+        660,
+        70
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "BIRD",
+      "pos": [
+        50,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "BIRD",
+      "pos": [
+        230,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nodeN",
+      "type": "backend",
+      "label": "Node N...",
+      "sublabel": "BIRD",
+      "pos": [
+        410,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "BIRD",
+      "pos": [
+        610,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "node4",
+      "type": "backend",
+      "label": "Node 4",
+      "sublabel": "BIRD",
+      "pos": [
+        790,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Route Reflector 노드 (RR 2대)", "wraps": ["rr1", "rr2"] },
-    { "kind": "region", "label": "클라이언트 노드 (50노드 이상)", "wraps": ["node1", "node2", "nodeN", "node3", "node4"] }
+    {
+      "kind": "region",
+      "label": "Route Reflector 노드 (RR 2대)",
+      "wraps": [
+        "rr1",
+        "rr2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클라이언트 노드 (50노드 이상)",
+      "wraps": [
+        "node1",
+        "node2",
+        "nodeN",
+        "node3",
+        "node4"
+      ]
+    }
   ],
   "connections": [
-    { "id": "rr1-rr2", "from": "rr1", "to": "rr2", "label": "iBGP (RR ↔ RR)", "variant": "emphasis" },
-    { "id": "node1-rr1", "from": "node1", "to": "rr1", "label": "iBGP", "fromSide": "top", "toSide": "bottom" },
-    { "id": "node2-rr1", "from": "node2", "to": "rr1", "fromSide": "top", "toSide": "bottom" },
-    { "id": "nodeN-rr1", "from": "nodeN", "to": "rr1", "fromSide": "top", "toSide": "bottom" },
-    { "id": "node3-rr2", "from": "node3", "to": "rr2", "label": "iBGP", "fromSide": "top", "toSide": "bottom" },
-    { "id": "node4-rr2", "from": "node4", "to": "rr2", "fromSide": "top", "toSide": "bottom" }
+    {
+      "id": "rr1-rr2",
+      "from": "rr1",
+      "to": "rr2",
+      "label": "iBGP (RR ↔ RR)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node1-rr1",
+      "from": "node1",
+      "to": "rr1",
+      "label": "iBGP",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "node2-rr1",
+      "from": "node2",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "nodeN-rr1",
+      "from": "nodeN",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "node3-rr2",
+      "from": "node3",
+      "to": "rr2",
+      "label": "iBGP",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "node4-rr2",
+      "from": "node4",
+      "to": "rr2",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
   ],
   "cards": [
-    { "dot": "amber", "title": "Route Reflector를 쓰는 이유", "items": [
-      "50노드 이상 대규모 클러스터에서는 Full Mesh 대신 Route Reflector를 사용한다",
-      "각 노드는 RR에만 iBGP 세션을 맺어 세션 수가 노드 수에 비례해 늘어난다",
-      "RR끼리도 iBGP로 피어링해 클라이언트에서 받은 Pod CIDR 라우트를 서로 반사한다"
-    ] }
+    {
+      "dot": "amber",
+      "title": "Route Reflector를 쓰는 이유",
+      "items": [
+        "50노드 이상 대규모 클러스터에서는 Full Mesh 대신 Route Reflector를 사용한다",
+        "각 노드는 RR에만 iBGP 세션을 맺어 세션 수가 노드 수에 비례해 늘어난다",
+        "RR끼리도 iBGP로 피어링해 클라이언트에서 받은 Pod CIDR 라우트를 서로 반사한다"
+      ]
+    }
   ]
 }

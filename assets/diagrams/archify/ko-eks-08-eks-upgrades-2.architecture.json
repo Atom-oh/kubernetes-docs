@@ -50,7 +50,18 @@
         ],
         "note": "일반적인 문제를 파악하고 정해진 문제 해결 단계를 따른다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

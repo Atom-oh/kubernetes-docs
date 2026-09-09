@@ -30,7 +30,18 @@
         ],
         "note": "서로 다른 AS 사이의 세션. TTL 기본값 1, Next-hop을 자신으로 바꿔 경로를 전파한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -11,7 +11,7 @@
       530
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "external": {
           "label": "오류 메시지 분류 기준"

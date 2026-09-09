@@ -39,7 +39,21 @@
         ],
         "note": "AWS Controllers for Kubernetes는 Kubernetes 리소스로 AWS 리소스를 관리하는 오퍼레이터 모음이다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

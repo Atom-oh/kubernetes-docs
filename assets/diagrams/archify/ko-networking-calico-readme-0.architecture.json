@@ -5,7 +5,21 @@
     "title": "Calico를 선택해야 하는 이유",
     "output": "ko-networking-calico-readme-0.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {
@@ -14,8 +28,14 @@
       "label": "고성능",
       "sublabel": "BGP / eBPF 데이터플레인",
       "tag": "PRF",
-      "pos": [40, 80],
-      "size": [190, 64]
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
     },
     {
       "id": "security",
@@ -23,8 +43,14 @@
       "label": "강력한 보안",
       "sublabel": "K8s 표준 + Calico 확장 정책",
       "tag": "SEC",
-      "pos": [270, 80],
-      "size": [200, 64]
+      "pos": [
+        270,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
     },
     {
       "id": "scalability",
@@ -32,8 +58,14 @@
       "label": "대규모 확장성",
       "sublabel": "10년+ 프로덕션 검증",
       "tag": "SCL",
-      "pos": [510, 80],
-      "size": [190, 64]
+      "pos": [
+        510,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
     },
     {
       "id": "flexibility",
@@ -41,8 +73,14 @@
       "label": "유연성",
       "sublabel": "K8s · VM · 베어메탈 · Windows",
       "tag": "FLX",
-      "pos": [740, 80],
-      "size": [210, 64]
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        210,
+        64
+      ]
     },
     {
       "id": "enterprise",
@@ -50,22 +88,61 @@
       "label": "엔터프라이즈 프로덕션 환경",
       "sublabel": "Fortune 100 기업의 80% 이상 사용",
       "tag": "OUT",
-      "pos": [375, 300],
-      "size": [240, 68]
+      "pos": [
+        375,
+        300
+      ],
+      "size": [
+        240,
+        68
+      ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
       "label": "Calico 핵심 가치",
-      "wraps": ["performance", "security", "scalability", "flexibility"]
+      "wraps": [
+        "performance",
+        "security",
+        "scalability",
+        "flexibility"
+      ]
     }
   ],
   "connections": [
-    { "id": "perf-to-enterprise", "from": "performance", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "sec-to-enterprise", "from": "security", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "scale-to-enterprise", "from": "scalability", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "flex-to-enterprise", "from": "flexibility", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" }
+    {
+      "id": "perf-to-enterprise",
+      "from": "performance",
+      "to": "enterprise",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sec-to-enterprise",
+      "from": "security",
+      "to": "enterprise",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "scale-to-enterprise",
+      "from": "scalability",
+      "to": "enterprise",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "flex-to-enterprise",
+      "from": "flexibility",
+      "to": "enterprise",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
   ],
   "cards": [
     {

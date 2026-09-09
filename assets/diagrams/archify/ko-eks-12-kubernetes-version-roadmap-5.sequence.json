@@ -38,7 +38,24 @@
         ],
         "note": "노드 그룹은 자동 업그레이드 대상이 아니므로 관리자가 직접 업그레이드해야 한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

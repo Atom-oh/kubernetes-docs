@@ -299,7 +299,9 @@ Typha is a fan-out proxy that sits between the Kubernetes API server and Felix a
 
 ### Why Typha?
 
-![Comparison diagram showing every Felix watching the Kubernetes API directly in a small cluster versus Typha pods fanning out cached updates to hundreds of Felix agents in a large cluster.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-6.svg)
+![Comparison diagram showing every Felix watching the Kubernetes API directly in a small cluster versus Typha pods fanning out cached updates to hundreds of Felix agents in a large cluster.](../../.gitbook/assets/en-networking-calico-02-architecture-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-6.html)
 
 ### Typha Scaling Calculation
 
@@ -407,7 +409,9 @@ spec:
 
 ### Typha Fan-out Architecture
 
-![Architecture diagram showing two API server watch streams feeding two Typha pods, each caching updates locally and fanning them out to roughly one hundred Felix agents in its node group.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
+![Architecture diagram showing two API server watch streams feeding two Typha pods, each caching updates locally and fanning them out to roughly one hundred Felix agents in its node group.](../../.gitbook/assets/en-networking-calico-02-architecture-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-7.html)
 
 ## kube-controllers: Kubernetes Integration
 
@@ -473,7 +477,9 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ### Kubernetes API Datastore (Recommended)
 
-![Diagram showing Felix, Typha, and kube-controllers all reading and writing Calico state through the Kubernetes API server, which itself persists to etcd - no separate Calico etcd cluster required.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
+![Diagram showing Felix, Typha, and kube-controllers all reading and writing Calico state through the Kubernetes API server, which itself persists to etcd - no separate Calico etcd cluster required.](../../.gitbook/assets/en-networking-calico-02-architecture-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-9.html)
 
 **Advantages:**
 
@@ -484,7 +490,9 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ### etcd Datastore (Legacy)
 
-![Diagram showing Felix and Typha reading and writing directly to a dedicated Calico etcd cluster while kube-controllers bridges that cluster with the Kubernetes API server - the legacy, decoupled datastore option.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
+![Diagram of the legacy etcd datastore option: Typha reads and writes Calico state in a dedicated Calico etcd cluster and fans updates out to Felix, while kube-controllers watches the Kubernetes API server and syncs resources into that etcd cluster.](../../.gitbook/assets/en-networking-calico-02-architecture-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-10.html)
 
 **Advantages:**
 
@@ -505,13 +513,17 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ## Component Interaction Sequence
 
-![Sequence diagram tracing a NetworkPolicy and a Pod creation from the Kubernetes API through kube-controllers and Typha to Felix, which programs the local data plane and updates BGP routes.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-11.svg)
+![Sequence diagram tracing a NetworkPolicy and a Pod creation from the Kubernetes API through kube-controllers and Typha to Felix, which programs the local data plane and updates BGP routes.](../../.gitbook/assets/en-networking-calico-02-architecture-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-11.html)
 
 ## Packet Flow Analysis
 
 ### Ingress Packet Flow (Pod-to-Pod, Same Node)
 
-![Diagram showing a packet crossing from one pod to another on the same node through their veth interfaces and the host's iptables/eBPF policy check.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
+![Diagram showing a packet crossing from one pod to another on the same node through their veth interfaces and the host's iptables/eBPF policy check.](../../.gitbook/assets/en-networking-calico-02-architecture-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-12.html)
 
 ### Egress Packet Flow (Pod-to-Pod, Different Nodes with IPIP)
 

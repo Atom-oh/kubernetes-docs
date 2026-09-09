@@ -40,7 +40,21 @@
         ],
         "note": "서버리스 컴퓨팅 엔진으로 노드 관리가 필요 없고 포드 단위로 과금되지만 로드 밸런서 직접 연결은 제한된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

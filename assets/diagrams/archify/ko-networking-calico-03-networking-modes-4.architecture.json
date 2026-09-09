@@ -11,7 +11,7 @@
       340
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "backend": {
           "label": "Pod / 노드 라우팅 테이블"

@@ -30,7 +30,21 @@
         ],
         "note": "VPC CNI가 각 포드에 VPC IP를 할당하므로 가용 영역 간 포드도 VPC 네트워크로 직접 통신한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -7,30 +7,198 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "filesystem-mode", "label": "Filesystem Mode (기본)", "focus": ["fs-pv", "fs-mount", "fs-pod"], "note": "PV를 ext4/xfs로 포맷해 디렉토리(/mnt/data)로 파드에 마운트하는 기본 방식이다." },
-      { "id": "block-mode", "label": "Block Mode", "focus": ["blk-pv", "blk-device", "blk-pod"], "note": "volumeMode: Block으로 지정한 PV를 원시 블록 디바이스(/dev/xvda)로 파드에 노출한다." }
-    ]
+      {
+        "id": "filesystem-mode",
+        "label": "Filesystem Mode (기본)",
+        "focus": [
+          "fs-pv",
+          "fs-mount",
+          "fs-pod"
+        ],
+        "note": "PV를 ext4/xfs로 포맷해 디렉토리(/mnt/data)로 파드에 마운트하는 기본 방식이다."
+      },
+      {
+        "id": "block-mode",
+        "label": "Block Mode",
+        "focus": [
+          "blk-pv",
+          "blk-device",
+          "blk-pod"
+        ],
+        "note": "volumeMode: Block으로 지정한 PV를 원시 블록 디바이스(/dev/xvda)로 파드에 노출한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "fs-pv", "type": "database", "label": "PersistentVolume", "sublabel": "volumeMode: Filesystem", "tag": "PV", "pos": [100, 70], "size": [220, 64] },
-    { "id": "fs-mount", "type": "backend", "label": "파일시스템 마운트", "sublabel": "/mnt/data", "pos": [100, 240], "size": [220, 64] },
-    { "id": "fs-pod", "type": "backend", "label": "Pod", "sublabel": "volumeMounts", "tag": "POD", "pos": [100, 410], "size": [220, 64] },
-    { "id": "blk-pv", "type": "database", "label": "PersistentVolume", "sublabel": "volumeMode: Block", "tag": "PV", "pos": [560, 70], "size": [220, 64] },
-    { "id": "blk-device", "type": "backend", "label": "/dev/xvda", "sublabel": "원시 블록 디바이스", "pos": [560, 240], "size": [220, 64] },
-    { "id": "blk-pod", "type": "backend", "label": "Pod", "sublabel": "volumeDevices", "tag": "POD", "pos": [560, 410], "size": [220, 64] }
+    {
+      "id": "fs-pv",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "volumeMode: Filesystem",
+      "tag": "PV",
+      "pos": [
+        100,
+        70
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "fs-mount",
+      "type": "backend",
+      "label": "파일시스템 마운트",
+      "sublabel": "/mnt/data",
+      "pos": [
+        100,
+        240
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "fs-pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "volumeMounts",
+      "tag": "POD",
+      "pos": [
+        100,
+        410
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "blk-pv",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "volumeMode: Block",
+      "tag": "PV",
+      "pos": [
+        560,
+        70
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "blk-device",
+      "type": "backend",
+      "label": "/dev/xvda",
+      "sublabel": "원시 블록 디바이스",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "blk-pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "volumeDevices",
+      "tag": "POD",
+      "pos": [
+        560,
+        410
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Filesystem Mode (기본)", "wraps": ["fs-pv", "fs-mount", "fs-pod"] },
-    { "kind": "region", "label": "Block Mode", "wraps": ["blk-pv", "blk-device", "blk-pod"] }
+    {
+      "kind": "region",
+      "label": "Filesystem Mode (기본)",
+      "wraps": [
+        "fs-pv",
+        "fs-mount",
+        "fs-pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Block Mode",
+      "wraps": [
+        "blk-pv",
+        "blk-device",
+        "blk-pod"
+      ]
+    }
   ],
   "connections": [
-    { "id": "fs-format", "from": "fs-pv", "to": "fs-mount", "label": "ext4/xfs 포맷", "labelDy": 24 },
-    { "id": "fs-access", "from": "fs-mount", "to": "fs-pod", "label": "디렉토리 접근", "labelDy": 24 },
-    { "id": "blk-raw", "from": "blk-pv", "to": "blk-device", "label": "원시 블록", "labelDy": 24, "variant": "emphasis" },
-    { "id": "blk-access", "from": "blk-device", "to": "blk-pod", "label": "디바이스 접근", "labelDy": 24, "variant": "emphasis" }
+    {
+      "id": "fs-format",
+      "from": "fs-pv",
+      "to": "fs-mount",
+      "label": "ext4/xfs 포맷",
+      "labelDy": 24
+    },
+    {
+      "id": "fs-access",
+      "from": "fs-mount",
+      "to": "fs-pod",
+      "label": "디렉토리 접근",
+      "labelDy": 24
+    },
+    {
+      "id": "blk-raw",
+      "from": "blk-pv",
+      "to": "blk-device",
+      "label": "원시 블록",
+      "labelDy": 24,
+      "variant": "emphasis"
+    },
+    {
+      "id": "blk-access",
+      "from": "blk-device",
+      "to": "blk-pod",
+      "label": "디바이스 접근",
+      "labelDy": 24,
+      "variant": "emphasis"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Filesystem Mode", "items": ["기본 volumeMode로, PV를 ext4/xfs로 포맷해 디렉토리로 마운트한다", "파드는 volumeMounts의 mountPath로 접근한다"] },
-    { "dot": "violet", "title": "Block Mode", "items": ["PV와 PVC 모두 volumeMode: Block으로 지정한다", "파드는 volumeMounts 대신 volumeDevices의 devicePath(/dev/xvda)로 접근한다", "파일시스템 오버헤드 없이 직접 블록 접근이 필요한 데이터베이스(PostgreSQL, Cassandra 등)·VM 디스크 이미지에 적합하다"] }
+    {
+      "dot": "cyan",
+      "title": "Filesystem Mode",
+      "items": [
+        "기본 volumeMode로, PV를 ext4/xfs로 포맷해 디렉토리로 마운트한다",
+        "파드는 volumeMounts의 mountPath로 접근한다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Block Mode",
+      "items": [
+        "PV와 PVC 모두 volumeMode: Block으로 지정한다",
+        "파드는 volumeMounts 대신 volumeDevices의 devicePath(/dev/xvda)로 접근한다",
+        "파일시스템 오버헤드 없이 직접 블록 접근이 필요한 데이터베이스(PostgreSQL, Cassandra 등)·VM 디스크 이미지에 적합하다"
+      ]
+    }
   ]
 }

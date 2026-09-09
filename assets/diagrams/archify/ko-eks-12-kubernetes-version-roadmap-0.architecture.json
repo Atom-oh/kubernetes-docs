@@ -6,30 +6,194 @@
     "output": "ko-eks-12-kubernetes-version-roadmap-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1180, 380],
+    "viewBox": [
+      1180,
+      380
+    ],
     "views": [
-      { "id": "release", "label": "릴리스 사이클", "focus": ["hub", "release"], "note": "연 3회 릴리스 주기와 alpha/beta/GA 성숙도 모델, Feature Gate 관리." },
-      { "id": "features", "label": "버전별 기능", "focus": ["hub", "features"], "note": "1.29 Mandala부터 1.36 Haru까지 각 버전의 주요 Enhancement." },
-      { "id": "eks", "label": "EKS 지원", "focus": ["hub", "eks"], "note": "Standard/Extended Support 체계와 비용 구조, EKS Auto Mode 버전 관리." },
-      { "id": "upgrade", "label": "업그레이드 전략", "focus": ["hub", "upgrade"], "note": "Feature Gate 테스트, 호환성 검증, 롤백 계획 수립." }
-    ]
+      {
+        "id": "release",
+        "label": "릴리스 사이클",
+        "focus": [
+          "hub",
+          "release"
+        ],
+        "note": "연 3회 릴리스 주기와 alpha/beta/GA 성숙도 모델, Feature Gate 관리."
+      },
+      {
+        "id": "features",
+        "label": "버전별 기능",
+        "focus": [
+          "hub",
+          "features"
+        ],
+        "note": "1.29 Mandala부터 1.36 Haru까지 각 버전의 주요 Enhancement."
+      },
+      {
+        "id": "eks",
+        "label": "EKS 지원",
+        "focus": [
+          "hub",
+          "eks"
+        ],
+        "note": "Standard/Extended Support 체계와 비용 구조, EKS Auto Mode 버전 관리."
+      },
+      {
+        "id": "upgrade",
+        "label": "업그레이드 전략",
+        "focus": [
+          "hub",
+          "upgrade"
+        ],
+        "note": "Feature Gate 테스트, 호환성 검증, 롤백 계획 수립."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "hub", "type": "backend", "label": "Kubernetes", "sublabel": "버전 관리", "pos": [490, 40], "size": [200, 64], "tag": "1.29 - 1.36" },
-    { "id": "release", "type": "cloud", "label": "릴리스 사이클", "sublabel": "연 3회 · alpha/beta/GA · Feature Gate", "pos": [40, 240], "size": [250, 64] },
-    { "id": "features", "type": "cloud", "label": "버전별 기능", "sublabel": "1.29 Mandala … 1.36 Haru", "pos": [330, 240], "size": [250, 64] },
-    { "id": "eks", "type": "cloud", "label": "EKS 지원", "sublabel": "Standard/Extended · Auto Mode", "pos": [620, 240], "size": [250, 64] },
-    { "id": "upgrade", "type": "cloud", "label": "업그레이드 전략", "sublabel": "호환성 검증 · 롤백 계획", "pos": [910, 240], "size": [250, 64] }
+    {
+      "id": "hub",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "버전 관리",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "1.29 - 1.36"
+    },
+    {
+      "id": "release",
+      "type": "cloud",
+      "label": "릴리스 사이클",
+      "sublabel": "연 3회 · alpha/beta/GA · Feature Gate",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "features",
+      "type": "cloud",
+      "label": "버전별 기능",
+      "sublabel": "1.29 Mandala … 1.36 Haru",
+      "pos": [
+        330,
+        240
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS 지원",
+      "sublabel": "Standard/Extended · Auto Mode",
+      "pos": [
+        620,
+        240
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "upgrade",
+      "type": "cloud",
+      "label": "업그레이드 전략",
+      "sublabel": "호환성 검증 · 롤백 계획",
+      "pos": [
+        910,
+        240
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
   ],
   "connections": [
-    { "id": "hub-release", "from": "hub", "to": "release", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "hub-features", "from": "hub", "to": "features", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "hub-eks", "from": "hub", "to": "eks", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "hub-upgrade", "from": "hub", "to": "upgrade", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" }
+    {
+      "id": "hub-release",
+      "from": "hub",
+      "to": "release",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hub-features",
+      "from": "hub",
+      "to": "features",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hub-eks",
+      "from": "hub",
+      "to": "eks",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hub-upgrade",
+      "from": "hub",
+      "to": "upgrade",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "릴리스와 기능", "items": ["연 3회 릴리스, 주기당 약 15주", "alpha → beta → GA 성숙도 모델과 Feature Gate", "1.29 Mandala ~ 1.36 Haru 버전별 주요 Enhancement"] },
-    { "dot": "amber", "title": "EKS 지원 체계", "items": ["Standard Support / Extended Support 와 비용 구조", "Extended Support 종료 시 컨트롤 플레인 자동 업그레이드", "EKS Auto Mode 클러스터의 버전 관리"] },
-    { "dot": "emerald", "title": "업그레이드 전략", "items": ["Deprecated API 스캔 등 사전 점검 체크리스트", "Feature Gate 테스트와 호환성 검증", "롤백 계획 수립"] }
+    {
+      "dot": "cyan",
+      "title": "릴리스와 기능",
+      "items": [
+        "연 3회 릴리스, 주기당 약 15주",
+        "alpha → beta → GA 성숙도 모델과 Feature Gate",
+        "1.29 Mandala ~ 1.36 Haru 버전별 주요 Enhancement"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "EKS 지원 체계",
+      "items": [
+        "Standard Support / Extended Support 와 비용 구조",
+        "Extended Support 종료 시 컨트롤 플레인 자동 업그레이드",
+        "EKS Auto Mode 클러스터의 버전 관리"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "업그레이드 전략",
+      "items": [
+        "Deprecated API 스캔 등 사전 점검 체크리스트",
+        "Feature Gate 테스트와 호환성 검증",
+        "롤백 계획 수립"
+      ]
+    }
   ]
 }

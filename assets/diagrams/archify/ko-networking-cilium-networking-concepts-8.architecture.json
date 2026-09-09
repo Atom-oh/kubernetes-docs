@@ -31,7 +31,21 @@
         ],
         "note": "10.0.0.3:1234는 같은 공용 IP의 다른 포트 5001로 변환되어 호스트 A와 구분된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

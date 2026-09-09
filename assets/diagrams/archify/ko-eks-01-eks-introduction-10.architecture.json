@@ -6,41 +6,326 @@
     "output": "ko-eks-01-eks-introduction-10.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1260, 560],
+    "viewBox": [
+      1260,
+      560
+    ],
     "views": [
-      { "id": "management-path", "label": "관리 경로", "focus": ["user", "eks", "apiserver"], "note": "사용자가 Console/CLI/API로 EKS를 관리하고, EKS가 컨트롤 플레인을 운영한다." },
-      { "id": "data-plane", "label": "데이터 플레인 옵션", "focus": ["eks", "mng", "selfmanaged", "fargate"], "note": "관리형 노드 그룹, 자체 관리형 노드, Fargate 세 가지 컴퓨팅 옵션." },
-      { "id": "aws-services", "label": "AWS 서비스 통합", "focus": ["eks", "iam", "vpc", "observability", "storage"], "note": "EKS가 사용하는 IAM, VPC/ELB, CloudWatch/ECR, 스토리지 서비스." }
-    ]
+      {
+        "id": "management-path",
+        "label": "관리 경로",
+        "focus": [
+          "user",
+          "eks",
+          "apiserver"
+        ],
+        "note": "사용자가 Console/CLI/API로 EKS를 관리하고, EKS가 컨트롤 플레인을 운영한다."
+      },
+      {
+        "id": "data-plane",
+        "label": "데이터 플레인 옵션",
+        "focus": [
+          "eks",
+          "mng",
+          "selfmanaged",
+          "fargate"
+        ],
+        "note": "관리형 노드 그룹, 자체 관리형 노드, Fargate 세 가지 컴퓨팅 옵션."
+      },
+      {
+        "id": "aws-services",
+        "label": "AWS 서비스 통합",
+        "focus": [
+          "eks",
+          "iam",
+          "vpc",
+          "observability",
+          "storage"
+        ],
+        "note": "EKS가 사용하는 IAM, VPC/ELB, CloudWatch/ECR, 스토리지 서비스."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "user", "type": "external", "label": "사용자", "sublabel": "AWS Console / CLI / API", "pos": [30, 230], "size": [160, 64] },
-    { "id": "eks", "type": "cloud", "label": "Amazon EKS", "sublabel": "관리형 Kubernetes", "pos": [250, 230], "size": [150, 64] },
-    { "id": "apiserver", "type": "backend", "label": "API 서버", "sublabel": "Kubernetes API", "pos": [470, 60], "size": [160, 60] },
-    { "id": "etcd", "type": "database", "label": "etcd", "sublabel": "클러스터 상태 저장", "pos": [670, 60], "size": [150, 60] },
-    { "id": "controllers", "type": "backend", "label": "컨트롤러 매니저 · 스케줄러", "sublabel": "상태 조정 · 포드 배치", "pos": [860, 60], "size": [220, 60] },
-    { "id": "mng", "type": "backend", "label": "관리형 노드 그룹", "sublabel": "EC2 인스턴스", "pos": [470, 230], "size": [160, 60] },
-    { "id": "selfmanaged", "type": "backend", "label": "자체 관리형 노드", "sublabel": "EC2 인스턴스", "pos": [670, 230], "size": [160, 60] },
-    { "id": "fargate", "type": "backend", "label": "Fargate", "sublabel": "Fargate 포드", "pos": [870, 230], "size": [150, 60] },
-    { "id": "iam", "type": "security", "label": "IAM", "sublabel": "인증 · 권한 부여", "pos": [470, 400], "size": [140, 60] },
-    { "id": "vpc", "type": "cloud", "label": "VPC · ELB", "sublabel": "네트워킹 · 로드 밸런싱", "pos": [650, 400], "size": [170, 60] },
-    { "id": "observability", "type": "cloud", "label": "CloudWatch · ECR", "sublabel": "모니터링 · 이미지 저장소", "pos": [860, 400], "size": [180, 60] },
-    { "id": "storage", "type": "database", "label": "EBS / EFS / FSx", "sublabel": "영구 스토리지", "pos": [1080, 400], "size": [120, 60] }
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "AWS Console / CLI / API",
+      "pos": [
+        30,
+        230
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS",
+      "sublabel": "관리형 Kubernetes",
+      "pos": [
+        250,
+        230
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "Kubernetes API",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "클러스터 상태 저장",
+      "pos": [
+        670,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "controllers",
+      "type": "backend",
+      "label": "컨트롤러 매니저 · 스케줄러",
+      "sublabel": "상태 조정 · 포드 배치",
+      "pos": [
+        860,
+        60
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "mng",
+      "type": "backend",
+      "label": "관리형 노드 그룹",
+      "sublabel": "EC2 인스턴스",
+      "pos": [
+        470,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "selfmanaged",
+      "type": "backend",
+      "label": "자체 관리형 노드",
+      "sublabel": "EC2 인스턴스",
+      "pos": [
+        670,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "fargate",
+      "type": "backend",
+      "label": "Fargate",
+      "sublabel": "Fargate 포드",
+      "pos": [
+        870,
+        230
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM",
+      "sublabel": "인증 · 권한 부여",
+      "pos": [
+        470,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC · ELB",
+      "sublabel": "네트워킹 · 로드 밸런싱",
+      "pos": [
+        650,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "observability",
+      "type": "cloud",
+      "label": "CloudWatch · ECR",
+      "sublabel": "모니터링 · 이미지 저장소",
+      "pos": [
+        860,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "EBS / EFS / FSx",
+      "sublabel": "영구 스토리지",
+      "pos": [
+        1080,
+        400
+      ],
+      "size": [
+        120,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "EKS 컨트롤 플레인 (AWS 관리)", "wraps": ["apiserver", "etcd", "controllers"] },
-    { "kind": "region", "label": "데이터 플레인", "wraps": ["mng", "selfmanaged", "fargate"] },
-    { "kind": "region", "label": "AWS 서비스", "wraps": ["iam", "vpc", "observability", "storage"] }
+    {
+      "kind": "region",
+      "label": "EKS 컨트롤 플레인 (AWS 관리)",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "controllers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "mng",
+        "selfmanaged",
+        "fargate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 서비스",
+      "wraps": [
+        "iam",
+        "vpc",
+        "observability",
+        "storage"
+      ]
+    }
   ],
   "connections": [
-    { "id": "user-to-eks", "from": "user", "to": "eks", "label": "관리", "variant": "emphasis" },
-    { "id": "eks-to-controlplane", "from": "eks", "to": "apiserver", "label": "관리", "variant": "emphasis", "fromSide": "top", "toSide": "left" },
-    { "id": "eks-to-dataplane", "from": "eks", "to": "mng", "label": "관리" },
-    { "id": "eks-to-services", "from": "eks", "to": "iam", "label": "사용", "variant": "dashed", "fromSide": "bottom", "toSide": "left" }
+    {
+      "id": "user-to-eks",
+      "from": "user",
+      "to": "eks",
+      "label": "관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eks-to-controlplane",
+      "from": "eks",
+      "to": "apiserver",
+      "label": "관리",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "eks-to-dataplane",
+      "from": "eks",
+      "to": "mng",
+      "label": "관리"
+    },
+    {
+      "id": "eks-to-services",
+      "from": "eks",
+      "to": "iam",
+      "label": "사용",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "컨트롤 플레인", "items": ["API 서버, etcd, 컨트롤러 매니저, 스케줄러로 구성", "여러 가용 영역에 걸쳐 실행되는 고가용성 구성", "AWS가 관리하므로 사용자가 직접 운영할 필요 없음"] },
-    { "dot": "emerald", "title": "데이터 플레인", "items": ["관리형 노드 그룹: AWS가 노드 수명 주기 관리", "자체 관리형 노드: 사용자가 직접 관리하는 EC2", "Fargate: 서버리스로 포드 실행"] },
-    { "dot": "amber", "title": "AWS 서비스 통합", "items": ["IAM으로 인증 · 권한 부여", "VPC 네트워킹과 ELB 로드 밸런싱", "CloudWatch 모니터링, ECR 이미지, EBS/EFS/FSx 스토리지"] }
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인",
+      "items": [
+        "API 서버, etcd, 컨트롤러 매니저, 스케줄러로 구성",
+        "여러 가용 영역에 걸쳐 실행되는 고가용성 구성",
+        "AWS가 관리하므로 사용자가 직접 운영할 필요 없음"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "데이터 플레인",
+      "items": [
+        "관리형 노드 그룹: AWS가 노드 수명 주기 관리",
+        "자체 관리형 노드: 사용자가 직접 관리하는 EC2",
+        "Fargate: 서버리스로 포드 실행"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AWS 서비스 통합",
+      "items": [
+        "IAM으로 인증 · 권한 부여",
+        "VPC 네트워킹과 ELB 로드 밸런싱",
+        "CloudWatch 모니터링, ECR 이미지, EBS/EFS/FSx 스토리지"
+      ]
+    }
   ]
 }

@@ -44,7 +44,21 @@
         ],
         "note": "개발/테스트·배치·웹·DB 워크로드별 전략과, 규제 준수·고가용성·보안 요구사항과 비용의 균형."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -47,7 +47,10 @@
         ],
         "note": "우선순위 선점은 스케줄러에, PDB는 Descheduler의 축출에 개입하며 축출된 포드는 다시 API 서버로 돌아온다"
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

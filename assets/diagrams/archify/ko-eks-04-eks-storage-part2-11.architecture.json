@@ -22,7 +22,10 @@
     "viewBox": [
       860,
       470
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

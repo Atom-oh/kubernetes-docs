@@ -35,7 +35,18 @@
         ],
         "note": "각 Typha가 변경 사항을 캐시해 자신이 담당하는 Felix 그룹으로 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
     {

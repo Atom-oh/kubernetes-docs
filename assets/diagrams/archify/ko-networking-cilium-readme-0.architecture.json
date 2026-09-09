@@ -37,7 +37,21 @@
         ],
         "note": "노드별 Hubble Server의 메트릭을 Hubble Relay가 클러스터 전체로 집계하고 Hubble UI가 시각화한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

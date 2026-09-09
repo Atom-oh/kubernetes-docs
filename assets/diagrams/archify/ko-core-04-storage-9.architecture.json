@@ -7,47 +7,322 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "ebs-path", "label": "Amazon EBS 경로 (RWO)", "focus": ["ebs", "ebs-csi", "ebs-sc", "ebs-pod"], "note": "블록 스토리지. ebs.csi.aws.com 프로비저너가 볼륨을 만들고 단일 파드가 ReadWriteOnce로 마운트한다." },
-      { "id": "efs-path", "label": "Amazon EFS 경로 (RWX)", "focus": ["efs", "efs-csi", "efs-sc", "efs-pod"], "note": "공유 파일 스토리지. 여러 파드가 동일한 볼륨을 ReadWriteMany로 공유한다." },
-      { "id": "fsx-path", "label": "FSx for Lustre 경로 (RWX, 고성능)", "focus": ["fsx", "fsx-csi", "fsx-sc", "fsx-pod"], "note": "고성능 병렬 파일 시스템. HPC·ML·vLLM 워크로드가 ReadWriteMany로 병렬 액세스한다." }
-    ]
+      {
+        "id": "ebs-path",
+        "label": "Amazon EBS 경로 (RWO)",
+        "focus": [
+          "ebs",
+          "ebs-csi",
+          "ebs-sc",
+          "ebs-pod"
+        ],
+        "note": "블록 스토리지. ebs.csi.aws.com 프로비저너가 볼륨을 만들고 단일 파드가 ReadWriteOnce로 마운트한다."
+      },
+      {
+        "id": "efs-path",
+        "label": "Amazon EFS 경로 (RWX)",
+        "focus": [
+          "efs",
+          "efs-csi",
+          "efs-sc",
+          "efs-pod"
+        ],
+        "note": "공유 파일 스토리지. 여러 파드가 동일한 볼륨을 ReadWriteMany로 공유한다."
+      },
+      {
+        "id": "fsx-path",
+        "label": "FSx for Lustre 경로 (RWX, 고성능)",
+        "focus": [
+          "fsx",
+          "fsx-csi",
+          "fsx-sc",
+          "fsx-pod"
+        ],
+        "note": "고성능 병렬 파일 시스템. HPC·ML·vLLM 워크로드가 ReadWriteMany로 병렬 액세스한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "ebs", "type": "cloud", "label": "Amazon EBS", "sublabel": "블록 스토리지", "pos": [40, 100], "size": [170, 60] },
-    { "id": "efs", "type": "cloud", "label": "Amazon EFS", "sublabel": "공유 파일 스토리지", "pos": [40, 240], "size": [170, 60] },
-    { "id": "fsx", "type": "cloud", "label": "Amazon FSx for Lustre", "sublabel": "고성능 파일 시스템", "pos": [40, 380], "size": [170, 60] },
-
-    { "id": "ebs-csi", "type": "backend", "label": "EBS CSI 드라이버", "sublabel": "ebs.csi.aws.com", "pos": [330, 100], "size": [180, 60] },
-    { "id": "efs-csi", "type": "backend", "label": "EFS CSI 드라이버", "sublabel": "efs.csi.aws.com", "pos": [330, 240], "size": [180, 60] },
-    { "id": "fsx-csi", "type": "backend", "label": "FSx CSI 드라이버", "sublabel": "fsx.csi.aws.com", "pos": [330, 380], "size": [180, 60] },
-
-    { "id": "ebs-sc", "type": "database", "label": "StorageClass → PV", "sublabel": "ebs-sc · 동적 프로비저닝", "pos": [600, 100], "size": [190, 60] },
-    { "id": "efs-sc", "type": "database", "label": "StorageClass → PV", "sublabel": "efs-sc · 동적 프로비저닝", "pos": [600, 240], "size": [190, 60] },
-    { "id": "fsx-sc", "type": "database", "label": "StorageClass → PV", "sublabel": "fsx-sc · 동적 프로비저닝", "pos": [600, 380], "size": [190, 60] },
-
-    { "id": "ebs-pod", "type": "backend", "label": "파드 (RWO)", "sublabel": "ReadWriteOnce", "pos": [880, 100], "size": [170, 60] },
-    { "id": "efs-pod", "type": "backend", "label": "파드 (RWX)", "sublabel": "ReadWriteMany", "pos": [880, 240], "size": [170, 60] },
-    { "id": "fsx-pod", "type": "backend", "label": "파드 (RWX, 고성능)", "sublabel": "ReadWriteMany", "pos": [880, 380], "size": [170, 60] }
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "Amazon EBS",
+      "sublabel": "블록 스토리지",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "cloud",
+      "label": "Amazon EFS",
+      "sublabel": "공유 파일 스토리지",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "cloud",
+      "label": "Amazon FSx for Lustre",
+      "sublabel": "고성능 파일 시스템",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ebs-csi",
+      "type": "backend",
+      "label": "EBS CSI 드라이버",
+      "sublabel": "ebs.csi.aws.com",
+      "pos": [
+        330,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "efs-csi",
+      "type": "backend",
+      "label": "EFS CSI 드라이버",
+      "sublabel": "efs.csi.aws.com",
+      "pos": [
+        330,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "fsx-csi",
+      "type": "backend",
+      "label": "FSx CSI 드라이버",
+      "sublabel": "fsx.csi.aws.com",
+      "pos": [
+        330,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebs-sc",
+      "type": "database",
+      "label": "StorageClass → PV",
+      "sublabel": "ebs-sc · 동적 프로비저닝",
+      "pos": [
+        600,
+        100
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "efs-sc",
+      "type": "database",
+      "label": "StorageClass → PV",
+      "sublabel": "efs-sc · 동적 프로비저닝",
+      "pos": [
+        600,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "fsx-sc",
+      "type": "database",
+      "label": "StorageClass → PV",
+      "sublabel": "fsx-sc · 동적 프로비저닝",
+      "pos": [
+        600,
+        380
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ebs-pod",
+      "type": "backend",
+      "label": "파드 (RWO)",
+      "sublabel": "ReadWriteOnce",
+      "pos": [
+        880,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "efs-pod",
+      "type": "backend",
+      "label": "파드 (RWX)",
+      "sublabel": "ReadWriteMany",
+      "pos": [
+        880,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fsx-pod",
+      "type": "backend",
+      "label": "파드 (RWX, 고성능)",
+      "sublabel": "ReadWriteMany",
+      "pos": [
+        880,
+        380
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Amazon EKS 클러스터", "wraps": ["ebs-csi", "efs-csi", "fsx-csi", "ebs-sc", "efs-sc", "fsx-sc", "ebs-pod", "efs-pod", "fsx-pod"] }
+    {
+      "kind": "region",
+      "label": "Amazon EKS 클러스터",
+      "wraps": [
+        "ebs-csi",
+        "efs-csi",
+        "fsx-csi",
+        "ebs-sc",
+        "efs-sc",
+        "fsx-sc",
+        "ebs-pod",
+        "efs-pod",
+        "fsx-pod"
+      ]
+    }
   ],
   "connections": [
-    { "id": "ebs-to-csi", "from": "ebs", "to": "ebs-csi", "variant": "emphasis" },
-    { "id": "ebs-csi-to-sc", "from": "ebs-csi", "to": "ebs-sc", "variant": "emphasis" },
-    { "id": "ebs-sc-to-pod", "from": "ebs-sc", "to": "ebs-pod", "label": "RWO 마운트", "variant": "emphasis" },
-
-    { "id": "efs-to-csi", "from": "efs", "to": "efs-csi" },
-    { "id": "efs-csi-to-sc", "from": "efs-csi", "to": "efs-sc" },
-    { "id": "efs-sc-to-pod", "from": "efs-sc", "to": "efs-pod", "label": "RWX 마운트" },
-
-    { "id": "fsx-to-csi", "from": "fsx", "to": "fsx-csi" },
-    { "id": "fsx-csi-to-sc", "from": "fsx-csi", "to": "fsx-sc" },
-    { "id": "fsx-sc-to-pod", "from": "fsx-sc", "to": "fsx-pod", "label": "RWX 병렬 마운트" }
+    {
+      "id": "ebs-to-csi",
+      "from": "ebs",
+      "to": "ebs-csi",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebs-csi-to-sc",
+      "from": "ebs-csi",
+      "to": "ebs-sc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebs-sc-to-pod",
+      "from": "ebs-sc",
+      "to": "ebs-pod",
+      "label": "RWO 마운트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "efs-to-csi",
+      "from": "efs",
+      "to": "efs-csi"
+    },
+    {
+      "id": "efs-csi-to-sc",
+      "from": "efs-csi",
+      "to": "efs-sc"
+    },
+    {
+      "id": "efs-sc-to-pod",
+      "from": "efs-sc",
+      "to": "efs-pod",
+      "label": "RWX 마운트"
+    },
+    {
+      "id": "fsx-to-csi",
+      "from": "fsx",
+      "to": "fsx-csi"
+    },
+    {
+      "id": "fsx-csi-to-sc",
+      "from": "fsx-csi",
+      "to": "fsx-sc"
+    },
+    {
+      "id": "fsx-sc-to-pod",
+      "from": "fsx-sc",
+      "to": "fsx-pod",
+      "label": "RWX 병렬 마운트"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Amazon EBS (RWO)", "items": ["단일 파드에서 사용하는 블록 스토리지", "gp3 · io2 · st1 · sc1 볼륨 유형", "StorageClass ebs-sc, provisioner ebs.csi.aws.com"] },
-    { "dot": "emerald", "title": "Amazon EFS (RWX)", "items": ["여러 파드가 공유하는 확장 가능한 파일 스토리지", "ReadWriteMany 액세스 모드 지원", "StorageClass efs-sc, provisioner efs.csi.aws.com"] },
-    { "dot": "amber", "title": "Amazon FSx for Lustre (RWX, 고성능)", "items": ["HPC · 기계 학습 · 분석 · vLLM 워크로드용 병렬 파일 시스템", "여러 노드에서 동시에 병렬 액세스", "StorageClass fsx-sc, provisioner fsx.csi.aws.com"] }
+    {
+      "dot": "cyan",
+      "title": "Amazon EBS (RWO)",
+      "items": [
+        "단일 파드에서 사용하는 블록 스토리지",
+        "gp3 · io2 · st1 · sc1 볼륨 유형",
+        "StorageClass ebs-sc, provisioner ebs.csi.aws.com"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Amazon EFS (RWX)",
+      "items": [
+        "여러 파드가 공유하는 확장 가능한 파일 스토리지",
+        "ReadWriteMany 액세스 모드 지원",
+        "StorageClass efs-sc, provisioner efs.csi.aws.com"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Amazon FSx for Lustre (RWX, 고성능)",
+      "items": [
+        "HPC · 기계 학습 · 분석 · vLLM 워크로드용 병렬 파일 시스템",
+        "여러 노드에서 동시에 병렬 액세스",
+        "StorageClass fsx-sc, provisioner fsx.csi.aws.com"
+      ]
+    }
   ]
 }

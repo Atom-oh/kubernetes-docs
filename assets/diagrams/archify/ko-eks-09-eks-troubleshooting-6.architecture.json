@@ -37,7 +37,10 @@
         ],
         "note": "메트릭 서버, Prometheus, Container Insights가 정상 동작하지 않는 다섯 가지 일반적인 원인."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

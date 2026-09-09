@@ -41,7 +41,24 @@
         "note": "거부되면 iptables가 패킷을 드롭하여 Source Pod 밖으로 나가지 못합니다."
       }
     ],
-    "column_fit": "spread"
+    "column_fit": "spread",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
     {
