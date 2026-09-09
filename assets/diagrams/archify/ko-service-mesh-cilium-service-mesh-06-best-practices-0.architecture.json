@@ -9,11 +9,11 @@
     "viewBox": [860, 470]
   },
   "components": [
-    { "id": "client", "type": "frontend", "label": "클라이언트 포드", "sublabel": "동일 워크로드 요청", "pos": [40, 210], "size": [150, 60] },
-    { "id": "native", "type": "cloud", "label": "Native", "sublabel": "포드 간 직접 네트워킹", "tag": "P99 0.1ms", "pos": [330, 70], "size": [190, 64] },
+    { "id": "client", "type": "frontend", "label": "클라이언트 Pod", "sublabel": "동일 워크로드 요청", "pos": [40, 210], "size": [150, 60] },
+    { "id": "native", "type": "cloud", "label": "Native", "sublabel": "Pod 간 직접 네트워킹", "tag": "P99 0.1ms", "pos": [330, 70], "size": [190, 64] },
     { "id": "cilium", "type": "cloud", "label": "Cilium SM", "sublabel": "eBPF 데이터 플레인", "tag": "P99 0.3ms", "pos": [330, 210], "size": [190, 64] },
     { "id": "istio", "type": "cloud", "label": "Istio", "sublabel": "사이드카 프록시", "tag": "P99 2.5ms", "pos": [330, 350], "size": [190, 64] },
-    { "id": "server", "type": "backend", "label": "서버 포드", "sublabel": "요청 처리", "pos": [670, 210], "size": [150, 60] }
+    { "id": "server", "type": "backend", "label": "서버 Pod", "sublabel": "요청 처리", "pos": [670, 210], "size": [150, 60] }
   ],
   "boundaries": [
     { "kind": "region", "label": "데이터 플레인별 P99 지연 시간", "wraps": ["native", "cilium", "istio"] }

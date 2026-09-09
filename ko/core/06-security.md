@@ -318,7 +318,7 @@ Node 권한 부여는 kubelet이 API 서버에 접근할 때 사용되는 특수
 
 보안 컨텍스트는 포드나 컨테이너 수준에서 보안 설정을 정의합니다. 이를 통해 권한, 액세스 제어, 기능 등을 세밀하게 제어할 수 있습니다.
 
-![포드가 포드 보안 컨텍스트(runAsUser·runAsGroup·fsGroup·supplementalGroups)와 컨테이너를 포함하고, 컨테이너는 다시 컨테이너 보안 컨텍스트(privileged·allowPrivilegeEscalation·readOnlyRootFilesystem·capabilities·seLinuxOptions)를 포함하며, 포드 전체는 Privileged·Baseline·Restricted 세 수준의 포드 보안 표준을 준수해야 함을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-3.png)
+![Pod가 Pod 보안 컨텍스트(runAsUser·runAsGroup·fsGroup·supplementalGroups)와 컨테이너를 포함하고, 컨테이너는 다시 컨테이너 보안 컨텍스트(privileged·allowPrivilegeEscalation·readOnlyRootFilesystem·capabilities·seLinuxOptions)를 포함하며, Pod 전체는 Privileged·Baseline·Restricted 세 수준의 Pod 보안 표준을 준수해야 함을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-06-security-3.html)
 
@@ -377,7 +377,7 @@ metadata:
 
 네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 Kubernetes 클러스터의 모든 포드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
 
-![NetworkPolicy(api-allow)가 podSelector로 대상 포드를 선택하고 policyTypes로 Ingress/Egress를 정의하며, ingress의 from·ports와 egress의 to·ports(podSelector·namespaceSelector·ipBlock)로 규칙을 구성해 API 포드에 적용되어 프론트엔드→API(8080/TCP)→데이터베이스(5432/TCP) 트래픽만 허용하는 모습을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-4.png)
+![NetworkPolicy(api-allow)가 podSelector로 대상 Pod를 선택하고 policyTypes로 Ingress/Egress를 정의하며, ingress의 from·ports와 egress의 to·ports(podSelector·namespaceSelector·ipBlock)로 규칙을 구성해 API Pod에 적용되어 프론트엔드→API(8080/TCP)→데이터베이스(5432/TCP) 트래픽만 허용하는 모습을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-06-security-4.html)
 
@@ -537,7 +537,7 @@ rules:
 
 Amazon EKS는 Kubernetes의 기본 보안 기능 외에도 AWS의 보안 서비스와 통합하여 보안을 강화할 수 있습니다.
 
-![AWS IAM, Security Groups, Secrets Manager, KMS, WAF, GuardDuty 같은 AWS 보안 서비스가 각각 IRSA, 포드 보안 그룹, External Secrets Operator 등의 EKS 통합 기능을 통해 포드, API 서버, 워커 노드를 보호하는 매핑을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-5.png)
+![AWS IAM, Security Groups, Secrets Manager, KMS, WAF, GuardDuty 같은 AWS 보안 서비스가 각각 IRSA, Pod 보안 그룹, External Secrets Operator 등의 EKS 통합 기능을 통해 Pod, API 서버, 워커 노드를 보호하는 매핑을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-06-security-5.html)
 

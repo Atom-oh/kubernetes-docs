@@ -29,7 +29,7 @@
     {
       "id": "pod-a",
       "type": "frontend",
-      "label": "포드 A",
+      "label": "Pod A",
       "sublabel": "클라이언트",
       "pos": [
         0,
@@ -99,7 +99,7 @@
     {
       "id": "pod-b",
       "type": "backend",
-      "label": "포드 B",
+      "label": "Pod B",
       "sublabel": "서버",
       "pos": [
         1220,
@@ -153,7 +153,7 @@
       "id": "forward-to-b",
       "from": "forward",
       "to": "pod-b",
-      "label": "포드 IP로 직접 전달",
+      "label": "Pod IP로 직접 전달",
       "variant": "emphasis"
     }
   ],

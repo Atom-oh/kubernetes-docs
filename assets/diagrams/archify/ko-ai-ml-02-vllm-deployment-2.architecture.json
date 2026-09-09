@@ -21,7 +21,7 @@
           "gpu",
           "cpu"
         ],
-        "note": "컨트롤 플레인이 vLLM 포드를 GPU 노드 그룹에, 보조 워크로드를 CPU 노드 그룹에 배치한다."
+        "note": "컨트롤 플레인이 vLLM Pod를 GPU 노드 그룹에, 보조 워크로드를 CPU 노드 그룹에 배치한다."
       },
       {
         "id": "model-storage",
@@ -264,7 +264,7 @@
       "id": "api-to-scheduler",
       "from": "apiserver",
       "to": "scheduler",
-      "label": "포드 감시"
+      "label": "Pod 감시"
     },
     {
       "id": "api-to-controller",
@@ -277,7 +277,7 @@
       "id": "scheduler-to-gpu",
       "from": "scheduler",
       "to": "gpu",
-      "label": "vLLM 포드 배치",
+      "label": "vLLM Pod 배치",
       "variant": "emphasis"
     },
     {
@@ -359,7 +359,7 @@
       "items": [
         "ECR: vLLM 컨테이너 이미지",
         "CloudWatch: 지표와 로그 수집",
-        "IAM: 노드와 포드 권한"
+        "IAM: 노드와 Pod 권한"
       ]
     }
   ]

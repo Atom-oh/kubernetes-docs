@@ -20,8 +20,8 @@ This quiz tests your understanding of Karpenter node autoscaler concepts, NodePo
 Karpenter's biggest differentiator is that it bypasses Auto Scaling Groups (ASG) and uses the EC2 Fleet API directly to provision nodes. Cluster Autoscaler scales through node groups/ASGs, so instance types are limited by node group configuration. Karpenter dynamically selects the optimal instance type from various options based on pod requirements and can provision nodes within seconds.
 </details>
 
-2. What CRD defines node provisioning policies in Karpenter v1beta1 API?
-   - A) Provisioner
+2. What CRD defines node provisioning policies (instance types, capacity types, disruption settings) in the Karpenter v1 API?
+   - A) NodeClaim
    - B) NodePool
    - C) NodeTemplate
    - D) EC2NodeClass
@@ -33,7 +33,7 @@ Karpenter's biggest differentiator is that it bypasses Auto Scaling Groups (ASG)
 **Answer: B) NodePool**
 
 **Explanation:**
-In Karpenter v1beta1 API, the previous Provisioner CRD has been replaced by NodePool. NodePool defines node provisioning policies (instance types, capacity types, architectures, availability zones, etc.) and disruption settings (consolidation, expireAfter, etc.). EC2NodeClass defines AWS-specific configurations (subnets, security groups, AMIs, block devices, etc.), and NodePool references EC2NodeClass through nodeClassRef.
+In the Karpenter v1 API (`karpenter.sh/v1`), NodePool defines node provisioning policies (instance types, capacity types, architectures, availability zones, etc.) and disruption settings (consolidation, expireAfter, budgets, etc.). EC2NodeClass (`karpenter.k8s.aws/v1`) defines AWS-specific configurations (subnets, security groups, AMIs, block devices, IAM role, etc.), and NodePool references it through nodeClassRef. NodeClaim is not a policy object — it is the per-node resource Karpenter creates from a NodePool to track an individual provisioned node.
 </details>
 
 3. How do you configure Karpenter to use Spot instances for cost optimization?
@@ -222,7 +222,7 @@ spec:
             - r5.xlarge
             - r5.2xlarge
       nodeClassRef:
-        apiVersion: karpenter.k8s.aws/v1
+        group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: default
   limits:
@@ -251,7 +251,8 @@ kind: EC2NodeClass
 metadata:
   name: secure-nodeclass
 spec:
-  amiFamily: AL2
+  amiSelectorTerms:
+    - alias: al2023@latest
 
   subnetSelectorTerms:
     - tags:

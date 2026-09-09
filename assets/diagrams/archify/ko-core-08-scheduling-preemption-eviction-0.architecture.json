@@ -23,7 +23,7 @@
           "score",
           "bind"
         ],
-        "note": "API 서버에서 감시된 스케줄링되지 않은 포드가 큐를 거쳐 필터링·스코어링·바인딩으로 처리되는 주 경로"
+        "note": "API 서버에서 감시된 스케줄링되지 않은 Pod가 큐를 거쳐 필터링·스코어링·바인딩으로 처리되는 주 경로"
       },
       {
         "id": "constraints",
@@ -45,7 +45,7 @@
           "descheduler",
           "api"
         ],
-        "note": "우선순위 선점은 스케줄러에, PDB는 Descheduler의 축출에 개입하며 축출된 포드는 다시 API 서버로 돌아온다"
+        "note": "우선순위 선점은 스케줄러에, PDB는 Descheduler의 축출에 개입하며 축출된 Pod는 다시 API 서버로 돌아온다"
       }
     ],
     "legend": {
@@ -57,7 +57,7 @@
       "id": "api",
       "type": "external",
       "label": "API 서버",
-      "sublabel": "미스케줄 포드",
+      "sublabel": "미스케줄 Pod",
       "pos": [
         30,
         220
@@ -98,8 +98,8 @@
     {
       "id": "cache",
       "type": "database",
-      "label": "노드 & 포드 캐시",
-      "sublabel": "노드·포드 상태",
+      "label": "노드 & Pod 캐시",
+      "sublabel": "노드·Pod 상태",
       "pos": [
         410,
         60
@@ -155,7 +155,7 @@
       "id": "descheduler",
       "type": "security",
       "label": "Descheduler",
-      "sublabel": "실행 중 포드 재분산",
+      "sublabel": "실행 중 Pod 재분산",
       "pos": [
         30,
         420
@@ -168,7 +168,7 @@
     {
       "id": "pdb",
       "type": "security",
-      "label": "포드 중단 예산",
+      "label": "Pod 중단 예산",
       "sublabel": "PodDisruptionBudget",
       "pos": [
         220,
@@ -237,7 +237,7 @@
       "id": "api-queue",
       "from": "api",
       "to": "queue",
-      "label": "포드 감시",
+      "label": "Pod 감시",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -251,7 +251,7 @@
       "id": "scheduler-cache",
       "from": "scheduler",
       "to": "cache",
-      "label": "노드·포드 상태 조회",
+      "label": "노드·Pod 상태 조회",
       "variant": "dashed"
     },
     {

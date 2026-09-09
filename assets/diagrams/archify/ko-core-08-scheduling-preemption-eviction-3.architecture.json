@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "포드 어피니티와 안티-어피니티",
+    "title": "Pod 어피니티와 안티-어피니티",
     "output": "ko-core-08-scheduling-preemption-eviction-3.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -16,33 +16,33 @@
           "label": "어피니티 유형"
         },
         "frontend": {
-          "label": "웹 포드"
+          "label": "웹 Pod"
         },
         "database": {
-          "label": "캐시 포드"
+          "label": "캐시 Pod"
         }
       }
     },
     "views": [
       {
         "id": "affinity",
-        "label": "포드 어피니티",
+        "label": "Pod 어피니티",
         "focus": [
           "pa",
           "web-pod",
           "cache-pod"
         ],
-        "note": "podAffinity는 app=cache 포드와 같은 노드(토폴로지)에 웹 포드를 함께 배치한다."
+        "note": "podAffinity는 app=cache Pod와 같은 노드(토폴로지)에 웹 Pod를 함께 배치한다."
       },
       {
         "id": "anti-affinity",
-        "label": "포드 안티-어피니티",
+        "label": "Pod 안티-어피니티",
         "focus": [
           "paa",
           "web-pod-1",
           "web-pod-2"
         ],
-        "note": "podAntiAffinity는 같은 app=web 레이블의 포드를 서로 다른 노드로 분리 배치한다."
+        "note": "podAntiAffinity는 같은 app=web 레이블의 Pod를 서로 다른 노드로 분리 배치한다."
       },
       {
         "id": "types",
@@ -62,7 +62,7 @@
       "id": "pa",
       "type": "backend",
       "label": "podAffinity",
-      "sublabel": "포드 어피니티",
+      "sublabel": "Pod 어피니티",
       "pos": [
         40,
         130
@@ -76,7 +76,7 @@
       "id": "paa",
       "type": "backend",
       "label": "podAntiAffinity",
-      "sublabel": "포드 안티-어피니티",
+      "sublabel": "Pod 안티-어피니티",
       "pos": [
         700,
         130
@@ -117,7 +117,7 @@
     {
       "id": "web-pod",
       "type": "frontend",
-      "label": "웹 포드",
+      "label": "웹 Pod",
       "sublabel": "app=web",
       "pos": [
         65,
@@ -131,7 +131,7 @@
     {
       "id": "cache-pod",
       "type": "database",
-      "label": "캐시 포드",
+      "label": "캐시 Pod",
       "sublabel": "app=cache",
       "pos": [
         265,
@@ -145,7 +145,7 @@
     {
       "id": "web-pod-1",
       "type": "frontend",
-      "label": "웹 포드 1",
+      "label": "웹 Pod 1",
       "sublabel": "app=web",
       "pos": [
         735,
@@ -159,7 +159,7 @@
     {
       "id": "web-pod-2",
       "type": "frontend",
-      "label": "웹 포드 2",
+      "label": "웹 Pod 2",
       "sublabel": "app=web",
       "pos": [
         970,

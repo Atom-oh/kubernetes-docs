@@ -17,7 +17,7 @@
           "services",
           "pods"
         ],
-        "note": "외부 요청이 Gateway → VirtualService → DestinationRule subset → Service → 포드로 전달되는 데이터 플레인 경로."
+        "note": "외부 요청이 Gateway → VirtualService → DestinationRule subset → Service → Pod로 전달되는 데이터 플레인 경로."
       },
       {
         "id": "rollouts-control",
@@ -39,7 +39,7 @@
           "analysisrun",
           "rollouts"
         ],
-        "note": "포드 메트릭을 Prometheus가 수집하고 AnalysisRun이 검증해 성공/실패를 Rollouts에 돌려준다."
+        "note": "Pod 메트릭을 Prometheus가 수집하고 AnalysisRun이 검증해 성공/실패를 Rollouts에 돌려준다."
       },
       {
         "id": "istiod-sync",
@@ -200,7 +200,7 @@
     {
       "id": "pods",
       "type": "backend",
-      "label": "Rollout 관리 포드",
+      "label": "Rollout 관리 Pod",
       "sublabel": "Stable v1 / Canary v2",
       "pos": [
         1020,
@@ -379,7 +379,7 @@
       "dot": "amber",
       "title": "메트릭 기반 자동 진행/롤백",
       "items": [
-        "포드 메트릭을 Prometheus가 수집",
+        "Pod 메트릭을 Prometheus가 수집",
         "AnalysisRun이 쿼리 결과를 검증",
         "성공이면 다음 step, 실패면 자동 롤백"
       ]

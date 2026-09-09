@@ -86,7 +86,7 @@ Kubernetes는 다양한 유형의 서비스를 제공하여 애플리케이션�
 
 ### 서비스 아키텍처
 
-![외부 클라이언트는 LoadBalancer 또는 NodePort를 거쳐 ClusterIP에 도달하고, 클러스터 내부 클라이언트는 CoreDNS 조회와 ClusterIP 접근을 통해 Endpoints가 가리키는 백엔드 포드로 연결되며, ExternalName은 DNS CNAME으로 외부 서비스를 가리킨다.](../.gitbook/assets/ko-core-03-services-networking-0.png)
+![외부 클라이언트는 LoadBalancer 또는 NodePort를 거쳐 ClusterIP에 도달하고, 클러스터 내부 클라이언트는 CoreDNS 조회와 ClusterIP 접근을 통해 Endpoints가 가리키는 백엔드 Pod로 연결되며, ExternalName은 DNS CNAME으로 외부 서비스를 가리킨다.](../.gitbook/assets/ko-core-03-services-networking-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-03-services-networking-0.html)
 
@@ -259,7 +259,7 @@ spec:
 
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 경로를 노출하는 API 객체입니다. 인그레스는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅을 제공합니다.
 
-![외부 클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 지나 인그레스 리소스의 host/path 라우팅 규칙에 따라 서비스 A 또는 서비스 B로 분기되고, 각 서비스가 자신의 백엔드 포드(A-1, A-2 / B-1, B-2)로 부하를 분산하는 경로를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-1.png)
+![외부 클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 지나 인그레스 리소스의 host/path 라우팅 규칙에 따라 서비스 A 또는 서비스 B로 분기되고, 각 서비스가 자신의 백엔드 Pod(A-1, A-2 / B-1, B-2)로 부하를 분산하는 경로를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-03-services-networking-1.html)
 
@@ -581,7 +581,7 @@ spec:
 
 네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 네트워크 정책을 사용하려면 네트워크 플러그인이 네트워크 정책을 지원해야 합니다(예: Calico, Cilium, Weave Net).
 
-![네임스페이스 A의 Frontend·API·Database 포드와 네임스페이스 B의 Monitoring 포드 사이에서 네트워크 정책이 어떤 경로는 허용하고 어떤 경로는 차단하는지 보여준다.](../.gitbook/assets/ko-core-03-services-networking-2.png)
+![네임스페이스 A의 Frontend·API·Database Pod와 네임스페이스 B의 Monitoring Pod 사이에서 네트워크 정책이 어떤 경로는 허용하고 어떤 경로는 차단하는지 보여준다.](../.gitbook/assets/ko-core-03-services-networking-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-03-services-networking-2.html)
 
@@ -703,7 +703,7 @@ spec:
 
 서비스 메시는 마이크로서비스 간의 통신을 관리하는 인프라 계층입니다. 서비스 메시는 서비스 디스커버리, 로드 밸런싱, 암호화, 인증, 권한 부여, 관찰 가능성 등의 기능을 제공합니다.
 
-![Istio 컨트롤 플레인이 세 포드에 주입된 사이드카 프록시에 설정을 배포하고, 각 서비스는 같은 포드의 사이드카 프록시를 거치며 사이드카끼리 서비스 간 트래픽을 주고받는 서비스 메시 구조를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-3.png)
+![Istio 컨트롤 플레인이 세 Pod에 주입된 사이드카 프록시에 설정을 배포하고, 각 서비스는 같은 Pod의 사이드카 프록시를 거치며 사이드카끼리 서비스 간 트래픽을 주고받는 서비스 메시 구조를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-03-services-networking-3.html)
 

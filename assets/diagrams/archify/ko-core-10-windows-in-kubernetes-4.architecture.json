@@ -39,7 +39,7 @@
           "elb",
           "user"
         ],
-        "note": "Windows 애플리케이션 포드는 Elastic Load Balancer를 통해 사용자에게 노출된다."
+        "note": "Windows 애플리케이션 Pod는 Elastic Load Balancer를 통해 사용자에게 노출된다."
       }
     ],
     "legend": {
@@ -95,7 +95,7 @@
     {
       "id": "lsys",
       "type": "backend",
-      "label": "시스템 포드",
+      "label": "시스템 Pod",
       "sublabel": "CoreDNS · VPC CNI · kube-proxy",
       "pos": [
         100,
@@ -123,7 +123,7 @@
     {
       "id": "wapp",
       "type": "frontend",
-      "label": "Windows 애플리케이션 포드",
+      "label": "Windows 애플리케이션 Pod",
       "sublabel": "nodeSelector: kubernetes.io/os=windows",
       "pos": [
         340,

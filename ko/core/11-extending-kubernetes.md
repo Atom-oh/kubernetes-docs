@@ -1082,7 +1082,7 @@ CNI는 Kubernetes와 네트워킹 솔루션 간의 표준 인터페이스를 제
 
 다음 다이어그램은 CNI의 아키텍처와 작동 방식을 보여줍니다:
 
-![kubelet이 컨테이너 런타임을 통해 CNI 플러그인을 호출하면 IPAM 플러그인이 IP 풀에서 주소를 할당하고 네트워크 구성이 적용되어 포드 네트워크가 완성되는 과정을 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-5.png)
+![kubelet이 컨테이너 런타임을 통해 CNI 플러그인을 호출하면 IPAM 플러그인이 IP 풀에서 주소를 할당하고 네트워크 구성이 적용되어 Pod 네트워크가 완성되는 과정을 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-11-extending-kubernetes-5.html)
 

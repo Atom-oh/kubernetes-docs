@@ -25,7 +25,7 @@
       "id": "apiserver",
       "type": "backend",
       "label": "API 서버",
-      "sublabel": "포드 스펙 전달",
+      "sublabel": "Pod 스펙 전달",
       "pos": [
         60,
         60
@@ -121,8 +121,8 @@
     {
       "id": "podnet",
       "type": "cloud",
-      "label": "포드 네트워크",
-      "sublabel": "포드 간 통신",
+      "label": "Pod 네트워크",
+      "sublabel": "Pod 간 통신",
       "pos": [
         640,
         420
@@ -158,7 +158,7 @@
       "id": "api-to-kubelet",
       "from": "apiserver",
       "to": "kubelet",
-      "label": "포드 생성",
+      "label": "Pod 생성",
       "labelDy": 24
     },
     {

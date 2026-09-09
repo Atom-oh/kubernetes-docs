@@ -392,7 +392,7 @@ Kubernetes 네트워크 모델의 기본 요구 사항:
 
 다음 다이어그램은 Kubernetes 네트워킹 구성요소와 통신 흐름을 보여줍니다:
 
-![클라이언트 요청이 인그레스와 서비스를 거쳐 두 노드에 분산된 포드로 전달되고, 포드 간 통신과 외부 서비스로의 아웃바운드 트래픽까지 이어지는 클러스터 네트워킹 흐름을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-3.png)
+![클라이언트 요청이 인그레스와 서비스를 거쳐 두 노드에 분산된 Pod로 전달되고, Pod 간 통신과 외부 서비스로의 아웃바운드 트래픽까지 이어지는 클러스터 네트워킹 흐름을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-3.html)
 
@@ -933,7 +933,7 @@ spec:
 
 다음 다이어그램은 Kubernetes 클러스터의 모니터링 및 로깅 아키텍처를 보여줍니다:
 
-![Kubernetes 클러스터의 API 서버·노드 메트릭이 kube-state-metrics와 Node Exporter를 거쳐 Prometheus에 수집되어 Alertmanager와 Grafana로 전달되고, 포드 로그가 Fluentd/Fluent Bit을 거쳐 Elasticsearch·Kibana와 Loki로 전달되어 Loki 로그가 다시 Grafana에서 조회되는 모니터링·로깅 스택 아키텍처를 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-7.png)
+![Kubernetes 클러스터의 API 서버·노드 메트릭이 kube-state-metrics와 Node Exporter를 거쳐 Prometheus에 수집되어 Alertmanager와 Grafana로 전달되고, Pod 로그가 Fluentd/Fluent Bit을 거쳐 Elasticsearch·Kibana와 Loki로 전달되어 Loki 로그가 다시 Grafana에서 조회되는 모니터링·로깅 스택 아키텍처를 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-7.html)
 
@@ -1408,7 +1408,7 @@ Kubernetes 클러스터 네트워킹은 파드 간 통신, 서비스 디스커�
 
 ### 네트워크 아키텍처
 
-![클러스터 네트워킹이 포드 네트워크, 서비스 네트워크, 인그레스, 네트워크 정책 네 영역으로 나뉘고 각 영역이 CNI 플러그인, 서비스 타입(ClusterIP, NodePort, LoadBalancer), 인그레스 컨트롤러, 네트워크 보안이라는 구현 요소로 이어지는 것을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-9.png)
+![클러스터 네트워킹이 Pod 네트워크, 서비스 네트워크, 인그레스, 네트워크 정책 네 영역으로 나뉘고 각 영역이 CNI 플러그인, 서비스 타입(ClusterIP, NodePort, LoadBalancer), 인그레스 컨트롤러, 네트워크 보안이라는 구현 요소로 이어지는 것을 보여준다.](../.gitbook/assets/ko-core-09-cluster-administration-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-09-cluster-administration-9.html)
 

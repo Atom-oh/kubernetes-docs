@@ -13,12 +13,12 @@
     "views": [
       {
         "id": "pod-level",
-        "label": "포드 보안 컨텍스트",
+        "label": "Pod 보안 컨텍스트",
         "focus": [
           "pod",
           "psc"
         ],
-        "note": "spec.securityContext는 runAsUser·runAsGroup·fsGroup·supplementalGroups로 포드 전체 프로세스의 신원을 정한다."
+        "note": "spec.securityContext는 runAsUser·runAsGroup·fsGroup·supplementalGroups로 Pod 전체 프로세스의 신원을 정한다."
       },
       {
         "id": "container-level",
@@ -32,7 +32,7 @@
       },
       {
         "id": "standards",
-        "label": "포드 보안 표준",
+        "label": "Pod 보안 표준",
         "focus": [
           "pod",
           "pss",
@@ -40,7 +40,7 @@
           "baseline",
           "restricted"
         ],
-        "note": "포드는 네임스페이스에 적용된 Privileged·Baseline·Restricted 세 수준 중 하나를 준수해야 한다."
+        "note": "Pod는 네임스페이스에 적용된 Privileged·Baseline·Restricted 세 수준 중 하나를 준수해야 한다."
       }
     ],
     "legend": {
@@ -51,7 +51,7 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "Pod spec",
       "pos": [
         40,
@@ -65,7 +65,7 @@
     {
       "id": "psc",
       "type": "security",
-      "label": "포드 보안 컨텍스트",
+      "label": "Pod 보안 컨텍스트",
       "sublabel": "runAsUser · runAsGroup · fsGroup · supplementalGroups",
       "pos": [
         300,
@@ -107,7 +107,7 @@
     {
       "id": "pss",
       "type": "security",
-      "label": "포드 보안 표준",
+      "label": "Pod 보안 표준",
       "sublabel": "세 가지 정책 수준",
       "pos": [
         780,
@@ -164,7 +164,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "포드 · 컨테이너 수준 설정",
+      "label": "Pod · 컨테이너 수준 설정",
       "wraps": [
         "pod",
         "psc",
@@ -174,7 +174,7 @@
     },
     {
       "kind": "region",
-      "label": "포드 보안 표준",
+      "label": "Pod 보안 표준",
       "wraps": [
         "pss",
         "privileged",
@@ -230,7 +230,7 @@
   "cards": [
     {
       "dot": "rose",
-      "title": "포드 보안 컨텍스트",
+      "title": "Pod 보안 컨텍스트",
       "items": [
         "runAsUser — 컨테이너 프로세스가 실행될 사용자 ID",
         "runAsGroup — 컨테이너 프로세스가 실행될 그룹 ID",
@@ -251,7 +251,7 @@
     },
     {
       "dot": "slate",
-      "title": "포드 보안 표준",
+      "title": "Pod 보안 표준",
       "items": [
         "Privileged — 제한 없음, 모든 권한 허용",
         "Baseline — 알려진 권한 상승 경로 차단",

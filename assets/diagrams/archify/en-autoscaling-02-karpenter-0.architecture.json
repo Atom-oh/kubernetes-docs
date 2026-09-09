@@ -25,7 +25,7 @@
           "provisioner",
           "nodetemplate"
         ],
-        "note": "Determines the right node type from the webhook-validated NodePool and EC2NodeClass CRDs."
+        "note": "Determines the right node type from the CEL-validated NodePool and EC2NodeClass CRDs."
       },
       {
         "id": "provision",
@@ -59,8 +59,8 @@
     {
       "id": "webhook",
       "type": "security",
-      "label": "Karpenter Webhook",
-      "sublabel": "validates resources",
+      "label": "CRD CEL Validation",
+      "sublabel": "rules built into the CRDs",
       "pos": [
         330,
         40

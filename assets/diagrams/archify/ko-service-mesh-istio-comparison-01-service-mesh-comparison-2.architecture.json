@@ -45,7 +45,7 @@
       },
       {
         "id": "mtls",
-        "label": "포드 간 mTLS",
+        "label": "Pod 간 mTLS",
         "focus": [
           "app1",
           "envoy1",

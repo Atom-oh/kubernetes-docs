@@ -15,17 +15,17 @@
           "backend",
           "database"
         ],
-        "note": "podSelector: {} 로 네임스페이스 안의 모든 포드에 적용되어 네임스페이스 간 트래픽을 차단한다."
+        "note": "podSelector: {} 로 네임스페이스 안의 모든 Pod에 적용되어 네임스페이스 간 트래픽을 차단한다."
       },
       {
         "id": "pod-communication",
-        "label": "포드 간 통신 허용",
+        "label": "Pod 간 통신 허용",
         "focus": [
           "np-pod",
           "frontend",
           "backend"
         ],
-        "note": "app: frontend 포드에서 app: backend 포드로 향하는 TCP 80 트래픽만 허용한다."
+        "note": "app: frontend Pod에서 app: backend Pod로 향하는 TCP 80 트래픽만 허용한다."
       },
       {
         "id": "external-egress",
@@ -84,7 +84,7 @@
     {
       "id": "np-pod",
       "type": "security",
-      "label": "포드 간 통신 허용 정책",
+      "label": "Pod 간 통신 허용 정책",
       "sublabel": "allow-frontend-to-backend",
       "pos": [
         410,
@@ -140,7 +140,7 @@
     {
       "id": "frontend",
       "type": "frontend",
-      "label": "프론트엔드 포드",
+      "label": "프론트엔드 Pod",
       "sublabel": "app: frontend",
       "pos": [
         220,
@@ -154,7 +154,7 @@
     {
       "id": "backend",
       "type": "backend",
-      "label": "백엔드 포드",
+      "label": "백엔드 Pod",
       "sublabel": "app: backend",
       "pos": [
         620,
@@ -168,7 +168,7 @@
     {
       "id": "database",
       "type": "database",
-      "label": "데이터베이스 포드",
+      "label": "데이터베이스 Pod",
       "sublabel": "app: db",
       "pos": [
         930,

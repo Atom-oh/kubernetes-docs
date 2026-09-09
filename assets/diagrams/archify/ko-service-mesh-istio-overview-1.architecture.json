@@ -2,37 +2,36 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Complex Microservices Environment: Without vs With a Service Mesh",
-    "locale": "en",
-    "output": "en-service-mesh-istio-readme-1.html",
+    "title": "복잡한 마이크로서비스 환경: Service Mesh 없이 vs 사용",
+    "output": "ko-service-mesh-istio-overview-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
       {
         "id": "without-mesh",
-        "label": "Without Service Mesh",
+        "label": "Service Mesh 없이",
         "focus": [
           "a1",
           "b1",
           "c1",
           "d1"
         ],
-        "note": "Each service implements mTLS, retries, logging/metrics, and circuit breaking itself, so duplicate code grows."
+        "note": "각 서비스가 mTLS·재시도·로깅/메트릭·Circuit Breaker를 직접 구현해 중복 코드가 늘어난다."
       },
       {
         "id": "with-mesh",
-        "label": "With Service Mesh",
+        "label": "Service Mesh 사용",
         "focus": [
           "a2",
           "b2",
           "c2",
           "d2"
         ],
-        "note": "The mesh handles communication between the same four services automatically."
+        "note": "같은 네 서비스 사이의 통신을 메시가 자동으로 처리한다."
       },
       {
         "id": "mesh-control",
-        "label": "Mesh control",
+        "label": "메시 제어",
         "focus": [
           "mesh",
           "a2",
@@ -40,9 +39,20 @@
           "c2",
           "d2"
         ],
-        "note": "The Service Mesh controls all four services with automatic mTLS, centralized policy, and unified observability."
+        "note": "Service Mesh가 자동 mTLS·중앙 집중식 정책·통합 관찰성으로 네 서비스를 제어한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {
@@ -153,7 +163,7 @@
       "id": "mesh",
       "type": "security",
       "label": "Service Mesh",
-      "sublabel": "Automates mTLS · policy · observability",
+      "sublabel": "mTLS · 정책 · 관찰성 자동화",
       "pos": [
         810,
         206
@@ -167,7 +177,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Without Service Mesh",
+      "label": "Service Mesh 없이",
       "wraps": [
         "a1",
         "b1",
@@ -177,7 +187,7 @@
     },
     {
       "kind": "region",
-      "label": "With Service Mesh",
+      "label": "Service Mesh 사용",
       "wraps": [
         "a2",
         "b2",
@@ -192,7 +202,7 @@
       "id": "a1-b1",
       "from": "a1",
       "to": "b1",
-      "label": "manual implementation",
+      "label": "수동 구현",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top"
@@ -225,7 +235,7 @@
       "id": "a2-b2",
       "from": "a2",
       "to": "b2",
-      "label": "handled automatically",
+      "label": "자동 처리",
       "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top"
@@ -258,7 +268,7 @@
       "id": "mesh-a2",
       "from": "mesh",
       "to": "a2",
-      "label": "control",
+      "label": "제어",
       "variant": "security"
     },
     {
@@ -283,23 +293,23 @@
   "cards": [
     {
       "dot": "slate",
-      "title": "Without Service Mesh — in every service",
+      "title": "Service Mesh 없이 — 각 서비스마다",
       "items": [
-        "Manual mTLS implementation",
-        "Retry logic",
-        "Logging / metrics",
+        "수동 mTLS 구현",
+        "재시도 로직",
+        "로깅/메트릭",
         "Circuit Breaker",
-        "Growing duplicate code"
+        "중복 코드 증가"
       ]
     },
     {
       "dot": "orange",
-      "title": "With Service Mesh",
+      "title": "Service Mesh 사용",
       "items": [
-        "Automatic mTLS",
-        "Centralized policy",
-        "Unified observability",
-        "Standardized security"
+        "자동 mTLS",
+        "중앙 집중식 정책",
+        "통합 관찰성",
+        "표준화된 보안"
       ]
     }
   ]

@@ -90,7 +90,7 @@ spec:
 
 EKS는 Kubernetes 서비스를 AWS 로드 밸런서와 통합하여 외부에서 애플리케이션에 액세스할 수 있게 합니다.
 
-![인터넷 사용자가 CLB, NLB, ALB 세 종류의 AWS 로드 밸런서를 통해 EKS 클러스터에 접근하며, CLB와 NLB는 LoadBalancer 서비스로, ALB는 Ingress 리소스를 거쳐 NodePort 서비스로 연결되고 각 서비스가 최종적으로 포드로 트래픽을 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-1.png)
+![인터넷 사용자가 CLB, NLB, ALB 세 종류의 AWS 로드 밸런서를 통해 EKS 클러스터에 접근하며, CLB와 NLB는 LoadBalancer 서비스로, ALB는 Ingress 리소스를 거쳐 NodePort 서비스로 연결되고 각 서비스가 최종적으로 Pod로 트래픽을 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-1.html)
 
@@ -154,7 +154,7 @@ metadata:
 
 ALB를 사용하려면 AWS Load Balancer Controller를 설치하고 Ingress 리소스를 사용해야 합니다:
 
-![인터넷 트래픽이 퍼블릭 서브넷의 Application Load Balancer를 거쳐 프라이빗 서브넷 EKS 클러스터의 Ingress 리소스로 들어가고, AWS Load Balancer Controller가 ALB를 생성·구성하며, Ingress가 서비스 1과 서비스 2를 통해 각각의 포드로 라우팅되는 경로를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-2.png)
+![인터넷 트래픽이 퍼블릭 서브넷의 Application Load Balancer를 거쳐 프라이빗 서브넷 EKS 클러스터의 Ingress 리소스로 들어가고, AWS Load Balancer Controller가 ALB를 생성·구성하며, Ingress가 서비스 1과 서비스 2를 통해 각각의 Pod로 라우팅되는 경로를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-2.html)
 
@@ -252,7 +252,7 @@ metadata:
 
 네트워크 정책은 포드 간 통신을 제어하는 데 사용됩니다. EKS에서 네트워크 정책을 사용하려면 네트워크 정책을 지원하는 CNI 플러그인(예: Calico, Cilium)을 설치해야 합니다.
 
-![외부 트래픽 제한, 포드 간 통신 허용, 이그레스 제한, 네임스페이스 격리라는 네 가지 네트워크 정책이 외부 서비스에서 프론트엔드 포드로, 프론트엔드에서 백엔드 포드로(TCP 80), 백엔드에서 데이터베이스 포드로(TCP 5432), 백엔드에서 외부 HTTPS(443)로 향하는 트래픽을 각각 어떻게 제어하는지 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-4.png)
+![외부 트래픽 제한, Pod 간 통신 허용, 이그레스 제한, 네임스페이스 격리라는 네 가지 네트워크 정책이 외부 서비스에서 프론트엔드 Pod로, 프론트엔드에서 백엔드 Pod로(TCP 80), 백엔드에서 데이터베이스 Pod로(TCP 5432), 백엔드에서 외부 HTTPS(443)로 향하는 트래픽을 각각 어떻게 제어하는지 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-4.html)
 

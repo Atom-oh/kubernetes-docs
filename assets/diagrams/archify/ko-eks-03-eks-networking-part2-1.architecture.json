@@ -18,7 +18,7 @@
           "pod1",
           "pod2"
         ],
-        "note": "CLB와 NLB는 type: LoadBalancer 서비스에 직접 연결되어 포드로 트래픽을 전달한다."
+        "note": "CLB와 NLB는 type: LoadBalancer 서비스에 직접 연결되어 Pod로 트래픽을 전달한다."
       },
       {
         "id": "ingress-path",
@@ -150,7 +150,7 @@
     {
       "id": "pod1",
       "type": "backend",
-      "label": "포드 1",
+      "label": "Pod 1",
       "pos": [
         245,
         560
@@ -163,7 +163,7 @@
     {
       "id": "pod2",
       "type": "backend",
-      "label": "포드 2",
+      "label": "Pod 2",
       "pos": [
         445,
         560
@@ -176,7 +176,7 @@
     {
       "id": "pod3",
       "type": "backend",
-      "label": "포드 3",
+      "label": "Pod 3",
       "pos": [
         640,
         560
@@ -208,7 +208,7 @@
     },
     {
       "kind": "region",
-      "label": "포드",
+      "label": "Pod",
       "wraps": [
         "pod1",
         "pod2",

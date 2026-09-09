@@ -134,7 +134,7 @@
       "id": "k8sattributes",
       "type": "backend",
       "label": "k8sattributes",
-      "sublabel": "포드 메타데이터 부여",
+      "sublabel": "Pod 메타데이터 부여",
       "pos": [
         470,
         150
@@ -331,7 +331,7 @@
       "title": "프로세서 순서",
       "items": [
         "memory_limiter를 가장 앞에 두어 Collector 메모리를 보호한다",
-        "k8sattributes가 포드·네임스페이스 메타데이터를 붙인다",
+        "k8sattributes가 Pod·네임스페이스 메타데이터를 붙인다",
         "filter·transform 뒤 batch를 마지막에 두어 전송 단위를 묶는다"
       ]
     },
