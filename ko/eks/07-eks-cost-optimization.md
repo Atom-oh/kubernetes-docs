@@ -197,6 +197,9 @@ kind: EC2NodeClass
 metadata:
   name: spot-class
 spec:
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: my-cluster
@@ -343,6 +346,9 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: my-cluster
@@ -353,8 +359,8 @@ spec:
 
 Karpenter 비용 최적화 설정:
 
-- **ttlSecondsAfterEmpty**: 노드가 비어 있은 후 종료까지의 시간 (예: 30초)
-- **consolidation.enabled**: 노드 통합 활성화 (기본값: true)
+- **disruption.consolidateAfter**: 노드가 비어 있은 후 종료까지의 대기 시간 (예: `30s`, 기존 `ttlSecondsAfterEmpty`를 대체)
+- **disruption.consolidationPolicy**: 노드 통합 정책 — `WhenEmpty`(빈 노드만 정리) 또는 `WhenEmptyOrUnderutilized`(저사용 노드까지 통합, 기존 `consolidation.enabled: true`에 해당)
 - **instance-types**: 비용 효율적인 인스턴스 유형 지정
 
 #### Horizontal Pod Autoscaler (HPA)

@@ -850,20 +850,29 @@ spec:
         values:
         - "true"
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: vllm-gpu-class
   limits:
     nvidia.com/gpu: 32
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ---
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: vllm-gpu-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: vllm-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: vllm-cluster
-  ttlSecondsAfterEmpty: 30
+  role: KarpenterNodeRole-vllm-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: vllm-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: vllm-cluster
 ```
 
 ## 보안 구성

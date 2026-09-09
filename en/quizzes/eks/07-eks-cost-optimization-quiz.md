@@ -83,11 +83,12 @@ The most effective strategy for optimizing compute costs in Amazon EKS is to com
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m4.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
      disruption:
        consolidationPolicy: WhenEmpty
        consolidateAfter: 30s
@@ -98,12 +99,15 @@ The most effective strategy for optimizing compute costs in Amazon EKS is to com
    metadata:
      name: default
    spec:
-     amiFamily: AL2
+     amiSelectorTerms:
+       - alias: al2023@latest
      role: KarpenterNodeRole
-     subnetSelector:
-       karpenter.sh/discovery: my-cluster
-     securityGroupSelector:
-       karpenter.sh/discovery: my-cluster
+     subnetSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
+     securityGroupSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
      tags:
        karpenter.sh/discovery: my-cluster
    ```
@@ -867,8 +871,8 @@ The most effective combination of tools for cost optimization in Amazon EKS is t
 2. **Karpenter Installation and Configuration**:
    ```bash
    # Install Karpenter
-   helm repo add karpenter https://charts.karpenter.sh
-   helm upgrade --install karpenter karpenter/karpenter \
+   # Karpenter v1 charts are published as an OCI artifact (no helm repo add needed)
+   helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
      --namespace karpenter \
      --create-namespace \
      --set serviceAccount.create=true \
@@ -901,11 +905,12 @@ The most effective combination of tools for cost optimization in Amazon EKS is t
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m4.large", "t3.large", "t3a.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
      disruption:
        consolidationPolicy: WhenEmpty
        consolidateAfter: 30s
@@ -915,12 +920,15 @@ The most effective combination of tools for cost optimization in Amazon EKS is t
    metadata:
      name: default
    spec:
-     amiFamily: AL2
+     amiSelectorTerms:
+       - alias: al2023@latest
      role: KarpenterNodeRole
-     subnetSelector:
-       karpenter.sh/discovery: my-cluster
-     securityGroupSelector:
-       karpenter.sh/discovery: my-cluster
+     subnetSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
+     securityGroupSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
      tags:
        karpenter.sh/discovery: my-cluster
    ```

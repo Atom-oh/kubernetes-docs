@@ -834,37 +834,46 @@ EKS Auto Mode에서는 NodePool이 자동으로 노드를 프로비저닝합니�
 # 실제 CRD 스펙은 EKS Auto Mode 문서 참조
 
 # Blue 클러스터용 고성능 NodePool
-apiVersion: eks.amazonaws.com/v1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: high-performance
 spec:
-  # Zone 제한
-  subnetSelector:
-    zone: ap-northeast-2a
+  template:
+    metadata:
+      # 노드 라벨
+      labels:
+        workload-type: database
+    spec:
+      requirements:
+        # Zone 제한
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values:
+            - ap-northeast-2a
+        # 인스턴스 타입 제한
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values:
+            - r6i.2xlarge
+            - r6i.4xlarge
+            - r6i.8xlarge
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+            - on-demand
 
-  # 인스턴스 타입 제한
-  requirements:
-    - key: node.kubernetes.io/instance-type
-      operator: In
-      values:
-        - r6i.2xlarge
-        - r6i.4xlarge
-        - r6i.8xlarge
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values:
-        - on-demand
+      # 노드 테인트
+      taints:
+        - key: dedicated
+          value: database
+          effect: NoSchedule
 
-  # 노드 라벨
-  labels:
-    workload-type: database
-
-  # 노드 테인트
-  taints:
-    - key: dedicated
-      value: database
-      effect: NoSchedule
+      # EKS Auto Mode 기본 NodeClass 참조
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 
   # 리소스 제한
   limits:

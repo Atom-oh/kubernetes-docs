@@ -420,7 +420,7 @@ watch -n 5 "kubectl --context service get pods -n msa -l 'app in (order-service,
 watch -n 5 "kubectl --context service get scaledobject,hpa -n msa"
 
 # Terminal 3: Karpenter 노드 스케일링
-watch -n 10 "kubectl --context service get nodes -l karpenter.sh/provisioner-name=default"
+watch -n 10 "kubectl --context service get nodes -l karpenter.sh/nodepool=default"
 
 # Terminal 4: SQS 메트릭
 watch -n 10 "aws sqs get-queue-attributes \
@@ -534,7 +534,7 @@ kubectl --context service get events -n default --field-selector reason=Terminat
         "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
         "targets": [
           {
-            "expr": "count(kube_node_labels{label_karpenter_sh_provisioner_name!=\"\"})",
+            "expr": "count(kube_node_labels{label_karpenter_sh_nodepool!=\"\"})",
             "legendFormat": "Karpenter Nodes"
           }
         ]

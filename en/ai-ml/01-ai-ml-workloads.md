@@ -812,6 +812,8 @@ spec:
         values:
         - amd64
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: gpu-spot-class
   limits:
     nvidia.com/gpu: 10
@@ -824,10 +826,15 @@ kind: EC2NodeClass
 metadata:
   name: gpu-spot-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: gpu-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: gpu-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
+  role: KarpenterNodeRole-gpu-cluster
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: gpu-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: gpu-cluster
 ```
 
 ### Auto Scaling

@@ -1389,8 +1389,8 @@ PodDisruptionBudget is a Kubernetes-native way to control pod disruption during 
     * Cost optimization and unified lifecycle management
 
     ```yaml
-    # Karpenter Provisioner
-    apiVersion: karpenter.sh/v1alpha5
+    # Karpenter NodePool (karpenter.sh/v1)
+    apiVersion: karpenter.sh/v1
     kind: NodePool
     metadata:
       name: default
@@ -1402,16 +1402,31 @@ PodDisruptionBudget is a Kubernetes-native way to control pod disruption during 
               operator: In
               values: ["spot", "on-demand"]
           nodeClassRef:
+            group: karpenter.k8s.aws
+            kind: EC2NodeClass
             name: default-class
       limits:
         cpu: 1000
-          memory: 1000Gi
-      provider:
-        subnetSelector:
-          karpenter.sh/discovery: "true"
-        securityGroupSelector:
-          karpenter.sh/discovery: "true"
-      ttlSecondsAfterEmpty: 30
+        memory: 1000Gi
+      disruption:
+        consolidationPolicy: WhenEmpty
+        consolidateAfter: 30s
+    ---
+    # Karpenter EC2NodeClass (karpenter.k8s.aws/v1)
+    apiVersion: karpenter.k8s.aws/v1
+    kind: EC2NodeClass
+    metadata:
+      name: default-class
+    spec:
+      amiSelectorTerms:
+        - alias: al2023@latest
+      role: KarpenterNodeRole-my-cluster
+      subnetSelectorTerms:
+        - tags:
+            karpenter.sh/discovery: "true"
+      securityGroupSelectorTerms:
+        - tags:
+            karpenter.sh/discovery: "true"
     ```
 3.  **Horizontal Pod Autoscaler (HPA)**:
 
@@ -2637,8 +2652,8 @@ Blue/Green deployment has disadvantages of additional resources and implementati
    *   Example:
 
        ```yaml
-       # Karpenter Provisioner
-       apiVersion: karpenter.sh/v1alpha5
+       # Karpenter NodePool (karpenter.sh/v1)
+       apiVersion: karpenter.sh/v1
        kind: NodePool
        metadata:
          name: default
@@ -2652,10 +2667,13 @@ Blue/Green deployment has disadvantages of additional resources and implementati
                - key: node.kubernetes.io/instance-type
                  operator: In
                  values: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
+             nodeClassRef:
+               group: karpenter.k8s.aws
+               kind: EC2NodeClass
+               name: default
          limits:
-           resources:
-             cpu: 1000
-             memory: 1000Gi
+           cpu: 1000
+           memory: 1000Gi
        ```
 
 Using the same instance type for all nodes is not an Auto Scaling optimization strategy; rather, mixing various instance types is more effective in terms of cost optimization and availability. Therefore, "Using the same instance type for all nodes" is NOT a method for optimizing Auto Scaling of node groups.

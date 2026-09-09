@@ -197,6 +197,9 @@ kind: EC2NodeClass
 metadata:
   name: spot-class
 spec:
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: my-cluster
@@ -343,6 +346,9 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: my-cluster
@@ -353,8 +359,8 @@ spec:
 
 Karpenter cost optimization settings:
 
-- **ttlSecondsAfterEmpty**: Time until termination after node is empty (e.g., 30 seconds)
-- **consolidation.enabled**: Enable node consolidation (default: true)
+- **disruption.consolidateAfter**: Wait time before terminating a node after it becomes empty (e.g., `30s`; replaces the legacy `ttlSecondsAfterEmpty`)
+- **disruption.consolidationPolicy**: Node consolidation policy — `WhenEmpty` (remove only empty nodes) or `WhenEmptyOrUnderutilized` (also consolidate underutilized nodes; the equivalent of the legacy `consolidation.enabled: true`)
 - **instance-types**: Specify cost-efficient instance types
 
 #### Horizontal Pod Autoscaler (HPA)

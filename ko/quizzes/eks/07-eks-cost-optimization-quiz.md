@@ -83,11 +83,12 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m4.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
      disruption:
        consolidationPolicy: WhenEmpty
        consolidateAfter: 30s
@@ -98,12 +99,15 @@ Amazon EKS에서 컴퓨팅 비용을 최적화하기 위한 가장 효과적인 
    metadata:
      name: default
    spec:
-     amiFamily: AL2
+     amiSelectorTerms:
+       - alias: al2023@latest
      role: KarpenterNodeRole
-     subnetSelector:
-       karpenter.sh/discovery: my-cluster
-     securityGroupSelector:
-       karpenter.sh/discovery: my-cluster
+     subnetSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
+     securityGroupSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
      tags:
        karpenter.sh/discovery: my-cluster
    ```
@@ -2185,8 +2189,8 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
 2. **Karpenter 설치 및 구성**:
    ```bash
    # Karpenter 설치
-   helm repo add karpenter https://charts.karpenter.sh
-   helm upgrade --install karpenter karpenter/karpenter \
+   # Karpenter v1 차트는 OCI 아티팩트로 배포됩니다 (helm repo add 불필요)
+   helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
      --namespace karpenter \
      --create-namespace \
      --set serviceAccount.create=true \
@@ -2219,11 +2223,12 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m4.large", "t3.large", "t3a.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
      disruption:
        consolidationPolicy: WhenEmpty
        consolidateAfter: 30s
@@ -2233,12 +2238,15 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
    metadata:
      name: default
    spec:
-     amiFamily: AL2
+     amiSelectorTerms:
+       - alias: al2023@latest
      role: KarpenterNodeRole
-     subnetSelector:
-       karpenter.sh/discovery: my-cluster
-     securityGroupSelector:
-       karpenter.sh/discovery: my-cluster
+     subnetSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
+     securityGroupSelectorTerms:
+       - tags:
+           karpenter.sh/discovery: my-cluster
      tags:
        karpenter.sh/discovery: my-cluster
    ```
@@ -2359,11 +2367,12 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
              operator: In
              values: ["m5.large", "m5a.large", "m5d.large", "m4.large", "t3.large", "t3a.large"]
          nodeClassRef:
+           group: karpenter.k8s.aws
+           kind: EC2NodeClass
            name: default
      limits:
-       resources:
-         cpu: 1000
-         memory: 1000Gi
+       cpu: 1000
+       memory: 1000Gi
    ```
 
 3. **워크로드 우선순위 및 선점**:
@@ -2496,7 +2505,7 @@ Amazon EKS에서 비용 최적화를 위한 가장 효과적인 도구 조합은
    # Karpenter 설치
    resource "helm_release" "karpenter" {
      name       = "karpenter"
-     repository = "https://charts.karpenter.sh"
+     repository = "oci://public.ecr.aws/karpenter"
      chart      = "karpenter"
      namespace  = "karpenter"
      create_namespace = true
