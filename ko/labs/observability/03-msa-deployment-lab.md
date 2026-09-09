@@ -525,12 +525,14 @@ spec:
             - c6i.large
             - c6i.xlarge
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default
   limits:
     cpu: 200
     memory: 400Gi
   disruption:
-    consolidationPolicy: WhenUnderutilized
+    consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 30s
     budgets:
       - nodes: "20%"
@@ -540,7 +542,8 @@ kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  amiFamily: AL2
+  amiSelectorTerms:
+    - alias: al2023@latest
   role: KarpenterNodeRole-obs-service
   subnetSelectorTerms:
     - tags:

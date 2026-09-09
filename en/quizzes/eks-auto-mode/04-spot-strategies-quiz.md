@@ -156,6 +156,10 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["spot"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ---
 # On-Demand fallback NodePool (weight: 10)
 apiVersion: karpenter.sh/v1
@@ -170,6 +174,10 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["on-demand"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ```
 
 </details>

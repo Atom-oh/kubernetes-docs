@@ -568,12 +568,11 @@ kind: EC2NodeClass
 metadata:
   name: gpu-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
 
   # GPU 드라이버가 포함된 EKS 최적화 AMI 사용
   amiSelectorTerms:
-  - alias: al2@latest
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:

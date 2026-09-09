@@ -739,6 +739,19 @@ kind: NodePool
 metadata:
   name: default
 spec:
+  template:
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand", "spot"]
+      nodeClassRef:
+        group: eks.amazonaws.com   # EKS Auto Mode 관리형 NodeClass
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 1m

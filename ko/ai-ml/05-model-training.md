@@ -284,7 +284,9 @@ kind: EC2NodeClass
 metadata:
   name: gpu-a100-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-ml-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
 
   subnetSelectorTerms:
     - tags:
@@ -843,7 +845,8 @@ kind: EC2NodeClass
 metadata:
   name: trainium-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-ml-cluster
+  amiFamily: Custom
   amiSelectorTerms:
     - id: ami-0123456789abcdef0  # Neuron 최적화 AMI
 

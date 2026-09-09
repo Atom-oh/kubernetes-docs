@@ -779,8 +779,8 @@ spec:
           operator: In
           values: ["c", "m", "r"]
       nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
+        group: eks.amazonaws.com
+        kind: NodeClass
         name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized

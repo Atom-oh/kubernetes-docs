@@ -285,7 +285,7 @@ managedNodeGroups:
       Purpose: service
 
 karpenter:
-  version: 'v0.35.0'
+  version: '1.14.1'
   createServiceAccount: true
   withSpotInterruptionQueue: true
 ```
@@ -320,12 +320,14 @@ spec:
           operator: In
           values: ["m5.large", "m5.xlarge", "m5.2xlarge", "m6i.large", "m6i.xlarge"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default
   limits:
     cpu: 100
     memory: 200Gi
   disruption:
-    consolidationPolicy: WhenUnderutilized
+    consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 30s
 ---
 apiVersion: karpenter.k8s.aws/v1
@@ -333,7 +335,8 @@ kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  amiFamily: AL2
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: obs-service-cluster

@@ -266,7 +266,8 @@ kind: EC2NodeClass
 metadata:
   name: gpu-nodes
 spec:
-  amiFamily: AL2023
+  amiSelectorTerms:
+    - alias: al2023@latest
   role: KarpenterNodeRole-${CLUSTER_NAME}
   subnetSelectorTerms:
     - tags:
@@ -1799,6 +1800,10 @@ spec:
             - g5.xlarge
             - g5.2xlarge
             - g6.xlarge
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: gpu-nodes
       taints:
         - key: spot-instance
           value: "true"

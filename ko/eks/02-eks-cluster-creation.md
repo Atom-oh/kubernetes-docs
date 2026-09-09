@@ -434,26 +434,20 @@ spec:
           operator: In
           values: ["p3.2xlarge", "p3.8xlarge"]
       nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodeclass
+        # EKS Auto Mode: karpenter.k8s.aws/EC2NodeClass가 아닌
+        # eks.amazonaws.com/NodeClass(기본값 "default")를 참조합니다.
+        # AMI, 부트스트랩(userData), 노드 OS는 Auto Mode가 관리하므로 지정하지 않습니다.
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   limits:
     cpu: 1000
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-nodeclass
-spec:
-  amiFamily: AL2
-  instanceStorePolicy: RAID0
-  userData: |
-    #!/bin/bash
-    /etc/eks/bootstrap.sh my-auto-cluster
 ```
+
+> **참고**: Auto Mode에서는 `EC2NodeClass`, `amiFamily`, 커스텀 `userData`(`/etc/eks/bootstrap.sh`)를 사용할 수 없습니다. 노드 AMI와 부트스트랩은 AWS가 관리하며, 서브넷/보안 그룹/임시 스토리지 등은 `eks.amazonaws.com/v1` `NodeClass`로 정의합니다.
 
 #### Auto Mode 제한사항
 

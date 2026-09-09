@@ -458,6 +458,13 @@ metadata:
 spec:
   amiSelectorTerms:
   - alias: bottlerocket@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
 
   # 이미지 프리페칭을 위한 사용자 정의 데이터
   userData: |
@@ -622,6 +629,10 @@ spec:
   - tags:
       karpenter.sh/discovery: my-cluster
       network/efa-enabled: "true"
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
 
   # 빠른 로컬 스크래치를 위한 인스턴스 스토어
   instanceStorePolicy: RAID0
@@ -756,6 +767,15 @@ kind: EC2NodeClass
 metadata:
   name: training-cluster-pg
 spec:
+  amiSelectorTerms:
+  - alias: al2023@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
   # ... 기타 구성 ...
 
   # 최저 지연 시간을 위해 클러스터 배치 그룹 사용

@@ -2670,7 +2670,7 @@ Blue/Green deployment has disadvantages of additional resources and implementati
              nodeClassRef:
                group: karpenter.k8s.aws
                kind: EC2NodeClass
-               name: default
+               name: default-class
          limits:
            cpu: 1000
            memory: 1000Gi

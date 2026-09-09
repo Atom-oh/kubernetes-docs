@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: August 31, 2026
+> **Last Updated**: September 9, 2026
 
 ## Lab Environment Setup
 
@@ -1255,7 +1255,7 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
-  role: KarpenterNodeRole
+  role: KarpenterNodeRole-my-cluster
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:

@@ -815,6 +815,7 @@ metadata:
 spec:
   template:
     spec:
+      # assumes an EC2NodeClass named default already exists
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass

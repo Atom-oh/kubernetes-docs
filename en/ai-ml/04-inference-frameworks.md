@@ -112,7 +112,9 @@ kind: EC2NodeClass
 metadata:
   name: nim-gpu-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
   subnetSelectorTerms:
   - tags:
       karpenter.sh/discovery: my-cluster
@@ -2257,7 +2259,8 @@ kind: EC2NodeClass
 metadata:
   name: neuron-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-my-cluster
+  amiFamily: Custom
   amiSelectorTerms:
   - id: ami-xxxxxxxxxxxxxxxxx  # Neuron DLAMI
   subnetSelectorTerms:

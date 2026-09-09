@@ -194,6 +194,13 @@ spec:
    spec:
      template:
        spec:
+         requirements:
+           - key: karpenter.sh/capacity-type
+             operator: In
+             values: ["on-demand"]
+           - key: kubernetes.io/arch
+             operator: In
+             values: ["amd64"]
          taints:
            - key: eks.amazonaws.com/auto-mode
              value: "true"

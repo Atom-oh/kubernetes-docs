@@ -611,9 +611,15 @@ EFA(Elastic Fabric Adapter)는 통신하는 모든 인스턴스가 동일한 가
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
+metadata:
+  name: gpu-training
 spec:
   template:
     spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
       requirements:
         - key: topology.kubernetes.io/zone
           operator: In

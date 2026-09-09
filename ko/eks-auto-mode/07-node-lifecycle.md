@@ -318,6 +318,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["m", "c"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
       expireAfter: 336h  # 14일 (긴 수명)
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
@@ -331,6 +339,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["m"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: secure-nodeclass
       expireAfter: 48h  # 2일 (짧은 수명)
   disruption:
     consolidationPolicy: WhenEmpty  # 보수적 통합

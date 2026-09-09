@@ -71,7 +71,7 @@ This quiz tests your understanding of advanced configuration, scalability, and o
    *   Example:
 
        ```yaml
-       # Karpenter NodePool + EC2NodeClass (karpenter.sh/v1)
+       # Karpenter NodePool (karpenter.sh/v1) + EC2NodeClass (karpenter.k8s.aws/v1)
        apiVersion: karpenter.sh/v1
        kind: NodePool
        metadata:
@@ -105,7 +105,7 @@ This quiz tests your understanding of advanced configuration, scalability, and o
        metadata:
          name: default
        spec:
-         role: KarpenterNodeRole
+         role: KarpenterNodeRole-my-cluster
          amiSelectorTerms:
            - alias: al2023@latest
          subnetSelectorTerms:
@@ -135,7 +135,7 @@ This quiz tests your understanding of advanced configuration, scalability, and o
 | Scaling Speed            | Slow (2-10 minutes)                 | Fast (under 1 minute)                        |
 | Configuration Complexity | Medium (ASG configuration required) | Low (only NodePool definition needed)        |
 | Cost Optimization        | Limited                             | High (workload-optimized instance selection) |
-| Maturity                 | High (older project)                | Medium (relatively new project)              |
+| Maturity | High (long-established project) | High (stable v1 API since 2024; powers EKS Auto Mode) |
 
 **Issues with Other Options:**
 

@@ -71,7 +71,7 @@
    *   예시:
 
        ```yaml
-       # Karpenter NodePool + EC2NodeClass (karpenter.sh/v1)
+       # Karpenter NodePool (karpenter.sh/v1) + EC2NodeClass (karpenter.k8s.aws/v1)
        apiVersion: karpenter.sh/v1
        kind: NodePool
        metadata:
@@ -105,7 +105,7 @@
        metadata:
          name: default
        spec:
-         role: KarpenterNodeRole
+         role: KarpenterNodeRole-my-cluster
          amiSelectorTerms:
            - alias: al2023@latest
          subnetSelectorTerms:
@@ -135,7 +135,7 @@
 | 확장 속도   | 느림 (2-10분)         | 빠름 (1분 이내)              |
 | 구성 복잡성  | 중간 (ASG 구성 필요)     | 낮음 (NodePool 정의만 필요)    |
 | 비용 최적화  | 제한적                | 높음 (워크로드에 최적화된 인스턴스 선택) |
-| 성숙도     | 높음 (오래된 프로젝트)      | 중간 (비교적 새로운 프로젝트)       |
+| 성숙도 | 높음 (오래된 프로젝트) | 높음 (2024년부터 안정적인 v1 API, EKS Auto Mode의 기반) |
 
 **다른 옵션들의 문제점:**
 

@@ -1,7 +1,7 @@
 # Amazon EKS Cost Optimization
 
 > **Supported Versions**: Amazon EKS 1.31, 1.32, 1.33
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 9, 2026
 
 Amazon EKS (Elastic Kubernetes Service) makes it easy to deploy, manage, and scale containerized applications, but managing costs effectively is important. This document covers various strategies and best practices for optimizing the costs of your EKS cluster.
 
@@ -361,7 +361,7 @@ Karpenter cost optimization settings:
 
 - **disruption.consolidateAfter**: Wait time before terminating a node after it becomes empty (e.g., `30s`; replaces the legacy `ttlSecondsAfterEmpty`)
 - **disruption.consolidationPolicy**: Node consolidation policy — `WhenEmpty` (remove only empty nodes) or `WhenEmptyOrUnderutilized` (also consolidate underutilized nodes; the equivalent of the legacy `consolidation.enabled: true`)
-- **instance-types**: Specify cost-efficient instance types
+- **template.spec.requirements** (`node.kubernetes.io/instance-type`): Specify cost-efficient instance types
 
 #### Horizontal Pod Autoscaler (HPA)
 

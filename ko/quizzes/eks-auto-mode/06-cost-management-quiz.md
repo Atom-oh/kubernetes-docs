@@ -68,6 +68,10 @@ spec:
         - key: karpenter.k8s.aws/instance-category
           operator: In
           values: ["c"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ```
 
 이를 통해 비용 폭주를 방지하고 예산을 관리할 수 있습니다.
@@ -242,6 +246,10 @@ spec:
         - key: kubernetes.io/arch
           operator: In
           values: ["amd64", "arm64"]  # Graviton 포함
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ```
 
 </details>

@@ -185,6 +185,8 @@ spec:
             - us-west-2b
             - us-west-2c
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: msa-nodeclass
       taints:
         - key: workload-type
@@ -194,7 +196,7 @@ spec:
     cpu: 200
     memory: 400Gi
   disruption:
-    consolidationPolicy: WhenUnderutilized
+    consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 60s
     budgets:
       - nodes: "20%"
@@ -204,7 +206,8 @@ kind: EC2NodeClass
 metadata:
   name: msa-nodeclass
 spec:
-  amiFamily: AL2
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: obs-service

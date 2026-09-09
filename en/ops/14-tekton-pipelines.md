@@ -2261,6 +2261,10 @@ spec:
         - key: node.kubernetes.io/instance-type
           operator: In
           values: ["m6i.xlarge", "m6a.xlarge", "m5.xlarge"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
       taints:
         - key: build-workload
           value: "true"

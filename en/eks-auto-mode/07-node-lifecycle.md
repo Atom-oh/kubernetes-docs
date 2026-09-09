@@ -207,6 +207,10 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["m", "c"]
       expireAfter: 168h
       nodeClassRef:
         group: eks.amazonaws.com
@@ -248,6 +252,10 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["m"]
       # Maximum node age for security compliance
       expireAfter: 72h  # 3 days
       nodeClassRef:
@@ -311,6 +319,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["m", "c"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
       expireAfter: 336h  # 14 days - relaxed
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
@@ -324,6 +340,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["m"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: secure-nodeclass
       expireAfter: 72h  # 3 days - aggressive
   disruption:
     consolidationPolicy: WhenEmpty  # Relaxed consolidation

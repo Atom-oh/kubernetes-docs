@@ -1,7 +1,7 @@
 # Amazon EKS 비용 최적화
 
 > **지원 버전**: Amazon EKS 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 9일
 
 Amazon EKS(Elastic Kubernetes Service)를 사용하면 컨테이너화된 애플리케이션을 쉽게 배포, 관리 및 확장할 수 있지만, 비용을 효과적으로 관리하는 것이 중요합니다. 이 문서에서는 EKS 클러스터의 비용을 최적화하기 위한 다양한 전략과 모범 사례를 다룹니다.
 
@@ -361,7 +361,7 @@ Karpenter 비용 최적화 설정:
 
 - **disruption.consolidateAfter**: 노드가 비어 있은 후 종료까지의 대기 시간 (예: `30s`, 기존 `ttlSecondsAfterEmpty`를 대체)
 - **disruption.consolidationPolicy**: 노드 통합 정책 — `WhenEmpty`(빈 노드만 정리) 또는 `WhenEmptyOrUnderutilized`(저사용 노드까지 통합, 기존 `consolidation.enabled: true`에 해당)
-- **instance-types**: 비용 효율적인 인스턴스 유형 지정
+- **template.spec.requirements** (`node.kubernetes.io/instance-type`): 비용 효율적인 인스턴스 유형 지정
 
 #### Horizontal Pod Autoscaler (HPA)
 

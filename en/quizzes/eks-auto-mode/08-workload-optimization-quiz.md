@@ -41,6 +41,10 @@ spec:
         - key: tier
           value: frontend
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 10m
@@ -96,6 +100,10 @@ spec:
         - key: tier
           value: batch
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s  # Quick cleanup
@@ -140,6 +148,10 @@ spec:
         - key: nvidia.com/gpu
           value: "true"
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   limits:
     nvidia.com/gpu: 20
   disruption:
@@ -189,6 +201,10 @@ spec:
         - key: tier
           value: api
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   weight: 10
 ```
 

@@ -194,7 +194,8 @@ kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  amiFamily: AL2023
+  amiSelectorTerms:
+  - alias: al2023@latest
   subnetSelectorTerms:
   - tags:
       karpenter.sh/discovery: my-hybrid-cluster
@@ -410,7 +411,7 @@ Karpenter의 `consolidationPolicy`와 pod-deletion-cost를 함께 사용하면 �
 |------|------|
 | `pod-deletion-cost` | ReplicaSet 스케일 다운 시 클라우드 Pod 우선 삭제 |
 | Karpenter `WhenEmpty` | 빈 클라우드 노드를 자동 제거 |
-| Karpenter `WhenUnderutilized` | 활용도 낮은 클라우드 노드 통합 |
+| Karpenter `WhenEmptyOrUnderutilized` | 활용도 낮은 클라우드 노드 통합 |
 
 ```yaml
 # karpenter와 deletion-cost 연동 예시
@@ -419,8 +420,18 @@ kind: NodePool
 metadata:
   name: cloud-burst-pool
 spec:
+  template:
+    spec:
+      requirements:
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values: ["spot", "on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
   disruption:
-    consolidationPolicy: WhenUnderutilized  # 활용도 낮으면 통합
+    consolidationPolicy: WhenEmptyOrUnderutilized  # 활용도 낮으면 통합
     consolidateAfter: 60s
   # ...나머지 설정은 위 Karpenter NodePool 구성 참조
 ```

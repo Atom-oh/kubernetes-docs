@@ -68,6 +68,10 @@ spec:
         - key: karpenter.k8s.aws/instance-category
           operator: In
           values: ["c"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ```
 
 This helps prevent cost overruns and manage budgets.
@@ -242,6 +246,10 @@ spec:
         - key: kubernetes.io/arch
           operator: In
           values: ["amd64", "arm64"]  # Include Graviton
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ```
 
 </details>

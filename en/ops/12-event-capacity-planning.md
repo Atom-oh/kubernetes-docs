@@ -202,6 +202,7 @@ kind: EC2NodeClass
 metadata:
   name: event-nodes
 spec:
+  role: KarpenterNodeRole-my-cluster
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:
@@ -270,6 +271,7 @@ kind: EC2NodeClass
 metadata:
   name: event-reserved
 spec:
+  role: KarpenterNodeRole-my-cluster
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:

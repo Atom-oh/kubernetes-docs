@@ -1,7 +1,7 @@
 # vLLM Deployment & Optimization
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33  
-> **Last Updated**: September 4, 2026
+> **Last Updated**: September 9, 2026
 
 vLLM is the most widely adopted open-source high-performance inference engine for Large Language Models (LLMs). In this chapter, we will explore vLLM's latest features and architecture, and learn how to deploy and optimize it at production scale on EKS.
 

@@ -2687,7 +2687,7 @@ kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATI
              nodeClassRef:
                group: karpenter.k8s.aws
                kind: EC2NodeClass
-               name: default
+               name: default-class
          limits:
            cpu: 1000
            memory: 1000Gi

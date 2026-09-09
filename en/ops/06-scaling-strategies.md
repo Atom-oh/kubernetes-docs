@@ -1913,6 +1913,7 @@ Optimize cost by effectively using Spot instances while maintaining reliability.
 
 ```yaml
 # spot/auto-mode-nodepools.yaml
+# EKS Auto Mode uses the karpenter.sh/v1 NodePool API with the built-in NodeClass "default"
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -1931,18 +1932,18 @@ spec:
         - key: kubernetes.io/arch
           operator: In
           values: ["amd64"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["large", "xlarge", "2xlarge"]
       nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
+        group: eks.amazonaws.com
+        kind: NodeClass
         name: default
 
   limits:
@@ -1977,15 +1978,15 @@ spec:
         - key: kubernetes.io/arch
           operator: In
           values: ["amd64"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]
       nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
+        group: eks.amazonaws.com
+        kind: NodeClass
         name: default
 
   limits:
@@ -2000,12 +2001,15 @@ spec:
   weight: 10  # Use only when Spot unavailable
 
 ---
-# EC2NodeClass for both pools
+# Self-managed Karpenter only: equivalent EC2NodeClass for both pools.
+# On EKS Auto Mode the built-in NodeClass "default" is used instead and no
+# EC2NodeClass is needed (point nodeClassRef at karpenter.k8s.aws/EC2NodeClass to use this).
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default
 spec:
+  role: KarpenterNodeRole-production-cluster
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:

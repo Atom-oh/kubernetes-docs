@@ -815,6 +815,7 @@ metadata:
 spec:
   template:
     spec:
+      # default라는 이름의 EC2NodeClass가 미리 정의되어 있다고 가정
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass

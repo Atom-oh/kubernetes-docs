@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
-> **마지막 업데이트**: 2026년 8월 31일
+> **마지막 업데이트**: 2026년 9월 9일
 
 ## 실습 환경 설정
 
@@ -1251,7 +1251,7 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
-  role: KarpenterNodeRole
+  role: KarpenterNodeRole-my-cluster
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:

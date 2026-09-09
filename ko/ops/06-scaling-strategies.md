@@ -1545,43 +1545,47 @@ Spot 인스턴스를 활용하여 비용을 절감하면서 안정성을 유지�
 ### 5.1 Auto Mode NodePool with Spot
 
 ```yaml
-# nodepool-spot.yaml (EKS Auto Mode)
-apiVersion: eks.amazonaws.com/v1
+# nodepool-spot.yaml (EKS Auto Mode — karpenter.sh/v1 NodePool API 사용)
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: general-spot
 spec:
   template:
+    metadata:
+      # Labels
+      labels:
+        capacity-type: spot
+        workload-type: stateless
     spec:
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
 
-      # Spot 인스턴스 설정
-      capacityType: Spot
-
-      # 인스턴스 타입 다양화 (가용성 향상)
-      instanceTypes:
-        - m6i.large
-        - m6i.xlarge
-        - m5.large
-        - m5.xlarge
-        - c6i.large
-        - c6i.xlarge
-        - r6i.large
-        - r6i.xlarge
+      requirements:
+        # Spot 인스턴스 설정
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+        # 인스턴스 타입 다양화 (가용성 향상)
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values:
+            - m6i.large
+            - m6i.xlarge
+            - m5.large
+            - m5.xlarge
+            - c6i.large
+            - c6i.xlarge
+            - r6i.large
+            - r6i.xlarge
 
       # Taints
       taints:
         - key: eks.amazonaws.com/capacityType
           value: SPOT
           effect: NoSchedule
-
-      # Labels
-      labels:
-        capacity-type: spot
-        workload-type: stateless
 
   # 스케일링 제한
   limits:
@@ -1594,28 +1598,32 @@ spec:
     consolidateAfter: 30s
 ---
 # nodepool-ondemand.yaml
-apiVersion: eks.amazonaws.com/v1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: general-ondemand
 spec:
   template:
+    metadata:
+      labels:
+        capacity-type: on-demand
+        workload-type: stateful
     spec:
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
 
-      capacityType: OnDemand
-
-      instanceTypes:
-        - m6i.large
-        - m6i.xlarge
-        - m6i.2xlarge
-
-      labels:
-        capacity-type: on-demand
-        workload-type: stateful
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values:
+            - m6i.large
+            - m6i.xlarge
+            - m6i.2xlarge
 
   limits:
     cpu: 200
@@ -2016,7 +2024,7 @@ Spot 사용 시 (약 70% 할인):
 ```yaml
 # fallback-strategy.yaml
 # 1. NodePool 우선순위 설정
-apiVersion: eks.amazonaws.com/v1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: spot-priority
@@ -2024,10 +2032,17 @@ spec:
   weight: 100  # 높은 우선순위
   template:
     spec:
-      capacityType: Spot
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
       # ...
 ---
-apiVersion: eks.amazonaws.com/v1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: ondemand-fallback
@@ -2035,7 +2050,14 @@ spec:
   weight: 10  # 낮은 우선순위 (Spot 부족 시 사용)
   template:
     spec:
-      capacityType: OnDemand
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
       # ...
 ---
 # 2. Capacity Reservation (예약 용량)

@@ -663,12 +663,11 @@ kind: EC2NodeClass
 metadata:
   name: gpu-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
 
   # Use EKS-optimized AMI with GPU drivers
   amiSelectorTerms:
-  - alias: al2@latest
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:
@@ -770,11 +769,10 @@ kind: EC2NodeClass
 metadata:
   name: neuron-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
 
   amiSelectorTerms:
-  - alias: al2@latest
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:
@@ -1722,8 +1720,10 @@ kind: EC2NodeClass
 metadata:
   name: efa-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
+
+  amiSelectorTerms:
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:
