@@ -14,7 +14,9 @@ The architecture simulates a production-grade environment with a **Managed Clust
 
 ## Architecture Diagram
 
-![Architecture diagram showing Argo CD deploying the OTel-instrumented MSA application onto the service cluster, whose autoscalers and OTel agent feed telemetry into the managed cluster's observability stack, while the application and observability stack both integrate with AWS managed services such as Aurora, SQS/SNS, MWAA, AMP, CloudWatch, and OpenSearch.](../../.gitbook/assets/en-labs-observability-README-0.png)
+![Architecture diagram showing Argo CD deploying the OTel-instrumented MSA application onto the service cluster, its OTel agent feeding the managed cluster's observability stack, and both integrating with AWS managed services such as Aurora, SQS/SNS, MWAA, AMP, CloudWatch, and OpenSearch.](../../.gitbook/assets/en-labs-observability-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-readme-0.html)
 
 ## Prerequisites
 
@@ -67,7 +69,9 @@ Your AWS user/role needs the following permissions:
 
 ## Lab Sequence
 
-![Six-part linear roadmap showing the observability lab's progression from infrastructure setup through the observability stack, MSA deployment with canary rollout, load testing and scaling, alerting and AIOps, to distributed tracing.](../../.gitbook/assets/en-labs-observability-README-1.png)
+![Six-part linear roadmap showing the observability lab's progression from infrastructure setup through the observability stack, MSA deployment with canary rollout, load testing and scaling, alerting and AIOps, to distributed tracing.](../../.gitbook/assets/en-labs-observability-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-readme-1.html)
 
 | Part | Title                                                    | Duration | Key Topics                                      |
 | ---- | -------------------------------------------------------- | -------- | ----------------------------------------------- |
@@ -92,7 +96,9 @@ The lab uses a sample e-commerce MSA application with 5 services:
 
 ### Service Call Flow
 
-![Sequence diagram showing a client's order request flowing through the API gateway to the order service, which writes to Aurora, calls the payment service to charge and record payment, then publishes an order event that a notification service consumes asynchronously while the order and gateway return success to the client.](../../.gitbook/assets/en-labs-observability-README-2.png)
+![Client POST /orders and POST /payments requests are routed by the API gateway to the order and payment services, which write to Aurora and publish events to SQS/SNS that the notification service consumes asynchronously.](../../.gitbook/assets/en-labs-observability-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-readme-2.html)
 
 ## Observability Tool Coverage
 

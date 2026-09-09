@@ -1,0 +1,303 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "JWT Validation Process",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "Sidecar processing step"
+        },
+        "security": {
+          "label": "Validation decision"
+        },
+        "cloud": {
+          "label": "Final outcome"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "extract",
+        "label": "Token extraction",
+        "focus": [
+          "request",
+          "header",
+          "notoken",
+          "extract"
+        ],
+        "note": "Without an Authorization header validation is skipped; otherwise the JWT is extracted and decoded."
+      },
+      {
+        "id": "validate",
+        "label": "jwtRules validation",
+        "focus": [
+          "extract",
+          "iss",
+          "aud",
+          "sig",
+          "exp"
+        ],
+        "note": "The issuer, audiences, JWKS signature, and expiration are validated in order."
+      },
+      {
+        "id": "result",
+        "label": "Allow / reject",
+        "focus": [
+          "iss",
+          "aud",
+          "sig",
+          "exp",
+          "reject",
+          "allow"
+        ],
+        "note": "Any failed check rejects the request with 401 Unauthorized; it is allowed only when every check passes."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "Client"
+    },
+    {
+      "id": "sidecar",
+      "label": "Sidecar"
+    },
+    {
+      "id": "validation",
+      "label": "jwtRules validation"
+    },
+    {
+      "id": "result",
+      "label": "Outcome",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "header",
+    "extract",
+    "iss",
+    "aud",
+    "sig",
+    "exp",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "client",
+      "col": 1,
+      "type": "external",
+      "label": "Client request",
+      "sublabel": "HTTP request",
+      "width": 140
+    },
+    {
+      "id": "header",
+      "lane": "sidecar",
+      "col": 1,
+      "type": "security",
+      "label": "Authorization header?",
+      "sublabel": "Check for Bearer token",
+      "width": 184,
+      "tag": "RequestAuthentication"
+    },
+    {
+      "id": "extract",
+      "lane": "sidecar",
+      "col": 2,
+      "type": "backend",
+      "label": "Extract & decode JWT",
+      "sublabel": "Header.Payload.Signature",
+      "width": 172
+    },
+    {
+      "id": "iss",
+      "lane": "validation",
+      "col": 2,
+      "type": "security",
+      "label": "Issuer check",
+      "sublabel": "iss field",
+      "width": 140
+    },
+    {
+      "id": "aud",
+      "lane": "validation",
+      "col": 3,
+      "type": "security",
+      "label": "Audiences check",
+      "sublabel": "aud field",
+      "width": 152
+    },
+    {
+      "id": "sig",
+      "lane": "validation",
+      "col": 4,
+      "type": "security",
+      "label": "Signature check",
+      "sublabel": "JWKS (jwksUri)",
+      "width": 148
+    },
+    {
+      "id": "exp",
+      "lane": "validation",
+      "col": 5,
+      "type": "security",
+      "label": "Expiration check",
+      "sublabel": "exp field",
+      "width": 156
+    },
+    {
+      "id": "notoken",
+      "lane": "result",
+      "col": 1,
+      "type": "cloud",
+      "label": "No token",
+      "sublabel": "Skip validation",
+      "width": 124
+    },
+    {
+      "id": "reject",
+      "lane": "result",
+      "col": 4,
+      "type": "cloud",
+      "label": "Reject",
+      "sublabel": "401 Unauthorized",
+      "width": 144
+    },
+    {
+      "id": "allow",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "Allow",
+      "sublabel": "Forward request",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-header",
+      "from": "request",
+      "to": "header"
+    },
+    {
+      "id": "header-notoken",
+      "from": "header",
+      "to": "notoken",
+      "label": "No",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        240,
+        380
+      ]
+    },
+    {
+      "id": "header-extract",
+      "from": "header",
+      "to": "extract",
+      "label": "Yes"
+    },
+    {
+      "id": "extract-iss",
+      "from": "extract",
+      "to": "iss"
+    },
+    {
+      "id": "iss-aud",
+      "from": "iss",
+      "to": "aud",
+      "label": "Pass"
+    },
+    {
+      "id": "aud-sig",
+      "from": "aud",
+      "to": "sig",
+      "label": "Pass"
+    },
+    {
+      "id": "sig-exp",
+      "from": "sig",
+      "to": "exp",
+      "label": "Pass"
+    },
+    {
+      "id": "exp-allow",
+      "from": "exp",
+      "to": "allow",
+      "label": "Valid",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iss-reject",
+      "from": "iss",
+      "to": "reject",
+      "label": "Fail",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "aud-reject",
+      "from": "aud",
+      "to": "reject",
+      "label": "Fail",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "sig-reject",
+      "from": "sig",
+      "to": "reject",
+      "label": "Fail",
+      "role": "error",
+      "variant": "security",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        830,
+        435
+      ]
+    },
+    {
+      "id": "exp-reject",
+      "from": "exp",
+      "to": "reject",
+      "label": "Expired",
+      "role": "error",
+      "variant": "security",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "JWT payload fields",
+      "items": [
+        "iss: token issuer",
+        "aud: intended audiences",
+        "exp: expiration time"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "RequestAuthentication jwtRules",
+      "items": [
+        "issuer: must match the iss field",
+        "jwksUri: where the public keys for signature validation live",
+        "audiences: must match the aud field"
+      ]
+    }
+  ]
+}

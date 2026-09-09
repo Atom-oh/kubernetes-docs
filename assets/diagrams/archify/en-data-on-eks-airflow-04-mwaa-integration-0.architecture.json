@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Driving an EKS Cluster from MWAA",
+    "locale": "en",
+    "output": "en-data-on-eks-airflow-04-mwaa-integration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pod-path",
+        "label": "Pod creation path",
+        "focus": [
+          "s3",
+          "sch",
+          "dag",
+          "pod"
+        ],
+        "note": "KubernetesPodOperator uses the DAG and kube_config.yaml synced from S3 to create a pod on a separate EKS cluster."
+      },
+      {
+        "id": "auth-path",
+        "label": "Authorization",
+        "focus": [
+          "iam",
+          "pod"
+        ],
+        "note": "eksctl iamidentitymapping binds the MWAA execution role into EKS RBAC so the pod creation is allowed."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "sch",
+      "type": "backend",
+      "label": "MWAA scheduler / workers",
+      "sublabel": "patched and scaled by AWS",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "dag",
+      "type": "backend",
+      "label": "DAG: KubernetesPodOperator",
+      "sublabel": "in_cluster=False · config_file=kube_config.yaml",
+      "tag": "DAG",
+      "pos": [
+        80,
+        250
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 bucket",
+      "sublabel": "DAGs + kube_config.yaml",
+      "pos": [
+        80,
+        470
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod created by the operator",
+      "sublabel": "data processing workload",
+      "pos": [
+        760,
+        250
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "eksctl iamidentitymapping",
+      "sublabel": "MWAA execution role → RBAC",
+      "pos": [
+        760,
+        470
+      ],
+      "size": [
+        280,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS-Managed MWAA Environment",
+      "wraps": [
+        "sch",
+        "dag"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Your EKS Cluster (separate infra)",
+      "wraps": [
+        "pod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s3-sync",
+      "from": "s3",
+      "to": "dag",
+      "label": "synced into",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sch-run",
+      "from": "sch",
+      "to": "dag",
+      "label": "runs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dag-pod",
+      "from": "dag",
+      "to": "pod",
+      "label": "creates pod via kube_config.yaml",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iam-rbac",
+      "from": "iam",
+      "to": "pod",
+      "label": "grants MWAA execution role access to EKS RBAC",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

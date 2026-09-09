@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "분석 워크플로우 — 메트릭 → 트레이스 → 로그",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      650
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "운영자"
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Dashboard / Explore"
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metrics"
+    },
+    {
+      "id": "tempo",
+      "type": "backend",
+      "label": "Tempo",
+      "sublabel": "Traces"
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "Logs"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 275,
+      "label": "메트릭"
+    },
+    {
+      "from": 290,
+      "to": 425,
+      "label": "트레이스"
+    },
+    {
+      "from": 470,
+      "to": 590,
+      "label": "로그 → 근본 원인: missing index"
+    }
+  ],
+  "messages": [
+    {
+      "id": "spike",
+      "from": "operator",
+      "to": "grafana",
+      "y": 190,
+      "label": "RED 대시보드에서 latency spike 발견"
+    },
+    {
+      "id": "p99",
+      "from": "grafana",
+      "to": "prometheus",
+      "y": 225,
+      "label": "p99 latency 그래프 조회"
+    },
+    {
+      "id": "exemplars",
+      "from": "prometheus",
+      "to": "grafana",
+      "y": 258,
+      "label": "Exemplar 포함 메트릭 반환",
+      "variant": "return"
+    },
+    {
+      "id": "click-exemplar",
+      "from": "operator",
+      "to": "grafana",
+      "y": 305,
+      "label": "Exemplar 점 클릭"
+    },
+    {
+      "id": "trace-lookup",
+      "from": "grafana",
+      "to": "tempo",
+      "y": 340,
+      "label": "TraceID로 트레이스 조회",
+      "variant": "emphasis"
+    },
+    {
+      "id": "span-timeline",
+      "from": "tempo",
+      "to": "grafana",
+      "y": 375,
+      "label": "Span 타임라인 표시",
+      "variant": "return"
+    },
+    {
+      "id": "slow-span",
+      "from": "operator",
+      "to": "grafana",
+      "y": 410,
+      "label": "느린 Span 식별 (DB query 800ms)"
+    },
+    {
+      "id": "span-to-logs",
+      "from": "operator",
+      "to": "grafana",
+      "y": 485,
+      "label": "Span → Logs 클릭"
+    },
+    {
+      "id": "log-lookup",
+      "from": "grafana",
+      "to": "loki",
+      "y": 520,
+      "label": "TraceID + 시간 범위로 로그 조회",
+      "variant": "emphasis"
+    },
+    {
+      "id": "logs",
+      "from": "loki",
+      "to": "grafana",
+      "y": 555,
+      "label": "관련 에러/슬로우 쿼리 로그 표시",
+      "variant": "return",
+      "note": "운영자가 근본 원인 식별 — missing index"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "grafana",
+      "from": 185,
+      "to": 560,
+      "type": "frontend"
+    },
+    {
+      "participant": "prometheus",
+      "from": 220,
+      "to": 263,
+      "type": "database"
+    },
+    {
+      "participant": "tempo",
+      "from": 335,
+      "to": 380,
+      "type": "backend"
+    },
+    {
+      "participant": "loki",
+      "from": 515,
+      "to": 560,
+      "type": "database"
+    }
+  ]
+}

@@ -1016,7 +1016,9 @@ OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하�
 
 컨테이너 네트워킹은 주로 브릿지 인터페이스와 NAT(Network Address Translation)를 사용하여 구현됩니다.
 
-![단일 호스트에서의 Docker 브리지 네트워킹](../../assets/diagrams/rendered/docker-bridge-networking.svg)
+![단일 호스트에서 두 컨테이너가 veth pair로 docker0 브릿지에 연결되고, iptables NAT 규칙을 거쳐 호스트 eth0을 통해 외부 인터넷과 통신하는 Docker 브리지 네트워킹 구조를 보여준다.](../.gitbook/assets/ko-basics-01-linux-basics-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-01-linux-basics-10.html)
 
 ### 시스템 호출 필터링 (seccomp)
 

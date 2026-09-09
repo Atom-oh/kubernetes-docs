@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zone Aware Routing Traffic Flow",
+    "output": "en-quizzes-service-mesh-istio-resilience-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "same-zone",
+        "label": "Same-AZ first (70%)",
+        "focus": [
+          "client",
+          "svc1",
+          "svc2"
+        ],
+        "note": "The Client Pod in us-east-1a sends 70% of traffic to Order Service pods in the same AZ; this path incurs no data transfer cost."
+      },
+      {
+        "id": "cross-zone",
+        "label": "Cross-AZ (15% + 15%)",
+        "focus": [
+          "client",
+          "svc3",
+          "svc5"
+        ],
+        "note": "The remaining 30% is split 15% each to us-east-1b and us-east-1c, incurring the $0.01/GB cross-AZ charge."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Pod",
+      "sublabel": "Zone A · us-east-1a",
+      "pos": [
+        80,
+        100
+      ],
+      "size": [
+        340,
+        60
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Order Service Pod 1",
+      "sublabel": "us-east-1a",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Order Service Pod 2",
+      "sublabel": "us-east-1a",
+      "pos": [
+        260,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Order Service Pod 3",
+      "sublabel": "us-east-1b",
+      "pos": [
+        640,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc4",
+      "type": "backend",
+      "label": "Order Service Pod 4",
+      "sublabel": "us-east-1b",
+      "pos": [
+        640,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc5",
+      "type": "backend",
+      "label": "Order Service Pod 5",
+      "sublabel": "us-east-1c",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "us-east-1a",
+      "wraps": [
+        "client",
+        "svc1",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "us-east-1b",
+      "wraps": [
+        "svc3",
+        "svc4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "us-east-1c",
+      "wraps": [
+        "svc5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-svc1",
+      "from": "client",
+      "to": "svc1",
+      "label": "70% · Free",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "client-svc2",
+      "from": "client",
+      "to": "svc2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "client-svc3",
+      "from": "client",
+      "to": "svc3",
+      "label": "15% · $0.01/GB",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "client-svc5",
+      "from": "client",
+      "to": "svc5",
+      "label": "15% · $0.01/GB",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Cost Savings (1TB/month)",
+      "items": [
+        "Without Zone Aware: 66.7% cross-AZ → $6.67",
+        "With Zone Aware: 30% cross-AZ → $3.00",
+        "Savings $3.67 (55%)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Failover",
+      "items": [
+        "On complete us-east-1a failure, failover shifts 100% to us-east-1b",
+        "Zone Aware stays in effect while outlierDetection minHealthPercent: 50 is met"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Drift 발생 시나리오",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "triggers",
+        "label": "Drift 트리거 유입",
+        "focus": [
+          "nodepool",
+          "nodeclass",
+          "ami",
+          "sg",
+          "controller"
+        ],
+        "note": "NodePool, NodeClass, AMI, 보안 그룹 변경이 모두 Auto Mode Controller로 모여 감지된다."
+      },
+      {
+        "id": "actions",
+        "label": "감지 후 조치",
+        "focus": [
+          "controller",
+          "mark",
+          "replace",
+          "provision"
+        ],
+        "note": "감지된 Drift는 NodeClaim에 표시된 뒤 순차적 교체와 새 노드 프로비저닝으로 이어진다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "설정 리소스 변경"
+        },
+        "cloud": {
+          "label": "AWS 인프라"
+        },
+        "security": {
+          "label": "보안 설정"
+        },
+        "backend": {
+          "label": "Auto Mode 처리"
+        },
+        "messagebus": {
+          "label": "노드 교체"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "config",
+      "label": "설정 리소스 변경"
+    },
+    {
+      "id": "infra",
+      "label": "이미지 · 네트워크 변경"
+    },
+    {
+      "id": "automode",
+      "label": "Auto Mode 감지 · 조치"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p_trigger",
+      "label": "Drift 트리거",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "p_detect",
+      "label": "감지",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p_action",
+      "label": "조치",
+      "fromCol": 3,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "nodepool",
+    "controller",
+    "mark",
+    "replace",
+    "provision"
+  ],
+  "nodes": [
+    {
+      "id": "nodepool",
+      "lane": "config",
+      "col": 0,
+      "type": "frontend",
+      "label": "NodePool 변경",
+      "sublabel": "karpenter.sh/v1",
+      "width": 140
+    },
+    {
+      "id": "nodeclass",
+      "lane": "config",
+      "col": 1,
+      "type": "frontend",
+      "label": "NodeClass 변경",
+      "sublabel": "eks.amazonaws.com/v1",
+      "width": 168
+    },
+    {
+      "id": "ami",
+      "lane": "infra",
+      "col": 0,
+      "type": "cloud",
+      "label": "AMI 업데이트",
+      "sublabel": "AL2023 / Bottlerocket",
+      "width": 168
+    },
+    {
+      "id": "sg",
+      "lane": "infra",
+      "col": 1,
+      "type": "security",
+      "label": "보안 그룹 변경",
+      "width": 140
+    },
+    {
+      "id": "controller",
+      "lane": "automode",
+      "col": 2,
+      "type": "backend",
+      "width": 176,
+      "label": "Auto Mode Controller",
+      "sublabel": "Drift 감지",
+      "tag": "focal"
+    },
+    {
+      "id": "mark",
+      "lane": "automode",
+      "col": 3,
+      "type": "backend",
+      "label": "Drift 표시",
+      "sublabel": "NodeClaim status",
+      "width": 150
+    },
+    {
+      "id": "replace",
+      "lane": "automode",
+      "col": 4,
+      "type": "messagebus",
+      "label": "순차적 교체",
+      "sublabel": "disruption budgets",
+      "width": 160
+    },
+    {
+      "id": "provision",
+      "lane": "automode",
+      "col": 5,
+      "type": "cloud",
+      "width": 160,
+      "label": "새 노드 프로비저닝",
+      "sublabel": "최신 설정 적용"
+    }
+  ],
+  "edges": [
+    {
+      "from": "nodepool",
+      "to": "controller"
+    },
+    {
+      "from": "nodeclass",
+      "to": "controller"
+    },
+    {
+      "from": "ami",
+      "to": "controller"
+    },
+    {
+      "from": "sg",
+      "to": "controller"
+    },
+    {
+      "from": "controller",
+      "to": "mark",
+      "label": "Drift 감지",
+      "variant": "emphasis"
+    },
+    {
+      "from": "mark",
+      "to": "replace"
+    },
+    {
+      "from": "replace",
+      "to": "provision"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Drift 트리거",
+      "items": [
+        "NodePool 또는 NodeClass 설정이 변경되면 자동으로 Drift가 감지된다",
+        "AMI 업데이트와 보안 그룹 변경도 같은 경로로 Auto Mode Controller에 유입된다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Drift 확인",
+      "items": [
+        "kubectl get nodeclaims -o wide 로 NodeClaim의 Drift 상태를 확인한다",
+        "kubectl describe nodeclaim <name> 의 Status에서 Drift 이유를 확인한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "안전한 교체",
+      "items": [
+        "disruption.budgets nodes: \"1\" 로 한 번에 한 노드씩 롤링 교체한다",
+        "expireAfter: 168h 로 7일마다 최신 AMI가 적용되도록 교체한다"
+      ]
+    }
+  ]
+}

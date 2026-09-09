@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Air-Gap Architecture Overview",
+    "locale": "en",
+    "output": "en-eks-hybrid-nodes-03-airgap-setup-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      560
+    ],
+    "views": [
+      {
+        "id": "prep-path",
+        "label": "Preparation path",
+        "focus": [
+          "manifest",
+          "script",
+          "s3",
+          "ecr"
+        ],
+        "note": "An internet-connected host reads manifest.yaml, uploads the binaries to the private S3 bucket and checks the ECR image list."
+      },
+      {
+        "id": "runtime-path",
+        "label": "Runtime access path",
+        "focus": [
+          "node",
+          "phz",
+          "vpce-s3",
+          "s3",
+          "vpce-ecr",
+          "ecr"
+        ],
+        "note": "The air-gapped node resolves the domain via the PHZ and reaches the same S3 bucket and ECR only through VPC endpoints."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "manifest",
+      "type": "external",
+      "label": "hybrid-assets.eks.amazonaws.com",
+      "sublabel": "manifest.yaml",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "script",
+      "type": "backend",
+      "label": "ekshybrid-download.sh",
+      "sublabel": "download / upload script",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Private S3 Bucket",
+      "sublabel": "binaries + checksums",
+      "pos": [
+        360,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "database",
+      "label": "ECR",
+      "sublabel": "container images",
+      "pos": [
+        360,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "phz",
+      "type": "cloud",
+      "label": "PHZ Domain Resolution",
+      "sublabel": "hybrid-assets.eks.amazonaws.com",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "vpce-s3",
+      "type": "cloud",
+      "label": "S3 Interface VPC Endpoint",
+      "sublabel": "binary downloads",
+      "pos": [
+        620,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "vpce-ecr",
+      "type": "cloud",
+      "label": "ECR API/DKR VPC Endpoint",
+      "sublabel": "image pulls",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "On-Premises Node",
+      "sublabel": "nodeadm / air-gapped",
+      "pos": [
+        930,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Preparation - Internet-Connected Host",
+      "wraps": [
+        "manifest",
+        "script"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Side - Private VPC Endpoint Path",
+      "wraps": [
+        "s3",
+        "ecr",
+        "phz",
+        "vpce-s3",
+        "vpce-ecr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Runtime - Air-Gapped Environment",
+      "wraps": [
+        "node"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "manifest-to-script",
+      "from": "manifest",
+      "to": "script",
+      "label": "Download manifest.yaml",
+      "labelDy": 24
+    },
+    {
+      "id": "script-to-s3",
+      "from": "script",
+      "to": "s3",
+      "label": "Upload binaries + checksums",
+      "variant": "emphasis",
+      "labelDy": 17
+    },
+    {
+      "id": "script-to-ecr",
+      "from": "script",
+      "to": "ecr",
+      "label": "Check container image list",
+      "variant": "dashed"
+    },
+    {
+      "id": "node-to-phz",
+      "from": "node",
+      "to": "phz",
+      "label": "Resolve domain"
+    },
+    {
+      "id": "phz-to-vpce-s3",
+      "from": "phz",
+      "to": "vpce-s3",
+      "label": "private IP",
+      "labelDy": 24
+    },
+    {
+      "id": "vpce-s3-to-s3",
+      "from": "vpce-s3",
+      "to": "s3",
+      "label": "binary downloads",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-to-vpce-ecr",
+      "from": "node",
+      "to": "vpce-ecr",
+      "label": "Pull container images"
+    },
+    {
+      "id": "vpce-ecr-to-ecr",
+      "from": "vpce-ecr",
+      "to": "ecr"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "S3 Bucket (pre-upload required)",
+      "items": [
+        "nodeadm, kubelet, kubectl, kube-proxy",
+        "cni-plugins, ecr-credential-provider, aws-iam-authenticator, aws_signing_helper",
+        "Checksum files (.sha256), manifest.yaml"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "ECR (direct access via VPC endpoints)",
+      "items": [
+        "pause, coredns, kube-proxy images",
+        "vpc-cni, vpc-cni-init images"
+      ]
+    }
+  ]
+}

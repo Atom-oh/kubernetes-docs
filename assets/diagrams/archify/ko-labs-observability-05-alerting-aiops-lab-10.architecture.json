@@ -1,0 +1,364 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "알림 분석 및 AIOps 대응 아키텍처",
+    "output": "ko-labs-observability-05-alerting-aiops-lab-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      560
+    ],
+    "views": [
+      {
+        "id": "detect-route",
+        "label": "1. 탐지와 라우팅",
+        "focus": [
+          "alertmanager",
+          "cloudwatch",
+          "oncall",
+          "sns",
+          "apigw"
+        ],
+        "note": "PrometheusRule과 CloudWatch Alarms가 이상을 탐지하면 Grafana OnCall, SNS Topic, API Gateway 웹훅으로 알림이 라우팅된다."
+      },
+      {
+        "id": "investigate",
+        "label": "2. 조사",
+        "focus": [
+          "sns",
+          "apigw",
+          "lambda",
+          "context"
+        ],
+        "note": "SNS 구독과 API Gateway 웹훅이 Lambda AIOps Agent를 호출하고, Agent는 알림을 인시던트 컨텍스트로 정규화한다."
+      },
+      {
+        "id": "evidence",
+        "label": "3. 증거 수집",
+        "focus": [
+          "lambda",
+          "logs",
+          "metrics",
+          "traces"
+        ],
+        "note": "Agent가 로그·지표·트레이스를 병렬로 조회해 분석에 필요한 텔레메트리 증거를 모은다."
+      },
+      {
+        "id": "analyze",
+        "label": "4. 분석과 대응",
+        "focus": [
+          "context",
+          "bedrock",
+          "responders"
+        ],
+        "note": "인시던트 컨텍스트를 Amazon Bedrock에 전달해 근본 원인을 분석하고, 결과를 SNS로 발행해 담당자에게 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "PrometheusRule",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "경보 및 이벤트",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "oncall",
+      "type": "frontend",
+      "label": "Grafana OnCall",
+      "sublabel": "인시던트 라우팅",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS Topic",
+      "sublabel": "알림 팬아웃",
+      "pos": [
+        290,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "apigw",
+      "type": "cloud",
+      "label": "API Gateway",
+      "sublabel": "직접 웹훅",
+      "pos": [
+        290,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lambda",
+      "type": "backend",
+      "label": "Lambda AIOps Agent",
+      "sublabel": "알림 컨텍스트 정규화",
+      "pos": [
+        540,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "context",
+      "type": "database",
+      "label": "인시던트 컨텍스트",
+      "sublabel": "서비스·지표·시간 범위",
+      "pos": [
+        540,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "database",
+      "label": "로그",
+      "sublabel": "CloudWatch Logs / Loki",
+      "pos": [
+        830,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "지표",
+      "sublabel": "AMP",
+      "pos": [
+        830,
+        160
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "traces",
+      "type": "database",
+      "label": "트레이스",
+      "sublabel": "X-Ray / Tempo",
+      "pos": [
+        830,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "bedrock",
+      "type": "backend",
+      "label": "Amazon Bedrock",
+      "sublabel": "근본 원인 분석",
+      "pos": [
+        830,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "responders",
+      "type": "external",
+      "label": "담당자",
+      "sublabel": "Slack / Email / PagerDuty",
+      "pos": [
+        1080,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. 탐지",
+      "wraps": [
+        "cloudwatch",
+        "alertmanager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "인시던트 관리",
+      "wraps": [
+        "oncall"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2. 라우팅",
+      "wraps": [
+        "sns",
+        "apigw"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3. 조사",
+      "wraps": [
+        "lambda",
+        "context"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "텔레메트리 증거",
+      "wraps": [
+        "logs",
+        "metrics",
+        "traces"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "4. 분석과 대응",
+      "wraps": [
+        "bedrock",
+        "responders"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "am-oncall",
+      "from": "alertmanager",
+      "to": "oncall",
+      "label": "webhook",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "am-sns",
+      "from": "alertmanager",
+      "to": "sns",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cw-sns",
+      "from": "cloudwatch",
+      "to": "sns"
+    },
+    {
+      "id": "am-apigw",
+      "from": "alertmanager",
+      "to": "apigw",
+      "label": "webhook"
+    },
+    {
+      "id": "sns-lambda",
+      "from": "sns",
+      "to": "lambda",
+      "label": "Lambda 구독",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "apigw-lambda",
+      "from": "apigw",
+      "to": "lambda"
+    },
+    {
+      "id": "lambda-context",
+      "from": "lambda",
+      "to": "context",
+      "label": "정규화",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "lambda-logs",
+      "from": "lambda",
+      "to": "logs",
+      "label": "병렬 조회",
+      "variant": "dashed"
+    },
+    {
+      "id": "lambda-metrics",
+      "from": "lambda",
+      "to": "metrics",
+      "variant": "dashed"
+    },
+    {
+      "id": "lambda-traces",
+      "from": "lambda",
+      "to": "traces",
+      "variant": "dashed"
+    },
+    {
+      "id": "context-bedrock",
+      "from": "context",
+      "to": "bedrock",
+      "label": "분석 요청",
+      "variant": "emphasis",
+      "labelDy": 22
+    },
+    {
+      "id": "bedrock-responders",
+      "from": "bedrock",
+      "to": "responders",
+      "label": "SNS 발행",
+      "labelDy": -24
+    }
+  ]
+}

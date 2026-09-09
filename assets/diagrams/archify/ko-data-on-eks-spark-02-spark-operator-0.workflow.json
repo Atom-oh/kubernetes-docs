@@ -1,0 +1,202 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Spark Operator 동작 방식",
+    "output": "ko-data-on-eks-spark-02-spark-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "submit",
+        "label": "제출과 감시",
+        "focus": [
+          "apply",
+          "watch",
+          "webhook",
+          "driver"
+        ],
+        "note": "kubectl apply로 만든 SparkApplication CR을 Controller가 감시하고, Webhook을 거쳐 Driver Pod를 생성한다."
+      },
+      {
+        "id": "run",
+        "label": "Driver가 이끄는 실행",
+        "focus": [
+          "driver",
+          "executor",
+          "run"
+        ],
+        "note": "Operator는 Driver Pod까지만 직접 관여하고, Executor Pod는 Driver가 Kubernetes API에 직접 요청한다."
+      },
+      {
+        "id": "loop",
+        "label": "상태 보고 루프",
+        "focus": [
+          "run",
+          "status",
+          "watch"
+        ],
+        "note": "진행 상황이 CR .status에 기록되고 Controller의 감시 루프로 되돌아간다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "사용자 제출"
+        },
+        "backend": {
+          "label": "Spark Operator"
+        },
+        "security": {
+          "label": "Mutating Webhook"
+        },
+        "database": {
+          "label": "CR .status 기록"
+        },
+        "cloud": {
+          "label": "Spark Pod"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "사용자"
+    },
+    {
+      "id": "operator",
+      "label": "Spark Operator"
+    },
+    {
+      "id": "admission",
+      "label": "Mutating Admission Webhook"
+    },
+    {
+      "id": "spark",
+      "label": "Spark Driver / Executor"
+    }
+  ],
+  "mainPath": [
+    "apply",
+    "watch",
+    "webhook",
+    "driver",
+    "executor",
+    "run",
+    "status"
+  ],
+  "nodes": [
+    {
+      "id": "apply",
+      "lane": "user",
+      "col": 0,
+      "type": "frontend",
+      "label": "kubectl apply",
+      "sublabel": "SparkApplication CR",
+      "width": 176
+    },
+    {
+      "id": "watch",
+      "lane": "operator",
+      "col": 1,
+      "type": "backend",
+      "label": "Controller가 CR 감시",
+      "sublabel": "reconcile loop",
+      "tag": "컨트롤 루프",
+      "width": 176
+    },
+    {
+      "id": "webhook",
+      "lane": "admission",
+      "col": 2,
+      "type": "security",
+      "label": "Pod 커스터마이징 주입",
+      "sublabel": "driver/executor pod",
+      "width": 176
+    },
+    {
+      "id": "driver",
+      "lane": "operator",
+      "col": 3,
+      "type": "backend",
+      "label": "Driver Pod 생성",
+      "sublabel": "spark-driver",
+      "width": 176
+    },
+    {
+      "id": "executor",
+      "lane": "spark",
+      "col": 4,
+      "type": "cloud",
+      "label": "Executor Pod 요청",
+      "sublabel": "Driver가 직접 요청",
+      "width": 176
+    },
+    {
+      "id": "run",
+      "lane": "spark",
+      "col": 5,
+      "type": "cloud",
+      "label": "Spark 작업 실행",
+      "sublabel": "executor에서 실행",
+      "width": 176
+    },
+    {
+      "id": "status",
+      "lane": "operator",
+      "col": 5,
+      "type": "database",
+      "label": "진행 상황 기록",
+      "sublabel": "CR .status",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "apply-to-watch",
+      "from": "apply",
+      "to": "watch",
+      "label": "CR 생성",
+      "toSide": "left"
+    },
+    {
+      "id": "watch-to-webhook",
+      "from": "watch",
+      "to": "webhook"
+    },
+    {
+      "id": "webhook-to-driver",
+      "from": "webhook",
+      "to": "driver",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "driver-to-executor",
+      "from": "driver",
+      "to": "executor",
+      "label": "Kubernetes API"
+    },
+    {
+      "id": "executor-to-run",
+      "from": "executor",
+      "to": "run"
+    },
+    {
+      "id": "run-to-status",
+      "from": "run",
+      "to": "status",
+      "label": "상태 보고"
+    },
+    {
+      "id": "status-to-watch",
+      "from": "status",
+      "to": "watch",
+      "label": "다시 감시",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ]
+}

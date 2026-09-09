@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Karpenter Best Practices",
+    "locale": "en",
+    "output": "en-autoscaling-02-karpenter-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Performance"
+        },
+        "cloud": {
+          "label": "Cost"
+        },
+        "frontend": {
+          "label": "Availability"
+        },
+        "security": {
+          "label": "Security"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "performance",
+        "label": "Performance Optimization",
+        "focus": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "note": "Pick instance types and TTLs that fit the workload, and enable consolidation to raise resource utilization."
+      },
+      {
+        "id": "cost",
+        "label": "Cost Optimization",
+        "focus": [
+          "c1",
+          "c2",
+          "c3",
+          "c4"
+        ],
+        "note": "Cut cost with Spot and right-sized instances, scale to zero when idle, and expire nodes on a schedule."
+      },
+      {
+        "id": "availability",
+        "label": "Availability Improvement",
+        "focus": [
+          "a1",
+          "a2",
+          "a3",
+          "a4"
+        ],
+        "note": "Protect workload availability with multiple AZs, an on-demand/Spot mix, PDBs, and interruption handling."
+      },
+      {
+        "id": "security",
+        "label": "Security Hardening",
+        "focus": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "note": "Harden nodes with least-privilege IAM, restricted security groups, encrypted EBS, and required IMDSv2."
+      }
+    ],
+    "viewBox": [
+      1300,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "p1",
+      "type": "backend",
+      "label": "Select appropriate instance types",
+      "sublabel": "Types suited to the workload",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "backend",
+      "label": "Allow diverse instance types",
+      "sublabel": "Availability and cost optimization",
+      "pos": [
+        40,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "backend",
+      "label": "Set appropriate TTL",
+      "sublabel": "Matched to workload patterns",
+      "pos": [
+        40,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "p4",
+      "type": "backend",
+      "label": "Enable node consolidation",
+      "sublabel": "Optimize resource utilization",
+      "pos": [
+        40,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "cloud",
+      "label": "Utilize Spot instances",
+      "sublabel": "Cost savings",
+      "pos": [
+        360,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "cloud",
+      "label": "Select appropriate instance sizes",
+      "sublabel": "Sizes suited to the workload",
+      "pos": [
+        360,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "Utilize zero scaling",
+      "sublabel": "Scale nodes to 0 when idle",
+      "pos": [
+        360,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c4",
+      "type": "cloud",
+      "label": "Set node expiration",
+      "sublabel": "Regular replacement, latest types",
+      "pos": [
+        360,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a1",
+      "type": "frontend",
+      "label": "Use multiple availability zones",
+      "sublabel": "Deploy nodes across AZs",
+      "pos": [
+        680,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "frontend",
+      "label": "Mix on-demand/Spot instances",
+      "sublabel": "Balance availability and cost",
+      "pos": [
+        680,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "frontend",
+      "label": "Set appropriate PDBs",
+      "sublabel": "Ensure application availability",
+      "pos": [
+        680,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a4",
+      "type": "frontend",
+      "label": "Optimize interruption handling",
+      "sublabel": "Protect workloads on node interruption",
+      "pos": [
+        680,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "security",
+      "label": "IAM role least privilege",
+      "sublabel": "Controller and node roles, least privilege",
+      "pos": [
+        1000,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "security",
+      "label": "Security group restrictions",
+      "sublabel": "Allow only required traffic",
+      "pos": [
+        1000,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "security",
+      "label": "Encrypted EBS volumes",
+      "sublabel": "Encrypt node volumes",
+      "pos": [
+        1000,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "security",
+      "label": "Require IMDSv2",
+      "sublabel": "Token-required metadata access",
+      "pos": [
+        1000,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Performance Optimization",
+      "wraps": [
+        "p1",
+        "p2",
+        "p3",
+        "p4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cost Optimization",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3",
+        "c4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Improvement",
+      "wraps": [
+        "a1",
+        "a2",
+        "a3",
+        "a4"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Security Hardening",
+      "wraps": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ]
+    }
+  ],
+  "connections": []
+}

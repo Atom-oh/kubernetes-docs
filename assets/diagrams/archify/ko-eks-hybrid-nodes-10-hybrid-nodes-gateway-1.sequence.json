@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Lease 기반 리더 선출 — 리더 장애 시 페일오버",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      540
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "steady",
+        "label": "정상 운영",
+        "focus": [
+          "leader",
+          "lease"
+        ],
+        "note": "리더 Pod가 retryPeriod(15초) 간격으로 Lease를 갱신하며 게이트웨이 역할을 수행한다."
+      },
+      {
+        "id": "failover",
+        "label": "장애와 인계",
+        "focus": [
+          "lease",
+          "follower"
+        ],
+        "note": "리더가 멈추면 leaseDuration(40초) 뒤 Lease가 만료되고, 팔로워 Pod가 이를 감지해 Lease를 획득한다."
+      },
+      {
+        "id": "reroute",
+        "label": "라우트 갱신",
+        "focus": [
+          "follower",
+          "vpcrt"
+        ],
+        "note": "새 리더가 VPC 라우트 테이블의 Hybrid Pod CIDR 경로를 자신의 ENI로 바꾼다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "leader",
+      "type": "backend",
+      "label": "리더 Pod",
+      "sublabel": "게이트웨이 레플리카 1"
+    },
+    {
+      "id": "lease",
+      "type": "cloud",
+      "label": "Kubernetes Lease",
+      "sublabel": "coordination.k8s.io"
+    },
+    {
+      "id": "follower",
+      "type": "backend",
+      "label": "팔로워 Pod",
+      "sublabel": "게이트웨이 레플리카 2"
+    },
+    {
+      "id": "vpcrt",
+      "type": "cloud",
+      "label": "VPC 라우트 테이블",
+      "sublabel": "routeTableIDs"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 235,
+      "label": "정상 운영"
+    },
+    {
+      "from": 255,
+      "to": 450,
+      "label": "리더 장애 발생 → 팔로워 승격"
+    }
+  ],
+  "messages": [
+    {
+      "id": "renew",
+      "from": "leader",
+      "to": "lease",
+      "y": 195,
+      "label": "Lease 갱신 (15초 간격)",
+      "variant": "default",
+      "note": "정상 운영 중"
+    },
+    {
+      "id": "expire",
+      "from": "lease",
+      "to": "follower",
+      "y": 300,
+      "label": "Lease 만료 감지 (40초 후)",
+      "variant": "dashed",
+      "note": "리더의 갱신이 멈춤"
+    },
+    {
+      "id": "acquire",
+      "from": "follower",
+      "to": "lease",
+      "y": 350,
+      "label": "Lease 획득",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reroute",
+      "from": "follower",
+      "to": "vpcrt",
+      "y": 405,
+      "label": "라우트 테이블 업데이트 (새 ENI로 변경)",
+      "variant": "emphasis",
+      "note": "새로운 리더로 승격"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "leader",
+      "from": 188,
+      "to": 228,
+      "type": "backend"
+    },
+    {
+      "participant": "follower",
+      "from": 293,
+      "to": 417,
+      "type": "backend"
+    }
+  ]
+}

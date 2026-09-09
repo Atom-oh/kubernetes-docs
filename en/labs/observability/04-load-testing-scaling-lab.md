@@ -22,7 +22,9 @@
 
 ## Load Testing and Scaling Timeline
 
-![Sequence diagram showing a k6 load test ramping virtual users against an API Gateway across four phases, with KEDA scaling pod counts in response to metrics and Karpenter provisioning or consolidating nodes when pod capacity demands it.](../../../assets/diagrams/rendered/en-labs-observability-04-load-testing-scaling-lab-0.svg)
+![Sequence diagram showing a k6 load test ramping virtual users against an API Gateway across four phases, with KEDA scaling MSA Pods on SQS depth and Karpenter provisioning nodes for Pending Pods and consolidating them during cool-down.](../../.gitbook/assets/en-labs-observability-04-load-testing-scaling-lab-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-04-load-testing-scaling-lab-0.html)
 
 ---
 

@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Data on EKS Data Pipeline Layout",
+    "locale": "en",
+    "output": "en-data-on-eks-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "orchestration",
+        "label": "Job scheduling",
+        "focus": [
+          "airflow",
+          "kafka",
+          "spark"
+        ],
+        "note": "Airflow defines the dependencies and schedules of Kafka and Spark jobs and manages their execution."
+      },
+      {
+        "id": "dataflow",
+        "label": "Data flow",
+        "focus": [
+          "kafka",
+          "flink",
+          "spark"
+        ],
+        "note": "Kafka streams events into Flink and lands raw data into Spark for batch processing."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "airflow",
+      "type": "backend",
+      "label": "Apache Airflow",
+      "sublabel": "Workflow orchestration",
+      "tag": "Control",
+      "pos": [
+        420,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Apache Kafka",
+      "sublabel": "Streaming",
+      "tag": "Hub",
+      "pos": [
+        120,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "spark",
+      "type": "backend",
+      "label": "Apache Spark",
+      "sublabel": "Batch / analytics",
+      "pos": [
+        740,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "Apache Flink",
+      "sublabel": "Stream processing",
+      "pos": [
+        120,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS cluster",
+      "wraps": [
+        "airflow",
+        "kafka",
+        "spark",
+        "flink"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "airflow-kafka",
+      "from": "airflow",
+      "to": "kafka",
+      "label": "schedule jobs",
+      "variant": "dashed"
+    },
+    {
+      "id": "airflow-spark",
+      "from": "airflow",
+      "to": "spark",
+      "label": "schedule jobs",
+      "variant": "dashed"
+    },
+    {
+      "id": "kafka-spark",
+      "from": "kafka",
+      "to": "spark",
+      "label": "raw data load"
+    },
+    {
+      "id": "kafka-flink",
+      "from": "kafka",
+      "to": "flink",
+      "label": "real-time events",
+      "variant": "emphasis",
+      "labelDy": 58
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Orchestration",
+      "items": [
+        "Airflow defines dependencies and schedules across data jobs and manages their execution"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Streaming and stream processing",
+      "items": [
+        "Kafka publishes and subscribes to events in real time and connects asynchronous communication between systems",
+        "Flink performs real-time aggregation, transformation, and stateful computation on streaming data"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Batch / analytics",
+      "items": [
+        "Spark processes large datasets in a distributed way for ETL, aggregation, and ML pipelines"
+      ]
+    }
+  ]
+}

@@ -11,7 +11,9 @@ This guide explains how EKS Auto Mode handles node provisioning, consolidation, 
 
 Understanding the scaling flow of EKS Auto Mode helps with optimization.
 
-![Flowchart showing how a pending pod triggers EKS Auto Mode to detect and evaluate the NodePool, select an optimal instance, provision a new EC2 node, and schedule the pod once the node is ready.](../../assets/diagrams/rendered/en-eks-auto-mode-03-scaling-behavior-0.svg)
+![Flowchart showing how a pending pod triggers EKS Auto Mode to detect and evaluate the NodePool, select an optimal instance, provision a new EC2 node, and schedule the pod once the node is ready.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-auto-mode-03-scaling-behavior-0.html)
 
 ### Scaling Timeline
 
@@ -85,7 +87,9 @@ spec:
 
 ### Consolidation Visualization
 
-![Before-and-after comparison showing three lightly-loaded nodes consolidating into one densely-packed surviving node while the other two are drained and removed.](../../assets/diagrams/rendered/en-eks-auto-mode-03-scaling-behavior-1.svg)
+![Before-and-after comparison showing three lightly-loaded nodes consolidating into one densely-packed surviving node while the other two are drained and removed.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-auto-mode-03-scaling-behavior-1.html)
 
 ### Consolidation Decision Factors
 

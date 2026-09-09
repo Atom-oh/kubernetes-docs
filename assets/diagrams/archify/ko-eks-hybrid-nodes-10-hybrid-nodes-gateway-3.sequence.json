@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "패턴 2: Hybrid Pod에서 VPC Pod로",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      620
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "src_pod",
+      "type": "backend",
+      "label": "Hybrid Pod",
+      "sublabel": "10.85.1.50"
+    },
+    {
+      "id": "hop2",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "Hybrid Node"
+    },
+    {
+      "id": "hop3",
+      "type": "external",
+      "label": "DX / VPN",
+      "sublabel": "Direct Connect/VPN"
+    },
+    {
+      "id": "hop4",
+      "type": "cloud",
+      "label": "hybrid_vxlan0",
+      "sublabel": "게이트웨이 VXLAN"
+    },
+    {
+      "id": "hop5",
+      "type": "cloud",
+      "label": "게이트웨이 EC2",
+      "sublabel": "10.0.1.100"
+    },
+    {
+      "id": "hop6",
+      "type": "cloud",
+      "label": "VPC 라우팅",
+      "sublabel": "VPC 네트워크"
+    },
+    {
+      "id": "dst_pod",
+      "type": "backend",
+      "label": "VPC Pod",
+      "sublabel": "10.0.1.50"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "src_pod",
+      "to": "hop2",
+      "y": 190,
+      "label": "패킷 전송 · dst 10.0.1.50",
+      "variant": "default",
+      "note": "CiliumVTEPConfig 참조 — 10.0.0.0/16 → VTEP 10.0.1.100"
+    },
+    {
+      "id": "m2",
+      "from": "hop2",
+      "to": "hop3",
+      "y": 255,
+      "label": "VXLAN 캡슐화 · VNI 2 · UDP 8472",
+      "variant": "emphasis",
+      "note": "VXLAN 캡슐화 · VNI 2 · UDP 8472"
+    },
+    {
+      "id": "m3",
+      "from": "hop3",
+      "to": "hop4",
+      "y": 320,
+      "label": "VXLAN 패킷 수신",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "hop4",
+      "to": "hop5",
+      "y": 385,
+      "label": "VXLAN 디캡슐화 · 원본 패킷",
+      "variant": "default",
+      "note": "VXLAN 디캡슐화"
+    },
+    {
+      "id": "m5",
+      "from": "hop5",
+      "to": "hop6",
+      "y": 450,
+      "label": "VPC 로컬 라우팅",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "hop6",
+      "to": "dst_pod",
+      "y": 515,
+      "label": "패킷 전달",
+      "variant": "default",
+      "note": "VPC 네트워크를 거쳐 대상 Pod 10.0.1.50에 도달"
+    }
+  ]
+}

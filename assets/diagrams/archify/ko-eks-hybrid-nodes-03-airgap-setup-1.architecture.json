@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "에어갭 아키텍처 개요",
+    "output": "ko-eks-hybrid-nodes-03-airgap-setup-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      560
+    ],
+    "views": [
+      {
+        "id": "prep-path",
+        "label": "사전 준비 경로",
+        "focus": [
+          "manifest",
+          "script",
+          "s3",
+          "ecr"
+        ],
+        "note": "인터넷 접근 호스트가 manifest.yaml을 읽어 바이너리를 프라이빗 S3 버킷에 올리고 ECR 이미지 목록을 확인한다."
+      },
+      {
+        "id": "runtime-path",
+        "label": "런타임 접근 경로",
+        "focus": [
+          "node",
+          "phz",
+          "vpce-s3",
+          "s3",
+          "vpce-ecr",
+          "ecr"
+        ],
+        "note": "에어갭 노드는 PHZ로 도메인을 해석하고 VPC 엔드포인트만 거쳐 같은 S3 버킷과 ECR에 접근한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "manifest",
+      "type": "external",
+      "label": "hybrid-assets.eks.amazonaws.com",
+      "sublabel": "manifest.yaml",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "script",
+      "type": "backend",
+      "label": "ekshybrid-download.sh",
+      "sublabel": "다운로드 · 업로드 스크립트",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "프라이빗 S3 버킷",
+      "sublabel": "바이너리 + 체크섬",
+      "pos": [
+        360,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "database",
+      "label": "ECR",
+      "sublabel": "컨테이너 이미지",
+      "pos": [
+        360,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "phz",
+      "type": "cloud",
+      "label": "PHZ 도메인 해석",
+      "sublabel": "hybrid-assets.eks.amazonaws.com",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "vpce-s3",
+      "type": "cloud",
+      "label": "S3 Interface VPC Endpoint",
+      "sublabel": "바이너리 다운로드",
+      "pos": [
+        620,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "vpce-ecr",
+      "type": "cloud",
+      "label": "ECR API/DKR VPC Endpoint",
+      "sublabel": "이미지 풀",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "온프레미스 노드",
+      "sublabel": "nodeadm · 에어갭",
+      "pos": [
+        930,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "사전 준비 · 인터넷 접근 가능 호스트",
+      "wraps": [
+        "manifest",
+        "script"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 측 · VPC 엔드포인트 프라이빗 경로",
+      "wraps": [
+        "s3",
+        "ecr",
+        "phz",
+        "vpce-s3",
+        "vpce-ecr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "런타임 · 에어갭 환경",
+      "wraps": [
+        "node"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "manifest-to-script",
+      "from": "manifest",
+      "to": "script",
+      "label": "manifest.yaml 다운로드",
+      "labelDy": 24
+    },
+    {
+      "id": "script-to-s3",
+      "from": "script",
+      "to": "s3",
+      "label": "바이너리 + 체크섬 업로드",
+      "variant": "emphasis",
+      "labelDy": 17
+    },
+    {
+      "id": "script-to-ecr",
+      "from": "script",
+      "to": "ecr",
+      "label": "컨테이너 이미지 목록 확인",
+      "variant": "dashed"
+    },
+    {
+      "id": "node-to-phz",
+      "from": "node",
+      "to": "phz",
+      "label": "도메인 해석"
+    },
+    {
+      "id": "phz-to-vpce-s3",
+      "from": "phz",
+      "to": "vpce-s3",
+      "label": "프라이빗 IP",
+      "labelDy": 24
+    },
+    {
+      "id": "vpce-s3-to-s3",
+      "from": "vpce-s3",
+      "to": "s3",
+      "label": "바이너리 다운로드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-to-vpce-ecr",
+      "from": "node",
+      "to": "vpce-ecr",
+      "label": "컨테이너 이미지 풀"
+    },
+    {
+      "id": "vpce-ecr-to-ecr",
+      "from": "vpce-ecr",
+      "to": "ecr"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "S3 버킷 (사전 업로드 필요)",
+      "items": [
+        "nodeadm, kubelet, kubectl, kube-proxy",
+        "cni-plugins, ecr-credential-provider, aws-iam-authenticator, aws_signing_helper",
+        "체크섬 파일(.sha256), manifest.yaml"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "ECR (VPC 엔드포인트로 직접 접근)",
+      "items": [
+        "pause, coredns, kube-proxy 이미지",
+        "vpc-cni, vpc-cni-init 이미지"
+      ]
+    }
+  ]
+}

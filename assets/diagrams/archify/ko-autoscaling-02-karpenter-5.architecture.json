@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Karpenter 모범 사례",
+    "output": "ko-autoscaling-02-karpenter-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "성능 최적화"
+        },
+        "cloud": {
+          "label": "비용 최적화"
+        },
+        "frontend": {
+          "label": "가용성 향상"
+        },
+        "security": {
+          "label": "보안 강화"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "performance",
+        "label": "성능 최적화",
+        "focus": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "note": "워크로드에 맞는 인스턴스 유형과 TTL을 정하고, 노드 통합으로 리소스 활용도를 높인다."
+      },
+      {
+        "id": "cost",
+        "label": "비용 최적화",
+        "focus": [
+          "c1",
+          "c2",
+          "c3",
+          "c4"
+        ],
+        "note": "스팟 인스턴스와 적절한 크기로 비용을 줄이고, 유휴 시 0으로 축소하며 노드를 정기 교체한다."
+      },
+      {
+        "id": "availability",
+        "label": "가용성 향상",
+        "focus": [
+          "a1",
+          "a2",
+          "a3",
+          "a4"
+        ],
+        "note": "여러 가용 영역과 온디맨드·스팟 혼합, PDB, 인터럽션 처리로 워크로드 가용성을 지킨다."
+      },
+      {
+        "id": "security",
+        "label": "보안 강화",
+        "focus": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "note": "IAM 최소 권한, 보안 그룹 제한, EBS 암호화, IMDSv2 필수화로 노드를 보호한다."
+      }
+    ],
+    "viewBox": [
+      1300,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "p1",
+      "type": "backend",
+      "label": "적절한 인스턴스 유형 선택",
+      "sublabel": "워크로드에 적합한 유형",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "backend",
+      "label": "다양한 인스턴스 유형 허용",
+      "sublabel": "가용성·비용 최적화",
+      "pos": [
+        40,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "backend",
+      "label": "적절한 TTL 설정",
+      "sublabel": "워크로드 패턴에 맞게",
+      "pos": [
+        40,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "p4",
+      "type": "backend",
+      "label": "노드 통합 활성화",
+      "sublabel": "리소스 활용도 최적화",
+      "pos": [
+        40,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "cloud",
+      "label": "스팟 인스턴스 활용",
+      "sublabel": "비용 절감",
+      "pos": [
+        360,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "cloud",
+      "label": "적절한 인스턴스 크기 선택",
+      "sublabel": "워크로드에 적합한 크기",
+      "pos": [
+        360,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "제로 스케일링 활용",
+      "sublabel": "유휴 시 노드 0개로 축소",
+      "pos": [
+        360,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "c4",
+      "type": "cloud",
+      "label": "노드 만료 설정",
+      "sublabel": "정기 교체로 최신 유형 활용",
+      "pos": [
+        360,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a1",
+      "type": "frontend",
+      "label": "다중 가용 영역 사용",
+      "sublabel": "여러 AZ에 노드 배포",
+      "pos": [
+        680,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "frontend",
+      "label": "온디맨드/스팟 인스턴스 혼합",
+      "sublabel": "가용성과 비용 균형",
+      "pos": [
+        680,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "frontend",
+      "label": "적절한 PDB 설정",
+      "sublabel": "애플리케이션 가용성 보장",
+      "pos": [
+        680,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "a4",
+      "type": "frontend",
+      "label": "인터럽션 처리 최적화",
+      "sublabel": "노드 인터럽션 시 워크로드 보호",
+      "pos": [
+        680,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "security",
+      "label": "IAM 역할 최소 권한",
+      "sublabel": "컨트롤러·노드 역할 최소 권한",
+      "pos": [
+        1000,
+        70
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "security",
+      "label": "보안 그룹 제한",
+      "sublabel": "필요한 트래픽만 허용",
+      "pos": [
+        1000,
+        156
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "security",
+      "label": "암호화된 EBS 볼륨",
+      "sublabel": "노드 볼륨 암호화",
+      "pos": [
+        1000,
+        242
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "security",
+      "label": "IMDSv2 필수 설정",
+      "sublabel": "메타데이터 토큰 필수",
+      "pos": [
+        1000,
+        328
+      ],
+      "size": [
+        250,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "성능 최적화",
+      "wraps": [
+        "p1",
+        "p2",
+        "p3",
+        "p4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "비용 최적화",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3",
+        "c4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "가용성 향상",
+      "wraps": [
+        "a1",
+        "a2",
+        "a3",
+        "a4"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "보안 강화",
+      "wraps": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ]
+    }
+  ],
+  "connections": []
+}

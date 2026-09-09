@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Data on EKS 데이터 파이프라인 구성",
+    "output": "ko-data-on-eks-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "orchestration",
+        "label": "작업 스케줄링",
+        "focus": [
+          "airflow",
+          "kafka",
+          "spark"
+        ],
+        "note": "Airflow가 Kafka와 Spark 작업의 의존성과 스케줄을 정의하고 실행을 관리한다."
+      },
+      {
+        "id": "dataflow",
+        "label": "데이터 흐름",
+        "focus": [
+          "kafka",
+          "flink",
+          "spark"
+        ],
+        "note": "Kafka가 실시간 이벤트를 Flink에 공급하고, 원시 데이터를 Spark 배치 처리에 적재한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "airflow",
+      "type": "backend",
+      "label": "Apache Airflow",
+      "sublabel": "워크플로우 오케스트레이션",
+      "tag": "제어",
+      "pos": [
+        420,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Apache Kafka",
+      "sublabel": "스트리밍",
+      "tag": "허브",
+      "pos": [
+        120,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "spark",
+      "type": "backend",
+      "label": "Apache Spark",
+      "sublabel": "배치 / 분석",
+      "pos": [
+        740,
+        260
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "Apache Flink",
+      "sublabel": "스트림 처리",
+      "pos": [
+        120,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS 클러스터",
+      "wraps": [
+        "airflow",
+        "kafka",
+        "spark",
+        "flink"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "airflow-kafka",
+      "from": "airflow",
+      "to": "kafka",
+      "label": "작업 스케줄",
+      "variant": "dashed"
+    },
+    {
+      "id": "airflow-spark",
+      "from": "airflow",
+      "to": "spark",
+      "label": "작업 스케줄",
+      "variant": "dashed"
+    },
+    {
+      "id": "kafka-spark",
+      "from": "kafka",
+      "to": "spark",
+      "label": "원시 데이터 적재"
+    },
+    {
+      "id": "kafka-flink",
+      "from": "kafka",
+      "to": "flink",
+      "label": "실시간 이벤트",
+      "variant": "emphasis",
+      "labelDy": 58
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "오케스트레이션",
+      "items": [
+        "Airflow가 여러 데이터 작업 간의 의존성과 스케줄을 정의하고 실행을 관리한다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "스트리밍 · 스트림 처리",
+      "items": [
+        "Kafka가 이벤트를 실시간으로 발행·구독하고 시스템 간 비동기 통신을 연결한다",
+        "Flink가 스트리밍 데이터에 실시간 집계·변환·상태 기반 연산을 수행한다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "배치 / 분석",
+      "items": [
+        "Spark가 대용량 데이터를 분산 처리하여 ETL, 집계, 머신러닝 파이프라인을 수행한다"
+      ]
+    }
+  ]
+}

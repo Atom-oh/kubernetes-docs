@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Observability 실습 플랫폼 전체 아키텍처",
+    "output": "ko-labs-observability-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      780
+    ],
+    "views": [
+      {
+        "id": "gitops",
+        "label": "GitOps 배포",
+        "focus": [
+          "argocd",
+          "msa",
+          "keda",
+          "mwaa"
+        ],
+        "note": "ArgoCD가 MSA 애플리케이션을 배포하고, KEDA·Karpenter가 스케일하며 MWAA가 배치를 트리거한다."
+      },
+      {
+        "id": "telemetry",
+        "label": "텔레메트리 경로",
+        "focus": [
+          "msa",
+          "otel",
+          "obs",
+          "awsobs"
+        ],
+        "note": "OTel Agent가 수집한 지표·로그·트레이스가 관측 스택을 거쳐 AWS 관리형 백엔드까지 흐른다."
+      },
+      {
+        "id": "appdeps",
+        "label": "애플리케이션 의존 서비스",
+        "focus": [
+          "msa",
+          "aurora",
+          "sqssns"
+        ],
+        "note": "주문·결제는 Aurora에 저장되고 이벤트는 SQS/SNS로 발행되며, Alertmanager 알림도 SNS로 나간다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD + Argo Rollouts",
+      "sublabel": "GitOps CD · 카나리",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "obs",
+      "type": "database",
+      "label": "Observability Stack",
+      "sublabel": "Prometheus · Loki · Tempo · Grafana",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "loadtest",
+      "type": "frontend",
+      "label": "부하 테스트",
+      "sublabel": "k6 / Locust",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "msa",
+      "type": "backend",
+      "label": "MSA 애플리케이션",
+      "sublabel": "OTel Instrumented",
+      "pos": [
+        560,
+        180
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "messagebus",
+      "label": "OTel Agent",
+      "sublabel": "DaemonSet 수집",
+      "pos": [
+        360,
+        330
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "keda",
+      "type": "backend",
+      "label": "Karpenter + KEDA",
+      "sublabel": "오토스케일링",
+      "pos": [
+        720,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora PostgreSQL",
+      "sublabel": "주문 · 결제 저장",
+      "pos": [
+        860,
+        620
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sqssns",
+      "type": "messagebus",
+      "label": "SQS / SNS",
+      "sublabel": "이벤트 큐 · 토픽",
+      "pos": [
+        380,
+        620
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "awsobs",
+      "type": "cloud",
+      "label": "관측 백엔드",
+      "sublabel": "AMP · CloudWatch · OpenSearch",
+      "pos": [
+        40,
+        620
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "mwaa",
+      "type": "cloud",
+      "label": "MWAA",
+      "sublabel": "analytics-batch 트리거",
+      "pos": [
+        1100,
+        620
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "관리 클러스터 (EKS)",
+      "wraps": [
+        "argocd",
+        "obs",
+        "loadtest"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "서비스 클러스터 (EKS)",
+      "wraps": [
+        "msa",
+        "otel",
+        "keda"
+      ],
+      "pad": 48
+    },
+    {
+      "kind": "region",
+      "label": "AWS 관리형 서비스",
+      "wraps": [
+        "aurora",
+        "sqssns",
+        "awsobs",
+        "mwaa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "argocd-msa",
+      "from": "argocd",
+      "to": "msa",
+      "label": "GitOps 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loadtest-msa",
+      "from": "loadtest",
+      "to": "msa",
+      "label": "부하 생성",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "msa-otel",
+      "from": "msa",
+      "to": "otel",
+      "label": "지표 · 로그 · 트레이스",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "otel-obs",
+      "from": "otel",
+      "to": "obs",
+      "label": "수집 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "keda-msa",
+      "from": "keda",
+      "to": "msa",
+      "label": "스케일 조정",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "obs-awsobs",
+      "from": "obs",
+      "to": "awsobs",
+      "label": "원격 쓰기 · 내보내기",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        95,
+        560
+      ]
+    },
+    {
+      "id": "obs-sqssns",
+      "from": "obs",
+      "to": "sqssns",
+      "label": "알림 (Alertmanager)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "msa-aurora",
+      "from": "msa",
+      "to": "aurora",
+      "label": "주문 · 결제 WRITE",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top",
+      "labelAt": [
+        1000,
+        540
+      ]
+    },
+    {
+      "id": "msa-sqssns",
+      "from": "msa",
+      "to": "sqssns",
+      "label": "이벤트 PUBLISH/SUB",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mwaa-msa",
+      "from": "mwaa",
+      "to": "msa",
+      "label": "배치 TRIGGER",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "labelAt": [
+        1200,
+        420
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "관리 클러스터",
+      "items": [
+        "ArgoCD + Argo Rollouts가 MSA 애플리케이션을 GitOps로 배포하고 카나리를 수행한다",
+        "Prometheus · Loki · Tempo · Grafana 관측 스택과 k6 부하 테스트를 함께 둔다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "서비스 클러스터",
+      "items": [
+        "OTel Instrumented MSA 애플리케이션이 실행된다",
+        "OTel Agent(DaemonSet)가 지표·로그·트레이스를 모아 관측 스택으로 보낸다",
+        "Karpenter + KEDA가 노드와 파드를 오토스케일링한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AWS 관리형 서비스",
+      "items": [
+        "Aurora PostgreSQL에 주문·결제 데이터를 저장한다",
+        "SQS/SNS로 이벤트를 발행·소비한다",
+        "AMP · CloudWatch · OpenSearch가 관측 백엔드, MWAA가 analytics-batch를 트리거한다"
+      ]
+    }
+  ]
+}

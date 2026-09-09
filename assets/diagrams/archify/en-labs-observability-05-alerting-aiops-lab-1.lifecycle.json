@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "CloudWatch Investigations Process",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "Start"
+        },
+        "active": {
+          "label": "In progress"
+        },
+        "decision": {
+          "label": "AI decision point"
+        },
+        "success": {
+          "label": "Complete"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "From alarm to AI hypothesis"
+    },
+    {
+      "id": "analyze",
+      "label": "Suggested actions"
+    },
+    {
+      "id": "terminal",
+      "label": "Investigation complete"
+    }
+  ],
+  "states": [
+    {
+      "id": "alarm",
+      "type": "start",
+      "label": "Alarm Fired",
+      "sublabel": "CloudWatch alarm",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "start",
+      "type": "active",
+      "label": "Investigation",
+      "sublabel": "alarm or time range",
+      "lane": "main",
+      "col": 1,
+      "step": "02"
+    },
+    {
+      "id": "scan",
+      "type": "active",
+      "label": "Resource Scan",
+      "sublabel": "analyze EKS, RDS, SQS",
+      "lane": "main",
+      "col": 2,
+      "step": "03"
+    },
+    {
+      "id": "findings",
+      "type": "active",
+      "label": "Key Findings",
+      "sublabel": "Key Findings, Timeline",
+      "lane": "main",
+      "col": 3,
+      "step": "04"
+    },
+    {
+      "id": "hypothesis",
+      "type": "decision",
+      "label": "AI Hypothesis",
+      "sublabel": "root cause, AI-generated",
+      "lane": "main",
+      "col": 4,
+      "step": "05"
+    },
+    {
+      "id": "actions",
+      "type": "active",
+      "label": "Suggestions",
+      "sublabel": "recommended actions",
+      "lane": "analyze",
+      "col": 2,
+      "step": "06"
+    },
+    {
+      "id": "report",
+      "type": "success",
+      "label": "Incident Report",
+      "sublabel": "investigation complete",
+      "lane": "terminal",
+      "col": 2,
+      "step": "07"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "alarm",
+      "to": "start",
+      "label": "start"
+    },
+    {
+      "from": "start",
+      "to": "scan",
+      "label": "scan"
+    },
+    {
+      "from": "scan",
+      "to": "findings"
+    },
+    {
+      "from": "findings",
+      "to": "hypothesis",
+      "variant": "emphasis"
+    },
+    {
+      "from": "hypothesis",
+      "to": "actions",
+      "label": "suggest",
+      "labelDy": 24
+    },
+    {
+      "from": "actions",
+      "to": "report",
+      "label": "generate report",
+      "labelDy": 24
+    }
+  ]
+}

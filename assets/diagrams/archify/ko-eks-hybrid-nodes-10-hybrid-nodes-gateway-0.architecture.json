@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Hybrid Nodes Gateway 전체 아키텍처",
+    "output": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "tunnel",
+        "label": "VXLAN 터널",
+        "focus": [
+          "gw-leader",
+          "hn1",
+          "hn2"
+        ],
+        "note": "리더 게이트웨이 Pod의 hybrid_vxlan0이 각 Hybrid Node의 Cilium Agent와 VNI 2, UDP 8472 VXLAN 터널을 맺는다."
+      },
+      {
+        "id": "routing",
+        "label": "VPC 라우팅",
+        "focus": [
+          "vpc-pod",
+          "rt",
+          "gw-leader"
+        ],
+        "note": "게이트웨이가 Hybrid Pod CIDR 라우트를 리더 ENI로 프로그래밍하므로 VPC Pod 트래픽이 게이트웨이 EC2로 향한다."
+      },
+      {
+        "id": "ha",
+        "label": "고가용성",
+        "focus": [
+          "gw-leader",
+          "gw-standby",
+          "api"
+        ],
+        "note": "2개 레플리카가 Kubernetes Lease로 리더를 선출하고, 스탠바이는 다른 서브넷에서 승격을 대기한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "API Server",
+      "sublabel": "EKS 컨트롤 플레인",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "cloud",
+      "label": "VPC 라우트 테이블",
+      "sublabel": "10.85.0.0/16 → 리더 ENI",
+      "pos": [
+        340,
+        70
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "vpc-pod",
+      "type": "backend",
+      "label": "VPC Pod",
+      "sublabel": "10.0.x.x · VPC CNI 노드",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gw-leader",
+      "type": "backend",
+      "label": "게이트웨이 EC2 + Gateway Pod",
+      "sublabel": "리더 · 서브넷 A · hybrid_vxlan0",
+      "pos": [
+        340,
+        250
+      ],
+      "size": [
+        220,
+        60
+      ],
+      "tag": "Leader"
+    },
+    {
+      "id": "gw-standby",
+      "type": "backend",
+      "label": "게이트웨이 EC2 + Gateway Pod",
+      "sublabel": "스탠바이(팔로워) · 서브넷 B",
+      "pos": [
+        340,
+        420
+      ],
+      "size": [
+        220,
+        60
+      ],
+      "tag": "Standby"
+    },
+    {
+      "id": "hn1",
+      "type": "external",
+      "label": "Hybrid Node 1",
+      "sublabel": "Cilium Agent · Hybrid Pod 10.85.1.x",
+      "pos": [
+        740,
+        160
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "hn2",
+      "type": "external",
+      "label": "Hybrid Node 2",
+      "sublabel": "Cilium Agent · Hybrid Pod 10.85.2.x",
+      "pos": [
+        740,
+        340
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Cloud · VPC (10.0.0.0/16)",
+      "wraps": [
+        "api",
+        "rt",
+        "vpc-pod",
+        "gw-leader",
+        "gw-standby"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "온프레미스 데이터센터 (Direct Connect / VPN)",
+      "wraps": [
+        "hn1",
+        "hn2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vpcpod-to-gw",
+      "from": "vpc-pod",
+      "to": "gw-leader",
+      "label": "VPC 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-to-hn1",
+      "from": "gw-leader",
+      "to": "hn1",
+      "label": "VXLAN 터널 · VNI 2, UDP 8472",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-to-hn2",
+      "from": "gw-leader",
+      "to": "hn2",
+      "label": "VXLAN 터널",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-to-rt",
+      "from": "gw-leader",
+      "to": "rt",
+      "label": "라우트 자동 프로그래밍",
+      "labelDx": 72
+    },
+    {
+      "id": "api-to-gw",
+      "from": "api",
+      "to": "gw-leader",
+      "label": "컨트롤 플레인 ENI",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-to-standby",
+      "from": "gw-leader",
+      "to": "gw-standby",
+      "label": "Lease 리더 선출",
+      "variant": "dashed",
+      "labelDy": 68
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "게이트웨이",
+      "items": [
+        "EC2 인스턴스에서 실행되는 Kubernetes Pod (소스/대상 확인 비활성화)",
+        "Deployment 2 레플리카, Lease 기반 리더 선출"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "VXLAN 터널",
+      "items": [
+        "hybrid_vxlan0 ↔ Cilium VTEP, VNI 2 / UDP 8472",
+        "Direct Connect 또는 VPN 위로 캡슐화 패킷 전달"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "라우팅",
+      "items": [
+        "Hybrid Pod CIDR → 리더 게이트웨이 ENI 라우트를 VPC 라우트 테이블에 자동 갱신",
+        "노드 추가/삭제를 감지해 FDB · ARP · 라우트 엔트리 갱신"
+      ]
+    }
+  ]
+}

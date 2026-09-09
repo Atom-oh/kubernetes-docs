@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Knative Eventing 아키텍처",
+    "output": "ko-autoscaling-03-knative-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "broker-trigger",
+        "label": "Broker/Trigger 패턴",
+        "focus": [
+          "src-broker",
+          "broker",
+          "order",
+          "payment",
+          "audit"
+        ],
+        "note": "Broker가 이벤트를 수신하고 Trigger 필터(type 등 CloudEvents 속성)에 따라 소비자에게 라우팅한다."
+      },
+      {
+        "id": "dead-letter",
+        "label": "전달 실패 처리",
+        "focus": [
+          "broker",
+          "dls"
+        ],
+        "note": "재시도 후에도 전달되지 않은 이벤트는 Dead Letter Sink로 보낸다."
+      },
+      {
+        "id": "channel-subscription",
+        "label": "Channel/Subscription 패턴",
+        "focus": [
+          "src-channel",
+          "channel",
+          "analytics",
+          "notification"
+        ],
+        "note": "Channel은 필터 없이 모든 Subscription에 이벤트를 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src-broker",
+      "type": "external",
+      "label": "이벤트 소스",
+      "sublabel": "ApiServerSource / KafkaSource / SQSSource",
+      "pos": [
+        20,
+        138
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Broker",
+      "sublabel": "Trigger 필터로 라우팅",
+      "pos": [
+        340,
+        138
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        140
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "backend",
+      "label": "Audit Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dls",
+      "type": "external",
+      "label": "Dead Letter Sink",
+      "sublabel": "전달 실패 이벤트 보관",
+      "pos": [
+        1110,
+        318
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "src-channel",
+      "type": "external",
+      "label": "이벤트 소스",
+      "sublabel": "SinkBinding / Custom Source",
+      "pos": [
+        20,
+        503
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "channel",
+      "type": "messagebus",
+      "label": "Channel",
+      "sublabel": "InMemoryChannel / KafkaChannel",
+      "pos": [
+        340,
+        503
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "analytics",
+      "type": "backend",
+      "label": "Analytics Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        450
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        560
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Broker/Trigger 패턴",
+      "wraps": [
+        "broker",
+        "order",
+        "payment",
+        "audit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "장애 처리",
+      "wraps": [
+        "dls"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Channel/Subscription 패턴",
+      "wraps": [
+        "channel",
+        "analytics",
+        "notification"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-to-broker",
+      "from": "src-broker",
+      "to": "broker",
+      "label": "CloudEvents",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trigger-order",
+      "from": "broker",
+      "to": "order",
+      "label": "type=order.created",
+      "labelSegment": 2
+    },
+    {
+      "id": "trigger-payment",
+      "from": "broker",
+      "to": "payment",
+      "label": "type=payment.processed",
+      "labelDx": 80
+    },
+    {
+      "id": "trigger-all",
+      "from": "broker",
+      "to": "audit",
+      "label": "type=*",
+      "labelSegment": 2
+    },
+    {
+      "id": "delivery-failure",
+      "from": "broker",
+      "to": "dls",
+      "label": "전달 실패 시",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          440,
+          350
+        ]
+      ]
+    },
+    {
+      "id": "src-to-channel",
+      "from": "src-channel",
+      "to": "channel",
+      "label": "CloudEvents",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sub-1",
+      "from": "channel",
+      "to": "analytics",
+      "label": "Subscription 1"
+    },
+    {
+      "id": "sub-2",
+      "from": "channel",
+      "to": "notification",
+      "label": "Subscription 2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Broker/Trigger 패턴",
+      "items": [
+        "Broker: 이벤트를 수신하고 등록된 Trigger에 따라 소비자에게 라우팅하는 이벤트 허브",
+        "Trigger: CloudEvents 속성(type, source 등)으로 필터링해 특정 서비스로 전달",
+        "Dead Letter Sink: 재시도 후에도 전달되지 않은 이벤트의 대체 목적지"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Channel/Subscription 패턴",
+      "items": [
+        "Channel: 이벤트를 임시 저장·전달하는 메시징 채널 (InMemoryChannel, KafkaChannel 등)",
+        "Subscription: Channel의 이벤트를 특정 서비스로 구독해 전달 (필터 없음)"
+      ]
+    }
+  ]
+}

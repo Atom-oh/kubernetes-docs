@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EnvoyFilter 기반 Rate Limiting 아키텍처 개요",
+    "output": "ko-quizzes-service-mesh-istio-advanced-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "클라이언트", "sublabel": "/api/premium/* 요청", "pos": [40, 300], "size": [150, 60] },
+    { "id": "envoy", "type": "backend", "label": "Envoy Proxy", "sublabel": "sidecar · EnvoyFilter", "pos": [280, 300], "size": [170, 60] },
+    { "id": "ratelimit", "type": "security", "label": "Rate Limit Service", "sublabel": "envoyproxy/ratelimit gRPC :9091", "pos": [560, 120], "size": [200, 60] },
+    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "Rate Limit 카운터 :6379", "pos": [900, 120], "size": [170, 60] },
+    { "id": "backend", "type": "backend", "label": "Backend Service", "sublabel": "허용된 요청 처리", "pos": [900, 300], "size": [170, 60] },
+    { "id": "reject", "type": "security", "label": "429 Too Many Requests", "sublabel": "한도 초과 시 거부", "pos": [560, 480], "size": [200, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "istio-system 네임스페이스", "wraps": ["ratelimit", "redis"] }
+  ],
+  "connections": [
+    { "id": "client-to-envoy", "from": "client", "to": "envoy", "label": "요청", "variant": "emphasis" },
+    { "id": "envoy-ratelimit-check", "from": "envoy", "to": "ratelimit", "label": "Rate Limit 체크 (gRPC)" },
+    { "id": "ratelimit-to-redis", "from": "ratelimit", "to": "redis", "label": "user_id 카운터" },
+    { "id": "envoy-to-backend", "from": "envoy", "to": "backend", "label": "허용된 요청", "variant": "emphasis" },
+    { "id": "envoy-to-reject", "from": "envoy", "to": "reject", "label": "거부된 요청", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Rate Limit 정책", "items": ["/api/premium/* 경로에만 적용", "사용자별(user_id) 분당 100 요청", "초과 시 429 Too Many Requests 응답"] }
+  ]
+}

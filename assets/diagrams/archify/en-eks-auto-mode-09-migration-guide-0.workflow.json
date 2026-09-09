@@ -1,0 +1,176 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Seven Steps from Managed Node Groups to Auto Mode",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Cluster operations (kubectl)"
+        },
+        "cloud": {
+          "label": "EKS / node group operations (aws eks, eksctl)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "Prepare (steps 1-3)",
+        "focus": [
+          "analyze",
+          "enable",
+          "nodepool"
+        ],
+        "note": "Analyze current node groups and workload spread, enable Auto Mode, then prepare NodePools matching the old node groups' instance needs."
+      },
+      {
+        "id": "cutover",
+        "label": "Cut over (steps 4-6)",
+        "focus": [
+          "nodepool",
+          "migrate",
+          "scaledown",
+          "delete"
+        ],
+        "note": "Cordon and drain old nodes so Pods move to Auto Mode nodes, scale the node group to zero, then delete it. Both coexist meanwhile."
+      },
+      {
+        "id": "verify",
+        "label": "Validate (step 7)",
+        "focus": [
+          "delete",
+          "validate"
+        ],
+        "note": "Confirm every Pod is Running, no Pods are Pending, and check node distribution per NodePool and resource utilization."
+      }
+    ],
+    "viewBox": [
+      1240,
+      528
+    ],
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "Prepare"
+    },
+    {
+      "id": "cut",
+      "label": "Cut over"
+    },
+    {
+      "id": "ver",
+      "label": "Validate"
+    }
+  ],
+  "mainPath": [
+    "analyze",
+    "enable",
+    "nodepool",
+    "migrate",
+    "scaledown",
+    "delete",
+    "validate"
+  ],
+  "nodes": [
+    {
+      "id": "analyze",
+      "lane": "prep",
+      "col": 0,
+      "type": "backend",
+      "label": "1. Analyze State",
+      "sublabel": "node groups · workload distribution",
+      "width": 176
+    },
+    {
+      "id": "enable",
+      "lane": "prep",
+      "col": 1,
+      "type": "cloud",
+      "label": "2. Enable Auto Mode",
+      "sublabel": "update-cluster-config",
+      "width": 176
+    },
+    {
+      "id": "nodepool",
+      "lane": "prep",
+      "col": 2,
+      "type": "backend",
+      "label": "3. Set Up NodePools",
+      "sublabel": "karpenter.sh/v1 NodePool",
+      "width": 176
+    },
+    {
+      "id": "migrate",
+      "lane": "cut",
+      "col": 2,
+      "type": "backend",
+      "label": "4. Migrate Workloads",
+      "sublabel": "cordon → gradual drain",
+      "width": 176
+    },
+    {
+      "id": "scaledown",
+      "lane": "cut",
+      "col": 3,
+      "type": "cloud",
+      "label": "5. Scale Down to Zero",
+      "sublabel": "old node group · eksctl scale",
+      "width": 176
+    },
+    {
+      "id": "delete",
+      "lane": "cut",
+      "col": 4,
+      "type": "cloud",
+      "label": "6. Delete Node Group",
+      "sublabel": "eksctl delete nodegroup",
+      "width": 176
+    },
+    {
+      "id": "validate",
+      "lane": "ver",
+      "col": 5,
+      "type": "backend",
+      "label": "7. Verify & Optimize",
+      "sublabel": "Pod status · node distribution",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "analyze",
+      "to": "enable"
+    },
+    {
+      "id": "e2",
+      "from": "enable",
+      "to": "nodepool"
+    },
+    {
+      "id": "e3",
+      "from": "nodepool",
+      "to": "migrate"
+    },
+    {
+      "id": "e4",
+      "from": "migrate",
+      "to": "scaledown"
+    },
+    {
+      "id": "e5",
+      "from": "scaledown",
+      "to": "delete"
+    },
+    {
+      "id": "e6",
+      "from": "delete",
+      "to": "validate"
+    }
+  ]
+}

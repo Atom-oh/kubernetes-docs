@@ -1,0 +1,188 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Outlier Detection의 작동 원리",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "detect",
+        "label": "에러 감지와 임계값 판정",
+        "focus": [
+          "start",
+          "check",
+          "count",
+          "threshold",
+          "normal"
+        ],
+        "note": "요청마다 에러를 확인해 카운트를 누적하고, 임계값을 넘었는지 판정한다."
+      },
+      {
+        "id": "eject",
+        "label": "일시 제외와 자동 복구",
+        "focus": [
+          "threshold",
+          "eject",
+          "wait",
+          "retry",
+          "start"
+        ],
+        "note": "임계값 초과 시 인스턴스를 트래픽 풀에서 일시적으로 제외하고, 대기 후 복구를 시도한다."
+      }
+    ],
+    "viewBox": [
+      980,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "요청 처리"
+    },
+    {
+      "id": "detect",
+      "label": "에러 감지"
+    },
+    {
+      "id": "ejection",
+      "label": "일시 제외 및 복구",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "check",
+    "count",
+    "threshold",
+    "eject",
+    "wait",
+    "retry"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "요청 시작",
+      "width": 118
+    },
+    {
+      "id": "check",
+      "lane": "request",
+      "col": 1,
+      "type": "security",
+      "label": "에러 확인",
+      "sublabel": "응답 결과 판정",
+      "width": 118
+    },
+    {
+      "id": "normal",
+      "lane": "request",
+      "col": 4,
+      "type": "backend",
+      "label": "정상 처리",
+      "sublabel": "트래픽 계속 수신",
+      "width": 150
+    },
+    {
+      "id": "count",
+      "lane": "detect",
+      "col": 2,
+      "type": "backend",
+      "width": 170,
+      "label": "에러 카운트 증가",
+      "sublabel": "연속 에러 누적"
+    },
+    {
+      "id": "threshold",
+      "lane": "detect",
+      "col": 3,
+      "type": "security",
+      "label": "임계값 초과?",
+      "sublabel": "consecutiveErrors 기준",
+      "width": 158
+    },
+    {
+      "id": "eject",
+      "lane": "ejection",
+      "col": 3,
+      "type": "security",
+      "label": "인스턴스 제외",
+      "sublabel": "트래픽 풀에서 일시 제외",
+      "tag": "삭제 아님",
+      "width": 140
+    },
+    {
+      "id": "wait",
+      "lane": "ejection",
+      "col": 4,
+      "type": "messagebus",
+      "label": "대기 시간",
+      "sublabel": "baseEjectionTime",
+      "width": 118
+    },
+    {
+      "id": "retry",
+      "lane": "ejection",
+      "col": 5,
+      "type": "cloud",
+      "label": "복구 시도",
+      "sublabel": "정상화되면 재편입",
+      "width": 146
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "count",
+      "label": "에러",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "check",
+      "to": "normal",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "from": "count",
+      "to": "threshold"
+    },
+    {
+      "from": "threshold",
+      "to": "eject",
+      "label": "Yes",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "threshold",
+      "to": "normal",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "eject",
+      "to": "wait"
+    },
+    {
+      "from": "wait",
+      "to": "retry"
+    },
+    {
+      "from": "retry",
+      "to": "start",
+      "label": "재시도",
+      "role": "return",
+      "variant": "dashed"
+    }
+  ]
+}

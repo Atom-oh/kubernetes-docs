@@ -1,0 +1,258 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "From Pod Pending to Node Provisioning",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Pod state"
+        },
+        "security": {
+          "label": "Scheduling decision"
+        },
+        "backend": {
+          "label": "Auto Mode Controller"
+        },
+        "cloud": {
+          "label": "EC2 node"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "trigger",
+        "label": "Trigger",
+        "focus": [
+          "pod_create",
+          "schedulable",
+          "existing_node",
+          "detect"
+        ],
+        "note": "A Pod that fits an existing node runs right away; one that cannot be scheduled stays Pending until the Auto Mode Controller detects it."
+      },
+      {
+        "id": "controller",
+        "label": "Controller decision",
+        "focus": [
+          "detect",
+          "evaluate",
+          "select"
+        ],
+        "note": "The controller evaluates NodePool requirements, analyzes the pending Pod's resource requests, and selects the optimal instance type."
+      },
+      {
+        "id": "provisioning",
+        "label": "Node provisioning",
+        "focus": [
+          "select",
+          "provision",
+          "bootstrap",
+          "node_ready"
+        ],
+        "note": "An EC2 instance starts, the node bootstraps, and once kubelet registers with the cluster the node becomes Ready."
+      },
+      {
+        "id": "scheduling",
+        "label": "Pod scheduling",
+        "focus": [
+          "node_ready",
+          "pod_running"
+        ],
+        "note": "Once the node is Ready, the pending Pod is scheduled onto it and transitions to Running."
+      }
+    ],
+    "viewBox": [
+      1180,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "trigger",
+      "label": "Trigger"
+    },
+    {
+      "id": "automode",
+      "label": "Auto Mode Controller"
+    },
+    {
+      "id": "provisioning",
+      "label": "Provisioning"
+    },
+    {
+      "id": "scheduling",
+      "label": "Scheduling"
+    }
+  ],
+  "mainPath": [
+    "pod_create",
+    "schedulable",
+    "detect",
+    "evaluate",
+    "select",
+    "provision",
+    "bootstrap",
+    "node_ready",
+    "pod_running"
+  ],
+  "nodes": [
+    {
+      "id": "pod_create",
+      "lane": "trigger",
+      "col": 0,
+      "type": "frontend",
+      "label": "Pod created",
+      "sublabel": "scheduling request",
+      "width": 156
+    },
+    {
+      "id": "schedulable",
+      "lane": "trigger",
+      "col": 1,
+      "type": "security",
+      "label": "Schedulable?",
+      "sublabel": "existing capacity?",
+      "width": 156
+    },
+    {
+      "id": "existing_node",
+      "lane": "trigger",
+      "col": 2,
+      "type": "frontend",
+      "label": "Existing node",
+      "sublabel": "placed, no new node",
+      "width": 172
+    },
+    {
+      "id": "detect",
+      "lane": "automode",
+      "col": 1,
+      "type": "backend",
+      "label": "Pending detected",
+      "sublabel": "Pod Pending state",
+      "width": 172
+    },
+    {
+      "id": "evaluate",
+      "lane": "automode",
+      "col": 2,
+      "type": "backend",
+      "label": "Check NodePool",
+      "sublabel": "analyze requirements",
+      "width": 156
+    },
+    {
+      "id": "select",
+      "lane": "automode",
+      "col": 3,
+      "type": "backend",
+      "label": "Select instance",
+      "sublabel": "optimal instance type",
+      "width": 172
+    },
+    {
+      "id": "provision",
+      "lane": "provisioning",
+      "col": 3,
+      "type": "cloud",
+      "label": "Provision node",
+      "sublabel": "start EC2 instance",
+      "width": 156
+    },
+    {
+      "id": "bootstrap",
+      "lane": "provisioning",
+      "col": 4,
+      "type": "cloud",
+      "label": "Node bootstrap",
+      "sublabel": "kubelet registration",
+      "width": 156
+    },
+    {
+      "id": "node_ready",
+      "lane": "provisioning",
+      "col": 5,
+      "type": "cloud",
+      "label": "Node Ready",
+      "sublabel": "joined the cluster",
+      "width": 156
+    },
+    {
+      "id": "pod_running",
+      "lane": "scheduling",
+      "col": 5,
+      "type": "frontend",
+      "label": "Pod scheduling",
+      "sublabel": "Pod Running",
+      "width": 156
+    }
+  ],
+  "edges": [
+    {
+      "id": "create-schedulable",
+      "from": "pod_create",
+      "to": "schedulable"
+    },
+    {
+      "id": "schedulable-existing",
+      "from": "schedulable",
+      "to": "existing_node",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "id": "schedulable-detect",
+      "from": "schedulable",
+      "to": "detect",
+      "label": "No",
+      "variant": "emphasis",
+      "toSide": "top"
+    },
+    {
+      "id": "detect-evaluate",
+      "from": "detect",
+      "to": "evaluate"
+    },
+    {
+      "id": "evaluate-select",
+      "from": "evaluate",
+      "to": "select"
+    },
+    {
+      "id": "select-provision",
+      "from": "select",
+      "to": "provision"
+    },
+    {
+      "id": "provision-bootstrap",
+      "from": "provision",
+      "to": "bootstrap"
+    },
+    {
+      "id": "bootstrap-ready",
+      "from": "bootstrap",
+      "to": "node_ready"
+    },
+    {
+      "id": "ready-running",
+      "from": "node_ready",
+      "to": "pod_running"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Typical provisioning timeline",
+      "items": [
+        "EC2 instance start: 10-30 s",
+        "AMI boot: 20-40 s",
+        "kubelet registration: 5-10 s",
+        "Pod scheduling: 1-5 s (40-90 s total)"
+      ]
+    }
+  ]
+}

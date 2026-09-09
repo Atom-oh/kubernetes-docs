@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Correct Behavior of Zone Aware Routing",
+    "locale": "en",
+    "output": "en-quizzes-service-mesh-istio-resilience-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      480
+    ],
+    "views": [
+      {
+        "id": "same-az",
+        "label": "Same-AZ priority (80%)",
+        "focus": [
+          "client",
+          "svc1",
+          "svc2"
+        ],
+        "note": "80% of traffic goes first to service pods in the client's own availability zone, with no cross-AZ transfer cost."
+      },
+      {
+        "id": "failover",
+        "label": "Cross-AZ failover (20%)",
+        "focus": [
+          "client",
+          "svc3",
+          "svc5"
+        ],
+        "note": "The remaining 20% is spread 10% each to Zone B and Zone C; if same-AZ pods fail, traffic fails over to other AZs automatically."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client Pod",
+      "sublabel": "Zone A",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service Pod 1",
+      "sublabel": "Zone A",
+      "pos": [
+        270,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service Pod 2",
+      "sublabel": "Zone A",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Service Pod 3",
+      "sublabel": "Zone B",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc4",
+      "type": "backend",
+      "label": "Service Pod 4",
+      "sublabel": "Zone B",
+      "pos": [
+        560,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc5",
+      "type": "backend",
+      "label": "Service Pod 5",
+      "sublabel": "Zone C",
+      "pos": [
+        850,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Availability Zone A",
+      "wraps": [
+        "client",
+        "svc1",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone B",
+      "wraps": [
+        "svc3",
+        "svc4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone C",
+      "wraps": [
+        "svc5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-svc1",
+      "from": "client",
+      "to": "svc1",
+      "label": "80% · same-AZ priority · free",
+      "variant": "emphasis",
+      "labelDy": 11
+    },
+    {
+      "id": "client-svc2",
+      "from": "client",
+      "to": "svc2",
+      "label": "80% · same-AZ priority · free",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-svc3",
+      "from": "client",
+      "to": "svc3",
+      "label": "10% · failover · cross-AZ cost",
+      "variant": "dashed"
+    },
+    {
+      "id": "client-svc5",
+      "from": "client",
+      "to": "svc5",
+      "label": "10% · failover · cross-AZ cost",
+      "variant": "dashed",
+      "labelDx": 150
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Latency and cost",
+      "items": [
+        "Same-AZ communication ~0.5ms, cross-AZ ~1-2ms",
+        "Saves AWS cross-AZ transfer at $0.01-0.02 per GB"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Availability",
+      "items": [
+        "Automatic failover to other AZs when same-AZ pods fail",
+        "Concentrating on a single AZ is wrong: it reduces availability"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "DestinationRule",
+      "items": [
+        "localityLbSetting.distribute sets the per-AZ ratio",
+        "us-east-1a 80% / us-east-1b 10% / us-east-1c 10%"
+      ]
+    }
+  ]
+}

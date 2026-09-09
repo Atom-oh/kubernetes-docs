@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "프로듀서 → 파티션 → 컨슈머 그룹 흐름",
+    "output": "ko-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "produce",
+        "label": "프로듀서 쓰기",
+        "focus": [
+          "producer",
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "note": "프로듀서가 orders 토픽에 쓴 메시지는 파티션 단위로 서로 다른 브로커의 리더 레플리카에 분산 저장된다."
+      },
+      {
+        "id": "consume",
+        "label": "컨슈머 그룹 읽기",
+        "focus": [
+          "p0",
+          "p1",
+          "p2",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "order-processor 그룹 안에서 한 파티션은 오직 하나의 컨슈머만 읽으며, 세 컨슈머가 병렬로 소비한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "producer",
+      "type": "external",
+      "label": "프로듀서",
+      "sublabel": "topic: orders",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "p0",
+      "type": "messagebus",
+      "label": "orders · Partition 0",
+      "sublabel": "Leader 레플리카",
+      "pos": [
+        360,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "messagebus",
+      "label": "orders · Partition 1",
+      "sublabel": "Leader 레플리카",
+      "pos": [
+        360,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "messagebus",
+      "label": "orders · Partition 2",
+      "sublabel": "Leader 레플리카",
+      "pos": [
+        360,
+        460
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "컨슈머 1",
+      "sublabel": "Partition 0 담당",
+      "pos": [
+        780,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "컨슈머 2",
+      "sublabel": "Partition 1 담당",
+      "pos": [
+        780,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "backend",
+      "label": "컨슈머 3",
+      "sublabel": "Partition 2 담당",
+      "pos": [
+        780,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "브로커 1",
+      "wraps": [
+        "p0"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "브로커 2",
+      "wraps": [
+        "p1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "브로커 3",
+      "wraps": [
+        "p2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "컨슈머 그룹: order-processor",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "produce-p0",
+      "from": "producer",
+      "to": "p0",
+      "variant": "emphasis",
+      "label": "메시지 쓰기",
+      "labelAt": [
+        274,
+        220
+      ]
+    },
+    {
+      "id": "produce-p1",
+      "from": "producer",
+      "to": "p1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "produce-p2",
+      "from": "producer",
+      "to": "p2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fetch-p0",
+      "from": "p0",
+      "to": "c1"
+    },
+    {
+      "id": "fetch-p1",
+      "from": "p1",
+      "to": "c2",
+      "label": "파티션 1:1 할당"
+    },
+    {
+      "id": "fetch-p2",
+      "from": "p2",
+      "to": "c3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "파티션 분산",
+      "items": [
+        "프로듀서는 토픽에 쓰고, Kafka는 파티션 단위로 여러 브로커에 분산 저장한다",
+        "각 파티션의 리더 레플리카가 모든 읽기/쓰기 요청을 처리한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "컨슈머 그룹",
+      "items": [
+        "같은 group.id를 가진 컨슈머들이 파티션을 나눠 갖고 병렬로 소비한다",
+        "한 파티션은 그룹 내 오직 하나의 컨슈머만 읽는다"
+      ]
+    }
+  ]
+}

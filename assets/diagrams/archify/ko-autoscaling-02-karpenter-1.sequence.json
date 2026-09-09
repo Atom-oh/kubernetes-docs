@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Karpenter 워크플로우 — 미스케줄 파드에서 노드 프로비저닝까지",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      735
+    ],
+    "views": [
+      {
+        "id": "detect",
+        "label": "감지",
+        "focus": [
+          "pod",
+          "k8sapi",
+          "karpenter"
+        ],
+        "note": "스케줄링되지 못한 파드 이벤트를 받아 요구 사항과 프로비저너·노드 템플릿을 평가한다."
+      },
+      {
+        "id": "provision",
+        "label": "프로비저닝",
+        "focus": [
+          "karpenter",
+          "ec2",
+          "node"
+        ],
+        "note": "EC2 API로 인스턴스 유형과 가격을 조회한 뒤 노드 프로비저닝을 요청한다."
+      },
+      {
+        "id": "schedule",
+        "label": "스케줄링",
+        "focus": [
+          "node",
+          "k8sapi",
+          "karpenter",
+          "pod"
+        ],
+        "note": "새 노드가 등록되면 레이블·테인트를 설정하고 파드가 그 노드에 스케줄링된다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "스케줄링 대기"
+    },
+    {
+      "id": "k8sapi",
+      "type": "backend",
+      "label": "Kubernetes API"
+    },
+    {
+      "id": "karpenter",
+      "type": "backend",
+      "label": "Karpenter",
+      "sublabel": "컨트롤러"
+    },
+    {
+      "id": "ec2",
+      "type": "cloud",
+      "label": "AWS EC2 API"
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "New Node",
+      "sublabel": "새 EC2 인스턴스"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 250,
+      "label": "1. 감지 · 요구 사항 분석 · 프로비저너/노드 템플릿 평가"
+    },
+    {
+      "from": 260,
+      "to": 425,
+      "label": "2. 프로비저닝"
+    },
+    {
+      "from": 440,
+      "to": 600,
+      "label": "3. 등록 및 스케줄링"
+    }
+  ],
+  "messages": [
+    {
+      "id": "pod-create",
+      "from": "pod",
+      "to": "k8sapi",
+      "y": 185,
+      "label": "Pod 생성 (스케줄링 불가)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-event",
+      "from": "k8sapi",
+      "to": "karpenter",
+      "y": 225,
+      "label": "Pod 이벤트 알림",
+      "note": "Karpenter 내부: Pod 요구 사항 분석 → 프로비저너·노드 템플릿 평가"
+    },
+    {
+      "id": "query-instances",
+      "from": "karpenter",
+      "to": "ec2",
+      "y": 285,
+      "label": "인스턴스 유형·가격 조회"
+    },
+    {
+      "id": "instance-info",
+      "from": "ec2",
+      "to": "karpenter",
+      "y": 325,
+      "label": "인스턴스 정보 반환",
+      "variant": "return"
+    },
+    {
+      "id": "provision-request",
+      "from": "karpenter",
+      "to": "ec2",
+      "y": 365,
+      "label": "노드 프로비저닝 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "create-instance",
+      "from": "ec2",
+      "to": "node",
+      "y": 405,
+      "label": "인스턴스 생성"
+    },
+    {
+      "id": "node-register",
+      "from": "node",
+      "to": "k8sapi",
+      "y": 460,
+      "label": "노드 등록"
+    },
+    {
+      "id": "node-event",
+      "from": "k8sapi",
+      "to": "karpenter",
+      "y": 500,
+      "label": "노드 이벤트 알림"
+    },
+    {
+      "id": "label-taint",
+      "from": "karpenter",
+      "to": "k8sapi",
+      "y": 540,
+      "label": "노드 레이블·테인트 설정"
+    },
+    {
+      "id": "schedule-pod",
+      "from": "k8sapi",
+      "to": "pod",
+      "y": 580,
+      "label": "Pod 스케줄링",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "k8sapi",
+      "from": 180,
+      "to": 230,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 220,
+      "to": 410,
+      "type": "backend"
+    },
+    {
+      "participant": "ec2",
+      "from": 280,
+      "to": 410,
+      "type": "cloud"
+    },
+    {
+      "participant": "node",
+      "from": 400,
+      "to": 465,
+      "type": "backend"
+    },
+    {
+      "participant": "k8sapi",
+      "from": 455,
+      "to": 585,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 495,
+      "to": 545,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Karpenter 내부 평가",
+      "items": [
+        "파드 요구 사항(리소스·노드 선택기·허용 오차) 분석",
+        "프로비저너·노드 템플릿 구성에 따라 적절한 노드 유형 결정"
+      ]
+    }
+  ]
+}

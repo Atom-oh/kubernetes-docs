@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Executor 선택: KubernetesExecutor vs. CeleryExecutor",
+    "output": "ko-data-on-eks-airflow-02-helm-deployment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "sched-k8s", "type": "backend", "label": "Scheduler", "sublabel": "Kubernetes API로 Pod 생성", "pos": [230, 60], "size": [180, 60] },
+    { "id": "task-a", "type": "backend", "label": "Pod: task A", "sublabel": "일시적 Pod", "pos": [40, 300], "size": [160, 60] },
+    { "id": "task-b", "type": "backend", "label": "Pod: task B", "sublabel": "일시적 Pod", "pos": [240, 300], "size": [160, 60] },
+    { "id": "task-c", "type": "backend", "label": "Pod: task C", "sublabel": "일시적 Pod", "pos": [440, 300], "size": [160, 60] },
+    { "id": "sched-celery", "type": "backend", "label": "Scheduler", "sublabel": "브로커에 태스크 큐잉", "pos": [830, 60], "size": [180, 60] },
+    { "id": "broker", "type": "messagebus", "label": "Redis broker", "sublabel": "태스크 큐", "pos": [830, 180], "size": [180, 60] },
+    { "id": "worker-1", "type": "backend", "label": "Pod: celery worker 1", "sublabel": "상시 실행 warm Pod", "pos": [720, 300], "size": [190, 60] },
+    { "id": "worker-2", "type": "backend", "label": "Pod: celery worker 2", "sublabel": "상시 실행 warm Pod", "pos": [940, 300], "size": [190, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "KubernetesExecutor", "wraps": ["sched-k8s", "task-a", "task-b", "task-c"] },
+    { "kind": "region", "label": "CeleryExecutor", "wraps": ["sched-celery", "broker", "worker-1", "worker-2"] }
+  ],
+  "connections": [
+    { "id": "k8s-task-a", "from": "sched-k8s", "to": "task-a", "fromSide": "bottom", "toSide": "top" },
+    { "id": "k8s-task-b", "from": "sched-k8s", "to": "task-b", "label": "태스크마다 Pod 1개 생성", "variant": "emphasis", "labelAt": [320, 262], "fromSide": "bottom", "toSide": "top" },
+    { "id": "k8s-task-c", "from": "sched-k8s", "to": "task-c", "fromSide": "bottom", "toSide": "top" },
+    { "id": "celery-enqueue", "from": "sched-celery", "to": "broker", "label": "태스크 큐잉", "variant": "emphasis", "labelDy": 50, "fromSide": "bottom", "toSide": "top" },
+    { "id": "broker-worker-1", "from": "broker", "to": "worker-1", "label": "warm worker가 가져감", "fromSide": "bottom", "toSide": "top" },
+    { "id": "broker-worker-2", "from": "broker", "to": "worker-2", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "KubernetesExecutor", "items": ["태스크마다 Pod 1개 — 완료되면 곧바로 삭제", "콜드 스타트 약 1~2분 (Pod 스케줄링, 이미지 풀, 노드 스케일 아웃)", "유휴 비용 없음, 태스크 간 격리 강함"] },
+    { "dot": "orange", "title": "CeleryExecutor", "items": ["warm worker 풀이 상시 실행 — 초 단위 시작", "Redis/RabbitMQ 브로커 + worker Deployment 추가 필요", "같은 worker의 태스크들이 리소스/의존성 공유 — 격리 약함"] }
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Airflow 3 on EKS Core Architecture",
+    "locale": "en",
+    "output": "en-data-on-eks-airflow-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Four control-plane services",
+        "focus": [
+          "dag-processor",
+          "scheduler",
+          "api-server",
+          "triggerer",
+          "postgres"
+        ],
+        "note": "Four single-purpose services read and write the PostgreSQL metadata database as shared state."
+      },
+      {
+        "id": "k8s-executor",
+        "label": "KubernetesExecutor path",
+        "focus": [
+          "scheduler",
+          "k8s-pod"
+        ],
+        "note": "The scheduler creates one Kubernetes pod per task directly. No Redis is needed."
+      },
+      {
+        "id": "celery-executor",
+        "label": "CeleryExecutor path",
+        "focus": [
+          "scheduler",
+          "redis",
+          "celery-worker"
+        ],
+        "note": "The scheduler queues tasks to the Redis broker and Celery worker pods consume them. Redis is required only here."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User / UI",
+      "sublabel": "Browser · REST client",
+      "pos": [
+        260,
+        20
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dag-processor",
+      "type": "backend",
+      "label": "dag-processor",
+      "sublabel": "Parses DAG files",
+      "pos": [
+        50,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api-server",
+      "type": "backend",
+      "label": "api-server",
+      "sublabel": "UI · REST API v2 · auth",
+      "pos": [
+        260,
+        180
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "triggerer",
+      "type": "backend",
+      "label": "triggerer",
+      "sublabel": "Runs deferrable operators",
+      "pos": [
+        480,
+        180
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "scheduler",
+      "sublabel": "Evaluates deps · queues tasks",
+      "pos": [
+        700,
+        180
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Metadata DB (always required)",
+      "pos": [
+        50,
+        370
+      ],
+      "size": [
+        840,
+        64
+      ]
+    },
+    {
+      "id": "k8s-pod",
+      "type": "backend",
+      "label": "KubernetesExecutor Pod",
+      "sublabel": "One pod per task",
+      "pos": [
+        1020,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "messagebus",
+      "label": "Redis",
+      "sublabel": "Celery broker (CeleryExecutor only)",
+      "pos": [
+        1020,
+        370
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "celery-worker",
+      "type": "backend",
+      "label": "Celery worker pod",
+      "sublabel": "Consumes tasks from broker",
+      "pos": [
+        1020,
+        540
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Airflow 3 control plane",
+      "wraps": [
+        "dag-processor",
+        "scheduler",
+        "api-server",
+        "triggerer",
+        "postgres"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Execution backend (executor)",
+      "wraps": [
+        "k8s-pod",
+        "redis",
+        "celery-worker"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "api-server",
+      "label": "UI / REST API",
+      "variant": "emphasis",
+      "labelAt": [
+        355,
+        130
+      ]
+    },
+    {
+      "id": "dagproc-to-db",
+      "from": "dag-processor",
+      "to": "postgres",
+      "label": "writes serialized_dag",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "scheduler-to-db",
+      "from": "scheduler",
+      "to": "postgres",
+      "label": "reads DAGs · queues tasks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 60
+    },
+    {
+      "id": "api-to-db",
+      "from": "api-server",
+      "to": "postgres",
+      "label": "state R/W",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "triggerer-to-db",
+      "from": "triggerer",
+      "to": "postgres",
+      "label": "trigger state",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "scheduler-to-k8s",
+      "from": "scheduler",
+      "to": "k8s-pod",
+      "label": "creates pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-to-redis",
+      "from": "scheduler",
+      "to": "redis",
+      "label": "queues tasks (Celery)",
+      "variant": "dashed"
+    },
+    {
+      "id": "redis-to-worker",
+      "from": "redis",
+      "to": "celery-worker",
+      "label": "consumes tasks",
+      "variant": "dashed",
+      "labelAt": [
+        1120,
+        490
+      ]
+    }
+  ]
+}

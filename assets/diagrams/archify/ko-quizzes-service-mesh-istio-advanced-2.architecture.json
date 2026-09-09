@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts + Istio 통합 아키텍처",
+    "output": "ko-quizzes-service-mesh-istio-advanced-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "사용자"
+        },
+        "cloud": {
+          "label": "Istio 라우팅"
+        },
+        "backend": {
+          "label": "워크로드 Pod"
+        },
+        "frontend": {
+          "label": "Argo Rollouts"
+        },
+        "database": {
+          "label": "메트릭 소스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "traffic-path",
+        "label": "트래픽 분할 경로",
+        "focus": [
+          "user",
+          "gateway",
+          "vs",
+          "stable",
+          "canary"
+        ],
+        "note": "VirtualService가 90/10 weight로 실제 트래픽을 나눈다."
+      },
+      {
+        "id": "weight-control",
+        "label": "weight 자동 업데이트",
+        "focus": [
+          "rollout",
+          "vs",
+          "stable",
+          "canary"
+        ],
+        "note": "Argo Rollouts는 Pod를 관리하고 VirtualService의 weight 값만 바꾼다."
+      },
+      {
+        "id": "analysis-loop",
+        "label": "메트릭 분석 루프",
+        "focus": [
+          "prometheus",
+          "analysis",
+          "rollout"
+        ],
+        "note": "AnalysisTemplate이 Prometheus 메트릭으로 성공/실패를 판정해 다음 단계를 결정한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "요청",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Istio Gateway",
+      "sublabel": "인그레스",
+      "pos": [
+        220,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService",
+      "sublabel": "트래픽 분할",
+      "pos": [
+        420,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable Pod",
+      "sublabel": "v1",
+      "pos": [
+        690,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary Pod",
+      "sublabel": "v2",
+      "pos": [
+        690,
+        380
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "rollout",
+      "type": "frontend",
+      "label": "Argo Rollouts",
+      "sublabel": "Controller",
+      "pos": [
+        930,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "frontend",
+      "label": "AnalysisTemplate",
+      "sublabel": "성공/실패 판정",
+      "pos": [
+        1160,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭",
+      "pos": [
+        1160,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio 데이터 플레인",
+      "wraps": [
+        "gateway",
+        "vs",
+        "stable",
+        "canary"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-gateway",
+      "from": "user",
+      "to": "gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-vs",
+      "from": "gateway",
+      "to": "vs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-to-stable",
+      "from": "vs",
+      "to": "stable",
+      "label": "90% weight",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-to-canary",
+      "from": "vs",
+      "to": "canary",
+      "label": "10% weight"
+    },
+    {
+      "id": "rollout-to-vs",
+      "from": "rollout",
+      "to": "vs",
+      "label": "weight 업데이트",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1010,
+          490
+        ],
+        [
+          500,
+          490
+        ]
+      ]
+    },
+    {
+      "id": "rollout-to-stable",
+      "from": "rollout",
+      "to": "stable",
+      "label": "Pod 관리",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "rollout-to-canary",
+      "from": "rollout",
+      "to": "canary",
+      "label": "Pod 관리",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "prometheus-to-analysis",
+      "from": "prometheus",
+      "to": "analysis",
+      "label": "메트릭",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "analysis-to-rollout",
+      "from": "analysis",
+      "to": "rollout",
+      "label": "성공/실패",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelDy": -24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Argo Rollouts",
+      "items": [
+        "Pod 생성/삭제와 배포 전략 실행",
+        "VirtualService weight 업데이트",
+        "분석 실패 시 자동 롤백"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Istio VirtualService",
+      "items": [
+        "실제 트래픽 분할과 라우팅 규칙 적용",
+        "Envoy 구성 생성"
+      ]
+    }
+  ]
+}

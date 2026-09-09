@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "JobManager <-> TaskManager Flow on Kubernetes",
+    "locale": "en",
+    "output": "en-data-on-eks-flink-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scheduling",
+        "label": "Subtask scheduling",
+        "focus": [
+          "jg",
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "note": "The JobManager splits the job graph into parallel subtasks and assigns them to task slots across the TaskManager pods."
+      },
+      {
+        "id": "checkpointing",
+        "label": "Checkpoint coordination",
+        "focus": [
+          "cp",
+          "tm1",
+          "tm2"
+        ],
+        "note": "The Checkpoint Coordinator periodically triggers distributed snapshots of operator state across all TaskManagers."
+      },
+      {
+        "id": "resources",
+        "label": "TaskManager pod resources",
+        "focus": [
+          "rm",
+          "tm1",
+          "tm2"
+        ],
+        "note": "In native Kubernetes deployment the Kubernetes ResourceManager requests and releases TaskManager pods on demand."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "REST API & Web UI",
+      "sublabel": "status / job submit",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "rm",
+      "type": "cloud",
+      "label": "Kubernetes ResourceManager",
+      "sublabel": "requests / releases pods",
+      "pos": [
+        440,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "Checkpoint Coordinator",
+      "sublabel": "triggers snapshot",
+      "pos": [
+        440,
+        280
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "jg",
+      "type": "backend",
+      "label": "Job Graph & Scheduler",
+      "sublabel": "deploys subtasks",
+      "pos": [
+        440,
+        390
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "tm1",
+      "type": "backend",
+      "label": "TaskManager 1",
+      "sublabel": "worker process",
+      "pos": [
+        60,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "Task Slot 1",
+      "sublabel": "one subtask",
+      "pos": [
+        60,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "Task Slot 2",
+      "sublabel": "one subtask",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "tm2",
+      "type": "backend",
+      "label": "TaskManager 2",
+      "sublabel": "worker process",
+      "pos": [
+        850,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "Task Slot 1",
+      "sublabel": "one subtask",
+      "pos": [
+        850,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "Task Slot 2",
+      "sublabel": "one subtask",
+      "pos": [
+        850,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "ui",
+        "rm",
+        "cp",
+        "jg",
+        "tm1",
+        "s1",
+        "s2",
+        "tm2",
+        "s3",
+        "s4"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "region",
+      "label": "JobManager Pod",
+      "wraps": [
+        "ui",
+        "rm",
+        "cp",
+        "jg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "TaskManager Pod 1",
+      "wraps": [
+        "tm1",
+        "s1",
+        "s2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "TaskManager Pod 2",
+      "wraps": [
+        "tm2",
+        "s3",
+        "s4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rm-tm1",
+      "from": "rm",
+      "to": "tm1",
+      "label": "requests / releases pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rm-tm2",
+      "from": "rm",
+      "to": "tm2",
+      "label": "requests / releases pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cp-tm1",
+      "from": "cp",
+      "to": "tm1",
+      "label": "triggers snapshot",
+      "variant": "dashed"
+    },
+    {
+      "id": "cp-tm2",
+      "from": "cp",
+      "to": "tm2",
+      "label": "triggers snapshot",
+      "variant": "dashed"
+    },
+    {
+      "id": "jg-s1",
+      "from": "jg",
+      "to": "s1",
+      "label": "deploys subtasks"
+    },
+    {
+      "id": "jg-s2",
+      "from": "jg",
+      "to": "s2"
+    },
+    {
+      "id": "jg-s3",
+      "from": "jg",
+      "to": "s3",
+      "label": "deploys subtasks"
+    },
+    {
+      "id": "jg-s4",
+      "from": "jg",
+      "to": "s4"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "JobManager (JM)",
+      "items": [
+        "Control plane of the Flink cluster — runs as its own pod",
+        "Builds the job graph, coordinates checkpoints, schedules work onto TaskManagers",
+        "Serves the REST API and Web UI"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "TaskManager (TM)",
+      "items": [
+        "Worker process that actually executes the job — one pod per TaskManager",
+        "Offers one or more task slots; each slot runs one operator subtask",
+        "With slot sharing, the slots a job needs is usually its maximum operator parallelism"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Kubernetes ResourceManager",
+      "items": [
+        "Talks to the Kubernetes API server to request and release TaskManager pods",
+        "Used only in native Kubernetes deployment — absent in standalone-on-Kubernetes"
+      ]
+    }
+  ]
+}

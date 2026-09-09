@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EnvoyFilter-based Rate Limiting Architecture Overview",
+    "output": "en-quizzes-service-mesh-istio-advanced-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "/api/premium/* request",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar · EnvoyFilter",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ratelimit",
+      "type": "security",
+      "label": "Rate Limit Service",
+      "sublabel": "envoyproxy/ratelimit gRPC :9091",
+      "pos": [
+        560,
+        120
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "rate limit counters :6379",
+      "pos": [
+        900,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend Service",
+      "sublabel": "handles allowed requests",
+      "pos": [
+        900,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "reject",
+      "type": "security",
+      "label": "429 Too Many Requests",
+      "sublabel": "rejected when over the limit",
+      "pos": [
+        560,
+        480
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "istio-system namespace",
+      "wraps": [
+        "ratelimit",
+        "redis"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-envoy",
+      "from": "client",
+      "to": "envoy",
+      "label": "Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-ratelimit-check",
+      "from": "envoy",
+      "to": "ratelimit",
+      "label": "Rate Limit Check (gRPC)"
+    },
+    {
+      "id": "ratelimit-to-redis",
+      "from": "ratelimit",
+      "to": "redis",
+      "label": "user_id counter"
+    },
+    {
+      "id": "envoy-to-backend",
+      "from": "envoy",
+      "to": "backend",
+      "label": "Allowed Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-to-reject",
+      "from": "envoy",
+      "to": "reject",
+      "label": "Rejected Request",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Rate Limit Policy",
+      "items": [
+        "Applied only to the /api/premium/* path",
+        "Per-user (user_id) limit of 100 requests per minute",
+        "Responds with 429 Too Many Requests when exceeded"
+      ]
+    }
+  ]
+}

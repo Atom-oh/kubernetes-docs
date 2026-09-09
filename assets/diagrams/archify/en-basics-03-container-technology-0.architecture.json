@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Container Image Layer Structure",
+    "locale": "en",
+    "output": "en-basics-03-container-technology-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Application code"
+        },
+        "backend": {
+          "label": "Runtime & dependencies"
+        },
+        "external": {
+          "label": "Base image"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application Layer",
+      "sublabel": "Application code",
+      "tag": "Changes often",
+      "pos": [
+        370,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "dep",
+      "type": "backend",
+      "label": "Dependencies Layer",
+      "sublabel": "npm packages, pip packages, etc.",
+      "pos": [
+        370,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Runtime Layer",
+      "sublabel": "Node.js, Python, etc.",
+      "pos": [
+        370,
+        280
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "os",
+      "type": "external",
+      "label": "OS Layer",
+      "sublabel": "Ubuntu, Alpine, etc.",
+      "tag": "Shared · cached",
+      "pos": [
+        370,
+        390
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Container image (layer stack)",
+      "wraps": [
+        "app",
+        "dep",
+        "runtime",
+        "os"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-dep",
+      "from": "app",
+      "to": "dep",
+      "label": "stacked on top of",
+      "variant": "emphasis",
+      "labelDy": 24,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dep-runtime",
+      "from": "dep",
+      "to": "runtime",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "runtime-os",
+      "from": "runtime",
+      "to": "os",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Image layers",
+      "items": [
+        "Each layer represents the changes made on top of the previous layer",
+        "Layering makes image sharing and caching efficient"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dockerfile",
+      "items": [
+        "Each Dockerfile instruction adds a new layer to the image",
+        "Place frequently changing layers later to leverage the build cache"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Container image",
+      "items": [
+        "An immutable template containing the application and its dependencies"
+      ]
+    }
+  ]
+}

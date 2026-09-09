@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Knative Scale-to-Zero와 콜드 스타트 시퀀스",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      730
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scale-to-zero",
+        "label": "Scale-to-Zero",
+        "focus": [
+          "as",
+          "pod",
+          "gw"
+        ],
+        "note": "stable-window 동안 요청이 0이면 파드를 종료하고 Gateway 목적지를 Activator로 바꿉니다."
+      },
+      {
+        "id": "cold-start",
+        "label": "콜드 스타트",
+        "focus": [
+          "client",
+          "gw",
+          "act",
+          "as",
+          "pod"
+        ],
+        "note": "Activator가 요청을 버퍼링한 채 스케일업을 요청하고, 파드가 Ready가 되면 전달합니다."
+      },
+      {
+        "id": "direct-path",
+        "label": "이후 요청",
+        "focus": [
+          "client",
+          "gw",
+          "pod"
+        ],
+        "note": "파드가 살아 있으면 Gateway가 Activator를 우회해 파드로 직접 전달합니다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트"
+    },
+    {
+      "id": "gw",
+      "type": "frontend",
+      "label": "Gateway",
+      "sublabel": "Kourier"
+    },
+    {
+      "id": "act",
+      "type": "backend",
+      "label": "Activator"
+    },
+    {
+      "id": "as",
+      "type": "backend",
+      "label": "Autoscaler"
+    },
+    {
+      "id": "pod",
+      "type": "cloud",
+      "label": "Pod",
+      "sublabel": "Queue Proxy + App"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 250,
+      "label": "Scale-to-Zero — stable-window(60s) 동안 요청 0 (유휴)"
+    },
+    {
+      "from": 287,
+      "to": 530,
+      "label": "콜드 스타트 — 새 요청 발생"
+    },
+    {
+      "from": 555,
+      "to": 635,
+      "label": "이후 요청은 직접 전달"
+    }
+  ],
+  "messages": [
+    {
+      "id": "scale-zero",
+      "from": "as",
+      "to": "pod",
+      "y": 190,
+      "label": "Scale to 0 (grace period 후 파드 종료)",
+      "note": "stable-window(60s) 동안 메트릭 0 감지 → grace period 후 종료"
+    },
+    {
+      "id": "set-dest",
+      "from": "as",
+      "to": "gw",
+      "y": 240,
+      "label": "Activator를 목적지로 설정"
+    },
+    {
+      "id": "http-req",
+      "from": "client",
+      "to": "gw",
+      "y": 309,
+      "label": "HTTP 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fwd-act",
+      "from": "gw",
+      "to": "act",
+      "y": 343,
+      "label": "요청 전달 (파드 없음)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scale-up-req",
+      "from": "act",
+      "to": "as",
+      "y": 377,
+      "label": "스케일업 요청",
+      "note": "Activator는 요청을 버퍼링"
+    },
+    {
+      "id": "scale-one",
+      "from": "as",
+      "to": "pod",
+      "y": 411,
+      "label": "Scale to 1 (파드 생성)"
+    },
+    {
+      "id": "ready",
+      "from": "pod",
+      "to": "act",
+      "y": 445,
+      "label": "컨테이너 시작 + Ready",
+      "variant": "return"
+    },
+    {
+      "id": "fwd-buffered",
+      "from": "act",
+      "to": "pod",
+      "y": 479,
+      "label": "버퍼링된 요청 전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "response",
+      "from": "pod",
+      "to": "client",
+      "y": 513,
+      "label": "응답 반환",
+      "variant": "return"
+    },
+    {
+      "id": "next-req",
+      "from": "client",
+      "to": "gw",
+      "y": 577,
+      "label": "다음 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "direct",
+      "from": "gw",
+      "to": "pod",
+      "y": 613,
+      "label": "직접 전달 (Activator 우회)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "act",
+      "from": 338,
+      "to": 486,
+      "type": "backend"
+    },
+    {
+      "participant": "as",
+      "from": 372,
+      "to": 416,
+      "type": "backend"
+    },
+    {
+      "participant": "pod",
+      "from": 406,
+      "to": 519,
+      "type": "cloud"
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "EMR on EKS 작업 제출 흐름 — StartJobRun",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      560
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "주요 호출"
+        },
+        "default": {
+          "label": "내부 호출"
+        },
+        "security": {
+          "label": "실행 역할 바인딩"
+        },
+        "dashed": {
+          "label": "비동기 보고"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 / SDK",
+      "sublabel": "CLI · 콘솔 · Step Functions"
+    },
+    {
+      "id": "emr",
+      "type": "cloud",
+      "label": "EMR 컨트롤 플레인",
+      "sublabel": "emr-containers API"
+    },
+    {
+      "id": "vc",
+      "type": "backend",
+      "label": "가상 클러스터",
+      "sublabel": "EKS 네임스페이스 (예: emr-spark)"
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "드라이버 Pod",
+      "sublabel": "일반 EKS Pod"
+    },
+    {
+      "id": "executor",
+      "type": "backend",
+      "label": "Executor Pod",
+      "sublabel": "드라이버가 요청"
+    }
+  ],
+  "messages": [
+    {
+      "id": "start-job-run",
+      "from": "user",
+      "to": "emr",
+      "y": 200,
+      "label": "StartJobRun",
+      "variant": "emphasis",
+      "note": "virtual-cluster-id · execution-role-arn · release-label"
+    },
+    {
+      "id": "target-namespace",
+      "from": "emr",
+      "to": "vc",
+      "y": 258,
+      "label": "가상 클러스터에 매핑된 네임스페이스 지정"
+    },
+    {
+      "id": "create-driver",
+      "from": "vc",
+      "to": "driver",
+      "y": 312,
+      "label": "작업 실행 역할(IRSA 방식 바인딩)로 드라이버 Pod 생성",
+      "variant": "security"
+    },
+    {
+      "id": "request-executors",
+      "from": "driver",
+      "to": "executor",
+      "y": 366,
+      "label": "드라이버가 Executor Pod 요청"
+    },
+    {
+      "id": "report-back",
+      "from": "driver",
+      "to": "emr",
+      "y": 448,
+      "label": "상태 · 로그(CloudWatch) · 메트릭 보고",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "emr",
+      "from": 194,
+      "to": 456,
+      "type": "cloud"
+    },
+    {
+      "participant": "vc",
+      "from": 252,
+      "to": 318,
+      "type": "backend"
+    },
+    {
+      "participant": "driver",
+      "from": 306,
+      "to": 454,
+      "type": "backend"
+    },
+    {
+      "participant": "executor",
+      "from": 360,
+      "to": 454,
+      "type": "backend"
+    }
+  ]
+}

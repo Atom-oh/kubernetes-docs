@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts Blue/Green 배포 개념",
+    "output": "ko-quizzes-service-mesh-istio-advanced-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      740
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "사용자"
+        },
+        "cloud": {
+          "label": "Istio Gateway"
+        },
+        "backend": {
+          "label": "Kubernetes Service"
+        },
+        "frontend": {
+          "label": "Rollout 버전 (Blue / Green)"
+        },
+        "security": {
+          "label": "Argo Rollouts 분석 · 액션"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "production-path",
+        "label": "프로덕션 트래픽",
+        "focus": [
+          "user",
+          "gateway",
+          "active",
+          "blue"
+        ],
+        "note": "사용자 트래픽은 Istio Gateway를 거쳐 Active Service, 즉 현재 버전 Blue(v1)로 전달된다."
+      },
+      {
+        "id": "preview-analysis",
+        "label": "미리보기와 분석",
+        "focus": [
+          "gateway",
+          "preview",
+          "green",
+          "analysis"
+        ],
+        "note": "미리보기 트래픽만 Preview Service를 통해 Green(v2)으로 가고, AnalysisTemplate이 Green의 메트릭을 분석한다."
+      },
+      {
+        "id": "promote-or-rollback",
+        "label": "전환 또는 롤백",
+        "focus": [
+          "analysis",
+          "promote",
+          "swap",
+          "rollback"
+        ],
+        "note": "분석이 성공하면 트래픽을 전환해 Active와 Preview를 교체하고, 실패하면 롤백한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "myapp.example.com",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Istio Gateway",
+      "sublabel": "VirtualService 라우팅",
+      "pos": [
+        240,
+        150
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "active",
+      "type": "backend",
+      "label": "Active Service",
+      "sublabel": "프로덕션 트래픽",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "preview",
+      "type": "backend",
+      "label": "Preview Service",
+      "sublabel": "테스트 트래픽",
+      "pos": [
+        470,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "blue",
+      "type": "frontend",
+      "label": "Blue",
+      "sublabel": "현재 버전 v1",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green",
+      "type": "frontend",
+      "label": "Green",
+      "sublabel": "새 버전 v2",
+      "pos": [
+        720,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "security",
+      "label": "AnalysisTemplate",
+      "sublabel": "Prometheus 메트릭",
+      "pos": [
+        470,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "promote",
+      "type": "security",
+      "label": "트래픽 전환",
+      "sublabel": "승격",
+      "pos": [
+        720,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "swap",
+      "type": "security",
+      "label": "Active ↔ Preview 교체",
+      "sublabel": "Green이 Active가 됨",
+      "pos": [
+        950,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rollback",
+      "type": "security",
+      "label": "롤백",
+      "sublabel": "Blue 유지",
+      "pos": [
+        720,
+        570
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-gateway",
+      "from": "user",
+      "to": "gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-active",
+      "from": "gateway",
+      "to": "active",
+      "label": "프로덕션",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-preview",
+      "from": "gateway",
+      "to": "preview",
+      "label": "미리보기",
+      "variant": "dashed"
+    },
+    {
+      "id": "active-to-blue",
+      "from": "active",
+      "to": "blue",
+      "variant": "emphasis"
+    },
+    {
+      "id": "preview-to-green",
+      "from": "preview",
+      "to": "green",
+      "variant": "dashed"
+    },
+    {
+      "id": "analysis-to-green",
+      "from": "analysis",
+      "to": "green",
+      "label": "메트릭 분석",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "analysis-to-promote",
+      "from": "analysis",
+      "to": "promote",
+      "label": "성공"
+    },
+    {
+      "id": "analysis-to-rollback",
+      "from": "analysis",
+      "to": "rollback",
+      "label": "실패"
+    },
+    {
+      "id": "promote-to-swap",
+      "from": "promote",
+      "to": "swap"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "두 개의 Service",
+      "items": [
+        "myapp-active: 프로덕션 트래픽 (Active)",
+        "myapp-preview: 미리보기 트래픽 (Preview)",
+        "Argo Rollouts가 두 Service의 selector를 자동으로 관리한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "prePromotionAnalysis",
+      "items": [
+        "success-rate: 성공률 95% 이상",
+        "latency: P95 지연시간 500ms 이하",
+        "error-rate: 에러율 1% 이하",
+        "autoPromotionEnabled: false — 분석 결과로 승격 여부 결정"
+      ]
+    }
+  ]
+}

@@ -50,7 +50,9 @@ Ambient Mode (10개 노드):
 
 **Ambient Mode 아키텍처:**
 
-![두 노드의 파드가 각 노드의 ztunnel L4 프록시로 연결되고, 두 ztunnel이 mTLS로 직접 통신하며 필요할 때만 선택적으로 waypoint L7 프록시를 거치는 Istio 앰비언트 메시 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-0.svg)
+![두 노드의 파드가 각 노드의 ztunnel L4 프록시로 연결되고, 두 ztunnel이 mTLS로 직접 통신하며 필요할 때만 선택적으로 waypoint L7 프록시를 거치는 Istio 앰비언트 메시 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-0.html)
 
 **Ambient Mode 활성화:**
 
@@ -101,7 +103,9 @@ D. Service Entry
 
 **Multi-cluster Mesh 아키텍처:**
 
-![하나의 Primary Istiod가 두 클러스터의 서비스 검색을 총괄하고, 각 클러스터의 Istiod가 자기 클러스터의 서비스 정보를 수집하며 두 클러스터의 파드가 크로스 클러스터로 통신하는 공유 컨트롤 플레인 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-1.svg)
+![하나의 Primary Istiod가 두 클러스터의 서비스 검색을 총괄하고, 각 클러스터의 Istiod가 자기 클러스터의 서비스 정보를 수집하며 두 클러스터의 파드가 크로스 클러스터로 통신하는 공유 컨트롤 플레인 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-1.html)
 
 **Istiod의 역할:**
 
@@ -477,7 +481,9 @@ A. Argo Rollouts Controller B. Istio VirtualService C. Kubernetes Service D. Ist
 
 **Argo Rollouts + Istio 통합 아키텍처:**
 
-![사용자 요청이 Istio Gateway와 VirtualService를 거쳐 안정 파드와 카나리 파드로 가중치 분할되고, Argo Rollouts 컨트롤러가 Prometheus 메트릭 분석 결과에 따라 가중치와 파드 수를 자동 조정하는 카나리 배포 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-2.svg)
+![사용자 요청이 Istio Gateway와 VirtualService를 거쳐 안정 파드와 카나리 파드로 가중치 분할되고, Argo Rollouts 컨트롤러가 Prometheus 메트릭 분석 결과에 따라 가중치와 파드 수를 자동 조정하는 카나리 배포 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-2.html)
 
 **VirtualService 역할:**
 
@@ -815,7 +821,9 @@ Ambient Mode 전환 비용 (1회):
 
 **1. 아키텍처 개요**
 
-![us-east-1과 us-west-2 두 클러스터가 각자 프라이머리 컨트롤 플레인을 두고 서비스 검색 정보를 교환하며, 두 클러스터의 파드가 East-West 게이트웨이를 거쳐 mTLS로 통신하는 멀티 프라이머리 멀티 네트워크 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-3.svg)
+![us-east-1의 Primary Istiod가 us-west-2의 Remote 클러스터에 구성을 배포하고 양쪽 서비스를 검색하며, 두 클러스터의 파드가 East-West Gateway를 거쳐 mTLS로 통신하는 Primary-Remote 멀티 클러스터 Istio Mesh 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-3.html)
 
 ***
 
@@ -1180,7 +1188,9 @@ EnvoyFilter를 사용하여 특정 경로(`/api/premium/*`)에만 **사용자별
 
 **1. 아키텍처 개요**
 
-![클라이언트 요청이 Envoy 프록시를 거쳐 Redis의 Rate Limit 카운터를 확인하고, 한도 내이면 백엔드로 전달하고 초과하면 429 Too Many Requests로 거부하는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-4.svg)
+![클라이언트 요청이 Envoy 프록시를 거쳐 istio-system의 Rate Limit Service와 Redis 카운터로 사용자별 한도를 확인하고, 한도 내이면 백엔드로 전달하고 초과하면 429 Too Many Requests로 거부하는 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-4.html)
 
 ***
 
@@ -1614,7 +1624,9 @@ Argo Rollouts와 Istio를 사용하여 **Blue/Green 배포**를 구현하세요.
 
 **1. Blue/Green 배포 개념**
 
-![사용자 트래픽은 Gateway를 거쳐 Active Service의 Blue 버전으로 가고 Preview Service는 미리보기 트래픽만 Green 버전으로 보내며, AnalysisTemplate이 Green을 분석해 성공하면 트래픽을 전환하고 실패하면 롤백하는 블루-그린 배포 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-advanced-5.svg)
+![사용자 트래픽은 Istio Gateway를 거쳐 Active Service의 Blue 버전(v1)으로 가고 미리보기 트래픽만 Preview Service를 통해 Green 버전(v2)으로 가며, AnalysisTemplate이 Green의 메트릭을 분석해 성공하면 트래픽을 전환해 Active와 Preview를 교체하고 실패하면 롤백하는 Argo Rollouts Blue/Green 배포 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-5.html)
 
 ***
 

@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Spark on Kubernetes 실행 구조",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "submit",
+        "label": "드라이버 Pod 생성",
+        "focus": [
+          "submit",
+          "apiserver",
+          "driver"
+        ],
+        "note": "spark-submit이 API Server에 요청해 드라이버 Pod 하나만 만든다. 상시 클러스터 매니저 데몬은 없다."
+      },
+      {
+        "id": "executors",
+        "label": "Executor Pod 요청·스케줄링",
+        "focus": [
+          "driver",
+          "apiserver",
+          "exec1",
+          "exec2",
+          "exec3"
+        ],
+        "note": "드라이버가 spark.executor.instances 또는 DRA에 따라 Kubernetes API를 직접 호출해 Executor Pod를 만든다."
+      },
+      {
+        "id": "report",
+        "label": "등록·상태 보고",
+        "focus": [
+          "exec1",
+          "exec2",
+          "exec3",
+          "driver"
+        ],
+        "note": "Executor는 드라이버에 직접 연결해 등록하고 결과·상태를 보고한다. Kubernetes는 작업 조율에 개입하지 않는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "submit",
+      "type": "external",
+      "label": "spark-submit",
+      "sublabel": "로컬 클라이언트",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        460,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "cloud",
+      "label": "Driver Pod",
+      "sublabel": "작업 동안 클러스터 매니저 역할",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "exec1",
+      "type": "backend",
+      "label": "Executor Pod 1",
+      "sublabel": "task 실행",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exec2",
+      "type": "backend",
+      "label": "Executor Pod 2",
+      "sublabel": "task 실행",
+      "pos": [
+        495,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exec3",
+      "type": "backend",
+      "label": "Executor Pod 3",
+      "sublabel": "task 실행",
+      "pos": [
+        660,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "apiserver",
+        "driver",
+        "exec1",
+        "exec2",
+        "exec3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "submit-to-api",
+      "from": "submit",
+      "to": "apiserver",
+      "label": "드라이버 Pod 생성 요청",
+      "variant": "emphasis",
+      "labelAt": [
+        650,
+        133
+      ]
+    },
+    {
+      "id": "api-to-driver",
+      "from": "apiserver",
+      "to": "driver",
+      "label": "드라이버 Pod 스케줄링",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          300
+        ],
+        [
+          175,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "driver-to-api",
+      "from": "driver",
+      "to": "apiserver",
+      "label": "Executor Pod 요청",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          40,
+          430
+        ],
+        [
+          40,
+          200
+        ]
+      ],
+      "labelAt": [
+        250,
+        188
+      ]
+    },
+    {
+      "id": "api-to-exec1",
+      "from": "apiserver",
+      "to": "exec1",
+      "label": "스케줄링",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          300
+        ],
+        [
+          405,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "api-to-exec2",
+      "from": "apiserver",
+      "to": "exec2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-exec3",
+      "from": "apiserver",
+      "to": "exec3",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          300
+        ],
+        [
+          735,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "exec1-to-driver",
+      "from": "exec1",
+      "to": "driver",
+      "variant": "dashed"
+    },
+    {
+      "id": "exec2-to-driver",
+      "from": "exec2",
+      "to": "driver",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          570,
+          505
+        ],
+        [
+          175,
+          505
+        ]
+      ],
+      "label": "등록 · 상태 보고",
+      "labelAt": [
+        372,
+        525
+      ]
+    },
+    {
+      "id": "exec3-to-driver",
+      "from": "exec3",
+      "to": "driver",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          735,
+          545
+        ],
+        [
+          175,
+          545
+        ]
+      ]
+    }
+  ]
+}

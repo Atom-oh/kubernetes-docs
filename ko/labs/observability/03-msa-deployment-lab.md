@@ -10,9 +10,13 @@
 
 ## 아키텍처 개요
 
-![MSA Service Map](../../../assets/diagrams/rendered/msa-service-map.svg)
+![API Gateway가 클라이언트 요청을 주문·결제 서비스로 라우팅하고, 두 서비스가 Aurora PostgreSQL에 기록하며 SQS·SNS로 이벤트를 발행하고, 알림 서비스가 SQS를 소비하고, MWAA가 분석 배치를 트리거하며, 각 서비스의 텔레메트리가 OpenTelemetry Agent를 거쳐 관측성 백엔드로 전달되는 MSA 서비스 맵을 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-10.png)
 
-![API 게이트웨이가 주문·결제 서비스로 요청을 분배하고, 각 서비스가 Aurora PostgreSQL에 기록하며 SQS·SNS로 비동기 이벤트를 발행·구독하고, MWAA가 트리거하는 분석 배치가 다시 Aurora에 기록하는 MSA 배포 아키텍처를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-03-msa-deployment-lab-0.svg)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-10.html)
+
+![API 게이트웨이가 주문·결제 서비스로 요청을 분배하고, 각 서비스가 Aurora PostgreSQL에 기록하며 SQS·SNS로 비동기 이벤트를 발행·구독하고, MWAA가 트리거하는 분석 배치가 다시 Aurora에 기록하는 MSA 배포 아키텍처를 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-0.html)
 
 ***
 
@@ -914,7 +918,9 @@ spec:
 
 ### Canary 배포 상태 다이어그램
 
-![캐너리 배포에서 v2 트래픽 비중을 20%부터 100%까지 단계적으로 올리며 두 지점(Analysis1, Analysis2)에서 성공률·지연시간 기준을 통과해야 다음 단계로 진행하고, 실패 시 즉시 v1으로 롤백하는 Argo Rollouts 상태 머신을 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-03-msa-deployment-lab-1.svg)
+![Argo Rollouts 카나리 상태 머신: v2 트래픽 비중을 SetWeight 20에서 시작해 대기 후 Analysis 1 게이트를 통과하면 40% → 60% → 80%로 올리고, Analysis 2 게이트까지 통과하면 SetWeight 100으로 v2를 승격한다. 두 게이트 중 어느 곳에서든 성공률·지연시간 지표가 기준을 넘지 못하면 즉시 v1으로 롤백(abort)된다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-1.html)
 
 **Step 3.7.1: Rollout 리소스**
 

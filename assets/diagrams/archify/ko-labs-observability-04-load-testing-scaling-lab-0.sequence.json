@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "부하 테스트 및 스케일링 타임라인",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      800
+    ],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "k6",
+      "type": "external",
+      "label": "k6",
+      "sublabel": "부하 생성"
+    },
+    {
+      "id": "apigw",
+      "type": "frontend",
+      "label": "API Gateway",
+      "sublabel": "msa 진입점"
+    },
+    {
+      "id": "msa",
+      "type": "backend",
+      "label": "MSA Pod",
+      "sublabel": "Deployment"
+    },
+    {
+      "id": "keda",
+      "type": "backend",
+      "label": "KEDA",
+      "sublabel": "Pod 스케일"
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "Node 스케일"
+    },
+    {
+      "id": "grafana",
+      "type": "database",
+      "label": "Grafana",
+      "sublabel": "대시보드"
+    }
+  ],
+  "segments": [
+    {
+      "from": 162,
+      "to": 275,
+      "label": "Phase 1 · Ramp-up (2분, 1→50 VUs)"
+    },
+    {
+      "from": 295,
+      "to": 410,
+      "label": "Phase 2 · Sustained (5분, 50 VUs)"
+    },
+    {
+      "from": 430,
+      "to": 545,
+      "label": "Phase 3 · Spike (2분, 200 VUs)"
+    },
+    {
+      "from": 565,
+      "to": 715,
+      "label": "Phase 4 · Cool-down (2분, 50→0 VUs)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "ramp-traffic",
+      "from": "k6",
+      "to": "apigw",
+      "y": 190,
+      "label": "트래픽 점진 증가",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ramp-orders",
+      "from": "apigw",
+      "to": "msa",
+      "y": 225,
+      "label": "주문 요청 → SQS 메시지 적체"
+    },
+    {
+      "id": "ramp-metrics",
+      "from": "apigw",
+      "to": "grafana",
+      "y": 260,
+      "label": "요청률 메트릭 상승",
+      "variant": "dashed"
+    },
+    {
+      "id": "scale-out",
+      "from": "keda",
+      "to": "msa",
+      "y": 322,
+      "label": "SQS depth 초과 → 6-10 Pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pending",
+      "from": "msa",
+      "to": "karpenter",
+      "y": 358,
+      "label": "Pending Pod 발생",
+      "variant": "dashed"
+    },
+    {
+      "id": "provision",
+      "from": "karpenter",
+      "to": "msa",
+      "y": 394,
+      "label": "노드 프로비저닝 (3 → 4-5) 후 Pod 스케줄",
+      "variant": "return"
+    },
+    {
+      "id": "spike-traffic",
+      "from": "k6",
+      "to": "apigw",
+      "y": 457,
+      "label": "스파이크 트래픽",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scale-out-fast",
+      "from": "keda",
+      "to": "msa",
+      "y": 493,
+      "label": "빠른 스케일아웃 (→ 10-20 Pod)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "add-nodes",
+      "from": "karpenter",
+      "to": "msa",
+      "y": 529,
+      "label": "노드 추가 (→ 5-8)",
+      "variant": "return"
+    },
+    {
+      "id": "cooldown-traffic",
+      "from": "k6",
+      "to": "apigw",
+      "y": 592,
+      "label": "트래픽 점진 감소",
+      "variant": "return"
+    },
+    {
+      "id": "scale-in",
+      "from": "keda",
+      "to": "msa",
+      "y": 628,
+      "label": "스케일인 (cooldownPeriod 60s)",
+      "variant": "dashed"
+    },
+    {
+      "id": "consolidate",
+      "from": "karpenter",
+      "to": "msa",
+      "y": 664,
+      "label": "빈 노드 통합·제거 (consolidateAfter 30s → 3)",
+      "variant": "dashed"
+    },
+    {
+      "id": "verify",
+      "from": "msa",
+      "to": "grafana",
+      "y": 700,
+      "label": "Pod·Node 수, SQS depth 복귀 확인",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "apigw",
+      "from": 185,
+      "to": 268,
+      "type": "frontend"
+    },
+    {
+      "participant": "msa",
+      "from": 220,
+      "to": 402,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 353,
+      "to": 400,
+      "type": "cloud"
+    },
+    {
+      "participant": "apigw",
+      "from": 452,
+      "to": 465,
+      "type": "frontend"
+    },
+    {
+      "participant": "msa",
+      "from": 488,
+      "to": 537,
+      "type": "backend"
+    },
+    {
+      "participant": "msa",
+      "from": 623,
+      "to": 708,
+      "type": "backend"
+    }
+  ]
+}

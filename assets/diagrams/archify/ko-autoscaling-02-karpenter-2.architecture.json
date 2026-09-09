@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Karpenter 노드 통합 프로세스",
+    "output": "ko-autoscaling-02-karpenter-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1200, 520],
+    "views": [
+      { "id": "analyze", "label": "사용률 분석·평가", "focus": ["node1", "node2", "node3", "analyze", "evaluate"], "note": "사용률이 낮은 기존 노드 세 개를 분석하고 통합 가능성을 평가한다." },
+      { "id": "consolidate", "label": "새 노드로 통합", "focus": ["provision", "newnode", "migrate"], "note": "새 노드 하나를 프로비저닝하고 파드를 그 노드로 마이그레이션한다." },
+      { "id": "cleanup", "label": "기존 노드 정리", "focus": ["migrate", "drain", "terminate", "node1", "node2", "node3"], "note": "비워진 기존 노드를 드레이닝한 뒤 종료해 노드 수를 줄인다." }
+    ]
+  },
+  "components": [
+    { "id": "node1", "type": "cloud", "label": "Node 1", "sublabel": "사용률 50%", "pos": [40, 60], "size": [160, 60] },
+    { "id": "node2", "type": "cloud", "label": "Node 2", "sublabel": "사용률 30%", "pos": [40, 170], "size": [160, 60] },
+    { "id": "node3", "type": "cloud", "label": "Node 3", "sublabel": "사용률 20%", "pos": [40, 280], "size": [160, 60] },
+    { "id": "analyze", "type": "backend", "label": "노드 사용률 분석", "pos": [300, 170], "size": [170, 60] },
+    { "id": "evaluate", "type": "backend", "label": "통합 가능성 평가", "pos": [530, 170], "size": [170, 60] },
+    { "id": "provision", "type": "backend", "label": "새 노드 프로비저닝", "pos": [760, 170], "size": [170, 60] },
+    { "id": "newnode", "type": "cloud", "label": "New Node", "sublabel": "사용률 100%", "pos": [990, 170], "size": [170, 60] },
+    { "id": "migrate", "type": "backend", "label": "파드 마이그레이션", "pos": [760, 400], "size": [170, 60] },
+    { "id": "drain", "type": "backend", "label": "기존 노드 드레이닝", "pos": [530, 400], "size": [170, 60] },
+    { "id": "terminate", "type": "backend", "label": "기존 노드 종료", "pos": [300, 400], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "기존 노드 (통합 대상)", "wraps": ["node1", "node2", "node3"] }
+  ],
+  "connections": [
+    { "id": "node1-analyze", "from": "node1", "to": "analyze", "fromSide": "right", "toSide": "left" },
+    { "id": "node2-analyze", "from": "node2", "to": "analyze", "fromSide": "right", "toSide": "left" },
+    { "id": "node3-analyze", "from": "node3", "to": "analyze", "fromSide": "right", "toSide": "left" },
+    { "id": "analyze-evaluate", "from": "analyze", "to": "evaluate", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "evaluate-provision", "from": "evaluate", "to": "provision", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "provision-newnode", "from": "provision", "to": "newnode", "label": "프로비저닝", "fromSide": "right", "toSide": "left" },
+    { "id": "provision-migrate", "from": "provision", "to": "migrate", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "migrate-newnode", "from": "migrate", "to": "newnode", "label": "파드 이동", "fromSide": "right", "toSide": "bottom" },
+    { "id": "migrate-drain", "from": "migrate", "to": "drain", "variant": "emphasis", "fromSide": "left", "toSide": "right" },
+    { "id": "drain-terminate", "from": "drain", "to": "terminate", "variant": "emphasis", "fromSide": "left", "toSide": "right" },
+    { "id": "terminate-nodes", "from": "terminate", "to": "node3", "label": "드레이닝 후 종료", "variant": "dashed", "fromSide": "left", "toSide": "bottom" }
+  ]
+}

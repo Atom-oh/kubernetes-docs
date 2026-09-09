@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Knative와 KEDA의 스케일링 모델 차이",
+    "output": "ko-autoscaling-03-knative-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1200, 460],
+    "views": [
+      { "id": "knative-path", "label": "Knative Serving 경로", "focus": ["kn-req", "kn-qp", "kn-kpa", "kn-pods"], "note": "Queue Proxy 사이드카가 보고한 HTTP 동시성 메트릭으로 Knative 자체 Autoscaler(KPA)가 파드 수를 결정한다." },
+      { "id": "keda-path", "label": "KEDA 경로", "focus": ["keda-src", "keda-op", "keda-hpa", "keda-pods"], "note": "KEDA Operator가 외부 메트릭 소스를 폴링하고 Kubernetes HPA를 생성/관리해 파드 수를 결정한다." }
+    ]
+  },
+  "components": [
+    { "id": "kn-req", "type": "external", "label": "HTTP 요청", "sublabel": "동기 트래픽", "pos": [40, 80], "size": [170, 60] },
+    { "id": "kn-qp", "type": "backend", "label": "Queue Proxy", "sublabel": "사이드카", "pos": [340, 80], "size": [170, 60] },
+    { "id": "kn-kpa", "type": "backend", "label": "Knative Autoscaler", "sublabel": "KPA", "pos": [640, 80], "size": [190, 60] },
+    { "id": "kn-pods", "type": "backend", "label": "파드 수 조절", "sublabel": "Knative Revision", "pos": [960, 80], "size": [190, 60] },
+    { "id": "keda-src", "type": "external", "label": "외부 메트릭 소스", "sublabel": "SQS, Kafka, Prometheus 등", "pos": [40, 300], "size": [170, 60] },
+    { "id": "keda-op", "type": "backend", "label": "KEDA Operator", "sublabel": "ScaledObject 기반", "pos": [340, 300], "size": [170, 60] },
+    { "id": "keda-hpa", "type": "backend", "label": "Kubernetes HPA", "sublabel": "KEDA가 관리", "pos": [640, 300], "size": [190, 60] },
+    { "id": "keda-pods", "type": "backend", "label": "파드 수 조절", "sublabel": "Deployment / StatefulSet / Job", "pos": [960, 300], "size": [190, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Knative Serving", "wraps": ["kn-req", "kn-qp", "kn-kpa", "kn-pods"] },
+    { "kind": "region", "label": "KEDA", "wraps": ["keda-src", "keda-op", "keda-hpa", "keda-pods"] }
+  ],
+  "connections": [
+    { "id": "kn-req-qp", "from": "kn-req", "to": "kn-qp", "label": "요청 유입", "variant": "emphasis" },
+    { "id": "kn-qp-kpa", "from": "kn-qp", "to": "kn-kpa", "label": "동시성 메트릭", "variant": "emphasis" },
+    { "id": "kn-kpa-pods", "from": "kn-kpa", "to": "kn-pods", "label": "스케일 결정", "variant": "emphasis" },
+    { "id": "keda-src-op", "from": "keda-src", "to": "keda-op", "label": "메트릭 폴링" },
+    { "id": "keda-op-hpa", "from": "keda-op", "to": "keda-hpa", "label": "HPA 생성/관리" },
+    { "id": "keda-hpa-pods", "from": "keda-hpa", "to": "keda-pods", "label": "스케일 결정" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Knative", "items": ["트리거: HTTP 동시성/RPS (Queue Proxy 기반)", "스케일링 주체: Knative Autoscaler (KPA)", "Scale-to-Zero 네이티브, HTTP/gRPC 대상"] },
+    { "dot": "orange", "title": "KEDA", "items": ["트리거: 50+ 외부 메트릭 소스", "스케일링 주체: Kubernetes HPA (KEDA가 관리)", "Scale-to-Zero는 ScaledObject로 구현, 프로토콜 무관"] }
+  ]
+}

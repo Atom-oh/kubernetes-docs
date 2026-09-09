@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Spark on Kubernetes Execution Model",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "submit",
+        "label": "Driver pod creation",
+        "focus": [
+          "submit",
+          "apiserver",
+          "driver"
+        ],
+        "note": "spark-submit asks the API Server to create a single driver pod. There is no persistent cluster-manager daemon."
+      },
+      {
+        "id": "executors",
+        "label": "Executor pod request and scheduling",
+        "focus": [
+          "driver",
+          "apiserver",
+          "exec1",
+          "exec2",
+          "exec3"
+        ],
+        "note": "The driver calls the Kubernetes API itself to create executor pods, based on spark.executor.instances or DRA."
+      },
+      {
+        "id": "report",
+        "label": "Registration and status reporting",
+        "focus": [
+          "exec1",
+          "exec2",
+          "exec3",
+          "driver"
+        ],
+        "note": "Executors connect directly to the driver to register and report results and status. Kubernetes stays out of task coordination."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "submit",
+      "type": "external",
+      "label": "spark-submit",
+      "sublabel": "local client",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "control plane",
+      "pos": [
+        460,
+        170
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "cloud",
+      "label": "Driver Pod",
+      "sublabel": "cluster manager for the job's duration",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "exec1",
+      "type": "backend",
+      "label": "Executor Pod 1",
+      "sublabel": "runs tasks",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exec2",
+      "type": "backend",
+      "label": "Executor Pod 2",
+      "sublabel": "runs tasks",
+      "pos": [
+        495,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exec3",
+      "type": "backend",
+      "label": "Executor Pod 3",
+      "sublabel": "runs tasks",
+      "pos": [
+        660,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "apiserver",
+        "driver",
+        "exec1",
+        "exec2",
+        "exec3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "submit-to-api",
+      "from": "submit",
+      "to": "apiserver",
+      "label": "create driver pod",
+      "variant": "emphasis",
+      "labelAt": [
+        650,
+        133
+      ]
+    },
+    {
+      "id": "api-to-driver",
+      "from": "apiserver",
+      "to": "driver",
+      "label": "schedule driver pod",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          300
+        ],
+        [
+          175,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "driver-to-api",
+      "from": "driver",
+      "to": "apiserver",
+      "label": "request executor pods",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          40,
+          430
+        ],
+        [
+          40,
+          200
+        ]
+      ],
+      "labelAt": [
+        250,
+        188
+      ]
+    },
+    {
+      "id": "api-to-exec1",
+      "from": "apiserver",
+      "to": "exec1",
+      "label": "schedule",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          300
+        ],
+        [
+          405,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "api-to-exec2",
+      "from": "apiserver",
+      "to": "exec2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-exec3",
+      "from": "apiserver",
+      "to": "exec3",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          570,
+          300
+        ],
+        [
+          735,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "exec1-to-driver",
+      "from": "exec1",
+      "to": "driver",
+      "variant": "dashed"
+    },
+    {
+      "id": "exec2-to-driver",
+      "from": "exec2",
+      "to": "driver",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          570,
+          505
+        ],
+        [
+          175,
+          505
+        ]
+      ],
+      "label": "register · report status",
+      "labelAt": [
+        372,
+        525
+      ]
+    },
+    {
+      "id": "exec3-to-driver",
+      "from": "exec3",
+      "to": "driver",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          735,
+          545
+        ],
+        [
+          175,
+          545
+        ]
+      ]
+    }
+  ]
+}

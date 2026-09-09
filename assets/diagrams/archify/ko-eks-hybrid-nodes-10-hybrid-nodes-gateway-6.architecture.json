@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "게이트웨이 HA 아키텍처 (Multi-AZ)",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      600
+    ],
+    "views": [
+      {
+        "id": "leader-path",
+        "label": "리더 · 활성 경로",
+        "focus": [
+          "gw-a",
+          "lease",
+          "rt",
+          "hybrid"
+        ],
+        "note": "리더가 Lease를 갱신하고 VPC 라우트와 활성 VXLAN 터널을 유지한다."
+      },
+      {
+        "id": "standby-path",
+        "label": "스탠바이 · 대기 경로",
+        "focus": [
+          "gw-b",
+          "lease",
+          "hybrid"
+        ],
+        "note": "스탠바이는 Lease를 감시하며 터널만 대기 상태로 유지한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gw-a",
+      "type": "backend",
+      "label": "게이트웨이 EC2 A (리더)",
+      "sublabel": "EC2 + Gateway Pod · 10.0.1.100",
+      "pos": [
+        60,
+        130
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "lease",
+      "type": "backend",
+      "label": "Kubernetes Lease",
+      "sublabel": "eks-hybrid-nodes-gateway",
+      "pos": [
+        470,
+        130
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "gw-b",
+      "type": "backend",
+      "label": "게이트웨이 EC2 B (스탠바이)",
+      "sublabel": "EC2 + Gateway Pod · 10.0.2.200",
+      "pos": [
+        870,
+        130
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "cloud",
+      "label": "VPC 라우트 테이블",
+      "sublabel": "10.85.0.0/16 → eni-A",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "hybrid",
+      "type": "external",
+      "label": "Hybrid Nodes",
+      "sublabel": "온프레미스 데이터센터",
+      "pos": [
+        470,
+        460
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "가용 영역 A",
+      "wraps": [
+        "gw-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "가용 영역 B",
+      "wraps": [
+        "gw-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "온프레미스",
+      "wraps": [
+        "hybrid"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gw-a-lease",
+      "from": "gw-a",
+      "to": "lease",
+      "label": "Lease 갱신",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-b-lease",
+      "from": "gw-b",
+      "to": "lease",
+      "label": "Lease 감시",
+      "variant": "dashed"
+    },
+    {
+      "id": "gw-a-rt",
+      "from": "gw-a",
+      "to": "rt",
+      "label": "라우트 관리",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60,
+      "labelDx": -60
+    },
+    {
+      "id": "gw-a-hybrid",
+      "from": "gw-a",
+      "to": "hybrid",
+      "label": "VXLAN · 활성",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-b-hybrid",
+      "from": "gw-b",
+      "to": "hybrid",
+      "label": "VXLAN · 대기",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "리더의 역할",
+      "items": [
+        "Lease(eks-hybrid-nodes-gateway)를 주기적으로 갱신",
+        "VPC 라우트 테이블의 10.85.0.0/16 경로를 자신의 ENI로 관리",
+        "Hybrid Nodes와의 활성 VXLAN 터널 유지"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "스탠바이와 페일오버",
+      "items": [
+        "다른 AZ의 스탠바이가 Lease를 감시 (topologySpreadConstraints)",
+        "Lease 만료(leaseDuration 40초) 후 스탠바이가 Lease를 획득",
+        "새 리더가 VPC 라우트와 CiliumVTEPConfig를 갱신하고 터널을 재구성"
+      ]
+    }
+  ]
+}

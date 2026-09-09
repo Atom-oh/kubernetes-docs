@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Cost Optimization: Cluster Autoscaler vs Karpenter",
+    "locale": "en",
+    "output": "en-autoscaling-02-karpenter-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      500
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Autoscaler"
+        },
+        "cloud": {
+          "label": "Cost strategy"
+        },
+        "external": {
+          "label": "Savings outcome"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ca-path",
+        "label": "Cluster Autoscaler",
+        "focus": [
+          "ca",
+          "ca-scaling",
+          "ca-speed",
+          "ca-result"
+        ],
+        "note": "Scaling node groups of identical instance types slowly keeps cost savings at a medium level."
+      },
+      {
+        "id": "ka-path",
+        "label": "Karpenter",
+        "focus": [
+          "ka",
+          "ka-scaling",
+          "ka-speed",
+          "ka-consolidation",
+          "ka-result"
+        ],
+        "note": "Fast, workload-driven provisioning across diverse instance types plus consolidation and Spot yields high cost savings."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ca",
+      "type": "backend",
+      "label": "Cluster Autoscaler",
+      "sublabel": "Node group-based",
+      "pos": [
+        140,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ca-scaling",
+      "type": "cloud",
+      "label": "Node group-based scaling",
+      "sublabel": "Same instance types",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ca-speed",
+      "type": "cloud",
+      "label": "Slow scaling speed",
+      "sublabel": "Limited bin packing",
+      "pos": [
+        250,
+        180
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ca-result",
+      "type": "external",
+      "label": "Cost savings: Medium",
+      "pos": [
+        140,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ka",
+      "type": "backend",
+      "label": "Karpenter",
+      "sublabel": "Workload-based",
+      "pos": [
+        745,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ka-scaling",
+      "type": "cloud",
+      "label": "Workload-based scaling",
+      "sublabel": "Diverse instance types",
+      "pos": [
+        540,
+        180
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ka-speed",
+      "type": "cloud",
+      "label": "Fast scaling speed",
+      "sublabel": "Efficient bin packing",
+      "pos": [
+        750,
+        180
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ka-consolidation",
+      "type": "cloud",
+      "label": "Node consolidation",
+      "sublabel": "Spot instance utilization",
+      "pos": [
+        960,
+        180
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ka-result",
+      "type": "external",
+      "label": "Cost savings: High",
+      "pos": [
+        745,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster Autoscaler approach",
+      "wraps": [
+        "ca",
+        "ca-scaling",
+        "ca-speed",
+        "ca-result"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Karpenter approach",
+      "wraps": [
+        "ka",
+        "ka-scaling",
+        "ka-speed",
+        "ka-consolidation",
+        "ka-result"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ca-to-scaling",
+      "from": "ca",
+      "to": "ca-scaling",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ca-to-speed",
+      "from": "ca",
+      "to": "ca-speed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ca-scaling-to-result",
+      "from": "ca-scaling",
+      "to": "ca-result",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ca-speed-to-result",
+      "from": "ca-speed",
+      "to": "ca-result",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ka-to-scaling",
+      "from": "ka",
+      "to": "ka-scaling",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ka-to-speed",
+      "from": "ka",
+      "to": "ka-speed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ka-to-consolidation",
+      "from": "ka",
+      "to": "ka-consolidation",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ka-scaling-to-result",
+      "from": "ka-scaling",
+      "to": "ka-result",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ka-speed-to-result",
+      "from": "ka-speed",
+      "to": "ka-result",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ka-consolidation-to-result",
+      "from": "ka-consolidation",
+      "to": "ka-result",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Three Karpenter settings that cut cost",
+      "items": [
+        "Use Spot instances: set the capacity-type requirement to spot",
+        "Use diverse instance types: allow amd64/arm64 and many instance-type values",
+        "Enable node consolidation: turn consolidation on to retire underutilized nodes"
+      ]
+    }
+  ]
+}

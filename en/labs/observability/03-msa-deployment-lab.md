@@ -20,11 +20,15 @@
 
 ## Architecture Overview
 
-![MSA Service Map](../../../assets/diagrams/rendered/msa-service-map.svg)
+![The API Gateway routes requests to the order and payment services, which write to Aurora PostgreSQL and publish to SQS and SNS; notification consumes SQS, MWAA triggers the analytics batch, and telemetry flows via the OpenTelemetry Agent to the backends.](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-10.html)
 
 ### Service Call Flow
 
-![Sequence diagram of an order placement request flowing synchronously from the client through the API Gateway, Order Service, and Payment Service (each writing to Aurora PostgreSQL), with the Order Service then publishing an event that a Notification service consumes asynchronously via SQS to send email or SMS.](../../../assets/diagrams/rendered/en-labs-observability-03-msa-deployment-lab-0.svg)
+![MSA deployment architecture in which the API Gateway routes to the Order and Payment services that write to Aurora PostgreSQL, async events go to SQS (consumed by Notification) and SNS, and an MWAA-triggered analytics batch writes back to Aurora.](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-0.html)
 
 ***
 

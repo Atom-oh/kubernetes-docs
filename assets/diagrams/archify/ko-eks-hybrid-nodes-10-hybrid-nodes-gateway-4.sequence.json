@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "패턴 3: Control Plane에서 Hybrid Node의 Webhook으로",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "요청 경로",
+        "focus": [
+          "apiserver",
+          "vpcrt",
+          "gateway",
+          "hybrid",
+          "webhook"
+        ],
+        "note": "API 요청이 웹훅을 트리거하면 컨트롤 플레인 ENI에서 나온 패킷이 VPC 라우트 테이블, 게이트웨이 EC2, VXLAN 터널을 거쳐 Webhook Pod에 도달한다."
+      },
+      {
+        "id": "response",
+        "label": "응답 경로",
+        "focus": [
+          "webhook",
+          "hybrid",
+          "gateway",
+          "apiserver"
+        ],
+        "note": "응답은 역방향(패턴 2)으로 돌아온다. Cilium이 VXLAN으로 캡슐화해 게이트웨이로 보내고, 게이트웨이가 디캡슐화해 VPC로 전달한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "EKS API Server",
+      "sublabel": "컨트롤 플레인 ENI"
+    },
+    {
+      "id": "vpcrt",
+      "type": "cloud",
+      "label": "VPC 라우트 테이블",
+      "sublabel": "10.85.0.0/16 → GW ENI"
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "게이트웨이 EC2",
+      "sublabel": "hybrid_vxlan0"
+    },
+    {
+      "id": "hybrid",
+      "type": "external",
+      "label": "Hybrid Node",
+      "sublabel": "Cilium Agent"
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "Webhook Pod",
+      "sublabel": "10.85.1.80"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 350,
+      "label": "요청: Control Plane → Webhook Pod"
+    },
+    {
+      "from": 370,
+      "to": 545,
+      "label": "응답: 역방향 경로 (패턴 2와 동일)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "webhook-call",
+      "from": "apiserver",
+      "to": "vpcrt",
+      "y": 195,
+      "label": "Webhook HTTPS 요청 (dst 10.85.1.80)",
+      "variant": "emphasis",
+      "note": "리소스 생성 요청이 Admission Webhook을 트리거"
+    },
+    {
+      "id": "route-match",
+      "from": "vpcrt",
+      "to": "gateway",
+      "y": 240,
+      "label": "Hybrid Pod CIDR → 게이트웨이 ENI 매칭",
+      "variant": "default"
+    },
+    {
+      "id": "vxlan-encap",
+      "from": "gateway",
+      "to": "hybrid",
+      "y": 285,
+      "label": "VXLAN 캡슐화 (VNI 2, UDP 8472)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deliver",
+      "from": "hybrid",
+      "to": "webhook",
+      "y": 330,
+      "label": "디캡슐화 후 Pod로 전달",
+      "variant": "default"
+    },
+    {
+      "id": "webhook-response",
+      "from": "webhook",
+      "to": "hybrid",
+      "y": 400,
+      "label": "Webhook 응답",
+      "variant": "return"
+    },
+    {
+      "id": "return-encap",
+      "from": "hybrid",
+      "to": "gateway",
+      "y": 445,
+      "label": "Cilium VXLAN 캡슐화 → 게이트웨이(10.0.1.100)",
+      "variant": "return"
+    },
+    {
+      "id": "return-deliver",
+      "from": "gateway",
+      "to": "apiserver",
+      "y": 500,
+      "label": "디캡슐화 후 VPC 라우팅으로 응답 전달",
+      "variant": "return",
+      "note": "ENI의 source/dest check 비활성화 필요"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "gateway",
+      "from": 235,
+      "to": 292,
+      "type": "backend"
+    },
+    {
+      "participant": "webhook",
+      "from": 325,
+      "to": 407,
+      "type": "backend"
+    },
+    {
+      "participant": "gateway",
+      "from": 440,
+      "to": 507,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "EKS Auto Mode Node Provisioning Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      600
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "EKS API Server",
+      "sublabel": "control plane"
+    },
+    {
+      "id": "controller",
+      "type": "cloud",
+      "label": "Auto Mode Controller",
+      "sublabel": "Karpenter-based · AWS managed"
+    },
+    {
+      "id": "ec2",
+      "type": "cloud",
+      "label": "EC2 Fleet",
+      "sublabel": "instance launch"
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "New Node",
+      "sublabel": "kubelet"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 255,
+      "label": "Pod created → stays Pending"
+    },
+    {
+      "from": 275,
+      "to": 355,
+      "label": "NodePool matching · instance type selection · launch"
+    },
+    {
+      "from": 380,
+      "to": 520,
+      "label": "Registration and scheduling"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "user",
+      "to": "api",
+      "y": 185,
+      "label": "Pod creation request"
+    },
+    {
+      "id": "detect",
+      "from": "controller",
+      "to": "api",
+      "y": 235,
+      "label": "Detect Pending Pod",
+      "note": "No node can place it, so the Pod stays Pending"
+    },
+    {
+      "id": "launch",
+      "from": "controller",
+      "to": "ec2",
+      "y": 290,
+      "label": "Instance launch request",
+      "variant": "emphasis",
+      "note": "NodePool matching → pick optimal instance type"
+    },
+    {
+      "id": "provision",
+      "from": "ec2",
+      "to": "node",
+      "y": 340,
+      "label": "Instance provisioning",
+      "variant": "emphasis"
+    },
+    {
+      "id": "register",
+      "from": "node",
+      "to": "api",
+      "y": 400,
+      "label": "Node registration (kubelet)"
+    },
+    {
+      "id": "schedule",
+      "from": "api",
+      "to": "node",
+      "y": 450,
+      "label": "Pod scheduling"
+    },
+    {
+      "id": "running",
+      "from": "node",
+      "to": "api",
+      "y": 500,
+      "label": "Pod Running",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "controller",
+      "from": 227,
+      "to": 298,
+      "type": "cloud"
+    },
+    {
+      "participant": "node",
+      "from": 332,
+      "to": 507,
+      "type": "backend"
+    }
+  ]
+}

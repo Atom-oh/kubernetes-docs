@@ -1,0 +1,196 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "스케일 다운 시의 전체 흐름",
+    "output": "public/archmaps/ko-eks-hybrid-nodes-06-workload-placement-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "trigger",
+        "label": "스케일 다운 트리거",
+        "focus": [
+          "traffic",
+          "hpa",
+          "order"
+        ],
+        "note": "트래픽이 줄면 HPA가 레플리카를 줄이고, ReplicaSet 컨트롤러가 pod-deletion-cost로 삭제 순서를 정합니다."
+      },
+      {
+        "id": "priority",
+        "label": "Pod 삭제 우선순위",
+        "focus": [
+          "order",
+          "cloud_del",
+          "onprem_keep"
+        ],
+        "note": "deletion-cost가 낮은 클라우드 Pod(0)가 먼저 삭제되고, 높은 온프레미스 Pod(1000)는 마지막까지 유지됩니다."
+      },
+      {
+        "id": "reclaim",
+        "label": "빈 노드 회수",
+        "focus": [
+          "cloud_del",
+          "node_empty",
+          "karpenter"
+        ],
+        "note": "클라우드 Pod가 빠져 노드가 비면 Karpenter consolidation이 빈 클라우드 노드를 제거합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "트래픽 변화"
+        },
+        "backend": {
+          "label": "HPA / Pod 워크로드"
+        },
+        "security": {
+          "label": "삭제 순서 판단"
+        },
+        "cloud": {
+          "label": "클라우드 노드 / Karpenter"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "controlLane",
+      "label": "HPA / ReplicaSet 컨트롤러"
+    },
+    {
+      "id": "cloudLane",
+      "label": "클라우드 노드 (EC2, Karpenter 관리)"
+    },
+    {
+      "id": "onpremLane",
+      "label": "온프레미스 노드 (Hybrid Nodes)"
+    }
+  ],
+  "mainPath": [
+    "traffic",
+    "hpa",
+    "order",
+    "cloud_del",
+    "node_empty",
+    "karpenter"
+  ],
+  "nodes": [
+    {
+      "id": "traffic",
+      "lane": "controlLane",
+      "col": 0,
+      "type": "external",
+      "label": "트래픽 감소",
+      "sublabel": "부하 하락",
+      "width": 148
+    },
+    {
+      "id": "hpa",
+      "lane": "controlLane",
+      "col": 1,
+      "type": "backend",
+      "label": "HPA 스케일 다운",
+      "sublabel": "레플리카 수 축소",
+      "width": 150
+    },
+    {
+      "id": "order",
+      "lane": "controlLane",
+      "col": 2,
+      "type": "security",
+      "label": "Pod 삭제 순서 결정",
+      "sublabel": "pod-deletion-cost 비교",
+      "width": 190
+    },
+    {
+      "id": "cloud_del",
+      "lane": "cloudLane",
+      "col": 3,
+      "type": "cloud",
+      "label": "클라우드 Pod 먼저 삭제",
+      "sublabel": "deletion-cost=0",
+      "width": 208
+    },
+    {
+      "id": "onprem_keep",
+      "lane": "onpremLane",
+      "col": 2,
+      "type": "backend",
+      "label": "온프레미스 Pod 유지",
+      "sublabel": "deletion-cost=1000",
+      "width": 190
+    },
+    {
+      "id": "node_empty",
+      "lane": "cloudLane",
+      "col": 4,
+      "type": "cloud",
+      "label": "클라우드 노드 비어짐",
+      "sublabel": "실행 중인 Pod 없음",
+      "width": 180
+    },
+    {
+      "id": "karpenter",
+      "lane": "cloudLane",
+      "col": 5,
+      "type": "cloud",
+      "label": "Karpenter 빈 노드 제거",
+      "sublabel": "consolidationPolicy",
+      "width": 232
+    }
+  ],
+  "edges": [
+    {
+      "from": "traffic",
+      "to": "hpa",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "hpa",
+      "to": "order",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "order",
+      "to": "cloud_del",
+      "label": "deletion-cost=0",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "order",
+      "to": "onprem_keep",
+      "label": "deletion-cost=1000",
+      "role": "branch",
+      "fromSide": "bottom"
+    },
+    {
+      "from": "cloud_del",
+      "to": "node_empty",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "node_empty",
+      "to": "karpenter",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Karpenter 연동 구성",
+      "items": [
+        "pod-deletion-cost: ReplicaSet 스케일 다운 시 클라우드 Pod 우선 삭제",
+        "Karpenter WhenEmpty: 빈 클라우드 노드를 자동 제거",
+        "Karpenter WhenUnderutilized: 활용도 낮은 클라우드 노드 통합"
+      ]
+    }
+  ]
+}

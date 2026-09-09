@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "MSA 서비스 호출 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      700
+    ],
+    "views": [
+      {
+        "id": "order-flow",
+        "label": "주문 생성 (POST /orders)",
+        "focus": [
+          "client",
+          "gw",
+          "order",
+          "aurora",
+          "mq"
+        ],
+        "note": "API Gateway가 요청을 order-service로 라우팅하고, Aurora 기록 후 order_created 이벤트를 SQS로 발행합니다."
+      },
+      {
+        "id": "payment-flow",
+        "label": "결제 처리 (POST /payments)",
+        "focus": [
+          "client",
+          "gw",
+          "payment",
+          "aurora",
+          "mq"
+        ],
+        "note": "payment-service도 같은 패턴으로 Aurora에 기록하고 payment_completed 이벤트를 SNS로 발행합니다."
+      },
+      {
+        "id": "async-notify",
+        "label": "비동기 알림",
+        "focus": [
+          "mq",
+          "notif"
+        ],
+        "note": "notification-service는 SQS 메시지를 소비해 이메일·SMS를 발송하며, 클라이언트 응답을 지연시키지 않습니다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "클라이언트"
+    },
+    {
+      "id": "gw",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "api-gateway · Go"
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "order-service · Python"
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment",
+      "sublabel": "payment-service · Java"
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora",
+      "sublabel": "PostgreSQL"
+    },
+    {
+      "id": "mq",
+      "type": "messagebus",
+      "label": "SQS / SNS",
+      "sublabel": "이벤트 큐·토픽"
+    },
+    {
+      "id": "notif",
+      "type": "backend",
+      "label": "Notification",
+      "sublabel": "Node.js / Express"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 340,
+      "label": "주문 생성 — POST /orders"
+    },
+    {
+      "from": 360,
+      "to": 540,
+      "label": "결제 처리 — POST /payments"
+    },
+    {
+      "from": 560,
+      "to": 605,
+      "label": "비동기 알림 발송"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "client",
+      "to": "gw",
+      "y": 182,
+      "label": "POST /orders",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m2",
+      "from": "gw",
+      "to": "order",
+      "y": 210,
+      "label": "인증 · 라우팅 후 요청 전달"
+    },
+    {
+      "id": "m3",
+      "from": "order",
+      "to": "aurora",
+      "y": 238,
+      "label": "INSERT 주문"
+    },
+    {
+      "id": "m5",
+      "from": "order",
+      "to": "mq",
+      "y": 266,
+      "label": "order_created 이벤트 발행",
+      "variant": "dashed"
+    },
+    {
+      "id": "m6",
+      "from": "order",
+      "to": "gw",
+      "y": 294,
+      "label": "201 Created",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "gw",
+      "to": "client",
+      "y": 322,
+      "label": "201 Created",
+      "variant": "return"
+    },
+    {
+      "id": "m8",
+      "from": "client",
+      "to": "gw",
+      "y": 382,
+      "label": "POST /payments",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m9",
+      "from": "gw",
+      "to": "payment",
+      "y": 410,
+      "label": "인증 · 라우팅 후 요청 전달"
+    },
+    {
+      "id": "m10",
+      "from": "payment",
+      "to": "aurora",
+      "y": 438,
+      "label": "INSERT 결제"
+    },
+    {
+      "id": "m12",
+      "from": "payment",
+      "to": "mq",
+      "y": 466,
+      "label": "payment_completed 이벤트 발행",
+      "variant": "dashed"
+    },
+    {
+      "id": "m13",
+      "from": "payment",
+      "to": "gw",
+      "y": 494,
+      "label": "결제 결과 응답",
+      "variant": "return"
+    },
+    {
+      "id": "m14",
+      "from": "gw",
+      "to": "client",
+      "y": 522,
+      "label": "결제 결과 응답",
+      "variant": "return"
+    },
+    {
+      "id": "m15",
+      "from": "mq",
+      "to": "notif",
+      "y": 585,
+      "label": "SQS 메시지 소비 → 이메일·SMS 발송",
+      "variant": "dashed",
+      "note": "응답 경로와 분리된 비동기 처리"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "gw",
+      "from": 182,
+      "to": 326,
+      "type": "backend"
+    },
+    {
+      "participant": "order",
+      "from": 210,
+      "to": 298,
+      "type": "backend"
+    },
+    {
+      "participant": "aurora",
+      "from": 238,
+      "to": 256,
+      "type": "database"
+    },
+    {
+      "participant": "gw",
+      "from": 382,
+      "to": 526,
+      "type": "backend"
+    },
+    {
+      "participant": "payment",
+      "from": 410,
+      "to": 498,
+      "type": "backend"
+    },
+    {
+      "participant": "aurora",
+      "from": 438,
+      "to": 456,
+      "type": "database"
+    },
+    {
+      "participant": "notif",
+      "from": 585,
+      "to": 602,
+      "type": "backend"
+    }
+  ]
+}

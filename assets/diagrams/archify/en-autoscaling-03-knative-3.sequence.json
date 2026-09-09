@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Knative Scale-to-Zero and Cold Start Sequence",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      730
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scale-to-zero",
+        "label": "Scale-to-Zero",
+        "focus": [
+          "as",
+          "pod",
+          "gw"
+        ],
+        "note": "With zero requests over the stable window, the pod is terminated and the Gateway destination switches to the Activator."
+      },
+      {
+        "id": "cold-start",
+        "label": "Cold start",
+        "focus": [
+          "client",
+          "gw",
+          "act",
+          "as",
+          "pod"
+        ],
+        "note": "The Activator buffers the request, asks for a scale-up, and forwards it once the pod is Ready."
+      },
+      {
+        "id": "direct-path",
+        "label": "Later requests",
+        "focus": [
+          "client",
+          "gw",
+          "pod"
+        ],
+        "note": "While the pod is running, the Gateway bypasses the Activator and routes directly to the pod."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "gw",
+      "type": "frontend",
+      "label": "Gateway",
+      "sublabel": "Kourier"
+    },
+    {
+      "id": "act",
+      "type": "backend",
+      "label": "Activator"
+    },
+    {
+      "id": "as",
+      "type": "backend",
+      "label": "Autoscaler"
+    },
+    {
+      "id": "pod",
+      "type": "cloud",
+      "label": "Pod",
+      "sublabel": "Queue Proxy + App"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 250,
+      "label": "Scale-to-Zero — zero requests for stable-window (60s)"
+    },
+    {
+      "from": 287,
+      "to": 530,
+      "label": "Cold start — new request arrives"
+    },
+    {
+      "from": 555,
+      "to": 635,
+      "label": "Subsequent requests go directly"
+    }
+  ],
+  "messages": [
+    {
+      "id": "scale-zero",
+      "from": "as",
+      "to": "pod",
+      "y": 190,
+      "label": "Scale to 0 (terminate pod after grace period)",
+      "note": "zero metrics over stable-window (60s) → terminated after grace period"
+    },
+    {
+      "id": "set-dest",
+      "from": "as",
+      "to": "gw",
+      "y": 240,
+      "label": "Set Activator as destination"
+    },
+    {
+      "id": "http-req",
+      "from": "client",
+      "to": "gw",
+      "y": 309,
+      "label": "HTTP request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fwd-act",
+      "from": "gw",
+      "to": "act",
+      "y": 343,
+      "label": "Forward request (no pod)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scale-up-req",
+      "from": "act",
+      "to": "as",
+      "y": 377,
+      "label": "Request scale-up",
+      "note": "Activator buffers the request"
+    },
+    {
+      "id": "scale-one",
+      "from": "as",
+      "to": "pod",
+      "y": 411,
+      "label": "Scale to 1 (create pod)"
+    },
+    {
+      "id": "ready",
+      "from": "pod",
+      "to": "act",
+      "y": 445,
+      "label": "Container started + Ready",
+      "variant": "return"
+    },
+    {
+      "id": "fwd-buffered",
+      "from": "act",
+      "to": "pod",
+      "y": 479,
+      "label": "Forward buffered request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "response",
+      "from": "pod",
+      "to": "client",
+      "y": 513,
+      "label": "HTTP response",
+      "variant": "return"
+    },
+    {
+      "id": "next-req",
+      "from": "client",
+      "to": "gw",
+      "y": 577,
+      "label": "Next request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "direct",
+      "from": "gw",
+      "to": "pod",
+      "y": 613,
+      "label": "Direct delivery (bypass Activator)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "act",
+      "from": 338,
+      "to": 486,
+      "type": "backend"
+    },
+    {
+      "participant": "as",
+      "from": 372,
+      "to": 416,
+      "type": "backend"
+    },
+    {
+      "participant": "pod",
+      "from": 406,
+      "to": 519,
+      "type": "cloud"
+    }
+  ]
+}

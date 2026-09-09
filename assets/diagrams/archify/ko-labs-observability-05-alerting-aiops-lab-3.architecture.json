@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "A2A 멀티 에이전트 아키텍처",
+    "output": "ko-labs-observability-05-alerting-aiops-lab-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1020,
+      600
+    ],
+    "views": [
+      {
+        "id": "trigger",
+        "label": "트리거",
+        "focus": [
+          "trigger",
+          "collaborator"
+        ],
+        "note": "운영자 또는 발생한 Alert가 Collaborator Agent를 호출해 분석을 시작한다."
+      },
+      {
+        "id": "consult",
+        "label": "전문 에이전트 협의",
+        "focus": [
+          "collaborator",
+          "metric",
+          "log",
+          "trace"
+        ],
+        "note": "Collaborator가 지표·로그·트레이스 전문 에이전트와 양방향으로 협의하며 각자의 데이터 소스를 분석하게 한다."
+      },
+      {
+        "id": "synthesis",
+        "label": "종합",
+        "focus": [
+          "collaborator",
+          "report"
+        ],
+        "note": "세 에이전트의 결과를 Collaborator가 종합해 근본 원인 보고서를 만든다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "trigger",
+      "type": "external",
+      "label": "운영자 / Alert",
+      "sublabel": "trigger",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "collaborator",
+      "type": "backend",
+      "label": "Collaborator Agent",
+      "sublabel": "조율 및 종합",
+      "pos": [
+        320,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "metric",
+      "type": "backend",
+      "label": "Metric Agent",
+      "sublabel": "Prometheus · AMP · CloudWatch",
+      "pos": [
+        720,
+        80
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "log",
+      "type": "backend",
+      "label": "Log Agent",
+      "sublabel": "Loki · CloudWatch Logs",
+      "pos": [
+        720,
+        280
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "trace",
+      "type": "backend",
+      "label": "Trace Agent",
+      "sublabel": "Tempo · X-Ray",
+      "pos": [
+        720,
+        470
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "report",
+      "type": "external",
+      "label": "종합 근본 원인 보고서",
+      "sublabel": "Root Cause Analysis",
+      "pos": [
+        320,
+        490
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "전문 에이전트",
+      "wraps": [
+        "metric",
+        "log",
+        "trace"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "trigger-to-collaborator",
+      "from": "trigger",
+      "to": "collaborator",
+      "label": "트리거",
+      "variant": "emphasis"
+    },
+    {
+      "id": "collaborator-to-metric",
+      "from": "collaborator",
+      "to": "metric",
+      "label": "메트릭 협의"
+    },
+    {
+      "id": "collaborator-to-log",
+      "from": "collaborator",
+      "to": "log",
+      "label": "로그 협의",
+      "labelAt": [
+        655,
+        302
+      ]
+    },
+    {
+      "id": "collaborator-to-trace",
+      "from": "collaborator",
+      "to": "trace",
+      "label": "트레이스 협의"
+    },
+    {
+      "id": "collaborator-to-report",
+      "from": "collaborator",
+      "to": "report",
+      "label": "종합",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "에이전트 역할",
+      "items": [
+        "Collaborator: 조율 및 종합 — 다른 에이전트 결과를 입력으로 사용",
+        "Metric / Log / Trace Agent: 각자 지표·로그·트레이스 분석 담당"
+      ]
+    }
+  ]
+}

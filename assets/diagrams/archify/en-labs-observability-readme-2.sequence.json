@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Service Call Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      700
+    ],
+    "views": [
+      {
+        "id": "order-flow",
+        "label": "Create order (POST /orders)",
+        "focus": [
+          "client",
+          "gw",
+          "order",
+          "aurora",
+          "mq"
+        ],
+        "note": "The API gateway routes the request to order-service, which writes to Aurora and then publishes an order_created event to SQS."
+      },
+      {
+        "id": "payment-flow",
+        "label": "Process payment (POST /payments)",
+        "focus": [
+          "client",
+          "gw",
+          "payment",
+          "aurora",
+          "mq"
+        ],
+        "note": "payment-service follows the same pattern: it writes to Aurora and publishes a payment_completed event to SNS."
+      },
+      {
+        "id": "async-notify",
+        "label": "Async notification",
+        "focus": [
+          "mq",
+          "notif"
+        ],
+        "note": "notification-service consumes SQS messages and sends email/SMS without delaying the client response."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "client"
+    },
+    {
+      "id": "gw",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "api-gateway · Go"
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "order-service · Python"
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment",
+      "sublabel": "payment-service · Java"
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora",
+      "sublabel": "PostgreSQL"
+    },
+    {
+      "id": "mq",
+      "type": "messagebus",
+      "label": "SQS / SNS",
+      "sublabel": "event queue / topic"
+    },
+    {
+      "id": "notif",
+      "type": "backend",
+      "label": "Notification",
+      "sublabel": "Node.js / Express"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 340,
+      "label": "Create order — POST /orders"
+    },
+    {
+      "from": 360,
+      "to": 540,
+      "label": "Process payment — POST /payments"
+    },
+    {
+      "from": 560,
+      "to": 605,
+      "label": "Async notification delivery"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "client",
+      "to": "gw",
+      "y": 182,
+      "label": "POST /orders",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m2",
+      "from": "gw",
+      "to": "order",
+      "y": 210,
+      "label": "authenticate, route request"
+    },
+    {
+      "id": "m3",
+      "from": "order",
+      "to": "aurora",
+      "y": 238,
+      "label": "INSERT order"
+    },
+    {
+      "id": "m5",
+      "from": "order",
+      "to": "mq",
+      "y": 266,
+      "label": "publish order_created event",
+      "variant": "dashed"
+    },
+    {
+      "id": "m6",
+      "from": "order",
+      "to": "gw",
+      "y": 294,
+      "label": "201 Created",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "gw",
+      "to": "client",
+      "y": 322,
+      "label": "201 Created",
+      "variant": "return"
+    },
+    {
+      "id": "m8",
+      "from": "client",
+      "to": "gw",
+      "y": 382,
+      "label": "POST /payments",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m9",
+      "from": "gw",
+      "to": "payment",
+      "y": 410,
+      "label": "authenticate, route request"
+    },
+    {
+      "id": "m10",
+      "from": "payment",
+      "to": "aurora",
+      "y": 438,
+      "label": "INSERT payment"
+    },
+    {
+      "id": "m12",
+      "from": "payment",
+      "to": "mq",
+      "y": 466,
+      "label": "publish payment_completed event",
+      "variant": "dashed"
+    },
+    {
+      "id": "m13",
+      "from": "payment",
+      "to": "gw",
+      "y": 494,
+      "label": "payment result",
+      "variant": "return"
+    },
+    {
+      "id": "m14",
+      "from": "gw",
+      "to": "client",
+      "y": 522,
+      "label": "payment result",
+      "variant": "return"
+    },
+    {
+      "id": "m15",
+      "from": "mq",
+      "to": "notif",
+      "y": 585,
+      "label": "consume SQS message → send email/SMS",
+      "variant": "dashed",
+      "note": "asynchronous, off the response path"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "gw",
+      "from": 182,
+      "to": 326,
+      "type": "backend"
+    },
+    {
+      "participant": "order",
+      "from": 210,
+      "to": 298,
+      "type": "backend"
+    },
+    {
+      "participant": "aurora",
+      "from": 238,
+      "to": 256,
+      "type": "database"
+    },
+    {
+      "participant": "gw",
+      "from": 382,
+      "to": 526,
+      "type": "backend"
+    },
+    {
+      "participant": "payment",
+      "from": 410,
+      "to": 498,
+      "type": "backend"
+    },
+    {
+      "participant": "aurora",
+      "from": 438,
+      "to": 456,
+      "type": "database"
+    },
+    {
+      "participant": "notif",
+      "from": 585,
+      "to": 602,
+      "type": "backend"
+    }
+  ]
+}

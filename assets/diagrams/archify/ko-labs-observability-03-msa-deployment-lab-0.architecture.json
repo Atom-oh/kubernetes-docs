@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MSA 배포 아키텍처",
+    "output": "ko-labs-observability-03-msa-deployment-lab-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1290,
+      700
+    ],
+    "views": [
+      {
+        "id": "sync-path",
+        "label": "동기 요청 경로",
+        "focus": [
+          "gateway",
+          "order",
+          "payment",
+          "aurora"
+        ],
+        "note": "API 게이트웨이가 주문·결제 서비스로 요청을 라우팅하고, 두 서비스는 Aurora PostgreSQL에 기록한다."
+      },
+      {
+        "id": "async-events",
+        "label": "비동기 이벤트",
+        "focus": [
+          "order",
+          "sqs",
+          "notification",
+          "payment",
+          "sns"
+        ],
+        "note": "order-service는 SQS로, payment-service는 SNS로 이벤트를 발행하고 notification-service가 SQS를 소비한다."
+      },
+      {
+        "id": "batch",
+        "label": "분석 배치",
+        "focus": [
+          "mwaa",
+          "analytics",
+          "aurora"
+        ],
+        "note": "MWAA가 트리거하는 analytics-batch가 Aurora PostgreSQL에 집계 결과를 기록한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "API 게이트웨이",
+      "sublabel": "Go / Gin · :8080",
+      "tag": "api-gateway",
+      "pos": [
+        30,
+        235
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "주문 서비스",
+      "sublabel": "Python / FastAPI · :8000",
+      "tag": "order-service",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "결제 서비스",
+      "sublabel": "Java / Spring Boot · :8080",
+      "tag": "payment-service",
+      "pos": [
+        300,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "알림 서비스",
+      "sublabel": "Node.js / Express · :3000",
+      "tag": "notification-service",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "analytics",
+      "type": "backend",
+      "label": "분석 배치",
+      "sublabel": "Python / Pandas",
+      "tag": "analytics-batch",
+      "pos": [
+        300,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora PostgreSQL",
+      "sublabel": "주문·결제·집계 데이터",
+      "pos": [
+        1040,
+        170
+      ],
+      "size": [
+        190,
+        194
+      ]
+    },
+    {
+      "id": "sqs",
+      "type": "messagebus",
+      "label": "SQS Queue",
+      "sublabel": "주문 이벤트",
+      "pos": [
+        780,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS Topic",
+      "sublabel": "결제 결과 알림",
+      "pos": [
+        780,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "mwaa",
+      "type": "cloud",
+      "label": "MWAA",
+      "sublabel": "Managed Airflow",
+      "pos": [
+        780,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Cluster (EKS)",
+      "wraps": [
+        "gateway",
+        "order",
+        "payment",
+        "notification",
+        "analytics"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 관리형 서비스",
+      "wraps": [
+        "aurora",
+        "sqs",
+        "sns",
+        "mwaa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gw-order",
+      "from": "gateway",
+      "to": "order",
+      "label": "주문 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-payment",
+      "from": "gateway",
+      "to": "payment",
+      "label": "결제 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "order-aurora",
+      "from": "order",
+      "to": "aurora",
+      "label": "INSERT"
+    },
+    {
+      "id": "payment-aurora",
+      "from": "payment",
+      "to": "aurora",
+      "label": "INSERT"
+    },
+    {
+      "id": "order-sqs",
+      "from": "order",
+      "to": "sqs",
+      "label": "이벤트 발행",
+      "variant": "dashed"
+    },
+    {
+      "id": "sqs-notification",
+      "from": "sqs",
+      "to": "notification",
+      "label": "소비",
+      "variant": "dashed"
+    },
+    {
+      "id": "payment-sns",
+      "from": "payment",
+      "to": "sns",
+      "label": "결제 결과 발행",
+      "variant": "dashed"
+    },
+    {
+      "id": "mwaa-analytics",
+      "from": "mwaa",
+      "to": "analytics",
+      "label": "트리거",
+      "variant": "dashed"
+    },
+    {
+      "id": "analytics-aurora",
+      "from": "analytics",
+      "to": "aurora",
+      "label": "집계 기록",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "동기 호출",
+      "items": [
+        "api-gateway가 JWT 인증 후 order-service·payment-service로 라우팅",
+        "두 서비스는 Aurora PostgreSQL에 주문·결제를 INSERT"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "비동기 이벤트",
+      "items": [
+        "order-service → SQS → notification-service (이메일/SMS)",
+        "payment-service는 결제 결과를 SNS Topic으로 발행",
+        "KEDA가 SQS 큐 깊이로 notification-service를 스케일"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "클러스터 애드온",
+      "items": [
+        "Karpenter NodePool로 노드 프로비저닝",
+        "모든 서비스를 OpenTelemetry로 계측해 otel-agent-collector로 전송 (api-gateway는 Manual SDK)"
+      ]
+    }
+  ]
+}

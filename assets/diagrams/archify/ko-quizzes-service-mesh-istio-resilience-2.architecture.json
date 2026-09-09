@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zone Aware Routing의 올바른 동작",
+    "output": "ko-quizzes-service-mesh-istio-resilience-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      480
+    ],
+    "views": [
+      {
+        "id": "same-az",
+        "label": "같은 AZ 우선 (80%)",
+        "focus": [
+          "client",
+          "svc1",
+          "svc2"
+        ],
+        "note": "클라이언트와 같은 가용영역의 서비스 파드로 트래픽의 80%를 먼저 보낸다. 크로스 AZ 전송 비용이 들지 않는다."
+      },
+      {
+        "id": "failover",
+        "label": "크로스 AZ 장애조치 (20%)",
+        "focus": [
+          "client",
+          "svc3",
+          "svc5"
+        ],
+        "note": "나머지 20%는 Zone B와 Zone C에 10%씩 분산한다. 같은 AZ 파드 장애 시 자동으로 다른 AZ로 전환된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "클라이언트 파드",
+      "sublabel": "Zone A",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "서비스 파드 1",
+      "sublabel": "Zone A",
+      "pos": [
+        270,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "서비스 파드 2",
+      "sublabel": "Zone A",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "서비스 파드 3",
+      "sublabel": "Zone B",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc4",
+      "type": "backend",
+      "label": "서비스 파드 4",
+      "sublabel": "Zone B",
+      "pos": [
+        560,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc5",
+      "type": "backend",
+      "label": "서비스 파드 5",
+      "sublabel": "Zone C",
+      "pos": [
+        850,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Availability Zone A",
+      "wraps": [
+        "client",
+        "svc1",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone B",
+      "wraps": [
+        "svc3",
+        "svc4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Availability Zone C",
+      "wraps": [
+        "svc5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-svc1",
+      "from": "client",
+      "to": "svc1",
+      "label": "80% · 같은 AZ 우선 · 무료",
+      "variant": "emphasis",
+      "labelDy": 11
+    },
+    {
+      "id": "client-svc2",
+      "from": "client",
+      "to": "svc2",
+      "label": "80% · 같은 AZ 우선 · 무료",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-svc3",
+      "from": "client",
+      "to": "svc3",
+      "label": "10% · 장애조치 · 크로스 AZ 비용",
+      "variant": "dashed"
+    },
+    {
+      "id": "client-svc5",
+      "from": "client",
+      "to": "svc5",
+      "label": "10% · 장애조치 · 크로스 AZ 비용",
+      "variant": "dashed",
+      "labelDx": 150
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "지연시간 · 비용",
+      "items": [
+        "같은 AZ 내 통신 ~0.5ms, 크로스 AZ 통신 ~1-2ms",
+        "AWS 크로스 AZ 전송 비용 GB당 $0.01-0.02 절감"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "가용성",
+      "items": [
+        "같은 AZ 파드 장애 시 자동으로 다른 AZ로 전환",
+        "단일 AZ 집중은 가용성을 떨어뜨리는 잘못된 접근"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "DestinationRule",
+      "items": [
+        "localityLbSetting.distribute로 AZ별 비율 지정",
+        "us-east-1a 80% / us-east-1b 10% / us-east-1c 10%"
+      ]
+    }
+  ]
+}

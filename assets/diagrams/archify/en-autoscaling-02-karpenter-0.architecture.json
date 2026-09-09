@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Karpenter Architecture",
+    "output": "en-autoscaling-02-karpenter-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "detect",
+        "label": "Pod detection",
+        "focus": [
+          "controller",
+          "pods"
+        ],
+        "note": "The Karpenter controller detects pods that cannot be scheduled."
+      },
+      {
+        "id": "policy",
+        "label": "Policy decision",
+        "focus": [
+          "controller",
+          "webhook",
+          "provisioner",
+          "nodetemplate"
+        ],
+        "note": "Determines the right node type from the webhook-validated Provisioner and NodeTemplate CRDs."
+      },
+      {
+        "id": "provision",
+        "label": "Node provisioning",
+        "focus": [
+          "controller",
+          "k8sapi",
+          "instanceapi",
+          "compute"
+        ],
+        "note": "Calls the Kubernetes API and the cloud provider Instance API to provision compute instances."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "pods",
+      "type": "frontend",
+      "label": "Unschedulable Pods",
+      "sublabel": "pending scheduling",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Karpenter Webhook",
+      "sublabel": "validates resources",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Karpenter Controller",
+      "sublabel": "manages node provisioning",
+      "pos": [
+        320,
+        360
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "provisioner",
+      "type": "database",
+      "label": "Provisioner CRD",
+      "sublabel": "node provisioning policy",
+      "pos": [
+        190,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nodetemplate",
+      "type": "database",
+      "label": "NodeTemplate CRD",
+      "sublabel": "node configuration",
+      "pos": [
+        470,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "k8sapi",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        320,
+        580
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "instanceapi",
+      "type": "cloud",
+      "label": "Instance API",
+      "sublabel": "cloud provider API",
+      "pos": [
+        900,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "compute",
+      "type": "cloud",
+      "label": "Compute Instances",
+      "sublabel": "provisioned nodes",
+      "pos": [
+        900,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "pods",
+        "webhook",
+        "controller",
+        "provisioner",
+        "nodetemplate",
+        "k8sapi"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cloud Provider",
+      "wraps": [
+        "instanceapi",
+        "compute"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "watch-pods",
+      "from": "controller",
+      "to": "pods",
+      "label": "watches",
+      "variant": "emphasis"
+    },
+    {
+      "id": "use-provisioner",
+      "from": "controller",
+      "to": "provisioner",
+      "label": "uses",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "use-nodetemplate",
+      "from": "controller",
+      "to": "nodetemplate",
+      "label": "uses",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "call-k8sapi",
+      "from": "controller",
+      "to": "k8sapi",
+      "label": "calls",
+      "labelDy": 24
+    },
+    {
+      "id": "call-instanceapi",
+      "from": "controller",
+      "to": "instanceapi",
+      "label": "calls",
+      "variant": "emphasis"
+    },
+    {
+      "id": "provision-compute",
+      "from": "instanceapi",
+      "to": "compute",
+      "label": "provisions",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "create-compute",
+      "from": "k8sapi",
+      "to": "compute",
+      "label": "creates"
+    },
+    {
+      "id": "validate-provisioner",
+      "from": "webhook",
+      "to": "provisioner",
+      "label": "validates",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "validate-nodetemplate",
+      "from": "webhook",
+      "to": "nodetemplate",
+      "label": "validates",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "How it works",
+      "items": [
+        "The controller detects unschedulable pods and analyzes their resource, node selector, and toleration requirements",
+        "Determines the appropriate node type from the Provisioner and NodeTemplate configuration",
+        "Calls the cloud provider API to provision nodes; pods are scheduled once the nodes join the cluster"
+      ]
+    }
+  ]
+}

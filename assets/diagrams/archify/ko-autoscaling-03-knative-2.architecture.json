@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Knative Serving 리소스 모델",
+    "output": "ko-autoscaling-03-knative-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1040, 560],
+    "views": [
+      { "id": "ownership", "label": "Service 소유 관계", "focus": ["svc", "config", "route"], "note": "최상위 리소스인 Service가 Configuration과 Route를 자동으로 관리한다." },
+      { "id": "revisions", "label": "Revision 생성", "focus": ["config", "rev1", "rev2", "rev3"], "note": "Configuration이 변경될 때마다 불변 Revision이 새로 생성된다." },
+      { "id": "traffic", "label": "트래픽 배분", "focus": ["route", "rev1", "rev2", "rev3"], "note": "Route가 최신 Revision에 100%를 보내고 이전 Revision은 0%로 유지한다." }
+    ]
+  },
+  "components": [
+    { "id": "svc", "type": "cloud", "label": "Service", "sublabel": "최상위 리소스", "pos": [440, 40], "size": [160, 64] },
+    { "id": "config", "type": "backend", "label": "Configuration", "sublabel": "원하는 상태 정의", "pos": [60, 290], "size": [180, 64] },
+    { "id": "route", "type": "frontend", "label": "Route", "sublabel": "트래픽 라우팅", "pos": [800, 290], "size": [180, 64] },
+    { "id": "rev3", "type": "backend", "label": "Revision v3", "sublabel": "최신", "pos": [440, 200], "size": [160, 60] },
+    { "id": "rev2", "type": "backend", "label": "Revision v2", "sublabel": "불변 스냅샷", "pos": [440, 320], "size": [160, 60] },
+    { "id": "rev1", "type": "backend", "label": "Revision v1", "sublabel": "불변 스냅샷", "pos": [440, 440], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Revision (불변 스냅샷)", "wraps": ["rev3", "rev2", "rev1"] }
+  ],
+  "connections": [
+    { "id": "svc-config", "from": "svc", "to": "config", "label": "소유", "fromSide": "left", "toSide": "top" },
+    { "id": "svc-route", "from": "svc", "to": "route", "label": "소유", "fromSide": "right", "toSide": "top" },
+    { "id": "config-rev3", "from": "config", "to": "rev3", "label": "생성", "fromSide": "right", "toSide": "left" },
+    { "id": "config-rev2", "from": "config", "to": "rev2", "label": "생성", "fromSide": "right", "toSide": "left" },
+    { "id": "config-rev1", "from": "config", "to": "rev1", "label": "생성", "fromSide": "right", "toSide": "left" },
+    { "id": "route-rev3", "from": "route", "to": "rev3", "label": "100%", "variant": "emphasis", "fromSide": "left", "toSide": "right" },
+    { "id": "route-rev2", "from": "route", "to": "rev2", "label": "0% (유지)", "variant": "dashed", "fromSide": "left", "toSide": "right" },
+    { "id": "route-rev1", "from": "route", "to": "rev1", "label": "0% (유지)", "variant": "dashed", "fromSide": "left", "toSide": "right" }
+  ]
+}

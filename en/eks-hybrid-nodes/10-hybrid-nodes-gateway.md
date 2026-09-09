@@ -70,7 +70,9 @@ The gateway transforms what was a complex, error-prone, multi-team networking ch
 
 The EKS Hybrid Nodes Gateway sits at the boundary between your VPC and your on-premises network, acting as a VXLAN-based bridge for Pod traffic. The following diagram illustrates the overall architecture:
 
-![Architecture diagram showing a leader gateway pod in the AWS VPC bridging cloud nodes and the EKS control plane to on-premises hybrid nodes over a VXLAN tunnel, with a standby gateway ready to take over and a VPC route table steering pod traffic to the leader's ENI.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.svg)
+![A leader gateway pod in the AWS VPC bridges VPC Pods to on-premises hybrid nodes over a VXLAN tunnel, with a standby gateway ready to take over and a VPC route table steering hybrid Pod traffic to the leader's ENI.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html)
 
 ### VXLAN Tunnel Mechanics
 
@@ -204,7 +206,9 @@ The standby pod:
 
 One of the gateway's most valuable features is automatic VPC route table management. The leader pod watches for Hybrid Node events and programs routes accordingly.
 
-![Sequence diagram showing the leader gateway watching Kubernetes node events, then programming or removing FDB, ARP, and local route entries and reflecting the change into the VPC route table, symmetrically for a hybrid node joining and leaving the cluster.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.svg)
+![Sequence showing the leader gateway receiving Kubernetes node watch events when a hybrid node joins or leaves, programming or removing FDB, ARP, and local route entries for the node, and then adding or deleting the Pod CIDR route in the VPC route table via ec2:CreateRoute and ec2:DeleteRoute.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html)
 
 The gateway uses the EC2 API to manage routes:
 
@@ -220,7 +224,9 @@ The gateway uses the EC2 API to manage routes:
 
 The following diagram shows how all components interact:
 
-![Architecture diagram showing the gateway pod as the hub that holds a leader-election lease, watches node resources, and updates CiliumVTEPConfig and the VPC route table, which drive a data plane where the hybrid_vxlan0 interface tunnels to a Cilium agent and an EC2 ENI forwards VPC-routed traffic into that tunnel.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.svg)
+![Architecture diagram of the gateway pod holding a leader Lease, watching Node objects, and updating CiliumVTEPConfig and the VPC route table, which steer traffic via the gateway ENI into the hybrid_vxlan0 VXLAN tunnel to Cilium agents.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html)
 
 ---
 

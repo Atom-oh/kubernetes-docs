@@ -84,7 +84,9 @@ By the end of this document you will be able to:
 
 Knative Serving deploys five key components inside the `knative-serving` namespace. Together they manage the full lifecycle of a serverless workload, from receiving an initial request to scaling the application and routing traffic.
 
-![Diagram of a Knative request path: a client request enters through a Kourier/Istio gateway, either flowing directly to a running revision's queue-proxy and container when scaled above zero, or being buffered by the Activator and forwarded once the Autoscaler brings a pod up from zero, with concurrency metrics feeding the Autoscaler's scaling decisions to the Controller.](../../assets/diagrams/rendered/en-autoscaling-03-knative-0.svg)
+![Knative Serving architecture in which a client request enters through a Kourier/Istio gateway and reaches a revision's Queue Proxy directly or, at scale-to-zero, via the Activator, while Queue Proxy concurrency metrics drive the Autoscaler's scale decision to the Controller.](../.gitbook/assets/en-autoscaling-03-knative-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-0.html)
 
 **Component responsibilities:**
 
@@ -100,7 +102,9 @@ Knative Serving deploys five key components inside the `knative-serving` namespa
 
 Knative Eventing provides a declarative way to bind event sources to consumers. It supports two delivery patterns: **Broker/Trigger** (content-based routing) and **Channel/Subscription** (direct pub-sub).
 
-![Diagram contrasting Knative's Broker/Trigger eventing pattern (sources feeding a Broker that routes filtered events through Triggers to consumer services, with failed deliveries going to a dead letter sink) against its Channel/Subscription pattern (a source feeding a Channel that fans out to Subscriptions and their consumer services).](../../assets/diagrams/rendered/en-autoscaling-03-knative-1.svg)
+![Knative's Broker/Trigger pattern, where a Broker routes events by Trigger filter to consumer services and sends failed deliveries to a Dead Letter Sink, beside the Channel/Subscription pattern, where a Channel fans events out to Subscriptions.](../.gitbook/assets/en-autoscaling-03-knative-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-1.html)
 
 **Eventing core concepts:**
 
@@ -396,7 +400,9 @@ kubectl wait --for=condition=Ready pods --all -n knative-eventing --timeout=300s
 
 Knative Serving introduces four primary custom resources that work together to manage the complete lifecycle of a serverless workload.
 
-![Diagram of Knative resource ownership: a Knative Service owns a Configuration and a Route; the Configuration creates a new immutable Revision on every change, while the Route sends all live traffic to the latest revision and keeps older revisions available at zero percent for rollback.](../../assets/diagrams/rendered/en-autoscaling-03-knative-2.svg)
+![Knative Serving resource model: a Service owns a Configuration and a Route; the Configuration creates an immutable Revision on every change, and the Route sends 100% of traffic to the latest Revision while keeping older ones at 0% for rollback.](../.gitbook/assets/en-autoscaling-03-knative-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-2.html)
 
 | Resource | Description |
 |----------|-------------|
@@ -579,7 +585,9 @@ spec:
 
 Scale-to-zero is a defining feature of Knative Serving. When a Revision receives no traffic, its pods are terminated after a configurable grace period. When a new request arrives, the Activator buffers it, triggers a scale-up, and proxies the request once a pod is ready.
 
-![Sequence diagram of Knative's scale-to-zero and cold-start flow: after 60 seconds without traffic the Autoscaler scales the pod to zero and it terminates, then a new client request causes the Activator to request a scale-up, buffer the request while the pod starts, forward it once the pod reports ready, and return the response, after which later requests go directly to the pod.](../../assets/diagrams/rendered/en-autoscaling-03-knative-3.svg)
+![Knative scale-to-zero and cold-start sequence: with no traffic the Autoscaler scales the pod to zero and points the Gateway at the Activator, which buffers the next request until a new pod is Ready, after which later requests go directly to the pod.](../.gitbook/assets/en-autoscaling-03-knative-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-3.html)
 
 Key parameters controlling scale-to-zero:
 

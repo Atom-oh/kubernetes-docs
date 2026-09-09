@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Strimzi-Managed Kafka Cluster Reconciliation Flow",
+    "output": "en-data-on-eks-kafka-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      780
+    ],
+    "views": [
+      {
+        "id": "declare",
+        "label": "Declare",
+        "focus": [
+          "user",
+          "apiserver",
+          "strimzi"
+        ],
+        "note": "The operator applies Kafka / KafkaNodePool CRs; the Strimzi Operator watches the API server and reads the desired state."
+      },
+      {
+        "id": "reconcile",
+        "label": "Reconcile",
+        "focus": [
+          "strimzi",
+          "broker1",
+          "broker2",
+          "controller"
+        ],
+        "note": "The Operator creates and reconciles broker Pods and a KRaft controller Pod. There is no ZooKeeper."
+      },
+      {
+        "id": "storage",
+        "label": "Storage",
+        "focus": [
+          "broker1",
+          "broker2",
+          "controller",
+          "pvc1",
+          "pvc2",
+          "pvc3"
+        ],
+        "note": "Each Pod stores its log and metadata on a gp3 PVC provisioned by the EBS CSI driver."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Operator (human)",
+      "sublabel": "kubectl apply",
+      "pos": [
+        470,
+        30
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        470,
+        170
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "strimzi",
+      "type": "backend",
+      "label": "Strimzi Operator",
+      "sublabel": "watches & reconciles CRDs",
+      "pos": [
+        470,
+        310
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "tag": "Operator"
+    },
+    {
+      "id": "broker1",
+      "type": "messagebus",
+      "label": "Broker Pod 1",
+      "sublabel": "kafka-broker",
+      "pos": [
+        120,
+        480
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "broker2",
+      "type": "messagebus",
+      "label": "Broker Pod 2",
+      "sublabel": "kafka-broker",
+      "pos": [
+        470,
+        480
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "messagebus",
+      "label": "Controller Pod",
+      "sublabel": "kraft-controller",
+      "pos": [
+        820,
+        480
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "pvc1",
+      "type": "database",
+      "label": "EBS gp3 PVC",
+      "sublabel": "ebs-csi",
+      "pos": [
+        120,
+        630
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "pvc2",
+      "type": "database",
+      "label": "EBS gp3 PVC",
+      "sublabel": "ebs-csi",
+      "pos": [
+        470,
+        630
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "pvc3",
+      "type": "database",
+      "label": "EBS gp3 PVC",
+      "sublabel": "ebs-csi",
+      "pos": [
+        820,
+        630
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "apiserver",
+        "strimzi",
+        "broker1",
+        "broker2",
+        "controller",
+        "pvc1",
+        "pvc2",
+        "pvc3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "apply Kafka / KafkaNodePool CR",
+      "variant": "emphasis",
+      "labelDy": 38
+    },
+    {
+      "id": "api-to-strimzi",
+      "from": "apiserver",
+      "to": "strimzi",
+      "label": "watch",
+      "variant": "emphasis",
+      "labelDy": 38
+    },
+    {
+      "id": "strimzi-to-broker1",
+      "from": "strimzi",
+      "to": "broker1",
+      "label": "create / reconcile"
+    },
+    {
+      "id": "strimzi-to-broker2",
+      "from": "strimzi",
+      "to": "broker2",
+      "label": "create / reconcile",
+      "variant": "emphasis",
+      "labelDy": 38
+    },
+    {
+      "id": "strimzi-to-controller",
+      "from": "strimzi",
+      "to": "controller",
+      "label": "create / reconcile"
+    },
+    {
+      "id": "broker1-to-pvc1",
+      "from": "broker1",
+      "to": "pvc1"
+    },
+    {
+      "id": "broker2-to-pvc2",
+      "from": "broker2",
+      "to": "pvc2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "controller-to-pvc3",
+      "from": "controller",
+      "to": "pvc3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Declarative management",
+      "items": [
+        "Declare the desired state in the Kafka and KafkaNodePool CRDs",
+        "The Strimzi Operator creates and reconciles Pods, PVCs, Services, and Secrets"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "KRaft mode",
+      "items": [
+        "A controller quorum manages metadata without ZooKeeper",
+        "As of Kafka 4.0, KRaft is the only metadata mechanism"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Storage",
+      "items": [
+        "Every broker and controller Pod uses its own EBS gp3 PVC"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "실습 순서",
+    "output": "public/archmaps/ko-labs-observability-readme-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "foundation",
+        "label": "기반 구축 (Part 1~2)",
+        "focus": [
+          "p1",
+          "p2"
+        ],
+        "note": "EKS 클러스터 2개와 AWS Managed Services를 프로비저닝한 뒤 OTel, Prometheus, Loki, Tempo, Grafana 스택을 배포합니다."
+      },
+      {
+        "id": "workload",
+        "label": "배포와 스케일링 (Part 3~4)",
+        "focus": [
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "note": "ArgoCD와 Argo Rollouts로 MSA를 카나리 배포하고, k6 부하 테스트로 KEDA·Karpenter 연동을 확인합니다."
+      },
+      {
+        "id": "operate",
+        "label": "알림과 추적 분석 (Part 5~6)",
+        "focus": [
+          "p4",
+          "p5",
+          "p6"
+        ],
+        "note": "AlertManager, Grafana OnCall, CloudWatch Investigations로 알림을 다루고 Tempo·TraceQL로 트레이스를 분석합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "AWS 인프라"
+        },
+        "backend": {
+          "label": "Observability 도구"
+        },
+        "frontend": {
+          "label": "MSA 애플리케이션"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "roadmap",
+      "label": "Observability 실습 로드맵"
+    }
+  ],
+  "mainPath": [
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6"
+  ],
+  "nodes": [
+    {
+      "id": "p1",
+      "lane": "roadmap",
+      "col": 0,
+      "type": "cloud",
+      "label": "인프라 구성",
+      "sublabel": "EKS 2개 · AWS 관리형 서비스",
+      "tag": "Part 1 · 60분",
+      "width": 168
+    },
+    {
+      "id": "p2",
+      "lane": "roadmap",
+      "col": 1,
+      "type": "backend",
+      "label": "Observability 스택",
+      "sublabel": "OTel · Prometheus · Grafana 등",
+      "tag": "Part 2 · 90분",
+      "width": 168
+    },
+    {
+      "id": "p3",
+      "lane": "roadmap",
+      "col": 2,
+      "type": "frontend",
+      "label": "MSA 배포 및 카나리",
+      "sublabel": "ArgoCD · Argo Rollouts · OTel",
+      "tag": "Part 3 · 60분",
+      "width": 168
+    },
+    {
+      "id": "p4",
+      "lane": "roadmap",
+      "col": 3,
+      "type": "backend",
+      "label": "부하 테스트 및 스케일링",
+      "sublabel": "k6 · KEDA · Karpenter",
+      "tag": "Part 4 · 45분",
+      "width": 168
+    },
+    {
+      "id": "p5",
+      "lane": "roadmap",
+      "col": 4,
+      "type": "backend",
+      "label": "알림 및 AIOps",
+      "sublabel": "AlertManager · CW Investigations",
+      "tag": "Part 5 · 60분",
+      "width": 168
+    },
+    {
+      "id": "p6",
+      "lane": "roadmap",
+      "col": 5,
+      "type": "backend",
+      "label": "분산 추적 분석",
+      "sublabel": "Tempo · TraceQL · 상관관계 분석",
+      "tag": "Part 6 · 45분",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "p1",
+      "to": "p2",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p2",
+      "to": "p3",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p3",
+      "to": "p4",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p4",
+      "to": "p5",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p5",
+      "to": "p6",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

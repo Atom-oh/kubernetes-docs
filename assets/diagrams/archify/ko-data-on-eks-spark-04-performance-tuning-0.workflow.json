@@ -1,0 +1,230 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Spark DRA와 Karpenter의 두 스케일링 루프",
+    "output": "ko-data-on-eks-spark-04-performance-tuning-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scale-out",
+        "label": "스케일 아웃",
+        "focus": [
+          "pending_tasks",
+          "request_pods",
+          "pods_pending",
+          "provision_node",
+          "pods_running"
+        ],
+        "note": "DRA가 태스크 백로그를 보고 Executor 파드를 요청하면, Pending 파드를 본 Karpenter가 EC2 노드를 늘린다."
+      },
+      {
+        "id": "scale-in",
+        "label": "스케일 인",
+        "focus": [
+          "pods_running",
+          "release_idle",
+          "node_empty",
+          "deprovision_node",
+          "pending_tasks"
+        ],
+        "note": "태스크가 소진되면 DRA가 유휴 Executor를 해제하고, 비어버린 노드를 Karpenter가 consolidateAfter 뒤 회수한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Kubernetes 파드/노드 상태"
+        },
+        "backend": {
+          "label": "Spark DRA 동작"
+        },
+        "cloud": {
+          "label": "Karpenter 노드 동작"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "spark",
+      "label": "Spark DRA (태스크 단위 판단)"
+    },
+    {
+      "id": "k8s",
+      "label": "Kubernetes Executor 파드"
+    },
+    {
+      "id": "karpenter",
+      "label": "Karpenter (노드 단위 판단)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "out",
+      "label": "스케일 아웃",
+      "fromCol": 0,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "in",
+      "label": "스케일 인",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "pending_tasks",
+    "request_pods",
+    "pods_pending",
+    "provision_node",
+    "pods_running",
+    "release_idle",
+    "node_empty",
+    "deprovision_node"
+  ],
+  "nodes": [
+    {
+      "id": "pending_tasks",
+      "lane": "spark",
+      "col": 0,
+      "type": "backend",
+      "label": "대기 중인 Spark 태스크",
+      "sublabel": "태스크 백로그 증가",
+      "width": 180
+    },
+    {
+      "id": "request_pods",
+      "lane": "spark",
+      "col": 1,
+      "type": "backend",
+      "label": "Executor 파드 추가 요청",
+      "sublabel": "DRA가 백로그 감지",
+      "width": 180
+    },
+    {
+      "id": "pods_pending",
+      "lane": "k8s",
+      "col": 2,
+      "type": "frontend",
+      "label": "신규 Executor 파드",
+      "sublabel": "Pending 상태",
+      "tag": "스케줄 불가",
+      "width": 180
+    },
+    {
+      "id": "provision_node",
+      "lane": "karpenter",
+      "col": 2,
+      "type": "cloud",
+      "label": "신규 EC2 노드 프로비저닝",
+      "sublabel": "NodePool 기준",
+      "width": 180
+    },
+    {
+      "id": "pods_running",
+      "lane": "k8s",
+      "col": 3,
+      "type": "frontend",
+      "label": "Executor 파드 스케줄·실행",
+      "sublabel": "태스크 처리",
+      "width": 180
+    },
+    {
+      "id": "release_idle",
+      "lane": "spark",
+      "col": 4,
+      "type": "backend",
+      "label": "유휴 Executor 파드 해제",
+      "sublabel": "executorIdleTimeout",
+      "width": 180
+    },
+    {
+      "id": "node_empty",
+      "lane": "k8s",
+      "col": 5,
+      "type": "frontend",
+      "label": "노드가 비어버림",
+      "sublabel": "Executor 파드 0개",
+      "width": 180
+    },
+    {
+      "id": "deprovision_node",
+      "lane": "karpenter",
+      "col": 5,
+      "type": "cloud",
+      "label": "Karpenter가 노드 회수",
+      "sublabel": "빈 노드 통합(consolidation)",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "pending_tasks",
+      "to": "request_pods"
+    },
+    {
+      "from": "request_pods",
+      "to": "pods_pending"
+    },
+    {
+      "from": "pods_pending",
+      "to": "provision_node",
+      "label": "스케줄 불가",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          466,
+          313
+        ]
+      ]
+    },
+    {
+      "from": "provision_node",
+      "to": "pods_running"
+    },
+    {
+      "from": "pods_running",
+      "to": "release_idle",
+      "label": "태스크 소진, Executor 유휴"
+    },
+    {
+      "from": "release_idle",
+      "to": "node_empty"
+    },
+    {
+      "from": "node_empty",
+      "to": "deprovision_node",
+      "label": "consolidateAfter 경과",
+      "variant": "dashed"
+    },
+    {
+      "from": "deprovision_node",
+      "to": "pending_tasks",
+      "variant": "dashed",
+      "role": "return",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          894,
+          418
+        ],
+        [
+          24,
+          418
+        ],
+        [
+          24,
+          120
+        ]
+      ]
+    }
+  ]
+}
