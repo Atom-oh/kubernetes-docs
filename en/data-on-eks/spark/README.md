@@ -11,7 +11,9 @@ Apache Spark is the workhorse for large-scale batch ETL, SQL analytics, and stre
 
 Unlike YARN, Spark on Kubernetes has no persistent cluster-manager daemons — there's no ResourceManager or NodeManager running around the clock waiting for work. Instead, `spark-submit` talks directly to the Kubernetes API server and creates a single **driver pod**. That driver pod is the cluster manager for the duration of the job: once it starts running, it calls back into the Kubernetes API itself to create and manage the **executor pods** it needs, based on `spark.executor.instances` or Dynamic Resource Allocation. Executors register with the driver, receive tasks, and report status and results back — all over a direct driver-to-executor connection, with Kubernetes only involved in pod scheduling and lifecycle, not task coordination.
 
-![A diagram showing spark-submit asking the Kubernetes API Server to create a driver pod, the driver pod requesting the API Server schedule three executor pods, and each executor pod registering its status directly back with the driver pod.](../../.gitbook/assets/en-data-on-eks-spark-README-0.png)
+![A diagram showing spark-submit asking the Kubernetes API Server to create a driver pod, the driver pod requesting the API Server schedule three executor pods, and each executor pod registering and reporting status directly back to the driver pod.](../../.gitbook/assets/en-data-on-eks-spark-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-readme-0.html)
 
 ## Deep Dive Table of Contents
 

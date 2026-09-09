@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Producer -> Partitions -> Consumer Group Flow",
+    "locale": "en",
+    "output": "en-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "produce",
+        "label": "Producer writes",
+        "focus": [
+          "producer",
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "note": "Messages the producer writes to the orders topic are spread partition by partition across leader replicas on different brokers."
+      },
+      {
+        "id": "consume",
+        "label": "Consumer group reads",
+        "focus": [
+          "p0",
+          "p1",
+          "p2",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "Within the order-processor group each partition is read by exactly one consumer, so the three consumers consume in parallel."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "producer",
+      "type": "external",
+      "label": "Producer",
+      "sublabel": "topic: orders",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "p0",
+      "type": "messagebus",
+      "label": "orders · Partition 0",
+      "sublabel": "Leader replica",
+      "pos": [
+        360,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "messagebus",
+      "label": "orders · Partition 1",
+      "sublabel": "Leader replica",
+      "pos": [
+        360,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "messagebus",
+      "label": "orders · Partition 2",
+      "sublabel": "Leader replica",
+      "pos": [
+        360,
+        460
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Consumer 1",
+      "sublabel": "assigned Partition 0",
+      "pos": [
+        780,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "Consumer 2",
+      "sublabel": "assigned Partition 1",
+      "pos": [
+        780,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "backend",
+      "label": "Consumer 3",
+      "sublabel": "assigned Partition 2",
+      "pos": [
+        780,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Broker 1",
+      "wraps": [
+        "p0"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Broker 2",
+      "wraps": [
+        "p1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Broker 3",
+      "wraps": [
+        "p2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Consumer Group: order-processor",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "produce-p0",
+      "from": "producer",
+      "to": "p0",
+      "variant": "emphasis",
+      "label": "write messages",
+      "labelAt": [
+        274,
+        220
+      ]
+    },
+    {
+      "id": "produce-p1",
+      "from": "producer",
+      "to": "p1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "produce-p2",
+      "from": "producer",
+      "to": "p2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fetch-p0",
+      "from": "p0",
+      "to": "c1"
+    },
+    {
+      "id": "fetch-p1",
+      "from": "p1",
+      "to": "c2",
+      "label": "one partition per consumer"
+    },
+    {
+      "id": "fetch-p2",
+      "from": "p2",
+      "to": "c3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Partition distribution",
+      "items": [
+        "Producers write to a topic; Kafka spreads the messages across brokers at the partition level",
+        "Each partition's leader replica handles all reads and writes"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Consumer group",
+      "items": [
+        "Consumers sharing a group.id split the partitions and consume in parallel",
+        "Each partition is read by exactly one consumer in the group"
+      ]
+    }
+  ]
+}

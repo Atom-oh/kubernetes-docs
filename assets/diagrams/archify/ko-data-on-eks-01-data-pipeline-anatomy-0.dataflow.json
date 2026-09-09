@@ -8,7 +8,10 @@
     "viewBox": [
       1080,
       760
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "stages": [
     {
@@ -142,7 +145,8 @@
       "from": "lake",
       "to": "dwh",
       "label": "정제 적재 (ELT)",
-      "variant": "default"
+      "variant": "default",
+      "labelDy": 24
     },
     {
       "id": "lake-spark",

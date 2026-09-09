@@ -20,9 +20,13 @@
 
 ## Architecture Overview
 
-![AIOps Architecture](../../../assets/diagrams/rendered/aiops-architecture.svg)
+![Alerts from Alertmanager PrometheusRules and CloudWatch Alarms route to Grafana OnCall, an SNS Topic, and an API Gateway webhook that invoke the Lambda AIOps Agent, which queries logs, metrics, and traces in parallel, asks Amazon Bedrock for root-cause analysis, and publishes the result via SNS to responders.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-10.png)
 
-![Alertmanager and CloudWatch Alarms trigger Grafana OnCall and an AIOps Lambda agent; CloudWatch Investigations feeds the agent a hypothesis, the agent queries Bedrock Claude, and results route through SNS to email, Slack, and PagerDuty.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-0.svg)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-10.html)
+
+![CloudWatch Alarms and AlertManager route alerts to SNS and Grafana OnCall; SNS triggers the AIOps Lambda agent, which analyzes root cause with Bedrock Claude and publishes results via SNS to Slack, email, and PagerDuty channels.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-0.html)
 
 ***
 
@@ -429,7 +433,9 @@ aws sns subscribe \
 
 CloudWatch Investigations uses AI to automatically analyze anomalies and provide hypotheses.
 
-![A linear state machine showing how CloudWatch anomaly detection leads through automatic investigation creation, data collection, correlation, AI hypothesis generation, root-cause proposal, and recommended actions to a completed investigation.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-1.svg)
+![A seven-state lifecycle showing how a CloudWatch alarm starts an Investigation that scans resources, collects key findings, generates an AI root-cause hypothesis, suggests actions, and ends with an incident report.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-1.html)
 
 **Step 5.2: Create Investigation trigger**
 
@@ -481,7 +487,9 @@ aws cloudwatch put-insight-rule \
 
 **Step 6.1: AIOps Agent architecture**
 
-![Alertmanager triggers an API Gateway webhook that invokes a Lambda function, which queries CloudWatch, Loki, and Tempo concurrently, asks Bedrock Claude to analyze the combined context, and publishes the resulting report to SNS.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-2.svg)
+![Alertmanager's webhook triggers the AIOps Lambda via API Gateway; it queries CloudWatch Logs, AMP metrics, and X-Ray traces in turn, asks Bedrock Claude to analyze them, and publishes the report to SNS for email delivery to the on-call team.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-2.html)
 
 **Step 6.2: Create Lambda function**
 
@@ -848,7 +856,9 @@ Check your email for the AIOps analysis report.
 
 **Step 9.1: Multi-agent architecture for complex incidents**
 
-![A coordinator agent triages an incoming alert, assigns four specialist agents (metrics, logs, traces, infrastructure) to analyze it in parallel, then synthesizes their findings into a final report.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-3.svg)
+![An operator or a firing alert triggers the Collaborator Agent, which consults the metric, log and trace specialist agents in both directions and synthesizes their findings into a root cause report.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-3.html)
 
 This advanced pattern uses multiple specialized AI agents that collaborate on complex incidents. Implementation requires:
 

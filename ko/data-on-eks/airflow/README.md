@@ -11,7 +11,9 @@ Apache Airflow는 ETL/ELT 작업, ML 학습 파이프라인, 시스템 간 배�
 
 Airflow 2에서는 UI/API를 담당하는 단일 **webserver** 프로세스와, 태스크 스케줄링*과* DAG 파일 파싱을 동시에 담당하는 **scheduler** 프로세스로 구성되어 있었습니다. 부하가 높은 상황에서는 비용이 큰 DAG 파싱 작업이 스케줄러 본연의 스케줄링 루프를 잠식할 수 있었습니다. Airflow 3는 컨트롤 플레인을 각각 하나의 책임만 갖는 네 개의 독립적으로 확장 가능한 서비스로 분리하여 이 문제를 해결합니다: **`api-server`**(UI, REST API v2, 인증을 담당하는 FastAPI 기반 서비스), **`scheduler`**(의존성 평가와 태스크 인스턴스 큐잉만 담당), **`dag-processor`**(이제는 필수 서비스가 된, DAG 파일을 파싱해 메타데이터 DB의 `serialized_dag` 테이블에 결과를 기록하는 것이 유일한 역할인 서비스), 그리고 **`triggerer`**(외부 이벤트를 기다리는 deferrable operator를 실행). **PostgreSQL**은 메타데이터 데이터베이스로 항상 필요하며, **Redis**는 `CeleryExecutor` 워커 풀을 사용하는 경우에만 필요합니다.
 
-![dag-processor, scheduler, api-server, triggerer가 모두 PostgreSQL 메타데이터 저장소를 공유 상태로 읽고 쓰며, scheduler가 Executor 종류에 따라 Redis 브로커를 거쳐 Celery worker Pod를 큐잉하거나 KubernetesExecutor Pod를 직접 생성하는 Airflow on EKS 아키텍처.](../../.gitbook/assets/ko-data-on-eks-airflow-README-0.png)
+![dag-processor, scheduler, api-server, triggerer가 PostgreSQL 메타데이터 DB를 공유 상태로 읽고 쓰며, scheduler가 Executor 종류에 따라 KubernetesExecutor Pod를 직접 생성하거나 Redis 브로커를 거쳐 Celery worker Pod에 태스크를 큐잉하는 Airflow 3 on EKS 아키텍처를 보여준다.](../../.gitbook/assets/ko-data-on-eks-airflow-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-airflow-readme-0.html)
 
 ## 딥다이브 목차
 

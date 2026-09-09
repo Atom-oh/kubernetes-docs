@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "패턴 4: AWS 서비스에서 Hybrid Pod로",
+    "output": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      600
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "IP 타겟 모드",
+      "pos": [
+        100,
+        50
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Network Load Balancer",
+      "sublabel": "IP 타겟 모드",
+      "pos": [
+        400,
+        50
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "amp",
+      "type": "cloud",
+      "label": "Amazon Managed Prometheus",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        700,
+        50
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "cloud",
+      "label": "VPC 라우트 테이블",
+      "sublabel": "10.85.0.0/16 → GW ENI",
+      "pos": [
+        400,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "backend",
+      "label": "게이트웨이 EC2",
+      "sublabel": "VXLAN 종단점",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "hp1",
+      "type": "backend",
+      "label": "Hybrid Pod 1",
+      "sublabel": "웹 앱",
+      "pos": [
+        100,
+        490
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "hp2",
+      "type": "backend",
+      "label": "Hybrid Pod 2",
+      "sublabel": "API 서버",
+      "pos": [
+        400,
+        490
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "hp3",
+      "type": "backend",
+      "label": "Hybrid Pod 3",
+      "sublabel": "메트릭 수출기",
+      "pos": [
+        700,
+        490
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 서비스",
+      "wraps": [
+        "alb",
+        "nlb",
+        "amp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC",
+      "wraps": [
+        "rt",
+        "gw"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "온프레미스",
+      "wraps": [
+        "hp1",
+        "hp2",
+        "hp3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "alb-rt",
+      "from": "alb",
+      "to": "rt",
+      "label": "IP 타겟 10.85.1.50",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          200,
+          240
+        ]
+      ]
+    },
+    {
+      "id": "nlb-rt",
+      "from": "nlb",
+      "to": "rt",
+      "label": "IP 타겟 10.85.2.50",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "amp-rt",
+      "from": "amp",
+      "to": "rt",
+      "label": "스크래핑 10.85.3.50:9090",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          800,
+          240
+        ]
+      ]
+    },
+    {
+      "id": "rt-gw",
+      "from": "rt",
+      "to": "gw",
+      "label": "GW ENI로 전달",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gw-hp1",
+      "from": "gw",
+      "to": "hp1",
+      "label": "VXLAN",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          200,
+          370
+        ]
+      ]
+    },
+    {
+      "id": "gw-hp2",
+      "from": "gw",
+      "to": "hp2",
+      "label": "VXLAN",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gw-hp3",
+      "from": "gw",
+      "to": "hp3",
+      "label": "VXLAN",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          800,
+          370
+        ]
+      ]
+    }
+  ]
+}

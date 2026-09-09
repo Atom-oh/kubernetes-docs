@@ -84,7 +84,9 @@ Knative는 개발자가 컨테이너 기반 애플리케이션을 서버리스 �
 
 Knative Serving은 서버리스 워크로드의 배포, 스케일링, 네트워킹을 관리하는 핵심 컴포넌트입니다.
 
-![클라이언트 요청이 Gateway를 거쳐 파드로 직접 전달되거나 Scale-to-Zero 상태에서는 Activator를 거쳐 전달되고, Queue Proxy가 보고한 동시성 메트릭을 바탕으로 Autoscaler가 스케일을 결정해 Controller/Webhook을 통해 Knative 리소스를 관리하는 구조를 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-autoscaling-03-knative-0.svg)
+![클라이언트 요청이 Gateway를 거쳐 파드의 Queue Proxy로 직접 전달되거나 Scale-to-Zero 상태에서는 Activator를 거쳐 전달되고, Queue Proxy가 보고한 동시성 메트릭으로 Autoscaler가 스케일을 결정하며 Controller와 Webhook이 Knative 리소스를 관리하는 Knative Serving 아키텍처를 보여준다.](../.gitbook/assets/ko-autoscaling-03-knative-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-03-knative-0.html)
 
 #### 핵심 컴포넌트 설명
 
@@ -119,7 +121,9 @@ Knative Serving은 서버리스 워크로드의 배포, 스케일링, 네트워�
 
 Knative Eventing은 느슨하게 결합된 이벤트 드리븐 아키텍처를 제공합니다.
 
-![이벤트 소스가 Broker로 들어와 Trigger 필터에 따라 Order/Payment/Audit 서비스로 라우팅되고 실패 시 Dead Letter Sink로 전달되는 Broker/Trigger 패턴과, Channel을 통해 Analytics/Notification 서비스로 이벤트를 전달하는 Channel/Subscription 패턴을 나란히 비교하는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-autoscaling-03-knative-1.svg)
+![이벤트 소스가 Broker로 들어와 Trigger 필터(type)에 따라 Order/Payment/Audit 서비스로 라우팅되고 전달 실패 시 Dead Letter Sink로 보내지는 Broker/Trigger 패턴과, Channel이 Subscription을 통해 Analytics/Notification 서비스로 이벤트를 전달하는 Channel/Subscription 패턴을 나란히 보여준다.](../.gitbook/assets/ko-autoscaling-03-knative-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-03-knative-1.html)
 
 #### Broker/Trigger 패턴
 
@@ -412,7 +416,9 @@ spec:
 
 Knative Serving의 네 가지 핵심 리소스는 다음과 같이 연결됩니다:
 
-![Knative Service가 Configuration과 Route를 소유하고, Configuration이 Revision을 생성하며, Route가 최신 Revision에는 트래픽 100%를 이전 Revision에는 0%를 배분해 유지하는 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-autoscaling-03-knative-2.svg)
+![Knative Service가 Configuration과 Route를 소유하고, Configuration이 변경될 때마다 불변 Revision을 생성하며, Route가 최신 Revision에 트래픽 100%를 보내고 이전 Revision은 0%로 유지하는 리소스 모델을 보여준다.](../.gitbook/assets/ko-autoscaling-03-knative-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-03-knative-2.html)
 
 * **Service**: 전체 서버리스 워크로드를 정의하는 최상위 리소스. Configuration과 Route를 자동으로 관리
 * **Configuration**: 배포할 컨테이너의 원하는 상태를 정의. 변경 시 새 Revision 자동 생성
@@ -582,7 +588,9 @@ kubectl patch ksvc my-api --type merge -p '
 
 Scale-to-Zero는 Knative의 핵심 기능으로, 트래픽이 없을 때 파드를 0으로 축소하여 리소스를 절약합니다.
 
-![트래픽이 없으면 Autoscaler가 파드를 0으로 줄이고 Activator가 목적지가 되며, 새 요청이 오면 Activator가 요청을 버퍼링한 채 Autoscaler에 스케일업을 요청해 파드를 다시 만들고 응답한 뒤에는 이후 요청이 Gateway에서 파드로 직접 전달되는 Knative 콜드 스타트 시퀀스를 보여준다.](../../assets/diagrams/rendered/ko-autoscaling-03-knative-3.svg)
+![트래픽이 없으면 Autoscaler가 파드를 0으로 줄이고 Activator가 목적지가 되며, 새 요청이 오면 Activator가 요청을 버퍼링한 채 Autoscaler에 스케일업을 요청해 파드를 다시 만들고 응답한 뒤에는 이후 요청이 Gateway에서 파드로 직접 전달되는 Knative 콜드 스타트 시퀀스를 보여준다.](../.gitbook/assets/ko-autoscaling-03-knative-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-03-knative-3.html)
 
 **동작 단계:**
 
@@ -1260,7 +1268,9 @@ spec:
 
 ### 스케일링 모델 차이
 
-![Knative는 Queue Proxy가 보고한 동시성 메트릭으로 자체 Autoscaler(KPA)가 파드 수를 조절하고, KEDA는 외부 메트릭 소스를 기반으로 Kubernetes HPA를 생성/관리해 파드 수를 조절하는 두 스케일링 경로를 나란히 비교하는 다이어그램.](../../assets/diagrams/rendered/ko-autoscaling-03-knative-4.svg)
+![Knative Serving은 HTTP 요청이 Queue Proxy와 Knative Autoscaler KPA를 거쳐 Revision 파드 수를 조절하고, KEDA는 SQS, Kafka, Prometheus 등 외부 메트릭 소스를 KEDA Operator의 ScaledObject와 Kubernetes HPA로 연결해 Deployment/StatefulSet/Job 파드 수를 조절하는 두 스케일링 모델의 차이를 보여준다.](../.gitbook/assets/ko-autoscaling-03-knative-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-03-knative-4.html)
 
 | 비교 항목        | Knative                              | KEDA                            |
 | ------------ | ------------------------------------ | ------------------------------- |

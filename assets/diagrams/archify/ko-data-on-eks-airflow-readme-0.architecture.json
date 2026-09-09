@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Airflow 3 on EKS 핵심 아키텍처",
+    "output": "ko-data-on-eks-airflow-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인 4개 서비스",
+        "focus": [
+          "dag-processor",
+          "scheduler",
+          "api-server",
+          "triggerer",
+          "postgres"
+        ],
+        "note": "각각 하나의 책임만 갖는 네 서비스가 PostgreSQL 메타데이터 DB를 공유 상태로 읽고 쓴다."
+      },
+      {
+        "id": "k8s-executor",
+        "label": "KubernetesExecutor 경로",
+        "focus": [
+          "scheduler",
+          "k8s-pod"
+        ],
+        "note": "scheduler가 태스크마다 Kubernetes Pod를 직접 생성한다. Redis가 필요 없다."
+      },
+      {
+        "id": "celery-executor",
+        "label": "CeleryExecutor 경로",
+        "focus": [
+          "scheduler",
+          "redis",
+          "celery-worker"
+        ],
+        "note": "scheduler가 Redis 브로커에 태스크를 큐잉하고 Celery worker Pod가 소비한다. Redis는 이 경우에만 필요하다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 / UI",
+      "sublabel": "브라우저 · REST 클라이언트",
+      "pos": [
+        260,
+        20
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dag-processor",
+      "type": "backend",
+      "label": "dag-processor",
+      "sublabel": "DAG 파일 파싱",
+      "pos": [
+        50,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api-server",
+      "type": "backend",
+      "label": "api-server",
+      "sublabel": "UI · REST API v2 · 인증",
+      "pos": [
+        260,
+        180
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "triggerer",
+      "type": "backend",
+      "label": "triggerer",
+      "sublabel": "deferrable operator 실행",
+      "pos": [
+        480,
+        180
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "scheduler",
+      "sublabel": "의존성 평가 · 태스크 큐잉",
+      "pos": [
+        700,
+        180
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "메타데이터 DB (항상 필요)",
+      "pos": [
+        50,
+        370
+      ],
+      "size": [
+        840,
+        64
+      ]
+    },
+    {
+      "id": "k8s-pod",
+      "type": "backend",
+      "label": "KubernetesExecutor Pod",
+      "sublabel": "태스크당 Pod 1개",
+      "pos": [
+        1020,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "messagebus",
+      "label": "Redis",
+      "sublabel": "Celery 브로커 (CeleryExecutor 전용)",
+      "pos": [
+        1020,
+        370
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "celery-worker",
+      "type": "backend",
+      "label": "Celery worker Pod",
+      "sublabel": "브로커에서 태스크 소비",
+      "pos": [
+        1020,
+        540
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Airflow 3 컨트롤 플레인",
+      "wraps": [
+        "dag-processor",
+        "scheduler",
+        "api-server",
+        "triggerer",
+        "postgres"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "실행 백엔드 (Executor)",
+      "wraps": [
+        "k8s-pod",
+        "redis",
+        "celery-worker"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "api-server",
+      "label": "UI / REST API",
+      "variant": "emphasis",
+      "labelAt": [
+        355,
+        130
+      ]
+    },
+    {
+      "id": "dagproc-to-db",
+      "from": "dag-processor",
+      "to": "postgres",
+      "label": "serialized_dag 기록",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "scheduler-to-db",
+      "from": "scheduler",
+      "to": "postgres",
+      "label": "DAG 읽기 · 태스크 큐잉",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 60
+    },
+    {
+      "id": "api-to-db",
+      "from": "api-server",
+      "to": "postgres",
+      "label": "상태 R/W",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "triggerer-to-db",
+      "from": "triggerer",
+      "to": "postgres",
+      "label": "트리거 상태",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "scheduler-to-k8s",
+      "from": "scheduler",
+      "to": "k8s-pod",
+      "label": "Pod 직접 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-to-redis",
+      "from": "scheduler",
+      "to": "redis",
+      "label": "태스크 큐잉 (Celery)",
+      "variant": "dashed"
+    },
+    {
+      "id": "redis-to-worker",
+      "from": "redis",
+      "to": "celery-worker",
+      "label": "태스크 소비",
+      "variant": "dashed",
+      "labelAt": [
+        1120,
+        490
+      ]
+    }
+  ]
+}

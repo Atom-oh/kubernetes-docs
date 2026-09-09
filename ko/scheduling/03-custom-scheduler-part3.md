@@ -12,13 +12,17 @@ AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 �
 
 다음 다이어그램은 GPU 워크로드 최적화 스케줄러의 아키텍처를 보여줍니다:
 
-![](../.gitbook/assets/gpu_scheduler_architecture.svg)
+![EKS 컨트롤 플레인의 API 서버가 GPU Pod를 커스텀 GPU 스케줄러 코어에 전달하고, GPU 토폴로지·사용률·메모리 플러그인이 Filter/Score를 거쳐 P3·G4·G5 노드 그룹에 바인딩하며, DCGM/Node Exporter 메트릭이 AMP와 CloudWatch로 흐르는 GPU 워크로드 최적화 스케줄러 아키텍처를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-10.html)
 
 #### GPU 워크로드 스케줄링 워크플로우
 
 다음 다이어그램은 GPU 워크로드 스케줄링 워크플로우를 보여줍니다:
 
-![](../.gitbook/assets/gpu_workload_scheduling_workflow.svg)
+![사용자의 GPU Pod 생성 요청이 API 서버와 GPU 스케줄러를 거쳐 스케줄러 플러그인이 메트릭 시스템에서 GPU 사용률과 토폴로지를 조회해 노드를 필터링·점수 매기기한 뒤 선택된 GPU 노드에 Pod가 스케줄링되는 순서를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-11.html)
 
 #### 요구 사항
 
@@ -169,13 +173,17 @@ EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워�
 
 다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 아키텍처를 보여줍니다.
 
-![](../.gitbook/assets/network_locality_scheduler_architecture.svg)
+![API 서버에서 기본 스케줄러, 네트워크 지역성 스케줄러, 스케줄러 확장기, 웹훅 서버로 이어지는 호출 경로와, 스케줄러가 참조하는 토폴로지·지연 시간·비용·네트워크 정책·서비스 메시 인식 컴포넌트, 3개 가용 영역의 워커 노드, CloudWatch 메트릭 수집 관계를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-12.html)
 
 #### 네트워크 지역성 최적화 워크플로우
 
 다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 워크플로우를 보여줍니다.
 
-![](../.gitbook/assets/network_locality_workflow.svg)
+![사용자의 Pod 생성 요청이 API 서버와 기본 스케줄러를 거쳐 스케줄러 확장으로 전달되고, 확장이 서비스 맵과 메트릭 시스템에서 서비스 의존성·네트워크 지연 시간으로 노드를 필터링한 뒤 서비스 배치·네트워크 비용으로 노드 점수를 매겨 선택된 노드에 Pod가 스케줄링되는 네트워크 지역성 최적화 워크플로우를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-13.html)
 
 ## Pod Deletion Cost를 이용한 스케일 다운 최적화
 
@@ -196,7 +204,9 @@ Pod Deletion Cost는 `controller.kubernetes.io/pod-deletion-cost` 어노테이�
 
 다음 다이어그램은 Pod Deletion Cost가 스케일 다운 시 어떻게 작동하는지 보여줍니다:
 
-![ReplicaSet 컨트롤러가 스케일 다운 시 Pod 목록을 조회하고 각 Pod의 Pod Deletion Cost 어노테이션 값을 확인한 뒤 비용이 낮은 순으로 정렬하여 가장 낮은 비용의 Pod(Pod-3: -10, Pod-4: 0)부터 삭제하는 과정을 보여주는 흐름도.](../../assets/diagrams/rendered/ko-scheduling-03-custom-scheduler-part3-0.svg)
+![ReplicaSet 컨트롤러가 스케일 다운 시 Pod 목록을 조회해 각 Pod의 pod-deletion-cost 어노테이션을 확인하고 비용이 낮은 순으로 정렬한 뒤 Pod-3(-10), Pod-4(0) 순서로 삭제하는 흐름을 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-0.html)
 
 ### 사용 사례
 
@@ -635,13 +645,17 @@ spec:
 
 다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다.
 
-![](../.gitbook/assets/custom_scheduler_monitoring_architecture.svg)
+![EKS 위의 커스텀 스케줄러 Pod에서 사이드카가 노출한 메트릭이 AMP를 거쳐 Grafana와 Alert Manager로, 로그가 Fluentd에서 ElasticSearch와 Kibana로 흐르고, 두 경로가 CloudWatch로 모이며 알림은 SNS를 통해 Lambda로 전달되는 커스텀 스케줄러 모니터링 아키텍처를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-14.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-14.html)
 
 ### 주요 모니터링 메트릭
 
 다음 다이어그램은 커스텀 스케줄러의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
 
-![](../.gitbook/assets/custom_scheduler_monitoring_metrics.svg)
+![커스텀 스케줄러의 성능·결정·오류 메트릭이 Prometheus로 수집되어 Grafana의 성능·결정·오류 대시보드로 시각화되고, 스케줄링 지연 시간·큐 길이·스케줄링 오류가 각각 높은 지연 시간·큐 백로그·오류율 알림으로 이어지는 관계를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-15.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-15.html)
 
 ### 로깅
 

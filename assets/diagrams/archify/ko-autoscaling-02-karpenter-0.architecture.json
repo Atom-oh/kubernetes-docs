@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Karpenter 아키텍처",
+    "output": "ko-autoscaling-02-karpenter-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "detect",
+        "label": "파드 감지",
+        "focus": [
+          "controller",
+          "pods"
+        ],
+        "note": "Karpenter 컨트롤러가 스케줄링할 수 없는 파드를 감지한다."
+      },
+      {
+        "id": "policy",
+        "label": "정책 결정",
+        "focus": [
+          "controller",
+          "webhook",
+          "provisioner",
+          "nodetemplate"
+        ],
+        "note": "웹훅이 검증한 NodePool·EC2NodeClass CRD 구성에 따라 적절한 노드 유형을 결정한다."
+      },
+      {
+        "id": "provision",
+        "label": "노드 프로비저닝",
+        "focus": [
+          "controller",
+          "k8sapi",
+          "instanceapi",
+          "compute"
+        ],
+        "note": "Kubernetes API와 클라우드 제공업체 Instance API를 호출해 컴퓨트 인스턴스를 프로비저닝한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "pods",
+      "type": "frontend",
+      "label": "Unschedulable Pods",
+      "sublabel": "스케줄링 대기 파드",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Karpenter Webhook",
+      "sublabel": "리소스 유효성 검사",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Karpenter Controller",
+      "sublabel": "노드 프로비저닝 관리",
+      "pos": [
+        320,
+        360
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "provisioner",
+      "type": "database",
+      "label": "NodePool CRD",
+      "sublabel": "노드 프로비저닝 정책",
+      "pos": [
+        190,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nodetemplate",
+      "type": "database",
+      "label": "EC2NodeClass CRD",
+      "sublabel": "노드 구성 정의",
+      "pos": [
+        470,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "k8sapi",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        320,
+        580
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "instanceapi",
+      "type": "cloud",
+      "label": "Instance API",
+      "sublabel": "클라우드 제공업체 API",
+      "pos": [
+        900,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "compute",
+      "type": "cloud",
+      "label": "Compute Instances",
+      "sublabel": "프로비저닝된 노드",
+      "pos": [
+        900,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "pods",
+        "webhook",
+        "controller",
+        "provisioner",
+        "nodetemplate",
+        "k8sapi"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클라우드 제공업체",
+      "wraps": [
+        "instanceapi",
+        "compute"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "watch-pods",
+      "from": "controller",
+      "to": "pods",
+      "label": "감시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "use-provisioner",
+      "from": "controller",
+      "to": "provisioner",
+      "label": "사용",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "use-nodetemplate",
+      "from": "controller",
+      "to": "nodetemplate",
+      "label": "사용",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "call-k8sapi",
+      "from": "controller",
+      "to": "k8sapi",
+      "label": "호출",
+      "labelDy": 24
+    },
+    {
+      "id": "call-instanceapi",
+      "from": "controller",
+      "to": "instanceapi",
+      "label": "호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "provision-compute",
+      "from": "instanceapi",
+      "to": "compute",
+      "label": "프로비저닝",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "create-compute",
+      "from": "k8sapi",
+      "to": "compute",
+      "label": "생성"
+    },
+    {
+      "id": "validate-provisioner",
+      "from": "webhook",
+      "to": "provisioner",
+      "label": "검증",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "validate-nodetemplate",
+      "from": "webhook",
+      "to": "nodetemplate",
+      "label": "검증",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "작동 방식",
+      "items": [
+        "컨트롤러가 스케줄링할 수 없는 파드를 감지하고 리소스·노드 선택기·허용 오차 요구 사항을 분석한다",
+        "NodePool과 EC2NodeClass 구성에 따라 적절한 노드 유형을 결정한다",
+        "클라우드 제공업체 API를 호출해 노드를 프로비저닝하고, 노드가 조인하면 파드가 스케줄링된다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pattern 6: Cloud Pod ↔ Hybrid Pod (East-West)",
+    "locale": "en",
+    "output": "en-eks-hybrid-nodes-02-network-configuration-15.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "cloud-side",
+        "label": "Cloud → Gateway",
+        "focus": [
+          "cloud-pod",
+          "eni",
+          "vpc-router",
+          "gateway"
+        ],
+        "note": "The 10.85.0.0/16 static entry in the VPC route table sends hybrid-pod-bound traffic to the on-premises gateway."
+      },
+      {
+        "id": "onprem-side",
+        "label": "Arrival on-premises",
+        "focus": [
+          "gateway",
+          "onprem-router",
+          "hn1-iptables",
+          "hn1-cni",
+          "hybrid-pod"
+        ],
+        "note": "The on-prem router forwards 10.85.1.0/24 to node 10.80.0.2, whose iptables and CNI deliver the packet to the pod."
+      },
+      {
+        "id": "second-node",
+        "label": "Other hybrid nodes",
+        "focus": [
+          "onprem-router",
+          "hybrid-node-2"
+        ],
+        "note": "Each per-node pod CIDR, such as 10.85.2.0/24, has a dynamic route pointing at that node's IP."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cloud-pod",
+      "type": "backend",
+      "label": "Cloud Pod",
+      "sublabel": "10.0.0.56 · VPC CNI",
+      "pos": [
+        60,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "ENI",
+      "sublabel": "EC2 Node 10.0.0.22",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "vpc-router",
+      "type": "cloud",
+      "label": "VPC Router",
+      "sublabel": "VPC route table",
+      "pos": [
+        300,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "VPN / Direct Connect",
+      "pos": [
+        540,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "onprem-router",
+      "type": "external",
+      "label": "On-prem Router",
+      "sublabel": "On-prem route table",
+      "pos": [
+        780,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "hybrid-node-2",
+      "type": "backend",
+      "label": "Hybrid Node 10.80.0.3",
+      "sublabel": "Pod CIDR 10.85.2.0/24",
+      "pos": [
+        780,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "hn1-iptables",
+      "type": "security",
+      "label": "iptables",
+      "sublabel": "kube-proxy rules",
+      "pos": [
+        1020,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "hn1-cni",
+      "type": "backend",
+      "label": "CNI",
+      "sublabel": "Cilium",
+      "pos": [
+        1020,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "hybrid-pod",
+      "type": "backend",
+      "label": "Hybrid Pod",
+      "sublabel": "10.85.1.56",
+      "pos": [
+        1020,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS · Cluster VPC 10.0.0.0/16",
+      "wraps": [
+        "cloud-pod",
+        "eni",
+        "vpc-router"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "EC2 Node 10.0.0.22",
+      "wraps": [
+        "cloud-pod",
+        "eni"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "On-premises · Node CIDR 10.80.0.0/16 · Pod CIDR 10.85.0.0/16",
+      "wraps": [
+        "onprem-router",
+        "hybrid-node-2",
+        "hn1-iptables",
+        "hn1-cni",
+        "hybrid-pod"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Hybrid Node 10.80.0.2 · Pod CIDR 10.85.1.0/24",
+      "wraps": [
+        "hn1-iptables",
+        "hn1-cni",
+        "hybrid-pod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "step1",
+      "from": "cloud-pod",
+      "to": "eni",
+      "label": "1 · send to 10.85.1.56",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "step2",
+      "from": "eni",
+      "to": "vpc-router",
+      "label": "2 · VPC routing",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "step3",
+      "from": "vpc-router",
+      "to": "gateway",
+      "label": "3 · 10.85.0.0/16 static",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "step4",
+      "from": "gateway",
+      "to": "onprem-router",
+      "label": "4 · cross the boundary",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "step5",
+      "from": "onprem-router",
+      "to": "hn1-iptables",
+      "label": "5 · 10.85.1.0/24 via 10.80.0.2",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "step6a",
+      "from": "hn1-iptables",
+      "to": "hn1-cni",
+      "variant": "emphasis"
+    },
+    {
+      "id": "step6b",
+      "from": "hn1-cni",
+      "to": "hybrid-pod",
+      "label": "6 · deliver to pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-node-2",
+      "from": "onprem-router",
+      "to": "hybrid-node-2",
+      "label": "10.85.2.0/24 via 10.80.0.3",
+      "variant": "dashed",
+      "labelAt": [
+        865,
+        240
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "VPC route table",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway",
+        "10.85.0.0/16 [static] via Gateway"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "On-prem route table",
+      "items": [
+        "10.80.0.0/16 [local] via eth0",
+        "10.0.0.0/16 [static] via Gateway",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2",
+        "10.85.2.0/24 [dynamic] via 10.80.0.3"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Requirements",
+      "items": [
+        "Routable pod CIDR (10.85.0.0/16)",
+        "VPC route table entries for the on-prem node and pod CIDRs",
+        "Hybrid Pod → Cloud Pod takes the same path in reverse (10.0.0.0/16 static via Gateway)"
+      ]
+    }
+  ]
+}

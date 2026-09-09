@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-cluster Mesh 아키텍처",
+    "output": "ko-quizzes-service-mesh-istio-advanced-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": { "label": "Istiod (컨트롤 플레인)" },
+        "cloud": { "label": "Kubernetes Service" },
+        "backend": { "label": "워크로드 Pod" }
+      }
+    }
+  },
+  "components": [
+    { "id": "primary-istiod", "type": "security", "label": "Primary Istiod", "sublabel": "서비스 검색 총괄", "pos": [430, 60], "size": [200, 64] },
+    { "id": "istiod1", "type": "security", "label": "Istiod", "sublabel": "Primary", "pos": [80, 250], "size": [160, 60] },
+    { "id": "service1", "type": "cloud", "label": "Service A", "sublabel": "클러스터 1의 서비스", "pos": [80, 400], "size": [160, 60] },
+    { "id": "pod1", "type": "backend", "label": "Pod A", "sublabel": "워크로드", "pos": [290, 400], "size": [140, 60] },
+    { "id": "istiod2", "type": "security", "label": "Istiod", "sublabel": "Remote", "pos": [820, 250], "size": [160, 60] },
+    { "id": "service2", "type": "cloud", "label": "Service B", "sublabel": "클러스터 2의 서비스", "pos": [820, 400], "size": [160, 60] },
+    { "id": "pod2", "type": "backend", "label": "Pod B", "sublabel": "워크로드", "pos": [630, 400], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Shared Control Plane", "wraps": ["primary-istiod"] },
+    { "kind": "region", "label": "클러스터 1", "wraps": ["istiod1", "service1", "pod1"] },
+    { "kind": "region", "label": "클러스터 2", "wraps": ["istiod2", "service2", "pod2"] }
+  ],
+  "connections": [
+    { "id": "primary-to-istiod1", "from": "primary-istiod", "to": "istiod1", "label": "구성 배포", "variant": "emphasis" },
+    { "id": "primary-to-istiod2", "from": "primary-istiod", "to": "istiod2", "label": "구성 배포", "variant": "emphasis" },
+    { "id": "istiod1-to-service1", "from": "istiod1", "to": "service1", "label": "서비스 정보 수집", "labelDy": 24 },
+    { "id": "istiod2-to-service2", "from": "istiod2", "to": "service2", "label": "서비스 정보 수집", "labelDy": 24 },
+    { "id": "pod1-to-pod2", "from": "pod1", "to": "pod2", "label": "Cross-cluster 양방향 통신", "variant": "dashed" }
+  ]
+}

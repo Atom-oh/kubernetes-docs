@@ -1,0 +1,175 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "관리형 노드 그룹에서 Auto Mode로 마이그레이션하는 7단계",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "클러스터 작업 (kubectl)"
+        },
+        "cloud": {
+          "label": "EKS / 노드 그룹 작업 (aws eks, eksctl)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "준비 (1~3단계)",
+        "focus": [
+          "analyze",
+          "enable",
+          "nodepool"
+        ],
+        "note": "현재 노드 그룹과 워크로드 분포를 분석한 뒤 Auto Mode를 켜고, 기존 노드 그룹과 유사한 인스턴스 요건의 NodePool을 준비합니다."
+      },
+      {
+        "id": "cutover",
+        "label": "전환 (4~6단계)",
+        "focus": [
+          "nodepool",
+          "migrate",
+          "scaledown",
+          "delete"
+        ],
+        "note": "기존 노드를 cordon·drain해 Pod를 Auto Mode 노드로 옮기고, 노드 그룹을 0으로 축소한 뒤 삭제합니다. 이 기간에는 두 방식이 공존합니다."
+      },
+      {
+        "id": "verify",
+        "label": "검증 (7단계)",
+        "focus": [
+          "delete",
+          "validate"
+        ],
+        "note": "모든 Pod가 Running 상태인지, Pending Pod가 없는지, NodePool별 노드 분포와 리소스 사용량을 확인합니다."
+      }
+    ],
+    "viewBox": [
+      1240,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "준비"
+    },
+    {
+      "id": "cut",
+      "label": "전환"
+    },
+    {
+      "id": "ver",
+      "label": "검증"
+    }
+  ],
+  "mainPath": [
+    "analyze",
+    "enable",
+    "nodepool",
+    "migrate",
+    "scaledown",
+    "delete",
+    "validate"
+  ],
+  "nodes": [
+    {
+      "id": "analyze",
+      "lane": "prep",
+      "col": 0,
+      "type": "backend",
+      "label": "1. 현재 상태 분석",
+      "sublabel": "노드 그룹 · 워크로드 분포",
+      "width": 176
+    },
+    {
+      "id": "enable",
+      "lane": "prep",
+      "col": 1,
+      "type": "cloud",
+      "label": "2. Auto Mode 활성화",
+      "sublabel": "update-cluster-config",
+      "width": 176
+    },
+    {
+      "id": "nodepool",
+      "lane": "prep",
+      "col": 2,
+      "type": "backend",
+      "label": "3. NodePool 구성",
+      "sublabel": "karpenter.sh/v1 NodePool",
+      "width": 176
+    },
+    {
+      "id": "migrate",
+      "lane": "cut",
+      "col": 2,
+      "type": "backend",
+      "label": "4. 워크로드 마이그레이션",
+      "sublabel": "cordon → 점진적 drain",
+      "width": 176
+    },
+    {
+      "id": "scaledown",
+      "lane": "cut",
+      "col": 3,
+      "type": "cloud",
+      "label": "5. 기존 노드 그룹 축소",
+      "sublabel": "기존 노드 그룹 · eksctl scale",
+      "width": 176
+    },
+    {
+      "id": "delete",
+      "lane": "cut",
+      "col": 4,
+      "type": "cloud",
+      "label": "6. 기존 노드 그룹 삭제",
+      "sublabel": "eksctl delete nodegroup",
+      "width": 176
+    },
+    {
+      "id": "validate",
+      "lane": "ver",
+      "col": 5,
+      "type": "backend",
+      "label": "7. 검증 및 최적화",
+      "sublabel": "Pod 상태 · 노드 분포 확인",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "analyze",
+      "to": "enable"
+    },
+    {
+      "id": "e2",
+      "from": "enable",
+      "to": "nodepool"
+    },
+    {
+      "id": "e3",
+      "from": "nodepool",
+      "to": "migrate"
+    },
+    {
+      "id": "e4",
+      "from": "migrate",
+      "to": "scaledown"
+    },
+    {
+      "id": "e5",
+      "from": "scaledown",
+      "to": "delete"
+    },
+    {
+      "id": "e6",
+      "from": "delete",
+      "to": "validate"
+    }
+  ]
+}

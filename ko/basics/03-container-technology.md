@@ -194,7 +194,9 @@ Kubernetes는 CRI(Container Runtime Interface)를 통해 다양한 컨테이너 
 
 ![컨테이너 레이어](../.gitbook/assets/container-layers.webp)
 
-![컨테이너 이미지는 응용 프로그램, 의존성, 런타임, OS 순서로 쌓인 4개 레이어로 구성되며, 런타임 레이어가 애플리케이션 코드와 OS를 잇는 핵심 계층임을 보여준다.](../../assets/diagrams/rendered/ko-basics-03-container-technology-0.svg)
+![컨테이너 이미지가 OS, 런타임, 의존성, 응용 프로그램 순서로 쌓인 4개 레이어 스택으로 구성되며, 각 레이어가 이전 레이어 위의 변경사항을 담아 이미지 공유와 캐싱을 효율적으로 만든다는 것을 보여준다.](../.gitbook/assets/ko-basics-03-container-technology-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-03-container-technology-0.html)
 
 ### 이미지 레지스트리
 

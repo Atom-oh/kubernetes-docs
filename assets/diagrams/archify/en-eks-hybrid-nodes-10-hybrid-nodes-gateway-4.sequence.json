@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pattern 2: Hybrid Pod to VPC Pod",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [1080, 610],
+    "views": [
+      { "id": "encap", "label": "BPF VTEP lookup + encap", "focus": ["hybridpod", "cilium", "transit"], "note": "Cilium matches 10.0.64.15 to the VTEP externalCIDR 10.0.0.0/16 and VXLAN-encapsulates toward the gateway IP." },
+      { "id": "decap", "label": "Gateway decap + native routing", "focus": ["transit", "gateway", "cloudpod"], "note": "The gateway strips the VXLAN header and forwards the inner packet through its ENI; standard VPC routing delivers it." }
+    ]
+  },
+  "participants": [
+    { "id": "hybridpod", "type": "backend", "label": "Hybrid Pod", "sublabel": "10.100.0.42" },
+    { "id": "cilium", "type": "security", "label": "Cilium Agent", "sublabel": "hybrid node" },
+    { "id": "transit", "type": "external", "label": "Direct Connect / VPN", "sublabel": "transit link" },
+    { "id": "gateway", "type": "cloud", "label": "Gateway (EC2)", "sublabel": "hybrid_vxlan0 + ENI" },
+    { "id": "cloudpod", "type": "backend", "label": "Cloud Pod", "sublabel": "10.0.64.15" }
+  ],
+  "segments": [
+    { "from": 165, "to": 300, "label": "On-premises: BPF VTEP lookup + VXLAN encap" },
+    { "from": 320, "to": 500, "label": "VPC: VXLAN decap + native routing" }
+  ],
+  "messages": [
+    { "id": "send", "from": "hybridpod", "to": "cilium", "y": 190, "label": "packet, dst 10.0.64.15", "variant": "default" },
+    { "id": "encap", "from": "cilium", "to": "transit", "y": 275, "label": "VXLAN encap, outer dst 10.0.1.100, VNI 2, UDP 8472", "variant": "emphasis", "note": "BPF VTEP lookup: 10.0.64.15 matches externalCIDR 10.0.0.0/16 -> gateway IP" },
+    { "id": "arrive", "from": "transit", "to": "gateway", "y": 345, "label": "encapsulated packet arrives on UDP 8472", "variant": "emphasis" },
+    { "id": "deliver", "from": "gateway", "to": "cloudpod", "y": 450, "label": "native VPC routing via gateway ENI", "variant": "default", "note": "VXLAN decap: inner dst 10.0.64.15 (source/dest check disabled on ENI)" }
+  ],
+  "activations": [
+    { "participant": "cilium", "from": 190, "to": 282, "type": "security" },
+    { "participant": "gateway", "from": 345, "to": 457, "type": "cloud" }
+  ]
+}

@@ -1014,7 +1014,9 @@ OverlayFS is a union mount file system that represents multiple directories as a
 
 Container networking is primarily implemented using bridge interfaces and NAT (Network Address Translation).
 
-![Docker bridge networking on a single host](../../assets/diagrams/rendered/docker-bridge-networking.svg)
+![Docker bridge networking on a single host: two containers attach to the docker0 bridge via veth pairs, and traffic passes through iptables NAT rules and the host eth0 interface to reach the external Internet.](../.gitbook/assets/en-basics-01-linux-basics-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-10.html)
 
 ### System Call Filtering (seccomp)
 

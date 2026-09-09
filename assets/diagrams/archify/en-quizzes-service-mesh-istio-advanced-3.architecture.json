@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-cluster Istio Mesh Architecture (Primary-Remote)",
+    "locale": "en",
+    "output": "en-quizzes-service-mesh-istio-advanced-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      620
+    ],
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control plane",
+        "focus": [
+          "istiod1",
+          "istiod2",
+          "svc-a",
+          "svc-b"
+        ],
+        "note": "A single primary Istiod distributes configuration and discovers services in both clusters."
+      },
+      {
+        "id": "data-plane",
+        "label": "Cross-cluster data plane",
+        "focus": [
+          "pod-a",
+          "ewg1",
+          "ewg2",
+          "pod-b"
+        ],
+        "note": "Pod-to-pod calls travel over mTLS through each cluster's East-West Gateway."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Control plane / workloads"
+        },
+        "security": {
+          "label": "East-West Gateway (mTLS)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "istiod1",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Primary Control Plane",
+      "pos": [
+        110,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "service-a:8080",
+      "pos": [
+        110,
+        200
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "app: service-a",
+      "pos": [
+        110,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ewg1",
+      "type": "security",
+      "label": "East-West Gateway",
+      "sublabel": "network1 · :15443",
+      "pos": [
+        110,
+        450
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "istiod2",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Remote Control Plane",
+      "pos": [
+        740,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "service-b:8080",
+      "pos": [
+        740,
+        200
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "app: service-b",
+      "pos": [
+        740,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ewg2",
+      "type": "security",
+      "label": "East-West Gateway",
+      "sublabel": "network2 · :15443",
+      "pos": [
+        740,
+        450
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster 1: us-east-1 (Primary)",
+      "wraps": [
+        "istiod1",
+        "svc-a",
+        "pod-a",
+        "ewg1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster 2: us-west-2 (Remote)",
+      "wraps": [
+        "istiod2",
+        "svc-b",
+        "pod-b",
+        "ewg2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "config-distribution",
+      "from": "istiod1",
+      "to": "istiod2",
+      "label": "Config distribution",
+      "variant": "emphasis"
+    },
+    {
+      "id": "discovery-a",
+      "from": "istiod1",
+      "to": "svc-a",
+      "label": "Service discovery",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "discovery-b",
+      "from": "istiod1",
+      "to": "svc-b",
+      "label": "Service discovery",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod-a-mtls",
+      "from": "pod-a",
+      "to": "ewg1",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cross-cluster",
+      "from": "ewg1",
+      "to": "ewg2",
+      "label": "Cross-cluster mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "pod-b-mtls",
+      "from": "ewg2",
+      "to": "pod-b",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Primary-Remote control plane",
+      "items": [
+        "Both clusters share a single meshID, mesh1",
+        "istioctl create-remote-secret lets cluster1 reach cluster2's API server",
+        "The remote cluster points at the primary Istiod via remotePilotAddress"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Cross-cluster traffic",
+      "items": [
+        "Multi-network setup with separate network1 / network2",
+        "Traffic crosses over mTLS via port 15443 on the East-West Gateway",
+        "Intermediate certs issued from a shared Root CA align the trust chain"
+      ]
+    }
+  ]
+}

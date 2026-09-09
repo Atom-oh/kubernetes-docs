@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Load Testing and Scaling Timeline",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      800
+    ],
+    "locale": "en",
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "k6",
+      "type": "external",
+      "label": "k6",
+      "sublabel": "load generator"
+    },
+    {
+      "id": "apigw",
+      "type": "frontend",
+      "label": "API Gateway",
+      "sublabel": "msa entrypoint"
+    },
+    {
+      "id": "msa",
+      "type": "backend",
+      "label": "MSA Pod",
+      "sublabel": "Deployment"
+    },
+    {
+      "id": "keda",
+      "type": "backend",
+      "label": "KEDA",
+      "sublabel": "Pod scaling"
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "Node scaling"
+    },
+    {
+      "id": "grafana",
+      "type": "database",
+      "label": "Grafana",
+      "sublabel": "dashboards"
+    }
+  ],
+  "segments": [
+    {
+      "from": 162,
+      "to": 275,
+      "label": "Phase 1 · Ramp-up (5 min, 10→100 VUs)"
+    },
+    {
+      "from": 295,
+      "to": 410,
+      "label": "Phase 2 · Sustained (10 min, 100 VUs)"
+    },
+    {
+      "from": 430,
+      "to": 545,
+      "label": "Phase 3 · Spike (7 min, 100→500 VUs)"
+    },
+    {
+      "from": 565,
+      "to": 715,
+      "label": "Phase 4 · Cool-down (8 min, 500→0 VUs)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "ramp-traffic",
+      "from": "k6",
+      "to": "apigw",
+      "y": 190,
+      "label": "Traffic ramps up",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ramp-orders",
+      "from": "apigw",
+      "to": "msa",
+      "y": 225,
+      "label": "Order requests → SQS queue builds up"
+    },
+    {
+      "id": "ramp-metrics",
+      "from": "apigw",
+      "to": "grafana",
+      "y": 260,
+      "label": "Request rate metrics rise",
+      "variant": "dashed"
+    },
+    {
+      "id": "scale-out",
+      "from": "keda",
+      "to": "msa",
+      "y": 322,
+      "label": "SQS depth high → 8 Pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pending",
+      "from": "msa",
+      "to": "karpenter",
+      "y": 358,
+      "label": "Pending Pods appear",
+      "variant": "dashed"
+    },
+    {
+      "id": "provision",
+      "from": "karpenter",
+      "to": "msa",
+      "y": 394,
+      "label": "Provision new nodes, then schedule Pods",
+      "variant": "return"
+    },
+    {
+      "id": "spike-traffic",
+      "from": "k6",
+      "to": "apigw",
+      "y": 457,
+      "label": "Spike traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scale-out-fast",
+      "from": "keda",
+      "to": "msa",
+      "y": 493,
+      "label": "Aggressive scale-out (→ 30 Pods)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "add-nodes",
+      "from": "karpenter",
+      "to": "msa",
+      "y": 529,
+      "label": "Add nodes (→ 8+)",
+      "variant": "return"
+    },
+    {
+      "id": "cooldown-traffic",
+      "from": "k6",
+      "to": "apigw",
+      "y": 592,
+      "label": "Traffic ramps down",
+      "variant": "return"
+    },
+    {
+      "id": "scale-in",
+      "from": "keda",
+      "to": "msa",
+      "y": 628,
+      "label": "Scale in (HPA cooldown)",
+      "variant": "dashed"
+    },
+    {
+      "id": "consolidate",
+      "from": "karpenter",
+      "to": "msa",
+      "y": 664,
+      "label": "Consolidate / terminate empty nodes (→ 3)",
+      "variant": "dashed"
+    },
+    {
+      "id": "verify",
+      "from": "msa",
+      "to": "grafana",
+      "y": 700,
+      "label": "Confirm Pod/Node counts and SQS depth recover",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "apigw",
+      "from": 185,
+      "to": 268,
+      "type": "frontend"
+    },
+    {
+      "participant": "msa",
+      "from": 220,
+      "to": 402,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 353,
+      "to": 400,
+      "type": "cloud"
+    },
+    {
+      "participant": "apigw",
+      "from": 452,
+      "to": 465,
+      "type": "frontend"
+    },
+    {
+      "participant": "msa",
+      "from": 488,
+      "to": 537,
+      "type": "backend"
+    },
+    {
+      "participant": "msa",
+      "from": 623,
+      "to": 708,
+      "type": "backend"
+    }
+  ]
+}

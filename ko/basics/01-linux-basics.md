@@ -1010,13 +1010,17 @@ journalctl -u <서비스> # 서비스 로그 확인
 
 OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하는 유니온 마운트 파일 시스템입니다. Docker와 같은 컨테이너 런타임에서 이미지 레이어를 구현하는 데 사용됩니다.
 
-![클라이언트(앱)가 OverlayFS의 병합된 뷰(merged view)를 통해 파일에 접근하고, 그 아래에 쓰기 가능한 upperdir, 스크래치 공간인 workdir, 읽기 전용 lowerdir 레이어가 겹쳐 있는 구조를 보여준다.](../.gitbook/assets/linux_basics_overlayfs.svg)
+![클라이언트(앱)가 OverlayFS의 병합된 뷰(merged view)를 통해 파일에 접근하고, 그 아래에 쓰기 가능한 upperdir, 스크래치 공간인 workdir, 읽기 전용 lowerdir 레이어가 겹쳐 있는 구조를 보여준다.](../.gitbook/assets/ko-basics-01-linux-basics-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-01-linux-basics-11.html)
 
 ### 네트워크 브릿지와 NAT
 
 컨테이너 네트워킹은 주로 브릿지 인터페이스와 NAT(Network Address Translation)를 사용하여 구현됩니다.
 
-![단일 호스트에서의 Docker 브리지 네트워킹](../../assets/diagrams/rendered/docker-bridge-networking.svg)
+![단일 호스트에서 두 컨테이너가 veth pair로 docker0 브릿지에 연결되고, iptables NAT 규칙을 거쳐 호스트 eth0을 통해 외부 인터넷과 통신하는 Docker 브리지 네트워킹 구조를 보여준다.](../.gitbook/assets/ko-basics-01-linux-basics-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-01-linux-basics-10.html)
 
 ### 시스템 호출 필터링 (seccomp)
 

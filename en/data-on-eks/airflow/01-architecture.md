@@ -39,7 +39,9 @@ Making the dag-processor mandatory and moving parsing fully out of the scheduler
 
 ## 2. Component Diagram on Kubernetes
 
-![Diagram of Airflow's API server, scheduler, DAG processor, and triggerer deployments all reading and writing shared state to a PostgreSQL StatefulSet on Kubernetes, with the scheduler optionally queuing tasks to Celery workers through a Redis broker, or creating a dedicated task pod directly under the KubernetesExecutor.](../../../assets/diagrams/rendered/en-data-on-eks-airflow-01-architecture-0.svg)
+![Airflow's api-server, scheduler, dag-processor and triggerer deployments sharing one PostgreSQL StatefulSet on Kubernetes, with the scheduler queuing tasks to Celery workers via a Redis broker or creating a per-task pod under the KubernetesExecutor.](../../.gitbook/assets/en-data-on-eks-airflow-01-architecture-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-airflow-01-architecture-0.html)
 
 The dag-processor writes to Postgres; the scheduler only ever reads DAG structure from Postgres. Neither the scheduler nor the api-server ever parses a DAG file directly — DAG file access is isolated to the dag-processor pod(s), which also means DAG authors' code only needs to be readable from that one component's filesystem or mounted volume.
 

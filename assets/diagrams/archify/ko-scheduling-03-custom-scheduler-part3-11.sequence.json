@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "GPU 워크로드 스케줄링 워크플로우",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1500, 900],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": { "label": "요청" },
+        "emphasis": { "label": "핵심 단계" },
+        "return": { "label": "응답" }
+      }
+    },
+    "views": [
+      { "id": "filter", "label": "필터링", "focus": ["scheduler", "plugin", "metrics"], "note": "플러그인이 GPU 사용률을 조회해 조건에 맞는 노드만 남긴다." },
+      { "id": "score", "label": "점수 매기기", "focus": ["scheduler", "plugin", "metrics"], "note": "GPU 토폴로지 데이터를 바탕으로 노드 점수를 계산한다." },
+      { "id": "bind", "label": "바인딩", "focus": ["apiserver", "gpunode", "user"], "note": "선택된 GPU 노드에 Pod를 스케줄링하고 결과를 사용자에게 돌려준다." }
+    ]
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "사용자" },
+    { "id": "apiserver", "type": "backend", "label": "API 서버" },
+    { "id": "scheduler", "type": "backend", "label": "GPU 스케줄러" },
+    { "id": "plugin", "type": "backend", "label": "스케줄러 플러그인" },
+    { "id": "metrics", "type": "database", "label": "메트릭 시스템" },
+    { "id": "gpunode", "type": "cloud", "label": "GPU 노드" }
+  ],
+  "segments": [
+    { "from": 165, "to": 250, "label": "요청" },
+    { "from": 265, "to": 445, "label": "필터링" },
+    { "from": 460, "to": 640, "label": "점수 매기기" },
+    { "from": 655, "to": 790, "label": "바인딩" }
+  ],
+  "messages": [
+    { "id": "m01", "from": "user", "to": "apiserver", "y": 190, "label": "GPU Pod 생성 요청" },
+    { "id": "m02", "from": "apiserver", "to": "scheduler", "y": 230, "label": "스케줄링 요청" },
+    { "id": "m03", "from": "scheduler", "to": "plugin", "y": 290, "label": "필터링 요청", "variant": "emphasis" },
+    { "id": "m04", "from": "plugin", "to": "metrics", "y": 330, "label": "GPU 사용률 조회" },
+    { "id": "m05", "from": "metrics", "to": "plugin", "y": 370, "label": "GPU 사용률 데이터", "variant": "return" },
+    { "id": "m06", "from": "plugin", "to": "scheduler", "y": 415, "label": "필터링된 노드 목록", "variant": "return" },
+    { "id": "m07", "from": "scheduler", "to": "plugin", "y": 485, "label": "점수 매기기 요청", "variant": "emphasis" },
+    { "id": "m08", "from": "plugin", "to": "metrics", "y": 525, "label": "GPU 토폴로지 조회" },
+    { "id": "m09", "from": "metrics", "to": "plugin", "y": 565, "label": "GPU 토폴로지 데이터", "variant": "return" },
+    { "id": "m10", "from": "plugin", "to": "scheduler", "y": 610, "label": "노드 점수", "variant": "return" },
+    { "id": "m11", "from": "scheduler", "to": "apiserver", "y": 675, "label": "선택된 노드", "variant": "return" },
+    { "id": "m12", "from": "apiserver", "to": "gpunode", "y": 715, "label": "Pod 스케줄링", "variant": "emphasis" },
+    { "id": "m13", "from": "gpunode", "to": "apiserver", "y": 750, "label": "스케줄링 결과", "variant": "return" },
+    { "id": "m14", "from": "apiserver", "to": "user", "y": 782, "label": "Pod 생성 완료", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "apiserver", "from": 185, "to": 786, "type": "backend" },
+    { "participant": "scheduler", "from": 225, "to": 680, "type": "backend" },
+    { "participant": "plugin", "from": 285, "to": 420, "type": "backend" },
+    { "participant": "plugin", "from": 480, "to": 615, "type": "backend" },
+    { "participant": "metrics", "from": 325, "to": 375, "type": "database" },
+    { "participant": "metrics", "from": 520, "to": 570, "type": "database" },
+    { "participant": "gpunode", "from": 710, "to": 755, "type": "cloud" }
+  ]
+}

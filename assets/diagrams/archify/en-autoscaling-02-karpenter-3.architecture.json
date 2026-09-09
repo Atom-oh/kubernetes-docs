@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Karpenter Integration with Amazon EKS",
+    "output": "en-autoscaling-02-karpenter-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      1245,
+      768
+    ]
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "backend",
+      "label": "EKS Control Plane",
+      "sublabel": "Kubernetes API",
+      "pos": [
+        110,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "backend",
+      "label": "Karpenter Controller",
+      "sublabel": "Direct provisioning",
+      "pos": [
+        110,
+        300
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "Karpenter Webhook",
+      "sublabel": "Config validation",
+      "pos": [
+        110,
+        620
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "irsa",
+      "type": "security",
+      "label": "IRSA",
+      "sublabel": "IAM Role for Service Account",
+      "pos": [
+        110,
+        500
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ec2api",
+      "type": "cloud",
+      "label": "EC2 API",
+      "sublabel": "RunInstances / CreateFleet",
+      "pos": [
+        620,
+        580
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "asg",
+      "type": "cloud",
+      "label": "Auto Scaling Groups",
+      "sublabel": "Not in the provisioning path",
+      "pos": [
+        620,
+        130
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "mng",
+      "type": "cloud",
+      "label": "Managed Node Groups",
+      "sublabel": "Not in the provisioning path",
+      "pos": [
+        620,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "security",
+      "label": "Security Groups",
+      "sublabel": "karpenter.sh/discovery tag",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC / Subnets",
+      "sublabel": "karpenter.sh/discovery tag",
+      "pos": [
+        620,
+        480
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "instances",
+      "type": "cloud",
+      "label": "EC2 Instances",
+      "sublabel": "Worker nodes",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        190,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS Cluster",
+      "wraps": [
+        "eks",
+        "karpenter",
+        "webhook",
+        "irsa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Services",
+      "wraps": [
+        "ec2api",
+        "asg",
+        "mng",
+        "sg",
+        "vpc",
+        "instances"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kc-watches-eks",
+      "from": "karpenter",
+      "to": "eks",
+      "label": "Watches"
+    },
+    {
+      "id": "kc-uses-irsa",
+      "from": "karpenter",
+      "to": "irsa",
+      "label": "Uses",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "irsa-assumes-ec2",
+      "from": "irsa",
+      "to": "ec2api",
+      "label": "Assumes role",
+      "variant": "security"
+    },
+    {
+      "id": "kc-creates-instances",
+      "from": "karpenter",
+      "to": "instances",
+      "label": "Creates directly",
+      "variant": "emphasis",
+      "labelAt": [
+        560,
+        320
+      ]
+    },
+    {
+      "id": "kc-bypasses-asg",
+      "from": "karpenter",
+      "to": "asg",
+      "label": "Bypasses",
+      "variant": "dashed",
+      "labelAt": [
+        545,
+        146
+      ]
+    },
+    {
+      "id": "kc-bypasses-mng",
+      "from": "karpenter",
+      "to": "mng",
+      "label": "Bypasses",
+      "variant": "dashed",
+      "labelAt": [
+        545,
+        226
+      ]
+    },
+    {
+      "id": "kc-uses-sg",
+      "from": "karpenter",
+      "to": "sg",
+      "label": "Uses",
+      "labelAt": [
+        545,
+        416
+      ]
+    },
+    {
+      "id": "kc-uses-vpc",
+      "from": "karpenter",
+      "to": "vpc",
+      "label": "Uses",
+      "labelAt": [
+        545,
+        496
+      ]
+    },
+    {
+      "id": "eks-manages-instances",
+      "from": "eks",
+      "to": "instances",
+      "label": "Manages",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ]
+}

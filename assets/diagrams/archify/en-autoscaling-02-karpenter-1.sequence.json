@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Karpenter Workflow — from Unschedulable Pod to Node Provisioning",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1085,
+      735
+    ],
+    "views": [
+      {
+        "id": "detect",
+        "label": "Detect",
+        "focus": [
+          "pod",
+          "k8sapi",
+          "karpenter"
+        ],
+        "note": "Receives the unschedulable pod event and evaluates its requirements against the NodePool and EC2NodeClass."
+      },
+      {
+        "id": "provision",
+        "label": "Provision",
+        "focus": [
+          "karpenter",
+          "ec2",
+          "node"
+        ],
+        "note": "Queries instance types and prices via the EC2 API, then requests node provisioning."
+      },
+      {
+        "id": "schedule",
+        "label": "Schedule",
+        "focus": [
+          "node",
+          "k8sapi",
+          "karpenter",
+          "pod"
+        ],
+        "note": "Once the new node registers, labels and taints are set and the pod is scheduled onto it."
+      }
+    ],
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "pending scheduling"
+    },
+    {
+      "id": "k8sapi",
+      "type": "backend",
+      "label": "Kubernetes API"
+    },
+    {
+      "id": "karpenter",
+      "type": "backend",
+      "label": "Karpenter",
+      "sublabel": "Controller"
+    },
+    {
+      "id": "ec2",
+      "type": "cloud",
+      "label": "AWS EC2 API"
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "New Node",
+      "sublabel": "new EC2 instance"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 250,
+      "label": "1. Detect · analyze requirements · evaluate NodePool and EC2NodeClass"
+    },
+    {
+      "from": 260,
+      "to": 425,
+      "label": "2. Provision"
+    },
+    {
+      "from": 440,
+      "to": 600,
+      "label": "3. Register and schedule"
+    }
+  ],
+  "messages": [
+    {
+      "id": "pod-create",
+      "from": "pod",
+      "to": "k8sapi",
+      "y": 185,
+      "label": "Pod creation (unschedulable)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-event",
+      "from": "k8sapi",
+      "to": "karpenter",
+      "y": 225,
+      "label": "Pod event notification",
+      "note": "Inside Karpenter: analyze pod requirements → evaluate NodePool and EC2NodeClass"
+    },
+    {
+      "id": "query-instances",
+      "from": "karpenter",
+      "to": "ec2",
+      "y": 285,
+      "label": "Query instance types/prices"
+    },
+    {
+      "id": "instance-info",
+      "from": "ec2",
+      "to": "karpenter",
+      "y": 325,
+      "label": "Return instance information",
+      "variant": "return"
+    },
+    {
+      "id": "provision-request",
+      "from": "karpenter",
+      "to": "ec2",
+      "y": 365,
+      "label": "Request node provisioning",
+      "variant": "emphasis"
+    },
+    {
+      "id": "create-instance",
+      "from": "ec2",
+      "to": "node",
+      "y": 405,
+      "label": "Create instance"
+    },
+    {
+      "id": "node-register",
+      "from": "node",
+      "to": "k8sapi",
+      "y": 460,
+      "label": "Node registration"
+    },
+    {
+      "id": "node-event",
+      "from": "k8sapi",
+      "to": "karpenter",
+      "y": 500,
+      "label": "Node event notification"
+    },
+    {
+      "id": "label-taint",
+      "from": "karpenter",
+      "to": "k8sapi",
+      "y": 540,
+      "label": "Set node labels and taints"
+    },
+    {
+      "id": "schedule-pod",
+      "from": "k8sapi",
+      "to": "pod",
+      "y": 580,
+      "label": "Schedule pod",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "k8sapi",
+      "from": 180,
+      "to": 230,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 220,
+      "to": 410,
+      "type": "backend"
+    },
+    {
+      "participant": "ec2",
+      "from": 280,
+      "to": 410,
+      "type": "cloud"
+    },
+    {
+      "participant": "node",
+      "from": 400,
+      "to": 465,
+      "type": "backend"
+    },
+    {
+      "participant": "k8sapi",
+      "from": 455,
+      "to": 585,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 495,
+      "to": 545,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Inside Karpenter",
+      "items": [
+        "Analyze pod requirements (resources, node selectors, tolerations)",
+        "Decide the node type from the NodePool and EC2NodeClass configuration"
+      ]
+    }
+  ]
+}

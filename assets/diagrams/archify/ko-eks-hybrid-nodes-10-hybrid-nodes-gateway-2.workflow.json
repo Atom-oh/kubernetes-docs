@@ -1,0 +1,216 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "패턴 1: VPC Pod에서 Hybrid Pod로",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Pod (출발·도착)"
+        },
+        "cloud": {
+          "label": "VPC 네트워크"
+        },
+        "backend": {
+          "label": "게이트웨이 EC2 (핵심 라우팅 지점)"
+        },
+        "external": {
+          "label": "온프레미스 연결"
+        },
+        "security": {
+          "label": "Cilium (디캡슐화)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "vpc-routing",
+        "label": "VPC 라우팅",
+        "focus": [
+          "vpc_pod",
+          "vpc_node",
+          "vpc_rtb",
+          "gw_ec2"
+        ],
+        "note": "VPC 라우트 테이블의 10.85.0.0/16 → 게이트웨이 ENI 규칙이 패킷을 게이트웨이 EC2로 보낸다."
+      },
+      {
+        "id": "vxlan-encap",
+        "label": "VXLAN 캡슐화",
+        "focus": [
+          "gw_ec2",
+          "vxlan",
+          "dx_vpn"
+        ],
+        "note": "커널 라우트 10.85.1.0/24 via hybrid_vxlan0 매칭 후 VNI 2, UDP 8472로 캡슐화해 Direct Connect/VPN으로 전달한다."
+      },
+      {
+        "id": "onprem-delivery",
+        "label": "온프레미스 전달",
+        "focus": [
+          "dx_vpn",
+          "cilium",
+          "hybrid_pod"
+        ],
+        "note": "Hybrid Node의 Cilium이 VXLAN 패킷을 디캡슐화해 원본 패킷을 대상 Hybrid Pod로 전달한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "vpc",
+      "label": "AWS VPC"
+    },
+    {
+      "id": "gateway",
+      "label": "게이트웨이 EC2 (10.0.1.100)"
+    },
+    {
+      "id": "wan",
+      "label": "Direct Connect / VPN"
+    },
+    {
+      "id": "onprem",
+      "label": "온프레미스 Hybrid Node"
+    }
+  ],
+  "mainPath": [
+    "vpc_pod",
+    "vpc_node",
+    "vpc_rtb",
+    "gw_ec2",
+    "vxlan",
+    "dx_vpn",
+    "cilium",
+    "hybrid_pod"
+  ],
+  "nodes": [
+    {
+      "id": "vpc_pod",
+      "lane": "vpc",
+      "col": 0,
+      "type": "frontend",
+      "label": "VPC Pod",
+      "sublabel": "10.0.1.50"
+    },
+    {
+      "id": "vpc_node",
+      "lane": "vpc",
+      "col": 1,
+      "type": "cloud",
+      "label": "VPC 노드",
+      "sublabel": "VPC CNI · 라우팅"
+    },
+    {
+      "id": "vpc_rtb",
+      "lane": "vpc",
+      "col": 2,
+      "type": "cloud",
+      "label": "VPC 라우트 테이블",
+      "sublabel": "10.85.0.0/16 → GW ENI",
+      "width": 150
+    },
+    {
+      "id": "gw_ec2",
+      "lane": "gateway",
+      "col": 2,
+      "type": "backend",
+      "label": "커널 라우트 매칭",
+      "sublabel": "10.85.1.0/24 → vxlan0",
+      "width": 150
+    },
+    {
+      "id": "vxlan",
+      "lane": "gateway",
+      "col": 3,
+      "type": "backend",
+      "label": "hybrid_vxlan0",
+      "sublabel": "VNI 2 · UDP 8472",
+      "width": 140
+    },
+    {
+      "id": "dx_vpn",
+      "lane": "wan",
+      "col": 3,
+      "type": "external",
+      "label": "Direct Connect / VPN",
+      "sublabel": "캡슐화된 패킷 전달",
+      "width": 200
+    },
+    {
+      "id": "cilium",
+      "lane": "onprem",
+      "col": 4,
+      "type": "security",
+      "label": "Cilium Agent",
+      "sublabel": "VXLAN 디캡슐화",
+      "width": 136
+    },
+    {
+      "id": "hybrid_pod",
+      "lane": "onprem",
+      "col": 5,
+      "type": "frontend",
+      "label": "Hybrid Pod",
+      "sublabel": "10.85.1.50",
+      "width": 136
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "vpc_pod",
+      "to": "vpc_node",
+      "label": "1"
+    },
+    {
+      "id": "e2",
+      "from": "vpc_node",
+      "to": "vpc_rtb",
+      "label": "2"
+    },
+    {
+      "id": "e3",
+      "from": "vpc_rtb",
+      "to": "gw_ec2",
+      "label": "3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e4",
+      "from": "gw_ec2",
+      "to": "vxlan",
+      "label": "4",
+      "route": "straight"
+    },
+    {
+      "id": "e5",
+      "from": "vxlan",
+      "to": "dx_vpn",
+      "label": "5 · 캡슐화",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          566,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "e6",
+      "from": "dx_vpn",
+      "to": "cilium",
+      "label": "6 · 온프레미스"
+    },
+    {
+      "id": "e7",
+      "from": "cilium",
+      "to": "hybrid_pod",
+      "label": "7 · 원본 패킷"
+    }
+  ]
+}

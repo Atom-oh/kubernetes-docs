@@ -188,7 +188,9 @@ Pod Deletion Cost assigns a cost value to each pod through the `controller.kuber
 
 The following diagram shows how Pod Deletion Cost works during scale-down:
 
-![The ReplicaSet controller sorts pods by their pod-deletion-cost annotation and deletes the lowest-cost pods first — Pod-3 (cost -10) before Pod-4 (cost 0) — while higher-cost Pod-1 and Pod-2 survive the scale-down.](../../assets/diagrams/rendered/en-scheduling-03-custom-scheduler-part3-0.svg)
+![The ReplicaSet controller sorts pods by their pod-deletion-cost annotation and deletes the lowest-cost pods first — Pod-3 (cost -10) before Pod-4 (cost 0) — while higher-cost Pod-1 and Pod-2 survive the scale-down.](../.gitbook/assets/en-scheduling-03-custom-scheduler-part3-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-scheduling-03-custom-scheduler-part3-0.html)
 
 ### Use Cases
 

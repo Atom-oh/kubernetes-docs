@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "낮은 사용률 노드의 통합",
+    "output": "ko-eks-auto-mode-03-scaling-behavior-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      480
+    ],
+    "views": [
+      {
+        "id": "before",
+        "label": "통합 전",
+        "focus": [
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "note": "세 노드 모두 CPU 10~20%, 메모리 20~30%로 낮게 사용된다."
+      },
+      {
+        "id": "consolidation",
+        "label": "Consolidation",
+        "focus": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "note": "노드 2·3의 워크로드가 노드 1로 옮겨져 노드 1의 사용률이 CPU 45%, 메모리 75%로 높아진다."
+      },
+      {
+        "id": "after",
+        "label": "통합 후",
+        "focus": [
+          "n4",
+          "n5",
+          "n6"
+        ],
+        "note": "빈 상태가 된 노드 2와 노드 3은 제거된다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "노드 1",
+      "sublabel": "CPU 20% · 메모리 30%",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "노드 2",
+      "sublabel": "CPU 15% · 메모리 25%",
+      "pos": [
+        70,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "노드 3",
+      "sublabel": "CPU 10% · 메모리 20%",
+      "pos": [
+        70,
+        350
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "backend",
+      "label": "노드 1",
+      "sublabel": "CPU 45% · 메모리 75%",
+      "pos": [
+        590,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ],
+      "tag": "통합됨"
+    },
+    {
+      "id": "n5",
+      "type": "external",
+      "label": "노드 2",
+      "sublabel": "(제거됨)",
+      "pos": [
+        590,
+        90
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "n6",
+      "type": "external",
+      "label": "노드 3",
+      "sublabel": "(제거됨)",
+      "pos": [
+        590,
+        350
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "통합 전",
+      "wraps": [
+        "n1",
+        "n2",
+        "n3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "통합 후",
+      "wraps": [
+        "n4",
+        "n5",
+        "n6"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-consolidation",
+      "from": "n1",
+      "to": "n4",
+      "label": "Consolidation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "n2-move",
+      "from": "n2",
+      "to": "n4",
+      "label": "워크로드 이동",
+      "labelDx": -100
+    },
+    {
+      "id": "n3-move",
+      "from": "n3",
+      "to": "n4",
+      "label": "워크로드 이동"
+    }
+  ]
+}

@@ -1,0 +1,302 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "JWT 검증 프로세스",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "클라이언트"
+        },
+        "backend": {
+          "label": "사이드카 처리 단계"
+        },
+        "security": {
+          "label": "검증 결정"
+        },
+        "cloud": {
+          "label": "최종 결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "extract",
+        "label": "토큰 추출",
+        "focus": [
+          "request",
+          "header",
+          "notoken",
+          "extract"
+        ],
+        "note": "Authorization 헤더가 없으면 검증을 건너뛰고, 있으면 JWT를 추출해 디코딩합니다."
+      },
+      {
+        "id": "validate",
+        "label": "jwtRules 검증",
+        "focus": [
+          "extract",
+          "iss",
+          "aud",
+          "sig",
+          "exp"
+        ],
+        "note": "issuer, audiences, JWKS 서명, 만료 시간을 순서대로 검증합니다."
+      },
+      {
+        "id": "result",
+        "label": "허용 / 거부",
+        "focus": [
+          "iss",
+          "aud",
+          "sig",
+          "exp",
+          "reject",
+          "allow"
+        ],
+        "note": "어느 단계든 실패하면 401 Unauthorized로 거부하고, 모두 통과해야 요청을 허용합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "클라이언트"
+    },
+    {
+      "id": "sidecar",
+      "label": "사이드카"
+    },
+    {
+      "id": "validation",
+      "label": "jwtRules 검증"
+    },
+    {
+      "id": "result",
+      "label": "결과",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "header",
+    "extract",
+    "iss",
+    "aud",
+    "sig",
+    "exp",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "client",
+      "col": 1,
+      "type": "external",
+      "label": "클라이언트 요청",
+      "sublabel": "HTTP 요청",
+      "width": 140
+    },
+    {
+      "id": "header",
+      "lane": "sidecar",
+      "col": 1,
+      "type": "security",
+      "label": "Authorization 헤더 존재?",
+      "sublabel": "Bearer 토큰 확인",
+      "width": 184,
+      "tag": "RequestAuthentication"
+    },
+    {
+      "id": "extract",
+      "lane": "sidecar",
+      "col": 2,
+      "type": "backend",
+      "label": "JWT 추출 및 디코딩",
+      "sublabel": "Header.Payload.Signature",
+      "width": 172
+    },
+    {
+      "id": "iss",
+      "lane": "validation",
+      "col": 2,
+      "type": "security",
+      "label": "issuer 검증",
+      "sublabel": "iss 필드",
+      "width": 140
+    },
+    {
+      "id": "aud",
+      "lane": "validation",
+      "col": 3,
+      "type": "security",
+      "label": "audiences 검증",
+      "sublabel": "aud 필드",
+      "width": 152
+    },
+    {
+      "id": "sig",
+      "lane": "validation",
+      "col": 4,
+      "type": "security",
+      "label": "서명 검증",
+      "sublabel": "JWKS (jwksUri)",
+      "width": 148
+    },
+    {
+      "id": "exp",
+      "lane": "validation",
+      "col": 5,
+      "type": "security",
+      "label": "만료 시간 검증",
+      "sublabel": "exp 필드",
+      "width": 156
+    },
+    {
+      "id": "notoken",
+      "lane": "result",
+      "col": 1,
+      "type": "cloud",
+      "label": "토큰 없음",
+      "sublabel": "검증 건너뜀",
+      "width": 124
+    },
+    {
+      "id": "reject",
+      "lane": "result",
+      "col": 4,
+      "type": "cloud",
+      "label": "거부",
+      "sublabel": "401 Unauthorized",
+      "width": 144
+    },
+    {
+      "id": "allow",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "허용",
+      "sublabel": "요청 전달",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-header",
+      "from": "request",
+      "to": "header"
+    },
+    {
+      "id": "header-notoken",
+      "from": "header",
+      "to": "notoken",
+      "label": "없음",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        240,
+        380
+      ]
+    },
+    {
+      "id": "header-extract",
+      "from": "header",
+      "to": "extract",
+      "label": "있음"
+    },
+    {
+      "id": "extract-iss",
+      "from": "extract",
+      "to": "iss"
+    },
+    {
+      "id": "iss-aud",
+      "from": "iss",
+      "to": "aud",
+      "label": "성공"
+    },
+    {
+      "id": "aud-sig",
+      "from": "aud",
+      "to": "sig",
+      "label": "성공"
+    },
+    {
+      "id": "sig-exp",
+      "from": "sig",
+      "to": "exp",
+      "label": "성공"
+    },
+    {
+      "id": "exp-allow",
+      "from": "exp",
+      "to": "allow",
+      "label": "유효함",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iss-reject",
+      "from": "iss",
+      "to": "reject",
+      "label": "실패",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "aud-reject",
+      "from": "aud",
+      "to": "reject",
+      "label": "실패",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "sig-reject",
+      "from": "sig",
+      "to": "reject",
+      "label": "실패",
+      "role": "error",
+      "variant": "security",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        830,
+        435
+      ]
+    },
+    {
+      "id": "exp-reject",
+      "from": "exp",
+      "to": "reject",
+      "label": "만료됨",
+      "role": "error",
+      "variant": "security",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "JWT Payload 필드",
+      "items": [
+        "iss: 토큰 발급자 (issuer)",
+        "aud: 토큰 대상 (audiences)",
+        "exp: 만료 시각 (expiration)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "RequestAuthentication jwtRules",
+      "items": [
+        "issuer: iss 필드와 일치해야 함",
+        "jwksUri: 서명 검증용 공개 키 위치",
+        "audiences: aud 필드와 일치해야 함"
+      ]
+    }
+  ]
+}

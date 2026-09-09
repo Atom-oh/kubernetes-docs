@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Consolidation과 Expiration의 상호작용",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "consolidation",
+        "label": "Consolidation 경로",
+        "focus": [
+          "running",
+          "util_check",
+          "move_pods",
+          "node_removed"
+        ],
+        "note": "사용률이 임계치 아래로 내려가면 Pod를 다른 노드로 이동시키고 노드를 제거한다."
+      },
+      {
+        "id": "expiration",
+        "label": "Expiration 경로",
+        "focus": [
+          "running",
+          "expire_check",
+          "mark_expired",
+          "replace_start"
+        ],
+        "note": "expireAfter에 도달한 노드는 만료로 표시되고 새 노드로의 교체가 시작된다."
+      },
+      {
+        "id": "return",
+        "label": "운영 중 복귀",
+        "focus": [
+          "util_check",
+          "expire_check",
+          "running"
+        ],
+        "note": "두 조건 모두 만족하지 않으면 노드는 다시 운영 중 상태로 돌아온다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "active": {
+          "label": "진행 중"
+        },
+        "decision": {
+          "label": "판단"
+        },
+        "failure": {
+          "label": "실패 · 복구"
+        },
+        "neutral": {
+          "label": "중립 상태"
+        },
+        "start": {
+          "label": "시작"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "노드 상태"
+    },
+    {
+      "id": "consolidation",
+      "label": "Consolidation"
+    },
+    {
+      "id": "expiration",
+      "label": "Expiration"
+    },
+    {
+      "id": "terminal",
+      "label": "결과"
+    }
+  ],
+  "states": [
+    {
+      "id": "new_node",
+      "type": "start",
+      "label": "신규 노드",
+      "sublabel": "프로비저닝 완료",
+      "lane": "main",
+      "col": 1,
+      "tag": "start"
+    },
+    {
+      "id": "running",
+      "type": "active",
+      "label": "운영 중",
+      "sublabel": "허브 상태",
+      "lane": "main",
+      "col": 3,
+      "tag": "hub"
+    },
+    {
+      "id": "util_check",
+      "type": "decision",
+      "label": "사용률 < 임계치?",
+      "sublabel": "저사용률 판단",
+      "lane": "consolidation",
+      "col": 0,
+      "height": 52
+    },
+    {
+      "id": "move_pods",
+      "type": "active",
+      "label": "Pod 이동",
+      "sublabel": "다른 노드로 통합",
+      "lane": "consolidation",
+      "col": 0,
+      "yOffset": 85,
+      "height": 52
+    },
+    {
+      "id": "expire_check",
+      "type": "decision",
+      "label": "expireAfter 도달?",
+      "sublabel": "만료 임박 판단",
+      "lane": "expiration",
+      "col": 2,
+      "height": 52
+    },
+    {
+      "id": "mark_expired",
+      "type": "active",
+      "label": "만료 표시",
+      "sublabel": "노드 신선도 유지",
+      "lane": "expiration",
+      "col": 2,
+      "yOffset": 85,
+      "height": 52
+    },
+    {
+      "id": "node_removed",
+      "type": "failure",
+      "label": "노드 제거",
+      "sublabel": "비용 절감",
+      "lane": "terminal",
+      "col": 0,
+      "tag": "terminal"
+    },
+    {
+      "id": "replace_start",
+      "type": "neutral",
+      "label": "교체 시작",
+      "sublabel": "새 노드로 대체",
+      "lane": "terminal",
+      "col": 2,
+      "tag": "async"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "new_node",
+      "to": "running",
+      "route": "straight",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "running",
+      "to": "util_check",
+      "label": "사용률 저하"
+    },
+    {
+      "from": "util_check",
+      "to": "move_pods",
+      "label": "YES",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "from": "move_pods",
+      "to": "node_removed",
+      "variant": "security"
+    },
+    {
+      "from": "util_check",
+      "to": "running",
+      "label": "NO",
+      "variant": "dashed",
+      "toSide": "top",
+      "fromSide": "left",
+      "via": [
+        [
+          322,
+          304
+        ],
+        [
+          322,
+          96
+        ],
+        [
+          556,
+          96
+        ]
+      ]
+    },
+    {
+      "from": "running",
+      "to": "expire_check",
+      "label": "expireAfter 도달"
+    },
+    {
+      "from": "expire_check",
+      "to": "mark_expired",
+      "label": "YES",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "from": "mark_expired",
+      "to": "replace_start"
+    },
+    {
+      "from": "expire_check",
+      "to": "running",
+      "label": "NO",
+      "variant": "dashed",
+      "route": "right-channel"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Consolidation",
+      "items": [
+        "트리거: 리소스 사용률",
+        "목적: 비용 최적화",
+        "동작: 저사용률 노드를 통합하고 제거"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Expiration",
+      "items": [
+        "트리거: 시간 경과(expireAfter)",
+        "목적: 노드 신선도 유지",
+        "동작: 만료된 노드를 새 노드로 교체"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "운영 중 복귀",
+      "items": [
+        "사용률이 임계치 이상이면 유지",
+        "expireAfter 미도달이면 유지",
+        "두 판단은 독립적으로 반복된다"
+      ]
+    }
+  ]
+}

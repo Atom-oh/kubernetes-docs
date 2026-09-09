@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Component Diagram on Kubernetes",
+    "locale": "en",
+    "output": "en-data-on-eks-airflow-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "shared-db",
+        "label": "Shared metadata DB",
+        "focus": [
+          "api",
+          "dp",
+          "trg",
+          "sch",
+          "pg"
+        ],
+        "note": "All four services share one PostgreSQL. Only the dag-processor writes DAGs; the scheduler only reads serialized_dag."
+      },
+      {
+        "id": "celery-path",
+        "label": "CeleryExecutor path",
+        "focus": [
+          "sch",
+          "redis",
+          "w1",
+          "w2"
+        ],
+        "note": "The scheduler queues tasks on the Redis broker and warm Celery worker pods pull them. Only needed with CeleryExecutor."
+      },
+      {
+        "id": "k8s-path",
+        "label": "KubernetesExecutor path",
+        "focus": [
+          "sch",
+          "kpod"
+        ],
+        "note": "The scheduler creates a dedicated pod per task instance; the pod is torn down on completion."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "frontend",
+      "label": "airflow api-server",
+      "sublabel": "Deployment · UI + REST API v2",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "backend",
+      "label": "airflow dag-processor",
+      "sublabel": "Deployment · parses DAG files",
+      "pos": [
+        330,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "trg",
+      "type": "backend",
+      "label": "airflow triggerer",
+      "sublabel": "Deployment · deferrable operators",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "StatefulSet · metadata DB",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sch",
+      "type": "backend",
+      "label": "airflow scheduler",
+      "sublabel": "Deployment · scheduling only",
+      "pos": [
+        870,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "messagebus",
+      "label": "Redis broker",
+      "sublabel": "Celery task queue",
+      "pos": [
+        600,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kpod",
+      "type": "backend",
+      "label": "Per-task worker pod",
+      "sublabel": "KubernetesExecutor",
+      "pos": [
+        870,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "w1",
+      "type": "backend",
+      "label": "Celery worker 1",
+      "sublabel": "Pod · always running",
+      "pos": [
+        330,
+        540
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "w2",
+      "type": "backend",
+      "label": "Celery worker 2",
+      "sublabel": "Pod · always running",
+      "pos": [
+        600,
+        540
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "api",
+        "dp",
+        "trg",
+        "pg",
+        "sch",
+        "redis",
+        "kpod",
+        "w1",
+        "w2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Optional — CeleryExecutor only",
+      "wraps": [
+        "redis",
+        "w1",
+        "w2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dp-writes-pg",
+      "from": "dp",
+      "to": "pg",
+      "label": "writes parsed DAGs",
+      "variant": "emphasis",
+      "labelAt": [
+        430,
+        170
+      ]
+    },
+    {
+      "id": "sch-reads-pg",
+      "from": "sch",
+      "to": "pg",
+      "label": "reads serialized_dag",
+      "variant": "emphasis",
+      "labelAt": [
+        700,
+        236
+      ]
+    },
+    {
+      "id": "api-state-pg",
+      "from": "api",
+      "to": "pg",
+      "label": "reads/writes state"
+    },
+    {
+      "id": "trg-state-pg",
+      "from": "trg",
+      "to": "pg",
+      "label": "reads/writes trigger state"
+    },
+    {
+      "id": "sch-queues-redis",
+      "from": "sch",
+      "to": "redis",
+      "label": "queues task via broker",
+      "variant": "dashed"
+    },
+    {
+      "id": "redis-to-w1",
+      "from": "redis",
+      "to": "w1",
+      "variant": "dashed"
+    },
+    {
+      "id": "redis-to-w2",
+      "from": "redis",
+      "to": "w2",
+      "variant": "dashed"
+    },
+    {
+      "id": "sch-creates-kpod",
+      "from": "sch",
+      "to": "kpod",
+      "label": "creates pod per task",
+      "labelAt": [
+        970,
+        330
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Metadata DB",
+      "items": [
+        "PostgreSQL is always required — stores DAG/task state, serialized_dag, connections, variables, XComs",
+        "DAG file access is isolated to the dag-processor pod(s); the scheduler and api-server never parse files directly"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Executors",
+      "items": [
+        "KubernetesExecutor: a fresh pod per task, near-zero idle cost",
+        "CeleryExecutor: warm worker pool + Redis (or RabbitMQ) broker required"
+      ]
+    }
+  ]
+}

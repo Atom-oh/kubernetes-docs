@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pattern 1: Kubelet → EKS Control Plane",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      760
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Regular call"
+        },
+        "emphasis": {
+          "label": "Main path"
+        },
+        "return": {
+          "label": "Response"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "Node 10.80.0.2"
+    },
+    {
+      "id": "dns",
+      "type": "cloud",
+      "label": "DNS",
+      "sublabel": "endpoint lookup"
+    },
+    {
+      "id": "router",
+      "type": "external",
+      "label": "Router",
+      "sublabel": "on-premises"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "VPN / DX"
+    },
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "public internet"
+    },
+    {
+      "id": "vpcrouter",
+      "type": "cloud",
+      "label": "VPC Router",
+      "sublabel": "VPC 10.0.0.0/16"
+    },
+    {
+      "id": "cpeni",
+      "type": "cloud",
+      "label": "CP ENI",
+      "sublabel": "10.0.0.132"
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS CP",
+      "sublabel": "API server"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 280,
+      "label": "① Request start — DNS lookup, then HTTPS request"
+    },
+    {
+      "from": 300,
+      "to": 415,
+      "label": "② → ③ Public endpoint route (public access mode)"
+    },
+    {
+      "from": 435,
+      "to": 630,
+      "label": "Private endpoint route (private access mode)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "dns-query",
+      "from": "kubelet",
+      "to": "dns",
+      "y": 190,
+      "label": "DNS lookup for API server endpoint",
+      "variant": "default"
+    },
+    {
+      "id": "dns-answer",
+      "from": "dns",
+      "to": "kubelet",
+      "y": 225,
+      "label": "endpoint IP",
+      "variant": "return"
+    },
+    {
+      "id": "https-start",
+      "from": "kubelet",
+      "to": "router",
+      "y": 262,
+      "label": "HTTPS request (TCP 443)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pub-internet",
+      "from": "router",
+      "to": "internet",
+      "y": 330,
+      "label": "routed to the public internet",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pub-eks",
+      "from": "internet",
+      "to": "eks",
+      "y": 367,
+      "label": "reaches public endpoint (HTTPS)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pub-resp",
+      "from": "eks",
+      "to": "kubelet",
+      "y": 403,
+      "label": "HTTPS response",
+      "variant": "return"
+    },
+    {
+      "id": "prv-gateway",
+      "from": "router",
+      "to": "gateway",
+      "y": 465,
+      "label": "10.0.0.0/16 [static] via Gateway",
+      "variant": "emphasis",
+      "note": "static route in the on-prem routing table"
+    },
+    {
+      "id": "prv-tunnel",
+      "from": "gateway",
+      "to": "vpcrouter",
+      "y": 505,
+      "label": "crosses cloud boundary via VPN / DX",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prv-eni",
+      "from": "vpcrouter",
+      "to": "cpeni",
+      "y": 545,
+      "label": "10.0.0.0/16 [local] → ENI",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prv-eks",
+      "from": "cpeni",
+      "to": "eks",
+      "y": 582,
+      "label": "forwarded to API server",
+      "variant": "default"
+    },
+    {
+      "id": "prv-resp",
+      "from": "eks",
+      "to": "kubelet",
+      "y": 618,
+      "label": "HTTPS response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kubelet",
+      "from": 185,
+      "to": 624,
+      "type": "backend"
+    },
+    {
+      "participant": "router",
+      "from": 257,
+      "to": 470,
+      "type": "external"
+    },
+    {
+      "participant": "eks",
+      "from": 362,
+      "to": 408,
+      "type": "cloud"
+    },
+    {
+      "participant": "eks",
+      "from": 577,
+      "to": 623,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "On-premises routing table",
+      "items": [
+        "10.80.0.0/16 [local] via eth0 (CONNECTED)",
+        "10.0.0.0/16 [static] via Gateway (STATIC)",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2 · 10.85.2.0/24 [dynamic] via 10.80.0.3"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Cluster VPC routing table",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway (Remote Node CIDR)",
+        "10.85.0.0/16 [static] via Gateway (Remote Pod CIDR)"
+      ]
+    }
+  ]
+}

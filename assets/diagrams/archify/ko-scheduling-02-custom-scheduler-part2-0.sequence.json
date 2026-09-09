@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "스케줄러 확장 워크플로우",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      600
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "filter-phase",
+        "label": "필터 단계",
+        "focus": [
+          "api",
+          "scheduler",
+          "extender"
+        ],
+        "note": "내부 필터링 뒤 HTTP POST /filter로 확장의 커스텀 필터링 결과를 받는다"
+      },
+      {
+        "id": "prioritize-phase",
+        "label": "우선순위 단계",
+        "focus": [
+          "scheduler",
+          "extender"
+        ],
+        "note": "내부 점수 매기기 뒤 HTTP POST /prioritize로 확장의 노드 점수를 받아 합산한다"
+      },
+      {
+        "id": "bind-phase",
+        "label": "노드 선택과 바인딩",
+        "focus": [
+          "scheduler",
+          "api",
+          "node"
+        ],
+        "note": "최종 노드를 선택해 API 서버에 바인딩을 요청하고 Pod가 노드에 스케줄링된다"
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver"
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "기본 스케줄러",
+      "sublabel": "kube-scheduler"
+    },
+    {
+      "id": "extender",
+      "type": "external",
+      "label": "스케줄러 확장",
+      "sublabel": "HTTP 서비스"
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "노드",
+      "sublabel": "워커 노드"
+    }
+  ],
+  "segments": [
+    {
+      "from": 172,
+      "to": 300,
+      "label": "필터 단계"
+    },
+    {
+      "from": 318,
+      "to": 410,
+      "label": "우선순위 단계"
+    },
+    {
+      "from": 424,
+      "to": 504,
+      "label": "노드 선택과 바인딩"
+    }
+  ],
+  "messages": [
+    {
+      "id": "pod-create",
+      "from": "api",
+      "to": "scheduler",
+      "y": 190,
+      "label": "Pod 생성 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "filter-request",
+      "from": "scheduler",
+      "to": "extender",
+      "y": 232,
+      "label": "내부 필터링 후 필터 요청 · HTTP POST /filter",
+      "variant": "emphasis"
+    },
+    {
+      "id": "filtered-nodes",
+      "from": "extender",
+      "to": "scheduler",
+      "y": 276,
+      "label": "커스텀 필터링 결과 노드 목록 반환",
+      "variant": "return"
+    },
+    {
+      "id": "prioritize-request",
+      "from": "scheduler",
+      "to": "extender",
+      "y": 340,
+      "label": "내부 점수 매기기 후 우선순위 요청 · HTTP POST /prioritize",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-scores",
+      "from": "extender",
+      "to": "scheduler",
+      "y": 386,
+      "label": "커스텀 점수 반환",
+      "variant": "return"
+    },
+    {
+      "id": "bind-request",
+      "from": "scheduler",
+      "to": "api",
+      "y": 446,
+      "label": "최종 노드 선택 후 바인딩 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "schedule-pod",
+      "from": "api",
+      "to": "node",
+      "y": 488,
+      "label": "Pod 스케줄링",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "scheduler",
+      "from": 186,
+      "to": 452,
+      "type": "backend"
+    },
+    {
+      "participant": "extender",
+      "from": 228,
+      "to": 282,
+      "type": "external"
+    },
+    {
+      "participant": "extender",
+      "from": 336,
+      "to": 392,
+      "type": "external"
+    }
+  ]
+}

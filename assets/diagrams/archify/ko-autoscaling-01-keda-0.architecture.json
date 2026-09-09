@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KEDA 아키텍처",
+    "output": "ko-autoscaling-01-keda-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "polling",
+        "label": "외부 이벤트 소스 폴링",
+        "focus": [
+          "metrics-server",
+          "queues",
+          "databases",
+          "streaming",
+          "custom-metrics"
+        ],
+        "note": "KEDA 메트릭 서버가 외부 메트릭 소스를 주기적으로 폴링하여 메트릭을 수집한다."
+      },
+      {
+        "id": "hpa-management",
+        "label": "ScaledObject 감시와 HPA 관리",
+        "focus": [
+          "operator",
+          "scaledobject",
+          "hpa"
+        ],
+        "note": "오퍼레이터가 ScaledObject/ScaledJob을 감지하고 해당 HPA를 생성·갱신한다."
+      },
+      {
+        "id": "scaling",
+        "label": "워크로드 스케일링",
+        "focus": [
+          "metrics-server",
+          "hpa",
+          "scaledobject",
+          "workload"
+        ],
+        "note": "HPA가 메트릭 서버의 메트릭을 기반으로 ScaledObject가 참조하는 Deployment/Job을 스케일링한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "KEDA 컴포넌트 / HPA"
+        },
+        "cloud": {
+          "label": "Kubernetes 리소스"
+        },
+        "messagebus": {
+          "label": "메시지 큐 / 스트리밍"
+        },
+        "database": {
+          "label": "데이터베이스"
+        },
+        "external": {
+          "label": "커스텀 메트릭 소스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "KEDA Operator",
+      "sublabel": "ScaledObject 감시, HPA 관리",
+      "pos": [
+        250,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scaledobject",
+      "type": "cloud",
+      "label": "ScaledObject / ScaledJob",
+      "sublabel": "스케일링 대상과 트리거 정의",
+      "pos": [
+        500,
+        80
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "workload",
+      "type": "cloud",
+      "label": "Deployment / Job",
+      "sublabel": "스케일링 대상 워크로드",
+      "pos": [
+        770,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "metrics-server",
+      "type": "backend",
+      "label": "KEDA Metrics Server",
+      "sublabel": "외부 메트릭 수집·노출",
+      "pos": [
+        250,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "Horizontal Pod Autoscaler",
+      "sublabel": "메트릭 기반 스케일링",
+      "pos": [
+        500,
+        250
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "queues",
+      "type": "messagebus",
+      "label": "메시지 큐",
+      "sublabel": "Message Queues",
+      "pos": [
+        130,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "databases",
+      "type": "database",
+      "label": "데이터베이스",
+      "sublabel": "Databases",
+      "pos": [
+        360,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "streaming",
+      "type": "messagebus",
+      "label": "스트리밍 플랫폼",
+      "sublabel": "Streaming Platforms",
+      "pos": [
+        590,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "custom-metrics",
+      "type": "external",
+      "label": "커스텀 메트릭",
+      "sublabel": "Custom Metrics",
+      "pos": [
+        820,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "operator",
+        "scaledobject",
+        "workload",
+        "metrics-server",
+        "hpa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "외부 이벤트 소스",
+      "wraps": [
+        "queues",
+        "databases",
+        "streaming",
+        "custom-metrics"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "operator-watches",
+      "from": "operator",
+      "to": "scaledobject",
+      "label": "감시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "operator-hpa",
+      "from": "operator",
+      "to": "hpa",
+      "label": "HPA 생성 / 갱신",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-to-hpa",
+      "from": "metrics-server",
+      "to": "hpa",
+      "label": "메트릭 제공",
+      "labelDy": 47
+    },
+    {
+      "id": "scaledobject-refs",
+      "from": "scaledobject",
+      "to": "workload",
+      "label": "참조"
+    },
+    {
+      "id": "hpa-scales",
+      "from": "hpa",
+      "to": "workload",
+      "label": "스케일링",
+      "variant": "emphasis"
+    },
+    {
+      "id": "poll-queues",
+      "from": "metrics-server",
+      "to": "queues",
+      "label": "폴링",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "poll-databases",
+      "from": "metrics-server",
+      "to": "databases",
+      "label": "폴링",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "poll-streaming",
+      "from": "metrics-server",
+      "to": "streaming",
+      "label": "폴링",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "poll-custom",
+      "from": "metrics-server",
+      "to": "custom-metrics",
+      "label": "폴링",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "주요 구성 요소",
+      "items": [
+        "KEDA 오퍼레이터: ScaledObject/ScaledJob을 감시하고 HPA를 관리",
+        "KEDA 메트릭 서버: 외부 메트릭 소스의 메트릭을 수집해 Kubernetes API로 노출",
+        "ScaledObject/ScaledJob: Deployment·StatefulSet·Job의 스케일링 구성 정의"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "작동 방식",
+      "items": [
+        "사용자가 ScaledObject 또는 ScaledJob으로 대상과 트리거를 정의",
+        "오퍼레이터가 이를 감지해 해당 HPA를 생성",
+        "메트릭 서버가 외부 소스를 폴링하고 HPA가 그 메트릭으로 워크로드를 스케일링",
+        "활동이 없으면 KEDA가 복제본을 0으로 스케일 다운 (HPA 단독으로는 불가)"
+      ]
+    }
+  ]
+}

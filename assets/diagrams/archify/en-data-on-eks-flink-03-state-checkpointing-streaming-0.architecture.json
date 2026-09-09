@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink Streaming Pattern: Kafka to S3/Iceberg",
+    "output": "en-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      640
+    ],
+    "views": [
+      {
+        "id": "processing",
+        "label": "Source and state processing",
+        "focus": [
+          "source",
+          "flink",
+          "rocksdb"
+        ],
+        "note": "The Flink job consumes the MSK source topic and keeps operator state in the RocksDB state backend inside its TaskManagers."
+      },
+      {
+        "id": "checkpoint",
+        "label": "Periodic checkpoints",
+        "focus": [
+          "flink",
+          "rocksdb",
+          "s3ckpt"
+        ],
+        "note": "RocksDB state is snapshotted to S3 checkpoint storage on a fixed interval."
+      },
+      {
+        "id": "sinks",
+        "label": "Two sink paths",
+        "focus": [
+          "flink",
+          "kafkaout",
+          "iceberg"
+        ],
+        "note": "KafkaSink writes to the Kafka output topic with EXACTLY_ONCE 2PC; the Dynamic Iceberg Sink writes to Iceberg tables on S3."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "source",
+      "type": "messagebus",
+      "label": "MSK / Kafka",
+      "sublabel": "Source topic",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "Flink Job",
+      "sublabel": "Stream processing",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rocksdb",
+      "type": "database",
+      "label": "RocksDB",
+      "sublabel": "State backend",
+      "pos": [
+        480,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "s3ckpt",
+      "type": "cloud",
+      "label": "S3 Checkpoint",
+      "sublabel": "Storage",
+      "pos": [
+        480,
+        500
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kafkaout",
+      "type": "messagebus",
+      "label": "Kafka Output Topic",
+      "sublabel": "read_committed consumers",
+      "pos": [
+        1000,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "iceberg",
+      "type": "cloud",
+      "label": "S3 / Iceberg",
+      "sublabel": "Tables",
+      "pos": [
+        1000,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "TaskManagers",
+      "wraps": [
+        "rocksdb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "source-to-flink",
+      "from": "source",
+      "to": "flink",
+      "label": "consume",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flink-state",
+      "from": "flink",
+      "to": "rocksdb",
+      "label": "operator state",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "checkpoint",
+      "from": "flink",
+      "to": "s3ckpt",
+      "label": "periodic checkpoint",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "kafka-sink",
+      "from": "flink",
+      "to": "kafkaout",
+      "label": "KafkaSink · EXACTLY_ONCE 2PC"
+    },
+    {
+      "id": "iceberg-sink",
+      "from": "flink",
+      "to": "iceberg",
+      "label": "Dynamic Iceberg Sink"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Checkpoints",
+      "items": [
+        "EmbeddedRocksDBStateBackend state is snapshotted to S3 periodically",
+        "Incremental checkpoints transfer only changed SSTable files"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Exactly-once delivery",
+      "items": [
+        "KafkaWriter writes records inside an open Kafka transaction",
+        "KafkaCommitter commits the transaction after the checkpoint completes"
+      ]
+    }
+  ]
+}

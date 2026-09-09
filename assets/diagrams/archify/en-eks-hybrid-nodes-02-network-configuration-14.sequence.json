@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pattern 5: Pod ↔ Pod on Hybrid Nodes (VXLAN)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1085,
+      650
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Router forwarding"
+        },
+        "emphasis": {
+          "label": "Encapsulate / decapsulate"
+        },
+        "return": {
+          "label": "Reply (Node 2 → Node 1)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "poda",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "10.85.1.56"
+    },
+    {
+      "id": "cni1",
+      "type": "cloud",
+      "label": "CNI · Node 1",
+      "sublabel": "10.80.0.2 · Pod CIDR 10.85.1.0/24"
+    },
+    {
+      "id": "router",
+      "type": "external",
+      "label": "Router",
+      "sublabel": "on-prem routing table"
+    },
+    {
+      "id": "cni2",
+      "type": "cloud",
+      "label": "CNI · Node 2",
+      "sublabel": "10.80.0.3 · Pod CIDR 10.85.2.0/24"
+    },
+    {
+      "id": "podb",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "10.85.2.67"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 366,
+      "label": "Node 1 → Node 2 (VXLAN)"
+    },
+    {
+      "from": 388,
+      "to": 567,
+      "label": "Node 2 → Node 1 (VXLAN)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "poda",
+      "to": "cni1",
+      "y": 186,
+      "label": "① original packet 10.85.1.56 → 10.85.2.67",
+      "variant": "default",
+      "note": "CNI looks up the destination pod IP to find its node (10.80.0.3)"
+    },
+    {
+      "id": "m2",
+      "from": "cni1",
+      "to": "router",
+      "y": 239,
+      "label": "② VXLAN encapsulation · outer header 10.80.0.2 → 10.80.0.3 · UDP 8472",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m3",
+      "from": "router",
+      "to": "cni2",
+      "y": 287,
+      "label": "③ forwarded via route 10.85.2.0/24 [dynamic] via 10.80.0.3",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "cni2",
+      "to": "podb",
+      "y": 335,
+      "label": "④ decapsulate and deliver to destination pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "r1",
+      "from": "podb",
+      "to": "cni2",
+      "y": 418,
+      "label": "reply packet 10.85.2.67 → 10.85.1.56",
+      "variant": "return"
+    },
+    {
+      "id": "r2",
+      "from": "cni2",
+      "to": "router",
+      "y": 458,
+      "label": "VXLAN encapsulation 10.80.0.3 → 10.80.0.2",
+      "variant": "return"
+    },
+    {
+      "id": "r3",
+      "from": "router",
+      "to": "cni1",
+      "y": 497,
+      "label": "10.85.1.0/24 [dynamic] via 10.80.0.2",
+      "variant": "return"
+    },
+    {
+      "id": "r4",
+      "from": "cni1",
+      "to": "poda",
+      "y": 536,
+      "label": "decapsulate and deliver to Pod A",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "cni1",
+      "from": 182,
+      "to": 246,
+      "type": "cloud"
+    },
+    {
+      "participant": "router",
+      "from": 234,
+      "to": 293,
+      "type": "external"
+    },
+    {
+      "participant": "cni2",
+      "from": 282,
+      "to": 342,
+      "type": "cloud"
+    },
+    {
+      "participant": "cni2",
+      "from": 414,
+      "to": 464,
+      "type": "cloud"
+    },
+    {
+      "participant": "router",
+      "from": 453,
+      "to": 503,
+      "type": "external"
+    },
+    {
+      "participant": "cni1",
+      "from": 492,
+      "to": 543,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Router routing table",
+      "items": [
+        "10.80.0.0/16 [local] via eth0 (CONNECTED) — Remote Node CIDR",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2 · 10.85.2.0/24 [dynamic] via 10.80.0.3",
+        "10.0.0.0/16 [static] via Gateway — route toward the VPC (not used in this flow)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "VXLAN encapsulation",
+      "items": [
+        "Outer IP header uses the source/destination node IPs (10.80.0.2 → 10.80.0.3)",
+        "UDP port 8472 (Cilium default) · VNI isolates pod network traffic",
+        "The receiving node's CNI strips the VXLAN and outer headers and delivers the original packet to the destination pod"
+      ]
+    }
+  ]
+}

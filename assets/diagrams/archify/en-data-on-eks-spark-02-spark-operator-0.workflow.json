@@ -1,0 +1,203 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How the Spark Operator Works",
+    "locale": "en",
+    "output": "en-data-on-eks-spark-02-spark-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "submit",
+        "label": "Submit and watch",
+        "focus": [
+          "apply",
+          "watch",
+          "webhook",
+          "driver"
+        ],
+        "note": "kubectl apply creates the SparkApplication CR; the Controller watches it and creates the driver Pod through the webhook."
+      },
+      {
+        "id": "run",
+        "label": "Driver-led execution",
+        "focus": [
+          "driver",
+          "executor",
+          "run"
+        ],
+        "note": "The Operator only touches the driver Pod directly; the driver requests executor Pods from the Kubernetes API itself."
+      },
+      {
+        "id": "loop",
+        "label": "Status reporting loop",
+        "focus": [
+          "run",
+          "status",
+          "watch"
+        ],
+        "note": "Progress is written back to the CR .status and control returns to the Controller's watch loop."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "User submission"
+        },
+        "backend": {
+          "label": "Spark Operator"
+        },
+        "security": {
+          "label": "Mutating Webhook"
+        },
+        "database": {
+          "label": "CR .status write"
+        },
+        "cloud": {
+          "label": "Spark Pods"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "User"
+    },
+    {
+      "id": "operator",
+      "label": "Spark Operator"
+    },
+    {
+      "id": "admission",
+      "label": "Mutating Admission Webhook"
+    },
+    {
+      "id": "spark",
+      "label": "Spark Driver / Executor"
+    }
+  ],
+  "mainPath": [
+    "apply",
+    "watch",
+    "webhook",
+    "driver",
+    "executor",
+    "run",
+    "status"
+  ],
+  "nodes": [
+    {
+      "id": "apply",
+      "lane": "user",
+      "col": 0,
+      "type": "frontend",
+      "label": "kubectl apply",
+      "sublabel": "SparkApplication CR",
+      "width": 176
+    },
+    {
+      "id": "watch",
+      "lane": "operator",
+      "col": 1,
+      "type": "backend",
+      "label": "Controller watches CR",
+      "sublabel": "reconcile loop",
+      "tag": "control loop",
+      "width": 176
+    },
+    {
+      "id": "webhook",
+      "lane": "admission",
+      "col": 2,
+      "type": "security",
+      "label": "Customize pods",
+      "sublabel": "driver/executor pod",
+      "width": 176
+    },
+    {
+      "id": "driver",
+      "lane": "operator",
+      "col": 3,
+      "type": "backend",
+      "label": "Create Driver Pod",
+      "sublabel": "spark-driver",
+      "width": 176
+    },
+    {
+      "id": "executor",
+      "lane": "spark",
+      "col": 4,
+      "type": "cloud",
+      "label": "Request Executor Pods",
+      "sublabel": "requested by the driver",
+      "width": 176
+    },
+    {
+      "id": "run",
+      "lane": "spark",
+      "col": 5,
+      "type": "cloud",
+      "label": "Spark job runs",
+      "sublabel": "on the executors",
+      "width": 176
+    },
+    {
+      "id": "status",
+      "lane": "operator",
+      "col": 5,
+      "type": "database",
+      "label": "Write progress",
+      "sublabel": "CR .status",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "apply-to-watch",
+      "from": "apply",
+      "to": "watch",
+      "label": "create CR",
+      "toSide": "left"
+    },
+    {
+      "id": "watch-to-webhook",
+      "from": "watch",
+      "to": "webhook"
+    },
+    {
+      "id": "webhook-to-driver",
+      "from": "webhook",
+      "to": "driver",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "driver-to-executor",
+      "from": "driver",
+      "to": "executor",
+      "label": "Kubernetes API"
+    },
+    {
+      "id": "executor-to-run",
+      "from": "executor",
+      "to": "run"
+    },
+    {
+      "id": "run-to-status",
+      "from": "run",
+      "to": "status",
+      "label": "report status"
+    },
+    {
+      "id": "status-to-watch",
+      "from": "status",
+      "to": "watch",
+      "label": "watch again",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ]
+}
