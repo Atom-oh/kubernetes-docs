@@ -138,6 +138,15 @@
 ### GitOps
 - [ArgoCD 퀴즈](./gitops/01-argocd-quiz.md)
 
+### 엔터프라이즈 클라우드 거버넌스
+- [거버넌스 개요 퀴즈](./governance/00-governance-overview-quiz.md)
+- [Landing Zone, OU와 조직 Control 퀴즈](./governance/01-landing-zone-and-ou-quiz.md)
+- [Account 구성과 IAM 경계 퀴즈](./governance/02-account-and-iam-quiz.md)
+- [EKS 멀티 계정·멀티 클러스터 아키텍처 퀴즈](./governance/03-eks-multi-account-multi-cluster-quiz.md)
+- [Shared VPC와 Connectivity 퀴즈](./governance/04-shared-vpc-and-connectivity-quiz.md)
+- [Data·Security 경계 퀴즈](./governance/05-data-security-boundaries-quiz.md)
+- [의사결정 프레임워크와 POC 설계 퀴즈](./governance/06-decision-framework-and-poc-quiz.md)
+
 ### Autoscaling
 - [KEDA 퀴즈](./autoscaling/05-keda-quiz.md)
 - [Karpenter 퀴즈](./autoscaling/06-karpenter-quiz.md)

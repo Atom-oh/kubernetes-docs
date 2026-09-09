@@ -301,6 +301,16 @@
   * [Flagger Progressive Delivery](gitops/04-flagger.md)
   * [Feature Flags and OpenFeature](gitops/05-feature-flags.md)
 
+## Enterprise Cloud Governance
+
+* [Governance Overview](governance/00-governance-overview.md)
+* [Landing Zone, OUs, and Organizational Control](governance/01-landing-zone-and-ou.md)
+* [Account Structure and IAM Boundaries](governance/02-account-and-iam.md)
+* [Multi-Account, Multi-Cluster EKS Architecture](governance/03-eks-multi-account-multi-cluster.md)
+* [Shared VPC and Connectivity](governance/04-shared-vpc-and-connectivity.md)
+* [Data and Security Boundaries](governance/05-data-security-boundaries.md)
+* [Decision Framework and PoC Design](governance/06-decision-framework-and-poc.md)
+
 ## Platform Engineering
 
 * [Platform Engineering Overview](platform-engineering/00-platform-engineering-overview.md)
@@ -608,6 +618,14 @@
   * [GitOps Tools Comparison Quiz](quizzes/gitops/03-gitops-comparison-quiz.md)
   * [Flagger Progressive Delivery Quiz](quizzes/gitops/04-flagger-quiz.md)
   * [Feature Flags and OpenFeature Quiz](quizzes/gitops/05-feature-flags-quiz.md)
+* Enterprise Cloud Governance
+  * [Governance Overview Quiz](quizzes/governance/00-governance-overview-quiz.md)
+  * [Landing Zone, OUs, and Organizational Control Quiz](quizzes/governance/01-landing-zone-and-ou-quiz.md)
+  * [Account Structure and IAM Boundaries Quiz](quizzes/governance/02-account-and-iam-quiz.md)
+  * [Multi-Account, Multi-Cluster EKS Architecture Quiz](quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md)
+  * [Shared VPC and Connectivity Quiz](quizzes/governance/04-shared-vpc-and-connectivity-quiz.md)
+  * [Data and Security Boundaries Quiz](quizzes/governance/05-data-security-boundaries-quiz.md)
+  * [Decision Framework and PoC Design Quiz](quizzes/governance/06-decision-framework-and-poc-quiz.md)
 * Observability
   * Metrics
     * [Metrics Overview Quiz](quizzes/observability/metrics/00-metrics-overview-quiz.md)

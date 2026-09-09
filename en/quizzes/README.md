@@ -134,6 +134,15 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 ### GitOps
 - [ArgoCD Quiz](./gitops/01-argocd-quiz.md)
 
+### Enterprise Cloud Governance
+- [Governance Overview Quiz](./governance/00-governance-overview-quiz.md)
+- [Landing Zone, OUs, and Organizational Control Quiz](./governance/01-landing-zone-and-ou-quiz.md)
+- [Account Structure and IAM Boundaries Quiz](./governance/02-account-and-iam-quiz.md)
+- [Multi-Account, Multi-Cluster EKS Architecture Quiz](./governance/03-eks-multi-account-multi-cluster-quiz.md)
+- [Shared VPC and Connectivity Quiz](./governance/04-shared-vpc-and-connectivity-quiz.md)
+- [Data and Security Boundaries Quiz](./governance/05-data-security-boundaries-quiz.md)
+- [Decision Framework and PoC Design Quiz](./governance/06-decision-framework-and-poc-quiz.md)
+
 ### Autoscaling
 - [KEDA Quiz](./autoscaling/05-keda-quiz.md)
 - [Karpenter Quiz](./autoscaling/06-karpenter-quiz.md)
