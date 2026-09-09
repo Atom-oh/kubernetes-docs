@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Feature Maturity Model",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "not-for-production",
+        "label": "Alpha: not for production",
+        "focus": [
+          "alpha"
+        ],
+        "note": "Disabled by default, may be buggy, and may be removed at any time."
+      },
+      {
+        "id": "graduation",
+        "label": "Graduation path",
+        "focus": [
+          "alpha",
+          "beta",
+          "ga"
+        ],
+        "note": "Every feature enters as Alpha, matures through Beta, and graduates to GA."
+      },
+      {
+        "id": "production-ready",
+        "label": "GA: safe for production",
+        "focus": [
+          "ga"
+        ],
+        "note": "Always enabled, backward compatible, and will not be removed."
+      }
+    ],
+    "viewBox": [
+      1060,
+      680
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Alpha — disabled by default, not for production"
+    },
+    {
+      "id": "beta",
+      "label": "Beta — well-tested, opt-in via feature gate"
+    },
+    {
+      "id": "terminal",
+      "label": "GA (Stable) — always enabled, safe for production"
+    }
+  ],
+  "states": [
+    {
+      "id": "alpha",
+      "type": "start",
+      "label": "Alpha",
+      "sublabel": "disabled by default",
+      "tag": "not for production",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "beta",
+      "type": "active",
+      "label": "Beta",
+      "sublabel": "well-tested, may change",
+      "tag": "non-critical workloads",
+      "lane": "beta",
+      "col": 2,
+      "step": "02"
+    },
+    {
+      "id": "ga",
+      "type": "success",
+      "label": "GA (Stable)",
+      "sublabel": "always enabled",
+      "tag": "safe for production",
+      "lane": "terminal",
+      "col": 2,
+      "step": "03"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "alpha",
+      "to": "beta",
+      "label": "graduates"
+    },
+    {
+      "from": "beta",
+      "to": "ga",
+      "label": "graduates",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Alpha",
+      "items": [
+        "Disabled by default",
+        "May be buggy, no guarantees",
+        "May be removed at any time",
+        "Not for production"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Beta",
+      "items": [
+        "Since 1.24 not enabled by default in new clusters; explicit opt-in via feature gates",
+        "Well-tested; details may change",
+        "OK for non-critical workloads"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "GA (Stable)",
+      "items": [
+        "Always enabled, feature gate locked",
+        "Backward compatible; will not be removed",
+        "Safe for production",
+        "Since 1.28 the feature gate is removed two releases after GA"
+      ]
+    }
+  ]
+}

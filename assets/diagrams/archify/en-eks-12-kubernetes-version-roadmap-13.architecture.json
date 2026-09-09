@@ -2,148 +2,227 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kubernetes 1.36 Enhancement Maturity Breakdown",
+    "title": "Dynamic Resource Allocation (DRA) Architecture",
     "locale": "en",
     "output": "en-eks-12-kubernetes-version-roadmap-13.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [
-      843,
-      520
-    ],
     "legend": {
+      "mode": "auto",
       "entries": {
-        "cloud": {
-          "label": "Release"
+        "database": {
+          "label": "DRA API objects"
         },
         "backend": {
-          "label": "Maturity stage"
+          "label": "Kubernetes components"
+        },
+        "external": {
+          "label": "Vendor DRA driver"
         }
       }
-    }
+    },
+    "views": [
+      {
+        "id": "claim-path",
+        "label": "Claim to device",
+        "focus": [
+          "deviceclass",
+          "claim",
+          "scheduler",
+          "kubelet"
+        ],
+        "note": "A ResourceClaim selects a DeviceClass, the scheduler places the pod, and the kubelet prepares the device."
+      },
+      {
+        "id": "api-objects",
+        "label": "API objects",
+        "focus": [
+          "deviceclass",
+          "claim",
+          "template"
+        ],
+        "note": "DeviceClass defines device types; ResourceClaim and ResourceClaimTemplate request them."
+      },
+      {
+        "id": "driver",
+        "label": "DRA driver",
+        "focus": [
+          "driver",
+          "scheduler",
+          "kubelet"
+        ],
+        "note": "The vendor driver supplies device info to the scheduler and prepares devices with the kubelet."
+      }
+    ],
+    "viewBox": [
+      1180,
+      600
+    ]
   },
   "components": [
     {
-      "id": "release",
-      "type": "cloud",
-      "label": "Kubernetes 1.36 \"Haru\"",
-      "sublabel": "68 enhancements in total",
-      "tag": "April 2026",
+      "id": "deviceclass",
+      "type": "database",
+      "label": "DeviceClass",
+      "sublabel": "Define device types",
+      "tag": "CEL selectors",
       "pos": [
         40,
-        210
+        230
       ],
       "size": [
-        220,
-        64
+        180,
+        60
       ]
     },
     {
-      "id": "stable",
-      "type": "backend",
-      "label": "Stable (GA)",
-      "sublabel": "18 enhancements",
+      "id": "claim",
+      "type": "database",
+      "label": "ResourceClaim",
+      "sublabel": "Request devices",
       "pos": [
-        520,
-        70
+        320,
+        90
       ],
       "size": [
-        200,
-        64
+        180,
+        60
       ]
     },
     {
-      "id": "beta",
-      "type": "backend",
-      "label": "Beta",
-      "sublabel": "25 enhancements",
+      "id": "template",
+      "type": "database",
+      "label": "ResourceClaimTemplate",
+      "sublabel": "Per-pod claim creation",
       "pos": [
-        520,
-        210
+        320,
+        370
       ],
       "size": [
-        200,
-        64
+        210,
+        60
       ]
     },
     {
-      "id": "alpha",
-      "type": "backend",
-      "label": "Alpha",
-      "sublabel": "25 enhancements",
+      "id": "driver",
+      "type": "external",
+      "label": "DRA Driver",
+      "sublabel": "nvidia, intel, etc.",
       "pos": [
-        520,
-        350
+        660,
+        470
       ],
       "size": [
-        200,
-        64
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Scheduler",
+      "sublabel": "Device-aware scheduling",
+      "pos": [
+        660,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "Device preparation",
+      "pos": [
+        940,
+        230
+      ],
+      "size": [
+        180,
+        60
       ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
-      "label": "Breakdown by maturity stage",
+      "label": "resource.k8s.io/v1",
       "wraps": [
-        "stable",
-        "beta",
-        "alpha"
+        "deviceclass",
+        "claim",
+        "template"
       ]
     }
   ],
   "connections": [
     {
-      "id": "release-stable",
-      "from": "release",
-      "to": "stable",
-      "label": "graduated to GA",
+      "id": "class-to-claim",
+      "from": "deviceclass",
+      "to": "claim",
+      "label": "deviceClassName",
       "variant": "emphasis"
     },
     {
-      "id": "release-beta",
-      "from": "release",
-      "to": "beta",
-      "label": "enabled by default",
-      "labelDx": 60
+      "id": "class-to-template",
+      "from": "deviceclass",
+      "to": "template",
+      "label": "deviceClassName"
     },
     {
-      "id": "release-alpha",
-      "from": "release",
-      "to": "alpha",
-      "label": "feature gate required",
+      "id": "claim-to-scheduler",
+      "from": "claim",
+      "to": "scheduler",
+      "variant": "emphasis"
+    },
+    {
+      "id": "template-to-scheduler",
+      "from": "template",
+      "to": "scheduler"
+    },
+    {
+      "id": "driver-to-scheduler",
+      "from": "driver",
+      "to": "scheduler",
+      "label": "device info",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "scheduler-to-kubelet",
+      "from": "scheduler",
+      "to": "kubelet",
+      "label": "allocated claim",
+      "variant": "emphasis"
+    },
+    {
+      "id": "driver-to-kubelet",
+      "from": "driver",
+      "to": "kubelet",
+      "label": "prepare devices",
       "variant": "dashed"
     }
   ],
   "cards": [
     {
-      "dot": "orange",
-      "title": "Release themes",
+      "dot": "violet",
+      "title": "API objects (GA in 1.34)",
       "items": [
-        "Security hardening",
-        "AI/ML workload support",
-        "API extensibility"
+        "DeviceClass selects hardware with CEL expressions (driver, attributes)",
+        "ResourceClaim requests a count of devices with constraints such as matchAttribute",
+        "ResourceClaimTemplate auto-creates a claim per pod"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Key GA features",
+      "title": "Pod usage",
       "items": [
-        "Mutating Admission Policies (KEP-3962)",
-        "User Namespaces -- feature gate removed",
-        "KYAML stabilized",
-        "Gang Scheduling (KEP-4832)",
-        "Fine-Grained Kubelet API Authorization",
-        "Legacy ServiceAccount Token Cleanup"
-      ]
-    },
-    {
-      "dot": "cyan",
-      "title": "Key Beta features",
-      "items": [
-        "DRA: Device Health Monitoring",
-        "Node Maintenance Mode",
-        "StatefulSet In-Place Resize"
+        "Pod lists claims under spec.resourceClaims",
+        "Containers reference them via resources.claims",
+        "Replaces the legacy device plugin model"
       ]
     }
   ]

@@ -52,7 +52,7 @@
           "v135",
           "v136"
         ],
-        "note": "1.33~1.36은 Standard Support 중이며, 1.36이 2026년 6월 출시된 최신 버전이다."
+        "note": "1.34~1.36은 Standard Support 중이며, 1.36이 2026년 6월 출시된 최신 버전이다."
       }
     ]
   },
@@ -62,7 +62,7 @@
       "type": "external",
       "label": "Kubernetes 1.29",
       "sublabel": "Standard 종료 2025-03 · Extended 종료 2026-03",
-      "tag": "EKS 릴리스 2024-03",
+      "tag": "EKS 릴리스 2024-01",
       "pos": [
         40,
         90
@@ -77,7 +77,7 @@
       "type": "cloud",
       "label": "Kubernetes 1.30",
       "sublabel": "Standard 종료 2025-07 · Extended 종료 2026-07",
-      "tag": "EKS 릴리스 2024-07",
+      "tag": "EKS 릴리스 2024-05",
       "pos": [
         340,
         90
@@ -91,8 +91,8 @@
       "id": "v131",
       "type": "cloud",
       "label": "Kubernetes 1.31",
-      "sublabel": "Standard 종료 2025-10 · Extended 종료 2026-10",
-      "tag": "EKS 릴리스 2024-10",
+      "sublabel": "Standard 종료 2025-11 · Extended 종료 2026-11",
+      "tag": "EKS 릴리스 2024-09",
       "pos": [
         610,
         90
@@ -106,7 +106,7 @@
       "id": "v132",
       "type": "cloud",
       "label": "Kubernetes 1.32",
-      "sublabel": "Standard 종료 2026-01 · Extended 종료 2027-01",
+      "sublabel": "Standard 종료 2026-03 · Extended 종료 2027-03",
       "tag": "EKS 릴리스 2025-01",
       "pos": [
         880,
@@ -121,8 +121,8 @@
       "id": "v133",
       "type": "backend",
       "label": "Kubernetes 1.33",
-      "sublabel": "Standard 종료 2026-08 · Extended 종료 2027-08",
-      "tag": "EKS 릴리스 2025-06",
+      "sublabel": "Standard 종료 2026-07 · Extended 종료 2027-07",
+      "tag": "EKS 릴리스 2025-05",
       "pos": [
         40,
         330
@@ -151,8 +151,8 @@
       "id": "v135",
       "type": "backend",
       "label": "Kubernetes 1.35",
-      "sublabel": "Standard 종료 2027-04 · Extended 종료 2028-04",
-      "tag": "EKS 릴리스 2026-02",
+      "sublabel": "Standard 종료 2027-03 · Extended 종료 2028-03",
+      "tag": "EKS 릴리스 2026-01",
       "pos": [
         600,
         330
@@ -274,7 +274,7 @@
       "dot": "slate",
       "title": "날짜 안내",
       "items": [
-        "버전별 지원 상태 구분은 2026년 6월 기준이다",
+        "버전별 지원 상태 구분은 2026년 9월 기준이다",
         "표기 날짜는 대략적인 예상이며 AWS 공식 문서를 확인해야 한다",
         "EKS 릴리스는 upstream 릴리스 후 통상 2~8주 뒤에 이루어진다"
       ]

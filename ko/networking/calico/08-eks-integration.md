@@ -208,7 +208,7 @@ helm upgrade calico projectcalico/tigera-operator \
 
 EKS v1.25+에서는 AWS가 자체 Network Policy Controller를 제공합니다. 이것은 Calico와 별개의 구현입니다.
 
-![Kubernetes NetworkPolicy는 VPC CNI의 Network Policy Controller(NPC) 또는 Calico의 Felix 중 하나가 강제하고, GlobalNetworkPolicy 같은 Calico 전용 정책은 Felix만 처리하므로 두 엔진을 동시에 활성화하면 충돌한다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-2.png)
+![Kubernetes NetworkPolicy는 VPC CNI의 Network Policy Controller(NPC) 또는 Calico의 Felix 중 하나가 강제하고, GlobalNetworkPolicy 같은 Calico 전용 정책은 Felix만 처리하므로 두 엔진을 동시에 활성화하면 충돌하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-08-eks-integration-2.html)
 

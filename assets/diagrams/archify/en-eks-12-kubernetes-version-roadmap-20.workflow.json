@@ -1,0 +1,221 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Version Lag vs. Upstream Kubernetes",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "upstream-cadence",
+        "label": "Upstream cadence",
+        "focus": [
+          "k33",
+          "k34",
+          "k35",
+          "k36"
+        ],
+        "note": "Upstream Kubernetes minor releases land roughly every four months, from 2025-04 to 2026-04."
+      },
+      {
+        "id": "eks-lag",
+        "label": "EKS availability lag",
+        "focus": [
+          "k33",
+          "e33",
+          "k34",
+          "e34",
+          "k35",
+          "e35",
+          "k36",
+          "e36"
+        ],
+        "note": "Each EKS release follows its upstream release by about two months; 1.36 is the most recent EKS release."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "upstream",
+      "label": "Upstream Kubernetes"
+    },
+    {
+      "id": "eks",
+      "label": "Amazon EKS"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p33",
+      "label": "Kubernetes 1.33",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p34",
+      "label": "Kubernetes 1.34",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p35",
+      "label": "Kubernetes 1.35",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "p36",
+      "label": "Kubernetes 1.36",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "k33",
+    "k34",
+    "k35",
+    "k36",
+    "e36"
+  ],
+  "nodes": [
+    {
+      "id": "k33",
+      "lane": "upstream",
+      "col": 0,
+      "type": "external",
+      "label": "1.33 released",
+      "sublabel": "2025-04"
+    },
+    {
+      "id": "k34",
+      "lane": "upstream",
+      "col": 1,
+      "type": "external",
+      "label": "1.34 released",
+      "sublabel": "2025-08"
+    },
+    {
+      "id": "k35",
+      "lane": "upstream",
+      "col": 2,
+      "type": "external",
+      "label": "1.35 released",
+      "sublabel": "2025-12"
+    },
+    {
+      "id": "k36",
+      "lane": "upstream",
+      "col": 3,
+      "type": "external",
+      "label": "1.36 released",
+      "sublabel": "2026-04"
+    },
+    {
+      "id": "e33",
+      "lane": "eks",
+      "col": 0,
+      "type": "cloud",
+      "label": "1.33 on EKS",
+      "sublabel": "EKS: May 2025"
+    },
+    {
+      "id": "e34",
+      "lane": "eks",
+      "col": 1,
+      "type": "cloud",
+      "label": "1.34 on EKS",
+      "sublabel": "EKS: Oct 2025"
+    },
+    {
+      "id": "e35",
+      "lane": "eks",
+      "col": 2,
+      "type": "cloud",
+      "label": "1.35 on EKS",
+      "sublabel": "EKS: Jan 2026"
+    },
+    {
+      "id": "e36",
+      "lane": "eks",
+      "col": 3,
+      "type": "cloud",
+      "label": "1.36 on EKS",
+      "sublabel": "EKS: Jun 2026",
+      "tag": "most recent"
+    }
+  ],
+  "edges": [
+    {
+      "from": "k33",
+      "to": "k34",
+      "label": "+4 months",
+      "route": "straight"
+    },
+    {
+      "from": "k34",
+      "to": "k35",
+      "label": "+4 months",
+      "route": "straight"
+    },
+    {
+      "from": "k35",
+      "to": "k36",
+      "label": "+4 months",
+      "route": "straight"
+    },
+    {
+      "from": "k33",
+      "to": "e33",
+      "variant": "dashed",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "k34",
+      "to": "e34",
+      "variant": "dashed",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "k35",
+      "to": "e35",
+      "variant": "dashed",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "k36",
+      "to": "e36",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Reading the Figure",
+      "items": [
+        "Top lane: upstream Kubernetes release month for 1.33 through 1.36",
+        "Bottom lane: when the same version became available on Amazon EKS",
+        "Plotted releases lag upstream by about 1-2 months; the section text cites approximately 2-4 months"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What the Lag Buys",
+      "items": [
+        "Stability: AWS validates the release with EKS-specific integrations",
+        "Add-on compatibility: managed add-ons are tested and updated",
+        "AMI availability and security patches: optimized EKS AMIs are built and known CVEs are addressed before release"
+      ]
+    }
+  ]
+}

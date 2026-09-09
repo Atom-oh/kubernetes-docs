@@ -274,7 +274,7 @@ addons:
 
 ### EKS 기본 네트워킹 아키텍처
 
-![인터넷 트래픽이 VPC 안의 Internet Gateway를 거쳐 ALB로, 또는 곧바로 NLB로 진입한 뒤 EKS 클러스터의 Worker Node로 전달되며, VPC 안에는 가용영역 A·B마다 퍼블릭/프라이빗 서브넷이 있고 NAT Gateway와 AWS 관리형 Control Plane이 함께 구성되어 있음을 보여주는 다이어그램.](../.gitbook/assets/ko-networking-readme-8.png)
+![인터넷 트래픽이 VPC 안의 Internet Gateway를 거쳐 ALB로, 또는 곧바로 NLB로 진입한 뒤 EKS 클러스터의 Worker Node로 전달되며, VPC 안에는 가용영역 A·B마다 퍼블릭/프라이빗 서브넷이 있고 NAT Gateway와 AWS 관리형 Control Plane이 함께 구성되어 있음을 보여준다.](../.gitbook/assets/ko-networking-readme-8.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-8.html)
 

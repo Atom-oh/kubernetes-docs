@@ -82,7 +82,7 @@ Each release follows a structured timeline spanning approximately 15 weeks:
 
 Kubernetes uses a three-stage graduation model for all features. Understanding these stages is critical for production planning.
 
-![Flowchart of the KEP (Kubernetes Enhancement Proposal) process: an idea becomes a KEP draft, passes SIG review and approval or is sent back for revision, reaches Implementable, then graduates Alpha to Beta to GA until the feature gate is removed.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-2.png)
+![Lifecycle diagram of the three-stage Kubernetes feature maturity model, Alpha graduating to Beta and then to GA, with the stability and production-readiness guarantees of each stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-2.html)
 
@@ -156,7 +156,7 @@ Amazon EKS provides two tiers of version support:
 | **Standard Support** | 14 months from EKS release | $0.10/cluster/hour | Full feature support, security patches, bug fixes |
 | **Extended Support** | Additional 12 months | $0.60/cluster/hour | Security patches and critical bug fixes only |
 
-> **Cost Impact**: Extended support costs 6x the standard support price. For a single cluster running 24/7, this translates to approximately $4,380/year in extended support vs. $730/year in standard support -- an additional $3,650 per cluster per year.
+> **Cost Impact**: Extended support costs 6x the standard support price. For a single cluster running 24/7, this translates to approximately $5,256/year in extended support vs. $876/year in standard support -- an additional $4,380 per cluster per year.
 
 ### Version Lifecycle Diagram
 
@@ -170,14 +170,16 @@ The table below tracks each Kubernetes version supported by EKS, including upstr
 
 | K8s Version | Code Name | Upstream Release | EKS Release | Standard Support End | Extended Support End | Current Status |
 |-------------|-----------|-----------------|-------------|---------------------|---------------------|----------------|
-| **1.29** | Mandala | Dec 2023 | Jun 2024 | Aug 2025 | Aug 2026 | Extended Support |
-| **1.30** | Uwubernetes | Apr 2024 | Sep 2024 | Nov 2025 | Nov 2026 | Extended Support |
-| **1.31** | Elli | Aug 2024 | Dec 2024 | Feb 2026 | Feb 2027 | Extended Support |
-| **1.32** | Penelope | Dec 2024 | Mar 2025 | May 2026 | May 2027 | Standard Support |
-| **1.33** | Octarine | Apr 2025 | Jun 2025 | Aug 2026 | Aug 2027 | Standard Support |
+| **1.29** | Mandala | Dec 2023 | Jan 2024 | Mar 2025 | Mar 2026 | End of Support |
+| **1.30** | Uwubernetes | Apr 2024 | May 2024 | Jul 2025 | Jul 2026 | End of Support |
+| **1.31** | Elli | Aug 2024 | Sep 2024 | Nov 2025 | Nov 2026 | Extended Support |
+| **1.32** | Penelope | Dec 2024 | Jan 2025 | Mar 2026 | Mar 2027 | Extended Support |
+| **1.33** | Octarine | Apr 2025 | May 2025 | Jul 2026 | Jul 2027 | Extended Support |
 | **1.34** | Of Wind & Will | Aug 2025 | Oct 2025 | Dec 2026 | Dec 2027 | Standard Support |
-| **1.35** | Timbernetes | Dec 2025 | Feb 2026 | Apr 2027 | Apr 2028 | Standard Support |
+| **1.35** | Timbernetes | Dec 2025 | Jan 2026 | Mar 2027 | Mar 2028 | Standard Support |
 | **1.36** | ハル (Haru) | Apr 2026 | Jun 2026 | Aug 2027 | Aug 2028 | Standard Support |
+
+Source: [Amazon EKS Kubernetes release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html); status column as of September 2026.
 
 > **Note**: EKS release dates typically lag upstream Kubernetes releases by 2-4 months. AWS uses this time to validate the release, integrate with EKS-managed add-ons, and ensure compatibility with AWS services.
 
@@ -185,9 +187,9 @@ The table below tracks each Kubernetes version supported by EKS, including upstr
 
 When a Kubernetes version reaches end of support (including extended support), EKS will automatically upgrade your cluster:
 
-![Shows each EKS Kubernetes version from 1.29 to 1.36 in release order with its Standard Support and Extended Support end dates and its support status as of June 2026.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-4.png)
+![Flowchart showing what happens when an EKS Kubernetes version approaches end of life: clusters may continue on paid extended support, but once a 60-day deprecation notice expires without a user upgrade, AWS force-upgrades the cluster.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-5.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-4.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-5.html)
 
 **Important**: Auto-upgrades only update the control plane. You must still upgrade your node groups, add-ons, and self-managed components manually. A forced control plane upgrade without corresponding node and add-on upgrades can cause workload disruptions.
 
@@ -915,7 +917,7 @@ spec:
 
 **Sidecar container lifecycle guarantees:**
 
-![Kubernetes 1.34 "Of Wind & Will" splits its 58 enhancements into 23 Stable, 22 Beta, and 13 Alpha, with DRA Core APIs and VolumeAttributesClass highlighted as the release's key GA graduations.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-11.png)
+![Sequence diagram showing the kubelet starting two sidecar containers, then an init container that must run to completion, then the main container; on pod shutdown the kubelet terminates the main container first and the sidecars last in reverse start order.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-11.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-11.html)
 
@@ -1181,7 +1183,7 @@ spec:
             request: gpu
 ```
 
-![Diagram showing the 68 enhancements in Kubernetes 1.36 "Haru" split by maturity stage into 18 Stable (GA), 25 Beta, and 25 Alpha, with the graduated-to-GA path emphasized, Beta enabled by default, and Alpha requiring a feature gate.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-13.png)
+![Architecture diagram of Dynamic Resource Allocation, GA in Kubernetes 1.34: a DeviceClass feeds ResourceClaims and ResourceClaimTemplates into the device-aware scheduler, which also takes device info from the DRA driver, before the kubelet prepares the devices.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-13.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-13.html)
 
@@ -1327,7 +1329,7 @@ spec:
 
 **Release Stats**: 60 enhancements -- 17 Stable, 19 Beta, 22 Alpha
 
-![Lifecycle diagram of Kubernetes 1.35 "Timbernetes" enhancements by maturity stage along the Alpha to Beta to Stable graduation path: 22 Alpha, 19 Beta and 17 Stable (GA) out of 58 total, with Stable highlighted and key features listed per stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-15.png)
+![Lifecycle diagram of Kubernetes 1.35 "Timbernetes" enhancements by maturity stage along the Alpha to Beta to Stable graduation path: 22 Alpha, 19 Beta and 17 Stable (GA) out of 60 total, with Stable highlighted and key features listed per stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-15.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-15.html)
 
@@ -2334,9 +2336,9 @@ EKS releases lag behind upstream Kubernetes by approximately 2-4 months. This la
 | **AMI Availability** | Optimized EKS AMIs are built and tested |
 | **Security Patches** | Known CVEs are addressed before release |
 
-![Decision flow that branches on the time left in Standard Support into a planned upgrade, an immediate upgrade, or an Extended Support cost review, ending in either a production upgrade or staying on Extended Support.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-16.png)
+![Two-lane timeline pairing upstream Kubernetes release months for 1.33 through 1.36 with their Amazon EKS availability, showing a consistent roughly two-month lag, with 1.36 highlighted as the most recent EKS release.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-20.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-16.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-20.html)
 
 ### EKS Feature Gate Availability
 
@@ -2438,6 +2440,11 @@ Additional cost per cluster in extended support:  $4,380/year
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-19.html)
 
 ---
+
+![Decision flow that branches on the time left in Standard Support into a planned upgrade, an immediate upgrade, or an Extended Support cost review, ending in either a production upgrade or staying on Extended Support.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-16.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-16.html)
+
 
 ## 8. Version Upgrade Planning
 

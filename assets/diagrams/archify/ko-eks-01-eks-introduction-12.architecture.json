@@ -21,14 +21,14 @@
       },
       {
         "id": "pods",
-        "label": "포드 네트워킹",
+        "label": "Pod 네트워킹",
         "focus": [
           "node-a",
           "node-b",
           "pods-a",
           "pods-b"
         ],
-        "note": "VPC CNI가 각 포드에 VPC IP를 할당하므로 가용 영역 간 포드도 VPC 네트워크로 직접 통신한다."
+        "note": "VPC CNI가 각 Pod에 VPC IP를 할당하므로 가용 영역 간 Pod도 VPC 네트워크로 직접 통신한다."
       }
     ],
     "legend": {
@@ -120,7 +120,7 @@
     {
       "id": "pods-a",
       "type": "backend",
-      "label": "포드 ×3",
+      "label": "Pod ×3",
       "sublabel": "VPC IP 할당",
       "pos": [
         840,
@@ -134,7 +134,7 @@
     {
       "id": "pods-b",
       "type": "backend",
-      "label": "포드 ×3",
+      "label": "Pod ×3",
       "sublabel": "VPC IP 할당",
       "pos": [
         840,
@@ -222,7 +222,7 @@
       "id": "pods-cross-az",
       "from": "pods-a",
       "to": "pods-b",
-      "label": "가용 영역 간 포드 통신 (VPC IP)",
+      "label": "가용 영역 간 Pod 통신 (VPC IP)",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top",
@@ -240,11 +240,11 @@
     },
     {
       "dot": "emerald",
-      "title": "VPC CNI 포드 네트워킹",
+      "title": "VPC CNI Pod 네트워킹",
       "items": [
-        "EKS 노드는 프라이빗 서브넷에서 포드를 실행한다",
-        "Amazon VPC CNI 플러그인이 각 포드에 VPC IP 주소를 할당한다",
-        "포드는 가용 영역이 달라도 VPC 네트워크로 직접 통신한다"
+        "EKS 노드는 프라이빗 서브넷에서 Pod를 실행한다",
+        "Amazon VPC CNI 플러그인이 각 Pod에 VPC IP 주소를 할당한다",
+        "Pod는 가용 영역이 달라도 VPC 네트워크로 직접 통신한다"
       ]
     }
   ]

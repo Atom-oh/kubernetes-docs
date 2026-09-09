@@ -127,7 +127,7 @@
       "id": "controllers",
       "type": "backend",
       "label": "컨트롤러 매니저 · 스케줄러",
-      "sublabel": "상태 조정 · 포드 배치",
+      "sublabel": "상태 조정 · Pod 배치",
       "pos": [
         860,
         60
@@ -169,7 +169,7 @@
       "id": "fargate",
       "type": "backend",
       "label": "Fargate",
-      "sublabel": "Fargate 포드",
+      "sublabel": "Fargate Pod",
       "pos": [
         870,
         230
@@ -315,7 +315,7 @@
       "items": [
         "관리형 노드 그룹: AWS가 노드 수명 주기 관리",
         "자체 관리형 노드: 사용자가 직접 관리하는 EC2",
-        "Fargate: 서버리스로 포드 실행"
+        "Fargate: 서버리스로 Pod 실행"
       ]
     },
     {

@@ -8,21 +8,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "frontend": {
-          "label": "EKS release"
-        },
-        "backend": {
-          "label": "Standard support ($0.10/hr)"
-        },
-        "cloud": {
-          "label": "Extended support ($0.60/hr)"
-        },
-        "external": {
-          "label": "End of support"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -44,7 +30,7 @@
           "v130",
           "v131"
         ],
-        "note": "The 2024 releases have passed their standard support end and bill at $0.60/cluster/hour."
+        "note": "As of Sept 2026: 1.29 and 1.30 are past extended support; 1.31 bills at the $0.60/cluster/hour extended rate."
       },
       {
         "id": "standard-now",
@@ -56,7 +42,7 @@
           "v135",
           "v136"
         ],
-        "note": "The 2025 and 2026 releases are still inside their 14-month standard support window."
+        "note": "As of Sept 2026: 1.32 and 1.33 are in extended support; 1.34, 1.35 and 1.36 are still in standard support."
       }
     ]
   },
@@ -155,8 +141,8 @@
       "col": 2,
       "type": "cloud",
       "label": "v1.29",
-      "sublabel": "Jun 2024 → Aug 2026",
-      "tag": "std ended Aug 2025",
+      "sublabel": "Jan 2024 → Mar 2026",
+      "tag": "std ended Mar 2025",
       "width": 112
     },
     {
@@ -165,8 +151,8 @@
       "col": 4,
       "type": "cloud",
       "label": "v1.30",
-      "sublabel": "Sep 2024 → Nov 2026",
-      "tag": "std ended Nov 2025",
+      "sublabel": "May 2024 → Jul 2026",
+      "tag": "std ended Jul 2025",
       "width": 112
     },
     {
@@ -175,8 +161,8 @@
       "col": 5,
       "type": "cloud",
       "label": "v1.31",
-      "sublabel": "Dec 2024 → Feb 2027",
-      "tag": "std ended Feb 2026",
+      "sublabel": "Sep 2024 → Nov 2026",
+      "tag": "std ended Nov 2025",
       "width": 112
     },
     {
@@ -185,8 +171,8 @@
       "col": 1,
       "type": "backend",
       "label": "v1.32",
-      "sublabel": "Mar 2025 → May 2026",
-      "tag": "ext until May 2027",
+      "sublabel": "Jan 2025 → Mar 2026",
+      "tag": "ext until Mar 2027",
       "width": 112
     },
     {
@@ -195,8 +181,8 @@
       "col": 2,
       "type": "backend",
       "label": "v1.33",
-      "sublabel": "Jun 2025 → Aug 2026",
-      "tag": "ext until Aug 2027",
+      "sublabel": "May 2025 → Jul 2026",
+      "tag": "ext until Jul 2027",
       "width": 112
     },
     {
@@ -215,8 +201,8 @@
       "col": 0,
       "type": "backend",
       "label": "v1.35",
-      "sublabel": "Feb 2026 → Apr 2027",
-      "tag": "ext until Apr 2028",
+      "sublabel": "Jan 2026 → Mar 2027",
+      "tag": "ext until Mar 2028",
       "width": 112
     },
     {
@@ -306,8 +292,8 @@
       "dot": "rose",
       "title": "Cost Impact",
       "items": [
-        "One cluster 24/7: about $4,380/year in extended vs $730/year in standard",
-        "An additional $3,650 per cluster per year",
+        "One cluster 24/7: about $5,256/year in extended vs about $876/year in standard",
+        "An additional $4,380 per cluster per year",
         "After extended support ends, EKS auto-upgrades the control plane only"
       ]
     }

@@ -202,14 +202,16 @@ Amazon EKS는 Kubernetes 업스트림 릴리스를 기반으로 매니지드 환
 
 | Kubernetes 버전 | EKS 릴리스 날짜 | Standard Support 종료 | Extended Support 종료 | 현재 상태 |
 |:---:|:---:|:---:|:---:|:---:|
-| 1.29 | 2024년 3월 | 2025년 3월 | 2026년 3월 | **Extended 종료** |
-| 1.30 | 2024년 7월 | 2025년 7월 | 2026년 7월 | **Extended Support** |
-| 1.31 | 2024년 10월 | 2025년 10월 | 2026년 10월 | **Extended Support** |
-| 1.32 | 2025년 1월 | 2026년 1월 | 2027년 1월 | **Extended Support** |
-| 1.33 | 2025년 6월 | 2026년 8월 | 2027년 8월 | **Standard Support** |
+| 1.29 | 2024년 1월 | 2025년 3월 | 2026년 3월 | **지원 종료** |
+| 1.30 | 2024년 5월 | 2025년 7월 | 2026년 7월 | **지원 종료** |
+| 1.31 | 2024년 9월 | 2025년 11월 | 2026년 11월 | **Extended Support** |
+| 1.32 | 2025년 1월 | 2026년 3월 | 2027년 3월 | **Extended Support** |
+| 1.33 | 2025년 5월 | 2026년 7월 | 2027년 7월 | **Extended Support** |
 | 1.34 | 2025년 10월 | 2026년 12월 | 2027년 12월 | **Standard Support** |
-| 1.35 | 2026년 2월 | 2027년 4월 | 2028년 4월 | **Standard Support** |
+| 1.35 | 2026년 1월 | 2027년 3월 | 2028년 3월 | **Standard Support** |
 | 1.36 | 2026년 6월 | 2027년 8월 | 2028년 8월 | **Standard Support (최신)** |
+
+출처: [Amazon EKS Kubernetes 릴리스 캘린더](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) (현재 상태 열은 2026년 9월 기준)
 
 > **참고**: 위 날짜는 대략적인 예상이며, 실제 날짜는 AWS 공식 문서를 확인하세요. EKS 릴리스는 upstream Kubernetes 릴리스 후 통상 2~8주 후에 이루어집니다.
 
@@ -400,9 +402,9 @@ spec:
 
 ### 4.2 Kubernetes 1.30 "Uwubernetes" (2024년 4월)
 
-Kubernetes 1.30은 커뮤니티 문화를 반영한 유머러스한 코드네임 "Uwubernetes"로 릴리스되었습니다. 58개의 Enhancement가 포함되며, 특히 보안과 스케줄링 영역에서 중요한 기능들이 GA로 졸업했습니다.
+Kubernetes 1.30은 커뮤니티 문화를 반영한 유머러스한 코드네임 "Uwubernetes"로 릴리스되었습니다. 45개의 Enhancement가 포함되며, 특히 보안과 스케줄링 영역에서 중요한 기능들이 GA로 졸업했습니다.
 
-![Kubernetes 1.30 Uwubernetes 릴리스의 58개 Enhancement가 Stable(GA) 17개, Beta 18개, Alpha 23개로 나뉘고, ValidatingAdmissionPolicy 등 핵심 GA 기능이 Stable 아래에 묶인 구조를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-7.png)
+![Kubernetes 1.30 Uwubernetes 릴리스의 Enhancement가 Stable(GA), Beta, Alpha 성숙도 단계로 나뉘고, ValidatingAdmissionPolicy와 Pod Scheduling Readiness 등 핵심 GA 기능이 Stable 아래에 묶인 구조를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-7.html)
 
@@ -1340,7 +1342,9 @@ data:
 
 Kubernetes 1.35 "Timbernetes"는 In-Place Pod Resize GA를 포함하여 워크로드 관리의 큰 진전을 이룬 릴리스입니다.
 
-![Kubernetes 1.35 릴리스의 전체 56개 Enhancement가 Stable(GA) 16개, Beta 18개, Alpha 22개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-12.png)
+**릴리스 통계**: Enhancement 60개 -- Stable 17개, Beta 19개, Alpha 22개
+
+![Kubernetes 1.35 릴리스의 전체 60개 Enhancement가 Stable(GA) 17개, Beta 19개, Alpha 22개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-12.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-12.html)
 
@@ -1546,7 +1550,7 @@ spec:
 
 Kubernetes 1.36은 일본어 "ハル"(봄, Haru)을 코드네임으로 사용한 릴리스입니다. **보안 강화, AI/ML 워크로드 지원, API 확장성**을 핵심 테마로, 18개 Stable(GA) / 25개 Beta / 25개 Alpha 기능이 포함되었습니다. EKS는 GovCloud(US)를 포함한 모든 가용 리전에서 1.36을 지원합니다.
 
-![Kubernetes 1.36 "Haru" 릴리스의 전체 68개 Enhancement가 Stable(GA) 18개, Beta 25개, Alpha 25개로 성숙도 단계별로 나뉜 분포를 보여주는 다이어그램. GA 졸업 경로가 강조되어 있고, Beta는 기본 활성화, Alpha는 Feature Gate가 필요함을 나타낸다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-13.png)
+![Kubernetes 1.36 "Haru" 릴리스의 전체 68개 Enhancement가 Stable(GA) 18개, Beta 25개, Alpha 25개로 성숙도 단계별로 나뉘고, GA 졸업 경로가 강조되며 Beta는 기본 활성화, Alpha는 Feature Gate가 필요함을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-13.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-13.html)
 

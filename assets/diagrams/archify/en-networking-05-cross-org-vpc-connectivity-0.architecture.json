@@ -10,7 +10,10 @@
       1280,
       900
     ],
-    "locale": "en"
+    "locale": "en",
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

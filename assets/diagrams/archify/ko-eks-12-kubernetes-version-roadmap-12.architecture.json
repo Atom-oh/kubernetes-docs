@@ -19,7 +19,7 @@
       "id": "release",
       "type": "external",
       "label": "Kubernetes 1.35 \"Timbernetes\"",
-      "sublabel": "2025년 12월 · Enhancement 56개",
+      "sublabel": "2025년 12월 · Enhancement 60개",
       "pos": [
         40,
         210
@@ -33,7 +33,7 @@
       "id": "stable",
       "type": "backend",
       "label": "Stable (GA)",
-      "sublabel": "16개 · In-Place Pod Resize GA",
+      "sublabel": "17개 · In-Place Pod Resize GA",
       "pos": [
         450,
         80
@@ -48,7 +48,7 @@
       "id": "beta",
       "type": "backend",
       "label": "Beta",
-      "sublabel": "18개 · KYAML Beta",
+      "sublabel": "19개 · KYAML Beta",
       "pos": [
         450,
         210
@@ -89,14 +89,14 @@
       "id": "release-stable",
       "from": "release",
       "to": "stable",
-      "label": "16개 GA 졸업",
+      "label": "17개 GA 졸업",
       "variant": "emphasis"
     },
     {
       "id": "release-beta",
       "from": "release",
       "to": "beta",
-      "label": "18개 Beta",
+      "label": "19개 Beta",
       "labelDx": 50
     },
     {

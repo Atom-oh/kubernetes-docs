@@ -45,6 +45,10 @@
         ],
         "note": "Each Route forwards traffic to the Services named in its backendRefs."
       }
+    ],
+    "viewBox": [
+      1131,
+      698
     ]
   },
   "components": [
