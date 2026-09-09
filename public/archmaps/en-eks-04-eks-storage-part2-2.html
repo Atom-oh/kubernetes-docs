@@ -5031,10 +5031,10 @@
 
         <!-- Swimlanes -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1147" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 스냅샷 생성</text>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / Snapshot creation</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="1147" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / 복원</text>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Restore</text>
 
         <!-- Phase headers -->
 
@@ -5050,8 +5050,8 @@
         <path data-edge-from="newpvc" data-edge-to="newpv" data-edge-label="5 provision" data-edge-key="4" data-edge-id="e5" data-composition-points="952.4,243;1023.2,243" d="M 952.4 243 L 1023.2 243" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.4" marker-end="url(#arrowhead)"/>
 
         <!-- Nodes -->
-        <g id="node-pvc" data-node-id="pvc" data-node-label="Source PVC" tabindex="0" role="button" aria-label="Focus Source PVC, PV → EBS, 스냅샷 생성" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="PV → EBS" data-node-context="스냅샷 생성">
-          <title>Source PVC · PV → EBS · 스냅샷 생성</title>
+        <g id="node-pvc" data-node-id="pvc" data-node-label="Source PVC" tabindex="0" role="button" aria-label="Focus Source PVC, PV → EBS, Snapshot creation" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="PV → EBS" data-node-context="Snapshot creation">
+          <title>Source PVC · PV → EBS · Snapshot creation</title>
           <rect x="48" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="48" y="93" width="150" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(54 99) scale(0.6875)">
@@ -5064,8 +5064,8 @@
           <text data-detail="context" x="123" y="131" class="t-muted" font-size="8" text-anchor="middle">PV → EBS</text>
         </g>
 
-        <g id="node-vs" data-node-id="vs" data-node-label="VolumeSnapshot" tabindex="0" role="button" aria-label="Focus VolumeSnapshot, Class lookup, 스냅샷 생성" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Class lookup" data-node-context="스냅샷 생성">
-          <title>VolumeSnapshot · Class lookup · 스냅샷 생성</title>
+        <g id="node-vs" data-node-id="vs" data-node-label="VolumeSnapshot" tabindex="0" role="button" aria-label="Focus VolumeSnapshot, Class lookup, Snapshot creation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Class lookup" data-node-context="Snapshot creation">
+          <title>VolumeSnapshot · Class lookup · Snapshot creation</title>
           <rect x="259.2" y="93" width="160" height="52" rx="6" class="c-mask"/>
           <rect x="259.2" y="93" width="160" height="52" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(265.2 99) scale(0.6875)">
@@ -5075,8 +5075,8 @@
           <text data-detail="context" x="339.2" y="131" class="t-muted" font-size="8" text-anchor="middle">Class lookup</text>
         </g>
 
-        <g id="node-vsc" data-node-id="vsc" data-node-label="SnapshotContent" tabindex="0" role="button" aria-label="Focus SnapshotContent, CSI delegate, 스냅샷 생성" aria-pressed="false" data-node-kind="backend" data-node-sublabel="CSI delegate" data-node-context="스냅샷 생성">
-          <title>SnapshotContent · CSI delegate · 스냅샷 생성</title>
+        <g id="node-vsc" data-node-id="vsc" data-node-label="SnapshotContent" tabindex="0" role="button" aria-label="Focus SnapshotContent, CSI delegate, Snapshot creation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="CSI delegate" data-node-context="Snapshot creation">
+          <title>SnapshotContent · CSI delegate · Snapshot creation</title>
           <rect x="466" y="93" width="160" height="52" rx="6" class="c-mask"/>
           <rect x="466" y="93" width="160" height="52" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(472 99) scale(0.6875)">
@@ -5086,8 +5086,8 @@
           <text data-detail="context" x="546" y="131" class="t-muted" font-size="8" text-anchor="middle">CSI delegate</text>
         </g>
 
-        <g id="node-snapshot" data-node-id="snapshot" data-node-label="EBS snapshot" tabindex="0" role="button" aria-label="Focus EBS snapshot, Incremental, 스냅샷 생성" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Incremental" data-node-context="스냅샷 생성">
-          <title>EBS snapshot · Incremental · 스냅샷 생성</title>
+        <g id="node-snapshot" data-node-id="snapshot" data-node-label="EBS snapshot" tabindex="0" role="button" aria-label="Focus EBS snapshot, Incremental, Snapshot creation" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Incremental" data-node-context="Snapshot creation">
+          <title>EBS snapshot · Incremental · Snapshot creation</title>
           <rect x="682.4" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="682.4" y="93" width="150" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(688.4 99) scale(0.6875)">
@@ -5097,8 +5097,8 @@
           <text data-detail="context" x="757.4" y="131" class="t-muted" font-size="8" text-anchor="middle">Incremental</text>
         </g>
 
-        <g id="node-newpvc" data-node-id="newpvc" data-node-label="Restore PVC" tabindex="0" role="button" aria-label="Focus Restore PVC, dataSource, 복원" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="dataSource" data-node-context="복원">
-          <title>Restore PVC · dataSource · 복원</title>
+        <g id="node-newpvc" data-node-id="newpvc" data-node-label="Restore PVC" tabindex="0" role="button" aria-label="Focus Restore PVC, dataSource, Restore" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="dataSource" data-node-context="Restore">
+          <title>Restore PVC · dataSource · Restore</title>
           <rect x="802.4" y="217" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="802.4" y="217" width="150" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:8" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(808.4 223) scale(0.6875)">
@@ -5111,8 +5111,8 @@
           <text data-detail="context" x="877.4" y="255" class="t-muted" font-size="8" text-anchor="middle">dataSource</text>
         </g>
 
-        <g id="node-newpv" data-node-id="newpv" data-node-label="New PV bound" tabindex="0" role="button" aria-label="Focus New PV bound, Restore done, 복원" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Restore done" data-node-context="복원">
-          <title>New PV bound · Restore done · 복원</title>
+        <g id="node-newpv" data-node-id="newpv" data-node-label="New PV bound" tabindex="0" role="button" aria-label="Focus New PV bound, Restore done, Restore" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Restore done" data-node-context="Restore">
+          <title>New PV bound · Restore done · Restore</title>
           <rect x="1023.2" y="217" width="155" height="52" rx="6" class="c-mask"/>
           <rect x="1023.2" y="217" width="155" height="52" rx="6" class="c-backend" data-animate="node" style="--step:9" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1029.2 223) scale(0.6875)">
@@ -5147,17 +5147,17 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="20" y="304" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="스냅샷 객체" data-legend-x="20" data-legend-baseline="324" data-legend-width="91">
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Snapshot objects" data-legend-x="20" data-legend-baseline="324" data-legend-width="113">
             <rect x="20" y="316" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="42" y="324" class="t-muted" font-size="7.5" font-weight="500">스냅샷 객체</text>
+            <text x="42" y="324" class="t-muted" font-size="7.5" font-weight="500">Snapshot objects</text>
           </g>
-          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="클레임" data-legend-x="118" data-legend-baseline="324" data-legend-width="70">
-            <rect x="118" y="316" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
-            <text x="140" y="324" class="t-muted" font-size="7.5" font-weight="500">클레임</text>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="Claims" data-legend-x="140" data-legend-baseline="324" data-legend-width="70">
+            <rect x="140" y="316" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="162" y="324" class="t-muted" font-size="7.5" font-weight="500">Claims</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="AWS 스냅샷" data-legend-x="195" data-legend-baseline="324" data-legend-width="87">
-            <rect x="195" y="316" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-            <text x="217" y="324" class="t-muted" font-size="7.5" font-weight="500">AWS 스냅샷</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="AWS snapshot" data-legend-x="217" data-legend-baseline="324" data-legend-width="96">
+            <rect x="217" y="316" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="239" y="324" class="t-muted" font-size="7.5" font-weight="500">AWS snapshot</text>
           </g>
         </g>
       </svg>

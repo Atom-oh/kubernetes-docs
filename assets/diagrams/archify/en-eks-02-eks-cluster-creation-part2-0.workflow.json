@@ -10,16 +10,16 @@
       "mode": "auto",
       "entries": {
         "external": {
-          "label": "사용자"
+          "label": "User"
         },
         "cloud": {
-          "label": "AWS 리소스"
+          "label": "AWS Resource"
         },
         "security": {
-          "label": "권한"
+          "label": "Permissions"
         },
         "backend": {
-          "label": "노드"
+          "label": "Nodes"
         }
       }
     },
@@ -28,11 +28,11 @@
   "lanes": [
     {
       "id": "cli",
-      "label": "eksctl 실행"
+      "label": "eksctl Run"
     },
     {
       "id": "aws",
-      "label": "AWS 리소스 생성"
+      "label": "AWS Resource Creation"
     }
   ],
   "mainPath": [
@@ -76,7 +76,7 @@
       "lane": "aws",
       "col": 3,
       "type": "security",
-      "label": "IAM · security groups",
+      "label": "IAM · SGs",
       "sublabel": "Roles · rules",
       "width": 155
     },

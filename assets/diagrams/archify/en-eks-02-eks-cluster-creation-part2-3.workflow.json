@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "cloud": {
-          "label": "클러스터 작업"
+          "label": "Cluster operations"
         },
         "backend": {
-          "label": "구성 작업"
+          "label": "Configuration"
         },
         "security": {
-          "label": "정리"
+          "label": "Cleanup"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "build",
-      "label": "생성과 구성"
+      "label": "Create & configure"
     },
     {
       "id": "ops",
-      "label": "운영과 정리"
+      "label": "Operate & clean up"
     }
   ],
   "mainPath": [

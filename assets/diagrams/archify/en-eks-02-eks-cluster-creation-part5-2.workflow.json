@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "검증 단계"
+          "label": "Validation step"
         },
         "frontend": {
-          "label": "테스트 워크로드"
+          "label": "Test workload"
         },
         "database": {
-          "label": "로그"
+          "label": "Logs"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "infra",
-      "label": "인프라 검증"
+      "label": "Infrastructure validation"
     },
     {
       "id": "app",
-      "label": "워크로드 검증"
+      "label": "Workload validation"
     }
   ],
   "mainPath": [
@@ -71,7 +71,7 @@
       "lane": "app",
       "col": 3,
       "type": "frontend",
-      "label": "Service reachability",
+      "label": "Service access",
       "sublabel": "LB · NodePort",
       "width": 155
     },

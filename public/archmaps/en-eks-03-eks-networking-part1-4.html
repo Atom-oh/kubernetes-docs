@@ -5031,11 +5031,11 @@
 
         <!-- Swimlanes -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="948" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / CIDR 계획</text>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / CIDR Planning</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="948" height="104" rx="10" class="c-lane" stroke-width="1"/>
         <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-1-exception" x="46" y="182" width="936" height="92" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="54" y="198" class="t-security" font-size="10" font-weight="600">EX / 중복 검사</text>
+        <text x="54" y="198" class="t-security" font-size="10" font-weight="600">EX / Overlap Check</text>
 
         <!-- Phase headers -->
 
@@ -5052,8 +5052,8 @@
         <path data-edge-from="conflict" data-edge-to="growth" data-edge-label="pick a new range" data-edge-key="5" data-edge-id="e6" data-composition-points="709.5,250;474,250;474,145" d="M 709.5 250 L 474 250 L 474 145" class="a-default" data-animate="edge" style="--step:10" stroke-width="1.4" marker-end="url(#arrowhead)"/>
 
         <!-- Nodes -->
-        <g id="node-size" data-node-id="size" data-node-label="Cluster scale" tabindex="0" role="button" aria-label="Focus Cluster scale, Estimate node count, CIDR 계획" aria-pressed="false" data-node-kind="external" data-node-sublabel="Estimate node count" data-node-context="CIDR 계획">
-          <title>Cluster scale · Estimate node count · CIDR 계획</title>
+        <g id="node-size" data-node-id="size" data-node-label="Cluster scale" tabindex="0" role="button" aria-label="Focus Cluster scale, Estimate node count, CIDR Planning" aria-pressed="false" data-node-kind="external" data-node-sublabel="Estimate node count" data-node-context="CIDR Planning">
+          <title>Cluster scale · Estimate node count · CIDR Planning</title>
           <rect x="48" y="93" width="145" height="52" rx="6" class="c-mask"/>
           <rect x="48" y="93" width="145" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 99) scale(0.6875)">
@@ -5064,19 +5064,19 @@
           <text data-detail="context" x="120.5" y="131" class="t-muted" font-size="8" text-anchor="middle">Estimate node count</text>
         </g>
 
-        <g id="node-ipcalc" data-node-id="ipcalc" data-node-label="Calculate IP demand" tabindex="0" role="button" aria-label="Focus Calculate IP demand, nodes × max pods, CIDR 계획" aria-pressed="false" data-node-kind="backend" data-node-sublabel="nodes × max pods" data-node-context="CIDR 계획">
-          <title>Calculate IP demand · nodes × max pods · CIDR 계획</title>
+        <g id="node-ipcalc" data-node-id="ipcalc" data-node-label="IP demand" tabindex="0" role="button" aria-label="Focus IP demand, nodes × max pods, CIDR Planning" aria-pressed="false" data-node-kind="backend" data-node-sublabel="nodes × max pods" data-node-context="CIDR Planning">
+          <title>IP demand · nodes × max pods · CIDR Planning</title>
           <rect x="221" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="221" y="93" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(227 99) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="296" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Calculate IP demand</text>
+          <text data-node-label="" data-detail-anchor="" x="296" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">IP demand</text>
           <text data-detail="context" x="296" y="131" class="t-muted" font-size="8" text-anchor="middle">nodes × max pods</text>
         </g>
 
-        <g id="node-growth" data-node-id="growth" data-node-label="Reserve headroom" tabindex="0" role="button" aria-label="Focus Reserve headroom, 20-30% spare, CIDR 계획" aria-pressed="false" data-node-kind="backend" data-node-sublabel="20-30% spare" data-node-context="CIDR 계획">
-          <title>Reserve headroom · 20-30% spare · CIDR 계획</title>
+        <g id="node-growth" data-node-id="growth" data-node-label="Reserve headroom" tabindex="0" role="button" aria-label="Focus Reserve headroom, 20-30% spare, CIDR Planning" aria-pressed="false" data-node-kind="backend" data-node-sublabel="20-30% spare" data-node-context="CIDR Planning">
+          <title>Reserve headroom · 20-30% spare · CIDR Planning</title>
           <rect x="399" y="93" width="150" height="52" rx="6" class="c-mask"/>
           <rect x="399" y="93" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(405 99) scale(0.6875)">
@@ -5086,20 +5086,20 @@
           <text data-detail="context" x="474" y="131" class="t-muted" font-size="8" text-anchor="middle">20-30% spare</text>
         </g>
 
-        <g id="node-overlap" data-node-id="overlap" data-node-label="Check existing networks" tabindex="0" role="button" aria-label="Focus Check existing networks, On-premises · peering, CIDR 계획" aria-pressed="false" data-node-kind="security" data-node-sublabel="On-premises · peering" data-node-context="CIDR 계획">
-          <title>Check existing networks · On-premises · peering · CIDR 계획</title>
+        <g id="node-overlap" data-node-id="overlap" data-node-label="Existing networks" tabindex="0" role="button" aria-label="Focus Existing networks, On-premises · peering, CIDR Planning" aria-pressed="false" data-node-kind="security" data-node-sublabel="On-premises · peering" data-node-context="CIDR Planning">
+          <title>Existing networks · On-premises · peering · CIDR Planning</title>
           <rect x="577" y="93" width="165" height="52" rx="6" class="c-mask"/>
           <rect x="577" y="93" width="165" height="52" rx="6" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(583 99) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="659.5" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Check existing networks</text>
+          <text data-node-label="" data-detail-anchor="" x="659.5" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Existing networks</text>
           <text data-detail="context" x="659.5" y="131" class="t-muted" font-size="8" text-anchor="middle">On-premises · peering</text>
         </g>
 
-        <g id="node-cidr" data-node-id="cidr" data-node-label="Finalize VPC CIDR" tabindex="0" role="button" aria-label="Focus Finalize VPC CIDR, RFC 1918 private range, CIDR 계획" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="RFC 1918 private range" data-node-context="CIDR 계획">
-          <title>Finalize VPC CIDR · RFC 1918 private range · CIDR 계획</title>
+        <g id="node-cidr" data-node-id="cidr" data-node-label="Finalize VPC CIDR" tabindex="0" role="button" aria-label="Focus Finalize VPC CIDR, RFC 1918 private range, CIDR Planning" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="RFC 1918 private range" data-node-context="CIDR Planning">
+          <title>Finalize VPC CIDR · RFC 1918 private range · CIDR Planning</title>
           <rect x="819.5" y="93" width="160" height="52" rx="6" class="c-mask"/>
           <rect x="819.5" y="93" width="160" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(825.5 99) scale(0.6875)">
@@ -5109,8 +5109,8 @@
           <text data-detail="context" x="899.5" y="131" class="t-muted" font-size="8" text-anchor="middle">RFC 1918 private range</text>
         </g>
 
-        <g id="node-conflict" data-node-id="conflict" data-node-label="Range overlap" tabindex="0" role="button" aria-label="Focus Range overlap, Needs redesign, 중복 검사" aria-pressed="false" data-node-kind="security" data-node-sublabel="Needs redesign" data-node-context="중복 검사">
-          <title>Range overlap · Needs redesign · 중복 검사</title>
+        <g id="node-conflict" data-node-id="conflict" data-node-label="Range overlap" tabindex="0" role="button" aria-label="Focus Range overlap, Needs redesign, Overlap Check" aria-pressed="false" data-node-kind="security" data-node-sublabel="Needs redesign" data-node-context="Overlap Check">
+          <title>Range overlap · Needs redesign · Overlap Check</title>
           <rect x="709.5" y="217" width="140" height="52" rx="6" class="c-mask"/>
           <rect x="709.5" y="217" width="140" height="52" rx="6" class="c-security" data-animate="node" style="--step:10" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(715.5 223) scale(0.6875)">

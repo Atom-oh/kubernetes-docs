@@ -10,13 +10,13 @@
       "mode": "auto",
       "entries": {
         "frontend": {
-          "label": "워크로드 정리"
+          "label": "Workload cleanup"
         },
         "cloud": {
-          "label": "AWS 리소스"
+          "label": "AWS resources"
         },
         "security": {
-          "label": "최종 삭제"
+          "label": "Final deletion"
         }
       }
     },
@@ -25,11 +25,11 @@
   "lanes": [
     {
       "id": "cleanup",
-      "label": "선행 정리"
+      "label": "Pre-cleanup"
     },
     {
       "id": "delete",
-      "label": "클러스터 삭제"
+      "label": "Cluster deletion"
     }
   ],
   "mainPath": [
