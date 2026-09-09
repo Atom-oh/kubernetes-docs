@@ -686,9 +686,9 @@ serviceAccount:
 # 리더 선출 설정
 leaderElection:
   enabled: true
-  leaseDuration: 40s
-  renewDeadline: 30s
-  retryPeriod: 15s
+  leaseDuration: 3s
+  renewDeadline: 2s
+  retryPeriod: 1s
 
 # 로깅 레벨
 logLevel: "info"  # debug, info, warn, error
@@ -1016,7 +1016,7 @@ metadata:
   namespace: eks-hybrid-nodes-gateway
 spec:
   holderIdentity: eks-hybrid-nodes-gateway-7b8c9d4e5f-abc12
-  leaseDurationSeconds: 40
+  leaseDurationSeconds: 3
   acquireTime: "2026-06-28T10:00:00Z"
   renewTime: "2026-06-28T10:05:15Z"
   leaseTransitions: 2
@@ -1035,7 +1035,7 @@ spec:
 
 **페일오버 프로세스:**
 
-1. 리더 Pod가 Lease 갱신에 실패 (renewDeadline: 30초)
+1. 리더 Pod가 Lease 갱신에 실패 (renewDeadline: 2초)
 2. Lease가 만료됨 (leaseDuration: 3초)
 3. 팔로워 Pod가 Lease를 획득 (retryPeriod: 1초)
 4. 새 리더가 자신의 EC2 인스턴스 ENI로 VPC 라우트 테이블 업데이트

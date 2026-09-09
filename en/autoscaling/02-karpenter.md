@@ -48,7 +48,7 @@ Karpenter is an open-source cluster autoscaler that automates node provisioning 
 
 Karpenter operates as a Kubernetes controller, detecting unschedulable pods and provisioning appropriate nodes.
 
-![Architecture diagram showing the Karpenter controller in a Kubernetes cluster watching unschedulable pods, using the webhook-validated Provisioner and NodeTemplate CRDs, and calling the Kubernetes API and the cloud provider Instance API to provision compute instances.](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
+![Architecture diagram showing the Karpenter controller in a Kubernetes cluster watching unschedulable pods, using the webhook-validated NodePool and EC2NodeClass CRDs, and calling the Kubernetes API and the cloud provider Instance API to provision compute instances.](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-0.html)
 

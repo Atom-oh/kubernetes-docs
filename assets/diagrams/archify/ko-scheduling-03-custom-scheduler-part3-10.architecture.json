@@ -41,7 +41,18 @@
         ],
         "note": "GPU 요청이 없는 Pod는 컨트롤 플레인의 기본 스케줄러가 그대로 처리한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

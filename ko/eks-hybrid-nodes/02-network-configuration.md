@@ -669,7 +669,7 @@ Pod는 `kubernetes` Service(ClusterIP)를 통해 Kubernetes API와 통신합니�
 * **CNI NAT 미사용 시**: Pod가 kubernetes 서비스 IP(예: 172.16.0.1)로 전송하면 kube-proxy가 컨트롤 플레인 ENI IP로 DNAT를 적용합니다. 반환 트래픽은 파드 CIDR을 통한 역방향 라우팅이 필요합니다.
 * **CNI NAT 사용 시**: CNI가 노드 처리 전에 SNAT를 적용하여 반환 라우팅을 단순화합니다(추가 파드 CIDR 라우팅 불필요).
 
-![하이브리드 노드의 파드가 kubernetes Service IP로 보낸 요청이 kube-proxy DNAT와 VPN/DX를 거쳐 EKS 컨트롤 플레인 ENI에 도달하는 경로와, CNI NAT(SNAT) 사용 여부에 따라 응답이 돌아오는 두 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-12.png)
+![하이브리드 노드의 Pod가 kubernetes Service IP로 보낸 요청이 kube-proxy DNAT와 VPN/DX를 거쳐 EKS 컨트롤 플레인 ENI에 도달하는 경로와, CNI NAT(SNAT) 사용 여부에 따라 응답이 돌아오는 두 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-12.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-12.html)
 
@@ -677,7 +677,7 @@ Pod는 `kubernetes` Service(ClusterIP)를 통해 Kubernetes API와 통신합니�
 
 API 서버가 하이브리드 노드에서 실행 중인 웹훅 Pod에 직접 연결을 시작합니다. 트래픽은 원격 파드 CIDR에 대해 VPC를 통해 라우팅되고, 게이트웨이를 통해 경계를 넘습니다. 이는 **라우팅 가능한 파드 CIDR이 필요**합니다.
 
-![EKS API 서버가 시작한 웹훅 호출이 CP ENI와 VPC 라우팅 테이블, VPN/DX 게이트웨이를 거쳐 온프레미스 라우터와 하이브리드 노드의 iptables·CNI를 통과해 웹훅 파드 10.85.1.23에 도달하는 7단계 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-13.png)
+![EKS API 서버가 시작한 웹훅 호출이 CP ENI와 VPC 라우팅 테이블, VPN/DX 게이트웨이를 거쳐 온프레미스 라우터와 하이브리드 노드의 iptables·CNI를 통과해 웹훅 Pod 10.85.1.23에 도달하는 7단계 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-13.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-13.html)
 
@@ -687,7 +687,7 @@ API 서버가 하이브리드 노드에서 실행 중인 웹훅 Pod에 직접 �
 
 서로 다른 하이브리드 노드의 Pod는 [VXLAN 캡슐화](../networking/cilium/03-networking.md#vxlan-기술-심층-분석)(또는 Geneve, IP-in-IP와 같은 유사한 오버레이 프로토콜)를 사용하여 통신합니다. CNI는 소스/대상 노드 IP를 사용하여 외부 헤더로 원본 Pod-to-Pod 패킷을 캡슐화합니다. 수신 노드의 CNI가 캡슐을 해제하고 대상 Pod로 전달합니다.
 
-![서로 다른 하이브리드 노드의 파드 간 패킷이 송신 노드 CNI에서 노드 IP 외부 헤더로 VXLAN 캡슐화되어 온프레미스 라우터를 거쳐 수신 노드 CNI에서 캡슐 해제된 뒤 대상 파드에 전달되는 왕복 흐름을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-14.png)
+![서로 다른 하이브리드 노드의 Pod 간 패킷이 송신 노드 CNI에서 노드 IP 외부 헤더로 VXLAN 캡슐화되어 온프레미스 라우터를 거쳐 수신 노드 CNI에서 캡슐 해제된 뒤 대상 Pod에 전달되는 왕복 흐름을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-14.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-14.html)
 
@@ -833,7 +833,7 @@ status:
 
 온프레미스 파드 CIDR을 라우팅 가능하게 만드는 것은 웹훅, East-West 트래픽, AWS 서비스 통합(ALB, Prometheus 등)에 필수적입니다.
 
-![두 하이브리드 노드가 각자 파드 CIDR을 갖고 온프레미스 라우터와 게이트웨이를 거쳐 AWS로 연결되는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-0.png)
+![두 하이브리드 노드가 각자 Pod CIDR을 갖고 온프레미스 라우터와 게이트웨이를 거쳐 AWS로 연결되는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-0.html)
 
@@ -841,7 +841,7 @@ status:
 
 CNI가 가상 라우터 역할을 하며 노드별 파드 CIDR 라우트를 로컬 온프레미스 라우터에 전파합니다. 가장 동적이고 유지보수하기 쉬운 접근 방식입니다.
 
-![각 하이브리드 노드가 BGP UPDATE로 자기 파드 CIDR을 온프레미스 라우터에 광고하는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-1.png)
+![각 하이브리드 노드가 BGP UPDATE로 자기 Pod CIDR을 온프레미스 라우터에 광고하는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-1.html)
 
@@ -1022,7 +1022,7 @@ cilium bgp routes
 
 파드 CIDR을 사용한 수동 라우터 구성입니다. 가장 간단하지만 오류가 발생하기 쉽고 노드가 변경될 때 수동 업데이트가 필요합니다.
 
-![온프레미스 라우터에 파드 CIDR별 정적 라우트를 노드 IP를 다음 홉으로 등록하는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-2.png)
+![온프레미스 라우터에 Pod CIDR별 정적 라우트를 노드 IP를 다음 홉으로 등록하는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-2.html)
 
@@ -1185,7 +1185,7 @@ ip route add 10.85.1.0/25 via 10.80.1.12
 
 노드가 호스팅된 파드 IP에 대한 ARP 요청에 응답합니다. 로컬 라우터와 레이어 2 네트워크 근접성이 필요합니다. Cilium에는 프록시 ARP 지원이 내장되어 있습니다. 라우터 BGP나 정적 라우트 구성이 필요 없지만, 파드 CIDR이 다른 네트워크와 겹치면 안 됩니다.
 
-![노드가 파드 IP의 ARP 요청에 자기 MAC으로 대신 응답해 라우터가 파드를 같은 링크의 호스트처럼 다루는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-3.png)
+![노드가 Pod IP의 ARP 요청에 자기 MAC으로 대신 응답해 라우터가 Pod를 같은 링크의 호스트처럼 다루는 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-02-network-configuration-3.html)
 

@@ -39,7 +39,24 @@
         ],
         "note": "10.85.2.0/24처럼 노드별 파드 CIDR마다 dynamic 라우트가 해당 노드 IP를 가리킨다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

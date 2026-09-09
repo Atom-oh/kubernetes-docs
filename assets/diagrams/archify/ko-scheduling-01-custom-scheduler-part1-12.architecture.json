@@ -40,7 +40,21 @@
         ],
         "note": "커스텀 스케줄러 파드는 IAM 권한으로 EC2 API와 CloudWatch에 접근한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

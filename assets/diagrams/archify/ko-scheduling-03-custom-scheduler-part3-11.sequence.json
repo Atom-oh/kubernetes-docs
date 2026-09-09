@@ -18,7 +18,7 @@
     "views": [
       { "id": "filter", "label": "필터링", "focus": ["scheduler", "plugin", "metrics"], "note": "플러그인이 GPU 사용률을 조회해 조건에 맞는 노드만 남긴다." },
       { "id": "score", "label": "점수 매기기", "focus": ["scheduler", "plugin", "metrics"], "note": "GPU 토폴로지 데이터를 바탕으로 노드 점수를 계산한다." },
-      { "id": "bind", "label": "바인딩", "focus": ["apiserver", "gpunode", "user"], "note": "선택된 GPU 노드에 포드를 스케줄링하고 결과를 사용자에게 돌려준다." }
+      { "id": "bind", "label": "바인딩", "focus": ["apiserver", "gpunode", "user"], "note": "선택된 GPU 노드에 Pod를 스케줄링하고 결과를 사용자에게 돌려준다." }
     ]
   },
   "participants": [
@@ -36,7 +36,7 @@
     { "from": 655, "to": 790, "label": "바인딩" }
   ],
   "messages": [
-    { "id": "m01", "from": "user", "to": "apiserver", "y": 190, "label": "GPU 포드 생성 요청" },
+    { "id": "m01", "from": "user", "to": "apiserver", "y": 190, "label": "GPU Pod 생성 요청" },
     { "id": "m02", "from": "apiserver", "to": "scheduler", "y": 230, "label": "스케줄링 요청" },
     { "id": "m03", "from": "scheduler", "to": "plugin", "y": 290, "label": "필터링 요청", "variant": "emphasis" },
     { "id": "m04", "from": "plugin", "to": "metrics", "y": 330, "label": "GPU 사용률 조회" },
@@ -47,9 +47,9 @@
     { "id": "m09", "from": "metrics", "to": "plugin", "y": 565, "label": "GPU 토폴로지 데이터", "variant": "return" },
     { "id": "m10", "from": "plugin", "to": "scheduler", "y": 610, "label": "노드 점수", "variant": "return" },
     { "id": "m11", "from": "scheduler", "to": "apiserver", "y": 675, "label": "선택된 노드", "variant": "return" },
-    { "id": "m12", "from": "apiserver", "to": "gpunode", "y": 715, "label": "포드 스케줄링", "variant": "emphasis" },
+    { "id": "m12", "from": "apiserver", "to": "gpunode", "y": 715, "label": "Pod 스케줄링", "variant": "emphasis" },
     { "id": "m13", "from": "gpunode", "to": "apiserver", "y": 750, "label": "스케줄링 결과", "variant": "return" },
-    { "id": "m14", "from": "apiserver", "to": "user", "y": 782, "label": "포드 생성 완료", "variant": "return" }
+    { "id": "m14", "from": "apiserver", "to": "user", "y": 782, "label": "Pod 생성 완료", "variant": "return" }
   ],
   "activations": [
     { "participant": "apiserver", "from": 185, "to": 786, "type": "backend" },

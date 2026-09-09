@@ -48,7 +48,7 @@ Karpenter는 Kubernetes 클러스터의 노드 프로비저닝을 자동화하�
 
 Karpenter는 Kubernetes 컨트롤러로 작동하며, 스케줄링할 수 없는 파드를 감지하고 적절한 노드를 프로비저닝합니다.
 
-![Karpenter 컨트롤러가 Kubernetes 클러스터 안에서 스케줄링되지 못한 파드를 감시하고 웹훅이 검증한 Provisioner·NodeTemplate CRD를 참조해, Kubernetes API와 클라우드 제공업체 Instance API를 호출하여 컴퓨트 인스턴스를 프로비저닝하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-0.png)
+![Karpenter 컨트롤러가 Kubernetes 클러스터 안에서 스케줄링되지 못한 파드를 감시하고 웹훅이 검증한 NodePool·EC2NodeClass CRD를 참조해, Kubernetes API와 클라우드 제공업체 Instance API를 호출하여 컴퓨트 인스턴스를 프로비저닝하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-02-karpenter-0.html)
 

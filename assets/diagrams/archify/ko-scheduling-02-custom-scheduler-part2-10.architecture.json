@@ -7,44 +7,341 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "http-path", "label": "HTTP 확장 호출 경로", "focus": ["apiserver", "scheduler", "extender"], "note": "기본 스케줄러가 HTTP 요청으로 외부 확장 서비스를 호출해 추가 필터링·우선순위 로직을 반영한다." },
-      { "id": "endpoints", "label": "확장 엔드포인트", "focus": ["extender", "ep-filter", "ep-prioritize", "ep-bind", "ep-prefilter", "ep-prescore"], "note": "/filter와 /prioritize는 필수, /bind·/prefilter·/prescore는 선택 사항이다." },
-      { "id": "binding", "label": "노드 바인딩", "focus": ["scheduler", "node1", "node2", "node3"], "note": "최종 노드가 선택되면 기본 스케줄러가 워커 노드에 포드를 바인딩한다." }
-    ]
+      {
+        "id": "http-path",
+        "label": "HTTP 확장 호출 경로",
+        "focus": [
+          "apiserver",
+          "scheduler",
+          "extender"
+        ],
+        "note": "기본 스케줄러가 HTTP 요청으로 외부 확장 서비스를 호출해 추가 필터링·우선순위 로직을 반영한다."
+      },
+      {
+        "id": "endpoints",
+        "label": "확장 엔드포인트",
+        "focus": [
+          "extender",
+          "ep-filter",
+          "ep-prioritize",
+          "ep-bind",
+          "ep-prefilter",
+          "ep-prescore"
+        ],
+        "note": "/filter와 /prioritize는 필수, /bind·/prefilter·/prescore는 선택 사항이다."
+      },
+      {
+        "id": "binding",
+        "label": "노드 바인딩",
+        "focus": [
+          "scheduler",
+          "node1",
+          "node2",
+          "node3"
+        ],
+        "note": "최종 노드가 선택되면 기본 스케줄러가 워커 노드에 Pod를 바인딩한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "apiserver", "type": "backend", "label": "API 서버", "sublabel": "kube-apiserver", "pos": [40, 90], "size": [140, 60] },
-    { "id": "scheduler", "type": "backend", "label": "기본 스케줄러", "sublabel": "kube-scheduler", "pos": [290, 90], "size": [160, 60] },
-    { "id": "extender", "type": "external", "label": "확장 서비스", "sublabel": "HTTP 서버 (예: :8888)", "pos": [600, 90], "size": [400, 60] },
-    { "id": "ep-filter", "type": "backend", "label": "/filter", "sublabel": "필터", "pos": [600, 240], "size": [120, 56] },
-    { "id": "ep-prioritize", "type": "backend", "label": "/prioritize", "sublabel": "우선순위", "pos": [740, 240], "size": [120, 56] },
-    { "id": "ep-prescore", "type": "backend", "label": "/prescore", "sublabel": "사전 점수 (선택)", "pos": [880, 240], "size": [120, 56] },
-    { "id": "ep-bind", "type": "backend", "label": "/bind", "sublabel": "바인드 (선택)", "pos": [670, 350], "size": [120, 56] },
-    { "id": "ep-prefilter", "type": "backend", "label": "/prefilter", "sublabel": "사전 필터 (선택)", "pos": [810, 350], "size": [120, 56] },
-    { "id": "node1", "type": "cloud", "label": "노드 1", "sublabel": "워커", "pos": [40, 350], "size": [110, 56] },
-    { "id": "node2", "type": "cloud", "label": "노드 2", "sublabel": "워커", "pos": [180, 350], "size": [110, 56] },
-    { "id": "node3", "type": "cloud", "label": "노드 3", "sublabel": "워커", "pos": [320, 350], "size": [110, 56] }
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "기본 스케줄러",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        290,
+        90
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "extender",
+      "type": "external",
+      "label": "확장 서비스",
+      "sublabel": "HTTP 서버 (예: :8888)",
+      "pos": [
+        600,
+        90
+      ],
+      "size": [
+        400,
+        60
+      ]
+    },
+    {
+      "id": "ep-filter",
+      "type": "backend",
+      "label": "/filter",
+      "sublabel": "필터",
+      "pos": [
+        600,
+        240
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "ep-prioritize",
+      "type": "backend",
+      "label": "/prioritize",
+      "sublabel": "우선순위",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "ep-prescore",
+      "type": "backend",
+      "label": "/prescore",
+      "sublabel": "사전 점수 (선택)",
+      "pos": [
+        880,
+        240
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "ep-bind",
+      "type": "backend",
+      "label": "/bind",
+      "sublabel": "바인드 (선택)",
+      "pos": [
+        670,
+        350
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "ep-prefilter",
+      "type": "backend",
+      "label": "/prefilter",
+      "sublabel": "사전 필터 (선택)",
+      "pos": [
+        810,
+        350
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "cloud",
+      "label": "노드 1",
+      "sublabel": "워커",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        110,
+        56
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "cloud",
+      "label": "노드 2",
+      "sublabel": "워커",
+      "pos": [
+        180,
+        350
+      ],
+      "size": [
+        110,
+        56
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "cloud",
+      "label": "노드 3",
+      "sublabel": "워커",
+      "pos": [
+        320,
+        350
+      ],
+      "size": [
+        110,
+        56
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "컨트롤 플레인", "wraps": ["apiserver", "scheduler"] },
-    { "kind": "region", "label": "워커 노드", "wraps": ["node1", "node2", "node3"] },
-    { "kind": "region", "label": "스케줄러 확장 (확장 엔드포인트)", "wraps": ["extender", "ep-filter", "ep-prioritize", "ep-prescore", "ep-bind", "ep-prefilter"] }
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "scheduler"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "node1",
+        "node2",
+        "node3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스케줄러 확장 (확장 엔드포인트)",
+      "wraps": [
+        "extender",
+        "ep-filter",
+        "ep-prioritize",
+        "ep-prescore",
+        "ep-bind",
+        "ep-prefilter"
+      ]
+    }
   ],
   "connections": [
-    { "id": "api-to-scheduler", "from": "apiserver", "to": "scheduler", "label": "포드 생성 요청" },
-    { "id": "scheduler-to-extender", "from": "scheduler", "to": "extender", "label": "HTTP 요청", "variant": "emphasis" },
-    { "id": "ext-filter", "from": "extender", "to": "ep-filter", "fromSide": "bottom", "toSide": "top" },
-    { "id": "ext-prioritize", "from": "extender", "to": "ep-prioritize", "fromSide": "bottom", "toSide": "top" },
-    { "id": "ext-prescore", "from": "extender", "to": "ep-prescore", "fromSide": "bottom", "toSide": "top" },
-    { "id": "ext-bind", "from": "extender", "to": "ep-bind", "fromSide": "bottom", "toSide": "top", "variant": "dashed" },
-    { "id": "ext-prefilter", "from": "extender", "to": "ep-prefilter", "fromSide": "bottom", "toSide": "top", "variant": "dashed" },
-    { "id": "sched-node1", "from": "scheduler", "to": "node1", "fromSide": "bottom", "toSide": "top" },
-    { "id": "sched-node2", "from": "scheduler", "to": "node2", "label": "바인딩", "fromSide": "bottom", "toSide": "top" },
-    { "id": "sched-node3", "from": "scheduler", "to": "node3", "fromSide": "bottom", "toSide": "top" }
+    {
+      "id": "api-to-scheduler",
+      "from": "apiserver",
+      "to": "scheduler",
+      "label": "Pod 생성 요청"
+    },
+    {
+      "id": "scheduler-to-extender",
+      "from": "scheduler",
+      "to": "extender",
+      "label": "HTTP 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ext-filter",
+      "from": "extender",
+      "to": "ep-filter",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ext-prioritize",
+      "from": "extender",
+      "to": "ep-prioritize",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ext-prescore",
+      "from": "extender",
+      "to": "ep-prescore",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ext-bind",
+      "from": "extender",
+      "to": "ep-bind",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "ext-prefilter",
+      "from": "extender",
+      "to": "ep-prefilter",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "sched-node1",
+      "from": "scheduler",
+      "to": "node1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sched-node2",
+      "from": "scheduler",
+      "to": "node2",
+      "label": "바인딩",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sched-node3",
+      "from": "scheduler",
+      "to": "node3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "컨트롤 플레인", "items": ["API 서버가 포드 생성 요청을 기본 스케줄러에 전달한다", "기본 스케줄러는 내부 필터링·점수 매기기 사이에 확장 서비스를 HTTP로 호출한다"] },
-    { "dot": "amber", "title": "확장 엔드포인트", "items": ["/filter: 포드를 실행할 수 없는 노드를 걸러낸다", "/prioritize: 노드에 우선순위 점수를 부여한다", "/bind, /prefilter, /prescore는 선택 사항이다"] },
-    { "dot": "emerald", "title": "워커 노드", "items": ["최종 선택된 노드에 포드가 바인딩된다"] }
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인",
+      "items": [
+        "API 서버가 Pod 생성 요청을 기본 스케줄러에 전달한다",
+        "기본 스케줄러는 내부 필터링·점수 매기기 사이에 확장 서비스를 HTTP로 호출한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "확장 엔드포인트",
+      "items": [
+        "/filter: Pod를 실행할 수 없는 노드를 걸러낸다",
+        "/prioritize: 노드에 우선순위 점수를 부여한다",
+        "/bind, /prefilter, /prescore는 선택 사항이다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "워커 노드",
+      "items": [
+        "최종 선택된 노드에 Pod가 바인딩된다"
+      ]
+    }
   ]
 }

@@ -20,7 +20,7 @@ AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 �
 
 다음 다이어그램은 GPU 워크로드 스케줄링 워크플로우를 보여줍니다:
 
-![사용자의 GPU 포드 생성 요청이 API 서버와 GPU 스케줄러를 거쳐 스케줄러 플러그인이 메트릭 시스템에서 GPU 사용률과 토폴로지를 조회해 노드를 필터링·점수 매기기한 뒤 선택된 GPU 노드에 포드가 스케줄링되는 순서를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-11.png)
+![사용자의 GPU Pod 생성 요청이 API 서버와 GPU 스케줄러를 거쳐 스케줄러 플러그인이 메트릭 시스템에서 GPU 사용률과 토폴로지를 조회해 노드를 필터링·점수 매기기한 뒤 선택된 GPU 노드에 Pod가 스케줄링되는 순서를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-11.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-11.html)
 
@@ -181,7 +181,7 @@ EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워�
 
 다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 워크플로우를 보여줍니다.
 
-![사용자의 포드 생성 요청이 API 서버와 기본 스케줄러를 거쳐 스케줄러 확장으로 전달되고, 확장이 서비스 맵과 메트릭 시스템에서 서비스 의존성·네트워크 지연 시간으로 노드를 필터링한 뒤 서비스 배치·네트워크 비용으로 노드 점수를 매겨 선택된 노드에 포드가 스케줄링되는 네트워크 지역성 최적화 워크플로우를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-13.png)
+![사용자의 Pod 생성 요청이 API 서버와 기본 스케줄러를 거쳐 스케줄러 확장으로 전달되고, 확장이 서비스 맵과 메트릭 시스템에서 서비스 의존성·네트워크 지연 시간으로 노드를 필터링한 뒤 서비스 배치·네트워크 비용으로 노드 점수를 매겨 선택된 노드에 Pod가 스케줄링되는 네트워크 지역성 최적화 워크플로우를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-13.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-13.html)
 
@@ -645,7 +645,7 @@ spec:
 
 다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다.
 
-![EKS 위의 커스텀 스케줄러 파드에서 사이드카가 노출한 메트릭이 AMP를 거쳐 Grafana와 Alert Manager로, 로그가 Fluentd에서 ElasticSearch와 Kibana로 흐르고, 두 경로가 CloudWatch로 모이며 알림은 SNS를 통해 Lambda로 전달되는 커스텀 스케줄러 모니터링 아키텍처를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-14.png)
+![EKS 위의 커스텀 스케줄러 Pod에서 사이드카가 노출한 메트릭이 AMP를 거쳐 Grafana와 Alert Manager로, 로그가 Fluentd에서 ElasticSearch와 Kibana로 흐르고, 두 경로가 CloudWatch로 모이며 알림은 SNS를 통해 Lambda로 전달되는 커스텀 스케줄러 모니터링 아키텍처를 보여준다.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-14.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-03-custom-scheduler-part3-14.html)
 

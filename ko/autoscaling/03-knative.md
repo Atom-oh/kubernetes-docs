@@ -1268,7 +1268,7 @@ spec:
 
 ### 스케일링 모델 차이
 
-![Knative와 KEDA의 스케일링 모델 차이: Knative Serving은 HTTP 요청 → Queue Proxy → Knative Autoscaler(KPA) → Revision 파드 수 조절, KEDA는 외부 메트릭 소스(SQS, Kafka, Prometheus 등) → KEDA Operator(ScaledObject) → Kubernetes HPA → Deployment/StatefulSet/Job 파드 수 조절.](../.gitbook/assets/ko-autoscaling-03-knative-4.png)
+![Knative Serving은 HTTP 요청이 Queue Proxy와 Knative Autoscaler KPA를 거쳐 Revision 파드 수를 조절하고, KEDA는 SQS, Kafka, Prometheus 등 외부 메트릭 소스를 KEDA Operator의 ScaledObject와 Kubernetes HPA로 연결해 Deployment/StatefulSet/Job 파드 수를 조절하는 두 스케일링 모델의 차이를 보여준다.](../.gitbook/assets/ko-autoscaling-03-knative-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-autoscaling-03-knative-4.html)
 

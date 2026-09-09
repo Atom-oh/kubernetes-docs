@@ -38,7 +38,7 @@
           "api",
           "node"
         ],
-        "note": "최종 노드를 선택해 API 서버에 바인딩을 요청하고 포드가 노드에 스케줄링된다"
+        "note": "최종 노드를 선택해 API 서버에 바인딩을 요청하고 Pod가 노드에 스케줄링된다"
       }
     ],
     "legend": {
@@ -102,7 +102,7 @@
       "from": "api",
       "to": "scheduler",
       "y": 190,
-      "label": "포드 생성 요청",
+      "label": "Pod 생성 요청",
       "variant": "emphasis"
     },
     {
@@ -150,7 +150,7 @@
       "from": "api",
       "to": "node",
       "y": 488,
-      "label": "포드 스케줄링",
+      "label": "Pod 스케줄링",
       "variant": "emphasis"
     }
   ],

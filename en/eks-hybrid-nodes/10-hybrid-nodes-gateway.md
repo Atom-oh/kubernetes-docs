@@ -170,7 +170,7 @@ metadata:
   namespace: eks-hybrid-nodes-gateway
 spec:
   holderIdentity: "gateway-pod-abc123"
-  leaseDurationSeconds: 15
+  leaseDurationSeconds: 3
   acquireTime: "2026-06-28T10:00:00Z"
   renewTime: "2026-06-28T10:00:10Z"
   leaseTransitions: 3
@@ -778,9 +778,9 @@ vxlanPort: 8472
 # --- Leader election settings (advanced) ---
 
 leaderElection:
-  leaseDuration: 15s
-  renewDeadline: 10s
-  retryPeriod: 2s
+  leaseDuration: 3s
+  renewDeadline: 2s
+  retryPeriod: 1s
 
 # --- Logging ---
 

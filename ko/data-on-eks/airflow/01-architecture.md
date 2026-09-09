@@ -39,7 +39,7 @@ dag-processor를 필수로 만들고 파싱을 스케줄러의 루프에서 완�
 
 ## 2. Kubernetes 위 컴포넌트 구성도
 
-![Kubernetes 클러스터 안에서 Airflow api-server, scheduler, dag-processor, triggerer 배포가 모두 PostgreSQL 상태 저장소를 공유하고, scheduler가 실행기(Executor) 종류에 따라 CeleryExecutor의 Redis 브로커/워커 풀 또는 KubernetesExecutor의 태스크별 파드 중 하나로 작업을 위임하는 구조를 보여준다.](../../.gitbook/assets/ko-data-on-eks-airflow-01-architecture-0.png)
+![Kubernetes 클러스터 안에서 Airflow api-server, scheduler, dag-processor, triggerer 배포가 모두 PostgreSQL 상태 저장소를 공유하고, scheduler가 실행기(Executor) 종류에 따라 CeleryExecutor의 Redis 브로커/워커 풀 또는 KubernetesExecutor의 태스크별 Pod 중 하나로 작업을 위임하는 구조를 보여준다.](../../.gitbook/assets/ko-data-on-eks-airflow-01-architecture-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-airflow-01-architecture-0.html)
 

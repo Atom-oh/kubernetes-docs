@@ -120,7 +120,7 @@
       "from": "user",
       "to": "apiserver",
       "y": 180,
-      "label": "포드 생성 요청"
+      "label": "Pod 생성 요청"
     },
     {
       "id": "m02",
@@ -235,7 +235,7 @@
       "from": "apiserver",
       "to": "node",
       "y": 714,
-      "label": "포드 스케줄링"
+      "label": "Pod 스케줄링"
     },
     {
       "id": "m17",
@@ -250,7 +250,7 @@
       "from": "apiserver",
       "to": "user",
       "y": 776,
-      "label": "포드 생성 완료",
+      "label": "Pod 생성 완료",
       "variant": "return"
     }
   ],

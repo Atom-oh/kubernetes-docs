@@ -19,7 +19,7 @@
           "k8sapi",
           "karpenter"
         ],
-        "note": "Receives the unschedulable pod event and evaluates its requirements against the provisioner and node template."
+        "note": "Receives the unschedulable pod event and evaluates its requirements against the NodePool and EC2NodeClass."
       },
       {
         "id": "provision",
@@ -79,7 +79,7 @@
     {
       "from": 165,
       "to": 250,
-      "label": "1. Detect · analyze requirements · evaluate provisioner and node template"
+      "label": "1. Detect · analyze requirements · evaluate NodePool and EC2NodeClass"
     },
     {
       "from": 260,
@@ -107,7 +107,7 @@
       "to": "karpenter",
       "y": 225,
       "label": "Pod event notification",
-      "note": "Inside Karpenter: analyze pod requirements → evaluate provisioner and node template"
+      "note": "Inside Karpenter: analyze pod requirements → evaluate NodePool and EC2NodeClass"
     },
     {
       "id": "query-instances",
@@ -213,7 +213,7 @@
       "title": "Inside Karpenter",
       "items": [
         "Analyze pod requirements (resources, node selectors, tolerations)",
-        "Decide the node type from the provisioner and node template configuration"
+        "Decide the node type from the NodePool and EC2NodeClass configuration"
       ]
     }
   ]

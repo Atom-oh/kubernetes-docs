@@ -17,7 +17,7 @@
           "pod-default",
           "node1"
         ],
-        "note": "schedulerName을 지정하지 않은(default-scheduler) 포드는 기본 스케줄러가 노드에 바인딩한다."
+        "note": "schedulerName을 지정하지 않은(default-scheduler) Pod는 기본 스케줄러가 노드에 바인딩한다."
       },
       {
         "id": "custom-path",
@@ -31,9 +31,26 @@
           "node2",
           "node3"
         ],
-        "note": "schedulerName이 일치하는 포드만 각 커스텀 스케줄러가 골라 스케줄링한다."
+        "note": "schedulerName이 일치하는 Pod만 각 커스텀 스케줄러가 골라 스케줄링한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {
@@ -98,7 +115,7 @@
       "id": "queue",
       "type": "messagebus",
       "label": "스케줄링 큐",
-      "sublabel": "미할당(Pending) 포드",
+      "sublabel": "미할당(Pending) Pod",
       "pos": [
         290,
         240
@@ -111,7 +128,7 @@
     {
       "id": "pod-default",
       "type": "frontend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "schedulerName: default-scheduler",
       "pos": [
         810,
@@ -125,7 +142,7 @@
     {
       "id": "pod-custom-1",
       "type": "frontend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "schedulerName: custom-scheduler-1",
       "pos": [
         810,
@@ -139,7 +156,7 @@
     {
       "id": "pod-custom-2",
       "type": "frontend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "schedulerName: custom-scheduler-2",
       "pos": [
         810,
@@ -207,7 +224,7 @@
     },
     {
       "kind": "region",
-      "label": "포드",
+      "label": "Pod",
       "wraps": [
         "pod-default",
         "pod-custom-1",
@@ -229,7 +246,7 @@
       "id": "api-to-queue",
       "from": "apiserver",
       "to": "queue",
-      "label": "포드 생성",
+      "label": "Pod 생성",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -258,7 +275,7 @@
       "id": "default-to-pod",
       "from": "default-scheduler",
       "to": "pod-default",
-      "label": "포드 선택",
+      "label": "Pod 선택",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -297,15 +314,15 @@
       "title": "다중 스케줄러 접근 방식",
       "items": [
         "기본 스케줄러와 함께 커스텀 스케줄러를 같은 클러스터에서 실행한다",
-        "포드 생성 시 spec.schedulerName 필드로 어떤 스케줄러를 사용할지 지정한다"
+        "Pod 생성 시 spec.schedulerName 필드로 어떤 스케줄러를 사용할지 지정한다"
       ]
     },
     {
       "dot": "emerald",
       "title": "커스텀 스케줄러 동작",
       "items": [
-        "FieldSelector spec.schedulerName=custom-scheduler,spec.nodeName= 으로 미할당 포드를 조회한다",
-        "노드를 선택한 뒤 포드를 노드에 바인딩한다"
+        "FieldSelector spec.schedulerName=custom-scheduler,spec.nodeName= 으로 미할당 Pod를 조회한다",
+        "노드를 선택한 뒤 Pod를 노드에 바인딩한다"
       ]
     }
   ]

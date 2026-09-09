@@ -25,7 +25,7 @@
           "provisioner",
           "nodetemplate"
         ],
-        "note": "웹훅이 검증한 Provisioner·NodeTemplate CRD 구성에 따라 적절한 노드 유형을 결정한다."
+        "note": "웹훅이 검증한 NodePool·EC2NodeClass CRD 구성에 따라 적절한 노드 유형을 결정한다."
       },
       {
         "id": "provision",
@@ -106,7 +106,7 @@
     {
       "id": "provisioner",
       "type": "database",
-      "label": "Provisioner CRD",
+      "label": "NodePool CRD",
       "sublabel": "노드 프로비저닝 정책",
       "pos": [
         190,
@@ -120,7 +120,7 @@
     {
       "id": "nodetemplate",
       "type": "database",
-      "label": "NodeTemplate CRD",
+      "label": "EC2NodeClass CRD",
       "sublabel": "노드 구성 정의",
       "pos": [
         470,
@@ -273,7 +273,7 @@
       "title": "작동 방식",
       "items": [
         "컨트롤러가 스케줄링할 수 없는 파드를 감지하고 리소스·노드 선택기·허용 오차 요구 사항을 분석한다",
-        "Provisioner와 NodeTemplate 구성에 따라 적절한 노드 유형을 결정한다",
+        "NodePool과 EC2NodeClass 구성에 따라 적절한 노드 유형을 결정한다",
         "클라우드 제공업체 API를 호출해 노드를 프로비저닝하고, 노드가 조인하면 파드가 스케줄링된다"
       ]
     }

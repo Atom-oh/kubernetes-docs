@@ -15,7 +15,7 @@ Kafka 클러스터는 **브로커(Broker)** 라는 프로세스 집합으로 구
 
 Strimzi는 이 모든 구성 요소를 Kubernetes 리소스로 감쌉니다. 사용자는 `Kafka`, `KafkaNodePool` 같은 CRD에 원하는 상태를 선언하고, Strimzi Operator가 이를 감지하여 브로커/컨트롤러 Pod, PVC, Service, Secret 등을 실제로 생성·조정합니다.
 
-![운영자가 Kafka/KafkaNodePool 커스텀 리소스를 적용하면 Kubernetes API Server를 통해 Strimzi Operator가 이를 조정하여 브로커 파드 2개와 컨트롤러 파드 1개를 생성하고, 각 파드는 EBS gp3 PVC에 데이터를 저장하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-kafka-readme-0.png)
+![운영자가 Kafka/KafkaNodePool 커스텀 리소스를 적용하면 Kubernetes API Server를 통해 Strimzi Operator가 이를 조정하여 브로커 Pod 2개와 컨트롤러 Pod 1개를 생성하고, 각 Pod는 EBS gp3 PVC에 데이터를 저장하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-kafka-readme-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-readme-0.html)
 

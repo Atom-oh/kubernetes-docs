@@ -144,7 +144,7 @@ Flink Kubernetes Operator에 내장된 오토스케일러(Part 2)와 Karpenter�
 * **Flink 오토스케일러**는 버텍스별 메트릭(백프레셔, Busy Time, 랙)을 관찰해 잡 그래프 안의 각 연산자에 필요한 **병렬도(parallelism)**를 결정합니다 — 이는 하위 노드에 대한 정보가 전혀 없는, 잡 내부의 판단입니다.
 * **Karpenter**는 스케줄링되지 못한 TaskManager Pod(또는 비어버린 노드)를 관찰해 EC2 용량을 프로비저닝하거나 회수할지 결정합니다 — 이는 그 Pod들이 왜 존재하는지는 전혀 모르고, 단지 존재한다는 사실에만 반응하는 노드 단위의 판단입니다.
 
-![Flink 오토스케일러가 버텍스별 메트릭으로 연산자 병렬도를 정하고, 그 결과로 TaskManager Pod가 추가되면 Karpenter가 새 EC2 노드를 프로비저닝하고, 제거되어 노드가 비면 통합/종료하는 두 루프의 연동 흐름.](../../.gitbook/assets/ko-data-on-eks-flink-04-operations-ha-0.png)
+![Flink 오토스케일러가 버텍스별 메트릭으로 연산자 병렬도를 정하고, 그 결과로 TaskManager Pod가 추가되면 Karpenter가 새 EC2 노드를 프로비저닝하고, 제거되어 노드가 비면 통합·종료하는 두 루프의 연동 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-flink-04-operations-ha-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-flink-04-operations-ha-0.html)
 

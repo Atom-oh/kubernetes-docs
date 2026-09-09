@@ -32,7 +32,7 @@ Apache Flink는 무한(unbounded) 및 유한(bounded) 데이터 스트림에 대
 
 ### Kubernetes에서의 JobManager ↔ TaskManager 흐름
 
-![Flink JobManager 파드 안의 Kubernetes ResourceManager가 TaskManager 파드 두 개를 요청·반환하고, Checkpoint Coordinator가 각 TaskManager에 스냅샷을 트리거하며, Job Graph & Scheduler가 각 파드의 Task Slot에 서브태스크를 배포하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-flink-01-architecture-0.png)
+![Flink JobManager Pod 안의 Kubernetes ResourceManager가 TaskManager Pod 두 개를 요청·반환하고, Checkpoint Coordinator가 각 TaskManager에 스냅샷을 트리거하며, Job Graph & Scheduler가 각 Pod의 Task Slot에 서브태스크를 배포하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-flink-01-architecture-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-flink-01-architecture-0.html)
 

@@ -35,7 +35,7 @@
           "scaledown",
           "delete"
         ],
-        "note": "기존 노드를 cordon·drain해 포드를 Auto Mode 노드로 옮기고, 노드 그룹을 0으로 축소한 뒤 삭제합니다. 이 기간에는 두 방식이 공존합니다."
+        "note": "기존 노드를 cordon·drain해 Pod를 Auto Mode 노드로 옮기고, 노드 그룹을 0으로 축소한 뒤 삭제합니다. 이 기간에는 두 방식이 공존합니다."
       },
       {
         "id": "verify",
@@ -44,7 +44,7 @@
           "delete",
           "validate"
         ],
-        "note": "모든 포드가 Running 상태인지, Pending 포드가 없는지, NodePool별 노드 분포와 리소스 사용량을 확인합니다."
+        "note": "모든 Pod가 Running 상태인지, Pending Pod가 없는지, NodePool별 노드 분포와 리소스 사용량을 확인합니다."
       }
     ],
     "viewBox": [
@@ -136,7 +136,7 @@
       "col": 5,
       "type": "backend",
       "label": "7. 검증 및 최적화",
-      "sublabel": "포드 상태 · 노드 분포 확인",
+      "sublabel": "Pod 상태 · 노드 분포 확인",
       "width": 176
     }
   ],

@@ -25,7 +25,7 @@
           "provisioner",
           "nodetemplate"
         ],
-        "note": "Determines the right node type from the webhook-validated Provisioner and NodeTemplate CRDs."
+        "note": "Determines the right node type from the webhook-validated NodePool and EC2NodeClass CRDs."
       },
       {
         "id": "provision",
@@ -87,7 +87,7 @@
     {
       "id": "provisioner",
       "type": "database",
-      "label": "Provisioner CRD",
+      "label": "NodePool CRD",
       "sublabel": "node provisioning policy",
       "pos": [
         190,
@@ -101,7 +101,7 @@
     {
       "id": "nodetemplate",
       "type": "database",
-      "label": "NodeTemplate CRD",
+      "label": "EC2NodeClass CRD",
       "sublabel": "node configuration",
       "pos": [
         470,
@@ -254,7 +254,7 @@
       "title": "How it works",
       "items": [
         "The controller detects unschedulable pods and analyzes their resource, node selector, and toleration requirements",
-        "Determines the appropriate node type from the Provisioner and NodeTemplate configuration",
+        "Determines the appropriate node type from the NodePool and EC2NodeClass configuration",
         "Calls the cloud provider API to provision nodes; pods are scheduled once the nodes join the cluster"
       ]
     }

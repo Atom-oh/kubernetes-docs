@@ -918,7 +918,7 @@ spec:
 
 ### Canary 배포 상태 다이어그램
 
-![Argo Rollouts 카나리 상태 머신: v2 트래픽 비중을 SetWeight 20에서 시작해 대기 후 Analysis 1 게이트를 통과하면 40% → 60% → 80%로 올리고, Analysis 2 게이트까지 통과하면 SetWeight 100으로 v2를 승격한다. 두 게이트 중 어느 곳에서든 성공률·지연시간 지표가 기준을 넘지 못하면 즉시 v1으로 롤백(abort)된다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-1.png)
+![Argo Rollouts 카나리 상태 머신에서 v2 트래픽 비중을 SetWeight 20에서 시작해 대기 후 Analysis 1 게이트를 통과하면 40%, 60%, 80%로 올리고 Analysis 2 게이트까지 통과하면 SetWeight 100으로 v2를 승격하며, 어느 게이트에서든 성공률·지연시간 지표가 기준을 넘지 못하면 즉시 v1으로 롤백하는 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-03-msa-deployment-lab-1.html)
 

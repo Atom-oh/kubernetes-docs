@@ -50,7 +50,7 @@ Ambient Mode (10개 노드):
 
 **Ambient Mode 아키텍처:**
 
-![두 노드의 파드가 각 노드의 ztunnel L4 프록시로 연결되고, 두 ztunnel이 mTLS로 직접 통신하며 필요할 때만 선택적으로 waypoint L7 프록시를 거치는 Istio 앰비언트 메시 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-0.png)
+![두 노드의 Pod가 각 노드의 ztunnel L4 프록시로 연결되고, 두 ztunnel이 mTLS로 직접 통신하며 필요할 때만 선택적으로 waypoint L7 프록시를 거치는 Istio 앰비언트 메시 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-0.html)
 
@@ -103,7 +103,7 @@ D. Service Entry
 
 **Multi-cluster Mesh 아키텍처:**
 
-![하나의 Primary Istiod가 두 클러스터의 서비스 검색을 총괄하고, 각 클러스터의 Istiod가 자기 클러스터의 서비스 정보를 수집하며 두 클러스터의 파드가 크로스 클러스터로 통신하는 공유 컨트롤 플레인 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-1.png)
+![하나의 Primary Istiod가 두 클러스터의 서비스 검색을 총괄하고, 각 클러스터의 Istiod가 자기 클러스터의 서비스 정보를 수집하며 두 클러스터의 Pod가 크로스 클러스터로 통신하는 공유 컨트롤 플레인 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-1.html)
 
@@ -481,7 +481,7 @@ A. Argo Rollouts Controller B. Istio VirtualService C. Kubernetes Service D. Ist
 
 **Argo Rollouts + Istio 통합 아키텍처:**
 
-![사용자 요청이 Istio Gateway와 VirtualService를 거쳐 안정 파드와 카나리 파드로 가중치 분할되고, Argo Rollouts 컨트롤러가 Prometheus 메트릭 분석 결과에 따라 가중치와 파드 수를 자동 조정하는 카나리 배포 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-2.png)
+![사용자 요청이 Istio Gateway와 VirtualService를 거쳐 안정 Pod와 카나리 Pod로 가중치 분할되고, Argo Rollouts 컨트롤러가 Prometheus 메트릭 분석 결과에 따라 가중치와 Pod 수를 자동 조정하는 카나리 배포 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-2.html)
 
@@ -821,7 +821,7 @@ Ambient Mode 전환 비용 (1회):
 
 **1. 아키텍처 개요**
 
-![us-east-1의 Primary Istiod가 us-west-2의 Remote 클러스터에 구성을 배포하고 양쪽 서비스를 검색하며, 두 클러스터의 파드가 East-West Gateway를 거쳐 mTLS로 통신하는 Primary-Remote 멀티 클러스터 Istio Mesh 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-3.png)
+![us-east-1의 Primary Istiod가 us-west-2의 Remote 클러스터에 구성을 배포하고 양쪽 서비스를 검색하며, 두 클러스터의 Pod가 East-West Gateway를 거쳐 mTLS로 통신하는 Primary-Remote 멀티 클러스터 Istio Mesh 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-advanced-3.html)
 
