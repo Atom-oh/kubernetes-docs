@@ -7,33 +7,249 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "full-airgap", "label": "완전 에어갭", "focus": ["a1", "a2", "a3"], "note": "인터넷 연결이 전혀 없어 아티팩트를 물리적 미디어로 옮겨야 한다." },
-      { "id": "proxy-airgap", "label": "부분 에어갭 (프록시)", "focus": ["b1", "b2", "b3"], "note": "허용 목록에 있는 대상만 프록시 서버를 거쳐 선별적으로 인터넷에 접근한다." },
-      { "id": "private-connect", "label": "프라이빗 연결", "focus": ["c1", "c2", "c3"], "note": "VPN/Direct Connect로 AWS VPC에 연결하고 VPC Endpoint로 S3, ECR에 접근한다. 이 문서가 구성하는 방식." }
-    ]
+      {
+        "id": "full-airgap",
+        "label": "완전 에어갭",
+        "focus": [
+          "a1",
+          "a2",
+          "a3"
+        ],
+        "note": "인터넷 연결이 전혀 없어 아티팩트를 물리적 미디어로 옮겨야 한다."
+      },
+      {
+        "id": "proxy-airgap",
+        "label": "부분 에어갭 (프록시)",
+        "focus": [
+          "b1",
+          "b2",
+          "b3"
+        ],
+        "note": "허용 목록에 있는 대상만 프록시 서버를 거쳐 선별적으로 인터넷에 접근한다."
+      },
+      {
+        "id": "private-connect",
+        "label": "프라이빗 연결",
+        "focus": [
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "VPN/Direct Connect로 AWS VPC에 연결하고 VPC Endpoint로 S3, ECR에 접근한다. 이 문서가 구성하는 방식."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "a1", "type": "security", "label": "인터넷 연결 없음", "sublabel": "완전 격리 네트워크", "pos": [60, 70], "size": [180, 60] },
-    { "id": "a2", "type": "external", "label": "물리적 미디어 전달", "sublabel": "오프라인 반입", "pos": [360, 70], "size": [180, 60] },
-    { "id": "a3", "type": "external", "label": "USB / DVD / 이동식 HDD", "sublabel": "아티팩트 매체", "pos": [660, 70], "size": [200, 60] },
-    { "id": "b1", "type": "backend", "label": "내부 네트워크", "sublabel": "제한된 접근", "pos": [60, 250], "size": [180, 60] },
-    { "id": "b2", "type": "security", "label": "프록시 서버", "sublabel": "허용 목록 기반", "pos": [360, 250], "size": [180, 60] },
-    { "id": "b3", "type": "external", "label": "인터넷", "sublabel": "선별된 대상만", "pos": [660, 250], "size": [200, 60] },
-    { "id": "c1", "type": "backend", "label": "온프레미스 네트워크", "sublabel": "하이브리드 노드", "pos": [60, 430], "size": [180, 60] },
-    { "id": "c2", "type": "cloud", "label": "AWS VPC", "sublabel": "VPC Endpoint 경유", "pos": [360, 430], "size": [180, 60] },
-    { "id": "c3", "type": "cloud", "label": "VPC Endpoints", "sublabel": "S3, ECR 등", "pos": [660, 430], "size": [200, 60] }
+    {
+      "id": "a1",
+      "type": "security",
+      "label": "인터넷 연결 없음",
+      "sublabel": "완전 격리 네트워크",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "external",
+      "label": "물리적 미디어 전달",
+      "sublabel": "오프라인 반입",
+      "pos": [
+        360,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "external",
+      "label": "USB / DVD / 이동식 HDD",
+      "sublabel": "아티팩트 매체",
+      "pos": [
+        660,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "내부 네트워크",
+      "sublabel": "제한된 접근",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "security",
+      "label": "프록시 서버",
+      "sublabel": "허용 목록 기반",
+      "pos": [
+        360,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "선별된 대상만",
+      "pos": [
+        660,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "온프레미스 네트워크",
+      "sublabel": "하이브리드 노드",
+      "pos": [
+        60,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "sublabel": "VPC Endpoint 경유",
+      "pos": [
+        360,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "VPC Endpoints",
+      "sublabel": "S3, ECR 등",
+      "pos": [
+        660,
+        430
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "완전 에어갭", "wraps": ["a1", "a2", "a3"] },
-    { "kind": "region", "label": "부분 에어갭 - 프록시", "wraps": ["b1", "b2", "b3"] },
-    { "kind": "region", "label": "프라이빗 연결 - VPN/DX + VPC Endpoint", "wraps": ["c1", "c2", "c3"] }
+    {
+      "kind": "region",
+      "label": "완전 에어갭",
+      "wraps": [
+        "a1",
+        "a2",
+        "a3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "부분 에어갭 - 프록시",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "프라이빗 연결 - VPN/DX + VPC Endpoint",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    }
   ],
   "connections": [
-    { "id": "a1-a2", "from": "a1", "to": "a2", "variant": "dashed" },
-    { "id": "a2-a3", "from": "a2", "to": "a3", "variant": "dashed" },
-    { "id": "b1-b2", "from": "b1", "to": "b2", "label": "허용 목록" },
-    { "id": "b2-b3", "from": "b2", "to": "b3", "label": "선별된 접근" },
-    { "id": "c1-c2", "from": "c1", "to": "c2", "label": "VPN / Direct Connect", "variant": "emphasis" },
-    { "id": "c2-c3", "from": "c2", "to": "c3", "variant": "emphasis" }
+    {
+      "id": "a1-a2",
+      "from": "a1",
+      "to": "a2",
+      "variant": "dashed"
+    },
+    {
+      "id": "a2-a3",
+      "from": "a2",
+      "to": "a3",
+      "variant": "dashed"
+    },
+    {
+      "id": "b1-b2",
+      "from": "b1",
+      "to": "b2",
+      "label": "허용 목록"
+    },
+    {
+      "id": "b2-b3",
+      "from": "b2",
+      "to": "b3",
+      "label": "선별된 접근"
+    },
+    {
+      "id": "c1-c2",
+      "from": "c1",
+      "to": "c2",
+      "label": "VPN / Direct Connect",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2-c3",
+      "from": "c2",
+      "to": "c3",
+      "variant": "emphasis"
+    }
   ]
 }

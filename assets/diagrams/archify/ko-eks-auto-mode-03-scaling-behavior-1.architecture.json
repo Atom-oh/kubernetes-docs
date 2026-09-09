@@ -42,7 +42,10 @@
         ],
         "note": "빈 상태가 된 노드 2와 노드 3은 제거된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

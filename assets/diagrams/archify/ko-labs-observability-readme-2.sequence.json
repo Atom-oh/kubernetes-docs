@@ -44,7 +44,24 @@
         ],
         "note": "notification-service는 SQS 메시지를 소비해 이메일·SMS를 발송하며, 클라이언트 응답을 지연시키지 않습니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

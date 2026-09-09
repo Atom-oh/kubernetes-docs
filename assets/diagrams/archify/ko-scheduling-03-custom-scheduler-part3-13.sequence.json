@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "네트워크 지역성 최적화 워크플로우",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1360,
+      860
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "filter",
+        "label": "필터 단계",
+        "focus": [
+          "scheduler",
+          "extender",
+          "svcmap",
+          "metrics"
+        ],
+        "note": "Scheduler Extender가 서비스 의존성과 네트워크 지연 시간으로 노드를 필터링한다."
+      },
+      {
+        "id": "prioritize",
+        "label": "우선순위 단계",
+        "focus": [
+          "scheduler",
+          "extender",
+          "svcmap",
+          "metrics"
+        ],
+        "note": "서비스 배치와 네트워크 비용을 바탕으로 노드 점수를 계산한다."
+      },
+      {
+        "id": "bind",
+        "label": "바인딩",
+        "focus": [
+          "scheduler",
+          "apiserver",
+          "node",
+          "user"
+        ],
+        "note": "선택된 노드에 Pod가 스케줄링되고 결과가 사용자에게 돌아간다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자"
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버"
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "기본 스케줄러"
+    },
+    {
+      "id": "extender",
+      "type": "backend",
+      "label": "스케줄러 확장"
+    },
+    {
+      "id": "svcmap",
+      "type": "database",
+      "label": "서비스 맵"
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "메트릭 시스템"
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "노드"
+    }
+  ],
+  "segments": [
+    {
+      "from": 234,
+      "to": 432,
+      "label": "필터 단계"
+    },
+    {
+      "from": 448,
+      "to": 646,
+      "label": "우선순위 단계"
+    },
+    {
+      "from": 662,
+      "to": 798,
+      "label": "바인딩"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m01",
+      "from": "user",
+      "to": "apiserver",
+      "y": 180,
+      "label": "포드 생성 요청"
+    },
+    {
+      "id": "m02",
+      "from": "apiserver",
+      "to": "scheduler",
+      "y": 212,
+      "label": "스케줄링 요청",
+      "note": "기본 스케줄러가 먼저 내부 필터링을 수행"
+    },
+    {
+      "id": "m03",
+      "from": "scheduler",
+      "to": "extender",
+      "y": 254,
+      "label": "필터 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m04",
+      "from": "extender",
+      "to": "svcmap",
+      "y": 286,
+      "label": "서비스 의존성 조회"
+    },
+    {
+      "id": "m05",
+      "from": "svcmap",
+      "to": "extender",
+      "y": 316,
+      "label": "의존성 데이터",
+      "variant": "return"
+    },
+    {
+      "id": "m06",
+      "from": "extender",
+      "to": "metrics",
+      "y": 348,
+      "label": "네트워크 지연 시간 조회"
+    },
+    {
+      "id": "m07",
+      "from": "metrics",
+      "to": "extender",
+      "y": 378,
+      "label": "지연 시간 데이터",
+      "variant": "return"
+    },
+    {
+      "id": "m08",
+      "from": "extender",
+      "to": "scheduler",
+      "y": 410,
+      "label": "필터링된 노드 목록",
+      "variant": "return"
+    },
+    {
+      "id": "m09",
+      "from": "scheduler",
+      "to": "extender",
+      "y": 468,
+      "label": "우선순위 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m10",
+      "from": "extender",
+      "to": "svcmap",
+      "y": 500,
+      "label": "서비스 배치 조회"
+    },
+    {
+      "id": "m11",
+      "from": "svcmap",
+      "to": "extender",
+      "y": 530,
+      "label": "배치 데이터",
+      "variant": "return"
+    },
+    {
+      "id": "m12",
+      "from": "extender",
+      "to": "metrics",
+      "y": 562,
+      "label": "네트워크 비용 조회"
+    },
+    {
+      "id": "m13",
+      "from": "metrics",
+      "to": "extender",
+      "y": 592,
+      "label": "비용 데이터",
+      "variant": "return"
+    },
+    {
+      "id": "m14",
+      "from": "extender",
+      "to": "scheduler",
+      "y": 624,
+      "label": "노드 점수",
+      "variant": "return"
+    },
+    {
+      "id": "m15",
+      "from": "scheduler",
+      "to": "apiserver",
+      "y": 682,
+      "label": "선택된 노드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m16",
+      "from": "apiserver",
+      "to": "node",
+      "y": 714,
+      "label": "포드 스케줄링"
+    },
+    {
+      "id": "m17",
+      "from": "node",
+      "to": "apiserver",
+      "y": 744,
+      "label": "스케줄링 결과",
+      "variant": "return"
+    },
+    {
+      "id": "m18",
+      "from": "apiserver",
+      "to": "user",
+      "y": 776,
+      "label": "포드 생성 완료",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "scheduler",
+      "from": 207,
+      "to": 687,
+      "type": "backend"
+    },
+    {
+      "participant": "extender",
+      "from": 249,
+      "to": 415,
+      "type": "backend"
+    },
+    {
+      "participant": "extender",
+      "from": 463,
+      "to": 629,
+      "type": "backend"
+    },
+    {
+      "participant": "node",
+      "from": 709,
+      "to": 749,
+      "type": "cloud"
+    }
+  ]
+}

@@ -9,7 +9,27 @@
     "viewBox": [
       1120,
       620
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {

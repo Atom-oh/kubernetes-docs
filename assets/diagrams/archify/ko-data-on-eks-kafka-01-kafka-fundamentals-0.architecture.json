@@ -31,7 +31,21 @@
         ],
         "note": "order-processor 그룹 안에서 한 파티션은 오직 하나의 컨슈머만 읽으며, 세 컨슈머가 병렬로 소비한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {

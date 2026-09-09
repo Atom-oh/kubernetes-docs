@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Roles in Event-Driven Architecture",
+    "locale": "en",
+    "output": "en-autoscaling-03-knative-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "keda-path", "label": "KEDA scaling path", "focus": ["sqs", "scaledobject", "hpa", "worker"], "note": "SQS queue depth drives a ScaledObject, which manages an HPA that scales the background Worker Deployment." },
+      { "id": "knative-path", "label": "Knative eventing path", "focus": ["kafka", "http", "broker", "trigger", "ksvc"], "note": "Kafka and HTTP events arrive as CloudEvents at the Broker; a Trigger filters and delivers them to a Knative Service." }
+    ]
+  },
+  "components": [
+    { "id": "sqs", "type": "messagebus", "label": "Amazon SQS", "sublabel": "queue", "pos": [40, 100], "size": [150, 60] },
+    { "id": "kafka", "type": "messagebus", "label": "Apache Kafka", "sublabel": "topic", "pos": [40, 330], "size": [150, 60] },
+    { "id": "http", "type": "external", "label": "HTTP Requests", "sublabel": "event producers", "pos": [40, 450], "size": [150, 60] },
+    { "id": "scaledobject", "type": "backend", "label": "ScaledObject", "sublabel": "KEDA CRD", "pos": [320, 100], "size": [150, 60] },
+    { "id": "hpa", "type": "backend", "label": "HPA", "sublabel": "managed by KEDA", "pos": [560, 100], "size": [150, 60] },
+    { "id": "worker", "type": "backend", "label": "Worker Deployment", "sublabel": "queue consumers", "pos": [800, 100], "size": [170, 60] },
+    { "id": "broker", "type": "messagebus", "label": "Broker", "sublabel": "Knative Eventing", "pos": [320, 390], "size": [150, 60] },
+    { "id": "trigger", "type": "backend", "label": "Trigger", "sublabel": "attribute filter", "pos": [560, 390], "size": [150, 60] },
+    { "id": "ksvc", "type": "backend", "label": "Knative Service", "sublabel": "Knative Serving", "pos": [800, 390], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Event Sources", "wraps": ["sqs", "kafka", "http"] },
+    { "kind": "region", "label": "KEDA Domain", "wraps": ["scaledobject", "hpa", "worker"] },
+    { "kind": "region", "label": "Knative Domain", "wraps": ["broker", "trigger", "ksvc"] }
+  ],
+  "connections": [
+    { "id": "sqs-to-so", "from": "sqs", "to": "scaledobject", "label": "Queue depth metric", "variant": "emphasis" },
+    { "id": "so-to-hpa", "from": "scaledobject", "to": "hpa", "variant": "emphasis" },
+    { "id": "hpa-to-worker", "from": "hpa", "to": "worker", "variant": "emphasis" },
+    { "id": "kafka-to-broker", "from": "kafka", "to": "broker", "label": "CloudEvents" },
+    { "id": "http-to-broker", "from": "http", "to": "broker", "label": "CloudEvents" },
+    { "id": "broker-to-trigger", "from": "broker", "to": "trigger" },
+    { "id": "trigger-to-ksvc", "from": "trigger", "to": "ksvc" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "KEDA", "items": ["Extends HPA with external metric sources (queue depth, DB rows, custom)", "Scales any Deployment, StatefulSet, or Job; no built-in routing or eventing"] },
+    { "dot": "emerald", "title": "Knative", "items": ["Full serverless platform: Serving (KPA, revisions, traffic splitting) plus Eventing", "Broker/Trigger routes CloudEvents to Knative Services"] },
+    { "dot": "slate", "title": "Together", "items": ["Knative Serving for HTTP-facing services", "KEDA for background workers; Knative Eventing routes events between them"] }
+  ]
+}

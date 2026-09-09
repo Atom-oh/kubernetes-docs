@@ -37,7 +37,9 @@ go get k8s.io/klog/v2
 
 Kubernetes 스케줄링 프로세스는 다음과 같은 단계로 이루어집니다:
 
-![kubernetes\_scheduling\_process](../.gitbook/assets/kubernetes_scheduling_process.svg)
+![Kubernetes 스케줄링 프로세스: 포드가 스케줄링 큐에 추가된 뒤 필터링 단계에서 적합한 노드를 선별하고, 점수 매기기 단계에서 최고 점수 노드를 선택해 바인딩 단계로 완료되며, 적합한 노드가 없으면 스케줄링 불가능으로 표시되어 재시도 큐를 거쳐 다시 큐로 돌아가는 흐름을 보여준다.](../.gitbook/assets/ko-scheduling-01-custom-scheduler-part1-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-01-custom-scheduler-part1-10.html)
 
 ### 스케줄링 단계 상세 설명
 
@@ -98,7 +100,9 @@ Kubernetes 스케줄링 프로세스는 다음과 같은 단계로 이루어집�
 
 다중 스케줄러 접근 방식에서는 기본 스케줄러와 함께 커스텀 스케줄러를 실행합니다. 포드를 생성할 때 `schedulerName` 필드를 사용하여 어떤 스케줄러를 사용할지 지정할 수 있습니다.
 
-![multi\_scheduler\_approach](../.gitbook/assets/multi_scheduler_approach.svg)
+![다중 스케줄러 접근 방식에서 API 서버가 생성한 포드가 스케줄링 큐에 쌓이고, 기본 스케줄러와 두 커스텀 스케줄러가 schedulerName이 일치하는 포드만 골라 각 워커 노드에 바인딩하는 흐름을 보여준다.](../.gitbook/assets/ko-scheduling-01-custom-scheduler-part1-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-01-custom-scheduler-part1-11.html)
 
 #### 커스텀 스케줄러 구현
 
@@ -298,7 +302,9 @@ Amazon EKS에서 커스텀 스케줄러를 구현할 때는 다음과 같은 사
 
 다음 다이어그램은 EKS 클러스터에서 커스텀 스케줄러를 구현하는 방법을 보여줍니다:
 
-![EKS 커스텀 스케줄러 아키텍처](../.gitbook/assets/eks_custom_scheduler_architecture.svg)
+![EKS 클러스터에서 API 서버가 기본 스케줄러와 커스텀 스케줄러에 파드를 전달하고, 커스텀 스케줄러가 관리형·자체 관리형·스팟 노드 그룹에서 노드를 선택하며, 같은 파드의 메트릭 수집기와 함께 EC2 API 및 CloudWatch와 연동되는 구조를 보여준다.](../.gitbook/assets/ko-scheduling-01-custom-scheduler-part1-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-01-custom-scheduler-part1-12.html)
 
 ### EKS 특화 스케줄링 고려 사항
 

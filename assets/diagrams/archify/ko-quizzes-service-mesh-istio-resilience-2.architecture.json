@@ -31,7 +31,18 @@
         ],
         "note": "나머지 20%는 Zone B와 Zone C에 10%씩 분산한다. 같은 AZ 파드 장애 시 자동으로 다른 AZ로 전환된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
   },
   "components": [
     {

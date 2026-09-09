@@ -43,7 +43,21 @@
         ],
         "note": "파드가 살아 있으면 Gateway가 Activator를 우회해 파드로 직접 전달합니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

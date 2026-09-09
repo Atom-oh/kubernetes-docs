@@ -38,7 +38,27 @@
         ],
         "note": "두 조건 모두 만족하지 않으면 노드는 다시 운영 중 상태로 돌아온다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "active": {
+          "label": "진행 중"
+        },
+        "decision": {
+          "label": "판단"
+        },
+        "failure": {
+          "label": "실패 · 복구"
+        },
+        "neutral": {
+          "label": "중립 상태"
+        },
+        "start": {
+          "label": "시작"
+        }
+      }
+    }
   },
   "lanes": [
     {

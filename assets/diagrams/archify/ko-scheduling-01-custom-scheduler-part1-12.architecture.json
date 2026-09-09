@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 커스텀 스케줄러 아키텍처",
+    "output": "ko-scheduling-01-custom-scheduler-part1-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scheduling-path",
+        "label": "스케줄링 경로",
+        "focus": [
+          "apiserver",
+          "custom-scheduler",
+          "managed-ng",
+          "self-managed-ng",
+          "spot-ng"
+        ],
+        "note": "API 서버가 schedulerName: custom-scheduler 파드를 커스텀 스케줄러에 넘기고, 스케줄러가 노드 그룹의 노드에 바인딩한다."
+      },
+      {
+        "id": "two-schedulers",
+        "label": "두 스케줄러 병행",
+        "focus": [
+          "apiserver",
+          "default-scheduler",
+          "custom-scheduler"
+        ],
+        "note": "기본 스케줄러와 커스텀 스케줄러는 같은 API 서버를 감시하며 병행 실행된다."
+      },
+      {
+        "id": "aws-integration",
+        "label": "AWS 서비스 연동",
+        "focus": [
+          "custom-scheduler",
+          "metrics-collector",
+          "ec2-api",
+          "cloudwatch"
+        ],
+        "note": "커스텀 스케줄러 파드는 IAM 권한으로 EC2 API와 CloudWatch에 접근한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "파드 / 노드 감시",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "default-scheduler",
+      "type": "backend",
+      "label": "기본 스케줄러",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        60,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "custom-scheduler",
+      "type": "backend",
+      "label": "커스텀 스케줄러",
+      "sublabel": "schedulerName: custom-scheduler",
+      "pos": [
+        380,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "kube-system"
+    },
+    {
+      "id": "metrics-collector",
+      "type": "backend",
+      "label": "메트릭 수집기",
+      "sublabel": "사이드카",
+      "pos": [
+        380,
+        100
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "managed-ng",
+      "type": "cloud",
+      "label": "관리형 노드 그룹",
+      "sublabel": "c5.large ×2",
+      "pos": [
+        60,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "self-managed-ng",
+      "type": "cloud",
+      "label": "자체 관리형 노드 그룹",
+      "sublabel": "m5.large, r5.large",
+      "pos": [
+        310,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "spot-ng",
+      "type": "cloud",
+      "label": "스팟 노드 그룹",
+      "sublabel": "c5.large / m5.large 스팟",
+      "pos": [
+        580,
+        470
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ec2-api",
+      "type": "external",
+      "label": "EC2 API",
+      "sublabel": "인스턴스 정보",
+      "pos": [
+        760,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "external",
+      "label": "CloudWatch",
+      "sublabel": "메트릭 전송",
+      "pos": [
+        760,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "apiserver",
+        "default-scheduler",
+        "custom-scheduler",
+        "metrics-collector",
+        "managed-ng",
+        "self-managed-ng",
+        "spot-ng"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "default-scheduler"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "커스텀 스케줄러 파드",
+      "wraps": [
+        "custom-scheduler",
+        "metrics-collector"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "노드 그룹",
+      "wraps": [
+        "managed-ng",
+        "self-managed-ng",
+        "spot-ng"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-custom",
+      "from": "apiserver",
+      "to": "custom-scheduler",
+      "label": "파드 감시 / 바인딩",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-default",
+      "from": "apiserver",
+      "to": "default-scheduler",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "custom-to-managed",
+      "from": "custom-scheduler",
+      "to": "managed-ng",
+      "label": "노드 선택",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "custom-to-self",
+      "from": "custom-scheduler",
+      "to": "self-managed-ng",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "custom-to-spot",
+      "from": "custom-scheduler",
+      "to": "spot-ng",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "custom-to-ec2",
+      "from": "custom-scheduler",
+      "to": "ec2-api",
+      "variant": "dashed"
+    },
+    {
+      "id": "metrics-to-cw",
+      "from": "metrics-collector",
+      "to": "cloudwatch",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "스케줄러 배치",
+      "items": [
+        "kube-system 네임스페이스에 Deployment로 배포",
+        "ServiceAccount + ClusterRole(pods, pods/binding, nodes)",
+        "파드는 schedulerName 필드로 커스텀 스케줄러를 지정"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "EKS 고려 사항",
+      "items": [
+        "IAM 권한: EKS 클러스터와 상호 작용",
+        "노드 그룹 관리: 관리형 / 자체 관리형 / Fargate",
+        "가용 영역 및 인스턴스 유형 인식 스케줄링"
+      ]
+    }
+  ]
+}

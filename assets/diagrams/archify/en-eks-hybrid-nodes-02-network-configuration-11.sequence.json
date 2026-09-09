@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pattern 2: EKS Control Plane → Kubelet (port 10250)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      980,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "In-VPC routing"
+        },
+        "emphasis": {
+          "label": "Reaches kubelet"
+        },
+        "security": {
+          "label": "DX/VPN crossing"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "in-vpc",
+        "label": "Routing inside the VPC",
+        "focus": [
+          "cp",
+          "eni",
+          "vpcrouter"
+        ],
+        "note": "The API server looks up the node IP and traffic flows through the CP ENI to the Cluster VPC router."
+      },
+      {
+        "id": "boundary",
+        "label": "Crossing the cloud boundary",
+        "focus": [
+          "vpcrouter",
+          "gateway",
+          "onprem"
+        ],
+        "note": "The VPC route table's 10.80.0.0/16 static route sends traffic to the Gateway, which reaches on-premises over Direct Connect or VPN."
+      },
+      {
+        "id": "arrive",
+        "label": "Reaching the kubelet",
+        "focus": [
+          "onprem",
+          "kubelet"
+        ],
+        "note": "The on-premises router forwards to 10.80.0.2 and the kubelet on port 10250 receives the request."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "EKS CP",
+      "sublabel": "API server"
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "CP ENI",
+      "sublabel": "10.0.0.132"
+    },
+    {
+      "id": "vpcrouter",
+      "type": "backend",
+      "label": "VPC Router",
+      "sublabel": "VPC 10.0.0.0/16"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "Direct Connect / VPN"
+    },
+    {
+      "id": "onprem",
+      "type": "backend",
+      "label": "On-prem Router",
+      "sublabel": "on-prem 10.80.0.0/16"
+    },
+    {
+      "id": "kubelet",
+      "type": "external",
+      "label": "kubelet",
+      "sublabel": "Hybrid Node 10.80.0.2"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 330,
+      "label": "AWS — Region · Cluster VPC 10.0.0.0/16"
+    },
+    {
+      "from": 350,
+      "to": 430,
+      "label": "Cloud boundary — Direct Connect or VPN"
+    },
+    {
+      "from": 450,
+      "to": 560,
+      "label": "On-prem environment — Remote Node CIDR 10.80.0.0/16"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "cp",
+      "to": "eni",
+      "y": 200,
+      "label": "1. Open connection to node IP 10.80.0.2:10250",
+      "variant": "default",
+      "note": "Node IP is retrieved from the node status object"
+    },
+    {
+      "id": "m2",
+      "from": "eni",
+      "to": "vpcrouter",
+      "y": 255,
+      "label": "2. Routed inside the Cluster VPC",
+      "variant": "default"
+    },
+    {
+      "id": "m3",
+      "from": "vpcrouter",
+      "to": "gateway",
+      "y": 305,
+      "label": "3. 10.80.0.0/16 [static] via Gateway",
+      "variant": "default",
+      "note": "VPC route table lookup"
+    },
+    {
+      "id": "m4",
+      "from": "gateway",
+      "to": "onprem",
+      "y": 390,
+      "label": "4→5. Crosses the boundary via Direct Connect or VPN",
+      "variant": "security"
+    },
+    {
+      "id": "m5",
+      "from": "onprem",
+      "to": "kubelet",
+      "y": 505,
+      "label": "6. 10.80.0.0/16 [local] via eth0 → port 10250",
+      "variant": "emphasis",
+      "note": "Used for kubectl logs · exec · port-forward"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "cp",
+      "from": 190,
+      "to": 215,
+      "type": "cloud"
+    },
+    {
+      "participant": "vpcrouter",
+      "from": 250,
+      "to": 312,
+      "type": "backend"
+    },
+    {
+      "participant": "gateway",
+      "from": 300,
+      "to": 398,
+      "type": "security"
+    },
+    {
+      "participant": "onprem",
+      "from": 385,
+      "to": 512,
+      "type": "backend"
+    },
+    {
+      "participant": "kubelet",
+      "from": 500,
+      "to": 545,
+      "type": "external"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "VPC route table",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway",
+        "10.85.0.0/16 [static] via Gateway"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "On-prem routing table",
+      "items": [
+        "10.80.0.0/16 [local] via eth0",
+        "10.0.0.0/16 [static] via Gateway",
+        "10.85.1.0/24 · 10.85.2.0/24 [dynamic] via each Hybrid Node"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Operations that use this path",
+      "items": [
+        "kubectl logs / kubectl exec / kubectl port-forward",
+        "The API server initiates the connection, so the on-prem firewall must allow inbound 10250/TCP",
+        "Only the node CIDR (10.80.0.0/16) needs to be routable; the pod CIDR is not required"
+      ]
+    }
+  ]
+}

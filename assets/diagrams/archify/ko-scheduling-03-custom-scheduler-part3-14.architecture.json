@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "커스텀 스케줄러 모니터링 아키텍처",
+    "output": "ko-scheduling-03-custom-scheduler-part3-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "메트릭 경로",
+        "focus": [
+          "scheduler",
+          "sidecar",
+          "amp",
+          "grafana",
+          "cloudwatch"
+        ],
+        "note": "사이드카가 노출한 메트릭을 AMP가 스크래핑하고 Grafana와 CloudWatch에서 확인한다."
+      },
+      {
+        "id": "log-path",
+        "label": "로그 경로",
+        "focus": [
+          "scheduler",
+          "fluentd",
+          "elasticsearch",
+          "kibana",
+          "cloudwatch"
+        ],
+        "note": "스케줄러 로그는 Fluentd → ElasticSearch → Kibana로 흐르고 CloudWatch로도 전달된다."
+      },
+      {
+        "id": "alert-path",
+        "label": "알림 경로",
+        "focus": [
+          "amp",
+          "alertmanager",
+          "sns",
+          "lambda"
+        ],
+        "note": "Alert Manager가 발생시킨 알림은 SNS를 거쳐 Lambda로 전달된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Custom Scheduler",
+      "sublabel": "스케줄링 결정",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "사이드카 컨테이너",
+      "sublabel": "메트릭 엔드포인트",
+      "pos": [
+        320,
+        50
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "fluentd",
+      "type": "backend",
+      "label": "Fluentd",
+      "sublabel": "로그 수집",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "elasticsearch",
+      "type": "database",
+      "label": "ElasticSearch",
+      "sublabel": "로그 저장",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "kibana",
+      "type": "frontend",
+      "label": "Kibana",
+      "sublabel": "로그 조회",
+      "pos": [
+        60,
+        420
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "amp",
+      "type": "cloud",
+      "label": "AMP",
+      "sublabel": "Amazon Managed Prometheus",
+      "pos": [
+        320,
+        180
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "대시보드",
+      "pos": [
+        340,
+        330
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alert Manager",
+      "sublabel": "알림 규칙",
+      "pos": [
+        600,
+        180
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "로그 / 메트릭",
+      "pos": [
+        60,
+        560
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS",
+      "sublabel": "알림 토픽",
+      "pos": [
+        600,
+        560
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "lambda",
+      "type": "cloud",
+      "label": "Lambda",
+      "sublabel": "알림 처리",
+      "pos": [
+        850,
+        560
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "스케줄러 파드",
+      "wraps": [
+        "scheduler",
+        "sidecar"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로깅 스택",
+      "wraps": [
+        "fluentd",
+        "elasticsearch",
+        "kibana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모니터링 스택",
+      "wraps": [
+        "amp",
+        "grafana",
+        "alertmanager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "scheduler",
+        "sidecar",
+        "fluentd",
+        "elasticsearch",
+        "kibana",
+        "amp",
+        "grafana",
+        "alertmanager"
+      ],
+      "pad": 44
+    }
+  ],
+  "connections": [
+    {
+      "id": "scheduler-to-sidecar",
+      "from": "scheduler",
+      "to": "sidecar",
+      "label": "메트릭 노출"
+    },
+    {
+      "id": "scheduler-to-fluentd",
+      "from": "scheduler",
+      "to": "fluentd",
+      "label": "로그",
+      "labelDy": 24
+    },
+    {
+      "id": "sidecar-to-amp",
+      "from": "sidecar",
+      "to": "amp",
+      "label": "메트릭 스크래핑",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fluentd-to-es",
+      "from": "fluentd",
+      "to": "elasticsearch"
+    },
+    {
+      "id": "es-to-kibana",
+      "from": "elasticsearch",
+      "to": "kibana"
+    },
+    {
+      "id": "amp-to-grafana",
+      "from": "amp",
+      "to": "grafana",
+      "variant": "emphasis"
+    },
+    {
+      "id": "amp-to-alertmanager",
+      "from": "amp",
+      "to": "alertmanager"
+    },
+    {
+      "id": "kibana-to-cloudwatch",
+      "from": "kibana",
+      "to": "cloudwatch",
+      "variant": "dashed"
+    },
+    {
+      "id": "amp-to-cloudwatch",
+      "from": "amp",
+      "to": "cloudwatch",
+      "variant": "dashed"
+    },
+    {
+      "id": "alertmanager-to-sns",
+      "from": "alertmanager",
+      "to": "sns",
+      "label": "알림",
+      "labelDy": 24
+    },
+    {
+      "id": "sns-to-lambda",
+      "from": "sns",
+      "to": "lambda"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "메트릭",
+      "items": [
+        "ServiceMonitor가 15초 간격으로 metrics 포트를 스크래핑한다",
+        "Grafana ConfigMap 대시보드로 시각화한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "로그와 이벤트",
+      "items": [
+        "kubectl logs -n kube-system -l app=custom-scheduler",
+        "kubectl get events --field-selector involvedObject.name=<pod-name>"
+      ]
+    }
+  ]
+}

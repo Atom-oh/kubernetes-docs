@@ -34,7 +34,21 @@
         ],
         "note": "응답은 역방향(패턴 2)으로 돌아온다. Cilium이 VXLAN으로 캡슐화해 게이트웨이로 보내고, 게이트웨이가 디캡슐화해 VPC로 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

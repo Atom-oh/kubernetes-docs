@@ -40,7 +40,10 @@
         ],
         "note": "세 에이전트의 결과를 Collaborator가 종합해 근본 원인 보고서를 만든다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

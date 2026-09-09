@@ -1158,7 +1158,9 @@ Both KEDA and Knative enable event-driven scaling on Kubernetes, but they operat
 
 ### Roles in Event-Driven Architecture
 
-![Diagram comparing two parallel scaling paths from shared event sources: Amazon SQS queue depth driving a KEDA ScaledObject through the HPA to scale a Worker Deployment, versus Kafka and HTTP CloudEvents flowing into a Knative Broker that routes through a Trigger to a Knative Service.](../../assets/diagrams/rendered/en-autoscaling-03-knative-4.svg)
+![Diagram comparing two parallel scaling paths from shared event sources: Amazon SQS queue depth driving a KEDA ScaledObject through the HPA to scale a Worker Deployment, versus Kafka and HTTP CloudEvents flowing into a Knative Broker that routes through a Trigger to a Knative Service.](../.gitbook/assets/en-autoscaling-03-knative-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-03-knative-4.html)
 
 ### When to Use KEDA vs Knative
 

@@ -40,7 +40,18 @@
         ],
         "note": "최종 노드를 선택해 API 서버에 바인딩을 요청하고 포드가 노드에 스케줄링된다"
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

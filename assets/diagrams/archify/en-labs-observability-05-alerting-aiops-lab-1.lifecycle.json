@@ -21,7 +21,11 @@
         }
       }
     },
-    "locale": "en"
+    "locale": "en",
+    "viewBox": [
+      1070,
+      660
+    ]
   },
   "lanes": [
     {

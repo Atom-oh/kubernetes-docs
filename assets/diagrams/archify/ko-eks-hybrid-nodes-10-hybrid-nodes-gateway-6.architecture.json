@@ -31,7 +31,21 @@
         ],
         "note": "스탠바이는 Lease를 감시하며 터널만 대기 상태로 유지한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

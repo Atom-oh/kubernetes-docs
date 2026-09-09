@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "커스텀 스케줄러 주요 모니터링 메트릭",
+    "output": "ko-scheduling-03-custom-scheduler-part3-15.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "performance",
+        "label": "성능 메트릭",
+        "focus": [
+          "latency",
+          "queue",
+          "throughput",
+          "perf-dash",
+          "latency-alert",
+          "backlog-alert"
+        ],
+        "note": "지연 시간·큐 길이·처리량은 성능 대시보드와 지연/백로그 알림으로 이어진다."
+      },
+      {
+        "id": "decision",
+        "label": "결정 메트릭",
+        "focus": [
+          "decision",
+          "decision-dash"
+        ],
+        "note": "필터링·점수 매기기·바인딩 단계의 메트릭은 결정 대시보드에서 확인한다."
+      },
+      {
+        "id": "errors",
+        "label": "오류 메트릭",
+        "focus": [
+          "errors",
+          "error-dash",
+          "error-rate-alert"
+        ],
+        "note": "스케줄링·바인딩·확장 오류는 오류 대시보드와 오류율 알림으로 이어진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "latency",
+      "type": "backend",
+      "label": "스케줄링 지연 시간",
+      "sublabel": "성능 메트릭",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "backend",
+      "label": "큐 길이",
+      "sublabel": "성능 메트릭",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "errors",
+      "type": "security",
+      "label": "오류 메트릭",
+      "sublabel": "스케줄링 · 바인딩 · 확장 오류",
+      "pos": [
+        440,
+        70
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "backend",
+      "label": "처리량",
+      "sublabel": "성능 메트릭",
+      "pos": [
+        690,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "decision",
+      "type": "backend",
+      "label": "결정 메트릭",
+      "sublabel": "필터링 · 점수 매기기 · 바인딩",
+      "pos": [
+        880,
+        70
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "latency-alert",
+      "type": "external",
+      "label": "높은 지연 시간 알림",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "backlog-alert",
+      "type": "external",
+      "label": "큐 백로그 알림",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "error-rate-alert",
+      "type": "external",
+      "label": "오류율 알림",
+      "pos": [
+        470,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "error-dash",
+      "type": "frontend",
+      "label": "오류 대시보드",
+      "sublabel": "Grafana",
+      "pos": [
+        690,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "perf-dash",
+      "type": "frontend",
+      "label": "성능 대시보드",
+      "sublabel": "Grafana",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "decision-dash",
+      "type": "frontend",
+      "label": "결정 대시보드",
+      "sublabel": "Grafana",
+      "pos": [
+        1070,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "스케줄러 메트릭 (Prometheus 수집)",
+      "wraps": [
+        "latency",
+        "queue",
+        "throughput",
+        "decision",
+        "errors"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "알림",
+      "wraps": [
+        "latency-alert",
+        "backlog-alert",
+        "error-rate-alert"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "대시보드",
+      "wraps": [
+        "perf-dash",
+        "decision-dash",
+        "error-dash"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "latency-to-alert",
+      "from": "latency",
+      "to": "latency-alert",
+      "label": "임계치 초과",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "queue-to-alert",
+      "from": "queue",
+      "to": "backlog-alert",
+      "label": "백로그 누적",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "errors-to-alert",
+      "from": "errors",
+      "to": "error-rate-alert",
+      "label": "스케줄링 오류율",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24,
+      "labelDx": -50
+    },
+    {
+      "id": "throughput-to-dash",
+      "from": "throughput",
+      "to": "perf-dash",
+      "label": "시각화",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "decision-to-dash",
+      "from": "decision",
+      "to": "decision-dash",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "errors-to-dash",
+      "from": "errors",
+      "to": "error-dash",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "성능 메트릭",
+      "items": [
+        "스케줄링 지연 시간",
+        "큐 길이",
+        "처리량"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "결정 메트릭",
+      "items": [
+        "필터링 메트릭",
+        "점수 매기기 메트릭",
+        "바인딩 메트릭"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "오류 메트릭",
+      "items": [
+        "스케줄링 오류",
+        "바인딩 오류",
+        "확장 오류"
+      ]
+    }
+  ]
+}

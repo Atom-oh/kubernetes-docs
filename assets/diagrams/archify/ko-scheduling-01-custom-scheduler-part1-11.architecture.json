@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "다중 스케줄러 접근 방식",
+    "output": "ko-scheduling-01-custom-scheduler-part1-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "default-path",
+        "label": "기본 스케줄러 경로",
+        "focus": [
+          "apiserver",
+          "queue",
+          "default-scheduler",
+          "pod-default",
+          "node1"
+        ],
+        "note": "schedulerName을 지정하지 않은(default-scheduler) 포드는 기본 스케줄러가 노드에 바인딩한다."
+      },
+      {
+        "id": "custom-path",
+        "label": "커스텀 스케줄러 경로",
+        "focus": [
+          "queue",
+          "custom-scheduler-1",
+          "custom-scheduler-2",
+          "pod-custom-1",
+          "pod-custom-2",
+          "node2",
+          "node3"
+        ],
+        "note": "schedulerName이 일치하는 포드만 각 커스텀 스케줄러가 골라 스케줄링한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "default-scheduler",
+      "type": "backend",
+      "label": "기본 스케줄러",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        540,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "custom-scheduler-1",
+      "type": "backend",
+      "label": "커스텀 스케줄러 1",
+      "sublabel": "custom-scheduler-1",
+      "pos": [
+        540,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "custom"
+    },
+    {
+      "id": "custom-scheduler-2",
+      "type": "backend",
+      "label": "커스텀 스케줄러 2",
+      "sublabel": "custom-scheduler-2",
+      "pos": [
+        540,
+        420
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "custom"
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "스케줄링 큐",
+      "sublabel": "미할당(Pending) 포드",
+      "pos": [
+        290,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pod-default",
+      "type": "frontend",
+      "label": "포드",
+      "sublabel": "schedulerName: default-scheduler",
+      "pos": [
+        810,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod-custom-1",
+      "type": "frontend",
+      "label": "포드",
+      "sublabel": "schedulerName: custom-scheduler-1",
+      "pos": [
+        810,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod-custom-2",
+      "type": "frontend",
+      "label": "포드",
+      "sublabel": "schedulerName: custom-scheduler-2",
+      "pos": [
+        810,
+        420
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "cloud",
+      "label": "노드 1",
+      "sublabel": "워커 노드",
+      "pos": [
+        1080,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "cloud",
+      "label": "노드 2",
+      "sublabel": "워커 노드",
+      "pos": [
+        1080,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "cloud",
+      "label": "노드 3",
+      "sublabel": "워커 노드",
+      "pos": [
+        1080,
+        420
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "queue",
+        "default-scheduler",
+        "custom-scheduler-1",
+        "custom-scheduler-2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "포드",
+      "wraps": [
+        "pod-default",
+        "pod-custom-1",
+        "pod-custom-2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "node1",
+        "node2",
+        "node3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-queue",
+      "from": "apiserver",
+      "to": "queue",
+      "label": "포드 생성",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "queue-to-default",
+      "from": "queue",
+      "to": "default-scheduler",
+      "label": "감시",
+      "variant": "dashed",
+      "labelDy": -24,
+      "labelDx": -30
+    },
+    {
+      "id": "queue-to-custom-1",
+      "from": "queue",
+      "to": "custom-scheduler-1",
+      "variant": "dashed"
+    },
+    {
+      "id": "queue-to-custom-2",
+      "from": "queue",
+      "to": "custom-scheduler-2",
+      "variant": "dashed"
+    },
+    {
+      "id": "default-to-pod",
+      "from": "default-scheduler",
+      "to": "pod-default",
+      "label": "포드 선택",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "custom-1-to-pod",
+      "from": "custom-scheduler-1",
+      "to": "pod-custom-1"
+    },
+    {
+      "id": "custom-2-to-pod",
+      "from": "custom-scheduler-2",
+      "to": "pod-custom-2"
+    },
+    {
+      "id": "pod-default-to-node",
+      "from": "pod-default",
+      "to": "node1",
+      "label": "바인딩",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "pod-custom-1-to-node",
+      "from": "pod-custom-1",
+      "to": "node2"
+    },
+    {
+      "id": "pod-custom-2-to-node",
+      "from": "pod-custom-2",
+      "to": "node3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "다중 스케줄러 접근 방식",
+      "items": [
+        "기본 스케줄러와 함께 커스텀 스케줄러를 같은 클러스터에서 실행한다",
+        "포드 생성 시 spec.schedulerName 필드로 어떤 스케줄러를 사용할지 지정한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "커스텀 스케줄러 동작",
+      "items": [
+        "FieldSelector spec.schedulerName=custom-scheduler,spec.nodeName= 으로 미할당 포드를 조회한다",
+        "노드를 선택한 뒤 포드를 노드에 바인딩한다"
+      ]
+    }
+  ]
+}

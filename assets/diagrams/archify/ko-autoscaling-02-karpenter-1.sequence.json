@@ -42,7 +42,21 @@
         ],
         "note": "새 노드가 등록되면 레이블·테인트를 설정하고 파드가 그 노드에 스케줄링된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

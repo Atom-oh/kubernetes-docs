@@ -39,7 +39,21 @@
         ],
         "note": "Channel은 필터 없이 모든 Subscription에 이벤트를 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {

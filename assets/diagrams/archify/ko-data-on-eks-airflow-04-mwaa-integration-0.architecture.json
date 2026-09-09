@@ -27,7 +27,21 @@
         ],
         "note": "eksctl iamidentitymapping이 MWAA 실행 역할을 EKS RBAC에 바인딩해 Pod 생성을 허용한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

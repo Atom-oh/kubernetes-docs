@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스케줄러 프레임워크 아키텍처",
+    "output": "ko-scheduling-02-custom-scheduler-part2-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": { "label": "Pod / Node" },
+        "messagebus": { "label": "큐 단계" },
+        "backend": { "label": "스케줄링 단계" },
+        "cloud": { "label": "바인딩 단계" }
+      }
+    },
+    "views": [
+      { "id": "queue", "label": "스케줄링 큐", "focus": ["pod", "queuesort", "prefilter"], "note": "Pod가 스케줄링 큐에 들어오면 QueueSort 플러그인이 포드의 순서를 결정한다." },
+      { "id": "scheduling", "label": "스케줄링 사이클", "focus": ["prefilter", "filter", "prescore", "score", "reserve", "permit"], "note": "노드를 필터링하고 점수를 매긴 뒤 리소스를 예약하고 스케줄링 허가 여부를 결정한다." },
+      { "id": "binding", "label": "바인딩 사이클", "focus": ["permit", "prebind", "bind", "postbind", "node"], "note": "허가된 포드를 선택된 노드에 바인딩하고 바인딩 후 작업을 수행한다." }
+    ]
+  },
+  "components": [
+    { "id": "pod", "type": "external", "label": "Pod", "sublabel": "스케줄링 대기 포드", "pos": [40, 40], "size": [150, 60] },
+    { "id": "queuesort", "type": "messagebus", "label": "QueueSort", "sublabel": "큐 내 포드 순서 결정", "pos": [280, 40], "size": [170, 60] },
+    { "id": "prefilter", "type": "backend", "label": "PreFilter", "sublabel": "필터링 데이터 준비", "pos": [40, 210], "size": [150, 60] },
+    { "id": "filter", "type": "backend", "label": "Filter", "sublabel": "실행 불가 노드 제외", "pos": [220, 210], "size": [150, 60] },
+    { "id": "prescore", "type": "backend", "label": "PreScore", "sublabel": "점수 데이터 준비", "pos": [400, 210], "size": [150, 60] },
+    { "id": "score", "type": "backend", "label": "Score", "sublabel": "NormalizeScore 포함", "tag": "점수 계산·정규화", "pos": [580, 210], "size": [150, 60] },
+    { "id": "reserve", "type": "backend", "label": "Reserve", "sublabel": "리소스 예약", "pos": [760, 210], "size": [150, 60] },
+    { "id": "permit", "type": "backend", "label": "Permit", "sublabel": "스케줄링 허가 결정", "pos": [940, 210], "size": [150, 60] },
+    { "id": "prebind", "type": "cloud", "label": "PreBind", "sublabel": "바인딩 전 작업", "pos": [220, 390], "size": [150, 60] },
+    { "id": "bind", "type": "cloud", "label": "Bind", "sublabel": "포드를 노드에 바인딩", "pos": [400, 390], "size": [150, 60] },
+    { "id": "postbind", "type": "cloud", "label": "PostBind", "sublabel": "바인딩 후 작업", "pos": [580, 390], "size": [150, 60] },
+    { "id": "node", "type": "external", "label": "Node", "sublabel": "선택된 노드", "pos": [850, 390], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "스케줄링 큐", "wraps": ["queuesort"] },
+    { "kind": "region", "label": "스케줄링 사이클", "wraps": ["prefilter", "filter", "prescore", "score", "reserve", "permit"] },
+    { "kind": "region", "label": "바인딩 사이클", "wraps": ["prebind", "bind", "postbind"] }
+  ],
+  "connections": [
+    { "id": "pod-queuesort", "from": "pod", "to": "queuesort", "label": "큐 진입", "variant": "emphasis" },
+    { "id": "queuesort-prefilter", "from": "queuesort", "to": "prefilter" },
+    { "id": "prefilter-filter", "from": "prefilter", "to": "filter" },
+    { "id": "filter-prescore", "from": "filter", "to": "prescore" },
+    { "id": "prescore-score", "from": "prescore", "to": "score" },
+    { "id": "score-reserve", "from": "score", "to": "reserve" },
+    { "id": "reserve-permit", "from": "reserve", "to": "permit" },
+    { "id": "permit-prebind", "from": "permit", "to": "prebind", "label": "허가됨", "fromSide": "bottom", "toSide": "top" },
+    { "id": "prebind-bind", "from": "prebind", "to": "bind" },
+    { "id": "bind-postbind", "from": "bind", "to": "postbind" },
+    { "id": "postbind-node", "from": "postbind", "to": "node", "label": "바인딩 완료", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "스케줄링 큐", "items": ["QueueSort: 스케줄링 큐에서 포드의 순서를 결정", "Kubernetes 1.15부터 도입된 플러그인 기반 아키텍처"] },
+    { "dot": "cyan", "title": "스케줄링 사이클", "items": ["PreFilter / Filter: 노드 필터링 및 사전 검증", "PreScore / Score / NormalizeScore: 노드 점수 계산 및 정규화", "Reserve / Permit: 리소스 예약과 스케줄링 허가 결정"] },
+    { "dot": "emerald", "title": "바인딩 사이클", "items": ["PreBind: 바인딩 전에 필요한 작업 수행", "Bind: 포드를 선택된 노드에 바인딩", "PostBind: 바인딩 후에 필요한 작업 수행"] }
+  ]
+}

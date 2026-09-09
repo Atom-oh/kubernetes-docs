@@ -27,7 +27,18 @@
         ],
         "note": "Kafka가 실시간 이벤트를 Flink에 공급하고, 원시 데이터를 Spark 배치 처리에 적재한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {

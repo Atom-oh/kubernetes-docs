@@ -7,35 +7,260 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "gitops", "label": "GitOps 배포 경로", "focus": ["argocd", "karpenter", "msa", "rollouts"], "note": "Managed Cluster의 ArgoCD가 등록된 Service Cluster에 워크로드를 배포한다." },
-      { "id": "observability", "label": "관측성 백엔드", "focus": ["obs-stack", "aws-obs"], "note": "클러스터 내 관측성 스택이 AMP · AMG · OpenSearch로 메트릭과 로그를 보낸다." },
-      { "id": "data", "label": "데이터 · 메시징", "focus": ["msa", "aws-data"], "note": "MSA 앱이 Aurora · SQS · SNS · MWAA 관리형 서비스를 사용한다." }
-    ]
+      {
+        "id": "gitops",
+        "label": "GitOps 배포 경로",
+        "focus": [
+          "argocd",
+          "karpenter",
+          "msa",
+          "rollouts"
+        ],
+        "note": "Managed Cluster의 ArgoCD가 등록된 Service Cluster에 워크로드를 배포한다."
+      },
+      {
+        "id": "observability",
+        "label": "관측성 백엔드",
+        "focus": [
+          "obs-stack",
+          "aws-obs"
+        ],
+        "note": "클러스터 내 관측성 스택이 AMP · AMG · OpenSearch로 메트릭과 로그를 보낸다."
+      },
+      {
+        "id": "data",
+        "label": "데이터 · 메시징",
+        "focus": [
+          "msa",
+          "aws-data"
+        ],
+        "note": "MSA 앱이 Aurora · SQS · SNS · MWAA 관리형 서비스를 사용한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "mgmt-ng", "type": "cloud", "label": "Node Group", "sublabel": "3x m5.large", "pos": [60, 90], "size": [220, 60] },
-    { "id": "argocd", "type": "backend", "label": "ArgoCD", "sublabel": "GitOps CD", "pos": [60, 180], "size": [220, 60] },
-    { "id": "obs-stack", "type": "backend", "label": "Observability Stack", "sublabel": "클러스터 내 관측성 스택", "pos": [60, 270], "size": [220, 60] },
-    { "id": "svc-ng", "type": "cloud", "label": "Node Group", "sublabel": "3x m5.large", "pos": [520, 90], "size": [200, 60] },
-    { "id": "karpenter", "type": "backend", "label": "Karpenter", "sublabel": "노드 오토스케일러", "pos": [520, 180], "size": [200, 60] },
-    { "id": "msa", "type": "backend", "label": "MSA Apps", "sublabel": "마이크로서비스", "pos": [520, 270], "size": [200, 60] },
-    { "id": "rollouts", "type": "backend", "label": "Argo Rollouts", "sublabel": "Progressive Delivery", "pos": [760, 180], "size": [200, 60] },
-    { "id": "aws-obs", "type": "cloud", "label": "Observability", "sublabel": "AMP · AMG · OpenSearch", "pos": [60, 450], "size": [260, 60] },
-    { "id": "aws-data", "type": "database", "label": "Data & Messaging", "sublabel": "Aurora · SQS · SNS · MWAA", "pos": [520, 450], "size": [260, 60] }
+    {
+      "id": "mgmt-ng",
+      "type": "cloud",
+      "label": "Node Group",
+      "sublabel": "3x m5.large",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "GitOps CD",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "obs-stack",
+      "type": "backend",
+      "label": "Observability Stack",
+      "sublabel": "클러스터 내 관측성 스택",
+      "pos": [
+        60,
+        270
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "svc-ng",
+      "type": "cloud",
+      "label": "Node Group",
+      "sublabel": "3x m5.large",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "backend",
+      "label": "Karpenter",
+      "sublabel": "노드 오토스케일러",
+      "pos": [
+        520,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "msa",
+      "type": "backend",
+      "label": "MSA Apps",
+      "sublabel": "마이크로서비스",
+      "pos": [
+        520,
+        270
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rollouts",
+      "type": "backend",
+      "label": "Argo Rollouts",
+      "sublabel": "Progressive Delivery",
+      "pos": [
+        760,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "aws-obs",
+      "type": "cloud",
+      "label": "Observability",
+      "sublabel": "AMP · AMG · OpenSearch",
+      "pos": [
+        60,
+        450
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "aws-data",
+      "type": "database",
+      "label": "Data & Messaging",
+      "sublabel": "Aurora · SQS · SNS · MWAA",
+      "pos": [
+        520,
+        450
+      ],
+      "size": [
+        260,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "EKS Managed Cluster", "wraps": ["mgmt-ng", "argocd", "obs-stack"] },
-    { "kind": "region", "label": "EKS Service Cluster", "wraps": ["svc-ng", "karpenter", "msa", "rollouts"] },
-    { "kind": "region", "label": "AWS Managed Services", "wraps": ["aws-obs", "aws-data"] }
+    {
+      "kind": "region",
+      "label": "EKS Managed Cluster",
+      "wraps": [
+        "mgmt-ng",
+        "argocd",
+        "obs-stack"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Service Cluster",
+      "wraps": [
+        "svc-ng",
+        "karpenter",
+        "msa",
+        "rollouts"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Managed Services",
+      "wraps": [
+        "aws-obs",
+        "aws-data"
+      ]
+    }
   ],
   "connections": [
-    { "id": "gitops-deploy", "from": "argocd", "to": "karpenter", "label": "GitOps 배포", "variant": "emphasis" },
-    { "id": "metrics-logs", "from": "obs-stack", "to": "aws-obs", "label": "메트릭 · 로그", "fromSide": "bottom", "toSide": "top" },
-    { "id": "data-access", "from": "msa", "to": "aws-data", "label": "데이터 · 메시지", "fromSide": "bottom", "toSide": "top" }
+    {
+      "id": "gitops-deploy",
+      "from": "argocd",
+      "to": "karpenter",
+      "label": "GitOps 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-logs",
+      "from": "obs-stack",
+      "to": "aws-obs",
+      "label": "메트릭 · 로그",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "data-access",
+      "from": "msa",
+      "to": "aws-data",
+      "label": "데이터 · 메시지",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "EKS Managed Cluster", "items": ["obs-managed-cluster, m5.large 3대 노드 그룹", "ArgoCD가 Service Cluster를 등록해 멀티 클러스터 GitOps 수행", "관측성 스택이 AMP로 remote write, OpenSearch로 로그 전송"] },
-    { "dot": "emerald", "title": "EKS Service Cluster", "items": ["obs-service-cluster, Karpenter IRSA 포함", "MSA 앱이 IRSA로 SQS · SNS 접근, Aurora는 DB 자격 증명으로 접근", "Argo Rollouts로 Progressive Delivery"] },
-    { "dot": "amber", "title": "AWS Managed Services", "items": ["AMP 워크스페이스 · AMG 워크스페이스 · OpenSearch 도메인", "Aurora PostgreSQL · SQS 큐 · SNS 토픽 · MWAA 환경", "모두 Terraform/CLI로 프로비저닝"] }
+    {
+      "dot": "cyan",
+      "title": "EKS Managed Cluster",
+      "items": [
+        "obs-managed-cluster, m5.large 3대 노드 그룹",
+        "ArgoCD가 Service Cluster를 등록해 멀티 클러스터 GitOps 수행",
+        "관측성 스택이 AMP로 remote write, OpenSearch로 로그 전송"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "EKS Service Cluster",
+      "items": [
+        "obs-service-cluster, Karpenter IRSA 포함",
+        "MSA 앱이 IRSA로 SQS · SNS 접근, Aurora는 DB 자격 증명으로 접근",
+        "Argo Rollouts로 Progressive Delivery"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AWS Managed Services",
+      "items": [
+        "AMP 워크스페이스 · AMG 워크스페이스 · OpenSearch 도메인",
+        "Aurora PostgreSQL · SQS 큐 · SNS 토픽 · MWAA 환경",
+        "모두 Terraform/CLI로 프로비저닝"
+      ]
+    }
   ]
 }

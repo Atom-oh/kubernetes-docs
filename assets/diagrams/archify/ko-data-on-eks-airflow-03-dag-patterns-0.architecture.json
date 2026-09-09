@@ -41,7 +41,10 @@
         ],
         "note": "Pod 완료 상태가 오퍼레이터로 전달되고, 오퍼레이터가 태스크 성공/실패를 Airflow scheduler와 메타데이터 DB에 보고한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

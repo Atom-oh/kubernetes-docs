@@ -37,7 +37,21 @@
         ],
         "note": "2개 레플리카가 Kubernetes Lease로 리더를 선출하고, 스탠바이는 다른 서브넷에서 승격을 대기한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

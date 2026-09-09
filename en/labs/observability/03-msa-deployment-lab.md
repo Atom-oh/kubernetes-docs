@@ -990,7 +990,9 @@ EOF
 
 ### Canary State Diagram
 
-![State machine showing a canary deployment ramping v2 traffic through 20% and 40% stages, each gated by a 2-minute analysis window, then automatically ramping to 100% once both gates pass, with a rollback to v1 triggered from either gate if the success rate drops below 95%.](../../../assets/diagrams/rendered/en-labs-observability-03-msa-deployment-lab-1.svg)
+![State machine showing a canary deployment ramping v2 traffic through 20% and 40% stages, each gated by a 2-minute analysis window, then automatically ramping to 100% once both gates pass, with a rollback to v1 triggered from either gate if the success rate drops below 95%.](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-03-msa-deployment-lab-1.html)
 
 **Step 6.3: Trigger canary deployment (update image)**
 

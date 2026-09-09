@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Canary State Diagram",
+    "output": "en-labs-observability-03-msa-deployment-lab-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      980,
+      632
+    ],
+    "views": [
+      {
+        "id": "promotion",
+        "label": "Promotion path",
+        "focus": [
+          "canary20",
+          "gate1",
+          "canary40",
+          "gate2",
+          "ramp",
+          "promoted"
+        ],
+        "note": "setWeight 20 → 40, each followed by a 2-minute pause and a success-rate AnalysisRun, then 60/80/100 with 2-minute pauses."
+      },
+      {
+        "id": "rollback",
+        "label": "Rollback path",
+        "focus": [
+          "gate1",
+          "gate2",
+          "rollback",
+          "rolledback"
+        ],
+        "note": "Either analysis gate aborts the Rollout when the success rate falls below 95%; traffic returns to v1."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Argo Rollouts canary steps"
+    },
+    {
+      "id": "recovery",
+      "label": "Abort on analysis failure"
+    },
+    {
+      "id": "terminal",
+      "label": "Final state"
+    }
+  ],
+  "states": [
+    {
+      "id": "canary20",
+      "type": "start",
+      "label": "20% Canary",
+      "sublabel": "deploy v2 · traffic to v2",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "gate1",
+      "type": "decision",
+      "label": "Analysis Gate",
+      "sublabel": "2 min window",
+      "lane": "main",
+      "col": 1,
+      "step": "02"
+    },
+    {
+      "id": "canary40",
+      "type": "active",
+      "label": "40% Canary",
+      "sublabel": "traffic to v2",
+      "lane": "main",
+      "col": 2,
+      "step": "03"
+    },
+    {
+      "id": "gate2",
+      "type": "decision",
+      "label": "Analysis Gate",
+      "sublabel": "2 min window",
+      "lane": "main",
+      "col": 3,
+      "step": "04"
+    },
+    {
+      "id": "ramp",
+      "type": "active",
+      "label": "Ramp to 100%",
+      "sublabel": "60% → 80% → 100%",
+      "lane": "main",
+      "col": 4,
+      "step": "05"
+    },
+    {
+      "id": "rollback",
+      "type": "active",
+      "label": "Rollback",
+      "sublabel": "revert to v1",
+      "lane": "recovery",
+      "col": 0
+    },
+    {
+      "id": "promoted",
+      "type": "success",
+      "label": "v2 Promoted",
+      "sublabel": "100% traffic on v2",
+      "lane": "terminal",
+      "col": 2
+    },
+    {
+      "id": "rolledback",
+      "type": "failure",
+      "label": "Rolled Back",
+      "sublabel": "100% traffic on v1",
+      "lane": "terminal",
+      "col": 0
+    }
+  ],
+  "transitions": [
+    {
+      "from": "canary20",
+      "to": "gate1",
+      "label": "wait 2m",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "gate1",
+      "to": "canary40",
+      "label": "≥95%",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "canary40",
+      "to": "gate2",
+      "label": "wait 2m",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "gate2",
+      "to": "ramp",
+      "label": "passed",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "gate1",
+      "to": "rollback",
+      "label": "<95%",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "gate2",
+      "to": "rollback",
+      "label": "failed",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "ramp",
+      "to": "promoted",
+      "label": "complete",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "from": "rollback",
+      "to": "rolledback",
+      "label": "rolled back to v1",
+      "variant": "security",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Analysis Gate (success-rate template)",
+      "items": [
+        "success-rate: non-5xx ratio ≥ 0.95 over 2m, 5 checks every 30s",
+        "latency-p99 ≤ 500 ms, error-count ≤ 5",
+        "failureLimit reached → Rollout aborted, traffic back to v1"
+      ]
+    }
+  ]
+}

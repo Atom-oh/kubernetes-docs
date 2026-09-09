@@ -1014,7 +1014,9 @@ Understanding how traffic flows through the gateway is essential for troubleshoo
 
 This is the most common pattern --- a Pod running on a cloud node in the VPC needs to communicate with a Pod running on a hybrid node on-premises.
 
-![Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.svg)
+![Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html)
 
 **Step-by-step packet flow:**
 
@@ -1031,7 +1033,9 @@ This is the most common pattern --- a Pod running on a cloud node in the VPC nee
 
 When a Pod on a hybrid node needs to reach a Pod (or any IP) in the VPC.
 
-![Sequence diagram showing a packet from a hybrid pod resolved by the Cilium agent's BPF VTEP lookup, VXLAN-encapsulated across Direct Connect or VPN to the gateway, decapsulated, and delivered natively through the VPC to the destination cloud pod.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.svg)
+![Sequence diagram showing a packet from a hybrid pod resolved by the Cilium agent's BPF VTEP lookup, VXLAN-encapsulated across Direct Connect or VPN to the gateway, decapsulated, and delivered natively through the VPC to the destination cloud pod.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html)
 
 **Step-by-step packet flow:**
 
@@ -1137,13 +1141,17 @@ VPC Pod → Hybrid Pod:
 
 The recommended production deployment uses 2 gateway replicas spread across Availability Zones:
 
-![Architecture diagram showing a leader gateway pod in Availability Zone A holding the Kubernetes lease, managing the CiliumVTEPConfig, and programming the VPC route table, while a standby gateway pod in Availability Zone B monitors the lease for takeover.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.svg)
+![Architecture diagram showing a leader gateway pod in Availability Zone A holding the Kubernetes lease, managing the CiliumVTEPConfig, and programming the VPC route table, while a standby gateway pod in Availability Zone B monitors the lease for takeover.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html)
 
 ### Failover Sequence
 
 When the leader gateway pod becomes unavailable (node failure, pod crash, network partition), the following failover sequence occurs:
 
-![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about fifteen to twenty-five seconds.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.svg)
+![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about fifteen to twenty-five seconds.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html)
 
 ### Failover Timeline
 

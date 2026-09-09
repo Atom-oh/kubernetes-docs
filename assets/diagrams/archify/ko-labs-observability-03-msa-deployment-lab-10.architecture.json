@@ -56,7 +56,10 @@
         ],
         "note": "각 서비스의 OTel SDK가 OpenTelemetry Agent로 트레이스를 내보내고, 에이전트가 관측성 백엔드로 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

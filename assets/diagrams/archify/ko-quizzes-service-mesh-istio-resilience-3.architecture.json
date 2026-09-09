@@ -7,31 +7,205 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "same-zone", "label": "같은 AZ 우선 (70%)", "focus": ["client", "svc1", "svc2"], "note": "us-east-1a의 Client Pod는 트래픽 70%를 같은 AZ의 Order Service 파드로 보내며, 이 구간은 데이터 전송 비용이 없다." },
-      { "id": "cross-zone", "label": "크로스 AZ (15% + 15%)", "focus": ["client", "svc3", "svc5"], "note": "나머지 30%는 us-east-1b와 us-east-1c로 15%씩 나뉘며 GB당 $0.01의 크로스 AZ 비용이 발생한다." }
-    ]
+      {
+        "id": "same-zone",
+        "label": "같은 AZ 우선 (70%)",
+        "focus": [
+          "client",
+          "svc1",
+          "svc2"
+        ],
+        "note": "us-east-1a의 Client Pod는 트래픽 70%를 같은 AZ의 Order Service 파드로 보내며, 이 구간은 데이터 전송 비용이 없다."
+      },
+      {
+        "id": "cross-zone",
+        "label": "크로스 AZ (15% + 15%)",
+        "focus": [
+          "client",
+          "svc3",
+          "svc5"
+        ],
+        "note": "나머지 30%는 us-east-1b와 us-east-1c로 15%씩 나뉘며 GB당 $0.01의 크로스 AZ 비용이 발생한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "client", "type": "external", "label": "Client Pod", "sublabel": "Zone A · us-east-1a", "pos": [80, 100], "size": [340, 60] },
-    { "id": "svc1", "type": "backend", "label": "Order Service Pod 1", "sublabel": "us-east-1a", "pos": [80, 230], "size": [160, 60] },
-    { "id": "svc2", "type": "backend", "label": "Order Service Pod 2", "sublabel": "us-east-1a", "pos": [260, 230], "size": [160, 60] },
-    { "id": "svc3", "type": "backend", "label": "Order Service Pod 3", "sublabel": "us-east-1b", "pos": [640, 100], "size": [170, 60] },
-    { "id": "svc4", "type": "backend", "label": "Order Service Pod 4", "sublabel": "us-east-1b", "pos": [640, 230], "size": [170, 60] },
-    { "id": "svc5", "type": "backend", "label": "Order Service Pod 5", "sublabel": "us-east-1c", "pos": [640, 400], "size": [170, 60] }
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Pod",
+      "sublabel": "Zone A · us-east-1a",
+      "pos": [
+        80,
+        100
+      ],
+      "size": [
+        340,
+        60
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Order Service Pod 1",
+      "sublabel": "us-east-1a",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Order Service Pod 2",
+      "sublabel": "us-east-1a",
+      "pos": [
+        260,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Order Service Pod 3",
+      "sublabel": "us-east-1b",
+      "pos": [
+        640,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc4",
+      "type": "backend",
+      "label": "Order Service Pod 4",
+      "sublabel": "us-east-1b",
+      "pos": [
+        640,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc5",
+      "type": "backend",
+      "label": "Order Service Pod 5",
+      "sublabel": "us-east-1c",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "us-east-1a", "wraps": ["client", "svc1", "svc2"] },
-    { "kind": "region", "label": "us-east-1b", "wraps": ["svc3", "svc4"] },
-    { "kind": "region", "label": "us-east-1c", "wraps": ["svc5"] }
+    {
+      "kind": "region",
+      "label": "us-east-1a",
+      "wraps": [
+        "client",
+        "svc1",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "us-east-1b",
+      "wraps": [
+        "svc3",
+        "svc4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "us-east-1c",
+      "wraps": [
+        "svc5"
+      ]
+    }
   ],
   "connections": [
-    { "id": "client-svc1", "from": "client", "to": "svc1", "label": "70% · 무료", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "client-svc2", "from": "client", "to": "svc2", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
-    { "id": "client-svc3", "from": "client", "to": "svc3", "label": "15% · $0.01/GB", "variant": "dashed", "fromSide": "right", "toSide": "left" },
-    { "id": "client-svc5", "from": "client", "to": "svc5", "label": "15% · $0.01/GB", "variant": "dashed", "fromSide": "right", "toSide": "left" }
+    {
+      "id": "client-svc1",
+      "from": "client",
+      "to": "svc1",
+      "label": "70% · 무료",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "client-svc2",
+      "from": "client",
+      "to": "svc2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "client-svc3",
+      "from": "client",
+      "to": "svc3",
+      "label": "15% · $0.01/GB",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "client-svc5",
+      "from": "client",
+      "to": "svc5",
+      "label": "15% · $0.01/GB",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
   ],
   "cards": [
-    { "dot": "emerald", "title": "비용 절감 (월 1TB 기준)", "items": ["Zone Aware 없음: 크로스 AZ 66.7% → $6.67", "Zone Aware 적용: 크로스 AZ 30% → $3.00", "절감액 $3.67 (55% 절감)"] },
-    { "dot": "amber", "title": "장애조치", "items": ["us-east-1a 전체 장애 시 failover로 us-east-1b에 100% 전환", "outlierDetection minHealthPercent: 50 충족 시 Zone Aware 유지"] }
+    {
+      "dot": "emerald",
+      "title": "비용 절감 (월 1TB 기준)",
+      "items": [
+        "Zone Aware 없음: 크로스 AZ 66.7% → $6.67",
+        "Zone Aware 적용: 크로스 AZ 30% → $3.00",
+        "절감액 $3.67 (55% 절감)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "장애조치",
+      "items": [
+        "us-east-1a 전체 장애 시 failover로 us-east-1b에 100% 전환",
+        "outlierDetection minHealthPercent: 50 충족 시 Zone Aware 유지"
+      ]
+    }
   ]
 }

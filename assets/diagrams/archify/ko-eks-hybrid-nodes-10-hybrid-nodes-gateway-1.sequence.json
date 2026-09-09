@@ -38,7 +38,21 @@
         ],
         "note": "새 리더가 VPC 라우트 테이블의 Hybrid Pod CIDR 경로를 자신의 ENI로 바꾼다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

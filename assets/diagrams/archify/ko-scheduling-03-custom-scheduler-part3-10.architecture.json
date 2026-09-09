@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GPU 워크로드 최적화 스케줄러 아키텍처",
+    "output": "ko-scheduling-03-custom-scheduler-part3-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scheduling-path",
+        "label": "GPU 스케줄링 경로",
+        "focus": [
+          "apiserver",
+          "core",
+          "topology",
+          "utilization",
+          "memory",
+          "p3"
+        ],
+        "note": "API 서버가 GPU Pod를 스케줄러 코어에 전달하고, 플러그인이 Filter / Score를 거쳐 노드 그룹에 바인딩한다."
+      },
+      {
+        "id": "metrics-path",
+        "label": "메트릭 경로",
+        "focus": [
+          "utilization",
+          "metrics",
+          "amp",
+          "cloudwatch"
+        ],
+        "note": "GPU 사용률 플러그인은 DCGM / Node Exporter 메트릭을 참고하고, 메트릭은 AMP와 CloudWatch로 전달된다."
+      },
+      {
+        "id": "coexist",
+        "label": "기본 스케줄러 공존",
+        "focus": [
+          "apiserver",
+          "default-scheduler",
+          "core"
+        ],
+        "note": "GPU 요청이 없는 Pod는 컨트롤 플레인의 기본 스케줄러가 그대로 처리한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        370,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "default-scheduler",
+      "type": "backend",
+      "label": "기본 스케줄러",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        140,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "스케줄러 코어",
+      "sublabel": "스케줄러 프레임워크",
+      "pos": [
+        370,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "topology",
+      "type": "backend",
+      "label": "GPU 토폴로지 플러그인",
+      "sublabel": "GPU 모델 · 개수 Filter",
+      "pos": [
+        140,
+        320
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "utilization",
+      "type": "backend",
+      "label": "GPU 사용률 플러그인",
+      "sublabel": "사용률 낮은 노드 Score",
+      "pos": [
+        370,
+        320
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "backend",
+      "label": "GPU 메모리 플러그인",
+      "sublabel": "gpu.nvidia.com/memory",
+      "pos": [
+        600,
+        320
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "cloud",
+      "label": "P3 인스턴스",
+      "sublabel": "p3.2xlarge · p3.8xlarge",
+      "pos": [
+        140,
+        500
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "g4",
+      "type": "cloud",
+      "label": "G4 인스턴스",
+      "sublabel": "g4dn.xlarge · g4dn.2xlarge",
+      "pos": [
+        370,
+        500
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "g5",
+      "type": "cloud",
+      "label": "G5 인스턴스",
+      "sublabel": "g5.xlarge · g5.2xlarge",
+      "pos": [
+        600,
+        500
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "메트릭 수집",
+      "sublabel": "DCGM Exporter · Node Exporter",
+      "pos": [
+        840,
+        500
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "amp",
+      "type": "cloud",
+      "label": "AMP",
+      "sublabel": "Amazon Managed Prometheus",
+      "pos": [
+        1080,
+        500
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "Amazon CloudWatch",
+      "pos": [
+        1080,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "default-scheduler"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GPU 스케줄러",
+      "wraps": [
+        "core",
+        "topology",
+        "utilization",
+        "memory"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 그룹",
+      "wraps": [
+        "p3",
+        "g4",
+        "g5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-core",
+      "from": "apiserver",
+      "to": "core",
+      "label": "GPU Pod 감시",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "api-to-default",
+      "from": "apiserver",
+      "to": "default-scheduler",
+      "label": "일반 Pod",
+      "variant": "dashed"
+    },
+    {
+      "id": "core-to-topology",
+      "from": "core",
+      "to": "topology"
+    },
+    {
+      "id": "core-to-utilization",
+      "from": "core",
+      "to": "utilization",
+      "label": "Filter / Score",
+      "labelDy": 24
+    },
+    {
+      "id": "core-to-memory",
+      "from": "core",
+      "to": "memory"
+    },
+    {
+      "id": "core-to-nodes",
+      "from": "core",
+      "to": "p3",
+      "label": "노드 바인딩",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          100,
+          210
+        ],
+        [
+          100,
+          530
+        ]
+      ]
+    },
+    {
+      "id": "utilization-to-metrics",
+      "from": "utilization",
+      "to": "metrics",
+      "label": "GPU 사용률 조회",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "metrics-to-amp",
+      "from": "metrics",
+      "to": "amp"
+    },
+    {
+      "id": "amp-to-cloudwatch",
+      "from": "amp",
+      "to": "cloudwatch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "요구 사항",
+      "items": [
+        "GPU 메모리 요구 사항에 따른 노드 선택",
+        "GPU 모델(A100, V100, T4 등)에 따른 노드 선택",
+        "GPU 사용률을 고려한 노드 선택",
+        "다중 GPU 인스턴스에서 GPU 공유 최적화"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "구현 방식",
+      "items": [
+        "스케줄러 프레임워크 플러그인 접근 방식",
+        "노드 레이블: gpu.nvidia.com/model · memory · count",
+        "GPUTopologyPlugin이 Filter와 Score를 구현"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "GPU 노드 그룹",
+      "items": [
+        "P3: p3.2xlarge, p3.8xlarge",
+        "G4: g4dn.xlarge, g4dn.2xlarge",
+        "G5: g5.xlarge, g5.2xlarge"
+      ]
+    }
+  ]
+}

@@ -44,7 +44,10 @@
         ],
         "note": "OnCall 에스컬레이션과 SNS 구독을 통해 경보와 분석 리포트가 담당자에게 전달된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

@@ -41,7 +41,24 @@
         ],
         "note": "Kafka는 기본적으로 fsync하지 않고 OS가 배경에서 flush합니다. 포화 시 RF3 상한 ≈130–135 MiB/s = gp3 볼륨 1개 쓰기 캡 (F1)."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {
