@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kafka에서 S3/Iceberg로 가는 Flink 스트리밍 패턴",
+    "output": "ko-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      640
+    ],
+    "views": [
+      {
+        "id": "processing",
+        "label": "소스와 상태 처리",
+        "focus": [
+          "source",
+          "flink",
+          "rocksdb"
+        ],
+        "note": "MSK 소스 토픽을 읽은 Flink Job이 TaskManager의 RocksDB 상태 백엔드에 오퍼레이터 상태를 둔다."
+      },
+      {
+        "id": "checkpoint",
+        "label": "주기적 체크포인트",
+        "focus": [
+          "flink",
+          "rocksdb",
+          "s3ckpt"
+        ],
+        "note": "RocksDB 상태를 일정 주기로 S3 체크포인트 스토리지에 스냅숏으로 남긴다."
+      },
+      {
+        "id": "sinks",
+        "label": "두 갈래 싱크",
+        "focus": [
+          "flink",
+          "kafkaout",
+          "iceberg"
+        ],
+        "note": "KafkaSink는 EXACTLY_ONCE 2PC로 Kafka 출력 토픽에, Dynamic Iceberg Sink는 S3 위 Iceberg 테이블에 쓴다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "source",
+      "type": "messagebus",
+      "label": "MSK / Kafka",
+      "sublabel": "소스 토픽",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "Flink Job",
+      "sublabel": "스트림 처리",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rocksdb",
+      "type": "database",
+      "label": "RocksDB",
+      "sublabel": "상태 백엔드",
+      "pos": [
+        480,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "s3ckpt",
+      "type": "cloud",
+      "label": "S3 체크포인트",
+      "sublabel": "스토리지",
+      "pos": [
+        480,
+        500
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kafkaout",
+      "type": "messagebus",
+      "label": "Kafka 출력 토픽",
+      "sublabel": "read_committed 컨슈머",
+      "pos": [
+        1000,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "iceberg",
+      "type": "cloud",
+      "label": "S3 / Iceberg",
+      "sublabel": "테이블",
+      "pos": [
+        1000,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "TaskManagers",
+      "wraps": [
+        "rocksdb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "source-to-flink",
+      "from": "source",
+      "to": "flink",
+      "label": "소비",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flink-state",
+      "from": "flink",
+      "to": "rocksdb",
+      "label": "오퍼레이터 상태",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "checkpoint",
+      "from": "flink",
+      "to": "s3ckpt",
+      "label": "주기적 체크포인트",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "kafka-sink",
+      "from": "flink",
+      "to": "kafkaout",
+      "label": "KafkaSink · EXACTLY_ONCE 2PC"
+    },
+    {
+      "id": "iceberg-sink",
+      "from": "flink",
+      "to": "iceberg",
+      "label": "Dynamic Iceberg Sink"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "체크포인트",
+      "items": [
+        "EmbeddedRocksDBStateBackend 상태를 S3에 주기적으로 스냅숏",
+        "증분 체크포인트는 변경된 SSTable 파일만 전송"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "정확히 한 번 전달",
+      "items": [
+        "KafkaWriter는 열린 Kafka 트랜잭션 안에 레코드를 기록",
+        "체크포인트 완료 후 KafkaCommitter가 트랜잭션을 커밋"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,317 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스케줄러 프레임워크 플러그인 구성",
+    "output": "ko-scheduling-02-custom-scheduler-part2-12.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "K8s 컴포넌트"
+        },
+        "frontend": {
+          "label": "플러그인 컴포넌트"
+        },
+        "cloud": {
+          "label": "프로필 컴포넌트"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "plugins",
+        "label": "플러그인 계층",
+        "focus": [
+          "core",
+          "default-plugin",
+          "custom-plugin"
+        ],
+        "note": "스케줄러 코어가 기본 플러그인과 커스텀 플러그인을 확장 포인트에서 호출한다."
+      },
+      {
+        "id": "profiles",
+        "label": "프로필 계층",
+        "focus": [
+          "default-plugin",
+          "custom-plugin",
+          "default-profile",
+          "custom-profile"
+        ],
+        "note": "프로필은 활성화할 플러그인 조합을 정의해 워크로드별 스케줄링 설정을 만든다."
+      },
+      {
+        "id": "binding",
+        "label": "노드 바인딩",
+        "focus": [
+          "default-profile",
+          "custom-profile",
+          "node1",
+          "node2",
+          "node3"
+        ],
+        "note": "선택된 프로필에 따라 파드가 워커 노드에 바인딩된다."
+      }
+    ],
+    "viewBox": [
+      1100,
+      660
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "클러스터 중앙 관리 포인트",
+      "pos": [
+        235,
+        70
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "스케줄러 코어",
+      "sublabel": "스케줄링 로직의 핵심 엔진",
+      "pos": [
+        235,
+        190
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "default-plugin",
+      "type": "frontend",
+      "label": "기본 플러그인",
+      "pos": [
+        160,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "custom-plugin",
+      "type": "frontend",
+      "label": "커스텀 플러그인",
+      "pos": [
+        350,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "default-profile",
+      "type": "cloud",
+      "label": "기본 프로필",
+      "pos": [
+        640,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "custom-profile",
+      "type": "cloud",
+      "label": "커스텀 프로필",
+      "pos": [
+        830,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "노드 1",
+      "pos": [
+        450,
+        500
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "노드 2",
+      "pos": [
+        645,
+        500
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "backend",
+      "label": "노드 3",
+      "pos": [
+        835,
+        500
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "core",
+        "default-plugin",
+        "custom-plugin",
+        "default-profile",
+        "custom-profile"
+      ],
+      "pad": 60
+    },
+    {
+      "kind": "region",
+      "label": "스케줄러",
+      "wraps": [
+        "core",
+        "default-plugin",
+        "custom-plugin",
+        "default-profile",
+        "custom-profile"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "security-group",
+      "label": "스케줄러 플러그인",
+      "wraps": [
+        "default-plugin",
+        "custom-plugin"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "security-group",
+      "label": "스케줄러 프로필",
+      "wraps": [
+        "default-profile",
+        "custom-profile"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "node1",
+        "node2",
+        "node3"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-core",
+      "from": "apiserver",
+      "to": "core",
+      "label": "파드 감시",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        330,
+        144
+      ]
+    },
+    {
+      "id": "core-to-default-plugin",
+      "from": "core",
+      "to": "default-plugin",
+      "label": "확장 포인트 호출",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "core-to-custom-plugin",
+      "from": "core",
+      "to": "custom-plugin",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "plugins-to-profiles",
+      "from": "custom-plugin",
+      "to": "default-profile",
+      "label": "프로필에서 활성화"
+    },
+    {
+      "id": "default-profile-to-node",
+      "from": "default-profile",
+      "to": "node2",
+      "label": "파드 바인딩",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        715,
+        394
+      ]
+    },
+    {
+      "id": "custom-profile-to-node",
+      "from": "custom-profile",
+      "to": "node3",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "구성 요소",
+      "items": [
+        "API 서버: 클러스터의 중앙 관리 포인트",
+        "스케줄러 코어: 스케줄링 로직의 핵심 엔진",
+        "플러그인: 확장 가능한 스케줄링 기능",
+        "프로필: 특정 워크로드에 최적화된 스케줄링 설정"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "확장 포인트",
+      "items": [
+        "QueueSort → PreFilter → Filter → PreScore → Score → NormalizeScore",
+        "Reserve → Permit → PreBind → Bind → PostBind",
+        "Kubernetes 1.15부터 도입된 플러그인 기반 스케줄러 프레임워크"
+      ]
+    }
+  ]
+}

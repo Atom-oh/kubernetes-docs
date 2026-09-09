@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 위 컴포넌트 구성도",
+    "output": "ko-data-on-eks-airflow-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "shared-db",
+        "label": "공유 메타데이터 DB",
+        "focus": [
+          "api",
+          "dp",
+          "trg",
+          "sch",
+          "pg"
+        ],
+        "note": "4개 서비스가 PostgreSQL 하나를 공유한다. dag-processor만 DAG를 쓰고, scheduler는 serialized_dag를 읽기만 한다."
+      },
+      {
+        "id": "celery-path",
+        "label": "CeleryExecutor 경로",
+        "focus": [
+          "sch",
+          "redis",
+          "w1",
+          "w2"
+        ],
+        "note": "scheduler가 Redis 브로커에 작업을 큐잉하면 상시 실행 중인 Celery 워커 Pod가 가져간다. CeleryExecutor를 쓸 때만 필요하다."
+      },
+      {
+        "id": "k8s-path",
+        "label": "KubernetesExecutor 경로",
+        "focus": [
+          "sch",
+          "kpod"
+        ],
+        "note": "scheduler가 작업 인스턴스마다 전용 Pod를 만들고, 완료되면 Pod는 종료된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "frontend",
+      "label": "airflow api-server",
+      "sublabel": "Deployment · UI + REST API v2",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "backend",
+      "label": "airflow dag-processor",
+      "sublabel": "Deployment · DAG 파일 파싱",
+      "pos": [
+        330,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "trg",
+      "type": "backend",
+      "label": "airflow triggerer",
+      "sublabel": "Deployment · deferrable 오퍼레이터",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "StatefulSet · 메타데이터 DB",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sch",
+      "type": "backend",
+      "label": "airflow scheduler",
+      "sublabel": "Deployment · 스케줄링만 담당",
+      "pos": [
+        870,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "messagebus",
+      "label": "Redis 브로커",
+      "sublabel": "Celery 작업 큐",
+      "pos": [
+        600,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kpod",
+      "type": "backend",
+      "label": "태스크별 워커 Pod",
+      "sublabel": "KubernetesExecutor",
+      "pos": [
+        870,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "w1",
+      "type": "backend",
+      "label": "Celery 워커 1",
+      "sublabel": "Pod · 상시 실행",
+      "pos": [
+        330,
+        540
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "w2",
+      "type": "backend",
+      "label": "Celery 워커 2",
+      "sublabel": "Pod · 상시 실행",
+      "pos": [
+        600,
+        540
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "api",
+        "dp",
+        "trg",
+        "pg",
+        "sch",
+        "redis",
+        "kpod",
+        "w1",
+        "w2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "선택 사항 — CeleryExecutor 전용",
+      "wraps": [
+        "redis",
+        "w1",
+        "w2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dp-writes-pg",
+      "from": "dp",
+      "to": "pg",
+      "label": "파싱한 DAG 기록",
+      "variant": "emphasis",
+      "labelAt": [
+        430,
+        170
+      ]
+    },
+    {
+      "id": "sch-reads-pg",
+      "from": "sch",
+      "to": "pg",
+      "label": "serialized_dag 읽기",
+      "variant": "emphasis",
+      "labelAt": [
+        700,
+        236
+      ]
+    },
+    {
+      "id": "api-state-pg",
+      "from": "api",
+      "to": "pg",
+      "label": "상태 읽기/쓰기"
+    },
+    {
+      "id": "trg-state-pg",
+      "from": "trg",
+      "to": "pg",
+      "label": "트리거 상태 읽기/쓰기"
+    },
+    {
+      "id": "sch-queues-redis",
+      "from": "sch",
+      "to": "redis",
+      "label": "브로커로 작업 큐잉",
+      "variant": "dashed"
+    },
+    {
+      "id": "redis-to-w1",
+      "from": "redis",
+      "to": "w1",
+      "variant": "dashed"
+    },
+    {
+      "id": "redis-to-w2",
+      "from": "redis",
+      "to": "w2",
+      "variant": "dashed"
+    },
+    {
+      "id": "sch-creates-kpod",
+      "from": "sch",
+      "to": "kpod",
+      "label": "작업마다 Pod 생성",
+      "labelAt": [
+        970,
+        330
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "메타데이터 DB",
+      "items": [
+        "PostgreSQL은 항상 필요 — DAG/작업 상태, serialized_dag, 커넥션, 변수, XCom 저장",
+        "DAG 파일 접근은 dag-processor Pod로 격리되고, scheduler와 api-server는 파일을 직접 파싱하지 않음"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Executor",
+      "items": [
+        "KubernetesExecutor: 작업마다 Pod 생성, 유휴 비용 거의 0",
+        "CeleryExecutor: 상시 워커 풀 + Redis(또는 RabbitMQ) 브로커 필요"
+      ]
+    }
+  ]
+}

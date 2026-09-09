@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Hybrid Nodes Gateway High-Level Architecture",
+    "output": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "tunnel",
+        "label": "VXLAN tunnel",
+        "focus": [
+          "gw-leader",
+          "hn1",
+          "hn2"
+        ],
+        "note": "The leader gateway pod's hybrid_vxlan0 terminates a VNI 2 / UDP 8472 VXLAN tunnel to the Cilium agent on each Hybrid Node."
+      },
+      {
+        "id": "routing",
+        "label": "VPC routing",
+        "focus": [
+          "vpc-pod",
+          "rt",
+          "gw-leader"
+        ],
+        "note": "The gateway programs hybrid Pod CIDR routes to the leader's ENI, so VPC Pod traffic is steered to the gateway EC2 instance."
+      },
+      {
+        "id": "ha",
+        "label": "High availability",
+        "focus": [
+          "gw-leader",
+          "gw-standby",
+          "api"
+        ],
+        "note": "Two replicas elect a leader via a Kubernetes Lease; the standby waits in another subnet to take over."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "API Server",
+      "sublabel": "EKS control plane",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "cloud",
+      "label": "VPC Route Table",
+      "sublabel": "10.100.0.0/20 → leader ENI",
+      "pos": [
+        340,
+        70
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "vpc-pod",
+      "type": "backend",
+      "label": "VPC Pod",
+      "sublabel": "10.0.x.x · VPC CNI node",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gw-leader",
+      "type": "backend",
+      "label": "Gateway EC2 + Gateway Pod",
+      "sublabel": "Leader · Subnet A · hybrid_vxlan0",
+      "pos": [
+        340,
+        250
+      ],
+      "size": [
+        220,
+        60
+      ],
+      "tag": "Leader"
+    },
+    {
+      "id": "gw-standby",
+      "type": "backend",
+      "label": "Gateway EC2 + Gateway Pod",
+      "sublabel": "Standby (follower) · Subnet B",
+      "pos": [
+        340,
+        420
+      ],
+      "size": [
+        220,
+        60
+      ],
+      "tag": "Standby"
+    },
+    {
+      "id": "hn1",
+      "type": "external",
+      "label": "Hybrid Node 1",
+      "sublabel": "Cilium agent · Pod CIDR 10.100.0.0/24",
+      "pos": [
+        740,
+        160
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "hn2",
+      "type": "external",
+      "label": "Hybrid Node 2",
+      "sublabel": "Cilium agent · Pod CIDR 10.100.1.0/24",
+      "pos": [
+        740,
+        340
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Cloud · VPC (10.0.0.0/16)",
+      "wraps": [
+        "api",
+        "rt",
+        "vpc-pod",
+        "gw-leader",
+        "gw-standby"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "On-Premises Data Center (Direct Connect / VPN)",
+      "wraps": [
+        "hn1",
+        "hn2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vpcpod-to-gw",
+      "from": "vpc-pod",
+      "to": "gw-leader",
+      "label": "VPC routing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-to-hn1",
+      "from": "gw-leader",
+      "to": "hn1",
+      "label": "VXLAN tunnel · VNI 2, UDP 8472",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-to-hn2",
+      "from": "gw-leader",
+      "to": "hn2",
+      "label": "VXLAN tunnel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-to-rt",
+      "from": "gw-leader",
+      "to": "rt",
+      "label": "Automatic route programming",
+      "labelDx": 72
+    },
+    {
+      "id": "api-to-gw",
+      "from": "api",
+      "to": "gw-leader",
+      "label": "Control plane ENI",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-to-standby",
+      "from": "gw-leader",
+      "to": "gw-standby",
+      "label": "Lease leader election",
+      "variant": "dashed",
+      "labelDy": 68
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Gateway",
+      "items": [
+        "Kubernetes Pod running on an EC2 instance (source/destination check disabled)",
+        "2-replica Deployment with Lease-based leader election"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "VXLAN tunnel",
+      "items": [
+        "hybrid_vxlan0 ↔ Cilium VTEP, VNI 2 / UDP 8472",
+        "Encapsulated packets traverse Direct Connect or VPN"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Routing",
+      "items": [
+        "Hybrid Pod CIDR → leader gateway ENI routes kept up to date in the VPC route table",
+        "FDB, ARP and route entries updated as Hybrid Nodes join and leave"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts + Istio Integration Architecture",
+    "locale": "en",
+    "output": "en-quizzes-service-mesh-istio-advanced-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "User"
+        },
+        "cloud": {
+          "label": "Istio routing"
+        },
+        "backend": {
+          "label": "Workload Pods"
+        },
+        "frontend": {
+          "label": "Argo Rollouts"
+        },
+        "database": {
+          "label": "Metrics source"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "traffic-path",
+        "label": "Traffic split path",
+        "focus": [
+          "user",
+          "gateway",
+          "vs",
+          "stable",
+          "canary"
+        ],
+        "note": "VirtualService performs the actual 90/10 weight split."
+      },
+      {
+        "id": "weight-control",
+        "label": "Automatic weight updates",
+        "focus": [
+          "rollout",
+          "vs",
+          "stable",
+          "canary"
+        ],
+        "note": "Argo Rollouts manages the Pods and only changes the VirtualService weight values."
+      },
+      {
+        "id": "analysis-loop",
+        "label": "Metric analysis loop",
+        "focus": [
+          "prometheus",
+          "analysis",
+          "rollout"
+        ],
+        "note": "AnalysisTemplate judges success or failure from Prometheus metrics to decide the next step."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "Requests",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Istio Gateway",
+      "sublabel": "Ingress",
+      "pos": [
+        220,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService",
+      "sublabel": "Traffic splitting",
+      "pos": [
+        420,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable Pod",
+      "sublabel": "v1",
+      "pos": [
+        690,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary Pod",
+      "sublabel": "v2",
+      "pos": [
+        690,
+        380
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "rollout",
+      "type": "frontend",
+      "label": "Argo Rollouts",
+      "sublabel": "Controller",
+      "pos": [
+        930,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "frontend",
+      "label": "AnalysisTemplate",
+      "sublabel": "Success/failure verdict",
+      "pos": [
+        1160,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metrics",
+      "pos": [
+        1160,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio data plane",
+      "wraps": [
+        "gateway",
+        "vs",
+        "stable",
+        "canary"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-gateway",
+      "from": "user",
+      "to": "gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-vs",
+      "from": "gateway",
+      "to": "vs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-to-stable",
+      "from": "vs",
+      "to": "stable",
+      "label": "90% weight",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-to-canary",
+      "from": "vs",
+      "to": "canary",
+      "label": "10% weight"
+    },
+    {
+      "id": "rollout-to-vs",
+      "from": "rollout",
+      "to": "vs",
+      "label": "weight update",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1010,
+          490
+        ],
+        [
+          500,
+          490
+        ]
+      ]
+    },
+    {
+      "id": "rollout-to-stable",
+      "from": "rollout",
+      "to": "stable",
+      "label": "Pod management",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "rollout-to-canary",
+      "from": "rollout",
+      "to": "canary",
+      "label": "Pod management",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "prometheus-to-analysis",
+      "from": "prometheus",
+      "to": "analysis",
+      "label": "Metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "analysis-to-rollout",
+      "from": "analysis",
+      "to": "rollout",
+      "label": "success/failure",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelDy": -24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Argo Rollouts",
+      "items": [
+        "Creates/deletes Pods and executes the deployment strategy",
+        "Updates the VirtualService weight",
+        "Automatic rollback when analysis fails"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Istio VirtualService",
+      "items": [
+        "Actual traffic splitting and routing rule application",
+        "Envoy configuration generation"
+      ]
+    }
+  ]
+}

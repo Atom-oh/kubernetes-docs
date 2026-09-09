@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Scheduler Extender Workflow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      600
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "filter-phase",
+        "label": "Filter phase",
+        "focus": [
+          "api",
+          "scheduler",
+          "extender"
+        ],
+        "note": "After internal filtering, HTTP POST /filter fetches the extender's custom filtering result"
+      },
+      {
+        "id": "prioritize-phase",
+        "label": "Prioritize phase",
+        "focus": [
+          "scheduler",
+          "extender"
+        ],
+        "note": "After internal scoring, HTTP POST /prioritize fetches the extender's node scores to combine"
+      },
+      {
+        "id": "bind-phase",
+        "label": "Node selection and binding",
+        "focus": [
+          "scheduler",
+          "api",
+          "node"
+        ],
+        "note": "The final node is selected, the API server is asked to bind, and the pod is scheduled on the node"
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver"
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Default Scheduler",
+      "sublabel": "kube-scheduler"
+    },
+    {
+      "id": "extender",
+      "type": "external",
+      "label": "Scheduler Extender",
+      "sublabel": "HTTP service"
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "Node",
+      "sublabel": "worker node"
+    }
+  ],
+  "segments": [
+    {
+      "from": 172,
+      "to": 300,
+      "label": "Filter phase"
+    },
+    {
+      "from": 318,
+      "to": 410,
+      "label": "Prioritize phase"
+    },
+    {
+      "from": 424,
+      "to": 504,
+      "label": "Node selection and binding"
+    }
+  ],
+  "messages": [
+    {
+      "id": "pod-create",
+      "from": "api",
+      "to": "scheduler",
+      "y": 190,
+      "label": "Pod creation request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "filter-request",
+      "from": "scheduler",
+      "to": "extender",
+      "y": 232,
+      "label": "Filter request after internal filtering · HTTP POST /filter",
+      "variant": "emphasis"
+    },
+    {
+      "id": "filtered-nodes",
+      "from": "extender",
+      "to": "scheduler",
+      "y": 276,
+      "label": "Return custom-filtered node list",
+      "variant": "return"
+    },
+    {
+      "id": "prioritize-request",
+      "from": "scheduler",
+      "to": "extender",
+      "y": 340,
+      "label": "Prioritize request after internal scoring · HTTP POST /prioritize",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-scores",
+      "from": "extender",
+      "to": "scheduler",
+      "y": 386,
+      "label": "Return custom node scores",
+      "variant": "return"
+    },
+    {
+      "id": "bind-request",
+      "from": "scheduler",
+      "to": "api",
+      "y": 446,
+      "label": "Binding request after final node selection",
+      "variant": "emphasis"
+    },
+    {
+      "id": "schedule-pod",
+      "from": "api",
+      "to": "node",
+      "y": 488,
+      "label": "Schedule pod",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "scheduler",
+      "from": 186,
+      "to": 452,
+      "type": "backend"
+    },
+    {
+      "participant": "extender",
+      "from": 228,
+      "to": 282,
+      "type": "external"
+    },
+    {
+      "participant": "extender",
+      "from": 336,
+      "to": 392,
+      "type": "external"
+    }
+  ]
+}

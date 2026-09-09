@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 2.16.0-dev.0">
+  <meta name="generator" content="archify 2.16.0">
   <title>모던 데이터 파이프라인 해부 — 5개 계층 Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
@@ -5050,7 +5050,7 @@
         <path data-edge-from="iot" data-edge-to="stream" data-edge-label="이벤트" data-edge-key="1" data-edge-id="iot-stream" data-composition-points="156,613;259,613" d="M 156 613 L 259 613" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="batch" data-edge-to="lake" data-edge-label="원본 적재" data-edge-key="2" data-edge-id="batch-lake" data-composition-points="371,157;474,157" d="M 371 157 L 474 157" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="stream" data-edge-to="lake" data-edge-label="원본 보존" data-edge-key="3" data-edge-id="stream-lake" data-composition-points="371,613;422.5,613;422.5,157;474,157" d="M 371 613 L 422.5 613 L 422.5 157 L 474 157" class="a-dashed" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="lake" data-edge-to="dwh" data-edge-label="정제 적재 (ELT)" data-edge-key="4" data-edge-id="lake-dwh" data-composition-points="530,186;530,186;530,356;530,356" d="M 530 186 L 530 186 L 530 356 L 530 356" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="lake" data-edge-to="dwh" data-edge-label="정제 적재 (ELT)" data-edge-key="4" data-edge-id="lake-dwh" data-composition-points="530,186;530,356" d="M 530 186 L 530 356" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="lake" data-edge-to="spark" data-edge-label="배치 변환" data-edge-key="5" data-edge-id="lake-spark" data-composition-points="586,157;689,157" d="M 586 157 L 689 157" class="a-emphasis" data-animate="edge" style="--step:5" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="stream" data-edge-to="flink" data-edge-label="실시간 변환" data-edge-key="6" data-edge-id="stream-flink" data-composition-points="371,613;689,613" d="M 371 613 L 689 613" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="dwh" data-edge-to="bi" data-edge-label="SQL 분석" data-edge-key="7" data-edge-id="dwh-bi" data-composition-points="586,385;745,385;745,271;904,271" d="M 586 385 L 745 385 L 745 271 L 904 271" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5197,8 +5197,8 @@
           <text x="422.5" y="375" class="t-messagebus" font-size="8" text-anchor="middle">원본 보존</text>
         </g>
         <g data-detail="context" data-edge-from="lake" data-edge-to="dwh" data-edge-label="정제 적재 (ELT)" data-edge-key="4" data-edge-id="lake-dwh">
-          <rect x="487.25" y="250" width="85.5" height="16" rx="4" class="c-mask"/>
-          <text x="530" y="261" class="t-muted" font-size="8" text-anchor="middle">정제 적재 (ELT)</text>
+          <rect x="487.25" y="189" width="85.5" height="16" rx="4" class="c-mask"/>
+          <text x="530" y="200" class="t-muted" font-size="8" text-anchor="middle">정제 적재 (ELT)</text>
         </g>
         <g data-detail="context" data-edge-from="lake" data-edge-to="spark" data-edge-label="배치 변환" data-edge-key="5" data-edge-id="lake-spark">
           <rect x="609.45" y="136" width="56.1" height="16" rx="4" class="c-mask"/>
@@ -5218,25 +5218,7 @@
         </g>
 
         <!-- Legend -->
-        <g data-legend="" data-legend-bridge="">
-          <text x="40" y="704" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="emphasis" data-legend-x="40" data-legend-baseline="724" data-legend-width="103">
-            <path d="M 40 721 L 74 721" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-            <text x="83" y="724" class="t-muted" font-size="10" font-weight="500">primary data</text>
-          </g>
-          <g data-legend-semantic-kind="dashed" data-legend-x="165" data-legend-baseline="724" data-legend-width="98">
-            <path d="M 165 721 L 199 721" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-            <text x="208" y="724" class="t-muted" font-size="10" font-weight="500">async batch</text>
-          </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="data store" data-legend-x="285" data-legend-baseline="724" data-legend-width="93">
-            <rect x="285" y="716" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-            <text x="307" y="724" class="t-muted" font-size="10" font-weight="500">data store</text>
-          </g>
-          <g data-legend-semantic-kind="default" data-legend-x="400" data-legend-baseline="724" data-legend-width="88">
-            <path d="M 400 721 L 434 721" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-            <text x="443" y="724" class="t-muted" font-size="10" font-weight="500">data flow</text>
-          </g>
-        </g>
+
       </svg>
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">

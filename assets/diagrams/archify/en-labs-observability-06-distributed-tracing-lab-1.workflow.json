@@ -1,0 +1,157 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Exemplar Workflow: Metric → Trace → Log Drill-down",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Metrics (Prometheus)"
+        },
+        "security": {
+          "label": "Drill-down pivot (Exemplar)"
+        },
+        "backend": {
+          "label": "Traces (Tempo)"
+        },
+        "database": {
+          "label": "Logs (Loki)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "spike",
+        "label": "Spot the latency spike",
+        "focus": [
+          "metric",
+          "exemplar"
+        ],
+        "note": "The diamond markers on the p99 latency graph are exemplars; hovering one shows the TraceID of that request."
+      },
+      {
+        "id": "trace",
+        "label": "Jump to the trace",
+        "focus": [
+          "exemplar",
+          "trace"
+        ],
+        "note": "Clicking the exemplar marker jumps from the aggregated metric straight to that single request's trace in Tempo."
+      },
+      {
+        "id": "logs",
+        "label": "Drill down to logs",
+        "focus": [
+          "trace",
+          "log"
+        ],
+        "note": "Select a span in Tempo and click Logs for this span; Loki searches logs by the same time range and TraceID."
+      }
+    ],
+    "viewBox": [
+      940,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prom",
+      "label": "Grafana · Prometheus panel"
+    },
+    {
+      "id": "tempo",
+      "label": "Tempo"
+    },
+    {
+      "id": "loki",
+      "label": "Loki"
+    }
+  ],
+  "mainPath": [
+    "metric",
+    "exemplar",
+    "trace",
+    "log"
+  ],
+  "nodes": [
+    {
+      "id": "metric",
+      "lane": "prom",
+      "col": 0,
+      "type": "frontend",
+      "label": "Metric graph",
+      "sublabel": "p99 latency spike",
+      "width": 160
+    },
+    {
+      "id": "exemplar",
+      "lane": "prom",
+      "col": 1,
+      "type": "security",
+      "label": "Exemplar point",
+      "sublabel": "TraceID of one request",
+      "width": 168
+    },
+    {
+      "id": "trace",
+      "lane": "tempo",
+      "col": 2,
+      "type": "backend",
+      "label": "Trace",
+      "sublabel": "Full request path",
+      "width": 168
+    },
+    {
+      "id": "log",
+      "lane": "loki",
+      "col": 3,
+      "type": "database",
+      "label": "Logs",
+      "sublabel": "Error message",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "metric-exemplar",
+      "from": "metric",
+      "to": "exemplar",
+      "label": "hover marker"
+    },
+    {
+      "id": "exemplar-trace",
+      "from": "exemplar",
+      "to": "trace",
+      "label": "click",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trace-log",
+      "from": "trace",
+      "to": "log",
+      "label": "Logs for this span"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Viewing exemplars in Grafana",
+      "items": [
+        "Enable the Exemplars option on the time series panel",
+        "Hover a diamond marker on the graph to see the traceId",
+        "Click to navigate to the trace in Tempo"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Prometheus prerequisite",
+      "items": [
+        "Add exemplar-storage to enableFeatures",
+        "Cap stored exemplars with exemplars.maxSize (e.g. 100000)"
+      ]
+    }
+  ]
+}

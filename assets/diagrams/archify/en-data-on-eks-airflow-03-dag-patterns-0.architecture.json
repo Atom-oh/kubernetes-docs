@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KubernetesPodOperator Pod Lifecycle",
+    "locale": "en",
+    "output": "en-data-on-eks-airflow-03-dag-patterns-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "views": [
+      {
+        "id": "launch",
+        "label": "Pod launch path",
+        "focus": [
+          "dag",
+          "kpo",
+          "pod"
+        ],
+        "note": "extract_orders invokes KubernetesPodOperator.execute(); the operator builds the Pod from pod_template_file plus constructor overrides."
+      },
+      {
+        "id": "isolation",
+        "label": "Isolation and permissions",
+        "focus": [
+          "pod",
+          "sa",
+          "node"
+        ],
+        "note": "The task pod runs under an IRSA-annotated ServiceAccount and is scheduled onto a tainted, dedicated node pool."
+      },
+      {
+        "id": "report",
+        "label": "Status reporting",
+        "focus": [
+          "pod",
+          "kpo",
+          "af"
+        ],
+        "note": "Pod completion status flows back to the operator, which reports task success or failure to the Airflow scheduler and metadata DB."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dag",
+      "type": "frontend",
+      "label": "DAG code",
+      "sublabel": "extract_orders task",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "af",
+      "type": "database",
+      "label": "Airflow scheduler",
+      "sublabel": "metadata DB",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "kpo",
+      "type": "backend",
+      "label": "KubernetesPodOperator",
+      "sublabel": ".execute()",
+      "pos": [
+        420,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "created from pod_template_file",
+      "pos": [
+        420,
+        370
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "tag": "task pod"
+    },
+    {
+      "id": "sa",
+      "type": "security",
+      "label": "ServiceAccount",
+      "sublabel": "orders-extractor-sa (IRSA role annotation)",
+      "pos": [
+        60,
+        530
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "Tainted dedicated node pool",
+      "sublabel": "dedicated NodeGroup / NodePool",
+      "pos": [
+        740,
+        530
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dag-to-kpo",
+      "from": "dag",
+      "to": "kpo",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kpo-to-pod",
+      "from": "kpo",
+      "to": "pod",
+      "label": "builds Pod from pod_template_file + constructor overrides",
+      "variant": "emphasis",
+      "labelAt": [
+        523,
+        317
+      ]
+    },
+    {
+      "id": "pod-to-sa",
+      "from": "pod",
+      "to": "sa",
+      "label": "runs as",
+      "variant": "security"
+    },
+    {
+      "id": "pod-to-node",
+      "from": "pod",
+      "to": "node",
+      "label": "scheduled onto"
+    },
+    {
+      "id": "pod-to-kpo",
+      "from": "pod",
+      "to": "kpo",
+      "label": "completion status",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          720,
+          402
+        ],
+        [
+          720,
+          232
+        ]
+      ],
+      "labelAt": [
+        720,
+        317
+      ]
+    },
+    {
+      "id": "kpo-to-af",
+      "from": "kpo",
+      "to": "af",
+      "label": "reports task success/failure",
+      "labelAt": [
+        350,
+        196
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod spec precedence",
+      "items": [
+        "pod_template_file supplies the shared defaults",
+        "Constructor arguments such as image, cmds/arguments and service_account_name override the same fields in the template",
+        "Jinja templates ({{ ds }}) are rendered before the Pod is built"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Dedicated node pool",
+      "items": [
+        "tolerations + nodeAffinity match the workload=airflow-tasks taint",
+        "Avoids competing with unrelated workloads on shared nodes and scales purely on task pod demand"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "IRSA per task",
+      "items": [
+        "Annotate the ServiceAccount with eks.amazonaws.com/role-arn",
+        "A permission boundary separate from the Airflow control-plane components' role"
+      ]
+    }
+  ]
+}

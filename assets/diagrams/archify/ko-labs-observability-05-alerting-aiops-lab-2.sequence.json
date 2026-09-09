@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AIOps Agent 아키텍처",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      650
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "trigger",
+        "label": "알림 수신",
+        "focus": [
+          "alertmanager",
+          "lambda"
+        ],
+        "note": "AlertManager 웹훅이 API Gateway를 거쳐 Lambda를 호출하고, 알림에서 service·metric·시간 범위를 추출한다."
+      },
+      {
+        "id": "collect",
+        "label": "원격 측정 수집",
+        "focus": [
+          "lambda",
+          "telemetry"
+        ],
+        "note": "CloudWatch Logs Insights, AMP PromQL, X-Ray GetTraceSummaries를 순서대로 조회해 근거 데이터를 모은다."
+      },
+      {
+        "id": "analyze",
+        "label": "AI 분석과 통지",
+        "focus": [
+          "lambda",
+          "bedrock",
+          "sns",
+          "oncall"
+        ],
+        "note": "알림+지표+로그+트레이스를 Bedrock Claude에 넘겨 분석하고, 결과를 SNS로 게시해 이메일로 전달한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "default": {
+          "label": "조회 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "dashed": {
+          "label": "비동기 이메일 통지"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "alertmanager",
+      "type": "external",
+      "label": "AlertManager",
+      "sublabel": "웹훅 발신"
+    },
+    {
+      "id": "lambda",
+      "type": "backend",
+      "label": "Lambda",
+      "sublabel": "AIOps Agent"
+    },
+    {
+      "id": "telemetry",
+      "type": "database",
+      "label": "Telemetry",
+      "sublabel": "Logs · AMP · X-Ray"
+    },
+    {
+      "id": "bedrock",
+      "type": "cloud",
+      "label": "Bedrock",
+      "sublabel": "Claude"
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS",
+      "sublabel": "알림 토픽"
+    },
+    {
+      "id": "oncall",
+      "type": "external",
+      "label": "온콜 팀",
+      "sublabel": "이메일 구독"
+    }
+  ],
+  "segments": [
+    {
+      "from": 155,
+      "to": 205,
+      "label": "알림 수신"
+    },
+    {
+      "from": 220,
+      "to": 410,
+      "label": "원격 측정 수집 (순차)"
+    },
+    {
+      "from": 425,
+      "to": 577,
+      "label": "AI 분석 · 통지"
+    }
+  ],
+  "messages": [
+    {
+      "id": "webhook",
+      "from": "alertmanager",
+      "to": "lambda",
+      "y": 180,
+      "label": "웹훅 (API Gateway 경유)",
+      "variant": "emphasis",
+      "note": "service · metric · 시간 범위 추출"
+    },
+    {
+      "id": "logs-query",
+      "from": "lambda",
+      "to": "telemetry",
+      "y": 245,
+      "label": "Logs Insights 쿼리",
+      "variant": "default"
+    },
+    {
+      "id": "logs-result",
+      "from": "telemetry",
+      "to": "lambda",
+      "y": 275,
+      "label": "로그 결과",
+      "variant": "return"
+    },
+    {
+      "id": "promql-query",
+      "from": "lambda",
+      "to": "telemetry",
+      "y": 305,
+      "label": "PromQL 쿼리 (AMP)",
+      "variant": "default"
+    },
+    {
+      "id": "promql-result",
+      "from": "telemetry",
+      "to": "lambda",
+      "y": 335,
+      "label": "지표 결과",
+      "variant": "return"
+    },
+    {
+      "id": "trace-query",
+      "from": "lambda",
+      "to": "telemetry",
+      "y": 365,
+      "label": "GetTraceSummaries (X-Ray)",
+      "variant": "default"
+    },
+    {
+      "id": "trace-result",
+      "from": "telemetry",
+      "to": "lambda",
+      "y": 395,
+      "label": "트레이스 결과",
+      "variant": "return"
+    },
+    {
+      "id": "claude-invoke",
+      "from": "lambda",
+      "to": "bedrock",
+      "y": 455,
+      "label": "Claude 호출 (알림 + 지표·로그·트레이스)",
+      "variant": "emphasis",
+      "note": "시스템 프롬프트: SRE 전문가"
+    },
+    {
+      "id": "analysis-result",
+      "from": "bedrock",
+      "to": "lambda",
+      "y": 500,
+      "label": "분석 결과",
+      "variant": "return"
+    },
+    {
+      "id": "publish",
+      "from": "lambda",
+      "to": "sns",
+      "y": 535,
+      "label": "분석 결과 Publish",
+      "variant": "emphasis"
+    },
+    {
+      "id": "email",
+      "from": "sns",
+      "to": "oncall",
+      "y": 560,
+      "label": "이메일 통지",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lambda",
+      "from": 175,
+      "to": 542,
+      "type": "backend"
+    },
+    {
+      "participant": "telemetry",
+      "from": 240,
+      "to": 402,
+      "type": "database"
+    },
+    {
+      "participant": "bedrock",
+      "from": 450,
+      "to": 507,
+      "type": "cloud"
+    },
+    {
+      "participant": "sns",
+      "from": 530,
+      "to": 567,
+      "type": "messagebus"
+    }
+  ]
+}

@@ -27,7 +27,9 @@ Outlier Detection은 **인스턴스를 삭제하지 않고** 트래픽 풀에서
 
 **Outlier Detection의 작동 원리:**
 
-![요청 처리 중 에러가 누적되어 임계값을 넘으면 해당 인스턴스를 일시적으로 제외하고, 대기 후 복구를 시도하는 아웃라이어 감지 루프를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-resilience-0.svg)
+![요청마다 에러를 확인해 카운트를 누적하고, 임계값을 넘으면 인스턴스를 트래픽 풀에서 일시 제외한 뒤 baseEjectionTime 대기 후 복구를 시도해 다시 편입하는 Outlier Detection 루프를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-resilience-0.html)
 
 **주요 기능:**
 
@@ -116,7 +118,9 @@ spec:
 
 **Token Bucket 알고리즘:**
 
-![초당 일정량 토큰이 채워지는 버킷에서 요청마다 토큰을 소비하고, 토큰이 없으면 429로 거부하는 토큰 버킷 알고리즘의 동작을 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-resilience-1.svg)
+![초당 10개씩 최대 100개까지 토큰이 채워지는 버킷에서 도착한 요청마다 토큰 1개를 소비해 허용하고, 토큰이 없으면 429로 거부하는 Token Bucket 알고리즘의 동작을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-resilience-1.html)
 
 **참고 자료:**
 
@@ -147,7 +151,9 @@ Zone Aware Routing은 **트래픽을 단일 AZ에 집중하는 것이 아니라*
 
 **Zone Aware Routing의 올바른 동작:**
 
-![클라이언트 파드가 같은 가용영역의 서비스 파드로 트래픽의 80%를 무료로 우선 라우팅하고, 나머지 20%만 크로스 AZ 비용을 지불하며 다른 가용영역으로 장애조치하는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-resilience-2.svg)
+![클라이언트 파드가 같은 가용영역의 서비스 파드로 트래픽의 80%를 무료로 우선 라우팅하고, 나머지 20%만 크로스 AZ 비용을 지불하며 다른 가용영역으로 장애조치하는 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-resilience-2.html)
 
 **Zone Aware Routing의 실제 이점:**
 
@@ -937,7 +943,9 @@ us-east-1/us-east-1c/*
 
 **3. 트래픽 흐름 다이어그램**
 
-![us-east-1a의 클라이언트 파드가 같은 가용영역의 Order Service 파드로 트래픽의 70%를 무료로 라우팅하고, 나머지 30%는 GB당 0.01달러의 비용을 내며 다른 가용영역의 Order Service 파드로 넘어가는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-resilience-3.svg)
+![us-east-1a의 클라이언트 파드가 같은 가용영역의 Order Service 파드로 트래픽의 70%를 무료로 라우팅하고, 나머지 30%는 GB당 0.01달러의 비용을 내며 다른 가용영역의 Order Service 파드로 넘어가는 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-resilience-3.html)
 
 **4. 비용 절감 계산**
 

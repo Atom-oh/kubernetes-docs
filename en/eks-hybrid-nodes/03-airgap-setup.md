@@ -22,7 +22,9 @@ An air-gapped environment is a network that is completely isolated from the publ
 
 ### Types of Air-Gapped Environments
 
-![Three connectivity models for air-gapped EKS Hybrid Nodes: fully air-gapped delivery by physical media, partially air-gapped access through an allow-listed proxy, and private connectivity over VPN/Direct Connect into a VPC that exposes AWS services through VPC endpoints, with VPC endpoints highlighted as the AWS-native path.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-03-airgap-setup-0.svg)
+![Three air-gapped environment types for EKS Hybrid Nodes: physical media when fully air-gapped, an allow-listed proxy when partially air-gapped, and the private VPN/Direct Connect path to an AWS VPC with VPC Endpoints for S3 and ECR used here.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-03-airgap-setup-0.html)
 
 ---
 
@@ -30,7 +32,9 @@ An air-gapped environment is a network that is completely isolated from the publ
 
 The air-gap architecture configured in this document is as follows:
 
-![Pipeline showing an internet-connected host pre-staging binaries and container images into a private S3 bucket and ECR via ekshybrid-download.sh, feeding an air-gapped on-premises node that pulls those same artifacts at runtime through private DNS and VPC endpoints.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-03-airgap-setup-1.svg)
+![Air-gapped setup where an internet-connected host pre-stages manifest.yaml binaries into a private S3 bucket, and the on-premises node resolves the domain via a PHZ and pulls the same binaries and images from S3 and ECR through VPC endpoints only.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-03-airgap-setup-1.html)
 
 ### Artifact Storage Responsibilities
 

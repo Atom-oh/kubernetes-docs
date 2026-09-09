@@ -20,7 +20,9 @@
 | **스트림 처리 (Stream Processing)** | 스트리밍 데이터에 대해 실시간으로 집계·변환·상태 기반 연산을 수행 | Apache Flink | ✅ [Flink on EKS](flink/README.md) |
 | **거버넌스 기반 데이터·AI 작업 공간** | 데이터 자산, project profile, 도구와 membership을 관리형 경계에서 공유 | SageMaker Unified Studio | ✅ [Unified Studio 거버넌스](sagemaker-unified-studio/README.md) |
 
-![Airflow가 Kafka와 Spark의 작업 스케줄링을 담당하고, Kafka는 실시간 이벤트를 Flink에 공급하는 동시에 원시 데이터를 Spark에 적재하는 Data on EKS 파이프라인 구성을 보여준다.](../.gitbook/assets/ko-data-on-eks-README-0.png)
+![Airflow가 Kafka와 Spark의 작업 스케줄링을 담당하고, Kafka는 실시간 이벤트를 Flink에 공급하는 동시에 원시 데이터를 Spark에 적재하는 Data on EKS 파이프라인 구성을 보여준다.](../.gitbook/assets/ko-data-on-eks-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-readme-0.html)
 
 ## 왜 EKS에서 직접 운영하는가
 

@@ -1,0 +1,206 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Autoscaler & Karpenter Interaction Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Metric signals"
+        },
+        "backend": {
+          "label": "Flink autoscaler / TaskManager pods"
+        },
+        "cloud": {
+          "label": "Karpenter (EC2 capacity)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "job-loop",
+        "label": "Job-level decision",
+        "focus": [
+          "metrics",
+          "autoscaler"
+        ],
+        "note": "The Flink autoscaler sets each operator's parallelism from per-vertex backpressure, busy time and lag alone; it knows nothing about nodes."
+      },
+      {
+        "id": "scale-up",
+        "label": "Scale-up path",
+        "focus": [
+          "autoscaler",
+          "pods-add",
+          "provision"
+        ],
+        "note": "More TaskManager pods are requested; Karpenter sees the unschedulable (Pending) pods and provisions a new EC2 node."
+      },
+      {
+        "id": "scale-down",
+        "label": "Scale-down path",
+        "focus": [
+          "autoscaler",
+          "pods-remove",
+          "consolidate"
+        ],
+        "note": "When parallelism decreases, TaskManager pods are removed; once a node goes empty, Karpenter consolidates and terminates it."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "flink",
+      "label": "Flink autoscaler"
+    },
+    {
+      "id": "up",
+      "label": "Scale up"
+    },
+    {
+      "id": "down",
+      "label": "Scale down"
+    }
+  ],
+  "phases": [
+    {
+      "id": "job-level",
+      "label": "Job-level decision (parallelism)",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "pod-level",
+      "label": "TaskManager pod change",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "dashed"
+    },
+    {
+      "id": "node-level",
+      "label": "Node-level decision (EC2 capacity)",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "metrics",
+    "autoscaler",
+    "pods-add",
+    "provision"
+  ],
+  "nodes": [
+    {
+      "id": "metrics",
+      "lane": "flink",
+      "col": 0,
+      "type": "external",
+      "label": "Vertex metrics",
+      "sublabel": "backpressure, busy time, lag",
+      "width": 150
+    },
+    {
+      "id": "autoscaler",
+      "lane": "flink",
+      "col": 1,
+      "type": "backend",
+      "label": "Adjust parallelism",
+      "sublabel": "Flink autoscaler · per operator",
+      "width": 196
+    },
+    {
+      "id": "pods-add",
+      "lane": "up",
+      "col": 2,
+      "type": "backend",
+      "label": "Request TaskManager pods",
+      "sublabel": "new pods sit Pending",
+      "width": 196
+    },
+    {
+      "id": "provision",
+      "lane": "up",
+      "col": 3,
+      "type": "cloud",
+      "label": "Provision new EC2 node",
+      "sublabel": "Karpenter · per NodePool",
+      "width": 192
+    },
+    {
+      "id": "pods-remove",
+      "lane": "down",
+      "col": 2,
+      "type": "backend",
+      "label": "TaskManager pods removed",
+      "sublabel": "node goes empty",
+      "width": 196
+    },
+    {
+      "id": "consolidate",
+      "lane": "down",
+      "col": 3,
+      "type": "cloud",
+      "label": "Consolidate node",
+      "sublabel": "Karpenter · terminate after delay",
+      "width": 192
+    }
+  ],
+  "edges": [
+    {
+      "id": "metrics-autoscaler",
+      "from": "metrics",
+      "to": "autoscaler",
+      "label": "autoscaler evaluates"
+    },
+    {
+      "id": "autoscaler-pods-add",
+      "from": "autoscaler",
+      "to": "pods-add",
+      "label": "parallelism increases",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pods-add-provision",
+      "from": "pods-add",
+      "to": "provision",
+      "label": "unschedulable"
+    },
+    {
+      "id": "autoscaler-pods-remove",
+      "from": "autoscaler",
+      "to": "pods-remove",
+      "label": "parallelism decreases",
+      "role": "branch"
+    },
+    {
+      "id": "pods-remove-consolidate",
+      "from": "pods-remove",
+      "to": "consolidate",
+      "label": "node goes empty",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two loops reacting to different signals",
+      "items": [
+        "Flink autoscaler: decides parallelism from per-vertex metrics — no knowledge of nodes",
+        "Karpenter: decides EC2 capacity from unschedulable pods or empty nodes — no knowledge of why the pods exist",
+        "The job-level decision always comes first; the node-level decision only reacts to its consequences"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Mismatches from tuning only one loop",
+      "items": [
+        "If parallelism grows faster than the NodePool can provision nodes, new pods sit Pending and stall the scale-up",
+        "Keep Karpenter's consolidation delay comfortably longer than the autoscaler's stabilization window"
+      ]
+    }
+  ]
+}

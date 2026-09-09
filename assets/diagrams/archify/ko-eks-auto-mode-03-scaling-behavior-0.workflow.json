@@ -1,0 +1,257 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pod Pending에서 노드 프로비저닝까지",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Pod 상태"
+        },
+        "security": {
+          "label": "스케줄 판단"
+        },
+        "backend": {
+          "label": "Auto Mode Controller"
+        },
+        "cloud": {
+          "label": "EC2 노드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "trigger",
+        "label": "트리거",
+        "focus": [
+          "pod_create",
+          "schedulable",
+          "existing_node",
+          "detect"
+        ],
+        "note": "새 Pod가 기존 노드에 배치될 수 있으면 그대로 실행되고, 스케줄이 불가능하면 Pending 상태가 되어 Auto Mode Controller가 감지합니다."
+      },
+      {
+        "id": "controller",
+        "label": "컨트롤러 판단",
+        "focus": [
+          "detect",
+          "evaluate",
+          "select"
+        ],
+        "note": "Controller는 NodePool 요구사항을 평가하고 Pending Pod의 리소스 요구사항을 분석해 최적 인스턴스 타입을 선택합니다."
+      },
+      {
+        "id": "provisioning",
+        "label": "노드 프로비저닝",
+        "focus": [
+          "select",
+          "provision",
+          "bootstrap",
+          "node_ready"
+        ],
+        "note": "EC2 인스턴스를 시작하고 노드를 부트스트랩한 뒤 kubelet이 클러스터에 등록되면 노드가 Ready 상태가 됩니다."
+      },
+      {
+        "id": "scheduling",
+        "label": "Pod 스케줄링",
+        "focus": [
+          "node_ready",
+          "pod_running"
+        ],
+        "note": "노드가 Ready가 되면 Pending Pod가 새 노드에 스케줄링되어 Running 상태로 전환됩니다."
+      }
+    ],
+    "viewBox": [
+      1180,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "trigger",
+      "label": "트리거"
+    },
+    {
+      "id": "automode",
+      "label": "Auto Mode Controller"
+    },
+    {
+      "id": "provisioning",
+      "label": "프로비저닝"
+    },
+    {
+      "id": "scheduling",
+      "label": "스케줄링"
+    }
+  ],
+  "mainPath": [
+    "pod_create",
+    "schedulable",
+    "detect",
+    "evaluate",
+    "select",
+    "provision",
+    "bootstrap",
+    "node_ready",
+    "pod_running"
+  ],
+  "nodes": [
+    {
+      "id": "pod_create",
+      "lane": "trigger",
+      "col": 0,
+      "type": "frontend",
+      "label": "Pod 생성",
+      "sublabel": "스케줄 요청",
+      "width": 156
+    },
+    {
+      "id": "schedulable",
+      "lane": "trigger",
+      "col": 1,
+      "type": "security",
+      "label": "스케줄 가능?",
+      "sublabel": "기존 노드 여유 확인",
+      "width": 156
+    },
+    {
+      "id": "existing_node",
+      "lane": "trigger",
+      "col": 2,
+      "type": "frontend",
+      "label": "기존 노드에 배치",
+      "sublabel": "노드 추가 없음",
+      "width": 172
+    },
+    {
+      "id": "detect",
+      "lane": "automode",
+      "col": 1,
+      "type": "backend",
+      "label": "Pending Pod 감지",
+      "sublabel": "Pod Pending 상태",
+      "width": 172
+    },
+    {
+      "id": "evaluate",
+      "lane": "automode",
+      "col": 2,
+      "type": "backend",
+      "label": "NodePool 평가",
+      "sublabel": "요구사항 분석",
+      "width": 156
+    },
+    {
+      "id": "select",
+      "lane": "automode",
+      "col": 3,
+      "type": "backend",
+      "label": "최적 인스턴스 선택",
+      "sublabel": "인스턴스 타입 결정",
+      "width": 172
+    },
+    {
+      "id": "provision",
+      "lane": "provisioning",
+      "col": 3,
+      "type": "cloud",
+      "label": "노드 프로비저닝",
+      "sublabel": "EC2 인스턴스 시작",
+      "width": 156
+    },
+    {
+      "id": "bootstrap",
+      "lane": "provisioning",
+      "col": 4,
+      "type": "cloud",
+      "label": "노드 부트스트랩",
+      "sublabel": "kubelet 등록",
+      "width": 156
+    },
+    {
+      "id": "node_ready",
+      "lane": "provisioning",
+      "col": 5,
+      "type": "cloud",
+      "label": "노드 Ready",
+      "sublabel": "클러스터 조인 완료",
+      "width": 156
+    },
+    {
+      "id": "pod_running",
+      "lane": "scheduling",
+      "col": 5,
+      "type": "frontend",
+      "label": "Pod 스케줄링",
+      "sublabel": "Pod Running",
+      "width": 156
+    }
+  ],
+  "edges": [
+    {
+      "id": "create-schedulable",
+      "from": "pod_create",
+      "to": "schedulable"
+    },
+    {
+      "id": "schedulable-existing",
+      "from": "schedulable",
+      "to": "existing_node",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "id": "schedulable-detect",
+      "from": "schedulable",
+      "to": "detect",
+      "label": "No",
+      "variant": "emphasis",
+      "toSide": "top"
+    },
+    {
+      "id": "detect-evaluate",
+      "from": "detect",
+      "to": "evaluate"
+    },
+    {
+      "id": "evaluate-select",
+      "from": "evaluate",
+      "to": "select"
+    },
+    {
+      "id": "select-provision",
+      "from": "select",
+      "to": "provision"
+    },
+    {
+      "id": "provision-bootstrap",
+      "from": "provision",
+      "to": "bootstrap"
+    },
+    {
+      "id": "bootstrap-ready",
+      "from": "bootstrap",
+      "to": "node_ready"
+    },
+    {
+      "id": "ready-running",
+      "from": "node_ready",
+      "to": "pod_running"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "일반적인 프로비저닝 타임라인",
+      "items": [
+        "EC2 인스턴스 시작: 10-30초",
+        "AMI 부팅: 20-40초",
+        "kubelet 등록: 5-10초",
+        "Pod 스케줄링: 1-5초 (총 40-90초)"
+      ]
+    }
+  ]
+}

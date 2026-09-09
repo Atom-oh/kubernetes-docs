@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "CloudWatch Investigations 조사 프로세스",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "시작"
+        },
+        "active": {
+          "label": "조사 진행"
+        },
+        "decision": {
+          "label": "AI 판단 지점"
+        },
+        "success": {
+          "label": "완료"
+        }
+      }
+    },
+    "viewBox": [
+      1070,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "경보 감지부터 AI 가설까지"
+    },
+    {
+      "id": "analyze",
+      "label": "조치 제안"
+    },
+    {
+      "id": "terminal",
+      "label": "조사 완료"
+    }
+  ],
+  "states": [
+    {
+      "id": "alarm",
+      "type": "start",
+      "label": "경보 발생",
+      "sublabel": "CloudWatch 알람",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "start",
+      "type": "active",
+      "label": "조사 시작",
+      "sublabel": "알람 또는 시간 범위 선택",
+      "lane": "main",
+      "col": 1,
+      "step": "02"
+    },
+    {
+      "id": "scan",
+      "type": "active",
+      "label": "리소스 스캔 및 분석",
+      "sublabel": "EKS, RDS, SQS",
+      "lane": "main",
+      "col": 2,
+      "step": "03"
+    },
+    {
+      "id": "findings",
+      "type": "active",
+      "label": "주요 발견 사항 수집",
+      "sublabel": "Key Findings, Timeline",
+      "lane": "main",
+      "col": 3,
+      "step": "04"
+    },
+    {
+      "id": "hypothesis",
+      "type": "decision",
+      "label": "근본 원인 가설",
+      "sublabel": "AI 생성 Hypothesis",
+      "lane": "main",
+      "col": 4,
+      "step": "05"
+    },
+    {
+      "id": "actions",
+      "type": "active",
+      "label": "제안 조치",
+      "sublabel": "Suggestions",
+      "lane": "analyze",
+      "col": 2,
+      "step": "06"
+    },
+    {
+      "id": "report",
+      "type": "success",
+      "label": "인시던트 보고서 생성",
+      "sublabel": "조사 완료",
+      "lane": "terminal",
+      "col": 2,
+      "step": "07"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "alarm",
+      "to": "start",
+      "label": "시작"
+    },
+    {
+      "from": "start",
+      "to": "scan",
+      "label": "스캔"
+    },
+    {
+      "from": "scan",
+      "to": "findings"
+    },
+    {
+      "from": "findings",
+      "to": "hypothesis",
+      "variant": "emphasis"
+    },
+    {
+      "from": "hypothesis",
+      "to": "actions",
+      "label": "제안",
+      "labelDy": 24
+    },
+    {
+      "from": "actions",
+      "to": "report",
+      "label": "보고서 생성",
+      "labelDy": 24
+    }
+  ]
+}

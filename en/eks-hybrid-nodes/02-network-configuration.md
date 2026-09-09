@@ -650,13 +650,17 @@ Understanding the traffic flow patterns between AWS and on-premises is critical 
 
 Kubelet initiates HTTPS requests to the API server endpoint via DNS lookup. In public access mode, traffic traverses the public internet. In private mode, traffic flows through VPN/DX to VPC ENIs.
 
-![Kubelet to Control Plane](../.gitbook/assets/hybrid-nodes-kubelet-to-cp.svg)
+![Sequence showing how a hybrid node's kubelet, after a DNS lookup, sends HTTPS requests to the EKS API server either over the public internet (public access mode) or through the VPN/DX gateway to the control plane ENI in the VPC (private mode).](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-10.html)
 
 ### Pattern 2: EKS Control Plane → Kubelet
 
 The API server retrieves the node IP from the node status object. Traffic routes through VPC, then crosses the cloud boundary via Direct Connect or VPN to reach the kubelet on port 10250. This is used for `kubectl logs`, `kubectl exec`, `kubectl port-forward`, etc.
 
-![Control Plane to Kubelet](../.gitbook/assets/hybrid-nodes-cp-to-kubelet.svg)
+![Sequence in which the EKS control plane looks up the node IP, routes through the CP ENI and Cluster VPC router, crosses the cloud boundary over Direct Connect or VPN, and reaches the hybrid node's kubelet on port 10250 via the on-premises router.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-11.html)
 
 ### Pattern 3: Pod → EKS Control Plane
 
@@ -665,13 +669,17 @@ Pods communicate with the Kubernetes API via the `kubernetes` Service (ClusterIP
 * **Without CNI NAT**: Pod sends to kubernetes service IP (e.g., 172.16.0.1), kube-proxy applies DNAT to control plane ENI IP. Return traffic requires reverse routing through pod CIDRs.
 * **With CNI NAT**: CNI applies SNAT before node processing, simplifying return routing (no additional pod CIDR routing needed).
 
-![Pod to Control Plane](../.gitbook/assets/hybrid-nodes-pod-to-cp.svg)
+![Sequence of a hybrid-node pod's request to the kubernetes Service IP reaching the EKS control plane ENI via kube-proxy DNAT and VPN/DX, plus the two return paths with and without CNI NAT (SNAT).](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-12.html)
 
 ### Pattern 4: EKS Control Plane → Pod (Webhooks)
 
 The API server initiates direct connections to webhook pods running on hybrid nodes. Traffic routes through VPC for the remote pod CIDR, crosses the boundary via gateway. This **requires routable pod CIDRs**.
 
-![Control Plane to Pod](../.gitbook/assets/hybrid-nodes-cp-to-pod.svg)
+![Seven-hop path of a webhook call initiated by the EKS API server through the CP ENI, the VPC route table and the VPN/DX gateway, then the on-premises router and the hybrid node's iptables and CNI to the webhook pod 10.85.1.23.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-13.html)
 
 > **Important**: If your on-premises pod CIDR is not routable, you **must run all webhooks on cloud nodes**. See [Webhook Configuration](02-network-configuration.md#webhook-configuration) below.
 
@@ -679,7 +687,9 @@ The API server initiates direct connections to webhook pods running on hybrid no
 
 Pods on different hybrid nodes communicate using [VXLAN encapsulation](../networking/cilium/03-networking.md#vxlan-technology-deep-dive) (or similar overlay protocols like Geneve, IP-in-IP). The CNI encapsulates the original pod-to-pod packet with outer headers using source/destination node IPs. The receiving node's CNI decapsulates and delivers to the destination pod.
 
-![Pod to Pod on Hybrid Nodes](../.gitbook/assets/hybrid-nodes-pod-to-pod.svg)
+![Sequence showing a packet between pods on two hybrid nodes being VXLAN-encapsulated with node-IP outer headers by the sending node's CNI, forwarded by the on-prem router, decapsulated by the receiving node's CNI and delivered to the destination pod, plus the reply path.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-14.html)
 
 #### VXLAN Encapsulation Details
 
@@ -733,7 +743,9 @@ VXLAN (Virtual Extensible LAN) encapsulates L2 frames into L3 packets to create 
 
 VPC pods (using VPC CNI) send directly to hybrid pods; VPC routing directs traffic to the on-premises gateway. The packet crosses the boundary and arrives at the hybrid node. This **requires routable pod CIDRs** and proper VPC route table entries.
 
-![East-West Traffic](../.gitbook/assets/hybrid-nodes-east-west.svg)
+![East-West traffic path in which a VPC CNI cloud pod's packet travels through the ENI, VPC router, gateway and on-premises router to a hybrid node, where iptables and the CNI deliver it to the hybrid pod, alongside both route tables.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-15.html)
 
 ### Traffic Flow Summary
 

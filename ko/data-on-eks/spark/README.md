@@ -11,7 +11,9 @@ Apache Spark는 대규모 배치 ETL, SQL 분석, 스트리밍 워크로드를 �
 
 YARN과 달리 Spark on Kubernetes에는 상시 구동되는 클러스터 매니저 데몬이 없습니다. 즉, 작업을 기다리며 항상 떠 있는 ResourceManager나 NodeManager 같은 프로세스가 존재하지 않습니다. 대신 `spark-submit`은 Kubernetes API 서버에 직접 요청을 보내 단 하나의 **드라이버 Pod**를 생성합니다. 이 드라이버 Pod는 작업이 실행되는 동안 그 자체로 클러스터 매니저 역할을 하며, 실행이 시작되면 `spark.executor.instances` 설정이나 Dynamic Resource Allocation에 따라 필요한 **Executor Pod**를 Kubernetes API를 직접 호출해 생성·관리합니다. Executor는 드라이버에 등록한 뒤 작업(task)을 받아 처리하고 결과와 상태를 다시 드라이버로 보고하는데, 이 과정은 드라이버-Executor 간 직접 연결로 이루어지며 Kubernetes는 Pod 스케줄링과 라이프사이클 관리에만 관여할 뿐 작업 조율 자체에는 개입하지 않습니다.
 
-![spark-submit이 Kubernetes API Server에 드라이버 Pod 생성을 요청하고, 드라이버 Pod가 API Server를 통해 Executor Pod를 스케줄링받은 뒤 각 Executor가 드라이버에 등록 및 상태를 보고하는 흐름을 보여주는 다이어그램](../../.gitbook/assets/ko-data-on-eks-spark-README-0.png)
+![spark-submit이 Kubernetes API Server에 드라이버 Pod 생성을 요청하고, 드라이버 Pod가 API Server를 통해 Executor Pod를 스케줄링받은 뒤 각 Executor가 드라이버에 직접 등록하고 상태를 보고하는 Spark on Kubernetes 실행 구조를 보여준다.](../../.gitbook/assets/ko-data-on-eks-spark-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-spark-readme-0.html)
 
 ## 딥다이브 목차
 

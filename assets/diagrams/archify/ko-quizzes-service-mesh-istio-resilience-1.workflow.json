@@ -1,0 +1,175 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Token Bucket 알고리즘",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "요청 유입"
+        },
+        "backend": {
+          "label": "토큰 처리"
+        },
+        "database": {
+          "label": "버킷 상태"
+        },
+        "security": {
+          "label": "거부"
+        }
+      }
+    },
+    "viewBox": [
+      1000,
+      528
+    ]
+  },
+  "lanes": [
+    {
+      "id": "bucket",
+      "label": "Token Bucket · 토큰 공급"
+    },
+    {
+      "id": "request",
+      "label": "요청 처리 경로"
+    },
+    {
+      "id": "rejected",
+      "label": "제한 초과",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "refill",
+      "lane": "bucket",
+      "col": 0,
+      "type": "backend",
+      "label": "Refill",
+      "sublabel": "10 tokens/sec",
+      "width": 140
+    },
+    {
+      "id": "tokens",
+      "lane": "bucket",
+      "col": 1,
+      "type": "database",
+      "label": "Token Bucket",
+      "sublabel": "최대 100 tokens",
+      "width": 150
+    },
+    {
+      "id": "request",
+      "lane": "request",
+      "col": 0,
+      "type": "frontend",
+      "label": "요청 도착",
+      "sublabel": "Envoy 프록시 수신",
+      "width": 152
+    },
+    {
+      "id": "check",
+      "lane": "request",
+      "col": 1,
+      "type": "backend",
+      "label": "토큰 있음?",
+      "sublabel": "잔여 토큰 확인",
+      "width": 164
+    },
+    {
+      "id": "allow",
+      "lane": "request",
+      "col": 2,
+      "type": "backend",
+      "label": "요청 허용",
+      "sublabel": "토큰 1개 소비",
+      "width": 152
+    },
+    {
+      "id": "reject",
+      "lane": "rejected",
+      "col": 2,
+      "type": "security",
+      "label": "요청 거부",
+      "sublabel": "429 반환",
+      "width": 152
+    }
+  ],
+  "edges": [
+    {
+      "id": "refill-tokens",
+      "from": "refill",
+      "to": "tokens",
+      "label": "매초 10개 추가",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "id": "request-check",
+      "from": "request",
+      "to": "check",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tokens-check",
+      "from": "tokens",
+      "to": "check",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "check-allow",
+      "from": "check",
+      "to": "allow",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-reject",
+      "from": "check",
+      "to": "reject",
+      "label": "No",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "allow-tokens",
+      "from": "allow",
+      "to": "tokens",
+      "label": "토큰 감소",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EnvoyFilter token_bucket 설정",
+      "items": [
+        "max_tokens: 100 — 버킷에 담을 수 있는 최대 토큰 수",
+        "tokens_per_fill: 10 / fill_interval: 1s — 초당 10개 보충",
+        "토큰이 없으면 Envoy가 429를 반환"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "로컬 Rate Limiting의 특징",
+      "items": [
+        "각 Envoy 프록시가 독립적으로 버킷을 관리",
+        "파드당 100 req/s → 파드 3개면 최대 300 req/s 허용",
+        "빠르고 단순하지만 전체 정확도는 낮음"
+      ]
+    }
+  ]
+}

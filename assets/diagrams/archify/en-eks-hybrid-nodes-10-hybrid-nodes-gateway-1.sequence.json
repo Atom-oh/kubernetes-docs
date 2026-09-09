@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "VPC Route Table Auto-Management — Node Join and Leave",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      540
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "join",
+        "label": "Node joins",
+        "focus": [
+          "hn",
+          "k8s",
+          "gw",
+          "vpc"
+        ],
+        "note": "A new hybrid node becomes NodeReady; the leader programs FDB, ARP and a local route, then adds the Pod CIDR route to the VPC route table."
+      },
+      {
+        "id": "leave",
+        "label": "Node leaves",
+        "focus": [
+          "k8s",
+          "gw",
+          "vpc"
+        ],
+        "note": "When the node is removed, the leader tears down the same entries and deletes the stale Pod CIDR route."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "hn",
+      "type": "external",
+      "label": "Hybrid Node",
+      "sublabel": "on-premises"
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "Node watch"
+    },
+    {
+      "id": "gw",
+      "type": "backend",
+      "label": "Gateway (Leader)",
+      "sublabel": "hybrid_vxlan0"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC Route Table",
+      "sublabel": "routeTableIDs"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 315,
+      "label": "Node joins → program FDB / ARP / local route"
+    },
+    {
+      "from": 335,
+      "to": 480,
+      "label": "Node leaves → remove FDB / ARP / local route"
+    }
+  ],
+  "messages": [
+    {
+      "id": "join",
+      "from": "hn",
+      "to": "k8s",
+      "y": 195,
+      "label": "Node joins cluster (NodeReady)",
+      "variant": "default"
+    },
+    {
+      "id": "watch-add",
+      "from": "k8s",
+      "to": "gw",
+      "y": 240,
+      "label": "Watch: new node → program FDB/ARP/route",
+      "variant": "default",
+      "note": "Leader programs FDB entry, ARP entry and local route for the node Pod CIDR"
+    },
+    {
+      "id": "create-route",
+      "from": "gw",
+      "to": "vpc",
+      "y": 285,
+      "label": "ec2:CreateRoute (Pod CIDR → leader ENI)",
+      "variant": "emphasis",
+      "note": "Route: 10.100.0.0/24 → eni-abc123"
+    },
+    {
+      "id": "leave",
+      "from": "hn",
+      "to": "k8s",
+      "y": 360,
+      "label": "Node leaves cluster",
+      "variant": "default"
+    },
+    {
+      "id": "watch-remove",
+      "from": "k8s",
+      "to": "gw",
+      "y": 405,
+      "label": "Watch: node removed → remove FDB/ARP/route",
+      "variant": "default",
+      "note": "Leader removes FDB entry, ARP entry and local route"
+    },
+    {
+      "id": "delete-route",
+      "from": "gw",
+      "to": "vpc",
+      "y": 450,
+      "label": "ec2:DeleteRoute (Pod CIDR)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "gw",
+      "from": 233,
+      "to": 297,
+      "type": "backend"
+    },
+    {
+      "participant": "gw",
+      "from": 398,
+      "to": 462,
+      "type": "backend"
+    }
+  ]
+}

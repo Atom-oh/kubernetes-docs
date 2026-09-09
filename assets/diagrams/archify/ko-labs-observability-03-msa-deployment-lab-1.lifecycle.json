@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Canary 배포 상태 다이어그램",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "stage1",
+        "label": "1차 카나리",
+        "focus": [
+          "sw20",
+          "pause30",
+          "analysis1",
+          "sw40"
+        ],
+        "note": "v2 이미지를 배포하면 카나리 비중 20%에서 30초 대기 후 첫 AnalysisRun이 성공률·p99 지연시간을 검사한다."
+      },
+      {
+        "id": "stage2",
+        "label": "2차 카나리",
+        "focus": [
+          "sw40",
+          "sw80",
+          "analysis2",
+          "promote"
+        ],
+        "note": "40% → 60% → 80%로 단계마다 30초씩 대기하며 올리고, 두 번째 게이트를 통과하면 v2를 100%로 승격한다."
+      },
+      {
+        "id": "rollback",
+        "label": "자동 롤백",
+        "focus": [
+          "analysis1",
+          "analysis2",
+          "rollback"
+        ],
+        "note": "두 게이트 중 어느 곳에서든 지표가 기준을 넘지 못하면 Rollout이 abort되어 트래픽이 v1로 돌아간다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "배포 시작"
+        },
+        "active": {
+          "label": "가중치 조정"
+        },
+        "waiting": {
+          "label": "대기"
+        },
+        "decision": {
+          "label": "분석 게이트"
+        },
+        "success": {
+          "label": "승격 완료"
+        },
+        "failure": {
+          "label": "롤백"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "카나리 단계 (setWeight · pause)"
+    },
+    {
+      "id": "gate",
+      "label": "2차 게이트 · 롤백"
+    },
+    {
+      "id": "terminal",
+      "label": "승격 완료"
+    }
+  ],
+  "states": [
+    {
+      "id": "sw20",
+      "type": "start",
+      "label": "SetWeight 20",
+      "sublabel": "v2 배포 후 weight=20",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "pause30",
+      "type": "waiting",
+      "label": "Pause",
+      "sublabel": "30초 대기",
+      "lane": "main",
+      "col": 1,
+      "step": "02"
+    },
+    {
+      "id": "analysis1",
+      "type": "decision",
+      "label": "Analysis 1",
+      "sublabel": "success ≥ 0.95, p99 < 2s",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "gate"
+    },
+    {
+      "id": "sw40",
+      "type": "active",
+      "label": "SetWeight 40",
+      "sublabel": "canary weight=40",
+      "lane": "main",
+      "col": 3,
+      "step": "04"
+    },
+    {
+      "id": "sw80",
+      "type": "active",
+      "label": "SetWeight 60→80",
+      "sublabel": "30초씩 대기 후 상승",
+      "lane": "main",
+      "col": 4,
+      "step": "05"
+    },
+    {
+      "id": "rollback",
+      "type": "failure",
+      "label": "Rollback",
+      "sublabel": "v1으로 abort",
+      "lane": "gate",
+      "col": 0,
+      "tag": "종료"
+    },
+    {
+      "id": "analysis2",
+      "type": "decision",
+      "label": "Analysis 2",
+      "sublabel": "AnalysisRun 게이트",
+      "lane": "gate",
+      "col": 2,
+      "step": "06",
+      "tag": "gate"
+    },
+    {
+      "id": "promote",
+      "type": "success",
+      "label": "SetWeight 100",
+      "sublabel": "v2 승격",
+      "lane": "terminal",
+      "col": 2,
+      "step": "07",
+      "tag": "완료"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-20",
+      "from": "sw20",
+      "to": "pause30",
+      "label": "20%"
+    },
+    {
+      "id": "t-pause",
+      "from": "pause30",
+      "to": "analysis1"
+    },
+    {
+      "id": "t-pass1",
+      "from": "analysis1",
+      "to": "sw40",
+      "label": "PASS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-40",
+      "from": "sw40",
+      "to": "sw80",
+      "label": "40%"
+    },
+    {
+      "id": "t-80",
+      "from": "sw80",
+      "to": "analysis2",
+      "label": "80%",
+      "labelDy": 24
+    },
+    {
+      "id": "t-pass2",
+      "from": "analysis2",
+      "to": "promote",
+      "label": "PASS",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "t-fail1",
+      "from": "analysis1",
+      "to": "rollback",
+      "label": "FAIL",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "t-fail2",
+      "from": "analysis2",
+      "to": "rollback",
+      "label": "FAIL",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "AnalysisTemplate success-rate-latency",
+      "items": [
+        "success-rate: result[0] >= 0.95",
+        "p99-latency: result[0] < 2 (초)",
+        "error-rate: result[0] < 0.05",
+        "30초 간격 3회 측정, failureLimit 1"
+      ]
+    }
+  ]
+}

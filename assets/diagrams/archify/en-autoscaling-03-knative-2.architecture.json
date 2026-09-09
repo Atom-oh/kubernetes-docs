@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Knative Serving Resource Model",
+    "locale": "en",
+    "output": "en-autoscaling-03-knative-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      560
+    ],
+    "views": [
+      {
+        "id": "ownership",
+        "label": "Service ownership",
+        "focus": [
+          "svc",
+          "config",
+          "route"
+        ],
+        "note": "The top-level Service owns and manages a Configuration and a Route."
+      },
+      {
+        "id": "revisions",
+        "label": "Revision creation",
+        "focus": [
+          "config",
+          "rev1",
+          "rev2",
+          "rev3"
+        ],
+        "note": "Every change to the Configuration creates a new immutable Revision."
+      },
+      {
+        "id": "traffic",
+        "label": "Traffic split",
+        "focus": [
+          "route",
+          "rev1",
+          "rev2",
+          "rev3"
+        ],
+        "note": "The Route sends 100% to the latest Revision and keeps older ones at 0% for rollback."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "svc",
+      "type": "cloud",
+      "label": "Service",
+      "sublabel": "top-level resource (ksvc)",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "config",
+      "type": "backend",
+      "label": "Configuration",
+      "sublabel": "desired state",
+      "pos": [
+        60,
+        290
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "route",
+      "type": "frontend",
+      "label": "Route",
+      "sublabel": "traffic routing",
+      "pos": [
+        800,
+        290
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "rev3",
+      "type": "backend",
+      "label": "Revision v3",
+      "sublabel": "latest",
+      "pos": [
+        440,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "rev2",
+      "type": "backend",
+      "label": "Revision v2",
+      "sublabel": "immutable snapshot",
+      "pos": [
+        440,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "rev1",
+      "type": "backend",
+      "label": "Revision v1",
+      "sublabel": "immutable snapshot",
+      "pos": [
+        440,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Revisions (immutable snapshots)",
+      "wraps": [
+        "rev3",
+        "rev2",
+        "rev1"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "svc-config",
+      "from": "svc",
+      "to": "config",
+      "label": "owns",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-route",
+      "from": "svc",
+      "to": "route",
+      "label": "owns",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "config-rev3",
+      "from": "config",
+      "to": "rev3",
+      "label": "creates on change",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "config-rev2",
+      "from": "config",
+      "to": "rev2",
+      "label": "creates on change",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "config-rev1",
+      "from": "config",
+      "to": "rev1",
+      "label": "creates on change",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "route-rev3",
+      "from": "route",
+      "to": "rev3",
+      "label": "100% traffic",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "route-rev2",
+      "from": "route",
+      "to": "rev2",
+      "label": "0% (rollback)",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "route-rev1",
+      "from": "route",
+      "to": "rev1",
+      "label": "0% (rollback)",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    }
+  ]
+}

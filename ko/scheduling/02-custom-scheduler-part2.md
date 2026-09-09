@@ -8,13 +8,17 @@
 
 다음 다이어그램은 스케줄러 확장 접근 방식의 아키텍처를 보여줍니다:
 
-![스케줄러 확장 아키텍처](../.gitbook/assets/scheduler_extender_architecture.svg)
+![컨트롤 플레인의 API 서버와 기본 스케줄러, 기본 스케줄러가 HTTP 요청으로 호출하는 외부 확장 서비스와 그 /filter·/prioritize·/bind·/prefilter·/prescore 엔드포인트, 그리고 Pod가 바인딩되는 워커 노드 1~3으로 구성된 스케줄러 확장 아키텍처를 보여준다.](../.gitbook/assets/ko-scheduling-02-custom-scheduler-part2-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-02-custom-scheduler-part2-10.html)
 
 ### 스케줄러 확장 워크플로우
 
 스케줄러 확장의 워크플로우는 다음과 같습니다:
 
-![API 서버의 포드 생성 요청을 받은 기본 스케줄러가 내부 필터링·점수 매기기 사이에 스케줄러 확장으로 HTTP 필터/우선순위 요청을 보내 커스텀 로직 결과를 반영한 뒤, 최종 노드를 선택해 바인딩 요청을 거쳐 노드에 포드를 스케줄링하는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-scheduling-02-custom-scheduler-part2-0.svg)
+![API 서버의 Pod 생성 요청을 받은 기본 스케줄러가 내부 필터링·점수 매기기 사이에 스케줄러 확장으로 HTTP 필터/우선순위 요청을 보내 커스텀 로직 결과를 반영한 뒤, 최종 노드를 선택해 바인딩 요청을 거쳐 노드에 Pod를 스케줄링하는 흐름을 보여준다.](../.gitbook/assets/ko-scheduling-02-custom-scheduler-part2-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-02-custom-scheduler-part2-0.html)
 
 ### 스케줄러 확장 구현
 
@@ -291,13 +295,17 @@ Kubernetes 1.15부터 도입된 스케줄러 프레임워크는 플러그인 기
 
 다음 다이어그램은 스케줄러 프레임워크의 아키텍처를 보여줍니다:
 
-![스케줄러 프레임워크 아키텍처](../.gitbook/assets/custom-scheduler-framework-architecture.svg)
+![스케줄러 프레임워크 아키텍처: Pod가 스케줄링 큐(QueueSort)를 거쳐 스케줄링 사이클(PreFilter, Filter, PreScore, Score/NormalizeScore, Reserve, Permit)과 바인딩 사이클(PreBind, Bind, PostBind)의 확장 포인트를 순서대로 통과해 선택된 Node에 바인딩되는 흐름을 보여준다.](../.gitbook/assets/ko-scheduling-02-custom-scheduler-part2-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-02-custom-scheduler-part2-11.html)
 
 ### 스케줄러 프레임워크 플러그인 구성
 
 다음 다이어그램은 스케줄러 프레임워크 플러그인의 구성을 보여줍니다:
 
-![](../.gitbook/assets/kubernetes-scheduler-architecture.svg)
+![컨트롤 플레인의 API 서버가 스케줄러 코어로 Pod를 전달하고, 스케줄러 코어가 기본·커스텀 플러그인을 호출하며, 플러그인이 기본·커스텀 프로필에서 활성화되어 워커 노드(노드 1~3)에 Pod를 바인딩하는 스케줄러 프레임워크 플러그인 구성을 보여준다.](../.gitbook/assets/ko-scheduling-02-custom-scheduler-part2-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-02-custom-scheduler-part2-12.html)
 
 ### 스케줄링 프레임워크 확장 포인트
 
@@ -468,7 +476,11 @@ Amazon EKS에서 스케줄러 프레임워크를 구현할 때는 다음과 같�
 
 ### EKS 스케줄러 프레임워크 아키텍처
 
-다음 다이어그램은 EKS에서 스케줄러 프레임워크를 구현하는 방법을 보여줍니다: ![](../.gitbook/assets/eks_scheduler_framework_architecture.svg)
+다음 다이어그램은 EKS에서 스케줄러 프레임워크를 구현하는 방법을 보여줍니다:
+
+![EKS 클러스터 안에서 API 서버가 기본 스케줄러와 Custom Scheduler Pod로 Pod를 전달하고, GPU·스팟 인스턴스·가용 영역 플러그인을 거친 Custom Scheduler가 GPU·표준·스팟 노드 그룹에 바인딩하며 Amazon ECR이 이미지를 제공하고 CloudWatch로 모니터링하는 EKS 스케줄러 프레임워크 아키텍처를 보여준다.](../.gitbook/assets/ko-scheduling-02-custom-scheduler-part2-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-scheduling-02-custom-scheduler-part2-13.html)
 
 ### EKS 스케줄러 프레임워크 구현 단계
 

@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Distributed Tracing Works",
+    "locale": "en",
+    "output": "en-quizzes-service-mesh-istio-observability-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path and header propagation",
+        "focus": [
+          "user",
+          "gateway",
+          "svc-a",
+          "svc-b",
+          "svc-c"
+        ],
+        "note": "Envoy at the Ingress Gateway mints the trace ID; each service's application forwards the headers to the next hop."
+      },
+      {
+        "id": "span-collection",
+        "label": "Span collection",
+        "focus": [
+          "gateway",
+          "svc-a",
+          "svc-b",
+          "svc-c",
+          "jaeger"
+        ],
+        "note": "Envoy at every hop sends its span to Jaeger, where spans sharing a trace ID are assembled into one distributed trace."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "HTTP request",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Ingress Gateway",
+      "sublabel": "Envoy · mints trace ID",
+      "pos": [
+        250,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Envoy sidecar",
+      "pos": [
+        600,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Envoy sidecar",
+      "pos": [
+        890,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Envoy sidecar",
+      "pos": [
+        1180,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger",
+      "sublabel": "collects spans · assembles traces",
+      "pos": [
+        850,
+        380
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio service mesh",
+      "wraps": [
+        "gateway",
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-gateway",
+      "from": "user",
+      "to": "gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-a",
+      "from": "gateway",
+      "to": "svc-a",
+      "label": "x-request-id · x-b3-traceid",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a-to-b",
+      "from": "svc-a",
+      "to": "svc-b",
+      "label": "Must propagate headers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-to-c",
+      "from": "svc-b",
+      "to": "svc-c",
+      "label": "Must propagate headers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-span",
+      "from": "gateway",
+      "to": "jaeger",
+      "label": "Send span",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 0,
+      "labelDx": -40
+    },
+    {
+      "id": "a-span",
+      "from": "svc-a",
+      "to": "jaeger",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b-span",
+      "from": "svc-b",
+      "to": "jaeger",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c-span",
+      "from": "svc-c",
+      "to": "jaeger",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Division of responsibility",
+      "items": [
+        "Envoy generates the trace ID automatically",
+        "The application must forward the x-request-id and x-b3-* headers to the next service",
+        "Envoy sends spans to Jaeger, so no Jaeger client is needed"
+      ]
+    }
+  ]
+}

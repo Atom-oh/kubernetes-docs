@@ -13,7 +13,9 @@
 
 ## 부하 테스트 및 스케일링 타임라인
 
-![k6 부하 테스트가 램프업, 지속, 스파이크, 쿨다운 4단계를 거치며 API Gateway 트래픽이 변할 때 KEDA가 파드를 스케일하고 Karpenter가 노드를 프로비저닝·정리하는 오토스케일링 시퀀스를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-04-load-testing-scaling-lab-0.svg)
+![k6 부하 테스트가 램프업, 지속, 스파이크, 쿨다운 4단계를 거치며 API Gateway 트래픽을 바꿀 때 KEDA가 SQS depth에 따라 MSA Pod를 스케일하고 Pending Pod를 본 Karpenter가 노드를 프로비저닝·정리하는 오토스케일링 시퀀스를 보여준다.](../../.gitbook/assets/ko-labs-observability-04-load-testing-scaling-lab-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-04-load-testing-scaling-lab-0.html)
 
 ---
 

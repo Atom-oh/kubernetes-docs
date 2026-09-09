@@ -51,7 +51,9 @@ Savings rate: 98.6% (memory), 98.5% (CPU)
 
 **Ambient Mode Architecture:**
 
-![Diagram showing pods on two nodes routing through a per-node ztunnel L4 proxy that carries mTLS to its peer node, with both ztunnels optionally forwarding to a shared waypoint proxy when L7 policy is needed.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-0.svg)
+![Diagram showing pods on two nodes routing through a per-node ztunnel L4 proxy that carries mTLS to its peer node, with both ztunnels optionally forwarding to a shared waypoint proxy when L7 policy is needed.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-advanced-0.html)
 
 **Enabling Ambient Mode:**
 
@@ -98,7 +100,9 @@ D. Service Entry
 
 **Multi-cluster Mesh Architecture:**
 
-![Diagram showing a shared primary Istiod distributing configuration to each cluster's local Istiod, which discovers its own services, while pods in the two clusters communicate directly across the cluster boundary.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-1.svg)
+![Diagram showing a shared primary Istiod distributing configuration to each cluster's local Istiod, which discovers its own services, while pods in the two clusters communicate directly across the cluster boundary.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-advanced-1.html)
 
 **Istiod's Roles:**
 
@@ -462,7 +466,9 @@ D. Istio Gateway
 
 **Argo Rollouts + Istio Integration Architecture:**
 
-![Diagram showing user traffic entering through an Istio Gateway and VirtualService that splits weight between a stable and canary pod, while an Argo Rollouts controller updates that weight and manages the pods based on success or failure verdicts from an AnalysisTemplate fed by Prometheus metrics.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-2.svg)
+![Diagram showing user traffic passing through an Istio Gateway and VirtualService that splits weight between a stable and a canary pod, while an Argo Rollouts controller updates that weight and manages the pods based on AnalysisTemplate verdicts from Prometheus metrics.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-advanced-2.html)
 
 **VirtualService Role:**
 
@@ -788,7 +794,9 @@ Explain how to integrate 2 EKS clusters (us-east-1, us-west-2) into **a single I
 
 **1. Architecture Overview**
 
-![Diagram showing a primary Istiod in one region distributing configuration and service discovery to a remote cluster's Istiod, while workload pods in each cluster reach each other only through mutually authenticated east-west gateways.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-3.svg)
+![Diagram showing a primary Istiod in us-east-1 distributing configuration to the remote cluster's Istiod in us-west-2 and discovering services in both clusters, while pods in each cluster reach each other only through mTLS East-West Gateways.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-advanced-3.html)
 
 ---
 
@@ -1148,7 +1156,9 @@ Implement **per-user Rate Limiting** (100 requests per minute) using EnvoyFilter
 
 **1. Architecture Overview**
 
-![Diagram showing a client request passing through the Envoy proxy, which checks a Redis-backed rate-limit store before forwarding an allowed request to the backend service or rejecting it with a 429 response.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-4.svg)
+![Diagram showing a client request passing through the Envoy proxy, which checks the per-user limit via the Rate Limit Service and its Redis counters in istio-system before forwarding an allowed request to the backend service or rejecting it with 429 Too Many Requests.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-advanced-4.html)
 
 ---
 
@@ -1460,7 +1470,9 @@ Implement **Blue/Green deployment** using Argo Rollouts and Istio. Include **aut
 
 **1. Blue/Green Deployment Concept**
 
-![Diagram showing an Istio Gateway sending production traffic to an active service backed by the current blue version, and preview traffic to a preview service backed by the new green version, while an AnalysisTemplate gates whether the rollout promotes to a traffic switch that swaps active and preview, or rolls back.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-5.svg)
+![Diagram showing an Istio Gateway routing production traffic to the Active Service (Blue v1) and preview traffic to the Preview Service (Green v2), while an AnalysisTemplate decides whether to switch traffic, swapping Active and Preview, or roll back.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-advanced-5.html)
 
 ---
 

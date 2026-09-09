@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "패턴 2: EKS 컨트롤 플레인 → Kubelet (포트 10250)",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [980, 640],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": { "label": "VPC 내부 라우팅" },
+        "emphasis": { "label": "kubelet 도달" },
+        "security": { "label": "클라우드 경계 통과 (DX/VPN)" }
+      }
+    },
+    "views": [
+      { "id": "in-vpc", "label": "VPC 내부 라우팅", "focus": ["cp", "eni", "vpcrouter"], "note": "API 서버가 노드 IP를 조회하고, 트래픽이 CP ENI를 거쳐 Cluster VPC 라우터까지 흐른다." },
+      { "id": "boundary", "label": "클라우드 경계 통과", "focus": ["vpcrouter", "gateway", "onprem"], "note": "VPC 라우트 테이블의 10.80.0.0/16 static 경로가 Gateway로 보내고, Direct Connect 또는 VPN으로 온프레미스에 도착한다." },
+      { "id": "arrive", "label": "kubelet 도달", "focus": ["onprem", "kubelet"], "note": "온프레미스 라우터가 10.80.0.2로 전달하고, 포트 10250의 kubelet이 요청을 받는다." }
+    ]
+  },
+  "participants": [
+    { "id": "cp", "type": "cloud", "label": "EKS CP", "sublabel": "API 서버" },
+    { "id": "eni", "type": "cloud", "label": "CP ENI", "sublabel": "10.0.0.132" },
+    { "id": "vpcrouter", "type": "backend", "label": "VPC Router", "sublabel": "VPC 10.0.0.0/16" },
+    { "id": "gateway", "type": "security", "label": "Gateway", "sublabel": "Direct Connect / VPN" },
+    { "id": "onprem", "type": "backend", "label": "On-prem Router", "sublabel": "온프레미스 10.80.0.0/16" },
+    { "id": "kubelet", "type": "external", "label": "kubelet", "sublabel": "Hybrid Node 10.80.0.2" }
+  ],
+  "segments": [
+    { "from": 160, "to": 330, "label": "AWS — Region · Cluster VPC 10.0.0.0/16" },
+    { "from": 350, "to": 430, "label": "클라우드 경계 — Direct Connect 또는 VPN" },
+    { "from": 450, "to": 560, "label": "온프레미스 환경 — Remote Node CIDR 10.80.0.0/16" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "cp", "to": "eni", "y": 200, "label": "1. 노드 IP 10.80.0.2:10250으로 연결 시작", "variant": "default", "note": "노드 상태 객체(node status)에서 노드 IP를 가져온다" },
+    { "id": "m2", "from": "eni", "to": "vpcrouter", "y": 255, "label": "2. Cluster VPC 내부 라우팅", "variant": "default" },
+    { "id": "m3", "from": "vpcrouter", "to": "gateway", "y": 305, "label": "3. 10.80.0.0/16 [static] via Gateway", "variant": "default", "note": "VPC 라우트 테이블 조회" },
+    { "id": "m4", "from": "gateway", "to": "onprem", "y": 390, "label": "4→5. Direct Connect 또는 VPN으로 경계 통과", "variant": "security" },
+    { "id": "m5", "from": "onprem", "to": "kubelet", "y": 505, "label": "6. 10.80.0.0/16 [local] via eth0 → 포트 10250", "variant": "emphasis", "note": "kubectl logs · exec · port-forward에 사용" }
+  ],
+  "activations": [
+    { "participant": "cp", "from": 190, "to": 215, "type": "cloud" },
+    { "participant": "vpcrouter", "from": 250, "to": 312, "type": "backend" },
+    { "participant": "gateway", "from": 300, "to": 398, "type": "security" },
+    { "participant": "onprem", "from": 385, "to": 512, "type": "backend" },
+    { "participant": "kubelet", "from": 500, "to": 545, "type": "external" }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "VPC 라우트 테이블",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway",
+        "10.85.0.0/16 [static] via Gateway"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "온프레미스 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 [local] via eth0",
+        "10.0.0.0/16 [static] via Gateway",
+        "10.85.1.0/24 · 10.85.2.0/24 [dynamic] via 각 Hybrid Node"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "이 경로를 쓰는 작업",
+      "items": [
+        "kubectl logs / kubectl exec / kubectl port-forward",
+        "API 서버가 시작하는 연결이므로 온프레미스 방화벽이 10250/TCP 인바운드를 허용해야 한다",
+        "노드 CIDR(10.80.0.0/16)만 라우팅 가능하면 되고 파드 CIDR은 불필요"
+      ]
+    }
+  ]
+}

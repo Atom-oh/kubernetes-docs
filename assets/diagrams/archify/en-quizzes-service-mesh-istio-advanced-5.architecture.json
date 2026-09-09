@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts Blue/Green Deployment Concept",
+    "locale": "en",
+    "output": "en-quizzes-service-mesh-istio-advanced-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      740
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "User"
+        },
+        "cloud": {
+          "label": "Istio Gateway"
+        },
+        "backend": {
+          "label": "Kubernetes Service"
+        },
+        "frontend": {
+          "label": "Rollout version"
+        },
+        "security": {
+          "label": "Argo Rollouts analysis"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "production-path",
+        "label": "Production traffic",
+        "focus": [
+          "user",
+          "gateway",
+          "active",
+          "blue"
+        ],
+        "note": "User traffic passes through the Istio Gateway to the Active Service, backed by the current version Blue (v1)."
+      },
+      {
+        "id": "preview-analysis",
+        "label": "Preview + analysis",
+        "focus": [
+          "gateway",
+          "preview",
+          "green",
+          "analysis"
+        ],
+        "note": "Only preview traffic reaches Green (v2) through the Preview Service, while the AnalysisTemplate analyzes Green's metrics."
+      },
+      {
+        "id": "promote-or-rollback",
+        "label": "Promote / rollback",
+        "focus": [
+          "analysis",
+          "promote",
+          "swap",
+          "rollback"
+        ],
+        "note": "If the analysis succeeds, traffic is switched and Active and Preview are swapped; if it fails, the rollout rolls back."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "myapp.example.com",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Istio Gateway",
+      "sublabel": "VirtualService routing",
+      "pos": [
+        240,
+        150
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "active",
+      "type": "backend",
+      "label": "Active Service",
+      "sublabel": "Production traffic",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "preview",
+      "type": "backend",
+      "label": "Preview Service",
+      "sublabel": "Test traffic",
+      "pos": [
+        470,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "blue",
+      "type": "frontend",
+      "label": "Blue",
+      "sublabel": "Current version v1",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green",
+      "type": "frontend",
+      "label": "Green",
+      "sublabel": "New version v2",
+      "pos": [
+        720,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "security",
+      "label": "AnalysisTemplate",
+      "sublabel": "Prometheus metrics",
+      "pos": [
+        470,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "promote",
+      "type": "security",
+      "label": "Traffic Switch",
+      "sublabel": "Promote",
+      "pos": [
+        720,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "swap",
+      "type": "security",
+      "label": "Active ↔ Preview Swap",
+      "sublabel": "Green becomes Active",
+      "pos": [
+        950,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rollback",
+      "type": "security",
+      "label": "Rollback",
+      "sublabel": "Blue stays active",
+      "pos": [
+        720,
+        570
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-gateway",
+      "from": "user",
+      "to": "gateway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-active",
+      "from": "gateway",
+      "to": "active",
+      "label": "Production",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-preview",
+      "from": "gateway",
+      "to": "preview",
+      "label": "Preview",
+      "variant": "dashed"
+    },
+    {
+      "id": "active-to-blue",
+      "from": "active",
+      "to": "blue",
+      "variant": "emphasis"
+    },
+    {
+      "id": "preview-to-green",
+      "from": "preview",
+      "to": "green",
+      "variant": "dashed"
+    },
+    {
+      "id": "analysis-to-green",
+      "from": "analysis",
+      "to": "green",
+      "label": "Metric analysis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "analysis-to-promote",
+      "from": "analysis",
+      "to": "promote",
+      "label": "Success"
+    },
+    {
+      "id": "analysis-to-rollback",
+      "from": "analysis",
+      "to": "rollback",
+      "label": "Failure"
+    },
+    {
+      "id": "promote-to-swap",
+      "from": "promote",
+      "to": "swap"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two Services",
+      "items": [
+        "myapp-active: production traffic (Active)",
+        "myapp-preview: preview traffic (Preview)",
+        "Argo Rollouts manages both Services' selectors automatically"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "prePromotionAnalysis",
+      "items": [
+        "success-rate: success rate >= 95%",
+        "latency: P95 latency <= 500 ms",
+        "error-rate: error rate <= 1%",
+        "autoPromotionEnabled: false — analysis results decide promotion"
+      ]
+    }
+  ]
+}

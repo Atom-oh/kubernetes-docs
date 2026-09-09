@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Kubernetes에서 spark-submit이 동작하는 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "driver",
+        "label": "드라이버 Pod 생성",
+        "focus": [
+          "user",
+          "api",
+          "driver"
+        ],
+        "note": "spark-submit이 API 서버와 직접 통신해 드라이버 Pod를 곧바로 생성한다 — 중간 스케줄링 프로세스가 없다."
+      },
+      {
+        "id": "executors",
+        "label": "Executor Pod 생성",
+        "focus": [
+          "driver",
+          "api",
+          "exec"
+        ],
+        "note": "드라이버 스스로가 Kubernetes API를 다시 호출해 executor Pod를 생성한다 (spark.executor.instances 또는 DRA 기준)."
+      },
+      {
+        "id": "tasks",
+        "label": "작업 실행과 정리",
+        "focus": [
+          "driver",
+          "exec",
+          "api"
+        ],
+        "note": "executor는 드라이버에 등록한 뒤 작업을 받아 실행하고 결과를 보고한다. 작업이 끝나면 드라이버가 executor Pod를 정리한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "spark-submit"
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "Kubernetes API 서버",
+      "sublabel": "EKS 컨트롤 플레인"
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "Driver Pod",
+      "sublabel": "스케줄러 역할"
+    },
+    {
+      "id": "exec",
+      "type": "backend",
+      "label": "Executor Pods",
+      "sublabel": "spark.executor.instances"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 262,
+      "label": "1. 드라이버 Pod 생성"
+    },
+    {
+      "from": 282,
+      "to": 375,
+      "label": "2. Executor Pod 생성"
+    },
+    {
+      "from": 395,
+      "to": 555,
+      "label": "3-4. 작업 실행과 정리"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create-driver",
+      "from": "user",
+      "to": "api",
+      "y": 192,
+      "label": "Driver Pod 생성 요청 (k8s://<endpoint>)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "start-driver",
+      "from": "api",
+      "to": "driver",
+      "y": 240,
+      "label": "Driver Pod 스케줄링 및 시작"
+    },
+    {
+      "id": "request-exec",
+      "from": "driver",
+      "to": "api",
+      "y": 305,
+      "label": "Executor Pod 생성 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "start-exec",
+      "from": "api",
+      "to": "exec",
+      "y": 352,
+      "label": "Executor Pod 스케줄링 및 시작"
+    },
+    {
+      "id": "register",
+      "from": "exec",
+      "to": "driver",
+      "y": 415,
+      "label": "드라이버에 등록",
+      "variant": "return"
+    },
+    {
+      "id": "assign",
+      "from": "driver",
+      "to": "exec",
+      "y": 455,
+      "label": "작업(Task) 할당",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report",
+      "from": "exec",
+      "to": "driver",
+      "y": 495,
+      "label": "상태 보고 · 작업 결과 전송",
+      "variant": "return"
+    },
+    {
+      "id": "cleanup",
+      "from": "driver",
+      "to": "api",
+      "y": 535,
+      "label": "작업 종료 시 Executor Pod 정리",
+      "variant": "default"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 187,
+      "to": 245,
+      "type": "cloud"
+    },
+    {
+      "participant": "driver",
+      "from": 240,
+      "to": 542,
+      "type": "backend"
+    },
+    {
+      "participant": "api",
+      "from": 300,
+      "to": 357,
+      "type": "cloud"
+    },
+    {
+      "participant": "exec",
+      "from": 352,
+      "to": 502,
+      "type": "backend"
+    }
+  ]
+}

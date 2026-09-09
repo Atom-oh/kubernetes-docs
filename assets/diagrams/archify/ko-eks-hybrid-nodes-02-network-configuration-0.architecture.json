@@ -7,9 +7,20 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      860,
+      1329,
       820
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

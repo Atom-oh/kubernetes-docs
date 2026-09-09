@@ -1,0 +1,197 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "End-to-End Scale-Down Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-eks-hybrid-nodes-06-workload-placement-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "trigger",
+        "label": "Scale-down trigger",
+        "focus": [
+          "traffic",
+          "hpa",
+          "order"
+        ],
+        "note": "When traffic drops, HPA lowers the replica count and the ReplicaSet controller orders deletions by pod-deletion-cost."
+      },
+      {
+        "id": "priority",
+        "label": "Pod deletion priority",
+        "focus": [
+          "order",
+          "cloud_del",
+          "onprem_keep"
+        ],
+        "note": "Cloud pods with the low deletion cost (0) go first; on-prem pods with the high cost (1000) are kept until last."
+      },
+      {
+        "id": "reclaim",
+        "label": "Empty node reclaim",
+        "focus": [
+          "cloud_del",
+          "node_empty",
+          "karpenter"
+        ],
+        "note": "Once the cloud pods are gone and a node is empty, Karpenter consolidation removes the empty cloud node."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Traffic change"
+        },
+        "backend": {
+          "label": "HPA / pod workload"
+        },
+        "security": {
+          "label": "Deletion order decision"
+        },
+        "cloud": {
+          "label": "Cloud node / Karpenter"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "controlLane",
+      "label": "HPA / ReplicaSet controller"
+    },
+    {
+      "id": "cloudLane",
+      "label": "Cloud nodes (EC2, managed by Karpenter)"
+    },
+    {
+      "id": "onpremLane",
+      "label": "On-premises nodes (Hybrid Nodes)"
+    }
+  ],
+  "mainPath": [
+    "traffic",
+    "hpa",
+    "order",
+    "cloud_del",
+    "node_empty",
+    "karpenter"
+  ],
+  "nodes": [
+    {
+      "id": "traffic",
+      "lane": "controlLane",
+      "col": 0,
+      "type": "external",
+      "label": "Traffic Decrease",
+      "sublabel": "load drops",
+      "width": 148
+    },
+    {
+      "id": "hpa",
+      "lane": "controlLane",
+      "col": 1,
+      "type": "backend",
+      "label": "HPA Scale Down",
+      "sublabel": "replica count reduced",
+      "width": 150
+    },
+    {
+      "id": "order",
+      "lane": "controlLane",
+      "col": 2,
+      "type": "security",
+      "label": "Pod Deletion Order",
+      "sublabel": "compare pod-deletion-cost",
+      "width": 190
+    },
+    {
+      "id": "cloud_del",
+      "lane": "cloudLane",
+      "col": 3,
+      "type": "cloud",
+      "label": "Cloud Pods Deleted First",
+      "sublabel": "deletion-cost=0",
+      "width": 208
+    },
+    {
+      "id": "onprem_keep",
+      "lane": "onpremLane",
+      "col": 2,
+      "type": "backend",
+      "label": "On-Prem Pods Retained",
+      "sublabel": "deletion-cost=1000",
+      "width": 190
+    },
+    {
+      "id": "node_empty",
+      "lane": "cloudLane",
+      "col": 4,
+      "type": "cloud",
+      "label": "Cloud Nodes Empty",
+      "sublabel": "no running pods",
+      "width": 180
+    },
+    {
+      "id": "karpenter",
+      "lane": "cloudLane",
+      "col": 5,
+      "type": "cloud",
+      "label": "Karpenter Removes Empty Nodes",
+      "sublabel": "consolidationPolicy",
+      "width": 232
+    }
+  ],
+  "edges": [
+    {
+      "from": "traffic",
+      "to": "hpa",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "hpa",
+      "to": "order",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "order",
+      "to": "cloud_del",
+      "label": "deletion-cost=0",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "order",
+      "to": "onprem_keep",
+      "label": "deletion-cost=1000",
+      "role": "branch",
+      "fromSide": "bottom"
+    },
+    {
+      "from": "cloud_del",
+      "to": "node_empty",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "node_empty",
+      "to": "karpenter",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Karpenter Integration",
+      "items": [
+        "pod-deletion-cost: prioritizes cloud pod removal during ReplicaSet scale-down",
+        "Karpenter WhenEmpty: automatically removes empty cloud nodes",
+        "Karpenter WhenUnderutilized: consolidates underutilized cloud nodes"
+      ]
+    }
+  ]
+}

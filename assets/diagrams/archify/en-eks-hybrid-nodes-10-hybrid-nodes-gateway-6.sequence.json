@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Gateway Leader Failover Sequence",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      620
+    ],
+    "views": [
+      {
+        "id": "detection",
+        "label": "Detection",
+        "focus": [
+          "gw1",
+          "lease"
+        ],
+        "note": "The leader stops renewing; the lease expires after leaseDuration (3s)."
+      },
+      {
+        "id": "election",
+        "label": "Election",
+        "focus": [
+          "lease",
+          "gw2"
+        ],
+        "note": "The standby acquires the expired lease on its next retryPeriod tick (1s)."
+      },
+      {
+        "id": "reconfigure",
+        "label": "Parallel reconfigure",
+        "focus": [
+          "gw2",
+          "targets"
+        ],
+        "note": "The new leader updates CiliumVTEPConfig and replaces the VPC route concurrently."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "lease acquired"
+        },
+        "dashed": {
+          "label": "failed call"
+        },
+        "default": {
+          "label": "config update"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "gw1",
+      "type": "backend",
+      "label": "Gateway Pod 1",
+      "sublabel": "leader (fails)"
+    },
+    {
+      "id": "lease",
+      "type": "cloud",
+      "label": "Kubernetes Lease",
+      "sublabel": "leader election"
+    },
+    {
+      "id": "gw2",
+      "type": "backend",
+      "label": "Gateway Pod 2",
+      "sublabel": "standby → leader"
+    },
+    {
+      "id": "targets",
+      "type": "database",
+      "label": "VTEPConfig / VPC RT",
+      "sublabel": "data-plane targets"
+    }
+  ],
+  "segments": [
+    {
+      "from": 172,
+      "to": 250,
+      "label": "Detection — 0–3s"
+    },
+    {
+      "from": 265,
+      "to": 340,
+      "label": "Election — 0–1s"
+    },
+    {
+      "from": 355,
+      "to": 520,
+      "label": "par: VTEP update + route replace (concurrent) — failover complete in ~5–10s"
+    }
+  ],
+  "messages": [
+    {
+      "id": "renew-fails",
+      "from": "gw1",
+      "to": "lease",
+      "y": 205,
+      "label": "renew lease — fails",
+      "variant": "dashed",
+      "note": "Node failure / pod crash; lease expires after leaseDuration (3s)"
+    },
+    {
+      "id": "acquire",
+      "from": "gw2",
+      "to": "lease",
+      "y": 300,
+      "label": "acquire lease (retryPeriod 1s)",
+      "variant": "emphasis",
+      "note": "Gateway Pod 2 becomes the new leader"
+    },
+    {
+      "id": "update-vtep",
+      "from": "gw2",
+      "to": "targets",
+      "y": 400,
+      "label": "update CiliumVTEPConfig vtepIPs",
+      "note": "Cilium agents reload BPF maps (1–5s)"
+    },
+    {
+      "id": "replace-route",
+      "from": "gw2",
+      "to": "targets",
+      "y": 480,
+      "label": "ec2:ReplaceRoute",
+      "note": "VPC routes now point at the new leader's ENI (1–3s)"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lease",
+      "from": 290,
+      "to": 330,
+      "type": "cloud"
+    },
+    {
+      "participant": "gw2",
+      "from": 290,
+      "to": 510,
+      "type": "backend"
+    },
+    {
+      "participant": "targets",
+      "from": 390,
+      "to": 505,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Failover Timeline",
+      "items": [
+        "Detection 0–3s: leader fails to renew; lease expires after leaseDuration",
+        "Election 0–1s: standby acquires the lease on the next retryPeriod tick",
+        "Route update 1–3s (ec2:ReplaceRoute) and VTEP update 1–5s run in parallel",
+        "Total end-to-end failover: ~5–10s"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "During the Failover Window",
+      "items": [
+        "VPC-to-hybrid traffic drops until VPC routes are updated",
+        "Hybrid-to-VPC traffic drops until CiliumVTEPConfig is updated",
+        "Intra-hybrid traffic is unaffected (Cilium handles it directly)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Choosing an Executor: KubernetesExecutor vs. CeleryExecutor",
+    "locale": "en",
+    "output": "en-data-on-eks-airflow-02-helm-deployment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "sched-k8s",
+      "type": "backend",
+      "label": "Scheduler",
+      "sublabel": "creates pods via Kubernetes API",
+      "pos": [
+        230,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "task-a",
+      "type": "backend",
+      "label": "Pod: task A",
+      "sublabel": "ephemeral pod",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "task-b",
+      "type": "backend",
+      "label": "Pod: task B",
+      "sublabel": "ephemeral pod",
+      "pos": [
+        240,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "task-c",
+      "type": "backend",
+      "label": "Pod: task C",
+      "sublabel": "ephemeral pod",
+      "pos": [
+        440,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "sched-celery",
+      "type": "backend",
+      "label": "Scheduler",
+      "sublabel": "enqueues tasks onto broker",
+      "pos": [
+        830,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Redis broker",
+      "sublabel": "task queue",
+      "pos": [
+        830,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "worker-1",
+      "type": "backend",
+      "label": "Pod: celery worker 1",
+      "sublabel": "long-running warm pod",
+      "pos": [
+        720,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "worker-2",
+      "type": "backend",
+      "label": "Pod: celery worker 2",
+      "sublabel": "long-running warm pod",
+      "pos": [
+        940,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "KubernetesExecutor",
+      "wraps": [
+        "sched-k8s",
+        "task-a",
+        "task-b",
+        "task-c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CeleryExecutor",
+      "wraps": [
+        "sched-celery",
+        "broker",
+        "worker-1",
+        "worker-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-task-a",
+      "from": "sched-k8s",
+      "to": "task-a",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "k8s-task-b",
+      "from": "sched-k8s",
+      "to": "task-b",
+      "label": "creates 1 pod per task",
+      "variant": "emphasis",
+      "labelAt": [
+        320,
+        262
+      ],
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "k8s-task-c",
+      "from": "sched-k8s",
+      "to": "task-c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "celery-enqueue",
+      "from": "sched-celery",
+      "to": "broker",
+      "label": "enqueues task",
+      "variant": "emphasis",
+      "labelDy": 50,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "broker-worker-1",
+      "from": "broker",
+      "to": "worker-1",
+      "label": "pulled by warm worker",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "broker-worker-2",
+      "from": "broker",
+      "to": "worker-2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "KubernetesExecutor",
+      "items": [
+        "One pod per task — torn down on completion",
+        "Cold start of roughly 1–2 min (pod scheduling, image pull, node scale-out)",
+        "No idle cost, strong isolation between tasks"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "CeleryExecutor",
+      "items": [
+        "Warm worker pool runs continuously — dispatch in seconds",
+        "Requires a Redis/RabbitMQ broker + worker Deployment",
+        "Tasks on the same worker share resources/deps — weak isolation"
+      ]
+    }
+  ]
+}

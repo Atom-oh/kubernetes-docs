@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pattern 3: Pod → EKS Control Plane",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      930,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Request hop"
+        },
+        "emphasis": {
+          "label": "NAT translation"
+        },
+        "return": {
+          "label": "Return (with CNI NAT)"
+        },
+        "dashed": {
+          "label": "Return (no CNI NAT)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request",
+        "label": "Request path",
+        "focus": [
+          "pod",
+          "cni",
+          "kproxy",
+          "onprem-router",
+          "gateway",
+          "vpc-router",
+          "cp-eni"
+        ],
+        "note": "A packet sent to the kubernetes Service IP is DNATed and reaches the CP ENI over VPN/DX."
+      },
+      {
+        "id": "return-snat",
+        "label": "Return · with CNI NAT",
+        "focus": [
+          "cp-eni",
+          "vpc-router",
+          "gateway",
+          "cni",
+          "pod"
+        ],
+        "note": "SNAT makes the node IP the source, so the reply returns over the existing node CIDR routes alone."
+      },
+      {
+        "id": "return-nosnat",
+        "label": "Return · without CNI NAT",
+        "focus": [
+          "cp-eni",
+          "vpc-router",
+          "gateway",
+          "onprem-router",
+          "pod"
+        ],
+        "note": "The source is the pod IP, so both the VPC and on-premises need reverse routes for the pod CIDR."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "10.85.1.56"
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI",
+      "sublabel": "node 10.80.0.2"
+    },
+    {
+      "id": "kproxy",
+      "type": "security",
+      "label": "kube-proxy",
+      "sublabel": "iptables"
+    },
+    {
+      "id": "onprem-router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "on-premises"
+    },
+    {
+      "id": "gateway",
+      "type": "external",
+      "label": "Gateway",
+      "sublabel": "VPN / DX"
+    },
+    {
+      "id": "vpc-router",
+      "type": "cloud",
+      "label": "VPC Router",
+      "sublabel": "10.0.0.0/16"
+    },
+    {
+      "id": "cp-eni",
+      "type": "cloud",
+      "label": "EKS CP",
+      "sublabel": "CP ENI 10.0.0.132"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 352,
+      "label": "Request path (hops 1–7)"
+    },
+    {
+      "from": 372,
+      "to": 455,
+      "label": "Return · with CNI NAT (SNAT)"
+    },
+    {
+      "from": 475,
+      "to": 558,
+      "label": "Return · without CNI NAT"
+    }
+  ],
+  "messages": [
+    {
+      "id": "h1",
+      "from": "pod",
+      "to": "cni",
+      "y": 182,
+      "label": "1. dst 172.16.0.1 (kubernetes Service)",
+      "variant": "default"
+    },
+    {
+      "id": "h2",
+      "from": "cni",
+      "to": "kproxy",
+      "y": 212,
+      "label": "2. With CNI NAT, SNAT: src → 10.80.0.2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "h3",
+      "from": "kproxy",
+      "to": "onprem-router",
+      "y": 242,
+      "label": "3. DNAT: 172.16.0.1 → CP ENI 10.0.0.132",
+      "variant": "emphasis"
+    },
+    {
+      "id": "h4",
+      "from": "onprem-router",
+      "to": "gateway",
+      "y": 272,
+      "label": "4. 10.0.0.0/16 [static] via Gateway",
+      "variant": "default"
+    },
+    {
+      "id": "h5",
+      "from": "gateway",
+      "to": "vpc-router",
+      "y": 302,
+      "label": "5. Cross boundary via VPN / DX",
+      "variant": "default"
+    },
+    {
+      "id": "h6",
+      "from": "vpc-router",
+      "to": "cp-eni",
+      "y": 332,
+      "label": "6–7. 10.0.0.0/16 [local] → CP ENI",
+      "variant": "default"
+    },
+    {
+      "id": "r1",
+      "from": "cp-eni",
+      "to": "gateway",
+      "y": 402,
+      "label": "dst 10.80.0.2 · 10.80.0.0/16 [static] via Gateway",
+      "variant": "return"
+    },
+    {
+      "id": "r2",
+      "from": "gateway",
+      "to": "pod",
+      "y": 440,
+      "label": "Arrives at node IP · CNI reverses SNAT, delivers to pod",
+      "variant": "return"
+    },
+    {
+      "id": "n1",
+      "from": "cp-eni",
+      "to": "gateway",
+      "y": 505,
+      "label": "dst 10.85.1.56 · needs 10.85.0.0/16 [static] via Gateway",
+      "variant": "dashed"
+    },
+    {
+      "id": "n2",
+      "from": "gateway",
+      "to": "pod",
+      "y": 543,
+      "label": "10.85.1.0/24 [dynamic] via 10.80.0.2 · pod CIDR reverse route",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kproxy",
+      "from": 207,
+      "to": 249,
+      "type": "security"
+    },
+    {
+      "participant": "gateway",
+      "from": 267,
+      "to": 309,
+      "type": "external"
+    },
+    {
+      "participant": "cp-eni",
+      "from": 327,
+      "to": 408,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Cluster VPC routing table",
+      "items": [
+        "10.0.0.0/16 [local]",
+        "10.80.0.0/16 [static] via Gateway",
+        "10.85.0.0/16 [static] via Gateway — needed without CNI NAT"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "On-premises routing table",
+      "items": [
+        "10.80.0.0/16 [local] via eth0",
+        "10.0.0.0/16 [static] via Gateway",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2 · 10.85.2.0/24 [dynamic] via 10.80.0.3"
+      ]
+    }
+  ]
+}

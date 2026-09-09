@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flink Kubernetes Operator: Resource Management and Autoscaling",
+    "locale": "en",
+    "output": "en-data-on-eks-flink-02-flink-kubernetes-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      620
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Custom resource (CR)"
+        },
+        "backend": {
+          "label": "Controller / Pod"
+        },
+        "database": {
+          "label": "Metrics"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "reconcile",
+        "label": "CR watch and pod management",
+        "focus": [
+          "cr-deployment",
+          "cr-sessionjob",
+          "operator",
+          "jobmanager",
+          "taskmanager"
+        ],
+        "note": "The operator watches FlinkDeployment / FlinkSessionJob CRs and manages the JobManager and TaskManager pods."
+      },
+      {
+        "id": "autoscale",
+        "label": "Autoscaling loop",
+        "focus": [
+          "jobmanager",
+          "taskmanager",
+          "metrics",
+          "autoscaler",
+          "operator"
+        ],
+        "note": "The autoscaler reads per-vertex metrics emitted by the pods; once a threshold is crossed it triggers a last-state rescale via the operator."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cr-deployment",
+      "type": "external",
+      "label": "FlinkDeployment CR",
+      "sublabel": "Application-mode cluster + job",
+      "pos": [
+        180,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cr-sessionjob",
+      "type": "external",
+      "label": "FlinkSessionJob CR",
+      "sublabel": "Job submitted to a session cluster",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Flink Kubernetes Operator",
+      "sublabel": "Reconciles CRs, hosts the built-in autoscaler",
+      "pos": [
+        340,
+        180
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "jobmanager",
+      "type": "backend",
+      "label": "JobManager Pod",
+      "sublabel": "Coordinates the job graph",
+      "pos": [
+        360,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "taskmanager",
+      "type": "backend",
+      "label": "TaskManager Pods",
+      "sublabel": "Run parallel vertex instances",
+      "pos": [
+        660,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "autoscaler",
+      "type": "backend",
+      "label": "Autoscaler",
+      "sublabel": "Computes per-vertex parallelism",
+      "pos": [
+        40,
+        183
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Per-vertex metrics",
+      "sublabel": "busy time · backlog · processing rate",
+      "pos": [
+        340,
+        480
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cr1-watch",
+      "from": "cr-deployment",
+      "to": "operator",
+      "label": "watches",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cr2-watch",
+      "from": "cr-sessionjob",
+      "to": "operator",
+      "label": "watches",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "op-manage-jm",
+      "from": "operator",
+      "to": "jobmanager",
+      "label": "manages · triggers last-state rescale",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "op-manage-tm",
+      "from": "operator",
+      "to": "taskmanager",
+      "label": "manages"
+    },
+    {
+      "id": "jm-to-tm",
+      "from": "jobmanager",
+      "to": "taskmanager"
+    },
+    {
+      "id": "jm-emit",
+      "from": "jobmanager",
+      "to": "metrics",
+      "label": "emits metrics",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "tm-emit",
+      "from": "taskmanager",
+      "to": "metrics",
+      "label": "emits metrics",
+      "variant": "dashed"
+    },
+    {
+      "id": "as-read",
+      "from": "autoscaler",
+      "to": "metrics",
+      "label": "reads"
+    },
+    {
+      "id": "as-threshold",
+      "from": "autoscaler",
+      "to": "operator",
+      "label": "threshold crossed",
+      "variant": "emphasis",
+      "labelDy": -34
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "What the autoscaler reads",
+      "items": [
+        "Source backlog and source incoming rate",
+        "Per-vertex record processing (output) rate",
+        "Busy time / backpressured time per vertex — no CPU or memory metrics"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "last-state rescale",
+      "items": [
+        "Restores from the latest checkpoint metadata without a fresh savepoint",
+        "Works even when the job is unhealthy, so the autoscaler leans on it continuously",
+        "Usable with FlinkSessionJob since operator 1.10.0"
+      ]
+    }
+  ]
+}

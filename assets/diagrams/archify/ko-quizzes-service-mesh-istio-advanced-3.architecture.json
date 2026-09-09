@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-cluster Istio Mesh 아키텍처 (Primary-Remote)",
+    "output": "ko-quizzes-service-mesh-istio-advanced-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      620
+    ],
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "istiod1",
+          "istiod2",
+          "svc-a",
+          "svc-b"
+        ],
+        "note": "Primary Istiod 하나가 구성을 배포하고 두 클러스터의 서비스를 모두 검색한다."
+      },
+      {
+        "id": "data-plane",
+        "label": "클러스터 간 데이터 플레인",
+        "focus": [
+          "pod-a",
+          "ewg1",
+          "ewg2",
+          "pod-b"
+        ],
+        "note": "Pod 간 호출은 각 클러스터의 East-West Gateway를 거쳐 mTLS로 전달된다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Istio 컨트롤 플레인 / 워크로드"
+        },
+        "security": {
+          "label": "East-West Gateway (mTLS)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "istiod1",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Primary Control Plane",
+      "pos": [
+        110,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "service-a:8080",
+      "pos": [
+        110,
+        200
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "app: service-a",
+      "pos": [
+        110,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ewg1",
+      "type": "security",
+      "label": "East-West Gateway",
+      "sublabel": "network1 · :15443",
+      "pos": [
+        110,
+        450
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "istiod2",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Remote Control Plane",
+      "pos": [
+        740,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "service-b:8080",
+      "pos": [
+        740,
+        200
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "app: service-b",
+      "pos": [
+        740,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ewg2",
+      "type": "security",
+      "label": "East-West Gateway",
+      "sublabel": "network2 · :15443",
+      "pos": [
+        740,
+        450
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "클러스터 1: us-east-1 (Primary)",
+      "wraps": [
+        "istiod1",
+        "svc-a",
+        "pod-a",
+        "ewg1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클러스터 2: us-west-2 (Remote)",
+      "wraps": [
+        "istiod2",
+        "svc-b",
+        "pod-b",
+        "ewg2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "config-distribution",
+      "from": "istiod1",
+      "to": "istiod2",
+      "label": "구성 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "discovery-a",
+      "from": "istiod1",
+      "to": "svc-a",
+      "label": "서비스 검색",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "discovery-b",
+      "from": "istiod1",
+      "to": "svc-b",
+      "label": "서비스 검색",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod-a-mtls",
+      "from": "pod-a",
+      "to": "ewg1",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cross-cluster",
+      "from": "ewg1",
+      "to": "ewg2",
+      "label": "Cross-cluster mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "pod-b-mtls",
+      "from": "ewg2",
+      "to": "pod-b",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Primary-Remote 컨트롤 플레인",
+      "items": [
+        "meshID mesh1 하나를 두 클러스터가 공유한다",
+        "istioctl create-remote-secret으로 cluster1이 cluster2의 API에 접근한다",
+        "Remote 클러스터는 remotePilotAddress로 Primary Istiod를 바라본다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "클러스터 간 트래픽",
+      "items": [
+        "network1 / network2로 네트워크가 분리된 멀티 네트워크 구성",
+        "East-West Gateway의 15443 포트를 통해 mTLS로 통신한다",
+        "공유 Root CA에서 발급한 중간 인증서로 신뢰 체인을 맞춘다"
+      ]
+    }
+  ]
+}

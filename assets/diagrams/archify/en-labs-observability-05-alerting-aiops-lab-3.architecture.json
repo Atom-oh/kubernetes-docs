@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "A2A Multi-Agent Architecture",
+    "locale": "en",
+    "output": "en-labs-observability-05-alerting-aiops-lab-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1020,
+      600
+    ],
+    "views": [
+      {
+        "id": "trigger",
+        "label": "Trigger",
+        "focus": [
+          "trigger",
+          "collaborator"
+        ],
+        "note": "An operator or a firing alert invokes the Collaborator Agent to start the analysis."
+      },
+      {
+        "id": "consult",
+        "label": "Specialist consultation",
+        "focus": [
+          "collaborator",
+          "metric",
+          "log",
+          "trace"
+        ],
+        "note": "The Collaborator consults the metric, log and trace specialists in both directions, each analyzing its own data sources."
+      },
+      {
+        "id": "synthesis",
+        "label": "Synthesis",
+        "focus": [
+          "collaborator",
+          "report"
+        ],
+        "note": "The Collaborator synthesizes the three agents' findings into a root cause report."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "trigger",
+      "type": "external",
+      "label": "Operator / Alert",
+      "sublabel": "trigger",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "collaborator",
+      "type": "backend",
+      "label": "Collaborator Agent",
+      "sublabel": "coordinate & synthesize",
+      "pos": [
+        320,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "metric",
+      "type": "backend",
+      "label": "Metric Agent",
+      "sublabel": "Prometheus · AMP · CloudWatch",
+      "pos": [
+        720,
+        80
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "log",
+      "type": "backend",
+      "label": "Log Agent",
+      "sublabel": "Loki · CloudWatch Logs",
+      "pos": [
+        720,
+        280
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "trace",
+      "type": "backend",
+      "label": "Trace Agent",
+      "sublabel": "Tempo · X-Ray",
+      "pos": [
+        720,
+        470
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "report",
+      "type": "external",
+      "label": "Root Cause Report",
+      "sublabel": "synthesized analysis",
+      "pos": [
+        320,
+        490
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Specialist agents",
+      "wraps": [
+        "metric",
+        "log",
+        "trace"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "trigger-to-collaborator",
+      "from": "trigger",
+      "to": "collaborator",
+      "label": "Trigger",
+      "variant": "emphasis"
+    },
+    {
+      "id": "collaborator-to-metric",
+      "from": "collaborator",
+      "to": "metric",
+      "label": "metric consult"
+    },
+    {
+      "id": "collaborator-to-log",
+      "from": "collaborator",
+      "to": "log",
+      "label": "log consult",
+      "labelAt": [
+        655,
+        302
+      ]
+    },
+    {
+      "id": "collaborator-to-trace",
+      "from": "collaborator",
+      "to": "trace",
+      "label": "trace consult"
+    },
+    {
+      "id": "collaborator-to-report",
+      "from": "collaborator",
+      "to": "report",
+      "label": "synthesize",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Agent roles",
+      "items": [
+        "Collaborator: coordinates and synthesizes, taking the other agents' results as input",
+        "Metric / Log / Trace Agent: each analyzes its own signal type"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 스케줄러 프레임워크 아키텍처",
+    "output": "ko-scheduling-02-custom-scheduler-part2-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scheduling-path",
+        "label": "스케줄링 경로",
+        "focus": [
+          "apiserver",
+          "custom-sched",
+          "gpu-node",
+          "std-node",
+          "spot-node"
+        ],
+        "note": "API 서버가 schedulerName: custom-scheduler 파드를 Custom Scheduler에 전달하고, 스케줄러가 노드 그룹에 바인딩한다."
+      },
+      {
+        "id": "plugins",
+        "label": "커스텀 플러그인",
+        "focus": [
+          "custom-sched",
+          "gpu-plugin",
+          "spot-plugin",
+          "az-plugin"
+        ],
+        "note": "gpuplugin, spotplugin, azplugin이 Filter / Score 확장 지점으로 등록된다."
+      },
+      {
+        "id": "aws-services",
+        "label": "AWS 서비스 연동",
+        "focus": [
+          "ecr",
+          "custom-sched",
+          "cloudwatch"
+        ],
+        "note": "플러그인이 포함된 스케줄러 이미지는 Amazon ECR에서 가져오고, 실행 로그와 메트릭은 CloudWatch로 보낸다."
+      }
+    ],
+    "viewBox": [
+      1360,
+      760
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "default-sched",
+      "type": "backend",
+      "label": "기본 스케줄러",
+      "sublabel": "컨트롤 플레인 (EKS 관리)",
+      "pos": [
+        100,
+        130
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        100,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gpu-plugin",
+      "type": "backend",
+      "label": "GPU 플러그인",
+      "sublabel": "gpuplugin",
+      "pos": [
+        340,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "spot-plugin",
+      "type": "backend",
+      "label": "스팟 인스턴스 플러그인",
+      "sublabel": "spotplugin",
+      "pos": [
+        560,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "az-plugin",
+      "type": "backend",
+      "label": "가용 영역 플러그인",
+      "sublabel": "azplugin",
+      "pos": [
+        780,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "custom-sched",
+      "type": "backend",
+      "label": "Custom Scheduler",
+      "sublabel": "schedulerName: custom-scheduler",
+      "pos": [
+        540,
+        350
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "gpu-node",
+      "type": "backend",
+      "label": "GPU 노드",
+      "sublabel": "p5.2xlarge",
+      "pos": [
+        1070,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "std-node",
+      "type": "backend",
+      "label": "표준 노드",
+      "sublabel": "c7i.large / c7g.large",
+      "pos": [
+        1070,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "spot-node",
+      "type": "backend",
+      "label": "스팟 노드",
+      "sublabel": "c7i.large / c7g.large",
+      "pos": [
+        1070,
+        490
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Amazon ECR",
+      "sublabel": "스케줄러 컨테이너 이미지",
+      "pos": [
+        380,
+        570
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "Amazon CloudWatch",
+      "sublabel": "로그 / 메트릭",
+      "pos": [
+        720,
+        570
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "default-sched",
+        "apiserver",
+        "gpu-plugin",
+        "spot-plugin",
+        "az-plugin",
+        "custom-sched",
+        "gpu-node",
+        "std-node",
+        "spot-node",
+        "ecr",
+        "cloudwatch"
+      ],
+      "pad": 64
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "default-sched",
+        "apiserver",
+        "gpu-plugin",
+        "spot-plugin",
+        "az-plugin",
+        "custom-sched",
+        "gpu-node",
+        "std-node",
+        "spot-node"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "security-group",
+      "label": "Custom Scheduler 파드",
+      "wraps": [
+        "gpu-plugin",
+        "spot-plugin",
+        "az-plugin",
+        "custom-sched"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "security-group",
+      "label": "노드 그룹",
+      "wraps": [
+        "gpu-node",
+        "std-node",
+        "spot-node"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-default",
+      "from": "apiserver",
+      "to": "default-sched",
+      "label": "기본 파드"
+    },
+    {
+      "id": "api-to-custom",
+      "from": "apiserver",
+      "to": "custom-sched",
+      "label": "schedulerName 지정 파드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sched-gpu-plugin",
+      "from": "custom-sched",
+      "to": "gpu-plugin",
+      "label": "Filter / Score"
+    },
+    {
+      "id": "sched-spot-plugin",
+      "from": "custom-sched",
+      "to": "spot-plugin"
+    },
+    {
+      "id": "sched-az-plugin",
+      "from": "custom-sched",
+      "to": "az-plugin"
+    },
+    {
+      "id": "sched-gpu-node",
+      "from": "custom-sched",
+      "to": "gpu-node",
+      "label": "노드 바인딩",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sched-std-node",
+      "from": "custom-sched",
+      "to": "std-node",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sched-spot-node",
+      "from": "custom-sched",
+      "to": "spot-node",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ecr-to-sched",
+      "from": "ecr",
+      "to": "custom-sched",
+      "label": "이미지 제공",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sched-to-cw",
+      "from": "custom-sched",
+      "to": "cloudwatch",
+      "label": "모니터링",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨테이너 이미지",
+      "items": [
+        "플러그인이 포함된 kube-scheduler 바이너리를 이미지로 빌드해 Amazon ECR에 푸시한다",
+        "Custom Scheduler 파드는 ECR에서 이미지를 가져온다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "스케줄러 구성",
+      "items": [
+        "KubeSchedulerConfiguration을 ConfigMap으로 만들어 파드에 마운트한다",
+        "profiles[].schedulerName: custom-scheduler 로 파드가 스케줄러를 선택한다",
+        "Filter / Score 확장 지점에 GPUScheduler 등 플러그인을 등록한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "클러스터 준비",
+      "items": [
+        "Custom Scheduler에 필요한 RBAC 권한을 부여한다",
+        "GPU 등 하드웨어 특성에 따라 노드에 레이블을 지정한다"
+      ]
+    }
+  ]
+}

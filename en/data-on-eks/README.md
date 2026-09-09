@@ -20,7 +20,9 @@ Tools in the data platform space generally fall into four categories, each solvi
 | **Stream Processing** | Perform real-time aggregation, transformation, and stateful computation on streaming data | Apache Flink | Available — [Flink on EKS](flink/README.md) |
 | **Governed data and AI workspace** | Share data assets, project profiles, tools, and membership within a managed boundary | SageMaker Unified Studio | Available — [Unified Studio governance](sagemaker-unified-studio/README.md) |
 
-![Airflow orchestrates scheduled jobs on both Kafka and Spark, while Kafka streams events into Flink for stream processing and lands raw data into Spark for batch analytics.](../.gitbook/assets/en-data-on-eks-README-0.png)
+![Airflow orchestrates scheduled jobs on both Kafka and Spark, while Kafka streams events into Flink for stream processing and lands raw data into Spark for batch analytics.](../.gitbook/assets/en-data-on-eks-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-readme-0.html)
 
 ## Why Run These on EKS
 

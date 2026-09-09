@@ -1,0 +1,287 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubernetes 스케줄링 프로세스",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작 / 완료"
+        },
+        "messagebus": {
+          "label": "스케줄링 큐"
+        },
+        "backend": {
+          "label": "스케줄러 단계"
+        },
+        "security": {
+          "label": "판단 · 예외 처리"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "queue",
+        "label": "큐 진입",
+        "focus": [
+          "start",
+          "enqueue",
+          "filter"
+        ],
+        "note": "새 Pod는 스케줄링 큐에 추가된 뒤 스케줄러가 하나씩 꺼내 필터링 단계로 넘깁니다."
+      },
+      {
+        "id": "filtering",
+        "label": "필터링 단계",
+        "focus": [
+          "filter",
+          "decision",
+          "score"
+        ],
+        "note": "각 필터 플러그인이 노드가 Pod를 호스팅할 수 있는지 판단하며, 하나라도 실패하면 그 노드는 후보에서 제외됩니다."
+      },
+      {
+        "id": "scoring",
+        "label": "점수 매기기와 바인딩",
+        "focus": [
+          "score",
+          "select",
+          "bind",
+          "complete"
+        ],
+        "note": "통과한 노드에 0-100점을 부여하고 가중치를 적용해 최고 점수 노드를 고른 뒤, API를 통해 Pod-노드 바인딩을 기록합니다."
+      },
+      {
+        "id": "retry",
+        "label": "적합한 노드가 없을 때",
+        "focus": [
+          "decision",
+          "unschedulable",
+          "retry",
+          "enqueue"
+        ],
+        "note": "필터링을 통과한 노드가 없으면 Pod는 스케줄링 불가능으로 표시되고 재시도 큐를 거쳐 다시 스케줄링 큐로 돌아옵니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "queue",
+      "label": "스케줄링 큐"
+    },
+    {
+      "id": "filtering",
+      "label": "필터링 단계 (Filtering)"
+    },
+    {
+      "id": "scoring",
+      "label": "점수 매기기 단계 (Scoring)"
+    },
+    {
+      "id": "binding",
+      "label": "바인딩 단계 (Binding)"
+    },
+    {
+      "id": "exception",
+      "label": "스케줄링 불가 · 재시도",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "enqueue",
+    "filter",
+    "decision",
+    "score",
+    "select",
+    "bind",
+    "complete"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "queue",
+      "col": 0,
+      "type": "external",
+      "label": "스케줄링 시작",
+      "sublabel": "새 Pod 생성",
+      "width": 128
+    },
+    {
+      "id": "enqueue",
+      "lane": "queue",
+      "col": 1,
+      "type": "messagebus",
+      "label": "스케줄링 큐에 Pod 추가",
+      "sublabel": "대기 중인 Pod",
+      "width": 176
+    },
+    {
+      "id": "filter",
+      "lane": "filtering",
+      "col": 2,
+      "type": "backend",
+      "label": "필터링 단계",
+      "sublabel": "적합한 노드 후보 선별",
+      "width": 132
+    },
+    {
+      "id": "decision",
+      "lane": "filtering",
+      "col": 3,
+      "type": "security",
+      "label": "적합한 노드 있음?",
+      "sublabel": "필터 통과 노드 확인",
+      "width": 156
+    },
+    {
+      "id": "score",
+      "lane": "scoring",
+      "col": 3,
+      "type": "backend",
+      "label": "점수 매기기 단계",
+      "sublabel": "노드별 0-100점 부여",
+      "width": 136
+    },
+    {
+      "id": "select",
+      "lane": "scoring",
+      "col": 4,
+      "type": "backend",
+      "label": "최고 점수 노드 선택",
+      "sublabel": "가중치 적용 최종 점수",
+      "width": 160
+    },
+    {
+      "id": "bind",
+      "lane": "binding",
+      "col": 4,
+      "type": "backend",
+      "label": "바인딩 단계",
+      "sublabel": "API로 Pod-노드 바인딩",
+      "width": 132
+    },
+    {
+      "id": "complete",
+      "lane": "binding",
+      "col": 5,
+      "type": "external",
+      "label": "스케줄링 완료",
+      "sublabel": "노드에 Pod 배치",
+      "width": 128
+    },
+    {
+      "id": "unschedulable",
+      "lane": "exception",
+      "col": 3,
+      "type": "security",
+      "label": "스케줄링 불가능으로 표시",
+      "sublabel": "Unschedulable",
+      "width": 184
+    },
+    {
+      "id": "retry",
+      "lane": "exception",
+      "col": 1,
+      "type": "messagebus",
+      "label": "재시도 큐에 추가",
+      "sublabel": "이후 다시 스케줄링 시도",
+      "width": 136
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-enqueue",
+      "from": "start",
+      "to": "enqueue"
+    },
+    {
+      "id": "enqueue-filter",
+      "from": "enqueue",
+      "to": "filter"
+    },
+    {
+      "id": "filter-decision",
+      "from": "filter",
+      "to": "decision"
+    },
+    {
+      "id": "decision-score",
+      "from": "decision",
+      "to": "score",
+      "label": "예",
+      "variant": "emphasis"
+    },
+    {
+      "id": "score-select",
+      "from": "score",
+      "to": "select"
+    },
+    {
+      "id": "select-bind",
+      "from": "select",
+      "to": "bind"
+    },
+    {
+      "id": "bind-complete",
+      "from": "bind",
+      "to": "complete"
+    },
+    {
+      "id": "decision-unschedulable",
+      "from": "decision",
+      "to": "unschedulable",
+      "label": "아니오",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "unschedulable-retry",
+      "from": "unschedulable",
+      "to": "retry",
+      "role": "error"
+    },
+    {
+      "id": "retry-enqueue",
+      "from": "retry",
+      "to": "enqueue",
+      "label": "재시도",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "필터링 단계 플러그인",
+      "items": [
+        "노드 리소스 적합성",
+        "노드 이름",
+        "노드 스케줄 가능 여부",
+        "노드 어피니티",
+        "테인트 · 톨러레이션"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "점수 매기기 단계 플러그인",
+      "items": [
+        "리소스 균형 할당",
+        "이미지 지역성",
+        "Pod 간 어피니티",
+        "노드 어피니티"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "단계별 규칙",
+      "items": [
+        "필터 하나라도 실패하면 해당 노드는 후보에서 제외",
+        "점수 플러그인마다 0-100점을 부여하고 가중치로 최종 점수 계산",
+        "최고 점수 노드에 Pod를 할당하고 Kubernetes API로 바인딩 정보 업데이트"
+      ]
+    }
+  ]
+}

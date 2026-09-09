@@ -188,7 +188,9 @@ Container images are immutable templates containing applications and their depen
 
 Container images are composed of a stack of multiple layers. Each layer represents changes to the previous layer. This layering approach makes image sharing and caching efficient.
 
-![A layer stack showing how a container image is built from an OS layer up through a runtime layer and a dependencies layer to the application layer, with the application layer highlighted as the layer developers change most often.](../../assets/diagrams/rendered/en-basics-03-container-technology-0.svg)
+![A layer stack showing how a container image is built from an OS layer up through a runtime layer and a dependencies layer to the application layer, where each layer records the changes on top of the one below so images share and cache efficiently.](../.gitbook/assets/en-basics-03-container-technology-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-03-container-technology-0.html)
 
 ### Image Registries
 

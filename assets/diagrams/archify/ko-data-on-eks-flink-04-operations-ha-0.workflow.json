@@ -1,0 +1,205 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "오토스케일러 & Karpenter 연동 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "메트릭 신호"
+        },
+        "backend": {
+          "label": "Flink 오토스케일러 / TaskManager Pod"
+        },
+        "cloud": {
+          "label": "Karpenter (EC2 용량)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "job-loop",
+        "label": "잡 단위 판단",
+        "focus": [
+          "metrics",
+          "autoscaler"
+        ],
+        "note": "Flink 오토스케일러는 버텍스별 백프레셔·Busy Time·랙만 보고 연산자별 병렬도를 정합니다. 하위 노드 정보는 전혀 모릅니다."
+      },
+      {
+        "id": "scale-up",
+        "label": "스케일 업 경로",
+        "focus": [
+          "autoscaler",
+          "pods-add",
+          "provision"
+        ],
+        "note": "병렬도가 늘면 TaskManager Pod가 추가 요청되고, 스케줄 불가(Pending) Pod를 본 Karpenter가 새 EC2 노드를 프로비저닝합니다."
+      },
+      {
+        "id": "scale-down",
+        "label": "스케일 다운 경로",
+        "focus": [
+          "autoscaler",
+          "pods-remove",
+          "consolidate"
+        ],
+        "note": "병렬도가 줄면 TaskManager Pod가 제거되고, 노드가 비게 되면 Karpenter가 해당 노드를 통합/종료합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "flink",
+      "label": "Flink 오토스케일러"
+    },
+    {
+      "id": "up",
+      "label": "스케일 업"
+    },
+    {
+      "id": "down",
+      "label": "스케일 다운"
+    }
+  ],
+  "phases": [
+    {
+      "id": "job-level",
+      "label": "잡 단위 판단 (병렬도)",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "pod-level",
+      "label": "TaskManager Pod 변화",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "dashed"
+    },
+    {
+      "id": "node-level",
+      "label": "노드 단위 판단 (EC2 용량)",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "metrics",
+    "autoscaler",
+    "pods-add",
+    "provision"
+  ],
+  "nodes": [
+    {
+      "id": "metrics",
+      "lane": "flink",
+      "col": 0,
+      "type": "external",
+      "label": "버텍스별 메트릭",
+      "sublabel": "백프레셔, Busy Time, 랙",
+      "width": 150
+    },
+    {
+      "id": "autoscaler",
+      "lane": "flink",
+      "col": 1,
+      "type": "backend",
+      "label": "오토스케일러가 병렬도 변경",
+      "sublabel": "연산자별 parallelism 결정",
+      "width": 196
+    },
+    {
+      "id": "pods-add",
+      "lane": "up",
+      "col": 2,
+      "type": "backend",
+      "label": "TaskManager Pod 추가 요청",
+      "sublabel": "새 Pod가 Pending 상태",
+      "width": 196
+    },
+    {
+      "id": "provision",
+      "lane": "up",
+      "col": 3,
+      "type": "cloud",
+      "label": "새 EC2 노드 프로비저닝",
+      "sublabel": "Karpenter · NodePool 기준",
+      "width": 192
+    },
+    {
+      "id": "pods-remove",
+      "lane": "down",
+      "col": 2,
+      "type": "backend",
+      "label": "TaskManager Pod 제거",
+      "sublabel": "노드가 비게 됨",
+      "width": 196
+    },
+    {
+      "id": "consolidate",
+      "lane": "down",
+      "col": 3,
+      "type": "cloud",
+      "label": "노드 통합/종료",
+      "sublabel": "Karpenter · consolidation 지연 후",
+      "width": 192
+    }
+  ],
+  "edges": [
+    {
+      "id": "metrics-autoscaler",
+      "from": "metrics",
+      "to": "autoscaler",
+      "label": "오토스케일러 평가"
+    },
+    {
+      "id": "autoscaler-pods-add",
+      "from": "autoscaler",
+      "to": "pods-add",
+      "label": "병렬도 증가",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pods-add-provision",
+      "from": "pods-add",
+      "to": "provision",
+      "label": "스케줄 불가"
+    },
+    {
+      "id": "autoscaler-pods-remove",
+      "from": "autoscaler",
+      "to": "pods-remove",
+      "label": "병렬도 감소",
+      "role": "branch"
+    },
+    {
+      "id": "pods-remove-consolidate",
+      "from": "pods-remove",
+      "to": "consolidate",
+      "label": "노드가 비게 됨",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "서로 다른 신호에 반응하는 두 루프",
+      "items": [
+        "Flink 오토스케일러: 버텍스별 메트릭을 보고 병렬도를 결정 — 노드 정보는 모름",
+        "Karpenter: 스케줄되지 않은 Pod 또는 빈 노드만 보고 EC2 용량을 결정 — Pod가 왜 생겼는지는 모름",
+        "잡 단위 판단이 항상 먼저, 노드 단위 판단은 그 결과에만 반응"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "한쪽만 튜닝하면 생기는 불일치",
+      "items": [
+        "병렬도가 NodePool의 프로비저닝 속도보다 빨리 늘면 새 Pod가 Pending에 오래 머물러 스케일 업이 지연됨",
+        "Karpenter의 consolidation 지연은 오토스케일러의 안정화 구간보다 충분히 길게 유지"
+      ]
+    }
+  ]
+}

@@ -147,7 +147,9 @@ Istio Envoy는 trace ID를 자동으로 생성하지만, **애플리케이션이
 
 **분산 추적 동작 원리:**
 
-![사용자 요청이 Ingress Gateway를 거쳐 Service A, B, C로 전달되는 동안 트레이스 헤더가 반드시 전파되어야 하며, 각 홉이 동시에 Jaeger로 스팬을 전송해 하나의 분산 트레이스로 연결됨을 보여주는 다이어그램](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-observability-0.svg)
+![사용자 요청이 Ingress Gateway를 거쳐 Service A, B, C로 전달되는 동안 트레이스 헤더가 반드시 전파되어야 하며, 각 홉이 동시에 Jaeger로 스팬을 전송해 하나의 분산 트레이스로 연결됨을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-observability-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-observability-0.html)
 
 **전파해야 하는 HTTP 헤더:**
 
@@ -1834,7 +1836,9 @@ frontend → backend-v2: 20% (2 rps)
 
 **5. 문제 해결 워크플로우**
 
-![문제 발생 시 Kiali 대시보드의 Graph 뷰에서 트래픽 없음·에러 발생·느린 응답·보안 거부 유형을 분류해 각각 Config·Logs·Traces·Security를 확인하고 구성을 수정한 뒤 테스트하여 해결되지 않으면 처음부터 다시 진단하는 순환 절차를 보여주는 흐름도](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-observability-1.svg)
+![문제 발생 시 Kiali Graph 뷰에서 증상을 트래픽 없음·에러 발생·느린 응답·보안 거부로 분류해 Istio Config·Logs·Traces·Security를 확인하고, 구성을 수정해 테스트한 뒤 해결되지 않으면 처음부터 다시 진단하는 순환 워크플로우를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-observability-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-observability-1.html)
 
 **참고 자료:**
 

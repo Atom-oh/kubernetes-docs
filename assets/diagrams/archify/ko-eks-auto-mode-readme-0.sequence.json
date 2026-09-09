@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "EKS Auto Mode 노드 프로비저닝 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      600
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "EKS API Server",
+      "sublabel": "컨트롤 플레인"
+    },
+    {
+      "id": "controller",
+      "type": "cloud",
+      "label": "Auto Mode Controller",
+      "sublabel": "Karpenter 기반 · AWS 관리"
+    },
+    {
+      "id": "ec2",
+      "type": "cloud",
+      "label": "EC2 Fleet",
+      "sublabel": "인스턴스 시작"
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "신규 노드",
+      "sublabel": "kubelet"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 255,
+      "label": "Pod 생성 → Pending 상태"
+    },
+    {
+      "from": 275,
+      "to": 355,
+      "label": "NodePool 매칭 · 인스턴스 타입 결정 · 인스턴스 시작"
+    },
+    {
+      "from": 380,
+      "to": 520,
+      "label": "등록과 스케줄링"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "user",
+      "to": "api",
+      "y": 185,
+      "label": "Pod 생성 요청"
+    },
+    {
+      "id": "detect",
+      "from": "controller",
+      "to": "api",
+      "y": 235,
+      "label": "Pending Pod 감지",
+      "note": "배치할 노드가 없어 Pod는 Pending 상태"
+    },
+    {
+      "id": "launch",
+      "from": "controller",
+      "to": "ec2",
+      "y": 290,
+      "label": "인스턴스 시작 요청",
+      "variant": "emphasis",
+      "note": "NodePool 매칭 → 최적 인스턴스 타입 결정"
+    },
+    {
+      "id": "provision",
+      "from": "ec2",
+      "to": "node",
+      "y": 340,
+      "label": "인스턴스 프로비저닝",
+      "variant": "emphasis"
+    },
+    {
+      "id": "register",
+      "from": "node",
+      "to": "api",
+      "y": 400,
+      "label": "노드 등록 (kubelet)"
+    },
+    {
+      "id": "schedule",
+      "from": "api",
+      "to": "node",
+      "y": 450,
+      "label": "Pod 스케줄링"
+    },
+    {
+      "id": "running",
+      "from": "node",
+      "to": "api",
+      "y": 500,
+      "label": "Pod Running",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "controller",
+      "from": 227,
+      "to": 298,
+      "type": "cloud"
+    },
+    {
+      "participant": "node",
+      "from": 332,
+      "to": 507,
+      "type": "backend"
+    }
+  ]
+}

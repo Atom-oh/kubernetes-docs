@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How spark-submit Works on Kubernetes",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "driver",
+        "label": "Driver pod creation",
+        "focus": [
+          "user",
+          "api",
+          "driver"
+        ],
+        "note": "spark-submit talks to the API server and creates the driver pod directly — no intermediate scheduling process."
+      },
+      {
+        "id": "executors",
+        "label": "Executor pod creation",
+        "focus": [
+          "driver",
+          "api",
+          "exec"
+        ],
+        "note": "The driver itself calls back into the Kubernetes API to create executor pods (per spark.executor.instances or DRA)."
+      },
+      {
+        "id": "tasks",
+        "label": "Task execution and cleanup",
+        "focus": [
+          "driver",
+          "exec",
+          "api"
+        ],
+        "note": "Executors register with the driver, pull tasks, run them and report results; when the job finishes the driver cleans up the executor pods."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "spark-submit"
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "Kubernetes API Server",
+      "sublabel": "EKS control plane"
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "Driver Pod",
+      "sublabel": "acts as scheduler"
+    },
+    {
+      "id": "exec",
+      "type": "backend",
+      "label": "Executor Pods",
+      "sublabel": "spark.executor.instances"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 262,
+      "label": "1. Driver pod creation"
+    },
+    {
+      "from": 282,
+      "to": 375,
+      "label": "2. Executor pod creation"
+    },
+    {
+      "from": 395,
+      "to": 555,
+      "label": "3-4. Task execution and cleanup"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create-driver",
+      "from": "user",
+      "to": "api",
+      "y": 192,
+      "label": "Create Driver Pod (k8s://<endpoint>)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "start-driver",
+      "from": "api",
+      "to": "driver",
+      "y": 240,
+      "label": "Schedule and start Driver Pod"
+    },
+    {
+      "id": "request-exec",
+      "from": "driver",
+      "to": "api",
+      "y": 305,
+      "label": "Request Executor Pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "start-exec",
+      "from": "api",
+      "to": "exec",
+      "y": 352,
+      "label": "Schedule and start Executor Pods"
+    },
+    {
+      "id": "register",
+      "from": "exec",
+      "to": "driver",
+      "y": 415,
+      "label": "Register with driver",
+      "variant": "return"
+    },
+    {
+      "id": "assign",
+      "from": "driver",
+      "to": "exec",
+      "y": 455,
+      "label": "Assign tasks",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report",
+      "from": "exec",
+      "to": "driver",
+      "y": 495,
+      "label": "Report status · send task results",
+      "variant": "return"
+    },
+    {
+      "id": "cleanup",
+      "from": "driver",
+      "to": "api",
+      "y": 535,
+      "label": "Clean up Executor Pods when job finishes",
+      "variant": "default"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 187,
+      "to": 245,
+      "type": "cloud"
+    },
+    {
+      "participant": "driver",
+      "from": 240,
+      "to": 542,
+      "type": "backend"
+    },
+    {
+      "participant": "api",
+      "from": 300,
+      "to": 357,
+      "type": "cloud"
+    },
+    {
+      "participant": "exec",
+      "from": 352,
+      "to": 502,
+      "type": "backend"
+    }
+  ]
+}

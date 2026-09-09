@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Types of Air-Gapped Environments",
+    "locale": "en",
+    "output": "en-eks-hybrid-nodes-03-airgap-setup-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "full-airgap",
+        "label": "Fully Air-Gapped",
+        "focus": [
+          "a1",
+          "a2",
+          "a3"
+        ],
+        "note": "No internet connectivity at all; artifacts must be carried in on physical media."
+      },
+      {
+        "id": "proxy-airgap",
+        "label": "Partially Air-Gapped (Proxy)",
+        "focus": [
+          "b1",
+          "b2",
+          "b3"
+        ],
+        "note": "Only allow-listed destinations are reached selectively through a proxy server."
+      },
+      {
+        "id": "private-connect",
+        "label": "Private Connectivity",
+        "focus": [
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "Connect to an AWS VPC over VPN/Direct Connect and reach S3 and ECR through VPC Endpoints. The model this document configures."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "a1",
+      "type": "security",
+      "label": "No Internet Connectivity",
+      "sublabel": "Fully isolated network",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "external",
+      "label": "Physical Media Delivery",
+      "sublabel": "Offline transfer",
+      "pos": [
+        360,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "external",
+      "label": "USB / DVD / Removable HDD",
+      "sublabel": "Artifact media",
+      "pos": [
+        660,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "Internal Network",
+      "sublabel": "Restricted access",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "security",
+      "label": "Proxy Server",
+      "sublabel": "Allow-list based",
+      "pos": [
+        360,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "Selected destinations only",
+      "pos": [
+        660,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "On-Premises Network",
+      "sublabel": "Hybrid Nodes",
+      "pos": [
+        60,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "sublabel": "Via VPC Endpoints",
+      "pos": [
+        360,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "VPC Endpoints",
+      "sublabel": "S3, ECR, etc.",
+      "pos": [
+        660,
+        430
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Fully Air-Gapped",
+      "wraps": [
+        "a1",
+        "a2",
+        "a3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Partially Air-Gapped - Proxy",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Private Connectivity - VPN/DX + VPC Endpoint",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a1-a2",
+      "from": "a1",
+      "to": "a2",
+      "variant": "dashed"
+    },
+    {
+      "id": "a2-a3",
+      "from": "a2",
+      "to": "a3",
+      "variant": "dashed"
+    },
+    {
+      "id": "b1-b2",
+      "from": "b1",
+      "to": "b2",
+      "label": "Allow-listed"
+    },
+    {
+      "id": "b2-b3",
+      "from": "b2",
+      "to": "b3",
+      "label": "Selective access"
+    },
+    {
+      "id": "c1-c2",
+      "from": "c1",
+      "to": "c2",
+      "label": "VPN / Direct Connect",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2-c3",
+      "from": "c2",
+      "to": "c3",
+      "variant": "emphasis"
+    }
+  ]
+}

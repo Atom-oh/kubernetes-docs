@@ -1,0 +1,372 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Deletion Cost Architecture",
+    "locale": "en",
+    "output": "en-scheduling-03-custom-scheduler-part3-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Scale-down request / deletion result"
+        },
+        "backend": {
+          "label": "Controller processing step"
+        },
+        "cloud": {
+          "label": "Deletion candidate pod"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "scale-down-flow",
+        "label": "Scale-down flow",
+        "focus": [
+          "scaledown",
+          "controller",
+          "getpods",
+          "checkcost",
+          "sortpods",
+          "selectpods",
+          "deleted"
+        ],
+        "note": "The main path: the ReplicaSet controller receives a scale-down request, lists its pods, sorts them by cost, and picks the pods to delete."
+      },
+      {
+        "id": "annotation-check",
+        "label": "Annotation check",
+        "focus": [
+          "checkcost",
+          "pod1",
+          "pod2",
+          "pod3",
+          "pod4"
+        ],
+        "note": "Reads each pod's controller.kubernetes.io/pod-deletion-cost value. A pod without the annotation is treated as the default, 0."
+      },
+      {
+        "id": "deletion-order",
+        "label": "Deletion order",
+        "focus": [
+          "selectpods",
+          "pod3",
+          "pod4",
+          "deleted"
+        ],
+        "note": "Pod-3 (-10), the lowest cost, is deleted first, then Pod-4 (0). Pod-1 (100) and Pod-2 (50) survive."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "scaledown",
+      "type": "external",
+      "label": "Scale-down Request",
+      "sublabel": "replicas decreased",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "ReplicaSet Controller",
+      "sublabel": "decides which pods to delete",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "getpods",
+      "type": "backend",
+      "label": "Get Pod List",
+      "sublabel": "pods owned by the ReplicaSet",
+      "pos": [
+        290,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "checkcost",
+      "type": "backend",
+      "label": "Check Deletion Cost Annotation",
+      "sublabel": "read pod-deletion-cost value",
+      "pos": [
+        480,
+        170
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "sortpods",
+      "type": "backend",
+      "label": "Sort by Cost",
+      "sublabel": "lowest → highest",
+      "pos": [
+        730,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "selectpods",
+      "type": "backend",
+      "label": "Select Low Cost Pods",
+      "sublabel": "as many as replicas removed",
+      "pos": [
+        920,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "cloud",
+      "label": "Pod-1",
+      "sublabel": "cost: 100",
+      "pos": [
+        290,
+        350
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "cloud",
+      "label": "Pod-2",
+      "sublabel": "cost: 50",
+      "pos": [
+        470,
+        350
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "cloud",
+      "label": "Pod-3",
+      "sublabel": "cost: -10",
+      "pos": [
+        650,
+        350
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod4",
+      "type": "cloud",
+      "label": "Pod-4",
+      "sublabel": "cost: 0",
+      "pos": [
+        830,
+        350
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "deleted",
+      "type": "external",
+      "label": "Deleted Pods",
+      "sublabel": "Pod-3, Pod-4",
+      "pos": [
+        1000,
+        470
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ReplicaSet Controller",
+      "wraps": [
+        "scaledown",
+        "controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod Selection Process",
+      "wraps": [
+        "getpods",
+        "checkcost",
+        "sortpods",
+        "selectpods"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pods owned by the ReplicaSet",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3",
+        "pod4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "scaledown-to-controller",
+      "from": "scaledown",
+      "to": "controller",
+      "variant": "emphasis"
+    },
+    {
+      "id": "controller-to-getpods",
+      "from": "controller",
+      "to": "getpods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "getpods-to-checkcost",
+      "from": "getpods",
+      "to": "checkcost",
+      "variant": "emphasis"
+    },
+    {
+      "id": "checkcost-to-sortpods",
+      "from": "checkcost",
+      "to": "sortpods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sortpods-to-selectpods",
+      "from": "sortpods",
+      "to": "selectpods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "selectpods-to-deleted",
+      "from": "selectpods",
+      "to": "deleted",
+      "label": "Pod-3, then Pod-4",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          1005,
+          290
+        ],
+        [
+          1085,
+          290
+        ]
+      ]
+    },
+    {
+      "id": "pod1-to-checkcost",
+      "from": "pod1",
+      "to": "checkcost",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod2-to-checkcost",
+      "from": "pod2",
+      "to": "checkcost",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod3-to-checkcost",
+      "from": "pod3",
+      "to": "checkcost",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod4-to-checkcost",
+      "from": "pod4",
+      "to": "checkcost",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod3-to-deleted",
+      "from": "pod3",
+      "to": "deleted",
+      "label": "Delete first",
+      "labelDy": 34
+    },
+    {
+      "id": "pod4-to-deleted",
+      "from": "pod4",
+      "to": "deleted",
+      "label": "Delete next",
+      "labelDy": 34
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod Deletion Cost Concept",
+      "items": [
+        "Introduced in Kubernetes 1.22",
+        "Assigns a cost value to each pod through the controller.kubernetes.io/pod-deletion-cost annotation",
+        "Controls which pods are deleted first when a ReplicaSet, Deployment, or StatefulSet scales down"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Key Features",
+      "items": [
+        "Default value: 0",
+        "Range: -2147483648 to 2147483647 (int32)",
+        "Higher value = more important pod (deleted later)",
+        "Lower value = less important pod (deleted first)"
+      ]
+    }
+  ]
+}

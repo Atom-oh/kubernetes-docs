@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Knative Eventing Architecture",
+    "locale": "en",
+    "output": "en-autoscaling-03-knative-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "broker-trigger",
+        "label": "Broker/Trigger pattern",
+        "focus": [
+          "src-broker",
+          "broker",
+          "order",
+          "payment",
+          "audit"
+        ],
+        "note": "The Broker receives events and routes them to consumers through Trigger filters on CloudEvents attributes such as type."
+      },
+      {
+        "id": "dead-letter",
+        "label": "Delivery failure handling",
+        "focus": [
+          "broker",
+          "dls"
+        ],
+        "note": "Events that still cannot be delivered after retries are sent to the Dead Letter Sink."
+      },
+      {
+        "id": "channel-subscription",
+        "label": "Channel/Subscription pattern",
+        "focus": [
+          "src-channel",
+          "channel",
+          "analytics",
+          "notification"
+        ],
+        "note": "A Channel does not filter: every Subscription receives every event."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src-broker",
+      "type": "external",
+      "label": "Event Sources",
+      "sublabel": "ApiServerSource / KafkaSource / SQSSource",
+      "pos": [
+        20,
+        138
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Broker",
+      "sublabel": "routes via Trigger filters",
+      "pos": [
+        340,
+        138
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        140
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "backend",
+      "label": "Audit Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dls",
+      "type": "external",
+      "label": "Dead Letter Sink",
+      "sublabel": "undeliverable events",
+      "pos": [
+        1110,
+        318
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "src-channel",
+      "type": "external",
+      "label": "Event Sources",
+      "sublabel": "SinkBinding / Custom Source",
+      "pos": [
+        20,
+        503
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "channel",
+      "type": "messagebus",
+      "label": "Channel",
+      "sublabel": "InMemoryChannel / KafkaChannel",
+      "pos": [
+        340,
+        503
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "analytics",
+      "type": "backend",
+      "label": "Analytics Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        450
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Service",
+      "sublabel": "Knative Service",
+      "pos": [
+        850,
+        560
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Broker/Trigger pattern",
+      "wraps": [
+        "broker",
+        "order",
+        "payment",
+        "audit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Failure handling",
+      "wraps": [
+        "dls"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Channel/Subscription pattern",
+      "wraps": [
+        "channel",
+        "analytics",
+        "notification"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-to-broker",
+      "from": "src-broker",
+      "to": "broker",
+      "label": "CloudEvents",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trigger-order",
+      "from": "broker",
+      "to": "order",
+      "label": "type=order.created",
+      "labelSegment": 2
+    },
+    {
+      "id": "trigger-payment",
+      "from": "broker",
+      "to": "payment",
+      "label": "type=payment.processed",
+      "labelDx": 80
+    },
+    {
+      "id": "trigger-all",
+      "from": "broker",
+      "to": "audit",
+      "label": "type=*",
+      "labelSegment": 2
+    },
+    {
+      "id": "delivery-failure",
+      "from": "broker",
+      "to": "dls",
+      "label": "on delivery failure",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          440,
+          350
+        ]
+      ]
+    },
+    {
+      "id": "src-to-channel",
+      "from": "src-channel",
+      "to": "channel",
+      "label": "CloudEvents",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sub-1",
+      "from": "channel",
+      "to": "analytics",
+      "label": "Subscription 1"
+    },
+    {
+      "id": "sub-2",
+      "from": "channel",
+      "to": "notification",
+      "label": "Subscription 2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Broker/Trigger pattern",
+      "items": [
+        "Broker: an event hub that receives events and routes them to consumers according to registered Triggers",
+        "Trigger: filters events by CloudEvents attributes (type, source, ...) and routes matches to a specific service",
+        "Dead Letter Sink: fallback destination for events that cannot be delivered after exhausting retries"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Channel/Subscription pattern",
+      "items": [
+        "Channel: a messaging channel that stores and forwards events (InMemoryChannel, KafkaChannel, ...)",
+        "Subscription: subscribes a specific service to the Channel and delivers every event to it (no filtering)"
+      ]
+    }
+  ]
+}

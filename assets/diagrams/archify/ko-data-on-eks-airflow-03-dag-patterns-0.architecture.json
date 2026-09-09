@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KubernetesPodOperator Pod 생명주기",
+    "output": "ko-data-on-eks-airflow-03-dag-patterns-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "views": [
+      {
+        "id": "launch",
+        "label": "Pod 생성 경로",
+        "focus": [
+          "dag",
+          "kpo",
+          "pod"
+        ],
+        "note": "DAG 코드의 extract_orders 태스크가 KubernetesPodOperator.execute()를 호출하고, 오퍼레이터가 pod_template_file과 생성자 오버라이드로 Pod를 만든다."
+      },
+      {
+        "id": "isolation",
+        "label": "격리와 권한",
+        "focus": [
+          "pod",
+          "sa",
+          "node"
+        ],
+        "note": "태스크 Pod는 IRSA 어노테이션이 달린 ServiceAccount로 실행되고, taint가 걸린 전용 노드 풀에 스케줄링된다."
+      },
+      {
+        "id": "report",
+        "label": "상태 보고",
+        "focus": [
+          "pod",
+          "kpo",
+          "af"
+        ],
+        "note": "Pod 완료 상태가 오퍼레이터로 전달되고, 오퍼레이터가 태스크 성공/실패를 Airflow scheduler와 메타데이터 DB에 보고한다."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "components": [
+    {
+      "id": "dag",
+      "type": "frontend",
+      "label": "DAG 코드",
+      "sublabel": "extract_orders 태스크",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "af",
+      "type": "database",
+      "label": "Airflow scheduler",
+      "sublabel": "메타데이터 DB",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "kpo",
+      "type": "backend",
+      "label": "KubernetesPodOperator",
+      "sublabel": ".execute()",
+      "pos": [
+        420,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "pod_template_file로부터 생성",
+      "pos": [
+        420,
+        370
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "tag": "태스크 Pod"
+    },
+    {
+      "id": "sa",
+      "type": "security",
+      "label": "ServiceAccount",
+      "sublabel": "orders-extractor-sa (IRSA 역할 어노테이션)",
+      "pos": [
+        60,
+        530
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "taint가 걸린 전용 노드 풀",
+      "sublabel": "별도 NodeGroup / NodePool",
+      "pos": [
+        740,
+        530
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dag-to-kpo",
+      "from": "dag",
+      "to": "kpo",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kpo-to-pod",
+      "from": "kpo",
+      "to": "pod",
+      "label": "pod_template_file + 생성자 오버라이드로 Pod 생성",
+      "variant": "emphasis",
+      "labelAt": [
+        523,
+        317
+      ]
+    },
+    {
+      "id": "pod-to-sa",
+      "from": "pod",
+      "to": "sa",
+      "label": "실행 주체",
+      "variant": "security"
+    },
+    {
+      "id": "pod-to-node",
+      "from": "pod",
+      "to": "node",
+      "label": "스케줄링 위치"
+    },
+    {
+      "id": "pod-to-kpo",
+      "from": "pod",
+      "to": "kpo",
+      "label": "완료 상태 전달",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          720,
+          402
+        ],
+        [
+          720,
+          232
+        ]
+      ],
+      "labelAt": [
+        720,
+        317
+      ]
+    },
+    {
+      "id": "kpo-to-af",
+      "from": "kpo",
+      "to": "af",
+      "label": "태스크 성공/실패 보고",
+      "labelAt": [
+        350,
+        196
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod 스펙 우선순위",
+      "items": [
+        "pod_template_file이 공통 기본값을 제공한다",
+        "image, cmds/arguments, service_account_name 등 생성자 인자가 템플릿의 같은 필드보다 우선한다",
+        "Jinja 템플릿({{ ds }})은 Pod 생성 전에 렌더링된다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "전용 노드 풀",
+      "items": [
+        "tolerations + nodeAffinity로 workload=airflow-tasks taint에 맞춘다",
+        "공용 노드의 다른 워크로드와 자원 경합을 피하고 태스크 수요만으로 독립 스케일한다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "태스크별 IRSA",
+      "items": [
+        "ServiceAccount에 eks.amazonaws.com/role-arn 어노테이션을 단다",
+        "Airflow 컨트롤 플레인 컴포넌트의 역할과 분리된 권한 경계다"
+      ]
+    }
+  ]
+}
