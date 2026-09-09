@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pod 생성 시 전체 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      640
+    ]
+  },
+  "participants": [
+    {
+      "id": "kubectl",
+      "type": "external",
+      "label": "kubectl",
+      "sublabel": "사용자 요청"
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "+ Scheduler"
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "노드 에이전트"
+    },
+    {
+      "id": "cni",
+      "type": "cloud",
+      "label": "Calico CNI",
+      "sublabel": "+ IPAM"
+    },
+    {
+      "id": "felix",
+      "type": "security",
+      "label": "Felix",
+      "sublabel": "+ BIRD"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 290,
+      "label": "Pod 생성(Pending)과 스케줄링"
+    },
+    {
+      "from": 300,
+      "to": 420,
+      "label": "CNI 네트워크 구성 — IPAM IP 할당, veth·라우트 설정"
+    },
+    {
+      "from": 430,
+      "to": 560,
+      "label": "Felix 규칙 반영 · BIRD BGP 광고 · Pod Running 갱신"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create-pod",
+      "from": "kubectl",
+      "to": "apiserver",
+      "y": 195,
+      "label": "kubectl create pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "start-pod",
+      "from": "apiserver",
+      "to": "kubelet",
+      "y": 262,
+      "label": "Pod 시작 요청",
+      "note": "Pending으로 생성 후 Scheduler가 노드 선택"
+    },
+    {
+      "id": "cni-add",
+      "from": "kubelet",
+      "to": "cni",
+      "y": 325,
+      "label": "CNI ADD 호출"
+    },
+    {
+      "id": "cni-result",
+      "from": "cni",
+      "to": "kubelet",
+      "y": 392,
+      "label": "결과 반환 (IP 할당, veth·라우트)",
+      "variant": "return",
+      "note": "IPAM이 IP 할당, veth·라우트 구성"
+    },
+    {
+      "id": "felix-watch",
+      "from": "apiserver",
+      "to": "felix",
+      "y": 462,
+      "label": "엔드포인트 변경 감지 (watch) → 규칙·BGP 반영",
+      "variant": "dashed",
+      "note": "Felix가 규칙 반영, BIRD가 BGP 광고"
+    },
+    {
+      "id": "pod-running",
+      "from": "kubelet",
+      "to": "apiserver",
+      "y": 532,
+      "label": "Pod Running 업데이트",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "apiserver",
+      "from": 190,
+      "to": 268,
+      "type": "backend"
+    },
+    {
+      "participant": "kubelet",
+      "from": 257,
+      "to": 538,
+      "type": "backend"
+    },
+    {
+      "participant": "cni",
+      "from": 320,
+      "to": 398,
+      "type": "cloud"
+    },
+    {
+      "participant": "felix",
+      "from": 457,
+      "to": 500,
+      "type": "security"
+    }
+  ]
+}

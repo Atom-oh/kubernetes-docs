@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CNCF 생태계 트렌드",
+    "output": "ko-eks-12-kubernetes-version-roadmap-18.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      440
+    ],
+    "views": [
+      {
+        "id": "workload",
+        "label": "워크로드와 플랫폼",
+        "focus": [
+          "cncf",
+          "aiml",
+          "platform"
+        ],
+        "note": "AI/ML 워크로드 지원과 내부 개발자 플랫폼(IDP) 구축이 생태계의 두 축으로 자리 잡았다."
+      },
+      {
+        "id": "security",
+        "label": "보안과 eBPF",
+        "focus": [
+          "cncf",
+          "security",
+          "ebpf"
+        ],
+        "note": "공급망 보안과 eBPF 기반 네트워킹·런타임 보안이 함께 확산되고 있다."
+      },
+      {
+        "id": "network",
+        "label": "네트워킹과 런타임",
+        "focus": [
+          "cncf",
+          "gateway",
+          "wasm"
+        ],
+        "note": "Gateway API가 Ingress를 대체하고, WASM이 서버리스와 Edge 런타임으로 확장된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cncf",
+      "type": "cloud",
+      "label": "CNCF 트렌드",
+      "sublabel": "클라우드 네이티브 생태계 흐름",
+      "pos": [
+        420,
+        190
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "aiml",
+      "type": "backend",
+      "label": "AI/ML 네이티브",
+      "sublabel": "DRA GPU 관리 · Gang Scheduling",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "platform",
+      "type": "frontend",
+      "label": "플랫폼 엔지니어링",
+      "sublabel": "IDP · Backstage · Crossplane",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "security",
+      "type": "security",
+      "label": "보안 강화",
+      "sublabel": "Supply Chain · Sigstore · SPIFFE",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF 확산",
+      "sublabel": "Cilium · Tetragon · Falco",
+      "pos": [
+        760,
+        40
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "messagebus",
+      "label": "Gateway API",
+      "sublabel": "Ingress 대체 · GAMMA · gRPC",
+      "pos": [
+        760,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "wasm",
+      "type": "external",
+      "label": "서버리스/Edge",
+      "sublabel": "WASM · Spin/Fermyon · KWasm",
+      "pos": [
+        760,
+        340
+      ],
+      "size": [
+        300,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cncf-aiml",
+      "from": "cncf",
+      "to": "aiml",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cncf-platform",
+      "from": "cncf",
+      "to": "platform",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cncf-security",
+      "from": "cncf",
+      "to": "security",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cncf-ebpf",
+      "from": "cncf",
+      "to": "ebpf"
+    },
+    {
+      "id": "cncf-gateway",
+      "from": "cncf",
+      "to": "gateway"
+    },
+    {
+      "id": "cncf-wasm",
+      "from": "cncf",
+      "to": "wasm"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "AI/ML 네이티브 · 플랫폼 엔지니어링",
+      "items": [
+        "DRA를 통한 GPU 관리, Gang Scheduling, LLM 추론 오토스케일링, KubeRay/Kueue",
+        "Internal Developer Platform, Backstage, Crossplane, Score"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "보안 강화 · eBPF 확산",
+      "items": [
+        "Supply Chain Security, Sigstore, SPIFFE/SPIRE, VEX/SBOM",
+        "Cilium CNI, Tetragon 보안, Falco, L4/L7 관찰성"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Gateway API · 서버리스/Edge",
+      "items": [
+        "Ingress 대체, GAMMA (Mesh), gRPC 라우팅, 정책 첨부",
+        "WASM on Kubernetes, Spin/Fermyon, KWasm"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 클러스터 사전 요구 사항",
+    "output": "ko-eks-02-eks-cluster-creation-part1-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "account-iam", "label": "계정과 IAM 권한", "focus": ["account", "iam"], "note": "유효한 AWS 계정과 eks/ec2/iam/cloudformation 권한이 모든 준비의 출발점이다." },
+      { "id": "tools", "label": "도구 설치", "focus": ["tools", "awscli", "kubectl", "eksctl"], "note": "AWS CLI, kubectl, eksctl 세 가지 명령줄 도구를 설치한다." },
+      { "id": "vpc", "label": "VPC 및 서브넷", "focus": ["vpc", "subnets", "tags"], "note": "서로 다른 가용 영역의 서브넷 2개 이상과 kubernetes.io/cluster 태그가 필요하다." }
+    ]
+  },
+  "components": [
+    { "id": "account", "type": "external", "label": "AWS 계정", "sublabel": "유효한 계정", "pos": [40, 250], "size": [150, 60] },
+    { "id": "iam", "type": "security", "label": "IAM 권한", "sublabel": "eks / ec2 / iam / cloudformation", "pos": [260, 250], "size": [170, 60] },
+    { "id": "tools", "type": "backend", "label": "도구 설치", "sublabel": "명령줄 도구", "pos": [500, 110], "size": [150, 60] },
+    { "id": "awscli", "type": "backend", "label": "AWS CLI", "sublabel": "aws configure", "pos": [740, 30], "size": [150, 60] },
+    { "id": "kubectl", "type": "backend", "label": "kubectl", "sublabel": "클러스터 통신", "pos": [740, 120], "size": [150, 60] },
+    { "id": "eksctl", "type": "backend", "label": "eksctl", "sublabel": "EKS 생성/관리", "pos": [740, 210], "size": [150, 60] },
+    { "id": "vpc", "type": "cloud", "label": "VPC 및 서브넷", "sublabel": "기존 또는 신규 VPC", "pos": [500, 390], "size": [150, 60] },
+    { "id": "subnets", "type": "cloud", "label": "최소 2개의 서브넷", "sublabel": "서로 다른 가용 영역", "pos": [740, 390], "size": [170, 60] },
+    { "id": "tags", "type": "cloud", "label": "적절한 태그 지정", "sublabel": "kubernetes.io/cluster/<name>", "pos": [980, 390], "size": [190, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "사전 요구 사항", "wraps": ["account", "iam", "tools", "awscli", "kubectl", "eksctl", "vpc", "subnets", "tags"] }
+  ],
+  "connections": [
+    { "id": "account-iam", "from": "account", "to": "iam", "label": "자격 증명", "variant": "emphasis" },
+    { "id": "iam-tools", "from": "iam", "to": "tools", "variant": "security" },
+    { "id": "iam-vpc", "from": "iam", "to": "vpc", "variant": "security" },
+    { "id": "tools-awscli", "from": "tools", "to": "awscli" },
+    { "id": "tools-kubectl", "from": "tools", "to": "kubectl" },
+    { "id": "tools-eksctl", "from": "tools", "to": "eksctl" },
+    { "id": "vpc-subnets", "from": "vpc", "to": "subnets", "label": "2개 이상" },
+    { "id": "subnets-tags", "from": "subnets", "to": "tags" },
+    { "id": "vpc-tags", "from": "vpc", "to": "tags", "label": "VPC 태그", "variant": "dashed", "fromSide": "top", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "계정과 권한", "items": ["유효한 AWS 계정이 필요하다", "IAM 권한: eks:*, ec2:*, iam:*, cloudformation:*", "관리자 권한이 있으면 추가 설정이 필요하지 않다"] },
+    { "dot": "cyan", "title": "도구 설치", "items": ["AWS CLI: AWS 서비스를 명령줄에서 제어 (aws configure로 자격 증명 구성)", "kubectl: Kubernetes 클러스터와 통신", "eksctl: EKS 클러스터를 생성·관리하는 CLI"] },
+    { "dot": "emerald", "title": "VPC 및 서브넷", "items": ["최소 2개의 서브넷이 서로 다른 가용 영역에 있어야 한다", "서브넷에는 인터넷 액세스와 충분한 IP 주소가 필요하다", "VPC/서브넷에 kubernetes.io/cluster/<cluster-name> 태그를 지정한다"] }
+  ]
+}

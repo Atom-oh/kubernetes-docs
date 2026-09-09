@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CNI 성능 벤치마크 (상대적 비교)",
+    "output": "ko-networking-readme-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "서드파티 CNI"
+        },
+        "cloud": {
+          "label": "AWS 네이티브 CNI (VPC Native)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "top-tier",
+        "label": "상위권 95~100%",
+        "focus": [
+          "cilium-ebpf",
+          "vpc-cni",
+          "calico-ebpf"
+        ],
+        "note": "Cilium eBPF 모드를 100% 기준으로 두면 AWS VPC CNI와 Calico eBPF 모드가 바로 뒤를 따른다."
+      },
+      {
+        "id": "lower-tier",
+        "label": "하위권 75~85%",
+        "focus": [
+          "calico-iptables",
+          "flannel",
+          "weave"
+        ],
+        "note": "iptables 및 VXLAN 오버레이 계열은 기준 대비 75~85% 수준의 처리량을 보인다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cilium-ebpf",
+      "type": "backend",
+      "label": "Cilium (eBPF)",
+      "sublabel": "상대 처리량 100%",
+      "tag": "기준",
+      "pos": [
+        60,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vpc-cni",
+      "type": "cloud",
+      "label": "AWS VPC CNI",
+      "sublabel": "상대 처리량 98%",
+      "tag": "AWS ENI",
+      "pos": [
+        340,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "calico-ebpf",
+      "type": "backend",
+      "label": "Calico (eBPF)",
+      "sublabel": "상대 처리량 95%",
+      "tag": "eBPF",
+      "pos": [
+        620,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "calico-iptables",
+      "type": "backend",
+      "label": "Calico (iptables)",
+      "sublabel": "상대 처리량 85%",
+      "tag": "iptables",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "flannel",
+      "type": "backend",
+      "label": "Flannel",
+      "sublabel": "상대 처리량 80%",
+      "tag": "VXLAN / host-gw",
+      "pos": [
+        340,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "weave",
+      "type": "backend",
+      "label": "Weave Net",
+      "sublabel": "상대 처리량 75%",
+      "tag": "VXLAN",
+      "pos": [
+        620,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "상위권 (95~100%) — eBPF 기반 CNI와 AWS VPC CNI",
+      "wraps": [
+        "cilium-ebpf",
+        "vpc-cni",
+        "calico-ebpf"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "하위권 (75~85%) — iptables / VXLAN 오버레이 계열",
+      "wraps": [
+        "calico-iptables",
+        "flannel",
+        "weave"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rank-1-2",
+      "from": "cilium-ebpf",
+      "to": "vpc-cni",
+      "label": "-2%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rank-2-3",
+      "from": "vpc-cni",
+      "to": "calico-ebpf",
+      "label": "-3%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rank-3-4",
+      "from": "calico-ebpf",
+      "to": "calico-iptables",
+      "label": "-10%",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rank-4-5",
+      "from": "calico-iptables",
+      "to": "flannel",
+      "label": "-5%",
+      "variant": "dashed"
+    },
+    {
+      "id": "rank-5-6",
+      "from": "flannel",
+      "to": "weave",
+      "label": "-5%",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "읽는 법",
+      "items": [
+        "Cilium eBPF 모드의 처리량을 100%로 두고 나머지 CNI를 상대값으로 표시한다",
+        "화살표는 처리량 순위 순서이며 라벨은 앞 순위 대비 차이다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "결과 요약",
+      "items": [
+        "eBPF 기반 CNI(Cilium, Calico eBPF 모드)와 AWS VPC CNI가 상위권을 형성한다",
+        "iptables 및 VXLAN 오버레이 계열(Calico iptables, Flannel, Weave)은 75~85% 수준이다"
+      ]
+    }
+  ]
+}

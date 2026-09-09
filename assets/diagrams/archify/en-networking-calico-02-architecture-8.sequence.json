@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Controller Reconciliation Loop",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      820,
+      500
+    ],
+    "views": [
+      {
+        "id": "list-diff",
+        "label": "List and diff",
+        "focus": [
+          "k8s",
+          "kc",
+          "calico"
+        ],
+        "note": "Every reconciliation interval kube-controllers lists both sides and computes the difference."
+      },
+      {
+        "id": "branches",
+        "label": "Sync or no-op",
+        "focus": [
+          "kc",
+          "calico"
+        ],
+        "note": "Inside each iteration: out-of-sync resources are written to the Calico datastore; otherwise nothing happens."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes API",
+      "sublabel": "nodes, policies, namespaces"
+    },
+    {
+      "id": "kc",
+      "type": "backend",
+      "label": "kube-controllers",
+      "sublabel": "reconciler"
+    },
+    {
+      "id": "calico",
+      "type": "database",
+      "label": "Calico Datastore",
+      "sublabel": "Calico resources"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 390,
+      "label": "loop: every reconciliation interval"
+    }
+  ],
+  "messages": [
+    {
+      "id": "list-k8s",
+      "from": "kc",
+      "to": "k8s",
+      "y": 190,
+      "label": "List Kubernetes resources"
+    },
+    {
+      "id": "list-calico",
+      "from": "kc",
+      "to": "calico",
+      "y": 250,
+      "label": "List Calico resources",
+      "note": "then compare and calculate diff"
+    },
+    {
+      "id": "write",
+      "from": "kc",
+      "to": "calico",
+      "y": 340,
+      "label": "Create/Update/Delete resources (only if out of sync)",
+      "variant": "emphasis",
+      "note": "alt branch inside the loop: else in sync, no action needed; the action is logged"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kc",
+      "from": 185,
+      "to": 262,
+      "type": "backend"
+    },
+    {
+      "participant": "kc",
+      "from": 335,
+      "to": 360,
+      "type": "backend"
+    }
+  ]
+}

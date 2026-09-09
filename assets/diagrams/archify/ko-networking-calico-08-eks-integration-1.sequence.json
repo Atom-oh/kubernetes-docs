@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "VPC CNI + Calico 트래픽 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      580
+    ],
+    "views": [
+      {
+        "id": "egress",
+        "label": "아웃바운드 패킷과 Policy 평가",
+        "focus": [
+          "pod",
+          "felix",
+          "ipt"
+        ],
+        "note": "Source Pod의 패킷은 Calico Felix가 프로그래밍한 iptables 규칙에서 NetworkPolicy가 평가됩니다."
+      },
+      {
+        "id": "allow",
+        "label": "Policy 허용 경로",
+        "focus": [
+          "ipt",
+          "eni",
+          "vpc",
+          "dest"
+        ],
+        "note": "허용되면 패킷은 VPC ENI를 거쳐 AWS VPC가 라우팅하고 목적지에 도달합니다."
+      },
+      {
+        "id": "deny",
+        "label": "Policy 거부 경로",
+        "focus": [
+          "ipt",
+          "pod"
+        ],
+        "note": "거부되면 iptables가 패킷을 드롭하여 Source Pod 밖으로 나가지 못합니다."
+      }
+    ],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Source Pod",
+      "sublabel": "패킷 출발점"
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Calico Felix",
+      "sublabel": "Policy 에이전트"
+    },
+    {
+      "id": "ipt",
+      "type": "security",
+      "label": "iptables",
+      "sublabel": "Policy 규칙"
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "VPC ENI",
+      "sublabel": "VPC CNI 관리"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "sublabel": "라우팅"
+    },
+    {
+      "id": "dest",
+      "type": "external",
+      "label": "Destination",
+      "sublabel": "목적지"
+    }
+  ],
+  "segments": [
+    {
+      "from": 262,
+      "to": 400,
+      "label": "alt — Policy 허용"
+    },
+    {
+      "from": 420,
+      "to": 488,
+      "label": "else — Policy 거부"
+    }
+  ],
+  "messages": [
+    {
+      "id": "egress",
+      "from": "pod",
+      "to": "felix",
+      "y": 185,
+      "label": "아웃바운드 패킷",
+      "variant": "default"
+    },
+    {
+      "id": "evaluate",
+      "from": "felix",
+      "to": "ipt",
+      "y": 228,
+      "label": "Policy 평가",
+      "variant": "security"
+    },
+    {
+      "id": "forward",
+      "from": "ipt",
+      "to": "eni",
+      "y": 292,
+      "label": "패킷 전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route",
+      "from": "eni",
+      "to": "vpc",
+      "y": 335,
+      "label": "VPC 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deliver",
+      "from": "vpc",
+      "to": "dest",
+      "y": 378,
+      "label": "목적지 전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "drop",
+      "from": "ipt",
+      "to": "pod",
+      "y": 470,
+      "label": "패킷 드롭",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "felix",
+      "from": 180,
+      "to": 235,
+      "type": "backend"
+    },
+    {
+      "participant": "ipt",
+      "from": 223,
+      "to": 478,
+      "type": "security"
+    },
+    {
+      "participant": "eni",
+      "from": 287,
+      "to": 342,
+      "type": "cloud"
+    },
+    {
+      "participant": "vpc",
+      "from": 330,
+      "to": 385,
+      "type": "cloud"
+    }
+  ]
+}

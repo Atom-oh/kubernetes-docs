@@ -1,0 +1,288 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Extended Support Cost Optimization Decision Flow",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "assess",
+        "label": "Assess remaining time",
+        "focus": [
+          "check",
+          "remain"
+        ],
+        "note": "Pick one of three paths based on how long the current version has left in Standard Support."
+      },
+      {
+        "id": "planned",
+        "label": "Planned upgrade",
+        "focus": [
+          "plan",
+          "nonprod",
+          "staging",
+          "prod"
+        ],
+        "note": "With 6+ months or 3-6 months left, move through non-production and staging before upgrading production."
+      },
+      {
+        "id": "urgent",
+        "label": "Immediate upgrade",
+        "focus": [
+          "urgent",
+          "direct",
+          "prod"
+        ],
+        "note": "With under 3 months left, trim the validation steps and upgrade production right away."
+      },
+      {
+        "id": "extended",
+        "label": "Extended Support review",
+        "focus": [
+          "ext",
+          "cost",
+          "decide",
+          "keep",
+          "staging"
+        ],
+        "note": "Already in Extended Support: compute the monthly extra cost and decide whether to stay or upgrade."
+      }
+    ],
+    "viewBox": [
+      1240,
+      660
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Starting point"
+        },
+        "security": {
+          "label": "Decision point"
+        },
+        "backend": {
+          "label": "Upgrade step"
+        },
+        "cloud": {
+          "label": "Production upgrade"
+        },
+        "database": {
+          "label": "Cost calculation"
+        },
+        "external": {
+          "label": "Extended Support state"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "assess",
+      "label": "Assessment"
+    },
+    {
+      "id": "urgent",
+      "label": "Immediate upgrade (under 3 months)"
+    },
+    {
+      "id": "planned",
+      "label": "Planned upgrade (6+ months / 3-6 months)"
+    },
+    {
+      "id": "extended",
+      "label": "Extended Support review (already Extended)",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "check",
+    "remain",
+    "plan",
+    "nonprod",
+    "staging",
+    "prod"
+  ],
+  "nodes": [
+    {
+      "id": "check",
+      "lane": "assess",
+      "col": 0,
+      "type": "frontend",
+      "label": "Check version",
+      "sublabel": "current cluster version",
+      "width": 164
+    },
+    {
+      "id": "remain",
+      "lane": "assess",
+      "col": 1,
+      "type": "security",
+      "label": "Time left in Standard?",
+      "sublabel": "branch decision",
+      "width": 186
+    },
+    {
+      "id": "plan",
+      "lane": "planned",
+      "col": 2,
+      "type": "backend",
+      "label": "Build upgrade plan",
+      "sublabel": "schedule and scope",
+      "width": 160
+    },
+    {
+      "id": "nonprod",
+      "lane": "planned",
+      "col": 3,
+      "type": "backend",
+      "label": "Non-prod test",
+      "sublabel": "validate in dev",
+      "width": 150
+    },
+    {
+      "id": "staging",
+      "lane": "planned",
+      "col": 4,
+      "type": "backend",
+      "label": "Staging validation",
+      "sublabel": "add-on and API compatibility",
+      "width": 216
+    },
+    {
+      "id": "prod",
+      "lane": "planned",
+      "col": 5,
+      "type": "cloud",
+      "label": "Production upgrade",
+      "sublabel": "stay in Standard Support",
+      "tag": "goal",
+      "width": 164
+    },
+    {
+      "id": "urgent",
+      "lane": "urgent",
+      "col": 3,
+      "type": "security",
+      "label": "Upgrade immediately",
+      "sublabel": "end of Standard imminent",
+      "tag": "urgent",
+      "width": 186
+    },
+    {
+      "id": "direct",
+      "lane": "urgent",
+      "col": 4,
+      "type": "cloud",
+      "label": "Direct prod upgrade",
+      "sublabel": "minimal validation",
+      "width": 206
+    },
+    {
+      "id": "ext",
+      "lane": "extended",
+      "col": 2,
+      "type": "external",
+      "label": "In Extended Support",
+      "sublabel": "6x the Standard price",
+      "width": 164
+    },
+    {
+      "id": "cost",
+      "lane": "extended",
+      "col": 3,
+      "type": "database",
+      "label": "Monthly extra cost",
+      "sublabel": "$0.50 × 730 h × clusters",
+      "width": 198
+    },
+    {
+      "id": "decide",
+      "lane": "extended",
+      "col": 4,
+      "type": "security",
+      "label": "Cost vs. risk?",
+      "sublabel": "stay or upgrade",
+      "width": 134
+    },
+    {
+      "id": "keep",
+      "lane": "extended",
+      "col": 5,
+      "type": "external",
+      "label": "Stay on Extended",
+      "sublabel": "accept the cost",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "check",
+      "to": "remain"
+    },
+    {
+      "from": "remain",
+      "to": "plan",
+      "label": "6+ months / 3-6 months",
+      "variant": "emphasis"
+    },
+    {
+      "from": "remain",
+      "to": "urgent",
+      "label": "under 3 months",
+      "role": "branch"
+    },
+    {
+      "from": "remain",
+      "to": "ext",
+      "label": "in Extended",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "plan",
+      "to": "nonprod"
+    },
+    {
+      "from": "nonprod",
+      "to": "staging"
+    },
+    {
+      "from": "staging",
+      "to": "prod",
+      "variant": "emphasis"
+    },
+    {
+      "from": "urgent",
+      "to": "direct"
+    },
+    {
+      "from": "direct",
+      "to": "prod",
+      "role": "branch"
+    },
+    {
+      "from": "ext",
+      "to": "cost"
+    },
+    {
+      "from": "cost",
+      "to": "decide"
+    },
+    {
+      "from": "decide",
+      "to": "staging",
+      "label": "upgrade",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "from": "decide",
+      "to": "keep",
+      "label": "stay",
+      "role": "branch"
+    }
+  ]
+}

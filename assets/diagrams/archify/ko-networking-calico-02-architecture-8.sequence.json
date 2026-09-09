@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "confd 동작 방식",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      640
+    ],
+    "views": [
+      {
+        "id": "initial",
+        "label": "초기 설정 생성",
+        "focus": [
+          "datastore",
+          "confd",
+          "templates",
+          "birdcfg",
+          "bird"
+        ],
+        "note": "데이터스토어의 BGP 설정과 템플릿을 병합해 bird.cfg를 만들고 BIRD를 리로드한다."
+      },
+      {
+        "id": "watch",
+        "label": "Watch Loop",
+        "focus": [
+          "datastore",
+          "confd",
+          "birdcfg",
+          "bird"
+        ],
+        "note": "BGP 설정이 바뀔 때마다 bird.cfg를 갱신하고 BIRD에 리로드를 트리거한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": "Datastore",
+      "sublabel": "BGP 설정"
+    },
+    {
+      "id": "confd",
+      "type": "backend",
+      "label": "confd",
+      "sublabel": "설정 생성"
+    },
+    {
+      "id": "templates",
+      "type": "external",
+      "label": "Template Files",
+      "sublabel": "BIRD 템플릿"
+    },
+    {
+      "id": "birdcfg",
+      "type": "database",
+      "label": "BIRD Config",
+      "sublabel": "bird.cfg"
+    },
+    {
+      "id": "bird",
+      "type": "backend",
+      "label": "BIRD Process",
+      "sublabel": "BGP 데몬"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 400,
+      "label": "초기 설정 생성"
+    },
+    {
+      "from": 420,
+      "to": 552,
+      "label": "Watch Loop: BGP 변경 감지 시"
+    }
+  ],
+  "messages": [
+    {
+      "id": "watch",
+      "from": "confd",
+      "to": "datastore",
+      "y": 190,
+      "label": "BGP 설정 Watch"
+    },
+    {
+      "id": "recv",
+      "from": "datastore",
+      "to": "confd",
+      "y": 230,
+      "label": "BGPConfiguration 등 수신",
+      "variant": "return"
+    },
+    {
+      "id": "tpl",
+      "from": "confd",
+      "to": "templates",
+      "y": 270,
+      "label": "템플릿 로드"
+    },
+    {
+      "id": "gen",
+      "from": "confd",
+      "to": "birdcfg",
+      "y": 320,
+      "label": "bird.cfg 생성",
+      "variant": "emphasis",
+      "note": "데이터 + 템플릿 병합 결과"
+    },
+    {
+      "id": "reload",
+      "from": "confd",
+      "to": "bird",
+      "y": 370,
+      "label": "SIGHUP / birdc configure",
+      "variant": "emphasis",
+      "note": "BIRD가 새 설정 적용"
+    },
+    {
+      "id": "event",
+      "from": "datastore",
+      "to": "confd",
+      "y": 445,
+      "label": "BGP 변경 이벤트",
+      "variant": "dashed"
+    },
+    {
+      "id": "update",
+      "from": "confd",
+      "to": "birdcfg",
+      "y": 490,
+      "label": "설정 업데이트"
+    },
+    {
+      "id": "trigger",
+      "from": "confd",
+      "to": "bird",
+      "y": 535,
+      "label": "리로드 트리거",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "confd",
+      "from": 185,
+      "to": 377,
+      "type": "backend"
+    },
+    {
+      "participant": "bird",
+      "from": 370,
+      "to": 395,
+      "type": "backend"
+    },
+    {
+      "participant": "confd",
+      "from": 445,
+      "to": 543,
+      "type": "backend"
+    }
+  ]
+}

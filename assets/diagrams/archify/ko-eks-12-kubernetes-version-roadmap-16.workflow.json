@@ -1,0 +1,287 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Extended Support 비용 최적화 의사결정 흐름",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "assess",
+        "label": "남은 기간 진단",
+        "focus": [
+          "check",
+          "remain"
+        ],
+        "note": "현재 버전의 Standard Support 종료까지 남은 기간으로 세 갈래 중 하나를 고른다."
+      },
+      {
+        "id": "planned",
+        "label": "계획적 업그레이드",
+        "focus": [
+          "plan",
+          "nonprod",
+          "staging",
+          "prod"
+        ],
+        "note": "6개월 이상 또는 3~6개월 남았다면 비프로덕션과 스테이징을 거쳐 프로덕션을 올린다."
+      },
+      {
+        "id": "urgent",
+        "label": "즉시 업그레이드",
+        "focus": [
+          "urgent",
+          "direct",
+          "prod"
+        ],
+        "note": "3개월 미만이면 검증 단계를 줄이고 프로덕션을 바로 업그레이드한다."
+      },
+      {
+        "id": "extended",
+        "label": "Extended Support 검토",
+        "focus": [
+          "ext",
+          "cost",
+          "decide",
+          "keep",
+          "staging"
+        ],
+        "note": "이미 Extended Support 중이면 월간 추가 비용을 계산해 유지할지 업그레이드할지 결정한다."
+      }
+    ],
+    "viewBox": [
+      1240,
+      660
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작점"
+        },
+        "security": {
+          "label": "판단·분기"
+        },
+        "backend": {
+          "label": "업그레이드 작업"
+        },
+        "cloud": {
+          "label": "프로덕션 업그레이드"
+        },
+        "database": {
+          "label": "비용 계산"
+        },
+        "external": {
+          "label": "Extended Support 상태"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "assess",
+      "label": "현황 진단"
+    },
+    {
+      "id": "urgent",
+      "label": "즉시 업그레이드 (3개월 미만)"
+    },
+    {
+      "id": "planned",
+      "label": "계획적 업그레이드 (6개월 이상 / 3~6개월)"
+    },
+    {
+      "id": "extended",
+      "label": "Extended Support 검토 (Extended 중)",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "check",
+    "remain",
+    "plan",
+    "nonprod",
+    "staging",
+    "prod"
+  ],
+  "nodes": [
+    {
+      "id": "check",
+      "lane": "assess",
+      "col": 0,
+      "type": "frontend",
+      "label": "현재 버전 확인",
+      "sublabel": "클러스터 버전 조회",
+      "width": 164
+    },
+    {
+      "id": "remain",
+      "lane": "assess",
+      "col": 1,
+      "type": "security",
+      "label": "Standard 종료 남은 기간?",
+      "sublabel": "분기 판단",
+      "width": 186
+    },
+    {
+      "id": "plan",
+      "lane": "planned",
+      "col": 2,
+      "type": "backend",
+      "label": "업그레이드 계획 수립",
+      "sublabel": "일정·범위 확정",
+      "width": 160
+    },
+    {
+      "id": "nonprod",
+      "lane": "planned",
+      "col": 3,
+      "type": "backend",
+      "label": "비프로덕션 테스트",
+      "sublabel": "개발 환경 검증",
+      "width": 150
+    },
+    {
+      "id": "staging",
+      "lane": "planned",
+      "col": 4,
+      "type": "backend",
+      "label": "스테이징 & 호환성 검증",
+      "sublabel": "애드온·API 확인",
+      "width": 216
+    },
+    {
+      "id": "prod",
+      "lane": "planned",
+      "col": 5,
+      "type": "cloud",
+      "label": "프로덕션 업그레이드",
+      "sublabel": "Standard Support 유지",
+      "tag": "목표",
+      "width": 164
+    },
+    {
+      "id": "urgent",
+      "lane": "urgent",
+      "col": 3,
+      "type": "security",
+      "label": "즉시 업그레이드 필요",
+      "sublabel": "종료 임박",
+      "tag": "긴급",
+      "width": 186
+    },
+    {
+      "id": "direct",
+      "lane": "urgent",
+      "col": 4,
+      "type": "cloud",
+      "label": "프로덕션 직접 업그레이드",
+      "sublabel": "최소 검증",
+      "width": 206
+    },
+    {
+      "id": "ext",
+      "lane": "extended",
+      "col": 2,
+      "type": "external",
+      "label": "Extended Support 중",
+      "sublabel": "Standard 대비 6배 비용",
+      "width": 164
+    },
+    {
+      "id": "cost",
+      "lane": "extended",
+      "col": 3,
+      "type": "database",
+      "label": "월간 추가 비용 계산",
+      "sublabel": "$0.50 × 730시간 × 클러스터",
+      "width": 198
+    },
+    {
+      "id": "decide",
+      "lane": "extended",
+      "col": 4,
+      "type": "security",
+      "label": "비용 vs 리스크?",
+      "sublabel": "유지 여부 판단",
+      "width": 134
+    },
+    {
+      "id": "keep",
+      "lane": "extended",
+      "col": 5,
+      "type": "external",
+      "label": "Extended 유지",
+      "sublabel": "비용 수용",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "check",
+      "to": "remain"
+    },
+    {
+      "from": "remain",
+      "to": "plan",
+      "label": "6개월 이상 / 3~6개월",
+      "variant": "emphasis"
+    },
+    {
+      "from": "remain",
+      "to": "urgent",
+      "label": "3개월 미만",
+      "role": "branch"
+    },
+    {
+      "from": "remain",
+      "to": "ext",
+      "label": "Extended 중",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "plan",
+      "to": "nonprod"
+    },
+    {
+      "from": "nonprod",
+      "to": "staging"
+    },
+    {
+      "from": "staging",
+      "to": "prod",
+      "variant": "emphasis"
+    },
+    {
+      "from": "urgent",
+      "to": "direct"
+    },
+    {
+      "from": "direct",
+      "to": "prod",
+      "role": "branch"
+    },
+    {
+      "from": "ext",
+      "to": "cost"
+    },
+    {
+      "from": "cost",
+      "to": "decide"
+    },
+    {
+      "from": "decide",
+      "to": "staging",
+      "label": "업그레이드",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "from": "decide",
+      "to": "keep",
+      "label": "유지",
+      "role": "branch"
+    }
+  ]
+}

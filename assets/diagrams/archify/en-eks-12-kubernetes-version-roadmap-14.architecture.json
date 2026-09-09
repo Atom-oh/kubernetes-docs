@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Feature Graduation Timeline",
+    "locale": "en",
+    "output": "en-eks-12-kubernetes-version-roadmap-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "Admission policy"
+        },
+        "backend": {
+          "label": "Workload / scheduling"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "early-ga",
+        "label": "1.30~1.34 GA",
+        "focus": [
+          "vap",
+          "sidecar",
+          "dra"
+        ],
+        "note": "ValidatingAdmissionPolicy reached GA first in 1.30, followed by Sidecar Containers (1.33) and DRA Core APIs (1.34)."
+      },
+      {
+        "id": "recent-ga",
+        "label": "1.35~1.36 GA",
+        "focus": [
+          "inplace",
+          "mutating",
+          "gang"
+        ],
+        "note": "In-Place Pod Resize went GA in 1.35; MutatingAdmissionPolicy and Gang Scheduling graduated to GA in 1.36."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "vap",
+      "type": "security",
+      "label": "ValidatingAdmissionPolicy",
+      "sublabel": "Alpha 1.26 · Beta 1.28 · GA 1.30",
+      "tag": "KEP-3488",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Sidecar Containers",
+      "sublabel": "Alpha 1.28 · Beta 1.29 · GA 1.33",
+      "tag": "KEP-753",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "dra",
+      "type": "backend",
+      "label": "DRA Core APIs",
+      "sublabel": "Alpha 1.26 · Beta 1.31 · GA 1.34",
+      "tag": "KEP-4381",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "inplace",
+      "type": "backend",
+      "label": "In-Place Pod Resize",
+      "sublabel": "Alpha 1.27 · Beta 1.33 · GA 1.35",
+      "tag": "KEP-1287",
+      "pos": [
+        60,
+        270
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "mutating",
+      "type": "security",
+      "label": "MutatingAdmissionPolicy",
+      "sublabel": "Alpha 1.33 · Beta 1.34 · GA 1.36",
+      "tag": "KEP-3962",
+      "pos": [
+        400,
+        270
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "gang",
+      "type": "backend",
+      "label": "Gang Scheduling",
+      "sublabel": "Alpha 1.35 · GA 1.36",
+      "tag": "KEP-4832",
+      "pos": [
+        740,
+        270
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "GA in 1.30 - 1.34",
+      "wraps": [
+        "vap",
+        "sidecar",
+        "dra"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GA in 1.35 - 1.36",
+      "wraps": [
+        "inplace",
+        "mutating",
+        "gang"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vap-to-sidecar",
+      "from": "vap",
+      "to": "sidecar",
+      "label": "GA graduation order",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "sidecar-to-dra",
+      "from": "sidecar",
+      "to": "dra",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dra-to-inplace",
+      "from": "dra",
+      "to": "inplace",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "inplace-to-mutating",
+      "from": "inplace",
+      "to": "mutating",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mutating-to-gang",
+      "from": "mutating",
+      "to": "gang",
+      "label": "same release",
+      "variant": "dashed",
+      "labelDy": -26
+    }
+  ]
+}

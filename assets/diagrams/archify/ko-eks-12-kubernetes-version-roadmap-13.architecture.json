@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.36 Enhancement 성숙도 분포",
+    "output": "ko-eks-12-kubernetes-version-roadmap-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [800, 520],
+    "legend": {
+      "entries": {
+        "cloud": { "label": "릴리스" },
+        "backend": { "label": "성숙도 단계" }
+      }
+    }
+  },
+  "components": [
+    { "id": "release", "type": "cloud", "label": "Kubernetes 1.36 \"Haru\"", "sublabel": "전체 68개 Enhancement", "tag": "2026년 4월", "pos": [40, 210], "size": [220, 64] },
+    { "id": "stable", "type": "backend", "label": "Stable (GA)", "sublabel": "18개", "pos": [520, 70], "size": [200, 64] },
+    { "id": "beta", "type": "backend", "label": "Beta", "sublabel": "25개", "pos": [520, 210], "size": [200, 64] },
+    { "id": "alpha", "type": "backend", "label": "Alpha", "sublabel": "25개", "pos": [520, 350], "size": [200, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "성숙도 단계별 분포", "wraps": ["stable", "beta", "alpha"] }
+  ],
+  "connections": [
+    { "id": "release-stable", "from": "release", "to": "stable", "label": "GA 졸업", "variant": "emphasis" },
+    { "id": "release-beta", "from": "release", "to": "beta", "label": "기본 활성화", "labelDx": 60 },
+    { "id": "release-alpha", "from": "release", "to": "alpha", "label": "Feature Gate 필요", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "릴리스 테마", "items": ["보안 강화", "AI/ML 워크로드 지원", "API 확장성"] },
+    { "dot": "emerald", "title": "주요 GA 기능", "items": ["Mutating Admission Policies (KEP-3962)", "User Namespaces — Feature Gate 제거", "KYAML 안정화", "Gang Scheduling (KEP-4832)", "Fine-Grained Kubelet API Authorization", "Legacy ServiceAccount Token Cleanup"] },
+    { "dot": "cyan", "title": "주요 Beta 기능", "items": ["DRA: Device Health Monitoring", "Node Maintenance Mode", "StatefulSet In-Place Resize"] }
+  ]
+}

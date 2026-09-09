@@ -730,7 +730,9 @@ spec:
 
 Block Volume Mode는 파일시스템 대신 원시 블록 디바이스로 볼륨을 마운트할 수 있는 기능입니다. 이는 데이터베이스와 같이 파일시스템 오버헤드 없이 직접 블록 접근이 필요한 애플리케이션에 유용합니다.
 
-![같은 PersistentVolume이 Filesystem Mode에서는 포맷된 디렉토리로, Block Mode에서는 원시 블록 디바이스로 파드에 노출되는 두 방식을 나란히 비교한다.](../../assets/diagrams/rendered/ko-core-04-storage-6.svg)
+![같은 PersistentVolume이 Filesystem Mode에서는 ext4/xfs로 포맷된 디렉토리(/mnt/data)로, Block Mode에서는 원시 블록 디바이스(/dev/xvda)로 파드에 노출되는 두 방식을 나란히 비교해 보여준다.](../.gitbook/assets/ko-core-04-storage-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-6.html)
 
 ### Block Volume 설정
 
@@ -798,7 +800,9 @@ spec:
 
 Volume Cloning은 기존 PVC의 데이터를 새 PVC로 복제하는 기능입니다. 스냅샷을 거치지 않고 직접 PVC-to-PVC 클론을 생성할 수 있습니다.
 
-![소스 PVC를 참조해 클론 PVC를 만드는 Volume Cloning 과정과 개발 환경 복제·테스트 데이터 준비·빠른 백업 등 활용 사례를 보여준다.](../../assets/diagrams/rendered/ko-core-04-storage-7.svg)
+![소스 PVC를 dataSource로 참조해 클론 PVC를 만드는 Volume Cloning 과정과 CLONE_VOLUME을 수행하는 EBS CSI Driver, 그리고 개발 환경 복제·테스트 데이터 준비·빠른 백업 등 활용 사례를 보여준다.](../.gitbook/assets/ko-core-04-storage-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-7.html)
 
 ### Volume Cloning 예제
 
@@ -862,7 +866,9 @@ kubectl get csidrivers ebs.csi.aws.com -o yaml
 
 Storage ResourceQuota는 네임스페이스 단위로 스토리지 리소스 사용을 제한합니다. PVC 수와 총 스토리지 용량을 제어할 수 있습니다.
 
-![dev-team 네임스페이스의 ResourceQuota가 PVC 개수, 총 용량, gp3 클래스별 용량을 제한하고 현재·남은 사용량을 함께 추적함을 보여준다.](../../assets/diagrams/rendered/ko-core-04-storage-8.svg)
+![dev-team 네임스페이스의 storage-quota ResourceQuota가 PVC 개수 10개, 총 용량 500Gi, gp3 클래스 200Gi/5개를 제한하고 kubectl describe로 확인한 현재 사용량(5 PVC, 100Gi)과 남은 여유(5 PVC, 400Gi)를 함께 추적함을 보여준다.](../.gitbook/assets/ko-core-04-storage-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-8.html)
 
 ### Storage ResourceQuota 예제
 
@@ -964,7 +970,9 @@ spec:
 
 Amazon EKS에서는 다양한 스토리지 옵션을 사용할 수 있습니다. 각 옵션은 서로 다른 사용 사례와 성능 특성을 가지고 있으므로, 애플리케이션의 요구 사항에 맞는 적절한 스토리지를 선택하는 것이 중요합니다.
 
-![Amazon EKS에서 EBS·EFS·FSx for Lustre 세 관리형 스토리지가 각각 전용 CSI 드라이버·StorageClass·PersistentVolume을 거쳐 서로 다른 접근 모드의 파드로 이어지는 병렬 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-04-storage-9.svg)
+![Amazon EKS에서 EBS·EFS·FSx for Lustre 세 관리형 스토리지가 각각 전용 CSI 드라이버·StorageClass·PersistentVolume을 거쳐 서로 다른 접근 모드의 파드로 이어지는 병렬 구조를 보여준다.](../.gitbook/assets/ko-core-04-storage-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-9.html)
 
 ### Amazon EBS
 

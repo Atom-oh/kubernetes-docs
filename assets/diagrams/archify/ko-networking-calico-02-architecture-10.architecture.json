@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Typha 적용 (해결책)",
+    "output": "ko-networking-calico-02-architecture-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      560
+    ],
+    "views": [
+      {
+        "id": "watch",
+        "label": "Watch 연결 3개",
+        "focus": [
+          "apiserver",
+          "typha1",
+          "typha2",
+          "typha3"
+        ],
+        "note": "API 서버에 대한 Watch 연결은 Typha 복제본 수(3개)만큼만 맺어진다."
+      },
+      {
+        "id": "fanout",
+        "label": "Felix로 팬아웃",
+        "focus": [
+          "typha1",
+          "typha2",
+          "typha3",
+          "felix-am",
+          "felix-nz",
+          "felix-more"
+        ],
+        "note": "각 Typha가 변경 사항을 캐시해 자신이 담당하는 Felix 그룹으로 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "database",
+      "label": "Datastore",
+      "sublabel": "API Server",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "typha1",
+      "type": "backend",
+      "label": "Typha 1",
+      "sublabel": ":5473",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "typha2",
+      "type": "backend",
+      "label": "Typha 2",
+      "sublabel": ":5473",
+      "pos": [
+        340,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "typha3",
+      "type": "backend",
+      "label": "Typha 3",
+      "sublabel": ":5473",
+      "pos": [
+        340,
+        420
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "felix-am",
+      "type": "backend",
+      "label": "Felix A-M",
+      "sublabel": "노드 그룹",
+      "pos": [
+        640,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "felix-nz",
+      "type": "backend",
+      "label": "Felix N-Z",
+      "sublabel": "노드 그룹",
+      "pos": [
+        640,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "felix-more",
+      "type": "backend",
+      "label": "Felix ...",
+      "sublabel": "노드 그룹",
+      "pos": [
+        640,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Typha (replicas: 3)",
+      "wraps": [
+        "typha1",
+        "typha2",
+        "typha3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Felix (노드별 에이전트)",
+      "wraps": [
+        "felix-am",
+        "felix-nz",
+        "felix-more"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "watch1",
+      "from": "apiserver",
+      "to": "typha1"
+    },
+    {
+      "id": "watch2",
+      "from": "apiserver",
+      "to": "typha2",
+      "label": "Watch",
+      "variant": "emphasis",
+      "labelDx": 45
+    },
+    {
+      "id": "watch3",
+      "from": "apiserver",
+      "to": "typha3"
+    },
+    {
+      "id": "fanout1",
+      "from": "typha1",
+      "to": "felix-am"
+    },
+    {
+      "id": "fanout2",
+      "from": "typha2",
+      "to": "felix-nz",
+      "label": "팬아웃",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fanout3",
+      "from": "typha3",
+      "to": "felix-more"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Watch 연결 3개",
+      "items": [
+        "API Server 부하가 Typha 대수만큼으로 고정된다",
+        "Felix는 API 서버 대신 Typha에 연결한다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Direct Pod-to-Pod Communication",
+    "locale": "en",
+    "output": "en-networking-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "10.244.1.10",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "10.244.1.11",
+      "pos": [
+        560,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pod-c",
+      "type": "backend",
+      "label": "Pod C",
+      "sublabel": "10.244.2.10",
+      "pos": [
+        300,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pod-d",
+      "type": "backend",
+      "label": "Pod D",
+      "sublabel": "10.244.2.11",
+      "pos": [
+        560,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node 1",
+      "wraps": [
+        "pod-a",
+        "pod-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2",
+      "wraps": [
+        "pod-c",
+        "pod-d"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-b",
+      "from": "pod-a",
+      "to": "pod-b",
+      "label": "same node"
+    },
+    {
+      "id": "a-to-c",
+      "from": "pod-a",
+      "to": "pod-c",
+      "label": "across nodes, no NAT",
+      "variant": "emphasis",
+      "labelDy": 100
+    },
+    {
+      "id": "b-to-d",
+      "from": "pod-b",
+      "to": "pod-d",
+      "label": "across nodes, no NAT",
+      "variant": "emphasis",
+      "labelDy": 100
+    },
+    {
+      "id": "c-to-d",
+      "from": "pod-c",
+      "to": "pod-d",
+      "label": "same node"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod Networking Model",
+      "items": [
+        "Every Pod can communicate with every other Pod without NAT",
+        "Each Pod has a unique IP address",
+        "The IP a Pod sees itself as is the same IP others see it as"
+      ]
+    }
+  ]
+}

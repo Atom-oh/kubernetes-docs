@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service 유형별 트래픽 진입",
+    "output": "ko-networking-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Service / 워크로드"
+        },
+        "cloud": {
+          "label": "클라우드 LB 연동"
+        },
+        "external": {
+          "label": "트래픽 소스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "클러스터 내부",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "외부 트래픽",
+      "sublabel": "인터넷",
+      "pos": [
+        370,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "클러스터 내 워크로드",
+      "pos": [
+        700,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "clusterip",
+      "type": "backend",
+      "label": "ClusterIP",
+      "sublabel": "클러스터 내부 전용",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "nodeport",
+      "type": "backend",
+      "label": "NodePort",
+      "sublabel": "노드 포트 30000-32767",
+      "pos": [
+        260,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "loadbalancer",
+      "type": "cloud",
+      "label": "LoadBalancer",
+      "sublabel": "외부 LB 연동 (NLB 등)",
+      "pos": [
+        480,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "externalname",
+      "type": "backend",
+      "label": "ExternalName",
+      "sublabel": "외부 DNS 매핑",
+      "pos": [
+        700,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service 유형",
+      "wraps": [
+        "clusterip",
+        "nodeport",
+        "loadbalancer",
+        "externalname"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-clusterip",
+      "from": "client",
+      "to": "clusterip",
+      "label": "내부 호출",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 86
+    },
+    {
+      "id": "internet-nodeport",
+      "from": "internet",
+      "to": "nodeport",
+      "label": "노드 IP:NodePort",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "internet-lb",
+      "from": "internet",
+      "to": "loadbalancer",
+      "label": "외부 LB 경유",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app-externalname",
+      "from": "app",
+      "to": "externalname",
+      "label": "DNS CNAME",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 86
+    }
+  ]
+}

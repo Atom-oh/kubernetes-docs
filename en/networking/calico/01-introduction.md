@@ -86,7 +86,9 @@ Calico is an open-source networking and network security solution designed for c
 
 ### Project History: From Project Calico to Tigera
 
-![Timeline showing Calico's evolution from an OpenStack networking project in 2014, through Kubernetes CNI adoption and Tigera's founding, to a Kubernetes-native datastore in 2018 and full eBPF data-plane feature parity in 2025.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-0.svg)
+![Timeline of Calico's evolution from an OpenStack networking project in 2014, through Kubernetes CNI support and Tigera's founding in 2016, Calico 3.0's Kubernetes-native datastore in 2018, Calico Enterprise and Calico Cloud, to eBPF GA in 2022 and full eBPF parity in Calico 3.29 in 2025.](../../.gitbook/assets/en-networking-calico-01-introduction-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-01-introduction-0.html)
 
 | Year | Milestone | Significance |
 |------|-----------|--------------|
@@ -245,7 +247,9 @@ Calico runs consistently across diverse environments:
 
 ### Traditional Kubernetes Networking Challenges
 
-![Architecture diagram contrasting kube-proxy's linear iptables rule chains, which degrade in performance as a cluster grows, with Calico's Felix agent using optimized iptables or eBPF and IP sets to hold consistent performance at scale.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-2.svg)
+![Architecture diagram contrasting kube-proxy's linear iptables rule chains, which degrade in performance as a cluster grows, with Calico's Felix agent using optimized iptables or eBPF and IP sets to hold consistent performance at scale.](../../.gitbook/assets/en-networking-calico-01-introduction-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-01-introduction-2.html)
 
 ### Comparison Table
 

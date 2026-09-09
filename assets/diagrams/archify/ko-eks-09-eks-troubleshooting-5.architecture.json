@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 문제",
+    "output": "ko-eks-09-eks-troubleshooting-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1180, 600],
+    "views": [
+      { "id": "ebs", "label": "EBS 볼륨 문제", "focus": ["ebs", "ebs-limit", "ebs-iam", "ebs-az", "ebs-sc", "ebs-csi"], "note": "PVC/PV, StorageClass, EBS CSI 드라이버 순으로 확인한다." },
+      { "id": "efs", "label": "EFS 문제", "focus": ["efs", "efs-mt", "efs-sg", "efs-iam", "efs-csi", "efs-net"], "note": "PVC/PV, EFS CSI 드라이버, 마운트 대상과 보안 그룹 순으로 확인한다." }
+    ]
+  },
+  "components": [
+    { "id": "ebs", "type": "database", "label": "EBS 볼륨 문제", "sublabel": "PVC Pending / 연결 실패", "pos": [60, 262], "size": [190, 64] },
+    { "id": "ebs-limit", "type": "cloud", "label": "볼륨 한도", "sublabel": "EBS 볼륨 한도 초과", "pos": [340, 50], "size": [180, 56] },
+    { "id": "ebs-iam", "type": "security", "label": "권한 문제", "sublabel": "볼륨 생성/연결 권한 부족", "pos": [340, 150], "size": [180, 56] },
+    { "id": "ebs-az", "type": "cloud", "label": "AZ 불일치", "sublabel": "파드와 볼륨의 가용 영역 불일치", "pos": [340, 250], "size": [180, 56] },
+    { "id": "ebs-sc", "type": "cloud", "label": "스토리지클래스", "sublabel": "StorageClass 구성 오류", "pos": [340, 350], "size": [180, 56] },
+    { "id": "ebs-csi", "type": "backend", "label": "CSI 드라이버", "sublabel": "EBS CSI 드라이버 문제", "pos": [340, 450], "size": [180, 56] },
+    { "id": "efs", "type": "database", "label": "EFS 문제", "sublabel": "마운트 실패 / 접근 불가", "pos": [640, 262], "size": [190, 64] },
+    { "id": "efs-mt", "type": "cloud", "label": "마운트 대상", "sublabel": "마운트 대상 구성 오류/누락", "pos": [920, 50], "size": [180, 56] },
+    { "id": "efs-sg", "type": "security", "label": "보안 그룹", "sublabel": "마운트 대상 SG 규칙 제한", "pos": [920, 150], "size": [180, 56] },
+    { "id": "efs-iam", "type": "security", "label": "권한 문제", "sublabel": "EFS 액세스 권한 문제", "pos": [920, 250], "size": [180, 56] },
+    { "id": "efs-csi", "type": "backend", "label": "CSI 드라이버", "sublabel": "EFS CSI 드라이버 문제", "pos": [920, 350], "size": [180, 56] },
+    { "id": "efs-net", "type": "cloud", "label": "네트워크 문제", "sublabel": "마운트 대상 네트워크 연결 문제", "pos": [920, 450], "size": [180, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "스토리지 문제", "wraps": ["ebs", "ebs-limit", "ebs-iam", "ebs-az", "ebs-sc", "ebs-csi", "efs", "efs-mt", "efs-sg", "efs-iam", "efs-csi", "efs-net"] }
+  ],
+  "connections": [
+    { "id": "ebs-to-limit", "from": "ebs", "to": "ebs-limit" },
+    { "id": "ebs-to-iam", "from": "ebs", "to": "ebs-iam" },
+    { "id": "ebs-to-az", "from": "ebs", "to": "ebs-az", "variant": "emphasis" },
+    { "id": "ebs-to-sc", "from": "ebs", "to": "ebs-sc" },
+    { "id": "ebs-to-csi", "from": "ebs", "to": "ebs-csi" },
+    { "id": "efs-to-mt", "from": "efs", "to": "efs-mt" },
+    { "id": "efs-to-sg", "from": "efs", "to": "efs-sg" },
+    { "id": "efs-to-iam", "from": "efs", "to": "efs-iam", "variant": "emphasis" },
+    { "id": "efs-to-csi", "from": "efs", "to": "efs-csi" },
+    { "id": "efs-to-net", "from": "efs", "to": "efs-net" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "EBS 볼륨 문제 진단", "items": ["kubectl get/describe pvc, pv로 상태 확인", "kubectl get storageclass로 StorageClass 확인", "kube-system의 ebs-csi-controller 파드와 로그 확인"] },
+    { "dot": "emerald", "title": "EFS 문제 진단", "items": ["kubectl get/describe pvc, pv로 상태 확인", "kube-system의 aws-efs-csi-driver 파드와 로그 확인", "EFS 마운트 대상과 보안 그룹 규칙 확인 후 디버깅 파드로 마운트 테스트"] }
+  ]
+}

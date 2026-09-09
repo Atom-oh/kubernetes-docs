@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.36 Enhancement Maturity Breakdown",
+    "locale": "en",
+    "output": "en-eks-12-kubernetes-version-roadmap-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      800,
+      520
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Release"
+        },
+        "backend": {
+          "label": "Maturity stage"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "release",
+      "type": "cloud",
+      "label": "Kubernetes 1.36 \"Haru\"",
+      "sublabel": "68 enhancements in total",
+      "tag": "April 2026",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable (GA)",
+      "sublabel": "18 enhancements",
+      "pos": [
+        520,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "beta",
+      "type": "backend",
+      "label": "Beta",
+      "sublabel": "25 enhancements",
+      "pos": [
+        520,
+        210
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "alpha",
+      "type": "backend",
+      "label": "Alpha",
+      "sublabel": "25 enhancements",
+      "pos": [
+        520,
+        350
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Breakdown by maturity stage",
+      "wraps": [
+        "stable",
+        "beta",
+        "alpha"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "release-stable",
+      "from": "release",
+      "to": "stable",
+      "label": "graduated to GA",
+      "variant": "emphasis"
+    },
+    {
+      "id": "release-beta",
+      "from": "release",
+      "to": "beta",
+      "label": "enabled by default",
+      "labelDx": 60
+    },
+    {
+      "id": "release-alpha",
+      "from": "release",
+      "to": "alpha",
+      "label": "feature gate required",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Release themes",
+      "items": [
+        "Security hardening",
+        "AI/ML workload support",
+        "API extensibility"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Key GA features",
+      "items": [
+        "Mutating Admission Policies (KEP-3962)",
+        "User Namespaces -- feature gate removed",
+        "KYAML stabilized",
+        "Gang Scheduling (KEP-4832)",
+        "Fine-Grained Kubelet API Authorization",
+        "Legacy ServiceAccount Token Cleanup"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Key Beta features",
+      "items": [
+        "DRA: Device Health Monitoring",
+        "Node Maintenance Mode",
+        "StatefulSet In-Place Resize"
+      ]
+    }
+  ]
+}

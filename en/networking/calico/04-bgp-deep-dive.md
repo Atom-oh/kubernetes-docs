@@ -969,7 +969,9 @@ ip route show | grep bird
 
 ### Multi-Datacenter BGP Design
 
-![Each datacenter runs its own AS with its own route reflectors peering internally with its nodes, and each datacenter's route reflectors peer over eBGP with a shared WAN edge, connecting the two datacenters.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg)
+![Each datacenter runs its own AS with its own route reflectors peering internally with its nodes, and each datacenter's route reflectors peer over eBGP with a shared WAN edge, connecting the two datacenters.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-8.html)
 
 Configuration for multi-datacenter:
 

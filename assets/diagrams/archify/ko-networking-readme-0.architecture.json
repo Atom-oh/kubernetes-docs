@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 네트워킹 계층",
+    "output": "ko-networking-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-networking",
+      "type": "backend",
+      "label": "Pod 네트워킹",
+      "sublabel": "Pod-to-Pod 통신",
+      "tag": "L1",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "service-networking",
+      "type": "backend",
+      "label": "Service 네트워킹",
+      "sublabel": "서비스 디스커버리 & 로드밸런싱",
+      "tag": "L2",
+      "pos": [
+        330,
+        170
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "ingress-networking",
+      "type": "cloud",
+      "label": "Ingress 네트워킹",
+      "sublabel": "외부 HTTP/HTTPS 트래픽 라우팅",
+      "tag": "L3",
+      "pos": [
+        330,
+        300
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "network-policy",
+      "type": "security",
+      "label": "Network Policy",
+      "sublabel": "네트워크 보안",
+      "tag": "L4",
+      "pos": [
+        330,
+        430
+      ],
+      "size": [
+        320,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-to-service",
+      "from": "pod-networking",
+      "to": "service-networking",
+      "label": "Pod 집합에 안정적 엔드포인트 제공",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "service-to-ingress",
+      "from": "service-networking",
+      "to": "ingress-networking",
+      "label": "외부 요청을 Service로 라우팅",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ingress-to-policy",
+      "from": "ingress-networking",
+      "to": "network-policy",
+      "label": "허용 트래픽 규칙 적용",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "네트워킹 모델 요구사항",
+      "items": [
+        "모든 Pod는 NAT 없이 다른 모든 Pod와 통신할 수 있어야 한다",
+        "모든 노드는 NAT 없이 모든 Pod와 통신할 수 있어야 한다",
+        "Pod가 자신을 보는 IP와 다른 Pod가 그 Pod를 보는 IP가 동일해야 한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "계층별 역할",
+      "items": [
+        "Pod 네트워킹: 각 Pod가 고유 IP를 갖고 클러스터 내 다른 Pod와 직접 통신한다",
+        "Service 네트워킹: Pod 집합에 안정적인 네트워크 엔드포인트를 제공한다",
+        "Ingress 네트워킹: HTTP/HTTPS 트래픽을 클러스터 내부 Service로 라우팅하는 규칙을 정의한다",
+        "Network Policy: Pod 간 허용 트래픽을 제한해 네트워크를 보호한다"
+      ]
+    }
+  ]
+}

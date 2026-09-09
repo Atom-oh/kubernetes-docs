@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico를 선택해야 하는 이유",
+    "output": "ko-networking-calico-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "performance",
+      "type": "backend",
+      "label": "고성능",
+      "sublabel": "BGP / eBPF 데이터플레인",
+      "tag": "PRF",
+      "pos": [40, 80],
+      "size": [190, 64]
+    },
+    {
+      "id": "security",
+      "type": "security",
+      "label": "강력한 보안",
+      "sublabel": "K8s 표준 + Calico 확장 정책",
+      "tag": "SEC",
+      "pos": [270, 80],
+      "size": [200, 64]
+    },
+    {
+      "id": "scalability",
+      "type": "backend",
+      "label": "대규모 확장성",
+      "sublabel": "10년+ 프로덕션 검증",
+      "tag": "SCL",
+      "pos": [510, 80],
+      "size": [190, 64]
+    },
+    {
+      "id": "flexibility",
+      "type": "backend",
+      "label": "유연성",
+      "sublabel": "K8s · VM · 베어메탈 · Windows",
+      "tag": "FLX",
+      "pos": [740, 80],
+      "size": [210, 64]
+    },
+    {
+      "id": "enterprise",
+      "type": "cloud",
+      "label": "엔터프라이즈 프로덕션 환경",
+      "sublabel": "Fortune 100 기업의 80% 이상 사용",
+      "tag": "OUT",
+      "pos": [375, 300],
+      "size": [240, 68]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Calico 핵심 가치",
+      "wraps": ["performance", "security", "scalability", "flexibility"]
+    }
+  ],
+  "connections": [
+    { "id": "perf-to-enterprise", "from": "performance", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "sec-to-enterprise", "from": "security", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "scale-to-enterprise", "from": "scalability", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "flex-to-enterprise", "from": "flexibility", "to": "enterprise", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "데이터플레인과 네트워크",
+      "items": [
+        "iptables와 eBPF 모드 중 선택 가능 (v3.29에서 eBPF GA)",
+        "BIRD 기반 BGP로 온프레미스 네트워크와 통합"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "정책과 워크로드",
+      "items": [
+        "Kubernetes 표준 + Calico 확장 Network Policy",
+        "Windows/Linux 하이브리드 워크로드 완전 지원"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "생태계",
+      "items": [
+        "10년 이상의 프로덕션 검증",
+        "CNCF 생태계에서 가장 활발한 네트워킹 프로젝트"
+      ]
+    }
+  ]
+}

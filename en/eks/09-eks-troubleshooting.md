@@ -1424,7 +1424,9 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/
 
 ## IAM and Authentication Issues
 
-![Tree diagram showing cluster access denial, IRSA, and node join failure issues each branching into their most common root causes.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-4.svg)
+![Tree diagram of IAM and authentication issues: cluster access denied, IRSA, and node join failure, each with troubleshooting steps, common solutions, and their most common root causes.](../.gitbook/assets/en-eks-09-eks-troubleshooting-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-4.html)
 
 ### Cluster Access Denied
 

@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "VPC CNI + Calico Traffic Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      580
+    ],
+    "views": [
+      {
+        "id": "egress",
+        "label": "Egress packet and policy evaluation",
+        "focus": [
+          "pod",
+          "felix",
+          "ipt"
+        ],
+        "note": "The Source Pod's packet hits the iptables rules programmed by Calico Felix, where NetworkPolicy is evaluated."
+      },
+      {
+        "id": "allow",
+        "label": "Policy allowed path",
+        "focus": [
+          "ipt",
+          "eni",
+          "vpc",
+          "dest"
+        ],
+        "note": "If allowed, the packet leaves through the VPC ENI, the AWS VPC routes it, and it reaches the destination."
+      },
+      {
+        "id": "deny",
+        "label": "Policy denied path",
+        "focus": [
+          "ipt",
+          "pod"
+        ],
+        "note": "If denied, iptables drops the packet so it never leaves the Source Pod."
+      }
+    ],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Source Pod",
+      "sublabel": "packet origin"
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Calico Felix",
+      "sublabel": "policy agent"
+    },
+    {
+      "id": "ipt",
+      "type": "security",
+      "label": "iptables",
+      "sublabel": "policy rules"
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "VPC ENI",
+      "sublabel": "managed by VPC CNI"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "sublabel": "routing"
+    },
+    {
+      "id": "dest",
+      "type": "external",
+      "label": "Destination",
+      "sublabel": "destination"
+    }
+  ],
+  "segments": [
+    {
+      "from": 262,
+      "to": 400,
+      "label": "alt — Policy allowed"
+    },
+    {
+      "from": 420,
+      "to": 488,
+      "label": "else — Policy denied"
+    }
+  ],
+  "messages": [
+    {
+      "id": "egress",
+      "from": "pod",
+      "to": "felix",
+      "y": 185,
+      "label": "outbound packet",
+      "variant": "default"
+    },
+    {
+      "id": "evaluate",
+      "from": "felix",
+      "to": "ipt",
+      "y": 228,
+      "label": "policy evaluation",
+      "variant": "security"
+    },
+    {
+      "id": "forward",
+      "from": "ipt",
+      "to": "eni",
+      "y": 292,
+      "label": "forward packet",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route",
+      "from": "eni",
+      "to": "vpc",
+      "y": 335,
+      "label": "VPC routing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deliver",
+      "from": "vpc",
+      "to": "dest",
+      "y": 378,
+      "label": "deliver to destination",
+      "variant": "emphasis"
+    },
+    {
+      "id": "drop",
+      "from": "ipt",
+      "to": "pod",
+      "y": 470,
+      "label": "drop packet",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "felix",
+      "from": 180,
+      "to": 235,
+      "type": "backend"
+    },
+    {
+      "participant": "ipt",
+      "from": 223,
+      "to": 478,
+      "type": "security"
+    },
+    {
+      "participant": "eni",
+      "from": 287,
+      "to": 342,
+      "type": "cloud"
+    },
+    {
+      "participant": "vpc",
+      "from": 330,
+      "to": 385,
+      "type": "cloud"
+    }
+  ]
+}

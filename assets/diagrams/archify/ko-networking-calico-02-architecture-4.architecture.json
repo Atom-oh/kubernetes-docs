@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "BIRD의 역할",
+    "output": "ko-networking-calico-02-architecture-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      420
+    ]
+  },
+  "components": [
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "로컬 라우트 프로그래밍",
+      "pos": [
+        30,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "kernel",
+      "type": "database",
+      "label": "Kernel 라우팅 테이블",
+      "sublabel": "노드 커널 상태",
+      "pos": [
+        250,
+        110
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "session",
+      "type": "backend",
+      "label": "BGP 세션 관리",
+      "sublabel": "피어 연결",
+      "pos": [
+        510,
+        110
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "exchange",
+      "type": "backend",
+      "label": "라우트 교환",
+      "sublabel": "Pod CIDR 광고",
+      "pos": [
+        760,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "rr",
+      "type": "backend",
+      "label": "Route Reflector",
+      "sublabel": "대규모 클러스터",
+      "pos": [
+        510,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "security",
+      "label": "라우트 필터링",
+      "sublabel": "정책 적용",
+      "pos": [
+        760,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "peers",
+      "type": "external",
+      "label": "BGP Peers",
+      "sublabel": "다른 노드 / 외부 라우터",
+      "pos": [
+        1010,
+        110
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "BIRD 기능",
+      "wraps": [
+        "session",
+        "exchange",
+        "rr",
+        "filter"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "felix-kernel",
+      "from": "felix",
+      "to": "kernel",
+      "label": "라우트 추가"
+    },
+    {
+      "id": "kernel-session",
+      "from": "kernel",
+      "to": "session",
+      "label": "라우트 정보",
+      "variant": "emphasis"
+    },
+    {
+      "id": "session-exchange",
+      "from": "session",
+      "to": "exchange",
+      "variant": "emphasis"
+    },
+    {
+      "id": "exchange-peers",
+      "from": "exchange",
+      "to": "peers",
+      "label": "BGP UPDATE",
+      "variant": "emphasis"
+    },
+    {
+      "id": "filter-exchange",
+      "from": "filter",
+      "to": "exchange",
+      "label": "export filter",
+      "variant": "dashed"
+    },
+    {
+      "id": "session-rr",
+      "from": "session",
+      "to": "rr",
+      "variant": "dashed"
+    }
+  ]
+}

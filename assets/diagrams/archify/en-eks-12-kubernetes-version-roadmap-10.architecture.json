@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 1.33 Enhancement Breakdown",
+    "output": "en-eks-12-kubernetes-version-roadmap-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      760,
+      520
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "release",
+      "type": "cloud",
+      "label": "Kubernetes 1.33 \"Octarine\"",
+      "sublabel": "April 2025 · 64 enhancements",
+      "pos": [
+        40,
+        228
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable (GA) · 18",
+      "sublabel": "Sidecar Containers and other GA features",
+      "pos": [
+        430,
+        70
+      ],
+      "size": [
+        250,
+        64
+      ],
+      "tag": "on by default"
+    },
+    {
+      "id": "beta",
+      "type": "backend",
+      "label": "Beta · 20",
+      "sublabel": "In-Place Pod Resize and more",
+      "pos": [
+        430,
+        228
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "alpha",
+      "type": "backend",
+      "label": "Alpha · 24",
+      "sublabel": "needs an explicit feature gate",
+      "pos": [
+        430,
+        386
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Distribution by maturity stage",
+      "wraps": [
+        "stable",
+        "beta",
+        "alpha"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "release-stable",
+      "from": "release",
+      "to": "stable",
+      "label": "18 (28%)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "release-beta",
+      "from": "release",
+      "to": "beta",
+      "label": "20 (31%)",
+      "labelDx": 50
+    },
+    {
+      "id": "release-alpha",
+      "from": "release",
+      "to": "alpha",
+      "label": "24 (38%)"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "1.33 release highlights",
+      "items": [
+        "64 enhancements -- the largest release of 2024-2025",
+        "Long-awaited features land: Sidecar Containers GA, In-Place Pod Resize Beta",
+        "The 18 Stable features are production-ready with no extra configuration"
+      ]
+    }
+  ]
+}

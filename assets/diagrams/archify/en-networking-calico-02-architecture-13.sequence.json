@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Packet Flow (Pod-to-Pod, Different Nodes)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      580
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "delivery path"
+        },
+        "default": {
+          "label": "encap · tunnel transmit"
+        },
+        "dashed": {
+          "label": "Direct mode (BGP)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "podA",
+      "type": "external",
+      "label": "Pod A",
+      "sublabel": "Node 1 · veth"
+    },
+    {
+      "id": "felix1",
+      "type": "security",
+      "label": "Felix/iptables",
+      "sublabel": "Node 1"
+    },
+    {
+      "id": "tunnel",
+      "type": "cloud",
+      "label": "IPIP/VXLAN",
+      "sublabel": "Tunnel (physical network)"
+    },
+    {
+      "id": "felix2",
+      "type": "security",
+      "label": "Felix/iptables",
+      "sublabel": "Node 2"
+    },
+    {
+      "id": "podB",
+      "type": "external",
+      "label": "Pod B",
+      "sublabel": "Node 2 · veth"
+    }
+  ],
+  "segments": [
+    {
+      "from": 235,
+      "to": 345,
+      "label": "IPIP/VXLAN mode — encapsulate, then send over the tunnel"
+    },
+    {
+      "from": 368,
+      "to": 440,
+      "label": "Direct mode — forward via BGP route"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "podA",
+      "to": "felix1",
+      "y": 200,
+      "label": "send packet (dst: Pod B)",
+      "variant": "emphasis",
+      "note": "egress policy check + route lookup"
+    },
+    {
+      "id": "encap",
+      "from": "felix1",
+      "to": "tunnel",
+      "y": 272,
+      "label": "encapsulate (outer IP: Node 2)"
+    },
+    {
+      "id": "transmit",
+      "from": "tunnel",
+      "to": "felix2",
+      "y": 318,
+      "label": "tunnel transmit",
+      "note": "decapsulated on Node 2"
+    },
+    {
+      "id": "direct",
+      "from": "felix1",
+      "to": "felix2",
+      "y": 408,
+      "label": "direct forward (BGP route)",
+      "variant": "dashed"
+    },
+    {
+      "id": "deliver",
+      "from": "felix2",
+      "to": "podB",
+      "y": 485,
+      "label": "deliver packet",
+      "variant": "emphasis",
+      "note": "delivered after ingress policy check"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "felix1",
+      "from": 195,
+      "to": 415,
+      "type": "security"
+    },
+    {
+      "participant": "felix2",
+      "from": 313,
+      "to": 492,
+      "type": "security"
+    }
+  ]
+}

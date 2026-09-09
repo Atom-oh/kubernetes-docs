@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 데이터 플레인 옵션",
+    "output": "ko-eks-01-eks-introduction-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "managed",
+        "label": "관리형 노드 그룹",
+        "focus": [
+          "mng",
+          "mng-lifecycle",
+          "mng-autoscale",
+          "mng-spot"
+        ],
+        "note": "EC2 노드 그룹의 수명 주기를 AWS가 관리하고, 오토 스케일링과 Spot 인스턴스를 지원한다."
+      },
+      {
+        "id": "self",
+        "label": "자체 관리형 노드",
+        "focus": [
+          "self",
+          "self-lifecycle",
+          "self-ami",
+          "self-bootstrap"
+        ],
+        "note": "사용자가 EC2 인스턴스를 직접 관리하며 수명 주기, AMI, 부트스트랩 스크립트를 자유롭게 정의한다."
+      },
+      {
+        "id": "fargate",
+        "label": "Fargate",
+        "focus": [
+          "fargate",
+          "fg-nonode",
+          "fg-billing",
+          "fg-lb"
+        ],
+        "note": "서버리스 컴퓨팅 엔진으로 노드 관리가 필요 없고 포드 단위로 과금되지만 로드 밸런서 직접 연결은 제한된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "mng",
+      "type": "cloud",
+      "label": "관리형 노드 그룹",
+      "sublabel": "EC2 · AWS 관리",
+      "pos": [
+        30,
+        148
+      ],
+      "size": [
+        165,
+        60
+      ]
+    },
+    {
+      "id": "mng-lifecycle",
+      "type": "backend",
+      "label": "노드 수명 주기 관리",
+      "pos": [
+        275,
+        40
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "mng-autoscale",
+      "type": "backend",
+      "label": "오토 스케일링",
+      "pos": [
+        275,
+        150
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "mng-spot",
+      "type": "backend",
+      "label": "Spot 인스턴스",
+      "pos": [
+        275,
+        260
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "self",
+      "type": "cloud",
+      "label": "자체 관리형 노드",
+      "sublabel": "EC2 · 사용자 관리",
+      "pos": [
+        470,
+        148
+      ],
+      "size": [
+        165,
+        60
+      ]
+    },
+    {
+      "id": "self-lifecycle",
+      "type": "backend",
+      "label": "사용자 정의 수명 주기",
+      "pos": [
+        715,
+        40
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "self-ami",
+      "type": "backend",
+      "label": "사용자 정의 AMI",
+      "pos": [
+        715,
+        150
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "self-bootstrap",
+      "type": "backend",
+      "label": "부트스트랩 스크립트",
+      "pos": [
+        715,
+        260
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "fargate",
+      "type": "cloud",
+      "label": "AWS Fargate",
+      "sublabel": "서버리스 컴퓨팅 엔진",
+      "pos": [
+        910,
+        148
+      ],
+      "size": [
+        165,
+        60
+      ]
+    },
+    {
+      "id": "fg-nonode",
+      "type": "backend",
+      "label": "노드 관리 불필요",
+      "pos": [
+        1155,
+        40
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "fg-billing",
+      "type": "backend",
+      "label": "포드 단위 과금",
+      "pos": [
+        1155,
+        150
+      ],
+      "size": [
+        165,
+        56
+      ]
+    },
+    {
+      "id": "fg-lb",
+      "type": "external",
+      "label": "로드 밸런서 직접 연결 불가",
+      "pos": [
+        1155,
+        260
+      ],
+      "size": [
+        165,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "옵션 1 · 관리형 노드 그룹",
+      "wraps": [
+        "mng",
+        "mng-lifecycle",
+        "mng-autoscale",
+        "mng-spot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "옵션 2 · 자체 관리형 노드",
+      "wraps": [
+        "self",
+        "self-lifecycle",
+        "self-ami",
+        "self-bootstrap"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "옵션 3 · AWS Fargate",
+      "wraps": [
+        "fargate",
+        "fg-nonode",
+        "fg-billing",
+        "fg-lb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mng-to-lifecycle",
+      "from": "mng",
+      "to": "mng-lifecycle",
+      "label": "AWS 관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mng-to-autoscale",
+      "from": "mng",
+      "to": "mng-autoscale",
+      "label": "지원",
+      "labelDx": 20
+    },
+    {
+      "id": "mng-to-spot",
+      "from": "mng",
+      "to": "mng-spot",
+      "label": "지원"
+    },
+    {
+      "id": "self-to-lifecycle",
+      "from": "self",
+      "to": "self-lifecycle",
+      "label": "사용자 관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "self-to-ami",
+      "from": "self",
+      "to": "self-ami",
+      "label": "지원",
+      "labelDx": 20
+    },
+    {
+      "id": "self-to-bootstrap",
+      "from": "self",
+      "to": "self-bootstrap",
+      "label": "지원"
+    },
+    {
+      "id": "fg-to-nonode",
+      "from": "fargate",
+      "to": "fg-nonode",
+      "label": "서버리스",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fg-to-billing",
+      "from": "fargate",
+      "to": "fg-billing",
+      "label": "지원",
+      "labelDx": 20
+    },
+    {
+      "id": "fg-to-lb",
+      "from": "fargate",
+      "to": "fg-lb",
+      "label": "제한",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "관리형 노드 그룹",
+      "items": [
+        "EC2 인스턴스로 구성된 노드 그룹",
+        "AWS가 노드 수명 주기를 관리한다",
+        "오토 스케일링과 Spot 인스턴스 지원"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "자체 관리형 노드",
+      "items": [
+        "사용자가 직접 관리하는 EC2 인스턴스",
+        "수명 주기, AMI, 부트스트랩 스크립트를 직접 정의"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "AWS Fargate",
+      "items": [
+        "서버리스 컴퓨팅 엔진 — 노드 관리 불필요",
+        "포드 실행 시간과 리소스 사용량 기준 과금",
+        "로드 밸런서 직접 연결은 제한"
+      ]
+    }
+  ]
+}

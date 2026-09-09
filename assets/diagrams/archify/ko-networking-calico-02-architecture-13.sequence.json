@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "패킷 흐름 (Pod-to-Pod, 다른 노드)",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      580
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "패킷 전달 경로"
+        },
+        "default": {
+          "label": "캡슐화 · 터널 전송"
+        },
+        "dashed": {
+          "label": "Direct 모드 (BGP)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "podA",
+      "type": "external",
+      "label": "Pod A",
+      "sublabel": "Node 1 · veth"
+    },
+    {
+      "id": "felix1",
+      "type": "security",
+      "label": "Felix/iptables",
+      "sublabel": "Node 1"
+    },
+    {
+      "id": "tunnel",
+      "type": "cloud",
+      "label": "IPIP/VXLAN",
+      "sublabel": "터널 (물리 네트워크)"
+    },
+    {
+      "id": "felix2",
+      "type": "security",
+      "label": "Felix/iptables",
+      "sublabel": "Node 2"
+    },
+    {
+      "id": "podB",
+      "type": "external",
+      "label": "Pod B",
+      "sublabel": "Node 2 · veth"
+    }
+  ],
+  "segments": [
+    {
+      "from": 235,
+      "to": 345,
+      "label": "IPIP/VXLAN 모드 — 캡슐화 후 터널 전송"
+    },
+    {
+      "from": 368,
+      "to": 440,
+      "label": "Direct 모드 — BGP 라우트로 직접 전송"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "podA",
+      "to": "felix1",
+      "y": 200,
+      "label": "패킷 전송 (dst: Pod B)",
+      "variant": "emphasis",
+      "note": "Egress Policy 검사 + 라우팅 조회"
+    },
+    {
+      "id": "encap",
+      "from": "felix1",
+      "to": "tunnel",
+      "y": 272,
+      "label": "캡슐화 (outer IP: Node 2)"
+    },
+    {
+      "id": "transmit",
+      "from": "tunnel",
+      "to": "felix2",
+      "y": 318,
+      "label": "터널 전송",
+      "note": "Node 2에서 디캡슐화"
+    },
+    {
+      "id": "direct",
+      "from": "felix1",
+      "to": "felix2",
+      "y": 408,
+      "label": "직접 전송 (BGP 라우트)",
+      "variant": "dashed"
+    },
+    {
+      "id": "deliver",
+      "from": "felix2",
+      "to": "podB",
+      "y": 485,
+      "label": "패킷 전달",
+      "variant": "emphasis",
+      "note": "Ingress Policy 검사 통과 후 전달"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "felix1",
+      "from": 195,
+      "to": 415,
+      "type": "security"
+    },
+    {
+      "participant": "felix2",
+      "from": 313,
+      "to": 492,
+      "type": "security"
+    }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traditional Kubernetes Networking Challenges",
+    "locale": "en",
+    "output": "en-networking-calico-01-introduction-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "traditional",
+        "label": "Traditional (kube-proxy)",
+        "focus": [
+          "kube-proxy",
+          "iptables-rules",
+          "linear-matching",
+          "degrades"
+        ],
+        "note": "kube-proxy programs linear iptables chains; every packet traverses O(n) rules."
+      },
+      {
+        "id": "calico",
+        "label": "Calico approach",
+        "focus": [
+          "felix",
+          "optimized-dataplane",
+          "ip-sets",
+          "consistent"
+        ],
+        "note": "Felix programs optimized iptables or eBPF with IP sets for O(1) lookups."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "kube-proxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "Service proxy",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "iptables-rules",
+      "type": "security",
+      "label": "iptables rules",
+      "sublabel": "linear chains",
+      "pos": [
+        350,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "linear-matching",
+      "type": "backend",
+      "label": "Linear rule matching",
+      "sublabel": "O(n) rule traversal",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "degrades",
+      "type": "external",
+      "label": "Performance degradation at scale",
+      "sublabel": "2-5ms added latency",
+      "pos": [
+        930,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "Calico node agent",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "optimized-dataplane",
+      "type": "security",
+      "label": "Optimized iptables / eBPF",
+      "sublabel": "data plane options",
+      "pos": [
+        350,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "ip-sets",
+      "type": "backend",
+      "label": "IP sets for efficient matching",
+      "sublabel": "O(1) IP set lookups",
+      "pos": [
+        640,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "consistent",
+      "type": "external",
+      "label": "Consistent performance at scale",
+      "sublabel": "<0.5ms added latency",
+      "pos": [
+        930,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Traditional Approach",
+      "wraps": [
+        "kube-proxy",
+        "iptables-rules",
+        "linear-matching",
+        "degrades"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Calico Approach",
+      "wraps": [
+        "felix",
+        "optimized-dataplane",
+        "ip-sets",
+        "consistent"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "proxy-to-rules",
+      "from": "kube-proxy",
+      "to": "iptables-rules",
+      "label": "programs"
+    },
+    {
+      "id": "rules-to-linear",
+      "from": "iptables-rules",
+      "to": "linear-matching"
+    },
+    {
+      "id": "linear-to-degrades",
+      "from": "linear-matching",
+      "to": "degrades",
+      "variant": "dashed"
+    },
+    {
+      "id": "felix-to-dataplane",
+      "from": "felix",
+      "to": "optimized-dataplane",
+      "label": "programs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dataplane-to-ipsets",
+      "from": "optimized-dataplane",
+      "to": "ip-sets",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ipsets-to-consistent",
+      "from": "ip-sets",
+      "to": "consistent",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Traditional (kube-proxy)",
+      "items": [
+        "Linear iptables chains, O(n) rule traversal",
+        "1000 nodes / 50,000 pods: ~150,000 rules, 2-5ms added latency, ~500MB per node"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Calico",
+      "items": [
+        "IP sets + optimized chains, O(1) lookups",
+        "Data plane options: iptables, nftables, eBPF",
+        "Same cluster: ~5,000 rules + IP sets, <0.5ms added latency, ~150MB per node"
+      ]
+    }
+  ]
+}

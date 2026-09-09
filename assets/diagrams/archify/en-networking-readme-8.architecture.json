@@ -1,0 +1,317 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Default Networking Architecture",
+    "output": "en-networking-readme-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "http-path",
+        "label": "HTTP(S) ingress path",
+        "focus": [
+          "internet",
+          "igw",
+          "alb",
+          "worker1",
+          "worker2"
+        ],
+        "note": "Internet traffic reaches the worker nodes through the VPC's Internet Gateway and the ALB."
+      },
+      {
+        "id": "tcp-path",
+        "label": "TCP/UDP ingress path",
+        "focus": [
+          "internet",
+          "nlb",
+          "worker1"
+        ],
+        "note": "L4 traffic is forwarded straight to a worker node through the NLB."
+      },
+      {
+        "id": "vpc-layout",
+        "label": "VPC layout",
+        "focus": [
+          "igw",
+          "natgw",
+          "pub-a",
+          "priv-a",
+          "pub-b",
+          "priv-b",
+          "control-plane",
+          "worker1",
+          "worker2"
+        ],
+        "note": "Each Availability Zone has a public and a private subnet; the IGW, NAT Gateway and AWS-managed control plane live inside the VPC."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "External clients",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application LB",
+      "sublabel": "ALB · L7",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Network LB",
+      "sublabel": "NLB · L4",
+      "pos": [
+        270,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "igw",
+      "type": "cloud",
+      "label": "Internet Gateway",
+      "sublabel": "IGW",
+      "pos": [
+        530,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "natgw",
+      "type": "cloud",
+      "label": "NAT Gateway",
+      "sublabel": "Outbound",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pub-a",
+      "type": "cloud",
+      "label": "Public subnet",
+      "pos": [
+        910,
+        120
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "priv-a",
+      "type": "cloud",
+      "label": "Private subnet",
+      "pos": [
+        910,
+        200
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "pub-b",
+      "type": "cloud",
+      "label": "Public subnet",
+      "pos": [
+        1110,
+        120
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "priv-b",
+      "type": "cloud",
+      "label": "Private subnet",
+      "pos": [
+        1110,
+        200
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "control-plane",
+      "type": "backend",
+      "label": "Control Plane",
+      "sublabel": "AWS managed",
+      "pos": [
+        720,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "worker1",
+      "type": "backend",
+      "label": "Worker Node 1",
+      "sublabel": "Node group",
+      "pos": [
+        720,
+        480
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "worker2",
+      "type": "backend",
+      "label": "Worker Node 2",
+      "sublabel": "Node group",
+      "pos": [
+        930,
+        480
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Cloud",
+      "pad": 72,
+      "wraps": [
+        "alb",
+        "nlb",
+        "igw",
+        "natgw",
+        "pub-a",
+        "priv-a",
+        "pub-b",
+        "priv-b",
+        "control-plane",
+        "worker1",
+        "worker2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC",
+      "pad": 46,
+      "wraps": [
+        "igw",
+        "natgw",
+        "pub-a",
+        "priv-a",
+        "pub-b",
+        "priv-b",
+        "control-plane",
+        "worker1",
+        "worker2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Availability Zone A",
+      "wraps": [
+        "pub-a",
+        "priv-a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Availability Zone B",
+      "wraps": [
+        "pub-b",
+        "priv-b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "EKS cluster",
+      "wraps": [
+        "control-plane",
+        "worker1",
+        "worker2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "internet-igw",
+      "from": "internet",
+      "to": "igw",
+      "label": "HTTP(S)",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "igw-alb",
+      "from": "igw",
+      "to": "alb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-worker1",
+      "from": "alb",
+      "to": "worker1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-worker2",
+      "from": "alb",
+      "to": "worker2"
+    },
+    {
+      "id": "internet-nlb",
+      "from": "internet",
+      "to": "nlb",
+      "label": "TCP/UDP"
+    },
+    {
+      "id": "nlb-worker1",
+      "from": "nlb",
+      "to": "worker1"
+    }
+  ]
+}

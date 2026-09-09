@@ -22,7 +22,9 @@ EKS에서는 AWS VPC CNI가 Pod 네트워킹을 담당하고, Calico는 Network 
 
 ### 트래픽 흐름
 
-![Source Pod가 보낸 패킷을 Calico Felix가 iptables로 Policy를 평가해 허용 시 VPC ENI를 거쳐 목적지에 도달시키고, 거부 시 iptables가 패킷을 드롭해 Pod로 되돌리는 시퀀스를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-1.svg)
+![Source Pod가 보낸 아웃바운드 패킷을 Calico Felix가 iptables로 Policy를 평가해 허용 시 VPC ENI와 AWS VPC 라우팅을 거쳐 목적지에 도달시키고, 거부 시 iptables가 패킷을 드롭해 Pod로 되돌리는 시퀀스를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-08-eks-integration-1.html)
 
 ## 설치 방법 비교
 
@@ -206,7 +208,9 @@ helm upgrade calico projectcalico/tigera-operator \
 
 EKS v1.25+에서는 AWS가 자체 Network Policy Controller를 제공합니다. 이것은 Calico와 별개의 구현입니다.
 
-![Kubernetes NetworkPolicy는 AWS Native Network Policy Controller와 Calico Felix 양쪽에서 처리될 수 있지만, Calico 전용 NetworkPolicy는 Felix에서만 처리됨을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-2.svg)
+![Kubernetes NetworkPolicy는 VPC CNI의 Network Policy Controller(NPC) 또는 Calico의 Felix 중 하나가 강제하고, GlobalNetworkPolicy 같은 Calico 전용 정책은 Felix만 처리하므로 두 엔진을 동시에 활성화하면 충돌한다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-08-eks-integration-2.html)
 
 ### 기능 비교
 

@@ -18,11 +18,15 @@ Felix는 Calico의 핵심 데이터플레인 에이전트로, 각 노드에서 D
 
 ### Felix의 주요 책임
 
-![데이터스토어의 변경 사항을 받아 Felix가 인터페이스 관리·라우팅 테이블·방화벽 규칙·정책 적용을 수행하고 헬스체크는 별도로 동작함을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-1.svg)
+![데이터스토어 변경을 감시한 Felix가 라우팅·정책/방화벽·인터페이스 관리 모듈을 통해 노드의 라우팅 테이블, iptables/eBPF 규칙, veth 인터페이스를 구성하고 헬스체크 상태를 데이터스토어에 보고하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-1.html)
 
 ### Felix 내부 워크플로우
 
-![Felix가 데이터스토어와 동기화해 초기 규칙을 프로그래밍하고, Watch Loop로 변경 이벤트를 반영하며, Pod 생성 시 CNI 호출에 대응해 veth·라우트·정책 규칙을 구성하는 내부 워크플로우를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-2.svg)
+![Felix가 데이터스토어와 동기화해 초기 규칙을 프로그래밍하고, Watch Loop로 변경 이벤트를 반영하며, Pod 생성 시 CNI 호출에 대응해 veth·라우트·정책 규칙을 구성하는 내부 워크플로우를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-2.html)
 
 ### Felix 설정 상세
 
@@ -127,7 +131,9 @@ spec:
 
 Felix가 생성하는 iptables 규칙 체인 구조:
 
-![Filter 테이블의 INPUT/FORWARD 체인과 NAT 테이블의 POSTROUTING 체인이 각각 cali- 접두 체인을 거쳐 워크로드 정책 체인과 NAT 아웃고잉 규칙으로 분기하는 iptables 체인 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-3.svg)
+![Filter 테이블의 INPUT/FORWARD 체인과 NAT 테이블의 POSTROUTING 체인이 각각 cali- 접두 체인을 거쳐 워크로드 정책 체인과 NAT 아웃고잉 규칙으로 분기하는 iptables 체인 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-3.html)
 
 ## BIRD 심층 분석
 
@@ -135,21 +141,29 @@ BIRD (BIRD Internet Routing Daemon)는 BGP 라우팅을 담당하는 컴포넌�
 
 ### BIRD의 역할
 
-![커널 라우팅 테이블 정보를 받은 BIRD가 BGP 세션을 관리하고 Pod CIDR 라우트를 BGP 피어에게 교환하며, Route Reflector와 라우트 필터링 기능도 갖고 있음을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-4.svg)
+![Felix가 커널 라우팅 테이블에 추가한 라우트 정보를 BIRD가 받아 BGP 세션을 관리하고, 라우트 교환 기능으로 Pod CIDR를 BGP UPDATE로 다른 노드와 외부 라우터에 광고하며, 대규모 클러스터용 Route Reflector와 export filter 기반 라우트 필터링 기능도 BIRD 안에 있음을 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-4.html)
 
 ### BGP 클러스터 토폴로지
 
 #### Full Mesh (소규모 클러스터)
 
-![50노드 미만의 소규모 클러스터에서 노드 4대가 모두 서로 iBGP로 직접 연결되는 Full Mesh BGP 토폴로지를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-5.svg)
+![50노드 미만의 소규모 클러스터에서 노드 4대가 모두 서로 iBGP로 직접 연결되는 Full Mesh BGP 토폴로지를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-5.html)
 
 #### Route Reflector (대규모 클러스터)
 
-![50노드 이상의 대규모 클러스터에서 각 노드가 전체 메시 대신 Route Reflector 두 대에만 iBGP로 연결되는 토폴로지를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-6.svg)
+![50노드 이상의 대규모 클러스터에서 각 노드가 전체 메시 대신 Route Reflector 두 대에만 iBGP로 연결되는 토폴로지를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-6.html)
 
 ### 외부 네트워크 연동
 
-![각 워커 노드가 ToR 스위치와 Spine 스위치를 거쳐 데이터센터의 Core 라우터까지 eBGP로 계층적으로 연결되는 외부 네트워크 연동 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-7.svg)
+![각 워커 노드(AS 64512)가 ToR 스위치(AS 64513)와 Spine 스위치(AS 64514)를 거쳐 데이터센터의 Core 라우터(AS 64515)까지 eBGP로 계층적으로 연결되는 외부 네트워크 연동 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-7.html)
 
 ## confd 심층 분석
 
@@ -157,7 +171,9 @@ confd는 BIRD 설정 파일을 동적으로 생성하는 템플릿 엔진입니�
 
 ### confd 동작 방식
 
-![confd가 데이터스토어의 BGP 설정을 감시해 템플릿과 병합한 bird.cfg를 생성하고 BIRD 프로세스를 리로드하며, Watch Loop로 이후 변경도 반영하는 동작 방식을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-8.svg)
+![confd가 데이터스토어의 BGP 설정을 감시해 템플릿과 병합한 bird.cfg를 생성하고 BIRD 프로세스를 리로드하며, Watch Loop로 이후 변경도 반영하는 동작 방식을 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-8.html)
 
 ### 생성되는 BIRD 설정 예시
 
@@ -225,9 +241,13 @@ Typha는 대규모 클러스터(50+ 노드)에서 필수적인 팬아웃 프록�
 
 ### Typha의 필요성
 
-![Typha 없이 모든 Felix가 API 서버에 직접 Watch 연결을 맺어 노드 수만큼 커넥션이 늘어나 API 서버 부하가 커지는 문제 상황을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-9.svg)
+![Typha 없이 모든 Felix가 Kubernetes API Server(Datastore)에 직접 Watch 연결을 맺어 노드 수만큼 커넥션이 늘어나 API Server 부하가 커지는 문제 상황을 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-9.png)
 
-![Typha 세 대가 API 서버에 대한 Watch 연결을 대신 맺고 각 Felix 그룹으로 변경 사항을 팬아웃해 API 서버 커넥션 수를 줄이는 해결책 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-10.svg)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-9.html)
+
+![Typha 세 대가 API 서버에 대한 Watch 연결을 대신 맺고 각 Felix 그룹으로 변경 사항을 팬아웃해 API 서버 커넥션 수를 줄이는 해결책 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-10.html)
 
 ### Typha 스케일링 계산
 
@@ -401,7 +421,9 @@ kube-controllers는 Kubernetes와 Calico 데이터스토어 간의 동기화를 
 
 ### 포함된 컨트롤러
 
-![kube-controllers 안의 다섯 컨트롤러가 각각 대응하는 쿠버네티스 리소스와 Calico 리소스를 양방향으로 동기화하는 매핑을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-11.svg)
+![calico-kube-controllers Pod 안의 Policy, Namespace, ServiceAccount, WorkloadEndpoint, Node 다섯 컨트롤러가 각각 Kubernetes 리소스를 Watch하여 Calico 데이터스토어의 Policy, Profile, WorkloadEndpoint, Node 리소스로 동기화하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-11.html)
 
 ### 컨트롤러별 역할
 
@@ -526,11 +548,15 @@ spec:
 
 ### Pod 생성 시 전체 흐름
 
-![kubectl 요청이 API 서버·Kubelet을 거쳐 Calico CNI가 IP와 네트워크를 구성하고, Felix가 이를 감지해 규칙을 적용하고 BGP로 광고하기까지의 Pod 생성 전체 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-12.svg)
+![kubectl 요청이 API 서버와 Kubelet을 거쳐 Calico CNI가 IPAM으로 IP를 할당하고 veth·라우트를 구성한 뒤, Felix가 엔드포인트 변경을 감지해 규칙을 반영하고 BIRD가 BGP로 광고하며 Pod가 Running으로 갱신되기까지의 Pod 생성 전체 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-12.html)
 
 ### 패킷 흐름 (Pod-to-Pod, 다른 노드)
 
-![다른 노드의 Pod로 향하는 패킷이 정책 검사를 거친 뒤 IPIP/VXLAN 캡슐화 또는 BGP 기반 직접 라우팅 중 한 경로로 전달되어 목적지 노드에서 다시 정책 검사를 받고 전달되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-02-architecture-13.svg)
+![다른 노드의 Pod로 향하는 패킷이 Felix/iptables의 Egress Policy 검사를 거친 뒤 IPIP/VXLAN 캡슐화 또는 BGP 기반 직접 라우팅 중 한 경로로 전달되어 목적지 노드에서 Ingress Policy 검사를 받고 Pod B로 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-13.html)
 
 ***
 

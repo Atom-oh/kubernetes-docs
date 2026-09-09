@@ -14,13 +14,17 @@ Kubernetes는 다음과 같은 네트워킹 요구사항을 기반으로 설계�
 2. **모든 노드는 NAT 없이 모든 Pod와 통신할 수 있어야 함**
 3. **Pod가 자신을 보는 IP와 다른 Pod가 그 Pod를 보는 IP가 동일해야 함**
 
-![Pod 네트워킹부터 Service, Ingress, Network Policy까지 쌓이는 쿠버네티스 네트워킹 4단계 계층과 외부 트래픽의 진입점인 Ingress 계층을 보여주는 다이어그램.](../.gitbook/assets/ko-networking-README-0.png)
+![Pod 네트워킹, Service 네트워킹, Ingress 네트워킹, Network Policy 순으로 쌓이는 Kubernetes 네트워킹 4단계 계층과 각 계층의 역할을 보여준다.](../.gitbook/assets/ko-networking-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-0.html)
 
 ### Pod 네트워킹
 
 Pod 네트워킹은 Kubernetes 네트워킹의 가장 기본적인 계층입니다. 각 Pod는 고유한 IP 주소를 가지며, 클러스터 내의 다른 모든 Pod와 직접 통신할 수 있습니다.
 
-![Node 1의 Pod A, B와 Node 2의 Pod C, D가 노드 경계를 넘어 서로 직접 IP로 양방향 통신하는 모습을 보여주는 다이어그램.](../.gitbook/assets/ko-networking-README-1.png)
+![Node 1의 Pod A, B와 Node 2의 Pod C, D가 각자 고유한 IP를 가지고 같은 노드 안에서든 노드 경계를 넘어서든 NAT 없이 서로 직접 통신하는 모습을 보여준다.](../.gitbook/assets/ko-networking-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-1.html)
 
 #### Pod 네트워킹 구현 방식
 
@@ -34,7 +38,9 @@ Pod 네트워킹은 Kubernetes 네트워킹의 가장 기본적인 계층입니�
 
 Service는 Pod 집합에 대한 안정적인 네트워크 엔드포인트를 제공합니다.
 
-![클라이언트, 외부 트래픽, 애플리케이션이 각각 ClusterIP, NodePort, LoadBalancer, ExternalName 서비스로 연결되는 모습을 보여주는 다이어그램.](../.gitbook/assets/ko-networking-README-2.png)
+![클러스터 내부 클라이언트, 인터넷 외부 트래픽, 클러스터 내 애플리케이션이 각각 ClusterIP, NodePort와 LoadBalancer, ExternalName Service로 진입하는 경로를 보여준다.](../.gitbook/assets/ko-networking-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-2.html)
 
 #### Service 유형별 특징
 
@@ -90,7 +96,9 @@ spec:
 
 Ingress는 HTTP/HTTPS 트래픽을 클러스터 내부 Service로 라우팅하는 규칙을 정의합니다.
 
-![인터넷에서 들어온 트래픽이 Ingress Controller를 통해 세 개의 Service로 라우팅되고, 각 Service가 자신이 속한 Pod로 트래픽을 다시 전달하는 흐름을 보여주는 다이어그램.](../.gitbook/assets/ko-networking-README-3.png)
+![인터넷에서 들어온 HTTP 트래픽이 Ingress Controller의 호스트/경로 규칙에 따라 세 개의 Service로 라우팅되고, 각 Service가 자신이 속한 Pod로 트래픽을 다시 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-networking-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-3.html)
 
 ```yaml
 # Ingress 예시
@@ -138,11 +146,15 @@ CNI는 컨테이너 네트워크 연결을 위한 표준 인터페이스입니�
 
 ### CNI 동작 방식
 
-![Kubelet의 ADD 호출로 CNI Plugin이 네트워크 인터페이스 생성, IP 주소 할당, 라우팅 설정을 순서대로 수행한 뒤 IP를 반환하고, Pod 삭제 시 DEL 호출로 리소스를 정리하는 순서도.](../.gitbook/assets/ko-networking-README-4.png)
+![Kubelet의 ADD 호출에 CNI Plugin이 네트워크 인터페이스 생성, IP 주소 할당, 라우팅 설정을 마치고 IP를 반환하며, Pod 삭제 시 DEL 호출로 리소스를 정리하는 순서를 보여준다.](../.gitbook/assets/ko-networking-readme-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-4.html)
 
 ### CNI 플러그인 구성 요소
 
-![Kubelet과 CNI Agent가 각 노드의 CNI Binary를 호출하고, CNI Binary가 CNI Config와 IPAM Plugin을 참조해 IP 주소와 네트워크 설정을 처리하는 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-networking-README-5.png)
+![Kubelet과 CNI Agent가 각 노드의 CNI Binary를 호출하고, CNI Binary가 CNI Config와 IPAM Plugin을 참조해 IP 주소와 네트워크 설정을 처리하는 구조를 보여준다.](../.gitbook/assets/ko-networking-readme-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-5.html)
 
 ## CNI 비교 매트릭스
 
@@ -189,13 +201,17 @@ CNI는 컨테이너 네트워크 연결을 위한 표준 인터페이스입니�
 
 #### 성능 벤치마크 (상대적 비교)
 
-![Cilium eBPF를 100%로 두었을 때 AWS VPC CNI 98%, Calico eBPF 95%, Calico iptables 85%, Flannel 80%, Weave 75% 순으로 상대적 처리량이 낮아지는 막대그래프.](../.gitbook/assets/ko-networking-README-6.png)
+![Cilium eBPF 모드를 100% 기준으로 두고 AWS VPC CNI 98%, Calico eBPF 95%가 상위권을, Calico iptables 85%, Flannel 80%, Weave 75%가 하위권을 이루는 CNI 상대 처리량 순위를 보여준다.](../.gitbook/assets/ko-networking-readme-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-6.html)
 
 ## CNI 선택 가이드
 
 ### 의사결정 플로우차트
 
-![AWS EKS 사용 여부를 먼저 확인한 뒤, EKS 환경에서는 필요한 Network Policy 수준에 따라 VPC CNI, Calico, Cilium 중 하나를, 비EKS 환경에서는 환경 특성에 따라 Flannel, Calico, Cilium 중 하나를 추천하는 CNI 선택 흐름도.](../.gitbook/assets/ko-networking-README-7.png)
+![AWS EKS 사용 여부를 먼저 확인한 뒤, EKS 환경에서는 필요한 Network Policy 수준에 따라 AWS VPC CNI, Calico, Cilium 중 하나를, 비EKS 환경에서는 환경 특성에 따라 Flannel, Calico, Cilium 중 하나를 권장하는 CNI 선택 흐름을 보여준다.](../.gitbook/assets/ko-networking-readme-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-7.html)
 
 ### 사용 사례별 권장 CNI
 
@@ -258,13 +274,17 @@ addons:
 
 ### EKS 기본 네트워킹 아키텍처
 
-![인터넷 트래픽이 Internet Gateway를 거쳐 ALB로, 또는 곧바로 NLB로 진입한 뒤 VPC 안 EKS 클러스터의 Worker Node로 전달되며, VPC 안에는 다중 가용영역 서브넷과 NAT Gateway, Control Plane이 함께 구성되어 있음을 보여주는 다이어그램.](../.gitbook/assets/ko-networking-README-8.png)
+![인터넷 트래픽이 VPC 안의 Internet Gateway를 거쳐 ALB로, 또는 곧바로 NLB로 진입한 뒤 EKS 클러스터의 Worker Node로 전달되며, VPC 안에는 가용영역 A·B마다 퍼블릭/프라이빗 서브넷이 있고 NAT Gateway와 AWS 관리형 Control Plane이 함께 구성되어 있음을 보여주는 다이어그램.](../.gitbook/assets/ko-networking-readme-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-8.html)
 
 ### VPC CNI 동작 방식
 
 AWS VPC CNI는 각 Pod에 VPC의 실제 IP 주소를 할당합니다.
 
-![Worker Node의 Primary ENI가 Pod 1과 Pod 2에, Secondary ENI(eth1)가 Pod 3과 Pod 4에 각각 보조 IP를 할당하는 AWS VPC CNI의 ENI-Pod IP 매핑 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-networking-README-9.png)
+![Worker Node의 Primary ENI가 Pod 1과 Pod 2에, Secondary ENI(eth1)가 Pod 3과 Pod 4에 각각 보조 IP를 할당하고 eth2는 여유 용량으로 대기하는 AWS VPC CNI의 ENI-Pod IP 매핑 구조를 보여준다.](../.gitbook/assets/ko-networking-readme-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-9.html)
 
 #### ENI 및 IP 제한
 

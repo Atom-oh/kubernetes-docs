@@ -97,7 +97,9 @@ eBPF의 주요 특징:
 
 Cilium은 eBPF를 기반으로 한 데이터 플레인과 Kubernetes와 통합되는 컨트롤 플레인으로 구성됩니다.
 
-![Cilium Operator와 Cilium API Server로 구성된 Control Plane이 Data Plane의 Cilium Agent를 관리하고, Agent가 eBPF Programs를 로드하며, Agent가 수집한 메트릭이 Hubble Server → Hubble Relay → Hubble UI로 이어지는 Observability 계층으로 전달되는 Cilium 아키텍처를 보여준다.](../../.gitbook/assets/ko-networking-cilium-README-0.png)
+![Cilium Operator와 Cilium API Server로 구성된 Control Plane이 Data Plane의 Cilium Agent를 관리하고, Agent가 eBPF Programs를 로드하며, Agent가 수집한 메트릭이 Hubble Server → Hubble Relay → Hubble UI로 이어지는 Observability 계층으로 전달되는 Cilium 아키텍처를 보여준다.](../../.gitbook/assets/ko-networking-cilium-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-readme-0.html)
 
 ### 주요 구성 요소
 

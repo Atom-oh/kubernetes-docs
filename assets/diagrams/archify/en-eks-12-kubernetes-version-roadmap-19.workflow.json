@@ -1,0 +1,201 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Upgrade Priority Matrix",
+    "locale": "en",
+    "output": "en-eks-12-kubernetes-version-roadmap-19.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "monitor",
+        "label": "Monitor quadrant",
+        "focus": [
+          "fleet1",
+          "fleet5"
+        ],
+        "note": "Small fleets with stable extended-support exposure: track deadlines, upgrade on the normal cadence."
+      },
+      {
+        "id": "plan",
+        "label": "Plan and schedule",
+        "focus": [
+          "fleet10",
+          "fleet25",
+          "fleet50"
+        ],
+        "note": "Complex fleets where extended support becomes urgent: schedule upgrade waves ahead of the standard-support end date."
+      },
+      {
+        "id": "cost",
+        "label": "Cost-risk trend",
+        "focus": [
+          "fleet1",
+          "fleet5",
+          "fleet10",
+          "fleet25",
+          "fleet50"
+        ],
+        "note": "Each cluster left in extended support adds $4,380 per year, so risk grows with fleet size."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Fleet profile"
+        },
+        "security": {
+          "label": "Highest cost-risk exposure"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "urgent",
+      "label": "Urgent (high extended-support cost risk)"
+    },
+    {
+      "id": "stable",
+      "label": "Stable (low extended-support cost risk)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "simple",
+      "label": "Simple fleet",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "complex",
+      "label": "Complex fleet",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "q_plan",
+      "label": "Plan & schedule",
+      "lane": "urgent",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    },
+    {
+      "id": "q_monitor",
+      "label": "Monitor",
+      "lane": "stable",
+      "fromCol": 0,
+      "toCol": 2
+    }
+  ],
+  "mainPath": [
+    "fleet1",
+    "fleet5",
+    "fleet10",
+    "fleet25",
+    "fleet50"
+  ],
+  "nodes": [
+    {
+      "id": "fleet1",
+      "lane": "stable",
+      "col": 0,
+      "type": "frontend",
+      "label": "1 cluster",
+      "sublabel": "simple apps",
+      "tag": "$4,380/yr"
+    },
+    {
+      "id": "fleet5",
+      "lane": "stable",
+      "col": 1,
+      "type": "frontend",
+      "label": "5 clusters",
+      "sublabel": "mixed workloads",
+      "tag": "$21,900/yr"
+    },
+    {
+      "id": "fleet10",
+      "lane": "urgent",
+      "col": 3,
+      "type": "frontend",
+      "label": "10 clusters",
+      "sublabel": "stateful apps",
+      "tag": "$43,800/yr"
+    },
+    {
+      "id": "fleet25",
+      "lane": "urgent",
+      "col": 4,
+      "type": "frontend",
+      "label": "25 clusters",
+      "sublabel": "multi-team",
+      "tag": "$109,500/yr"
+    },
+    {
+      "id": "fleet50",
+      "lane": "urgent",
+      "col": 5,
+      "type": "security",
+      "label": "50+ clusters",
+      "sublabel": "enterprise",
+      "tag": "highest cost risk"
+    }
+  ],
+  "edges": [
+    {
+      "from": "fleet1",
+      "to": "fleet5"
+    },
+    {
+      "from": "fleet5",
+      "to": "fleet10",
+      "label": "fleet grows"
+    },
+    {
+      "from": "fleet10",
+      "to": "fleet25"
+    },
+    {
+      "from": "fleet25",
+      "to": "fleet50",
+      "label": "$219,000+/yr",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Extended Support Cost",
+      "items": [
+        "Standard support: $0.10/hour, about $876 per cluster per year",
+        "Extended support: $0.60/hour, about $5,256 per cluster per year",
+        "Every cluster left in extended support adds $4,380 per year"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Reading the Matrix",
+      "items": [
+        "Horizontal axis: fleet complexity, from simple to complex",
+        "Vertical axis: urgency driven by extended-support cost exposure",
+        "Quadrants: Monitor, Invest in automation, Upgrade immediately, Plan & schedule"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Enterprise Fleet",
+      "items": [
+        "50+ clusters in extended support cost $219,000 or more per year",
+        "Highest cost-risk exposure lands in the Plan & schedule quadrant",
+        "At 100 clusters the extended-support premium reaches $438,000 per year"
+      ]
+    }
+  ]
+}

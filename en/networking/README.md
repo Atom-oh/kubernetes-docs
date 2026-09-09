@@ -14,13 +14,17 @@ Kubernetes is designed based on the following networking requirements:
 2. **Every Node can communicate with every Pod without NAT**
 3. **The IP that a Pod sees itself as is the same IP that others see it as**
 
-![Four stacked layers show how Kubernetes networking is built up from pod-to-pod connectivity through service discovery, ingress routing, and network policy enforcement.](../.gitbook/assets/en-networking-README-0.png)
+![Four stacked layers show how Kubernetes networking is built up from pod-to-pod connectivity through service discovery, ingress routing, and network policy enforcement.](../.gitbook/assets/en-networking-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-0.html)
 
 ### Pod Networking
 
 Pod networking is the most fundamental layer of Kubernetes networking. Each Pod has a unique IP address and can communicate directly with all other Pods in the cluster.
 
-![Four pods spread across two worker nodes each hold a unique cluster IP and can reach every other pod directly, whether it lives on the same node or a different one.](../.gitbook/assets/en-networking-README-1.png)
+![Four pods spread across two worker nodes each hold a unique cluster IP and can reach every other pod directly without NAT, whether it lives on the same node or a different one.](../.gitbook/assets/en-networking-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-1.html)
 
 #### Pod Networking Implementation Methods
 
@@ -34,7 +38,9 @@ Pod networking is the most fundamental layer of Kubernetes networking. Each Pod 
 
 Services provide stable network endpoints for a set of Pods.
 
-![Client, external, and in-cluster traffic each reach pods through a different Service type: ClusterIP for internal-only calls, NodePort and LoadBalancer for external entry, and ExternalName for DNS mapping to an outside system.](../.gitbook/assets/en-networking-README-2.png)
+![Client, external, and in-cluster traffic each reach pods through a different Service type: ClusterIP for internal-only calls, NodePort and LoadBalancer for external entry, and ExternalName for DNS mapping to an outside system.](../.gitbook/assets/en-networking-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-2.html)
 
 #### Service Type Characteristics
 
@@ -90,7 +96,9 @@ spec:
 
 Ingress defines rules for routing HTTP/HTTPS traffic to internal cluster Services.
 
-![An Ingress Controller receives all internet traffic and fans it out by host and path rule to three Services, each of which load-balances to its own backing pods.](../.gitbook/assets/en-networking-README-3.png)
+![An Ingress Controller receives all internet traffic and fans it out by host and path rule to three Services, each of which load-balances to its own backing pods.](../.gitbook/assets/en-networking-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-3.html)
 
 ```yaml
 # Ingress Example
@@ -138,11 +146,15 @@ CNI is a standard interface for container network connectivity. Kubernetes imple
 
 ### How CNI Works
 
-![The kubelet calls the CNI plugin's ADD hook on pod creation, which configures the network and returns the pod's IP, then calls DEL on pod deletion to clean the network back up.](../.gitbook/assets/en-networking-README-4.png)
+![The kubelet calls the CNI plugin's ADD hook on pod creation, which configures the network and returns the pod's IP, then calls DEL on pod deletion to clean the network back up.](../.gitbook/assets/en-networking-readme-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-4.html)
 
 ### CNI Plugin Components
 
-![The kubelet invokes the node-local CNI binary, which the CNI agent also drives, and the binary in turn reads its config file and calls the IPAM plugin to allocate a Pod IP.](../.gitbook/assets/en-networking-README-5.png)
+![The kubelet invokes the node-local CNI binary, which the CNI agent also drives, and the binary in turn reads its config file and calls the IPAM plugin to allocate a Pod IP.](../.gitbook/assets/en-networking-readme-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-5.html)
 
 ## CNI Comparison Matrix
 
@@ -189,13 +201,17 @@ CNI is a standard interface for container network connectivity. Kubernetes imple
 
 #### Performance Benchmark (Relative Comparison)
 
-![Bar chart ranking six CNI network-mode combinations by relative throughput, with Cilium's eBPF mode as the 100% baseline and Weave the slowest at 75%.](../.gitbook/assets/en-networking-README-6.png)
+![Relative CNI throughput ranking with Cilium's eBPF mode as the 100% baseline: AWS VPC CNI (98%) and Calico eBPF (95%) form the top tier, while Calico iptables (85%), Flannel (80%) and Weave (75%) form the lower tier.](../.gitbook/assets/en-networking-readme-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-6.html)
 
 ## CNI Selection Guide
 
 ### Decision Flowchart
 
-![A decision tree for choosing a Kubernetes CNI: EKS users pick by network-policy depth, non-EKS users pick by environment complexity, multi-cloud need, and BGP/service-mesh requirements, landing on AWS VPC CNI, Calico, Cilium, or Flannel.](../.gitbook/assets/en-networking-README-7.png)
+![A CNI selection flowchart: first check whether the cluster runs on AWS EKS, then pick by the required Network Policy level on EKS or by environment traits off EKS, landing on AWS VPC CNI, Calico, Cilium, or Flannel.](../.gitbook/assets/en-networking-readme-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-7.html)
 
 ### Recommended CNI by Use Case
 
@@ -258,13 +274,17 @@ addons:
 
 ### EKS Default Networking Architecture
 
-![Internet traffic reaches EKS worker nodes through an Internet Gateway and an Application Load Balancer, or directly through a Network Load Balancer, while the AWS-managed control plane sits alongside the node group inside the VPC.](../.gitbook/assets/en-networking-README-8.png)
+![Internet traffic enters through the Internet Gateway inside the VPC and reaches the EKS worker nodes via an Application Load Balancer, or directly via a Network Load Balancer; each of Availability Zones A and B holds a public and a private subnet, with the NAT Gateway and the AWS-managed control plane also inside the VPC.](../.gitbook/assets/en-networking-readme-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-8.html)
 
 ### How VPC CNI Works
 
 AWS VPC CNI assigns actual VPC IP addresses to each Pod.
 
-![Inside a worker node, the AWS VPC CNI hands out secondary IP addresses from each attached elastic network interface to the pods scheduled on that node, with a spare ENI held in reserve.](../.gitbook/assets/en-networking-README-9.png)
+![Inside a worker node, the AWS VPC CNI hands out secondary IP addresses from each attached elastic network interface to the pods scheduled on that node, with a spare ENI held in reserve.](../.gitbook/assets/en-networking-readme-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-9.html)
 
 #### ENI and IP Limits
 

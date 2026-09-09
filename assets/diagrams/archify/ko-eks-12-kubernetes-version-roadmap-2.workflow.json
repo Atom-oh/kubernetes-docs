@@ -1,0 +1,266 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KEP(Kubernetes Enhancement Proposal) 프로세스",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1075,
+      528
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "제안 입력"
+        },
+        "backend": {
+          "label": "KEP 절차"
+        },
+        "security": {
+          "label": "심사 · 수정"
+        },
+        "cloud": {
+          "label": "기능 졸업 단계"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "proposal",
+        "label": "제안에서 승인까지",
+        "focus": [
+          "idea",
+          "draft",
+          "sig_review",
+          "approve",
+          "revise",
+          "implementable"
+        ],
+        "note": "KEP 초안이 SIG 리뷰를 거쳐 승인되면 Implementable 상태가 되고, 반려되면 보완 후 다시 리뷰를 받습니다."
+      },
+      {
+        "id": "graduation",
+        "label": "Alpha에서 GA로 졸업",
+        "focus": [
+          "implementable",
+          "alpha",
+          "beta",
+          "ga",
+          "gate_removed"
+        ],
+        "note": "승인된 기능은 Alpha → Beta → GA로 졸업하며, GA 후 2 릴리스가 지나면 Feature Gate가 코드에서 제거됩니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "rework",
+      "label": "반려 · 보완",
+      "variant": "exception"
+    },
+    {
+      "id": "proposal",
+      "label": "KEP 제안 · 승인"
+    },
+    {
+      "id": "graduation",
+      "label": "구현 · 졸업"
+    }
+  ],
+  "mainPath": [
+    "idea",
+    "draft",
+    "sig_review",
+    "approve",
+    "implementable"
+  ],
+  "nodes": [
+    {
+      "id": "revise",
+      "lane": "rework",
+      "col": 3,
+      "type": "security",
+      "label": "수정 요청",
+      "sublabel": "KEP 보완 후 재리뷰",
+      "width": 112
+    },
+    {
+      "id": "idea",
+      "lane": "proposal",
+      "col": 0,
+      "type": "external",
+      "label": "아이디어",
+      "sublabel": "기능 개선 제안"
+    },
+    {
+      "id": "draft",
+      "lane": "proposal",
+      "col": 1,
+      "type": "backend",
+      "label": "KEP 초안 작성",
+      "sublabel": "동기 · 제안 · 졸업 기준",
+      "width": 112
+    },
+    {
+      "id": "sig_review",
+      "lane": "proposal",
+      "col": 2,
+      "type": "backend",
+      "label": "SIG 리뷰",
+      "sublabel": "담당 SIG 검토",
+      "width": 120
+    },
+    {
+      "id": "approve",
+      "lane": "proposal",
+      "col": 3,
+      "type": "security",
+      "label": "승인?",
+      "sublabel": "SIG 승인 심사",
+      "width": 112
+    },
+    {
+      "id": "implementable",
+      "lane": "proposal",
+      "col": 4,
+      "type": "backend",
+      "label": "Implementable",
+      "sublabel": "구현 착수 가능 상태",
+      "width": 132
+    },
+    {
+      "id": "alpha",
+      "lane": "graduation",
+      "col": 2,
+      "type": "cloud",
+      "label": "Alpha 구현",
+      "sublabel": "Feature Gate 명시 활성화",
+      "width": 112
+    },
+    {
+      "id": "beta",
+      "lane": "graduation",
+      "col": 3,
+      "type": "cloud",
+      "label": "Beta 승격",
+      "sublabel": "기본 활성화",
+      "width": 136
+    },
+    {
+      "id": "ga",
+      "lane": "graduation",
+      "col": 4,
+      "type": "cloud",
+      "label": "GA 졸업",
+      "sublabel": "Feature Gate 잠금",
+      "width": 136
+    },
+    {
+      "id": "gate_removed",
+      "lane": "graduation",
+      "col": 5,
+      "type": "backend",
+      "label": "Feature Gate 제거",
+      "sublabel": "코드에서 삭제",
+      "width": 184
+    }
+  ],
+  "edges": [
+    {
+      "id": "idea-draft",
+      "from": "idea",
+      "to": "draft"
+    },
+    {
+      "id": "draft-sig",
+      "from": "draft",
+      "to": "sig_review"
+    },
+    {
+      "id": "sig-approve",
+      "from": "sig_review",
+      "to": "approve"
+    },
+    {
+      "id": "approve-impl",
+      "from": "approve",
+      "to": "implementable",
+      "label": "예",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "approve-revise",
+      "from": "approve",
+      "to": "revise",
+      "label": "아니오",
+      "role": "branch",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "revise-draft",
+      "from": "revise",
+      "to": "draft",
+      "role": "return",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "impl-alpha",
+      "from": "implementable",
+      "to": "alpha",
+      "label": "구현 시작",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "alpha-beta",
+      "from": "alpha",
+      "to": "beta",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "beta-ga",
+      "from": "beta",
+      "to": "ga",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ga-gate",
+      "from": "ga",
+      "to": "gate_removed",
+      "label": "GA 후 2 릴리스"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "KEP 문서에 담기는 내용",
+      "items": [
+        "동기(Motivation): 왜 이 기능이 필요한가",
+        "제안(Proposal): 설계와 구현 방법",
+        "졸업 기준(Graduation Criteria): alpha → beta → GA 요구사항",
+        "테스트 계획과 프로덕션 준비 검토(PRR)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "졸업 단계별 의미",
+      "items": [
+        "Alpha: Feature Gate를 명시적으로 켜야 하며 프로덕션 비권장",
+        "Beta: 기본 활성화, 최소 1개 릴리스 유지 보장",
+        "GA: Feature Gate 잠금, API 하위 호환성 보장",
+        "GA 후 2 릴리스: Feature Gate가 코드에서 제거"
+      ]
+    }
+  ]
+}

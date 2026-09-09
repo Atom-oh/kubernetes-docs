@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 버전 라이프사이클 (2024-2028)",
+    "output": "ko-eks-12-kubernetes-version-roadmap-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      500
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Extended Support 종료 (지원 종료)"
+        },
+        "backend": {
+          "label": "Standard Support ($0.10/cluster/hr)"
+        },
+        "cloud": {
+          "label": "Extended Support ($0.60/cluster/hr)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "retired",
+        "label": "지원 종료 버전",
+        "focus": [
+          "v129"
+        ],
+        "note": "1.29는 2026년 3월 Extended Support까지 끝나 EKS에서 더 이상 지원되지 않는다."
+      },
+      {
+        "id": "extended",
+        "label": "Extended Support 버전",
+        "focus": [
+          "v130",
+          "v131",
+          "v132"
+        ],
+        "note": "Standard 기간이 끝난 1.30~1.32는 Extended Support 상태로 6배 비용($0.60/cluster/hr)이 발생한다."
+      },
+      {
+        "id": "standard",
+        "label": "Standard Support 버전",
+        "focus": [
+          "v133",
+          "v134",
+          "v135",
+          "v136"
+        ],
+        "note": "1.33~1.36은 Standard Support 중이며, 1.36이 2026년 6월 출시된 최신 버전이다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "v129",
+      "type": "external",
+      "label": "Kubernetes 1.29",
+      "sublabel": "Standard 종료 2025-03 · Extended 종료 2026-03",
+      "tag": "EKS 릴리스 2024-03",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        240,
+        68
+      ]
+    },
+    {
+      "id": "v130",
+      "type": "cloud",
+      "label": "Kubernetes 1.30",
+      "sublabel": "Standard 종료 2025-07 · Extended 종료 2026-07",
+      "tag": "EKS 릴리스 2024-07",
+      "pos": [
+        340,
+        90
+      ],
+      "size": [
+        240,
+        68
+      ]
+    },
+    {
+      "id": "v131",
+      "type": "cloud",
+      "label": "Kubernetes 1.31",
+      "sublabel": "Standard 종료 2025-10 · Extended 종료 2026-10",
+      "tag": "EKS 릴리스 2024-10",
+      "pos": [
+        610,
+        90
+      ],
+      "size": [
+        240,
+        68
+      ]
+    },
+    {
+      "id": "v132",
+      "type": "cloud",
+      "label": "Kubernetes 1.32",
+      "sublabel": "Standard 종료 2026-01 · Extended 종료 2027-01",
+      "tag": "EKS 릴리스 2025-01",
+      "pos": [
+        880,
+        90
+      ],
+      "size": [
+        240,
+        68
+      ]
+    },
+    {
+      "id": "v133",
+      "type": "backend",
+      "label": "Kubernetes 1.33",
+      "sublabel": "Standard 종료 2026-08 · Extended 종료 2027-08",
+      "tag": "EKS 릴리스 2025-06",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        240,
+        68
+      ]
+    },
+    {
+      "id": "v134",
+      "type": "backend",
+      "label": "Kubernetes 1.34",
+      "sublabel": "Standard 종료 2026-12 · Extended 종료 2027-12",
+      "tag": "EKS 릴리스 2025-10",
+      "pos": [
+        320,
+        330
+      ],
+      "size": [
+        240,
+        68
+      ]
+    },
+    {
+      "id": "v135",
+      "type": "backend",
+      "label": "Kubernetes 1.35",
+      "sublabel": "Standard 종료 2027-04 · Extended 종료 2028-04",
+      "tag": "EKS 릴리스 2026-02",
+      "pos": [
+        600,
+        330
+      ],
+      "size": [
+        240,
+        68
+      ]
+    },
+    {
+      "id": "v136",
+      "type": "backend",
+      "label": "Kubernetes 1.36 (최신)",
+      "sublabel": "Standard 종료 2027-08 · Extended 종료 2028-08",
+      "tag": "EKS 릴리스 2026-06",
+      "pos": [
+        880,
+        330
+      ],
+      "size": [
+        240,
+        68
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Extended Support 종료",
+      "wraps": [
+        "v129"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Extended Support",
+      "wraps": [
+        "v130",
+        "v131",
+        "v132"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Standard Support",
+      "wraps": [
+        "v133",
+        "v134",
+        "v135",
+        "v136"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "v129-v130",
+      "from": "v129",
+      "to": "v130",
+      "variant": "emphasis"
+    },
+    {
+      "id": "v130-v131",
+      "from": "v130",
+      "to": "v131",
+      "variant": "emphasis"
+    },
+    {
+      "id": "v131-v132",
+      "from": "v131",
+      "to": "v132",
+      "variant": "emphasis"
+    },
+    {
+      "id": "v132-v133",
+      "from": "v132",
+      "to": "v133",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "v133-v134",
+      "from": "v133",
+      "to": "v134",
+      "variant": "emphasis"
+    },
+    {
+      "id": "v134-v135",
+      "from": "v134",
+      "to": "v135",
+      "variant": "emphasis"
+    },
+    {
+      "id": "v135-v136",
+      "from": "v135",
+      "to": "v136",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Standard Support",
+      "items": [
+        "$0.10/cluster/hr (월 약 $73, 연 약 $876)",
+        "각 버전은 EKS 릴리스 이후 Standard Support로 시작한다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Extended Support",
+      "items": [
+        "$0.60/cluster/hr — Standard 대비 6배",
+        "Standard 종료 후 약 12개월간 이어진 뒤 지원이 종료된다",
+        "권장: Extended Support 진입 전에 업그레이드 계획 수립"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "날짜 안내",
+      "items": [
+        "버전별 지원 상태 구분은 2026년 6월 기준이다",
+        "표기 날짜는 대략적인 예상이며 AWS 공식 문서를 확인해야 한다",
+        "EKS 릴리스는 upstream 릴리스 후 통상 2~8주 뒤에 이루어진다"
+      ]
+    }
+  ]
+}

@@ -22,7 +22,9 @@ EKS는 표준 Kubernetes API를 제공하는 관리형 서비스입니다. Kuber
 
 Amazon EKS의 전체 아키텍처는 다음과 같습니다:
 
-![EKS 전체 아키텍처](../.gitbook/assets/eks_overall_architecture.svg)
+![사용자가 AWS Console/CLI/API로 Amazon EKS를 관리하고, EKS가 AWS 관리형 컨트롤 플레인(API 서버, etcd, 컨트롤러 매니저·스케줄러), 데이터 플레인(관리형 노드 그룹, 자체 관리형 노드, Fargate), IAM·VPC·ELB·CloudWatch·ECR·EBS/EFS/FSx 등 AWS 서비스와 연결되는 EKS 전체 아키텍처를 보여준다.](../.gitbook/assets/ko-eks-01-eks-introduction-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-01-eks-introduction-10.html)
 
 ### 컨트롤 플레인
 
@@ -39,7 +41,9 @@ EKS에서는 이러한 컨트롤 플레인 구성 요소가 AWS에 의해 관리
 
 EKS 데이터 플레인은 다음과 같은 옵션으로 구성할 수 있습니다:
 
-![EKS 데이터 플레인 옵션](../.gitbook/assets/eks_data_plane_options.svg)
+![EKS 데이터 플레인 옵션인 관리형 노드 그룹, 자체 관리형 노드, AWS Fargate가 각각 노드 수명 주기 관리·오토 스케일링·Spot 인스턴스, 사용자 정의 수명 주기·AMI·부트스트랩 스크립트, 노드 관리 불필요·포드 단위 과금·로드 밸런서 직접 연결 제한이라는 특징을 제공함을 보여준다.](../.gitbook/assets/ko-eks-01-eks-introduction-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-01-eks-introduction-11.html)
 
 1. **관리형 노드 그룹**: EC2 인스턴스로 구성된 노드 그룹으로, AWS에서 노드 수명 주기를 관리합니다.
 2. **자체 관리형 노드**: 사용자가 직접 관리하는 EC2 인스턴스입니다.
@@ -49,7 +53,9 @@ EKS 데이터 플레인은 다음과 같은 옵션으로 구성할 수 있습니
 
 EKS는 Amazon VPC CNI 플러그인을 사용하여 포드 네트워킹을 제공합니다. 이 플러그인은 각 포드에 VPC IP 주소를 할당하여 AWS 네트워킹 기능을 활용할 수 있게 합니다.
 
-![EKS VPC 네트워킹](../.gitbook/assets/eks_vpc_networking.svg)
+![인터넷 트래픽이 VPC의 두 가용 영역에 있는 퍼블릭 서브넷 NLB/ALB를 거쳐 프라이빗 서브넷의 EKS 노드와 VPC IP를 할당받은 포드로 전달되고, 가용 영역 간 포드가 직접 통신하는 EKS VPC 네트워킹 구조를 보여준다.](../.gitbook/assets/ko-eks-01-eks-introduction-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-01-eks-introduction-12.html)
 
 ## 일반 Kubernetes와 EKS의 차이점
 

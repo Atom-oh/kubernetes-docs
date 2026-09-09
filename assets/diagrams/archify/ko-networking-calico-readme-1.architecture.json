@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 아키텍처 개요",
+    "output": "ko-networking-calico-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-path",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "apiserver",
+          "operator",
+          "kube-controllers",
+          "datastore"
+        ],
+        "note": "API Server·Tigera Operator·kube-controllers가 Calico Datastore에 상태를 기록한다."
+      },
+      {
+        "id": "node-path",
+        "label": "노드 데이터 플레인",
+        "focus": [
+          "datastore",
+          "typha",
+          "felix",
+          "bird"
+        ],
+        "note": "Typha가 데이터스토어 연결을 집계하고 Felix가 정책을, BIRD가 라우트를 처리한다."
+      },
+      {
+        "id": "bgp-path",
+        "label": "BGP 피어링",
+        "focus": [
+          "bird",
+          "tor",
+          "extnet"
+        ],
+        "note": "BIRD가 ToR 스위치와 BGP 피어링해 외부 네트워크와 라우트를 교환한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Tigera Operator",
+      "sublabel": "install · upgrade",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kube-controllers",
+      "type": "backend",
+      "label": "kube-controllers",
+      "sublabel": "K8s ↔ Calico 동기화",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "단일 Pod"
+    },
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": "Calico Datastore",
+      "sublabel": "etcd / Kubernetes API",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha",
+      "type": "backend",
+      "label": "Typha",
+      "sublabel": "연결 집계 · 캐싱",
+      "pos": [
+        520,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "전용 Pod 3+"
+    },
+    {
+      "id": "felix",
+      "type": "security",
+      "label": "Felix",
+      "sublabel": "정책 적용 에이전트",
+      "pos": [
+        520,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "모든 노드"
+    },
+    {
+      "id": "bird",
+      "type": "backend",
+      "label": "BIRD",
+      "sublabel": "confd 로 설정 동기화",
+      "pos": [
+        520,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "모든 노드"
+    },
+    {
+      "id": "tor",
+      "type": "external",
+      "label": "ToR Switch / Router",
+      "sublabel": "BGP peer",
+      "pos": [
+        800,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "extnet",
+      "type": "external",
+      "label": "외부 네트워크",
+      "sublabel": "온프레미스 / 클라우드",
+      "pos": [
+        800,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "operator",
+        "kube-controllers",
+        "datastore"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인 · 노드",
+      "wraps": [
+        "typha",
+        "felix",
+        "bird"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "외부",
+      "wraps": [
+        "tor",
+        "extnet"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-kc",
+      "from": "apiserver",
+      "to": "kube-controllers",
+      "label": "리소스 감시",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "op-to-ds",
+      "from": "operator",
+      "to": "datastore",
+      "label": "설정 기록",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "kc-to-ds",
+      "from": "kube-controllers",
+      "to": "datastore",
+      "label": "동기화",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ds-to-typha",
+      "from": "datastore",
+      "to": "typha",
+      "label": "watch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "typha-to-felix",
+      "from": "typha",
+      "to": "felix",
+      "label": "정책 · 라우트 전달",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "felix-to-bird",
+      "from": "felix",
+      "to": "bird",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "bird-to-tor",
+      "from": "bird",
+      "to": "tor",
+      "label": "BGP 피어링 (양방향)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tor-to-ext",
+      "from": "tor",
+      "to": "extnet",
+      "label": "라우트 교환",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인",
+      "items": [
+        "kube-controllers(단일 Pod)가 K8s ↔ Calico 리소스를 동기화한다",
+        "Tigera Operator가 Calico 설치·업그레이드를 담당한다",
+        "Calico Datastore는 etcd 또는 Kubernetes API를 사용한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "노드 컴포넌트",
+      "items": [
+        "Felix: 라우팅, iptables/eBPF 규칙, 정책 적용",
+        "BIRD: BGP 피어링, 라우트 교환 (confd가 설정을 동적 생성)",
+        "Typha(전용 Pod 3+): 데이터스토어 연결 집계, 캐싱",
+        "CNI Plugin: Pod 네트워크 인터페이스 설정"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "BGP 통합",
+      "items": [
+        "BIRD가 ToR 스위치/라우터와 BGP 피어링한다",
+        "온프레미스 · 클라우드 네트워크와 라우트를 교환한다"
+      ]
+    }
+  ]
+}

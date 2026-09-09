@@ -97,7 +97,9 @@ Key characteristics of eBPF:
 
 Cilium consists of a data plane based on eBPF and a control plane integrated with Kubernetes.
 
-![The Cilium Agent runs on every node and is managed by the Cilium Operator (fronted by the Cilium API Server); the Agent loads eBPF programs into the kernel and reports metrics to the Hubble Server, which the Hubble Relay aggregates cluster-wide for the Hubble UI to visualize.](../../.gitbook/assets/en-networking-cilium-README-0.png)
+![Cilium architecture: the Operator and API Server in the control plane manage the per-node Cilium Agent, which loads eBPF programs into the kernel and sends metrics to Hubble Server, aggregated by Hubble Relay and visualized in Hubble UI.](../../.gitbook/assets/en-networking-cilium-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-readme-0.html)
 
 ### Key Components
 

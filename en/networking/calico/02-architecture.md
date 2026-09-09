@@ -18,7 +18,9 @@ Felix is the primary Calico agent that runs on every node in the cluster. It is 
 
 ### Felix Responsibilities
 
-![Diagram showing Felix's Datastore Watcher fanning out to its route, ACL, interface, and IPAM managers, which in turn program the node's routing table, iptables rules, IP sets, and network interfaces.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
+![Felix's Datastore Watcher feeds its Route, ACL, and Interface managers, which program the node's routing table, iptables/eBPF rules, and veth interfaces, while Health Reporting sends node status back to the datastore.](../../.gitbook/assets/en-networking-calico-02-architecture-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-1.html)
 
 ### Core Functions
 
@@ -128,7 +130,9 @@ Felix organizes iptables rules into chains for efficient processing:
 
 ### Felix Data Flow
 
-![Sequence diagram showing Felix receiving policy, endpoint, and IP pool updates from the datastore and translating each into iptables rules, route table entries, or network interface configuration.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
+![Sequence diagram showing Felix syncing initial state from the datastore to program rules and routes, applying policy, endpoint and IPPool change events in its watch loop, and handling the CNI ADD call on Pod creation with veth, route and policy setup.](../../.gitbook/assets/en-networking-calico-02-architecture-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-2.html)
 
 ## BIRD: BGP Routing Daemon
 
@@ -136,7 +140,9 @@ BIRD (BIRD Internet Routing Daemon) is the BGP daemon used by Calico for distrib
 
 ### BIRD in Calico Architecture
 
-![Diagram showing BIRD instances on each node forming a full iBGP mesh to exchange pod routes, then peering over eBGP with the top-of-rack switch and core router to advertise those routes externally.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
+![Diagram showing BIRD on each of three nodes forming a full iBGP mesh to exchange pod routes, then peering over eBGP with the top-of-rack switch, which passes those routes on to the core router.](../../.gitbook/assets/en-networking-calico-02-architecture-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-3.html)
 
 ### BGP Session Types
 
@@ -215,7 +221,9 @@ spec:
 
 ### Route Propagation Process
 
-![Sequence diagram showing a new pod's route being allocated by Felix, added to BIRD's local routing table, and propagated to peer nodes over a BGP UPDATE so they install it and route Felix accordingly.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
+![Diagram showing Felix adding a route to the kernel routing table, BIRD picking up that route info through its BGP session management, and its route exchange function advertising the Pod CIDR to other nodes and external routers via a BGP UPDATE, with Route Reflector support for large clusters and export-filter-based route filtering shown as further BIRD functions.](../../.gitbook/assets/en-networking-calico-02-architecture-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-4.html)
 
 ### BIRD Status Commands
 
@@ -247,7 +255,9 @@ confd is a lightweight configuration management tool that watches the Calico dat
 
 ### confd Workflow
 
-![Diagram showing confd's watcher reacting to BGP configuration, peer, and node resources in the Calico datastore, rendering a bird.cfg file from templates, and handing it to the running BIRD process.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
+![Full Mesh BGP topology for a small cluster under 50 nodes, where all four nodes running BIRD in AS 64512 peer directly with one another over iBGP.](../../.gitbook/assets/en-networking-calico-02-architecture-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-5.html)
 
 ### confd Template Processing
 
@@ -415,7 +425,9 @@ The calico-kube-controllers pod runs a set of controllers that sync Kubernetes r
 
 ### Controller Reconciliation Loop
 
-![Sequence diagram showing kube-controllers repeatedly listing Kubernetes and Calico resources, diffing them, and either writing changes to the Calico datastore or taking no action when the two are already in sync.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
+![Sequence diagram showing kube-controllers repeatedly listing Kubernetes and Calico resources, diffing them, and either writing changes to the Calico datastore or taking no action when the two are already in sync.](../../.gitbook/assets/en-networking-calico-02-architecture-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-8.html)
 
 ### kube-controllers Configuration
 
@@ -503,7 +515,9 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ### Egress Packet Flow (Pod-to-Pod, Different Nodes with IPIP)
 
-![Diagram showing a packet leaving one node's pod through its veth and iptables check, IPIP-encapsulated across the physical network switch, and decapsulated and delivered into a pod on a second node.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
+![Sequence diagram showing a packet from Pod A passing the Felix/iptables egress policy check on Node 1, reaching Node 2 either IPIP/VXLAN-encapsulated or forwarded directly via a BGP route, then passing the ingress policy check and reaching Pod B.](../../.gitbook/assets/en-networking-calico-02-architecture-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-13.html)
 
 ### Packet Structure Comparison
 

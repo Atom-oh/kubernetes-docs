@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Typha의 필요성 — Typha 없이 (문제점)",
+    "output": "ko-networking-calico-02-architecture-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      400
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "database",
+      "label": "Datastore",
+      "sublabel": "Kubernetes API Server",
+      "pos": [
+        460,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "felix1",
+      "type": "backend",
+      "label": "Felix 1",
+      "sublabel": "노드 1",
+      "pos": [
+        180,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "felix2",
+      "type": "backend",
+      "label": "Felix 2",
+      "sublabel": "노드 2",
+      "pos": [
+        380,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "felix3",
+      "type": "backend",
+      "label": "Felix ...",
+      "sublabel": "...",
+      "pos": [
+        580,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "felixN",
+      "type": "backend",
+      "label": "Felix N",
+      "sublabel": "노드 N",
+      "pos": [
+        780,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "워커 노드 N대 (노드당 Felix 1개)",
+      "wraps": [
+        "felix1",
+        "felix2",
+        "felix3",
+        "felixN"
+      ],
+      "pad": 48
+    }
+  ],
+  "connections": [
+    {
+      "id": "watch1",
+      "from": "apiserver",
+      "to": "felix1",
+      "label": "Watch",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "watch2",
+      "from": "apiserver",
+      "to": "felix2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "watch3",
+      "from": "apiserver",
+      "to": "felix3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "watchN",
+      "from": "apiserver",
+      "to": "felixN",
+      "label": "Watch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "N개의 Watch 연결",
+      "items": [
+        "Felix마다 API Server에 직접 Watch 연결 1개",
+        "API Server 부하가 노드 수에 비례해 증가",
+        "50+ 노드부터 팬아웃 프록시 Typha가 필수"
+      ]
+    }
+  ]
+}

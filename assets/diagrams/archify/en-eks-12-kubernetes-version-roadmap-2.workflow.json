@@ -1,0 +1,267 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KEP (Kubernetes Enhancement Proposal) Process",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1075,
+      528
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Proposal input"
+        },
+        "backend": {
+          "label": "KEP process step"
+        },
+        "security": {
+          "label": "Review · revision"
+        },
+        "cloud": {
+          "label": "Feature graduation stage"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "proposal",
+        "label": "From proposal to approval",
+        "focus": [
+          "idea",
+          "draft",
+          "sig_review",
+          "approve",
+          "revise",
+          "implementable"
+        ],
+        "note": "A KEP draft goes through SIG review; once approved it becomes Implementable, otherwise it is revised and reviewed again."
+      },
+      {
+        "id": "graduation",
+        "label": "Graduating from Alpha to GA",
+        "focus": [
+          "implementable",
+          "alpha",
+          "beta",
+          "ga",
+          "gate_removed"
+        ],
+        "note": "An approved feature graduates Alpha → Beta → GA; two releases after GA its feature gate is removed from the code."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "rework",
+      "label": "Rejected · revise",
+      "variant": "exception"
+    },
+    {
+      "id": "proposal",
+      "label": "KEP proposal · approval"
+    },
+    {
+      "id": "graduation",
+      "label": "Implementation · graduation"
+    }
+  ],
+  "mainPath": [
+    "idea",
+    "draft",
+    "sig_review",
+    "approve",
+    "implementable"
+  ],
+  "nodes": [
+    {
+      "id": "revise",
+      "lane": "rework",
+      "col": 3,
+      "type": "security",
+      "label": "Revise KEP",
+      "sublabel": "revise KEP, re-review",
+      "width": 112
+    },
+    {
+      "id": "idea",
+      "lane": "proposal",
+      "col": 0,
+      "type": "external",
+      "label": "Idea",
+      "sublabel": "feature proposal"
+    },
+    {
+      "id": "draft",
+      "lane": "proposal",
+      "col": 1,
+      "type": "backend",
+      "label": "Draft KEP",
+      "sublabel": "motivation · criteria",
+      "width": 112
+    },
+    {
+      "id": "sig_review",
+      "lane": "proposal",
+      "col": 2,
+      "type": "backend",
+      "label": "SIG review",
+      "sublabel": "owning SIG evaluates",
+      "width": 120
+    },
+    {
+      "id": "approve",
+      "lane": "proposal",
+      "col": 3,
+      "type": "security",
+      "label": "Approved?",
+      "sublabel": "SIG approval decision",
+      "width": 112
+    },
+    {
+      "id": "implementable",
+      "lane": "proposal",
+      "col": 4,
+      "type": "backend",
+      "label": "Implementable",
+      "sublabel": "ready to implement",
+      "width": 132
+    },
+    {
+      "id": "alpha",
+      "lane": "graduation",
+      "col": 2,
+      "type": "cloud",
+      "label": "Alpha stage",
+      "sublabel": "feature gate opt-in",
+      "width": 112
+    },
+    {
+      "id": "beta",
+      "lane": "graduation",
+      "col": 3,
+      "type": "cloud",
+      "label": "Beta promotion",
+      "sublabel": "enabled by default",
+      "width": 136
+    },
+    {
+      "id": "ga",
+      "lane": "graduation",
+      "col": 4,
+      "type": "cloud",
+      "label": "GA graduation",
+      "sublabel": "feature gate locked",
+      "width": 136
+    },
+    {
+      "id": "gate_removed",
+      "lane": "graduation",
+      "col": 5,
+      "type": "backend",
+      "label": "Feature gate removed",
+      "sublabel": "deleted from code",
+      "width": 184
+    }
+  ],
+  "edges": [
+    {
+      "id": "idea-draft",
+      "from": "idea",
+      "to": "draft"
+    },
+    {
+      "id": "draft-sig",
+      "from": "draft",
+      "to": "sig_review"
+    },
+    {
+      "id": "sig-approve",
+      "from": "sig_review",
+      "to": "approve"
+    },
+    {
+      "id": "approve-impl",
+      "from": "approve",
+      "to": "implementable",
+      "label": "yes",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "approve-revise",
+      "from": "approve",
+      "to": "revise",
+      "label": "no",
+      "role": "branch",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "revise-draft",
+      "from": "revise",
+      "to": "draft",
+      "role": "return",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "impl-alpha",
+      "from": "implementable",
+      "to": "alpha",
+      "label": "start implementation",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "alpha-beta",
+      "from": "alpha",
+      "to": "beta",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "beta-ga",
+      "from": "beta",
+      "to": "ga",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ga-gate",
+      "from": "ga",
+      "to": "gate_removed",
+      "label": "2 releases after GA"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What a KEP document contains",
+      "items": [
+        "Motivation: why the feature is needed",
+        "Proposal: design and implementation approach",
+        "Graduation Criteria: requirements for alpha → beta → GA",
+        "Test Plan and Production Readiness Review (PRR)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "What each graduation stage means",
+      "items": [
+        "Alpha: feature gate must be enabled explicitly; not for production",
+        "Beta: enabled by default, kept for at least one release",
+        "GA: feature gate locked, API backward compatibility guaranteed",
+        "Two releases after GA: feature gate removed from the code"
+      ]
+    }
+  ]
+}

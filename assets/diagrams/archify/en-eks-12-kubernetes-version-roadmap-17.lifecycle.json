@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Kubernetes 1.36 Enhancement Breakdown",
+    "locale": "en",
+    "output": "en-eks-12-kubernetes-version-roadmap-17.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "stable-focus",
+        "label": "Stable (GA) highlighted",
+        "focus": [
+          "release",
+          "stable"
+        ],
+        "note": "18 of the 68 enhancements reach Stable in 1.36 -- the production-relevant count."
+      },
+      {
+        "id": "full-breakdown",
+        "label": "Full breakdown",
+        "focus": [
+          "release",
+          "alpha",
+          "beta",
+          "stable"
+        ],
+        "note": "68 enhancements split by maturity stage: 25 Alpha, 25 Beta, 18 Stable."
+      }
+    ],
+    "viewBox": [
+      980,
+      566
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Enhancement maturity stage in the 1.36 release"
+    },
+    {
+      "id": "eks",
+      "label": "Amazon EKS availability"
+    }
+  ],
+  "states": [
+    {
+      "id": "release",
+      "type": "start",
+      "label": "Kubernetes 1.36",
+      "sublabel": "\"Haru\" -- 68 enhancements",
+      "lane": "main",
+      "col": 0,
+      "tag": "release"
+    },
+    {
+      "id": "alpha",
+      "type": "neutral",
+      "label": "Alpha",
+      "sublabel": "25 enhancements",
+      "lane": "main",
+      "col": 1,
+      "tag": "25"
+    },
+    {
+      "id": "beta",
+      "type": "waiting",
+      "label": "Beta",
+      "sublabel": "25 enhancements",
+      "lane": "main",
+      "col": 2,
+      "tag": "25"
+    },
+    {
+      "id": "stable",
+      "type": "success",
+      "label": "Stable (GA)",
+      "sublabel": "18 enhancements",
+      "lane": "main",
+      "col": 3,
+      "tag": "18"
+    },
+    {
+      "id": "eks",
+      "type": "external",
+      "label": "Amazon EKS 1.36",
+      "sublabel": "all regions + GovCloud (US)",
+      "lane": "eks",
+      "col": 0,
+      "tag": "supported",
+      "width": 150
+    }
+  ],
+  "transitions": [
+    {
+      "from": "release",
+      "to": "alpha"
+    },
+    {
+      "from": "alpha",
+      "to": "beta",
+      "variant": "dashed"
+    },
+    {
+      "from": "beta",
+      "to": "stable",
+      "variant": "emphasis"
+    },
+    {
+      "from": "release",
+      "to": "eks",
+      "variant": "dashed",
+      "label": "available on EKS",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          94,
+          235
+        ],
+        [
+          402,
+          235
+        ]
+      ],
+      "labelSegment": 1
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Graduated to GA in 1.36",
+      "items": [
+        "Mutating Admission Policies -- CEL mutation without webhook servers",
+        "User Namespaces -- container root is not node root",
+        "Fine-Grained Kubelet API Authorization",
+        "Legacy ServiceAccount Token Cleanup"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Release themes",
+      "items": [
+        "Security hardening",
+        "AI/ML workload support",
+        "API extensibility"
+      ]
+    }
+  ]
+}

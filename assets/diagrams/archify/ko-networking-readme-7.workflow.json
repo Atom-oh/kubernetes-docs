@@ -1,0 +1,249 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "CNI 선택 의사결정 플로우차트",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "판단 지점"
+        },
+        "cloud": {
+          "label": "AWS 관리형 CNI"
+        },
+        "external": {
+          "label": "오픈소스 CNI"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "eks_path",
+        "label": "EKS 환경 경로",
+        "focus": [
+          "start",
+          "eks_q",
+          "policy_q",
+          "vpc_cni",
+          "calico",
+          "cilium"
+        ],
+        "note": "EKS라면 필요한 Network Policy 수준이 갈림길이다. 정책이 불필요하면 VPC CNI, 기본 정책은 Calico, L7 정책은 Cilium."
+      },
+      {
+        "id": "non_eks_path",
+        "label": "비EKS 환경 경로",
+        "focus": [
+          "start",
+          "eks_q",
+          "env_q",
+          "flannel",
+          "calico",
+          "cilium"
+        ],
+        "note": "EKS가 아니면 환경 특성으로 고른다. 단순 환경은 Flannel, 멀티클라우드는 Calico, BGP와 Service Mesh가 필요하면 Cilium."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "환경 판별"
+    },
+    {
+      "id": "eks",
+      "label": "EKS 환경"
+    },
+    {
+      "id": "shared",
+      "label": "공통 권장"
+    },
+    {
+      "id": "noneks",
+      "label": "비EKS 환경"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "eks_q",
+    "policy_q",
+    "vpc_cni"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "frontend",
+      "label": "CNI 선택 시작",
+      "sublabel": "클러스터 환경 확인",
+      "width": 136
+    },
+    {
+      "id": "eks_q",
+      "lane": "decide",
+      "col": 1,
+      "type": "backend",
+      "label": "AWS EKS 사용 중?",
+      "sublabel": "YES / NO",
+      "tag": "결정",
+      "width": 150
+    },
+    {
+      "id": "policy_q",
+      "lane": "eks",
+      "col": 2,
+      "type": "backend",
+      "label": "필요한 정책 수준?",
+      "sublabel": "Network Policy 요구",
+      "tag": "결정",
+      "width": 150
+    },
+    {
+      "id": "env_q",
+      "lane": "noneks",
+      "col": 2,
+      "type": "backend",
+      "label": "환경 특성은?",
+      "sublabel": "규모·클라우드·라우팅",
+      "tag": "결정",
+      "width": 150
+    },
+    {
+      "id": "vpc_cni",
+      "lane": "eks",
+      "col": 3,
+      "type": "cloud",
+      "label": "AWS VPC CNI",
+      "sublabel": "ENI · 기본 L3-L4",
+      "tag": "권장",
+      "width": 124
+    },
+    {
+      "id": "flannel",
+      "lane": "noneks",
+      "col": 3,
+      "type": "external",
+      "label": "Flannel",
+      "sublabel": "VXLAN · 낮은 복잡도",
+      "tag": "권장",
+      "width": 124
+    },
+    {
+      "id": "calico",
+      "lane": "shared",
+      "col": 4,
+      "type": "external",
+      "label": "Calico",
+      "sublabel": "L3-L4 정책 · BGP",
+      "tag": "권장",
+      "width": 124
+    },
+    {
+      "id": "cilium",
+      "lane": "shared",
+      "col": 5,
+      "type": "external",
+      "label": "Cilium",
+      "sublabel": "eBPF · L7 · Mesh",
+      "tag": "권장",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_start",
+      "from": "start",
+      "to": "eks_q"
+    },
+    {
+      "id": "e_yes",
+      "from": "eks_q",
+      "to": "policy_q",
+      "label": "YES",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e_no",
+      "from": "eks_q",
+      "to": "env_q",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "id": "e_none",
+      "from": "policy_q",
+      "to": "vpc_cni",
+      "label": "불필요",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e_basic",
+      "from": "policy_q",
+      "to": "calico",
+      "label": "기본 (L3-L4)",
+      "role": "branch"
+    },
+    {
+      "id": "e_l7",
+      "from": "policy_q",
+      "to": "cilium",
+      "label": "L7",
+      "role": "branch",
+      "bias": 0.85
+    },
+    {
+      "id": "e_simple",
+      "from": "env_q",
+      "to": "flannel",
+      "label": "단순",
+      "role": "branch"
+    },
+    {
+      "id": "e_multi",
+      "from": "env_q",
+      "to": "calico",
+      "label": "멀티클라우드",
+      "role": "branch"
+    },
+    {
+      "id": "e_bgp",
+      "from": "env_q",
+      "to": "cilium",
+      "label": "BGP + Service Mesh",
+      "role": "branch",
+      "bias": 0.85
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS EKS 프로덕션",
+      "items": [
+        "권장: AWS VPC CNI + Calico (Network Policy)",
+        "vpc-cni 애드온에서 enableNetworkPolicy: \"true\""
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "고급 보안 · Service Mesh",
+      "items": [
+        "권장: Cilium — L7 Network Policy, DNS 기반 정책",
+        "WireGuard 암호화, Sidecar-less Service Mesh로 Istio/Envoy 대체"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "온프레미스 · 개발/테스트",
+      "items": [
+        "온프레미스/베어메탈: Calico BGP 모드로 ToR 스위치와 피어링",
+        "개발/테스트: Flannel — 간단한 설치와 낮은 리소스 사용량"
+      ]
+    }
+  ]
+}

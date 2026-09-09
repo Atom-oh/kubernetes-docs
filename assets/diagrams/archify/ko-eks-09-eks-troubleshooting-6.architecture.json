@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "로깅 및 모니터링 문제",
+    "output": "ko-eks-09-eks-troubleshooting-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      410
+    ],
+    "views": [
+      {
+        "id": "cw-logs",
+        "label": "CloudWatch 로그 문제",
+        "focus": [
+          "cwlogs",
+          "log_perm",
+          "fluent_cfg",
+          "log_volume",
+          "log_path",
+          "iam_role"
+        ],
+        "note": "Fluent Bit/Fluentd 로그 수집이 CloudWatch에 도달하지 못하는 다섯 가지 일반적인 원인."
+      },
+      {
+        "id": "monitoring",
+        "label": "모니터링 문제",
+        "focus": [
+          "monitoring",
+          "metrics_server",
+          "prom_cfg",
+          "insights",
+          "resources",
+          "network"
+        ],
+        "note": "메트릭 서버, Prometheus, Container Insights가 정상 동작하지 않는 다섯 가지 일반적인 원인."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cwlogs",
+      "type": "cloud",
+      "label": "CloudWatch 로그 문제",
+      "sublabel": "Fluent Bit / Fluentd 수집 경로",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "log_perm",
+      "type": "security",
+      "label": "로그 그룹 권한 문제",
+      "sublabel": "CloudWatch 로그 그룹 권한 부족",
+      "pos": [
+        340,
+        60
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "fluent_cfg",
+      "type": "backend",
+      "label": "Fluent Bit / Fluentd 구성 오류",
+      "sublabel": "로그 수집기 구성 오류",
+      "pos": [
+        340,
+        126
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "log_volume",
+      "type": "cloud",
+      "label": "로그 볼륨 제한",
+      "sublabel": "로그 볼륨 제한 초과",
+      "pos": [
+        340,
+        192
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "log_path",
+      "type": "backend",
+      "label": "컨테이너 로그 경로 문제",
+      "sublabel": "컨테이너 로그 경로 구성 오류",
+      "pos": [
+        340,
+        258
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "iam_role",
+      "type": "security",
+      "label": "IAM 역할 권한 문제",
+      "sublabel": "로그 수집기 IAM 역할 권한 부족",
+      "pos": [
+        340,
+        324
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "monitoring",
+      "type": "backend",
+      "label": "모니터링 문제",
+      "sublabel": "메트릭 서버 / Prometheus / Insights",
+      "pos": [
+        680,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "metrics_server",
+      "type": "backend",
+      "label": "메트릭 서버 문제",
+      "sublabel": "metrics-server 구성 또는 상태 문제",
+      "pos": [
+        980,
+        60
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "prom_cfg",
+      "type": "backend",
+      "label": "Prometheus 구성 오류",
+      "sublabel": "Prometheus 구성 오류",
+      "pos": [
+        980,
+        126
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "insights",
+      "type": "cloud",
+      "label": "CloudWatch Container Insights 문제",
+      "sublabel": "Container Insights 구성 또는 상태 문제",
+      "pos": [
+        980,
+        192
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "resources",
+      "type": "backend",
+      "label": "리소스 제약",
+      "sublabel": "모니터링 구성 요소의 리소스 제약",
+      "pos": [
+        980,
+        258
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "network",
+      "type": "external",
+      "label": "네트워크 문제",
+      "sublabel": "모니터링 구성 요소 간 연결 문제",
+      "pos": [
+        980,
+        324
+      ],
+      "size": [
+        260,
+        48
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "CloudWatch 로그 문제 - 일반적인 원인",
+      "wraps": [
+        "cwlogs",
+        "log_perm",
+        "fluent_cfg",
+        "log_volume",
+        "log_path",
+        "iam_role"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모니터링 문제 - 일반적인 원인",
+      "wraps": [
+        "monitoring",
+        "metrics_server",
+        "prom_cfg",
+        "insights",
+        "resources",
+        "network"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cw-perm",
+      "from": "cwlogs",
+      "to": "log_perm"
+    },
+    {
+      "id": "cw-fluent",
+      "from": "cwlogs",
+      "to": "fluent_cfg"
+    },
+    {
+      "id": "cw-volume",
+      "from": "cwlogs",
+      "to": "log_volume"
+    },
+    {
+      "id": "cw-path",
+      "from": "cwlogs",
+      "to": "log_path"
+    },
+    {
+      "id": "cw-iam",
+      "from": "cwlogs",
+      "to": "iam_role"
+    },
+    {
+      "id": "mon-metrics",
+      "from": "monitoring",
+      "to": "metrics_server"
+    },
+    {
+      "id": "mon-prom",
+      "from": "monitoring",
+      "to": "prom_cfg"
+    },
+    {
+      "id": "mon-insights",
+      "from": "monitoring",
+      "to": "insights"
+    },
+    {
+      "id": "mon-resources",
+      "from": "monitoring",
+      "to": "resources"
+    },
+    {
+      "id": "mon-network",
+      "from": "monitoring",
+      "to": "network"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "CloudWatch 로그 문제 해결 단계",
+      "items": [
+        "aws eks describe-cluster --query cluster.logging 으로 클러스터 로깅 상태 확인",
+        "amazon-cloudwatch 네임스페이스의 fluent-bit 파드 상태와 로그 확인",
+        "/aws/containerinsights/<cluster> 로그 그룹과 fluent-bit ServiceAccount의 IAM 역할 확인"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "모니터링 문제 해결 단계",
+      "items": [
+        "메트릭 서버(kube-system metrics-server) 상태 확인",
+        "Prometheus와 CloudWatch Container Insights 파드 상태 확인",
+        "CloudWatch 메트릭과 대시보드 수집 여부 확인"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "일반적인 해결 방법",
+      "items": [
+        "클러스터 로깅 활성화, Fluent Bit 설치 또는 업데이트, IAM 역할 권한 추가",
+        "메트릭 서버 / Container Insights / Prometheus / Grafana 설치 또는 업데이트",
+        "모니터링 구성 요소의 리소스 제약 조정"
+      ]
+    }
+  ]
+}

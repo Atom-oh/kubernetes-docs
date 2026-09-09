@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "IAM and Authentication Issues",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "cluster-access",
+        "label": "Cluster access denied",
+        "focus": [
+          "iam_auth",
+          "access_denied",
+          "access_steps",
+          "access_fix"
+        ],
+        "note": "aws-auth mapping, expired tokens and kubeconfig drift are checked before re-mapping the identity."
+      },
+      {
+        "id": "irsa",
+        "label": "IRSA issues",
+        "focus": [
+          "iam_auth",
+          "irsa",
+          "irsa_steps",
+          "irsa_fix"
+        ],
+        "note": "Pods lose AWS permissions when the OIDC provider, trust policy or service account annotation is wrong."
+      },
+      {
+        "id": "node-join",
+        "label": "Node join failure",
+        "focus": [
+          "iam_auth",
+          "node_join",
+          "node_steps",
+          "node_fix"
+        ],
+        "note": "Nodes never register when the node role, security groups or bootstrap script block control-plane communication."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "iam_auth",
+      "type": "security",
+      "label": "IAM and Authentication Issues",
+      "sublabel": "three symptom families",
+      "pos": [
+        520,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "tag": "root"
+    },
+    {
+      "id": "access_denied",
+      "type": "security",
+      "label": "Cluster Access Denied",
+      "sublabel": "kubectl refused",
+      "pos": [
+        115,
+        190
+      ],
+      "size": [
+        190,
+        62
+      ]
+    },
+    {
+      "id": "access_steps",
+      "type": "backend",
+      "label": "Troubleshooting Steps",
+      "sublabel": "caller identity, aws-auth",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        165,
+        64
+      ]
+    },
+    {
+      "id": "access_fix",
+      "type": "cloud",
+      "label": "Common Solutions",
+      "sublabel": "update-kubeconfig, map identity",
+      "pos": [
+        215,
+        330
+      ],
+      "size": [
+        165,
+        64
+      ]
+    },
+    {
+      "id": "irsa",
+      "type": "security",
+      "label": "IRSA Issues",
+      "sublabel": "pods lack AWS access",
+      "pos": [
+        535,
+        190
+      ],
+      "size": [
+        190,
+        62
+      ]
+    },
+    {
+      "id": "irsa_steps",
+      "type": "backend",
+      "label": "Troubleshooting Steps",
+      "sublabel": "OIDC, SA annotation, trust",
+      "pos": [
+        460,
+        330
+      ],
+      "size": [
+        165,
+        64
+      ]
+    },
+    {
+      "id": "irsa_fix",
+      "type": "cloud",
+      "label": "Common Solutions",
+      "sublabel": "associate OIDC, annotate SA",
+      "pos": [
+        635,
+        330
+      ],
+      "size": [
+        165,
+        64
+      ]
+    },
+    {
+      "id": "node_join",
+      "type": "security",
+      "label": "Node Join Failure",
+      "sublabel": "nodes never register",
+      "pos": [
+        955,
+        190
+      ],
+      "size": [
+        190,
+        62
+      ]
+    },
+    {
+      "id": "node_steps",
+      "type": "backend",
+      "label": "Troubleshooting Steps",
+      "sublabel": "node role, SG, kubelet logs",
+      "pos": [
+        880,
+        330
+      ],
+      "size": [
+        165,
+        64
+      ]
+    },
+    {
+      "id": "node_fix",
+      "type": "cloud",
+      "label": "Common Solutions",
+      "sublabel": "policies, SG rules, bootstrap",
+      "pos": [
+        1055,
+        330
+      ],
+      "size": [
+        165,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster Access Denied",
+      "wraps": [
+        "access_denied",
+        "access_steps",
+        "access_fix"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "IRSA Issues",
+      "wraps": [
+        "irsa",
+        "irsa_steps",
+        "irsa_fix"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "Node Join Failure",
+      "wraps": [
+        "node_join",
+        "node_steps",
+        "node_fix"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-access",
+      "from": "iam_auth",
+      "to": "access_denied",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-irsa",
+      "from": "iam_auth",
+      "to": "irsa",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-node",
+      "from": "iam_auth",
+      "to": "node_join",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "access-steps",
+      "from": "access_denied",
+      "to": "access_steps",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "access-fix",
+      "from": "access_denied",
+      "to": "access_fix",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "irsa-steps",
+      "from": "irsa",
+      "to": "irsa_steps",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "irsa-fix",
+      "from": "irsa",
+      "to": "irsa_fix",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "node-steps",
+      "from": "node_join",
+      "to": "node_steps",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "node-fix",
+      "from": "node_join",
+      "to": "node_fix",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Cluster Access Denied: common causes",
+      "items": [
+        "aws-auth ConfigMap missing",
+        "IAM role not mapped",
+        "Token expiration",
+        "kubeconfig misconfiguration"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "IRSA Issues: common causes",
+      "items": [
+        "OIDC provider not configured",
+        "Trust policy misconfiguration",
+        "Service account annotation missing",
+        "IAM role permission issues"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Node Join Failure: common causes",
+      "items": [
+        "Node role permissions",
+        "Security group restrictions",
+        "Bootstrap failure"
+      ]
+    }
+  ]
+}
