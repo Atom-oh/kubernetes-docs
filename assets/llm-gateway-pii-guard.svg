@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="720" viewBox="0 0 1240 720" font-family="'Segoe UI', Helvetica, Arial, 'Noto Sans', sans-serif" font-size="14">
+<title>LLM gateway PII guard: detect, act, restore</title>
+<defs>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+<marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+<marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#15803d"/></marker>
+<marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+</defs>
+<rect width="1240" height="720" fill="#ffffff"/>
+<text x="620" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">PII guard — detect → decide → transform → restore, and where PII must never land</text>
+<rect x="30" y="80" width="200" height="90" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.6"/>
+<text x="130.0" y="102" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Client prompt</text>
+<text x="130.0" y="122" text-anchor="middle" font-size="12.5" fill="#374151">&quot;Refund order for</text>
+<text x="130.0" y="139" text-anchor="middle" font-size="12.5" fill="#374151">hong@corp.kr, card</text>
+<text x="130.0" y="156" text-anchor="middle" font-size="12.5" fill="#374151">4111 1111 1111 1111&quot;</text>
+<rect x="270" y="60" width="700" height="330" rx="14" fill="#dbeafe" fill-opacity="0.45" stroke="#1d4ed8" stroke-width="1.4" stroke-dasharray="8 5"/>
+<text x="284" y="82" font-size="15" font-weight="700" fill="#1d4ed8">Gateway — request side</text>
+<rect x="290" y="100" width="200" height="100" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.6"/>
+<text x="390.0" y="122" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Detect</text>
+<text x="390.0" y="142" text-anchor="middle" font-size="12.5" fill="#374151">regex (email, card, SSN, IP)</text>
+<text x="390.0" y="159" text-anchor="middle" font-size="12.5" fill="#374151">NER model (name, address)</text>
+<text x="390.0" y="176" text-anchor="middle" font-size="12.5" fill="#374151">checksum (Luhn) · allow-lists</text>
+<rect x="520" y="100" width="200" height="100" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.6"/>
+<text x="620.0" y="122" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Decide (policy)</text>
+<text x="620.0" y="142" text-anchor="middle" font-size="12.5" fill="#374151">per team / data class</text>
+<text x="620.0" y="159" text-anchor="middle" font-size="12.5" fill="#374151">block · mask · pseudonymize</text>
+<text x="620.0" y="176" text-anchor="middle" font-size="12.5" fill="#374151">tokenize(reversible) · allow</text>
+<rect x="750" y="100" width="200" height="100" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="850.0" y="122" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Transform</text>
+<text x="850.0" y="142" text-anchor="middle" font-size="12.5" fill="#374151">text blocks ONLY</text>
+<text x="850.0" y="159" text-anchor="middle" font-size="12.5" fill="#374151">never cache_control / tools /</text>
+<text x="850.0" y="176" text-anchor="middle" font-size="12.5" fill="#374151">structural fields</text>
+<line x1="232" y1="125" x2="288" y2="125" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
+<line x1="492" y1="150" x2="518" y2="150" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
+<line x1="722" y1="150" x2="748" y2="150" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
+<rect x="290" y="240" width="300" height="110" rx="10" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.6"/>
+<text x="440.0" y="262" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Vault (session-scoped, TTL)</text>
+<text x="440.0" y="282" text-anchor="middle" font-size="12.5" fill="#374151">&lt;EMAIL_1&gt; ⇄ hong@corp.kr</text>
+<text x="440.0" y="299" text-anchor="middle" font-size="12.5" fill="#374151">&lt;CARD_1&gt; ⇄ 4111…1111</text>
+<text x="440.0" y="316" text-anchor="middle" font-size="12.5" fill="#374151">deterministic per session ⇒ stable prefix</text>
+<line x1="850" y1="202" x2="850" y2="238" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
+<rect x="750" y="240" width="200" height="110" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="850.0" y="262" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Outbound body</text>
+<text x="850.0" y="282" text-anchor="middle" font-size="12.5" fill="#374151">&quot;Refund order for</text>
+<text x="850.0" y="299" text-anchor="middle" font-size="12.5" fill="#374151">&lt;EMAIL_1&gt;, card &lt;CARD_1&gt;&quot;</text>
+<text x="850.0" y="316" text-anchor="middle" font-size="12.5" fill="#374151">(re-serialized ⇒ cache prefix changes)</text>
+<line x1="592" y1="295" x2="748" y2="295" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)" stroke-dasharray="6 4"/>
+<text x="670.0" y="289.0" text-anchor="middle" font-size="12" fill="#374151">store mapping</text>
+<rect x="1010" y="240" width="200" height="110" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6"/>
+<text x="1110.0" y="262" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Model provider</text>
+<text x="1110.0" y="282" text-anchor="middle" font-size="12.5" fill="#374151">sees pseudonyms only</text>
+<text x="1110.0" y="299" text-anchor="middle" font-size="12.5" fill="#374151">Bedrock Guardrails may add</text>
+<text x="1110.0" y="316" text-anchor="middle" font-size="12.5" fill="#374151">a provider-side PII filter</text>
+<line x1="952" y1="295" x2="1008" y2="295" stroke="#15803d" stroke-width="1.8" marker-end="url(#arr-green)"/>
+<rect x="270" y="420" width="700" height="160" rx="14" fill="#dbeafe" fill-opacity="0.45" stroke="#1d4ed8" stroke-width="1.4" stroke-dasharray="8 5"/>
+<text x="284" y="442" font-size="15" font-weight="700" fill="#1d4ed8">Gateway — response side</text>
+<rect x="750" y="460" width="200" height="90" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.6"/>
+<text x="850.0" y="482" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Model output</text>
+<text x="850.0" y="502" text-anchor="middle" font-size="12.5" fill="#374151">&quot;Refund issued to</text>
+<text x="850.0" y="519" text-anchor="middle" font-size="12.5" fill="#374151">&lt;EMAIL_1&gt;&quot;</text>
+<rect x="520" y="460" width="200" height="90" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="620.0" y="482" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Restore (de-tokenize)</text>
+<text x="620.0" y="502" text-anchor="middle" font-size="12.5" fill="#374151">look up vault</text>
+<text x="620.0" y="519" text-anchor="middle" font-size="12.5" fill="#374151">per completed content block</text>
+<text x="620.0" y="536" text-anchor="middle" font-size="12.5" fill="#374151">(streaming: buffer a block)</text>
+<rect x="290" y="460" width="200" height="90" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.6"/>
+<text x="390.0" y="482" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Output guard</text>
+<text x="390.0" y="502" text-anchor="middle" font-size="12.5" fill="#374151">new PII the model</text>
+<text x="390.0" y="519" text-anchor="middle" font-size="12.5" fill="#374151">invented? secrets? →</text>
+<text x="390.0" y="536" text-anchor="middle" font-size="12.5" fill="#374151">redact before returning</text>
+<line x1="1010" y1="505" x2="952" y2="505" stroke="#15803d" stroke-width="1.8" marker-end="url(#arr-green)"/>
+<line x1="748" y1="505" x2="722" y2="505" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
+<line x1="518" y1="505" x2="492" y2="505" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
+<rect x="30" y="460" width="200" height="90" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.6"/>
+<text x="130.0" y="482" text-anchor="middle" font-size="15" font-weight="600" fill="#111827">Client response</text>
+<text x="130.0" y="502" text-anchor="middle" font-size="12.5" fill="#374151">&quot;Refund issued to</text>
+<text x="130.0" y="519" text-anchor="middle" font-size="12.5" fill="#374151">hong@corp.kr&quot;</text>
+<line x1="288" y1="505" x2="232" y2="505" stroke="#374151" stroke-width="1.8" marker-end="url(#arr)"/>
+<path d="M 1110 352 L 1110 505" fill="none" stroke="#15803d" stroke-width="1.8" stroke-dasharray="6 4"/>
+<rect x="30" y="610" width="1180" height="90" rx="14" fill="#fee2e2" fill-opacity="0.45" stroke="#b91c1c" stroke-width="1.4"/>
+<text x="44" y="632" font-size="15" font-weight="700" fill="#b91c1c">Where PII must NEVER be persisted</text>
+<text x="50" y="650" text-anchor="start" font-size="13" font-weight="normal" fill="#111827">audit chain (only counts: redactions=2)   ·   metrics labels   ·   traces / span attributes   ·   error messages   ·   gateway logs</text>
+<text x="50" y="675" text-anchor="start" font-size="12.5" font-weight="normal" fill="#374151">Body capture, if enabled, is encrypted at rest with a separate key and stores the MASKED body. The vault is memory-only with TTL, never the audit store.</text>
+<text x="30" y="210" text-anchor="start" font-size="13" font-weight="700" fill="#b91c1c">Fail-closed:</text>
+<text x="30" y="228" text-anchor="start" font-size="12.5" font-weight="normal" fill="#b91c1c">detector error ⇒ 5xx,</text>
+<text x="30" y="245" text-anchor="start" font-size="12.5" font-weight="normal" fill="#b91c1c">never forward raw text</text>
+<text x="30" y="290" text-anchor="start" font-size="13" font-weight="700" fill="#b45309">Cost trade-off:</text>
+<text x="30" y="308" text-anchor="start" font-size="12.5" font-weight="normal" fill="#b45309">masking mutates the body</text>
+<text x="30" y="325" text-anchor="start" font-size="12.5" font-weight="normal" fill="#b45309">⇒ verbatim forwarding lost</text>
+<text x="30" y="342" text-anchor="start" font-size="12.5" font-weight="normal" fill="#b45309">⇒ prompt cache may miss.</text>
+<text x="30" y="359" text-anchor="start" font-size="12.5" font-weight="normal" fill="#b45309">Make it an explicit opt-in.</text>
+</svg>

@@ -207,6 +207,7 @@ This training content provides quizzes for each topic along with the learning ma
 5. [vLLM Deployment & Optimization](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI Platform on EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML Best Practices](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. [LLM Gateway (Inference Gateway) Deep Dive](./ai-ml/08-llm-gateway.md) | [Quiz](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 8. **Ray on EKS Deep Dive**
    - [Ray on EKS Introduction](./ai-ml/ray/README.md)
    - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [Quiz](./quizzes/ai-ml/ray/01-architecture-quiz.md)

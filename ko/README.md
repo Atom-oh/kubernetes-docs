@@ -207,6 +207,7 @@
 5. [vLLM 배포 및 최적화](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML 모범 사례](./ai-ml/07-ai-ml-best-practices.md) | [퀴즈](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. [LLM 게이트웨이(Inference Gateway) 딥다이브](./ai-ml/08-llm-gateway.md) | [퀴즈](./quizzes/ai-ml/08-llm-gateway-quiz.md)
 8. **Ray on EKS 딥다이브**
    - [Ray on EKS 소개](./ai-ml/ray/README.md)
    - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [퀴즈](./quizzes/ai-ml/ray/01-architecture-quiz.md)
