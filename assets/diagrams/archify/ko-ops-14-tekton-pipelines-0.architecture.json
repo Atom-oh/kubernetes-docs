@@ -1,0 +1,353 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tekton 핵심 CRD 구조",
+    "output": "ko-ops-14-tekton-pipelines-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "triggers",
+        "label": "이벤트 트리거",
+        "focus": [
+          "eventlistener",
+          "interceptor",
+          "triggerbinding",
+          "triggertemplate",
+          "pipelinerun"
+        ],
+        "note": "Webhook 이벤트가 EventListener → Interceptor → TriggerBinding → TriggerTemplate을 거쳐 새 PipelineRun을 생성한다."
+      },
+      {
+        "id": "core",
+        "label": "핵심 CRD 실행",
+        "focus": [
+          "pipelinerun",
+          "pipeline",
+          "taskrun",
+          "task",
+          "workspace"
+        ],
+        "note": "PipelineRun이 Pipeline을 참조해 TaskRun을 만들고, TaskRun이 Task를 실행해 Workspace/Result에 데이터를 남긴다."
+      },
+      {
+        "id": "chains",
+        "label": "공급망 보안",
+        "focus": [
+          "taskrun",
+          "chains",
+          "provenance"
+        ],
+        "note": "Tekton Chains가 TaskRun 완료를 감지해 OCI 이미지 서명과 SLSA Provenance를 자동 생성한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "Tekton Triggers (이벤트 처리)"
+        },
+        "backend": {
+          "label": "Tekton 핵심 CRD"
+        },
+        "database": {
+          "label": "공유 스토리지 / 결과"
+        },
+        "security": {
+          "label": "Tekton Chains (공급망 보안)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "eventlistener",
+      "type": "messagebus",
+      "label": "EventListener",
+      "sublabel": "이벤트 수신",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "interceptor",
+      "type": "messagebus",
+      "label": "Interceptor",
+      "sublabel": "이벤트 필터 / 변환",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "triggerbinding",
+      "type": "messagebus",
+      "label": "TriggerBinding",
+      "sublabel": "파라미터 바인딩",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "triggertemplate",
+      "type": "messagebus",
+      "label": "TriggerTemplate",
+      "sublabel": "실행 템플릿",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pipelinerun",
+      "type": "backend",
+      "label": "PipelineRun",
+      "sublabel": "파이프라인 실행",
+      "pos": [
+        420,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "backend",
+      "label": "Pipeline",
+      "sublabel": "파이프라인 정의",
+      "pos": [
+        300,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "taskrun",
+      "type": "backend",
+      "label": "TaskRun",
+      "sublabel": "작업 실행",
+      "pos": [
+        550,
+        230
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "task",
+      "type": "backend",
+      "label": "Task",
+      "sublabel": "작업 정의 (Step 컨테이너)",
+      "pos": [
+        420,
+        380
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "workspace",
+      "type": "database",
+      "label": "Workspace / Result",
+      "sublabel": "공유 스토리지 · 결과 전달",
+      "pos": [
+        410,
+        520
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "chains",
+      "type": "security",
+      "label": "Tekton Chains",
+      "sublabel": "서명 & Attestation",
+      "pos": [
+        840,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "provenance",
+      "type": "security",
+      "label": "SLSA Provenance / OCI 서명",
+      "sublabel": "Cosign · Rekor",
+      "pos": [
+        830,
+        380
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tekton Triggers",
+      "wraps": [
+        "eventlistener",
+        "interceptor",
+        "triggerbinding",
+        "triggertemplate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton Core CRDs",
+      "wraps": [
+        "pipelinerun",
+        "pipeline",
+        "taskrun",
+        "task",
+        "workspace"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton Chains",
+      "wraps": [
+        "chains",
+        "provenance"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "el-to-interceptor",
+      "from": "eventlistener",
+      "to": "interceptor",
+      "label": "이벤트",
+      "labelDy": 24
+    },
+    {
+      "id": "interceptor-to-binding",
+      "from": "interceptor",
+      "to": "triggerbinding",
+      "label": "필터링",
+      "labelDy": 24
+    },
+    {
+      "id": "binding-to-template",
+      "from": "triggerbinding",
+      "to": "triggertemplate",
+      "label": "매핑",
+      "labelDy": 24
+    },
+    {
+      "id": "template-to-pipelinerun",
+      "from": "triggertemplate",
+      "to": "pipelinerun",
+      "label": "PipelineRun 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pipelinerun-to-pipeline",
+      "from": "pipelinerun",
+      "to": "pipeline",
+      "label": "참조",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pipelinerun-to-taskrun",
+      "from": "pipelinerun",
+      "to": "taskrun",
+      "label": "생성",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pipeline-to-task",
+      "from": "pipeline",
+      "to": "task",
+      "label": "포함",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "taskrun-to-task",
+      "from": "taskrun",
+      "to": "task",
+      "label": "참조",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "task-to-workspace",
+      "from": "task",
+      "to": "workspace",
+      "label": "데이터 · 결과",
+      "labelDy": 24
+    },
+    {
+      "id": "taskrun-to-chains",
+      "from": "taskrun",
+      "to": "chains",
+      "label": "완료 감지",
+      "variant": "security"
+    },
+    {
+      "id": "chains-to-provenance",
+      "from": "chains",
+      "to": "provenance",
+      "label": "생성",
+      "variant": "security",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "핵심 CRD",
+      "items": [
+        "Task는 여러 Step(컨테이너)으로 구성된 작업 단위, TaskRun은 그 실행 인스턴스",
+        "Pipeline은 Task의 실행 순서와 의존 관계를 정의, PipelineRun은 그 실행 인스턴스",
+        "Workspace는 Task/Pipeline 간 데이터를 공유하고, Result는 Task 간 값을 전달"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Tekton Chains",
+      "items": [
+        "TaskRun 완료 후 자동 실행",
+        "Cosign/Sigstore로 OCI 이미지 서명",
+        "SLSA Provenance와 in-toto Attestation 생성, Rekor 투명성 로그 기록"
+      ]
+    }
+  ]
+}

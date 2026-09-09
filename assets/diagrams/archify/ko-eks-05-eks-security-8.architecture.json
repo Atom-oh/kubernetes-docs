@@ -41,7 +41,24 @@
         ],
         "note": "노드는 인터넷 게이트웨이 대신 VPC 엔드포인트로 ECR, S3, STS에 접근한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

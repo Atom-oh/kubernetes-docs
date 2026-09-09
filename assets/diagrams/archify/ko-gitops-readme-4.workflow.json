@@ -1,0 +1,258 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "GitOps 도구 선택 가이드",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "security": {
+          "label": "분기 질문"
+        },
+        "cloud": {
+          "label": "가장 많이 추천되는 도구"
+        },
+        "backend": {
+          "label": "추천 결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ui-path",
+        "label": "웹 UI가 필요한 경우",
+        "focus": [
+          "start",
+          "q_ui",
+          "q_multi",
+          "q_prog",
+          "argocd",
+          "either"
+        ],
+        "note": "멀티 클러스터나 프로그레시브 딜리버리가 필요하면 ArgoCD, 둘 다 아니면 ArgoCD 또는 FluxCD"
+      },
+      {
+        "id": "cli-path",
+        "label": "웹 UI가 필요 없는 경우",
+        "focus": [
+          "start",
+          "q_ui",
+          "q_modular",
+          "q_cicd",
+          "flux",
+          "jenkins"
+        ],
+        "note": "모듈형 아키텍처를 선호하면 FluxCD, CI/CD 통합까지 필요하면 Jenkins X 고려"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "common",
+      "label": "공통 질문"
+    },
+    {
+      "id": "ui",
+      "label": "웹 UI 필요 (예)"
+    },
+    {
+      "id": "result",
+      "label": "추천 결과"
+    },
+    {
+      "id": "cli",
+      "label": "웹 UI 불필요 (아니오)"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_ui",
+    "q_multi",
+    "argocd"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "common",
+      "col": 0,
+      "type": "frontend",
+      "label": "GitOps 도구 선택",
+      "width": 132
+    },
+    {
+      "id": "q_ui",
+      "lane": "common",
+      "col": 1,
+      "type": "security",
+      "label": "웹 UI가 필요한가?",
+      "width": 136
+    },
+    {
+      "id": "q_multi",
+      "lane": "ui",
+      "col": 2,
+      "type": "security",
+      "label": "멀티 클러스터",
+      "sublabel": "관리 필요?"
+    },
+    {
+      "id": "q_prog",
+      "lane": "ui",
+      "col": 3,
+      "type": "security",
+      "label": "프로그레시브",
+      "sublabel": "딜리버리 필요?",
+      "width": 122
+    },
+    {
+      "id": "argocd",
+      "lane": "result",
+      "col": 3,
+      "type": "cloud",
+      "label": "ArgoCD 추천",
+      "tag": "최다 추천",
+      "width": 122
+    },
+    {
+      "id": "either",
+      "lane": "ui",
+      "col": 4,
+      "type": "backend",
+      "label": "ArgoCD 또는",
+      "sublabel": "FluxCD",
+      "width": 122
+    },
+    {
+      "id": "q_modular",
+      "lane": "cli",
+      "col": 2,
+      "type": "security",
+      "label": "모듈형 아키텍처",
+      "sublabel": "선호?",
+      "width": 128
+    },
+    {
+      "id": "q_cicd",
+      "lane": "cli",
+      "col": 3,
+      "type": "security",
+      "label": "CI/CD 통합",
+      "sublabel": "필요?"
+    },
+    {
+      "id": "flux",
+      "lane": "result",
+      "col": 4,
+      "type": "backend",
+      "label": "FluxCD 추천",
+      "width": 122
+    },
+    {
+      "id": "jenkins",
+      "lane": "cli",
+      "col": 4,
+      "type": "backend",
+      "label": "Jenkins X 고려",
+      "width": 128
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-ui",
+      "from": "start",
+      "to": "q_ui"
+    },
+    {
+      "id": "ui-yes",
+      "from": "q_ui",
+      "to": "q_multi",
+      "label": "예",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ui-no",
+      "from": "q_ui",
+      "to": "q_modular",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "multi-yes",
+      "from": "q_multi",
+      "to": "argocd",
+      "label": "예",
+      "variant": "emphasis"
+    },
+    {
+      "id": "multi-no",
+      "from": "q_multi",
+      "to": "q_prog",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "prog-yes",
+      "from": "q_prog",
+      "to": "argocd",
+      "label": "예"
+    },
+    {
+      "id": "prog-no",
+      "from": "q_prog",
+      "to": "either",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "modular-yes",
+      "from": "q_modular",
+      "to": "flux",
+      "label": "예"
+    },
+    {
+      "id": "modular-no",
+      "from": "q_modular",
+      "to": "q_cicd",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "cicd-yes",
+      "from": "q_cicd",
+      "to": "jenkins",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "cicd-no",
+      "from": "q_cicd",
+      "to": "flux",
+      "label": "아니오",
+      "fromSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "ArgoCD 선택 시나리오",
+      "items": [
+        "직관적인 UI로 배포 상태를 시각화하고 싶을 때",
+        "다중 클러스터를 중앙에서 관리해야 할 때",
+        "Argo Rollouts로 블루/그린·카나리 배포가 필요할 때"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "FluxCD 선택 시나리오",
+      "items": [
+        "CLI 중심의 경량 솔루션을 원할 때",
+        "모듈형 아키텍처로 필요한 컴포넌트만 사용하고 싶을 때",
+        "리소스 사용량을 최소화해야 할 때"
+      ]
+    }
+  ]
+}

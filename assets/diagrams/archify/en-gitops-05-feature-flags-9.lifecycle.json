@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Feature Flag Lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "rollout-path",
+        "label": "Delivery path",
+        "focus": [
+          "plan",
+          "develop",
+          "test",
+          "rollout",
+          "stable"
+        ],
+        "note": "A flag request starts planning; after development and testing it rolls out 5% → 25% → 100%, then enters a stabilization period."
+      },
+      {
+        "id": "cleanup-path",
+        "label": "Cleanup path",
+        "focus": [
+          "stable",
+          "cleanup",
+          "removed"
+        ],
+        "note": "After stabilization, a removal PR hardcodes the default and updates tests so the flag never becomes technical debt."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "start": {
+          "label": "Flag request (start)"
+        },
+        "active": {
+          "label": "Work in progress"
+        },
+        "waiting": {
+          "label": "Waiting period"
+        },
+        "success": {
+          "label": "Flag removed (end of life)"
+        }
+      }
+    },
+    "viewBox": [
+      980,
+      640
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Delivery phases"
+    },
+    {
+      "id": "retire",
+      "label": "Cleanup phase"
+    },
+    {
+      "id": "terminal",
+      "label": "End of life"
+    }
+  ],
+  "states": [
+    {
+      "id": "plan",
+      "type": "start",
+      "label": "Plan",
+      "sublabel": "name, type, owner, expiry",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "FLAG REQUEST"
+    },
+    {
+      "id": "develop",
+      "type": "active",
+      "label": "Development",
+      "sublabel": "implement with flag off",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "Start implementation"
+    },
+    {
+      "id": "test",
+      "type": "waiting",
+      "label": "Testing",
+      "sublabel": "awaiting QA approval",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "Review complete"
+    },
+    {
+      "id": "rollout",
+      "type": "active",
+      "label": "Rollout",
+      "sublabel": "5% → 25% → 100%",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "QA approved"
+    },
+    {
+      "id": "stable",
+      "type": "waiting",
+      "label": "Stable",
+      "sublabel": "flag on 100%, stabilizing",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "100% rollout"
+    },
+    {
+      "id": "cleanup",
+      "type": "active",
+      "label": "Cleanup",
+      "sublabel": "flag removal PR",
+      "lane": "retire",
+      "col": 2,
+      "step": "06"
+    },
+    {
+      "id": "removed",
+      "type": "success",
+      "label": "Removed",
+      "sublabel": "default hardcoded",
+      "lane": "terminal",
+      "col": 2,
+      "step": "07"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-plan-develop",
+      "from": "plan",
+      "to": "develop"
+    },
+    {
+      "id": "t-develop-test",
+      "from": "develop",
+      "to": "test"
+    },
+    {
+      "id": "t-test-rollout",
+      "from": "test",
+      "to": "rollout"
+    },
+    {
+      "id": "t-rollout-stable",
+      "from": "rollout",
+      "to": "stable"
+    },
+    {
+      "id": "t-stable-cleanup",
+      "from": "stable",
+      "to": "cleanup",
+      "label": "Stabilization period over",
+      "labelDy": 24
+    },
+    {
+      "id": "t-cleanup-removed",
+      "from": "cleanup",
+      "to": "removed",
+      "label": "Code removed",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Decided at planning",
+      "items": [
+        "Define flag name, type and owner",
+        "Set an expiry date",
+        "List the affected services"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Done at cleanup",
+      "items": [
+        "Open a PR that removes the flag code",
+        "Hardcode the default value",
+        "Update the related tests"
+      ]
+    }
+  ]
+}

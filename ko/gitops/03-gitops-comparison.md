@@ -50,11 +50,15 @@ GitOps는 애플리케이션 개발에 사용되는 DevOps 모범 사례를 인�
 
 #### ArgoCD 아키텍처
 
-![Git 저장소의 변경 사항이 ArgoCD의 API 서버를 중심으로 Repo Server와 Application Controller를 거쳐 Kubernetes 클러스터에 반영되는 구조를 보여준다.](../../assets/diagrams/rendered/ko-gitops-03-gitops-comparison-0.svg)
+![Git 저장소의 변경 사항이 ArgoCD의 API 서버를 중심으로 Repo Server와 Application Controller를 거쳐 Kubernetes 클러스터에 반영되는 구조를 보여준다.](../.gitbook/assets/ko-gitops-03-gitops-comparison-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-03-gitops-comparison-0.html)
 
 #### FluxCD 아키텍처
 
-![Git·Helm·OCI 저장소를 감시하는 Source Controller가 중심이 되어 Kustomize Controller와 Helm Controller에 변경을 전달해 Kubernetes 클러스터에 반영하고, Notification Controller가 각 컨트롤러의 이벤트를 알리며 Image Automation Controller가 새 이미지를 다시 Git에 반영하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-gitops-03-gitops-comparison-1.svg)
+![Git·Helm·OCI 저장소를 감시하는 Source Controller가 중심이 되어 Kustomize Controller와 Helm Controller에 변경을 전달해 Kubernetes 클러스터에 반영하고, Notification Controller가 각 컨트롤러의 이벤트를 알리며 Image Automation Controller가 새 이미지를 다시 Git에 반영하는 구조를 보여준다.](../.gitbook/assets/ko-gitops-03-gitops-comparison-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-03-gitops-comparison-1.html)
 
 ### 커뮤니티와 생태계
 

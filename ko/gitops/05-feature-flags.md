@@ -37,7 +37,9 @@ Feature Flag는 코드 배포와 기능 릴리스를 분리하여 프로덕션 �
 
 Feature Flag(Feature Toggle)는 코드 변경 없이 런타임에 소프트웨어 기능의 동작을 제어할 수 있는 소프트웨어 설계 패턴입니다. 코드 배포(Deployment)와 기능 릴리스(Release)를 분리함으로써, 개발팀은 불완전한 기능을 안전하게 프로덕션에 배포하고 원하는 시점에 사용자에게 노출할 수 있습니다.
 
-![전통적 배포와 Feature Flag 배포를 비교하여, Feature Flag 배포에서는 배포와 릴리스가 분리되고 플래그 값에 따라 대상 사용자에게만 새 기능이 노출됨을 보여주는 흐름도.](../../assets/diagrams/rendered/ff-compare.svg)
+![전통적 배포에서는 배포 즉시 전체 사용자에게 릴리스되지만, Feature Flag 배포에서는 배포와 릴리스가 분리되어 플래그가 ON인 대상 사용자에게만 새 기능이 노출되고 OFF인 사용자는 기존 경험을 유지함을 두 레인으로 비교해 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-0.html)
 
 ### Feature Flag의 유형
 
@@ -52,7 +54,9 @@ Feature Flag(Feature Toggle)는 코드 변경 없이 런타임에 소프트웨�
 
 Progressive Delivery는 기능을 점진적으로 사용자에게 노출하는 배포 전략입니다. Feature Flag는 이 전략의 핵심 구현 수단입니다.
 
-![코드 배포부터 카나리, 링 기반 단계적 롤아웃을 거쳐 Flag 제거까지 이어지는 점진적 배포 파이프라인을 보여주는 6단계 흐름도.](../../assets/diagrams/rendered/progressive-delivery.svg)
+![코드 배포부터 카나리, 링 기반 단계적 롤아웃을 거쳐 Flag 제거까지 이어지는 점진적 배포 파이프라인 6단계를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-10.html)
 
 ### Feature Flag 도구 비교
 
@@ -84,13 +88,17 @@ OpenFeature는 CNCF Incubating 프로젝트로, Feature Flag 관리를 위한 �
 
 OpenFeature SDK는 애플리케이션과 Feature Flag 백엔드 사이의 추상화 계층을 제공합니다. 아래 다이어그램은 SDK의 핵심 컴포넌트와 상호작용을 보여줍니다.
 
-![애플리케이션 코드가 OpenFeature API/Client, Hooks, Provider Interface를 거쳐 여러 Provider와 각 백엔드 시스템으로 연결되는 OpenFeature SDK 아키텍처.](../../assets/diagrams/rendered/openfeature-sdk-arch.svg)
+![애플리케이션 코드의 Flag 평가 요청이 OpenFeature API/Client, Hooks, Provider Interface를 거쳐 교체 가능한 Provider와 각 백엔드 시스템(flagd, LaunchDarkly, Flagsmith)으로 연결되는 OpenFeature SDK 아키텍처를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-1.html)
 
 ### Provider 모델
 
 Provider는 OpenFeature SDK와 구체적인 Feature Flag 백엔드를 연결하는 어댑터입니다. Provider를 교체하는 것만으로 전체 Feature Flag 시스템을 변경할 수 있습니다.
 
-![OpenFeature SDK의 API 계층이 환경에 따라 flagd, LaunchDarkly, In-Memory Provider 중 하나로 연결되는 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/openfeature-provider-select.svg)
+![OpenFeature SDK의 API 계층이 SetProvider()로 환경에 따라 flagd(개발/스테이징), LaunchDarkly(프로덕션), In-Memory(테스트) Provider 중 하나에 연결되는 구조를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-2.html)
 
 **Provider 설정 예시 (Go):**
 
@@ -150,7 +158,9 @@ value, _ := client.StringValue(ctx, "banner-color", "blue", evalCtx)
 
 Hooks는 Flag 평가 라이프사이클의 각 단계에서 실행되는 콜백입니다. 로깅, 메트릭 수집, 검증 등 횡단 관심사를 처리합니다.
 
-![애플리케이션의 Flag 평가 요청이 Before, After, Error, Finally Hook을 차례로 거쳐 Provider와 상호작용한 뒤 최종 결과를 반환하는 과정을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/hooks-sequence.svg)
+![애플리케이션의 Flag 평가 요청이 OpenFeature Client를 통해 Before Hook, Provider 평가, After Hook, 오류 시 Error Hook, Finally Hook을 차례로 거친 뒤 최종 결과를 반환하는 과정을 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-11.html)
 
 **커스텀 Hook 구현 예시 (Go):**
 
@@ -195,7 +205,9 @@ func (h *MetricsHook) Finally(ctx context.Context, hookCtx openfeature.HookConte
 
 flagd는 OpenFeature 호환 Feature Flag 평가 엔진으로, 경량이며 Kubernetes 환경에 최적화되어 있습니다. CNCF OpenFeature 프로젝트의 일부로 개발되었습니다.
 
-![Flag 소스가 flagd 사이드카 모드 또는 독립형 flagd Deployment를 거쳐 애플리케이션 Pod로 전달되는 Kubernetes 배포 구조.](../../assets/diagrams/rendered/flagd-k8s-deploy.svg)
+![Flag 소스가 flagd 사이드카 모드 또는 독립형 flagd Deployment를 거쳐 애플리케이션 Pod로 전달되는 Kubernetes 배포 구조를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-3.html)
 
 ### Helm 설치
 
@@ -502,7 +514,9 @@ spec:
 
 OpenFeature Operator는 Kubernetes 클러스터에서 Feature Flag를 선언적으로 관리하기 위한 컨트롤러입니다. CRD를 통해 Flag 정의, 소스 구성, 자동 사이드카 주입을 처리합니다.
 
-![FeatureFlag/FeatureFlagSource 사용자 정의 리소스를 OpenFeature Operator의 Controller와 Reconciler, Mutating Webhook이 감시하여 ConfigMap과 Pod의 flagd 사이드카에 반영하는 구조.](../../assets/diagrams/rendered/openfeature-operator.svg)
+![FeatureFlag와 FeatureFlagSource CR을 OpenFeature Operator의 Controller Manager와 Reconciler가 감시해 flagd가 읽는 ConfigMap으로 동기화하고, Mutating Webhook이 Pod 생성 시 flagd 사이드카를 주입하는 구조를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-6.html)
 
 ### FeatureFlagSource CRD
 
@@ -642,7 +656,9 @@ spec:
 
 OpenFeature Operator는 FeatureFlag CRD를 ConfigMap으로 변환하여 flagd가 읽을 수 있도록 합니다. CRD가 변경되면 ConfigMap이 자동 업데이트되고, flagd는 파일 시스템 감시를 통해 실시간으로 변경을 감지합니다.
 
-![사용자나 GitOps가 생성한 FeatureFlag CR 변경이 Kubernetes API와 OpenFeature Operator를 거쳐 ConfigMap에 반영되고, flagd가 이를 감지해 무중단으로 재로드하는 과정을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/featureflag-crd-sync.svg)
+![사용자나 GitOps가 생성한 FeatureFlag CR 변경이 Kubernetes API와 OpenFeature Operator를 거쳐 ConfigMap에 반영되고, flagd가 파일 변경을 감지해 무중단으로 구성을 재로드하는 시퀀스를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-12.html)
 
 ---
 
@@ -1011,7 +1027,9 @@ spec:
 
 Flagger(또는 Argo Rollouts)와 Feature Flag를 결합하면, 인프라 수준의 트래픽 분할과 애플리케이션 수준의 기능 제어를 함께 활용하여 더욱 정교한 배포 전략을 구현할 수 있습니다.
 
-![새 버전을 Feature Flag OFF로 배포한 뒤 소규모 카나리 트래픽에서 메트릭을 분석해 통과 시 점진적으로 트래픽을 확대하고 실패 시 자동 롤백하는 5단계 배포 절차를 보여주는 흐름도.](../../assets/diagrams/rendered/canary-rollout-flag.svg)
+![새 버전을 Feature Flag OFF로 배포한 뒤 소량의 카나리 트래픽에서만 Flag를 켜고 메트릭 분석을 통과하면 트래픽과 Flag 대상을 단계적으로 확대해 100% 릴리스 후 Flag를 정리하며, 실패 시 자동 롤백하는 5단계 워크플로우를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-7.html)
 
 **Flagger Canary + FeatureFlag 조합 예시:**
 
@@ -1130,7 +1148,9 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 
 다크 런칭은 사용자에게 노출하지 않으면서 프로덕션 트래픽으로 새로운 기능을 검증하는 패턴입니다.
 
-![사용자 요청을 기존 로직과 새 로직에 동시에 보내되 사용자에게는 기존 결과만 반환하고 새 로직의 결과는 메트릭 비교용으로만 수집하는 다크 런칭 패턴을 보여주는 다이어그램.](../../assets/diagrams/rendered/dark-launch-pattern.svg)
+![사용자 요청이 dark-launch-new-search Flag 평가를 거쳐 기존 로직의 결과만 사용자에게 반환되고, Flag가 켜지면 새 로직이 비동기로 병렬 실행되어 결과 비교와 메트릭 수집에만 쓰이는 다크 런칭 패턴의 흐름을 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-13.html)
 
 ```go
 // 다크 런칭 구현 예시
@@ -1372,7 +1392,9 @@ spec:
 
 Feature Flag 변경을 PR(Pull Request) 기반으로 관리하면 코드 리뷰, 승인 프로세스, 자동 테스트를 통해 안전하게 Flag를 제어할 수 있습니다.
 
-![Flag 변경 PR이 CI 검증과 리뷰를 거쳐 승인되면 GitOps로 배포되고 헬스 체크와 메트릭 확인 후 알림이 발송되며, 거부되면 다시 PR 생성 단계로 되돌아가는 전체 파이프라인을 보여주는 흐름도.](../../assets/diagrams/rendered/flag-change-gitops-pipeline.svg)
+![Flag 변경 PR이 CI 스키마 검증과 영향도 분석, CODEOWNERS 리뷰를 거쳐 승인되면 머지 후 ArgoCD/Flux가 FeatureFlag CR을 동기화하고 헬스·메트릭 확인 뒤 Slack/Teams 알림이 가며, 거부되면 PR 생성 단계로 되돌아가는 워크플로우를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-8.html)
 
 **GitHub Actions CI 파이프라인 예시:**
 
@@ -1648,7 +1670,9 @@ data:
 
 Feature Flag는 명확한 생명주기를 가져야 합니다. 목적을 달성한 Flag는 반드시 제거하여 기술 부채를 방지합니다.
 
-![Feature Flag가 계획 단계부터 개발, 테스트, 롤아웃, 완료를 거쳐 코드 정리로 종료되기까지의 생명주기 상태 전이도.](../../assets/diagrams/rendered/feature-flag-lifecycle-state.svg)
+![Feature Flag가 계획·개발·테스트·롤아웃·완료를 거쳐 정리 단계에서 코드가 제거되기까지의 생명주기 상태 전이를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-9.html)
 
 **Flag 메타데이터 관리:**
 

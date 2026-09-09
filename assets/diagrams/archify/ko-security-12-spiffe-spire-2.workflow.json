@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "노드 및 워크로드 어테스테이션 플로우",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "node-attestation",
+        "label": "노드 어테스테이션",
+        "focus": [
+          "agent_start",
+          "psat",
+          "aws_iid",
+          "validate",
+          "node_svid"
+        ],
+        "note": "SPIRE Agent가 k8s_psat 토큰 또는 aws_iid 문서를 Server에 제출하고, 검증을 통과하면 Node SVID를 발급받는다."
+      },
+      {
+        "id": "workload-attestation",
+        "label": "워크로드 어테스테이션",
+        "focus": [
+          "node_svid",
+          "wl_call",
+          "collect",
+          "pod_meta",
+          "unix",
+          "match",
+          "wl_svid"
+        ],
+        "note": "Node SVID를 가진 Agent가 Workload API를 호출한 프로세스의 Pod 메타데이터와 UID/GID를 확인해 등록 엔트리와 매칭하고 Workload SVID를 발급한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "SPIRE 처리 단계"
+        },
+        "cloud": {
+          "label": "어테스테이션 증적"
+        },
+        "security": {
+          "label": "SVID 발급"
+        },
+        "frontend": {
+          "label": "워크로드"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "k8s",
+      "label": "Kubernetes 워크로드 / API"
+    },
+    {
+      "id": "agent",
+      "label": "SPIRE Agent"
+    },
+    {
+      "id": "node",
+      "label": "노드 (EC2 / OS)"
+    },
+    {
+      "id": "server",
+      "label": "SPIRE Server"
+    }
+  ],
+  "phases": [
+    {
+      "id": "node-phase",
+      "label": "노드 어테스테이션",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "workload-phase",
+      "label": "워크로드 어테스테이션",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "agent_start",
+    "psat",
+    "validate",
+    "node_svid",
+    "wl_call",
+    "collect",
+    "pod_meta",
+    "match",
+    "wl_svid"
+  ],
+  "nodes": [
+    {
+      "id": "agent_start",
+      "lane": "agent",
+      "col": 0,
+      "type": "backend",
+      "label": "SPIRE Agent 시작",
+      "sublabel": "DaemonSet",
+      "width": 190
+    },
+    {
+      "id": "psat",
+      "lane": "k8s",
+      "col": 1,
+      "type": "cloud",
+      "label": "k8s_psat",
+      "sublabel": "ServiceAccount Token 획득",
+      "width": 190
+    },
+    {
+      "id": "aws_iid",
+      "lane": "node",
+      "col": 1,
+      "type": "cloud",
+      "label": "aws_iid",
+      "sublabel": "Instance Identity Doc 획득",
+      "width": 190
+    },
+    {
+      "id": "validate",
+      "lane": "server",
+      "col": 2,
+      "type": "backend",
+      "label": "어테스테이션 요청 검증",
+      "sublabel": "제출된 토큰/문서",
+      "width": 190
+    },
+    {
+      "id": "node_svid",
+      "lane": "agent",
+      "col": 2,
+      "type": "security",
+      "label": "Node SVID 발급",
+      "sublabel": "Agent 신원 확보",
+      "width": 190
+    },
+    {
+      "id": "wl_call",
+      "lane": "k8s",
+      "col": 3,
+      "type": "frontend",
+      "label": "Workload API 호출",
+      "sublabel": "Unix 소켓",
+      "width": 190
+    },
+    {
+      "id": "collect",
+      "lane": "agent",
+      "col": 3,
+      "type": "backend",
+      "label": "프로세스 정보 수집",
+      "sublabel": "호출 프로세스 식별",
+      "width": 190
+    },
+    {
+      "id": "pod_meta",
+      "lane": "k8s",
+      "col": 4,
+      "type": "cloud",
+      "label": "Pod 메타데이터 조회",
+      "sublabel": "k8s 워크로드 어테스터",
+      "width": 190
+    },
+    {
+      "id": "unix",
+      "lane": "node",
+      "col": 4,
+      "type": "cloud",
+      "label": "UID/GID 확인",
+      "sublabel": "unix 워크로드 어테스터",
+      "width": 190
+    },
+    {
+      "id": "match",
+      "lane": "agent",
+      "col": 5,
+      "type": "backend",
+      "label": "셀렉터 매칭",
+      "sublabel": "등록 엔트리와 비교",
+      "width": 190
+    },
+    {
+      "id": "wl_svid",
+      "lane": "k8s",
+      "col": 5,
+      "type": "security",
+      "label": "Workload SVID 발급",
+      "sublabel": "X.509 / JWT",
+      "width": 190
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-psat",
+      "from": "agent_start",
+      "to": "psat"
+    },
+    {
+      "id": "start-iid",
+      "from": "agent_start",
+      "to": "aws_iid",
+      "role": "branch"
+    },
+    {
+      "id": "psat-validate",
+      "from": "psat",
+      "to": "validate"
+    },
+    {
+      "id": "iid-validate",
+      "from": "aws_iid",
+      "to": "validate",
+      "role": "branch"
+    },
+    {
+      "id": "validate-nodesvid",
+      "from": "validate",
+      "to": "node_svid",
+      "variant": "security"
+    },
+    {
+      "id": "nodesvid-wlcall",
+      "from": "node_svid",
+      "to": "wl_call",
+      "label": "Node SVID 사용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wlcall-collect",
+      "from": "wl_call",
+      "to": "collect"
+    },
+    {
+      "id": "collect-podmeta",
+      "from": "collect",
+      "to": "pod_meta"
+    },
+    {
+      "id": "collect-unix",
+      "from": "collect",
+      "to": "unix",
+      "role": "branch"
+    },
+    {
+      "id": "podmeta-match",
+      "from": "pod_meta",
+      "to": "match"
+    },
+    {
+      "id": "unix-match",
+      "from": "unix",
+      "to": "match",
+      "role": "branch"
+    },
+    {
+      "id": "match-wlsvid",
+      "from": "match",
+      "to": "wl_svid",
+      "variant": "security"
+    }
+  ]
+}

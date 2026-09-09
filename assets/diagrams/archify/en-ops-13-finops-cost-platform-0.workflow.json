@@ -1,0 +1,250 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Inform, Optimize, Operate Cycle",
+    "locale": "en",
+    "output": "public/archmaps/en-ops-13-finops-cost-platform-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "inform",
+        "label": "Inform: build visibility",
+        "focus": [
+          "tagging",
+          "allocation",
+          "showback"
+        ],
+        "note": "Labels feed cost allocation, which feeds showback dashboards - the foundation every optimization builds on."
+      },
+      {
+        "id": "optimize",
+        "label": "Optimize: cut waste",
+        "focus": [
+          "showback",
+          "rightsizing",
+          "spot",
+          "idle"
+        ],
+        "note": "Visibility data drives rightsizing, Spot and Savings Plans adoption, and idle resource cleanup."
+      },
+      {
+        "id": "operate",
+        "label": "Operate: sustain and loop back",
+        "focus": [
+          "idle",
+          "budget",
+          "policy",
+          "reviews",
+          "tagging"
+        ],
+        "note": "Budget alerts, policy enforcement, and regular reviews institutionalize efficiency and feed back into Inform."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Visibility & dashboards"
+        },
+        "backend": {
+          "label": "Engineering action"
+        },
+        "cloud": {
+          "label": "AWS pricing model"
+        },
+        "messagebus": {
+          "label": "Alerting"
+        },
+        "security": {
+          "label": "Policy guardrail"
+        },
+        "external": {
+          "label": "Team cadence"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "inform",
+      "label": "Inform"
+    },
+    {
+      "id": "optimize",
+      "label": "Optimize"
+    },
+    {
+      "id": "operate",
+      "label": "Operate"
+    }
+  ],
+  "mainPath": [
+    "tagging",
+    "allocation",
+    "showback",
+    "rightsizing",
+    "spot",
+    "idle",
+    "budget"
+  ],
+  "nodes": [
+    {
+      "id": "tagging",
+      "lane": "inform",
+      "col": 0,
+      "type": "frontend",
+      "label": "Tagging & Labels",
+      "sublabel": "label strategy",
+      "width": 144
+    },
+    {
+      "id": "allocation",
+      "lane": "inform",
+      "col": 1,
+      "type": "backend",
+      "label": "Cost Allocation",
+      "sublabel": "namespace + label based",
+      "width": 144
+    },
+    {
+      "id": "showback",
+      "lane": "inform",
+      "col": 2,
+      "type": "frontend",
+      "label": "Showback Dashboards",
+      "sublabel": "team cost views",
+      "width": 168
+    },
+    {
+      "id": "rightsizing",
+      "lane": "optimize",
+      "col": 2,
+      "type": "backend",
+      "label": "Rightsizing",
+      "sublabel": "VPA + Goldilocks",
+      "width": 144
+    },
+    {
+      "id": "spot",
+      "lane": "optimize",
+      "col": 3,
+      "type": "cloud",
+      "label": "Spot / Savings Plans",
+      "sublabel": "Spot + Savings Plans adoption",
+      "width": 168
+    },
+    {
+      "id": "idle",
+      "lane": "optimize",
+      "col": 4,
+      "type": "backend",
+      "label": "Idle Resource Cleanup",
+      "sublabel": "remove waste",
+      "width": 168
+    },
+    {
+      "id": "budget",
+      "lane": "operate",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Budget Alerts",
+      "sublabel": "anomaly alerts to Slack",
+      "width": 144
+    },
+    {
+      "id": "policy",
+      "lane": "operate",
+      "col": 3,
+      "type": "security",
+      "label": "Policy Enforcement",
+      "sublabel": "Kyverno label rules",
+      "width": 168
+    },
+    {
+      "id": "reviews",
+      "lane": "operate",
+      "col": 2,
+      "type": "external",
+      "label": "Regular Reviews",
+      "sublabel": "weekly + monthly cadence",
+      "width": 144
+    }
+  ],
+  "edges": [
+    {
+      "from": "tagging",
+      "to": "allocation"
+    },
+    {
+      "from": "allocation",
+      "to": "showback"
+    },
+    {
+      "from": "showback",
+      "to": "rightsizing",
+      "label": "Visibility & Allocation",
+      "variant": "emphasis"
+    },
+    {
+      "from": "rightsizing",
+      "to": "spot"
+    },
+    {
+      "from": "spot",
+      "to": "idle"
+    },
+    {
+      "from": "idle",
+      "to": "budget",
+      "label": "Rightsizing & Savings",
+      "variant": "emphasis"
+    },
+    {
+      "from": "budget",
+      "to": "policy",
+      "role": "return"
+    },
+    {
+      "from": "policy",
+      "to": "reviews",
+      "role": "return"
+    },
+    {
+      "from": "reviews",
+      "to": "tagging",
+      "label": "Governance & Automation",
+      "variant": "emphasis",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Crawl (1-3 months)",
+      "items": [
+        "Namespace-level allocation with basic labels",
+        "Manual rightsizing and ad-hoc cleanup",
+        "No formal policies, reactive alerts"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Walk (3-6 months)",
+      "items": [
+        "Label-based allocation with shared cost splitting and showback",
+        "VPA recommendations and Spot adoption",
+        "Label enforcement and monthly reviews"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Run (6-12 months)",
+      "items": [
+        "Real-time chargeback with CUR reconciliation",
+        "Automated rightsizing pipelines",
+        "Automated policies and cost gates in CI/CD"
+      ]
+    }
+  ]
+}

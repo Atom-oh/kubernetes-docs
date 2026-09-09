@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Automated Resource Adjustment Pipeline — from VPA Recommendations through PR Review to ArgoCD Deploy",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      600
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "cronjob",
+      "type": "cloud",
+      "label": "CronJob",
+      "sublabel": "runs weekly"
+    },
+    {
+      "id": "vpa",
+      "type": "backend",
+      "label": "VPA",
+      "sublabel": "recommender"
+    },
+    {
+      "id": "script",
+      "type": "backend",
+      "label": "Script",
+      "sublabel": "recs vs current requests"
+    },
+    {
+      "id": "gitci",
+      "type": "external",
+      "label": "Git / CI",
+      "sublabel": "PR · lint checks"
+    },
+    {
+      "id": "lead",
+      "type": "external",
+      "label": "Team Lead",
+      "sublabel": "reviewer"
+    },
+    {
+      "id": "argocd",
+      "type": "cloud",
+      "label": "ArgoCD",
+      "sublabel": "GitOps deploy"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 260,
+      "label": "Weekly automated run"
+    },
+    {
+      "from": 275,
+      "to": 425,
+      "label": "PR-based review"
+    },
+    {
+      "from": 440,
+      "to": 505,
+      "label": "Safe rollout"
+    }
+  ],
+  "messages": [
+    {
+      "id": "query",
+      "from": "cronjob",
+      "to": "vpa",
+      "y": 190,
+      "label": "query recommendations (kubectl get vpa)"
+    },
+    {
+      "id": "recs",
+      "from": "vpa",
+      "to": "script",
+      "y": 235,
+      "label": "recommendation data",
+      "variant": "return"
+    },
+    {
+      "id": "pr",
+      "from": "script",
+      "to": "gitci",
+      "y": 295,
+      "label": "open PR for changes over 20%",
+      "variant": "emphasis",
+      "note": "compared with current requests · change threshold 20%"
+    },
+    {
+      "id": "review",
+      "from": "gitci",
+      "to": "lead",
+      "y": 355,
+      "label": "request PR review",
+      "note": "after CI trigger · lint checks pass"
+    },
+    {
+      "id": "approve",
+      "from": "lead",
+      "to": "gitci",
+      "y": 400,
+      "label": "approve + merge",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync",
+      "from": "gitci",
+      "to": "argocd",
+      "y": 465,
+      "label": "sync merged manifests"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "script",
+      "from": 230,
+      "to": 300,
+      "type": "backend"
+    },
+    {
+      "participant": "gitci",
+      "from": 290,
+      "to": 470,
+      "type": "external"
+    },
+    {
+      "participant": "lead",
+      "from": 350,
+      "to": 405,
+      "type": "external"
+    },
+    {
+      "participant": "argocd",
+      "from": 460,
+      "to": 500,
+      "type": "cloud"
+    }
+  ]
+}

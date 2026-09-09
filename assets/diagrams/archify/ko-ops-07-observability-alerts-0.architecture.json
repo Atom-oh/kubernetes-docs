@@ -1,41 +1,206 @@
 {
-  "schema_version": 1, "diagram_type": "architecture",
-  "meta": { "title": "알림 아키텍처", "output": "ko-ops-07-observability-alerts-0.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1220, 720] },
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "알림 아키텍처",
+    "output": "ko-ops-07-observability-alerts-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      720
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
   "components": [
-    { "id": "rules", "type": "messagebus", "label": "PrometheusRule CRD", "sublabel": "알림 · 레코딩 규칙", "pos": [40, 110], "size": [250, 80] },
-    { "id": "prometheus", "type": "backend", "label": "Prometheus", "sublabel": "규칙 주기 평가", "pos": [40, 350], "size": [250, 80] },
-    { "id": "am", "type": "backend", "label": "Alertmanager", "sublabel": "그룹화 · 억제 · 라우팅", "pos": [410, 230], "size": [260, 84] },
-    { "id": "slack", "type": "external", "label": "Slack", "sublabel": "warning 기본", "pos": [800, 90], "size": [210, 76] },
-    { "id": "pagerduty", "type": "external", "label": "PagerDuty", "sublabel": "critical 온콜", "pos": [800, 230], "size": [210, 76] },
-    { "id": "email", "type": "external", "label": "Email", "sublabel": "info · 주간 리뷰", "pos": [800, 370], "size": [210, 76] },
-    { "id": "webhook", "type": "external", "label": "Webhook", "sublabel": "사내 시스템 연동", "pos": [800, 510], "size": [210, 76] }
+    {
+      "id": "rules",
+      "type": "messagebus",
+      "label": "PrometheusRule CRD",
+      "sublabel": "알림 · 레코딩 규칙",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        250,
+        80
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "규칙 주기 평가",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        250,
+        80
+      ]
+    },
+    {
+      "id": "am",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "그룹화 · 억제 · 라우팅",
+      "pos": [
+        410,
+        230
+      ],
+      "size": [
+        260,
+        84
+      ]
+    },
+    {
+      "id": "slack",
+      "type": "external",
+      "label": "Slack",
+      "sublabel": "warning 기본",
+      "pos": [
+        800,
+        90
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "pagerduty",
+      "type": "external",
+      "label": "PagerDuty",
+      "sublabel": "critical 온콜",
+      "pos": [
+        800,
+        230
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "email",
+      "type": "external",
+      "label": "Email",
+      "sublabel": "info · 주간 리뷰",
+      "pos": [
+        800,
+        370
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "external",
+      "label": "Webhook",
+      "sublabel": "사내 시스템 연동",
+      "pos": [
+        800,
+        510
+      ],
+      "size": [
+        210,
+        76
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Kubernetes 클러스터", "wraps": ["rules", "prometheus", "am"], "pad": 36 }
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "rules",
+        "prometheus",
+        "am"
+      ],
+      "pad": 36
+    }
   ],
   "connections": [
-    { "id": "rules-prom", "from": "rules", "to": "prometheus", "label": "레이블 셀렉터로 선택", "fromSide": "bottom", "toSide": "top", "labelDy": 80 },
-    { "id": "prom-am", "from": "prometheus", "to": "am", "label": "발생 알림 전송" },
-    { "id": "am-slack", "from": "am", "to": "slack" },
-    { "id": "am-pd", "from": "am", "to": "pagerduty" },
-    { "id": "am-email", "from": "am", "to": "email" },
-    { "id": "am-webhook", "from": "am", "to": "webhook" }
+    {
+      "id": "rules-prom",
+      "from": "rules",
+      "to": "prometheus",
+      "label": "레이블 셀렉터로 선택",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    },
+    {
+      "id": "prom-am",
+      "from": "prometheus",
+      "to": "am",
+      "label": "발생 알림 전송"
+    },
+    {
+      "id": "am-slack",
+      "from": "am",
+      "to": "slack"
+    },
+    {
+      "id": "am-pd",
+      "from": "am",
+      "to": "pagerduty"
+    },
+    {
+      "id": "am-email",
+      "from": "am",
+      "to": "email"
+    },
+    {
+      "id": "am-webhook",
+      "from": "am",
+      "to": "webhook"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "규칙에서 알림까지", "items": [
-      "PrometheusRule CRD에 알림 조건과 for 기간, 레이블·어노테이션을 선언한다",
-      "Prometheus가 release 같은 레이블 셀렉터로 자기 규칙을 골라 주기적으로 평가한다",
-      "조건이 for 기간 동안 유지되면 Firing 상태가 되어 Alertmanager로 전송된다"
-    ]},
-    { "dot": "emerald", "title": "Alertmanager의 역할", "items": [
-      "같은 원인의 알림을 그룹화해 폭주를 막는다",
-      "상위 장애가 있을 때 하위 알림을 억제(inhibit)한다",
-      "severity 레이블을 기준으로 수신 채널을 라우팅한다"
-    ]},
-    { "dot": "amber", "title": "severity별 대응", "items": [
-      "critical — 서비스 중단·데이터 손실 위험, 5분 이내, PagerDuty·전화",
-      "warning — 성능 저하나 잠재 문제, 업무 시간 내, Slack·Email",
-      "info — 정보성 알림, 주간 리뷰, Email·대시보드"
-    ]}
+    {
+      "dot": "cyan",
+      "title": "규칙에서 알림까지",
+      "items": [
+        "PrometheusRule CRD에 알림 조건과 for 기간, 레이블·어노테이션을 선언한다",
+        "Prometheus가 release 같은 레이블 셀렉터로 자기 규칙을 골라 주기적으로 평가한다",
+        "조건이 for 기간 동안 유지되면 Firing 상태가 되어 Alertmanager로 전송된다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Alertmanager의 역할",
+      "items": [
+        "같은 원인의 알림을 그룹화해 폭주를 막는다",
+        "상위 장애가 있을 때 하위 알림을 억제(inhibit)한다",
+        "severity 레이블을 기준으로 수신 채널을 라우팅한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "severity별 대응",
+      "items": [
+        "critical — 서비스 중단·데이터 손실 위험, 5분 이내, PagerDuty·전화",
+        "warning — 성능 저하나 잠재 문제, 업무 시간 내, Slack·Email",
+        "info — 정보성 알림, 주간 리뷰, Email·대시보드"
+      ]
+    }
   ]
 }

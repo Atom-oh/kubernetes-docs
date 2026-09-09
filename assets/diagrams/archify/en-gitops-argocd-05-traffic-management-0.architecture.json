@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts Architecture",
+    "locale": "en",
+    "output": "en-gitops-argocd-05-traffic-management-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Controller / strategies"
+        },
+        "cloud": {
+          "label": "Traffic integrations"
+        },
+        "external": {
+          "label": "Analysis provider"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "strategies",
+        "label": "Strategy execution",
+        "focus": [
+          "controller",
+          "bluegreen",
+          "canary",
+          "experiment"
+        ],
+        "note": "The Rollouts Controller executes the blue-green, canary, or experiment strategy defined in the Rollout resource."
+      },
+      {
+        "id": "traffic",
+        "label": "Traffic management",
+        "focus": [
+          "bluegreen",
+          "canary",
+          "ingress",
+          "mesh"
+        ],
+        "note": "Blue-green switches traffic at once through the ingress; canary shifts weights gradually via the ingress or service mesh."
+      },
+      {
+        "id": "analysis",
+        "label": "Analysis and rollback",
+        "focus": [
+          "controller",
+          "analysis"
+        ],
+        "note": "The controller queries metrics through an AnalysisRun and promotes or rolls back automatically based on the result."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Rollouts Controller",
+      "sublabel": "Reconciles Rollout resources",
+      "pos": [
+        420,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "bluegreen",
+      "type": "backend",
+      "label": "Blue-Green",
+      "sublabel": "Full environment switch",
+      "pos": [
+        120,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary",
+      "sublabel": "Gradual traffic shift",
+      "pos": [
+        430,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "experiment",
+      "type": "backend",
+      "label": "Experiment",
+      "sublabel": "A/B testing",
+      "pos": [
+        740,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "cloud",
+      "label": "Ingress Controller",
+      "sublabel": "ALB / NGINX",
+      "pos": [
+        120,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mesh",
+      "type": "cloud",
+      "label": "Service Mesh",
+      "sublabel": "Istio / SMI",
+      "pos": [
+        430,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "external",
+      "label": "Analysis Provider",
+      "sublabel": "Prometheus / Datadog / New Relic",
+      "pos": [
+        1010,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Argo Rollouts",
+      "wraps": [
+        "controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Deployment Strategies",
+      "wraps": [
+        "bluegreen",
+        "canary",
+        "experiment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Integrations",
+      "wraps": [
+        "ingress",
+        "mesh",
+        "analysis"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ctrl-bluegreen",
+      "from": "controller",
+      "to": "bluegreen",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-canary",
+      "from": "controller",
+      "to": "canary",
+      "label": "execute",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-experiment",
+      "from": "controller",
+      "to": "experiment"
+    },
+    {
+      "id": "bluegreen-ingress",
+      "from": "bluegreen",
+      "to": "ingress",
+      "label": "switch traffic",
+      "labelDy": 24
+    },
+    {
+      "id": "canary-ingress",
+      "from": "canary",
+      "to": "ingress",
+      "label": "weighted routing"
+    },
+    {
+      "id": "canary-mesh",
+      "from": "canary",
+      "to": "mesh",
+      "label": "weighted routing",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-analysis",
+      "from": "controller",
+      "to": "analysis",
+      "label": "AnalysisRun query",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "analysis-ctrl",
+      "from": "analysis",
+      "to": "controller",
+      "label": "Pass / Fail",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Deployment strategies",
+      "items": [
+        "Blue-green: keep two environments and switch traffic at once",
+        "Canary: shift traffic gradually through weighted steps",
+        "Experiment: run several versions side by side for A/B tests"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Analysis",
+      "items": [
+        "AnalysisTemplate defines the metric queries",
+        "Pass promotes automatically, Fail rolls back automatically"
+      ]
+    }
+  ]
+}

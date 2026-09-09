@@ -1,0 +1,156 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Harbor Proxy Cache Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-container-registry-03-harbor-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "cache-hit",
+        "label": "Cache Hit",
+        "focus": [
+          "pull",
+          "lookup",
+          "respond"
+        ],
+        "note": "If the requested image is already cached in Harbor, it is returned immediately without contacting the upstream."
+      },
+      {
+        "id": "cache-miss",
+        "label": "Cache Miss",
+        "focus": [
+          "pull",
+          "lookup",
+          "fetch",
+          "store",
+          "respond"
+        ],
+        "note": "On a miss, Harbor fetches the image from the upstream registry, stores it, and then returns it to the client."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "Harbor"
+        },
+        "database": {
+          "label": "Cache storage"
+        },
+        "external": {
+          "label": "External registry"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "clientLane",
+      "label": "Client (Docker / containerd)"
+    },
+    {
+      "id": "harborLane",
+      "label": "Harbor proxy cache project"
+    },
+    {
+      "id": "upstreamLane",
+      "label": "External registry"
+    }
+  ],
+  "mainPath": [
+    "pull",
+    "lookup",
+    "fetch",
+    "store",
+    "respond"
+  ],
+  "nodes": [
+    {
+      "id": "pull",
+      "lane": "clientLane",
+      "col": 0,
+      "type": "frontend",
+      "label": "Image pull request",
+      "sublabel": "Docker / containerd",
+      "width": 160
+    },
+    {
+      "id": "lookup",
+      "lane": "harborLane",
+      "col": 1,
+      "type": "backend",
+      "label": "Harbor Proxy Cache",
+      "sublabel": "cache lookup",
+      "tag": "hit / miss",
+      "width": 160
+    },
+    {
+      "id": "fetch",
+      "lane": "upstreamLane",
+      "col": 2,
+      "type": "external",
+      "label": "Upstream Registry",
+      "sublabel": "Docker Hub, etc.",
+      "width": 160
+    },
+    {
+      "id": "store",
+      "lane": "harborLane",
+      "col": 3,
+      "type": "database",
+      "label": "Cache in Harbor",
+      "sublabel": "stored in the proxy cache project",
+      "width": 160
+    },
+    {
+      "id": "respond",
+      "lane": "clientLane",
+      "col": 4,
+      "type": "frontend",
+      "label": "Return cached image",
+      "sublabel": "response to client",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "pull-to-lookup",
+      "from": "pull",
+      "to": "lookup",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hit",
+      "from": "lookup",
+      "to": "respond",
+      "label": "Cache Hit",
+      "role": "branch",
+      "variant": "dashed",
+      "fromSide": "right"
+    },
+    {
+      "id": "miss",
+      "from": "lookup",
+      "to": "fetch",
+      "label": "Cache Miss",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fetch-to-store",
+      "from": "fetch",
+      "to": "store"
+    },
+    {
+      "id": "store-to-respond",
+      "from": "store",
+      "to": "respond"
+    }
+  ]
+}

@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts 아키텍처",
+    "output": "ko-gitops-argocd-05-traffic-management-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Argo Rollouts 컨트롤러 / 배포 전략"
+        },
+        "cloud": {
+          "label": "트래픽 관리 통합"
+        },
+        "external": {
+          "label": "Analysis Provider"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "strategies",
+        "label": "배포 전략 실행",
+        "focus": [
+          "controller",
+          "bluegreen",
+          "canary",
+          "experiment"
+        ],
+        "note": "Rollouts Controller가 Rollout 리소스에 정의된 블루/그린, 카나리, 실험 전략을 실행한다."
+      },
+      {
+        "id": "traffic",
+        "label": "트래픽 관리",
+        "focus": [
+          "bluegreen",
+          "canary",
+          "ingress",
+          "mesh"
+        ],
+        "note": "블루/그린은 Ingress로 트래픽을 즉시 전환하고, 카나리는 Ingress 또는 Service Mesh로 가중치를 점진적으로 이동한다."
+      },
+      {
+        "id": "analysis",
+        "label": "Analysis와 자동 롤백",
+        "focus": [
+          "controller",
+          "analysis"
+        ],
+        "note": "컨트롤러가 AnalysisRun으로 메트릭을 질의하고, 결과에 따라 자동 승격 또는 롤백한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Rollouts Controller",
+      "sublabel": "Rollout 리소스 조정",
+      "pos": [
+        420,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "bluegreen",
+      "type": "backend",
+      "label": "블루/그린",
+      "sublabel": "환경 전체 전환",
+      "pos": [
+        120,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "카나리",
+      "sublabel": "점진적 트래픽 이동",
+      "pos": [
+        430,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "experiment",
+      "type": "backend",
+      "label": "실험",
+      "sublabel": "A/B 테스트",
+      "pos": [
+        740,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "cloud",
+      "label": "Ingress Controller",
+      "sublabel": "ALB / NGINX",
+      "pos": [
+        120,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mesh",
+      "type": "cloud",
+      "label": "Service Mesh",
+      "sublabel": "Istio / SMI",
+      "pos": [
+        430,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "external",
+      "label": "Analysis Provider",
+      "sublabel": "Prometheus / Datadog / New Relic",
+      "pos": [
+        1010,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Argo Rollouts",
+      "wraps": [
+        "controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "배포 전략",
+      "wraps": [
+        "bluegreen",
+        "canary",
+        "experiment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "통합",
+      "wraps": [
+        "ingress",
+        "mesh",
+        "analysis"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ctrl-bluegreen",
+      "from": "controller",
+      "to": "bluegreen",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-canary",
+      "from": "controller",
+      "to": "canary",
+      "label": "실행",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-experiment",
+      "from": "controller",
+      "to": "experiment"
+    },
+    {
+      "id": "bluegreen-ingress",
+      "from": "bluegreen",
+      "to": "ingress",
+      "label": "트래픽 전환",
+      "labelDy": 24
+    },
+    {
+      "id": "canary-ingress",
+      "from": "canary",
+      "to": "ingress",
+      "label": "가중치 라우팅"
+    },
+    {
+      "id": "canary-mesh",
+      "from": "canary",
+      "to": "mesh",
+      "label": "가중치 라우팅",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-analysis",
+      "from": "controller",
+      "to": "analysis",
+      "label": "AnalysisRun 질의",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "analysis-ctrl",
+      "from": "analysis",
+      "to": "controller",
+      "label": "Pass / Fail",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "배포 전략",
+      "items": [
+        "블루/그린: 두 환경을 유지하고 트래픽을 즉시 전환",
+        "카나리: 가중치 단계로 트래픽을 점진 이동",
+        "실험: 여러 버전을 동시에 실행해 A/B 테스트"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Analysis",
+      "items": [
+        "AnalysisTemplate으로 메트릭 질의를 정의",
+        "Pass면 자동 승격, Fail이면 자동 롤백"
+      ]
+    }
+  ]
+}

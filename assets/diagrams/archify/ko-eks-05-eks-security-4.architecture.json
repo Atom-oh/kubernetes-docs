@@ -37,7 +37,21 @@
         ],
         "note": "Agent가 AssumeRoleForPodIdentity를 호출해 연결된 IAM 역할의 임시 자격 증명을 받는다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

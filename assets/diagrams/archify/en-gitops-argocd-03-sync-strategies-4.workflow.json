@@ -1,0 +1,183 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sync Window Behavior",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-argocd-03-sync-strategies-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "deny-path",
+        "label": "Deny path",
+        "focus": [
+          "request",
+          "check",
+          "deny_q",
+          "sync_block"
+        ],
+        "note": "An active deny window takes precedence over allow windows and blocks the sync."
+      },
+      {
+        "id": "allow-path",
+        "label": "Allow path",
+        "focus": [
+          "deny_q",
+          "allow_q",
+          "default_allow",
+          "sync_run"
+        ],
+        "note": "The sync runs when an allow window is active or when no window is active at all."
+      }
+    ],
+    "viewBox": [
+      1040,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "app",
+      "label": "Application sync request"
+    },
+    {
+      "id": "windows",
+      "label": "AppProject syncWindows evaluation"
+    },
+    {
+      "id": "result",
+      "label": "Outcome"
+    },
+    {
+      "id": "blocked",
+      "label": "Blocked",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check",
+    "deny_q",
+    "allow_q",
+    "default_allow",
+    "sync_run"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "app",
+      "col": 0,
+      "type": "frontend",
+      "label": "Sync request",
+      "sublabel": "auto or manual sync",
+      "width": 120
+    },
+    {
+      "id": "check",
+      "lane": "app",
+      "col": 1,
+      "type": "backend",
+      "label": "Check windows",
+      "sublabel": "read syncWindows",
+      "width": 130
+    },
+    {
+      "id": "deny_q",
+      "lane": "windows",
+      "col": 2,
+      "type": "security",
+      "label": "Deny window active?",
+      "sublabel": "kind: deny",
+      "tag": "takes precedence",
+      "width": 180
+    },
+    {
+      "id": "allow_q",
+      "lane": "windows",
+      "col": 3,
+      "type": "security",
+      "label": "Allow window active?",
+      "sublabel": "kind: allow",
+      "width": 180
+    },
+    {
+      "id": "default_allow",
+      "lane": "windows",
+      "col": 4,
+      "type": "backend",
+      "label": "Default allow",
+      "sublabel": "no active window",
+      "width": 130
+    },
+    {
+      "id": "sync_run",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "Run sync",
+      "sublabel": "apply changes to cluster",
+      "width": 150
+    },
+    {
+      "id": "sync_block",
+      "lane": "blocked",
+      "col": 2,
+      "type": "security",
+      "label": "Sync blocked",
+      "sublabel": "blocked by deny window",
+      "width": 136
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "deny_q",
+      "toSide": "top"
+    },
+    {
+      "from": "deny_q",
+      "to": "sync_block",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "deny_q",
+      "to": "allow_q",
+      "label": "No"
+    },
+    {
+      "from": "allow_q",
+      "to": "sync_run",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "allow_q",
+      "to": "default_allow",
+      "label": "No"
+    },
+    {
+      "from": "default_allow",
+      "to": "sync_run",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Window precedence",
+      "items": [
+        "A deny window overrides an allow window",
+        "The more specific match wins (application name > namespace > cluster)",
+        "With no active window, sync is allowed"
+      ]
+    }
+  ]
+}

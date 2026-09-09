@@ -1,0 +1,234 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How a Lifecycle Policy Works",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Image"
+        },
+        "backend": {
+          "label": "Rule evaluation (by rulePriority)"
+        },
+        "security": {
+          "label": "Rule application · retention check"
+        },
+        "external": {
+          "label": "Outcome"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "evaluate",
+        "label": "Ordered rule evaluation",
+        "focus": [
+          "push",
+          "eval",
+          "rule1",
+          "rule2",
+          "ruleN"
+        ],
+        "note": "Rules are evaluated from the lowest rulePriority upward; an image matches only the first rule that applies to it."
+      },
+      {
+        "id": "decide",
+        "label": "Retention threshold check",
+        "focus": [
+          "apply",
+          "threshold",
+          "expire",
+          "keep"
+        ],
+        "note": "Only images that exceed the matched rule's countType threshold (imageCountMoreThan / sinceImagePushed) expire; the rest are retained."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "evaluate",
+      "label": "Rule evaluation"
+    },
+    {
+      "id": "action",
+      "label": "Apply rule · decide"
+    },
+    {
+      "id": "result",
+      "label": "Expiration"
+    }
+  ],
+  "mainPath": [
+    "push",
+    "eval",
+    "rule1",
+    "apply",
+    "threshold",
+    "expire"
+  ],
+  "nodes": [
+    {
+      "id": "push",
+      "lane": "evaluate",
+      "col": 0,
+      "type": "frontend",
+      "label": "Image Pushed",
+      "sublabel": "stored in repository",
+      "width": 118
+    },
+    {
+      "id": "eval",
+      "lane": "evaluate",
+      "col": 1,
+      "type": "backend",
+      "label": "Lifecycle Policy Evaluation",
+      "sublabel": "walk registered rules",
+      "width": 214
+    },
+    {
+      "id": "rule1",
+      "lane": "evaluate",
+      "col": 2,
+      "type": "backend",
+      "label": "Rule 1 match?",
+      "sublabel": "SemVer tags",
+      "tag": "rulePriority 1",
+      "width": 124
+    },
+    {
+      "id": "rule2",
+      "lane": "evaluate",
+      "col": 3,
+      "type": "backend",
+      "label": "Rule 2 match?",
+      "sublabel": "dev / staging tags",
+      "tag": "rulePriority 2",
+      "width": 124
+    },
+    {
+      "id": "ruleN",
+      "lane": "evaluate",
+      "col": 4,
+      "type": "backend",
+      "label": "Rule N match?",
+      "sublabel": "tagStatus: untagged",
+      "tag": "rulePriority N",
+      "width": 124
+    },
+    {
+      "id": "keep",
+      "lane": "evaluate",
+      "col": 5,
+      "type": "external",
+      "label": "Image Retained",
+      "sublabel": "image kept",
+      "width": 128
+    },
+    {
+      "id": "apply",
+      "lane": "action",
+      "col": 4,
+      "type": "security",
+      "label": "Apply Matched Rule",
+      "sublabel": "first matching rule only",
+      "width": 152
+    },
+    {
+      "id": "threshold",
+      "lane": "action",
+      "col": 5,
+      "type": "security",
+      "label": "Over retention limit?",
+      "sublabel": "countType · countNumber",
+      "width": 176
+    },
+    {
+      "id": "expire",
+      "lane": "result",
+      "col": 5,
+      "type": "external",
+      "label": "Image Expired",
+      "sublabel": "action: expire",
+      "width": 128
+    }
+  ],
+  "edges": [
+    {
+      "id": "push-eval",
+      "from": "push",
+      "to": "eval"
+    },
+    {
+      "id": "eval-rule1",
+      "from": "eval",
+      "to": "rule1"
+    },
+    {
+      "id": "rule1-rule2",
+      "from": "rule1",
+      "to": "rule2",
+      "label": "no match"
+    },
+    {
+      "id": "rule2-ruleN",
+      "from": "rule2",
+      "to": "ruleN",
+      "label": "no match"
+    },
+    {
+      "id": "ruleN-keep",
+      "from": "ruleN",
+      "to": "keep",
+      "label": "no match",
+      "role": "branch"
+    },
+    {
+      "id": "rule1-apply",
+      "from": "rule1",
+      "to": "apply",
+      "label": "match",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rule2-apply",
+      "from": "rule2",
+      "to": "apply",
+      "label": "match",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "ruleN-apply",
+      "from": "ruleN",
+      "to": "apply",
+      "variant": "emphasis",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "apply-threshold",
+      "from": "apply",
+      "to": "threshold"
+    },
+    {
+      "id": "threshold-expire",
+      "from": "threshold",
+      "to": "expire",
+      "label": "exceeds",
+      "variant": "security"
+    },
+    {
+      "id": "threshold-keep",
+      "from": "threshold",
+      "to": "keep",
+      "label": "within threshold",
+      "role": "branch"
+    }
+  ]
+}

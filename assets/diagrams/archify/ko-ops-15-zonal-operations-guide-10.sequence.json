@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "KIP-392 Follower Fetching — 동일 AZ 팔로워로 리다이렉트",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "데이터 반환 (동일 AZ)"
+        },
+        "return": {
+          "label": "리더의 리다이렉트 응답"
+        },
+        "default": {
+          "label": "Fetch 요청"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "consumer",
+      "type": "frontend",
+      "label": "Consumer",
+      "sublabel": "AZ-a · client.rack=AZ-a"
+    },
+    {
+      "id": "leader",
+      "type": "messagebus",
+      "label": "Leader Broker",
+      "sublabel": "AZ-b"
+    },
+    {
+      "id": "follower",
+      "type": "messagebus",
+      "label": "Follower Broker",
+      "sublabel": "AZ-a"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 300,
+      "label": "1. 리더에 Fetch — 선호 replica 확인"
+    },
+    {
+      "from": 325,
+      "to": 470,
+      "label": "2. 동일 AZ 팔로워에서 Fetch — cross-AZ 비용 없음"
+    }
+  ],
+  "messages": [
+    {
+      "id": "fetch-leader",
+      "from": "consumer",
+      "to": "leader",
+      "y": 200,
+      "label": "Fetch 요청 (client.rack=AZ-a 포함)",
+      "variant": "default"
+    },
+    {
+      "id": "preferred-replica",
+      "from": "leader",
+      "to": "consumer",
+      "y": 265,
+      "label": "\"AZ-a의 팔로워로 가라\" (선호 replica 지시)",
+      "variant": "return",
+      "note": "RackAwareReplicaSelector가 broker.rack과 client.rack을 비교"
+    },
+    {
+      "id": "fetch-follower",
+      "from": "consumer",
+      "to": "follower",
+      "y": 360,
+      "label": "Fetch 요청 재전송",
+      "variant": "default"
+    },
+    {
+      "id": "data-return",
+      "from": "follower",
+      "to": "consumer",
+      "y": 430,
+      "label": "데이터 반환 (동일 AZ, cross-AZ 비용 없음)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "consumer",
+      "from": 190,
+      "to": 445,
+      "type": "frontend"
+    },
+    {
+      "participant": "leader",
+      "from": 195,
+      "to": 272,
+      "type": "messagebus"
+    },
+    {
+      "participant": "follower",
+      "from": 355,
+      "to": 437,
+      "type": "messagebus"
+    }
+  ]
+}

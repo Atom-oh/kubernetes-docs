@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ACK + KRO 통합 배포 아키텍처",
+    "output": "ko-platform-engineering-05-example-corp-app-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "KRO 커스텀 리소스"
+        },
+        "backend": {
+          "label": "KRO가 생성하는 자식 리소스"
+        },
+        "cloud": {
+          "label": "ACK가 관리하는 AWS 인프라"
+        },
+        "database": {
+          "label": "ACK가 관리하는 데이터베이스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "kro-children",
+        "label": "KRO 자식 리소스 생성",
+        "focus": [
+          "cr",
+          "svc",
+          "tgb",
+          "dep",
+          "cm"
+        ],
+        "note": "WebApp CR 하나가 Service, TargetGroupBinding, Deployment, ConfigMap을 함께 생성한다."
+      },
+      {
+        "id": "traffic-path",
+        "label": "트래픽 경로 연결",
+        "focus": [
+          "r53",
+          "nlb",
+          "tg",
+          "tgb",
+          "svc"
+        ],
+        "note": "Route 53 → NLB → Target Group으로 들어온 트래픽을 TargetGroupBinding이 Service의 Pod에 연결한다."
+      },
+      {
+        "id": "db-config",
+        "label": "DB 접속 정보 주입",
+        "focus": [
+          "aurora",
+          "cm",
+          "dep"
+        ],
+        "note": "Aurora endpoint를 ConfigMap에 담고 Deployment가 envFrom으로 읽는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cr",
+      "type": "frontend",
+      "label": "WebApp CR",
+      "sublabel": "단일 애플리케이션 API",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "ClusterIP",
+      "pos": [
+        300,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "tgb",
+      "type": "backend",
+      "label": "TargetGroupBinding",
+      "sublabel": "Pod ↔ Target Group 연결",
+      "pos": [
+        300,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dep",
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "Order API Pod",
+      "pos": [
+        300,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cm",
+      "type": "backend",
+      "label": "ConfigMap",
+      "sublabel": "DB 접속 정보",
+      "pos": [
+        300,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "NLB",
+      "sublabel": "Network Load Balancer",
+      "pos": [
+        680,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "r53",
+      "type": "cloud",
+      "label": "Route 53 Record",
+      "sublabel": "app.example.com",
+      "pos": [
+        940,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "tg",
+      "type": "cloud",
+      "label": "Target Group",
+      "sublabel": "Pod IP 대상 등록",
+      "pos": [
+        680,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora PostgreSQL",
+      "sublabel": "Writer / Reader endpoint",
+      "pos": [
+        680,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "KRO (애플리케이션)",
+      "wraps": [
+        "cr",
+        "svc",
+        "tgb",
+        "dep",
+        "cm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ACK (AWS 인프라)",
+      "wraps": [
+        "nlb",
+        "r53",
+        "tg",
+        "aurora"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cr-svc",
+      "from": "cr",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-tgb",
+      "from": "cr",
+      "to": "tgb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-dep",
+      "from": "cr",
+      "to": "dep",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-cm",
+      "from": "cr",
+      "to": "cm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-tgb",
+      "from": "svc",
+      "to": "tgb",
+      "label": "serviceRef",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "tgb-tg",
+      "from": "tgb",
+      "to": "tg",
+      "label": "targetGroupARN",
+      "variant": "dashed"
+    },
+    {
+      "id": "dep-cm",
+      "from": "dep",
+      "to": "cm",
+      "label": "envFrom",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cm-aurora",
+      "from": "cm",
+      "to": "aurora",
+      "label": "endpoints",
+      "variant": "dashed"
+    },
+    {
+      "id": "r53-nlb",
+      "from": "r53",
+      "to": "nlb"
+    },
+    {
+      "id": "nlb-tg",
+      "from": "nlb",
+      "to": "tg",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "ACK (AWS 인프라)",
+      "items": [
+        "elbv2 컨트롤러: NLB + TargetGroup + Listener",
+        "route53 컨트롤러: app.example.com → NLB",
+        "rds 컨트롤러: Aurora PostgreSQL Writer + Reader"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "KRO (애플리케이션)",
+      "items": [
+        "ResourceGraphDefinition이 WebApp CR을 정의",
+        "CR 하나로 Deployment, Service, TargetGroupBinding, ConfigMap 관리",
+        "targetGroupARN·endpoints로 ACK 인프라를 참조"
+      ]
+    }
+  ]
+}

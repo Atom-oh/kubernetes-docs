@@ -8,7 +8,9 @@ Harbor는 CNCF Graduated 프로젝트로, 오픈소스 컨테이너 레지스트
 
 ### 아키텍처
 
-![Portal이 Core에 연결되고 Core가 Registry, Job Service, PostgreSQL, Redis로 뻗어나가며, Job Service가 Trivy·Notary 보안 계층과 연결되는 Harbor 내부 구조를 보여준다.](../../assets/diagrams/rendered/ko-container-registry-03-harbor-0.svg)
+![Portal이 Core에 연결되고 Core가 Registry, Job Service, PostgreSQL, Redis로 뻗어나가며, Job Service가 Trivy·Notary 보안 계층과 연결되는 Harbor 내부 구조를 보여준다.](../.gitbook/assets/ko-container-registry-03-harbor-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-03-harbor-0.html)
 
 ### 주요 컴포넌트
 
@@ -290,7 +292,9 @@ docker login harbor.example.com \
 
 ## 이미지 복제
 
-![외부 레지스트리에서 로컬 Harbor로 이미지를 가져오는 Pull 복제와, 소스 Harbor에서 원격 레지스트리로 내보내는 Push 복제의 방향 차이를 위아래 두 패널로 비교해 보여준다.](../../assets/diagrams/rendered/ko-container-registry-03-harbor-1.svg)
+![외부 레지스트리에서 로컬 Harbor로 이미지를 가져오는 Pull 복제와, 소스 Harbor에서 원격 레지스트리로 내보내는 Push 복제의 방향 차이를 위아래 두 패널로 비교해 보여준다.](../.gitbook/assets/ko-container-registry-03-harbor-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-03-harbor-1.html)
 
 ### 복제 모드
 
@@ -683,7 +687,9 @@ spec:
 
 ### Proxy Cache
 
-![Docker/containerd 요청이 Harbor 프록시 캐시를 거쳐 캐시 적중 시 즉시 반환되고, 캐시 미스 시 업스트림 레지스트리에서 가져와 캐시에 저장한 뒤 반환되는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-container-registry-03-harbor-2.svg)
+![Docker/containerd 요청이 Harbor 프록시 캐시를 거쳐 캐시 적중 시 즉시 반환되고, 캐시 미스 시 업스트림 레지스트리에서 가져와 캐시에 저장한 뒤 반환되는 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-03-harbor-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-03-harbor-2.html)
 
 Harbor를 외부 레지스트리의 프록시 캐시로 사용:
 

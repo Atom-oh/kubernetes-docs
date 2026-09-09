@@ -333,7 +333,9 @@ spec:
 
 **How It Works:**
 
-![Sequence diagram showing how the infra team reserves node capacity ahead of a traffic event by deploying low-priority pause pods that trigger Karpenter to provision nodes early, then get evicted instantly by real workloads when the event starts.](../../assets/diagrams/rendered/en-ops-12-event-capacity-planning-0.svg)
+![Sequence diagram showing the infra team reserving node capacity at D-7 with low-priority pause pods that make Karpenter provision nodes early, then real workloads evicting those pause pods on D-Day and scheduling instantly.](../.gitbook/assets/en-ops-12-event-capacity-planning-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-12-event-capacity-planning-0.html)
 
 ---
 
@@ -517,7 +519,9 @@ spec:
 
 KEDA selects the **maximum replica count** across all triggers. If cron requests 100 and Prometheus requests 150, the result is 150.
 
-![Architecture diagram showing three KEDA triggers — a cron floor, a Prometheus order-rate trigger, and an SQS queue-depth trigger — feeding a MAX selection that sets the single desired replica count applied to the HPA and used for pod scaling.](../../assets/diagrams/rendered/en-ops-12-event-capacity-planning-1.svg)
+![Architecture diagram showing three KEDA triggers — a cron floor, a Prometheus order-rate trigger, and an SQS queue-depth trigger — feeding a MAX selection that sets the single desired replica count applied to the HPA and used for pod scaling.](../.gitbook/assets/en-ops-12-event-capacity-planning-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-12-event-capacity-planning-1.html)
 
 ---
 
@@ -525,7 +529,9 @@ KEDA selects the **maximum replica count** across all triggers. If cron requests
 
 ### 4.1 Pod-Level and Node-Level Scaling
 
-![Sequence diagram tracing two scaling waves before and at an event: a cron-triggered KEDA scale-up 30 minutes early that makes the scheduler ask Karpenter to provision nodes on AWS EC2 ahead of demand, followed by a smaller metric-triggered wave once the event starts that provisions a few more nodes.](../../assets/diagrams/rendered/en-ops-12-event-capacity-planning-2.svg)
+![Sequence diagram showing KEDA's cron trigger requesting 200 Pods 30 minutes before an event so Karpenter provisions 20 EC2 Nodes for the Pending Pods, then a metric trigger raising the target to 250 and adding 5 more Nodes once the event starts.](../.gitbook/assets/en-ops-12-event-capacity-planning-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-12-event-capacity-planning-2.html)
 
 ### 4.2 Scaling Timing Optimization
 

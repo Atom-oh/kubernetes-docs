@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pattern 5: Multi-Tenant SaaS Platform",
+    "locale": "en",
+    "output": "en-platform-engineering-08-vcluster-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "provisioner",
+      "type": "backend",
+      "label": "Tenant Provisioner",
+      "sublabel": "Control plane",
+      "pos": [
+        110,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vc-customer-a",
+      "type": "backend",
+      "label": "vCluster: customer-a",
+      "sublabel": "3 app replicas · PostgreSQL",
+      "pos": [
+        440,
+        90
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "vc-customer-b",
+      "type": "backend",
+      "label": "vCluster: customer-b",
+      "sublabel": "5 app replicas · PostgreSQL + Redis",
+      "pos": [
+        440,
+        250
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "vc-customer-c",
+      "type": "backend",
+      "label": "vCluster: customer-c",
+      "sublabel": "10 app replicas · PostgreSQL + Redis + Kafka",
+      "pos": [
+        440,
+        410
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "infra",
+      "type": "cloud",
+      "label": "Shared Infrastructure",
+      "sublabel": "Nodes · Networking · Storage · Monitoring",
+      "pos": [
+        820,
+        250
+      ],
+      "size": [
+        270,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "SaaS Platform (EKS)",
+      "wraps": [
+        "provisioner",
+        "vc-customer-a",
+        "vc-customer-b",
+        "vc-customer-c",
+        "infra"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Customer A",
+      "wraps": [
+        "vc-customer-a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Customer B",
+      "wraps": [
+        "vc-customer-b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Customer C (Enterprise)",
+      "wraps": [
+        "vc-customer-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "provision-a",
+      "from": "provisioner",
+      "to": "vc-customer-a",
+      "label": "Provision",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "provision-b",
+      "from": "provisioner",
+      "to": "vc-customer-b",
+      "label": "Provision",
+      "variant": "emphasis"
+    },
+    {
+      "id": "provision-c",
+      "from": "provisioner",
+      "to": "vc-customer-c",
+      "label": "Provision",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Canary CRD and Deployment Process",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-04-flagger-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Canary CRD field"
+        },
+        "backend": {
+          "label": "Deployment step"
+        },
+        "messagebus": {
+          "label": "Shift traffic"
+        },
+        "security": {
+          "label": "Metric analysis gate"
+        },
+        "cloud": {
+          "label": "Promote"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "crd-fields",
+        "label": "CRD fields",
+        "focus": [
+          "targetRef",
+          "service",
+          "provider",
+          "analysis",
+          "init"
+        ],
+        "note": "See how the Canary CRD's targetRef, service, provider and analysis feed each deployment step."
+      },
+      {
+        "id": "traffic-steps",
+        "label": "Traffic shifting and analysis",
+        "focus": [
+          "scale",
+          "route",
+          "metric"
+        ],
+        "note": "Traffic climbs by stepWeight 10 up to maxWeight 50, with metrics analyzed at a 1-minute interval at each step."
+      },
+      {
+        "id": "promote-or-rollback",
+        "label": "Promote or roll back",
+        "focus": [
+          "metric",
+          "promote",
+          "init"
+        ],
+        "note": "Successful analysis promotes the canary to primary; failing threshold times triggers a rollback."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "crd",
+      "label": "Canary CRD"
+    },
+    {
+      "id": "process",
+      "label": "Deployment process"
+    }
+  ],
+  "mainPath": [
+    "init",
+    "detect",
+    "scale",
+    "route",
+    "metric",
+    "promote"
+  ],
+  "nodes": [
+    {
+      "id": "targetRef",
+      "lane": "crd",
+      "col": 0,
+      "type": "database",
+      "label": "targetRef",
+      "sublabel": "Deployment",
+      "width": 150
+    },
+    {
+      "id": "service",
+      "lane": "crd",
+      "col": 1,
+      "type": "database",
+      "label": "service",
+      "sublabel": "port · protocol",
+      "width": 150
+    },
+    {
+      "id": "provider",
+      "lane": "crd",
+      "col": 3,
+      "type": "database",
+      "label": "provider",
+      "sublabel": "mesh / ingress",
+      "width": 150
+    },
+    {
+      "id": "analysis",
+      "lane": "crd",
+      "col": 4,
+      "type": "database",
+      "label": "analysis",
+      "sublabel": "metrics · thresholds · webhooks",
+      "width": 170
+    },
+    {
+      "id": "init",
+      "lane": "process",
+      "col": 0,
+      "type": "backend",
+      "label": "Initialize",
+      "sublabel": "create primary",
+      "width": 150
+    },
+    {
+      "id": "detect",
+      "lane": "process",
+      "col": 1,
+      "type": "backend",
+      "label": "Detect change",
+      "sublabel": "new image · spec change",
+      "width": 150
+    },
+    {
+      "id": "scale",
+      "lane": "process",
+      "col": 2,
+      "type": "backend",
+      "label": "Scale up canary",
+      "sublabel": "start canary pods",
+      "width": 150
+    },
+    {
+      "id": "route",
+      "lane": "process",
+      "col": 3,
+      "type": "messagebus",
+      "label": "Shift traffic",
+      "sublabel": "10% → 50% · stepWeight 10",
+      "width": 170
+    },
+    {
+      "id": "metric",
+      "lane": "process",
+      "col": 4,
+      "type": "security",
+      "label": "Analyze metrics",
+      "sublabel": "success rate ≥ 99% · P99 ≤ 500ms",
+      "tag": "every 1m",
+      "width": 190
+    },
+    {
+      "id": "promote",
+      "lane": "process",
+      "col": 5,
+      "type": "cloud",
+      "label": "Promote",
+      "sublabel": "primary traffic 100%",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "targetRef",
+      "to": "init",
+      "label": "target ref",
+      "role": "branch"
+    },
+    {
+      "from": "service",
+      "to": "init",
+      "label": "create services",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "provider",
+      "to": "route",
+      "label": "routing control",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "analysis",
+      "to": "metric",
+      "label": "analysis rules",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "init",
+      "to": "detect",
+      "role": "main"
+    },
+    {
+      "from": "detect",
+      "to": "scale",
+      "role": "main"
+    },
+    {
+      "from": "scale",
+      "to": "route",
+      "role": "main"
+    },
+    {
+      "from": "route",
+      "to": "metric",
+      "label": "each step",
+      "role": "main"
+    },
+    {
+      "from": "metric",
+      "to": "promote",
+      "label": "success",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "metric",
+      "to": "init",
+      "label": "failure · rollback",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Traffic shifting steps",
+      "items": [
+        "stepWeight 10 · maxWeight 50 → 10% → 20% → 30% → 40% → 50%",
+        "Each step analyzes metrics for interval 1m before moving to the next weight",
+        "After 50%, promote: canary spec is copied to primary and all traffic goes to primary"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Checks at each step",
+      "items": [
+        "request-success-rate: thresholdRange.min 99 (non-5xx success rate)",
+        "request-duration: thresholdRange.max 500 (P99 ms)",
+        "webhooks: load-test → flagger-loadtester runs the load test"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Automatic rollback conditions",
+      "items": [
+        "A metric check fails more than threshold times",
+        "Canary pods are not Ready, or a webhook returns a failure",
+        "On rollback traffic returns to primary, the canary scales to zero, status becomes Failed"
+      ]
+    }
+  ]
+}

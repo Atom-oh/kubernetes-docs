@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OPA Gatekeeper Architecture",
+    "locale": "en",
+    "output": "en-security-09-opa-gatekeeper-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Control plane"
+        },
+        "security": {
+          "label": "Policy evaluation"
+        },
+        "database": {
+          "label": "Policy resources / audit"
+        },
+        "external": {
+          "label": "Target workloads"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "admission-path",
+        "label": "Admission request path",
+        "focus": [
+          "api",
+          "webhook",
+          "gk",
+          "opa"
+        ],
+        "note": "An API Server request passes through the Admission Webhook to the Gatekeeper Controller, and the OPA Engine evaluates it with Rego."
+      },
+      {
+        "id": "policy-model",
+        "label": "Policy components",
+        "focus": [
+          "opa",
+          "ct",
+          "c",
+          "rego",
+          "target"
+        ],
+        "note": "A ConstraintTemplate defines the Rego policy, and a Constraint applies that policy to the target resources."
+      },
+      {
+        "id": "audit",
+        "label": "Audit",
+        "focus": [
+          "gk",
+          "audit"
+        ],
+        "note": "The Gatekeeper Controller also periodically scans resources that already exist and records audit results."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Webhook",
+      "sublabel": "Admission Webhook",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gk",
+      "type": "backend",
+      "label": "Gatekeeper Controller",
+      "sublabel": "controller-runtime",
+      "pos": [
+        470,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "opa",
+      "type": "security",
+      "label": "OPA Engine",
+      "sublabel": "Rego evaluation",
+      "pos": [
+        730,
+        70
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "database",
+      "label": "Audit Results",
+      "sublabel": "Periodic audit",
+      "pos": [
+        470,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ct",
+      "type": "database",
+      "label": "Constraint Templates",
+      "sublabel": "CRD schema",
+      "pos": [
+        730,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "c",
+      "type": "database",
+      "label": "Constraints",
+      "sublabel": "CR instances",
+      "pos": [
+        990,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rego",
+      "type": "security",
+      "label": "Rego Policy",
+      "sublabel": "Policy logic",
+      "pos": [
+        730,
+        450
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "external",
+      "label": "Target Resources",
+      "sublabel": "K8s resources",
+      "pos": [
+        990,
+        450
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OPA Gatekeeper Architecture",
+      "wraps": [
+        "api",
+        "webhook",
+        "gk",
+        "opa",
+        "audit",
+        "ct",
+        "c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Policy Components",
+      "wraps": [
+        "rego",
+        "target"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-webhook",
+      "from": "api",
+      "to": "webhook",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-gk",
+      "from": "webhook",
+      "to": "gk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gk-opa",
+      "from": "gk",
+      "to": "opa",
+      "variant": "emphasis"
+    },
+    {
+      "id": "opa-ct",
+      "from": "opa",
+      "to": "ct",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "opa-c",
+      "from": "opa",
+      "to": "c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gk-audit",
+      "from": "gk",
+      "to": "audit",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ct-rego",
+      "from": "ct",
+      "to": "rego",
+      "label": "Defines",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    },
+    {
+      "id": "c-target",
+      "from": "c",
+      "to": "target",
+      "label": "Applies to",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    }
+  ]
+}

@@ -9,7 +9,18 @@
     "viewBox": [
       1260,
       580
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
     {
