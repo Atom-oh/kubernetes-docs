@@ -31,7 +31,7 @@ spec:
         tier: frontend
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
         - key: karpenter.sh/capacity-type
@@ -84,10 +84,10 @@ spec:
         tier: batch
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c", "m", "r", "i", "d"]  # 다양한 패밀리
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: In
           values: ["5", "6", "7"]
         - key: karpenter.sh/capacity-type
@@ -135,7 +135,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["g"]
         - key: node.kubernetes.io/instance-type
@@ -188,7 +188,7 @@ spec:
         tier: api
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
         - key: karpenter.sh/capacity-type

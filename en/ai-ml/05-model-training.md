@@ -1,7 +1,7 @@
 # Model Training on EKS
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: September 2, 2026
+> **Last Updated**: September 9, 2026
 
 Model training is one of the most resource-intensive workloads in the AI/ML lifecycle. This chapter covers distributed training strategies, Slurm integration with Slinky, GPU and Trainium-based training, and best practices for running large-scale training jobs on Amazon EKS.
 

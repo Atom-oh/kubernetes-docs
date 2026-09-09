@@ -1,7 +1,7 @@
 # Spot 인스턴스 활용 전략
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: 스케일링 동작](./03-scaling-behavior.md) | [목차](./README.md) | [다음: 운영 및 관리](./05-operations.md) >
 
@@ -23,10 +23,10 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]
         # Spot과 On-Demand 모두 허용
@@ -97,15 +97,15 @@ spec:
     spec:
       requirements:
         # 다양한 인스턴스 패밀리
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r", "i", "d"]
         # 다양한 세대
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: In
           values: ["5", "6", "7"]
         # 다양한 크기
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["large", "xlarge", "2xlarge"]
         # 다양한 아키텍처
@@ -141,7 +141,7 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["spot"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r"]
       nodeClassRef:

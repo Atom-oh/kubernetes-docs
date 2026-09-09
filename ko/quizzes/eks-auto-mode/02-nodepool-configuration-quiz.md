@@ -99,14 +99,14 @@ spec:
 ### 4. GPU 워크로드를 위한 NodePool에서 GPU 제조사를 지정하는 레이블 키는 무엇인가요?
 
 - A) `karpenter.k8s.aws/gpu-vendor`
-- B) `karpenter.k8s.aws/instance-gpu-manufacturer`
+- B) `eks.amazonaws.com/instance-gpu-manufacturer`
 - C) `nvidia.com/gpu-family`
 - D) `karpenter.sh/gpu-type`
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `karpenter.k8s.aws/instance-gpu-manufacturer`**
+**정답: B) `eks.amazonaws.com/instance-gpu-manufacturer`**
 
 **설명:**
 GPU 인스턴스를 선택할 때 제조사를 지정할 수 있습니다.
@@ -116,10 +116,10 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["g", "p"]
-        - key: karpenter.k8s.aws/instance-gpu-manufacturer
+        - key: eks.amazonaws.com/instance-gpu-manufacturer
           operator: In
           values: ["nvidia"]
 ```
@@ -129,14 +129,14 @@ spec:
 ### 5. NodePool에서 특정 인스턴스 세대를 지정하는 올바른 방법은 무엇인가요?
 
 - A) `node.kubernetes.io/instance-generation: "6"`
-- B) `karpenter.k8s.aws/instance-generation` with `operator: In`
+- B) `eks.amazonaws.com/instance-generation` with `operator: In`
 - C) `eks.amazonaws.com/generation: "6"`
 - D) `instance-generation: 6`
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `karpenter.k8s.aws/instance-generation` with `operator: In`**
+**정답: B) `eks.amazonaws.com/instance-generation` with `operator: In`**
 
 **설명:**
 Karpenter 레이블을 사용하여 인스턴스 세대를 지정합니다.
@@ -146,10 +146,10 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]  # 6세대 이상
         - key: karpenter.sh/capacity-type

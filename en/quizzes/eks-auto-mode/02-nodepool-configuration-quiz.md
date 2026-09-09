@@ -99,14 +99,14 @@ spec:
 ### 4. What is the label key to specify GPU manufacturer in a NodePool for GPU workloads?
 
 - A) `karpenter.k8s.aws/gpu-vendor`
-- B) `karpenter.k8s.aws/instance-gpu-manufacturer`
+- B) `eks.amazonaws.com/instance-gpu-manufacturer`
 - C) `nvidia.com/gpu-family`
 - D) `karpenter.sh/gpu-type`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `karpenter.k8s.aws/instance-gpu-manufacturer`**
+**Answer: B) `eks.amazonaws.com/instance-gpu-manufacturer`**
 
 **Explanation:**
 You can specify the manufacturer when selecting GPU instances.
@@ -116,10 +116,10 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["g", "p"]
-        - key: karpenter.k8s.aws/instance-gpu-manufacturer
+        - key: eks.amazonaws.com/instance-gpu-manufacturer
           operator: In
           values: ["nvidia"]
 ```
@@ -129,14 +129,14 @@ spec:
 ### 5. What is the correct way to specify instance generation in a NodePool?
 
 - A) `node.kubernetes.io/instance-generation: "6"`
-- B) `karpenter.k8s.aws/instance-generation` with `operator: In`
+- B) `eks.amazonaws.com/instance-generation` with `operator: In`
 - C) `eks.amazonaws.com/generation: "6"`
 - D) `instance-generation: 6`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `karpenter.k8s.aws/instance-generation` with `operator: In`**
+**Answer: B) `eks.amazonaws.com/instance-generation` with `operator: In`**
 
 **Explanation:**
 Use Karpenter labels to specify instance generation.
@@ -146,10 +146,10 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]  # Generation 6 or higher
         - key: karpenter.sh/capacity-type

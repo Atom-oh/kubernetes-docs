@@ -1,7 +1,7 @@
 # Node Lifecycle Management
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: July 3, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers node lifecycle management in EKS Auto Mode, including expiration policies, AMI management, drift detection, and node freshness monitoring.
 
@@ -22,7 +22,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:
@@ -208,7 +208,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       expireAfter: 168h
@@ -253,7 +253,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
       # Maximum node age for security compliance
@@ -320,7 +320,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:
@@ -341,7 +341,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
       nodeClassRef:

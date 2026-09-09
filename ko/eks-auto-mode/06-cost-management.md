@@ -1,7 +1,7 @@
 # 비용 관리 및 최적화
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 7월 11일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: 운영 및 관리](./05-operations.md) | [목차](./README.md) | [다음: 노드 생명주기](./07-node-lifecycle.md) >
 
@@ -31,7 +31,7 @@ spec:
     spec:
       requirements:
         # 1. 다양한 인스턴스 패밀리 허용
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r", "i", "d"]
 

@@ -1,7 +1,7 @@
 # AI/ML Best Practices on EKS
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers comprehensive best practices for running AI/ML workloads on Amazon EKS, including benchmarking, container optimization, GPU selection, networking, storage, observability, cost optimization, and security.
 

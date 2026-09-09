@@ -1,7 +1,7 @@
 # Cost Management and Optimization
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: July 11, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers cost optimization strategies for EKS Auto Mode, including cost analysis, Spot savings measurement, resource right-sizing, and Savings Plans integration.
 
@@ -29,7 +29,7 @@ spec:
     spec:
       requirements:
         # 1. Allow various instance families
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r", "i", "d"]
 

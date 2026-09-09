@@ -1,7 +1,7 @@
 # Event Capacity Planning Playbook
 
 > **Supported Versions**: Kubernetes 1.28+, KEDA 2.14+, Karpenter 0.37+
-> **Last Updated**: April 25, 2026
+> **Last Updated**: September 9, 2026
 
 < [Previous: EKS Upgrade Operations](./11-upgrade-operations.md) | [Table of Contents](./README.md) | [Next: FinOps Cost Visibility](./13-finops-cost-platform.md) >
 

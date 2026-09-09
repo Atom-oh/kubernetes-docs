@@ -1,7 +1,7 @@
 # AI Infrastructure on EKS
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers comprehensive AI/ML infrastructure patterns on Amazon EKS, including the JARK Stack, Dynamic Resource Allocation (DRA), and production-ready platforms for AI agent development.
 

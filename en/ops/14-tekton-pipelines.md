@@ -1,6 +1,6 @@
 # Tekton Pipelines
 > **Supported Versions**: Tekton Pipelines v0.62+, Tekton Triggers v0.28+
-> **Last Updated**: June 2025
+> **Last Updated**: September 9, 2026
 
 < [Previous: FinOps Cost Visibility Platform](./13-finops-cost-platform.md) | [Table of Contents](./README.md) | [Next: None] >
 

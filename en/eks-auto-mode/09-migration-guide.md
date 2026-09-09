@@ -1,7 +1,7 @@
 # Migrating from Managed Node Groups to Auto Mode
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: July 3, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers how to migrate from existing EKS Managed Node Groups to Auto Mode, including step-by-step instructions, coexistence strategies, and important cautions.
 
@@ -98,10 +98,10 @@ spec:
     spec:
       requirements:
         # Instance types similar to existing node groups
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["large", "xlarge", "2xlarge"]
         - key: karpenter.sh/capacity-type
@@ -117,7 +117,7 @@ spec:
 
 | Node Group Config | NodePool Equivalent |
 |-------------------|---------------------|
-| Instance types | `karpenter.k8s.aws/instance-category`, `instance-size` |
+| Instance types | `eks.amazonaws.com/instance-category`, `instance-size` |
 | Capacity type | `karpenter.sh/capacity-type` |
 | Labels | `template.metadata.labels` |
 | Taints | `template.spec.taints` |
