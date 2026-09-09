@@ -1,7 +1,7 @@
 # EKS 업그레이드: Auto Mode 무중단 업그레이드
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 7월 10일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: 리소스 최적화](./10-resource-optimization.md) | [목차](./README.md) | [다음: 이벤트 용량 계획](./12-event-capacity-planning.md) >
 
@@ -739,6 +739,19 @@ kind: NodePool
 metadata:
   name: default
 spec:
+  template:
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand", "spot"]
+      nodeClassRef:
+        group: eks.amazonaws.com   # EKS Auto Mode 관리형 NodeClass
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 1m

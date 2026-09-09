@@ -1,7 +1,7 @@
 # Workload-Specific Optimization
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 19, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers how to optimize EKS Auto Mode configurations for different workload types including web services, batch processing, GPU workloads, and AI/ML training.
 
@@ -23,10 +23,10 @@ spec:
     spec:
       requirements:
         # General-purpose instances
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["large", "xlarge", "2xlarge"]
         # Use only On-Demand (availability first)
@@ -128,10 +128,10 @@ spec:
     spec:
       requirements:
         # Compute-optimized
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["xlarge", "2xlarge", "4xlarge"]
         # Use only Spot (cost first)
@@ -139,7 +139,7 @@ spec:
           operator: In
           values: ["spot"]
         # Various instance types for better Spot availability
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: In
           values: ["5", "6", "7"]
       taints:
@@ -216,10 +216,10 @@ spec:
     spec:
       requirements:
         # GPU instances
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["g", "p"]
-        - key: karpenter.k8s.aws/instance-gpu-manufacturer
+        - key: eks.amazonaws.com/instance-gpu-manufacturer
           operator: In
           values: ["nvidia"]
         # Specific GPU instance types

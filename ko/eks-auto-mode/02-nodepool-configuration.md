@@ -1,7 +1,7 @@
 # NodePool 구성 및 최적화
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 7월 3일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: Auto Mode 시작하기](./01-getting-started.md) | [목차](./README.md) | [다음: 스케일링 동작](./03-scaling-behavior.md) >
 
@@ -33,10 +33,10 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["on-demand", "spot"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]
       nodeClassRef:
@@ -68,7 +68,7 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["on-demand"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["medium", "large", "xlarge"]
       taints:
@@ -106,15 +106,15 @@ spec:
     spec:
       requirements:
         # CPU 최적화 인스턴스만 사용
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c"]
         # 최신 세대 인스턴스
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["6"]
         # 인스턴스 크기 제한
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["xlarge", "2xlarge", "4xlarge"]
         # x86_64만 사용
@@ -158,13 +158,13 @@ spec:
     spec:
       requirements:
         # 메모리 최적화 인스턴스
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["r"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["2xlarge", "4xlarge", "8xlarge", "12xlarge"]
         - key: kubernetes.io/arch
@@ -311,7 +311,7 @@ spec:
         workload-tier: frontend
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
         - key: karpenter.sh/capacity-type
@@ -339,7 +339,7 @@ spec:
         workload-tier: backend
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "r"]
         - key: karpenter.sh/capacity-type
@@ -371,10 +371,10 @@ spec:
         environment: development
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["t", "m"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["medium", "large"]
         - key: karpenter.sh/capacity-type

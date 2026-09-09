@@ -65,7 +65,7 @@ NodePool의 `spec.template.spec.requirements`에서 `karpenter.sh/capacity-type`
 **정답: B) 여러 노드의 워크로드를 더 적은 수의 노드로 통합하여 비용 절감**
 
 **설명:**
-Consolidation은 Karpenter의 핵심 비용 최적화 기능입니다. 사용률이 낮은 여러 노드의 워크로드를 더 적은 수의 노드로 통합(빈 패킹)하여 리소스 활용도를 높이고 비용을 절감합니다. `consolidationPolicy: WhenEmpty`는 노드가 비어 있을 때만 제거하고, `consolidationPolicy: WhenUnderutilized`는 사용률이 낮을 때도 통합을 수행합니다. `consolidateAfter`로 통합까지의 대기 시간을 설정합니다.
+Consolidation은 Karpenter의 핵심 비용 최적화 기능입니다. 사용률이 낮은 여러 노드의 워크로드를 더 적은 수의 노드로 통합(빈 패킹)하여 리소스 활용도를 높이고 비용을 절감합니다. `consolidationPolicy: WhenEmpty`는 노드가 비어 있을 때만 제거하고, `consolidationPolicy: WhenEmptyOrUnderutilized`는 사용률이 낮을 때도 통합을 수행합니다. `consolidateAfter`로 통합까지의 대기 시간을 설정합니다.
 </details>
 
 5. Karpenter의 expireAfter 설정의 목적은 무엇인가요?
@@ -113,7 +113,7 @@ NodePool의 `spec.limits`에서 해당 NodePool이 프로비저닝할 수 있는
 **정답: B) NodePool/EC2NodeClass 변경으로 인해 기존 노드가 현재 구성과 일치하지 않는 상태**
 
 **설명:**
-Drift 기능은 NodePool 또는 EC2NodeClass의 구성이 변경되었을 때, 기존 노드가 새 구성과 일치하지 않음을 감지합니다. 예를 들어 AMI를 업데이트하거나 보안 그룹을 변경한 경우, 기존 노드는 "drifted" 상태가 됩니다. Karpenter는 이러한 노드를 점진적으로 교체하여 클러스터의 모든 노드가 최신 구성을 사용하도록 합니다. `featureGates.drift=true`로 활성화합니다.
+Drift 기능은 NodePool 또는 EC2NodeClass의 구성이 변경되었을 때, 기존 노드가 새 구성과 일치하지 않음을 감지합니다. 예를 들어 AMI를 업데이트하거나 보안 그룹을 변경한 경우, 기존 노드는 "drifted" 상태가 됩니다. Karpenter는 이러한 노드를 점진적으로 교체하여 클러스터의 모든 노드가 최신 구성을 사용하도록 합니다. Karpenter v1(1.0+)에서는 Drift가 항상 활성화되어 있으며, 별도의 `featureGates.drift` 설정이 필요하지 않습니다(해당 피처 게이트는 v1에서 제거되었습니다).
 </details>
 
 8. EC2NodeClass에서 노드의 루트 볼륨 크기와 유형을 설정하는 필드는 무엇인가요?

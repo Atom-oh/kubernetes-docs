@@ -1,7 +1,7 @@
 # AI/ML 워크로드
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 9월 9일
 
 Kubernetes는 AI/ML 워크로드를 실행하기 위한 강력한 플랫폼입니다. 이 장에서는 EKS에서 AI/ML 워크로드를 실행하는 방법과 모범 사례를 알아보겠습니다.
 
@@ -812,6 +812,8 @@ spec:
         values:
         - amd64
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: gpu-spot-class
   limits:
     nvidia.com/gpu: 10
@@ -824,10 +826,15 @@ kind: EC2NodeClass
 metadata:
   name: gpu-spot-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: gpu-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: gpu-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
+  role: KarpenterNodeRole-gpu-cluster
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: gpu-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: gpu-cluster
 ```
 
 ### 자동 스케일링

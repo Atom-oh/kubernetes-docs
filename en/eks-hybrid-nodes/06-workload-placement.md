@@ -3,7 +3,7 @@
 < [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Node Lifecycle Management](./07-node-lifecycle.md) >
 
 > **Supported Versions**: EKS 1.31+, Karpenter 1.0+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 9, 2026
 
 This document covers strategies for placing workloads across hybrid nodes and cloud nodes, including node affinity, taints/tolerations, and cloud bursting with Karpenter.
 
@@ -194,7 +194,8 @@ kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  amiFamily: AL2023
+  amiSelectorTerms:
+  - alias: al2023@latest
   subnetSelectorTerms:
   - tags:
       karpenter.sh/discovery: my-hybrid-cluster
@@ -410,7 +411,7 @@ Pod deletion cost works well together with Karpenter's consolidation policies:
 |--------------|------|
 | `pod-deletion-cost` | Prioritizes cloud pod removal during ReplicaSet scale-down |
 | Karpenter `WhenEmpty` | Automatically removes empty cloud nodes |
-| Karpenter `WhenUnderutilized` | Consolidates underutilized cloud nodes |
+| Karpenter `WhenEmptyOrUnderutilized` | Consolidates underutilized cloud nodes |
 
 ```yaml
 # Karpenter with deletion-cost integration example
@@ -419,8 +420,18 @@ kind: NodePool
 metadata:
   name: cloud-burst-pool
 spec:
+  template:
+    spec:
+      requirements:
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values: ["spot", "on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
   disruption:
-    consolidationPolicy: WhenUnderutilized  # Consolidate underutilized nodes
+    consolidationPolicy: WhenEmptyOrUnderutilized  # Consolidate underutilized nodes
     consolidateAfter: 60s
   # ...remaining config from Karpenter NodePool Configuration above
 ```

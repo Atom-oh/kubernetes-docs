@@ -65,7 +65,7 @@ Use the `karpenter.sh/capacity-type` key in NodePool's `spec.template.spec.requi
 **Answer: B) Consolidate workloads from multiple nodes to fewer nodes for cost savings**
 
 **Explanation:**
-Consolidation is Karpenter's core cost optimization feature. It consolidates (bin-packs) workloads from underutilized nodes to fewer nodes to increase resource utilization and reduce costs. `consolidationPolicy: WhenEmpty` only removes empty nodes, while `consolidationPolicy: WhenUnderutilized` also consolidates when utilization is low. `consolidateAfter` sets the wait time before consolidation.
+Consolidation is Karpenter's core cost optimization feature. It consolidates (bin-packs) workloads from underutilized nodes to fewer nodes to increase resource utilization and reduce costs. `consolidationPolicy: WhenEmpty` only removes empty nodes, while `consolidationPolicy: WhenEmptyOrUnderutilized` also consolidates when utilization is low. `consolidateAfter` sets the wait time before consolidation.
 </details>
 
 5. What is the purpose of Karpenter's expireAfter setting?
@@ -113,7 +113,7 @@ NodePool's `spec.limits` defines the maximum resources that the NodePool can pro
 **Answer: B) State where existing nodes don't match current configuration due to NodePool/EC2NodeClass changes**
 
 **Explanation:**
-The Drift feature detects when NodePool or EC2NodeClass configurations change and existing nodes don't match the new configuration. For example, when you update an AMI or change security groups, existing nodes become "drifted". Karpenter gradually replaces these nodes so all cluster nodes use the latest configuration. Enable with `featureGates.drift=true`.
+The Drift feature detects when NodePool or EC2NodeClass configurations change and existing nodes don't match the new configuration. For example, when you update an AMI or change security groups, existing nodes become "drifted". Karpenter gradually replaces these nodes so all cluster nodes use the latest configuration. In Karpenter v1 (1.0+) Drift is always on — no `featureGates.drift` setting is needed (that feature gate was removed in v1).
 </details>
 
 8. What field in EC2NodeClass sets the node's root volume size and type?

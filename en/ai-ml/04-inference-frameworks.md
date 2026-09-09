@@ -1,7 +1,7 @@
 # Inference Frameworks for LLM Serving
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: April 9, 2026
+> **Last Updated**: September 9, 2026
 
 This chapter covers the diverse inference framework ecosystem for deploying Large Language Models (LLMs) on Amazon EKS. We explore NVIDIA NIM, NVIDIA Dynamo, AIBrix, Ray Serve integration, and AWS Neuron, as well as rapidly growing open-source frameworks including SGLang, HuggingFace TGI, Ollama, and LiteLLM.
 
@@ -112,7 +112,9 @@ kind: EC2NodeClass
 metadata:
   name: nim-gpu-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
   subnetSelectorTerms:
   - tags:
       karpenter.sh/discovery: my-cluster
@@ -2257,7 +2259,8 @@ kind: EC2NodeClass
 metadata:
   name: neuron-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-my-cluster
+  amiFamily: Custom
   amiSelectorTerms:
   - id: ami-xxxxxxxxxxxxxxxxx  # Neuron DLAMI
   subnetSelectorTerms:

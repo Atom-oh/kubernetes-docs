@@ -1,7 +1,7 @@
 # 워크로드별 최적화
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: 노드 생명주기](./07-node-lifecycle.md) | [목차](./README.md) | [다음: 마이그레이션 가이드](./09-migration-guide.md) >
 
@@ -25,10 +25,10 @@ spec:
     spec:
       requirements:
         # 범용 인스턴스
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["large", "xlarge", "2xlarge"]
         # On-Demand만 사용 (가용성 우선)
@@ -118,10 +118,10 @@ spec:
     spec:
       requirements:
         # 컴퓨팅 최적화
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c"]
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["xlarge", "2xlarge", "4xlarge"]
         # Spot만 사용 (비용 우선)
@@ -129,7 +129,7 @@ spec:
           operator: In
           values: ["spot"]
         # 다양한 인스턴스 타입으로 Spot 가용성 향상
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: In
           values: ["5", "6", "7"]
       taints:
@@ -194,10 +194,10 @@ spec:
     spec:
       requirements:
         # GPU 인스턴스
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["g", "p"]
-        - key: karpenter.k8s.aws/instance-gpu-manufacturer
+        - key: eks.amazonaws.com/instance-gpu-manufacturer
           operator: In
           values: ["nvidia"]
         # 특정 GPU 인스턴스 타입

@@ -1,7 +1,7 @@
 # Kubernetes 스케줄링, 선점 및 축출
 
 > **지원 버전**: Kubernetes 1.32 - 1.34  
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 9일
 
 Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 노드 문제 발생 시 포드를 안전하게 이동시키는 과정입니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
 
@@ -1190,6 +1190,8 @@ spec:
           operator: In
           values: ["amd64", "arm64"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default-class
   limits:
     cpu: 1000
@@ -1203,10 +1205,15 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: my-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
 ```
 
 Karpenter는 포드의 리소스 요구 사항에 맞는 최적의 인스턴스 유형을 선택하여 비용을 최적화합니다.

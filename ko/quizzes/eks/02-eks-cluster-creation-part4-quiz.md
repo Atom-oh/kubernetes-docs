@@ -71,8 +71,8 @@
    *   예시:
 
        ```yaml
-       # Karpenter Provisioner
-       apiVersion: karpenter.sh/v1alpha5
+       # Karpenter NodePool (karpenter.sh/v1) + EC2NodeClass (karpenter.k8s.aws/v1)
+       apiVersion: karpenter.sh/v1
        kind: NodePool
        metadata:
          name: default
@@ -86,19 +86,34 @@
                - key: kubernetes.io/arch
                  operator: In
                  values: ["amd64", "arm64"]
-           - key: node.kubernetes.io/instance-type
-             operator: In
-             values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
+               - key: node.kubernetes.io/instance-type
+                 operator: In
+                 values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
+             nodeClassRef:
+               group: karpenter.k8s.aws
+               kind: EC2NodeClass
+               name: default
          limits:
-           resources:
-             cpu: 1000
-             memory: 1000Gi
-         provider:
-           subnetSelector:
-             karpenter.sh/discovery: "true"
-           securityGroupSelector:
-             karpenter.sh/discovery: "true"
-         ttlSecondsAfterEmpty: 30
+           cpu: 1000
+           memory: 1000Gi
+         disruption:
+           consolidationPolicy: WhenEmpty
+           consolidateAfter: 30s
+       ---
+       apiVersion: karpenter.k8s.aws/v1
+       kind: EC2NodeClass
+       metadata:
+         name: default
+       spec:
+         role: KarpenterNodeRole-my-cluster
+         amiSelectorTerms:
+           - alias: al2023@latest
+         subnetSelectorTerms:
+           - tags:
+               karpenter.sh/discovery: "true"
+         securityGroupSelectorTerms:
+           - tags:
+               karpenter.sh/discovery: "true"
        ```
 2. **작동 방식**:
    * 스케줄링할 수 없는 포드의 요구 사항을 분석
@@ -118,9 +133,9 @@
 | 확장 단위   | 노드 그룹 (ASG)        | 개별 노드                   |
 | 인스턴스 선택 | 미리 정의된 인스턴스 유형     | 워크로드 요구 사항에 맞는 최적의 인스턴스 |
 | 확장 속도   | 느림 (2-10분)         | 빠름 (1분 이내)              |
-| 구성 복잡성  | 중간 (ASG 구성 필요)     | 낮음 (Provisioner 정의만 필요) |
+| 구성 복잡성  | 중간 (ASG 구성 필요)     | 낮음 (NodePool 정의만 필요)    |
 | 비용 최적화  | 제한적                | 높음 (워크로드에 최적화된 인스턴스 선택) |
-| 성숙도     | 높음 (오래된 프로젝트)      | 중간 (비교적 새로운 프로젝트)       |
+| 성숙도 | 높음 (오래된 프로젝트) | 높음 (2024년부터 안정적인 v1 API, EKS Auto Mode의 기반) |
 
 **다른 옵션들의 문제점:**
 

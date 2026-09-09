@@ -807,24 +807,32 @@ spec:
 
 **1. Pre-scaling Capacity Planning:**
 ```yaml
-# Karpenter Provisioner - Surge Configuration
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+# Karpenter NodePool - Surge Configuration
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: blackfriday
 spec:
-  requirements:
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values: ["m5.2xlarge", "m5.4xlarge", "c5.2xlarge", "c5.4xlarge"]
-  - key: topology.kubernetes.io/zone
-    operator: In
-    values: ["us-west-2a", "us-west-2b", "us-west-2c"]
+  template:
+    spec:
+      # assumes an EC2NodeClass named default already exists
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values: ["m5.2xlarge", "m5.4xlarge", "c5.2xlarge", "c5.4xlarge"]
+      - key: topology.kubernetes.io/zone
+        operator: In
+        values: ["us-west-2a", "us-west-2b", "us-west-2c"]
   limits:
-    resources:
-      cpu: 2000
-      memory: 4000Gi
-  ttlSecondsAfterEmpty: 30
+    cpu: 2000
+    memory: 4000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ---
 # HPA Pre-scaling
 apiVersion: autoscaling/v2

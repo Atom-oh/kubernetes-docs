@@ -1,7 +1,7 @@
 # EKS 기반 Agentic AI 플랫폼 구축
 
 > **지원 버전**: EKS 1.31+, vLLM 0.6+, Karpenter 1.0+
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 9월 9일
 
 Agentic AI는 단순한 질의응답을 넘어 자율적으로 계획을 세우고, 도구를 사용하며, 반복적으로 목표를 달성하는 AI 시스템입니다. 이 장에서는 EKS에서 프로덕션 수준의 Agentic AI 플랫폼을 구축하는 방법을 알아보겠습니다.
 
@@ -266,7 +266,8 @@ kind: EC2NodeClass
 metadata:
   name: gpu-nodes
 spec:
-  amiFamily: AL2023
+  amiSelectorTerms:
+    - alias: al2023@latest
   role: KarpenterNodeRole-${CLUSTER_NAME}
   subnetSelectorTerms:
     - tags:
@@ -1799,6 +1800,10 @@ spec:
             - g5.xlarge
             - g5.2xlarge
             - g6.xlarge
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: gpu-nodes
       taints:
         - key: spot-instance
           value: "true"

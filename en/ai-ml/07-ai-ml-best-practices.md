@@ -1,7 +1,7 @@
 # AI/ML Best Practices on EKS
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers comprehensive best practices for running AI/ML workloads on Amazon EKS, including benchmarking, container optimization, GPU selection, networking, storage, observability, cost optimization, and security.
 
@@ -458,6 +458,13 @@ metadata:
 spec:
   amiSelectorTerms:
   - alias: bottlerocket@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
 
   # Custom user data for image prefetching
   userData: |
@@ -622,6 +629,10 @@ spec:
   - tags:
       karpenter.sh/discovery: my-cluster
       network/efa-enabled: "true"
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
 
   # Instance store for fast local scratch
   instanceStorePolicy: RAID0
@@ -756,6 +767,15 @@ kind: EC2NodeClass
 metadata:
   name: training-cluster-pg
 spec:
+  amiSelectorTerms:
+  - alias: al2023@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
   # ... other config ...
 
   # Use cluster placement group for lowest latency

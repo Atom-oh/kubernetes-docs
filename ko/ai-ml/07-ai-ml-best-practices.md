@@ -1,7 +1,7 @@
 # EKS에서의 AI/ML 모범 사례
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 25일
+> **마지막 업데이트**: 2026년 9월 9일
 
 이 가이드는 Amazon EKS에서 AI/ML 워크로드를 실행하기 위한 종합적인 모범 사례를 다룹니다. 벤치마킹, 컨테이너 최적화, GPU 선택, 네트워킹, 스토리지, 관측성, 비용 최적화, 보안에 대해 알아봅니다.
 
@@ -458,6 +458,13 @@ metadata:
 spec:
   amiSelectorTerms:
   - alias: bottlerocket@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
 
   # 이미지 프리페칭을 위한 사용자 정의 데이터
   userData: |
@@ -622,6 +629,10 @@ spec:
   - tags:
       karpenter.sh/discovery: my-cluster
       network/efa-enabled: "true"
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
 
   # 빠른 로컬 스크래치를 위한 인스턴스 스토어
   instanceStorePolicy: RAID0
@@ -756,6 +767,15 @@ kind: EC2NodeClass
 metadata:
   name: training-cluster-pg
 spec:
+  amiSelectorTerms:
+  - alias: al2023@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
   # ... 기타 구성 ...
 
   # 최저 지연 시간을 위해 클러스터 배치 그룹 사용

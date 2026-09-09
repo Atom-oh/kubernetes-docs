@@ -1,7 +1,7 @@
 # EKS Upgrades: Auto Mode Zero-Downtime Upgrade
 
 > **Supported Versions**: EKS 1.28+, Terraform 1.5+, Karpenter 1.0+
-> **Last Updated**: July 10, 2026
+> **Last Updated**: September 9, 2026
 
 < [Previous: Resource Optimization](./10-resource-optimization.md) | [Table of Contents](./README.md) | [Next: Event Capacity Planning](./12-event-capacity-planning.md) >
 
@@ -775,12 +775,12 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["on-demand", "spot"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c", "m", "r"]
       nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
+        group: eks.amazonaws.com
+        kind: NodeClass
         name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized

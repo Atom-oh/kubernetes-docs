@@ -25,15 +25,15 @@ spec:
     spec:
       requirements:
         # Diverse instance families
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r", "i", "d"]
         # Diverse generations
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: In
           values: ["5", "6", "7"]
         # Diverse sizes
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["large", "xlarge", "2xlarge"]
         # Diverse architectures
@@ -156,6 +156,10 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["spot"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ---
 # On-Demand fallback NodePool (weight: 10)
 apiVersion: karpenter.sh/v1
@@ -170,6 +174,10 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["on-demand"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
 ```
 
 </details>

@@ -1406,8 +1406,8 @@ PodDisruptionBudget은 노드 그룹 업데이트 중 포드 중단을 제어하
     * 비용 최적화 및 통합 수명 주기 관리
 
     ```yaml
-    # Karpenter Provisioner
-    apiVersion: karpenter.sh/v1alpha5
+    # Karpenter NodePool (karpenter.sh/v1)
+    apiVersion: karpenter.sh/v1
     kind: NodePool
     metadata:
       name: default
@@ -1419,16 +1419,31 @@ PodDisruptionBudget은 노드 그룹 업데이트 중 포드 중단을 제어하
               operator: In
               values: ["spot", "on-demand"]
           nodeClassRef:
+            group: karpenter.k8s.aws
+            kind: EC2NodeClass
             name: default-class
       limits:
         cpu: 1000
-          memory: 1000Gi
-      provider:
-        subnetSelector:
-          karpenter.sh/discovery: "true"
-        securityGroupSelector:
-          karpenter.sh/discovery: "true"
-      ttlSecondsAfterEmpty: 30
+        memory: 1000Gi
+      disruption:
+        consolidationPolicy: WhenEmpty
+        consolidateAfter: 30s
+    ---
+    # Karpenter EC2NodeClass (karpenter.k8s.aws/v1)
+    apiVersion: karpenter.k8s.aws/v1
+    kind: EC2NodeClass
+    metadata:
+      name: default-class
+    spec:
+      amiSelectorTerms:
+        - alias: al2023@latest
+      role: KarpenterNodeRole-my-cluster
+      subnetSelectorTerms:
+        - tags:
+            karpenter.sh/discovery: "true"
+      securityGroupSelectorTerms:
+        - tags:
+            karpenter.sh/discovery: "true"
     ```
 3.  **Horizontal Pod Autoscaler (HPA)**:
 
@@ -2654,8 +2669,8 @@ kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATI
    *   예시:
 
        ```yaml
-       # Karpenter Provisioner
-       apiVersion: karpenter.sh/v1alpha5
+       # Karpenter NodePool (karpenter.sh/v1)
+       apiVersion: karpenter.sh/v1
        kind: NodePool
        metadata:
          name: default
@@ -2669,10 +2684,13 @@ kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATI
                - key: node.kubernetes.io/instance-type
                  operator: In
                  values: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
+             nodeClassRef:
+               group: karpenter.k8s.aws
+               kind: EC2NodeClass
+               name: default-class
          limits:
-           resources:
-             cpu: 1000
-             memory: 1000Gi
+           cpu: 1000
+           memory: 1000Gi
        ```
 
 모든 노드에 동일한 인스턴스 유형을 사용하는 것은 Auto Scaling 최적화 전략이 아니며, 오히려 다양한 인스턴스 유형을 혼합하여 사용하는 것이 비용 최적화와 가용성 측면에서 더 효과적입니다. 따라서 "모든 노드에 동일한 인스턴스 유형 사용"은 노드 그룹의 Auto Scaling을 최적화하기 위한 방법이 아닙니다.

@@ -1,7 +1,7 @@
 # AI Infrastructure on EKS
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers comprehensive AI/ML infrastructure patterns on Amazon EKS, including the JARK Stack, Dynamic Resource Allocation (DRA), and production-ready platforms for AI agent development.
 
@@ -663,12 +663,11 @@ kind: EC2NodeClass
 metadata:
   name: gpu-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
 
   # Use EKS-optimized AMI with GPU drivers
   amiSelectorTerms:
-  - alias: al2@latest
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:
@@ -770,11 +769,10 @@ kind: EC2NodeClass
 metadata:
   name: neuron-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
 
   amiSelectorTerms:
-  - alias: al2@latest
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:
@@ -1722,8 +1720,10 @@ kind: EC2NodeClass
 metadata:
   name: efa-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
+
+  amiSelectorTerms:
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:

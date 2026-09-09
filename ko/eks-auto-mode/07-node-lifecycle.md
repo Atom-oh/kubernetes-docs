@@ -1,7 +1,7 @@
 # 노드 생명주기 관리
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 7월 3일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: 비용 관리](./06-cost-management.md) | [목차](./README.md) | [다음: 워크로드 최적화](./08-workload-optimization.md) >
 
@@ -24,7 +24,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:
@@ -171,7 +171,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:
@@ -213,7 +213,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
       nodeClassRef:
@@ -290,7 +290,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:
@@ -318,6 +318,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m", "c"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
       expireAfter: 336h  # 14일 (긴 수명)
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
@@ -331,6 +339,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: secure-nodeclass
       expireAfter: 48h  # 2일 (짧은 수명)
   disruption:
     consolidationPolicy: WhenEmpty  # 보수적 통합

@@ -1,7 +1,7 @@
 # Kubernetes Scheduling, Preemption, and Eviction
 
 > **Supported Versions**: Kubernetes 1.32 - 1.34
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 9, 2026
 
 In Kubernetes, scheduling is the process of placing pods on appropriate nodes. Preemption is the process of removing lower-priority pods to make room for higher-priority pods, and eviction is the process of safely moving pods when node issues occur. In this chapter, we will learn about Kubernetes scheduling mechanisms, node selection, preemption, eviction, and scheduling optimization methods in Amazon EKS.
 
@@ -1111,6 +1111,8 @@ spec:
           operator: In
           values: ["amd64", "arm64"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default-class
   limits:
     cpu: 1000
@@ -1124,10 +1126,15 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: my-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
 ```
 
 Karpenter optimizes costs by selecting the optimal instance type for pod resource requirements.

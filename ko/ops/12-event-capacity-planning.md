@@ -1,7 +1,7 @@
 # 이벤트 용량 계획 플레이북
 
 > **지원 버전**: Kubernetes 1.28+, KEDA 2.14+, Karpenter 0.37+
-> **마지막 업데이트**: 2026년 4월 25일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: EKS 업그레이드 운영](./11-upgrade-operations.md) | [목차](./README.md) | [다음: FinOps 비용 가시성](./13-finops-cost-platform.md) >
 
@@ -202,6 +202,7 @@ kind: EC2NodeClass
 metadata:
   name: event-nodes
 spec:
+  role: KarpenterNodeRole-my-cluster
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:
@@ -272,6 +273,7 @@ kind: EC2NodeClass
 metadata:
   name: event-reserved
 spec:
+  role: KarpenterNodeRole-my-cluster
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:

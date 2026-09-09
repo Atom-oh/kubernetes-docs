@@ -1,7 +1,7 @@
 # EKS에서의 모델 훈련
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 9월 2일
+> **마지막 업데이트**: 2026년 9월 9일
 
 모델 훈련은 AI/ML 라이프사이클에서 가장 리소스 집약적인 워크로드입니다. 이 장에서는 분산 훈련 전략, Slinky를 통한 Slurm 통합, GPU 및 Trainium 기반 훈련, 그리고 Amazon EKS에서 대규모 훈련 작업을 실행하기 위한 모범 사례를 다룹니다.
 
@@ -284,7 +284,9 @@ kind: EC2NodeClass
 metadata:
   name: gpu-a100-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-ml-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
 
   subnetSelectorTerms:
     - tags:
@@ -843,7 +845,8 @@ kind: EC2NodeClass
 metadata:
   name: trainium-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-ml-cluster
+  amiFamily: Custom
   amiSelectorTerms:
     - id: ami-0123456789abcdef0  # Neuron 최적화 AMI
 

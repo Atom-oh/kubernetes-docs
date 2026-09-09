@@ -1,7 +1,7 @@
 # LLM 서빙을 위한 추론 프레임워크
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 4월 9일
+> **마지막 업데이트**: 2026년 9월 9일
 
 이 장에서는 Amazon EKS에서 대규모 언어 모델(LLM)을 배포하기 위한 다양한 추론 프레임워크를 다룹니다. NVIDIA NIM, NVIDIA Dynamo, AIBrix, Ray Serve 통합, AWS Neuron뿐만 아니라 SGLang, HuggingFace TGI, Ollama, LiteLLM 등 최근 빠르게 성장하고 있는 오픈소스 프레임워크를 포괄적으로 살펴봅니다.
 
@@ -112,7 +112,9 @@ kind: EC2NodeClass
 metadata:
   name: nim-gpu-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
   subnetSelectorTerms:
   - tags:
       karpenter.sh/discovery: my-cluster
@@ -1520,7 +1522,8 @@ kind: EC2NodeClass
 metadata:
   name: neuron-class
 spec:
-  amiFamily: AL2
+  role: KarpenterNodeRole-my-cluster
+  amiFamily: Custom
   amiSelectorTerms:
   - id: ami-xxxxxxxxxxxxxxxxx  # Neuron DLAMI
   subnetSelectorTerms:

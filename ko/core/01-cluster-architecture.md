@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
-> **마지막 업데이트**: 2026년 8월 31일
+> **마지막 업데이트**: 2026년 9월 9일
 
 ## 실습 환경 설정
 
@@ -1239,6 +1239,8 @@ spec:
           operator: In
           values: ["spot", "on-demand"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default-class
   limits:
     cpu: 1000
@@ -1249,10 +1251,15 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: my-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: my-cluster
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
 ```
 
 ### 수직적 확장

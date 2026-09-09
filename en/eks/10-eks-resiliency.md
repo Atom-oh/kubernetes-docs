@@ -1,6 +1,6 @@
 # EKS Resiliency and High Availability
 
-> **Supported Versions**: EKS 1.28+, Istio 1.20+, Karpenter 1.0+ **Last Updated**: February 23, 2026
+> **Supported Versions**: EKS 1.28+, Istio 1.20+, Karpenter 1.0+ **Last Updated**: September 9, 2026
 
 ## Resiliency Overview
 
@@ -183,8 +183,13 @@ spec:
       - key: node.kubernetes.io/instance-type
         operator: In
         values: ["m6i.xlarge", "m6i.2xlarge", "m7i.xlarge", "m7i.2xlarge"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
     budgets:
     - nodes: "20%"    # Maximum 20% disrupted simultaneously
     - nodes: "0"

@@ -1,7 +1,7 @@
 # Operations and Management
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 19, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers operational aspects of EKS Auto Mode including disruption budgets, rolling replacement, monitoring, troubleshooting, and security best practices.
 
@@ -21,7 +21,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r"]
         - key: karpenter.sh/capacity-type
@@ -68,7 +68,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
       nodeClassRef:
@@ -211,7 +211,7 @@ spec:
         - key: topology.kubernetes.io/zone
           operator: In
           values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:

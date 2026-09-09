@@ -1,7 +1,7 @@
 # Spot Instance Utilization Strategies
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 19, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers strategies for using Spot instances effectively with EKS Auto Mode, including mixed capacity configurations, diversification, and interrupt handling.
 
@@ -21,10 +21,10 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r"]
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: Gt
           values: ["5"]
         # Allow both Spot and On-Demand
@@ -108,15 +108,15 @@ spec:
     spec:
       requirements:
         # Various instance families
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r", "i", "d"]
         # Various generations
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: In
           values: ["5", "6", "7"]
         # Various sizes
-        - key: karpenter.k8s.aws/instance-size
+        - key: eks.amazonaws.com/instance-size
           operator: In
           values: ["large", "xlarge", "2xlarge"]
         # Various architectures
@@ -165,7 +165,7 @@ spec:
         - key: karpenter.sh/capacity-type
           operator: In
           values: ["spot"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r"]
       nodeClassRef:

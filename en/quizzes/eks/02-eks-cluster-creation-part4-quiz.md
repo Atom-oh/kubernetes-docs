@@ -71,8 +71,8 @@ This quiz tests your understanding of advanced configuration, scalability, and o
    *   Example:
 
        ```yaml
-       # Karpenter Provisioner
-       apiVersion: karpenter.sh/v1alpha5
+       # Karpenter NodePool (karpenter.sh/v1) + EC2NodeClass (karpenter.k8s.aws/v1)
+       apiVersion: karpenter.sh/v1
        kind: NodePool
        metadata:
          name: default
@@ -86,19 +86,34 @@ This quiz tests your understanding of advanced configuration, scalability, and o
                - key: kubernetes.io/arch
                  operator: In
                  values: ["amd64", "arm64"]
-           - key: node.kubernetes.io/instance-type
-             operator: In
-             values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
+               - key: node.kubernetes.io/instance-type
+                 operator: In
+                 values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
+             nodeClassRef:
+               group: karpenter.k8s.aws
+               kind: EC2NodeClass
+               name: default
          limits:
-           resources:
-             cpu: 1000
-             memory: 1000Gi
-         provider:
-           subnetSelector:
-             karpenter.sh/discovery: "true"
-           securityGroupSelector:
-             karpenter.sh/discovery: "true"
-         ttlSecondsAfterEmpty: 30
+           cpu: 1000
+           memory: 1000Gi
+         disruption:
+           consolidationPolicy: WhenEmpty
+           consolidateAfter: 30s
+       ---
+       apiVersion: karpenter.k8s.aws/v1
+       kind: EC2NodeClass
+       metadata:
+         name: default
+       spec:
+         role: KarpenterNodeRole-my-cluster
+         amiSelectorTerms:
+           - alias: al2023@latest
+         subnetSelectorTerms:
+           - tags:
+               karpenter.sh/discovery: "true"
+         securityGroupSelectorTerms:
+           - tags:
+               karpenter.sh/discovery: "true"
        ```
 2. **How It Works**:
    * Analyzes requirements of unschedulable pods
@@ -118,9 +133,9 @@ This quiz tests your understanding of advanced configuration, scalability, and o
 | Scaling Unit             | Node Group (ASG)                    | Individual Node                              |
 | Instance Selection       | Pre-defined instance types          | Optimal instances for workload requirements  |
 | Scaling Speed            | Slow (2-10 minutes)                 | Fast (under 1 minute)                        |
-| Configuration Complexity | Medium (ASG configuration required) | Low (only Provisioner definition needed)     |
+| Configuration Complexity | Medium (ASG configuration required) | Low (only NodePool definition needed)        |
 | Cost Optimization        | Limited                             | High (workload-optimized instance selection) |
-| Maturity                 | High (older project)                | Medium (relatively new project)              |
+| Maturity | High (long-established project) | High (stable v1 API since 2024; powers EKS Auto Mode) |
 
 **Issues with Other Options:**
 

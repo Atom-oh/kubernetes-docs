@@ -31,7 +31,7 @@ spec:
         tier: frontend
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
         - key: karpenter.sh/capacity-type
@@ -41,6 +41,10 @@ spec:
         - key: tier
           value: frontend
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 10m
@@ -80,10 +84,10 @@ spec:
         tier: batch
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["c", "m", "r", "i", "d"]  # Diverse families
-        - key: karpenter.k8s.aws/instance-generation
+        - key: eks.amazonaws.com/instance-generation
           operator: In
           values: ["5", "6", "7"]
         - key: karpenter.sh/capacity-type
@@ -96,6 +100,10 @@ spec:
         - key: tier
           value: batch
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s  # Quick cleanup
@@ -127,7 +135,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["g"]
         - key: node.kubernetes.io/instance-type
@@ -140,6 +148,10 @@ spec:
         - key: nvidia.com/gpu
           value: "true"
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   limits:
     nvidia.com/gpu: 20
   disruption:
@@ -176,7 +188,7 @@ spec:
         tier: api
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
         - key: karpenter.sh/capacity-type
@@ -189,6 +201,10 @@ spec:
         - key: tier
           value: api
           effect: NoSchedule
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   weight: 10
 ```
 

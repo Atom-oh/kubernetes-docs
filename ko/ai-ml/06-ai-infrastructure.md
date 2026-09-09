@@ -1,7 +1,7 @@
 # EKS 기반 AI 인프라
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 25일
+> **마지막 업데이트**: 2026년 9월 9일
 
 이 가이드에서는 Amazon EKS에서 AI/ML 인프라를 구축하는 방법을 다룹니다. JARK 스택, 동적 리소스 할당(DRA), AI 에이전트 개발을 위한 프로덕션 플랫폼을 포함합니다.
 
@@ -568,12 +568,11 @@ kind: EC2NodeClass
 metadata:
   name: gpu-nodeclass
 spec:
-  amiFamily: AL2
   role: KarpenterNodeRole-ml-cluster
 
   # GPU 드라이버가 포함된 EKS 최적화 AMI 사용
   amiSelectorTerms:
-  - alias: al2@latest
+  - alias: al2023@latest
 
   subnetSelectorTerms:
   - tags:

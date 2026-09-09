@@ -1,7 +1,7 @@
 # 운영 및 관리
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 9월 9일
 
 < [이전: Spot 전략](./04-spot-strategies.md) | [목차](./README.md) | [다음: 비용 관리](./06-cost-management.md) >
 
@@ -23,7 +23,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c", "r"]
         - key: karpenter.sh/capacity-type
@@ -68,7 +68,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m"]
       nodeClassRef:
@@ -180,7 +180,7 @@ spec:
         - key: topology.kubernetes.io/zone
           operator: In
           values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:
@@ -440,6 +440,19 @@ kind: NodePool
 metadata:
   name: production
 spec:
+  template:
+    spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m", "c", "r"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 10m
@@ -455,6 +468,16 @@ kind: NodePool
 metadata:
   name: development
 spec:
+  template:
+    spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m", "c", "r"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 1m

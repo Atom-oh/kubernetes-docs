@@ -611,9 +611,15 @@ EFA (Elastic Fabric Adapter) requires all communicating instances to be in the s
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
+metadata:
+  name: gpu-training
 spec:
   template:
     spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
       requirements:
         - key: topology.kubernetes.io/zone
           operator: In

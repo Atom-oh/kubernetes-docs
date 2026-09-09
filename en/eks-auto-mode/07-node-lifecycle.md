@@ -1,7 +1,7 @@
 # Node Lifecycle Management
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: July 3, 2026
+> **Last Updated**: September 9, 2026
 
 This guide covers node lifecycle management in EKS Auto Mode, including expiration policies, AMI management, drift detection, and node freshness monitoring.
 
@@ -22,7 +22,7 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-category
+        - key: eks.amazonaws.com/instance-category
           operator: In
           values: ["m", "c"]
       nodeClassRef:
@@ -207,6 +207,10 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m", "c"]
       expireAfter: 168h
       nodeClassRef:
         group: eks.amazonaws.com
@@ -248,6 +252,10 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m"]
       # Maximum node age for security compliance
       expireAfter: 72h  # 3 days
       nodeClassRef:
@@ -311,6 +319,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m", "c"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
       expireAfter: 336h  # 14 days - relaxed
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
@@ -324,6 +340,14 @@ metadata:
 spec:
   template:
     spec:
+      requirements:
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["m"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: secure-nodeclass
       expireAfter: 72h  # 3 days - aggressive
   disruption:
     consolidationPolicy: WhenEmpty  # Relaxed consolidation

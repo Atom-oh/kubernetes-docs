@@ -1,7 +1,7 @@
 # vLLM 배포 및 최적화
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2026년 9월 4일
+> **마지막 업데이트**: 2026년 9월 9일
 
 vLLM은 대규모 언어 모델(LLM)을 위한 고성능 오픈소스 추론 엔진으로, 현재 가장 널리 사용되는 LLM 서빙 프레임워크입니다. 이 장에서는 vLLM의 최신 기능과 아키텍처를 이해하고, EKS에서 프로덕션 수준으로 배포 및 최적화하는 방법을 알아보겠습니다.
 
@@ -850,20 +850,29 @@ spec:
         values:
         - "true"
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: vllm-gpu-class
   limits:
     nvidia.com/gpu: 32
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ---
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: vllm-gpu-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: vllm-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: vllm-cluster
-  ttlSecondsAfterEmpty: 30
+  role: KarpenterNodeRole-vllm-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: vllm-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: vllm-cluster
 ```
 
 ## 보안 구성

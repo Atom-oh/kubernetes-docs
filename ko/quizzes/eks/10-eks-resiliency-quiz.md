@@ -807,24 +807,32 @@ spec:
 
 **1. 사전 용량 계획 (Pre-scaling):**
 ```yaml
-# Karpenter Provisioner - 급증 대비 구성
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+# Karpenter NodePool - 급증 대비 구성
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: blackfriday
 spec:
-  requirements:
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values: ["m5.2xlarge", "m5.4xlarge", "c5.2xlarge", "c5.4xlarge"]
-  - key: topology.kubernetes.io/zone
-    operator: In
-    values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
+  template:
+    spec:
+      # default라는 이름의 EC2NodeClass가 미리 정의되어 있다고 가정
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values: ["m5.2xlarge", "m5.4xlarge", "c5.2xlarge", "c5.4xlarge"]
+      - key: topology.kubernetes.io/zone
+        operator: In
+        values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
   limits:
-    resources:
-      cpu: 2000
-      memory: 4000Gi
-  ttlSecondsAfterEmpty: 30
+    cpu: 2000
+    memory: 4000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ---
 # HPA 사전 스케일링
 apiVersion: autoscaling/v2

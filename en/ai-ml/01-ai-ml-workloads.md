@@ -1,7 +1,7 @@
 # AI/ML Workloads
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 23, 2026
+> **Last Updated**: September 9, 2026
 
 Kubernetes is a powerful platform for running AI/ML workloads. In this chapter, we will learn how to run AI/ML workloads on EKS and explore best practices.
 
@@ -812,6 +812,8 @@ spec:
         values:
         - amd64
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: gpu-spot-class
   limits:
     nvidia.com/gpu: 10
@@ -824,10 +826,15 @@ kind: EC2NodeClass
 metadata:
   name: gpu-spot-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: gpu-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: gpu-cluster
+  amiSelectorTerms:
+  - alias: al2023@latest
+  role: KarpenterNodeRole-gpu-cluster
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: gpu-cluster
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: gpu-cluster
 ```
 
 ### Auto Scaling

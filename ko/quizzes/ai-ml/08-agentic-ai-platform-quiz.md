@@ -1673,21 +1673,27 @@ spec:
 
 ---
 # Spot 인스턴스 활용 (배치 분석용)
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: finance-spot
 spec:
-  requirements:
-  - key: karpenter.sh/capacity-type
-    operator: In
-    values: ["spot"]
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values: ["g5.12xlarge", "g5.24xlarge"]
+  template:
+    spec:
+      # default라는 이름의 EC2NodeClass가 미리 정의되어 있다고 가정
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values: ["spot"]
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values: ["g5.12xlarge", "g5.24xlarge"]
   limits:
-    resources:
-      nvidia.com/gpu: 8
+    nvidia.com/gpu: 8
 ```
 
 **비용 절감 예상:**
