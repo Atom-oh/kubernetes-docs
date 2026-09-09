@@ -195,7 +195,7 @@ kubectl get lease -n eks-hybrid-nodes-gateway
 - 리더 장애 시 즉시 인계 준비
 - Lease 갱신 모니터링
 
-![리더 Pod가 15초마다 Lease를 갱신하다 장애가 발생하면, 40초 뒤 Lease 만료를 감지한 팔로워 Pod가 Lease를 획득하고 VPC 라우트 테이블의 경로를 자신의 ENI로 갱신해 새로운 리더로 승격하는 시퀀스를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
+![리더 Pod가 1초마다 Lease를 갱신하다 장애가 발생하면, 3초 뒤 Lease 만료를 감지한 팔로워 Pod가 Lease를 획득하고 VPC 라우트 테이블의 경로를 자신의 ENI로 갱신해 새로운 리더로 승격하는 시퀀스를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html)
 
@@ -203,9 +203,9 @@ Lease 관련 주요 파라미터:
 
 | 파라미터 | 기본값 | 설명 |
 |---------|--------|------|
-| leaseDuration | 40s | Lease 유효 기간 |
-| renewDeadline | 30s | 리더가 갱신해야 하는 최대 시간 |
-| retryPeriod | 15s | Lease 획득 재시도 간격 |
+| leaseDuration | 3s | Lease 유효 기간 |
+| renewDeadline | 2s | 리더가 갱신해야 하는 최대 시간 |
+| retryPeriod | 1s | Lease 획득 재시도 간격 |
 
 #### 6. VPC 라우트 테이블 자동 관리
 
@@ -1028,16 +1028,16 @@ spec:
 
 | 장애 유형 | 감지 시간 | 복구 시간 | 총 중단 시간 |
 |-----------|----------|----------|------------|
-| Gateway Pod 크래시 | 즉시 (Pod 종료) | ~40초 (Lease 만료) | ~40-55초 |
-| EC2 인스턴스 장애 | ~30초 (kubelet 타임아웃) | ~40초 (Lease 만료) | ~60-70초 |
-| AZ 전체 장애 | ~1분 (노드 상태 전파) | ~40초 (Lease 만료) | ~90-120초 |
-| 네트워크 파티션 | ~30초 (Lease 갱신 실패) | ~40초 (Lease 만료) | ~60-70초 |
+| Gateway Pod 크래시 | 즉시 (Pod 종료) | ~3초 (Lease 만료) | ~5-10초 |
+| EC2 인스턴스 장애 | ~30초 (kubelet 타임아웃) | ~3초 (Lease 만료) | ~35-40초 |
+| AZ 전체 장애 | ~1분 (노드 상태 전파) | ~3초 (Lease 만료) | ~65-70초 |
+| 네트워크 파티션 | ~2초 (renewDeadline 초과) | ~3초 (Lease 만료) | ~5-10초 |
 
 **페일오버 프로세스:**
 
 1. 리더 Pod가 Lease 갱신에 실패 (renewDeadline: 30초)
-2. Lease가 만료됨 (leaseDuration: 40초)
-3. 팔로워 Pod가 Lease를 획득 (retryPeriod: 15초)
+2. Lease가 만료됨 (leaseDuration: 3초)
+3. 팔로워 Pod가 Lease를 획득 (retryPeriod: 1초)
 4. 새 리더가 자신의 EC2 인스턴스 ENI로 VPC 라우트 테이블 업데이트
 5. CiliumVTEPConfig CRD를 새 리더의 정보로 업데이트
 6. VXLAN 터널 재구성

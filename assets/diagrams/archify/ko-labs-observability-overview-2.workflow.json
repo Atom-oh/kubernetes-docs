@@ -3,7 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "실습 순서",
-    "output": "public/archmaps/ko-labs-observability-readme-1.html",
+    "output": "public/archmaps/ko-labs-observability-overview-2.html",
     "animation": "trace",
     "quality_profile": "showcase",
     "views": [

@@ -18,7 +18,7 @@
           "leader",
           "lease"
         ],
-        "note": "리더 Pod가 retryPeriod(15초) 간격으로 Lease를 갱신하며 게이트웨이 역할을 수행한다."
+        "note": "리더 Pod가 retryPeriod(1초) 간격으로 Lease를 갱신하며 게이트웨이 역할을 수행한다."
       },
       {
         "id": "failover",
@@ -27,7 +27,7 @@
           "lease",
           "follower"
         ],
-        "note": "리더가 멈추면 leaseDuration(40초) 뒤 Lease가 만료되고, 팔로워 Pod가 이를 감지해 Lease를 획득한다."
+        "note": "리더가 멈추면 leaseDuration(3초) 뒤 Lease가 만료되고, 팔로워 Pod가 이를 감지해 Lease를 획득한다."
       },
       {
         "id": "reroute",
@@ -98,7 +98,7 @@
       "from": "leader",
       "to": "lease",
       "y": 195,
-      "label": "Lease 갱신 (15초 간격)",
+      "label": "Lease 갱신 (1초 간격)",
       "variant": "default",
       "note": "정상 운영 중"
     },
@@ -107,7 +107,7 @@
       "from": "lease",
       "to": "follower",
       "y": 300,
-      "label": "Lease 만료 감지 (40초 후)",
+      "label": "Lease 만료 감지 (3초 후)",
       "variant": "dashed",
       "note": "리더의 갱신이 멈춤"
     },

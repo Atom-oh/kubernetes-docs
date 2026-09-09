@@ -180,9 +180,9 @@ The leader election parameters control failover timing:
 
 | Parameter | Default Value | Description |
 |-----------|---------------|-------------|
-| `leaseDuration` | 15s | How long a lease is valid |
-| `renewDeadline` | 10s | How long the leader has to renew |
-| `retryPeriod` | 2s | How often non-leaders retry acquiring the lease |
+| `leaseDuration` | 3s | How long a lease is valid |
+| `renewDeadline` | 2s | How long the leader has to renew |
+| `retryPeriod` | 1s | How often non-leaders retry acquiring the lease |
 
 #### What the Leader Does
 
@@ -1149,7 +1149,7 @@ The recommended production deployment uses 2 gateway replicas spread across Avai
 
 When the leader gateway pod becomes unavailable (node failure, pod crash, network partition), the following failover sequence occurs:
 
-![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about fifteen to twenty-five seconds.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
+![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about five to ten seconds.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html)
 
@@ -1157,11 +1157,11 @@ When the leader gateway pod becomes unavailable (node failure, pod crash, networ
 
 | Phase | Duration | Description |
 |-------|----------|-------------|
-| **Detection** | 0-15s | Current leader fails to renew lease; lease expires after `leaseDuration` |
-| **Election** | 0-2s | Standby acquires lease on next `retryPeriod` tick |
+| **Detection** | 0-3s | Current leader fails to renew lease; lease expires after `leaseDuration` |
+| **Election** | 0-1s | Standby acquires lease on next `retryPeriod` tick |
 | **Route update** | 1-3s | New leader calls `ec2:ReplaceRoute` to update VPC routes |
 | **VTEP update** | 1-5s | New leader updates `CiliumVTEPConfig`; Cilium agents reload BPF maps |
-| **Total** | **~15-25s** | End-to-end failover time |
+| **Total** | **~5-10s** | End-to-end failover time |
 
 During the failover window:
 - **VPC-to-hybrid traffic**: Drops until VPC routes are updated (packets go to the failed gateway's ENI)
@@ -1579,7 +1579,7 @@ During an upgrade:
 1. The standby pod is replaced first (if using rolling update strategy)
 2. Once the new standby pod is ready, the old leader pod is replaced
 3. A leader transition occurs (see [Failover Sequence](#failover-sequence))
-4. Brief connectivity disruption (~15-25 seconds) during leader transition
+4. Brief connectivity disruption (~5-10 seconds) during leader transition
 
 To minimize disruption:
 
@@ -1640,7 +1640,7 @@ kubectl label node ip-10-0-2-200.us-west-2.compute.internal \
 | **Encapsulation overhead** | None (native routing with BGP) or varies | VXLAN (~50 bytes per packet) |
 | **Single point of traffic** | No (distributed routing) | Yes (all traffic through gateway) |
 | **High availability** | Depends on BGP/router HA | Built-in leader election |
-| **Failover time** | BGP convergence (seconds to minutes) | ~15-25 seconds |
+| **Failover time** | BGP convergence (seconds to minutes) | ~5-10 seconds |
 | **Network team involvement** | Required (router/firewall/BGP config) | Minimal (security group + firewall rules for UDP 8472) |
 | **Cost** | VPN/DX only | VPN/DX + EC2 gateway instances |
 | **Maximum throughput** | Limited by DX/VPN bandwidth | Limited by gateway instance + DX/VPN bandwidth |

@@ -12,9 +12,9 @@
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-0.html)
 
-![EKS 관리 클러스터의 ArgoCD·관측 스택과 EKS 서비스 클러스터의 OTel 계측 MSA 애플리케이션이 Aurora, SQS/SNS, 관측 백엔드, MWAA 등 AWS 관리형 서비스와 연동되는 실습 플랫폼 전체 아키텍처를 보여준다.](../../.gitbook/assets/ko-labs-observability-readme-0.png)
+![EKS 관리 클러스터의 ArgoCD·관측 스택과 EKS 서비스 클러스터의 OTel 계측 MSA 애플리케이션이 Aurora, SQS/SNS, 관측 백엔드, MWAA 등 AWS 관리형 서비스와 연동되는 실습 플랫폼 전체 아키텍처를 보여준다.](../../.gitbook/assets/ko-labs-observability-overview-1.png)
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-readme-0.html)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-1.html)
 
 ***
 
@@ -99,9 +99,9 @@ aws sts get-caller-identity --query "Account" --output text 2>/dev/null && echo 
 
 ## 실습 순서
 
-![관찰 가능성 실습이 인프라 구성부터 분산 추적 분석까지 여섯 단계(Part 1~6)를 순서대로 진행하는 학습 로드맵을 보여준다.](../../.gitbook/assets/ko-labs-observability-readme-1.png)
+![관찰 가능성 실습이 인프라 구성부터 분산 추적 분석까지 여섯 단계(Part 1~6)를 순서대로 진행하는 학습 로드맵을 보여준다.](../../.gitbook/assets/ko-labs-observability-overview-2.png)
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-readme-1.html)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-2.html)
 
 | Part                                     | 제목                  | 소요 시간 | 주요 내용                                           |
 | ---------------------------------------- | ------------------- | ----- | ----------------------------------------------- |
@@ -128,9 +128,9 @@ aws sts get-caller-identity --query "Account" --output text 2>/dev/null && echo 
 
 ### MSA 서비스 호출 흐름
 
-![클라이언트의 POST /orders와 POST /payments 요청이 API Gateway를 거쳐 order-service·payment-service로 라우팅되어 Aurora에 기록되고, order_created·payment_completed 이벤트가 SQS/SNS로 발행되어 notification-service가 비동기로 소비하는 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-readme-2.png)
+![클라이언트의 POST /orders와 POST /payments 요청이 API Gateway를 거쳐 order-service·payment-service로 라우팅되어 Aurora에 기록되고, order_created·payment_completed 이벤트가 SQS/SNS로 발행되어 notification-service가 비동기로 소비하는 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-overview-3.png)
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-readme-2.html)
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-3.html)
 
 ***
 

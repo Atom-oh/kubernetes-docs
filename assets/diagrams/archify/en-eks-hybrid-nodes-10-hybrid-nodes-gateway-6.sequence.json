@@ -19,7 +19,7 @@
           "gw1",
           "lease"
         ],
-        "note": "The leader stops renewing; the lease expires after leaseDuration (15s)."
+        "note": "The leader stops renewing; the lease expires after leaseDuration (3s)."
       },
       {
         "id": "election",
@@ -28,7 +28,7 @@
           "lease",
           "gw2"
         ],
-        "note": "The standby acquires the expired lease on its next retryPeriod tick (2s)."
+        "note": "The standby acquires the expired lease on its next retryPeriod tick (1s)."
       },
       {
         "id": "reconfigure",
@@ -84,17 +84,17 @@
     {
       "from": 172,
       "to": 250,
-      "label": "Detection — 0–15s"
+      "label": "Detection — 0–3s"
     },
     {
       "from": 265,
       "to": 340,
-      "label": "Election — 0–2s"
+      "label": "Election — 0–1s"
     },
     {
       "from": 355,
       "to": 520,
-      "label": "par: VTEP update + route replace (concurrent) — failover complete in ~15–25s"
+      "label": "par: VTEP update + route replace (concurrent) — failover complete in ~5–10s"
     }
   ],
   "messages": [
@@ -105,14 +105,14 @@
       "y": 205,
       "label": "renew lease — fails",
       "variant": "dashed",
-      "note": "Node failure / pod crash; lease expires after leaseDuration (15s)"
+      "note": "Node failure / pod crash; lease expires after leaseDuration (3s)"
     },
     {
       "id": "acquire",
       "from": "gw2",
       "to": "lease",
       "y": 300,
-      "label": "acquire lease (retryPeriod 2s)",
+      "label": "acquire lease (retryPeriod 1s)",
       "variant": "emphasis",
       "note": "Gateway Pod 2 becomes the new leader"
     },
@@ -158,10 +158,10 @@
       "dot": "amber",
       "title": "Failover Timeline",
       "items": [
-        "Detection 0–15s: leader fails to renew; lease expires after leaseDuration",
-        "Election 0–2s: standby acquires the lease on the next retryPeriod tick",
+        "Detection 0–3s: leader fails to renew; lease expires after leaseDuration",
+        "Election 0–1s: standby acquires the lease on the next retryPeriod tick",
         "Route update 1–3s (ec2:ReplaceRoute) and VTEP update 1–5s run in parallel",
-        "Total end-to-end failover: ~15–25s"
+        "Total end-to-end failover: ~5–10s"
       ]
     },
     {
