@@ -42,7 +42,21 @@
         ],
         "note": "차이가 있으면 동기화를 적용하고 결과가 상태 업데이트로 사용자에게 돌아온다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

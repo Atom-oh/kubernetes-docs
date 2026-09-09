@@ -41,7 +41,27 @@
         ],
         "note": "준비가 끝나면 Enforce 모드로 전환하고 메트릭을 모니터링하며, 정기 검토에서 업데이트가 필요하면 정책 작성으로 돌아간다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "시작 · 사용자 단계"
+        },
+        "messagebus": {
+          "label": "메시지"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

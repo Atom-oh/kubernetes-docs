@@ -43,7 +43,10 @@
         ],
         "note": "Syncer가 호스트 API Server와 리소스를 동기화하고 실제 Pod는 호스트 노드에 생성된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

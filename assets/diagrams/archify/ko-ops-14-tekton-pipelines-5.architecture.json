@@ -45,7 +45,10 @@
         ],
         "note": "ArgoCD가 매니페스트를 동기화하고 클러스터는 ECR에서 새 이미지를 pull해 배포한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

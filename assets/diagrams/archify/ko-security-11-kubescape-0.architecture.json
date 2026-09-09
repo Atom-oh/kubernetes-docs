@@ -46,7 +46,10 @@
         ],
         "note": "산정된 위험도는 리포트로 취합되어 JSON/SARIF, Kubescape Cloud, 알림 채널로 전달된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

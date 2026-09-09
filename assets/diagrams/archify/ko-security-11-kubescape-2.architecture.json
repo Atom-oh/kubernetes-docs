@@ -47,7 +47,10 @@
     "viewBox": [
       1160,
       640
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

@@ -37,7 +37,21 @@
         ],
         "note": "컨트롤러가 AWS 리소스 상태를 모니터링하여 Kubernetes 리소스 상태를 업데이트한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {
