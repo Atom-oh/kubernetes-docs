@@ -69,9 +69,9 @@ A test-result-driven decision guide for choosing between Istio's sidecar mode an
 
 ### Service Mesh Selection Criteria
 
-![Two-branch decision flow for choosing a service mesh: the Kubernetes platform path ends in Istio, Linkerd, or Consul/Kong Mesh, and the AWS-centric path ends in VPC Lattice, Istio on EKS, Istio Multi-cluster, or a regional solution.](../../../.gitbook/assets/en-service-mesh-istio-comparison-readme-0.png)
+![Two-branch decision flow for choosing a service mesh: the Kubernetes platform path ends in Istio, Linkerd, or Consul/Kong Mesh, and the AWS-centric path ends in VPC Lattice, Istio on EKS, Istio Multi-cluster, or a regional solution.](../../../.gitbook/assets/en-service-mesh-istio-comparison-overview-0.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-readme-0.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-overview-0.html)
 
 ### Use Case Recommendations
 

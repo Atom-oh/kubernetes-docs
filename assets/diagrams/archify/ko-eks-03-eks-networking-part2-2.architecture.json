@@ -110,7 +110,7 @@
     {
       "id": "pod1",
       "type": "backend",
-      "label": "포드 1",
+      "label": "Pod 1",
       "sublabel": "워크로드",
       "pos": [
         1060,
@@ -124,7 +124,7 @@
     {
       "id": "pod2",
       "type": "backend",
-      "label": "포드 2",
+      "label": "Pod 2",
       "sublabel": "워크로드",
       "pos": [
         1060,

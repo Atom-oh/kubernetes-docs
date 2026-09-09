@@ -12,7 +12,7 @@
           "label": "선택 메커니즘"
         },
         "frontend": {
-          "label": "포드 스펙"
+          "label": "Pod 스펙"
         },
         "cloud": {
           "label": "후보 노드"
@@ -29,7 +29,7 @@
           "node1",
           "node2"
         ],
-        "note": "가장 간단한 방법. 포드는 gpu=true 레이블이 있는 노드에만 배치된다."
+        "note": "가장 간단한 방법. Pod는 gpu=true 레이블이 있는 노드에만 배치된다."
       },
       {
         "id": "nodename",
@@ -72,7 +72,7 @@
     {
       "id": "pod1",
       "type": "frontend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "nodeSelector: gpu=\"true\"",
       "pos": [
         95,
@@ -156,7 +156,7 @@
     {
       "id": "pod2",
       "type": "frontend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "zone in (us-east-1a, us-east-1b)",
       "pos": [
         756,

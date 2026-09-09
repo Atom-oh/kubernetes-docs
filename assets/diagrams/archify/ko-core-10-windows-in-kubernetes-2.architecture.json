@@ -21,18 +21,18 @@
           "lp1",
           "wp1"
         ],
-        "note": "클라이언트 요청이 로드 밸런서와 Kubernetes 서비스를 거쳐 OS와 무관하게 Linux·Windows 포드로 분산된다."
+        "note": "클라이언트 요청이 로드 밸런서와 Kubernetes 서비스를 거쳐 OS와 무관하게 Linux·Windows Pod로 분산된다."
       },
       {
         "id": "pod-to-pod",
-        "label": "포드 간 통신",
+        "label": "Pod 간 통신",
         "focus": [
           "lp1",
           "lp2",
           "wp1",
           "wp2"
         ],
-        "note": "서로 다른 OS의 노드에 있는 포드도 클러스터 네트워크로 직접 통신한다."
+        "note": "서로 다른 OS의 노드에 있는 Pod도 클러스터 네트워크로 직접 통신한다."
       }
     ],
     "legend": {
@@ -72,7 +72,7 @@
       "id": "svc",
       "type": "backend",
       "label": "Kubernetes 서비스",
-      "sublabel": "Linux·Windows 포드에 분산",
+      "sublabel": "Linux·Windows Pod에 분산",
       "pos": [
         500,
         190
@@ -85,7 +85,7 @@
     {
       "id": "lp1",
       "type": "backend",
-      "label": "Linux 포드",
+      "label": "Linux Pod",
       "sublabel": "kubernetes.io/os: linux",
       "pos": [
         780,
@@ -99,7 +99,7 @@
     {
       "id": "lp2",
       "type": "backend",
-      "label": "Linux 포드",
+      "label": "Linux Pod",
       "sublabel": "kubernetes.io/os: linux",
       "pos": [
         1010,
@@ -113,7 +113,7 @@
     {
       "id": "wp1",
       "type": "backend",
-      "label": "Windows 포드",
+      "label": "Windows Pod",
       "sublabel": "kubernetes.io/os: windows",
       "pos": [
         780,
@@ -127,7 +127,7 @@
     {
       "id": "wp2",
       "type": "backend",
-      "label": "Windows 포드",
+      "label": "Windows Pod",
       "sublabel": "kubernetes.io/os: windows",
       "pos": [
         1010,

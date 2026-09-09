@@ -24,13 +24,13 @@
       },
       {
         "id": "pod-level",
-        "label": "포드 수준 AWS 통합",
+        "label": "Pod 수준 AWS 통합",
         "focus": [
           "iam",
           "sg",
           "pod"
         ],
-        "note": "IRSA가 포드에 AWS 권한을 부여하고, 포드용 보안 그룹이 포드 간 통신을 제어한다."
+        "note": "IRSA가 Pod에 AWS 권한을 부여하고, Pod용 보안 그룹이 Pod 간 통신을 제어한다."
       },
       {
         "id": "k8s-native",
@@ -42,7 +42,7 @@
           "ns",
           "pod"
         ],
-        "note": "ResourceQuota, LimitRange, NetworkPolicy, PSS가 클러스터 안의 네임스페이스와 포드에 적용된다."
+        "note": "ResourceQuota, LimitRange, NetworkPolicy, PSS가 클러스터 안의 네임스페이스와 Pod에 적용된다."
       }
     ],
     "legend": {
@@ -110,7 +110,7 @@
       "id": "sg",
       "type": "cloud",
       "label": "AWS Security Groups",
-      "sublabel": "포드용 보안 그룹",
+      "sublabel": "Pod용 보안 그룹",
       "pos": [
         1080,
         90
@@ -151,8 +151,8 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "포드",
-      "sublabel": "포드 수준",
+      "label": "Pod",
+      "sublabel": "Pod 수준",
       "pos": [
         950,
         340
@@ -294,8 +294,8 @@
       "dot": "amber",
       "title": "AWS 서비스 통합",
       "items": [
-        "IRSA로 포드에 AWS 서비스 권한을 부여해 최소 권한 원칙을 적용",
-        "SecurityGroupPolicy로 포드 수준에 AWS 보안 그룹 적용",
+        "IRSA로 Pod에 AWS 서비스 권한을 부여해 최소 권한 원칙을 적용",
+        "SecurityGroupPolicy로 Pod 수준에 AWS 보안 그룹 적용",
         "AWS Config·Organizations로 조직 수준 정책 적용 (예: 태그 없는 클러스터 생성 거부)",
         "AWS Firewall Manager로 여러 EKS 클러스터의 네트워크 정책을 중앙 관리"
       ]
@@ -305,8 +305,8 @@
       "title": "Kubernetes 기본 정책",
       "items": [
         "ResourceQuota · LimitRange — 네임스페이스 리소스 제어",
-        "NetworkPolicy — 포드 간 트래픽 제어",
-        "Pod Security Standards — 포드 보안 수준 적용"
+        "NetworkPolicy — Pod 간 트래픽 제어",
+        "Pod Security Standards — Pod 보안 수준 적용"
       ]
     }
   ]

@@ -55,7 +55,7 @@
       "id": "frontend",
       "type": "frontend",
       "label": "Frontend",
-      "sublabel": "포드",
+      "sublabel": "Pod",
       "pos": [
         40,
         140
@@ -97,7 +97,7 @@
       "id": "backend",
       "type": "backend",
       "label": "Backend",
-      "sublabel": "포드",
+      "sublabel": "Pod",
       "pos": [
         600,
         140

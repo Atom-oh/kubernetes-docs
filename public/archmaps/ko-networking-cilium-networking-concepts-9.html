@@ -5035,21 +5035,21 @@
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="노드 B" x="30" y="300" width="840" height="110" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="podA" data-edge-to="routeA" data-edge-label="포드 패킷" data-edge-key="0" data-edge-id="podA-routeA" data-composition-points="210,110;300,110" d="M 210 110 L 300 110" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="podA" data-edge-to="routeA" data-edge-label="Pod 패킷" data-edge-key="0" data-edge-id="podA-routeA" data-composition-points="210,110;300,110" d="M 210 110 L 300 110" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="routeA" data-edge-to="ethA" data-edge-label="경로 조회" data-edge-key="1" data-edge-id="routeA-ethA" data-composition-points="600,110;690,110" d="M 600 110 L 690 110" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="ethA" data-edge-to="ethB" data-edge-label="물리 네트워크 (캡슐화 없음)" data-edge-key="2" data-edge-id="ethA-ethB" data-composition-points="765,140;765,330" d="M 765 140 L 765 330" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="podB" data-edge-to="routeB" data-edge-label="포드 패킷" data-edge-key="3" data-edge-id="podB-routeB" data-composition-points="210,360;300,360" d="M 210 360 L 300 360" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="podB" data-edge-to="routeB" data-edge-label="Pod 패킷" data-edge-key="3" data-edge-id="podB-routeB" data-composition-points="210,360;300,360" d="M 210 360 L 300 360" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="routeB" data-edge-to="ethB" data-edge-label="경로 조회" data-edge-key="4" data-edge-id="routeB-ethB" data-composition-points="600,360;690,360" d="M 600 360 L 690 360" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
-        <g id="node-podA" data-node-id="podA" data-node-label="포드 A" tabindex="0" role="button" aria-label="Focus 포드 A, 10.0.0.2, 노드 A" aria-pressed="false" data-node-kind="backend" data-node-sublabel="10.0.0.2" data-node-context="노드 A">
-          <title>포드 A · 10.0.0.2 · 노드 A</title>
+        <g id="node-podA" data-node-id="podA" data-node-label="Pod A" tabindex="0" role="button" aria-label="Focus Pod A, 10.0.0.2, 노드 A" aria-pressed="false" data-node-kind="backend" data-node-sublabel="10.0.0.2" data-node-context="노드 A">
+          <title>Pod A · 10.0.0.2 · 노드 A</title>
           <rect x="60" y="80" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="60" y="80" width="150" height="60" rx="6" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(66 86) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="135" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">포드 A</text>
+          <text data-node-label="" data-detail-anchor="" x="135" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod A</text>
         <text data-detail="context" x="135" y="124" class="t-muted" font-size="9" text-anchor="middle">10.0.0.2</text>
         </g>
 
@@ -5076,14 +5076,14 @@
         <text data-detail="context" x="765" y="124" class="t-muted" font-size="9" text-anchor="middle">192.168.1.10</text>
         </g>
 
-        <g id="node-podB" data-node-id="podB" data-node-label="포드 B" tabindex="0" role="button" aria-label="Focus 포드 B, 10.0.1.2, 노드 B" aria-pressed="false" data-node-kind="backend" data-node-sublabel="10.0.1.2" data-node-context="노드 B">
-          <title>포드 B · 10.0.1.2 · 노드 B</title>
+        <g id="node-podB" data-node-id="podB" data-node-label="Pod B" tabindex="0" role="button" aria-label="Focus Pod B, 10.0.1.2, 노드 B" aria-pressed="false" data-node-kind="backend" data-node-sublabel="10.0.1.2" data-node-context="노드 B">
+          <title>Pod B · 10.0.1.2 · 노드 B</title>
           <rect x="60" y="330" width="150" height="60" rx="6" class="c-mask"/>
           <rect x="60" y="330" width="150" height="60" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(66 336) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="135" y="358" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">포드 B</text>
+          <text data-node-label="" data-detail-anchor="" x="135" y="358" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod B</text>
         <text data-detail="context" x="135" y="374" class="t-muted" font-size="9" text-anchor="middle">10.0.1.2</text>
         </g>
 
@@ -5111,9 +5111,9 @@
         </g>
 
         <!-- Connection labels -->
-        <g data-detail="context" data-edge-from="podA" data-edge-to="routeA" data-edge-label="포드 패킷" data-edge-key="0" data-edge-id="podA-routeA">
-          <rect x="228.4" y="90" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="255" y="100" class="t-muted" font-size="8" text-anchor="middle">포드 패킷</text>
+        <g data-detail="context" data-edge-from="podA" data-edge-to="routeA" data-edge-label="Pod 패킷" data-edge-key="0" data-edge-id="podA-routeA">
+          <rect x="230.8" y="90" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="255" y="100" class="t-muted" font-size="8" text-anchor="middle">Pod 패킷</text>
         </g>
         <g data-detail="context" data-edge-from="routeA" data-edge-to="ethA" data-edge-label="경로 조회" data-edge-key="1" data-edge-id="routeA-ethA">
           <rect x="618.4" y="90" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
@@ -5123,9 +5123,9 @@
           <rect x="695.2" y="225" width="139.6" height="14" rx="3" class="c-mask"/>
           <text x="765" y="235" class="t-backend" font-size="8" text-anchor="middle">물리 네트워크 (캡슐화 없음)</text>
         </g>
-        <g data-detail="context" data-edge-from="podB" data-edge-to="routeB" data-edge-label="포드 패킷" data-edge-key="3" data-edge-id="podB-routeB">
-          <rect x="228.4" y="340" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="255" y="350" class="t-muted" font-size="8" text-anchor="middle">포드 패킷</text>
+        <g data-detail="context" data-edge-from="podB" data-edge-to="routeB" data-edge-label="Pod 패킷" data-edge-key="3" data-edge-id="podB-routeB">
+          <rect x="230.8" y="340" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="255" y="350" class="t-muted" font-size="8" text-anchor="middle">Pod 패킷</text>
         </g>
         <g data-detail="context" data-edge-from="routeB" data-edge-to="ethB" data-edge-label="경로 조회" data-edge-key="4" data-edge-id="routeB-ethB">
           <rect x="618.4" y="340" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
@@ -5146,17 +5146,17 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="40" y="442" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="포드" data-legend-x="40" data-legend-baseline="462" data-legend-width="63">
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Pod" data-legend-x="40" data-legend-baseline="462" data-legend-width="58">
             <rect x="40" y="453" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="62" y="462" class="t-muted" font-size="10" font-weight="500">포드</text>
+            <text x="62" y="462" class="t-muted" font-size="10" font-weight="500">Pod</text>
           </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="노드 라우팅 테이블" data-legend-x="125" data-legend-baseline="462" data-legend-width="133">
-            <rect x="125" y="453" width="16" height="10" rx="2.5" class="c-database" stroke-width="1"/>
-            <text x="147" y="462" class="t-muted" font-size="10" font-weight="500">노드 라우팅 테이블</text>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="노드 라우팅 테이블" data-legend-x="120" data-legend-baseline="462" data-legend-width="133">
+            <rect x="120" y="453" width="16" height="10" rx="2.5" class="c-database" stroke-width="1"/>
+            <text x="142" y="462" class="t-muted" font-size="10" font-weight="500">노드 라우팅 테이블</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="노드 네트워크 인터페이스" data-legend-x="280" data-legend-baseline="462" data-legend-width="163">
-            <rect x="280" y="453" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
-            <text x="302" y="462" class="t-muted" font-size="10" font-weight="500">노드 네트워크 인터페이스</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="노드 네트워크 인터페이스" data-legend-x="275" data-legend-baseline="462" data-legend-width="163">
+            <rect x="275" y="453" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
+            <text x="297" y="462" class="t-muted" font-size="10" font-weight="500">노드 네트워크 인터페이스</text>
           </g>
         </g>
       </svg>
@@ -5351,8 +5351,8 @@
           <h3>직접 라우팅 모드</h3>
         </div>
         <ul>
-          <li>&bull; 각 노드는 자신의 포드 CIDR에 대한 라우팅 정보를 광고한다</li>
-          <li>&bull; 오버레이 캡슐화 없이 포드 IP를 직접 라우팅해 오버헤드가 없다</li>
+          <li>&bull; 각 노드는 자신의 Pod CIDR에 대한 라우팅 정보를 광고한다</li>
+          <li>&bull; 오버레이 캡슐화 없이 Pod IP를 직접 라우팅해 오버헤드가 없다</li>
           <li>&bull; 노드 간 라우팅 가능한 네트워크가 필요하다 (단일 서브넷 클러스터 등)</li>
         </ul>
       </div>

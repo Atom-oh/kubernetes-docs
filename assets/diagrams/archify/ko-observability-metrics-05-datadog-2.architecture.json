@@ -33,7 +33,7 @@
           "l2",
           "l3"
         ],
-        "note": "containerCollectAll: false로 선별 수집하고, 포드 어노테이션의 log_processing_rules로 제외한다."
+        "note": "containerCollectAll: false로 선별 수집하고, Pod 어노테이션의 log_processing_rules로 제외한다."
       },
       {
         "id": "view-apm",

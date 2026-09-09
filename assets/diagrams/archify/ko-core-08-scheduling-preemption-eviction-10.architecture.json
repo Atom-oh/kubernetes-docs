@@ -37,7 +37,7 @@
           "descheduler",
           "rebalanced"
         ],
-        "note": "노드·포드 변경으로 깨진 균등 분산을 Descheduler가 실행 중인 포드를 축출해 되돌리는 흐름"
+        "note": "노드·Pod 변경으로 깨진 균등 분산을 Descheduler가 실행 중인 Pod를 축출해 되돌리는 흐름"
       },
       {
         "id": "strategies",
@@ -74,7 +74,7 @@
       "id": "events",
       "type": "external",
       "label": "변경 이벤트",
-      "sublabel": "노드 추가·제거/장애, 포드 변경",
+      "sublabel": "노드 추가·제거/장애, Pod 변경",
       "pos": [
         270,
         70
@@ -102,7 +102,7 @@
       "id": "descheduler",
       "type": "backend",
       "label": "Descheduler",
-      "sublabel": "실행 중인 포드 축출",
+      "sublabel": "실행 중인 Pod 축출",
       "pos": [
         760,
         70
@@ -130,7 +130,7 @@
       "id": "remove-duplicates",
       "type": "cloud",
       "label": "RemoveDuplicates",
-      "sublabel": "중복 포드 제거",
+      "sublabel": "중복 Pod 제거",
       "pos": [
         40,
         260
@@ -158,7 +158,7 @@
       "id": "too-many-restarts",
       "type": "cloud",
       "label": "RemovePodsHavingTooManyRestarts",
-      "sublabel": "재시작 과다 포드 제거",
+      "sublabel": "재시작 과다 Pod 제거",
       "pos": [
         780,
         260
@@ -172,7 +172,7 @@
       "id": "pod-lifetime",
       "type": "cloud",
       "label": "PodLifeTime",
-      "sublabel": "수명 초과 포드 제거",
+      "sublabel": "수명 초과 Pod 제거",
       "pos": [
         40,
         360

@@ -157,7 +157,7 @@
     {
       "id": "pods",
       "type": "backend",
-      "label": "백엔드 포드",
+      "label": "백엔드 Pod",
       "sublabel": "Pod 1 · Pod 2 · Pod 3",
       "pos": [
         820,

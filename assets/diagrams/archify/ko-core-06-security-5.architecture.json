@@ -13,14 +13,14 @@
     "views": [
       {
         "id": "pod-protection",
-        "label": "포드 보호",
+        "label": "Pod 보호",
         "focus": [
           "iam",
           "sg",
           "sm",
           "pod"
         ],
-        "note": "IRSA로 권한을 부여하고, 포드 보안 그룹으로 네트워크를 통제하며, External Secrets Operator가 시크릿을 제공한다."
+        "note": "IRSA로 권한을 부여하고, Pod 보안 그룹으로 네트워크를 통제하며, External Secrets Operator가 시크릿을 제공한다."
       },
       {
         "id": "api-protection",
@@ -65,7 +65,7 @@
       "id": "sg",
       "type": "security",
       "label": "AWS Security Groups",
-      "sublabel": "포드 보안 그룹",
+      "sublabel": "Pod 보안 그룹",
       "pos": [
         60,
         138
@@ -134,7 +134,7 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "워크로드",
       "pos": [
         760,

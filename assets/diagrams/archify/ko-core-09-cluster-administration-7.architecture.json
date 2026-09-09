@@ -39,7 +39,7 @@
           "loki",
           "grafana"
         ],
-        "note": "포드 로그는 Fluentd/Fluent Bit이 수집해 Elasticsearch(Kibana)와 Loki로 전달하며, Loki 로그는 Grafana에서 조회한다."
+        "note": "Pod 로그는 Fluentd/Fluent Bit이 수집해 Elasticsearch(Kibana)와 Loki로 전달하며, Loki 로그는 Grafana에서 조회한다."
       }
     ]
   },
@@ -75,7 +75,7 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "컨테이너 로그",
       "pos": [
         40,

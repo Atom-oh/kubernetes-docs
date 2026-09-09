@@ -16,9 +16,9 @@
       }
     },
     "views": [
-      { "id": "resource-policy", "label": "리소스 정책", "focus": ["resource", "quota", "ns"], "note": "ResourceQuota는 네임스페이스의 리소스 총량을, LimitRange는 컨테이너·포드의 기본 요청/제한과 허용 범위를 정한다." },
-      { "id": "security-policy", "label": "보안 정책", "focus": ["security", "pss", "admctrl", "ns", "pod"], "note": "PSS 수준(Privileged/Baseline/Restricted)은 네임스페이스 레이블(enforce/audit/warn)로 지정되고, 어드미션 단계에서 포드 생성 요청을 검증한다." },
-      { "id": "network-policy", "label": "네트워크 정책", "focus": ["network", "netpol", "pod"], "note": "NetworkPolicy는 podSelector로 선택한 포드의 Ingress/Egress 트래픽을 제어한다." },
+      { "id": "resource-policy", "label": "리소스 정책", "focus": ["resource", "quota", "ns"], "note": "ResourceQuota는 네임스페이스의 리소스 총량을, LimitRange는 컨테이너·Pod의 기본 요청/제한과 허용 범위를 정한다." },
+      { "id": "security-policy", "label": "보안 정책", "focus": ["security", "pss", "admctrl", "ns", "pod"], "note": "PSS 수준(Privileged/Baseline/Restricted)은 네임스페이스 레이블(enforce/audit/warn)로 지정되고, 어드미션 단계에서 Pod 생성 요청을 검증한다." },
+      { "id": "network-policy", "label": "네트워크 정책", "focus": ["network", "netpol", "pod"], "note": "NetworkPolicy는 podSelector로 선택한 Pod의 Ingress/Egress 트래픽을 제어한다." },
       { "id": "custom-policy", "label": "커스텀 정책", "focus": ["custom", "opa", "cluster", "ns", "pod"], "note": "OPA Gatekeeper와 Kyverno는 어드미션 컨트롤러로 동작하는 애드온 정책 엔진으로, 세 계층 모두에 정책을 적용한다." }
     ]
   },
@@ -34,7 +34,7 @@
     { "id": "opa", "type": "security", "label": "OPA Gatekeeper / Kyverno", "sublabel": "어드미션 웹훅 기반 정책 엔진", "tag": "애드온", "pos": [400, 500], "size": [240, 64] },
     { "id": "cluster", "type": "cloud", "label": "클러스터 수준", "pos": [820, 170], "size": [180, 64] },
     { "id": "ns", "type": "cloud", "label": "네임스페이스 수준", "pos": [820, 280], "size": [180, 64] },
-    { "id": "pod", "type": "cloud", "label": "포드 수준", "pos": [820, 390], "size": [180, 64] }
+    { "id": "pod", "type": "cloud", "label": "Pod 수준", "pos": [820, 390], "size": [180, 64] }
   ],
   "boundaries": [
     { "kind": "region", "label": "정책 유형", "wraps": ["resource", "security", "network", "custom"] },
