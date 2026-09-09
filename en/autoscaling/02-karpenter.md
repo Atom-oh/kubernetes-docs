@@ -7,8 +7,8 @@
 - [Introduction](#introduction)
 - [Architecture](#architecture)
 - [Installation and Configuration](#installation-and-configuration)
-- [Provisioner](#provisioner)
-- [Node Templates](#node-templates)
+- [NodePool](#nodepool)
+- [Node Classes](#node-classes)
 - [Interruption Handling](#interruption-handling)
 - [Integration](#integration)
 - [Integration with Amazon EKS](#integration-with-amazon-eks)
@@ -64,15 +64,15 @@ The following diagram shows how Karpenter works in an EKS cluster:
 
 1. **Karpenter Controller**: Detects unschedulable pods and manages node provisioning
 2. **Karpenter Webhook**: Validates Karpenter resources
-3. **Provisioner CRD**: Defines node provisioning policies
-4. **NodeTemplate CRD**: Defines the configuration of nodes to be provisioned
+3. **NodePool CRD**: Defines node provisioning policies
+4. **EC2NodeClass CRD**: Defines the configuration of nodes to be provisioned
 5. **Cloud Provider Integration**: Integrates with cloud provider APIs to manage compute resources
 
 ### How It Works
 
 1. Karpenter Controller detects unschedulable pods
 2. Analyzes pod requirements (resources, node selectors, tolerations, etc.)
-3. Determines appropriate node types based on provisioner and node template configuration
+3. Determines appropriate node types based on NodePool and EC2NodeClass configuration
 4. Calls cloud provider API to provision nodes
 5. Schedules pods once nodes join the cluster
 6. Removes nodes through integrated interruption handling when they're no longer needed
@@ -81,7 +81,7 @@ The following diagram shows how Karpenter works in an EKS cluster:
 
 ### Prerequisites
 
-- Kubernetes cluster (v1.19 or higher)
+- Kubernetes cluster (v1.29 or higher)
 - kubectl configured
 - Cloud provider credentials and permissions
 - Helm (optional)
@@ -119,18 +119,19 @@ aws iam add-role-to-instance-profile --instance-profile-name KarpenterNodeInstan
 #### 2. Installation Using Helm
 
 ```bash
-# Add Helm repository
-helm repo add karpenter https://charts.karpenter.sh
-helm repo update
+# Karpenter v1 charts are published as an OCI artifact in Public ECR (no `helm repo add` needed)
+export KARPENTER_VERSION="1.14.1"   # any 1.6+ release; 1.14.1 is the latest patch covered on this page
 
 # Install Karpenter
-helm install karpenter karpenter/karpenter \
+helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+  --version "${KARPENTER_VERSION}" \
   --namespace karpenter \
   --create-namespace \
   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::${ACCOUNT_ID}:role/KarpenterControllerRole \
-  --set clusterName=${CLUSTER_NAME} \
-  --set clusterEndpoint=${CLUSTER_ENDPOINT} \
-  --set aws.defaultInstanceProfile=KarpenterNodeInstanceProfile
+  --set settings.clusterName=${CLUSTER_NAME} \
+  --set settings.clusterEndpoint=${CLUSTER_ENDPOINT} \
+  --wait
+# The node instance profile is no longer a Helm value: set `role` (or `instanceProfile`) on each EC2NodeClass instead
 ```
 
 #### 3. Verify Installation
@@ -145,7 +146,7 @@ NAME                         READY   STATUS    RESTARTS   AGE
 karpenter-6f4f46d855-5lqx7   1/1     Running   0          1m
 ```
 
-### Basic Provisioner Configuration
+### Basic NodePool and EC2NodeClass Configuration
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -181,6 +182,9 @@ kind: EC2NodeClass
 metadata:
   name: default
 spec:
+  role: KarpenterNodeRole
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: "true"
@@ -209,9 +213,14 @@ kind: NodePool
 metadata:
   name: default
 spec:
-  # Node requirements
   template:
+    metadata:
+      # Labels
+      labels:
+        environment: production
+        app: web
     spec:
+      # Node requirements
       requirements:
         - key: karpenter.sh/capacity-type
           operator: In
@@ -223,42 +232,35 @@ spec:
           operator: In
           values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
 
-  # Resource limits
-  limits:
-    cpu: 1000
-    memory: 1000Gi
-
-  # Node class reference
-  template:
-    spec:
+      # Node class reference
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: default
 
-  # Node expiration settings
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 30s
-    expireAfter: 720h  # 30 days
+      # Node expiration (maximum node lifetime)
+      expireAfter: 720h  # 30 days
 
-  # Taints and labels
-  template:
-    spec:
+      # Taints
       taints:
         - key: example.com/special-taint
           value: "true"
           effect: NoSchedule
-      labels:
-        environment: production
-        app: web
 
-  # Startup template
-  template:
-    spec:
+      # Startup taints
       startupTaints:
         - key: node.kubernetes.io/not-ready
           effect: NoSchedule
+
+  # Resource limits
+  limits:
+    cpu: 1000
+    memory: 1000Gi
+
+  # Disruption (consolidation) settings
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ```
 
 ### Requirements Configuration
@@ -315,15 +317,18 @@ Starting with Karpenter v1.13 (released June 2026), Karpenter supports device al
 Node expiration settings define when Karpenter removes nodes:
 
 ```yaml
-disruption:
-  # Consolidate (remove) when node is empty
-  consolidationPolicy: WhenEmpty
+spec:
+  template:
+    spec:
+      # Maximum time before removing node after creation
+      expireAfter: 720h  # 30 days (use "Never" to disable expiration)
 
-  # Time until consolidation (removal) after node becomes empty
-  consolidateAfter: 30s
+  disruption:
+    # Consolidate (remove) when node is empty
+    consolidationPolicy: WhenEmpty
 
-  # Maximum time before removing node after creation
-  expireAfter: 720h  # 30 days
+    # Time until consolidation (removal) after node becomes empty
+    consolidateAfter: 30s
 ```
 
 ### Automatic Ignoring of Initialization Taints via NodeReadinessController (v1.13)
@@ -387,7 +392,8 @@ spec:
 
   # Detailed instance configuration
   role: KarpenterNodeRole
-  amiFamily: AL2
+  amiSelectorTerms:
+    - alias: al2023@latest  # AL2 AMIs are not published for EKS 1.33+; use AL2023
   userData: |
     #!/bin/bash
     echo "Hello from Karpenter node!"
@@ -402,37 +408,40 @@ spec:
 
 ### Subnet and Security Group Selection
 
-Subnets and security groups can be selected using label selectors:
+Subnets and security groups are selected with selector terms (multiple terms are ORed; the tags within one term are ANDed):
 
 ```yaml
 # Subnet selection
-subnetSelector:
-  karpenter.sh/discovery: "true"
-  Name: "private-*"
+subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: "true"
+      Name: "private-*"
 
 # Security group selection
-securityGroupSelector:
-  karpenter.sh/discovery: "true"
-  aws:eks:cluster-name: "my-cluster"
+securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: "true"
+      aws:eks:cluster-name: "my-cluster"
 ```
 
 ### AMI Configuration
 
-Karpenter supports various AMI families:
+Karpenter selects AMIs through `amiSelectorTerms`. The `alias` form pins an EKS-optimized AMI family (AL2 AMIs are not published for EKS 1.33 and later, so use AL2023). An EC2NodeClass declares `amiSelectorTerms` exactly once, so the variants below are separate examples:
 
 ```yaml
-# Amazon Linux 2
-amiFamily: AL2
-
+# Amazon Linux 2023
+amiSelectorTerms:
+  - alias: al2023@latest
+---
 # Bottlerocket
-amiFamily: Bottlerocket
-
-# Ubuntu
-amiFamily: Ubuntu
-
-# Custom AMI
-amiSelector:
-  aws:ec2:image:id: "ami-0123456789abcdef0"
+amiSelectorTerms:
+  - alias: bottlerocket@latest
+---
+# Custom AMI (by ID) — amiFamily is required when no alias term is used
+amiFamily: Custom
+amiSelectorTerms:
+  - id: "ami-0123456789abcdef0"
+# Ubuntu: no v1 alias — use amiFamily: Custom with an id/tags/name term
 ```
 
 ### Block Device Configuration
@@ -510,39 +519,70 @@ kind: NodePool
 metadata:
   name: default
 spec:
-  # Other configuration...
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
 
-  # Node expiration settings
+      # Node expiration settings
+      expireAfter: 720h  # 30 days
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
-    expireAfter: 720h  # 30 days
 ```
 
 ### Draining Configuration
 
-Karpenter safely drains pods before removing nodes:
+Karpenter safely drains pods before removing nodes. Controller-wide behavior is configured through Helm values (the legacy global-settings ConfigMap was removed in v0.33), while how many nodes may be drained at once is configured per NodePool through disruption budgets:
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: karpenter-global-settings
-  namespace: karpenter
-data:
-  aws:
-    enablePodENI: "true"
-  batchMaxDuration: "10s"
-  batchIdleDuration: "1s"
+# karpenter-values.yaml — pass with `helm upgrade --install ... -f karpenter-values.yaml`
+settings:
+  clusterName: my-cluster
+  interruptionQueue: my-cluster   # SQS queue receiving Spot interruption / rebalance / health events
+  batchMaxDuration: 10s
+  batchIdleDuration: 1s
   featureGates:
-    driftEnabled: "true"
-  nodePool:
-    disruptionBudget:
-      maxUnavailablePercentage: "30"
-    disruption:
-      consolidationPolicy: WhenEmpty
-      consolidateAfter: 30s
+    spotToSpotConsolidation: false
+controller:
+  resources:
+    requests:
+      cpu: 1
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 1Gi
+logLevel: info
+```
+
+```yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
       expireAfter: 720h
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    budgets:
+      - nodes: "30%"   # at most 30% of this NodePool's nodes may be disrupted at the same time
 ```
 
 ### PDB (PodDisruptionBudget) Integration
@@ -619,19 +659,25 @@ spec:
 Karpenter considers taints and tolerations when provisioning nodes:
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: gpu
 spec:
-  requirements:
-    - key: node.kubernetes.io/instance-type
-      operator: In
-      values: ["g4dn.xlarge", "g4dn.2xlarge"]
-  taints:
-    - key: nvidia.com/gpu
-      value: "true"
-      effect: NoSchedule
+  template:
+    spec:
+      requirements:
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["g4dn.xlarge", "g4dn.2xlarge"]
+      taints:
+        - key: nvidia.com/gpu
+          value: "true"
+          effect: NoSchedule
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -646,7 +692,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       nodeSelector:
-        karpenter.sh/provisioner-name: gpu
+        karpenter.sh/nodepool: gpu
 ```
 
 ### AWS Integration
@@ -656,27 +702,36 @@ spec:
 Karpenter supports EC2 Spot instances to optimize costs:
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: spot
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["spot"]
-  providerRef:
-    name: spot
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: spot
 ---
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
 metadata:
   name: spot
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: "true"
-  securityGroupSelector:
-    karpenter.sh/discovery: "true"
+  role: KarpenterNodeRole
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
 ```
 
 #### 2. EC2 Instance Profiles
@@ -684,27 +739,56 @@ spec:
 Karpenter uses EC2 instance profiles to grant IAM permissions to nodes:
 
 ```yaml
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  instanceProfile: KarpenterNodeInstanceProfile
+  instanceProfile: KarpenterNodeInstanceProfile  # or `role: <node role>` to let Karpenter manage the profile
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
 ```
 
 #### 3. Launch Templates
 
-Karpenter supports EC2 launch templates:
+Karpenter v1 does not accept user-supplied EC2 launch templates (the legacy `launchTemplate` field was removed). Karpenter generates and manages launch templates itself from the EC2NodeClass, so settings you would have put in a launch template are expressed directly in the EC2NodeClass:
 
 ```yaml
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
 metadata:
   name: custom-launch-template
 spec:
-  launchTemplate:
-    name: my-launch-template
-    version: "1"
+  role: KarpenterNodeRole
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
+  # AMI, user data, block devices, and IMDS options replace the launch template contents
+  amiSelectorTerms:
+    - alias: al2023@latest
+  userData: |
+    #!/bin/bash
+    echo "Hello from Karpenter node!"
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 100Gi
+        volumeType: gp3
+        deleteOnTermination: true
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
 ```
 ## Integration with Amazon EKS
 
@@ -831,14 +915,19 @@ aws iam put-role-policy \
 ### Installing Karpenter on EKS Cluster
 
 ```bash
-# Installation using Helm
-helm install karpenter karpenter/karpenter \
+# Installation using Helm (v1 OCI chart)
+export KARPENTER_VERSION="1.14.1"
+
+helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+  --version "${KARPENTER_VERSION}" \
   --namespace karpenter \
   --create-namespace \
   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::${ACCOUNT_ID}:role/KarpenterControllerRole-${CLUSTER_NAME} \
-  --set clusterName=${CLUSTER_NAME} \
-  --set clusterEndpoint=$(aws eks describe-cluster --name ${CLUSTER_NAME} --query "cluster.endpoint" --output text) \
-  --set aws.defaultInstanceProfile=KarpenterNodeInstanceProfile-${CLUSTER_NAME}
+  --set settings.clusterName=${CLUSTER_NAME} \
+  --set settings.clusterEndpoint=$(aws eks describe-cluster --name ${CLUSTER_NAME} --query "cluster.endpoint" --output text) \
+  --set settings.interruptionQueue=${CLUSTER_NAME} \
+  --wait
+# Node IAM: reference KarpenterNodeRole-${CLUSTER_NAME} via `role:` in each EC2NodeClass (see below)
 ```
 
 ### Using with EKS Managed Node Groups
@@ -846,38 +935,50 @@ helm install karpenter karpenter/karpenter \
 Karpenter can be used alongside EKS Managed Node Groups:
 
 ```yaml
-# Provisioner for EKS Managed Node Groups
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+# NodePool used alongside EKS Managed Node Groups
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: managed-ng
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["on-demand"]
-    - key: node.kubernetes.io/instance-type
-      operator: In
-      values: ["m5.large", "m5.xlarge"]
-  labels:
-    managed-by: karpenter
-  taints:
-    - key: managed-by
-      value: karpenter
-      effect: NoSchedule
-  providerRef:
-    name: managed-ng
-  ttlSecondsAfterEmpty: 30
+  template:
+    metadata:
+      labels:
+        managed-by: karpenter
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["m5.large", "m5.xlarge"]
+      taints:
+        - key: managed-by
+          value: karpenter
+          effect: NoSchedule
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: managed-ng
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
 metadata:
   name: managed-ng
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
-  securityGroupSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
+  role: KarpenterNodeRole-${CLUSTER_NAME}
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
   tags:
     karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
@@ -886,14 +987,16 @@ spec:
 
 Karpenter can be used with EKS Fargate to configure hybrid clusters:
 
-```yaml
+```bash
 # Create Fargate profile
 aws eks create-fargate-profile \
   --cluster-name ${CLUSTER_NAME} \
   --fargate-profile-name fp-default \
   --pod-execution-role-arn arn:aws:iam::${ACCOUNT_ID}:role/AmazonEKSFargatePodExecutionRole \
   --selectors namespace=default,namespace=kube-system
+```
 
+```yaml
 # Karpenter NodePool configuration
 apiVersion: karpenter.sh/v1
 kind: NodePool
@@ -919,6 +1022,9 @@ kind: EC2NodeClass
 metadata:
   name: ec2
 spec:
+  role: KarpenterNodeRole-${CLUSTER_NAME}
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: "${CLUSTER_NAME}"
@@ -944,74 +1050,101 @@ You can use Karpenter to optimize costs for EKS clusters:
 #### 1. Using Spot Instances
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: spot
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["spot"]
-    - key: kubernetes.io/arch
-      operator: In
-      values: ["amd64", "arm64"]
-  providerRef:
-    name: spot
-  ttlSecondsAfterEmpty: 30
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: spot
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
 metadata:
   name: spot
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
-  securityGroupSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
+  role: KarpenterNodeRole-${CLUSTER_NAME}
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
 
 #### 2. Using Diverse Instance Types
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: flexible
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["on-demand", "spot"]
-    - key: kubernetes.io/arch
-      operator: In
-      values: ["amd64", "arm64"]
-    - key: node.kubernetes.io/instance-type
-      operator: In
-      values: [
-        "m5.large", "m5.xlarge", "m5.2xlarge",
-        "m6g.large", "m6g.xlarge", "m6g.2xlarge",
-        "c5.large", "c5.xlarge", "c5.2xlarge",
-        "c6g.large", "c6g.xlarge", "c6g.2xlarge",
-        "r5.large", "r5.xlarge", "r5.2xlarge",
-        "r6g.large", "r6g.xlarge", "r6g.2xlarge"
-      ]
-  providerRef:
-    name: flexible
-  ttlSecondsAfterEmpty: 30
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand", "spot"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [
+            "m5.large", "m5.xlarge", "m5.2xlarge",
+            "m6g.large", "m6g.xlarge", "m6g.2xlarge",
+            "c5.large", "c5.xlarge", "c5.2xlarge",
+            "c6g.large", "c6g.xlarge", "c6g.2xlarge",
+            "r5.large", "r5.xlarge", "r5.2xlarge",
+            "r6g.large", "r6g.xlarge", "r6g.2xlarge"
+          ]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: flexible
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ```
 
 #### 3. Enabling Node Consolidation
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: default
 spec:
-  consolidation:
-    enabled: true
-  # Other configuration...
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
 ```
 
 ## Best Practices
@@ -1049,11 +1182,13 @@ spec:
         kind: EC2NodeClass
         name: optimized
 
-  # Set appropriate TTL
+      # Set appropriate TTL
+      expireAfter: 720h  # 30 days
+
+  # Enable node consolidation
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
-    expireAfter: 720h  # 30 days
 ```
 
 ### Cost Optimization
@@ -1081,11 +1216,13 @@ spec:
         kind: EC2NodeClass
         name: cost-optimized
 
-  # Zero scaling and node expiration settings
+      # Node expiration
+      expireAfter: 168h  # 7 days
+
+  # Zero scaling: consolidate empty nodes down to zero
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
-    expireAfter: 168h  # 7 days
 ```
 
 ### Availability Improvement
@@ -1112,17 +1249,17 @@ spec:
           operator: In
           values: ["on-demand", "spot"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: high-availability
 
-  # Optimize interruption handling
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 60s
-  ttlSecondsUntilExpired: 2592000  # 30 days
+      # Node expiration
+      expireAfter: 720h  # 30 days
 
-  # Node consolidation settings
-  consolidation:
-    enabled: true
+  # Optimize interruption handling and node consolidation
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 60s
 ```
 
 ## Troubleshooting
@@ -1136,14 +1273,14 @@ spec:
 **Solution**:
 - Check Karpenter logs
 - Verify IAM permissions
-- Check provisioner configuration
+- Check NodePool configuration
 
 ```bash
 # Check Karpenter logs
 kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller
 
-# Check provisioner status
-kubectl describe provisioner <name>
+# Check NodePool status
+kubectl describe nodepool <name>
 
 # Check pod events
 kubectl describe pod <name>
@@ -1174,13 +1311,13 @@ kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller | gr
 **Symptom**: Unexpected instance types are provisioned
 
 **Solution**:
-- Check provisioner requirements
+- Check NodePool requirements
 - Verify pod resource requests
 - Check availability zone constraints
 
 ```bash
-# Check provisioner requirements
-kubectl get provisioner <name> -o yaml
+# Check NodePool requirements
+kubectl get nodepool <name> -o yaml
 
 # Check pod resource requests
 kubectl describe pod <name>
@@ -1198,31 +1335,33 @@ kubectl get deployment -n karpenter karpenter -o jsonpath="{.spec.template.spec.
 # Check Karpenter logs
 kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller
 
-# Check provisioner list
-kubectl get provisioners
+# Check NodePool list
+kubectl get nodepools
 
-# Check node template list
-kubectl get awsnodetemplates
+# Check EC2NodeClass list
+kubectl get ec2nodeclasses
 
 # Check events
 kubectl get events --sort-by='.lastTimestamp'
 
-# Enable debug logs
-kubectl patch configmap -n karpenter karpenter-global-settings --type merge -p '{"data":{"logLevel":"debug"}}'
+# Enable debug logs (logLevel is a Helm value; the legacy global-settings ConfigMap no longer exists)
+helm upgrade karpenter oci://public.ecr.aws/karpenter/karpenter \
+  --version "${KARPENTER_VERSION}" --namespace karpenter \
+  --reuse-values --set logLevel=debug
 ```
 
 ## Conclusion
 
 Karpenter is a powerful autoscaler that automates node provisioning for Kubernetes clusters. It dynamically provisions appropriate compute resources based on workload requirements to ensure application availability and optimize cluster efficiency.
 
-This document covered Karpenter's basic concepts, installation methods, provisioner and node template configuration, interruption handling, various integrations, integration with Amazon EKS, best practices, and troubleshooting.
+This document covered Karpenter's basic concepts, installation methods, NodePool and EC2NodeClass configuration, interruption handling, various integrations, integration with Amazon EKS, best practices, and troubleshooting.
 
 Using Karpenter, you can simplify cluster management, optimize resource utilization, and reduce costs. Especially in cloud-managed Kubernetes environments like Amazon EKS, you can maximize the benefits of Karpenter.
 
 ### Next Steps
 
 - Implement cost optimization strategies using Karpenter
-- Configure provisioners for various workload types
+- Configure NodePools for various workload types
 - Design hybrid cluster architectures
 - Integrate Karpenter with other Kubernetes tools
 - Develop advanced node lifecycle management strategies
