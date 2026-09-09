@@ -17,7 +17,7 @@
           "ingress",
           "egress"
         ],
-        "note": "NetworkPolicy는 podSelector로 대상 포드를 선택하고 policyTypes로 Ingress/Egress 규칙을 정의한다."
+        "note": "NetworkPolicy는 podSelector로 대상 Pod를 선택하고 policyTypes로 Ingress/Egress 규칙을 정의한다."
       },
       {
         "id": "inbound",
@@ -29,7 +29,7 @@
           "frontend",
           "api"
         ],
-        "note": "from 선택자와 ports로 frontend 포드에서 8080/TCP로 들어오는 트래픽만 허용한다."
+        "note": "from 선택자와 ports로 frontend Pod에서 8080/TCP로 들어오는 트래픽만 허용한다."
       },
       {
         "id": "outbound",
@@ -41,7 +41,7 @@
           "api",
           "db"
         ],
-        "note": "to 선택자와 ports로 database 포드의 5432/TCP로 나가는 트래픽만 허용한다."
+        "note": "to 선택자와 ports로 database Pod의 5432/TCP로 나가는 트래픽만 허용한다."
       }
     ],
     "legend": {
@@ -67,7 +67,7 @@
       "id": "podselector",
       "type": "security",
       "label": "podSelector",
-      "sublabel": "대상 포드 (app: api)",
+      "sublabel": "대상 Pod (app: api)",
       "pos": [
         300,
         70
@@ -193,7 +193,7 @@
     {
       "id": "frontend",
       "type": "frontend",
-      "label": "프론트엔드 포드",
+      "label": "프론트엔드 Pod",
       "sublabel": "app: frontend",
       "pos": [
         140,
@@ -207,7 +207,7 @@
     {
       "id": "api",
       "type": "backend",
-      "label": "API 포드",
+      "label": "API Pod",
       "sublabel": "app: api",
       "pos": [
         540,
@@ -221,7 +221,7 @@
     {
       "id": "db",
       "type": "database",
-      "label": "데이터베이스 포드",
+      "label": "데이터베이스 Pod",
       "sublabel": "app: database",
       "pos": [
         960,
@@ -356,7 +356,7 @@
       "dot": "rose",
       "title": "적용 대상",
       "items": [
-        "podSelector가 app: api 레이블의 포드를 선택",
+        "podSelector가 app: api 레이블의 Pod를 선택",
         "policyTypes에 Ingress와 Egress를 모두 정의"
       ]
     },
@@ -364,7 +364,7 @@
       "dot": "cyan",
       "title": "인바운드 (ingress)",
       "items": [
-        "from: app: frontend 레이블의 포드만 소스로 허용",
+        "from: app: frontend 레이블의 Pod만 소스로 허용",
         "ports: 8080/TCP만 허용"
       ]
     },
@@ -372,7 +372,7 @@
       "dot": "violet",
       "title": "아웃바운드 (egress)",
       "items": [
-        "to: app: database 레이블의 포드만 대상으로 허용",
+        "to: app: database 레이블의 Pod만 대상으로 허용",
         "ports: 5432/TCP만 허용",
         "CNI 플러그인(Calico, Cilium, Antrea 등)의 지원 필요"
       ]

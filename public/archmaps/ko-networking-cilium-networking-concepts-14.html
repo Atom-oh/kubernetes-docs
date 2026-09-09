@@ -5037,11 +5037,11 @@
         <path data-edge-from="intercept" data-edge-to="lookup" data-edge-key="1" data-edge-id="intercept-to-lookup" data-composition-points="400,182;450,182" d="M 400 182 L 450 182" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="lookup" data-edge-to="select" data-edge-key="2" data-edge-id="lookup-to-select" data-composition-points="610,182;660,182" d="M 610 182 L 660 182" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="select" data-edge-to="forward" data-edge-key="3" data-edge-id="select-to-forward" data-composition-points="820,182;870,182" d="M 820 182 L 870 182" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="forward" data-edge-to="pod-b" data-edge-label="포드 IP로 직접 전달" data-edge-key="4" data-edge-id="forward-to-b" data-composition-points="1020,182;1220,182" d="M 1020 182 L 1220 182" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="forward" data-edge-to="pod-b" data-edge-label="Pod IP로 직접 전달" data-edge-key="4" data-edge-id="forward-to-b" data-composition-points="1020,182;1220,182" d="M 1020 182 L 1220 182" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
-        <g id="node-pod-a" data-node-id="pod-a" data-node-label="포드 A" tabindex="0" role="button" aria-label="Focus 포드 A, 클라이언트, Architecture component" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="클라이언트" data-node-context="Architecture component">
-          <title>포드 A · 클라이언트 · Architecture component</title>
+        <g id="node-pod-a" data-node-id="pod-a" data-node-label="Pod A" tabindex="0" role="button" aria-label="Focus Pod A, 클라이언트, Architecture component" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="클라이언트" data-node-context="Architecture component">
+          <title>Pod A · 클라이언트 · Architecture component</title>
           <rect x="0" y="150" width="100" height="64" rx="6" class="c-mask"/>
           <rect x="0" y="150" width="100" height="64" rx="6" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(6 156) scale(0.6875)">
@@ -5050,7 +5050,7 @@
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="50" y="180" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">포드 A</text>
+          <text data-node-label="" data-detail-anchor="" x="50" y="180" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod A</text>
         <text data-detail="context" x="50" y="196" class="t-muted" font-size="9" text-anchor="middle">클라이언트</text>
         </g>
 
@@ -5099,14 +5099,14 @@
         <text data-detail="context" x="945" y="196" class="t-muted" font-size="9" text-anchor="middle">백엔드로 DNAT</text>
         </g>
 
-        <g id="node-pod-b" data-node-id="pod-b" data-node-label="포드 B" tabindex="0" role="button" aria-label="Focus 포드 B, 서버, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-sublabel="서버" data-node-context="Architecture component">
-          <title>포드 B · 서버 · Architecture component</title>
+        <g id="node-pod-b" data-node-id="pod-b" data-node-label="Pod B" tabindex="0" role="button" aria-label="Focus Pod B, 서버, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-sublabel="서버" data-node-context="Architecture component">
+          <title>Pod B · 서버 · Architecture component</title>
           <rect x="1220" y="150" width="100" height="64" rx="6" class="c-mask"/>
           <rect x="1220" y="150" width="100" height="64" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1226 156) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1270" y="180" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">포드 B</text>
+          <text data-node-label="" data-detail-anchor="" x="1270" y="180" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod B</text>
         <text data-detail="context" x="1270" y="196" class="t-muted" font-size="9" text-anchor="middle">서버</text>
         </g>
 
@@ -5118,9 +5118,9 @@
 
 
 
-        <g data-detail="context" data-edge-from="forward" data-edge-to="pod-b" data-edge-label="포드 IP로 직접 전달" data-edge-key="4" data-edge-id="forward-to-b">
-          <rect x="1069.4" y="162" width="101.2" height="14" rx="3" class="c-mask"/>
-          <text x="1120" y="172" class="t-backend" font-size="8" text-anchor="middle">포드 IP로 직접 전달</text>
+        <g data-detail="context" data-edge-from="forward" data-edge-to="pod-b" data-edge-label="Pod IP로 직접 전달" data-edge-key="4" data-edge-id="forward-to-b">
+          <rect x="1071.8" y="162" width="96.39999999999999" height="14" rx="3" class="c-mask"/>
+          <text x="1120" y="172" class="t-backend" font-size="8" text-anchor="middle">Pod IP로 직접 전달</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

@@ -20,8 +20,8 @@
 Karpenter의 가장 큰 차별점은 Auto Scaling Group(ASG)을 우회하고 EC2 Fleet API를 직접 사용하여 노드를 프로비저닝한다는 것입니다. Cluster Autoscaler는 노드 그룹/ASG를 통해 스케일링하므로 노드 그룹 구성에 따라 인스턴스 유형이 제한됩니다. Karpenter는 파드 요구사항에 따라 다양한 인스턴스 유형 중 최적의 것을 동적으로 선택하며, 몇 초 내에 노드를 프로비저닝할 수 있습니다.
 </details>
 
-2. Karpenter v1beta1 API에서 노드 프로비저닝 정책을 정의하는 CRD는 무엇인가요?
-   - A) Provisioner
+2. Karpenter v1 API에서 노드 프로비저닝 정책(인스턴스 유형, 용량 유형, disruption 설정)을 정의하는 CRD는 무엇인가요?
+   - A) NodeClaim
    - B) NodePool
    - C) NodeTemplate
    - D) EC2NodeClass
@@ -33,7 +33,7 @@ Karpenter의 가장 큰 차별점은 Auto Scaling Group(ASG)을 우회하고 EC2
 **정답: B) NodePool**
 
 **설명:**
-Karpenter v1beta1 API에서는 기존의 Provisioner CRD가 NodePool로 대체되었습니다. NodePool은 노드 프로비저닝 정책(인스턴스 유형, 용량 유형, 아키텍처, 가용 영역 등)과 disruption 설정(consolidation, expireAfter 등)을 정의합니다. EC2NodeClass는 AWS 특정 구성(서브넷, 보안 그룹, AMI, 블록 디바이스 등)을 정의하며, NodePool은 nodeClassRef를 통해 EC2NodeClass를 참조합니다.
+Karpenter v1 API(`karpenter.sh/v1`)에서 NodePool은 노드 프로비저닝 정책(인스턴스 유형, 용량 유형, 아키텍처, 가용 영역 등)과 disruption 설정(consolidation, expireAfter, budgets 등)을 정의합니다. EC2NodeClass(`karpenter.k8s.aws/v1`)는 AWS 특정 구성(서브넷, 보안 그룹, AMI, 블록 디바이스, IAM 역할 등)을 정의하며, NodePool은 nodeClassRef를 통해 EC2NodeClass를 참조합니다. NodeClaim은 정책 객체가 아니라 Karpenter가 NodePool로부터 실제 프로비저닝한 개별 노드를 추적하기 위해 생성하는 노드 단위 리소스입니다.
 </details>
 
 3. Karpenter에서 비용 최적화를 위해 Spot 인스턴스를 사용하도록 구성하는 방법은 무엇인가요?
@@ -222,7 +222,7 @@ spec:
             - r5.xlarge
             - r5.2xlarge
       nodeClassRef:
-        apiVersion: karpenter.k8s.aws/v1
+        group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: default
   limits:
@@ -251,7 +251,8 @@ kind: EC2NodeClass
 metadata:
   name: secure-nodeclass
 spec:
-  amiFamily: AL2
+  amiSelectorTerms:
+    - alias: al2023@latest
 
   subnetSelectorTerms:
     - tags:

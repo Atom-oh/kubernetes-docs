@@ -5035,7 +5035,7 @@
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="CNI 플러그인" x="350" y="30" width="490" height="290" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="apiserver" data-edge-to="kubelet" data-edge-label="포드 생성" data-edge-key="0" data-edge-id="api-to-kubelet" data-composition-points="145,120;145,210" d="M 145 120 L 145 210" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="apiserver" data-edge-to="kubelet" data-edge-label="Pod 생성" data-edge-key="0" data-edge-id="api-to-kubelet" data-composition-points="145,120;145,210" d="M 145 120 L 145 210" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="kubelet" data-edge-to="runtime" data-edge-label="1. 컨테이너 생성" data-edge-key="1" data-edge-id="kubelet-to-runtime" data-composition-points="145,270;145,360" d="M 145 270 L 145 360" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="runtime" data-edge-to="cni" data-edge-label="2. 네트워크 설정 요청" data-edge-key="2" data-edge-id="runtime-to-cni" data-composition-points="230,390;365,390;365,90;500,90" d="M 230 390 L 357 390 Q 365 390 365 382 L 365 98 Q 365 90 373 90 L 500 90" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="cni" data-edge-to="ipam" data-edge-label="3. IP 할당 요청" data-edge-key="3" data-edge-id="cni-to-ipam" data-composition-points="588,120;588,180;465,180;465,240" d="M 588 120 L 588 172 Q 588 180 580 180 L 473 180 Q 465 180 465 188 L 465 240" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
@@ -5044,15 +5044,15 @@
         <path data-edge-from="netconf" data-edge-to="podnet" data-edge-label="6. 네트워크 구성 적용" data-edge-key="6" data-edge-id="netconf-to-podnet" data-composition-points="725,300;725,420" d="M 725 300 L 725 420" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
-        <g id="node-apiserver" data-node-id="apiserver" data-node-label="API 서버" tabindex="0" role="button" aria-label="Focus API 서버, 포드 스펙 전달, Kubernetes 컴포넌트" aria-pressed="false" data-node-kind="backend" data-node-sublabel="포드 스펙 전달" data-node-context="Kubernetes 컴포넌트">
-          <title>API 서버 · 포드 스펙 전달 · Kubernetes 컴포넌트</title>
+        <g id="node-apiserver" data-node-id="apiserver" data-node-label="API 서버" tabindex="0" role="button" aria-label="Focus API 서버, Pod 스펙 전달, Kubernetes 컴포넌트" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Pod 스펙 전달" data-node-context="Kubernetes 컴포넌트">
+          <title>API 서버 · Pod 스펙 전달 · Kubernetes 컴포넌트</title>
           <rect x="60" y="60" width="170" height="60" rx="6" class="c-mask"/>
           <rect x="60" y="60" width="170" height="60" rx="6" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(66 66) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="145" y="88" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API 서버</text>
-        <text data-detail="context" x="145" y="104" class="t-muted" font-size="9" text-anchor="middle">포드 스펙 전달</text>
+        <text data-detail="context" x="145" y="104" class="t-muted" font-size="9" text-anchor="middle">Pod 스펙 전달</text>
         </g>
 
         <g id="node-kubelet" data-node-id="kubelet" data-node-label="kubelet" tabindex="0" role="button" aria-label="Focus kubelet, 노드 에이전트, Kubernetes 컴포넌트" aria-pressed="false" data-node-kind="backend" data-node-sublabel="노드 에이전트" data-node-context="Kubernetes 컴포넌트">
@@ -5121,21 +5121,21 @@
         <text data-detail="context" x="465" y="464" class="t-muted" font-size="9" text-anchor="middle">예: 10.244.0.0/24</text>
         </g>
 
-        <g id="node-podnet" data-node-id="podnet" data-node-label="포드 네트워크" tabindex="0" role="button" aria-label="Focus 포드 네트워크, 포드 간 통신, Architecture component" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="포드 간 통신" data-node-context="Architecture component">
-          <title>포드 네트워크 · 포드 간 통신 · Architecture component</title>
+        <g id="node-podnet" data-node-id="podnet" data-node-label="Pod 네트워크" tabindex="0" role="button" aria-label="Focus Pod 네트워크, Pod 간 통신, Architecture component" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Pod 간 통신" data-node-context="Architecture component">
+          <title>Pod 네트워크 · Pod 간 통신 · Architecture component</title>
           <rect x="640" y="420" width="170" height="60" rx="6" class="c-mask"/>
           <rect x="640" y="420" width="170" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:7" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(646 426) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="725" y="448" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">포드 네트워크</text>
-        <text data-detail="context" x="725" y="464" class="t-muted" font-size="9" text-anchor="middle">포드 간 통신</text>
+          <text data-node-label="" data-detail-anchor="" x="725" y="448" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod 네트워크</text>
+        <text data-detail="context" x="725" y="464" class="t-muted" font-size="9" text-anchor="middle">Pod 간 통신</text>
         </g>
 
         <!-- Connection labels -->
-        <g data-detail="context" data-edge-from="apiserver" data-edge-to="kubelet" data-edge-label="포드 생성" data-edge-key="0" data-edge-id="api-to-kubelet">
-          <rect x="118.4" y="124" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="145" y="134" class="t-muted" font-size="8" text-anchor="middle">포드 생성</text>
+        <g data-detail="context" data-edge-from="apiserver" data-edge-to="kubelet" data-edge-label="Pod 생성" data-edge-key="0" data-edge-id="api-to-kubelet">
+          <rect x="120.8" y="124" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="145" y="134" class="t-muted" font-size="8" text-anchor="middle">Pod 생성</text>
         </g>
         <g data-detail="context" data-edge-from="kubelet" data-edge-to="runtime" data-edge-label="1. 컨테이너 생성" data-edge-key="1" data-edge-id="kubelet-to-runtime">
           <rect x="101.6" y="274" width="86.8" height="14" rx="3" class="c-mask"/>

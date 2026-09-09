@@ -29,7 +29,7 @@
     {
       "id": "pod-a",
       "type": "frontend",
-      "label": "포드 A",
+      "label": "Pod A",
       "sublabel": "클라이언트"
     },
     {
@@ -67,9 +67,9 @@
       "from": "service-b",
       "to": "coredns",
       "y": 325,
-      "label": "3. 백엔드 포드 선택",
+      "label": "3. 백엔드 Pod 선택",
       "variant": "return",
-      "note": "백엔드: 포드 B1, B2, B3"
+      "note": "백엔드: Pod B1, B2, B3"
     },
     {
       "id": "answer",

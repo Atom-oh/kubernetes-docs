@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "포드 중단 예산(PDB) 구성과 작동 방식",
+    "title": "Pod 중단 예산(PDB) 구성과 작동 방식",
     "output": "public/archmaps/ko-core-08-scheduling-preemption-eviction-7.html",
     "animation": "trace",
     "quality_profile": "showcase",
@@ -35,7 +35,7 @@
           "maxUnavailable",
           "selector"
         ],
-        "note": "minAvailable 또는 maxUnavailable로 중단 한도를 정하고 selector로 대상 포드를 고릅니다."
+        "note": "minAvailable 또는 maxUnavailable로 중단 한도를 정하고 selector로 대상 Pod를 고릅니다."
       },
       {
         "id": "operation",
@@ -95,7 +95,7 @@
       "col": 1,
       "type": "backend",
       "label": "minAvailable",
-      "sublabel": "최소 가용 포드 수",
+      "sublabel": "최소 가용 Pod 수",
       "width": 125
     },
     {
@@ -104,7 +104,7 @@
       "col": 2,
       "type": "backend",
       "label": "maxUnavailable",
-      "sublabel": "최대 불가용 포드 수",
+      "sublabel": "최대 불가용 Pod 수",
       "width": 135
     },
     {
@@ -113,7 +113,7 @@
       "col": 3,
       "type": "backend",
       "label": "selector",
-      "sublabel": "대상 포드 선택",
+      "sublabel": "대상 Pod 선택",
       "width": 135
     },
     {
@@ -140,7 +140,7 @@
       "lane": "operation",
       "col": 2,
       "type": "external",
-      "label": "포드 축출 허용",
+      "label": "Pod 축출 허용",
       "sublabel": "축출 진행",
       "width": 175
     },
@@ -149,7 +149,7 @@
       "lane": "operation",
       "col": 3,
       "type": "external",
-      "label": "포드 축출 거부",
+      "label": "Pod 축출 거부",
       "sublabel": "중단 보류",
       "width": 175
     },

@@ -16,7 +16,7 @@
           "proxy-b",
           "proxy-c"
         ],
-        "note": "Istio Control Plane이 각 포드에 주입된 사이드카 프록시에 설정을 배포한다."
+        "note": "Istio Control Plane이 각 Pod에 주입된 사이드카 프록시에 설정을 배포한다."
       },
       {
         "id": "sidecar-pair",
@@ -29,7 +29,7 @@
           "svc-c",
           "proxy-c"
         ],
-        "note": "각 서비스의 트래픽은 같은 포드의 사이드카 프록시를 거친다."
+        "note": "각 서비스의 트래픽은 같은 Pod의 사이드카 프록시를 거친다."
       },
       {
         "id": "mesh-traffic",
@@ -149,7 +149,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "서비스 A 포드",
+      "label": "서비스 A Pod",
       "wraps": [
         "svc-a",
         "proxy-a"
@@ -157,7 +157,7 @@
     },
     {
       "kind": "region",
-      "label": "서비스 B 포드",
+      "label": "서비스 B Pod",
       "wraps": [
         "svc-b",
         "proxy-b"
@@ -165,7 +165,7 @@
     },
     {
       "kind": "region",
-      "label": "서비스 C 포드",
+      "label": "서비스 C Pod",
       "wraps": [
         "svc-c",
         "proxy-c"

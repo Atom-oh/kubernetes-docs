@@ -37,7 +37,7 @@
           "ingress",
           "egress"
         ],
-        "note": "NetworkPolicy는 대상 포드(podSelector), 적용 방향(policyTypes), 인바운드(ingress)·아웃바운드(egress) 규칙으로 구성된다."
+        "note": "NetworkPolicy는 대상 Pod(podSelector), 적용 방향(policyTypes), 인바운드(ingress)·아웃바운드(egress) 규칙으로 구성된다."
       },
       {
         "id": "traffic-control",
@@ -48,7 +48,7 @@
           "api",
           "db"
         ],
-        "note": "api 포드에 적용된 정책이 프론트엔드에서 들어오는 인바운드와 데이터베이스로 나가는 아웃바운드만 허용한다."
+        "note": "api Pod에 적용된 정책이 프론트엔드에서 들어오는 인바운드와 데이터베이스로 나가는 아웃바운드만 허용한다."
       },
       {
         "id": "selector-kinds",
@@ -82,7 +82,7 @@
       "id": "podselector",
       "type": "security",
       "label": "podSelector",
-      "sublabel": "대상 포드 (app: api)",
+      "sublabel": "대상 Pod (app: api)",
       "pos": [
         310,
         110
@@ -137,7 +137,7 @@
     {
       "id": "frontend",
       "type": "frontend",
-      "label": "프론트엔드 포드",
+      "label": "프론트엔드 Pod",
       "sublabel": "app: frontend",
       "pos": [
         810,
@@ -151,7 +151,7 @@
     {
       "id": "api",
       "type": "backend",
-      "label": "API 포드",
+      "label": "API Pod",
       "sublabel": "app: api",
       "pos": [
         620,
@@ -165,7 +165,7 @@
     {
       "id": "db",
       "type": "database",
-      "label": "데이터베이스 포드",
+      "label": "데이터베이스 Pod",
       "sublabel": "app: database",
       "pos": [
         1000,
@@ -194,7 +194,7 @@
       "id": "podsel",
       "type": "security",
       "label": "podSelector",
-      "sublabel": "포드 레이블",
+      "sublabel": "Pod 레이블",
       "pos": [
         900,
         470
@@ -336,9 +336,9 @@
       "dot": "rose",
       "title": "api-allow 예시 정책",
       "items": [
-        "app: api 레이블 포드에 적용, policyTypes는 Ingress와 Egress",
-        "app: frontend 포드에서 TCP 8080으로 들어오는 인바운드만 허용",
-        "app: database 포드의 TCP 5432로 나가는 아웃바운드만 허용"
+        "app: api 레이블 Pod에 적용, policyTypes는 Ingress와 Egress",
+        "app: frontend Pod에서 TCP 8080으로 들어오는 인바운드만 허용",
+        "app: database Pod의 TCP 5432로 나가는 아웃바운드만 허용"
       ]
     },
     {
@@ -346,7 +346,7 @@
       "title": "선택자와 전제 조건",
       "items": [
         "podSelector, namespaceSelector, ipBlock을 from/to에서 조합할 수 있다",
-        "기본적으로 모든 포드가 서로 통신할 수 있으며 정책으로 이를 제한한다",
+        "기본적으로 모든 Pod가 서로 통신할 수 있으며 정책으로 이를 제한한다",
         "Calico, Cilium, Antrea 등 네트워크 정책을 지원하는 CNI 플러그인이 필요하다"
       ]
     }

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "포드 보안 계층",
+    "title": "Pod 보안 계층",
     "output": "ko-eks-05-eks-security-9.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -13,7 +13,7 @@
     "views": [
       {
         "id": "pss-levels",
-        "label": "포드 보안 표준",
+        "label": "Pod 보안 표준",
         "focus": [
           "ns-labels",
           "privileged",
@@ -216,7 +216,7 @@
     },
     {
       "kind": "security-group",
-      "label": "포드 보안 표준 (PSS)",
+      "label": "Pod 보안 표준 (PSS)",
       "wraps": [
         "privileged",
         "baseline",
@@ -312,7 +312,7 @@
   "cards": [
     {
       "dot": "rose",
-      "title": "포드 보안 표준 (PSS)",
+      "title": "Pod 보안 표준 (PSS)",
       "items": [
         "Privileged: 제한 없음",
         "Baseline: 알려진 권한 에스컬레이션 방지",

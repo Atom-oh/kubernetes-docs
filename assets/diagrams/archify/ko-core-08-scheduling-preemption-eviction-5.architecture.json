@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "포드 우선순위와 선점",
+    "title": "Pod 우선순위와 선점",
     "output": "ko-core-08-scheduling-preemption-eviction-5.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -12,7 +12,7 @@
           "label": "우선순위 정책"
         },
         "backend": {
-          "label": "스케줄러 / 포드"
+          "label": "스케줄러 / Pod"
         },
         "external": {
           "label": "제거 대상"
@@ -27,7 +27,7 @@
           "pc",
           "pod"
         ],
-        "note": "PriorityClass의 value가 클수록 포드의 중요도가 높습니다. priorityClassName으로 포드에 적용합니다."
+        "note": "PriorityClass의 value가 클수록 Pod의 중요도가 높습니다. priorityClassName으로 Pod에 적용합니다."
       },
       {
         "id": "preemption",
@@ -40,7 +40,7 @@
           "s3",
           "s4"
         ],
-        "note": "우선순위 높은 포드를 배치할 노드가 없으면 스케줄러가 우선순위 낮은 포드를 선점해 리소스를 확보합니다."
+        "note": "우선순위 높은 Pod를 배치할 노드가 없으면 스케줄러가 우선순위 낮은 Pod를 선점해 리소스를 확보합니다."
       }
     ]
   },
@@ -62,7 +62,7 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "포드",
+      "label": "Pod",
       "sublabel": "priorityClassName",
       "pos": [
         340,
@@ -90,7 +90,7 @@
     {
       "id": "lowpod",
       "type": "external",
-      "label": "우선순위가 낮은 포드",
+      "label": "우선순위가 낮은 Pod",
       "sublabel": "제거됨",
       "pos": [
         940,
@@ -118,7 +118,7 @@
     {
       "id": "s2",
       "type": "backend",
-      "label": "2. 선점 대상 포드 선택",
+      "label": "2. 선점 대상 Pod 선택",
       "pos": [
         340,
         300
@@ -131,7 +131,7 @@
     {
       "id": "s3",
       "type": "backend",
-      "label": "3. 선점 대상 포드 종료",
+      "label": "3. 선점 대상 Pod 종료",
       "sublabel": "종료 신호 전송",
       "pos": [
         640,
@@ -145,8 +145,8 @@
     {
       "id": "s4",
       "type": "backend",
-      "label": "4. 상위 포드 스케줄링",
-      "sublabel": "우선순위 높은 포드 배치",
+      "label": "4. 상위 Pod 스케줄링",
+      "sublabel": "우선순위 높은 Pod 배치",
       "pos": [
         940,
         300
@@ -244,8 +244,8 @@
       "dot": "rose",
       "title": "우선순위 클래스 예시",
       "items": [
-        "system-node-critical: 2000000000 (노드 작동에 중요한 포드)",
-        "system-cluster-critical: 1000000000 (클러스터 작동에 중요한 포드)",
+        "system-node-critical: 2000000000 (노드 작동에 중요한 Pod)",
+        "system-cluster-critical: 1000000000 (클러스터 작동에 중요한 Pod)",
         "high-priority: 사용자 정의, 예: 1000000",
         "default: 0 (PriorityClass 미지정 시)"
       ]
@@ -254,7 +254,7 @@
       "dot": "amber",
       "title": "선점 고려 사항",
       "items": [
-        "선점된 포드는 terminationGracePeriodSeconds 동안 정상 종료 과정을 거침",
+        "선점된 Pod는 terminationGracePeriodSeconds 동안 정상 종료 과정을 거침",
         "선점은 PodDisruptionBudget을 존중하지 않음"
       ]
     }

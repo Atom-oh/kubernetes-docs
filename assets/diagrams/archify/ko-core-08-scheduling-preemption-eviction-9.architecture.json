@@ -13,10 +13,10 @@
     "legend": {
       "entries": {
         "backend": {
-          "label": "HPA / 남는 포드"
+          "label": "HPA / 남는 Pod"
         },
         "security": {
-          "label": "먼저 삭제되는 포드 (낮은 cost)"
+          "label": "먼저 삭제되는 Pod (낮은 cost)"
         },
         "external": {
           "label": "높은 cost로 보호하는 사용 사례"
@@ -36,7 +36,7 @@
       },
       {
         "id": "protected",
-        "label": "보호되는 포드",
+        "label": "보호되는 Pod",
         "focus": [
           "pod-a",
           "pod-d",
@@ -45,7 +45,7 @@
           "leader",
           "long-task"
         ],
-        "note": "cost가 높은 Pod A·D·E는 남는다. 캐시, 리더, 장시간 작업 포드에 높은 값을 부여해 보호한다."
+        "note": "cost가 높은 Pod A·D·E는 남는다. 캐시, 리더, 장시간 작업 Pod에 높은 값을 부여해 보호한다."
       }
     ]
   },
@@ -151,7 +151,7 @@
     {
       "id": "leader",
       "type": "external",
-      "label": "리더 포드 보호",
+      "label": "리더 Pod 보호",
       "sublabel": "리더 선출 유지",
       "pos": [
         580,
@@ -165,7 +165,7 @@
     {
       "id": "long-task",
       "type": "external",
-      "label": "장시간 작업 포드 보호",
+      "label": "장시간 작업 Pod 보호",
       "sublabel": "처리 중인 작업 유지",
       "pos": [
         840,
@@ -188,7 +188,7 @@
     },
     {
       "kind": "region",
-      "label": "남은 포드",
+      "label": "남은 Pod",
       "wraps": [
         "pod-a",
         "pod-d",
@@ -228,7 +228,7 @@
       "items": [
         "controller.kubernetes.io/pod-deletion-cost: \"100\"",
         "값 범위: -2147483648 ~ 2147483647 (32비트 정수)",
-        "기본값 0, 낮은 값의 포드가 먼저 삭제됨"
+        "기본값 0, 낮은 값의 Pod가 먼저 삭제됨"
       ]
     }
   ]

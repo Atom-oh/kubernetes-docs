@@ -507,7 +507,7 @@ Cilium은 eBPF를 활용하여 효율적인 라우팅을 구현하며, 다양한
 - **요구 사항**: 노드 간 라우팅 가능한 네트워크
 - **사용 사례**: 성능이 중요한 워크로드, 단일 서브넷 클러스터
 
-![서로 다른 노드에 있는 두 포드가 각 노드의 라우팅 테이블 항목을 이용해 캡슐화 없이 물리 네트워크로 직접 통신하는 Cilium 직접 라우팅(Native Routing) 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-9.png)
+![서로 다른 노드에 있는 두 Pod가 각 노드의 라우팅 테이블 항목을 이용해 캡슐화 없이 물리 네트워크로 직접 통신하는 Cilium 직접 라우팅(Native Routing) 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-9.html)
 
@@ -662,7 +662,7 @@ Kubernetes는 클러스터 내 DNS 서비스(일반적으로 CoreDNS)를 실행�
 - **포드 DNS**: `<pod-ip>.<namespace>.pod.cluster.local`
 - **헤드리스 서비스**: 서비스 이름이 모든 포드 IP의 DNS 레코드로 확인됨
 
-![포드 A가 CoreDNS에 service-b를 조회하면 CoreDNS가 서비스 B(ClusterIP 10.0.0.1)를 확인하고 백엔드 포드 B1, B2, B3 중 하나를 선택한 뒤 포드 A에 10.0.0.1을 응답하는 Kubernetes DNS 서비스 디스커버리 시퀀스 다이어그램을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-11.png)
+![Pod A가 CoreDNS에 service-b를 조회하면 CoreDNS가 서비스 B(ClusterIP 10.0.0.1)를 확인하고 백엔드 Pod B1, B2, B3 중 하나를 선택한 뒤 Pod A에 10.0.0.1을 응답하는 Kubernetes DNS 서비스 디스커버리 시퀀스 다이어그램을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-11.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-11.html)
 
@@ -881,7 +881,7 @@ Cilium은 eBPF를 활용하여 효율적인 로드 밸런싱을 구현합니다:
 - **확장성**: 대규모 서비스 및 엔드포인트 지원
 - **연결 추적 최적화**: 효율적인 상태 관리
 
-![포드 A가 서비스 IP로 보낸 패킷이 커널의 eBPF 프로그램에서 패킷 인터셉트·서비스 맵 조회·백엔드 선택·패킷 전달의 4단계를 거쳐 kube-proxy 없이 곧바로 포드 B로 전달되는 Cilium eBPF 기반 로드 밸런싱 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-14.png)
+![Pod A가 서비스 IP로 보낸 패킷이 커널의 eBPF 프로그램에서 패킷 인터셉트·서비스 맵 조회·백엔드 선택·패킷 전달의 4단계를 거쳐 kube-proxy 없이 곧바로 Pod B로 전달되는 Cilium eBPF 기반 로드 밸런싱 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-14.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-14.html)
 

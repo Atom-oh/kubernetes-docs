@@ -95,7 +95,7 @@
     {
       "id": "system-pods",
       "type": "backend",
-      "label": "시스템 포드",
+      "label": "시스템 Pod",
       "sublabel": "CoreDNS · metrics-server · 기타",
       "pos": [
         270,

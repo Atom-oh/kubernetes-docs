@@ -18,7 +18,7 @@
           "label": "whenUnsatisfiable 옵션"
         },
         "external": {
-          "label": "새 포드"
+          "label": "새 Pod"
         },
         "cloud": {
           "label": "가용 영역"
@@ -57,7 +57,7 @@
           "az2",
           "az3"
         ],
-        "note": "maxSkew=1이면 포드가 가장 적은 ap-northeast-2b(2개)에 새 포드가 배치되어 3개가 된다."
+        "note": "maxSkew=1이면 Pod가 가장 적은 ap-northeast-2b(2개)에 새 Pod가 배치되어 3개가 된다."
       }
     ]
   },
@@ -122,7 +122,7 @@
       "id": "labelselector",
       "type": "backend",
       "label": "labelSelector",
-      "sublabel": "대상 포드 선택",
+      "sublabel": "대상 Pod 선택",
       "pos": [
         290,
         350
@@ -163,7 +163,7 @@
     {
       "id": "newpod",
       "type": "external",
-      "label": "새 포드",
+      "label": "새 Pod",
       "sublabel": "스케줄링 대기",
       "pos": [
         985,
@@ -178,7 +178,7 @@
       "id": "az1",
       "type": "cloud",
       "label": "ap-northeast-2a",
-      "sublabel": "포드 3개",
+      "sublabel": "Pod 3개",
       "pos": [
         820,
         380
@@ -192,7 +192,7 @@
       "id": "az2",
       "type": "cloud",
       "label": "ap-northeast-2b",
-      "sublabel": "포드 2개 → 3개",
+      "sublabel": "Pod 2개 → 3개",
       "pos": [
         985,
         380
@@ -206,7 +206,7 @@
       "id": "az3",
       "type": "cloud",
       "label": "ap-northeast-2c",
-      "sublabel": "포드 3개",
+      "sublabel": "Pod 3개",
       "pos": [
         1150,
         380
@@ -302,7 +302,7 @@
       "dot": "amber",
       "title": "whenUnsatisfiable",
       "items": [
-        "DoNotSchedule: 하드 제약 - 충족 불가 시 포드를 스케줄링하지 않음",
+        "DoNotSchedule: 하드 제약 - 충족 불가 시 Pod를 스케줄링하지 않음",
         "ScheduleAnyway: 소프트 제약 - 불균형(skew)을 최소화하는 노드를 우선하여 배치"
       ]
     },
@@ -310,7 +310,7 @@
       "dot": "cyan",
       "title": "가용 영역 분산 예시",
       "items": [
-        "ap-northeast-2a 3개, 2b 2개, 2c 3개인 상태에서 새 포드 스케줄링",
+        "ap-northeast-2a 3개, 2b 2개, 2c 3개인 상태에서 새 Pod 스케줄링",
         "maxSkew=1이면 도메인 간 차이가 1을 넘지 않도록 2b에 배치 (2개 → 3개)"
       ]
     }

@@ -743,7 +743,7 @@ Kubernetes 1.23부터 도입된 포드 보안 표준은 파드의 보안 컨텍�
 - **Baseline**: 알려진 권한 에스컬레이션 방지
 - **Restricted**: 강력한 보안 제한 적용
 
-![네임스페이스 레이블(enforce·audit·warn)로 지정한 Privileged·Baseline·Restricted 포드 보안 표준, securityContext 설정, OPA Gatekeeper와 Kyverno가 어드미션 웹훅으로 적용하는 정책이 권한 있는 파드·애플리케이션 파드·시스템 파드에 각각 어떻게 반영되는지 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-9.png)
+![네임스페이스 레이블(enforce·audit·warn)로 지정한 Privileged·Baseline·Restricted Pod 보안 표준, securityContext 설정, OPA Gatekeeper와 Kyverno가 어드미션 웹훅으로 적용하는 정책이 권한 있는 파드·애플리케이션 파드·시스템 파드에 각각 어떻게 반영되는지 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-05-eks-security-9.html)
 

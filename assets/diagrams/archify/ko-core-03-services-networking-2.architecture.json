@@ -26,7 +26,7 @@
           "mon",
           "db"
         ],
-        "note": "Frontend와 Monitoring이 Database 포드로 직접 접근하는 경로는 정책이 차단한다."
+        "note": "Frontend와 Monitoring이 Database Pod로 직접 접근하는 경로는 정책이 차단한다."
       },
       {
         "id": "policies",
@@ -36,7 +36,7 @@
           "np2",
           "np3"
         ],
-        "note": "각 네임스페이스에 배치된 NetworkPolicy 리소스가 포드 간 통신 규칙을 정의한다."
+        "note": "각 네임스페이스에 배치된 NetworkPolicy 리소스가 Pod 간 통신 규칙을 정의한다."
       }
     ],
     "legend": {
@@ -233,7 +233,7 @@
       "dot": "rose",
       "title": "네트워크 정책",
       "items": [
-        "포드 간 통신을 제어하는 규칙",
+        "Pod 간 통신을 제어하는 규칙",
         "네트워크 플러그인이 지원해야 사용 가능 (Calico, Cilium, Weave Net)",
         "실선은 허용, 붉은 선은 정책으로 차단된 트래픽"
       ]

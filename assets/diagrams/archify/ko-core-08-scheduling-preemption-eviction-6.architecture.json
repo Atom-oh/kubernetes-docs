@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "포드 축출 유형과 원인",
+    "title": "Pod 축출 유형과 원인",
     "output": "ko-core-08-scheduling-preemption-eviction-6.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -35,7 +35,7 @@
           "notready",
           "unreachable"
         ],
-        "note": "노드가 NotReady로 pod-eviction-timeout(기본 5분)을 넘기거나 Unreachable이면 kube-controller-manager가 포드를 축출합니다."
+        "note": "노드가 NotReady로 pod-eviction-timeout(기본 5분)을 넘기거나 Unreachable이면 kube-controller-manager가 Pod를 축출합니다."
       },
       {
         "id": "kubelet",
@@ -49,7 +49,7 @@
           "imagefs",
           "pid"
         ],
-        "note": "kubelet은 메모리·파일 시스템·PID 축출 신호를 모니터링해 리소스 부족이나 하드웨어 문제 시 포드를 축출합니다."
+        "note": "kubelet은 메모리·파일 시스템·PID 축출 신호를 모니터링해 리소스 부족이나 하드웨어 문제 시 Pod를 축출합니다."
       },
       {
         "id": "user",
@@ -58,7 +58,7 @@
           "user",
           "maintenance"
         ],
-        "note": "kubectl drain 등 노드 유지 관리 작업으로 사용자가 직접 포드를 축출합니다."
+        "note": "kubectl drain 등 노드 유지 관리 작업으로 사용자가 직접 Pod를 축출합니다."
       }
     ]
   },
@@ -352,9 +352,9 @@
       "dot": "rose",
       "title": "kubelet 축출 순서",
       "items": [
-        "1. BestEffort QoS 포드",
-        "2. Burstable QoS 포드 (요청량 초과 사용부터)",
-        "3. Guaranteed QoS 포드"
+        "1. BestEffort QoS Pod",
+        "2. Burstable QoS Pod (요청량 초과 사용부터)",
+        "3. Guaranteed QoS Pod"
       ]
     }
   ]
