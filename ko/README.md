@@ -267,6 +267,15 @@
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [퀴즈](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags와 OpenFeature](./gitops/05-feature-flags.md) | [퀴즈](./quizzes/gitops/05-feature-flags-quiz.md)
 
+### 엔터프라이즈 클라우드 거버넌스
+1. [거버넌스 개요](./governance/00-governance-overview.md) | [퀴즈](./quizzes/governance/00-governance-overview-quiz.md)
+2. [Landing Zone, OU와 조직 Control](./governance/01-landing-zone-and-ou.md) | [퀴즈](./quizzes/governance/01-landing-zone-and-ou-quiz.md)
+3. [Account 구성과 IAM 경계](./governance/02-account-and-iam.md) | [퀴즈](./quizzes/governance/02-account-and-iam-quiz.md)
+4. [EKS 멀티 계정·멀티 클러스터 아키텍처](./governance/03-eks-multi-account-multi-cluster.md) | [퀴즈](./quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md)
+5. [Shared VPC와 Connectivity](./governance/04-shared-vpc-and-connectivity.md) | [퀴즈](./quizzes/governance/04-shared-vpc-and-connectivity-quiz.md)
+6. [Data·Security 경계](./governance/05-data-security-boundaries.md) | [퀴즈](./quizzes/governance/05-data-security-boundaries-quiz.md)
+7. [의사결정 프레임워크와 POC 설계](./governance/06-decision-framework-and-poc.md) | [퀴즈](./quizzes/governance/06-decision-framework-and-poc-quiz.md)
+
 ### Platform Engineering
 0. [Platform Engineering 개요](./platform-engineering/00-platform-engineering-overview.md) | [퀴즈](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)

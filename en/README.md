@@ -267,6 +267,15 @@ This training content provides quizzes for each topic along with the learning ma
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [Quiz](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags and OpenFeature](./gitops/05-feature-flags.md) | [Quiz](./quizzes/gitops/05-feature-flags-quiz.md)
 
+### Enterprise Cloud Governance
+1. [Governance Overview](./governance/00-governance-overview.md) | [Quiz](./quizzes/governance/00-governance-overview-quiz.md)
+2. [Landing Zone, OUs, and Organizational Control](./governance/01-landing-zone-and-ou.md) | [Quiz](./quizzes/governance/01-landing-zone-and-ou-quiz.md)
+3. [Account Structure and IAM Boundaries](./governance/02-account-and-iam.md) | [Quiz](./quizzes/governance/02-account-and-iam-quiz.md)
+4. [Multi-Account, Multi-Cluster EKS Architecture](./governance/03-eks-multi-account-multi-cluster.md) | [Quiz](./quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md)
+5. [Shared VPC and Connectivity](./governance/04-shared-vpc-and-connectivity.md) | [Quiz](./quizzes/governance/04-shared-vpc-and-connectivity-quiz.md)
+6. [Data and Security Boundaries](./governance/05-data-security-boundaries.md) | [Quiz](./quizzes/governance/05-data-security-boundaries-quiz.md)
+7. [Decision Framework and PoC Design](./governance/06-decision-framework-and-poc.md) | [Quiz](./quizzes/governance/06-decision-framework-and-poc-quiz.md)
+
 ### Platform Engineering
 0. [Platform Engineering Overview](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
