@@ -160,8 +160,9 @@ export function canonicalUrl(relativePath) {
   return `${siteHostname}${cleanUrlPath(relativePath)}`
 }
 
-const KO_DATE_RE = /^>\s*\*\*마지막 업데이트\*\*\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/m
-const EN_DATE_RE = /^>\s*\*\*(?:Supported Versions|Last Updated)\*\*\s*:\s*([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/m
+// Older pages put version metadata and the update date on one quote line.
+const KO_DATE_RE = /^>[^\r\n]*?\*\*마지막 업데이트\*\*\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/m
+const EN_DATE_RE = /^>[^\r\n]*?\*\*(?:Supported Versions|Last Updated)\*\*\s*:\s*([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/m
 const EN_MONTHS = [
   'january', 'february', 'march', 'april', 'may', 'june',
   'july', 'august', 'september', 'october', 'november', 'december'

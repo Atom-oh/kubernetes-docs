@@ -4,11 +4,12 @@
 //
 // SUMMARY.md (GitBook nav) is the canonical page list, same as the sidebar.
 import fs from 'node:fs'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { supportedLocales } from '../.vitepress/site-scope.mjs'
-import { extractDescription } from '../.vitepress/seo.mjs'
+import { extractDescription, extractLastUpdated } from '../.vitepress/seo.mjs'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
@@ -65,6 +66,58 @@ export function sectionBundleUrl(locale, slug) {
 }
 
 const NOT_MIRRORED = /^(quizzes|labs)\//
+
+// The same publication boundary is used by raw Markdown, manifests and MCP.
+function isContentPage(group, mdPath) {
+  return !QUIZ_GROUP.test(group) && !LAB_GROUP.test(group) &&
+    mdPath !== ROOT_INDEX && !NOT_MIRRORED.test(mdPath)
+}
+
+function documentHeadings(content) {
+  const headings = []
+  let fence = null
+  for (const line of content.split('\n')) {
+    const marker = line.match(/^\s{0,3}(`{3,}|~{3,})/)
+    if (marker) {
+      if (!fence) fence = marker[1]
+      else if (marker[1][0] === fence[0] && marker[1].length >= fence.length) fence = null
+      continue
+    }
+    if (fence) continue
+    const heading = line.match(/^#{1,6}\s+(.+?)(?:\s+#+)?$/)
+    if (heading) headings.push(heading[1])
+  }
+  return headings
+}
+
+export function buildDocuments(locale, groups, readPage) {
+  const documents = []
+  const seen = new Set()
+  for (const { group, items } of groups) {
+    for (const { title, path: mdPath } of items) {
+      if (!isContentPage(group, mdPath) || seen.has(mdPath)) continue
+      seen.add(mdPath)
+      const content = readPage(mdPath)
+      if (content === null) continue
+      documents.push({
+        id: `${locale}/${mdPath}`,
+        locale,
+        path: mdPath,
+        title,
+        section: mdPath.includes('/') ? mdPath.split('/')[0] : 'intro',
+        description: extractDescription(content) ?? '',
+        headings: documentHeadings(content),
+        url: pageUrl(locale, mdPath),
+        markdownUrl: markdownPageUrl(locale, mdPath),
+        lastUpdated: extractLastUpdated(content) ?? null,
+        sha256: createHash('sha256').update(content).digest('hex'),
+        bytes: Buffer.byteLength(content),
+        content
+      })
+    }
+  }
+  return documents
+}
 
 // Relative links only resolve inside the repo checkout. An LLM reading a page
 // out of context needs every reference to be fetchable, so rewrite them:
@@ -138,7 +191,7 @@ export function sectionBundles(groups, readPage) {
   for (const group of groups) {
     if (QUIZ_GROUP.test(group.group) || LAB_GROUP.test(group.group)) continue
     const pages = group.items.filter(
-      ({ path: mdPath }) => mdPath !== ROOT_INDEX && readPage(mdPath) !== null
+      ({ path: mdPath }) => isContentPage(group.group, mdPath) && readPage(mdPath) !== null
     )
     if (pages.length === 0) continue
 
@@ -165,7 +218,11 @@ export function buildLlmsTxt(
     '> data. Korean (ko) is the primary human-edited language; English (en) mirrors',
     '> its coverage. Full-content dumps: llms-full-ko.txt and llms-full-en.txt;',
     '> per-section dumps (a few hundred KiB each) are listed under "Section',
-    '> bundles". Every link below returns raw Markdown with absolute URLs.',
+    '> bundles". Document links return raw Markdown with absolute URLs.',
+    '',
+    '## Machine-readable catalog',
+    '',
+    `- [Document manifest](${SITE_BASE}/llms/manifest.json): JSON metadata with stable document IDs, language, section, canonical and Markdown URLs, update dates, byte lengths, and SHA-256 hashes for incremental LLM Wiki / RAG ingestion.`,
     ''
   ]
   for (const locale of Object.keys(summariesByLocale)) {
@@ -173,7 +230,7 @@ export function buildLlmsTxt(
     for (const { group, items } of summariesByLocale[locale]) {
       if (QUIZ_GROUP.test(group) || LAB_GROUP.test(group)) continue
       for (const { title, path: mdPath } of items) {
-        if (mdPath === ROOT_INDEX) continue
+        if (!isContentPage(group, mdPath)) continue
 
         const readPage = readPagesByLocale[locale]
         const content = readPage?.(mdPath)
@@ -247,7 +304,7 @@ function writeMarkdownPages(root, locale, groups, readPage) {
     if (QUIZ_GROUP.test(group) || LAB_GROUP.test(group)) continue
 
     for (const { path: mdPath } of items) {
-      if (mdPath === ROOT_INDEX || seen.has(mdPath)) continue
+      if (!isContentPage(group, mdPath) || seen.has(mdPath)) continue
       seen.add(mdPath)
 
       const content = readPage(mdPath)
@@ -272,6 +329,7 @@ export function generateLlmsFiles(root = projectRoot) {
   const summaries = {}
   const readPages = {}
   const bundles = {}
+  const documents = []
   for (const locale of supportedLocales) {
     summaries[locale] = parseSummary(
       fs.readFileSync(path.join(root, locale, 'SUMMARY.md'), 'utf8')
@@ -283,12 +341,22 @@ export function generateLlmsFiles(root = projectRoot) {
     }
     bundles[locale] = sectionBundles(summaries[locale], readPages[locale])
     writeMarkdownPages(root, locale, summaries[locale], readPages[locale])
+    documents.push(...buildDocuments(locale, summaries[locale], readPages[locale]))
   }
 
   const written = []
   const indexPath = path.join(outDir, 'llms.txt')
   fs.writeFileSync(indexPath, buildLlmsTxt(summaries, readPages, bundles))
   written.push(indexPath)
+
+  const manifestPath = path.join(outDir, 'llms', 'manifest.json')
+  fs.mkdirSync(path.dirname(manifestPath), { recursive: true })
+  fs.writeFileSync(manifestPath, JSON.stringify({
+    schemaVersion: 1,
+    siteUrl: SITE_BASE,
+    documents: documents.map(({ content, ...metadata }) => metadata)
+  }, null, 2) + '\n')
+  written.push(manifestPath)
 
   for (const locale of supportedLocales) {
     for (const bundle of bundles[locale]) {

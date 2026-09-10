@@ -240,6 +240,15 @@ test('extractLastUpdated reads the English header date as ISO 8601', () => {
   assert.equal(extractLastUpdated(src), '2026-08-01')
 })
 
+test('extractLastUpdated reads a date after version metadata on the same header line', () => {
+  assert.equal(extractLastUpdated(
+    '# Linux\n> **지원 버전**: Ubuntu 20.04+, Debian 11+ **마지막 업데이트**: 2026년 2월 11일\n\n본문.'
+  ), '2026-02-11')
+  assert.equal(extractLastUpdated(
+    '# Linux\n> **Supported Versions**: Ubuntu 20.04+, Debian 11+ **Last Updated**: February 11, 2026\n\nBody.'
+  ), '2026-02-11')
+})
+
 test('extractLastUpdated returns undefined without a date header or on a bad month', () => {
   assert.equal(extractLastUpdated('# Title\n\nBody with no header.'), undefined)
   assert.equal(

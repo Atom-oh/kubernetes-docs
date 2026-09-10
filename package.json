@@ -7,6 +7,8 @@
     "docs:build": "node scripts/build-vitepress-locales.mjs",
     "docs:build:locale": "vitepress build",
     "docs:preview": "vitepress preview",
+    "docs:llms": "node scripts/generate-llms-txt.mjs",
+    "docs:mcp": "node scripts/docs-mcp.mjs",
     "docs:test": "node --test scripts/__tests__/*.test.mjs",
     "docs:validate": "npm run docs:test && node scripts/validate-local-links.mjs && node scripts/validate-image-assets.mjs && node scripts/validate-language-parity.mjs"
   },
@@ -16,5 +18,10 @@
     "sitemap": "^8.0.3",
     "vitepress": "^1.6.4",
     "vitepress-plugin-mermaid": "^2.0.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "minisearch": "^7.2.0",
+    "zod": "^4.6.1"
   }
 }
