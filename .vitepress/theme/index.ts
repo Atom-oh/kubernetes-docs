@@ -1,7 +1,7 @@
 import DefaultTheme from 'vitepress/theme'
 import mediumZoom from 'medium-zoom'
 import { nextTick, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vitepress'
+import { useRoute, useRouter } from 'vitepress'
 import { initQuizProgress } from './quiz-progress.mjs'
 import { createDocViewTracker } from './analytics.mjs'
 import './custom.css'
@@ -29,8 +29,17 @@ export default {
   extends: DefaultTheme,
   setup() {
     const route = useRoute()
+    const router = useRouter()
     let cleanupQuizProgress = () => {}
     let trackDocView = (_location: string, _title: string) => {}
+    let originalAfterRouteChange: typeof router.onAfterRouteChange
+    let previousAfterRouteChange: typeof router.onAfterRouteChange
+
+    const afterRouteChange = async (to: string) => {
+      await previousAfterRouteChange?.(to)
+      await nextTick()
+      trackDocView(window.location.href, document.title)
+    }
 
     const initZoom = () => {
       // exclude images wrapped in a link — clicking those should navigate, not zoom
@@ -49,14 +58,21 @@ export default {
         document.referrer,
         (...args: unknown[]) => window.gtag?.(...args)
       )
+      // route.path omits query strings; the completion hook also covers
+      // query-only navigation and browser back/forward.
+      originalAfterRouteChange = router.onAfterRouteChange
+      previousAfterRouteChange = originalAfterRouteChange ?? router.onAfterRouteChanged
+      router.onAfterRouteChange = afterRouteChange
       initPageEnhancements()
       trackDocView(window.location.href, document.title)
     })
-    watch(() => route.path, () => nextTick(() => {
-      initPageEnhancements()
-      trackDocView(window.location.href, document.title)
-    }))
+    watch(() => route.path, () => nextTick(initPageEnhancements))
     onUnmounted(() => cleanupQuizProgress())
+    onUnmounted(() => {
+      if (router.onAfterRouteChange === afterRouteChange) {
+        router.onAfterRouteChange = originalAfterRouteChange
+      }
+    })
 
     // The mobile hamburger menu's translations panel only enters the DOM
     // once opened, after any route-change re-tagging has already run.
