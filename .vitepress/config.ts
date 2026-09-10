@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
 import { vitepressBuildScope } from './site-scope.mjs'
+import { GA_ID } from './theme/analytics.mjs'
 import {
   breadcrumbTrail,
   canonicalUrl,
@@ -17,7 +18,6 @@ import {
   structuredData
 } from './seo.mjs'
 
-const GA_ID = 'G-GWVLEW5JLL'
 const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
 const FAVICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="78" font-size="80" text-anchor="middle">☸️</text></svg>')}`
 
@@ -173,30 +173,30 @@ const config = defineConfig({
       const description = extractDescription(source)
       if (description) pageData.description = description
     }
-    // Carried on frontmatter so transformHead can date the structured data
-    // without re-reading the file.
+    // Reuse the source date for structured data without reading it again.
     const lastUpdated = extractLastUpdated(source)
     if (lastUpdated) pageData.frontmatter.lastUpdatedISO = lastUpdated
-  },
-  transformHead({ pageData }) {
-    // The 404 page is a rendering shell, not a document: it must not be
-    // indexed and has nothing to be canonical to.
-    if (pageData.relativePath === '404.md') {
-      return [['meta', { name: 'robots', content: 'noindex' }]]
+    // VitePress updates frontmatter.head during SPA navigation; transformHead
+    // only affects SSR HTML. A Markdown twin must follow the current article.
+    const markdownUrl = markdownAlternateUrl(pageData.relativePath)
+    if (markdownUrl) {
+      pageData.frontmatter.head ??= []
+      pageData.frontmatter.head.push([
+        'link',
+        { rel: 'alternate', type: 'text/markdown', href: markdownUrl }
+      ])
     }
-
     const url = canonicalUrl(pageData.relativePath)
     const locale = pageData.relativePath.split('/')[0]
     const title = pageData.title || siteName
     const description = pageData.description || pageData.frontmatter.description
     const crumbs = breadcrumbTrail(pageData.relativePath, pageData.title)
-    const markdownUrl = markdownAlternateUrl(pageData.relativePath)
 
-    return [
+    // Keep canonical, translations and JSON-LD in the same client-managed
+    // head as the Markdown link, so SPA navigation cannot leave stale URLs.
+    pageData.frontmatter.head ??= []
+    pageData.frontmatter.head.push(
       ['link', { rel: 'canonical', href: url }],
-      ...(markdownUrl
-        ? [['link', { rel: 'alternate', type: 'text/markdown', href: markdownUrl }]]
-        : []),
       ...localeAlternates(pageData.relativePath).map(({ hreflang, href }) => [
         'link',
         { rel: 'alternate', hreflang, href }
@@ -214,7 +214,13 @@ const config = defineConfig({
           crumbs
         })
       ]
-    ]
+    )
+  },
+  transformHead({ pageData }) {
+    // VitePress synthesizes 404 without running the normal page-data hook.
+    return pageData.relativePath === '404.md'
+      ? [['meta', { name: 'robots', content: 'noindex' }]]
+      : []
   },
   sitemap: {
     hostname: 'https://www.atomai.click/kubernetes-docs/',
@@ -233,6 +239,9 @@ const config = defineConfig({
   },
   head: [
     ['link', { rel: 'icon', href: FAVICON }],
+    ['link', { rel: 'alternate', type: 'text/plain', title: 'LLM documentation index', href: 'https://www.atomai.click/kubernetes-docs/llms.txt' }],
+    ['link', { rel: 'alternate', type: 'application/json', title: 'Document manifest', href: 'https://www.atomai.click/kubernetes-docs/llms/manifest.json' }],
+    ['link', { rel: 'sitemap', type: 'application/xml', title: 'Sitemap', href: 'https://www.atomai.click/kubernetes-docs/sitemap.xml' }],
     ['script', { async: '', src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}` }],
     ['script', {}, `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${GA_ID}');`],
     ['script', { async: '', src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`, crossorigin: 'anonymous' }]
@@ -244,7 +253,10 @@ const config = defineConfig({
       link: '/ko/',
       description:
         '쿠버네티스와 Amazon EKS 실무 학습 자료 — 핵심 개념, 네트워킹, 서비스 메시, 옵저버빌리티, 퀴즈와 실습 랩까지 한 곳에서.',
-      themeConfig: { sidebar: summarySidebar('ko') }
+      themeConfig: {
+        sidebar: summarySidebar('ko'),
+        nav: [{ text: 'AI · MCP 활용', link: '/ko/llm-guide' }]
+      }
     },
     en: {
       label: 'English',
@@ -252,7 +264,10 @@ const config = defineConfig({
       link: '/en/',
       description:
         'Hands-on Kubernetes and Amazon EKS training — core concepts, networking, service mesh, observability, quizzes, and labs.',
-      themeConfig: { sidebar: summarySidebar('en') }
+      themeConfig: {
+        sidebar: summarySidebar('en'),
+        nav: [{ text: 'AI · MCP guide', link: '/en/llm-guide' }]
+      }
     }
   },
   themeConfig: {

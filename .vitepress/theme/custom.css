@@ -1,8 +1,52 @@
-/* Sidebar and right-hand outline stay fixed width in VitePress's default
-   theme, so widening the overall layout max-width adds nearly all the
-   extra space to the content column specifically. */
+/* The layout width and VPDoc's internal content cap are independent. */
 :root {
   --vp-layout-max-width: 1560px;
+}
+
+/* Target the article column directly: the outline also contains .content.
+   Let flex items shrink around wide tables, code blocks and diagrams. */
+.VPDoc > .container > .content {
+  min-width: 0;
+}
+
+.VPDoc.has-aside > .container > .content > .content-container {
+  max-width: 960px;
+}
+
+.VPDoc > .container > .content > .content-container {
+  container: vp-doc / inline-size;
+}
+
+@media (min-width: 960px) {
+  .VPDoc.has-sidebar > .container > .content {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}
+
+@media (min-width: 1280px) {
+  /* Keep the existing 224px outline, with a smaller gutter. Together with
+     the article padding this leaves 952px of text at a 1920px viewport. */
+  .VPDoc.has-sidebar > .container > .aside:not(.left-aside) {
+    flex-shrink: 0;
+    padding-left: 16px;
+    width: 240px;
+    max-width: 240px;
+  }
+}
+
+/* Preserve readable Mermaid labels on narrow screens; scroll the diagram
+   locally. Mermaid's inline max-width still caps each SVG at its own size. */
+.VPDoc .vp-doc .mermaid {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.VPDoc .vp-doc .mermaid > svg {
+  display: block;
+  width: max(100%, 40rem);
+  height: auto;
+  margin: 0 auto;
 }
 
 /* medium-zoom's overlay/zoomed image default to a low z-index that sits
@@ -84,19 +128,19 @@
 
 
 /* Archify interactive diagram embeds (see archify_embed rule in config.ts) */
-.archmap-embed {
+.VPDoc .archmap-embed {
   margin: 16px 0;
 }
 
-.archmap-embed iframe {
+.VPDoc .archmap-embed iframe {
   width: 100%;
-  height: 620px;
+  height: clamp(480px, 70vh, 760px);
   border: 1px solid var(--vp-c-divider);
   border-radius: 12px;
   background: var(--vp-c-bg);
 }
 
-.archmap-embed__caption {
+.VPDoc .archmap-embed__caption {
   display: flex;
   gap: 12px;
   align-items: baseline;
@@ -107,61 +151,60 @@
 
 /* The diagram description: the accessible name for the iframe and the only
    prose account of the diagram in the page text. */
-.archmap-embed__alt {
+.VPDoc .archmap-embed__alt {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--vp-c-text-2);
   line-height: 1.5;
   text-align: left;
 }
 
-.archmap-embed__caption a {
+.VPDoc .archmap-embed__caption a {
   flex: none;
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .archmap-embed__caption {
+@container vp-doc (max-width: 640px) {
+  .VPDoc .archmap-embed__caption {
     flex-direction: column;
     gap: 4px;
   }
 
-  .archmap-embed__caption a {
+  .VPDoc .archmap-embed__caption a {
     align-self: flex-end;
   }
 }
 
 /* The static PNG kept alongside the embed (see archify_embed in config.ts) is
    the narrow-screen fallback, so it stays hidden while the iframe is shown. */
-.vp-doc p.archmap-embed__fallback {
+.VPDoc .vp-doc p.archmap-embed__fallback {
   display: none;
 }
 
-/* Under 768px the embedded viewer is unusable: at ~342px its toolbar and the
-   diagram's own nodes are clipped on both sides, and the iframe body does not
-   scroll (scrollWidth === clientWidth), so the clipped parts are unreachable.
-   Swap in the static PNG — tappable to zoom via medium-zoom — and promote the
-   full-screen link to a real button for anyone who wants the interactive one. */
-@media (max-width: 767px) {
-  .archmap-embed iframe {
+/* The viewer needs 768px inside its 2px border, even with a desktop sidebar.
+   Below that, use the PNG with medium-zoom and a full-screen viewer link. */
+@container vp-doc (max-width: 769px) {
+  .VPDoc .archmap-embed iframe {
     display: none;
   }
 
-  .vp-doc p.archmap-embed__fallback {
+  .VPDoc .vp-doc p.archmap-embed__fallback {
     display: block;
   }
 
   /* The iframe is gone, so the wrapper only holds the link; drop the gap that
      separated it from the diagram above. */
-  .archmap-embed {
+  .VPDoc .archmap-embed {
     margin-top: 0;
   }
 
-  .archmap-embed__caption {
+  .VPDoc .archmap-embed__caption {
     margin: 8px 0 0;
     text-align: center;
   }
 
-  .archmap-embed__caption a {
+  .VPDoc .archmap-embed__caption a {
     display: block;
     padding: 11px 16px;
     border: 1px solid var(--vp-c-divider);

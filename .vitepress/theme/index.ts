@@ -3,7 +3,14 @@ import mediumZoom from 'medium-zoom'
 import { nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vitepress'
 import { initQuizProgress } from './quiz-progress.mjs'
+import { createDocViewTracker } from './analytics.mjs'
 import './custom.css'
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void
+  }
+}
 
 const LANG_SWITCH_LINK_SELECTOR = '.VPNavBarTranslations a, .VPNavScreenTranslations a'
 
@@ -23,6 +30,7 @@ export default {
   setup() {
     const route = useRoute()
     let cleanupQuizProgress = () => {}
+    let trackDocView = (_location: string, _title: string) => {}
 
     const initZoom = () => {
       // exclude images wrapped in a link — clicking those should navigate, not zoom
@@ -36,8 +44,18 @@ export default {
       cleanupQuizProgress = initQuizProgress(document, route.path)
     }
 
-    onMounted(initPageEnhancements)
-    watch(() => route.path, () => nextTick(initPageEnhancements))
+    onMounted(() => {
+      trackDocView = createDocViewTracker(
+        document.referrer,
+        (...args: unknown[]) => window.gtag?.(...args)
+      )
+      initPageEnhancements()
+      trackDocView(window.location.href, document.title)
+    })
+    watch(() => route.path, () => nextTick(() => {
+      initPageEnhancements()
+      trackDocView(window.location.href, document.title)
+    }))
     onUnmounted(() => cleanupQuizProgress())
 
     // The mobile hamburger menu's translations panel only enters the DOM
