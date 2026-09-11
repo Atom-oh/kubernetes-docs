@@ -1856,6 +1856,8 @@ kubectl label configmap knative-serving-dashboard -n monitoring grafana_dashboar
 
 ### Troubleshooting
 
+Revision-scoped annotation changes must clear the existing `spec.template.metadata.name` (`null` in a JSON merge patch) or use a new, unused Revision name. To apply the new configuration to the entire demo Service, set `spec.traffic` to `[{"latestRevision": true, "percent": 100}]`. This replaces any canary split or pinned Revision routing; if those routes must stay in place, validate the new Revision on a separate test route before switching traffic.
+
 #### Cold Start Latency Is Too High
 
 **Symptoms:** First request after idle period takes several seconds.

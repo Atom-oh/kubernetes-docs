@@ -160,12 +160,12 @@ jq -n --arg a "${EKS_PRIVATE_SUBNET_A:?}" --arg b "${EKS_PRIVATE_SUBNET_B:?}" \
 
 ### 4. Create EKS Cluster
 
-Use `--version`, not `--kubernetes-version`, for `create-cluster`. This example disables automatic creator-admin access, enables the five control-plane log types and bootstraps the conventional core add-ons. CLI bootstrap add-ons are self-managed; adopting them as EKS-managed add-ons requires a separate compatible-version/configuration workflow.
+Use `--kubernetes-version` for `aws eks create-cluster`; `--version` displays the AWS CLI version. The API JSON field remains `version`. This example disables automatic creator-admin access, enables the five control-plane log types and bootstraps the conventional core add-ons. CLI bootstrap add-ons are self-managed; adopting them as EKS-managed add-ons requires a separate compatible-version/configuration workflow.
 
 ```bash
 aws eks describe-cluster-versions --region "${EKS_REGION:?}" --output table
 aws eks create-cluster --name "${EKS_CLUSTER_NAME:?}" --region "$EKS_REGION" \
-  --version 1.36 --role-arn "${EKS_CLUSTER_ROLE_ARN:?}" \
+  --kubernetes-version 1.36 --role-arn "${EKS_CLUSTER_ROLE_ARN:?}" \
   --resources-vpc-config "file://${EKS_CREATE_DIR:?}/vpc-config.json" \
   --access-config authenticationMode=API,bootstrapClusterCreatorAdminPermissions=false \
   --bootstrap-self-managed-addons \

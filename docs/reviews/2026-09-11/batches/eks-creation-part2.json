@@ -72,8 +72,8 @@
   {
     "path": "en/quizzes/eks/02-eks-cluster-creation-part2-quiz.md",
     "fullyRead": true,
-    "status": "fixed",
-    "summary": "Fully reviewed and repaired15questions and2exercises: IRSA/KMS, VPC CNI, current policy APIs, AL2023, IPv6, Windows, IMDS, safe bootstrap and scoped lab lifecycle.",
+    "status": "needs_followup",
+    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
     "sources": [
       "https://docs.aws.amazon.com/eks/latest/userguide/al2023.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
@@ -153,7 +153,8 @@
       "Official Kyverno1.19.1 CLI warns ClusterPolicy is deprecated; verifying CEL alternative before updating policy-engine examples.",
       "Resolved every recorded question/exercise defect. Kept original kernel tuning values explicitly unvalidated; did not claim runtime performance.",
       "The original eksctl kubernetesNetworkConfig.ipFamily:IPv6 spelling was valid and preserved; clarified its distinction from the EKS API lowercase value.",
-      "Current policy example migrated to policies.kyverno.io/v1 after actualCLI deprecation warning; legacy types deprecated1.19 and scheduled removal1.20 per official migration guide."
+      "Current policy example migrated to policies.kyverno.io/v1 after actualCLI deprecation warning; legacy types deprecated1.19 and scheduled removal1.20 per official migration guide.",
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
     ],
     "validation": [
       "Sequential full read1–400,401–800,801–1200,1201–1600,1601–2000,2001–2498. No document commands executed.",
@@ -166,8 +167,8 @@
   {
     "path": "ko/quizzes/eks/02-eks-cluster-creation-part2-quiz.md",
     "fullyRead": true,
-    "status": "fixed",
-    "summary": "Fully reviewed and repaired15questions and2exercises: IRSA/KMS, VPC CNI, current policy APIs, AL2023, IPv6, Windows, IMDS, safe bootstrap and scoped lab lifecycle.",
+    "status": "needs_followup",
+    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
     "sources": [
       "https://docs.aws.amazon.com/eks/latest/userguide/al2023.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
@@ -247,7 +248,8 @@
       "Official Kyverno1.19.1 CLI warns ClusterPolicy is deprecated; verifying CEL alternative before updating policy-engine examples.",
       "Resolved every recorded question/exercise defect. Kept original kernel tuning values explicitly unvalidated; did not claim runtime performance.",
       "The original eksctl kubernetesNetworkConfig.ipFamily:IPv6 spelling was valid and preserved; clarified its distinction from the EKS API lowercase value.",
-      "Current policy example migrated to policies.kyverno.io/v1 after actualCLI deprecation warning; legacy types deprecated1.19 and scheduled removal1.20 per official migration guide."
+      "Current policy example migrated to policies.kyverno.io/v1 after actualCLI deprecation warning; legacy types deprecated1.19 and scheduled removal1.20 per official migration guide.",
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
     ],
     "validation": [
       "Sequential full read1–400,401–800,801–1200,1201–1600,1601–2000,2001–2493. No document commands executed.",

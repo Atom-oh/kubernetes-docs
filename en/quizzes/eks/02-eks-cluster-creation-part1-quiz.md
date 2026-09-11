@@ -330,9 +330,9 @@ eksctl create cluster --name "${NEW_CLUSTER_NAME:?}" --region "$EXAMPLE_REGION" 
   --version 1.36 --dry-run > "$EKS_VERSION_DIR/version-example.yaml"
 # Review all generated defaults, AMI, endpoint CIDRs and costs before creating.
 
-# AWS API creation uses --version, not --kubernetes-version.
+# AWS CLI creation uses --kubernetes-version; the API JSON field is version.
 aws eks create-cluster --name "$NEW_CLUSTER_NAME" --region "$EXAMPLE_REGION" \
-  --version 1.36 --role-arn "${CLUSTER_ROLE_ARN:?}" \
+  --kubernetes-version 1.36 --role-arn "${CLUSTER_ROLE_ARN:?}" \
   --access-config authenticationMode=API \
   --resources-vpc-config "subnetIds=${SUBNET_A:?},${SUBNET_B:?},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}"
 

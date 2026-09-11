@@ -374,7 +374,7 @@ Compose additional policy fragments into the existing ConfigMap data using Kusto
 
 Argo CD API RBAC is separate from Kubernetes RBAC. The object project/app does not identify a destination namespace; Applications outside the control-plane namespace also use project/application-namespace/app. Glob matching does not treat slash as a separator, so include complete resource-action paths.
 
-With the 3.x default, Application update/delete permissions do not automatically grant the same operation on child Kubernetes resources. Use update/<group>/<kind>/<namespace>/<name> or delete/... for those operations, considering server.rbac.disableApplicationFineGrainedRBACInheritance.
+With the 3.x default, Application update/delete permissions do not automatically grant the same operation on child Kubernetes resources. Use `update/<group>/<kind>/<namespace>/<name>` or `delete/...` for those operations, considering `server.rbac.disableApplicationFineGrainedRBACInheritance`.
 
 sync can create, update and prune deployed resources. Denying Application deletion does not prevent deletion through sync/prune. The rollback API also checks sync; there is no separate action/rollback or rollback-only permission. override allows source replacement such as local manifests, not simply force sync. application.sync.requireOverridePrivilegeForRevisionSync can require override when a revision is supplied.
 

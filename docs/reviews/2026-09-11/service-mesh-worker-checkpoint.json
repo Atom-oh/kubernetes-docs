@@ -33,8 +33,9 @@
     "ko/quizzes/service-mesh/linkerd/architecture.md"
   ],
   "currentWork": [
-    "Linkerd architecture guides552lines each andquiz209lines each fully read;128fullread/124fixed. No editsyet. CurrentprimaryAPI/identity/renewal sources being verified and22figures prepared for visual review.",
-    "Correct root/issuer signing, ConfigMap/Secret scheme, DNS-vs-SPIFFE identity, unsafe iptables/manual injection, API versions and unsupported benchmark/rank claims; preserve valid figures with precise scope."
+    "Linkerd architecture guides/quizzes4fullyread and edits now applied;128fullyread/124fixed until final validation. All22figures visually inspected; retained0/3/5/8/9 with precise captions, removed1/2/4/6/7/10 for wrong/obsolete/unsupported embedded claims.",
+    "Corrected issuer-vs-root signing, ConfigMap storage, DNS-form Kubernetes identity, TokenReview, v1beta2 ServerAuthorization error, proto-vs-Go label, CNI/native/manual injection distinctions, unsafe iptables/partial rotation and benchmark rankings.",
+    "Verified70% refresh claim in exact proxy release/v2.368.0 commit a66af8117769df060adda6233302a2d1c4142229: remaining lifetime clamped to min/max; loaded key/CSR reused. Next: released CRD and native injection/identity/jq checks, quiz consistency and links."
   ],
   "nextSteps": [
     "ReviewLinkerd28sequentiallyandCilium24.",
@@ -480,7 +481,29 @@
       "/tmp/mesh-linkerd-architecture-original-ko.md",
       "/tmp/mesh-linkerd-architecture-quiz-original-en.md",
       "/tmp/mesh-linkerd-architecture-quiz-original-ko.md"
-    ]
+    ],
+    "linkerdArchitectureDrafts": [
+      "/tmp/mesh-linkerd-architecture-content.py",
+      "/tmp/mesh-linkerd-architecture-en.py",
+      "/tmp/mesh-linkerd-architecture-ko.py",
+      "/tmp/mesh-linkerd-architecture-quiz-edit.py"
+    ],
+    "linkerdArchitectureSources": {
+      "architecture": "c57bb26eb68e",
+      "injection": "0fd0cb23d817",
+      "authorization": "df5aed0b7772",
+      "apiGoMod": "65239a3cb7f3",
+      "destinationProto": "e0074b4b1cae",
+      "proxyTree": "3156c80fe78c",
+      "proxyTagMetadata": "d5cf920ccab0",
+      "proxyBumpPR": "b9020898f9c7",
+      "certify": "91428ea67ebd",
+      "validator": "41cc2c742eb9",
+      "domain": "1c57312ea374",
+      "loadbalancing": "9c2df5ef75de",
+      "manualRotation": "71d074bdea40",
+      "managedRotation": "0dd09674f2c0"
+    }
   },
   "scopeRules": [
     "Only assigned ko/en docs/quizzes/labs and review evidence; the single shared test exception is explicit.",
@@ -640,5 +663,6 @@
     "reason": "Unverified fixed memory/latency claims embedded in footer; replaced redundant diagram with accurate role table. Any reuse needs parent-owned semantic regeneration.",
     "translationPolicy": "Automated source-sync/backfill only; no foreign prose edited."
   },
-  "parentSharedOwnership": "Parent owns shared frontend/site statistics and analytics workflow. No GA4 credentials supplied; worker continues assigned semantic scopes only. Max2workers; no delegation."
+  "parentSharedOwnership": "Parent owns shared frontend/site statistics and analytics workflow. No GA4 credentials supplied; worker continues assigned semantic scopes only. Max2workers; no delegation.",
+  "linkerdUpcomingSourcePitfall": "Official managed-rotation page has a comment saying two months before expiry beside duration8760h/renewBefore7320h, which actually renews about60days after issuance. Do not copy that arithmetic into the forthcoming security guide. It also copies whole root Secret data unnecessarily; evaluate public-bundle-only sources."
 }

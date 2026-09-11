@@ -1953,6 +1953,8 @@ kubectl label configmap knative-serving-dashboard -n monitoring grafana_dashboar
 
 ### 문제 해결
 
+아래의 Revision 설정 패치는 실습 Service 전체에 새 설정을 적용하는 예제입니다. 기존 `spec.template.metadata.name`을 `null`로 제거해 새 Revision 이름을 자동 생성하고, 트래픽 100%를 준비된 최신 Revision으로 전환합니다. 기존 canary 분할이나 고정 Revision 라우팅을 유지해야 한다면 이 트래픽 설정을 그대로 적용하지 말고 별도 테스트 경로에서 검증한 뒤 전환하세요.
+
 #### 콜드 스타트 지연
 
 ```bash
@@ -1970,11 +1972,15 @@ kubectl patch ksvc order-api -n knative-demo --type merge -p '
   "spec": {
     "template": {
       "metadata": {
+        "name": null,
         "annotations": {
           "autoscaling.knative.dev/min-scale": "1"
         }
       }
-    }
+    },
+    "traffic": [
+      { "latestRevision": true, "percent": 100 }
+    ]
   }
 }'
 
@@ -2027,11 +2033,15 @@ kubectl patch ksvc order-api -n knative-demo --type merge -p '
   "spec": {
     "template": {
       "metadata": {
+        "name": null,
         "annotations": {
           "autoscaling.knative.dev/initial-scale": "5"
         }
       }
-    }
+    },
+    "traffic": [
+      { "latestRevision": true, "percent": 100 }
+    ]
   }
 }'
 ```

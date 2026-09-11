@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { readFile } from 'node:fs/promises'
 import { compile } from '@vue/compiler-dom'
 import { createMarkdownRenderer, resolveConfig } from 'vitepress'
 
@@ -38,3 +39,12 @@ test('inline HTML stays escaped while prose Vue bindings still work', async () =
   assert.doesNotMatch(code, /_ctx\.literal/)
   assert.match(code, /_ctx\.count/)
 })
+
+for (const locale of ['ko', 'en']) {
+  test(`${locale}: Argo CD RBAC action placeholders do not become Vue elements`, async () => {
+    const source = await readFile(new URL(`../../${locale}/gitops/argocd/06-projects-rbac.md`, import.meta.url), 'utf8')
+    const { html, errors } = await render(source)
+    assert.deepEqual(errors, [])
+    assert.match(html, /update\/&lt;group&gt;\/&lt;kind&gt;\/&lt;namespace&gt;\/&lt;name&gt;/)
+  })
+}

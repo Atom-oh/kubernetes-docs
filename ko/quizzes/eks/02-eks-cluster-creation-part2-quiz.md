@@ -130,7 +130,7 @@ kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$IRSA_NAMESPACE" \
 ```bash
 # Cluster creation fragment: use reviewed roles/subnets/groups and a new name.
 aws eks create-cluster --name "${NEW_CLUSTER_NAME:?}" \
-  --region "${EXAMPLE_REGION:?}" --version 1.36 \
+  --region "${EXAMPLE_REGION:?}" --kubernetes-version 1.36 \
   --role-arn "${CLUSTER_ROLE_ARN:?}" \
   --access-config authenticationMode=API,bootstrapClusterCreatorAdminPermissions=false \
   --resources-vpc-config "subnetIds=${PRIVATE_SUBNET_A:?},${PRIVATE_SUBNET_B:?},securityGroupIds=${ADDITIONAL_CONTROL_PLANE_SG:?},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}"

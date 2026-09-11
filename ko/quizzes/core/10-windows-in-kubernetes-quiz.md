@@ -1275,7 +1275,7 @@ monitoring 네임스페이스, Prometheus Operator/ServiceMonitor 검색 설정 
        image: mcr.microsoft.com/mssql/server:2022-latest
        env:
        - name: ACCEPT_EULA
-         value: Y
+         value: "Y"
        - name: MSSQL_SA_PASSWORD
          valueFrom:
            secretKeyRef:

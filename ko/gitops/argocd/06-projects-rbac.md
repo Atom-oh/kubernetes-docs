@@ -346,7 +346,7 @@ data:
 
 Argo CD API RBAC은 Kubernetes RBAC과 별개입니다. object의 project/app은 배포 대상 Namespace가 아니며, 다른 Namespace에 둔 Application CR은 project/application-namespace/app 형식도 사용합니다. `/`는 glob의 구분자가 아니므로 리소스 action/update/delete 경로를 생략하지 않습니다.
 
-3.x 기본 설정에서 application의 update/delete 권한은 하위 Kubernetes 리소스 작업으로 자동 상속되지 않습니다. 하위 작업은 update/<group>/<kind>/<namespace>/<name> 또는 delete/...로 명시합니다. server.rbac.disableApplicationFineGrainedRBACInheritance 설정에 따라 달라질 수 있습니다.
+3.x 기본 설정에서 application의 update/delete 권한은 하위 Kubernetes 리소스 작업으로 자동 상속되지 않습니다. 하위 작업은 `update/<group>/<kind>/<namespace>/<name>` 또는 `delete/...`로 명시합니다. `server.rbac.disableApplicationFineGrainedRBACInheritance` 설정에 따라 달라질 수 있습니다.
 
 sync는 실제 배포 리소스를 생성·변경하고 prune으로 삭제할 수 있습니다. Application 객체 delete 권한을 주지 않았다고 해서 배포 리소스 삭제도 막는 것은 아닙니다. Rollback API도 sync 권한을 검사하므로 별도의 action/rollback 또는 'rollback-only' 권한은 없습니다. override는 강제 sync가 아니라 로컬 매니페스트 등의 소스 대체 권한입니다. 3.5.2의 application.sync.requireOverridePrivilegeForRevisionSync 설정은 revision 지정 sync에도 override를 요구할 수 있습니다.
 

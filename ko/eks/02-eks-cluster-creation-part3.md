@@ -160,12 +160,12 @@ jq -n --arg a "${EKS_PRIVATE_SUBNET_A:?}" --arg b "${EKS_PRIVATE_SUBNET_B:?}" \
 
 ### 4. EKS 클러스터 생성
 
-`create-cluster`에는 `--kubernetes-version`이 아니라 `--version`을 사용합니다. 예제는 생성자의 자동 관리자 접근을 끄고 컨트롤 플레인 로그 다섯 유형과 일반 코어 애드온 부트스트랩을 활성화합니다. CLI 부트스트랩 애드온은 자체 관리형이므로 EKS 관리형 애드온으로 전환하려면 별도의 호환 버전·구성 절차가 필요합니다.
+`aws eks create-cluster`에는 `--kubernetes-version`을 사용합니다. `--version`은 AWS CLI 버전을 출력하며 API JSON 필드는 `version`입니다. 예제는 생성자의 자동 관리자 접근을 끄고 컨트롤 플레인 로그 다섯 유형과 일반 코어 애드온 부트스트랩을 활성화합니다. CLI 부트스트랩 애드온은 자체 관리형이므로 EKS 관리형 애드온으로 전환하려면 별도의 호환 버전·구성 절차가 필요합니다.
 
 ```bash
 aws eks describe-cluster-versions --region "${EKS_REGION:?}" --output table
 aws eks create-cluster --name "${EKS_CLUSTER_NAME:?}" --region "$EKS_REGION" \
-  --version 1.36 --role-arn "${EKS_CLUSTER_ROLE_ARN:?}" \
+  --kubernetes-version 1.36 --role-arn "${EKS_CLUSTER_ROLE_ARN:?}" \
   --resources-vpc-config "file://${EKS_CREATE_DIR:?}/vpc-config.json" \
   --access-config authenticationMode=API,bootstrapClusterCreatorAdminPermissions=false \
   --bootstrap-self-managed-addons \
