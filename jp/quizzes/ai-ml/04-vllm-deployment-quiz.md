@@ -1,58 +1,58 @@
 # vLLM デプロイメントクイズ
 
-このクイズでは、Kubernetes で vLLM (Vector Language Model) をデプロイする方法についての理解を確認します。
+このクイズでは、Kubernetes における vLLM（Vector Language Model）のデプロイに関する理解を確認します。
 
-## クイズの質問
+## クイズ問題
 
-### 1. vLLM (Vector Language Model) の主な目的は何ですか？
+### 1. vLLM（Vector Language Model）の主な目的は何ですか？
 
 A. 画像処理の高速化
-B. Large Language Model (LLM) 推論の最適化と高速化
-C. Database クエリの最適化
-D. Network トラフィック管理
+B. 大規模言語モデル（LLM）の推論最適化と高速化
+C. データベースクエリの最適化
+D. ネットワークトラフィックの管理
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. Large Language Model (LLM) 推論の最適化と高速化**
+**回答: B. 大規模言語モデル（LLM）の推論最適化と高速化**
 
 **解説:**
-vLLM (Vector Language Model) の主な目的は、Large Language Model (LLM) 推論を最適化し高速化することです。vLLM は PagedAttention と呼ばれる革新的な attention アルゴリズムを使用してメモリ管理を最適化し、高スループットかつ低レイテンシでの LLM 推論を可能にします。
+vLLM（Vector Language Model）の主な目的は、大規模言語モデル（LLM）の推論を最適化して高速化することです。vLLM は PagedAttention と呼ばれる革新的な attention アルゴリズムを使用してメモリ管理を最適化し、高スループットかつ低レイテンシでの LLM 推論を可能にします。
 
 **vLLM の主な機能:**
-1. **PagedAttention**: GPU メモリ使用量を最適化する、メモリ効率の高い attention メカニズムです。
+1. **PagedAttention**: GPU メモリ使用量を最適化する、メモリ効率の高い attention メカニズム。
 2. **Continuous batching**: リクエストを動的にバッチ化してスループットを向上させます。
-3. **Distributed inference**: 大規模モデルを複数の GPU と node に分散します。
-4. **さまざまなモデルのサポート**: Llama、GPT-NeoX、Falcon、MPT など、さまざまなオープンソース LLM をサポートします。
+3. **分散推論**: 大規模モデルを複数の GPU とノードに分散します。
+4. **さまざまなモデルのサポート**: Llama、GPT-NeoX、Falcon、MPT を含む各種オープンソース LLM をサポートします。
 5. **OpenAI 互換 API**: OpenAI API と互換性のあるインターフェイスを提供します。
 
 **PagedAttention の仕組み:**
-PagedAttention は、オペレーティングシステムの仮想メモリ管理から着想を得た手法で、KV (Key-Value) cache を効率的に管理します。従来の手法では各リクエストに固定サイズのメモリブロックを割り当てますが、PagedAttention は必要な分だけメモリを割り当て、それを再利用します。
+PagedAttention は、オペレーティングシステムの仮想メモリ管理に着想を得て、KV（Key-Value）cache を効率的に管理する手法です。従来の方法では各リクエストに固定サイズのメモリブロックを割り当てますが、PagedAttention は必要な量だけを割り当てて再利用します。
 
 **vLLM のパフォーマンス上の利点:**
-1. **高スループット**: 既存のソリューションと比較して 2〜4 倍高いスループット
-2. **メモリ効率**: 最大 8 倍多くの同時リクエストを処理可能
-3. **低レイテンシ**: 効率的なメモリ管理により応答時間を短縮
+1. **高スループット**: 既存のソリューションと比較して 2～4 倍高いスループット
+2. **メモリ効率**: 最大 8 倍多い同時リクエストを処理可能
+3. **低レイテンシ**: 効率的なメモリ管理による応答時間の短縮
 4. **リソース使用率の向上**: GPU リソースをより効率的に利用
 
 **vLLM のユースケース:**
-1. **Conversational AI サービス**: Chatbot、仮想アシスタントなど
+1. **対話型 AI サービス**: チャットボット、仮想アシスタントなど
 2. **テキスト生成サービス**: コンテンツ生成、要約、翻訳など
-3. **Code 生成と補完**: プログラミング支援ツール
-4. **大規模テキスト処理**: ドキュメント分析、情報抽出など
+3. **コード生成と補完**: プログラミング支援ツール
+4. **大規模テキスト処理**: 文書分析、情報抽出など
 
 **他の選択肢の問題点:**
 - A. 画像処理の高速化: vLLM はテキストベースの言語モデル向けであり、画像処理に特化していません。
-- C. Database クエリの最適化: vLLM は Database クエリの最適化とは関係ありません。
-- D. Network トラフィック管理: vLLM は Network トラフィック管理とは関係ありません。
+- C. データベースクエリの最適化: vLLM はデータベースクエリの最適化とは関係ありません。
+- D. ネットワークトラフィックの管理: vLLM はネットワークトラフィックの管理とは関係ありません。
 </details>
 
-### 2. Kubernetes で vLLM をデプロイする際に最も重要なリソース要件は何ですか？
+### 2. Kubernetes で vLLM をデプロイする際、最も重要なリソース要件は何ですか？
 
-A. 大量の CPU とメモリ
+A. 大容量の CPU とメモリ
 B. 高性能 GPU と十分な GPU メモリ
-C. 高速 Network インターフェイス
-D. 大容量の永続 storage
+C. 高速ネットワークインターフェイス
+D. 大容量の永続ストレージ
 
 <details>
 <summary>回答を表示</summary>
@@ -60,17 +60,17 @@ D. 大容量の永続 storage
 **回答: B. 高性能 GPU と十分な GPU メモリ**
 
 **解説:**
-Kubernetes で vLLM をデプロイする際に最も重要なリソース要件は、高性能 GPU と十分な GPU メモリです。Large Language Models (LLMs) は数十億から数千億の parameter を持つため、これらのモデルを効率的に実行するには、強力な GPU コンピューティング能力と、モデル parameter を格納するための十分な GPU メモリが不可欠です。
+Kubernetes で vLLM をデプロイする際に最も重要なリソース要件は、高性能 GPU と十分な GPU メモリです。大規模言語モデル（LLM）には数十億から数千億のパラメータがあり、これらのモデルを効率的に実行するには、強力な GPU の計算能力とモデルパラメータを格納できる十分な GPU メモリが不可欠です。
 
 **GPU 要件:**
-1. **GPU type**: NVIDIA A100、H100、V100、RTX A6000 などの高性能 GPU
-2. **GPU メモリ**: モデルサイズによって異なりますが、一般的には次のとおりです:
-   - 7B parameter モデル: 最低 16GB GPU メモリ
-   - 13B parameter モデル: 最低 24GB GPU メモリ
-   - 70B parameter モデル: 最低 80GB GPU メモリ、または複数 GPU への分散
-3. **GPU の数**: スループット要件とモデルサイズによって異なりますが、大規模モデルは複数の GPU に分散する必要があります。
+1. **GPU タイプ**: NVIDIA A100、H100、V100、RTX A6000 などの高性能 GPU
+2. **GPU メモリ**: モデルサイズによって異なりますが、一般に以下のとおりです。
+   - 7B パラメータモデル: 最低 16GB の GPU メモリ
+   - 13B パラメータモデル: 最低 24GB の GPU メモリ
+   - 70B パラメータモデル: 最低 80GB の GPU メモリ、または複数 GPU への分散
+3. **GPU 数**: スループット要件とモデルサイズに依存しますが、大規模モデルは複数の GPU に分散する必要があります。
 
-**vLLM deployment の GPU resource request 例:**
+**vLLM デプロイメントの GPU リソースリクエスト例:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -101,7 +101,7 @@ spec:
             memory: 16Gi
 ```
 
-**大規模モデル向け distributed deployment の例:**
+**大規模モデルの分散デプロイメント例:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -136,51 +136,52 @@ spec:
 ```
 
 **GPU メモリ要件の計算:**
-LLM の GPU メモリ要件は、次の要素によって決まります:
-1. **Model parameters**: 各 parameter は通常 2 bytes (FP16) または 4 bytes (FP32) を使用します。
-2. **KV cache**: 各 token の key-value cache には追加のメモリが必要です。
-3. **Batch size**: 同時リクエスト数が増えるほど、メモリ要件も増加します。
-4. **Context length**: より長い context length には、より多くの KV cache メモリが必要です。
+LLM の GPU メモリ要件は、次の要素によって決まります。
+1. **モデルパラメータ**: 各パラメータは通常 2 バイト（FP16）または 4 バイト（FP32）を使用します。
+2. **KV cache**: 各トークンの Key-Value cache には追加メモリが必要です。
+3. **バッチサイズ**: 同時リクエスト数の増加に伴ってメモリ要件も増加します。
+4. **コンテキスト長**: コンテキスト長が長いほど、より多くの KV cache メモリが必要です。
 
-**概算メモリ要件の式:**
+**おおよそのメモリ要件の式:**
 ```
 Required GPU memory = Model size + (batch size x sequence length x hidden size x layers x 4 bytes)
 ```
 
 **その他のリソース要件:**
-1. **CPU**: 前処理と後処理に十分な CPU core
-2. **System memory**: モデルの読み込みと処理に十分な RAM
-3. **Storage**: model weight ファイル用の十分な storage
-4. **Network**: distributed inference 用の高速 network 接続
+1. **CPU**: 前処理と後処理のための十分な CPU コア
+2. **システムメモリ**: モデルのロードと処理のための十分な RAM
+3. **ストレージ**: モデル重みファイルのための十分なストレージ
+4. **ネットワーク**: 分散推論のための高速ネットワーク接続
 
 **他の選択肢の問題点:**
-- A. 大量の CPU とメモリ: CPU は LLM 推論には効率的ではなく、system memory だけでは GPU メモリを代替できません。
-- C. 高速 Network インターフェイス: distributed inference では重要ですが、GPU と GPU メモリより優先度は低いです。
-- D. 大容量の永続 storage: model weight の storage には必要ですが、推論性能には直接影響しません。
+- A. 大容量の CPU とメモリ: CPU は LLM 推論に効率的ではなく、システムメモリだけで GPU メモリを置き換えることはできません。
+- C. 高速ネットワークインターフェイス: 分散推論では重要ですが、GPU と GPU メモリより優先度は低くなります。
+- D. 大容量の永続ストレージ: モデル重みの保存には必要ですが、推論パフォーマンスに直接影響しません。
 </details>
-### 3. Kubernetes の vLLM に最適な storage ソリューションは何ですか？
+
+### 3. Kubernetes における vLLM の最適なストレージソリューションは何ですか？
 
 A. emptyDir volume
 B. hostPath volume
-C. 高性能 distributed file system (例: FSx for Lustre)
-D. 通常の network file system (NFS)
+C. 高性能分散ファイルシステム（例: FSx for Lustre）
+D. 通常のネットワークファイルシステム（NFS）
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: C. 高性能 distributed file system (例: FSx for Lustre)**
+**回答: C. 高性能分散ファイルシステム（例: FSx for Lustre）**
 
 **解説:**
-Kubernetes の vLLM に最適な storage ソリューションは、高性能 distributed file system (例: FSx for Lustre) です。vLLM は large language models を処理するために model weight ファイルを迅速に読み込む必要があり、distributed inference 環境では複数の node が同じモデルファイルに同時にアクセスする必要があります。高性能 distributed file system は、高スループット、低レイテンシ、並列アクセス機能を提供することで、これらの要件を満たします。
+Kubernetes における vLLM の最適なストレージソリューションは、高性能分散ファイルシステム（例: FSx for Lustre）です。vLLM は大規模言語モデルを処理するためにモデル重みファイルを迅速にロードする必要があり、分散推論環境では複数のノードが同じモデルファイルに同時にアクセスする必要があります。高性能分散ファイルシステムは、高スループット、低レイテンシ、並列アクセス機能によってこれらの要件を満たします。
 
-**高性能 distributed file system の利点:**
-1. **高スループット**: 大きなモデルファイルを迅速に読み込めます。
-2. **並列アクセス**: 複数の node が同じファイルに同時にアクセスできます。
-3. **スケーラビリティ**: 必要に応じて storage 容量と性能を拡張できます。
-4. **データ整合性**: 複数の node 間で一貫したデータビューを提供します。
-5. **耐久性**: データ複製とバックアップ機能によりデータ損失のリスクを低減します。
+**高性能分散ファイルシステムの利点:**
+1. **高スループット**: 大規模なモデルファイルを迅速にロードできます。
+2. **並列アクセス**: 複数ノードが同じファイルへ同時にアクセスできます。
+3. **スケーラビリティ**: ストレージ容量とパフォーマンスを必要に応じてスケールできます。
+4. **データ整合性**: 複数ノードにわたり一貫したデータビューを提供します。
+5. **耐久性**: データレプリケーションとバックアップ機能により、データ損失のリスクを低減します。
 
-**AWS FSx for Lustre configuration example:**
+**AWS FSx for Lustre の設定例:**
 ```yaml
 # StorageClass definition
 apiVersion: storage.k8s.io/v1
@@ -247,7 +248,7 @@ spec:
           claimName: vllm-models
 ```
 
-**Google Cloud Filestore configuration example:**
+**Google Cloud Filestore の設定例:**
 ```yaml
 # StorageClass definition
 apiVersion: storage.k8s.io/v1
@@ -275,7 +276,7 @@ spec:
       storage: 1200Gi
 ```
 
-**Azure NetApp Files configuration example:**
+**Azure NetApp Files の設定例:**
 ```yaml
 # StorageClass definition
 apiVersion: storage.k8s.io/v1
@@ -302,51 +303,51 @@ spec:
       storage: 1200Gi
 ```
 
-**他の storage オプションとの比較:**
+**他のストレージオプションとの比較:**
 
-| Storage Option | Throughput | Latency | Multi-node Access | Scalability | Persistence |
+| ストレージオプション | スループット | レイテンシ | マルチノードアクセス | スケーラビリティ | 永続性 |
 |----------------|------------|---------|-------------------|-------------|-------------|
-| emptyDir | High | Very low | Not possible | Limited | Temporary |
-| hostPath | High | Very low | Not possible | Limited | Node-dependent |
-| NFS | Medium | Medium | Possible | Medium | Persistent |
-| FSx for Lustre | Very high | Low | Possible | High | Persistent |
-| Google Filestore | High | Low | Possible | High | Persistent |
-| Azure NetApp Files | High | Low | Possible | High | Persistent |
+| emptyDir | 高 | 非常に低い | 不可 | 制限あり | 一時的 |
+| hostPath | 高 | 非常に低い | 不可 | 制限あり | ノード依存 |
+| NFS | 中 | 中 | 可能 | 中 | 永続的 |
+| FSx for Lustre | 非常に高い | 低い | 可能 | 高い | 永続的 |
+| Google Filestore | 高い | 低い | 可能 | 高い | 永続的 |
+| Azure NetApp Files | 高い | 低い | 可能 | 高い | 永続的 |
 
-**Model loading 性能の最適化戦略:**
-1. **Memory mapping**: 大きなモデルファイルをメモリに直接 mapping することで読み込み時間を短縮します
-2. **Model sharding**: モデルを複数の shard に分割し、並列に読み込みます
-3. **Caching**: よく使われるモデルをメモリに cache し、再読み込みを防ぎます
-4. **Pre-loading**: サービス起動時にモデルを事前読み込みし、初回リクエストのレイテンシを短縮します
+**モデルロードのパフォーマンス最適化戦略:**
+1. **メモリマッピング**: 大規模モデルファイルをメモリへ直接マッピングしてロード時間を削減
+2. **モデルシャーディング**: モデルを複数の shard に分割して並列ロード
+3. **キャッシュ**: 頻繁に使用するモデルをメモリにキャッシュして再ロードを防止
+4. **事前ロード**: サービス起動時にモデルを事前ロードして、最初のリクエストのレイテンシを削減
 
 **他の選択肢の問題点:**
-- A. emptyDir volume: Pod が再起動するとデータが失われる一時 storage です。大きなモデルファイルの保存には適していません。
-- B. hostPath volume: node local storage に依存するため、multi-node 環境でのデータ共有が困難です。
-- D. 通常の network file system (NFS): スループットとレイテンシの面で、高性能 distributed file system より性能が低くなります。
+- A. emptyDir volume: Pod の再起動時にデータが失われる一時ストレージです。大規模モデルファイルの保存には適していません。
+- B. hostPath volume: ノードローカルストレージに依存するため、マルチノード環境でのデータ共有が困難です。
+- D. 通常のネットワークファイルシステム（NFS）: スループットとレイテンシの面で、高性能分散ファイルシステムよりパフォーマンスが低くなります。
 </details>
 
 ### 4. vLLM における Tensor Parallelism の主な目的は何ですか？
 
 A. 複数のユーザーリクエストを並列処理する
-B. 大規模モデルを複数の GPU に分散してメモリ要件を削減する
+B. 大規模モデルを複数の GPU に分散してメモリ要件を減らす
 C. データ前処理を高速化する
-D. Network 通信を最適化する
+D. ネットワーク通信を最適化する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. 大規模モデルを複数の GPU に分散してメモリ要件を削減する**
+**回答: B. 大規模モデルを複数の GPU に分散してメモリ要件を減らす**
 
 **解説:**
-vLLM における Tensor Parallelism の主な目的は、大規模モデルを複数の GPU に分散してメモリ要件を削減することです。Large Language Models (LLMs) は、単一 GPU のメモリ容量を超える数十億から数千億の parameter を持つことがよくあります。Tensor parallelism は、モデル層を複数の GPU に分割し、各 GPU がモデルの一部だけを格納して処理することで、この問題を解決します。
+vLLM における Tensor Parallelism の主な目的は、大規模モデルを複数の GPU に分散してメモリ要件を減らすことです。大規模言語モデル（LLM）は、多くの場合、単一 GPU のメモリ容量を超える数十億または数千億のパラメータを持ちます。Tensor parallelism はモデルレイヤーを複数の GPU に分割し、各 GPU がモデルの一部だけを保存・処理することでこの問題を解決します。
 
 **Tensor Parallelism の仕組み:**
-1. **Model splitting**: モデルの各層 (特に attention と MLP 層) を複数の GPU に分割します。
-2. **Parallel computation**: 各 GPU は、割り当てられたモデル部分に対して計算を実行します。
-3. **Synchronization**: 必要に応じて GPU 間で中間結果を同期します。
-4. **Result aggregation**: 各 GPU からの結果を集約して最終出力を生成します。
+1. **モデル分割**: モデルの各レイヤー（特に attention と MLP レイヤー）を複数 GPU に分割します。
+2. **並列計算**: 各 GPU は、割り当てられたモデル部分の計算を実行します。
+3. **同期**: 必要に応じて GPU 間で中間結果を同期します。
+4. **結果の集約**: 各 GPU の結果を集約して最終出力を生成します。
 
-**vLLM における tensor parallelism configuration example:**
+**vLLM における Tensor parallelism の設定例:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -377,58 +378,59 @@ spec:
             nvidia.com/gpu: 8  # Request 8 GPUs
 ```
 
-**Tensor parallelism size の選択ガイド:**
-1. **Model size**: 必要な tensor parallelism size は、モデル parameter 数によって異なります。
-   - 7B parameter モデル: 1〜2 GPU
-   - 13B parameter モデル: 2〜4 GPU
-   - 70B parameter モデル: 8〜16 GPU
-   - 175B parameter モデル: 16+ GPU
+**Tensor parallelism サイズの選択ガイド:**
+1. **モデルサイズ**: 必要な Tensor parallelism サイズはモデルパラメータ数に依存します。
+   - 7B パラメータモデル: 1～2 GPU
+   - 13B パラメータモデル: 2～4 GPU
+   - 70B パラメータモデル: 8～16 GPU
+   - 175B パラメータモデル: 16 台以上の GPU
 
-2. **GPU メモリ**: Tensor parallelism size は、利用可能な GPU メモリに基づいて調整する必要があります。
-   - 24GB GPU: 小規模モデルに適しています
-   - 40GB GPU: 中規模モデルに適しています
-   - 80GB GPU: 大規模モデルに適しています
+2. **GPU メモリ**: 利用可能な GPU メモリに基づいて Tensor parallelism サイズを調整する必要があります。
+   - 24GB GPU: 小規模モデルに適する
+   - 40GB GPU: 中規模モデルに適する
+   - 80GB GPU: 大規模モデルに適する
 
 3. **パフォーマンス上の考慮事項**: Tensor parallelism は GPU 間通信のオーバーヘッドを発生させます。
-   - tensor parallelism size が小さすぎる場合: メモリ不足の問題
-   - tensor parallelism size が大きすぎる場合: 通信オーバーヘッドによる性能低下
+   - Tensor parallelism サイズが小さすぎる場合: メモリ不足の問題
+   - Tensor parallelism サイズが大きすぎる場合: 通信オーバーヘッドによるパフォーマンス低下
 
 **Tensor Parallelism と他の並列化手法の比較:**
-1. **Data Parallelism**: 同じモデルの複数コピーが異なるデータ batch を処理します。主に training に使用されます。
-2. **Pipeline Parallelism**: モデル層を複数の GPU に順番に分散します。
-3. **Tensor Parallelism**: 個々の層の計算を複数の GPU に分散します。
+1. **Data Parallelism**: 同じモデルの複数コピーが異なるデータバッチを処理します。主にトレーニングで使用されます。
+2. **Pipeline Parallelism**: モデルレイヤーを複数 GPU に順番に分散します。
+3. **Tensor Parallelism**: 個別レイヤーの計算を複数 GPU に分散します。
 
 **Tensor Parallelism の利点:**
-1. **メモリ効率**: 大規模モデルを複数の GPU に分散することでメモリ要件を削減
-2. **単一リクエストのレイテンシ削減**: 並列計算により推論速度を改善
+1. **メモリ効率**: 大規模モデルを複数 GPU に分散することでメモリ要件を削減
+2. **単一リクエストのレイテンシ短縮**: 並列計算により推論速度を向上
 3. **リソース使用率の向上**: GPU リソースをより効率的に利用
 
 **Tensor Parallelism の欠点:**
 1. **通信オーバーヘッド**: GPU 間のデータ転送によるオーバーヘッド
-2. **実装の複雑さ**: 複雑なモデル分割と同期ロジック
-3. **ハードウェア要件**: 高速 GPU interconnect (NVLink、NVSwitch など) が必要
+2. **実装の複雑性**: 複雑なモデル分割および同期ロジック
+3. **ハードウェア要件**: 高速 GPU インターコネクト（NVLink、NVSwitch など）が必要
 
 **他の選択肢の問題点:**
-- A. 複数のユーザーリクエストを並列処理する: これは batch processing または request parallelism の目的です。
-- C. データ前処理を高速化する: Tensor parallelism はデータ前処理ではなく、モデル推論に焦点を当てます。
-- D. Network 通信を最適化する: Tensor parallelism は network 通信を最適化するものではなく、むしろ追加の通信を発生させます。
+- A. 複数のユーザーリクエストを並列処理する: これはバッチ処理またはリクエスト並列化の目的です。
+- C. データ前処理を高速化する: Tensor parallelism はデータ前処理ではなく、モデル推論に重点を置きます。
+- D. ネットワーク通信を最適化する: Tensor parallelism はネットワーク通信を最適化するのではなく、むしろ追加の通信を発生させます。
 </details>
+
 ### 5. Kubernetes で vLLM サービスの高可用性を確保する最も効果的な方法は何ですか？
 
-A. 単一の pod に複数の container をデプロイする
-B. 複数の replica と適切な resource requests/limits を持つ Deployment を使用する
-C. DaemonSet を使用してすべての node にデプロイする
+A. 単一の Pod に複数コンテナをデプロイする
+B. 複数 replica と適切なリソース requests/limits を備えた Deployment を使用する
+C. DaemonSet で全ノードにデプロイする
 D. CronJob で定期的に再起動する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. 複数の replica と適切な resource requests/limits を持つ Deployment を使用する**
+**回答: B. 複数 replica と適切なリソース requests/limits を備えた Deployment を使用する**
 
 **解説:**
-Kubernetes で vLLM サービスの高可用性を確保する最も効果的な方法は、複数の replica と適切な resource requests/limits を持つ Deployment を使用することです。このアプローチは、サービス中断なしにトラフィックを処理し、node 障害時に自動復旧を提供し、負荷に基づく scaling を可能にします。
+Kubernetes で vLLM サービスの高可用性を確保する最も効果的な方法は、複数 replica と適切なリソース requests/limits を備えた Deployment を使用することです。この方法では、サービスを中断せずにトラフィックを処理し、ノード障害時には自動復旧を行い、負荷に応じたスケーリングを実現できます。
 
-**高可用性 vLLM deployment configuration example:**
+**高可用性 vLLM デプロイメント設定例:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -495,7 +497,7 @@ spec:
           name: http
 ```
 
-**Service configuration example:**
+**Service 設定例:**
 ```yaml
 apiVersion: v1
 kind: Service
@@ -511,7 +513,7 @@ spec:
   type: ClusterIP
 ```
 
-**Horizontal Pod Autoscaling configuration example:**
+**Horizontal Pod Autoscaling 設定例:**
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -542,7 +544,7 @@ spec:
 
 **高可用性のための追加設定:**
 
-1. **Pod Disruption Budget (PDB) setting**:
+1. **Pod Disruption Budget（PDB）の設定**:
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -555,7 +557,7 @@ spec:
       app: vllm
 ```
 
-2. **Node affinity and tolerations**:
+2. **ノード affinity と toleration**:
 ```yaml
 affinity:
   nodeAffinity:
@@ -585,18 +587,18 @@ topologySpreadConstraints:
 ```
 
 **高可用性設定の主な利点:**
-1. **Fault tolerance**: node または pod 障害があってもサービス提供を継続
-2. **Load balancing**: 複数の instance にトラフィックを分散
-3. **Zero downtime updates**: rolling updates による無停止 deployment
-4. **Auto-scaling**: 負荷に基づく自動 scaling
-5. **Auto-recovery**: 障害が発生した pod の自動再起動
+1. **耐障害性**: ノードまたは Pod が障害を起こしてもサービスを継続
+2. **ロードバランシング**: 複数インスタンスにトラフィックを分散
+3. **ゼロダウンタイム更新**: RollingUpdate による中断なしのデプロイ
+4. **自動スケーリング**: 負荷に基づく自動スケーリング
+5. **自動復旧**: 障害が発生した Pod を自動再起動
 
-**Load balancing 戦略:**
-1. **Internal service load balancing**: Kubernetes Service による基本的な load balancing
-2. **External load balancing**: Ingress または cloud load balancer による外部トラフィック分散
-3. **Session affinity**: 必要に応じて同じ client リクエストを同じ pod にルーティング
+**ロードバランシング戦略:**
+1. **内部 Service のロードバランシング**: Kubernetes Service による基本的なロードバランシング
+2. **外部ロードバランシング**: Ingress またはクラウドロードバランサーによる外部トラフィックの分散
+3. **Session affinity**: 必要に応じて同じクライアントのリクエストを同じ Pod にルーティング
 
-**Monitoring and alerting:**
+**監視とアラート:**
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -613,52 +615,52 @@ spec:
 ```
 
 **他の選択肢の問題点:**
-- A. 単一の pod に複数の container をデプロイする: node 障害時にサービス全体が中断される可能性があり、真の高可用性を提供しません。
-- C. DaemonSet を使用してすべての node にデプロイする: すべての node に GPU がある保証はなく、リソースの無駄を招く可能性があります。
-- D. CronJob で定期的に再起動する: サービス中断を引き起こし、高可用性ソリューションではありません。
+- A. 単一の Pod に複数コンテナをデプロイする: ノード障害時にサービス全体が中断する可能性があり、真の高可用性を提供しません。
+- C. DaemonSet で全ノードにデプロイする: すべてのノードに GPU がある保証はなく、リソースの浪費につながる可能性があります。
+- D. CronJob で定期的に再起動する: サービスの中断を引き起こすため、高可用性のソリューションではありません。
 </details>
 
-### 6. vLLM における "Continuous Batching" の主な利点は何ですか？
+### 6. vLLM における「Continuous Batching」の主な利点は何ですか？
 
 A. モデル精度の向上
-B. スループットの増加と GPU 使用率の向上
+B. スループットの向上と GPU 使用率の改善
 C. モデルサイズの削減
-D. Network bandwidth の節約
+D. ネットワーク帯域幅の節約
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. スループットの増加と GPU 使用率の向上**
+**回答: B. スループットの向上と GPU 使用率の改善**
 
 **解説:**
-vLLM における "Continuous Batching" の主な利点は、スループットの増加と GPU 使用率の向上です。Continuous batching は、さまざまな長さと開始時刻を持つリクエストを動的に batch にまとめて処理し、GPU リソースをより効率的に使用して、システム全体のスループットを大幅に向上させます。
+vLLM における「Continuous Batching」の主な利点は、スループットの向上と GPU 使用率の改善です。Continuous batching は、さまざまな長さと開始時刻のリクエストを動的にバッチへグループ化して処理します。これにより GPU リソースをより効率的に使用し、システム全体のスループットを大幅に向上させます。
 
 **従来の batching と Continuous batching の比較:**
-1. **Traditional batching**:
-   - 固定サイズの batch を形成するまでリクエストを待機させます
-   - すべてのリクエストが同時に開始し、同時に終了します
-   - batch 内の最長 sequence に合わせるため padding が必要です
-   - 新しいリクエストは現在の batch が完了するまで待つ必要があります
+1. **従来の batching**:
+   - 固定サイズのバッチを形成するまでリクエストを待機させる
+   - すべてのリクエストが同時に開始・終了する
+   - バッチ内で最長のシーケンスに合わせる padding が必要
+   - 新規リクエストは現在のバッチが完了するまで待機する必要がある
 
 2. **Continuous batching**:
-   - リクエストが到着すると動的に処理します
-   - 開始時刻と長さが異なるリクエストを同時に処理します
-   - 不要な padding なしで効率的にメモリを使用します
-   - 完了したリクエストのリソースを新しいリクエストに即座に割り当てます
+   - リクエストの到着に合わせて動的に処理する
+   - 開始時刻と長さが異なるリクエストを同時に処理する
+   - 不要な padding を使わず、メモリを効率的に使用する
+   - 完了したリクエストのリソースを直ちに新規リクエストへ割り当てる
 
 **Continuous Batching の仕組み:**
-1. **Dynamic request scheduling**: リクエストが到着するとすぐに処理を開始します
-2. **Token-by-token processing**: 各リクエストを token 単位で処理し、各 step で新しい token を生成します
-3. **Resource reallocation**: 完了したリクエストのリソースを新しいリクエストに即座に割り当てます
-4. **KV cache management**: PagedAttention による効率的な KV cache 管理
+1. **動的リクエストスケジューリング**: リクエスト到着時に直ちに処理を開始
+2. **トークン単位の処理**: 各リクエストはトークンごとに処理され、各ステップで新しいトークンを生成
+3. **リソースの再割り当て**: 完了したリクエストのリソースを直ちに新規リクエストへ割り当て
+4. **KV cache 管理**: PagedAttention による効率的な KV cache 管理
 
 **Continuous Batching の利点:**
-1. **高スループット**: GPU リソースをより効率的に利用することで、1 秒あたりに処理できるリクエスト数が増加
-2. **低レイテンシ**: リクエストが batch 形成を待つ必要がありません
-3. **リソース使用率の向上**: GPU 計算リソースとメモリリソースの idle time を削減
+1. **高スループット**: GPU リソースのより効率的な利用により、毎秒処理するリクエスト数を増加
+2. **低レイテンシ**: リクエストはバッチ形成を待つ必要がない
+3. **リソース使用率の向上**: GPU 計算およびメモリリソースのアイドル時間を削減
 4. **さまざまなリクエスト長への対応**: 異なる長さのリクエストを効率的に処理
 
-**vLLM configuration における continuous batching settings:**
+**vLLM 設定での Continuous batching 設定:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -688,80 +690,81 @@ spec:
             nvidia.com/gpu: 1
 ```
 
-**Continuous batching の性能最適化:**
-1. **最適な batch size settings**:
-   - `max-num-batched-tokens`: 一度に処理できる最大 token 数
-   - `max-num-seqs`: 同時に処理できる最大 sequence 数
+**Continuous batching のパフォーマンス最適化:**
+1. **最適なバッチサイズの設定**:
+   - `max-num-batched-tokens`: 一度に処理できる最大トークン数
+   - `max-num-seqs`: 同時に処理できる最大シーケンス数
 
-2. **GPU memory utilization adjustment**:
-   - `gpu-memory-utilization`: GPU メモリ使用率 (0.0〜1.0) を設定
+2. **GPU メモリ使用率の調整**:
+   - `gpu-memory-utilization`: GPU メモリ使用率を設定（0.0～1.0）
 
-3. **KV cache management**:
-   - `max-model-len`: 最大 context length を設定
-   - `block-size`: PagedAttention block size を設定
+3. **KV cache 管理**:
+   - `max-model-len`: 最大コンテキスト長を設定
+   - `block-size`: PagedAttention ブロックサイズを設定
 
-**Performance benchmark example:**
-| Batching Method | Throughput (req/sec) | Average Latency (ms) | GPU Utilization (%) |
+**パフォーマンスベンチマーク例:**
+| バッチ処理方式 | スループット（req/sec） | 平均レイテンシ（ms） | GPU 使用率（%） |
 |-----------------|----------------------|----------------------|---------------------|
 | Static batching | 10 | 500 | 60% |
 | Continuous batching | 25 | 300 | 90% |
 
 **Continuous Batching の制限事項:**
-1. **Memory management complexity**: 動的なメモリ割り当てと解放により複雑さが増加
-2. **Scheduling overhead**: 動的な request scheduling による追加オーバーヘッド
-3. **Optimization difficulty**: さまざまな workload に対して最適な parameter を設定する難しさ
+1. **メモリ管理の複雑さ**: 動的なメモリ割り当てと解放による複雑さの増加
+2. **スケジューリングオーバーヘッド**: 動的リクエストスケジューリングによる追加オーバーヘッド
+3. **最適化の難しさ**: 多様なワークロードに対して最適なパラメータを設定する難しさ
 
 **他の選択肢の問題点:**
 - A. モデル精度の向上: Continuous batching はモデル精度に影響しません。
 - C. モデルサイズの削減: Continuous batching はモデルサイズを変更しません。
-- D. Network bandwidth の節約: Continuous batching は network bandwidth 使用量に直接影響しません。
+- D. ネットワーク帯域幅の節約: Continuous batching はネットワーク帯域幅の使用量に直接影響しません。
 </details>
-### 7. Kubernetes で vLLM サービスを監視する際に最も重要な metric は何ですか？
 
-A. Pod restart count
-B. Inference latency、throughput、GPU memory usage
-C. Network packet loss rate
-D. Disk I/O performance
+### 7. Kubernetes で vLLM サービスを監視する際に最も重要なメトリクスは何ですか？
+
+A. Pod の再起動回数
+B. 推論レイテンシ、スループット、GPU メモリ使用量
+C. ネットワークパケット損失率
+D. ディスク I/O パフォーマンス
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. Inference latency、throughput、GPU memory usage**
+**回答: B. 推論レイテンシ、スループット、GPU メモリ使用量**
 
 **解説:**
-Kubernetes で vLLM サービスを監視する際に最も重要な metrics は、inference latency、throughput、GPU memory usage です。これらの metrics は vLLM サービスの性能、効率、リソース使用率を直接反映し、service quality (QoS) とユーザー体験に直接影響します。
+Kubernetes で vLLM サービスを監視する際に最も重要なメトリクスは、推論レイテンシ、スループット、および GPU メモリ使用量です。これらのメトリクスは vLLM サービスのパフォーマンス、効率、リソース使用率を直接示し、サービス品質（QoS）とユーザーエクスペリエンスに直接影響します。
 
-**主要な monitoring metrics:**
+**主要な監視メトリクス:**
 
-1. **Inference Latency**:
-   - **定義**: リクエストを受信してから応答を返すまでの時間
-   - **重要性**: ユーザー体験とサービス応答性に直接影響
-   - **測定単位**: ミリ秒 (ms) または秒 (s)
-   - **詳細 metrics**:
+1. **推論レイテンシ**:
+   - **定義**: リクエスト受信からレスポンス返却までの時間
+   - **重要性**: ユーザーエクスペリエンスとサービス応答性に直接影響
+   - **測定単位**: ミリ秒（ms）または秒（s）
+   - **詳細メトリクス**:
      - Time to First Token
      - Time per Token
      - Total Generation Time
 
-2. **Throughput**:
-   - **定義**: 単位時間あたりに処理できるリクエスト数または token 数
-   - **重要性**: system capacity と scalability の評価
-   - **測定単位**: Requests per Second (RPS) または Tokens per Second (TPS)
-   - **詳細 metrics**:
+2. **スループット**:
+   - **定義**: 単位時間あたりに処理できるリクエスト数またはトークン数
+   - **重要性**: システム容量とスケーラビリティの評価
+   - **測定単位**: Requests per Second（RPS）または Tokens per Second（TPS）
+   - **詳細メトリクス**:
      - Requests per Second
      - Tokens per Second
      - Batch Size
 
-3. **GPU memory usage**:
+3. **GPU メモリ使用量**:
    - **定義**: vLLM サービスが使用する GPU メモリ量
    - **重要性**: メモリ不足の防止とリソース最適化
-   - **測定単位**: Gigabytes (GB) または Megabytes (MB)
-   - **詳細 metrics**:
-     - Model weight memory usage
-     - KV cache memory usage
-     - Activation memory usage
-     - Total GPU memory usage
+   - **測定単位**: ギガバイト（GB）またはメガバイト（MB）
+   - **詳細メトリクス**:
+     - モデル重みのメモリ使用量
+     - KV cache のメモリ使用量
+     - Activation メモリ使用量
+     - GPU メモリ総使用量
 
-**Prometheus metrics configuration example:**
+**Prometheus メトリクス設定例:**
 ```yaml
 # Expose metrics from vLLM service
 apiVersion: apps/v1
@@ -785,7 +788,7 @@ spec:
         - --enable-metrics=true  # Enable metrics
 ```
 
-**Prometheus ServiceMonitor configuration:**
+**Prometheus ServiceMonitor の設定:**
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -802,9 +805,9 @@ spec:
     path: /metrics
 ```
 
-**主な vLLM metrics と PromQL queries:**
+**主要な vLLM メトリクスと PromQL クエリ:**
 
-1. **Inference latency**:
+1. **推論レイテンシ**:
    ```
    # 95th percentile inference latency
    histogram_quantile(0.95, sum(rate(vllm_request_latency_seconds_bucket[5m])) by (le))
@@ -813,7 +816,7 @@ spec:
    avg(rate(vllm_token_generation_time_seconds_sum[5m]) / rate(vllm_token_generation_time_seconds_count[5m]))
    ```
 
-2. **Throughput**:
+2. **スループット**:
    ```
    # Requests per second
    sum(rate(vllm_requests_total[5m]))
@@ -822,7 +825,7 @@ spec:
    sum(rate(vllm_generated_tokens_total[5m]))
    ```
 
-3. **GPU memory usage**:
+3. **GPU メモリ使用量**:
    ```
    # GPU memory usage
    vllm_gpu_memory_used_bytes
@@ -831,7 +834,7 @@ spec:
    vllm_kv_cache_memory_bytes
    ```
 
-**Grafana dashboard configuration example:**
+**Grafana ダッシュボード設定例:**
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -905,7 +908,7 @@ data:
     }
 ```
 
-**Alert rule configuration example:**
+**アラートルール設定例:**
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -944,67 +947,67 @@ spec:
         description: "GPU memory usage is above 95%"
 ```
 
-**追加の monitoring metrics:**
-1. **GPU utilization**: GPU compute unit の使用率
-2. **CPU usage**: 前処理と後処理に使用される CPU リソース
-3. **System memory usage**: Host memory 使用量
-4. **Error rate**: 失敗したリクエストの割合
-5. **Queue length**: 処理待ちリクエスト数
-6. **Batch efficiency**: 平均 batch size と使用率
+**追加の監視メトリクス:**
+1. **GPU 使用率**: GPU 計算ユニットの使用率
+2. **CPU 使用量**: 前処理と後処理に使用する CPU リソース
+3. **システムメモリ使用量**: ホストメモリ使用量
+4. **エラー率**: 失敗したリクエストの割合
+5. **キュー長**: 処理待ちリクエスト数
+6. **バッチ効率**: 平均バッチサイズと使用率
 
-**Monitoring tool integration:**
-1. **Prometheus + Grafana**: metric 収集と可視化
-2. **NVIDIA DCGM Exporter**: GPU metric 収集
-3. **Jaeger/Zipkin**: Distributed tracing
-4. **ELK Stack**: Log 収集と分析
+**監視ツールの統合:**
+1. **Prometheus + Grafana**: メトリクスの収集と可視化
+2. **NVIDIA DCGM Exporter**: GPU メトリクスの収集
+3. **Jaeger/Zipkin**: 分散トレーシング
+4. **ELK Stack**: ログの収集と分析
 
 **他の選択肢の問題点:**
-- A. Pod restart count: system stability の指標ですが、vLLM サービス性能を直接反映するものではありません。
-- C. Network packet loss rate: network 問題の診断には有用ですが、vLLM サービスの中核的な performance metric ではありません。
-- D. Disk I/O performance: モデル読み込み時には重要な場合がありますが、稼働中の vLLM サービス性能にはそれほど重要ではありません。
+- A. Pod の再起動回数: システム安定性の指標ですが、vLLM サービスのパフォーマンスを直接反映しません。
+- C. ネットワークパケット損失率: ネットワーク問題の診断には有用ですが、vLLM サービスの中核的なパフォーマンスメトリクスではありません。
+- D. ディスク I/O パフォーマンス: モデルロード時には重要となることがありますが、実行中の vLLM サービスパフォーマンスには重要度が低くなります。
 </details>
 
-### 8. Kubernetes の vLLM サービスに最適な network configuration は何ですか？
+### 8. Kubernetes における vLLM サービスの最適なネットワーク設定は何ですか？
 
 A. デフォルトの CNI plugin を使用する
-B. Tensor parallelism のための高性能 network interface と RDMA support
-C. Network policies ですべての traffic を制限する
-D. Service mesh を実装する
+B. Tensor parallelism 用の高性能ネットワークインターフェイスと RDMA サポート
+C. network policy で全トラフィックを制限する
+D. service mesh を実装する
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. Tensor parallelism のための高性能 network interface と RDMA support**
+**回答: B. Tensor parallelism 用の高性能ネットワークインターフェイスと RDMA サポート**
 
 **解説:**
-Kubernetes の vLLM サービスに最適な network configuration は、tensor parallelism のための高性能 network interface と RDMA (Remote Direct Memory Access) support です。大規模言語モデルを複数 GPU に分散して実行する場合、GPU 間通信の性能はシステム全体の性能に大きく影響します。高性能 network interface と RDMA support は、GPU 間データ転送のレイテンシを最小化し、スループットを最大化して、distributed inference の性能を向上させます。
+Kubernetes における vLLM サービスの最適なネットワーク設定は、Tensor parallelism 用の高性能ネットワークインターフェイスと RDMA（Remote Direct Memory Access）サポートです。大規模言語モデルを複数 GPU に分散して実行する場合、GPU 間通信のパフォーマンスはシステム全体のパフォーマンスに大きく影響します。高性能ネットワークインターフェイスと RDMA サポートは、GPU 間データ転送のレイテンシを最小化し、スループットを最大化して分散推論のパフォーマンスを向上させます。
 
-**高性能 networking の重要性:**
-1. **Tensor parallelism**: モデル層を複数 GPU に分散する際、頻繁な GPU 間通信が必要です
-2. **Model sharding**: 大規模モデルを複数 node に分散する際、node 間の network performance が重要です
-3. **Latency sensitivity**: GPU 間通信レイテンシは全体の inference latency に直接影響します
-4. **Bandwidth requirements**: 大きな tensor data transfer には高い bandwidth が必要です
+**高性能ネットワーキングの重要性:**
+1. **Tensor parallelism**: モデルレイヤーを複数 GPU に分散するときに頻繁な GPU 間通信が必要
+2. **モデルシャーディング**: 大規模モデルを複数ノードに分散するときはノード間ネットワーク性能が重要
+3. **レイテンシ感度**: GPU 間通信レイテンシは推論全体のレイテンシに直接影響
+4. **帯域幅要件**: 大規模 tensor データの転送には高帯域幅が必要
 
-**最適な network configuration の構成要素:**
+**最適なネットワーク設定の構成要素:**
 
-1. **High-performance network interface**:
-   - **NVIDIA ConnectX-6/7**: 最大 200Gbps bandwidth をサポート
-   - **InfiniBand**: 超低レイテンシ高帯域 networking
-   - **RDMA over Converged Ethernet (RoCE)**: Ethernet network 上の RDMA 機能
+1. **高性能ネットワークインターフェイス**:
+   - **NVIDIA ConnectX-6/7**: 最大 200Gbps の帯域幅をサポート
+   - **InfiniBand**: 超低レイテンシ・高帯域幅ネットワーキング
+   - **RDMA over Converged Ethernet（RoCE）**: Ethernet ネットワーク上での RDMA 機能
 
-2. **RDMA (Remote Direct Memory Access) support**:
+2. **RDMA（Remote Direct Memory Access）サポート**:
    - CPU を介さない GPU メモリ間の直接データ転送
    - レイテンシを最小化しスループットを最大化
    - GPU Direct RDMA: GPU メモリ間の直接データ転送
 
 3. **NVLink/NVSwitch**:
-   - 同一 node 内の GPU 間の高速接続
-   - 最大 600GB/s bandwidth (NVLink 4.0)
-   - multi-GPU system で重要
+   - 同一ノード内の GPU 間の高速接続
+   - 最大 600GB/s の帯域幅（NVLink 4.0）
+   - マルチ GPU システムで重要
 
-**Kubernetes における高性能 networking configuration:**
+**Kubernetes での高性能ネットワーキング設定:**
 
-1. **SR-IOV (Single Root I/O Virtualization) Network Device Plugin**:
+1. **SR-IOV（Single Root I/O Virtualization）Network Device Plugin**:
 ```yaml
 # SR-IOV network device plugin configuration
 apiVersion: v1
@@ -1032,7 +1035,7 @@ data:
     }
 ```
 
-2. **NetworkAttachmentDefinition configuration**:
+2. **NetworkAttachmentDefinition の設定**:
 ```yaml
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
@@ -1053,7 +1056,7 @@ spec:
   }'
 ```
 
-3. **Apply high-performance network configuration to vLLM deployment**:
+3. **vLLM デプロイメントに高性能ネットワーク設定を適用する**:
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1095,8 +1098,8 @@ spec:
           value: "eth0,ens"
 ```
 
-**NCCL (NVIDIA Collective Communications Library) configuration:**
-NCCL は GPU 間通信を最適化する library で、次の environment variables によって設定できます:
+**NCCL（NVIDIA Collective Communications Library）の設定:**
+NCCL は GPU 間通信を最適化するライブラリであり、次の環境変数で設定できます。
 
 ```
 # Enable NCCL debug information
@@ -1121,8 +1124,8 @@ NCCL_IB_ENABLE_RDMA=1
 NCCL_IB_GDR_LEVEL=4
 ```
 
-**Multi-node distributed configuration:**
-vLLM を複数 node に分散する場合、node 間の network performance がさらに重要になります。次の設定が必要です:
+**マルチノード分散設定:**
+vLLM を複数ノードに分散する場合、ノード間のネットワークパフォーマンスはさらに重要になります。以下の設定が必要です。
 
 ```yaml
 apiVersion: v1
@@ -1181,7 +1184,7 @@ spec:
         nvidia.com/sriov_rdma: 8
 ```
 
-**Network performance testing:**
+**ネットワークパフォーマンステスト:**
 ```bash
 # Run NCCL test
 kubectl run nccl-test --image=nvidia/cuda:11.8.0-devel-ubuntu22.04 --overrides='{"spec": {"containers": [{"name": "nccl-test", "image": "nvidia/cuda:11.8.0-devel-ubuntu22.04", "command": ["/bin/bash", "-c"], "args": ["apt-get update && apt-get install -y git && git clone https://github.com/NVIDIA/nccl-tests.git && cd nccl-tests && make && ./build/all_reduce_perf -b 8 -e 128M -f 2 -g 8"], "resources": {"limits": {"nvidia.com/gpu": 8}}}]}}' --restart=Never
@@ -1193,38 +1196,39 @@ kubectl run iperf3-client --image=networkstatic/iperf3 --rm -it -- -c iperf3-ser
 ```
 
 **他の選択肢の問題点:**
-- A. デフォルトの CNI plugin を使用する: デフォルトの CNI plugin は通常、RDMA のような高性能 networking 機能をサポートせず、tensor parallelism に必要な性能を提供しません。
-- C. Network policies ですべての traffic を制限する: Security を強化できますが、performance は向上せず、追加のオーバーヘッドを加える可能性があります。
-- D. Service mesh を実装する: Service mesh は microservices architecture には有用ですが、vLLM のような high-performance computing workload には不要なオーバーヘッドを追加します。
+- A. デフォルトの CNI plugin を使用する: デフォルトの CNI plugin は一般に RDMA などの高性能ネットワーキング機能をサポートせず、Tensor parallelism に必要なパフォーマンスを提供しません。
+- C. network policy で全トラフィックを制限する: セキュリティは向上しますが、パフォーマンスは改善せず、追加のオーバーヘッドを発生させる可能性があります。
+- D. service mesh を実装する: service mesh はマイクロサービスアーキテクチャには有用ですが、vLLM のような高性能コンピューティングワークロードには不要なオーバーヘッドを追加します。
 </details>
-### 9. Kubernetes で vLLM サービスの scalability を向上させる最も効果的な方法は何ですか？
 
-A. CPU core を増やす
-B. Horizontal scaling (複数 replica) と load balancing、vertical scaling (より大きな GPU) の組み合わせ
-C. メモリを増やす
-D. より大きな persistent volume を provision する
+### 9. Kubernetes における vLLM サービスのスケーラビリティを改善する最も効果的な方法は何ですか？
+
+A. CPU コアを追加で割り当てる
+B. Horizontal scaling（複数 replica）とロードバランシング、および Vertical scaling（より大きな GPU）の組み合わせ
+C. メモリを追加で割り当てる
+D. より大きな PersistentVolume をプロビジョニングする
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. Horizontal scaling (複数 replica) と load balancing、vertical scaling (より大きな GPU) の組み合わせ**
+**回答: B. Horizontal scaling（複数 replica）とロードバランシング、および Vertical scaling（より大きな GPU）の組み合わせ**
 
 **解説:**
-Kubernetes で vLLM サービスの scalability を向上させる最も効果的な方法は、horizontal scaling (複数 replica) と load balancing、vertical scaling (より大きな GPU) の組み合わせです。このアプローチは、さまざまな workload 要件とリソース制約に柔軟に対応でき、cost efficiency と performance のバランスを取ることができます。
+Kubernetes における vLLM サービスのスケーラビリティを改善する最も効果的な方法は、Horizontal scaling（複数 replica）とロードバランシング、および Vertical scaling（より大きな GPU）の組み合わせです。このアプローチは、さまざまなワークロード要件とリソース制約に柔軟に対応し、コスト効率とパフォーマンスのバランスを取ることができます。
 
 **Horizontal Scaling の利点:**
-1. **スループットの増加**: より多くの replica により、より多くの同時リクエストを処理できます
-2. **高可用性**: 一部の instance が失敗してもサービスを継続できます
-3. **地理的分散**: 複数 region にデプロイしてレイテンシを削減できます
-4. **Cost efficiency**: 必要に応じて instance 数を調整できます
+1. **スループットの向上**: replica を増やすことで、より多くの同時リクエストを処理可能
+2. **高可用性**: 一部のインスタンスが失敗してもサービスを継続
+3. **地理的分散**: 複数リージョンにデプロイしてレイテンシを削減
+4. **コスト効率**: 必要に応じてインスタンス数を調整可能
 
 **Vertical Scaling の利点:**
-1. **より大きなモデルのサポート**: より大きな GPU メモリでより大きなモデルを読み込めます
-2. **単一リクエストのレイテンシ削減**: より強力な GPU により推論速度が向上します
-3. **より長い context の処理**: より多くのメモリでより長い context を処理できます
-4. **通信オーバーヘッドの削減**: 単一 GPU または単一 node 内の複数 GPU を使用する場合、通信オーバーヘッドを削減できます
+1. **より大きなモデルのサポート**: 大きな GPU メモリでより大きなモデルをロード可能
+2. **単一リクエストのレイテンシ短縮**: より強力な GPU により推論速度を向上
+3. **より長いコンテキストの処理**: より多くのメモリでより長いコンテキストを処理可能
+4. **通信オーバーヘッドの削減**: 単一 GPU または単一ノード内の複数 GPU を使用する場合に通信オーバーヘッドを削減
 
-**Horizontal scaling configuration example:**
+**Horizontal scaling の設定例:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1250,7 +1254,7 @@ spec:
             nvidia.com/gpu: 1
 ```
 
-**Horizontal auto-scaling configuration:**
+**Horizontal auto-scaling の設定:**
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -1279,7 +1283,7 @@ spec:
         averageValue: 100
 ```
 
-**Vertical scaling configuration example:**
+**Vertical scaling の設定例:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1308,7 +1312,7 @@ spec:
             nvidia.com/gpu: 8  # Allocate more GPUs
 ```
 
-**Load balancing configuration:**
+**ロードバランシング設定:**
 ```yaml
 apiVersion: v1
 kind: Service
@@ -1346,8 +1350,8 @@ spec:
               number: 80
 ```
 
-**Model sharding and routing:**
-複数の deployment を組み合わせて routing することで、さまざまな model size と type をサポートできます:
+**モデルシャーディングとルーティング:**
+さまざまなモデルサイズとタイプをサポートするため、複数の Deployment を組み合わせてルーティングできます。
 
 ```yaml
 # Small model deployment
@@ -1394,7 +1398,7 @@ spec:
         - --tensor-parallel-size=8
 ```
 
-**API gateway configuration:**
+**API gateway 設定:**
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -1441,74 +1445,74 @@ spec:
           number: 8000
 ```
 
-**Scalability optimization strategies:**
-1. **Request routing optimization**:
-   - model size と complexity に基づいて適切な instance にリクエストを routing
-   - session affinity により KV cache 再利用を最適化
+**スケーラビリティ最適化戦略:**
+1. **リクエストルーティングの最適化**:
+   - モデルサイズと複雑さに基づき、適切なインスタンスへリクエストをルーティング
+   - Session affinity による KV cache 再利用の最適化
 
-2. **Resource allocation optimization**:
-   - workload 特性に適した GPU type を選択
-   - 適切な tensor parallelism size を設定
+2. **リソース割り当ての最適化**:
+   - ワークロードの特性に適した GPU タイプを選択
+   - 適切な Tensor parallelism サイズを設定
 
-3. **Caching strategy**:
-   - よく使われる prompt と response を cache
-   - model weight caching
+3. **キャッシュ戦略**:
+   - 頻繁に使用する prompt とレスポンスをキャッシュ
+   - モデル重みのキャッシュ
 
 4. **Hybrid cloud scaling**:
-   - on-premises と cloud resources を組み合わせる
-   - burst traffic に対して cloud scaling を使用
+   - オンプレミスとクラウドのリソースを組み合わせる
+   - バーストトラフィックに対するクラウドスケーリング
 
-**Scalability testing and benchmarking:**
+**スケーラビリティのテストとベンチマーク:**
 ```bash
 # Run load test
 kubectl run locust --image=locustio/locust --env="LOCUST_HOST=http://vllm-service" --env="LOCUST_LOCUSTFILE=/mnt/locustfile.py" --volume=locustfile.py:/mnt/locustfile.py
 ```
 
 **他の選択肢の問題点:**
-- A. CPU core を増やす: vLLM は主に GPU-bound であり、CPU core を追加するだけでは性能は大きく改善しません。
-- C. メモリを増やす: system memory は重要ですが、GPU メモリが主な制約です。
-- D. より大きな persistent volume を provision する: storage 容量はモデル保存には重要ですが、推論性能と scalability には直接影響しません。
+- A. CPU コアを追加で割り当てる: vLLM は主に GPU-bound であり、CPU コアを追加するだけではパフォーマンスは大きく向上しません。
+- C. メモリを追加で割り当てる: システムメモリは重要ですが、GPU メモリが主な制約です。
+- D. より大きな PersistentVolume をプロビジョニングする: ストレージ容量はモデル保存には重要ですが、推論パフォーマンスとスケーラビリティには直接影響しません。
 </details>
 
-### 10. Kubernetes で vLLM をデプロイする際に最も重要な security consideration は何ですか？
+### 10. Kubernetes で vLLM をデプロイする際に最も重要なセキュリティ上の考慮事項は何ですか？
 
-A. Network policy configuration
-B. Model weights と API keys の保護、container security hardening
-C. Pod security policy configuration
-D. Audit logging の有効化
+A. NetworkPolicy の設定
+B. モデル重みと API key の保護、コンテナセキュリティの強化
+C. Pod security policy の設定
+D. audit logging の有効化
 
 <details>
 <summary>回答を表示</summary>
 
-**回答: B. Model weights と API keys の保護、container security hardening**
+**回答: B. モデル重みと API key の保護、コンテナセキュリティの強化**
 
 **解説:**
-Kubernetes で vLLM をデプロイする際に最も重要な security consideration は、model weights と API keys の保護、および container security hardening です。vLLM サービスは知的財産である model weights、機密性の高い API keys、ユーザーデータを扱うため、これらの資産を保護し、container 環境の security を強化することが最も重要です。
+Kubernetes で vLLM をデプロイする際に最も重要なセキュリティ上の考慮事項は、モデル重みと API key の保護、およびコンテナセキュリティの強化です。vLLM サービスは知的財産であるモデル重み、機密性の高い API key、ユーザーデータを扱うため、これらの資産を保護し、コンテナ環境のセキュリティを強化することが最も重要です。
 
-**主な security considerations:**
+**主なセキュリティ上の考慮事項:**
 
-1. **Model weight protection**:
-   - Model weights は知的財産権を持つ価値ある資産です。
+1. **モデル重みの保護**:
+   - モデル重みは知的財産権を伴う貴重な資産です。
    - 不正アクセス、コピー、漏えいから保護する必要があります。
-   - 暗号化 storage と転送中の暗号化が必要です。
+   - 保存時の暗号化と転送中の暗号化が必要です。
 
 2. **API key と認証情報の保護**:
-   - API keys、tokens、passwords などの認証情報は安全に管理する必要があります。
-   - Kubernetes Secrets または外部 secret management systems を使用するべきです。
-   - secrets は environment variables ではなく mounted volumes を通じて提供するべきです。
+   - API key、token、password などの認証情報は安全に管理する必要があります。
+   - Kubernetes Secrets または外部 secret 管理システムを使用する必要があります。
+   - 環境変数ではなく、マウントされた volume を通じて secret を提供する必要があります。
 
-3. **Container security hardening**:
+3. **コンテナセキュリティの強化**:
    - 最小権限の原則を適用
-   - container を non-root user として実行
-   - read-only file system を使用
-   - 不要な capabilities と privileges を削除
+   - non-root ユーザーとしてコンテナを実行
+   - 読み取り専用ファイルシステムを使用
+   - 不要な capability と権限を削除
 
-4. **Input validation and output filtering**:
-   - prompt injection attack を防止
+4. **入力検証と出力フィルタリング**:
+   - prompt injection 攻撃を防止
    - 機密情報の漏えいを防止
-   - 有害なコンテンツを filter
+   - 有害なコンテンツをフィルタリング
 
-**Model weight protection configuration example:**
+**モデル重み保護の設定例:**
 ```yaml
 # Encrypted persistent volume claim
 apiVersion: storage.k8s.io/v1
@@ -1603,7 +1607,7 @@ spec:
           secretName: api-keys
 ```
 
-**Container security hardening:**
+**コンテナセキュリティの強化:**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1632,7 +1636,7 @@ spec:
             type: RuntimeDefault
 ```
 
-**Network policy:**
+**NetworkPolicy:**
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -1673,7 +1677,7 @@ spec:
       port: 443
 ```
 
-**Input validation and output filtering:**
+**入力検証と出力フィルタリング:**
 ```python
 # Prompt validation and filtering example
 def validate_prompt(prompt):
@@ -1702,7 +1706,7 @@ def filter_output(response):
     return response
 ```
 
-**RBAC (Role-Based Access Control) configuration:**
+**RBAC（Role-Based Access Control）の設定:**
 ```yaml
 # Create service account
 apiVersion: v1
@@ -1745,7 +1749,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-**Audit logging configuration:**
+**Audit logging の設定:**
 ```yaml
 # ConfigMap for audit logging
 apiVersion: v1
@@ -1790,15 +1794,36 @@ spec:
         emptyDir: {}
 ```
 
-**追加の security best practices:**
-1. **Regular security scanning**: container images と dependencies の脆弱性を scan
-2. **Principle of least privilege**: 必要最小限の privileges のみを付与
-3. **Immutable infrastructure**: 変更が必要な場合は新しい containers をデプロイ
-4. **Security monitoring**: 異常な behavior を検出して alert を送信
-5. **Emergency response plan**: security incidents に対する対応手順を準備
+**追加のセキュリティベストプラクティス:**
+1. **定期的なセキュリティスキャン**: コンテナイメージと依存関係の脆弱性をスキャン
+2. **最小権限の原則**: 必要最小限の権限のみを付与
+3. **Immutable infrastructure**: 変更が必要な場合は新しいコンテナをデプロイ
+4. **セキュリティ監視**: 異常な動作を検出してアラートを送信
+5. **緊急対応計画**: セキュリティインシデントへの対応手順を準備
 
 **他の選択肢の問題点:**
-- A. Network policy configuration: 重要ですが、model weights と API keys の保護、および container security hardening より優先度は低いです。
-- C. Pod security policy configuration: container security の一部ですが、model weight と API key の保護は含まれません。
-- D. Audit logging の有効化: security monitoring には重要ですが、予防的 security measures より優先度は低いです。
+- A. NetworkPolicy の設定: 重要ですが、モデル重みと API key の保護、およびコンテナセキュリティ強化より優先度は低くなります。
+- C. Pod security policy の設定: コンテナセキュリティの一部ですが、モデル重みと API key の保護は含まれません。
+- D. audit logging の有効化: セキュリティ監視には重要ですが、予防的なセキュリティ対策より優先度は低くなります。
+</details>
+
+### 11. このページの、単一の NVIDIA L4 GPU で測定した Qwen2.5-7B-Instruct ベンチマークでは、同時実行数が 1 から 16 に増加したとき、リクエストごとのレイテンシはどうなりましたか？
+
+A. 増加した負荷に比例して、ほぼ 16 倍に増加した
+B. 集計スループットがほぼ線形にスケールする一方で、ほぼ横ばいだった（p50 は 5.65s から 7.52s へ、+33%）
+C. リクエストが増えると vLLM が prefill ステージをスキップできるため、低下した
+D. 同時実行数 16 に達する前に GPU の KV cache メモリが尽きたため、測定できなかった
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B. 集計スループットがほぼ線形にスケールする一方で、ほぼ横ばいだった（p50 は 5.65s から 7.52s へ、+33%）**
+
+**解説:**
+これは Continuous batching の中核となる教訓です。vLLM は、すでに実行中のリクエストの後ろに新しいリクエストをキューイングしません。次の scheduler step で batch に参加させるため、GPU は多くの sequence を直列ではなく並列に処理します。この測定では、約 100～128 token の完全なレスポンスの p50 レイテンシは、同時実行数 1 での 5.65s から同時実行数 16 での 7.52s へと 33% 増えただけであり、集計 completion throughput は約 17 tokens/s から 208 tokens/s（client 測定）へスケールしました。このスケーリングは、帯域幅律速の decode を示す特徴です。同時実行数 1 では、token ごとに約 15.2 GB の bf16 重みを GDDR6 メモリからストリーミングするため、この L4 の約 300 GB/s のメモリ帯域幅では、単一リクエストの decode は測定されたおよそ 17～18 tokens/s に制限されます。一方、最も多忙な測定点でも、計算は GPU の約 121 TFLOPS の bf16 上限の数パーセントにすぎません。Batching により多くのリクエストが同じ重みの読み取りをほぼ無料で共有できるため、レイテンシはほとんど変わらない一方で、スループットはほぼ線形にスケールします。
+
+**他の選択肢が誤っている理由:**
+- A. これは Continuous batching ではなく、直列の（非バッチ化）リクエスト処理で発生する動作です。
+- C. Continuous batching は prefill をスキップしません。新規リクエストはすべて decode の前に prefill を実行しますが、他のリクエストの decode step と並行して実行されるだけです。
+- D. この 24GB L4 では、同時実行数 16 における GPU KV cache 使用量のピークはわずか 2.6% であり、枯渇にはほど遠い状態でした。このベンチマークでは、その上限を探るほど同時実行数を増やしていません。
 </details>
