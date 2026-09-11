@@ -147,7 +147,7 @@ export function markdownAlternateUrl(relativePath) {
   const [locale, ...rest] = relativePath.split('/')
   if (!supportedLocales.includes(locale) || rest.length === 0) return undefined
   const source = rest.join('/').replace(/(^|\/)index\.md$/, '$1README.md')
-  if (source === 'README.md' || /^(quizzes|labs)\//.test(source)) return undefined
+  if (source === 'README.md' || source === 'statistics.md' || /^(quizzes|labs)\//.test(source)) return undefined
   return `${siteHostname}llms/${locale}/${source}`
 }
 

@@ -13,6 +13,8 @@ on:
       - 'package-lock.json'
       - '.vitepress/**'
       - '.github/workflows/pr-validate.yml'
+      - '.github/workflows/deploy.yml'
+      - 'public/site-statistics.json'
 
 jobs:
   validate:

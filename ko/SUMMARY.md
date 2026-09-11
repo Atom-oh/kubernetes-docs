@@ -5,6 +5,7 @@
 * [소개](README.md)
 * [가이드북 로드맵](roadmap.md)
 * [LLM과 함께 읽기](llm-guide.md)
+* [방문 통계](statistics.md)
 
 ## 소식
 
