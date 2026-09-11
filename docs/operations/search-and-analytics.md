@@ -56,6 +56,10 @@ VitePress 공개 페이지에는 포함되지 않습니다.
 
 ## GA4에서 방문자 수 확인
 
+문서 사이트에도 방문 통계를 표시합니다. 공개 집계 연결과 운영 방법은
+[문서 사이트 방문 통계 연결](./public-visitor-statistics.md)을 참고하세요.
+아래 GA4 관리자 화면은 수신 확인과 상세 분석에 사용합니다.
+
 1. [Google Analytics](https://analytics.google.com/)에 로그인합니다.
 2. **관리 → 데이터 스트림 → 웹 스트림**에서 측정 ID가 `G-GWVLEW5JLL`인 속성을
    확인합니다. `G-...` 측정 ID와 숫자로 된 GA4 속성 ID는 서로 다릅니다.

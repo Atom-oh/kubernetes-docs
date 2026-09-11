@@ -239,7 +239,10 @@ const config = defineConfig({
     // carries correct ko/en/x-default alternates for every page, so drop the
     // sitemap ones rather than ship contradictory signals.
     transformItems: (items) =>
-      items.map(({ links, ...item }) => {
+      items
+      // Statistics is a noindex site utility, not an article to submit for indexing.
+      .filter(item => !['ko/statistics', 'en/statistics'].includes(normalizeSitemapUrl(item.url)))
+      .map(({ links, ...item }) => {
         const lastmod = lastUpdatedIndex.get(normalizeSitemapUrl(item.url))
         return lastmod ? { ...item, lastmod } : item
       })
@@ -262,7 +265,10 @@ const config = defineConfig({
         '쿠버네티스와 Amazon EKS 실무 학습 자료 — 핵심 개념, 네트워킹, 서비스 메시, 옵저버빌리티, 퀴즈와 실습 랩까지 한 곳에서.',
       themeConfig: {
         sidebar: summarySidebar('ko'),
-        nav: [{ text: 'AI · MCP 활용', link: '/ko/llm-guide' }]
+        nav: [
+          { text: 'AI · MCP 활용', link: '/ko/llm-guide' },
+          { text: '방문 통계', link: '/ko/statistics' }
+        ]
       }
     },
     en: {
@@ -273,7 +279,10 @@ const config = defineConfig({
         'Hands-on Kubernetes and Amazon EKS training — core concepts, networking, service mesh, observability, quizzes, and labs.',
       themeConfig: {
         sidebar: summarySidebar('en'),
-        nav: [{ text: 'AI · MCP guide', link: '/en/llm-guide' }]
+        nav: [
+          { text: 'AI · MCP guide', link: '/en/llm-guide' },
+          { text: 'Statistics', link: '/en/statistics' }
+        ]
       }
     }
   },

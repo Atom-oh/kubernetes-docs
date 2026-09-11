@@ -7,6 +7,8 @@ This repository is a comprehensive cloud guidebook covering Linux and container 
 
 ## Learning Materials and Quizzes
 
+[Visitor statistics](./statistics.md) shows recent visitor counts and document views for this site.
+
 This training content provides quizzes for each topic along with the learning materials. You can test and reinforce what you've learned through the quizzes. Each quiz is designed with toggle-style answers that are hidden, allowing you to attempt the questions first before revealing the answers.
 
 - [Learning Materials Table of Contents](#table-of-contents) - Learning materials by topic
