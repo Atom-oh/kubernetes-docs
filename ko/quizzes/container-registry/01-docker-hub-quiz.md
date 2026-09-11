@@ -1,19 +1,19 @@
 # Docker Hub 퀴즈
-> **마지막 업데이트**: 2026년 2월 25일
+> **마지막 업데이트**: 2026년 9월 11일
 
-1. Docker Hub 무료 플랜에서 익명 사용자의 이미지 풀(pull) 제한은 어떻게 적용되나요?
-   - A) 사용자당 시간당 100회
-   - B) IP 주소당 6시간당 100회
-   - C) 사용자당 하루 1000회
+1. 공용 NAT 뒤의 노드가 Docker Hub에 익명으로 접근할 때 pull 제한의 집계 기준은 무엇인가요?
+   - A) 각 Pod별
+   - B) 송신 IPv4 주소 또는 IPv6 /64 대역
+   - C) Kubernetes namespace별
    - D) 제한 없음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) IP 주소당 6시간당 100회**
+**정답: B) 송신 IPv4 주소 또는 IPv6 /64 대역**
 
 **설명:**
-Docker Hub는 익명 사용자에게 IP 주소 기준으로 6시간당 100회의 풀 제한을 적용합니다. 인증된 무료 사용자는 6시간당 200회로 제한이 완화됩니다.
+익명 요청은 송신 IPv4 주소 또는 IPv6 /64 기준으로 집계되므로 NAT를 공유하는 노드가 같은 버킷을 사용할 수 있습니다. 구체적인 횟수와 시간 창은 현재 공식 정책과 rate-limit 응답 헤더에서 확인합니다.
 
 </details>
 
@@ -45,23 +45,23 @@ Docker Hub는 익명 사용자에게 IP 주소 기준으로 6시간당 100회의
 **정답: B) Pull-through 캐시 프록시 구성**
 
 **설명:**
-Pull-through 캐시(예: Harbor의 프록시 캐시, Amazon ECR의 풀스루 캐시)를 사용하면 Docker Hub에서 이미지를 한 번만 풀하고 이후에는 로컬 캐시에서 제공하므로 레이트 리밋 영향을 크게 줄일 수 있습니다.
+Pull-through 캐시는 캐시된 레이어의 반복 다운로드를 줄입니다. 캐시 미스, 태그 갱신과 재검증은 여전히 upstream 요청을 발생시키므로 제한을 완전히 없애는 것은 아닙니다.
 
 </details>
 
-4. Docker Hub의 Automated Builds 기능에 대한 설명으로 올바른 것은?
+4. 2026년 9월 기준 Docker Hub Automated Builds의 운영 방침으로 올바른 것은?
    - A) 모든 무료 플랜 사용자가 사용 가능하다
-   - B) GitHub/GitLab 연동으로 코드 푸시 시 자동으로 이미지를 빌드한다
+   - B) 폐기 예정 기능이므로 2027-04-01 종료 전에 외부 CI/CD로 이전한다
    - C) 빌드된 이미지는 자동으로 서명된다
    - D) 오직 공개 레포지토리에서만 작동한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) GitHub/GitLab 연동으로 코드 푸시 시 자동으로 이미지를 빌드한다**
+**정답: B) 폐기 예정 기능이므로 2027-04-01 종료 전에 외부 CI/CD로 이전한다**
 
 **설명:**
-Docker Hub의 Automated Builds는 GitHub 또는 GitLab 레포지토리와 연동하여 소스 코드 변경 시 자동으로 Docker 이미지를 빌드하고 푸시합니다. 이 기능은 유료 플랜에서 제공됩니다.
+공식 안내는 Automated Builds를 deprecated로 표시하고 2027-04-01 종료를 공지합니다. 기존 네이티브 연동은 GitHub/Bitbucket이며 GitLab은 GitLab CI에서 빌드 후 push하는 방식으로 구성합니다.
 
 </details>
 
@@ -77,27 +77,27 @@ Docker Hub의 Automated Builds는 GitHub 또는 GitLab 레포지토리와 연동
 **정답: C) 사용자가 직접 Official Image를 등록할 수 있다**
 
 **설명:**
-Official Images는 Docker Inc.가 관리하는 큐레이션된 이미지 세트로, 엄격한 검토 과정을 거칩니다. 일반 사용자가 직접 Official Image를 등록할 수 없으며, Docker 공식 팀의 승인이 필요합니다.
+Official Images는 Docker와 upstream/community 관리자가 큐레이션하는 이미지입니다. 기여자가 등록을 제안할 수는 있지만 검토 없이 스스로 공식 배지를 붙일 수는 없습니다. 공식 배지도 개별 태그의 취약점 부재를 보장하지 않습니다.
 
 </details>
 
 6. Docker Hub의 "Verified Publisher" 배지가 의미하는 것은?
    - A) 이미지가 취약점이 없음을 보장한다
-   - B) Docker Inc.가 퍼블리셔의 신원과 콘텐츠를 검증했다
+   - B) 게시자 검증 프로그램을 통과한 조직임을 나타낸다
    - C) 이미지가 무료로 사용 가능하다
    - D) 이미지가 자동으로 업데이트된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Docker Inc.가 퍼블리셔의 신원과 콘텐츠를 검증했다**
+**정답: B) 게시자 검증 프로그램을 통과한 조직임을 나타낸다**
 
 **설명:**
-Verified Publisher 배지는 Docker Inc.가 해당 조직의 신원을 확인하고 콘텐츠의 품질과 보안 표준을 검토했음을 나타냅니다. 이는 신뢰할 수 있는 소스에서 이미지를 가져오고 있음을 의미합니다.
+게시자 신원을 확인하는 신호이며 각 이미지가 취약점이 없거나 서명됐다는 보장은 아닙니다. 선택한 태그/digest의 유지보수 상태, 스캔 및 서명을 별도로 확인합니다.
 
 </details>
 
-7. imagePullSecrets를 모든 Pod에 자동으로 적용하려면 어떻게 해야 하나요?
+7. 특정 ServiceAccount를 사용하는 새 Pod가 기본 pull 자격 증명을 받게 하려면 어떻게 해야 하나요?
    - A) 클러스터 전역 설정에서 구성
    - B) ServiceAccount에 imagePullSecrets를 추가
    - C) ConfigMap에 설정
@@ -109,7 +109,7 @@ Verified Publisher 배지는 Docker Inc.가 해당 조직의 신원을 확인하
 **정답: B) ServiceAccount에 imagePullSecrets를 추가**
 
 **설명:**
-ServiceAccount에 `imagePullSecrets` 필드를 추가하면, 해당 ServiceAccount를 사용하는 모든 Pod에 자동으로 imagePullSecrets가 적용됩니다. 네임스페이스의 default ServiceAccount에 추가하면 해당 네임스페이스의 모든 Pod에 적용됩니다.
+같은 namespace의 ServiceAccount에 `imagePullSecrets`를 설정하면, 이를 사용하는 새 Pod 중 자체 pull-secret 목록이 없는 Pod가 해당 목록을 받습니다. 기존 Pod, 다른 ServiceAccount, 다른 namespace에는 소급 적용되지 않습니다.
 
 </details>
 
@@ -117,7 +117,7 @@ ServiceAccount에 `imagePullSecrets` 필드를 추가하면, 해당 ServiceAccou
    - A) 이미지 다이제스트(SHA256)로 고정하여 사용
    - B) 신뢰할 수 있는 베이스 이미지 사용
    - C) 항상 :latest 태그 사용으로 최신 보안 패치 적용
-   - D) 이미지 서명 검증 (Docker Content Trust)
+   - D) 신뢰할 서명자를 지정한 런타임·admission 검증
 
 <details>
 <summary>정답 보기</summary>
@@ -133,7 +133,7 @@ ServiceAccount에 `imagePullSecrets` 필드를 추가하면, 해당 ServiceAccou
    - A) Pro는 개인용, Team은 조직용으로 협업 기능 제공
    - B) Pro는 무제한 프라이빗 레포지토리, Team은 제한됨
    - C) Pro만 Automated Builds를 지원
-   - D) Team은 레이트 리밋이 없음
+   - D) Team만 pull이 무제한이고 Pro는 항상 제한됨
 
 <details>
 <summary>정답 보기</summary>
@@ -141,7 +141,7 @@ ServiceAccount에 `imagePullSecrets` 필드를 추가하면, 해당 ServiceAccou
 **정답: A) Pro는 개인용, Team은 조직용으로 협업 기능 제공**
 
 **설명:**
-Docker Hub Pro는 개인 개발자를 위한 플랜이며, Team 플랜은 조직을 위한 것으로 역할 기반 접근 제어, 감사 로그, 조직 관리 기능 등 협업에 필요한 기능을 제공합니다.
+Pro는 개인 개발자용이고 Team은 조직 협업을 위한 플랜입니다. 구체적인 권한·감사·SSO 제공 범위는 현재 플랜 표를 확인하며, pull 제한만으로 두 플랜을 구분하지 않습니다.
 
 </details>
 

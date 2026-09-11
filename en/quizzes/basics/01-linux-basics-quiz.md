@@ -32,7 +32,7 @@ The Linux kernel is the core of the operating system, acting as an intermediary 
 **Answer: C) Memory namespace**
 
 **Explanation:**
-Linux has the following namespaces: PID (Process ID), Network, Mount, UTS (hostname), IPC (Inter-Process Communication), User, and cgroup namespaces. Memory namespace does not exist. Memory isolation is primarily managed through cgroups.
+Linux has the following namespaces: PID (Process ID), Network, Mount, UTS (hostname), IPC (Inter-Process Communication), User, cgroup and time namespaces. There is no memory namespace: process virtual address spaces provide memory separation, while cgroups account for and limit memory usage.
 
 </details>
 
@@ -49,7 +49,7 @@ Linux has the following namespaces: PID (Process ID), Network, Mount, UTS (hostn
 **Answer: A) Limiting and isolating resource usage of process groups**
 
 **Explanation:**
-cgroups is a Linux kernel feature that limits and isolates the resource usage of process groups. It can limit and monitor the usage of resources such as CPU time, memory, block I/O, and network bandwidth. This is a core technology for implementing resource limits in containers.
+cgroups is a Linux kernel feature that limits and isolates the resource usage of process groups. It can limit and monitor the usage of CPU time, memory and block I/O resources; network bandwidth control requires tc/eBPF integration. This is a core technology for implementing resource limits in containers.
 </details>
 
 4. In the file permission "rwxr-xr--", what are the group user's permissions?
@@ -119,7 +119,7 @@ OverlayFS is a union mount file system that overlays multiple directories to pre
 **Answer: B) net.ipv4.ip_forward**
 
 **Explanation:**
-`net.ipv4.ip_forward` is the setting that enables IP packet forwarding in the Linux kernel. This setting must be set to 1 to enable communication between containers and between containers and external networks. This parameter must be enabled when setting up Kubernetes nodes, and can be set with the command `sysctl -w net.ipv4.ip_forward=1`.
+`net.ipv4.ip_forward` is the setting that enables IP packet forwarding in the Linux kernel. Set it to 1 when the node must forward IPv4 packets between interfaces; same-network-namespace localhost traffic does not require forwarding. This parameter must be enabled when setting up Kubernetes nodes, and can be set with the command `sysctl -w net.ipv4.ip_forward=1`.
 </details>
 
 8. In a systemd unit file, which directive is used to define that a service should start after a specific service?
@@ -135,10 +135,10 @@ OverlayFS is a union mount file system that overlays multiple directories to pre
 **Answer: C) After**
 
 **Explanation:**
-In systemd unit files, `After` defines that the current unit should start after the specified unit. For example, `After=network-online.target` ensures the service starts after the network is ready. `Requires` defines a strong dependency, `Wants` defines a weak dependency, and `Before` indicates that the current unit should start before another unit.
+In systemd unit files, `After` defines that the current unit should start after the specified unit. After= only sets ordering when both units are started; pair Wants=network-online.target with After= and a distribution wait-online implementation when startup requires network readiness. It does not continuously monitor network availability. `Requires` defines a strong dependency, `Wants` defines a weak dependency, and `Before` indicates that the current unit should start before another unit.
 </details>
 
-9. Which kernel parameter is required for CNI plugins to work properly, allowing bridge traffic to pass through iptables?
+9. Which kernel parameter sends bridged IPv4 traffic through iptables when the selected CNI requires bridge netfilter?
    - A) net.ipv4.ip_forward
    - B) net.bridge.bridge-nf-call-iptables
    - C) net.core.netdev_max_backlog
@@ -151,7 +151,7 @@ In systemd unit files, `After` defines that the current unit should start after 
 **Answer: B) net.bridge.bridge-nf-call-iptables**
 
 **Explanation:**
-`net.bridge.bridge-nf-call-iptables` configures bridged network traffic to pass through iptables rules. This setting is essential for Kubernetes CNI plugins (Calico, Flannel, etc.) to correctly apply network policies and service routing. To enable this setting, you must first load the `br_netfilter` kernel module.
+`net.bridge.bridge-nf-call-iptables` configures bridged network traffic to pass through iptables rules. Whether this setting is needed depends on the CNI/data plane; it is not universal for routed or eBPF networking. To enable this setting, you must first load the `br_netfilter` kernel module.
 </details>
 
 10. In package management, which command is used on Ubuntu/Debian to prevent automatic upgrades of Kubernetes components?
@@ -167,7 +167,7 @@ In systemd unit files, `After` defines that the current unit should start after 
 **Answer: B) apt-mark hold**
 
 **Explanation:**
-`apt-mark hold` pins specific packages to prevent automatic upgrades. In Kubernetes clusters, version compatibility of kubelet, kubeadm, and kubectl is important, so it is recommended to pin versions with the command `sudo apt-mark hold kubelet kubeadm kubectl`. On RHEL/CentOS, use the `yum versionlock` command.
+`apt-mark hold` pins specific packages to prevent automatic upgrades. In Kubernetes clusters, version compatibility of kubelet, kubeadm, and kubectl is important, so it is recommended to pin versions with the command `sudo apt-mark hold kubelet kubeadm kubectl`. On RPM-based systems, use the installed DNF/YUM versionlock plugin or repository exclusions appropriate to the distribution.
 </details>
 
 ## Short Answer Questions
@@ -241,7 +241,7 @@ A veth pair is a virtual ethernet interface pair where one end is inside the con
 **Answer: ulimit**
 
 **Explanation:**
-ulimit is a command to check and set resource limits for users and processes. `ulimit -n` checks the number of file descriptors that can be opened, and `ulimit -n 65536` changes the limit. On Kubernetes nodes, many file handles are needed, so it is common to permanently set high values in `/etc/security/limits.conf`.
+ulimit is a command to check and set resource limits for users and processes. `ulimit -n` checks the number of file descriptors that can be opened, and `ulimit -n 65536` changes the limit. The shell limit applies to it and future children. PAM limits affect new login sessions; use systemd LimitNOFILE for system services such as kubelet.
 </details>
 
 17. What is the name of systemd's logging system tool used for unified management of service logs?
@@ -265,7 +265,7 @@ journald is systemd's unified logging system that collects and stores system and
 **Answer: chronyd (or chrony)**
 
 **Explanation:**
-chronyd is a modern NTP client/server that synchronizes time faster than the traditional ntpd. The `chronyc tracking` command checks synchronization status, and `chronyc sources` shows the NTP server list. In Kubernetes clusters, all nodes must have accurately synchronized time for authentication, logging, etc. to work correctly.
+chronyd is an NTP client/server; convergence depends on network, source quality and configuration. The `chronyc tracking` command checks synchronization status, and `chronyc sources` shows the NTP server list. In Kubernetes clusters, all nodes must have accurately synchronized time for authentication, logging, etc. to work correctly.
 </details>
 
 19. What is the path of the file where DNS name resolution settings are stored in Linux?
@@ -291,10 +291,12 @@ chronyd is a modern NTP client/server that synchronizes time faster than the tra
 **Answer:**
 ```bash
 # Create a new network namespace
-ip netns add mynetns
+sudo ip netns add mynetns
 
 # List network interfaces within that namespace
-ip netns exec mynetns ip link list
+sudo ip netns exec mynetns ip link list
+# After the exercise, when no processes use it:
+sudo ip netns delete mynetns
 ```
 
 **Explanation:**
@@ -386,7 +388,7 @@ ss -tulpn | grep :8080
   - `ss -tulpn | grep :8080`: A modern replacement for `netstat` that provides the same information.
 </details>
 
-25. Write the commands to configure the kernel modules br_netfilter and overlay to load automatically at boot, which are required for Kubernetes nodes.
+25. Write the commands to configure the kernel modules br_netfilter and overlay to load automatically at boot, when the selected runtime/CNI requires those modules.
 
 <details>
 
@@ -405,7 +407,7 @@ sudo modprobe br_netfilter
 ```
 
 **Explanation:**
-Creating a `.conf` file in the `/etc/modules-load.d/` directory causes the systemd-modules-load service to automatically load those modules at boot. The `overlay` module supports the OverlayFS file system used for container image layers, and the `br_netfilter` module allows bridge traffic to pass through iptables, which is essential for Kubernetes networking.
+Creating a `.conf` file in the `/etc/modules-load.d/` directory causes the systemd-modules-load service to automatically load those modules at boot. The `overlay` module supports the OverlayFS file system used for container image layers, and the `br_netfilter` module allows bridge traffic to pass through iptables, when required by the selected CNI configuration.
 </details>
 
 26. Write a journalctl command to view real-time logs of the kubelet service while filtering only error level and above messages.
@@ -419,11 +421,7 @@ Creating a `.conf` file in the `/etc/modules-load.d/` directory causes the syste
 journalctl -u kubelet -f -p err
 ```
 
-or
-
-```bash
-journalctl -u kubelet -f -p warning
-```
+`-p warning` also includes warnings and therefore does not meet the question’s error-only threshold.
 
 **Explanation:**
   - `-u kubelet`: Show only kubelet service logs
@@ -460,19 +458,19 @@ The `timedatectl` command is systemd's time management utility that can set and 
 <summary>Show Answer</summary>
 
 **Answer:**
-```bash
+```text
 *               soft    nofile          65536
 *               hard    nofile          65536
 ```
 
-or for specific users/services:
-```bash
+or for a specific PAM login user (not a systemd service):
+```text
 root            soft    nofile          65536
 root            hard    nofile          65536
 ```
 
 **Explanation:**
-`/etc/security/limits.conf` is a configuration file used by PAM (Pluggable Authentication Modules) to define per-user resource limits. `*` means all users, `soft` is the default limit, `hard` is the maximum limit. `nofile` specifies the number of file descriptors that can be opened. On Kubernetes nodes, many network connections and file handles are needed, so this value should be set high.
+`/etc/security/limits.conf` is a configuration file used by PAM (Pluggable Authentication Modules) to define per-user resource limits. `*` matches ordinary users (root needs an explicit entry), `soft` is the default limit, `hard` is the maximum limit. `nofile` specifies the number of file descriptors that can be opened. Choose limits from workload needs. PAM settings do not update running processes or ordinary systemd system services; configure LimitNOFILE in the service drop-in instead.
 </details>
 
 ## Advanced Questions
@@ -502,7 +500,7 @@ root            hard    nofile          65536
   - CPU time limiting
   - Memory usage limiting
   - Block I/O bandwidth limiting
-  - Network bandwidth limiting
+  - Network traffic classification integrated with tc/eBPF
   - Device access control
 
 3. **Capabilities**:
@@ -600,7 +598,7 @@ It is important to grant only the minimum necessary capabilities to containers f
 In production environments, it is good security practice to accurately identify the capabilities a container needs and remove all other capabilities. Docker's `--cap-drop`, `--cap-add` options or Kubernetes' `securityContext.capabilities` field can be used for this.
 </details>
 
-32. Explain the structure of a systemd service unit file and the role of main sections ([Unit], [Service], [Install]), and write a basic unit file example for the Kubernetes kubelet service.
+32. Explain the structure of a systemd service unit file and the role of main sections ([Unit], [Service], [Install]), and write a basic unit file for a training service, explaining why kubelet’s packaged unit/drop-ins should be preserved.
 
 <details>
 
@@ -625,19 +623,18 @@ In production environments, it is good security practice to accurately identify 
 3. **[Install] Section**: Defines behavior when unit is enabled
    - `WantedBy`: Target that wants this unit
 
-**kubelet service unit file example:**
+**Training service unit example (linux-basics-demo.service):**
 
 ```ini
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Linux basics training service
+Documentation=man:systemd.service(5)
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/kubelet
-Restart=always
-StartLimitInterval=0
+ExecStart=/usr/bin/sleep infinity
+Restart=on-failure
 RestartSec=10
 
 [Install]
@@ -645,7 +642,7 @@ WantedBy=multi-user.target
 ```
 
 **Explanation:**
-This unit file defines the kubelet service. It starts after the network is ready (`After=network-online.target`), always restarts on failure (`Restart=always`), and attempts to restart every 10 seconds (`RestartSec=10`). `WantedBy=multi-user.target` means this service starts when the system boots into multi-user mode.
+This unit runs a harmless training process. Use systemctl cat kubelet to inspect the distribution unit and kubeadm drop-ins; do not replace them with this example. It orders startup after network-online.target when both are activated, always restarts on failure (`Restart=on-failure`), and attempts to restart every 10 seconds (`RestartSec=10`). `WantedBy=multi-user.target` means this service starts when the system boots into multi-user mode.
 </details>
 
 33. Explain how to permanently set sysctl kernel parameters required for Kubernetes node configuration and describe the role of each parameter.
@@ -665,12 +662,11 @@ cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes.conf
 net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 1
 
-# Bridge traffic passes through iptables - essential for CNI network policies
+# Bridge traffic passes through iptables - only if the CNI uses bridge netfilter
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 
-# Connection tracking table size (for large clusters)
-net.netfilter.nf_conntrack_max = 1000000
+# Size conntrack separately from measured workload/memory requirements.
 EOF
 
 # Apply settings
@@ -686,8 +682,8 @@ sudo sysctl --system
 
 2. **net.bridge.bridge-nf-call-iptables = 1**
    - Configures traffic passing through bridges to be subject to iptables rules
-   - Essential for Kubernetes services (ClusterIP, NodePort) and NetworkPolicy to work correctly
-   - Required because kube-proxy uses iptables for service routing
+   - Needed only for implementations relying on bridge netfilter
+   - kube-proxy may use iptables or nftables; another data plane may replace kube-proxy
 
 3. **net.ipv6.conf.all.forwarding = 1**
    - Enables packet forwarding in IPv6 environments
@@ -698,7 +694,7 @@ sudo sysctl --system
 2. Create the sysctl configuration file
 3. Apply all settings with `sysctl --system`
 
-Without these settings, Kubernetes cluster networking will not function properly, especially with issues in Pod-to-Pod communication and service discovery.
+Apply only the settings required by your IP families and CNI, in an isolated lab or reviewed node configuration workflow.
 </details>
 
 34. Explain Linux log management strategy using journald and logrotate, and present configuration methods for efficient log management on Kubernetes nodes.
@@ -718,7 +714,7 @@ Without these settings, Kubernetes cluster networking will not function properly
 
 **logrotate (traditional log file management):**
 - Manages rotation, compression, and deletion of text log files
-- Runs periodically via cron job
+- Runs via the distribution’s systemd timer or cron job
 
 **Kubernetes Node Log Management Configuration:**
 
@@ -741,10 +737,19 @@ SystemKeepFree=1G
 MaxRetentionSec=1month
 ```
 
-**2. logrotate configuration for container logs:**
-```bash
-# /etc/logrotate.d/containers
-/var/log/containers/*.log {
+**2. Kubelet CRI log rotation:**
+
+Merge these fields into the existing kubelet configuration; do not apply them with kubectl or replace the entire file.
+
+```yaml
+containerLogMaxSize: 10Mi
+containerLogMaxFiles: 5
+```
+
+For ordinary application text logs not owned by kubelet:
+```text
+# /etc/logrotate.d/myapp
+/var/log/myapp/*.log {
     daily
     rotate 7
     compress
@@ -768,9 +773,11 @@ journalctl --disk-usage
 
 **Kubernetes Log Management Best Practices:**
 
-1. **kubelet logs**: Managed by journald, stored in `/var/log/journal/`
-2. **Container logs**: Stored in `/var/log/containers/`, managed by logrotate
+1. **kubelet logs**: Commonly journald; persistent journals use /var/log/journal, volatile journals use /run/log/journal
+2. **Container logs**: CRI files are typically under /var/log/pods with symlinks in /var/log/containers; kubelet manages rotation. Do not run logrotate on these symlinks.
 3. **Centralized logging**: Recommended to forward to external systems using Fluentd/Fluent Bit
+
+copytruncate can lose records during its copy/truncate race; prefer an application-supported reopen mechanism. Journal vacuum commands remove archived files only.
 
 Proper log management maintains a balance between preventing node failures due to disk space exhaustion and preserving logs for troubleshooting.
 </details>
@@ -778,3 +785,24 @@ Proper log management maintains a balance between preventing node failures due t
 ---
 
 [Return to Learning Materials](../../basics/01-linux-basics.md) | [Next Quiz: Linux Operations](./02-linux-advanced-quiz.md)
+
+## Verification References
+
+- https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+- https://kubernetes.io/docs/concepts/architecture/cgroups/
+- https://man7.org/linux/man-pages/man7/time_namespaces.7.html
+- https://man7.org/linux/man-pages/man2/getrlimit.2.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+- https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- https://ubuntu.com/about/release-cycle
+- https://www.debian.org/releases/
+- https://www.centos.org/centos-linux-eol/
+- https://documentation.ubuntu.com/server/how-to/networking/timedatectl-and-timesyncd/
+- https://aws.amazon.com/amazon-linux-2/faqs/
+- https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
+- https://github.com/logrotate/logrotate/blob/main/logrotate.8.in
+- https://github.com/linux-pam/linux-pam/blob/master/modules/pam_limits/limits.conf.5.xml

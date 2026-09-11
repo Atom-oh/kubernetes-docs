@@ -1,6 +1,6 @@
 # Harbor
 
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 11, 2026
 
 ## Overview
 
@@ -23,7 +23,7 @@ Harbor is an open-source, cloud-native container registry that provides enterpri
 
 ### Architecture
 
-![Harbor's internal structure: the Portal fronts the Core API, which fans out to the Registry, Job Service, PostgreSQL and Redis, while the Job Service drives the Trivy and Notary security layer.](../.gitbook/assets/en-container-registry-03-harbor-0.png)
+![Harbor's internal structure: the Portal fronts the Core API, which fans out to the Registry, Job Service, PostgreSQL and Redis, while the Job Service drives the Trivy scanner.](../.gitbook/assets/en-container-registry-03-harbor-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-0.html)
 
@@ -35,41 +35,58 @@ Harbor is an open-source, cloud-native container registry that provides enterpri
 | **Registry** | Docker Distribution v2 API implementation, image storage |
 | **Job Service** | Async task execution (replication, scanning, GC) |
 | **Trivy** | Vulnerability scanning engine |
-| **Notary** | Content trust and image signing (legacy) |
 | **Portal** | Web UI for administration |
 | **PostgreSQL** | Metadata, user data, audit logs |
 | **Redis** | Job queue, session cache, registry cache |
 
 ## Helm Installation
 
+The reviewed baseline on 2026-09-11 is **Harbor 2.15.2 / Helm chart 1.19.2**. Application and chart versions differ. This example assumes that external HA PostgreSQL, Redis and shared storage already exist; the values file does not provision them.
+
 ### Prerequisites
 
+- Prepare supported Kubernetes/Helm versions, DNS, a maintained Ingress controller and its `IngressClass`. Configure upload limits, timeouts and TLS for that controller.
+- Create the `harbor-tls` certificate/key Secret in namespace `harbor`. The certificate must match the hostname; clients and nodes must trust its CA.
+- Two Registry replicas on separate nodes require a **shared RWX PVC or object storage**. Sharing one EBS `gp3` RWO PVC across nodes is not an HA configuration.
+- Prepare PostgreSQL database `registry`, its user and the `password` key in Secret `harbor-database`. `sslmode: require` requires encryption only; validate CA trust and `verify-full` when certificate and hostname validation are required.
+- Redis must support the multiple logical databases used by Harbor. Do not use a Redis Cluster mode restricted to DB 0. Prepare `REDIS_PASSWORD` in Secret `harbor-redis` and validate TLS connectivity. Use the chart's `caBundleSecretName` for a private CA.
+
 ```bash
-# Add Harbor Helm repository
 helm repo add harbor https://helm.goharbor.io
 helm repo update
-
-# Create namespace
+helm show chart harbor/harbor --version 1.19.2
 kubectl create namespace harbor
+kubectl get ingressclass
+kubectl get storageclass
 ```
 
-### Basic Installation
+### Initial Credentials
 
 ```bash
-helm install harbor harbor/harbor \
-  --namespace harbor \
-  --set expose.type=ingress \
-  --set expose.ingress.hosts.core=harbor.example.com \
-  --set externalURL=https://harbor.example.com \
-  --set persistence.persistentVolumeClaim.registry.size=100Gi \
-  --set persistence.persistentVolumeClaim.database.size=10Gi \
-  --set persistence.persistentVolumeClaim.redis.size=5Gi
+# Initial installation only: preserve this encryption key during upgrades.
+umask 077
+HARBOR_SETUP_DIR=$(mktemp -d)
+python3 - "$HARBOR_SETUP_DIR" <<'PYTHON'
+import getpass
+import pathlib
+import secrets
+import sys
+root = pathlib.Path(sys.argv[1])
+(root / "admin-password").write_text(getpass.getpass("Initial Harbor admin password: "))
+(root / "secretKey").write_text(secrets.token_hex(8))  # exactly 16 characters
+PYTHON
+kubectl create secret generic harbor-admin -n harbor \
+  --from-file=HARBOR_ADMIN_PASSWORD="$HARBOR_SETUP_DIR/admin-password"
+kubectl create secret generic harbor-encryption-key -n harbor \
+  --from-file=secretKey="$HARBOR_SETUP_DIR/secretKey"
+rm -rf -- "$HARBOR_SETUP_DIR"
 ```
 
 ### Production values.yaml
 
+Save as `harbor-values.yaml` and replace every example hostname and StorageClass. Add resource requests/limits and Pod spreading for the measured load and available nodes. Enable `serviceMonitor.enabled` only after installing the Prometheus Operator CRDs.
+
 ```yaml
-# harbor-values.yaml
 expose:
   type: ingress
   tls:
@@ -80,224 +97,83 @@ expose:
   ingress:
     hosts:
       core: harbor.example.com
-    className: nginx
-    annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-      nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-
+    className: your-ingress-class
+    annotations: {}
 externalURL: https://harbor.example.com
-
-# Persistence configuration
+existingSecretAdminPassword: harbor-admin
+existingSecretSecretKey: harbor-encryption-key
+internalTLS:
+  enabled: true
+  certSource: auto
 persistence:
   enabled: true
   resourcePolicy: keep
   persistentVolumeClaim:
     registry:
-      storageClass: gp3
-      size: 500Gi
-      accessMode: ReadWriteOnce
-    database:
-      storageClass: gp3
-      size: 20Gi
-      accessMode: ReadWriteOnce
-    redis:
-      storageClass: gp3
-      size: 10Gi
-      accessMode: ReadWriteOnce
+      storageClass: your-rwx-storage-class
+      accessMode: ReadWriteMany
+      size: 100Gi
     trivy:
-      storageClass: gp3
+      storageClass: your-storage-class
       size: 10Gi
-      accessMode: ReadWriteOnce
-
-# Use S3 for registry storage (recommended for production)
-# persistence:
-#   imageChartStorage:
-#     type: s3
-#     s3:
-#       region: us-east-1
-#       bucket: my-harbor-registry
-#       # Use IRSA for authentication
-#       # accesskey: ""
-#       # secretkey: ""
-
-# Database configuration
-database:
-  type: internal
-  internal:
-    resources:
-      requests:
-        memory: 512Mi
-        cpu: 250m
-      limits:
-        memory: 2Gi
-        cpu: 1000m
-  # For production, use external PostgreSQL
-  # type: external
-  # external:
-  #   host: "harbor-db.cluster-xxx.us-east-1.rds.amazonaws.com"
-  #   port: "5432"
-  #   username: "harbor"
-  #   password: "secretpassword"
-  #   database: "harbor"
-  #   sslmode: "require"
-
-# Redis configuration
-redis:
-  type: internal
-  internal:
-    resources:
-      requests:
-        memory: 256Mi
-        cpu: 100m
-      limits:
-        memory: 1Gi
-        cpu: 500m
-  # For production, use external Redis (ElastiCache)
-  # type: external
-  # external:
-  #   addr: "harbor-redis.xxx.ng.0001.use1.cache.amazonaws.com:6379"
-
-# Core component
 core:
   replicas: 2
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 250m
-    limits:
-      memory: 2Gi
-      cpu: 1000m
-  # Secret key for encrypting credentials
-  secretKey: "not-a-secure-key"  # Change this!
-  # XSRF key
-  xsrfKey: "not-a-secure-xsrf-key"  # Change this!
-
-# Job Service
-jobservice:
-  replicas: 2
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 250m
-    limits:
-      memory: 2Gi
-      cpu: 1000m
-  jobLoggers:
-    - stdout
-    - database
-  maxJobWorkers: 10
-
-# Registry
-registry:
-  replicas: 2
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-    limits:
-      memory: 2Gi
-      cpu: 1000m
-  credentials:
-    username: harbor_registry_user
-    password: harbor_registry_password  # Change this!
-
-# Trivy scanner
-trivy:
-  enabled: true
-  replicas: 1
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 250m
-    limits:
-      memory: 2Gi
-      cpu: 1000m
-  # Trivy database auto-update
-  gitHubToken: ""  # Optional: speeds up DB downloads
-
-# Portal (Web UI)
 portal:
   replicas: 2
-  resources:
-    requests:
-      memory: 128Mi
-      cpu: 50m
-    limits:
-      memory: 512Mi
-      cpu: 500m
-
-# Notary (optional, for Docker Content Trust)
-notary:
-  enabled: false
-
-# Metrics
+registry:
+  replicas: 2
+jobservice:
+  replicas: 2
+  jobLoggers: [database]
+database:
+  type: external
+  external:
+    host: harbor-db.internal
+    port: "5432"
+    username: harbor
+    coreDatabase: registry
+    existingSecret: harbor-database
+    sslmode: require
+redis:
+  type: external
+  external:
+    addr: harbor-redis.internal:6379
+    existingSecret: harbor-redis
+    tlsOptions:
+      enable: true
+trivy:
+  enabled: true
+  skipUpdate: false
+  skipJavaDBUpdate: false
+  offlineScan: false
 metrics:
   enabled: true
-  core:
-    path: /metrics
-    port: 8001
-  registry:
-    path: /metrics
-    port: 8001
-  jobservice:
-    path: /metrics
-    port: 8001
-
-# Cache settings
-cache:
-  enabled: true
-  expireHours: 24
-
-# Garbage collection (manual trigger via UI/API)
-# Configure automatic GC via cron job externally
-
-# Log level
-logLevel: info
-
-# Update strategy
-updateStrategy:
-  type: RollingUpdate
+  serviceMonitor:
+    enabled: false
 ```
 
 ### Installation with Custom Values
 
 ```bash
-# Install with production values
-helm install harbor harbor/harbor \
-  --namespace harbor \
-  --values harbor-values.yaml \
-  --wait
-
-# Verify installation
-kubectl get pods -n harbor
-kubectl get ingress -n harbor
-
-# Get initial admin password
-kubectl get secret -n harbor harbor-core -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d
+helm template harbor harbor/harbor --version 1.19.2   --namespace harbor --values harbor-values.yaml > harbor-rendered.yaml
+helm install harbor harbor/harbor --version 1.19.2   --namespace harbor --values harbor-values.yaml --wait --timeout 15m
+kubectl get pods,svc,ingress,pvc -n harbor
+docker login harbor.example.com --username admin
 ```
 
 ### Upgrading Harbor
 
-```bash
-# Check current version
-helm list -n harbor
+Before upgrading, check the supported upgrade path in release notes. Back up metadata, registry data, configuration and encryption keys at a consistent recovery point and test restoration. Compare old/new chart values and test rendering and migrations in staging. Pin the target chart in `helm upgrade`; a Helm rollback alone may not reverse a database migration.
 
-# Update repo and check available versions
-helm repo update
-helm search repo harbor/harbor --versions
-
-# Backup database before upgrade
-kubectl exec -n harbor harbor-database-0 -- pg_dump -U postgres registry > harbor-backup.sql
-
-# Upgrade
-helm upgrade harbor harbor/harbor \
-  --namespace harbor \
-  --values harbor-values.yaml \
-  --wait
-```
+Notary v1 was removed in Harbor 2.9. Cosign and Notation are external signing tools; their signatures are stored as OCI artifacts in the registry.
 
 ## Projects and RBAC
+
+API examples assume a reachable test Harbor over HTTPS, `curl` and `jq`. Set `HARBOR_USER` to a user with the required permissions. `curl --user "$HARBOR_USER"` prompts for the password. For automation, supply scoped robot credentials through your secret manager without logging them.
+
+```bash
+export HARBOR_USER=admin
+```
 
 ### Project Types
 
@@ -309,20 +185,15 @@ helm upgrade harbor harbor/harbor \
 ### Creating Projects
 
 ```bash
-# Using Harbor API
-# Login and get token
-TOKEN=$(curl -s -u admin:Harbor12345 \
-  "https://harbor.example.com/service/token?service=harbor-registry" | jq -r .token)
-
 # Create project via API
-curl -X POST "https://harbor.example.com/api/v2.0/projects" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/projects" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "project_name": "myapp",
     "metadata": {
       "public": "false",
-      "enable_content_trust": "true",
+      "prevent_vul": "true",
       "auto_scan": "true",
       "severity": "high"
     },
@@ -336,17 +207,17 @@ curl -X POST "https://harbor.example.com/api/v2.0/projects" \
 |------|-------------|
 | **Project Admin** | Full control: manage members, policies, images |
 | **Maintainer** | Push/pull images, scan, delete tags |
-| **Developer** | Push/pull images, scan |
+| **Developer** | Push/pull images; member administration is not included |
 | **Guest** | Pull images only |
-| **Limited Guest** | Pull images from proxy cache only |
+| **Limited Guest** | Pull/read artifacts; no project member or log listing |
 
 ### Adding Members
 
 ```bash
 # Add user to project
-curl -X POST "https://harbor.example.com/api/v2.0/projects/myapp/members" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/projects/myapp/members" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "role_id": 2,
     "member_user": {
@@ -363,13 +234,13 @@ Robot accounts are service accounts for CI/CD automation:
 
 ```bash
 # Create robot account
-curl -X POST "https://harbor.example.com/api/v2.0/robots" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/robots" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "name": "ci-robot",
     "description": "Robot account for CI/CD pipelines",
-    "duration": 365,
+    "duration": 90,
     "level": "project",
     "permissions": [
       {
@@ -377,11 +248,7 @@ curl -X POST "https://harbor.example.com/api/v2.0/robots" \
         "namespace": "myapp",
         "access": [
           {"resource": "repository", "action": "push"},
-          {"resource": "repository", "action": "pull"},
-          {"resource": "artifact", "action": "delete"},
-          {"resource": "tag", "action": "create"},
-          {"resource": "tag", "action": "delete"},
-          {"resource": "scan", "action": "create"}
+          {"resource": "repository", "action": "pull"}
         ]
       }
     ]
@@ -389,7 +256,7 @@ curl -X POST "https://harbor.example.com/api/v2.0/robots" \
 
 # Response includes robot name and secret
 # {
-#   "name": "robot$ci-robot",
+#   "name": "robot$myapp+ci-robot",
 #   "secret": "xxxxxxxxxxxxxxxxxxxx",
 #   ...
 # }
@@ -399,9 +266,12 @@ Using robot account in CI/CD:
 
 ```bash
 # Docker login with robot account
-docker login harbor.example.com \
-  -u 'robot$myapp+ci-robot' \
-  -p 'robot-secret-here'
+read -r -p 'Robot name returned by Harbor: ' ROBOT_NAME
+read -r -s -p 'Robot secret: ' ROBOT_SECRET
+printf '\n'
+printf '%s' "$ROBOT_SECRET" | docker login harbor.example.com \
+  --username "$ROBOT_NAME" --password-stdin
+unset ROBOT_SECRET
 
 # Push image
 docker push harbor.example.com/myapp/app:v1.0.0
@@ -415,6 +285,8 @@ docker push harbor.example.com/myapp/app:v1.0.0
 
 Harbor supports bidirectional replication between registries.
 
+Endpoint IDs `1` and `3` below are examples: obtain actual IDs from the creation response `Location` or endpoint list. Scheduled cron expressions contain six fields including seconds (`0 0 0 * * *`); check the Job Service timezone. Pull replication needs connectivity to its upstream and cannot import into a fully disconnected network. Event replication follows local Harbor push/retag/deletion events, not arbitrary changes in a remote registry.
+
 ### Replication Modes
 
 | Mode | Description | Use Case |
@@ -426,9 +298,9 @@ Harbor supports bidirectional replication between registries.
 
 ```bash
 # Create registry endpoint (e.g., Docker Hub)
-curl -X POST "https://harbor.example.com/api/v2.0/registries" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/registries" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "name": "docker-hub",
     "type": "docker-hub",
@@ -436,14 +308,14 @@ curl -X POST "https://harbor.example.com/api/v2.0/registries" \
     "credential": {
       "type": "basic",
       "access_key": "dockerhub-username",
-      "access_secret": "dockerhub-password"
+      "access_secret": "<dockerhub-PAT>"
     }
   }'
 
 # Create registry endpoint (ECR)
-curl -X POST "https://harbor.example.com/api/v2.0/registries" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/registries" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "name": "aws-ecr",
     "type": "aws-ecr",
@@ -456,17 +328,17 @@ curl -X POST "https://harbor.example.com/api/v2.0/registries" \
   }'
 
 # Create registry endpoint (another Harbor)
-curl -X POST "https://harbor.example.com/api/v2.0/registries" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/registries" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "name": "harbor-dr",
     "type": "harbor",
     "url": "https://harbor-dr.example.com",
     "credential": {
       "type": "basic",
-      "access_key": "admin",
-      "access_secret": "Harbor12345"
+      "access_key": "<replication-user>",
+      "access_secret": "<replication-secret>"
     }
   }'
 ```
@@ -475,9 +347,9 @@ curl -X POST "https://harbor.example.com/api/v2.0/registries" \
 
 ```bash
 # Pull replication from Docker Hub (mirror official images)
-curl -X POST "https://harbor.example.com/api/v2.0/replication/policies" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/replication/policies" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "name": "mirror-dockerhub-nginx",
     "src_registry": {"id": 1},
@@ -489,31 +361,31 @@ curl -X POST "https://harbor.example.com/api/v2.0/replication/policies" \
     "trigger": {
       "type": "scheduled",
       "trigger_settings": {
-        "cron": "0 0 * * *"
+        "cron": "0 0 0 * * *"
       }
     },
     "enabled": true,
-    "deletion": false,
+    "replicate_deletion": false,
     "override": true,
     "speed": -1
   }'
 
 # Push replication to DR site
-curl -X POST "https://harbor.example.com/api/v2.0/replication/policies" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/replication/policies" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "name": "replicate-to-dr",
     "dest_registry": {"id": 3},
-    "src_namespaces": ["production"],
     "filters": [
+      {"type": "name", "value": "production/**"},
       {"type": "tag", "value": "v*"}
     ],
     "trigger": {
       "type": "event_based"
     },
     "enabled": true,
-    "deletion": true,
+    "replicate_deletion": false,
     "override": true,
     "speed": 102400
   }'
@@ -524,7 +396,7 @@ curl -X POST "https://harbor.example.com/api/v2.0/replication/policies" \
 | Filter Type | Description | Example |
 |-------------|-------------|---------|
 | `name` | Repository name pattern | `library/**`, `myapp/*` |
-| `tag` | Tag pattern | `v*`, `latest`, `!*-dev` |
+| `tag` | Tag pattern | `v*`, `latest` |
 | `label` | Harbor label | `production`, `approved` |
 | `resource` | Resource type | `image`, `chart` |
 
@@ -536,15 +408,15 @@ Harbor uses Trivy as its default vulnerability scanner. Trivy scans for:
 
 - OS package vulnerabilities (Alpine, Debian, Ubuntu, RHEL, etc.)
 - Application dependencies (npm, pip, gem, maven, go modules)
-- Misconfigurations
+
 
 ### Scan-on-Push Configuration
 
 ```bash
 # Enable automatic scanning for a project
-curl -X PUT "https://harbor.example.com/api/v2.0/projects/myapp" \
+curl --fail-with-body -X PUT "https://harbor.example.com/api/v2.0/projects/myapp" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "metadata": {
       "auto_scan": "true"
@@ -555,44 +427,31 @@ curl -X PUT "https://harbor.example.com/api/v2.0/projects/myapp" \
 ### Manual Scanning
 
 ```bash
-# Trigger scan via API
-curl -X POST "https://harbor.example.com/api/v2.0/projects/myapp/repositories/app/artifacts/sha256:abc123/scan" \
-  -u admin:Harbor12345
-
-# Get scan results
-curl "https://harbor.example.com/api/v2.0/projects/myapp/repositories/app/artifacts/sha256:abc123?with_scan_overview=true" \
-  -u admin:Harbor12345
+# Use the digest of an existing artifact from the Harbor UI/API.
+: "${HARBOR_DIGEST:?Set the complete sha256 digest}"
+curl --fail-with-body --user "$HARBOR_USER" -X POST \
+  "https://harbor.example.com/api/v2.0/projects/myapp/repositories/app/artifacts/${HARBOR_DIGEST}/scan"
+curl --fail-with-body --user "$HARBOR_USER" \
+  "https://harbor.example.com/api/v2.0/projects/myapp/repositories/app/artifacts/${HARBOR_DIGEST}?with_scan_overview=true"
 ```
+
+Scanning is asynchronous. Check completion and database freshness; an empty/incomplete report is not a clean scan. Unlike the single-component `app` example, nested repository names such as `team/app` require Harbor API double URL encoding.
 
 ### CVE Allowlists
 
-Create allowlists to ignore specific CVEs:
+Limit exceptions to approved CVEs with an owner, rationale and expiry. The PUT below replaces the project allowlist, so merge existing entries first. It disables reuse of the system list and requires an approved identifier and future expiry.
 
 ```bash
-# Set project-level CVE allowlist
-curl -X PUT "https://harbor.example.com/api/v2.0/projects/myapp" \
-  -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
-  -d '{
-    "cve_allowlist": {
-      "items": [
-        {"cve_id": "CVE-2023-12345"},
-        {"cve_id": "CVE-2023-67890"}
-      ],
-      "expires_at": 1735689600
-    }
-  }'
-
-# System-wide CVE allowlist
-curl -X PUT "https://harbor.example.com/api/v2.0/system/CVEAllowlist" \
-  -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
-  -d '{
-    "items": [
-      {"cve_id": "CVE-2023-12345"}
-    ],
-    "expires_at": null
-  }'
+# Review the existing project allowlist before replacing it.
+: "${APPROVED_CVE:?Set an approved CVE identifier}"
+: "${ALLOWLIST_EXPIRES_AT:?Set a future Unix timestamp in seconds}"
+jq -n --arg cve "$APPROVED_CVE" --argjson expires "$ALLOWLIST_EXPIRES_AT" \
+  '{metadata:{reuse_sys_cve_allowlist:"false"},
+    cve_allowlist:{items:[{cve_id:$cve}],expires_at:$expires}}' > cve-allowlist.json
+curl --fail-with-body --user "$HARBOR_USER" -X PUT \
+  -H 'Content-Type: application/json' \
+  --data-binary @cve-allowlist.json \
+  'https://harbor.example.com/api/v2.0/projects/myapp'
 ```
 
 ### Preventing Vulnerable Image Deployment
@@ -601,9 +460,9 @@ Configure Harbor to block pulls of vulnerable images:
 
 ```bash
 # Set vulnerability prevention policy
-curl -X PUT "https://harbor.example.com/api/v2.0/projects/myapp" \
+curl --fail-with-body -X PUT "https://harbor.example.com/api/v2.0/projects/myapp" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "metadata": {
       "prevent_vul": "true",
@@ -614,308 +473,208 @@ curl -X PUT "https://harbor.example.com/api/v2.0/projects/myapp" \
 # Severity options: none, low, medium, high, critical
 ```
 
-When enabled, Harbor returns 412 Precondition Failed for pulls of images exceeding the severity threshold.
+This policy gates registry pulls; it does not inspect or stop containers that are already running or using cached images. Auto-scan alone does not enable pull prevention.
 
 ## Image Signing
 
-Harbor supports image signing with Cosign and Notation for supply chain security.
+Signatures verify artifact integrity and a trusted signer. They do not patch vulnerabilities or inspect running Pods. Install Cosign/Notation using their official guides and validate signature-format compatibility with Harbor and your policy engine.
 
 ### Cosign Integration
 
 ```bash
-# Generate Cosign key pair
+# HARBOR_IMAGE must include an existing image digest, not a mutable tag.
+: "${HARBOR_IMAGE:?Set harbor.example.com/myapp/app@sha256:<actual-digest>}"
+cosign version
 cosign generate-key-pair
+cosign sign --key cosign.key "$HARBOR_IMAGE"
+cosign verify --key cosign.pub "$HARBOR_IMAGE"
+```
 
-# Sign image
-cosign sign --key cosign.key harbor.example.com/myapp/app:v1.0.0
+Keyless signing uses an OIDC identity and transparency log; verification must constrain the trusted issuer and identity. Protect the private key and its password in the key-based example. A fully disconnected environment cannot directly use a workflow that depends on public Sigstore services.
 
-# Verify signature
-cosign verify --key cosign.pub harbor.example.com/myapp/app:v1.0.0
+### Notation (Notary v2) Integration
 
-# Sign with keyless (Sigstore/Fulcio)
-COSIGN_EXPERIMENTAL=1 cosign sign harbor.example.com/myapp/app:v1.0.0
+This uses a test-only self-signed certificate. Import the trust policy for the trust store created by `generate-test` before verifying. Production policies should use the organization's CA/key management and explicit signer identity restrictions.
+
+```bash
+notation version
+notation login harbor.example.com
+notation cert generate-test --default harbor-demo
+notation sign "$HARBOR_IMAGE"
+cat > trustpolicy.json <<'JSON'
+{
+  "version": "1.0",
+  "trustPolicies": [{
+    "name": "harbor-demo",
+    "registryScopes": ["harbor.example.com/myapp/app"],
+    "signatureVerification": {"level": "strict"},
+    "trustStores": ["ca:harbor-demo"],
+    "trustedIdentities": ["*"]
+  }]
+}
+JSON
+notation policy import trustpolicy.json
+notation verify "$HARBOR_IMAGE"
 ```
 
 ### Configuring Cosign in Harbor
 
-```yaml
-# harbor-values.yaml
-core:
-  # Enable Cosign signature verification
-  cosignKeyFile: /etc/cosign/cosign.pub
-
-# Mount Cosign public key
-extraVolumes:
-  - name: cosign-key
-    secret:
-      secretName: cosign-public-key
-extraVolumeMounts:
-  - name: cosign-key
-    mountPath: /etc/cosign
-    readOnly: true
-```
-
-### Notation (Notary v2) Integration
-
-```bash
-# Install Notation CLI
-curl -sSL https://github.com/notaryproject/notation/releases/download/v1.0.0/notation_1.0.0_linux_amd64.tar.gz | tar xz
-
-# Generate certificate
-notation cert generate-test --default "mycompany.io"
-
-# Sign image
-notation sign harbor.example.com/myapp/app:v1.0.0
-
-# Verify signature
-notation verify harbor.example.com/myapp/app:v1.0.0
-```
+Select the Cosign or Notation policy in project Configuration. Enabling both requires both signature types. The chart has no `core.cosignKeyFile` option for public-key verification. Distinguish the registry's signature-accessory checks from verification against your organization's trusted keys and identities.
 
 ### Kubernetes Policy Enforcement
 
-Use Kyverno or OPA Gatekeeper to enforce signed images:
-
-```yaml
-# Kyverno policy for Cosign verification
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: verify-image-signature
-spec:
-  validationFailureAction: Enforce
-  background: false
-  rules:
-  - name: verify-cosign-signature
-    match:
-      resources:
-        kinds:
-        - Pod
-    verifyImages:
-    - imageReferences:
-      - "harbor.example.com/*"
-      attestors:
-      - entries:
-        - keys:
-            publicKeys: |-
-              -----BEGIN PUBLIC KEY-----
-              MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
-              -----END PUBLIC KEY-----
-```
+For deployment enforcement, configure an admission policy such as Kyverno as described in [Image Security](../security/07-image-security.md). Supply valid keys or trusted OIDC issuer/identity, exact image scope and private registry credentials; cover init/ephemeral containers. Validate in Audit before Enforce, including wrong-key, unsigned-image and tag-reassignment failures.
 
 ## Air-Gap Scenarios
 
-Harbor is ideal for disconnected or air-gapped environments.
+The Docker Compose offline installer and a Kubernetes Helm deployment are separate installation paths. The offline installer bundles Harbor images, but not every Docker/Compose package, Kubernetes chart, CNI, application image or Trivy database.
 
 ### Offline Installer
 
 ```bash
-# Download offline installer
-wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-offline-installer-v2.10.0.tgz
-
-# Transfer to air-gapped environment
-# ... (USB, secure file transfer, etc.)
-
-# Extract and install
-tar xzvf harbor-offline-installer-v2.10.0.tgz
-cd harbor
-
-# Configure harbor.yml
-cp harbor.yml.tmpl harbor.yml
-vim harbor.yml
-
-# Install
-./install.sh --with-trivy
+HARBOR_VERSION=2.15.2
+curl --fail --location --remote-name \
+  "https://github.com/goharbor/harbor/releases/download/v${HARBOR_VERSION}/harbor-offline-installer-v${HARBOR_VERSION}.tgz"
+# Verify the release checksum/signature before transporting the bundle.
+sha256sum "harbor-offline-installer-v${HARBOR_VERSION}.tgz" > harbor-bundle.sha256
+# Transfer both files through the approved offline transport.
 ```
 
-### harbor.yml Configuration
+On the disconnected host, run the following. A locally generated SHA-256 verifies transport integrity; it does not replace verification of the publisher's release signature.
 
-```yaml
-# harbor.yml for air-gap deployment
-hostname: harbor.internal.local
-
-http:
-  port: 80
-
-https:
-  port: 443
-  certificate: /data/cert/server.crt
-  private_key: /data/cert/server.key
-
-harbor_admin_password: Harbor12345
-
-database:
-  password: root123
-  max_idle_conns: 100
-  max_open_conns: 900
-
-data_volume: /data
-
-trivy:
-  ignore_unfixed: false
-  skip_update: true  # Important for air-gap
-  offline_scan: true  # Important for air-gap
-  security_check: vuln
-  insecure: false
-
-jobservice:
-  max_job_workers: 10
-
-notification:
-  webhook_job_max_retry: 10
-
-log:
-  level: info
-  local:
-    rotate_count: 50
-    rotate_size: 200M
-    location: /var/log/harbor
-
-proxy:
-  http_proxy:
-  https_proxy:
-  no_proxy:
-  components:
-    - core
-    - jobservice
-    - trivy
+```bash
+sha256sum -c harbor-bundle.sha256
+tar xzf harbor-offline-installer-v2.15.2.tgz
+cd harbor
+cp harbor.yml.tmpl harbor.yml
+# Set hostname, HTTPS certificate/key, strong admin/DB passwords and data_volume.
+# For Trivy: preload DBs, set skip_update, skip_java_db_update and offline_scan.
+# Install Docker Engine/Compose and other prerequisites from offline packages first.
+./install.sh --with-trivy
 ```
 
 ### Preloading Images for Air-Gap Kubernetes
 
-```bash
-# On connected environment: Export images from Docker Hub
-IMAGES=(
-  "nginx:1.25"
-  "redis:7"
-  "postgres:15"
-  "busybox:1.36"
-)
-
-for img in "${IMAGES[@]}"; do
-  docker pull $img
-  docker save $img -o $(echo $img | tr '/:' '-').tar
-done
-
-# Create archive
-tar czvf k8s-images.tar.gz *.tar
-
-# Transfer to air-gapped environment
-# ... (USB, secure file transfer, etc.)
-
-# On air-gapped environment: Load and push to Harbor
-tar xzvf k8s-images.tar.gz
-
-for tarfile in *.tar; do
-  docker load -i $tarfile
-done
-
-# Login to Harbor
-docker login harbor.internal.local
-
-# Re-tag and push
-for img in "${IMAGES[@]}"; do
-  new_tag="harbor.internal.local/library/$img"
-  docker tag $img $new_tag
-  docker push $new_tag
-done
-```
-
-### Trivy Database Update for Air-Gap
+Use a matching kubeadm binary to list control-plane images for the exact supported Kubernetes version. Add CNI, CSI, ingress and monitoring images plus charts/CRDs separately. For clusters not managed by kubeadm, use the distribution's own image inventory.
 
 ```bash
-# On connected environment: Download Trivy DB
-trivy image --download-db-only
-tar czvf trivy-db.tar.gz ~/.cache/trivy/db
-
-# Transfer to air-gapped environment
-# ...
-
-# Extract to Harbor Trivy container
-kubectl cp trivy-db.tar.gz harbor/harbor-trivy-0:/home/scanner/.cache/trivy/
-kubectl exec -n harbor harbor-trivy-0 -- tar xzvf /home/scanner/.cache/trivy/trivy-db.tar.gz -C /home/scanner/.cache/trivy/
+: "${K8S_VERSION:?Set the exact supported Kubernetes patch version}"
+kubeadm config images list --kubernetes-version "$K8S_VERSION" > kubeadm-images.txt
 ```
 
 ### Automated Image Sync Script
 
-```bash
-#!/bin/bash
-# sync-images-to-harbor.sh
-# Sync images from a manifest to Harbor
-
-HARBOR_URL="harbor.internal.local"
-PROJECT="library"
-MANIFEST_FILE="required-images.txt"
-
-# Login to Harbor
-docker login $HARBOR_URL
-
-# Read manifest and sync
-while IFS= read -r image; do
-  [[ "$image" =~ ^#.*$ ]] && continue  # Skip comments
-  [[ -z "$image" ]] && continue  # Skip empty lines
-
-  echo "Processing: $image"
-
-  # Pull from source (if connected) or load from local
-  if docker pull $image 2>/dev/null; then
-    echo "  Pulled from remote"
-  elif [ -f "images/$(echo $image | tr '/:' '-').tar" ]; then
-    docker load -i "images/$(echo $image | tr '/:' '-').tar"
-    echo "  Loaded from local archive"
-  else
-    echo "  ERROR: Cannot find image $image"
-    continue
-  fi
-
-  # Determine target name
-  if [[ "$image" == *"/"* ]]; then
-    repo_name=$(echo $image | cut -d'/' -f2-)
-  else
-    repo_name="library/$image"
-  fi
-
-  target="${HARBOR_URL}/${PROJECT}/${repo_name}"
-
-  # Re-tag and push
-  docker tag $image $target
-  docker push $target
-  echo "  Pushed to $target"
-
-done < "$MANIFEST_FILE"
-```
-
-Sample manifest file:
+Map source and target references explicitly in a TSV file. Basename-only retagging can collide across registries/namespaces. These Bash/Skopeo examples transport all platforms through OCI archives. Signatures/SBOM referrers require separate transport and verification according to tool support.
 
 ```text
-# required-images.txt
-# Base images
-nginx:1.25
-redis:7-alpine
-postgres:15-alpine
-
-# Kubernetes components
-registry.k8s.io/ingress-nginx/controller:v1.9.0
-registry.k8s.io/metrics-server/metrics-server:v0.6.4
-
-# Monitoring
-grafana/grafana:10.0.0
-prom/prometheus:v2.47.0
+# images.tsv: two columns separated by a TAB; replace the internal hostname.
+docker.io/library/nginx:1.30.4	harbor.airgap.local/k8s-system/dockerhub/library/nginx:1.30.4
 ```
+
+On the connected side:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p image-bundle
+: > image-bundle/import.tsv
+index=0
+while IFS=$'\t' read -r source target || [[ -n "$source" ]]; do
+  [[ -z "$source" || "$source" == \#* ]] && continue
+  [[ -n "$target" ]] || { echo 'Missing target image' >&2; exit 1; }
+  index=$((index + 1))
+  file="image-${index}.tar"
+  skopeo copy --all "docker://${source}" "oci-archive:image-bundle/${file}"
+  printf '%s\t%s\n' "$file" "$target" >> image-bundle/import.tsv
+done < images.tsv
+(cd image-bundle && sha256sum image-*.tar import.tsv > SHA256SUMS)
+```
+
+After transferring `image-bundle`, on the disconnected side:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd image-bundle
+sha256sum -c SHA256SUMS
+# Pre-create the target Harbor projects and trust its TLS CA.
+skopeo login harbor.airgap.local
+while IFS=$'\t' read -r file target; do
+  skopeo copy --all "oci-archive:${file}" "docker://${target}"
+done < import.tsv
+```
+
+Apply the mapped internal image URIs to Pod/Helm/kubeadm configuration and verify digests, platforms and pulls. `--all` requests all platform manifests; representation conversion can change a digest, so compare source and destination results.
+
+### Trivy Database Update for Air-Gap
+
+```bash
+# Use a Trivy version compatible with the deployed Harbor scanner adapter.
+trivy image --cache-dir ./trivy-cache --download-db-only
+trivy image --cache-dir ./trivy-cache --download-java-db-only
+tar -C trivy-cache -czf trivy-db-bundle.tgz db java-db
+```
+
+Extract the bundle into each Trivy replica's persistent cache root `/home/scanner/.cache/trivy`, with correct ownership for `db/trivy.db`, `db/metadata.json`, `java-db/trivy-java.db` and its metadata. Stop the scanner or use a replacement PVC/init job instead of overwriting an open database. The `tar -C` form above avoids accidentally nesting a home-directory path inside the cache.
+
+```yaml
+trivy:
+  skipUpdate: true
+  skipJavaDBUpdate: true
+  offlineScan: true
+```
+
+`offlineScan` alone neither disables every database update nor creates a missing database. Establish a database import/freshness schedule and rescan after updates. The equivalent Compose `harbor.yml` keys are `skip_update`, `skip_java_db_update` and `offline_scan`.
+
+### Containerd Trust Configuration
+
+Use explicit internal Harbor image references in offline manifests. Redirecting arbitrary external registries to `/v2/<project>` does not automatically rewrite repository paths or credentials. Install the CA on each node and use configuration appropriate to its runtime version.
+
+```toml
+# containerd 2.x: /etc/containerd/config.toml
+[plugins."io.containerd.cri.v1.images".registry]
+  config_path = "/etc/containerd/certs.d"
+# containerd 1.x uses plugins."io.containerd.grpc.v1.cri".registry instead.
+```
+
+```toml
+# /etc/containerd/certs.d/harbor.airgap.local/hosts.toml
+server = "https://harbor.airgap.local"
+[host."https://harbor.airgap.local"]
+  capabilities = ["pull", "resolve"]
+  ca = "/etc/containerd/certs.d/harbor.airgap.local/ca.crt"
+```
+
+Restart containerd under your node maintenance procedure when changing `config_path`, then verify an actual CRI pull. Supply namespace-scoped pull-only credentials through `imagePullSecrets`.
 
 ## Harbor + Kubernetes Integration
 
 ### Creating imagePullSecrets
 
 ```bash
-# Create secret for Harbor
-kubectl create secret docker-registry harbor-secret \
-  --docker-server=harbor.example.com \
-  --docker-username=robot\$myapp+k8s \
-  --docker-password=robot-secret \
-  -n default
-
-# Verify
-kubectl get secret harbor-secret -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d | jq
+# Create pull credentials in the same namespace as the consuming Pod.
+umask 077
+HARBOR_AUTH_DIR=$(mktemp -d)
+python3 - "$HARBOR_AUTH_DIR/config.json" <<'PYTHON'
+import base64
+import getpass
+import json
+import pathlib
+import sys
+name = input("Pull robot name returned by Harbor: ")
+password = getpass.getpass("Pull robot secret: ")
+auth = base64.b64encode(f"{name}:{password}".encode()).decode()
+pathlib.Path(sys.argv[1]).write_text(json.dumps({
+    "auths": {"harbor.example.com": {"auth": auth}}
+}))
+PYTHON
+kubectl create secret generic harbor-secret -n default \
+  --type=kubernetes.io/dockerconfigjson \
+  --from-file=.dockerconfigjson="$HARBOR_AUTH_DIR/config.json" \
+  --dry-run=client -o yaml \
+  | kubectl apply --server-side --field-manager=harbor-pull-secret -f -
+rm -rf -- "$HARBOR_AUTH_DIR"
+kubectl get secret harbor-secret -n default -o jsonpath='{.type}'
 ```
 
 ### ServiceAccount Configuration
@@ -959,9 +718,9 @@ Configure Harbor as a proxy cache for external registries:
 
 ```bash
 # Create proxy cache project via API
-curl -X POST "https://harbor.example.com/api/v2.0/projects" \
+curl --fail-with-body -X POST "https://harbor.example.com/api/v2.0/projects" \
   -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
+  --user "$HARBOR_USER" \
   -d '{
     "project_name": "dockerhub-proxy",
     "registry_id": 1,
@@ -971,234 +730,58 @@ curl -X POST "https://harbor.example.com/api/v2.0/projects" \
   }'
 ```
 
-Configure containerd to use Harbor proxy:
-
-```toml
-# /etc/containerd/config.toml
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-  endpoint = ["https://harbor.example.com/v2/dockerhub-proxy/"]
-
-[plugins."io.containerd.grpc.v1.cri".registry.configs."harbor.example.com".auth]
-  username = "robot$proxy+pull"
-  password = "robot-secret"
-```
+Pull the explicit proxy path, for example `harbor.example.com/dockerhub-proxy/library/nginx:1.30.4`. A cache miss requires upstream access. Cached-content freshness, upstream deletion behavior and authentication depend on the proxy project configuration; this is not an offline completeness guarantee.
 
 ### Garbage Collection
 
-Harbor accumulates unused image layers over time. Configure garbage collection:
+GC reclaims unreferenced blobs. `delete_untagged` additionally deletes untagged artifacts, which may still be deployed by digest. Protect deployed/rollback images first. The following example performs a dry run without deletion.
 
 ```bash
-# Trigger GC manually via API
-curl -X POST "https://harbor.example.com/api/v2.0/system/gc/schedule" \
-  -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
-  -d '{
-    "schedule": {
-      "type": "Manual"
-    },
-    "parameters": {
-      "delete_untagged": true,
-      "dry_run": false
-    }
-  }'
-
-# Schedule automatic GC
-curl -X POST "https://harbor.example.com/api/v2.0/system/gc/schedule" \
-  -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
-  -d '{
-    "schedule": {
-      "type": "Weekly",
-      "cron": "0 0 0 * * 0"
-    },
-    "parameters": {
-      "delete_untagged": true,
-      "dry_run": false
-    }
-  }'
-
-# Check GC history
-curl "https://harbor.example.com/api/v2.0/system/gc" \
-  -u admin:Harbor12345
+curl --fail-with-body --user "$HARBOR_USER" -X POST \
+  'https://harbor.example.com/api/v2.0/system/gc/schedule' \
+  -H 'Content-Type: application/json' \
+  -d '{"schedule":{"type":"Manual"},
+       "parameters":{"delete_untagged":false,"dry_run":true}}'
+curl --fail-with-body --user "$HARBOR_USER"   'https://harbor.example.com/api/v2.0/system/gc'
 ```
+
+Review results before configuring a real run/schedule in the UI. Harbor supports push/pull during GC, but I/O load and the recent-upload protection window can delay space reclamation.
 
 ### Tag Retention Policies
 
+In the project Policy → Tag Retention view, define what to **retain**. Combining the latest 10 pushes with the last 30 days retains their **OR/union**, potentially more than 10 artifacts. Use Dry Run to review excluded tags/artifacts, signature relationships and deployed/rollback digests.
+
+The policy creation endpoint is `/api/v2.0/retentions`, not a project `/tag-retention` endpoint. Instead of creating a policy with a guessed project ID, inspect and dry-run an existing policy configured in the UI.
+
 ```bash
-# Create retention policy
-curl -X POST "https://harbor.example.com/api/v2.0/retentions" \
-  -H "Content-Type: application/json" \
-  -u admin:Harbor12345 \
-  -d '{
-    "algorithm": "or",
-    "rules": [
-      {
-        "disabled": false,
-        "action": "retain",
-        "scope_selectors": {
-          "repository": [
-            {"kind": "doublestar", "decoration": "repoMatches", "pattern": "**"}
-          ]
-        },
-        "tag_selectors": [
-          {"kind": "doublestar", "decoration": "matches", "pattern": "v*"}
-        ],
-        "params": {
-          "latestPushedK": 10
-        }
-      },
-      {
-        "disabled": false,
-        "action": "retain",
-        "scope_selectors": {
-          "repository": [
-            {"kind": "doublestar", "decoration": "repoMatches", "pattern": "**"}
-          ]
-        },
-        "tag_selectors": [
-          {"kind": "doublestar", "decoration": "matches", "pattern": "**"}
-        ],
-        "params": {
-          "nDaysSinceLastPush": 30
-        }
-      }
-    ],
-    "trigger": {
-      "kind": "Schedule",
-      "settings": {
-        "cron": "0 0 0 * * *"
-      }
-    },
-    "scope": {
-      "level": "project",
-      "ref": 1
-    }
-  }'
+curl --fail-with-body --user "$HARBOR_USER" \
+  'https://harbor.example.com/api/v2.0/projects/myapp' \
+  | jq '{project_id, retention_id: .metadata.retention_id}'
+# Use the actual non-empty policy ID returned above.
+: "${RETENTION_ID:?Set an existing retention policy ID}"
+curl --fail-with-body --user "$HARBOR_USER"   "https://harbor.example.com/api/v2.0/retentions/${RETENTION_ID}"
+curl --fail-with-body --user "$HARBOR_USER" -X POST \
+  "https://harbor.example.com/api/v2.0/retentions/${RETENTION_ID}/executions" \
+  -H 'Content-Type: application/json' -d '{"dry_run":true}'
 ```
 
 ## Best Practices
 
 ### High Availability
 
-```yaml
-# harbor-values.yaml for HA
-core:
-  replicas: 3
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            component: core
-        topologyKey: kubernetes.io/hostname
-
-registry:
-  replicas: 3
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            component: registry
-        topologyKey: kubernetes.io/hostname
-
-portal:
-  replicas: 2
-
-jobservice:
-  replicas: 2
-
-# Use external PostgreSQL (RDS) and Redis (ElastiCache)
-database:
-  type: external
-  external:
-    host: harbor-db.cluster-xxx.us-east-1.rds.amazonaws.com
-    port: "5432"
-    username: harbor
-    password: secretpassword
-    database: harbor
-    sslmode: require
-
-redis:
-  type: external
-  external:
-    addr: harbor-redis.xxx.cache.amazonaws.com:6379
-
-# Use S3 for registry storage
-persistence:
-  imageChartStorage:
-    type: s3
-    s3:
-      region: us-east-1
-      bucket: harbor-registry-prod
-      regionendpoint: s3.us-east-1.amazonaws.com
-      encrypt: true
-```
+Spread at least two portal/core/jobservice/registry replicas and validate failover of PostgreSQL, Redis and the shared storage itself. For S3, set `persistence.imageChartStorage.type: s3`, bucket/region and an explicit registry Pod IAM identity or `existingSecret`. Do not embed long-lived keys in values. IRSA/Pod Identity requires compatible SDK support in the registry image, the correct ServiceAccount and scoped S3 permissions; omitting static keys alone does not configure an IAM role.
 
 ### Security Hardening
 
-1. **Enable TLS everywhere**
-2. **Use OIDC/LDAP instead of local users**
-3. **Implement network policies**
-4. **Regular security updates**
-5. **Audit log monitoring**
-
-```yaml
-# Network policy for Harbor
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: harbor-network-policy
-  namespace: harbor
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          harbor-access: "true"
-    ports:
-    - port: 443
-  egress:
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - port: 443
-    - port: 5432  # PostgreSQL
-    - port: 6379  # Redis
-```
+Use external/internal TLS, OIDC/LDAP, expiring scoped robots, audit logs and patch management. Build NetworkPolicies from rendered Pod labels/container ports and required DNS, core/registry/jobservice, PostgreSQL/Redis, scanner DB and replication flows. A blanket port-443-only policy can break internal traffic and DNS. Manage password/MFA requirements through the identity provider rather than assuming undocumented Harbor UI controls.
 
 ### Backup Strategy
 
-```bash
-#!/bin/bash
-# harbor-backup.sh
+Coordinate writes, replication and GC to capture a consistent recovery point for PostgreSQL, registry blobs, configuration, TLS and encryption keys. Helm values do not back up databases/images; S3 versioning or `aws s3 sync` alone does not guarantee a consistent snapshot. Secret YAML is merely base64-encoded, so store it in an encrypted access-controlled backup. Test restoration of projects/robot authentication, digest pulls, signatures, policies and scan results.
 
-BACKUP_DIR="/backups/harbor/$(date +%Y%m%d)"
-mkdir -p $BACKUP_DIR
+### Monitoring
 
-# Backup PostgreSQL
-kubectl exec -n harbor harbor-database-0 -- \
-  pg_dump -U postgres registry > $BACKUP_DIR/harbor-db.sql
-
-# Backup Harbor configuration
-kubectl get configmap -n harbor -o yaml > $BACKUP_DIR/configmaps.yaml
-kubectl get secret -n harbor -o yaml > $BACKUP_DIR/secrets.yaml
-
-# Backup registry storage (if using PVC)
-# For S3, enable versioning instead
-
-# Compress
-tar czvf $BACKUP_DIR.tar.gz $BACKUP_DIR
-
-# Upload to S3 (if connected)
-aws s3 cp $BACKUP_DIR.tar.gz s3://harbor-backups/
-
-echo "Backup completed: $BACKUP_DIR.tar.gz"
-```
+Use the chart's `metrics.enabled` and, when Operator CRDs exist, `metrics.serviceMonitor.enabled`. Inspect the generated ServiceMonitor/Service ports instead of guessing an `http-metrics` port. Match Prometheus ServiceMonitor and namespace selectors. Monitor storage/database capacity, replication/scan/GC failures, queue delays, Trivy DB freshness and certificate/robot expiry.
 
 ## Summary
 
@@ -1208,13 +791,13 @@ Harbor provides a comprehensive, enterprise-grade container registry solution th
 - **Flexibility**: Self-hosted with full control over data and infrastructure
 - **Air-Gap Support**: Designed for disconnected environments
 - **Multi-tenancy**: Project-based isolation with fine-grained access control
-- **Integration**: Replication to/from any OCI-compliant registry
+- **Integration**: Replication through supported registry adapters and artifact formats
 
 ### When to Choose Harbor
 
 | Scenario | Recommendation |
 |----------|----------------|
-| Air-gapped environment | Harbor (only option) |
+| Air-gapped environment | Harbor or another supported self-hosted registry |
 | Strict data sovereignty | Harbor |
 | Multi-cloud deployment | Harbor |
 | AWS-native with EKS | Consider ECR first, Harbor for advanced features |
@@ -1230,3 +813,12 @@ Harbor provides a comprehensive, enterprise-grade container registry solution th
 5. **Implement retention**: Configure garbage collection and retention policies
 6. **Monitor and alert**: Use Prometheus metrics and alerting
 7. **Backup regularly**: Database backups are critical for disaster recovery
+
+## References
+
+- [Harbor 2.15.2 release](https://github.com/goharbor/harbor/releases/tag/v2.15.2)
+- [Helm chart 1.19.2 values](https://github.com/goharbor/harbor-helm/blob/v1.19.2/values.yaml)
+- [Harbor 2.15.2 API schema](https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml)
+- [Project role permissions](https://goharbor.io/docs/main/administration/managing-users/user-permissions-by-role/)
+- [Cosign and Notation](https://goharbor.io/docs/main/working-with-projects/working-with-images/sign-images/)
+- [Containerd registry hosts](https://github.com/containerd/containerd/blob/main/docs/hosts.md)

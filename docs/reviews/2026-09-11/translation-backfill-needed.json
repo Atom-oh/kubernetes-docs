@@ -1,0 +1,546 @@
+[
+  {
+    "path": "cn/container-registry/01-docker-hub.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/container-registry/02-amazon-ecr.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/container-registry/03-harbor.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/container-registry/04-best-practices.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/container-registry/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/airflow/01-architecture.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/airflow/02-helm-deployment.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/airflow/03-dag-patterns.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/airflow/04-mwaa-integration.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/airflow/05-operations.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/airflow/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/flink/01-architecture.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/flink/02-flink-kubernetes-operator.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/flink/03-state-checkpointing-streaming.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/flink/04-operations-ha.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/flink/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/kafka/09-kafka-benchmark.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/spark/01-spark-fundamentals.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/spark/02-spark-operator.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/spark/03-emr-on-eks.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/spark/04-performance-tuning.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/spark/05-best-practices.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/data-on-eks/spark/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/database/01-clickhouse-on-eks.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/gitops/argocd/10-rollouts-experiment.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/lab-guides/labs/observability-end-to-end/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/container-registry/01-docker-hub-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/container-registry/02-amazon-ecr-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/container-registry/03-harbor-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/container-registry/04-best-practices-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/core/10-windows-in-kubernetes-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/airflow/01-architecture-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/flink/02-operator.md",
+    "reason": "English counterpart absent"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/spark/04-performance-tuning-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "cn/roadmap.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/container-registry/01-docker-hub.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/container-registry/02-amazon-ecr.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/container-registry/03-harbor.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/container-registry/04-best-practices.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/container-registry/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/airflow/01-architecture.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/airflow/02-helm-deployment.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/airflow/03-dag-patterns.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/airflow/04-mwaa-integration.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/airflow/05-operations.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/airflow/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/flink/01-architecture.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/flink/02-flink-kubernetes-operator.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/flink/03-state-checkpointing-streaming.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/flink/04-operations-ha.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/flink/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/kafka/09-kafka-benchmark.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/spark/01-spark-fundamentals.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/spark/02-spark-operator.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/spark/03-emr-on-eks.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/spark/04-performance-tuning.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/spark/05-best-practices.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/data-on-eks/spark/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/database/01-clickhouse-on-eks.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/gitops/argocd/10-rollouts-experiment.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/lab-guides/labs/observability-end-to-end/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/container-registry/01-docker-hub-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/container-registry/02-amazon-ecr-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/container-registry/03-harbor-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/container-registry/04-best-practices-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/airflow/01-architecture-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/spark/04-performance-tuning-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "es/roadmap.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/container-registry/01-docker-hub.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/container-registry/02-amazon-ecr.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/container-registry/03-harbor.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/container-registry/04-best-practices.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/container-registry/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/airflow/01-architecture.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/airflow/02-helm-deployment.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/airflow/03-dag-patterns.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/airflow/04-mwaa-integration.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/airflow/05-operations.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/airflow/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/flink/01-architecture.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/flink/02-flink-kubernetes-operator.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/flink/03-state-checkpointing-streaming.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/flink/04-operations-ha.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/flink/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/kafka/09-kafka-benchmark.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/spark/01-spark-fundamentals.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/spark/02-spark-operator.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/spark/03-emr-on-eks.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/spark/04-performance-tuning.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/spark/05-best-practices.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/data-on-eks/spark/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/database/01-clickhouse-on-eks.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/gitops/argocd/10-rollouts-experiment.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/lab-guides/labs/observability-end-to-end/README.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/container-registry/01-docker-hub-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/container-registry/02-amazon-ecr-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/container-registry/03-harbor-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/container-registry/04-best-practices-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/airflow/01-architecture-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/spark/02-spark-operator-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/spark/04-performance-tuning-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/quizzes/data-on-eks/spark/05-best-practices-quiz.md",
+    "reason": "No previous translation; requires backfill"
+  },
+  {
+    "path": "jp/roadmap.md",
+    "reason": "No previous translation; requires backfill"
+  }
+]

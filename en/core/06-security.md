@@ -1,6 +1,6 @@
 # Kubernetes Security
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
 > **Last Updated**: February 23, 2026
 
 In Kubernetes, security is a key element for protecting clusters and applications. In this chapter, we'll explore Kubernetes security concepts, authentication and authorization mechanisms, network policies, security contexts, and how to enhance security in Amazon EKS.
@@ -10,7 +10,7 @@ In Kubernetes, security is a key element for protecting clusters and application
 To follow the examples in this document, you'll need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.34 or higher
+- kubectl within one minor version of the API server
 - A working Kubernetes cluster (EKS, minikube, kind, etc.)
 - OpenSSL (for certificate creation)
 
@@ -63,6 +63,9 @@ spec:
     runAsUser: 1000
     runAsGroup: 3000
     fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - name: sec-ctx-demo
     image: busybox
@@ -88,8 +91,8 @@ EOF
 6. [Secret Management](#secret-management)
 7. [Image Security](#image-security)
 8. [Pod Security Standards](#pod-security-standards)
-9. [Audit Logging](#audit-logging)
-10. [EKS Security Best Practices](#eks-security-best-practices)
+9. [Audit](#audit)
+10. [Amazon EKS Security Enhancement](#amazon-eks-security-enhancement)
 
 ## Security Overview
 
@@ -115,36 +118,6 @@ Kubernetes security consists of the following main areas:
 
 ## Authentication
 
-Authentication is the process of verifying who a user or service account is. Kubernetes supports various authentication methods:
-
-### Authentication Methods
-
-1. **X.509 Certificates**: Authentication using TLS client certificates
-2. **Service Account Tokens**: Service account authentication using JWT tokens
-3. **OpenID Connect (OIDC)**: Authentication through external identity providers
-4. **Webhook Token Authentication**: Authentication through external authentication services
-5. **Authentication Proxy**: Authentication through a proxy
-
-### Service Account Example
-
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: my-service-account
-  namespace: default
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-service-account-token
-  annotations:
-    kubernetes.io/service-account.name: my-service-account
-type: kubernetes.io/service-account-token
-```
-
-## Authentication
-
 To access the Kubernetes API server, you must go through an authentication process. Kubernetes supports various authentication methods:
 
 ![A user or service sends an authentication request to the API server, which checks it against one of five supported methods (X.509 certificates, service account tokens, OIDC, webhook token authentication, authentication proxy), then routes the outcome to either the authorization stage or request denial.](../.gitbook/assets/en-core-06-security-1.png)
@@ -162,7 +135,7 @@ kubectl config set-credentials admin --client-certificate=admin.crt --client-key
 
 ### Service Account Tokens
 
-Service accounts are accounts used by processes running in Pods to communicate with the API server. Each service account has an automatically generated token that is automatically mounted to Pods.
+Service accounts are accounts used by processes running in Pods to communicate with the API server. Current Pods normally receive short-lived, Pod-bound projected tokens through the TokenRequest API; kubelet rotates them and applications must reread the token file. Since v1.24, creating a ServiceAccount no longer automatically creates a long-lived token Secret. Set `automountServiceAccountToken: false` when API credentials are unnecessary (as in this web-server example). For an explicit short-lived token, use `kubectl create token`; long-lived token Secrets are a legacy exception.
 
 ```yaml
 apiVersion: v1
@@ -179,22 +152,27 @@ metadata:
   name: my-pod
 spec:
   serviceAccountName: my-service-account
+  automountServiceAccountToken: false
   containers:
   - name: my-container
-    image: nginx:1.19
+    image: nginx:1.30.4
 ```
 
 ### OpenID Connect (OIDC)
 
-Supports authentication through external identity providers (e.g., AWS IAM, Google, Azure AD). This is useful for implementing Single Sign-On (SSO) in enterprise environments.
+Supports authentication through external identity providers (for example, Google or Microsoft Entra ID). This is useful for implementing Single Sign-On (SSO) in enterprise environments.
 
-```bash
-# Example kubeconfig setup using OIDC
-kubectl config set-credentials oidc-user \
-  --auth-provider=oidc \
-  --auth-provider-arg=idp-issuer-url=https://accounts.google.com \
-  --auth-provider-arg=client-id=<CLIENT_ID> \
-  --auth-provider-arg=client-secret=<CLIENT_SECRET>
+Configure a trusted client-go ExecCredential login plugin for your identity provider and complete its login flow. This kubeconfig user fragment uses a placeholder executable; replace it with the installed plugin and its documented arguments. EKS IAM authentication uses AWS-signed tokens (for example through `aws eks get-token`), not IAM as a generic OIDC identity provider.
+
+```yaml
+users:
+- name: oidc-user
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1
+      command: oidc-login-helper
+      interactiveMode: IfAvailable
+      provideClusterInfo: true
 ```
 
 ### Webhook Token Authentication
@@ -219,7 +197,7 @@ RBAC is the most widely used authorization mechanism in Kubernetes. Through Role
 
 #### Role and ClusterRole
 
-Roles define permissions within a namespace, and ClusterRoles define permissions that apply to the entire cluster.
+A Role is namespaced; a ClusterRole is cluster-scoped and can describe namespaced or cluster-scoped permissions. Neither grants access by itself: a RoleBinding limits namespaced access to its namespace, while a ClusterRoleBinding grants cluster-wide access.
 
 ```yaml
 # Namespace Role example
@@ -239,10 +217,10 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: secret-reader
+  name: node-reader
 rules:
 - apiGroups: [""]
-  resources: ["secrets"]
+  resources: ["nodes"]
   verbs: ["get", "watch", "list"]
 ```
 
@@ -272,14 +250,14 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: read-secrets-global
+  name: read-nodes-global
 subjects:
 - kind: Group
-  name: manager
+  name: node-viewers
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: secret-reader
+  name: node-reader
   apiGroup: rbac.authorization.k8s.io
 ```
 
@@ -315,9 +293,13 @@ spec:
     runAsUser: 1000
     runAsGroup: 3000
     fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - name: security-context-container
-    image: nginx:1.19
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
@@ -336,7 +318,7 @@ In the example above:
 
 ### Pod Security Standards
 
-Starting from Kubernetes 1.25, Pod Security Policy was replaced by Pod Security Standards. Pod Security Standards define three policy levels:
+PodSecurityPolicy was removed in v1.25. Pod Security Admission (stable in v1.25) can enforce the Pod Security Standards through namespace labels. The standards are policy definitions, not a `PodSecurityStandard` API resource. They define three levels:
 
 1. **Privileged**: No restrictions, all privileges allowed
 2. **Baseline**: Blocks known privilege escalation paths
@@ -353,6 +335,8 @@ metadata:
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
 ```
+
+Restricted Linux workloads need `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, a permitted seccomp profile, and dropped capabilities as well as restrictions on host access. `readOnlyRootFilesystem` is useful hardening but is not itself required by Restricted. Pin `*-version` namespace labels when you need a fixed policy version.
 
 ## Network Policy
 
@@ -394,15 +378,17 @@ spec:
 ```
 
 In the example above:
-- Defines a network policy for Pods with the `api` label
-- Allows only inbound traffic on port 8080 from Pods with the `frontend` label
-- Allows only outbound traffic to port 5432 on Pods with the `database` label
+- Defines a network policy for Pods with `app=api`
+- Allows only inbound traffic on port 8080 from Pods with `app=frontend`
+- Allows only outbound traffic to port 5432 on Pods with `app=database`
 
 To use network policies, the cluster's network plugin must support network policies. CNI plugins like Calico, Cilium, and Antrea support network policies.
 
+These podSelectors refer to Pods in `default`. Policies are additive, so another policy can allow more traffic; source egress and destination ingress must both permit a connection. This example omits DNS: add TCP/UDP 53 access to the actual cluster DNS endpoints if the application resolves Service names.
+
 ## Secret Management
 
-Kubernetes Secrets are used to store and manage sensitive information such as passwords, API keys, and certificates. However, by default, secrets are only base64 encoded, not encrypted. Therefore, additional security measures are needed.
+Kubernetes Secrets are used to store and manage sensitive information such as passwords, API keys, and certificates. The Secret API uses base64 for `data`; that encoding is not encryption. At-rest protection depends on the cluster: self-managed clusters require encryption configuration, while current EKS clusters have default envelope encryption. RBAC and safe application handling are required in either case.
 
 ### Secret Encryption
 
@@ -421,6 +407,8 @@ resources:
               secret: <base64-encoded-key>
       - identity: {}
 ```
+
+The self-managed API server must load this file with `--encryption-provider-config`; protect the key and rewrite existing Secrets. This is not a Kubernetes resource to apply with kubectl.
 
 ### External Secret Management
 
@@ -461,7 +449,7 @@ Verify the origin and integrity of images through image signing:
 Restrict pulling images only from trusted registries through image policies:
 
 ```yaml
-apiVersion: admission.k8s.io/v1
+apiVersion: apiserver.config.k8s.io/v1
 kind: AdmissionConfiguration
 plugins:
 - name: ImagePolicyWebhook
@@ -474,11 +462,15 @@ plugins:
       defaultAllow: false
 ```
 
+ImagePolicyWebhook requires a running policy backend and self-managed API server admission configuration; this file alone does not enforce registry rules. EKS does not expose arbitrary API-server flags: use supported admission webhooks/policy controllers there.
+
 ## Audit
 
 Kubernetes auditing provides a mechanism to record and analyze events occurring in the cluster.
 
-### Audit Policy
+#ImagePolicyWebhook requires a running policy backend and self-managed API server admission configuration; this file alone does not enforce registry rules. EKS does not expose arbitrary API-server flags: use supported admission webhooks/policy controllers there.
+
+## Audit Policy
 
 Audit policies define which events to record:
 
@@ -489,16 +481,10 @@ rules:
 - level: Metadata
   resources:
   - group: ""
-    resources: ["pods"]
-- level: Request
-  resources:
-  - group: ""
-    resources: ["secrets"]
-- level: None
-  users: ["system:kube-proxy"]
-  resources:
-  - group: ""
-    resources: ["endpoints", "services"]
+    resources: ["secrets", "serviceaccounts/token"]
+  - group: "authentication.k8s.io"
+    resources: ["tokenreviews"]
+- level: Metadata
 ```
 
 Audit levels:
@@ -507,18 +493,21 @@ Audit levels:
 - `Request`: Record request metadata and request body
 - `RequestResponse`: Record request metadata, request body, and response body
 
-### Audit Log Backends
+#ImagePolicyWebhook requires a running policy backend and self-managed API server admission configuration; this file alone does not enforce registry rules. EKS does not expose arbitrary API-server flags: use supported admission webhooks/policy controllers there.
+
+## Audit Log Backends
 
 Audit logs can be stored in various backends:
 - File
 - Webhook
-- Dynamic backends (e.g., Elasticsearch, Loki)
+
+The built-in backends are file/log and webhook. Forward their output to Elasticsearch/Loki with a collector; those are not native dynamic audit backends. This example records metadata only so Secret/token bodies are not copied into logs. Self-managed clusters must configure an audit policy and backend on the API server; EKS audit logs are enabled through control plane logging.
 
 ## Amazon EKS Security Enhancement
 
 Amazon EKS can enhance security by integrating with AWS security services in addition to Kubernetes' basic security features.
 
-![Six AWS security services — KMS, WAF, GuardDuty, IAM, Security Groups, and Secrets Manager — each integrate into a specific EKS mechanism and protect the API server, a worker node, or Pods inside the cluster.](../.gitbook/assets/en-core-06-security-5.png)
+![AWS security integration: IAM provides workload identity, KMS encrypts API data, security groups restrict network traffic, Secrets Manager supplies secrets, GuardDuty detects threats, and WAF protects web traffic through ALB or CloudFront.](../.gitbook/assets/en-core-06-security-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-5.html)
 
@@ -535,21 +524,15 @@ eksctl create iamserviceaccount \
   --name my-service-account \
   --namespace default \
   --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+  --attach-policy-arn arn:aws:iam::123456789012:policy/ReadApplicationBucket \
   --approve
 ```
 
+Create `ReadApplicationBucket` with `s3:GetObject` scoped to the required bucket/prefix and `s3:ListBucket` only if needed. Do not grant every bucket through a broad managed policy. EKS Pod Identity is another option on supported compute; Fargate applications use IRSA.
+
 ### Secret Encryption with AWS KMS
 
-You can use AWS KMS to encrypt Kubernetes secrets in your EKS cluster.
-
-```bash
-# Create KMS key
-aws kms create-key --description "EKS Secret Encryption Key"
-
-# Specify KMS key when creating EKS cluster
-eksctl create cluster --name my-cluster --encryption-provider-key-arn arn:aws:kms:region:account-id:key/key-id
-```
+EKS 1.28+ encrypts all Kubernetes API data with an AWS-owned KMS key by default. A customer-managed key is optional. See the [configuration chapter](./05-configuration-secrets.md#secret-encryption-with-aws-kms) for a correctly scoped association example; do not confuse base64 API representation with the managed at-rest encryption.
 
 ### AWS Security Groups
 
@@ -557,42 +540,43 @@ Apply AWS security groups to EKS cluster nodes and Pods to control network traff
 
 ```bash
 # Create security group
-aws ec2 create-security-group --group-name eks-cluster-sg --description "EKS Cluster Security Group"
+SECURITY_GROUP_ID=$(aws ec2 create-security-group \
+  --vpc-id vpc-0123456789abcdef0 \
+  --group-name eks-client-access --description "EKS client access example" \
+  --query GroupId --output text)
 
 # Add inbound rule
 aws ec2 authorize-security-group-ingress \
-  --group-id sg-12345 \
+  --group-id "$SECURITY_GROUP_ID" \
   --protocol tcp \
   --port 443 \
   --cidr 10.0.0.0/16
 ```
 
+Replace the VPC/CIDR for your environment and associate the security group with the intended resource; merely creating a group does not protect existing nodes or Pods. Pod security groups additionally require supported VPC CNI configuration and SecurityGroupPolicy.
+
 ### AWS WAF
 
-Place AWS WAF (Web Application Firewall) in front of EKS clusters to protect web applications.
+AWS WAF protects HTTP(S) application traffic through an associated ALB or CloudFront distribution; it is not attached directly to the EKS API server, Pods, or an NLB. A Web ACL with `Allow` as its default and no rules blocks nothing. Configure and test rules, then associate the regional ACL with the application ALB (same Region), for example:
 
 ```bash
-# Create WAF Web ACL
-aws wafv2 create-web-acl \
-  --name eks-web-acl \
-  --scope REGIONAL \
-  --default-action Allow={} \
-  --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=eks-web-acl
+aws wafv2 associate-web-acl \
+  --web-acl-arn "$WEB_ACL_ARN" \
+  --resource-arn "$APPLICATION_ALB_ARN"
 ```
 
 ### AWS GuardDuty
 
 Use AWS GuardDuty to detect and respond to security threats in EKS clusters.
 
-```bash
-# Enable GuardDuty
-aws guardduty create-detector --enable
+First inspect the detector in the target account/Region. EKS audit-log analysis (`EKS_AUDIT_LOGS`) and Runtime Monitoring (`RUNTIME_MONITORING`) are separate features. Runtime Monitoring also requires agent coverage on supported nodes; automated EKS agent management uses `EKS_ADDON_MANAGEMENT`. Existing `EKS_RUNTIME_MONITORING` users must follow the migration procedure rather than enable both runtime features.
 
-# Enable EKS protection
-aws guardduty update-detector \
-  --detector-id 12abc34d567e8fa901bc2d34e56789f0 \
-  --features '[{"Name": "EKS_RUNTIME_MONITORING", "Status": "ENABLED"}]'
+```bash
+aws guardduty list-detectors
+aws guardduty get-detector --detector-id "$DETECTOR_ID"
 ```
+
+Set `DETECTOR_ID` from the returned IDs, then follow the [Runtime Monitoring setup](https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html) and verify coverage. GuardDuty generates findings; automated remediation needs separately configured workflows.
 
 ## Security Best Practices
 
@@ -622,7 +606,9 @@ Here are best practices for enhancing the security of Kubernetes clusters and wo
 4. **Trusted Registries**: Pull images only from trusted registries.
 5. **Use Latest Images**: Regularly update images to patch known vulnerabilities.
 
-### Secret Management
+#These podSelectors refer to Pods in `default`. Policies are additive, so another policy can allow more traffic; source egress and destination ingress must both permit a connection. This example omits DNS: add TCP/UDP 53 access to the actual cluster DNS endpoints if the application resolves Service names.
+
+## Secret Management
 
 1. **External Secret Management**: Use external secret management systems to securely manage secrets.
 2. **Secret Encryption**: Encrypt secrets stored in etcd.

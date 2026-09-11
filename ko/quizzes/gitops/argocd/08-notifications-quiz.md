@@ -50,8 +50,8 @@ ArgoCD Notifications Controller는 ArgoCD Applications를 모니터링하고 구
 
 </details>
 
-4. Application이 알림을 받도록 구독하려면 어떻게 해야 하나요?
-   - A) notifications ConfigMap 편집
+4. 특정 Application의 metadata에서 알림 구독을 직접 지정하는 방법은 무엇인가요?
+   - A) Application의 replica 수 변경
    - B) Application에 알림 구독 어노테이션 추가
    - C) NotificationSubscription CRD 생성
    - D) ArgoCD UI에서 구성
@@ -62,7 +62,7 @@ ArgoCD Notifications Controller는 ArgoCD Applications를 모니터링하고 구
 **정답: B) Application에 알림 구독 어노테이션 추가**
 
 **설명:**
-Applications는 `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`과 같은 어노테이션을 통해 알림을 구독합니다. 트리거, 서비스 및 수신자를 지정합니다.
+Applications는 `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`과 같은 어노테이션을 통해 알림을 구독합니다. 트리거, 서비스 및 수신자를 지정합니다. 중앙 ConfigMap의 `subscriptions` 또는 AppProject 어노테이션으로도 구독할 수 있습니다. 여러 수신자는 세미콜론으로 구분합니다.
 
 </details>
 
@@ -78,6 +78,6 @@ Applications는 `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my
 **정답: C) Slack, Teams, 이메일, 웹훅 등 여러 개**
 
 **설명:**
-ArgoCD 알림은 Slack, Microsoft Teams, Telegram, Opsgenie, Grafana, PagerDuty, GitHub, 이메일(SMTP), 일반 웹훅 등 많은 서비스를 지원합니다.
+Argo CD는 Slack, Teams Workflows, GitHub, 이메일, 일반 Webhook, SQS 등 여러 서비스 형식을 지원합니다. 서비스 자격 증명과 트리거·템플릿·구독을 구성해야 해당 수신자로 전송됩니다. 템플릿에 여러 서비스가 있어도 자동으로 모두에게 보내지 않습니다. 기존 Opsgenie 통합은 공지된 제품 종료 일정에 맞춰 이전해야 합니다.
 
 </details>

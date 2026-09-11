@@ -31,7 +31,7 @@
           "webhook",
           "github"
         ],
-        "note": "Trigger가 일치하면 Template로 렌더링한 메시지를 구독된 서비스로 전송한다."
+        "note": "조건·구독이 일치한 서비스에만 전송한다. 모든 서비스로 자동 방송하지 않는다."
       }
     ],
     "legend": {
@@ -91,7 +91,8 @@
       "size": [
         190,
         56
-      ]
+      ],
+      "sublabel": "Workflows"
     },
     {
       "id": "email",
@@ -145,7 +146,7 @@
     },
     {
       "kind": "region",
-      "label": "알림 서비스",
+      "label": "구독된 서비스 예시",
       "wraps": [
         "slack",
         "teams",
@@ -197,7 +198,7 @@
         "Trigger — 알림을 발생시키는 조건",
         "Template — 알림 메시지 형식",
         "Service — 알림 대상 (Slack, Email 등)",
-        "Subscription — Application과 알림 연결"
+        "Subscription — 대상·트리거 선택"
       ]
     }
   ]

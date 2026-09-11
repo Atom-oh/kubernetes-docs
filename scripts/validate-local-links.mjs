@@ -6,6 +6,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const REMOTE_OR_DYNAMIC_TARGET = /^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\{\{|\{%)/i
+const REPOSITORY_MAIN = /^https:\/\/(?:github\.com\/Atom-oh\/kubernetes-docs\/blob\/main\/|raw\.githubusercontent\.com\/Atom-oh\/kubernetes-docs\/main\/)/i
 
 export function stripFencedCode(markdown) {
   let activeFence = null
@@ -29,7 +30,7 @@ function lineNumberAt(source, index) {
 }
 
 function isLocalTarget(target) {
-  return target && !REMOTE_OR_DYNAMIC_TARGET.test(target)
+  return target && (REPOSITORY_MAIN.test(target) || !REMOTE_OR_DYNAMIC_TARGET.test(target))
 }
 
 export function extractLocalTargets(markdown) {
@@ -71,7 +72,7 @@ export function requiresExplicitReadmeTarget(target) {
 }
 
 export function resolveLocalTarget(sourcePath, target, repositoryRoot) {
-  const cleanTarget = withoutQueryOrFragment(target)
+  const cleanTarget = withoutQueryOrFragment(target.replace(REPOSITORY_MAIN, '/'))
   if (!cleanTarget) return []
 
   let resolved

@@ -18,6 +18,7 @@ import {
 
 import { supportedLocales } from '../.vitepress/site-scope.mjs'
 import { generateLlmsFiles } from './generate-llms-txt.mjs'
+import { normalizeArchmapFontsInDirectory } from './lib/archmap-fonts.mjs'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
@@ -178,6 +179,9 @@ export async function mergeLocaleOutputs(localeOutputs, destination) {
     localeOutputs.map((localeOutput) => path.join(localeOutput, 'sitemap.xml')),
     path.join(destination, 'sitemap.xml')
   )
+
+  const fontsUpdated = await normalizeArchmapFontsInDirectory(path.join(destination, 'archmaps'))
+  if (fontsUpdated > 0) console.log(`Normalized CJK fonts in ${fontsUpdated} archmap viewers`)
 
   const marked = await markArchmapsNoindex(destination)
   if (marked > 0) console.log(`Marked ${marked} archmap pages noindex`)

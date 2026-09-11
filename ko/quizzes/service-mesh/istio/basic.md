@@ -1,6 +1,6 @@
 # Basic 퀴즈
 
-> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 23일
+> **검토 버전**: Istio 1.31.0 **EKS 버전**: 1.34–1.36 **마지막 업데이트**: 2026년 9월 11일
 
 이 퀴즈는 Istio의 기본 개념과 아키텍처에 대한 이해도를 테스트합니다.
 
@@ -27,13 +27,13 @@ D. 네트워크 레벨에서 보안과 정책을 적용한다.
 
 * A (O): 서비스 메시는 마이크로서비스 아키텍처에서 서비스 간 통신을 담당하는 전용 인프라 계층입니다
 * B (X): 애플리케이션 코드 변경 없이 사이드카 프록시나 Ambient Mode로 투명하게 적용됩니다
-* C (O): VirtualService, DestinationRule 등으로 트래픽을 제어하고, 메트릭/로그/트레이스를 자동 수집합니다
+* C (O): VirtualService, DestinationRule 등으로 트래픽을 제어하고, 메트릭을 노출합니다. 로그·추적에는 설정과 애플리케이션의 추적 컨텍스트 전파가 필요합니다
 * D (O): mTLS, Authorization Policy 등으로 네트워크 레벨에서 보안 정책을 적용합니다
 
 **참고 자료:**
 
 * [Istio 핵심 개념](../../../service-mesh/istio/02-basic-concepts.md)
-* [서비스 메시란?](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/02-istio.md#%EC%86%8C%EA%B0%9C)
+* [서비스 메시란?](../../../service-mesh/istio/README.md)
 
 </details>
 
@@ -78,7 +78,7 @@ D. Citadel
 **참고 자료:**
 
 * [Istio 구성 요소](../../../service-mesh/istio/03-architecture.md)
-* [아키텍처 개요](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/02-istio.md#%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98-%EA%B0%9C%EC%9A%94)
+* [아키텍처 개요](../../../service-mesh/istio/README.md)
 
 </details>
 
@@ -99,14 +99,14 @@ D. 메트릭, 로그, 트레이스 수집
 
 **정답: C**
 
-Kubernetes CRD 검증 및 저장은 Control Plane(Istiod)의 역할입니다.
+Kubernetes API Server가 리소스를 저장하고 스키마를 검증하며 istiod는 admission webhook으로 Istio 구성을 검증합니다. Envoy가 Kubernetes CRD를 저장하지는 않습니다.
 
 **해설:**
 
 * A (O): Envoy는 VirtualService 규칙에 따라 트래픽을 라우팅하고 로드 밸런싱합니다
 * B (O): Envoy는 서비스 간 통신을 자동으로 mTLS로 암호화하고 인증서를 검증합니다
 * C (X): CRD 검증 및 저장은 Kubernetes API Server와 Istiod의 역할입니다
-* D (O): Envoy는 모든 요청에 대한 메트릭(Prometheus), 로그(Access Log), 트레이스(Jaeger)를 수집합니다
+* D (O): Envoy는 메트릭을 노출하고 설정한 로깅 및 샘플링에 따라 액세스 로그와 추적 span을 생성합니다
 
 **참고 자료:**
 
@@ -129,32 +129,19 @@ D. production
 
 <summary>정답 및 해설</summary>
 
-**정답: D**
+**정답: A**
 
-프로덕션 환경에서는 **production** 프로파일을 사용해야 합니다.
+이 가이드의 Sidecar 설치는 `default`를 프로덕션 시작 프로필로 사용합니다. 기본 제공 `production` 프로필은 없습니다. Replica, 리소스 요청, 배치, PDB, 보안 정책은 명시적으로 구성해야 하며 `default`만 선택해도 고가용성이 보장되지는 않습니다.
 
-**해설:**
-
-**Istio 설치 프로파일 비교:**
-
-| 프로파일           | 용도     | 특징                   |
-| -------------- | ------ | -------------------- |
-| **default**    | 개발/테스트 | 기본 구성, 중간 리소스        |
-| **demo**       | 데모/학습  | 모든 기능 활성화, 높은 리소스 사용 |
-| **minimal**    | 최소 구성  | Control Plane만 설치    |
-| **production** | 프로덕션   | HA 구성, 높은 가용성        |
-
-**Production 프로파일 특징:**
+| 프로필 | 용도 |
+| --- | --- |
+| default | 프로덕션 시작 설정; 워크로드에 맞게 조정 |
+| demo | 데모용; 상세 텔레메트리로 성능 테스트에는 부적합 |
+| minimal | Control Plane만 설치 |
+| production | 기본 제공 프로필이 아님 |
 
 ```bash
-# Production 프로파일 설치
-istioctl install --set profile=production -y
-
-# 주요 특징:
-# - Istiod replica: 3개 (HA)
-# - PodDisruptionBudget 설정
-# - 리소스 제한 적절히 설정
-# - Ingress/Egress Gateway 포함
+istioctl install --set profile=default
 ```
 
 **프로덕션 체크리스트:**
@@ -217,7 +204,7 @@ D. Gateway
 
 ```yaml
 # 트래픽 관리
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -232,7 +219,7 @@ spec:
 
 ---
 # 보안
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -293,9 +280,13 @@ kind: Deployment
 metadata:
   name: myapp
 spec:
+  selector:
+    matchLabels:
+      app: myapp
   template:
     metadata:
       labels:
+        app: myapp
         sidecar.istio.io/inject: "true"  # 또는 "false"
     spec:
       containers:
@@ -346,6 +337,8 @@ spec:
 
 **답변:**
 
+아래 값은 산술 연습용 가정이며 측정한 Istio 요구량이나 용량 권장값이 아닙니다. MB/GB는 10진 단위로 계산합니다. CPU도 사이드카당 0.1 vCPU, ztunnel당 0.1 vCPU, waypoint 0.5 vCPU로 가정합니다.
+
 **가정:**
 
 * Pod 수: 1000개
@@ -387,36 +380,9 @@ CPU 사용량 = (Node 수 × ztunnel CPU) + waypoint CPU
 | **메모리** | 50GB         | 0.7GB        | 49.3GB    | **98.6%** |
 | **CPU** | 100 vCPU     | 1.5 vCPU     | 98.5 vCPU | **98.5%** |
 
-**비용 계산 (AWS EKS 기준):**
+**해석:**
 
-```
-# r5.xlarge: 4 vCPU, 32GB RAM, $0.252/시간
-
-Sidecar Mode:
-- CPU: 100 vCPU → 25개 인스턴스 필요
-- 메모리: 50GB → 2개 인스턴스 필요
-- 필요 인스턴스: max(25, 2) = 25개
-- 월간 비용: 25 × $0.252 × 24 × 30 = $4,536
-
-Ambient Mode:
-- CPU: 1.5 vCPU → 1개 인스턴스면 충분
-- 메모리: 0.7GB → 1개 인스턴스면 충분
-- 필요 인스턴스: 1개
-- 월간 비용: 1 × $0.252 × 24 × 30 = $181
-
-월간 비용 절감: $4,536 - $181 = $4,355 (96%)
-```
-
-**결론:**
-
-* Ambient Mode는 대규모 클러스터에서 **96% 이상의 비용 절감** 효과
-* 1000개 Pod 규모에서 월간 약 **$4,300 절감**
-* 리소스 사용량이 **98% 이상 감소**
-
-**주의사항:**
-
-* L7 기능이 필요한 경우 waypoint 추가 필요
-* Ambient Mode는 Istio 1.28+ 베타 기능
+가정한 값의 프록시 합계만 비교하면 메모리 98.6%, CPU 98.5% 감소입니다. 이것이 AWS 비용 96% 절감이나 10노드·1,000파드 클러스터의 인스턴스 1개 운영을 뜻하지는 않습니다. 애플리케이션 리소스, 파드/IP 제한, HA, replica, 처리량, waypoint 용량이 빠져 있습니다. 용량과 비용은 실제 토폴로지를 벤치마크해 산정하세요. Ambient 핵심 기능은 Istio 1.24부터 GA입니다.
 
 **참고 자료:**
 
@@ -441,7 +407,7 @@ Istio에서 두 서비스(service-a와 service-b) 간 통신 시 mTLS가 작동�
 
 **1단계: 인증서 발급 (부트스트랩)**
 
-* Pod 시작 시 Envoy는 자신의 Service Account를 사용하여 Istiod에 인증서 요청(CSR)
+* 파드 시작 시 Istio 에이전트가 개인 키/CSR을 만들고 워크로드 자격 증명으로 istiod에 인증합니다. Envoy는 로컬 에이전트의 SDS로 인증서/키를 받습니다
 * Istiod는 Service Account를 검증하고 X.509 인증서 발급
 * 인증서에는 Service Account ID가 포함됨 (예: `cluster.local/ns/default/sa/service-a`)
 * 인증서 유효기간: 기본 24시간 (자동 갱신)
@@ -454,52 +420,30 @@ Service A → Envoy A → [mTLS] → Envoy B → Service B
 
 **상세 과정:**
 
-```yaml
-# Service A가 Service B 호출
-1. Service A → Envoy A (localhost:outbound)
-   - 애플리케이션은 평문 HTTP 요청
-
-2. Envoy A: Outbound 처리
-   - Istiod로부터 받은 구성 확인
-   - PeerAuthentication 정책 확인 (STRICT mTLS)
-   - Service B의 Envoy B로 연결 시작
-
-3. TLS 핸드셰이크 (Envoy A ↔ Envoy B)
-   a. Envoy A → Envoy B: ClientHello
-      - 자신의 인증서 제시
-      - 지원하는 암호화 알고리즘 제시
-
-   b. Envoy B → Envoy A: ServerHello
-      - 자신의 인증서 제시
-      - 선택된 암호화 알고리즘
-
-   c. 상호 인증서 검증
-      - Envoy A: Service B의 인증서 검증
-      - Envoy B: Service A의 인증서 검증
-      - Istiod의 Root CA로 서명 검증
-
-   d. 암호화 세션 키 생성
-      - TLS 1.3 암호화 채널 생성
-
-4. Envoy B → Service B (localhost:inbound)
-   - 복호화된 평문 HTTP 요청 전달
-
-5. Service B → Envoy B → [mTLS] → Envoy A → Service A
-   - 응답도 같은 암호화 채널 사용
+```text
+1. 출발 앱의 HTTP 요청은 설정된 리다이렉션으로 Envoy A에 전달됩니다.
+2. 자동 mTLS/DestinationRule이 아웃바운드 TLS를 결정하고,
+   목적지 PeerAuthentication이 Envoy B의 인바운드 mTLS 요구를 결정합니다.
+3. ClientHello/ServerHello로 TLS 매개변수와 키 교환을 협상합니다.
+   인증서는 Hello가 아닌 Certificate 메시지에 포함됩니다.
+   서버가 클라이언트 인증서를 요청하고 양쪽은 구성된 신뢰 체인에 따라
+   상대 인증서와 개인 키 소유 증명을 검증합니다.
+4. Envoy B가 인가 정책을 적용하고 복호화한 요청을 Service B로 전달합니다.
+5. 응답은 수립한 TLS 연결로 반환됩니다.
 ```
 
 **각 컴포넌트의 역할:**
 
 **Istiod:**
 
-* Root CA 역할 (인증서 서명)
+* CA 역할 (외부 루트 아래의 중간 CA일 수 있음)
 * Service Account 기반 인증서 발급
-* 인증서 자동 갱신 (24시간마다)
+* 만료 전 갱신 요청에 서명; 인증서 수명은 설정 가능
 * PeerAuthentication 정책 배포
 
 **Envoy Sidecar:**
 
-* 인증서 요청 및 갱신
+* Istio 에이전트의 SDS에서 인증서 수신
 * TLS 핸드셰이크 수행
 * 트래픽 암호화/복호화
 * 인증서 검증
@@ -515,7 +459,7 @@ Service A → Envoy A → [mTLS] → Envoy B → Service B
 
 ```yaml
 # PeerAuthentication - STRICT mTLS
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -528,20 +472,9 @@ spec:
 **인증서 확인:**
 
 ```bash
-# Pod의 인증서 확인
-istioctl proxy-config secret <pod-name> -o json
-
-# 출력 예시:
-{
-  "name": "default",
-  "tlsCertificate": {
-    "certificateChain": "...",
-    "privateKey": "...",
-    "subjectAltNames": [
-      "spiffe://cluster.local/ns/default/sa/service-a"
-    ]
-  }
-}
+# Inspect certificate validity/status; private keys are not shown as plaintext
+istioctl proxy-config secret <pod-name> -n <namespace>
+istioctl proxy-config secret <pod-name> -n <namespace> -o json
 ```
 
 **보안 이점:**
@@ -554,7 +487,7 @@ istioctl proxy-config secret <pod-name> -o json
 **참고 자료:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [인증서 관리](../../../service-mesh/istio/03-architecture.md#인증서-관리)
+* [인증서 관리](../../../service-mesh/istio/03-architecture.md#3-certificate-management-citadel-기능)
 
 </details>
 
@@ -579,7 +512,7 @@ istioctl proxy-config secret <pod-name> -o json
 kubectl get pods -n <namespace>
 
 # Sidecar가 주입되었는지 확인 (컨테이너가 2개여야 함)
-kubectl get pods <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].name}'
+kubectl get pods <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].name}{" "}{.spec.initContainers[*].name}'
 # 예상 출력: myapp istio-proxy
 
 # Sidecar 주입 여부 상세 확인
@@ -592,7 +525,7 @@ kubectl logs <pod-name> -n <namespace> -c istio-proxy  # Envoy 로그
 
 **문제 진단:**
 
-* 컨테이너가 1개만 있으면 → Sidecar 미주입
+* containers와 native sidecar initContainers에서 istio-proxy 확인; Ambient 워크로드는 주입된 사이드카가 없음
 * Pod가 CrashLoopBackOff → 애플리케이션 또는 Sidecar 초기화 실패
 
 **해결:**
@@ -617,7 +550,7 @@ kubectl rollout restart deployment/<deployment-name> -n <namespace>
 kubectl get svc <service-name> -n <namespace>
 
 # Service Endpoint 확인 (Pod IP가 등록되어 있는지)
-kubectl get endpoints <service-name> -n <namespace>
+kubectl get endpointslices -n <namespace> -l kubernetes.io/service-name=<service-name>
 
 # Service 상세 정보
 kubectl describe svc <service-name> -n <namespace>
@@ -652,7 +585,7 @@ kubectl get destinationrule -n <namespace>
 kubectl describe destinationrule <dr-name> -n <namespace>
 
 # Gateway 확인 (외부 접근 시)
-kubectl get gateway -n <namespace>
+kubectl get gateways.networking.istio.io -n <namespace>
 
 # Istio 구성 검증
 istioctl analyze -n <namespace>
@@ -672,7 +605,7 @@ istioctl analyze -n <namespace>
 
 # 출력 예시:
 # Error [IST0101] (VirtualService reviews.default)
-# Referenced host not found: reviews
+# Referenced gateway not found: missing-gateway
 ```
 
 ***
@@ -684,7 +617,9 @@ istioctl analyze -n <namespace>
 kubectl get peerauthentication -A
 
 # 특정 Pod의 mTLS 모드 확인
-istioctl authn tls-check <pod-name>.<namespace> <service-name>.<namespace>.svc.cluster.local
+istioctl proxy-config secret <pod-name> -n <namespace>
+istioctl proxy-config clusters <pod-name> -n <namespace> -o json
+istioctl x authz check <pod-name> -n <namespace>
 
 # AuthorizationPolicy 확인
 kubectl get authorizationpolicy -n <namespace>
@@ -692,27 +627,14 @@ kubectl get authorizationpolicy -n <namespace>
 
 **문제 진단:**
 
-* mTLS 모드 불일치 (STRICT vs PERMISSIVE)
+* STRICT 목적지에 평문 클라이언트 접근, 만료 인증서, 신뢰 체인 불일치
 * AuthorizationPolicy가 트래픽 차단
 
 **해결:**
 
-```bash
-# PERMISSIVE 모드로 임시 변경 (디버깅용)
-kubectl apply -f - <<EOF
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: <namespace>
-spec:
-  mtls:
-    mode: PERMISSIVE
-EOF
+유효 정책, 워크로드 ID, 인증서와 Envoy 거부 로그를 확인하세요. STRICT와 PERMISSIVE 서버 모두 메시 mTLS 클라이언트를 받을 수 있습니다. 정책 변경은 격리된 테스트 네임스페이스에서 재현하며 운영 인가 삭제나 mTLS 완화를 기본 디버깅 단계로 사용하지 않습니다.
 
-# AuthorizationPolicy 임시 삭제
-kubectl delete authorizationpolicy <policy-name> -n <namespace>
-```
+
 
 ***
 
@@ -746,14 +668,14 @@ istioctl proxy-config endpoints <pod-name> -n <namespace>
 # Pod 내에서 직접 테스트
 kubectl exec -it <source-pod> -n <namespace> -- curl http://<target-service>:<port>
 
-# Envoy를 거치지 않고 직접 테스트 (Pod IP로)
+# Pod IP 라우팅 비교; 이 요청도 사이드카 가로채기를 우회하지 않음
 kubectl exec -it <source-pod> -n <namespace> -- curl http://<pod-ip>:<port>
 
 # DNS 해석 확인
 kubectl exec -it <source-pod> -n <namespace> -- nslookup <service-name>
 
 # Envoy Admin API로 통계 확인
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- curl localhost:15000/stats | grep <service-name>
+istioctl dashboard envoy <pod-name> -n <namespace>
 ```
 
 ***
@@ -774,6 +696,8 @@ istioctl proxy-status <pod-name>.<namespace>
 ***
 
 **8단계: 메트릭 및 트레이싱 확인**
+
+텔레메트리 애드온은 별도 설치가 필요합니다. 각 port-forward는 별도 터미널에서 실행하며 실제 수집기의 서비스/네임스페이스를 사용하세요.
 
 ```bash
 # Prometheus에서 메트릭 확인
@@ -804,11 +728,11 @@ istioctl dashboard kiali
    └─ YES → 4단계
 
 4. mTLS/정책 정상?
-   ├─ NO → PERMISSIVE 모드 테스트
+   ├─ NO → ID·인증서·거부 로그 확인
    └─ YES → 5단계
 
 5. Envoy 구성 정상?
-   ├─ NO → Istiod 재시작
+   ├─ NO → xDS 상태와 istiod 로그 확인
    └─ YES → 6단계
 
 6. 네트워크 연결 정상?
@@ -826,259 +750,85 @@ istioctl dashboard kiali
 
 ### 문제 10: Istio 업그레이드 전략
 
-프로덕션 환경에서 Istio를 1.27.0에서 1.28.0으로 업그레이드하는 **Canary Upgrade** 전략을 설명하세요. 단계별 명령어와 검증 방법을 포함해야 합니다.
+호환되는 EKS 클러스터에서 Istio 1.30.4를 1.31.0으로 Canary Upgrade하는 방법을 설명하세요. 워크로드 이전, 게이트웨이 처리, 검증, 롤백 조건을 포함하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+모든 워크로드와 게이트웨이 이전 및 롤백 기간 종료 전까지 기존 Control Plane을 유지합니다. 아래는 istioctl 관리 Sidecar 예제이며 Helm과 Ambient 설치는 별도 업그레이드 절차를 사용합니다. Revision 이름은 실제 설치와 일치하도록 바꾸세요.
 
-**Istio Canary Upgrade 전략:**
+**1. 사전 준비 및 백업**
 
-Canary Upgrade는 새 버전과 이전 버전의 Control Plane을 동시에 실행하고, 점진적으로 워크로드를 이전하는 안전한 업그레이드 방식입니다.
-
-***
-
-**사전 준비:**
+Istio/EKS 지원 매트릭스와 업그레이드 노트를 확인합니다. 모범 사례 장에 따라 기존 설치 파일, 해당하는 차트 버전, 메시 리소스, CA/TLS Secret을 보존하세요. 대상 istioctl을 다운로드하고 사전 검증합니다:
 
 ```bash
-# 1. 현재 버전 확인
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.0 sh -
+cd istio-1.31.0
+export PATH="$PWD/bin:$PATH"
 istioctl version
-
-# 2. 백업 생성
-kubectl get istiooperator -A -o yaml > istio-1.27-backup.yaml
-kubectl get vs,dr,gw,se,pa,ra,ap -A -o yaml > istio-config-backup.yaml
-
-# 3. 새 버전 다운로드
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
-cd istio-1.28.0
-export PATH=$PWD/bin:$PATH
-
-# 4. 호환성 확인
 istioctl x precheck
 ```
 
-***
+**2. Canary Control Plane 설치**
 
-**1단계: 새 Control Plane 설치 (revision 사용)**
+기존 설정에서 `canary-install.yaml`을 준비해 메시 ID·신뢰·리소스 설정을 보존하세요. Revision은 `1-31-0`, Control Plane만 설치하는 프로필은 `minimal`로 설정하고 게이트웨이 구성 요소는 활성화하지 않습니다. 렌더링 결과를 검토한 후 설치합니다:
 
 ```bash
-# Revision을 사용하여 새 버전 Control Plane 설치
-istioctl install --set revision=1-28-0 --set profile=production -y
-
-# 설치 확인
-kubectl get pods -n istio-system -l app=istiod
-# 출력 예시:
-# istiod-1-27-0-xxxx  (기존 버전)
-# istiod-1-28-0-xxxx  (새 버전)
-
-# Revision 확인
-kubectl get mutatingwebhookconfigurations | grep istio
-# 출력:
-# istio-sidecar-injector-1-27-0
-# istio-sidecar-injector-1-28-0
+istioctl manifest generate -f canary-install.yaml > canary-rendered.yaml
+istioctl install -f canary-install.yaml
+kubectl rollout status deployment/istiod-1-31-0 -n istio-system
 ```
 
-**중요:** 이 시점에서 **두 개의 Control Plane**이 동시에 실행됩니다.
+`production` 프로필은 없습니다. Revision 레이블은 바이너리 버전을 선택하지 않으며 대상 istioctl과 설정이 버전을 결정합니다.
 
-***
-
-**2단계: 테스트 Namespace로 Canary 검증**
+**3. 테스트 네임스페이스 검증**
 
 ```bash
-# 테스트 네임스페이스 생성
 kubectl create namespace istio-upgrade-test
-
-# 새 버전으로 레이블 지정
-kubectl label namespace istio-upgrade-test istio.io/rev=1-28-0
-
-# 테스트 애플리케이션 배포
-kubectl apply -n istio-upgrade-test -f samples/sleep/sleep.yaml
+kubectl label namespace istio-upgrade-test istio.io/rev=1-31-0
+kubectl apply -n istio-upgrade-test -f samples/curl/curl.yaml
 kubectl apply -n istio-upgrade-test -f samples/httpbin/httpbin.yaml
-
-# Sidecar 버전 확인 (1.28.0이어야 함)
-kubectl get pods -n istio-upgrade-test -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}'
-
-# 통신 테스트
-kubectl exec -n istio-upgrade-test deploy/sleep -- curl http://httpbin:8000/headers
-
-# Envoy 구성 확인
-istioctl proxy-config clusters deploy/sleep.istio-upgrade-test
+kubectl rollout status deployment/curl -n istio-upgrade-test
+kubectl rollout status deployment/httpbin -n istio-upgrade-test
+kubectl exec -n istio-upgrade-test deploy/curl -c curl -- curl -fsS http://httpbin:8000/headers
+istioctl proxy-status
+istioctl analyze -n istio-upgrade-test
 ```
 
-**검증 체크리스트:**
+실제 프록시 이미지 버전, 동기화 상태, mTLS/인가 동작, 오류율, 지연 시간을 검증한 뒤 진행합니다.
 
-* ✅ Sidecar가 1.28.0 버전으로 주입되었는가?
-* ✅ 서비스 간 통신이 정상인가?
-* ✅ mTLS가 정상 작동하는가?
-* ✅ 메트릭이 수집되는가?
+**4. 스테이징 후 프로덕션 네임스페이스를 하나씩 이전**
 
-***
-
-**3단계: 스테이징 Namespace 이전**
+Revision보다 우선하는 `istio-injection` 레이블을 제거합니다. 컨트롤러를 재시작해 새 프록시가 있는 파드를 만들고 해당하는 StatefulSet·DaemonSet·향후 Job도 확인하세요.
 
 ```bash
-# 스테이징 네임스페이스를 새 버전으로 전환
-kubectl label namespace staging istio.io/rev=1-28-0 --overwrite
-
-# 기존 레이블 제거 (있는 경우)
-kubectl label namespace staging istio-injection-
-
-# Pod 재시작 (새 버전 Sidecar 주입)
+kubectl label namespace staging istio-injection- istio.io/rev=1-31-0 --overwrite
 kubectl rollout restart deployment -n staging
-
-# 재시작 상태 모니터링
 kubectl rollout status deployment -n staging
-
-# 버전 확인
-kubectl get pods -n staging -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}'
+istioctl proxy-status
 ```
 
-**검증:**
+애플리케이션 smoke test 통과와 워크로드에 맞는 관찰 기간 후에만 다음 네임스페이스로 진행합니다. 고정 sleep 시간은 정상 동작 검증을 대신하지 않습니다.
+
+**5. 이전 Control Plane 제거 전에 게이트웨이 이전**
+
+게이트웨이의 관리 도구인 istioctl/Helm으로 프록시 이미지, revision, 외부 로드 밸런서 설정을 함께 업데이트하세요. 이전 이미지가 명시된 Deployment는 레이블만 바꿔도 업그레이드되지 않습니다. 롤아웃, 외부 요청, proxy-status를 확인합니다. istioctl default 프로필은 공유 게이트웨이를 in-place 업그레이드할 수 있으므로 명시적으로 계획하세요.
+
+**6. 완료 또는 롤백**
+
+게이트웨이와 Deployment 외 워크로드를 포함한 모든 프록시가 이전 revision을 떠난 것을 확인한 후 설치 도구로 제거합니다. 공유 검증 webhook을 직접 삭제하지 마세요:
 
 ```bash
-# 메트릭 확인
-kubectl exec -n staging <pod-name> -c istio-proxy -- curl localhost:15000/stats/prometheus | grep istio_build
-
-# 통신 테스트
-kubectl exec -n staging <pod-name> -- curl http://<service-name>
-
-# Kiali로 시각화 확인
-istioctl dashboard kiali
+istioctl proxy-status
+istioctl uninstall --revision=1-30-4
 ```
 
-**24-48시간 모니터링:**
-
-* Prometheus 메트릭 확인
-* 에러율, 지연시간 비교
-* Istiod 리소스 사용량 확인
-
-***
-
-**4단계: 프로덕션 Namespace 단계적 이전**
-
-```bash
-# 프로덕션 Namespace 목록
-PROD_NAMESPACES="prod-api prod-web prod-worker"
-
-# 하나씩 단계적으로 이전
-for ns in $PROD_NAMESPACES; do
-  echo "Upgrading namespace: $ns"
-
-  # 레이블 업데이트
-  kubectl label namespace $ns istio.io/rev=1-28-0 --overwrite
-
-  # Pod 재시작
-  kubectl rollout restart deployment -n $ns
-
-  # 완료 대기
-  kubectl rollout status deployment -n $ns
-
-  # 검증
-  echo "Verifying namespace: $ns"
-  kubectl exec -n $ns <pod-name> -- curl http://<service-name>
-
-  # 다음 Namespace 이전 전 대기 (관찰)
-  echo "Waiting 1 hour before next namespace..."
-  sleep 3600
-done
-```
-
-**단계별 검증:**
-
-```bash
-# 각 Namespace 이전 후 확인
-# 1. Golden Signals
-kubectl port-forward -n istio-system svc/prometheus 9090:9090
-# Prometheus에서 쿼리:
-# - istio_requests_total
-# - istio_request_duration_milliseconds
-# - istio_request_bytes
-
-# 2. Control Plane 상태
-istioctl proxy-status | grep $ns
-
-# 3. 에러 로그
-kubectl logs -n istio-system -l app=istiod,istio.io/rev=1-28-0 --tail=100
-```
-
-***
-
-**5단계: 이전 버전 제거**
-
-```bash
-# 모든 Namespace가 새 버전으로 이전되었는지 확인
-kubectl get namespace -L istio.io/rev
-
-# 이전 버전을 사용하는 Pod가 없는지 확인
-kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}' | grep 1.27
-
-# 이전 버전 Control Plane 제거
-istioctl uninstall --revision=1-27-0 -y
-
-# 제거 확인
-kubectl get pods -n istio-system -l app=istiod
-
-# 정리
-kubectl delete mutatingwebhookconfigurations istio-sidecar-injector-1-27-0
-kubectl delete validatingwebhookconfigurations istio-validator-1-27-0-istio-system
-```
-
-***
-
-**6단계: Gateway 업그레이드 (선택사항)**
-
-```bash
-# Gateway도 별도로 업그레이드
-kubectl patch deployment istio-ingressgateway -n istio-system \
-  -p '{"spec":{"template":{"metadata":{"labels":{"istio.io/rev":"1-28-0"}}}}}'
-
-kubectl rollout restart deployment istio-ingressgateway -n istio-system
-kubectl rollout status deployment istio-ingressgateway -n istio-system
-```
-
-***
-
-**롤백 계획:**
-
-```bash
-# 문제 발생 시 즉시 롤백
-# 1. 이전 버전으로 Namespace 레이블 변경
-kubectl label namespace <namespace> istio.io/rev=1-27-0 --overwrite
-
-# 2. Pod 재시작
-kubectl rollout restart deployment -n <namespace>
-
-# 3. 새 버전 Control Plane 제거
-istioctl uninstall --revision=1-28-0 -y
-```
-
-***
-
-**모범 사례:**
-
-1. **단계적 접근:**
-   * Test → Staging → Prod (단계별로 진행)
-   * Namespace별로 하나씩 이전
-   * 각 단계마다 충분한 관찰 시간 확보
-2. **모니터링:**
-   * Golden Signals 모니터링 (Latency, Traffic, Errors, Saturation)
-   * Istiod 리소스 사용량 확인
-   * 각 단계마다 24-48시간 관찰
-3. **자동화:**
-   * CI/CD 파이프라인에 통합
-   * Smoke Test 자동화
-   * 롤백 스크립트 준비
-4. **커뮤니케이션:**
-   * 팀에 업그레이드 일정 공유
-   * 릴리스 노트 검토
-   * 변경 사항 문서화
+제거 전 롤백은 네임스페이스를 아직 실행 중인 이전 revision으로 되돌리고 워크로드를 재시작하며 업그레이드한 게이트웨이도 이전 릴리스 설정으로 복구한 뒤 트래픽을 검증하는 것입니다. 새 revision에 의존하는 프록시가 없을 때만 새 revision을 제거하세요. 이전 revision을 이미 제거했다면 워크로드 레이블 변경 전에 재설치·검증해야 합니다.
 
 **참고 자료:**
 
-* [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
-* [업그레이드 전략](../../../service-mesh/istio/best-practices.md#업그레이드-전략)
+- [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
+- [백업 및 운영 가이드](../../../service-mesh/istio/best-practices.md)
 
 </details>
 
@@ -1104,3 +854,13 @@ istioctl uninstall --revision=1-28-0 -y
 * [핵심 개념](../../../service-mesh/istio/02-basic-concepts.md)
 * [구성 요소](../../../service-mesh/istio/03-architecture.md)
 * [Istio 공식 문서](https://istio.io/latest/docs/)
+
+* [Installation Configuration Profiles](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
+* [Installing the Sidecar](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+* [Security](https://istio.io/latest/docs/concepts/security/)
+* [Internet Engineering Task Force (IETF)                       E. Rescorla](https://www.rfc-editor.org/rfc/rfc8446.html)
+* [Canary Upgrades](https://istio.io/latest/docs/setup/upgrade/canary/)
+* [istioctl](https://istio.io/latest/docs/reference/commands/istioctl/)
+* [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)
+* [Announcing Istio 1.24.0](https://istio.io/latest/news/releases/1.24.x/announcing-1.24/)
+* [Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)

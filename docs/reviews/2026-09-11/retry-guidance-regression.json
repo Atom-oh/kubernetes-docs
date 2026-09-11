@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-11",
+  "status": "fixed",
+  "path": "scripts/__tests__/service-mesh-mtls-retry-guidance.test.mjs",
+  "authorization": "User explicitly permitted editing this shared test file; all other original write-scope restrictions remain.",
+  "cause": "The test required literal adjacency POST|PATCH, but the audited guide safely expanded the matcher to POST|PUT|PATCH|DELETE with attempts:0 on each write route.",
+  "changes": [
+    "Guide retry safeguards were preserved; no document change was needed for this regression.",
+    "Test extracts block-style VirtualService HTTP routes and evaluates method matchers instead of requiring one alternation spelling/order.",
+    "Requires attempts:0 on every explicit POST/PATCH route and verifies POST/PATCH coverage; unrelated read-route zero cannot satisfy the assertion.",
+    "Replaced the700-character reset scan with route-scoped retryOn checking.",
+    "Added fixtures for reordered/expanded/exact matchers, missing/nonzero limits, unsupported layouts failing closed, and a neighboring read route with reset."
+  ],
+  "validation": {
+    "targetedTests": 14,
+    "targetedPassed": 14,
+    "docsTests": 107,
+    "docsPassed": 107,
+    "docsFailed": 0
+  },
+  "logs": [
+    "/tmp/mesh-retry-test-before.log",
+    "/tmp/mesh-retry-test-after.log",
+    "/tmp/kubernetes-docs-full-review/docs-test-retry-fix.log"
+  ],
+  "environmentNote": "Normal isolated node --test failed to load under the sandbox. Focused checks used --experimental-test-isolation=none; the normal npm run docs:test suite subsequently ran with approved escalation and exited0."
+}

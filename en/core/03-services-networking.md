@@ -1,6 +1,6 @@
 # Services and Networking
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
 > **Last Updated**: February 23, 2026
 
 In Kubernetes, a Service is an abstraction layer that provides a single access point for a set of Pods. In this chapter, we'll explore Kubernetes networking concepts in detail, including various service types, Ingress, network policies, and more.
@@ -10,7 +10,7 @@ In Kubernetes, a Service is an abstraction layer that provides a single access p
 To follow the examples in this document, you'll need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.34 or higher
+- kubectl within one minor version of the API server
 - A working Kubernetes cluster (EKS, minikube, kind, etc.)
 
 ### Deploy Example Application
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
 ---
@@ -86,7 +86,7 @@ Kubernetes provides various types of services to support multiple ways of exposi
 
 ### Service Architecture
 
-![External clients reach ClusterIP through LoadBalancer or NodePort, cluster-internal clients resolve names via CoreDNS and access ClusterIP, which is routed through Endpoints to the backend Pods, while ExternalName aliases an outside service via DNS CNAME.](../.gitbook/assets/en-core-03-services-networking-0.png)
+![Service networking: proxies/load balancers route traffic to backend Pods using EndpointSlice information; CoreDNS resolves Service names, and ExternalName supplies a DNS CNAME alias.](../.gitbook/assets/en-core-03-services-networking-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-0.html)
 
@@ -139,45 +139,6 @@ spec:
   type: NodePort
 ```
 
-ClusterIP is the default service type, providing an IP address accessible only within the cluster.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-  - port: 80
-    targetPort: 9376
-  type: ClusterIP
-```
-
-This service can be accessed as `my-service:80` within the cluster.
-
-### NodePort
-
-NodePort services allow access to the service through a specific port on all nodes.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-  - port: 80
-    targetPort: 9376
-    nodePort: 30007  # Optional, auto-assigned from 30000-32767 if not specified
-  type: NodePort
-```
-
-This service can be accessed as `<Node IP>:30007` on all nodes in the cluster.
-
 ### LoadBalancer
 
 LoadBalancer services provision a load balancer from the cloud provider to expose the service externally.
@@ -188,7 +149,9 @@ kind: Service
 metadata:
   name: my-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb  # Use NLB on AWS
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
 spec:
   selector:
     app: MyApp
@@ -198,7 +161,7 @@ spec:
   type: LoadBalancer
 ```
 
-This service can be accessed externally through the cloud provider's load balancer.
+This example requires the AWS Load Balancer Controller, its IAM permissions, suitable subnets, and routable Pod IPs. It provisions an internet-facing NLB. Internal load balancers are also possible; AWS may return a DNS hostname rather than an IP. EKS Auto Mode uses a separate controller/class and configuration.
 
 ### ExternalName
 
@@ -238,7 +201,7 @@ This service does not allocate a cluster IP and creates DNS records for each Pod
 
 ### External IP
 
-Services can specify external IPs to expose external resources as Kubernetes services.
+`externalIPs` exposes this Service at administrator-managed IPs already routed to the nodes; it does not allocate addresses or select an external backend. It is deprecated since v1.36. Prefer a supported load balancer or Gateway implementation for new configurations. The documentation-only address below must be replaced with an address you control.
 
 ```yaml
 apiVersion: v1
@@ -252,14 +215,14 @@ spec:
   - port: 80
     targetPort: 9376
   externalIPs:
-  - 80.11.12.10
+  - 198.51.100.32
 ```
 
 ## Ingress
 
 Ingress is an API object that exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Ingress provides load balancing, SSL termination, and name-based virtual hosting.
 
-![An external client's request passes through a load balancer and Ingress controller to a single Ingress resource, whose host/path rules fan out to Service A and Service B, each load-balancing across its own backend Pods (A-1, A-2 / B-1, B-2).](../.gitbook/assets/en-core-03-services-networking-1.png)
+![Ingress host/path rules configure a proxy or load balancer to route requests to the backend Pods of Service A or Service B; the Ingress API object itself is configuration, not a traffic hop.](../.gitbook/assets/en-core-03-services-networking-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-1.html)
 
@@ -267,12 +230,13 @@ Ingress is an API object that exposes HTTP and HTTPS routes from outside the clu
 
 To use Ingress resources, an Ingress controller must be running in the cluster. There are various Ingress controllers:
 
-- NGINX Ingress Controller
-- AWS ALB Ingress Controller
+- AWS Load Balancer Controller
 - GCE Ingress Controller
 - Traefik
 - HAProxy
 - Istio Ingress
+
+Community ingress-nginx retired in March 2026 ([notice](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)). The generic examples below assume an installed Traefik controller and `traefik` IngressClass. Ingress is a configuration API, not a packet-processing hop; the controller configures the actual proxy/load balancer.
 
 ### Basic Ingress
 
@@ -282,7 +246,7 @@ kind: Ingress
 metadata:
   name: minimal-ingress
 spec:
-  ingressClassName: nginx  # Ingress controller class to use
+  ingressClassName: traefik  # Ingress controller class to use
   rules:
   - host: example.com
     http:
@@ -306,7 +270,7 @@ kind: Ingress
 metadata:
   name: path-based-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: example.com
     http:
@@ -337,7 +301,7 @@ kind: Ingress
 metadata:
   name: name-based-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: foo.example.com
     http:
@@ -371,7 +335,7 @@ kind: Ingress
 metadata:
   name: tls-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
   - hosts:
     - example.com
@@ -397,9 +361,9 @@ TLS secret creation:
 kubectl create secret tls example-tls --cert=path/to/cert.crt --key=path/to/key.key
 ```
 
-### AWS ALB Ingress Controller
+### AWS Load Balancer Controller
 
-On AWS EKS, you can use the AWS ALB Ingress Controller to provision Application Load Balancers.
+On AWS EKS, you can use the AWS Load Balancer Controller to provision Application Load Balancers.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -407,12 +371,13 @@ kind: Ingress
 metadata:
   name: alb-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id
 spec:
+  ingressClassName: alb
   rules:
   - host: example.com
     http:
@@ -430,6 +395,8 @@ This Ingress uses AWS ALB to handle requests to `example.com`.
 
 ## Endpoints
 
+The legacy `v1/Endpoints` API is deprecated since v1.33. Use `discovery.k8s.io/v1` EndpointSlices for new integrations. These objects describe backends; traffic does not pass through API objects.
+
 Endpoints are resources that store the IP addresses and ports of Pods that a service points to. When there are Pods matching the service's selector, Kubernetes automatically creates and manages the Endpoints object.
 
 ```yaml
@@ -444,7 +411,7 @@ subsets:
   - port: 9376
 ```
 
-This Endpoints makes `my-service` point to `192.168.1.1:9376`.
+For manual backends, create a Service named `my-service` **without a selector** and matching ports; otherwise the controller can overwrite the backend data. Prefer a manually managed EndpointSlice as below.
 
 ### EndpointSlice
 
@@ -457,20 +424,20 @@ metadata:
   name: my-service-abc
   labels:
     kubernetes.io/service-name: my-service
+    endpointslice.kubernetes.io/managed-by: docs.example.com
 addressType: IPv4
 ports:
-- name: http
+- name: ""
   protocol: TCP
-  port: 80
+  port: 9376
 endpoints:
 - addresses:
   - "10.1.2.3"
   conditions:
     ready: true
   hostname: pod-1
-  topology:
-    kubernetes.io/hostname: node-1
-    topology.kubernetes.io/zone: us-west-2a
+  nodeName: node-1
+  zone: us-west-2a
 ```
 
 ## Service Discovery
@@ -482,7 +449,7 @@ Kubernetes provides two main service discovery methods:
 
 ### Environment Variables
 
-When a Pod is created, Kubernetes injects environment variables for all services that exist at that time into the Pod. For example, if there's a service called `my-service`, the following environment variables are created:
+With `enableServiceLinks: true`, kubelet adds variables for Services with ClusterIPs already present in the Pod's namespace when its containers start. These variables do not update dynamically; DNS is preferable for later-created Services. For example, if there's a service called `my-service`, the following environment variables are created:
 
 ```
 MY_SERVICE_SERVICE_HOST=10.0.0.11
@@ -579,7 +546,7 @@ spec:
 
 ## Network Policies
 
-Network policies provide a way to control communication between Pods. To use network policies, the network plugin must support them (e.g., Calico, Cilium, Weave Net).
+Network policies provide a way to control communication between Pods. To use network policies, the network plugin must support them (e.g., Calico, Cilium).
 
 ![Network policies allow the Frontend Pod to reach the API Pod and the API Pod to reach the Database Pod, and allow a Monitoring Pod in another namespace to reach the API Pod, while directly blocking the Frontend Pod and the Monitoring Pod from reaching the Database Pod.](../.gitbook/assets/en-core-03-services-networking-2.png)
 
@@ -598,7 +565,7 @@ spec:
   - Ingress
 ```
 
-This network policy blocks ingress traffic to all Pods.
+This policy isolates ingress to Pods in its own namespace. Standard NetworkPolicies are additive: traffic allowed by another policy remains allowed. The plugin must enforce policies; source egress and destination ingress must both allow a connection. Node traffic has documented exceptions.
 
 ### Allow Ingress to Specific Pods
 
@@ -676,6 +643,8 @@ spec:
 
 This network policy allows egress traffic from Pods with the `app: frontend` label to TCP port 8080 on Pods with the `app: api` label and to all Pods in namespaces with the `purpose: monitoring` label.
 
+The egress example also blocks DNS unless another policy permits it. Add TCP/UDP 53 access to the cluster DNS endpoints when applications use Service names; account for NodeLocal DNS if installed.
+
 ### CIDR-Based Policy
 
 ```yaml
@@ -709,12 +678,12 @@ A service mesh is an infrastructure layer that manages communication between mic
 
 ### Istio
 
-Istio is one of the popular service mesh implementations. Istio uses the sidecar pattern to inject Envoy proxies into each Pod.
+Istio is one of the popular service mesh implementations. The diagram shows Istio sidecar mode, which injects Envoy into enrolled Pods. Istio also offers ambient mode with a different data plane.
 
 #### Istio Virtual Service
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -741,7 +710,7 @@ This VirtualService routes requests with the `end-user: jason` header to the `v2
 #### Istio Destination Rule
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -770,6 +739,8 @@ Linkerd is a lightweight service mesh characterized by simple installation and u
 
 #### Linkerd Service Profile
 
+This is a legacy example. Since Linkerd 2.16, Gateway API types supersede ServiceProfiles; they remain for compatibility. See the [current reference](https://linkerd.io/2-edge/reference/service-profiles/).
+
 ```yaml
 apiVersion: linkerd.io/v1alpha2
 kind: ServiceProfile
@@ -796,6 +767,10 @@ spec:
 
 This ServiceProfile defines routes and retry policies for the `nginx` service.
 
+## CNI(Container Network Interface)
+
+CNI plugins configure Pod network interfaces and IP addressing. NetworkPolicy enforcement is optional and depends on the plugin.
+
 ## Cilium
 
 ![Kubernetes delegates networking through the Container Network Interface to Cilium, which loads eBPF programs into the Linux kernel to implement the data path and also feeds Hubble for network flow observability.](../.gitbook/assets/en-core-03-services-networking-4.png)
@@ -806,7 +781,7 @@ This ServiceProfile defines routes and retry policies for the `nginx` service.
 
 ### Introduction to Cilium
 
-Cilium is open-source software that leverages the powerful eBPF technology in the Linux kernel to provide network connectivity, security, and observability for containerized applications. It's designed to provide networking, security, and observability for container orchestration platforms like Kubernetes, Docker, and Mesos.
+Cilium is open-source software that leverages the powerful eBPF technology in the Linux kernel to provide network connectivity, security, and observability for containerized applications. Its current Kubernetes integration provides networking, security, and observability through a CNI plugin and controllers.
 
 #### Key Features
 
@@ -842,7 +817,7 @@ eBPF (extended Berkeley Packet Filter) is a technology that allows programs to r
 #### Key Features of eBPF
 
 1. **In-kernel Execution**: eBPF programs execute directly within the kernel, providing high performance.
-2. **Safety**: The eBPF verifier ensures programs don't damage the kernel.
+2. **Safety**: The verifier checks program safety constraints before loading; this is not a guarantee against kernel bugs or incorrect policy logic.
 3. **Dynamic Loading**: eBPF programs can be loaded and unloaded without rebooting the kernel.
 4. **Maps**: eBPF maps are used to store data and share data between user space and kernel space.
 
@@ -883,7 +858,7 @@ Cilium implements overlay networking by default using VXLAN, but also supports o
 **Advantages**:
 - Compatibility with existing network infrastructure
 - Network topology independence
-- IP conflict prevention in multi-cluster environments
+- Pod addressing independent of the underlay; connected clusters still need a compatible, non-overlapping address plan
 
 **Disadvantages**:
 - Performance impact due to encapsulation overhead
@@ -909,18 +884,9 @@ Native routing uses direct routing without encapsulation. In this mode, the unde
 - Network topology constraints
 - IP address management complexity
 
-#### Hybrid Mode
+#### Routing Mode Selection
 
-Cilium also supports a hybrid mode that combines overlay networking and native routing.
-
-**How it works**:
-1. Uses native routing when possible.
-2. Falls back to overlay networking when native routing is not possible.
-
-**Advantages**:
-- Balance of flexibility and performance
-- Support for various network topologies
-- Gradual migration possible
+Select encapsulation or native routing explicitly for the deployment. Do not assume that failed native routes automatically fall back to a tunnel; configure routing and any migration according to the chosen Cilium version.
 
 #### AWS ENI Mode
 
@@ -963,7 +929,7 @@ This policy allows ingress traffic on TCP port 80 from Pods with the `app: front
 
 #### L7 Policies
 
-Cilium supports L7 (application layer) policies to define fine-grained policies for protocols like HTTP, gRPC, and Kafka.
+Cilium supports L7 policies, such as HTTP rules, using a userspace Envoy proxy in conjunction with eBPF. L7 inspection is not performed entirely inside the kernel; check protocol and encryption limitations for the installed version.
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1042,6 +1008,9 @@ rm hubble-linux-amd64.tar.gz
 # Enable Hubble
 cilium hubble enable
 
+# Run in a separate terminal and keep it open
+cilium hubble port-forward
+
 # Observe network flows
 hubble observe
 
@@ -1049,7 +1018,7 @@ hubble observe
 hubble observe --protocol http
 
 # Observe network flows for specific Pod
-hubble observe --pod app=myapp
+hubble observe --pod default/myapp-pod
 
 # Observe network policy violations
 hubble observe --verdict DROPPED
@@ -1059,38 +1028,35 @@ hubble observe --verdict DROPPED
 
 There are various ways to configure Cilium on Amazon EKS. Here we'll look at some common configuration methods.
 
-#### Basic Installation
+#### Choose the CNI Mode Before Installation
 
-```bash
-# Install Cilium CLI
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
-sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-rm cilium-linux-amd64.tar.gz
+Use a disposable EKS test cluster and select a Cilium release compatible with its Kubernetes version. Follow the [official EKS installation guide](https://docs.cilium.io/en/stable/installation/k8s-install-helm/); the following are Helm **values fragments**, not complete installation or migration commands.
 
-# Install Cilium
-cilium install
+For **AWS VPC CNI chaining**, retain `aws-node` as IPAM and use:
 
-# Check installation status
-cilium status
-
-# Test connectivity
-cilium connectivity test
+```yaml
+cni:
+  chainingMode: aws-cni
+  exclusive: false
+enableIPv4Masquerade: false
+routingMode: native
 ```
 
-#### AWS ENI Mode Configuration
+Existing Pods must be recreated through a controlled rollout for the new CNI chain to apply. Review chaining feature limitations before enabling L7 policy or kube-proxy replacement.
 
-```bash
-# Install Cilium with AWS ENI mode
-cilium install --config aws-eni-mode=true
+For **Cilium ENI IPAM**, Cilium owns ENIs instead of VPC CNI:
 
-# Or install using Helm
-helm install cilium cilium/cilium \
-  --namespace kube-system \
-  --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set tunnel=disabled
+```yaml
+eni:
+  enabled: true
+ipam:
+  mode: eni
+routingMode: native
 ```
+
+This mode requires EC2 API permissions and preventing `aws-node` from managing the same nodes, following the official migration/install procedure. Do not apply it over a running VPC CNI installation without those steps. EKS Auto Mode and Fargate manage their networking separately.
+
+Validate after installation with `cilium status --wait` and the connectivity test in the isolated test cluster. Pin the chart version and preserve the reviewed values for upgrades.
 
 #### Enable Hubble
 
@@ -1168,7 +1134,7 @@ In the next chapter, we'll learn about Kubernetes storage options.
 - [Kubernetes Official Documentation - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [Kubernetes Official Documentation - DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
 - [Istio Official Documentation](https://istio.io/latest/docs/)
-- [Linkerd Official Documentation](https://linkerd.io/2.11/overview/)
+- [Linkerd Official Documentation](https://linkerd.io/2-edge/overview/)
 - [Cilium Official Documentation](https://docs.cilium.io/)
 - [CNI Official Documentation](https://github.com/containernetworking/cni)
 

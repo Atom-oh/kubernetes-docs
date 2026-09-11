@@ -1,0 +1,889 @@
+[
+  {
+    "path": "ko/service-mesh/istio/traffic-management/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed traffic overview; corrected API fields, mirror semantics, resource scope, and prerequisites.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
+      "https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/"
+    ],
+    "findings": [
+      "Replaced two obsolete consecutiveErrors fields with consecutive5xxErrors.",
+      "Clarified API objects vs network hops, mirrored copies vs routing remainder, independent overlapping examples, subset prerequisites, mesh vs gateway binding and ambient API scope.",
+      "Added omitted WorkloadEntry navigation and qualified client-header routing and streaming timeouts."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "7 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/01-gateway-virtualservice.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed Gateway/VirtualService guide; corrected namespace bindings, TLS secret mismatch and misleading header examples.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
+      "https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/"
+    ],
+    "findings": [
+      "Qualified references to gateways in istio-system and made example gateway namespaces consistent.",
+      "Matched my-gateway credentialName to the actually created myapp-tls Secret; identified shell code as bash.",
+      "Distinguished Istio Gateway from Gateway API/provisioning and documented workload-secret namespace and route dependencies.",
+      "Removed forged x-forwarded-proto and fake x-response-time static examples in favor of clearly illustrative headers."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "14 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed traffic overview; corrected API fields, mirror semantics, resource scope, and prerequisites.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
+      "https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/"
+    ],
+    "findings": [
+      "Replaced two obsolete consecutiveErrors fields with consecutive5xxErrors.",
+      "Clarified API objects vs network hops, mirrored copies vs routing remainder, independent overlapping examples, subset prerequisites, mesh vs gateway binding and ambient API scope.",
+      "Added omitted WorkloadEntry navigation and qualified client-header routing and streaming timeouts."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "7 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/01-gateway-virtualservice.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed Gateway/VirtualService guide; corrected namespace bindings, TLS secret mismatch and misleading header examples.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
+      "https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/"
+    ],
+    "findings": [
+      "Qualified references to gateways in istio-system and made example gateway namespaces consistent.",
+      "Matched my-gateway credentialName to the actually created myapp-tls Secret; identified shell code as bash.",
+      "Distinguished Istio Gateway from Gateway API/provisioning and documented workload-secret namespace and route dependencies.",
+      "Removed forged x-forwarded-proto and fake x-response-time static examples in favor of clearly illustrative headers."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "14 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/09-traffic-mirror.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed mirror guide; preserved correct routing examples and added missing prerequisites and operational semantics.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/"
+    ],
+    "findings": [
+      "Fixed TOC entries pointing to absent sections.",
+      "Documented subset prerequisites, extra-copy semantics, discarded responses, shadow Host suffix, and isolation of write side effects."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "2 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/10-session-affinity.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed affinity guide; corrected permanent-stickiness guarantee and navigation.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/#ConsistentHashLB"
+    ],
+    "findings": [
+      "Corrected same-pod guarantee to soft consistent-hash affinity; explained endpoint churn/locality and the diagram assumptions.",
+      "Preserved valid ttl:0s session-cookie behavior and added cookie/header/IP prerequisites.",
+      "Fixed missing TOC targets and explained mutually exclusive same-host DestinationRules."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "3 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/11-egress-control.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed egress guide; replaced incompatible HTTP-to-TLS-passthrough routing with consistent SNI TLS routing.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/"
+    ],
+    "findings": [
+      "Replaced http routes at port80 feeding PASSTHROUGH443 with tls/SNI matches on both legs, qualified gateway binding, and gateway subset.",
+      "Pinned gateway chart 1.31.0 and ClusterIP Service to avoid unnecessary external LB provisioning.",
+      "Added missing TLS origination/verification sections and distinguished service registry, gateway routing, network enforcement, and TLS termination."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "5 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/09-traffic-mirror.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed mirror guide; preserved correct routing examples and added missing prerequisites and operational semantics.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/"
+    ],
+    "findings": [
+      "Fixed TOC entries pointing to absent sections.",
+      "Documented subset prerequisites, extra-copy semantics, discarded responses, shadow Host suffix, and isolation of write side effects."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "2 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/10-session-affinity.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed affinity guide; corrected permanent-stickiness guarantee and navigation.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/#ConsistentHashLB"
+    ],
+    "findings": [
+      "Corrected same-pod guarantee to soft consistent-hash affinity; explained endpoint churn/locality and the diagram assumptions.",
+      "Preserved valid ttl:0s session-cookie behavior and added cookie/header/IP prerequisites.",
+      "Fixed missing TOC targets and explained mutually exclusive same-host DestinationRules."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "3 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/11-egress-control.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed egress guide; replaced incompatible HTTP-to-TLS-passthrough routing with consistent SNI TLS routing.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/"
+    ],
+    "findings": [
+      "Replaced http routes at port80 feeding PASSTHROUGH443 with tls/SNI matches on both legs, qualified gateway binding, and gateway subset.",
+      "Pinned gateway chart 1.31.0 and ClusterIP Service to avoid unnecessary external LB provisioning.",
+      "Added missing TLS origination/verification sections and distinguished service registry, gateway routing, network enforcement, and TLS termination."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "5 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/02-routing.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed routing chapter; corrected match semantics, source selection vs authentication, host coverage and fallback behavior.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/"
+    ],
+    "findings": [
+      "Split duplicate top-level keys in alternative YAML snippets; complete naming example now has a route.",
+      "Moved specific tablet User-Agent match before Mobile and included tenant-b hostname in VirtualService hosts.",
+      "Corrected sourceLabels/Namespace as configuration selectors, renamed ServiceAccount section, and replaced nonexistent access-denied/error destinations with explicit HTTP responses.",
+      "Removed no-op fault block and clarified fallback is not runtime failover.",
+      "Removed Bearer-string pseudo-authentication/fallthrough and documented actual JWT/authorization prerequisite.",
+      "Corrected RE2 full-string matching/slash claim, lowercase header-key requirement, GB country code, and gateway-aware test requests."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "20 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/02-routing.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed routing chapter; corrected match semantics, source selection vs authentication, host coverage and fallback behavior.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/"
+    ],
+    "findings": [
+      "Split duplicate top-level keys in alternative YAML snippets; complete naming example now has a route.",
+      "Moved specific tablet User-Agent match before Mobile and included tenant-b hostname in VirtualService hosts.",
+      "Corrected sourceLabels/Namespace as configuration selectors, renamed ServiceAccount section, and replaced nonexistent access-denied/error destinations with explicit HTTP responses.",
+      "Removed no-op fault block and clarified fallback is not runtime failover.",
+      "Removed Bearer-string pseudo-authentication/fallthrough and documented actual JWT/authorization prerequisite.",
+      "Corrected RE2 full-string matching/slash claim, lowercase header-key requirement, GB country code, and gateway-aware test requests."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "20 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/03-destination-rule.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed DestinationRule chapter; corrected removed fields, TLS/SQL protocol errors, merge semantics and rollout dependencies.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/ops/best-practices/traffic-management/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/"
+    ],
+    "findings": [
+      "Updated supported-version banner to reviewed 1.31.0 and all obsolete consecutiveErrors fields.",
+      "Clarified configuration objects vs hops, subset endpoint selection, route percentages, workload labels vs node locality and ordered subset rollout.",
+      "Repaired external-payment example to HTTP-to-TLS origination with targetPort443/SNI/SAN verification; removed HTTP pool settings from PostgreSQL.",
+      "Corrected claim that unique same-host DestinationRule subsets necessarily conflict; explained documented fragment merging and duplicate policy precedence.",
+      "Changed ephemeral pod-label repair to inspecting Deployment template, removed fabricated analyzer output, fixed Korean next-step links and split duplicate YAML keys."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "30 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/03-destination-rule.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed DestinationRule chapter; corrected removed fields, TLS/SQL protocol errors, merge semantics and rollout dependencies.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/ops/best-practices/traffic-management/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/"
+    ],
+    "findings": [
+      "Updated supported-version banner to reviewed 1.31.0 and all obsolete consecutiveErrors fields.",
+      "Clarified configuration objects vs hops, subset endpoint selection, route percentages, workload labels vs node locality and ordered subset rollout.",
+      "Repaired external-payment example to HTTP-to-TLS origination with targetPort443/SNI/SAN verification; removed HTTP pool settings from PostgreSQL.",
+      "Corrected claim that unique same-host DestinationRule subsets necessarily conflict; explained documented fragment merging and duplicate policy precedence.",
+      "Changed ephemeral pod-label repair to inspecting Deployment template, removed fabricated analyzer output, fixed Korean next-step links and split duplicate YAML keys."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "30 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed 1,942-line rollout chapter; corrected Argo metric gates, jobs, routing ownership, cookies and obsolete examples.",
+    "sources": [
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/job.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/analysis.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/platform/kube/bookinfo.yaml",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/samples/curl/curl.yaml",
+      "https://istio.io/latest/docs/reference/config/annotations/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://prometheus.io/docs/prometheus/latest/configuration/configuration/",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/manifests/crds/analysis-template-crd.yaml",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/manifests/crds/rollout-crd.yaml",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/concepts.md"
+    ],
+    "findings": [
+      "Pinned controller/CLI v1.10.0 and updated Bookinfo/curl image versions from released Istio examples; historical rollout-date annotation preserved.",
+      "Fixed Pod injection label, route-name optionality, resource creation vs mutation, subset hash ownership and preview Gateway hostname.",
+      "Changed first canary to finite inline analyses at every stage; Prometheus conditions now handle vectors/empty/NaN and target the latest ReplicaSet via explicit pod-scrape relabeling.",
+      "Fixed Job-provider success semantics using exit codes, valid Bookinfo endpoints, native sidecar completion and bounded execution.",
+      "Corrected A/B cookies per selected destination, cookie matching boundaries and full-match mobile version regex.",
+      "Replaced broken grep/counter/sleep rollback controllers and unsolicited webhook example with AnalysisRun-owned operation; distinguished abort/undo and non-atomic propagation.",
+      "Fixed request ratio scalar matching, EndpointSlice diagnostics and route-config weight inspection; marked shortened Rollouts as overlays.",
+      "Clarified asynchronous blue/green selector propagation and unmanaged canary routes that survive weight rollback; human pause is not an automatic failure.",
+      "Parent external-link report confirmed obsolete CNCF progressive-delivery URL returns 404; replaced with verified versioned Argo concepts documentation."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "21 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Eight Rollout and five AnalysisTemplate examples per language passed the official Argo Rollouts v1.10.0 CRD schemas. Shortened Rollout overlays remain explicitly marked as requiring the baseline template/selector.",
+      "Inspected parsed main Rollout: four finite inline analysis gates, one after each weighted stage. No live rollout or analysis Job executed.",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed 1,942-line rollout chapter; corrected Argo metric gates, jobs, routing ownership, cookies and obsolete examples.",
+    "sources": [
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/job.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/analysis.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/platform/kube/bookinfo.yaml",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/samples/curl/curl.yaml",
+      "https://istio.io/latest/docs/reference/config/annotations/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://prometheus.io/docs/prometheus/latest/configuration/configuration/",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/manifests/crds/analysis-template-crd.yaml",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/manifests/crds/rollout-crd.yaml",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/concepts.md"
+    ],
+    "findings": [
+      "Pinned controller/CLI v1.10.0 and updated Bookinfo/curl image versions from released Istio examples; historical rollout-date annotation preserved.",
+      "Fixed Pod injection label, route-name optionality, resource creation vs mutation, subset hash ownership and preview Gateway hostname.",
+      "Changed first canary to finite inline analyses at every stage; Prometheus conditions now handle vectors/empty/NaN and target the latest ReplicaSet via explicit pod-scrape relabeling.",
+      "Fixed Job-provider success semantics using exit codes, valid Bookinfo endpoints, native sidecar completion and bounded execution.",
+      "Corrected A/B cookies per selected destination, cookie matching boundaries and full-match mobile version regex.",
+      "Replaced broken grep/counter/sleep rollback controllers and unsolicited webhook example with AnalysisRun-owned operation; distinguished abort/undo and non-atomic propagation.",
+      "Fixed request ratio scalar matching, EndpointSlice diagnostics and route-config weight inspection; marked shortened Rollouts as overlays.",
+      "Clarified asynchronous blue/green selector propagation and unmanaged canary routes that survive weight rollback; human pause is not an automatic failure.",
+      "Parent external-link report confirmed obsolete CNCF progressive-delivery URL returns 404; replaced with verified versioned Argo concepts documentation."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "21 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Eight Rollout and five AnalysisTemplate examples per language passed the official Argo Rollouts v1.10.0 CRD schemas. Shortened Rollout overlays remain explicitly marked as requiring the baseline template/selector.",
+      "Inspected parsed main Rollout: four finite inline analysis gates, one after each weighted stage. No live rollout or analysis Job executed.",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/05-retry-timeout.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed retry guide; repaired idempotency logic, retry defaults/backoff, HTTPS policy visibility and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/route/retry/retry.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter",
+      "https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods",
+      "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "https://raw.githubusercontent.com/psf/requests/main/docs/user/advanced.rst",
+      "https://raw.githubusercontent.com/urllib3/urllib3/main/src/urllib3/util/retry.py",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/"
+    ],
+    "findings": [
+      "Retained correct attempts=additional-retries semantics; aligned exact rendered default retryOn with released 1.31 source, including retriable-status-codes.",
+      "Replaced non-atomic Redis check/create/cache server with explicit atomic idempotency contract; client now requires a persisted reusable key, current urllib3 import, bounded timeouts and status checking.",
+      "Fixed OR-match bug so PUT and idempotency header must both match; header presence remains insufficient without server enforcement.",
+      "Repaired external HTTP retry example using TLS origination and documented opaque HTTPS/SQL limitations and retry amplification.",
+      "Added actual backoff field and write fallback, corrected fixed-delay claim, replaced UR pseudo-counter, moved timeout test out of proxy container and updated all obsolete outlier fields."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "26 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/05-retry-timeout.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed retry guide; repaired idempotency logic, retry defaults/backoff, HTTPS policy visibility and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/route/retry/retry.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter",
+      "https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods",
+      "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "https://raw.githubusercontent.com/psf/requests/main/docs/user/advanced.rst",
+      "https://raw.githubusercontent.com/urllib3/urllib3/main/src/urllib3/util/retry.py",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/"
+    ],
+    "findings": [
+      "Retained correct attempts=additional-retries semantics; aligned exact rendered default retryOn with released 1.31 source, including retriable-status-codes.",
+      "Replaced non-atomic Redis check/create/cache server with explicit atomic idempotency contract; client now requires a persisted reusable key, current urllib3 import, bounded timeouts and status checking.",
+      "Fixed OR-match bug so PUT and idempotency header must both match; header presence remains insufficient without server enforcement.",
+      "Repaired external HTTP retry example using TLS origination and documented opaque HTTPS/SQL limitations and retry amplification.",
+      "Added actual backoff field and write fallback, corrected fixed-delay claim, replaced UR pseudo-counter, moved timeout test out of proxy container and updated all obsolete outlier fields."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "26 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/06-load-balancing.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed load-balancing chapter; corrected defaults, policy schemas, protocol-specific examples and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/kubectl_top_pod/"
+    ],
+    "findings": [
+      "Corrected default ROUND_ROBIN to released-source LEAST_REQUEST and explained two-choice selection rather than global pod scan.",
+      "Migrated invalid/deprecated warmupDurationSecs numerics to warmup.duration strings and minimumRingSize to ringHash.minimumRingSize.",
+      "Separated mutually exclusive locality distribute/failover examples and added outlier detection to explicit failover.",
+      "Corrected hard affinity, hot-key/ring-size and Envoy bounded-load claims; distinguished original-destination balancing from Gateway TLS passthrough.",
+      "Recast HTTP cache example as HTTP rather than native Redis; removed SQL HTTP pool settings and misleading database/queue/WebSocket recommendations.",
+      "Corrected per-pod metrics, kubectl top units, node topology/EDS inspection and incomplete annotation example; split conflicting YAML snippets.",
+      "Removed incorrect algorithm diagrams 3 and 6 from the page; their PNG/archmap sources require external regeneration before reuse."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "33 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/06-load-balancing.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed load-balancing chapter; corrected defaults, policy schemas, protocol-specific examples and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/kubectl_top_pod/"
+    ],
+    "findings": [
+      "Corrected default ROUND_ROBIN to released-source LEAST_REQUEST and explained two-choice selection rather than global pod scan.",
+      "Migrated invalid/deprecated warmupDurationSecs numerics to warmup.duration strings and minimumRingSize to ringHash.minimumRingSize.",
+      "Separated mutually exclusive locality distribute/failover examples and added outlier detection to explicit failover.",
+      "Corrected hard affinity, hot-key/ring-size and Envoy bounded-load claims; distinguished original-destination balancing from Gateway TLS passthrough.",
+      "Recast HTTP cache example as HTTP rather than native Redis; removed SQL HTTP pool settings and misleading database/queue/WebSocket recommendations.",
+      "Corrected per-pod metrics, kubectl top units, node topology/EDS inspection and incomplete annotation example; split conflicting YAML snippets.",
+      "Removed incorrect algorithm diagrams 3 and 6 from the page; their PNG/archmap sources require external regeneration before reuse."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "33 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/07-circuit-breaker.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed circuit-breaker guide; corrected ejection semantics, unsupported API fields, budgets, protocol visibility and consistency examples.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats",
+      "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/"
+    ],
+    "findings": [
+      "Replaced obsolete consecutiveErrors and removed unsupported maxEjectionTime; corrected minHealthPercent fail-open semantics, inline vs periodic detection and 502/503/504 classification.",
+      "Distinguished generic Half-Open diagram from actual per-proxy resource limits/outlier ejection; removed fixed 1ms guarantee and global single-connection/rate-limit claims.",
+      "Made retry-budget pattern a real trafficPolicy.retryBudget with read-only retries and write fallback.",
+      "Corrected external HTTP visibility with TLS origination, SQL HTTP-pool misuse and false default 429/rate-reset claims.",
+      "Corrected gauge-vs-counter dashboards and deprecated ejection counter, duplicate-delivery arithmetic, shopping-cart/notification idempotency claims and unsafe Redis pattern.",
+      "Split alternative YAML objects, completed final resource and distinguished configuration inspection from live circuit state."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "30 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/07-circuit-breaker.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed circuit-breaker guide; corrected ejection semantics, unsupported API fields, budgets, protocol visibility and consistency examples.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats",
+      "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/"
+    ],
+    "findings": [
+      "Replaced obsolete consecutiveErrors and removed unsupported maxEjectionTime; corrected minHealthPercent fail-open semantics, inline vs periodic detection and 502/503/504 classification.",
+      "Distinguished generic Half-Open diagram from actual per-proxy resource limits/outlier ejection; removed fixed 1ms guarantee and global single-connection/rate-limit claims.",
+      "Made retry-budget pattern a real trafficPolicy.retryBudget with read-only retries and write fallback.",
+      "Corrected external HTTP visibility with TLS origination, SQL HTTP-pool misuse and false default 429/rate-reset claims.",
+      "Corrected gauge-vs-counter dashboards and deprecated ejection counter, duplicate-delivery arithmetic, shopping-cart/notification idempotency claims and unsafe Redis pattern.",
+      "Split alternative YAML objects, completed final resource and distinguished configuration inspection from live circuit state."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "30 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/08-fault-injection.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed fault-injection chapter; corrected fault-vs-retry/ejection claims, request percentages, routing and automation.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/tasks/traffic-management/fault-injection/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "https://docs.gitlab.com/ci/yaml/",
+      "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md"
+    ],
+    "findings": [
+      "Removed same-route timeout pseudo-test and local-abort outlier pseudo-test; provided real upstream HTTP-error ejection approach.",
+      "Clarified request percentages vs Pod failures, HTTP vs native SQL, overlapping delay/abort percentages, and added normal routing for non-test requests.",
+      "Separated staged updates and merged competing same-host blue/green VirtualServices.",
+      "Repaired CronJob structure with timezone, bounds, fixtures and explicit runner/RBAC prerequisites; suspended template and independent cleanup required before use.",
+      "Replaced raw-rate/invalid-promtool checks with encoded Prometheus error-ratio query, strict missing-data handling, and full-baseline restoration on normal exit.",
+      "Corrected alert aggregation/ConfigMap activation assumptions and invalid metadata-only examples.",
+      "Removed misleading fault-to-outlier diagrams 1 and 3; external source assets need regeneration before reuse."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "21 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/08-fault-injection.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed fault-injection chapter; corrected fault-vs-retry/ejection claims, request percentages, routing and automation.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/tasks/traffic-management/fault-injection/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier",
+      "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+      "https://docs.gitlab.com/ci/yaml/",
+      "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md"
+    ],
+    "findings": [
+      "Removed same-route timeout pseudo-test and local-abort outlier pseudo-test; provided real upstream HTTP-error ejection approach.",
+      "Clarified request percentages vs Pod failures, HTTP vs native SQL, overlapping delay/abort percentages, and added normal routing for non-test requests.",
+      "Separated staged updates and merged competing same-host blue/green VirtualServices.",
+      "Repaired CronJob structure with timezone, bounds, fixtures and explicit runner/RBAC prerequisites; suspended template and independent cleanup required before use.",
+      "Replaced raw-rate/invalid-promtool checks with encoded Prometheus error-ratio query, strict missing-data handling, and full-baseline restoration on normal exit.",
+      "Corrected alert aggregation/ConfigMap activation assumptions and invalid metadata-only examples.",
+      "Removed misleading fault-to-outlier diagrams 1 and 3; external source assets need regeneration before reuse."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "21 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/12-service-entry.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed ServiceEntry guide; corrected registry semantics, resolution modes, TLS/protocol routing and external service examples.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/service-entry/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html",
+      "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html"
+    ],
+    "findings": [
+      "Restored supported DNS_ROUND_ROBIN semantics and documented fifth DYNAMIC_DNS API mode with mode/release constraints.",
+      "Corrected service registry vs firewall/network-hop claims, application DNS vs proxy resolution, external TLS/identity responsibility and HTTP telemetry visibility.",
+      "Fixed payment HTTP/TLS origination and retry-safe methods, invalid interior S3 wildcards, RDS TLS/DNS prerequisites and regional upstream selection.",
+      "Removed Redis primary/replica round-robin write routing; corrected egress TLS/SNI two-leg paths, missing targetPort443 and missing api2 routes.",
+      "Added proxy certificate mount/rotation prerequisites, corrected namespace/metrics assumptions and marked metadata-only pricing/SLA example as illustrative.",
+      "Removed misleading unmanaged-vs-managed diagram 0; its external source asset needs regeneration before reuse."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "31 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/12-service-entry.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed ServiceEntry guide; corrected registry semantics, resolution modes, TLS/protocol routing and external service examples.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/service-entry/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/",
+      "https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html",
+      "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html"
+    ],
+    "findings": [
+      "Restored supported DNS_ROUND_ROBIN semantics and documented fifth DYNAMIC_DNS API mode with mode/release constraints.",
+      "Corrected service registry vs firewall/network-hop claims, application DNS vs proxy resolution, external TLS/identity responsibility and HTTP telemetry visibility.",
+      "Fixed payment HTTP/TLS origination and retry-safe methods, invalid interior S3 wildcards, RDS TLS/DNS prerequisites and regional upstream selection.",
+      "Removed Redis primary/replica round-robin write routing; corrected egress TLS/SNI two-leg paths, missing targetPort443 and missing api2 routes.",
+      "Added proxy certificate mount/rotation prerequisites, corrected namespace/metrics assumptions and marked metadata-only pricing/SLA example as illustrative.",
+      "Removed misleading unmanaged-vs-managed diagram 0; its external source asset needs regeneration before reuse."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "31 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/traffic-management/13-workload-entry.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed VM guide; corrected bootstrap/registration sequence, database semantics, monitoring and migration prerequisites.",
+    "sources": [
+      "https://istio.io/latest/docs/setup/install/virtual-machine/",
+      "https://istio.io/latest/docs/ops/diagnostic-tools/virtual-machines/",
+      "https://istio.io/latest/docs/reference/config/networking/workload-entry/",
+      "https://istio.io/latest/docs/reference/config/networking/workload-group/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://prometheus-operator.dev/docs/api-reference/api/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/"
+    ],
+    "findings": [
+      "Pinned Debian runtime to 1.31.0/new artifact host; clarified exposed control plane/network prerequisites, local-to-remote copy order, hosts file, directories and ownership.",
+      "Removed unnecessary Kubernetes Secret-read grants and token printing; defaulted walkthrough to manual registration and documented opt-in auto-registration/probe workflow.",
+      "Preserved correct VM persisted certificate renewal behavior; corrected bootstrap regeneration vs certificate issuance and incomplete root-only recovery.",
+      "Separated PostgreSQL primary/replica services; removed HTTP authorization/pool/metrics and HTTPS curl from native PostgreSQL tests.",
+      "Replaced nonfunctional ServiceMonitor-on-ServiceEntry with explicit exporter scrape prerequisites, TCP metrics and exporter alerts.",
+      "Corrected locality hierarchy, DNS capture/client injection, maxEjectionPercent meaning, incomplete label-update/migration resources and declarative restore assumptions."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "35 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/traffic-management/13-workload-entry.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed VM guide; corrected bootstrap/registration sequence, database semantics, monitoring and migration prerequisites.",
+    "sources": [
+      "https://istio.io/latest/docs/setup/install/virtual-machine/",
+      "https://istio.io/latest/docs/ops/diagnostic-tools/virtual-machines/",
+      "https://istio.io/latest/docs/reference/config/networking/workload-entry/",
+      "https://istio.io/latest/docs/reference/config/networking/workload-group/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://prometheus-operator.dev/docs/api-reference/api/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/"
+    ],
+    "findings": [
+      "Pinned Debian runtime to 1.31.0/new artifact host; clarified exposed control plane/network prerequisites, local-to-remote copy order, hosts file, directories and ownership.",
+      "Removed unnecessary Kubernetes Secret-read grants and token printing; defaulted walkthrough to manual registration and documented opt-in auto-registration/probe workflow.",
+      "Preserved correct VM persisted certificate renewal behavior; corrected bootstrap regeneration vs certificate issuance and incomplete root-only recovery.",
+      "Separated PostgreSQL primary/replica services; removed HTTP authorization/pool/metrics and HTTPS curl from native PostgreSQL tests.",
+      "Replaced nonfunctional ServiceMonitor-on-ServiceEntry with explicit exporter scrape prerequisites, TCP metrics and exporter alerts.",
+      "Corrected locality hierarchy, DNS capture/client injection, maxEjectionPercent meaning, incomplete label-update/migration resources and declarative restore assumptions."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "35 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/istio/traffic-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed all quiz questions; corrected gateway wording, Argo gates, locality/cost math, TLS design and renamed links.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/networking/gateway/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md",
+      "https://aws.amazon.com/ec2/pricing/on-demand/",
+      "https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://cert-manager.io/docs/releases/",
+      "https://istio.io/latest/docs/ops/integrations/certmanager/",
+      "https://cert-manager.io/docs/usage/certificate/",
+      "https://www.rfc-editor.org/rfc/rfc9525.html"
+    ],
+    "findings": [
+      "Kept unique multiple-choice keys C/C/B/C/A while clarifying API-object processing and actual gateway capabilities; English options render separately.",
+      "Rebuilt Q6 from the already audited complete rollout resources with per-revision vector/NaN-safe gates and explicit scrape prerequisites.",
+      "Corrected Q7 capacity/rollback guarantees, Q8 mirror side effects/response validation, and Q9 AZ topology/region failover/metrics semantics.",
+      "Replaced universal AWS rates and latency claims with a script-verified hypothetical 200,000GB calculation ($1,000/month savings), explicitly not a current price quote.",
+      "Reworked Q10 into coherent Istio-terminated and NLB-terminated TLS paths, Envoy HTTP redirect, proper Service/target ports, SAN/trust handling, MUTUAL Secret and cert-manager 1.21.1 with verified Kubernetes support.",
+      "Replaced renamed own GitHub/main links with verified relative chapter paths."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "14 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed.",
+      "Traffic quiz keys verified in both languages: C, C, B, C, A. Argo Rollout/AnalysisTemplate objects passed official v1.10.0 CRD schemas."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/istio/traffic-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed all quiz questions; corrected gateway wording, Argo gates, locality/cost math, TLS design and renamed links.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/reference/config/networking/gateway/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md",
+      "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md",
+      "https://aws.amazon.com/ec2/pricing/on-demand/",
+      "https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://cert-manager.io/docs/releases/",
+      "https://istio.io/latest/docs/ops/integrations/certmanager/",
+      "https://cert-manager.io/docs/usage/certificate/",
+      "https://www.rfc-editor.org/rfc/rfc9525.html"
+    ],
+    "findings": [
+      "Kept unique multiple-choice keys C/C/B/C/A while clarifying API-object processing and actual gateway capabilities; English options render separately.",
+      "Rebuilt Q6 from the already audited complete rollout resources with per-revision vector/NaN-safe gates and explicit scrape prerequisites.",
+      "Corrected Q7 capacity/rollback guarantees, Q8 mirror side effects/response validation, and Q9 AZ topology/region failover/metrics semantics.",
+      "Replaced universal AWS rates and latency claims with a script-verified hypothetical 200,000GB calculation ($1,000/month savings), explicitly not a current price quote.",
+      "Reworked Q10 into coherent Istio-terminated and NLB-terminated TLS paths, Envoy HTTP redirect, proper Service/target ports, SAN/trust handling, MUTUAL Secret and cert-manager 1.21.1 with verified Kubernetes support.",
+      "Replaced renamed own GitHub/main links with verified relative chapter paths.",
+      "Reclassified prose/HTTP-method illustrations incorrectly fenced as YAML as text."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "14 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Traffic batch final checks: 654 YAML blocks parsed with duplicate-key rejection; 142 bash command blocks passed bash -n after placeholder substitution; balanced Markdown/details and all relative/own-repository links resolve.",
+      "Parent external-link snapshot contains no remaining exact 404/410 Markdown reference in this reviewed batch; parent NFC/NFD normalization policy respected.",
+      "git diff --check passed for the traffic batch; no cluster deployments or destructive sample commands executed.",
+      "Traffic quiz keys verified in both languages: C, C, B, C, A. Argo Rollout/AnalysisTemplate objects passed official v1.10.0 CRD schemas."
+    ]
+  }
+]

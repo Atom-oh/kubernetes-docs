@@ -1,0 +1,222 @@
+[
+  {
+    "path": "ko/gitops/argocd/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/releases/tag/v3.5.2",
+      "https://argo-cd.readthedocs.io/en/stable/operator-manual/installation/"
+    ],
+    "findings": [
+      "Obsolete 2.x/Kubernetes pairing table contradicted 3.5 release notes",
+      "3.5.0 release date appears as both Aug4 and Aug7",
+      "Root Application missing project; ApplicationSet template missing fields",
+      "Unconditional selfHeal/rollback/HA claims and quickstart prerequisites incomplete"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "b6bfed1fb716b0a2f40af59bfdcb064484ad558697da1107e24da1773469517a"
+  },
+  {
+    "path": "en/gitops/argocd/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/releases/tag/v3.5.2",
+      "https://argo-cd.readthedocs.io/en/stable/operator-manual/installation/"
+    ],
+    "findings": [
+      "Obsolete 2.x/Kubernetes pairing table contradicted 3.5 release notes",
+      "3.5.0 release date appears as both Aug4 and Aug7",
+      "Root Application missing project; ApplicationSet template missing fields",
+      "Unconditional selfHeal/rollback/HA claims and quickstart prerequisites incomplete"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "46a9573db25d2042cef47db84f374432040ac3e2b57afa457fcac9834554f599"
+  },
+  {
+    "path": "ko/gitops/argocd/01-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/installation.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md"
+    ],
+    "findings": [
+      "Old2.13/Helm5.55 versions and obsolete kubectl --short",
+      "Invalid/stale Helm fields, controller sharding keys and Redis HA nesting",
+      "HTTPS ALB backend combined with server.insecure=true",
+      "Unconditional internet-facing exposure and retired ingress-nginx example",
+      "Generic IRSA policy grants wrong components broad ECR/Secrets Manager rights; cross-account cluster CA/EKS auth prerequisites missing",
+      "Wrong leader election description and controller deployment rollout kind",
+      "Legacy ConfigMap repository.credentials/repositories, invalid health defaults, unsafe premature admin disable, subpath mismatch",
+      "Quiz presents Helm as sole recommended production method; clarify installation modes and bootstrap-secret scope"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "24db012944fa87aef5a017398d5043a3214a5c0856a4863f7c70d5bc2d15296c"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/01-installation-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/installation.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md"
+    ],
+    "findings": [
+      "Old2.13/Helm5.55 versions and obsolete kubectl --short",
+      "Invalid/stale Helm fields, controller sharding keys and Redis HA nesting",
+      "HTTPS ALB backend combined with server.insecure=true",
+      "Unconditional internet-facing exposure and retired ingress-nginx example",
+      "Generic IRSA policy grants wrong components broad ECR/Secrets Manager rights; cross-account cluster CA/EKS auth prerequisites missing",
+      "Wrong leader election description and controller deployment rollout kind",
+      "Legacy ConfigMap repository.credentials/repositories, invalid health defaults, unsafe premature admin disable, subpath mismatch",
+      "Quiz presents Helm as sole recommended production method; clarify installation modes and bootstrap-secret scope"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "cda67d0e3b27c7157a9270049c93cec44febd6c5a84877a57fc98589015aa831"
+  },
+  {
+    "path": "en/gitops/argocd/01-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/installation.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md"
+    ],
+    "findings": [
+      "Old2.13/Helm5.55 versions and obsolete kubectl --short",
+      "Invalid/stale Helm fields, controller sharding keys and Redis HA nesting",
+      "HTTPS ALB backend combined with server.insecure=true",
+      "Unconditional internet-facing exposure and retired ingress-nginx example",
+      "Generic IRSA policy grants wrong components broad ECR/Secrets Manager rights; cross-account cluster CA/EKS auth prerequisites missing",
+      "Wrong leader election description and controller deployment rollout kind",
+      "Legacy ConfigMap repository.credentials/repositories, invalid health defaults, unsafe premature admin disable, subpath mismatch",
+      "Quiz presents Helm as sole recommended production method; clarify installation modes and bootstrap-secret scope"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "317b22e2cc119a76542a9e91028b3b70fb6be15aa350ee31c399492b40462165"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/01-installation-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/installation.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md"
+    ],
+    "findings": [
+      "Old2.13/Helm5.55 versions and obsolete kubectl --short",
+      "Invalid/stale Helm fields, controller sharding keys and Redis HA nesting",
+      "HTTPS ALB backend combined with server.insecure=true",
+      "Unconditional internet-facing exposure and retired ingress-nginx example",
+      "Generic IRSA policy grants wrong components broad ECR/Secrets Manager rights; cross-account cluster CA/EKS auth prerequisites missing",
+      "Wrong leader election description and controller deployment rollout kind",
+      "Legacy ConfigMap repository.credentials/repositories, invalid health defaults, unsafe premature admin disable, subpath mismatch",
+      "Quiz presents Helm as sole recommended production method; clarify installation modes and bootstrap-secret scope"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "07d71ae20cb8a2e61d0362422c16cc59632a79ee9319092c253fb5da5bdd8ecf"
+  },
+  {
+    "path": "ko/quizzes/gitops/01-argocd-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md"
+    ],
+    "findings": [
+      "Wrong four GitOps principles; all components independently HA includes invalid Dex scaling assumption",
+      "ApplicationSet incomplete; readonly default grants broader access than dev-team examples",
+      "Secrets separated into another Git repo are not protected by separation alone",
+      "Unquoted <app-name> placeholders parse as shell redirection",
+      "Troubleshooting defaults to destructive prune and claims small quiz grants expert status",
+      "Outdated2023/2025 trends heading; cluster add expects kubeconfig context not arbitrary ARN"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "d24445f74330d9ddbc3f94b0b27b9c414d5ccd1181777175765d577db0d5e2f4"
+  },
+  {
+    "path": "en/quizzes/gitops/01-argocd-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected Argo CD baseline/install/quiz content against3.5.2 and Helm10.8.4; current support, valid specs, TLS, HA/sharding, identity, credentials and upgrade behavior reconciled.",
+    "sources": [
+      "https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md"
+    ],
+    "findings": [
+      "Wrong four GitOps principles; all components independently HA includes invalid Dex scaling assumption",
+      "ApplicationSet incomplete; readonly default grants broader access than dev-team examples",
+      "Secrets separated into another Git repo are not protected by separation alone",
+      "Unquoted <app-name> placeholders parse as shell redirection",
+      "Troubleshooting defaults to destructive prune and claims small quiz grants expert status",
+      "Outdated2023/2025 trends heading; cluster add expects kubeconfig context not arbitrary ARN"
+    ],
+    "validation": [
+      "95 freshly extracted Bash/YAML fences parsed;8 Application/ApplicationSet embedded specs passed official3.5.2 CRD schema checks",
+      "Official Helm10.8.4 archive digest matched index; HA values rendered with controller replicas/env2, ApplicationSet leader election, Dex1, Redis3 and four PDBs",
+      "Official CLI checksum entries matched Linux/macOS amd64/arm64 and Windowsamd64 documented asset names",
+      "Local jq fixture verified EKS target name/role/CA/TLS-verification and cluster-secret label",
+      "KO/EN HA diagrams delivered9/9, zero composition errors/warnings; four desktop viewports contained; finalKOsmall-light andENlarge-dark screenshots inspected",
+      "No real Argo installation, IAM/EKS mutation, cluster registration or upgrade performed"
+    ],
+    "reviewedSha256": "31f708237b79fbee24b71af8820857c566b7c6534e4b446239a977d3e05469f1"
+  }
+]

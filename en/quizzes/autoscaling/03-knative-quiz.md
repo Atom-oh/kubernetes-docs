@@ -1,24 +1,26 @@
 # Knative Quiz
 
+> **Last Updated**: September 11, 2026
+
 1. How does Scale-to-Zero work in Knative Serving?
    - A) Delete Pods and recreate the Deployment on new requests
-   - B) Activator buffers traffic while Autoscaler scales replicas from 0 to 1
+   - B) Activator buffers eligible requests while the autoscaling path activates ready replicas
    - C) Shut down Nodes and have Karpenter provision new ones on request
    - D) Pause containers and resume them on request
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Activator buffers traffic while Autoscaler scales replicas from 0 to 1**
+**Answer: B) Activator buffers eligible requests while the autoscaling path activates ready replicas**
 
 **Explanation:**
-When replicas are at 0, incoming requests are buffered by the Activator. The Activator requests a scale-up from the Autoscaler, and once Pods are ready, buffered requests are forwarded. This process is the "cold start," which can be prevented by setting `minScale` to maintain minimum instances.
+At zero replicas, the routing path uses the Activator, which buffers within its capacity and timeout limits while activation creates ready capacity. Failures, exhausted buffers or client/request timeouts can still cause errors. A positive min-scale avoids normal idle scale-to-zero, but does not eliminate initialization for new Revisions, restarts or additional replicas.
 
 </details>
 
 ---
 
-2. What is the key difference between KPA (Knative Pod Autoscaler) and HPA?
+2. What distinguishes the KPA and HPA integrations in Knative Serving?
    - A) KPA is CPU-based only, HPA is memory-based only
    - B) KPA scales based on concurrency and supports Scale-to-Zero, while HPA scales based on CPU/memory
    - C) KPA scales nodes, HPA scales Pods
@@ -30,7 +32,7 @@ When replicas are at 0, incoming requests are buffered by the Activator. The Act
 **Answer: B) KPA scales based on concurrency and supports Scale-to-Zero, while HPA scales based on CPU/memory**
 
 **Explanation:**
-KPA scales based on concurrent requests or RPS measured by Queue Proxy and natively supports Scale-to-Zero. HPA scales based on CPU/memory metrics but requires at least 1 replica at all times.
+Knative KPA supports concurrency/RPS and its Activator-based zero path. The optional Knative HPA extension supports CPU, memory and supported custom Pod metrics, and does not implement that zero path. This is not a universal claim about Kubernetes HPA: upstream Kubernetes1.37 has beta scale-to-zero for object/external metrics. In the1.23 HPA implementation CPU targets are percentage utilization of CPU requests, memory targets are MiB, and custom metrics use per-Pod average values.
 
 </details>
 
@@ -48,7 +50,7 @@ KPA scales based on concurrent requests or RPS measured by Queue Proxy and nativ
 **Answer: B) Filters events from the Broker and routes them to specific services**
 
 **Explanation:**
-Triggers are registered with a Broker and filter CloudEvents based on attributes (type, source, etc.). Only matching events are delivered to the specified Subscriber (Knative Service, Kubernetes Service, etc.). Multiple Triggers can be registered on a single Broker to route events to different services.
+A Trigger describes filtering and a subscriber for one Broker; controllers and the Broker dataplane implement delivery. Several matching Triggers may deliver copies of the same event, and retry/backing-store behavior depends on the implementation and policy. A Trigger is not a persistent event store or a generic consumer autoscaler.
 
 </details>
 
@@ -56,17 +58,17 @@ Triggers are registered with a Broker and filter CloudEvents based on attributes
 
 4. What happens when you set `containerConcurrency: 1` on a Knative Service?
    - A) Only 1 Pod is created per container
-   - B) Each container processes one request at a time; additional requests are routed to new Pods
+   - B) Queue Proxy forwards at most one concurrent request per Pod, with bounded waiting and asynchronous scaling
    - C) Only one request per second is allowed
    - D) Only one Revision is maintained
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Each container processes one request at a time; additional requests are routed to new Pods**
+**Answer: B) Queue Proxy forwards at most one concurrent request per Pod, with bounded waiting and asynchronous scaling**
 
 **Explanation:**
-`containerConcurrency: 1` configures the Queue Proxy in each Pod to forward only one concurrent request to the container. When additional requests arrive, the Autoscaler creates new Pods. This is useful for CPU-intensive tasks or non-thread-safe applications.
+Queue Proxy limits the number of concurrent requests forwarded to the receiving container in each Pod. Extra requests may wait in bounded queues, be sent to available capacity, or fail. Autoscaling is asynchronous and constrained by limits and node capacity. This is not one request per second, one global request across all replicas, or a guarantee that every extra request gets a new Pod.
 
 </details>
 
@@ -75,8 +77,8 @@ Triggers are registered with a Broker and filter CloudEvents based on attributes
 5. What is an appropriate scenario for using KEDA and Knative together?
    - A) The two tools are incompatible; use only one
    - B) Use Knative Serving for HTTP workloads and KEDA for queue/stream-based async workloads
-   - C) Use KEDA for Scale-to-Zero and Knative for event routing
-   - D) Knative uses KEDA internally
+   - C) Let KEDA and KPA independently scale the same Knative-generated Deployment
+   - D) Every Knative Service automatically installs KEDA and uses it as its default autoscaler
 
 <details>
 <summary>Show Answer</summary>
@@ -84,7 +86,7 @@ Triggers are registered with a Broker and filter CloudEvents based on attributes
 **Answer: B) Use Knative Serving for HTTP workloads and KEDA for queue/stream-based async workloads**
 
 **Explanation:**
-Knative Serving is optimized for HTTP request-based serverless workloads with Scale-to-Zero and concurrency-based scaling. KEDA excels at scaling based on queue metrics from SQS, Kafka, Redis, etc. Using both together allows scaling synchronous and asynchronous workloads optimally.
+Use Knative Serving for suitable HTTP services and KEDA for independently managed background workers. Configure queue retention/acknowledgements, activation metrics and worker idempotency. Do not let KEDA and KPA independently control the same generated Deployment. SinkBinding configures event producers; it does not wake an arbitrary HTTP consumer scaled to zero.
 
 </details>
 
@@ -102,7 +104,7 @@ Knative Serving is optimized for HTTP request-based serverless workloads with Sc
 **Answer: B) Specify traffic percentages per Revision in the Knative Service's spec.traffic**
 
 **Explanation:**
-The `spec.traffic` field in a Knative Service allows specifying traffic percentages per Revision. For example, assign 90% to the existing Revision and 10% to the new Revision for a canary deployment. Use `@latest` to reference the latest Revision or specify Revision names directly.
+spec.traffic contains explicit revisionName targets or latestRevision: true with percentages. @latest is a kn CLI shorthand, not a revisionName value or an API tag that means latest. Referenced Revisions must exist and be ready; route reconciliation is not an instantaneous global cutover, and existing requests can continue on the old Revision.
 
 </details>
 
@@ -110,23 +112,23 @@ The `spec.traffic` field in a Knative Service allows specifying traffic percenta
 
 7. What is the purpose of a Dead Letter Sink in Knative?
    - A) Archive deleted Knative Services
-   - B) Send failed events to a separate destination to prevent event loss
+   - B) Attempt delivery to a configured alternative destination when subscriber delivery fails
    - C) Clean up expired Revisions
    - D) Store debug logs
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Send failed events to a separate destination to prevent event loss**
+**Answer: B) Attempt delivery to a configured alternative destination when subscriber delivery fails**
 
 **Explanation:**
-A Dead Letter Sink forwards events to a designated destination (another Knative Service, Kubernetes Service, etc.) when delivery fails after retries. This prevents event loss and enables analysis or reprocessing of failed events.
+A configured DLS is an alternative destination after the delivery policy cannot deliver to the subscriber. The DLS itself can fail; event retention and successful persistence depend on the transport and handler. Acknowledge only after the intended storage/processing succeeds and deduplicate by the CloudEvent source plus id where required.
 
 </details>
 
 ---
 
-8. What is the most effective way to minimize cold starts in Knative Serving?
+8. Which combination can reduce cold-start latency while keeping an explicit warm-capacity policy?
    - A) Reduce container image size infinitely
    - B) Maintain minimum instances with `minScale` annotation and use lightweight images with fast-starting frameworks
    - C) Completely disable Scale-to-Zero
@@ -138,6 +140,6 @@ A Dead Letter Sink forwards events to a designated destination (another Knative 
 **Answer: B) Maintain minimum instances with `minScale` annotation and use lightweight images with fast-starting frameworks**
 
 **Explanation:**
-Setting `autoscaling.knative.dev/min-scale` to 1 or higher prevents cold starts. Combining this with lightweight base images (distroless, alpine), fast-starting frameworks like GraalVM Native Image, and `initialScale` settings minimizes cold start latency.
+A positive autoscaling.knative.dev/min-scale keeps baseline capacity for ordinary idle periods, while initial-scale applies when a Revision is first created. Image size, node availability, image cache, startup and readiness behavior affect latency. New Revisions, restarts and scale-out beyond the warm baseline can still cold-start; measure representative traffic instead of promising elimination.
 
 </details>

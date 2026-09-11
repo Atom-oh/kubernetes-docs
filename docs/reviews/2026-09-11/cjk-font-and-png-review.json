@@ -1,0 +1,40 @@
+{
+  "status": "verified_local_fix",
+  "finding": "Generic monospace selected Droid Sans Fallback for some Hangul syllables, producing malformed glyphs; fixed screenshot clip also discarded content below1080px.",
+  "evidence": {
+    "beforePlatformFonts": [
+      "JetBrains Mono",
+      "Droid Sans Fallback",
+      "Noto Sans CJK KR"
+    ],
+    "afterPlatformFonts": [
+      "JetBrains Mono",
+      "Noto Sans CJK KR"
+    ],
+    "beforeCrop": "/tmp/kubernetes-docs-full-review/cjk-before.png",
+    "afterCrop": "/tmp/kubernetes-docs-full-review/cjk-after.png",
+    "fullPageFixtureSize": [
+      1600,
+      1816
+    ],
+    "footerPixelAt800x1750": [
+      28,
+      180,
+      100
+    ]
+  },
+  "changes": [
+    "Production merge inserts locale-specific complete CJK fonts before generic monospace in viewer CSS/SVG exports/canvas measurements",
+    "PNG renderer uses the same locale-specific CJK fallback and full-page capture"
+  ],
+  "tests": [
+    "Existing merge integration reproduced missing CJK preference, then passed after fix;6/6build tests",
+    "110/110repository tests at font checkpoint",
+    "Long fixture1600x1816preserved footer below former1080pxclip (body minimum1800plus default paragraph margin)"
+  ],
+  "remaining": [
+    "Regenerate all referenced source PNGs after diagram/content edits stabilize",
+    "Final full build and browser verification required; current verified site snapshot predates these changes",
+    "Standalone public source artifacts are untouched by font normalization; production copied outputs are normalized during merge"
+  ]
+}

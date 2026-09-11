@@ -1,209 +1,231 @@
 # Linkerd Installation Quiz
 
-This quiz tests your understanding of Linkerd installation and setup.
+Reviewed September 11, 2026 against edge-26.9.1 and charts 2026.9.1. See the [installation guide](../../../service-mesh/linkerd/01-installation.md) for complete prerequisites and validation boundaries.
 
-## Quiz Questions
+### 1. How should you obtain the exact public CLI used in this guide?
 
-### 1. What is the correct command to install the Linkerd CLI?
+A. Assume any package named linkerd is the same version
 
-A. `apt-get install linkerd`
-B. `curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh`
-C. `kubectl install linkerd`
-D. `helm install linkerd`
+B. Select the official edge-26.9.1 asset for the OS/architecture, verify its checksum and client version
+
+C. Use kubectl install linkerd
+
+D. Pass --version stable-2.16.0 to an installer that does not parse that flag
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B. `curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh`**
+**Answer: B**
 
-**Explanation:**
-The Linkerd CLI is installed through the official installation script. This script detects the operating system and downloads the appropriate binary. Homebrew (`brew install linkerd`) or Chocolatey (`choco install linkerd2`) can also be used, but the official script is the most common method.
+The guide pins an official release asset. The installer alternative uses LINKERD2_VERSION, and the old install script is deprecated and now defaults to edge. Stable distributions use vendor guidance. Windows has a windows.exe release asset; do not invent a windows-amd64.exe filename.
 
 </details>
 
-### 2. What command verifies cluster requirements before Linkerd installation?
+### 2. Which command is the new-install preflight?
 
-A. `linkerd check`
-B. `linkerd check --pre`
-C. `linkerd verify`
-D. `linkerd install --dry-run`
+A. linkerd check
+
+B. linkerd check --pre
+
+C. linkerd verify
+
+D. linkerd install --dry-run
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B. `linkerd check --pre`**
+**Answer: B**
 
-**Explanation:**
-The `linkerd check --pre` command verifies that the cluster meets requirements before Linkerd installation. It validates Kubernetes API accessibility, version compatibility, and necessary permissions. After installation, use `linkerd check` to verify full status.
+check --pre checks API access, minimum Kubernetes version, Gateway API prerequisites and installation permissions/setup. It is not proof of compatibility with every later Kubernetes version. Review the exact version matrix and use the CNI-aware flag if that installation path is selected.
 
 </details>
 
-### 3. What must be provided when installing Linkerd with Helm?
+### 3. What identity material does the manual Helm path require?
 
-A. Envoy proxy image
-B. Trust Anchor and Identity Issuer certificates
-C. Prometheus configuration file
-D. Kubernetes version information
+A. An Envoy image
+
+B. The public trust anchor and issuer certificate/private key, or a supported configured issuer-secret integration
+
+C. The root CA private key in every proxy Pod
+
+D. A Prometheus configuration file
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B. Trust Anchor and Identity Issuer certificates**
+**Answer: B**
 
-**Explanation:**
-Unlike CLI installation, Helm installation does not auto-generate certificates. Users must create and provide Trust Anchor (Root CA) and Identity Issuer (Intermediate CA) certificates themselves. This allows better control over certificate management in production environments.
+The control-plane Helm chart does not generate the workload identity CA material for this path. Provide the public trust anchor and the issuer signing credential. Keep the root private key outside Kubernetes. External issuer-secret integrations need their corresponding scheme/owner configuration.
 
 </details>
 
-### 4. What is the recommended number of control plane replicas for Linkerd HA installation?
+### 4. How many replicas does the packaged HA profile select for critical control-plane components?
 
 A. 1
+
 B. 2
+
 C. 3
+
 D. 5
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: C. 3**
+**Answer: C**
 
-**Explanation:**
-HA configuration recommends 3 replicas each for Destination, Identity, and Proxy Injector. Three replicas can maintain quorum even if one fails and ensure availability during rolling updates.
+The packaged profile selects three critical-component replicas with node anti-affinity, PDBs and a Fail injection-webhook policy. These are redundant serving instances, not quorum voters. Sufficient eligible nodes, resources and working credentials/network paths are still required; replica count alone does not guarantee availability.
 
 </details>
 
-### 5. Which is NOT a main feature of the Viz extension?
+### 5. Which is not a main Viz feature?
 
 A. Web dashboard
-B. Prometheus metrics collection
-C. Automatic canary deployment
-D. Real-time traffic tap
+
+B. Prometheus-based metrics
+
+C. Automatic canary promotion
+
+D. HTTP traffic tap
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: C. Automatic canary deployment**
+**Answer: C**
 
-**Explanation:**
-The Viz extension provides web dashboard, Prometheus-based metrics collection, Grafana dashboards, and real-time traffic tap functionality. Automatic canary deployment is implemented through separate tools like Flagger.
+Viz provides metrics/dashboard/tap functions. Canary progression needs a separate delivery controller and analysis policy. The current Viz chart offers links to an external Grafana; grafana.enabled does not deploy or disable a bundled Grafana.
 
 </details>
 
-### 6. What load balancer type is recommended for Multicluster gateway on EKS?
+### 6. Which AWS load balancer can preserve the gateway’s raw TCP transport without terminating Linkerd mTLS?
 
-A. Classic Load Balancer
-B. Application Load Balancer (ALB)
-C. Network Load Balancer (NLB)
-D. Internal Load Balancer
+A. An ALB HTTP listener
+
+B. A dashboard Ingress resource
+
+C. An NLB TCP listener
+
+D. A Gateway Load Balancer GENEVE appliance path
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: C. Network Load Balancer (NLB)**
+**Answer: C**
 
-**Explanation:**
-NLB is optimized for TCP/TLS traffic, making it suitable for Linkerd's mTLS gateway traffic. ALB is optimized for HTTP/HTTPS, and since the Linkerd gateway operates at the TCP level, NLB is recommended.
+Use TCP passthrough for the Linkerd gateway transport. NLB internal versus internet-facing is a scheme choice governed by network requirements, not a separate load balancer product. The guide’s internal NLB example assumes AWS Load Balancer Controller ownership and reachable remote networks/probe paths.
 
 </details>
 
-### 7. What is the correct order for Linkerd upgrade?
+### 7. Which upgrade ordering matches the documented workflow?
 
-A. Data plane → CRD → Control plane
-B. CRD → Control plane → Data plane
-C. Control plane → CRD → Data plane
-D. CRD → Data plane → Control plane
+A. Data plane, then control plane and CRDs
+
+B. Target CLI, CRDs, control plane, installed extensions, then data plane
+
+C. CRDs, data plane, then control plane
+
+D. Delete the CA, then install everything again
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B. CRD → Control plane → Data plane**
+**Answer: B**
 
-**Explanation:**
-The correct upgrade order is: 1) CLI upgrade, 2) CRD upgrade, 3) Control plane upgrade, 4) Data plane (proxy) upgrade. CRDs must be upgraded first to use new API versions.
+Review target compatibility/release notes and current health first. Preserve trust credentials, update through each resource owner, then recreate the intended application Pods to receive the new proxy. CLI extensions render updates with install; viz upgrade is not a subcommand. Observe supported skew and inspect prune output before deleting resources.
 
 </details>
 
-### 8. What is the purpose of the `linkerd install --crds` command?
+### 8. What does linkerd install --crds itself do?
 
-A. Install Linkerd CLI
-B. Install Custom Resource Definitions
-C. Generate certificates
-D. Inject proxies
+A. Installs the CLI binary
+
+B. Generates Linkerd CRD manifests
+
+C. Applies all cluster resources immediately
+
+D. Injects every existing application Pod
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B. Install Custom Resource Definitions**
+**Answer: B**
 
-**Explanation:**
-`linkerd install --crds` installs only the CRDs (Custom Resource Definitions) used by Linkerd. This includes CRDs for ServiceProfile, Server, ServerAuthorization, etc. The control plane is installed separately with `linkerd install`.
+The command outputs manifests. kubectl apply or the chosen deployment owner performs installation. Gateway API prerequisites are separate from the default Linkerd CRD output, and the control plane is installed afterwards.
 
 </details>
 
-### 9. What is the command to install the Jaeger extension?
+### 9. Which tracing approach applies to edge-26.9.1?
 
-A. `linkerd install jaeger`
-B. `linkerd jaeger install | kubectl apply -f -`
-C. `kubectl apply -f jaeger.yaml`
-D. `helm install jaeger linkerd/jaeger`
+A. Run linkerd jaeger install because every extension still ships in the CLI
+
+B. Configure a supported collector/backend and proxy tracing with application context propagation
+
+C. Install Viz and assume it stores every distributed trace
+
+D. Ignore trace headers because proxies can reconstruct all application spans
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B. `linkerd jaeger install | kubectl apply -f -`**
+**Answer: B**
 
-**Explanation:**
-Linkerd extensions generate manifests in the format `linkerd <extension> install` and apply them with kubectl. The Jaeger extension provides distributed tracing functionality.
+This CLI has no jaeger subcommand, and the public linkerd-jaeger chart history is older than the selected release. Use the current tracing data path and verify receiver/export compatibility. Metrics/topology graphs are not equivalent to collected distributed traces.
 
 </details>
 
-### 10. What is the correct order to completely remove Linkerd?
+### 10. What must a complete removal plan do first?
 
-A. Control plane → Extensions → CRD
-B. Extensions → Control plane → CRD
-C. CRD → Control plane → Extensions
-D. All can be removed simultaneously
+A. Delete the CRDs while applications remain injected
+
+B. Remove application injection/manual proxies and verify recreated workloads before extensions and the control plane
+
+C. Delete every namespace immediately
+
+D. Force uninstall to ignore remaining injected workloads
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B. Extensions → Control plane → CRD**
+**Answer: B**
 
-**Explanation:**
-The removal order is the reverse of installation: 1) Remove extensions like Viz, Jaeger, Multicluster, 2) Remove control plane, 3) Remove CRDs. This is because extensions depend on the control plane, and the control plane depends on CRDs.
+Remove all injection sources through workload owners, recreate and verify the application Pods, then remove installed extensions and the control plane/CRDs through their respective owners. CRD deletion removes its custom resources. Review CNI cleanup and namespace ownership separately, including the loss of mesh security/routing.
 
 </details>
 
-### 11. What does the `linkerd check` command NOT verify?
+### 11. What does linkerd check not validate?
 
-A. Kubernetes API connection
-B. Certificate validity
+A. Kubernetes API access
+
+B. Control-plane certificate validity
+
 C. Application business logic
-D. Control plane Pod status
+
+D. Control-plane Pod health
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: C. Application business logic**
+**Answer: C**
 
-**Explanation:**
-`linkerd check` only verifies Linkerd infrastructure status: Kubernetes API connection, certificate validity, control plane Pod status, proxy status, etc. It does not verify application business logic or functionality.
+Core health checks do not validate business outcomes or every traffic/security path. check --proxy adds the relevant data-plane checks; installed extensions have their own checks. Keep application tests and real traffic verification separate.
 
 </details>
 
-### 12. What annotation must be added to a namespace for automatic proxy injection?
+### 12. Which namespace annotation requests automatic proxy injection?
 
-A. `linkerd.io/inject: enabled`
-B. `linkerd.io/proxy: true`
-C. `sidecar.linkerd.io/inject: true`
-D. `linkerd/auto-inject: yes`
+A. linkerd.io/inject: enabled
+
+B. linkerd.io/proxy: true
+
+C. sidecar.linkerd.io/inject: true
+
+D. linkerd/auto-inject: yes
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: A. `linkerd.io/inject: enabled`**
+**Answer: A**
 
-**Explanation:**
-Adding the `linkerd.io/inject: enabled` annotation to a namespace automatically injects linkerd-proxy into all new Pods in that namespace. The same annotation can be used on individual Pods.
+The annotation requests injection for eligible newly created Pods. Pod-level overrides, webhook exclusions and platform conditions can change the result; it is not a guarantee that every new Pod is injected. Existing Pods must be recreated, and native sidecars may appear in initContainers.
 
 </details>

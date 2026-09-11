@@ -8,133 +8,157 @@
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
-      "entries": {
-        "backend": {
-          "label": "AnalysisRun verdict · Experiment success"
-        },
-        "security": {
-          "label": "Failure · Rollout aborted"
-        },
-        "cloud": {
-          "label": "Rollout proceeds"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
         "id": "success-path",
-        "label": "Successful path",
+        "label": "Successful",
         "focus": [
-          "analysisRun",
+          "verdict",
           "expSuccess",
           "nextStep"
         ],
-        "note": "Once the duration has elapsed and the analysis succeeded, the Experiment becomes Successful and the Rollout proceeds to its next step."
+        "note": "A Successful Experiment advances the Rollout."
+      },
+      {
+        "id": "pause-path",
+        "label": "Inconclusive",
+        "focus": [
+          "verdict",
+          "expInconclusive",
+          "paused"
+        ],
+        "note": "Inconclusive pauses for investigation; it is not an abort."
       },
       {
         "id": "failure-path",
-        "label": "Failure path",
+        "label": "Failed / Error",
         "focus": [
-          "analysisRun",
+          "verdict",
           "expFailed",
           "degraded"
         ],
-        "note": "A Failed, Inconclusive, or Error result fails the Experiment; the Rollout is aborted and left Degraded."
+        "note": "Failed/Error aborts the Rollout into Degraded."
       }
+    ],
+    "viewBox": [
+      960,
+      528
     ]
   },
   "lanes": [
     {
-      "id": "analysis",
-      "label": "AnalysisRun verdict"
+      "id": "proceed",
+      "label": "Proceed"
     },
     {
-      "id": "proceed",
-      "label": "Experiment succeeds → Rollout proceeds"
+      "id": "pause",
+      "label": "Decision / pause"
     },
     {
       "id": "abort",
-      "label": "Experiment fails → Rollout aborted",
+      "label": "Failure/error",
       "variant": "exception"
     }
   ],
   "mainPath": [
-    "analysisRun",
+    "verdict",
     "expSuccess",
     "nextStep"
   ],
   "semanticChecks": {
     "allowedRoots": [
-      "analysisRun"
+      "verdict"
     ],
     "allowedTerminals": [
       "nextStep",
+      "paused",
       "degraded"
     ],
     "requiredPaths": [
       {
-        "from": "analysisRun",
+        "from": "verdict",
         "to": "nextStep"
       },
       {
-        "from": "analysisRun",
+        "from": "verdict",
+        "to": "paused"
+      },
+      {
+        "from": "verdict",
         "to": "degraded"
       }
     ]
   },
   "nodes": [
     {
-      "id": "analysisRun",
-      "lane": "analysis",
+      "id": "verdict",
+      "lane": "pause",
       "col": 0,
       "type": "backend",
-      "label": "AnalysisRun final status",
-      "sublabel": "decided by limit fields",
-      "tag": "verdict",
+      "label": "Experiment result",
+      "sublabel": "templates and analysis policy",
       "width": 212
     },
     {
       "id": "expSuccess",
       "lane": "proceed",
-      "col": 2,
+      "col": 3,
       "type": "backend",
-      "label": "Experiment Successful",
-      "sublabel": "duration elapsed + analysis passed",
+      "label": "Successful",
+      "sublabel": "completion policy satisfied",
       "width": 196
     },
     {
       "id": "nextStep",
       "lane": "proceed",
-      "col": 4,
+      "col": 5,
       "type": "cloud",
-      "label": "Rollout proceeds to next step",
+      "label": "Proceed to next step",
       "sublabel": "e.g. setWeight 20",
-      "tag": "proceed",
-      "width": 244
+      "width": 224
+    },
+    {
+      "id": "expInconclusive",
+      "lane": "pause",
+      "col": 3,
+      "type": "cloud",
+      "label": "Inconclusive",
+      "sublabel": "insufficient verdict",
+      "width": 196
+    },
+    {
+      "id": "paused",
+      "lane": "pause",
+      "col": 5,
+      "type": "cloud",
+      "label": "Rollout Paused",
+      "sublabel": "InconclusiveExperiment",
+      "width": 224
     },
     {
       "id": "expFailed",
       "lane": "abort",
-      "col": 2,
+      "col": 3,
       "type": "security",
-      "label": "Experiment Failed",
-      "sublabel": "Rollout abort",
+      "label": "Failed / Error",
+      "sublabel": "failed or errored",
       "width": 196
     },
     {
       "id": "degraded",
       "lane": "abort",
-      "col": 4,
+      "col": 5,
       "type": "security",
       "label": "Rollout Degraded",
-      "sublabel": "stable version stays in place",
-      "tag": "aborted",
-      "width": 244
+      "sublabel": "abort",
+      "width": 224
     }
   ],
   "edges": [
     {
-      "from": "analysisRun",
+      "from": "verdict",
       "to": "expSuccess",
       "label": "Successful",
       "variant": "emphasis",
@@ -143,14 +167,24 @@
     {
       "from": "expSuccess",
       "to": "nextStep",
-      "label": "reports success",
+      "label": "proceed",
       "variant": "emphasis",
       "role": "main"
     },
     {
-      "from": "analysisRun",
+      "from": "verdict",
+      "to": "expInconclusive",
+      "label": "Inconclusive"
+    },
+    {
+      "from": "expInconclusive",
+      "to": "paused",
+      "label": "pause"
+    },
+    {
+      "from": "verdict",
       "to": "expFailed",
-      "label": "Failed / Inconclusive / Error",
+      "label": "Failed / Error",
       "variant": "security",
       "role": "error"
     },
@@ -164,11 +198,19 @@
   ],
   "cards": [
     {
-      "dot": "slate",
-      "title": "Either way, on completion",
+      "dot": "orange",
+      "title": "Completion policy (1.10.0)",
       "items": [
-        "The Experiment's ReplicaSets are scaled down to 0",
-        "Any Service created via the service attribute is cleaned up too"
+        "Required analysis success can finish before duration",
+        "Non-required analysis can stop when duration ends"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Cleanup",
+      "items": [
+        "Default thirty-second delay before scaling down",
+        "Generated Service removed after available replicas reach zero"
       ]
     }
   ]

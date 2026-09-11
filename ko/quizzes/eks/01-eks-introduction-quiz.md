@@ -1,6 +1,10 @@
 # EKS 소개 퀴즈
 
+> **마지막 업데이트**: 2026년 9월 11일
+
 이 퀴즈는 Amazon Elastic Kubernetes Service(EKS)의 기본 개념과 특징에 관한 이해도를 테스트합니다. EKS 아키텍처, 구성 요소, 관리 방법, 요금 모델 등의 주제를 다룹니다.
+
+이 문서의 독립적인 API 예제는 `EXAMPLE_CLUSTER`, `EXAMPLE_REGION`, `EXAMPLE_CONTEXT` 등 표시된 변수를 실제 검토 대상에 맞춰 설정해야 합니다. IRSA 예제의 `APP_POLICY_ARN`은 대상 버킷/접두사에 한정된 사전 검토 정책이며, `EXAMPLE_NAMESPACE`가 존재하고 앱이 IRSA를 지원하는 AWS SDK를 사용해야 합니다. 아래 두 실습의 `EKS_INTRO_*` 변수는 별도로 만든 전용 클러스터를 가리킵니다.
 
 ## 객관식 문제
 
@@ -21,16 +25,16 @@
 EKS의 주요 이점:
 
 * **관리형 컨트롤 플레인**: AWS가 컨트롤 플레인 노드, etcd 클러스터, API 서버 등을 관리합니다.
-* **고가용성**: 컨트롤 플레인이 여러 가용 영역에 걸쳐 배포되어 단일 장애점이 없습니다.
-* **자동 업그레이드 및 패치**: AWS가 Kubernetes 버전 업그레이드 및 보안 패치를 관리합니다.
+* **고가용성**: 리전 컨트롤 플레인은 여러 AZ에 분산됩니다. 워크로드 가용성은 복제본·배치·용량·종속 서비스에 따라 달라집니다.
+* **관리형 유지 보수**: AWS가 컨트롤 플레인을 패치합니다. 운영자가 마이너 버전 업그레이드를 계획하며 지원 정책에 따른 자동 업그레이드도 있습니다.
 * **AWS 서비스와의 통합**: IAM, VPC, ELB, ECR 등 다양한 AWS 서비스와 원활하게 통합됩니다.
-* **표준 Kubernetes**: 완전히 호환되는 Kubernetes를 제공하여 벤더 종속성을 방지합니다.
+* **표준 Kubernetes**: 표준을 준수하는 API는 이식성을 높이지만 AWS 전용 신원·스토리지·통합에는 별도 이전 작업이 필요합니다.
 
 다른 옵션들의 문제점:
 
 * EKS는 다른 관리형 Kubernetes 서비스보다 반드시 저렴하지는 않습니다. 실제로 컨트롤 플레인에 대한 시간당 요금이 있습니다.
 * EKS는 AWS 서비스뿐만 아니라 모든 Kubernetes 호환 애플리케이션 및 서비스를 실행할 수 있습니다.
-* EKS 클러스터는 기본적으로 여러 가용 영역에 걸쳐 배포되어 고가용성을 제공합니다.
+* 리전 EKS 컨트롤 플레인은 여러 AZ에 분산되며 워커 노드와 앱 복제본 배치는 별도로 구성해야 합니다.
 
 </details>
 
@@ -51,10 +55,10 @@ EKS의 주요 이점:
 EKS 컨트롤 플레인 배포의 주요 특징:
 
 * **AWS 관리 인프라**: 컨트롤 플레인은 AWS가 소유하고 관리하는 계정에서 실행됩니다.
-* **다중 AZ 배포**: 고가용성을 위해 최소 3개의 가용 영역에 걸쳐 배포됩니다.
+* **다중 AZ 배포**: 리전 EKS 컨트롤 플레인 구성 요소는 여러 AZ에 분산됩니다.
 * **자동 복구**: AWS는 컨트롤 플레인 구성 요소의 상태를 모니터링하고 장애가 발생한 구성 요소를 자동으로 교체합니다.
-* **엔드포인트 접근성**: 컨트롤 플레인 엔드포인트는 공개적으로 접근 가능하거나 VPC 내에서만 접근 가능하도록 구성할 수 있습니다.
-* **자동 확장**: 클러스터 부하에 따라 컨트롤 플레인 용량이 자동으로 조정됩니다.
+* **엔드포인트 접근성**: 퍼블릭·프라이빗 또는 두 접근 방식을 함께 구성합니다. 프라이빗 접근에는 VPC나 연결된 네트워크의 DNS·라우팅이 필요합니다.
+* **자동 확장**: Standard 컨트롤 플레인 용량은 자동 조정되며 선택 기능인 Provisioned Control Plane 등급은 명시적으로 지정합니다.
 
 다른 옵션들의 문제점:
 
@@ -64,43 +68,30 @@ EKS 컨트롤 플레인 배포의 주요 특징:
 
 </details>
 
-3. Amazon EKS에서 워커 노드를 관리하는 방법으로 올바르지 않은 것은 무엇인가요?
-   * A) 자체 관리형 노드 그룹
+3. EKS 컴퓨팅 관리 방식에 대한 설명 중 틀린 것은 무엇인가요?
+   * A) 자체 관리형 EC2 노드
    * B) 관리형 노드 그룹
    * C) Fargate 프로필
-   * D) EKS 자동 노드 프로비저닝
+   * D) 별도 서버리스 컴퓨팅 서비스인 Bottlerocket
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: D) EKS 자동 노드 프로비저닝**
+**정답: D) 별도 서버리스 컴퓨팅 서비스인 Bottlerocket**
 
-**설명:** "EKS 자동 노드 프로비저닝"은 Amazon EKS에서 공식적으로 제공하는 워커 노드 관리 방법이 아닙니다. 이는 존재하지 않는 기능입니다.
+Bottlerocket은 컨테이너 노드용 운영체제입니다. 독립적인 서버리스 실행 옵션이 아닙니다.
 
-Amazon EKS에서 워커 노드를 관리하는 실제 방법은 다음과 같습니다:
+1. **자체 관리형 노드**: 고객이 EC2/Auto Scaling 그룹과 AMI·업데이트·노드 구성을 관리합니다.
+2. **관리형 노드 그룹**: AWS가 프로비저닝·교체 과정을 관리하지만, 운영자가 AMI/버전 업데이트를 시작합니다. 노드 그룹 최소·최대 크기만으로 Pod 수요 기반 확장이 활성화되지는 않습니다.
+3. **Fargate**: 프로필로 선택된 Pod에 별도 컴퓨팅을 제공합니다. DaemonSet·GPU·EBS 등 지원 제약을 확인합니다.
+4. **EKS Auto Mode**: AWS가 노드 프로비저닝·확장·교체를 자동화하는 실제 EKS 기능입니다.
+5. **Hybrid Nodes**: 온프레미스/엣지 머신을 AWS 관리형 컨트롤 플레인에 연결합니다.
 
-1. **자체 관리형 노드 그룹**:
-   * 사용자가 EC2 인스턴스를 직접 생성하고 관리합니다.
-   * Auto Scaling 그룹을 통해 관리할 수 있습니다.
-   * 노드 구성에 대한 완전한 제어가 가능합니다.
-   * 운영 오버헤드가 가장 큽니다.
-2. **관리형 노드 그룹**:
-   * AWS가 노드의 프로비저닝 및 수명 주기를 관리합니다.
-   * 노드 업그레이드, 패치, 조정이 자동화됩니다.
-   * EC2 Auto Scaling 그룹을 기반으로 합니다.
-   * 표준 Amazon Linux 또는 Bottlerocket AMI를 사용합니다.
-3. **Fargate 프로필**:
-   * 서버리스 컴퓨팅 옵션으로, 개별 EC2 인스턴스를 관리할 필요가 없습니다.
-   * 포드 단위로 컴퓨팅 리소스를 프로비저닝합니다.
-   * 인프라 관리 오버헤드가 가장 적습니다.
-   * 특정 제한 사항이 있습니다(예: DaemonSet 미지원, 특정 리소스 제한).
-
-노드 자동 확장을 위해 EKS는 Kubernetes Cluster Autoscaler 또는 Karpenter와 같은 도구를 지원하지만, "EKS 자동 노드 프로비저닝"이라는 공식 기능은 없습니다.
+일반 EC2 노드의 수요 기반 확장은 Cluster Autoscaler나 자체 관리형 Karpenter를 별도로 구성할 수 있습니다.
 
 </details>
 
-4. Amazon EKS 클러스터에서 포드 네트워킹을 위해 기본적으로 사용되는 CNI 플러그인은 무엇인가요?
+4. 일반 EC2 기반 EKS 노드의 기본 CNI는 무엇인가요?
    * A) Flannel
    * B) Calico
    * C) AWS VPC CNI
@@ -118,217 +109,43 @@ AWS VPC CNI의 주요 특징:
 
 * **VPC 네이티브 IP 주소 할당**: 포드는 VPC의 IP 주소를 직접 할당받아 VPC 내의 다른 리소스와 동일한 네트워크 공간에 존재합니다.
 * **보조 IP 주소 사용**: 각 노드의 탄력적 네트워크 인터페이스(ENI)에 연결된 보조 IP 주소를 포드에 할당합니다.
-* **보안 그룹 통합**: 포드 수준에서 보안 그룹을 적용할 수 있습니다(SecurityGroupsForPods 기능).
+* **보안 그룹 통합**: Pod 보안 그룹에는 지원 인스턴스·VPC 리소스 컨트롤러 권한·CNI 설정·SecurityGroupPolicy가 필요합니다.
 * **VPC 흐름 로그 가시성**: 포드 트래픽이 VPC 흐름 로그에 표시됩니다.
 * **AWS 네트워킹 기능 활용**: VPC 피어링, Transit Gateway, PrivateLink 등의 기능을 포드에 직접 활용할 수 있습니다.
 
 AWS VPC CNI는 오픈 소스 프로젝트이며, GitHub에서 코드를 확인할 수 있습니다: https://github.com/aws/amazon-vpc-cni-k8s
 
-다른 CNI 플러그인(Flannel, Calico, Weave Net 등)도 EKS에 설치할 수 있지만, 기본 제공되는 것은 AWS VPC CNI입니다.
+EC2 노드의 대체 CNI는 호환성과 지원 범위를 별도로 검토합니다. Fargate·Auto Mode에서 임의 CNI 교체는 지원되지 않으며, Hybrid Nodes에는 호환되는 온프레미스 CNI가 필요합니다. `hostNetwork` Pod는 노드 네트워크를 공유합니다.
 
 </details>
 
-5. Amazon EKS에서 Kubernetes 리소스에 대한 인증 및 권한 부여를 관리하는 방법은 무엇인가요?
-   * A) Kubernetes 서비스 계정만 사용
-   * B) AWS IAM과 Kubernetes RBAC의 통합
-   * C) EKS 전용 권한 관리 시스템
-   * D) AWS Cognito를 통한 사용자 인증
+5. IAM 신원에 EKS Kubernetes API 접근을 부여하는 방법은 무엇인가요?
+   * A) ServiceAccount만으로 모든 IAM 사용자를 인증
+   * B) IAM 인증과 access entry의 접근 정책 및/또는 Kubernetes RBAC
+   * C) EKS IAM 정책이 모든 Kubernetes 리소스 권한을 자동 부여
+   * D) Cognito를 모든 클러스터에 자동 연결
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) AWS IAM과 Kubernetes RBAC의 통합**
+**정답: B) IAM 인증과 access entry의 접근 정책 및/또는 Kubernetes RBAC**
 
-**설명:** Amazon EKS에서는 AWS IAM(Identity and Access Management)과 Kubernetes RBAC(Role-Based Access Control)을 통합하여 Kubernetes 리소스에 대한 인증 및 권한 부여를 관리합니다. 이 통합 접근 방식은 AWS의 강력한 ID 관리 기능과 Kubernetes의 세분화된 권한 제어를 결합합니다.
+IAM 신원의 Kubernetes API 접근과 Pod의 AWS API 접근은 별도 경로입니다.
 
-주요 특징:
+1. `aws eks get-token`은 IAM 자격증명으로 서명한 인증 토큰을 만듭니다.
+2. EKS 인증 경로가 IAM 신원을 확인합니다. 새로운 접근 구성에는 **access entry**를 사용합니다.
+3. access entry에 EKS 접근 정책을 연결하거나 Kubernetes 그룹을 지정하고 RoleBinding/ClusterRoleBinding을 구성합니다. RBAC와 EKS authorizer의 허용은 합산되며, 둘 다 허용하지 않으면 요청이 거부됩니다.
+4. 기존 `aws-auth` ConfigMap 방식은 폐기 예정(deprecated)입니다. 기존 매핑은 자동으로 모두 이전되지 않으므로 access entry 전환 시 각 신원과 권한을 확인해야 합니다.
 
-* **IAM 인증**: AWS IAM 자격 증명을 사용하여 Kubernetes API 서버에 인증합니다.
-* **aws-auth ConfigMap**: IAM 역할 또는 사용자를 Kubernetes 사용자 및 그룹에 매핑합니다.
-* **RBAC 권한 부여**: Kubernetes RBAC 시스템을 사용하여 클러스터 내 권한을 제어합니다.
-* **IRSA(IAM Roles for Service Accounts)**: Kubernetes 서비스 계정에 IAM 역할을 연결하여 포드가 AWS 서비스에 안전하게 접근할 수 있게 합니다.
-
-작동 방식:
-
-1. 사용자가 `aws eks get-token` 명령(AWS CLI 또는 AWS SDK를 통해)을 사용하여 Kubernetes API 서버에 대한 인증 토큰을 얻습니다.
-2. 이 토큰은 IAM 자격 증명을 사용하여 서명됩니다.
-3. Kubernetes API 서버는 AWS IAM 인증자를 사용하여 토큰을 검증합니다.
-4. aws-auth ConfigMap의 매핑에 따라 사용자에게 Kubernetes 사용자 및 그룹이 할당됩니다.
-5. Kubernetes RBAC 시스템이 해당 사용자 또는 그룹에 부여된 권한에 따라 요청을 허용하거나 거부합니다.
-
-다른 옵션들의 문제점:
-
-* Kubernetes 서비스 계정만 사용하는 것은 AWS 서비스와의 통합이 제한됩니다.
-* EKS에는 별도의 전용 권한 관리 시스템이 없으며, 표준 Kubernetes RBAC와 AWS IAM을 통합하여 사용합니다.
-* AWS Cognito는 EKS 인증에 직접 사용되지 않지만, OIDC 제공자로 구성하여 사용할 수는 있습니다.
+IAM 정책은 EKS 서비스 API 호출 권한을 제어합니다. EKS 접근 정책은 Kubernetes 권한 템플릿이며 IAM 정책이 아닙니다. IRSA/Pod Identity는 워크로드의 AWS 권한을 위한 별도 기능입니다. ServiceAccount 토큰이나 구성한 OIDC 제공자도 Kubernetes 인증에 사용할 수 있으므로 IAM만이 유일한 인증 방법이라는 뜻은 아닙니다.
 
 </details>
 
-\## 객관식 문제
-
-1. Amazon EKS(Elastic Kubernetes Service)의 주요 이점은 무엇인가요?
-   * A) 자체 Kubernetes 컨트롤 플레인 인프라를 관리할 필요가 없음
-   * B) 다른 관리형 Kubernetes 서비스보다 저렴한 비용
-   * C) AWS 서비스만 사용 가능
-   * D) 단일 가용 영역에서만 실행 가능
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: A) 자체 Kubernetes 컨트롤 플레인 인프라를 관리할 필요가 없음**
-
-**설명:** Amazon EKS(Elastic Kubernetes Service)의 주요 이점은 자체 Kubernetes 컨트롤 플레인 인프라를 관리할 필요가 없다는 것입니다. AWS가 Kubernetes 컨트롤 플레인의 가용성과 확장성을 관리하므로, 사용자는 워크로드 실행에 집중할 수 있습니다.
-
-EKS의 주요 이점:
-
-* **관리형 컨트롤 플레인**: AWS가 컨트롤 플레인 노드, etcd 클러스터, API 서버 등을 관리합니다.
-* **고가용성**: 컨트롤 플레인이 여러 가용 영역에 걸쳐 배포되어 단일 장애점이 없습니다.
-* **자동 업그레이드 및 패치**: AWS가 Kubernetes 버전 업그레이드 및 보안 패치를 관리합니다.
-* **AWS 서비스와의 통합**: IAM, VPC, ELB, ECR 등 다양한 AWS 서비스와 원활하게 통합됩니다.
-* **표준 Kubernetes**: 완전히 호환되는 Kubernetes를 제공하여 벤더 종속성을 방지합니다.
-
-다른 옵션들의 문제점:
-
-* EKS는 다른 관리형 Kubernetes 서비스보다 반드시 저렴하지는 않습니다. 실제로 컨트롤 플레인에 대한 시간당 요금이 있습니다.
-* EKS는 AWS 서비스뿐만 아니라 모든 Kubernetes 호환 애플리케이션 및 서비스를 실행할 수 있습니다.
-* EKS 클러스터는 기본적으로 여러 가용 영역에 걸쳐 배포되어 고가용성을 제공합니다.
-
-</details>
-
-2. Amazon EKS 클러스터의 컨트롤 플레인은 어디에 배포되나요?
-   * A) 사용자의 VPC 내
-   * B) AWS가 관리하는 계정의 여러 가용 영역에 걸쳐 배포
-   * C) 사용자가 선택한 단일 가용 영역
-   * D) 사용자의 EC2 인스턴스에서 실행
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) AWS가 관리하는 계정의 여러 가용 영역에 걸쳐 배포**
-
-**설명:** Amazon EKS 클러스터의 컨트롤 플레인은 AWS가 관리하는 계정의 여러 가용 영역에 걸쳐 배포됩니다. 이는 EKS의 핵심 관리형 서비스 측면 중 하나입니다.
-
-EKS 컨트롤 플레인 배포의 주요 특징:
-
-* **AWS 관리 인프라**: 컨트롤 플레인은 AWS가 소유하고 관리하는 계정에서 실행됩니다.
-* **다중 AZ 배포**: 고가용성을 위해 최소 3개의 가용 영역에 걸쳐 배포됩니다.
-* **자동 복구**: AWS는 컨트롤 플레인 구성 요소의 상태를 모니터링하고 장애가 발생한 구성 요소를 자동으로 교체합니다.
-* **엔드포인트 접근성**: 컨트롤 플레인 엔드포인트는 공개적으로 접근 가능하거나 VPC 내에서만 접근 가능하도록 구성할 수 있습니다.
-* **자동 확장**: 클러스터 부하에 따라 컨트롤 플레인 용량이 자동으로 조정됩니다.
-
-다른 옵션들의 문제점:
-
-* 컨트롤 플레인은 사용자의 VPC 내에 배포되지 않습니다. 대신, 사용자의 VPC와 AWS 관리 VPC 간에 ENI(Elastic Network Interface)를 통한 연결이 설정됩니다.
-* 컨트롤 플레인은 단일 가용 영역이 아닌 여러 가용 영역에 배포되어 고가용성을 보장합니다.
-* 컨트롤 플레인은 사용자의 EC2 인스턴스가 아닌 AWS 관리 인프라에서 실행됩니다.
-
-</details>
-
-3. Amazon EKS에서 워커 노드를 관리하는 방법으로 올바르지 않은 것은 무엇인가요?
-   * A) 자체 관리형 노드 그룹
-   * B) 관리형 노드 그룹
-   * C) Fargate 프로필
-   * D) EKS 자동 노드 프로비저닝
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: D) EKS 자동 노드 프로비저닝**
-
-**설명:** "EKS 자동 노드 프로비저닝"은 Amazon EKS에서 공식적으로 제공하는 워커 노드 관리 방법이 아닙니다. 이는 존재하지 않는 기능입니다.
-
-Amazon EKS에서 워커 노드를 관리하는 실제 방법은 다음과 같습니다:
-
-1. **자체 관리형 노드 그룹**:
-   * 사용자가 EC2 인스턴스를 직접 생성하고 관리합니다.
-   * Auto Scaling 그룹을 통해 관리할 수 있습니다.
-   * 노드 구성에 대한 완전한 제어가 가능합니다.
-   * 운영 오버헤드가 가장 큽니다.
-2. **관리형 노드 그룹**:
-   * AWS가 노드의 프로비저닝 및 수명 주기를 관리합니다.
-   * 노드 업그레이드, 패치, 조정이 자동화됩니다.
-   * EC2 Auto Scaling 그룹을 기반으로 합니다.
-   * 표준 Amazon Linux 또는 Bottlerocket AMI를 사용합니다.
-3. **Fargate 프로필**:
-   * 서버리스 컴퓨팅 옵션으로, 개별 EC2 인스턴스를 관리할 필요가 없습니다.
-   * 포드 단위로 컴퓨팅 리소스를 프로비저닝합니다.
-   * 인프라 관리 오버헤드가 가장 적습니다.
-   * 특정 제한 사항이 있습니다(예: DaemonSet 미지원, 특정 리소스 제한).
-
-노드 자동 확장을 위해 EKS는 Kubernetes Cluster Autoscaler 또는 Karpenter와 같은 도구를 지원하지만, "EKS 자동 노드 프로비저닝"이라는 공식 기능은 없습니다.
-
-</details>
-
-4. Amazon EKS 클러스터에서 포드 네트워킹을 위해 기본적으로 사용되는 CNI 플러그인은 무엇인가요?
-   * A) Flannel
-   * B) Calico
-   * C) AWS VPC CNI
-   * D) Weave Net
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) AWS VPC CNI**
-
-**설명:** Amazon EKS 클러스터에서 포드 네트워킹을 위해 기본적으로 사용되는 CNI(Container Network Interface) 플러그인은 AWS VPC CNI입니다. 이 플러그인은 Amazon VPC 네트워킹을 Kubernetes 포드에 직접 통합합니다.
-
-AWS VPC CNI의 주요 특징:
-
-* **VPC 네이티브 IP 주소 할당**: 포드는 VPC의 IP 주소를 직접 할당받아 VPC 내의 다른 리소스와 동일한 네트워크 공간에 존재합니다.
-* **보조 IP 주소 사용**: 각 노드의 탄력적 네트워크 인터페이스(ENI)에 연결된 보조 IP 주소를 포드에 할당합니다.
-* **보안 그룹 통합**: 포드 수준에서 보안 그룹을 적용할 수 있습니다(SecurityGroupsForPods 기능).
-* **VPC 흐름 로그 가시성**: 포드 트래픽이 VPC 흐름 로그에 표시됩니다.
-* **AWS 네트워킹 기능 활용**: VPC 피어링, Transit Gateway, PrivateLink 등의 기능을 포드에 직접 활용할 수 있습니다.
-
-AWS VPC CNI는 오픈 소스 프로젝트이며, GitHub에서 코드를 확인할 수 있습니다: https://github.com/aws/amazon-vpc-cni-k8s
-
-다른 CNI 플러그인(Flannel, Calico, Weave Net 등)도 EKS에 설치할 수 있지만, 기본 제공되는 것은 AWS VPC CNI입니다.
-
-</details>
-
-5. Amazon EKS에서 Kubernetes 리소스에 대한 인증 및 권한 부여를 관리하는 방법은 무엇인가요?
-   * A) Kubernetes 서비스 계정만 사용
-   * B) AWS IAM과 Kubernetes RBAC의 통합
-   * C) EKS 전용 권한 관리 시스템
-   * D) AWS Cognito를 통한 사용자 인증
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) AWS IAM과 Kubernetes RBAC의 통합**
-
-**설명:** Amazon EKS에서는 AWS IAM(Identity and Access Management)과 Kubernetes RBAC(Role-Based Access Control)을 통합하여 Kubernetes 리소스에 대한 인증 및 권한 부여를 관리합니다. 이 통합 접근 방식은 AWS의 강력한 ID 관리 기능과 Kubernetes의 세분화된 권한 제어를 결합합니다.
-
-주요 특징:
-
-* **IAM 인증**: AWS IAM 자격 증명을 사용하여 Kubernetes API 서버에 인증합니다.
-* **aws-auth ConfigMap**: IAM 역할 또는 사용자를 Kubernetes 사용자 및 그룹에 매핑합니다.
-* **RBAC 권한 부여**: Kubernetes RBAC 시스템을 사용하여 클러스터 내 권한을 제어합니다.
-* **IRSA(IAM Roles for Service Accounts)**: Kubernetes 서비스 계정에 IAM 역할을 연결하여 포드가 AWS 서비스에 안전하게 접근할 수 있게 합니다.
-
-작동 방식:
-
-1. 사용자가 `aws eks get-token` 명령(AWS CLI 또는 AWS SDK를 통해)을 사용하여 Kubernetes API 서버에 대한 인증 토큰을 얻습니다.
-2. 이 토큰은 IAM 자격 증명을 사용하여 서명됩니다.
-3. Kubernetes API 서버는 AWS IAM 인증자를 사용하여 토큰을 검증합니다.
-4. aws-auth ConfigMap의 매핑에 따라 사용자에게 Kubernetes 사용자 및 그룹이 할당됩니다.
-5. Kubernetes RBAC 시스템이 해당 사용자 또는 그룹에 부여된 권한에 따라 요청을 허용하거나 거부합니다.
-
-다른 옵션들의 문제점:
-
-* Kubernetes 서비스 계정만 사용하는 것은 AWS 서비스와의 통합이 제한됩니다.
-* EKS에는 별도의 전용 권한 관리 시스템이 없으며, 표준 Kubernetes RBAC와 AWS IAM을 통합하여 사용합니다.
-* AWS Cognito는 EKS 인증에 직접 사용되지 않지만, OIDC 제공자로 구성하여 사용할 수는 있습니다.
-
-</details>
-
-6\. Amazon EKS 클러스터에서 포드가 AWS 서비스(예: S3, DynamoDB)에 접근하기 위한 권장 방법은 무엇인가요? - A) EC2 인스턴스 프로필을 사용하여 노드에 IAM 역할 부여 - B) AWS 자격 증명을 환경 변수로 포드에 직접 주입 - C) IAM 역할을 Kubernetes 서비스 계정에 연결(IRSA) - D) AWS 자격 증명을 Kubernetes Secret으로 저장하여 마운트
+6. OIDC 연동으로 Kubernetes ServiceAccount에 임시 AWS 자격증명을 부여하는 방식은 무엇인가요?
+   * A) EC2 인스턴스 프로필을 사용하여 노드에 IAM 역할 부여
+   * B) 장기 AWS 액세스 키를 Pod 환경변수에 직접 포함
+   * C) IAM 역할을 Kubernetes 서비스 계정에 연결(IRSA)
+   * D) AWS 자격 증명을 Kubernetes Secret으로 저장하여 마운트
 
 <details>
 
@@ -336,7 +153,7 @@ AWS VPC CNI는 오픈 소스 프로젝트이며, GitHub에서 코드를 확인�
 
 **정답: C) IAM 역할을 Kubernetes 서비스 계정에 연결(IRSA)**
 
-**설명:** Amazon EKS 클러스터에서 포드가 AWS 서비스에 접근하기 위한 권장 방법은 IAM 역할을 Kubernetes 서비스 계정에 연결하는 것입니다. 이 기능은 IRSA(IAM Roles for Service Accounts)라고 불리며, 포드 수준에서 세분화된 권한을 제공합니다.
+IRSA는 클러스터 OIDC 제공자와 ServiceAccount 토큰을 사용해 임시 AWS 자격증명을 얻습니다. 신뢰 정책은 대상 네임스페이스·ServiceAccount 및 `aud=sts.amazonaws.com`으로 제한합니다. EKS Pod Identity도 임시 자격증명을 제공하지만 별도 OIDC 제공자를 사용하지 않으며, 지원되는 컴퓨팅과 에이전트/SDK 구성을 확인해야 합니다. 이 예제는 IRSA 방식을 설명합니다.
 
 IRSA의 주요 이점:
 
@@ -350,19 +167,19 @@ IRSA 설정 방법:
 1.  EKS 클러스터에 OpenID Connect(OIDC) 제공자 연결:
 
     ```bash
-    eksctl utils associate-iam-oidc-provider --cluster=<cluster-name> --approve
+    eksctl utils associate-iam-oidc-provider --cluster="${EXAMPLE_CLUSTER:?}" --region="${EXAMPLE_REGION:?}" --approve
     ```
 2.  서비스 계정에 대한 IAM 역할 생성:
 
     ```bash
     eksctl create iamserviceaccount \
-      --name=<service-account-name> \
-      --namespace=<namespace> \
-      --cluster=<cluster-name> \
-      --attach-policy-arn=arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+      --name=app-sa \
+      --namespace="${EXAMPLE_NAMESPACE:?}" \
+      --cluster="${EXAMPLE_CLUSTER:?}" --region="${EXAMPLE_REGION:?}" \
+      --attach-policy-arn="${APP_POLICY_ARN:?Use a reviewed policy scoped to the required bucket/prefix}" \
       --approve
     ```
-3.  포드 매니페스트에서 서비스 계정 참조:
+3.  같은 네임스페이스의 Pod에서 서비스 계정을 참조합니다. 아래는 템플릿입니다. IRSA 호환 SDK를 사용하는 앱 이미지로 바꾸고 `-n "$EXAMPLE_NAMESPACE"`로 적용합니다:
 
     ```yaml
     apiVersion: v1
@@ -370,16 +187,16 @@ IRSA 설정 방법:
     metadata:
       name: my-pod
     spec:
-      serviceAccountName: <service-account-name>
+      serviceAccountName: app-sa
       containers:
       - name: my-container
-        image: my-image
+        image: registry.example.com/team/app:reviewed
     ```
 
 다른 옵션들의 문제점:
 
-* EC2 인스턴스 프로필을 사용하면 같은 노드의 모든 포드가 동일한 권한을 갖게 되어 최소 권한 원칙을 위반합니다.
-* AWS 자격 증명을 환경 변수로 주입하는 것은 자격 증명이 노출될 위험이 있고 자격 증명 순환이 어렵습니다.
+* IMDS에 접근 가능한 Pod는 노드 역할의 자격증명을 얻을 수 있습니다. IMDS 접근을 제한하고 워크로드별 역할을 사용합니다. IRSA만으로 IMDS 접근이 차단되지는 않습니다.
+* 장기 액세스 키를 Pod 환경변수에 넣으면 노출·회전 위험이 늘어납니다. IRSA/Pod Identity의 자격증명 제공자 설정용 환경변수와는 다른 방식입니다.
 * AWS 자격 증명을 Kubernetes Secret으로 저장하는 것은 자격 증명 관리의 부담이 있고 자격 증명 순환이 복잡합니다.
 
 </details>
@@ -408,19 +225,19 @@ EKS 컨트롤 플레인 로깅의 주요 특징:
   * 컨트롤러 관리자(controllerManager)
   * 스케줄러(scheduler)
 * **CloudWatch Logs 통합**: 선택한 로그는 AWS CloudWatch Logs로 전송되어 저장, 분석, 모니터링이 가능합니다.
-* **비용 고려**: 로그 저장에는 CloudWatch Logs 요금이 적용됩니다.
+* **비용 고려**: CloudWatch Logs 수집·보존·쿼리 요금이 발생할 수 있습니다.
 
 로깅 활성화 방법:
 
 ```bash
 # AWS CLI를 사용한 로깅 활성화
 aws eks update-cluster-config \
-    --region <region> \
-    --name <cluster-name> \
+    --region "${EXAMPLE_REGION:?}" \
+    --name "${EXAMPLE_CLUSTER:?}" \
     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
 
 # eksctl을 사용한 로깅 활성화
-eksctl utils update-cluster-logging --enable-types api,audit,authenticator,controllerManager,scheduler --cluster <cluster-name> --region <region>
+eksctl utils update-cluster-logging --enable-types api,audit,authenticator,controllerManager,scheduler --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" --approve
 ```
 
 워커 노드 로깅:
@@ -453,17 +270,17 @@ eksctl utils update-cluster-logging --enable-types api,audit,authenticator,contr
 Amazon EKS 클러스터의 실제 비용 구성 요소는 다음과 같습니다:
 
 1. **EKS 컨트롤 플레인 시간당 요금**:
-   * 각 EKS 클러스터에 대해 시간당 고정 요금이 부과됩니다(예: 시간당 $0.10).
-   * 이 비용은 클러스터 크기나 워크로드와 관계없이 일정합니다.
-   * 여러 리전에 걸쳐 있는 경우 리전별로 요금이 부과됩니다.
+   * Standard/extended support의 클러스터 요금은 다르며, 선택한 Provisioned Control Plane 등급에는 추가 요금이 있습니다.
+   * EKS 클러스터는 리전 리소스입니다. 여러 리전에는 별도 클러스터와 요금이 필요합니다.
+   * Auto Mode, EKS Capabilities, Hybrid Nodes 및 AWS 인프라 요금도 별도로 계산합니다.
 2. **워커 노드로 사용되는 EC2 인스턴스 비용**:
    * 자체 관리형 노드 그룹이나 관리형 노드 그룹에서 사용하는 EC2 인스턴스에 대한 비용이 발생합니다.
    * 인스턴스 유형, 크기, 수량, 실행 시간에 따라 비용이 달라집니다.
    * 예약 인스턴스, Savings Plans, 스팟 인스턴스 등을 통해 비용을 최적화할 수 있습니다.
 3. **Fargate 포드 실행 비용**:
    * Fargate를 사용하는 경우, 포드에 할당된 vCPU 및 메모리 리소스에 따라 비용이 부과됩니다.
-   * 포드가 실행되는 시간에 따라 초 단위로 비용이 계산됩니다.
-   * 노드 관리 오버헤드가 없지만, 일반적으로 EC2 기반 노드보다 비용이 높을 수 있습니다.
+   * Linux Fargate 과금은 이미지 다운로드부터 시작하며 초 단위 올림·최소 1분이 적용됩니다. 요청 리소스도 지원되는 크기로 올림됩니다.
+   * 프로비저닝 용량·사용률·운영 부담을 함께 비교합니다. Fargate나 EC2가 항상 더 저렴한 것은 아닙니다.
 4. **추가 AWS 리소스 비용**:
    * EBS 볼륨
    * 로드 밸런서(NLB, ALB)
@@ -482,7 +299,7 @@ Amazon EKS 클러스터의 실제 비용 구성 요소는 다음과 같습니다
 
 </details>
 
-9. Amazon EKS 클러스터에서 로드 밸런싱을 구현하는 방법으로 올바른 것은 무엇인가요?
+9. Auto Mode를 사용하지 않는 일반 EKS 클러스터에서 선언적으로 ALB/NLB를 관리하는 방식은 무엇인가요?
    * A) 기본 제공되는 EKS 로드 밸런서 사용
    * B) Kubernetes Service 리소스와 AWS Load Balancer Controller 통합
    * C) 수동으로 EC2 로드 밸런서 생성 및 구성
@@ -500,7 +317,7 @@ EKS에서 로드 밸런싱 구현 방법:
 
 1.  **기본 LoadBalancer 유형 서비스**:
 
-    * Kubernetes의 `LoadBalancer` 유형 Service를 생성하면 기본적으로 Classic Load Balancer(CLB) 또는 Network Load Balancer(NLB)가 프로비저닝됩니다.
+    * 선택한 컨트롤러가 로드 밸런서를 결정합니다. 이 예제는 설치·권한 설정이 완료된 AWS LBC를 `service.k8s.aws/nlb`로 명시합니다. 레거시 통합은 CLB를 생성할 수 있습니다.
 
     ```yaml
     apiVersion: v1
@@ -509,6 +326,7 @@ EKS에서 로드 밸런싱 구현 방법:
       name: my-service
     spec:
       type: LoadBalancer
+      loadBalancerClass: service.k8s.aws/nlb
       ports:
       - port: 80
         targetPort: 8080
@@ -527,10 +345,10 @@ EKS에서 로드 밸런싱 구현 방법:
     metadata:
       name: my-ingress
       annotations:
-        kubernetes.io/ingress.class: alb
         alb.ingress.kubernetes.io/scheme: internet-facing
         alb.ingress.kubernetes.io/target-type: ip
     spec:
+      ingressClassName: alb
       rules:
       - http:
           paths:
@@ -552,16 +370,21 @@ EKS에서 로드 밸런싱 구현 방법:
     metadata:
       name: my-service
       annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-        service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+        service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
     spec:
       type: LoadBalancer
-      # ...
+      loadBalancerClass: service.k8s.aws/nlb
+      selector:
+        app: my-app
+      ports:
+      - port: 80
+        targetPort: 8080
     ```
 
 다른 옵션들의 문제점:
 
-* EKS에는 "기본 제공되는 EKS 로드 밸런서"라는 별도의 구성 요소가 없습니다. 로드 밸런싱은 Kubernetes Service 리소스와 AWS 로드 밸런서의 통합을 통해 제공됩니다.
+* Auto Mode는 `eks.amazonaws.com/nlb` 등 별도 클래스로 관리형 로드 밸런싱을 제공합니다. 클러스터 내 AWS LBC 설치가 필요 없으며 두 구현의 클래스·지원하지 않는 어노테이션을 혼용하지 않습니다.
 * 수동으로 EC2 로드 밸런서를 생성하고 구성하는 것은 가능하지만, Kubernetes의 선언적 접근 방식과 일치하지 않으며 관리가 복잡해집니다.
 * EKS는 로드 밸런싱을 완벽하게 지원합니다.
 
@@ -570,16 +393,16 @@ EKS에서 로드 밸런싱 구현 방법:
 10. Amazon EKS 클러스터에서 스토리지를 관리하는 방법으로 올바르지 않은 것은 무엇인가요?
     * A) EBS CSI 드라이버를 사용하여 EBS 볼륨 프로비저닝
     * B) EFS CSI 드라이버를 사용하여 EFS 파일 시스템 마운트
-    * C) EKS 내장 스토리지 관리자를 통한 자동 볼륨 프로비저닝
+    * C) Fargate Pod에 EBS 볼륨 마운트
     * D) FSx for Lustre CSI 드라이버를 사용하여 고성능 파일 시스템 연결
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: C) EKS 내장 스토리지 관리자를 통한 자동 볼륨 프로비저닝**
+**정답: C) Fargate Pod에 EBS 볼륨 마운트**
 
-**설명:** "EKS 내장 스토리지 관리자"는 존재하지 않는 기능입니다. Amazon EKS에는 자동 볼륨 프로비저닝을 위한 내장 스토리지 관리자가 없으며, 스토리지는 CSI(Container Storage Interface) 드라이버를 통해 관리됩니다.
+Fargate에서는 EBS 볼륨을 마운트할 수 없습니다. 일반 EC2 노드는 IAM 권한을 가진 EBS CSI 드라이버를 설치해서 사용합니다. Auto Mode는 일반 `ebs.csi.aws.com`과 다른 `ebs.csi.eks.amazonaws.com`으로 관리형 EBS 프로비저닝을 제공합니다.
 
 Amazon EKS 클러스터에서 스토리지를 관리하는 실제 방법은 다음과 같습니다:
 
@@ -587,8 +410,8 @@ Amazon EKS 클러스터에서 스토리지를 관리하는 실제 방법은 다�
 
     * Amazon EBS(Elastic Block Store) 볼륨을 Kubernetes 포드에 연결할 수 있습니다.
     * 블록 스토리지가 필요한 애플리케이션(데이터베이스 등)에 적합합니다.
-    * 동적 프로비저닝, 스냅샷, 볼륨 크기 조정 등을 지원합니다.
-    * 단일 가용 영역 내에서만 접근 가능합니다(ReadWriteOnce 접근 모드).
+    * 동적 프로비저닝, 스냅샷 컨트롤러를 통한 스냅샷, StorageClass에서 허용한 볼륨 확장을 지원합니다.
+    * EBS는 AZ 범위 리소스입니다. ReadWriteOnce는 Pod 하나가 아니라 노드 하나에서의 읽기·쓰기를 뜻하며 같은 노드의 여러 Pod가 사용할 수 있습니다. 접근 모드가 AZ 범위를 정의하는 것은 아닙니다.
 
     ```yaml
     # StorageClass 예시
@@ -641,8 +464,9 @@ Amazon EKS 클러스터에서 스토리지를 관리하는 실제 방법은 다�
       automaticBackupRetentionDays: "1"
       dailyAutomaticBackupStartTime: "00:00"
       perUnitStorageThroughput: "200"
-      storageCapacity: "1200"
     ```
+   용량은 StorageClass의 `storageCapacity`가 아니라 PVC의 `spec.resources.requests.storage`(예: `1200Gi`)에 지정합니다. 파일 시스템 유형별 최소/증분 용량, 서브넷·보안 그룹·Lustre 클라이언트 및 드라이버 IAM 권한을 별도로 확인합니다.
+
 4. **기타 스토리지 옵션**:
    * Amazon S3(Simple Storage Service)를 CSI 드라이버나 S3 마운터를 통해 사용
    * Amazon FSx for Windows File Server
@@ -675,141 +499,166 @@ Amazon EKS 클러스터에서 스토리지를 관리하는 실제 방법은 다�
 **해결 방법:**
 
 <details>
-
 <summary>해결 방법 보기</summary>
 
-**1. eksctl을 사용하여 EKS 클러스터 생성**
+이 해설의 배포 명령은 실행하면 과금되는 AWS 리소스를 생성합니다. 감사에서는 실행하지 않았습니다. Bash, 현재 AWS CLI v2, kubectl 1.36 및 Helm을 준비하고, [공식 eksctl 설치 절차](https://eksctl.io/installation/)에서 OS/CPU 아키텍처와 체크섬을 확인합니다. 아래는 eksctl 0.230.0 스키마와 EKS 1.36을 기준으로 검토한 학습 예제이며 검증된 프로덕션 구성은 아닙니다.
+
+같은 셸에서 순서대로 진행하고 명령 실패 시 중단합니다. `EKS_INTRO_ADMIN_CIDR`에는 승인된 클라이언트의 실제 외부 IPv4 CIDR(보통 `/32`)을 설정합니다. 새 클러스터는 프라이빗 노드·프라이빗 API 접근과 제한된 퍼블릭 API 접근을 사용합니다. 단일 NAT 게이트웨이는 이 개발 실습의 선택이며 프로덕션 가용성 설계를 대신하지 않습니다. 생성자의 관리자 권한도 이 전용 실습 클러스터의 초기 설정을 위한 것입니다.
+
+**1. 전용 클러스터 생성**
 
 ```bash
-# eksctl 설치 (아직 설치되지 않은 경우)
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
-eksctl version
+# Use a dedicated nonproduction AWS account/role and an approved region.
+eksctl version  # Example tool baseline: 0.230.0
+aws --version
+kubectl version --client
+helm version
 
-# 클러스터 생성
-cat << EOF > eks-cluster.yaml
+EKS_INTRO_DIR=$(mktemp -d /tmp/eks-intro.XXXXXX)
+: "${EKS_INTRO_DIR:?}"
+EKS_INTRO_CLUSTER=$(basename "$EKS_INTRO_DIR" | tr '[:upper:].' '[:lower:]-')
+EKS_INTRO_REGION=us-west-2
+: "${EKS_INTRO_ADMIN_CIDR:?Set your approved client egress IPv4 CIDR, normally /32}"
+EKS_INTRO_KUBECONFIG="$EKS_INTRO_DIR/kubeconfig"
+unset EKS_INTRO_CLUSTER_ARN EKS_INTRO_POLICY_ARN
+aws sts get-caller-identity
+
+cat > "$EKS_INTRO_DIR/eks-cluster.yaml" << EOF
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
-
 metadata:
-  name: dev-cluster
-  region: us-west-2
-  version: "1.28"
-
+  name: ${EKS_INTRO_CLUSTER}
+  region: ${EKS_INTRO_REGION}
+  version: "1.36"
+  tags:
+    docs-lab: ${EKS_INTRO_CLUSTER}
+iam:
+  withOIDC: true
+accessConfig:
+  authenticationMode: API
+  bootstrapClusterCreatorAdminPermissions: true
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs: ["${EKS_INTRO_ADMIN_CIDR}"]
+  nat:
+    gateway: Single
 managedNodeGroups:
-  - name: ng-1
-    instanceType: t3.medium
-    desiredCapacity: 2
-    minSize: 1
-    maxSize: 3
-    iam:
-      withAddonPolicies:
-        imageBuilder: true
-        autoScaler: true
-        externalDNS: true
-        certManager: true
-        appMesh: false
-        ebs: true
-        fsx: false
-        efs: false
-        albIngress: true
-        xRay: false
-        cloudWatch: true
-
+- name: ng-1
+  amiFamily: AmazonLinux2023
+  instanceType: t3.medium
+  privateNetworking: true
+  disableIMDSv1: true
+  disablePodIMDS: true
+  desiredCapacity: 2
+  minSize: 1
+  maxSize: 3
 cloudWatch:
   clusterLogging:
     enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 EOF
 
-eksctl create cluster -f eks-cluster.yaml
+# Inspect the file, account, allowed CIDR and projected costs before provisioning.
+cat "$EKS_INTRO_DIR/eks-cluster.yaml"
+eksctl create cluster -f "$EKS_INTRO_DIR/eks-cluster.yaml" \
+  --kubeconfig "$EKS_INTRO_KUBECONFIG" &&
+  EKS_INTRO_CLUSTER_ARN=$(aws eks describe-cluster --name "$EKS_INTRO_CLUSTER" \
+    --region "$EKS_INTRO_REGION" --query cluster.arn --output text)
+: "${EKS_INTRO_CLUSTER_ARN:?Cluster creation/verification did not complete}"
 ```
 
-**2. kubectl 구성 및 확인**
+클러스터 생성에 실패하면 이름을 재사용하지 말고 해당 이름의 CloudFormation 스택과 생성된 리소스를 확인해 정리합니다. `minSize`/`maxSize`는 범위일 뿐 수요 기반 노드 오토스케일러를 설치하지 않습니다. t3.medium은 예시이며 실제 용량·CPU 크레딧·지역 가격을 평가해야 합니다.
+
+**2. 별도 kubeconfig와 연결 확인**
 
 ```bash
-# kubectl 구성 업데이트
-aws eks update-kubeconfig --name dev-cluster --region us-west-2
-
-# 클러스터 연결 확인
-kubectl get nodes
-kubectl cluster-info
+aws eks update-kubeconfig --name "${EKS_INTRO_CLUSTER:?}" \
+  --region "${EKS_INTRO_REGION:?}" --kubeconfig "${EKS_INTRO_KUBECONFIG:?}"
+intro_kubectl() {
+  kubectl --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" "$@"
+}
+intro_kubectl get nodes
+intro_kubectl cluster-info
 ```
 
-**3. 기본 모니터링 구성 요소 확인**
+**3. 기본 메트릭 구성**
+
+Metrics Server 0.9.x는 Kubernetes 1.34 이상을 지원합니다. 리소스 메트릭용 구성으로, 로그·장기 모니터링을 대신하지 않습니다. kubelet 인증서와 네트워크 도달성을 검증하고 TLS 검증을 끄지 않습니다.
 
 ```bash
-# 기본 시스템 포드 확인
-kubectl get pods -n kube-system
+intro_kubectl get pods -n kube-system
 
-# 메트릭 서버 설치 (기본 제공되지 않는 경우)
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-
-# 메트릭 서버 작동 확인
-kubectl get deployment metrics-server -n kube-system
-kubectl top nodes
+# Fresh lab cluster only: do not overwrite an existing managed installation.
+curl -fL https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.0/components.yaml \
+  -o "${EKS_INTRO_DIR:?}/metrics-server.yaml" &&
+  intro_kubectl apply -f "$EKS_INTRO_DIR/metrics-server.yaml"
+intro_kubectl rollout status deployment/metrics-server -n kube-system --timeout=180s
+intro_kubectl top nodes
 ```
 
 **4. AWS Load Balancer Controller 설치**
 
+정책·컨트롤러·차트는 3.5.0에 맞췄습니다. 노드 역할에 여러 애드온의 권한을 몰아주지 않고 IRSA 역할을 사용합니다. 명시한 리전/VPC ID로 IMDS 자동 탐색에 의존하지 않습니다. 서브넷 태그·보안 그룹·서비스 할당량은 별도로 확인합니다.
+
 ```bash
-# IAM 정책 생성
-curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
-aws iam create-policy \
-    --policy-name AWSLoadBalancerControllerIAMPolicy \
-    --policy-document file://iam-policy.json
+: "${EKS_INTRO_CLUSTER_ARN:?Use the new lab cluster}"
+curl -fL https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json \
+  -o "${EKS_INTRO_DIR:?}/lbc-policy.json" || exit 1
+# Inspect the pinned policy before creating this lab-owned IAM policy.
+EKS_INTRO_POLICY_ARN=$(aws iam create-policy \
+  --policy-name "${EKS_INTRO_CLUSTER:?}-lbc" \
+  --policy-document "file://$EKS_INTRO_DIR/lbc-policy.json" \
+  --query Policy.Arn --output text)
+: "${EKS_INTRO_POLICY_ARN:?Policy creation failed}"
 
-# IRSA 설정
+# iam.withOIDC created the cluster OIDC provider in step1.
 eksctl create iamserviceaccount \
-  --cluster=dev-cluster \
-  --namespace=kube-system \
-  --name=aws-load-balancer-controller \
-  --attach-policy-arn=arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
-  --override-existing-serviceaccounts \
-  --approve
+  --cluster="$EKS_INTRO_CLUSTER" --region="${EKS_INTRO_REGION:?}" \
+  --namespace=kube-system --name=aws-load-balancer-controller \
+  --attach-policy-arn="$EKS_INTRO_POLICY_ARN" --approve
 
-# Helm으로 컨트롤러 설치
+EKS_INTRO_VPC_ID=$(aws eks describe-cluster --name "$EKS_INTRO_CLUSTER" \
+  --region "$EKS_INTRO_REGION" --query cluster.resourcesVpcConfig.vpcId --output text)
+: "${EKS_INTRO_VPC_ID:?}"
 helm repo add eks https://aws.github.io/eks-charts
-helm repo update
-helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  -n kube-system \
-  --set clusterName=dev-cluster \
+helm repo update eks
+helm --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" install aws-load-balancer-controller \
+  eks/aws-load-balancer-controller --version 3.5.0 -n kube-system \
+  --set clusterName="$EKS_INTRO_CLUSTER" \
+  --set region="$EKS_INTRO_REGION" --set vpcId="$EKS_INTRO_VPC_ID" \
   --set serviceAccount.create=false \
-  --set serviceAccount.name=aws-load-balancer-controller
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --wait --timeout 5m
 ```
 
 **5. 클러스터 상태 확인**
 
 ```bash
-# 노드 상태 확인
-kubectl get nodes -o wide
-
-# 시스템 포드 상태 확인
-kubectl get pods -n kube-system
-
-# 클러스터 이벤트 확인
-kubectl get events --sort-by='.lastTimestamp'
-
-# 클러스터 정보 확인
-kubectl cluster-info
+intro_kubectl get nodes -o wide
+intro_kubectl get pods -n kube-system
+intro_kubectl get events --sort-by='.lastTimestamp'
+intro_kubectl cluster-info
 ```
 
-**6. 테스트 애플리케이션 배포**
+**6. 로컬 포트 포워딩으로 기본 앱 확인**
 
 ```bash
-# 간단한 nginx 배포
-kubectl create deployment nginx --image=nginx
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
-
-# 배포 확인
-kubectl get deployment nginx
-kubectl get service nginx
+intro_kubectl create namespace intro-smoke
+intro_kubectl -n intro-smoke create deployment nginx --image=nginx:1.30.4-alpine
+intro_kubectl -n intro-smoke rollout status deployment/nginx --timeout=180s
+intro_kubectl -n intro-smoke expose deployment nginx --port=80 --type=ClusterIP
+intro_kubectl -n intro-smoke get deployment,service
+# Run in a separate terminal using the same dedicated kubeconfig.
+kubectl --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" -n intro-smoke \
+  port-forward --address 127.0.0.1 service/nginx 8080:80
 ```
 
-이 실습을 통해 비용 효율적인 EKS 클러스터를 생성하고, 기본적인 모니터링을 설정하며, 로드 밸런서 컨트롤러를 구성하여 애플리케이션을 외부에 노출하는 방법을 배울 수 있습니다. t3.medium 인스턴스 타입은 개발 환경에 적합한 비용 효율적인 선택이며, 오토스케일링 설정을 통해 필요에 따라 노드를 확장할 수 있습니다.
+포트 포워딩이 실행 중일 때 `http://127.0.0.1:8080`에 접속하고 Ctrl-C로 종료합니다. 외부 ALB 노출은 다음 실습에서 구성합니다. 두 실습을 마친 뒤 아래 정리 절차를 실행하며, 예상 출력이나 비용 절감을 실측 결과로 간주하지 않습니다.
 
 </details>
 
-\### 실습 2: EKS 클러스터에서 애플리케이션 배포 및 서비스 노출
+### 실습 2: EKS 클러스터에서 애플리케이션 배포 및 서비스 노출
 
 **시나리오:** 당신의 팀은 마이크로서비스 아키텍처를 기반으로 한 웹 애플리케이션을 개발했습니다. 이 애플리케이션을 EKS 클러스터에 배포하고, 외부에서 접근할 수 있도록 구성해야 합니다.
 
@@ -823,20 +672,40 @@ kubectl get service nginx
 **해결 방법:**
 
 <details>
-
 <summary>해결 방법 보기</summary>
+
+실습 1의 전용 클러스터, 같은 셸 변수와 AWS LBC/IngressClass `alb`, 정상 Metrics Server가 필요합니다. 이 HTTP 예제에는 공개 더미 응답만 넣고 ALB 접근을 지정한 클라이언트 CIDR로 제한합니다. 실제 인증·TLS·프로덕션 부하 검증은 포함하지 않습니다.
 
 **1. 네임스페이스 생성**
 
 ```bash
-kubectl create namespace web-app
-kubectl config set-context --current --namespace=web-app
+: "${EKS_INTRO_CLUSTER_ARN:?Complete exercise1 first}"
+unset EKS_INTRO_WEB_UID
+EKS_INTRO_WEB_UID=$(intro_kubectl create namespace web-app -o jsonpath='{.metadata.uid}')
+: "${EKS_INTRO_WEB_UID:?Stop if this namespace already exists}"
 ```
 
-**2. 백엔드 서비스 배포**
+**2. 백엔드 구성**
 
-```yaml
-# backend-deployment.yaml
+NGINX가 실제로 80번 포트를 듣고 `/api`를 포함한 경로에 더미 JSON을 반환하도록 구성합니다.
+
+```bash
+cat > "${EKS_INTRO_DIR:?}/backend-deployment.yaml" << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: web-app
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location / {
+            default_type application/json;
+            return 200 '{"service":"backend","example":true}\n';
+        }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -852,11 +721,13 @@ spec:
       labels:
         app: backend
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: backend
-        image: nginx:alpine  # 실제 백엔드 이미지로 대체
+        image: nginx:1.30.4-alpine
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 80
         resources:
           requests:
             cpu: 100m
@@ -864,6 +735,18 @@ spec:
           limits:
             cpu: 500m
             memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: backend-config
 ---
 apiVersion: v1
 kind: Service
@@ -875,17 +758,35 @@ spec:
     app: backend
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: http
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/backend-deployment.yaml"
 ```
+
+**3. 프론트엔드와 서비스 간 통신 구성**
+
+일반 NGINX 이미지는 `BACKEND_URL` 환경변수를 사용하지 않습니다. 아래 NGINX 설정의 `/proxy-api/`가 `backend-service`로 프록시하여 실제 서비스 간 통신 경로를 만듭니다.
 
 ```bash
-kubectl apply -f backend-deployment.yaml
-```
-
-**3. 프론트엔드 서비스 배포**
-
-```yaml
-# frontend-deployment.yaml
+cat > "${EKS_INTRO_DIR:?}/frontend-deployment.yaml" << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: web-app
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location /proxy-api/ {
+            proxy_pass http://backend-service/;
+        }
+        location / {
+            default_type text/plain;
+            return 200 'frontend demo\n';
+        }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -901,14 +802,13 @@ spec:
       labels:
         app: frontend
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: frontend
-        image: nginx:alpine  # 실제 프론트엔드 이미지로 대체
+        image: nginx:1.30.4-alpine
         ports:
-        - containerPort: 80
-        env:
-        - name: BACKEND_URL
-          value: "http://backend-service"
+        - name: http
+          containerPort: 80
         resources:
           requests:
             cpu: 100m
@@ -916,6 +816,18 @@ spec:
           limits:
             cpu: 500m
             memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: frontend-config
 ---
 apiVersion: v1
 kind: Service
@@ -927,28 +839,29 @@ spec:
     app: frontend
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: http
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/frontend-deployment.yaml"
 ```
+
+**4. AWS LBC용 Ingress 생성**
+
+ALB는 `/api` 접두사를 자동 제거하지 않습니다. 여기서는 백엔드가 해당 경로를 직접 처리합니다. `/`와 `/proxy-api/`는 프론트엔드로 전달됩니다.
 
 ```bash
-kubectl apply -f frontend-deployment.yaml
-```
-
-**4. 인그레스 리소스 생성 (AWS ALB Ingress Controller 사용)**
-
-```yaml
-# ingress.yaml
+cat > "${EKS_INTRO_DIR:?}/ingress.yaml" << EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: web-app-ingress
   namespace: web-app
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/inbound-cidrs: ${EKS_INTRO_ADMIN_CIDR:?}
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
@@ -966,16 +879,16 @@ spec:
             name: frontend-service
             port:
               number: 80
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/ingress.yaml"
 ```
+
+**5. HPA 구성**
+
+CPU 요청 대비 사용률을 기준으로 Pod 수를 조정합니다. HPA는 노드를 생성하지 않으며 Metrics Server·여유 노드 용량이 필요합니다.
 
 ```bash
-kubectl apply -f ingress.yaml
-```
-
-**5. 수평 포드 자동 확장(HPA) 구성**
-
-```yaml
-# hpa.yaml
+cat > "${EKS_INTRO_DIR:?}/hpa.yaml" << 'EOF'
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -1015,50 +928,85 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/hpa.yaml"
 ```
+
+**6. 라우팅과 상태 확인**
+
+ALB 주소가 생기는 것과 타깃이 정상인 것은 별개입니다. 응답이 실패하면 이벤트·타깃 상태·보안 그룹과 클라이언트 CIDR부터 확인합니다.
 
 ```bash
-kubectl apply -f hpa.yaml
+intro_kubectl -n web-app rollout status deployment/backend --timeout=180s
+intro_kubectl -n web-app rollout status deployment/frontend --timeout=180s
+intro_kubectl -n web-app get deployments,services,ingress,hpa
+intro_kubectl -n web-app describe ingress web-app-ingress
+ALB_ADDRESS=$(intro_kubectl -n web-app get ingress web-app-ingress \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+: "${ALB_ADDRESS:?Wait for ALB provisioning and inspect events}"
+curl --fail --show-error --connect-timeout 5 --max-time 20 "http://$ALB_ADDRESS/"
+curl --fail --show-error --connect-timeout 5 --max-time 20 "http://$ALB_ADDRESS/api"
+curl --fail --show-error --connect-timeout 5 --max-time 20 "http://$ALB_ADDRESS/proxy-api/"
 ```
 
-**6. 배포 상태 확인**
+**7. 제한된 부하 관찰**
+
+이 부하는 예제이며 CPU 목표치를 넘거나 HPA가 확장한다는 보장은 없습니다. 정적 NGINX 응답은 CPU를 적게 사용할 수 있고, 프론트엔드 요청만 보내면 백엔드 부하는 늘지 않습니다. 실제 확장 여부는 메트릭·HPA 상태·Pending Pod와 함께 관찰합니다.
 
 ```bash
-# 배포 상태 확인
-kubectl get deployments -n web-app
-
-# 서비스 상태 확인
-kubectl get services -n web-app
-
-# 인그레스 상태 확인
-kubectl get ingress -n web-app
-
-# HPA 상태 확인
-kubectl get hpa -n web-app
-
-# ALB 주소 확인
-kubectl get ingress web-app-ingress -n web-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+# Only target the lab ALB whose ownership and health you checked above.
+: "${ALB_ADDRESS:?}"
+ab -n 1000 -c 10 -s 10 "http://$ALB_ADDRESS/"
+intro_kubectl -n web-app get hpa
+intro_kubectl -n web-app top pods
+intro_kubectl -n web-app get events --sort-by='.lastTimestamp'
+# Optional observation; Ctrl-C stops watching, not the HPA.
+intro_kubectl -n web-app get hpa -w
 ```
-
-**7. 로드 테스트 및 스케일링 확인**
-
-```bash
-# ALB 주소 가져오기
-ALB_ADDRESS=$(kubectl get ingress web-app-ingress -n web-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-# 부하 테스트 (별도의 도구 필요)
-# 예: Apache Bench 사용
-ab -n 10000 -c 100 http://$ALB_ADDRESS/
-
-# 스케일링 확인
-kubectl get hpa -n web-app -w
-```
-
-이 실습을 통해 EKS 클러스터에 마이크로서비스 아키텍처 애플리케이션을 배포하고, AWS ALB Ingress Controller를 사용하여 외부에 노출하며, HPA를 통해 자동 스케일링을 구성하는 방법을 배울 수 있습니다. 리소스 요청과 제한을 적절히 설정하여 효율적인 리소스 사용을 보장하고, 인그레스 규칙을 통해 경로 기반 라우팅을 구현했습니다.
 
 </details>
 
-\## 고급 주제
+### 실습 리소스 정리
+
+원래 실습에만 사용한 클러스터인지 계정·ARN·태그로 확인합니다. 앱 로드 밸런서를 컨트롤러보다 먼저 삭제하며 최종 처리가 끝날 때까지 기다립니다. 타임아웃이 나면 finalizer를 제거하지 말고 컨트롤러 오류를 조사합니다.
+
+```bash
+: "${EKS_INTRO_CLUSTER_ARN:?Use only the dedicated cluster created in exercise1}"
+EKS_INTRO_CLEANUP_READY=false
+current_arn=$(aws eks describe-cluster --name "${EKS_INTRO_CLUSTER:?}" \
+  --region "${EKS_INTRO_REGION:?}" --query cluster.arn --output text)
+current_tag=$(aws eks describe-cluster --name "$EKS_INTRO_CLUSTER" \
+  --region "$EKS_INTRO_REGION" --query 'cluster.tags."docs-lab"' --output text)
+if [[ "$current_arn" = "$EKS_INTRO_CLUSTER_ARN" && "$current_tag" = "$EKS_INTRO_CLUSTER" ]]; then
+  # Keep the controller running until it removes ALB resources/finalizers.
+  intro_kubectl -n web-app delete ingress web-app-ingress --ignore-not-found --wait=true --timeout=180s &&
+    intro_kubectl delete namespace web-app intro-smoke --ignore-not-found --wait=true --timeout=180s &&
+    EKS_INTRO_CLEANUP_READY=true
+else
+  printf 'Ownership check failed; stop cleanup and inspect the selected account/cluster\n' >&2
+fi
+```
+
+소유권 확인과 Ingress/네임스페이스 삭제가 성공했을 때만 다음 단계로 진행합니다. IAM 역할 스택 삭제 완료와 정책 연결 해제를 확인한 뒤 정책을 삭제합니다.
+
+```bash
+if [[ ${EKS_INTRO_CLEANUP_READY:-false} = true ]]; then
+  helm --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" uninstall aws-load-balancer-controller -n kube-system
+  eksctl delete iamserviceaccount --cluster="${EKS_INTRO_CLUSTER:?}" \
+    --region="${EKS_INTRO_REGION:?}" --namespace=kube-system --name=aws-load-balancer-controller --approve --wait
+  # Wait for the related IAM-role stack deletion to finish before deleting its policy.
+  aws iam list-entities-for-policy --policy-arn "${EKS_INTRO_POLICY_ARN:?}"
+  # Continue only when no attachment remains.
+  aws iam delete-policy --policy-arn "$EKS_INTRO_POLICY_ARN" &&
+    eksctl delete cluster --config-file="${EKS_INTRO_DIR:?}/eks-cluster.yaml" --wait
+else
+  printf 'Complete ownership and load balancer cleanup checks first\n' >&2
+fi
+```
+
+CloudFormation의 삭제 완료, 잔여 로드 밸런서·보안 그룹·NAT·EBS 및 로그 보존 비용을 확인합니다. CloudWatch 로그 그룹은 별도 보존/삭제 결정을 내립니다. 클러스터 생성이 중간에 실패했거나 아래 단계에서 사용하지 않은 리소스라면 자동으로 정리됐다고 가정하지 않습니다. 실습을 모두 마친 뒤 전용 디렉터리의 매니페스트·정책·kubeconfig도 삭제합니다.
+
+## 고급 주제
 
 다음은 Amazon EKS에 관한 고급 주제에 대한 질문입니다. 이 섹션은 EKS의 심화 기능과 통합에 대한 이해를 테스트합니다.
 
@@ -1081,13 +1029,13 @@ Fargate 프로필의 주요 특징:
 * **선택적 실행**: 모든 포드가 아닌, 프로필에 정의된 조건과 일치하는 포드만 Fargate에서 실행됩니다.
 * **네임스페이스 및 레이블 선택기**: 특정 네임스페이스와 레이블 조합을 기반으로 포드를 선택합니다.
 * **서브넷 지정**: 포드가 실행될 프라이빗 서브넷을 지정할 수 있습니다.
-* **IAM 역할**: Fargate 포드에 대한 IAM 실행 역할을 지정합니다.
+* **IAM 역할**: Pod 실행 역할은 이미지 가져오기 등 Fargate 인프라가 사용합니다. 앱 컨테이너의 AWS API 접근에는 별도의 IRSA 역할이 필요합니다.
 
 Fargate 프로필 생성 예시:
 
 ```bash
 eksctl create fargateprofile \
-  --cluster my-cluster \
+  --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
   --name my-fargate-profile \
   --namespace my-namespace \
   --labels app=my-app
@@ -1117,7 +1065,7 @@ Fargate 사용 시 고려사항:
 * HostNetwork, HostPort는 지원되지 않습니다.
 * GPU 워크로드는 지원되지 않습니다.
 * 포드당 비용이 발생하므로 비용 계획이 필요합니다.
-* 스토리지는 임시 스토리지로 제한됩니다(영구 볼륨은 EFS를 통해 가능).
+* 정적으로 프로비저닝한 EFS 볼륨으로 영구 저장소를 사용할 수 있습니다. Fargate는 EBS 마운트와 EFS 동적 프로비저닝을 지원하지 않습니다.
 
 다른 옵션들의 문제점:
 
@@ -1127,75 +1075,70 @@ Fargate 사용 시 고려사항:
 
 </details>
 
-2. Amazon EKS에서 클러스터 업그레이드를 수행할 때 올바른 순서는 무엇인가요?
-   * A) 워커 노드 업그레이드 → 컨트롤 플레인 업그레이드 → 애드온 업그레이드
-   * B) 컨트롤 플레인 업그레이드 → 워커 노드 업그레이드 → 애드온 업그레이드
-   * C) 애드온 업그레이드 → 컨트롤 플레인 업그레이드 → 워커 노드 업그레이드
-   * D) 동시에 모든 구성 요소 업그레이드
+2. EKS 업그레이드를 계획하는 올바른 방법은 무엇인가요?
+   * A) 노드를 대상 버전으로 먼저 올리고 호환성은 나중에 확인
+   * B) 호환성/현재 버전을 정리한 뒤 컨트롤 플레인 → 노드, 각 애드온의 호환성에 맞춰 갱신
+   * C) 모든 애드온을 무조건 최신으로 올리면 준비 완료
+   * D) 모든 구성 요소를 동시에 변경
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 컨트롤 플레인 업그레이드 → 워커 노드 업그레이드 → 애드온 업그레이드**
+**정답: B) 호환성/현재 버전을 정리한 뒤 컨트롤 플레인 → 노드, 각 애드온의 호환성에 맞춰 갱신**
 
-**설명:** Amazon EKS 클러스터 업그레이드의 올바른 순서는 컨트롤 플레인을 먼저 업그레이드한 다음, 워커 노드를 업그레이드하고, 마지막으로 애드온을 업그레이드하는 것입니다. 이 순서는 Kubernetes의 버전 호환성 모델을 따르며, 업그레이드 과정에서 발생할 수 있는 문제를 최소화합니다.
+먼저 현재 클러스터·노드 버전, 업그레이드 인사이트, 제거 API, 웹훅·CRD·애드온 호환성, 서브넷 IP 여유와 복구 계획을 확인합니다. 노드가 뒤처져 있다면 현재 컨트롤 플레인 버전에 맞춘 뒤 다음 마이너 버전으로 진행합니다.
 
-**1. 컨트롤 플레인 업그레이드**
+**1. 컨트롤 플레인**
 
-* 컨트롤 플레인은 클러스터의 두뇌 역할을 하므로 먼저 업그레이드해야 합니다.
-* Kubernetes는 컨트롤 플레인이 노드보다 최대 2개의 마이너 버전까지 앞설 수 있도록 설계되었습니다.
-* 컨트롤 플레인 업그레이드는 AWS 관리 콘솔, AWS CLI 또는 eksctl을 통해 수행할 수 있습니다.
+다음 마이너 버전으로 한 단계씩 업데이트합니다. 현재 kubelet은 API 서버보다 새 버전일 수 없으며 최대 3개 마이너 버전까지 오래될 수 있지만, EKS는 업그레이드 전후 버전을 맞추는 것을 권장합니다. 허용되는 skew를 상시 운영 목표로 삼지 않습니다.
 
 ```bash
-# AWS CLI를 사용한 컨트롤 플레인 업그레이드
-aws eks update-cluster-version --name my-cluster --kubernetes-version 1.28
+# Inspect the current version and node versions before choosing the next minor.
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query 'cluster.{version:version,status:status}' --output table
+kubectl --context "${EXAMPLE_CONTEXT:?}" get nodes
 
-# eksctl을 사용한 컨트롤 플레인 업그레이드
-eksctl upgrade cluster --name=my-cluster --version=1.28 --approve
+# Choose one interface, after prerequisite checks and workload testing.
+aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?Select the next supported minor}"
+# Alternative:
+# eksctl upgrade cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" --version "$NEXT_MINOR_VERSION" --approve
+
+# Use the update ID returned above. Proceed only after status is Successful.
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "${CONTROL_PLANE_UPDATE_ID:?}" --query update.status
 ```
 
-**2. 워커 노드 업그레이드**
+**2. 노드**
 
-* 컨트롤 플레인 업그레이드가 완료된 후, 워커 노드를 업그레이드합니다.
-* 관리형 노드 그룹의 경우, AWS 관리 콘솔, AWS CLI 또는 eksctl을 통해 업그레이드할 수 있습니다.
-* 자체 관리형 노드의 경우, 새 AMI로 노드를 교체해야 합니다.
+컨트롤 플레인 업데이트 완료 후 관리형 노드 그룹의 업데이트를 시작하고 해당 업데이트 상태와 노드 Ready·kubelet 버전을 확인합니다. 일반 노드 그룹은 컨트롤 플레인과 함께 자동 갱신되지 않습니다. 자체 관리형/Hybrid Nodes는 운영자가 업데이트하고, Fargate Pod는 재생성해야 새 버전을 사용합니다. Auto Mode 노드는 AWS가 점진적으로 갱신합니다.
 
 ```bash
-# 관리형 노드 그룹 업그레이드
-aws eks update-nodegroup-version --cluster-name my-cluster --nodegroup-name my-nodegroup
-
-# eksctl을 사용한 관리형 노드 그룹 업그레이드
-eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup
+aws eks update-nodegroup-version --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?}"
+# Alternative:
+# eksctl upgrade nodegroup --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" --name "$EXAMPLE_NODEGROUP" --kubernetes-version "$NEXT_MINOR_VERSION"
 ```
 
-**3. 애드온 업그레이드**
+**3. 애드온과 클라이언트**
 
-* 마지막으로, 클러스터 애드온(kube-proxy, CoreDNS, Amazon VPC CNI 등)을 업그레이드합니다.
-* 애드온은 특정 Kubernetes 버전과 호환되도록 설계되었으므로, 컨트롤 플레인과 노드 업그레이드 후 업그레이드해야 합니다.
+기존 버전과 대상 버전 양쪽에서 필요한 호환성을 미리 확인합니다. 일부 CNI·웹훅·컨트롤러는 컨트롤 플레인보다 먼저 호환 버전으로 갱신해야 하므로 “애드온은 항상 마지막”이라는 규칙은 없습니다. 제어면 업그레이드 후 나머지 애드온·Cluster Autoscaler·kubectl 등을 지원 버전에 맞추고 각각 검증합니다.
 
 ```bash
-# AWS CLI를 사용한 애드온 업그레이드
-aws eks update-addon --cluster-name my-cluster --addon-name vpc-cni --addon-version v1.12.0-eksbuild.1
+aws eks describe-addon-versions --region "${EXAMPLE_REGION:?}" --addon-name vpc-cni \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?}" \
+  --query 'addons[].addonVersions[].addonVersion' --output table
 
-# eksctl을 사용한 애드온 업그레이드
-eksctl update addon --name vpc-cni --version v1.12.0-eksbuild.1 --cluster my-cluster
+# Select a compatible EKS add-on build after reviewing configuration changes.
+aws eks update-addon --cluster-name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_REGION" \
+  --addon-name vpc-cni --addon-version "${REVIEWED_ADDON_VERSION:?}" \
+  --resolve-conflicts PRESERVE
 ```
 
-**업그레이드 모범 사례:**
+`PRESERVE`는 기존 사용자 설정을 보존하기 위한 옵션이지 호환성 보장이 아닙니다. PDB, 여유 용량, graceful termination을 확인하고 강제 옵션으로 실패를 숨기지 않습니다. 단계마다 상태를 검증하며 복구 가능한 애플리케이션/데이터 백업을 준비합니다. AWS의 제어면 백업이 고객용 데이터 복구 계획을 대신하지는 않습니다.
 
-* 업그레이드 전 클러스터 상태 확인 및 백업
-* 테스트 환경에서 먼저 업그레이드 테스트
-* 블루/그린 배포 전략 고려
-* 업그레이드 중 워크로드 중단 최소화를 위한 PodDisruptionBudget 구성
-* 한 번에 한 마이너 버전씩 업그레이드
-* 업그레이드 후 워크로드 및 시스템 구성 요소 검증
-
-다른 옵션들의 문제점:
-
-* 워커 노드를 컨트롤 플레인보다 먼저 업그레이드하면 버전 호환성 문제가 발생할 수 있습니다.
-* 애드온을 먼저 업그레이드하면 새 버전의 애드온이 이전 버전의 Kubernetes와 호환되지 않을 수 있습니다.
-* 모든 구성 요소를 동시에 업그레이드하는 것은 위험하며, 문제 발생 시 원인 파악이 어렵습니다.
+현재 EKS는 조건을 충족한 업그레이드에 대해 완료 후 7일 이내 이전 마이너 버전으로의 롤백을 지원합니다. 노드·애드온·API 변경·지원 정책 제약을 확인해야 하며 앱 데이터가 자동 복구되는 것은 아닙니다. [업그레이드 절차](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)와 [롤백 조건](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)을 따릅니다.
 
 </details>
 
@@ -1211,12 +1154,12 @@ eksctl update addon --name vpc-cni --version v1.12.0-eksbuild.1 --cluster my-clu
 
 **정답: C) 포드 간 네트워크 트래픽 암호화**
 
-**설명:** Amazon VPC CNI(Container Network Interface) 플러그인은 포드 간 네트워크 트래픽을 자동으로 암호화하지 않습니다. 포드 간 트래픽 암호화는 VPC CNI의 기본 기능이 아니며, 이를 위해서는 서비스 메시(예: AWS App Mesh, Istio)나 네트워크 정책 솔루션(예: Calico, Cilium)과 같은 추가 도구가 필요합니다.
+Amazon VPC CNI가 모든 Pod 간 트래픽을 암호화하는 것은 아닙니다. 애플리케이션 TLS/mTLS 또는 지원되는 메시/CNI 암호화 기능을 명시적으로 구성해야 합니다. NetworkPolicy만으로는 트래픽을 필터링할 뿐 암호화하지 않습니다.
 
 Amazon VPC CNI 플러그인의 실제 주요 기능은 다음과 같습니다:
 
 1. **포드에 VPC IP 주소 할당**:
-   * 각 포드는 VPC 내의 고유한 IP 주소를 받습니다.
+   * 일반 Pod는 VPC IP를 받으며 `hostNetwork` Pod는 노드 네트워크를 공유합니다.
    * 이를 통해 포드는 VPC 내의 다른 리소스와 직접 통신할 수 있습니다.
    * 포드 IP는 VPC 내에서 라우팅 가능하므로, 복잡한 오버레이 네트워크가 필요하지 않습니다.
 2. **보안 그룹을 포드 수준에서 적용**:
@@ -1241,204 +1184,156 @@ Amazon VPC CNI 플러그인의 실제 주요 기능은 다음과 같습니다:
 3. **접두사 위임을 통한 IP 주소 확장**:
    * 기본적으로 각 노드는 제한된 수의 IP 주소(인스턴스 유형에 따라 다름)를 포드에 할당할 수 있습니다.
    * 접두사 위임 기능을 사용하면 각 노드에 /28 CIDR 블록(16개 IP)을 할당하여 사용 가능한 IP 주소 수를 늘릴 수 있습니다.
-   * 이는 고밀도 배포 시나리오에서 IP 주소 부족 문제를 해결합니다.
+   * ENI당 주소 수용량을 늘리지만 기존 서브넷 주소를 소비합니다. 연속된 여유 prefix가 필요하며 서브넷 용량 자체가 늘어나는 것은 아닙니다.
 4. **사용자 지정 네트워킹**:
    * 포드를 특정 서브넷에 배치할 수 있습니다.
    * 다중 네트워크 인터페이스를 사용하여 포드 네트워킹을 구성할 수 있습니다.
-5. **호스트 네트워킹 통합**:
-   * 포드는 호스트 네트워크 스택을 직접 사용할 수 있습니다.
+5. **Kubernetes 호스트 네트워킹**:
+   * `hostNetwork`는 Kubernetes Pod 설정으로 노드 네트워크를 사용하며 CNI 암호화·격리 기능이 아닙니다.
    * 이는 네트워크 성능이 중요한 워크로드에 유용합니다.
 
-VPC CNI 구성 예시:
+VPC CNI 기능은 선행 조건을 확인한 뒤 개별적으로 적용합니다.
+
+| 설정 | 필요한 확인 |
+| --- | --- |
+| `ENABLE_PREFIX_DELEGATION` | 지원 인스턴스/CNI 버전, 연속된 `/28` 여유 블록, kubelet max-pods 및 신규 노드 전환 계획 |
+| `ENABLE_POD_ENI` | 지원 trunk/branch ENI 인스턴스, VPC 리소스 컨트롤러 권한, SecurityGroupPolicy 및 DNS·보안 그룹 규칙 |
+| `AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG` | IPv4, 동일 VPC/AZ의 Pod 서브넷·보안 그룹, 노드별 ENIConfig 연결 및 여유 IP |
+
+설정 하나만 켜면 기존 Pod와 신규 Pod의 네트워크가 다르게 동작하거나 IP 할당이 실패할 수 있습니다. EKS 애드온 관리 설정과 충돌하지 않게 공식 전환 절차를 따릅니다. Auto Mode/Fargate/Hybrid Nodes에 아래 일반 EC2 DaemonSet 경로를 그대로 적용하지 않습니다.
 
 ```bash
-# 접두사 위임 활성화
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# 보안 그룹 포드 기능 활성화
-kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-# 사용자 지정 네트워킹 활성화
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
+# Inspect current non-secret CNI flags; this does not enable any feature.
+kubectl --context "${EXAMPLE_CONTEXT:?}" -n kube-system get daemonset aws-node \
+  -o jsonpath='{.spec.template.spec.containers[?(@.name=="aws-node")].env}{"\n"}'
 ```
+
 
 포드 간 네트워크 트래픽 암호화를 구현하려면 다음과 같은 대안을 고려할 수 있습니다:
 
-* AWS App Mesh와 TLS 사용
+* 기존 App Mesh 사용자는 2026년 9월 30일 지원 종료 전에 마이그레이션을 계획합니다.
 * Istio 서비스 메시 구현
 * Cilium의 투명한 암호화 기능 사용
 * 애플리케이션 수준에서 TLS/mTLS 구현
 
 </details>
 
-4. Amazon EKS에서 클러스터 인증을 위한 IAM 역할 기반 접근 제어(RBAC)를 구성하는 올바른 방법은 무엇인가요?
-   * A) IAM 사용자에게 직접 Kubernetes RBAC 역할 할당
-   * B) aws-auth ConfigMap에 IAM 역할과 Kubernetes 그룹 매핑 구성
-   * C) EKS 클러스터에 IAM 정책 직접 연결
-   * D) Kubernetes 서비스 계정에 IAM 역할 연결
+4. 개발자 IAM 역할에 네임스페이스별 Kubernetes 조회 권한을 부여하는 방법은 무엇인가요?
+   * A) IAM 사용자에게 Kubernetes Role을 직접 연결
+   * B) EKS access entry로 IAM 역할을 Kubernetes 그룹에 연결하고 RBAC 바인딩 구성
+   * C) 클러스터 IAM 역할에 S3 정책만 연결
+   * D) 앱 ServiceAccount의 IRSA 설정만으로 개발자에게 kubectl 권한 부여
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) aws-auth ConfigMap에 IAM 역할과 Kubernetes 그룹 매핑 구성**
+**정답: B) EKS access entry로 IAM 역할을 Kubernetes 그룹에 연결하고 RBAC 바인딩 구성**
 
-**설명:** Amazon EKS에서 클러스터 인증을 위한 IAM 역할 기반 접근 제어(RBAC)를 구성하는 올바른 방법은 `aws-auth` ConfigMap을 사용하여 IAM 역할과 Kubernetes 그룹 간의 매핑을 구성하는 것입니다. 이 방법을 통해 AWS IAM 자격 증명을 Kubernetes RBAC 시스템과 통합할 수 있습니다.
+신규 IAM 접근은 **EKS access entry**로 구성합니다. 클러스터 인증 모드가 `API` 또는 `API_AND_CONFIG_MAP`이어야 합니다. 기존 클러스터의 모드 전환은 매핑 이전과 관리자 복구 경로를 먼저 준비하고 수행합니다. `aws-auth`는 deprecated이며 유일한 매핑 방식이 아닙니다.
 
-**aws-auth ConfigMap 작동 방식:**
+아래 예제는 이미 존재하는 개발자 IAM 역할을 `dev-readers` 그룹에 연결합니다. IAM 신원과 EKS access entry만으로 Kubernetes RBAC 객체가 자동 생성되지는 않습니다.
 
-1. EKS는 AWS IAM Authenticator를 사용하여 API 요청을 인증합니다.
-2. `aws-auth` ConfigMap은 IAM 엔티티(사용자 또는 역할)를 Kubernetes 사용자 및 그룹에 매핑합니다.
-3. Kubernetes RBAC 시스템은 이러한 사용자 및 그룹에 권한을 부여합니다.
+```bash
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query cluster.accessConfig.authenticationMode
 
-**aws-auth ConfigMap 구성 예시:**
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aws-auth
-  namespace: kube-system
-data:
-  mapRoles: |
-    - rolearn: arn:aws:iam::123456789012:role/EksAdminRole
-      username: eks-admin
-      groups:
-        - system:masters
-    - rolearn: arn:aws:iam::123456789012:role/DevTeamRole
-      username: dev-team
-      groups:
-        - dev-group
-  mapUsers: |
-    - userarn: arn:aws:iam::123456789012:user/admin-user
-      username: admin
-      groups:
-        - system:masters
-    - userarn: arn:aws:iam::123456789012:user/read-only-user
-      username: read-only
-      groups:
-        - read-only-group
+aws eks create-access-entry --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --principal-arn "${DEV_ROLE_ARN:?Existing developer IAM role}" \
+  --type STANDARD --kubernetes-groups dev-readers
 ```
 
-**Kubernetes RBAC 역할 및 바인딩 구성:**
+기존 `dev` 네임스페이스에서 관리자가 다음 Role과 RoleBinding을 적용합니다. 이 예제는 Pod·Deployment 조회만 허용하며 Secret이나 변경 권한을 부여하지 않습니다. 워크로드 생성 권한은 해당 네임스페이스의 Secret 사용으로 이어질 수 있으므로 별도로 검토합니다.
 
 ```yaml
-# 개발자 역할 생성
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   namespace: dev
-  name: developer
+  name: dev-reader
 rules:
-- apiGroups: ["", "apps", "batch"]
-  resources: ["pods", "deployments", "jobs"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
 ---
-# 개발자 그룹에 역할 바인딩
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: dev-binding
+  name: dev-readers
   namespace: dev
 subjects:
 - kind: Group
-  name: dev-group
+  name: dev-readers
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: Role
-  name: developer
+  name: dev-reader
   apiGroup: rbac.authorization.k8s.io
 ```
 
-**eksctl을 사용한 IAM 및 RBAC 구성:**
+역할을 AssumeRole할 수 있는 신원으로 별도 kubeconfig를 만들고 실제 권한을 검증합니다. 첫 조회는 허용, 두 번째 조회는 거부가 예상되지만 다른 RBAC/EKS 접근 정책의 추가 허용이 있으면 결과가 달라집니다.
 
 ```bash
-# IAM 역할 매핑 추가
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn arn:aws:iam::123456789012:role/EksAdminRole \
-  --username eks-admin \
-  --group system:masters
-
-# IAM 사용자 매핑 추가
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn arn:aws:iam::123456789012:user/admin-user \
-  --username admin \
-  --group system:masters
+aws eks update-kubeconfig --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --role-arn "${DEV_ROLE_ARN:?}" --kubeconfig "${DEV_KUBECONFIG:?Use a dedicated file}"
+kubectl --kubeconfig "$DEV_KUBECONFIG" auth can-i get pods -n dev
+kubectl --kubeconfig "$DEV_KUBECONFIG" auth can-i get secrets -n dev
 ```
 
-**모범 사례:**
-
-* 최소 권한 원칙 적용
-* 개인 IAM 사용자보다 IAM 역할 사용 권장
-* 네임스페이스별로 권한 분리
-* 정기적인 접근 권한 검토
-* 클러스터 관리자 권한(system:masters)은 제한적으로 부여
-
-다른 옵션들의 문제점:
-
-* IAM 사용자에게 직접 Kubernetes RBAC 역할을 할당할 수 없습니다. IAM과 Kubernetes는 별개의 시스템이므로 aws-auth ConfigMap을 통한 매핑이 필요합니다.
-* EKS 클러스터에 IAM 정책을 직접 연결하는 것은 클러스터 내 RBAC 권한과 관련이 없습니다. IAM 정책은 클러스터 자체에 대한 API 호출 권한을 제어합니다.
-* Kubernetes 서비스 계정에 IAM 역할 연결(IRSA)은 포드가 AWS 서비스에 접근하기 위한 것이며, 클러스터 인증 및 권한 부여와는 다른 목적입니다.
+대안으로 access entry에 네임스페이스 범위 EKS 접근 정책을 연결할 수 있습니다. 접근 정책과 RBAC 권한은 합산되며 IAM 정책만 연결해서 Kubernetes 권한을 부여할 수는 없습니다. IRSA/Pod Identity는 Pod가 AWS API를 호출하는 별도 경로입니다. 일반 개발자에게 `system:masters`를 부여하거나 전체 `aws-auth`를 덮어쓰지 않습니다.
 
 </details>
 
-5. Amazon EKS에서 Kubernetes 버전 지원 정책에 대한 올바른 설명은 무엇인가요?
-   * A) 모든 Kubernetes 버전이 무기한 지원됨
-   * B) 각 Kubernetes 버전은 출시 후 12개월 동안 지원됨
-   * C) 최신 버전과 이전 3개 버전만 지원됨
-   * D) 각 Kubernetes 버전은 출시 후 14개월 동안 지원됨
+5. EKS 버전 지원 정책에 대한 올바른 설명은 무엇인가요?
+   * A) 모든 버전을 무기한 지원
+   * B) 전체 지원이 12개월에 종료
+   * C) 항상 최신 버전과 이전 3개만 지원
+   * D) EKS 출시 후 표준 14개월 + 유료 연장 12개월
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: D) 각 Kubernetes 버전은 출시 후 14개월 동안 지원됨**
+**정답: D) EKS 출시 후 표준 14개월 + 유료 연장 12개월**
 
-**설명:** Amazon EKS의 Kubernetes 버전 지원 정책에 따르면, 각 Kubernetes 버전은 EKS에서 출시된 후 14개월 동안 지원됩니다. 이 기간이 지나면 해당 버전은 더 이상 지원되지 않으며, 클러스터를 지원되는 버전으로 업그레이드해야 합니다.
+EKS 마이너 버전은 **EKS 출시일**부터 표준 지원 14개월, 이어서 추가 요금의 연장 지원 12개월을 제공합니다. 업스트림 출시일을 기준으로 계산하지 않습니다.
 
-**EKS 버전 지원 정책의 주요 특징:**
+* 2026년 9월 11일 공식 목록: 표준 지원 **1.34–1.36**, 연장 지원 **1.31–1.33**. 업스트림 1.37 출시가 EKS 지원을 뜻하지는 않습니다.
+* 연장 지원이 기본 활성화됩니다. `STANDARD` 업그레이드 정책으로 연장 지원을 끄면 표준 지원 종료 후 자동 업그레이드 대상이 됩니다.
+* 연장 지원 종료 후에는 AWS가 컨트롤 플레인을 지원되는 버전으로 자동 업그레이드합니다. 구체적인 실행 시간을 보장하지 않으므로 운영자가 사전에 업그레이드를 계획해야 합니다.
+* 관리형/자체 관리형/Hybrid 노드는 자동 제어면 업그레이드만으로 갱신되지 않습니다. Fargate Pod 재생성과 애드온 갱신도 별도로 계획하며 Auto Mode 노드는 관리형 갱신 경로를 따릅니다.
+* 지원 기간에는 보안 패치를 제공하지만 “모든 버전 무기한 유지”는 지원하지 않습니다. 지원 종료 버전으로 새 클러스터를 만들 수 없습니다.
 
-1. **14개월 지원 기간**:
-   * 각 Kubernetes 버전은 EKS에서 출시된 날짜로부터 14개월 동안 지원됩니다.
-   * 지원 종료 날짜는 AWS에서 미리 공지합니다.
-2. **표준 지원 일정**:
-   * Kubernetes 커뮤니티는 약 4개월마다 새 버전을 출시합니다.
-   * EKS는 일반적으로 새 Kubernetes 버전이 출시된 후 2-3개월 내에 해당 버전을 지원합니다.
-   * 이로 인해 EKS에서는 보통 3-4개의 Kubernetes 버전이 동시에 지원됩니다.
-3. **자동 업그레이드 없음**:
-   * AWS는 지원 종료가 다가오더라도 클러스터를 자동으로 업그레이드하지 않습니다.
-   * 클러스터 관리자가 명시적으로 업그레이드를 수행해야 합니다.
-4. **지원 종료 후 영향**:
-   * 지원이 종료된 버전에서 실행 중인 클러스터는 계속 작동하지만, AWS는 더 이상 보안 패치나 버그 수정을 제공하지 않습니다.
-   * 지원되지 않는 버전에서는 새 클러스터를 생성할 수 없습니다.
-   * AWS 지원을 받을 수 없습니다.
-
-**버전 업그레이드 모범 사례:**
-
-* 정기적인 업그레이드 일정 수립
-* 지원 종료 날짜 모니터링
-* 테스트 환경에서 먼저 업그레이드 테스트
-* 업그레이드 전 클러스터 백업
-* 한 번에 한 마이너 버전씩 업그레이드
-* 블루/그린 배포 전략 고려
-
-**버전 지원 상태 확인:**
+릴리스 캘린더와 실제 리전의 버전 정보를 확인합니다. 애드온 목록을 grep한 결과는 클러스터 버전 지원 목록을 대신하지 못합니다.
 
 ```bash
-# 사용 가능한 EKS 버전 확인
-aws eks describe-addon-versions | grep kubernetesVersion
-
-# 특정 클러스터의 버전 확인
-aws eks describe-cluster --name my-cluster --query "cluster.version"
+aws eks describe-cluster-versions --region "${EXAMPLE_REGION:?}" --output table
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_REGION" \
+  --query 'cluster.{version:version,upgradePolicy:upgradePolicy}' --output json
 ```
 
-다른 옵션들의 문제점:
-
-* 모든 Kubernetes 버전이 무기한 지원되지는 않습니다. 각 버전은 정해진 기간 동안만 지원됩니다.
-* 각 버전은 12개월이 아닌 14개월 동안 지원됩니다.
-* "최신 버전과 이전 3개 버전만 지원"이라는 고정된 규칙은 없으며, 지원되는 버전 수는 Kubernetes 커뮤니티의 출시 일정과 EKS의 지원 정책에 따라 달라집니다.
+정기적인 일정, 제거 API/호환성 검토, 테스트 환경 검증, 애플리케이션·데이터 복구 계획을 준비하고 한 번에 한 마이너 버전씩 진행합니다. EKS는 최소 3개 표준 지원 버전을 제공하지만 “항상 최신+이전 3개만”이라는 고정 규칙은 아닙니다.
 
 </details>
+
+
+## 공식 자료와 검증 범위
+
+- [EKS version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
+- [Pod Identity and IRSA](https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html)
+- [Load Balancer Controller](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+- [Auto Mode load balancing](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)
+- [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)
+- [FSx CSI configuration and PVC capacity](https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi-create.html)
+- [Fargate limitations](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)
+- [Prefix delegation](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html)
+- [Custom networking](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html)
+- [EKS pricing](https://aws.amazon.com/eks/pricing/)
+- [Fargate pricing](https://aws.amazon.com/fargate/pricing/)
+- [eksctl 0.230.0 schema](https://github.com/eksctl-io/eksctl/blob/v0.230.0/pkg/apis/eksctl.io/v1alpha5/assets/schema.json)
+- [LBC 3.5.0 installation](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/installation.md)
+- [Metrics Server 0.9.0 compatibility](https://github.com/kubernetes-sigs/metrics-server/blob/v0.9.0/README.md)
+
+공식 문서·릴리스 스키마에 대한 정적 검토입니다. 클러스터·IAM·로드 밸런서 생성, 앱 배포, 업그레이드·롤백, NGINX 실행, 부하 테스트나 비용 측정은 수행하지 않았습니다. 예제의 예상 동작은 실측 결과가 아닙니다.

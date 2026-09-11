@@ -1,0 +1,253 @@
+{
+  "fences": 60,
+  "yaml": 44,
+  "bash": 8,
+  "json": 6,
+  "fluxCRDs": 36,
+  "examples": [
+    {
+      "locale": "ko",
+      "line": 53,
+      "kind": "GitRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 72,
+      "kind": "HelmRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 89,
+      "kind": "OCIRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 108,
+      "kind": "Bucket",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 130,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 158,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 207,
+      "kind": "HelmRelease",
+      "apiVersion": "helm.toolkit.fluxcd.io/v2"
+    },
+    {
+      "locale": "ko",
+      "line": 284,
+      "kind": "Provider",
+      "apiVersion": "notification.toolkit.fluxcd.io/v1beta3"
+    },
+    {
+      "locale": "ko",
+      "line": 313,
+      "kind": "Alert",
+      "apiVersion": "notification.toolkit.fluxcd.io/v1beta3"
+    },
+    {
+      "locale": "ko",
+      "line": 340,
+      "kind": "Receiver",
+      "apiVersion": "notification.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 368,
+      "kind": "ImageRepository",
+      "apiVersion": "image.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 385,
+      "kind": "ImagePolicy",
+      "apiVersion": "image.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 418,
+      "kind": "ImageUpdateAutomation",
+      "apiVersion": "image.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 580,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 580,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 685,
+      "kind": "OCIRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 705,
+      "kind": "Bucket",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "ko",
+      "line": 741,
+      "kind": "GitRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 53,
+      "kind": "GitRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 72,
+      "kind": "HelmRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 89,
+      "kind": "OCIRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 108,
+      "kind": "Bucket",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 130,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 158,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 207,
+      "kind": "HelmRelease",
+      "apiVersion": "helm.toolkit.fluxcd.io/v2"
+    },
+    {
+      "locale": "en",
+      "line": 284,
+      "kind": "Provider",
+      "apiVersion": "notification.toolkit.fluxcd.io/v1beta3"
+    },
+    {
+      "locale": "en",
+      "line": 313,
+      "kind": "Alert",
+      "apiVersion": "notification.toolkit.fluxcd.io/v1beta3"
+    },
+    {
+      "locale": "en",
+      "line": 340,
+      "kind": "Receiver",
+      "apiVersion": "notification.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 368,
+      "kind": "ImageRepository",
+      "apiVersion": "image.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 385,
+      "kind": "ImagePolicy",
+      "apiVersion": "image.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 418,
+      "kind": "ImageUpdateAutomation",
+      "apiVersion": "image.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 580,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 580,
+      "kind": "Kustomization",
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 685,
+      "kind": "OCIRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 705,
+      "kind": "Bucket",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    },
+    {
+      "locale": "en",
+      "line": 741,
+      "kind": "GitRepository",
+      "apiVersion": "source.toolkit.fluxcd.io/v1"
+    }
+  ],
+  "errors": [],
+  "fragmentSchemas": 6,
+  "envsubst": {
+    "version": "2.9.5",
+    "numericSubstitution": "passed",
+    "undefinedVariableRejected": "passed"
+  },
+  "chartRender": {
+    "chart": "podinfo6.15.0",
+    "localHelm": "3.21.3",
+    "replicas": 2,
+    "service": "ClusterIP"
+  },
+  "bootstrapExportAndPatch": {
+    "flux": "2.9.5",
+    "exportedControllers": [
+      "helm-controller",
+      "image-automation-controller",
+      "image-reflector-controller",
+      "kustomize-controller",
+      "notification-controller",
+      "source-controller"
+    ],
+    "patchMatchedOnlySourceController": true,
+    "clusterCalls": "none; install --export with explicit offline kubeconfig"
+  },
+  "strictSubstitutionDefault": "Verified internal/features/features.go at kustomize-controller1.9.5:StrictPostBuildSubstitutionstrue(defaultsince1.9); no falseoverride in defaultgenerateddeployment.",
+  "limitations": "No real bootstrap, Git push, provider notification, AWS request or workload deployment. Chart render used localHelm3.21.3;Flux2.9.5helm-controlleruses4.2.4."
+}

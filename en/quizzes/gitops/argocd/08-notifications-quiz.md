@@ -50,8 +50,8 @@ Triggers define the conditions (like sync status changes, health changes, or syn
 
 </details>
 
-4. How do you subscribe an Application to receive notifications?
-   - A) Edit the notifications ConfigMap
+4. How do you define a subscription directly in a specific Application’s metadata?
+   - A) Change the Application replica count
    - B) Add annotations to the Application with notification subscriptions
    - C) Create a NotificationSubscription CRD
    - D) Configure it in the ArgoCD UI
@@ -62,7 +62,7 @@ Triggers define the conditions (like sync status changes, health changes, or syn
 **Answer: B) Add annotations to the Application with notification subscriptions**
 
 **Explanation:**
-Applications subscribe to notifications via annotations like `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`. This specifies the trigger, service, and recipient.
+Applications subscribe to notifications via annotations like `notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel`. This specifies the trigger, service, and recipient. Central ConfigMap `subscriptions` and AppProject annotations are other supported methods. Separate multiple recipients with semicolons.
 
 </details>
 
@@ -78,6 +78,6 @@ Applications subscribe to notifications via annotations like `notifications.argo
 **Answer: C) Multiple including Slack, Teams, email, webhooks, and more**
 
 **Explanation:**
-ArgoCD notifications supports many services including Slack, Microsoft Teams, Telegram, Opsgenie, Grafana, PagerDuty, GitHub, email (SMTP), and generic webhooks.
+Argo CD supports formats for Slack, Teams Workflows, GitHub, email, generic webhooks, SQS, and other services. Credentials, triggers, templates, and subscriptions must be configured before delivery. A template containing several service formats does not automatically broadcast to all of them. Existing Opsgenie integrations need a migration plan for its announced shutdown.
 
 </details>

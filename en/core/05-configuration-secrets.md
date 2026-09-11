@@ -1,6 +1,6 @@
 # Configuration and Secrets
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
 > **Last Updated**: February 22, 2026
 
 In Kubernetes, configuration management is an important part of managing application settings separately from code. In this chapter, we'll explore Kubernetes configuration management methods in detail, including ConfigMaps, Secrets, environment variables, and mounting configuration through volumes.
@@ -10,7 +10,7 @@ In Kubernetes, configuration management is an important part of managing applica
 To follow the examples in this document, you'll need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.34 or higher
+- kubectl within one minor version of the API server
 - A working Kubernetes cluster (EKS, minikube, kind, etc.)
 
 ### Configuration Example Setup
@@ -32,7 +32,7 @@ kubectl -n config-demo create secret generic app-secrets \
   --from-literal=API_KEY=abcdef123456
 
 # Create Pod using ConfigMap and Secret
-kubectl -n config-demo apply -f - <<EOF
+kubectl -n config-demo apply -f - <<'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
@@ -41,7 +41,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: ["sh", "-c", "env | sort && sleep 3600"]
+    command: ["sh", "-c", 'test -n "$DB_PASSWORD" && echo "Secret available" && sleep 3600']
     env:
     - name: APP_ENV
       valueFrom:
@@ -73,7 +73,7 @@ kubectl -n config-demo logs config-test-pod
 3. [Environment Variables](#environment-variables)
 4. [Mounting Configuration Through Volumes](#mounting-configuration-through-volumes)
 5. [Configuration Best Practices](#configuration-best-practices)
-6. [External Configuration Management Tools](#external-configuration-management-tools)
+6. [Configuration Management in Amazon EKS](#configuration-management-in-amazon-eks)
 
 ## ConfigMap
 
@@ -86,9 +86,9 @@ ConfigMaps are API objects that store configuration data in key-value pairs. Usi
 | Feature | ConfigMap | Secret |
 |---------|-----------|--------|
 | **Purpose** | General configuration data | Sensitive configuration data |
-| **Storage Format** | Plain text | Base64 encoded (default) |
-| **Size Limit** | 1MB | 1MB |
-| **Encryption** | None by default | etcd encryption support |
+| **API Representation** | UTF-8 `data` or base64 `binaryData` | Base64 `data`; `stringData` accepted on write |
+| **Size Limit** | 1 MiB | 1 MiB |
+| **Encryption at rest** | Depends on API-server/platform configuration | Depends on API-server/platform configuration |
 | **Volume Type** | configMap | secret |
 | **Use Cases** | Environment variables, config files | Passwords, tokens, certificates |
 | **Auto Update** | Possible delay when volume mounted | Possible delay when volume mounted |
@@ -283,7 +283,7 @@ spec:
 
 ### ConfigMap Updates
 
-When a ConfigMap is updated, the contents of the ConfigMap mounted as a volume are automatically updated. However, ConfigMaps used as environment variables require a Pod restart to be updated.
+Mutable ConfigMaps and Secrets mounted as full volumes update eventually; delay depends on kubelet sync and change-detection/cache settings. Applications must reread or reload the files. `subPath` mounts do not receive updates. Environment values do not change in a running process; recreate Pods (for example, a Deployment rollout) to use new values.
 
 ```bash
 kubectl edit configmap my-config
@@ -337,7 +337,7 @@ Secrets can be created in various ways:
 kubectl create secret generic my-secret --from-literal=username=admin --from-literal=password=secret
 
 # Create from files
-kubectl create secret generic my-secret --from-file=username.txt --from-file=password.txt
+kubectl create secret generic my-secret --from-file=username=username.txt --from-file=password=password.txt
 
 # Create TLS secret
 kubectl create secret tls my-tls-secret --cert=path/to/cert.crt --key=path/to/key.key
@@ -393,7 +393,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "env" ]
+    command: ["/bin/sh", "-c", 'test -n "$USERNAME" && echo "Secret available"']
     env:
     # Use single key-value pair
     - name: USERNAME
@@ -451,8 +451,10 @@ Secrets are base64 encoded by default, but this is not encryption. To enhance se
 
 1. **etcd Encryption**: Encrypt secrets stored in etcd.
 2. **RBAC**: Restrict access to secrets.
-3. **Network Policies**: Limit Pods that can access secrets.
+3. **Network Policies**: Restrict network access to the API or external stores where supported; Secret object authorization is enforced by RBAC, not NetworkPolicy.
 4. **External Secret Management Tools**: Use external secret management tools like AWS Secrets Manager, HashiCorp Vault, etc.
+
+All credentials shown here are dummy learning values. Do not log Secret contents or commit real values/base64 equivalents; prefer protected input files or an external secret manager over literal CLI arguments. Users who can create Pods using a Secret may obtain it even without direct Secret read permission.
 
 #### etcd Encryption Configuration
 
@@ -469,6 +471,8 @@ resources:
           secret: <base64 encoded key>
     - identity: {}
 ```
+
+For self-managed clusters, load this file with `--encryption-provider-config`, protect the encryption key, and rewrite existing Secrets to encrypt them. It is not a resource for `kubectl apply`. EKS manages its own encryption (see below).
 
 ## Environment Variables
 
@@ -515,7 +519,7 @@ spec:
       valueFrom:
         configMapKeyRef:
           name: my-config
-          key: environment
+          key: key1
   restartPolicy: Never
 ```
 
@@ -530,7 +534,7 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "env" ]
+    command: ["/bin/sh", "-c", 'test -n "$DATABASE_PASSWORD" && echo "Secret available"']
     env:
     - name: DATABASE_PASSWORD
       valueFrom:
@@ -692,11 +696,11 @@ spec:
   containers:
   - name: test-container
     image: busybox
-    command: [ "/bin/sh", "-c", "cat /etc/nginx/nginx.conf" ]
+    command: [ "/bin/sh", "-c", "cat /etc/config/config.properties" ]
     volumeMounts:
     - name: config-volume
-      mountPath: /etc/nginx/nginx.conf
-      subPath: nginx.conf
+      mountPath: /etc/config/config.properties
+      subPath: config.properties
   volumes:
   - name: config-volume
     configMap:
@@ -749,14 +753,18 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: my-config-v1
+immutable: true
 data:
+  log_level: INFO
   # Configuration data
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: my-config-v2
+immutable: true
 data:
+  log_level: DEBUG
   # Updated configuration data
 ```
 
@@ -776,6 +784,10 @@ Validate configuration before applying it. Invalid configuration can cause appli
 
 Document configuration options and their effects. This helps team members understand and manage configuration.
 
+### Resource Requests and QoS
+
+Requests guide scheduling and runtime resource allocation; they do not force an application to consume that amount. CPU limits throttle CPU use, while memory limits can trigger OOM termination. For the quiz's container-level examples, Guaranteed requires equal CPU and memory requests/limits on every container; BestEffort has neither, and other configurations are Burstable. Pod-level resources can also affect QoS. Node-pressure eviction also considers priority and usage relative to requests. See [resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) and [Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/).
+
 ## Configuration Management in Amazon EKS
 
 In Amazon EKS, you can use AWS's various services in addition to Kubernetes' basic configuration management features to manage configuration and secrets. This section covers various ways to manage configuration in EKS and integration with AWS services.
@@ -786,7 +798,7 @@ In Amazon EKS, you can use AWS's various services in addition to Kubernetes' bas
 
 ### AWS Secrets Manager Integration
 
-AWS Secrets Manager is a service that allows you to securely store and manage database credentials, API keys, and other secret information. In EKS, you can use External Secrets Operator or AWS Secrets and Configuration Provider (ASCP) to synchronize secrets from AWS Secrets Manager to Kubernetes secrets.
+AWS Secrets Manager is a service that allows you to securely store and manage database credentials, API keys, and other secret information. External Secrets Operator reconciles Kubernetes Secrets. ASCP with Secrets Store CSI Driver mounts external values as files; Kubernetes Secret synchronization and automatic rotation require optional driver configuration.
 
 #### External Secrets Operator Installation
 
@@ -801,7 +813,7 @@ helm install external-secrets external-secrets/external-secrets \
 #### Create SecretStore
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: aws-secretsmanager
@@ -820,7 +832,7 @@ spec:
 #### Create ExternalSecret
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: database-credentials
@@ -858,13 +870,15 @@ eksctl create iamserviceaccount \
   --cluster my-cluster \
   --namespace my-namespace \
   --name my-serviceaccount \
-  --attach-policy-arn arn:aws:iam::aws:policy/SecretsManagerReadWrite \
+  --attach-policy-arn arn:aws:iam::123456789012:policy/ReadAppDatabaseSecret \
   --approve
 ```
 
+Create `ReadAppDatabaseSecret` first with `secretsmanager:GetSecretValue` and `secretsmanager:DescribeSecret` restricted to the full ARN of `prod/db/credentials`; add scoped `kms:Decrypt` only if a customer-managed key requires it. The IAM trust policy must match this cluster, namespace, and ServiceAccount. Install ESO/its v1 CRDs and create the namespace and ServiceAccount before the SecretStore.
+
 ### Using AWS Parameter Store
 
-AWS Systems Manager Parameter Store is a service that allows you to hierarchically store and manage configuration data and secret values. Parameter Store is less expensive than Secrets Manager and is suitable for storing simple configuration values.
+AWS Systems Manager Parameter Store is a service that allows you to hierarchically store and manage configuration data and secret values. Choose between Parameter Store and Secrets Manager based on rotation, lifecycle, and access requirements; charges depend on the parameter tier and API usage.
 
 #### ASCP (AWS Secrets and Configuration Provider) Installation
 
@@ -905,6 +919,7 @@ metadata:
   name: parameter-store-pod
   namespace: my-namespace
 spec:
+  serviceAccountName: parameter-reader
   containers:
   - name: app
     image: my-app:latest
@@ -921,11 +936,15 @@ spec:
         secretProviderClass: aws-parameters
 ```
 
+Create `parameter-reader` with an IRSA role or Pod Identity association granting `ssm:GetParameters` for the two parameter ARNs and, if needed, scoped KMS decryption. The earlier Secrets Manager role does not provide SSM permissions. ASCP requires compatible EC2 nodes; the CSI mount does not work on Fargate.
+
 ### Dynamic Configuration with AWS AppConfig
 
 AWS AppConfig is a service that manages and deploys application configuration. Using AppConfig allows you to dynamically update configuration without redeploying applications.
 
 #### AppConfig Agent Sidecar Pattern
+
+The application fetches configuration from the agent's local HTTP endpoint and must refresh/reload it. A shared emptyDir alone does not make the agent write `/config/config.json`. Create the application/environment/configuration profile and a deployment first, and grant the Pod identity `appconfig:StartConfigurationSession` and `appconfig:GetLatestConfiguration` for the required configuration.
 
 ```yaml
 apiVersion: apps/v1
@@ -943,47 +962,47 @@ spec:
       labels:
         app: my-app
     spec:
+      serviceAccountName: appconfig-reader
       containers:
       - name: app
         image: my-app:latest
         env:
-        - name: CONFIG_PATH
-          value: /config/config.json
-        volumeMounts:
-        - name: config-volume
-          mountPath: /config
+        - name: CONFIG_URL
+          value: http://localhost:2772/applications/MyApp/environments/Production/configurations/MyConfig
       - name: appconfig-agent
-        image: public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.0
+        image: public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.x
         env:
-        - name: AWS_APPCONFIG_EXTENSION_POLL_INTERVAL_SECONDS
-          value: "45"
-        - name: AWS_APPCONFIG_EXTENSION_POLL_TIMEOUT_SECONDS
-          value: "15"
-        - name: AWS_APPCONFIG_EXTENSION_HTTP_PORT
+        - name: SERVICE_REGION
+          value: us-west-2
+        - name: POLL_INTERVAL
+          value: "45s"
+        - name: REQUEST_TIMEOUT
+          value: "15s"
+        - name: HTTP_PORT
           value: "2772"
-        - name: AWS_APPCONFIG_EXTENSION_PREFETCH_LIST
-          value: '{"Applications":[{"ApplicationId":"MyApp","Environments":[{"EnvironmentId":"Production","Configurations":[{"ConfigurationProfileId":"MyConfig","VersionNumber":null}]}]}]}'
-        volumeMounts:
-        - name: config-volume
-          mountPath: /config
-      volumes:
-      - name: config-volume
-        emptyDir: {}
+        - name: HTTP_HOST
+          value: localhost
+        - name: PREFETCH_LIST
+          value: MyApp:Production:MyConfig
 ```
+
+The application image must implement CONFIG_URL retrieval and retry while the sidecar starts. Create `appconfig-reader` and its scoped AWS identity before deploying; pin a tested agent version/digest for production. These are container-agent settings, not Lambda extension variables.
 
 ### Configuration with EKS Fargate Profiles
 
 Using EKS Fargate allows you to run Kubernetes Pods without managing nodes. You can configure the Pod execution environment using Fargate profiles.
 
+Fargate profiles are EKS API resources, not native Kubernetes objects. For example, use this `eksctl` configuration with `eksctl create fargateprofile -f fargate-profile.yaml` after replacing the private subnet IDs and execution role:
+
 ```yaml
-apiVersion: eks.amazonaws.com/v1beta1
-kind: FargateProfile
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
 metadata:
-  name: my-profile
-  namespace: my-namespace
-spec:
-  clusterName: my-cluster
-  podExecutionRoleArn: arn:aws:iam::123456789012:role/my-pod-execution-role
+  name: my-cluster
+  region: us-west-2
+fargateProfiles:
+- name: my-profile
+  podExecutionRoleARN: arn:aws:iam::123456789012:role/my-pod-execution-role
   selectors:
   - namespace: my-namespace
     labels:
@@ -995,29 +1014,24 @@ spec:
 
 ### Secret Encryption with AWS KMS
 
-Kubernetes secrets are base64 encoded by default, which is not encryption. You can use AWS KMS (Key Management Service) to encrypt secrets in your EKS cluster.
+EKS clusters on Kubernetes 1.28 or later have [default envelope encryption for all Kubernetes API data](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), including Secrets and ConfigMaps, with an AWS-owned key. A customer-managed KMS key is optional; it is not required to turn encryption on.
 
-#### Create KMS Key
-
-```bash
-# Create KMS key
-aws kms create-key --description "EKS Secret Encryption Key"
-
-# Store key ID
-KEY_ID=$(aws kms create-key --query KeyMetadata.KeyId --output text)
-
-# Create key alias
-aws kms create-alias --alias-name alias/eks-secrets --target-key-id $KEY_ID
-```
-
-#### Apply Encryption Configuration to EKS Cluster
+To associate a customer-managed key with an eligible existing cluster, use `associate-encryption-config`, not `update-cluster-config`. Review the key's Region, policy, permissions, and association restrictions before applying it. The following example creates one key and reuses its returned ARN:
 
 ```bash
-# Apply encryption configuration
-aws eks update-cluster-config \
-  --name my-cluster \
-  --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:us-west-2:123456789012:key/'$KEY_ID'"}}]'
+set -eu
+KEY_ARN=$(aws kms create-key --region us-west-2 \
+  --description "EKS customer-managed encryption key" \
+  --query KeyMetadata.Arn --output text)
+aws kms create-alias --region us-west-2 \
+  --alias-name alias/eks-secrets --target-key-id "$KEY_ARN"
+
+aws eks associate-encryption-config --region us-west-2 \
+  --cluster-name my-cluster \
+  --encryption-config "resources=secrets,provider={keyArn=$KEY_ARN}"
 ```
+
+Check completion with `aws eks describe-update` using the returned update ID and inspect `aws eks describe-cluster --name my-cluster --region us-west-2 --query cluster.encryptionConfig`. An absent customer-managed configuration does not mean default encryption is disabled.
 
 ### Secret Access Control with AWS IAM
 
@@ -1054,7 +1068,7 @@ spec:
 
 Consider the following best practices when managing configuration in EKS:
 
-1. **Use IRSA**: Always use IRSA to grant minimum permissions to Pods when accessing AWS services.
+1. **Use workload identity**: Use EKS Pod Identity on supported compute or IRSA, with scoped permissions. Fargate applications use IRSA; their Pod execution role is for infrastructure, not application credentials.
 
 2. **Encrypt Secrets**: Use KMS to encrypt secrets in your EKS cluster.
 
@@ -1081,16 +1095,15 @@ apiVersion: secretsmanager.services.k8s.aws/v1alpha1
 kind: Secret
 metadata:
   name: my-secret
+  annotations:
+    services.k8s.aws/deletion-policy: retain
 spec:
   name: my-secret
   description: "My secret created via ACK"
-  forceDeleteWithoutRecovery: true
-  generateSecretString:
-    excludeCharacters: "\"@/\\"
-    excludePunctuation: true
-    includeSpace: false
-    passwordLength: 16
+  recoveryWindowInDays: 30
 ```
+
+Install the ACK Secrets Manager controller and its IAM role/CRDs first. This manifest manages the secret container metadata; it does not generate a password or create a native Kubernetes Secret. Populate the secret value through a controlled secret-management workflow.
 
 #### eksctl
 
@@ -1115,30 +1128,23 @@ eksctl create cluster -f cluster.yaml
 
 AWS CDK (Cloud Development Kit) is a tool for defining AWS resources using programming languages. You can use CDK to define EKS clusters and related resources.
 
+This helper works with an existing CDK EKS cluster and Secret construct; it grants read access only to that Secret. The namespace must already exist and the cluster must have a compatible kubectl provider configured.
+
 ```typescript
-import * as cdk from 'aws-cdk-lib';
 import * as eks from 'aws-cdk-lib/aws-eks';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
-const app = new cdk.App();
-const stack = new cdk.Stack(app, 'EksStack');
-
-// Create EKS cluster
-const cluster = new eks.Cluster(stack, 'Cluster', {
-  version: eks.KubernetesVersion.V1_21,
-  secretsEncryptionKey: new kms.Key(stack, 'Key'),
-});
-
-// Create service account
-const serviceAccount = cluster.addServiceAccount('ServiceAccount', {
-  name: 'my-service-account',
-  namespace: 'my-namespace',
-});
-
-// Attach IAM policy
-serviceAccount.role.addManagedPolicy(
-  iam.ManagedPolicy.fromAwsManagedPolicyName('SecretsManagerReadWrite')
-);
+export function addSecretReader(
+  cluster: eks.Cluster,
+  secret: secretsmanager.ISecret,
+): eks.ServiceAccount {
+  const serviceAccount = cluster.addServiceAccount('SecretReader', {
+    name: 'my-service-account',
+    namespace: 'my-namespace',
+  });
+  secret.grantRead(serviceAccount);
+  return serviceAccount;
+}
 ```
 
 ## Conclusion

@@ -17,6 +17,8 @@ Istio의 고급 라우팅 기능을 사용하면 요청의 다양한 속성을 �
 
 ## 라우팅 개요
 
+각 예제는 독립적인 Sidecar 라우팅 구성입니다. 참조하는 Service와 subset을 준비하고 같은 호스트의 중복 VirtualService는 하나씩 적용하세요. `gateways`가 없으면 메시 Sidecar에 적용되며 외부 호스트의 인바운드 예제는 기존 Gateway 연결과 호스트 일치도 필요합니다. 헤더·쿼리 파라미터·출발 워크로드 레이블은 라우팅 입력이며 사용자 ID 증명이 아닙니다. 테넌트/사용자 권한은 인증과 AuthorizationPolicy로 집행하세요.
+
 VirtualService의 라우팅 규칙은 **Match 조건**과 **Route 대상**으로 구성됩니다.
 
 ![들어오는 요청이 VirtualService의 세 가지 규칙(API v1 트래픽, 모바일 클라이언트, 기본 폴백)에 순서대로 매칭되어 각각 api-v1, mobile-app, web-app 서비스로 라우팅되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-02-routing-0.png)
@@ -74,12 +76,16 @@ spec:
 match:
 - uri:
     exact: "/login"
+```
 
+```yaml
 # prefix: 접두사 일치
 match:
 - uri:
     prefix: "/api/"
+```
 
+```yaml
 # regex: 정규 표현식 일치
 match:
 - uri:
@@ -103,7 +109,9 @@ http:
   route:
   - destination:
       host: api-debug
+```
 
+```yaml
 # OR 조건: 여러 match 블록 사용
 http:
 - match:
@@ -252,16 +260,6 @@ spec:
   hosts:
   - reviews
   http:
-  # Mobile 디바이스
-  - match:
-    - headers:
-        user-agent:
-          regex: ".*Mobile.*"
-    route:
-    - destination:
-        host: reviews
-        subset: mobile
-
   # Tablet 디바이스
   - match:
     - headers:
@@ -271,6 +269,16 @@ spec:
     - destination:
         host: reviews
         subset: tablet
+
+  # Mobile 디바이스
+  - match:
+    - headers:
+        user-agent:
+          regex: ".*Mobile.*"
+    route:
+    - destination:
+        host: reviews
+        subset: mobile
 
   # Desktop (기본)
   - route:
@@ -509,6 +517,8 @@ spec:
 
 ## 소스 기반 라우팅
 
+`sourceLabels`와 `sourceNamespace`는 구성을 받을 출발 Sidecar를 선택하며 인바운드 게이트웨이에서 요청별로 인증하는 조건이 아닙니다. 최상위 gateways를 명시했다면 `mesh`를 포함해야 합니다. 아래 database 예제는 일반 SQL 프로토콜이 아닌 HTTP 서비스라는 가정입니다.
+
 ### Namespace 기반 라우팅
 
 ```yaml
@@ -537,13 +547,12 @@ spec:
         host: database
         subset: staging
 
-  # 기타 네임스페이스는 차단
-  - route:
-    - destination:
-        host: access-denied
+  # HTTP 거부 응답 예시; ID 정책은 목적지에서 집행
+  - directResponse:
+      status: 403
 ```
 
-### Service Account 기반 라우팅
+### 소스 워크로드 레이블 기반 라우팅
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -554,7 +563,7 @@ spec:
   hosts:
   - payment-service
   http:
-  # 특정 Service Account만 접근 허용
+  # 일치하는 출발 워크로드 레이블에 구성 적용
   - match:
     - sourceLabels:
         app: frontend
@@ -625,6 +634,8 @@ spec:
 
 ### 폴백 전략
 
+여기서 폴백은 앞 조건에 일치하지 않은 요청의 기본 경로입니다. 경로가 선택된 뒤 업스트림 오류가 나도 다음 라우팅 규칙으로 다시 평가하지 않습니다. 장애 복구에는 재시도·Outlier Detection 또는 롤아웃 컨트롤러를 별도 구성하세요.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -643,14 +654,9 @@ spec:
     - destination:
         host: myapp
         subset: canary
-    fault:
-      abort:
-        percentage:
-          value: 0
-        httpStatus: 503
     # Canary 실패 시 폴백 없음 - 에러 반환
 
-  # 기본 요청 - 폴백 있음
+  # Canary 조건에 일치하지 않은 요청의 기본 경로
   - route:
     - destination:
         host: myapp
@@ -670,6 +676,7 @@ metadata:
 spec:
   hosts:
   - api.example.com
+  - tenant-b.api.example.com
   http:
   # 테넌트 A (헤더로 식별)
   - match:
@@ -733,7 +740,7 @@ spec:
         host: myapp
         subset: beta
 
-  # 실험적 기능 (직원만)
+  # role=employee 레이블과 기능 헤더가 있는 워크로드
   - match:
     - headers:
         x-feature-experimental:
@@ -797,7 +804,7 @@ spec:
   - match:
     - headers:
         x-country-code:
-          regex: "DE|FR|UK|IT|ES"
+          regex: "DE|FR|GB|IT|ES"
     route:
     - destination:
         host: content-service
@@ -812,6 +819,8 @@ spec:
 
 ### 예제 4: API 게이트웨이 패턴
 
+`api-gateway`를 실제 게이트웨이에 연결하고 노출 전에 보호 경로에 [JWT 인증 및 인가](../security/02-authentication.md)를 적용하세요. `Bearer ...` 문자열 매칭은 토큰 검증이 아닙니다. 자격 증명이 없다고 보호 경로가 공개/일반 라우트로 넘어가서는 안 됩니다. 지역/테넌트 헤더가 접근 결정에 쓰이면 신뢰하고 인증한 출처에서 제공되어야 합니다.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -823,13 +832,10 @@ spec:
   gateways:
   - api-gateway
   http:
-  # 인증이 필요한 API
+  # 보호 경로 라우팅; JWT/인가는 별도 집행 필요
   - match:
     - uri:
         prefix: "/api/v1/protected/"
-      headers:
-        authorization:
-          regex: "Bearer .*"
     route:
     - destination:
         host: protected-api-service
@@ -868,10 +874,9 @@ spec:
     - destination:
         host: health-service
 
-  # 404 처리
-  - route:
-    - destination:
-        host: error-service
+  # 일치하지 않는 경로에 404 응답
+  - directResponse:
+      status: 404
 ```
 
 ## 문제 해결
@@ -922,7 +927,9 @@ http:
   route:
   - destination:
       host: api-service
+```
 
+```yaml
 # ✅ 올바른 순서
 http:
 - match:  # 구체적인 규칙 먼저
@@ -936,28 +943,24 @@ http:
       host: myapp
 ```
 
-#### 2. Regex 문법 오류
+#### 2. Regex 매칭 범위
+
+RE2는 전체 문자열을 매칭합니다. `/api/v[1-3]`은 유효한 문법으로 `/api/v1`에는 일치하지만 `/api/v1/users`에는 일치하지 않습니다. `/`를 이스케이프할 필요는 없습니다. 버전 루트와 하위 경로를 함께 매칭하려면:
 
 ```yaml
-# ❌ 잘못된 regex
 match:
 - uri:
-    regex: "/api/v[1-3]"  # 슬래시 이스케이프 안 됨
-
-# ✅ 올바른 regex
-match:
-- uri:
-    regex: "^/api/v[1-3].*"
+    regex: "^/api/v[1-3](/.*)?$"
 ```
 
-#### 3. Header 대소문자 문제
+#### 3. Header 이름
+
+전송되는 HTTP 헤더 이름은 대소문자를 구분하지 않지만 Istio match 맵의 키는 소문자로 작성해야 합니다. 값은 표현식에서 달리 지정하지 않으면 대소문자를 구분합니다.
 
 ```yaml
-# HTTP 헤더는 대소문자 구분 없음
-# Istio는 자동으로 소문자로 변환
 match:
 - headers:
-    X-Custom-Header:  # 자동으로 x-custom-header로 변환됨
+    x-custom-header:
       exact: "value"
 ```
 
@@ -998,7 +1001,9 @@ http:
 match:
 - uri:
     regex: "^/(api|admin|public)/v[0-9]+/(users|products|orders)/[a-zA-Z0-9_-]+$"
+```
 
+```yaml
 # ✅ 권장 - prefix나 exact 사용
 match:
 - uri:
@@ -1019,6 +1024,10 @@ metadata:
 spec:
   hosts:
   - product-api.example.com
+  http:
+  - route:
+    - destination:
+        host: product-api-service
 ```
 
 ### 4. 문서화
@@ -1048,6 +1057,8 @@ spec:
 
 ### 5. 테스트 전략
 
+GATEWAY_URL을 설치된 인바운드 주소/포트로 지정하고 현재 적용한 예제의 Host와 헤더에 맞추세요. 메시 내부 예제를 외부 curl로 검사하려면 먼저 해당 Gateway에 연결해야 합니다. 임시 프록시 debug 로그 레벨은 조사 후 원래대로 복구하세요.
+
 ```bash
 # 라우팅 규칙 테스트 스크립트
 #!/bin/bash
@@ -1059,10 +1070,10 @@ curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v1/users
 curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v2/users
 
 # Mobile 사용자 테스트
-curl -H "User-Agent: Mobile" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "User-Agent: Mobile" "http://$GATEWAY_URL/"
 
 # Header 기반 테스트
-curl -H "x-canary: true" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "x-canary: true" "http://$GATEWAY_URL/"
 ```
 
 ## 참고 자료

@@ -1,0 +1,74 @@
+{
+  "date": "2026-09-11",
+  "owner": "service-mesh/networking/observability content audit worker",
+  "sequence": [
+    {
+      "domain": "service-mesh",
+      "status": "active",
+      "scope": [
+        "ko/service-mesh/**",
+        "en/service-mesh/**",
+        "ko/quizzes/service-mesh/**",
+        "en/quizzes/service-mesh/**"
+      ],
+      "progress": "docs/reviews/2026-09-11/service-mesh-progress.json",
+      "inventoryMarkdownCount": 170,
+      "inventoryByLanguage": {
+        "en": 85,
+        "ko": 85
+      },
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim."
+    },
+    {
+      "domain": "networking",
+      "status": "queued",
+      "scope": [
+        "ko/networking/**",
+        "en/networking/**",
+        "ko/quizzes/networking/**",
+        "en/quizzes/networking/**"
+      ],
+      "inventoryMarkdownCount": 108,
+      "inventoryByLanguage": {
+        "en": 54,
+        "ko": 54
+      },
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim."
+    },
+    {
+      "domain": "observability",
+      "status": "queued",
+      "scope": [
+        "ko/observability/**",
+        "en/observability/**",
+        "ko/quizzes/observability/**",
+        "en/quizzes/observability/**",
+        "ko/labs/observability/**",
+        "en/labs/observability/**"
+      ],
+      "inventoryMarkdownCount": 116,
+      "inventoryByLanguage": {
+        "en": 58,
+        "ko": 58
+      },
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim."
+    }
+  ],
+  "requirements": [
+    "Read each Markdown completely; one evidence row per file in per-subdirectory batch arrays.",
+    "Finish each sequential domain before starting the next; brief checkpoint per bounded batch.",
+    "Fix certain errors using primary sources; document complex unverified lab assumptions and never imply production or live-cluster validation.",
+    "Preserve actual historical benchmark versions and measurements.",
+    "No commits, pushes, further delegation, foreign prose edits, AWS provisioning, or destructive sample execution.",
+    "Parent handles registry/gitops/AI/data/ops and mechanical/translation work; structural networking links already repaired, prose still needs full review."
+  ],
+  "candidateReports": [
+    "docs/reviews/2026-09-11/external-links.json",
+    "docs/reviews/2026-09-11/code-syntax.json",
+    "/tmp/kubernetes-docs-full-review/internal-main-links.log"
+  ],
+  "extraAuthorizedWritePaths": [
+    "scripts/__tests__/service-mesh-mtls-retry-guidance.test.mjs"
+  ],
+  "parentCurrentOwnership": "Registry/Harbor/best practices and repository audit tooling, plus previously assigned other domains and mechanical/translation fixes."
+}

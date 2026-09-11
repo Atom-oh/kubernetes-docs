@@ -8,23 +8,7 @@
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
-      "entries": {
-        "database": {
-          "label": "Canary CRD field"
-        },
-        "backend": {
-          "label": "Deployment step"
-        },
-        "messagebus": {
-          "label": "Shift traffic"
-        },
-        "security": {
-          "label": "Metric analysis gate"
-        },
-        "cloud": {
-          "label": "Promote"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -57,7 +41,7 @@
           "promote",
           "init"
         ],
-        "note": "Successful analysis promotes the canary to primary; failing threshold times triggers a rollback."
+        "note": "Final success promotes; reached cumulative failure limits restore primary during analysis and await another revision."
       }
     ]
   },
@@ -121,8 +105,8 @@
       "lane": "process",
       "col": 0,
       "type": "backend",
-      "label": "Initialize",
-      "sublabel": "create primary",
+      "label": "Primary ready",
+      "sublabel": "initial / restored",
       "width": 150
     },
     {
@@ -131,7 +115,7 @@
       "col": 1,
       "type": "backend",
       "label": "Detect change",
-      "sublabel": "new image · spec change",
+      "sublabel": "Pod spec / tracked config",
       "width": 150
     },
     {
@@ -157,7 +141,7 @@
       "lane": "process",
       "col": 4,
       "type": "security",
-      "label": "Analyze metrics",
+      "label": "Repeated analysis",
       "sublabel": "success rate ≥ 99% · P99 ≤ 500ms",
       "tag": "every 1m",
       "width": 190
@@ -168,8 +152,8 @@
       "col": 5,
       "type": "cloud",
       "label": "Promote",
-      "sublabel": "primary traffic 100%",
-      "width": 150
+      "sublabel": "ready / switch",
+      "width": 138
     }
   ],
   "edges": [
@@ -224,14 +208,14 @@
     {
       "from": "metric",
       "to": "promote",
-      "label": "success",
+      "label": "final pass",
       "variant": "emphasis",
       "role": "main"
     },
     {
       "from": "metric",
       "to": "init",
-      "label": "failure · rollback",
+      "label": "threshold / restore",
       "variant": "security",
       "role": "error"
     }
@@ -239,29 +223,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Traffic shifting steps",
+      "title": "Weight steps",
       "items": [
-        "stepWeight 10 · maxWeight 50 → 10% → 20% → 30% → 40% → 50%",
-        "Each step analyzes metrics for interval 1m before moving to the next weight",
-        "After 50%, promote: canary spec is copied to primary and all traffic goes to primary"
+        "Analysis: 10 → 20 → 30 → 40 → 50%",
+        "Promotion includes primary update and readiness waiting"
       ]
     },
     {
       "dot": "amber",
-      "title": "Checks at each step",
+      "title": "Metrics and timing",
       "items": [
-        "request-success-rate: thresholdRange.min 99 (non-5xx success rate)",
-        "request-duration: thresholdRange.max 500 (P99 ms)",
-        "webhooks: load-test → flagger-loadtester runs the load test"
+        "analysis.interval schedules; metric.interval is the query window",
+        "99% / 500ms are illustrative SLO bounds"
       ]
     },
     {
       "dot": "rose",
-      "title": "Automatic rollback conditions",
+      "title": "Failure handling",
       "items": [
-        "A metric check fails more than threshold times",
-        "Canary pods are not Ready, or a webhook returns a failure",
-        "On rollback traffic returns to primary, the canary scales to zero, status becomes Failed"
+        "failedChecks >= threshold; success does not reset it",
+        "Readiness deadlines and promotion failures need separate checks"
       ]
     }
   ]

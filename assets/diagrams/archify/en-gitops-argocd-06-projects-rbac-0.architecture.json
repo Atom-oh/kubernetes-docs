@@ -9,7 +9,7 @@
     "views": [
       {
         "id": "ownership",
-        "label": "Team owns its project",
+        "label": "Team application permissions",
         "focus": [
           "team-frontend",
           "team-backend",
@@ -18,7 +18,7 @@
           "proj-backend",
           "proj-platform"
         ],
-        "note": "Each team SSO group owns its own AppProject."
+        "note": "SSO groups receive project application roles. Permission to edit AppProject policy is separate."
       },
       {
         "id": "destinations",
@@ -31,10 +31,23 @@
           "ns-backend",
           "ns-platform"
         ],
-        "note": "AppProject destinations restrict which namespaces a project can deploy into."
+        "note": "Destinations constrain Argo CD deployment scope; they do not create exclusive Namespace ownership or runtime isolation."
       }
     ],
-    "locale": "en"
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Namespace scope"
+        },
+        "external": {
+          "label": "SSO group"
+        },
+        "security": {
+          "label": "AppProject"
+        }
+      }
+    }
   },
   "components": [
     {
@@ -125,7 +138,7 @@
       "id": "ns-frontend",
       "type": "backend",
       "label": "Namespace: team-a",
-      "sublabel": "team-a apps only",
+      "sublabel": "allowed deployment scope",
       "pos": [
         720,
         70
@@ -139,7 +152,7 @@
       "id": "ns-backend",
       "type": "backend",
       "label": "Namespace: team-b",
-      "sublabel": "team-b apps only",
+      "sublabel": "allowed deployment scope",
       "pos": [
         720,
         210
@@ -185,7 +198,7 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes Cluster",
+      "label": "Namespaces on allowed clusters",
       "wraps": [
         "ns-frontend",
         "ns-backend",
@@ -198,20 +211,20 @@
       "id": "own-frontend",
       "from": "team-frontend",
       "to": "proj-frontend",
-      "label": "owns",
+      "label": "app role",
       "variant": "emphasis"
     },
     {
       "id": "own-backend",
       "from": "team-backend",
       "to": "proj-backend",
-      "label": "owns"
+      "label": "app role"
     },
     {
       "id": "own-platform",
       "from": "team-platform",
       "to": "proj-platform",
-      "label": "owns"
+      "label": "app role"
     },
     {
       "id": "deploy-frontend",
@@ -245,10 +258,10 @@
     },
     {
       "dot": "slate",
-      "title": "Default project",
+      "title": "Additional isolation controls",
       "items": [
-        "Allows every repo, destination, and resource",
-        "Not recommended for production"
+        "Platform administrators pre-provision namespaces",
+        "Kubernetes RBAC, Pod Security, NetworkPolicy and quotas are separate"
       ]
     }
   ]

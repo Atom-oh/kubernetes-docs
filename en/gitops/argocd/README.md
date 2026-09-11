@@ -1,7 +1,7 @@
 # ArgoCD
 
-> **Supported Versions**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Last Updated**: August 31, 2026
+> **Supported Versions**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (reviewed baseline)
+> **Last Updated**: September 11, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -16,7 +16,7 @@
 
 ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes. It automates the deployment of applications to Kubernetes clusters by synchronizing the desired state defined in Git repositories with the actual state in the cluster.
 
-As a CNCF graduated project, ArgoCD has become the de facto standard for GitOps-based Kubernetes deployments, used by thousands of organizations worldwide.
+Argo CD is part of the CNCF Graduated Argo project. Adoption alone does not establish suitability for a particular security or availability requirement.
 
 ![Architecture diagram showing ArgoCD's control plane fetching manifests from Git, Helm, and OCI sources through its Repo Server, with the Application Controller reconciling and syncing them into managed Kubernetes clusters, while users reach the API Server through the web UI, CLI, or gRPC API.](../../.gitbook/assets/en-gitops-argocd-overview-0.png)
 
@@ -29,7 +29,7 @@ As a CNCF graduated project, ArgoCD has become the de facto standard for GitOps-
 - **Git as Single Source of Truth**: All application configurations stored in Git
 - **Declarative Deployments**: Define desired state, ArgoCD handles the rest
 - **Audit Trail**: Complete history of all changes via Git commits
-- **Rollback**: Instant rollback to any previous state
+- **Rollback**: Redeploy retained configuration revisions; database/external-state recovery is separate
 
 ### Multi-Cluster Management
 
@@ -40,7 +40,7 @@ As a CNCF graduated project, ArgoCD has become the de facto standard for GitOps-
 ### Enterprise Ready
 
 - **RBAC**: Fine-grained role-based access control
-- **SSO Integration**: OIDC, SAML, LDAP support
+- **SSO Integration**: Direct OIDC or supported Dex connectors for other identity providers
 - **Multi-Tenancy**: Project-based isolation
 - **High Availability**: Production-ready HA deployment
 
@@ -61,7 +61,7 @@ As a CNCF graduated project, ArgoCD has become the de facto standard for GitOps-
 | **Repository Server** | Clones repos, generates manifests, caches results | 2+ |
 | **Application Controller** | Monitors applications, reconciles state | 2+ (sharded) |
 | **Redis** | Caching layer for repo server and controller | 3 (HA) |
-| **Dex** | OIDC provider for SSO integration | 2+ |
+| **Dex** | Optional identity broker; bundled in-memory storage is not safely scaled by adding replicas | 1 in the standard bundle |
 | **Notification Controller** | Sends notifications on events | 1+ |
 | **ApplicationSet Controller** | Manages ApplicationSet resources | 1+ |
 
@@ -122,12 +122,14 @@ Synchronization brings the cluster state to match the desired state:
 
 ### 1. Install ArgoCD
 
+This is a self-managed non-HA evaluation example. Prepare a compatible cluster, CRD/RBAC permissions and an empty dedicated namespace; use the [installation guide](01-installation.md) for production HA/authentication/upgrade decisions.
+
 ```bash
 # Create namespace
 kubectl create namespace argocd
 
 # Install ArgoCD
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
 
 # Wait for pods to be ready
 kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
@@ -150,6 +152,8 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 
 ### 4. Login via CLI
 
+Install the matching OS/architecture CLI and verify release checksums as shown in the [installation guide](01-installation.md). Keep port forwarding running in another terminal.
+
 ```bash
 # Install CLI (macOS)
 brew install argocd
@@ -157,8 +161,9 @@ brew install argocd
 # Login
 argocd login localhost:8080
 
-# Change password (recommended)
+# Change the bootstrap password
 argocd account update-password
+kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
 
 ### 5. Deploy Your First Application
@@ -196,67 +201,37 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 ```
 
 ## Version Compatibility
 
-### August 2026 Update: ArgoCD v3.5.2 / v3.4.8 Patch Releases
+The reviewed baseline is **Argo CD 3.5.2 / Helm chart 10.8.4**. Application and installation-chart versions differ. Argo CD patches the three most recent minor lines; older lines are EOL.
 
-On August 27, 2026, patches for the maintained release lines went out: v3.5.2 and v3.4.8. v3.5.2 carries bug fixes such as auto-sync being skipped when a newer commit arrives during a sync, `ignoreApplicationDifferences` not being restored after ApplicationSet normalization, and the notification controller mutating objects from a shared cache without deep-copying them first. See the [v3.5.2 release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2) for details.
+### Tested Kubernetes Combinations
 
-### August 2026 Update: Custom Configuration for the EKS Managed Argo CD Capability
+| Argo CD | Kubernetes |
+|---|---|
+| 3.5 | 1.36, 1.35, 1.34, 1.33 |
+| 3.4 | 1.35, 1.34, 1.33, 1.32 |
+| 3.3 | 1.35, 1.34, 1.33, 1.32 |
 
-On August 21, 2026, AWS announced that the Amazon EKS Capability for Argo CD now supports custom configuration through the standard `argocd-cm` ConfigMap in your cluster. You can define custom health checks for your Custom Resources, customize the Argo CD UI banner content, and adjust how the capability watches and compares the resources it manages — configured the same way as in upstream Argo CD, with AWS applying the settings to the managed capability. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-argo-cd-configuration) and the [configuration guide](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html) for details.
+This is the upstream test matrix recorded in the 3.5.2 repository. It differs from a chart's minimum kubeVersion constraint, Kubernetes/EKS support windows and the managed Argo CD version policy. There is no one-to-one EKS-minor-to-Argo-CD-minor mapping.
 
-### August 2026 Update: ArgoCD 3.5 GA and Patch Releases
+### Recent Releases
 
-ArgoCD v3.5.0 went GA on August 7, 2026, making 3.5 the current stable release line. It was followed on August 12 by coordinated patches for the three maintained release lines: v3.5.1 / v3.4.7 / v3.3.14. v3.5.1 includes bug fixes such as stopping ApplicationSet progressive sync from reconciling in a tight loop and server-side diff Secret-masking fixes (including hiding secrets in the `last-applied-configuration` annotation). See the [v3.5.1 release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.1) for details.
+- 3.5.0: released **2026-08-04**. Check migration guidance for changes including the server's Helm 4 renderer.
+- 3.5.1: released 2026-08-12.
+- 3.5.2: released 2026-08-27. Check official releases for patch details and current supported lines.
 
-### July 2026 Update: ArgoCD 3.x Patch Releases
+### Argo Rollouts
 
-ArgoCD v3.4.5 was released on July 9, 2026. The tables below were written against the 2.x era — check the [ArgoCD releases page](https://github.com/argoproj/argo-cd/releases) for up-to-date per-version support information.
+Rollouts is a separate controller and can be used without Argo CD. This review uses its 1.10.0 documentation. Validate Rollouts CRDs/controller, traffic plugins, Kubernetes and Argo CD health-check integration instead of mapping unrelated product version numbers.
 
-At ArgoCon Japan, held July 28, 2026 in Yokohama as a KubeCon + CloudNativeCon Japan colocated event, the Argo CD lead maintainer shared a proposal for the next version (3.5) ([CNCF blog](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
+### EKS Managed Argo CD Capability
 
-### August 2026 Update: ArgoCD v3.5.0 Released
-
-[ArgoCD v3.5.0](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0) went GA on August 4, 2026, making 3.5 the current stable release line. Notable changes include:
-
-- **Helm 3 → Helm 4 migration**: manifest rendering now uses Helm 4
-- **Source integrity verification (Alpha)**: opt-in signature verification for dry sources in the source hydrator, plus CLI support for Source Integrity configuration
-- **ApplicationSet improvements**: concurrent application management and repository filtering by archived status
-- **Webhook jitter**: configurable jitter for webhook-triggered application refreshes to smooth thundering-herd refresh spikes
-- **UI**: multi-source application creation in the New App panel, ApplicationSet Preview Apps tab, and AppSet nodes in the resource tree
-- **New health checks**: GatewayClass, `BackendTLSPolicy` (Gateway API), VictoriaMetrics, Gardener Shoot, and more
-
-Patch releases v3.4.6 and v3.3.13 also went out on July 31, 2026 for the previous lines.
-
-### Kubernetes Compatibility
-
-| ArgoCD Version | Kubernetes Versions |
-|----------------|---------------------|
-| 2.13.x | 1.28 - 1.31 |
-| 2.12.x | 1.27 - 1.30 |
-| 2.11.x | 1.26 - 1.29 |
-| 2.10.x | 1.25 - 1.28 |
-| 2.9.x | 1.24 - 1.27 |
-
-### Amazon EKS Compatibility
-
-| EKS Version | Recommended ArgoCD |
-|-------------|-------------------|
-| 1.31 | 2.13.x |
-| 1.30 | 2.12.x - 2.13.x |
-| 1.29 | 2.11.x - 2.12.x |
-| 1.28 | 2.10.x - 2.11.x |
-
-### Argo Rollouts Compatibility
-
-| Rollouts Version | ArgoCD Version | Features |
-|------------------|----------------|----------|
-| 1.7.x | 2.10+ | Analysis improvements |
-| 1.6.x | 2.9+ | Notification integration |
-| 1.5.x | 2.8+ | Progressive delivery |
+EKS Capability for Argo CD is a distinct operating model from a self-managed installation. Its custom configuration applies only to **supported** argocd-cm keys, in the capability-configured namespace and with label `app.kubernetes.io/part-of: argocd`. Unsupported keys/flags are ignored; do not assume standard Lua libraries or arbitrary execution plugins are available. See the [managed configuration guide](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html).
 
 ## Next Steps
 
@@ -274,3 +249,11 @@ Patch releases v3.4.6 and v3.3.13 also went out on July 31, 2026 for the previou
 ## Quiz
 
 To test what you've learned, try the [ArgoCD installation quiz](../../quizzes/gitops/argocd/01-installation-quiz.md).
+
+### Versioned Review Sources
+
+- [Argo CD 3.5.2 tested Kubernetes versions](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/tested-kubernetes-versions.md)
+- [Release support policy](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/developer-guide/release-process-and-cadence.md)
+- [3.5.0 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0)
+- [3.5.2 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)
+- [HA component behavior](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md)

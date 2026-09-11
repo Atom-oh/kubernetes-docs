@@ -18,7 +18,7 @@ Argo Rollouts는 카나리 배포, 블루-그린 배포, 자동화된 분석을 
 
 </details>
 
-2. 이전 버전에서 새 버전으로 트래픽을 점진적으로 이동시키는 배포 전략은 무엇인가요?
+2. 명시한 트래픽 비중 단계와 분석 게이트를 통해 새 버전을 검증하는 배포 전략은 무엇인가요?
    - A) Recreate
    - B) Rolling Update
    - C) Canary
@@ -36,17 +36,17 @@ Argo Rollouts는 카나리 배포, 블루-그린 배포, 자동화된 분석을 
 
 3. Argo Rollouts를 사용한 Blue-Green 배포에서 프로모션 중에 무슨 일이 일어나나요?
    - A) Blue 환경이 삭제됨
-   - B) Stable(blue) 서비스에서 Preview(green) 서비스로 트래픽 전환
+   - B) active Service의 selector를 새 ReplicaSet으로 변경
    - C) 두 버전이 영원히 동시 실행
    - D) 새 환경이 생성됨
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Stable(blue) 서비스에서 Preview(green) 서비스로 트래픽 전환**
+**정답: B) active Service의 selector를 새 ReplicaSet으로 변경**
 
 **설명:**
-Blue-Green 배포에서 프로모션은 활성 서비스 선택기를 업데이트하여 현재 안정 버전에서 미리보기 버전으로 트래픽을 전환합니다. 이전 ReplicaSet은 프로모션 후 스케일 다운됩니다.
+Blue-Green 배포에서 프로모션은 활성 서비스 선택기를 업데이트하여 현재 안정 버전에서 미리보기 버전으로 트래픽을 전환합니다. 이전 ReplicaSet의 축소는 분석과 scale-down 지연 설정에 따라 진행되며 데이터플레인 전파가 즉시 완료된다고 보장하지 않습니다.
 
 </details>
 
@@ -66,7 +66,7 @@ AnalysisTemplates는 쿼리할 메트릭(Prometheus, Datadog 등에서)과 성�
 
 </details>
 
-5. 트래픽 분할을 위해 Argo Rollouts와 네이티브 통합이 있는 Ingress 컨트롤러는 무엇인가요?
+5. Argo Rollouts의 네이티브 트래픽 관리 provider는 무엇인가요?
    - A) Traefik만
    - B) NGINX Ingress만
    - C) NGINX, ALB, Istio, Traefik 등 여러 개
@@ -78,11 +78,11 @@ AnalysisTemplates는 쿼리할 메트릭(Prometheus, Datadog 등에서)과 성�
 **정답: C) NGINX, ALB, Istio, Traefik 등 여러 개**
 
 **설명:**
-Argo Rollouts는 NGINX Ingress, AWS ALB, Istio, Linkerd, SMI, Traefik을 포함한 여러 ingress 컨트롤러 및 서비스 메시와 네이티브 트래픽 관리 통합을 제공합니다.
+Argo Rollouts는 AWS ALB, Istio, Traefik, APISIX 등의 네이티브 통합을 제공합니다. ingress-nginx/SMI API가 남아 있어도 해당 프로젝트의 유지보수가 보장되는 것은 아닙니다. Linkerd를 위한 별도 네이티브 필드는 없습니다.
 
 </details>
 
-6. Canary 전략에서 `setWeight` 단계는 무엇을 하나요?
+6. 트래픽 라우터와 기본 maxTrafficWeight=100을 사용하는 Canary 전략에서 `setWeight` 단계는 무엇을 하나요?
    - A) 파드의 CPU 가중치 설정
    - B) 카나리 버전으로 라우팅할 트래픽 비율 설정
    - C) 배포의 중요도 설정
@@ -94,23 +94,23 @@ Argo Rollouts는 NGINX Ingress, AWS ALB, Istio, Linkerd, SMI, Traefik을 포함�
 **정답: B) 카나리 버전으로 라우팅할 트래픽 비율 설정**
 
 **설명:**
-카나리 전략의 `setWeight` 단계는 카나리(새) 버전으로 라우팅해야 할 트래픽 비율을 구성합니다. 예를 들어, `setWeight: 20`은 트래픽의 20%를 카나리로 라우팅합니다.
+카나리 전략의 `setWeight` 단계는 카나리(새) 버전으로 라우팅해야 할 트래픽 비율을 구성합니다. 예를 들어, `setWeight: 20`은 상대 가중치20/100을 요청합니다. 실제 요청 비율은 표본·연결·쿠키 등에 따라 달라질 수 있고, 라우터가 없으면 Pod 비율의 근사치입니다.
 
 </details>
 
-7. 카나리 배포 중에 AnalysisRun이 실패하면 어떻게 되나요?
+7. Rollout에 연결된 분석의 AnalysisRun이 Failed 상태가 되면 어떻게 되나요?
    - A) 배포가 상관없이 계속됨
    - B) 알림이 전송되지만 다른 일은 없음
-   - C) 롤아웃이 자동으로 중단되고 롤백됨
+   - C) 롤아웃을 중단하고 stable 트래픽으로 복귀
    - D) 클러스터가 종료됨
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 롤아웃이 자동으로 중단되고 롤백됨**
+**정답: C) 롤아웃을 중단하고 stable 트래픽으로 복귀**
 
 **설명:**
-AnalysisRun이 실패하면(메트릭이 실패 임계값 초과) Argo Rollouts는 자동으로 롤아웃을 중단하고 안정 버전으로 롤백을 시작하여 잘못된 배포가 모든 트래픽에 영향을 미치는 것을 방지합니다.
+AnalysisRun이 실패하면(메트릭이 실패 임계값 초과) Argo Rollouts는 롤아웃을 중단하고 stable로 트래픽을 되돌립니다. Git 커밋이나 데이터베이스는 되돌리지 않으며, 개별 실패 측정과 전체 AnalysisRun 실패는 failureLimit에 의해 구분됩니다. Inconclusive는 조사할 수 있도록 일시 중지합니다.
 
 </details>
 
@@ -142,7 +142,7 @@ AnalysisRun이 실패하면(메트릭이 실패 임계값 초과) Argo Rollouts�
 **정답: B) Gateway API 플러그인(`trafficRouting.plugins`)을 통해 HTTPRoute를 조작한다**
 
 **설명:**
-Kong은 Argo Rollouts에 네이티브로 통합되어 있지 않습니다. `trafficRouting.kong`이라는 필드는 존재하지 않으며, argoproj-labs의 Gateway API 플러그인을 통해 표준 HTTPRoute 리소스를 조작하는 방식으로만 지원됩니다. Kong 외에도 Traefik, kgateway 등 Gateway API를 구현하는 다른 컨트롤러 역시 동일한 플러그인을 사용합니다.
+Kong은 Argo Rollouts에 네이티브로 통합되어 있지 않습니다. `trafficRouting.kong`이라는 필드는 존재하지 않으며, argoproj-labs의 Gateway API 플러그인을 통해 표준 HTTPRoute 리소스를 조작하는 방식이 이 문서의 연동 경로입니다. Kong 외에도 Traefik, kgateway 등 Gateway API를 구현하는 다른 컨트롤러 역시 동일한 플러그인을 사용합니다.
 
 </details>
 
@@ -158,6 +158,6 @@ Kong은 Argo Rollouts에 네이티브로 통합되어 있지 않습니다. `traf
 **정답: C) HTTPRoute의 `backendRefs[].weight`**
 
 **설명:**
-Gateway API 플러그인은 표준 Gateway API 리소스인 HTTPRoute의 `backendRefs[].weight` 값을 setWeight 단계마다 직접 갱신합니다. 이 방식은 Gateway API를 구현하는 어떤 컨트롤러(Kong, Traefik, kgateway 등)에도 동일하게 적용되는 범용 메커니즘입니다.
+Gateway API 플러그인은 표준 Gateway API 리소스인 HTTPRoute의 `backendRefs[].weight` 값을 setWeight 단계마다 직접 갱신합니다. 이 방식은 Gateway API를 구현하는 어떤 컨트롤러(Kong, Traefik, kgateway 등)에도 적용할 수 있지만, 실제 CRD·구현체의 Route 기능 지원과 수렴 상태를 검증해야 합니다.
 
 </details>

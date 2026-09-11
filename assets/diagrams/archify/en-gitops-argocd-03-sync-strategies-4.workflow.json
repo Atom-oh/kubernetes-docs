@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Sync Window Behavior",
+    "title": "Windows for a New Automated Sync",
     "locale": "en",
     "output": "public/archmaps/en-gitops-argocd-03-sync-strategies-4.html",
     "animation": "trace",
@@ -25,16 +25,29 @@
         "focus": [
           "deny_q",
           "allow_q",
-          "default_allow",
+          "has_allow",
           "sync_run"
         ],
-        "note": "The sync runs when an allow window is active or when no window is active at all."
+        "note": "Without an active deny, an active allow or no matching allow rule permits the request."
       }
     ],
     "viewBox": [
-      1040,
+      1120,
       660
-    ]
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Processing stage"
+        },
+        "frontend": {
+          "label": "Sync request"
+        },
+        "security": {
+          "label": "Window policy"
+        }
+      }
+    }
   },
   "lanes": [
     {
@@ -60,7 +73,7 @@
     "check",
     "deny_q",
     "allow_q",
-    "default_allow",
+    "has_allow",
     "sync_run"
   ],
   "nodes": [
@@ -70,7 +83,7 @@
       "col": 0,
       "type": "frontend",
       "label": "Sync request",
-      "sublabel": "auto or manual sync",
+      "sublabel": "new automated sync",
       "width": 120
     },
     {
@@ -79,7 +92,7 @@
       "col": 1,
       "type": "backend",
       "label": "Check windows",
-      "sublabel": "read syncWindows",
+      "sublabel": "select matching rules",
       "width": 130
     },
     {
@@ -102,21 +115,21 @@
       "width": 180
     },
     {
-      "id": "default_allow",
+      "id": "has_allow",
       "lane": "windows",
       "col": 4,
-      "type": "backend",
-      "label": "Default allow",
-      "sublabel": "no active window",
-      "width": 130
+      "type": "security",
+      "label": "Matching allow exists?",
+      "sublabel": "currently inactive",
+      "width": 180
     },
     {
       "id": "sync_run",
       "lane": "result",
       "col": 5,
-      "type": "cloud",
-      "label": "Run sync",
-      "sublabel": "apply changes to cluster",
+      "type": "backend",
+      "label": "Window permits",
+      "sublabel": "other checks still apply",
       "width": 150
     },
     {
@@ -125,8 +138,8 @@
       "col": 2,
       "type": "security",
       "label": "Sync blocked",
-      "sublabel": "blocked by deny window",
-      "width": 136
+      "sublabel": "active deny / inactive allow",
+      "width": 180
     }
   ],
   "edges": [
@@ -160,23 +173,31 @@
     },
     {
       "from": "allow_q",
-      "to": "default_allow",
+      "to": "has_allow",
       "label": "No"
     },
     {
-      "from": "default_allow",
+      "from": "has_allow",
       "to": "sync_run",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "label": "No"
+    },
+    {
+      "from": "has_allow",
+      "to": "sync_block",
+      "label": "Yes",
+      "variant": "security",
+      "role": "error"
     }
   ],
   "cards": [
     {
       "dot": "amber",
-      "title": "Window precedence",
+      "title": "Scope and matching",
       "items": [
-        "A deny window overrides an allow window",
-        "The more specific match wins (application name > namespace > cluster)",
-        "With no active window, sync is allowed"
+        "An active deny wins; matching inactive allow rules block the request",
+        "Application, namespace and cluster selectors use OR; andOperator: true uses AND",
+        "No specificity ranking. See the text for manual exceptions, ongoing syncs and time zones"
       ]
     }
   ]

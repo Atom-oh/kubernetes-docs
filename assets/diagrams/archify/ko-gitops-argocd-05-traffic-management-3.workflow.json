@@ -18,7 +18,7 @@
           "label": "pause 대기"
         },
         "security": {
-          "label": "Analysis 판정 · 롤백"
+          "label": "Analysis 판정 / 중단"
         },
         "external": {
           "label": "수동 승격 게이트"
@@ -52,14 +52,15 @@
       },
       {
         "id": "outcome",
-        "label": "완료 또는 롤백",
+        "label": "완료 · 중단 · 일시 중지",
         "focus": [
           "a1",
           "a2",
           "done",
-          "rollback"
+          "rollback",
+          "inconclusive"
         ],
-        "note": "두 Analysis 중 하나라도 실패하면 롤백, 최종 Analysis 성공 시 100%로 자동 완료됩니다."
+        "note": "Failed/Error이면 abort하여 stable로 복귀하며, Inconclusive이면 일시 중지합니다. 최종 성공 후 가용성을 확인하여 완료합니다."
       }
     ],
     "viewBox": [
@@ -82,7 +83,7 @@
     },
     {
       "id": "abort",
-      "label": "Analysis 실패 · 롤백",
+      "label": "분석 실패 또는 판정 불가",
       "variant": "exception"
     }
   ],
@@ -105,7 +106,8 @@
     ],
     "allowedTerminals": [
       "done",
-      "rollback"
+      "rollback",
+      "inconclusive"
     ],
     "requiredPaths": [
       {
@@ -119,6 +121,14 @@
       {
         "from": "a2",
         "to": "rollback"
+      },
+      {
+        "from": "a1",
+        "to": "inconclusive"
+      },
+      {
+        "from": "a2",
+        "to": "inconclusive"
       }
     ]
   },
@@ -129,7 +139,7 @@
       "col": 0,
       "type": "frontend",
       "label": "롤아웃 시작",
-      "sublabel": "Rollout 배포",
+      "sublabel": "기존 stable의 업데이트",
       "width": 150
     },
     {
@@ -222,7 +232,7 @@
       "col": 5,
       "type": "frontend",
       "label": "완료",
-      "sublabel": "100% 자동 완료",
+      "sublabel": "100% · 가용성 확인",
       "width": 150
     },
     {
@@ -230,8 +240,17 @@
       "lane": "abort",
       "col": 4,
       "type": "security",
-      "label": "롤백",
-      "sublabel": "abort 후 30s 뒤 카나리 축소",
+      "label": "Abort",
+      "sublabel": "stable 복귀 · Git 유지",
+      "width": 150
+    },
+    {
+      "id": "inconclusive",
+      "lane": "abort",
+      "col": 1,
+      "type": "security",
+      "label": "일시 중지",
+      "sublabel": "지표 / 트래픽 확인",
       "width": 150
     }
   ],
@@ -312,15 +331,29 @@
     {
       "from": "a1",
       "to": "rollback",
-      "label": "실패",
+      "label": "Failed / Error",
       "variant": "security",
       "role": "error"
     },
     {
       "from": "a2",
       "to": "rollback",
-      "label": "실패",
+      "label": "Failed / Error",
       "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "a1",
+      "to": "inconclusive",
+      "label": "판정 불가",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "a2",
+      "to": "inconclusive",
+      "label": "판정 불가",
+      "variant": "dashed",
       "role": "error"
     }
   ]

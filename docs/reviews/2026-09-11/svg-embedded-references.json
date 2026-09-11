@@ -1,0 +1,586 @@
+{
+  "summary": {
+    "files": 97,
+    "parseErrors": 0,
+    "embeddedReferences": 18,
+    "needsContext": 0
+  },
+  "scope": "Unique SVGs referenced by the full inventory; path/fragment/XML checks only, not a claim every SVG visually reviewed.",
+  "results": [
+    {
+      "path": "assets/diagrams/rendered/docker-bridge-networking.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-10.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-11.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-2.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-4.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-5.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-6.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-7.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-8.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-core-01-cluster-architecture-9.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-11.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-6.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-03-networking-modes-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-03-networking-modes-2.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-03-networking-modes-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-03-networking-modes-4.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-03-networking-modes-5.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-03-networking-modes-6.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-05-network-policy-0.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-05-network-policy-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-ops-15-zonal-operations-guide-0.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-0.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-1.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-10.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-11.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-12.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-3.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-4.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-5.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-6.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-7.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-8.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "assets/diagrams/rendered/en-service-mesh-istio-03-architecture-9.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "cn/.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "cn/.gitbook/assets/hybrid-nodes-cp-to-kubelet.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "cn/.gitbook/assets/hybrid-nodes-cp-to-pod.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "cn/.gitbook/assets/hybrid-nodes-east-west.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "cn/.gitbook/assets/hybrid-nodes-kubelet-to-cp.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "cn/.gitbook/assets/hybrid-nodes-pod-to-cp.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "cn/.gitbook/assets/hybrid-nodes-pod-to-pod.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "en/.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "es/.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "es/.gitbook/assets/hybrid-nodes-cp-to-kubelet.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "es/.gitbook/assets/hybrid-nodes-cp-to-pod.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "es/.gitbook/assets/hybrid-nodes-east-west.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "es/.gitbook/assets/hybrid-nodes-kubelet-to-cp.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "es/.gitbook/assets/hybrid-nodes-pod-to-cp.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "es/.gitbook/assets/hybrid-nodes-pod-to-pod.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "jp/.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg",
+      "status": "parsed",
+      "references": []
+    },
+    {
+      "path": "jp/.gitbook/assets/hybrid-nodes-cp-to-kubelet.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "jp/.gitbook/assets/hybrid-nodes-cp-to-pod.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "jp/.gitbook/assets/hybrid-nodes-east-west.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "jp/.gitbook/assets/hybrid-nodes-kubelet-to-cp.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "jp/.gitbook/assets/hybrid-nodes-pod-to-cp.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "jp/.gitbook/assets/hybrid-nodes-pod-to-pod.svg",
+      "status": "parsed",
+      "references": [
+        {
+          "kind": "image",
+          "status": "embedded-data"
+        }
+      ]
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-storage-01-ebs-gp2-gp3-iops-timeline.svg",
+      "status": "parsed",
+      "references": []
+    }
+  ]
+}

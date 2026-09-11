@@ -16,8 +16,13 @@ Istio's traffic management capabilities allow fine-grained control over traffic 
 10. [Session Affinity](10-session-affinity.md)
 11. [Egress Control](11-egress-control.md)
 12. [ServiceEntry (External Service Management)](12-service-entry.md)
+13. [WorkloadEntry (VM Registration)](13-workload-entry.md)
 
 ## Overview
+
+These are sidecar-mode configuration examples for a supported Istio release. Gateway, VirtualService, and DestinationRule are API objects consumed by proxies, not separate network hops. A mirror is an additional copy of selected requests, not the remainder of a 90/10 split; mirrored responses are discarded. The diagrams show logical configuration relationships.
+
+The snippets are alternative examples, not one manifest to apply together. Create the referenced Services and DestinationRule subsets first. A VirtualService with no `gateways` list applies to the mesh; ingress routes require an explicit Gateway binding and matching hostname. For ambient, use supported Gateway API/waypoint routing.
 
 Traffic management is one of Istio's core features, enabling the following operations without code changes:
 
@@ -200,6 +205,8 @@ spec:
         subset: v1
 ```
 
+The developer header is a routing hint supplied by the client, not authentication or an authorization boundary.
+
 ### Circuit Breaker + Retry
 
 ```yaml
@@ -219,7 +226,7 @@ spec:
         maxRequestsPerConnection: 2
     # Circuit Breaker
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ---
@@ -312,7 +319,7 @@ weight: 100
 # 5% → Monitor → 10% → Monitor → ...
 ```
 
-### 2. Always Set Timeout
+### 2. Set Workload-Appropriate Timeouts
 
 ```yaml
 # ✅ Always set timeout
@@ -322,6 +329,8 @@ http:
       host: reviews
   timeout: 10s
 ```
+
+Streaming requests may need different timeout settings. A short HTTP deadline is not suitable for every gRPC stream or long-lived response.
 
 ### 3. Use Retry Carefully
 
@@ -338,7 +347,7 @@ retries:
 ```yaml
 # ✅ Adjust according to service characteristics
 outlierDetection:
-  consecutiveErrors: 5      # Adjust per service
+  consecutive5xxErrors: 5      # Adjust per service
   interval: 30s
   baseEjectionTime: 30s
   maxEjectionPercent: 50    # Maximum 50% ejection

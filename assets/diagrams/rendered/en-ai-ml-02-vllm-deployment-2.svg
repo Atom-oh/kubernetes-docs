@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-ai-ml-02-vllm-deployment-2-title en-ai-ml-02-vllm-deployment-2-desc">
+<title id="en-ai-ml-02-vllm-deployment-2-title">vLLM on Amazon EKS Architecture</title>
+<desc id="en-ai-ml-02-vllm-deployment-2-desc">Architecture diagram of an Amazon EKS cluster running vLLM: a control plane, GPU and CPU node groups, storage and networking resources, and supporting AWS services.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="96" width="776" height="368" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="40" y="100" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="84.0" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS CLOUD</text>
+<rect x="40" y="132" width="512" height="316" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="136" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="104.0" y="145" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS</text>
+<rect x="64" y="168" width="220" height="112" rx="8" fill="#ffffff"/>
+<rect x="64" y="168" width="220" height="112" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="76" y="180" width="40" height="14" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="96.0" y="190" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="174.0" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Control Plane</text>
+<circle cx="84" cy="229" r="1.6" fill="#545B64"/>
+<text x="92" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">API Server</text>
+<circle cx="84" cy="245" r="1.6" fill="#545B64"/>
+<text x="92" y="248" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Scheduler</text>
+<circle cx="84" cy="261" r="1.6" fill="#545B64"/>
+<text x="92" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Controller Manager</text>
+<rect x="316" y="168" width="220" height="96" rx="8" fill="#ffffff"/>
+<rect x="316" y="168" width="220" height="96" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="328" y="180" width="72" height="14" rx="2" fill="transparent" stroke="#EC721166" stroke-width="0.8"/>
+<text x="364.0" y="190" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">COMPUTE</text>
+<text x="426.0" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node Groups</text>
+<circle cx="336" cy="229" r="1.6" fill="#545B64"/>
+<text x="344" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">GPU: p4d / p3 / g5</text>
+<circle cx="336" cy="245" r="1.6" fill="#545B64"/>
+<text x="344" y="248" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CPU: c5 / m5</text>
+<rect x="64" y="304" width="220" height="112" rx="8" fill="#ffffff"/>
+<rect x="64" y="304" width="220" height="112" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="76" y="316" width="40" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)66" stroke-width="0.8"/>
+<text x="96.0" y="326" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+<text x="174.0" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Storage</text>
+<circle cx="84" cy="365" r="1.6" fill="#545B64"/>
+<text x="92" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">FSx for Lustre</text>
+<circle cx="84" cy="381" r="1.6" fill="#545B64"/>
+<text x="92" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Amazon EBS</text>
+<circle cx="84" cy="397" r="1.6" fill="#545B64"/>
+<text x="92" y="400" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Amazon S3</text>
+<rect x="316" y="304" width="220" height="128" rx="8" fill="#ffffff"/>
+<rect x="316" y="304" width="220" height="128" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="328" y="316" width="40" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)66" stroke-width="0.8"/>
+<text x="348.0" y="326" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+<text x="426.0" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Networking</text>
+<circle cx="336" cy="365" r="1.6" fill="#545B64"/>
+<text x="344" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">VPC</text>
+<circle cx="336" cy="381" r="1.6" fill="#545B64"/>
+<text x="344" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Subnet</text>
+<circle cx="336" cy="397" r="1.6" fill="#545B64"/>
+<text x="344" y="400" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Security Group</text>
+<circle cx="336" cy="413" r="1.6" fill="#545B64"/>
+<text x="344" y="416" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Elastic Fabric Adapter</text>
+<rect x="600" y="168" width="176" height="112" rx="8" fill="#ffffff"/>
+<rect x="600" y="168" width="176" height="112" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="612" y="180" width="40" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)66" stroke-width="0.8"/>
+<text x="632.0" y="190" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+<text x="688.0" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS Services</text>
+<circle cx="620" cy="229" r="1.6" fill="#545B64"/>
+<text x="628" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Amazon ECR</text>
+<circle cx="620" cy="245" r="1.6" fill="#545B64"/>
+<text x="628" y="248" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CloudWatch</text>
+<circle cx="620" cy="261" r="1.6" fill="#545B64"/>
+<text x="628" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">IAM</text>
+<path d="M 400,264 V 276 Q 400,284 392,284 H 182 Q 174,284 174,292 V 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 452,264 V 276 Q 452,284 444,284 H 434 Q 426,284 426,292 V 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="552" y1="224" x2="600" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="32" y1="520" x2="928" y2="520" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="32" y="536" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="32" y="547" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="54" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Control plane</text>
+<rect x="186" y="547" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="208" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Node groups (focal)</text>
+<rect x="388" y="547" width="16" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="410" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">AWS service</text>
+</svg>

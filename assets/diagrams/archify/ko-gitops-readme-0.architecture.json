@@ -41,7 +41,7 @@
       "sublabel": "원하는 상태를 코드로 정의",
       "pos": [
         40,
-        240
+        400
       ],
       "size": [
         230,
@@ -51,11 +51,11 @@
     {
       "id": "versioned",
       "type": "backend",
-      "label": "버전 관리 (Versioned)",
-      "sublabel": "Git 이력 · 리뷰 · 롤백",
+      "label": "버전 관리와 불변성",
+      "sublabel": "Versioned and Immutable",
       "pos": [
         320,
-        240
+        400
       ],
       "size": [
         230,
@@ -65,11 +65,11 @@
     {
       "id": "automated",
       "type": "backend",
-      "label": "자동 적용 (Automated)",
-      "sublabel": "승인된 변경 자동 배포",
+      "label": "자동 Pull",
+      "sublabel": "Pulled Automatically",
       "pos": [
         600,
-        240
+        400
       ],
       "size": [
         230,
@@ -80,10 +80,10 @@
       "id": "reconciled",
       "type": "backend",
       "label": "지속적 조정 (Reconciled)",
-      "sublabel": "드리프트 감지 · 자체 치유",
+      "sublabel": "실제 상태 관찰 · 적용 시도",
       "pos": [
         880,
-        240
+        400
       ],
       "size": [
         240,
@@ -128,26 +128,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "선언적 · 버전 관리",
+      "title": "선언적 · 버전 관리와 불변성",
       "items": [
-        "시스템의 원하는 상태(Desired State)를 \"어떻게\"가 아닌 \"무엇\"으로 정의한다",
-        "모든 구성은 Git에서 버전 관리되어 변경 이력 추적, Pull Request 리뷰, 롤백, 감사 추적이 가능하다"
+        "원하는 시스템 상태를 선언적으로 표현한다",
+        "버전과 전체 이력을 보존하고 불변성을 보장한다"
       ]
     },
     {
       "dot": "emerald",
-      "title": "자동 적용",
+      "title": "자동 Pull",
       "items": [
-        "승인된 변경 사항은 자동으로 시스템에 적용된다",
-        "커밋 → CI 빌드·테스트 → Git 반영 → GitOps 도구가 감지해 Kubernetes에 배포"
+        "소프트웨어 에이전트가 원하는 상태 선언을 자동으로 가져온다",
+        "CI의 일회성 kubectl apply만으로는 이 원칙을 충족하지 않는다"
       ]
     },
     {
       "dot": "amber",
       "title": "지속적 조정",
       "items": [
-        "GitOps 에이전트가 실제 상태와 원하는 상태를 지속적으로 비교한다",
-        "드리프트 감지, 자체 치유(원하는 상태로 자동 복구), 불일치 시 알림"
+        "실제 상태를 계속 관찰하고 원하는 상태 적용을 시도한다",
+        "조정 정책·권한·상태에 따라 적용 결과가 달라질 수 있다"
       ]
     }
   ]

@@ -1,14 +1,16 @@
 # Cluster Architecture
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
 > **Last Updated**: September 9, 2026
+
+The version header refers to upstream Kubernetes. As of September 11, 2026, EKS standard support covers 1.34–1.36; check the [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before selecting a version. Component commands below illustrate self-managed clusters; EKS manages its control plane. Image tags and infrastructure IDs are examples: select compatible, maintained images and replace placeholders before use.
 
 ## Lab Environment Setup
 
 To practice the concepts in this document, you need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.34 or higher
+- kubectl within one minor version of the API server
 - A working Kubernetes cluster (EKS, minikube, kind, etc.)
 
 ### Local Development Environment Setup
@@ -36,13 +38,13 @@ A Kubernetes cluster consists of a set of nodes (virtual or physical machines) f
 
 ### Cluster Architecture Diagram
 
-![Architecture diagram showing the control plane's kube-apiserver coordinating etcd, the scheduler, and controller managers, and reaching across to a worker node's kubelet and kube-proxy, which in turn drive the container runtime and running pods.](../.gitbook/assets/en-core-01-cluster-architecture-0.png)
+![Architecture diagram showing the control plane's kube-apiserver coordinating etcd, the scheduler, and controller managers, and reaching across to a worker node's kubelet and kube-proxy, with kubelet driving the container runtime and kube-proxy configuring Service networking.](../.gitbook/assets/en-core-01-cluster-architecture-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-0.html)
 
 **Control Plane Components**:
 - **kube-apiserver**: Frontend that exposes the Kubernetes API
-- **etcd**: Key-value store that stores all cluster data
+- **etcd**: Key-value store that stores Kubernetes API state
 - **kube-scheduler**: Selects nodes to run newly created pods
 - **kube-controller-manager**: Runs controllers that manage cluster state
 - **cloud-controller-manager**: Interacts with cloud provider APIs
@@ -92,12 +94,18 @@ kube-apiserver \
   --advertise-address=192.168.1.10 \
   --allow-privileged=true \
   --authorization-mode=Node,RBAC \
+  --client-ca-file=/etc/kubernetes/pki/ca.crt \
   --enable-admission-plugins=NodeRestriction \
   --enable-bootstrap-token-auth=true \
   --etcd-servers=https://127.0.0.1:2379 \
+  --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt \
+  --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt \
+  --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key \
   --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \
   --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \
   --service-account-key-file=/etc/kubernetes/pki/sa.pub \
+  --service-account-signing-key-file=/etc/kubernetes/pki/sa.key \
+  --service-account-issuer=https://kubernetes.default.svc.cluster.local \
   --service-cluster-ip-range=10.96.0.0/12 \
   --tls-cert-file=/etc/kubernetes/pki/apiserver.crt \
   --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
@@ -111,7 +119,7 @@ kube-apiserver \
 
 ### etcd
 
-etcd is a consistent, highly available key-value store that stores all cluster data. It acts as Kubernetes' "source of truth."
+etcd is a consistent, highly available key-value store that stores Kubernetes API state. It acts as Kubernetes' "source of truth."
 
 **Key Features**:
 - Distributed system
@@ -132,7 +140,15 @@ etcd \
   --initial-cluster-token etcd-cluster \
   --initial-cluster etcd-1=https://192.168.1.11:2380,etcd-2=https://192.168.1.12:2380,etcd-3=https://192.168.1.13:2380 \
   --initial-cluster-state new \
-  --data-dir=/var/lib/etcd
+  --data-dir=/var/lib/etcd \
+  --cert-file=/etc/kubernetes/pki/etcd/server.crt \
+  --key-file=/etc/kubernetes/pki/etcd/server.key \
+  --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+  --client-cert-auth=true \
+  --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
+  --peer-key-file=/etc/kubernetes/pki/etcd/peer.key \
+  --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+  --peer-client-cert-auth=true
 ```
 
 **etcd Backup and Recovery**:
@@ -145,7 +161,8 @@ ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
   --key=/etc/kubernetes/pki/etcd/server.key
 
 # etcd recovery
-ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
+etcdutl snapshot restore snapshot.db \
+  --bump-revision=1000000000 --mark-compacted \
   --data-dir=/var/lib/etcd-restore \
   --name=etcd-1 \
   --initial-cluster=etcd-1=https://192.168.1.11:2380 \
@@ -211,13 +228,16 @@ apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 profiles:
 - schedulerName: default-scheduler
-  plugins:
-    score:
-      disabled:
-      - name: NodeResourcesLeastAllocated
-      enabled:
-      - name: NodeResourcesMostAllocated
-        weight: 1
+  pluginConfig:
+  - name: NodeResourcesFit
+    args:
+      scoringStrategy:
+        type: MostAllocated
+        resources:
+        - name: cpu
+          weight: 1
+        - name: memory
+          weight: 1
 ```
 
 ### kube-controller-manager
@@ -227,8 +247,8 @@ kube-controller-manager is the control plane component that runs multiple contro
 **Main Controllers**:
 - **Node Controller**: Monitors and responds to node status
 - **Replication Controller**: Maintains pod replica count
-- **Endpoint Controller**: Connects services and pods
-- **Service Account & Token Controller**: Creates default accounts and API tokens for namespaces
+- **EndpointSlice Controller**: Tracks Service backends in EndpointSlices
+- **Service Account & Token Controllers**: Create default ServiceAccounts and maintain explicitly requested legacy token Secrets; current Pods use short-lived TokenRequest tokens
 - **Job Controller**: Manages one-time tasks
 - **CronJob Controller**: Manages scheduled tasks
 - **DaemonSet Controller**: Ensures specific pods run on all nodes
@@ -265,7 +285,8 @@ cloud-controller-manager is the control plane component that contains cloud-spec
 - **Node Controller**: Checks node status through cloud provider API
 - **Route Controller**: Configures routes in cloud environments
 - **Service Controller**: Creates, updates, and deletes cloud load balancers
-- **Volume Controller**: Creates, attaches, and mounts cloud storage volumes
+
+Cloud storage provisioning and attachment use CSI controllers; kubelet and CSI node plugins handle mounts. These are not cloud-controller-manager responsibilities.
 
 **Cloud Provider Implementations**:
 - AWS Cloud Controller Manager
@@ -311,9 +332,7 @@ kubelet is an agent running on each node that manages containers within pods. ku
 kubelet \
   --kubeconfig=/etc/kubernetes/kubelet.conf \
   --config=/var/lib/kubelet/config.yaml \
-  --container-runtime=remote \
-  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \
-  --pod-infra-container-image=k8s.gcr.io/pause:3.6
+  --container-runtime-endpoint=unix:///run/containerd/containerd.sock
 ```
 
 **kubelet Configuration File Example**:
@@ -347,7 +366,7 @@ healthzBindAddress: 127.0.0.1
 healthzPort: 10248
 ```
 
-**Static Pods**:
+**Static Pods**: The manifest below is a fragment, not a complete control-plane installation; it also needs host networking, certificates, mounts, and the full API-server configuration.
 kubelet can run static pods that it manages directly without going through the API server. This is primarily used to run control plane components.
 
 ```yaml
@@ -360,7 +379,7 @@ metadata:
 spec:
   containers:
   - name: kube-apiserver
-    image: k8s.gcr.io/kube-apiserver:v1.24.0
+    image: registry.k8s.io/kube-apiserver:v1.37.0
     command:
     - kube-apiserver
     - --advertise-address=192.168.1.10
@@ -378,9 +397,12 @@ kube-proxy is a network proxy running on each node that implements the Kubernete
 - Supports service discovery
 
 **Operating Modes**:
-1. **userspace mode**: Runs proxy in user space (legacy)
-2. **iptables mode**: NAT implementation using Linux iptables (default)
-3. **IPVS mode**: Uses Linux kernel's IP Virtual Server (high performance)
+1. **iptables**: Default Linux mode; installs kernel packet-processing rules
+2. **nftables**: Stable since v1.33; check kernel and CNI compatibility
+3. **IPVS**: Legacy Linux mode, deprecated since v1.35; migrate to a supported alternative
+4. **kernelspace**: Windows mode
+
+The old `userspace` mode was removed. Some network implementations replace kube-proxy entirely.
 
 **kube-proxy Configuration**:
 ```bash
@@ -430,7 +452,7 @@ mode: "iptables"
 | Characteristic | iptables Mode | IPVS Mode |
 |----------------|---------------|-----------|
 | Performance | Performance degradation with many services | Better performance in large clusters |
-| Load Balancing Algorithms | Only round robin supported | Various algorithms supported (rr, lc, dh, sh, sed, nq) |
+| Load Balancing Algorithms | Random backend selection by default | Various algorithms supported (rr, lc, dh, sh, sed, nq) |
 | Implementation | Network packet filtering chains | Hash table based |
 | Kernel Requirements | Default kernel modules | IPVS kernel module required |
 
@@ -441,7 +463,7 @@ Container runtime is software that runs containers. Kubernetes supports various 
 **Main Container Runtimes**:
 1. **containerd**: Lightweight container runtime (currently most widely used)
 2. **CRI-O**: Lightweight runtime specifically designed for Kubernetes
-3. **Docker Engine**: Supported through Docker shim (deprecated from Kubernetes 1.24)
+3. **Docker Engine**: Requires an external CRI adapter such as cri-dockerd; the built-in dockershim was removed in v1.24. Docker-built OCI images still work with containerd/CRI-O.
 
 **Container Runtime Layer Structure**:
 
@@ -449,14 +471,14 @@ Container runtime is software that runs containers. Kubernetes supports various 
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-1.html)
 
-**containerd Configuration Example**:
+**containerd 1.x Configuration Example** (2.x uses different plugin IDs; generate defaults for the installed release):
 ```toml
 # /etc/containerd/config.toml
 version = 2
 
 [plugins]
   [plugins."io.containerd.grpc.v1.cri"]
-    sandbox_image = "k8s.gcr.io/pause:3.6"
+    sandbox_image = "registry.k8s.io/pause:3.10"
     [plugins."io.containerd.grpc.v1.cri".containerd]
       default_runtime_name = "runc"
       [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
@@ -482,7 +504,7 @@ conmon_cgroup = "pod"
 cgroup_manager = "systemd"
 
 [crio.image]
-pause_image = "k8s.gcr.io/pause:3.6"
+pause_image = "registry.k8s.io/pause:3.10"
 ```
 
 ### Add-on Components
@@ -490,16 +512,16 @@ pause_image = "k8s.gcr.io/pause:3.6"
 Add-ons are additional components that extend the functionality of Kubernetes clusters. Some important add-ons include:
 
 1. **CNI Network Plugins**: Implements pod networking
-   - Calico, Cilium, Flannel, Weave Net, etc.
+   - Calico, Cilium, Flannel, etc.
 
 2. **DNS**: Provides DNS service within the cluster
    - CoreDNS (default)
 
 3. **Dashboard**: Provides web-based UI
-   - Kubernetes Dashboard
+   - Headlamp (Kubernetes Dashboard is archived)
 
 4. **Ingress Controller**: Manages HTTP/HTTPS routing
-   - NGINX Ingress Controller, Traefik, HAProxy, etc.
+   - Traefik, HAProxy, etc.
 
 5. **Metrics Server**: Collects resource usage metrics
    - Metrics Server
@@ -611,18 +633,18 @@ Communication between control plane components is as follows:
 
 ### Control Plane and Node Communication
 
-![Architecture diagram showing bidirectional HTTPS communication between the kube-apiserver and each node's kubelet and kube-proxy.](../.gitbook/assets/en-core-01-cluster-architecture-3.png)
+![kubelet and kube-proxy watch the API server; the API server separately calls the kubelet for logs, exec, and port forwarding.](../.gitbook/assets/en-core-01-cluster-architecture-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-3.html)
 
 Communication between control plane and nodes is as follows:
 
-1. **kube-apiserver and kubelet**: kube-apiserver communicates with kubelet to deliver pod specs and collect node status.
+1. **kube-apiserver → kubelet**: The API server calls the kubelet API for logs, exec/attach, and port forwarding.
    - Protocol: HTTPS
    - Port: 10250/TCP (kubelet)
    - Security: TLS certificate-based authentication
 
-2. **kubelet and kube-apiserver**: kubelet communicates with kube-apiserver for node registration, pod status reporting, and event transmission.
+2. **kubelet and kube-apiserver**: kubelet communicates with kube-apiserver to watch assigned PodSpecs, register the node, and report node/Pod status and events.
    - Protocol: HTTPS
    - Port: 6443/TCP (kube-apiserver)
    - Security: TLS certificate-based authentication
@@ -677,7 +699,7 @@ Security for communication within a Kubernetes cluster is implemented through th
 3. **Network Policies**: Pod-to-pod communication can be restricted through network policies.
 4. **Encrypted Secrets**: Secrets stored in etcd can be encrypted.
 
-**API Server Communication Security Configuration Example**:
+**API Data Encryption at Rest Example** (configure the API server with `--encryption-provider-config`; rewrite existing Secrets to encrypt them):
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
@@ -748,6 +770,9 @@ metadata:
   name: web-server
 spec:
   replicas: 3
+  selector:
+    matchLabels:
+      app: web-server
   template:
     metadata:
       labels:
@@ -765,7 +790,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: web-server
-        image: nginx:1.21
+        image: nginx:1.30.4
 ```
 
 **PodDisruptionBudget Example**:
@@ -800,28 +825,15 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d-%H%M%S)
   --key=/etc/kubernetes/pki/etcd/server.key
 ```
 
-**etcd Recovery Script Example**:
-```bash
-#!/bin/bash
-# Stop cluster
-systemctl stop kubelet
-docker stop $(docker ps -q)
+**etcd recovery procedure (self-managed clusters)**:
 
-# Recover etcd data
-ETCDCTL_API=3 etcdctl snapshot restore /backup/etcd-snapshot.db \
-  --data-dir=/var/lib/etcd-restore \
-  --name=master \
-  --initial-cluster=master=https://127.0.0.1:2380 \
-  --initial-cluster-token=etcd-cluster \
-  --initial-advertise-peer-urls=https://127.0.0.1:2380
+1. Validate the snapshot with `etcdutl snapshot status`. Restore into a new data directory with a compatible `etcdutl`, as shown above.
+2. Before switching data directories, stop all API server instances and the affected etcd processes using the cluster's runbook. Stopping kubelet alone does not stop existing static Pod containers.
+3. For a multi-member recovery, restore the same snapshot on every member with a unique name/peer URL and the same full `--initial-cluster` membership. The single-member example above is not an HA recovery recipe.
+4. Use `--bump-revision` and `--mark-compacted` for Kubernetes watch caches; choose the bump to exceed revisions since the snapshot (the shown value is an example).
+5. Update the etcd static Pod's hostPath to the restored directory, restart etcd, verify quorum/health, then restart API servers and controllers. Keep the original data and backup until verification finishes.
 
-# Replace etcd directory with recovered data
-mv /var/lib/etcd /var/lib/etcd.old
-mv /var/lib/etcd-restore /var/lib/etcd
-
-# Restart cluster
-systemctl start kubelet
-```
+Follow the [etcd recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). EKS users do not operate or restore the managed control plane's etcd directly.
 
 ## Cluster Networking
 
@@ -832,8 +844,8 @@ Kubernetes networking enables communication between pods, services, and the outs
 The Kubernetes networking model has the following requirements:
 
 1. **Pod-to-Pod Communication**: All pods must be able to communicate with all other pods without NAT
-2. **Node-to-Pod Communication**: Nodes must be able to communicate with all pods without NAT
-3. **Pod-to-External Communication**: Pods must be able to communicate with the outside world (typically using NAT)
+2. **Node-to-Pod Communication**: Node agents must be able to communicate with Pods on that node
+3. **Pod-to-External Communication**: External connectivity depends on routing, NAT where needed, and security/egress policy; it is not a requirement that every Pod reach the internet
 
 ### CNI (Container Network Interface)
 
@@ -853,9 +865,7 @@ CNI is a standard interface for implementing networking in Kubernetes. There are
    - Features: Simple setup, lightweight
    - Use cases: Small clusters, development environments
 
-4. **Weave Net**: Multi-host container networking
-   - Features: Encryption, network policies, multi-cloud
-   - Use cases: Hybrid cloud, multi-cloud
+4. **Weave Net (historical)**: The project was archived in June 2024; evaluate maintained alternatives for new deployments.
 
 **CNI Configuration Example (Calico)**:
 ```yaml
@@ -908,7 +918,7 @@ Kubernetes Services provide stable endpoints for a set of pods. Services have se
 
 **Service Networking Flow**:
 ```
-Client -> Service (ClusterIP) -> kube-proxy -> Pod
+Client -> kernel rules programmed by kube-proxy (ClusterIP DNAT) -> Pod
 ```
 
 **Service Example**:
@@ -931,8 +941,8 @@ spec:
 Ingress manages HTTP and HTTPS routing from outside the cluster to services inside the cluster. Ingress controllers implement ingress resources.
 
 **Main Ingress Controllers**:
-1. **NGINX Ingress Controller**: NGINX-based ingress controller
-2. **AWS ALB Ingress Controller**: Based on AWS Application Load Balancer
+1. **Maintained Ingress/Gateway controllers**: Check controller lifecycle and Gateway API support
+2. **AWS Load Balancer Controller**: Provisions ALBs for Ingress
 3. **Traefik**: Cloud-native edge router
 4. **HAProxy Ingress**: HAProxy-based ingress controller
 
@@ -941,16 +951,16 @@ Ingress manages HTTP and HTTPS routing from outside the cluster to services insi
 Client -> Ingress Controller -> Service -> Pod
 ```
 
+Community ingress-nginx retired in March 2026; see the [retirement notice](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/). This example requires an installed Traefik controller with an IngressClass named `traefik`; `/app` is forwarded unchanged.
+
 **Ingress Example**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: my-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: example.com
     http:
@@ -1021,7 +1031,7 @@ kubectl exec -it <pod-name> -- nslookup <service-name>
 kubectl exec -it <pod-name> -- tcpdump -i eth0 -n
 
 # Check service endpoints
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 ```
 
 ## Cluster Storage
@@ -1055,9 +1065,7 @@ Kubernetes supports various types of volumes:
    - **downwardAPI**: Exposes pod and container information as files
 
 2. **Persistent Volumes**:
-   - **awsElasticBlockStore**: AWS EBS volumes
-   - **azureDisk**: Azure Disk
-   - **gcePersistentDisk**: GCE Persistent Disk
+   - **Cloud block storage via CSI**: AWS EBS, Azure Disk, and GCE Persistent Disk; their legacy in-tree implementations have been removed
    - **nfs**: NFS volumes
    - **csi**: Volumes through CSI drivers
 
@@ -1084,6 +1092,8 @@ spec:
 
 Persistent Volumes (PV) are storage resources in the cluster that are provisioned by administrators or dynamically provisioned through storage classes. Persistent Volume Claims (PVC) are user storage requests.
 
+Install the EBS CSI driver with IAM permissions first. For the static PV below, replace the volume ID and zone with an existing EBS volume and its actual zone. EBS cannot mount on Fargate; EKS Auto Mode uses `ebs.csi.eks.amazonaws.com` instead.
+
 **Persistent Volume Example**:
 ```yaml
 apiVersion: v1
@@ -1097,9 +1107,17 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: standard
-  awsElasticBlockStore:
-    volumeID: vol-0123456789abcdef0
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0123456789abcdef0
     fsType: ext4
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: [ap-northeast-2a]
 ```
 
 **Persistent Volume Claim Example**:
@@ -1127,12 +1145,14 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: standard
-provisioner: kubernetes.io/aws-ebs
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: "true"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
 ```
 
 ### CSI (Container Storage Interface)
@@ -1154,7 +1174,7 @@ metadata:
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
   encrypted: "true"
 volumeBindingMode: WaitForFirstConsumer
 ```
@@ -1176,15 +1196,7 @@ Kubernetes cluster scalability refers to the cluster's ability to handle increas
 
 ### Cluster Scale Limits
 
-Kubernetes clusters have the following scale limits:
-
-1. **Number of Nodes**: Maximum 5,000 nodes
-2. **Number of Pods**: Maximum 150,000 pods per cluster
-3. **Pods per Node**: Maximum 110 pods per node (default)
-4. **Number of Services**: Maximum 10,000 services per cluster
-5. **Containers per Pod**: Maximum 20 containers per pod
-
-These limits may vary depending on Kubernetes version and cluster configuration.
+The upstream [large-cluster guidance](https://kubernetes.io/docs/setup/best-practices/cluster-large/) describes a tested support envelope: 5,000 nodes, 150,000 total Pods, 300,000 total containers, and 110 Pods per node. These criteria apply together; they are not universal hard API limits. There is no general 20-containers-per-Pod limit. Service capacity also depends on the address range and data plane. Cloud networking limits and quotas may be lower.
 
 ### Horizontal Scaling
 
@@ -1200,7 +1212,7 @@ tags:
   k8s.io/cluster-autoscaler/my-cluster: "owned"
 ```
 
-**Cluster Autoscaler Deployment Example**:
+**Cluster Autoscaler Deployment fragment (v1.36 cluster example)**: Select a patched release matching the cluster minor version. Supply the ServiceAccount, Kubernetes RBAC, and a dedicated IAM role; this fragment is not a complete installation.
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -1219,7 +1231,7 @@ spec:
     spec:
       containers:
       - name: cluster-autoscaler
-        image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.24.0
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.0
         command:
         - ./cluster-autoscaler
         - --cloud-provider=aws
@@ -1268,7 +1280,7 @@ spec:
 
 ### Vertical Scaling
 
-Vertical scaling increases the resources (CPU, memory) of existing nodes.
+Vertical workload scaling adjusts Pod CPU/memory requests. VPA does not resize the underlying node; additional node capacity must be provisioned separately.
 
 **Vertical Pod Autoscaler (VPA)**:
 VPA automatically adjusts CPU and memory requests for pods.
@@ -1284,7 +1296,7 @@ spec:
     kind: Deployment
     name: my-app
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
   resourcePolicy:
     containerPolicies:
     - containerName: '*'
@@ -1414,7 +1426,7 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
-
+---
 # Role binding
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -1520,22 +1532,6 @@ Best practices for Kubernetes cluster security:
 
 Kubernetes cluster upgrades are necessary to apply new features, security patches, and bug fixes. Upgrades must be carefully planned and executed.
 
-### July 2026 Update: Kubernetes v1.37 in Beta
-
-v1.37.0-beta.0 was published on July 20, 2026, moving the next minor release, v1.37, into the late stage of its release cycle. Code Freeze took effect as scheduled on July 22-23, 2026, and the final v1.37.0 release is planned for August 26, 2026. See the [v1.37 release information](https://www.kubernetes.dev/resources/release/) for the full schedule.
-
-In the same week (July 22-23, 2026), patch releases went out for all maintained lines: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3), [v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7), and [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10). As usual, applying the latest patch for your minor version is recommended.
-
-### August 2026 Update: v1.37 Sneak Peek
-
-On July 31, 2026, the release team published the [Kubernetes v1.37 sneak peek](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/), outlining planned deprecations, removals, and feature changes ahead of the final v1.37.0 release still scheduled for August 26, 2026. Docs Freeze took effect on August 5-6, 2026. Meanwhile, the first tag of the following cycle, v1.38.0-alpha.0, was cut on August 6, 2026.
-
-### August 2026 Update: Patch Releases and v1.37.0-rc.1
-
-On August 20, 2026, patch releases went out for all maintained lines: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4), [v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8), and [v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11). As usual, applying the latest patch for your minor version is recommended.
-
-The same day, the second release candidate for v1.37, [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1), was also tagged (rc.0 was cut on August 6), keeping the final v1.37.0 release on track for August 26, 2026.
-
 ### August 2026 Update: Kubernetes v1.37 "Garhwal" Released
 
 [Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) was released on schedule on August 26, 2026. The release consists of 67 enhancements: 16 graduated to Stable, 23 graduated to Beta, and the rest entered as Alpha. Highlights:
@@ -1543,7 +1539,7 @@ The same day, the second release candidate for v1.37, [v1.37.0-rc.1](https://git
 - **Pod certificates and ClusterTrustBundles graduate to Stable**: the PodCertificate feature, which automatically issues and rotates X.509 certificates for workloads as an alternative to service account tokens, and the ClusterTrustBundle resource for distributing trust anchors are now standard features ([detailed post](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
 - **Metrics API (metrics.k8s.io) goes GA**: the resource metrics API used by `kubectl top` and the HPA has graduated to stable ([detailed post](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
 - Also **Stable**: several DRA (Dynamic Resource Allocation) features, resilient watchcache initialization, and more / **Beta**: HPA scale-to-zero, manifest-based admission control configuration, and more / **Alpha**: pod-level checkpoint and restore, and more
-- **Deprecations**: kube-dns, kube-proxy's `ipvs` mode, and `kubectl run --filename/-f` are deprecated, and static Pods can no longer reference Secrets or ConfigMaps. The removal of cgroup v1 support also continues to progress.
+- **Deprecations**: kube-dns and `kubectl run --filename/-f` are deprecated; `ipvs` was already deprecated in v1.35, and static Pods can no longer reference Secrets or ConfigMaps. The removal of cgroup v1 support also continues to progress.
 
 Before upgrading, be sure to review the deprecations and removals in the [official release notes](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md).
 
@@ -1563,20 +1559,14 @@ Typical order for Kubernetes cluster upgrades:
 2. **DNS and CNI Upgrade**: CoreDNS, CNI plugins, and other major add-ons
 3. **Worker Node Upgrade**: Sequential upgrade of worker nodes
 
-**kubeadm Upgrade Example**:
-```bash
-# Control plane upgrade
-kubeadm upgrade plan
-kubeadm upgrade apply v1.24.0
+**kubeadm upgrade sequence**:
 
-# Worker node upgrade
-kubectl drain <node-name> --ignore-daemonsets
-# Upgrade kubelet and kubeadm on the node
-apt-get update && apt-get install -y kubelet=1.24.0-00 kubeadm=1.24.0-00
-kubeadm upgrade node
-systemctl restart kubelet
-kubectl uncordon <node-name>
-```
+Follow the [version-specific kubeadm upgrade guide](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/) and configure the target minor's `pkgs.k8s.io` package repository. Upgrade only one minor at a time.
+
+1. Back up etcd and verify add-on compatibility. Upgrade `kubeadm` on the first control plane node, run `kubeadm upgrade plan`, then `kubeadm upgrade apply <target-version>`.
+2. On additional control plane nodes, upgrade `kubeadm` and run `kubeadm upgrade node`.
+3. Drain each node before upgrading its kubelet; upgrade the kubelet/kubectl packages to the chosen patch, reload systemd, restart kubelet, verify readiness, and uncordon.
+4. On workers, upgrade `kubeadm`, run `kubeadm upgrade node`, then perform the drain/kubelet/uncordon sequence. Keep kubelet no newer than the API server.
 
 ### Upgrade Considerations
 
@@ -1636,7 +1626,10 @@ EKS supports various types of nodes:
 1. **Self-Managed Nodes**: Users directly manage EC2 instances
 2. **Managed Node Groups**: AWS manages node lifecycle
 3. **Fargate**: Serverless container execution environment
-4. **Bottlerocket Nodes**: OS optimized for container workloads
+4. **EKS Auto Mode**: AWS manages compute and integrated infrastructure
+5. **EKS Hybrid Nodes**: Customer-managed on-premises nodes
+
+Bottlerocket is a node operating system, not a separate compute management type.
 
 **Managed Node Group Example**:
 ```yaml
@@ -1657,10 +1650,6 @@ managedNodeGroups:
       role: worker
     tags:
       nodegroup-role: worker
-    iam:
-      withAddonPolicies:
-        autoScaler: true
-        albIngress: true
 ```
 
 ### EKS Networking
@@ -1672,19 +1661,19 @@ EKS networking is based on Amazon VPC and includes the following components:
 3. **Load Balancer Integration**: Integration with ELB, ALB, NLB
 4. **VPC Endpoints**: Private communication with AWS services
 
-**VPC CNI Configuration Example**:
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-network-policy: "true"
-  enable-pod-eni: "true"
-  warm-ip-target: "5"
-  minimum-ip-target: "10"
+**VPC CNI add-on configuration example** (JSON configuration values, not a ConfigMap):
+
+```json
+{
+  "enableNetworkPolicy": "true",
+  "env": {
+    "WARM_IP_TARGET": "5",
+    "MINIMUM_IP_TARGET": "10"
+  }
+}
 ```
+
+Merge these values with the installed add-on's configuration and validate its schema before updating it. Pod ENI support uses the `ENABLE_POD_ENI` environment variable and additionally requires compatible nodes, IAM permissions, and a SecurityGroupPolicy; a ConfigMap key alone does not enable it. See the [network policy setup](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html).
 
 ### EKS Storage
 

@@ -1,6 +1,6 @@
 # Reading with LLMs — llms.txt and MCP
 
-> **Last Updated**: September 10, 2026
+> **Last Updated**: September 11, 2026
 
 This guidebook provides the [proposed llms.txt format](https://llmstxt.org/) and per-document Markdown. Give the index to an AI tool that can fetch URLs, ingest the catalog and source text into an LLM Wiki or RAG pipeline, or connect the search and retrieval tools to a local MCP client. Publishing `llms.txt` does not guarantee automatic discovery or search by every AI. The consuming tool needs web retrieval or an MCP connection.
 
@@ -14,7 +14,7 @@ This guidebook provides the [proposed llms.txt format](https://llmstxt.org/) and
 | [llms-full-en.txt](https://www.atomai.click/kubernetes-docs/llms-full-en.txt) | Full English content (markdown) | English-language tools and pipelines |
 | `llms-full-<locale>-<section>.txt` (e.g. [llms-full-en-networking.txt](https://www.atomai.click/kubernetes-docs/llms-full-en-networking.txt)) | One sidebar section's content concatenated; the full list is under `## Section bundles` in `llms.txt` | Loading a single section as context — the full files are too large for one prompt |
 
-All of these files and the per-document Markdown pages are regenerated on every site deploy, so they always match the published content. Content links in `llms.txt` use `/llms/<locale>/<source path>.md` and return only that document's Markdown — no VitePress HTML, sidebar, or scripts. Relative links in the source are rewritten to absolute URLs — links to other documents point at that document's Markdown URL, images and other assets at the raw file on GitHub — so a model that fetches one document can follow every reference. Each rendered HTML page also carries the same Markdown URL in its `<head>` as `<link rel="alternate" type="text/markdown">`, so an agent handed a web page URL can find the Markdown source. Quizzes appear only as a link to the quiz index page (one per language) under `## Optional`; individual quiz pages (with their answer keys) are left out of both the index and the full files — answer keys don't belong in an LLM's context. Lab guides likewise appear in the index only as the lab index link (one per language), but their full text is included in the full files.
+All of these files and the per-document Markdown pages are generated from the same source during a site build and match the corresponding successful deployment. Local edits or main-branch changes that have not deployed are not immediately public. Content links in `llms.txt` use `/llms/<locale>/<source path>.md` and return only that document's Markdown — no VitePress HTML, sidebar, or scripts. Relative links in the source are rewritten to absolute URLs — in-scope content links point to Markdown, quiz/lab/locale-root links to rendered pages, and images/assets to raw GitHub files — so a model that fetches one document can follow every reference. Each HTML content page with a Markdown twin also carries the same Markdown URL in its `<head>` as `<link rel="alternate" type="text/markdown">`, so an agent handed a web page URL can find the Markdown source. Quizzes appear only as a link to the quiz index page (one per language) under `## Optional`; individual quiz pages (with their answer keys) are left out of both the index and the full files — answer keys don't belong in an LLM's context. Lab guides likewise appear in the index only as the lab index link (one per language), but their full text is included in the full files.
 
 ## Ingesting sources into an LLM Wiki
 
@@ -31,7 +31,7 @@ curl -fL https://www.atomai.click/kubernetes-docs/llms/manifest.json -o manifest
 jq -r '.documents[] | select(.locale == "en" and .section == "storage") | .markdownUrl' manifest.json
 ```
 
-The manifest has `schemaVersion: 1`. Per-document Markdown, the manifest, and MCP search share the same scope, excluding quiz answers and labs. Use the existing `llms-full-<locale>.txt` separately when lab content is needed. Treat source text and diagram descriptions as reference data; do not promote document instructions to system instructions or tool execution authorization.
+The manifest has `schemaVersion: 1`. Per-document Markdown, the manifest, and MCP search share the same scope, excluding quiz answers and labs. Use the existing `llms-full-<locale>.txt` separately when lab content is needed. VitePress and this catalog currently publish Korean/English, not the cn/jp/es translations. Treat source text and diagram descriptions as reference data; do not promote document instructions to system instructions or tool execution authorization.
 
 ## Searching and reading through MCP
 
@@ -90,7 +90,7 @@ Draft a migration plan from gp2 PVCs to gp3.
 **Indexing for RAG** — download one file and chunk it:
 
 ```bash
-curl -sL https://www.atomai.click/kubernetes-docs/llms-full-en.txt -o guidebook-en.txt
+curl -fL https://www.atomai.click/kubernetes-docs/llms-full-en.txt -o guidebook-en.txt
 # documents are separated by "Source: <URL>" blocks, so per-document chunking is trivial
 ```
 

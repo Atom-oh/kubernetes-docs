@@ -1,7 +1,7 @@
 # ArgoCD Applications
 
-> **Supported Versions**: ArgoCD v2.9+
-> **Last Updated**: February 22, 2026
+> **Supported Versions**: Argo CD 3.5.2
+> **Last Updated**: September 11, 2026
 
 ## Table of Contents
 - [Application CRD Overview](#application-crd-overview)
@@ -14,6 +14,8 @@
 - [App of Apps Pattern](#app-of-apps-pattern)
 
 ## Application CRD Overview
+
+Examples are independent configurations. Replace myorg/accounts/clusters/paths with actual authorized sources. Choose source/sources, renderer and destination.server/name according to the scenario rather than enabling every alternative at once.
 
 The Application CRD is the core resource in ArgoCD that defines how and where to deploy your applications. It connects a source repository to a target Kubernetes cluster.
 
@@ -75,6 +77,8 @@ spec:
 
   revisionHistoryLimit: 10
 ```
+
+Application.status is controller-reported state. To create Applications outside the control-plane namespace, an administrator must enable application.namespaces and the AppProject sourceNamespaces plus appropriate RBAC.
 
 ### Key Fields Explained
 
@@ -144,7 +148,7 @@ spec:
           tag: v1.2.3
       parameters:
         - name: service.type
-          value: LoadBalancer
+          value: ClusterIP
         - name: ingress.enabled
           value: "true"
       skipCrds: false
@@ -156,61 +160,68 @@ spec:
 
 #### From Helm Repository
 
+A pinned small podinfo chart illustrates the source format. The final replicaCount is 3 because parameters override valuesObject. valuesObject supplies structured inline values; it does not automatically read environment variables.
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prometheus
+  name: podinfo-helm
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 55.5.0
+    repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
     helm:
-      releaseName: prometheus
-      values: |
-        prometheus:
-          prometheusSpec:
-            retention: 30d
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: gp3
-                  resources:
-                    requests:
-                      storage: 100Gi
-        grafana:
-          enabled: true
-          adminPassword: admin
-        alertmanager:
-          enabled: true
+      valuesObject:
+        replicaCount: 2
+        service:
+          type: ClusterIP
+        ui:
+          message: "Managed by Argo CD"
+      parameters:
+      - name: replicaCount
+        value: "3"
+      passCredentials: false
+      skipCrds: false
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
+
+Precedence is parameters → valuesObject → values → valueFiles → chart defaults. Prefer one inline representation; when valuesObject exists it supplies the inline values. Enable passCredentials only when required because it can forward credentials to other domains. This baseline uses bundled Helm 4; do not arbitrarily select v2/v3.
 
 #### With Values from External Files
 
+A $values reference requires a matching ref source in spec.sources. The values repository/file must exist and be authorized.
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: app-with-external-values
+  name: podinfo-with-values
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: nginx
-    targetRevision: 15.4.0
+  sources:
+  - repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
     helm:
       valueFiles:
-        - $values/production/nginx-values.yaml
+      - $values/environments/production/podinfo-values.yaml
+  - repoURL: https://github.com/myorg/helm-values.git
+    targetRevision: main
+    ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: web
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
 
 ### Kustomize
@@ -231,6 +242,8 @@ spec:
       namePrefix: prod-
       nameSuffix: -v1
       namespace: production
+      labelWithoutSelector: true
+      labelIncludeTemplates: true
       commonLabels:
         environment: production
         team: platform
@@ -238,8 +251,7 @@ spec:
         owner: platform-team@example.com
       images:
         - myregistry/myapp:v1.2.3
-        - name: myregistry/sidecar
-          newTag: v2.0.0
+        - myregistry/sidecar:v2.0.0
       replicas:
         - name: my-deployment
           count: 5
@@ -248,34 +260,52 @@ spec:
             kind: Deployment
             name: my-deployment
           patch: |-
-            - op: replace
-              path: /spec/template/spec/containers/0/resources/limits/memory
-              value: 2Gi
+            - op: add
+              path: /spec/progressDeadlineSeconds
+              value: 600
   destination:
     server: https://kubernetes.default.svc
     namespace: production
 ```
 
-### OCI Artifacts (v2.8+)
+### OCI Artifacts
 
-Deploy from OCI-compliant registries:
+General OCI sources use an oci:// URI and a path inside the expanded artifact. Replace this account/repository/tag with a published artifact. A normal container image is not automatically a manifest source.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: oci-app
+  name: oci-manifests
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: 123456789012.dkr.ecr.us-west-2.amazonaws.com/my-manifests
+    repoURL: oci://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-manifests
     targetRevision: v1.0.0
     path: .
   destination:
     server: https://kubernetes.default.svc
     namespace: my-app
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
+
+Argo CD 3.5.2 requires one layer with a supported media type: by default application/vnd.oci.image.layer.v1.tar+gzip or Helm chart content tar+gzip. Validate other types with ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES and the artifact structure.
+
+The Helm OCI form uses a chart field and a repository URL **without oci://**. This is a source fragment under Application.spec.
+
+```yaml
+source:
+  repoURL: ghcr.io/stefanprodan/charts
+  chart: podinfo
+  targetRevision: 6.15.0
+  helm:
+    valuesObject:
+      replicaCount: 2
+```
+
+Match credentials to the source type: general OCI uses type: oci and an oci:// URL; Helm OCI uses type: helm, enableOCI: "true" and a scheme-less URL. ECR needs registry permissions and renewal/application of its 12-hour token; granting IRSA permissions does not update a Secret by itself.
 
 ### Jsonnet
 
@@ -298,8 +328,10 @@ spec:
             value: production
           - name: replicas
             value: "3"
+            code: true
         tlas:
           - name: config
+            code: true
             value: |
               {
                 "namespace": "production"
@@ -314,73 +346,38 @@ spec:
 
 ## Multiple Sources
 
-ArgoCD v2.6+ supports multiple sources in a single application, enabling complex deployment scenarios.
-
-### Combining Helm Chart with Values from Git
+When sources is present, singular source is ignored. Combine configuration for one related application, such as a chart plus values repository; use ApplicationSet/App of Apps for independently managed platform stacks.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: multi-source-app
+  name: podinfo-with-values
   namespace: argocd
 spec:
   project: default
   sources:
-    # Primary source: Helm chart from registry
-    - repoURL: https://charts.bitnami.com/bitnami
-      chart: postgresql
-      targetRevision: 14.0.0
-      helm:
-        valueFiles:
-          - $values/environments/production/postgresql-values.yaml
-
-    # Values source: Git repository
-    - repoURL: https://github.com/myorg/helm-values.git
-      targetRevision: HEAD
-      ref: values
-
+  - repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
+    helm:
+      valueFiles:
+      - $values/environments/production/podinfo-values.yaml
+  - repoURL: https://github.com/myorg/helm-values.git
+    targetRevision: main
+    ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: database
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
 
-### Multiple Applications in One
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: platform-stack
-  namespace: argocd
-spec:
-  project: default
-  sources:
-    # Monitoring stack
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: 55.5.0
-      helm:
-        releaseName: monitoring
-
-    # Logging stack
-    - repoURL: https://grafana.github.io/helm-charts
-      chart: loki-stack
-      targetRevision: 2.10.0
-      helm:
-        releaseName: logging
-
-    # Custom dashboards from Git
-    - repoURL: https://github.com/myorg/dashboards.git
-      targetRevision: HEAD
-      path: grafana-dashboards
-
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: observability
-```
+ref: values maps $values to that Git repository root. Without path it supplies only values; with path it also generates manifests there. A ref source cannot also specify chart. Duplicate group/kind/name/namespace resources use the last source and raise RepeatedResourceWarning; this is not an automatic field-by-field merge.
 
 ## Destination Configuration
+
+Choose server or name for the registered destination. destination.namespace supplies the default for namespaced resources lacking their own namespace; CreateNamespace creates that destination only, not every namespace explicitly embedded in a chart. Use managedNamespaceMetadata with namespace creation and review ownership before updating an existing namespace.
 
 ### Using Server URL
 
@@ -408,27 +405,26 @@ syncPolicy:
 
 ## Health Assessment
 
-ArgoCD assesses application health using built-in and custom checks.
+Synced describes compared desired/live fields, not proof that the service handles requests. Healthy follows configured per-resource checks. Custom resources without a check may be omitted from application health and need an appropriate definition.
 
 ### Built-in Health Checks
 
-ArgoCD includes health checks for standard Kubernetes resources:
+These summarize important 3.5.2 implementation checks, not complete predicates based on one replica counter.
 
-| Resource | Healthy When |
-|----------|--------------|
-| Deployment | All replicas available |
-| StatefulSet | All replicas ready |
-| DaemonSet | Desired equals scheduled |
-| ReplicaSet | All replicas available |
-| Service | Endpoints exist |
-| Ingress | Load balancer assigned |
-| PersistentVolumeClaim | Bound |
-| Pod | Running and ready |
-| Job | Succeeded |
+| Resource | Important checks |
+|---|---|
+| Deployment | Observed generation, rollout progress/failure, updated/available replicas |
+| StatefulSet | Generation, update strategy/partition, revisions and replica state |
+| DaemonSet | Generation and desired/updated/available Pod counts |
+| Pod | Phase, readiness and container termination/failure |
+| Service | LoadBalancer waits for an address; other types do not validate endpoints |
+| Ingress | Controller-reported loadBalancer address state |
+| PVC | Bound state |
+| Job | Incomplete Progressing, failed Degraded, completed Healthy, suspended Suspended |
 
-### Custom Health Checks (Lua)
+### Custom Health Checks
 
-Define custom health checks in `argocd-cm`:
+Do not replace bundled Rollout/cert-manager Certificate checks with a simplistic phase comparison. The Certificate group is cert-manager.io; its bundled check handles Issuing before Ready. The ACK example below returns Progressing for missing status/conditions and does not equate ARN existence with Healthy. Validate the Ready/ACK.ResourceSynced and error conditions supplied by your ACK version. The example prefers Ready when present and otherwise falls back to ACK.ResourceSynced.
 
 ```yaml
 apiVersion: v1
@@ -436,73 +432,50 @@ kind: ConfigMap
 metadata:
   name: argocd-cm
   namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
 data:
-  resource.customizations.health.certmanager.io_Certificate: |
-    hs = {}
-    if obj.status ~= nil then
-      if obj.status.conditions ~= nil then
-        for i, condition in ipairs(obj.status.conditions) do
-          if condition.type == "Ready" and condition.status == "False" then
-            hs.status = "Degraded"
-            hs.message = condition.message
-            return hs
-          end
-          if condition.type == "Ready" and condition.status == "True" then
-            hs.status = "Healthy"
-            hs.message = "Certificate is ready"
-            return hs
-          end
-        end
-      end
+  resource.customizations.health.s3.services.k8s.aws_Bucket: |
+    local hs = {status = "Progressing", message = "Waiting for ACK reconciliation"}
+    local conditions = {}
+    if obj.status ~= nil and obj.status.conditions ~= nil then
+      conditions = obj.status.conditions
     end
-    hs.status = "Progressing"
-    hs.message = "Waiting for certificate"
-    return hs
-
-  resource.customizations.health.argoproj.io_Rollout: |
-    hs = {}
-    if obj.status ~= nil then
-      if obj.status.phase == "Healthy" then
-        hs.status = "Healthy"
-        hs.message = "Rollout is healthy"
-      elseif obj.status.phase == "Paused" then
-        hs.status = "Suspended"
-        hs.message = "Rollout is paused"
-      elseif obj.status.phase == "Progressing" then
-        hs.status = "Progressing"
-        hs.message = "Rollout in progress"
-      else
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.Terminal" and condition.status == "True" then
         hs.status = "Degraded"
-        hs.message = obj.status.message or "Rollout degraded"
+        hs.message = condition.message or "ACK reported a terminal error"
+        return hs
       end
-    else
-      hs.status = "Progressing"
-      hs.message = "Waiting for rollout status"
+    end
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.Recoverable" and condition.status == "True" then
+        hs.message = condition.message or "ACK is retrying a recoverable error"
+        return hs
+      end
+    end
+    local synchronized = nil
+    local ready = nil
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.ResourceSynced" then synchronized = condition end
+      if condition.type == "Ready" then ready = condition end
+    end
+    local reported = ready or synchronized
+    if reported ~= nil then
+      hs.message = reported.message or hs.message
+      if reported.status == "True" then
+        hs.status = "Healthy"
+        hs.message = reported.message or "ACK reports the resource synchronized"
+      end
     end
     return hs
 ```
 
-### Health Check for AWS Resources (ACK)
-
-```yaml
-resource.customizations.health.s3.services.k8s.aws_Bucket: |
-  hs = {}
-  if obj.status ~= nil then
-    if obj.status.ackResourceMetadata ~= nil and obj.status.ackResourceMetadata.arn ~= nil then
-      hs.status = "Healthy"
-      hs.message = "Bucket created: " .. obj.status.ackResourceMetadata.arn
-    else
-      hs.status = "Progressing"
-      hs.message = "Waiting for bucket creation"
-    end
-  else
-    hs.status = "Progressing"
-    hs.message = "Waiting for status"
-  end
-  return hs
-```
+This interprets controller-reported state; it does not query AWS directly. Merge the key into existing argocd-cm and test missing/waiting/ready/error/new-spec states with real CRs. EKS managed Argo CD provides ACK/kro checks, so inspect its existing checks and supported configuration first.
 
 ## Resource Hooks
+
+PostSync waits for successful Sync and relevant Healthy resources. Explicit resource-selective sync does not run hooks. In 3.5.2, ApplyOutOfSyncOnly still runs hooks and records history. SyncFail handles eligible synchronization failures; do not rely on it as a guaranteed cleanup/backup path for every error, including manifest-generation failures.
 
 Resource hooks allow running jobs at specific points during sync.
 
@@ -512,9 +485,11 @@ Resource hooks allow running jobs at specific points during sync.
 |------|---------------|
 | `PreSync` | Before sync starts |
 | `Sync` | During sync (after PreSync) |
-| `PostSync` | After sync succeeds |
+| `PostSync` | After Sync succeeds and resources are Healthy |
 | `SyncFail` | After sync fails |
-| `Skip` | Skipped during sync |
+| `Skip` | Manifest application is skipped |
+| `PreDelete` | Before resources are deleted with the Application |
+| `PostDelete` | After Application resources are deleted |
 
 ### Hook Delete Policies
 
@@ -533,7 +508,7 @@ metadata:
   name: db-migrate
   annotations:
     argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
     argocd.argoproj.io/sync-wave: "-5"
 spec:
   ttlSecondsAfterFinished: 600
@@ -561,19 +536,19 @@ metadata:
   name: notify-deployment
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   template:
     spec:
       restartPolicy: Never
       containers:
         - name: notify
-          image: curlimages/curl:latest
+          image: curlimages/curl:8.22.0
           command:
             - sh
             - -c
             - |
-              curl -X POST $SLACK_WEBHOOK \
+              curl --fail --show-error --silent --connect-timeout 5 --max-time 20 -X POST "$SLACK_WEBHOOK" \
                 -H 'Content-Type: application/json' \
                 -d '{"text":"Deployment completed successfully!"}'
           env:
@@ -601,13 +576,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: smoke-test
-          image: curlimages/curl:latest
+          image: curlimages/curl:8.22.0
           command:
             - sh
             - -c
             - |
               for i in $(seq 1 10); do
-                if curl -sf http://my-service:8080/health; then
+                if curl --fail --show-error --silent --connect-timeout 3 --max-time 10 http://my-service:8080/health; then
                   echo "Health check passed"
                   exit 0
                 fi
@@ -618,76 +593,45 @@ spec:
               exit 1
 ```
 
+Fixed-name Jobs need lifecycle rules such as BeforeHookCreation for repeat runs. Preserve failure logs externally before cleanup; HookSucceeded cleanup follows Argo sync phase/result semantics. Prepare the migration image, database Secret and ServiceAccount and separately validate idempotence, locking and rollback compatibility. Hook failure does not automatically revert a database or existing Deployment. PreDelete/PostDelete apply to Application deletion, not ordinary sync pruning.
+
 ## Ignore Differences
 
-Configure ArgoCD to ignore specific differences during comparison.
-
-### By JSON Pointer
+Exclude only specific fields owned by a known other controller. This Application.spec fragment ignores HPA-managed replicas on my-deployment in production.
 
 ```yaml
-ignoreDifferences:
-  - group: apps
-    kind: Deployment
-    jsonPointers:
-      - /spec/replicas
-      - /spec/template/spec/containers/0/image
-```
-
-### By JQ Path Expression
-
-```yaml
-ignoreDifferences:
-  - group: apps
-    kind: Deployment
-    jqPathExpressions:
-      - .spec.template.spec.containers[].resources
-      - .metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"]
-```
-
-### By Name
-
-```yaml
-ignoreDifferences:
+spec:
+  ignoreDifferences:
   - group: apps
     kind: Deployment
     name: my-deployment
     namespace: production
     jsonPointers:
-      - /spec/replicas
+    - /spec/replicas
+  syncPolicy:
+    syncOptions:
+    - RespectIgnoreDifferences=true
 ```
 
-### Managed Fields (Kubernetes Server-Side Apply)
+ignoreDifferences normally affects comparison. RespectIgnoreDifferences=true extends it to synchronization, but initial creation without a live resource still applies the desired manifest. Broad image, secret, entire-resources or all-manager rules can hide important drift.
+
+For webhook arrays, select by name rather than fixed indices and scope the resource name too. Use this only when the CA-injection controller and webhook identity are known.
 
 ```yaml
-ignoreDifferences:
-  - group: "*"
-    kind: "*"
-    managedFieldsManagers:
-      - kube-controller-manager
-      - cluster-autoscaler
+spec:
+  ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    name: my-webhook
+    jqPathExpressions:
+    - '.webhooks[]? | select(.name == "admission.example.com") | .clientConfig.caBundle'
 ```
 
-### Global Ignore in argocd-cm
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cm
-  namespace: argocd
-data:
-  resource.compareoptions: |
-    ignoreAggregatedRoles: true
-    ignoreResourceStatusField: all
-
-  resource.customizations.ignoreDifferences.all: |
-    managedFieldsManagers:
-      - kube-controller-manager
-    jsonPointers:
-      - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
-```
+Global resource.customizations.ignoreDifferences settings affect every Application. Prefer application-scoped rules; choose managedFieldsManagers only after inspecting which fields that manager actually owns.
 
 ## App of Apps Pattern
+
+App of Apps is an administrative bootstrap pattern. Parent-source writers can affect powerful Applications/AppProjects in the management namespace; restrict write/review/destination privileges. Parent/child finalizers and pruning can cascade deletions. Creating child Applications in order does not by itself ensure child-workload readiness; validate Application health propagation, sync policy and wave behavior.
 
 The App of Apps pattern allows managing multiple applications from a single parent application.
 
@@ -736,7 +680,10 @@ spec:
 
 ### Child Application Template
 
+This monitoring child pins kube-prometheus-stack 90.0.0. Review that chart's upgrade/CRD requirements and provision monitoring capacity separately. Pre-create a protected grafana-admin Secret in namespace monitoring with admin-user/admin-password keys; do not put admin credentials in the parent Git values.
+
 ```yaml
+---
 # apps/templates/monitoring.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -750,7 +697,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 55.5.0
+    targetRevision: 90.0.0
     helm:
       values: |
         prometheus:
@@ -759,6 +706,10 @@ spec:
             replicas: {{ .Values.monitoring.replicas | default 2 }}
         grafana:
           enabled: true
+          admin:
+            existingSecret: grafana-admin
+            userKey: admin-user
+            passwordKey: admin-password
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -791,44 +742,29 @@ ingress:
 
 ### Sync Waves for App of Apps
 
-Control the order of child application deployment:
+The following are metadata-only fragments; combine them with complete child specs. Ordering child Application creation is not a child-workload readiness guarantee: configure/verify child Application health propagation and sync policy.
 
 ```yaml
-# apps/templates/cert-manager.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+# Merge into the corresponding complete child Application metadata.
 metadata:
   name: cert-manager
-  namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"  # Deploy first
-spec:
-  # ...
-
-# apps/templates/ingress.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+    argocd.argoproj.io/sync-wave: "-3"
+---
 metadata:
   name: ingress-controller
-  namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"  # Deploy second
-spec:
-  # ...
-
-# apps/templates/monitoring.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+    argocd.argoproj.io/sync-wave: "-2"
+---
 metadata:
   name: monitoring
-  namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "0"  # Deploy last
-spec:
-  # ...
+    argocd.argoproj.io/sync-wave: "0"
 ```
 
 ## Revision History and Rollback
+
+History rollback cannot be used while automated sync is enabled. Review the policy in its actual Git/ApplicationSet owner first. Rollback does not update Git, so later reconciliation may restore the Git state. Persist intended changes through an approved Git revert/revision change; database/external-state recovery is separate.
 
 ### View History
 
@@ -836,14 +772,20 @@ spec:
 # CLI
 argocd app history my-app
 
-# Output
+```
+
+Example output (not shell commands):
+
+```text
 ID  DATE                           REVISION
 0   2024-01-15 10:30:00 +0000 UTC  abc1234
 1   2024-01-16 14:45:00 +0000 UTC  def5678
-2   2024-01-17 09:15:00 +0000 UTC  ghi9012
+2   2024-01-17 09:15:00 +0000 UTC  ab89012
 ```
 
 ### Rollback
+
+Choose an ID from the actual history. Applying a previous manifest revision and pruning extra resources are separate decisions.
 
 ```bash
 # Rollback to specific revision
@@ -862,6 +804,10 @@ metadata:
   name: my-app
   namespace: argocd
 spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-app
   source:
     repoURL: https://github.com/myorg/myrepo.git
     targetRevision: abc1234  # Specific commit for rollback
@@ -871,3 +817,13 @@ spec:
 ## Quiz
 
 To test what you've learned, try the [ArgoCD applications quiz](../../quizzes/gitops/argocd/02-applications-quiz.md).
+
+## Versioned Review Sources
+
+- [3.5.2 sources and Helm](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md)
+- [Multiple sources](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/multiple_sources.md)
+- [OCI source rules](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md)
+- [Sync options](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md)
+- [Phases, waves and hooks](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md)
+- [Service health implementation](https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go)
+- [ACK condition definitions](https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go)

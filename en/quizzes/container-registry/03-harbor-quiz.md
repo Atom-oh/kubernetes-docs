@@ -1,5 +1,5 @@
 # Harbor Quiz
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 11, 2026
 
 1. What is Harbor's status within the Cloud Native Computing Foundation (CNCF)?
    - A) Sandbox project
@@ -51,17 +51,17 @@ The official Harbor Helm chart is the recommended installation method for Kubern
 
 4. In Harbor's RBAC model, what permissions does a Project Maintainer have compared to a Developer?
    - A) Maintainer can push images; Developer cannot
-   - B) Maintainer can manage project members and configurations; Developer can only push/pull images
+   - B) Maintainer can scan/delete images; Developer can push/pull but cannot administer project members
    - C) Maintainer and Developer have identical permissions
    - D) Developer has more permissions than Maintainer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Maintainer can manage project members and configurations; Developer can only push/pull images**
+**Answer: B) Maintainer can scan/delete images; Developer can push/pull but cannot administer project members**
 
 **Explanation:**
-Harbor's project-level RBAC defines several roles: Project Admin, Maintainer, Developer, and Guest. Maintainers can manage project configurations, labels, and replication rules but cannot manage members. Developers can push and pull images but cannot modify project settings. Project Admins have full control including member management.
+Harbor's project-level RBAC defines several roles: Project Admin, Maintainer, Developer, and Guest. Maintainers can scan/delete images and manage labels, but cannot edit project configuration or manage members. Developers can push/pull images without those administrative privileges. Project Admins have full control including member management.
 
 </details>
 
@@ -77,7 +77,7 @@ Harbor's project-level RBAC defines several roles: Project Admin, Maintainer, De
 **Answer: B) Providing non-human service accounts with limited, scoped credentials for CI/CD systems**
 
 **Explanation:**
-Robot accounts provide system-to-system authentication for automated workflows like CI/CD pipelines. They have configurable expiration, scoped permissions (push/pull per repository or project), and don't require human user credentials. This follows security best practices by avoiding shared credentials and enabling credential rotation.
+Robot accounts provide system-to-system authentication for automated workflows like CI/CD pipelines. They have configurable expiration, project-scoped permissions such as repository push/pull, and don't require human user credentials. This follows security best practices by avoiding shared credentials and enabling credential rotation.
 
 </details>
 
@@ -93,23 +93,23 @@ Robot accounts provide system-to-system authentication for automated workflows l
 **Answer: B) Push-based sends images to remote registries; pull-based fetches from remote registries**
 
 **Explanation:**
-Push-based replication proactively sends images from Harbor to remote registries (useful for distributing images to edge locations). Pull-based replication fetches images from remote registries into Harbor (useful for mirroring external registries or disaster recovery). Both can be triggered manually, on schedule, or by events.
+Push-based replication proactively sends images from Harbor to remote registries (useful for distributing images to edge locations). Pull-based replication fetches images from remote registries into Harbor (useful for mirroring external registries or disaster recovery). Manual and scheduled replication support pull workflows. Event-based replication follows local Harbor artifact events; it does not subscribe to arbitrary external registry changes.
 
 </details>
 
 7. Which tool does Harbor integrate with for image signing and verification?
    - A) GPG
-   - B) Notary (with Cosign support)
+   - B) Cosign and Notation
    - C) OpenSSL
    - D) HashiCorp Vault
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Notary (with Cosign support)**
+**Answer: B) Cosign and Notation**
 
 **Explanation:**
-Harbor historically integrated with Notary for image signing using Docker Content Trust. Modern Harbor versions also support Cosign (from the Sigstore project) for keyless signing and verification. Cosign has become the preferred approach due to its simpler workflow and integration with transparency logs for supply chain security.
+Harbor stores signatures produced by Cosign and Notation. Notary v1 was removed in Harbor 2.9. Registry signature-presence policies do not replace verification against trusted signing keys or identities at admission time.
 
 </details>
 
@@ -125,7 +125,7 @@ Harbor historically integrated with Notary for image signing using Docker Conten
 **Answer: B) Acting as a pull-through cache for remote registries like Docker Hub**
 
 **Explanation:**
-Harbor's proxy cache creates a caching proxy for external registries. When users pull images through Harbor, the images are cached locally. Subsequent pulls for the same image are served from Harbor's cache, reducing external bandwidth usage, improving pull performance, and avoiding rate limits from upstream registries like Docker Hub.
+Harbor's proxy cache creates a caching proxy for external registries. When users pull images through Harbor, the images are cached locally. Subsequent pulls for the same image are served from Harbor's cache, reducing external bandwidth usage, improving pull performance, and reducing upstream requests. Cache misses, freshness checks and upstream account limits still apply.
 
 </details>
 

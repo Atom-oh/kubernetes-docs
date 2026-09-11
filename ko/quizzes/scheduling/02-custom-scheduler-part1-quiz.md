@@ -1,5 +1,8 @@
 # Custom Scheduler 퀴즈 (Part 1)
 
+> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.1
+> **마지막 업데이트**: 2026년 9월 11일
+
 이 퀴즈는 Kubernetes에서 Custom Scheduler를 구현하고 사용하는 방법에 대한 이해를 테스트합니다.
 
 ## 퀴즈 문제
@@ -12,7 +15,7 @@ C. 노드 리소스 모니터링
 D. 컨테이너 이미지 다운로드  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. 파드를 적절한 노드에 할당**
 
@@ -25,37 +28,31 @@ Kubernetes에서 스케줄러의 주요 역할은 파드를 적절한 노드에 
 3. **스코어링**: 적합한 노드에 점수를 매겨 최적의 노드를 선택합니다.
 4. **바인딩**: 선택한 노드에 파드를 바인딩하여 스케줄링 결정을 확정합니다.
 
-**스케줄링 프로세스:**
-1. **필터링 단계(Predicates)**: 파드를 실행할 수 없는 노드를 제외합니다.
-   - PodFitsResources: 노드에 파드의 리소스 요청을 충족할 수 있는 충분한 리소스가 있는지 확인
-   - PodFitsHostPorts: 요청된 호스트 포트가 사용 가능한지 확인
-   - PodMatchNodeSelector: 파드의 노드 셀렉터가 노드 레이블과 일치하는지 확인
-   - NoVolumeZoneConflict: 볼륨 영역 제약 조건 확인
-   - CheckNodeMemoryPressure: 노드의 메모리 압력 상태 확인
-   - CheckNodeDiskPressure: 노드의 디스크 압력 상태 확인
+**스케줄링 프로세스 (Kubernetes 1.35.8):**
+1. **Filter**: `NodeResourcesFit`은 유효 리소스 요청과 남은 allocatable을 비교하고, `NodePorts`는 host port 요청, `NodeAffinity`는 nodeSelector와 affinity, `TaintToleration`은 taint를 검사합니다. `VolumeBinding`, `VolumeZone`, `NodeVolumeLimits` 등은 스토리지 제약을 처리합니다. 노드 pressure는 조건·taint에 반영됩니다. `CheckNodeDiskPressure` 같은 이름은 과거 predicate이며 현재 설정할 플러그인 이름이 아닙니다.
+2. **Score**: `NodeResourcesFit`(기본 `LeastAllocated`), `NodeResourcesBalancedAllocation`, `NodeAffinity`, `InterPodAffinity`, `PodTopologySpread`, `TaintToleration`, `ImageLocality`가 선호도에 기여합니다. 모두 실시간 사용률을 측정하는 것은 아닙니다.
+3. **Bind**: 나머지 프레임워크 단계도 성공하면 노드 할당을 기록하고 kubelet·런타임이 실행을 관리합니다. 높은 점수가 시작 성공·지연 시간·가용성을 보장하지는 않습니다.
 
-2. **스코어링 단계(Priorities)**: 적합한 노드에 점수를 매깁니다.
-   - LeastRequestedPriority: 요청된 리소스가 적은 노드에 높은 점수 부여
-   - BalancedResourceAllocation: 리소스 사용 균형이 좋은 노드에 높은 점수 부여
-   - NodeAffinityPriority: 노드 어피니티 규칙에 따라 점수 부여
-   - TaintTolerationPriority: 테인트 톨러레이션에 따라 점수 부여
-   - InterPodAffinityPriority: 파드 간 어피니티/안티-어피니티에 따라 점수 부여
-
-3. **바인딩**: 가장 높은 점수를 받은 노드에 파드를 바인딩합니다.
-
-**기본 스케줄러 구성 예시:**
+**보조 스케줄러 설정 예시:**
+점수 가중치만 변경하고 기본 필터를 유지합니다. 이 퀴즈의 스케줄러 설정은 `--config`로 읽는 파일이며 `kubectl apply`할 Kubernetes API 리소스가 아닙니다.
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
-- schedulerName: default-scheduler
+- schedulerName: custom-scheduler
   plugins:
     score:
-      disabled:
-      - name: NodeResourcesLeastAllocated
       enabled:
       - name: NodeResourcesBalancedAllocation
-        weight: 1
+        weight: 2
 ```
 
 **다른 옵션들의 문제점:**
@@ -72,7 +69,7 @@ C. 스케줄링 프레임워크 플러그인 개발
 D. kubelet 수정  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: D. kubelet 수정**
 
@@ -81,94 +78,31 @@ kubelet 수정은 Custom Scheduler를 구현하는 방법이 아닙니다. kubel
 
 **Custom Scheduler 구현 방법:**
 
-1. **기존 kube-scheduler 확장**:
-   - KubeSchedulerConfiguration을 사용하여 기본 스케줄러의 동작을 사용자 정의합니다.
-   - 플러그인 가중치, 활성화/비활성화 등을 조정합니다.
-   
-   ```yaml
-   apiVersion: kubescheduler.config.k8s.io/v1
-   kind: KubeSchedulerConfiguration
-   profiles:
-   - schedulerName: custom-scheduler
-     plugins:
-       score:
-         disabled:
-         - name: NodeResourcesLeastAllocated
-         enabled:
-         - name: NodeResourcesBalancedAllocation
-           weight: 2
-   ```
+1. **kube-scheduler 기반 보조 스케줄러 설정**: 기본 플러그인을 유지하고 필요한 동작만 조정합니다. Part1 본문에 전체 명령·RBAC·ConfigMap·Deployment가 있습니다.
 
-2. **완전히 새로운 스케줄러 구현**:
-   - Kubernetes API와 통신하는 독립적인 스케줄러를 개발합니다.
-   - 파드 감시, 노드 선택, 바인딩 로직을 직접 구현합니다.
-   
-   ```go
-   // 간단한 Go 스케줄러 예시
-   func main() {
-       config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
-       if err != nil {
-           log.Fatal(err)
-       }
-       
-       clientset, err := kubernetes.NewForConfig(config)
-       if err != nil {
-           log.Fatal(err)
-       }
-       
-       // 스케줄링되지 않은 파드 감시
-       watchPods(clientset)
-   }
-   
-   func watchPods(clientset *kubernetes.Clientset) {
-       watch, err := clientset.CoreV1().Pods("").Watch(context.TODO(), metav1.ListOptions{
-           FieldSelector: "spec.schedulerName=custom-scheduler,spec.nodeName=",
-       })
-       if err != nil {
-           log.Fatal(err)
-       }
-       
-       for event := range watch.ResultChan() {
-           if event.Type != watch.Added {
-               continue
-           }
-           
-           pod := event.Object.(*v1.Pod)
-           // 노드 선택 로직 구현
-           node := selectNode(clientset, pod)
-           if node != "" {
-               bindPod(clientset, pod, node)
-           }
-       }
-   }
-   ```
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
+  plugins:
+    score:
+      enabled:
+      - name: NodeResourcesBalancedAllocation
+        weight: 2
+```
 
-3. **스케줄링 프레임워크 플러그인 개발**:
-   - Kubernetes 스케줄링 프레임워크를 사용하여 특정 스케줄링 단계에 대한 플러그인을 개발합니다.
-   - 필터, 스코어, 바인드 등의 확장 포인트를 구현합니다.
-   
-   ```go
-   // 스코어링 플러그인 예시
-   type MyScorePlugin struct{}
-   
-   func (pl *MyScorePlugin) Name() string {
-       return "MyScorePlugin"
-   }
-   
-   func (pl *MyScorePlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-       // 사용자 정의 스코어링 로직 구현
-       return score, nil
-   }
-   
-   func (pl *MyScorePlugin) ScoreExtensions() framework.ScoreExtensions {
-       return pl
-   }
-   
-   func (pl *MyScorePlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
-       // 점수 정규화 로직 구현
-       return nil
-   }
-   ```
+2. **독립 스케줄러 구현**: 올바른 캐시·큐·list/watch 복구·리소스 계산·볼륨 조정·재시도·리더 선출·바인딩이 필요합니다. watch만 시작하면 기존 Pod나 연결 끊김을 놓칩니다. 실제 구현은 informer/workqueue를 사용하고 tombstone·취소·오래된 객체를 처리해야 합니다. Ready 노드를 선택하는 것만으로 Pod 적합성을 확인할 수 없으므로 본문의 예제는 upstream kube-scheduler에 이 동작을 맡깁니다.
+
+3. **프레임워크 플러그인 개발**: 플러그인을 스케줄러 바이너리에 컴파일하고 `app.WithPlugin`으로 등록합니다. 4번은 전체 Filter 플러그인, 6번은 Score 플러그인, 7번은 등록 명령을 제공합니다. 인터페이스는 `k8s.io/kube-scheduler/framework` v0.35.8 기준이며 Kubernetes 마이너 버전에 따라 시그니처가 달라집니다.
 
 **kubelet의 역할:**
 kubelet은 각 노드에서 실행되는 에이전트로, 다음과 같은 역할을 수행합니다:
@@ -193,7 +127,7 @@ C. metadata.scheduler
 D. spec.nodeName  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. spec.schedulerName**
 
@@ -209,10 +143,10 @@ metadata:
   labels:
     app: my-app
 spec:
-  schedulerName: my-custom-scheduler  # 사용자 정의 스케줄러 지정
+  schedulerName: custom-scheduler  # 사용자 정의 스케줄러 지정
   containers:
   - name: main-container
-    image: nginx:1.19
+    image: nginx:1.30.4
     resources:
       requests:
         memory: "64Mi"
@@ -222,33 +156,24 @@ spec:
         cpu: "500m"
 ```
 
-이 파드는 "my-custom-scheduler"라는 이름의 스케줄러에 의해서만 스케줄링됩니다. 해당 이름의 스케줄러가 클러스터에 존재하지 않으면, 파드는 `Pending` 상태로 남게 됩니다.
+이 파드는 "custom-scheduler"라는 이름의 스케줄러에 의해서만 스케줄링됩니다. 해당 이름의 스케줄러가 클러스터에 존재하지 않으면, 파드는 `Pending` 상태로 남게 됩니다.
 
-**여러 스케줄러 배포 예시:**
+**스케줄러 이름 설정:**
+Part1의 전체 Deployment에서 아래 설정을 `/etc/scheduler/config.yaml`로 마운트하고 `--config=/etc/scheduler/config.yaml`로 읽습니다. `--scheduler-name`은 현재 설정 방식이 아닙니다. ServiceAccount와 Lease 권한이 먼저 필요합니다.
+
 ```yaml
-# 사용자 정의 스케줄러 배포
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-custom-scheduler
-  namespace: kube-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      component: my-custom-scheduler
-  template:
-    metadata:
-      labels:
-        component: my-custom-scheduler
-    spec:
-      serviceAccountName: my-custom-scheduler
-      containers:
-      - name: scheduler
-        image: my-custom-scheduler:v1.0
-        args:
-        - --scheduler-name=my-custom-scheduler
-        - --leader-elect=false
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
 ```
 
 **스케줄러 선택 시 고려 사항:**
@@ -266,7 +191,7 @@ kubectl get pod custom-scheduled-pod
 kubectl describe pod custom-scheduled-pod | grep -A 5 Events
 
 # 스케줄러 로그 확인
-kubectl logs -n kube-system -l component=my-custom-scheduler
+kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 ```
 
 **다른 옵션들의 문제점:**
@@ -282,7 +207,7 @@ C. 파드를 실행할 수 없는 노드 제외
 D. 스케줄링 큐에서 파드 정렬  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: C. 파드를 실행할 수 없는 노드 제외**
 
@@ -290,73 +215,72 @@ D. 스케줄링 큐에서 파드 정렬
 Kubernetes 스케줄링 프레임워크에서 "Filter" 확장 포인트(이전에는 "Predicate"라고 불림)의 역할은 파드를 실행할 수 없는 노드를 제외하는 것입니다. 필터 플러그인은 각 노드가 파드의 요구 사항을 충족하는지 확인하고, 충족하지 않는 노드를 후보 목록에서 제외합니다.
 
 **스케줄링 프레임워크 확장 포인트:**
-스케줄링 프레임워크는 스케줄링 사이클의 여러 단계에서 플러그인을 통합할 수 있는 다양한 확장 포인트를 제공합니다:
+* **PreEnqueue / QueueSort**: 큐 진입을 제어하고 대기 Pod의 순서를 정합니다.
+* **PreFilter / Filter**: 공통 상태를 준비하고 부적합 노드를 제외합니다.
+* **PostFilter**: 적격 노드가 없을 때 선점 등의 복구를 시도합니다.
+* **PreScore / Score / 선택적 NormalizeScore**: 적격 노드를 준비·평가하며 정규화된 플러그인 점수는 0–100이어야 합니다.
+* **Reserve / Unreserve**: assume 상태를 기록하고 이후 실패 시 되돌립니다. 물리적 CPU·장치 할당을 뜻하지 않습니다.
+* **Permit**: 허용·거부·대기 여부를 결정합니다.
+* **PreBind / Bind / PostBind**: 의존성을 준비하고 바인딩을 확정한 뒤 후속 작업을 합니다. `PostBind`로 이미 확정된 바인딩을 거부할 수 없습니다. 버전별 추가 메서드가 있으므로 대상 릴리스로 컴파일해야 합니다.
 
-1. **Queue Sort**: 스케줄링 큐에서 파드의 순서를 결정합니다.
-2. **PreFilter**: 필터링 전에 파드 및 클러스터 상태에 대한 사전 처리를 수행합니다.
-3. **Filter**: 파드를 실행할 수 없는 노드를 제외합니다.
-4. **PreScore**: 스코어링 전에 필요한 계산을 수행합니다.
-5. **Score**: 필터링을 통과한 노드에 점수를 부여합니다.
-6. **NormalizeScore**: 각 스코어링 플러그인의 점수를 정규화합니다.
-7. **Reserve**: 선택된 노드에 파드 리소스를 예약합니다.
-8. **Permit**: 파드의 스케줄링을 허용, 거부 또는 지연시킵니다.
-9. **PreBind**: 바인딩 전에 필요한 작업을 수행합니다.
-10. **Bind**: 파드를 노드에 바인딩합니다.
-11. **PostBind**: 바인딩 후 정리 작업을 수행합니다.
+**기본 필터:**
+`NodeResourcesFit`, `NodeName`, `NodeUnschedulable`, `NodePorts`, `TaintToleration`, `NodeAffinity`, `InterPodAffinity`, `PodTopologySpread`, `VolumeRestrictions`, `NodeVolumeLimits`, `VolumeBinding`, `VolumeZone`이 각 제약을 담당합니다. 과거 predicate 이름과 공급자별 `EBSLimits`는 현재 플러그인 이름이 아닙니다.
 
-**기본 필터 플러그인:**
-Kubernetes는 다음과 같은 기본 필터 플러그인을 제공합니다:
+**커스텀 필터 예시 (`plugins/filter.go`):**
+이처럼 단순한 레이블 조건은 보통 required node affinity로 표현합니다. 아래는 프레임워크 인터페이스 예제입니다. 레이블이 없으면 다른 Pod를 선점해도 해결되지 않지만, 이후 노드 레이블이 바뀌면 재시도할 수 있습니다.
 
-1. **NodeResourcesFit**: 노드에 파드의 리소스 요청을 충족할 수 있는 충분한 리소스가 있는지 확인합니다.
-2. **NodeName**: 파드의 spec.nodeName 필드가 노드 이름과 일치하는지 확인합니다.
-3. **NodeUnschedulable**: 노드가 스케줄 불가능으로 표시되었는지 확인합니다.
-4. **TaintToleration**: 파드가 노드의 테인트를 허용하는지 확인합니다.
-5. **NodeAffinity**: 파드의 노드 어피니티 요구 사항을 충족하는지 확인합니다.
-6. **PodAffinity**: 파드의 파드 어피니티 요구 사항을 충족하는지 확인합니다.
-7. **VolumeRestrictions**: 볼륨 제약 조건을 확인합니다.
-8. **EBSLimits**: Amazon EBS 볼륨 제한을 확인합니다.
-9. **NoVolumeZoneConflict**: 볼륨 영역 제약 조건을 확인합니다.
-10. **CheckNodeMemoryPressure**: 노드의 메모리 압력 상태를 확인합니다.
-11. **CheckNodeDiskPressure**: 노드의 디스크 압력 상태를 확인합니다.
-
-**사용자 정의 필터 플러그인 예시:**
 ```go
-// 사용자 정의 필터 플러그인 예시
+package plugins
+
+import (
+	"context"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
 type MyFilterPlugin struct{}
 
-func (pl *MyFilterPlugin) Name() string {
-    return "MyFilterPlugin"
+var _ fwk.FilterPlugin = &MyFilterPlugin{}
+
+func (*MyFilterPlugin) Name() string { return "MyFilterPlugin" }
+
+func (*MyFilterPlugin) Filter(_ context.Context, _ fwk.CycleState, _ *v1.Pod, info fwk.NodeInfo) *fwk.Status {
+	if info == nil || info.Node() == nil {
+		return fwk.NewStatus(fwk.Error, "missing node")
+	}
+	if info.Node().Labels["custom-label"] != "required-value" {
+		return fwk.NewStatus(fwk.UnschedulableAndUnresolvable, "node lacks required label")
+	}
+	return nil
 }
 
-// Filter 메서드 구현
-func (pl *MyFilterPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    // 노드가 특정 조건을 충족하는지 확인
-    node := nodeInfo.Node()
-    if node == nil {
-        return framework.NewStatus(framework.Error, "node not found")
-    }
-    
-    // 예: 특정 레이블이 있는 노드만 허용
-    if value, exists := node.Labels["custom-label"]; !exists || value != "required-value" {
-        return framework.NewStatus(framework.Unschedulable, "node does not have required label")
-    }
-    
-    return nil // nil 반환은 노드가 적합함을 의미
+func NewFilter(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, error) {
+	return &MyFilterPlugin{}, nil
 }
 ```
 
-**스케줄러 구성에서 필터 플러그인 활성화:**
+**기본 필터와 함께 활성화:**
+7번에서 플러그인을 등록합니다. 레이블 검사를 추가하려고 `NodeResourcesFit`을 비활성화하지 마세요.
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
     filter:
       enabled:
       - name: MyFilterPlugin
-      disabled:
-      - name: NodeResourcesFit  # 기본 플러그인 비활성화
 ```
 
 **다른 옵션들의 문제점:**
@@ -365,100 +289,54 @@ profiles:
 - D. 스케줄링 큐에서 파드 정렬: 이는 "Queue Sort" 확장 포인트의 역할입니다.
 </details>
 
-### 5. 다음 중 Custom Scheduler 구현 시 고려해야 할 사항이 아닌 것은 무엇인가요?
+### 5. 다음 중 스케줄러 대신 kubelet과 컨테이너 런타임이 수행하는 작업은 무엇인가요?
 
-A. 노드 리소스 사용량  
-B. 파드 우선순위 및 선점  
-C. 컨테이너 이미지 크기  
-D. 노드 어피니티 및 안티-어피니티  
+A. 노드의 리소스 요청량과 allocatable 평가
+B. Pod 우선순위와 선점 고려
+C. 이미지 레이어 다운로드와 컨테이너 생성
+D. 노드 affinity와 Pod 간 affinity 평가
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: C. 컨테이너 이미지 크기**
+**정답: C. 이미지 레이어 다운로드와 컨테이너 생성**
 
 **설명:**
-컨테이너 이미지 크기는 일반적으로 Custom Scheduler 구현 시 고려하지 않는 요소입니다. 이미지 크기는 스케줄링 결정보다는 이미지 다운로드 및 컨테이너 시작 시간에 영향을 미치며, 이는 kubelet과 컨테이너 런타임의 책임 영역입니다.
+스케줄러는 노드를 선택하고 kubelet은 런타임에 이미지 pull과 컨테이너 생성을 요청합니다. **이미지 지역성은 스케줄링에 영향을 줄 수 있습니다.** 기본 `ImageLocality` 점수 플러그인은 노드가 보고한 이미지 캐시와 크기를 활용합니다. 캐시 보고가 오래될 수 있으므로 pull 생략을 보장하지 않습니다.
 
-**Custom Scheduler 구현 시 주요 고려 사항:**
+**구현 시 고려 사항:**
+1. **리소스**: `NodeResourcesFit`을 유지합니다. 유효 요청과 캐시의 할당·assume된 요청을 사용하며 실시간 CPU·메모리 사용률과는 다릅니다. CPU·메모리 limit은 초과 약정될 수 있고 기본 적합성 검사 기준이 아닙니다.
+2. **우선순위**: PriorityClass와 preemptionPolicy를 의도적으로 사용합니다. 선점해도 affinity·볼륨 등 조건을 충족하지 못하면 고우선순위 Pod도 Pending으로 남습니다.
+3. **배치**: required node affinity는 후보를 제한하고 preferred affinity는 점수를 줍니다. 아래 AZ는 실제 적격 용량이 있는 영역으로 바꾸세요. 일반적인 GPU·토폴로지 요구에는 커스텀 스케줄러가 필요하지 않을 수 있습니다.
 
-1. **노드 리소스 사용량**:
-   - CPU, 메모리, 디스크, 네트워크 등의 리소스 사용량
-   - 현재 사용량과 요청량을 고려한 최적의 배치
-   - 리소스 오버커밋 정책
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/zone
+            operator: In
+            values: [us-east-1a, us-east-1b]
+  containers:
+  - name: nginx
+    image: nginx:1.30.4
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+```
 
-   ```go
-   // 리소스 사용량 기반 필터링 예시
-   func filterByResourceUsage(pod *v1.Pod, node *v1.Node) bool {
-       // 노드의 할당 가능한 리소스 확인
-       allocatable := node.Status.Allocatable
-       // 노드에서 실행 중인 파드의 리소스 요청 합계 계산
-       // 새 파드의 리소스 요청이 가용 리소스를 초과하는지 확인
-       return podFitsResources(pod, allocatable, usedResources)
-   }
-   ```
+4. **기타 제약**: taint/toleration, topology spread, 스토리지 토폴로지·연결 제한, 하드웨어 리소스 검사를 유지합니다. 네트워크 지역성은 신뢰할 수 있는 토폴로지 데이터로 모델링하며 레이블만으로 지연 시간을 입증할 수 없습니다.
+5. **이미지 처리**: `ImageLocality`는 선호도이며 용량·시작 시간 보장이 아닙니다. 이미지 가비지 컬렉션, 레지스트리 인증, pull 실패는 여전히 노드에서 발생합니다.
 
-2. **파드 우선순위 및 선점**:
-   - 우선순위가 높은 파드를 먼저 스케줄링
-   - 필요한 경우 우선순위가 낮은 파드 선점
-   - PriorityClass 및 preemptionPolicy 고려
-
-   ```yaml
-   # 우선순위 클래스 예시
-   apiVersion: scheduling.k8s.io/v1
-   kind: PriorityClass
-   metadata:
-     name: high-priority
-   value: 1000000
-   globalDefault: false
-   description: "High priority pods"
-   ```
-
-3. **노드 어피니티 및 안티-어피니티**:
-   - 파드의 nodeSelector, nodeAffinity 요구 사항 충족
-   - 파드 간 어피니티 및 안티-어피니티 규칙 적용
-   - 토폴로지 분산 제약 조건 고려
-
-   ```yaml
-   # 노드 어피니티 예시
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: with-node-affinity
-   spec:
-     affinity:
-       nodeAffinity:
-         requiredDuringSchedulingIgnoredDuringExecution:
-           nodeSelectorTerms:
-           - matchExpressions:
-             - key: kubernetes.io/e2e-az-name
-               operator: In
-               values:
-               - e2e-az1
-               - e2e-az2
-   ```
-
-4. **기타 중요한 고려 사항**:
-   - **테인트 및 톨러레이션**: 노드 테인트와 파드 톨러레이션 매칭
-   - **토폴로지 분산**: 파드를 다양한 토폴로지 도메인에 분산
-   - **노드 상태**: 노드의 상태(Ready, MemoryPressure, DiskPressure 등)
-   - **워크로드 특성**: 배치, 서비스, 데몬셋 등 다양한 워크로드 유형의 요구 사항
-   - **네트워크 토폴로지**: 노드 간 네트워크 지연 및 대역폭
-   - **하드웨어 특성**: GPU, FPGA 등 특수 하드웨어 요구 사항
-
-**컨테이너 이미지 크기와 관련된 고려 사항:**
-컨테이너 이미지 크기는 다음과 같은 이유로 일반적으로 스케줄링 결정에 직접적인 영향을 미치지 않습니다:
-
-1. **이미지 가용성**: 이미지가 노드에 이미 캐시되어 있는지 여부는 스케줄러가 아닌 kubelet이 처리합니다.
-2. **다운로드 시간**: 이미지 다운로드는 스케줄링 결정 후에 발생하며, kubelet의 책임입니다.
-3. **스토리지 사용량**: 이미지 스토리지는 일반적으로 노드의 할당 가능한 리소스 계산에 포함되지 않습니다.
-
-그러나 특수한 경우에는 이미지 지역성(locality)을 고려하는 사용자 정의 스케줄러를 구현할 수 있습니다. 이는 이미지가 이미 캐시된 노드를 선호하여 시작 시간을 단축하는 데 도움이 될 수 있습니다.
-
-**다른 옵션들의 설명:**
-- A. 노드 리소스 사용량: 스케줄링 결정에 중요한 요소로, 파드의 리소스 요청을 충족할 수 있는 노드를 선택하는 데 필수적입니다.
-- B. 파드 우선순위 및 선점: 리소스 경합 시 어떤 파드를 먼저 스케줄링할지, 필요한 경우 어떤 파드를 선점할지 결정하는 데 중요합니다.
-- D. 노드 어피니티 및 안티-어피니티: 파드가 특정 노드 또는 다른 파드와 함께 또는 떨어져 스케줄링되어야 하는 제약 조건을 처리하는 데 중요합니다.
+**다른 선택지:**
+A·B·D는 스케줄링 고려 사항입니다. 구분해야 할 것은 배치 결정과 런타임 작업이며, 이미지 정보 자체를 스케줄링에서 제외하는 것이 아닙니다.
 </details>
 ### 6. Kubernetes 스케줄링 프레임워크에서 "Score" 확장 포인트의 역할은 무엇인가요?
 
@@ -468,7 +346,7 @@ C. 파드를 노드에 바인딩
 D. 스케줄링 큐에서 파드 정렬  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. 필터링을 통과한 노드에 점수 부여**
 
@@ -476,7 +354,7 @@ D. 스케줄링 큐에서 파드 정렬
 Kubernetes 스케줄링 프레임워크에서 "Score" 확장 포인트(이전에는 "Priority"라고 불림)의 역할은 필터링을 통과한 노드에 점수를 부여하는 것입니다. 스코어링 플러그인은 각 노드에 점수를 할당하고, 이 점수를 기반으로 최적의 노드가 선택됩니다.
 
 **스코어링 프로세스:**
-1. 각 스코어링 플러그인은 노드별로 점수를 계산합니다(일반적으로 0-100 범위).
+1. 각 플러그인은 점수를 계산하고 선택적 정규화 이후 반드시 0–100 범위를 반환합니다.
 2. 각 플러그인의 점수는 구성된 가중치에 따라 가중치가 부여됩니다.
 3. 모든 플러그인의 가중치가 적용된 점수가 합산됩니다.
 4. 가장 높은 총점을 받은 노드가 파드 배치를 위해 선택됩니다.
@@ -485,97 +363,86 @@ Kubernetes 스케줄링 프레임워크에서 "Score" 확장 포인트(이전에
 Kubernetes는 다음과 같은 기본 스코어링 플러그인을 제공합니다:
 
 1. **NodeResourcesBalancedAllocation**: CPU와 메모리 사용의 균형이 잘 잡힌 노드에 높은 점수를 부여합니다.
-2. **NodeResourcesFit**: 요청된 리소스에 비해 가용 리소스가 많은 노드에 높은 점수를 부여합니다.
+2. **NodeResourcesFit**: 요청량과 allocatable을 기준으로 설정된 LeastAllocated·MostAllocated·RequestedToCapacityRatio 전략을 사용합니다.
 3. **NodeAffinity**: 노드 어피니티 규칙에 따라 점수를 부여합니다.
 4. **InterPodAffinity**: 파드 간 어피니티/안티-어피니티 규칙에 따라 점수를 부여합니다.
 5. **PodTopologySpread**: 토폴로지 도메인 전체에 파드를 균등하게 분산시키는 노드에 높은 점수를 부여합니다.
-6. **TaintToleration**: 테인트가 적은 노드에 높은 점수를 부여합니다.
+6. **TaintToleration**: 허용되지 않은 PreferNoSchedule taint를 감점하며 hard taint는 필터에서 처리합니다.
 7. **ImageLocality**: 필요한 컨테이너 이미지가 이미 있는 노드에 높은 점수를 부여합니다.
 
-**사용자 정의 스코어링 플러그인 예시:**
+**커스텀 점수 플러그인 (`plugins/score.go`):**
+이 예제의 노드 레이블은 관리자가 제어하는 정책 입력입니다. 잘못된 값은 임의의 선호도로 바꾸지 않고 점수 계산 사이클을 실패시킵니다. 유효한 0점은 필터가 아닙니다.
+
 ```go
-// 사용자 정의 스코어링 플러그인 예시
+package plugins
+
+import (
+	"context"
+	"strconv"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	fwk "k8s.io/kube-scheduler/framework"
+)
+
 type MyScorePlugin struct{}
 
-func (pl *MyScorePlugin) Name() string {
-    return "MyScorePlugin"
+var _ fwk.ScorePlugin = &MyScorePlugin{}
+
+func (*MyScorePlugin) Name() string { return "MyScorePlugin" }
+
+func (*MyScorePlugin) Score(_ context.Context, _ fwk.CycleState, _ *v1.Pod, info fwk.NodeInfo) (int64, *fwk.Status) {
+	if info == nil || info.Node() == nil {
+		return 0, fwk.NewStatus(fwk.Error, "missing node")
+	}
+	value := info.Node().Labels["custom-score-label"]
+	if value == "" {
+		return 0, nil
+	}
+	score, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || score < fwk.MinNodeScore || score > fwk.MaxNodeScore {
+		return 0, fwk.NewStatus(fwk.Error, "custom-score-label must be an integer from 0 to 100")
+	}
+	return score, nil
 }
 
-// Score 메서드 구현
-func (pl *MyScorePlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    // 노드 정보 가져오기
-    nodeInfo, err := pl.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, fmt.Sprintf("getting node %q from Snapshot: %v", nodeName, err))
-    }
-    
-    node := nodeInfo.Node()
-    
-    // 예: 특정 레이블 값에 따라 점수 부여
-    if value, exists := node.Labels["custom-score-label"]; exists {
-        score, err := strconv.ParseInt(value, 10, 64)
-        if err != nil {
-            return 0, framework.NewStatus(framework.Error, fmt.Sprintf("invalid score value: %v", err))
-        }
-        // 점수 범위는 0-100이어야 함
-        if score < 0 {
-            score = 0
-        } else if score > 100 {
-            score = 100
-        }
-        return score, nil
-    }
-    
-    return 0, nil
-}
+// Scores are already absolute 0-100 values; no relative rescaling is needed.
+func (*MyScorePlugin) ScoreExtensions() fwk.ScoreExtensions { return nil }
 
-// ScoreExtensions 인터페이스 구현
-func (pl *MyScorePlugin) ScoreExtensions() framework.ScoreExtensions {
-    return pl
-}
-
-// NormalizeScore 메서드 구현
-func (pl *MyScorePlugin) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
-    // 점수 정규화 로직
-    var highest int64 = 0
-    for _, nodeScore := range scores {
-        if nodeScore.Score > highest {
-            highest = nodeScore.Score
-        }
-    }
-    
-    if highest == 0 {
-        return nil
-    }
-    
-    // 모든 점수를 최고 점수에 대한 비율로 조정
-    for i := range scores {
-        scores[i].Score = scores[i].Score * 100 / highest
-    }
-    
-    return nil
+func NewScore(_ context.Context, _ runtime.Object, _ fwk.Handle) (fwk.Plugin, error) {
+	return &MyScorePlugin{}, nil
 }
 ```
 
-**스케줄러 구성에서 스코어링 플러그인 활성화 및 가중치 설정:**
+**두 플러그인 산술 예제의 가중치:**
+아래는 의도적으로 **Score** 플러그인 집합만 교체합니다. 기본 Filter는 유지됩니다. 실제 정책에는 필요한 다른 점수 선호도도 유지하세요.
+
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
 - schedulerName: custom-scheduler
   plugins:
     score:
+      disabled:
+      - name: "*"
       enabled:
       - name: MyScorePlugin
-        weight: 5  # 가중치 설정
+        weight: 5
       - name: NodeResourcesBalancedAllocation
-        weight: 2  # 기본 플러그인 가중치 변경
-      disabled:
-      - name: NodeResourcesFit  # 기본 플러그인 비활성화
+        weight: 2
 ```
 
 **스코어링 결과 예시:**
-노드 A, B, C가 필터링을 통과했고, 두 개의 스코어링 플러그인이 있다고 가정합니다:
+실측 결과가 아닌 산술 예제입니다. A·B·C가 필터를 통과하고 두 플러그인이 아래 최종 0–100 점수를 반환한다고 가정합니다:
 
 1. MyScorePlugin (가중치: 5)
    - 노드 A: 80점
@@ -608,115 +475,78 @@ C. 다중 스케줄러 배포
 D. 노드 컨트롤러 수정  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: D. 노드 컨트롤러 수정**
 
 **설명:**
 노드 컨트롤러 수정은 Kubernetes에서 스케줄러 확장을 위한 방법이 아닙니다. 노드 컨트롤러는 노드의 상태를 모니터링하고 관리하는 컨트롤 플레인 구성 요소로, 스케줄링 결정과는 직접적인 관련이 없습니다.
 
-**Kubernetes에서 스케줄러 확장을 위한 방법:**
+**확장 방법:**
 
-1. **스케줄링 프레임워크 플러그인**:
-   - Kubernetes 1.15부터 도입된 방법으로, 스케줄링 사이클의 다양한 단계에 플러그인을 삽입할 수 있습니다.
-   - 필터, 스코어, 바인드 등의 확장 포인트를 제공합니다.
-   - 스케줄러 코드베이스와 직접 통합되어 효율적입니다.
+1. **프레임워크 플러그인**은 스케줄러 내부에서 실행됩니다. 4·6번의 전체 Filter/Score 파일을 Part1 모듈의 `plugins/`에 저장하고 아래를 `cmd/with-plugins/main.go`로 저장합니다. `CGO_ENABLED=0 go build -buildvcs=false -o custom-scheduler ./cmd/with-plugins`로 빌드합니다. 등록만으로 활성화되지는 않으며 설정에서도 참조해야 합니다.
 
-   ```go
-   // 스케줄링 프레임워크 플러그인 등록 예시
-   func NewPlugin(args runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-       // 플러그인 구성 파싱
-       config, ok := args.(*Config)
-       if !ok {
-           return nil, fmt.Errorf("want args to be of type Config, got %T", args)
-       }
-       
-       // 플러그인 인스턴스 생성
-       return &Plugin{
-           handle: handle,
-           config: config,
-       }, nil
-   }
-   
-   // 플러그인 인터페이스 구현
-   type Plugin struct {
-       handle framework.Handle
-       config *Config
-   }
-   
-   func (pl *Plugin) Name() string { return "MyPlugin" }
-   
-   // 필요한 확장 포인트 메서드 구현
-   func (pl *Plugin) Filter(...) { ... }
-   func (pl *Plugin) Score(...) { ... }
-   ```
+```go
+package main
 
-2. **스케줄러 익스텐더**:
-   - 외부 HTTP 서비스를 통해 스케줄러의 기능을 확장합니다.
-   - 필터링, 우선순위 지정, 바인딩 등의 단계를 확장할 수 있습니다.
-   - 스케줄러와 별도로 실행되므로 성능 오버헤드가 있을 수 있습니다.
+import (
+	"os"
 
-   ```yaml
-   # 스케줄러 익스텐더 구성 예시
-   apiVersion: kubescheduler.config.k8s.io/v1
-   kind: KubeSchedulerConfiguration
-   profiles:
-   - schedulerName: default-scheduler
-     extenders:
-     - urlPrefix: "http://extender-service:8080"
-       filterVerb: "filter"
-       prioritizeVerb: "prioritize"
-       weight: 5
-       bindVerb: "bind"
-       enableHTTPS: false
-   ```
+	"example.com/custom-scheduler/plugins"
+	"k8s.io/component-base/cli"
+	"k8s.io/kubernetes/cmd/kube-scheduler/app"
+)
 
-3. **다중 스케줄러 배포**:
-   - 기본 스케줄러와 함께 사용자 정의 스케줄러를 배포합니다.
-   - 각 스케줄러는 독립적으로 작동하며, 파드는 `spec.schedulerName`을 통해 특정 스케줄러를 지정할 수 있습니다.
-   - 완전한 유연성을 제공하지만, 구현 및 유지 관리가 복잡할 수 있습니다.
+func main() {
+	command := app.NewSchedulerCommand(
+		app.WithPlugin("MyFilterPlugin", plugins.NewFilter),
+		app.WithPlugin("MyScorePlugin", plugins.NewScore),
+	)
+	os.Exit(cli.Run(command))
+}
+```
 
-   ```yaml
-   # 사용자 정의 스케줄러 배포 예시
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: my-custom-scheduler
-     namespace: kube-system
-   spec:
-     replicas: 1
-     selector:
-       matchLabels:
-         component: my-custom-scheduler
-     template:
-       metadata:
-         labels:
-           component: my-custom-scheduler
-       spec:
-         serviceAccountName: my-custom-scheduler
-         containers:
-         - name: scheduler
-           image: my-custom-scheduler:v1.0
-           args:
-           - --scheduler-name=my-custom-scheduler
-           - --leader-elect=false
-   ```
+이 버전의 factory는 `(context.Context, runtime.Object, framework.Handle)`을 받습니다. 예제는 사용자 인수를 받지 않습니다. 설정을 추가한다면 버전에 맞는 framework runtime decoder로 `runtime.Unknown` payload를 디코딩·검증하세요. 등록되지 않은 사용자 정의 타입으로 바로 단언하면 안 됩니다.
 
-**노드 컨트롤러의 역할:**
-노드 컨트롤러는 다음과 같은 역할을 수행하는 컨트롤 플레인 구성 요소입니다:
-- 노드 등록 및 상태 모니터링
-- 노드 상태 업데이트(Ready, NotReady 등)
-- 노드 상태에 따른 파드 제거(노드가 장시간 NotReady 상태인 경우)
-- 노드 수명 주기 관리
+2. **HTTP extender**는 외부 필터·우선순위 계산과 선택적인 바인딩을 제공합니다. `extenders`는 profile 내부가 아닌 **최상위 필드**입니다. 아래 구성에는 실제 extender 서비스, 표시한 경로에 마운트된 일치하는 TLS 인증서, 네트워크 연결, 제한된 오류 처리가 필요합니다. 독립 실행 가능한 서버나 EKS 관리형 스케줄러 설정이 아닙니다. `bindVerb`를 생략하여 기본 바인더를 유지합니다.
 
-노드 컨트롤러는 스케줄링 결정에 직접 관여하지 않으며, 스케줄러가 사용하는 노드 정보를 업데이트하는 역할을 합니다. 따라서 노드 컨트롤러를 수정하는 것은 스케줄러 확장 방법이 아닙니다.
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
+extenders:
+- urlPrefix: https://extender.scheduler-lab.svc:8443
+  filterVerb: filter
+  prioritizeVerb: prioritize
+  weight: 5
+  enableHTTPS: true
+  tlsConfig:
+    caFile: /etc/extender-tls/ca.crt
+    certFile: /etc/extender-tls/tls.crt
+    keyFile: /etc/extender-tls/tls.key
+  httpTimeout: 2s
+  nodeCacheCapable: false
+  ignorable: false
+```
 
-**스케줄러 확장 방법 선택 시 고려 사항:**
-1. **복잡성**: 스케줄링 프레임워크 플러그인은 구현이 복잡할 수 있지만, 스케줄러와 긴밀하게 통합됩니다.
-2. **성능**: 스케줄러 익스텐더는 HTTP 호출 오버헤드가 있어 성능에 영향을 줄 수 있습니다.
-3. **유지 관리**: 다중 스케줄러는 별도의 코드베이스를 유지 관리해야 합니다.
-4. **업그레이드**: Kubernetes 업그레이드 시 호환성 문제가 발생할 수 있습니다.
-5. **기능**: 각 방법은 서로 다른 수준의 기능과 유연성을 제공합니다.
+`ignorable: false`에서는 extender filter 실패 시 해당 스케줄링 시도가 차단됩니다. true로 바꾸면 필수 사용자 제약을 우회할 수 있습니다. prioritize 오류는 다르게 처리됩니다. Kubernetes1.35.8은 실패를 기록하고 해당 extender 점수를 제외하므로 점수로 필수 규칙을 강제해서는 안 됩니다. 가능하면 프레임워크 플러그인을 사용하고 타임아웃·재시도·실패 동작을 검증하세요.
+
+3. **다중 스케줄러**는 구별되는 `profiles[].schedulerName`과 별도의 리더 선출 그룹을 사용합니다. 기본 스케줄러의 이름·Lease를 공유하는 프로세스를 추가하지 말고 Part1의 전체 Deployment/RBAC를 사용합니다.
+
+**노드 컨트롤러 역할:**
+보통 kubelet이 노드를 등록하고 상태를 보고합니다. 노드 수명주기 컨트롤러는 heartbeat를 관찰하고 조건·taint를 갱신하며 비정상 노드 대응을 조정합니다. 이 정보는 스케줄링에 영향을 주지만 노드 컨트롤러 수정은 스케줄러 확장 API가 아닙니다.
+
+**방법 선택:**
+구현 복잡도, 노드별 HTTP 비용, 캐시 일관성, 실패 동작, 업그레이드 호환성을 평가합니다. EKS에서는 별도 스케줄러를 배포하며 관리형 기본 스케줄러의 플래그·레지스트리를 교체하지 않습니다.
 
 **다른 옵션들의 설명:**
 - A. 스케줄링 프레임워크 플러그인: 유효한 스케줄러 확장 방법입니다.
@@ -731,12 +561,12 @@ C. 스케줄러를 클러스터의 리더 노드에서만 실행
 D. 스케줄러에 다른 컴포넌트보다 높은 우선순위 부여  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. 여러 스케줄러 인스턴스 중 하나만 활성화**
 
 **설명:**
-Kubernetes 스케줄러의 `--leader-elect` 플래그는 고가용성(HA) 구성에서 여러 스케줄러 인스턴스 중 하나만 활성화하여 작업을 수행하도록 하는 목적을 가집니다. 이는 여러 스케줄러 인스턴스가 동시에 작동하여 발생할 수 있는 충돌과 경쟁 상태를 방지합니다.
+Kubernetes 스케줄러의 `--leader-elect` 플래그는 고가용성(HA) 구성에서 여러 스케줄러 인스턴스 중 하나만 활성화하여 작업을 수행하도록 하는 목적을 가집니다. 같은 Lease 그룹의 복제본을 조정하며, 모든 장애에 대한 fencing이나 동시성 안전 API 작업을 대체하지는 않습니다.
 
 **리더 선출 메커니즘:**
 1. 여러 스케줄러 인스턴스가 배포되면, 리더 선출 알고리즘을 통해 하나의 인스턴스만 리더로 선출됩니다.
@@ -744,121 +574,42 @@ Kubernetes 스케줄러의 `--leader-elect` 플래그는 고가용성(HA) 구성
 3. 다른 인스턴스는 대기 상태로 유지되며, 현재 리더가 실패하면 새로운 리더가 선출됩니다.
 4. 이 메커니즘은 Kubernetes의 리소스 잠금(resource lock)을 사용하여 구현됩니다.
 
-**리더 선출 관련 플래그:**
-```
---leader-elect=true                      # 리더 선출 활성화 여부 (기본값: true)
---leader-elect-lease-duration=15s        # 리더십 임대 기간
---leader-elect-renew-deadline=10s        # 리더십 갱신 기한
---leader-elect-retry-period=2s           # 리더십 재시도 주기
---leader-elect-resource-lock=leases      # 리더십 잠금에 사용할 리소스 유형
---leader-elect-resource-name=kube-scheduler  # 리더십 잠금 리소스 이름
---leader-elect-resource-namespace=kube-system  # 리더십 잠금 리소스 네임스페이스
-```
+**리더 선출 설정:**
+버전이 지정된 설정 파일로 Lease 이름·네임스페이스·시간을 구성합니다:
 
-**고가용성 스케줄러 배포 예시:**
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kube-scheduler
-  namespace: kube-system
-spec:
-  replicas: 3  # 여러 인스턴스 배포
-  selector:
-    matchLabels:
-      component: kube-scheduler
-  template:
-    metadata:
-      labels:
-        component: kube-scheduler
-    spec:
-      containers:
-      - name: kube-scheduler
-        image: k8s.gcr.io/kube-scheduler:v1.23.0
-        command:
-        - kube-scheduler
-        - --leader-elect=true  # 리더 선출 활성화
-        - --leader-elect-lease-duration=15s
-        - --leader-elect-renew-deadline=10s
-        - --leader-elect-retry-period=2s
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
+profiles:
+- schedulerName: custom-scheduler
 ```
 
-**리더 선출 상태 확인:**
+**HA 배포:**
+Part1의 전체 Deployment는 이미 같은 설정·ServiceAccount를 사용하는 두 복제본을 실행합니다. 격리된 실습에서는 세 개로 늘릴 수 있습니다. 이것만으로 운영 HA가 검증되지는 않습니다. 장애 영역 분리, API 연결, 부트스트랩 용량, 장애 전환을 확인하세요.
+
 ```bash
-# 리더십 리소스 확인
-kubectl get leases -n kube-system | grep kube-scheduler
-
-# 리더십 세부 정보 확인
-kubectl describe lease kube-scheduler -n kube-system
-
-# 스케줄러 로그에서 리더십 관련 메시지 확인
-kubectl logs -n kube-system -l component=kube-scheduler | grep -i leader
+kubectl -n scheduler-lab scale deployment/custom-scheduler --replicas=3
+kubectl -n scheduler-lab get lease custom-scheduler -o yaml
+kubectl -n scheduler-lab logs -l app=custom-scheduler --prefix --tail=100
 ```
 
-**사용자 정의 스케줄러에서의 리더 선출:**
-사용자 정의 스케줄러를 구현할 때도 동일한 리더 선출 메커니즘을 사용할 수 있습니다. 이를 위해 client-go 라이브러리의 leaderelection 패키지를 활용합니다.
+**독립 구현:**
+kube-scheduler 명령에는 client-go 리더 선출이 통합되어 있습니다. 독립 구현은 프로세스별 고유 ID, 스케줄러 그룹별 공용 Lease, 갱신 권한, 리더십 상실 시 스케줄링 작업 취소가 필요합니다. client-go는 가능한 모든 프로세스 중첩에 대한 fencing을 제공하지 않습니다. 바인딩·외부 부작용에도 동시성 안전 설계가 필요합니다. `ReleaseOnCancel`을 사용하면 Lease를 반납하기 전에 보호 대상 작업이 중지되어야 합니다.
 
-```go
-// 사용자 정의 스케줄러에서 리더 선출 구현 예시
-import (
-    "context"
-    "time"
-    
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    clientset "k8s.io/client-go/kubernetes"
-    "k8s.io/client-go/tools/leaderelection"
-    "k8s.io/client-go/tools/leaderelection/resourcelock"
-)
-
-func runWithLeaderElection(ctx context.Context, client clientset.Interface, schedulerName string) {
-    // 리더 선출 구성
-    lock := &resourcelock.LeaseLock{
-        LeaseMeta: metav1.ObjectMeta{
-            Name:      schedulerName,
-            Namespace: "kube-system",
-        },
-        Client: client.CoordinationV1(),
-        LockConfig: resourcelock.ResourceLockConfig{
-            Identity: schedulerName + "-" + uuid.New().String(),
-        },
-    }
-    
-    // 리더 선출 실행
-    leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
-        Lock:            lock,
-        ReleaseOnCancel: true,
-        LeaseDuration:   15 * time.Second,
-        RenewDeadline:   10 * time.Second,
-        RetryPeriod:     2 * time.Second,
-        Callbacks: leaderelection.LeaderCallbacks{
-            OnStartedLeading: func(ctx context.Context) {
-                // 리더가 되었을 때 스케줄러 로직 실행
-                runScheduler(ctx)
-            },
-            OnStoppedLeading: func() {
-                // 리더십을 잃었을 때 처리
-                log.Printf("Lost leadership, shutting down")
-                os.Exit(0)
-            },
-            OnNewLeader: func(identity string) {
-                // 새로운 리더가 선출되었을 때 처리
-                log.Printf("New leader elected: %s", identity)
-            },
-        },
-    })
-}
-```
-
-**리더 선출을 비활성화해야 하는 경우:**
-1. **단일 인스턴스 배포**: 스케줄러가 하나의 인스턴스로만 배포되는 경우
-2. **다른 리더 선출 메커니즘 사용**: 외부 오케스트레이션 도구가 인스턴스 활성화를 관리하는 경우
-3. **서로 다른 스케줄러 이름**: 각 스케줄러 인스턴스가 다른 `schedulerName`을 사용하는 경우
-
-이러한 경우에는 `--leader-elect=false`로 설정하여 리더 선출을 비활성화할 수 있습니다.
+**리더 선출을 끌 수 있는 경우:**
+의도적으로 격리한 실험이거나 롤아웃·장애 상황에도 단일 활성 프로세스를 보장하는 다른 장치가 있을 때만 끕니다. `replicas: 1`도 rolling update 중에는 중첩될 수 있습니다. 스케줄러 이름이 다르면 별도 선출 그룹이 필요하며, 이름만 다르다고 리더 선출을 꺼도 안전하지는 않습니다.
 
 **다른 옵션들의 문제점:**
 - A. 스케줄러에 리더십 권한 부여: 이는 모호한 설명으로, 리더 선출의 구체적인 목적을 설명하지 않습니다.
-- C. 스케줄러를 클러스터의 리더 노드에서만 실행: Kubernetes에는 "리더 노드"라는 개념이 없으며, 스케줄러는 컨트롤 플레인 노드에서 실행됩니다.
+- C. 스케줄러를 클러스터의 리더 노드에서만 실행: 스케줄러 리더십은 프로세스에 속하며 클러스터 전체의 단일 리더 노드를 뜻하지 않습니다. 보조 스케줄러는 워커 노드의 Pod에서도 실행할 수 있습니다.
 - D. 스케줄러에 다른 컴포넌트보다 높은 우선순위 부여: 리더 선출은 우선순위와 관련이 없으며, 여러 스케줄러 인스턴스 간의 조정을 위한 것입니다.
 </details>
 
@@ -870,7 +621,7 @@ C. SchedulingPriority
 D. PodPriority  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. PriorityClass**
 
@@ -890,8 +641,8 @@ preemptionPolicy: PreemptLowerPriority  # 선점 정책 (기본값: PreemptLower
 ```
 
 **주요 필드:**
-1. **value**: 우선순위 값으로, 높을수록 우선순위가 높습니다. 시스템 파드는 일반적으로 1000000000(10억) 이상의 값을 사용합니다.
-2. **globalDefault**: true로 설정하면, 우선순위 클래스를 지정하지 않은 파드에 이 우선순위 클래스가 적용됩니다.
+1. **value**: 우선순위 값으로, 높을수록 우선순위가 높습니다. 사용자 정의 값은 최대 1000000000이며 기본 critical 클래스는 예약된 상위 범위를 사용합니다.
+2. **globalDefault**: true이면 클래스가 없는 신규 Pod의 클러스터 전체 기본값이 됩니다. 기존 Pod를 소급 변경하지 않으며 아래 실습 클래스는 모두 false를 사용합니다.
 3. **description**: 우선순위 클래스에 대한 설명입니다.
 4. **preemptionPolicy**: 선점 정책으로, `PreemptLowerPriority`(기본값) 또는 `Never`로 설정할 수 있습니다.
 
@@ -905,13 +656,13 @@ spec:
   priorityClassName: high-priority  # PriorityClass 이름 참조
   containers:
   - name: nginx
-    image: nginx
+    image: nginx:1.30.4
 ```
 
 **우선순위 및 선점 동작:**
 1. **스케줄링 우선순위**: 우선순위가 높은 파드는 스케줄링 큐에서 우선적으로 처리됩니다.
 2. **선점(Preemption)**: 우선순위가 높은 파드가 스케줄링될 노드가 없는 경우, 스케줄러는 우선순위가 낮은 파드를 제거(선점)하여 공간을 확보할 수 있습니다.
-3. **선점 정책**: `preemptionPolicy: Never`로 설정된 PriorityClass를 사용하는 파드는 다른 파드를 선점하지 않습니다.
+3. **선점 정책**: `preemptionPolicy: Never`인 Pod는 다른 Pod를 선점하지 않지만 자신은 선점될 수 있습니다. 높은 우선순위 Pod가 적합한 노드를 찾지 못해 backoff 중이면 더 낮은 우선순위 Pod가 진행할 수 있습니다.
 
 **시스템 PriorityClass:**
 Kubernetes는 다음과 같은 시스템 PriorityClass를 제공합니다:
@@ -939,7 +690,7 @@ kind: PriorityClass
 metadata:
   name: medium-priority
 value: 100000
-globalDefault: true
+globalDefault: false
 description: "Medium priority pods"
 ---
 apiVersion: scheduling.k8s.io/v1
@@ -965,18 +716,24 @@ kubectl get pods -o custom-columns=NAME:.metadata.name,PRIORITY:.spec.priority
 사용자 정의 스케줄러를 구현할 때는 파드의 우선순위를 고려하여 스케줄링 결정을 내려야 합니다.
 
 ```go
-// 파드 우선순위 확인 예시
-func getPodPriority(pod *v1.Pod) int32 {
-    if pod.Spec.Priority != nil {
-        return *pod.Spec.Priority
+package priorityexample
+
+import (
+    "sort"
+    v1 "k8s.io/api/core/v1"
+)
+
+func podPriority(pod *v1.Pod) int32 {
+    if pod == nil || pod.Spec.Priority == nil {
+        return 0
     }
-    return 0
+    return *pod.Spec.Priority
 }
 
-// 우선순위 기반 파드 정렬 예시
+// Demonstrates only priority comparison, not queue backoff or requeue handling.
 func sortPodsByPriority(pods []*v1.Pod) {
-    sort.Slice(pods, func(i, j int) bool {
-        return getPodPriority(pods[i]) > getPodPriority(pods[j])
+    sort.SliceStable(pods, func(i, j int) bool {
+        return podPriority(pods[i]) > podPriority(pods[j])
     })
 }
 ```
@@ -990,49 +747,44 @@ func sortPodsByPriority(pods []*v1.Pod) {
 ### 10. 다음 중 Kubernetes 스케줄러의 `NodeResourcesFit` 플러그인의 역할은 무엇인가요?
 
 A. 노드의 물리적 위치에 따라 파드 배치  
-B. 노드의 리소스 용량과 파드의 리소스 요청 비교  
+B. 남은 allocatable과 Pod의 유효 요청 비교\
 C. 노드의 운영체제와 파드의 호환성 확인  
 D. 노드의 네트워크 대역폭 측정  
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. 노드의 리소스 용량과 파드의 리소스 요청 비교**
+**정답: B. 남은 allocatable과 Pod의 유효 요청 비교**
 
 **설명:**
-Kubernetes 스케줄러의 `NodeResourcesFit` 플러그인은 노드의 리소스 용량과 파드의 리소스 요청을 비교하여, 파드가 노드에서 실행될 수 있는지 확인하는 역할을 합니다. 이 플러그인은 CPU, 메모리, 임시 스토리지, 확장 리소스(GPU 등) 등 다양한 리소스 유형을 고려합니다.
+`NodeResourcesFit`은 Pod의 유효 요청을 **노드 allocatable에서 이미 할당·assume된 요청을 뺀 값**과 비교합니다. Pod 개수 제한과 관련 확장 리소스도 검사합니다. 신규 Pod와 전체 `Capacity`만 비교하는 것이 아니며 CPU·메모리 limit 합이 용량을 넘는다고 일반적으로 거부하지도 않습니다.
 
-**NodeResourcesFit 플러그인의 주요 기능:**
-1. **리소스 요청 검증**: 파드의 리소스 요청이 노드의 할당 가능한 리소스를 초과하지 않는지 확인합니다.
-2. **리소스 제한 검증**: 파드의 리소스 제한이 노드의 용량을 초과하지 않는지 확인합니다.
-3. **확장 리소스 검증**: GPU, FPGA 등의 확장 리소스 요청이 노드에서 사용 가능한지 확인합니다.
-4. **스코어링**: 필터링 단계를 통과한 노드에 대해 리소스 사용량에 따라 점수를 부여합니다.
+**리소스 계산:**
+* 일반 컨테이너, 순차 init 컨테이너, 재시작 가능한 sidecar, Pod overhead, 지원되는 Pod 수준 리소스 설정을 고려합니다. API 기본값 처리로 limit에서 request가 유도될 수 있습니다.
+* assume된 바인딩을 포함한 스케줄러 스냅샷을 사용합니다. API로 Running Pod만 합산하면 예약된 수요를 놓칩니다.
+* 대상 버전의 기능 게이트와 DRA 동작을 유지합니다. CPU·메모리 산술만으로 전체 리소스 적합성 검사를 구현할 수 없습니다.
 
-**리소스 검증 프로세스:**
-1. 파드의 모든 컨테이너의 리소스 요청을 합산합니다.
-2. 노드의 할당 가능한 리소스를 확인합니다.
-3. 파드의 리소스 요청이 노드의 할당 가능한 리소스를 초과하지 않는지 확인합니다.
-4. 초과하는 경우, 해당 노드는 필터링됩니다.
+**설정:**
+`NodeResourcesFit`은 기본 활성화되어 있습니다. 아래는 Filter 단계를 제거하지 않고 점수 전략만 변경합니다.
 
-**스케줄러 구성에서 NodeResourcesFit 설정:**
 ```yaml
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
+leaderElection:
+  leaderElect: true
+  resourceLock: leases
+  resourceName: custom-scheduler
+  resourceNamespace: scheduler-lab
+  leaseDuration: 15s
+  renewDeadline: 10s
+  retryPeriod: 2s
 profiles:
-- schedulerName: default-scheduler
-  plugins:
-    filter:
-      enabled:
-      - name: NodeResourcesFit
-    score:
-      enabled:
-      - name: NodeResourcesFit
-        weight: 1
+- schedulerName: custom-scheduler
   pluginConfig:
   - name: NodeResourcesFit
     args:
       scoringStrategy:
-        type: MostAllocated  # 또는 LeastAllocated, RequestedToCapacityRatio
+        type: MostAllocated
         resources:
         - name: cpu
           weight: 1
@@ -1043,17 +795,17 @@ profiles:
 **스코어링 전략:**
 NodeResourcesFit 플러그인은 다음과 같은 스코어링 전략을 지원합니다:
 
-1. **LeastAllocated**: 사용 중인 리소스가 적은 노드에 높은 점수를 부여합니다. 이는 리소스 사용을 분산시키는 데 유용합니다.
+1. **LeastAllocated**: 리소스 요청 비율이 낮은 노드에 높은 점수를 부여하여 요청량을 분산합니다.
    ```
-   score = (capacity - requested) / capacity
-   ```
-
-2. **MostAllocated**: 사용 중인 리소스가 많은 노드에 높은 점수를 부여합니다. 이는 리소스 사용을 집중시켜 노드 수를 최소화하는 데 유용합니다.
-   ```
-   score = requested / capacity
+   score ≈ 100 × (allocatable - requested) / allocatable
    ```
 
-3. **RequestedToCapacityRatio**: 사용자 정의 함수를 사용하여 요청된 리소스와 용량의 비율에 따라 점수를 부여합니다.
+2. **MostAllocated**: 리소스 요청 비율이 높은 노드에 높은 점수를 부여하여 요청량을 집중합니다. 이 전략 자체가 노드를 축소하지는 않습니다.
+   ```
+   score ≈ 100 × requested / allocatable
+   ```
+
+3. **RequestedToCapacityRatio**: 설정한 구간별 선형 shape를 사용하여 요청량과 allocatable의 비율에 점수를 매깁니다. 위 단일 리소스 식은 정수 반올림, 0·용량 초과 처리와 리소스 가중치를 생략한 설명용 식이며 실시간 사용률 식이 아닙니다.
 
 **리소스 유형:**
 NodeResourcesFit 플러그인은 다음과 같은 리소스 유형을 고려합니다:
@@ -1078,46 +830,23 @@ kubectl top node <node-name>
 kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].resources.requests}'
 ```
 
-**Custom Scheduler에서 리소스 적합성 검사 구현:**
-```go
-// 노드 리소스 적합성 검사 예시
-func checkNodeResourcesFit(pod *v1.Pod, node *v1.Node) bool {
-    // 노드의 할당 가능한 리소스 가져오기
-    allocatable := node.Status.Allocatable
-    
-    // 파드의 리소스 요청 계산
-    var requestedCPU, requestedMemory resource.Quantity
-    for _, container := range pod.Spec.Containers {
-        if request, ok := container.Resources.Requests[v1.ResourceCPU]; ok {
-            requestedCPU.Add(request)
-        }
-        if request, ok := container.Resources.Requests[v1.ResourceMemory]; ok {
-            requestedMemory.Add(request)
-        }
-    }
-    
-    // 노드에서 이미 사용 중인 리소스 계산
-    // (실제 구현에서는 노드에서 실행 중인 모든 파드의 리소스 요청을 합산해야 함)
-    
-    // 리소스 적합성 확인
-    if allocatableCPU, ok := allocatable[v1.ResourceCPU]; ok {
-        if requestedCPU.Cmp(allocatableCPU) > 0 {
-            return false  // CPU 요청이 할당 가능한 양을 초과
-        }
-    }
-    
-    if allocatableMemory, ok := allocatable[v1.ResourceMemory]; ok {
-        if requestedMemory.Cmp(allocatableMemory) > 0 {
-            return false  // 메모리 요청이 할당 가능한 양을 초과
-        }
-    }
-    
-    return true  // 모든 리소스 요청이 충족됨
-}
-```
+**안전한 적합성 검사:**
+스케줄러 프레임워크의 upstream 플러그인을 유지합니다. 신규 Pod의 CPU·메모리만 합산하고 기존 수요를 무시한 채 true를 반환하는 함수는 대체 구현이 아닙니다. 이번 감사에서는 고정한 upstream 구현을 로컬에서 검사합니다. 2코어 노드에 이미 1500m 요청이 있을 때 추가 1코어 요청은 거부되고 250m 요청은 CPU limit이 더 커도 적합합니다. 이는 로컬 리소스 계산 검사이며 클러스터 스케줄링 벤치마크가 아닙니다.
+
+`kubectl top`은 Metrics Server가 있을 때 현재 메트릭을 보여주며 기본 fit/score가 사용하는 요청량 합계가 아닙니다. 차이를 진단할 때 init 컨테이너와 overhead를 포함한 전체 Pod 스펙을 확인하세요.
 
 **다른 옵션들의 문제점:**
 - A. 노드의 물리적 위치에 따라 파드 배치: 이는 토폴로지 관련 플러그인(예: NodeAffinity, PodTopologySpread)의 역할입니다.
-- C. 노드의 운영체제와 파드의 호환성 확인: 이는 NodeSelector 또는 NodeAffinity를 통해 처리되며, 별도의 플러그인이 아닙니다.
+- C. 노드의 운영체제와 파드의 호환성 확인: OS 레이블과 배치 제약을 적절히 사용하되 이미지·런타임 호환성 자체를 보장하지는 않습니다. `NodeResourcesFit`은 해당 검사가 아닙니다.
 - D. 노드의 네트워크 대역폭 측정: Kubernetes 스케줄러는 기본적으로 네트워크 대역폭을 고려하지 않습니다. 이를 위해서는 사용자 정의 메트릭과 플러그인이 필요합니다.
 </details>
+
+## 참고 자료
+
+[Part1 모듈과 배포 구성](../../scheduling/01-custom-scheduler-part1.md)을 사용합니다. 로컬 컴파일·설정·리소스 계산 검사는 운영 적합성 검증이 아니며 클러스터·AWS 배포는 실행하지 않았습니다.
+
+* [스케줄러 설정과 기본 플러그인](https://kubernetes.io/docs/reference/scheduling/config/)
+* [프레임워크 확장 포인트](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
+* [리소스 점수 전략](https://kubernetes.io/docs/concepts/scheduling-eviction/resource-bin-packing/)
+* [우선순위와 선점](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/)
+* [고정 버전 Go 인터페이스](https://github.com/kubernetes/kubernetes/blob/v1.35.8/staging/src/k8s.io/kube-scheduler/framework/interface.go)

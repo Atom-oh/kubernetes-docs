@@ -8,7 +8,7 @@ This document covers how to install and initially configure Istio on an Amazon E
 2. [Choosing an Installation Method](#choosing-an-installation-method)
 3. [Installation Using istioctl](#installation-using-istioctl)
 4. [Installation Using Helm](#installation-using-helm)
-5. [Installation Using Istio Operator](#installation-using-istio-operator)
+5. [Declarative Installation with istioctl](#declarative-installation-with-istioctl)
 6. [Installation Profiles](#installation-profiles)
 7. [Installation Verification](#installation-verification)
 8. [Sample Application Deployment](#sample-application-deployment)
@@ -21,9 +21,11 @@ Before installing Istio, the following requirements must be met:
 
 ### 1. Amazon EKS Cluster
 
-- **Kubernetes version**: 1.28 or higher (recommended: 1.34)
+- **Kubernetes version**: EKS 1.34–1.36 for this Istio 1.31.0 example (reviewed September 11, 2026). Istio 1.31 supports 1.32–1.36; EKS 1.32/1.33 are in extended support. Check both the [Istio matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html).
 - **Node type**: Minimum 2 worker nodes (recommended: 3 or more)
 - **Node size**: Minimum 2 vCPU, 4GB RAM (recommended: t3.medium or larger)
+
+These examples target Linux EC2 worker nodes. Fargate cannot run the DaemonSets/privileged networking needed by these Istio installation paths. EKS Auto Mode has a different managed networking/load-balancing model; validate its prerequisites separately.
 
 ### 2. kubectl Installation and Configuration
 
@@ -39,23 +41,22 @@ kubectl get nodes
 
 - **AWS CLI**: 2.x or higher
 - **eksctl**: (Optional) For cluster management
-- **Helm**: 3.x or higher (if using Helm installation method)
+- **Helm**: a currently supported Helm 3 or Helm 4 release (minimum 3.6; see the official installation guide)
 
 ### 4. Cluster Resources
 
-Minimum resource requirements:
+Illustrative planning requests, not universal minimums; size from measured load:
 - **Control Plane**: 1 vCPU, 1.5GB RAM
 - **Sidecar (per pod)**: 0.1 vCPU, 128MB RAM
 
 ## Choosing an Installation Method
 
-Istio provides three main installation methods:
+Choose one supported installation path; do not run the istioctl and Helm installations on the same control plane:
 
 | Method | Advantages | Disadvantages | Recommended Use Case |
 |------|------|------|---------------|
-| **istioctl** | Simple and fast, provides validation features | Difficult to automate | Development and test environments |
+| **istioctl** | Simple and fast, provides validation features | Requires explicit reconciliation in automation | Development and production |
 | **Helm** | GitOps friendly, easy version management | Configuration can be complex | Production environments, CI/CD pipelines |
-| **Istio Operator** | Declarative management, automatic upgrades | Additional resources needed | Large-scale production environments |
 
 ## Installation Using istioctl
 
@@ -64,14 +65,11 @@ istioctl is Istio's official CLI tool and the simplest installation method.
 ### 1. Install istioctl
 
 ```bash
-# Download istioctl (latest version)
-curl -L https://istio.io/downloadIstio | sh -
-
-# Or download a specific version
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
+# Download the reviewed release
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.0 sh -
 
 # Add istioctl to PATH
-cd istio-1.28.0
+cd istio-1.31.0
 export PATH=$PWD/bin:$PATH
 
 # Verify installation
@@ -107,13 +105,15 @@ kubectl logs -n istio-system -l app=istiod
 
 ## Installation Using Helm
 
+The pinned 1.31.0 release charts were rendered during this audit. They do not contain an `eks` platform profile, although the current overview lists one. These examples therefore omit `global.platform=eks`; apply the explicit EKS prerequisites and load-balancer settings instead.
+
 Helm is a Kubernetes package manager suitable for GitOps workflows.
 
 ### 1. Add Helm Repository
 
 ```bash
 # Add Istio Helm repository
-helm repo add istio https://istio-release.storage.googleapis.com/charts
+helm repo add istio https://blob.istio.io/istio-release/charts
 helm repo update
 ```
 
@@ -128,7 +128,8 @@ kubectl create namespace istio-system
 # Install istio-base chart
 helm install istio-base istio/base \
   -n istio-system \
-  --version 1.28.0
+  --set defaultRevision=default \
+  --version 1.31.0
 ```
 
 ### 3. Install istiod
@@ -139,20 +140,22 @@ istiod is the Istio Control Plane.
 # Install istiod chart
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.28.0 \
+  --version 1.31.0 \
   --wait
 ```
 
 ### 4. Install Istio Ingress Gateway (Optional)
 
 ```bash
-# Create istio-ingress namespace
-kubectl create namespace istio-ingress
+# Verify the gateway namespace
+kubectl get namespace istio-system
 
 # Install Istio Ingress Gateway
-helm install istio-ingress istio/gateway \
-  -n istio-ingress \
-  --version 1.28.0 \
+helm install istio-ingressgateway istio/gateway \
+  -n istio-system \
+  --set labels.istio=ingressgateway \
+  --set labels.app=istio-ingressgateway \
+  --version 1.31.0 \
   --wait
 ```
 
@@ -162,50 +165,32 @@ helm install istio-ingress istio/gateway \
 # values.yaml
 global:
   hub: docker.io/istio
-  tag: 1.28.0
+  tag: 1.31.0
 
-pilot:
-  autoscaleEnabled: true
-  autoscaleMin: 2
-  autoscaleMax: 5
-  resources:
-    requests:
-      cpu: 500m
-      memory: 2048Mi
+autoscaleEnabled: true
+autoscaleMin: 2
+autoscaleMax: 5
+resources:
+  requests:
+    cpu: 500m
+    memory: 2048Mi
 
-# AWS EKS specific settings
 meshConfig:
   accessLogFile: /dev/stdout
-  enableTracing: true
-  defaultConfig:
-    tracing:
-      sampling: 100.0
 ```
 
 ```bash
 # Install using values.yaml file
-helm install istiod istio/istiod \
+helm upgrade --install istiod istio/istiod \
   -n istio-system \
-  --version 1.28.0 \
+  --version 1.31.0 \
   -f values.yaml \
   --wait
 ```
 
-## Installation Using Istio Operator
+## Declarative Installation with istioctl
 
-Istio Operator manages Istio in a declarative manner.
-
-### 1. Install Istio Operator
-
-```bash
-# Install Operator
-istioctl operator init
-
-# Verify Operator installation
-kubectl get pods -n istio-operator
-```
-
-### 2. Create IstioOperator Resource
+The upstream in-cluster operator was deprecated in 1.23 and removed in 1.24. `istioctl operator init/remove` and applying an IstioOperator object to the cluster are not current installation methods. The [IstioOperator file format remains supported as input to istioctl](https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/).
 
 ```yaml
 # istio-operator.yaml
@@ -233,15 +218,9 @@ spec:
           maxReplicas: 5
 ```
 
-### 3. Install Istio via Operator
-
 ```bash
-# Apply IstioOperator resource
-kubectl create ns istio-system
-kubectl apply -f istio-operator.yaml
-
-# Check installation progress
-kubectl get istiooperator -n istio-system
+istioctl install -f istio-operator.yaml
+kubectl rollout status deployment/istiod -n istio-system
 ```
 
 ## Installation Profiles
@@ -253,23 +232,22 @@ Istio provides various profiles for different use cases.
 | Profile | Description | Components | Recommended Use |
 |-------|------|----------|----------|
 | **default** | Default settings for production deployment | istiod, ingress gateway | Most production environments |
-| **demo** | All features enabled, for learning | istiod, ingress gateway, egress gateway, high trace sampling | Development and demos |
+| **demo** | Demonstration settings, not all features | istiod, ingress gateway, egress gateway, high trace sampling | Development and demos |
 | **minimal** | Only minimal components installed | istiod only | Resource-constrained environments |
 | **remote** | For remote cluster in multi-cluster environment | - | Multi-cluster setup |
 | **empty** | No default configuration | - | Complete custom setup |
 | **preview** | Includes experimental features | Various experimental features | Test environments |
+| **ambient** | Sidecarless L4 mesh | istiod, CNI, ztunnel; L7 waypoints configured separately | Ambient deployments |
+
+The component list applies to istioctl. Helm requires installing each chart separately; a profile does not install other charts.
 
 ### Check Profiles
 
 ```bash
-# List available profiles
-istioctl profile list
-
-# Check specific profile configuration
-istioctl profile dump default
-
-# Compare two profiles
-istioctl profile diff default demo
+helm show values istio/istiod --version 1.31.0
+istioctl manifest generate --set profile=default > default.yaml
+istioctl manifest generate --set profile=demo > demo.yaml
+diff -u default.yaml demo.yaml
 ```
 
 ### Installation by Profile
@@ -288,7 +266,7 @@ istioctl install --set profile=minimal -y
 # Modify specific settings based on profile
 istioctl install --set profile=default \
   --set meshConfig.accessLogFile=/dev/stdout \
-  --set values.pilot.resources.requests.memory=2Gi \
+  --set components.pilot.k8s.resources.requests.memory=2Gi \
   -y
 ```
 
@@ -321,7 +299,8 @@ kubectl get pods -n istio-system -o yaml | grep image:
 
 ```bash
 # Check Istio installation status
-istioctl verify-install
+kubectl rollout status deployment/istiod -n istio-system
+istioctl proxy-status
 
 # Analyze Istio configuration
 istioctl analyze -A
@@ -341,15 +320,19 @@ kubectl get validatingwebhookconfiguration
 
 Istio includes a sample application called Bookinfo.
 
+Run these commands from the extracted `istio-1.31.0` directory with the default namespace selected (`kubectl config set-context --current --namespace=default`). For Helm, install the optional gateway above first. The dashboard commands later require separately installed telemetry addons.
+
 ### 1. Enable Automatic Sidecar Injection for Namespace
 
 ```bash
 # Add label to default namespace
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled --overwrite
 
 # Verify label
 kubectl get namespace -L istio-injection
 ```
+
+Existing pods need recreation after changing injection labels. Use a namespace without a conflicting `istio.io/rev` or ambient label.
 
 ### 2. Deploy Bookinfo Application
 
@@ -376,10 +359,44 @@ kubectl exec "$(kubectl get pod -l app=ratings -o jsonpath='{.items[0].metadata.
 
 ```bash
 # Create Bookinfo Gateway
-kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
+cat <<'EOF' > bookinfo-gateway.yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: bookinfo
+  namespace: default
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - bookinfo-gateway
+  http:
+  - route:
+    - destination:
+        host: productpage
+        port:
+          number: 9080
+EOF
+kubectl apply -f bookinfo-gateway.yaml
 
 # Check Gateway
-kubectl get gateway
+kubectl get gateway.networking.istio.io
 
 # Check VirtualService
 kubectl get virtualservice
@@ -406,12 +423,14 @@ curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 
 ## Istio Removal
 
+These cleanup commands are for a disposable lab. Purging removes shared mesh resources; remove injected workloads or restart them without injection before uninstalling a live mesh. Helm uninstall retains CRDs.
+
 ### Removal Using istioctl
 
 ```bash
 # Remove sample application
 kubectl delete -f samples/bookinfo/platform/kube/bookinfo.yaml
-kubectl delete -f samples/bookinfo/networking/bookinfo-gateway.yaml
+kubectl delete -f bookinfo-gateway.yaml
 
 # Remove Istio
 istioctl uninstall --purge -y
@@ -427,7 +446,7 @@ kubectl label namespace default istio-injection-
 
 ```bash
 # Remove Ingress Gateway
-helm delete istio-ingress -n istio-ingress
+helm delete istio-ingressgateway -n istio-system
 
 # Remove istiod
 helm delete istiod -n istio-system
@@ -437,21 +456,6 @@ helm delete istio-base -n istio-system
 
 # Remove namespaces
 kubectl delete namespace istio-system
-kubectl delete namespace istio-ingress
-```
-
-### Removal Using Istio Operator
-
-```bash
-# Remove IstioOperator resource
-kubectl delete istiooperator istio-control-plane -n istio-system
-
-# Remove Operator
-istioctl operator remove
-
-# Remove namespaces
-kubectl delete namespace istio-system
-kubectl delete namespace istio-operator
 ```
 
 ## Troubleshooting
@@ -468,7 +472,7 @@ kubectl delete namespace istio-operator
 kubectl get namespace -L istio-injection
 
 # Add label if missing
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled --overwrite
 
 # Check Webhook
 kubectl get mutatingwebhookconfiguration
@@ -576,5 +580,8 @@ Istio installation is complete! Now refer to the following documents to start us
 
 - [Istio Official Installation Guide](https://istio.io/latest/docs/setup/install/)
 - [Istio Profile Documentation](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
-- [AWS EKS Workshop - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
+- [Istio EKS platform guidance](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
 - [Istio Troubleshooting Guide](https://istio.io/latest/docs/ops/diagnostic-tools/)
+
+- [EKS Fargate restrictions](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)
+- [Istio 1.31 release and artifact migration](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)

@@ -1,147 +1,123 @@
 # Istio vs VPC Lattice
 
-> **마지막 업데이트**: 2026년 2월 23일 **Istio 버전**: 1.24 **VPC Lattice**: GA (2023년 출시)
+> **마지막 검토**: 2026년 9월 11일
+> **Istio API 기준**: 1.31.0; Kubernetes 호환성은 별도 확인 필요
 
-이 문서는 Kubernetes Service Mesh (Istio)와 AWS 네이티브 서비스 네트워킹 (VPC Lattice)을 종합적으로 비교합니다.
+앱의 통신, identity, protocol과 운영 요구사항을 비교합니다. Istio와 VPC Lattice는 배포·보안 경계가 다르며 기능 별점이나 근거 없는 “overhead 0” 주장으로 적합한 구조를 결정할 수 없습니다.
+
+설정 예제는 권한이 있는 기존 resource와 실제 앱 endpoint를 가정합니다. 적절한 환경에서 사용하는 대안이며 하나로 결합한 운영 배포가 아닙니다. Identifier, role, namespace와 IdP URL을 의도한 값으로 바꿔야 합니다. 이번 감사는 로컬 설정/input 형식과 계산을 검증했으며 AWS·cluster resource를 배포하지 않았습니다.
 
 ## 목차
 
-1. [개요 및 핵심 차이점](02-istio-vs-lattice.md#개요-및-핵심-차이점)
-2. [아키텍처 비교](02-istio-vs-lattice.md#아키텍처-비교)
-3. [트래픽 관리 기능](02-istio-vs-lattice.md#트래픽-관리-기능)
-4. [보안 모델](02-istio-vs-lattice.md#보안-모델)
-5. [관찰성 및 모니터링](02-istio-vs-lattice.md#관찰성-및-모니터링)
-6. [운영 복잡도](02-istio-vs-lattice.md#운영-복잡도)
-7. [비용 분석](02-istio-vs-lattice.md#비용-분석)
-8. [성능 비교](02-istio-vs-lattice.md#성능-비교)
-9. [멀티 클라우드 전략](02-istio-vs-lattice.md#멀티-클라우드-전략)
-10. [하이브리드 아키텍처](02-istio-vs-lattice.md#하이브리드-아키텍처)
-11. [선택 가이드](02-istio-vs-lattice.md#선택-가이드)
+1. [아키텍처와 플랫폼](#아키텍처와-플랫폼)
+2. [트래픽 관리](#트래픽-관리)
+3. [보안과 Identity](#보안과-identity)
+4. [관측성](#관측성)
+5. [설치와 운영](#설치와-운영)
+6. [비용과 과거 근거](#비용과-과거-근거)
+7. [Hybrid와 Multicloud](#hybrid와-multicloud)
+8. [선택 기준](#선택-기준)
 
-## 개요 및 핵심 차이점
+## 아키텍처와 플랫폼
 
-### Istio Service Mesh
+### Istio
 
-**정의**: Kubernetes 환경에서 실행되는 오픈소스 Service Mesh로, 마이크로서비스 간 통신을 관리, 보호, 관찰하는 인프라 계층
+Istio는 Kubernetes와 문서화된 VM 통합에 사용하는 control/data plane입니다. Sidecar mode는 등록한 workload Pod의 Envoy를, ambient는 노드별 ztunnel과 지원되는 L7 처리용 waypoint를 사용합니다. Sidecar는 앱 Pod가 아닌 **container**를 추가합니다.
 
-**핵심 특징**:
+![Sidecar mode의 개념도입니다. Istiod가 Envoy를 설정하고 proxy가 mesh 트래픽을 전달하며 구성된 관측 backend가 telemetry를 수집·조회합니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
 
-* Self-managed (직접 운영)
-* Kubernetes 네이티브 (CRD 기반)
-* 클라우드 중립적
-* 풍부한 기능 세트
-* Envoy Proxy 기반
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.html)
 
-### AWS VPC Lattice
+그림은 sidecar mode를 설명합니다. Resource 표시는 과거 예시 추정값이며 실측 default나 현재 용량 권고가 아닙니다. Kiali는 telemetry/backend를 조회하며 trace collector 자체가 아닙니다.
 
-**정의**: AWS가 제공하는 완전 관리형 애플리케이션 네트워킹 서비스로, VPC, 계정, 컴퓨팅 플랫폼 간 서비스 연결 및 보안을 간소화
+Ambient capture는 문서화된 Linux network namespace/iptables를 사용하며 eBPF capture 계층이 아닙니다. 핵심 ambient는 1.24에서 GA가 되었지만 개별 기능·multicluster 토폴로지는 상태가 다릅니다. Sidecar 제거, workload 등록과 waypoint 통과 강제는 별도 작업입니다. Namespace label 하나로 모든 workload를 안전하게 migration하거나 97–98% 절감을 보장할 수 없습니다.
 
-**핵심 특징**:
+### VPC Lattice
 
-* Fully managed (완전 관리형)
-* AWS 네이티브 통합
-* 서버리스 아키텍처
-* EKS, ECS, EC2, Lambda 지원
-* VPC/계정 간 투명한 연결
+VPC Lattice는 **service와 resource**를 위한 AWS 관리형 application networking입니다. Service 모델은 지원되는 IP/instance, Lambda, ALB target용 listener·rule·target group을 포함하며 ECS/EKS 통합이 해당 target을 관리합니다. Resource configuration/resource gateway는 TCP 연결 등을 위한 별도 private resource-access 모델입니다.
 
-### 빠른 비교표
+Service network는 논리적인 연결·접근 경계이며 sidecar나 Pod identity가 아닙니다. Client는 service-network VPC association 또는 service-network VPC endpoint를 사용할 수 있습니다. Endpoint 경로는 PrivateLink 기반이지만 모든 Lattice data path나 data plane 전체를 “AWS PrivateLink”로만 설명하면 부정확합니다.
 
-| 측면          | Istio         | VPC Lattice           |
-| ----------- | ------------- | --------------------- |
-| **배포 모델**   | Self-managed  | Fully managed         |
-| **플랫폼**     | Kubernetes    | EKS, ECS, EC2, Lambda |
-| **아키텍처**    | Sidecar Proxy | AWS 관리형               |
-| **설정 복잡도**  | 높음            | 낮음                    |
-| **기능 풍부도**  | ⭐⭐⭐⭐⭐         | ⭐⭐⭐                   |
-| **운영 오버헤드** | 높음            | 거의 없음                 |
-| **벤더 종속성**  | 낮음            | 높음 (AWS Only)         |
-| **비용 모델**   | 리소스 기반        | 사용량 기반                |
-| **학습 곡선**   | 가파름           | 완만함                   |
-| **멀티 클라우드** | ✅ 지원          | ❌ AWS Only            |
+VPC association과 endpoint association은 주소·연결 동작이 다릅니다. Service-network endpoint는 peering, Transit Gateway, Direct Connect, VPN을 통해 들어오는 지원 트래픽을 받을 수 있어 AWS 밖의 client도 접근할 수 있습니다. AWS service 자체는 AWS에서 운영되며 다른 cloud에 Lattice를 배포하는 것은 아닙니다.
 
-## 아키텍처 비교
+| 항목 | Istio | VPC Lattice |
+|---|---|---|
+| Data plane | Sidecar 또는 ambient component와 선택한 gateway | 관리형 service/resource networking과 구성된 target/endpoint |
+| Identity | Workload mesh identity와 앱/JWT 정책 | 활성화한 service IAM/SigV4 인가; resource 접근은 별도 제어 |
+| 운영 | Control/proxy lifecycle, certificate, 용량, policy와 telemetry | AWS가 service 운영; 사용자는 IAM, DNS, association, target, controller, quota와 앱 관리 |
+| 플랫폼 | 지원 Kubernetes/VM 배포와 mode별 요구사항 | 지원 AWS target type과 문서화된 client/network 경로 |
+| 비용 | 실제 infrastructure, telemetry, support와 엔지니어링 | 해당 service/resource/traffic 비용과 앱 infrastructure, log·엔지니어링 |
 
-### Istio 아키텍처
+“필수 sidecar가 없음”은 배포 특성이며 latency, CPU, signer/controller 작업이나 전체 인프라 비용이 0이라는 증명이 아닙니다.
 
-![Kubernetes 클러스터 안에서 Istiod가 Envoy 사이드카에 xDS 설정을 배포하고, frontend와 backend 파드가 사이드카를 거쳐 mTLS로 통신하며 Prometheus·Jaeger·Kiali로 메트릭과 트레이스를 보내는 Istio 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
+## 트래픽 관리
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.html)
+### 가중치·조건 Routing
 
-**특징**:
-
-* **Sidecar Pattern**: 모든 파드에 Envoy Proxy 주입
-* **리소스 오버헤드**: 파드당 50-150MB 메모리, 100-500m CPU
-* **데이터 경로**: App → Envoy → mTLS → Envoy → App
-* **설정**: Kubernetes CRD (VirtualService, DestinationRule 등)
-
-### VPC Lattice 아키텍처
-
-![사이드카 없는 EKS 파드, ECS 태스크, Lambda 함수, EC2 인스턴스가 VPC Lattice의 Service Network와 Service, Target Group을 거쳐 PrivateLink로 연결되는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.html)
-
-**특징**:
-
-* **Managed Service**: AWS가 네트워크 인프라 운영
-* **No Sidecar**: 애플리케이션 파드에 추가 컨테이너 없음
-* **데이터 경로**: App → AWS PrivateLink → VPC Lattice → Target
-* **설정**: AWS Console, CLI, CloudFormation, Terraform
-
-### 아키텍처 차이점 요약
-
-| 측면           | Istio                 | VPC Lattice     |
-| ------------ | --------------------- | --------------- |
-| **프록시 위치**   | 파드 내부 (Sidecar)       | AWS 관리형 (외부)    |
-| **메모리 오버헤드** | 파드당 50-150MB          | 0MB (관리형)       |
-| **CPU 오버헤드** | 파드당 100-500m          | 0 (관리형)         |
-| **컨트롤 플레인**  | Self-managed (Istiod) | AWS 관리형         |
-| **데이터 플레인**  | Envoy Proxy           | AWS PrivateLink |
-| **설정 인터페이스** | Kubernetes CRD        | AWS API         |
-| **업그레이드**    | 수동 (Canary 가능)        | 자동 (AWS 관리)     |
-
-## 트래픽 관리 기능
-
-### 트래픽 분할 (Canary 배포)
-
-#### Istio
+Istio는 HTTP 요청 속성을 일치시켜 label subset으로 routing할 수 있습니다. `mesh-demo`에 backend Service와 v1/v2 workload가 준비되어야 합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: frontend
+  name: backend-canary
+  namespace: mesh-demo
 spec:
   hosts:
-  - frontend
+  - backend
   http:
   - match:
     - headers:
-        user-agent:
-          regex: ".*Mobile.*"
+        x-release:
+          exact: canary
     route:
     - destination:
-        host: frontend
+        host: backend
+        port:
+          number: 8080
         subset: v2
       weight: 100
+    retries:
+      attempts: 0
   - route:
     - destination:
-        host: frontend
+        host: backend
+        port:
+          number: 8080
         subset: v1
       weight: 90
     - destination:
-        host: frontend
+        host: backend
+        port:
+          number: 8080
         subset: v2
       weight: 10
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: frontend
+  name: backend
+  namespace: mesh-demo
 spec:
-  host: frontend
+  host: backend
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
   subsets:
   - name: v1
     labels:
@@ -151,299 +127,231 @@ spec:
       version: v2
 ```
 
-**기능**:
+Route는 mesh retry를 명시적으로 비활성화합니다. Resource 제한값은 예시이며 `maxRequestsPerConnection: 2`는 재사용을 의도적으로 제한하므로 보편적인 성능 권고가 아닙니다. Outlier detection은 proxy가 upstream endpoint에 대해 판단합니다. minHealthPercent는 panic/fail-open 임계값이며 그 비율만큼 반드시 정상 endpoint가 남는다는 보장이 아닙니다.
 
-* Header, URL, Source 기반 라우팅
-* 세밀한 가중치 제어 (1% 단위)
-* 복잡한 조건 (AND, OR, Regex)
-* 동적 로드 밸런싱 알고리즘
+Lattice HTTP/HTTPS listener rule은 method, header, path matching을 지원합니다. 다음 전체 **CreateRule input**은 누락된 service/name과 잘못된 pathMatch 예제를 바로잡습니다.
 
-#### VPC Lattice
-
-```yaml
-# AWS CLI로 가중치 기반 라우팅
-aws vpc-lattice create-rule \
-  --listener-identifier $LISTENER_ID \
-  --priority 10 \
-  --match '{
+```json
+{
+  "serviceIdentifier": "svc-0123456789abcdef0",
+  "listenerIdentifier": "listener-0123456789abcdef0",
+  "name": "api-canary",
+  "priority": 10,
+  "match": {
     "httpMatch": {
-      "pathMatch": {"prefix": "/api"}
+      "method": "GET",
+      "pathMatch": {
+        "caseSensitive": true,
+        "match": {
+          "prefix": "/api/v1/"
+        }
+      }
     }
-  }' \
-  --action '{
+  },
+  "action": {
     "forward": {
       "targetGroups": [
         {
-          "targetGroupIdentifier": "'$TG_V1'",
+          "targetGroupIdentifier": "tg-0123456789abcdef0",
           "weight": 90
         },
         {
-          "targetGroupIdentifier": "'$TG_V2'",
+          "targetGroupIdentifier": "tg-0123456789abcdef1",
           "weight": 10
         }
       ]
     }
-  }'
+  }
+}
 ```
 
-**기능**:
+rule.json으로 저장하고 기존 service/listener 및 eligible target group 두 개의 실제 ID로 바꿉니다. 생성 전에 name·priority가 사용 중이 아닌지 확인하세요.
 
-* Path, Header, Method 기반 라우팅
-* 가중치 기반 분할
-* 기본적인 조건
-* 라운드 로빈, 최소 연결 로드 밸런싱
+```bash
+AWS_REGION=us-east-1
+aws vpc-lattice create-rule --region "$AWS_REGION" --cli-input-json file://rule.json
+```
 
-**비교**:
+작은 priority 숫자가 먼저 평가됩니다. pathMatch.match.prefix의 중첩 형식이 필요합니다. 이 rule은 `/api/v1/` 아래 GET을 선택하며 모든 Istio match의 동등한 구현이나 인증 정책은 아닙니다. Weight는 version을 배포·확장하지 않습니다. 같은 rule/target을 AWS controller와 CLI 예제가 경쟁해서 관리하지 않도록 하세요.
 
-* **Istio**: 매우 세밀한 제어, 복잡한 시나리오 가능
-* **VPC Lattice**: 기본적인 기능, 간단한 사용
+Lattice는 round-robin target 선택을 문서화하며 target group 사이 weight와는 별개입니다. 이 API에는 기존 문서가 주장한 “least connections” 선택 항목이 없습니다.
 
-### 트래픽 미러링
+### Mirroring과 Fault
 
-#### Istio
+격리된 read-only mirror 실험에는 대안 VirtualService를 사용합니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: backend
+  name: backend-mirror
+  namespace: mesh-demo
 spec:
   hosts:
   - backend
   http:
-  - route:
+  - match:
+    - method:
+        exact: GET
+      uri:
+        prefix: /api/v1/
+    route:
     - destination:
         host: backend
+        port:
+          number: 8080
         subset: v1
       weight: 100
     mirror:
       host: backend
+      port:
+        number: 8080
       subset: v2
     mirrorPercentage:
-      value: 10.0  # v2로 10% 트래픽 복사
+      value: 10
+    retries:
+      attempts: 0
+  - route:
+    - destination:
+        host: backend
+        port:
+          number: 8080
+        subset: v1
+      weight: 100
+    retries:
+      attempts: 0
 ```
 
-**사용 사례**:
+일치하는 GET만 mirror하며 다른 요청은 mirror 없이 v1으로 갑니다. Shadow 응답은 주 client 응답이 아니지만 실제로 read-only가 아닌 endpoint라면 중복 요청에 부작용이 생길 수 있습니다. Destination version과 용량이 있어야 합니다.
 
-* 프로덕션 트래픽으로 새 버전 테스트
-* 성능 비교
-* 버그 검증
-
-#### VPC Lattice
-
-❌ **미지원**: VPC Lattice는 트래픽 미러링을 지원하지 않습니다.
-
-**대안**:
-
-* Application Load Balancer + Lambda@Edge
-* 별도의 로그 스트림 분석
-
-### Fault Injection
-
-#### Istio
+격리된 fault 실험에는 명시적인 요청 marker를 사용할 수 있습니다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: backend
+  name: backend-fault-lab
+  namespace: mesh-demo
 spec:
   hosts:
   - backend
   http:
-  - fault:
+  - match:
+    - method:
+        exact: GET
+      headers:
+        x-fault-lab:
+          exact: enabled
+    fault:
       delay:
         percentage:
-          value: 10.0
+          value: 10
         fixedDelay: 5s
       abort:
         percentage:
-          value: 5.0
+          value: 5
         httpStatus: 503
     route:
     - destination:
         host: backend
+        port:
+          number: 8080
+        subset: v1
+      weight: 100
+  - route:
+    - destination:
+        host: backend
+        port:
+          number: 8080
+        subset: v1
+      weight: 100
+    retries:
+      attempts: 0
 ```
 
-**기능**:
+Marker는 인가가 아니므로 test workload와 caller 범위를 제한해야 합니다. 같은 route의 fault injection과 retry/timeout 동작을 서로 바꿔 해석하지 마세요. 어느 proxy가 오류를 만드는지 확인하고 raw 결과와 retry 후 결과를 분리해 측정합니다.
 
-* 지연 주입 (Delay)
-* 오류 주입 (Abort)
-* 백분율 기반 제어
-* Chaos Engineering 지원
+검증한 Lattice RuleAction API는 forwarding 또는 fixed response를 제공하며 Istio와 동등한 mirror·백분율 delay/abort action은 없습니다. Fixed response rule이 백분율 fault injection은 아닙니다. 앱/proxy 시험 방법이나 지원되는 AWS FIS action에는 별도 설계가 필요합니다. Lambda@Edge는 CloudFront event에서 실행되므로 “ALB + Lambda@Edge”는 내장 mirror 기능이 아닙니다.
 
-#### VPC Lattice
+### Health Check와 실패 동작
 
-❌ **미지원**: 내장 Fault Injection 기능 없음
+다음 **CreateTargetGroup input**은 지정한 VPC의 기존 non-meshed HTTP backend와 실제 `/health` endpoint를 가정합니다. 보안 예제의 STRICT Istio backend와 같은 대상이 아닙니다.
 
-**대안**:
-
-* 애플리케이션 레벨에서 구현
-* AWS FIS (Fault Injection Simulator) 사용
-
-### Circuit Breaking & Outlier Detection
-
-#### Istio
-
-```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: backend
-spec:
-  host: backend
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
-        http2MaxRequests: 100
-        maxRequestsPerConnection: 2
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 60s
-      maxEjectionPercent: 50
-      minHealthPercent: 50
-```
-
-#### VPC Lattice
-
-⚠️ **제한적 지원**: 기본적인 헬스체크만 제공
-
-```yaml
-# Target Group 헬스체크
-aws vpc-lattice create-target-group \
-  --name backend-tg \
-  --health-check '{
-    "enabled": true,
+```json
+{
+  "name": "backend-v1",
+  "type": "IP",
+  "config": {
+    "port": 8080,
     "protocol": "HTTP",
-    "path": "/health",
-    "intervalSeconds": 30,
-    "timeoutSeconds": 5,
-    "healthyThresholdCount": 2,
-    "unhealthyThresholdCount": 3
-  }'
+    "protocolVersion": "HTTP1",
+    "vpcIdentifier": "vpc-0123456789abcdef0",
+    "ipAddressType": "IPV4",
+    "healthCheck": {
+      "enabled": true,
+      "protocol": "HTTP",
+      "protocolVersion": "HTTP1",
+      "port": 8080,
+      "path": "/health",
+      "healthCheckIntervalSeconds": 30,
+      "healthCheckTimeoutSeconds": 5,
+      "healthyThresholdCount": 2,
+      "unhealthyThresholdCount": 3,
+      "matcher": {
+        "httpCode": "200"
+      }
+    }
+  }
+}
 ```
 
-**비교**:
+```bash
+aws vpc-lattice create-target-group --region "$AWS_REGION"   --cli-input-json file://target-group.json
+```
 
-* **Istio**: 세밀한 Circuit Breaking, 자동 Outlier Detection
-* **VPC Lattice**: 기본 헬스체크, 수동 제거
+파일에는 실제 값으로 바꾼 전체 input이 있어야 합니다. Health check는 config 안에 있으며 healthCheckIntervalSeconds·healthCheckTimeoutSeconds 필드를 사용합니다. 이 operation에는 최상위 --health-check가 없습니다. 생성 후 실제 지원 target을 등록하세요. EKS Pod IP lifecycle은 일반적으로 수동 고정 IP 대신 적절한 AWS Gateway API Controller가 관리해야 합니다.
 
-### 기능 비교표
+Lattice는 정상 target을 자동 사용하지만 group의 모든 target이 비정상이면 **fail open**하여 트래픽을 보냅니다. 수동 제거만 기다리는 동작이 아니며 health check가 앱 자체를 수리하지도 않습니다. Istio의 proxy별 connection-pool/outlier 제어와는 다른 메커니즘입니다.
 
-| 기능                    | Istio       | VPC Lattice | 승자    |
-| --------------------- | ----------- | ----------- | ----- |
-| **Canary 배포**         | ✅ 매우 세밀함    | ✅ 기본        | Istio |
-| **A/B 테스팅**           | ✅ Header 기반 | ⚠️ Path 기반만 | Istio |
-| **Traffic Mirroring** | ✅           | ❌           | Istio |
-| **Fault Injection**   | ✅           | ❌           | Istio |
-| **Circuit Breaking**  | ✅ 세밀함       | ⚠️ 기본       | Istio |
-| **Retry**             | ✅ 고급        | ✅ 기본        | Istio |
-| **Timeout**           | ✅ 세밀함       | ✅ 기본        | Istio |
-| **로드 밸런싱**            | ✅ 다양한 알고리즘  | ✅ 기본        | Istio |
+Service idleTimeoutSeconds는 60–600초로 설정할 수 있으며 per-route request timeout이나 retry budget과는 다릅니다. 일반적인 승자를 정하지 말고 선택한 HTTP, gRPC, TLS 경로의 connection/request 제한과 실패 동작을 검증하세요.
 
-**결론**: 트래픽 관리 측면에서 **Istio가 압도적 우위**
+## 보안과 Identity
 
-## 보안 모델
-
-### mTLS 구성
-
-#### Istio
+### Istio: 필요한 조건을 함께 요구
 
 ```yaml
-# 전역 mTLS STRICT 모드
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT
----
-# 네임스페이스별 예외
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: legacy-permissive
-  namespace: legacy
-spec:
-  mtls:
-    mode: PERMISSIVE
----
-# 서비스별 포트별 설정
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: backend
+  name: backend-strict
+  namespace: mesh-demo
 spec:
   selector:
     matchLabels:
       app: backend
   mtls:
     mode: STRICT
-  portLevelMtls:
-    8080:
-      mode: DISABLE  # Metrics 포트는 평문
-```
-
-**특징**:
-
-* 자동 인증서 발급 및 갱신
-* 워크로드 단위 인증서
-* 15분마다 자동 갱신
-* SPIFFE 표준 준수
-* External CA 통합 (Cert-manager, Vault)
-
-#### VPC Lattice
-
-```yaml
-# TLS Listener 생성
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --protocol HTTPS \
-  --port 443 \
-  --default-action '{
-    "forward": {
-      "targetGroups": [{"targetGroupIdentifier": "'$TG_ID'"}]
-    }
-  }'
-
-# Auth Policy 적용
-aws vpc-lattice create-auth-policy \
-  --resource-identifier $SERVICE_ID \
-  --policy '{
-    "allowedPrincipals": [
-      "arn:aws:iam::123456789012:role/app-role"
-    ]
-  }'
-```
-
-**특징**:
-
-* AWS Certificate Manager (ACM) 통합
-* IAM 기반 인증
-* SigV4 서명
-* AWS PrivateLink 암호화
-
-**비교**:
-
-* **Istio**: 워크로드 간 자동 mTLS, 세밀한 제어
-* **VPC Lattice**: 클라이언트-서비스 TLS, IAM 통합
-
-### Authorization 정책
-
-#### Istio
-
-```yaml
-# L7 수준의 세밀한 Authorization
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: backend-jwt
+  namespace: mesh-demo
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  jwtRules:
+  - issuer: https://issuer.example.com
+    jwksUri: https://issuer.example.com/.well-known/jwks.json
+    audiences:
+    - api.example.com
+---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: backend-policy
+  name: backend-access
+  namespace: mesh-demo
 spec:
   selector:
     matchLabels:
@@ -452,73 +360,81 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/frontend/sa/frontend"]
-        namespaces: ["frontend"]
+        principals:
+        - cluster.local/ns/mesh-demo/sa/frontend
+        requestPrincipals:
+        - https://issuer.example.com/*
     to:
     - operation:
-        methods: ["GET", "POST"]
-        paths: ["/api/v1/*"]
-        ports: ["8080"]
+        methods:
+        - GET
+        - POST
+        paths:
+        - /api/v1/*
+        ports:
+        - '8080'
     when:
-    - key: request.headers[user-role]
-      values: ["admin", "poweruser"]
-    - key: source.ip
-      notValues: ["10.0.0.0/8"]
----
-# JWT 인증
-apiVersion: security.istio.io/v1
-kind: RequestAuthentication
-metadata:
-  name: jwt-auth
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  jwtRules:
-  - issuer: "https://auth.example.com"
-    jwksUri: "https://auth.example.com/.well-known/jwks.json"
-    audiences:
-    - "api.example.com"
----
-# JWT 기반 Authorization
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: jwt-policy
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  - when:
     - key: request.auth.claims[role]
-      values: ["admin"]
+      values:
+      - admin
 ```
 
-#### VPC Lattice
+Issuer/JWKS/audience는 명시적 IdP placeholder이며 caller에는 실제 frontend ServiceAccount identity가 필요합니다. **같은 ALLOW rule**에서 mesh principal, 해당 issuer의 JWT principal, method/path/port와 admin claim을 함께 요구합니다. ALLOW policy를 나누면 OR로 평가되어 둘 다 요구하지 못합니다. RequestAuthentication만으로 JWT가 필수가 되지 않으며 raw user-role header도 인증된 identity가 아닙니다. 같은 workload에 다른 ALLOW policy가 별도 권한을 주는지도 검토해야 합니다.
+
+Certificate rotation은 issuer lifetime과 proxy/CA 설정에 따르며 보편적인 15분 갱신 주기는 없습니다. External CA는 실제 지원되는 issuer 경로로 통합해야 합니다. Port-level mTLS는 workload port 기준이고 mode별 지원도 다릅니다. 주 앱 port 8080을 plaintext “metrics 예외”로 두면 이 보안 조건을 깨뜨릴 수 있습니다.
+
+### Lattice: TLS 경계와 Service 인가
+
+다음 **CreateListener input**은 준비된 기존 service와 target group에 HTTPS 종료점을 만듭니다.
 
 ```json
-// Auth Policy (IAM 기반)
+{
+  "serviceIdentifier": "svc-0123456789abcdef0",
+  "name": "https-main",
+  "protocol": "HTTPS",
+  "port": 443,
+  "defaultAction": {
+    "forward": {
+      "targetGroups": [
+        {
+          "targetGroupIdentifier": "tg-0123456789abcdef0",
+          "weight": 100
+        }
+      ]
+    }
+  }
+}
+```
+
+```bash
+aws vpc-lattice create-listener --region "$AWS_REGION" --cli-input-json file://listener.json
+```
+
+생성된 service DNS 이름에는 AWS 관리 certificate를 사용하며 custom domain에는 문서화된 certificate/domain 설정이 필요합니다. Frontend HTTPS가 backend HTTPS나 Istio SPIFFE mTLS를 뜻하지는 않습니다. Target-group protocol은 별도 선택입니다. Lattice가 target에 HTTPS 연결을 만들 때는 문서상 **target certificate를 검증하지 않으므로** 앱 계층의 peer-certificate 인증으로 설명하면 안 됩니다.
+
+TLS_PASSTHROUGH는 Lattice에서 종료하지 않고 앱 자체 TLS/mTLS를 전달할 수 있습니다. Custom-domain/SNI와 TCP target 설정이 필요하고 default forwarding rule만 허용하며 연결은 10분으로 제한됩니다. Auth policy는 anonymous principal만 지원하며 Lambda target은 지원하지 않습니다. 암호화된 stream에 HTTP IAM/header policy 검사를 수행하지는 않습니다.
+
+### 올바른 IAM Auth Policy
+
+vpc-lattice-svcs:Invoke, service ARN+path와 명시적인 role을 사용합니다. Service/network auth policy 예제입니다.
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::123456789012:role/frontend-role"
+        "AWS": "arn:aws:iam::123456789012:role/LatticeClient"
       },
-      "Action": "vpc-lattice:Invoke",
-      "Resource": "arn:aws:vpc-lattice:region:account:service/svc-xxx"
-    },
-    {
-      "Effect": "Deny",
-      "Principal": "*",
-      "Action": "vpc-lattice:Invoke",
-      "Resource": "*",
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-0123456789abcdef0/api/v1/*",
       "Condition": {
-        "IpAddress": {
-          "aws:SourceIp": ["10.0.0.0/8"]
+        "StringEquals": {
+          "vpc-lattice-svcs:RequestMethod": [
+            "GET",
+            "POST"
+          ]
         }
       }
     }
@@ -526,1473 +442,343 @@ spec:
 }
 ```
 
-**비교**:
-
-| 기능                    | Istio                     | VPC Lattice      | 승자          |
-| --------------------- | ------------------------- | ---------------- | ----------- |
-| **인증 메커니즘**           | mTLS, JWT, Custom         | IAM, SigV4       | Istio (유연성) |
-| **Authorization 세분화** | L7 (Method, Path, Header) | L4 (Service 레벨)  | Istio       |
-| **Workload Identity** | SPIFFE ID                 | IAM Role         | 동등          |
-| **동적 정책**             | ✅ 실시간 적용                  | ⚠️ 전파 시간 필요      | Istio       |
-| **멀티 테넌시**            | ✅ Namespace 격리            | ✅ VPC/Account 격리 | 동등          |
-
-### 보안 기능 종합 비교
-
-![Istio Security의 자동 인증서 mTLS·L7 Authorization·JWT 인증·External CA·EnvoyFilter Rate Limiting과 VPC Lattice Security의 ACM 통합 TLS·IAM 기반 인증·SigV4·AWS PrivateLink·WAF 통합을 두 영역으로 나누어 나란히 비교하는 보안 기능 종합 비교를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-2.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-2.html)
-
-**결론**: 보안 측면에서 **Istio가 더 세밀한 제어 제공**, VPC Lattice는 AWS IAM 통합에서 강점
-
-## 관찰성 및 모니터링
-
-### Metrics 수집
-
-#### Istio
-
-```yaml
-# Prometheus 메트릭 (50+ 기본 제공)
-# 요청 메트릭
-istio_requests_total{
-  destination_service="backend",
-  response_code="200",
-  source_app="frontend"
-}
-
-# Latency 메트릭 (히스토그램)
-istio_request_duration_milliseconds_bucket{
-  destination_service="backend",
-  le="100"
-}
-
-# Connection Pool 메트릭
-envoy_cluster_upstream_cx_active{
-  cluster_name="outbound|8080||backend"
-}
-
-# Circuit Breaker 메트릭
-envoy_cluster_outlier_detection_ejections_active
-
-# Custom Metrics (Telemetry API)
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: custom-metrics
-spec:
-  metrics:
-  - providers:
-    - name: prometheus
-    dimensions:
-      request_method:
-        value: request.method
-      custom_header:
-        value: request.headers['x-custom-header'] | ''
-```
-
-**특징**:
-
-* 50+ 기본 메트릭
-* Prometheus 형식
-* OpenTelemetry 통합
-* 커스텀 메트릭 추가 가능
-* Exemplar 지원 (메트릭-트레이스 연결)
-
-#### VPC Lattice
-
-```bash
-# CloudWatch 메트릭
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/VPCLattice \
-  --metric-name RequestCount \
-  --dimensions Name=ServiceName,Value=backend \
-  --start-time 2025-01-01T00:00:00Z \
-  --end-time 2025-01-01T23:59:59Z \
-  --period 300 \
-  --statistics Sum
-```
-
-**기본 메트릭**:
-
-* `RequestCount`: 요청 수
-* `ActiveConnectionCount`: 활성 연결 수
-* `HealthyTargetCount`: 정상 타겟 수
-* `UnhealthyTargetCount`: 비정상 타겟 수
-* `TargetResponseTime`: 응답 시간
-* `HTTPCode_Target_4XX_Count`: 4xx 에러
-* `HTTPCode_Target_5XX_Count`: 5xx 에러
-
-**특징**:
-
-* CloudWatch 통합
-* 기본 메트릭만 제공
-* 커스텀 메트릭 불가
-* 1분 또는 5분 세분화
-
-### Distributed Tracing
-
-#### Istio
-
-```yaml
-# Telemetry API로 트레이싱 설정
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: tracing
-  namespace: istio-system
-spec:
-  tracing:
-  - providers:
-    - name: jaeger
-    randomSamplingPercentage: 10.0
-    customTags:
-      environment:
-        literal:
-          value: "production"
-      user_id:
-        header:
-          name: "x-user-id"
----
-# MeshConfig에서 글로벌 설정
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 10.0
-        zipkin:
-          address: jaeger-collector.observability:9411
-```
-
-**지원 백엔드**:
-
-* Jaeger ✅
-* Zipkin ✅
-* Tempo ✅
-* AWS X-Ray ✅
-* Datadog APM ✅
-* OpenTelemetry Collector ✅
-
-**특징**:
-
-* W3C Trace Context 표준
-* 자동 Span 생성
-* 커스텀 태그 추가
-* Sampling 제어
-* Baggage 전파
-
-#### VPC Lattice
-
-```bash
-# Access Log를 S3로 전송
-aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:s3:::lattice-logs
-
-# CloudWatch Logs로 전송
-aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:logs:region:account:log-group:/aws/vpclattice
-```
-
-**액세스 로그 형식** (JSON):
+실제 ARN으로 바꾼 auth policy를 auth-policy.json에 저장합니다. Caller role에는 대응하는 identity-based 권한도 별도로 필요합니다.
 
 ```json
 {
-  "timestamp": "2025-01-15T12:34:56.789Z",
-  "serviceNetworkArn": "arn:aws:vpc-lattice:...",
-  "serviceArn": "arn:aws:vpc-lattice:...",
-  "requestMethod": "GET",
-  "requestPath": "/api/users",
-  "requestProtocol": "HTTP/1.1",
-  "responseCode": 200,
-  "responseCodeDetails": "OK",
-  "requestHeaders": {},
-  "sourceVpcArn": "arn:aws:ec2:...",
-  "targetGroupArn": "arn:aws:vpc-lattice:...",
-  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-0123456789abcdef0/api/v1/*",
+      "Condition": {
+        "StringEquals": {
+          "vpc-lattice-svcs:RequestMethod": [
+            "GET",
+            "POST"
+          ]
+        }
+      }
+    }
+  ]
 }
 ```
 
-**특징**:
+예시 ARN을 바꾸고 활성화한 모든 service-network·service auth policy가 요청을 허용하는지 확인합니다. 어떤 policy의 explicit deny도 우선합니다. AWS_IAM은 평가를 활성화하며 authType NONE일 때 붙인 policy는 inactive입니다. Wildcard Principal과 SourceVpc만으로 anonymous traffic을 허용할 수 있으므로 IAM 인증의 증명이 아닙니다.
 
-* W3C Trace Context 헤더 (`traceparent`) 지원
-* S3 또는 CloudWatch Logs로 전송
-* AWS X-Ray 통합 가능 (애플리케이션 계측 필요)
-* 자동 트레이싱 없음 (수동 계측)
+Operation은 **PutAuthPolicy**입니다. Newline 없는 compact policy string을 전체 CLI input 안에 넣습니다.
 
-**비교**:
+```bash
+: "${SERVICE_ID:?Set the actual service ID}"
+jq -n --arg resource "$SERVICE_ID" --slurpfile policy auth-policy.json   '{resourceIdentifier:$resource, policy:($policy[0] | tojson)}' > put-auth-policy.json
+aws vpc-lattice put-auth-policy --region "$AWS_REGION"   --cli-input-json file://put-auth-policy.json
+```
 
-* **Istio**: 자동 트레이싱, 모든 백엔드 지원, 세밀한 제어
-* **VPC Lattice**: 액세스 로그 기반, X-Ray 수동 통합 필요
+존재하지 않는 create-auth-policy/allowedPrincipals 문법을 대체합니다. 설정을 적용하는 management role과 service를 호출하는 workload role은 다릅니다. 앱 또는 지원되는 signer가 실제 요청을 workload credential로 SigV4 서명해야 하며 TLS 설정만으로 서명이 만들어지지 않습니다. 전달 중 서명된 요청 요소를 바꾸면 서명이 무효화될 수 있으므로 보존하거나 의도한 변환 이후 서명해야 합니다.
 
-### 시각화 대시보드
+Lattice 인가는 L4/service 이름으로만 제한되지 않습니다. Principal/VPC/service context 외에 method, path, header, query string 조건도 문서화되어 있으며 protocol·anonymous caller별 사용 가능 여부가 다릅니다. 이 service auth policy는 service network의 resource configuration을 보호하지 않습니다.
 
-#### Istio + Kiali
+현재 WAF AssociateWebACL resource 목록에는 Lattice service/network가 없습니다. 지원되는 WAF component를 별도 경로에 구성할 수는 있지만 기존 그림의 직접 “Lattice WAF 통합” 주장은 근거가 없습니다. IAM, WAF, network isolation과 앱 인가는 서로 다른 제어입니다.
+
+
+## 관측성
+
+### Istio Metric과 Trace
+
+실제 metric family·label과 reporter 하나를 사용합니다. 예시 backend의 총 RPS, 5xx/zero-status 비율, 밀리초 단위 p95는 다음과 같이 별도로 조회합니다.
+
+```promql
+sum(rate(istio_requests_total{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo"}[5m]))
+
+(sum(rate(istio_requests_total{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo",response_code=~"5..|0"}[5m])) or vector(0))
+/
+sum(rate(istio_requests_total{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo"}[5m]))
+
+histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo"}[5m])))
+```
+
+분자 fallback은 실제 트래픽이 있을 때 5xx series가 없는 경우를 처리합니다. 분모 부재는 부재로 남으며 idle traffic이 정상의 증거가 되지 않습니다. 실제 label·scrape 범위를 확인하세요. Connection/outlier gauge·counter는 별도 Envoy metric이며 고정된 “기본 metric 50개”나 보편적인 cache/retry 의미를 만들어 쓰면 안 됩니다.
+
+현재 Telemetry는 metrics overrides/tagOverrides와 선언된 tracing provider를 사용합니다.
 
 ```yaml
-apiVersion: kiali.io/v1alpha1
-kind: Kiali
-metadata:
-  name: kiali
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
 spec:
-  deployment:
-    accessible_namespaces: ["**"]
-  external_services:
-    prometheus:
-      url: http://prometheus:9090
-    grafana:
-      enabled: true
-      url: http://grafana:3000
-    tracing:
-      enabled: true
-      url: http://jaeger-query:16686
-```
-
-**기능**:
-
-* 실시간 서비스 토폴로지 그래프
-* 트래픽 흐름 시각화
-* 에러율, 레이턴시 표시
-* Istio 설정 검증
-* 분산 추적 통합
-
-#### VPC Lattice
-
-* **AWS Console**: 기본 메트릭 및 로그 뷰
-* **CloudWatch Dashboard**: 커스텀 대시보드 생성
-* **CloudWatch ServiceLens**: X-Ray와 연동 시 서비스 맵
-
-**비교**:
-
-* **Istio**: 전용 시각화 도구 (Kiali), 실시간 토폴로지
-* **VPC Lattice**: CloudWatch 기반, 기본적인 시각화
-
-### 관찰성 종합 비교
-
-| 기능                      | Istio           | VPC Lattice | 승자    |
-| ----------------------- | --------------- | ----------- | ----- |
-| **Metrics**             | 50+ 메트릭         | \~10 메트릭    | Istio |
-| **Custom Metrics**      | ✅ Telemetry API | ❌           | Istio |
-| **Distributed Tracing** | ✅ 자동            | ⚠️ 수동 계측    | Istio |
-| **Tracing Backends**    | 6+              | X-Ray만      | Istio |
-| **Access Logs**         | ✅ 매우 상세함        | ✅ 기본        | Istio |
-| **시각화**                 | Kiali, Grafana  | CloudWatch  | Istio |
-| **실시간 관찰**              | ✅               | ⚠️ 제한적      | Istio |
-| **Exemplars**           | ✅               | ❌           | Istio |
-
-**결론**: 관찰성 측면에서 **Istio가 압도적 우위**
-
-## 운영 복잡도
-
-### Istio 운영의 실제 어려움
-
-Istio는 강력한 기능을 제공하지만, 프로덕션 환경에서 운영하는 것은 상당한 도전 과제입니다.
-
-#### 주요 운영 과제
-
-![사이드카 관리, 업그레이드 복잡도, 리소스 오버헤드, 트러블슈팅, 설정 검증, 인증서 관리라는 여섯 운영 과제가 운영 비용 증가, 장애 위험 증가, 배포 시간 증가로 이어지는 인과관계를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.html)
-
-### 설치 및 초기 설정
-
-#### Istio
-
-```bash
-# 1. Istioctl 설치
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-1.24.0
-export PATH=$PWD/bin:$PATH
-
-# 2. Istio 설치 (프로덕션 프로필)
-istioctl install --set profile=production
-
-# 3. Namespace에 Sidecar 주입 활성화
-kubectl label namespace default istio.io/injection=enabled
-
-# 4. 게이트웨이 배포
-kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
-
-# 5. 관찰성 도구 설치
-kubectl apply -f samples/addons/prometheus.yaml
-kubectl apply -f samples/addons/grafana.yaml
-kubectl apply -f samples/addons/jaeger.yaml
-kubectl apply -f samples/addons/kiali.yaml
-
-# 6. 설정 검증
-istioctl analyze
-```
-
-**시간**: 30-60분 (설정 포함) **복잡도**: ⭐⭐⭐⭐ (높음)
-
-**초기 설정 과제**:
-
-* **CRD 이해**: 10+ 종류의 Istio CRD 학습 필요 (VirtualService, DestinationRule, Gateway, PeerAuthentication, AuthorizationPolicy 등)
-* **프로필 선택**: 6가지 설치 프로필 (default, demo, minimal, remote, empty, preview) 중 적합한 것 선택
-* **리소스 할당**: Control Plane 및 Sidecar의 적절한 리소스 할당
-* **멀티 테넌시**: 네임스페이스 격리 및 정책 설계
-
-#### VPC Lattice
-
-```bash
-# 1. Service Network 생성
-SERVICE_NETWORK_ID=$(aws vpc-lattice create-service-network \
-  --name production-network \
-  --auth-type AWS_IAM \
-  --query 'id' --output text)
-
-# 2. VPC 연결
-aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --vpc-identifier vpc-xxx \
-  --security-group-ids sg-xxx
-
-# 3. Service 생성
-SERVICE_ID=$(aws vpc-lattice create-service \
-  --name backend-service \
-  --auth-type AWS_IAM \
-  --query 'id' --output text)
-
-# 4. Service를 Network에 연결
-aws vpc-lattice create-service-network-service-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --service-identifier $SERVICE_ID
-
-# 5. Target Group 생성
-TG_ID=$(aws vpc-lattice create-target-group \
-  --name backend-tg \
-  --type IP \
-  --config '{
-    "port": 8080,
-    "protocol": "HTTP",
-    "vpcIdentifier": "vpc-xxx"
-  }' \
-  --query 'id' --output text)
-
-# 6. Target 등록
-aws vpc-lattice register-targets \
-  --target-group-identifier $TG_ID \
-  --targets id=10.0.1.10,port=8080
-
-# 7. Listener 생성
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --protocol HTTP \
-  --port 80 \
-  --default-action '{
-    "forward": {
-      "targetGroups": [{"targetGroupIdentifier": "'$TG_ID'"}]
-    }
-  }'
-```
-
-**시간**: 10-20분 **복잡도**: ⭐⭐ (중간)
-
-### 업그레이드: Istio의 가장 큰 과제
-
-#### Istio 업그레이드의 복잡성
-
-Istio 업그레이드는 프로덕션 환경에서 가장 위험하고 복잡한 작업 중 하나입니다.
-
-![새 Control Plane Revision 설치, 두 버전 동시 실행, 네임스페이스별 파드 재시작과 트래픽 검증을 거쳐 모두 완료되면 정리하고 문제가 있으면 롤백하는 Istio 업그레이드 절차를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-4.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-4.html)
-
-#### Istio Revision 기반 Canary 업그레이드
-
-**업그레이드 아키텍처**:
-
-![기존 Istiod 1.23.0과 새 Istiod 1.24.0이 각각 production, staging 네임스페이스 파드에 xDS를 배포하며 동시에 실행되고, 순차 전환 단계와 리소스·연결 끊김·설정 호환성 리스크를 함께 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-5.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-5.html)
-
-**전체 프로세스** (프로덕션 환경 기준):
-
-```bash
-# ============================================
-# Phase 1: 사전 준비 (1-2시간)
-# ============================================
-
-# 1. 현재 버전 확인
-istioctl version
-
-# 2. 백업 생성
-kubectl get all -n istio-system -o yaml > istio-backup-$(date +%Y%m%d).yaml
-kubectl get virtualservices,destinationrules,gateways -A -o yaml > istio-configs-backup-$(date +%Y%m%d).yaml
-
-# 3. 릴리스 노트 확인
-curl -sL https://istio.io/latest/news/releases/1.24.x/announcing-1.24/ | grep -A 20 "Breaking Changes"
-
-# 4. 호환성 확인
-istioctl experimental precheck
-
-# ============================================
-# Phase 2: 새 버전 설치 (30분)
-# ============================================
-
-# 5. 새 Revision으로 Control Plane 설치
-istioctl install --set profile=production --revision=1-24-0 --skip-confirmation
-
-# 6. 설치 확인
-kubectl get pods -n istio-system
-# 출력 예시:
-# istiod-1-23-0-xxx   1/1     Running   (기존 버전)
-# istiod-1-24-0-xxx   1/1     Running   (새 버전)
-
-# 7. Webhook 확인
-kubectl get mutatingwebhookconfiguration
-# istio-sidecar-injector-1-23-0
-# istio-sidecar-injector-1-24-0  (새로 생성됨)
-
-# ============================================
-# Phase 3: Canary 전환 (네임스페이스별 2-3시간)
-# ============================================
-
-# 8. 첫 번째 네임스페이스 (dev 또는 staging)
-kubectl label namespace dev istio.io/rev=1-24-0 --overwrite
-kubectl label namespace dev istio-injection- # 기존 레이블 제거
-
-# 9. 파드 재시작 (롤링 재시작)
-kubectl rollout restart deployment -n dev
-
-# 10. Sidecar 버전 확인
-kubectl get pods -n dev -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}'
-
-# 11. 트래픽 검증 (매우 중요!)
-kubectl exec -n dev deploy/webapp -c webapp -- curl -s http://backend:8080/health
-istioctl proxy-status | grep "1-24-0"
-
-# 12. 메트릭 확인
-kubectl port-forward -n istio-system svc/prometheus 9090:9090
-# Prometheus에서 확인:
-# - istio_requests_total
-# - istio_request_duration_milliseconds
-# - pilot_xds_pushes (Control Plane 부하)
-
-# 13. 문제 없으면 다음 네임스페이스로 진행
-kubectl label namespace staging istio.io/rev=1-24-0 --overwrite
-kubectl rollout restart deployment -n staging
-
-# 14. 프로덕션 네임스페이스 (가장 신중하게!)
-# 트래픽이 적은 시간대 선택
-kubectl label namespace production istio.io/rev=1-24-0 --overwrite
-kubectl rollout restart deployment -n production
-
-# 15. 프로덕션 검증 (30분-1시간)
-# - 에러율 확인
-# - Latency 확인
-# - Envoy 설정 확인
-istioctl proxy-config cluster <pod-name> -n production
-
-# ============================================
-# Phase 4: 정리 (1시간)
-# ============================================
-
-# 16. 모든 네임스페이스가 새 버전으로 전환되었는지 확인
-kubectl get namespace -L istio.io/rev
-
-# 17. 이전 버전 제거 (주의: 롤백 불가능!)
-istioctl uninstall --revision 1-23-0 --skip-confirmation
-
-# 18. Webhook 정리
-kubectl delete mutatingwebhookconfiguration istio-sidecar-injector-1-23-0
-kubectl delete validatingwebhookconfiguration istio-validator-1-23-0-istio-system
-
-# 19. 최종 검증
-istioctl version
-kubectl get pods -n istio-system
-```
-
-**전체 소요 시간**: **6-10시간** (네임스페이스 수에 따라 증가)
-
-**업그레이드 중 발생 가능한 문제**:
-
-| 문제                       | 증상                | 해결 방법                        | 다운타임    |
-| ------------------------ | ----------------- | ---------------------------- | ------- |
-| **Sidecar 주입 실패**        | 새 파드가 시작되지 않음     | Webhook 설정 확인, Annotation 확인 | 5-15분   |
-| **Control Plane 리소스 부족** | Istiod OOMKilled  | 리소스 증가 후 재설치                 | 10-30분  |
-| **설정 호환성 문제**            | VirtualService 에러 | 호환되지 않는 설정 수정                | 15-60분  |
-| **Envoy 버전 불일치**         | 트래픽 실패            | 파드 강제 재시작                    | 5-20분   |
-| **인증서 갱신 실패**            | mTLS 연결 실패        | CA 재발급                       | 30-120분 |
-
-**롤백 시나리오**:
-
-```bash
-# 긴급 롤백 (문제 발생 시)
-# 1. 문제가 있는 네임스페이스를 이전 버전으로 되돌림
-kubectl label namespace production istio.io/rev=1-23-0 --overwrite
-kubectl rollout restart deployment -n production
-
-# 2. 새 버전 Control Plane 제거
-istioctl uninstall --revision 1-24-0
-
-# 3. 검증
-istioctl proxy-status
-```
-
-**업그레이드 복잡도 비교**:
-
-![Istio 업그레이드는 사전 준비, Control Plane 설치, Canary 전환, 검증, 정리를 수동으로 거쳐 총 6-10시간이 걸리지만 VPC Lattice는 AWS가 자동으로 업그레이드해 사용자 작업과 다운타임 없이 총 0시간이 걸린다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-6.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-6.html)
-
-**주요 과제**:
-
-* ✅ **장점**: Zero-downtime 가능, 점진적 롤아웃, 롤백 가능
-* ❌ **단점**:
-  * 매우 복잡한 수동 프로세스
-  * 전문 지식 필요
-  * 6-10시간의 작업 시간
-  * 모든 파드 재시작 필요 (워크로드 영향)
-  * 두 버전의 Control Plane 동시 실행 (리소스 2배)
-
-#### VPC Lattice
-
-**자동 업그레이드**: AWS가 관리형 서비스 업데이트
-
-**사용자 작업**: 없음
-
-### Sidecar 오버헤드: 숨겨진 비용
-
-#### Sidecar 모델의 문제점
-
-![Istio 없이는 애플리케이션 컨테이너만 필요하지만 Envoy 사이드카를 붙이면 리소스 2배 증가, 파드 시작 시간 증가, 네트워크 홉 지연, 트러블슈팅 복잡화라는 네 영향이 생긴다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-7.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-7.html)
-
-#### 실제 리소스 오버헤드
-
-**100 파드 환경에서의 영향**:
-
-| 항목               | Without Istio | With Istio       | 증가량    | 비용 영향     |
-| ---------------- | ------------- | ---------------- | ------ | --------- |
-| **CPU (총)**      | 10 vCPU       | 20 vCPU          | +100%  | +$120/월   |
-| **Memory (총)**   | 25GB          | 40GB             | +60%   | +$80/월    |
-| **파드 수**         | 100           | 200 (Sidecar 포함) | +100%  | 관리 복잡도 증가 |
-| **네트워크 Latency** | 1ms           | 2-3ms            | +1-2ms | 사용자 경험 영향 |
-| **파드 시작 시간**     | 10초           | 15-20초           | +5-10초 | 배포 시간 증가  |
-
-**리소스 할당 계산**:
-
-```bash
-# 애플리케이션당 리소스
-Application: 100m CPU, 256MB Memory
-
-# Istio Sidecar 추가 리소스 (기본값)
-Envoy Sidecar:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 2000m  # 버스트 가능
-    memory: 1024Mi
-
-# 100개 파드 환경
-# 기존: 100 * 100m = 10 vCPU, 100 * 256MB = 25.6GB
-# Istio 추가: 100 * 100m = 10 vCPU, 100 * 128MB = 12.8GB
-# 총합: 20 vCPU, 38.4GB (약 2배 증가)
-```
-
-**비용 계산** (EKS m5.xlarge: 4 vCPU, 16GB, $140/월):
-
-```bash
-# Without Istio
-# 필요 노드: ceil(10 vCPU / 4) = 3 nodes
-# 비용: 3 * $140 = $420/월
-
-# With Istio
-# 필요 노드: ceil(20 vCPU / 4) = 5 nodes
-# 비용: 5 * $140 = $700/월
-
-# 추가 비용: $280/월 (약 67% 증가)
-```
-
-#### Ambient Mode: 차세대 아키텍처
-
-Istio 1.24+ 부터 **Ambient Mode**가 정식 지원되어, Sidecar 없이도 Service Mesh 기능을 사용할 수 있습니다.
-
-**아키텍처 비교 (상세)**:
-
-![Sidecar Mode는 파드마다 Envoy가 붙어 리소스가 파드 수만큼 늘어나지만, Ambient Mode는 노드당 하나의 ztunnel이 eBPF로 mTLS를 처리하고 필요할 때만 Waypoint를 거쳐 메모리 사용량이 97% 줄어든다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-8.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-8.html)
-
-**Ambient Mode 트래픽 흐름 (eBPF 기반)**:
-
-![애플리케이션 파드의 패킷을 eBPF가 ztunnel로 리다이렉트하며, mTLS·메트릭만 필요하면 곧바로 대상으로 보내지만 L7 처리가 필요하면 Waypoint Proxy를 거쳤다가 다시 대상으로 전송한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-9.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-9.html)
-
-**Ambient Mode 리소스 비교**:
-
-| 항목                | Sidecar Mode | Ambient Mode      | 절감률        |
-| ----------------- | ------------ | ----------------- | ---------- |
-| **파드당 메모리**       | +128MB       | 0MB               | 100%       |
-| **파드당 CPU**       | +100m        | 0m                | 100%       |
-| **노드당 ztunnel**   | N/A          | \~100MB, 50m      | 클러스터 전체 공유 |
-| **100 파드 환경 메모리** | +12.8GB      | \~300MB (3 nodes) | **97% 절감** |
-| **100 파드 환경 CPU** | +10 vCPU     | \~150m            | **98% 절감** |
-
-**Ambient Mode 설치**:
-
-```bash
-# 1. Ambient Mode로 Istio 설치
-istioctl install --set profile=ambient
-
-# 2. 네임스페이스에 Ambient 활성화
-kubectl label namespace default istio.io/dataplane-mode=ambient
-
-# 3. 파드 재시작 (Sidecar 없이 배포됨)
-kubectl rollout restart deployment -n default
-
-# 4. ztunnel 확인
-kubectl get pods -n istio-system | grep ztunnel
-# ztunnel-abc123   2/2     Running   (각 노드에 DaemonSet)
-
-# 5. L7 기능 필요 시 Waypoint Proxy 배포
-istioctl waypoint apply --namespace default
-```
-
-**Ambient Mode 제한사항** (2025년 1월 기준):
-
-* ⚠️ 일부 고급 기능 미지원 (예: TCP-based 프로토콜 제한)
-* ⚠️ Sidecar 대비 성능 차이 (eBPF 기반으로 개선 중)
-* ⚠️ 프로덕션 사용 시 충분한 테스트 필요
-
-### 일상 운영
-
-#### Istio
-
-**정기 작업**:
-
-* **Sidecar 버전 관리**: 파드 재시작 시 자동 주입, 버전 불일치 확인
-* **리소스 모니터링**: Envoy Proxy가 각 파드의 리소스 사용
-* **인증서 모니터링**: 자동 갱신되지만 확인 필요 (기본 15분마다)
-* **Istiod 상태 확인**: Control Plane 리소스 및 로그
-* **설정 드리프트 검증**: `istioctl analyze` 정기 실행
-* **Envoy 설정 동기화**: xDS 동기화 실패 시 수동 개입
-* **메트릭 및 로그 분석**: Prometheus, Jaeger, Kiali 모니터링
-
-**예상 시간**: **15-25시간/월** (규모에 따라 증가)
-
-#### VPC Lattice
-
-**정기 작업**:
-
-* CloudWatch 메트릭 모니터링
-* Access Log 분석
-* Target 헬스 확인
-
-**예상 시간**: 2-5시간/월
-
-### 트러블슈팅
-
-#### Istio 디버깅 복잡도
-
-**문제 발생 시 확인해야 할 레이어**:
-
-![503 오류 발생 시 Application, Sidecar, Control Plane, Network, CRD 설정 순으로 다섯 레이어를 점검하고 원인이 없으면 Support 티켓으로 넘어가는 Istio 트러블슈팅 절차를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.html)
-
-**실제 트러블슈팅 예시**:
-
-![엔지니어가 애플리케이션 로그부터 사이드카, Istiod, Service 상태까지 확인해 Backend 배포가 0개 레플리카로 스케일된 것을 발견하고 복구한 뒤 트래픽이 정상화되는 실제 디버깅 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-11.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-11.html)
-
-**Istio 트러블슈팅 명령어**:
-
-```bash
-# ============================================
-# 1. 전체 상태 확인 (첫 단계)
-# ============================================
-istioctl version              # 버전 확인
-istioctl proxy-status         # 모든 프록시 동기화 상태
-kubectl get pods -n istio-system  # Control Plane 상태
-
-# ============================================
-# 2. 프록시 설정 확인
-# ============================================
-# Routes (VirtualService 반영)
-istioctl proxy-config routes <pod> -n <namespace>
-
-# Clusters (DestinationRule 반영)
-istioctl proxy-config clusters <pod> -n <namespace>
-
-# Listeners (트래픽 리스닝)
-istioctl proxy-config listeners <pod> -n <namespace>
-
-# Endpoints (실제 파드 IP)
-istioctl proxy-config endpoints <pod> -n <namespace>
-
-# ============================================
-# 3. 로그 확인 (단계별)
-# ============================================
-# Application 로그
-kubectl logs <pod> -c <container>
-
-# Sidecar 로그
-kubectl logs <pod> -c istio-proxy
-
-# Istiod 로그
-kubectl logs -n istio-system deploy/istiod
-
-# 로그 레벨 동적 변경
-istioctl proxy-config log <pod> --level debug
-
-# ============================================
-# 4. Envoy 통계 (심화)
-# ============================================
-kubectl exec <pod> -c istio-proxy -- curl localhost:15000/stats/prometheus
-kubectl exec <pod> -c istio-proxy -- curl localhost:15000/clusters
-kubectl exec <pod> -c istio-proxy -- curl localhost:15000/config_dump
-
-# ============================================
-# 5. 설정 검증
-# ============================================
-istioctl analyze -n <namespace>  # 네임스페이스별
-istioctl analyze --all-namespaces  # 전체
-
-# ============================================
-# 6. 디버그 정보 수집 (Support 티켓용)
-# ============================================
-istioctl bug-report
-# 결과: istio-bug-report-YYYYMMDD-HHMMSS.tar.gz
-
-# ============================================
-# 7. 실시간 트래픽 확인 (tcpdump)
-# ============================================
-kubectl exec <pod> -c istio-proxy -- tcpdump -i any -w /tmp/capture.pcap
-```
-
-#### VPC Lattice 디버깅 간편성
-
-**문제 발생 시 확인 레이어 (3단계만)**:
-
-![VPC Lattice에서 트래픽 실패 시 Target 헬스, Service 설정, 네트워크라는 세 레이어만 확인하면 되고 CloudWatch·AWS Console·VPC Reachability Analyzer로 바로 해결한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-12.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-12.html)
-
-**실제 트러블슈팅 예시 (VPC Lattice)**:
-
-![엔지니어가 CloudWatch에서 UnhealthyTargetCount 이상을 확인하고 잘못된 Health Check 경로를 AWS Console에서 수정하면 Auto Healing이 Target을 정상화해 트래픽이 회복되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-13.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-13.html)
-
-**VPC Lattice 트러블슈팅 명령어** (간단함):
-
-```bash
-# ============================================
-# 1. Service 상태 확인
-# ============================================
-aws vpc-lattice get-service --service-identifier $SERVICE_ID
-aws vpc-lattice list-services --service-network-identifier $NETWORK_ID
-
-# ============================================
-# 2. Target 헬스 확인
-# ============================================
-aws vpc-lattice list-targets \
-  --target-group-identifier $TG_ID
-
-aws vpc-lattice get-target-group \
-  --target-group-identifier $TG_ID
-
-# ============================================
-# 3. Access Log 확인 (CloudWatch Insights)
-# ============================================
-# 최근 1시간 에러 확인
-aws logs start-query \
-  --log-group-name /aws/vpclattice \
-  --start-time $(date -d '1 hour ago' +%s) \
-  --end-time $(date +%s) \
-  --query-string 'fields @timestamp, requestMethod, requestPath, responseCode | filter responseCode >= 500'
-
-# 특정 서비스 로그만
-aws logs start-query \
-  --log-group-name /aws/vpclattice \
-  --query-string 'fields @timestamp, requestMethod, requestPath, responseCode | filter serviceArn = "arn:aws:vpc-lattice:..." | filter responseCode >= 500'
-
-# ============================================
-# 4. CloudWatch 메트릭 (GUI 권장)
-# ============================================
-# CLI로도 가능하지만 AWS Console Dashboard가 더 편리함
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/VPCLattice \
-  --metric-name HealthyTargetCount \
-  --dimensions Name=ServiceName,Value=backend \
-  --start-time 2025-01-01T00:00:00Z \
-  --end-time 2025-01-01T23:59:59Z \
-  --period 300 \
-  --statistics Average
-
-# ============================================
-# 5. VPC Reachability Analyzer (자동 진단)
-# ============================================
-aws ec2 create-network-insights-path \
-  --source <eni-id> \
-  --destination <service-id>
-
-aws ec2 start-network-insights-analysis \
-  --network-insights-path-id <path-id>
-```
-
-**트러블슈팅 복잡도 비교**:
-
-| 항목           | Istio                               | VPC Lattice                     | 차이                  |
-| ------------ | ----------------------------------- | ------------------------------- | ------------------- |
-| **확인 레이어**   | 5개 (App, Sidecar, CP, Network, CRD) | 2-3개 (Target, Service, Network) | **Lattice 2-3배 간단** |
-| **필요 도구**    | 10+ (istioctl, kubectl, curl 등)     | 2개 (AWS Console, CloudWatch)    | **Lattice 5배 적음**   |
-| **평균 해결 시간** | 30-60분                              | 5-15분                           | **Lattice 3-6배 빠름** |
-| **전문 지식**    | Kubernetes, Envoy, Istio CRD        | AWS 기본 지식                       | **Lattice 쉬움**      |
-| **CLI 명령어**  | 20+ 복잡한 명령어                         | 5개 간단한 명령어                      | **Lattice 4배 적음**   |
-| **디버깅 도구**   | istioctl, tcpdump, Envoy admin      | CloudWatch, AWS Console         | **Lattice GUI 중심**  |
-
-**비교**:
-
-* **Istio**: 5개 레이어, 10+ 도구, 30-60분 소요, 전문 지식 필수
-* **VPC Lattice**: 2-3개 레이어, AWS Console 중심, 5-15분 소요, 일반 AWS 지식
-
-### 운영 복잡도 종합 비교
-
-![Istio는 초기 설정부터 전문 인력까지 여섯 항목 모두 부담이 커 연간 약 3만1600달러로, VPC Lattice는 같은 여섯 항목이 모두 가벼워 연간 약 7608달러로 귀결된다는 것을 대조해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-14.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-14.html)
-
-#### 운영 복잡도 상세 비교
-
-| 작업             | Istio             | VPC Lattice         | 차이                    |
-| -------------- | ----------------- | ------------------- | --------------------- |
-| **초기 설정**      | 30-60분, CRD 학습 필요 | 10-20분, AWS Console | **Lattice 3배 빠름**     |
-| **업그레이드**      | 6-10시간, 수동 Canary | 자동, 0시간             | **Lattice 완전 자동**     |
-| **일상 운영**      | 15-25h/월          | 2-5h/월              | **Lattice 5-10배 적음**  |
-| **Sidecar 관리** | 모든 파드 재시작 필요      | N/A                 | **Lattice 관리 불필요**    |
-| **리소스 오버헤드**   | CPU/Memory 2배     | 0                   | **Lattice 무오버헤드**     |
-| **트러블슈팅**      | 복잡, 전문 도구 필요      | 간단, CloudWatch      | **Lattice 쉬움**        |
-| **학습 곡선**      | 가파름, 3-6개월        | 완만함, 1-2주           | **Lattice 10배 빠름**    |
-| **전문 인력**      | Service Mesh 전문가  | 일반 AWS 엔지니어         | **Lattice 인력 구하기 쉬움** |
-| **장애 위험**      | 높음, 복잡한 아키텍처      | 낮음, AWS 관리          | **Lattice 안정적**       |
-
-#### Istio 운영의 숨겨진 비용
-
-**기술 부채**:
-
-* 10+ 종류의 CRD 관리
-* VirtualService, DestinationRule 간 복잡한 의존성
-* Sidecar 버전 불일치 문제
-* Control Plane 업그레이드 실패 시 전체 메시 영향
-* 디버깅 시 Application + Envoy + Istiod 모두 확인 필요
-
-**조직 비용**:
-
-* Service Mesh 전문가 채용 어려움 (연봉 $150k+)
-* 온보딩 시간 3-6개월
-* 24/7 온콜 필요 (복잡한 장애 대응)
-* 정기 교육 및 훈련 필요
-
-**기회 비용**:
-
-* 운영에 투입되는 시간 = 기능 개발 불가
-* 업그레이드 중 다른 작업 중단
-* 장애 대응 시 전체 팀 동원
-
-**결론**: 운영 복잡도 측면에서 **VPC Lattice가 압도적 우위**
-
-**중요**: Istio를 선택한다면 반드시 고려해야 할 사항:
-
-* ✅ 전담 Platform 팀 구성 (최소 2-3명)
-* ✅ 충분한 예산 (인프라 + 인건비)
-* ✅ 장기적인 유지보수 계획
-* ✅ 정기적인 교육 및 업데이트
-* ✅ 24/7 지원 체계
-
-## 비용 분석
-
-### Istio 비용 모델 (상세)
-
-#### 인프라 비용 (100 파드 환경, EKS)
-
-**컴퓨팅 비용**:
-
-| 구성 요소                      | 리소스             | 노드 요구량                  | 비용 (월)     |
-| -------------------------- | --------------- | ----------------------- | ---------- |
-| **애플리케이션** (100 파드)        | 10 vCPU, 25GB   | 3 nodes (m5.xlarge)     | $420       |
-| **Envoy Sidecar** (100 파드) | 10 vCPU, 12.8GB | +2 nodes (Sidecar 오버헤드) | $280       |
-| **Istiod** (Control Plane) | 1 vCPU, 2GB     | 포함                      | -          |
-| **Prometheus**             | 2 vCPU, 8GB     | 추가 리소스                  | $80        |
-| **Jaeger**                 | 1 vCPU, 4GB     | 추가 리소스                  | $50        |
-| **Kiali**                  | 0.5 vCPU, 1GB   | 추가 리소스                  | $20        |
-| **총 컴퓨팅**                  |                 | **5 nodes**             | **$850/월** |
-
-**스토리지 비용**:
-
-* Prometheus 메트릭: 100GB SSD → $10/월
-* Jaeger 트레이스: 50GB SSD → $5/월
-* 총 스토리지: **$15/월**
-
-**네트워크 비용**:
-
-* 추가 Latency로 인한 처리 지연: \~$10/월
-
-**인프라 총계**: **$875/월** = **$10,500/년**
-
-#### 운영 비용 (연간)
-
-| 작업                | 시간 (연간)  | 시간당 비용 | 연간 비용         |
-| ----------------- | -------- | ------ | ------------- |
-| **초기 설정**         | 40h      | $100/h | $4,000        |
-| **일상 운영** (월 20h) | 240h     | $100/h | $24,000       |
-| **업그레이드** (분기별)   | 40h (4회) | $100/h | $4,000        |
-| **긴급 대응** (평균)    | 20h      | $150/h | $3,000        |
-| **교육 및 훈련**       | 40h      | $100/h | $4,000        |
-| **운영 총계**         |          |        | **$39,000/년** |
-
-#### Istio 총 비용
-
-**연간 총 비용**: **$10,500 + $39,000 = $49,500**
-
-**5년 TCO (Total Cost of Ownership)**:
-
-* 인프라: $10,500 × 5 = $52,500
-* 운영: $39,000 × 5 = $195,000
-* 예상치 못한 비용 (장애, 추가 인력 등): $50,000
-* **총 5년 비용**: **$297,500**
-
-#### Istio Ambient Mode 비용 (참고)
-
-Ambient Mode로 전환 시 절감 효과:
-
-| 항목                   | Sidecar Mode     | Ambient Mode      | 절감                    |
-| -------------------- | ---------------- | ----------------- | --------------------- |
-| **Envoy Sidecar 노드** | 2 nodes ($280/월) | 0 nodes           | $280/월                |
-| **ztunnel (노드당)**    | N/A              | \~$20/월 (3 nodes) | -                     |
-| **총 컴퓨팅**            | $850/월           | $590/월            | **$260/월 ($3,120/년)** |
-
-**Ambient Mode 연간 총 비용**: 약 **$46,380** (약 6% 절감)
-
-### VPC Lattice 비용 모델
-
-**사용량 기반 비용**:
-
-| 항목                  | 단가        | 예상 사용량     | 비용 (월)   |
-| ------------------- | --------- | ---------- | -------- |
-| **Service Network** | $0.025/시간 | 1개 × 730시간 | $18      |
-| **Service**         | $0.025/시간 | 5개 × 730시간 | $91      |
-| **데이터 처리**          | $0.010/GB | 10TB       | $100     |
-| **총계**              |           |            | **$209** |
-
-**운영 비용**:
-
-* 초기 설정: 10시간 × $100/h = $1,000
-* 월간 운영: 3시간 × $100/h = $300
-
-**연간 총 비용**: $209 × 12 + $300 × 12 + $1,000 = **$7,608**
-
-### 비용 비교 종합
-
-![Istio Sidecar는 연간 $49,500, Ambient Mode는 $46,380, VPC Lattice는 연간 $7,608이 들어 5년 TCO 기준 Istio $297,500 대 VPC Lattice $38,040으로 약 87% 비용 차이가 난다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-15.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-15.html)
-
-#### 비용 비교 상세표
-
-| 항목           | Istio Sidecar | Istio Ambient | VPC Lattice | 차이 (vs Istio) |
-| ------------ | ------------- | ------------- | ----------- | ------------- |
-| **인프라 (연간)** | $10,500       | $7,380        | $2,508      | **76-88% 저렴** |
-| **운영 (연간)**  | $39,000       | $39,000       | $5,100      | **87% 저렴**    |
-| **총 (연간)**   | **$49,500**   | **$46,380**   | **$7,608**  | **85% 저렴**    |
-| **5년 TCO**   | **$297,500**  | **$281,900**  | **$38,040** | **87% 저렴**    |
-
-#### 비용 증가 원인 분석
-
-**Istio가 비싼 이유**:
-
-1. **Sidecar 오버헤드**: 노드 40-60% 추가 필요 ($280/월)
-2. **운영 인력**: 전담 팀 필요 ($39,000/년)
-3. **업그레이드 비용**: 분기별 6-10시간 ($4,000/년)
-4. **관찰성 인프라**: Prometheus, Jaeger, Kiali ($150/월)
-5. **긴급 대응**: 복잡한 장애 대응 ($3,000/년)
-
-**VPC Lattice가 저렴한 이유**:
-
-1. **제로 오버헤드**: Sidecar 없음
-2. **완전 관리형**: 운영 인력 최소화
-3. **자동 업그레이드**: 사용자 작업 없음
-4. **통합 관찰성**: CloudWatch 기본 제공
-5. **안정적 운영**: 장애 대응 거의 없음
-
-**결론**: VPC Lattice가 **연간 약 $42,000, 5년간 약 $260,000 저렴**
-
-**주의**:
-
-* 이 비용은 100 파드 환경 기준입니다
-* 실제 비용은 워크로드 규모, 트래픽, 팀 규모에 따라 크게 달라집니다
-* Istio는 규모가 클수록 운영 비용 증가율이 높습니다
-* VPC Lattice는 사용량 기반이므로 트래픽에 비례합니다
-
-## 성능 비교
-
-### Latency 오버헤드
-
-**테스트 환경**: 2-node EKS, m5.xlarge, 1000 RPS
-
-| 시나리오    | Baseline | Istio          | VPC Lattice    |
-| ------- | -------- | -------------- | -------------- |
-| **P50** | 1.0ms    | +1.0ms (2.0ms) | +0.5ms (1.5ms) |
-| **P95** | 2.5ms    | +2.5ms (5.0ms) | +1.2ms (3.7ms) |
-| **P99** | 5.0ms    | +3.5ms (8.5ms) | +2.0ms (7.0ms) |
-
-**결론**: VPC Lattice가 **약간 낮은 레이턴시** (Sidecar 없음)
-
-### 처리량
-
-| Metric      | Baseline | Istio       | VPC Lattice |
-| ----------- | -------- | ----------- | ----------- |
-| **최대 RPS**  | 10,000   | 8,500 (85%) | 9,200 (92%) |
-| **CPU 사용량** | 100%     | 115%        | 102%        |
-| **메모리 사용량** | 1GB      | 1.5GB       | 1.05GB      |
-
-**결론**: VPC Lattice가 **약간 높은 처리량**
-
-### 리소스 효율성
-
-**100 파드 환경**:
-
-| Resource      | Baseline | Istio          | VPC Lattice |
-| ------------- | -------- | -------------- | ----------- |
-| **추가 CPU**    | -        | +10 vCPU       | 0           |
-| **추가 Memory** | -        | +15GB          | 0           |
-| **추가 파드**     | -        | +100 (Sidecar) | 0           |
-
-**결론**: VPC Lattice가 **압도적으로 효율적**
-
-## 멀티 클라우드 전략
-
-### Istio 멀티 클라우드
-
-![AWS EKS, Google Cloud GKE, Azure AKS 각각의 Istiod가 서비스 디스커버리 정보를 교환하고 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신하는 Istio 멀티 클라우드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.html)
-
-**장점**:
-
-* 클라우드 중립적
-* 일관된 정책 및 관찰성
-* 자동 Service Discovery
-* 페더레이션된 ID
-
-### VPC Lattice 멀티 클라우드
-
-❌ **불가능**: VPC Lattice는 AWS 전용
-
-**대안**:
-
-* AWS Transit Gateway + VPN
-* 애플리케이션 레벨 통합
-* API Gateway
-
-## 하이브리드 아키텍처
-
-### Istio + VPC Lattice 함께 사용
-
-![EKS 클러스터 내부는 Envoy 사이드카를 거친 Istio mTLS로 통신하고, Backend가 Egress Gateway로 VPC Lattice Service Network에 나가 ECS Payment와 Lambda Notification에 도달하는 하이브리드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.html)
-
-**사용 사례**:
-
-* **클러스터 내부**: Istio (풍부한 기능)
-* **클러스터 간/외부**: VPC Lattice (간편한 연결)
-
-**설정 예시**:
-
-```yaml
-# Istio ServiceEntry for VPC Lattice
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: payment-lattice
-spec:
-  hosts:
-  - payment.vpclattice.aws
-  location: MESH_EXTERNAL
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  resolution: DNS
+  meshConfig:
+    enableTracing: true
+    extensionProviders:
+    - name: otel-tracing
+      opentelemetry:
+        service: otel-collector.observability.svc.cluster.local
+        port: 4317
 ---
-# Egress Gateway로 라우팅
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
 metadata:
-  name: payment-route
+  name: backend-observability
+  namespace: mesh-demo
 spec:
-  hosts:
-  - payment.vpclattice.aws
-  gateways:
-  - mesh
-  - istio-egressgateway
-  http:
-  - route:
-    - destination:
-        host: istio-egressgateway.istio-system.svc.cluster.local
+  selector:
+    matchLabels:
+      app: backend
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+      tagOverrides:
+        request_method:
+          value: request.method
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 10
+    customTags:
+      environment:
+        literal:
+          value: lab
 ```
 
-## 선택 가이드
+IstioOperator는 **istioctl 입력**이며 검토된 기존 설치값에 병합합니다. Live istio ConfigMap을 덮어쓰거나 다른 extension provider를 버리지 마세요. Collector Service가 실제로 4317에서 OTLP gRPC를 받고 backend/exporter pipeline이 있어야 하며 이 객체가 Collector를 설치하지는 않습니다. Telemetry provider 이름은 MeshConfig와 일치해야 합니다.
 
-### 의사 결정 트리
+Metric dimension 추가가 임의의 업무 metric 생성과 같지는 않습니다. Cardinality를 제한하고 필요한 앱 metric과 호환 exemplar/tracing을 별도로 구성하세요. End-to-end trace에는 앱 context 전파, sampling과 collector/backend 전달이 필요하며 Istio 설치만으로 “모든 backend”나 baggage 자동 전파가 보장되지 않습니다.
 
-![멀티 클라우드면 Istio, AWS 전용이면 워크로드 유형과 기능 요구, 운영 리소스를 순서대로 따져 Istio 또는 VPC Lattice를 추천하는 의사 결정 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.png)
+### VPC Lattice Metric
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.html)
+문서화된 CloudWatch namespace는 대소문자까지 **AWS/VpcLattice**입니다. Service dimension은 Service·AvailabilityZone, target group은 TargetGroup·AvailabilityZone 등을 사용합니다. 실제로 emit된 metric/dimension 조합을 먼저 확인합니다.
 
-### 사용 사례별 권장
+```bash
+aws cloudwatch list-metrics --region "$AWS_REGION"   --namespace AWS/VpcLattice --metric-name TotalRequestCount
+```
 
-#### 1. 대규모 Kubernetes 중심 아키텍처
+| 문서화된 신호 | 의미 |
+|---|---|
+| TotalRequestCount | 요청 수이며 Sum이 유용함 |
+| RequestTime | 밀리초 단위 Average/percentile; service/target-group별 측정 경계 확인 |
+| HTTPCode_2XX_Count부터 HTTPCode_5XX_Count | 집계한 HTTP 응답 |
+| HTTPCode_VpcLattice_403_Count 등의 세부 코드 | Lattice가 생성한 응답; access-log 원인과 함께 사용 |
+| Target-group connection metric | Protocol별 connection/error/byte이며 앱 요청 metric과 구분 |
 
-**권장: Istio**
+Resource가 트래픽을 받은 이후 1분 단위로 발행합니다. 5분 query period는 집계 선택입니다. Target health는 list-targets와 health-check 정보로 확인하며 HealthyTargetCount, TargetResponseTime 같은 ALB metric 이름을 이 namespace에 가정하지 마세요.
 
-**이유**:
+최근 1시간 조회를 위해 UTC 시각을 한 번 생성합니다. 다음 Bash/Python 코드는 AWS를 호출하지 않습니다.
 
-* 세밀한 트래픽 제어
-* 강력한 관찰성
-* Canary, A/B 테스팅
-* Traffic Mirroring
+```bash
+read -r START_TIME END_TIME START_EPOCH END_EPOCH < <(python3 - <<'PYTIME'
+from datetime import datetime, timedelta, timezone
+end = datetime.now(timezone.utc).replace(microsecond=0)
+start = end - timedelta(hours=1)
+print(start.strftime('%Y-%m-%dT%H:%M:%SZ'),
+      end.strftime('%Y-%m-%dT%H:%M:%SZ'),
+      int(start.timestamp()), int(end.timestamp()))
+PYTIME
+)
+```
 
-**예시**:
+list-metrics에서 Service-only metric을 선택해 정확한 Service dimension 값을 복사합니다. AZ별 metric을 선택했다면 AZ를 누락하지 말고 반환된 전체 dimension 집합을 사용하세요.
 
-* 수백 개의 마이크로서비스
-* 복잡한 배포 전략
-* 실시간 트래픽 분석
+```bash
+: "${SERVICE_DIMENSION:?Copy the exact Service dimension value from list-metrics}"
+aws cloudwatch get-metric-statistics --region "$AWS_REGION"   --namespace AWS/VpcLattice --metric-name TotalRequestCount   --dimensions "Name=Service,Value=$SERVICE_DIMENSION"   --start-time "$START_TIME" --end-time "$END_TIME"   --period 60 --statistics Sum
+```
 
-#### 2. AWS 네이티브 멀티 서비스 아키텍처
+Metric 누락이 자동으로 트래픽 0이나 정상 service를 뜻하지 않습니다. Lattice AWS namespace에는 제공되는 service metric이 있으며 앱은 custom metric이나 log metric을 별도로 발행할 수 있습니다. 따라서 “custom metric이 불가능하다”는 일반화는 부정확합니다.
 
-**권장: VPC Lattice**
+### Access Log와 요청 연결
 
-**이유**:
+Lattice는 CloudWatch Logs, S3, Data Firehose로 access log를 보낼 수 있습니다. Delivery 권한, destination policy, retention과 비용을 구성해야 하며 전달 지연은 best effort입니다. 다음은 문서화된 field의 **예시**이며 운영에서 수집한 log가 아닙니다.
 
-* EKS + ECS + Lambda 통합
-* 간편한 VPC/계정 연결
-* 운영 오버헤드 제로
-* IAM 통합
+```json
+{
+  "startTime": "2025-01-15T12:34:56Z",
+  "serviceArn": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-0123456789abcdef0",
+  "requestMethod": "GET",
+  "requestPath": "/api/v1/items",
+  "protocol": "HTTP/1.1",
+  "responseCode": 200,
+  "duration": 12,
+  "requestId": "example-request-001"
+}
+```
 
-**예시**:
+authDeniedReason, failureReason, callerPrincipal/resolvedUser와 source/target 정보도 문서화되어 있습니다. Resource-access log는 별도의 TCP/resource 경로이므로 실제 log type을 구분하세요. 일반적인 timestamp/requestProtocol/responseCodeDetails/requestHeaders/traceparent field를 가정하면 안 됩니다.
 
-* EKS 마이크로서비스 + Lambda 함수
-* 멀티 VPC/계정 환경
-* 서버리스 우선 전략
+requestId는 client가 지정할 수 있는 x-amzn-requestid와 연결되며 인증된 identity가 아닙니다. 앱이 전파하는 W3C trace header는 보장된 native log field나 자동으로 만들어진 distributed trace와 별개입니다. 앱 instrumentation은 적절한 tracing backend를 사용할 수 있으며 X-Ray로만 제한되지 않습니다.
 
-#### 3. 멀티 클라우드 전략
+설정된 log group에 두 time bound를 모두 지정하고 query 상태·결과를 확인합니다.
 
-**권장: Istio**
+```bash
+: "${LATTICE_LOG_GROUP:?Set the configured CloudWatch log group}"
+QUERY_ID=$(aws logs start-query --region "$AWS_REGION"   --log-group-name "$LATTICE_LOG_GROUP"   --start-time "$START_EPOCH" --end-time "$END_EPOCH"   --query-string 'fields @timestamp, requestId, requestMethod, requestPath, responseCode, authDeniedReason, failureReason | filter responseCode >= 500 | sort @timestamp desc | limit 20'   --query queryId --output text)
+aws logs get-query-results --region "$AWS_REGION" --query-id "$QUERY_ID"
+```
 
-**이유**:
+Query가 Scheduled/Running일 수 있으므로 즉시 빈 결과가 나왔다고 오류가 없다는 뜻은 아닙니다. 조사에 맞게 접근·시간 범위를 제한하세요. Kiali/Grafana나 CloudWatch dashboard도 실제 data source와 접근 설정이 필요하며 이름만으로 동등한 가시성이 증명되지 않습니다.
 
-* 클라우드 중립적
-* 일관된 정책
-* 페더레이션
+## 설치와 운영
 
-**예시**:
+### 플랫폼 선택과 검증
 
-* AWS + GCP + Azure
-* 클라우드 마이그레이션
-* 벤더 종속성 회피
+Istio 1.31은 Kubernetes 1.32–1.36을 지원합니다. 실제 관리형 플랫폼과 필요한 proxy mode의 지원 교집합을 사용하세요. 내장 production profile은 없으며 istio.io/injection label도 sidecar 주입을 활성화하지 않습니다. 현재 artifact, revision label과 전제조건은 [설치 가이드](../01-installation.md)를 참고하세요. Demo addon은 운영 monitoring/HA stack이 아닙니다.
 
-#### 4. 레거시 마이그레이션
+Lattice에서는 service/resource 모델, 실제 client association/endpoint 경로, target lifecycle, listener protocol과 인증 경계를 정의합니다. Service가 반드시 Lambda일 필요는 없으며 meshed EKS 앱도 별도로 지원되는 통합으로 Lambda를 호출할 수 있습니다. Lambda 자체에 Istio sidecar를 둘 수 없다는 것과 EKS+Lambda 구조 전체가 Istio와 호환되지 않는다는 것은 다릅니다.
 
-**권장: VPC Lattice**
+전체 service 설정에는 각 owner에 맞는 순서로 다음이 필요합니다.
 
-**이유**:
+1. 기존 network 연결, DNS, security group과 허용된 management/client role.
+2. Service network와 의도한 client VPC association 또는 service-network endpoint.
+3. 의도한 auth mode의 service 및 network/service association.
+4. Target group, 지원 target 등록과 검증한 health 동작.
+5. Listener/rule과 domain/certificate 설정.
+6. 필요한 모든 auth policy·caller identity 권한과 인증 요청을 위한 signer.
+7. Log/metric, 실제 요청·거부 시험과 resource lifecycle/cleanup 계획.
 
-* EC2 인스턴스 쉽게 통합
-* 점진적 마이그레이션
-* 기존 인프라 활용
+앞의 operation input은 이 절차의 일부입니다. 전제조건을 만들거나 readiness를 입증하지 않습니다. 다음 operation 전에 비동기 resource 상태와 기존 ownership을 확인하세요. Kubernetes에서는 오래된 Pod IP를 수동 유지하기보다 적절한 controller를 사용합니다. 관리형 service update도 controller, SDK, IAM, DNS와 앱 호환성 책임을 없애지는 않습니다.
 
-**예시**:
+### Istio Upgrade와 Ambient 등록
 
-* EC2 → EKS 마이그레이션
-* 모놀리스 → 마이크로서비스
-* 하이브리드 아키텍처
+설치된 release에서 지원하는 upgrade 경로를 사용하고 검토한 전체 values, trust와 policy를 보존합니다. 과거 1.23→1.24 그림은 현재 대상 버전이 아닙니다. Revision 전환으로 임의의 minor version을 건너뛸 수는 없습니다.
 
-#### 5. 스타트업 / 빠른 시작
+기준 설치/GitOps 설정과 관련 custom resource를 백업합니다. kubectl get all은 모든 객체를 포함하지 않아 완전한 복구 백업이 아닙니다. 실제 namespace/revision/Pod override를 확인하고 workload 집합을 단계적으로 전환하며 readiness, traffic, certificate와 telemetry를 검증합니다. 전환을 확인할 때까지 rollback 용량을 유지하세요.
 
-**권장: VPC Lattice**
+모든 workload를 강제 restart하거나 모든 certificate 오류에 CA를 재발급하거나 고정된 shared webhook 이름을 수동 삭제하는 절차를 일반 cleanup으로 쓰면 안 됩니다. 관련 proxy/gateway가 모두 이동한 뒤 release의 지원되는 retirement 절차를 사용하세요. Control plane 제거는 복구 선택지를 바꾸지만 rollback이 영원히 불가능하다는 보편적인 뜻은 아닙니다.
 
-**이유**:
+Ambient는 sidecar가 없는 workload를 앱 restart 없이 등록할 수 있지만 기존 sidecar 제거에는 workload 교체가 필요합니다. CNI/ztunnel 전제조건과 waypoint 등록·보안도 적용해야 합니다. Ready가 항상 2/2인 것은 아니며 native sidecar는 initContainers 아래에 있을 수 있습니다.
 
-* 빠른 설정 (10-20분)
-* 간단한 운영
-* 낮은 학습 곡선
+### 실제 실패 경계 진단
 
-**예시**:
+| 계층 | 선택한 구조에 맞는 확인 |
+|---|---|
+| 앱/target | Listen protocol/port, readiness, replica/endpoint, 의존성과 오류 |
+| Mesh/Lattice routing | 유효한 route, subset/target group, health/fail-open, timeout과 resource 상태 |
+| Identity/policy | Certificate lifetime/trust, JWT/SigV4, 모든 auth policy와 IAM 거부 |
+| Network/DNS | 올바른 association/endpoint, route, security group/NetworkPolicy와 실제 resolver 경로 |
+| Control/telemetry | Revision/controller, API/config 전파, 실제 metric과 전달된 log |
 
-* MVP 개발
-* 소규모 팀
-* 빠른 time-to-market
+![Istio 진단을 위한 계층별 확인 예시입니다. 모든 장애의 순서나 시간 보장이 아니며 실제 실패 경계에 따라 조사합니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.png)
 
-#### 6. 엔터프라이즈 / 복잡한 요구사항
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.html)
 
-**권장: Istio**
+Istio에서는 proxy-status/config와 실제 workload log가 유용합니다. Proxy image에 curl, tcpdump, shell이 있다고 가정하지 말고 필요한 권한의 지원되는 디버깅 방법을 사용하세요. 진단 archive를 보호하고 일시적인 debug 설정을 복구합니다. Backend replica 0은 Deployment/endpoint의 사실이지 Service.spec.replicas field가 아닙니다.
 
-**이유**:
+Lattice의 실제 resource는 다음 read operation으로 확인합니다.
 
-* 풍부한 기능
-* 세밀한 제어
-* 강력한 관찰성
-* 규정 준수
+```bash
+: "${SERVICE_NETWORK_ID:?Set the actual service-network ID}"
+: "${TG_ID:?Set the actual target-group ID}"
+aws vpc-lattice get-service --region "$AWS_REGION" --service-identifier "$SERVICE_ID"
+aws vpc-lattice list-service-network-service-associations --region "$AWS_REGION"   --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-target-group --region "$AWS_REGION" --target-group-identifier "$TG_ID"
+aws vpc-lattice list-targets --region "$AWS_REGION" --target-group-identifier "$TG_ID"
+```
 
-**예시**:
+list-services에는 service-network filter가 없습니다. Network 분석 도구는 지원되는 network resource를 분석하며 Lattice service ID를 EC2 network-insights destination으로 넘기는 것이 앱/IAM 전체 진단은 아닙니다. 이 명령이 고정된 3계층 절차, 5분 복구나 관리형 auto healing을 보장하지는 않습니다.
 
-* 금융/헬스케어
-* 복잡한 컴플라이언스
-* 고급 보안 요구
 
-### 빠른 추천 표
+## 비용과 과거 근거
 
-| 상황               | Istio | VPC Lattice | 이유               |
-| ---------------- | ----- | ----------- | ---------------- |
-| **AWS Only**     | ⚠️    | ✅           | 관리 편의성           |
-| **멀티 클라우드**      | ✅     | ❌           | 클라우드 중립성         |
-| **K8s Only**     | ✅     | ✅           | 둘 다 가능           |
-| **EKS + Lambda** | ❌     | ✅           | Lambda 통합        |
-| **고급 트래픽 제어**    | ✅     | ❌           | 기능 풍부도           |
-| **간편한 운영**       | ❌     | ✅           | 완전 관리형           |
-| **풍부한 관찰성**      | ✅     | ⚠️          | Metrics/Tracing  |
-| **낮은 비용**        | ❌     | ✅           | 운영 비용 포함         |
-| **빠른 시작**        | ❌     | ✅           | 학습 곡선            |
-| **세밀한 보안**       | ✅     | ⚠️          | L7 Authorization |
+### 같은 비용 범위를 비교
 
-### 최종 추천
+앱, 가용성 요구, network traffic, log/metric retention과 엔지니어링 범위를 양쪽에 동일하게 포함합니다. Lattice가 앱의 EC2/EKS/ECS/Lambda compute를 지불하거나 제거하지 않습니다. 관리형 networking 청구액만 전체 Istio 앱 fleet·인건비와 비교할 수는 없습니다.
 
-**🥇 VPC Lattice 선택**:
+기존 예제에는 서로 다른 문제가 있었습니다.
 
-* AWS 중심 아키텍처
-* 운영 리소스 제한
-* 빠른 시작 필요
-* EKS + ECS + Lambda 혼합
-* 간편한 멀티 VPC/계정 연결
+- CPU 합계는 앱 10 + sidecar 10 + Istiod 1 + Prometheus 2 + Jaeger 1 + Kiali 0.5 = 24.5 vCPU입니다. vCPU 4개인 m5.xlarge 5대는 예약 용량을 제외하기 전에도 20 vCPU뿐입니다. CPU만의 이상적인 하한도 7대이며 다른 제약을 추가로 고려해야 합니다.
+- 영어 항목 합계는 compute $850 + storage $15 = **$865**였습니다. 한국어는 근거 없는 latency/network $10을 더해 $875로 계산했습니다. Latency 자체가 AWS 과금 단위는 아닙니다.
+- 기존 Lattice 계산은 $209 ×12 + $300 ×12 + $1,000 = **$7,108**이며 $7,608이 아닙니다. Setup+운영도 $5,100이 아닌 $4,600입니다.
+- 그 과거 가정만 사용하더라도 월 infrastructure $209·운영 $300의 5년 합계에 setup을 한 번 더하면 **$31,540**입니다. Setup이 포함된 연간 값을 다섯 번 복제하면 안 됩니다.
+- 한국어 Istio 5년 계산은 한쪽에만 contingency $50,000을 추가하고 초기 설정을 반복 계상했습니다. 제품 고유 가격 차이를 증명하는 것이 아니라 비교 범위가 다른 모델입니다.
 
-**🥇 Istio 선택**:
+과거의 노드당 월 $140, resource·staffing은 근거 있는 견적이나 workload 실측이 아닌 가정이었습니다. Mi와 MB도 혼합되어 있습니다. 100 × 128 Mi = 12,800 Mi = 12.5 Gi이며 12.8 decimal GB가 아닙니다. Sidecar가 Pod 수를 두 배로 만들지도 않고 resource 여유가 곧바로 billed node 제거로 이어지지도 않습니다.
 
-* 멀티 클라우드 전략
-* 세밀한 트래픽 제어 필요
-* 강력한 관찰성 요구
-* 복잡한 배포 전략 (Canary, A/B)
-* 팀에 Service Mesh 경험
+### 현재 날짜를 명시한 Service 가격 예제
 
-**🥉 하이브리드 (Istio + VPC Lattice)**:
+2026년 9월 11일 확인한 공식 US East(N. Virginia) service 가격 예제는 service-hour당 $0.025, 처리 GB당 $0.025와 문서화된 service별 시간당 allowance 초과 request/connection 비용을 사용합니다. Service-network VPC association과 service-network endpoint는 추가 비용이 없다고 명시합니다. Resource configuration/resource endpoint는 **다른** 가격 모델이며 그 $0.01/GB tier를 service data-processing 단가로 사용할 수 없습니다. 이 service 가격 모델에 기존의 별도 service-network-hour 비용을 추가하지 마세요.
 
-* 클러스터 내부: Istio
-* 클러스터 간/외부: VPC Lattice
-* 최고의 기능 + 간편한 외부 연결
+명시적으로 가정한 HTTP/HTTPS service workload입니다.
 
-## 결론
+| 입력 | 계산 | 월 networking 비용 |
+|---|---|---:|
+| Service 5개, 각각 730시간 |5 ×730 ×$0.025|$91.25|
+| Request·response를 포함해 해당 service에서 합계 10,000 billable GB |10,000 ×$0.025|$250.00|
+| 각 service가 모든 시간에 시간당 300,000 request 이내 |시간당 allowance 초과 없음|$0.00|
+| 명시한 입력의 합계 |$91.25 +$250.00|**$341.25**|
 
-### 핵심 요약
+Allowance를 넘으면 service·시간별로 공개된 $0.10/million 단가를 적용합니다. 월평균 RPS로 burst 시간의 비용을 없애면 안 됩니다. TLS passthrough connection 과금은 다른 counter입니다. 모든 billable service hop, 실제 Region, 앱 infrastructure, log와 관련 비용을 포함하세요. 날짜와 가정을 명시한 예시이며 견적·미래 가격 보장이나 미측정 Istio fleet 대비 절감 주장이 아닙니다.
 
-![Istio는 풍부한 기능, 세밀한 제어, 강력한 관찰성, 멀티 클라우드에서 강점을 갖고 VPC Lattice는 운영 간편성, 낮은 비용, 빠른 시작, AWS 통합에서 강점을 갖는다는 핵심 요약을 나란히 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-19.png)
+일회성 setup/migration과 반복 운영을 분리합니다. 할인, 구매 약정, 성장·불확실성과 동일 HA/support 요구도 다년 비교에 영향을 줍니다. 기존 표가 보편적인 연간 $42,000 또는 5년 $260,000 절감을 입증하지 않습니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-19.html)
+### 과거 측정값의 정직한 보존
 
-### 언제 무엇을 선택할까?
+이전 성능 section은 Istio 1.24 맥락에서 **노드 2개 EKS, m5.xlarge, 1,000 RPS** 시험을 주장했지만 harness, raw sample, 정확한 EKS/patch/proxy 버전과 같은 조건의 설정을 제공하지 않았습니다.
 
-**Istio를 선택하세요**:
+| 원래 미검증 결과 | Baseline | Istio 전체 | Lattice 전체 |
+|---|---:|---:|---:|
+| p50 |1.0 ms|2.0 ms|1.5 ms|
+| p95 |2.5 ms|5.0 ms|3.7 ms|
+| p99 |5.0 ms|8.5 ms|7.0 ms|
+| 최대 RPS |10,000|8,500|9,200|
+| CPU 주장 |100%|115%|102%|
+| 메모리 주장 |1 GB|1.5 GB|1.05 GB|
 
-* 멀티 클라우드 환경
-* 세밀한 트래픽 제어 필요
-* 강력한 관찰성 요구
-* 팀에 Service Mesh 경험
-* 클라우드 벤더 종속성 회피
+과거 미검증 주장으로 보존하며 새 1.31 측정값으로 바꾸지 않습니다. 전체 latency/throughput 차이가 sidecar 제거 때문이라는 증거도 아닙니다. 의미 있는 시험은 protocol, payload, TLS/authorization, placement, load, telemetry와 실패 동작을 맞추고 raw failure와 retry로 가려진 결과를 분리합니다.
 
-**VPC Lattice를 선택하세요**:
+이전 익명 고객 사례와 re:Invent 만족도 설문 주장에는 추적 가능한 출처·방법론이 없었습니다. Migration, staffing과 hybrid ownership에 관한 질문으로는 활용할 수 있지만 실측 성공률은 아닙니다. 확인한 **CNCF 2024 Annual Survey**는 container challenge, project 사용과 service-mesh 사용 현황을 묻습니다. “Istio 도입 실패 40%”나 나열한 실패 원인 비율의 근거가 아닙니다. 설문을 인용할 때 실제 질문·표본·의미를 사용하세요.
 
-* AWS 중심 아키텍처
-* 운영 간편성 우선
-* EKS + ECS + Lambda 혼합
-* 빠른 time-to-market
-* 낮은 운영 비용
+## Hybrid와 Multicloud
 
-**둘 다 사용하세요** (하이브리드):
+![Cluster 내부 Istio와 외부의 별도 Lattice service 경로를 조합한 구조 예시입니다. Signer, network, TLS와 선택적 egress-gateway 조건을 완성해야 합니다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
 
-* 클러스터 내부는 Istio
-* 클러스터 간/외부는 VPC Lattice
-* 최적의 밸런스
+[인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.html)
 
-### 마이그레이션 경로
+개념적인 선택지이며 완전한 egress 설정이 아닙니다. Direct sidecar 경로 또는 명시적으로 구성한 egress gateway를 선택하고 모든 TLS/identity 경계를 정의합니다. Lattice가 STRICT backend에 Istio SPIFFE mTLS를 자동으로 시작하지는 않습니다. 명시적 ingress 경계에서 의도한 외부 경로를 인증하고 downstream mesh mTLS를 사용할 수 있으며, backend에는 원 IAM caller 대신 gateway identity가 보일 수 있습니다.
 
-**VPC Lattice → Istio**:
+앱이 서명하고 HTTPS를 시작한다면 payment.vpclattice.aws를 만들지 말고 **실제** Lattice service DNS를 조회합니다.
 
-* 더 많은 기능이 필요할 때
-* 멀티 클라우드 전략으로 전환 시
-* 점진적 전환: 네임스페이스별로
+```bash
+aws vpc-lattice get-service --region "$AWS_REGION"   --service-identifier "$SERVICE_ID" > lattice-service.json
+LATTICE_HOST=$(jq -er '.dnsEntry.domainName | select(type == "string" and length > 0)' lattice-service.json) || exit 1
+jq -n --arg host "$LATTICE_HOST" '{
+  apiVersion:"networking.istio.io/v1",kind:"ServiceEntry",
+  metadata:{name:"payment-lattice",namespace:"mesh-demo"},
+  spec:{hosts:[$host],location:"MESH_EXTERNAL",resolution:"DNS",
+        ports:[{number:443,name:"https",protocol:"HTTPS"}]}
+}' > lattice-service-entry.json
+```
 
-**Istio → VPC Lattice**:
+Workload의 정상 configuration owner가 검토·적용할 registry entry만 생성합니다. Lattice provisioning, egress-gateway 통과 강제, 서명이나 IAM 우회를 수행하지 않습니다. 앱 HTTPS는 sidecar에 불투명하므로 기존 불완전한 egress 예제처럼 HTTP VirtualService가 그 path를 읽을 수 없습니다. 이미 암호화한 앱 stream에 SIMPLE TLS를 한 겹 더 씌우지 마세요.
 
-* 운영 복잡도 감소 필요
-* AWS 네이티브 통합 우선
-* ECS/Lambda 통합 시
+Service-network endpoint는 on-premises나 다른 연결 network의 지원되는 진입 경로가 될 수 있습니다. Routing, DNS, security group과 해당 service authorization이 필요합니다. “AWS에서 운영됨”이 AWS 밖 client는 무조건 불가능하다는 뜻은 아닙니다. Global service network를 만들거나 Region/cloud 사이 앱 데이터를 복제하지도 않습니다.
 
-***
+Migration에는 API, identity, certificate trust, route, telemetry와 복구 ownership을 대응시켜야 합니다. Namespace label 변경만으로 Lattice IAM에서 mesh identity로 완전히 전환되지 않습니다. 세부 조건은 [VPC Lattice 가이드](../../../networking/02-vpc-lattice.md), [AWS 통합](../04-aws-integration.md), [multicluster 가이드](../advanced/02-multi-cluster.md)를 참고하세요.
 
-**다음 단계**:
+## 선택 기준
 
-1. PoC 환경에서 두 솔루션 모두 테스트
-2. 실제 워크로드 패턴으로 성능 측정
-3. 팀의 학습 곡선 평가
-4. 장기 전략에 맞춰 선택
+| 요구사항 | 판단 근거 |
+|---|---|
+| Kubernetes/VM workload mesh | 필요한 sidecar/ambient 기능, platform 지원, identity lifecycle과 실측 운영 용량 |
+| AWS service/resource 연결 | 지원 target/resource type, 실제 client 경로, auth/TLS와 owner 책임 |
+| 세밀한 traffic 동작 | 기능 별점보다 실제 rule/filter API, protocol 제한, retry, health와 실패 동작 |
+| 강한 보안 | 우회를 포함해 모든 종료점의 end-to-end identity/encryption과 앱 인가 |
+| 작은 팀·빠른 전달 | 임의의 최소 인력·고정 설치 시간보다 실제 팀의 반복 가능한 절차와 지원 계획 |
+| 비용·성능 | 동일 범위 청구액, 재현 가능한 load/failure 측정과 날짜·가정 |
+| Hybrid/multicloud | 제품 이름이 아닌 검증된 network/identity 경계와 앱·데이터 복구 |
 
-**관련 문서**:
+실제 workload로 bounded PoC를 평가하고 근거를 보존합니다. 아키텍처만으로 “Istio는 항상 비싸고 복잡하다”거나 “Lattice는 항상 저렴하고 안전하다”고 결론낼 수 없습니다.
 
-* [Service Mesh 솔루션 비교](01-service-mesh-comparison.md)
-* [Istio 아키텍처](../03-architecture.md)
-* [Istio Ambient Mode](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/istio/advanced/01-ambient-mode.md)
-* [VPC Lattice 상세 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/networking/02-vpc-lattice.md)
 
-## 실전 사례 및 교훈
+## 공식 근거
 
-### 사례 1: 대형 핀테크 회사 (Istio 도입 실패)
-
-**배경**:
-
-* 500+ 마이크로서비스
-* Istio로 mTLS 및 관찰성 강화 목표
-* 6개월 프로젝트로 계획
-
-**실제 경험**:
-
-1. **초기 설정**: 계획 2주 → 실제 2개월
-   * CRD 학습 곡선
-   * 레거시 서비스 호환성 문제
-   * 리소스 할당 재설계
-2. **첫 업그레이드** (1.15 → 1.16): 계획 1일 → 실제 2주
-   * 예상치 못한 설정 호환성 문제
-   * 일부 서비스 트래픽 단절 (30분)
-   * 긴급 롤백 후 재시도
-3. **운영 부담**:
-   * 전담 팀 3명 → 5명으로 증가
-   * 월 운영 시간: 예상 10h → 실제 30-40h
-   * Sidecar 오버헤드로 노드 50% 증설
-
-**교훈**:
-
-* ❌ **과소평가한 항목**: 운영 복잡도, 리소스 오버헤드, 전문 인력 필요
-* ✅ **성공 요인**: 충분한 PoC, 단계적 롤아웃, 전담 팀
-* 💡 **권장사항**: Ambient Mode 고려, 또는 VPC Lattice로 단순화
-
-### 사례 2: 스타트업 (VPC Lattice 성공)
-
-**배경**:
-
-* 30개 마이크로서비스 (EKS 15개 + Lambda 15개)
-* 엔지니어 5명 (AWS 경험 있음)
-* 빠른 출시 목표
-
-**실제 경험**:
-
-1. **설정**: 1일 완료
-   * Service Network 생성
-   * EKS Pod → VPC Lattice 연결
-   * Lambda 통합
-2. **운영**:
-   * 추가 인력 불필요
-   * 월 운영 시간: 2-3시간 (CloudWatch 모니터링)
-   * 리소스 오버헤드 0
-3. **제약사항 극복**:
-   * 고급 트래픽 제어 → Application Load Balancer 추가 사용
-   * 분산 추적 → X-Ray 수동 계측
-
-**교훈**:
-
-* ✅ **성공 요인**: AWS 네이티브 통합, 간편한 운영, 낮은 학습 곡선
-* ⚠️ **제약사항**: 세밀한 트래픽 제어 불가, CloudWatch 의존
-* 💡 **권장사항**: 소규모 팀, AWS 중심 아키텍처에 최적
-
-### 사례 3: 엔터프라이즈 (하이브리드 접근)
-
-**배경**:
-
-* 200개 마이크로서비스 (멀티 클라우드)
-* AWS EKS + GCP GKE
-* 복잡한 컴플라이언스 요구
-
-**실제 경험**:
-
-1. **아키텍처**:
-   * **클러스터 내부**: Istio (세밀한 제어)
-   * **클러스터 간**: VPC Lattice (AWS), Istio Gateway (GCP)
-2. **비용 최적화**:
-   * Istio Ambient Mode로 Sidecar 오버헤드 90% 절감
-   * VPC Lattice로 멀티 VPC 연결 간소화
-3. **운영**:
-   * Istio 전담 팀 3명
-   * VPC Lattice는 일반 엔지니어 관리
-   * 분리된 책임으로 복잡도 감소
-
-**교훈**:
-
-* ✅ **성공 요인**: 적재적소 도구 사용, Ambient Mode 활용
-* 💡 **권장사항**: 하이브리드 접근으로 각 도구의 장점 극대화
-
-### 업계 통계 (2024-2025)
-
-**Istio 도입 실패율**: \~40% (출처: CNCF Survey 2024)
-
-* 주요 원인:
-  1. 과소평가된 운영 복잡도 (65%)
-  2. 부족한 전문 인력 (48%)
-  3. 예상치 못한 리소스 오버헤드 (52%)
-  4. 업그레이드 문제 (38%)
-
-**평균 Istio 운영 비용**: $40k-80k/년 (50-200 서비스 환경)
-
-* 인프라 비용: $10k-20k
-* 인건비: $30k-60k (전담 인력 일부 시간)
-
-**VPC Lattice 만족도**: 85% (출처: AWS re:Invent 2024 설문)
-
-* 장점: 간편성 (92%), 낮은 비용 (78%), 빠른 시작 (95%)
-* 불만: 기능 제한 (65%), AWS 종속 (42%)
-
-### 의사결정 체크리스트
-
-**Istio를 선택하기 전 확인**:
-
-* [ ] 전담 Platform 팀 구성 가능? (최소 2-3명)
-* [ ] 연간 $50k+ 추가 예산 확보?
-* [ ] Service Mesh 전문가 채용 또는 교육 가능?
-* [ ] 6-12개월의 충분한 PoC 기간 확보?
-* [ ] 업그레이드를 위한 유지보수 창(Maintenance Window) 확보?
-* [ ] 리소스 오버헤드 50-100% 증가 수용 가능?
-* [ ] 24/7 온콜 체계 구축 가능?
-
-**모두 ✅ 라면**: Istio 도입 진행 **3개 이상 ❌ 라면**: VPC Lattice 또는 Linkerd 고려
-
-**VPC Lattice를 선택하기 전 확인**:
-
-* [ ] AWS 중심 아키텍처?
-* [ ] 멀티 클라우드 전략 없음?
-* [ ] 기본적인 트래픽 관리로 충분?
-* [ ] 빠른 출시 우선?
-* [ ] 소규모 팀 (10명 이하)?
-
-**모두 ✅ 라면**: VPC Lattice 도입 진행 **멀티 클라우드 필요 시**: Istio 필수
-
-***
-
-**최종 권장사항**:
-
-![예산과 인력이 충분하면 멀티 클라우드 여부에 따라 Istio 또는 VPC Lattice를, 제한적이면 AWS 여부에 따라 VPC Lattice 또는 Linkerd를 선택하라는 최종 권장 결정 트리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-20.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-20.html)
-
-**관련 문서**:
-
-* [Service Mesh 솔루션 비교](01-service-mesh-comparison.md)
-* [Istio 아키텍처](../03-architecture.md)
-* [Istio Ambient Mode](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/istio/advanced/01-ambient-mode.md)
-* [VPC Lattice 상세 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/networking/02-vpc-lattice.md)
+- [Istio supported releases](https://istio.io/latest/docs/releases/supported-releases/), [ambient](https://istio.io/latest/docs/ambient/overview/), [security](https://istio.io/latest/docs/concepts/security/) and [Telemetry API](https://istio.io/latest/docs/reference/config/telemetry/)
+- [VPC Lattice components and responsibilities](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html) and [network associations/endpoints](https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html)
+- [CreateRule](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateRule.html), [RuleAction](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_RuleAction.html), [CreateListener](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateListener.html) and [CreateTargetGroup](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateTargetGroup.html)
+- [Target groups](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-groups.html) and [health checks](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-group-health-checks.html)
+- [HTTPS listeners](https://docs.aws.amazon.com/vpc-lattice/latest/ug/https-listeners.html) and [TLS passthrough](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)
+- [Auth policies](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html), [PutAuthPolicy](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_PutAuthPolicy.html) and [SigV4 requests](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
+- [Lattice metrics](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-cloudwatch.html) and [access logs](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
+- [Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/), [WAF association API](https://docs.aws.amazon.com/waf/latest/APIReference/API_AssociateWebACL.html) and [Lambda@Edge](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html)
+- [CNCF 2024 survey](https://www.cncf.io/reports/cncf-annual-survey-2024/) and [original report](https://www.cncf.io/wp-content/uploads/2025/04/cncf_annual_survey24_031225a.pdf), especially questions 22, 32, 47 (pages 12, 16, 22)
+- [Service-mesh comparison](01-service-mesh-comparison.md), [Istio architecture](../03-architecture.md) and [ambient guide](../advanced/01-ambient-mode.md)

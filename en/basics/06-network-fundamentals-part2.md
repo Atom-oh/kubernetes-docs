@@ -1,6 +1,6 @@
 # Network Fundamentals Part 2 — The Transport Layer and TLS
 
-> **Last Updated**: August 28, 2026
+> **Last Updated**: September 11, 2026
 
 ::: tip This is a four-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
@@ -9,11 +9,11 @@
 [Part 4: A Request's Journey and the Cloud](./06-network-fundamentals-part4.md)
 :::
 
-Part 1 delivered packets to the destination host; this part builds a **reliable conversation** on top with TCP, UDP, and QUIC — and encrypts it with TLS.
+Part 1 delivered packets to the destination host. This part compares reliable streams (TCP and QUIC) with UDP datagrams, then explains how TLS protects communication. UDP itself does not supply reliability or TLS; applications choose an appropriate security protocol, such as DTLS, or use a transport such as QUIC that integrates TLS 1.3.
 
 One picture summarizes the heart of this part:
 
-![Compares TCP+TLS 1.3, which needs 2 RTTs before the first request, with QUIC, which merges the transport and crypto handshakes into 1 RTT (0 RTT on resumption).](../.gitbook/assets/en-basics-06-network-fundamentals-part2-0.png)
+![Typical fresh connection: TCP plus a full TLS 1.3 handshake takes about 2 RTTs before a request, while QUIC combines these into about 1 RTT. Eligible resumption can send 0-RTT early data before handshake completion.](../.gitbook/assets/en-basics-06-network-fundamentals-part2-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-06-network-fundamentals-part2-0.html)
 
@@ -29,13 +29,13 @@ From here on, your conversation partner is not a "network" but a "process." That
 
 **How it works:** A 3-way handshake (SYN → SYN+ACK → ACK) establishes the connection. Sequence numbers preserve order, ACKs and retransmission recover losses, sliding windows control flow, and congestion control adapts to network load. To the application, TCP presents a clean abstraction: a gapless stream of bytes.
 
-**In practice:** The price of that abstraction is **head-of-line (HOL) blocking**. Guaranteeing order means that if an earlier segment is lost, later data — even if already received — cannot be delivered to the application. When HTTP/2 multiplexed many streams over one TCP connection, a single lost packet stalled *all* streams. That is precisely why QUIC exists.
+**In practice:** Ordered delivery causes **head-of-line (HOL) blocking**: a missing TCP segment prevents delivery of bytes beyond the gap. With HTTP/2, this can delay multiple streams sharing that connection; data already delivered and independent application work can still progress. QUIC removes this particular cross-stream transport ordering dependency.
 
-Handshake cost is not negligible either: 1 RTT per connection, plus 1–2 more RTTs for TLS. On high-latency paths, connection reuse and connection-pool tuning dominate performance.
+For a typical fresh connection without optimizations, TCP setup costs about 1 RTT, followed by a full TLS 1.3 handshake of 1 RTT (typically 2 RTTs for TLS 1.2). Connection reuse, resumption, early data and TCP Fast Open change the timing; retries can add delay. Assess connection pooling against the actual workload.
 
-**A short lineage of congestion control:** Which congestion control algorithm you run determines throughput. Classic **Reno** treats loss as the signal and halves the window; **CUBIC**, the Linux default, is also loss-based but recovers faster on high-bandwidth paths. Google's **BBR** models bandwidth and RTT directly instead of reacting to loss, which yields far higher throughput on long-haul and mobile paths where a little loss is always present. Check or change it with `sysctl net.ipv4.tcp_congestion_control`.
+**A short lineage of congestion control:** Congestion control influences throughput along with bandwidth, latency, buffers and application behavior. Classic **Reno** reduces its congestion window on loss. **CUBIC**, a common Linux default, uses a cubic window-growth function to improve scalability on high-bandwidth paths. **BBR** models bottleneck bandwidth and propagation RTT to guide sending; its use of loss and ECN also depends on the implementation/version. No algorithm guarantees higher throughput on every long-haul or mobile path. `sysctl net.ipv4.tcp_congestion_control` only **reads** the configured default; changing the default affects new connections and requires separate configuration and measurement.
 
-**TIME_WAIT and port exhaustion:** Whichever side closes first holds the socket in TIME_WAIT for a while. On devices that churn through short connections — proxies, load balancers — those sockets exhaust local ports and surface as "cannot connect" incidents. Connection reuse (keep-alive) is the first remedy; kernel parameter tuning comes second.
+**TIME_WAIT and port exhaustion:** In a normal graceful close, the active closer generally enters TIME_WAIT; simultaneous close can put both peers there. High connection churn can contribute to exhaustion of available connection tuples, ephemeral ports or NAT mappings, depending on the implementation and destination pattern. A TIME_WAIT entry does not universally reserve that port against every remote endpoint. Diagnose the actual limit and consider connection reuse before changing kernel settings; TIME_WAIT also protects against delayed packets from an old connection.
 
 ### UDP
 
@@ -43,7 +43,7 @@ Handshake cost is not negligible either: 1 RTT per connection, plus 1–2 more R
 
 **How it works:** The 8-byte header carries only source port, destination port, length, and checksum. No handshake, no retransmission, no ordering, no congestion control. It is essentially "IP with port numbers."
 
-**In practice:** The missing features are a choice, not a flaw. For real-time audio/video, "an imperfect frame on time" beats "a perfect frame late." For one-shot exchanges like DNS queries, a handshake is wasted cost. And any reliability you do need, the application can build itself — which is exactly the road QUIC took.
+**In practice:** Real-time applications can prefer timely delivery over retransmitting stale data, and DNS commonly uses UDP for small exchanges. Applications must implement any required reliability and appropriate congestion control themselves, or use a protocol such as QUIC that provides them.
 
 The caveat: being stateless makes UDP easy to abuse for spoofing and amplification attacks. When exposing UDP services externally, plan for response-size limits and request-rate control.
 
@@ -53,14 +53,14 @@ The caveat: being stateless makes UDP easy to abuse for spoofing and amplificati
 
 **How it works:** QUIC redesigns, from scratch on UDP, everything TCP+TLS used to do. Four key properties:
 
-1. **Independent streams** — one connection carries many streams, each recovering losses independently. TCP's HOL blocking disappears structurally.
-2. **Built-in encryption** — TLS 1.3 is part of the protocol itself. With no separate negotiation phase, connection setup is 1 RTT, and 0 RTT on resumption.
-3. **Connection IDs** — the connection survives IP or port changes. Switching from Wi-Fi to cellular does not drop the session.
-4. **User-space implementation** — it lives in the application, not the kernel, so congestion-control improvements ship without OS updates.
+1. **Independent stream delivery** — each stream has its own byte ordering, so loss on one stream need not prevent delivery of another stream’s available data. Packet recovery and congestion control still operate across the connection/path; a stream can block on its own missing bytes, and application or HTTP/3 QPACK dependencies can also cause blocking.
+2. **Built-in encryption** — QUIC integrates the TLS 1.3 handshake and uses its own packet protection rather than TLS records. A normal full handshake takes about 1 RTT. Eligible, accepted resumption can carry **0-RTT early data**, but the handshake still completes later; Retry or additional handshake exchanges can increase latency.
+3. **Connection IDs** — these support connection continuity through address changes, with path validation and endpoint support. Migration restrictions or unavailable paths can still interrupt a Wi-Fi-to-cellular transition; continuity is not guaranteed.
+4. **Implementation flexibility** — QUIC is commonly implemented in user space, allowing transport changes to ship with an application or library. User-space implementation is not a protocol requirement.
 
-**In practice:** Where firewalls block UDP 443, QUIC cannot run and falls back to TCP. In environments with strict UDP policies — regulated financial networks are a typical example — HTTP/3's benefits often never materialize, so "we enabled HTTP/3, why isn't it faster?" starts with checking this. Also, user-space processing costs more CPU than kernel TCP.
+**In practice:** HTTP/3 usually uses UDP 443. If that path is blocked, an HTTP client can try HTTP/2 or HTTP/1.1 over TCP when the server supports them; QUIC itself does not turn into TCP. Check reachability, negotiated protocol and implementation/offload behavior before attributing a performance result to QUIC. CPU cost depends on the implementation and workload.
 
-One security caveat: **0-RTT resumption data is replayable.** An on-path attacker can copy a 0-RTT packet and send it again, making the server process the same request twice. The rule is to send only idempotent requests (e.g. GET) over 0-RTT, and to explicitly restrict what 0-RTT is allowed to carry in server/CDN configuration.
+One security caveat: **0-RTT data can be replayed.** Replaying an early-data exchange can make an application process a request more than once; transport packet deduplication alone does not provide application replay protection. Permit only operations the application has explicitly assessed as replay-safe. A GET name or an idempotency claim alone is insufficient. Servers can reject early data; HTTP servers can use `425 Too Early` so the client retries after the handshake. Configure this policy across the client, CDN and origin.
 
 ---
 
@@ -70,20 +70,22 @@ One security caveat: **0-RTT resumption data is replayable.** An on-path attacke
 
 **Definition:** The protocol providing confidentiality, integrity, and authentication for data in transit.
 
-**How it works:** TLS has a handshake phase and a record phase. The handshake negotiates a cipher suite, verifies the server's identity via its certificate, and derives session keys through key exchange. The record phase then encrypts data with those session keys and verifies integrity with MACs.
+**How it works:** TLS negotiates cryptographic parameters and establishes keys during a handshake. Certificate-based handshakes authenticate the server using a certificate and proof of key possession; PSK-based handshakes can authenticate using a previously established or externally provisioned key instead. TLS records protect application data. TLS 1.3 uses authenticated encryption (AEAD) for confidentiality and integrity.
 
-TLS 1.3 was a major cleanup: the handshake dropped to 1 RTT (0 RTT on session resumption), RSA key exchange and weak cipher suites were removed, and forward secrecy became effectively mandatory.
+A normal full TLS 1.3 handshake takes about 1 RTT; resumption permits optional early data under additional conditions. TLS 1.3 removed static RSA key exchange and legacy cipher suites, but RSA certificate signatures are still supported. Ephemeral (EC)DHE key exchange provides forward secrecy, including when combined with a PSK. **PSK-only key exchange and 0-RTT data do not provide the same forward-secrecy guarantee.**
 
 **In practice:** Three things go wrong over and over.
 
-- **Certificate expiry** — still a top-tier outage cause. Automate renewal *and* monitor expiry as two separate safeguards.
-- **SNI exposure** — even in TLS 1.3, the target domain travels in plaintext. ECH tries to hide it — which, ironically, collides with regulated environments that require traffic visibility.
-- **Termination point design** — terminate TLS at the load balancer and go plaintext behind it, or encrypt end to end? Where regulation demands encryption of internal segments too (common in finance), mTLS or a service mesh (such as Istio) is the increasingly standard answer.
+- **Certificate expiry** — automate renewal and separately monitor expiry and successful certificate deployment.
+- **SNI exposure** — TLS 1.3 alone leaves the ClientHello SNI visible. ECH (Encrypted Client Hello, RFC 9849) can protect the inner ClientHello when supported and configured by both endpoints. QUIC Initial packet keys are publicly derivable, so Initial encryption alone does not hide SNI. ECH also does not hide the destination IP or all traffic metadata.
+- **Termination point design** — document every hop: client to load balancer, load balancer to application, and any service-to-service connection. TLS termination does not automatically encrypt the next hop. Use TLS there when required; use mTLS when both peers must authenticate with certificates. A service mesh can automate this, but is not required for every design.
 
-**Certificate chains and OCSP stapling:** A server certificate is never validated alone — it is validated as a chain through intermediate CAs up to a root. Forget to deploy the intermediate certificate and you get the nastiest kind of failure: one that only some clients hit. Revocation checking matters too: instead of every client asking the CA, **OCSP stapling** has the server pre-fetch a signed revocation status and attach it to the handshake — the standard choice for both latency and privacy.
+**Certificate chains and OCSP stapling:** Typical X.509 validation builds a path from the leaf certificate, through any required intermediates, to a configured trust anchor. The server should send the needed intermediate certificates; the root is normally already trusted by the client. Missing intermediates can cause client-dependent failures, although not every valid chain contains an intermediate. Revocation handling depends on the issuer and client. Where OCSP is supported, stapling lets the server attach a signed status response and can reduce direct client lookups. It is not universal: Let’s Encrypt ended OCSP service in August 2025 and uses CRLs. Match certificate and revocation configuration to the actual CA and clients.
 
 > 📎 For how Istio automates this, see [Istio mTLS](../service-mesh/istio/security/01-mtls.md).
 
+
+**Primary references**: [TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446.html), [QUIC transport](https://www.rfc-editor.org/rfc/rfc9000.html), [QUIC/TLS](https://www.rfc-editor.org/rfc/rfc9001.html), [HTTP early data](https://www.rfc-editor.org/rfc/rfc8470.html), [ECH](https://www.rfc-editor.org/rfc/rfc9849.html), [Linux TCP settings](https://docs.kernel.org/networking/ip-sysctl.html), [Let’s Encrypt OCSP retirement](https://letsencrypt.org/2025/08/06/ocsp-service-has-reached-end-of-life/).
 ---
 
 **Next:** [Part 3: Application Protocols](./06-network-fundamentals-part3.md)

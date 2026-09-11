@@ -1,0 +1,42 @@
+{
+  "checkedAt": "2026-09-11",
+  "source": "AWS Pricing GetProducts (read-only)",
+  "region": "ap-northeast-2",
+  "rates": [
+    {
+      "sku": "HYU9KEWRBJTDDSCK",
+      "usageType": "APN2-EBS:VolumeUsage.gp2",
+      "unit": "GB-Mo",
+      "usd": "0.1140000000",
+      "description": "$0.114 per GB-month of General Purpose SSD (gp2) provisioned storage - Asia Pacific (Seoul)"
+    },
+    {
+      "sku": "65V6R2HKUXFQ5VRV",
+      "usageType": "APN2-EBS:VolumeP-IOPS.gp3",
+      "unit": "IOPS-Mo",
+      "usd": "0.0057000000",
+      "description": "$0.0057 per provisioned IOPS-month of gp3 - Asia Pacific (Seoul)"
+    },
+    {
+      "sku": "MTK7D9SGKGYR3JD6",
+      "usageType": "APN2-EBS:VolumeUsage.gp3",
+      "unit": "GB-Mo",
+      "usd": "0.0912000000",
+      "description": "$0.0912 per GB-month of General Purpose (gp3) provisioned storage - Asia Pacific (Seoul)"
+    },
+    {
+      "sku": "Q48V7C4BM3UCSZMQ",
+      "usageType": "APN2-EBS:VolumeP-Throughput.gp3",
+      "unit": "GiBps-mo",
+      "usd": "46.6944000000",
+      "description": "$0.0456 per provisioned MiBps-month of gp3 - Asia Pacific (Seoul)"
+    },
+    {
+      "sku": "2FN5PXDGXPZDCV43",
+      "usageType": "APN2-BoxUsage:m5.xlarge",
+      "unit": "Hrs",
+      "usd": "0.2360000000",
+      "description": "$0.236 per On Demand Linux m5.xlarge Instance Hour"
+    }
+  ]
+}

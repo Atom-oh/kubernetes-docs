@@ -32,7 +32,7 @@
           "rs-canary",
           "analysisrun"
         ],
-        "note": "Rollout creates the Experiment; the Experiment creates ReplicaSets per spec.templates and AnalysisRuns per spec.analyses."
+        "note": "The Rollout creates an Experiment and its template ReplicaSets; analysis starts once all are available."
       },
       {
         "id": "analysis-reference",

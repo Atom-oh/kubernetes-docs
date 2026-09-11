@@ -1,5 +1,5 @@
 # Container Registry Best Practices Quiz
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 11, 2026
 
 1. Why is tag immutability considered a best practice for container registries?
    - A) It reduces storage costs
@@ -13,7 +13,7 @@
 **Answer: B) It ensures a tag always refers to the same image content, providing deployment reproducibility**
 
 **Explanation:**
-Tag immutability guarantees that once an image is pushed with a specific tag, that tag cannot be overwritten with a different image. This ensures deployment reproducibility (the same tag always deploys the same code), enables reliable rollbacks, and prevents accidental or malicious image replacement. It's a fundamental supply chain security practice.
+Tag immutability guarantees that once an image is pushed with a specific tag, that tag cannot be overwritten with a different image. Pinning the verified digest additionally identifies the exact image. Preserve that artifact for rollback; tag immutability alone is not a universal deletion-protection or provenance guarantee. It's a fundamental supply chain security practice.
 
 </details>
 
@@ -29,7 +29,7 @@ Tag immutability guarantees that once an image is pushed with a specific tag, th
 **Answer: C) The actual image content is unpredictable and may change between deployments**
 
 **Explanation:**
-The `:latest` tag is mutable and typically points to the most recently pushed image. Using it in production means you cannot guarantee which version of the code is running, rollbacks become unreliable, and debugging is difficult since you don't know what code was deployed. Best practice is to use semantic versioning or Git SHA-based tags.
+`latest` is an ordinary tag; it does not automatically select the most recently pushed image. Unless protected by an immutability policy, its target changes when someone pushes to that tag. Using it in production means you cannot guarantee which version of the code is running, rollbacks become unreliable, and debugging is difficult since you don't know what code was deployed. Best practice is to use semantic versioning or Git SHA-based tags.
 
 </details>
 
@@ -45,7 +45,7 @@ The `:latest` tag is mutable and typically points to the most recently pushed im
 **Answer: B) It reduces external network traffic, improves pull latency, and mitigates rate limiting**
 
 **Explanation:**
-Registry mirrors and pull-through caches store copies of external images locally. Benefits include: reduced bandwidth costs and external dependencies, faster pull times from local network, avoidance of rate limits (like Docker Hub's limits), and improved reliability when external registries are unavailable. They're essential for large clusters and air-gapped environments.
+Registry mirrors and pull-through caches store copies of external images locally. Benefits include: reduced bandwidth costs and external dependencies, faster pull times from local network, avoidance of rate limits (like Docker Hub's limits), and improved reliability when external registries are unavailable. Cache misses/refreshes still depend on upstream access. Disconnected networks need a complete preloaded mirror and a tested update process.
 
 </details>
 
@@ -83,17 +83,17 @@ Lifecycle policies automate cleanup of images based on age, count, or tag patter
 
 6. At what stage in the CI/CD pipeline should container image vulnerability scanning occur?
    - A) Only in production
-   - B) As early as possible, ideally during the build stage before pushing to the registry
+   - B) After building, as early as possible and before production promotion/deployment
    - C) Only during manual security audits
    - D) After deployment to Kubernetes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) As early as possible, ideally during the build stage before pushing to the registry**
+**Answer: B) After building, as early as possible and before production promotion/deployment**
 
 **Explanation:**
-Shift-left security means scanning images during the CI build phase, before they're pushed to the registry. This catches vulnerabilities early when they're cheapest to fix, prevents vulnerable images from ever entering the registry, and provides fast feedback to developers. Additional scanning should occur in the registry and at admission time for defense in depth.
+Scan locally after building or scan a digest in an isolated staging registry before promotion. Deploy the same artifact that passed the gates and rescan as new CVEs appear. Registry scanning and admission verification complement the CI gate.
 
 </details>
 
@@ -115,14 +115,14 @@ Admission controllers like Gatekeeper/OPA, Kyverno, or cloud-provider solutions 
 
 8. What is a recommended naming convention for container image tags?
    - A) Random UUIDs
-   - B) Semantic version (v1.2.3) or Git commit SHA, optionally with build metadata
+   - B) Semantic version (v1.2.3) or Git commit SHA using valid tag characters
    - C) Timestamps only
    - D) Developer initials
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Semantic version (v1.2.3) or Git commit SHA, optionally with build metadata**
+**Answer: B) Semantic version (v1.2.3) or Git commit SHA using valid tag characters**
 
 **Explanation:**
 Good tag naming enables traceability from deployed image to source code. Semantic versions (v1.2.3) communicate release significance. Git SHAs provide exact commit traceability. Combining them (v1.2.3-abc1234) or adding build numbers (v1.2.3-build.456) provides comprehensive lineage. This supports debugging, auditing, and rollback decisions.

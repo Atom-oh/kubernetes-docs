@@ -15,7 +15,7 @@
           "core",
           "registry"
         ],
-        "note": "Portal의 요청을 Core가 인증·인가한 뒤 Registry가 이미지를 저장·제공한다."
+        "note": "Core는 인증·인가와 아티팩트 관리를 담당한다. 이미지 데이터는 클라이언트와 Registry 사이에서 전송된다."
       },
       {
         "id": "async-security",
@@ -23,8 +23,7 @@
         "focus": [
           "core",
           "jobservice",
-          "trivy",
-          "notary"
+          "trivy"
         ],
         "note": "Core가 복제·GC·스캔 작업을 Job Service에 맡기고, Trivy가 취약점을 스캔한다."
       },
@@ -91,7 +90,7 @@
       "id": "registry",
       "type": "backend",
       "label": "Registry",
-      "sublabel": "Docker Distribution (registry:2)",
+      "sublabel": "OCI Distribution API",
       "pos": [
         120,
         300
@@ -156,20 +155,6 @@
         200,
         60
       ]
-    },
-    {
-      "id": "notary",
-      "type": "security",
-      "label": "Notary",
-      "sublabel": "이미지 서명 (선택적)",
-      "pos": [
-        880,
-        560
-      ],
-      "size": [
-        200,
-        60
-      ]
     }
   ],
   "boundaries": [
@@ -183,8 +168,7 @@
         "jobservice",
         "postgres",
         "redis",
-        "trivy",
-        "notary"
+        "trivy"
       ]
     },
     {
@@ -199,8 +183,7 @@
       "kind": "security-group",
       "label": "보안",
       "wraps": [
-        "trivy",
-        "notary"
+        "trivy"
       ]
     }
   ],
@@ -217,7 +200,7 @@
       "id": "core-registry",
       "from": "core",
       "to": "registry",
-      "label": "이미지 push/pull",
+      "label": "Artifact API",
       "variant": "emphasis"
     },
     {

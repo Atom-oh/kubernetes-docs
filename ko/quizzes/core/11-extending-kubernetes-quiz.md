@@ -97,7 +97,6 @@ metadata:
 spec:
   serviceAccountName: prometheus
   replicas: 2
-  version: v2.35.0
   serviceMonitorSelector:
     matchLabels:
       team: frontend
@@ -111,7 +110,7 @@ spec:
 - 구성 파일 생성 및 관리
 - 서비스 모니터링 대상 자동 발견
 - 고가용성 설정
-- 스토리지 관리
+- storage/volumeClaimTemplate을 구성한 경우 스토리지 관리
 - 업그레이드 조정
 
 다른 옵션들은 오퍼레이터의 주요 목적이 아닙니다:
@@ -166,7 +165,7 @@ webhooks:
     operations: ["CREATE", "UPDATE"]
     resources: ["pods"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -203,7 +202,7 @@ Kubernetes API 서버의 애그리게이션 레이어(Aggregation Layer)의 주�
 - 커스텀 API 서버를 Kubernetes API 서버의 URL 공간에 통합합니다.
 - 커스텀 API 서버는 자체 스토리지, 비즈니스 로직, API 버전 등을 가질 수 있습니다.
 - 기본 API 서버는 요청을 적절한 커스텀 API 서버로 프록시합니다.
-- 인증 및 권한 부여는 기본 API 서버에서 처리됩니다.
+- 기본 API 서버가 사용자를 인증하며 확장 서버는 인증 프록시를 검증하고 SubjectAccessReview로 권한 검사를 위임해야 합니다.
 
 애그리게이션 레이어를 사용하는 경우:
 - 복잡한 검증 로직이 필요한 경우
@@ -216,23 +215,23 @@ APIService 리소스 예시:
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1alpha1.metrics.k8s.io
+  name: v1beta1.metrics.k8s.io
 spec:
   service:
     name: metrics-server
     namespace: kube-system
   group: metrics.k8s.io
-  version: v1alpha1
-  insecureSkipTLSVerify: true
+  version: v1beta1
+  caBundle: <base64-encoded-serving-ca>
   groupPriorityMinimum: 100
   versionPriority: 100
 ```
 
-이 구성은 `metrics.k8s.io/v1alpha1` API 그룹에 대한 요청을 `kube-system` 네임스페이스의 `metrics-server` 서비스로 라우팅합니다.
+이 구성은 `metrics.k8s.io/v1beta1` API 그룹에 대한 요청을 `kube-system` 네임스페이스의 `metrics-server` 서비스로 라우팅합니다.
 
 애그리게이션 레이어를 사용하는 실제 예:
 - metrics-server: 노드 및 포드 리소스 사용량 메트릭 제공
-- service-catalog: 외부 서비스 브로커와의 통합
+- service-catalog(보관됨): 과거 외부 서비스 브로커 통합
 - custom-metrics-apiserver: HPA를 위한 커스텀 메트릭 제공
 
 다른 옵션들의 문제점:
@@ -279,7 +278,7 @@ func (c *Controller) reconcile(key string) error {
     // 커스텀 리소스 가져오기
     instance, err := c.customResourceLister.CustomResources(namespace).Get(name)
     if errors.IsNotFound(err) {
-        // 리소스가 삭제됨 - 정리 작업 수행
+        // 이미 삭제됨. 외부 정리는 삭제 전에 finalizer로 수행해야 합니다.
         return nil
     }
     if err != nil {
@@ -292,7 +291,7 @@ func (c *Controller) reconcile(key string) error {
     // 상태 업데이트
     instanceCopy := instance.DeepCopy()
     instanceCopy.Status.Phase = "Reconciled"
-    _, err = c.customResourceClient.CustomResources(namespace).UpdateStatus(instanceCopy)
+    _, err = c.customResourceClient.CustomResources(namespace).UpdateStatus(context.TODO(), instanceCopy, metav1.UpdateOptions{})
     return err
 }
 ```
@@ -409,11 +408,11 @@ Kubernetes에서 커스텀 리소스의 상태(status) 하위 리소스를 활�
    - 이를 통해 상태 정보가 무단으로 변경되는 것을 방지할 수 있습니다.
 
 3. **충돌 방지**:
-   - 사용자가 `spec`을 업데이트하는 동안 컨트롤러가 `status`를 업데이트해도 충돌이 발생하지 않습니다.
-   - 이는 두 필드가 별도의 API 요청으로 업데이트되기 때문입니다.
+   - spec/status는 분리되지만 resourceVersion을 공유하므로 동시 쓰기 시 409 Conflict가 발생할 수 있습니다.
+   - 최신 객체를 읽고 충돌 시 재시도/재조정합니다.
 
 4. **스케일 하위 리소스 지원**:
-   - 상태 하위 리소스를 활성화하면 스케일 하위 리소스도 활성화할 수 있습니다.
+   - scale 하위 리소스는 specReplicasPath/statusReplicasPath 및 선택적 labelSelectorPath로 별도 구성합니다.
    - 이를 통해 HPA(Horizontal Pod Autoscaler)와 같은 표준 Kubernetes 스케일링 도구를 사용할 수 있습니다.
 
 CRD에서 상태 하위 리소스 활성화 예시:
@@ -425,23 +424,29 @@ metadata:
 spec:
   group: stable.example.com
   versions:
-    - name: v1
-      served: true
-      storage: true
-      subresources:
-        status: {}  # 상태 하위 리소스 활성화
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                # 스펙 필드 정의...
-            status:
-              type: object
-              properties:
-                # 상태 필드 정의...
+  - name: v1
+    served: true
+    storage: true
+    subresources:
+      status: {}
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              cronSpec:
+                type: string
+              image:
+                type: string
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
+              message:
+                type: string
   scope: Namespaced
   names:
     plural: crontabs
@@ -452,13 +457,11 @@ spec:
 컨트롤러에서 상태 업데이트 예시:
 ```go
 // 상태만 업데이트
-statusUpdate := &v1alpha1.MyResource{}
-statusUpdate.Name = instance.Name
-statusUpdate.Namespace = instance.Namespace
+statusUpdate := instance.DeepCopy() // Preserve resourceVersion from a current read.
 statusUpdate.Status.Phase = "Running"
 statusUpdate.Status.Message = "Resource is running"
 
-_, err = c.clientset.MyGroup().MyResources(namespace).UpdateStatus(statusUpdate)
+_, err = c.clientset.MyGroup().MyResources(namespace).UpdateStatus(ctx, statusUpdate, metav1.UpdateOptions{})
 ```
 
 다른 옵션들의 문제점:
@@ -493,7 +496,7 @@ Kubernetes에서 웹훅 변환(Webhook Conversion)의 주요 목적은 커스텀
 
 3. **스토리지 버전 독립성**:
    - 스토리지 버전이 변경되어도 이전 버전의 클라이언트는 계속 작동할 수 있습니다.
-   - 웹훅은 이전 버전과 새 버전 간의 양방향 변환을 처리합니다.
+   - 웹훅은 제공되는 버전 간 양방향 변환을 처리합니다. storage:true 변경만으로 기존 저장 데이터가 재작성되지는 않으므로 이전 status.storedVersions를 제거하기 전에 저장 객체를 마이그레이션합니다.
 
 CRD에서 변환 웹훅 구성 예시:
 ```yaml
@@ -504,18 +507,58 @@ metadata:
 spec:
   group: stable.example.com
   versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          # v1 스키마 정의...
-    - name: v1beta1
-      served: true
-      storage: false
-      schema:
-        openAPIV3Schema:
-          # v1beta1 스키마 정의...
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        required:
+        - spec
+        properties:
+          spec:
+            type: object
+            required:
+            - cronSpec
+            - image
+            properties:
+              cronSpec:
+                type: string
+              image:
+                type: string
+              replicas:
+                type: integer
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
+  - name: v1beta1
+    served: true
+    storage: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        required:
+        - spec
+        properties:
+          spec:
+            type: object
+            required:
+            - cron
+            - image
+            properties:
+              cron:
+                type: string
+              image:
+                type: string
+              replicas:
+                type: integer
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
   conversion:
     strategy: Webhook
     webhook:
@@ -525,7 +568,8 @@ spec:
           name: crd-conversion-webhook
           path: /convert
         caBundle: <base64-encoded-ca-cert>
-      conversionReviewVersions: ["v1", "v1beta1"]
+      conversionReviewVersions:
+      - v1
   scope: Namespaced
   names:
     plural: crontabs
@@ -535,64 +579,62 @@ spec:
 
 변환 웹훅 서버 구현 예시:
 ```go
-func (s *WebhookServer) ServeConvert(w http.ResponseWriter, r *http.Request) {
-    var body []byte
-    if r.Body != nil {
-        if data, err := ioutil.ReadAll(r.Body); err == nil {
-            body = data
+// Include encoding/json, net/http, fmt and the Kubernetes types below in the server.
+// apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+// "k8s.io/apimachinery/pkg/runtime"
+func convertCron(raw []byte, desired string) ([]byte, error) {
+    var obj map[string]interface{}
+    if err := json.Unmarshal(raw, &obj); err != nil { return nil, err }
+    source, _ := obj["apiVersion"].(string)
+    valid := func(v string) bool { return v == "stable.example.com/v1" || v == "stable.example.com/v1beta1" }
+    if !valid(source) || !valid(desired) || obj["kind"] != "CronTab" {
+        return nil, fmt.Errorf("unsupported CronTab conversion %q -> %q", source, desired)
+    }
+    spec, ok := obj["spec"].(map[string]interface{})
+    if !ok { return nil, fmt.Errorf("spec object required") }
+    if source != desired {
+        oldField, newField := "cron", "cronSpec"
+        if desired == "stable.example.com/v1beta1" { oldField, newField = newField, oldField }
+        value, ok := spec[oldField]
+        if !ok { return nil, fmt.Errorf("missing %s", oldField) }
+        if _, collision := spec[newField]; collision { return nil, fmt.Errorf("ambiguous cron fields") }
+        spec[newField] = value
+        delete(spec, oldField)
+    }
+    obj["apiVersion"] = desired
+    // Preserve metadata (including UID/resourceVersion), status and all other fields.
+    return json.Marshal(obj)
+}
+
+func serveConvert(w http.ResponseWriter, r *http.Request) {
+    var review apiextensionsv1.ConversionReview
+    if r.Method != http.MethodPost || r.Body == nil {
+        http.Error(w, "POST body required", http.StatusBadRequest); return
+    }
+    if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<20)).Decode(&review); err != nil ||
+        review.APIVersion != "apiextensions.k8s.io/v1" || review.Kind != "ConversionReview" ||
+        review.Request == nil || review.Request.UID == "" {
+        http.Error(w, "Invalid ConversionReview v1", http.StatusBadRequest); return
+    }
+    response := &apiextensionsv1.ConversionResponse{
+        UID: review.Request.UID, Result: metav1.Status{Status: "Success"},
+    }
+    for _, obj := range review.Request.Objects {
+        raw, err := convertCron(obj.Raw, review.Request.DesiredAPIVersion)
+        if err != nil {
+            response.Result = metav1.Status{Status: "Failure", Message: err.Error()}
+            response.ConvertedObjects = nil
+            break
         }
+        response.ConvertedObjects = append(response.ConvertedObjects, runtime.RawExtension{Raw: raw})
     }
-
-    // ConversionReview 요청 디코딩
-    convertReview := v1.ConversionReview{}
-    if err := json.Unmarshal(body, &convertReview); err != nil {
-        // 오류 처리
-        return
+    out := apiextensionsv1.ConversionReview{
+        TypeMeta: metav1.TypeMeta{APIVersion: "apiextensions.k8s.io/v1", Kind: "ConversionReview"},
+        Response: response,
     }
-
-    // 변환 로직 수행
-    if convertReview.Request.DesiredAPIVersion == "stable.example.com/v1" {
-        // v1beta1 -> v1 변환
-        for i, obj := range convertReview.Request.Objects {
-            v1beta1Obj := &v1beta1.CronTab{}
-            if err := json.Unmarshal(obj.Raw, v1beta1Obj); err != nil {
-                // 오류 처리
-                return
-            }
-            
-            // 변환 로직
-            v1Obj := &v1.CronTab{
-                Spec: v1.CronTabSpec{
-                    CronSpec: v1beta1Obj.Spec.Cron,  // 필드 이름 변경
-                    Image: v1beta1Obj.Spec.Image,
-                    Replicas: v1beta1Obj.Spec.Replicas,
-                },
-            }
-            
-            // 변환된 객체 인코딩
-            raw, err := json.Marshal(v1Obj)
-            if err != nil {
-                // 오류 처리
-                return
-            }
-            
-            convertReview.Response.ConvertedObjects = append(
-                convertReview.Response.ConvertedObjects,
-                runtime.RawExtension{Raw: raw},
-            )
-        }
-    } else {
-        // v1 -> v1beta1 변환
-        // 유사한 로직...
-    }
-
-    // 응답 설정
-    convertReview.Response.UID = convertReview.Request.UID
-    convertReview.Response.Result.Status = "Success"
-    
-    // 응답 전송
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(convertReview)
+    _ = json.NewEncoder(w).Encode(out)
 }
 ```
 
@@ -687,7 +729,7 @@ Kubernetes에서 커스텀 리소스 정의(CRD)와 애그리게이션 API(Aggre
 - **제한된 유연성**: 
   - 스토리지는 etcd로 제한됩니다.
   - 기본 API 서버의 동작을 상속합니다.
-  - 복잡한 검증 로직이나 변환 로직을 구현하기 어렵습니다.
+  - CEL 검증과 admission/conversion webhook을 지원하며 커스텀 저장소와 비표준 API 동작이 주요 차이점입니다.
 - **웹훅을 통한 확장**: 검증 웹훅, 변환 웹훅 등을 통해 일부 기능을 확장할 수 있습니다.
 
 **애그리게이션 API의 특징:**
@@ -729,6 +771,8 @@ CRD 적합 사례:
 - CRD도 OpenAPI v3 Schema를 통한 검증 스키마를 지원합니다(B는 틀림).
 - CRD와 애그리게이션 API 모두 클러스터 범위 및 네임스페이스 범위 리소스를 지원합니다(D는 틀림).
 </details>
+> cronSpec 정규식은 숫자/별표/간격의 제한된 5필드 형태만 검사합니다. 범위·목록·이름·유효한 시간 범위 전체를 검증하지 않습니다. 실제 cron 파서 검증을 컨트롤러 또는 webhook에 추가합니다. CRD 자체는 스케줄 작업을 실행하지 않습니다.
+
 ## 주관식 문제
 
 1. CustomResourceDefinition(CRD)을 사용하여 커스텀 리소스를 정의하는 방법과 해당 리소스의 검증 규칙을 설정하는 방법을 설명하세요.
@@ -748,23 +792,43 @@ CRD는 Kubernetes API를 확장하여 새로운 리소스 유형을 정의하는
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: <plural>.<group>  # 예: crontabs.stable.example.com
+  name: <plural>.<group>
 spec:
-  group: <api-group>      # 예: stable.example.com
+  group: <api-group>
   names:
-    kind: <kind-name>     # 예: CronTab
-    plural: <plural-name> # 예: crontabs
-    singular: <singular-name>  # 예: crontab
-    shortNames:           # 선택 사항
-    - <short-name>        # 예: ct
-  scope: Namespaced       # 또는 Cluster
+    kind: <kind-name>
+    plural: <plural-name>
+    singular: <singular-name>
+    shortNames:
+    - <short-name>
+  scope: Namespaced
   versions:
-    - name: <version>     # 예: v1
-      served: true        # API 서버에서 제공 여부
-      storage: true       # 스토리지 버전 여부
-      schema:
-        openAPIV3Schema:
-          # 스키마 정의
+  - name: <version>
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        required:
+        - spec
+        properties:
+          spec:
+            type: object
+            required:
+            - cronSpec
+            - image
+            properties:
+              cronSpec:
+                type: string
+              image:
+                type: string
+              replicas:
+                type: integer
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
 ```
 
 **2. 검증 규칙 설정:**
@@ -806,7 +870,7 @@ OpenAPI v3 Schema는 다양한 검증 기능을 제공합니다:
 
 - **데이터 유형**: `type` 필드를 사용하여 데이터 유형 지정
   ```yaml
-  type: string | number | integer | boolean | array | object
+  type: string  # Choose one supported type, not a pipe-separated union.
   ```
 
 - **문자열 제약 조건**: 문자열 길이 및 패턴 검증
@@ -827,7 +891,7 @@ OpenAPI v3 Schema는 다양한 검증 기능을 제공합니다:
   ```yaml
   minItems: 1
   maxItems: 10
-  uniqueItems: true
+  x-kubernetes-list-type: set
   items:
     type: string
   ```
@@ -842,9 +906,10 @@ OpenAPI v3 Schema는 다양한 검증 기능을 제공합니다:
   default: "default-value"
   ```
 
-- **추가 속성**: 추가 속성 허용 여부 제어
+- **맵 값**: 맵 항목 타입을 정의합니다. CRD에서 additionalProperties: false는 금지되며 미정의 필드는 보통 제거됩니다.
   ```yaml
-  additionalProperties: false
+  additionalProperties:
+    type: string
   ```
 
 **4. 전체 CRD 예시:**
@@ -951,11 +1016,7 @@ EOF
 ```
 
 이 명령은 다음과 같은 오류를 반환합니다:
-```
-Error from server (Invalid): error when creating "STDIN": admission webhook "validate-crontab.example.com" denied the request: 
-- spec.cronSpec: Invalid value: "invalid-cron-spec": does not match pattern '^(\d+|\*)(/\d+)?(\s+(\d+|\*)(/\d+)?){4}$'
-- spec.replicas: Invalid value: 20: must be less than or equal to 10
-```
+API 서버의 CRD 스키마 검증이 잘못된 cronSpec/replicas를 거부합니다. 별도 admission webhook은 이 예제에 설치되지 않았으며 정확한 오류 문구는 버전에 따라 달라집니다.
 
 **7. 모범 사례:**
 
@@ -1003,10 +1064,8 @@ Error from server (Invalid): error when creating "STDIN": admission webhook "val
 [Operator SDK](https://sdk.operatorframework.io/)는 Red Hat의 Operator Framework의 일부로, 오퍼레이터 개발을 간소화하는 도구입니다.
 
 ```bash
-# Operator SDK 설치
-curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.25.0/operator-sdk_linux_amd64
-chmod +x operator-sdk_linux_amd64
-sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk
+: "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
+# Install a supported released SDK/CLI and verify its checksum before scaffolding.
 
 # Go 기반 오퍼레이터 프로젝트 생성
 operator-sdk init --domain example.com --repo github.com/example/my-operator
@@ -1018,8 +1077,8 @@ operator-sdk create api --group apps --version v1alpha1 --kind MyApp --resource 
 make manifests
 
 # 오퍼레이터 빌드 및 배포
-make docker-build docker-push
-make deploy
+make docker-build docker-push IMG="$OPERATOR_IMAGE"
+make deploy IMG="$OPERATOR_IMAGE"
 ```
 
 **2. Kubebuilder 사용:**
@@ -1027,9 +1086,8 @@ make deploy
 [Kubebuilder](https://book.kubebuilder.io/)는 Kubernetes SIG에서 개발한 프레임워크로, 컨트롤러 개발을 위한 도구를 제공합니다.
 
 ```bash
-# Kubebuilder 설치
-curl -L https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH) | tar -xz -C /tmp/
-sudo mv /tmp/kubebuilder_*/bin/kubebuilder /usr/local/bin/
+: "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
+# Install a supported released SDK/CLI and verify its checksum before scaffolding.
 
 # 프로젝트 초기화
 kubebuilder init --domain example.com --repo github.com/example/my-operator
@@ -1039,7 +1097,7 @@ kubebuilder create api --group apps --version v1alpha1 --kind MyApp
 
 # CRD 생성 및 컨트롤러 배포
 make install
-make deploy
+make deploy IMG="$OPERATOR_IMAGE"
 ```
 
 **3. 컨트롤러 구현:**
@@ -1047,99 +1105,51 @@ make deploy
 오퍼레이터의 핵심은 조정 함수(reconciliation function)입니다. 이 함수는 커스텀 리소스의 현재 상태를 관찰하고 필요한 작업을 수행합니다.
 
 ```go
-// 조정 함수 예시
+// Uses the scaffold's client.Client and Scheme. Import controllerutil and sort.
 func (r *MyAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := r.Log.WithValues("myapp", req.NamespacedName)
-    
-    // 커스텀 리소스 가져오기
     var myApp appsv1alpha1.MyApp
     if err := r.Get(ctx, req.NamespacedName, &myApp); err != nil {
-        if errors.IsNotFound(err) {
-            // 리소스가 삭제됨 - 정리 작업 수행
-            return ctrl.Result{}, nil
-        }
-        // 오류 발생
-        return ctrl.Result{}, err
+        return ctrl.Result{}, client.IgnoreNotFound(err)
     }
-    
-    // 1. 필요한 리소스가 있는지 확인
-    deployment := &appsv1.Deployment{}
-    err := r.Get(ctx, types.NamespacedName{Name: myApp.Name, Namespace: myApp.Namespace}, deployment)
-    if errors.IsNotFound(err) {
-        // 배포가 없으면 생성
-        deployment = r.deploymentForMyApp(&myApp)
-        log.Info("Creating a new Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-        if err := r.Create(ctx, deployment); err != nil {
-            log.Error(err, "Failed to create new Deployment")
-            return ctrl.Result{}, err
+    if !myApp.DeletionTimestamp.IsZero() { return ctrl.Result{}, nil }
+    deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: myApp.Name, Namespace: myApp.Namespace}}
+    _, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
+        if deployment.UID != "" && !metav1.IsControlledBy(deployment, &myApp) {
+            return fmt.Errorf("refusing to modify Deployment owned by another actor")
         }
-        // 배포 생성 성공
-        return ctrl.Result{Requeue: true}, nil
-    } else if err != nil {
-        log.Error(err, "Failed to get Deployment")
-        return ctrl.Result{}, err
-    }
-    
-    // 2. 배포가 원하는 상태인지 확인
-    size := myApp.Spec.Size
-    if *deployment.Spec.Replicas != size {
+        labels := map[string]string{"myapp.example.com/owner-uid": string(myApp.UID)}
+        if deployment.Spec.Selector == nil {
+            deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: labels}
+        }
+        if deployment.Spec.Template.Labels == nil { deployment.Spec.Template.Labels = map[string]string{} }
+        deployment.Spec.Template.Labels["myapp.example.com/owner-uid"] = string(myApp.UID)
+        size := myApp.Spec.Size
         deployment.Spec.Replicas = &size
-        if err := r.Update(ctx, deployment); err != nil {
-            log.Error(err, "Failed to update Deployment")
-            return ctrl.Result{}, err
-        }
-        // 배포 업데이트 성공
-        return ctrl.Result{Requeue: true}, nil
-    }
-    
-    // 3. 상태 업데이트
+        keys := []string{}
+        for key := range myApp.Spec.Config { keys = append(keys, key) }
+        sort.Strings(keys) // Stable output avoids unnecessary updates.
+        env := []corev1.EnvVar{}
+        for _, key := range keys { env = append(env, corev1.EnvVar{Name: key, Value: myApp.Spec.Config[key]}) }
+        // This operator owns its application container; update image as well as replicas.
+        deployment.Spec.Template.Spec.Containers = []corev1.Container{{
+            Name: "myapp", Image: myApp.Spec.Image, Env: env,
+            Ports: []corev1.ContainerPort{{ContainerPort: 8080, Name: "http"}},
+        }}
+        return ctrl.SetControllerReference(&myApp, deployment, r.Scheme)
+    })
+    if err != nil { return ctrl.Result{}, err }
     if myApp.Status.AvailableReplicas != deployment.Status.AvailableReplicas {
         myApp.Status.AvailableReplicas = deployment.Status.AvailableReplicas
-        if err := r.Status().Update(ctx, &myApp); err != nil {
-            log.Error(err, "Failed to update MyApp status")
-            return ctrl.Result{}, err
-        }
+        if err := r.Status().Update(ctx, &myApp); err != nil { return ctrl.Result{}, err }
     }
-    
     return ctrl.Result{}, nil
 }
 
-// 배포 생성 함수
-func (r *MyAppReconciler) deploymentForMyApp(m *appsv1alpha1.MyApp) *appsv1.Deployment {
-    ls := labelsForMyApp(m.Name)
-    replicas := m.Spec.Size
-
-    dep := &appsv1.Deployment{
-        ObjectMeta: metav1.ObjectMeta{
-            Name:      m.Name,
-            Namespace: m.Namespace,
-        },
-        Spec: appsv1.DeploymentSpec{
-            Replicas: &replicas,
-            Selector: &metav1.LabelSelector{
-                MatchLabels: ls,
-            },
-            Template: corev1.PodTemplateSpec{
-                ObjectMeta: metav1.ObjectMeta{
-                    Labels: ls,
-                },
-                Spec: corev1.PodSpec{
-                    Containers: []corev1.Container{{
-                        Image: m.Spec.Image,
-                        Name:  "myapp",
-                        Ports: []corev1.ContainerPort{{
-                            ContainerPort: 8080,
-                            Name:          "http",
-                        }},
-                    }},
-                },
-            },
-        },
-    }
-    
-    // 소유자 참조 설정
-    ctrl.SetControllerReference(m, dep, r.Scheme)
-    return dep
+func (r *MyAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewControllerManagedBy(mgr).
+        For(&appsv1alpha1.MyApp{}).
+        Owns(&appsv1.Deployment{}).
+        Complete(r)
 }
 ```
 
@@ -1273,8 +1283,8 @@ webhooks:
   clientConfig:
     service:
       namespace: webhook-system
-      name: sidecar-injector
-      path: "/inject"
+      name: webhook-server
+      path: "/mutate"
     caBundle: <base64-encoded-ca-cert>
   rules:
   - apiGroups: [""]
@@ -1282,7 +1292,7 @@ webhooks:
     operations: ["CREATE"]
     resources: ["pods"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -1303,14 +1313,14 @@ webhooks:
 3. **이미지 정책 적용:**
    - 이미지 레지스트리 URL 수정
    - 이미지 태그를 다이제스트로 변환
-   - 예시: `nginx:latest`를 `internal-registry.example.com/nginx:v1.19.0`으로 변경
+   - 예시: `nginx:latest`를 `internal-registry.example.com/nginx:1.30.4`으로 변경
 
 4. **볼륨 수정:**
    - 기본 볼륨 마운트 추가
    - ConfigMap 또는 Secret 자동 마운트
-   - 예시: 모든 포드에 서비스 계정 토큰 볼륨 자동 마운트
+   - 예시: ServiceAccount admission이 automountServiceAccountToken 설정에 따라 projected 토큰을 추가하며 opt-out을 덮어쓰지 않음
 
-5. **네트워크 정책 적용:**
+5. **Pod 네트워크 설정:**
    - 기본 네트워크 설정 추가
    - DNS 구성 수정
    - 예시: 특정 네임스페이스의 모든 포드에 특정 DNS 설정 적용
@@ -1323,7 +1333,7 @@ webhooks:
 - 요청 객체를 수정할 수 없음
 - 요청을 허용하거나 거부만 가능
 - 여러 검증 웹훅이 병렬로 실행됨
-- 모든 웹훅이 요청을 허용해야 요청이 처리됨
+- 일치하는 webhook의 명시적 결정은 모두 허용이어야 하며 호출 오류/시간 초과는 failurePolicy에 따라 Ignore로 통과할 수 있음
 
 **구성 예시:**
 ```yaml
@@ -1336,7 +1346,7 @@ webhooks:
   clientConfig:
     service:
       namespace: webhook-system
-      name: pod-policy-validator
+      name: webhook-server
       path: "/validate"
     caBundle: <base64-encoded-ca-cert>
   rules:
@@ -1345,7 +1355,7 @@ webhooks:
     operations: ["CREATE", "UPDATE"]
     resources: ["pods"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -1391,171 +1401,181 @@ package main
 
 import (
     "encoding/json"
-    "fmt"
-    "io/ioutil"
+    "log"
     "net/http"
-    
+    "os"
+    "time"
     admissionv1 "k8s.io/api/admission/v1"
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/apimachinery/pkg/runtime/serializer"
+    "k8s.io/apimachinery/pkg/api/resource"
 )
 
-var (
-    runtimeScheme = runtime.NewScheme()
-    codecs        = serializer.NewCodecFactory(runtimeScheme)
-    deserializer  = codecs.UniversalDeserializer()
-)
-
-// 변경 웹훅 핸들러
-func mutateHandler(w http.ResponseWriter, r *http.Request) {
-    body, err := ioutil.ReadAll(r.Body)
-    if err != nil {
-        http.Error(w, "Failed to read request body", http.StatusBadRequest)
-        return
+func readPodReview(w http.ResponseWriter, r *http.Request) (*admissionv1.AdmissionRequest, *corev1.Pod, bool) {
+    if r.Method != http.MethodPost || r.Body == nil {
+        http.Error(w, "POST body required", http.StatusBadRequest)
+        return nil, nil, false
     }
-    
-    // AdmissionReview 요청 디코딩
-    admissionReview := admissionv1.AdmissionReview{}
-    if _, _, err := deserializer.Decode(body, nil, &admissionReview); err != nil {
-        http.Error(w, "Failed to decode request", http.StatusBadRequest)
-        return
+    var review admissionv1.AdmissionReview
+    if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2<<20)).Decode(&review); err != nil {
+        http.Error(w, "Invalid AdmissionReview JSON", http.StatusBadRequest)
+        return nil, nil, false
     }
-    
-    // 포드 객체 디코딩
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Failed to decode pod", http.StatusBadRequest)
-        return
+    req := review.Request
+    if review.APIVersion != "admission.k8s.io/v1" || review.Kind != "AdmissionReview" || req == nil || req.UID == "" {
+        http.Error(w, "AdmissionReview v1 request and UID required", http.StatusBadRequest)
+        return nil, nil, false
     }
-    
-    // 패치 생성 (사이드카 컨테이너 추가)
-    patch := []map[string]interface{}{
-        {
-            "op": "add",
-            "path": "/spec/containers/-",
-            "value": map[string]interface{}{
-                "name": "sidecar",
-                "image": "sidecar-image:latest",
-                "resources": map[string]interface{}{
-                    "limits": map[string]interface{}{
-                        "cpu": "100m",
-                        "memory": "100Mi",
-                    },
-                    "requests": map[string]interface{}{
-                        "cpu": "50m",
-                        "memory": "50Mi",
-                    },
-                },
-            },
-        },
+    if req.Kind.Group != "" || req.Kind.Version != "v1" || req.Kind.Kind != "Pod" ||
+        (req.Operation != admissionv1.Create && req.Operation != admissionv1.Update) {
+        http.Error(w, "Only Pod CREATE/UPDATE is supported", http.StatusBadRequest)
+        return nil, nil, false
     }
-    
-    // 패치를 JSON으로 변환
-    patchBytes, err := json.Marshal(patch)
-    if err != nil {
-        http.Error(w, "Failed to marshal patch", http.StatusInternalServerError)
-        return
+    var pod corev1.Pod
+    if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
+        http.Error(w, "Invalid Pod JSON", http.StatusBadRequest)
+        return nil, nil, false
     }
-    
-    // 응답 생성
-    admissionResponse := admissionv1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: true,
-        Patch:   patchBytes,
-        PatchType: func() *admissionv1.PatchType {
-            pt := admissionv1.PatchTypeJSONPatch
-            return &pt
-        }(),
-    }
-    
-    // 응답 전송
-    admissionReview.Response = &admissionResponse
-    resp, err := json.Marshal(admissionReview)
-    if err != nil {
-        http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
-        return
-    }
-    
-    w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    return req, &pod, true
 }
 
-// 검증 웹훅 핸들러
-func validateHandler(w http.ResponseWriter, r *http.Request) {
-    body, err := ioutil.ReadAll(r.Body)
+func writeReview(w http.ResponseWriter, response admissionv1.AdmissionResponse) {
+    review := admissionv1.AdmissionReview{
+        TypeMeta: metav1.TypeMeta{APIVersion: "admission.k8s.io/v1", Kind: "AdmissionReview"},
+        Response: &response,
+    }
+    data, err := json.Marshal(review)
     if err != nil {
-        http.Error(w, "Failed to read request body", http.StatusBadRequest)
+        http.Error(w, "Response encoding failed", http.StatusInternalServerError)
         return
     }
-    
-    // AdmissionReview 요청 디코딩
-    admissionReview := admissionv1.AdmissionReview{}
-    if _, _, err := deserializer.Decode(body, nil, &admissionReview); err != nil {
-        http.Error(w, "Failed to decode request", http.StatusBadRequest)
-        return
-    }
-    
-    // 포드 객체 디코딩
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Failed to decode pod", http.StatusBadRequest)
-        return
-    }
-    
-    // 검증 로직
-    allowed := true
-    var message string
-    
-    // 특권 컨테이너 검사
-    for _, container := range pod.Spec.Containers {
-        if container.SecurityContext != nil && container.SecurityContext.Privileged != nil && *container.SecurityContext.Privileged {
-            allowed = false
-            message = "Privileged containers are not allowed"
-            break
-        }
-    }
-    
-    // 응답 생성
-    admissionResponse := admissionv1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: allowed,
-    }
-    
-    if !allowed {
-        admissionResponse.Result = &metav1.Status{
-            Message: message,
-            Status:  "Failure",
-            Reason:  metav1.StatusReasonForbidden,
-            Code:    403,
-        }
-    }
-    
-    // 응답 전송
-    admissionReview.Response = &admissionResponse
-    resp, err := json.Marshal(admissionReview)
-    if err != nil {
-        http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
-        return
-    }
-    
     w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    _, _ = w.Write(data)
+}
+
+func writePatch(w http.ResponseWriter, req *admissionv1.AdmissionRequest, patches []map[string]interface{}) {
+    response := admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
+    if len(patches) > 0 {
+        data, err := json.Marshal(patches)
+        if err != nil {
+            http.Error(w, "Patch encoding failed", http.StatusInternalServerError)
+            return
+        }
+        patchType := admissionv1.PatchTypeJSONPatch
+        response.PatchType, response.Patch = &patchType, data
+    }
+    writeReview(w, response)
+}
+
+func deny(w http.ResponseWriter, req *admissionv1.AdmissionRequest, message string) {
+    writeReview(w, admissionv1.AdmissionResponse{
+        UID: req.UID, Allowed: false,
+        Result: &metav1.Status{Status: "Failure", Reason: metav1.StatusReasonForbidden, Code: 403, Message: message},
+    })
+}
+var sidecarImage string
+
+func mutateHandler(w http.ResponseWriter, r *http.Request) {
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    // This example targets explicitly declared Linux Pods on CREATE only.
+    if req.Operation != admissionv1.Create || pod.Spec.OS == nil || pod.Spec.OS.Name != corev1.Linux {
+        writePatch(w, req, nil)
+        return
+    }
+    if sidecarImage == "" {
+        deny(w, req, "Configure a tested SIDE_CAR_IMAGE first")
+        return
+    }
+    changed, foundVolume, foundSidecar := false, false, false
+    for _, volume := range pod.Spec.Volumes {
+        if volume.Name == "shared-data" {
+            if volume.EmptyDir == nil {
+                deny(w, req, "shared-data is reserved for an emptyDir volume")
+                return
+            }
+            foundVolume = true
+        }
+    }
+    if !foundVolume {
+        pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+            Name: "shared-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+        })
+        changed = true
+    }
+    for i := range pod.Spec.Containers {
+        c := &pod.Spec.Containers[i]
+        if c.Name == "monitoring-sidecar" {
+            if c.Image != sidecarImage {
+                deny(w, req, "monitoring-sidecar name is reserved")
+                return
+            }
+            foundSidecar = true
+        }
+        mounted := false
+        for _, mount := range c.VolumeMounts {
+            if mount.MountPath == "/var/monitoring" {
+                if mount.Name != "shared-data" || mount.SubPath != "" || mount.SubPathExpr != "" {
+                    deny(w, req, "/var/monitoring is reserved for shared-data")
+                    return
+                }
+                mounted = true
+            }
+        }
+        if !mounted {
+            c.VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{Name: "shared-data", MountPath: "/var/monitoring"})
+            changed = true
+        }
+    }
+    if !foundSidecar {
+        pod.Spec.Containers = append(pod.Spec.Containers, corev1.Container{
+            Name: "monitoring-sidecar", Image: sidecarImage,
+            VolumeMounts: []corev1.VolumeMount{{Name: "shared-data", MountPath: "/var/monitoring", ReadOnly: true}},
+            Resources: corev1.ResourceRequirements{
+                Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("50m"), corev1.ResourceMemory: resource.MustParse("50Mi")},
+                Limits: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("100m"), corev1.ResourceMemory: resource.MustParse("100Mi")},
+            },
+        })
+        changed = true
+    }
+    if !changed { writePatch(w, req, nil); return }
+    // Whole-array add also works when volumes was absent; preserve all existing entries.
+    writePatch(w, req, []map[string]interface{}{
+        {"op": "add", "path": "/spec/volumes", "value": pod.Spec.Volumes},
+        {"op": "add", "path": "/spec/containers", "value": pod.Spec.Containers},
+    })
+}
+
+func validateHandler(w http.ResponseWriter, r *http.Request) {
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    contexts := []*corev1.SecurityContext{}
+    for _, c := range pod.Spec.Containers { contexts = append(contexts, c.SecurityContext) }
+    for _, c := range pod.Spec.InitContainers { contexts = append(contexts, c.SecurityContext) }
+    for _, c := range pod.Spec.EphemeralContainers { contexts = append(contexts, c.SecurityContext) }
+    for _, sc := range contexts {
+        if sc != nil && sc.Privileged != nil && *sc.Privileged {
+            deny(w, req, "Privileged containers are not allowed")
+            return
+        }
+    }
+    writeReview(w, admissionv1.AdmissionResponse{UID: req.UID, Allowed: true})
 }
 
 func main() {
-    http.HandleFunc("/mutate", mutateHandler)
-    http.HandleFunc("/validate", validateHandler)
-    
-    fmt.Println("Starting webhook server on :8443")
-    http.ListenAndServeTLS(":8443", "tls.crt", "tls.key", nil)
+    sidecarImage = os.Getenv("SIDE_CAR_IMAGE")
+    if sidecarImage == "" { log.Fatal("Set SIDE_CAR_IMAGE to a tested Linux image tag/digest") }
+    mux := http.NewServeMux()
+    mux.HandleFunc("/mutate", mutateHandler)
+    mux.HandleFunc("/validate", validateHandler)
+    server := &http.Server{Addr: ":8443", Handler: mux, ReadHeaderTimeout: 5*time.Second}
+    log.Fatal(server.ListenAndServeTLS("/etc/webhook/certs/tls.crt", "/etc/webhook/certs/tls.key"))
 }
 ```
 
 **4. 웹훅 배포 및 구성:**
 
-웹훅 서버는 일반적으로 Kubernetes 클러스터 내에 배포되며, 서비스와 TLS 인증서가 필요합니다.
+위 서버를 빌드하고 서버/sidecar 이미지 자리표시자를 바꾼 후 webhook-system과 webhook-server-tls를 생성합니다. 인증서는 webhook-server.webhook-system.svc(별도 Service 이름 사용 시 해당 이름도)를 포함해야 하며 caBundle에는 서명 CA를 넣습니다. sidecar 이미지는 애플리케이션 파일 권한에 맞아야 합니다. 일반 sidecar 예제이므로 Job 종료/native-sidecar 동작은 별도 구성합니다.
 
 ```yaml
 # 웹훅 서버 배포
@@ -1576,7 +1596,10 @@ spec:
     spec:
       containers:
       - name: server
-        image: webhook-server:latest
+        image: example/webhook-server:REPLACE_WITH_TESTED_RELEASE
+        env:
+        - name: SIDE_CAR_IMAGE
+          value: example/monitoring-agent:REPLACE_WITH_TESTED_RELEASE
         ports:
         - containerPort: 8443
         volumeMounts:
@@ -1610,7 +1633,7 @@ spec:
 - **범위 제한**: 필요한 리소스 및 작업에만 웹훅을 적용합니다.
 - **테스트**: 다양한 시나리오에서 웹훅의 동작을 철저히 테스트합니다.
 - **모니터링**: 웹훅 서버의 성능 및 오류를 모니터링합니다.
-- **버전 관리**: API 버전 변경에 대비하여 여러 버전의 AdmissionReview를 지원합니다.
+- **버전 관리**: 실제로 구현한 AdmissionReview 버전만 광고하며 요청과 같은 버전으로 응답합니다.
 </details>
 
 ## 실습 문제
@@ -1733,9 +1756,9 @@ metadata:
   name: my-webapp
   namespace: default
 spec:
-  image: nginx:1.19
+  image: nginx:1.30.4
   replicas: 3
-  port: 8080
+  port: 80
   env:
     - name: ENV_VAR1
       value: "value1"
@@ -1753,7 +1776,7 @@ status:
 </details>
 
 2. 다음 요구 사항에 맞는 변경(Mutating) 어드미션 웹훅 구성을 작성하세요:
-   - 모든 포드 생성 요청에 사이드카 컨테이너 추가
+   - spec.os.name: linux를 명시한 Pod의 CREATE 요청에 사이드카 추가
    - 특정 네임스페이스(monitoring)에만 적용
    - 웹훅 서비스: webhook-service.webhook-system.svc
    - 경로: /mutate
@@ -1784,8 +1807,11 @@ webhooks:
     scope: "Namespaced"
   namespaceSelector:
     matchLabels:
-      monitoring-injection: enabled
-  admissionReviewVersions: ["v1", "v1beta1"]
+      kubernetes.io/metadata.name: monitoring
+  matchConditions:
+  - name: explicit-linux-pod
+    expression: "has(object.spec.os) && object.spec.os.name == 'linux'"
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
   failurePolicy: Fail
@@ -1796,7 +1822,7 @@ kind: Namespace
 metadata:
   name: monitoring
   labels:
-    monitoring-injection: enabled
+    kubernetes.io/metadata.name: monitoring
 ```
 
 이 구성은 다음과 같은 특징을 가집니다:
@@ -1814,8 +1840,8 @@ metadata:
    - 스코프: `Namespaced`
 
 3. **네임스페이스 선택기**:
-   - `monitoring-injection: enabled` 레이블이 있는 네임스페이스에만 적용
-   - `monitoring` 네임스페이스에 이 레이블을 추가
+   - `kubernetes.io/metadata.name: monitoring` 레이블이 있는 네임스페이스에만 적용
+   - API 서버가 monitoring 네임스페이스에 제공하는 변경 불가 이름 레이블을 사용
 
 4. **추가 설정**:
    - `admissionReviewVersions`: 지원하는 AdmissionReview API 버전
@@ -1825,77 +1851,32 @@ metadata:
 
 웹훅 서버는 다음과 같은 로직을 구현해야 합니다:
 
-```go
-func mutateHandler(w http.ResponseWriter, r *http.Request) {
-    // 요청 디코딩
-    body, _ := ioutil.ReadAll(r.Body)
-    admissionReview := admissionv1.AdmissionReview{}
-    deserializer.Decode(body, nil, &admissionReview)
-    
-    // 포드 객체 디코딩
-    pod := corev1.Pod{}
-    json.Unmarshal(admissionReview.Request.Object.Raw, &pod)
-    
-    // 사이드카 컨테이너 정의
-    sidecarContainer := corev1.Container{
-        Name:  "monitoring-sidecar",
-        Image: "monitoring-agent:latest",
-        Resources: corev1.ResourceRequirements{
-            Limits: corev1.ResourceList{
-                corev1.ResourceCPU:    resource.MustParse("100m"),
-                corev1.ResourceMemory: resource.MustParse("100Mi"),
-            },
-            Requests: corev1.ResourceList{
-                corev1.ResourceCPU:    resource.MustParse("50m"),
-                corev1.ResourceMemory: resource.MustParse("50Mi"),
-            },
-        },
-        VolumeMounts: []corev1.VolumeMount{
-            {
-                Name:      "shared-data",
-                MountPath: "/var/monitoring",
-            },
-        },
-    }
-    
-    // 패치 생성
-    patch := []map[string]interface{}{
-        {
-            "op":    "add",
-            "path":  "/spec/containers/-",
-            "value": sidecarContainer,
-        },
-        {
-            "op":   "add",
-            "path": "/spec/volumes/-",
-            "value": map[string]interface{}{
-                "name": "shared-data",
-                "emptyDir": map[string]interface{}{},
-            },
-        },
-    }
-    
-    // 패치를 JSON으로 변환
-    patchBytes, _ := json.Marshal(patch)
-    
-    // 응답 생성
-    admissionResponse := admissionv1.AdmissionResponse{
-        UID:       admissionReview.Request.UID,
-        Allowed:   true,
-        Patch:     patchBytes,
-        PatchType: func() *admissionv1.PatchType {
-            pt := admissionv1.PatchTypeJSONPatch
-            return &pt
-        }(),
-    }
-    
-    // 응답 전송
-    admissionReview.Response = &admissionResponse
-    resp, _ := json.Marshal(admissionReview)
-    w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
-}
-```
+앞의 완전한 서버의 `mutateHandler`와 공통 요청/응답 함수를 그대로 사용합니다. 이 핸들러는 누락된 volumes 배열을 만들고, 기존 볼륨/컨테이너를 보존하며, 중복 주입을 방지하고, 애플리케이션과 sidecar 양쪽에 shared-data를 마운트합니다. reserved 이름/경로 충돌은 거부합니다.
 
-이 웹훅은 `monitoring` 네임스페이스에 생성되는 모든 포드에 모니터링 사이드카 컨테이너를 자동으로 추가합니다. 사이드카 컨테이너는 모니터링 에이전트 이미지를 사용하고, 공유 볼륨을 마운트하여 메인 컨테이너와 데이터를 공유할 수 있습니다.
+이 웹훅은 `monitoring` 네임스페이스에서 `spec.os.name: linux`를 명시하여 생성하는 Pod에 모니터링 사이드카 컨테이너를 자동으로 추가합니다. 사이드카 컨테이너는 모니터링 에이전트 이미지를 사용하고, 공유 볼륨을 마운트하여 메인 컨테이너와 데이터를 공유할 수 있습니다.
 </details>
+
+> 컨트롤러 코드는 생성한 프로젝트의 타입/클라이언트/RBAC와 함께 사용하는 조각입니다. Deployment 소유권을 확인하고 이미지/복제본/환경 설정을 조정하며 Owns watch로 상태 변화를 수신합니다. 외부 리소스 정리는 finalizer로 삭제 전에 처리합니다. 이 환경에서는 Kubernetes/AWS 배포를 실행하지 않았습니다.
+
+## 검증 참고 자료
+
+- https://kubernetes.io/releases/
+- https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+- https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+- https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/
+- https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml
+- https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md
+- https://github.com/operator-framework/operator-sdk/blob/master/README.md
+- https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md
+- https://github.com/jaegertracing/jaeger-operator/blob/main/README.md
+- https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/
+- https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md
+- https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml

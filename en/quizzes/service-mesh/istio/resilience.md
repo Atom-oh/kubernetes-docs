@@ -1,8 +1,10 @@
 # Resilience Quiz
 
-> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 19, 2026
+> **Reviewed**: September 11, 2026 · Istio1.31 · Kubernetes1.32–1.36; see the installation chapter for EKS compatibility.
 
 This quiz tests your understanding of Istio's Resilience features.
+
+Each example is independent and assumes the named Services, labels, namespaces and sidecar HTTP8080 workloads exist. Values are illustrative; offline schema/query checks are not production/load tests. The locality examples use `localityLbSetting`, not the separate `zoneAwareLbSetting` API.
 
 ## Multiple Choice Questions (1-5)
 
@@ -10,7 +12,10 @@ This quiz tests your understanding of Istio's Resilience features.
 
 Which of the following is **NOT** a primary purpose of Outlier Detection?
 
-A. Automatically detect instances behaving abnormally B. Automatically remove from traffic pool when threshold exceeded C. Permanently delete removed instances D. Automatically attempt recovery after a period of time
+A. Automatically detect instances behaving abnormally\
+B. Temporarily eject when the configured failure threshold and ejection cap permit it\
+C. Permanently delete removed instances\
+D. Make a temporarily ejected host eligible again after its ejection period
 
 <details>
 
@@ -24,22 +29,19 @@ Outlier Detection **does not delete instances** but temporarily removes them fro
 
 **How Outlier Detection Works:**
 
-![Outlier Detection loop: each request is checked for errors and the error count accumulates; once the threshold is exceeded the instance is temporarily ejected from the traffic pool, waits for baseEjectionTime, then a recovery attempt reinstates it.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-resilience-0.html)
 
 **Key Features:**
 
-1. **Automatic Detection**: Automatically monitors error rate, latency, and response failures
+1. **Automatic Detection**: Counts configured consecutive qualifying HTTP/transport failures
 2. **Automatic Ejection**: Temporarily removes from traffic pool when threshold exceeded
-3. **Automatic Recovery**: Automatically attempts recovery after baseEjectionTime
+3. **Re-entry**: Ejection expires; this does not send an active probe or prove recovery
 4. **Temporary Measure**: Only blocks traffic without deleting instances
 
 **Why Option C is Incorrect:**
 
 * Outlier Detection is a Circuit Breaker pattern
 * It **temporarily ejects** instances without deleting them
-* If recovery attempts succeed, traffic reception resumes
+* Successful later traffic confirms recovery; repeated failures may trigger longer ejections
 
 **Reference:**
 
@@ -53,7 +55,10 @@ Outlier Detection **does not delete instances** but temporarily removes them fro
 
 Which statement correctly compares Local Rate Limiting and Global Rate Limiting?
 
-A. Local Rate Limiting has higher accuracy B. Global Rate Limiting has faster performance C. Local Rate Limiting limits requests independently at each Envoy proxy D. Global Rate Limiting operates without external services
+A. Local Rate Limiting has higher accuracy\
+B. Global Rate Limiting has faster performance\
+C. Local Rate Limiting limits requests independently at each Envoy proxy\
+D. Global Rate Limiting operates without external services
 
 <details>
 
@@ -69,7 +74,7 @@ Local Rate Limiting limits requests **independently at each Envoy proxy**.
 
 | Characteristic  | Local Rate Limiting | Global Rate Limiting             |
 | --------------- | ------------------- | -------------------------------- |
-| **Accuracy**    | Low (per instance)  | High (cluster-wide)              |
+| **Quota scope** | Local configured bucket | Shared domain/descriptor and window |
 | **Performance** | Very fast           | Slightly slower                  |
 | **Complexity**  | Low                 | High (requires external service) |
 | **Use Case**    | General protection  | When precise limiting is needed  |
@@ -77,37 +82,55 @@ Local Rate Limiting limits requests **independently at each Envoy proxy**.
 **Characteristics of Local Rate Limiting:**
 
 ```yaml
-# Limits 100 req/s per pod
-# With 3 pods, up to 300 req/s total is allowed
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
+  namespace: default
 spec:
   workloadSelector:
     labels:
       app: myapp
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
-            max_tokens: 100        # Maximum token count
-            tokens_per_fill: 10    # Add 10 per second
+            max_tokens: 100
+            tokens_per_fill: 10
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
+
+The shown bucket starts with100 tokens and refills10/s. Three replicas can sustain about30/s in aggregate under suitable load distribution, with separate burst allowances; this is not a shared30/s cap.
 
 **Characteristics of Global Rate Limiting:**
 
 ```yaml
-# Limits total to 100 req/s
-# Allows only 100 req/s regardless of pod count
-# Requires centralized Rate Limit server (e.g., Redis)
+# Configured shared descriptor quota:100 per backend second-window
+# Actual enforcement depends on the shared backend, window and failure policy
+# Requires an actual gRPC rate-limit service plus shared counter storage such as Redis
 ```
 
 **Token Bucket Algorithm:**
@@ -128,7 +151,10 @@ spec:
 
 Which is **NOT** a benefit of using Zone Aware Routing?
 
-A. Reduced latency through same-AZ communication B. Cross-AZ data transfer cost savings C. Performance improvement by concentrating all traffic to a single AZ D. Automatic failover to other AZs during failures
+A. Reduced latency through same-AZ communication\
+B. Cross-AZ data transfer cost savings\
+C. Guaranteed availability improvement by placing every service replica in one AZ\
+D. Failover to reachable healthy endpoints when the appropriate policy and capacity exist
 
 <details>
 
@@ -136,38 +162,25 @@ A. Reduced latency through same-AZ communication B. Cross-AZ data transfer cost 
 
 **Answer: C**
 
-Zone Aware Routing **does not concentrate traffic to a single AZ**, but rather prioritizes the same AZ while distributing for availability.
+C is not a guarantee. Locality is relative to each caller; it can concentrate a caller’s traffic in its local zone. Moving every replica into one AZ creates a shared failure domain and may overload that zone.
 
 **Explanation:**
 
 **Correct Behavior of Zone Aware Routing:**
 
-![Diagram showing a client pod sending 80% of its traffic to two same-zone service pods at no cost, and failing over 10% each to service pods in two other availability zones at a cross-AZ cost, with a fourth service pod present in zone B but not targeted.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-2.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-resilience-2.html)
 
 **Actual Benefits of Zone Aware Routing:**
 
-1. **Reduced Latency**:
-   * Same AZ communication: \~0.5ms
-   * Cross-AZ communication: \~1-2ms
-2. **Cost Savings**:
-   * AWS cross-AZ transfer: $0.01-0.02 per GB
-   * Saves hundreds to thousands of dollars per month in high-traffic environments
-3. **Improved Availability**:
-   * Automatic failover to other AZs when same-AZ pods fail
-   * Single AZ concentration is an **incorrect approach** (reduces availability)
-4. **Performance Optimization**:
-   * Reduced network hops
-   * Bandwidth optimization
+Same-zone routing can reduce the network component of latency and billable cross-zone bytes, but exact latency/prices/savings depend on the deployment. Weighted80/10/10 means normal traffic is sent to all three healthy zones; the10% portions are not standby failover. Other zones need real reachable endpoints and spare capacity.
 
 **DestinationRule Configuration Example:**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
+  namespace: default
 spec:
   host: myapp
   trafficPolicy:
@@ -177,9 +190,15 @@ spec:
         distribute:
         - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1/us-east-1a/*": 80   # Same AZ 80%
-            "us-east-1/us-east-1b/*": 10   # Other AZ 10%
-            "us-east-1/us-east-1c/*": 10   # Other AZ 10%
+            us-east-1/us-east-1a/*: 80
+            us-east-1/us-east-1b/*: 10
+            us-east-1/us-east-1c/*: 10
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 0
 ```
 
 **Reference:**
@@ -196,13 +215,16 @@ What is the condition for ejecting an instance with the following Outlier Detect
 
 ```yaml
 outlierDetection:
-  consecutiveErrors: 5
+  consecutive5xxErrors: 5
   interval: 30s
   baseEjectionTime: 30s
   maxEjectionPercent: 50
 ```
 
-A. When errors occur for 5 seconds B. When 5 consecutive errors occur C. When error rate exceeds 50% over 30 seconds D. Unconditionally eject every 30 seconds
+A. When errors occur for 5 seconds\
+B. When 5 consecutive qualifying 5xx failures reach the threshold, subject to the ejection cap\
+C. When error rate exceeds 50% over 30 seconds\
+D. Unconditionally eject every 30 seconds
 
 <details>
 
@@ -210,32 +232,34 @@ A. When errors occur for 5 seconds B. When 5 consecutive errors occur C. When er
 
 **Answer: B**
 
-`consecutiveErrors: 5` ejects an instance when **5 consecutive** errors occur.
+B identifies the trigger. Five consecutive qualifying failures can trigger ejection inline; `interval` is a periodic sweep interval, and `maxEjectionPercent` can prevent enforcement. A slow successful response alone is not a latency outlier.
 
 **Explanation:**
 
 **Key Outlier Detection Parameters:**
 
-| Parameter              | Description                 | Default | Recommended |
+| Parameter              | Description                 | Default | Example range |
 | ---------------------- | --------------------------- | ------- | ----------- |
-| **consecutiveErrors**  | Consecutive error threshold | 5       | 3-10        |
+| **consecutive5xxErrors**  | Consecutive error threshold | 5       | 3-10        |
 | **interval**           | Analysis interval           | 10s     | 10s-60s     |
 | **baseEjectionTime**   | Minimum ejection time       | 30s     | 30s-300s    |
 | **maxEjectionPercent** | Maximum ejection ratio      | 10%     | 10%-50%     |
 
 **Detailed Parameter Explanation:**
 
-**consecutiveErrors**
+**consecutive5xxErrors**
 
 ```yaml
 # Sensitive service (fast detection)
-consecutiveErrors: 3
+consecutive5xxErrors: 3
 
 # General service
-consecutiveErrors: 5
+---
+consecutive5xxErrors: 5
 
 # Lenient setting (prevent false positives)
-consecutiveErrors: 10
+---
+consecutive5xxErrors: 10
 ```
 
 **interval**
@@ -245,9 +269,11 @@ consecutiveErrors: 10
 interval: 10s
 
 # Typical case
+---
 interval: 30s
 
 # Stable service
+---
 interval: 60s
 ```
 
@@ -258,9 +284,11 @@ interval: 60s
 baseEjectionTime: 30s
 
 # Typical case
+---
 baseEjectionTime: 60s
 
 # Cautious recovery
+---
 baseEjectionTime: 300s
 ```
 
@@ -271,16 +299,18 @@ baseEjectionTime: 300s
 maxEjectionPercent: 10
 
 # Balanced setting
+---
 maxEjectionPercent: 30
 
 # Aggressive (performance priority)
+---
 maxEjectionPercent: 50
 ```
 
 **Complete DestinationRule Example:**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-outlier
@@ -289,21 +319,16 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5          # 5 consecutive errors
-      interval: 30s                 # Evaluate every 30 seconds
-      baseEjectionTime: 30s         # Eject for 30 seconds
-      maxEjectionPercent: 50        # Allow ejection up to 50%
-      minHealthPercent: 50          # Maintain at least 50% healthy
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 0
 ```
 
 **Operation Example:**
 
-```
-T=0: Pod-1 has 5 consecutive errors → Ejected
-T=30s: interval cycle reached, attempt recovery of ejected pod
-T=30s: If Pod-1 is healthy → Recovered
-T=30s: If Pod-1 still has errors → Additional 30s ejection (cumulative)
-```
+A success resets the relevant consecutive sequence. When a host reaches the threshold it can be ejected if the cap permits it; it becomes eligible after its actual ejection duration. Repeated ejections increase that duration with an Envoy multiplier/cap. `minHealthPercent` is a panic/fail-open threshold, not a guaranteed fraction of healthy Pods;0 disables that threshold.
 
 **Reference:**
 
@@ -315,7 +340,7 @@ T=30s: If Pod-1 still has errors → Additional 30s ejection (cumulative)
 
 ### Question 5: Token Bucket Algorithm
 
-What is the average requests per second that can be processed with the following Rate Limiting configuration?
+With one token per request and sustained demand, what is the long-run refill-limited admission rate after the initial burst?
 
 ```yaml
 token_bucket:
@@ -324,7 +349,10 @@ token_bucket:
   fill_interval: 1s
 ```
 
-A. 10 req/s B. 100 req/s C. 110 req/s D. 1000 req/s
+A. 10 req/s\
+B. 100 req/s\
+C. 110 req/s\
+D. 1000 req/s
 
 <details>
 
@@ -357,7 +385,7 @@ Burst throughput = max_tokens
 
 ```
 T=0: 100 tokens in bucket (initial state)
-     Can handle 100 requests simultaneously
+     Can admit up to100 immediate requests if the bucket is full; backend concurrency is separate
 
 T=0.1s: Bucket empty (0 tokens)
         Additional requests rejected
@@ -369,7 +397,7 @@ T=2s: 10 tokens added
       Can handle 10 requests
 
 Average: 10 req/s (sustainable throughput)
-Burst: 100 req/s (only for brief moment)
+Burst allowance:100 requests from a full bucket, not a sustained req/s rate
 ```
 
 **Practical Configuration Examples:**
@@ -382,12 +410,14 @@ token_bucket:
   fill_interval: 1s
 
 # Scenario 2: High-performance API
+---
 token_bucket:
   max_tokens: 1000       # Allow burst of 1000
   tokens_per_fill: 100   # Average 100 req/s
   fill_interval: 1s
 
 # Scenario 3: Limited resource
+---
 token_bucket:
   max_tokens: 10         # Only 10 burst
   tokens_per_fill: 1     # Average 1 req/s
@@ -397,7 +427,7 @@ token_bucket:
 **Complete EnvoyFilter Example:**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -411,24 +441,28 @@ spec:
     match:
       context: SIDECAR_INBOUND
       listener:
+        portNumber: 8080
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
           token_bucket:
-            max_tokens: 100        # Burst
-            tokens_per_fill: 10    # Average throughput
+            max_tokens: 100
+            tokens_per_fill: 10
             fill_interval: 1s
           filter_enabled:
-            runtime_key: local_rate_limit_enabled
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
             default_value:
               numerator: 100
               denominator: HUNDRED
@@ -451,8 +485,8 @@ A `product-service` running in production is intermittently becoming slow and ex
 **Requirements:**
 
 * Eject after 3 consecutive errors
-* Evaluate every 20 seconds
-* Ejected instances attempt recovery after 60 seconds
+* Use a20-second periodic sweep; consecutive failures can be detected inline
+* Set the initial base ejection duration to60 seconds
 * Allow ejection of maximum 30%
 * Also detect 502, 503, 504 gateway errors
 
@@ -460,10 +494,10 @@ A `product-service` running in production is intermittently becoming slow and ex
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Slow responses alone are not an outlier criterion. The example separates HTTP errors from locally observed transport failures; a real route/client timeout must exist for timeouts to be observed.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: product-service-outlier
@@ -472,119 +506,31 @@ spec:
   host: product-service
   trafficPolicy:
     outlierDetection:
-      # Consecutive error threshold
-      consecutiveErrors: 3
       consecutive5xxErrors: 3
-      consecutiveGatewayErrors: 3  # Detect 502, 503, 504
-
-      # Analysis interval
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 3
       interval: 20s
-
-      # Ejection time
       baseEjectionTime: 60s
-
-      # Maximum ejection ratio
       maxEjectionPercent: 30
-
-      # Minimum healthy ratio (maintain 70% or more)
-      minHealthPercent: 70
-
-      # Minimum request count (evaluate only with 5+ requests)
-      enforcingConsecutive5xx: 100
-      enforcingConsecutiveGatewayFailure: 100
+      minHealthPercent: 0
+      consecutiveGatewayErrors: 3
 ```
 
-**Explanation:**
+The gateway subset502/503/504 is already included in5xx. Equal thresholds of3 are redundant but valid; lower gateway thresholds would eject on that subset earlier. `interval: 20s` does not delay consecutive-error detection. `baseEjectionTime: 60s` is the initial minimum duration, not an active health probe. The30% cap limits ejections but cannot keep the remaining endpoints healthy. `minHealthPercent: 70` would enable panic behavior below its threshold, not preserve70% healthy capacity. Unsupported `enforcing*` fields are Envoy internals, not this DestinationRule API.
 
-**1. consecutiveErrors vs consecutive5xxErrors vs consecutiveGatewayErrors**
-
-| Parameter                    | Detection Target                            | Use Case                  |
-| ---------------------------- | ------------------------------------------- | ------------------------- |
-| **consecutiveErrors**        | All errors (5xx, connection failures, etc.) | General error detection   |
-| **consecutive5xxErrors**     | 5xx errors only                             | Server errors only        |
-| **consecutiveGatewayErrors** | 502, 503, 504 only                          | Gateway problem detection |
-
-**2. Parameter Explanation**
-
-**interval: 20s**
-
-* Run Outlier Detection every 20 seconds
-* Evaluate error rate for each instance
-
-**baseEjectionTime: 60s**
-
-* Ejected instances don't receive traffic for minimum 60 seconds
-* Time increases on repeated ejection (60s -> 120s -> 180s...)
-
-**maxEjectionPercent: 30**
-
-* Allow ejection of maximum 30% of instances simultaneously
-* Example: With 10 pods, only up to 3 can be ejected
-* Ensures availability
-
-**minHealthPercent: 70**
-
-* Maintain minimum 70% of instances in healthy state
-* Complementary to maxEjectionPercent
-
-**3. Operation Example**
-
-```
-Initial state: All 10 pods healthy
-
-T=0:   Pod-1 has 3 consecutive 503 errors
-       -> Pod-1 ejected (9 healthy)
-
-T=20s: Pod-2 has 3 consecutive 502 errors
-       -> Pod-2 ejected (8 healthy)
-
-T=40s: Pod-3 has 3 consecutive 504 errors
-       -> Pod-3 ejected (7 healthy)
-
-T=40s: Pod-4 has 3 consecutive errors
-       -> Not ejected (maxEjectionPercent 30% reached)
-       -> 30% = only 3 can be ejected
-
-T=60s: Pod-1 recovery attempt
-       -> If healthy, traffic reception resumes
-```
-
-**4. Monitoring**
+A ten-host example can reach the cap after three ejections, but discovered pool size, rounding and current health matter; inspect actual enforced/detected/overflow counters. A returning host must receive successful traffic to demonstrate recovery.
 
 ```bash
-# Check Outlier Detection events
-kubectl logs <envoy-pod> -c istio-proxy | grep outlier
-
-# Prometheus metrics
-envoy_cluster_outlier_detection_ejections_active
-envoy_cluster_outlier_detection_ejections_total
+istioctl proxy-config clusters <caller-pod> -n production --fqdn product-service.production.svc.cluster.local -o json
+istioctl x envoy-stats <caller-pod> -n production --output prom | grep outlier_detection
 ```
 
-**5. Production Considerations**
-
-**Sensitive service (fast detection):**
-
-```yaml
-outlierDetection:
-  consecutiveErrors: 3
-  interval: 10s
-  baseEjectionTime: 30s
-  maxEjectionPercent: 50
+```promql
+envoy_cluster_outlier_detection_ejections_active{namespace="production"}
+rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="production"}[5m])
 ```
 
-**Stable service (prevent false positives):**
-
-```yaml
-outlierDetection:
-  consecutiveErrors: 10
-  interval: 60s
-  baseEjectionTime: 300s
-  maxEjectionPercent: 10
-```
-
-**Reference:**
-
-* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+Enable optional stats/scraping as in the [outlier chapter](../../../service-mesh/istio/resilience/01-outlier-detection.md). Tune thresholds from measured errors and spare capacity; no universal “production” value is implied.
 
 </details>
 
@@ -592,7 +538,7 @@ outlierDetection:
 
 ### Question 7: Applying Local Rate Limiting
 
-The `api-gateway` service is under DDoS attack. You want to apply Local Rate Limiting to limit each Envoy proxy to 50 requests per second with a burst of up to 200. Write the EnvoyFilter.
+A sidecar-injected application named `api-gateway` is receiving excessive HTTP traffic. You want to apply Local Rate Limiting to limit each Envoy proxy to 50 requests per second with a burst of up to 200. Write the EnvoyFilter.
 
 Additional requirements:
 
@@ -603,10 +549,10 @@ Additional requirements:
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Assume `api-gateway` is an application with an injected sidecar on HTTP8080 in `production`. This protects selected HTTP requests after they reach Envoy; it is not complete DDoS or connection/TLS protection. For an actual Istio ingress gateway, use its namespace/selector and `GATEWAY` context as in the rate-limit chapter.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: api-gateway-ratelimit
@@ -620,202 +566,137 @@ spec:
     match:
       context: SIDECAR_INBOUND
       listener:
+        portNumber: 8080
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
-
-          # Token Bucket configuration
           token_bucket:
-            max_tokens: 200         # Burst: max 200
-            tokens_per_fill: 50     # Average: 50 per second
-            fill_interval: 1s       # Add 50 every second
-
-          # Enable Rate Limit
+            max_tokens: 200
+            tokens_per_fill: 50
+            fill_interval: 1s
           filter_enabled:
-            runtime_key: local_rate_limit_enabled
             default_value:
-              numerator: 100        # 100%
+              numerator: 100
               denominator: HUNDRED
-
-          # Enforce Rate Limit
           filter_enforced:
-            runtime_key: local_rate_limit_enforced
             default_value:
-              numerator: 100        # 100%
+              numerator: 100
               denominator: HUNDRED
-
-          # Add response headers
           response_headers_to_add:
-          # Rate limit info
-          - append: false
+          - append_action: OVERWRITE_IF_EXISTS_OR_ADD
             header:
               key: X-RateLimit-Limit
               value: '50'
-
-          # Current remaining tokens
-          - append: false
-            header:
-              key: X-RateLimit-Remaining
-              value: '%DYNAMIC_METADATA(envoy.extensions.filters.http.local_ratelimit:tokens_remaining)%'
-
-          # Whether rate limit was applied
-          - append: false
+          - append_action: OVERWRITE_IF_EXISTS_OR_ADD
             header:
               key: X-Local-Rate-Limit
               value: 'true'
-
-          # 429 response Retry-After header
-          rate_limited_status:
-            code: TOO_MANY_REQUESTS  # 429
-
-          # Retry-After header addition (requires separate patch)
-
-  # Add Retry-After header for 429 responses
-  - applyTo: HTTP_ROUTE
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: MERGE
-      value:
-        response_headers_to_add:
-        - header:
-            key: Retry-After
-            value: '1'
-          append: false
+          - append_action: OVERWRITE_IF_EXISTS_OR_ADD
+            header:
+              key: Retry-After
+              value: '1'
 ```
 
-**Explanation:**
+The full bucket admits up to200 requests immediately, then refills50 tokens/s. At sustained100 requests/s after depletion, about50/s can be admitted, assuming one token per request and no other limits. Smooth40/s demand can fit, but a40/s average alone does not guarantee that every burst is accepted. Admission does not guarantee backend processing success.
 
-**1. Token Bucket Calculation**
-
-```
-Average processing rate: tokens_per_fill / fill_interval
-                       = 50 / 1s
-                       = 50 req/s
-
-Burst processing: max_tokens
-                = 200 req (for brief moment)
-```
-
-**2. Scenario-based Behavior**
-
-**Normal traffic (40 req/s):**
-
-```
-50 tokens added per second, 40 used
--> Always has capacity
-```
-
-**Burst traffic (instantaneous 200 req/s):**
-
-```
-T=0: 200 tokens available
-     All 200 requests processed
-
-T=0.1s: 0 tokens
-        Additional requests rejected (429 returned)
-
-T=1s: 50 tokens added
-      50 requests processed
-```
-
-**Continuous overload (100 req/s):**
-
-```
-50 tokens added per second
-Only 50 of 100 requests processed
-Remaining 50 return 429
-```
-
-**3. Response Header Examples**
-
-**Normal request:**
-
-```http
-HTTP/1.1 200 OK
-X-RateLimit-Limit: 50
-X-RateLimit-Remaining: 45
-X-Local-Rate-Limit: true
-```
-
-**Rate limit exceeded:**
+The filter defaults to HTTP429 and adds these headers only to its enforced rate-limit responses. A normal200 response does not receive these headers from this configuration. `Retry-After: 1` is an advisory delay, not a reservation or guarantee of success a second later. No `tokens_remaining` dynamic metadata is created by this example, so a fabricated Remaining header is omitted.
 
 ```http
 HTTP/1.1 429 Too Many Requests
 X-RateLimit-Limit: 50
-X-RateLimit-Remaining: 0
 X-Local-Rate-Limit: true
 Retry-After: 1
 ```
 
-**4. Path-based Rate Limiting**
-
-For more granular control, set different limits per path:
+For different path-prefix buckets, use this **alternative**, not a second overlapping filter. The explicit descriptor generator is supported by the Envoy API pinned with Istio1.31. Missing/unmatched paths use the bounded default bucket; prefix matching includes longer paths beginning with the supplied text.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: path-based-ratelimit
+  namespace: production
 spec:
   workloadSelector:
     labels:
       app: api-gateway
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
           stat_prefix: http_local_rate_limiter
-
-          # Path-based configuration
+          token_bucket:
+            max_tokens: 30
+            tokens_per_fill: 10
+            fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          always_consume_default_token_bucket: false
           descriptors:
-          # /api/login: 10 per second
           - entries:
-            - key: path
+            - key: header_match
               value: /api/login
             token_bucket:
               max_tokens: 30
               tokens_per_fill: 10
               fill_interval: 1s
-
-          # /api/search: 100 per second
           - entries:
-            - key: path
+            - key: header_match
               value: /api/search
             token_bucket:
               max_tokens: 300
               tokens_per_fill: 100
               fill_interval: 1s
+          rate_limits:
+          - actions:
+            - header_value_match:
+                descriptor_value: /api/login
+                headers:
+                - name: :path
+                  string_match:
+                    prefix: /api/login
+          - actions:
+            - header_value_match:
+                descriptor_value: /api/search
+                headers:
+                - name: :path
+                  string_match:
+                    prefix: /api/search
 ```
 
-**5. Monitoring**
-
-```bash
-# Prometheus metrics
-envoy_http_local_rate_limit_enabled
-envoy_http_local_rate_limit_enforced
-envoy_http_local_rate_limit_rate_limited
-
-# 429 response count
-sum(rate(istio_requests_total{response_code="429"}[5m]))
+```promql
+sum by (pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="production"}[5m]))
 ```
 
-**Reference:**
-
-* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+See [rate limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md) for optional-stat collection, global service/Redis prerequisites and trusted identity handling.
 
 </details>
 
@@ -829,17 +710,17 @@ Your AWS EKS cluster is distributed across 3 AZs (us-east-1a, us-east-1b, us-eas
 
 * Send 70% traffic to same-AZ pods
 * Distribute 15% each to other AZs
-* Automatic failover to other AZs on complete AZ failure
-* Apply Zone Aware only when 50% or more pods are healthy
+* Explain a separate priority-failover alternative and complete-AZ-outage limitations
+* Explain why minHealthPercent50 is not a50%-healthy guarantee or locality activation switch
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer:**
+These requirements mix weighted distribution, priority failover and a healthy-capacity guarantee. They cannot all be expressed by combining fields in one locality policy. Use the following distribution policy for normal70/15/15 traffic; `minHealthPercent` is not a switch that activates locality only when half the Pods are healthy.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: order-service-locality
@@ -849,214 +730,78 @@ spec:
   trafficPolicy:
     loadBalancer:
       localityLbSetting:
-        # Enable Zone Aware Routing
         enabled: true
-
-        # Traffic distribution ratio
         distribute:
-        # Traffic originating from us-east-1a
         - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1/us-east-1a/*": 70   # Same AZ 70%
-            "us-east-1/us-east-1b/*": 15   # Other AZ 15%
-            "us-east-1/us-east-1c/*": 15   # Other AZ 15%
-
-        # Traffic originating from us-east-1b
+            us-east-1/us-east-1a/*: 70
+            us-east-1/us-east-1b/*: 15
+            us-east-1/us-east-1c/*: 15
         - from: us-east-1/us-east-1b/*
           to:
-            "us-east-1/us-east-1b/*": 70
-            "us-east-1/us-east-1a/*": 15
-            "us-east-1/us-east-1c/*": 15
-
-        # Traffic originating from us-east-1c
+            us-east-1/us-east-1a/*: 15
+            us-east-1/us-east-1b/*: 70
+            us-east-1/us-east-1c/*: 15
         - from: us-east-1/us-east-1c/*
           to:
-            "us-east-1/us-east-1c/*": 70
-            "us-east-1/us-east-1a/*": 15
-            "us-east-1/us-east-1b/*": 15
-
-        # Failover configuration
-        failover:
-        # On us-east-1a failure
-        - from: us-east-1/us-east-1a
-          to: us-east-1/us-east-1b    # Priority 1: us-east-1b
-
-        # On us-east-1b failure
-        - from: us-east-1/us-east-1b
-          to: us-east-1/us-east-1c    # Priority 1: us-east-1c
-
-        # On us-east-1c failure
-        - from: us-east-1/us-east-1c
-          to: us-east-1/us-east-1a    # Priority 1: us-east-1a
-
-    # Outlier Detection (healthy pod determination)
+            us-east-1/us-east-1a/*: 15
+            us-east-1/us-east-1b/*: 15
+            us-east-1/us-east-1c/*: 70
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 5
       interval: 30s
       baseEjectionTime: 30s
-
-      # Maintain minimum 50% healthy
-      minHealthPercent: 50
+      maxEjectionPercent: 50
+      minHealthPercent: 0
 ```
 
-**Explanation:**
-
-**1. Kubernetes Node Label Verification**
-
-AWS EKS automatically adds Topology labels:
-
-```bash
-kubectl get nodes -L topology.kubernetes.io/zone -L topology.kubernetes.io/region
-
-# Example output:
-# NAME                          ZONE         REGION
-# ip-10-0-1-10.ec2.internal     us-east-1a   us-east-1
-# ip-10-0-2-20.ec2.internal     us-east-1b   us-east-1
-# ip-10-0-3-30.ec2.internal     us-east-1c   us-east-1
-```
-
-**2. Locality Hierarchy**
-
-```
-Region/Zone/SubZone
-
-Examples:
-us-east-1/us-east-1a/*
-us-east-1/us-east-1b/*
-us-east-1/us-east-1c/*
-```
-
-**3. Traffic Flow Diagram**
-
-![Client pod in us-east-1a sends 70% of Order Service traffic to two same-zone pods for free and 15% each to pods in us-east-1b and us-east-1c at $0.01 per GB, with a fourth us-east-1b pod not targeted.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-resilience-3.html)
-
-**4. Cost Savings Calculation**
-
-**Scenario**: 1TB monthly traffic
-
-**Without Zone Aware (even distribution):**
-
-```
-Total traffic: 1TB
-Cross-AZ: 66.7% (667GB)
-Cost: 667GB x $0.01 = $6.67
-```
-
-**With Zone Aware (70% same AZ):**
-
-```
-Total traffic: 1TB
-Cross-AZ: 30% (300GB)
-Cost: 300GB x $0.01 = $3.00
-
-Savings: $6.67 - $3.00 = $3.67 (55% savings)
-```
-
-**High-volume environment (100TB/month):**
-
-```
-Without Zone Aware: $667
-With Zone Aware: $300
-
-Savings: $367/month = $4,404/year
-```
-
-**5. Failover Scenarios**
-
-**Normal state:**
-
-```
-Client in us-east-1a
--> 70% us-east-1a pods
--> 15% us-east-1b pods
--> 15% us-east-1c pods
-```
-
-**Complete us-east-1a failure:**
-
-```
-Client in us-east-1a
--> failover: switch to us-east-1b
--> 100% us-east-1b pods
-
-(If us-east-1b also fails -> switch to us-east-1c)
-```
-
-**Some pods unhealthy (Outlier Detection):**
-
-```
-us-east-1a: 2 pods (1 healthy, 1 ejected)
-us-east-1b: 2 pods (all healthy)
-
--> minHealthPercent: 50% satisfied
--> Zone Aware continues to apply
--> Unhealthy pod doesn't receive traffic
-```
-
-**6. Monitoring**
-
-```bash
-# Check locality-based traffic
-kubectl exec <pod> -c istio-proxy -- \
-  curl localhost:15000/clusters | grep locality
-
-# Prometheus query
-# Same-zone traffic ratio
-sum(rate(istio_requests_total{
-  source_workload_namespace="production",
-  source_canonical_service="client",
-  destination_canonical_service="order-service"
-}[5m])) by (source_cluster_zone, destination_cluster_zone)
-```
-
-**7. AWS EKS Specific Configuration**
-
-**Configure EKS node groups per AZ:**
+For local-zone priority and spillover instead, apply this **alternative**, not both policies. `localityLbSetting.failover` accepts region names, not `region/zone` paths. `distribute` and priority modes are mutually exclusive in this API.
 
 ```yaml
-# eksctl config
-managedNodeGroups:
-- name: ng-us-east-1a
-  availabilityZones: ["us-east-1a"]
-  labels:
-    topology.kubernetes.io/zone: us-east-1a
-
-- name: ng-us-east-1b
-  availabilityZones: ["us-east-1b"]
-  labels:
-    topology.kubernetes.io/zone: us-east-1b
-
-- name: ng-us-east-1c
-  availabilityZones: ["us-east-1c"]
-  labels:
-    topology.kubernetes.io/zone: us-east-1c
-```
-
-**Distribute pods evenly across AZs:**
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
 metadata:
-  name: order-service
+  name: order-service-failover
+  namespace: production
 spec:
-  replicas: 9
-  template:
-    spec:
-      topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: DoNotSchedule
-        labelSelector:
-          matchLabels:
-            app: order-service
+  host: order-service
+  trafficPolicy:
+    loadBalancer:
+      localityLbSetting:
+        enabled: true
+        failoverPriority:
+        - topology.kubernetes.io/region
+        - topology.kubernetes.io/zone
+    outlierDetection:
+      consecutive5xxErrors: 5
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+      minHealthPercent: 0
 ```
 
-**Reference:**
+A complete zone outage also affects the client in that zone: a surviving/recreated client or entry point elsewhere is required. Remaining healthy endpoint capacity, detection, connection reuse and network reachability determine failover; the policy does not promise100% to zoneB or instantaneous recovery. `minHealthPercent: 0` disables panic use of unhealthy hosts, and a100% cap permits all endpoints to be ejected if all fail. Neither makes healthy capacity appear.
 
-* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+Use the [zone-aware chapter](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) for Node→Pod topology checks, matching topologySpreadConstraints, EKS node groups and EDS diagnostics. Do not manually assign cloud topology labels merely to make an example match. Standard Istio metrics do not contain `source_cluster_zone`/`destination_cluster_zone`; zone queries require verified enrichment, separate from routing.
+
+**Illustrative cost arithmetic**: assume decimal1TB=1000GB, an effective charge of$0.01 per billable GB, baseline cross-zone fraction2/3 and after fraction0.30. This is a simplified assumption, not an AWS price quote, measured saving or complete network bill.
+
+| Monthly traffic | Before | After | Monthly saving | Annual saving |
+|---|---:|---:|---:|---:|
+|1TB|$6.67|$3.00|$3.67|$44.00|
+|100TB|$666.67|$300.00|$366.67|$4,400.00|
+
+The modeled reduction is55%. Calculate from exact fractions and round only the displayed currency; annual savings must not multiply a prematurely rounded monthly$367. Actual billable directions, byte volumes, region and service processing charges need billing/flow evidence.
+
+```bash
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config bootstrap <caller-pod> -n production -o json
+istioctl proxy-config all <caller-pod> -n production -o json
+```
 
 </details>
 
@@ -1067,9 +812,9 @@ spec:
 `payment-service` is a critical service that calls external payment APIs. Implement the following combined Resilience strategy:
 
 1. **Outlier Detection**: Eject instance after 3 consecutive errors
-2. **Retry**: Retry up to 3 times on 502, 503, 504 errors
+2. **Retry**: Permit up to3 retries on502/503/504 for verified idempotent reads; explicitly disable write retries
 3. **Timeout**: 5 second timeout per request
-4. **Circuit Breaker**: Block entire service when error rate exceeds 50%
+4. **Circuit Breaker**: Explain why “block the entire service above50% errors” is not this API’s pool breaker; show supported concurrency limits instead
 
 Write the DestinationRule and VirtualService.
 
@@ -1077,13 +822,12 @@ Write the DestinationRule and VirtualService.
 
 <summary>Show Answer</summary>
 
-**Answer:**
+A DestinationRule cannot implement “globally block this service above50% errors” through the listed success-rate fields. Those fields are not supported here, and statistical deviation is not a fixed error-percentage threshold. Pool circuit breakers constrain concurrent connections/requests per caller proxy’s upstream cluster; outlier detection changes host eligibility. A coordinated service-wide error-ratio breaker would need a separately designed application/controller mechanism.
+
+This answer applies to **caller→payment-service HTTP8080**. The service’s outgoing payment API call needs its own destination policy and TLS visibility as described in the [outlier chapter](../../../service-mesh/istio/resilience/01-outlier-detection.md). Mesh retries cannot provide payment idempotency.
 
 ```yaml
-# ========================================
-# DestinationRule: Outlier Detection + Circuit Breaker
-# ========================================
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: payment-service-resilience
@@ -1091,47 +835,25 @@ metadata:
 spec:
   host: payment-service
   trafficPolicy:
-    # Connection Pool (Circuit Breaker)
     connectionPool:
       tcp:
-        maxConnections: 100          # Maximum concurrent connections
+        maxConnections: 100
+        connectTimeout: 1s
       http:
-        http1MaxPendingRequests: 50  # Pending request count
-        http2MaxRequests: 100        # HTTP/2 maximum requests
-        maxRequestsPerConnection: 2  # Maximum requests per connection
-        maxRetries: 3                # Maximum retry count
-
-    # Outlier Detection
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 0
+        maxRetries: 3
     outlierDetection:
-      # Consecutive error detection
-      consecutiveErrors: 3
       consecutive5xxErrors: 3
-      consecutiveGatewayErrors: 3
-
-      # Analysis interval
-      interval: 10s
-
-      # Ejection time
-      baseEjectionTime: 30s
-
-      # Maximum ejection ratio
-      maxEjectionPercent: 50
-
-      # Error rate based ejection (Circuit Breaker)
       splitExternalLocalOriginErrors: true
-
-      # Eject when error rate exceeds 50%
-      enforcingLocalOriginSuccessRate: 100
-      enforcingSuccessRate: 100
-      successRateMinimumHosts: 3
-      successRateRequestVolume: 10
-      successRateStdevFactor: 1900  # 50% error rate
-
+      consecutiveLocalOriginFailures: 3
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 0
 ---
-# ========================================
-# VirtualService: Retry + Timeout
-# ========================================
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: payment-service-retry
@@ -1140,214 +862,63 @@ spec:
   hosts:
   - payment-service
   http:
-  - match:
-    - uri:
-        prefix: /payment
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
     route:
     - destination:
         host: payment-service
         port:
           number: 8080
-
-    # Timeout configuration
     timeout: 5s
-
-    # Retry configuration
     retries:
-      attempts: 3                    # Maximum 3 retries
-      perTryTimeout: 2s              # 2 second timeout per retry
-      retryOn: 5xx,reset,connect-failure,refused-stream,retriable-4xx
-      retryRemoteLocalities: true    # Retry on pods in other AZs
+      attempts: 0
+  - name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+    route:
+    - destination:
+        host: payment-service
+        port:
+          number: 8080
+    timeout: 5s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: payment-service
+        port:
+          number: 8080
+    timeout: 5s
+    retries:
+      attempts: 0
 ```
 
-**Explanation:**
+The explicit write/fallback rules disable inherited mesh retries. Retry only the matched reads whose application semantics are safe to repeat. `gateway-error` covers502/503/504; broad reset/5xx/4xx conditions are not added to payment writes. A transport error does not establish whether a payment committed.
 
-**1. Outlier Detection (Instance Level)**
+`attempts: 3` means up to three retries **after** the initial attempt. Four full2s attempts plus backoff cannot fit within5s, so the total route budget stops earlier; application deadlines must also cover upload/streaming and downstream work. This is not an exact failure timeline or a promise of a particular final HTTP status.
 
-**Consecutive error detection:**
+`maxRetries: 3` limits concurrent outstanding retries for that proxy/cluster, not retries per request. `http2MaxRequests` also applies to HTTP/1.1. `maxRequestsPerConnection: 0` permits reuse without that request-count cap. Pending/active request overflow can reject HTTP requests, while one connection-limit hit can first cause queuing. None of these settings is a global50%-error circuit.
 
-```yaml
-consecutiveErrors: 3
-consecutive5xxErrors: 3
-consecutiveGatewayErrors: 3
+| Observation | Correct interpretation |
+|---|---|
+|A safe read gets502 then succeeds on a retry|A retry can help; it may revisit a host and is not guaranteed to succeed|
+|A host reaches its failure threshold|That caller may eject it if the cap permits; other callers maintain their own state|
+|All endpoints fail|No healthy destination may remain; an ejection timer does not repair the service or implement a coordinated half-open test|
+
+```promql
+sum(rate(envoy_cluster_upstream_rq_retry{namespace="production"}[5m]))
+envoy_cluster_circuit_breakers_default_rq_pending_open{namespace="production"}
+sum(rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="production"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="payment-service",destination_service_namespace="production",response_flags=~".*UT.*"}[5m]))
 ```
 
-* When a specific pod has 3 consecutive errors -> only that pod is ejected
-* Other healthy pods continue to receive traffic
-
-**2. Circuit Breaker (Service Level)**
-
-**Error rate based blocking:**
-
-```yaml
-successRateStdevFactor: 1900  # 50% error rate
-successRateMinimumHosts: 3    # Minimum 3 pods
-successRateRequestVolume: 10  # Minimum 10 requests
-```
-
-**Behavior:**
-
-```
-Error rate < 50%: Normal operation
-Error rate >= 50%: Entire service blocked (Circuit Open)
-
-Circuit Open state:
-- All requests immediately return 503
-- Recovery attempt after baseEjectionTime (Circuit Half-Open)
-```
-
-**3. Retry Strategy**
-
-**Retry conditions (retryOn):**
-
-| Condition           | Description              |
-| ------------------- | ------------------------ |
-| **5xx**             | All 5xx errors           |
-| **reset**           | Connection reset         |
-| **connect-failure** | Connection failure       |
-| **refused-stream**  | HTTP/2 stream refused    |
-| **retriable-4xx**   | Retriable 4xx (409, 429) |
-
-**Retry timeline:**
-
-```
-T=0:    First attempt (2s timeout)
-T=2s:   Timeout -> 2nd attempt
-T=4s:   Timeout -> 3rd attempt
-T=6s:   Timeout -> Final failure (503 returned)
-
-Total time: 6s (but VirtualService timeout: 5s)
--> Final failure after 5 seconds
-```
-
-**4. Timeout Hierarchy**
-
-```
-VirtualService timeout: 5s
-|
-Retry perTryTimeout: 2s
-|
-DestinationRule connectionPool
-```
-
-**Full timeline:**
-
-```
-attempt=1: 2s timeout
-attempt=2: 2s timeout
-attempt=3: 1s timeout (5s total limit reached)
-```
-
-**5. Complete Operation Example**
-
-**Scenario 1: Temporary network issue**
-
-```
-Pod-1: 502 error (1st)
--> Retry -> Pod-2: 200 OK
-
-Result: Client receives success response
-Pod-1: Error count 1 (not yet ejected)
-```
-
-**Scenario 2: Specific pod issue**
-
-```
-Pod-1: 503 error (1st)
--> Retry -> Pod-1: 503 error (2nd)
--> Retry -> Pod-1: 503 error (3rd)
--> Pod-1 ejected
-
--> Retry -> Pod-2: 200 OK
-
-Result: Client receives success response
-Pod-1: Traffic blocked for 30 seconds
-```
-
-**Scenario 3: Complete service failure (Circuit Breaker)**
-
-```
-Error rate exceeds 50% on all pods
--> Circuit Breaker Open
--> All new requests immediately return 503 (no retries)
-
-After baseEjectionTime:
--> Circuit Half-Open
--> Test with some requests
--> If successful, Circuit Closed
--> If failed, Circuit Open again
-```
-
-**6. Connection Pool (Additional Protection)**
-
-```yaml
-connectionPool:
-  tcp:
-    maxConnections: 100
-  http:
-    http1MaxPendingRequests: 50
-    http2MaxRequests: 100
-```
-
-**Behavior:**
-
-* Over 100 concurrent connections -> new connections rejected
-* Over 50 pending requests -> 503 returned
-* Prevents service overload
-
-**7. Monitoring**
-
-```bash
-# Circuit Breaker status
-kubectl exec <pod> -c istio-proxy -- \
-  curl localhost:15000/stats | grep circuit_breakers
-
-# Outlier Detection events
-kubectl logs <pod> -c istio-proxy | grep outlier
-
-# Prometheus queries
-# Retry count
-sum(rate(envoy_cluster_upstream_rq_retry[5m]))
-
-# Circuit Breaker activation count
-sum(rate(envoy_cluster_circuit_breakers_default_rq_pending_open[5m]))
-
-# Timeout occurrence count
-sum(rate(istio_requests_total{response_flags=~".*UT.*"}[5m]))
-```
-
-**8. Production Considerations**
-
-**For external API calls:**
-
-```yaml
-# More lenient settings
-timeout: 10s
-retries:
-  attempts: 5
-  perTryTimeout: 3s
-outlierDetection:
-  consecutiveErrors: 10
-  baseEjectionTime: 300s
-```
-
-**For internal service-to-service:**
-
-```yaml
-# Stricter settings
-timeout: 1s
-retries:
-  attempts: 2
-  perTryTimeout: 500ms
-outlierDetection:
-  consecutiveErrors: 3
-  baseEjectionTime: 30s
-```
-
-**Reference:**
-
-* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-* [Traffic Management](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic/README.md)
+The `_open` series is a0/1 gauge, not a counter to pass to `rate`. Scope Envoy cluster labels and enable the relevant stats. See [retry/timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md) and [circuit breaking](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md) for safe operational tradeoffs.
 
 </details>
 
@@ -1374,356 +945,238 @@ In a large-scale microservices environment, monthly network costs are $5,000. De
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Treat the supplied100 services,500TB/month,$5,000 bill,150ms latency and3% errors as a **hypothetical baseline**, not measured results from this audit. First identify the billable traffic components and the user-facing SLI boundary. Proxy hop latency is not automatically end-to-end request latency.
 
-### Comprehensive Resilience Strategy
+**1. Consolidate one destination policy per reviewed service**
 
-#### 1. Zone Aware Routing (Cost Savings + Performance Improvement)
-
-**DestinationRule Template:**
+The representative `api-service` example combines pool limits, locality weighting and supported outlier detection in one DestinationRule. Do not apply several competing wildcard rules or route every service to one generic backend. Size values against each caller and destination; the sample is not a production default.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: zone-aware-template
+  name: api-service-resilience
   namespace: production
 spec:
-  host: "*"  # Apply to all services
+  host: api-service
   trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 1s
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 0
+        maxRetries: 3
     loadBalancer:
       localityLbSetting:
         enabled: true
         distribute:
         - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1/us-east-1a/*": 80
-            "us-east-1/us-east-1b/*": 10
-            "us-east-1/us-east-1c/*": 10
+            us-east-1/us-east-1a/*: 80
+            us-east-1/us-east-1b/*: 10
+            us-east-1/us-east-1c/*: 10
         - from: us-east-1/us-east-1b/*
           to:
-            "us-east-1/us-east-1b/*": 80
-            "us-east-1/us-east-1a/*": 10
-            "us-east-1/us-east-1c/*": 10
+            us-east-1/us-east-1a/*: 10
+            us-east-1/us-east-1b/*: 80
+            us-east-1/us-east-1c/*: 10
         - from: us-east-1/us-east-1c/*
           to:
-            "us-east-1/us-east-1c/*": 80
-            "us-east-1/us-east-1a/*": 10
-            "us-east-1/us-east-1b/*": 10
-```
-
-**Cost Savings Calculation:**
-
-```
-Current state (even distribution):
-- Cross-AZ traffic: 66.7% (333TB)
-- Cost: 333TB x $0.015/GB = $5,000
-
-With Zone Aware (80% same AZ):
-- Cross-AZ traffic: 20% (100TB)
-- Cost: 100TB x $0.015/GB = $1,500
-
-Savings: $5,000 - $1,500 = $3,500/month (70% savings)
-```
-
-**Performance Improvement:**
-
-```
-Current (cross-AZ latency):
-- Average latency: ~1.5ms
-
-With Zone Aware:
-- Same AZ latency: ~0.3ms
-- Cross-AZ latency: ~1.5ms
-- Weighted average: 0.3x0.8 + 1.5x0.2 = 0.54ms
-
-Improvement: 1.5ms -> 0.54ms (64% improvement)
-```
-
-#### 2. Outlier Detection (Error Rate Reduction)
-
-**Sensitive Detection Settings:**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
+            us-east-1/us-east-1a/*: 10
+            us-east-1/us-east-1b/*: 10
+            us-east-1/us-east-1c/*: 80
+    outlierDetection:
+      consecutive5xxErrors: 3
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 3
+      interval: 10s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 30
+      minHealthPercent: 0
+      consecutiveGatewayErrors: 2
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
 metadata:
-  name: strict-outlier-detection
+  name: api-service-routing
   namespace: production
 spec:
-  host: "*"
-  trafficPolicy:
-    outlierDetection:
-      consecutiveErrors: 3           # Fast detection
-      consecutive5xxErrors: 3
-      consecutiveGatewayErrors: 2    # More sensitive to gateway errors
-
-      interval: 10s                  # Fast evaluation
-      baseEjectionTime: 60s          # Sufficient recovery time
-      maxEjectionPercent: 30         # Ensure availability
-
-      # Error rate based ejection
-      enforcingSuccessRate: 100
-      successRateMinimumHosts: 3
-      successRateRequestVolume: 10
+  hosts:
+  - api-service
+  http:
+  - name: writes-no-retry
+    match:
+    - method:
+        regex: ^(POST|PUT|PATCH|DELETE)$
+    route:
+    - destination:
+        host: api-service
+        port:
+          number: 8080
+    timeout: 3s
+    retries:
+      attempts: 0
+  - name: idempotent-reads
+    match:
+    - method:
+        regex: ^(GET|HEAD|OPTIONS)$
+    route:
+    - destination:
+        host: api-service
+        port:
+          number: 8080
+    timeout: 3s
+    retries:
+      attempts: 2
+      perTryTimeout: 1s
+      retryOn: gateway-error,connect-failure,refused-stream
+  - name: other-methods-no-retry
+    route:
+    - destination:
+        host: api-service
+        port:
+          number: 8080
+    timeout: 3s
+    retries:
+      attempts: 0
 ```
 
-**Error Rate Reduction Effect:**
+**2. Rate limits as measured admission controls**
 
-```
-Current error rate: 3%
-- Problematic pods continue receiving traffic
-- Additional load from retries
-
-With Outlier Detection:
-- Immediately eject problem pods
-- Route only to healthy pods
-- Expected error rate: under 1%
-
-Additional effects:
-- Reduced retry count -> Reduced network load
-- Response time improvement
-```
-
-#### 3. Rate Limiting (Service Protection)
-
-**Tier-based Rate Limiting:**
+These are independent per-proxy buckets on HTTP8080 in `production`. Verify the tier labels and capacity; a “critical” label alone does not justify a particular rate. They do not impose a shared service/account quota or replace edge protection.
 
 ```yaml
-# Critical services (payments, authentication)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: critical-service-ratelimit
+  namespace: production
 spec:
   workloadSelector:
     labels:
       tier: critical
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 500
             tokens_per_fill: 100
             fill_interval: 1s
-
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ---
-# Standard services
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: standard-service-ratelimit
+  namespace: production
 spec:
   workloadSelector:
     labels:
       tier: standard
   configPatches:
   - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        portNumber: 8080
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.local_ratelimit
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          stat_prefix: http_local_rate_limiter
           token_bucket:
             max_tokens: 200
             tokens_per_fill: 50
             fill_interval: 1s
+          filter_enabled:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
+          filter_enforced:
+            default_value:
+              numerator: 100
+              denominator: HUNDRED
 ```
 
-#### 4. Comprehensive Performance Optimization
+**3. Separate an illustrative model from an actual bill**
 
-**Response Time Improvement Strategy:**
+Assume decimal500TB=500,000GB, baseline cross-AZ fraction2/3, after fraction0.20, and an **assumed effective**$0.015 per billable GB. The modeled variable component is:
 
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: performance-optimization
-  namespace: production
-spec:
-  host: "*"
-  trafficPolicy:
-    # Connection Pool optimization
-    connectionPool:
-      tcp:
-        maxConnections: 1000
-        connectTimeout: 1s
-      http:
-        http1MaxPendingRequests: 100
-        http2MaxRequests: 1000
-        maxRequestsPerConnection: 10
-        idleTimeout: 60s
+| Model | Calculation | Monthly amount |
+|---|---|---:|
+|Before|500,000 × 2/3 × 0.015|$5,000|
+|After|500,000 × 0.20 × 0.015|$1,500|
+|Difference|5,000 − 1,500|$3,500 (70%)|
 
-    # Zone Aware Routing
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
+This matches the full$5,000 baseline only if that entire bill is this variable component. Actual network bills can include other directions, load-balancer/NAT processing, internet/region transfer and fixed costs. Request weights need not equal byte fractions when request/response sizes differ. Validate modeled savings against billable flow/CUR data and current pricing; do not promise70% total-bill savings.
 
-    # Outlier Detection
-    outlierDetection:
-      consecutiveErrors: 3
-      interval: 10s
-      baseEjectionTime: 60s
+For illustrative one-hop network latencies0.3ms same-AZ and1.5ms cross-AZ, an equal three-zone baseline gives0.3×1/3+1.5×2/3=1.10ms;80/20 gives0.54ms. This0.56ms component change cannot establish150ms→100ms end-to-end improvement. Trace the real critical path, database/pool waits, application work and retry amplification.
 
----
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: performance-routing
-  namespace: production
-spec:
-  hosts:
-  - "*"
-  http:
-  - route:
-    - destination:
-        host: service
+**4. Validate staged changes**
 
-    # Timeout optimization
-    timeout: 3s
+| Illustrative stage | Evidence needed before widening scope |
+|---|---|
+|Weeks1–2: topology/locality|Actual Node/Pod/EDS mapping, zonal capacity, request and billable-byte distribution, failure behavior|
+|Weeks3–4: outlier/pool limits|Enforced ejections, remaining endpoints, overflow, latency and application error causes|
+|Weeks5–6: rate limits|Genuine overload rejected without unacceptable legitimate-request rejection; observe client retry behavior|
 
-    # Retry strategy
-    retries:
-      attempts: 2
-      perTryTimeout: 1s
-      retryOn: 5xx,reset,connect-failure
-```
+The schedule is illustrative. Define rollback/stop criteria and measure after each change. Outlier detection can remove capacity or expose underlying failure; it does not guarantee errors below1%. A changed timeout can produce more failures instead of making work faster.
 
-#### 5. Implementation Roadmap
+**5. Use correctly typed, scoped metrics**
 
-**Phase 1: Zone Aware Routing (Week 1-2)**
-
-```bash
-# 1. Check node Topology
-kubectl get nodes -L topology.kubernetes.io/zone
-
-# 2. Check pod AZ distribution
-kubectl get pods -o wide | awk '{print $7}' | sort | uniq -c
-
-# 3. Apply Zone Aware DestinationRule
-kubectl apply -f zone-aware-template.yaml
-
-# 4. Set up cost monitoring
-# Monitor cross-AZ data transfer in CloudWatch
-```
-
-**Expected Effect:**
-
-* Cost: $5,000 -> $1,500 (70% savings)
-* Latency: 150ms -> 120ms (20% improvement)
-
-**Phase 2: Outlier Detection (Week 3-4)**
-
-```bash
-# 1. Apply Outlier Detection to each service
-kubectl apply -f strict-outlier-detection.yaml
-
-# 2. Set up monitoring dashboard
-# Check Outlier ejection metrics in Grafana
-
-# 3. Monitor error rate
-```
-
-**Expected Effect:**
-
-* Error rate: 3% -> 1.5% (50% reduction)
-* Latency: 120ms -> 100ms (additional improvement)
-
-**Phase 3: Rate Limiting (Week 5-6)**
-
-```bash
-# 1. Apply tier-based Rate Limiting
-kubectl apply -f critical-service-ratelimit.yaml
-kubectl apply -f standard-service-ratelimit.yaml
-
-# 2. Monitor 429 response rate
-# Adjust to ensure normal traffic is not blocked
-```
-
-**Expected Effect:**
-
-* DDoS protection
-* Improved service stability
-* Prevent unnecessary resource consumption
-
-#### 6. Monitoring and Validation
-
-**Grafana Dashboard:**
+The following per-service queries diagnose the representative service. Measure the user-facing SLI separately. Mean latency uses histogram sum/count, not P50; active ejections are a gauge, whereas enforced ejection events are a counter.
 
 ```promql
-# Cross-AZ traffic ratio
-100 * sum(rate(istio_requests_total{
-  source_cluster_zone!="",
-  destination_cluster_zone!="",
-  source_cluster_zone!=destination_cluster_zone
-}[5m])) /
-sum(rate(istio_requests_total{
-  source_cluster_zone!="",
-  destination_cluster_zone!=""
-}[5m]))
+# Per-service mean request duration, milliseconds
+sum(rate(istio_request_duration_milliseconds_sum{reporter="destination",destination_service_name="api-service",destination_service_namespace="production"}[5m])) /
+sum(rate(istio_request_duration_milliseconds_count{reporter="destination",destination_service_name="api-service",destination_service_namespace="production"}[5m]))
 
-# Average response time
-histogram_quantile(0.50,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m]))
-  by (le, destination_service_name)
-)
+# Per-service HTTP5xx percentage (define gRPC/application failures separately)
+100 * sum(rate(istio_requests_total{reporter="destination",destination_service_name="api-service",destination_service_namespace="production",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="destination",destination_service_name="api-service",destination_service_namespace="production"}[5m]))
 
-# Error rate
-100 * sum(rate(istio_requests_total{response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total[5m]))
-
-# Outlier ejection events
-sum(rate(envoy_cluster_outlier_detection_ejections_active[5m]))
-
-# Rate limit application count
-sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
+envoy_cluster_outlier_detection_ejections_active{namespace="production"}
+sum(rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="production"}[5m]))
+sum by (pod) (rate({__name__=~"envoy_.*http_local_rate_limit_enforced",namespace="production"}[5m]))
 ```
 
-#### 7. Final Results Prediction
+Enable optional stats and handle no traffic/scrape failures. A cross-AZ query requires real zone enrichment; `source_cluster_zone!=destination_cluster_zone` is not valid PromQL. See the [zone chapter](../../../service-mesh/istio/resilience/03-zone-aware-routing.md) for explicitly scoped conditional queries.
 
-| Metric                    | Current | Target | Expected Result        |
-| ------------------------- | ------- | ------ | ---------------------- |
-| **Monthly Network Cost**  | $5,000  | $2,500 | $1,500 (70% savings)   |
-| **Average Response Time** | 150ms   | 100ms  | 95ms (37% improvement) |
-| **Error Rate**            | 3%      | 1%     | 0.8% (73% reduction)   |
-| **Cross-AZ Traffic**      | 66.7%   | 33%    | 20% (70% reduction)    |
+**Targets remain to be measured**: cross-AZ cost−50%, mean user-facing latency≤100ms and errors<1% are acceptance criteria, not predicted results. Cache placement can reduce distance but does not by itself increase hit ratio. Evaluate ambient feature/capacity requirements before comparing overhead; a generic30–50% saving is not established. One HPA over a multi-zone Deployment does not independently scale each zone; independent zonal scaling needs an explicit workload/controller design.
 
-#### 8. Additional Optimization Opportunities
-
-**Caching Strategy:**
-
-```yaml
-# Place Redis/Memcached in same AZ
-# Improved cache hit rate + Network cost savings
-```
-
-**Service Mesh Optimization:**
-
-```yaml
-# Consider Ambient Mode (Reduce Sidecar overhead)
-# 30-50% reduction in resource usage
-# Additional response time improvement
-```
-
-**Auto Scaling:**
-
-```yaml
-# HPA + Zone Aware Routing
-# Independent scaling per AZ based on traffic patterns
-# Maximize cost efficiency
-```
-
-**Reference:**
-
-* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+References: [Outlier detection](../../../service-mesh/istio/resilience/01-outlier-detection.md), [rate limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md), [EKS network cost optimization](https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html).
 
 </details>
 
@@ -1738,7 +1191,7 @@ sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 **Evaluation Criteria:**
 
 * 90-100 points: Excellent (Istio Resilience Expert)
-* 80-89 points: Good (Production Ready)
+* 80-89 points: Good understanding; deployment validation is separate
 * 70-79 points: Average (Additional Study Recommended)
 * 60-69 points: Below Average (Basic Concept Review Needed)
 * 0-59 points: Needs Re-study

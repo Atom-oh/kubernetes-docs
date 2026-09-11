@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무신사 AWS 인프라 표준화 아키텍처 검토 회신</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --ink:#1A1F2B; --muted:#5B6470; --faint:#8A93A0;
+  --paper:#FFFFFF; --panel:#F3F5F8; --panel-2:#E9EDF3; --rule:#D9DEE6; --rule-2:#C5CCD6;
+  --navy:#1F3A5F; --navy-2:#2B4C7A; --navy-soft:#E6ECF4;
+  --ok:#2E7D5B; --ok-bg:#E8F3EE;
+  --cond:#B7791F; --cond-bg:#FBF1E0;
+  --review:#B23A3A; --review-bg:#F9E8E8;
+  --poc:#3E5C8A; --poc-bg:#E7EDF6;
+  --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,"D2Coding","Noto Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:15.5px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.75;
+     -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
+.page{max-width:920px;margin:0 auto;padding:56px 32px 72px}
+a{color:var(--navy);text-decoration:none;border-bottom:1px solid var(--rule-2)}
+a:hover{border-bottom-color:var(--navy)}
+:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+p{margin:0 0 .9em}
+ul,ol{margin:0 0 1em;padding-left:1.35em}
+li{margin:.3em 0}
+ul.plain,ol.plain{padding-left:1.35em}
+strong{font-weight:650}
+em{font-style:normal;font-weight:600;color:var(--navy-2)}
+.mono,code{font-family:var(--mono);font-size:.9em;background:var(--panel);padding:.05em .35em;border-radius:3px}
+.num{font-variant-numeric:tabular-nums}
+td > .mono:only-child{white-space:nowrap}
+
+/* ---- cover ---- */
+.cover{padding:0 0 28px;border-bottom:3px solid var(--navy);margin-bottom:28px}
+.cover-label{margin:0 0 14px;font-size:.85rem;font-weight:600;color:var(--navy);letter-spacing:.01em}
+.cover h1{margin:0 0 14px;font-size:2rem;line-height:1.3;font-weight:750;letter-spacing:-.01em}
+.cover-sub{margin:0 0 24px;font-size:1.05rem;color:var(--muted);max-width:760px}
+.cover-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 28px;margin:0;padding:18px 20px;background:var(--panel);border-radius:4px}
+.cover-meta div{display:grid;grid-template-columns:96px 1fr;gap:12px;font-size:.92rem}
+.cover-meta dt{color:var(--muted);font-weight:600}
+.cover-meta dd{margin:0}
+
+/* ---- executive summary ---- */
+.exec{margin:0 0 32px;padding:24px 28px 20px;background:var(--panel)}
+.exec h2{margin:0 0 14px;font-size:1.1rem;font-weight:700;color:var(--navy)}
+.exec ul{margin:0 0 18px;padding-left:1.2em}
+.exec li{margin:.45em 0}
+.verdict-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding-top:16px;border-top:1px solid var(--rule)}
+.verdict-strip > div{font-size:.86rem;color:var(--muted);line-height:1.5}
+.verdict-strip .v{margin-bottom:6px}
+.verdict-strip b{display:block;font-size:1.35rem;color:var(--ink);font-weight:700;line-height:1.2;margin:2px 0}
+
+/* ---- toc ---- */
+.toc{margin:0 0 40px;padding:18px 22px;border:1px solid var(--rule);border-radius:4px}
+.toc-title{margin:0 0 8px;font-size:.9rem;font-weight:700;color:var(--muted)}
+.toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:32px}
+.toc li{display:flex;gap:10px;margin:.2em 0;break-inside:avoid;font-size:.95rem}
+.toc .no{color:var(--faint);font-variant-numeric:tabular-nums;min-width:1.6em}
+.toc a{border-bottom:none}
+.toc a:hover{text-decoration:underline}
+
+/* ---- sections ---- */
+.sec{margin:0 0 52px}
+.sec h2{display:flex;align-items:baseline;gap:14px;margin:0 0 16px;padding-top:10px;font-size:1.5rem;font-weight:700;line-height:1.3;border-top:2px solid var(--navy)}
+.sec h2 .no{color:var(--navy);font-variant-numeric:tabular-nums;font-weight:700;font-size:1.05rem;min-width:2.1em}
+.key-msg{margin:0 0 22px;padding:14px 18px;background:var(--navy-soft);font-weight:500;color:var(--ink)}
+.sec h3{margin:34px 0 12px;font-size:1.15rem;font-weight:700;line-height:1.4;color:var(--navy)}
+.sec h4{margin:26px 0 8px;font-size:1rem;font-weight:700;line-height:1.45}
+
+/* ---- tags & blocks ---- */
+.tag{display:inline-block;font-size:.76rem;font-weight:700;line-height:1;padding:.32em .55em;border-radius:3px;vertical-align:middle;white-space:nowrap;letter-spacing:0}
+.t-ok{background:var(--panel-2);color:var(--muted)}
+.t-fix{background:var(--review-bg);color:var(--review)}
+.t-add{background:var(--navy-soft);color:var(--navy)}
+.t-rec{background:var(--ok-bg);color:var(--ok)}
+.t-poc{background:var(--poc-bg);color:var(--poc)}
+.t-impact{background:var(--cond-bg);color:var(--cond)}
+.t-premise{background:var(--panel-2);color:var(--muted)}
+.t-concl{background:var(--navy);color:#fff}
+li > .tag{margin-right:.4em}
+
+.finding,.impact,.premise,.rec,.conclusion{display:grid;grid-template-columns:auto 1fr;gap:12px 14px;align-items:start;margin:0 0 14px;padding:14px 16px;border:1px solid var(--rule);border-radius:4px;break-inside:avoid}
+.finding .tag,.impact .tag,.premise .tag,.rec .tag,.conclusion .tag{margin-top:.35em}
+.f-body{min-width:0}
+.f-body p:last-child{margin-bottom:0}
+.f-body .f-lead{font-weight:650}
+.f-fix{}
+.f-add{}
+.f-ok{background:var(--paper)}
+.f-rec{background:#FAFDFB}
+.impact{background:#FEFBF5}
+.premise{background:var(--panel);border-color:var(--panel);color:var(--muted)}
+.rec{border:none;background:var(--ok-bg);}
+.conclusion{border:none;background:var(--navy-soft);}
+
+/* ---- callouts ---- */
+.callout{margin:16px 0;padding:14px 18px;border-radius:4px;break-inside:avoid}
+.callout-title{display:block;font-weight:700;margin-bottom:6px}
+.callout p{margin:0}
+.callout.warn{background:var(--cond-bg);}
+.callout.warn .callout-title{color:#8A5A12}
+.callout.note{background:var(--navy-soft);}
+.callout.note .callout-title{color:var(--navy)}
+
+/* ---- tables ---- */
+.tbl-wrap{margin:16px 0 20px;overflow-x:auto;break-inside:avoid}
+table{width:100%;border-collapse:collapse;font-size:.92rem;line-height:1.55}
+caption{text-align:left;caption-side:top;padding:0 0 8px;font-weight:700;color:var(--navy)}
+th,td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;text-align:left}
+thead th{background:var(--navy);color:#fff;font-weight:600;border-bottom:none}
+tbody th{background:var(--panel);font-weight:650;white-space:nowrap}
+tbody tr:nth-child(even) td{background:#FAFBFC}
+.v{display:inline-block;font-size:.8rem;font-weight:700;line-height:1;padding:.3em .55em;border-radius:3px;white-space:nowrap}
+.v-ok{background:var(--ok-bg);color:var(--ok)}
+.v-cond{background:var(--cond-bg);color:var(--cond)}
+.v-review{background:var(--review-bg);color:var(--review)}
+.v-poc{background:var(--poc-bg);color:var(--poc)}
+
+/* ---- code ---- */
+.codeblock{margin:16px 0 20px;border:1px solid var(--rule);border-radius:4px;overflow:hidden;break-inside:avoid}
+.code-caption{padding:8px 14px;background:var(--panel);font-size:.86rem;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)}
+pre{margin:0;padding:14px 16px;overflow-x:auto;font-size:.86rem;line-height:1.6;background:#FBFCFD}
+pre code{background:none;padding:0;font-size:1em}
+.cm{color:var(--faint)}
+
+/* ---- references / footer ---- */
+.refs h3{font-size:1rem;margin-top:24px}
+.refs ul{padding-left:1.2em}
+.refs li{margin:.45em 0;font-size:.93rem}
+.refs .url{display:block;font-family:var(--mono);font-size:.78rem;color:var(--faint);word-break:break-all}
+.doc-footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--rule);font-size:.88rem;color:var(--muted)}
+
+@media (max-width:720px){
+  .page{padding:32px 18px 56px}
+  .cover h1{font-size:1.6rem}
+  .cover-meta{grid-template-columns:1fr}
+  .verdict-strip{grid-template-columns:repeat(2,1fr)}
+  .toc ol{columns:1}
+  .finding,.impact,.premise,.rec,.conclusion{grid-template-columns:1fr;gap:8px}
+}
+@media print{
+  html{font-size:11.5pt}
+  .page{max-width:none;padding:0}
+  a{border-bottom:none;color:inherit}
+  .sec{break-before:auto}
+  .sec h2{break-after:avoid}
+  thead{display:table-header-group}
+  .exec,.key-msg,.callout,.rec,.conclusion,.impact,.premise,.finding{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---- figures ---- */
+.fig{margin:18px 0 22px;padding:16px 16px 10px;border:1px solid var(--rule);border-radius:4px;background:#fff;break-inside:avoid}
+.fig svg{display:block;max-width:100%;height:auto}
+.fig svg text{font-family:var(--sans)}
+.fig figcaption{margin-top:10px;font-size:.88rem;font-weight:700;color:var(--navy)}
+</style>
+</head>
+<body>
+<div class="page">
+<header class="cover">
+  <p class="cover-label">AWS Architecture Review</p>
+  <h1>무신사 AWS 인프라 표준화 아키텍처 검토 회신</h1>
+  <p class="cover-sub">
+    무신사 인프라 표준화 아키텍처 검토 요청서에 대한 회신 자료입니다.
+    핵심 질문 6건과 12장 전제를 AWS 공식 문서 기준으로 검증하고, 선택지별 판정과 누락된 결정 요소, POC 설계 제언을 담았습니다.
+  </p>
+  <dl class="cover-meta">
+    <div><dt>작성 기준일</dt><dd>2026-08-30</dd></div>
+    <div><dt>문서 상태</dt><dd>1차 서면 검토 (기술 진단, 사실관계 정정, 제언)</dd></div>
+    <div><dt>대상 문서</dt><dd><span class="mono">musinsa-standard-doc.md</span> (작성 기준일 2026-08-21)</dd></div>
+    <div><dt>검토 범위</dt><dd>5장 핵심 질문 6건 우선, 12장 전제 검증, 6~7장 선택지 중 결정을 바꿀 수 있는 항목</dd></div>
+    <div><dt>근거</dt><dd>부록의 AWS 공식 문서. quota 수치는 기본값 기준</dd></div>
+  </dl>
+</header>
+<!-- ===================== TL;DR ===================== -->
+<section class="exec" aria-labelledby="exec-title">
+  <h2 id="exec-title">Executive Summary</h2>
+  <ul>
+    <li>기술적으로 성립하지 않는 선택지는 없습니다. 다만 <strong>성립 조건이 문서에 적힌 것보다 복잡한 항목 6개, 전제가 최신 동작과 어긋나는 항목 4개</strong>가 있습니다.</li>
+    <li>가장 시급한 재검토 대상은 Control Tower landing zone 4.0입니다. baseline끼리 묶인 활성화 의존 관계와 Security OU를 특별하게 다루는 동작이 <strong>OU 설계, IAM-H1, SEC-2를 동시에 제약</strong>하므로 OU 후보를 만들기 전에 확정해야 합니다.</li>
+    <li>SVPC-1(최소 Shared VPC Pool)의 실제 상한은 CIDR이 아니라 <strong>전파 route 100개(조정 불가)</strong>에서 먼저 옵니다. 중앙 TGW hub와 결합하는 순간 첫 번째 병목이 됩니다.</li>
+    <li>추가로 결정해야 할 것은 세 가지입니다. Config 활성화 여부, CUJ별 RTO/RPO 정의, 판정표 작성. 이 셋이 정해지면 나머지 판단 및 재작업이 크게 줄어듭니다.</li>
+  </ul>
+  <div class="verdict-strip" aria-label="판정 분포">
+    <div><span class="v v-review">재검토</span><b>5</b>LZ-PLATFORM-1, OU-3, IAM-H2, CONN-4, SEC-1 ~ SEC-7</div>
+    <div><span class="v v-poc">POC</span><b>2</b>AVAIL-1, SVPC-1</div>
+    <div><span class="v v-cond">조건부</span><b>19</b>판정표 행 기준. 문서에 없는 조건 충족 시 성립</div>
+    <div><span class="v v-ok">성립</span><b>33</b>판정표 행 기준. AWS 기능상 문제 없음</div>
+  </div>
+</section>
+
+
+<!-- ===================== TOC ===================== -->
+<nav class="toc" aria-label="목차">
+  <p class="toc-title">목차</p>
+  <ol>
+    <li><span class="no">00</span><a href="#s0">문서 구성과 대상</a></li>
+    <li><span class="no">01</span><a href="#s1">총평</a></li>
+    <li><span class="no">02</span><a href="#s2">12장 전제의 사실관계 정정과 보완</a></li>
+    <li><span class="no">03</span><a href="#s3">핵심 질문 6건에 대한 답변</a></li>
+    <li><span class="no">04</span><a href="#s4">선택지별 판정 요약표</a></li>
+    <li><span class="no">05</span><a href="#s5">문서에서 누락된 결정 요소</a></li>
+    <li><span class="no">06</span><a href="#s6">POC 설계 제언</a></li>
+    <li><span class="no">07</span><a href="#s7">후속 논의 항목 분류</a></li>
+    <li><span class="no">08</span><a href="#s8">우선순위 제언</a></li>
+    <li><span class="no"></span><a href="#limits">검증 범위와 한계</a></li>
+    <li><span class="no"></span><a href="#refs">참고 자료</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ===================== 00 ===================== -->
+<section class="sec" id="s0">
+  <h2><span class="no">00</span>문서 구성과 대상</h2>
+  <p>
+    문서는 8개 장으로 구성했습니다. 역할에 따라 우선 읽을 챕터가 다릅니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 1. 문서 구성과 우선 독자</caption>
+      <thead>
+        <tr><th scope="col">장</th><th scope="col">내용</th><th scope="col">우선 읽을 대상</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="num">01</span></td><td>총평과 요약</td><td>의사결정자</td></tr>
+        <tr><td><span class="num">02</span></td><td>12장 전제의 사실관계 정정과 보완 (가장 중요)</td><td>아키텍트</td></tr>
+        <tr><td><span class="num">03</span></td><td>5장 핵심 질문 6건에 대한 답변</td><td>아키텍트, 각 영역 오너</td></tr>
+        <tr><td><span class="num">04</span></td><td>선택지별 판정 요약표 (성립 / 조건부 / 재검토)</td><td>ADR 작성자</td></tr>
+        <tr><td><span class="num">05</span></td><td>문서에서 누락된 결정 요소</td><td>아키텍트</td></tr>
+        <tr><td><span class="num">06</span></td><td>POC 설계 제언과 측정 지표</td><td>플랫폼팀</td></tr>
+        <tr><td><span class="num">07</span></td><td>후속 논의 항목과 Specialist SA 구분</td><td>PM</td></tr>
+        <tr><td><span class="num">08</span></td><td>우선순위 제언</td><td>의사결정자</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>본문에서 쓰는 표기 규칙은 다섯 가지입니다.</p>
+  <ul class="plain">
+    <li><span class="tag t-ok">[확인]</span> AWS 공식 문서로 확인한 사실. 무신사 문서의 전제가 맞습니다.</li>
+    <li><span class="tag t-fix">[정정]</span> 무신사 문서의 전제가 사실과 다르거나 최신 동작과 어긋납니다.</li>
+    <li><span class="tag t-add">[보완]</span> 전제는 맞지만 결정을 바꿀 수 있는 조건이 빠져 있습니다.</li>
+    <li><span class="tag t-rec">[제언]</span> AWS 공식 지침 또는 반복된 운영 근거가 있는 방향 제시입니다.</li>
+    <li><span class="tag t-poc">[POC]</span> 서면으로 확정할 수 없고 실제 테스트가 필요합니다.</li>
+  </ul>
+</section>
+
+<!-- ===================== 01 ===================== -->
+<section class="sec" id="s1">
+  <h2><span class="no">01</span>총평</h2>
+
+  <h3>1.1 요약</h3>
+  <ol class="plain">
+    <li>경계를 독립 판정하는 BND-B, Shared와 Dedicated를 조합하는 EKS-4 / ACC-5 / VPC-3, Layered SCP bundle(SCP-ATT-3)은 AWS 관점에서 모두 성립합니다. 기술적으로 성립하지 않는 선택지는 없으나, <strong>성립 조건이 문서에 적힌 것보다 복잡한 항목이 6개, 전제가 최신 동작과 어긋나는 항목이 4개</strong> 있습니다.</li>
+    <li>가장 시급하게 재검토할 항목은 Control Tower landing zone 4.0의 OU와 baseline 의존 관계입니다. 4.0에서는 AWS가 Security OU를 더 이상 생성하거나 강제하지 않고, <em>service integration Account가 속한 OU가 Security OU로 지정</em>됩니다. 또 <span class="mono">IdentityCenterBaseline</span>은 <span class="mono">CentralSecurityRolesBaseline</span>을, 그것은 다시 <span class="mono">CentralConfigBaseline</span>을 요구합니다. 이렇게 연관성이 높은 의존 관계는 "Control Tower와 내부 pipeline의 책임 분리"와 "OU-3 중첩이 적은 functional 혼합형"을 <strong>동시에</strong> 제약하므로, OU 후보를 만들기 전에 확정해야 합니다.</li>
+    <li>SVPC-1(최소 VPC, Shared VPC Pool)은 CIDR quota가 아니라 <strong>participant Account 100개 / Account당 공유 subnet 100개 / NAU 64,000(최대 256,000) / 전파 route 100개(조정 불가)</strong> 순서로 먼저 막힙니다. 특히 마지막 항목은 중앙 TGW hub와 결합하는 순간 첫 번째 병목이 됩니다.</li>
+  </ol>
+
+</section>
+<!-- ===================== 02 ===================== -->
+<section class="sec" id="s2">
+  <h2><span class="no">02</span>12장 전제의 사실관계 정정과 보완</h2>
+  <p class="key-msg">검증 결과는 정정 5건, 보완 26건입니다. 결정을 실제로 바꾸는 항목은 Control Tower LZ 4.0의 baseline 의존 관계(2.1), Shared VPC의 실제 상한(2.4), cross-account 복구 제약(2.11) 세 가지입니다.</p>
+  <p>
+    무신사 문서 12장이 전제한 AWS 동작을 항목별로 검증했습니다. 원문의 전제를 먼저 인용하고,
+    확인 / 정정 / 보완을 순서대로 붙입니다. 결정에 직접 닿는 항목에는 영향까지 적었습니다.
+  </p>
+
+  <h3>2.1 Control Tower landing zone 4.0 - [정정] 4건, [보완] 3건</h3>
+  <div class="premise"><span class="tag t-premise">무신사 문서 전제</span><div class="f-body">"Landing zone 수준의 Config integration은 service integration Account에 중앙 resource를 구성하며,
+    일반 member Account의 Config recorder 등은 destination OU에 적용한 baseline에 따라 달라집니다."</div></div>
+  <div class="finding f-ok"><span class="tag t-ok">[확인]</span><div class="f-body"><span class="f-lead">이 부분은 맞습니다.</span> LZ 수준 Config integration은 service integration Account에만
+    Config recording resource를 배포합니다. member Account에 Config Recorder와 Delivery Channel을 배포하려면
+    관리 대상 OU별로 Config baseline을 따로 활성화해야 합니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 1]</span><div class="f-body"><span class="f-lead">LZ 수준 Config integration은 OU Config baseline의 전제 조건입니다.</span>
+    LZ 수준 설정만으로는 member Account에 배포되지 않지만, 반대로 LZ 수준에서 Config integration을 비활성화하면
+    OU에서 Config baseline을 활성화할 수도 없습니다. "Config는 내부 pipeline이 소유한다"는 선택지를 택하려면
+    LZ 수준 integration을 비활성화하는 것이 아니라 <strong>integration은 활성화한 채 OU baseline을 선택적으로 적용</strong>하는 형태가 되어야 합니다.</div></div>
+  <div class="finding f-fix"><span class="tag t-fix">[정정 1]</span><div class="f-body"><span class="f-lead">baseline 사이에는 활성화와 비활성화 순서를 묶는 의존 관계가 있습니다.</span>
+    이 부분이 문서에 빠져 있고, OU 설계와 책임 분리 결정을 직접 제약합니다.</div></div>
+
+  <figure class="fig" id="fig-lz-chain"><svg viewBox="0 0 860 296" width="100%" role="img" aria-label="Control Tower landing zone 4.0 baseline 활성화 의존 관계" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><text x="30" y="26" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">활성화 순서: 왼쪽 baseline이 먼저 활성화되어 있어야 오른쪽 baseline을 활성화할 수 있습니다.</text><rect x="30" y="108" width="210" height="54" rx="4" fill="#fff" stroke="#B7791F" stroke-width="2"/><text x="135.0" y="131.5" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">CentralConfigBaseline</text><text x="135.0" y="148.5" font-size="11" fill="#5B6470" text-anchor="middle">독립 활성화 가능</text><rect x="30" y="84" width="143" height="20" rx="3" fill="#FBF1E0"/><text x="101.5" y="96" font-size="11" font-weight="700" fill="#B7791F" text-anchor="middle">SEC-2: Config 도입 여부</text><rect x="330" y="108" width="230" height="54" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="445.0" y="139.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">CentralSecurityRolesBaseline</text><rect x="640" y="48" width="190" height="44" rx="4" fill="#E6ECF4" stroke="#1F3A5F" stroke-width="2.5"/><text x="735.0" y="74.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">IdentityCenterBaseline</text><rect x="640" y="24" width="143" height="20" rx="3" fill="#E6ECF4"/><text x="711.5" y="36" font-size="11" font-weight="700" fill="#1F3A5F" text-anchor="middle">IAM-H1이 쓰는 baseline</text><rect x="640" y="113" width="190" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="735.0" y="139.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">BackupAdminBaseline</text><rect x="640" y="178" width="190" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="735.0" y="203.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">BackupCentralVaultBaseline</text><rect x="30" y="190" width="210" height="44" rx="4" fill="#fff" stroke="#8A93A0" stroke-width="1.5" stroke-dasharray="4 3"/><text x="135.0" y="216.0" font-size="13" font-weight="600" fill="#5B6470" text-anchor="middle">LogArchiveBaseline</text><text x="250" y="217" font-size="11" fill="#8A93A0" text-anchor="start" font-weight="400">독립 (의존 관계 없음)</text><line x1="240" y1="135" x2="328" y2="135" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><path d="M560,135 L600,135 L600,70 L638,70" fill="none" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><line x1="560" y1="135" x2="638" y2="135" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><path d="M560,135 L600,135 L600,200 L638,200" fill="none" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><path d="M830,252 L640,252" fill="none" stroke="#B23A3A" stroke-width="1.5" marker-end="url(#ar-r)" stroke-dasharray="5 4"/><path d="M560,252 L330,252" fill="none" stroke="#B23A3A" stroke-width="1.5" marker-end="url(#ar-r)" stroke-dasharray="5 4"/><path d="M240,252 L30,252" fill="none" stroke="#B23A3A" stroke-width="1.5" marker-end="url(#ar-r)" stroke-dasharray="5 4"/><text x="430" y="280" font-size="12" fill="#B23A3A" text-anchor="middle" font-weight="400">비활성화는 역순으로만 가능: 오른쪽 세 baseline을 모두 비활성화한 뒤 CentralSecurityRolesBaseline, 마지막에 CentralConfigBaseline</text></svg><figcaption>그림 1. Control Tower LZ 4.0 baseline 활성화 의존 관계</figcaption></figure>
+
+
+  <p>
+    비활성화는 역순으로만 가능합니다. <span class="mono">CentralConfigBaseline</span>을 비활성화하려면
+    <span class="mono">CentralSecurityRolesBaseline</span>, <span class="mono">IdentityCenterBaseline</span>,
+    <span class="mono">BackupAdminBaseline</span>, <span class="mono">BackupCentralVaultBaseline</span>을 먼저 모두 비활성화합니다.
+  </p>
+  <div class="impact"><span class="tag t-impact">영향</span><div class="f-body">문서는 IAM-H1(Identity Center)을 현재 검토 방향으로, Config는 "CNAPP와 비교 후 결정"(SEC-2)으로 두고 있습니다.
+    그런데 Control Tower의 <span class="mono">IdentityCenterBaseline</span>을 쓰려면 <span class="mono">CentralConfigBaseline</span>이
+    반드시 활성화되어 있어야 합니다. <strong>SEC-2의 Config 도입 여부 결정이 IAM-H1의 구현 방식을 제약합니다.</strong>
+    두 결정을 독립적으로 다룰 수 없습니다.</div></div>
+  <div class="finding f-fix"><span class="tag t-fix">[정정 2]</span><div class="f-body"><span class="f-lead">LZ 4.0은 Security OU를 생성하거나 강제하지 않습니다.</span>
+    3.x와 달리 4.0은 designated Security OU를 만들지 않고, <strong>service integration Account들이 위치한 OU가 Security OU로 지정</strong>됩니다.
+    또한 각 service integration에 설정된 모든 Account가 동일한 부모 OU 아래에 있어야 합니다.</div></div>
+  <div class="impact"><span class="tag t-impact">영향</span><div class="f-body">OU-3에서 <span class="mono">Security</span>를 "쉽게 변하지 않는 기능 OU"로 제시했는데,
+    4.0에서 이 OU는 무신사가 자유롭게 설계하는 OU가 아니라 <strong>Control Tower가 특별하게 다루는 OU</strong>가 됩니다.
+    다음 세 가지가 따라옵니다.</div></div>
+  <ul class="plain">
+    <li>Security OU에는 <span class="mono">AWSControlTowerBaseline</span>과 <span class="mono">AWS Config Baseline</span>을 적용할 수 없습니다(상태가 <span class="mono">Not Applicable</span>로 표시되며 정상입니다). <span class="mono">BackupBaseline</span>은 적용 가능합니다.</li>
+    <li>Security OU 안에 service integration Account가 아닌 일반 Account를 두면 <strong>baseline resource를 받지 못합니다.</strong> 통제하려면 managed OU로 옮겨야 합니다.</li>
+    <li>Control Tower는 Logging Account와 SecurityRoles Account용 Identity Center permission set만 프로비저닝합니다. <strong>Config Account와 Backup Account용 permission set은 만들어 주지 않으므로 직접 생성해야 합니다.</strong></li>
+  </ul>
+  <div class="finding f-fix"><span class="tag t-fix">[정정 3]</span><div class="f-body"><span class="f-lead">일반 member Account를 Security OU로 옮기면 해당 OU의 enabled control이
+    drift 상태가 됩니다.</span> auto-enrollment 설정과 무관합니다. 문서의 <span class="mono">Transitional</span> OU 설계에서,
+    검사 대기 Account를 절대 Security OU 계열에 두면 안 됩니다. 이 조건은 문서에 없습니다.</div></div>
+  <div class="finding f-fix"><span class="tag t-fix">[정정 4]</span><div class="f-body"><span class="f-lead">CentralizedLogging 비활성화 동작이 4.0에서 바뀌었습니다.</span>
+    3.3 이하는 Organization CloudTrail만 비활성화하고 배포된 resource를 유지했으나,
+    4.0은 logging Account의 Config Recorder, Delivery Channel, CloudTrail 관련 stack instance를 삭제합니다.
+    이후 Control Tower는 logging Account를 관리하지 않습니다. 되돌리기가 아니라 해체이므로,
+    LZ-MIG-2 단계적 전환 중 <strong>"일단 비활성화하고 나중에 다시 활성화한다"를 rollback 수단으로 쓸 수 없습니다.</strong></div></div>
+
+  <div class="finding f-add"><span class="tag t-add">[보완 2]</span><div class="f-body"><span class="f-lead">3.3 이하에서 4.0으로 업그레이드할 때는 순서 제약이 있습니다.</span>
+    업그레이드 과정에서 AWS Config와 SecurityRoles integration을 <strong>비활성화하지 마세요.</strong>
+    3.3 이하에서는 두 integration이 항상 활성화된 상태였고, 4.0에서 처음으로 선택 옵션이 되었습니다.
+    업그레이드가 성공한 뒤에 원하는 대로 비활성화하는 순서여야 합니다. 또한 API로 업그레이드하는 경우
+    <span class="mono">AWSControlTowerCloudTrailRole</span>이 기존 inline policy 대신 관리형 정책
+    <span class="mono">AWSControlTowerCloudTrailRolePolicy</span>를 사용하도록 먼저 교체해야 합니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 3]</span><div class="f-body"><span class="f-lead">Drift 알림 경로가 바뀌었습니다.</span> <span class="mono">AWSControlTowerBaseline</span>이
+    활성화되지 않은 4.0 환경에서는 SNS topic으로 drift 알림을 보내지 않고, <strong>management Account의 EventBridge로</strong> 보냅니다.
+    6.7의 "표준 준수 검증"에서 drift 신호 수집 경로를 SNS 기준으로 설계했다면 고쳐야 합니다.</div></div>
+
+  <h3>2.2 Control Tower auto-enrollment - [확인] + [보완] 2건</h3>
+  <div class="premise"><span class="tag t-premise">무신사 문서 전제</span><div class="f-body">"Landing zone 3.1 이상에서 auto-enrollment를 활성화하면 Account를 등록 OU로 이동할 때
+    해당 OU의 baseline과 control이 자동 적용됩니다. 기존 설정 충돌과 실패 복구를 자동으로 해결하는 기능은 아닙니다."</div></div>
+  <div class="finding f-ok"><span class="tag t-ok">[확인]</span><div class="f-body"><span class="f-lead">맞습니다.</span> 3.1 이상에서 쓸 수 있고, <span class="mono">RemediationType</span>을
+    <span class="mono">Inheritance Drift</span>로 설정해 활성화합니다. inheritance drift를 만들지 않고 Account를 옮기는 기능입니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 4]</span><div class="f-body"><span class="f-lead">등록 해제 시 baseline resource가 자동 삭제됩니다.</span>
+    Account를 등록되지 않은 OU나 조직 root로 옮기면 Control Tower가 배포한 baseline resource와 control을 모두 자동으로 제거합니다.
+    문서의 <span class="mono">Suspended</span> OU를 "폐기 예정 Account의 일반 변경을 막는 위치"로 쓰려는 설계에서,
+    이 OU를 Control Tower에 등록하지 않으면 <strong>감사 증거 수집에 필요한 baseline까지 사라집니다.</strong>
+    <span class="mono">Suspended</span>는 등록된 OU로 두고 Deny 중심 SCP로 변경을 막는 형태가 안전합니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 5]</span><div class="f-body"><span class="f-lead">enrollment는 eventual consistency 방식이라 이동 Account 수에 따라 수 분에서 수 시간까지 걸립니다.</span>
+    또한 auto-enrollment는 Service Catalog provisioned product를
+    생성, 수정, 종료하지 않습니다. Account Factory로 만든 Account를 unenroll하면 provisioned product가
+    management Account에 고아 상태로 남습니다. "Account 이동 &rarr; 자동 enrollment &rarr; 내부 workload bootstrap"
+    파이프라인에서 bootstrap 시작 조건을 이동 이벤트가 아니라 <strong>baseline 적용 완료 확인</strong>으로 두고,
+    고아 provisioned product 정리를 전환 체크리스트에 포함하시기 바랍니다.</div></div>
+
+  <h3>2.3 SCP, RCP, declarative policy - [확인] + [보완] 3건</h3>
+  <p>
+    무신사 전제(SCP 평가, RCP, declarative policy, Tag Policy 구분)는 모두 <span class="tag t-ok">[확인]</span> 사실과 일치합니다.
+    6.2의 상세, 후속 질문 3에 답하자면, 이 구분에 잘못 이해한 부분은 없습니다.
+    다만 SCP-ATT-3(Layered bundle)의 설계 여유를 계산하려면 아래 수치가 필요한데, 문서에는 없습니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 2. Organizations 정책 유형별 한도 (기본값)</caption>
+      <thead>
+        <tr><th scope="col">정책 유형</th><th scope="col">entity(root/OU/Account)당 최대 연결</th><th scope="col">정책 문서 최대 크기</th><th scope="col">조직 전체 최대</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SCP</td><td><span class="num">10</span></td><td><span class="num">10,240자</span></td><td><span class="num">10,000</span></td></tr>
+        <tr><td>RCP</td><td><span class="num">5</span> (<span class="mono">RCPFullAWSAccess</span> 포함, 실사용 4)</td><td><span class="num">5,120자</span></td><td><span class="num">2,000</span></td></tr>
+        <tr><td>Declarative policy</td><td><span class="num">10</span></td><td><span class="num">10,000자</span></td><td><span class="num">1,000</span></td></tr>
+        <tr><td>Tag policy</td><td><span class="num">10</span></td><td><span class="num">10,000자</span></td><td><span class="num">1,000</span></td></tr>
+        <tr><td>Backup policy</td><td><span class="num">10</span></td><td><span class="num">10,000자</span></td><td><span class="num">1,000</span></td></tr>
+        <tr><td>Security Hub policy</td><td><span class="num">10</span></td><td><span class="num">10,000자</span></td><td><span class="num">1,000</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-add"><span class="tag t-add">[보완 6]</span><div class="f-body"><span class="f-lead">상속된 정책은 연결 개수 한도에 포함되지 않습니다.</span> SCP-ATT-3에 유리한 결정적 사실입니다.
+    Root에 최소 SCP를 두고 OU 계층마다 policy bundle을 붙이는 구조에서 상위 정책은 하위 entity의 "10개" 한도를 소비하지 않으므로,
+    계층마다 10개를 온전히 쓸 수 있습니다.
+    반면 SCP-ATT-2(OU별 완성형 직접 연결)는 상속을 쓰지 않아 OU 하나에서 10개 한도를 모두 소비하고,
+    한도에 닿으면 정책을 병합(merge)해야 합니다. <strong>quota 관점만 보면 SCP-ATT-3이 SCP-ATT-2보다 확장성이 좋습니다.</strong></div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 7]</span><div class="f-body"><span class="f-lead">OU 중첩은 root 아래 5단계까지입니다.</span> OU-1(깊은 계층형)의 실제 상한이며,
+    OU-3(중첩이 적은 혼합형)에는 제약이 아닙니다. 조직 전체 OU는 2,000개입니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 8]</span><div class="f-body"><span class="f-lead">RCP는 실사용 4개뿐이고 문서 크기도 5,120자로 SCP의 절반입니다.</span>
+    문서는 RCP를 "지원 resource의 resource policy가 허용할 수 있는 최대 범위"로 정확히 이해했지만,
+    <strong>RCP는 SCP와 같은 수준의 계층적 bundle 전략을 쓸 여유가 없습니다.</strong>
+    RCP는 조직 전체에 적용하는 소수의 절대 규칙(예: 외부 principal의 S3, KMS 접근 차단, confused deputy 방어)에 한정하고,
+    세분화는 SCP와 resource policy에 위임합니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 9]</span><div class="f-body"><span class="f-lead">Organizations에 Security Hub policy 유형이 추가되었습니다.</span>
+    문서의 SEC-1 / SEC-6에서 조직 예방 control과 finding workflow를 다루는데,
+    Security Hub 설정을 조직 정책으로 중앙 배포하는 수단이 목록에 없습니다.
+    SCP, RCP, declarative policy, Tag Policy와 함께 검토 대상에 넣는 것이 좋습니다.</div></div>
+
+  <h3>2.4 Shared VPC 책임과 quota - [확인] + [정정] 1건 + [보완] 4건</h3>
+  <div class="premise"><span class="tag t-premise">무신사 문서 전제</span><div class="f-body">"Owner는 subnet, route, NACL, NAT, endpoint, TGW attachment 등을 관리하고
+    participant는 자기 ENI와 Security Group을 관리할 수 있습니다."</div></div>
+  <div class="finding f-ok"><span class="tag t-ok">[확인]</span><div class="f-body"><span class="f-lead">맞습니다.</span> 추가로 명확히 해둘 세부 사항을 표로 정리합니다.</div></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 3. Shared VPC의 리소스별 participant / owner 권한</caption>
+      <thead>
+        <tr><th scope="col">리소스</th><th scope="col">Participant 권한</th><th scope="col">Owner 권한</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Subnet</td><td>describe만. 수정 불가</td><td>전권</td></tr>
+        <tr><td>Route table</td><td>describe만. 생성, 삭제, 연결 불가</td><td>전권</td></tr>
+        <tr><td>NACL</td><td>describe만(owner가 만든 것)</td><td>전권</td></tr>
+        <tr><td>NAT Gateway</td><td><strong>describe조차 불가</strong></td><td>전권</td></tr>
+        <tr><td>Internet Gateway</td><td>describe만 (EIGW는 describe도 불가)</td><td>전권</td></tr>
+        <tr><td>TGW attachment</td><td>생성 불가</td><td>owner만 가능</td></tr>
+        <tr><td>ENI</td><td>자기 것 생성, 수정, 삭제</td><td>남의 것 describe만</td></tr>
+        <tr><td>Security Group</td><td>자기 것 전권 + owner가 공유한 것 사용</td><td>남의 것 describe만</td></tr>
+        <tr><td>Flow Logs</td><td>자기 ENI 것만. subnet 단위 불가</td><td>subnet + 모든 ENI 가능. 단 participant가 만든 flow log는 describe, 삭제 불가</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-add"><span class="tag t-add">[보완 10]</span><div class="f-body"><span class="f-lead">Flow Logs 가시성이 양방향으로 비대칭입니다.</span>
+    Owner는 participant가 만든 flow log를 볼 수도 지울 수도 없고, participant는 subnet 단위 flow log를 만들 수도 볼 수도 없습니다.
+    문서 6.4 INSP-1은 "SG, NACL, route, EKS NetworkPolicy와 Flow Logs로 VPC별 통신을 통제"한다고 했으나,
+    Shared VPC에서 이 통제의 증거를 한 곳에 모으려면 <strong>Owner가 subnet 단위 flow log를 소유하고
+    participant의 개별 flow log 생성을 SCP로 금지하는 형태</strong>가 되어야 합니다.
+    그렇지 않으면 로그가 중복 과금되면서도 전체 그림은 어느 Account에서도 보이지 않습니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 11]</span><div class="f-body"><span class="f-lead">VPC와 내부 resource의 tag는 participant에게 공유되지 않습니다.</span>
+    이것이 EKS에서 실제 문제가 됩니다. AWS Load Balancer Controller의 subnet 자동 탐색은
+    <span class="mono">kubernetes.io/role/elb</span>, <span class="mono">kubernetes.io/role/internal-elb</span>
+    subnet tag에 의존합니다. Shared VPC에서 subnet은 owner 소유이므로 tag도 owner가 붙여야 하는데,
+    participant Account에서는 그 tag가 보인다고 보장할 수 없습니다.
+    <strong>Shared VPC + EKS 조합에서는 자동 탐색에 의존하지 말고 Ingress / Service에 subnet ID를
+    명시(annotation)하는 방식을 표준으로 정하시길 제언합니다.</strong> POC-1과 POC-3에서 반드시 확인할 항목입니다.</div></div>
+  <div class="finding f-ok"><span class="tag t-ok">[확인]</span><div class="f-body"><span class="f-lead">VPC IPv4 CIDR quota는 기본 5개, 조정 후 최대 50개입니다.</span> 문서 전제 그대로입니다.</div></div>
+  <div class="finding f-fix"><span class="tag t-fix">[정정 5]</span><div class="f-body"><span class="f-lead">SVPC-1의 실제 상한은 CIDR이 아니라 다른 quota에서 먼저 옵니다.</span>
+    문서도 "최대 CIDR 수가 아니라 먼저 도달하는 quota"라고 방향은 맞게 잡았지만,
+    무엇이 먼저인지는 적지 않았습니다.
+    무신사 규모(수십 팀, 수백 엔지니어)에서는 아래 순서로 막힐 것으로 예상합니다.</div></div>
+
+  <figure class="fig" id="fig-svpc-order"><svg viewBox="0 0 860 186" width="100%" role="img" aria-label="SVPC-1이 quota에 도달하는 예상 순서" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><rect x="30" y="44" width="122" height="84" rx="4" fill="#F9E8E8" stroke="#B23A3A" stroke-width="2"/><text x="91.0" y="66" font-size="12" fill="#B23A3A" text-anchor="middle" font-weight="700">1</text><text x="91.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">전파 route</text><text x="91.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">100 / route table</text><text x="91.0" y="118" font-size="11" fill="#B23A3A" text-anchor="middle" font-weight="700">조정 불가</text><line x1="153" y1="86.0" x2="165" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="166" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="227.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">2</text><text x="227.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">participant Account</text><text x="227.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">100 / VPC</text><text x="227.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">조정 가능</text><line x1="289" y1="86.0" x2="301" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="302" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="363.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">3</text><text x="363.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">공유받는 subnet</text><text x="363.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">100 / Account</text><text x="363.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">조정 가능</text><line x1="425" y1="86.0" x2="437" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="438" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="499.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">4</text><text x="499.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">NAU</text><text x="499.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">64,000 / VPC</text><text x="499.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">256,000까지</text><line x1="561" y1="86.0" x2="573" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="574" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="635.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">5</text><text x="635.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">subnet, route table</text><text x="635.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">각 200 / VPC</text><text x="635.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">조정 가능</text><line x1="697" y1="86.0" x2="709" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="710" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="771.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">6</text><text x="771.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">IPv4 CIDR</text><text x="771.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">5 / VPC</text><text x="771.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">50까지</text><text x="30" y="26" font-size="12" fill="#B23A3A" text-anchor="start" font-weight="700">먼저 막힘</text><text x="830" y="26" font-size="12" fill="#5B6470" text-anchor="end" font-weight="400">가장 늦게 막힘 (문서가 언급한 항목)</text><text x="30" y="154" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">1순위는 중앙 TGW hub(CONN-2)에서 route propagation을 활성화할 때 VPC와 on-prem prefix 합계가 100개를 넘는 순간 정지합니다.</text><text x="30" y="172" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">조정이 불가능한 유일한 항목이며, 표 4의 나머지 항목은 모두 조정 가능합니다.</text></svg><figcaption>그림 2. SVPC-1이 quota에 도달하는 예상 순서</figcaption></figure>
+<div class="tbl-wrap">
+    <table>
+      <caption>표 4. SVPC-1이 quota에 도달하는 예상 순서</caption>
+      <thead>
+        <tr><th scope="col">순위</th><th scope="col">Quota</th><th scope="col">기본값</th><th scope="col">조정</th><th scope="col">왜 먼저 막히는가</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="num">1</span></td><td><strong>VPC route table당 전파(propagated) route</strong></td><td><span class="num">100</span></td><td><strong>불가</strong></td><td>중앙 TGW hub에서 route propagation을 활성화하면, 조직의 VPC와 on-prem prefix가 100개를 넘는 순간 정지. 조정이 불가능한 유일한 항목</td></tr>
+        <tr><td><span class="num">2</span></td><td>Participant Account per VPC</td><td><span class="num">100</span></td><td>가능</td><td>수십 팀 x 환경 조합이면 조기 도달</td></tr>
+        <tr><td><span class="num">3</span></td><td>Account당 공유받을 수 있는 subnet</td><td><span class="num">100</span></td><td>가능</td><td>3-AZ x trust zone x 용도별로 늘어남</td></tr>
+        <tr><td><span class="num">4</span></td><td>NAU per VPC</td><td><span class="num">64,000</span></td><td><span class="num">256,000</span>까지</td><td>EKS Pod = ENI가 아니지만 IP는 NAU에 계산됨. Pod 밀도가 높으면 도달</td></tr>
+        <tr><td><span class="num">5</span></td><td>Subnet per VPC / Route table per VPC</td><td>각 <span class="num">200</span></td><td>가능</td><td></td></tr>
+        <tr><td><span class="num">6</span></td><td>IPv4 CIDR per VPC</td><td><span class="num">5</span></td><td><span class="num">50</span>까지</td><td>문서가 언급한 항목. 실제로는 가장 늦게 도달</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    1순위가 결정적입니다. SVPC-1(최소 VPC) + CONN-2(중앙 TGW) 조합은 "전파 route 100개"라는 조정 불가 한도를 공유합니다.
+    회피 수단은 default route(<span class="mono">0.0.0.0/0</span>) 광고 또는 static route 사용이지만,
+    그러면 세분화된 route 기반 통제(INSP-3의 강제 경로)와 충돌합니다.
+    <strong>SVPC-1을 POC할 때 첫 번째 측정 항목으로 "현재 및 3년 후 예상 전파 prefix 수"를 넣으시기 바랍니다.</strong>
+  </p>
+
+  <div class="callout note">
+    <span class="callout-title">참고 - participant가 만든 리소스의 quota는 participant Account에 계산됩니다</span>
+    <p>
+      <span class="tag t-add">[보완 12]</span> SVPC-1에 유리한 사실입니다. ENI(AZ당 5,000)와 Security Group(Region당 2,500)은
+      participant Account별로 계산되므로, Shared VPC를 쓰더라도 이 두 quota는 병목이 되지 않습니다.
+      문서의 "participant SG 통제" 우려는 quota 문제가 아니라 권한 문제로 좁혀서 다루는 편이 맞습니다.
+    </p>
+  </div>
+
+  <div class="finding f-ok"><span class="tag t-ok">[확인]</span><div class="f-body"><span class="f-lead">Security Group은 allow rule만 지원하고 여러 SG의 rule은 합쳐집니다.</span>
+    "다른 SG의 넓은 Allow를 중앙 SG로 상쇄할 수 없다"는 문서의 판단은 정확하고 중요합니다.
+    추가로 SG당 rule은 60개(inbound / outbound 각각, IPv4 / IPv6 각각), ENI당 SG는 5개이며,
+    <strong>"rule 수 x ENI당 SG 수 &le; 1,000"</strong> 제약이 있습니다.
+    Firewall Manager로 공통 SG를 배포하면 이 예산을 소비하므로, 공통 SG + workload SG 조합의 rule 예산을 미리 배분합니다.</div></div>
+
+  <h3>2.5 AZ ID와 Shared VPC - [확인] + [보완] 1건</h3>
+  <div class="finding f-ok"><span class="tag t-ok">[확인]</span><div class="f-body"><span class="f-lead">AZ 이름은 Account마다 다른 물리 AZ를 가리킬 수 있으므로
+    cross-account 배치는 AZ ID(<span class="mono">apne2-az*</span>)로 맞춰야 한다는 전제는 그대로 성립합니다.</span></div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 13]</span><div class="f-body"><span class="f-lead">VPC CNI custom networking을 쓰면 AZ ID 기준 배치가 강제됩니다.</span>
+    Shared VPC에서 이 기능을 사용하면 각 <span class="mono">ENIConfig</span>를
+    중앙 network Account에 표시된 AZ ID mapping 기준으로 만들어야 합니다.
+    문서는 AZ ID를 "일관성 관리 원칙"으로 서술했지만, custom networking에서는 원칙이 아니라
+    <strong>동작 요구사항</strong>입니다. 개인정보 경계 분리로 secondary CIDR을 쓰게 되면
+    custom networking을 쓸 가능성이 높으므로 미리 확인합니다.</div></div>
+
+  <h3>2.6 Regional NAT Gateway - [확인] + [보완] 3건</h3>
+  <p>
+    무신사 전제(하나의 ID로 자동 확장과 축소, public subnet 불필요, private NAT 미지원, 최대 60분 확장 지연,
+    기존 Zonal NAT 전환 시 connection reset과 IP 변경)는 <span class="tag t-ok">[확인]</span> 모두 사실에 부합합니다.
+    특히 60분 지연과 그 동안의 cross-AZ 처리, 전환 시 연결 리셋을 정확히 파악하고 있습니다.
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완 14]</span><div class="f-body"><span class="f-lead">Regional NAT Gateway는 constrained AZ에서 지원되지 않습니다.</span>
+    AZ-2 / AZ-3 결정과 결합하는 조건이며 문서에 없습니다.
+    서울 리전에서 사용 예정 AZ가 constrained AZ에 해당하지 않는지 먼저 확인해야 합니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 15]</span><div class="f-body"><span class="f-lead">IP와 연결 한도가 Zonal보다 유리합니다.</span>
+    Regional은 AZ당 IP 32개(Zonal은 8개)를 지원하고, IP 1개당 동일 목적지(destination IP + port + protocol 조합)로 맺을 수 있는
+    동시 연결도 55,000개 늘어납니다. EGRESS-2 / EGRESS-3 비교에서
+    <strong>SaaS와 외부 API 같은 소수 목적지로 대량 연결이 몰리는 e-commerce 패턴(PG, 배송사, 재고 연동)에서는
+    이 차이가 port exhaustion을 막는 데 직접 효과를 냅니다.</strong> 비용만이 아니라 이 항목도 비교표에 넣으시는 것을 권고드립니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 16]</span><div class="f-body"><span class="f-lead">Automatic mode와 Manual mode가 있습니다.</span> 권장은 Automatic으로, AWS가 IP와 AZ 확장을 관리합니다.
+    Manual은 IP와 AZ별 확장과 축소를 직접 관리합니다.
+    <strong>고정 egress IP를 외부 파트너 allowlist에 등록해야 하는 경로(PG사, 물류 파트너)가 있다면
+    Manual mode 또는 IPAM public IPv4 allocation policy 연동이 필요합니다.</strong>
+    문서 6.7의 "외부 partner 허용 목록 dependency"와 직접 연결되는 항목입니다.
+    Regional NAT Gateway의 route table에는 TGW를 유효한 route로 넣을 수 있습니다.</div></div>
+  <h3>2.7 TGW와 Network Firewall - [확인] + [보완] 2건</h3>
+  <p>
+    무신사 전제(inspection VPC 방식과 TGW-attached 방식, asymmetric routing 미지원, appliance mode와 양방향 route 필요)는
+    <span class="tag t-ok">[확인]</span> 어긋난 부분이 없습니다.
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완 17]</span><div class="f-body"><span class="f-lead">TGW 관련 주요 quota입니다.</span> INSP-3과 SVPC-1 결합 검증에 필요합니다.</div></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 5. Transit Gateway 주요 quota</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">기본값</th><th scope="col">조정</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>TGW per Account</td><td><span class="num">5</span></td><td>가능</td></tr>
+        <tr><td>Attachment per TGW</td><td><span class="num">5,000</span></td><td>가능</td></tr>
+        <tr><td>TGW per VPC</td><td><span class="num">5</span></td><td><strong>불가</strong></td></tr>
+        <tr><td>TGW route table per TGW</td><td><span class="num">20</span></td><td>가능</td></tr>
+        <tr><td>전체 route(동적 + 정적) per TGW</td><td><span class="num">10,000</span></td><td>SA / TAM 문의</td></tr>
+        <tr><td>VPC attachment당 AZ당 대역폭</td><td>최대 <span class="num">100 Gbps</span> (양방향 각각)</td><td>SA / TAM 문의</td></tr>
+        <tr><td>VPC attachment당 AZ당 PPS</td><td>최대 <span class="num">7,500,000</span></td><td>SA / TAM 문의</td></tr>
+        <tr><td>동일 VPC에 대한 VPC attachment</td><td><strong>1개만</strong></td><td>불가</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-add"><span class="tag t-add">[보완 18]</span><div class="f-body"><span class="f-lead">"동일 VPC에 TGW attachment는 1개만" + "AZ당 100 Gbps"가 SVPC-1의 처리량 상한을 정의합니다.</span>
+    최소 VPC 전략은 여러 workload의 on-prem과 외부 트래픽을 <strong>VPC attachment 하나</strong>로 집약합니다.
+    장애 영향이 한곳에 몰릴 뿐 아니라 대역폭과 PPS 상한도 함께 쓴다는 뜻입니다.
+    반면 SVPC-2(Workload별 전용 Shared VPC)는 VPC마다 별도 attachment를 가지므로 이 상한을 나눕니다.
+    문서는 SVPC-2의 장점을 "VPC 장애 영향을 Workload 단위로 제한"으로만 서술했는데,
+    TGW 처리량 상한 분리도 SVPC-2의 실질 장점이므로, POC-3 측정 항목으로도 넣을 만합니다.</div></div>
+  <p>
+    또한 TGW MTU는 VPC, DX, peering 간 8,500바이트지만 <strong>VPN 경로는 1,500바이트</strong>입니다.
+    무신사는 on-prem 연결에 VPN을 사용하고 있으므로, VPC peering(CONN-1)에서 TGW(CONN-2)로 옮기는 구간에서
+    MTU가 어긋나 패킷이 비대칭으로 드롭될 수 있습니다. 양쪽 VPC를 동시에 변경해야 하며,
+    TGW는 모든 패킷에 MSS clamping을 적용합니다.
+  </p>
+
+  <h3>2.8 AWS API와 VPC endpoint - [확인]</h3>
+  <p>
+    무신사 전제(서비스, Region, 기능별 endpoint 지원 차이, endpoint policy 미명시 시 full-access 기본 적용,
+    endpoint policy 미지원 서비스 존재)는 <span class="tag t-ok">[확인]</span> 정확합니다.
+    "AWS API 경로를 일괄적으로 endpoint로 고정하지 않고 미지원 경로에는 통제된 egress를 둔다"는 결론도 타당합니다.
+    이 항목은 추가 지적이 없습니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">6.5의 coverage matrix를 만들 때, 서비스별 지원 여부를 사람이 조사하지 마시고
+    <span class="mono">aws ec2 describe-vpc-endpoint-services</span> 결과를 서울 리전에서 주기적으로 덤프해 자동 대조하시기 바랍니다.</span>
+    신규 서비스를 도입할 때 endpoint 지원 여부가 자동으로 판정되어야
+    SCP-MODE-2(Deny-list 중심)의 "새 서비스 위험 탐지 절차"와 이어집니다.</div></div>
+
+  <h3>2.9 Route 53 Profiles와 hybrid DNS - [확인] + [보완] 2건</h3>
+  <p>
+    무신사 전제(PHZ, Resolver rule, DNS Firewall, query logging을 여러 VPC에 적용, RAM 공유, VPC에는 Profile 하나)는
+    <span class="tag t-ok">[확인]</span> 문서 그대로입니다.
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완 19]</span><div class="f-body"><span class="f-lead">Profile에 연결 가능한 리소스 목록이 문서보다 하나 더 많습니다.</span>
+    PHZ, Resolver rule(forwarding, system), DNS Firewall rule group, <strong>interface VPC endpoint</strong>,
+    VPC Resolver query logging config입니다. interface VPC endpoint를 Profile로 배포할 수 있다는 점은
+    EGRESS-4(traffic class별 Hybrid)에서 "AWS API는 endpoint 우선"을 여러 VPC에 일괄 적용하는 수단이 되므로,
+    DNS-3의 가치 평가에 반영하시기 바랍니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 20]</span><div class="f-body"><span class="f-lead">Profile과 local VPC 설정의 우선순위 규칙이 "local 우선"이 아니라
+    "더 구체적인 것 우선"입니다.</span> 문서는 "local VPC 설정과 Profile 설정의 우선순위"를 확인 항목으로만 두었습니다.
+    실제 규칙은 이렇습니다.</div></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 6. Route 53 Profiles와 local VPC 설정의 우선순위</caption>
+      <thead>
+        <tr><th scope="col">DNS query</th><th scope="col">Profile rule</th><th scope="col">VPC local rule</th><th scope="col">적용되는 rule</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="mono">example.com</span></td><td><span class="mono">example.com</span></td><td><span class="mono">example.com</span></td><td><strong>Local VPC</strong> (동일 이름이면 local 우선)</td></tr>
+        <tr><td><span class="mono">test.example.com</span></td><td><span class="mono">test.example.com</span></td><td><span class="mono">example.com</span></td><td><strong>Profile</strong> (더 구체적인 이름 우선)</td></tr>
+        <tr><td><span class="mono">marketing.example.com</span></td><td>없음</td><td><span class="mono">marketing.example.com</span></td><td>Local VPC</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    정리하면, Profile에 더 구체적인 이름을 두면 local 설정을 덮어씁니다.
+    DNS-2(namespace governance + workload 위임)에서 workload가 소유한 subdomain을 local PHZ로 관리하는데
+    중앙이 Profile에 더 구체적인 rule을 넣으면, workload는 원인을 알기 어려운 이름 해석 오류를 겪습니다.
+    <strong>"중앙 Profile은 workload 위임 namespace보다 구체적인 이름을 갖지 않는다"를 명문 규칙으로 두시길 제언합니다.</strong>
+    또한 Profile의 reverse DNS lookup, DNS Firewall failure mode, DNSSEC validation 설정은
+    Profile에서 직접 관리되며 연결 즉시 적용됩니다.
+  </p>
+
+  <h3>2.10 EKS Access Entries와 Pod Identity - [확인] + [보완] 1건</h3>
+  <p>
+    무신사 전제(Access Entry로 Access Policy 연결 또는 K8s group mapping, 두 경로의 허용 권한이 합쳐지며
+    한쪽으로 다른 쪽을 줄일 수 없음, Pod Identity role은 cluster와 같은 Account에 있어야 하므로
+    cross-account는 target role 필요)는 <span class="tag t-ok">[확인]</span> 모두 맞습니다. K8S-AUTH-1의 위험 서술도 정확합니다.
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완 21]</span><div class="f-body"><span class="f-lead">Access entry는 cluster당 3,000개이며 조정 불가입니다.</span>
+    RUN-2(Shared Cluster Account)에서 수십 팀의 principal을 하나의 cluster에 매핑하는 구조를 검토하고 있으므로,
+    이 한도가 실제 상한입니다. 3,000개는 넉넉해 보이지만,
+    <strong>CI/CD role을 workload별로 발급하는 패턴(workload 수 x 환경 수)을 쓰면 한도에 다가가는 속도가 빨라집니다.</strong>
+    Permission Set이나 팀 단위 role로 집약하고 access entry는 principal 유형별로 묶는 설계가 낫습니다.
+    Pod Identity association 수는 Service Quotas로 조정할 수 없으니 EKS Pod Identity 문서의 한도를 별도 확인하셔야 합니다.</div></div>
+
+  <h3>2.11 Secrets Manager와 KMS cross-account - [확인] + [보완] 3건 (Q6의 핵심)</h3>
+  <p>
+    무신사 전제(secret resource policy와 호출자 identity policy 모두 필요, cross-account secret에는
+    customer-managed KMS key 필요, KMS도 owner의 key policy와 caller의 IAM policy 모두 필요)는
+    <span class="tag t-ok">[확인]</span> 정확합니다.
+  </p>
+  <p>여기에 문서가 놓친, <strong>DATA-1 vs DATA-2 선택을 실제로 바꿀 수 있는</strong> 제약 3건을 추가합니다.</p>
+  <div class="finding f-add"><span class="tag t-add">[보완 22]</span><div class="f-body"><span class="f-lead">RDS 자동 백업은 공유할 수 없습니다.</span> cross-account로 넘기려면
+    automated snapshot을 수동 snapshot으로 복사한 뒤 그 복사본을 공유해야 합니다.
+    <strong>AWS Backup이 생성한 리소스에도 동일하게 적용됩니다.</strong>
+    즉 DATA-1(중앙 DB Account)에서 workload Account로 데이터를 넘기거나,
+    DATA-2(workload 소유)에서 중앙 백업 Account로 모으는 경로 모두에 "복사" 단계가 필수이고,
+    그 단계에 드는 시간과 스토리지 비용, 자동화를 맡을 소유자가 필요합니다.</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 23]</span><div class="f-body"><span class="f-lead">암호화된 공유 snapshot은 직접 restore할 수 없습니다.</span>
+    공유받은 계정은 snapshot을 먼저 자기 계정으로 복사한 뒤 그 복사본에서 restore해야 합니다. 제약이 더 있습니다.</div></div>
+  <ul class="plain">
+    <li><strong>AWS 기본 KMS key로 암호화한 snapshot은 공유 자체가 불가능합니다.</strong> 개인정보 저장소는 처음부터 customer-managed key를 써야 합니다. 이는 선택이 아니라 cross-account 복구 가능성의 전제 조건입니다.</li>
+    <li>수동 snapshot은 최대 20개 계정에만 공유 가능합니다.</li>
+    <li><strong>Multi-AZ DB cluster의 snapshot은 공유할 수 없습니다.</strong></li>
+    <li>Oracle / SQL Server의 permanent, persistent option(TDE 등)을 쓰는 인스턴스는 공유 제약이 있습니다.</li>
+  </ul>
+  <figure class="fig" id="fig-recovery"><svg viewBox="0 0 860 432" width="100%" role="img" aria-label="cross-account 데이터 복구 경로: 복사 후 복사본에서 restore" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><text x="30" y="24" font-size="13" fill="#1F3A5F" text-anchor="start" font-weight="700">경로 A. RDS snapshot 공유</text><rect x="30" y="36" width="400" height="156" rx="6" fill="none" stroke="#D9DEE6" stroke-width="1.5" stroke-dasharray="5 4"/><text x="44" y="56" font-size="12" fill="#5B6470" text-anchor="start" font-weight="600">Production Account</text><rect x="470" y="36" width="360" height="156" rx="6" fill="none" stroke="#D9DEE6" stroke-width="1.5" stroke-dasharray="5 4"/><text x="484" y="56" font-size="12" fill="#5B6470" text-anchor="start" font-weight="600">복구 Account (또는 workload Account)</text><image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tUkRTXzY0PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS82NC9BcmNoX0FtYXpvbi1SRFNfNjQiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy82NC9EYXRhYmFzZSIgZmlsbD0iI0M5MjVEMSI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNMTUuNDE0LDE0IEwyNC43MDcsMjMuMjkzIEwyMy4yOTMsMjQuNzA3IEwxNCwxNS40MTQgTDE0LDIzIEwxMiwyMyBMMTIsMTMgQzEyLDEyLjQ0OCAxMi40NDcsMTIgMTMsMTIgTDIzLDEyIEwyMywxNCBMMTUuNDE0LDE0IFogTTY4LDEzIEw2OCwyMyBMNjYsMjMgTDY2LDE1LjQxNCBMNTYuNzA3LDI0LjcwNyBMNTUuMjkzLDIzLjI5MyBMNjQuNTg2LDE0IEw1NywxNCBMNTcsMTIgTDY3LDEyIEM2Ny41NTMsMTIgNjgsMTIuNDQ4IDY4LDEzIEw2OCwxMyBaIE02Niw1NyBMNjgsNTcgTDY4LDY3IEM2OCw2Ny41NTIgNjcuNTUzLDY4IDY3LDY4IEw1Nyw2OCBMNTcsNjYgTDY0LjU4Niw2NiBMNTUuMjkzLDU2LjcwNyBMNTYuNzA3LDU1LjI5MyBMNjYsNjQuNTg2IEw2Niw1NyBaIE02NS41LDM5LjIxMyBDNjUuNSwzNS44OTQgNjEuNjY4LDMyLjYxNSA1NS4yNSwzMC40NDIgTDU1Ljg5MSwyOC41NDggQzYzLjI2OCwzMS4wNDUgNjcuNSwzNC45MzIgNjcuNSwzOS4yMTMgQzY3LjUsNDMuNDk1IDYzLjI2OCw0Ny4zODMgNTUuODksNDkuODc5IEw1NS4yNDksNDcuOTg0IEM2MS42NjgsNDUuODEyIDY1LjUsNDIuNTM0IDY1LjUsMzkuMjEzIEw2NS41LDM5LjIxMyBaIE0xNC41NTYsMzkuMjEzIEMxNC41NTYsNDIuMzkzIDE4LjE0Myw0NS41ODUgMjQuMTUyLDQ3Ljc1MyBMMjMuNDczLDQ5LjYzNCBDMTYuNTM1LDQ3LjEzMSAxMi41NTYsNDMuMzMzIDEyLjU1NiwzOS4yMTMgQzEyLjU1NiwzNS4wOTQgMTYuNTM1LDMxLjI5NiAyMy40NzMsMjguNzkyIEwyNC4xNTIsMzAuNjczIEMxOC4xNDMsMzIuODQyIDE0LjU1NiwzNi4wMzQgMTQuNTU2LDM5LjIxMyBMMTQuNTU2LDM5LjIxMyBaIE0yNC43MDcsNTYuNzA3IEwxNS40MTQsNjYgTDIzLDY2IEwyMyw2OCBMMTMsNjggQzEyLjQ0Nyw2OCAxMiw2Ny41NTIgMTIsNjcgTDEyLDU3IEwxNCw1NyBMMTQsNjQuNTg2IEwyMy4yOTMsNTUuMjkzIEwyNC43MDcsNTYuNzA3IFogTTQwLDMxLjI4NiBDMzIuODU0LDMxLjI4NiAyOSwyOS40NCAyOSwyOC42ODYgQzI5LDI3LjkzMSAzMi44NTQsMjYuMDg2IDQwLDI2LjA4NiBDNDcuMTQ1LDI2LjA4NiA1MSwyNy45MzEgNTEsMjguNjg2IEM1MSwyOS40NCA0Ny4xNDUsMzEuMjg2IDQwLDMxLjI4NiBMNDAsMzEuMjg2IFogTTQwLjAyOSwzOS4wMzEgQzMzLjE4NywzOS4wMzEgMjksMzcuMTYyIDI5LDM2LjE0NSBMMjksMzEuMjg0IEMzMS40NjMsMzIuNjQzIDM1LjgzMiwzMy4yODYgNDAsMzMuMjg2IEM0NC4xNjgsMzMuMjg2IDQ4LjUzNywzMi42NDMgNTEsMzEuMjg0IEw1MSwzNi4xNDUgQzUxLDM3LjE2MyA0Ni44MzUsMzkuMDMxIDQwLjAyOSwzOS4wMzEgTDQwLjAyOSwzOS4wMzEgWiBNNDAuMDI5LDQ2LjY2NyBDMzMuMTg3LDQ2LjY2NyAyOSw0NC43OTggMjksNDMuNzgxIEwyOSwzOC44NjIgQzMxLjQzMSw0MC4yOTEgMzUuNzQyLDQxLjAzMSA0MC4wMjksNDEuMDMxIEM0NC4yOTIsNDEuMDMxIDQ4LjU3OCw0MC4yOTIgNTEsMzguODY3IEw1MSw0My43ODEgQzUxLDQ0Ljc5OSA0Ni44MzUsNDYuNjY3IDQwLjAyOSw0Ni42NjcgTDQwLjAyOSw0Ni42NjcgWiBNNDAsNTMuNTE4IEMzMi44ODMsNTMuNTE4IDI5LDUxLjYwNSAyOSw1MC42MjIgTDI5LDQ2LjQ5OCBDMzEuNDMxLDQ3LjkyNyAzNS43NDIsNDguNjY3IDQwLjAyOSw0OC42NjcgQzQ0LjI5Miw0OC42NjcgNDguNTc4LDQ3LjkyOSA1MSw0Ni41MDMgTDUxLDUwLjYyMiBDNTEsNTEuNjA1IDQ3LjExNyw1My41MTggNDAsNTMuNTE4IEw0MCw1My41MTggWiBNNDAsMjQuMDg2IEMzMy43MzksMjQuMDg2IDI3LDI1LjUyNSAyNywyOC42ODYgTDI3LDUwLjYyMiBDMjcsNTMuODM2IDMzLjU0LDU1LjUxOCA0MCw1NS41MTggQzQ2LjQ2LDU1LjUxOCA1Myw1My44MzYgNTMsNTAuNjIyIEw1MywyOC42ODYgQzUzLDI1LjUyNSA0Ni4yNjEsMjQuMDg2IDQwLDI0LjA4NiBMNDAsMjQuMDg2IFoiIGlkPSJBbWF6b24tUkRTX0ljb25fNjRfU3F1aWQiIGZpbGw9IiNGRkZGRkYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+" x="52" y="92" width="34" height="34"/><rect x="96" y="86" width="130" height="46" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="161.0" y="104.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">자동 백업</text><text x="161.0" y="121.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">(automated snapshot)</text><line x1="226" y1="109" x2="262" y2="109" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="244" y="100" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">복사</text><rect x="264" y="86" width="150" height="46" rx="4" fill="#fff" stroke="#B7791F" stroke-width="2"/><text x="339.0" y="104.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">수동 snapshot</text><text x="339.0" y="121.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">CMK 암호화 필수</text><line x1="414" y1="109" x2="500" y2="109" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="457" y="98" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">공유</text><text x="457" y="126" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">(최대 20 Account)</text><rect x="502" y="86" width="140" height="46" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="572.0" y="104.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">자기 계정으로</text><text x="572.0" y="121.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">복사한 복사본</text><line x1="642" y1="109" x2="686" y2="109" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="664" y="100" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">restore</text><rect x="688" y="86" width="126" height="46" rx="4" fill="#E8F3EE" stroke="#2E7D5B" stroke-width="2"/><text x="751.0" y="112.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">DB 인스턴스</text><text x="44" y="158" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">자동 백업, 기본 KMS key 암호화 snapshot,</text><text x="44" y="174" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">Multi-AZ DB cluster snapshot은 공유 불가</text><text x="484" y="158" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">공유받은 암호화 snapshot은 직접 restore 불가</text><text x="484" y="174" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">복사 후 복사본에서 restore</text><text x="30" y="220" font-size="13" fill="#1F3A5F" text-anchor="start" font-weight="700">경로 B. AWS Backup cross-account copy</text><rect x="30" y="232" width="400" height="156" rx="6" fill="none" stroke="#D9DEE6" stroke-width="1.5" stroke-dasharray="5 4"/><text x="44" y="252" font-size="12" fill="#5B6470" text-anchor="start" font-weight="600">Source Account (동일 Organization)</text><rect x="470" y="232" width="360" height="156" rx="6" fill="none" stroke="#D9DEE6" stroke-width="1.5" stroke-dasharray="5 4"/><text x="484" y="252" font-size="12" fill="#5B6470" text-anchor="start" font-weight="600">Destination Account</text><image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtQmFja3VwXzY0PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS82NC9BcmNoX0FXUy1CYWNrdXBfNjQiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy82NC9TdG9yYWdlIiBmaWxsPSIjN0FBMTE2Ij4KICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIj48L3JlY3Q+CiAgICAgICAgPC9nPgogICAgICAgIDxwYXRoIGQ9Ik01Mi4yNDEsNDAuMzYzIEM1Mi42ODQsNDMuMzk5IDUxLjkxOSw0Ni40MjUgNTAuMDg1LDQ4Ljg4NSBDNDguMjUyLDUxLjM0NSA0NS41NjksNTIuOTQ0IDQyLjUzNCw1My4zODcgQzQxLjk3MSw1My40NjkgNDEuNDA5LDUzLjUwOTAwMSA0MC44NTEsNTMuNTA5MDAxIEMzOC4zOTUsNTMuNTEgMzYuMDE1LDUyLjcyNSAzNC4wMTIsNTEuMjMxIEMzMS4wOTksNDkuMDYgMjkuNDE0LDQ1LjcyOSAyOS4zODgsNDIuMDkyIEwzMS4zODgsNDIuMDc4IEMzMS40MSw0NS4wODIgMzIuODAyLDQ3LjgzNCAzNS4yMDcsNDkuNjI3IEMzNy4yMzgsNTEuMTQyIDM5LjczNCw1MS43NzUgNDIuMjQ1LDUxLjQwOCBDNDQuNzUyLDUxLjA0MiA0Ni45NjcsNDkuNzIyIDQ4LjQ4MSw0Ny42OSBDNDkuOTk2LDQ1LjY1OCA1MC42MjgsNDMuMTU5IDUwLjI2Miw0MC42NTIgQzQ5Ljg5NiwzOC4xNDQgNDguNTc2LDM1LjkyOSA0Ni41NDUsMzQuNDE1IEM0Mi45ODIsMzEuNzYgMzcuNzQ5LDMyLjE0MyAzNC4zMzIsMzQuOTk2IEwzNS45OTksMzQuOTk0IEwzNi4wMDEsMzYuOTk0IEwzMi4wMDEsMzcgTDMyLDM3IEMzMS43MzUsMzcgMzEuNDgsMzYuODk1IDMxLjI5MywzNi43MDcgQzMxLjEwNSwzNi41MiAzMSwzNi4yNjUgMzEsMzYgTDMxLDMyLjAxMyBMMzMsMzIuMDEzIEwzMywzMy41MTMgQzM0LjY2NywzMi4xMSAzNi43MzksMzEuMTQxIDM4Ljk2OCwzMC43OCBDNDIuMTI1LDMwLjI2OSA0NS4zMjIsMzEuMDA5IDQ3Ljc0LDMyLjgxMiBDNTAuMiwzNC42NDUgNTEuNzk5LDM3LjMyNyA1Mi4yNDEsNDAuMzYzIE01NCw1OCBDNTMuNTQ0LDU4IDUzLjA4NCw1OC4wNjUgNTIuNjM4LDU4LjE5IEw0OS44MDEsNTQuNCBMNDguMTk5LDU1LjU5OSBMNTAuODMzLDU5LjExNSBDNDkuOTc1LDU5Ljc5OCA0OS4zMjcsNjAuNzc0IDQ5LjA5NSw2MiBMMzAuOTE3LDYyIEMzMC43MTcsNjAuNzM5IDMwLjEyMyw1OS43MzYgMjkuMjM4LDU5LjA0NCBMMzEuODAzLDU1LjU5NiBMMzAuMTk3LDU0LjQwMyBMMjcuMzg5LDU4LjE3NyBDMjYuOTU0LDU4LjA3NiAyNi40OTgsNTguMDA1IDI2LDU4LjAwNSBDMjUuNTcsNTguMDA1IDI1LjE2OCw1OC4wNTQgMjQuNzgzLDU4LjEzIEwxOC45NjQsMzguNjgzIEMxOS44NDgsMzguMzc5IDIwLjU1NCwzNy44NSAyMS4wNjgsMzcuMTQxIEwyNS42MzUsMzguOTMxIEwyNi4zNjUsMzcuMDY5IEwyMS44NTgsMzUuMzAyIEMyMS45NDIsMzQuODkzIDIyLDM0LjQ2NSAyMiwzNCBDMjIsMzIuOTA0IDIxLjczNiwzMS45NTUgMjEuMjY3LDMxLjE4MSBMMzYuMzUxLDIwLjYyMyBDMzcuMDIyLDIxLjI5OCAzNy45MjUsMjEuNzQxIDM5LDIxLjkxMSBMMzksMjcgTDQxLDI3IEw0MSwyMS45MTQgQzQyLjA5MSwyMS43NDkgNDIuOTk2LDIxLjMxNCA0My42NjUsMjAuNjQxIEw1OC42OTQsMzEuMyBDNTguMjU1LDMyLjA1NyA1OCwzMi45NjQgNTgsMzQgQzU4LDM0LjQyIDU4LjA1NiwzNC44NDMgNTguMTYsMzUuMjU5IEw1My42MjksMzcuMDcxIEw1NC4zNzEsMzguOTI4IEw1OS4wMTEsMzcuMDcyIEM1OS42MTcsMzcuODg5IDYwLjQ5MywzOC41MjkgNjEuNjE3LDM4LjgyMSBMNTQuMzAzLDU4LjAyNSBDNTQuMiw1OC4wMiA1NC4xMDUsNTggNTQsNTggTTU0LDY2IEM1Mi4wMzcsNjYgNTEsNjQuOTYyIDUxLDYzIEM1MSw2MS4xMjIgNTIuNTI1LDYwIDU0LDYwIEM1NS45MzQsNjAgNTcsNjEuMDY1IDU3LDYzIEM1Nyw2NC45NjIgNTUuOTYzLDY2IDU0LDY2IE0yNiw2NiBDMjQuMDk0LDY2IDIzLDY0LjkwNiAyMyw2MyBDMjMsNjEuMDY5IDI0LjA2NSw2MC4wMDUgMjYsNjAuMDA1IEMyOC40NzksNjAuMDA1IDI5LDYxLjYzNCAyOSw2MyBDMjksNjQuOTM0IDI3LjkzNCw2NiAyNiw2NiBNMTQsMzQgQzE0LDMyLjA2NSAxNS4wNjUsMzEgMTcsMzEgQzE4LjkzNCwzMSAyMCwzMi4wNjUgMjAsMzQgQzIwLDM1Ljk2MiAxOC45NjMsMzcgMTcsMzcgQzE1LjAxLDM3IDE0LDM1Ljk5IDE0LDM0IE00MCwxNCBDNDEuOTYzLDE0IDQzLDE1LjAzNyA0MywxNyBDNDMsMTguOTU5IDQxLjk2MywxOS45OTQgNDAsMTkuOTk0IEMzOC4wNjUsMTkuOTk0IDM3LDE4LjkzMSAzNywxNyBDMzcsMTUuMDY1IDM4LjA2NSwxNCA0MCwxNCBNNjMsMzEgQzY0LjkzNCwzMSA2NiwzMi4wNjUgNjYsMzQgQzY2LDM1LjkzNCA2NC45MzQsMzcgNjMsMzcgQzYxLjA1MiwzNyA2MCwzNS40NTQgNjAsMzQgQzYwLDMyLjA5MyA2MS4wOTQsMzEgNjMsMzEgTTY4LDM0IEM2OCwzMC45NjIgNjYuMDM3LDI5IDYzLDI5IEM2MS44NiwyOSA2MC44NjYsMjkuMjk1IDYwLjA2OCwyOS44MjIgTDQ0LjY5NSwxOC45MiBDNDQuODg3LDE4LjM0NCA0NSwxNy43MDcgNDUsMTcgQzQ1LDEzLjkxNiA0My4wODQsMTIgNDAsMTIgQzM2Ljk2MywxMiAzNSwxMy45NjIgMzUsMTcgQzM1LDE3LjY5OSAzNS4xMTUsMTguMzM0IDM1LjMxMiwxOC45MDggTDE5LjgzNywyOS43NDEgQzE5LjA1OSwyOS4yNjUgMTguMTAzLDI5IDE3LDI5IEMxMy45NjMsMjkgMTIsMzAuOTYyIDEyLDM0IEMxMiwzNy4wNzMgMTMuOTA0LDM4Ljk4NSAxNi45NywzOC45OTcgTDIyLjkyOSw1OC45MDkgQzIxLjcxNCw1OS43NjYgMjEsNjEuMTg0IDIxLDYzIEMyMSw2Ni4wMzcgMjIuOTYzLDY4IDI2LDY4IEMyOC42ODcsNjggMzAuNTI3LDY2LjQ1OSAzMC45MTcsNjQgTDQ5LjA4Myw2NCBDNDkuNDcyLDY2LjQ1OSA1MS4zMTIsNjggNTQsNjggQzU3LjAzNyw2OCA1OSw2Ni4wMzcgNTksNjMgQzU5LDYwLjgxNyA1Ny45NzQsNTkuMjA0IDU2LjI3Nyw1OC40NjEgTDYzLjcxMiwzOC45NDEgQzY2LjMzMywzOC42NTEgNjgsMzYuNzg5IDY4LDM0IiBpZD0iQVdTLUJhY2t1cF9JY29uXzY0X1NxdWlkIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" x="52" y="288" width="34" height="34"/><rect x="96" y="282" width="130" height="46" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="161.0" y="300.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">backup vault</text><text x="161.0" y="317.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">recovery point</text><line x1="226" y1="305" x2="262" y2="305" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="244" y="296" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400"></text><image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtS2V5LU1hbmFnZW1lbnQtU2VydmljZV82NDwvdGl0bGU+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtS2V5LU1hbmFnZW1lbnQtU2VydmljZV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L1NlY3VyaXR5LUlkZW50aXR5LUNvbXBsaWFuY2UiIGZpbGw9IiNERDM0NEMiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTUxLjk5Njg5NDMsNTIuNDk2MzMxMiBMNTguOTk2ODk0Myw1Mi40OTYzMzEyIEw1OC45OTY4OTQzLDUwLjQ5NjMzMTIgTDUxLjk5Njg5NDMsNTAuNDk2MzMxMiBMNTEuOTk2ODk0Myw1Mi40OTYzMzEyIFogTTQyLjk5Njg5NDMsNTIuNDk2MzMxMiBMNDkuOTk2ODk0Myw1Mi40OTYzMzEyIEw0OS45OTY4OTQzLDUwLjQ5NjMzMTIgTDQyLjk5Njg5NDMsNTAuNDk2MzMxMiBMNDIuOTk2ODk0Myw1Mi40OTYzMzEyIFogTTMzLjk5Njg5NDMsNTIuNDk2MzMxMiBMNDAuOTk2ODk0Myw1Mi40OTYzMzEyIEw0MC45OTY4OTQzLDUwLjQ5NjMzMTIgTDMzLjk5Njg5NDMsNTAuNDk2MzMxMiBMMzMuOTk2ODk0Myw1Mi40OTYzMzEyIFogTTQ0Ljk5Njg5NDMsNDQuNDk2MzMxMiBDNDQuOTk2ODk0Myw0My4zOTMzMzEyIDQ1Ljg5NDg5NDMsNDIuNDk2MzMxMiA0Ni45OTY4OTQzLDQyLjQ5NjMzMTIgQzQ4LjA5OTg5NDMsNDIuNDk2MzMxMiA0OC45OTY4OTQzLDQzLjM5MzMzMTIgNDguOTk2ODk0Myw0NC40OTYzMzEyIEM0OC45OTY4OTQzLDQ1LjU5OTMzMTIgNDguMDk5ODk0Myw0Ni40OTYzMzEyIDQ2Ljk5Njg5NDMsNDYuNDk2MzMxMiBDNDUuODk0ODk0Myw0Ni40OTYzMzEyIDQ0Ljk5Njg5NDMsNDUuNTk5MzMxMiA0NC45OTY4OTQzLDQ0LjQ5NjMzMTIgTDQ0Ljk5Njg5NDMsNDQuNDk2MzMxMiBaIE01MC45OTY4OTQzLDQ0LjQ5NjMzMTIgQzUwLjk5Njg5NDMsNDIuMjkwMzMxMiA0OS4yMDM4OTQzLDQwLjQ5NjMzMTIgNDYuOTk2ODk0Myw0MC40OTYzMzEyIEM0NC43OTA4OTQzLDQwLjQ5NjMzMTIgNDIuOTk2ODk0Myw0Mi4yOTAzMzEyIDQyLjk5Njg5NDMsNDQuNDk2MzMxMiBDNDIuOTk2ODk0Myw0Ni43MDIzMzEyIDQ0Ljc5MDg5NDMsNDguNDk2MzMxMiA0Ni45OTY4OTQzLDQ4LjQ5NjMzMTIgQzQ5LjIwMzg5NDMsNDguNDk2MzMxMiA1MC45OTY4OTQzLDQ2LjcwMjMzMTIgNTAuOTk2ODk0Myw0NC40OTYzMzEyIEw1MC45OTY4OTQzLDQ0LjQ5NjMzMTIgWiBNMzYuOTk2ODk0Myw0Mi40OTYzMzEyIEMzOC4wOTk4OTQzLDQyLjQ5NjMzMTIgMzguOTk2ODk0Myw0My4zOTMzMzEyIDM4Ljk5Njg5NDMsNDQuNDk2MzMxMiBDMzguOTk2ODk0Myw0NS41OTkzMzEyIDM4LjA5OTg5NDMsNDYuNDk2MzMxMiAzNi45OTY4OTQzLDQ2LjQ5NjMzMTIgQzM1Ljg5NDg5NDMsNDYuNDk2MzMxMiAzNC45OTY4OTQzLDQ1LjU5OTMzMTIgMzQuOTk2ODk0Myw0NC40OTYzMzEyIEMzNC45OTY4OTQzLDQzLjM5MzMzMTIgMzUuODk0ODk0Myw0Mi40OTYzMzEyIDM2Ljk5Njg5NDMsNDIuNDk2MzMxMiBMMzYuOTk2ODk0Myw0Mi40OTYzMzEyIFogTTM2Ljk5Njg5NDMsNDguNDk2MzMxMiBDMzkuMjAzODk0Myw0OC40OTYzMzEyIDQwLjk5Njg5NDMsNDYuNzAyMzMxMiA0MC45OTY4OTQzLDQ0LjQ5NjMzMTIgQzQwLjk5Njg5NDMsNDIuMjkwMzMxMiAzOS4yMDM4OTQzLDQwLjQ5NjMzMTIgMzYuOTk2ODk0Myw0MC40OTYzMzEyIEMzNC43OTA4OTQzLDQwLjQ5NjMzMTIgMzIuOTk2ODk0Myw0Mi4yOTAzMzEyIDMyLjk5Njg5NDMsNDQuNDk2MzMxMiBDMzIuOTk2ODk0Myw0Ni43MDIzMzEyIDM0Ljc5MDg5NDMsNDguNDk2MzMxMiAzNi45OTY4OTQzLDQ4LjQ5NjMzMTIgTDM2Ljk5Njg5NDMsNDguNDk2MzMxMiBaIE02NS45OTY4OTQzLDMzLjQ5NjMzMTIgTDY1Ljk5Njg5NDMsNTYuNDk2MzMxMiBDNjUuOTk2ODk0Myw1Ny4wNDgzMzEyIDY1LjU0OTg5NDMsNTcuNDk2MzMxMiA2NC45OTY4OTQzLDU3LjQ5NjMzMTIgTDMzLjk5Njg5NDMsNTcuNDk2MzMxMiBMMzMuOTk2ODk0Myw1NS40OTYzMzEyIEw2My45OTY4OTQzLDU1LjQ5NjMzMTIgTDYzLjk5Njg5NDMsMzQuNDk2MzMxMiBMNDEuOTk2ODk0MywzNC40OTYzMzEyIEw0MS45OTY4OTQzLDMyLjQ5NjMzMTIgTDY0Ljk5Njg5NDMsMzIuNDk2MzMxMiBDNjUuNTQ5ODk0MywzMi40OTYzMzEyIDY1Ljk5Njg5NDMsMzIuOTQ0MzMxMiA2NS45OTY4OTQzLDMzLjQ5NjMzMTIgTDY1Ljk5Njg5NDMsMzMuNDk2MzMxMiBaIE0zMC42OTU4OTQzLDM4LjU0MzMzMTIgQzMwLjI3OTg5NDMsMzguNjc0MzMxMiAyOS45OTY4OTQzLDM5LjA2MDMzMTIgMjkuOTk2ODk0MywzOS40OTYzMzEyIEwyOS45OTY4OTQzLDYwLjUzNjMzMTIgTDI3LjU5Nzg5NDMsNjIuNTkzMzMxMiBMMjQuOTk2ODk0Myw1OS42MjAzMzEyIEwyNC45OTY4OTQzLDU2Ljk5NjMzMTIgQzI0Ljk5Njg5NDMsNTYuNzMxMzMxMiAyNC44OTE4OTQzLDU2LjQ3NjMzMTIgMjQuNzAzODk0Myw1Ni4yODkzMzEyIEwyMi40MTE4OTQzLDUzLjk5NjMzMTIgTDI0LjcwMzg5NDMsNTEuNzAzMzMxMiBDMjQuODkxODk0Myw1MS41MTYzMzEyIDI0Ljk5Njg5NDMsNTEuMjYxMzMxMiAyNC45OTY4OTQzLDUwLjk5NjMzMTIgTDI0Ljk5Njg5NDMsNDguOTk2MzMxMiBDMjQuOTk2ODk0Myw0OC43MzEzMzEyIDI0Ljg5MTg5NDMsNDguNDc2MzMxMiAyNC43MDM4OTQzLDQ4LjI4OTMzMTIgTDIyLjQxMTg5NDMsNDUuOTk2MzMxMiBMMjQuNzAzODk0Myw0My43MDMzMzEyIEMyNC44OTE4OTQzLDQzLjUxNjMzMTIgMjQuOTk2ODk0Myw0My4yNjEzMzEyIDI0Ljk5Njg5NDMsNDIuOTk2MzMxMiBMMjQuOTk2ODk0MywzOS41MDYzMzEyIEMyNC45OTY4OTQzLDM5LjA3MDMzMTIgMjQuNzE0ODk0MywzOC42ODQzMzEyIDI0LjI5ODg5NDMsMzguNTUzMzMxMiBDMTkuMTU2ODk0MywzNi45MjMzMzEyIDE2LjExNjg5NDMsMzEuNjM0MzMxMiAxNy4yMjk4OTQzLDI2LjI0OTMzMTIgQzE4LjAzMTg5NDMsMjIuMzY5MzMxMiAyMS4wMTU4OTQzLDE5LjI1ODMzMTIgMjQuODMwODk0MywxOC4zMjMzMzEyIEMyOC4wNzk4OTQzLDE3LjUyNjMzMTIgMzEuNDExODk0MywxOC4yMjMzMzEyIDMzLjk3MTg5NDMsMjAuMjMwMzMxMiBDMzYuNTI5ODk0MywyMi4yMzczMzEyIDM3Ljk5Njg5NDMsMjUuMjUwMzMxMiAzNy45OTY4OTQzLDI4LjQ5NjMzMTIgQzM3Ljk5Njg5NDMsMzMuMDQ5MzMxMiAzNC45OTQ4OTQzLDM3LjE4MTMzMTIgMzAuNjk1ODk0MywzOC41NDMzMzEyIEwzMC42OTU4OTQzLDM4LjU0MzMzMTIgWiBNMzkuOTk2ODk0MywyOC40OTYzMzEyIEMzOS45OTY4OTQzLDI0LjYzMjMzMTIgMzguMjUwODk0MywyMS4wNDUzMzEyIDM1LjIwNTg5NDMsMTguNjU2MzMxMiBDMzIuMTYwODk0MywxNi4yNjczMzEyIDI4LjIwODg5NDMsMTUuNDM2MzMxMiAyNC4zNTQ4OTQzLDE2LjM4MTMzMTIgQzE5Ljc5Mzg5NDMsMTcuNDk4MzMxMiAxNi4yMjg4OTQzLDIxLjIxMzMzMTIgMTUuMjcwODk0MywyNS44NDQzMzEyIEwxNS4yNzA4OTQzLDI1Ljg0NTMzMTIgQzE0LjAwMDg5NDMsMzEuOTkwMzMxMiAxNy4yOTk4OTQzLDM4LjAzNDMzMTIgMjIuOTk2ODk0Myw0MC4yMTUzMzEyIEwyMi45OTY4OTQzLDQyLjU4MjMzMTIgTDIwLjI4OTg5NDMsNDUuMjg5MzMxMiBDMTkuODk5ODk0Myw0NS42ODAzMzEyIDE5Ljg5OTg5NDMsNDYuMzEyMzMxMiAyMC4yODk4OTQzLDQ2LjcwMzMzMTIgTDIyLjk5Njg5NDMsNDkuNDEwMzMxMiBMMjIuOTk2ODk0Myw1MC41ODIzMzEyIEwyMC4yODk4OTQzLDUzLjI4OTMzMTIgQzE5Ljg5OTg5NDMsNTMuNjgwMzMxMiAxOS44OTk4OTQzLDU0LjMxMjMzMTIgMjAuMjg5ODk0Myw1NC43MDMzMzEyIEwyMi45OTY4OTQzLDU3LjQxMDMzMTIgTDIyLjk5Njg5NDMsNTkuOTk2MzMxMiBDMjIuOTk2ODk0Myw2MC4yMzgzMzEyIDIzLjA4NDg5NDMsNjAuNDcyMzMxMiAyMy4yNDQ4OTQzLDYwLjY1NTMzMTIgTDI2Ljc0NDg5NDMsNjQuNjU1MzMxMiBDMjYuOTQyODk0Myw2NC44ODAzMzEyIDI3LjIxODg5NDMsNjQuOTk2MzMxMiAyNy40OTY4OTQzLDY0Ljk5NjMzMTIgQzI3LjcyNzg5NDMsNjQuOTk2MzMxMiAyNy45NTg4OTQzLDY0LjkxNzMzMTIgMjguMTQ3ODk0Myw2NC43NTUzMzEyIEwzMS42NDc4OTQzLDYxLjc1NTMzMTIgQzMxLjg2OTg5NDMsNjEuNTY1MzMxMiAzMS45OTY4OTQzLDYxLjI4ODMzMTIgMzEuOTk2ODk0Myw2MC45OTYzMzEyIEwzMS45OTY4OTQzLDQwLjIwNDMzMTIgQzM2Ljc0Mjg5NDMsMzguMzcyMzMxMiAzOS45OTY4OTQzLDMzLjY2MjMzMTIgMzkuOTk2ODk0MywyOC40OTYzMzEyIEwzOS45OTY4OTQzLDI4LjQ5NjMzMTIgWiBNMjcuNDk2ODk0MywzMC44NjYzMzEyIEMyNi4xMTg4OTQzLDMwLjg2NjMzMTIgMjQuOTk2ODk0MywyOS43NDUzMzEyIDI0Ljk5Njg5NDMsMjguMzY2MzMxMiBDMjQuOTk2ODk0MywyNi45ODgzMzEyIDI2LjExODg5NDMsMjUuODY2MzMxMiAyNy40OTY4OTQzLDI1Ljg2NjMzMTIgQzI4Ljg3NTg5NDMsMjUuODY2MzMxMiAyOS45OTY4OTQzLDI2Ljk4ODMzMTIgMjkuOTk2ODk0MywyOC4zNjYzMzEyIEMyOS45OTY4OTQzLDI5Ljc0NTMzMTIgMjguODc1ODk0MywzMC44NjYzMzEyIDI3LjQ5Njg5NDMsMzAuODY2MzMxMiBMMjcuNDk2ODk0MywzMC44NjYzMzEyIFogTTI3LjQ5Njg5NDMsMjMuODY2MzMxMiBDMjUuMDE1ODk0MywyMy44NjYzMzEyIDIyLjk5Njg5NDMsMjUuODg1MzMxMiAyMi45OTY4OTQzLDI4LjM2NjMzMTIgQzIyLjk5Njg5NDMsMzAuODQ4MzMxMiAyNS4wMTU4OTQzLDMyLjg2NjMzMTIgMjcuNDk2ODk0MywzMi44NjYzMzEyIEMyOS45Nzg4OTQzLDMyLjg2NjMzMTIgMzEuOTk2ODk0MywzMC44NDgzMzEyIDMxLjk5Njg5NDMsMjguMzY2MzMxMiBDMzEuOTk2ODk0MywyNS44ODUzMzEyIDI5Ljk3ODg5NDMsMjMuODY2MzMxMiAyNy40OTY4OTQzLDIzLjg2NjMzMTIgTDI3LjQ5Njg5NDMsMjMuODY2MzMxMiBaIiBpZD0iQVdTLUtleS1NYW5hZ2VtZW50LVNlcnZpY2VfSWNvbl82NF9TcXVpZCIgZmlsbD0iI0ZGRkZGRiI+PC9wYXRoPgogICAgPC9nPgo8L3N2Zz4=" x="262" y="288" width="34" height="34"/><rect x="304" y="282" width="110" height="46" rx="4" fill="#fff" stroke="#B7791F" stroke-width="2"/><text x="359.0" y="300.0" font-size="11" font-weight="600" fill="#1A1F2B" text-anchor="middle">CMK 필수</text><text x="359.0" y="316.0" font-size="11" font-weight="600" fill="#1A1F2B" text-anchor="middle">(default vault 불가)</text><line x1="414" y1="305" x2="500" y2="305" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="457" y="294" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">vault 간 copy</text><text x="457" y="322" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400"></text><rect x="502" y="282" width="140" height="46" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="572.0" y="300.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">대상 vault</text><text x="572.0" y="317.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">복사본</text><line x1="642" y1="305" x2="686" y2="305" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="664" y="296" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">restore</text><rect x="688" y="282" width="126" height="46" rx="4" fill="#E8F3EE" stroke="#2E7D5B" stroke-width="2"/><text x="751.0" y="300.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">리소스 복구</text><text x="751.0" y="317.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">(SLR 필요)</text><text x="44" y="354" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">management Account에서 cross-account backup 활성화</text><text x="44" y="370" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">(UpdateGlobalSettings). cold tier는 copy 미지원</text><text x="484" y="354" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">계정 간 직접 restore 미지원: 복사본에서 restore</text><text x="484" y="370" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">Organization 탈퇴 시 백업 보유 (탈퇴를 SCP로 Deny)</text><text x="430" y="418" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">두 경로 모두 "복사" 단계가 필수이므로 RTO 계산에 snapshot 복사 시간을 포함해야 합니다.</text></svg><figcaption>그림 3. cross-account 데이터 복구 경로: 두 경로 모두 복사 후 복사본에서 restore</figcaption></figure>
+<div class="impact"><span class="tag t-impact">영향</span><div class="f-body">(Q6 답변의 핵심) 문서는 "Development와 QA의 Production 원본 데이터 접근 차단"을
+    IAM, KMS key policy, resource policy, VPC endpoint policy로 강제한다고 했습니다. 방향은 정확하지만,
+    위 제약은 정반대 방향의 문제도 만듭니다. 즉 정당한 복구 경로(Production &rarr; 격리된 복구 Account)도 같은 제약을 받습니다.
+    RTO를 계산할 때 "snapshot 복사 시간"을 반드시 포함해야 합니다. TB급 DB에서 이 시간은 무시할 수 없으며,
+    <strong>문서의 어느 곳에도 RTO / RPO 목표가 없습니다.</strong></div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 24]</span><div class="f-body"><span class="f-lead">AWS Backup cross-account copy의 전제 조건입니다.</span>
+    6.6과 6.7에서 backup과 restore를 다루지만 다음 조건이 문서에 없습니다.</div></div>
+  <ul class="plain">
+    <li>소스와 대상 Account가 동일 Organization에 속해야 합니다.</li>
+    <li>Management Account에서 cross-account backup 기능을 명시적으로 활성화해야 합니다(<span class="mono">UpdateGlobalSettings</span>).</li>
+    <li><strong>대상 vault는 default vault가 될 수 없습니다.</strong> default vault의 키는 공유할 수 없기 때문입니다.</li>
+    <li>대상 vault에 <span class="mono">backup:CopyIntoBackupVault</span>를 허용하는 resource policy가 필요하고, 소스 role에는 <span class="mono">backup:CopyFromBackupVault</span>와 <span class="mono">backup:CopyIntoBackupVault</span>가 모두 필요합니다.</li>
+    <li>AWS Backup이 완전 관리하는 리소스 유형이 아니면 customer-managed key가 필수입니다(AWS managed key policy는 불변이며 cross-account 공유 불가).</li>
+    <li><strong>AWS Backup은 계정 간 직접 restore를 지원하지 않습니다.</strong> "복사 후 복사본에서 restore"의 2단계이며, 대상 Account에 해당 리소스 유형의 service-linked role이 존재해야 합니다(그 서비스를 한 번도 쓰지 않은 Account에는 없습니다).</li>
+    <li>cold tier로 전환된 백업은 cross-account copy를 지원하지 않습니다.</li>
+    <li>대상 Account가 나중에 Organization을 떠나면 백업을 그대로 보유합니다. <span class="mono">organizations:LeaveOrganization</span>을 SCP로 Deny해 두어야 합니다. <strong>이는 개인정보 유출 경로이며 문서의 규제 경계 논의에 없습니다.</strong></li>
+  </ul>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body">위 조건들을 종합하면, KEY-3(Hybrid: workload 소유 기본 + 공유 integration만 중앙)은 성립하지만
+    <strong>"개인정보를 담는 저장소의 KMS key는 workload 소유라도 customer-managed key를 강제하고,
+    복구용 Account를 key policy의 principal에 미리 포함시킨다"</strong>는 추가 규칙이 필요합니다.
+    사고 발생 후 key policy를 바꾸려면 key owner Account에 접근해야 하는데, 그 Account가 침해 대상이면 복구가 막힙니다.</div></div>
+
+  <h3>2.12 AWS MCP Server - [확인] + [보완] 1건</h3>
+  <p>
+    무신사 전제(기존 IAM credential과 downstream permission으로 authorize, CloudTrail 기록,
+    MCP condition context key, 2026-08-21 기준 endpoint는 미국 동부와 프랑크푸르트)는 문서가 인용한 근거와 일치합니다.
+    "MCP 자체를 별도 permission boundary로 간주하지 않는다"는 판단을 포함해 이 부분은 정확합니다.
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완 25]</span><div class="f-body"><span class="f-lead">endpoint 위치가 서울 리전이 아니라는 사실 자체가 결정 조건입니다.</span>
+    AIOPS-4(Agent-direct MCP / CLI / API)를 Production 운영 경로로 쓰려면, 서비스 endpoint가 서울에 없다는 점이
+    (a) 개인정보보호법과 ISMS-P 관점의 데이터 이동 검토 대상인지,
+    (b) 서울 리전 장애 시 복구 도구가 다른 리전에 의존하는 것이 이점인지 위험인지를
+    <strong>보안팀과 공동 판단</strong>해야 합니다. 문서는 이 사실을 12장에 기록했지만 6.8의 결정 조건으로 올리지 않았습니다.
+    보안팀 공동 검토 필요로 분류하는 것을 권고드립니다.</div></div>
+</section>
+<!-- ===================== 03 ===================== -->
+<section class="sec" id="s3">
+  <h2><span class="no">03</span>핵심 질문 6건에 대한 답변</h2>
+  <p class="key-msg">여섯 질문 모두 현재 방향을 뒤집는 AWS 제약은 없습니다. 다만 Q2(OU 설계), Q3(IAM-H2 격상), Q4(A/B 성립 조건), Q6(RTO / RPO 부재)에서는 성립 조건을 더 구체적으로 정의해야 합니다.</p>
+  <p>
+    무신사 문서 5장의 핵심 질문 6건에 답합니다. 질문마다 결론부터 적고,
+    그 결론을 만드는 조건을 번호로 나눠 풀었습니다.
+  </p>
+
+  <h3>Q1. 경계 산정 - Account / VPC / EKS / Data를 1:1로 맞춰야 하는 조건이 있는가</h3>
+  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>BND-B(경계별 독립 판정)를 막는 AWS 제약은 없습니다.</strong> 다만 세 경계를 부분적으로 결합하도록 강제하는 조건이 4가지 있습니다.</div></div>
+
+  <h4>(1) EKS cluster는 여러 VPC에 걸칠 수 없습니다</h4>
+  <p>
+    Amazon EKS는 multi-VPC cluster를 지원하지 않습니다. 따라서 <strong>EKS 경계는 VPC 경계의 하위 집합</strong>이어야 합니다.
+    한 cluster의 worker node를 두 VPC에 나눌 수 없습니다.
+  </p>
+  <div class="impact"><span class="tag t-impact">영향</span><div class="f-body">RUNTIME-VPC-2(A/B 또는 Cell별 VPC)를 선택하면 A/B는 필연적으로 별도 cluster입니다(이미 그렇게 설계됨).
+    반대로 RUNTIME-VPC-1(같은 Shared VPC)에서는 A/B cluster가 subnet만 다르므로
+    route, DNS, IPAM, NAU를 공유합니다. 문서가 위험을 제대로 짚었습니다.</div></div>
+
+  <h4>(2) EKS Pod Identity role은 cluster와 같은 Account에 있어야 합니다</h4>
+  <p>
+    RUN-2(Shared Cluster Account)에서 workload가 자기 Account의 resource에 접근하려면
+    <strong>반드시 2단 구조</strong>(cluster Account의 association role &rarr; workload Account의 target role)가 됩니다.
+    Account 경계와 EKS 경계를 분리한 대가입니다.
+  </p>
+  <div class="impact"><span class="tag t-impact">영향</span><div class="f-body">문서의 IAM-W4(Cross-account target role)가 RUN-2에서 <strong>선택이 아니라 필수</strong>가 됩니다.
+    "Cross-account resource 접근이 필요한 경우에만"이라는 성립 조건을
+    "RUN-2 선택 시 모든 workload에 기본 적용"으로 수정하시기 바랍니다.</div></div>
+
+  <figure class="fig" id="fig-pod-identity"><svg viewBox="0 0 860 190" width="100%" role="img" aria-label="EKS Pod Identity의 2단 구조: association role에서 target role로" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><rect x="30" y="30" width="380" height="150" rx="6" fill="none" stroke="#D9DEE6" stroke-width="1.5" stroke-dasharray="5 4"/><text x="44" y="50" font-size="12" fill="#5B6470" text-anchor="start" font-weight="600">Shared Cluster Account (RUN-2)</text><rect x="470" y="30" width="360" height="150" rx="6" fill="none" stroke="#D9DEE6" stroke-width="1.5" stroke-dasharray="5 4"/><text x="484" y="50" font-size="12" fill="#5B6470" text-anchor="start" font-weight="600">Workload Account</text><image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRWxhc3RpYy1LdWJlcm5ldGVzLVNlcnZpY2VfNjQ8L3RpdGxlPgogICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLzY0L0FyY2hfQW1hem9uLUVsYXN0aWMtS3ViZXJuZXRlcy1TZXJ2aWNlXzY0IiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUtQkcvNjQvQ29tcHV0ZSIgZmlsbD0iI0VENzEwMCI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNNDYuODQyLDMyLjE5OTAxNjggTDQwLjAxMyw0MC4xMjAwMTMyIEw0Ny40NDEsNDguNzg0MDA5MiBMNDQuNjY5LDQ4Ljc4NDAwOTIgTDM4LDQxLjAwMDAxNjkgTDM4LDQ5LjAwMDAxNjkgTDM2LDQ5LjAwMDAxNjkgTDM2LDMyLjAwMDAxNjkgTDM4LDMyLjAwMDAxNjkgTDM4LDM5LjAwMDAxNjkgTDQ0LjE4MSwzMi4xOTkwMTY4IEw0Ni44NDIsMzIuMTk5MDE2OCBaIE02NCw0OC4yMzQwMDk1IEw1Niw0My40MzMwMTE3IEw1NiwzMi4wMDAwMTY5IEM1NiwzMS42NDQwMTcxIDU1LjgxMiwzMS4zMTUwMTcyIDU1LjUwNCwzMS4xMzYwMTczIEw0NCwyNC40MjYwMjA0IEw0NCwxNC43NTIwMjQ4IEw2NCwyNi41NzEwMTk0IEw2NCw0OC4yMzQwMDk1IFogTTY1LjUwOSwyNS4xMzkwMiBMNDMuNTA5LDEyLjEzOTAyNiBDNDMuMTk5LDExLjk1NjAyNjEgNDIuODE4LDExLjk1NDAyNjEgNDIuNTA0LDEyLjEzMTAyNiBDNDIuMTkzLDEyLjMwOTAyNTkgNDIsMTIuNjQxMDI1NyA0MiwxMy4wMDAwMjU2IEw0MiwyNS4wMDAwMjAxIEM0MiwyNS4zNTUwMTk5IDQyLjE4OSwyNS42ODQwMTk4IDQyLjQ5NiwyNS44NjQwMTk3IEw1NCwzMi41NzQwMTY2IEw1NCw0NC4wMDAwMTE0IEM1NCw0NC4zNTEwMTEzIDU0LjE4NSw0NC42NzcwMTExIDU0LjQ4Niw0NC44NTcwMTEgTDY0LjQ4Niw1MC44NTcwMDgzIEM2NC42NDQsNTAuOTUyMDA4MiA2NC44MjIsNTEgNjUsNTEgQzY1LjE3LDUxIDY1LjM0LDUwLjk1NzAwODIgNjUuNDkzLDUwLjg3MDAwODMgQzY1LjgwNyw1MC42OTMwMDg0IDY2LDUwLjM2MDAwODUgNjYsNTAgTDY2LDI2LjAwMDAxOTYgQzY2LDI1LjY0NjAxOTggNjUuODE0LDI1LjMxOTAyIDY1LjUwOSwyNS4xMzkwMiBMNjUuNTA5LDI1LjEzOTAyIFogTTQwLjQ0NSw2Ni44NjMwMDEgTDE3LDU0LjM5OTAwNjcgTDE3LDI2LjU3MTAxOTQgTDM3LDE0Ljc1MjAyNDggTDM3LDI0LjQ1MTAyMDQgTDI2LjQ2MywzMS4xNTYwMTczIEMyNi4xNzUsMzEuMzQwMDE3MiAyNiwzMS42NTgwMTcxIDI2LDMyLjAwMDAxNjkgTDI2LDQ5LjAwMDAwOTEgQzI2LDQ5LjM3MzAwOSAyNi4yMDgsNDkuNzE1MDA4OCAyNi41MzgsNDkuODg3MDA4NyBMMzkuOTkxLDU2Ljg4NzAwNTUgQzQwLjI4LDU3LjAzNzAwNTUgNDAuNjI0LDU3LjAzODAwNTUgNDAuOTEyLDU2Ljg4ODAwNTUgTDUzLjk2NCw1MC4xNDQwMDg2IEw2MS45OTYsNTQuOTY0MDA2NCBMNDAuNDQ1LDY2Ljg2MzAwMSBaIE02NC41MTUsNTQuMTQyMDA2OCBMNTQuNTE1LDQ4LjE0MjAwOTUgQzU0LjIxNyw0Ny45NjQwMDk2IDUzLjg0OSw0Ny45NTIwMDk2IDUzLjU0MSw0OC4xMTIwMDk1IEw0MC40NTUsNTQuODczMDA2NSBMMjgsNDguMzkzMDA5NCBMMjgsMzIuNTQ5MDE2NyBMMzguNTM3LDI1Ljg0NDAxOTcgQzM4LjgyNSwyNS42NjAwMTk4IDM5LDI1LjM0MjAxOTkgMzksMjUuMDAwMDIwMSBMMzksMTMuMDAwMDI1NiBDMzksMTIuNjQxMDI1NyAzOC44MDgsMTIuMzA5MDI1OSAzOC40OTYsMTIuMTMxMDI2IEMzOC4xODQsMTEuOTU0MDI2MSAzNy44MDIsMTEuOTU2MDI2MSAzNy40OTEsMTIuMTM5MDI2IEwxNS40OTEsMjUuMTM5MDIgQzE1LjE4NywyNS4zMTkwMiAxNSwyNS42NDYwMTk4IDE1LDI2LjAwMDAxOTYgTDE1LDU1IEMxNSw1NS4zNjkwMDYyIDE1LjIwNCw1NS43MDkwMDYxIDE1LjUzLDU1Ljg4MzAwNiBMMzkuOTg0LDY4Ljg4MzAwMDEgQzQwLjEzMSw2OC45NjEgNDAuMjkyLDY5IDQwLjQ1Myw2OSBDNDAuNjIsNjkgNDAuNzg2LDY4Ljk1OCA0MC45MzcsNjguODc1MDAwMSBMNjQuNDg0LDU1Ljg3NTAwNiBDNjQuNzk3LDU1LjcwMjAwNjEgNjQuOTkzLDU1LjM3NTAwNjIgNjUuMDAwMTQxNiw1NS4wMTgwMDY0IEM2NS4wMDYsNTQuNjYwMDA2NiA2NC44MjEsNTQuMzI2MDA2NyA2NC41MTUsNTQuMTQyMDA2OCBMNjQuNTE1LDU0LjE0MjAwNjggWiIgaWQ9IkFtYXpvbi1FbGFzdGljLUt1YmVybmV0ZXMtU2VydmljZV9JY29uXzY0X1NxdWlkIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==" x="50" y="88" width="40" height="40"/><rect x="100" y="86" width="90" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="145.0" y="111.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Pod</text><line x1="190" y1="108" x2="224" y2="108" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="207" y="100" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">1단</text><rect x="226" y="86" width="170" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="311.0" y="103.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">association role</text><text x="311.0" y="120.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">(Pod Identity)</text><rect x="536" y="86" width="130" height="44" rx="4" fill="#E6ECF4" stroke="#1F3A5F" stroke-width="2.5"/><text x="601.0" y="103.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">target role</text><text x="601.0" y="120.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">(IAM-W4)</text><line x1="666" y1="108" x2="704" y2="108" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><rect x="706" y="86" width="108" height="44" rx="4" fill="#E8F3EE" stroke="#2E7D5B" stroke-width="2"/><text x="760.0" y="103.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">resource</text><text x="760.0" y="120.0" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">S3, RDS 등</text><line x1="396" y1="108" x2="534" y2="108" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="465" y="100" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">2단: AssumeRole</text><text x="465" y="126" font-size="10" fill="#5B6470" text-anchor="middle" font-weight="400">(cross-account)</text><text x="44" y="166" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">Pod Identity role은 cluster와 같은 Account에만 둘 수 있음</text><text x="484" y="166" font-size="11" fill="#B23A3A" text-anchor="start" font-weight="400">RUN-2에서는 IAM-W4가 선택이 아니라 기본 적용</text></svg><figcaption>그림 4. RUN-2에서 Pod Identity의 2단 구조</figcaption></figure>
+<h4>(3) Shared VPC에서 EKS의 SG와 IAM role은 participant Account에 있어야 합니다</h4>
+  <p>
+    cluster, node, pod용 SG를 참여 Account에서 만들어야 하고, IAM role과 정책도 참여 Account에 두어야 합니다.
+    <strong>VPC를 공유하더라도 SG와 IAM 경계는 Account 경계와 일치합니다.</strong>
+    문서의 "network 권한이 완전히 0이 되는 model은 아니다"라는 인식이 정확합니다.
+  </p>
+
+  <h4>(4) Data 경계는 VPC 배치형 / 비배치형으로 갈립니다</h4>
+  <p>
+    문서가 "S3는 VPC에 배치되는 resource가 아니다"라고 정확히 구분했습니다.
+    추가로 명확히 할 점: <strong>Shared VPC subnet에서 리소스를 만들 수 있는 서비스는
+    명시적으로 지원되는 목록에 한정됩니다.</strong>
+    DATA-4(Shared VPC locality) 판단에 직접 필요하므로 서울 리전 기준으로 확인해야 할 목록을 정리합니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 7. Shared subnet 지원이 확인된 서비스 (DATA-4에 사용 가능)</caption>
+      <thead>
+        <tr><th scope="col">서비스</th><th scope="col">비고</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Amazon RDS, Amazon Aurora</td><td>DATA-4의 주 대상</td></tr>
+        <tr><td>Amazon ElastiCache (Redis OSS)</td><td></td></tr>
+        <tr><td>Amazon Redshift, Amazon EMR, AWS Glue</td><td>공통 Data Platform 대상</td></tr>
+        <tr><td>Amazon OpenSearch Service, Amazon MSK</td><td></td></tr>
+        <tr><td>Amazon EC2, ECS, EKS, AWS Lambda, EFS</td><td></td></tr>
+        <tr><td>ALB / NLB / GWLB</td><td>ALB-1 / ALB-2 / ALB-3에 사용 가능</td></tr>
+        <tr><td>AWS PrivateLink (interface endpoint)</td><td>PrivateLink 지원 전 서비스 연결 가능</td></tr>
+        <tr><td>Amazon VPC Lattice, TGW, VPC Peering, Traffic Mirroring</td><td></td></tr>
+        <tr><td>Route 53 (PHZ cross-account association)</td><td>DNS-2에 사용 가능</td></tr>
+        <tr><td>AWS DMS, Verified Access, SageMaker Unified Studio</td><td></td></tr>
+        <tr><td>Amazon MQ</td><td><strong>Apache MQ만. RabbitMQ 미지원</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">이 목록은 AWS도 "누락이 있을 수 있다"고 명시하는 목록입니다.</span>
+    무신사가 실제로 쓰는 서비스 인벤토리를 이 목록과 대조해, 미지원 서비스가 하나라도 CUJ 경로에 있으면
+    그 workload는 DATA-4 대상에서 제외하는 판정 규칙을 두시는 것을 권고드립니다. 특히 RabbitMQ 사용 여부를 확인하시기 바랍니다.</div></div>
+  <div class="rec"><span class="tag t-rec">Q1 최종 제언</span><div class="f-body">BND-B를 유지하되, 판정표에 4개 열을 추가하는 것을 권고드립니다 -
+    EKS 필요 여부(있으면 VPC 경계에 종속), cross-account resource 접근 필요 여부(있으면 target role 2단 구조 확정),
+    Shared subnet 미지원 서비스 사용 여부(있으면 전용 VPC), 장애 시 복구 주체(현재 문서에 없는 요소).</div></div>
+
+  <figure class="fig" id="fig-decision-flow"><svg viewBox="0 0 860 452" width="100%" role="img" aria-label="판정표에 추가할 4개 열의 결정 흐름" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><rect x="30" y="20" width="150" height="40" rx="4" fill="#F3F5F8" stroke="#8A93A0" stroke-width="1.5"/><text x="105.0" y="44.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">workload 1건 입력</text><line x1="105" y1="60" x2="105" y2="78" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><rect x="30" y="80" width="300" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="180.0" y="106.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">EKS가 필요한가</text><line x1="330" y1="102" x2="388" y2="102" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="359" y="94" font-size="11" fill="#2E7D5B" text-anchor="middle" font-weight="700">예</text><rect x="390" y="80" width="440" height="44" rx="4" fill="#E8F3EE" stroke="#2E7D5B" stroke-width="1.5"/><text x="610.0" y="105.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">VPC 경계에 종속 (EKS 경계는 VPC 경계의 하위 집합)</text><line x1="105" y1="124" x2="105" y2="154" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="118" y="144" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">아니오</text><rect x="30" y="156" width="300" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="180.0" y="182.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">cross-account resource 접근이 필요한가</text><line x1="330" y1="178" x2="388" y2="178" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="359" y="170" font-size="11" fill="#2E7D5B" text-anchor="middle" font-weight="700">예</text><rect x="390" y="156" width="440" height="44" rx="4" fill="#E8F3EE" stroke="#2E7D5B" stroke-width="1.5"/><text x="610.0" y="181.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">target role 2단 구조 확정 (IAM-W4 기본 적용)</text><line x1="105" y1="200" x2="105" y2="230" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="118" y="220" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">아니오</text><rect x="30" y="232" width="300" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="180.0" y="258.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">Shared subnet 미지원 서비스를 쓰는가</text><line x1="330" y1="254" x2="388" y2="254" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="359" y="246" font-size="11" fill="#2E7D5B" text-anchor="middle" font-weight="700">예</text><rect x="390" y="232" width="440" height="44" rx="4" fill="#E8F3EE" stroke="#2E7D5B" stroke-width="1.5"/><text x="610.0" y="257.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">전용 VPC (VPC-1). DATA-4 대상에서 제외</text><line x1="105" y1="276" x2="105" y2="306" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="118" y="296" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">아니오</text><rect x="30" y="308" width="300" height="44" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="180.0" y="334.0" font-size="13" font-weight="600" fill="#1A1F2B" text-anchor="middle">장애 시 복구 주체가 둘 이상인가</text><line x1="330" y1="330" x2="388" y2="330" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="359" y="322" font-size="11" fill="#2E7D5B" text-anchor="middle" font-weight="700">예</text><rect x="390" y="308" width="440" height="44" rx="4" fill="#E8F3EE" stroke="#2E7D5B" stroke-width="1.5"/><text x="610.0" y="333.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">경계 분리 후보 (1차 대응 주체, escalation 경로 열 추가)</text><line x1="105" y1="352" x2="105" y2="372" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><text x="118" y="368" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">아니오</text><rect x="30" y="374" width="300" height="40" rx="4" fill="#F3F5F8" stroke="#8A93A0" stroke-width="1.5"/><text x="180.0" y="398.0" font-size="13" font-weight="600" fill="#5B6470" text-anchor="middle">기존 판정 기준 적용</text><text x="30" y="440" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">네 질문이 판정표에 추가할 4개 열입니다. 한 열이라도 "예"면 오른쪽 결과가 경계 판정을 제약합니다.</text></svg><figcaption>그림 5. 판정표에 추가할 4개 열의 결정 흐름</figcaption></figure>
+<h3>Q2. Landing Zone, OU, Control - 이 방향을 바꿀 제약이 있는가</h3>
+  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>LZ-PLATFORM-1(Control Tower) + LZ-MIG-2(단계적 전환) + SCP-ATT-3(Layered bundle) 조합은 성립합니다.
+    그러나 OU 설계는 2.1의 정정 사항 때문에 재작업이 필요합니다.</strong> </div></div>
+
+  <h4>(1) OU-3의 Security OU는 무신사가 자유롭게 설계할 수 없습니다</h4>
+  <p>
+    2.1의 [정정 2], [정정 3] 참조. LZ 4.0에서 service integration Account가 있는 OU가 Security OU가 되고,
+    그 OU에는 <span class="mono">AWSControlTowerBaseline</span>과 Config Baseline을 적용할 수 없으며,
+    일반 Account를 그 OU로 옮기면 control이 drift 상태가 됩니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">OU-3의 시작점을 이렇게 수정하는 것을 권장드립니다.</span></div></div>
+
+  <figure class="fig" id="fig-ou-tree"><svg viewBox="0 0 860 458" width="100%" role="img" aria-label="OU-3 수정 제안: Security OU를 둘로 나눈 시작점" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><rect x="30" y="16" width="110" height="34" rx="4" fill="#1F3A5F" stroke="#1F3A5F" stroke-width="1.5"/><text x="85.0" y="37.0" font-size="13" font-weight="600" fill="#fff" text-anchor="middle">Root</text><text x="100" y="74" font-size="12" fill="#B23A3A" text-anchor="start" font-weight="700">핵심 변경: Security를 둘로 분리합니다. AWS가 특별하게 다루는 OU(Control Tower 전용)와 보안팀이 운영하는 OU는 같을 수 없습니다.</text><line x1="85" y1="107" x2="100" y2="107" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="90" width="170" height="34" rx="4" fill="#F9E8E8" stroke="#B23A3A" stroke-width="2"/><text x="185.0" y="110.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Security</text><text x="296" y="112" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">LZ 4.0 service integration Account 전용. 일반 Account 금지 (Log Archive, SecurityRoles, Config, Backup)</text><line x1="85" y1="143" x2="100" y2="143" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="126" width="170" height="34" rx="4" fill="#E6ECF4" stroke="#1F3A5F" stroke-width="2"/><text x="185.0" y="146.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">SecurityOperations</text><text x="296" y="148" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">보안팀이 쓰는 일반 Account (SIEM, CNAPP 연동 등)</text><line x1="85" y1="179" x2="100" y2="179" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="162" width="170" height="34" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="185.0" y="182.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Infrastructure</text><text x="284" y="184" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">Network, IPAM, Shared Services</text><line x1="85" y1="215" x2="100" y2="215" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="198" width="170" height="34" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="185.0" y="218.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Workloads</text><line x1="120" y1="251" x2="140" y2="251" stroke="#D9DEE6" stroke-width="1.5"/><rect x="140" y="234" width="170" height="34" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="225.0" y="254.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Production</text><line x1="120" y1="287" x2="140" y2="287" stroke="#D9DEE6" stroke-width="1.5"/><rect x="140" y="270" width="170" height="34" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="225.0" y="290.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Non-production</text><line x1="85" y1="323" x2="100" y2="323" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="306" width="170" height="34" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="185.0" y="326.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Sandbox</text><line x1="85" y1="359" x2="100" y2="359" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="342" width="170" height="34" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="185.0" y="362.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">PolicyStaging</text><line x1="85" y1="395" x2="100" y2="395" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="378" width="170" height="34" rx="4" fill="#FBF1E0" stroke="#B7791F" stroke-width="2"/><text x="185.0" y="398.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Transitional</text><text x="284" y="400" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">등록 OU. 검사 대기 Account. Security 계열과 절대 분리</text><line x1="85" y1="431" x2="100" y2="431" stroke="#D9DEE6" stroke-width="1.5"/><rect x="100" y="414" width="170" height="34" rx="4" fill="#FBF1E0" stroke="#B7791F" stroke-width="2"/><text x="185.0" y="434.5" font-size="12" font-weight="600" fill="#1A1F2B" text-anchor="middle">Suspended</text><text x="284" y="436" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">등록 OU로 유지 (2.2 [보완 4]). Deny SCP로 변경 차단</text><line x1="85" y1="50" x2="85" y2="431" stroke="#D9DEE6" stroke-width="1.5"/><line x1="120" y1="232" x2="120" y2="287" stroke="#D9DEE6" stroke-width="1.5"/><path d="M278,92 L286,92 L286,160 L278,160" fill="none" stroke="#B23A3A" stroke-width="1.5"/></svg><figcaption>그림 6. OU-3 수정 제안: Security OU를 둘로 나눈 시작점</figcaption></figure>
+
+
+  <p>
+    핵심 변경은 <strong>Security를 둘로 쪼개는 것</strong>입니다. AWS가 특별하게 다루는 OU와,
+    보안팀이 실제 운영하는 Account가 담기는 OU는 같을 수 없습니다. 문서는 이를 하나로 보고 있습니다.
+  </p>
+
+  <h4>(2) Control Tower와 내부 pipeline의 책임 분리는 baseline 의존 관계에 묶여 자유롭지 않습니다</h4>
+  <p>
+    2.1 [정정 1] 참조. <span class="mono">IdentityCenterBaseline &rarr; CentralSecurityRolesBaseline &rarr; CentralConfigBaseline</span>으로
+    이어지는 의존 때문에, Identity Center를 Control Tower가 관리하게 하려면 Config도 Control Tower가 관리해야 합니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">다음 두 가지 중 하나를 먼저 결정하고 나머지를 따라가게 하는 것을 권장드립니다.</span></div></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 8. Control Tower 활용 폭에 대한 두 방향</caption>
+      <thead>
+        <tr><th scope="col">방향</th><th scope="col">구성</th><th scope="col">결과</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">A. Control Tower 최대 활용</th>
+          <td>Config, CloudTrail, SecurityRoles, Backup integration 모두 활성화 + OU별 Config baseline 적용</td>
+          <td>Identity Center baseline 사용 가능. Config 비용 발생. SEC-2의 "CNAPP로 대체" 여지 축소. 내부 pipeline은 workload bootstrap만 담당</td>
+        </tr>
+        <tr>
+          <th scope="row">B. Control Tower 최소 활용</th>
+          <td>Config integration만 활성화하고(전제 조건) OU baseline은 선택 적용, Identity Center는 내부 pipeline이 관리</td>
+          <td>Config 비용을 OU별로 통제. Identity Center Permission Set lifecycle을 직접 운영해야 함. Config / Backup Account용 permission set은 어차피 수동 생성 필요</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    무신사가 IAM-H1을 "현재 검토 방향", SEC-2를 "비교 후보"로 둔 상태는
+    <strong>A와 B 사이에서 결정이 미정인 상태</strong>입니다. 이 두 항목을 하나의 ADR로 묶어 다루시길 권합니다.
+  </p>
+
+  <h4>(3) SCP-ATT-3는 quota 관점에서 문제가 없고, 오히려 SCP-ATT-2보다 유리합니다</h4>
+  <p>
+    2.3 [보완 6] 참조. 상속된 정책이 개수 한도를 소비하지 않으므로 계층별로 각각 10개를 쓸 수 있습니다.
+    반면 SCP-ATT-2는 OU 하나에서 10개를 모두 소비합니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body">SCP-ATT-3를 채택하되, "version이 있는 policy 묶음"의 version을
+    policy 이름이나 tag가 아니라 <strong><span class="mono">Sid</span>에 version 문자열을 넣어</strong>,
+    effective policy 시뮬레이션 결과에서 어느 version이 적용됐는지 판정할 수 있게 하시기 바랍니다.
+    Organizations는 정책 version 관리 기능을 제공하지 않으므로 이 부분은 무신사가 만들어야 합니다.</div></div>
+
+  <h4>(4) 문서에 없는 제약: 예외 OU에도 SCP는 최소 1개가 항상 붙어 있어야 합니다</h4>
+  <p>
+    SCP를 활성화하면 모든 entity에 최소 1개 SCP가 붙어 있어야 하고 마지막 SCP는 제거할 수 없습니다.
+    "예외 OU에는 아무 control도 없다"는 상태를 만들 수 없으므로,
+    <span class="mono">Production-Exception</span> 같은 예외 OU에도 최소 baseline SCP를 설계해야 합니다.
+  </p>
+  <div class="rec"><span class="tag t-rec">Q2 최종 제언</span><div class="f-body">OU 후보를 만들기 전에 (a) LZ 4.0의 service integration 조합, (b) 위 표 8의 A/B 방향 선택을 확정하시기 바랍니다.
+    현재 문서 순서대로 "OU 후보 &rarr; Account 배치 &rarr; effective policy 확인"을 진행하면 Security OU 관련 재작업이 발생합니다.</div></div>
+
+  <h3>Q3. Account, IAM - Shared Cluster Account 구조를 제한하는 제약이 있는가</h3>
+  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>RUN-2를 막는 AWS 제약은 없습니다. 규모 한계는 EKS가 아니라
+    IAM Identity Center와 access entry에서 먼저 옵니다.</strong> </div></div>
+
+  <h4>(1) EKS 측 한계는 여유가 있습니다</h4>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 9. EKS 주요 quota와 RUN-2 관점</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">기본값</th><th scope="col">조정</th><th scope="col">RUN-2 관점</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Cluster per Region</td><td><span class="num">100</span></td><td>가능</td><td>EKS-4에서 전용 cluster가 늘어도 여유</td></tr>
+        <tr><td>Access entry per cluster</td><td><span class="num">3,000</span></td><td><strong>불가</strong></td><td>Shared cluster의 실제 상한</td></tr>
+        <tr><td>Managed node group per cluster</td><td><span class="num">30</span></td><td>가능</td><td>tenant별 node group 격리 시 조기 도달 가능</td></tr>
+        <tr><td>Node per managed node group</td><td><span class="num">450</span></td><td>가능</td><td></td></tr>
+        <tr><td>Control plane SG per cluster</td><td><span class="num">4</span></td><td><strong>불가</strong></td><td></td></tr>
+        <tr><td>Fargate profile per cluster</td><td><span class="num">10</span></td><td>가능</td><td></td></tr>
+        <tr><td>Public endpoint access CIDR per cluster</td><td><span class="num">40</span></td><td>불가</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">Managed node group 30개가 실무적으로 먼저 걸립니다.</span>
+    Shared cluster에서 tenant별 node group으로 격리하는 전략(문서의 soft multi-tenancy 보완책)은 30 tenant에서 막힙니다.
+    Karpenter + taint / toleration + node pool 기반 격리를 함께 검토하는 것을 권고드립니다.
+    Karpenter는 ARC zonal shift와 <strong>1.12 이상</strong>에서 연동됩니다(AVAIL-1과 결합).</div></div>
+
+  <h4>(2) IAM Identity Center의 규모 한계가 IAM-H1의 실제 상한입니다</h4>
+  <p>
+    문서는 "Permission Set이 team x domain x environment 조합으로 늘 수 있다"는 위험을
+    정확히 지적했으나 수치가 없습니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 10. IAM Identity Center 주요 quota</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">기본값</th><th scope="col">조정</th><th scope="col">영향</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Identity Center 전체 Permission Set</td><td><span class="num">3,500</span></td><td>가능</td><td></td></tr>
+        <tr><td>Account당 프로비저닝된 Permission Set</td><td><span class="num">500</span></td><td>가능</td><td>Shared Cluster Account, 중앙 DB Account처럼 여러 팀이 접근하는 Account에서 조기 도달</td></tr>
+        <tr><td>Permission Set당 관리형 정책</td><td><span class="num">25</span></td><td>불가</td><td>단, IAM의 "role당 관리형 정책 10개" 한도가 실효 상한. 25개를 쓰려면 배포 대상 Account마다 IAM quota를 올려야 함</td></tr>
+        <tr><td>Permission Set당 inline policy</td><td>1개 / <span class="num">32,768바이트</span>(공백 제외 <span class="num">10,240바이트</span>)</td><td>불가</td><td></td></tr>
+        <tr><td>Account당 Permission Set에 할당 가능한 group 수</td><td><span class="num">100</span></td><td><strong>불가</strong></td><td>RBAC 확장의 진짜 상한</td></tr>
+        <tr><td>구성 가능한 Account 수</td><td><span class="num">7,000</span></td><td>가능</td><td></td></tr>
+        <tr><td>Identity Center API 전체 throttle</td><td><span class="num">20 TPS</span></td><td>읽기만 증가 가능</td><td>대량 프로비저닝 시 병목</td></tr>
+        <tr><td><span class="mono">CreateAccountAssignment</span> 미완료 비동기 호출</td><td><span class="num">15</span></td><td>불가</td><td>대량 배포 자동화 설계 제약</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-rec"><span class="tag t-rec">[중요 제언]</span><div class="f-body"><span class="f-lead">"Account당 Permission Set에 할당 가능한 group 100개"가 조정 불가 한도입니다.</span>
+    이것이 IAM-H1의 순수 RBAC 확장을 막는 지점입니다.
+    수십 팀 x 직무 조합의 group을 하나의 Account(예: Shared Cluster Account)에 할당하면 100개에서 정지합니다.</div></div>
+  <p>
+    이 사실이 IAM-H2(RBAC + 제한된 ABAC)의 우선순위를 올립니다. 문서는 IAM-H2를 "조건별 적용"으로 두었으나,
+    <strong>Shared Cluster Account와 중앙 DB Account처럼 다수 팀이 접근하는 Account에서는
+    조건부가 아니라 필수가 될 가능성이 높습니다.</strong>
+    tag 기반으로 범위를 좁혀 Permission Set과 group 할당 수를 줄이는 것이 유일한 확장 경로입니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">판정표에 "이 Account에 접근할 group 수 예상치" 열을 넣고,
+    100의 절반(50)을 넘으면 IAM-H2 적용 또는 Account 분리를 검토하는 threshold를 두는 것이 좋겠습니다.</span></div></div>
+
+  <h4>(3) Kubernetes API 접근 조합에 문제는 없습니다</h4>
+  <p>
+    사람 = Identity Center RBAC(+ 제한적 ABAC), workload = runtime role / Pod Identity / IRSA,
+    K8s API = Access Entries 분리는 성립합니다. 다만 <strong>Access Policy와 RBAC의 권한이 합쳐지고
+    한쪽으로 다른 쪽을 줄일 수 없다</strong>는 점 때문에, 문서가 요구한
+    "Principal별 주 권한 부여 경로 지정 + 중복 grant 검사"는 선택이 아니라 필수 통제입니다.
+    이 검사를 자동화하지 않으면 시간이 지나며 반드시 권한 확대가 누적됩니다.
+  </p>
+
+  <h4>(4) RAM 측 제약</h4>
+  <p>
+    subnet 공유는 동일 Organization 내에서만 가능하고 default VPC의 subnet은 공유할 수 없습니다.
+    분사 가능성을 Account 축의 근거로 언급한 ACC-2 / ACC-3 검토에서,
+    <strong>분사 시 Shared VPC 관계가 먼저 끊어진다</strong>는 점을 고려해야 합니다.
+    brand 독립과 분사 요구가 실재한다면 VPC-1(전용 VPC)이 사실상 강제된다는 뜻입니다.
+    Account만 나누고 Shared VPC를 유지하는 구조로는 분사에 대응할 수 없습니다. 이는 문서에 없는 결합 조건입니다.
+  </p>
+  <h3>Q4. EKS 가용성 - Cluster 분리 기준과 CUJ 이중화가 실질 효과를 내기 위한 AWS 측 조건</h3>
+  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>A/B EKS Runtime(AVAIL-1)은 "EKS control plane, add-on, upgrade 장애"에 대해서만 유효하며,
+    그것도 아래 5개 조건을 모두 충족해야 합니다.</strong> 조건을 채우지 못하면 비용만 두 배가 되고 가용성은 개선되지 않습니다.
+    문서의 위험 인식은 정확하나 조건이 구체적이지 않습니다.</div></div>
+
+  <h4>(1) EKS managed control plane은 이미 multi-AZ이며 zonal shift 대상이 아닙니다</h4>
+  <p>
+    ARC zonal shift와 zonal autoshift는 <strong>Kubernetes data plane에만</strong> 작용합니다.
+    control plane은 AWS가 여러 AZ에 걸쳐 운영합니다.
+  </p>
+  <div class="impact"><span class="tag t-impact">영향</span><div class="f-body">A/B의 가치는 AZ 장애 대비가 아닙니다. 문서가 "A/B cluster는 AZ 분산을 대신하지 않는다"고 명시한 것은 옳습니다.
+    A/B가 실제로 방어하는 것은 <strong>무신사가 직접 만드는 장애</strong>입니다 -
+    cluster upgrade 실패, add-on(CNI, CoreDNS, CSI driver) 회귀, admission webhook 오류,
+    잘못된 cluster-wide policy 적용, control plane API throttling.
+    이 목록을 명문화하고, A/B의 성공 기준을 "이 목록의 장애를 한쪽으로 격리했는가"로 정의하시길 제언합니다.
+    "가용성 향상"이라는 추상 목표로는 POC 판정이 불가능합니다.</div></div>
+
+  <h4>(2) CoreDNS가 A/B와 AZ 양쪽에서 가장 흔한 단일 실패 지점입니다</h4>
+  <p>
+    AWS 문서가 명시적으로 강조하는 항목입니다. AZ 장애 시 정상 AZ의 CoreDNS Pod가 늘어난 부하를 흡수해야 하고,
+    A/B에서는 각 cluster가 독립적인 CoreDNS를 가져야 합니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">POC-2의 필수 측정 항목에 다음을 넣으시는 것을 추천드립니다.</span></div></div>
+  <ul class="plain">
+    <li>CoreDNS <span class="mono">replicaCount</span>와 <span class="mono">topologySpreadConstraints</span>가 AZ에 분산되어 있는지 (CoreDNS EKS add-on은 기본값으로 분산하나 커스텀 설정 시 깨질 수 있음)</li>
+    <li>CoreDNS add-on의 autoscaling 활성화 여부 (<span class="mono">{"autoScaling":{"enabled":true}}</span>) 또는 HPA / cluster-proportional-autoscaler 구성</li>
+    <li>한 AZ 제거 시 CoreDNS의 초당 쿼리 처리량과 지연</li>
+    <li><strong>EC2 instance당 ENI당 Route 53 Resolver로 보낼 수 있는 패킷은 초당 1,024개이며 조정 불가</strong>입니다. 고밀도 Pod 노드에서 이 한도가 DNS 실패의 원인이 됩니다. NodeLocal DNS도 검토하는 것을 추천드립니다.</li>
+  </ul>
+
+  <h4>(3) ARC zonal shift는 "사전 확보된 capacity"가 없으면 오히려 장애를 만듭니다</h4>
+
+  <div class="callout warn">
+    <span class="callout-title">주의 - AWS 문서가 명시적으로 경고하는 부분</span>
+    <p>
+      zonal shift는 해당 AZ의 모든 in-cluster 트래픽을 제거하므로, 워크로드가 여러 AZ에 충분한 replica로
+      분산되어 있지 않으면 <strong>zonal shift 자체가 가용성 장애를 유발</strong>합니다.
+      사전 프로비저닝된 여유 capacity가 zonal shift 사용의 전제 조건입니다.
+    </p>
+  </div>
+
+  <p>zonal shift가 걸리면 자동으로 이런 일이 일어납니다.</p>
+  <ul class="plain">
+    <li>해당 AZ의 모든 node가 cordon됨 (신규 Pod 스케줄링 차단)</li>
+    <li>Managed node group의 AZ rebalancing이 중단되고 ASG가 정상 AZ에만 node를 띄우도록 변경됨</li>
+    <li>EndpointSlice controller가 해당 AZ의 Pod endpoint를 EndpointSlice에서 제거</li>
+    <li>node는 종료되지 않고 Pod도 evict되지 않음 (shift 해제 시 즉시 복귀 가능)</li>
+    <li>ALB / NLB를 ARC에 등록해두면 ingress 트래픽도 정상 AZ로만 라우팅</li>
+  </ul>
+  <p>
+    안전장치: 어떤 workload의 endpoint가 전부 장애 AZ에만 있으면 EKS가 fail-safe로 그 AZ에 트래픽을 보냅니다.
+    즉 <strong>AZ 하나에만 배포된 workload는 zonal shift로 보호되지 않습니다.</strong>
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">이것이 AZ-1(1-AZ worker)을 예외로도 허용하기 어려운 이유입니다.</span>
+    문서는 AZ-1을 "Non-production, 재생 가능 batch, 낮은 availability를 명시적으로 수용한 경우"로 제한했는데,
+    여기에 "ARC zonal autoshift 대상 cluster에는 1-AZ workload를 두지 않는다"를 추가합니다.
+    같은 cluster에 1-AZ workload가 섞여 있으면 zonal autoshift의 practice run이 그 workload를 중단시킵니다.</div></div>
+
+  <h4>(4) ARC zonal shift의 기술 제약</h4>
+  <ul class="plain">
+    <li><strong>EKS Fargate에서는 동작하지 않습니다.</strong> (Fargate는 zonal health 이벤트를 인지하면 자체적으로 다른 AZ를 선호하지만 ARC 연동은 아님)</li>
+    <li>Self-managed Karpenter는 1.12 이상에서 지원됩니다.</li>
+    <li>EKS Auto Mode는 추가 설정 없이 연동되며, 장애 AZ의 node provisioning 중단, consolidation과 drift 같은 voluntary disruption 중단까지 자동 처리합니다.</li>
+    <li>Stateful workload는 별도 판단이 필요합니다. 정상 AZ에 새로 뜬 Pod는 장애 AZ에 바인딩된 persistent volume에 attach할 수 없습니다.</li>
+    <li>ARC zonal shift와 autoshift 자체는 추가 비용이 없습니다(프로비저닝한 인스턴스 비용은 계속 발생).</li>
+  </ul>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">문서의 AZ-1 예외 조건에 "zonal storage 전환이 준비돼야 한다"는 서술이 있는데,
+    이는 AZ-1만의 문제가 아니라 <strong>AZ-2와 AZ-3 전부의 문제</strong>입니다.</span>
+    PVC를 쓰는 workload는 AZ 수와 무관하게 zonal EBS에 묶입니다. CUJ 중 stateful workload를 따로 식별해 두시기 바랍니다.</div></div>
+
+  <h4>(5) 2배, 1.5배 capacity 계산 평가</h4>
+  <p>
+    문서의 "2-AZ는 약 2배, 3-AZ는 약 1.5배" 계산은 산술적으로 맞습니다
+    (N-1 기준: 2-AZ는 각 AZ가 100%를 처리해야 하므로 총 200%, 3-AZ는 각 50%씩 여유가 필요하므로 총 150%).
+    이를 "AWS가 요구하는 고정 배수가 아니다"라고 명시한 점도 정확합니다.
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완]</span><div class="f-body"><span class="f-lead">이 계산이 놓치는 항목 3개입니다.</span></div></div>
+  <ul class="plain">
+    <li><strong>node 추가 시간(scaling lag)</strong>을 계산에 포함하지 않았습니다. AWS 문서는 zonal shift 사용 시 "사전 프로비저닝된 여유 capacity"를 강하게 권고합니다. Pod priority + over-provisioning(placeholder Pod) 패턴으로 스케줄링 지연을 제거하는 방법이 표준 해법입니다.</li>
+    <li>"AZ 장애 시 정상 AZ의 capacity 확보 제약"은 무신사가 내부 가설로 표시했고 AWS 공식 입장으로 인용하지 않겠다고 했습니다. 이 신중함이 적절합니다. 다만 AWS 문서 자체가 "zonal impairment 시 healthy AZ에 신규 node가 추가되지 못하는 compute capacity constraint 위험"을 명시하고 있으므로, <strong>"빠른 provisioning을 복구 전제로 두지 않는다"는 무신사의 결론은 AWS 문서 방향과 일치합니다.</strong> 가설이 아니라 확인된 근거로 격상해도 됩니다.</li>
+    <li>상호 의존 Pod의 AZ 공존(co-location)이 계산에 없습니다. Application A가 AZ1과 AZ2에 있고 Application B가 AZ3에만 있으면 AZ3 장애가 end-to-end 흐름을 끊습니다. topology spread constraint만으로는 부족하고 pod affinity를 함께 써야 합니다. CUJ의 서비스 그래프를 그려서 각 hop이 모든 AZ에 존재하는지 확인하는 항목을 POC-2에 추가합니다.</li>
+  </ul>
+
+  <h4>(6) cross-AZ 비용 분석 방법 평가</h4>
+  <p>
+    문서의 접근(Flow Logs와 ENI / AZ mapping으로 상위 경로 특정 &rarr; same-zone routing,
+    <span class="mono">trafficDistribution: PreferClose</span>, topology spread, ALB IP target,
+    NAT와 endpoint의 zonal locality, data locality 적용 &rarr; 남는 비용 비교)은 AWS가 권고하는 순서와 일치합니다.
+    "CUR만으로 source / destination AZ pair를 알 수 없다", "AZ 수 자체가 cross-AZ 비율을 결정하지 않는다"는 판단도 타당합니다.
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완]</span><div class="f-body"><span class="f-lead">두 가지를 추가합니다.</span></div></div>
+  <ul class="plain">
+    <li><span class="mono">trafficDistribution: PreferClose</span>는 Kubernetes 버전에 따라 필드와 동작이 다릅니다. 최신 버전은 <span class="mono">PreferSameZone</span>, <span class="mono">PreferSameNode</span> 값을 도입했습니다. <strong>EKS의 목표 Kubernetes 버전을 먼저 고정하고 해당 버전의 필드명으로 표준을 기술</strong>합니다. 버전 업그레이드 시 이 설정이 깨질 수 있습니다.</li>
+    <li>ALB target group의 cross-zone load balancing 비활성화가 cross-AZ 비용 절감 수단으로 문서에 없습니다. ALB는 load balancer 수준에서 cross-zone을 비활성화할 수 없지만 target group 수준에서는 비활성화할 수 있습니다. 단 제약이 많습니다: sticky session 불가, Lambda target 불가, <strong>target group 중 하나라도 특정 AZ가 비어 있으면 그 AZ로 들어온 HTTP 요청 전부 503</strong>, 빈 subnet을 만들면 ALB가 그 AZ의 IP를 DNS에 노출해 503 발생. AZ별 capacity를 확실히 보장할 수 없다면 활성화 상태로 두는 것이 AWS 권고입니다. A/B와 AZ 조합이 복잡한 무신사 환경에서는 신중히 판단하시길 권고드립니다.</li>
+  </ul>
+
+  <h4>(7) Cluster 분리 신호 - 측정 가능한 지표 제언</h4>
+  <p>문서 6.4의 상세 질문 1("AWS에서 측정 가능한 분리 신호와 서비스 한계")에 답합니다.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 11. Cluster 분리 신호와 threshold 제언</caption>
+      <thead>
+        <tr><th scope="col">신호</th><th scope="col">측정 방법</th><th scope="col">분리 threshold 제언</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Managed node group 수</td><td>EKS API</td><td><span class="num">25/30</span> (tenant 격리에 node group을 쓴다면)</td></tr>
+        <tr><td>Access entry 수</td><td>EKS API</td><td><span class="num">2,000/3,000</span></td></tr>
+        <tr><td>Control plane API 요청 throttling</td><td>CloudWatch <span class="mono">apiserver_request_total</span>, EKS control plane log의 429</td><td>지속적 429 발생</td></tr>
+        <tr><td>etcd 크기와 객체 수</td><td>control plane metric (<span class="mono">apiserver_storage_size_bytes</span>)</td><td>AWS 권고 한도 접근 시</td></tr>
+        <tr><td>NAU per VPC</td><td>VPC 콘솔 / CloudWatch</td><td><span class="num">50,000/64,000</span> (또는 <span class="num">200,000/256,000</span>)</td></tr>
+        <tr><td>upgrade blast radius</td><td>해당 cluster에 배포된 CUJ 수</td><td>CUJ가 2개 이상이면 A/B 분리 검토</td></tr>
+        <tr><td>add-on 변경 주기 충돌</td><td>팀별 add-on 버전 요구 차이</td><td>동일 add-on에 상충하는 요구가 발생하면 분리</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rec"><span class="tag t-rec">Q4 최종 제언</span><div class="f-body">AVAIL-1은 POC 후보 유지가 맞습니다. 다만 POC 성공 기준을 세 개로 구체화하시길 권고드립니다 -
+    (1)에서 정의한 "A/B가 방어하는 장애 목록" 중 최소 3개를 실제로 주입해 한쪽 cluster로 격리됨을 증명,
+    ARC zonal autoshift practice run을 A/B 양쪽에서 실행해 각 cluster가 단독으로 N-1 AZ peak를 처리,
+    Cloudflare와 Route 53 두 control plane을 거친 A&rarr;B 전환의 end-to-end 시간과 rollback 시간 측정.</div></div>
+
+  <h3>Q5. VPC, Connectivity - 빠진 제약이 있는가</h3>
+  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>SVPC-1과 SVPC-2 모두 AWS 기능상 성립합니다.</strong> CONN-1~5와 INSP-1~4를 traffic 요구별로
+    조합하는 접근도 타당하며, 중앙 TGW inspection이 무조건 필수인 조건은 AWS 관점에서 없습니다.
+    다만 SVPC-1의 실질 한계는 문서 예상보다 일찍 오고, CONN-4(Lattice)의 제약은 문서 서술보다 큽니다.</div></div>
+
+  <h4>(1) SVPC-1이 먼저 도달하는 한계는 2.4 [정정 5]의 순서대로입니다</h4>
+  <p>
+    재확인: 전파 route 100개(조정 불가) &rarr; participant 100개 &rarr; Account당 공유 subnet 100개 &rarr;
+    NAU 64,000 &rarr; subnet / route table 200 &rarr; CIDR 5(&rarr;50).
+    문서가 CIDR을 언급한 것은 방향이 맞지만 실제로 가장 늦게 오는 항목입니다.
+    <strong>POC-3의 첫 번째 측정 항목을 "전파 prefix 수"로 바꾸시길 제언합니다.</strong>
+  </p>
+
+  <h4>(2) SVPC-1은 TGW 처리량 상한도 공유합니다</h4>
+  <p>
+    2.7 [보완 18] 참조. 동일 VPC에 TGW attachment는 1개만 가능하므로, 최소 VPC 전략은
+    모든 on-prem과 외부 트래픽을 하나의 attachment(AZ당 100 Gbps, 7.5M PPS)로 집약합니다.
+    SVPC-2는 이를 VPC별로 나눕니다.
+  </p>
+
+  <h4>(3) SVPC-2에서 문서가 정확히 파악한 점</h4>
+  <p>
+    "VPC, NAT, endpoint와 VPC 간 연결 수는 줄지 않고, 중앙 pipeline의 잘못된 변경이 여러 VPC에 전파될 수 있으며,
+    participant는 자기 ENI와 SG를 계속 소유한다"는 서술은 정확합니다.
+    추가할 점은 SVPC-2가 "VPC 수는 SVPC-1보다 많지만 blast radius는 작고, TGW 처리량 상한은 분리된다"는
+    트레이드오프를 가진다는 것입니다. 결국 SVPC-1 vs SVPC-2는 "비용 vs 격리"가 아니라
+    <strong>"중앙 pipeline 변경 위험 vs VPC 공통 장애 위험"의 교환</strong>입니다.
+    어느 쪽도 pipeline 품질에 의존하므로, POC-3에서 "중앙 pipeline의 잘못된 route 변경을 얼마나 빨리 탐지하고
+    복구하는가"를 두 안 모두에서 측정하시길 권고드립니다.
+  </p>
+
+  <h4>(4) CONN-4(VPC Lattice)의 제약이 문서보다 큽니다</h4>
+  <p>
+    문서는 "별도 control plane, protocol, quota, 비용을 검증해야 한다"고만 서술했습니다.
+    실제 제약은 그보다 많고, e-commerce 워크로드에 직접 영향을 줍니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 12. VPC Lattice 주요 제약과 quota</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">값</th><th scope="col">영향</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>VPC당 service network association</td><td><strong>1개만</strong></td><td>여러 service network에 붙이려면 service-network 유형 VPC endpoint를 써야 함</td></tr>
+        <tr><td>Lattice service의 최대 연결 수명</td><td><strong><span class="num">10분</span></strong></td><td><strong>장기 연결(gRPC streaming, WebSocket, 긴 배치 호출)이 10분마다 끊깁니다.</strong> 애플리케이션이 재연결을 처리해야 함</td></tr>
+        <tr><td>Lattice service의 idle timeout</td><td>기본 <span class="num">60초</span> (60~600초 설정 가능)</td><td></td></tr>
+        <tr><td>Lattice resource의 idle timeout</td><td><span class="num">350초</span>, 연결 수명 제한 없음</td><td>TCP resource는 service보다 제약이 적음</td></tr>
+        <tr><td>service당 AZ당 대역폭</td><td><span class="num">10 Gbps</span> (증가 가능, SA / TAM 문의)</td><td></td></tr>
+        <tr><td>service당 AZ당 RPS</td><td><span class="num">10,000</span> (증가 가능)</td><td>CUJ 트래픽에 대해 사전 증설 필요</td></tr>
+        <tr><td>service당 listener</td><td><span class="num">2</span></td><td></td></tr>
+        <tr><td>listener당 rule</td><td><span class="num">10</span></td><td></td></tr>
+        <tr><td>service network당 service association</td><td><span class="num">500</span></td><td></td></tr>
+        <tr><td>service network per Region</td><td><span class="num">50</span></td><td></td></tr>
+        <tr><td>VPC association per service network</td><td><span class="num">500</span></td><td></td></tr>
+        <tr><td>Auth policy 크기</td><td><span class="num">10KB</span></td><td></td></tr>
+        <tr><td>MTU</td><td><span class="num">8,500바이트</span></td><td></td></tr>
+        <tr><td>미지원 AZ</td><td><span class="mono">use1-az3</span>, <span class="mono">usw1-az2</span>, <span class="mono">apne1-az3</span>, <span class="mono">euw1-az4</span>, <span class="mono">cac1-az3</span>, <span class="mono">ilc1-az2</span></td><td>서울(<span class="mono">apne2-*</span>)은 목록에 없음, 영향 없음</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">"최대 연결 수명 10분"이 CONN-4 채택의 결정적 제약입니다.</span>
+    무신사가 gRPC 기반 내부 통신이나 장기 연결을 쓰는 구간이 있다면 그 구간은 CONN-4 대상에서 제외해야 합니다.
+    반대로 <strong>CONN-4는 "CIDR overlap이 있는 VPC 간 연결"에서 다른 것으로 대체하기 어려운 가치가 있습니다.</strong>
+    Lattice는 IPv4 / IPv6 link-local 주소 공간에서 동작하므로 주소가 겹치는 VPC 사이에도 연결을 제공합니다.
+    문서 6.7의 "폐기 예정 legacy network", "인수한 환경", "managed SAP 환경" 같은 CIDR 정리가 어려운 대상에는
+    Private NAT나 CNI custom networking보다 Lattice가 나을 수 있습니다.
+    이 용도가 문서의 CONN-4 성립 조건에는 빠져 있습니다.</div></div>
+
+  <h4>(5) CONN-1(Peering)에 문서에 없는 quota</h4>
+  <p>
+    Peered NAU 한도는 128,000(최대 512,000)이며, 동일 Region 안의 모든 peered VPC 합계에 적용됩니다.
+    소수 VPC 간 peering이라도 각 VPC가 크면 이 한도에 걸릴 수 있습니다.
+    Cross-Region peering은 이 합계에 포함되지 않습니다.
+  </p>
+
+  <h4>(6) 중앙 TGW inspection(INSP-3)이 AWS 관점에서 "필수"인 조건은 없습니다</h4>
+  <p>
+    AWS는 특정 구현을 강제하지 않으며, INSP-4(Hybrid)를 현재 검토 방향으로 둔 것은 타당합니다.
+    다만 INSP-3을 선택하는 경우의 조건은 문서가 정확히 파악했습니다
+    (symmetric routing 보장, appliance mode, 양방향 route, TGW-attached 방식에서는 appliance mode가 항상 적용,
+    두 Account 소유 시 삭제 권한과 제한된 가시성).
+  </p>
+  <div class="finding f-add"><span class="tag t-add">[보완]</span><div class="f-body"><span class="f-lead">하나 추가합니다.</span> Regional NAT Gateway의 route table은 TGW를 유효한 route로 지원합니다.
+    EGRESS-2(TGW + Network Firewall)와 NAT-2(Regional NAT)를 조합할 수 있다는 뜻입니다.
+    문서는 두 결정을 따로 서술했는데, 조합할 수 있다고 명시해 두면
+    "Regional NAT는 중앙 inspection과 양립하지 않는다"는 오해를 막을 수 있습니다.</div></div>
+
+  <h4>(7) 문서에 없는 결정 요소: Shared VPC에서 flow log 소유권</h4>
+  <p>
+    2.4 [보완 10] 참조. INSP-1의 증거 수집이 Shared VPC에서는 owner / participant로 쪼개지며
+    어느 쪽도 전체를 볼 수 없습니다. owner가 subnet 단위 flow log를 소유하고
+    participant의 ENI 단위 flow log 생성을 SCP로 제한하는 표준을 정하시길 제언합니다.
+  </p>
+  <div class="rec"><span class="tag t-rec">Q5 최종 제언</span><div class="f-body">SVPC-1과 SVPC-2를 "둘 중 하나"로 보지 마시고, trust zone별로 다르게 적용하는 3안을 추가로 검토하시기 바랍니다.
+    일반 workload는 SVPC-1(전파 prefix가 적은 구간), on-prem과 외부 연동이 많은 workload는 SVPC-2(TGW 상한과 route 예산을 분리)로
+    나누면 두 안의 약점을 서로 보완합니다. 이는 문서의 VPC-3(trust zone 혼합형)을 Shared VPC 확장 방식에까지 적용한 형태입니다.</div></div>
+
+  <h3>Q6. Data, Security - 반드시 보완해야 할 조건</h3>
+  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>DATA-3(Hybrid) + KEY-3(Hybrid) 방향은 성립합니다.</strong> 그러나 cross-account 복구 경로에 문서가 다루지 않은 필수 조건이 다수 있으며,
+    이들이 DATA-1 vs DATA-2 선택을 바꿀 수 있습니다.</div></div>
+
+  <h4>(1) 2.11의 [보완 22][보완 23][보완 24]가 이 질문의 핵심 답변입니다</h4>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 13. cross-account 데이터 제약이 DATA-1 / DATA-2에 미치는 영향</caption>
+      <thead>
+        <tr><th scope="col">제약</th><th scope="col">DATA-1(중앙 DB Account) 영향</th><th scope="col">DATA-2(Workload 소유) 영향</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>자동 백업은 공유 불가 (수동 snapshot 복사 필요)</td><td>중앙에서 workload로 넘길 때마다 복사 단계</td><td>중앙 백업 Account로 모을 때마다 복사 단계</td></tr>
+        <tr><td>AWS 기본 KMS key 암호화 snapshot은 공유 불가</td><td>중앙이 CMK를 일관 적용하기 쉬움, <strong>DATA-1 유리</strong></td><td>workload별 CMK 강제를 guardrail로 만들어야 함</td></tr>
+        <tr><td>암호화 공유 snapshot은 직접 restore 불가 (복사 후 restore)</td><td>양쪽 동일</td><td>양쪽 동일</td></tr>
+        <tr><td>수동 snapshot 공유 대상 최대 20 Account</td><td>중앙 1개에서 다수 workload로 공유 시 <strong>20개 한도에 걸림</strong></td><td>workload에서 백업 Account 1~2개면 여유, <strong>DATA-2 유리</strong></td></tr>
+        <tr><td>Multi-AZ DB cluster snapshot 공유 불가</td><td>양쪽 동일. <strong>Multi-AZ DB cluster를 쓰면 cross-account 복구 경로가 아예 없음</strong></td><td>양쪽 동일</td></tr>
+        <tr><td>AWS Backup은 계정 간 직접 restore 미지원</td><td>양쪽 동일 (복사 후 복사본에서 restore)</td><td>양쪽 동일</td></tr>
+        <tr><td>대상 Account에 리소스 유형별 SLR 필요</td><td>중앙 Account는 대개 이미 보유, <strong>DATA-1 유리</strong></td><td>신규 workload Account마다 확인 필요</td></tr>
+        <tr><td>cold tier는 cross-account copy 미지원</td><td>양쪽 동일. 장기 보존 정책과 cross-account 복구가 충돌</td><td>양쪽 동일</td></tr>
+        <tr><td>대상 Account가 Organization 탈퇴 시 백업 보유</td><td>양쪽 동일. SCP로 <span class="mono">organizations:LeaveOrganization</span> Deny 필수</td><td>양쪽 동일</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">위 표에서 DATA-1과 DATA-2의 우열이 갈리지 않습니다.</span>
+    따라서 이 항목들은 DATA-1 / DATA-2 선택 기준이 아니라 <strong>어느 쪽을 택해도 반드시 구현해야 하는
+    공통 guardrail</strong>로 분류하는 것이 맞습니다. 문서의 DATA-1 / DATA-2 성립 조건 칸에 넣지 말고,
+    "데이터 공통 요구사항" 절을 따로 두는 편이 좋겠습니다.</div></div>
+  <p>
+    단, 하나는 선택을 바꿉니다: "Multi-AZ DB cluster snapshot 공유 불가".
+    무신사가 CUJ의 write 부하를 위해 Multi-AZ DB cluster(2개 읽기 복제본 구성)를 쓰고 있거나 쓸 계획이라면,
+    <strong>그 DB는 cross-account 복구 경로를 가질 수 없습니다.</strong>
+    이 경우 DB와 복구 책임을 같은 Account에 두는 DATA-2가 사실상 강제됩니다.
+    현재 Multi-AZ DB cluster 사용 여부를 먼저 확인하시기 바랍니다.
+  </p>
+
+  <h4>(2) 개인정보 저장 계층 VPC 분리에서 빠진 통제</h4>
+  <p>
+    문서는 "별도 VPC만으로 달성되지 않으므로 IAM, Security Group, KMS key policy, logging,
+    승인된 접근 경로를 함께 적용한다"고 정확히 서술했습니다. 여기에 추가할 항목입니다.
+  </p>
+  <ul class="plain">
+    <li>Shared VPC를 쓰는 경우 participant는 NAT Gateway를 describe조차 할 수 없습니다. 개인정보 저장 계층이 참여 Account 소유이고 VPC가 중앙 소유라면, <strong>그 계층의 egress 경로를 데이터 소유팀이 검증할 수 없습니다.</strong> 규제 대응 시 "이 데이터가 어디로 나갈 수 있는가"를 데이터 소유팀이 증명할 수 없다는 뜻입니다. 개인정보 저장 계층은 VPC-1(전용 VPC, workload 소유)로 두는 것이 감사 가능성 측면에서 유리합니다. 문서의 VPC-3 방향과 일치하지만, 근거를 "격리"가 아니라 "소유팀의 egress 경로 증명 가능성"으로 보강하시길 제언합니다.</li>
+    <li>RCP는 개인정보 저장소의 최후 방어선으로 쓰는 것을 권고드립니다. RCP는 4개(실사용)뿐이지만 이 용도에 정확히 맞습니다: 조직 외부 principal의 S3와 KMS 접근 전면 차단, <span class="mono">aws:SourceOrgID</span> 조건 강제. 문서는 RCP를 일반 개념으로만 설명하고 개인정보 경계에 배치하지 않았습니다.</li>
+    <li>Backup vault를 destination으로 지정할 수 있는 Account를 SCP로 제한합니다.</li>
+  </ul>
+
+  <div class="callout warn">
+    <span class="callout-title">주의 - Dev / QA 차단에서 가장 크게 빠진 경로는 backup copy입니다</span>
+    <p>
+      cross-account backup을 활성화하면 조직의 모든 member Account 사용자가 자기 Account를 destination으로
+      설정할 수 있습니다. 즉 개인정보 백업이 승인되지 않은 Account로 복사될 수 있습니다.
+      <span class="mono">backup:CopyFromBackupVault</span>에 <span class="mono">backup:CopyTargets</span> 또는
+      <span class="mono">backup:CopyTargetOrgPaths</span> 조건을 걸어 승인된 vault와 OU로만 복사되게 해야 합니다.
+      IAM, KMS, resource policy, VPC endpoint policy를 다 막아도 backup copy 경로는 별개입니다.
+    </p>
+  </div>
+
+  <h4>(3) Development와 QA 차단에서 빠진 경로 정리</h4>
+  <p>
+    문서가 든 통제 수단(Route, IAM, KMS key policy, resource policy, VPC endpoint policy) 외에
+    점검이 필요한 경로입니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 14. Production 데이터 유출 경로와 통제 수단</caption>
+      <thead>
+        <tr><th scope="col">경로</th><th scope="col">통제 수단</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AWS Backup cross-account copy</td><td><span class="mono">backup:CopyTargets</span> / <span class="mono">CopyTargetOrgPaths</span> SCP 조건, destination vault access policy</td></tr>
+        <tr><td>RDS 수동 snapshot 공유</td><td><span class="mono">rds:ModifyDBSnapshotAttribute</span> SCP Deny 또는 대상 Account 제한</td></tr>
+        <tr><td>RDS snapshot public 공유</td><td>SCP로 <span class="mono">restore</span> 속성에 <span class="mono">all</span> 지정 차단</td></tr>
+        <tr><td>EBS snapshot 공유 / EC2 Allowed AMIs</td><td><span class="mono">ec2:ModifySnapshotAttribute</span> 제한. Allowed AMIs 설정 시 소스 Account allowlist 필요</td></tr>
+        <tr><td>S3 Batch Replication / cross-account replication</td><td>bucket policy, replication role 제한, RCP</td></tr>
+        <tr><td>DMS, Glue를 통한 데이터 이동</td><td>해당 서비스의 network와 IAM 경로</td></tr>
+        <tr><td>CDC stream (MSK / Kinesis / DMS)</td><td>resource policy + cross-account consumer 제한</td></tr>
+        <tr><td>Athena / Redshift cross-account query, Lake Formation 권한</td><td>Lake Formation cross-account grant 감사</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">문서 6.4의 "Development와 QA는 Production 원본 데이터, snapshot, backup과
+    CDC stream에 직접 접근하지 않는다"를 경로 목록 기반 coverage matrix로 전환하시기 바랍니다.</span>
+    현재는 "직접 접근"이라는 표현이 어떤 API를 뜻하는지 정의되지 않아 검증이 불가능합니다.
+    6.5의 egress coverage matrix와 같은 형식을 쓰시면 됩니다.</div></div>
+
+  <h4>(4) AWS-native security telemetry - 문서가 놓친 사실 2건</h4>
+  <ul class="plain">
+    <li>AWS Security Hub의 이름이 "Security Hub CSPM"으로 바뀌었습니다. 문서의 SEC-2 / SEC-6는 "Security Hub control"과 "Security Hub aggregation"을 언급하는데, 현재 명칭 체계에서 CSPM 기능(표준, control, finding aggregation, automation rule)과 별개의 Security Hub 기능이 구분됩니다. <strong>SEC-2 / SEC-6 비교표를 만들 때 어느 쪽을 지칭하는지 명확히 하지 않으면 CNAPP와의 중복 판정이 틀어집니다.</strong></li>
+    <li>Security Hub CSPM은 대부분의 control에 AWS Config를 요구합니다. Config를 활성화하지 않으면 대다수 control finding이 생성되지 않습니다. 이는 2.1 [정정 1]의 Control Tower baseline 의존 관계와 합쳐져 <strong>"Config를 활성화할 것인가"가 Landing Zone, Identity Center, Security Hub CSPM 세 결정의 공통 전제</strong>가 된다는 뜻입니다. 문서는 Config를 SEC-2 안에서만 다루고 있습니다.</li>
+    <li>Security Hub CSPM은 활성화 이전에 생성된 finding을 소급 수집하지 않습니다. 또한 활성화한 리전에서 생성된 finding만 처리하며, CIS 벤치마크를 전체 준수하려면 지원되는 모든 리전에서 활성화해야 합니다. 서울 단일 리전 결정과 함께, 미사용 리전에 대한 control(SCP <span class="mono">aws:RequestedRegion</span> Deny)과 탐지(미사용 리전에서의 활동)를 어떻게 볼 것인지를 SEC-1 / SEC-5에 명시하시기를 권고드립니다.</li>
+  </ul>
+  <div class="rec"><span class="tag t-rec">Q6 최종 제언</span><div class="f-body">문서에 RTO / RPO 목표가 전혀 없습니다. 위 제약들(snapshot 복사 필수, 계정 간 직접 restore 불가,
+    cold tier 미지원)은 모두 복구 시간을 늘립니다. CUJ별 RTO / RPO를 정의하지 않으면 DATA-1 / DATA-2 / DATA-3 중
+    무엇을 골라도 복구 가능성을 검증할 수 없습니다. 이것이 6장 전체에서 가장 큰 누락입니다.</div></div>
+</section>
+<!-- ===================== 04 ===================== -->
+<section class="sec" id="s4">
+  <h2><span class="no">04</span>선택지별 판정 요약표</h2>
+  <p class="key-msg">판정표 기준 재검토 5건, POC 2건, 조건부 19건입니다. 재검토는 Control Tower LZ 4.0 반영(LZ-PLATFORM-1, OU-3), 조정 불가 한도(IAM-H2, CONN-4), Security Hub CSPM 개칭과 Config 의존(SEC-1~7)에서 비롯됩니다.</p>
+  <p>
+    판정 기준은 네 가지입니다. <em>성립</em>은 AWS 기능상 문제 없음, <em>조건부</em>는 문서에 없는 조건을
+    충족해야 성립, <em>재검토</em>는 문서의 전제나 성립 조건 수정 필요, <em>POC</em>는 서면 확정 불가를 뜻합니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 15. 선택지별 AWS 판정과 추가 조건</caption>
+      <thead>
+        <tr><th scope="col">ID</th><th scope="col">무신사 상태</th><th scope="col">AWS 판정</th><th scope="col">추가 조건 또는 수정 사항</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="mono">BND-A</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td>세 경계를 1:1로 강제하는 AWS 제약은 없음. 대안 유지 타당</td></tr>
+        <tr><td><span class="mono">BND-B</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>판정표에 4개 열 추가 (Q1 최종 제언)</td></tr>
+        <tr><td><span class="mono">BND-C / BND-D</span></td><td>방향 / 조건별</td><td><span class="v v-ok">성립</span></td><td>Hybrid 타당</td></tr>
+        <tr><td><span class="mono">LZ-PLATFORM-1</span></td><td>현재 방향</td><td><span class="v v-review">재검토</span></td><td>LZ 4.0의 baseline 의존 관계와 달라진 Security OU 동작 반영 필요 (2.1)</td></tr>
+        <tr><td><span class="mono">LZ-PLATFORM-2</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td>대안 유지 타당</td></tr>
+        <tr><td><span class="mono">LZ-MIG-1</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td>대안 유지 타당</td></tr>
+        <tr><td><span class="mono">LZ-MIG-2</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>CentralizedLogging 비활성화를 rollback 수단으로 쓸 수 없음 (2.1 [정정 4]). enrollment 완료 확인 후 bootstrap 시작 (2.2 [보완 5])</td></tr>
+        <tr><td><span class="mono">OU-1</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td>최대 5단계 중첩</td></tr>
+        <tr><td><span class="mono">OU-2</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td>정책 중복 시 entity당 10개 한도 소비</td></tr>
+        <tr><td><span class="mono">OU-3</span></td><td>비교 후보</td><td><span class="v v-review">재검토</span></td><td>Security를 Control Tower 전용 OU와 보안 운영 OU로 분리. Suspended는 등록 OU로 유지 (Q2 제언)</td></tr>
+        <tr><td><span class="mono">SCP-ATT-1</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td>대안 유지 타당</td></tr>
+        <tr><td><span class="mono">SCP-ATT-2</span></td><td>비교 후보</td><td><span class="v v-cond">조건부</span></td><td>OU당 10개 한도를 상속 없이 모두 소비. 한도 도달 시 정책 병합 필요</td></tr>
+        <tr><td><span class="mono">SCP-ATT-3</span></td><td>현재 방향</td><td><span class="v v-ok">성립(권장)</span></td><td>상속 정책은 개수 한도 미소비, quota 관점 최적. version은 <span class="mono">Sid</span>에 내장 (2.3 [보완 6], Q2)</td></tr>
+        <tr><td><span class="mono">SCP-MODE-1 / MODE-2</span></td><td>조건별 / 방향</td><td><span class="v v-ok">성립</span></td><td>모든 entity에 SCP 최소 1개 필수 (Q2-(4))</td></tr>
+        <tr><td><span class="mono">ACC-1 ~ ACC-4</span></td><td>비교 / 대안</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">ACC-5</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>판정표에 "접근 group 수 예상치" 열 추가. 분사 가능성 있으면 Shared VPC 불가 (Q3-(4))</td></tr>
+        <tr><td><span class="mono">RUN-1</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">RUN-2</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>IAM-W4(target role)가 선택이 아니라 필수. SG와 IAM은 participant Account에 위치. access entry 3,000 / node group 30 한도 (Q1, Q3)</td></tr>
+        <tr><td><span class="mono">IAM-H1</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>Account당 group 할당 100개(조정 불가)가 실제 상한. Control Tower <span class="mono">IdentityCenterBaseline</span> 사용 시 Config 필수 (Q3-(2), 2.1)</td></tr>
+        <tr><td><span class="mono">IAM-H2</span></td><td>조건별 적용</td><td><span class="v v-review">재검토(격상 권장)</span></td><td>다수 팀 접근 Account에서는 조건부가 아니라 필수가 될 가능성</td></tr>
+        <tr><td><span class="mono">IAM-H3</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">IAM-W1 ~ W4</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td>RUN-2 선택 시 W4는 기본 적용</td></tr>
+        <tr><td><span class="mono">K8S-AUTH-1</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>Access Policy와 RBAC의 중복 grant 자동 검사가 필수 통제. access entry 3,000 한도</td></tr>
+        <tr><td><span class="mono">K8S-AUTH-2</span></td><td>예외</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">EKS-1 ~ EKS-3</span></td><td>대안 / 비교</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">EKS-4</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>분리 신호 지표 7개 정의 (Q4-(7))</td></tr>
+        <tr><td><span class="mono">AVAIL-1</span></td><td>POC 후보</td><td><span class="v v-poc">POC</span></td><td>"방어하는 장애 목록" 명문화 + CoreDNS 조건 + zonal shift 전제 (Q4)</td></tr>
+        <tr><td><span class="mono">AVAIL-2</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">AZ-1</span></td><td>예외</td><td><span class="v v-cond">조건부</span></td><td>ARC zonal autoshift 대상 cluster에 1-AZ workload 금지. ALB는 2 AZ 필요</td></tr>
+        <tr><td><span class="mono">AZ-2 / AZ-3</span></td><td>비교 후보</td><td><span class="v v-cond">조건부</span></td><td>scaling lag, pod affinity 기반 co-location, stateful PV 제약 반영 (Q4-(5))</td></tr>
+        <tr><td><span class="mono">VPC-1</span></td><td>조건별</td><td><span class="v v-ok">성립(개인정보 계층 권장)</span></td><td>근거를 "소유팀의 egress 경로 증명 가능성"으로 보강 (Q6-(2))</td></tr>
+        <tr><td><span class="mono">VPC-2 / VPC-3</span></td><td>비교 / 방향</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">SVPC-1</span></td><td>POC 후보</td><td><span class="v v-poc">POC</span></td><td>첫 측정 항목을 전파 prefix 수로 변경. TGW attachment 1개 상한 공유 (Q5)</td></tr>
+        <tr><td><span class="mono">SVPC-2</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td>TGW 처리량 상한 분리를 장점으로 추가</td></tr>
+        <tr><td><span class="mono">RUNTIME-VPC-1/2</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td>EKS는 multi-VPC 불가, VPC 분리 시 cluster 분리 필연</td></tr>
+        <tr><td><span class="mono">CONN-1</span></td><td>조건별</td><td><span class="v v-cond">조건부</span></td><td>Peered NAU 128,000 한도 추가</td></tr>
+        <tr><td><span class="mono">CONN-2</span></td><td>기준선 유지</td><td><span class="v v-cond">조건부</span></td><td>전파 route 100(조정 불가), VPC당 attachment 1개, VPN MTU 1,500</td></tr>
+        <tr><td><span class="mono">CONN-3</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">CONN-4</span></td><td>조건별</td><td><span class="v v-review">재검토</span></td><td>최대 연결 수명 10분, VPC당 service network 1개. CIDR overlap 해결 용도를 성립 조건에 추가 (Q5-(4))</td></tr>
+        <tr><td><span class="mono">CONN-5</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">INSP-1</span></td><td>조건별</td><td><span class="v v-cond">조건부</span></td><td>Shared VPC에서 flow log 소유권 표준 필요 (2.4 [보완 10])</td></tr>
+        <tr><td><span class="mono">INSP-2 / INSP-3 / INSP-4</span></td><td>조건별 / 방향</td><td><span class="v v-ok">성립</span></td><td>Regional NAT와 TGW inspection 조합 가능 (Q5-(6))</td></tr>
+        <tr><td><span class="mono">DATA-1 / DATA-2</span></td><td>비교 후보</td><td><span class="v v-cond">조건부</span></td><td>cross-account 제약은 공통 guardrail로 분리. Multi-AZ DB cluster 사용 시 DATA-2 강제 (Q6-(1))</td></tr>
+        <tr><td><span class="mono">DATA-3</span></td><td>현재 방향</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">DATA-4</span></td><td>조건별</td><td><span class="v v-cond">조건부</span></td><td>Shared subnet 지원 서비스 목록 대조 필수. RabbitMQ 미지원 (Q1-(4))</td></tr>
+        <tr><td><span class="mono">DATA-5</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">EDGE-1 ~ EDGE-4</span></td><td>대안 / 방향 / 예외</td><td><span class="v v-ok">성립</span></td><td>AWS 관점에서 EDGE-2를 막는 제약 없음</td></tr>
+        <tr><td><span class="mono">ALB-1 / ALB-2 / ALB-3</span></td><td>조건별</td><td><span class="v v-cond">조건부</span></td><td>cross-zone LB off 시 503 위험 (Q4-(6)). weighted TG 관련 정정은 5.4</td></tr>
+        <tr><td><span class="mono">EGRESS-1 ~ EGRESS-4</span></td><td>조건별 / 방향</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">NAT-1</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">NAT-2</span></td><td>조건별</td><td><span class="v v-cond">조건부</span></td><td>constrained AZ 미지원. Manual mode 또는 IPAM 연동 시 고정 IP 가능. IP 32개/AZ 이점 추가 (2.6)</td></tr>
+        <tr><td><span class="mono">DNS-1</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">DNS-2</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>"중앙 Profile은 위임 namespace보다 구체적 이름을 갖지 않는다"를 명문 규칙화 (2.9 [보완 20])</td></tr>
+        <tr><td><span class="mono">DNS-3</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td>interface VPC endpoint 배포 가능을 가치 평가에 반영</td></tr>
+        <tr><td><span class="mono">KEY-1 / KEY-2 / KEY-3</span></td><td>비교 / 비교 / 방향</td><td><span class="v v-cond">조건부</span></td><td>개인정보 저장소는 CMK 강제 + 복구 Account를 key policy에 사전 포함 (2.11)</td></tr>
+        <tr><td><span class="mono">SEC-1 ~ SEC-7</span></td><td>방향</td><td><span class="v v-review">재검토</span></td><td>Security Hub CSPM 개칭, Config 의존, 소급 수집 불가 반영. Security Hub policy 유형 추가 (Q6-(4), 2.3 [보완 9])</td></tr>
+        <tr><td><span class="mono">MIG-1 / MIG-2</span></td><td>대안 / 방향</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">FOUNDATION-1 / 2</span></td><td>대안 / 방향</td><td><span class="v v-ok">성립</span></td><td></td></tr>
+        <tr><td><span class="mono">AIOPS-1 ~ AIOPS-5</span></td><td>대안 / 방향 / POC</td><td><span class="v v-ok">성립</span></td><td>MCP endpoint 리전을 보안팀 공동 검토 항목으로 격상 (2.12)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<!-- ===================== 05 ===================== -->
+<section class="sec" id="s5">
+  <h2><span class="no">05</span>문서에서 누락된 결정 요소</h2>
+  <p class="key-msg">여섯 가지 결정 요소가 문서에 없습니다. 이 중 CUJ별 RTO / RPO 목표가 가장 큰 누락이며, 이것이 없으면 AVAIL-1, AZ-2 / AZ-3, DATA-1/2/3 판정을 정량화할 수 없습니다.</p>
+
+  <h3>5.1 RTO / RPO 목표 - 가장 큰 누락</h3>
+  <p>
+    문서 전체에 복구 시간 목표가 없습니다. CUJ 정의는 있으나
+    "장애가 고객과 business에 직접 영향을 준다"는 정성 서술에 머무릅니다.
+    RTO / RPO 없이는 다음을 판정할 수 없습니다.
+  </p>
+  <ul class="plain">
+    <li>AVAIL-1의 A/B 전환이 충분히 빠른가 (DNS TTL + Cloudflare 전파 + Route 53 전파 + health 판단 지연의 합)</li>
+    <li>DATA-1 / DATA-2 중 어느 쪽이 복구 가능한가 (snapshot 복사 시간이 RTO에 들어가는지)</li>
+    <li>AZ-2와 AZ-3의 차이가 의미 있는가 (N-1 상태에서 목표 SLO 유지 여부)</li>
+    <li>Cell-local data(DATA-5)의 추가 비용이 정당한가</li>
+  </ul>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">CUJ별로 RTO, RPO, 허용 오류율을 정의한 표를 6장 앞에 두는 것을 권합니다.</span>
+    이 표가 있으면 AVAIL-1, AZ-2 / AZ-3, DATA-1/2/3 결정이 정성 비교에서 정량 판정으로 바뀝니다.</div></div>
+
+  <h3>5.2 장애 시 복구 주체(on-call ownership)</h3>
+  <p>
+    경계 판정 기준에 보안, quota, 비용, lifecycle, 장애 영향은 있으나 <strong>복구 주체</strong>가 없습니다.
+    RUN-2와 DATA-1에서 실제로 문제가 되는 지점입니다.
+  </p>
+  <ul class="plain">
+    <li>RUN-2: Shared Cluster의 control plane과 add-on 장애는 cluster Account 오너가, workload 장애는 workload 오너가 대응합니다. 그런데 "CNI 문제인지 애플리케이션 문제인지 불분명한 상태"에서 누가 1차 대응하는지 정해 두지 않으면 야간 장애에서 시간을 잃습니다.</li>
+    <li>DATA-1: 중앙 DB Account 오너가 복구하지만 데이터 정합성은 workload 오너만 판단할 수 있습니다.</li>
+  </ul>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">판정표에 "1차 대응 주체"와 "escalation 경로" 열을 추가하고,
+    "복구 주체가 둘 이상인 경계는 분리 후보"라는 규칙을 두시는 것을 권고드립니다.</span></div></div>
+
+  <h3>5.3 Kubernetes 목표 버전과 업그레이드 전략</h3>
+  <p>문서에 Kubernetes 버전이 한 번도 나오지 않습니다. 그런데 다음이 버전에 의존합니다.</p>
+  <ul class="plain">
+    <li><span class="mono">trafficDistribution</span> 필드와 지원 값 (<span class="mono">PreferClose</span> / <span class="mono">PreferSameZone</span> / <span class="mono">PreferSameNode</span>)</li>
+    <li>Karpenter의 ARC zonal shift 연동 (1.12 이상)</li>
+    <li>EKS Auto Mode 사용 여부와 그에 따른 node lifecycle 소유권</li>
+    <li>add-on 호환성 매트릭스</li>
+  </ul>
+  <p>
+    또한 A/B EKS Runtime의 가장 큰 존재 이유가 upgrade 격리인데, 업그레이드 전략(버전 스큐 허용 폭,
+    A와 B의 버전 차이 유지 여부, EKS extended support 사용 여부)이 문서에 없습니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">A/B의 성립 조건에 <strong>"A와 B는 항상 최대 1개 minor version 차이를 유지하고,
+    업그레이드는 항상 한쪽만 먼저 진행한다"</strong> 같은 구체 규칙을 넣는 것을 권고드립니다.</span>
+    이것이 없으면 A/B는 "cluster 2개"에 그칩니다.</div></div>
+
+  <h3>5.4 ALB weighted target group 실패 처리 - [보완]</h3>
+  <div class="premise"><span class="tag t-premise">무신사 문서 서술</span><div class="f-body">"Weighted target group 중 하나가 비어 있거나 unhealthy여도 ALB가 다른 target group으로
+    자동 failover하지 않으므로 별도의 health 판단과 전환 절차가 필요합니다."</div></div>
+  <div class="finding f-add"><span class="tag t-add">[보완 26]</span><div class="f-body"><span class="f-lead">이 서술은 기본 동작 기준으로는 맞지만, ALB에 이를 완화하는 설정이 있습니다.</span>
+    Target group health 설정으로 DNS failover와 routing failover의 threshold를 정의할 수 있습니다.</div></div>
+
+  <div class="callout warn">
+    <span class="callout-title">주의 - ALB 기본 동작은 failover가 아니라 fail open입니다</span>
+    <p>
+      healthy target이 충분하지 않으면 ALB는 <strong>모든 등록 target(unhealthy 포함)에 트래픽을 보냅니다.</strong>
+      문서는 "failover하지 않는다"고만 서술했는데, 실제로는 unhealthy target에도 보냅니다.
+      A/B 전환 검증 중 B의 target이 unhealthy일 때, ALB는 트래픽을 멈추지 않고 unhealthy target으로 보냅니다.
+    </p>
+  </div>
+
+  <ul class="plain">
+    <li>조정 가능: <span class="mono">target_group_health.unhealthy_state_routing.minimum_healthy_targets.count</span>(또는 <span class="mono">.percentage</span>)와 <span class="mono">target_group_health.dns_failover.minimum_healthy_targets.count</span>(또는 <span class="mono">.percentage</span>)를 설정하면 threshold 미달 시 동작을 제어할 수 있습니다. 콘솔에서는 "Unified configuration"으로 양쪽에 동일 임계값을 두는 것이 AWS 권고입니다.</li>
+    <li>기본값이 "healthy target 1개면 healthy"이므로, 대규모 target group에서 1개만 살아 있어도 ALB는 정상으로 판단합니다. A/B의 weight 단계 상향 절차가 이 기본값에 의존하면 1개 Pod만 뜬 cluster로 트래픽을 보낼 수 있습니다.</li>
+  </ul>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">문서의 ALB 운영 원칙에 다음 규칙을 추가하는 것을 권고드립니다.</span>
+    "A/B target group에는 <span class="mono">minimum_healthy_targets.percentage</span>를 CUJ의 N-1 capacity 기준으로 설정하고,
+    weight 상향 게이트를 target health가 아니라 이 threshold 통과 여부로 판정한다."</div></div>
+
+  <h3>5.5 Region 미사용에 대한 통제</h3>
+  <p>서울 단일 리전 결정은 명확하지만, 미사용 리전의 통제와 탐지가 6장에 없습니다.</p>
+  <ul class="plain">
+    <li>예방: SCP <span class="mono">aws:RequestedRegion</span> Deny (global 서비스 예외 목록 필요 - IAM, Organizations, CloudFront, Route 53, WAF global, Support 등)</li>
+    <li>탐지: Security Hub CSPM은 활성화한 리전의 finding만 처리하고 소급 수집도 하지 않습니다. GuardDuty도 리전별 활성화입니다. <strong>미사용 리전을 아예 비활성화하지 않으면 그 리전에서의 활동이 탐지되지 않습니다.</strong></li>
+    <li>Region 비활성화: Account 수준에서 opt-in 리전을 비활성화하는 것이 가장 강한 통제입니다.</li>
+  </ul>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">SEC-1에 "미사용 리전 통제" 항목을 추가하고, SCP Deny와 리전 비활성화 중
+    어느 것을 표준으로 할지 결정해야 합니다.</span> MCP endpoint가 미국 동부와 프랑크푸르트에 있다는 사실(2.12)이
+    이 결정과 충돌할 수 있습니다.</div></div>
+
+  <h3>5.6 비용 관측성과 태그 강제 시점</h3>
+  <p>
+    문서는 Tag Policy를 통제 수단으로 언급하고 Workload ID 개념을 정의했으나,
+    <strong>태그가 언제 부여되는지</strong>가 없습니다. cross-AZ 비용을 workload pair 단위로 귀속시키려면
+    ENI 수준까지 태그가 필요하고, 이는 리소스 생성 시점에 강제되어야 합니다.
+  </p>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">Workload ID를 생성 시점에 강제하는 수단을 정해야 합니다.</span>
+    Tag Policy는 지원 리소스의 준수 검사와 강제까지는 해주지만 모든 리소스를 덮지 않습니다.
+    IaC template 수준 강제 + SCP <span class="mono">aws:RequestTag</span> 조건 + Tag Policy 검사의
+    3중 구조를 제언합니다. Shared VPC에서 owner의 태그가 participant에게 보이지 않는다(2.4 [보완 11])는 점도
+    비용 귀속 설계에 반영해야 합니다.</div></div>
+</section>
+
+<!-- ===================== 06 ===================== -->
+<section class="sec" id="s6">
+  <h2><span class="no">06</span>POC 설계 제언</h2>
+  <p class="key-msg">POC 3건은 모두 유효하며 정량 성공 기준을 덧붙였습니다. 다만 판정표 dry-run(POC-0)을 세 POC보다 먼저 수행해야 POC 결과가 표준으로 이어집니다.</p>
+  <p>
+    문서의 POC 3건은 모두 기술적 불확실성을 줄이는 데 유효합니다.
+    성공 기준을 정량화할 수 있도록 측정 항목을 덧붙입니다.
+  </p>
+
+  <h3>POC-1. Shared Cluster + Workload Account</h3>
+  <p>
+    문서 성공 기준: "cross-account 최소 권한, 독립 배포와 감사, 운영 책임을 설명할 수 있어야 한다."
+    다음의 추가 측정을 권고드립니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 16. POC-1 추가 측정 항목</caption>
+      <thead>
+        <tr><th scope="col">측정 항목</th><th scope="col">판정 기준 제언</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Pod Identity 2단 구조(association role &rarr; target role)의 권한 경로 수</td><td>workload 1개당 role 2개 + trust policy 2개. 이 수가 workload 수에 선형 증가함을 확인</td></tr>
+        <tr><td>Shared subnet에서 AWS Load Balancer Controller의 subnet 탐색</td><td>tag 자동 탐색 실패 여부 확인. 실패 시 명시 annotation 표준화 (2.4 [보완 11])</td></tr>
+        <tr><td>Access entry 수 증가율</td><td>workload 1개 추가 시 access entry 증가량 x 목표 workload 수 &lt; 3,000</td></tr>
+        <tr><td>Managed node group 수</td><td>tenant 격리 전략 적용 시 30 한도 대비 여유</td></tr>
+        <tr><td>cluster Account와 workload Account 간 장애 1차 대응 시간</td><td>"CNI 문제인지 앱 문제인지" 판별에 걸린 시간 측정 (5.2)</td></tr>
+        <tr><td>participant SG의 넓은 Allow 탐지와 차단 시간</td><td>Firewall Manager audit policy 위반 탐지에서 차단까지의 시간</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>POC-2. A/B EKS Runtime과 AZ 구성</h3>
+  <p>
+    문서 성공 기준: "한 cluster 또는 한 AZ 장애에서 목표 SLO를 만족하고, cross-AZ bytes, 사전 capacity,
+    공통 dependency를 측정." 선행 조건이 있습니다: 5.1의 CUJ별 RTO / RPO 목표가 먼저 정의되어야
+    "목표 SLO 만족"을 판정할 수 있습니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 17. POC-2 측정 항목</caption>
+      <thead>
+        <tr><th scope="col">측정 항목</th><th scope="col">판정 기준 제언</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Q4-(1)의 장애 목록 중 3개 이상 주입</td><td>각 장애가 한쪽 cluster로 격리됨</td></tr>
+        <tr><td>ARC zonal autoshift practice run</td><td>A와 B 각 cluster가 단독으로 N-1 AZ peak 처리</td></tr>
+        <tr><td>CoreDNS N-1 처리량과 지연</td><td>정상 대비 지연 증가율. ENI당 1,024 packet/s 한도 도달 여부</td></tr>
+        <tr><td>CUJ 서비스 그래프의 AZ 커버리지</td><td>모든 hop이 모든 AZ에 존재 (pod affinity 포함)</td></tr>
+        <tr><td>stateful workload의 PV 재바인딩</td><td>정상 AZ에서 Pod가 실제로 뜨는지</td></tr>
+        <tr><td>A&rarr;B 전환 end-to-end 시간</td><td>Cloudflare 전환 + Route 53 record 변경 각각 분리 측정</td></tr>
+        <tr><td>rollback 시간</td><td>전환 시간과 별도로 측정</td></tr>
+        <tr><td>cross-AZ bytes</td><td>Flow Logs 기반. 최적화 적용 전후 비교</td></tr>
+        <tr><td>사전 capacity 배수</td><td>실측값을 2배, 1.5배 가설과 대조</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>POC-3. 최소 VPC, Shared VPC Pool</h3>
+  <p>
+    문서 성공 기준: "금지 flow를 차단하고 owner bottleneck, quota, 분리 threshold를 측정."
+    첫 측정 항목을 CIDR에서 <strong>전파 prefix</strong>로 변경하시는 것을 권고드립니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 18. POC-3 측정 항목</caption>
+      <thead>
+        <tr><th scope="col">측정 항목</th><th scope="col">판정 기준 제언</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>TGW 전파 prefix 수 (현재 / 3년 후 예상)</strong></td><td>100 미달 여부. 초과 시 default route 광고로 전환할 수 있는지</td></tr>
+        <tr><td>Participant Account 수 증가율</td><td>목표 팀 수 대비 100 한도</td></tr>
+        <tr><td>Account당 공유 subnet 수</td><td>3-AZ x trust zone x 용도 조합 vs 100</td></tr>
+        <tr><td>NAU 사용량</td><td>Pod 밀도 반영. <span class="num">64,000</span>에서 <span class="num">256,000</span>으로 조정이 필요한 시점</td></tr>
+        <tr><td>owner에게 route / DNS 변경 요청 후 반영까지의 시간</td><td>bottleneck 정량화</td></tr>
+        <tr><td>flow log 증거의 완결성</td><td>owner + participant 로그로 전체 flow를 재구성 가능한지 (2.4 [보완 10])</td></tr>
+        <tr><td>SVPC-1 vs SVPC-2에서 잘못된 중앙 route 변경의 탐지와 복구 시간</td><td>두 안 모두 측정. 이것이 실제 선택 기준 (Q5-(3))</td></tr>
+        <tr><td>TGW attachment 처리량</td><td>AZ당 100 Gbps / 7.5M PPS 대비 여유 (2.7 [보완 18])</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>POC-0. 판정표 dry-run (신규 제언)</h3>
+  <p>
+    <strong>POC 3건보다 먼저 수행할 것을 제언합니다.</strong> 현재 방향 6개(BND-B, ACC-5, EKS-4, VPC-3, DATA-3, KEY-3)
+    전부가 "판정표로 재현 가능"을 성립 조건으로 두고 있으므로, 판정표가 없으면 어떤 POC 결과도 표준으로 전환되지 않습니다.
+  </p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 19. POC-0 설계</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">내용</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">입력</th><td>대표 workload 10~15개 (CUJ 포함, 개인정보 취급 1개 이상, One Core 공통 도메인 1개 이상, 작은 사내 도구 2개 이상, 외부 파트너 연동 1개 이상)</td></tr>
+        <tr><th scope="row">절차</th><td>판정표를 두 사람이 독립적으로 적용하고 결과를 대조</td></tr>
+        <tr><th scope="row">성공 기준</th><td>불일치율 20% 미만, 예외 처리율 15% 미만</td></tr>
+        <tr><th scope="row">부수 산출물</th><td>판정 결과로부터 Account, VPC, cluster 수 추정치가 나오며, 이 수치로 POC-1~3의 quota 측정 목표값이 결정됨</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== 07 ===================== -->
+<section class="sec" id="s7">
+  <h2><span class="no">07</span>후속 논의 항목 분류</h2>
+  <p class="key-msg">서면으로 답한 항목, 무신사 입력이 필요한 항목, POC와 보안팀 공동 검토가 필요한 항목, Specialist SA 참여를 권장하는 영역으로 나눴습니다.</p>
+  <p>문서 2장의 요청대로 항목을 구분합니다.</p>
+
+  <h3>서면 답변으로 충분 (본 회신에서 완료)</h3>
+  <ul class="plain">
+    <li>2장 전체 (12장 전제 검증)</li>
+    <li>Q1, Q2, Q3, Q5의 quota, 지원 범위, cross-account 제약</li>
+    <li>4장 선택지 판정표</li>
+  </ul>
+
+  <h3>추가 자료 필요 (무신사 측 입력 대기)</h3>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 20. 추가 자료가 필요한 항목과 요청 입력</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">필요한 입력</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Q4, Q6 정량 판정</td><td><strong>CUJ별 RTO / RPO 목표</strong> (5.1)</td></tr>
+        <tr><td>DATA-1 / DATA-2 선택</td><td>Multi-AZ DB cluster 사용 여부 (Q6-(1))</td></tr>
+        <tr><td>DATA-4 적용 범위</td><td>사용 중인 데이터와 메시징 서비스 인벤토리 (특히 RabbitMQ) (Q1-(4))</td></tr>
+        <tr><td>SVPC-1 판정</td><td>현재 및 3년 후 예상 TGW 전파 prefix 수 (Q5-(1))</td></tr>
+        <tr><td>IAM-H1 / H2 판정</td><td>Account별 접근 group 수 예상치 (Q3-(2))</td></tr>
+        <tr><td>CONN-4 판정</td><td>장기 연결(gRPC streaming 등) 사용 구간 유무 (Q5-(4))</td></tr>
+        <tr><td>A/B 설계</td><td>Kubernetes 목표 버전과 업그레이드 전략 (5.3)</td></tr>
+        <tr><td>NAT-2 판정</td><td>외부 파트너 allowlist에 등록된 고정 egress IP 유무 (2.6 [보완 16])</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>POC 필요</h3>
+  <ul class="plain">
+    <li>AVAIL-1 (POC-2)</li>
+    <li>SVPC-1 / SVPC-2 비교 (POC-3)</li>
+    <li>RUN-2 (POC-1)</li>
+    <li>AIOPS-3, AIOPS-4</li>
+    <li><strong>판정표 dry-run (POC-0)</strong> - 신규 제언</li>
+  </ul>
+
+  <h3>보안팀 공동 검토 필요</h3>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 21. 보안팀 공동 검토 항목</caption>
+      <thead>
+        <tr><th scope="col">항목</th><th scope="col">검토 내용</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AWS MCP Server endpoint 리전</td><td>미국 동부와 프랑크푸르트 endpoint의 개인정보보호법, ISMS-P 적합성 (2.12 [보완 25])</td></tr>
+        <tr><td>Backup copy destination 통제</td><td>개인정보 백업의 미승인 Account 유출 경로 차단 (Q6-(2))</td></tr>
+        <tr><td>RCP 배치</td><td>개인정보 저장소의 조직 외부 접근 최후 방어선 (Q6-(2))</td></tr>
+        <tr><td>미사용 리전 통제 방식</td><td>SCP Deny vs Region 비활성화 (5.5)</td></tr>
+        <tr><td><span class="mono">organizations:LeaveOrganization</span> Deny</td><td>백업 보유 계정의 조직 탈퇴 차단 (2.11 [보완 24])</td></tr>
+        <tr><td>SEC-2 / SEC-6 재정의</td><td>Security Hub CSPM과 Security Hub 구분, Config 의존 (Q6-(4))</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Specialist SA 참여 권장</h3>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>표 22. Specialist SA 참여 권장 영역</caption>
+      <thead>
+        <tr><th scope="col">영역</th><th scope="col">사유</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Networking SA</td><td>SVPC-1의 전파 route 한도 회피 설계, INSP-3의 두 구현 비교, TGW 처리량 상한</td></tr>
+        <tr><td>Container SA</td><td>A/B EKS Runtime의 upgrade 격리 설계, Shared subnet + EKS의 LB controller subnet 탐색, node group vs Karpenter 격리</td></tr>
+        <tr><td>Security SA</td><td>RCP, SCP, declarative policy 조합의 effective policy 검증, Control Tower LZ 4.0 baseline 의존 관계</td></tr>
+        <tr><td>Resilience SA</td><td>ARC zonal shift와 autoshift practice run 설계, CUJ 서비스 그래프의 AZ 커버리지 검증</td></tr>
+        <tr><td>Database SA</td><td>cross-account snapshot, backup, restore 경로의 RTO 실측, Multi-AZ DB cluster 제약</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>AWS 일반 기술 자문 범위를 벗어나는 항목</h3>
+  <ul class="plain">
+    <li>8장의 유사 사례: 고객 대외비가 아닌 공개 자료와 익명화된 일반 pattern에 한해 후속 세션에서 공유 가능합니다. 요청하신 "초기 선택 &rarr; 문제가 된 조건 &rarr; 변경 기준 &rarr; 이후 결과" 형식으로 정리하겠습니다.</li>
+    <li>절대 비용, 할인, credit 관련 판단: AWS Pricing Calculator와 담당 Account Team을 통해 별도로 진행하시기 바랍니다. 본 회신에서는 구조 비교에 필요한 과금 요소(NAT 고정비 vs 처리비, TGW attachment vs processing, Lattice 대역폭, IPAM Advanced Tier active IP 과금, Config item, Security Hub CSPM finding과 check)만 식별했습니다.</li>
+  </ul>
+</section>
+
+<!-- ===================== 08 ===================== -->
+<section class="sec" id="s8">
+  <h2><span class="no">08</span>우선순위 제언 - 추가로 결정할 3가지</h2>
+  <ol class="plain">
+    <li><strong>Config를 활성화할 것인가.</strong> 이 하나가 Control Tower baseline 의존 관계(Identity Center baseline 포함), Security Hub CSPM control coverage, SEC-2의 CNAPP 중복 판정을 동시에 결정합니다. 현재 문서는 이 결정을 SEC-2 안에 묻어두었습니다. (2.1, Q2, Q6-(4))</li>
+    <li><strong>CUJ별 RTO / RPO를 정의할 것인가.</strong> AVAIL-1, AZ-2 / AZ-3, DATA-1/2/3, KEY-3 판정이 모두 여기에 막혀 있습니다. (5.1)</li>
+    <li><strong>판정표를 만들 것인가.</strong> 현재 방향 6개 전부의 성립 조건입니다. POC보다 먼저 필요합니다. (POC-0)</li>
+  </ol>
+  <figure class="fig" id="fig-decision-map"><svg viewBox="0 0 860 312" width="100%" role="img" aria-label="추가로 결정할 3가지와 각 결정이 정하는 항목" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><rect x="30" y="20" width="262" height="50" rx="4" fill="#1F3A5F"/><text x="183.0" y="51" font-size="13" fill="#fff" text-anchor="middle" font-weight="700">1. Config를 활성화할 것인가</text><image href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BV1MtQ29uZmlnXzY0PC90aXRsZT4KICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS82NC9BcmNoX0FXUy1Db25maWdfNjQiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy82NC9NYW5hZ2VtZW50LUdvdmVybmFuY2UiIGZpbGw9IiNFNzE1N0IiPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiB4PSIwIiB5PSIwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiPjwvcmVjdD4KICAgICAgICA8L2c+CiAgICAgICAgPHBhdGggZD0iTTU4LjU0MDc0MjcsNDcuMDUwODczMSBMNjAuNDIxNTcyMiw0Ny43MDEzNTU2IEw1OS4yMzQ5ODg2LDUxLjEyOTgxNjUgQzU5LjA5NTc0MTUsNTEuNTMzNjMyOSA1OC43MTQ4MDE0LDUxLjc5ODIwMjMgNTguMjk2MDY1Nyw1MS43OTgyMDIzIEM1OC4yNTUyODYyLDUxLjc5ODIwMjMgNTguMjEzNTEyMSw1MS43OTYyMTMxIDU4LjE3MTczOCw1MS43OTEyNCBMNTQuMzQwNDU1Myw1MS4zMTM4MjE2IEw1NC41ODcxMjE1LDQ5LjMzOTQ5NzUgTDU2Ljc1MjQxMjksNDkuNjEwMDM0NiBDNTUuOTAxMDE2Nyw0OC4yNjgyOSA1NC4yOTQ3MDI3LDQ3LjQzMDgxODUgNTIuMzc1MDgyOSw0Ny40MzA4MTg1IEM0OS44NjA2NzkzLDQ3LjQzMDgxODUgNDcuOTU0OTg0Miw0OC44MDYzODAzIDQ3LjUyMDMzNDUsNTAuOTM0ODcwNyBMNDUuNTcxODcwNiw1MC41MzcwMjIgQzQ2LjIwNDQ1LDQ3LjQ0MTc1OTQgNDguODc1MDA5Miw0NS40NDE1NzUyIDUyLjM3NTA4MjksNDUuNDQxNTc1MiBDNTQuODI4ODE0Niw0NS40NDE1NzUyIDU2LjkwNjU3OTIsNDYuNDgwOTU0OCA1OC4xNTY4MTg3LDQ4LjE2MTg2NTUgTDU4LjU0MDc0MjcsNDcuMDUwODczMSBaIE01Ny4yMjk4MzEzLDUzLjc4OTQzNDkgTDU5LjE3ODI5NTEsNTQuMTg5MjcyOCBDNTguNTQ4Njk5Niw1Ny4yNjI2NTM4IDU1LjgxNDQ4NDYsNTkuMzI3NDg4NCA1Mi4zNzUwODI5LDU5LjMyNzQ4ODQgQzUwLjEzNjE4OTUsNTkuMzI3NDg4NCA0OC4xNjI4NjAxLDU4LjM2MjcwNTQgNDYuODg3NzU1MSw1Ni44MTUwNzQgTDQ2LjY4OTgyNTQsNTcuNzQ5MDIzOCBMNDQuNzQzMzUwOCw1Ny4zMzYyNTU4IEw0NS41MzIwODU4LDUzLjYxNDM4MTUgQzQ1LjY0NDQ3OCw1My4wODMyNTM1IDQ2LjE1NTcxMzUsNTIuNzM5MTE0NCA0Ni42OTY3ODc3LDUyLjg0NDU0NDMgTDUwLjMxNDIyNjgsNTMuNTUyNzE0OSBMNDkuOTMyMjkyMSw1NS41MDUxNTczIEw0OC4xMDkxNTA1LDU1LjE0ODA4ODEgQzQ4Ljk4MjQyODQsNTYuNDg2ODQ4OSA1MC41NjA4OTI5LDU3LjMzODI0NSA1Mi4zNzUwODI5LDU3LjMzODI0NSBDNTQuODgxNTI5NSw1Ny4zMzgyNDUgNTYuNzg3MjI0Niw1NS45NDQ3ODAxIDU3LjIyOTgzMTMsNTMuNzg5NDM0OSBMNTcuMjI5ODMxMyw1My43ODk0MzQ5IFogTTY1LjAxMDc1NjYsNTQuMDk5NzU2OSBMNjMuODE0MjI2OCw1NC4wMzIxMjI2IEM2My4zMzE4MzUzLDU0LjAwOTI0NjMgNjIuODk1MTk2Myw1NC4zMzE1MDM3IDYyLjc4Nzc3NzIsNTQuODA2OTMyOSBDNjIuNTI0MjAyNSw1NS45Nzc2MDI2IDYyLjA2NDY4NzIsNTcuMDg3NjAwNCA2MS40MjExNjcsNTguMTA2MDkzIEM2MS4xNjE1NzA4LDU4LjUxNjg3MTcgNjEuMjM3MTYyLDU5LjA1NTk1NjcgNjEuNTk5MjA0Myw1OS4zNzkyMDg3IEw2Mi40OTMzNjkyLDYwLjE3NTkwMDcgTDYwLjE3Njg5NTMsNjIuNDkzMzY5MiBMNTkuMzgzMTg3Miw2MS42MDQxNzc0IEM1OS4wNTg5NDA1LDYxLjI0MDE0NTkgNTguNTE5ODU1Niw2MS4xNjU1NDkzIDU4LjEwOTA3NjgsNjEuNDI1MTQ1NSBDNTcuMDkwNTg0Miw2Mi4wNjg2NjU3IDU1Ljk3OTU5MTgsNjIuNTI5MTc1NiA1NC44MDQ5NDM2LDYyLjc5NDczOTYgQzU0LjMzMTUwMzcsNjIuOTAyMTU4NyA1NC4wMDMyNzg2LDYzLjMzNTgxMzcgNTQuMDMyMTIyNiw2My44MjExODkxIEw1NC4wOTk3NTY5LDY1LjAxMDc1NjYgTDUwLjgyMTQ4MzgsNjUuMDEwNzU2NiBMNTAuODkwMTEyNyw2My44MjAxOTQ1IEM1MC45MTc5NjIxLDYzLjMzNDgxOTEgNTAuNTkwNzMxNiw2Mi45MDAxNjk1IDUwLjExNjI5NzEsNjIuNzkyNzUwMyBDNDguOTQ1NjI3Myw2Mi41MjkxNzU2IDQ3LjgzMzY0MDMsNjIuMDY3NjcxMSA0Ni44MTQxNTMxLDYxLjQyMzE1NjMgQzQ2LjQwMzM3NDMsNjEuMTYzNTYgNDUuODY0Mjg5NCw2MS4yMzcxNjIgNDUuNTQxMDM3NCw2MS42MDIxODgyIEw0NC43NDUzNCw2Mi40OTMzNjkyIEw0Mi40Mjc4NzE1LDYwLjE3NTkwMDcgTDQzLjMxOTA1MjUsNTkuMzgxMTk4IEM0My42ODIwODk0LDU5LjA1Nzk0NTkgNDMuNzU3NjgwNyw1OC41MTk4NTU2IDQzLjQ5ODA4NDQsNTguMTA5MDc2OCBDNDIuODU1NTU4OCw1Ny4wODk1ODk2IDQyLjM5NzAzODIsNTUuOTc5NTkxOCA0Mi4xMzI0Njg5LDU0LjgwNTkzODMgQzQyLjAyNjA0NDQsNTQuMzMwNTA5MSA0MS41NzQ0ODYxLDUzLjk5OTMwMDEgNDEuMTA2MDE5Myw1NC4wMzIxMjI2IEwzOS45MTE0Nzg3LDU0LjA5OTc1NjkgTDM5LjkxMTQ3ODcsNTAuODIyNDc4NCBMNDEuMTA5OTk3OCw1MC44OTAxMTI3IEM0MS41NTA2MTUyLDUwLjkxMDAwNTIgNDIuMDI4MDMzNiw1MC41OTE3MjYyIDQyLjEzNjQ0NzQsNTAuMTE3MjkxNyBDNDIuNDAxMDE2Nyw0OC45NDc2MTY2IDQyLjg2MTUyNjYsNDcuODM4NjEzNCA0My41MDUwNDY4LDQ2LjgyMTExNTQgQzQzLjc2NDY0Myw0Ni40MDkzNDIxIDQzLjY4ODA1NzIsNDUuODcxMjUxNyA0My4zMjYwMTQ5LDQ1LjU0Nzk5OTcgTDQyLjQyNzg3MTUsNDQuNzQ2MzM0NiBMNDQuNzQ1MzQsNDIuNDI3ODcxNSBMNDUuNTQ3MDA1MSw0My4zMjUwMjAzIEM0NS44NjkyNjI1LDQzLjY4OTA1MTggNDYuNDEwMzM2Nyw0My43NjI2NTM4IDQ2LjgxOTEyNjIsNDMuNTA1MDQ2OCBDNDcuODM1NjI5Niw0Mi44NjM1MTU4IDQ4Ljk0NTYyNzMsNDIuNDA0OTk1MiA1MC4xMTYyOTcxLDQyLjE0MDQyNTggQzUwLjU5MDczMTYsNDIuMDMzMDA2NyA1MC45MTc5NjIxLDQxLjU5ODM1NyA1MC44OTAxMTI3LDQxLjExMjk4MTcgTDUwLjgyMTQ4MzgsMzkuOTExNDc4NyBMNTQuMDk5NzU2OSwzOS45MTE0Nzg3IEw1NC4wMzIxMjI2LDQxLjExNDk3MDkgQzU0LjAwMzI3ODYsNDEuNjAwMzQ2MyA1NC4zMzE1MDM3LDQyLjAzNDAwMTMgNTQuODA0OTQzNiw0Mi4xNDE0MjA1IEM1NS45NzQ2MTg3LDQyLjQwNTk4OTggNTcuMDgyNjI3Myw0Mi44NjU1MDUgNTguMDk5MTMwNiw0My41MDcwMzYgQzU4LjUwNzkyMDEsNDMuNzY0NjQzIDU5LjA0Nzk5OTcsNDMuNjkxMDQxIDU5LjM3MjI0NjQsNDMuMzI4MDA0MSBMNjAuMTc1OTAwNyw0Mi40Mjc4NzE1IEw2Mi40OTMzNjkyLDQ0Ljc0NjMzNDYgTDYxLjU5NzIxNTEsNDUuNTQ1MDE1OCBDNjEuMjM1MTcyOCw0NS44NjkyNjI1IDYxLjE1OTU4MTUsNDYuNDA3MzUyOCA2MS40MTkxNzc4LDQ2LjgxODEzMTYgQzYyLjA2MTcwMzQsNDcuODM2NjI0MiA2Mi41MjIyMTMyLDQ4Ljk0NTYyNzMgNjIuNzg2NzgyNiw1MC4xMTcyOTE3IEM2Mi44OTQyMDE3LDUwLjU5MTcyNjIgNjMuMzU0NzExNiw1MC45MTAwMDUyIDYzLjgxMzIzMjIsNTAuODkwMTEyNyBMNjUuMDEwNzU2Niw1MC44MjI0Nzg0IEw2NS4wMTA3NTY2LDU0LjA5OTc1NjkgWiBNNjYuNjg3Njg4OCw0OS4wNDYwODQxIEM2Ni40ODk3NTkxLDQ4Ljg1ODEwMDYgNjYuMjE0MjQ4OSw0OC43NTg2Mzg1IDY1Ljk0ODY4NDksNDguNzc1NTQ3IEw2NC41MTI0NTEyLDQ4Ljg1ODEwMDYgQzY0LjI2Njc3OTYsNDguMDM2NTQzMSA2My45Mzg1NTQ1LDQ3LjI0MjgzNSA2My41Mjk3NjUsNDYuNDg3OTE3MiBMNjQuNjAzOTU2NCw0NS41MjkxMDE5IEM2NC44MDc4NTM4LDQ1LjM0NzA4NjEgNjQuOTI4MjAzMSw0NS4wODg0ODQ1IDY0LjkzNjE2LDQ0LjgxNDk2MzUgQzY0Ljk0MzEyMjQsNDQuNTQyNDM3MiA2NC44Mzc2OTI1LDQ0LjI3Njg3MzIgNjQuNjQ0NzM1OSw0NC4wODM5MTY2IEw2MC44MzgzMTg3LDQwLjI3NjUwNDggQzYwLjY0NDM2NzUsNDAuMDgzNTQ4MiA2MC4zOTE3MzM2LDM5Ljk3MTE1NiA2MC4xMDYyNzcyLDM5Ljk4NjA3NTMgQzU5LjgzMjc1NjIsMzkuOTk0MDMyMyA1OS41NzUxNDkyLDQwLjExMzM4NjkgNTkuMzkyMTM4OCw0MC4zMTcyODQzIEw1OC40MzAzMzk2LDQxLjM5NjQ0ODggQzU3LjY3NjQxNjQsNDAuOTg4NjUzOSA1Ni44ODQ2OTc2LDQwLjY2MDQyODggNTYuMDY0MTM0Nyw0MC40MTU3NTE5IEw1Ni4xNDU2OTM3LDM4Ljk3MjU1NTggQzU2LjE2MDYxMywzOC43MDAwMjk1IDU2LjA2NDEzNDcsMzguNDMyNDc2MiA1NS44NzUxNTY2LDM4LjIzMzU1MTkgQzU1LjY4ODE2NzcsMzguMDM0NjI3NiA1NS40MjY1ODIyLDM3LjkyMjIzNTMgNTUuMTUzMDYxMiwzNy45MjIyMzUzIEw0OS43NjkxNzQxLDM3LjkyMjIzNTMgQzQ5LjQ5NDY1ODUsMzcuOTIyMjM1MyA0OS4yMzQwNjc2LDM4LjAzNDYyNzYgNDkuMDQ2MDg0MSwzOC4yMzM1NTE5IEM0OC44NTgxMDA2LDM4LjQzMjQ3NjIgNDguNzYwNjI3NywzOC43MDAwMjk1IDQ4Ljc3NjU0MTcsMzguOTcyNTU1OCBMNDguODU4MTAwNiw0MC40MTM3NjI2IEM0OC4wMzU1NDg1LDQwLjY1ODQzOTUgNDcuMjQ0ODI0Myw0MC45ODY2NjQ3IDQ2LjQ4OTkwNjQsNDEuMzk0NDU5NiBMNDUuNTI5MTAxOSw0MC4zMTgyNzg5IEM0NS4zNDcwODYxLDQwLjExMzM4NjkgNDUuMDg5NDc5MSwzOS45OTQwMzIzIDQ0LjgxNDk2MzUsMzkuOTg2MDc1MyBDNDQuNTM3NDY0MSwzOS45NzQxMzk4IDQ0LjI3Nzg2NzgsNDAuMDgzNTQ4MiA0NC4wODM5MTY2LDQwLjI3NjUwNDggTDQwLjI3NjUwNDgsNDQuMDgzOTE2NiBDNDAuMDgyNTUzNiw0NC4yNzY4NzMyIDM5Ljk3NzEyMzcsNDQuNTQyNDM3MiAzOS45ODUwODA3LDQ0LjgxNDk2MzUgQzM5Ljk5MzAzNzYsNDUuMDg4NDg0NSA0MC4xMTMzODY5LDQ1LjM0NzA4NjEgNDAuMzE3Mjg0Myw0NS41MjkxMDE5IEw0MS4zOTQ0NTk2LDQ2LjQ5MDkwMTEgQzQwLjk4NTY3MDEsNDcuMjQ0ODI0MyA0MC42NTc0NDQ5LDQ4LjAzNzUzNzggNDAuNDEwNzc4OCw0OC44NTgxMDA2IEwzOC45NzI1NTU4LDQ4Ljc3NTU0NyBDMzguNzAxMDI0MSw0OC43NTc2NDM5IDM4LjQzMTQ4MTYsNDguODU4MTAwNiAzOC4yMzM1NTE5LDQ5LjA0NjA4NDEgQzM4LjAzNDYyNzYsNDkuMjM0MDY3NiAzNy45MjIyMzUzLDQ5LjQ5NTY1MzEgMzcuOTIyMjM1Myw0OS43NjkxNzQxIEwzNy45MjIyMzUzLDU1LjE1MzA2MTIgQzM3LjkyMjIzNTMsNTUuNDI1NTg3NiAzOC4wMzQ2Mjc2LDU1LjY4ODE2NzcgMzguMjMzNTUxOSw1NS44NzYxNTEyIEMzOC40MzE0ODE2LDU2LjA2NDEzNDcgMzguNzAyMDE4Nyw1Ni4xNTk2MTg0IDM4Ljk3MjU1NTgsNTYuMTQ1NjkzNyBMNDAuNDA1ODA1Niw1Ni4wNjQxMzQ3IEM0MC42NTE0NzcyLDU2Ljg4NzY4MTQgNDAuOTc5NzAyNCw1Ny42ODEzODk1IDQxLjM4ODQ5MTksNTguNDM4Mjk2NiBMNDAuMzE3Mjg0Myw1OS4zOTIxMzg4IEM0MC4xMTMzODY5LDU5LjU3NTE0OTIgMzkuOTkzMDM3Niw1OS44MzI3NTYyIDM5Ljk4NTA4MDcsNjAuMTA2Mjc3MiBDMzkuOTc3MTIzNyw2MC4zNzk3OTgxIDQwLjA4MjU1MzYsNjAuNjQ0MzY3NSA0MC4yNzY1MDQ4LDYwLjgzODMxODcgTDQ0LjA4MzkxNjYsNjQuNjQ0NzM1OSBDNDQuMjc3ODY3OCw2NC44Mzg2ODcxIDQ0LjU2MTMzNSw2NC45NDUxMTE2IDQ0LjgxNDk2MzUsNjQuOTM2MTYgQzQ1LjA4OTQ3OTEsNjQuOTI4MjAzMSA0NS4zNDcwODYxLDY0LjgwNzg1MzggNDUuNTI5MTAxOSw2NC42MDM5NTY0IEw0Ni40ODM5Mzg3LDYzLjUzMzc0MzUgQzQ3LjI0MDg0NTgsNjMuOTQzNTI3NiA0OC4wMzQ1NTM5LDY0LjI3Mjc0NzQgNDguODU4MTAwNiw2NC41MTg0MTg5IEw0OC43NzY1NDE3LDY1Ljk0ODY4NDkgQzQ4Ljc2MDYyNzcsNjYuMjIyMjA1OCA0OC44NTgxMDA2LDY2LjQ4OTc1OTEgNDkuMDQ2MDg0MSw2Ni42ODg2ODM0IEM0OS4yMzQwNjc2LDY2Ljg4NzYwNzggNDkuNDk0NjU4NSw2NyA0OS43NjkxNzQxLDY3IEw1NS4xNTMwNjEyLDY3IEM1NS40MjY1ODIyLDY3IDU1LjY4ODE2NzcsNjYuODg3NjA3OCA1NS44NzUxNTY2LDY2LjY4ODY4MzQgQzU2LjA2NDEzNDcsNjYuNDg5NzU5MSA1Ni4xNjA2MTMsNjYuMjIyMjA1OCA1Ni4xNDU2OTM3LDY1Ljk0ODY4NDkgTDU2LjA2NDEzNDcsNjQuNTIwNDA4MiBDNTYuODg4Njc2LDY0LjI3NDczNjYgNTcuNjgzMzc4OCw2My45NDU1MTY4IDU4LjQzOTI5MTIsNjMuNTM1NzMyNyBMNTkuMzkyMTM4OCw2NC42MDM5NTY0IEM1OS41NzQxNTQ2LDY0LjgwODg0ODQgNTkuODMyNzU2Miw2NC45MjgyMDMxIDYwLjEwNjI3NzIsNjQuOTM2MTYgQzYwLjM5NDcxNzUsNjQuOTQ4MDk1NSA2MC42NDQzNjc1LDY0LjgzODY4NzEgNjAuODM4MzE4Nyw2NC42NDQ3MzU5IEw2NC42NDQ3MzU5LDYwLjgzODMxODcgQzY0LjgzNzY5MjUsNjAuNjQ0MzY3NSA2NC45NDMxMjI0LDYwLjM3OTc5ODEgNjQuOTM2MTYsNjAuMTA2Mjc3MiBDNjQuOTI4MjAzMSw1OS44MzI3NTYyIDY0LjgwNzg1MzgsNTkuNTc1MTQ5MiA2NC42MDM5NTY0LDU5LjM5MzEzMzQgTDYzLjUzMTc1NDIsNTguNDM2MzA3NCBDNjMuOTQwNTQzNyw1Ny42ODAzOTQ5IDY0LjI2OTc2MzUsNTYuODg2Njg2OCA2NC41MTQ0NDA0LDU2LjA2NDEzNDcgTDY1Ljk0ODY4NDksNTYuMTQ1NjkzNyBDNjYuMjEzMjU0Myw1Ni4xNTg2MjM3IDY2LjQ4OTc1OTEsNTYuMDYzMTQwMSA2Ni42ODc2ODg4LDU1Ljg3NjE1MTIgQzY2Ljg4NzYwNzgsNTUuNjg4MTY3NyA2Nyw1NS40MjU1ODc2IDY3LDU1LjE1MzA2MTIgTDY3LDQ5Ljc2OTE3NDEgQzY3LDQ5LjQ5NTY1MzEgNjYuODg3NjA3OCw0OS4yMzQwNjc2IDY2LjY4NzY4ODgsNDkuMDQ2MDg0MSBMNjYuNjg3Njg4OCw0OS4wNDYwODQxIFogTTE0Ljk4OTI0MzQsNTQuNzc0MTEwNCBMMzQuODgxNjc2OSw1NC43NzQxMTA0IEwzNC44ODE2NzY5LDU2Ljc2MzM1MzcgTDEzLjk5NDYyMTcsNTYuNzYzMzUzNyBDMTMuNDQ0NTk1OSw1Ni43NjMzNTM3IDEzLDU2LjMxNzc2MzIgMTMsNTUuNzY4NzMyIEwxMywxMy45OTQ2MjE3IEMxMywxMy40NDU1OTA1IDEzLjQ0NDU5NTksMTMgMTMuOTk0NjIxNywxMyBMNTkuNzQ3MjE4NywxMyBDNjAuMjk3MjQ0NSwxMyA2MC43NDE4NDA0LDEzLjQ0NTU5MDUgNjAuNzQxODQwNCwxMy45OTQ2MjE3IEw2MC43NDE4NDA0LDM1Ljg3NjI5ODUgTDU4Ljc1MjU5NzEsMzUuODc2Mjk4NSBMNTguNzUyNTk3MSwxNC45ODkyNDM0IEwxNC45ODkyNDM0LDE0Ljk4OTI0MzQgTDE0Ljk4OTI0MzQsNTQuNzc0MTEwNCBaIE00Ny44MTE3NTg2LDI2LjkyNDcwMzUgTDQ2LjgxNzEzNywyNi45MjQ3MDM1IEw0Ni44MTcxMzcsMjQuOTM1NDYwMSBMNDcuODExNzU4NiwyNC45MzU0NjAxIEw1MS43OTAyNDUzLDI0LjkzNTQ2MDEgTDUyLjc4NDg2NywyNC45MzU0NjAxIEw1Mi43ODQ4NjcsMjYuOTI0NzAzNSBMNTEuNzkwMjQ1MywyNi45MjQ3MDM1IEw0Ny44MTE3NTg2LDI2LjkyNDcwMzUgWiBNNDguODA2MzgwMywyMi45NDYyMTY4IEw1MC43OTU2MjM3LDIyLjk0NjIxNjggTDUwLjc5NTYyMzcsMTguOTY3NzMwMSBMNDguODA2MzgwMywxOC45Njc3MzAxIEw0OC44MDYzODAzLDIyLjk0NjIxNjggWiBNNTIuNzg0ODY3LDM1Ljg3NjI5ODUgTDUyLjc4NDg2NywyOC45MTM5NDY4IEw1My43Nzk0ODg3LDI4LjkxMzk0NjggQzU0LjMyOTUxNDUsMjguOTEzOTQ2OCA1NC43NzQxMTA0LDI4LjQ2ODM1NjMgNTQuNzc0MTEwNCwyNy45MTkzMjUxIEw1NC43NzQxMTA0LDIzLjk0MDgzODQgQzU0Ljc3NDExMDQsMjMuMzkxODA3MyA1NC4zMjk1MTQ1LDIyLjk0NjIxNjggNTMuNzc5NDg4NywyMi45NDYyMTY4IEw1Mi43ODQ4NjcsMjIuOTQ2MjE2OCBMNTIuNzg0ODY3LDE3Ljk3MzEwODQgQzUyLjc4NDg2NywxNy40MjQwNzcyIDUyLjM0MDI3MTEsMTYuOTc4NDg2NyA1MS43OTAyNDUzLDE2Ljk3ODQ4NjcgTDQ3LjgxMTc1ODYsMTYuOTc4NDg2NyBDNDcuMjYxNzMyOSwxNi45Nzg0ODY3IDQ2LjgxNzEzNywxNy40MjQwNzcyIDQ2LjgxNzEzNywxNy45NzMxMDg0IEw0Ni44MTcxMzcsMjIuOTQ2MjE2OCBMNDUuODIyNTE1MywyMi45NDYyMTY4IEM0NS4yNzI0ODk1LDIyLjk0NjIxNjggNDQuODI3ODkzNiwyMy4zOTE4MDczIDQ0LjgyNzg5MzYsMjMuOTQwODM4NCBMNDQuODI3ODkzNiwyNy45MTkzMjUxIEM0NC44Mjc4OTM2LDI4LjQ2ODM1NjMgNDUuMjcyNDg5NSwyOC45MTM5NDY4IDQ1LjgyMjUxNTMsMjguOTEzOTQ2OCBMNDYuODE3MTM3LDI4LjkxMzk0NjggTDQ2LjgxNzEzNywzNS44NzYyOTg1IEw0OC44MDYzODAzLDM1Ljg3NjI5ODUgTDQ4LjgwNjM4MDMsMjguOTEzOTQ2OCBMNTAuNzk1NjIzNywyOC45MTM5NDY4IEw1MC43OTU2MjM3LDM1Ljg3NjI5ODUgTDUyLjc4NDg2NywzNS44NzYyOTg1IFogTTMzLjg4NzA1NTIsMzcuODY1NTQxOSBMMzIuODkyNDMzNSwzNy44NjU1NDE5IEwzMi44OTI0MzM1LDM1Ljg3NjI5ODUgTDMzLjg4NzA1NTIsMzUuODc2Mjk4NSBMMzcuODY1NTQxOSwzNS44NzYyOTg1IEwzOC44NjAxNjM2LDM1Ljg3NjI5ODUgTDM4Ljg2MDE2MzYsMzcuODY1NTQxOSBMMzcuODY1NTQxOSwzNy44NjU1NDE5IEwzMy44ODcwNTUyLDM3Ljg2NTU0MTkgWiBNMzQuODgxNjc2OSwzMy44ODcwNTUyIEwzNi44NzA5MjAyLDMzLjg4NzA1NTIgTDM2Ljg3MDkyMDIsMTguOTY3NzMwMSBMMzQuODgxNjc2OSwxOC45Njc3MzAxIEwzNC44ODE2NzY5LDMzLjg4NzA1NTIgWiBNMzguODYwMTYzNiw0MS44NDQwMjg2IEwzOC44NjAxNjM2LDM5Ljg1NDc4NTIgTDM5Ljg1NDc4NTIsMzkuODU0Nzg1MiBDNDAuNDA0ODExLDM5Ljg1NDc4NTIgNDAuODQ5NDA2OSwzOS40MDkxOTQ3IDQwLjg0OTQwNjksMzguODYwMTYzNiBMNDAuODQ5NDA2OSwzNC44ODE2NzY5IEM0MC44NDk0MDY5LDM0LjMzMjY0NTcgNDAuNDA0ODExLDMzLjg4NzA1NTIgMzkuODU0Nzg1MiwzMy44ODcwNTUyIEwzOC44NjAxNjM2LDMzLjg4NzA1NTIgTDM4Ljg2MDE2MzYsMTcuOTczMTA4NCBDMzguODYwMTYzNiwxNy40MjQwNzcyIDM4LjQxNTU2NzcsMTYuOTc4NDg2NyAzNy44NjU1NDE5LDE2Ljk3ODQ4NjcgTDMzLjg4NzA1NTIsMTYuOTc4NDg2NyBDMzMuMzM3MDI5NCwxNi45Nzg0ODY3IDMyLjg5MjQzMzUsMTcuNDI0MDc3MiAzMi44OTI0MzM1LDE3Ljk3MzEwODQgTDMyLjg5MjQzMzUsMzMuODg3MDU1MiBMMzEuODk3ODExOCwzMy44ODcwNTUyIEMzMS4zNDc3ODYsMzMuODg3MDU1MiAzMC45MDMxOTAyLDM0LjMzMjY0NTcgMzAuOTAzMTkwMiwzNC44ODE2NzY5IEwzMC45MDMxOTAyLDM4Ljg2MDE2MzYgQzMwLjkwMzE5MDIsMzkuNDA5MTk0NyAzMS4zNDc3ODYsMzkuODU0Nzg1MiAzMS44OTc4MTE4LDM5Ljg1NDc4NTIgTDMyLjg5MjQzMzUsMzkuODU0Nzg1MiBMMzIuODkyNDMzNSw1MC43OTU2MjM3IEwzNC44ODE2NzY5LDUwLjc5NTYyMzcgTDM0Ljg4MTY3NjksMzkuODU0Nzg1MiBMMzYuODcwOTIwMiwzOS44NTQ3ODUyIEwzNi44NzA5MjAyLDQxLjg0NDAyODYgTDM4Ljg2MDE2MzYsNDEuODQ0MDI4NiBaIE0xOC45Njc3MzAxLDI3LjkxOTMyNTEgTDE5Ljk2MjM1MTcsMjcuOTE5MzI1MSBMMjMuOTQwODM4NCwyNy45MTkzMjUxIEwyNC45MzU0NjAxLDI3LjkxOTMyNTEgTDI0LjkzNTQ2MDEsMjkuOTA4NTY4NSBMMjMuOTQwODM4NCwyOS45MDg1Njg1IEwxOS45NjIzNTE3LDI5LjkwODU2ODUgTDE4Ljk2NzczMDEsMjkuOTA4NTY4NSBMMTguOTY3NzMwMSwyNy45MTkzMjUxIFogTTIwLjk1Njk3MzQsMjUuOTMwMDgxOCBMMjIuOTQ2MjE2OCwyNS45MzAwODE4IEwyMi45NDYyMTY4LDE4Ljk2NzczMDEgTDIwLjk1Njk3MzQsMTguOTY3NzMwMSBMMjAuOTU2OTczNCwyNS45MzAwODE4IFogTTIwLjk1Njk3MzQsNDguODA2MzgwMyBMMjIuOTQ2MjE2OCw0OC44MDYzODAzIEwyMi45NDYyMTY4LDMxLjg5NzgxMTggTDIwLjk1Njk3MzQsMzEuODk3ODExOCBMMjAuOTU2OTczNCw0OC44MDYzODAzIFogTTE5Ljk2MjM1MTcsNTAuNzk1NjIzNyBMMjMuOTQwODM4NCw1MC43OTU2MjM3IEMyNC40OTA4NjQyLDUwLjc5NTYyMzcgMjQuOTM1NDYwMSw1MC4zNTAwMzMyIDI0LjkzNTQ2MDEsNDkuODAxMDAyIEwyNC45MzU0NjAxLDMxLjg5NzgxMTggTDI1LjkzMDA4MTgsMzEuODk3ODExOCBDMjYuNDgwMTA3NiwzMS44OTc4MTE4IDI2LjkyNDcwMzUsMzEuNDUyMjIxMyAyNi45MjQ3MDM1LDMwLjkwMzE5MDIgTDI2LjkyNDcwMzUsMjYuOTI0NzAzNSBDMjYuOTI0NzAzNSwyNi4zNzU2NzIzIDI2LjQ4MDEwNzYsMjUuOTMwMDgxOCAyNS45MzAwODE4LDI1LjkzMDA4MTggTDI0LjkzNTQ2MDEsMjUuOTMwMDgxOCBMMjQuOTM1NDYwMSwxNy45NzMxMDg0IEMyNC45MzU0NjAxLDE3LjQyNDA3NzIgMjQuNDkwODY0MiwxNi45Nzg0ODY3IDIzLjk0MDgzODQsMTYuOTc4NDg2NyBMMTkuOTYyMzUxNywxNi45Nzg0ODY3IEMxOS40MTIzMjU5LDE2Ljk3ODQ4NjcgMTguOTY3NzMwMSwxNy40MjQwNzcyIDE4Ljk2NzczMDEsMTcuOTczMTA4NCBMMTguOTY3NzMwMSwyNS45MzAwODE4IEwxNy45NzMxMDg0LDI1LjkzMDA4MTggQzE3LjQyMzA4MjYsMjUuOTMwMDgxOCAxNi45Nzg0ODY3LDI2LjM3NTY3MjMgMTYuOTc4NDg2NywyNi45MjQ3MDM1IEwxNi45Nzg0ODY3LDMwLjkwMzE5MDIgQzE2Ljk3ODQ4NjcsMzEuNDUyMjIxMyAxNy40MjMwODI2LDMxLjg5NzgxMTggMTcuOTczMTA4NCwzMS44OTc4MTE4IEwxOC45Njc3MzAxLDMxLjg5NzgxMTggTDE4Ljk2NzczMDEsNDkuODAxMDAyIEMxOC45Njc3MzAxLDUwLjM1MDAzMzIgMTkuNDEyMzI1OSw1MC43OTU2MjM3IDE5Ljk2MjM1MTcsNTAuNzk1NjIzNyBMMTkuOTYyMzUxNyw1MC43OTU2MjM3IFoiIGlkPSJBV1MtQ29uZmlnX0ljb25fNjRfU3F1aWQiIGZpbGw9IiNGRkZGRkYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+" x="40" y="27" width="36" height="36"/><line x1="161.0" y1="70" x2="161.0" y2="90" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><rect x="30" y="92" width="262" height="52" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="42" y="113" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">Control Tower baseline 의존 관계</text><text x="42" y="131" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">(IdentityCenterBaseline 사용 가능 여부, IAM-H1)</text><rect x="30" y="154" width="262" height="52" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="42" y="175" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">Security Hub CSPM control coverage</text><text x="42" y="193" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">(대부분 control이 Config 요구)</text><rect x="30" y="216" width="262" height="36" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="42" y="237" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">SEC-2의 CNAPP 중복 판정</text><rect x="314" y="20" width="262" height="50" rx="4" fill="#1F3A5F"/><text x="445.0" y="51" font-size="13" fill="#fff" text-anchor="middle" font-weight="700">2. CUJ별 RTO / RPO를 정의할 것인가</text><line x1="445.0" y1="70" x2="445.0" y2="90" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><rect x="314" y="92" width="262" height="52" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="326" y="113" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">AVAIL-1</text><text x="326" y="131" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">(A/B 전환 시간이 충분한가)</text><rect x="314" y="154" width="262" height="52" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="326" y="175" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">AZ-2 / AZ-3</text><text x="326" y="193" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">(N-1 상태의 SLO 유지)</text><rect x="314" y="216" width="262" height="52" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="326" y="237" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">DATA-1/2/3, KEY-3</text><text x="326" y="255" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">(snapshot 복사 시간 포함 복구 가능성)</text><rect x="598" y="20" width="262" height="50" rx="4" fill="#1F3A5F"/><text x="729.0" y="51" font-size="13" fill="#fff" text-anchor="middle" font-weight="700">3. 판정표를 만들 것인가</text><line x1="729.0" y1="70" x2="729.0" y2="90" stroke="#1F3A5F" stroke-width="1.5" marker-end="url(#ar)"/><rect x="598" y="92" width="262" height="52" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="610" y="113" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">현재 방향 6개의 성립 조건</text><text x="610" y="131" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">(BND-B, ACC-5, EKS-4, VPC-3, DATA-3, KEY-3)</text><rect x="598" y="154" width="262" height="36" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="610" y="175" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">POC-1, 2, 3의 quota 측정 목표값</text><rect x="598" y="200" width="262" height="52" rx="4" fill="#fff" stroke="#D9DEE6" stroke-width="1.5"/><text x="610" y="221" font-size="12" fill="#1A1F2B" text-anchor="start" font-weight="600">POC-0 dry-run</text><text x="610" y="239" font-size="11" fill="#5B6470" text-anchor="start" font-weight="400">(두 사람 독립 판정, 불일치율 20% 미만)</text><text x="430" y="300" font-size="12" fill="#5B6470" text-anchor="middle" font-weight="400">세 결정이 정해지면 나머지 판정은 정성 비교에서 정량 판정으로 바뀌고 재작업이 줄어듭니다.</text></svg><figcaption>그림 7. 추가로 결정할 3가지와 각 결정이 좌우하는 항목</figcaption></figure>
+<div class="rec"><span class="tag t-rec">정리</span><div class="f-body">나머지 항목은 이 3가지가 정해진 뒤에 검토하면 재작업이 크게 줄어듭니다.</div></div>
+</section>
+<!-- ===================== 검증 범위와 한계 ===================== -->
+<section class="sec" id="limits">
+  <h2><span class="no"></span>검증 범위와 한계</h2>
+  <ul class="plain">
+    <li>본 회신은 <strong>2026-08-30 기준 AWS 공식 문서</strong>를 근거로 작성했습니다. Quota 기본값과 서비스 동작은 변경될 수 있으므로, 실제 구축 시점에 Service Quotas 콘솔에서 적용된 quota(applied quota)를 다시 확인해야 합니다. 기본값과 계정에 적용된 값은 다를 수 있습니다.</li>
+    <li>서울 리전(<span class="mono">ap-northeast-2</span>)의 개별 기능 지원 여부 중 다음은 문서 링크로 확인했으나 실제 콘솔과 API 확인을 권합니다: Regional NAT Gateway 지원, Route 53 Profiles 지원, Security Hub CSPM과 GuardDuty의 finding type별 coverage, Regional NAT Gateway의 constrained AZ 해당 여부.</li>
+    <li>무신사 환경의 실제 상태(Account 수, 현재 quota 사용량, 전파 prefix 수, Kubernetes 버전, Multi-AZ DB cluster 사용 여부)는 확인하지 않았습니다. 7장의 "추가 자료 필요" 항목이 그 목록입니다.</li>
+    <li>조직 책임, 비용 배분, 위험 수용 수준과 최종 선택은 무신사가 결정합니다. 본 회신은 AWS 기술 관점의 성립 여부와 적용 조건만 다룹니다.</li>
+  </ul>
+</section>
+
+<!-- ===================== References ===================== -->
+<section class="sec refs" id="refs">
+  <h2><span class="no"></span>참고 자료</h2>
+  <p>본 회신에서 인용한 AWS 공식 문서입니다. 본문 각 절의 수치와 동작 서술은 아래 문서에 대응합니다.</p>
+
+  <h3>Organizations / Control Tower</h3>
+  <ul>
+    <li>
+      <a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html">Organizations quotas</a>
+      - SCP 10/entity, 10,240자 / RCP 5/entity, 5,120자 / OU 5단계 / 상속 정책은 한도 미소비
+      <span class="url">https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/controltower/latest/userguide/key-changes-lz-v4.html">Control Tower landing zone 4.0 key changes</a>
+      - baseline 의존 관계, Security OU 동작 변화, Config integration 범위, CentralizedLogging 동작 변경
+      <span class="url">https://docs.aws.amazon.com/controltower/latest/userguide/key-changes-lz-v4.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/controltower/latest/userguide/config-updates-v4.html">Control Tower AWS Config updates (4.0)</a>
+      <span class="url">https://docs.aws.amazon.com/controltower/latest/userguide/config-updates-v4.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/controltower/latest/userguide/account-auto-enrollment.html">Control Tower account auto-enrollment</a>
+      - 3.1 이상, unenroll 시 baseline 삭제, eventual consistency, Service Catalog provisioned product 미처리
+      <span class="url">https://docs.aws.amazon.com/controltower/latest/userguide/account-auto-enrollment.html</span>
+    </li>
+  </ul>
+
+  <h3>IAM / Identity Center</h3>
+  <ul>
+    <li>
+      <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/limits.html">IAM Identity Center quotas</a>
+      - permission set 3,500/instance, 500/Account, group 100/permission set/Account(조정 불가), 관리형 정책 25(IAM 10이 실효 상한), API 20 TPS
+      <span class="url">https://docs.aws.amazon.com/singlesignon/latest/userguide/limits.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html">EKS Access Entries</a>
+      <span class="url">https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html">EKS IAM best practices</a>
+      <span class="url">https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html">EKS Pod Identity</a>
+      <span class="url">https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-id-assign-target-role.html">EKS Pod Identity target role</a>
+      <span class="url">https://docs.aws.amazon.com/eks/latest/userguide/pod-id-assign-target-role.html</span>
+    </li>
+  </ul>
+
+  <h3>VPC / Connectivity</h3>
+  <ul>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html">VPC quotas</a>
+      - 전파 route 100/route table(조정 불가), participant 100/VPC, 공유 subnet 100/Account, NAU 64,000에서 256,000, Peered NAU 128,000에서 512,000, SG rule x SG &le; 1,000, Resolver 1,024 packet/s per ENI
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-share-limitations.html">Shared VPC owner / participant 책임</a>
+      - NAT describe 불가, route table과 NACL은 describe만, flow log 비대칭
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/vpc-share-limitations.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html">Shared subnet 지원 서비스</a>
+      - Amazon MQ는 Apache MQ만
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-share-subnet-working-with.html">Shared subnet AZ ID</a>
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-share-subnet-working-with.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/userguide/security-group-sharing.html">Security Group 공유</a>
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/security-group-sharing.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html">Regional NAT Gateway</a>
+      - private NAT 미지원, 60분 확장, AZ당 IP 32개, constrained AZ 미지원, Automatic / Manual mode, TGW route 지원
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html">TGW quotas</a>
+      - VPC당 attachment 1개, AZ당 100 Gbps / 7.5M PPS, route 10,000, VPN MTU 1,500, MSS clamping
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc-lattice/latest/ug/quotas.html">VPC Lattice quotas</a>
+      - 연결 수명 10분, VPC당 service network 1개, 10 Gbps / 10,000 RPS per service per AZ
+      <span class="url">https://docs.aws.amazon.com/vpc-lattice/latest/ug/quotas.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html">PrivateLink 지원 서비스</a>
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html">VPC endpoint policy</a>
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/network-firewall/latest/developerguide/tgw-firewall.html">Network Firewall TGW attachment</a>
+      <span class="url">https://docs.aws.amazon.com/network-firewall/latest/developerguide/tgw-firewall.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/network-firewall/latest/developerguide/asymmetric-routing.html">Network Firewall asymmetric routing</a>
+      <span class="url">https://docs.aws.amazon.com/network-firewall/latest/developerguide/asymmetric-routing.html</span>
+    </li>
+  </ul>
+
+  <h3>EKS / 가용성</h3>
+  <ul>
+    <li>
+      <a href="https://docs.aws.amazon.com/general/latest/gr/eks.html#limits_eks">EKS quotas</a>
+      - cluster 100, access entry 3,000(조정 불가), node group 30, node 450/group, control plane SG 4
+      <span class="url">https://docs.aws.amazon.com/general/latest/gr/eks.html#limits_eks</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html">EKS VPC와 subnet 고려사항</a>
+      - multi-VPC cluster 불가, shared subnet에서 SG와 IAM은 participant Account, ENIConfig의 AZ ID, cluster subnet의 upgrade용 ENI, ELB controller 2 AZ 요구
+      <span class="url">https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html">EKS ARC zonal shift</a>
+      - data plane만, Fargate 미지원, Karpenter 1.12+, CoreDNS 사전 스케일, node cordon과 ASG 변경, stateful PV 제약, 사전 capacity 필수
+      <span class="url">https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html">EKS network cost 최적화</a>
+      <span class="url">https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/eks/latest/best-practices/tenant-isolation.html">EKS tenant isolation</a>
+      <span class="url">https://docs.aws.amazon.com/eks/latest/best-practices/tenant-isolation.html</span>
+    </li>
+    <li>
+      <a href="https://aws.amazon.com/builders-library/static-stability-using-availability-zones/">Static stability using Availability Zones</a>
+      <span class="url">https://aws.amazon.com/builders-library/static-stability-using-availability-zones/</span>
+    </li>
+  </ul>
+
+  <h3>Ingress / DNS</h3>
+  <ul>
+    <li>
+      <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html">ALB target group attributes</a>
+      - target group health threshold, fail open 동작, cross-zone off 시 503 위험
+      <span class="url">https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health.html">ALB target group health</a>
+      <span class="url">https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/profiles.html">Route 53 Profiles</a>
+      - VPC당 1개, "더 구체적인 이름 우선", interface endpoint 배포 가능
+      <span class="url">https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/profiles.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html">Route 53 Resolver hybrid DNS</a>
+      <span class="url">https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html</span>
+    </li>
+  </ul>
+
+  <h3>Data / Security</h3>
+  <ul>
+    <li>
+      <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html">RDS snapshot 공유</a>
+      - 자동 백업 공유 불가, 기본 KMS key 공유 불가, 암호화 공유 snapshot 직접 restore 불가, 20 Account, Multi-AZ DB cluster 공유 불가
+      <span class="url">https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/share-encrypted-snapshot.html">RDS 암호화 snapshot 공유</a>
+      <span class="url">https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/share-encrypted-snapshot.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/aws-backup/latest/devguide/create-cross-account-backup.html">AWS Backup cross-account copy</a>
+      - 동일 Organization, 명시적 활성화, default vault 불가, CMK 요구, 계정 간 직접 restore 불가, SLR 필요, cold tier 미지원, 탈퇴 시 백업 보유
+      <span class="url">https://docs.aws.amazon.com/aws-backup/latest/devguide/create-cross-account-backup.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html">Secrets Manager cross-account</a>
+      <span class="url">https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html">KMS external account</a>
+      <span class="url">https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html">Security Hub CSPM 소개</a>
+      - 개칭, Config 의존, 소급 수집 불가, 리전별 활성화
+      <span class="url">https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/regions-controls.html">Security Hub CSPM 리전별 control</a>
+      <span class="url">https://docs.aws.amazon.com/securityhub/latest/userguide/regions-controls.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html">GuardDuty 리전별 차이</a>
+      <span class="url">https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html">AWS SRA Security Tooling</a>
+      <span class="url">https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html</span>
+    </li>
+  </ul>
+
+  <h3>AI-native 운영</h3>
+  <ul>
+    <li>
+      <a href="https://docs.aws.amazon.com/agent-toolkit/latest/userguide/mcp-server.html">AWS MCP Server</a>
+      <span class="url">https://docs.aws.amazon.com/agent-toolkit/latest/userguide/mcp-server.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/agent-toolkit/latest/userguide/security_iam_service-with-iam.html">AWS MCP Server IAM</a>
+      <span class="url">https://docs.aws.amazon.com/agent-toolkit/latest/userguide/security_iam_service-with-iam.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/general/latest/gr/aws-mcp.html">AWS MCP Server endpoint</a>
+      <span class="url">https://docs.aws.amazon.com/general/latest/gr/aws-mcp.html</span>
+    </li>
+  </ul>
+</section>
+
+</main>
+
+<footer class="doc-footer">
+  <p>
+    작성 기준일: 2026-08-30.
+    본 문서는 무신사 AWS 인프라 표준화 아키텍처 검토 요청서(<span class="mono">musinsa-standard-doc.md</span>, 2026-08-21)에 대한
+    AWS SA의 1차 서면 회신이며, 위 AWS 공식 문서를 근거로 작성했습니다.
+    quota와 서비스 동작 수치는 작성 시점 기준이므로, 구축 시점에 Service Quotas 콘솔과 공식 문서에서 최신 값을 확인하시기 바랍니다.
+  </p>
+</footer>
+</div>
+</body>
+</html>

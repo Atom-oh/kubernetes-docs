@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "동기화 윈도우 동작",
+    "title": "새 자동 동기화 요청의 윈도우 판정",
     "output": "public/archmaps/ko-gitops-argocd-03-sync-strategies-4.html",
     "animation": "trace",
     "quality_profile": "showcase",
@@ -24,24 +24,17 @@
         "focus": [
           "deny_q",
           "allow_q",
-          "default_allow",
+          "has_allow",
           "sync_run"
         ],
-        "note": "allow 윈도우가 활성이거나, 활성 윈도우가 하나도 없으면 동기화를 실행합니다."
+        "note": "활성 deny가 없을 때, 활성 allow가 있거나 매칭 allow 규칙이 없으면 윈도우가 허용합니다."
       }
-    ],
-    "viewBox": [
-      1040,
-      660
     ],
     "legend": {
       "mode": "auto",
       "entries": {
         "backend": {
           "label": "처리 단계"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
         },
         "frontend": {
           "label": "시작 · 사용자 단계"
@@ -50,7 +43,11 @@
           "label": "판단 · 정책"
         }
       }
-    }
+    },
+    "viewBox": [
+      1120,
+      660
+    ]
   },
   "lanes": [
     {
@@ -76,7 +73,7 @@
     "check",
     "deny_q",
     "allow_q",
-    "default_allow",
+    "has_allow",
     "sync_run"
   ],
   "nodes": [
@@ -86,7 +83,7 @@
       "col": 0,
       "type": "frontend",
       "label": "동기화 요청",
-      "sublabel": "자동 또는 수동 sync",
+      "sublabel": "새 자동 sync",
       "width": 120
     },
     {
@@ -95,7 +92,7 @@
       "col": 1,
       "type": "backend",
       "label": "윈도우 확인",
-      "sublabel": "syncWindows 조회",
+      "sublabel": "매칭 규칙만 선택",
       "width": 130
     },
     {
@@ -118,21 +115,21 @@
       "width": 180
     },
     {
-      "id": "default_allow",
+      "id": "has_allow",
       "lane": "windows",
       "col": 4,
-      "type": "backend",
-      "label": "기본 허용",
-      "sublabel": "활성 윈도우 없음",
-      "width": 130
+      "type": "security",
+      "label": "매칭 Allow 규칙 있음?",
+      "sublabel": "현재 비활성",
+      "width": 180
     },
     {
       "id": "sync_run",
       "lane": "result",
       "col": 5,
-      "type": "cloud",
-      "label": "동기화 실행",
-      "sublabel": "클러스터에 변경 적용",
+      "type": "backend",
+      "label": "윈도우 허용",
+      "sublabel": "권한 등은 별도 판정",
       "width": 150
     },
     {
@@ -141,8 +138,8 @@
       "col": 2,
       "type": "security",
       "label": "동기화 차단",
-      "sublabel": "deny 윈도우 동안 차단",
-      "width": 136
+      "sublabel": "활성 deny / 비활성 allow",
+      "width": 180
     }
   ],
   "edges": [
@@ -176,23 +173,31 @@
     },
     {
       "from": "allow_q",
-      "to": "default_allow",
+      "to": "has_allow",
       "label": "아니오"
     },
     {
-      "from": "default_allow",
+      "from": "has_allow",
       "to": "sync_run",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "label": "아니오"
+    },
+    {
+      "from": "has_allow",
+      "to": "sync_block",
+      "label": "예",
+      "variant": "security",
+      "role": "error"
     }
   ],
   "cards": [
     {
       "dot": "amber",
-      "title": "윈도우 우선순위",
+      "title": "판정 범위와 매칭",
       "items": [
-        "deny 윈도우가 allow 윈도우보다 우선한다",
-        "더 구체적인 매칭이 우선한다 (애플리케이션 이름 > 네임스페이스 > 클러스터)",
-        "활성 윈도우가 없으면 동기화를 허용한다"
+        "활성 deny가 우선하며, 비활성 allow만 매칭되면 차단한다",
+        "이름·네임스페이스·클러스터는 기본 OR; andOperator: true는 AND",
+        "구체성 순위는 없다. 수동 예외·진행 중 작업·시간대는 본문 참조"
       ]
     }
   ]

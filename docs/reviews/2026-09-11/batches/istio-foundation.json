@@ -1,0 +1,586 @@
+[
+  {
+    "path": "ko/service-mesh/istio/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; current release/support guidance, data-plane concepts, security/tracing claims, and broken figures/references corrected.",
+    "sources": [
+      "https://istio.io/latest/docs/releases/supported-releases/",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://istio.io/latest/news/releases/1.31.x/announcing-1.31/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/overview/",
+      "https://istio.io/latest/docs/ops/deployment/performance-and-scalability/",
+      "https://istio.io/latest/news/security/istio-security-2026-006/",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "https://istio.io/latest/get-involved/"
+    ],
+    "findings": [
+      "README: stale release-candidate guidance, sidecar-only description, tracing propagation omitted, unsupported general performance guarantees.",
+      "Replaced stale RC timeline with GA announcement; official support page dates 1.31 Aug 27 whereas release announcement is Aug 31, so prose attributes the announcement date explicitly.",
+      "Corrected blanket mTLS/tracing claims, Cilium authentication vs encryption, service-count thresholds, unsupported performance guarantees, and historical Pilot/Citadel/Galley roles.",
+      "Removed unverified Gateway API image path and linked its official explanatory page. Local overview decision diagrams retain illustrative thresholds, now explicitly qualified in prose; no external asset edited.",
+      "Parent image inventory confirmed request-routing.svg also returns 404; removed this redundant figure and replaced it with correct routing text. Replaced unresolved discuss.istio.io community link."
+    ],
+    "validation": [
+      "Entire source read, including code blocks and image descriptions.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "2 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "Cross-checked parent image-validation.json: no known missing external image URL remains in this document. Removed request-routing.svg and gateway-api-topology.svg 404s.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/01-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; installation pinned to supported 1.31.0, obsolete operator/CLI workflows replaced, Helm settings and gateway examples verified against released artifacts.",
+    "sources": [
+      "https://istio.io/latest/docs/releases/supported-releases/",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://istio.io/latest/news/releases/1.31.x/announcing-1.31/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://istio.io/latest/docs/setup/install/helm/",
+      "https://istio.io/latest/docs/setup/additional-setup/config-profiles/",
+      "https://istio.io/latest/docs/reference/commands/istioctl/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/manifests/charts/istio-control/istio-discovery/values.yaml",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/manifests/charts/gateway/values.yaml",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/networking/bookinfo-gateway.yaml",
+      "https://blob.istio.io/istio-release/charts/base-1.31.0.tgz",
+      "https://blob.istio.io/istio-release/charts/istiod-1.31.0.tgz",
+      "https://blob.istio.io/istio-release/charts/gateway-1.31.0.tgz"
+    ],
+    "findings": [
+      "Installation pins unsupported 1.28.0; removed in-cluster operator commands; gateway namespace/selector mismatch across install methods.",
+      "Pinned 1.31.0 on supported EKS versions; moved Helm repo to blob.istio.io; fixed root istiod chart values, defaultRevision, and verified chart values.",
+      "Replaced removed operator workflow with istioctl file input; replaced removed profile/verify-install subcommands with manifest rendering and rollout/proxy checks.",
+      "Unified gateway labels/name/namespace; explicit HTTP Gateway avoids versioned sample port and Helm selector mismatch; documented sidecar recreation, addon prerequisites, lab-only cleanup and retained Helm CRDs.",
+      "Released 1.31.0 base/istiod/gateway archives lack files/profile-platform-eks.yaml and helm template rejects global.platform=eks. Omitted that flag despite the newer overview documentation; explicit EKS guidance retained."
+    ],
+    "validation": [
+      "Entire source read, including code blocks and image descriptions.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "1 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "32 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "Helm 3.21.3 rendered official base/istiod/gateway 1.31.0 archives offline for Kubernetes 1.36.0. Confirmed pilot:1.31.0, 500m/2048Mi requests, HPA min=2/max=5, and gateway name/namespace/selector matching the examples.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; current release/support guidance, data-plane concepts, security/tracing claims, and broken figures/references corrected.",
+    "sources": [
+      "https://istio.io/latest/docs/releases/supported-releases/",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://istio.io/latest/news/releases/1.31.x/announcing-1.31/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/overview/",
+      "https://istio.io/latest/docs/ops/deployment/performance-and-scalability/",
+      "https://istio.io/latest/news/security/istio-security-2026-006/",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "https://istio.io/latest/get-involved/"
+    ],
+    "findings": [
+      "README: stale release-candidate guidance, sidecar-only description, tracing propagation omitted, unsupported general performance guarantees.",
+      "Replaced stale RC timeline with GA announcement; official support page dates 1.31 Aug 27 whereas release announcement is Aug 31, so prose attributes the announcement date explicitly.",
+      "Corrected blanket mTLS/tracing claims, Cilium authentication vs encryption, service-count thresholds, unsupported performance guarantees, and historical Pilot/Citadel/Galley roles.",
+      "Removed unverified Gateway API image path and linked its official explanatory page. Local overview decision diagrams retain illustrative thresholds, now explicitly qualified in prose; no external asset edited.",
+      "Parent image inventory confirmed request-routing.svg also returns 404; removed this redundant figure and replaced it with correct routing text. Replaced unresolved discuss.istio.io community link."
+    ],
+    "validation": [
+      "Entire source read, including code blocks and image descriptions.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "2 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "Cross-checked parent image-validation.json: no known missing external image URL remains in this document. Removed request-routing.svg and gateway-api-topology.svg 404s.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/01-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; installation pinned to supported 1.31.0, obsolete operator/CLI workflows replaced, Helm settings and gateway examples verified against released artifacts.",
+    "sources": [
+      "https://istio.io/latest/docs/releases/supported-releases/",
+      "https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/",
+      "https://istio.io/latest/news/releases/1.31.x/announcing-1.31/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://istio.io/latest/docs/setup/install/helm/",
+      "https://istio.io/latest/docs/setup/additional-setup/config-profiles/",
+      "https://istio.io/latest/docs/reference/commands/istioctl/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/manifests/charts/istio-control/istio-discovery/values.yaml",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/manifests/charts/gateway/values.yaml",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/networking/bookinfo-gateway.yaml",
+      "https://blob.istio.io/istio-release/charts/base-1.31.0.tgz",
+      "https://blob.istio.io/istio-release/charts/istiod-1.31.0.tgz",
+      "https://blob.istio.io/istio-release/charts/gateway-1.31.0.tgz"
+    ],
+    "findings": [
+      "Installation pins unsupported 1.28.0; removed in-cluster operator commands; gateway namespace/selector mismatch across install methods.",
+      "Pinned 1.31.0 on supported EKS versions; moved Helm repo to blob.istio.io; fixed root istiod chart values, defaultRevision, and verified chart values.",
+      "Replaced removed operator workflow with istioctl file input; replaced removed profile/verify-install subcommands with manifest rendering and rollout/proxy checks.",
+      "Unified gateway labels/name/namespace; explicit HTTP Gateway avoids versioned sample port and Helm selector mismatch; documented sidecar recreation, addon prerequisites, lab-only cleanup and retained Helm CRDs.",
+      "Released 1.31.0 base/istiod/gateway archives lack files/profile-platform-eks.yaml and helm template rejects global.platform=eks. Omitted that flag despite the newer overview documentation; explicit EKS guidance retained."
+    ],
+    "validation": [
+      "Entire source read, including code blocks and image descriptions.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "1 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "32 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "Helm 3.21.3 rendered official base/istiod/gateway 1.31.0 archives offline for Kubernetes 1.36.0. Confirmed pilot:1.31.0, 500m/2048Mi requests, HPA min=2/max=5, and gateway name/namespace/selector matching the examples.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/02-basic-concepts.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; traffic/security APIs, VM enrollment, TCP metrics, tracing and isolation semantics corrected; historical milestones preserved.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/",
+      "https://istio.io/latest/docs/setup/install/virtual-machine/",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/",
+      "https://istio.io/latest/docs/overview/dataplane-modes/",
+      "https://istio.io/latest/blog/2020/istiod/",
+      "https://www.cncf.io/projects/envoy/",
+      "https://istio.io/latest/news/releases/1.18.x/announcing-1.18/",
+      "https://istio.io/latest/news/releases/1.24.x/announcing-1.24/"
+    ],
+    "findings": [
+      "consecutiveErrors replaced with consecutive5xxErrors in all three DestinationRule examples.",
+      "Corrected Sidecar configuration scoping vs authorization and ambient DISABLE behavior; database ALLOW now matches TCP port rather than nonexistent HTTP methods.",
+      "Replaced HTTP MySQL metrics/error-rate query with TCP counters; documented actual VM bootstrap and DNS prerequisites.",
+      "Migrated tracing excerpt to OTLP extension provider plus Telemetry; removed Kubernetes-only claim, unsupported 50% latency guarantee, and obsolete current-1.28 wording.",
+      "Historical 1.18 ambient alpha timeline verified against release announcement; preserved historical 1.28 timeline endpoint. Diagram basic-concepts-8 is conceptual configuration flow, not literal data-plane hops."
+    ],
+    "validation": [
+      "Full source read in two contiguous chunks per language; code and diagram descriptions reviewed.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "25 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "1 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "1 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/02-basic-concepts.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; traffic/security APIs, VM enrollment, TCP metrics, tracing and isolation semantics corrected; historical milestones preserved.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/",
+      "https://istio.io/latest/docs/setup/install/virtual-machine/",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/",
+      "https://istio.io/latest/docs/overview/dataplane-modes/",
+      "https://istio.io/latest/blog/2020/istiod/",
+      "https://www.cncf.io/projects/envoy/",
+      "https://istio.io/latest/news/releases/1.18.x/announcing-1.18/",
+      "https://istio.io/latest/news/releases/1.24.x/announcing-1.24/"
+    ],
+    "findings": [
+      "consecutiveErrors replaced with consecutive5xxErrors in all three DestinationRule examples.",
+      "Corrected Sidecar configuration scoping vs authorization and ambient DISABLE behavior; database ALLOW now matches TCP port rather than nonexistent HTTP methods.",
+      "Replaced HTTP MySQL metrics/error-rate query with TCP counters; documented actual VM bootstrap and DNS prerequisites.",
+      "Migrated tracing excerpt to OTLP extension provider plus Telemetry; removed Kubernetes-only claim, unsupported 50% latency guarantee, and obsolete current-1.28 wording.",
+      "Historical 1.18 ambient alpha timeline verified against release announcement; preserved historical 1.28 timeline endpoint. Diagram basic-concepts-8 is conceptual configuration flow, not literal data-plane hops."
+    ],
+    "validation": [
+      "Full source read in two contiguous chunks per language; code and diagram descriptions reviewed.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "25 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "1 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "1 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/03-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; CNI/DNS/EDS/SDS ownership, validation and diagnostic examples corrected; misleading diagrams replaced with accurate prose.",
+    "sources": [
+      "https://istio.io/latest/docs/ops/deployment/architecture/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://istio.io/latest/docs/setup/additional-setup/cni/",
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/analysis/ist0101/",
+      "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/ops/configuration/mesh/configuration-scoping/",
+      "https://istio.io/latest/docs/ops/deployment/performance-and-scalability/",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto"
+    ],
+    "findings": [
+      "Admission webhook does not guarantee referential existence: replaced fabricated host-not-found rejection with offline IST0101 missing-Gateway analysis.",
+      "Replaced incomplete managed-istiod Deployment with IstioOperator HPA/resource input; injection uses Pod labels and documents Pod CREATE semantics.",
+      "Corrected CNI vs eBPF claim, DNS vs EDS distinction, Istio agent DNS ownership, ADS multiplexing and local-agent SDS certificate flow.",
+      "Removed misleading architecture diagrams 1,8,9,11,12 from these pages; their source PNG/archmap assets require scope-external regeneration before reuse.",
+      "Replaced fixed-index config_dump parsing and container curl/ps assumptions; qualified performance figures; corrected Sidecar host FQDNs and firewall claims.",
+      "Offline istioctl validation found portless Sidecar egress listener was not last; reordered specific HTTPS listener before the catch-all.",
+      "Replaced timed-out Envoy blog link incorrectly labeled as origin story with the verified CNCF project milestone page.",
+      "Corrected weighted-cluster JSON to an Envoy Route fragment (match plus route.weighted_clusters) with fully qualified upstream cluster names."
+    ],
+    "validation": [
+      "Entire source read in contiguous chunks; all diagram descriptions and code blocks reviewed.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "7 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "2 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "9 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/03-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; CNI/DNS/EDS/SDS ownership, validation and diagnostic examples corrected; misleading diagrams replaced with accurate prose.",
+    "sources": [
+      "https://istio.io/latest/docs/ops/deployment/architecture/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://istio.io/latest/docs/setup/additional-setup/cni/",
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/analysis/ist0101/",
+      "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/ops/configuration/mesh/configuration-scoping/",
+      "https://istio.io/latest/docs/ops/deployment/performance-and-scalability/",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto"
+    ],
+    "findings": [
+      "Admission webhook does not guarantee referential existence: replaced fabricated host-not-found rejection with offline IST0101 missing-Gateway analysis.",
+      "Replaced incomplete managed-istiod Deployment with IstioOperator HPA/resource input; injection uses Pod labels and documents Pod CREATE semantics.",
+      "Corrected CNI vs eBPF claim, DNS vs EDS distinction, Istio agent DNS ownership, ADS multiplexing and local-agent SDS certificate flow.",
+      "Removed misleading architecture diagrams 1,8,9,11,12 from these pages; their source PNG/archmap assets require scope-external regeneration before reuse.",
+      "Replaced fixed-index config_dump parsing and container curl/ps assumptions; qualified performance figures; corrected Sidecar host FQDNs and firewall claims.",
+      "Offline istioctl validation found portless Sidecar egress listener was not last; reordered specific HTTPS listener before the catch-all.",
+      "Replaced timed-out Envoy blog link incorrectly labeled as origin story with the verified CNCF project milestone page.",
+      "Corrected weighted-cluster JSON to an Envoy Route fragment (match plus route.weighted_clusters) with fully qualified upstream cluster names."
+    ],
+    "validation": [
+      "Entire source read in contiguous chunks; all diagram descriptions and code blocks reviewed.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "7 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "2 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "9 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/04-aws-integration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; coherent TLS termination designs, controller prerequisites, certificate retrieval, CloudWatch wiring and EKS platform guidance corrected.",
+    "sources": [
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0",
+      "https://raw.githubusercontent.com/aws/eks-charts/master/stable/aws-load-balancer-controller/Chart.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html",
+      "https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/acm-pca/issue-certificate.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/acm-pca/get-certificate.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://istio.io/latest/docs/ambient/install/platform-prerequisites/"
+    ],
+    "findings": [
+      "Pinned matching LBC/chart v3.5.0/3.5.0 with tagged IAM policy; added OIDC, explicit region/VPC inputs and existing-manager guidance.",
+      "Separated TCP passthrough from NLB TLS termination; removed unmatched PROXY protocol v2; removed public health service port and replaced deprecated cross-zone annotation. ALB HTTP gateway avoids TLS redirect loops.",
+      "Added missing Private CA certificate wait/get/chain steps and fileb CSR input; explained Secret renewal and credentialName.",
+      "Replaced namespace/SA-only CloudWatch pseudo-install with actual Prometheus agent manifest, corrected scrape discovery and added EMF declaration wiring; split Logs Insights queries and documented log-field prerequisite.",
+      "Corrected ambient sidecar/VM support, Lattice mTLS passthrough limitations, unsupported blanket LB cost/performance rankings, Pod Identity omission, VPC CNI NetworkPolicy omission, retired DNS auto-allocation flag and misplaced proxy concurrency.",
+      "Removed ALB diagram 1 and its interactive link because it labels HTTP/2 while this example uses default HTTP/1.1; replaced with accurate prose. Source PNG/archmap requires external regeneration before reuse.",
+      "Added ambient EKS Pod Security Group strict-mode/link-local health-probe prerequisite.",
+      "Resolved parent-reported duplicate H1: removed duplicated un-fenced OIDC command, demoted the IRSA label to the existing H4 level. Kept the complete OIDC/IRSA Bash example. Fence-aware check finds exactly1 H1 and balanced fences."
+    ],
+    "validation": [
+      "Entire source read in contiguous chunks for both languages; official AWS and controller docs checked; no AWS resources provisioned.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "5 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "1 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "4 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed.",
+      "2026-09-11 parent checkpoint regression verified; changes are structural only."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/04-aws-integration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; coherent TLS termination designs, controller prerequisites, certificate retrieval, CloudWatch wiring and EKS platform guidance corrected.",
+    "sources": [
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0",
+      "https://raw.githubusercontent.com/aws/eks-charts/master/stable/aws-load-balancer-controller/Chart.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html",
+      "https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/acm-pca/issue-certificate.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/acm-pca/get-certificate.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/",
+      "https://istio.io/latest/docs/ambient/install/platform-prerequisites/"
+    ],
+    "findings": [
+      "Pinned matching LBC/chart v3.5.0/3.5.0 with tagged IAM policy; added OIDC, explicit region/VPC inputs and existing-manager guidance.",
+      "Separated TCP passthrough from NLB TLS termination; removed unmatched PROXY protocol v2; removed public health service port and replaced deprecated cross-zone annotation. ALB HTTP gateway avoids TLS redirect loops.",
+      "Added missing Private CA certificate wait/get/chain steps and fileb CSR input; explained Secret renewal and credentialName.",
+      "Replaced namespace/SA-only CloudWatch pseudo-install with actual Prometheus agent manifest, corrected scrape discovery and added EMF declaration wiring; split Logs Insights queries and documented log-field prerequisite.",
+      "Corrected ambient sidecar/VM support, Lattice mTLS passthrough limitations, unsupported blanket LB cost/performance rankings, Pod Identity omission, VPC CNI NetworkPolicy omission, retired DNS auto-allocation flag and misplaced proxy concurrency.",
+      "Removed ALB diagram 1 and its interactive link because it labels HTTP/2 while this example uses default HTTP/1.1; replaced with accurate prose. Source PNG/archmap requires external regeneration before reuse.",
+      "Added ambient EKS Pod Security Group strict-mode/link-local health-probe prerequisite."
+    ],
+    "validation": [
+      "Entire source read in contiguous chunks for both languages; official AWS and controller docs checked; no AWS resources provisioned.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "5 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "1 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "4 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; upgrade/backup/HA workflows, performance claims, security semantics, monitoring queries and broken reading links corrected.",
+    "sources": [
+      "https://istio.io/latest/docs/setup/upgrade/canary/",
+      "https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/",
+      "https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/xds/monitoring.go",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://istio.io/latest/docs/ops/configuration/telemetry/envoy-stats/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/releases/supported-releases/",
+      "https://istio.io/latest/get-involved/",
+      "https://istio.io/latest/docs/ops/best-practices/deployment/",
+      "https://istio.io/latest/docs/ops/best-practices/traffic-management/"
+    ],
+    "findings": [
+      "Revision upgrade now uses target 1.31 binary, removes conflicting legacy injection labels, preserves install configuration, and defers old-revision removal until all proxies/gateways migrate.",
+      "Replaced nonexistent IstioOperator-cluster backup with installation-file backup; corrected k8s.affinity nesting and HPA replica floor.",
+      "Removed invented per-service memory formula, fixed default concurrency and HTTP connection reuse guidance, and removed unsupported fixed cost/resource savings.",
+      "Corrected external TLS vs PeerAuthentication DISABLE and REGISTRY_ONLY firewall claim; separated installer input from kubectl resources.",
+      "Fixed CPU container selector, destination reporter double counting, histogram quantile, pilot_xds connection gauge, and scrape-target alert semantics.",
+      "External link check found Tetrate istio-in-production and OReilly service-mesh-patterns URLs return 404; replaced both with verified official Istio best-practice pages. Replaced unresolvable discussion domain; Slack canonical invitation URL remains access-gated (HTTP 403 to automated requests)."
+    ],
+    "validation": [
+      "Read full 586-line source per language; official schemas/source-code metrics and upgrade docs checked.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "11 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "3 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "3 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "Known 404 reading links and dead discussion-domain link removed. Canonical Slack invitation is linked from official Istio community pages but returns HTTP 403 to automated requests.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; upgrade/backup/HA workflows, performance claims, security semantics, monitoring queries and broken reading links corrected.",
+    "sources": [
+      "https://istio.io/latest/docs/setup/upgrade/canary/",
+      "https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/",
+      "https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/xds/monitoring.go",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://istio.io/latest/docs/ops/configuration/telemetry/envoy-stats/",
+      "https://istio.io/latest/docs/reference/config/networking/sidecar/",
+      "https://istio.io/latest/docs/releases/supported-releases/",
+      "https://istio.io/latest/get-involved/",
+      "https://istio.io/latest/docs/ops/best-practices/deployment/",
+      "https://istio.io/latest/docs/ops/best-practices/traffic-management/"
+    ],
+    "findings": [
+      "Revision upgrade now uses target 1.31 binary, removes conflicting legacy injection labels, preserves install configuration, and defers old-revision removal until all proxies/gateways migrate.",
+      "Replaced nonexistent IstioOperator-cluster backup with installation-file backup; corrected k8s.affinity nesting and HPA replica floor.",
+      "Removed invented per-service memory formula, fixed default concurrency and HTTP connection reuse guidance, and removed unsupported fixed cost/resource savings.",
+      "Corrected external TLS vs PeerAuthentication DISABLE and REGISTRY_ONLY firewall claim; separated installer input from kubectl resources.",
+      "Fixed CPU container selector, destination reporter double counting, histogram quantile, pilot_xds connection gauge, and scrape-target alert semantics.",
+      "External link check found Tetrate istio-in-production and OReilly service-mesh-patterns URLs return 404; replaced both with verified official Istio best-practice pages. Replaced unresolvable discussion domain; Slack canonical invitation URL remains access-gated (HTTP 403 to automated requests)."
+    ],
+    "validation": [
+      "Read full 586-line source per language; official schemas/source-code metrics and upgrade docs checked.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "11 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "3 IstioOperator inputs rendered with istioctl 1.30.2 manifest generate --cluster-specific=false; no cluster access.",
+      "3 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "Known 404 reading links and dead discussion-domain link removed. Canonical Slack invitation is linked from official Istio community pages but returns HTTP 403 to automated requests.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/glossary.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; ambient/Mixer history, CNI, EnvoyFilter, SigV4, Wasm, waypoint, metrics and terminology corrected.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/setup/additional-setup/cni/",
+      "https://istio.io/latest/docs/ambient/architecture/traffic-redirection/",
+      "https://istio.io/latest/docs/ambient/install/istioctl/",
+      "https://istio.io/latest/docs/ambient/usage/waypoint/",
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/",
+      "https://raw.githubusercontent.com/proxy-wasm/proxy-wasm-rust-sdk/main/examples/http_headers/src/lib.rs",
+      "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats",
+      "https://istio.io/latest/news/releases/1.8.x/announcing-1.8/change-notes/",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html"
+    ],
+    "findings": [
+      "Read original 1,659 lines per language. Corrected ambient first alpha/GA, Mixer removal in 1.8, eBPF/CNI misconceptions, negotiated ciphers, SPIFFE SVID types and SDS/ADS ownership.",
+      "Fixed all obsolete consecutiveErrors and missing DestinationRule metadata/hosts; local rate limit now uses v1alpha3 EnvoyFilter with typed_config, router match, workload scope and enforcement fractions.",
+      "Removed invalid STS-JWKS authentication, impossible HTTPS signing and double-TLS examples; documented explicit proxy credential/signing requirements and SDK/CLI path.",
+      "Fixed Rust Context trait/callback signature, removed hardcoded secret demo, corrected waypoint WasmPlugin targetRefs, explained packaging prerequisites, and separated checksum integrity from publisher signature.",
+      "Replaced invalid handmade ztunnel DaemonSet with full ambient-profile installation; removed invented performance guarantees and added App Mesh September 30, 2026 end-of-support notice.",
+      "Fixed broken glossary fragments and added missing Control Plane/AuthorizationPolicy definitions; SigV4 diagram explicitly qualified as configured proxy-signing path."
+    ],
+    "validation": [
+      "Each source read fully in three contiguous chunks per language; primary schemas, runtime SDK source, release notes, and AWS docs inspected.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "20 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "8 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "Rust example checked against current upstream trait signatures; not compiled because this is a crate excerpt requiring the documented build/dependency prerequisites.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/glossary.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed; ambient/Mixer history, CNI, EnvoyFilter, SigV4, Wasm, waypoint, metrics and terminology corrected.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/setup/additional-setup/cni/",
+      "https://istio.io/latest/docs/ambient/architecture/traffic-redirection/",
+      "https://istio.io/latest/docs/ambient/install/istioctl/",
+      "https://istio.io/latest/docs/ambient/usage/waypoint/",
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/",
+      "https://raw.githubusercontent.com/proxy-wasm/proxy-wasm-rust-sdk/main/examples/http_headers/src/lib.rs",
+      "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats",
+      "https://istio.io/latest/news/releases/1.8.x/announcing-1.8/change-notes/",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html"
+    ],
+    "findings": [
+      "Read original 1,659 lines per language. Corrected ambient first alpha/GA, Mixer removal in 1.8, eBPF/CNI misconceptions, negotiated ciphers, SPIFFE SVID types and SDS/ADS ownership.",
+      "Fixed all obsolete consecutiveErrors and missing DestinationRule metadata/hosts; local rate limit now uses v1alpha3 EnvoyFilter with typed_config, router match, workload scope and enforcement fractions.",
+      "Removed invalid STS-JWKS authentication, impossible HTTPS signing and double-TLS examples; documented explicit proxy credential/signing requirements and SDK/CLI path.",
+      "Fixed Rust Context trait/callback signature, removed hardcoded secret demo, corrected waypoint WasmPlugin targetRefs, explained packaging prerequisites, and separated checksum integrity from publisher signature.",
+      "Replaced invalid handmade ztunnel DaemonSet with full ambient-profile installation; removed invented performance guarantees and added App Mesh September 30, 2026 end-of-support notice.",
+      "Fixed broken glossary fragments and added missing Control Plane/AuthorizationPolicy definitions; SigV4 diagram explicitly qualified as configured proxy-signing path."
+    ],
+    "validation": [
+      "Each source read fully in three contiguous chunks per language; primary schemas, runtime SDK source, release notes, and AWS docs inspected.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "20 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "8 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "Rust example checked against current upstream trait signatures; not compiled because this is a crate excerpt requiring the documented build/dependency prerequisites.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/istio/basic.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed all ten questions and explanations; answer key corrected to B/B/C/A/C and long-form examples aligned with audited prose.",
+    "sources": [
+      "https://istio.io/latest/docs/setup/additional-setup/config-profiles/",
+      "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://www.rfc-editor.org/rfc/rfc8446.html",
+      "https://istio.io/latest/docs/setup/upgrade/canary/",
+      "https://istio.io/latest/docs/reference/commands/istioctl/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://istio.io/latest/news/releases/1.24.x/announcing-1.24/",
+      "https://istio.io/latest/docs/ops/deployment/performance-and-scalability/"
+    ],
+    "findings": [
+      "Question 4 answer D changed to A: default is production starting profile; production does not exist. English options now render on separate lines.",
+      "Question 7 retains valid arithmetic as explicitly hypothetical inputs but removes false EKS cost guarantees and ambient-beta claim.",
+      "Question 8 corrects agent CSR/SDS ownership, TLS Certificate vs Hello messages, configurable renewal and CA trust chain; removes fabricated private-key dump.",
+      "Question 9 replaces removed authn tls-check and legacy Endpoints with supported diagnostics, corrects native sidecar detection and Pod-IP bypass myth, removes default production policy deletion/relaxation.",
+      "Question 10 now upgrades supported 1.30.4 to 1.31.0, uses curl sample, separates gateway migration before cleanup, preserves rollback conditions, and removes manual webhook deletion and blind sleep rollout.",
+      "Fixed dead legacy chapter URLs, API versions and cross-chapter references."
+    ],
+    "validation": [
+      "All ten question prompts, five multiple-choice answer keys, complete long-form explanations and scoring sections read in two contiguous chunks per language.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "3 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "19 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/istio/basic.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed all ten questions and explanations; answer key corrected to B/B/C/A/C and long-form examples aligned with audited prose.",
+    "sources": [
+      "https://istio.io/latest/docs/setup/additional-setup/config-profiles/",
+      "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://www.rfc-editor.org/rfc/rfc8446.html",
+      "https://istio.io/latest/docs/setup/upgrade/canary/",
+      "https://istio.io/latest/docs/reference/commands/istioctl/",
+      "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/",
+      "https://istio.io/latest/news/releases/1.24.x/announcing-1.24/",
+      "https://istio.io/latest/docs/ops/deployment/performance-and-scalability/"
+    ],
+    "findings": [
+      "Question 4 answer D changed to A: default is production starting profile; production does not exist. English options now render on separate lines.",
+      "Question 7 retains valid arithmetic as explicitly hypothetical inputs but removes false EKS cost guarantees and ambient-beta claim.",
+      "Question 8 corrects agent CSR/SDS ownership, TLS Certificate vs Hello messages, configurable renewal and CA trust chain; removes fabricated private-key dump.",
+      "Question 9 replaces removed authn tls-check and legacy Endpoints with supported diagnostics, corrects native sidecar detection and Pod-IP bypass myth, removes default production policy deletion/relaxation.",
+      "Question 10 now upgrades supported 1.30.4 to 1.31.0, uses curl sample, separates gateway migration before cleanup, preserves rollback conditions, and removes manual webhook deletion and blind sleep rollout.",
+      "Fixed dead legacy chapter URLs, API versions and cross-chapter references."
+    ],
+    "validation": [
+      "All ten question prompts, five multiple-choice answer keys, complete long-form explanations and scoring sections read in two contiguous chunks per language.",
+      "Markdown fences and details blocks balanced; all in-scope relative document links and heading fragments resolve.",
+      "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
+      "3 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
+      "19 command blocks passed bash -n after replacing illustrative angle-bracket placeholders; commands were not executed.",
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+    ]
+  }
+]

@@ -37,7 +37,7 @@ ConfigMap은 키-값 쌍 형태로 구성 데이터를 저장하는 Kubernetes �
 </details>
 
 3. Kubernetes에서 포드의 리소스 요청(requests)과 제한(limits)의 차이점은 무엇인가요?
-   - A) 요청은 포드가 사용할 수 있는 최소 리소스, 제한은 최대 리소스
+   - A) 요청은 스케줄링·리소스 배분 기준이며 제한은 실행 중 사용량을 제약
    - B) 요청은 포드가 사용할 수 있는 최대 리소스, 제한은 최소 리소스
    - C) 요청은 스케줄링에만 사용되고, 제한은 런타임에만 적용됨
    - D) 요청은 CPU에만 적용되고, 제한은 메모리에만 적용됨
@@ -46,10 +46,10 @@ ConfigMap은 키-값 쌍 형태로 구성 데이터를 저장하는 Kubernetes �
 
 <summary>정답 보기</summary>
 
-**정답: A) 요청은 포드가 사용할 수 있는 최소 리소스, 제한은 최대 리소스**
+**정답: A) 요청은 스케줄링·리소스 배분 기준이며 제한은 실행 중 사용량을 제약**
 
 **설명:**
-리소스 요청(requests)은 포드가 보장받을 수 있는 최소 리소스 양을 지정하며, 스케줄러가 포드를 노드에 배치할 때 이 값을 사용합니다. 리소스 제한(limits)은 포드가 사용할 수 있는 최대 리소스 양을 지정하며, 이 값을 초과하면 포드가 제한되거나(CPU의 경우) 종료될 수 있습니다(메모리의 경우).
+요청은 스케줄링 용량을 예약하고 실행 중 리소스 배분에도 영향을 줍니다. 프로세스는 요청보다 적게 사용할 수도 있습니다. CPU 제한은 스로틀링으로, 메모리 제한은 OOM 종료로 반응적으로 집행되며 요청이 노드 압력에서의 생존을 보장하지는 않습니다.
 </details>
 
 4. Kubernetes에서 Secret 데이터를 포드에 제공하는 방법이 아닌 것은 무엇인가요?
@@ -68,20 +68,20 @@ ConfigMap은 키-값 쌍 형태로 구성 데이터를 저장하는 Kubernetes �
 Kubernetes에서 Secret 데이터를 포드에 제공하는 방법은 환경 변수로 제공, 볼륨으로 마운트, 이미지 레지스트리 자격 증명으로 사용하는 방법이 있습니다. 네트워크 인터페이스를 통해 Secret을 제공하는 방법은 Kubernetes에서 지원하지 않습니다.
 </details>
 
-5. Kubernetes에서 ConfigMap을 생성하는 방법이 아닌 것은 무엇인가요?
+5. `kubectl create configmap`이 지원하는 입력 옵션이 아닌 것은 무엇인가요?
    - A) 리터럴 값에서 생성
    - B) 파일에서 생성
    - C) 디렉토리에서 생성
-   - D) 네트워크 요청에서 생성
+   - D) `--from-url`
    
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: D) 네트워크 요청에서 생성**
+**정답: D) `--from-url`**
 
 **설명:**
-Kubernetes에서 ConfigMap을 생성하는 방법은 리터럴 값에서 생성(`--from-literal`), 파일에서 생성(`--from-file`), 디렉토리에서 생성(`--from-file=<디렉토리>`)이 있습니다. 네트워크 요청에서 직접 ConfigMap을 생성하는 방법은 Kubernetes에서 기본적으로 제공하지 않습니다.
+Kubernetes에서 ConfigMap을 생성하는 방법은 리터럴 값에서 생성(`--from-literal`), 파일에서 생성(`--from-file`), 디렉토리에서 생성(`--from-file=<디렉토리>`)이 있습니다. 이 명령에는 `--from-url` 플래그가 없습니다. ConfigMap 자체는 Kubernetes REST API 요청이나 URL에서 가져온 매니페스트 적용으로 생성할 수 있습니다.
 </details>
 
 6. Kubernetes에서 포드의 서비스 계정을 지정하는 필드는 무엇인가요?
@@ -116,11 +116,11 @@ Kubernetes에서 포드의 서비스 계정은 `spec.serviceAccountName` 필드�
 Kubernetes에서 Secret 데이터는 기본적으로 Base64로 인코딩되어 저장됩니다. 이는 단순한 인코딩일 뿐 암호화가 아니므로, 추가적인 보안 조치가 필요합니다. Kubernetes 1.13부터는 etcd에 저장된 Secret 데이터를 암호화하는 기능을 제공합니다.
 </details>
 
-8. Kubernetes에서 환경 변수를 설정하는 방법 중 가장 권장되지 않는 것은 무엇인가요?
-   - A) ConfigMap에서 가져오기
-   - B) Secret에서 가져오기
+8. 실제 비밀번호를 파드에 전달할 때 피해야 할 방식은 무엇인가요?
+   - A) Secret 키 참조
+   - B) 보호된 Secret 볼륨 사용
    - C) 포드 스펙에 직접 하드코딩
-   - D) Downward API를 통해 가져오기
+   - D) 워크로드 ID로 외부 시크릿 저장소에서 조회
    
 <details>
 
@@ -129,10 +129,10 @@ Kubernetes에서 Secret 데이터는 기본적으로 Base64로 인코딩되어 �
 **정답: C) 포드 스펙에 직접 하드코딩**
 
 **설명:**
-환경 변수를 포드 스펙에 직접 하드코딩하는 것은 구성과 코드를 분리하는 원칙에 위배되므로 권장되지 않습니다. ConfigMap이나 Secret을 사용하여 환경 변수를 관리하면 애플리케이션 코드를 변경하지 않고도 구성을 변경할 수 있으며, Downward API를 사용하면 포드의 메타데이터나 리소스 정보를 환경 변수로 제공할 수 있습니다.
+비밀번호를 매니페스트·로그에 리터럴로 기록하지 마세요. 민감하지 않은 상수에는 `env.value`를 직접 사용해도 됩니다. 민감한 값은 Secret이나 외부 저장소를 사용하며 ConfigMap·Downward API는 비밀번호 저장소가 아닙니다.
 </details>
 
-9. Kubernetes에서 포드의 QoS(Quality of Service) 클래스 중, 모든 컨테이너에 리소스 요청과 제한이 설정되어 있고, 요청과 제한이 동일한 경우의 QoS 클래스는 무엇인가요?
+9. Kubernetes에서 포드의 QoS(Quality of Service) 클래스 중, 파드 수준 리소스 설정 없이 모든 컨테이너의 CPU·메모리 요청이 각각 제한과 동일한 경우의 QoS 클래스는 무엇인가요?
    - A) Guaranteed
    - B) Burstable
    - C) BestEffort
@@ -145,12 +145,12 @@ Kubernetes에서 Secret 데이터는 기본적으로 Base64로 인코딩되어 �
 **정답: A) Guaranteed**
 
 **설명:**
-Guaranteed QoS 클래스는 포드의 모든 컨테이너에 리소스 요청과 제한이 설정되어 있고, 요청과 제한이 동일한 경우에 할당됩니다. 이 클래스의 포드는 리소스 부족 시 가장 마지막에 종료됩니다. Burstable은 일부 컨테이너에만 요청과 제한이 설정되어 있거나, 요청과 제한이 다른 경우에 할당되며, BestEffort는 요청과 제한이 모두 설정되지 않은 경우에 할당됩니다.
+Guaranteed QoS 클래스는 포드의 파드 수준 리소스 설정 없이 모든 컨테이너의 CPU·메모리 요청이 각각 제한과 동일한 경우에 할당됩니다. 축출에는 파드 우선순위와 요청 대비 사용량도 반영되며 Guaranteed가 무조건 생존을 보장하지는 않습니다. Burstable은 일부 컨테이너에만 요청과 제한이 설정되어 있거나, 요청과 제한이 다른 경우에 할당되며, BestEffort는 요청과 제한이 모두 설정되지 않은 경우에 할당됩니다.
 </details>
 
 10. Kubernetes에서 ConfigMap이나 Secret의 변경 사항이 포드에 자동으로 반영되는 경우는 언제인가요?
     - A) 항상 자동으로 반영됨
-    - B) 볼륨으로 마운트된 경우에만 자동으로 반영됨
+    - B) 전체 볼륨 마운트에서 최종적으로 반영됨 (subPath 제외)
     - C) 환경 변수로 사용된 경우에만 자동으로 반영됨
     - D) 자동으로 반영되지 않고 포드를 재시작해야 함
     
@@ -158,10 +158,10 @@ Guaranteed QoS 클래스는 포드의 모든 컨테이너에 리소스 요청과
 
 <summary>정답 보기</summary>
 
-**정답: B) 볼륨으로 마운트된 경우에만 자동으로 반영됨**
+**정답: B) 전체 볼륨 마운트에서 최종적으로 반영됨 (subPath 제외)**
 
 **설명:**
-ConfigMap이나 Secret이 볼륨으로 마운트된 경우, Kubernetes는 주기적으로(기본값은 약 1분) 마운트된 파일을 업데이트합니다. 그러나 환경 변수로 사용된 경우에는 포드가 생성될 때 한 번만 설정되므로, 변경 사항을 반영하려면 포드를 재시작해야 합니다. 이는 환경 변수가 프로세스의 시작 시점에 설정되기 때문입니다.
+수정 가능한 전체 볼륨 프로젝션은 최종적으로 갱신되며 지연은 kubelet 동기화·캐시·변경 감지 설정에 따라 다릅니다. `subPath`는 갱신되지 않고 앱도 파일을 다시 읽어야 합니다. 환경 변수는 앱 컨테이너 재시작·대체 또는 새 파드 롤아웃이 필요합니다.
 </details>
 
 ## 실습 문제
@@ -181,6 +181,7 @@ kind: ConfigMap
 metadata:
    name: app-config
 data:
+  app.name: MyApp
   app.properties: |
     app.name=MyApp
     app.version=1.0.0
@@ -218,8 +219,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: app.properties
-              subPath: app.name
+              key: app.name
         # Secret에서 환경 변수 가져오기
         - name: DB_USER
           valueFrom:
@@ -259,7 +259,7 @@ kubectl apply -f pod.yaml
 
 5. 환경 변수 확인:
 ```bash
-kubectl exec app-pod -- env | grep -E 'APP_NAME|DB_'
+kubectl exec app-pod -- sh -c 'test -n "$APP_NAME" && test -n "$DB_PASSWORD" && echo "Configuration available"'
 ```
 
 6. 마운트된 볼륨 확인:
@@ -271,7 +271,7 @@ kubectl exec app-pod -- ls -la /etc/secrets
 7. 파일 내용 확인:
 ```bash
 kubectl exec app-pod -- cat /etc/config/app.properties
-kubectl exec app-pod -- cat /etc/secrets/db.user
+kubectl exec app-pod -- test -s /etc/secrets/db.user
 ```
 </details>
 
@@ -370,7 +370,7 @@ kubectl top pod besteffort-pod
 ```
 
 **QoS 클래스 결정 규칙**:
-  - **Guaranteed**: 모든 컨테이너에 리소스 요청과 제한이 설정되어 있고, 요청과 제한이 동일한 경우
+  - **Guaranteed**: 파드 수준 리소스 설정 없이 모든 컨테이너의 CPU·메모리 요청이 각각 제한과 동일한 경우
   - **Burstable**: 적어도 하나의 컨테이너에 리소스 요청이 설정되어 있지만, Guaranteed 조건을 충족하지 않는 경우
   - **BestEffort**: 모든 컨테이너에 리소스 요청과 제한이 설정되지 않은 경우
 </details>
@@ -436,11 +436,13 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
         - name: CPU_LIMIT
           valueFrom:
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
         - name: MEM_REQUEST
           valueFrom:
             resourceFieldRef:
@@ -471,10 +473,12 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
           - path: "cpu-limit"
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
 ```
 
 2. 포드 생성:

@@ -62,7 +62,7 @@
     {
       "from": 510,
       "to": 572,
-      "label": "시도 5 · 40초 대기 후 (20s × 2) · 성공 — limit=5 도달 시 재시도 중단"
+      "label": "시도 5 · 40초 대기 후 · 네 번째 재시도에서 성공"
     }
   ],
   "messages": [
@@ -144,7 +144,7 @@
       "y": 562,
       "label": "성공",
       "variant": "emphasis",
-      "note": "limit=5 도달 시 재시도 중단"
+      "note": "성공하여 종료 (재시도 한도 소진 아님)"
     }
   ],
   "activations": [
@@ -184,7 +184,7 @@
       "dot": "orange",
       "title": "syncPolicy.retry 설정",
       "items": [
-        "limit: 5 — 최대 재시도 횟수 (-1은 무제한)",
+        "limit: 5 — 최초 시도 + 최대 5회 재시도, 총 최대 6회",
         "backoff.duration: 5s — 초기 대기 시간",
         "backoff.factor: 2 — 대기 시간 증가 배수",
         "backoff.maxDuration: 3m — 대기 시간 상한"
@@ -196,7 +196,7 @@
       "items": [
         "5s → 10s → 20s → 40s: 실패마다 factor 배로 증가",
         "계산값이 maxDuration(3m)을 넘으면 3m으로 고정",
-        "limit=5에 도달하면 더 이상 재시도하지 않는다"
+        "이 예시는 네 번째 재시도에서 성공하여 남은 재시도를 실행하지 않음"
       ]
     }
   ]

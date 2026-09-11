@@ -15,6 +15,8 @@ Retry and Timeout are core mechanisms for improving microservice resilience. Wit
 
 ## Overview
 
+Examples are alternative HTTP sidecar policies and assume retry-safe operations unless a write policy is shown. Native SQL and opaque application HTTPS cannot use these HTTP retry/timeout rules. Set a caller deadline as well; retries at several layers multiply backend attempts and can outlive one layer’s local timeout.
+
 ### Why Timeout and Retry?
 
 ![Without timeout/retry the client waits forever on an unresponsive service and wastes resources; with Istio timeout/retry it stops after 1s, retries another instance, and succeeds.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
@@ -81,7 +83,9 @@ spec:
 
 ## Retry Configuration
 
-> **Important:** Omitting `retries` does not necessarily mean retry is off. Istio's cluster-wide default is `attempts: 2` with `retryOn: connect-failure,refused-stream,unavailable,cancelled`. `attempts` counts **additional retries after the original request**, so this can result in three total deliveries. Set `attempts: 0` on the route to disable proxy retries explicitly.
+> **Important:** Omitting `retries` does not necessarily mean retry is off. The rendered Istio 1.31.0 default is `attempts: 2` with `retryOn: connect-failure,refused-stream,unavailable,cancelled,retriable-status-codes`. `attempts` counts **additional retries after the original request**, so this can result in three total deliveries. Set `attempts: 0` on the route to disable proxy retries explicitly.
+
+The HTTPRetry reference abbreviates that list; the released retry implementation also enables `retriable-status-codes` for configured codes. Cluster defaults can be overridden. An explicit retry policy must name the intended conditions; do not assume that every timeout is retried or that another healthy endpoint always exists.
 
 ### Basic Retry
 
@@ -194,7 +198,7 @@ spec:
   - name: writes-no-mesh-retry
     match:
     - method:
-        regex: "^(POST|PATCH)$"
+        regex: "^(POST|PUT|PATCH|DELETE)$"
     route:
     - destination:
         host: order-service
@@ -304,12 +308,28 @@ spec:
   hosts:
   - api.external.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-api-tls
+spec:
+  host: api.external.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.external.com
+      subjectAltNames:
+      - api.external.com
 ```
+
+Call `http://api.external.com` from the application for this origination example; replace the hostname with the real service. If the application already starts HTTPS, its encrypted HTTP messages cannot be inspected for these retry conditions.
 
 ### Example 3: Combined with Circuit Breaker
 
@@ -364,7 +384,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -416,57 +436,47 @@ spec:
 `reset`, `503`, and timeout do not prove that the server rejected the request. The server can commit the database transaction and then lose only the response, so a proxy cannot determine whether replay is safe. After an ambiguous outcome, the application should query the operation status instead of blindly resending it.
 
 ```python
-# Application: Use Idempotency Key
-import uuid
+# Client excerpt: requires an API with an atomic idempotency contract.
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 
-def create_order_with_idempotency(order_data):
-    # Generate unique Idempotency Key
-    idempotency_key = str(uuid.uuid4())
 
-    session = requests.Session()
-    retry_strategy = Retry(
+def create_order_with_idempotency(order_data, idempotency_key):
+    # Persist one key per logical order; reuse it after ambiguous failures.
+    if not idempotency_key:
+        raise ValueError("A persisted operation idempotency key is required")
+    retries = Retry(
         total=3,
         status_forcelist=[500, 502, 503, 504],
-        allowed_methods=["POST"],  # Allow POST retry
-        backoff_factor=1
+        allowed_methods=["POST"],
+        backoff_factor=1,
     )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("http://", adapter)
-
-    headers = {
-        "X-Idempotency-Key": idempotency_key  # Prevent duplicates
-    }
-
-    response = session.post(
-        "http://order-service/orders",
-        json=order_data,
-        headers=headers
-    )
-    return response
-
-# Server side: Validate Idempotency Key
-@app.route('/orders', methods=['POST'])
-def create_order():
-    idempotency_key = request.headers.get('X-Idempotency-Key')
-
-    # Check if already processed in Redis/DB
-    if redis.exists(f"order:idempotency:{idempotency_key}"):
-        # Already processed - return cached result
-        cached_result = redis.get(f"order:result:{idempotency_key}")
-        return jsonify(json.loads(cached_result)), 200
-
-    # Create new order
-    order = create_order_in_db(request.json)
-
-    # Cache Idempotency Key and result (24h TTL)
-    redis.setex(f"order:idempotency:{idempotency_key}", 86400, "1")
-    redis.setex(f"order:result:{idempotency_key}", 86400, json.dumps(order))
-
-    return jsonify(order), 201
+    with requests.Session() as session:
+        adapter = HTTPAdapter(max_retries=retries)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        response = session.post(
+            "http://order-service/orders",
+            json=order_data,
+            headers={"X-Idempotency-Key": idempotency_key},
+            timeout=(3, 10),
+        )
+        response.raise_for_status()
+        return response.json()
 ```
+
+The server must enforce the contract atomically. A Redis `exists` check followed by order creation and separate cache writes allows concurrent duplicate orders and crash windows; it is not a safe deduplication implementation.
+
+1. Validate the key and bind it to the authenticated caller and a request-payload fingerprint.
+2. Use a unique database constraint to claim the key; serialize concurrent attempts.
+3. Commit the order mutation and stored status/response with that key in one transaction.
+4. Return the stored result for the same key/payload; reject reuse with a different payload.
+5. Coordinate irreversible external effects through an outbox/idempotent downstream API. Choose retention to cover the supported retry window.
+
+The client example assumes this server contract already exists. A header by itself does not make POST safe, and the Requests timeout is per attempt/connect-read phase rather than a total retry deadline.
+
+
 
 Combine these safeguards for production write APIs:
 
@@ -524,7 +534,7 @@ spec:
   - match:
     - method:
         exact: PUT
-    - headers:
+      headers:
         x-idempotency-key:
           regex: ".+"  # Only when Idempotency Key present
     route:
@@ -565,7 +575,7 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       baseEjectionTime: 30s
 
 # Result: Before the Circuit Breaker opens,
@@ -597,7 +607,7 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       baseEjectionTime: 30s
 ```
 
@@ -649,7 +659,7 @@ spec:
   - route:
     - destination:
         host: api-gateway
-    timeout: 300s  # 5 minutes is too long
+    timeout: 300s  # Illustrative poor fit for a short interactive request; streaming differs
 ```
 
 ### 2. Retry Strategy
@@ -679,7 +689,7 @@ spec:
   # POST/PATCH - explicitly disable mesh retry
   - match:
     - method:
-        regex: "^(POST|PATCH)$"
+        regex: "^(POST|PUT|PATCH|DELETE)$"
     route:
     - destination:
         host: api-service
@@ -689,7 +699,7 @@ spec:
 
 ### 3. Exponential Backoff
 
-Istio retries with a default interval of 25ms, but here is how to configure a custom backoff. This applies to the read path only — `payment` still disables mesh retry for writes, as shown earlier in this page:
+Envoy uses fully jittered exponential backoff with a default 25ms base interval; actual delays are not a fixed 25/50/100ms sequence. The example sets a custom base for reads and explicitly disables retries on the write path:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -710,8 +720,12 @@ spec:
       attempts: 5
       perTryTimeout: 2s
       retryOn: connect-failure,refused-stream
-      # Istio automatically increases retry interval
-      # 25ms, 50ms, 100ms, 200ms, 400ms
+      backoff: 100ms
+  - route:
+    - destination:
+        host: payment
+    retries:
+      attempts: 0
 ```
 
 ### 4. Total System Timeout Calculation
@@ -739,19 +753,16 @@ kubectl describe virtualservice <name> -n <namespace>
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | grep timeout
 
 # 3. Test actual timeout
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
-  curl -v --max-time 5 http://backend-service
+kubectl exec -it <pod-name> -n <namespace> -c <app-container> -- \
+  curl -v --max-time 15 http://backend-service
 ```
 
 ### Too Many Retries
 
-```bash
-# Check retry metrics
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/stats/prometheus | grep retry
+Generate traffic from an application container with curl installed, not from the istio-proxy UID (which can bypass interception). Set curl's deadline above the configured route timeout for that test. Use Envoy retry counters, enabled by the proxy stats matcher, to measure retries; the `UR` response flag means upstream remote reset and is not a retry counter.
 
-# Check retries for specific service
-istio_requests_total{destination_service="backend.default.svc.cluster.local",response_flags="UR"}
+```promql
+sum(rate(envoy_cluster_upstream_rq_retry[5m]))
 ```
 
 ### Preventing Retry Storm
@@ -773,7 +784,7 @@ spec:
         http2MaxRequests: 100
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3  # Fast circuit break
+      consecutive5xxErrors: 3  # Fast circuit break
       interval: 10s
       baseEjectionTime: 30s
 ```
@@ -784,3 +795,12 @@ spec:
 - [Istio Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
 - [Envoy Retry Policy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
 - [RFC 9110: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Primary reference 2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/route/retry/retry.go)
+- [Primary reference 3](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter)
+- [Primary reference 4](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
+- [Primary reference 5](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+- [Primary reference 6](https://raw.githubusercontent.com/psf/requests/main/docs/user/advanced.rst)
+- [Primary reference 7](https://raw.githubusercontent.com/urllib3/urllib3/main/src/urllib3/util/retry.py)
+- [Primary reference 8](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

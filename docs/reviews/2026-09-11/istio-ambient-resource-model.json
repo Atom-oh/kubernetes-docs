@@ -1,0 +1,17 @@
+{
+  "date": "2026-09-11",
+  "kind": "Hypothetical arithmetic from original documentation inputs, not an official benchmark",
+  "values": {
+    "sidecar_memory": 5000,
+    "sidecar_cpu": 10.0,
+    "ambient_memory": 700,
+    "ambient_cpu": 1.5,
+    "memory_saved": 4300,
+    "cpu_saved": 8.5
+  },
+  "memoryBudgetDifferencePercent": 86,
+  "cpuBudgetDifferencePercent": 85,
+  "validation": [
+    "Both language snippets parsed and evaluated with arithmetic-only AST; all deployment/sample commands remained unexecuted."
+  ]
+}

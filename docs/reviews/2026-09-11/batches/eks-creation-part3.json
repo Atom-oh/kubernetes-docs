@@ -1,0 +1,52 @@
+[
+  {
+    "path": "en/eks/02-eks-cluster-creation-part3.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Full read complete; paired Console/CLI operational corrections in progress.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html"
+    ],
+    "findings": [
+      "Conventional-node workflow needs explicit Console Custom/AutoMode selection and current AL2023/version guidance.",
+      "Private endpoint access incorrectly limited to within one VPC.",
+      "Minimal VPC/subnet creation omits DNS/routing/NAT or private endpoints and does not capture/use created IDs.",
+      "Unrestricted TCP443 SG ingress is unnecessary for public API access and contradicts restricted endpoint guidance.",
+      "CreateCluster uses invalid --kubernetes-version and old1.26; add Region, correct --version and waiters.",
+      "IAM role creation can fall through to attaching policies on an existing name; node ECR policy outdated and CNI role tradeoff unqualified.",
+      "Missing explicit operator access entries; default kubeconfig/context and getnodes alone are insufficient validation."
+    ],
+    "validation": [
+      "Read every line1–264; no commands in the guide executed."
+    ]
+  },
+  {
+    "path": "ko/eks/02-eks-cluster-creation-part3.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Full read complete; paired Console/CLI operational corrections in progress.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html"
+    ],
+    "findings": [
+      "Conventional-node workflow needs explicit Console Custom/AutoMode selection and current AL2023/version guidance.",
+      "Private endpoint access incorrectly limited to within one VPC.",
+      "Minimal VPC/subnet creation omits DNS/routing/NAT or private endpoints and does not capture/use created IDs.",
+      "Unrestricted TCP443 SG ingress is unnecessary for public API access and contradicts restricted endpoint guidance.",
+      "CreateCluster uses invalid --kubernetes-version and old1.26; add Region, correct --version and waiters.",
+      "IAM role creation can fall through to attaching policies on an existing name; node ECR policy outdated and CNI role tradeoff unqualified.",
+      "Missing explicit operator access entries; default kubeconfig/context and getnodes alone are insufficient validation."
+    ],
+    "validation": [
+      "Read every line1–264; no commands in the guide executed."
+    ]
+  }
+]

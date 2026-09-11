@@ -2,6 +2,8 @@
 
 이 퀴즈는 컨테이너 기술의 기본 개념, 작동 원리, 그리고 Kubernetes와의 관계에 대한 이해도를 테스트합니다.
 
+기본 Linux 프로세스 격리 컨테이너를 기준으로 답합니다. Kata/Fargate 등 VM 기반 실행 환경과 Windows 지원 범위는 별도입니다.
+
 ## 객관식 문제
 
 1. 컨테이너의 주요 특징이 아닌 것은 무엇인가요?
@@ -112,7 +114,7 @@ bridge는 Docker의 기본 네트워크 드라이버로, 동일한 호스트에�
 **정답: B) 볼륨**
 
 **설명:**
-볼륨은 Docker가 관리하는 호스트 파일 시스템의 영역으로, 컨테이너의 영구 데이터 저장에 가장 적합한 방법입니다. 임시 스토리지는 컨테이너 내부 파일 시스템으로 컨테이너 삭제 시 데이터가 손실됩니다. 바인드 마운트는 호스트의 특정 경로를 컨테이너에 마운트하는 방식이고, tmpfs 마운트는 메모리에만 데이터를 저장합니다.
+볼륨은 Docker가 관리하는 호스트 파일 시스템의 영역으로, 컨테이너의 영구 데이터 저장에 가장 적합한 방법입니다. 임시 스토리지는 컨테이너 내부 파일 시스템으로 컨테이너 삭제 시 데이터가 손실됩니다. 바인드 마운트는 호스트의 특정 경로를 컨테이너에 마운트하는 방식이고, tmpfs 마운트는 메모리 기반이지만 swap을 사용할 수 있습니다.
 </details>
 
 8. 컨테이너 보안을 강화하기 위한 방법이 아닌 것은 무엇인가요?
@@ -134,17 +136,17 @@ bridge는 Docker의 기본 네트워크 드라이버로, 동일한 호스트에�
 9. AWS에서 서버리스 컨테이너 실행 환경을 제공하는 서비스는 무엇인가요?
    - A) Amazon EC2
    - B) Amazon ECS
-   - C) Amazon Fargate
+   - C) AWS Fargate
    - D) Amazon ECR
    
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: C) Amazon Fargate**
+**정답: C) AWS Fargate**
 
 **설명:**
-Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버를 관리하지 않고도 컨테이너를 실행할 수 있습니다. Amazon EC2는 가상 서버 서비스, Amazon ECS는 컨테이너 오케스트레이션 서비스, Amazon ECR은 컨테이너 이미지 레지스트리 서비스입니다.
+AWS Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버를 관리하지 않고도 컨테이너를 실행할 수 있습니다. Amazon EC2는 가상 서버 서비스, Amazon ECS는 컨테이너 오케스트레이션 서비스, Amazon ECR은 컨테이너 이미지 레지스트리 서비스입니다.
 </details>
 
 10. 컨테이너 오케스트레이션 도구의 주요 기능이 아닌 것은 무엇인가요?
@@ -163,7 +165,7 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
 컨테이너 이미지 빌드는 일반적으로 CI/CD 파이프라인이나 Docker와 같은 컨테이너 빌드 도구의 역할입니다. 컨테이너 오케스트레이션 도구(Kubernetes, Docker Swarm 등)의 주요 기능은 자동 배포 및 롤백, 서비스 검색 및 로드 밸런싱, 자동 확장, 자가 복구, 구성 관리, 스토리지 오케스트레이션 등입니다.
 </details>
 
-11. 컨테이너가 실행 중이 아닌 상태에서 존재할 수 있는 상태가 아닌 것은 무엇인가요?
+11. 다음 중 Docker 컨테이너 라이프사이클 상태가 아닌 것은 무엇인가요?
     - A) Created
     - B) Exited
     - C) Building
@@ -176,7 +178,7 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
 **정답: C) Building**
 
 **설명:**
-컨테이너의 라이프사이클 상태에는 Created(생성됨), Running(실행 중), Paused(일시 중지), Restarting(재시작 중), Exited(종료됨), Dead(죽음) 상태가 있습니다. Building은 이미지 빌드 과정의 상태이며, 컨테이너의 상태가 아닙니다. 컨테이너는 이미지가 빌드된 후에 생성됩니다.
+컨테이너의 라이프사이클 상태에는 Created(생성됨), Running(실행 중), Paused(일시 중지), Restarting(재시작 중), Exited(종료됨), Removing(삭제 중), Dead(비정상) 상태가 있습니다. Building은 이미지 빌드 과정의 상태이며, 컨테이너의 상태가 아닙니다. 컨테이너는 이미지가 빌드된 후에 생성됩니다.
 </details>
 
 12. 컨테이너 재시작 정책 중 Docker 데몬 시작 시에도 컨테이너가 재시작되지만, 수동으로 중지한 경우에는 재시작되지 않는 정책은 무엇인가요?
@@ -192,7 +194,7 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
 **정답: D) unless-stopped**
 
 **설명:**
-`unless-stopped` 재시작 정책은 컨테이너가 명시적으로 중지되지 않는 한 항상 재시작됩니다. Docker 데몬이 재시작되어도 컨테이너가 자동으로 시작되지만, 사용자가 수동으로 `docker stop` 명령으로 중지한 경우에는 데몬 재시작 후에도 컨테이너가 시작되지 않습니다. `always`는 수동 중지 여부와 관계없이 항상 재시작됩니다.
+`unless-stopped` 재시작 정책은 컨테이너가 명시적으로 중지되지 않는 한 항상 재시작됩니다. Docker 데몬이 재시작되어도 컨테이너가 자동으로 시작되지만, 사용자가 수동으로 `docker stop` 명령으로 중지한 경우에는 데몬 재시작 후에도 컨테이너가 시작되지 않습니다. always도 수동 중지 직후에는 재시작하지 않으며 데몬 재시작 또는 명시적 start 후 다시 적용됩니다. unless-stopped와 달리 데몬 재시작 후에는 다시 시작됩니다.
 </details>
 
 13. 컨테이너와 원본 이미지 사이의 파일 시스템 변경 사항을 확인하는 Docker 명령은 무엇인가요?
@@ -222,7 +224,7 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
 **정답: 다이제스트(Digest)**
 
 **설명:**
-다이제스트는 컨테이너 이미지 내용의 SHA256 해시로, 이미지의 고유한 식별자입니다. 태그와 달리 이미지 내용이 변경되면 다이제스트도 변경되므로, 특정 이미지 버전을 정확하게 참조할 때 사용됩니다. 예: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
+이미지 참조의 다이제스트는 manifest 또는 다중 플랫폼 index 바이트를 보통 SHA256으로 식별하며 manifest는 layer/config 다이제스트를 참조합니다. 태그와 달리 이미지 내용이 변경되면 다이제스트도 변경되므로, 특정 이미지 버전을 정확하게 참조할 때 사용됩니다. 예: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
 </details>
 
 15. Dockerfile에서 컨테이너 시작 시 실행할 명령을 지정하는 지시문은 무엇인가요?
@@ -300,7 +302,7 @@ Amazon ECR(Elastic Container Registry)은 AWS의 관리형 컨테이너 이미�
 ## 실습 문제
 
 21. 다음 요구사항을 충족하는 Dockerfile을 작성하세요:
-    - Node.js 14 Alpine 이미지 사용
+    - Node.js 24 Alpine 이미지 사용
     - 작업 디렉토리를 /app으로 설정
     - package.json과 package-lock.json 파일을 먼저 복사
     - 의존성 설치
@@ -314,15 +316,17 @@ Amazon ECR(Elastic Container Registry)은 AWS의 관리형 컨테이너 이미�
 
 **정답:**
 ```dockerfile
-FROM node:14-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 3000
 
@@ -330,7 +334,7 @@ CMD ["node", "server.js"]
 ```
 
 **설명:**
-이 Dockerfile은 Node.js 애플리케이션을 위한 기본적인 구성을 보여줍니다. 의존성 파일(package*.json)을 먼저 복사하고 설치한 후, 나머지 파일을 복사하는 방식으로 Docker의 레이어 캐싱을 최적화합니다. 이렇게 하면 소스 코드가 변경되어도 의존성이 변경되지 않았다면 npm install 단계를 재사용할 수 있습니다.
+이 Dockerfile은 Node.js 애플리케이션을 위한 기본적인 구성을 보여줍니다. 의존성 파일(package*.json)을 먼저 복사하고 설치한 후, 나머지 파일을 복사하는 방식으로 Docker의 레이어 캐싱을 최적화합니다. 이렇게 하면 소스 코드가 변경되어도 의존성이 변경되지 않았다면 npm ci 단계를 재사용할 수 있습니다.
 </details>
 
 22. 다음 Docker 명령을 분석하고 그 목적을 설명하세요:
@@ -348,8 +352,10 @@ CMD ["node", "server.js"]
     - `--name my-app`: 컨테이너 이름을 "my-app"으로 설정
     - `-p 8080:80`: 호스트의 8080 포트를 컨테이너의 80 포트에 매핑
     - `-v data:/app/data`: "data"라는 이름의 볼륨을 컨테이너의 /app/data 경로에 마운트
-    - `--restart always`: 컨테이너가 종료되면 항상 자동으로 재시작
-    - `nginx:latest`: 최신 버전의 nginx 이미지 사용
+    - `--restart always`: 종료 후 재시작하며 수동 중지 시 데몬 재시작/명시적 start까지 억제
+    - `nginx:latest`: 변경 가능한 latest 태그 사용; 새 내용 반영에는 pull 필요
+
+/app/data 마운트가 NGINX document root를 바꾸지는 않습니다. 포트 공개는 기본적으로 모든 호스트 주소에 바인딩하며 로컬 전용은 127.0.0.1:8080:80을 사용합니다.
 
 이 명령은 nginx 웹 서버를 백그라운드에서 실행하고, 호스트의 8080 포트를 통해 접근할 수 있게 하며, 영구 데이터 저장을 위한 볼륨을 설정하고, 컨테이너가 종료되면 자동으로 재시작하도록 구성합니다.
 </details>
@@ -363,20 +369,20 @@ CMD ["node", "server.js"]
 **정답:**
 ```dockerfile
 # 빌드 단계
-FROM node:14 AS build
+FROM node:24 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
 RUN npm run build
 
 # 실행 단계
-FROM nginx:alpine
+FROM nginx:1.30.4-alpine
 
 # 빌드 결과물을 nginx의 서비스 디렉토리로 복사
 COPY --from=build /app/build /usr/share/nginx/html
@@ -404,14 +410,15 @@ CMD ["nginx", "-g", "daemon off;"]
 
 **정답:**
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.4-alpine
 
 # 애플리케이션 복사 (예시)
 COPY ./html /usr/share/nginx/html
+RUN printf 'ok\n' > /usr/share/nginx/html/health
 
 # 헬스 체크 설정
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/health || exit 1
 
 EXPOSE 80
 
@@ -422,11 +429,11 @@ CMD ["nginx", "-g", "daemon off;"]
 HEALTHCHECK 지시어의 각 옵션 의미:
 - `--interval=30s`: 30초마다 헬스 체크 수행
 - `--timeout=3s`: 헬스 체크 명령이 3초 이내에 완료되어야 함
-- `--start-period=10s`: 컨테이너 시작 후 10초간 헬스 체크 실패를 무시 (초기화 시간)
+- `--start-period=10s`: 초기화 실패를 최대 10초간 허용하며 먼저 성공한 검사가 있으면 이후 실패는 집계
 - `--retries=3`: 3회 연속 실패 시 컨테이너를 unhealthy로 표시
 - `CMD`: 실행할 헬스 체크 명령. wget으로 /health 엔드포인트 확인
 
-헬스 체크는 컨테이너 오케스트레이션 도구가 컨테이너 상태를 파악하여 자동 복구나 트래픽 라우팅 결정에 활용합니다.
+Docker는 unhealthy를 표시하지만 그 상태만으로 일반 컨테이너를 재시작하지 않습니다. 오케스트레이터는 지원하는 상태 신호에 반응할 수 있지만 Kubernetes는 Dockerfile HEALTHCHECK 대신 자체 probe가 필요합니다. 예제는 HTTP 200을 반환하는 /health 경로를 제공해야 합니다.
 </details>
 
 25. 컨테이너 디버깅을 위해 실행 중인 컨테이너의 환경 변수, 네트워크 설정, 프로세스 목록을 확인하는 Docker 명령어들을 작성하세요.
@@ -480,6 +487,8 @@ docker stats <container-id>
 이러한 도구들을 활용하면 컨테이너 내부 상태를 효과적으로 파악하고 문제를 해결할 수 있습니다.
 </details>
 
+Dockerfile 실습은 일치하는 package-lock.json, server.js/정적 빌드 스크립트, html 디렉토리를 독자가 제공한다는 전제입니다. .dockerignore에서 node_modules/.git/.env를 제외합니다. React 정적 출력은 도구에 따라 build 또는 dist이므로 실제 경로에 맞춥니다. SSR 서버 앱은 NGINX에 정적 파일만 복사하는 방식으로 실행되지 않습니다. 위 /health는 정적 NGINX 응답 확인용이며 백엔드 준비 상태를 검증하지 않습니다.
+
 ## 심화 문제
 
 26. 컨테이너 기술의 핵심 구성 요소인 네임스페이스와 cgroups의 역할을 비교하고, 각각이 컨테이너 격리에 어떻게 기여하는지 설명하세요.
@@ -497,7 +506,7 @@ docker stats <container-id>
     - PID 네임스페이스: 프로세스 ID 격리
     - 네트워크 네임스페이스: 네트워크 스택 격리
     - 마운트 네임스페이스: 파일 시스템 마운트 포인트 격리
-    - UTS 네임스페이스: 호스트명과 도메인명 격리
+    - UTS 네임스페이스: 호스트명과 NIS 도메인명 격리
     - IPC 네임스페이스: 프로세스 간 통신 자원 격리
     - 사용자 네임스페이스: 사용자 및 그룹 ID 격리
 
@@ -508,7 +517,7 @@ docker stats <container-id>
     - CPU 시간 제한
     - 메모리 사용량 제한
     - 블록 I/O 대역폭 제한
-    - 네트워크 대역폭 제한
+    - tc/eBPF 연동을 통한 네트워크 트래픽 제어
     - 장치 접근 제어
 
 **컨테이너 격리에 대한 기여**:
@@ -519,7 +528,7 @@ docker stats <container-id>
 
     - cgroups는 컨테이너가 사용할 수 있는 시스템 자원(CPU, 메모리, 디스크 I/O 등)을 제한하여 물리적 자원 격리를 제공합니다. 이를 통해 한 컨테이너가 과도한 자원을 사용하여 다른 컨테이너나 호스트 시스템에 영향을 미치는 것을 방지합니다.
 
-두 기술이 함께 작동하여 컨테이너는 독립된 환경에서 제한된 자원을 사용하며 실행될 수 있습니다. 이러한 격리는 가상 머신보다 가볍지만, 보안과 자원 관리 측면에서 충분한 격리를 제공합니다.
+두 기술이 함께 작동하여 컨테이너는 독립된 환경에서 제한된 자원을 사용하며 실행될 수 있습니다. 이러한 격리는 가상 머신보다 가볍지만, 보안 수준은 커널 노출, 권한 및 런타임 구성에 따라 달라지며 완전한 격리를 보장하지는 않습니다.
 </details>
 
 27. 컨테이너 이미지 레이어링 시스템의 작동 방식과 Copy-on-Write(CoW) 전략이 컨테이너의 효율성에 어떻게 기여하는지 설명하세요.
@@ -532,7 +541,7 @@ docker stats <container-id>
 
 **컨테이너 이미지 레이어링 시스템**:
 
-컨테이너 이미지는 여러 레이어의 스택으로 구성됩니다. 각 레이어는 파일 시스템의 변경사항을 나타내며, Dockerfile의 각 명령(FROM, RUN, COPY 등)은 새로운 레이어를 생성합니다. 이러한 레이어는 읽기 전용이며, 계층적으로 쌓여 최종 이미지를 형성합니다.
+컨테이너 이미지는 여러 레이어의 스택으로 구성됩니다. 각 레이어는 파일 시스템의 변경사항을 나타내며, RUN/COPY/ADD는 파일 시스템 diff를 만들 수 있지만 ENV/CMD 같은 메타데이터 명령은 파일 시스템 레이어를 만들지 않습니다. 이러한 레이어는 읽기 전용이며, 계층적으로 쌓여 최종 이미지를 형성합니다.
 
 레이어링 시스템의 주요 특징:
 1. **증분적 빌드**: 이미지 빌드 시 변경된 레이어만 다시 생성
@@ -546,7 +555,7 @@ Copy-on-Write는 데이터가 실제로 수정될 때까지 복사 작업을 지
 1. **컨테이너 시작**: 컨테이너가 시작되면, 기존 이미지 레이어 위에 쓰기 가능한 얇은 레이어가 추가됩니다.
 2. **읽기 작업**: 파일을 읽을 때, 시스템은 위에서 아래로 레이어를 검색하여 첫 번째로 발견된 파일 버전을 사용합니다.
 3. **쓰기 작업**: 파일을 수정할 때, 해당 파일이 먼저 쓰기 가능 레이어로 복사된 후 수정됩니다(Copy-on-Write). 원본 파일은 변경되지 않습니다.
-4. **삭제 작업**: 파일을 삭제할 때, 실제로 파일이 삭제되지 않고 쓰기 가능 레이어에 "whiteout" 파일이 생성되어 해당 파일이 삭제된 것처럼 보이게 합니다.
+4. **삭제 작업**: 하위 레이어 파일 삭제는 쓰기 레이어에 whiteout을 만들며 상위 레이어에만 있는 파일은 해당 레이어에서 제거할 수 있습니다.
 
 **효율성에 대한 기여**:
 
@@ -591,18 +600,18 @@ Copy-on-Write는 데이터가 실제로 수정될 때까지 복사 작업을 지
      - `docker pause` → Paused
      - `docker stop` → Exited
      - `docker kill` → Exited
-     - `docker restart` → Restarting → Running
+     - `docker restart` → stop/start → Running
      - 프로세스 종료 시 → Exited
 
 3. **Paused (일시 중지)**
-   - 모든 프로세스가 SIGSTOP으로 일시 중지됨
+   - Linux 프로세스는 SIGSTOP 전송이 아닌 freezer cgroup으로 일시 중지됨
    - `docker pause` 명령으로 진입
    - 메모리는 유지되지만 CPU 사용 없음
    - 전환: `docker unpause` → Running
 
 4. **Restarting (재시작 중)**
    - 컨테이너가 재시작 중인 임시 상태
-   - `docker restart` 또는 재시작 정책에 의해 발생
+   - 재시작 정책에 따른 자동 재시작 상태이며 명시적 docker restart는 stop/start 순서를 요청
    - 전환: 자동으로 Running 또는 Exited로 전환
 
 5. **Exited (종료됨)**
@@ -638,7 +647,7 @@ docker rm <id>                  # 삭제
 **재시작 정책과 라이프사이클:**
 - `no`: 자동 재시작 없음
 - `on-failure[:max]`: 비정상 종료 시 재시작, 최대 횟수 지정 가능
-- `always`: 항상 재시작 (데몬 재시작 포함)
+- `always`: 종료/데몬 재시작 후 시작; 수동 중지 후에는 데몬 재시작/명시적 start까지 억제
 - `unless-stopped`: 수동 중지 전까지 항상 재시작
 
 컨테이너 라이프사이클을 이해하면 애플리케이션의 가용성을 보장하고, 문제 발생 시 적절한 복구 전략을 수립할 수 있습니다.
@@ -647,3 +656,30 @@ docker rm <id>                  # 삭제
 ---
 
 [학습 자료로 돌아가기](../../basics/03-container-technology.md) | [다음 퀴즈: Kubernetes 소개](./04-kubernetes-introduction-quiz.md)
+
+## 검증 참고 자료
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

@@ -15,6 +15,8 @@ Retry와 Timeout은 마이크로서비스의 복원력을 높이는 핵심 메�
 
 ## 개요
 
+각 예제는 독립적인 HTTP Sidecar 정책이며 쓰기 정책을 표시한 경우 외에는 재시도가 안전한 작업을 가정합니다. 일반 SQL과 앱이 직접 암호화한 HTTPS에는 HTTP 재시도/타임아웃 규칙이 적용되지 않습니다. 호출자 기한도 설정하세요. 여러 계층의 재시도는 백엔드 시도 수를 곱하고 개별 계층의 로컬 타임아웃을 넘길 수 있습니다.
+
 ### Timeout과 Retry의 필요성
 
 ![Timeout/Retry가 없으면 응답 없는 서비스에 무한 대기하며 리소스를 낭비하지만, Istio Timeout/Retry를 설정하면 1초 후 중단하고 다른 인스턴스로 재시도해 성공하는 비교 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
@@ -59,7 +61,7 @@ spec:
     - destination:
         host: api-service
     timeout: 1s
-  
+
   # 일반 API
   - match:
     - uri:
@@ -68,7 +70,7 @@ spec:
     - destination:
         host: api-service
     timeout: 5s
-  
+
   # 무거운 작업 - 긴 timeout
   - match:
     - uri:
@@ -81,7 +83,9 @@ spec:
 
 ## Retry 설정
 
-> **중요**: `retries`를 생략했다고 retry가 꺼지는 것은 아닙니다. Istio의 클러스터 기본 정책은 `attempts: 2`, `retryOn: connect-failure,refused-stream,unavailable,cancelled`입니다. 여기서 `attempts`는 최초 요청 이후의 **추가 재시도 횟수**이므로 최대 전달 횟수는 3회입니다. 프록시 retry를 확실히 끄려면 해당 route에 `attempts: 0`을 명시합니다.
+> **중요**: `retries`를 생략했다고 retry가 꺼지는 것은 아닙니다. Istio 1.31.0의 렌더링 기본 정책은 `attempts: 2`, `retryOn: connect-failure,refused-stream,unavailable,cancelled,retriable-status-codes`입니다. 여기서 `attempts`는 최초 요청 이후의 **추가 재시도 횟수**이므로 최대 전달 횟수는 3회입니다. 프록시 retry를 확실히 끄려면 해당 route에 `attempts: 0`을 명시합니다.
+
+HTTPRetry 참조 문서에는 목록이 축약되어 있지만 릴리스 구현은 설정된 상태 코드를 위한 retriable-status-codes도 활성화합니다. 클러스터 기본값은 재정의될 수 있습니다. 재시도 조건을 명시하고 모든 타임아웃이 재시도되거나 항상 다른 정상 엔드포인트가 있다고 가정하지 마세요.
 
 ### 기본 Retry
 
@@ -194,7 +198,7 @@ spec:
   - name: writes-no-mesh-retry
     match:
     - method:
-        regex: "^(POST|PATCH)$"
+        regex: "^(POST|PUT|PATCH|DELETE)$"
     route:
     - destination:
         host: order-service
@@ -304,12 +308,28 @@ spec:
   hosts:
   - api.external.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-api-tls
+spec:
+  host: api.external.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.external.com
+      subjectAltNames:
+      - api.external.com
 ```
+
+TLS Origination 예제이므로 앱은 `http://api.external.com`으로 호출하며 실제 서비스 호스트로 바꾸세요. 앱이 HTTPS를 직접 시작하면 암호화된 HTTP 메시지를 재시도 조건으로 검사할 수 없습니다.
 
 ### 예제 3: Circuit Breaker와 함께 사용
 
@@ -363,7 +383,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -415,57 +435,47 @@ spec:
 `reset`, `503`, timeout은 서버가 요청을 처리하지 않았다는 증거가 아닙니다. 서버가 DB commit을 끝낸 뒤 응답만 유실될 수 있으므로 프록시는 동일 요청의 replay가 안전한지 판단할 수 없습니다. 결과가 모호하면 무조건 재전송하기보다 애플리케이션이 요청 상태를 조회해야 합니다.
 
 ```python
-# 애플리케이션: Idempotency Key 사용
-import uuid
+# Client excerpt: requires an API with an atomic idempotency contract.
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 
-def create_order_with_idempotency(order_data):
-    # 고유한 Idempotency Key 생성
-    idempotency_key = str(uuid.uuid4())
 
-    session = requests.Session()
-    retry_strategy = Retry(
+def create_order_with_idempotency(order_data, idempotency_key):
+    # Persist one key per logical order; reuse it after ambiguous failures.
+    if not idempotency_key:
+        raise ValueError("A persisted operation idempotency key is required")
+    retries = Retry(
         total=3,
         status_forcelist=[500, 502, 503, 504],
-        allowed_methods=["POST"],  # POST도 재시도
-        backoff_factor=1
+        allowed_methods=["POST"],
+        backoff_factor=1,
     )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("http://", adapter)
-
-    headers = {
-        "X-Idempotency-Key": idempotency_key  # 중복 방지
-    }
-
-    response = session.post(
-        "http://order-service/orders",
-        json=order_data,
-        headers=headers
-    )
-    return response
-
-# 서버측: Idempotency Key 검증
-@app.route('/orders', methods=['POST'])
-def create_order():
-    idempotency_key = request.headers.get('X-Idempotency-Key')
-
-    # Redis/DB에서 이미 처리된 요청인지 확인
-    if redis.exists(f"order:idempotency:{idempotency_key}"):
-        # 이미 처리된 요청 - 저장된 결과 반환
-        cached_result = redis.get(f"order:result:{idempotency_key}")
-        return jsonify(json.loads(cached_result)), 200
-
-    # 새 주문 생성
-    order = create_order_in_db(request.json)
-
-    # Idempotency Key와 결과 저장 (24시간 TTL)
-    redis.setex(f"order:idempotency:{idempotency_key}", 86400, "1")
-    redis.setex(f"order:result:{idempotency_key}", 86400, json.dumps(order))
-
-    return jsonify(order), 201
+    with requests.Session() as session:
+        adapter = HTTPAdapter(max_retries=retries)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        response = session.post(
+            "http://order-service/orders",
+            json=order_data,
+            headers={"X-Idempotency-Key": idempotency_key},
+            timeout=(3, 10),
+        )
+        response.raise_for_status()
+        return response.json()
 ```
+
+서버가 원자적으로 계약을 보장해야 합니다. Redis exists 확인 뒤 주문을 만들고 캐시 키를 따로 기록하면 동시 요청과 크래시 구간에서 중복 주문이 발생하므로 안전한 중복 방지 구현이 아닙니다.
+
+1. 키를 검증하고 인증한 호출자와 요청 페이로드 fingerprint에 결합합니다.
+2. DB unique constraint로 키를 확보하고 동시 시도를 직렬화합니다.
+3. 주문 변경과 키에 연결된 상태/응답을 같은 트랜잭션으로 커밋합니다.
+4. 동일 키/페이로드에는 저장한 결과를 반환하고 다른 페이로드의 키 재사용은 거부합니다.
+5. 되돌리기 어려운 외부 효과는 outbox/멱등 다운스트림 API로 조정하고 재시도 기간을 포함하는 보존 시간을 정합니다.
+
+클라이언트 예제는 서버가 이 계약을 이미 제공한다는 전제입니다. 헤더만으로 POST가 안전해지지 않으며 Requests timeout은 시도별 연결/읽기 기한이지 전체 재시도 기한이 아닙니다.
+
+
 
 프로덕션 쓰기 API에는 다음 보호장치를 조합합니다.
 
@@ -523,7 +533,7 @@ spec:
   - match:
     - method:
         exact: PUT
-    - headers:
+      headers:
         x-idempotency-key:
           regex: ".+"  # Idempotency Key 있을 때만
     route:
@@ -564,7 +574,7 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       baseEjectionTime: 30s
 
 # 결과: Circuit Breaker가 열리기 전에
@@ -596,7 +606,7 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       baseEjectionTime: 30s
 ```
 
@@ -648,7 +658,7 @@ spec:
   - route:
     - destination:
         host: api-gateway
-    timeout: 300s  # 5분은 너무 김
+    timeout: 300s  # 짧은 대화형 요청에는 부적절한 예시; 스트리밍은 별도 판단
 ```
 
 ### 2. Retry 전략
@@ -674,11 +684,11 @@ spec:
       attempts: 3
       perTryTimeout: 2s
       retryOn: 5xx,reset,connect-failure
-  
+
   # POST/PATCH - mesh retry 명시적 비활성화
   - match:
     - method:
-        regex: "^(POST|PATCH)$"
+        regex: "^(POST|PUT|PATCH|DELETE)$"
     route:
     - destination:
         host: api-service
@@ -688,9 +698,7 @@ spec:
 
 ### 3. 지수 백오프 (Exponential Backoff)
 
-Istio는 기본적으로 25ms 간격으로 재시도하지만, 커스텀 백오프가 필요하면 다음처럼
-설정합니다. 이건 읽기 경로에만 적용되며, `payment`의 write는 이 문서 앞부분과
-동일하게 여전히 mesh retry를 끕니다:
+Envoy는 기본 25ms 기저 간격의 jitter가 있는 지수 백오프를 사용하며 실제 지연은 25/50/100ms의 고정 순서가 아닙니다. 아래는 읽기 재시도의 기저 간격을 지정하고 쓰기는 명시적으로 재시도하지 않는 예제입니다:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -711,8 +719,12 @@ spec:
       attempts: 5
       perTryTimeout: 2s
       retryOn: connect-failure,refused-stream
-      # Istio는 자동으로 재시도 간격 증가
-      # 25ms, 50ms, 100ms, 200ms, 400ms
+      backoff: 100ms
+  - route:
+    - destination:
+        host: payment
+    retries:
+      attempts: 0
 ```
 
 ### 4. 전체 시스템 Timeout 계산
@@ -740,19 +752,16 @@ kubectl describe virtualservice <name> -n <namespace>
 istioctl proxy-config routes <pod-name> -n <namespace> -o json | grep timeout
 
 # 3. 실제 timeout 테스트
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
-  curl -v --max-time 5 http://backend-service
+kubectl exec -it <pod-name> -n <namespace> -c <app-container> -- \
+  curl -v --max-time 15 http://backend-service
 ```
 
 ### Retry가 너무 많이 발생
 
-```bash
-# Retry 메트릭 확인
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/stats/prometheus | grep retry
+curl이 있는 애플리케이션 컨테이너에서 트래픽을 생성하세요. istio-proxy UID는 가로채기를 우회할 수 있습니다. 테스트하는 라우트 타임아웃보다 curl 기한을 길게 설정합니다. 프록시 stats matcher에서 활성화한 Envoy 재시도 카운터를 사용하세요. UR 응답 플래그는 upstream remote reset이며 재시도 카운터가 아닙니다.
 
-# 특정 서비스로의 retry 확인
-istio_requests_total{destination_service="backend.default.svc.cluster.local",response_flags="UR"}
+```promql
+sum(rate(envoy_cluster_upstream_rq_retry[5m]))
 ```
 
 ### Retry Storm 방지
@@ -774,7 +783,7 @@ spec:
         http2MaxRequests: 100
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3  # 빠른 차단
+      consecutive5xxErrors: 3  # 빠른 차단
       interval: 10s
       baseEjectionTime: 30s
 ```
@@ -785,3 +794,12 @@ spec:
 - [Istio Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
 - [Envoy Retry Policy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
 - [RFC 9110: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Primary reference 2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/route/retry/retry.go)
+- [Primary reference 3](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter)
+- [Primary reference 4](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
+- [Primary reference 5](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+- [Primary reference 6](https://raw.githubusercontent.com/psf/requests/main/docs/user/advanced.rst)
+- [Primary reference 7](https://raw.githubusercontent.com/urllib3/urllib3/main/src/urllib3/util/retry.py)
+- [Primary reference 8](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

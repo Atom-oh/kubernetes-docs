@@ -17,6 +17,8 @@ Istio's advanced routing features allow fine-grained control over traffic based 
 
 ## Routing Overview
 
+These are independent sidecar routing examples. Create the named Services and subsets, and apply only one overlapping VirtualService per host. Without `gateways`, routes apply to mesh sidecars; external-host ingress examples also need an existing Gateway binding and matching hostname. Headers, query parameters, and source workload labels are routing inputs, not proof of user identity. Enforce tenant/user permissions with authentication and AuthorizationPolicy.
+
 VirtualService routing rules consist of **Match conditions** and **Route destinations**.
 
 ![Diagram showing how an incoming request is evaluated against ordered match conditions in an Istio VirtualService and routed to the corresponding destination service, with a default fallback rule applied when no earlier condition matches.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-02-routing-0.png)
@@ -74,12 +76,16 @@ spec:
 match:
 - uri:
     exact: "/login"
+```
 
+```yaml
 # prefix: Prefix match
 match:
 - uri:
     prefix: "/api/"
+```
 
+```yaml
 # regex: Regular expression match
 match:
 - uri:
@@ -103,7 +109,9 @@ http:
   route:
   - destination:
       host: api-debug
+```
 
+```yaml
 # OR condition: Use multiple match blocks
 http:
 - match:
@@ -252,16 +260,6 @@ spec:
   hosts:
   - reviews
   http:
-  # Mobile devices
-  - match:
-    - headers:
-        user-agent:
-          regex: ".*Mobile.*"
-    route:
-    - destination:
-        host: reviews
-        subset: mobile
-
   # Tablet devices
   - match:
     - headers:
@@ -271,6 +269,16 @@ spec:
     - destination:
         host: reviews
         subset: tablet
+
+  # Mobile devices
+  - match:
+    - headers:
+        user-agent:
+          regex: ".*Mobile.*"
+    route:
+    - destination:
+        host: reviews
+        subset: mobile
 
   # Desktop (default)
   - route:
@@ -509,6 +517,8 @@ spec:
 
 ## Source-based Routing
 
+`sourceLabels` and `sourceNamespace` select which source sidecars receive configuration; they are not per-request authenticated matches at an ingress gateway. An explicit top-level gateway list must include `mesh` for these selectors to apply. The database example assumes an HTTP-facing service, not an opaque SQL protocol.
+
 ### Namespace-based Routing
 
 ```yaml
@@ -537,13 +547,12 @@ spec:
         host: database
         subset: staging
 
-  # Block other namespaces
-  - route:
-    - destination:
-        host: access-denied
+  # Illustrative HTTP rejection; enforce identity policy at the destination
+  - directResponse:
+      status: 403
 ```
 
-### Service Account-based Routing
+### Source Workload Label-based Routing
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -554,7 +563,7 @@ spec:
   hosts:
   - payment-service
   http:
-  # Allow access only from specific Service Account
+  # Select configuration for matching source workload labels
   - match:
     - sourceLabels:
         app: frontend
@@ -625,6 +634,8 @@ spec:
 
 ### Fallback Strategy
 
+Fallback here means the final unmatched-request route. Once a route matches, an upstream failure does not restart rule evaluation at the next route. Configure retries/outlier detection or a rollout controller separately for failure recovery.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -643,14 +654,9 @@ spec:
     - destination:
         host: myapp
         subset: canary
-    fault:
-      abort:
-        percentage:
-          value: 0
-        httpStatus: 503
     # No fallback on canary failure - return error
 
-  # Default requests - with fallback
+  # Default route for requests that did not match the canary condition
   - route:
     - destination:
         host: myapp
@@ -670,6 +676,7 @@ metadata:
 spec:
   hosts:
   - api.example.com
+  - tenant-b.api.example.com
   http:
   # Tenant A (identified by header)
   - match:
@@ -733,7 +740,7 @@ spec:
         host: myapp
         subset: beta
 
-  # Experimental features (employees only)
+  # Workloads labeled role=employee with the feature header
   - match:
     - headers:
         x-feature-experimental:
@@ -797,7 +804,7 @@ spec:
   - match:
     - headers:
         x-country-code:
-          regex: "DE|FR|UK|IT|ES"
+          regex: "DE|FR|GB|IT|ES"
     route:
     - destination:
         host: content-service
@@ -812,6 +819,8 @@ spec:
 
 ### Example 4: API Gateway Pattern
 
+Bind `api-gateway` to the real gateway and apply [JWT authentication plus authorization](../security/02-authentication.md) to protected paths before exposure. Matching the text `Bearer ...` does not validate a token. A protected path must not fall through to a public/general route when its credential is missing. Geo/tenant headers must come from a trusted, authenticated source if they influence access decisions.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -823,13 +832,10 @@ spec:
   gateways:
   - api-gateway
   http:
-  # APIs requiring authentication
+  # Route protected paths; JWT/authorization must be enforced separately
   - match:
     - uri:
         prefix: "/api/v1/protected/"
-      headers:
-        authorization:
-          regex: "Bearer .*"
     route:
     - destination:
         host: protected-api-service
@@ -868,10 +874,9 @@ spec:
     - destination:
         host: health-service
 
-  # 404 handling
-  - route:
-    - destination:
-        host: error-service
+  # 404 response for unmatched paths
+  - directResponse:
+      status: 404
 ```
 
 ## Troubleshooting
@@ -922,7 +927,9 @@ http:
   route:
   - destination:
       host: api-service
+```
 
+```yaml
 # ✅ Correct order
 http:
 - match:  # Specific rules first
@@ -936,28 +943,24 @@ http:
       host: myapp
 ```
 
-#### 2. Regex Syntax Errors
+#### 2. Regex Matching Scope
+
+RE2 matches the complete string. `/api/v[1-3]` is valid syntax and matches `/api/v1`, but not `/api/v1/users`; `/` does not need escaping. For both the version root and descendant paths:
 
 ```yaml
-# ❌ Incorrect regex
 match:
 - uri:
-    regex: "/api/v[1-3]"  # Missing anchor
-
-# ✅ Correct regex
-match:
-- uri:
-    regex: "^/api/v[1-3].*"
+    regex: "^/api/v[1-3](/.*)?$"
 ```
 
-#### 3. Header Case Sensitivity Issues
+#### 3. Header Names
+
+HTTP header names are case-insensitive on the wire, but Istio match-map keys must be lowercase. Header values remain case-sensitive unless the expression says otherwise.
 
 ```yaml
-# HTTP headers are case-insensitive
-# Istio automatically converts to lowercase
 match:
 - headers:
-    X-Custom-Header:  # Automatically converted to x-custom-header
+    x-custom-header:
       exact: "value"
 ```
 
@@ -998,7 +1001,9 @@ http:
 match:
 - uri:
     regex: "^/(api|admin|public)/v[0-9]+/(users|products|orders)/[a-zA-Z0-9_-]+$"
+```
 
+```yaml
 # ✅ Recommended - use prefix or exact
 match:
 - uri:
@@ -1019,6 +1024,10 @@ metadata:
 spec:
   hosts:
   - product-api.example.com
+  http:
+  - route:
+    - destination:
+        host: product-api-service
 ```
 
 ### 4. Documentation
@@ -1048,6 +1057,8 @@ spec:
 
 ### 5. Testing Strategy
 
+Set GATEWAY_URL to the installed ingress address/port and adapt Host and headers to the single example currently deployed. The mesh-only examples must first be bound to that gateway for these external curl tests. Restore any temporary proxy debug log level after investigation.
+
 ```bash
 # Routing rule test script
 #!/bin/bash
@@ -1059,10 +1070,10 @@ curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v1/users
 curl -H "Host: api.example.com" http://$GATEWAY_URL/api/v2/users
 
 # Mobile user test
-curl -H "User-Agent: Mobile" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "User-Agent: Mobile" "http://$GATEWAY_URL/"
 
 # Header-based test
-curl -H "x-canary: true" http://$GATEWAY_URL/
+curl -H "Host: myapp.example.com" -H "x-canary: true" "http://$GATEWAY_URL/"
 ```
 
 ## References

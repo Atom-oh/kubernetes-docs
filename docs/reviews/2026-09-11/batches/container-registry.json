@@ -1,0 +1,604 @@
+[
+  {
+    "path": "ko/container-registry/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed full introduction, comparisons, selection criteria, pricing assumptions and quick starts.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/usage/",
+      "https://www.docker.com/pricing/",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/service-quotas.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html",
+      "https://aws.amazon.com/ecr/pricing/"
+    ],
+    "findings": [
+      "Corrected ECR signing support, service quotas and private-connectivity versus air-gap distinction.",
+      "Corrected Docker Hub private repository/scan/usage claims and removed obsolete fixed plan prices.",
+      "Replaced unsupported vendor security hierarchy with control and operational-responsibility criteria.",
+      "Clarified storage-only cost examples and EKS execution-role versus workload-role responsibilities."
+    ],
+    "validation": [
+      "Full source read for both languages.",
+      "First-party Docker/AWS usage, signing, endpoint, IAM and pricing references checked.",
+      "Existing local diagram assets decode successfully.",
+      "Infrastructure examples reviewed statically; not executed against AWS."
+    ]
+  },
+  {
+    "path": "en/container-registry/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed full introduction, comparisons, selection criteria, pricing assumptions and quick starts.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/usage/",
+      "https://www.docker.com/pricing/",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/service-quotas.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html",
+      "https://aws.amazon.com/ecr/pricing/"
+    ],
+    "findings": [
+      "Corrected ECR signing support, service quotas and private-connectivity versus air-gap distinction.",
+      "Corrected Docker Hub private repository/scan/usage claims and removed obsolete fixed plan prices.",
+      "Replaced unsupported vendor security hierarchy with control and operational-responsibility criteria.",
+      "Clarified storage-only cost examples and EKS execution-role versus workload-role responsibilities."
+    ],
+    "validation": [
+      "Full source read for both languages.",
+      "First-party Docker/AWS usage, signing, endpoint, IAM and pricing references checked.",
+      "Existing local diagram assets decode successfully.",
+      "Infrastructure examples reviewed statically; not executed against AWS."
+    ]
+  },
+  {
+    "path": "ko/container-registry/01-docker-hub.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full article/quiz review against current Docker, containerd, ECR and policy references.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/usage/",
+      "https://docs.docker.com/docker-hub/usage/pulls/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/link-source/",
+      "https://docs.docker.com/reference/api/hub/latest.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-rule.html",
+      "https://github.com/kyverno/policies/tree/main/best-practices/restrict-image-registries",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://github.com/docker-library/official-images/blob/master/library/nginx",
+      "https://github.com/docker-library/official-images/blob/master/library/docker"
+    ],
+    "findings": [
+      "Corrected paid-plan pull limits, legacy autobuild support/providers and April 2027 retirement.",
+      "Corrected namespace/ServiceAccount scope, complete Deployment selectors and current containerd hosts configuration.",
+      "Corrected ECR pull-through credential prefix/region and actual secret ARN lookup.",
+      "Replaced misleading signature/scanning enforcement examples with accurately scoped source allowlists and explicit verification requirements.",
+      "Migrated Hub auth to access_token API, added complete read-only pagination, removed unverified destructive API cleanup and vulnerability endpoints.",
+      "Corrected outdated image tags, CI scan artifact handling, Jenkins credential quoting and ambiguous quiz answers."
+    ],
+    "validation": [
+      "Read both full articles and both full quiz files.",
+      "Checked 51 current Bash/YAML blocks syntactically without running infrastructure/registry mutations.",
+      "Verified Docker Hub authentication/request schema against official OpenAPI.",
+      "Plan/rate values are explicitly attributed and require current account/header verification; no universal quota guarantee."
+    ]
+  },
+  {
+    "path": "ko/quizzes/container-registry/01-docker-hub-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full article/quiz review against current Docker, containerd, ECR and policy references.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/usage/",
+      "https://docs.docker.com/docker-hub/usage/pulls/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/link-source/",
+      "https://docs.docker.com/reference/api/hub/latest.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-rule.html",
+      "https://github.com/kyverno/policies/tree/main/best-practices/restrict-image-registries",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://github.com/docker-library/official-images/blob/master/library/nginx",
+      "https://github.com/docker-library/official-images/blob/master/library/docker"
+    ],
+    "findings": [
+      "Corrected paid-plan pull limits, legacy autobuild support/providers and April 2027 retirement.",
+      "Corrected namespace/ServiceAccount scope, complete Deployment selectors and current containerd hosts configuration.",
+      "Corrected ECR pull-through credential prefix/region and actual secret ARN lookup.",
+      "Replaced misleading signature/scanning enforcement examples with accurately scoped source allowlists and explicit verification requirements.",
+      "Migrated Hub auth to access_token API, added complete read-only pagination, removed unverified destructive API cleanup and vulnerability endpoints.",
+      "Corrected outdated image tags, CI scan artifact handling, Jenkins credential quoting and ambiguous quiz answers."
+    ],
+    "validation": [
+      "Read both full articles and both full quiz files.",
+      "Checked 51 current Bash/YAML blocks syntactically without running infrastructure/registry mutations.",
+      "Verified Docker Hub authentication/request schema against official OpenAPI.",
+      "Plan/rate values are explicitly attributed and require current account/header verification; no universal quota guarantee."
+    ]
+  },
+  {
+    "path": "en/container-registry/01-docker-hub.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full article/quiz review against current Docker, containerd, ECR and policy references.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/usage/",
+      "https://docs.docker.com/docker-hub/usage/pulls/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/link-source/",
+      "https://docs.docker.com/reference/api/hub/latest.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-rule.html",
+      "https://github.com/kyverno/policies/tree/main/best-practices/restrict-image-registries",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://github.com/docker-library/official-images/blob/master/library/nginx",
+      "https://github.com/docker-library/official-images/blob/master/library/docker"
+    ],
+    "findings": [
+      "Corrected paid-plan pull limits, legacy autobuild support/providers and April 2027 retirement.",
+      "Corrected namespace/ServiceAccount scope, complete Deployment selectors and current containerd hosts configuration.",
+      "Corrected ECR pull-through credential prefix/region and actual secret ARN lookup.",
+      "Replaced misleading signature/scanning enforcement examples with accurately scoped source allowlists and explicit verification requirements.",
+      "Migrated Hub auth to access_token API, added complete read-only pagination, removed unverified destructive API cleanup and vulnerability endpoints.",
+      "Corrected outdated image tags, CI scan artifact handling, Jenkins credential quoting and ambiguous quiz answers."
+    ],
+    "validation": [
+      "Read both full articles and both full quiz files.",
+      "Checked 51 current Bash/YAML blocks syntactically without running infrastructure/registry mutations.",
+      "Verified Docker Hub authentication/request schema against official OpenAPI.",
+      "Plan/rate values are explicitly attributed and require current account/header verification; no universal quota guarantee."
+    ]
+  },
+  {
+    "path": "en/quizzes/container-registry/01-docker-hub-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full article/quiz review against current Docker, containerd, ECR and policy references.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/usage/",
+      "https://docs.docker.com/docker-hub/usage/pulls/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/",
+      "https://docs.docker.com/docker-hub/repos/manage/builds/link-source/",
+      "https://docs.docker.com/reference/api/hub/latest.yaml",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-rule.html",
+      "https://github.com/kyverno/policies/tree/main/best-practices/restrict-image-registries",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://github.com/docker-library/official-images/blob/master/library/nginx",
+      "https://github.com/docker-library/official-images/blob/master/library/docker"
+    ],
+    "findings": [
+      "Corrected paid-plan pull limits, legacy autobuild support/providers and April 2027 retirement.",
+      "Corrected namespace/ServiceAccount scope, complete Deployment selectors and current containerd hosts configuration.",
+      "Corrected ECR pull-through credential prefix/region and actual secret ARN lookup.",
+      "Replaced misleading signature/scanning enforcement examples with accurately scoped source allowlists and explicit verification requirements.",
+      "Migrated Hub auth to access_token API, added complete read-only pagination, removed unverified destructive API cleanup and vulnerability endpoints.",
+      "Corrected outdated image tags, CI scan artifact handling, Jenkins credential quoting and ambiguous quiz answers."
+    ],
+    "validation": [
+      "Read both full articles and both full quiz files.",
+      "Checked 51 current Bash/YAML blocks syntactically without running infrastructure/registry mutations.",
+      "Verified Docker Hub authentication/request schema against official OpenAPI.",
+      "Plan/rate values are explicitly attributed and require current account/header verification; no universal quota guarantee."
+    ]
+  },
+  {
+    "path": "ko/container-registry/02-amazon-ecr.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full ECR article/quiz reviewed; corrected operational and retention errors.",
+    "sources": [
+      "https://docs.aws.amazon.com/general/latest/gr/ecr-public.html",
+      "https://aws.amazon.com/ecr/pricing/",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lifecycle_policy_parameters.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/ecr-repository-metrics.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/replication.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-iam.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/slr-pullthroughcache.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md"
+    ],
+    "findings": [
+      "Corrected Public API regions, price assumptions, Basic scanner engine and encryption distinctions.",
+      "Corrected lifecycle evaluation/application order, wildcard-only selection, AND pattern semantics, invalid/unsafe age-count examples and consistent release prefixes.",
+      "Replaced destructive first-tag cleanup with tested read-only candidate preview protecting release/mixed tags and unknown artifacts.",
+      "Corrected kubelet node/Fargate image-pull identity versus workload IRSA/Pod Identity; removed non-working AWS-CLI-only CronJobs and delete-before-create Secret rotation.",
+      "Corrected replication/settings/RPO claims, explicit regional manifests and logical image size versus billed storage.",
+      "Removed nonexistent native scan/push metrics and corrected cache-client versus service-linked-role permissions.",
+      "Corrected ambiguous or wrong quiz answers."
+    ],
+    "validation": [
+      "Read complete source for both articles and quizzes, including truncated-output follow-up reads.",
+      "92 current code blocks parsed for JSON/YAML/Python/Bash syntax where applicable.",
+      "Read-only Python selection tested with fixed data; no boto3 import or AWS calls in the test.",
+      "Official ECR/EKS/SDK primary sources checked; no AWS infrastructure mutation or production runtime execution."
+    ]
+  },
+  {
+    "path": "ko/quizzes/container-registry/02-amazon-ecr-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full ECR article/quiz reviewed; corrected operational and retention errors.",
+    "sources": [
+      "https://docs.aws.amazon.com/general/latest/gr/ecr-public.html",
+      "https://aws.amazon.com/ecr/pricing/",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lifecycle_policy_parameters.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/ecr-repository-metrics.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/replication.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-iam.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/slr-pullthroughcache.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md"
+    ],
+    "findings": [
+      "Corrected Public API regions, price assumptions, Basic scanner engine and encryption distinctions.",
+      "Corrected lifecycle evaluation/application order, wildcard-only selection, AND pattern semantics, invalid/unsafe age-count examples and consistent release prefixes.",
+      "Replaced destructive first-tag cleanup with tested read-only candidate preview protecting release/mixed tags and unknown artifacts.",
+      "Corrected kubelet node/Fargate image-pull identity versus workload IRSA/Pod Identity; removed non-working AWS-CLI-only CronJobs and delete-before-create Secret rotation.",
+      "Corrected replication/settings/RPO claims, explicit regional manifests and logical image size versus billed storage.",
+      "Removed nonexistent native scan/push metrics and corrected cache-client versus service-linked-role permissions.",
+      "Corrected ambiguous or wrong quiz answers."
+    ],
+    "validation": [
+      "Read complete source for both articles and quizzes, including truncated-output follow-up reads.",
+      "92 current code blocks parsed for JSON/YAML/Python/Bash syntax where applicable.",
+      "Read-only Python selection tested with fixed data; no boto3 import or AWS calls in the test.",
+      "Official ECR/EKS/SDK primary sources checked; no AWS infrastructure mutation or production runtime execution."
+    ]
+  },
+  {
+    "path": "en/container-registry/02-amazon-ecr.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full ECR article/quiz reviewed; corrected operational and retention errors.",
+    "sources": [
+      "https://docs.aws.amazon.com/general/latest/gr/ecr-public.html",
+      "https://aws.amazon.com/ecr/pricing/",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lifecycle_policy_parameters.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/ecr-repository-metrics.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/replication.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-iam.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/slr-pullthroughcache.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md"
+    ],
+    "findings": [
+      "Corrected Public API regions, price assumptions, Basic scanner engine and encryption distinctions.",
+      "Corrected lifecycle evaluation/application order, wildcard-only selection, AND pattern semantics, invalid/unsafe age-count examples and consistent release prefixes.",
+      "Replaced destructive first-tag cleanup with tested read-only candidate preview protecting release/mixed tags and unknown artifacts.",
+      "Corrected kubelet node/Fargate image-pull identity versus workload IRSA/Pod Identity; removed non-working AWS-CLI-only CronJobs and delete-before-create Secret rotation.",
+      "Corrected replication/settings/RPO claims, explicit regional manifests and logical image size versus billed storage.",
+      "Removed nonexistent native scan/push metrics and corrected cache-client versus service-linked-role permissions.",
+      "Corrected ambiguous or wrong quiz answers."
+    ],
+    "validation": [
+      "Read complete source for both articles and quizzes, including truncated-output follow-up reads.",
+      "92 current code blocks parsed for JSON/YAML/Python/Bash syntax where applicable.",
+      "Read-only Python selection tested with fixed data; no boto3 import or AWS calls in the test.",
+      "Official ECR/EKS/SDK primary sources checked; no AWS infrastructure mutation or production runtime execution."
+    ]
+  },
+  {
+    "path": "en/quizzes/container-registry/02-amazon-ecr-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full ECR article/quiz reviewed; corrected operational and retention errors.",
+    "sources": [
+      "https://docs.aws.amazon.com/general/latest/gr/ecr-public.html",
+      "https://aws.amazon.com/ecr/pricing/",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lifecycle_policy_parameters.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/ecr-repository-metrics.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/replication.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-iam.html",
+      "https://docs.aws.amazon.com/AmazonECR/latest/userguide/slr-pullthroughcache.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md"
+    ],
+    "findings": [
+      "Corrected Public API regions, price assumptions, Basic scanner engine and encryption distinctions.",
+      "Corrected lifecycle evaluation/application order, wildcard-only selection, AND pattern semantics, invalid/unsafe age-count examples and consistent release prefixes.",
+      "Replaced destructive first-tag cleanup with tested read-only candidate preview protecting release/mixed tags and unknown artifacts.",
+      "Corrected kubelet node/Fargate image-pull identity versus workload IRSA/Pod Identity; removed non-working AWS-CLI-only CronJobs and delete-before-create Secret rotation.",
+      "Corrected replication/settings/RPO claims, explicit regional manifests and logical image size versus billed storage.",
+      "Removed nonexistent native scan/push metrics and corrected cache-client versus service-linked-role permissions.",
+      "Corrected ambiguous or wrong quiz answers."
+    ],
+    "validation": [
+      "Read complete source for both articles and quizzes, including truncated-output follow-up reads.",
+      "92 current code blocks parsed for JSON/YAML/Python/Bash syntax where applicable.",
+      "Read-only Python selection tested with fixed data; no boto3 import or AWS calls in the test.",
+      "Official ECR/EKS/SDK primary sources checked; no AWS infrastructure mutation or production runtime execution."
+    ]
+  },
+  {
+    "path": "ko/container-registry/03-harbor.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed all sections and quiz answers against Harbor 2.15.2 / chart 1.19.2; corrected installation, removed Notary v1 diagram component, API schemas, role claims, signature trust limits, offline transport, scanner DBs, runtime auth, retention/GC and HA/backup guidance.",
+    "sources": [
+      "https://github.com/goharbor/harbor/releases/tag/v2.15.2",
+      "https://github.com/goharbor/harbor-helm/blob/v1.19.2/values.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/src/server/middleware/contenttrust/contentrust.go",
+      "https://github.com/goharbor/website/blob/main/docs/administration/managing-users/user-permissions-by-role.md",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md"
+    ],
+    "findings": [
+      "Nonexistent core.cosignKeyFile and mislocated encryption key",
+      "Registry replicas could not share gp3 RWO across nodes",
+      "Notary v1 removed since 2.9 still shown in diagram/quiz",
+      "Maintainer quiz answer incorrectly allowed member administration",
+      "Wrong project robot/retention endpoints, replication filter/cron settings",
+      "Airgap image inventory incomplete and archive/DB paths incorrect",
+      "Harbor pull signature policy checks accessory presence; trusted signer admission is separate",
+      "Destructive GC/retention examples replaced with valid previews"
+    ],
+    "validation": [
+      "65 Markdown code fences collected; Bash/JSON/YAML parsed where applicable",
+      "Helm 1.19.2 chart rendered with revised values",
+      "Harbor API endpoint/body fields checked against versioned Swagger",
+      "KO/EN diagram deliver passed nine checks with zero composition warnings/errors",
+      "1440x900,1600x1000,1920x1080,2048x1320 containment passed; KO large-light and EN small-dark screenshots visually inspected",
+      "No cluster, registry or AWS mutations executed"
+    ]
+  },
+  {
+    "path": "ko/quizzes/container-registry/03-harbor-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed all sections and quiz answers against Harbor 2.15.2 / chart 1.19.2; corrected installation, removed Notary v1 diagram component, API schemas, role claims, signature trust limits, offline transport, scanner DBs, runtime auth, retention/GC and HA/backup guidance.",
+    "sources": [
+      "https://github.com/goharbor/harbor/releases/tag/v2.15.2",
+      "https://github.com/goharbor/harbor-helm/blob/v1.19.2/values.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/src/server/middleware/contenttrust/contentrust.go",
+      "https://github.com/goharbor/website/blob/main/docs/administration/managing-users/user-permissions-by-role.md",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md"
+    ],
+    "findings": [
+      "Nonexistent core.cosignKeyFile and mislocated encryption key",
+      "Registry replicas could not share gp3 RWO across nodes",
+      "Notary v1 removed since 2.9 still shown in diagram/quiz",
+      "Maintainer quiz answer incorrectly allowed member administration",
+      "Wrong project robot/retention endpoints, replication filter/cron settings",
+      "Airgap image inventory incomplete and archive/DB paths incorrect",
+      "Harbor pull signature policy checks accessory presence; trusted signer admission is separate",
+      "Destructive GC/retention examples replaced with valid previews"
+    ],
+    "validation": [
+      "65 Markdown code fences collected; Bash/JSON/YAML parsed where applicable",
+      "Helm 1.19.2 chart rendered with revised values",
+      "Harbor API endpoint/body fields checked against versioned Swagger",
+      "KO/EN diagram deliver passed nine checks with zero composition warnings/errors",
+      "1440x900,1600x1000,1920x1080,2048x1320 containment passed; KO large-light and EN small-dark screenshots visually inspected",
+      "No cluster, registry or AWS mutations executed"
+    ]
+  },
+  {
+    "path": "en/container-registry/03-harbor.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed all sections and quiz answers against Harbor 2.15.2 / chart 1.19.2; corrected installation, removed Notary v1 diagram component, API schemas, role claims, signature trust limits, offline transport, scanner DBs, runtime auth, retention/GC and HA/backup guidance.",
+    "sources": [
+      "https://github.com/goharbor/harbor/releases/tag/v2.15.2",
+      "https://github.com/goharbor/harbor-helm/blob/v1.19.2/values.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/src/server/middleware/contenttrust/contentrust.go",
+      "https://github.com/goharbor/website/blob/main/docs/administration/managing-users/user-permissions-by-role.md",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md"
+    ],
+    "findings": [
+      "Nonexistent core.cosignKeyFile and mislocated encryption key",
+      "Registry replicas could not share gp3 RWO across nodes",
+      "Notary v1 removed since 2.9 still shown in diagram/quiz",
+      "Maintainer quiz answer incorrectly allowed member administration",
+      "Wrong project robot/retention endpoints, replication filter/cron settings",
+      "Airgap image inventory incomplete and archive/DB paths incorrect",
+      "Harbor pull signature policy checks accessory presence; trusted signer admission is separate",
+      "Destructive GC/retention examples replaced with valid previews"
+    ],
+    "validation": [
+      "65 Markdown code fences collected; Bash/JSON/YAML parsed where applicable",
+      "Helm 1.19.2 chart rendered with revised values",
+      "Harbor API endpoint/body fields checked against versioned Swagger",
+      "KO/EN diagram deliver passed nine checks with zero composition warnings/errors",
+      "1440x900,1600x1000,1920x1080,2048x1320 containment passed; KO large-light and EN small-dark screenshots visually inspected",
+      "No cluster, registry or AWS mutations executed"
+    ]
+  },
+  {
+    "path": "en/quizzes/container-registry/03-harbor-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed all sections and quiz answers against Harbor 2.15.2 / chart 1.19.2; corrected installation, removed Notary v1 diagram component, API schemas, role claims, signature trust limits, offline transport, scanner DBs, runtime auth, retention/GC and HA/backup guidance.",
+    "sources": [
+      "https://github.com/goharbor/harbor/releases/tag/v2.15.2",
+      "https://github.com/goharbor/harbor-helm/blob/v1.19.2/values.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+      "https://github.com/goharbor/harbor/blob/v2.15.2/src/server/middleware/contenttrust/contentrust.go",
+      "https://github.com/goharbor/website/blob/main/docs/administration/managing-users/user-permissions-by-role.md",
+      "https://github.com/containerd/containerd/blob/main/docs/hosts.md"
+    ],
+    "findings": [
+      "Nonexistent core.cosignKeyFile and mislocated encryption key",
+      "Registry replicas could not share gp3 RWO across nodes",
+      "Notary v1 removed since 2.9 still shown in diagram/quiz",
+      "Maintainer quiz answer incorrectly allowed member administration",
+      "Wrong project robot/retention endpoints, replication filter/cron settings",
+      "Airgap image inventory incomplete and archive/DB paths incorrect",
+      "Harbor pull signature policy checks accessory presence; trusted signer admission is separate",
+      "Destructive GC/retention examples replaced with valid previews"
+    ],
+    "validation": [
+      "65 Markdown code fences collected; Bash/JSON/YAML parsed where applicable",
+      "Helm 1.19.2 chart rendered with revised values",
+      "Harbor API endpoint/body fields checked against versioned Swagger",
+      "KO/EN diagram deliver passed nine checks with zero composition warnings/errors",
+      "1440x900,1600x1000,1920x1080,2048x1320 containment passed; KO large-light and EN small-dark screenshots visually inspected",
+      "No cluster, registry or AWS mutations executed"
+    ]
+  },
+  {
+    "path": "ko/container-registry/04-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read both lessons/quizzes; corrected registry immutability, tag/CLI syntax, runtime mirrors, lifecycle logic, image promotion, costs/DR, signing/admission, node image-pull network identity, CI gates and Skopeo transport.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/repos/manage/hub-images/immutable-tags/",
+      "https://github.com/distribution/reference/blob/main/regexp.go",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-sync.1.md",
+      "https://external-secrets.io/latest/guides/common-k8s-secret-types/",
+      "https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.0/docs/configuration/images.md",
+      "https://github.com/docker/build-push-action/tree/v7.3.0",
+      "https://github.com/aquasecurity/trivy-action/tree/v0.36.0",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://raw.githubusercontent.com/nodejs/Release/main/schedule.json"
+    ],
+    "findings": [
+      "Version tags alone are mutable; Docker Hub now supports immutable tags in Beta; Harbor content trust is not tag immutability",
+      "docker tag accepts one target and SemVer +build is not legal tag syntax",
+      "ECR tagPatternList uses AND; separate prefix rules and protect deployed digests",
+      "RTO/RPO and cost thresholds were presented as guarantees without evidence",
+      "Node build omitted devDependencies before compilation; old Node20 line was EOL",
+      "GitHub Actions scan target mismatched generated short tags and could run after publication",
+      "GitLab scan lacked registry auth/entrypoint and publish did not prove same artifact; replaced with gated tar artifact flow",
+      "NetworkPolicy on application Pods does not control kubelet/containerd image pulls",
+      "Skopeo regex list should be scalar; bulk sync unbounded; all-platform copy and path/auth prerequisites missing"
+    ],
+    "validation": [
+      "59 Markdown fences parsed; nested GitHub Actions Bash checked",
+      "Official actionlint 1.7.12 checksum verified; revised workflow passed static validation",
+      "Action input names and commit pins compared against official versioned sources",
+      "Docker base tags and supported Node24 release line verified against official images/Release schedule",
+      "Cloud/registry/CI jobs were not executed; credentials/resources remain documented prerequisites"
+    ]
+  },
+  {
+    "path": "ko/quizzes/container-registry/04-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read both lessons/quizzes; corrected registry immutability, tag/CLI syntax, runtime mirrors, lifecycle logic, image promotion, costs/DR, signing/admission, node image-pull network identity, CI gates and Skopeo transport.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/repos/manage/hub-images/immutable-tags/",
+      "https://github.com/distribution/reference/blob/main/regexp.go",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-sync.1.md",
+      "https://external-secrets.io/latest/guides/common-k8s-secret-types/",
+      "https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.0/docs/configuration/images.md",
+      "https://github.com/docker/build-push-action/tree/v7.3.0",
+      "https://github.com/aquasecurity/trivy-action/tree/v0.36.0",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://raw.githubusercontent.com/nodejs/Release/main/schedule.json"
+    ],
+    "findings": [
+      "Version tags alone are mutable; Docker Hub now supports immutable tags in Beta; Harbor content trust is not tag immutability",
+      "docker tag accepts one target and SemVer +build is not legal tag syntax",
+      "ECR tagPatternList uses AND; separate prefix rules and protect deployed digests",
+      "RTO/RPO and cost thresholds were presented as guarantees without evidence",
+      "Node build omitted devDependencies before compilation; old Node20 line was EOL",
+      "GitHub Actions scan target mismatched generated short tags and could run after publication",
+      "GitLab scan lacked registry auth/entrypoint and publish did not prove same artifact; replaced with gated tar artifact flow",
+      "NetworkPolicy on application Pods does not control kubelet/containerd image pulls",
+      "Skopeo regex list should be scalar; bulk sync unbounded; all-platform copy and path/auth prerequisites missing"
+    ],
+    "validation": [
+      "59 Markdown fences parsed; nested GitHub Actions Bash checked",
+      "Official actionlint 1.7.12 checksum verified; revised workflow passed static validation",
+      "Action input names and commit pins compared against official versioned sources",
+      "Docker base tags and supported Node24 release line verified against official images/Release schedule",
+      "Cloud/registry/CI jobs were not executed; credentials/resources remain documented prerequisites"
+    ]
+  },
+  {
+    "path": "en/container-registry/04-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read both lessons/quizzes; corrected registry immutability, tag/CLI syntax, runtime mirrors, lifecycle logic, image promotion, costs/DR, signing/admission, node image-pull network identity, CI gates and Skopeo transport.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/repos/manage/hub-images/immutable-tags/",
+      "https://github.com/distribution/reference/blob/main/regexp.go",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-sync.1.md",
+      "https://external-secrets.io/latest/guides/common-k8s-secret-types/",
+      "https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.0/docs/configuration/images.md",
+      "https://github.com/docker/build-push-action/tree/v7.3.0",
+      "https://github.com/aquasecurity/trivy-action/tree/v0.36.0",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://raw.githubusercontent.com/nodejs/Release/main/schedule.json"
+    ],
+    "findings": [
+      "Version tags alone are mutable; Docker Hub now supports immutable tags in Beta; Harbor content trust is not tag immutability",
+      "docker tag accepts one target and SemVer +build is not legal tag syntax",
+      "ECR tagPatternList uses AND; separate prefix rules and protect deployed digests",
+      "RTO/RPO and cost thresholds were presented as guarantees without evidence",
+      "Node build omitted devDependencies before compilation; old Node20 line was EOL",
+      "GitHub Actions scan target mismatched generated short tags and could run after publication",
+      "GitLab scan lacked registry auth/entrypoint and publish did not prove same artifact; replaced with gated tar artifact flow",
+      "NetworkPolicy on application Pods does not control kubelet/containerd image pulls",
+      "Skopeo regex list should be scalar; bulk sync unbounded; all-platform copy and path/auth prerequisites missing"
+    ],
+    "validation": [
+      "59 Markdown fences parsed; nested GitHub Actions Bash checked",
+      "Official actionlint 1.7.12 checksum verified; revised workflow passed static validation",
+      "Action input names and commit pins compared against official versioned sources",
+      "Docker base tags and supported Node24 release line verified against official images/Release schedule",
+      "Cloud/registry/CI jobs were not executed; credentials/resources remain documented prerequisites"
+    ]
+  },
+  {
+    "path": "en/quizzes/container-registry/04-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read both lessons/quizzes; corrected registry immutability, tag/CLI syntax, runtime mirrors, lifecycle logic, image promotion, costs/DR, signing/admission, node image-pull network identity, CI gates and Skopeo transport.",
+    "sources": [
+      "https://docs.docker.com/docker-hub/repos/manage/hub-images/immutable-tags/",
+      "https://github.com/distribution/reference/blob/main/regexp.go",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md",
+      "https://github.com/containers/skopeo/blob/main/docs/skopeo-sync.1.md",
+      "https://external-secrets.io/latest/guides/common-k8s-secret-types/",
+      "https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.0/docs/configuration/images.md",
+      "https://github.com/docker/build-push-action/tree/v7.3.0",
+      "https://github.com/aquasecurity/trivy-action/tree/v0.36.0",
+      "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "https://raw.githubusercontent.com/nodejs/Release/main/schedule.json"
+    ],
+    "findings": [
+      "Version tags alone are mutable; Docker Hub now supports immutable tags in Beta; Harbor content trust is not tag immutability",
+      "docker tag accepts one target and SemVer +build is not legal tag syntax",
+      "ECR tagPatternList uses AND; separate prefix rules and protect deployed digests",
+      "RTO/RPO and cost thresholds were presented as guarantees without evidence",
+      "Node build omitted devDependencies before compilation; old Node20 line was EOL",
+      "GitHub Actions scan target mismatched generated short tags and could run after publication",
+      "GitLab scan lacked registry auth/entrypoint and publish did not prove same artifact; replaced with gated tar artifact flow",
+      "NetworkPolicy on application Pods does not control kubelet/containerd image pulls",
+      "Skopeo regex list should be scalar; bulk sync unbounded; all-platform copy and path/auth prerequisites missing"
+    ],
+    "validation": [
+      "59 Markdown fences parsed; nested GitHub Actions Bash checked",
+      "Official actionlint 1.7.12 checksum verified; revised workflow passed static validation",
+      "Action input names and commit pins compared against official versioned sources",
+      "Docker base tags and supported Node24 release line verified against official images/Release schedule",
+      "Cloud/registry/CI jobs were not executed; credentials/resources remain documented prerequisites"
+    ]
+  }
+]

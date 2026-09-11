@@ -16,6 +16,9 @@
         },
         "external": {
           "label": "Analysis Provider"
+        },
+        "frontend": {
+          "label": "Kubernetes Service"
         }
       }
     },
@@ -37,19 +40,19 @@
         "focus": [
           "bluegreen",
           "canary",
-          "ingress",
-          "mesh"
+          "services",
+          "router"
         ],
-        "note": "블루/그린은 Ingress로 트래픽을 즉시 전환하고, 카나리는 Ingress 또는 Service Mesh로 가중치를 점진적으로 이동한다."
+        "note": "블루/그린은 active Service selector를 바꾸고, 카나리는 Service selector와 라우터 가중치를 관리합니다."
       },
       {
         "id": "analysis",
-        "label": "Analysis와 자동 롤백",
+        "label": "Analysis 판정",
         "focus": [
           "controller",
           "analysis"
         ],
-        "note": "컨트롤러가 AnalysisRun으로 메트릭을 질의하고, 결과에 따라 자동 승격 또는 롤백한다."
+        "note": "Successful은 다음 단계, Failed/Error는 abort, Inconclusive는 일시 중지로 이어집니다. Git과 데이터는 되돌리지 않습니다."
       }
     ]
   },
@@ -72,7 +75,7 @@
       "id": "bluegreen",
       "type": "backend",
       "label": "블루/그린",
-      "sublabel": "환경 전체 전환",
+      "sublabel": "Service selector 전환",
       "pos": [
         120,
         250
@@ -100,7 +103,7 @@
       "id": "experiment",
       "type": "backend",
       "label": "실험",
-      "sublabel": "A/B 테스트",
+      "sublabel": "별도 ReplicaSet / 지표",
       "pos": [
         740,
         250
@@ -111,10 +114,10 @@
       ]
     },
     {
-      "id": "ingress",
-      "type": "cloud",
-      "label": "Ingress Controller",
-      "sublabel": "ALB / NGINX",
+      "id": "services",
+      "type": "frontend",
+      "label": "Service selectors",
+      "sublabel": "active / stable / canary",
       "pos": [
         120,
         440
@@ -125,10 +128,10 @@
       ]
     },
     {
-      "id": "mesh",
+      "id": "router",
       "type": "cloud",
-      "label": "Service Mesh",
-      "sublabel": "Istio / SMI",
+      "label": "Traffic Router",
+      "sublabel": "ALB / Gateway API / Istio",
       "pos": [
         430,
         440
@@ -142,7 +145,7 @@
       "id": "analysis",
       "type": "external",
       "label": "Analysis Provider",
-      "sublabel": "Prometheus / Datadog / New Relic",
+      "sublabel": "Metrics / HTTP / Jobs",
       "pos": [
         1010,
         440
@@ -174,8 +177,8 @@
       "kind": "region",
       "label": "통합",
       "wraps": [
-        "ingress",
-        "mesh",
+        "services",
+        "router",
         "analysis"
       ]
     }
@@ -203,20 +206,20 @@
     {
       "id": "bluegreen-ingress",
       "from": "bluegreen",
-      "to": "ingress",
-      "label": "트래픽 전환",
+      "to": "services",
+      "label": "selector 변경",
       "labelDy": 24
     },
     {
       "id": "canary-ingress",
       "from": "canary",
-      "to": "ingress",
-      "label": "가중치 라우팅"
+      "to": "services",
+      "label": "Pod hash 선택"
     },
     {
       "id": "canary-mesh",
       "from": "canary",
-      "to": "mesh",
+      "to": "router",
       "label": "가중치 라우팅",
       "variant": "emphasis",
       "labelDy": 24
@@ -233,7 +236,7 @@
       "id": "analysis-ctrl",
       "from": "analysis",
       "to": "controller",
-      "label": "Pass / Fail",
+      "label": "판정 결과",
       "variant": "dashed",
       "fromSide": "right",
       "toSide": "top"
@@ -244,17 +247,18 @@
       "dot": "orange",
       "title": "배포 전략",
       "items": [
-        "블루/그린: 두 환경을 유지하고 트래픽을 즉시 전환",
-        "카나리: 가중치 단계로 트래픽을 점진 이동",
-        "실험: 여러 버전을 동시에 실행해 A/B 테스트"
+        "블루/그린: active Service selector 전환",
+        "카나리: 가중치와 ReplicaSet 용량 관리",
+        "Experiment: 별도 ReplicaSet, 테스트 트래픽은 별도 준비"
       ]
     },
     {
       "dot": "cyan",
       "title": "Analysis",
       "items": [
-        "AnalysisTemplate으로 메트릭 질의를 정의",
-        "Pass면 자동 승격, Fail이면 자동 롤백"
+        "Successful: 다음 단계 (수동 게이트는 별도)",
+        "Failed/Error: abort · stable 복귀",
+        "Inconclusive: 일시 중지 · 원인 확인"
       ]
     }
   ]

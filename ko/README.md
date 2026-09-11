@@ -1,4 +1,4 @@
-> [English Version](https://atomoh.gitbook.io/kubernetes-docs-en/)
+> [English Version](https://www.atomai.click/kubernetes-docs/en/)
 
 # Cloud Native Operations 교육 컨텐츠
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
@@ -12,7 +12,7 @@
 - [학습 자료 목차](#목차) - 주제별 학습 자료
 - [퀴즈 모음](./quizzes/README.md) - 주제별 퀴즈
 - [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로 | [퀴즈](./quizzes/roadmap-quiz.md)
-- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
+- [LLM과 함께 읽기](./llm-guide.md) - llms.txt·문서 manifest·MCP로 필요한 자료를 검색하고 읽는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
 
 ## 목차
 

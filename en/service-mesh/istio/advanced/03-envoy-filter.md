@@ -1,7 +1,7 @@
 # EnvoyFilter
 
-> **Supported Versions**: Istio 1.28+
-> **Last Updated**: February 19, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36; sidecars and Istio Envoy gateways
+> **Last reviewed**: September 11, 2026
 
 EnvoyFilter is an advanced feature that allows you to directly customize Envoy proxy configurations.
 
@@ -17,6 +17,8 @@ EnvoyFilter is an advanced feature that allows you to directly customize Envoy p
 8. [Troubleshooting](#troubleshooting)
 
 ## Overview
+
+These are independent alternatives. Applying all examples to the same workload stacks filters, routes and policies. Confirm the actual namespaces, labels and listeners, merge with existing configuration, and verify generated Envoy configuration and request behavior in a test environment. EnvoyFilter depends on internal Envoy APIs and needs revalidation for each Istio upgrade; it is not supported on ambient waypoints.
 
 With EnvoyFilter you can:
 - Add/modify/delete custom headers
@@ -44,16 +46,19 @@ spec:
         filterChain:
           filter:
             name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.lua
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              request_handle:headers():add("x-custom-header", "value")
-            end
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(request_handle)
+                request_handle:headers():replace("x-custom-header", "value")
+              end
 ```
 
 ## Main Use Cases
@@ -65,6 +70,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: add-header
+  namespace: default
 spec:
   workloadSelector:
     labels:
@@ -73,17 +79,23 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_OUTBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.lua
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              request_handle:headers():add("x-request-id", request_handle:headers():get(":authority"))
-              request_handle:headers():add("x-forwarded-proto", "https")
-            end
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(request_handle)
+                request_handle:headers():replace("x-client-service", "myapp")
+              end
 ```
 
 ### 2. Rate Limiting
@@ -93,6 +105,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit
+  namespace: default
 spec:
   workloadSelector:
     labels:
@@ -101,6 +114,12 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
@@ -112,7 +131,13 @@ spec:
             max_tokens: 100
             tokens_per_fill: 10
             fill_interval: 1s
+          filter_enabled:
+            default_value: {numerator: 100, denominator: HUNDRED}
+          filter_enforced:
+            default_value: {numerator: 100, denominator: HUNDRED}
 ```
+
+This is a **per-proxy-process** bucket with an initial burst of 100 and refill of 10 tokens/second, not a global limit across replicas. Explicit enable/enforce fractions activate rejection.
 
 ### 3. WASM Plugin
 
@@ -121,6 +146,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: wasm-filter
+  namespace: default
 spec:
   workloadSelector:
     labels:
@@ -129,6 +155,12 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
@@ -143,27 +175,34 @@ spec:
                   filename: "/var/local/lib/wasm-filters/my_plugin.wasm"
 ```
 
-## X-Forwarded-For and Hop Settings
+The local Wasm example assumes a compatible module already mounted at that path in the proxy container through a read-only volume. An application-container file is not automatically visible and this YAML does not download the module. Validate module/ABI/runtime and failure behavior; prefer the [WasmPlugin API](https://istio.io/latest/docs/reference/config/proxy_extensions/wasm-plugin/) for distribution.
 
-Controlling the X-Forwarded-For (XFF) header and hop count is crucial for tracking the actual client IP in proxy chain environments.
+## X-Forwarded-For and Hop Settings
 
 ### X-Forwarded-For Overview
 
-![Sequence diagram showing a client request passing through a load balancer, an Istio Gateway, and an Envoy sidecar, with each hop appending its own address to the X-Forwarded-For header before the application receives the final request.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-03-envoy-filter-0.html)
+An HTTP proxy normally appends the address of **the client connected to it**, not its own address. With ALB's default `append` mode, the Gateway receives `203.0.113.5` for a direct client, or `203.0.113.5, 192.0.2.20` through CloudFront. The Gateway's direct peer is the ALB. These documentation addresses are not actual CloudFront IP ranges.
 
 ### XFF Configuration Options
 
-#### 1. use_remote_address Setting
+Prefer the official [gateway topology configuration](https://istio.io/latest/docs/ops/configuration/traffic-management/network-topologies/) with `gatewayTopology.numTrustedProxies`. Merge this **Pod-template fragment** into the existing ingress Deployment, restart the affected Gateway Pods and inspect the effective configuration.
 
-**use_remote_address** determines how Envoy processes the XFF header.
+```yaml
+# Existing ingress Deployment: spec.template fragment, not a complete Deployment
+metadata:
+  annotations:
+    proxy.istio.io/config: |
+      gatewayTopology:
+        numTrustedProxies: 1
+```
+
+The lower-level alternative is this EnvoyFilter. Do not configure conflicting values through both mechanisms. Verify the actual ingress namespace and `istio: ingressgateway` Pod label.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: xff-config
+  name: gateway-xff-config
   namespace: istio-system
 spec:
   workloadSelector:
@@ -176,930 +215,225 @@ spec:
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
     patch:
       operation: MERGE
       value:
+        name: envoy.filters.network.http_connection_manager
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           use_remote_address: true
           xff_num_trusted_hops: 1
-```
-
-**use_remote_address options**:
-
-| Setting | Behavior | Use Scenario |
-|---------|------|--------------|
-| `true` | Add downstream address to XFF and trust it | Edge Proxy (direct internet access) |
-| `false` | Don't trust downstream address, pass XFF as-is | Internal Proxy (behind trusted proxy) |
-
-#### 2. xff_num_trusted_hops Setting
-
-**xff_num_trusted_hops** defines the number of trusted hops in the XFF header.
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: xff-trusted-hops
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: true
-          xff_num_trusted_hops: 2  # Trust last 2 hops
           skip_xff_append: false
+          via: istio-gateway
 ```
 
-**xff_num_trusted_hops calculation example**:
+| Option | Meaning |
+|---|---|
+| `use_remote_address: true`, hops 0 | Use the direct connection peer |
+| `true`, hops N>0 | Use the **Nth address from the right in the received XFF** |
+| `false`, hops N | Use the N+1th address from the right |
+| Too few XFF addresses | Fall back to the direct peer; this does not imply access is allowed |
+| `skip_xff_append: true` | Skip appending to XFF here; separate from address selection |
+| `via` | Add a Via identifier to requests/responses; not authentication |
 
-```
-X-Forwarded-For: 203.0.113.5, 10.0.1.100, 10.0.2.50, 10.244.1.10
-                 [Client IP] [Proxy 1]   [Proxy 2]   [Proxy 3]
-
-xff_num_trusted_hops: 0 -> Don't trust
-  -> Client IP: 10.244.1.10 (last hop)
-
-xff_num_trusted_hops: 1 -> Trust last 1
-  -> Client IP: 10.0.2.50
-
-xff_num_trusted_hops: 2 -> Trust last 2
-  -> Client IP: 10.0.1.100
-
-xff_num_trusted_hops: 3 -> Trust last 3
-  -> Client IP: 203.0.113.5 (actual client)
-```
+Do not set `use_remote_address: false` merely because a service is internal: this can trust caller-supplied XFF. Inspect actual connections and header transformations first. The Gateway's decision is **a property of its own request stream**; it does not automatically become the backend Envoy's trusted `remote.ip`.
 
 ### Scenario-specific Settings
 
-#### Scenario 1: AWS ALB + Istio Gateway
+These values assume `use_remote_address: true`, every HTTP proxy appends its connection peer, and bypass paths are blocked.
 
-![Flowchart showing a client request passing through a single AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at the ALB.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-1.png)
+| Path | XFF received by Gateway | Direct peer | Trusted hops |
+|---|---|---|---|
+| Client → ALB → Gateway | `203.0.113.5` | ALB | 1 |
+| Client → CloudFront → ALB → Gateway | `203.0.113.5, 192.0.2.20` | ALB | 2 |
+| Client → CloudFront → NLB → ALB → Gateway | Same, when the NLB ALB-target setup preserves the client address | ALB | 2 |
+| Client → Gateway directly | Arbitrary caller-supplied value | Client | 0 |
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-03-envoy-filter-1.html)
-
-**Configuration**:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: gateway-xff-config
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: true
-          xff_num_trusted_hops: 1  # Trust only ALB
-          skip_xff_append: false
-```
-
-**Explanation**:
-- `use_remote_address: true`: Gateway acts as edge proxy
-- `xff_num_trusted_hops: 1`: Trust ALB (last hop)
-- Result: Actual client IP (`203.0.113.5`) is correctly extracted
-
-#### Scenario 2: Client -> CloudFront -> ALB -> Gateway
-
-![Flowchart showing a client request passing through CloudFront and an AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at each proxy.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-2.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-03-envoy-filter-2.html)
-
-**Configuration**:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: gateway-xff-cf-alb
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: true
-          xff_num_trusted_hops: 2  # Trust CloudFront + ALB
-          skip_xff_append: false
-```
-
-**XFF Calculation**:
-```
-X-Forwarded-For: 203.0.113.5, 172.64.0.1, 10.0.1.100
-                 [Actual IP]  [CloudFront IP] [ALB IP]
-
-xff_num_trusted_hops: 2 -> Trust last 2 (CloudFront, ALB)
--> Actual client IP: 203.0.113.5
-```
-
-#### Scenario 3: Client -> CloudFront -> NLB -> ALB -> Gateway
-
-![A client request passes through CloudFront, an L4 AWS NLB, and an AWS ALB before reaching the Istio Gateway and application; the NLB leaves the X-Forwarded-For header untouched while CloudFront and the ALB each add a hop.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-03-envoy-filter-3.html)
-
-**Configuration**:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: gateway-xff-cf-nlb-alb
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: true
-          xff_num_trusted_hops: 2  # Trust CloudFront + ALB (NLB is L4 so not counted)
-          skip_xff_append: false
-```
-
-**Important**: NLB is an L4 load balancer so it doesn't read or modify XFF headers. Therefore, it doesn't affect the XFF chain.
-
-**XFF Calculation**:
-```
-X-Forwarded-For: 203.0.113.5, 172.64.0.1, 10.0.1.100
-                 [Actual IP]  [CloudFront IP] [ALB IP]
-
-NLB has no effect on XFF (L4 LB)
-xff_num_trusted_hops: 2 -> Trust last 2 (CloudFront, ALB)
--> Actual client IP: 203.0.113.5
-```
-
-#### Scenario 4: Client -> ALB -> Gateway (Direct Connection)
-
-![Flowchart showing a client request passing through a single AWS ALB with no CDN in front of it before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining exactly one hop at the ALB.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-4.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-03-envoy-filter-4.html)
-
-**Configuration**:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: gateway-xff-alb-only
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: true
-          xff_num_trusted_hops: 1  # Trust only ALB
-          skip_xff_append: false
-```
-
-**XFF Calculation**:
-```
-X-Forwarded-For: 203.0.113.5, 10.0.1.100
-                 [Actual IP]  [ALB IP]
-
-xff_num_trusted_hops: 1 -> Trust last 1 (ALB)
--> Actual client IP: 203.0.113.5
-```
-
-#### Scenario 5: Internal Service Communication (Sidecar)
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: sidecar-xff-config
-  namespace: default
-spec:
-  workloadSelector:
-    labels:
-      app: backend-service
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: false  # Internal proxy, trusted environment
-          xff_num_trusted_hops: 0
-          skip_xff_append: false
-```
-
-### Additional XFF Options
-
-#### skip_xff_append
-
-Don't add the current hop to the XFF header.
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: xff-skip-append
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          skip_xff_append: true  # Don't modify XFF header
-```
-
-**Use scenario**: When debugging or maintaining a specific XFF chain is needed
-
-#### via Header Setting
-
-Track proxy chain with Via header:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: via-header
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          via: "istio-gateway"
-```
+NLB operates at L4 and does not edit XFF. This does not mean every NLB configuration preserves the original socket address. Verify target type, supported listener/target ports, address preservation and the actual headers received. ALB `preserve`/`remove` modes, additional CDNs, PROXY protocol or alternate paths require separate analysis.
 
 ### Real Client IP Extraction Example
 
-Extract actual client IP with Lua script:
+Do not parse the leftmost XFF value as trusted. At the Gateway with the trust boundary configured above, use Envoy's computed address for diagnostics. The Lua API returns a **string**, possibly including IPv6/port notation, not an address object.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: extract-real-ip
-  namespace: default
+  name: gateway-client-address
+  namespace: istio-system
 spec:
   workloadSelector:
     labels:
-      app: api-service
+      istio: ingressgateway
   configPatches:
   - applyTo: HTTP_FILTER
     match:
-      context: SIDECAR_INBOUND
+      context: GATEWAY
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
+            name: envoy.filters.network.http_connection_manager
             subFilter:
-              name: "envoy.filters.http.router"
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.lua
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              -- Get X-Forwarded-For header
-              local xff = request_handle:headers():get("x-forwarded-for")
-
-              if xff then
-                -- First IP is the actual client IP
-                local client_ip = xff:match("^([^,]+)")
-
-                -- Set as custom header
-                request_handle:headers():add("x-real-ip", client_ip)
-
-                request_handle:logInfo("Real Client IP: " .. client_ip)
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(handle)
+                local address = handle:streamInfo():downstreamRemoteAddress()
+                handle:headers():replace("x-client-address", address)
               end
-            end
 ```
 
-### XFF Verification and Debugging
-
-#### 1. Header Verification
-
-```bash
-# Verify headers inside pod
-kubectl exec -it <pod-name> -c istio-proxy -- curl -v localhost:15000/config_dump | \
-  jq '.configs[] | select(.["@type"] == "type.googleapis.com/envoy.admin.v3.ListenersConfigDump") |
-      .dynamic_listeners[].active_state.listener.filter_chains[].filters[] |
-      select(.name == "envoy.filters.network.http_connection_manager") |
-      .typed_config | {use_remote_address, xff_num_trusted_hops}'
-```
-
-#### 2. Test with Actual Request
-
-```bash
-# Test request with XFF header
-curl -H "X-Forwarded-For: 203.0.113.5, 10.0.1.100" \
-     http://your-gateway.example.com/api/test
-
-# Check received headers in application logs
-kubectl logs -n default <pod-name> -c app | grep -i "x-forwarded-for"
-```
-
-#### 3. Enable Envoy Access Logs
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: access-log-xff
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          access_log:
-          - name: envoy.access_loggers.file
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
-              path: /dev/stdout
-              log_format:
-                text_format: |
-                  [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%"
-                  XFF: "%REQ(X-FORWARDED-FOR)%"
-                  Real IP: "%DOWNSTREAM_REMOTE_ADDRESS%"
-                  Status: %RESPONSE_CODE% Duration: %DURATION%ms
-```
-
-### Security Considerations
-
-#### 1. XFF Spoofing Prevention
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: xff-security
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: true
-          xff_num_trusted_hops: 1
-          # XFF from untrusted hops is ignored
-```
-
-**Important**: At Edge Gateway, you **must** set `use_remote_address: true` to prevent clients from manipulating XFF.
-
-#### 2. Protect Internal Services
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: internal-xff-strip
-  namespace: default
-spec:
-  workloadSelector:
-    labels:
-      tier: backend
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.lua
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              -- Remove XFF from requests not coming from internal network
-              local remote_addr = request_handle:streamInfo():downstreamRemoteAddress():ip()
-
-              -- Remove XFF if not from 10.0.0.0/8 internal network
-              if not remote_addr:match("^10%.") then
-                request_handle:headers():remove("x-forwarded-for")
-                request_handle:logWarn("Removed potentially spoofed XFF from: " .. remote_addr)
-              end
-            end
-```
+`x-client-address` is not application authentication. Use it for diagnostics only when the trusted gateway overwrites it and direct backend access is prevented. Define privacy and retention limits for address/header logs.
 
 ### Selective Per-App IP Restriction (Gateway + AuthorizationPolicy)
 
-**Scenario**: Some apps (A-E) allow all clients, specific apps (F-G) allow only company NAT IP
-
-#### Architecture Overview
-
-![Two internet clients reach an AWS ALB and the Istio Gateway Envoy, which extracts the original IP from X-Forwarded-For; App A-C accept any client while App F-G allow only the company IP via AuthorizationPolicy.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-5.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-03-envoy-filter-5.html)
-
-#### Core Principle
-
-**Gateway's Role** (common to all apps):
-- Extract original client IP from XFF header
-- Exclude trusted hops (`xff_num_trusted_hops`)
-- **Does NOT perform access control** - only identifies IP accurately
-
-**AuthorizationPolicy's Role** (selectively applied to specific apps):
-- Access control based on original IP extracted by Gateway
-- Target specific apps with `selector`
-- **Apps without policies allow all clients**
-
-#### Implementation Example
-
-**Step 1: XFF Processing at Gateway (common to all apps)**
+Enforce external IP restrictions **at the Gateway that determines the original IP**, scoped by HTTP Host for Apps F/G. Apps A–E do not match this DENY rule. Existing mesh/namespace/Gateway policies and application authentication still apply; the absence of an app-specific policy file does not guarantee access.
 
 ```yaml
-# Apply once to istio-system namespace
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
 metadata:
-  name: gateway-xff-config
+  name: restricted-app-ingress
   namespace: istio-system
 spec:
-  workloadSelector:
-    labels:
+  selector:
+    matchLabels:
       istio: ingressgateway
-  configPatches:
-  - applyTo: NETWORK_FILTER
-    match:
-      context: GATEWAY  # Gateway context
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-    patch:
-      operation: MERGE
-      value:
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          use_remote_address: true
-          xff_num_trusted_hops: 1  # Trust only ALB (2 if CloudFlare present)
-          skip_xff_append: false
-```
-
-**Step 2: Apply IP Restriction to App F (selective)**
-
-```yaml
-# Allow only company NAT IP for App F
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: app-f-ip-restriction
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: app-f  # Applied only to App F
   action: DENY
   rules:
   - from:
     - source:
-        notRemoteIpBlocks:  # Deny if not following IPs
-        - "203.0.113.0/24"  # Company NAT IP range
+        notRemoteIpBlocks: ["203.0.113.0/24"]
+    to:
+    - operation:
+        hosts:
+        - "app-f.example.com"
+        - "app-f.example.com:*"
+        - "app-g.example.com"
+        - "app-g.example.com:*"
 ```
 
-**Step 3: Apply IP Restriction to App G (selective)**
-
-```yaml
-# Allow same company NAT IP for App G
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: app-g-ip-restriction
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: app-g  # Applied only to App G
-  action: DENY
-  rules:
-  - from:
-    - source:
-        notRemoteIpBlocks:
-        - "203.0.113.0/24"  # Company NAT IP range
-```
-
-**Step 4: Apps A-E have no AuthorizationPolicy (all clients allowed)**
-
-```yaml
-# No AuthorizationPolicy created for Apps A-E
-# = All client IPs allowed
-```
-
-#### Operation Flow
-
-![Sequence in which the Istio Gateway extracts the real client IP from XFF once and forwards it to two apps: App A with no AuthorizationPolicy returns 200 OK while IP-restricted App F returns 403 Forbidden for the same client.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-6.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-03-envoy-filter-6.html)
-
-#### Why Gateway Configuration is Needed?
-
-**Without Gateway XFF configuration**:
-- `remoteIpBlocks` reads ALB's IP (not original IP)
-- All requests appear from same ALB IP, can't filter properly
-
-**With Gateway XFF configuration**:
-- Gateway accurately extracts original IP from XFF header
-- AuthorizationPolicy's `remoteIpBlocks` uses original IP
-- Each app's AuthorizationPolicy works correctly
-
-#### Testing
-
-```bash
-# General user (1.2.3.4) - App A access
-curl -H "Host: app-a.example.com" http://<gateway-ip>/
-# Expected: 200 OK
-
-# General user (1.2.3.4) - App F access
-curl -H "Host: app-f.example.com" http://<gateway-ip>/
-# Expected: 403 Forbidden (RBAC: access denied)
-
-# Company user (203.0.113.10) - App F access
-curl -H "Host: app-f.example.com" -H "X-Forwarded-For: 203.0.113.10" http://<gateway-ip>/
-# Expected: 200 OK
-
-# Check AuthorizationPolicy
-kubectl get authorizationpolicy -n default
-# Output:
-# NAME                    AGE
-# app-f-ip-restriction    5m
-# app-g-ip-restriction    5m
-# (app-a, app-b, app-c, app-d, app-e are absent)
-```
-
-#### Summary
-
-| Component | Scope | Purpose | Required? |
-|----------|----------|------|----------|
-| Gateway EnvoyFilter | All apps | Extract original IP from XFF | Required (once) |
-| App F AuthorizationPolicy | App F only | Allow only company NAT IP | Selective |
-| App G AuthorizationPolicy | App G only | Allow only company NAT IP | Selective |
-| App A-E AuthorizationPolicy | None | No restriction (all IPs allowed) | Not needed |
-
-**Key Points**:
-- Gateway XFF configuration only extracts IP, no access control
-- AuthorizationPolicy is selectively applied to specific apps only
-- Apps without policies automatically allow all clients
-
----
+The Gateway must terminate HTTP and route each Host to the intended app.Use a dedicated HTTP-terminating Gateway. For mixed TCP-passthrough listeners, constrain the policy to verified workload ports; missing HTTP attributes can match a DENY rule. Review aliases, wildcard hosts and other routes that could expose F/G. Protect backends separately against bypass, for example with mTLS and an AuthorizationPolicy permitting the actual Gateway service account. IP restrictions do not replace user authentication.
 
 ### XFF-based IP Access Control
 
-Implement access control based on original client IP in X-Forwarded-For header.
+The following examples are independent alternatives for a **dedicated API Gateway**. Once any ALLOW policy selects a workload, a request needs a matching ALLOW rule. Multiple ALLOW policies are additive; do not stack these on a shared Gateway without accounting for its other apps.
 
-**Recommended method**: Use AuthorizationPolicy's `remoteIpBlocks` (more declarative and safer than EnvoyFilter)
-
-#### 1. IP Whitelist with AuthorizationPolicy (Recommended)
+#### 1. IP Allow List and Deny List
 
 ```yaml
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: ip-whitelist
-  namespace: default
+  name: api-ip-allowlist
+  namespace: istio-system
 spec:
   selector:
     matchLabels:
-      app: api-service
+      istio: ingressgateway
   action: ALLOW
   rules:
   - from:
     - source:
-        remoteIpBlocks:  # Original IP from X-Forwarded-For
-        - "203.0.113.10/32"
-        - "203.0.113.11/32"
-        - "198.51.100.0/24"
-```
-
-**Pros**:
-- Declarative and easy to understand
-- Istio automatically parses XFF header
-- CIDR range support
-- Safe during Istio upgrades
-- No separate code needed
-
-#### 2. IP Blacklist with AuthorizationPolicy (Recommended)
-
-```yaml
+        remoteIpBlocks: ["203.0.113.10/32", "203.0.113.11/32", "2001:db8:1234::/48"]
+    to:
+    - operation:
+        hosts: ["api.example.com", "api.example.com:*"]
+---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: ip-blacklist
-  namespace: default
+  name: api-ip-denylist
+  namespace: istio-system
 spec:
   selector:
     matchLabels:
-      app: api-service
+      istio: ingressgateway
   action: DENY
   rules:
   - from:
     - source:
-        remoteIpBlocks:  # IPs to block
-        - "192.0.2.100/32"
-        - "192.0.2.101/32"
-        - "198.51.100.0/24"
+        remoteIpBlocks: ["203.0.113.11/32"]
+    to:
+    - operation:
+        hosts: ["api.example.com", "api.example.com:*"]
 ```
 
-#### 3. Per-path IP Restriction (AuthorizationPolicy)
+The allowed address `203.0.113.11` is still rejected by DENY. Istio evaluates CUSTOM, DENY, then ALLOW; AUDIT does not change the decision. Choose `remoteIpBlocks` for original addresses derived from trusted XFF/PROXY protocol, and `ipBlocks` for the received packet source, according to the real connection.
+
+#### 2. IP + Path + Method
 
 ```yaml
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: admin-path-ip-restriction
-  namespace: default
+  name: api-path-ip-policy
+  namespace: istio-system
 spec:
   selector:
     matchLabels:
-      app: api-service
+      istio: ingressgateway
   action: ALLOW
   rules:
-  # Admin paths only specific IPs
-  - to:
-    - operation:
-        paths: ["/admin/*"]
-    from:
-    - source:
-        remoteIpBlocks:
-        - "203.0.113.10/32"
-        - "203.0.113.11/32"
-
-  # General paths all IPs
-  - to:
-    - operation:
-        notPaths: ["/admin/*"]
-    from:
-    - source:
-        remoteIpBlocks:
-        - "0.0.0.0/0"
-```
-
-#### 4. Complex Policy: IP + Path + Method
-
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: complex-access-control
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: ALLOW
-  rules:
-  # Admin: All paths accessible
   - from:
     - source:
-        remoteIpBlocks:
-        - "203.0.113.10/32"  # Admin IP
-
-  # Internal network: API read only
-  - to:
+        remoteIpBlocks: ["203.0.113.10/32"]
+    to:
     - operation:
+        hosts: ["api.example.com", "api.example.com:*"]
+        paths: ["/admin", "/admin/*"]
+  - from:
+    - source:
+        remoteIpBlocks: ["10.0.0.0/8"]
+    to:
+    - operation:
+        hosts: ["api.example.com", "api.example.com:*"]
         paths: ["/api/v1/*"]
         methods: ["GET"]
-    from:
-    - source:
-        remoteIpBlocks:
-        - "10.0.0.0/8"  # Internal network
-
-  # Public network: Public API only
   - to:
     - operation:
+        hosts: ["api.example.com", "api.example.com:*"]
         paths: ["/api/v1/public/*"]
         methods: ["GET", "POST"]
-    from:
-    - source:
-        remoteIpBlocks:
-        - "0.0.0.0/0"
 ```
 
-#### 5. Whitelist + Blacklist Combination
+Protect both `/admin` and `/admin/*`. Omitting the source condition on the public route covers IPv6 as well as IPv4. The `10.0.0.0/8` rule is meaningful only on a private-client path where that address is actually observed; it cannot recover an address hidden behind internet NAT.
 
-```yaml
-# Blacklist applied first (higher priority)
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: ip-blacklist
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: DENY
-  rules:
-  - from:
-    - source:
-        remoteIpBlocks:
-        - "192.0.2.100/32"
-        - "192.0.2.101/32"
-        - "198.51.100.0/24"
----
-# Whitelist applied
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: ip-whitelist
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        remoteIpBlocks:
-        - "203.0.113.0/24"
-        - "198.51.100.0/22"  # Larger range
-```
-
-**Processing order**: DENY policies are evaluated first, so Blacklist takes priority.
-
-#### 6. Testing
+### XFF Verification and Debugging
 
 ```bash
-# 1. Test from allowed IP
-curl -H "X-Forwarded-For: 203.0.113.10" http://api-service:8080/api
+# Local CLI reads the effective gateway configuration; no curl binary in proxy required.
+istioctl proxy-config listeners <gateway-pod> -n istio-system -o json |
+  jq '.. | objects |
+      select(.["@type"]? == "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager") |
+      {useRemoteAddress, xffNumTrustedHops, skipXffAppend}'
 
-# 2. Test from blocked IP
-curl -H "X-Forwarded-For: 192.0.2.100" http://api-service:8080/api
+# Through the real ALB/CDN path, from a source outside the allowed NAT range:
+curl -i https://app-f.example.com/
+curl -i -H "X-Forwarded-For: 203.0.113.10" https://app-f.example.com/
+# Both must be denied. A user-supplied header must not grant access.
 
-# 3. IP not in Whitelist
-curl -H "X-Forwarded-For: 1.2.3.4" http://api-service:8080/api
+# Run this separately from the real approved NAT egress:
+curl -i https://app-f.example.com/
 
-# 4. Admin path access test
-curl -H "X-Forwarded-For: 203.0.113.10" http://api-service:8080/admin/users
-curl -H "X-Forwarded-For: 10.0.1.100" http://api-service:8080/admin/users
-
-# 5. Check policies
-kubectl get authorizationpolicy -n default
-
-# 6. Check logs (Envoy access logs)
-kubectl logs -n default <pod-name> -c istio-proxy | grep "403"
+kubectl get authorizationpolicy -n istio-system
+kubectl logs -n istio-system <gateway-pod> -c istio-proxy
 ```
 
-#### 7. Advanced: Custom Deny Message with EnvoyFilter (Optional)
+Prepending an allowed IP to XFF from a disallowed source must still fail. Test allowed access from the actual approved NAT egress. A direct-Gateway request that succeeds with a forged header demonstrates bypass, not successful validation. Also test IPv6, missing/short XFF, direct Gateway access, Host aliases and alternate routes.
 
-AuthorizationPolicy returns `RBAC: access denied` message by default. Add EnvoyFilter only if custom message is needed:
+Distinguish `%DOWNSTREAM_DIRECT_REMOTE_ADDRESS%` (socket peer), `%DOWNSTREAM_REMOTE_ADDRESS%` (computed address), `%REQ(X-FORWARDED-FOR)%` and `%RESPONSE_CODE_DETAILS%` in access logs. Enable logs with Telemetry and configure format in the selected mesh access-log provider; see [ProxyConfig and observability settings](#envoy-configuration-with-proxyconfig).
 
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: custom-deny-message
-  namespace: default
-spec:
-  workloadSelector:
-    matchLabels:
-      app: api-service
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "envoy.filters.http.router"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.lua
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_response(response_handle)
-              local status = response_handle:headers():get(":status")
-              local body = response_handle:body():getBytes(0, 1000)
+### Security Considerations
 
-              -- Detect AuthorizationPolicy's 403 response
-              if status == "403" and body and body:match("RBAC: access denied") then
-                response_handle:body():setBytes('{"error": "Access denied", "code": "IP_NOT_ALLOWED"}')
-                response_handle:headers():replace("content-type", "application/json")
-              end
-            end
-```
-
-### Best Practices
-
-1. **Edge Gateway settings**:
-   - `use_remote_address: true`
-   - `xff_num_trusted_hops`: Set to the number of trusted proxies
-
-2. **Internal Sidecar settings**:
-   - `use_remote_address: false`
-   - `skip_xff_append: false`
-
-3. **Verification and testing**:
-   - Thoroughly test XFF behavior before production deployment
-   - Verify actual client IP extraction with access logs
-
-4. **Security**:
-   - Prevent XFF spoofing at Edge
-   - Ignore XFF from untrusted sources
+Restrict each downstream hop to **the actual trusted proxy**, such as ALB → Gateway and CloudFront → ALB, with security groups/network and origin-access controls. A hop count does not authenticate the sender; `use_remote_address: true` alone does not prevent spoofing. Removing a header later in Lua does not undo a previously computed address or an earlier authorization decision.
 
 ## Static Response Configuration
 
@@ -1126,7 +460,6 @@ Istio provides several ways to implement static responses:
 | Method | When to use | Pros | Cons |
 |------|----------|------|------|
 | **VirtualService** | Simple static responses, integrate with routing rules | Declarative, easy to understand | Limited customization |
-| **ProxyConfig** | Per-workload Envoy configuration | Fine-grained control, performance tuning | Complex configuration |
 | **AuthorizationPolicy** | IP/header based access control | Integrates with security policies | Not just for static responses |
 | **EnvoyFilter** | Only when above methods are insufficient | Maximum flexibility | Complex, upgrade risk |
 
@@ -1135,6 +468,8 @@ Istio provides several ways to implement static responses:
 ### Implementing Static Responses with VirtualService
 
 #### 1. Basic Static Response (directResponse)
+
+The timestamp is a fixed example string, not the current clock. Check the response-body limit in the generated route configuration. Istio 1.31 sets a 1 MiB limit for these outbound VirtualService routes; unmodified Envoy defaults to 4 KiB. Large static bodies consume proxy memory. These mesh-outbound VirtualServices are independent alternatives; do not stack them for the same host.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1149,7 +484,9 @@ spec:
   # Maintenance mode
   - match:
     - uri:
-        prefix: "/api/v1"
+        exact: "/api/v1"
+    - uri:
+        prefix: "/api/v1/"
     directResponse:
       status: 503
       body:
@@ -1170,7 +507,7 @@ spec:
 ```
 
 **Result**:
-```bash
+```text
 $ curl -i http://api-service/api/v1/users
 HTTP/1.1 503 Service Unavailable
 content-type: application/json
@@ -1188,11 +525,14 @@ retry-after: 3600
 
 #### 2. Health Check Endpoint
 
+A static 200 checks only proxy routing. Use a real backend probe when Kubernetes readiness or ALB target health must reflect application health.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-service-health
+  namespace: default
 spec:
   hosts:
   - api-service
@@ -1210,6 +550,8 @@ spec:
   - route:
     - destination:
         host: api-service
+    retries:
+      attempts: 0
 ```
 
 #### 3. Block Specific Paths
@@ -1219,6 +561,7 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: block-admin
+  namespace: default
 spec:
   hosts:
   - api-service
@@ -1226,7 +569,9 @@ spec:
   # Block Admin paths
   - match:
     - uri:
-        prefix: "/admin"
+        exact: "/admin"
+    - uri:
+        prefix: "/admin/"
     directResponse:
       status: 403
       body:
@@ -1243,6 +588,8 @@ spec:
   - route:
     - destination:
         host: api-service
+    retries:
+      attempts: 0
 ```
 
 #### 4. Error Simulation with Fault Injection
@@ -1252,6 +599,7 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: fault-injection
+  namespace: default
 spec:
   hosts:
   - api-service
@@ -1264,169 +612,62 @@ spec:
     route:
     - destination:
         host: api-service
+    retries:
+      attempts: 0
 ```
 
 ### Access Control with AuthorizationPolicy
 
-#### 1. Source IP Based Access Control
+`ipBlocks` evaluates the received packet source. This may be the original client with a source-preserving L4 ingress, or a proxy/NAT behind ALB or another intermediary. For XFF-derived addresses, use the Gateway `remoteIpBlocks` examples above. A selected ALLOW policy already rejects requests that do not match; a duplicate complementary DENY is unnecessary.
+
+#### Custom Deny Response
+
+This standardizes **all HTTP 403 responses generated locally by this Gateway**. It does not rewrite backend 403 responses or every TCP rejection. Use a generic `FORBIDDEN` code instead of inferring IP denial from body text. A later Lua filter may never run when an earlier RBAC filter rejects a request; use HCM `local_reply_config` and review the order/scope when merging existing mappers.
 
 ```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: ip-whitelist
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        ipBlocks:
-        - "203.0.113.10/32"
-        - "203.0.113.11/32"
-        - "198.51.100.0/24"
----
-# Default DENY policy
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: DENY
-  rules:
-  - from:
-    - source:
-        notIpBlocks:
-        - "203.0.113.10/32"
-        - "203.0.113.11/32"
-        - "198.51.100.0/24"
-```
-
-#### 2. Per-path IP Restriction
-
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: admin-ip-whitelist
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: ALLOW
-  rules:
-  # Admin paths only specific IPs
-  - to:
-    - operation:
-        paths: ["/admin/*"]
-    from:
-    - source:
-        ipBlocks:
-        - "203.0.113.10/32"
-        - "203.0.113.11/32"
-
-  # General paths all IPs
-  - to:
-    - operation:
-        notPaths: ["/admin/*"]
-```
-
-#### 3. X-Forwarded-For Header Based Control
-
-AuthorizationPolicy can use `remoteIpBlocks` to check the original IP from X-Forwarded-For header:
-
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: xff-based-access
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        remoteIpBlocks:  # Original IP from X-Forwarded-For header
-        - "203.0.113.0/24"
-        - "198.51.100.0/24"
-```
-
-**Important**: For `remoteIpBlocks` to work, `xff_num_trusted_hops` must be correctly configured at Gateway (see [XFF Settings](#xff-configuration-options) above).
-
-#### 4. Custom Deny Response
-
-Requests blocked by AuthorizationPolicy return 403 response by default, but can be combined with EnvoyFilter to provide custom responses:
-
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: block-untrusted-ips
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  action: DENY
-  rules:
-  - from:
-    - source:
-        notRemoteIpBlocks:
-        - "203.0.113.0/24"
----
-# Add custom body to 403 response
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: custom-deny-response
-  namespace: default
+  name: custom-local-forbidden
+  namespace: istio-system
 spec:
   workloadSelector:
-    matchLabels:
-      app: api-service
+    labels:
+      istio: ingressgateway
   configPatches:
-  - applyTo: HTTP_FILTER
+  - applyTo: NETWORK_FILTER
     match:
-      context: SIDECAR_INBOUND
+      context: GATEWAY
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "envoy.filters.http.router"
+            name: envoy.filters.network.http_connection_manager
     patch:
-      operation: INSERT_BEFORE
+      operation: MERGE
       value:
-        name: envoy.filters.http.lua
+        name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_response(response_handle)
-              local status = response_handle:headers():get(":status")
-
-              if status == "403" then
-                response_handle:body():setBytes('{"error": "Access denied", "code": "FORBIDDEN"}')
-                response_handle:headers():replace("content-type", "application/json")
-              end
-            end
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          local_reply_config:
+            mappers:
+            - filter:
+                status_code_filter:
+                  comparison:
+                    op: EQ
+                    value:
+                      default_value: 403
+                      runtime_key: local_reply_403
+              body_format_override:
+                json_format:
+                  error: "Access denied"
+                  code: "FORBIDDEN"
 ```
 
 ### Envoy Configuration with ProxyConfig
 
-ProxyConfig allows fine-grained per-workload Envoy proxy configuration.
+The `networking.istio.io` ProxyConfig resource has different fields from the mesh `ProxyConfig` message. It exposes options such as `concurrency`, `environmentVariables` and `image`; arbitrary logging, tracing and connection-pool fields are invalid. Changes require restarting affected Pods.
 
-#### 1. Per-workload Proxy Settings
+#### Workload Threads and Observability
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1438,159 +679,151 @@ spec:
   selector:
     matchLabels:
       app: api-service
-  concurrency: 4  # Worker thread count
-
-  # Access log settings
-  accessLogging:
-  - providers:
-    - name: envoy
-      file:
-        path: /dev/stdout
-        format: |
-          [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%"
-          Status: %RESPONSE_CODE% Duration: %DURATION%ms
-          Client IP: %REQ(X-FORWARDED-FOR)%
-
-  # Timeout settings
-  connectionTimeout: 10s
-  drainDuration: 5s
-
-  # Resource limits
-  resourceLimits:
-    maxConnections: 10000
-```
-
-#### 2. Statistics and Metrics Settings
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: ProxyConfig
+  concurrency: 4
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
 metadata:
-  name: monitoring-config
+  name: api-observability
   namespace: default
 spec:
   selector:
     matchLabels:
       app: api-service
-
-  # Statistics settings
-  stats:
-    inclusionPrefixes:
-    - "cluster.outbound"
-    - "http.inbound"
-    inclusionSuffixes:
-    - "upstream_rq_time"
-
-  # Tracing settings
+  accessLogging:
+  - providers:
+    - name: envoy
   tracing:
-    sampling: 100.0  # 100% sampling
-    maxPathTagLength: 256
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 1
 ```
+
+The `envoy` access-log and `otel-tracing` trace providers must already exist in mesh extensionProviders. Configure log format/output and OTLP endpoint/TLS there. `concurrency: 4` requests four worker threads; check CPU capacity and load. A 1% head-sampling setting does not guarantee complete trace retention.
+
+#### Statistics and Shutdown Grace
+
+```yaml
+# Existing application Deployment: spec.template fragment
+metadata:
+  annotations:
+    proxy.istio.io/config: |
+      terminationDrainDuration: 5s
+      proxyStatsMatcher:
+        inclusionRegexps:
+        - ".*outlier_detection.*"
+        - ".*upstream_rq_retry.*"
+        inclusionSuffixes:
+        - upstream_rq_timeout
+```
+
+Merge into the existing application Deployment Pod template and restart affected Pods. The Kubernetes termination grace period must accommodate application shutdown and proxy draining. Additional Envoy statistics increase series count and memory costs.
+
+#### Destination Connection Pool
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: api-outbound-pool
+  namespace: default
+spec:
+  host: api-service.default.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        connectTimeout: 10s
+        maxConnections: 10000
+```
+
+These are per-proxy outbound connection settings for this destination, not a Gateway-wide concurrent-request limit or application timeout. Validate the example limits under load.
 
 ### Integrated Example: VirtualService + AuthorizationPolicy
 
-Integrated example for real production scenarios.
+An independent **HTTP lab fragment**. It requires an existing ingress Gateway Deployment/Service exposing port 80, `default/api-service` on Service port 8080 with healthy endpoints, working DNS/ALB routing and the validated XFF trust configuration above. External use also needs a reviewed TLS boundary and backend bypass protection. Deployment and production-load testing have not been performed for this fragment.
 
-#### Scenario: Protect API Service
+Authorization and routing are evaluated at the same Gateway. Public, health and retired paths are explicitly allowed; other unmatched paths are denied. `/health` proves only proxy-route reachability, not application/database health. Mesh retries are 0 on the general route, which may carry writes.
 
 ```yaml
-# 1. IP based access control
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: api-lab
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts: ["api.example.com"]
+---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: api-access-control
-  namespace: default
+  namespace: istio-system
 spec:
   selector:
     matchLabels:
-      app: api-service
+      istio: ingressgateway
   action: ALLOW
   rules:
-  # Admin API only specific IPs
+  - from:
+    - source:
+        remoteIpBlocks: ["203.0.113.10/32"]
+    to:
+    - operation:
+        hosts: ["api.example.com", "api.example.com:*"]
+        paths: ["/api/v1/admin", "/api/v1/admin/*"]
   - to:
     - operation:
-        paths: ["/api/v1/admin/*"]
-    from:
-    - source:
-        remoteIpBlocks:
-        - "203.0.113.10/32"  # Admin IP
-
-  # Public API all trusted networks
-  - to:
-    - operation:
-        paths: ["/api/v1/public/*"]
-    from:
-    - source:
-        remoteIpBlocks:
-        - "0.0.0.0/0"  # All IPs (in practice only trusted ranges)
+        hosts: ["api.example.com", "api.example.com:*"]
+        paths: ["/health", "/api/v0/*", "/api/v1/public/*"]
 ---
-# 2. Routing and static responses
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-service-routes
+  namespace: default
 spec:
-  hosts:
-  - api-service
+  hosts: ["api.example.com"]
+  gateways: ["istio-system/api-lab"]
   http:
-  # Health check
   - match:
     - uri:
-        exact: "/health"
+        exact: /health
     directResponse:
       status: 200
       body:
-        string: '{"status": "healthy"}'
+        string: '{"status":"proxy-route-reachable"}'
     headers:
       response:
         set:
-          content-type: "application/json"
-
-  # Block legacy API version
+          content-type: application/json
+          cache-control: no-store
   - match:
     - uri:
-        prefix: "/api/v0/"
+        prefix: /api/v0/
     directResponse:
       status: 410
       body:
-        string: |
-          {
-            "error": "API v0 is deprecated",
-            "supported_versions": ["v1", "v2"],
-            "migration_guide": "https://docs.example.com/migration"
-          }
+        string: '{"error":"API v0 is retired","supported_versions":["v1","v2"]}'
     headers:
       response:
         set:
-          content-type: "application/json"
-
-  # Normal routing
+          content-type: application/json
+          cache-control: no-store
   - route:
     - destination:
-        host: api-service
+        host: api-service.default.svc.cluster.local
         port:
           number: 8080
     timeout: 30s
     retries:
-      attempts: 3
-      perTryTimeout: 10s
----
-# 3. Proxy settings
-apiVersion: networking.istio.io/v1beta1
-kind: ProxyConfig
-metadata:
-  name: api-service-proxy
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: api-service
-  concurrency: 4
-  accessLogging:
-  - providers:
-    - name: envoy
-      file:
-        path: /dev/stdout
+      attempts: 0
 ```
 
 ### Dynamic Static Responses with Lua
@@ -1625,21 +858,27 @@ spec:
         name: envoy.filters.http.lua
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              -- Current time (UTC)
-              local current_hour = tonumber(os.date("!%H"))
-
-              -- Daily maintenance window 2-4 AM
-              if current_hour >= 2 and current_hour < 4 then
-                request_handle:respond(
-                  {[":status"] = "503",
-                   ["content-type"] = "application/json",
-                   ["retry-after"] = "3600"},
-                  '{"error": "Maintenance in progress", "window": "02:00-04:00 UTC"}'
-                )
+          default_source_code:
+            inline_string: |
+              local function is_maintenance(hour)
+                return hour >= 2 and hour < 4
               end
-            end
+
+              function envoy_on_request(request_handle)
+                -- Current time (UTC)
+                local current_hour = tonumber(os.date("!%H"))
+
+                -- Daily maintenance window 2-4 AM
+                if is_maintenance(current_hour) then
+                  request_handle:respond(
+                    {[":status"] = "503",
+                     ["content-type"] = "application/json",
+                     ["retry-after"] = "60",
+                     ["cache-control"] = "no-store"},
+                    '{"error": "Maintenance in progress", "window": "02:00-04:00 UTC"}'
+                  )
+                end
+              end
 ```
 
 #### Request Header Based Response
@@ -1670,84 +909,62 @@ spec:
         name: envoy.filters.http.lua
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              local api_version = request_handle:headers():get("x-api-version")
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(request_handle)
+                local api_version = request_handle:headers():get("x-api-version")
 
-              -- Unsupported API version
-              if api_version and api_version == "v1" then
-                request_handle:respond(
-                  {[":status"] = "410",
-                   ["content-type"] = "application/json"},
-                  '{"error": "API v1 is deprecated", "supported_versions": ["v2", "v3"]}'
-                )
+                -- Unsupported API version
+                if api_version and api_version == "v1" then
+                  request_handle:respond(
+                    {[":status"] = "410",
+                     ["content-type"] = "application/json"},
+                    '{"error": "API v1 is deprecated", "supported_versions": ["v2", "v3"]}'
+                  )
+                end
               end
-            end
 ```
 
 ### Integration with VirtualService
 
-VirtualService and EnvoyFilter can be used together to implement more complex routing scenarios.
+A single `directResponse` can set the maintenance status and body. A destination-side Lua filter cannot rewrite a fault already generated by the source-side VirtualService, and response headers do not contain the request `:path`. This is an independent mesh-outbound example, not authorization. For ingress, explicitly bind the gateway and external host as in the previous example.
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-service
+  name: maintenance-response
+  namespace: default
 spec:
-  hosts:
-  - api-service
+  hosts: ["api-service"]
   http:
   - match:
     - uri:
-        prefix: "/maintenance"
-    fault:
-      abort:
-        httpStatus: 503
-        percentage:
-          value: 100
-    route:
-    - destination:
-        host: api-service
+        exact: /maintenance
+    - uri:
+        prefix: /maintenance/
+    directResponse:
+      status: 503
+      body:
+        string: '{"message":"Service under maintenance"}'
+    headers:
+      response:
+        set:
+          content-type: application/json
+          cache-control: no-store
+          retry-after: "60"
   - route:
     - destination:
         host: api-service
----
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: maintenance-response-body
-  namespace: default
-spec:
-  workloadSelector:
-    labels:
-      app: api-service
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.lua
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_response(response_handle)
-              local status = response_handle:headers():get(":status")
-              local path = response_handle:headers():get(":path")
-
-              -- Add custom body when VirtualService returns 503
-              if status == "503" and path and path:match("^/maintenance") then
-                response_handle:body():setBytes('{"message": "Service under maintenance"}')
-                response_handle:headers():replace("content-type", "application/json")
-              end
-            end
+    retries:
+      attempts: 0
 ```
 
 ### Practical Scenarios
 
 #### Scenario 1: Block Traffic During Blue/Green Deployment
+
+This intentionally changes every inbound HTTP route on the selected v1 workload to 503. It does not implement a zero-downtime cutover or connection drain. Protobuf `MERGE` changes the Route action oneof to direct_response; it does not control earlier filter rejections or TCP paths. The cutoff_date is a fixed example value to replace with the actual deployment schedule.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -1831,58 +1048,61 @@ spec:
             default_value:
               numerator: 100
               denominator: HUNDRED
-          response_headers_to_add:
-          - append: false
-            header:
-              key: x-local-rate-limit
-              value: 'true'
           local_rate_limit_per_downstream_connection: false
           # Custom 429 response
           status:
             code: 429
           response_headers_to_add:
           - header:
-              key: "Content-Type"
-              value: "application/json"
+              key: x-local-rate-limit
+              value: "true"
+            append_action: OVERWRITE_IF_EXISTS_OR_ADD
+```
 
-  # Lua filter to add 429 response body
-  - applyTo: HTTP_FILTER
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: local-rate-limit-json
+  namespace: default
+spec:
+  workloadSelector:
+    labels:
+      app: api-service
+  configPatches:
+  - applyTo: NETWORK_FILTER
     match:
       context: SIDECAR_INBOUND
       listener:
         filterChain:
           filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "envoy.filters.http.router"
+            name: envoy.filters.network.http_connection_manager
     patch:
-      operation: INSERT_BEFORE
+      operation: MERGE
       value:
-        name: envoy.filters.http.lua
+        name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_response(response_handle)
-              local status = response_handle:headers():get(":status")
-              local rate_limited = response_handle:headers():get("x-local-rate-limit")
-
-              if status == "429" and rate_limited == "true" then
-                local body = [[
-                {
-                  "error": {
-                    "code": "RATE_LIMIT_EXCEEDED",
-                    "message": "Too many requests",
-                    "retry_after": 60
-                  }
-                }
-                ]]
-                response_handle:body():setBytes(body)
-                response_handle:headers():add("Retry-After", "60")
-              end
-            end
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          local_reply_config:
+            mappers:
+            - filter:
+                status_code_filter:
+                  comparison:
+                    op: EQ
+                    value:
+                      default_value: 429
+                      runtime_key: local_reply_429
+              body_format_override:
+                json_format:
+                  error: "Too many requests"
+                  code: "RATE_LIMIT_EXCEEDED"
 ```
 
+Both resources select the same workload. The mapper formats locally generated 429 responses as JSON; upstream 429 responses are unchanged. Token refill does not guarantee when every caller's retry will succeed, so no arbitrary `Retry-After: 60` is emitted.
+
 #### Scenario 3: Canary Deployment Test Response
+
+Use only on an isolated test workload. A caller can supply this header; the resulting200 proves neither authentication, backend execution nor version health. Any operational exposure needs separately validated authorization and header trust.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -1911,62 +1131,57 @@ spec:
         name: envoy.filters.http.lua
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              local test_header = request_handle:headers():get("x-canary-test")
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(request_handle)
+                local test_header = request_handle:headers():get("x-canary-test")
 
-              -- Return predefined response if canary test header present
-              if test_header == "dry-run" then
-                request_handle:respond(
-                  {[":status"] = "200",
-                   ["content-type"] = "application/json",
-                   ["x-canary-version"] = "v2.0.0"},
-                  '{"message": "Canary version response", "version": "v2.0.0"}'
-                )
+                -- Return predefined response if canary test header present
+                if test_header == "dry-run" then
+                  request_handle:respond(
+                    {[":status"] = "200",
+                     ["content-type"] = "application/json",
+                     ["x-canary-version"] = "v2.0.0"},
+                    '{"message": "Canary version response", "version": "v2.0.0"}'
+                  )
+                end
               end
-            end
 ```
 
 ### Testing and Verification
 
 #### Static Response Testing
 
+Use a test client whose traffic actually crosses the proxy implementing the selected example. `/health` or informational headers alone do not validate authentication/authorization.
+
 ```bash
-# 1. Test basic 503 response
 curl -i http://api-service:8080/api/v1
-
-# 2. Test health check endpoint
 curl -i http://api-service:8080/health
-
-# 3. Test JSON error response
-curl -i -H "Content-Type: application/json" http://api-service:8080/api/v1/users
-
-# 4. Test maintenance window (time manipulation)
-kubectl exec -it <pod-name> -c istio-proxy -- date -s "02:30:00"
-curl -i http://api-service:8080/api/v1
-
-# 5. Rate Limit test
-for i in {1..150}; do
-  curl -i http://api-service:8080/api/v1
-done
+curl -i http://api-service:8080/admin
+curl -i http://api-service:8080/admin/users
 ```
+
+Test the maintenance predicate in an isolated Lua harness with UTC hours 1,2,3,4 and expect false,true,true,false. Do not change Pod/node clocks. For a real filter integration test, use a controlled test-time input or reviewed temporary function in an isolated environment, then restore the normal function.
+
+For rate limiting, target one known proxy and measure the initial 100 tokens, refill of 10/second, elapsed time and actual 429 count together. A sequential 150-request curl loop does not guarantee 429. Replica count and load distribution require separate tests.
 
 #### Verify Envoy Configuration
 
 ```bash
 # 1. Verify static response route
 istioctl proxy-config routes <pod-name> -n default -o json | \
-  jq '.[] | select(.virtualHosts[].routes[].directResponse != null)'
+  jq '.[] | .virtualHosts[]? | .routes[]? | select(.directResponse != null)'
 
 # 2. Check full route configuration
 istioctl proxy-config routes <pod-name> -n default
 
 # 3. Verify EnvoyFilter applied
-kubectl get envoyfilter -n default maintenance-mode -o yaml
+kubectl get envoyfilter -n default maintenance-window -o yaml
 
 # 4. Verify via Envoy Admin API
-kubectl port-forward <pod-name> 15000:15000
-curl http://localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == "type.googleapis.com/envoy.admin.v3.RoutesConfigDump")'
+kubectl port-forward -n default <pod-name> 15000:15000
+# Run in a second local terminal while port-forward is active:
+curl http://127.0.0.1:15000/config_dump | jq '.configs[] | select(.["@type"] == "type.googleapis.com/envoy.admin.v3.RoutesConfigDump")'
 ```
 
 ### Best Practices
@@ -1988,16 +1203,16 @@ curl http://localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == 
    - Test with canary deployment before full application
 
 5. **Rollback plan**:
-   - Immediately restore normal traffic by removing EnvoyFilter
+   - Restore the reviewed configuration, then verify xDS acceptance, routes and requests
    - Automated rollback scripts for emergencies
 
 ### Cautions
 
-1. **Priority**: EnvoyFilter static responses may take priority over VirtualService
+1. **Priority**: Response behavior depends on the processing proxy, filter order and generated route
 2. **Performance**: Lua scripts execute on every request, consider performance impact
 3. **Security**: Be careful not to expose sensitive information in error messages
 4. **Caching**: Static responses also need `Cache-Control` header settings
-5. **Metrics**: Static responses generate different metrics than normal responses
+5. **Metrics**: Inspect response_code/details/flags and reporter; static replies need not create a separate metric family
 
 ## Practical Examples
 
@@ -2008,6 +1223,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: request-response-logging
+  namespace: default
 spec:
   workloadSelector:
     labels:
@@ -2016,54 +1232,64 @@ spec:
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+            subFilter:
+              name: envoy.filters.http.router
     patch:
       operation: INSERT_BEFORE
       value:
         name: envoy.filters.http.lua
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              request_handle:logInfo("Request: " .. request_handle:headers():get(":path"))
-            end
+          default_source_code:
+            inline_string: |
+              function envoy_on_request(request_handle)
+                request_handle:logInfo("Request method: " .. (request_handle:headers():get(":method") or "unknown"))
+              end
 
-            function envoy_on_response(response_handle)
-              response_handle:logInfo("Response: " .. response_handle:headers():get(":status"))
-            end
+              function envoy_on_response(response_handle)
+                response_handle:logInfo("Response: " .. (response_handle:headers():get(":status") or "unknown"))
+              end
 ```
 
 ### Example 2: JWT Validation
 
+Use Istio RequestAuthentication with AuthorizationPolicy. Replace the example issuer/audience/JWKS URL with actual provider values and verify DNS/TLS/JWKS reachability from the verifier. RequestAuthentication alone accepts a missing token; the ALLOW policy requires a verified principal. Check that another ALLOW policy on this workload does not grant broader access.
+
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
 metadata:
-  name: jwt-auth
+  name: api-jwt
+  namespace: default
 spec:
-  workloadSelector:
-    labels:
+  selector:
+    matchLabels:
       app: api-service
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.jwt_authn
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
-          providers:
-            auth0:
-              issuer: "https://example.auth0.com/"
-              audiences:
-              - "api.example.com"
-              remote_jwks:
-                http_uri:
-                  uri: "https://example.auth0.com/.well-known/jwks.json"
-                  cluster: "auth0_jwks"
-                  timeout: 5s
+  jwtRules:
+  - issuer: https://issuer.example.com/
+    audiences: ["api.example.com"]
+    jwksUri: https://issuer.example.com/.well-known/jwks.json
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: api-require-jwt
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: api-service
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["*"]
 ```
+
 
 ## Best Practices
 
@@ -2090,3 +1316,15 @@ kubectl logs -n <namespace> <pod-name> -c istio-proxy
 - [EnvoyFilter Reference](https://istio.io/latest/docs/reference/config/networking/envoy-filter/)
 - [Envoy Documentation](https://www.envoyproxy.io/docs/envoy/latest/)
 - [WASM Plugins](https://istio.io/latest/docs/concepts/wasm/)
+- [XFF / trusted addresses](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers)
+- [Istio ingress authorization](https://istio.io/latest/docs/tasks/security/authorization/authz-ingress/)
+- [ALB X-Forwarded headers](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/x-forwarded-headers.html)
+- [CloudFront request behavior](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorCustomOrigin.html)
+- [NLB application-load-balancer targets](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/application-load-balancer-target.html)
+- [Lua filter API](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/lua_filter)
+- [Local reply configuration](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/local_reply)
+- [ProxyConfig resource](https://istio.io/latest/docs/reference/config/networking/proxy-config/)
+- [Telemetry API](https://istio.io/latest/docs/reference/config/telemetry/)
+- [Mesh ProxyConfig and statistics](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/)
+- [RequestAuthentication](https://istio.io/latest/docs/reference/config/security/request_authentication/)
+- [Istio 1.31 direct-response limit](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/route/route.go)

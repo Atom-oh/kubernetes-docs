@@ -2,19 +2,19 @@
 
 This quiz tests your understanding of ArgoCD best practices and operational patterns.
 
-1. What is the recommended approach for managing ArgoCD's own configuration?
+1. Which pattern uses an administrator-owned root repository to declare multiple child Applications?
    - A) Manual configuration through the UI
-   - B) Managing ArgoCD with ArgoCD (app-of-apps pattern)
+   - B) App of Apps
    - C) Using kubectl apply directly
    - D) Configuration should never change
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Managing ArgoCD with ArgoCD (app-of-apps pattern)**
+**Answer: B) App of Apps**
 
 **Explanation:**
-The "app-of-apps" pattern involves having ArgoCD manage its own configuration and other ArgoCD Applications. This ensures ArgoCD's configuration is version-controlled and follows GitOps principles.
+App of Apps uses a root Application to manage child Applications. It is not synonymous with self-managing Argo CD and is not required for every installation. Treat it as an administrative capability, restrict repository writes, and retain an independent bootstrap/recovery path.
 
 </details>
 
@@ -30,11 +30,11 @@ The "app-of-apps" pattern involves having ArgoCD manage its own configuration an
 **Answer: B) Separate repositories for application code and deployment manifests**
 
 **Explanation:**
-Separating application code from deployment manifests provides clearer audit trails, allows different teams to manage each, and prevents CI triggers from deployment changes.
+Separating application code from deployment manifests provides clearer audit trails, allows different teams to manage each, and can avoid rebuilding application code for deployment-only changes. CI triggers, path filters, and repository boundaries still need explicit design.
 
 </details>
 
-3. How should you handle environment-specific configurations?
+3. How can you reuse common manifests while expressing environment-specific values?
    - A) Create separate Applications for each environment
    - B) Use Kustomize overlays or Helm values files per environment
    - C) Hardcode values in the manifests

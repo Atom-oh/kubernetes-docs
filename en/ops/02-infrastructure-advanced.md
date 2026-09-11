@@ -724,7 +724,7 @@ For stateful workloads, pods must schedule in the same zone as their persistent 
 
 ### NodePool Zone Configuration
 
-The actual NodePool YAML is managed by ArgoCD GitOps (see [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)), but here are the key concepts:
+The actual NodePool YAML is managed by ArgoCD GitOps (see [GitOps Pipeline Configuration](04-gitops-multi-cluster.md)), but here are the key concepts:
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -1390,7 +1390,7 @@ The Blue/Green cluster architecture with NLB weighted routing provides:
 
 * [Terraform 3-Layer Infrastructure](01-infrastructure-setup.md)
 * [CI Pipelines](03-ci-pipelines.md)
-* [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [GitOps Pipeline Configuration](04-gitops-multi-cluster.md)
 * [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 
 ***

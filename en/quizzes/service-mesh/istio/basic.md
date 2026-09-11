@@ -1,6 +1,6 @@
 # Basic Quiz
 
-> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 23, 2026
+> **Reviewed Version**: Istio 1.31.0 **EKS Versions**: 1.34–1.36 **Last Updated**: September 11, 2026
 
 This quiz tests your understanding of Istio's basic concepts and architecture.
 
@@ -10,7 +10,10 @@ This quiz tests your understanding of Istio's basic concepts and architecture.
 
 Which statement about Service Mesh is **NOT correct**?
 
-A. It is an infrastructure layer that handles communication between microservices B. It can only be used by modifying application code C. It provides traffic control and observability between services D. It applies security and policies at the network level
+A. It is an infrastructure layer that handles communication between microservices\
+B. It can only be used by modifying application code\
+C. It provides traffic control and observability between services\
+D. It applies security and policies at the network level
 
 <details>
 
@@ -24,13 +27,13 @@ One of the core advantages of Service Mesh is that it can control and observe co
 
 * A (O): Service Mesh is a dedicated infrastructure layer responsible for communication between services in microservice architecture
 * B (X): It is transparently applied through sidecar proxies or Ambient Mode without changing application code
-* C (O): It controls traffic with VirtualService, DestinationRule, etc., and automatically collects metrics/logs/traces
+* C (O): It controls traffic with VirtualService, DestinationRule, etc., and exposes metrics; logs/traces need configuration and applications must propagate trace context
 * D (O): It applies security policies at the network level with mTLS, Authorization Policy, etc.
 
 **Reference:**
 
 * [Istio Core Concepts](../../../service-mesh/istio/02-basic-concepts.md)
-* [What is Service Mesh?](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/02-istio.md#introduction)
+* [What is Service Mesh?](../../../service-mesh/istio/README.md)
 
 </details>
 
@@ -40,7 +43,10 @@ One of the core advantages of Service Mesh is that it can control and observe co
 
 In Istio's Control Plane, which is the **centralized component** responsible for service discovery, configuration management, and certificate management?
 
-A. Envoy B. Istiod C. Pilot D. Citadel
+A. Envoy\
+B. Istiod\
+C. Pilot\
+D. Citadel
 
 <details>
 
@@ -72,7 +78,7 @@ A. Envoy B. Istiod C. Pilot D. Citadel
 **Reference:**
 
 * [Istio Components](../../../service-mesh/istio/03-architecture.md)
-* [Architecture Overview](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/02-istio.md#architecture-overview)
+* [Architecture Overview](../../../service-mesh/istio/README.md)
 
 </details>
 
@@ -82,7 +88,10 @@ A. Envoy B. Istiod C. Pilot D. Citadel
 
 Which is **NOT** a task performed by the Data Plane's Envoy proxy?
 
-A. Traffic routing and load balancing B. mTLS encryption and authentication C. Kubernetes CRD validation and storage D. Metrics, logs, and trace collection
+A. Traffic routing and load balancing\
+B. mTLS encryption and authentication\
+C. Kubernetes CRD validation and storage\
+D. Metrics, logs, and trace collection
 
 <details>
 
@@ -90,14 +99,14 @@ A. Traffic routing and load balancing B. mTLS encryption and authentication C. K
 
 **Answer: C**
 
-Kubernetes CRD validation and storage is the role of the Control Plane (Istiod).
+Kubernetes API Server stores resources and enforces schemas; istiod also validates Istio configuration through admission webhooks. Envoy does not store Kubernetes CRDs.
 
 **Explanation:**
 
 * A (O): Envoy routes traffic and load balances according to VirtualService rules
 * B (O): Envoy automatically encrypts service-to-service communication with mTLS and validates certificates
 * C (X): CRD validation and storage is the role of Kubernetes API Server and Istiod
-* D (O): Envoy collects metrics (Prometheus), logs (Access Log), and traces (Jaeger) for all requests
+* D (O): Envoy collects metrics (Prometheus), logs (Access Log), and traces (Jaeger) according to configured logging and trace sampling
 
 **Reference:**
 
@@ -111,38 +120,28 @@ Kubernetes CRD validation and storage is the role of the Control Plane (Istiod).
 
 Which profile is **recommended** when installing Istio in an Amazon EKS production environment?
 
-A. default B. demo C. minimal D. production
+A. default\
+B. demo\
+C. minimal\
+D. production
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: D**
+**Answer: A**
 
-For production environments, the **production** profile should be used.
+`default` is the production starting profile for the sidecar installation in this guide. There is no built-in `production` profile. Set replicas, resource requests, placement, PDBs, and security policies explicitly; selecting `default` alone does not make the deployment highly available.
 
-**Explanation:**
-
-**Istio Installation Profile Comparison:**
-
-| Profile        | Purpose             | Characteristics                           |
-| -------------- | ------------------- | ----------------------------------------- |
-| **default**    | Development/Testing | Default configuration, medium resources   |
-| **demo**       | Demo/Learning       | All features enabled, high resource usage |
-| **minimal**    | Minimal Setup       | Control Plane only                        |
-| **production** | Production          | HA configuration, high availability       |
-
-**Production Profile Characteristics:**
+| Profile | Purpose |
+| --- | --- |
+| default | Production starting settings; customize for the workload |
+| demo | Demonstrations; verbose telemetry, not performance testing |
+| minimal | Control plane only |
+| production | Not a built-in profile |
 
 ```bash
-# Production profile installation
-istioctl install --set profile=production -y
-
-# Key characteristics:
-# - Istiod replica: 3 (HA)
-# - PodDisruptionBudget configured
-# - Resource limits properly set
-# - Ingress/Egress Gateway included
+istioctl install --set profile=default
 ```
 
 **Production Checklist:**
@@ -166,7 +165,10 @@ istioctl install --set profile=production -y
 
 Which of the following is **NOT** a CRD for Istio's **traffic management**?
 
-A. VirtualService B. DestinationRule C. PeerAuthentication D. Gateway
+A. VirtualService\
+B. DestinationRule\
+C. PeerAuthentication\
+D. Gateway
 
 <details>
 
@@ -202,7 +204,7 @@ A. VirtualService B. DestinationRule C. PeerAuthentication D. Gateway
 
 ```yaml
 # Traffic Management
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -217,7 +219,7 @@ spec:
 
 ---
 # Security
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -278,9 +280,13 @@ kind: Deployment
 metadata:
   name: myapp
 spec:
+  selector:
+    matchLabels:
+      app: myapp
   template:
     metadata:
       labels:
+        app: myapp
         sidecar.istio.io/inject: "true"  # or "false"
     spec:
       containers:
@@ -332,6 +338,8 @@ Calculate and compare the **expected resource usage** when using Istio in a larg
 
 **Answer:**
 
+These are invented inputs for an arithmetic exercise, not measured Istio requirements or a sizing recommendation. Use decimal MB/GB consistently. Assume 0.1 vCPU per sidecar, 0.1 vCPU per ztunnel, and 0.5 vCPU for the waypoint.
+
 **Assumptions:**
 
 * Number of Pods: 1000
@@ -373,36 +381,9 @@ CPU Usage = (Number of Nodes × ztunnel CPU) + waypoint CPU
 | **Memory** | 50GB         | 0.7GB        | 49.3GB    | **98.6%**    |
 | **CPU**    | 100 vCPU     | 1.5 vCPU     | 98.5 vCPU | **98.5%**    |
 
-**Cost Calculation (AWS EKS basis):**
+**Interpretation:**
 
-```
-# r5.xlarge: 4 vCPU, 32GB RAM, $0.252/hour
-
-Sidecar Mode:
-- CPU: 100 vCPU → 25 instances needed
-- Memory: 50GB → 2 instances needed
-- Required instances: max(25, 2) = 25
-- Monthly cost: 25 × $0.252 × 24 × 30 = $4,536
-
-Ambient Mode:
-- CPU: 1.5 vCPU → 1 instance sufficient
-- Memory: 0.7GB → 1 instance sufficient
-- Required instances: 1
-- Monthly cost: 1 × $0.252 × 24 × 30 = $181
-
-Monthly cost savings: $4,536 - $181 = $4,355 (96%)
-```
-
-**Conclusion:**
-
-* Ambient Mode provides **96% or more cost savings** in large-scale clusters
-* At 1000 Pod scale, approximately **$4,300 monthly savings**
-* Resource usage reduced by **more than 98%**
-
-**Notes:**
-
-* Additional waypoints needed when L7 features are required
-* Ambient Mode is a beta feature in Istio 1.28+
+The assumed inputs yield 98.6% memory and 98.5% CPU reductions for the proxy totals only. They do not imply a 96% reduction in the AWS bill or that a 10-node, 1,000-pod cluster can run on one instance. Application resources, pod/IP limits, HA, replicas, throughput, and waypoint capacity are omitted. Benchmark the actual topology before sizing or estimating costs. Ambient core features have been GA since Istio 1.24.
 
 **Reference:**
 
@@ -427,7 +408,7 @@ Explain step by step how mTLS works when two services (service-a and service-b) 
 
 **Step 1: Certificate Issuance (Bootstrap)**
 
-* When Pod starts, Envoy requests a certificate (CSR) from Istiod using its Service Account
+* When the pod starts, the Istio agent creates a private key/CSR and authenticates to istiod with workload credentials; Envoy receives the certificate/key from the local agent via SDS
 * Istiod validates the Service Account and issues an X.509 certificate
 * The certificate contains the Service Account ID (e.g., `cluster.local/ns/default/sa/service-a`)
 * Certificate validity: 24 hours by default (auto-renewed)
@@ -440,52 +421,30 @@ Service A → Envoy A → [mTLS] → Envoy B → Service B
 
 **Detailed Process:**
 
-```yaml
-# Service A calls Service B
-1. Service A → Envoy A (localhost:outbound)
-   - Application sends plaintext HTTP request
-
-2. Envoy A: Outbound Processing
-   - Check configuration received from Istiod
-   - Check PeerAuthentication policy (STRICT mTLS)
-   - Start connection to Service B's Envoy B
-
-3. TLS Handshake (Envoy A ↔ Envoy B)
-   a. Envoy A → Envoy B: ClientHello
-      - Present own certificate
-      - Present supported encryption algorithms
-
-   b. Envoy B → Envoy A: ServerHello
-      - Present own certificate
-      - Selected encryption algorithm
-
-   c. Mutual Certificate Validation
-      - Envoy A: Validate Service B's certificate
-      - Envoy B: Validate Service A's certificate
-      - Verify signature with Istiod's Root CA
-
-   d. Generate Encrypted Session Key
-      - Create TLS 1.3 encrypted channel
-
-4. Envoy B → Service B (localhost:inbound)
-   - Deliver decrypted plaintext HTTP request
-
-5. Service B → Envoy B → [mTLS] → Envoy A → Service A
-   - Response uses same encrypted channel
+```text
+1. The source app sends HTTP; configured redirection sends it through Envoy A.
+2. Auto mTLS/DestinationRule determines outbound TLS; destination PeerAuthentication
+   determines whether Envoy B requires inbound mTLS.
+3. ClientHello and ServerHello negotiate TLS parameters/key exchange.
+   Certificates are sent in Certificate messages, not in ClientHello/ServerHello.
+   The server requests the client certificate; each peer validates the other
+   certificate and proof of key possession against the configured trust chain.
+4. Envoy B applies authorization and forwards the decrypted request to Service B.
+5. The response travels over the established TLS connection.
 ```
 
 **Roles of Each Component:**
 
 **Istiod:**
 
-* Acts as Root CA (certificate signing)
+* Acts as the CA (may use an intermediate under an external root)
 * Issues certificates based on Service Account
-* Auto-renews certificates (every 24 hours)
+* Signs renewal requests before certificate expiry; lifetime is configurable
 * Distributes PeerAuthentication policies
 
 **Envoy Sidecar:**
 
-* Requests and renews certificates
+* Receives certificates from the Istio agent over SDS
 * Performs TLS handshake
 * Encrypts/decrypts traffic
 * Validates certificates
@@ -501,7 +460,7 @@ Service A → Envoy A → [mTLS] → Envoy B → Service B
 
 ```yaml
 # PeerAuthentication - STRICT mTLS
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -514,20 +473,9 @@ spec:
 **Certificate Verification:**
 
 ```bash
-# Check Pod's certificate
-istioctl proxy-config secret <pod-name> -o json
-
-# Example output:
-{
-  "name": "default",
-  "tlsCertificate": {
-    "certificateChain": "...",
-    "privateKey": "...",
-    "subjectAltNames": [
-      "spiffe://cluster.local/ns/default/sa/service-a"
-    ]
-  }
-}
+# Inspect certificate validity/status; private keys are not shown as plaintext
+istioctl proxy-config secret <pod-name> -n <namespace>
+istioctl proxy-config secret <pod-name> -n <namespace> -o json
 ```
 
 **Security Benefits:**
@@ -540,7 +488,7 @@ istioctl proxy-config secret <pod-name> -o json
 **Reference:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
+* [Certificate Management](../../../service-mesh/istio/03-architecture.md#3-certificate-management-citadel-functionality)
 
 </details>
 
@@ -565,7 +513,7 @@ Write a step-by-step debugging method for diagnosing problems when a newly deplo
 kubectl get pods -n <namespace>
 
 # Check if Sidecar is injected (should have 2 containers)
-kubectl get pods <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].name}'
+kubectl get pods <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].name}{" "}{.spec.initContainers[*].name}'
 # Expected output: myapp istio-proxy
 
 # Detailed Sidecar injection check
@@ -578,7 +526,7 @@ kubectl logs <pod-name> -n <namespace> -c istio-proxy  # Envoy logs
 
 **Diagnosis:**
 
-* If only 1 container → Sidecar not injected
+* Check istio-proxy in containers or native sidecar initContainers; ambient workloads have no injected sidecar
 * If Pod is CrashLoopBackOff → Application or Sidecar initialization failed
 
 **Resolution:**
@@ -603,7 +551,7 @@ kubectl rollout restart deployment/<deployment-name> -n <namespace>
 kubectl get svc <service-name> -n <namespace>
 
 # Check Service Endpoint (is Pod IP registered)
-kubectl get endpoints <service-name> -n <namespace>
+kubectl get endpointslices -n <namespace> -l kubernetes.io/service-name=<service-name>
 
 # Service details
 kubectl describe svc <service-name> -n <namespace>
@@ -638,7 +586,7 @@ kubectl get destinationrule -n <namespace>
 kubectl describe destinationrule <dr-name> -n <namespace>
 
 # Check Gateway (for external access)
-kubectl get gateway -n <namespace>
+kubectl get gateways.networking.istio.io -n <namespace>
 
 # Validate Istio configuration
 istioctl analyze -n <namespace>
@@ -658,7 +606,7 @@ istioctl analyze -n <namespace>
 
 # Example output:
 # Error [IST0101] (VirtualService reviews.default)
-# Referenced host not found: reviews
+# Referenced gateway not found: missing-gateway
 ```
 
 ***
@@ -670,7 +618,9 @@ istioctl analyze -n <namespace>
 kubectl get peerauthentication -A
 
 # Check mTLS mode for specific Pod
-istioctl authn tls-check <pod-name>.<namespace> <service-name>.<namespace>.svc.cluster.local
+istioctl proxy-config secret <pod-name> -n <namespace>
+istioctl proxy-config clusters <pod-name> -n <namespace> -o json
+istioctl x authz check <pod-name> -n <namespace>
 
 # Check AuthorizationPolicy
 kubectl get authorizationpolicy -n <namespace>
@@ -678,27 +628,14 @@ kubectl get authorizationpolicy -n <namespace>
 
 **Diagnosis:**
 
-* mTLS mode mismatch (STRICT vs PERMISSIVE)
+* Plaintext client traffic reaching a STRICT destination, expired certificates, or incompatible trust
 * AuthorizationPolicy blocking traffic
 
 **Resolution:**
 
-```bash
-# Temporarily change to PERMISSIVE mode (for debugging)
-kubectl apply -f - <<EOF
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: <namespace>
-spec:
-  mtls:
-    mode: PERMISSIVE
-EOF
+Inspect effective policies, workload identity, certificates, and Envoy denial logs. STRICT and PERMISSIVE servers can both accept mesh mTLS clients. Reproduce policy changes in an isolated test namespace; deleting live authorization policies or relaxing mTLS is not a default debugging step.
 
-# Temporarily delete AuthorizationPolicy
-kubectl delete authorizationpolicy <policy-name> -n <namespace>
-```
+
 
 ***
 
@@ -732,14 +669,14 @@ istioctl proxy-config endpoints <pod-name> -n <namespace>
 # Test directly from inside Pod
 kubectl exec -it <source-pod> -n <namespace> -- curl http://<target-service>:<port>
 
-# Test directly without going through Envoy (by Pod IP)
+# Compare Pod-IP routing; this does not bypass the sidecar interception
 kubectl exec -it <source-pod> -n <namespace> -- curl http://<pod-ip>:<port>
 
 # Check DNS resolution
 kubectl exec -it <source-pod> -n <namespace> -- nslookup <service-name>
 
 # Check statistics via Envoy Admin API
-kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- curl localhost:15000/stats | grep <service-name>
+istioctl dashboard envoy <pod-name> -n <namespace>
 ```
 
 ***
@@ -760,6 +697,8 @@ istioctl proxy-status <pod-name>.<namespace>
 ***
 
 **Step 8: Check Metrics and Tracing**
+
+Telemetry addons must be installed separately. Run each blocking port-forward in its own terminal; substitute the actual service/namespace for your collector.
 
 ```bash
 # Check metrics in Prometheus
@@ -790,11 +729,11 @@ istioctl dashboard kiali
    └─ YES → Step 4
 
 4. mTLS/policies normal?
-   ├─ NO → Test PERMISSIVE mode
+   ├─ NO → Inspect identity, certificates, and denial logs
    └─ YES → Step 5
 
 5. Envoy configuration normal?
-   ├─ NO → Restart Istiod
+   ├─ NO → Inspect xDS status and istiod logs
    └─ YES → Step 6
 
 6. Network connection normal?
@@ -812,259 +751,85 @@ istioctl dashboard kiali
 
 ### Question 10: Istio Upgrade Strategy
 
-Explain the **Canary Upgrade** strategy for upgrading Istio from 1.27.0 to 1.28.0 in a production environment. Include step-by-step commands and verification methods.
+Explain a canary upgrade from Istio 1.30.4 to 1.31.0 on a compatible EKS cluster. Include workload migration, gateway handling, verification, and rollback conditions.
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer:**
+Keep the old control plane until every workload and gateway has migrated and the rollback window has closed. This is an istioctl-managed sidecar example; Helm and ambient installations have their own upgrade procedures. Revision names below are examples and must match the actual installation.
 
-**Istio Canary Upgrade Strategy:**
+**1. Prepare and back up**
 
-Canary Upgrade is a safe upgrade approach that runs both old and new Control Plane versions simultaneously and gradually migrates workloads.
-
-***
-
-**Preparation:**
+Check the Istio/EKS support matrices and release upgrade notes. Preserve the existing installation file, chart versions if applicable, mesh resources, and CA/TLS secrets as described in the best-practices chapter. Download the target istioctl and run its precheck:
 
 ```bash
-# 1. Check current version
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.0 sh -
+cd istio-1.31.0
+export PATH="$PWD/bin:$PATH"
 istioctl version
-
-# 2. Create backup
-kubectl get istiooperator -A -o yaml > istio-1.27-backup.yaml
-kubectl get vs,dr,gw,se,pa,ra,ap -A -o yaml > istio-config-backup.yaml
-
-# 3. Download new version
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
-cd istio-1.28.0
-export PATH=$PWD/bin:$PATH
-
-# 4. Check compatibility
 istioctl x precheck
 ```
 
-***
+**2. Install the canary control plane**
 
-**Step 1: Install New Control Plane (using revision)**
+Prepare `canary-install.yaml` from the existing configuration, preserving mesh identity, trust, and resource settings. Set revision `1-31-0` and use `minimal` for a control-plane-only canary, with no gateway components enabled. Render and review before installation:
 
 ```bash
-# Install new version Control Plane using Revision
-istioctl install --set revision=1-28-0 --set profile=production -y
-
-# Verify installation
-kubectl get pods -n istio-system -l app=istiod
-# Example output:
-# istiod-1-27-0-xxxx  (old version)
-# istiod-1-28-0-xxxx  (new version)
-
-# Check Revision
-kubectl get mutatingwebhookconfigurations | grep istio
-# Output:
-# istio-sidecar-injector-1-27-0
-# istio-sidecar-injector-1-28-0
+istioctl manifest generate -f canary-install.yaml > canary-rendered.yaml
+istioctl install -f canary-install.yaml
+kubectl rollout status deployment/istiod-1-31-0 -n istio-system
 ```
 
-**Important:** At this point, **two Control Planes** are running simultaneously.
+A `production` profile does not exist. A revision label does not select a binary version; the target istioctl/configuration does.
 
-***
-
-**Step 2: Canary Validation with Test Namespace**
+**3. Verify a test namespace**
 
 ```bash
-# Create test namespace
 kubectl create namespace istio-upgrade-test
-
-# Label for new version
-kubectl label namespace istio-upgrade-test istio.io/rev=1-28-0
-
-# Deploy test application
-kubectl apply -n istio-upgrade-test -f samples/sleep/sleep.yaml
+kubectl label namespace istio-upgrade-test istio.io/rev=1-31-0
+kubectl apply -n istio-upgrade-test -f samples/curl/curl.yaml
 kubectl apply -n istio-upgrade-test -f samples/httpbin/httpbin.yaml
-
-# Check Sidecar version (should be 1.28.0)
-kubectl get pods -n istio-upgrade-test -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}'
-
-# Test communication
-kubectl exec -n istio-upgrade-test deploy/sleep -- curl http://httpbin:8000/headers
-
-# Check Envoy configuration
-istioctl proxy-config clusters deploy/sleep.istio-upgrade-test
+kubectl rollout status deployment/curl -n istio-upgrade-test
+kubectl rollout status deployment/httpbin -n istio-upgrade-test
+kubectl exec -n istio-upgrade-test deploy/curl -c curl -- curl -fsS http://httpbin:8000/headers
+istioctl proxy-status
+istioctl analyze -n istio-upgrade-test
 ```
 
-**Verification Checklist:**
+Verify actual proxy image versions, sync status, mTLS/authorization behavior, errors, and latency before proceeding.
 
-* ✅ Is Sidecar injected with version 1.28.0?
-* ✅ Is service-to-service communication normal?
-* ✅ Is mTLS working correctly?
-* ✅ Are metrics being collected?
+**4. Move staging, then one production namespace at a time**
 
-***
-
-**Step 3: Migrate Staging Namespace**
+Remove `istio-injection`, which otherwise takes precedence over the revision label. Restart controllers to create pods with the new proxy; include StatefulSets, DaemonSets, and future Jobs where applicable.
 
 ```bash
-# Switch staging namespace to new version
-kubectl label namespace staging istio.io/rev=1-28-0 --overwrite
-
-# Remove existing label (if present)
-kubectl label namespace staging istio-injection-
-
-# Restart Pods (inject new version Sidecar)
+kubectl label namespace staging istio-injection- istio.io/rev=1-31-0 --overwrite
 kubectl rollout restart deployment -n staging
-
-# Monitor restart status
 kubectl rollout status deployment -n staging
-
-# Verify version
-kubectl get pods -n staging -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}'
+istioctl proxy-status
 ```
 
-**Verification:**
+Repeat only after successful application smoke tests and an observation period suited to the workload. A fixed sleep is not a health gate.
+
+**5. Migrate gateways before removing the old control plane**
+
+Upgrade gateways through their owning istioctl/Helm configuration, including the proxy image, revision, and any external load-balancer settings. Patching only a Deployment label is insufficient for a gateway with an explicit old image. Verify rollout, external requests, and proxy-status. The default istioctl profile can upgrade shared gateways in place; plan this behavior explicitly.
+
+**6. Complete or roll back**
+
+After verifying all proxies (including gateways and non-Deployment workloads) have left the old revision, remove it using the installation tool. Do not manually delete shared validation webhooks:
 
 ```bash
-# Check metrics
-kubectl exec -n staging <pod-name> -c istio-proxy -- curl localhost:15000/stats/prometheus | grep istio_build
-
-# Test communication
-kubectl exec -n staging <pod-name> -- curl http://<service-name>
-
-# Visual confirmation with Kiali
-istioctl dashboard kiali
+istioctl proxy-status
+istioctl uninstall --revision=1-30-4
 ```
 
-**Monitor for 24-48 hours:**
+Before that removal, rollback means relabeling affected namespaces to the still-running old revision, restarting their workloads, restoring any upgraded gateways with the old release configuration, and validating traffic. Remove the new revision only when no proxies depend on it. If the old revision has already been removed, reinstall and validate it before relabeling workloads.
 
-* Check Prometheus metrics
-* Compare error rates and latency
-* Check Istiod resource usage
+**References:**
 
-***
-
-**Step 4: Gradual Migration of Production Namespaces**
-
-```bash
-# List of production Namespaces
-PROD_NAMESPACES="prod-api prod-web prod-worker"
-
-# Migrate one at a time gradually
-for ns in $PROD_NAMESPACES; do
-  echo "Upgrading namespace: $ns"
-
-  # Update label
-  kubectl label namespace $ns istio.io/rev=1-28-0 --overwrite
-
-  # Restart Pods
-  kubectl rollout restart deployment -n $ns
-
-  # Wait for completion
-  kubectl rollout status deployment -n $ns
-
-  # Verify
-  echo "Verifying namespace: $ns"
-  kubectl exec -n $ns <pod-name> -- curl http://<service-name>
-
-  # Wait before next Namespace migration (observation)
-  echo "Waiting 1 hour before next namespace..."
-  sleep 3600
-done
-```
-
-**Step-by-step Verification:**
-
-```bash
-# After each Namespace migration
-# 1. Golden Signals
-kubectl port-forward -n istio-system svc/prometheus 9090:9090
-# Query in Prometheus:
-# - istio_requests_total
-# - istio_request_duration_milliseconds
-# - istio_request_bytes
-
-# 2. Control Plane status
-istioctl proxy-status | grep $ns
-
-# 3. Error logs
-kubectl logs -n istio-system -l app=istiod,istio.io/rev=1-28-0 --tail=100
-```
-
-***
-
-**Step 5: Remove Old Version**
-
-```bash
-# Verify all Namespaces have migrated to new version
-kubectl get namespace -L istio.io/rev
-
-# Verify no Pods using old version
-kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.spec.containers[?(@.name=="istio-proxy")].image}{"\n"}{end}' | grep 1.27
-
-# Remove old version Control Plane
-istioctl uninstall --revision=1-27-0 -y
-
-# Verify removal
-kubectl get pods -n istio-system -l app=istiod
-
-# Cleanup
-kubectl delete mutatingwebhookconfigurations istio-sidecar-injector-1-27-0
-kubectl delete validatingwebhookconfigurations istio-validator-1-27-0-istio-system
-```
-
-***
-
-**Step 6: Gateway Upgrade (Optional)**
-
-```bash
-# Upgrade Gateway separately
-kubectl patch deployment istio-ingressgateway -n istio-system \
-  -p '{"spec":{"template":{"metadata":{"labels":{"istio.io/rev":"1-28-0"}}}}}'
-
-kubectl rollout restart deployment istio-ingressgateway -n istio-system
-kubectl rollout status deployment istio-ingressgateway -n istio-system
-```
-
-***
-
-**Rollback Plan:**
-
-```bash
-# Immediate rollback if issues occur
-# 1. Change Namespace label to old version
-kubectl label namespace <namespace> istio.io/rev=1-27-0 --overwrite
-
-# 2. Restart Pods
-kubectl rollout restart deployment -n <namespace>
-
-# 3. Remove new version Control Plane
-istioctl uninstall --revision=1-28-0 -y
-```
-
-***
-
-**Best Practices:**
-
-1. **Phased Approach:**
-   * Progress in stages: Test → Staging → Prod
-   * Migrate one Namespace at a time
-   * Allow sufficient observation time at each stage
-2. **Monitoring:**
-   * Monitor Golden Signals (Latency, Traffic, Errors, Saturation)
-   * Check Istiod resource usage
-   * Observe for 24-48 hours at each stage
-3. **Automation:**
-   * Integrate into CI/CD pipeline
-   * Automate Smoke Tests
-   * Prepare rollback scripts
-4. **Communication:**
-   * Share upgrade schedule with team
-   * Review release notes
-   * Document changes
-
-**Reference:**
-
-* [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
-* [Upgrade Strategy](../../../service-mesh/istio/best-practices.md#upgrade-strategy)
+- [Canary upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
+- [Backup and operations guidance](../../../service-mesh/istio/best-practices.md)
 
 </details>
 
@@ -1090,3 +855,13 @@ istioctl uninstall --revision=1-28-0 -y
 * [Core Concepts](../../../service-mesh/istio/02-basic-concepts.md)
 * [Components](../../../service-mesh/istio/03-architecture.md)
 * [Istio Official Documentation](https://istio.io/latest/docs/)
+
+* [Installation Configuration Profiles](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
+* [Installing the Sidecar](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+* [Security](https://istio.io/latest/docs/concepts/security/)
+* [Internet Engineering Task Force (IETF)                       E. Rescorla](https://www.rfc-editor.org/rfc/rfc8446.html)
+* [Canary Upgrades](https://istio.io/latest/docs/setup/upgrade/canary/)
+* [istioctl](https://istio.io/latest/docs/reference/commands/istioctl/)
+* [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)
+* [Announcing Istio 1.24.0](https://istio.io/latest/news/releases/1.24.x/announcing-1.24/)
+* [Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)

@@ -120,7 +120,16 @@ Start with the [Prerequisites and System Requirements](01-prerequisites.md) to e
 
 To test your understanding of EKS Hybrid Nodes, try the following quiz:
 
-* [EKS Hybrid Nodes Quiz](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/eks-hybrid-nodes/README.md)
+* [EKS Hybrid Nodes Prerequisites Quiz](../quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+* [EKS Hybrid Nodes Network Configuration Quiz](../quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+* [EKS Hybrid Nodes Air-Gap Environment Setup Quiz](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+* [EKS Hybrid Nodes Node Bootstrapping Quiz](../quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+* [EKS Hybrid Nodes GPU Integration Quiz](../quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+* [EKS Hybrid Nodes Workload Placement Quiz](../quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+* [Node Lifecycle Management Quiz](../quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+* [EKS Hybrid Nodes Operations Quiz](../quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+* [Bare Metal Server OS Installation and Migration Quiz](../quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+* [EKS Hybrid Nodes Gateway Quiz](../quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ## Related Documents
 

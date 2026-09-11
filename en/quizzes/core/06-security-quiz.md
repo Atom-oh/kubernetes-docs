@@ -7,7 +7,7 @@ This quiz tests your understanding of Kubernetes security concepts including aut
 1. Which authentication method is NOT supported by Kubernetes for user authentication?
    - A) X.509 certificates
    - B) Service account tokens
-   - C) OAuth tokens
+   - C) OpenID Connect ID tokens
    - D) Built-in user database
    
 <details>
@@ -16,7 +16,7 @@ This quiz tests your understanding of Kubernetes security concepts including aut
 **Answer: D) Built-in user database**
 
 **Explanation:**
-Kubernetes does not provide a built-in user database. Instead, it supports authentication methods such as X.509 certificates, service account tokens, OAuth tokens, OpenID Connect tokens, and webhook token authentication. User management is typically done through integration with external systems (e.g., LDAP, Active Directory).
+Kubernetes does not provide a built-in user database. Instead, it supports authentication methods such as X.509 certificates, service account tokens, OIDC ID tokens, and webhook token authentication. Arbitrary OAuth access tokens require an appropriate configured authenticator. User management is typically done through integration with external systems (e.g., LDAP, Active Directory).
 </details>
 
 2. Which is NOT a main component of RBAC (Role-Based Access Control) in Kubernetes?
@@ -31,7 +31,7 @@ Kubernetes does not provide a built-in user database. Instead, it supports authe
 **Answer: D) SecurityPolicy**
 
 **Explanation:**
-The main components of Kubernetes RBAC are Role, ClusterRole, RoleBinding, and ClusterRoleBinding. Role and ClusterRole define sets of permissions, while RoleBinding and ClusterRoleBinding associate these permissions with users, groups, or service accounts. SecurityPolicy is not an RBAC component; similar resources include PodSecurityPolicy (now deprecated) or PodSecurityStandard.
+The main components of Kubernetes RBAC are Role, ClusterRole, RoleBinding, and ClusterRoleBinding. Role and ClusterRole define sets of permissions, while RoleBinding and ClusterRoleBinding associate these permissions with users, groups, or service accounts. SecurityPolicy is not an RBAC component; PodSecurityPolicy was removed in v1.25. Pod Security Standards are policy definitions enforced by Pod Security Admission, not a PodSecurityStandard API resource.
 </details>
 
 3. What CANNOT be configured through a pod's Security Context in Kubernetes?
@@ -99,7 +99,7 @@ Pod Security Standards define three policy levels:
 The Restricted policy is the most restrictive, following the principle of least privilege and applying security best practices. This policy prohibits privileged containers, host namespace sharing, host path mounts, and more.
 </details>
 
-7. What is the most effective method for protecting Secret data in Kubernetes?
+7. Which option encrypts Secret data at rest in etcd?
    - A) Base64 encoding
    - B) etcd encryption configuration
    - C) Namespace isolation
@@ -146,7 +146,7 @@ Audit logging is a mechanism that records requests to the Kubernetes API server.
 
 10. Which is NOT a characteristic of privileged containers in Kubernetes?
     - A) Access to all host devices
-    - B) Use of host network stack
+    - B) Granting all Linux capabilities
     - C) Ability to load host kernel modules
     - D) Automatic access to resources in other namespaces
     
@@ -156,7 +156,7 @@ Audit logging is a mechanism that records requests to the Kubernetes API server.
 **Answer: D) Automatic access to resources in other namespaces**
 
 **Explanation:**
-Privileged containers can access almost all host capabilities, but they do not automatically have access to Kubernetes resources in other namespaces. Cross-namespace access is controlled by RBAC permissions. Privileged containers can access host devices, network stack, kernel modules, etc., posing significant security risks, so they should be used only when absolutely necessary.
+Privileged containers can access almost all host capabilities, but they do not automatically have access to Kubernetes resources in other namespaces. Cross-namespace access is controlled by RBAC permissions. `privileged: true` does not itself set `hostNetwork: true`. It removes major host isolation barriers; host compromise can expose credentials and bypass intended isolation, so RBAC is not a protection against a compromised privileged workload.
 </details>
 
 ## Short Answer Questions
@@ -167,7 +167,7 @@ Privileged containers can access almost all host capabilities, but they do not a
 <summary>Show Answer</summary>
 
 **Answer:**
-Role defines and applies permissions only within a specific namespace, while ClusterRole applies cluster-wide and defines permissions across all namespaces. ClusterRole is also used to define permissions for non-namespaced resources (nodes, PVs, etc.).
+Role is a namespaced permission definition. ClusterRole is a cluster-scoped definition that may cover namespaced or cluster-scoped resources. A RoleBinding can grant a ClusterRole's namespaced permissions in one namespace; a ClusterRoleBinding grants permissions cluster-wide. Defining either role alone grants nobody access.
 </details>
 
 2. Explain three methods for applying the 'principle of least privilege' in Kubernetes.
@@ -192,7 +192,7 @@ Role defines and applies permissions only within a specific namespace, while Clu
 <summary>Show Answer</summary>
 
 **Answer:**
-Secret is for storing sensitive information (passwords, tokens, keys, etc.), while ConfigMap is for storing general configuration data. Secrets are stored encoded in Base64 (not encrypted by default), can be configured to mount only in memory, and are referenced only when pods are created. However, without additional configuration, both are stored in plaintext in etcd, so etcd encryption settings are required for complete security.
+Secret is for storing sensitive information (passwords, tokens, keys, etc.), while ConfigMap is for storing general configuration data. Secret `data` uses base64 in API representations, not encryption. Full Secret volumes on Linux use memory-backed storage and can receive updates after Pod creation; applications must reread them. Encryption at rest is cluster-dependent (EKS 1.28+ encrypts API data by default). RBAC and least-privilege Pod access remain necessary.
 </details>
 
 4. What is the purpose and benefit of 'service account token volume projection' in Kubernetes?
@@ -201,7 +201,7 @@ Secret is for storing sensitive information (passwords, tokens, keys, etc.), whi
 <summary>Show Answer</summary>
 
 **Answer:**
-Service account token volume projection provides additional security features for service account tokens mounted to pods, such as time limits and audience restrictions. This allows limiting token lifetime and ensuring only specific API servers accept the token, reducing risk in case of token leakage. Additionally, tokens are automatically renewed, preventing authentication issues for long-running applications.
+Service account token volume projection provides additional security features for service account tokens mounted to pods, such as time limits and audience restrictions. This allows limiting token lifetime and ensuring only specific API servers accept the token, reducing risk in case of token leakage. Kubelet rotates the projected token; applications must reread it and the recipient must validate its audience and expiry. Rotation alone does not update a token cached forever by an application.
 </details>
 
 5. What is 'container sandboxing' in Kubernetes, and what technologies can be used to implement it?
@@ -240,7 +240,7 @@ metadata:
   namespace: monitoring
   name: pod-reader
 rules:
-  - apiGroups: [""]
+- apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
 ---
@@ -293,7 +293,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: frontend
+          kubernetes.io/metadata.name: frontend
     ports:
     - protocol: TCP
       port: 8080
@@ -306,10 +306,7 @@ How to apply:
 kubectl apply -f backend-network-policy.yaml
 ```
 
-Note: For this NetworkPolicy to work, the 'frontend' namespace must have the 'name: frontend' label. If not, add it with:
-```bash
-kubectl label namespace frontend name=frontend
-```
+The built-in `kubernetes.io/metadata.name: frontend` namespace label selects the `frontend` namespace without requiring a custom label. Other additive policies and the source Pod's egress policy still affect reachability.
 </details>
 
 3. Create a pod with the following security context requirements:
@@ -331,7 +328,8 @@ metadata:
 spec:
   containers:
   - name: secure-container
-    image: nginx
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       runAsUser: 1000
       allowPrivilegeEscalation: false
@@ -411,7 +409,7 @@ kubectl apply -f pod-with-secret.yaml
 
 **Answer:**
 
-OPA Gatekeeper is a powerful tool for applying policies to Kubernetes clusters. Here are examples of policies that can be applied:
+OPA Gatekeeper is a powerful tool for applying policies to Kubernetes clusters. Install Gatekeeper and the matching ConstraintTemplates from the official policy library before creating these constraints. Constraint kinds are not built-in Kubernetes APIs, and registry allow-listing alone does not verify image signatures. Here are examples of policies that can be applied:
 
 1. **Image Registry Restriction**: Force images to only be pulled from approved registries, preventing use of images from untrusted sources.
    ```yaml
@@ -477,7 +475,7 @@ mTLS (mutual TLS) is a method where both client and server authenticate each oth
 1. **Using Service Mesh**: Service meshes like Istio and Linkerd automatically implement mTLS through sidecar proxies.
    ```yaml
    # Istio example
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -487,7 +485,7 @@ mTLS (mutual TLS) is a method where both client and server authenticate each oth
        mode: STRICT
    ```
 
-2. **Use with Network Policies**: Combine mTLS with network policies to allow only authenticated traffic.
+2. **Use with Network Policies**: NetworkPolicy restricts L3/L4 reachability; the mesh authenticates certificates. Enroll workloads, enforce mTLS, and apply mesh authorization to restrict authenticated identities.
 
 3. **Certificate Management**: Use tools like cert-manager to manage certificate lifecycle.
    ```yaml
@@ -530,28 +528,28 @@ Methods for enhancing supply chain security in Kubernetes include:
    - Sign container images using tools like Cosign, Notary
    - Apply policies to ensure only signed images are deployed (e.g., OPA Gatekeeper, Kyverno)
    ```bash
-   cosign sign --key cosign.key docker.io/company/app:latest
+   cosign sign --key cosign.key "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
 2. **Software Bill of Materials (SBOM) Generation and Verification**:
    - Generate SBOMs using tools like Syft, Anchore
    - Track all software components included in images
    ```bash
-   syft docker.io/company/app:latest -o spdx-json > sbom.json
+   syft "${IMAGE_REF:?Set repository@sha256:digest}" -o spdx-json > sbom.json
    ```
 
 3. **Vulnerability Scanning**:
    - Scan images for vulnerabilities using tools like Trivy, Clair
    - Integrate scanning into CI/CD pipelines
    ```bash
-   trivy image docker.io/company/app:latest
+   trivy image "${IMAGE_REF:?Set repository@sha256:digest}"
    ```
 
 4. **Use Minimal Base Images**:
    - Use minimal images like distroless, scratch to reduce attack surface
    ```dockerfile
-   FROM gcr.io/distroless/java:11
-   COPY --from=build /app/target/app.jar /app.jar
+   FROM gcr.io/distroless/java21-debian13:nonroot
+   COPY app.jar /app.jar
    CMD ["app.jar"]
    ```
 
@@ -559,7 +557,7 @@ Methods for enhancing supply chain security in Kubernetes include:
    - Apply policies based on image age, vulnerability severity, registry source, etc.
    ```yaml
    apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sTrustedImages
+   kind: K8sAllowedRepos
    metadata:
      name: trusted-images
    spec:
@@ -568,7 +566,7 @@ Methods for enhancing supply chain security in Kubernetes include:
          - apiGroups: [""]
            kinds: ["Pod"]
      parameters:
-       allowedRegistries:
+       repos:
          - "docker.io/company/"
          - "gcr.io/verified/"
    ```
@@ -607,7 +605,7 @@ The zero trust security model is based on the principle of "never trust, always 
    rules:
    - apiGroups: [""]
      resources: ["pods"]
-     verbs: ["get", "list"]
+     verbs: ["get"]
      resourceNames: ["app-pod"]
    ```
 
@@ -631,7 +629,7 @@ The zero trust security model is based on the principle of "never trust, always 
    - Use service mesh (Istio, Linkerd, etc.) to apply mTLS to all service-to-service communication
    - Certificate-based service identity verification
    ```yaml
-   apiVersion: security.istio.io/v1beta1
+   apiVersion: security.istio.io/v1
    kind: PeerAuthentication
    metadata:
      name: default
@@ -661,12 +659,23 @@ The zero trust security model is based on the principle of "never trust, always 
    - Use read-only filesystems
    - Apply security context restrictions
    ```yaml
-   securityContext:
-     runAsUser: 1000
-     runAsGroup: 3000
-     fsGroup: 2000
-     readOnlyRootFilesystem: true
-     allowPrivilegeEscalation: false
+   spec:
+     securityContext:
+       runAsUser: 1000
+       runAsGroup: 3000
+       fsGroup: 2000
+       runAsNonRoot: true
+       seccompProfile:
+         type: RuntimeDefault
+     containers:
+     - name: app
+       image: busybox:1.36
+       command: ["sh", "-c", "sleep 3600"]
+       securityContext:
+         readOnlyRootFilesystem: true
+         allowPrivilegeEscalation: false
+         capabilities:
+           drop: ["ALL"]
    ```
 
 8. **Continuous Security Posture Assessment**:
@@ -696,7 +705,7 @@ Major tools and technologies for runtime security in Kubernetes include:
      ```yaml
      - rule: Terminal shell in container
        desc: A shell was spawned by a container
-       condition: container and proc.name = bash
+       condition: spawned_process and container and proc.name = bash and proc.tty != 0
        output: Shell opened in container (user=%user.name container=%container.name)
        priority: WARNING
      ```
@@ -718,13 +727,17 @@ Major tools and technologies for runtime security in Kubernetes include:
          seccompProfile:
            type: Localhost
            localhostProfile: profiles/audit.json
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 3. **AppArmor**:
    - **How it works**: Applies per-program access control profiles
    - **Features**:
      - Fine-grained access control for files, network, capabilities, etc.
-     - Included by default in Linux distributions
+     - Requires a Linux node with AppArmor enabled and the profile preloaded
      - Per-container profile application possible
    - **Implementation example**:
      ```yaml
@@ -732,15 +745,22 @@ Major tools and technologies for runtime security in Kubernetes include:
      kind: Pod
      metadata:
        name: apparmor-pod
-       annotations:
-         container.apparmor.security.beta.kubernetes.io/container1: localhost/restricted
+     spec:
+       containers:
+       - name: container1
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
+         securityContext:
+           appArmorProfile:
+             type: Localhost
+             localhostProfile: restricted
      ```
 
 4. **SELinux**:
    - **How it works**: Applies Mandatory Access Control (MAC) policies
    - **Features**:
      - Fine-grained label-based security policies
-     - Military-grade security standard support
+     - Enforces the configured host SELinux policy
      - Complex configuration required
    - **Implementation example**:
      ```yaml
@@ -752,10 +772,14 @@ Major tools and technologies for runtime security in Kubernetes include:
        securityContext:
          seLinuxOptions:
            level: "s0:c123,c456"
+       containers:
+       - name: app
+         image: busybox:1.36
+         command: ["sh", "-c", "sleep 3600"]
      ```
 
 5. **OPA Gatekeeper**:
-   - **How it works**: Policy-based runtime governance
+   - **How it works**: Admission-time enforcement and periodic audit of API objects; not syscall monitoring
    - **Features**:
      - Declarative policy definition
      - Wide policy application scope
@@ -790,9 +814,11 @@ Major tools and technologies for runtime security in Kubernetes include:
      - OCI compatibility maintained
      - Higher overhead than regular containers
 
+The seccomp Localhost profile must exist under the kubelet seccomp profile directory on eligible nodes; an audit-only profile logs calls rather than blocking them. AppArmor/SELinux require host support and configured profiles/labels. RuntimeClass handlers (`runsc`, `kata`) must already be installed and configured in the CRI runtime, and Pods must select `runtimeClassName`; creating a RuntimeClass does not install a runtime. The Java Dockerfile assumes a compatible prebuilt `app.jar` in the build context.
+
 **Comparison and Selection Criteria**:
-  - **Security level**: Kata Containers and gVisor provide strongest isolation
-  - **Performance impact**: Seccomp has minimal overhead, Kata Containers has highest
+  - **Security level**: Kata Containers and gVisor add isolation boundaries; choose against a threat model
+  - **Performance impact**: Measure startup, I/O, memory, and syscall overhead for the actual workload
   - **Implementation complexity**: Seccomp and AppArmor are relatively easy, SELinux is complex
   - **Monitoring vs Prevention**: Falco is primarily monitoring, others provide preventive protection
   - **Integration ease**: OPA Gatekeeper integrates closely with Kubernetes

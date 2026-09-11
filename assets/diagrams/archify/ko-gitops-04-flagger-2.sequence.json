@@ -2,12 +2,12 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "Flagger 제어 루프 — 변경 감지부터 승격·롤백까지",
+    "title": "Flagger 분석과 승격 흐름",
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
       1600,
-      840
+      880
     ],
     "animation": "trace",
     "views": [
@@ -43,7 +43,7 @@
           "dev",
           "prom"
         ],
-        "note": "메트릭이 임계값을 벗어나면 트래픽을 0%로 되돌리고 Canary를 롤백한 뒤 알립니다."
+        "note": "승격 전 분석 실패 한도에 도달하면 건강한 primary로 복귀하고 원본 canary를 축소한다."
       },
       {
         "id": "promote",
@@ -54,28 +54,11 @@
           "mesh",
           "dev"
         ],
-        "note": "모든 단계를 통과하면 Primary를 갱신하고 트래픽 100%를 Primary로 돌립니다."
+        "note": "canary로 서비스하는 동안 primary를 갱신·검증한 뒤 전환한다. 승격 장애 예외는 본문 참조."
       }
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "dashed": {
-          "label": "비동기 · 선택"
-        },
-        "default": {
-          "label": "일반 호출"
-        },
-        "emphasis": {
-          "label": "핵심 호출"
-        },
-        "return": {
-          "label": "응답"
-        },
-        "security": {
-          "label": "보안 호출"
-        }
-      }
+      "mode": "hidden"
     }
   },
   "participants": [
@@ -129,12 +112,12 @@
     {
       "from": 472,
       "to": 632,
-      "label": "3. 메트릭 이상 — 자동 롤백"
+      "label": "3A. 분석 실패 한도 도달 (분기)"
     },
     {
       "from": 646,
-      "to": 780,
-      "label": "4. 승격"
+      "to": 816,
+      "label": "3B. 최종 검사 통과 (분기)"
     }
   ],
   "messages": [
@@ -143,7 +126,7 @@
       "from": "dev",
       "to": "git",
       "y": 190,
-      "label": "이미지 태그 업데이트"
+      "label": "검토된 Git 변경"
     },
     {
       "id": "git-detect",
@@ -196,7 +179,7 @@
       "from": "prom",
       "to": "flagger",
       "y": 498,
-      "label": "실패 응답",
+      "label": "실패 검사 결과",
       "variant": "return"
     },
     {
@@ -204,7 +187,7 @@
       "from": "flagger",
       "to": "mesh",
       "y": 536,
-      "label": "트래픽 원복 (0%)",
+      "label": "Primary 100% / Canary 0%",
       "variant": "security"
     },
     {
@@ -212,7 +195,7 @@
       "from": "flagger",
       "to": "k8s",
       "y": 574,
-      "label": "Canary Deployment 롤백",
+      "label": "Canary replicas 0 (spec 유지)",
       "variant": "security"
     },
     {
@@ -224,26 +207,34 @@
       "variant": "dashed"
     },
     {
+      "id": "traffic-canary",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 672,
+      "label": "승격 중 Canary로 서비스",
+      "variant": "emphasis"
+    },
+    {
       "id": "primary-update",
       "from": "flagger",
       "to": "k8s",
-      "y": 672,
-      "label": "Primary Deployment 업데이트",
+      "y": 710,
+      "label": "Primary spec 갱신 · Ready 대기",
       "variant": "emphasis"
     },
     {
       "id": "traffic-primary",
       "from": "flagger",
       "to": "mesh",
-      "y": 710,
+      "y": 748,
       "label": "트래픽 100% Primary로 전환"
     },
     {
       "id": "done-notify",
       "from": "flagger",
       "to": "dev",
-      "y": 748,
-      "label": "배포 완료 알림",
+      "y": 786,
+      "label": "정리 후 완료 알림",
       "variant": "dashed"
     }
   ],
@@ -257,7 +248,7 @@
     {
       "participant": "flagger",
       "from": 292,
-      "to": 756,
+      "to": 794,
       "type": "backend"
     },
     {

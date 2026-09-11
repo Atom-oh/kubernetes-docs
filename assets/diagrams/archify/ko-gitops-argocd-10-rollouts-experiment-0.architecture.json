@@ -31,7 +31,7 @@
           "rs-canary",
           "analysisrun"
         ],
-        "note": "Rollout이 experiment step에서 Experiment를 만들고, Experiment가 spec.templates마다 ReplicaSet을, spec.analyses마다 AnalysisRun을 생성한다."
+        "note": "Rollout이 Experiment를 만들고 template별 ReplicaSet을 생성한다. 모두 available이면 분석을 시작한다."
       },
       {
         "id": "analysis-reference",

@@ -1,0 +1,182 @@
+[
+  {
+    "path": "ko/gitops/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full read and primary-source correction applied; current OCI, Helm lifecycle, identity, reconciliation and project-history guidance corrected.",
+    "sources": [
+      "https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://fluxcd.io/flux/components/helm/helmreleases/",
+      "https://fluxcd.io/flux/installation/configuration/multitenancy/",
+      "https://www.cncf.io/projects/argo/",
+      "https://www.cncf.io/projects/flux/",
+      "https://jayex.io/v3/about/"
+    ],
+    "findings": [
+      "OpenGitOps requires immutable versioned state, automatic pull and continuous reconciliation",
+      "Wrong Argo/Flux graduation history and subjective star rankings",
+      "Current Argo CD supports general OCI sources, not only Helm",
+      "Argo CD Helm templating differs from Flux Helm release ownership",
+      "Image automation is optional and sync/selfHeal/prune are not unconditional",
+      "Coexistence/migration must separate resource ownership and preserve existing objects",
+      "Jenkins X upstream now identifies as JayeX; Weave repository is active, do not falsely mark archived"
+    ],
+    "validation": [
+      "Every source/quiz fully read; current feature claims checked against primary sources",
+      "19 code fences classified; Bash/YAML syntax checks passed",
+      "Internal relative document targets exist",
+      "KO OpenGitOps diagram delivered: 9/9 checks, zero errors/warnings; PNG regenerated",
+      "KO diagram containment passed 1440x900,1600x1000,1920x1080,2048x1320; final large-light screenshot visually inspected",
+      "No bootstrap, deployment or Terraform changes executed against clusters"
+    ],
+    "reviewedSha256": "d33cf82d8fe1d9e32241c64508eff7a2caadc428e933edd232e194de5310c3eb"
+  },
+  {
+    "path": "ko/gitops/03-gitops-comparison.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full read and primary-source correction applied; current OCI, Helm lifecycle, identity, reconciliation and project-history guidance corrected.",
+    "sources": [
+      "https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://fluxcd.io/flux/components/helm/helmreleases/",
+      "https://fluxcd.io/flux/installation/configuration/multitenancy/",
+      "https://www.cncf.io/projects/argo/",
+      "https://www.cncf.io/projects/flux/",
+      "https://jayex.io/v3/about/"
+    ],
+    "findings": [
+      "OpenGitOps requires immutable versioned state, automatic pull and continuous reconciliation",
+      "Wrong Argo/Flux graduation history and subjective star rankings",
+      "Current Argo CD supports general OCI sources, not only Helm",
+      "Argo CD Helm templating differs from Flux Helm release ownership",
+      "Image automation is optional and sync/selfHeal/prune are not unconditional",
+      "Coexistence/migration must separate resource ownership and preserve existing objects",
+      "Jenkins X upstream now identifies as JayeX; Weave repository is active, do not falsely mark archived"
+    ],
+    "validation": [
+      "Every source/quiz fully read; current feature claims checked against primary sources",
+      "19 code fences classified; Bash/YAML syntax checks passed",
+      "Internal relative document targets exist",
+      "KO OpenGitOps diagram delivered: 9/9 checks, zero errors/warnings; PNG regenerated",
+      "KO diagram containment passed 1440x900,1600x1000,1920x1080,2048x1320; final large-light screenshot visually inspected",
+      "No bootstrap, deployment or Terraform changes executed against clusters"
+    ],
+    "reviewedSha256": "ad347207e97b0683458ee26a3bf8b4362ff4a1a8a116af1bb46a20f0f0179bf1"
+  },
+  {
+    "path": "ko/quizzes/gitops/03-gitops-comparison-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All quiz questions read and OCI/automation/ownership answers corrected; answers reconciled with the updated comparison.",
+    "sources": [
+      "ko/gitops/03-gitops-comparison.md"
+    ],
+    "findings": [
+      "OCI support answer was obsolete",
+      "Optional controllers and coexistence boundaries missing"
+    ],
+    "validation": [
+      "Every source/quiz fully read; current feature claims checked against primary sources",
+      "19 code fences classified; Bash/YAML syntax checks passed",
+      "Internal relative document targets exist",
+      "KO OpenGitOps diagram delivered: 9/9 checks, zero errors/warnings; PNG regenerated",
+      "KO diagram containment passed 1440x900,1600x1000,1920x1080,2048x1320; final large-light screenshot visually inspected",
+      "No bootstrap, deployment or Terraform changes executed against clusters"
+    ],
+    "reviewedSha256": "32a6c56d8a9729f01a786b55c0b7ad46fdd028f9614884b198a9751ba2e2c550"
+  },
+  {
+    "path": "en/gitops/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full read and primary-source correction applied; current OCI, Helm lifecycle, identity, reconciliation and project-history guidance corrected.",
+    "sources": [
+      "https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://fluxcd.io/flux/components/helm/helmreleases/",
+      "https://fluxcd.io/flux/installation/configuration/multitenancy/",
+      "https://www.cncf.io/projects/argo/",
+      "https://www.cncf.io/projects/flux/",
+      "https://jayex.io/v3/about/"
+    ],
+    "findings": [
+      "OpenGitOps requires immutable versioned state, automatic pull and continuous reconciliation",
+      "Wrong Argo/Flux graduation history and subjective star rankings",
+      "Current Argo CD supports general OCI sources, not only Helm",
+      "Argo CD Helm templating differs from Flux Helm release ownership",
+      "Image automation is optional and sync/selfHeal/prune are not unconditional",
+      "Coexistence/migration must separate resource ownership and preserve existing objects",
+      "Jenkins X upstream now identifies as JayeX; Weave repository is active, do not falsely mark archived"
+    ],
+    "validation": [
+      "Every source/quiz fully read; current feature claims checked against primary sources",
+      "19 code fences classified; Bash/YAML syntax checks passed",
+      "Internal relative document targets exist",
+      "KO OpenGitOps diagram delivered: 9/9 checks, zero errors/warnings; PNG regenerated",
+      "KO diagram containment passed 1440x900,1600x1000,1920x1080,2048x1320; final large-light screenshot visually inspected",
+      "No bootstrap, deployment or Terraform changes executed against clusters"
+    ],
+    "reviewedSha256": "bc3bf494d11d211bbde6178966b1639c32832b6e9bb24dc477d25145e401de0f"
+  },
+  {
+    "path": "en/gitops/03-gitops-comparison.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full read and primary-source correction applied; current OCI, Helm lifecycle, identity, reconciliation and project-history guidance corrected.",
+    "sources": [
+      "https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://fluxcd.io/flux/components/helm/helmreleases/",
+      "https://fluxcd.io/flux/installation/configuration/multitenancy/",
+      "https://www.cncf.io/projects/argo/",
+      "https://www.cncf.io/projects/flux/",
+      "https://jayex.io/v3/about/"
+    ],
+    "findings": [
+      "OpenGitOps requires immutable versioned state, automatic pull and continuous reconciliation",
+      "Wrong Argo/Flux graduation history and subjective star rankings",
+      "Current Argo CD supports general OCI sources, not only Helm",
+      "Argo CD Helm templating differs from Flux Helm release ownership",
+      "Image automation is optional and sync/selfHeal/prune are not unconditional",
+      "Coexistence/migration must separate resource ownership and preserve existing objects",
+      "Jenkins X upstream now identifies as JayeX; Weave repository is active, do not falsely mark archived"
+    ],
+    "validation": [
+      "Every source/quiz fully read; current feature claims checked against primary sources",
+      "19 code fences classified; Bash/YAML syntax checks passed",
+      "Internal relative document targets exist",
+      "KO OpenGitOps diagram delivered: 9/9 checks, zero errors/warnings; PNG regenerated",
+      "KO diagram containment passed 1440x900,1600x1000,1920x1080,2048x1320; final large-light screenshot visually inspected",
+      "No bootstrap, deployment or Terraform changes executed against clusters"
+    ],
+    "reviewedSha256": "0064ce6aea14b8eae43668e717c98c9730917b1d80f3bcda47b26f08ad380701"
+  },
+  {
+    "path": "en/quizzes/gitops/03-gitops-comparison-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All quiz questions read and OCI/automation/ownership answers corrected; answers reconciled with the updated comparison.",
+    "sources": [
+      "en/gitops/03-gitops-comparison.md"
+    ],
+    "findings": [
+      "OCI support answer was obsolete",
+      "Optional controllers and coexistence boundaries missing"
+    ],
+    "validation": [
+      "Every source/quiz fully read; current feature claims checked against primary sources",
+      "19 code fences classified; Bash/YAML syntax checks passed",
+      "Internal relative document targets exist",
+      "KO OpenGitOps diagram delivered: 9/9 checks, zero errors/warnings; PNG regenerated",
+      "KO diagram containment passed 1440x900,1600x1000,1920x1080,2048x1320; final large-light screenshot visually inspected",
+      "No bootstrap, deployment or Terraform changes executed against clusters"
+    ],
+    "reviewedSha256": "65c64dcfcbbdc2b1e0b1dd96475191af3531dc17bf7135b8af7f9b7c425a68d7"
+  }
+]

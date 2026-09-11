@@ -30,15 +30,7 @@
       }
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "database": {
-          "label": "데이터 저장소"
-        }
-      }
+      "mode": "hidden"
     }
   },
   "components": [

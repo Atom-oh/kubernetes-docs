@@ -14,7 +14,7 @@ This quiz tests your understanding of ArgoCD Applications and their configuratio
 **Answer: B) To specify the desired state of an application and its sync settings**
 
 **Explanation:**
-An ArgoCD Application is a Kubernetes custom resource that defines the source (Git repo, path, revision) and destination (cluster, namespace) of an application, along with sync policies and health checks.
+An ArgoCD Application is a Kubernetes custom resource that defines the source (Git repo, path, revision) and destination (cluster, namespace) of an application, along with sync policy. Health is controller-reported status; custom resource health checks are configured separately in argocd-cm.
 
 </details>
 
@@ -34,7 +34,7 @@ The `destination` field specifies the target cluster (by server URL or name) and
 
 </details>
 
-3. What does the `spec.source.path` field specify in an Application?
+3. For a Git-source Application, what does `spec.source.path` specify?
    - A) The path to the ArgoCD installation
    - B) The directory within the Git repository containing the manifests
    - C) The local file system path
@@ -50,7 +50,7 @@ The `path` field under `source` specifies the directory within the Git repositor
 
 </details>
 
-4. How can you deploy an application to a specific namespace that doesn't exist yet?
+4. Which built-in sync option makes Argo CD create destination.namespace automatically?
    - A) Manually create the namespace first
    - B) Use syncPolicy.syncOptions with CreateNamespace=true
    - C) It's not possible
@@ -62,23 +62,23 @@ The `path` field under `source` specifies the directory within the Git repositor
 **Answer: B) Use syncPolicy.syncOptions with CreateNamespace=true**
 
 **Explanation:**
-Setting `CreateNamespace=true` in `syncPolicy.syncOptions` tells ArgoCD to automatically create the target namespace if it doesn't exist before syncing the application resources.
+Setting `CreateNamespace=true` in `syncPolicy.syncOptions` tells ArgoCD to automatically create the target namespace before syncing, subject to AppProject/RBAC authorization. It does not create every different namespace embedded in manifests.
 
 </details>
 
 5. What is the difference between `targetRevision: HEAD` and `targetRevision: main`?
    - A) No difference
-   - B) HEAD always points to the default branch, main is explicit
+   - B) HEAD follows the remote HEAD; main names a specific branch
    - C) HEAD is faster
    - D) main supports webhooks, HEAD doesn't
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) HEAD always points to the default branch, main is explicit**
+**Answer: B) HEAD follows the remote HEAD; main names a specific branch**
 
 **Explanation:**
-`HEAD` is a symbolic reference that points to whatever the repository's default branch is, while `main` explicitly specifies the main branch. Using `HEAD` is more flexible if the default branch changes.
+`HEAD` is a symbolic reference that points to whatever the repository's default branch is, while `main` explicitly specifies the main branch. A default-branch change can affect deployment targets. Use a verified commit/tag policy for releases requiring reproducibility.
 
 </details>
 
@@ -110,7 +110,7 @@ When deploying from a Helm repository, you set `source.chart` and `source.repoUR
 **Answer: B) It overrides the default release name (which is the Application name)**
 
 **Explanation:**
-By default, ArgoCD uses the Application name as the Helm release name. Setting `releaseName` explicitly allows you to use a different name for the Helm release.
+By default, ArgoCD uses the Application name as the Helm release name. releaseName changes the templated Release.Name; Argo CD still owns resource lifecycle rather than maintaining a normal Helm release. If using label-based tracking, check interactions with chart selectors/tracking labels.
 
 </details>
 
@@ -126,6 +126,6 @@ By default, ArgoCD uses the Application name as the Helm release name. Setting `
 **Answer: C) Both through values files and inline values**
 
 **Explanation:**
-ArgoCD supports specifying Helm values through `spec.source.helm.valueFiles` (referencing files in the repo) and/or `spec.source.helm.values` (inline YAML). Both can be used together, with inline values taking precedence.
+ArgoCD supports specifying Helm values through `spec.source.helm.valueFiles` (referencing files in the repo) and/or `spec.source.helm.values` (inline YAML). valueFiles and inline values can be combined. Full precedence is parameters > valuesObject > values > valueFiles > chart defaults; prefer a single inline representation instead of duplicating valuesObject and values.
 
 </details>

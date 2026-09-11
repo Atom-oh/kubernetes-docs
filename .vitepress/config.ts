@@ -12,7 +12,9 @@ import {
   extractLastUpdated,
   localeAlternates,
   markdownAlternateUrl,
+  normalizeLocalAnchorLinks,
   normalizeReadmeHref,
+  preserveInlineCode,
   siteName,
   socialHeadTags,
   structuredData
@@ -86,9 +88,11 @@ const config = defineConfig({
       logql: 'sql',
       traceql: 'sql',
       rego: 'hcl',
-      river: 'hcl'
+      river: 'hcl',
+      alloy: 'hcl'
     },
     config(md) {
+      preserveInlineCode(md)
       // Content links target README.md (GitBook convention). The README→index
       // rewrites change the emitted routes, but VitePress does not map link
       // hrefs through rewrites — normalize them here so rendered links match.
@@ -101,6 +105,9 @@ const config = defineConfig({
             if (href) token.attrSet('href', normalizeReadmeHref(href))
           }
         }
+      })
+      md.core.ruler.push('local_anchor_links', state => {
+        normalizeLocalAnchorLinks(state.tokens)
       })
       // Archify diagrams: the shared markdown embeds a static PNG followed by
       // an "interactive diagram" link to public/archmaps/ (GitBook shows both

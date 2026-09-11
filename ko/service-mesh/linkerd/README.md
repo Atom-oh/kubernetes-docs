@@ -1,6 +1,10 @@
 # Linkerd
 
-> **지원 버전**: Linkerd 2.16+ **마지막 업데이트**: 2026년 8월 31일
+> **검토일**: 2026년 9월 11일 · 공개 CLI 예제 검증: edge-26.9.1
+
+Upstream 프로젝트는 edge 산출물을 배포하며 stable 배포판과 지원 수명 주기는 vendor가 제공합니다. Linkerd 2.20은 기능 milestone이지 내려받은 CLI의 보편적인 버전 문자열이 아닙니다. 정확한 배포판·릴리스를 고르고 Kubernetes·Gateway API 호환성을 확인하세요. 여기의 공개 예시는 2026년 9월 4일 게시된 edge-26.9.1입니다. Multicluster 원격 credential의 exec auth provider 수용 문제와 목적지 IP 충돌의 retry 가능 오류 처리를 수정했습니다. [릴리스](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1)와 [배포 모델](https://linkerd.io/releases/)을 참고하세요.
+
+아래는 과거 릴리스 맥락을 보존한 기록입니다. Edge-26.8.2의 테스트 Kubernetes 상한이 stable vendor 배포판의 지원 범위를 자동 확대하지는 않습니다.
 
 ### 2026년 8월 업데이트: edge-26.8.4
 
@@ -12,205 +16,164 @@
 
 ### 2026년 7월 업데이트: edge-26.7.1 — 미정의 서비스 포트 요청 차단
 
-2026년 7월 16일 공개된 edge-26.7.1 릴리스에는 **동작이 바뀌는(breaking) 수정**이 포함되었습니다. 기존에는 대상 서비스에 ServiceProfile이 정의되어 있으면, Service에 정의되지 않은 포트로의 요청도 허용되는 문제가 있었습니다. 이제 destination 컨트롤러가 서비스에 정의되지 않은 포트에 대한 `GetProfile` 요청에 빈 `DestinationProfile`을 반환해, 프록시가 클라이언트 정책 API로 폴백하면서 해당 연결이 올바르게 거부(Forbidden)됩니다. Service 리소스에 선언되지 않은 포트로 통신하던 워크로드가 있다면 업그레이드 전에 포트 정의를 정리하세요. 자세한 내용은 [릴리스 노트](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1)를 참고하세요.
+edge-26.7.1의 GitHub 릴리스 게시일은 2026년 7월 21일입니다. ServiceProfile이 있어도 목적지 Service에 선언하지 않은 포트의 요청을 거부하는 동작 변경이 포함되었습니다. 업그레이드 전에 실제 Service port 선언을 확인하세요. Gateway API 설치 검사도 추가되었습니다. [릴리스 노트](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1)를 참고하세요.
 
 ## 개요
 
-Linkerd는 CNCF(Cloud Native Computing Foundation) 졸업 프로젝트로, 경량화된 서비스 메시 솔루션입니다. 2016년 Buoyant에서 처음 개발되어 "서비스 메시"라는 용어를 최초로 정의한 프로젝트이기도 합니다. Linkerd는 단순성, 보안, 그리고 최소한의 리소스 오버헤드를 핵심 가치로 삼아, Kubernetes 환경에서 서비스 간 통신을 안전하고 신뢰성 있게 만들어줍니다.
+Linkerd는 Rust 데이터 플레인 프록시를 사용하는 CNCF 졸업 서비스 메시입니다. CNCF 기록상 첫 commit은 2016년, 졸업은 2021년입니다. “단순함”이나 “경량”을 보장으로 해석하기보다 실제 workload에 운영 모델, protocol 지원과 리소스 사용이 맞는지 평가하세요.
 
 ### 핵심 가치
 
-| 가치         | 설명                                         |
-| ---------- | ------------------------------------------ |
-| **단순성**    | 복잡한 설정 없이 즉시 사용 가능한 합리적인 기본값 제공            |
-| **기본 보안**  | 설정 없이 자동으로 mTLS 암호화 적용                     |
-| **경량화**    | Rust로 작성된 마이크로 프록시로 최소 리소스 사용 (\~10MB 메모리) |
-| **빠른 성능**  | 1ms 미만의 p99 지연 시간 추가                       |
-| **운영 용이성** | 간단한 업그레이드 및 디버깅 도구 제공                      |
+| 기능 | 확인할 사항 |
+|---|---|
+| 기본 workload mTLS | 양쪽 peer의 mesh 등록과 proxy 우회 여부. Unmeshed plaintext에는 별도 인가 정책 필요 |
+| Rust proxy | 예상 연결·트래픽의 memory/CPU request, limit과 실제 사용량 |
+| HTTP/gRPC 라우팅 | 지원되는 Gateway API type, 부착과 protocol detection |
+| 운영 | 인증서 수명 주기, HA, 업그레이드 호환과 확장 소유 |
+| 성능 | 실제 지연·오류·부하 측정. 보편적인 10MB·1ms 미만 보장 없음 |
 
 ## Linkerd 아키텍처 개요
 
-![Linkerd 컨트롤 플레인(Destination, Identity, Proxy Injector)이 Pod에 주입된 linkerd-proxy 사이드카를 설정·인증하고, 두 프록시가 mTLS로 통신하며 Viz 등 확장 기능이 이를 관찰하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-overview-0.png)
+| 구성 요소 | 역할 |
+|---|---|
+| Destination·policy controller | Endpoint를 발견하고 라우팅·인가 정책을 proxy에 배포 |
+| Identity | Identity 요청을 검증하고 구성한 신뢰 credential로 단기 workload 인증서 발급 |
+| Proxy Injector | 대상인 새 Pod를 변형해 proxy 추가 |
+| linkerd-proxy | 구성된 TCP 트래픽을 처리하고 해당 mesh 경로 인증·암호화 및 지원 L7 기능 제공 |
+| 선택적 확장·backend | Viz metrics/dashboard, multicluster 통합, 별도로 구성한 trace 수집·저장 |
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-overview-0.html)
+이 아키텍처만으로 고정 메모리나 지연 오버헤드가 정해지지 않습니다. 선택한 workload와 설정에서 측정해야 합니다.
 
 ## 서비스 메시 비교
 
-Linkerd, Istio, Cilium Service Mesh를 비교하여 각 솔루션의 특성을 이해합니다.
+| 항목 | Linkerd | Istio | Cilium |
+|---|---|---|---|
+| 데이터 플레인 | Rust sidecar | Envoy sidecar 또는 ztunnel·waypoint | eBPF networking과 지원 L7 기능의 Envoy |
+| HTTP 라우팅 | Gateway API route. 이전 ServiceProfile 방식도 지원 | Istio API 또는 지원 Gateway API 부착 | Gateway API와 Cilium policy/controller 기능 |
+| 보안 | 대상 mesh TCP peer 사이 자동 mTLS. 다른 출발지는 인가로 제어 | Auto mTLS, 수신 적용과 인가는 별도 제어 | Peer 인증과 payload 암호화를 별도로 평가 |
+| 관측성 | Proxy metric과 구성한 Viz/기타 backend | 모드별 telemetry와 구성한 backend | Hubble 및 구성한 L7/metric backend |
+| Multicluster | Mirroring/federation과 명시적 trust/network 구성 | 지원 토폴로지별 mesh 설정 | ClusterMesh와 플랫폼·네트워크 요구 |
+| 선택 | 필요한 기능과 운영 검증 | 필요한 기능과 운영 검증 | 필요한 기능과 운영 검증 |
 
-| 특성           | Linkerd               | Istio           | Cilium Service Mesh |
-| ------------ | --------------------- | --------------- | ------------------- |
-| **프록시**      | linkerd2-proxy (Rust) | Envoy (C++)     | eBPF + Envoy (선택적)  |
-| **리소스 사용량**  | 매우 낮음 (\~10MB)        | 높음 (\~50-100MB) | 낮음 (eBPF 모드)        |
-| **지연 시간 추가** | <1ms p99              | 2-5ms p99       | <1ms (eBPF 모드)      |
-| **복잡성**      | 낮음                    | 높음              | 중간                  |
-| **mTLS**     | 자동 (기본값)              | 설정 필요           | 설정 필요               |
-| **트래픽 관리**   | 기본적 (SMI)             | 매우 풍부           | 기본적                 |
-| **관찰성**      | 좋음 (기본 내장)            | 매우 좋음           | 좋음 (Hubble)         |
-| **다중 클러스터**  | 서비스 미러링               | 복잡한 설정          | ClusterMesh         |
-| **CNI 통합**   | 별도                    | 별도              | 네이티브                |
-| **CNCF 상태**  | 졸업                    | 졸업              | 졸업                  |
-| **학습 곡선**    | 완만함                   | 가파름             | 중간                  |
-| **커뮤니티**     | 활발함                   | 매우 활발함          | 활발함                 |
+SMI TrafficSplit은 이전 방식이며 현재 Linkerd 라우팅의 전체 설명이 아닙니다. Gateway API로 HTTP/gRPC 요청 속성에 따라 라우팅할 수 있습니다. 재현 가능한 workload·버전별 측정 없이 고정 memory·p99·인력·복잡성 순위를 비교할 수 없습니다.
 
 ## Linkerd를 선택해야 할 때
 
-### 적합한 사용 사례
+기본 Kubernetes 통합, workload identity와 지원 HTTP/gRPC/TCP 동작이 앱 요구에 맞을 때 후보가 됩니다. 실제 부하에서 리소스 효율·지연을 측정하고 CA 회전, 접근 정책과 업그레이드를 계획하세요. 자동 전송 암호화만으로 완전한 zero-trust나 규정 준수가 되지는 않습니다.
 
-1. **단순함이 중요할 때**
-   * 복잡한 트래픽 관리 기능보다 기본적인 서비스 메시 기능이 필요한 경우
-   * 운영팀 규모가 작거나 서비스 메시 경험이 적은 경우
-   * 빠른 도입과 낮은 학습 곡선이 중요한 경우
-2. **리소스 효율성이 중요할 때**
-   * 노드당 많은 Pod를 실행하는 환경
-   * 사이드카 오버헤드를 최소화해야 하는 경우
-   * 지연 시간에 민감한 애플리케이션
-3. **보안이 기본값이어야 할 때**
-   * 설정 없이 자동 mTLS가 필요한 경우
-   * 제로 트러스트 네트워크 구현
-   * 규정 준수를 위한 암호화 요구사항
-4. **운영 간소화가 필요할 때**
-   * 단순한 업그레이드 프로세스 선호
-   * 최소한의 CRD 및 설정
-   * 직관적인 CLI 도구
+필요한 라우팅·filter·확장 기능을 구체적으로 확인하세요. 비HTTP protocol도 TCP로 proxy할 수 있지만 HTTP routing·metric이 생기지는 않습니다. Server-first·idle 연결에는 opaque-port 또는 appProtocol 구성이 필요할 수 있으며 앱이 시작한 TLS는 HTTP 검사에 opaque합니다. Opaque 트래픽도 proxy를 통과하고 skip port는 우회합니다.
 
-### 부적합한 사용 사례
-
-1. **고급 트래픽 관리 필요**
-   * 복잡한 라우팅 규칙, 헤더 조작
-   * 고급 로드 밸런싱 알고리즘
-   * 광범위한 프로토콜 지원 (gRPC 외)
-2. **VM 워크로드 통합**
-   * Kubernetes 외부 워크로드와의 통합
-   * VM과 컨테이너 혼합 환경
-3. **대규모 다중 프로토콜 환경**
-   * Kafka, MongoDB 등 다양한 프로토콜 지원 필요
-   * 복잡한 Wasm 확장 필요
+VM·물리 머신 통합은 ExternalWorkload 등록과 외부 identity/bootstrap을 포함한 [mesh expansion](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/)으로 가능합니다. 범주 전체가 미지원인 것은 아닙니다. Network 연결, DNS, proxy 설치와 trust 설계가 Pod 주입 외에 필요하며 upstream tutorial의 간단한 bootstrap 구성이 운영 설계는 아닙니다.
 
 ## 문서 구성
 
-이 섹션은 Linkerd의 주요 기능과 운영 방법을 다음과 같이 구성합니다:
-
-| 문서                                 | 설명                                              |
-| ---------------------------------- | ----------------------------------------------- |
-| [설치 및 설정](01-installation.md)      | CLI 설치, 컨트롤 플레인 설치, HA 구성, 확장 기능 설치             |
-| [아키텍처](02-architecture.md)         | 컨트롤 플레인, 데이터 플레인, 인증서 체계 상세 설명                  |
-| [트래픽 관리](03-traffic-management.md) | ServiceProfile, TrafficSplit, 재시도, 타임아웃, 카나리 배포 |
-| [보안](04-security.md)               | mTLS, 인증 정책, 인증서 관리, 외부 CA 통합                   |
-| [관찰성](05-observability.md)         | 메트릭, 대시보드, CLI 도구, Prometheus/Grafana 통합, 분산 추적 |
-| [다중 클러스터](06-multi-cluster.md)     | 서비스 미러링, 클러스터 연결, 페일오버                          |
-| [모범 사례](07-best-practices.md)      | 프로덕션 체크리스트, 성능 튜닝, 문제 해결                        |
+| 문서 | 설명 |
+|---|---|
+| [설치 및 설정](01-installation.md) | 정확한 릴리스·호환성, CLI/Helm, trust credential, HA와 확장 |
+| [아키텍처](02-architecture.md) | Controller, proxy와 인증서 계층 |
+| [트래픽 관리](03-traffic-management.md) | Gateway API, 이전 ServiceProfile, retry/timeout과 traffic split |
+| [보안](04-security.md) | mTLS 경계, 인가와 CA 회전 |
+| [관찰성](05-observability.md) | Metrics, Viz, 외부 backend와 tracing |
+| [다중 클러스터](06-multi-cluster.md) | Mirroring/federation, network 경로, trust와 credential |
+| [모범 사례](07-best-practices.md) | 운영 검증, 성능과 문제 해결 |
 
 ## 빠른 시작
 
-### 1. Linkerd CLI 설치
+### 1. CLI와 전제 조건 선택
+
+[설치 가이드](01-installation.md)에서 OS/architecture와 정확한 릴리스를 선택하세요. CLI 출력이 의도한 배포판과 맞는지 확인하고 버전 없는 installer가 예전 stable을 제공한다고 가정하지 않습니다. Gateway API CRD가 필요하며 설치 bundle은 사용하는 모든 controller와 호환되어야 합니다.
 
 ```bash
-# Linux/macOS
-curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
-export PATH=$HOME/.linkerd2/bin:$PATH
-
-# 설치 확인
-linkerd version
-```
-
-### 2. 클러스터 사전 검증
-
-```bash
-# 클러스터가 Linkerd 요구사항을 충족하는지 확인
+linkerd version --client
+kubectl config current-context
+kubectl get crd httproutes.gateway.networking.k8s.io   -o 'jsonpath={.metadata.annotations.gateway\.networking\.k8s\.io/bundle-version}'
 linkerd check --pre
 ```
 
-### 3. Linkerd 설치
+### 2. Render, 검토와 설치
+
+선택한 CLI와 전제 조건을 갖춘 새 통제 실습에서 CLI는 매니페스트를 생성합니다:
 
 ```bash
-# CRD 설치
-linkerd install --crds | kubectl apply -f -
-
-# 컨트롤 플레인 설치
-linkerd install | kubectl apply -f -
-
-# 설치 확인
+set -euo pipefail
+linkerd install --crds > linkerd-crds.yaml
+# Review CRD ownership/version before applying.
+kubectl apply -f linkerd-crds.yaml
+linkerd install > linkerd-control-plane.yaml
+# Review trust credentials and deployment settings before applying.
+kubectl apply -f linkerd-control-plane.yaml
 linkerd check
 ```
 
-### 4. 애플리케이션 메시에 추가
+기본 CLI 구성은 유한한 유효기간의 trust credential을 생성하며 공유 trust multicluster 완성 구성이 아닙니다. 장기 설치는 문서화된 Helm·CA 수명 주기 절차를 따르세요. 이번 검토는 오프라인 render와 CLI 문법을 확인했으며 실제 설치는 하지 않았습니다.
+
+### 3. 의도한 애플리케이션 추가
+
+기존 namespace와 Deployment를 선택하고 두 my-app 이름을 실제 대상으로 바꿉니다:
 
 ```bash
-# 네임스페이스에 자동 주입 활성화
 kubectl annotate namespace my-app linkerd.io/inject=enabled
-
-# 기존 Deployment 재시작하여 프록시 주입
-kubectl rollout restart deployment -n my-app
-
-# 또는 수동으로 주입
-kubectl get deploy -n my-app -o yaml | linkerd inject - | kubectl apply -f -
+kubectl -n my-app rollout restart deployment/my-app
+kubectl -n my-app rollout status deployment/my-app
+linkerd check --proxy -n my-app
 ```
 
-### 5. 대시보드 설치 및 접근
+기존 annotation이 충돌하면 자동으로 덮어쓰지 말고 검토하세요. 새 Pod에만 주입되며 rolling restart에는 workload readiness·capacity 조건이 필요합니다. 수동 주입은 검토한 앱 매니페스트에 적용할 수도 있습니다. 모든 live Deployment를 inject/apply로 왕복하는 방식을 일괄 수정으로 쓰지 않습니다.
+
+### 4. 필요한 경우 Viz 추가
 
 ```bash
-# Viz 확장 설치
-linkerd viz install | kubectl apply -f -
-
-# 대시보드 열기
+linkerd viz install > linkerd-viz.yaml
+# Review the extension's backend, resources and retention.
+kubectl apply -f linkerd-viz.yaml
+linkerd viz check
 linkerd viz dashboard
 ```
+
+Viz는 선택적이며 자체 수명 주기 관리가 필요합니다. 기본 metric 구성이 모든 운영 보존·HA 요구를 충족하지는 않습니다.
 
 ## Linkerd 컴포넌트 상태 확인
 
 ```bash
-# 전체 상태 확인
+# Core installation/control-plane checks.
 linkerd check
-
-# 컨트롤 플레인 상태
-linkerd check --proxy
-
-# 데이터 플레인 프록시 상태
+# Data-plane proxy checks in the selected namespace.
+linkerd check --proxy -n my-app
+# Requires the configured Viz extension.
 linkerd viz stat deploy -n my-app
-
-# 실시간 트래픽 모니터링
 linkerd viz tap deploy/my-app -n my-app
 ```
+
+Tap은 지원되는 HTTP 요청 이벤트를 관찰하며 모든 TCP 경로, packet 또는 암호화 경계의 증거가 아닙니다.
 
 ## 핵심 개념
 
 ### 데이터 플레인 프록시
 
-Linkerd는 각 Pod에 `linkerd-proxy`라는 사이드카 컨테이너를 주입합니다. 이 프록시는:
-
-* Rust로 작성되어 메모리 안전성과 높은 성능 제공
-* 약 10MB의 메모리만 사용
-* 1ms 미만의 지연 시간 추가
-* 모든 인바운드/아웃바운드 트래픽 처리
-* 자동으로 mTLS 암호화 적용
+Rust linkerd-proxy는 등록된 workload 옆에서 구성된 TCP 경로를 처리합니다. Skip port, unmeshed endpoint와 플랫폼 제한을 별도로 확인하세요. HTTP 동작에는 보이거나 감지되는 HTTP가 필요합니다. 일정한 Pod당 사용량을 가정하지 말고 실제 리소스·지연을 측정합니다.
 
 ### 서비스 디스커버리
 
-Destination 컴포넌트가 Kubernetes 서비스를 모니터링하고 프록시에 엔드포인트 정보를 제공합니다:
-
-* 실시간 엔드포인트 업데이트
-* ServiceProfile 기반 라우팅 정보
-* 트래픽 분할 정책 전달
+Destination·policy 구성 요소는 Service/endpoint 상태를 감시하고 라우팅 정보를 제공합니다. ServiceProfile과 Gateway API는 버전별 우선순위·지원 기능이 다른 설정 경로입니다. 필요한 모든 Service port를 선언하고 앞의 과거 동작 변경 기록을 확인하세요.
 
 ### 자동 mTLS
 
-Linkerd는 설정 없이 모든 메시 트래픽을 자동으로 암호화합니다:
+문서화된 workload 인증서 기본 유효기간은 24시간이며 자동 갱신됩니다. Identity는 Pod의 ServiceAccount에 연결되므로 Pod마다 고유한 identity가 아닙니다. Trust anchor와 issuer credential은 별도의 수명 주기를 가지며 기본 CLI 생성 credential은 1년 후 만료되어 회전 계획이 필요합니다.
 
-1. Identity 컴포넌트가 각 프록시에 인증서 발급
-2. 프록시 간 통신 시 상호 TLS 인증
-3. 인증서 자동 갱신 (24시간 기본값)
+Meshed TCP peer 사이에는 mTLS를 사용하지만 unmeshed peer·skip port 트래픽에는 그 자동 보장이 적용되지 않습니다. 기본 inbound policy는 unmeshed plaintext를 허용하므로 차단이 필요하면 인가 정책을 사용하세요. Multicluster에는 공유 trust와 명시적인 연결 경로가 필요합니다.
 
 ## 다음 단계
 
-1. [**설치 및 설정**](01-installation.md): Linkerd를 클러스터에 설치하는 자세한 방법
-2. [**아키텍처**](02-architecture.md): Linkerd 내부 구조 이해하기
-3. [**퀴즈**](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/service-mesh/linkerd/README.md): 학습 내용 확인하기
+1. [설치 및 설정](01-installation.md)
+2. [아키텍처](02-architecture.md)
+3. [설치 퀴즈](../../quizzes/service-mesh/linkerd/installation.md), [아키텍처 퀴즈](../../quizzes/service-mesh/linkerd/architecture.md), [트래픽 퀴즈](../../quizzes/service-mesh/linkerd/traffic-management.md)
+4. [보안 퀴즈](../../quizzes/service-mesh/linkerd/security.md), [관측성 퀴즈](../../quizzes/service-mesh/linkerd/observability.md), [멀티클러스터 퀴즈](../../quizzes/service-mesh/linkerd/multi-cluster.md)
 
 ## 참고 자료
 
-* [Linkerd 공식 문서](https://linkerd.io/2/overview/)
-* [Linkerd GitHub](https://github.com/linkerd/linkerd2)
-* [CNCF Linkerd 프로젝트 페이지](https://www.cncf.io/projects/linkerd/)
-* [Linkerd Slack 커뮤니티](https://slack.linkerd.io/)
-* [Buoyant 블로그](https://buoyant.io/blog)
+- [Linkerd 문서](https://linkerd.io/docs/overview/)
+- [릴리스 구분](https://linkerd.io/releases/)과 [설치](https://linkerd.io/docs/tasks/install/)
+- [Gateway API](https://linkerd.io/docs/features/gateway-api/)와 [요청 라우팅](https://linkerd.io/docs/features/request-routing/)
+- [자동 mTLS와 제약](https://linkerd.io/docs/features/automatic-mtls/) 및 [TCP/protocol 처리](https://linkerd.io/docs/features/protocol-detection/)
+- [CNCF 프로젝트 기록](https://www.cncf.io/projects/linkerd/)
+- [Linkerd GitHub](https://github.com/linkerd/linkerd2), [커뮤니티](https://slack.linkerd.io/), [Buoyant 블로그](https://buoyant.io/blog)

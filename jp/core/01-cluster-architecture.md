@@ -36,7 +36,7 @@ Kubernetes クラスターは、コンテナ化されたアプリケーション
 
 ### クラスターアーキテクチャ図
 
-![control plane の kube-apiserver が etcd、scheduler、controller manager を調整し、worker node の kubelet と kube-proxy に接続します。これらはさらに container runtime と実行中の Pod を駆動するアーキテクチャ図。](../../.gitbook/assets/en-core-01-cluster-architecture-0.png)
+![control plane の kube-apiserver が etcd、scheduler、controller manager を調整し、worker node の kubelet と kube-proxy に接続します。これらはさらに container runtime と実行中の Pod を駆動するアーキテクチャ図。](../.gitbook/assets/en-core-01-cluster-architecture-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-0.html)
 

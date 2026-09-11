@@ -1,0 +1,136 @@
+{
+  "version": "Rollouts1.10.0/expr1.17.7",
+  "documents": [
+    {
+      "locale": "ko",
+      "sameTestedManifest": true,
+      "routingFragmentsSchemaChecked": 2
+    },
+    {
+      "locale": "en",
+      "sameTestedManifest": true,
+      "routingFragmentsSchemaChecked": 2
+    }
+  ],
+  "productionSelector": "matches base, excludes both experiment template label overrides",
+  "expressionCases": [
+    {
+      "case": "good",
+      "expected": "Successful",
+      "passed": true,
+      "phase": "Successful"
+    },
+    {
+      "case": "boundary",
+      "expected": "Successful",
+      "passed": true,
+      "phase": "Successful"
+    },
+    {
+      "case": "one",
+      "expected": "Successful",
+      "passed": true,
+      "phase": "Successful"
+    },
+    {
+      "case": "bad",
+      "expected": "Failed",
+      "passed": true,
+      "phase": "Failed"
+    },
+    {
+      "case": "zero",
+      "expected": "Failed",
+      "passed": true,
+      "phase": "Failed"
+    },
+    {
+      "case": "negative",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "over-one",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "null",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "empty",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "missing-rate",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "unknown-status",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "null-rate",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "numeric-string",
+      "expected": "Successful",
+      "passed": true,
+      "phase": "Successful"
+    },
+    {
+      "case": "invalid-number",
+      "evaluationError": "success=strconv.ParseFloat: parsing \"bad\": invalid syntax (1:95)\n | let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil && asFloat(payload.success_rate) >= 0.95 && asFloat(payload.success_rate) <= 1\n | ..............................................................................................^ failure=strconv.ParseFloat: parsing \"bad\": invalid syntax (1:95)\n | let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil && asFloat(payload.success_rate) >= 0 && asFloat(payload.success_rate) < 0.95\n | ..............................................................................................^",
+      "expected": "Error",
+      "passed": true,
+      "phase": "Error"
+    },
+    {
+      "case": "boolean-rate",
+      "evaluationError": "success=unsupported JSON number type bool (1:95)\n | let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil && asFloat(payload.success_rate) >= 0.95 && asFloat(payload.success_rate) <= 1\n | ..............................................................................................^ failure=unsupported JSON number type bool (1:95)\n | let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil && asFloat(payload.success_rate) >= 0 && asFloat(payload.success_rate) < 0.95\n | ..............................................................................................^",
+      "expected": "Error",
+      "passed": true,
+      "phase": "Error"
+    },
+    {
+      "case": "nan-string",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "inf-string",
+      "expected": "Inconclusive",
+      "passed": true,
+      "phase": "Inconclusive"
+    },
+    {
+      "case": "array-payload",
+      "evaluationError": "success=invalid operation: int(string) (1:45)\n | let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil && asFloat(payload.success_rate) >= 0.95 && asFloat(payload.success_rate) <= 1\n | ............................................^ failure=invalid operation: int(string) (1:45)\n | let payload = default(result, {}); payload?.status == 'ok' && payload?.success_rate != nil && asFloat(payload.success_rate) >= 0 && asFloat(payload.success_rate) < 0.95\n | ............................................^",
+      "expected": "Error",
+      "passed": true,
+      "phase": "Error"
+    }
+  ],
+  "sourceReview": [
+    "InconclusiveExperiment pause in rollout/experiment.go",
+    "required analysis can complete early in experiments/experiment.go",
+    "thirty-second default and Service cleanup after available replicas zero",
+    "active ReplicaSet name helper uses experiment-template (hash-name helper in utils is unused)"
+  ],
+  "limitations": "No real controller/cluster/mock service deployment or traffic test; historical1.8.3KWOK report was not reproduced."
+}

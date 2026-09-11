@@ -1,8 +1,10 @@
 # Kubernetes 소개
 
-> **지원 버전**: Kubernetes 1.31, 1.32, 1.33 **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Upstream Kubernetes 1.35, 1.36, 1.37; EKS 표준 지원 1.34–1.36 (2026-09-11) **마지막 업데이트**: 2026년 9월 11일
 
 Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다. 이 문서에서는 Kubernetes의 기본 개념, 아키텍처, 주요 구성 요소 및 기능에 대해 설명합니다.
+
+이 문서의 매니페스트는 서로 독립적인 학습 예제이며 문법/스키마와 공식 문서를 기준으로 검토했습니다. 실제 클러스터에서 배포 검증한 프로덕션 구성은 아닙니다. 커스텀 이미지, 이름/레이블, TLS, IAM/RBAC, CNI 및 스토리지 요구를 대상 환경에서 확인하고 자리표시자를 바꿔야 합니다.
 
 ## 실습 환경 설정
 
@@ -11,7 +13,7 @@ Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 �
 ### 필수 도구
 
 * **kubectl**: Kubernetes 클러스터와 상호 작용하는 명령줄 도구
-* **컨테이너 런타임**: Docker, containerd, CRI-O 등
+* **로컬 클러스터 드라이버**: minikube/kind가 지원하는 컨테이너 엔진/VM 드라이버; Kubernetes 노드는 CRI v1 런타임 사용
 * **minikube** 또는 **kind**: 로컬 Kubernetes 클러스터 (개발 및 학습용)
 
 ### 설치 방법
@@ -19,32 +21,44 @@ Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 �
 **kubectl 설치**:
 
 ```bash
-# macOS
+# macOS: use a kubectl version within one minor of the API server.
 brew install kubectl
+```
 
-# Linux
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x kubectl
-sudo mv kubectl /usr/local/bin/
+```bash
+# Linux: select an explicit compatible version and architecture.
+set -euo pipefail
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.0}"
+case "$(uname -m)" in
+  x86_64) KUBECTL_ARCH=amd64 ;;
+  aarch64|arm64) KUBECTL_ARCH=arm64 ;;
+  *) echo "Choose a supported kubectl architecture" >&2; exit 1 ;;
+esac
+curl --fail --location --output kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl"
+curl --fail --location --output kubectl.sha256 "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl.sha256"
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+sudo install -m 0755 kubectl /usr/local/bin/kubectl
+```
 
-# Windows (PowerShell)
-curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
+```powershell
+$ErrorActionPreference = "Stop"
+$KubectlVersion = Read-Host "Cluster-compatible kubectl version (vX.Y.Z)"
+$KubectlArch = Read-Host "Architecture (amd64 or arm64)"
+if ($KubectlVersion -notmatch '^v\d+\.\d+\.\d+$' -or $KubectlArch -notin @('amd64','arm64')) { throw "Invalid version/architecture" }
+$BaseUrl = "https://dl.k8s.io/release/$KubectlVersion/bin/windows/$KubectlArch"
+Invoke-WebRequest "$BaseUrl/kubectl.exe" -OutFile kubectl.exe
+Invoke-WebRequest "$BaseUrl/kubectl.exe.sha256" -OutFile kubectl.exe.sha256
+if ((Get-FileHash kubectl.exe -Algorithm SHA256).Hash -ne (Get-Content kubectl.exe.sha256).Trim()) { throw "Checksum mismatch" }
+# Move the verified binary to a directory included in PATH.
 ```
 
 **minikube 설치**:
 
+minikube의 공식 시작 안내에서 OS/아키텍처/드라이버에 맞는 바이너리와 체크섬을 선택합니다. Linux와 Windows 명령은 각각 해당 셸에서 실행하며 검증한 바이너리를 PATH에 추가합니다. macOS 예시는 다음과 같습니다:
+
 ```bash
-# macOS
 brew install minikube
-
-# Linux
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-chmod +x minikube-linux-amd64
-sudo mv minikube-linux-amd64 /usr/local/bin/minikube
-
-# Windows (PowerShell)
-New-Item -Path 'c:\' -Name 'minikube' -ItemType Directory
-Invoke-WebRequest -OutFile 'c:\minikube\minikube.exe' -Uri 'https://github.com/kubernetes/minikube/releases/latest/download/minikube-windows-amd64.exe'
+minikube version
 ```
 
 ### 로컬 클러스터 시작
@@ -75,7 +89,7 @@ Kubernetes는 그리스어로 '조타수' 또는 '파일럿'을 의미하며, �
 
 1. **서비스 디스커버리와 로드 밸런싱**: 컨테이너를 외부에 노출하고 트래픽을 분산
 2. **스토리지 오케스트레이션**: 로컬 또는 클라우드 스토리지 시스템을 자동으로 마운트
-3. **자동화된 롤아웃과 롤백**: 애플리케이션의 상태를 점진적으로 변경하고 문제 발생 시 이전 상태로 복원
+3. **롤아웃과 롤백**: 애플리케이션을 점진적으로 업데이트하고 운영자/도구가 롤백할 수 있습니다. Deployment 실패만으로 자동 롤백하지는 않습니다.
 4. **자동 빈 패킹**: 리소스 요구사항에 따라 컨테이너를 노드에 배치
 5. **자가 복구**: 실패한 컨테이너를 재시작하고, 응답하지 않는 컨테이너를 교체
 6. **시크릿과 구성 관리**: 민감한 정보를 저장하고 구성 정보를 업데이트할 수 있음
@@ -85,9 +99,9 @@ Kubernetes는 그리스어로 '조타수' 또는 '파일럿'을 의미하며, �
 ### Kubernetes가 해결하는 문제
 
 * **컨테이너 오케스트레이션**: 수백, 수천 개의 컨테이너를 효율적으로 관리
-* **고가용성**: 애플리케이션의 중단 없는 운영 보장
+* **고가용성**: 복제본, 배치, probe 및 용량을 구성하여 복원력 있는 애플리케이션 설계 지원
 * **확장성**: 트래픽 증가에 따른 자동 확장
-* **재해 복구**: 장애 발생 시 자동 복구
+* **복구**: 실패한 워크로드를 조정하며 재해 복구에는 검증한 백업/복원 계획도 필요
 * **리소스 효율성**: 하드웨어 리소스를 효율적으로 활용
 * **선언적 구성**: 인프라를 코드로 관리
 * **멀티 클라우드 및 하이브리드 클라우드**: 다양한 환경에서 일관된 배포 및 관리
@@ -121,28 +135,27 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-0.html)
 
 1. **kube-apiserver**: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드
-2. **etcd**: 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소
+2. **etcd**: Kubernetes API 객체와 클러스터 상태(애플리케이션 볼륨 내용 제외)를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소
 3. **kube-scheduler**: 노드에 파드를 할당하는 구성 요소
 4. **kube-controller-manager**: 컨트롤러 프로세스를 실행하는 구성 요소
    * 노드 컨트롤러: 노드가 다운되었을 때 알림 및 대응
    * 레플리케이션 컨트롤러: 파드 복제본의 올바른 수를 유지
-   * 엔드포인트 컨트롤러: 서비스와 파드를 연결
-   * 서비스 어카운트 & 토큰 컨트롤러: 새 네임스페이스에 대한 기본 계정 및 API 접근 토큰 생성
+   * EndpointSlice 컨트롤러: Service 엔드포인트 정보 유지(기존 Endpoints는 deprecated)
+   * ServiceAccount 컨트롤러: 기본 계정 생성; 현대 Pod 토큰은 TokenRequest와 kubelet 갱신 사용
 5. **cloud-controller-manager**: 클라우드별 컨트롤 로직을 포함하는 구성 요소
    * 노드 컨트롤러: 클라우드 제공자에게 노드가 삭제되었는지 확인
    * 라우트 컨트롤러: 클라우드 인프라에서 라우트 설정
    * 서비스 컨트롤러: 클라우드 제공자 로드 밸런서 생성, 업데이트, 삭제
-   * 볼륨 컨트롤러: 볼륨 생성, 연결, 마운트
 
 ### 노드 구성 요소
 
-![컨트롤 플레인의 지시를 받은 kubelet이 컨테이너 런타임(Docker, containerd, CRI-O)을 통해 Pod 안의 컨테이너를 실행하고, kube-proxy가 네트워크 규칙을 관리하는 워커 노드 내부 구성을 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-1.png)
+![컨트롤 플레인의 지시를 받은 kubelet이 CRI 런타임(containerd/CRI-O 또는 외부 어댑터를 거친 Docker Engine)을 통해 Pod 안의 컨테이너를 실행하고, kube-proxy가 네트워크 규칙을 관리하는 워커 노드 내부 구성을 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-1.html)
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리
 2. **kube-proxy**: 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당
-3. **컨테이너 런타임**: 컨테이너 실행을 담당하는 소프트웨어 (Docker, containerd, CRI-O 등)
+3. **컨테이너 런타임**: containerd/CRI-O 등 CRI v1 구현체; Docker Engine에는 별도 CRI 어댑터 필요
 
 ### 전체 아키텍처
 
@@ -154,7 +167,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### API 서버 (kube-apiserver)
 
-API 서버는 Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드입니다. 모든 내부 및 외부 요청은 API 서버를 통해 처리됩니다.
+API 서버는 Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드입니다. Kubernetes API 요청을 처리하며 애플리케이션 트래픽과 스토리지 I/O가 API 서버를 거치는 것은 아닙니다.
 
 **주요 기능**:
 
@@ -166,7 +179,7 @@ API 서버는 Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔
 
 ### etcd
 
-etcd는 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소입니다.
+etcd는 Kubernetes API 객체와 클러스터 상태(애플리케이션 볼륨 내용 제외)를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소입니다.
 
 **주요 특징**:
 
@@ -202,24 +215,23 @@ etcd는 모든 클러스터 데이터를 저장하는 일관성 있고 고가용
 
 * **노드 컨트롤러**: 노드 상태 모니터링 및 대응
 * **레플리케이션 컨트롤러**: 파드 복제본 수 유지
-* **엔드포인트 컨트롤러**: 서비스와 파드 연결
-* **서비스 어카운트 & 토큰 컨트롤러**: 네임스페이스에 대한 기본 계정 및 API 토큰 생성
+* **EndpointSlice 컨트롤러**: Service 엔드포인트 정보 유지(기존 Endpoints는 deprecated)
+* **ServiceAccount 컨트롤러**: 기본 계정 생성; 현대 Pod 토큰은 TokenRequest와 kubelet 갱신 사용
 * **잡 컨트롤러**: 일회성 작업 관리
 * **크론잡 컨트롤러**: 예약된 작업 관리
-* **데몬셋 컨트롤러**: 모든 노드에 특정 파드 실행 보장
+* **DaemonSet 컨트롤러**: 각 적합한 노드의 Pod를 조정
 * **스테이트풀셋 컨트롤러**: 상태 유지 애플리케이션 관리
 * **PV 컨트롤러**: 영구 볼륨 관리
 
 ### 클라우드 컨트롤러 매니저 (cloud-controller-manager)
 
-클라우드 컨트롤러 매니저는 클라우드별 컨트롤 로직을 포함하는 컨트롤 플레인 구성 요소입니다.
+클라우드 컨트롤러 매니저는 클라우드별 컨트롤 로직을 포함합니다. 스토리지 생성/연결/마운트는 CSI sidecar/드라이버 및 kubelet/노드 플러그인의 역할이며 CCM 볼륨 컨트롤러의 역할이 아닙니다.
 
 **주요 컨트롤러**:
 
 * **노드 컨트롤러**: 클라우드 제공자 API를 통해 노드 상태 확인
 * **라우트 컨트롤러**: 클라우드 환경에서 라우트 설정
 * **서비스 컨트롤러**: 클라우드 로드 밸런서 생성, 업데이트, 삭제
-* **볼륨 컨트롤러**: 클라우드 스토리지 볼륨 생성, 연결, 마운트
 
 ### kubelet
 
@@ -245,9 +257,9 @@ kube-proxy는 각 노드에서 실행되는 네트워크 프록시로, Kubernete
 
 **작동 모드**:
 
-* **userspace 모드**: 사용자 공간에서 프록시 실행 (레거시)
+* **nftables 모드**: 1.33부터 stable이며 커널/네트워크 플러그인 호환성 확인
 * **iptables 모드**: 리눅스 iptables를 사용한 NAT 구현 (기본)
-* **IPVS 모드**: 리눅스 커널의 IP Virtual Server 사용 (고성능)
+* **IPVS 모드**: 1.35부터 deprecated이므로 전환 계획 필요. 과거 userspace 모드는 제거됨
 
 ## Kubernetes 기본 객체
 
@@ -255,7 +267,7 @@ Kubernetes 객체는 클러스터의 상태를 나타내는 영구적인 엔티�
 
 ### 파드 (Pod)
 
-파드는 Kubernetes의 가장 작은 배포 단위로, 하나 이상의 컨테이너 그룹을 나타냅니다. 파드 내의 컨테이너는 스토리지와 네트워크를 공유하며, 항상 같은 노드에서 함께 스케줄링됩니다.
+파드는 Kubernetes의 가장 작은 배포 단위로, 하나 이상의 컨테이너 그룹을 나타냅니다. Pod의 컨테이너는 네트워크와 명시적으로 마운트한 볼륨을 공유하고 같은 노드에서 실행됩니다. 루트 파일 시스템이 자동 공유되지는 않습니다.
 
 **주요 특징**:
 
@@ -277,15 +289,22 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
-  - name: log-sidecar
-    image: busybox
-    command: ["/bin/sh", "-c", "tail -f /var/log/nginx/access.log"]
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
+  - name: log-sidecar
+    image: busybox:1.37.0
+    command:
+    - /bin/sh
+    - -c
+    - until [ -f /var/log/nginx/access.log ]; do sleep 1; done; tail -F /var/log/nginx/access.log
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/nginx
+      readOnly: true
   volumes:
   - name: logs
     emptyDir: {}
@@ -293,13 +312,13 @@ spec:
 
 ### 네임스페이스 (Namespace)
 
-네임스페이스는 단일 클러스터 내에서 리소스 그룹을 격리하는 방법을 제공합니다. 이는 여러 팀이나 프로젝트가 동일한 클러스터를 사용할 때 유용합니다.
+네임스페이스는 단일 클러스터 내에서 리소스 그룹을 격리하는 방법을 제공합니다. 여러 팀/프로젝트 구분에 유용하지만 네임스페이스만으로 네트워크/권한 격리가 강제되지는 않습니다.
 
 **기본 네임스페이스**:
 
 * **default**: 기본 네임스페이스
 * **kube-system**: Kubernetes 시스템에서 생성한 객체를 위한 네임스페이스
-* **kube-public**: 모든 사용자가 읽을 수 있는 객체를 위한 네임스페이스
+* **kube-public**: 공개 정보를 위한 관례적 네임스페이스이며 실제 객체 접근은 RBAC에 따름
 * **kube-node-lease**: 노드 하트비트를 위한 네임스페이스
 
 **네임스페이스 예시**:
@@ -350,7 +369,7 @@ selector:
 ```yaml
 metadata:
   annotations:
-    kubernetes.io/created-by: "admin"
+    example.com/created-by: "admin"
     example.com/last-modified: "2023-07-01T12:00:00Z"
     prometheus.io/scrape: "true"
     prometheus.io/port: "9090"
@@ -367,7 +386,7 @@ metadata:
 * **용량**: CPU, 메모리, 최대 파드 수
 * **정보**: 커널 버전, 컨테이너 런타임 버전, kubelet 버전
 
-**노드 예시**:
+**Node 상태 예시(노드/컨트롤러가 보고하며 노드 생성용 매니페스트가 아님)**:
 
 ```yaml
 apiVersion: v1
@@ -378,8 +397,6 @@ metadata:
     kubernetes.io/hostname: worker-1
     node-role.kubernetes.io/worker: ""
     topology.kubernetes.io/zone: us-east-1a
-spec:
-  # ...
 status:
   capacity:
     cpu: "4"
@@ -397,7 +414,7 @@ status:
 
 ### 레플리카셋 (ReplicaSet)
 
-레플리카셋은 지정된 수의 파드 복제본이 항상 실행되도록 보장합니다. 파드가 실패하거나 삭제되면 레플리카셋은 자동으로 대체 파드를 생성합니다.
+ReplicaSet은 원하는 Pod 객체 수를 조정하며 준비 상태는 용량, 올바른 설정 및 애플리케이션에 달려 있습니다. 파드가 실패하거나 삭제되면 레플리카셋은 자동으로 대체 파드를 생성합니다.
 
 **주요 기능**:
 
@@ -426,7 +443,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
 ```
@@ -468,7 +485,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -484,7 +501,15 @@ spec:
             port: 80
           initialDelaySeconds: 30
           periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
 ```
+
+아래 MySQL은 단일 인스턴스 영속 저장 예제입니다. StatefulSet이 복제/장애 조치/백업을 자동 구성하지 않습니다. mysql-secret의 password 키와 실제 StorageClass를 먼저 준비하고 자리표시자를 바꿉니다. 복제본만 늘리면 독립 데이터베이스가 생기므로 HA는 검증한 DB 오퍼레이터/복제 구성이 필요합니다.
 
 ### 스테이트풀셋 (StatefulSet)
 
@@ -500,6 +525,19 @@ spec:
 **스테이트풀셋 예시**:
 
 ```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  clusterIP: None
+  selector:
+    app: mysql
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -509,15 +547,16 @@ spec:
     matchLabels:
       app: mysql
   serviceName: mysql
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
         app: mysql
+        role: db
     spec:
       containers:
       - name: mysql
-        image: mysql:8.0
+        image: mysql:8.4
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -530,20 +569,28 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 10
+          periodSeconds: 5
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: "standard"
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: replace-with-storage-class
       resources:
         requests:
           storage: 10Gi
 ```
 
+아래 Linux Fluent Bit 예제는 CRI 로그를 stdout으로 출력하는 실습용입니다. 자체 로그는 제외하여 재수집 루프를 막으며 상태 DB를 별도 경로에 유지합니다. 같은 로그를 다시 stdout으로 내보내는 다른 수집기와 함께 배포하지 않습니다. 운영 환경은 중앙 로그 저장소로 전달하고 호스트 경로/권한/PSS 예외를 검토합니다.
+
 ### 데몬셋 (DaemonSet)
 
-데몬셋은 모든 노드(또는 특정 노드)에서 파드의 복사본을 실행하도록 보장합니다. 노드가 클러스터에 추가되면 파드가 자동으로 추가되고, 노드가 제거되면 파드도 제거됩니다.
+DaemonSet은 각 적합한 노드에 Pod를 생성하며 nodeSelector, taint, 용량 및 admission 정책의 영향을 받습니다. 노드가 클러스터에 추가되면 파드가 자동으로 추가되고, 노드가 제거되면 파드도 제거됩니다.
 
 **주요 사용 사례**:
 
@@ -555,39 +602,89 @@ spec:
 **데몬셋 예시**:
 
 ```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intro-log-agent-config
+  namespace: kube-system
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush 5
+        Parsers_File /fluent-bit/etc/parsers.conf
+    [INPUT]
+        Name tail
+        Path /var/log/containers/*.log
+        Exclude_Path /var/log/containers/intro-log-agent-*_kube-system_fluent-bit-*.log
+        Parser cri
+        Tag kube.*
+        DB /var/lib/fluent-bit/tail.db
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+    [OUTPUT]
+        Name stdout
+        Match *
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: fluentd
+  name: intro-log-agent
   namespace: kube-system
 spec:
   selector:
     matchLabels:
-      name: fluentd
+      app: intro-log-agent
   template:
     metadata:
       labels:
-        name: fluentd
+        app: intro-log-agent
     spec:
+      automountServiceAccountToken: false
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
         effect: NoSchedule
       containers:
-      - name: fluentd
-        image: fluentd:v1.14
+      - name: fluent-bit
+        image: cr.fluentbit.io/fluent/fluent-bit:5.1.2
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        args:
+        - -c
+        - /fluent-bit/custom/fluent-bit.conf
         resources:
-          limits:
-            memory: 200Mi
           requests:
             cpu: 100m
             memory: 100Mi
+          limits:
+            memory: 200Mi
         volumeMounts:
         - name: varlog
           mountPath: /var/log
+          readOnly: true
+        - name: config
+          mountPath: /fluent-bit/custom
+          readOnly: true
+        - name: state
+          mountPath: /var/lib/fluent-bit
       volumes:
       - name: varlog
         hostPath:
           path: /var/log
+          type: Directory
+      - name: config
+        configMap:
+          name: intro-log-agent-config
+      - name: state
+        hostPath:
+          path: /var/lib/intro-log-agent
+          type: DirectoryOrCreate
+      nodeSelector:
+        kubernetes.io/os: linux
 ```
 
 ### 잡 (Job)
@@ -598,7 +695,7 @@ spec:
 
 * 일회성 작업 실행
 * 병렬 작업 실행
-* 작업 완료 보장
+* 성공 완료 횟수를 추적하며 실패/기한 제한에 따라 Job이 실패할 수 있음
 * 실패 시 재시도
 
 **잡 예시**:
@@ -621,6 +718,8 @@ spec:
       restartPolicy: Never
 ```
 
+Job은 실패/기한 제한으로 실패할 수 있고 동일 작업이 재실행될 수 있으므로 멱등성을 확보합니다. CronJob 스케줄도 정확히 한 번 실행을 보장하지 않으며 Forbid는 해당 CronJob의 겹치는 실행만 제어합니다.
+
 ### 크론잡 (CronJob)
 
 크론잡은 지정된 일정에 따라 잡을 주기적으로 실행합니다. 리눅스 크론 작업과 유사한 방식으로 작동합니다.
@@ -640,6 +739,7 @@ kind: CronJob
 metadata:
   name: database-backup
 spec:
+  timeZone: Etc/UTC
   schedule: "0 2 * * *"  # 매일 02:00에 실행
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -659,7 +759,7 @@ spec:
 
 ## Kubernetes 서비스와 네트워킹
 
-Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가지며, 특별한 구성 없이도 서로 통신할 수 있다는 것을 기본 전제로 합니다. 서비스는 파드 집합에 대한 안정적인 엔드포인트를 제공합니다.
+Kubernetes의 네트워킹 모델은 호환되는 CNI가 Pod 네트워크를 제공하고 실제 통신은 NetworkPolicy/방화벽/토폴로지에 영향을 받는다는 것을 기본 전제로 합니다. 서비스는 파드 집합에 대한 안정적인 엔드포인트를 제공합니다.
 
 ### 서비스 (Service)
 
@@ -672,7 +772,7 @@ Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가
 * **LoadBalancer**: 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능
 * **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
 
-![외부 클라이언트가 NodePort·LoadBalancer 서비스를 통해서만 클러스터 안으로 들어오고 ClusterIP 서비스는 내부 접근만 허용하며, 세 서비스 유형이 모두 같은 파드 집합(Pod 1·2·3)으로 port 80 요청을 로드 밸런싱하는 구조를 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-3.png)
+![NodePort·LoadBalancer를 통한 외부 접근을 예시로 보여주며 Ingress/Gateway 같은 다른 진입점도 가능합니다.  ClusterIP 서비스는 내부 접근만 허용하며, 세 서비스 유형이 모두 같은 파드 집합(Pod 1·2·3)으로 port 80 요청을 로드 밸런싱하는 구조를 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-3.html)
 
@@ -709,6 +809,8 @@ spec:
   type: NodePort
 ```
 
+이 AWS 예제는 AWS Load Balancer Controller와 IAM/네트워크 사전 구성이 필요합니다. EKS Auto Mode는 다른 loadBalancerClass를 사용하며 로컬 클러스터는 자체 LoadBalancer 구현이 필요합니다.
+
 **LoadBalancer 서비스 예시**:
 
 ```yaml
@@ -717,7 +819,8 @@ kind: Service
 metadata:
   name: nginx-lb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
 spec:
   selector:
     app: nginx
@@ -725,7 +828,10 @@ spec:
   - port: 80
     targetPort: 80
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
 ```
+
+이 예제는 설치된 Traefik과 traefik IngressClass, app1/app2 Service, TLS Secret이 필요합니다. /app1과 /app2 경로를 그대로 전달하므로 백엔드가 해당 경로를 제공해야 합니다. Ingress 리소스만으로 컨트롤러가 설치되지는 않습니다.
 
 ### 인그레스 (Ingress)
 
@@ -733,8 +839,8 @@ spec:
 
 **인그레스 컨트롤러**:
 
-* **NGINX Ingress Controller**: NGINX 기반 인그레스 컨트롤러
-* **AWS ALB Ingress Controller**: AWS Application Load Balancer 기반 인그레스 컨트롤러
+* **ingress-nginx(2026년 3월 종료)**: 과거 커뮤니티 컨트롤러이며 신규 설치는 유지 관리되는 컨트롤러를 선택합니다. F5 NGINX Ingress Controller는 별도 프로젝트입니다.
+* **AWS Load Balancer Controller**: AWS Application Load Balancer 기반 인그레스 컨트롤러
 * **Traefik**: 클라우드 네이티브 엣지 라우터
 * **Istio Ingress**: 서비스 메시 기반 인그레스
 
@@ -745,10 +851,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: example.com
     http:
@@ -807,28 +911,45 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          role: frontend
+          role: api
     ports:
     - protocol: TCP
       port: 3306
-  egress:
-  - to:
-    - podSelector:
+  - from:
+    - namespaceSelector:
         matchLabels:
-          role: monitoring
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
     ports:
     - protocol: TCP
-      port: 9090
+      port: 9104
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
+
+NetworkPolicy의 허용 규칙은 합산됩니다. 위 정책은 role=api에서 DB3306으로의 접근과 monitoring 네임스페이스의 app=prometheus에서 DB exporter9104로의 스크레이프를 허용합니다. 9104 exporter는 별도로 설치해야 하며 DB가 Prometheus9090으로 연결하는 규칙이 아닙니다. DNS egress 레이블은 실제 클러스터 DNS/NodeLocal DNS 구성에 맞춥니다.
 
 ### DNS
 
-Kubernetes는 클러스터 내에서 DNS 서비스를 제공하여 서비스 디스커버리를 지원합니다. 기본적으로 CoreDNS가 사용됩니다.
+Kubernetes 배포판은 보통 CoreDNS로 서비스 검색을 제공합니다. ConfigMap 수정 시 배포판 관리 설정을 유지합니다. 아래 pods insecure는 Pod 존재를 검증하지 않는 레거시 IP 기반 레코드 모드이며 불필요하면 disabled, 검증이 필요하면 추가 watch/메모리 비용을 고려해 verified를 선택합니다.
 
 **DNS 이름 형식**:
 
 * **서비스**: `<서비스명>.<네임스페이스>.svc.cluster.local`
-* **파드**: `<파드-IP-주소-점으로-구분>.pod.cluster.local`
+* **파드**: `<점-대신-하이픈을-쓴-Pod-IP>.<네임스페이스>.pod.cluster.local` (IPv4 레코드; CoreDNS pods 모드에 따라 다름)
 
 **DNS 구성 예시**:
 
@@ -843,9 +964,9 @@ data:
     .:53 {
         errors
         health
+        ready
         kubernetes cluster.local in-addr.arpa ip6.arpa {
           pods insecure
-          upstream
           fallthrough in-addr.arpa ip6.arpa
         }
         prometheus :9153
@@ -865,12 +986,12 @@ data:
 
 * **Istio**: 가장 널리 사용되는 서비스 메시
 * **Linkerd**: 경량화된 서비스 메시
-* **AWS App Mesh**: AWS의 관리형 서비스 메시
+* **AWS App Mesh(2026-09-30 지원 종료 예정)**: 마이그레이션이 필요하며 신규 배포 권장 대상은 아님
 
 **Istio 가상 서비스 예시**:
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -890,6 +1011,20 @@ spec:
     - destination:
         host: reviews
         subset: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: reviews-subsets
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
 ```
 
 ## Kubernetes 스토리지
@@ -922,7 +1057,7 @@ metadata:
 spec:
   containers:
   - name: test-container
-    image: nginx
+    image: nginx:1.30.4
     volumeMounts:
     - mountPath: /cache
       name: cache-volume
@@ -933,13 +1068,16 @@ spec:
 
 ### 영구 볼륨 (PersistentVolume, PV)
 
-영구 볼륨은 클러스터의 스토리지 리소스를 나타내는 API 객체입니다. 파드와 독립적으로 존재하며, 클러스터 관리자가 프로비저닝합니다.
+영구 볼륨은 클러스터의 스토리지 리소스를 나타내는 API 객체입니다. 파드와 독립적으로 존재하며, 관리자가 정적으로 또는 provisioner가 동적으로 생성합니다.
 
 **접근 모드**:
 
 * **ReadWriteOnce (RWO)**: 단일 노드에서 읽기/쓰기 가능
 * **ReadOnlyMany (ROX)**: 여러 노드에서 읽기 전용으로 마운트 가능
 * **ReadWriteMany (RWX)**: 여러 노드에서 읽기/쓰기 가능
+* **ReadWriteOncePod (RWOP)**: 지원하는 CSI 볼륨의 단일 Pod 접근; RWO만으로는 같은 노드의 여러 Pod 접근을 막지 않음
+
+EBS CSI 드라이버와 IAM 권한을 먼저 구성합니다. 실제 기존 볼륨 ID와 AZ를 사용하며 다른 곳에서 사용 중인 볼륨을 중복 연결하지 않습니다. 이 스토리지 예제는 AWS용이며 로컬 클러스터는 자체 provisioner가 필요합니다.
 
 **영구 볼륨 예시**:
 
@@ -952,12 +1090,21 @@ spec:
   capacity:
     storage: 10Gi
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: standard
-  awsElasticBlockStore:
-    volumeID: vol-0123456789abcdef0
+  storageClassName: ebs-gp3
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0123456789abcdef0
     fsType: ext4
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values:
+          - replace-with-volume-az
 ```
 
 ### 영구 볼륨 클레임 (PersistentVolumeClaim, PVC)
@@ -973,11 +1120,11 @@ metadata:
   name: pvc-example
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 5Gi
-  storageClassName: standard
+  storageClassName: ebs-gp3
 ```
 
 **PVC를 사용하는 파드 예시**:
@@ -990,7 +1137,7 @@ metadata:
 spec:
   containers:
     - name: myfrontend
-      image: nginx
+      image: nginx:1.30.4
       volumeMounts:
       - mountPath: "/var/www/html"
         name: mypd
@@ -1010,13 +1157,15 @@ spec:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: standard
-provisioner: kubernetes.io/aws-ebs
+  name: ebs-gp3
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: 'true'
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
 ```
 
 ### 동적 프로비저닝
@@ -1032,11 +1181,11 @@ metadata:
   name: dynamic-pvc
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
-  storageClassName: standard  # 동적 프로비저닝을 위한 스토리지 클래스
+  storageClassName: ebs-gp3
 ```
 
 ### CSI (Container Storage Interface)
@@ -1051,7 +1200,7 @@ CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제
 * **GCE PD CSI Driver**: Google Compute Engine 영구 디스크 관리
 * **Azure Disk CSI Driver**: Azure 디스크 관리
 
-**CSI 드라이버 배포 예시**:
+**설치된 CSI 드라이버를 사용하는 StorageClass 예시**:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1061,8 +1210,8 @@ metadata:
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
-  encrypted: "true"
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
 volumeBindingMode: WaitForFirstConsumer
 ```
 
@@ -1089,6 +1238,8 @@ data:
   log-level: INFO
   max-connections: "100"
 ```
+
+환경 변수는 자동 갱신되지 않아 변경 시 Pod를 재생성합니다. 볼륨 갱신은 지연될 수 있고 앱 reload가 필요하며 subPath 마운트는 갱신되지 않습니다.
 
 **ConfigMap을 사용하는 파드 예시**:
 
@@ -1123,12 +1274,14 @@ Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객
 **Secret 유형**:
 
 * **Opaque**: 임의의 사용자 정의 데이터 (기본값)
-* **kubernetes.io/service-account-token**: 서비스 계정 토큰
+* **kubernetes.io/service-account-token**: 수동 요청하는 장기 레거시 토큰 Secret; TokenRequest/projected 토큰 권장
 * **kubernetes.io/dockercfg**: 직렬화된 \~/.dockercfg 파일
 * **kubernetes.io/dockerconfigjson**: 직렬화된 \~/.docker/config.json 파일
 * **kubernetes.io/basic-auth**: 기본 인증을 위한 자격 증명
 * **kubernetes.io/ssh-auth**: SSH 인증을 위한 자격 증명
 * **kubernetes.io/tls**: TLS 클라이언트 또는 서버를 위한 데이터
+
+data 필드는 base64 인코딩이며 암호화가 아닙니다. RBAC와 클러스터에 맞는 저장 암호화를 사용합니다. EKS는 1.28 이상에서 모든 Kubernetes API 데이터를 기본 암호화합니다. 아래 값은 설명용이며 실제 배포 시 교체해야 합니다.
 
 **Secret 예시**:
 
@@ -1174,7 +1327,7 @@ RBAC는 Kubernetes API에 대한 접근을 제어하는 메커니즘입니다. �
 **주요 RBAC 객체**:
 
 * **Role**: 네임스페이스 내에서 권한 집합을 정의
-* **ClusterRole**: 클러스터 전체에서 권한 집합을 정의
+* **ClusterRole**: 클러스터/네임스페이스 리소스의 재사용 가능한 규칙이며 실제 적용 범위는 바인딩에 따름
 * **RoleBinding**: 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
 * **ClusterRoleBinding**: 클러스터 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
 
@@ -1261,23 +1414,38 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          role: frontend
+          role: api
     ports:
     - protocol: TCP
       port: 3306
-  egress:
-  - to:
-    - podSelector:
+  - from:
+    - namespaceSelector:
         matchLabels:
-          role: monitoring
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
     ports:
     - protocol: TCP
-      port: 9090
+      port: 9104
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
-### 파드 보안 정책 (PodSecurityPolicy)
+### Pod Security Admission과 SecurityContext
 
-파드 보안 정책은 파드 생성 및 업데이트에 대한 보안 관련 조건을 정의합니다. 이는 Kubernetes 1.21부터 사용 중단되었으며, 파드 보안 표준(Pod Security Standards)으로 대체되었습니다.
+PodSecurityPolicy는 1.25에서 제거되었습니다. Pod Security Admission은 네임스페이스 레이블로 Pod Security Standards를 적용합니다. SecurityContext는 워크로드 자체 설정이며 admission 강제를 대신하지 않습니다.
 
 **파드 보안 컨텍스트 예시**:
 
@@ -1291,6 +1459,9 @@ spec:
     runAsUser: 1000
     runAsGroup: 3000
     fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - name: app
     image: myapp:1.0
@@ -1324,7 +1495,7 @@ metadata:
 
 ## Kubernetes vs Amazon EKS
 
-Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kubernetes 서비스입니다. EKS는 Kubernetes의 기본 기능을 모두 제공하면서도 AWS 서비스와의 통합과 관리 편의성을 추가로 제공합니다.
+Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kubernetes 서비스입니다. EKS는 표준 Kubernetes API와 AWS 통합을 제공합니다. 아래 비교는 일반 EC2 노드 그룹 기준이며 Auto Mode/Fargate/Hybrid Nodes는 책임과 지원 기능이 다릅니다.
 
 ### 주요 차이점
 
@@ -1332,14 +1503,14 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kuber
 | ---------- | ------------------- | -------------------------------- |
 | 컨트롤 플레인 관리 | 사용자가 직접 관리          | AWS에서 관리                         |
 | 고가용성       | 사용자가 구성 필요          | 기본 제공 (여러 가용 영역에 걸쳐 배포)          |
-| 업그레이드      | 사용자가 직접 수행          | AWS에서 관리 (사용자가 시작 가능)            |
-| 보안 패치      | 사용자가 직접 적용          | AWS에서 자동 적용                      |
+| 업그레이드      | 사용자가 직접 수행          | AWS가 컨트롤 플레인 업그레이드 관리; 노드/애드온은 별도 조정            |
+| 보안 패치      | 사용자가 직접 적용          | AWS가 컨트롤 플레인 패치; 관리형 노드 AMI 배포는 사용자 책임(Auto Mode는 별도)                      |
 | 인증         | 다양한 옵션 구성 필요        | AWS IAM과 통합                      |
 | 네트워킹       | CNI 플러그인 선택 및 구성 필요 | Amazon VPC CNI 기본 제공             |
 | 로드 밸런싱     | 수동 구성 필요            | AWS Load Balancer Controller 통합  |
 | 스토리지       | 스토리지 드라이버 구성 필요     | EBS, EFS, FSx CSI 드라이버 통합        |
 | 모니터링       | 수동 설정 필요            | CloudWatch Container Insights 통합 |
-| 비용         | 인프라 비용만 발생          | 컨트롤 플레인 비용 + 인프라 비용              |
+| 비용         | 인프라 비용 및 운영 비용          | 컨트롤 플레인 비용 + 인프라 비용              |
 
 ### EKS의 추가 기능
 
@@ -1349,7 +1520,7 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kuber
 4. **Fargate 프로필**: 서버리스 Kubernetes 파드 실행
 5. **VPC CNI 플러그인**: AWS VPC 네트워킹과의 통합
 6. **CloudWatch Container Insights**: 컨테이너 모니터링 및 로깅
-7. **AWS App Mesh**: 서비스 메시 통합
+7. **AWS App Mesh**: 기존 연동; 2026-09-30 지원 종료 예정
 8. **AWS Distro for OpenTelemetry**: 분산 추적 및 모니터링
 9. **EKS 콘솔 및 CLI**: 관리 인터페이스 제공
 10. **EKS 블루프린트**: 모범 사례 기반 클러스터 구성
@@ -1357,8 +1528,8 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kuber
 ### EKS 특화 구성 요소
 
 1. **EKS 컨트롤 플레인**: 여러 가용 영역에 걸쳐 고가용성 보장
-2. **EKS 노드 AMI**: Kubernetes에 최적화된 Amazon Linux 또는 Ubuntu AMI
-3. **EKS 관리형 노드 그룹**: 자동 확장 및 업데이트 지원
+2. **EKS 노드 AMI**: AWS 제공 AL2023/Bottlerocket/Windows 옵션 및 Ubuntu 같은 별도 호환 AMI
+3. **EKS 관리형 노드 그룹**: 노드 그룹 업데이트 지원; 워크로드 기반 노드 확장은 별도 autoscaler 필요
 4. **EKS Fargate**: 서버리스 컨테이너 실행 환경
 5. **EKS Connector**: 외부 Kubernetes 클러스터를 AWS 콘솔에 연결
 6. **EKS Anywhere**: 온프레미스 환경에서 EKS 호환 클러스터 실행
@@ -1374,12 +1545,12 @@ EKS는 다음과 같은 AWS 서비스와 통합됩니다:
 4. **AWS Load Balancer**: 애플리케이션 트래픽 분산
 5. **Amazon EBS/EFS/FSx**: 영구 스토리지
 6. **AWS CloudWatch**: 모니터링 및 로깅
-7. **AWS CloudTrail**: 감사 및 규정 준수
+7. **AWS CloudTrail**: AWS API 감사; Kubernetes API 감사에는 EKS audit 로깅 필요
 8. **AWS KMS**: 암호화 키 관리
-9. **AWS WAF**: 웹 애플리케이션 방화벽
+9. **AWS WAF**: ALB 등 지원되는 애플리케이션 진입점에 연결하며 EKS API 엔드포인트에 직접 연결하지 않음
 10. **AWS Shield**: DDoS 보호
 11. **AWS X-Ray**: 분산 추적
-12. **AWS App Mesh**: 서비스 메시
+12. **AWS App Mesh**: 2026-09-30 지원 종료 예정; 기존 워크로드 마이그레이션 필요
 13. **AWS SageMaker**: 기계 학습 워크로드
 14. **AWS Bedrock**: 생성형 AI 워크로드
 
@@ -1391,7 +1562,7 @@ Kubernetes를 시작하는 방법은 여러 가지가 있습니다. 여기서는
 
 #### Minikube
 
-Minikube는 로컬 머신에서 단일 노드 Kubernetes 클러스터를 실행하는 도구입니다.
+Minikube는 로컬 Kubernetes 클러스터를 실행하며 단일/다중 노드 구성을 지원합니다.
 
 **설치 및 시작**:
 
@@ -1405,13 +1576,13 @@ minikube start
 # 상태 확인
 minikube status
 
-# 대시보드 열기
-minikube dashboard
+# 워크로드 확인; 아래 유지 관리되는 Headlamp UI 절차 참고
+kubectl get pods -A
 ```
 
 #### Kind (Kubernetes in Docker)
 
-Kind는 Docker 컨테이너를 노드로 사용하여 로컬에서 Kubernetes 클러스터를 실행하는 도구입니다.
+Kind는 지원되는 Docker/Podman/nerdctl 제공자를 통해 컨테이너를 노드로 사용하는 로컬 클러스터 도구입니다.
 
 **설치 및 시작**:
 
@@ -1446,25 +1617,23 @@ eksctl은 EKS 클러스터를 생성하고 관리하기 위한 간단한 CLI 도
 **설치 및 클러스터 생성**:
 
 ```bash
-# eksctl 설치
-brew tap weaveworks/tap
-brew install weaveworks/tap/eksctl
-
-# AWS CLI 구성
-aws configure
-
-# EKS 클러스터 생성
+# Install a reviewed eksctl release from the official eksctl-io GitHub releases,
+# verify eksctl_checksums.txt, and place the binary in PATH.
+eksctl version
+# Use an existing short-lived AWS login/SSO profile with required permissions.
+aws sts get-caller-identity
+# This example provisions real AWS resources. Choose the intended account/Region,
+# supported EKS version, networking and IAM configuration before running it.
+: "${EKS_VERSION:?Set a version supported by EKS, not upstream latest}"
 eksctl create cluster \
   --name my-cluster \
   --region ap-northeast-2 \
+  --version "$EKS_VERSION" \
   --nodegroup-name standard-workers \
   --node-type t3.medium \
-  --nodes 3 \
-  --nodes-min 1 \
-  --nodes-max 4 \
-  --managed
-
-# 클러스터 확인
+  --node-ami-family AmazonLinux2023 \
+  --node-private-networking \
+  --nodes 3 --nodes-min 1 --nodes-max 4 --managed
 kubectl get nodes
 ```
 
@@ -1490,16 +1659,35 @@ kubectl은 Kubernetes 클러스터와 상호 작용하기 위한 명령줄 도�
 **설치**:
 
 ```bash
-# macOS
+# macOS: use a kubectl version within one minor of the API server.
 brew install kubectl
+```
 
-# Linux
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x kubectl
-sudo mv kubectl /usr/local/bin/
+```bash
+# Linux: select an explicit compatible version and architecture.
+set -euo pipefail
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.0}"
+case "$(uname -m)" in
+  x86_64) KUBECTL_ARCH=amd64 ;;
+  aarch64|arm64) KUBECTL_ARCH=arm64 ;;
+  *) echo "Choose a supported kubectl architecture" >&2; exit 1 ;;
+esac
+curl --fail --location --output kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl"
+curl --fail --location --output kubectl.sha256 "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl.sha256"
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+sudo install -m 0755 kubectl /usr/local/bin/kubectl
+```
 
-# Windows (PowerShell)
-curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
+```powershell
+$ErrorActionPreference = "Stop"
+$KubectlVersion = Read-Host "Cluster-compatible kubectl version (vX.Y.Z)"
+$KubectlArch = Read-Host "Architecture (amd64 or arm64)"
+if ($KubectlVersion -notmatch '^v\d+\.\d+\.\d+$' -or $KubectlArch -notin @('amd64','arm64')) { throw "Invalid version/architecture" }
+$BaseUrl = "https://dl.k8s.io/release/$KubectlVersion/bin/windows/$KubectlArch"
+Invoke-WebRequest "$BaseUrl/kubectl.exe" -OutFile kubectl.exe
+Invoke-WebRequest "$BaseUrl/kubectl.exe.sha256" -OutFile kubectl.exe.sha256
+if ((Get-FileHash kubectl.exe -Algorithm SHA256).Hash -ne (Get-Content kubectl.exe.sha256).Trim()) { throw "Checksum mismatch" }
+# Move the verified binary to a directory included in PATH.
 ```
 
 **기본 명령어**:
@@ -1515,10 +1703,12 @@ kubectl get nodes
 kubectl get pods --all-namespaces
 
 # 배포 생성
-kubectl create deployment nginx --image=nginx
+kubectl create deployment nginx --image=nginx:1.30.4
 
 # 서비스 노출
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
+kubectl expose deployment nginx --port=80 --type=ClusterIP
+# Run port-forward in a separate terminal; stop it when finished.
+kubectl port-forward service/nginx 8080:80
 
 # 로그 확인
 kubectl logs <pod-name>
@@ -1527,46 +1717,22 @@ kubectl logs <pod-name>
 kubectl exec -it <pod-name> -- /bin/bash
 ```
 
-### Kubernetes 대시보드 설치
+### Headlamp UI 사용
 
-Kubernetes 대시보드는 클러스터를 관리하기 위한 웹 기반 UI를 제공합니다.
-
-**설치 및 접근**:
+Kubernetes Dashboard는 보관되어 유지 관리되지 않습니다. Headlamp를 사용하고 사용자의 기존 RBAC 범위로 로그인합니다. 아래 Helm 예제는 자동 cluster-admin 바인딩을 생성하지 않으며 인증을 우회하는 서비스 계정 토큰 모드도 비활성화합니다. 필요한 경우 관리자가 별도로 최소 권한을 부여합니다.
 
 ```bash
-# 대시보드 설치
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
-
-# 관리자 사용자 생성
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: admin-user
-  namespace: kubernetes-dashboard
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: admin-user
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: admin-user
-  namespace: kubernetes-dashboard
-EOF
-
-# 토큰 가져오기
-kubectl -n kubernetes-dashboard create token admin-user
-
-# 대시보드 접근
-kubectl proxy
+helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+helm repo update headlamp
+: "${HEADLAMP_CHART_VERSION:?Set a reviewed chart version}"
+helm upgrade --install headlamp headlamp/headlamp \
+  --namespace kube-system --version "$HEADLAMP_CHART_VERSION" \
+  --set clusterRoleBinding.create=false \
+  --set config.unsafeUseServiceAccountToken=false
+kubectl -n kube-system port-forward service/headlamp 8080:80
 ```
 
-대시보드는 `http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/`에서 접근할 수 있습니다.
+로컬 http://localhost:8080에서 설치한 Headlamp 버전의 로그인 절차를 따릅니다. 공개 인그레스로 노출하려면 TLS/인증 구성을 별도로 준비해야 합니다.
 
 ## 결론
 
@@ -1645,3 +1811,29 @@ Kubernetes는 계속 발전하고 있으며, 클라우드 네이티브 애플리
 * [CNCF(Cloud Native Computing Foundation)](https://www.cncf.io/)
 * [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
 * [Kubernetes Patterns](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)
+
+## 검증 참고 자료
+
+- https://kubernetes.io/releases/version-skew-policy/
+- https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+- https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+- https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+- https://kubernetes.io/docs/reference/networking/virtual-ips/
+- https://kubernetes.io/docs/concepts/services-networking/network-policies/
+- https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
+- https://coredns.io/plugins/kubernetes/
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.2
+- https://github.com/fluent/fluent-bit/blob/v5.1.2/conf/parsers.conf
+- https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
+- https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://eksctl.io/installation/
+- https://minikube.sigs.k8s.io/docs/tutorials/multi_node/
+- https://kind.sigs.k8s.io/docs/user/quick-start/
+- https://github.com/kubernetes/dashboard/blob/master/README.md
+- https://headlamp.dev/docs/latest/installation/in-cluster/
+- https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml

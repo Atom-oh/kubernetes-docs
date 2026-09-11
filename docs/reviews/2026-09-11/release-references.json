@@ -1,0 +1,198 @@
+{
+  "checkedAt": "2026-09-11",
+  "note": "Latest GitHub release metadata is evidence, not an automatic upgrade target or compatibility matrix.",
+  "releases": [
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.37.0",
+      "publishedAt": "2026-08-26T16:29:12Z",
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0",
+      "name": "v1.37.0",
+      "prerelease": false
+    },
+    {
+      "repo": "istio/istio",
+      "tag": "1.31.0",
+      "publishedAt": "2026-08-31T15:47:13Z",
+      "url": "https://github.com/istio/istio/releases/tag/1.31.0",
+      "name": "Istio 1.31.0",
+      "prerelease": false
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.20.1",
+      "publishedAt": "2026-08-18T10:36:16Z",
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.20.1",
+      "name": "1.20.1",
+      "prerelease": false
+    },
+    {
+      "repo": "linkerd/linkerd2",
+      "tag": "edge-26.9.1",
+      "publishedAt": "2026-09-04T23:14:08Z",
+      "url": "https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1",
+      "name": "edge-26.9.1",
+      "prerelease": false
+    },
+    {
+      "repo": "kubernetes-sigs/gateway-api",
+      "tag": "v1.6.2",
+      "publishedAt": "2026-09-03T18:49:15Z",
+      "url": "https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.2",
+      "name": "v1.6.2",
+      "prerelease": false
+    },
+    {
+      "repo": "aws/karpenter-provider-aws",
+      "tag": "v1.14.1",
+      "publishedAt": "2026-08-21T22:39:31Z",
+      "url": "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1",
+      "name": "v1.14.1 (LTS)",
+      "prerelease": false
+    },
+    {
+      "repo": "kedacore/keda",
+      "tag": "v2.20.2",
+      "publishedAt": "2026-07-31T08:14:38Z",
+      "url": "https://github.com/kedacore/keda/releases/tag/v2.20.2",
+      "name": "v2.20.2",
+      "prerelease": false
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.5.2",
+      "publishedAt": "2026-08-27T09:55:47Z",
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.5.2",
+      "name": "v3.5.2",
+      "prerelease": false
+    },
+    {
+      "repo": "argoproj/argo-rollouts",
+      "tag": "v1.10.0",
+      "publishedAt": "2026-08-27T15:42:04Z",
+      "url": "https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0",
+      "name": "v1.10.0",
+      "prerelease": false
+    },
+    {
+      "repo": "prometheus/prometheus",
+      "tag": "v3.14.0",
+      "publishedAt": "2026-08-18T08:49:40Z",
+      "url": "https://github.com/prometheus/prometheus/releases/tag/v3.14.0",
+      "name": "3.14.0 / 2026-08-17",
+      "prerelease": false
+    },
+    {
+      "repo": "grafana/grafana",
+      "tag": "v13.2.1",
+      "publishedAt": "2026-09-02T07:00:31Z",
+      "url": "https://github.com/grafana/grafana/releases/tag/v13.2.1",
+      "name": "13.2.1",
+      "prerelease": false
+    },
+    {
+      "repo": "open-telemetry/opentelemetry-collector-releases",
+      "tag": "v0.160.0",
+      "publishedAt": "2026-09-02T22:47:58Z",
+      "url": "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/tag/v0.160.0",
+      "name": "v0.160.0",
+      "prerelease": false
+    },
+    {
+      "repo": "open-policy-agent/gatekeeper",
+      "tag": "v3.23.1",
+      "publishedAt": "2026-08-27T22:03:10Z",
+      "url": "https://github.com/open-policy-agent/gatekeeper/releases/tag/v3.23.1",
+      "name": "v3.23.1",
+      "prerelease": false
+    },
+    {
+      "repo": "kyverno/kyverno",
+      "tag": "v1.19.1",
+      "publishedAt": "2026-09-10T06:24:30Z",
+      "url": "https://github.com/kyverno/kyverno/releases/tag/v1.19.1",
+      "name": "v1.19.1",
+      "prerelease": false
+    },
+    {
+      "repo": "crossplane/crossplane",
+      "tag": "v2.4.0",
+      "publishedAt": "2026-08-20T14:42:33Z",
+      "url": "https://github.com/crossplane/crossplane/releases/tag/v2.4.0",
+      "name": "v2.4.0",
+      "prerelease": false
+    },
+    {
+      "repo": "loft-sh/vcluster",
+      "tag": "v0.36.1",
+      "publishedAt": "2026-08-03T12:35:44Z",
+      "url": "https://github.com/loft-sh/vcluster/releases/tag/v0.36.1",
+      "name": "v0.36.1",
+      "prerelease": false
+    },
+    {
+      "repo": "eksctl-io/eksctl",
+      "tag": "v0.230.0",
+      "publishedAt": "2026-08-14T18:42:38Z",
+      "url": "https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0",
+      "name": "eksctl 0.230.0",
+      "prerelease": false
+    },
+    {
+      "repo": "kubernetes-sigs/aws-load-balancer-controller",
+      "tag": "v3.5.0",
+      "publishedAt": "2026-08-03T22:55:57Z",
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0",
+      "name": "v3.5.0",
+      "prerelease": false
+    },
+    {
+      "repo": "aws/amazon-vpc-cni-k8s",
+      "tag": "v1.23.0",
+      "publishedAt": "2026-08-07T21:00:19Z",
+      "url": "https://github.com/aws/amazon-vpc-cni-k8s/releases/tag/v1.23.0",
+      "name": "v1.23.0",
+      "prerelease": false
+    },
+    {
+      "repo": "kubernetes-sigs/aws-efs-csi-driver",
+      "tag": "helm-chart-aws-efs-csi-driver-4.4.2",
+      "publishedAt": "2026-08-19T15:47:27Z",
+      "url": "https://github.com/kubernetes-sigs/aws-efs-csi-driver/releases/tag/helm-chart-aws-efs-csi-driver-4.4.2",
+      "name": "helm-chart-aws-efs-csi-driver-4.4.2",
+      "prerelease": false
+    },
+    {
+      "repo": "kubernetes-sigs/aws-ebs-csi-driver",
+      "tag": "v1.66.0",
+      "publishedAt": "2026-09-10T14:46:34Z",
+      "url": "https://github.com/kubernetes-sigs/aws-ebs-csi-driver/releases/tag/v1.66.0",
+      "name": "v1.66.0",
+      "prerelease": false
+    },
+    {
+      "repo": "kubernetes-sigs/metrics-server",
+      "tag": "v0.9.0",
+      "publishedAt": "2026-07-13T12:15:05Z",
+      "url": "https://github.com/kubernetes-sigs/metrics-server/releases/tag/v0.9.0",
+      "name": "v0.9.0",
+      "prerelease": false
+    },
+    {
+      "repo": "cert-manager/cert-manager",
+      "tag": "v1.21.1",
+      "publishedAt": "2026-07-29T15:36:11Z",
+      "url": "https://github.com/cert-manager/cert-manager/releases/tag/v1.21.1",
+      "name": "v1.21.1",
+      "prerelease": false
+    },
+    {
+      "repo": "knative/serving",
+      "tag": "knative-v1.23.0",
+      "publishedAt": "2026-07-29T09:58:30Z",
+      "url": "https://github.com/knative/serving/releases/tag/knative-v1.23.0",
+      "name": "v1.23.0",
+      "prerelease": false
+    }
+  ]
+}

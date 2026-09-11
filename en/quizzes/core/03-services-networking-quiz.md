@@ -36,7 +36,7 @@ ClusterIP is the default service type in Kubernetes, providing an IP address tha
 Ingress is an API object that exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Ingress provides load balancing, SSL termination, and name-based virtual hosting.
 </details>
 
-3. Which of the following is NOT a method provided by Kubernetes for service discovery?
+3. Which two are the built-in Kubernetes Service discovery mechanisms? (Select two.)
    - A) Environment variables
    - B) DNS
    - C) Service Mesh
@@ -46,7 +46,7 @@ Ingress is an API object that exposes HTTP and HTTPS routes from outside the clu
 
 <summary>Show Answer</summary>
 
-**Answer: D) ConfigMap**
+**Answer: A) Environment variables and B) DNS**
 
 **Explanation:**
 Kubernetes provides two main service discovery methods: environment variables and DNS. ConfigMap is used to store configuration data and is not a service discovery mechanism.
@@ -172,10 +172,10 @@ ExternalName services provide an alias for an external service. This service typ
 
 <summary>Show Answer</summary>
 
-**Answer: Endpoints**
+**Answer: EndpointSlice**
 
 **Explanation:**
-Endpoints is a resource that stores the IP addresses and ports of pods pointed to by a service. When there are pods matching the service's selector, Kubernetes automatically creates and manages endpoint objects.
+EndpointSlices store Service backend addresses and ports. The controller manages them for selector-based Services. Legacy Endpoints serve a similar purpose but are deprecated since v1.33.
 </details>
 
 2. What is the name of the ingress controller used to provision Application Load Balancers in AWS EKS?
@@ -184,10 +184,10 @@ Endpoints is a resource that stores the IP addresses and ports of pods pointed t
 
 <summary>Show Answer</summary>
 
-**Answer: AWS ALB Ingress Controller**
+**Answer: AWS Load Balancer Controller**
 
 **Explanation:**
-AWS ALB Ingress Controller is an ingress controller used to provision Application Load Balancers in AWS EKS. This controller converts Kubernetes Ingress resources into AWS ALBs.
+AWS Load Balancer Controller is an ingress controller used to provision Application Load Balancers in AWS EKS. This controller converts Kubernetes Ingress resources into AWS ALBs.
 </details>
 
 3. What is the name of the pod DNS policy in Kubernetes that inherits the DNS settings of the node where the pod is running?
@@ -244,7 +244,7 @@ A service mesh is an infrastructure layer that manages communication between mic
 
 3. **Traffic management**:
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -268,7 +268,7 @@ spec:
 
 4. **Security policies**:
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: httpbin
@@ -323,47 +323,19 @@ Service meshes abstract the complexity of inter-service communication in complex
 
 4. **Observability**: eBPF can collect detailed metrics about network flows, useful for troubleshooting and performance optimization.
 
-5. **L7 awareness**: eBPF can recognize up to the application layer (L7), allowing fine-grained policies for protocols such as HTTP, gRPC, and Kafka.
+5. **L7 policy**: Cilium combines eBPF with userspace Envoy for HTTP/L7 inspection; this work is not entirely in kernel eBPF.
 
 **Ways to Optimize Cilium in AWS EKS**:
 
-1. **Enable AWS ENI mode**:
-```bash
-helm install cilium cilium/cilium \
-   --namespace kube-system \
-   --set eni.enabled=true \
-   --set ipam.mode=eni \
-   --set egressMasqueradeInterfaces=eth0 \
-   --set tunnel=disabled
-```
-This configuration leverages AWS Elastic Network Interfaces (ENI) to assign VPC-native IP addresses to pods and provides VPC-native networking without overlay networks.
+1. **Select IPAM and routing deliberately**: AWS VPC CNI chaining keeps `aws-node`; Cilium ENI mode requires EC2 permissions and a controlled transition of ENI ownership. Use the chapter's reviewed Helm values and official installation procedure.
 
-2. **Node group optimization**:
-  - Choose instance types that provide sufficient ENIs and IP addresses (e.g., m5.large or larger)
-  - Configure appropriate maximum pod count (varies by instance type)
+2. **Size node networking**: Check actual instance ENI/IP limits, subnet capacity, and Pod density; an instance family name alone is not sufficient.
 
-3. **Performance optimization**:
-```bash
-helm install cilium cilium/cilium \
-   --namespace kube-system \
-   --set eni.enabled=true \
-   --set ipam.mode=eni \
-   --set tunnel=disabled \
-   --set bpf.masquerade=true \
-   --set kubeProxyReplacement=strict \
-   --set loadBalancer.mode=dsr \
-   --set loadBalancer.acceleration=native
-```
-This configuration replaces kube-proxy and enables Direct Server Return (DSR) mode and native load balancing acceleration.
+3. **Measure before tuning**: Current Helm values use `routingMode: native` and boolean `kubeProxyReplacement: true` where appropriate, not removed `tunnel=disabled` or `kubeProxyReplacement=strict`. Replacement also needs API-server connectivity and a migration plan. DSR and XDP require compatible AWS networking, NIC/kernel support, and measured validation; enabling every setting is not a universal optimization recipe.
 
 4. **Enable Hubble**:
 ```bash
-helm upgrade cilium cilium/cilium \
-   --namespace kube-system \
-   --reuse-values \
-   --set hubble.enabled=true \
-   --set hubble.relay.enabled=true \
-   --set hubble.ui.enabled=true
+cilium hubble enable --ui
 ```
 Enable Hubble to provide network flow monitoring and troubleshooting capabilities.
 

@@ -9,9 +9,9 @@
 
 **답변:**
 1. **선언적 구성**: 시스템의 원하는 상태를 코드로 정의
-2. **버전 제어**: 모든 변경 사항을 Git에서 추적
-3. **자동화된 동기화**: 저장소와 실행 환경 간의 차이를 자동으로 조정
-4. **자체 치유**: 시스템이 원하는 상태로 자동 복구
+2. **버전 관리와 불변성**: 원하는 상태의 버전·전체 이력·불변성을 보존
+3. **자동 Pull**: 에이전트가 소스에서 원하는 상태 선언을 자동으로 가져옴
+4. **지속적 조정**: 실제 상태를 관찰하고 원하는 상태 적용을 지속적으로 시도
 
 이러한 원칙들은 GitOps가 단순한 배포 도구를 넘어서 전체 운영 모델로 작동할 수 있게 합니다.
 </details>
@@ -25,10 +25,10 @@
 - **API Server**: REST API 및 웹 UI 제공, 인증 및 권한 관리
 - **Repository Server**: Git 저장소 연결 및 매니페스트 생성
 - **Application Controller**: 애플리케이션 상태 모니터링 및 동기화 수행
-- **Redis**: 캐싱 및 세션 저장소
+- **Redis**: 재구성 가능한 캐시
 - **Dex**: OIDC 인증 서버 (선택사항)
 
-각 구성 요소는 독립적으로 확장 가능하며, 고가용성 구성을 지원합니다.
+구성 요소별 확장 방식이 다릅니다. Application Controller는 shard를 나누고, ApplicationSet은 leader election을 사용합니다. 번들 Dex는 in-memory 저장소이므로 replica만 늘리는 방식이 안전하지 않습니다.
 </details>
 
 ## 문제 3: Application 리소스
@@ -84,7 +84,7 @@ syncPolicy:
 **수동 동기화 (Manual Sync):**
 - 사용자가 명시적으로 동기화 실행
 - 변경 사항을 검토한 후 적용
-- 더 안전하지만 운영 오버헤드 증가
+- 검토·승인 절차와 운영 부담은 별도로 설계해야 함
 </details>
 
 ## 문제 5: ApplicationSet
@@ -109,19 +109,30 @@ syncPolicy:
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: cluster-apps
+  name: demo-cluster-apps
+  namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
-  - clusters: {}
+  - clusters:
+      selector:
+        matchLabels:
+          environment: demo
   template:
     metadata:
-      name: '{{name}}-app'
+      name: '{{.nameNormalized}}-guestbook'
     spec:
+      project: default
       source:
-        repoURL: https://github.com/example/apps
-        path: '{{name}}'
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: guestbook
       destination:
-        server: '{{server}}'
+        server: '{{.server}}'
+        namespace: guestbook
+      syncPolicy:
+        syncOptions: [CreateNamespace=true]
 ```
 </details>
 
@@ -133,15 +144,15 @@ spec:
 **답변:**
 1. **RBAC 구성**:
    ```yaml
-   policy.default: role:readonly
+   policy.default: role:authenticated
    policy.csv: |
-     p, role:admin, applications, *, */*, allow
      p, role:dev, applications, get, dev/*, allow
+     p, role:dev, projects, get, dev, allow
      g, dev-team, role:dev
    ```
 
 2. **SSO 통합**:
-   - OIDC, SAML, LDAP 연동
+   - OIDC 직접 연동 또는 Dex 등 지원 커넥터를 통한 다른 IdP 연동
    - 중앙 집중식 인증 관리
 
 3. **네트워크 보안**:
@@ -152,7 +163,7 @@ spec:
 4. **시크릿 관리**:
    - External Secrets Operator 사용
    - Sealed Secrets 또는 Helm Secrets
-   - 민감한 정보의 Git 저장소 분리
+   - 평문 시크릿을 Git에서 제외하고 외부 Secret 저장소 또는 적절한 암호화·키 관리를 사용
 
 5. **감사 로깅**:
    - 모든 변경 사항 추적
@@ -207,13 +218,13 @@ spec:
    ```bash
    # 저장소 접근 권한 확인
    argocd repo list
-   argocd repo get <repo-url>
+   argocd repo get "$REPO_URL"
    ```
 
 2. **매니페스트 유효성 검증**:
    ```bash
    # 로컬에서 매니페스트 검증
-   kubectl apply --dry-run=client -f manifests/
+   kubectl --context "$TARGET_CONTEXT" apply --server-side --dry-run=server -f manifests/
    ```
 
 3. **동기화 정책 확인**:
@@ -224,8 +235,8 @@ spec:
 4. **리소스 상태 분석**:
    ```bash
    # 애플리케이션 상세 정보 확인
-   argocd app get <app-name>
-   argocd app diff <app-name>
+   argocd app get "$APP_NAME"
+   argocd app diff "$APP_NAME"
    ```
 
 5. **로그 확인**:
@@ -236,14 +247,14 @@ spec:
 
 6. **수동 동기화 시도**:
    ```bash
-   argocd app sync <app-name> --prune
+   argocd app sync "$APP_NAME" --dry-run
    ```
 </details>
 
-## 문제 9: 최신 GitOps 트렌드
+## 문제 9: GitOps 확장 운영 패턴
 
 <details>
-<summary>2025년 GitOps 영역의 주요 트렌드는?</summary>
+<summary>가이드에서 다루는 GitOps 확장 운영 패턴은?</summary>
 
 **답변:**
 1. **멀티 클러스터 GitOps**:
@@ -274,23 +285,26 @@ spec:
 1. **IAM 권한 설정**:
    ```yaml
    # IRSA (IAM Roles for Service Accounts) 구성
-   serviceAccount:
-     annotations:
-       eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/argocd-role
+   controller:
+     serviceAccount:
+       annotations:
+         eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-Management
    ```
 
 2. **ALB Ingress 구성**:
    ```yaml
-   annotations:
-     kubernetes.io/ingress.class: alb
-     alb.ingress.kubernetes.io/scheme: internet-facing
-     alb.ingress.kubernetes.io/target-type: ip
+   metadata:
+     annotations:
+       alb.ingress.kubernetes.io/scheme: internal
+       alb.ingress.kubernetes.io/target-type: ip
+   spec:
+     ingressClassName: alb
    ```
 
 3. **EKS 클러스터 등록**:
    ```bash
    # EKS 클러스터를 ArgoCD에 등록
-   argocd cluster add arn:aws:eks:region:account:cluster/cluster-name
+   argocd cluster add "$TARGET_CONTEXT"
    ```
 
 4. **ECR 통합**:
@@ -310,7 +324,10 @@ spec:
 ---
 
 **점수 계산:**
-- 8-10개 정답: 우수 (ArgoCD 전문가 수준)
+- 8-10개 정답: 이 퀴즈의 핵심 개념 이해
 - 6-7개 정답: 양호 (추가 학습 권장)
 - 4-5개 정답: 보통 (기본 개념 복습 필요)
-- 0-3개 정답: 미흡 (전체 내용 재학습 필요)
+- 0-3개 정답: 기본 개념 복습 후 실습 권장
+
+
+예제의 `REPO_URL`, `APP_NAME`, `TARGET_CONTEXT`는 실제 값으로 설정합니다. `TARGET_CONTEXT`는 kubeconfig context이며 EKS 기본 context 이름이 ARN인 경우도 있습니다. `cluster add`의 대상 RBAC 변경과 sync/prune의 차이를 확인합니다. 위 dry run은 변경 검토용이고, `--prune`은 삭제를 포함하므로 별도 확인 후 선택합니다. IRSA annotation만으로 신뢰 정책·EKS Access Entry가 구성되지 않으며, ALB에는 인증서·TLS·접근 경로도 필요합니다. ApplicationSet의 `environment: demo`는 등록된 클러스터 Secret의 라벨입니다. 기본 `role:authenticated`에는 전역 readonly 권한을 추가하지 않으며 `dev-team`에 필요한 범위만 부여합니다.

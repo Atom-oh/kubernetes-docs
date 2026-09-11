@@ -1,28 +1,28 @@
 # Network Fundamentals Part 4 Quiz — The Journey and the Cloud
 
-> **Last Updated**: August 28, 2026
+> **Last Updated**: September 11, 2026
 
 Tests your understanding of a request's full journey and the cloud/Kubernetes mapping.
 
 ## Multiple Choice Questions
 
-1. Which is the correct order of protocol operations when visiting `https://example.com`?
+1. For a new HTTPS connection, which is the correct conceptual dependency order (with caches and existing connections excluded)?
    - A) TLS → DNS → ARP → TCP → HTTP
-   - B) DNS lookup → gateway ARP → IP routing/NAT → TCP/QUIC+TLS connection → HTTP request
+   - B) Resolve the server address → use link/IP connectivity → TCP+TLS or QUIC handshake → HTTP request
    - C) ARP → TLS → DNS → NAT → HTTP
    - D) TCP connection → DNS lookup → TLS → routing → HTTP
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) DNS lookup → gateway ARP → IP routing/NAT → TCP/QUIC+TLS connection → HTTP request**
+**Answer: B) Resolve the server address → use link/IP connectivity → TCP+TLS or QUIC handshake → HTTP request**
 
 **Explanation:**
-You need the destination IP before you can build packets (DNS), the gateway MAC before you can send frames (ARP), and only after routing and NAT reach the peer can the transport connection and encryption (TCP/QUIC+TLS) be established — with HTTP flowing on top. Lower layers must work before upper layers can exist.
+This is a dependency summary, not a packet trace. DNS messages already use link/IP connectivity, and ARP or IPv6 Neighbor Discovery may occur during DNS or later traffic. NAT is optional and routing applies to every relevant packet. HTTP/3 uses QUIC with TLS1.3 integrated; HTTP/1.1 and HTTP/2 commonly use TCP with a separate TLS handshake for HTTPS.
 
 </details>
 
-2. Which correctly pairs the Kubernetes component that translates a Service's ClusterIP into real pod IPs with its traditional networking counterpart?
+2. In a cluster using kube-proxy, which pairing describes ordinary ClusterIP Service forwarding?
    - A) CoreDNS — DHCP
    - B) kube-proxy — NAT + L4 load balancing
    - C) CNI plugin — TLS termination
@@ -34,23 +34,23 @@ You need the destination IP before you can build packets (DNS), the gateway MAC 
 **Answer: B) kube-proxy — NAT + L4 load balancing**
 
 **Explanation:**
-kube-proxy uses iptables/IPVS (or eBPF depending on the CNI) rules to translate the virtual ClusterIP into real pod IPs and spread traffic across pods — traditionally, a combination of NAT and L4 load balancing. CoreDNS maps to DNS, the CNI's IPAM to DHCP/IP assignment, and NetworkPolicy to firewall rules.
+On Linux, kube-proxy programs iptables or nftables; its IPVS mode is deprecated since Kubernetes1.35. An eBPF-based Service implementation can replace kube-proxy, but is not a kube-proxy eBPF mode. Service/EndpointSlice state supplies eligible endpoints. Headless Services do not use a ClusterIP, and NetworkPolicy needs a supporting implementation.
 
 </details>
 
-3. For an EKS workload with heavy outbound traffic, what is the standard design for cutting NAT Gateway costs?
+3. Which option can reduce NAT Gateway processing for supported AWS service traffic, after checking endpoint dependencies and total cost?
    - A) Consolidate to one NAT Gateway per region
-   - B) Route AWS service traffic (S3, ECR, …) through VPC endpoints so it bypasses the NAT Gateway
+   - B) Use suitable VPC endpoints for supported service traffic, with the required DNS, routes and access policies
    - C) Give every pod a public IP
    - D) Disable IPv6
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Route AWS service traffic (S3, ECR, …) through VPC endpoints so it bypasses the NAT Gateway**
+**Answer: B) Use suitable VPC endpoints for supported service traffic, with the required DNS, routes and access policies**
 
 **Explanation:**
-NAT Gateway bills by data processed, so redirecting high-volume AWS service paths like S3 and ECR through VPC endpoints (gateway/interface) cuts costs substantially and reduces port-exhaustion risk. IP address planning, the outbound path, and the encryption termination point are the three decisions to settle early in design.
+Endpoints can remove matching service traffic from the NAT path, but interface endpoints have hourly/data charges and topology matters. S3/DynamoDB gateway endpoints have no additional endpoint charge. Private ECR image pulls commonly need ecr.api and ecr.dkr interface endpoints plus an S3 path, private DNS and appropriate access. Pull-through-cache first pulls or external Windows layers can still need internet access. Calculate total cost and preserve required egress; savings and elimination of port exhaustion are not universal guarantees.
 
 </details>
 

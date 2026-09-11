@@ -9,20 +9,10 @@
     "animation": "trace",
     "viewBox": [
       1160,
-      700
+      660
     ],
     "legend": {
-      "entries": {
-        "external": {
-          "label": "Source (Source CRD)"
-        },
-        "backend": {
-          "label": "FluxCD controllers"
-        },
-        "cloud": {
-          "label": "Cluster resources"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -52,14 +42,16 @@
         "id": "automation",
         "label": "Notifications and image automation",
         "focus": [
-          "notification",
+          "image-registry",
+          "reflector",
           "image",
           "git",
+          "notification",
           "source",
           "kustomize",
           "helmctl"
         ],
-        "note": "The Notification Controller handles events and Image Automation commits new image tags to Git."
+        "note": "Events reach Notification. Reflector selects images; Automation edits marked YAML on a push branch. PR merging is separate."
       }
     ]
   },
@@ -67,8 +59,8 @@
     {
       "id": "git",
       "type": "external",
-      "label": "GitRepository",
-      "sublabel": "Git branch / tag",
+      "label": "Git repository",
+      "sublabel": "GitRepository source",
       "pos": [
         80,
         80
@@ -81,8 +73,8 @@
     {
       "id": "helm",
       "type": "external",
-      "label": "HelmRepository",
-      "sublabel": "Helm chart repository",
+      "label": "Helm repository",
+      "sublabel": "HelmRepository source",
       "pos": [
         340,
         80
@@ -95,8 +87,8 @@
     {
       "id": "oci",
       "type": "external",
-      "label": "OCIRepository",
-      "sublabel": "OCI registry",
+      "label": "OCI artifacts",
+      "sublabel": "OCIRepository source",
       "pos": [
         600,
         80
@@ -109,8 +101,8 @@
     {
       "id": "bucket",
       "type": "external",
-      "label": "Bucket",
-      "sublabel": "S3-compatible storage",
+      "label": "Object storage",
+      "sublabel": "Bucket source",
       "pos": [
         860,
         80
@@ -124,7 +116,7 @@
       "id": "image",
       "type": "backend",
       "label": "Image Automation Controller",
-      "sublabel": "Image tag updates",
+      "sublabel": "optional · edits marked fields",
       "pos": [
         60,
         240
@@ -180,7 +172,7 @@
       "id": "notification",
       "type": "backend",
       "label": "Notification Controller",
-      "sublabel": "Inbound / outbound events",
+      "sublabel": "events / Receivers",
       "pos": [
         560,
         400
@@ -203,12 +195,40 @@
         230,
         60
       ]
+    },
+    {
+      "id": "reflector",
+      "type": "backend",
+      "label": "Image Reflector Controller",
+      "sublabel": "optional · tags and policy",
+      "pos": [
+        70,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "image-registry",
+      "type": "external",
+      "label": "Image registry",
+      "sublabel": "ImageRepository",
+      "pos": [
+        70,
+        560
+      ],
+      "size": [
+        200,
+        60
+      ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
-      "label": "Git repository (sources)",
+      "label": "External sources",
       "wraps": [
         "git",
         "helm",
@@ -224,12 +244,13 @@
         "source",
         "kustomize",
         "helmctl",
-        "notification"
+        "notification",
+        "reflector"
       ]
     },
     {
       "kind": "region",
-      "label": "Kubernetes cluster",
+      "label": "Destination resources",
       "wraps": [
         "cluster"
       ]
@@ -301,35 +322,39 @@
       "toSide": "top"
     },
     {
-      "id": "notification-source",
-      "from": "notification",
-      "to": "source",
-      "label": "Events / alerts",
+      "id": "source-events",
+      "from": "source",
+      "to": "notification",
+      "label": "events",
       "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        660,
+        380
+      ]
     },
     {
-      "id": "notification-kustomize",
-      "from": "notification",
-      "to": "kustomize",
-      "variant": "dashed",
-      "fromSide": "left",
-      "toSide": "right"
-    },
-    {
-      "id": "notification-helmctl",
-      "from": "notification",
-      "to": "helmctl",
+      "id": "kustomize-events",
+      "from": "kustomize",
+      "to": "notification",
       "variant": "dashed",
       "fromSide": "right",
       "toSide": "left"
     },
     {
+      "id": "helmctl-events",
+      "from": "helmctl",
+      "to": "notification",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
       "id": "image-git",
       "from": "image",
       "to": "git",
-      "label": "Commit new image tag",
+      "label": "push branch",
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "bottom",
@@ -337,6 +362,24 @@
         170,
         188
       ]
+    },
+    {
+      "id": "registry-reflector",
+      "from": "image-registry",
+      "to": "reflector",
+      "label": "tags / digest",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "reflector-automation",
+      "from": "reflector",
+      "to": "image",
+      "label": "ImagePolicy",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
     }
   ]
 }
