@@ -13,7 +13,7 @@
     "istio-observability",
     "istio-resilience"
   ],
-  "reviewedDocuments": 124,
+  "reviewedDocuments": 128,
   "totalDocuments": 170,
   "activeBatch": "mesh-linkerd",
   "pendingGroups": {
@@ -23,7 +23,6 @@
       "en/quizzes/service-mesh/cilium-service-mesh/observability.md",
       "en/quizzes/service-mesh/cilium-service-mesh/security.md",
       "en/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
-      "en/quizzes/service-mesh/linkerd/architecture.md",
       "en/quizzes/service-mesh/linkerd/multi-cluster.md",
       "en/quizzes/service-mesh/linkerd/observability.md",
       "en/quizzes/service-mesh/linkerd/security.md",
@@ -33,7 +32,6 @@
       "ko/quizzes/service-mesh/cilium-service-mesh/observability.md",
       "ko/quizzes/service-mesh/cilium-service-mesh/security.md",
       "ko/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
-      "ko/quizzes/service-mesh/linkerd/architecture.md",
       "ko/quizzes/service-mesh/linkerd/multi-cluster.md",
       "ko/quizzes/service-mesh/linkerd/observability.md",
       "ko/quizzes/service-mesh/linkerd/security.md",
@@ -47,7 +45,6 @@
       "en/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
       "en/service-mesh/cilium-service-mesh/06-best-practices.md",
       "en/service-mesh/cilium-service-mesh/README.md",
-      "en/service-mesh/linkerd/02-architecture.md",
       "en/service-mesh/linkerd/03-traffic-management.md",
       "en/service-mesh/linkerd/04-security.md",
       "en/service-mesh/linkerd/05-observability.md",
@@ -60,7 +57,6 @@
       "ko/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
       "ko/service-mesh/cilium-service-mesh/06-best-practices.md",
       "ko/service-mesh/cilium-service-mesh/README.md",
-      "ko/service-mesh/linkerd/02-architecture.md",
       "ko/service-mesh/linkerd/03-traffic-management.md",
       "ko/service-mesh/linkerd/04-security.md",
       "ko/service-mesh/linkerd/05-observability.md",
@@ -69,7 +65,7 @@
     ]
   },
   "instructions": "Sequential batches, full-file reads; source-backed fixes; no delegation/commits/provisioning; update each per-document evidence array incrementally.",
-  "lastReviewed": "ko/quizzes/service-mesh/linkerd/installation.md",
+  "lastReviewed": "ko/quizzes/service-mesh/linkerd/architecture.md",
   "parentLinkReports": [
     "/tmp/kubernetes-docs-full-review/internal-main-links.log",
     "docs/reviews/2026-09-11/external-links.json",

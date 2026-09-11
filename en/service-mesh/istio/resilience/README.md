@@ -63,7 +63,7 @@ Ejection is local to each observing proxy, not deletion of a Pod or a mesh-wide 
 Limits request rate to protect services from overload.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit
@@ -496,7 +496,7 @@ spec:
     retries:
       attempts: 0
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit

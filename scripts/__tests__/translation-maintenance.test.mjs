@@ -84,3 +84,26 @@ test('translation validation rejects changed code and link targets even when cou
     assert.throws(() => execFileSync('python3', [validator, src, dst], { stdio: 'pipe' }))
   } finally { fs.rmSync(root, { recursive: true, force: true }) }
 })
+
+test('image path repair changes only link destinations, preserving repeated paths in inline code and labels', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-target-spans-'))
+  try {
+    for (const directory of ['en/.gitbook/assets', 'en/topic', 'jp/topic']) fs.mkdirSync(path.join(root, directory), { recursive: true })
+    fs.writeFileSync(path.join(root, 'en/.gitbook/assets/diagram.png'), 'image')
+    fs.writeFileSync(path.join(root, 'en/topic/page.md'), '![Diagram](../.gitbook/assets/diagram.png)\n')
+    const translated = [
+      '`../../.gitbook/assets/diagram.png` ![../../.gitbook/assets/diagram.png](../../.gitbook/assets/diagram.png "../../.gitbook/assets/diagram.png") ![Again](../../.gitbook/assets/diagram.png)',
+      '<img alt="../../.gitbook/assets/diagram.png" src="../../.gitbook/assets/diagram.png">',
+      '[../../.gitbook/assets/diagram.png]: <../../.gitbook/assets/diagram.png>'
+    ].join('\n')
+    fs.writeFileSync(path.join(root, 'jp/topic/page.md'), translated)
+    const result = syncTranslatedAssets(root)
+    assert.equal(result.repairedLinks.length, 4)
+    assert.deepEqual(result.unresolved, [])
+    assert.equal(fs.readFileSync(path.join(root, 'jp/topic/page.md'), 'utf8'), [
+      '`../../.gitbook/assets/diagram.png` ![../../.gitbook/assets/diagram.png](../.gitbook/assets/diagram.png "../../.gitbook/assets/diagram.png") ![Again](../.gitbook/assets/diagram.png)',
+      '<img alt="../../.gitbook/assets/diagram.png" src="../.gitbook/assets/diagram.png">',
+      '[../../.gitbook/assets/diagram.png]: <../.gitbook/assets/diagram.png>'
+    ].join('\n'))
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
+})

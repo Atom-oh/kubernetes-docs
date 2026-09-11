@@ -79,7 +79,7 @@ Envoy 프록시 구성을 직접 커스터마이즈합니다.
 
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: custom-header

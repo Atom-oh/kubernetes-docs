@@ -5,14 +5,14 @@
   "state": "active; original sequential scope retained",
   "coverage": {
     "serviceMeshInventory": 170,
-    "fullyRead": 124,
+    "fullyRead": 128,
     "fixedAndValidated": 124,
-    "fullyReadPendingValidation": 0,
-    "serviceMeshUnread": 46,
+    "fullyReadPendingValidation": 4,
+    "serviceMeshUnread": 42,
     "networkingQueued": 108,
     "observabilityAndLabsQueued": 116,
     "totalAssignedMarkdownInventory": 394,
-    "totalUnreadInventory": 270
+    "totalUnreadInventory": 266
   },
   "completedBatches": [
     "istio-foundation (16)",
@@ -33,8 +33,8 @@
     "ko/quizzes/service-mesh/linkerd/architecture.md"
   ],
   "currentWork": [
-    "Linkerd installation guides/quizzes4complete;124fullyread/fixed overall.14Helm render cases,26Bashblocks/language,12quizanswers/language and clean fulltests110/110passed.",
-    "Next: Linkerd architecture guide/quiz pair, then traffic/security/observability/multicluster/best-practices.22Linkerd and24Cilium documents remain unread before networking108 andobservability/labs116."
+    "Linkerd architecture guides552lines each andquiz209lines each fully read;128fullread/124fixed. No editsyet. CurrentprimaryAPI/identity/renewal sources being verified and22figures prepared for visual review.",
+    "Correct root/issuer signing, ConfigMap/Secret scheme, DNS-vs-SPIFFE identity, unsafe iptables/manual injection, API versions and unsupported benchmark/rank claims; preserve valid figures with precise scope."
   ],
   "nextSteps": [
     "ReviewLinkerd28sequentiallyandCilium24.",
@@ -474,7 +474,13 @@
     ],
     "linkerdFinalAdjustmentWarning": "Published guide has final EN spacing and concrete debug Pod variables beyond writers; prefer repository files.",
     "linkerdInstallationValidation": "/tmp/mesh-linkerd-validation/installation-final-report.json",
-    "linkerdInstallFinalWarning": "Published guides contain final spacing, concrete debugPod variables, Identity/log suppression explanations, Smallstep canonical link and legacy/migration notes beyond writers. Do not blindly rerun writers."
+    "linkerdInstallFinalWarning": "Published guides contain final spacing, concrete debugPod variables, Identity/log suppression explanations, Smallstep canonical link and legacy/migration notes beyond writers. Do not blindly rerun writers.",
+    "linkerdArchitectureOriginals": [
+      "/tmp/mesh-linkerd-architecture-original-en.md",
+      "/tmp/mesh-linkerd-architecture-original-ko.md",
+      "/tmp/mesh-linkerd-architecture-quiz-original-en.md",
+      "/tmp/mesh-linkerd-architecture-quiz-original-ko.md"
+    ]
   },
   "scopeRules": [
     "Only assigned ko/en docs/quizzes/labs and review evidence; the single shared test exception is explicit.",

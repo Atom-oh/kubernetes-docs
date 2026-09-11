@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
@@ -131,6 +131,27 @@ function assertPostRoutesDoNotRetryReset(routes) {
 }
 
 for (const locale of ['ko', 'en']) {
+  test(`${locale}: EnvoyFilter examples use the API version served by Istio`, async () => {
+    let checked = 0
+    for (const directory of ['service-mesh/istio', 'quizzes/service-mesh/istio']) {
+      const files = await readdir(path.join(root, locale, directory), { recursive: true })
+      for (const file of files.filter(file => file.endsWith('.md'))) {
+        const relative = path.join(directory, file)
+        const markdown = await read(locale, relative)
+        for (const fence of markdown.matchAll(/^```ya?ml\s*\n([\s\S]*?)^```\s*$/gm)) {
+          for (const document of fence[1].split(/^---\s*$/m)) {
+            if (!/^kind:\s*EnvoyFilter\s*$/m.test(document)) continue
+            // Unlike VirtualService, EnvoyFilter still serves only v1alpha3
+            // in the official Istio 1.31.0 CRD.
+            assert.match(document, /^apiVersion:\s*networking\.istio\.io\/v1alpha3\s*$/m, relative)
+            checked += 1
+          }
+        }
+      }
+    }
+    assert.ok(checked > 0, 'expected EnvoyFilter examples to be checked')
+  })
+
   test(`${locale}: write routes explicitly disable mesh retries`, async () => {
     const retry = await read(
       locale,

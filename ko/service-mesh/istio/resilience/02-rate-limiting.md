@@ -76,7 +76,7 @@ Rate Limiting은 다음과 같은 상황에서 필요합니다:
 ### 기본 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -143,7 +143,7 @@ token_bucket:
 ### 경로별 Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: path-based-ratelimit
@@ -220,7 +220,7 @@ spec:
 ### 헤더 기반 Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: user-based-ratelimit
@@ -421,7 +421,7 @@ spec:
 #### 2. EnvoyFilter로 글로벌 Rate Limiting 구성
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-ratelimit
@@ -463,7 +463,7 @@ Filter와 같은 전용 gateway에 action 집합을 한 번 적용합니다. 의
 
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-ratelimit-actions
@@ -530,7 +530,7 @@ Filter는 Istio가 생성한 gRPC cluster를 사용하므로 일반 discovery·m
 ### 예제 1: API Gateway Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: api-gateway-ratelimit
@@ -620,7 +620,7 @@ spec:
 ### 예제 2: 사용자 등급별 Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: tiered-ratelimit
@@ -711,7 +711,7 @@ spec:
 ### 예제 3: 외부 API 보호
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: external-api-ratelimit

@@ -79,7 +79,7 @@ Prefer supported APIs such as VirtualService headers, AuthorizationPolicy or Was
 
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: custom-header

@@ -36,19 +36,23 @@ function isLocalTarget(target) {
 export function extractLocalTargets(markdown) {
   const matches = []
   const patterns = [
-    /!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))/g,
-    /<(?:a|img)\b[^>]*?\b(?:href|src)=["']([^"']+)["'][^>]*>/gi,
-    /^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))/gm
+    /!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))/gd,
+    /<(?:a|img)\b[^>]*?\b(?:href|src)=["']([^"']+)["'][^>]*>/gdi,
+    /^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))/gmd
   ]
 
   for (const pattern of patterns) {
     for (const match of markdown.matchAll(pattern)) {
       const target = (match[1] || match[2] || '').trim()
       if (!isLocalTarget(target)) continue
+      const group = match[1] ? 1 : 2
+      const targetStart = match.indices[group][0] + match[group].indexOf(target)
       matches.push({
         target,
         line: lineNumberAt(markdown, match.index),
-        index: match.index
+        index: match.index,
+        targetStart,
+        targetEnd: targetStart + target.length
       })
     }
   }

@@ -3,7 +3,7 @@
 This is a progress report, not a claim that the full corpus has been semantically reviewed.
 
 - Initial inventory: 2701 Markdown documents across five languages; current inventory includes 2707 after restoring deleted translations.
-- Fully read source/quiz/lab files recorded so far: 354 (348 fixed, 0 verified, 6 with follow-up).
+- Fully read source/quiz/lab files recorded so far: 364 (354 fixed, 0 verified, 10 with follow-up).
 - Source files are maintained in Korean and English; translations are checked structurally and repaired through automation.
 
 | Batch | Files recorded | Fixed | Verified | Follow-up |
@@ -25,8 +25,10 @@ This is a progress report, not a claim that the full corpus has been semanticall
 | [core-rest](batches/core-rest.json) | 20 | 20 | 0 | 0 |
 | [eks-creation-overview](batches/eks-creation-overview.json) | 2 | 2 | 0 | 0 |
 | [eks-creation-part1](batches/eks-creation-part1.json) | 4 | 4 | 0 | 0 |
-| [eks-creation-part2](batches/eks-creation-part2.json) | 4 | 2 | 0 | 2 |
+| [eks-creation-part2](batches/eks-creation-part2.json) | 4 | 4 | 0 | 0 |
+| [eks-creation-part3](batches/eks-creation-part3.json) | 2 | 0 | 0 | 2 |
 | [eks-introduction](batches/eks-introduction.json) | 4 | 4 | 0 | 0 |
+| [feature-flags](batches/feature-flags.json) | 4 | 0 | 0 | 4 |
 | [flagger](batches/flagger.json) | 4 | 4 | 0 | 0 |
 | [flux](batches/flux.json) | 4 | 4 | 0 | 0 |
 | [gitops-overviews](batches/gitops-overviews.json) | 6 | 6 | 0 | 0 |
@@ -40,7 +42,7 @@ This is a progress report, not a claim that the full corpus has been semanticall
 | [istio-traffic](batches/istio-traffic.json) | 30 | 30 | 0 | 0 |
 | [istio-troubleshooting](batches/istio-troubleshooting.json) | 2 | 2 | 0 | 0 |
 | [labs-foundations](batches/labs-foundations.json) | 14 | 14 | 0 | 0 |
-| [mesh-linkerd](batches/mesh-linkerd.json) | 6 | 2 | 0 | 4 |
+| [mesh-linkerd](batches/mesh-linkerd.json) | 10 | 6 | 0 | 4 |
 | [mesh-other-istio-overview](batches/mesh-other-istio-overview.json) | 4 | 4 | 0 | 0 |
 | [storage-database](batches/storage-database.json) | 12 | 12 | 0 | 0 |
 

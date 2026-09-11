@@ -1,0 +1,98 @@
+[
+  {
+    "path": "ko/gitops/05-feature-flags.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "sources": [
+      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
+      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
+      "https://www.cncf.io/projects/openfeature/"
+    ],
+    "findings": [
+      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
+      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
+      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
+      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
+      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
+      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
+      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
+      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+    ],
+    "validation": [
+      "Full source/quiz reads complete; no code or deployment checks yet."
+    ]
+  },
+  {
+    "path": "ko/quizzes/gitops/05-feature-flags-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "sources": [
+      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
+      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
+      "https://www.cncf.io/projects/openfeature/"
+    ],
+    "findings": [
+      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
+      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
+      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
+      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
+      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
+      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
+      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
+      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+    ],
+    "validation": [
+      "Full source/quiz reads complete; no code or deployment checks yet."
+    ]
+  },
+  {
+    "path": "en/gitops/05-feature-flags.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "sources": [
+      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
+      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
+      "https://www.cncf.io/projects/openfeature/"
+    ],
+    "findings": [
+      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
+      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
+      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
+      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
+      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
+      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
+      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
+      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+    ],
+    "validation": [
+      "Full source/quiz reads complete; no code or deployment checks yet."
+    ]
+  },
+  {
+    "path": "en/quizzes/gitops/05-feature-flags-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "sources": [
+      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
+      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
+      "https://www.cncf.io/projects/openfeature/"
+    ],
+    "findings": [
+      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
+      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
+      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
+      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
+      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
+      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
+      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
+      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+    ],
+    "validation": [
+      "Full source/quiz reads complete; no code or deployment checks yet."
+    ]
+  }
+]

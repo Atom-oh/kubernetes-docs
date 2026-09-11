@@ -82,7 +82,7 @@ Local Rate Limiting limits requests **independently at each Envoy proxy**.
 **Characteristics of Local Rate Limiting:**
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -427,7 +427,7 @@ token_bucket:
 **Complete EnvoyFilter Example:**
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -552,7 +552,7 @@ Additional requirements:
 Assume `api-gateway` is an application with an injected sidecar on HTTP8080 in `production`. This protects selected HTTP requests after they reach Envoy; it is not complete DDoS or connection/TLS protection. For an actual Istio ingress gateway, use its namespace/selector and `GATEWAY` context as in the rate-limit chapter.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: api-gateway-ratelimit
@@ -620,7 +620,7 @@ Retry-After: 1
 For different path-prefix buckets, use this **alternative**, not a second overlapping filter. The explicit descriptor generator is supported by the Envoy API pinned with Istio1.31. Missing/unmatched paths use the bounded default bucket; prefix matching includes longer paths beginning with the supplied text.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: path-based-ratelimit
@@ -1049,7 +1049,7 @@ spec:
 These are independent per-proxy buckets on HTTP8080 in `production`. Verify the tier labels and capacity; a “critical” label alone does not justify a particular rate. They do not impose a shared service/account quota or replace edge protection.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: critical-service-ratelimit
@@ -1089,7 +1089,7 @@ spec:
               numerator: 100
               denominator: HUNDRED
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: standard-service-ratelimit

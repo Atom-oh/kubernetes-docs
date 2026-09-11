@@ -63,7 +63,7 @@ Ejection은 관측 프록시별 동작이며 Pod 삭제나 메시 전체의 건�
 서비스를 과부하로부터 보호하기 위해 요청 속도를 제한합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit
@@ -496,7 +496,7 @@ spec:
     retries:
       attempts: 0
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: ratelimit

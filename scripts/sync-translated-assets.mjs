@@ -33,11 +33,12 @@ function repairImagePaths(markdown, englishFile, translatedFile, root) {
       return line
     }
     if (fence) return line
-    for (const { target } of extractLocalTargets(line)) {
+    // Work backwards so replacing a destination cannot shift earlier spans.
+    for (const { target, targetStart, targetEnd } of extractLocalTargets(line).reverse()) {
       if (!IMAGE.test(target) || resolveLocalTarget(translatedFile, target, root).some(file => fs.existsSync(file))) continue
       const replacement = canonical.get(path.basename(target.split(/[?#]/)[0]).toLowerCase())
       if (!replacement || replacement === target) continue
-      line = line.replaceAll(target, replacement)
+      line = line.slice(0, targetStart) + replacement + line.slice(targetEnd)
       changes.push({ file: path.relative(root, translatedFile), line: index + 1, from: target, to: replacement })
     }
     return line

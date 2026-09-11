@@ -97,7 +97,7 @@ EnvoyFilter의 주요 목적은 무엇인가요?
 먼저 목적에 맞는 routing·telemetry·security·extension API를 사용합니다. 해당 API로 제공되지 않는 동작이 필요하고 생성된 설정을 이해하는 경우 EnvoyFilter를 고려합니다. 다음 sidecar 전용 Lua 예제는 outbound 요청의 설명용 header를 바꿉니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: quiz-header
@@ -531,7 +531,7 @@ Image는 검증한 upstream commit 8fe6ea42와 digest로 고정하며 움직이�
 기존 service discovery/TLS 정책이 적용되도록 Istio가 생성한 gRPC cluster를 사용합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: premium-ratelimit
@@ -566,7 +566,7 @@ spec:
                 authority: ratelimit.istio-system.svc.cluster.local
             transport_api_version: V3
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: premium-ratelimit-actions

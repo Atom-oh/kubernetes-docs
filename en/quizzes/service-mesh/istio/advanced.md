@@ -97,7 +97,7 @@ What is EnvoyFilter's main purpose?
 Prefer supported routing, telemetry, security or extension APIs for the task. EnvoyFilter is appropriate when those APIs do not provide a needed supported behavior and the generated configuration is understood. For example, this sidecar-only Lua filter changes an illustrative outbound request header:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: quiz-header
@@ -531,7 +531,7 @@ The image is the verified upstream commit 8fe6ea42 with a digest, not a moving m
 Use the generated Istio gRPC cluster so the established service discovery/TLS policy applies:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: premium-ratelimit
@@ -566,7 +566,7 @@ spec:
                 authority: ratelimit.istio-system.svc.cluster.local
             transport_api_version: V3
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: premium-ratelimit-actions

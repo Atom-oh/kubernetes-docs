@@ -82,7 +82,7 @@ D. 글로벌 Rate Limiting은 외부 서비스 없이 동작한다
 **로컬 Rate Limiting의 특징:**
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -427,7 +427,7 @@ token_bucket:
 **EnvoyFilter 완전한 예제:**
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -552,7 +552,7 @@ rate(envoy_cluster_outlier_detection_ejections_enforced_total{namespace="product
 `api-gateway`가 `production`의 HTTP8080 사이드카 주입 앱이라고 가정합니다. Envoy에 도착한 HTTP 요청을 제한하며 완전한 DDoS·연결/TLS 보호가 아닙니다. 실제 Istio ingress gateway에는 rate-limit 장처럼 해당 namespace/selector·`GATEWAY` context를 사용합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: api-gateway-ratelimit
@@ -620,7 +620,7 @@ Retry-After: 1
 경로 prefix별 bucket이 필요하면 중복 filter로 추가하지 말고 다음 **대안**을 사용합니다. 명시적 descriptor 생성은 Istio1.31 고정 Envoy API가 지원합니다. 미매칭 경로는 제한된 기본 bucket을 사용하며 prefix로 시작하는 더 긴 경로도 일치합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: path-based-ratelimit
@@ -1049,7 +1049,7 @@ spec:
 `production`의 HTTP8080 프록시별 독립 bucket입니다. Tier 레이블·용량을 검증하며 “critical”이라는 이름만으로 특정률이 정당화되지는 않습니다. 서비스/계정의 공유 quota나 edge 보호 대체가 아닙니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: critical-service-ratelimit
@@ -1089,7 +1089,7 @@ spec:
               numerator: 100
               denominator: HUNDRED
 ---
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: standard-service-ratelimit

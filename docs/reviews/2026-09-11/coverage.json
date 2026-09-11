@@ -9951,12 +9951,12 @@
       "sha256": "10e64ec8768e8d9cf47db0eb0636825fa1907fe3b09f4d6643185b4a814c2e7c",
       "lines": 265,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 2,
       "linkCount": 22,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-creation-part3"
     },
     {
       "path": "en/eks/02-eks-cluster-creation-part4.md",
@@ -10287,12 +10287,12 @@
       "sha256": "a71782bf9446fb5cbfb93436192032e6ade1297298de99488d5b7918828171d1",
       "lines": 1585,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 10,
       "linkCount": 102,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "feature-flags"
     },
     {
       "path": "en/gitops/README.md",
@@ -13791,7 +13791,7 @@
       "sha256": "90fc0aa801599bbeff6e8889efeb48be92554805c4d8efe85852eb45b3e04ff4",
       "lines": 2499,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
@@ -14143,12 +14143,12 @@
       "sha256": "1da6dc6b66f0100b2d8b7de707ec05df094a7cf90ddfff22c00453e9ea2cedda",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "feature-flags"
     },
     {
       "path": "en/quizzes/gitops/argocd/01-installation-quiz.md",
@@ -16143,12 +16143,12 @@
       "sha256": "ee0a20a920501e0653b9c3a8a71e14948d1611ecbff8a258b83ebe12636fb8f7",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 14,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mesh-linkerd"
     },
     {
       "path": "en/quizzes/service-mesh/linkerd/installation.md",
@@ -16159,7 +16159,7 @@
       "sha256": "e47335456ad5896881100647e6547c1bba8760068f77ac0776e18955700bdba7",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 14,
       "structuralFindings": [],
@@ -17439,7 +17439,7 @@
       "sha256": "9bdeef194993baacb8896610ac8e4468c8ab858d9ac1739fa98d7afe7f329590",
       "lines": 1032,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 74,
       "structuralFindings": [],
@@ -17455,12 +17455,12 @@
       "sha256": "08234f614082c16929933fb3b94147215e99e3d3d19a3269f5e98df9e4dd6251",
       "lines": 553,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 11,
       "linkCount": 46,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mesh-linkerd"
     },
     {
       "path": "en/service-mesh/linkerd/03-traffic-management.md",
@@ -35671,12 +35671,12 @@
       "sha256": "c600961c9134e1352a53c5b389656e43c7bae9cc5c2880b4db0d4b69a0a504ef",
       "lines": 265,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 2,
       "linkCount": 22,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-creation-part3"
     },
     {
       "path": "ko/eks/02-eks-cluster-creation-part4.md",
@@ -36007,12 +36007,12 @@
       "sha256": "c9b4417bf7b060bef5f3e11e9e412bf0e51de57a5a6109b6cdec8a26a8ae7a87",
       "lines": 1917,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 12,
       "linkCount": 96,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "feature-flags"
     },
     {
       "path": "ko/gitops/README.md",
@@ -39511,7 +39511,7 @@
       "sha256": "5bf6ed980f6010a6c1ff4b8f150b30cbd4533f4bf1b41d464226f95bd0fd3a2c",
       "lines": 2494,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
@@ -39863,12 +39863,12 @@
       "sha256": "2b2485124c7c497c3656d05f74e3c3aca6057c5472b09274993a80eaa60efd57",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "feature-flags"
     },
     {
       "path": "ko/quizzes/gitops/argocd/01-installation-quiz.md",
@@ -41863,12 +41863,12 @@
       "sha256": "888fff5716e30601a54ed97a5d56c633b4b065810f0baae33453503dbacc44e8",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 14,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mesh-linkerd"
     },
     {
       "path": "ko/quizzes/service-mesh/linkerd/installation.md",
@@ -41879,7 +41879,7 @@
       "sha256": "ccef0429b0e15c33aaf3018d6a4044955158a1658f58d07eb0c8e9df1c760b7e",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 14,
       "structuralFindings": [],
@@ -43161,7 +43161,7 @@
       "sha256": "d24cecc5ff93971da1ff0faec53245887774f391cb7d434d43ff9ec26402a3ac",
       "lines": 1032,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 74,
       "structuralFindings": [],
@@ -43177,12 +43177,12 @@
       "sha256": "f790a7db0331a8d455decb254f73f04c3adf6e4fd6aa2651d6c7ee1fa050d494",
       "lines": 553,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 11,
       "linkCount": 46,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mesh-linkerd"
     },
     {
       "path": "ko/service-mesh/linkerd/03-traffic-management.md",

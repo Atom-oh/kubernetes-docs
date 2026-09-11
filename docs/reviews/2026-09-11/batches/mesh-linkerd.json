@@ -246,5 +246,81 @@
       "Complete209-line originals read perlocale. All12answer choices checked; keysB/B/B/C/C/C/B/B/B/B/C/A agree across languages.",
       "Aligned with nativeCLI command availability,14render cases and official documentation. Current Linkerd batch link/syntax checks and fullclean docs:test110/110passed."
     ]
+  },
+  {
+    "path": "en/service-mesh/linkerd/02-architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/linkerd/02-architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
   }
 ]

@@ -76,7 +76,7 @@ Rate Limiting is needed in the following situations:
 ### Basic Configuration
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -143,7 +143,7 @@ token_bucket:
 ### Path-Based Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: path-based-ratelimit
@@ -220,7 +220,7 @@ spec:
 ### Header-Based Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: user-based-ratelimit
@@ -421,7 +421,7 @@ spec:
 #### 2. Configure Global Rate Limiting with EnvoyFilter
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-ratelimit
@@ -463,7 +463,7 @@ Apply this action set once to the same dedicated gateway as the filter. It delib
 
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: filter-ratelimit-actions
@@ -530,7 +530,7 @@ The filter uses Istio’s generated gRPC cluster, so normal service discovery an
 ### Example 1: API Gateway Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: api-gateway-ratelimit
@@ -620,7 +620,7 @@ This local gateway example classifies path prefixes; `/protected` does not itsel
 ### Example 2: Tiered Rate Limiting by User
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: tiered-ratelimit
@@ -711,7 +711,7 @@ Enterprise/premium/free quotas below are shared per tier per configured proxy bu
 ### Example 3: External API Protection
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: external-api-ratelimit
