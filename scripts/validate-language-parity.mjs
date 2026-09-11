@@ -39,6 +39,8 @@ export function extractSummaryLinks(markdown) {
 }
 
 export function expectedQuizPath(relativePath) {
+  // Site utility, not a learning article.
+  if (relativePath === 'statistics.md') return null
   const basename = path.posix.basename(relativePath)
   if (basename === 'README.md' || basename === 'SUMMARY.md') return null
   if (QUIZ_EXEMPT_PREFIXES.some((prefix) => relativePath.startsWith(prefix))) return null

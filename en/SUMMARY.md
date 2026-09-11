@@ -5,6 +5,7 @@
 * [Introduction](README.md)
 * [Guidebook Roadmap](roadmap.md)
 * [Reading with LLMs](llm-guide.md)
+* [Visitor statistics](statistics.md)
 
 ## News
 

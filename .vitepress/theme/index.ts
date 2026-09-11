@@ -4,6 +4,7 @@ import { nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vitepress'
 import { initQuizProgress } from './quiz-progress.mjs'
 import { createDocViewTracker } from './analytics.mjs'
+import StatisticsLayout from './StatisticsLayout.vue'
 import './custom.css'
 
 declare global {
@@ -27,6 +28,7 @@ const hardenLangSwitchLinks = () => {
 
 export default {
   extends: DefaultTheme,
+  Layout: StatisticsLayout,
   setup() {
     const route = useRoute()
     const router = useRouter()
