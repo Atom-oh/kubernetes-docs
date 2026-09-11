@@ -3,7 +3,7 @@
 This is a progress report, not a claim that the full corpus has been semantically reviewed.
 
 - Initial inventory: 2701 Markdown documents across five languages; current inventory includes 2707 after restoring deleted translations.
-- Fully read source/quiz/lab files recorded so far: 364 (354 fixed, 0 verified, 10 with follow-up).
+- Fully read source/quiz/lab files recorded so far: 364 (350 fixed, 0 verified, 14 with follow-up).
 - Source files are maintained in Korean and English; translations are checked structurally and repaired through automation.
 
 | Batch | Files recorded | Fixed | Verified | Follow-up |
@@ -24,8 +24,8 @@ This is a progress report, not a claim that the full corpus has been semanticall
 | [core-foundation](batches/core-foundation.json) | 24 | 24 | 0 | 0 |
 | [core-rest](batches/core-rest.json) | 20 | 20 | 0 | 0 |
 | [eks-creation-overview](batches/eks-creation-overview.json) | 2 | 2 | 0 | 0 |
-| [eks-creation-part1](batches/eks-creation-part1.json) | 4 | 4 | 0 | 0 |
-| [eks-creation-part2](batches/eks-creation-part2.json) | 4 | 4 | 0 | 0 |
+| [eks-creation-part1](batches/eks-creation-part1.json) | 4 | 2 | 0 | 2 |
+| [eks-creation-part2](batches/eks-creation-part2.json) | 4 | 2 | 0 | 2 |
 | [eks-creation-part3](batches/eks-creation-part3.json) | 2 | 0 | 0 | 2 |
 | [eks-introduction](batches/eks-introduction.json) | 4 | 4 | 0 | 0 |
 | [feature-flags](batches/feature-flags.json) | 4 | 0 | 0 | 4 |

@@ -184,13 +184,13 @@ pre code{background:none;padding:0;font-size:1em}
   <ul>
     <li>기술적으로 성립하지 않는 선택지는 없습니다. 다만 <strong>성립 조건이 문서에 적힌 것보다 복잡한 항목 6개, 전제가 최신 동작과 어긋나는 항목 4개</strong>가 있습니다.</li>
     <li>가장 시급한 재검토 대상은 Control Tower landing zone 4.0입니다. baseline끼리 묶인 활성화 의존 관계와 Security OU를 특별하게 다루는 동작이 <strong>OU 설계, IAM-H1, SEC-2를 동시에 제약</strong>하므로 OU 후보를 만들기 전에 확정해야 합니다.</li>
-    <li>SVPC-1(최소 Shared VPC Pool)의 실제 상한은 CIDR이 아니라 <strong>전파 route 100개(조정 불가)</strong>에서 먼저 옵니다. 중앙 TGW hub와 결합하는 순간 첫 번째 병목이 됩니다.</li>
+    <li>SVPC-1(최소 Shared VPC Pool)은 <strong>TGW 전체 route 합계, VPC route table별 route 수와 participant·subnet·NAU·CIDR quota</strong>를 각각 확인해야 합니다. 현재 사용량과 성장률 없이 어느 한도가 먼저 소진될지 단정할 수 없습니다.</li>
     <li>추가로 결정해야 할 것은 세 가지입니다. Config 활성화 여부, CUJ별 RTO/RPO 정의, 판정표 작성. 이 셋이 정해지면 나머지 판단 및 재작업이 크게 줄어듭니다.</li>
   </ul>
   <div class="verdict-strip" aria-label="판정 분포">
-    <div><span class="v v-review">재검토</span><b>5</b>LZ-PLATFORM-1, OU-3, IAM-H2, CONN-4, SEC-1 ~ SEC-7</div>
+    <div><span class="v v-review">재검토</span><b>4</b>LZ-PLATFORM-1, OU-3, CONN-4, SEC-1 ~ SEC-7</div>
     <div><span class="v v-poc">POC</span><b>2</b>AVAIL-1, SVPC-1</div>
-    <div><span class="v v-cond">조건부</span><b>19</b>판정표 행 기준. 문서에 없는 조건 충족 시 성립</div>
+    <div><span class="v v-cond">조건부</span><b>20</b>판정표 행 기준. 문서에 없는 조건 충족 시 성립</div>
     <div><span class="v v-ok">성립</span><b>33</b>판정표 행 기준. AWS 기능상 문제 없음</div>
   </div>
 </section>
@@ -260,14 +260,14 @@ pre code{background:none;padding:0;font-size:1em}
   <ol class="plain">
     <li>경계를 독립 판정하는 BND-B, Shared와 Dedicated를 조합하는 EKS-4 / ACC-5 / VPC-3, Layered SCP bundle(SCP-ATT-3)은 AWS 관점에서 모두 성립합니다. 기술적으로 성립하지 않는 선택지는 없으나, <strong>성립 조건이 문서에 적힌 것보다 복잡한 항목이 6개, 전제가 최신 동작과 어긋나는 항목이 4개</strong> 있습니다.</li>
     <li>가장 시급하게 재검토할 항목은 Control Tower landing zone 4.0의 OU와 baseline 의존 관계입니다. 4.0에서는 AWS가 Security OU를 더 이상 생성하거나 강제하지 않고, <em>service integration Account가 속한 OU가 Security OU로 지정</em>됩니다. 또 <span class="mono">IdentityCenterBaseline</span>은 <span class="mono">CentralSecurityRolesBaseline</span>을, 그것은 다시 <span class="mono">CentralConfigBaseline</span>을 요구합니다. 이렇게 연관성이 높은 의존 관계는 "Control Tower와 내부 pipeline의 책임 분리"와 "OU-3 중첩이 적은 functional 혼합형"을 <strong>동시에</strong> 제약하므로, OU 후보를 만들기 전에 확정해야 합니다.</li>
-    <li>SVPC-1(최소 VPC, Shared VPC Pool)은 CIDR quota가 아니라 <strong>participant Account 100개 / Account당 공유 subnet 100개 / NAU 64,000(최대 256,000) / 전파 route 100개(조정 불가)</strong> 순서로 먼저 막힙니다. 특히 마지막 항목은 중앙 TGW hub와 결합하는 순간 첫 번째 병목이 됩니다.</li>
+    <li>SVPC-1(최소 VPC, Shared VPC Pool)은 <strong>TGW당 모든 route table의 동적·정적 route 합계 10,000개</strong>와 <strong>VPC route table별 비전파 route 기본 500개(최대 1,000개)</strong>를 구분해야 합니다. VGW 전파 route 100개는 해당 VPC route table에 적용되는 별도 한도이며, TGW 전파 한도가 아닙니다. Participant·subnet·NAU·CIDR까지 적용 quota와 사용량을 함께 비교해야 합니다.</li>
   </ol>
 
 </section>
 <!-- ===================== 02 ===================== -->
 <section class="sec" id="s2">
   <h2><span class="no">02</span>12장 전제의 사실관계 정정과 보완</h2>
-  <p class="key-msg">검증 결과는 정정 5건, 보완 26건입니다. 결정을 실제로 바꾸는 항목은 Control Tower LZ 4.0의 baseline 의존 관계(2.1), Shared VPC의 실제 상한(2.4), cross-account 복구 제약(2.11) 세 가지입니다.</p>
+  <p class="key-msg">검증 결과는 정정 5건, 보완 26건입니다. 결정을 실제로 바꾸는 항목은 Control Tower LZ 4.0의 baseline 의존 관계(2.1), Shared VPC quota의 적용 범위(2.4), cross-account 복구 제약(2.11) 세 가지입니다.</p>
   <p>
     무신사 문서 12장이 전제한 AWS 동작을 항목별로 검증했습니다. 원문의 전제를 먼저 인용하고,
     확인 / 정정 / 보완을 순서대로 붙입니다. 결정에 직접 닿는 항목에는 영향까지 적었습니다.
@@ -425,42 +425,66 @@ pre code{background:none;padding:0;font-size:1em}
     <strong>Shared VPC + EKS 조합에서는 자동 탐색에 의존하지 말고 Ingress / Service에 subnet ID를
     명시(annotation)하는 방식을 표준으로 정하시길 제언합니다.</strong> POC-1과 POC-3에서 반드시 확인할 항목입니다.</div></div>
   <div class="finding f-ok"><span class="tag t-ok">[확인]</span><div class="f-body"><span class="f-lead">VPC IPv4 CIDR quota는 기본 5개, 조정 후 최대 50개입니다.</span> 문서 전제 그대로입니다.</div></div>
-  <div class="finding f-fix"><span class="tag t-fix">[정정 5]</span><div class="f-body"><span class="f-lead">SVPC-1의 실제 상한은 CIDR이 아니라 다른 quota에서 먼저 옵니다.</span>
-    문서도 "최대 CIDR 수가 아니라 먼저 도달하는 quota"라고 방향은 맞게 잡았지만,
-    무엇이 먼저인지는 적지 않았습니다.
-    무신사 규모(수십 팀, 수백 엔지니어)에서는 아래 순서로 막힐 것으로 예상합니다.</div></div>
+  <div class="finding f-fix"><span class="tag t-fix">[정정 5]</span><div class="f-body"><span class="f-lead">SVPC-1의 route quota는 TGW, VPC route table, VGW 전파를 구분해 산정해야 합니다.</span>
+    요청서의 "최대 CIDR 수가 아니라 먼저 도달하는 quota"를 확인한다는 방향은 맞습니다.
+    다만 팀·엔지니어 수만으로 한도 도달 순서를 고정할 수는 없습니다.
+    아래 항목의 실제 적용 quota, 현재 사용량, 증가율과 증설·분리 소요 시간을 각각 확인합니다.</div></div>
 
-  <figure class="fig" id="fig-svpc-order"><svg viewBox="0 0 860 186" width="100%" role="img" aria-label="SVPC-1이 quota에 도달하는 예상 순서" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F3A5F"/></marker><marker id="ar-r" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#B23A3A"/></marker></defs><rect x="30" y="44" width="122" height="84" rx="4" fill="#F9E8E8" stroke="#B23A3A" stroke-width="2"/><text x="91.0" y="66" font-size="12" fill="#B23A3A" text-anchor="middle" font-weight="700">1</text><text x="91.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">전파 route</text><text x="91.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">100 / route table</text><text x="91.0" y="118" font-size="11" fill="#B23A3A" text-anchor="middle" font-weight="700">조정 불가</text><line x1="153" y1="86.0" x2="165" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="166" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="227.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">2</text><text x="227.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">participant Account</text><text x="227.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">100 / VPC</text><text x="227.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">조정 가능</text><line x1="289" y1="86.0" x2="301" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="302" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="363.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">3</text><text x="363.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">공유받는 subnet</text><text x="363.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">100 / Account</text><text x="363.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">조정 가능</text><line x1="425" y1="86.0" x2="437" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="438" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="499.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">4</text><text x="499.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">NAU</text><text x="499.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">64,000 / VPC</text><text x="499.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">256,000까지</text><line x1="561" y1="86.0" x2="573" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="574" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="635.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">5</text><text x="635.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">subnet, route table</text><text x="635.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">각 200 / VPC</text><text x="635.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">조정 가능</text><line x1="697" y1="86.0" x2="709" y2="86.0" stroke="#1F3A5F" stroke-width="1.2" marker-end="url(#ar)"/><rect x="710" y="44" width="122" height="84" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/><text x="771.0" y="66" font-size="12" fill="#1F3A5F" text-anchor="middle" font-weight="700">6</text><text x="771.0" y="85" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="600">IPv4 CIDR</text><text x="771.0" y="102" font-size="12" fill="#1A1F2B" text-anchor="middle" font-weight="700">5 / VPC</text><text x="771.0" y="118" font-size="11" fill="#5B6470" text-anchor="middle" font-weight="400">50까지</text><text x="30" y="26" font-size="12" fill="#B23A3A" text-anchor="start" font-weight="700">먼저 막힘</text><text x="830" y="26" font-size="12" fill="#5B6470" text-anchor="end" font-weight="400">가장 늦게 막힘 (문서가 언급한 항목)</text><text x="30" y="154" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">1순위는 중앙 TGW hub(CONN-2)에서 route propagation을 활성화할 때 VPC와 on-prem prefix 합계가 100개를 넘는 순간 정지합니다.</text><text x="30" y="172" font-size="12" fill="#5B6470" text-anchor="start" font-weight="400">조정이 불가능한 유일한 항목이며, 표 4의 나머지 항목은 모두 조정 가능합니다.</text></svg><figcaption>그림 2. SVPC-1이 quota에 도달하는 예상 순서</figcaption></figure>
+  <figure class="fig" id="fig-svpc-order" style="overflow-x:auto">
+    <svg viewBox="0 0 860 250" width="100%" style="min-width:720px" role="img" aria-label="TGW, VPC 비전파 route, VGW 전파 route의 서로 다른 quota 적용 범위. 소진 순위를 뜻하지 않음" xmlns="http://www.w3.org/2000/svg">
+      <text x="30" y="25" font-size="13" fill="#1F3A5F" font-weight="700">경로별 route 예산 — 세 한도는 적용 대상이 다릅니다</text>
+      <rect x="30" y="48" width="250" height="132" rx="4" fill="#E6ECF4" stroke="#1F3A5F" stroke-width="1.5"/>
+      <text x="155" y="76" font-size="13" fill="#1A1F2B" text-anchor="middle" font-weight="600">TGW 전체 route tables</text>
+      <text x="155" y="108" font-size="22" fill="#1F3A5F" text-anchor="middle" font-weight="700">10,000</text>
+      <text x="155" y="133" font-size="12" fill="#1A1F2B" text-anchor="middle">동적 + 정적 route 합계 / TGW</text>
+      <text x="155" y="158" font-size="11" fill="#5B6470" text-anchor="middle">추가 용량: SA / TAM 문의</text>
+      <rect x="304" y="48" width="252" height="132" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/>
+      <text x="430" y="76" font-size="13" fill="#1A1F2B" text-anchor="middle" font-weight="600">VPC route table · 비전파</text>
+      <text x="430" y="108" font-size="18" fill="#1F3A5F" text-anchor="middle" font-weight="700">500 → 최대 1,000</text>
+      <text x="430" y="133" font-size="12" fill="#1A1F2B" text-anchor="middle">Table별 · IPv4 / IPv6 각각</text>
+      <text x="430" y="158" font-size="11" fill="#5B6470" text-anchor="middle">실제 적용 quota 별도 확인</text>
+      <rect x="580" y="48" width="250" height="132" rx="4" fill="#fff" stroke="#1F3A5F" stroke-width="1.5"/>
+      <text x="705" y="76" font-size="13" fill="#1A1F2B" text-anchor="middle" font-weight="600">VGW → VPC route table</text>
+      <text x="705" y="108" font-size="22" fill="#1F3A5F" text-anchor="middle" font-weight="700">100</text>
+      <text x="705" y="133" font-size="12" fill="#1A1F2B" text-anchor="middle">VGW에서 전파된 route / table</text>
+      <text x="705" y="158" font-size="11" fill="#5B6470" text-anchor="middle">조정 불가 · TGW 전파와 구분</text>
+      <text x="30" y="209" font-size="12" fill="#5B6470">Participant·subnet·NAU·CIDR 등은 별도 예산으로 측정합니다.</text>
+      <text x="30" y="232" font-size="12" fill="#5B6470">현재 사용량과 성장률 없이 한도 도달 순서를 고정할 수 없습니다.</text>
+    </svg>
+    <figcaption>그림 2. VPC·TGW·VGW route quota의 적용 범위 (소진 순위 아님)</figcaption>
+  </figure>
 <div class="tbl-wrap">
     <table>
-      <caption>표 4. SVPC-1이 quota에 도달하는 예상 순서</caption>
+      <caption>표 4. SVPC-1에서 별도로 측정할 quota</caption>
       <thead>
-        <tr><th scope="col">순위</th><th scope="col">Quota</th><th scope="col">기본값</th><th scope="col">조정</th><th scope="col">왜 먼저 막히는가</th></tr>
+        <tr><th scope="col">범주</th><th scope="col">Quota</th><th scope="col">기본값</th><th scope="col">조정</th><th scope="col">측정 범위·조건</th></tr>
       </thead>
       <tbody>
-        <tr><td><span class="num">1</span></td><td><strong>VPC route table당 전파(propagated) route</strong></td><td><span class="num">100</span></td><td><strong>불가</strong></td><td>중앙 TGW hub에서 route propagation을 활성화하면, 조직의 VPC와 on-prem prefix가 100개를 넘는 순간 정지. 조정이 불가능한 유일한 항목</td></tr>
-        <tr><td><span class="num">2</span></td><td>Participant Account per VPC</td><td><span class="num">100</span></td><td>가능</td><td>수십 팀 x 환경 조합이면 조기 도달</td></tr>
-        <tr><td><span class="num">3</span></td><td>Account당 공유받을 수 있는 subnet</td><td><span class="num">100</span></td><td>가능</td><td>3-AZ x trust zone x 용도별로 늘어남</td></tr>
-        <tr><td><span class="num">4</span></td><td>NAU per VPC</td><td><span class="num">64,000</span></td><td><span class="num">256,000</span>까지</td><td>EKS Pod = ENI가 아니지만 IP는 NAU에 계산됨. Pod 밀도가 높으면 도달</td></tr>
-        <tr><td><span class="num">5</span></td><td>Subnet per VPC / Route table per VPC</td><td>각 <span class="num">200</span></td><td>가능</td><td></td></tr>
-        <tr><td><span class="num">6</span></td><td>IPv4 CIDR per VPC</td><td><span class="num">5</span></td><td><span class="num">50</span>까지</td><td>문서가 언급한 항목. 실제로는 가장 늦게 도달</td></tr>
+        <tr><td>Route</td><td><strong>단일 TGW의 모든 route table에 있는 동적 + 정적 route 합계</strong></td><td><span class="num">10,000</span></td><td>SA / TAM 문의</td><td>Attachment에서 TGW route table로 전파된 route와 정적 route를 합산. 같은 TGW에 VPC를 추가해도 이 합계는 분리되지 않음</td></tr>
+        <tr><td>Route</td><td><strong>VPC route table당 비전파(non-propagated) route</strong></td><td><span class="num">500</span></td><td>최대 <span class="num">1,000</span></td><td>TGW를 대상으로 추가한 subnet route도 이 범위에서 산정. IPv4와 IPv6에 각각 적용</td></tr>
+        <tr><td>Route</td><td><strong>VGW에서 VPC route table로 전파된 route</strong></td><td><span class="num">100</span></td><td><strong>불가</strong></td><td>Virtual private gateway(VGW)의 route propagation을 사용하는 경로에 적용. TGW route table의 전파 한도와 구분</td></tr>
+        <tr><td>Account</td><td>Participant Account per VPC</td><td><span class="num">100</span></td><td>가능</td><td>실제 참여 Account 수와 증가율</td></tr>
+        <tr><td>Subnet</td><td>Account당 공유받을 수 있는 subnet</td><td><span class="num">100</span></td><td>가능</td><td>AZ·trust zone·용도별 실제 공유 subnet 수</td></tr>
+        <tr><td>Address</td><td>NAU per VPC</td><td><span class="num">64,000</span></td><td><span class="num">256,000</span>까지</td><td>EKS Pod = ENI가 아니지만 IP는 NAU에 계산됨. Pod 밀도와 주소 사용량을 반영</td></tr>
+        <tr><td>VPC</td><td>Subnet per VPC / Route table per VPC</td><td>각 <span class="num">200</span></td><td>가능</td><td>실제 subnet·route table 수와 확장 계획</td></tr>
+        <tr><td>Address</td><td>IPv4 CIDR per VPC</td><td><span class="num">5</span></td><td><span class="num">50</span>까지</td><td>주소 수요와 IPAM pool 설계에 따라 산정</td></tr>
       </tbody>
     </table>
   </div>
 
   <p>
-    1순위가 결정적입니다. SVPC-1(최소 VPC) + CONN-2(중앙 TGW) 조합은 "전파 route 100개"라는 조정 불가 한도를 공유합니다.
-    회피 수단은 default route(<span class="mono">0.0.0.0/0</span>) 광고 또는 static route 사용이지만,
-    그러면 세분화된 route 기반 통제(INSP-3의 강제 경로)와 충돌합니다.
-    <strong>SVPC-1을 POC할 때 첫 번째 측정 항목으로 "현재 및 3년 후 예상 전파 prefix 수"를 넣으시기 바랍니다.</strong>
+    TGW attachment의 전파는 TGW route table에 route를 추가하며, VPC subnet route table에는 TGW를 대상으로 하는 경로를 별도로 설정합니다.
+    VGW를 사용하지 않는 TGW 경로에 VPC의 VGW 전파 한도 100개를 적용하지 않습니다.
+    Route 집약이나 default route는 실제 경로·inspection 요구와 사용량을 확인한 뒤 검토할 선택지이며, 가상의 TGW 100개 한도를 피하기 위한 필수 조치는 아닙니다.
+    <strong>POC에서는 TGW별 전체 route 합계, VPC route table별 비전파 route, VGW 사용 시 전파 route의 현재·3년 후 예상 사용량을 각각 비교해야 합니다.</strong>
   </p>
 
   <div class="callout note">
     <span class="callout-title">참고 - participant가 만든 리소스의 quota는 participant Account에 계산됩니다</span>
     <p>
       <span class="tag t-add">[보완 12]</span> SVPC-1에 유리한 사실입니다. ENI(AZ당 5,000)와 Security Group(Region당 2,500)은
-      participant Account별로 계산되므로, Shared VPC를 쓰더라도 이 두 quota는 병목이 되지 않습니다.
-      문서의 "participant SG 통제" 우려는 quota 문제가 아니라 권한 문제로 좁혀서 다루는 편이 맞습니다.
+      participant Account별로 계산됩니다. 따라서 VPC 공통 quota와 별도로 각 participant의 사용량을 측정해야 하며, 어느 쪽도 병목에서 제외할 수 없습니다.
+      문서의 "participant SG 통제"에서는 quota 여유와 SG 변경 권한을 구분해 검토해야 합니다.
     </p>
   </div>
 
@@ -661,7 +685,7 @@ pre code{background:none;padding:0;font-size:1em}
 <!-- ===================== 03 ===================== -->
 <section class="sec" id="s3">
   <h2><span class="no">03</span>핵심 질문 6건에 대한 답변</h2>
-  <p class="key-msg">여섯 질문 모두 현재 방향을 뒤집는 AWS 제약은 없습니다. 다만 Q2(OU 설계), Q3(IAM-H2 격상), Q4(A/B 성립 조건), Q6(RTO / RPO 부재)에서는 성립 조건을 더 구체적으로 정의해야 합니다.</p>
+  <p class="key-msg">여섯 질문 모두 현재 방향을 뒤집는 AWS 제약은 없습니다. 다만 Q2(OU 설계), Q3(권한 할당 quota 범위), Q4(A/B 성립 조건), Q6(RTO / RPO 부재)에서는 성립 조건을 더 구체적으로 정의해야 합니다.</p>
   <p>
     무신사 문서 5장의 핵심 질문 6건에 답합니다. 질문마다 결론부터 적고,
     그 결론을 만드는 조건을 번호로 나눠 풀었습니다.
@@ -808,8 +832,8 @@ pre code{background:none;padding:0;font-size:1em}
     현재 문서 순서대로 "OU 후보 &rarr; Account 배치 &rarr; effective policy 확인"을 진행하면 Security OU 관련 재작업이 발생합니다.</div></div>
 
   <h3>Q3. Account, IAM - Shared Cluster Account 구조를 제한하는 제약이 있는가</h3>
-  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>RUN-2를 막는 AWS 제약은 없습니다. 규모 한계는 EKS가 아니라
-    IAM Identity Center와 access entry에서 먼저 옵니다.</strong> </div></div>
+  <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>RUN-2를 막는 AWS 제약은 없습니다. 규모 여유는 EKS와 IAM Identity Center의 각 quota에 대해
+    실제 사용량, 증가율과 적용 범위를 나누어 평가해야 합니다.</strong> </div></div>
 
   <h4>(1) EKS 측 한계는 여유가 있습니다</h4>
 
@@ -836,7 +860,7 @@ pre code{background:none;padding:0;font-size:1em}
     Karpenter + taint / toleration + node pool 기반 격리를 함께 검토하는 것을 권고드립니다.
     Karpenter는 ARC zonal shift와 <strong>1.12 이상</strong>에서 연동됩니다(AVAIL-1과 결합).</div></div>
 
-  <h4>(2) IAM Identity Center의 규모 한계가 IAM-H1의 실제 상한입니다</h4>
+  <h4>(2) IAM Identity Center quota의 적용 단위를 구분합니다</h4>
   <p>
     문서는 "Permission Set이 team x domain x environment 조합으로 늘 수 있다"는 위험을
     정확히 지적했으나 수치가 없습니다.
@@ -853,7 +877,7 @@ pre code{background:none;padding:0;font-size:1em}
         <tr><td>Account당 프로비저닝된 Permission Set</td><td><span class="num">500</span></td><td>가능</td><td>Shared Cluster Account, 중앙 DB Account처럼 여러 팀이 접근하는 Account에서 조기 도달</td></tr>
         <tr><td>Permission Set당 관리형 정책</td><td><span class="num">25</span></td><td>불가</td><td>단, IAM의 "role당 관리형 정책 10개" 한도가 실효 상한. 25개를 쓰려면 배포 대상 Account마다 IAM quota를 올려야 함</td></tr>
         <tr><td>Permission Set당 inline policy</td><td>1개 / <span class="num">32,768바이트</span>(공백 제외 <span class="num">10,240바이트</span>)</td><td>불가</td><td></td></tr>
-        <tr><td>Account당 Permission Set에 할당 가능한 group 수</td><td><span class="num">100</span></td><td><strong>불가</strong></td><td>RBAC 확장의 진짜 상한</td></tr>
+        <tr><td>단일 Permission Set × AWS Account 조합에 할당 가능한 group 수</td><td><span class="num">100</span></td><td><strong>불가</strong></td><td>각 조합별 한도. Account 전체의 서로 다른 Permission Set에 할당된 group을 합산한 한도가 아님</td></tr>
         <tr><td>구성 가능한 Account 수</td><td><span class="num">7,000</span></td><td>가능</td><td></td></tr>
         <tr><td>Identity Center API 전체 throttle</td><td><span class="num">20 TPS</span></td><td>읽기만 증가 가능</td><td>대량 프로비저닝 시 병목</td></tr>
         <tr><td><span class="mono">CreateAccountAssignment</span> 미완료 비동기 호출</td><td><span class="num">15</span></td><td>불가</td><td>대량 배포 자동화 설계 제약</td></tr>
@@ -861,17 +885,17 @@ pre code{background:none;padding:0;font-size:1em}
     </table>
   </div>
 
-  <div class="finding f-rec"><span class="tag t-rec">[중요 제언]</span><div class="f-body"><span class="f-lead">"Account당 Permission Set에 할당 가능한 group 100개"가 조정 불가 한도입니다.</span>
-    이것이 IAM-H1의 순수 RBAC 확장을 막는 지점입니다.
-    수십 팀 x 직무 조합의 group을 하나의 Account(예: Shared Cluster Account)에 할당하면 100개에서 정지합니다.</div></div>
+  <div class="finding f-rec"><span class="tag t-rec">[중요 제언]</span><div class="f-body"><span class="f-lead">Group 100개 한도는 각각의 Permission Set × AWS Account 조합에 적용됩니다.</span>
+    같은 Account에서 서로 다른 Permission Set을 사용할 때 group 수를 모두 더해 이 한도와 비교하지 않습니다.
+    예를 들어 Permission Set A와 B에 각각 80개 group을 할당한 경우, 합계 160개라는 이유만으로 이 한도를 초과하지는 않습니다. Account당 프로비저닝된 Permission Set 수와 IAM role 등 다른 quota는 별도로 확인해야 합니다.</div></div>
   <p>
-    이 사실이 IAM-H2(RBAC + 제한된 ABAC)의 우선순위를 올립니다. 문서는 IAM-H2를 "조건별 적용"으로 두었으나,
-    <strong>Shared Cluster Account와 중앙 DB Account처럼 다수 팀이 접근하는 Account에서는
-    조건부가 아니라 필수가 될 가능성이 높습니다.</strong>
-    tag 기반으로 범위를 좁혀 Permission Set과 group 할당 수를 줄이는 것이 유일한 확장 경로입니다.
+    <strong>IAM-H2(RBAC + 제한된 ABAC)는 조건별 적용으로 유지합니다.</strong>
+    먼저 동일한 권한 요구를 가진 group의 구성과 Permission Set 설계를 검토하고, 각 quota의 여유를 확인합니다.
+    ABAC는 대상 서비스의 tag 기반 권한 지원, 신뢰할 attribute와 tag 변경 권한 통제, 정책 검증이 성립할 때 평가할 선택지입니다.
+    Account 전체 group 수만으로 ABAC나 Account 분리를 의무화하거나 ABAC를 유일한 확장 경로로 판단하지 않습니다.
   </p>
-  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">판정표에 "이 Account에 접근할 group 수 예상치" 열을 넣고,
-    100의 절반(50)을 넘으면 IAM-H2 적용 또는 Account 분리를 검토하는 threshold를 두는 것이 좋겠습니다.</span></div></div>
+  <div class="finding f-rec"><span class="tag t-rec">[제언]</span><div class="f-body"><span class="f-lead">판정표에 "Permission Set × Account별 group 수와 증가율" 및 "Account별 프로비저닝된 Permission Set 수"를 기록합니다.</span>
+    검토 시점은 각 조합의 남은 여유, 예상 증가 속도와 설계 변경 소요 시간을 바탕으로 정합니다. Account 전체 group 수에 고정 threshold를 적용해 ABAC나 분리를 자동 결정하지 않습니다.</div></div>
 
   <h4>(3) Kubernetes API 접근 조합에 문제는 없습니다</h4>
   <p>
@@ -1015,14 +1039,14 @@ pre code{background:none;padding:0;font-size:1em}
   <h3>Q5. VPC, Connectivity - 빠진 제약이 있는가</h3>
   <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>SVPC-1과 SVPC-2 모두 AWS 기능상 성립합니다.</strong> CONN-1~5와 INSP-1~4를 traffic 요구별로
     조합하는 접근도 타당하며, 중앙 TGW inspection이 무조건 필수인 조건은 AWS 관점에서 없습니다.
-    다만 SVPC-1의 실질 한계는 문서 예상보다 일찍 오고, CONN-4(Lattice)의 제약은 문서 서술보다 큽니다.</div></div>
+    다만 SVPC-1의 용량 판단에는 quota별 사용량 검증이 필요하며, CONN-4(Lattice)의 제약은 문서 서술보다 큽니다.</div></div>
 
-  <h4>(1) SVPC-1이 먼저 도달하는 한계는 2.4 [정정 5]의 순서대로입니다</h4>
+  <h4>(1) SVPC-1은 2.4의 quota를 적용 범위별로 측정합니다</h4>
   <p>
-    재확인: 전파 route 100개(조정 불가) &rarr; participant 100개 &rarr; Account당 공유 subnet 100개 &rarr;
-    NAU 64,000 &rarr; subnet / route table 200 &rarr; CIDR 5(&rarr;50).
-    문서가 CIDR을 언급한 것은 방향이 맞지만 실제로 가장 늦게 오는 항목입니다.
-    <strong>POC-3의 첫 번째 측정 항목을 "전파 prefix 수"로 바꾸시길 제언합니다.</strong>
+    TGW당 모든 route table의 동적·정적 route 합계는 기본 10,000개이며, VPC route table의 비전파 route는 기본 500개(최대 1,000개, IPv4·IPv6 각각)입니다.
+    VGW 전파 route 100개는 해당 VGW 경로를 사용하는 VPC route table에만 적용해 확인합니다.
+    Participant·공유 subnet·NAU·subnet/route table 수·CIDR도 별도 예산입니다. 어느 항목이 먼저 소진될지는 현재 사용량과 성장률에 달려 있습니다.
+    <strong>POC-3은 각 적용 단위의 현재·예상 사용량, 승인된 quota와 증설·분리 소요 시간을 함께 검증해야 합니다.</strong>
   </p>
 
   <h4>(2) SVPC-1은 TGW 처리량 상한도 공유합니다</h4>
@@ -1108,8 +1132,9 @@ pre code{background:none;padding:0;font-size:1em}
     participant의 ENI 단위 flow log 생성을 SCP로 제한하는 표준을 정하시길 제언합니다.
   </p>
   <div class="rec"><span class="tag t-rec">Q5 최종 제언</span><div class="f-body">SVPC-1과 SVPC-2를 "둘 중 하나"로 보지 마시고, trust zone별로 다르게 적용하는 3안을 추가로 검토하시기 바랍니다.
-    일반 workload는 SVPC-1(전파 prefix가 적은 구간), on-prem과 외부 연동이 많은 workload는 SVPC-2(TGW 상한과 route 예산을 분리)로
-    나누면 두 안의 약점을 서로 보완합니다. 이는 문서의 VPC-3(trust zone 혼합형)을 Shared VPC 확장 방식에까지 적용한 형태입니다.</div></div>
+    공유 quota와 장애 예산에 여유가 있는 workload는 SVPC-1, attachment 처리량이나 운영 격리를 분리할 필요가 있는 workload는 SVPC-2 후보로 비교합니다.
+    여러 VPC가 같은 TGW를 사용하면 TGW 전체 route 합계는 여전히 공유하므로 VPC 분리만으로 그 예산이 늘어나지는 않습니다.
+    이는 문서의 VPC-3(trust zone 혼합형)을 Shared VPC 확장 방식에까지 적용한 형태이며, 실제 사용량과 경로·격리 요구로 판단해야 합니다.</div></div>
 
   <h3>Q6. Data, Security - 반드시 보완해야 할 조건</h3>
   <div class="conclusion"><span class="tag t-concl">결론</span><div class="f-body"><strong>DATA-3(Hybrid) + KEY-3(Hybrid) 방향은 성립합니다.</strong> 그러나 cross-account 복구 경로에 문서가 다루지 않은 필수 조건이 다수 있으며,
@@ -1214,7 +1239,7 @@ pre code{background:none;padding:0;font-size:1em}
 <!-- ===================== 04 ===================== -->
 <section class="sec" id="s4">
   <h2><span class="no">04</span>선택지별 판정 요약표</h2>
-  <p class="key-msg">판정표 기준 재검토 5건, POC 2건, 조건부 19건입니다. 재검토는 Control Tower LZ 4.0 반영(LZ-PLATFORM-1, OU-3), 조정 불가 한도(IAM-H2, CONN-4), Security Hub CSPM 개칭과 Config 의존(SEC-1~7)에서 비롯됩니다.</p>
+  <p class="key-msg">판정표 기준 재검토 4건, POC 2건, 조건부 20건입니다. 재검토는 Control Tower LZ 4.0 반영(LZ-PLATFORM-1, OU-3), Lattice 연결 제약(CONN-4), Security Hub CSPM 개칭과 Config 의존(SEC-1~7)에서 비롯됩니다. IAM-H2는 Permission Set × Account별 할당과 권한 설계를 검토하는 조건부 선택지로 유지합니다.</p>
   <p>
     판정 기준은 네 가지입니다. <em>성립</em>은 AWS 기능상 문제 없음, <em>조건부</em>는 문서에 없는 조건을
     충족해야 성립, <em>재검토</em>는 문서의 전제나 성립 조건 수정 필요, <em>POC</em>는 서면 확정 불가를 뜻합니다.
@@ -1242,11 +1267,11 @@ pre code{background:none;padding:0;font-size:1em}
         <tr><td><span class="mono">SCP-ATT-3</span></td><td>현재 방향</td><td><span class="v v-ok">성립(권장)</span></td><td>상속 정책은 개수 한도 미소비, quota 관점 최적. version은 <span class="mono">Sid</span>에 내장 (2.3 [보완 6], Q2)</td></tr>
         <tr><td><span class="mono">SCP-MODE-1 / MODE-2</span></td><td>조건별 / 방향</td><td><span class="v v-ok">성립</span></td><td>모든 entity에 SCP 최소 1개 필수 (Q2-(4))</td></tr>
         <tr><td><span class="mono">ACC-1 ~ ACC-4</span></td><td>비교 / 대안</td><td><span class="v v-ok">성립</span></td><td></td></tr>
-        <tr><td><span class="mono">ACC-5</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>판정표에 "접근 group 수 예상치" 열 추가. 분사 가능성 있으면 Shared VPC 불가 (Q3-(4))</td></tr>
+        <tr><td><span class="mono">ACC-5</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>판정표에 "Permission Set × Account별 group 할당 수와 quota 여유" 추가. 분사 가능성 있으면 Shared VPC 불가 (Q3-(4))</td></tr>
         <tr><td><span class="mono">RUN-1</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td></td></tr>
         <tr><td><span class="mono">RUN-2</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>IAM-W4(target role)가 선택이 아니라 필수. SG와 IAM은 participant Account에 위치. access entry 3,000 / node group 30 한도 (Q1, Q3)</td></tr>
-        <tr><td><span class="mono">IAM-H1</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>Account당 group 할당 100개(조정 불가)가 실제 상한. Control Tower <span class="mono">IdentityCenterBaseline</span> 사용 시 Config 필수 (Q3-(2), 2.1)</td></tr>
-        <tr><td><span class="mono">IAM-H2</span></td><td>조건별 적용</td><td><span class="v v-review">재검토(격상 권장)</span></td><td>다수 팀 접근 Account에서는 조건부가 아니라 필수가 될 가능성</td></tr>
+        <tr><td><span class="mono">IAM-H1</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>Permission Set × Account별 group 할당 100개(조정 불가). Account 전체 합계와 구분. Control Tower <span class="mono">IdentityCenterBaseline</span> 사용 시 Config 필수 (Q3-(2), 2.1)</td></tr>
+        <tr><td><span class="mono">IAM-H2</span></td><td>조건별 적용</td><td><span class="v v-cond">조건부</span></td><td>Group·Permission Set 설계와 quota 여유를 먼저 확인. ABAC는 tag 권한 지원·attribute 통제·정책 검증이 성립할 때 적용</td></tr>
         <tr><td><span class="mono">IAM-H3</span></td><td>대안</td><td><span class="v v-ok">성립</span></td><td></td></tr>
         <tr><td><span class="mono">IAM-W1 ~ W4</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td>RUN-2 선택 시 W4는 기본 적용</td></tr>
         <tr><td><span class="mono">K8S-AUTH-1</span></td><td>현재 방향</td><td><span class="v v-cond">조건부</span></td><td>Access Policy와 RBAC의 중복 grant 자동 검사가 필수 통제. access entry 3,000 한도</td></tr>
@@ -1259,11 +1284,11 @@ pre code{background:none;padding:0;font-size:1em}
         <tr><td><span class="mono">AZ-2 / AZ-3</span></td><td>비교 후보</td><td><span class="v v-cond">조건부</span></td><td>scaling lag, pod affinity 기반 co-location, stateful PV 제약 반영 (Q4-(5))</td></tr>
         <tr><td><span class="mono">VPC-1</span></td><td>조건별</td><td><span class="v v-ok">성립(개인정보 계층 권장)</span></td><td>근거를 "소유팀의 egress 경로 증명 가능성"으로 보강 (Q6-(2))</td></tr>
         <tr><td><span class="mono">VPC-2 / VPC-3</span></td><td>비교 / 방향</td><td><span class="v v-ok">성립</span></td><td></td></tr>
-        <tr><td><span class="mono">SVPC-1</span></td><td>POC 후보</td><td><span class="v v-poc">POC</span></td><td>첫 측정 항목을 전파 prefix 수로 변경. TGW attachment 1개 상한 공유 (Q5)</td></tr>
+        <tr><td><span class="mono">SVPC-1</span></td><td>POC 후보</td><td><span class="v v-poc">POC</span></td><td>TGW 전체 route 합계, VPC table별 비전파 route, VGW 사용 시 전파 route와 다른 quota를 각각 측정. 고정 소진 순위 없음 (Q5)</td></tr>
         <tr><td><span class="mono">SVPC-2</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td>TGW 처리량 상한 분리를 장점으로 추가</td></tr>
         <tr><td><span class="mono">RUNTIME-VPC-1/2</span></td><td>비교 후보</td><td><span class="v v-ok">성립</span></td><td>EKS는 multi-VPC 불가, VPC 분리 시 cluster 분리 필연</td></tr>
         <tr><td><span class="mono">CONN-1</span></td><td>조건별</td><td><span class="v v-cond">조건부</span></td><td>Peered NAU 128,000 한도 추가</td></tr>
-        <tr><td><span class="mono">CONN-2</span></td><td>기준선 유지</td><td><span class="v v-cond">조건부</span></td><td>전파 route 100(조정 불가), VPC당 attachment 1개, VPN MTU 1,500</td></tr>
+        <tr><td><span class="mono">CONN-2</span></td><td>기준선 유지</td><td><span class="v v-cond">조건부</span></td><td>TGW의 모든 route table 동적·정적 합계 기본 10,000. VPC 비전파/VGW 전파 한도와 구분. 동일 TGW에는 VPC별 attachment 1개, VPN MTU 1,500</td></tr>
         <tr><td><span class="mono">CONN-3</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td></td></tr>
         <tr><td><span class="mono">CONN-4</span></td><td>조건별</td><td><span class="v v-review">재검토</span></td><td>최대 연결 수명 10분, VPC당 service network 1개. CIDR overlap 해결 용도를 성립 조건에 추가 (Q5-(4))</td></tr>
         <tr><td><span class="mono">CONN-5</span></td><td>조건별</td><td><span class="v v-ok">성립</span></td><td></td></tr>
@@ -1447,7 +1472,7 @@ pre code{background:none;padding:0;font-size:1em}
   <h3>POC-3. 최소 VPC, Shared VPC Pool</h3>
   <p>
     문서 성공 기준: "금지 flow를 차단하고 owner bottleneck, quota, 분리 threshold를 측정."
-    첫 측정 항목을 CIDR에서 <strong>전파 prefix</strong>로 변경하시는 것을 권고드립니다.
+    CIDR과 함께 <strong>적용 범위별 route 수와 다른 공유 quota의 현재·성장 사용량</strong>을 측정합니다. 결과를 보기 전에 소진 순서를 고정하지 않습니다.
   </p>
 
   <div class="tbl-wrap">
@@ -1457,7 +1482,9 @@ pre code{background:none;padding:0;font-size:1em}
         <tr><th scope="col">측정 항목</th><th scope="col">판정 기준 제언</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong>TGW 전파 prefix 수 (현재 / 3년 후 예상)</strong></td><td>100 미달 여부. 초과 시 default route 광고로 전환할 수 있는지</td></tr>
+        <tr><td><strong>TGW별 모든 route table의 동적 + 정적 route 합계 (현재 / 3년 후 예상)</strong></td><td>기본 10,000 및 실제 승인 quota와 비교. 여러 table의 route를 합산하고 증설 필요 시 SA / TAM과 확인</td></tr>
+        <tr><td>VPC route table별 비전파 route 수</td><td>IPv4·IPv6 각각 기본 500, 조정 최대 1,000과 실제 적용 quota를 비교. TGW 대상 경로와 inspection 요구 포함</td></tr>
+        <tr><td>VGW 사용 시 VPC route table별 전파 route 수</td><td>해당 VGW 경로에만 100개 한도 적용. TGW route 수의 합격 기준으로 사용하지 않음</td></tr>
         <tr><td>Participant Account 수 증가율</td><td>목표 팀 수 대비 100 한도</td></tr>
         <tr><td>Account당 공유 subnet 수</td><td>3-AZ x trust zone x 용도 조합 vs 100</td></tr>
         <tr><td>NAU 사용량</td><td>Pod 밀도 반영. <span class="num">64,000</span>에서 <span class="num">256,000</span>으로 조정이 필요한 시점</td></tr>
@@ -1516,8 +1543,8 @@ pre code{background:none;padding:0;font-size:1em}
         <tr><td>Q4, Q6 정량 판정</td><td><strong>CUJ별 RTO / RPO 목표</strong> (5.1)</td></tr>
         <tr><td>DATA-1 / DATA-2 선택</td><td>Multi-AZ DB cluster 사용 여부 (Q6-(1))</td></tr>
         <tr><td>DATA-4 적용 범위</td><td>사용 중인 데이터와 메시징 서비스 인벤토리 (특히 RabbitMQ) (Q1-(4))</td></tr>
-        <tr><td>SVPC-1 판정</td><td>현재 및 3년 후 예상 TGW 전파 prefix 수 (Q5-(1))</td></tr>
-        <tr><td>IAM-H1 / H2 판정</td><td>Account별 접근 group 수 예상치 (Q3-(2))</td></tr>
+        <tr><td>SVPC-1 판정</td><td>TGW별 전체 route 합계, VPC table별 비전파 route, VGW 사용 시 전파 route 및 기타 quota의 현재·3년 후 예상 사용량 (Q5-(1))</td></tr>
+        <tr><td>IAM-H1 / H2 판정</td><td>Permission Set × Account별 group 할당 수·성장률, Account별 프로비저닝된 Permission Set 수 (Q3-(2))</td></tr>
         <tr><td>CONN-4 판정</td><td>장기 연결(gRPC streaming 등) 사용 구간 유무 (Q5-(4))</td></tr>
         <tr><td>A/B 설계</td><td>Kubernetes 목표 버전과 업그레이드 전략 (5.3)</td></tr>
         <tr><td>NAT-2 판정</td><td>외부 파트너 allowlist에 등록된 고정 egress IP 유무 (2.6 [보완 16])</td></tr>
@@ -1562,7 +1589,7 @@ pre code{background:none;padding:0;font-size:1em}
         <tr><th scope="col">영역</th><th scope="col">사유</th></tr>
       </thead>
       <tbody>
-        <tr><td>Networking SA</td><td>SVPC-1의 전파 route 한도 회피 설계, INSP-3의 두 구현 비교, TGW 처리량 상한</td></tr>
+        <tr><td>Networking SA</td><td>SVPC-1의 TGW/VPC/VGW route 예산과 성장 여유 검증, INSP-3의 두 구현 비교, TGW 처리량 상한</td></tr>
         <tr><td>Container SA</td><td>A/B EKS Runtime의 upgrade 격리 설계, Shared subnet + EKS의 LB controller subnet 탐색, node group vs Karpenter 격리</td></tr>
         <tr><td>Security SA</td><td>RCP, SCP, declarative policy 조합의 effective policy 검증, Control Tower LZ 4.0 baseline 의존 관계</td></tr>
         <tr><td>Resilience SA</td><td>ARC zonal shift와 autoshift practice run 설계, CUJ 서비스 그래프의 AZ 커버리지 검증</td></tr>
@@ -1593,9 +1620,9 @@ pre code{background:none;padding:0;font-size:1em}
 <section class="sec" id="limits">
   <h2><span class="no"></span>검증 범위와 한계</h2>
   <ul class="plain">
-    <li>본 회신은 <strong>2026-08-30 기준 AWS 공식 문서</strong>를 근거로 작성했습니다. Quota 기본값과 서비스 동작은 변경될 수 있으므로, 실제 구축 시점에 Service Quotas 콘솔에서 적용된 quota(applied quota)를 다시 확인해야 합니다. 기본값과 계정에 적용된 값은 다를 수 있습니다.</li>
+    <li>본 회신은 <strong>2026-08-30 기준 AWS 공식 문서</strong>를 근거로 작성했습니다. TGW/VPC/VGW route quota와 IAM Identity Center group quota의 적용 범위는 2026-09-11에 확인한 AWS 공식 문서로 정정했습니다. Quota 기본값과 서비스 동작은 변경될 수 있으므로, 실제 구축 시점에 Service Quotas 콘솔에서 적용된 quota(applied quota)를 다시 확인해야 합니다. 기본값과 계정에 적용된 값은 다를 수 있습니다.</li>
     <li>서울 리전(<span class="mono">ap-northeast-2</span>)의 개별 기능 지원 여부 중 다음은 문서 링크로 확인했으나 실제 콘솔과 API 확인을 권합니다: Regional NAT Gateway 지원, Route 53 Profiles 지원, Security Hub CSPM과 GuardDuty의 finding type별 coverage, Regional NAT Gateway의 constrained AZ 해당 여부.</li>
-    <li>무신사 환경의 실제 상태(Account 수, 현재 quota 사용량, 전파 prefix 수, Kubernetes 버전, Multi-AZ DB cluster 사용 여부)는 확인하지 않았습니다. 7장의 "추가 자료 필요" 항목이 그 목록입니다.</li>
+    <li>무신사 환경의 실제 상태(Account 수, 적용 범위별 quota·route 사용량, Permission Set × Account별 group 할당 수, Kubernetes 버전, Multi-AZ DB cluster 사용 여부)는 확인하지 않았습니다. 7장의 "추가 자료 필요" 항목이 그 목록입니다.</li>
     <li>조직 책임, 비용 배분, 위험 수용 수준과 최종 선택은 무신사가 결정합니다. 본 회신은 AWS 기술 관점의 성립 여부와 적용 조건만 다룹니다.</li>
   </ul>
 </section>
@@ -1657,8 +1684,13 @@ pre code{background:none;padding:0;font-size:1em}
   <ul>
     <li>
       <a href="https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html">VPC quotas</a>
-      - 전파 route 100/route table(조정 불가), participant 100/VPC, 공유 subnet 100/Account, NAU 64,000에서 256,000, Peered NAU 128,000에서 512,000, SG rule x SG &le; 1,000, Resolver 1,024 packet/s per ENI
+      - VPC 비전파 route 기본 500/route table(최대 1,000, IPv4·IPv6 각각), VGW 전파 route 100/route table(조정 불가), participant 100/VPC, 공유 subnet 100/Account, NAU 64,000에서 256,000, Peered NAU 128,000에서 512,000, SG rule x SG &le; 1,000, Resolver 1,024 packet/s per ENI
       <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html</span>
+    </li>
+    <li>
+      <a href="https://docs.aws.amazon.com/vpc/latest/userguide/route-table-options.html#route-tables-tgw">VPC와 TGW route 구성</a>
+      - VPC subnet route table의 TGW 대상 경로와 TGW route table로의 attachment 전파를 구분
+      <span class="url">https://docs.aws.amazon.com/vpc/latest/userguide/route-table-options.html#route-tables-tgw</span>
     </li>
     <li>
       <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-share-limitations.html">Shared VPC owner / participant 책임</a>
@@ -1685,7 +1717,7 @@ pre code{background:none;padding:0;font-size:1em}
     </li>
     <li>
       <a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html">TGW quotas</a>
-      - VPC당 attachment 1개, AZ당 100 Gbps / 7.5M PPS, route 10,000, VPN MTU 1,500, MSS clamping
+      - 동일 TGW에는 VPC당 attachment 1개, AZ당 100 Gbps / 7.5M PPS, 단일 TGW의 모든 route table에 걸친 동적·정적 route 합계 기본 10,000, VPN MTU 1,500, MSS clamping
       <span class="url">https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html</span>
     </li>
     <li>

@@ -5,8 +5,8 @@
   "latestCoverage": {
     "documents": 2707,
     "fullyRead": 364,
-    "fixed": 354,
-    "followup": 10
+    "fixed": 350,
+    "followup": 14
   },
   "parentCompleted": [
     "ko/en container-registry all 5 articles and 4 quizzes each (18 files)",
@@ -119,5 +119,6 @@
     "pending": "Wait88292fullbuild; freshpreview4198; run/tmp/.../browser-check.mjs12cases+dark; inspectfinalshots; checkbuilt sitemapstatistics0 andrawLLMnone. Gitdiffcheck+explicitstaging EXCLUDEuntrackednode_modulessymlink. CommitPRcreatepushmergeauthorizedearlier,waitPageslive200/currentunavailable/GA4var. PRbodyprepared/tmp/.../pr-body.md. Noauditchangescommit; thisworktreefrommain. Afterstatsmainmerge doNOTrebase/stash sharedauditwhileworkersactive; integrateontoauditwhenworkersdonebeforefinalglobalbuild. UsernoGCPproject/auth, guideprepared; noactualcounts.",
     "worktreeMove": "Movedfrom/tmpafterinode1852. gitworktreemoveEXDEV; copiedall11065files verifiedtext hashes/sizes/status, gitworktreerepair updatedpath, removedONLY ownold/tmpworktree. Parenthas30GBdisk andlargeinodecapacity.",
     "review": "Peirce readonlyreviewcomplete /tmp/public-statistics-review-core-worker-2026-09-11.json. OneP2:asyncIIFE synchronouscatch requestreset overwrittenbyouterassignment. ParentrealChromiumreproducedcalls1->1 /tmp/.../retry-before.json. FixedcreateStatisticsLoader Promise.resolve().then+AbortController timer,3regressions;15statisticsunitpass. Peirceimmediatelyresumedoriginalauditatcheckpoint (EKSCLIoptionsnext)."
-  }
+  },
+  "aggregationScope": "Counts reflect the committed batch records. Other worker/check fields are historical checkpoints, not the latest PR validation result or whole-corpus completion."
 }
