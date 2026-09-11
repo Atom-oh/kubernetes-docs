@@ -7,7 +7,8 @@
 // from pre-font-swap text widths and overlap the last glyph of every label
 // (the delivered HTML itself is fine in a browser). This drives the same
 // Chromium through playwright-core, waits for fonts + one settled frame,
-// then screenshots at the reader's 1600x1080 desktop size.
+// then screenshots from a 1600x1080 desktop viewport. Taller diagrams retain
+// the full page instead of silently cropping their lower nodes or notes.
 //
 // Usage:
 //   node scripts/render-archmap-png.mjs <stem> [<stem> ...]      # ko + en
@@ -32,6 +33,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
+import { archmapFontStack } from './lib/archmap-fonts.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const VIEWPORT = { width: 1600, height: 1080 };
@@ -125,8 +127,12 @@ try {
     const page = await context.newPage();
     try {
       await page.goto('file://' + job.html, { waitUntil: 'load' });
+      // Match the production build's CJK fallback order without changing the
+      // delivered source artifact. Otherwise generic monospace may select
+      // incomplete Droid Sans Fallback Hangul glyphs in static screenshots.
+      await page.addStyleTag({ content: `body { font-family: ${archmapFontStack(job.html)}; }` });
       await settle(page);
-      await page.screenshot({ path: job.out, clip: { x: 0, y: 0, ...VIEWPORT } });
+      await page.screenshot({ path: job.out, fullPage: true });
       console.log(`rendered ${job.out}`);
     } catch (err) {
       failed += 1;

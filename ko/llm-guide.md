@@ -1,6 +1,6 @@
 # LLM과 함께 읽기 — llms.txt와 MCP
 
-> **마지막 업데이트**: 2026년 9월 10일
+> **마지막 업데이트**: 2026년 9월 11일
 
 이 가이드북은 [llms.txt 제안 형식](https://llmstxt.org/)과 문서별 Markdown을 제공합니다. URL을 읽을 수 있는 AI 도구에는 색인을 전달하고, LLM Wiki나 RAG에는 문서 목록과 원문을 수집하며, 로컬 MCP 클라이언트에는 검색·본문 조회 도구를 연결할 수 있습니다. `llms.txt`가 존재한다고 모든 AI가 자동으로 발견하거나 검색하는 것은 아닙니다. 사용하는 도구에 웹 가져오기 기능이나 MCP 연결이 필요합니다.
 
@@ -14,7 +14,7 @@
 | [llms-full-en.txt](https://www.atomai.click/kubernetes-docs/llms-full-en.txt) | 영어 전체 본문 (마크다운) | 영어 기반 도구/파이프라인 |
 | `llms-full-<언어>-<섹션>.txt` (예: [llms-full-ko-networking.txt](https://www.atomai.click/kubernetes-docs/llms-full-ko-networking.txt)) | 사이드바 섹션 하나의 본문만 합친 파일. 전체 목록은 `llms.txt`의 `## Section bundles` 절에 | 한 섹션만 컨텍스트에 넣을 때 — 전체 파일은 한 번에 넣기엔 너무 큽니다 |
 
-모든 파일과 문서별 Markdown은 사이트가 배포될 때마다 자동으로 다시 생성되므로 항상 최신 콘텐츠와 일치합니다. `llms.txt`의 본문 링크는 `/llms/<언어>/<원본 경로>.md` 형식이며, VitePress HTML·사이드바·스크립트 없이 해당 문서의 Markdown만 반환합니다. 원문의 상대 링크는 모두 절대 URL로 바뀌어 있습니다 — 다른 문서 링크는 그 문서의 Markdown URL로, 이미지 등 자산은 GitHub 원본 파일 URL로 — 그래서 LLM이 문서 하나만 받아도 참조를 그대로 따라갈 수 있습니다. 렌더링된 각 HTML 페이지의 `<head>`에도 `<link rel="alternate" type="text/markdown">`으로 같은 Markdown URL이 걸려 있어, 에이전트가 웹페이지 URL만 받아도 Markdown 원문을 찾아갈 수 있습니다. 퀴즈는 `## Optional` 절에 퀴즈 목록 페이지 링크(언어별 하나)로만 등장하고, 개별 퀴즈 페이지(정답 포함)는 색인과 full 파일 어디에도 들어가지 않습니다 — LLM 컨텍스트에 정답지를 섞지 않기 위해서입니다. 랩 가이드는 색인에서는 마찬가지로 목록 페이지 링크(언어별 하나)로만 나타나지만, full 파일에는 본문과 함께 포함됩니다.
+모든 파일과 문서별 Markdown은 사이트 빌드에서 같은 소스를 기준으로 생성됩니다. 성공한 배포가 반영된 뒤에 공개 콘텐츠와 일치하며, 로컬 변경이나 아직 배포되지 않은 main 변경이 즉시 공개되는 것은 아닙니다. `llms.txt`의 본문 링크는 `/llms/<언어>/<원본 경로>.md` 형식이며, VitePress HTML·사이드바·스크립트 없이 해당 문서의 Markdown만 반환합니다. 원문의 상대 링크는 모두 절대 URL로 바뀌어 있습니다 — 수집 범위의 문서 링크는 Markdown URL로, 퀴즈·랩·언어 루트는 웹페이지 URL로, 이미지 등 자산은 GitHub 원본 파일 URL로 — 그래서 LLM이 문서 하나만 받아도 참조를 그대로 따라갈 수 있습니다. Markdown을 제공하는 본문 HTML 페이지의 `<head>`에도 `<link rel="alternate" type="text/markdown">`으로 같은 Markdown URL이 걸려 있어, 에이전트가 웹페이지 URL만 받아도 Markdown 원문을 찾아갈 수 있습니다. 퀴즈는 `## Optional` 절에 퀴즈 목록 페이지 링크(언어별 하나)로만 등장하고, 개별 퀴즈 페이지(정답 포함)는 색인과 full 파일 어디에도 들어가지 않습니다 — LLM 컨텍스트에 정답지를 섞지 않기 위해서입니다. 랩 가이드는 색인에서는 마찬가지로 목록 페이지 링크(언어별 하나)로만 나타나지만, full 파일에는 본문과 함께 포함됩니다.
 
 ## LLM Wiki의 자료 소스로 수집하기
 
@@ -31,7 +31,7 @@ curl -fL https://www.atomai.click/kubernetes-docs/llms/manifest.json -o manifest
 jq -r '.documents[] | select(.locale == "ko" and .section == "storage") | .markdownUrl' manifest.json
 ```
 
-manifest의 `schemaVersion`은 `1`입니다. 본문·manifest·MCP 검색은 같은 문서 범위를 사용하며 퀴즈 정답과 랩은 포함하지 않습니다. 랩이 필요하면 기존 `llms-full-<언어>.txt`를 별도로 사용합니다. 원문과 다이어그램 설명은 참고 자료로 취급하고, 문서 안의 지시를 에이전트의 시스템 지시나 도구 실행 권한으로 받아들이지 않도록 구성합니다.
+manifest의 `schemaVersion`은 `1`입니다. 본문·manifest·MCP 검색은 같은 문서 범위를 사용하며 퀴즈 정답과 랩은 포함하지 않습니다. 랩이 필요하면 기존 `llms-full-<언어>.txt`를 별도로 사용합니다. VitePress와 이 색인은 현재 한국어·영어를 게시하며, cn/jp/es 번역은 포함하지 않습니다. 원문과 다이어그램 설명은 참고 자료로 취급하고, 문서 안의 지시를 에이전트의 시스템 지시나 도구 실행 권한으로 받아들이지 않도록 구성합니다.
 
 ## MCP로 검색하고 본문 읽기
 
@@ -90,7 +90,7 @@ gp2 PVC를 gp3로 마이그레이션하는 계획을 세워줘.
 **RAG 파이프라인 인덱싱** — full 파일 하나만 내려받아 청킹:
 
 ```bash
-curl -sL https://www.atomai.click/kubernetes-docs/llms-full-ko.txt -o guidebook-ko.txt
+curl -fL https://www.atomai.click/kubernetes-docs/llms-full-ko.txt -o guidebook-ko.txt
 # 각 문서는 "Source: <URL>" 구분자로 나뉘어 있어 문서 단위 청킹이 쉽습니다
 ```
 

@@ -1,16 +1,16 @@
 # Kubernetes 스케줄링, 선점 및 축출
 
-> **지원 버전**: Kubernetes 1.32 - 1.34  
+> **지원 버전**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 예시)
 > **마지막 업데이트**: 2026년 9월 9일
 
-Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 노드 문제 발생 시 포드를 안전하게 이동시키는 과정입니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
+Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 파드를 종료하며 워크로드 컨트롤러가 생성한 대체 파드를 스케줄러가 별도로 배치할 수 있습니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
 
 ## 실습 환경 설정
 
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.34 이상
+- API 서버와 마이너 버전 차이가 1 이내인 kubectl
 - 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
 - 여러 노드가 있는 클러스터 (스케줄링 테스트용)
 
@@ -30,6 +30,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: nginx-ssd
+  labels:
+    app: nginx
 spec:
   affinity:
     nodeAffinity:
@@ -72,7 +74,7 @@ EOF
 
 ## Kubernetes 스케줄링 아키텍처
 
-![API 서버에서 감시된 스케줄링되지 않은 Pod가 스케줄링 큐를 거쳐 kube-scheduler의 필터링·스코어링·바인딩 단계로 처리되고, 노드 셀렉터·어피니티·테인트·토폴로지 분배 제약이 필터링과 스코어링에 개입하며, PriorityClass 선점은 스케줄러에, PodDisruptionBudget은 Descheduler의 축출에 개입하고 축출된 Pod는 다시 API 서버로 돌아오는 Kubernetes 스케줄링 아키텍처를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-0.png)
+![API 서버에서 감시된 스케줄링되지 않은 Pod가 스케줄링 큐를 거쳐 kube-scheduler의 필터링·스코어링·바인딩 단계로 처리되고, 노드 셀렉터·어피니티·테인트·토폴로지 분배 제약이 필터링과 스코어링에 개입하며, PriorityClass 선점은 스케줄러에, PodDisruptionBudget은 Descheduler의 축출에 개입하고 워크로드 컨트롤러가 대체 Pod를 새로 생성하는 Kubernetes 스케줄링 아키텍처를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-0.html)
 
@@ -136,7 +138,7 @@ Kubernetes 스케줄러는 포드를 적절한 노드에 배치하는 컨트롤 
 3. **어피니티/안티-어피니티 명세**: 다른 포드와의 배치 관계
 4. **데이터 지역성**: 데이터에 가까운 곳에 포드 배치
 5. **워크로드 간 간섭**: 다양한 워크로드 간의 간섭 최소화
-6. **데드라인**: 시간 제약이 있는 워크로드 고려
+6. **사용자 정의 목표**: 앱 데드라인·워크로드 간 간섭을 인식하는 배치는 별도 로직이 필요하며 기본 스케줄러가 앱 데드라인을 추론하지는 않음
 
 ### 스케줄링 프로세스
 
@@ -222,10 +224,16 @@ spec:
     gpu: "true"
   containers:
   - name: gpu-container
-    image: nvidia/cuda
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+    resources:
+      limits:
+        nvidia.com/gpu: 1
 ```
 
 위 예시에서 포드는 `gpu=true` 레이블이 있는 노드에만 배치됩니다.
+
+GPU 예시는 스케줄링 확인용입니다. 실제 GPU와 `nvidia.com/gpu`를 광고하는 동작 중인 장치 플러그인이 필요하며 `gpu=true` 레이블만으로 GPU를 할당하지는 않습니다.
 
 ### nodeName
 
@@ -422,11 +430,11 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: kubernetes.io/e2e-az-name
+          - key: topology.kubernetes.io/zone
             operator: In
             values:
-            - e2e-az1
-            - e2e-az2
+            - us-west-2a
+            - us-west-2b
       preferredDuringSchedulingIgnoredDuringExecution:
       - weight: 1
         preference:
@@ -440,7 +448,7 @@ spec:
     image: nginx
 ```
 
-위 예시에서 포드는 `kubernetes.io/e2e-az-name` 레이블이 `e2e-az1` 또는 `e2e-az2`인 노드에만 배치됩니다. 또한 가능하면 `another-node-label-key=another-node-label-value` 레이블이 있는 노드에 배치됩니다.
+위 예시에서 포드는 `topology.kubernetes.io/zone` 레이블이 `us-west-2a` 또는 `us-west-2b`인 노드에만 배치됩니다. 또한 가능하면 `another-node-label-key=another-node-label-value` 레이블이 있는 노드에 배치됩니다.
 
 ### 연산자
 
@@ -499,7 +507,7 @@ spec:
 선점 과정:
 1. 스케줄러가 우선순위가 높은 포드를 스케줄링할 노드를 찾지 못함
 2. 스케줄러가 우선순위가 낮은 포드를 선점하여 제거할 노드를 선택
-3. 선택된 노드에서 우선순위가 낮은 포드에 종료 신호 전송
+3. API를 통해 선택한 낮은 우선순위 파드 삭제를 요청하며 실제 종료는 kubelet·런타임이 수행
 4. 포드가 정상적으로 종료되면 우선순위가 높은 포드를 해당 노드에 스케줄링
 
 ### 선점 고려 사항
@@ -507,14 +515,14 @@ spec:
 선점을 사용할 때 고려해야 할 사항:
 
 1. **그레이스풀 종료 기간**: 선점된 포드는 `terminationGracePeriodSeconds`에 지정된 시간 동안 정상 종료 과정을 거침
-2. **PodDisruptionBudget**: 선점은 PodDisruptionBudget을 존중하지 않음
+2. **PodDisruptionBudget**: 스케줄러가 위반을 피하려고 하지만 적절한 대상을 찾지 못하면 PDB를 위반하며 선점할 수 있음
 3. **시스템 우선순위 클래스**: Kubernetes는 시스템 컴포넌트를 위한 우선순위 클래스를 제공
    - `system-cluster-critical`: 클러스터 작동에 중요한 포드
    - `system-node-critical`: 노드 작동에 중요한 포드
 
 ## 포드 축출
 
-포드 축출(Pod Eviction)은 노드 문제 발생 시 포드를 안전하게 이동시키는 과정입니다. 축출은 다양한 이유로 발생할 수 있습니다.
+축출은 같은 파드를 이동시키는 것이 아니라 종료하는 작업입니다. 대체 여부는 컨트롤러, 용량, 스케줄링·스토리지 제약에 따라 달라집니다. 축출은 다양한 이유로 발생할 수 있습니다.
 
 ![컨트롤러(kube-controller-manager)·kubelet·사용자라는 세 축출 주체가 각각 노드 NotReady/Unreachable, 리소스 부족·하드웨어 문제, 유지 관리(kubectl drain)라는 원인으로 이어지고, kubelet이 memory·nodefs·imagefs·pid 축출 신호를 모니터링하는 구조를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-6.png)
 
@@ -523,12 +531,12 @@ spec:
 ### 축출 유형
 
 1. **kube-controller-manager에 의한 축출**:
-   - 노드가 NotReady 상태로 `pod-eviction-timeout` 기간(기본 5분) 동안 유지될 때
+   - taint-eviction-controller가 NoExecute 테인트를 처리하며 일반 파드는 기본 not-ready/unreachable 톨러레이션 300초를 받음. 실제 축출 시점은 톨러레이션 설정에 따름
    - 노드가 Unreachable 상태일 때
 
 2. **kubelet에 의한 축출**:
    - 노드 리소스 부족(메모리, 디스크 등)
-   - 하드웨어 문제
+   - 하드웨어 장애는 노드 사용 불가로 이어질 수 있지만 일반적인 kubelet 압력 축출 신호는 아님
 
 3. **사용자에 의한 축출**:
    - `kubectl drain` 명령 실행
@@ -557,22 +565,20 @@ evictionHard:
   nodefs.available: "10%"
   nodefs.inodesFree: "5%"
   imagefs.available: "15%"
+  imagefs.inodesFree: "5%"
 evictionSoft:
   memory.available: "200Mi"
   nodefs.available: "15%"
 evictionSoftGracePeriod:
   memory.available: "1m"
   nodefs.available: "2m"
+evictionMaxPodGracePeriod: 30
 evictionPressureTransitionPeriod: "30s"
 ```
 
 ### 축출 우선순위
 
-kubelet은 다음 순서로 포드를 축출합니다:
-
-1. BestEffort QoS 클래스의 포드
-2. Burstable QoS 클래스의 포드 (리소스 사용량이 요청량을 초과하는 포드부터)
-3. Guaranteed QoS 클래스의 포드 (리소스 사용량이 요청량과 제한량이 동일한 포드)
+kubelet은 요청 초과 사용 여부, 파드 우선순위, 요청 대비 사용량을 기준으로 대상을 정합니다. 모든 BestEffort → 모든 Burstable → 모든 Guaranteed라는 고정 순서는 아닙니다. 디스크·PID 압력은 리소스 계산도 다르므로 QoS를 보편적인 축출 순서로 해석하면 안 됩니다.
 
 ## 포드 중단 예산(PDB)
 
@@ -621,11 +627,13 @@ spec:
 2. PDB 조건을 충족하면 포드 축출 진행
 3. PDB 조건을 충족하지 않으면 포드 축출 거부
 
+PDB는 일반 drain·descheduler 등의 Eviction API 요청을 제한합니다. 직접 파드 삭제, 컨트롤러 롤아웃, 노드 압력 축출은 이 검사를 우회합니다. `minAvailable: 2`와 `maxUnavailable: 1`은 원하는 복제본이 3개인 경우에만 같은 의미이며 대체 용량을 생성하지는 않습니다.
+
 ### PDB 모범 사례
 
 1. **모든 중요한 워크로드에 PDB 설정**: 고가용성이 필요한 모든 워크로드에 PDB 설정
 2. **적절한 값 선택**: 워크로드 특성에 맞는 `minAvailable` 또는 `maxUnavailable` 값 선택
-3. **레플리카 수 고려**: PDB 값은 레플리카 수보다 작아야 함
+3. **레플리카 수 고려**: `minAvailable`을 복제본 수와 같게 설정해 자발적 축출을 막을 수 있지만 유지 관리가 정체될 수 있으므로 허용 중단 수를 의도적으로 정함
 4. **정기적인 테스트**: 노드 드레인 등의 작업으로 PDB 작동 테스트
 
 ## 노드 압력 축출
@@ -653,6 +661,7 @@ evictionHard:
   nodefs.available: "10%"
   nodefs.inodesFree: "5%"
   imagefs.available: "15%"
+  imagefs.inodesFree: "5%"
 evictionSoft:
   memory.available: "200Mi"
   nodefs.available: "15%"
@@ -662,6 +671,7 @@ evictionSoftGracePeriod:
 evictionMinimumReclaim:
   memory.available: "50Mi"
   nodefs.available: "5%"
+evictionMaxPodGracePeriod: 30
 evictionPressureTransitionPeriod: "30s"
 ```
 
@@ -673,7 +683,7 @@ evictionPressureTransitionPeriod: "30s"
 
 토폴로지 분배 제약 조건은 포드를 클러스터의 여러 토폴로지 도메인(노드, 영역, 리전 등)에 균등하게 분산시키는 기능입니다. 이는 고가용성을 보장하고 장애 도메인의 영향을 최소화하는 데 유용합니다.
 
-![TopologySpreadConstraints가 maxSkew, topologyKey, whenUnsatisfiable, labelSelector 네 필수 필드로 가용 영역 간 Pod 분산을 제어하고, whenUnsatisfiable의 DoNotSchedule과 ScheduleAnyway 옵션을 선택하며, maxSkew=1일 때 새 Pod가 Pod가 가장 적은 ap-northeast-2b에 배치되는 EKS 예시를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-8.png)
+![TopologySpreadConstraints가 maxSkew, topologyKey, whenUnsatisfiable과 보통 명시하는 labelSelector로 가용 영역 간 Pod 분산을 제어하고, whenUnsatisfiable의 DoNotSchedule과 ScheduleAnyway 옵션을 선택하며, maxSkew=1일 때 새 Pod가 Pod가 가장 적은 ap-northeast-2b에 배치되는 EKS 예시를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-8.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-8.html)
 
@@ -681,11 +691,11 @@ evictionPressureTransitionPeriod: "30s"
 
 | 필드 | 설명 | 필수 여부 |
 |------|------|----------|
-| **maxSkew** | 토폴로지 도메인 간 포드 수 차이의 최대 허용치 | 필수 |
+| **maxSkew** | DoNotSchedule은 대상 도메인과 전역 최소값의 차이를 제한; ScheduleAnyway는 편차를 선호 점수에 반영 | 필수 |
 | **topologyKey** | 토폴로지 도메인을 정의하는 노드 레이블 키 | 필수 |
 | **whenUnsatisfiable** | 제약 조건을 충족할 수 없을 때 동작 (DoNotSchedule 또는 ScheduleAnyway) | 필수 |
-| **labelSelector** | 분산 대상 포드를 선택하는 레이블 셀렉터 | 필수 |
-| **minDomains** | 최소 토폴로지 도메인 수 (Kubernetes 1.25+) | 선택 |
+| **labelSelector** | 계산할 파드 선택; 보통 자기 파드와 일치하도록 지정 | 선택 (null은 아무 파드도 선택하지 않음) |
+| **minDomains** | 편차 계산을 위한 최소 적격 도메인 수 (v1.30부터 Stable) | 선택 |
 | **matchLabelKeys** | 동일한 키의 레이블 값으로 그룹화 (Kubernetes 1.27+) | 선택 |
 | **nodeAffinityPolicy** | 노드 어피니티/노드 셀렉터 고려 여부 (Kubernetes 1.26+) | 선택 |
 | **nodeTaintsPolicy** | 노드 테인트 고려 여부 (Kubernetes 1.26+) | 선택 |
@@ -725,16 +735,16 @@ spec:
             app: web
       containers:
       - name: web
-        image: nginx:1.24
+        image: nginx:1.30.4
         resources:
           requests:
             cpu: 100m
             memory: 128Mi
 ```
 
-### minDomains 사용 (Kubernetes 1.25+)
+### minDomains 사용 (v1.30부터 Stable)
 
-`minDomains`는 최소 도메인 수를 지정하여, 도메인 수가 이 값보다 적을 때 스케줄링 동작을 제어합니다.
+`minDomains`보다 적격 도메인이 적으면 전역 최소값을 0으로 계산합니다. `maxSkew: 1`일 때도 적격 도메인별 첫 파드는 배치할 수 있으며 추가 파드가 Pending이 될 수 있습니다. 모든 파드를 즉시 차단하는 설정은 아닙니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -755,7 +765,7 @@ spec:
       - maxSkew: 1
         topologyKey: topology.kubernetes.io/zone
         whenUnsatisfiable: DoNotSchedule
-        minDomains: 3  # 최소 3개 영역에 분산 필요
+        minDomains: 3  # 적격 도메인이 3개 미만이면 전역 최소값을 0으로 계산
         labelSelector:
           matchLabels:
             app: zone-spread
@@ -829,9 +839,9 @@ topologySpreadConstraints:
 
 ## Pod Deletion Cost
 
-Pod Deletion Cost는 HPA(Horizontal Pod Autoscaler)가 스케일다운 시 어떤 포드를 먼저 제거할지 결정하는 데 사용되는 어노테이션입니다. 낮은 비용의 포드가 먼저 제거됩니다.
+Pod Deletion Cost는 ReplicaSet 컨트롤러가 축소 시 사용하는 best-effort 선호값입니다. HPA는 원하는 복제본 수를 바꾸며 개별 삭제 파드를 직접 선택하지 않습니다. 이 어노테이션은 Job·StatefulSet을 보호하거나 축출을 막지 않으며 삭제 순서를 보장하지도 않습니다.
 
-![HPA 스케일다운 시 pod-deletion-cost 어노테이션 값이 낮은 Pod부터 먼저 제거되고, 값이 높은 Pod는 캐시나 리더처럼 보호할 목적으로 남겨진다는 원리를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-9.png)
+![HPA가 원하는 복제본 수를 줄이면 ReplicaSet 컨트롤러가 pod-deletion-cost를 삭제 선호값으로 고려하며, 높은 값이 축출·삭제 면제를 보장하지는 않음을 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-9.html)
 
@@ -849,7 +859,7 @@ metadata:
 
 ### 캐시 보호 패턴
 
-캐시가 충분히 워밍업된 포드를 보호하여 스케일다운 시에도 캐시 히트율을 유지합니다.
+CPU 사용률 HPA를 사용할 캐시는 명시적인 CPU 요청이 필요합니다. 아래는 스케줄링 예시이며 완전한 Redis 운영 구성이 아닙니다:
 
 ```yaml
 apiVersion: apps/v1
@@ -857,72 +867,37 @@ kind: Deployment
 metadata:
   name: cache-service
 spec:
-  replicas: 5
+  replicas: 3
   selector:
     matchLabels:
-      app: cache-service
+      app: cache
   template:
     metadata:
       labels:
-        app: cache-service
+        app: cache
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: cache
         image: redis:7
-        lifecycle:
-          postStart:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                # 시작 시 낮은 비용 설정
-                sleep 10
-        # 캐시 워밍업 완료 후 사이드카가 비용 증가
-      - name: cost-updater
-        image: bitnami/kubectl:latest
-        command:
-        - /bin/sh
-        - -c
-        - |
-          # 5분 후 캐시 워밍업 완료로 간주하고 비용 증가
-          sleep 300
-          kubectl annotate pod $POD_NAME \
-            controller.kubernetes.io/pod-deletion-cost=1000 \
-            --overwrite
-          # 이후 주기적으로 캐시 히트율에 따라 비용 조정
-          while true; do
-            sleep 60
-            HIT_RATE=$(redis-cli INFO stats | grep keyspace_hits)
-            # 캐시 히트율에 따라 비용 동적 조정 로직
-          done
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
 ```
 
-### 장시간 작업 보호 패턴
+실제 캐시 상태를 측정한 뒤 권한 있는 운영자·컨트롤러가 축소 전에 선택한 ReplicaSet 소유 파드에 한 번 어노테이션을 설정할 수 있습니다:
 
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: long-running-task
-spec:
-  template:
-    metadata:
-      annotations:
-        # 작업 진행 중인 포드 보호
-        controller.kubernetes.io/pod-deletion-cost: "10000"
-    spec:
-      containers:
-      - name: worker
-        image: worker:latest
-        command: ["./process-large-dataset.sh"]
-      restartPolicy: Never
+```bash
+kubectl -n default annotate pod "$CACHE_POD" \
+  controller.kubernetes.io/pod-deletion-cost="1000" --overwrite
 ```
+
+`CACHE_POD`는 실제 캐시 파드 이름으로 설정합니다. 잦은 어노테이션 변경은 API 부하를 만듭니다. 사용자 정의 갱신기는 Redis·Kubernetes 클라이언트와 좁은 Pod patch 권한이 필요하며 단순 시간 경과는 캐시 워밍업의 증거가 아닙니다. 이 예시는 갱신기를 설치하지 않습니다.
+
+### Job에는 적용되지 않음
+
+Job 파드에 deletion-cost를 넣어도 보호되지 않습니다. 장시간 작업은 체크포인트, 재시도·멱등성, 정상 종료 처리를 설계하고 작업 특성에 맞게 중단 정책을 정하세요.
 
 ### HPA와 함께 사용
 
@@ -952,7 +927,7 @@ spec:
       - type: Pods
         value: 1
         periodSeconds: 60
-      # Pod Deletion Cost가 자동으로 고려됨
+      # HPA가 복제본 수를 줄이면 ReplicaSet이 deletion cost를 선호값으로 고려
 ```
 
 ## Descheduler
@@ -965,36 +940,29 @@ Descheduler는 실행 중인 클러스터에서 포드를 재분산시키는 도
 
 ### Helm을 사용한 설치
 
+검증한 예시 릴리스는 Descheduler v0.36.0이며 Kubernetes v1.36과 이전 두 마이너 버전이 테스트 범위입니다. 다른 릴리스에는 호환성 표를 확인하세요. 검토한 `schedule`과 아래 정책의 `profiles`를 `deschedulerPolicy.profiles` 아래 넣어 `descheduler-values.yaml`로 저장합니다. 이전 `strategies.*.enabled` 값은 이 API를 구성하지 않습니다.
+
 ```bash
-# Helm 저장소 추가
 helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
-
-# 기본 설치
-helm install descheduler descheduler/descheduler \
-  --namespace kube-system \
-  --set cronJobApiVersion="batch/v1"
-
-# 커스텀 설정으로 설치
-helm install descheduler descheduler/descheduler \
-  --namespace kube-system \
+helm upgrade --install descheduler descheduler/descheduler \
+  --version 0.36.0 --namespace kube-system \
   --values descheduler-values.yaml
 ```
 
 ### DeschedulerPolicy 설정
 
 ```yaml
-apiVersion: "descheduler/v1alpha2"
-kind: "DeschedulerPolicy"
+apiVersion: descheduler/v1alpha2
+kind: DeschedulerPolicy
 profiles:
 - name: default
   pluginConfig:
-  # 동일한 노드에 같은 ReplicaSet/Deployment의 포드가 2개 이상 있으면 제거
+  - name: DefaultEvictor
+    args:
+      nodeFit: true
   - name: RemoveDuplicates
     args:
-      excludeOwnerKinds:
-      - StatefulSet
-
-  # 저활용 노드에서 고활용 노드로 포드 이동
+      excludeOwnerKinds: [StatefulSet]
   - name: LowNodeUtilization
     args:
       thresholds:
@@ -1005,33 +973,22 @@ profiles:
         cpu: 50
         memory: 50
         pods: 50
-
-  # 재시작 횟수가 많은 포드 제거
   - name: RemovePodsHavingTooManyRestarts
     args:
       podRestartThreshold: 100
       includingInitContainers: true
-
-  # 특정 시간 이상 실행된 포드 제거
   - name: PodLifeTime
     args:
-      maxPodLifeTimeSeconds: 86400  # 24시간
+      maxPodLifeTimeSeconds: 86400
       labelSelector:
         matchLabels:
           app.kubernetes.io/lifecycle: ephemeral
-
-  # 노드 어피니티 규칙을 위반하는 포드 제거
   - name: RemovePodsViolatingNodeAffinity
     args:
-      nodeAffinityType:
-      - requiredDuringSchedulingIgnoredDuringExecution
-
-  # TopologySpreadConstraints 위반 포드 제거
+      nodeAffinityType: [requiredDuringSchedulingIgnoredDuringExecution]
   - name: RemovePodsViolatingTopologySpreadConstraint
     args:
-      constraints:
-      - DoNotSchedule
-
+      constraints: [DoNotSchedule]
   plugins:
     balance:
       enabled:
@@ -1044,6 +1001,8 @@ profiles:
       - PodLifeTime
       - RemovePodsViolatingNodeAffinity
 ```
+
+위 정책은 Descheduler 설정 파일이며 kubectl apply용 API 객체가 아닙니다. 그룹 재분배는 Balance, 파드별 결정은 Deschedule 플러그인을 사용합니다. LowNodeUtilization은 보통 실시간 CPU 사용률 대신 리소스 요청량을 평가하며 축출 후 다른 노드 배치를 보장하지 않습니다. 보호 설정을 검토하고 dry-run 검증 후 반복 축출을 활성화하세요.
 
 ### Descheduler CronJob 설정
 
@@ -1063,7 +1022,7 @@ spec:
           serviceAccountName: descheduler
           containers:
           - name: descheduler
-            image: registry.k8s.io/descheduler/descheduler:v0.28.0
+            image: registry.k8s.io/descheduler/descheduler:v0.36.0
             args:
             - --policy-config-file=/policy-dir/policy.yaml
             - --v=3
@@ -1094,14 +1053,16 @@ spec:
       app: web
 ---
 # Descheduler가 이 PDB를 존중하여
-# 최소 2개의 web 포드가 항상 유지됨
+# 허용 가능한 voluntary eviction만 진행 (장애 시 가용성 보장은 아님)
 ```
+
+위 독립 CronJob은 Helm 설치와 중복 실행하지 않는 대안입니다. `descheduler` ServiceAccount·RBAC와 `policy.yaml` 키를 가진 `descheduler-policy` ConfigMap이 필요하므로 공식 차트·매니페스트로 선행 리소스를 구성하세요.
 
 ### 주의사항
 
-1. **시스템 포드 보호**: kube-system 네임스페이스의 포드는 기본적으로 제외됩니다.
+1. **시스템 포드 보호**: 기본 critical Pod 보호를 전체 kube-system 제외와 혼동하지 말고 설치 버전의 DefaultEvictor와 선택 조건을 확인하세요.
 2. **DaemonSet 포드**: DaemonSet 포드는 축출되지 않습니다.
-3. **로컬 스토리지**: 로컬 스토리지를 사용하는 포드는 기본적으로 축출되지 않습니다.
+3. **로컬 스토리지**: 보호 여부는 DefaultEvictor·차트 값에 따라 달라지며 로컬 데이터 손실을 검토해야 합니다.
 4. **PDB 제한**: PDB 제한을 초과하여 포드를 축출하지 않습니다.
 
 > 📚 **심화 학습**: 커스텀 스케줄러에 대한 자세한 내용은 다음을 참조하세요:
@@ -1127,14 +1088,30 @@ EKS에서는 다양한 노드 그룹과 인스턴스 유형을 활용하여 워�
 
 노드 레이블과 테인트를 사용하여 특정 워크로드를 특정 노드 그룹에 배치할 수 있습니다:
 
+기존 클러스터와 리전, 지원 GPU 인스턴스·AMI, IAM 권한에 맞게 검토한 eksctl 구성을 사용하세요:
+
+```yaml
+# gpu-nodegroup.yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: gpu-nodes
+  instanceType: p3.2xlarge
+  desiredCapacity: 1
+  privateNetworking: true
+  labels:
+    workload-type: gpu
+  taints:
+  - key: gpu
+    value: "true"
+    effect: NoSchedule
+```
+
 ```bash
-# 노드 그룹 생성 시 레이블 및 테인트 설정
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name gpu-nodes \
-  --node-labels="workload-type=gpu" \
-  --node-type=p3.2xlarge \
-  --taints="gpu=true:NoSchedule"
+eksctl create nodegroup --config-file=gpu-nodegroup.yaml
 ```
 
 ### 가용 영역 분산
@@ -1238,7 +1215,7 @@ spec:
     kind: Deployment
     name: frontend
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
 ```
 
 ## 스케줄링 모범 사례

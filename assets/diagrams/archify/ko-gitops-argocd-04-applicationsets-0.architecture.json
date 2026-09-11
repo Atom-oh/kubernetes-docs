@@ -31,20 +31,17 @@
           "app3",
           "appn"
         ],
-        "note": "템플릿 처리 한 번으로 여러 Application 리소스가 동시에 생성된다."
+        "note": "파라미터 조합마다 Application 리소스를 생성하거나 갱신합니다. 동시 원자적 생성을 의미하지 않습니다."
       }
     ],
     "legend": {
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "백엔드 서비스"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
+          "label": "템플릿 처리 / Application"
         },
         "external": {
-          "label": "외부 시스템"
+          "label": "생성기 입력 / 템플릿"
         }
       }
     }
@@ -94,7 +91,7 @@
     },
     {
       "id": "app1",
-      "type": "cloud",
+      "type": "backend",
       "label": "Application 1",
       "pos": [
         880,
@@ -107,7 +104,7 @@
     },
     {
       "id": "app2",
-      "type": "cloud",
+      "type": "backend",
       "label": "Application 2",
       "pos": [
         880,
@@ -120,7 +117,7 @@
     },
     {
       "id": "app3",
-      "type": "cloud",
+      "type": "backend",
       "label": "Application 3",
       "pos": [
         880,
@@ -133,7 +130,7 @@
     },
     {
       "id": "appn",
-      "type": "cloud",
+      "type": "backend",
       "label": "Application N",
       "pos": [
         880,

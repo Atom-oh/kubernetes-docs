@@ -1,6 +1,6 @@
 # GitOps 도구 비교
 
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 11일
 
 이 가이드는 Kubernetes 생태계에서 가장 인기 있는 두 가지 선택인 ArgoCD와 FluxCD를 중심으로 GitOps 도구에 대한 포괄적인 비교를 제공합니다.
 
@@ -19,32 +19,32 @@ GitOps는 애플리케이션 개발에 사용되는 DevOps 모범 사례를 인�
 
 | 측면 | ArgoCD | FluxCD |
 |------|--------|--------|
-| **아키텍처** | UI가 포함된 모놀리식 애플리케이션 | 컨트롤러의 모듈식 툴킷 |
+| **아키텍처** | API/Repo Server·Application Controller 등 여러 컴포넌트 | 컨트롤러의 모듈식 툴킷 |
 | **구성** | 애플리케이션 중심 CRDs | 소스 중심 CRDs |
 | **사용자 인터페이스** | 풍부한 Web UI 포함 | CLI 우선, 내장 UI 없음 |
-| **학습 곡선** | 초보자에게 더 완만함 | 더 가파르지만 유연함 |
+| **학습 관점** | Application·AppProject와 UI 흐름 | Source·Kustomization·HelmRelease 등 컨트롤러 관계 |
 | **배포 모델** | 풀 기반 GitOps | 풀 기반 GitOps |
 
 ### 기능 비교
 
 | 기능 | ArgoCD | FluxCD |
 |------|--------|--------|
-| **Web UI** | 내장, 기능 풍부 | 미포함 (Weave GitOps 사용) |
+| **Web UI** | 내장, 기능 풍부 | 핵심 배포에는 없음; 유지보수 중인 생태계 UI 비교 |
 | **CLI** | `argocd` CLI | `flux` CLI |
 | **멀티 테넌시** | RBAC가 있는 Projects | 네임스페이스 격리 |
 | **멀티 클러스터** | 네이티브 지원 | 네이티브 지원 |
-| **Helm 지원** | 완전 지원 | Helm Controller를 통한 완전 지원 |
+| **Helm 지원** | helm template; Argo CD가 수명주기 관리 | Helm Controller가 release 수명주기 관리 |
 | **Kustomize 지원** | 완전 지원 | Kustomize Controller를 통한 완전 지원 |
-| **OCI 지원** | Helm 차트만 | 전체 OCI 아티팩트 지원 |
+| **OCI 지원** | 일반 OCI 및 OCI Helm 소스 (버전·media type 조건 확인) | OCIRepository (지원 layer·검증 조건 확인) |
 | **알림** | 내장 알림 시스템 | Notification Controller |
 | **RBAC** | 포괄적인 RBAC | Kubernetes 네이티브 RBAC |
-| **SSO 통합** | OIDC, SAML, LDAP | Kubernetes 인증 |
-| **헬스 체크** | 내장 리소스 헬스 | 커스텀 헬스 체크 |
+| **SSO 통합** | OIDC 직접 또는 Dex 등의 지원 커넥터 | Kubernetes 인증 |
+| **헬스 체크** | 내장 및 사용자 정의 리소스 헬스 | 컨트롤러별 준비 상태·health check·사용자 정의 조건 |
 | **점진적 배포** | Argo Rollouts를 통해 | Flagger를 통해 |
-| **이미지 자동화** | Argo Image Updater를 통해 | 내장 Image Automation |
+| **이미지 자동화** | Argo Image Updater를 통해 | 선택 설치 Image Reflector/Automation |
 | **Diff 미리보기** | UI에서 시각적 diff | CLI diff |
 | **Sync Waves** | 네이티브 지원 | 의존성을 통해 |
-| **Hooks** | PreSync, Sync, PostSync | 네이티브 아님 (Jobs 사용) |
+| **Hooks** | Argo sync hooks | Helm hooks; Kustomization 의존성과 Jobs는 별도 설계 |
 
 ### 아키텍처 비교
 
@@ -64,10 +64,9 @@ GitOps는 애플리케이션 개발에 사용되는 DevOps 모범 사례를 인�
 
 | 지표 | ArgoCD | FluxCD |
 |------|--------|--------|
-| **GitHub Stars** | ~17,000+ | ~6,500+ |
 | **CNCF 상태** | 졸업 (2022년 12월) | 졸업 (2022년 11월) |
 | **첫 릴리스** | 2018 | 2016 (v1), 2020 (v2) |
-| **주요 메인테이너** | Intuit, Red Hat | Weaveworks, CNCF |
+| **유지보수** | 현재 프로젝트 거버넌스·보안 지원 확인 | 현재 프로젝트 거버넌스·보안 지원 확인 |
 | **생태계 도구** | Argo Workflows, Rollouts, Events | Flagger, Weave GitOps |
 
 ## ArgoCD를 선택해야 할 때
@@ -116,15 +115,15 @@ FluxCD는 다음이 필요할 때 이상적입니다:
 2. **CLI 우선 워크플로우**: UI 의존성 없는 GitOps 네이티브 워크플로우
 3. **이미지 자동화**: Git에서 자동 컨테이너 이미지 업데이트
 4. **OCI 아티팩트**: OCI 레지스트리에서 저장 및 배포
-5. **경량 풋프린트**: 최소한의 리소스 소비
+5. **구성 선택**: 필요한 컨트롤러와 실제 부하에 맞춰 리소스 측정
 
 ### 장점
 
 - **모듈식 설계**: 필요한 것만 사용
-- **네이티브 이미지 자동화**: 내장 컨테이너 이미지 업데이트
+- **네이티브 이미지 자동화**: 선택 설치 컨트롤러를 통한 이미지 업데이트
 - **OCI 지원**: OCI 아티팩트에 대한 일급 지원
 - **Kubernetes 네이티브**: 표준 Kubernetes RBAC 사용
-- **낮은 리소스 사용량**: 더 작은 메모리 및 CPU 풋프린트
+- **리소스 제어**: 설치 컴포넌트·소스·객체 수·조정 주기에 맞춰 CPU/메모리 측정
 
 ### 예제 시나리오
 
@@ -144,6 +143,8 @@ FluxCD는 다음이 필요할 때 이상적입니다:
 
 ## 함께 사용할 수 있을까?
 
+같은 리소스를 두 reconciler가 동시에 수정·prune하지 않도록 소유권을 분리합니다. CR 생성자와 CR을 처리하는 Operator가 협력하는 것과, 동일 Deployment/Helm release를 둘이 경쟁 관리하는 것은 다릅니다.
+
 네, ArgoCD와 FluxCD는 상호 보완적인 패턴으로 함께 사용할 수 있습니다:
 
 ### 패턴 1: 인프라에 FluxCD, 애플리케이션에 ArgoCD
@@ -152,7 +153,7 @@ FluxCD는 다음이 필요할 때 이상적입니다:
 Git Repository
 ├── infrastructure/     # FluxCD가 관리
 │   ├── cert-manager/
-│   ├── ingress-nginx/
+│   ├── ingress-controller/
 │   └── monitoring/
 └── applications/       # ArgoCD가 관리
     ├── app-a/
@@ -178,6 +179,8 @@ Git Repository
 - 개발 클러스터: FluxCD (빠른 반복용)
 
 ## 마이그레이션 고려 사항
+
+아래는 설계 매핑이며 CRD 이름을 자동 치환하는 절차가 아닙니다. 리소스 inventory·Helm release·hooks·prune/finalizer·비밀 값·권한을 비교하고 기존 reconciler를 중지한 뒤 삭제 없이 소유권을 넘기는 과정을 검증 환경에서 시험합니다. Argo CD의 Helm은 template 처리이므로 Flux Helm release 이력을 그대로 가져오는 것으로 간주하지 않습니다.
 
 ### FluxCD에서 ArgoCD로
 
@@ -213,9 +216,9 @@ ArgoCD와 FluxCD가 GitOps 환경을 지배하지만, 다른 도구도 존재합
 
 ### Weave GitOps
 
-- FluxCD를 기반으로 한 상용 제품
+- Flux 기반 OSS UI 프로젝트; 상용 지원 계약은 별도 확인
 - Flux에 UI와 엔터프라이즈 기능 추가
-- 적합한 경우: UI를 원하는 FluxCD 사용자
+- 검토 사항: 현재 릴리스·Flux 버전 호환성·지원 주체 확인
 
 ## 결정 매트릭스
 
@@ -223,11 +226,11 @@ ArgoCD와 FluxCD가 GitOps 환경을 지배하지만, 다른 도구도 존재합
 |-----------|-------------|
 | Web UI 필요 | ArgoCD |
 | CLI 우선 워크플로우 | FluxCD |
-| 이미지 자동화 | FluxCD |
+| 이미지 자동화 | Flux 선택 컨트롤러 또는 Argo CD Image Updater |
 | 복잡한 RBAC | ArgoCD |
 | SSO 통합 | ArgoCD |
-| 최소한의 리소스 | FluxCD |
-| OCI 아티팩트 | FluxCD |
+| 리소스 제약 | 동일한 실제 워크로드로 비교 측정 |
+| OCI 아티팩트 | 둘 다; 형식·검증·인증 요구사항 비교 |
 | Sync waves/hooks | ArgoCD |
 | 시각적 diff | ArgoCD |
 | 모듈식 배포 | FluxCD |
@@ -246,3 +249,11 @@ ArgoCD와 FluxCD 모두 GitOps를 구현하기 위한 훌륭한 선택입니다.
 ## 퀴즈
 
 이 장에서 배운 내용을 테스트하려면 [GitOps 도구 비교 퀴즈](../quizzes/gitops/03-gitops-comparison-quiz.md)를 풀어보세요.
+
+## 참고 자료
+
+- [Argo CD OCI](https://argo-cd.readthedocs.io/en/stable/user-guide/oci/)
+- [Argo CD Helm lifecycle](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/)
+- [Flux HelmRelease lifecycle](https://fluxcd.io/flux/components/helm/helmreleases/)
+- [Flux multi-tenancy](https://fluxcd.io/flux/installation/configuration/multitenancy/)
+- [Flux ecosystem](https://fluxcd.io/ecosystem/)

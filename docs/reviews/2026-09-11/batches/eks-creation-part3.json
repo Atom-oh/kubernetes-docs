@@ -1,0 +1,54 @@
+[
+  {
+    "path": "en/eks/02-eks-cluster-creation-part3.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html"
+    ],
+    "findings": [
+      "Conventional-node workflow needs explicit Console Custom/AutoMode selection and current AL2023/version guidance.",
+      "Private endpoint access incorrectly limited to within one VPC.",
+      "Minimal VPC/subnet creation omits DNS/routing/NAT or private endpoints and does not capture/use created IDs.",
+      "Unrestricted TCP443 SG ingress is unnecessary for public API access and contradicts restricted endpoint guidance.",
+      "CreateCluster used an obsolete1.26 target and omitted Region/waiters. Preserve its correct --kubernetes-version flag; --version is the global CLI version switch.",
+      "IAM role creation can fall through to attaching policies on an existing name; node ECR policy outdated and CNI role tradeoff unqualified.",
+      "Missing explicit operator access entries; default kubeconfig/context and getnodes alone are insufficient validation.",
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
+    ],
+    "validation": [
+      "Read every line1–264; no commands in the guide executed."
+    ]
+  },
+  {
+    "path": "ko/eks/02-eks-cluster-creation-part3.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html"
+    ],
+    "findings": [
+      "Conventional-node workflow needs explicit Console Custom/AutoMode selection and current AL2023/version guidance.",
+      "Private endpoint access incorrectly limited to within one VPC.",
+      "Minimal VPC/subnet creation omits DNS/routing/NAT or private endpoints and does not capture/use created IDs.",
+      "Unrestricted TCP443 SG ingress is unnecessary for public API access and contradicts restricted endpoint guidance.",
+      "CreateCluster used an obsolete1.26 target and omitted Region/waiters. Preserve its correct --kubernetes-version flag; --version is the global CLI version switch.",
+      "IAM role creation can fall through to attaching policies on an existing name; node ECR policy outdated and CNI role tradeoff unqualified.",
+      "Missing explicit operator access entries; default kubeconfig/context and getnodes alone are insufficient validation.",
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
+    ],
+    "validation": [
+      "Read every line1–264; no commands in the guide executed."
+    ]
+  }
+]

@@ -1,6 +1,6 @@
 # DestinationRule
 
-> **지원 버전**: Istio 1.28+ **API 버전**: `networking.istio.io/v1` **마지막 업데이트**: 2026년 2월 23일
+> **검토 버전**: Istio 1.31.0 **API 버전**: `networking.istio.io/v1` **마지막 업데이트**: 2026년 9월 11일
 
 DestinationRule은 VirtualService가 트래픽을 라우팅한 후, 해당 트래픽을 어떻게 처리할지 정의하는 Istio의 핵심 리소스입니다.
 
@@ -18,6 +18,8 @@ DestinationRule은 VirtualService가 트래픽을 라우팅한 후, 해당 트�
 10. [문제 해결](03-destination-rule.md#문제-해결)
 
 ## DestinationRule이란?
+
+각 예제는 독립적인 Sidecar 구성 패턴입니다. DestinationRule과 VirtualService는 istiod가 변환하는 설정 입력이며 별도 트래픽 처리 홉이 아닙니다. DestinationRule은 VirtualService 없이도 적용됩니다. Subset은 Service에 이미 발견된 엔드포인트를 선택하며 워크로드 생성·환경 격리·트래픽 비율 지정을 하지 않습니다. 일치하는 파드 템플릿 레이블과 subset을 참조하는 라우트를 사용하세요.
 
 DestinationRule은 **라우팅 이후의 트래픽 정책**을 정의합니다. VirtualService가 "어디로" 보낼지 결정한다면, DestinationRule은 "어떻게" 처리할지 결정합니다.
 
@@ -130,9 +132,7 @@ spec:
 ```
 
 ```yaml
-# 파드 레이블
-apiVersion: v1
-kind: Pod
+# 파드 템플릿 레이블 발췌
 metadata:
   labels:
     app: reviews
@@ -363,7 +363,7 @@ trafficPolicy:
 ```yaml
 trafficPolicy:
   outlierDetection:
-    consecutiveErrors: 5
+    consecutive5xxErrors: 5
     interval: 30s
     baseEjectionTime: 30s
     maxEjectionPercent: 50
@@ -401,6 +401,8 @@ trafficPolicy:
 VirtualService와 DestinationRule은 함께 사용되어 완전한 트래픽 제어를 제공합니다.
 
 ### 기본 패턴: Canary 배포
+
+실제 롤아웃에서는 DestinationRule을 먼저 적용하고 프록시 cluster 구성에 새 subset이 나타난 것을 확인한 뒤 VirtualService를 변경하세요. 여러 문서를 한 번에 apply해도 구성 전파 순서는 보장되지 않습니다. Subset 삭제 전에는 라우트 참조를 먼저 제거하세요.
 
 ```yaml
 # DestinationRule: Subset 정의
@@ -571,6 +573,8 @@ spec:
 
 ### 예제 2: Multi-Region 배포
 
+메시가 각 리전의 엔드포인트를 이미 발견하고 연결할 수 있다는 가정입니다. 사용자 정의 `region` 파드 레이블은 subset 선택용이며 Envoy locality는 별도의 노드 topology 정보로 결정됩니다. 리전 subset에는 명시적 라우팅이 필요하며 locality 장애 조치에는 Outlier Detection과 연결 가능한 정상 용량이 필요합니다.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -629,7 +633,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -644,7 +648,7 @@ spec:
         http:
           http1MaxPendingRequests: 20
       outlierDetection:
-        consecutiveErrors: 5
+        consecutive5xxErrors: 5
         interval: 30s
         baseEjectionTime: 30s
 
@@ -659,7 +663,7 @@ spec:
         http:
           http1MaxPendingRequests: 100
       outlierDetection:
-        consecutiveErrors: 10
+        consecutive5xxErrors: 10
         interval: 60s
         baseEjectionTime: 30s
 ```
@@ -676,9 +680,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -697,12 +702,17 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
       mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames:
+      - api.payment-gateway.com
 ```
+
+이 구성은 앱이 등록된 80 포트로 HTTP를 보내고 Sidecar가 443 포트로 검증된 TLS를 시작하는 예제입니다. 호스트는 실제 엔드포인트로 바꾸세요. 앱이 이미 HTTPS를 보내는 경우 해당 불투명 TLS 경로에 TLS Origination과 HTTP 전용 정책을 추가하지 않아야 이중 암호화를 피할 수 있습니다.
 
 ### 예제 5: 데이터베이스 연결 풀
 
@@ -721,11 +731,8 @@ spec:
         tcpKeepalive:
           time: 7200s
           interval: 75s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
   subsets:
@@ -741,6 +748,8 @@ spec:
           maxConnections: 100  # Replica는 더 많이
 ```
 
+위 TCP 연결 제한은 프록시별로 적용되며 데이터베이스 전체의 연결 예산이 아닙니다. PostgreSQL에는 HTTP 연결 설정이 적용되지 않습니다. Primary/replica subset은 선택한 Service의 엔드포인트에 실제로 존재해야 하며 앱이 읽기/쓰기 목적지를 올바르게 선택해야 합니다.
+
 ## 모범 사례
 
 ### 1. Subset 명명 규칙
@@ -754,7 +763,9 @@ subsets:
 - name: canary
 - name: us-west
 - name: production
+```
 
+```yaml
 # ❌ 나쁜 예: 모호한 이름
 subsets:
 - name: subset1
@@ -788,10 +799,10 @@ spec:
         simple: ROUND_ROBIN
 ```
 
-### 3. Circuit Breaker는 필수
+### 3. 장애 격리 정책 조정
 
 ```yaml
-# ✅ 항상 outlierDetection 설정
+# 서비스와 장애 모델에 맞게 outlierDetection 조정
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -801,8 +812,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # 필수
-      consecutiveErrors: 5
+    outlierDetection:  # 선택적 정책
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -897,25 +908,27 @@ kubectl get destinationrule reviews -o yaml
 kubectl get pods --show-labels | grep reviews
 
 # 4. 파드에 version=v2 레이블이 있는지 확인
-kubectl label pod reviews-v2-xxx version=v2
+kubectl get deployment reviews-v2 -o jsonpath='{.spec.template.metadata.labels}'
 ```
 
 ### Traffic Policy가 적용되지 않음
 
 ```bash
 # Envoy 구성 확인
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local -o json
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local -o json
 
 # Circuit Breaker 설정 확인
-istioctl proxy-config cluster <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
+istioctl proxy-config clusters <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 ```
 
 ### Subset 충돌
 
+Istio는 동일 호스트에 적용되는 DestinationRule 조각을 병합할 수 있습니다. 아래처럼 다른 이름의 두 subset 자체가 충돌하지는 않습니다. 중복 subset 이름은 내용을 병합하지 않고 첫 정의를 사용하며 최상위 trafficPolicy가 여러 개면 먼저 처리한 것만 사용합니다. 네임스페이스 조회 범위와 가시성도 영향을 주므로 한 관리 주체의 규칙 하나가 이해하기 쉽습니다.
+
 **문제**:
 
 ```yaml
-# 같은 host에 여러 DestinationRule이 있으면 충돌
+# 같은 host의 DestinationRule 조각은 제한 조건에 따라 병합 가능
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -927,7 +940,7 @@ spec:
     labels:
       version: v1
 ---
-# ❌ 충돌 발생
+# 고유 subset 이름은 병합 가능; 중복 이름/정책이 문제
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -969,20 +982,23 @@ istioctl analyze
 istioctl analyze -n production
 
 # 예시 출력
-# Error [IST0101] (DestinationRule reviews.default) Referenced host not found: "reviews"
+# Inspect actual analyzer messages and confirm subset clusters in proxy-config output
 ```
 
 ## 다음 단계
 
 DestinationRule을 이해했다면 다음 주제로 넘어가세요:
 
-1. [**트래픽 분할**](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md): Canary, Blue/Green 배포
+1. [**트래픽 분할**](04-traffic-splitting.md): Canary, Blue/Green 배포
 2. [**로드 밸런싱**](06-load-balancing.md): 다양한 알고리즘과 정책
 3. [**Circuit Breaker**](07-circuit-breaker.md): 장애 격리 및 복원력
-4. [**Retry 및 Timeout**](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/04-retry-timeout.md): 재시도 및 타임아웃 설정
+4. [**Retry 및 Timeout**](05-retry-timeout.md): 재시도 및 타임아웃 설정
 
 ## 참고 자료
 
 * [Istio DestinationRule Reference](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 * [Istio Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
 * [Envoy Cluster Configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)
+
+- [DestinationRule merging and safe subset rollout](https://istio.io/latest/docs/ops/best-practices/traffic-management/)
+- [TLS origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

@@ -1,9 +1,9 @@
-> [한국어 버전](https://atomoh.gitbook.io/kubernetes-docs/)
+> [한국어 버전](https://www.atomai.click/kubernetes-docs/ko/)
 
 # Kubernetes and Amazon EKS Training Content
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-This repository is a comprehensive cloud guidebook covering Linux and container fundamentals, Kubernetes and Amazon EKS, networking, service mesh, storage, databases, data pipelines, AI/ML, and security & operations. Alongside the learning materials it provides benchmark data measured on real AWS environments, plus quizzes and hands-on labs for every topic.
+This repository is a comprehensive cloud guidebook covering Linux and container fundamentals, Kubernetes and Amazon EKS, networking, service mesh, storage, databases, data pipelines, AI/ML, and security & operations. Alongside the learning materials it provides benchmark data measured on real AWS environments, plus topic quizzes and selected hands-on labs.
 
 ## Learning Materials and Quizzes
 
@@ -14,7 +14,7 @@ This training content provides quizzes for each topic along with the learning ma
 - [Learning Materials Table of Contents](#table-of-contents) - Learning materials by topic
 - [Quiz Collection](./quizzes/README.md) - Quizzes by topic
 - [Guidebook Roadmap](./roadmap.md) - The full learning map and recommended learning paths | [Quiz](./quizzes/roadmap-quiz.md)
-- [Reading with LLMs](./llm-guide.md) - How to feed this entire guidebook to an AI via llms.txt | [Quiz](./quizzes/llm-guide-quiz.md)
+- [Reading with LLMs](./llm-guide.md) - Find and read source material through llms.txt, the manifest and MCP | [Quiz](./quizzes/llm-guide-quiz.md)
 
 ## Table of Contents
 
@@ -306,7 +306,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [CloudWatch Metrics](./observability/metrics/04-cloudwatch-metrics.md) | [Quiz](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
    - [Datadog](./observability/metrics/05-datadog.md) | [Quiz](./quizzes/observability/metrics/05-datadog-quiz.md)
 3. **Logging**
-   - [Logging Overview](./observability/logging/README.md)
+   - [Logging Overview](./observability/logging/README.md) | [Quiz](./quizzes/observability/logging/README-quiz.md)
    - [Grafana Loki](./observability/logging/01-loki.md) | [Quiz](./quizzes/observability/logging/01-loki-quiz.md)
    - [OpenSearch](./observability/logging/02-opensearch.md) | [Quiz](./quizzes/observability/logging/02-opensearch-quiz.md)
    - [CloudWatch Logs](./observability/logging/03-cloudwatch-logs.md) | [Quiz](./quizzes/observability/logging/03-cloudwatch-logs-quiz.md)

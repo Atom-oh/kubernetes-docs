@@ -1,0 +1,668 @@
+{
+  "date": "2026-09-11",
+  "branch": "audit/full-content-2026-09",
+  "repo": "/home/atomoh/kubernetes-docs",
+  "state": "active; original sequential scope retained",
+  "coverage": {
+    "serviceMeshInventory": 170,
+    "fullyRead": 128,
+    "fixedAndValidated": 124,
+    "fullyReadPendingValidation": 4,
+    "serviceMeshUnread": 42,
+    "networkingQueued": 108,
+    "observabilityAndLabsQueued": 116,
+    "totalAssignedMarkdownInventory": 394,
+    "totalUnreadInventory": 266
+  },
+  "completedBatches": [
+    "istio-foundation (16)",
+    "istio-traffic (30)",
+    "istio-security (10)",
+    "istio-observability (12)",
+    "istio-resilience (10)",
+    "istio-advanced (24)",
+    "istio-comparison (10)",
+    "istio-troubleshooting (2)",
+    "mesh-other-istio-overview (4)"
+  ],
+  "activeBatch": "mesh-linkerd (6/28 fixed)",
+  "currentFiles": [
+    "en/service-mesh/linkerd/02-architecture.md",
+    "en/quizzes/service-mesh/linkerd/architecture.md",
+    "ko/service-mesh/linkerd/02-architecture.md",
+    "ko/quizzes/service-mesh/linkerd/architecture.md"
+  ],
+  "currentWork": [
+    "Linkerd architecture guides/quizzes4fullyread and edits now applied;128fullyread/124fixed until final validation. All22figures visually inspected; retained0/3/5/8/9 with precise captions, removed1/2/4/6/7/10 for wrong/obsolete/unsupported embedded claims.",
+    "Corrected issuer-vs-root signing, ConfigMap storage, DNS-form Kubernetes identity, TokenReview, v1beta2 ServerAuthorization error, proto-vs-Go label, CNI/native/manual injection distinctions, unsafe iptables/partial rotation and benchmark rankings.",
+    "Verified70% refresh claim in exact proxy release/v2.368.0 commit a66af8117769df060adda6233302a2d1c4142229: remaining lifetime clamped to min/max; loaded key/CSR reused. Next: released CRD and native injection/identity/jq checks, quiz consistency and links."
+  ],
+  "nextSteps": [
+    "ReviewLinkerd28sequentiallyandCilium24.",
+    "Then networking108 andobservability/labs116."
+  ],
+  "blockers": [],
+  "knownLimitations": [
+    "No live AWS/cluster deployment, production-load validation or destructive sample execution.",
+    "Kiali2.31 published compatibility table lacks an explicit Istio1.31 entry; this gap is documented rather than treated as proven incompatibility or compatibility.",
+    "Inaccurate/404 figures were removed only with corresponding explanation; external archmap sources requiring regeneration are listed in per-document findings. Parent owns mechanical/foreign-translation assets.",
+    "Kong Mesh2.14.4 is published, but the official Kubernetes validation matrix currently stops at2.13; the comparison explicitly records this evidence gap rather than claiming compatibility.",
+    "Parent freed /tmp inodes by removing only its disposable go-cache; this worker made no cache deletions during the transient startup failure. Reuse existing tools and avoid large dependency trees."
+  ],
+  "durableReports": [
+    "docs/reviews/2026-09-11/service-mesh-progress.json",
+    "docs/reviews/2026-09-11/worker-domain-queue.json",
+    "docs/reviews/2026-09-11/batches/istio-foundation.json",
+    "docs/reviews/2026-09-11/batches/istio-traffic.json",
+    "docs/reviews/2026-09-11/batches/istio-security.json",
+    "docs/reviews/2026-09-11/batches/istio-observability.json",
+    "docs/reviews/2026-09-11/retry-guidance-regression.json",
+    "docs/reviews/2026-09-11/batches/istio-comparison.json",
+    "docs/reviews/2026-09-11/istio-comparison-benchmark-calculations.json",
+    "docs/reviews/2026-09-11/batches/istio-troubleshooting.json",
+    "docs/reviews/2026-09-11/batches/mesh-other-istio-overview.json",
+    "docs/reviews/2026-09-11/istio-overview-quiz-validation.json",
+    "docs/reviews/2026-09-11/batches/mesh-linkerd.json",
+    "docs/reviews/2026-09-11/linkerd-installation-validation.json"
+  ],
+  "temporaryArtifacts": {
+    "sourceCache": "/tmp/istio-foundation-sources/ (SHA256(url)[:12].html is raw; .txt is extracted text)",
+    "sourceFetcher": "/tmp/istio-foundation-sources/fetch.py (official-page network calls need require_escalated)",
+    "auditHelpers": [
+      "/tmp/mesh_audit.py",
+      "/tmp/mesh_batch_check.py",
+      "/tmp/mesh_metrics_validation.py",
+      "/tmp/mesh_logql_validation.py",
+      "/tmp/mesh-zone-check.py"
+    ],
+    "quizOriginals": [
+      "/tmp/observability-quiz-original-en.md",
+      "/tmp/observability-quiz-original-ko.md",
+      "/tmp/resilience-quiz-original-en.md",
+      "/tmp/resilience-quiz-original-ko.md"
+    ],
+    "quizEditScripts": [
+      "/tmp/mesh-observability-quiz-fix1.py",
+      "/tmp/mesh-observability-quiz-fix2.py"
+    ],
+    "businessCode": [
+      "/tmp/mesh-business-code/app.py",
+      "/tmp/mesh-business-code/app.cjs"
+    ],
+    "businessDependency": "/tmp/mesh-business-validation/node_modules/@prometheus-io/client (0.16.1; Node22 supported)",
+    "nativeValidators": [
+      "/tmp/promtool (3.14.0)",
+      "/tmp/otelcol-contrib (0.160.0)",
+      "/tmp/jaeger (2.20.0)",
+      "/tmp/loki and /tmp/lokitool (3.7.7)",
+      "/tmp/alloy (1.19.2)"
+    ],
+    "istio": "Native /tmp/istioctl-1.31.0 plus released1.31.0 CRD schemas/charts; prior rows preserve actual validator versions.",
+    "warning": "Edit scripts can be non-idempotent; do not rerun against current files. Keep original snapshots and exact section boundaries. New Envoy proto validator uses pinned Istio1.31 dependency with Go1.26 under /tmp only.",
+    "envoyProtoValidator": "/tmp/mesh-envoy-proto-check; source/go.mod under /tmp/mesh-envoy-validation; rate checks /tmp/mesh-rate-check.py",
+    "istio31CLI": "/tmp/istioctl-1.31.0; official asset sha256:c2367fb837d8fd10ed9a742c1927d8207b06fdc5271255a7288eafd8f2a85d42",
+    "zoneSources": {
+      "k8sSpread": "4f7e995f7bb7",
+      "awsNetworkCost": "83b331dc50e1",
+      "ebs": "cbd4c7908852",
+      "nthREADME": "a4c6e6fa8f62",
+      "releasedDRproto": "d7f473a9607a",
+      "releasedLoadBalancer": "66c1a8b9d075",
+      "releasedValidation": "f4b844301cf4",
+      "releasedProxyConfig": "8b6efc2c1086",
+      "endpointWriter": "9447daace718",
+      "IMDSv2": "82aca706445c",
+      "AZIDs": "8988e812c241",
+      "eksctlNodegroups": "5c6d3e1ecb3e"
+    },
+    "resilienceFinal": [
+      "/tmp/mesh-resilience-final-validation.json",
+      "/tmp/istio-resilience-batch-validation.json",
+      "/tmp/mesh-resilience-final-check.py",
+      "/tmp/kubernetes-docs-full-review/docs-test-resilience.log"
+    ],
+    "advancedSources": {
+      "ambientOverview": "e22a9556901c",
+      "waypoint": "e2bd02e09b86",
+      "DNSProxy": "bc9962506e98",
+      "Lua": "fdfd868d78d7",
+      "KEDARelease": "2f5517a8f874 (v2.20.2)",
+      "KEDADeploy": "efeb4df256dd",
+      "KEDAScaledObjectSpec": "c31a52cfe072",
+      "KEDAScaledObjectCRD": "56c175e93b20",
+      "KEDAPrometheus": "41d6d54455e2",
+      "KEDACloudWatch": "2b6fd16c9945",
+      "HPA": "3e97077d488e",
+      "ArgoIstio": "45faadc7bd1c"
+    },
+    "ambientSources": {
+      "trafficRedirection": "18355af7586b",
+      "HBONE": "f76d27207465",
+      "platformPrereqs": "9a419bbabd24",
+      "istioctlInstall": "7ce398b72c02",
+      "L7Status": "a7ddccda2fb0",
+      "mTLSVerify": "eea9c5258d51",
+      "multiclusterStatus": "8229d81a2d61",
+      "bookinfo131": "7ca89082c8c7",
+      "curl131": "9266da2121d4",
+      "httpbin131": "a93816a4a5cf",
+      "addWorkloads": "21603c00375f",
+      "manageTraffic": "426ee248b50f",
+      "sampleApp": "5131a12742cd",
+      "dataPlane": "76a732663d27",
+      "gatewayAPI160CRDs": "794ad80426bd",
+      "intro2022": "7831a07e930f",
+      "beta122": "c846feb87858",
+      "performance": "06c6c993ec2c",
+      "oldSecurity2022": "ac33470dd19f",
+      "oldGettingStarted2022": "57ceca9ad878",
+      "community": "5057797cf5df",
+      "SKTArticle": "438cdac17aa4"
+    },
+    "ambientScripts": [
+      "/tmp/mesh-ambient-edit1.py",
+      "/tmp/mesh-ambient-install-edit.py",
+      "/tmp/mesh-ambient-migration-edit.py",
+      "/tmp/mesh-ambient-final-edit.py",
+      "/tmp/mesh-ambient-check.py"
+    ],
+    "ambientValidation": "/tmp/mesh-ambient-validation.json; docs/reviews/2026-09-11/istio-ambient-resource-model.json",
+    "multiclusterValidation": "/tmp/mesh-multicluster-validation/report.json",
+    "envoyFilter": [
+      "/tmp/envoy-filter-original-en.md",
+      "/tmp/envoy-filter-original-ko.md",
+      "/tmp/mesh-envoy-filter-validation.json",
+      "/tmp/mesh-envoy-filter-typed.json",
+      "/tmp/mesh-envoy-filter-lua.json"
+    ],
+    "dnsValidation": "/tmp/mesh-dns-validation/report.json",
+    "injectionValidation": "/tmp/mesh-injection-validation/report.json",
+    "recentEditScripts": [
+      "/tmp/mesh-envoy-edit1.py",
+      "/tmp/mesh-envoy-edit2.py",
+      "/tmp/mesh-envoy-edit3.py",
+      "/tmp/mesh-dns-edit1.py",
+      "/tmp/mesh-dns-edit2.py",
+      "/tmp/mesh-grpc-edit.py",
+      "/tmp/mesh-websocket-edit.py",
+      "/tmp/mesh-injection-edit.py"
+    ],
+    "recentScriptWarning": "Edit scriptsnon-idempotent andsomefinalchangesappliedseparately; do notrerun. Currentrepositoryfilesandbatchrowsaretruth.",
+    "argoCurrentSources": {
+      "release": "7d8d284e2449",
+      "istio": "45faadc7bd1c",
+      "analysisDocs": "bca4964a90c8",
+      "prometheus": "9efb289ec1bd",
+      "bluegreen": "72a957ba33c3",
+      "experiment": "61814315e303",
+      "spec": "3c9683cb2a00",
+      "FAQ": "0b3324df5de3",
+      "istioController": "0267a93e0e65",
+      "rolloutCRD": "629698de3598",
+      "analysisTemplateCRD": "e817619cef02",
+      "blueDockerHub": "2198199a23d4",
+      "greenDockerHub": "0679dc026400",
+      "demoDockerfile": "5648264314f8",
+      "demoMain": "236fbbf480b0",
+      "evaluate": "2e2a3f883824",
+      "analysisController": "337e78672725",
+      "analysisHelpers": "008c37ee643d",
+      "argocdSyncRaw": "c971d0a0b6d4",
+      "trafficManagement": "3c9905267d97",
+      "goMod": "ef3352819384",
+      "repoTree": "2a4fce2dc970",
+      "webMetricDocs": "4fc863dfe8a3",
+      "headerFixture": "6fbf770c0bc7",
+      "mirrorFixture": "5fef8a6ea225"
+    },
+    "argoImages": {
+      "blueDigest": "sha256:3225193a6415b14b3fcdd160c40248b2bfd62f8c77326480559b91a41ced6e20",
+      "greenDigest": "sha256:e32df3d15f759d36c323b3dccb7003d38df1a4274d37217715151f085c24c58f",
+      "platform": "linux/amd64 only forboth tags",
+      "originalRemote": "/tmp/istio-argo-service-metrics.png (verifiedoriginalreleasedasset, historicalGrafanaService screenshot)",
+      "contactSheet": "/tmp/istio-argo-figures.png"
+    },
+    "argoValidation": [
+      "/tmp/mesh-argo-validation/report.json",
+      "/tmp/mesh-argo-validation/predicate-proof.json",
+      "/tmp/mesh-argo-validation/prometheus-fixtures.yaml",
+      "/tmp/mesh-argo-validation/prometheus-fixtures.json",
+      "/tmp/mesh-argo-validation/conditions.json",
+      "/tmp/mesh-argo-check.py",
+      "/tmp/mesh-argo-prom-fixtures.py",
+      "/tmp/mesh-argo-expr-check"
+    ],
+    "argoCurrentWriters": [
+      "/tmp/mesh-argo-content.py",
+      "/tmp/mesh-argo-sections-en.py",
+      "/tmp/mesh-argo-sections-ko.py"
+    ],
+    "argoWriterNote": "WritersbuildthefinaldocfromsharedobjectsbutfinalEnglishspacingandhistoryCLIreplacementwerealsoapplied;prefercurrentrepositoryfiles. NativeGoexprsourceunder/tmp/mesh-argo-expr;onlyoneadditionalmodule,nomassdependencycopy.",
+    "zonalArgoSources": {
+      "disruptions": "b2cb58aaf3d9",
+      "PDB": "5bb569773cff",
+      "affinity": "37b2614a3ee3",
+      "EC2SpotNotices": "ff704e292777",
+      "AWSAZs": "67149aa133ac",
+      "localityFailover": "0df60205b93d",
+      "EKSSpotBadURL": "8bbbc8ecaeb2 (spot.html returns only Amazon EKS landing content; do not cite asarticle)",
+      "EKSManagedNodes": "Official awsknowledge search chunk for https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html confirms diversification/rebalancing and no replacementReady guarantee."
+    },
+    "zonalArgoValidation": [
+      "/tmp/mesh-zone-argo-validation/report.json",
+      "/tmp/mesh-zone-argo-validation/prometheus-fixtures.json",
+      "/tmp/mesh-zone-argo-validation/prometheus-fixtures.yaml",
+      "/tmp/mesh-zone-argo-validation/conditions.json",
+      "/tmp/mesh-zone-argo-check.py",
+      "/tmp/mesh-zone-argo-prom-fixtures.py"
+    ],
+    "zonalArgoWriters": [
+      "/tmp/mesh-zone-argo-content.py",
+      "/tmp/mesh-zone-argo-en.py",
+      "/tmp/mesh-zone-argo-ko.py"
+    ],
+    "kedaDrafts": [
+      "/tmp/mesh-keda-content.py",
+      "/tmp/mesh-keda-publishing.py",
+      "/tmp/mesh-keda-en.py",
+      "/tmp/mesh-keda-ko.py"
+    ],
+    "kedaValidation": [
+      "/tmp/mesh-keda-validation/",
+      "/tmp/keda-2.20.2.tgz",
+      "/tmp/otelcol-contrib-0.158.0"
+    ],
+    "advancedQuizWriters": [
+      "/tmp/mesh-advanced-quiz-content.py",
+      "/tmp/mesh-advanced-quiz-en.py",
+      "/tmp/mesh-advanced-quiz-ko.py"
+    ],
+    "advancedQuizValidation": [
+      "/tmp/mesh-advanced-quiz-validation/",
+      "/tmp/mesh-advanced-quiz-check.py",
+      "/tmp/mesh-advanced-quiz-fixtures.py"
+    ],
+    "comparisonSources": {
+      "LinkerdOverview": "c0dee6733367",
+      "LinkerdMeshExpansion": "1af6d0fb8d72",
+      "LinkerdReleases": "c277728da1fa",
+      "KongOverview": "be19e378fde6",
+      "KongArchitecture": "96aae17403db",
+      "ConsulMesh": "fb22f3427eed",
+      "IstioVM": "2b4f15b569d6",
+      "Cilium1201Architecture": "52ba047fa27b",
+      "Cilium1201MutualAuth": "2e97c35c1c5d",
+      "LatticeOverview": "57229010cd53"
+    },
+    "comparisonWriters": [
+      "/tmp/mesh-comparison-readme-edit.py"
+    ],
+    "comparison01Sources": {
+      "KongSupport": "063243efaa35",
+      "KongHTTPRoute": "2a558aef870c",
+      "KongPermission": "2f3f75373f49",
+      "KongMultizone": "440f810c8f2e",
+      "ConsulRelease": "93bf5d9634d1 (v2.0.4Sep10)",
+      "ConsulLicenseMain": "f1084323855b",
+      "ConsulProxy": "c9cde347871a",
+      "LinkerdInstall": "68291fb8424a",
+      "LinkerdK8sMatrix": "6c22a907474a",
+      "LinkerdLocalRatelimit": "8f6d55a5bc23",
+      "LinkerdSMIdeprecation": "5d1e33b54c3e",
+      "KongSelfManaged": "767f935f92e8",
+      "KongMatrix": "1d06eb7a2ddd (onlythrough2.13;gapfor2.14)",
+      "KongChangelog": "0b7f7aecd641 (2.14.4Sep3,Kuma2.14.4)",
+      "LinkerdRequestRouting": "9d10ba07f5c7",
+      "LinkerdHTTPRoute": "b6a69c767266",
+      "LinkerdAuthorization": "df5aed0b7772",
+      "LinkerdMulticluster": "c60507bd06d0",
+      "Consul204License": "82a23fb53225",
+      "KongChartIndex": "23eb44d69b87",
+      "ConsulChartIndex": "95ba87b236c2",
+      "LinkerdEdgeRelease": "856a41b4d161",
+      "LinkerdGatewayAPI": "7c922f1e19ff (2.20supports1.2.1–1.5.1)",
+      "LinkerdTracing": "1d8bc540c1af",
+      "GatewayAPI151CRDs": "eb0857b733ef",
+      "ConsulSplitter": "f8770aad9918",
+      "ConsulResolver": "a7ea78b9a7a3",
+      "ConsulDefaults": "575c8c20e091",
+      "ConsulIntentions": "7b46a72459f2",
+      "KongLoadBalancing": "c2674b6b697c"
+    },
+    "comparison01Tools": [
+      "/tmp/mesh-comparison-tools/artifacts.json",
+      "/tmp/mesh-comparison-tools/linkerd-edge-26.9.1",
+      "/tmp/mesh-comparison-tools/kong-rendered.yaml",
+      "/tmp/mesh-comparison-tools/consul-rendered.yaml",
+      "/tmp/mesh-comparison-tools/linkerd-crds.yaml",
+      "/tmp/mesh-comparison-tools/linkerd-control-plane.yaml",
+      "/tmp/mesh-comparison01-resume.md"
+    ],
+    "comparison01Writers": [
+      "/tmp/mesh-comparison01-content.py",
+      "/tmp/mesh-comparison01-en.py",
+      "/tmp/mesh-comparison01-ko.py",
+      "/tmp/mesh-comparison01-schema.py",
+      "/tmp/mesh-comparison01-check.py"
+    ],
+    "comparison01Validation": "/tmp/mesh-comparison01-validation/report.json",
+    "comparison02Originals": [
+      "/tmp/mesh-comparison02-original-en.md",
+      "/tmp/mesh-comparison02-original-ko.md"
+    ],
+    "latticeSources": {
+      "CreateRule": "479bcdbda641",
+      "CreateListener": "e9cf4bbf20db",
+      "CreateTargetGroup": "2d914fe6be33",
+      "PutAuthPolicy": "8f9c73105a59",
+      "AuthPolicies": "e752f7e7f6fc",
+      "CloudWatchMetrics": "263c26800310",
+      "AccessLogs": "5db1a64fe31d",
+      "WafAssociateAPI": "055ddd37df26",
+      "Pricing": "bba50548b6fa",
+      "RuleAction": "0b767f2c25d8",
+      "RuleMatch": "698ca1fce14f",
+      "HttpMatch": "e27e2b51dfb6",
+      "PathMatch": "c984b54f708f",
+      "TargetGroups": "cf6f629f3803",
+      "HealthChecks": "c0ec351cd95d",
+      "TLSListener": "a7c5aa479e1a",
+      "HTTPSListener": "350d7bd4852d",
+      "SDKServiceModel": "3e3b0d3ada37",
+      "CNCFLanding": "c827bd608373",
+      "ActualHealthChecks": "454d432eef11",
+      "Associations": "2a32f7cebcf9",
+      "CloudFrontEdge": "3f18f7428b87",
+      "CloudWatchModel": "15f0161759ab",
+      "LogsModel": "4a986403f2ec",
+      "CreateService": "ee450c7d71fd"
+    },
+    "latticeValidation": "/tmp/mesh-lattice-validation/ (CNCF PDF, extracted text and attribution check; no live AWS calls)",
+    "latticeWriters": [
+      "/tmp/mesh-lattice-content.py",
+      "/tmp/mesh-lattice-en.py",
+      "/tmp/mesh-lattice-ko.py",
+      "/tmp/mesh-aws-shape-check.py"
+    ],
+    "latticeValidators": [
+      "/tmp/mesh-lattice-check.py",
+      "/tmp/mesh-lattice-fixtures.py",
+      "/tmp/mesh-aws-shape-check.py"
+    ],
+    "comparison03Originals": [
+      "/tmp/mesh-comparison03-original-en.md",
+      "/tmp/mesh-comparison03-original-ko.md"
+    ],
+    "comparison03Sources": {
+      "Istio1302Release": "5e5c4bff7e89",
+      "Istio1302GoMod": "85f54459b12d",
+      "Istio1302Agent": "4ded2dc9f524",
+      "Fortio1694Release": "fd7e3c12df56",
+      "K8sLifecycle": "832e816851b9",
+      "AWSNPConfigure": "b2b0dfe277a3",
+      "AWSNPOverview": "87050528ccc6",
+      "CiliumPolicyIntro": "fd538e21d24a"
+    },
+    "comparison03Harness": "/tmp/mesh-comparison03-harness/ (original extraction modified only after red tests; red.log, red-after-order-fix.log, green.log; five real local HTTP regressions now pass)",
+    "comparison03Validation": [
+      "/tmp/mesh-comparison03-validation/",
+      "/tmp/mesh-comparison03-tools/",
+      "/tmp/mesh-comparison03-harness/",
+      "/tmp/mesh-comparison03-check.py"
+    ],
+    "comparison03DraftWarning": "Published repository has final spacing, log annotations, pinned CLI variable and source-link adjustments beyond /tmp writers. Do not rerun writers over current source.",
+    "comparisonQuizOriginals": [
+      "/tmp/mesh-comparison-quiz-original-en.md",
+      "/tmp/mesh-comparison-quiz-original-ko.md"
+    ],
+    "comparisonFullTests": "/tmp/kubernetes-docs-full-review/docs-test-istio-comparison-clean.log",
+    "troubleshootingValidation": "/tmp/mesh-troubleshooting-validation/report.json",
+    "troubleshootingWriters": [
+      "/tmp/mesh-troubleshooting-content.py",
+      "/tmp/mesh-troubleshooting-en.py",
+      "/tmp/mesh-troubleshooting-ko.py"
+    ],
+    "orphanIstioValidation": "/tmp/mesh-orphan-quiz-validation/",
+    "orphanWriters": [
+      "/tmp/mesh-orphan-istio-edit.py",
+      "/tmp/mesh-orphan-quiz-content.py",
+      "/tmp/mesh-orphan-quiz-en.py",
+      "/tmp/mesh-orphan-quiz-ko.py"
+    ],
+    "orphanWarning": "PublishedENquizspacingandoverviewquiz-topiclabelhavefinaladjustmentsoutsidewriters;preferrepositoryfiles. Originalsnapshotsunder/tmp/mesh-orphan-istio-{quiz-}original-{en,ko}.md.",
+    "linkerdCurrentSources": {
+      "edge2684": "3349fabf04ab",
+      "edge2682": "63df18586fab",
+      "edge2671": "3e5efaedc05c",
+      "edge2691": "856a41b4d161",
+      "mTLS": "8a2421194625",
+      "install": "68291fb8424a",
+      "meshExpansion": "1af6d0fb8d72",
+      "requestRouting": "9d10ba07f5c7",
+      "gatewayAPI": "7c922f1e19ff",
+      "releases": "c277728da1fa",
+      "protocols": "fb9b0a25f561",
+      "CNCF": "cc6807907013"
+    },
+    "linkerdCLI": "/tmp/mesh-comparison-tools/linkerd-edge-26.9.1",
+    "linkerdReadmeArtifacts": "/tmp/mesh-linkerd-validation/readme-cli-*.txt; /tmp/mesh-linkerd-readme-images.png; /tmp/mesh-linkerd-readme-original-{en,ko}.md",
+    "linkerdReadmeWriter": "/tmp/mesh-linkerd-readme-edit.py (repository includes a final prose cleanup beyond writer; do not blindly rerun)",
+    "linkerdInstallSources": {
+      "chartIndex": "f9c3e8db52c9",
+      "deprecatedInstaller": "324c964b20b9",
+      "k8sMatrix": "6c22a907474a",
+      "helmInstall": "d0ab8c93d1e1",
+      "HA": "d8458806d965",
+      "platform": "9bcc67aee2b2",
+      "uninstall": "120a3883fceb"
+    },
+    "linkerdInstallOriginals": [
+      "/tmp/mesh-linkerd-install-original-en.md",
+      "/tmp/mesh-linkerd-install-original-ko.md",
+      "/tmp/mesh-linkerd-install-quiz-original-en.md",
+      "/tmp/mesh-linkerd-install-quiz-original-ko.md"
+    ],
+    "linkerdInstallationDrafts": [
+      "/tmp/mesh-linkerd-install-content.py",
+      "/tmp/mesh-linkerd-install-en.py",
+      "/tmp/mesh-linkerd-install-ko.py",
+      "/tmp/mesh-linkerd-install-quiz-edit.py"
+    ],
+    "linkerdInstallationEvidence": [
+      "/tmp/mesh-linkerd-validation/chart-artifacts.json",
+      "/tmp/mesh-linkerd-validation/original-values-characterization.json",
+      "/tmp/mesh-linkerd-install-characterize.py"
+    ],
+    "linkerdFinalAdjustmentWarning": "Published guide has final EN spacing and concrete debug Pod variables beyond writers; prefer repository files.",
+    "linkerdInstallationValidation": "/tmp/mesh-linkerd-validation/installation-final-report.json",
+    "linkerdInstallFinalWarning": "Published guides contain final spacing, concrete debugPod variables, Identity/log suppression explanations, Smallstep canonical link and legacy/migration notes beyond writers. Do not blindly rerun writers.",
+    "linkerdArchitectureOriginals": [
+      "/tmp/mesh-linkerd-architecture-original-en.md",
+      "/tmp/mesh-linkerd-architecture-original-ko.md",
+      "/tmp/mesh-linkerd-architecture-quiz-original-en.md",
+      "/tmp/mesh-linkerd-architecture-quiz-original-ko.md"
+    ],
+    "linkerdArchitectureDrafts": [
+      "/tmp/mesh-linkerd-architecture-content.py",
+      "/tmp/mesh-linkerd-architecture-en.py",
+      "/tmp/mesh-linkerd-architecture-ko.py",
+      "/tmp/mesh-linkerd-architecture-quiz-edit.py"
+    ],
+    "linkerdArchitectureSources": {
+      "architecture": "c57bb26eb68e",
+      "injection": "0fd0cb23d817",
+      "authorization": "df5aed0b7772",
+      "apiGoMod": "65239a3cb7f3",
+      "destinationProto": "e0074b4b1cae",
+      "proxyTree": "3156c80fe78c",
+      "proxyTagMetadata": "d5cf920ccab0",
+      "proxyBumpPR": "b9020898f9c7",
+      "certify": "91428ea67ebd",
+      "validator": "41cc2c742eb9",
+      "domain": "1c57312ea374",
+      "loadbalancing": "9c2df5ef75de",
+      "manualRotation": "71d074bdea40",
+      "managedRotation": "0dd09674f2c0"
+    }
+  },
+  "scopeRules": [
+    "Only assigned ko/en docs/quizzes/labs and review evidence; the single shared test exception is explicit.",
+    "No foreign prose, SUMMARY, package manifests or other scripts; no commits/pushes/further delegation.",
+    "Ignore root aws-architecture-review-request.md and musinsa-standardization-aws-sa-review (1).html.",
+    "Only mark fullyRead after an actual complete read. Parent external-links/code-syntax reports are candidates, not proof.",
+    "Preserve historical benchmark versions/dates/measurements. Latest release metadata is not a compatibility matrix."
+  ],
+  "skillsAlreadyApplied": [
+    "aws-containers",
+    "aws-observability",
+    "aws-billing-and-cost-management",
+    "aws-auth",
+    "verification-before-completion",
+    "superpowers:systematic-debugging",
+    "superpowers:test-driven-development (and writing-good-tests reference)"
+  ],
+  "importantVerifiedFacts": [
+    "Istio1.31 supports Kubernetes1.32–1.36; EKS standard1.34–1.36. Latest Kubernetes1.37 is not an Istio1.31 compatibility target.",
+    "In-cluster Istio operator removed in1.24; IstioOperator YAML remains istioctl input.",
+    "Official1.31 charts lack platform-eks profile despite overview docs listing it; global.platform=eks fails in released charts.",
+    "Promtail EOL2026-03-02; new logging examples use Alloy1.19.2/Loki3.7.7.",
+    "JavaScript prom-client15.1.3 is deprecated; maintained @prometheus-io/client0.16.1 requires Node22/24/26+.",
+    "CloudFront currently supports native viewer mTLS; do not incorrectly remove the capability.",
+    "Istio1.31 maxEjectionPercent0 does not disable ejection: released applyOutlierDetection only sets positive values; success-rate enforcement is explicitly disabled.",
+    "Released Istio bootstrap uses cluster_name metric label; detected versus enforced ejection counters differ; minHealthPercent is panic/fail-open threshold.",
+    "localityLbSetting and zoneAwareLbSetting are distinct Istio1.31 messages; do not mix their failoverPriority/minClusterSize semantics. Locality API allows region/zone labels and a single terminal wildcard.",
+    "Ambient in-pod capture uses Linux netns +iptables, not eBPF. HBONE is HTTP2+CONNECT+mTLS onTCP15008.",
+    "Ambient VirtualService is Alpha; mixing with GatewayAPI undefined. EnvoyFilter is unsupported for waypoints; L7 policy only protects traffic reaching waypoint, require documented L4 guard for mandatory traversal.",
+    "Current ambient multicluster is beta, only multi-primary/multi-network; primary-remote and single-network unsupported/untested. Do not apply sidecar multicluster assumptions.",
+    "Istio1.31 go.mod/conformance use GatewayAPI1.6.0, matching official ambient installation tutorial. Latest catalog1.6.2 alone is not compatibility proof.",
+    "Released Bookinfo1.31 manifest uses registry.istio.io/release images1.20.3 and complete reviews v1/v2/v3 +ratings deps. curl sample8.16.0; httpbin Service8000→target8080, imagego-httpbin2.15.0.",
+    "CLI1.31 waypoint apply supports --name,--for,--wait and --enroll-namespace, no --service-account; delete uses a positional waypoint name. ztunnel-config workloads supports --workload-namespace.",
+    "Ambient profile rendered offline to /tmp/mesh-ambient-rendered.yaml: ztunnel has no hostNetwork/hostPID; privileged:false with specific NET_ADMIN/SYS_ADMIN/NET_RAW capabilities and token/CA/socket/tmp mounts.",
+    "Istio1.31 DNS agent metrics are istio_agent_dns_requests_total, dns_upstream_requests_total/failures_total and dns_upstream_request_duration_seconds_bucket; failures count agent-generatedSERVFAIL after exchangefailures.",
+    "Istio1.31 native IPallocator supports DYNAMIC_DNS wildcardkeepHost; defaultIPv4prefix240.240.0.0/16+IPv6prefix2001:2::/48. Actualallocation inServiceEntry.status.addresses.",
+    "Istio1.31 cluster generation sets respectDnsTtltrue; meshDNSrefreshdefault60seconds, contradicting currentconceptualpage fixed30secondtext.",
+    "Istio1.31 kube-inject withall3localconfigfiles stillstartsdefaultrevision clusterwatcher unless--revision isexplicit. --revisiondefault avoidsdiscovery; sixofflinefixturecasespassed. See officialistioctl/pkg/cli/context.go RevisionOrDefault andkubeinject.go.",
+    "ArgoRollouts1.10 analysis compares Failed>failureLimit;failureLimit2 fails on thirdfailure, count5doesnotmean5successes iffailurestolerated. successConditionalonefalsemeansFailed; bothconditionsfalsemeansInconclusive. Expr1.17.7 fromGo.mod; sourceenvincludesisNaN/isInf.",
+    "ArgoRollouts1.10 supportsmanagedheader/mirrorroutecleanup andweightedexperimentsforIstio;specRefonlystable/canary, notexperimental. AdditionalSubsetNames supported, whole-destination-arrayoverwriteclaimwrong. BlueGreenautoPromotiondefaulttrue;scaleDownDelay scalesRSdown,notdeletes.",
+    "Argo1.10createHeaderRoute/createMirrorRoute doNOTcopyprimaryretryconfiguration. Managedheader/mirrordemosrequireexplicitread-only/idempotentinputlimitsandactualgeneratedconfigreview; do notpromisemeshwrite-retryprotection.",
+    "ArgoCLI1.10 hasnohistorycommand.Usegetrolloutrevisiontreeandundo--to-revision;actualhelpverified.",
+    "Promtool3.14.0nativeArm64at/tmp/promtool; actualIstioPromQLmissing-numerator/idle/absent/histogramfixturespassed8scenarios23assertions. Parentinformedofexactbinaryversion/path.",
+    "ZonalrevisionService/subsetscannotfailoveroutsideeligibleendpointpool. Main09guideexplicitlyboundedzoneisolation, nottransparentcrossAZHA. PDBmin1perzoneisnotgloballyequivalenttomin6; sourceLabelsneedsrealclientPodlabels,notautomaticNodeAZ."
+  ],
+  "executionEnvironment": {
+    "instruction": "User recommends login:false plus telemetry-free minimal per-process env for future tests/builds; do not modify home settings.",
+    "wrapper": "/bin/sh /tmp/mesh-env-clean.sh <program> <args>",
+    "details": "Wrapper uses env -i, explicit tool PATH/LANG/CI, OTEL_SDK_DISABLED=true, all OTEL exporters none, CLAUDE_CODE_ENABLE_TELEMETRY=0 and /tmp caches; no inherited user.email or OTEL endpoints.",
+    "homeSettingsModified": false
+  },
+  "futureObservabilityEvidence": [
+    {
+      "from": "parent/user 2026-09-11",
+      "subject": "kube-prometheus-stack90.0.0 published2026-09-06; verify per-guide compatibility, not bulk latest replacement",
+      "artifacts": [
+        "/tmp/kubernetes-docs-full-review/gitops-sources/kube-prom-chart",
+        "/tmp/kubernetes-docs-full-review/gitops-sources/kube-prom-values90",
+        "/tmp/kubernetes-docs-full-review/gitops-sources/kube-prom-release"
+      ],
+      "notes": [
+        "User reports Grafana dependency repository oci://ghcr.io/grafana-community/helm-charts; old grafana/helm-charts/main/charts/grafana/values.yaml404.",
+        "User reports root grafana.admin.existingSecret/userKey/passwordKey documented. Worker must inspect actual parent artifacts/official versioned sources when reviewing affected guides."
+      ]
+    },
+    {
+      "from": "parent/user2026-09-11",
+      "subject": "Loki chart18.12.1/app3.7.7 from grafana-community Sep4; EnvoyGatewayv1.9.1 Aug28 OCI digest prefix91bae9",
+      "artifacts": [
+        "/tmp/kubernetes-docs-full-review/gitops-sources/"
+      ],
+      "notes": [
+        "Parent primary-verified these chart pins. Worker must inspect exact chart/values/platform prerequisites when reaching corresponding guides; not independently chart-validated by this worker yet."
+      ]
+    }
+  ],
+  "latestParentCheckpoint": "User reports frozen ko/en builds, browser8 checks and109/109 code tests passed; worker did not independently repeat these shared checks.",
+  "resolvedExecutionIssues": [
+    "/tmp inode exhaustion (free bytes14GB, free inodes0) prevented sandbox startup. Removed only own /tmp/mesh-go-cache disposable compilation cache; artifacts/module sources/reports retained; execution resumed.",
+    "Second/tmpinodeexhaustion occurred duringArgoEnglishread. Removedonlyownregenerated/tmp/mesh-go-cache;freeinodes1418immediatelyaftercleanupandreadingresumed.Parentinformedofrecurrence. CachemayneedrebuildifextendingGovalidatoragain."
+  ],
+  "parentRendererUpdates": [
+    "User reports Archify Hangul font fallback fixed by explicit Noto Sans CJK KR in production merge/export/canvas and PNG renderer;6/6build tests passed. Parent will regenerate referenced KO PNGs after content stabilizes. Worker does not edit shared renderer/fonts or foreign prose.",
+    "Parentremovedonlyown/tmp/kubernetes-docs-audit-build(23035entries), retainedfullreview; free~78kinodes. Preview4193unusable. PNGhelperfullPage:true with1600x1816bottom/CJKfixtureverified. Avoidmassdependencycopies."
+  ],
+  "latestParentPromQLCheckpoint": {
+    "tool": "/tmp/kubernetes-docs-full-review/prometheus-tools/promtool",
+    "version": "3.14.0 linux-amd64",
+    "reportedValidation": "Argo05 34actualseriescasespass inclmissingnumerator,missingmetrics,zeroNaN,classichistogram; rollouts-promql-tests.yaml",
+    "workerTool": "/tmp/promtool3.14.0linux-arm64 retained; no duplicate download"
+  },
+  "externalTranslationFollowups": [
+    {
+      "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "owner": "parent translation pipeline; mesh source semantic review remains in worker queue",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: unquoted [Zone1,Zone2] label near598"
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "owner": "parent translation pipeline; mesh source semantic review remains in worker queue",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: unquoted [Zone1,Zone2] label near598"
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "owner": "parent translation pipeline; mesh source semantic review remains in worker queue",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: unquoted [Zone1,Zone2] label near598"
+    },
+    {
+      "path": "cn/ai-ml/ray/03-ray-train-tune.md",
+      "owner": "parent Ray/translation pipeline",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: malformed ObjectStoreNode near52"
+    },
+    {
+      "path": "es/ai-ml/ray/03-ray-train-tune.md",
+      "owner": "parent Ray/translation pipeline",
+      "repair": "automated-source-sync/backfill",
+      "issue": "Parent Mermaid report: malformed ObjectStoreNode near52"
+    }
+  ],
+  "parentMermaidCheckpoint": "User reports1971refs/661unique,659pass2fail; ko/en pass. docs/reviews/2026-09-11/mermaid-syntax.json. No foreign prose edited.",
+  "parentDomainFollowups": [
+    {
+      "scope": "observability",
+      "note": "Verify against parent gitops primary cache: ArgoCD3.5.2 has no server.audit.enabled/path; use component JSON stdout + K8s Events/API audit correlation. Fluent Bit native cloudwatch_logs and CRI framing differ from application JSON. SealedSecrets0.40/chart2.20 repo moved to bitnami; ESO2.10 v1 API. No changes outside own scope.",
+      "evidence": "/tmp/kubernetes-docs-full-review/gitops-sources/"
+    }
+  ],
+  "latestSharedTest": {
+    "result": "110/110passed",
+    "log": "/tmp/kubernetes-docs-full-review/docs-test-istio-advanced-clean.log",
+    "environment": "loginfalse/env-i/OTELdisabled; require_escalated forNodechildprocessesafterEPERMinsandbox"
+  },
+  "troubleshootingDiagramFollowup": {
+    "sourcePages": [
+      "en/service-mesh/istio/troubleshooting/common-errors.md",
+      "ko/service-mesh/istio/troubleshooting/common-errors.md"
+    ],
+    "removedFigureIndexes": [
+      0,
+      1,
+      2
+    ],
+    "reason": "Oldfiguresmisstatedshutdownordering/drainsuccessandPeerAuthenticationdirection. Anyreuseofparent-ownedarchmapsrequiressemanticregeneration;assetsnotedited.",
+    "translationQueue": [
+      "cn/service-mesh/istio/troubleshooting/common-errors.md",
+      "jp/service-mesh/istio/troubleshooting/common-errors.md",
+      "es/service-mesh/istio/troubleshooting/common-errors.md"
+    ],
+    "policy": "Automatedsource-sync/backfillonly;noforeignproseedited."
+  },
+  "linkerdDiagramFollowup": {
+    "removedFigure": "{en,ko}-service-mesh-linkerd-overview-0",
+    "reason": "Unverified fixed memory/latency claims embedded in footer; replaced redundant diagram with accurate role table. Any reuse needs parent-owned semantic regeneration.",
+    "translationPolicy": "Automated source-sync/backfill only; no foreign prose edited."
+  },
+  "parentSharedOwnership": "Parent owns shared frontend/site statistics and analytics workflow. No GA4 credentials supplied; worker continues assigned semantic scopes only. Max2workers; no delegation.",
+  "linkerdUpcomingSourcePitfall": "Official managed-rotation page has a comment saying two months before expiry beside duration8760h/renewBefore7320h, which actually renews about60days after issuance. Do not copy that arithmetic into the forthcoming security guide. It also copies whole root Secret data unnecessarily; evaluate public-bundle-only sources."
+}

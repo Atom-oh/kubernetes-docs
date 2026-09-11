@@ -36,7 +36,7 @@ Un clúster de Kubernetes consta de un conjunto de nodos (máquinas virtuales o 
 
 ### Diagrama de arquitectura del clúster
 
-![Diagrama de arquitectura que muestra que kube-apiserver del plano de control coordina etcd, el scheduler y los controller managers, y se comunica con el kubelet y kube-proxy de un nodo de trabajo, que a su vez controlan el runtime de contenedores y los pods en ejecución.](../../.gitbook/assets/en-core-01-cluster-architecture-0.png)
+![Diagrama de arquitectura que muestra que kube-apiserver del plano de control coordina etcd, el scheduler y los controller managers, y se comunica con el kubelet y kube-proxy de un nodo de trabajo, que a su vez controlan el runtime de contenedores y los pods en ejecución.](../.gitbook/assets/en-core-01-cluster-architecture-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-0.html)
 

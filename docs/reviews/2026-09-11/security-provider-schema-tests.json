@@ -1,0 +1,65 @@
+{
+  "validated": [
+    {
+      "path": "ko/gitops/argocd/07-security.md",
+      "fence": 10,
+      "kind": "SecretStore"
+    },
+    {
+      "path": "ko/gitops/argocd/07-security.md",
+      "fence": 10,
+      "kind": "ExternalSecret"
+    },
+    {
+      "path": "ko/gitops/argocd/07-security.md",
+      "fence": 20,
+      "kind": "Gateway"
+    },
+    {
+      "path": "ko/gitops/argocd/07-security.md",
+      "fence": 20,
+      "kind": "HTTPRoute"
+    },
+    {
+      "path": "ko/gitops/argocd/07-security.md",
+      "fence": 20,
+      "kind": "BackendTLSPolicy"
+    },
+    {
+      "path": "en/gitops/argocd/07-security.md",
+      "fence": 12,
+      "kind": "SecretStore"
+    },
+    {
+      "path": "en/gitops/argocd/07-security.md",
+      "fence": 12,
+      "kind": "ExternalSecret"
+    },
+    {
+      "path": "en/gitops/argocd/07-security.md",
+      "fence": 13,
+      "kind": "SecretStore"
+    },
+    {
+      "path": "en/gitops/argocd/07-security.md",
+      "fence": 13,
+      "kind": "ExternalSecret"
+    },
+    {
+      "path": "en/gitops/argocd/07-security.md",
+      "fence": 23,
+      "kind": "Gateway"
+    },
+    {
+      "path": "en/gitops/argocd/07-security.md",
+      "fence": 23,
+      "kind": "HTTPRoute"
+    },
+    {
+      "path": "en/gitops/argocd/07-security.md",
+      "fence": 23,
+      "kind": "BackendTLSPolicy"
+    }
+  ],
+  "errors": []
+}

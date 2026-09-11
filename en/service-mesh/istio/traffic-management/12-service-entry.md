@@ -18,23 +18,23 @@ ServiceEntry registers external services in the Istio service mesh, allowing the
 
 ### The Need for External Service Management
 
-By default, Istio mesh does not control traffic to external services. Using ServiceEntry:
+With ALLOW_ANY, unknown external destinations can pass through with reduced policy/telemetry. A ServiceEntry registers a destination so compatible proxy policies can be configured; it is not an access-control rule.
 
-![Side-by-side comparison showing that without a ServiceEntry, mesh traffic to an external API is unmanaged with no monitoring, policy enforcement, or circuit breaker, while with a ServiceEntry the same traffic is managed and gains all three capabilities.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-12-service-entry-0.html)
+Registration enables destination-specific configuration; actual monitoring, TLS, and traffic control still depend on the protocol and applied policies.
 
 ### Key Benefits
 
 | Feature | Without ServiceEntry | With ServiceEntry |
 |---------|---------------------|-------------------|
-| **Monitoring** | Black hole | Full metrics collection |
+| **Monitoring** | Limited passthrough telemetry | Protocol-dependent telemetry; HTTP requires L7 visibility |
 | **Traffic Control** | Impossible | Timeout, Retry, Circuit Breaker |
-| **Security** | Limited | mTLS, certificate management |
-| **Egress Control** | All external traffic allowed | Explicit allow/block |
+| **Security** | Application TLS can still apply | Configure TLS/mTLS separately; no automatic external certificate issuance |
+| **Egress Control** | Depends on outbound/network policy | Registry and routing configuration; network enforcement is separate |
 | **Service Discovery** | Manual management | Automatic DNS lookup |
 
 ## ServiceEntry Overview
+
+These examples are alternative sidecar configurations. ServiceEntry is consumed by istiod/proxies, not a network hop. `addresses` classifies service/VIP traffic, while `endpoints` identifies upstream backends. Resolution controls the proxy’s lookup, not application DNS; configure DNS records or DNS capture for synthetic hosts. A ServiceEntry does not enroll a VM proxy or issue its identity credentials.
 
 ServiceEntry adds external services to the Istio service registry.
 
@@ -62,7 +62,7 @@ spec:
 
 ## Resolution Modes
 
-ServiceEntry supports 4 address resolution modes.
+The Istio 1.31 API defines five resolution modes.
 
 ### 1. DNS Resolution
 
@@ -145,9 +145,13 @@ spec:
 - Client-side load balancing
 - TCP/TLS proxy
 
-### 4. DNS_ROUND_ROBIN Resolution (Deprecated)
+### 4. DNS_ROUND_ROBIN Resolution
 
-Uses DNS round robin (now integrated into DNS mode).
+This is supported, not deprecated. Unlike DNS mode’s complete endpoint set, it uses the first DNS address when opening a new connection and retains existing connections across DNS record changes. It is useful for DNS-fronted services where frequent endpoint changes should not constantly drain connection pools.
+
+### 5. DYNAMIC_DNS Resolution
+
+This mode resolves a wildcard destination from HTTP Host/SNI at request time. Its eligibility depends on the release, data plane and waypoint setup; it is not applicable to opaque TCP traffic that lacks a recoverable hostname. Check the mode-specific requirements before using it. The concrete wildcard example below uses sidecar NONE mode.
 
 ## Location Settings
 
@@ -172,7 +176,7 @@ spec:
 ```
 
 **Characteristics**:
-- mTLS not applied
+- External TLS/mTLS is possible with an appropriate DestinationRule and server trust configuration
 - Can exit through Egress Gateway
 - Classified as external traffic
 
@@ -221,9 +225,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -237,14 +242,23 @@ spec:
   hosts:
   - api.payment-gateway.com
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: api.payment-gateway.com
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: api.payment-gateway.com
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 # DestinationRule: Circuit Breaker
 apiVersion: networking.istio.io/v1
@@ -260,12 +274,16 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
-      mode: SIMPLE  # TLS connection
+      mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames: [api.payment-gateway.com]
 ```
+
+The app sends HTTP to the local sidecar in this origination design; the proxy sends verified HTTPS upstream. Do not combine this with application-originated HTTPS. Payment writes require an application idempotency contract before retries are enabled.
 
 ### 2. Registering External Database
 
@@ -298,12 +316,14 @@ spec:
         maxConnections: 100
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
 
 ### 3. Registering Wildcard Domain
+
+Configure RDS TLS and certificate verification in the database driver using the current RDS CA bundle. TCP registration does not configure database authentication or SSL negotiation. For several external databases on the same port, use DNS capture/unique service VIPs to avoid port-only ambiguity.
 
 #### Scenario: AWS S3 Bucket Access
 
@@ -315,8 +335,8 @@ metadata:
 spec:
   hosts:
   - "*.s3.amazonaws.com"
-  - "*.s3.*.amazonaws.com"
-  - "*.s3-*.amazonaws.com"
+  - "*.s3.us-west-2.amazonaws.com"
+  - "s3.us-west-2.amazonaws.com"
   ports:
   - number: 443
     name: https
@@ -324,6 +344,8 @@ spec:
   location: MESH_EXTERNAL
   resolution: NONE  # Use NONE for wildcards
 ```
+
+Only a leading wildcard prefix is valid; enumerate real regional endpoint suffixes instead of placing `*` inside the name. This is a sidecar example and does not cover all S3 endpoint families or grant IAM access.
 
 ### 4. External Service with Multiple Endpoints
 
@@ -338,11 +360,38 @@ spec:
   hosts:
   - api.global-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+  endpoints:
+  - address: us-west.api.global-service.com
+    labels:
+      region: us-west
+  - address: eu-central.api.global-service.com
+    labels:
+      region: eu-central
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: multi-region-api
+spec:
+  host: api.global-service.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.global-service.com
+      subjectAltNames: [api.global-service.com]
+  subsets:
+  - name: us-west
+    labels:
+      region: us-west
+  - name: eu-central
+    labels:
+      region: eu-central
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -352,36 +401,28 @@ spec:
   hosts:
   - api.global-service.com
   http:
-  # Region-based routing
   - match:
     - headers:
         x-region:
-          exact: "us-west"
+          exact: us-west
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: us-west.api.global-service.com
-
+        subset: us-west
   - match:
     - headers:
         x-region:
-          exact: "eu-central"
+          exact: eu-central
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: eu-central.api.global-service.com
-
-  # Default routing
+        subset: eu-central
   - route:
     - destination:
         host: api.global-service.com
 ```
+
+Both regional endpoints must serve the same canonical API hostname/certificate. Changing an HTTP Host header alone does not change the DNS endpoint selected by the proxy. The app uses HTTP locally; TLS is originated upstream as shown.
 
 ### 5. Registering TCP Service
 
@@ -394,10 +435,9 @@ metadata:
   name: external-redis
 spec:
   hosts:
-  - redis.external-cluster.com
+  - redis-primary.external-cluster.com
   addresses:
   - 203.0.113.10
-  - 203.0.113.11
   ports:
   - number: 6379
     name: tcp
@@ -408,16 +448,13 @@ spec:
   - address: 203.0.113.10
     labels:
       instance: primary
-  - address: 203.0.113.11
-    labels:
-      instance: replica
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-redis-lb
 spec:
-  host: redis.external-cluster.com
+  host: redis-primary.external-cluster.com
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -426,6 +463,8 @@ spec:
         maxConnections: 50
         connectTimeout: 3s
 ```
+
+This example selects the writable primary only. Register replicas separately for read-only traffic or use a Redis-aware cluster client; generic round robin cannot preserve Redis primary/replica or sharding semantics. Example IPs must be replaced with reachable endpoints.
 
 ## Combining with Egress Gateway
 
@@ -454,14 +493,15 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
   servers:
   - port:
       number: 443
-      name: https
-      protocol: HTTPS
+      name: tls
+      protocol: TLS
     hosts:
     - api.example.com
     tls:
@@ -477,12 +517,14 @@ spec:
   - api.example.com
   gateways:
   - mesh
-  - egress-gateway
-  http:
+  - istio-system/egress-gateway
+  tls:
   - match:
     - gateways:
       - mesh
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
@@ -490,8 +532,10 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-gateway
+      - istio-system/egress-gateway
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: api.example.com
@@ -513,6 +557,7 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
+    targetPort: 443
   - number: 443
     name: https
     protocol: HTTPS
@@ -546,9 +591,10 @@ spec:
   hosts:
   - mtls-api.example.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -561,10 +607,14 @@ spec:
   trafficPolicy:
     tls:
       mode: MUTUAL
+      sni: mtls-api.example.com
+      subjectAltNames: [mtls-api.example.com]
       clientCertificate: /etc/certs/client-cert.pem
       privateKey: /etc/certs/client-key.pem
       caCertificates: /etc/certs/ca-cert.pem
 ```
+
+Mount these certificate/key files into the proxy container and rotate them through your certificate-management workflow. The external server must trust the client CA; ServiceEntry does not issue these credentials. This is proxy-originated mTLS from local HTTP, not a second layer over application TLS.
 
 ### SNI Routing
 
@@ -573,6 +623,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-sni-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
@@ -597,7 +648,7 @@ spec:
   - api2.example.com
   gateways:
   - mesh
-  - egress-sni-gateway
+  - istio-system/egress-sni-gateway
   tls:
   - match:
     - gateways:
@@ -612,7 +663,7 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-sni-gateway
+      - istio-system/egress-sni-gateway
       port: 443
       sniHosts:
       - api.example.com
@@ -621,7 +672,31 @@ spec:
         host: api.example.com
         port:
           number: 443
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - istio-system/egress-sni-gateway
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: api2.example.com
+        port:
+          number: 443
 ```
+
+Install the egress gateway workload/ClusterIP Service as shown in [Egress Control](11-egress-control.md), and register both external hosts with ServiceEntries. SNI routes configure forwarding but do not enforce that all traffic must traverse the gateway; use network enforcement for that boundary.
 
 ## Monitoring and Control
 
@@ -633,29 +708,31 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
   curl localhost:15000/stats/prometheus | grep "api.example.com"
 
 # Egress traffic metrics
-istio_requests_total{destination_service_name="api.example.com"}
+istio_requests_total{reporter="source",destination_service_name="api.example.com"}
 ```
 
 ### Prometheus Queries
 
-```yaml
+Inspect actual metric labels before querying. HTTP request/error/latency metrics require L7 visibility (for example TLS origination); opaque HTTPS/TCP exposes connection/byte metrics instead. Do not assume an external ServiceEntry has an empty namespace label.
+
+```promql
 # External service request count
-sum(rate(istio_requests_total{destination_service_namespace="",destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service error rate
-sum(rate(istio_requests_total{destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total{destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # External service response time
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket{destination_service_name="api.example.com"}[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="api.example.com"}[5m])) by (le)
 )
 ```
 
-### Blocking Egress Traffic
+### Detecting Unregistered Destinations
 
 ```yaml
-# Block all Egress by default
+# Registry/configuration control, not a firewall
 apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
@@ -667,8 +744,10 @@ spec:
     - "./*"  # Allow only same namespace
     - "istio-system/*"  # Allow istio-system
   outboundTrafficPolicy:
-    mode: REGISTRY_ONLY  # Allow only those registered in ServiceEntry
+    mode: REGISTRY_ONLY  # Known Kubernetes and ServiceEntry destinations
 ```
+
+Sidecar import scope and REGISTRY_ONLY are not security boundaries. Use network policies/firewalls for mandatory egress control and AuthorizationPolicy where applicable.
 
 ## Best Practices
 
@@ -696,7 +775,7 @@ spec:
   resolution: DNS
 ```
 
-### 2. Always Apply Circuit Breaker
+### 2. Tune Resilience for the Protocol
 
 ```yaml
 # Always apply Circuit Breaker for external services
@@ -712,7 +791,7 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
 ```
@@ -747,7 +826,7 @@ spec:
 # - Consistent security policies
 ```
 
-### 5. Namespace Isolation
+### 5. Namespace Configuration Visibility
 
 ```yaml
 # Isolate ServiceEntry by namespace
@@ -769,8 +848,7 @@ spec:
 ### 6. Documentation Template
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
+# Metadata excerpt; replace illustrative SLA/cost values with the actual service contract
 metadata:
   name: external-service
   annotations:
@@ -800,3 +878,12 @@ metadata:
 - [Istio Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
 - [Istio TLS Origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
 - [Envoy External Services](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+- [Primary reference 2](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Primary reference 3](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+- [Primary reference 4](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Primary reference 5](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/)
+- [Primary reference 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
+- [Primary reference 7](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
+- [Primary reference 8](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html)

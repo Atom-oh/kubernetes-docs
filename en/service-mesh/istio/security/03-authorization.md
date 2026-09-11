@@ -19,9 +19,9 @@ AuthorizationPolicy allows you to finely control service access permissions.
 Istio AuthorizationPolicy provides fine-grained access control for services. The diagram above shows how Authorization Policy works:
 
 1. **Request Reception**: Envoy receives inbound request
-2. **Policy Evaluation**: AuthorizationPolicy rules are evaluated in order
+2. **Policy Evaluation**: Matching CUSTOM policies, then DENY, then ALLOW; not YAML creation order
 3. **Access Decision**: ALLOW, DENY, or CUSTOM action is applied
-4. **Audit Logging**: All decisions are recorded
+4. **Audit Logging**: Requires configured access/audit logging; AUDIT alone only marks a request
 
 **Supported Conditions**:
 - **Source**: Request origin (ServiceAccount, Namespace, IP)
@@ -34,6 +34,8 @@ Istio AuthorizationPolicy provides fine-grained access control for services. The
 
 ## Basic Policies
 
+The diagram illustrates one conjunctive rule. Within a rule, from/to/when constraints combine; separate rules and matching ALLOW policies are alternatives. With no ALLOW policy for a workload, requests are allowed unless CUSTOM/DENY rejects them. Once an ALLOW policy applies, at least one ALLOW match is needed. The examples below are alternatives; allow-all would broaden a get-only policy.
+
 ### Default Deny (Deny All)
 
 ```yaml
@@ -43,9 +45,8 @@ metadata:
   name: deny-all
   namespace: default
 spec:
-  action: DENY
-  rules:
-  - {}  # Deny all requests
+  action: ALLOW
+  rules: []  # Default deny with room for specific ALLOW exceptions
 ```
 
 ### Default Allow (Allow All)
@@ -164,6 +165,19 @@ spec:
     - key: request.auth.claims[role]
       values: ["admin", "superuser"]  # role claim is admin or superuser
 ```
+
+## Practical Examples
+
+For default deny plus exceptions, apply the empty ALLOW policy and only the intended specific ALLOW rules. An explicit DENY with rules: [{}] is a hard block that no ALLOW can override. A policy with no selector applies to its namespace; root-namespace and targetRefs attachment rules need separate care.
+
+The service-account/namespace matches require authenticated mTLS peer identity. The JWT role example requires a matching RequestAuthentication and intended issuer/audience validation. Client headers do not substitute for either identity. For native TCP, match identities/IPs/ports rather than HTTP methods or JWT claims; missing HTTP attributes in DENY rules can match TCP unexpectedly.
+
+## Best Practices
+
+- Scope policies to the intended workload/resource and review all applicable ALLOW rules together.
+- Use waypoint targetRefs for ambient L7 policies; a sidecar selector is not a waypoint attachment.
+- Validate no-policy, no-match, explicit-deny, and permitted-request cases, including namespace boundaries.
+- Configure logging explicitly and inspect effective policies with `istioctl x authz check <pod> -n <namespace>`.
 
 ## References
 

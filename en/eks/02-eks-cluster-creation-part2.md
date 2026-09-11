@@ -1,29 +1,30 @@
 # Part 2: Creating Clusters with eksctl
 
+> **Last Updated**: September 11, 2026
+
+Use the [Part 1 prerequisites](02-eks-cluster-creation-part1.md), a dedicated training account/cluster and a private temporary kubeconfig (`EKS_KUBECONFIG`). Examples are alternatives, not one sequential script. Set `EKS_CLUSTER_NAME`/`EKS_REGION` to the reviewed target and use existing approved identities. Commands that create AWS resources incur charges; this review did not provision them. The examples were checked against eksctl 0.230.0 and EKS 1.36.
+
 ## Creating a Cluster Using eksctl
 
-eksctl is the simplest way to create and manage EKS clusters. eksctl uses CloudFormation to create EKS clusters and related resources.
+eksctl provides a command-line and declarative configuration interface for EKS. eksctl uses CloudFormation to create EKS clusters and related resources.
 
 The following diagram shows the EKS cluster creation process using eksctl:
 
-![Diagram of the eksctl cluster creation process, building VPC, IAM, control plane, and node group in order through CloudFormation stacks.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-0.png)
+![Diagram of the eksctl cluster creation process, creating related VPC, IAM, control-plane and node-group resources through CloudFormation stack dependencies.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-0.html)
 
+This illustrates a new-VPC workflow. Existing VPCs can be reused, timings are variable, and writing kubeconfig does not by itself establish authorization or readiness.
+
 ### Basic Cluster Creation
 
-To create the most basic form of an EKS cluster, run the following command:
+Create the basic cluster from a reviewed configuration file:
 
 ```bash
-eksctl create cluster --name my-cluster --region us-west-2
+eksctl create cluster --config-file cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-This command creates a cluster with the following default settings:
-
-* 2 m5.large nodes
-* New VPC and subnets
-* Default Amazon Linux 2 AMI
-* Latest Kubernetes version
+Read and edit `cluster.yaml` below before running this command. It explicitly selects EKS 1.36, AL2023, existing VPC subnets and node-group capacities. Replace the example identifiers and documentation CIDR with actual approved values. These are selected settings, not claims about every eksctl version's defaults.
 
 ### Creating a Cluster Using a Configuration File
 
@@ -33,12 +34,10 @@ For more complex configurations, you can define the cluster using a YAML file:
 # cluster.yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
-
 metadata:
-  name: my-eks-cluster
+  name: my-cluster
   region: us-west-2
-  version: "1.26"
-
+  version: '1.36'
 vpc:
   id: vpc-12345678
   subnets:
@@ -52,59 +51,59 @@ vpc:
         id: subnet-23456789
       us-west-2b:
         id: subnet-98765432
-
+  clusterEndpoints:
+    privateAccess: true
+    publicAccess: true
+  publicAccessCIDRs:
+  - 203.0.113.10/32
 managedNodeGroups:
-  - name: ng-1
-    instanceType: m5.large
-    desiredCapacity: 2
-    minSize: 1
-    maxSize: 3
-    privateNetworking: true
-    volumeSize: 80
-    volumeType: gp3
-    iam:
-      withAddonPolicies:
-        imageBuilder: true
-        autoScaler: true
-        externalDNS: true
-        certManager: true
-        appMesh: true
-        ebs: true
-        fsx: true
-        efs: true
-        albIngress: true
-        xRay: true
-        cloudWatch: true
-
-  - name: ng-2
-    instanceType: c5.xlarge
-    desiredCapacity: 2
-    privateNetworking: true
-    spot: true
-
-fargate:
-  profiles:
-    - name: fp-default
-      selectors:
-        - namespace: default
-          labels:
-            env: fargate
-    - name: fp-kube-system
-      selectors:
-        - namespace: kube-system
-          labels:
-            k8s-app: kube-dns
-
+- name: ng-1
+  instanceType: m5.large
+  desiredCapacity: 2
+  minSize: 1
+  maxSize: 3
+  privateNetworking: true
+  volumeSize: 80
+  volumeType: gp3
+  amiFamily: AmazonLinux2023
+  disableIMDSv1: true
+- name: ng-2
+  instanceType: c5.xlarge
+  desiredCapacity: 2
+  privateNetworking: true
+  spot: true
+  amiFamily: AmazonLinux2023
+  disableIMDSv1: true
 cloudWatch:
   clusterLogging:
-    enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+    enableTypes:
+    - api
+    - audit
+    - authenticator
+    - controllerManager
+    - scheduler
+fargateProfiles:
+- name: fp-default
+  selectors:
+  - namespace: default
+    labels:
+      env: fargate
+iam:
+  withOIDC: true
+accessConfig:
+  authenticationMode: API
 ```
 
 To create a cluster using this configuration file, run the following command:
 
 ```bash
-eksctl create cluster -f cluster.yaml
+eksctl create cluster -f cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
+
+The configuration above demonstrates EC2 nodes and an optional application Fargate profile. CoreDNS stays on EC2; moving it to Fargate requires reviewing CoreDNS compute settings as well as the profile.
+
+
+The configuration removes blanket add-on permissions from node roles. Review the CNI IRSA and policies generated by eksctl when `iam.withOIDC` is enabled, and configure separate roles for other AWS-integrated controllers. Inspect the actual add-on configuration and any conventional node-role CNI fallback. API authentication still requires appropriate EKS access entries/policies for operators. Min/max node counts do not install Cluster Autoscaler.
 
 ### Creating Managed Node Groups
 
@@ -113,6 +112,8 @@ The following diagram shows the managed node group architecture for an EKS clust
 ![Architecture diagram of the control plane managing a node group whose Auto Scaling group launches EC2 instances that run pods.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-1.html)
+
+The infrastructure actor is the AWS EKS managed node-group service and its Auto Scaling group. The diagram illustrates EKS-selected AMI defaults; custom AMIs require their own reviewed bootstrap configuration. Kubernetes schedules Pods onto the resulting nodes.
 
 To add a managed node group to an existing cluster, run the following command:
 
@@ -125,8 +126,7 @@ eksctl create nodegroup \
   --nodes 3 \
   --nodes-min 1 \
   --nodes-max 5 \
-  --ssh-access \
-  --ssh-public-key my-key
+  --managed --node-ami-family AmazonLinux2023 --node-private-networking
 ```
 
 Or you can use a configuration file:
@@ -148,9 +148,11 @@ managedNodeGroups:
     maxSize: 5
     volumeSize: 80
     volumeType: gp3
+    amiFamily: AmazonLinux2023
+    privateNetworking: true
+    disableIMDSv1: true
     ssh:
-      allow: true
-      publicKeyName: my-key
+      allow: false
 ```
 
 ```bash
@@ -159,11 +161,15 @@ eksctl create nodegroup -f nodegroup.yaml
 
 ### Creating Fargate Profiles
 
-The following diagram shows the EKS Fargate profile architecture:
+A profile selects matching Pods; it does not create Pods or scale application replicas. Verify private subnets, the Fargate Pod execution role and supported workload features. An application profile does not automatically move CoreDNS to Fargate. The CLI and file examples below are alternatives.
 
+Fargate profiles select Pods by namespace and labels. For overlapping profiles, explicitly select a matching profile with `eks.amazonaws.com/fargate-profile`; AWS documents alphanumeric profile-name selection when multiple profiles match. Startup latency depends on the image, capacity and environment.
+
+<!-- Audit asset repair pending: Correct overlapping-profile selection and remove unmeasured startup comparison. Restore this embed/link after parent repairs the asset.
 ![Architecture diagram showing pods that match a Fargate profile's namespace and label selectors being placed on dedicated microVMs.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-2.html)
+-->
 
 To create a Fargate profile, run the following command:
 
@@ -187,13 +193,12 @@ metadata:
   name: my-cluster
   region: us-west-2
 
-fargate:
-  profiles:
-    - name: my-fargate-profile
-      selectors:
-        - namespace: default
-          labels:
-            env: fargate
+fargateProfiles:
+- name: my-fargate-profile
+  selectors:
+    - namespace: default
+      labels:
+        env: fargate
 ```
 
 ```bash
@@ -202,32 +207,66 @@ eksctl create fargateprofile -f fargate.yaml
 
 ### Updating a Cluster
 
-You can update an existing cluster using eksctl:
+Upgrade one supported minor at a time. Review EKS upgrade insights, removed APIs, kubelet skew, add-ons, capacity and workload disruption first. EKS support is independent of upstream releases. The first eksctl upgrade command previews the change; `--approve` starts it.
 
 ```bash
-# Upgrade cluster version
-eksctl upgrade cluster --name=my-cluster --version=1.27
+aws eks describe-cluster-versions --region "${EKS_REGION:?}" --output table
+aws eks describe-cluster --name "${EKS_CLUSTER_NAME:?}" --region "$EKS_REGION" \
+  --query 'cluster.{version:version,status:status}' --output table
 
-# Upgrade node group
-eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup
+# Select the next supported minor after compatibility/readiness review.
+eksctl upgrade cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --version "${NEXT_MINOR_VERSION:?}"
+
+# This separate command actually starts the reviewed control-plane upgrade.
+eksctl upgrade cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --version "$NEXT_MINOR_VERSION" --approve
+```
+
+Wait for the control plane update to succeed, then update compatible add-ons and managed node groups in the reviewed order. This node-group command applies the EKS-selected AMI update; custom AMIs require a reviewed version of the same launch template. Managed node updates replace instances and are separate from control-plane updates. PDBs and spare capacity help control disruption but do not guarantee availability.
+
+```bash
+# After control-plane completion and add-on/workload compatibility checks.
+eksctl upgrade nodegroup --cluster "${EKS_CLUSTER_NAME:?}" \
+  --region "${EKS_REGION:?}" --name "${EKS_NODEGROUP_NAME:?}" --wait
 ```
 
 ### Deleting a Cluster
 
-You can delete a cluster using eksctl:
+Record the intended lab cluster ARN after creation as `EKS_EXPECTED_CLUSTER_ARN`. Before deletion, remove lab LoadBalancer Services/Ingresses while their controllers still run, wait for AWS cleanup, and inspect PVC reclaim policies and retained data. Confirm that the cluster contains only resources you intend to remove. The ARN check below verifies the recorded account/Region/name; it is not a backup or an immutable creation identifier.
 
 ```bash
-eksctl delete cluster --name=my-cluster --region=us-west-2
+if CURRENT_CLUSTER_ARN=$(aws eks describe-cluster \
+  --name "${EKS_CLUSTER_NAME:?}" --region "${EKS_REGION:?}" \
+  --query cluster.arn --output text) &&
+  [ "$CURRENT_CLUSTER_ARN" = "${EKS_EXPECTED_CLUSTER_ARN:?Recorded lab cluster ARN required}" ]; then
+  eksctl delete cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" --wait
+else
+  printf '%s\n' 'Cluster lookup/identity mismatch; no deletion attempted.' >&2
+fi
 ```
+
+Inspect CloudFormation deletion events and retained/independently created resources afterward. An existing shared VPC is not owned by this example. Use the [complete cleanup guide](02-eks-cluster-creation-part5.md) for lifecycle dependencies.
 
 ## EKS Cluster Lifecycle Management
 
-The following diagram shows the overall lifecycle management process for an EKS cluster:
+The lifecycle includes creation, configuration, operation, reviewed upgrades and eventual cleanup. Remove application load-balancer resources while their controllers still run, then remove node groups/profiles and the cluster. Remove a dedicated VPC only after its dependent resources are gone.
 
+<!-- Audit asset repair pending: Correct upgrade target/approval and resource cleanup order; VPC comes after dependencies are removed. Restore this embed/link after parent repairs the asset.
 ![EKS cluster lifecycle diagram running from creation and configuration through version updates to deletion.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-3.html)
+-->
 
 ## Quiz
 
 To test what you learned in this chapter, try the [EKS Cluster Creation - Part 2 Quiz](../quizzes/eks/02-eks-cluster-creation-part2-quiz.md).
+
+## References
+
+- [eksctl schema](https://schema.eksctl.io/)
+- [EKS versions](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [AL2023](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html)
+- [Fargate profiles](https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html)
+- [Upgrade EKS](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [Managed node updates](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html)

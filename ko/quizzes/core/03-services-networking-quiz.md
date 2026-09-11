@@ -36,7 +36,7 @@ ClusterIP는 Kubernetes의 기본 서비스 유형으로, 클러스터 내부에
 Ingress는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 경로를 노출하는 API 객체입니다. Ingress는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅을 제공합니다.
 </details>
 
-3. 다음 중 Kubernetes에서 서비스 디스커버리를 위해 제공하는 방법이 아닌 것은 무엇인가요?
+3. Kubernetes에 내장된 Service 디스커버리 방식은 무엇인가요? (두 개 선택)
    - A) 환경 변수
    - B) DNS
    - C) Service Mesh
@@ -46,7 +46,7 @@ Ingress는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP �
 
 <summary>정답 보기</summary>
 
-**정답: D) ConfigMap**
+**정답: A) 환경 변수, B) DNS**
 
 **설명:**
 Kubernetes는 두 가지 주요 서비스 디스커버리 방법을 제공합니다: 환경 변수와 DNS. ConfigMap은 구성 데이터를 저장하는 데 사용되며 서비스 디스커버리 메커니즘이 아닙니다.
@@ -172,10 +172,10 @@ ExternalName 서비스는 외부 서비스에 대한 별칭을 제공합니다. 
 
 <summary>정답 보기</summary>
 
-**정답: Endpoints**
+**정답: EndpointSlice**
 
 **설명:**
-Endpoints는 서비스가 가리키는 포드의 IP 주소와 포트를 저장하는 리소스입니다. 서비스의 셀렉터와 일치하는 포드가 있으면 Kubernetes는 자동으로 엔드포인트 객체를 생성하고 관리합니다.
+EndpointSlice는 Service 백엔드 주소와 포트를 저장하며 selector 기반 Service에서는 컨트롤러가 관리합니다. 비슷한 역할의 레거시 Endpoints는 v1.33부터 사용 중단되었습니다.
 </details>
 
 2. AWS EKS에서 Application Load Balancer를 프로비저닝하기 위해 사용하는 인그레스 컨트롤러의 이름은 무엇인가요?
@@ -184,10 +184,10 @@ Endpoints는 서비스가 가리키는 포드의 IP 주소와 포트를 저장�
 
 <summary>정답 보기</summary>
 
-**정답: AWS ALB Ingress Controller**
+**정답: AWS Load Balancer Controller**
 
 **설명:**
-AWS ALB Ingress Controller는 AWS EKS에서 Application Load Balancer를 프로비저닝하기 위해 사용되는 인그레스 컨트롤러입니다. 이 컨트롤러는 Kubernetes 인그레스 리소스를 AWS ALB로 변환합니다.
+AWS Load Balancer Controller는 AWS EKS에서 Application Load Balancer를 프로비저닝하기 위해 사용되는 인그레스 컨트롤러입니다. 이 컨트롤러는 Kubernetes 인그레스 리소스를 AWS ALB로 변환합니다.
 </details>
 
 3. Kubernetes에서 포드의 DNS 정책 중, 포드가 실행 중인 노드의 DNS 설정을 상속받는 정책의 이름은 무엇인가요?
@@ -244,7 +244,7 @@ EndpointSlice는 엔드포인트의 확장 가능한 대안으로, 대규모 클
 
 3. **트래픽 관리**:
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -268,7 +268,7 @@ spec:
 
 4. **보안 정책**:
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: httpbin
@@ -323,47 +323,19 @@ spec:
 
 4. **관찰 가능성**: eBPF는 네트워크 흐름에 대한 세부적인 메트릭을 수집할 수 있어, 문제 해결과 성능 최적화에 유용합니다.
 
-5. **L7 인식**: eBPF는 애플리케이션 계층(L7)까지 인식하여 HTTP, gRPC, Kafka 등의 프로토콜에 대한 세분화된 정책을 적용할 수 있습니다.
+5. **L7 정책**: Cilium은 eBPF와 사용자 공간 Envoy를 결합해 HTTP/L7를 검사하며 모든 작업이 커널 eBPF에서 수행되지는 않습니다.
 
 **AWS EKS에서 Cilium 최적화 방법**:
 
-1. **AWS ENI 모드 활성화**:
-```bash
-helm install cilium cilium/cilium \
-   --namespace kube-system \
-   --set eni.enabled=true \
-   --set ipam.mode=eni \
-   --set egressMasqueradeInterfaces=eth0 \
-   --set tunnel=disabled
-```
-이 구성은 AWS의 Elastic Network Interface(ENI)를 활용하여 포드에 VPC 네이티브 IP 주소를 할당하고, 오버레이 네트워크 없이 VPC 네이티브 네트워킹을 제공합니다.
+1. **IPAM과 라우팅을 명시적으로 선택**: AWS VPC CNI 체이닝은 `aws-node`를 유지합니다. Cilium ENI 모드에는 EC2 권한과 ENI 관리 주체를 전환하는 통제된 절차가 필요합니다. 본문의 Helm values와 공식 설치 절차를 사용하세요.
 
-2. **노드 그룹 최적화**:
-  - 충분한 ENI와 IP 주소를 제공하는 인스턴스 유형 선택(예: m5.large 이상)
-  - 적절한 최대 포드 수 구성(인스턴스 유형에 따라 다름)
+2. **노드 네트워킹 용량 확인**: 실제 인스턴스 ENI/IP 한도, 서브넷 여유, 파드 밀도를 확인하며 인스턴스 계열 이름만으로 판단하지 않습니다.
 
-3. **성능 최적화**:
-```bash
-helm install cilium cilium/cilium \
-   --namespace kube-system \
-   --set eni.enabled=true \
-   --set ipam.mode=eni \
-   --set tunnel=disabled \
-   --set bpf.masquerade=true \
-   --set kubeProxyReplacement=strict \
-   --set loadBalancer.mode=dsr \
-   --set loadBalancer.acceleration=native
-```
-이 구성은 kube-proxy를 대체하고, 직접 서버 반환(DSR) 모드와 네이티브 로드 밸런싱 가속을 활성화합니다.
+3. **측정 후 조정**: 현재 Helm은 해당 구성에서 `routingMode: native`와 불리언 `kubeProxyReplacement: true`를 사용합니다. 제거된 `tunnel=disabled`, `kubeProxyReplacement=strict`를 사용하지 않습니다. 프록시 대체에는 API 서버 연결과 마이그레이션 계획도 필요합니다. DSR·XDP에는 AWS 네트워크 및 NIC·커널 호환성과 실측 검증이 필요하며 모든 설정 활성화가 보편적 최적화 방법은 아닙니다.
 
 4. **Hubble 활성화**:
 ```bash
-helm upgrade cilium cilium/cilium \
-   --namespace kube-system \
-   --reuse-values \
-   --set hubble.enabled=true \
-   --set hubble.relay.enabled=true \
-   --set hubble.ui.enabled=true
+cilium hubble enable --ui
 ```
 Hubble을 활성화하여 네트워크 흐름 모니터링 및 문제 해결 기능을 제공합니다.
 

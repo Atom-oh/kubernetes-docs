@@ -1,6 +1,6 @@
 # Kubernetes Policies
 
-> **Supported Versions**: Kubernetes 1.32 - 1.34
+> **Supported Versions**: Kubernetes 1.35 - 1.37
 > **Last Updated**: February 22, 2026
 
 In Kubernetes, policies are sets of rules that control and regulate the behavior of clusters and workloads. Through policies, you can manage various aspects such as security, resource usage, and network communication. In this chapter, we will learn about the different types of policies in Kubernetes, how to implement them, and policy management in Amazon EKS.
@@ -10,7 +10,7 @@ In Kubernetes, policies are sets of rules that control and regulate the behavior
 To follow the examples in this document, you need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.34 or higher
+- kubectl within one minor version of the API server
 - A working Kubernetes cluster (EKS, minikube, kind, etc.)
 - Kyverno CLI (optional)
 - OPA Gatekeeper (optional)
@@ -64,9 +64,9 @@ kubectl -n policy-demo get resourcequota,networkpolicy
 | Policy Type | Implementation Mechanism | Application Level | Primary Purpose | Kubernetes Version Support |
 |------------|--------------------------|-------------------|-----------------|---------------------------|
 | **Resource Policies** | ResourceQuota, LimitRange | Namespace | Resource usage limitation and management | All versions |
-| **Security Policies** | Pod Security Standards, PodSecurityPolicy(deprecated) | Pod, Namespace | Security context restrictions | PSP: ~1.24, PSS: 1.22+ |
+| **Security Policies** | Pod Security Standards, Pod Security Admission (PSP removed) | Pod, Namespace | Security context restrictions | PSP removed: 1.25; PSA stable: 1.25 |
 | **Network Policies** | NetworkPolicy | Pod | Network traffic control | 1.8+ |
-| **Custom Policies** | OPA Gatekeeper, Kyverno | Cluster, Namespace, Pod | User-defined policy enforcement | All versions (add-ons) |
+| **Custom Policies** | OPA Gatekeeper, Kyverno | Cluster, Namespace, Pod | User-defined policy enforcement | Depends on installed engine compatibility |
 
 ## Resource Policies
 
@@ -97,7 +97,7 @@ spec:
 
 ### LimitRange
 
-LimitRange sets default resource limits and requests for individual containers or pods within a namespace.
+LimitRange defaults container requests/limits and validates resource bounds for containers, Pods, or PVCs. Pod and PVC entries do not inject request/limit defaults.
 
 ```yaml
 apiVersion: v1
@@ -149,7 +149,7 @@ Kubernetes can implement various types of policies through built-in resources (e
 
 Resource allocation policies control the amount of resources such as CPU and memory that pods and containers can use.
 
-![Requests and limits set in a pod's resources field decide its QoS class, and that class sets the eviction order when a node runs short: BestEffort first, Burstable next, Guaranteed last.](../.gitbook/assets/en-core-07-policies-1.png)
+![Resource requests and limits determine Pod QoS; node-pressure eviction additionally evaluates usage above requests and Pod priority rather than a strict QoS-only order.](../.gitbook/assets/en-core-07-policies-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-1.html)
 
@@ -175,12 +175,12 @@ spec:
         cpu: "500m"
 ```
 
-- **requests**: The minimum amount of resources guaranteed for the container
-- **limits**: The maximum amount of resources the container can use
+- **requests**: Scheduling reservation and runtime resource-allocation input; actual use may be lower
+- **limits**: Runtime constraint: CPU is throttled, memory excess can trigger OOM killing
 
 Setting resource requests and limits provides the following benefits:
 
-1. **Resource Guarantee**: Pods are guaranteed the minimum resources they need
+1. **Resource Guarantee**: The scheduler accounts for requested capacity; this is not an availability guarantee
 2. **Resource Isolation**: Prevents one pod from monopolizing another pod's resources
 3. **Efficient Scheduling**: The scheduler considers node resource capacity when placing pods
 
@@ -188,14 +188,11 @@ Setting resource requests and limits provides the following benefits:
 
 Kubernetes automatically assigns QoS classes based on pod resource request and limit settings:
 
-1. **Guaranteed**: All containers have resource requests and limits set, and requests equal limits
+1. **Guaranteed**: All containers have equal CPU and memory requests/limits in a container-level configuration
 2. **Burstable**: At least one container has resource requests set, but doesn't meet Guaranteed conditions
 3. **BestEffort**: No containers have resource requests and limits set
 
-QoS classes determine the pod eviction order during resource shortage:
-1. BestEffort pods are evicted first
-2. Burstable pods are evicted next
-3. Guaranteed pods are evicted last
+Node-pressure eviction considers whether usage exceeds requests, Pod priority, and relative usage. BestEffort is generally more exposed than Guaranteed, but QoS alone is not a strict ordering rule. Pod-level resources can also affect QoS; see the [official QoS criteria](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/).
 
 ## Pod Security Policies
 
@@ -273,11 +270,13 @@ spec:
 ```
 
 In the example above:
-- Defines a network policy for pods with the `api` label
-- Only allows inbound traffic from pods with the `frontend` label on port 8080
-- Only allows outbound traffic to pods with the `database` label on port 5432
+- Defines a network policy for pods with `app=api`
+- Only allows inbound traffic from pods with `app=frontend` on port 8080
+- Only allows outbound traffic to pods with `app=database` on port 5432
 
 To use network policies, the cluster's network plugin must support network policies. CNI plugins such as Calico, Cilium, and Antrea support network policies.
+
+Pod selectors without a namespace selector stay in the policy namespace. Standard NetworkPolicies are additive; another policy can allow more traffic, and both source egress and destination ingress must permit a connection. The example also blocks DNS unless another egress rule allows TCP/UDP 53 to the cluster DNS endpoints.
 
 ### Network Policy Types
 
@@ -333,7 +332,7 @@ spec:
 ```
 
 In the example above:
-- The `team-a` namespace can create a maximum of 10 pods
+- The `team-a` namespace can create a maximum of 10 non-terminal Pods
 - The sum of all pod CPU requests cannot exceed 4 cores
 - The sum of all pod memory requests cannot exceed 8Gi
 - The sum of all pod CPU limits cannot exceed 8 cores
@@ -363,28 +362,55 @@ spec:
 
 You can also set quotas for pods of specific priority classes:
 
+Use a separate quota per priority class; keys such as `pods.high` do not exist. Create the corresponding PriorityClasses before scheduling Pods.
+
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: priority-class-quota
+  name: high-priority-quota
   namespace: team-c
 spec:
   hard:
-    pods: "10"
-    pods.high: "5"
-    pods.medium: "3"
-    pods.low: "2"
+    pods: "5"
   scopeSelector:
     matchExpressions:
     - operator: In
       scopeName: PriorityClass
-      values: ["high", "medium", "low"]
+      values: ["high"]
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: medium-priority-quota
+  namespace: team-c
+spec:
+  hard:
+    pods: "3"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values: ["medium"]
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: low-priority-quota
+  namespace: team-c
+spec:
+  hard:
+    pods: "2"
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values: ["low"]
 ```
 
 ## LimitRange
 
-LimitRange sets default resource limits and requests for individual resources (pods, containers, etc.) created within a namespace. This is applied when developers do not explicitly set resource requests and limits.
+LimitRange applies defaults to missing container requests/limits and validates minimum/maximum values during admission. It does not resize existing Pods or supply defaults for Pod/PVC entries.
 
 ```yaml
 apiVersion: v1
@@ -439,25 +465,27 @@ Gatekeeper consists of the following components:
 
 ```yaml
 # ConstraintTemplate example
-apiVersion: templates.gatekeeper.sh/v1beta1
+apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
-  name: k8srequiredlabels
+  name: k8srequiredlabelkeys
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequiredLabels
+        kind: K8sRequiredLabelKeys
       validation:
         openAPIV3Schema:
+          type: object
           properties:
             labels:
               type: array
-              items: string
+              items:
+                type: string
   targets:
     - target: admission.k8s.gatekeeper.sh
       rego: |
-        package k8srequiredlabels
+        package k8srequiredlabelkeys
         violation[{"msg": msg, "details": {"missing_labels": missing}}] {
           provided := {label | input.review.object.metadata.labels[label]}
           required := {label | label := input.parameters.labels[_]}
@@ -470,7 +498,7 @@ spec:
 ```yaml
 # Constraint example
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
+kind: K8sRequiredLabelKeys
 metadata:
   name: require-app-label
 spec:
@@ -493,14 +521,15 @@ kind: ClusterPolicy
 metadata:
   name: require-labels
 spec:
-  validationFailureAction: enforce
   rules:
   - name: check-for-labels
     match:
-      resources:
-        kinds:
-        - Pod
+      any:
+      - resources:
+          kinds:
+          - Pod
     validate:
+      failureAction: Enforce
       message: "The labels 'app' and 'owner' are required."
       pattern:
         metadata:
@@ -515,7 +544,7 @@ Kyverno supports the following policy types:
 2. **Mutate**: Automatically modifies resources
 3. **Generate**: Automatically creates other resources when a resource is created
 4. **Verify Images**: Validates image signatures
-5. **Clean Up**: Automatically cleans up related resources when a resource is deleted
+5. **Clean Up**: CleanupPolicy/ClusterCleanupPolicy schedule deletion of matching resources; this is separate from owner-reference garbage collection
 
 ### Kubewarden
 
@@ -523,12 +552,13 @@ Kubewarden is a WebAssembly-based policy engine that allows writing policies in 
 
 ```yaml
 # Kubewarden policy example
-apiVersion: policies.kubewarden.io/v1alpha2
+apiVersion: policies.kubewarden.io/v1
 kind: ClusterAdmissionPolicy
 metadata:
   name: require-labels
 spec:
-  module: registry://ghcr.io/kubewarden/policies/require-labels:v0.1.0
+  module: "registry://ghcr.io/kubewarden/policies/safe-labels:<tested-tag>"
+  mutating: false
   rules:
   - apiGroups: [""]
     apiVersions: ["v1"]
@@ -537,10 +567,12 @@ spec:
     - CREATE
     - UPDATE
   settings:
-    required_labels:
+    mandatory_labels:
       - app
       - owner
 ```
+
+Install the policy engines, their CRDs, and policy servers before these resources. The Gatekeeper example deliberately defines `K8sRequiredLabelKeys` to avoid conflicting with the richer library `K8sRequiredLabels` template. For Kubewarden, select a tested published safe-labels tag/digest and use its `mandatory_labels` settings; `<tested-tag>` is a placeholder.
 
 ## Policy Management in Amazon EKS
 
@@ -563,9 +595,11 @@ eksctl create iamserviceaccount \
   --name my-service-account \
   --namespace default \
   --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+  --attach-policy-arn arn:aws:iam::123456789012:policy/ReadApplicationBucket \
   --approve
 ```
+
+Create the referenced customer-managed policy with read access limited to the required bucket/prefix; EKS Pod Identity is also available on supported compute. IAM controls AWS API access, not Kubernetes resource authorization.
 
 ### AWS Security Groups for Pods
 
@@ -583,12 +617,14 @@ spec:
       app: web
   securityGroups:
     groupIds:
-      - sg-12345
+      - sg-0123456789abcdef0
 ```
+
+Replace the security group ID with a group in the cluster VPC whose rules allow the required application and DNS traffic. Pod security groups require the supported VPC CNI setup, IAM permissions, and compatible compute; they are not supported on Windows or EKS Auto Mode.
 
 ### AWS Config and AWS Organizations
 
-You can apply organization-level policies to EKS clusters using AWS Config and AWS Organizations. For example, you can restrict the creation of EKS clusters without specific tags.
+AWS Config evaluates resource compliance; it does not itself deny CreateCluster. An Organizations service control policy (SCP) can deny creation without a required request tag in the member accounts/OUs where it applies, for example:
 
 ```json
 {
@@ -610,7 +646,7 @@ You can apply organization-level policies to EKS clusters using AWS Config and A
 
 ### AWS Firewall Manager
 
-You can use AWS Firewall Manager to centrally manage network policies for multiple EKS clusters. This allows applying consistent security policies across the organization.
+Firewall Manager centrally manages supported AWS protections such as WAF, VPC security groups, Network Firewall, and DNS Firewall. It does not reconcile Kubernetes NetworkPolicy objects; manage those through Kubernetes/GitOps policy tooling.
 
 ## Policy Best Practices
 

@@ -1,6 +1,6 @@
 # Kubernetes Pods and Workloads
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
 > **Last Updated**: February 23, 2026
 
 This document provides a detailed explanation of Pods, the basic execution unit in Kubernetes, and the various workload resources that manage them. Starting from the concept of Pods, we'll cover the characteristics and use cases of various workload resources including Deployments, StatefulSets, DaemonSets, and more.
@@ -10,7 +10,7 @@ This document provides a detailed explanation of Pods, the basic execution unit 
 To follow the examples in this document, you'll need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.34 or higher
+- kubectl within one minor version of the API server
 - A working Kubernetes cluster (EKS, minikube, kind, etc.)
 
 ### Deploy Example Application
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -65,12 +65,6 @@ kubectl -n workloads-demo get deployments,pods
 - [StatefulSet](#statefulset)
 - [DaemonSet](#daemonset)
 - [Jobs and CronJobs](#jobs-and-cronjobs)
-- [Resource Management](#resource-management)
-- [Pod Disruption Budget](#pod-disruption-budget)
-- [Horizontal Pod Autoscaling](#horizontal-pod-autoscaling)
-- [Vertical Pod Autoscaling](#vertical-pod-autoscaling)
-- [Workload Best Practices](#workload-best-practices)
-- [Amazon EKS Workload Considerations](#amazon-eks-workload-considerations)
 
 ## Pod Concepts
 
@@ -80,7 +74,7 @@ A Pod is the smallest deployable computing unit in Kubernetes. A Pod is a group 
 
 ### Pod Characteristics
 
-1. **Shared Context**: All containers within a Pod share the same network namespace, IPC namespace, and UTS namespace.
+1. **Shared Context**: Containers share the Pod network and normally IPC; process namespace sharing requires `shareProcessNamespace: true`. Container root filesystems remain separate.
 2. **Same Node**: All containers in a Pod always run on the same node.
 3. **Unique IP Address**: Each Pod has a unique IP address within the cluster.
 4. **Ephemeral**: Pods are fundamentally ephemeral and can be replaced by new Pods in case of failure.
@@ -111,7 +105,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
     volumeMounts:
@@ -121,7 +115,8 @@ spec:
     image: alpine
     command: ["/bin/sh", "-c"]
     args:
-    - while true; do
+    - |
+      while true; do
         echo "Current time: $(date)" > /content/index.html;
         sleep 10;
       done
@@ -148,7 +143,10 @@ metadata:
 spec:
   containers:
   - name: web-application
-    image: nginx:1.21
+    image: nginx:1.30.4
+    volumeMounts:
+    - name: log-volume
+      mountPath: /var/log/nginx
     ports:
     - containerPort: 80
     resources:
@@ -182,17 +180,8 @@ This example demonstrates the following real-world scenario:
 - Setting resource requests and limits for each container
 
 This configuration is suitable for running closely connected containers while separating functionality such as logging, monitoring, and proxying in microservice architectures.
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 
-    %% Apply classes
-    class Pod default;
-    class Container1,Container2 userApp;
-    class Volume dataStore;
-    class IP default;
-```
+These logging manifests illustrate volume wiring. Fluentd also needs an explicit tail source and output configuration; mounting a directory alone does not collect its logs. Images and application configuration are illustrative, not production version recommendations. Native sidecars use `initContainers` with `restartPolicy: Always` (stable since v1.33); ordinary multi-container Pods do not guarantee startup or shutdown order.
 
 ### Pod Definition
 
@@ -208,7 +197,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
     resources:
@@ -246,7 +235,10 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/nginx
   - name: log-collector
     image: fluentd:v1.14
     volumeMounts:
@@ -270,7 +262,7 @@ spec:
   - name: app
     image: myapp:1.0
   - name: ambassador
-    image: envoy:v1.20
+    image: envoyproxy/envoy:v1.20.0
     ports:
     - containerPort: 9901
 ```
@@ -287,6 +279,9 @@ spec:
   containers:
   - name: app
     image: myapp:1.0
+    volumeMounts:
+    - name: app-logs
+      mountPath: /var/log/app
   - name: adapter
     image: adapter:1.0
     volumeMounts:
@@ -320,7 +315,7 @@ spec:
 Containers within a Pod have the following networking characteristics:
 
 1. **Same IP Address**: All containers within a Pod share the same IP address.
-2. **Port Sharing**: Containers within a Pod share the port space, so they cannot use the same port.
+2. **Port Sharing**: Containers within a Pod share the port space, so they cannot normally bind the same IP/protocol/port combination.
 3. **Localhost Communication**: Containers within a Pod can communicate with each other via localhost.
 4. **Inter-Pod Communication**: Each Pod has a unique IP address and can communicate directly with other Pods.
 
@@ -376,7 +371,7 @@ Pods go through the following phases:
 Each container within a Pod can have the following states:
 
 1. **Waiting**: State before the container is running (downloading image, waiting for dependencies, etc.)
-2. **Running**: Container is running without issues
+2. **Running**: The process is executing; this alone does not establish application health or readiness
 3. **Terminated**: Container has completed execution or failed for some reason
 
 ### Pod Conditions
@@ -385,7 +380,7 @@ Pods indicate their state more specifically through the following conditions:
 
 1. **PodScheduled**: Whether the Pod has been scheduled to a node
 2. **ContainersReady**: Whether all containers in the Pod are ready
-3. **Initialized**: Whether all init containers have successfully completed
+3. **Initialized**: Regular init containers have completed and restartable init containers (native sidecars) have started
 4. **Ready**: Whether the Pod can handle requests and can be added to the load balancing pool of services
 
 ### Container Probes
@@ -436,8 +431,8 @@ When a Pod is terminated, the following process occurs:
 1. **Deletion Request to API Server**: User or controller requests Pod deletion
 2. **Termination Period Starts**: Default termination period (30 seconds) is set
 3. **API Update**: API server updates the Pod's deletion timestamp
-4. **Removal from Service**: Endpoint controller removes the Pod from service endpoints
-5. **SIGTERM Signal**: kubelet sends SIGTERM signal to containers
+4. **Endpoint update**: EndpointSlices mark the endpoint terminating and not ready; propagation occurs concurrently with node shutdown
+5. **Stop signal**: kubelet runs any preStop hook within the grace period, then asks the runtime to send the stop signal (normally SIGTERM, unless the image/container overrides it)
 6. **Graceful Shutdown Wait**: Time is provided for applications to shut down gracefully
 7. **SIGKILL Signal**: If containers don't terminate after the termination period, SIGKILL signal is sent
 8. **Resource Cleanup**: kubelet cleans up Pod resources
@@ -480,7 +475,7 @@ Pod disruptions can be divided into voluntary or involuntary disruptions:
 
 2. **Involuntary Disruptions**: Disruptions due to hardware failures, kernel panics, network partitions, etc.
 
-PodDisruptionBudget can ensure minimum availability during voluntary disruptions.
+PodDisruptionBudget limits voluntary evictions through the Eviction API (for example, drain). Direct Pod deletion and Deployment rolling updates bypass it; configure rollout availability separately. It cannot prevent involuntary failures.
 
 ## Pod Design Patterns
 
@@ -515,7 +510,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
   # Pod template ends
@@ -557,7 +552,7 @@ spec:
           topologyKey: "kubernetes.io/hostname"
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
 ```
 
 ### Node Affinity
@@ -588,10 +583,12 @@ spec:
 
 Taints are applied to nodes to prevent certain Pods from being scheduled, and tolerations are applied to Pods to allow scheduling on nodes with taints:
 
-```yaml
+```bash
 # Apply taint to node
 kubectl taint nodes node1 key=value:NoSchedule
+```
 
+```yaml
 # Apply toleration to Pod
 apiVersion: v1
 kind: Pod
@@ -667,7 +664,7 @@ metadata:
 value: 1000000
 globalDefault: false
 description: "This priority class should be used for critical pods only."
-
+---
 # Pod using priority class
 apiVersion: v1
 kind: Pod
@@ -807,7 +804,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -847,16 +844,16 @@ Deployments support rollback to previous versions:
 
 ```bash
 # Check deployment history
-kubectl rollout history deployment/nginx-deployment
+kubectl -n workloads-demo rollout history deployment/nginx-deployment
 
 # Check details of specific version
-kubectl rollout history deployment/nginx-deployment --revision=2
+kubectl -n workloads-demo rollout history deployment/nginx-deployment --revision=2
 
 # Rollback to previous version
-kubectl rollout undo deployment/nginx-deployment
+kubectl -n workloads-demo rollout undo deployment/nginx-deployment
 
 # Rollback to specific version
-kubectl rollout undo deployment/nginx-deployment --to-revision=2
+kubectl -n workloads-demo rollout undo deployment/nginx-deployment --to-revision=2
 ```
 
 ### Deployment Scaling
@@ -865,7 +862,7 @@ Deployments can be easily scaled:
 
 ```bash
 # Imperative scaling
-kubectl scale deployment/nginx-deployment --replicas=5
+kubectl -n workloads-demo scale deployment/nginx-deployment --replicas=5
 
 # Declarative scaling (after modifying YAML file)
 kubectl apply -f deployment.yaml
@@ -877,23 +874,19 @@ Deployment rollouts can be paused and resumed:
 
 ```bash
 # Pause rollout
-kubectl rollout pause deployment/nginx-deployment
+kubectl -n workloads-demo rollout pause deployment/nginx-deployment
 
 # Apply multiple changes
-kubectl set image deployment/nginx-deployment nginx=nginx:1.22
-kubectl set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
+kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.4-alpine
+kubectl -n workloads-demo set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
 
 # Resume rollout
-kubectl rollout resume deployment/nginx-deployment
+kubectl -n workloads-demo rollout resume deployment/nginx-deployment
 ```
 
 ### Deployment Status
 
-Deployments can have the following statuses:
-
-1. **Progressing**: New ReplicaSet is being created or scaling up/down
-2. **Complete**: All replicas have been updated and are available
-3. **Failed**: Error occurred during deployment (e.g., image pull failure, insufficient resources)
+Deployment conditions include `Progressing`, `Available`, and `ReplicaFailure`. A stalled rollout can report `Progressing=False` with reason `ProgressDeadlineExceeded`; Kubernetes does not automatically roll it back. “Complete” describes rollout completion rather than a condition type.
 
 ## StatefulSet
 
@@ -929,7 +922,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
           name: web
@@ -1010,88 +1003,42 @@ StatefulSets are suitable for the following applications:
 3. **Message Queues**: RabbitMQ, etc.
 4. **Other Stateful Applications**: File servers, session stores, etc.
 
-### StatefulSet Example: MySQL Replication
+### StatefulSet Example: Persistent MySQL Instance
+
+This example demonstrates stable identity and a PVC for one MySQL instance. It does **not** configure replication or automatic database failover. Increasing `replicas` would create independent databases. Create `mysql-secret` with a `password` key in the same namespace and provide a default StorageClass (or set a suitable class explicitly). Use a tested MySQL 8.4 patch/digest; credential changes require database-level rotation, not merely updating the Secret.
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  labels:
-    app: mysql
 spec:
-  ports:
-  - port: 3306
-    name: mysql
   clusterIP: None
   selector:
     app: mysql
+  ports:
+  - name: mysql
+    port: 3306
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql
 spec:
+  serviceName: mysql
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
-  serviceName: mysql
-  replicas: 3
+  podManagementPolicy: OrderedReady
   template:
     metadata:
       labels:
         app: mysql
     spec:
-      initContainers:
-      - name: init-mysql
-        image: mysql:5.7
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          # Generate server ID based on Pod index
-          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-          ordinal=${BASH_REMATCH[1]}
-          echo [mysqld] > /mnt/conf.d/server-id.cnf
-          echo server-id=$((100 + $ordinal)) >> /mnt/conf.d/server-id.cnf
-          # Master or slave configuration
-          if [[ $ordinal -eq 0 ]]; then
-            echo [mysqld] > /mnt/conf.d/master.cnf
-            echo log-bin=mysql-bin >> /mnt/conf.d/master.cnf
-          else
-            echo [mysqld] > /mnt/conf.d/slave.cnf
-            echo super-read-only >> /mnt/conf.d/slave.cnf
-          fi
-        volumeMounts:
-        - name: conf
-          mountPath: /mnt/conf.d
-      - name: clone-mysql
-        image: gcr.io/google-samples/xtrabackup:1.0
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          # Only perform replication if not the first Pod
-          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-          ordinal=${BASH_REMATCH[1]}
-          if [[ $ordinal -eq 0 ]]; then
-            exit 0
-          fi
-          # Replicate data from previous Pod
-          ncat --recv-only mysql-$(($ordinal-1)).mysql 3307 | xbstream -x -C /var/lib/mysql
-          # Prepare backup
-          xtrabackup --prepare --target-dir=/var/lib/mysql
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
       containers:
       - name: mysql
-        image: mysql:5.7
+        image: mysql:8.4
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -1101,78 +1048,39 @@ spec:
         ports:
         - name: mysql
           containerPort: 3306
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
+        startupProbe:
+          tcpSocket:
+            port: mysql
+          periodSeconds: 10
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h 127.0.0.1 -u root -e "SELECT 1"'
+          periodSeconds: 10
+          timeoutSeconds: 5
         resources:
           requests:
             cpu: 500m
             memory: 1Gi
-        livenessProbe:
-          exec:
-            command: ["mysqladmin", "ping"]
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-        readinessProbe:
-          exec:
-            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          timeoutSeconds: 1
-      - name: xtrabackup
-        image: gcr.io/google-samples/xtrabackup:1.0
-        ports:
-        - name: xtrabackup
-          containerPort: 3307
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          cd /var/lib/mysql
-          # Start slave
-          if [[ -f xtrabackup_slave_info ]]; then
-            cat xtrabackup_slave_info | sed -E 's/;$//g' > change_master_to.sql
-            mysql -h 127.0.0.1 -e "$(cat change_master_to.sql); RESET SLAVE; START SLAVE;"
-          # If replicated from master
-          elif [[ -f xtrabackup_binlog_info ]]; then
-            [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-            ordinal=${BASH_REMATCH[1]}
-            [[ $ordinal -eq 0 ]] && exit 0
-            master_host=mysql-0.mysql
-            master_log_file=$(cat xtrabackup_binlog_info | awk '{print $1}')
-            master_log_pos=$(cat xtrabackup_binlog_info | awk '{print $2}')
-            mysql -h 127.0.0.1 -e "CHANGE MASTER TO MASTER_HOST='$master_host', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='$master_log_file', MASTER_LOG_POS=$master_log_pos; RESET SLAVE; START SLAVE;"
-          fi
-          # Start backup server
-          exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1"
+          limits:
+            memory: 2Gi
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-      volumes:
-      - name: conf
-        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: standard
+      accessModes: [ReadWriteOnce]
       resources:
         requests:
           storage: 10Gi
 ```
+
+For replication and leader promotion, use a database operator or a separately tested replication runbook. StatefulSet alone does not provide either. The [upstream replication tutorial](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/) explicitly uses insecure teaching defaults and is not a production configuration.
 
 ## DaemonSet
 
@@ -1209,7 +1117,7 @@ spec:
         name: fluentd-elasticsearch
     spec:
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
       containers:
       - name: fluentd-elasticsearch
@@ -1223,18 +1131,15 @@ spec:
         volumeMounts:
         - name: varlog
           mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
           readOnly: true
       terminationGracePeriodSeconds: 30
       volumes:
       - name: varlog
         hostPath:
           path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
 ```
+
+For CRI runtimes, configure the collector to parse CRI logs under `/var/log/pods` (usually linked from `/var/log/containers`), not Docker JSON logs. The collector needs its own source/output configuration and RBAC.
 
 ### DaemonSet Update Strategies
 
@@ -1266,7 +1171,7 @@ spec:
   template:
     spec:
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
 ```
 
@@ -1276,7 +1181,7 @@ DaemonSets are used for the following purposes:
 
 1. **Log Collectors**: Fluentd, Logstash, etc.
 2. **Monitoring Agents**: Prometheus Node Exporter, Datadog Agent, etc.
-3. **Network Plugins**: Calico, Cilium, Weave Net, etc.
+3. **Network Plugins**: Calico, Cilium, etc.
 4. **Storage Daemons**: Ceph, GlusterFS, etc.
 5. **Security Agents**: Falco, Sysdig, etc.
 
@@ -1354,7 +1259,7 @@ A Job creates one or more Pods and continues execution until a specified number 
 
 #### Main Features of Job
 
-1. **Completion Guarantee**: Runs until specified number of Pods complete successfully
+1. **Completion Tracking**: Tracks successful Pods; retry limits or deadlines can make a Job fail
 2. **Parallel Execution**: Can run multiple Pods in parallel
 3. **Retry**: Automatic retry of failed Pods
 4. **Cleanup After Completion**: Optional cleanup of Pods after job completion
@@ -1442,7 +1347,7 @@ metadata:
   name: hello
 spec:
   schedule: "*/1 * * * *"  # Run every minute
-  timeZone: "America/New_York"  # Timezone (Kubernetes 1.24+)
+  timeZone: "America/New_York"  # Timezone (stable since Kubernetes 1.27)
   concurrencyPolicy: Forbid  # Allow, Forbid, Replace
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -1469,7 +1374,7 @@ Cron expressions have the following format:
 | +----------------- hour (0 - 23)
 | | +--------------- day of month (1 - 31)
 | | | +------------- month (1 - 12)
-| | | | +----------- day of week (0 - 6) (Sunday to Saturday; 7 is also Sunday)
+| | | | +----------- day of week (0 - 6) (Sunday to Saturday; use 0 for Sunday)
 | | | | |
 | | | | |
 * * * * *
@@ -1509,7 +1414,8 @@ kind: CronJob
 metadata:
   name: database-backup
 spec:
-  schedule: "0 2 * * *"  # Run daily at 02:00
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -1537,8 +1443,13 @@ spec:
             - /bin/sh
             - -c
             - |
-              pg_dump -Fc > /backup/db-$(date +%Y%m%d-%H%M%S).dump
-              find /backup -type f -mtime +7 -delete  # Delete backups older than 7 days
+              set -eu
+              backup_file="/backup/db-$(date +%Y%m%d-%H%M%S).dump"
+              trap 'rm -f "$backup_file.partial"' EXIT
+              pg_dump -Fc > "$backup_file.partial"
+              pg_restore --list "$backup_file.partial" > /dev/null
+              mv "$backup_file.partial" "$backup_file"
+              find /backup -maxdepth 1 -type f -name 'db-*.dump' -mtime +7 -delete
             volumeMounts:
             - name: backup-volume
               mountPath: /backup
@@ -1548,6 +1459,8 @@ spec:
             persistentVolumeClaim:
               claimName: backup-pvc
 ```
+
+CronJob scheduling is approximate: jobs must tolerate duplicate execution. `Forbid` applies only to Jobs from the same CronJob. History limits delete Job/Pod objects, not backup files. The backup example runs at 02:00 UTC and requires `backup-pvc`, `postgres-secret`, and a reachable database; `pg_dump` must be at least as new as the server major version. Specify `PGDATABASE` when it differs from `PGUSER`. Test actual restores separately.
 
 ## Conclusion
 

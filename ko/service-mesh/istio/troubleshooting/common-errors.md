@@ -1,9 +1,20 @@
 # Istio 일반적인 에러 및 해결 방법
 
-> **지원 버전**: Istio 1.28
-> **마지막 업데이트**: 2026년 2월 19일
+> **검토일**: 2026년 9월 11일 · CLI·설정 검증: Istio 1.31.0
 
-이 문서는 Istio를 사용할 때 가장 자주 발생하는 에러와 해결 방법을 정리합니다.
+관측한 실패, 적용된 설정과 워크로드 모드부터 확인합니다. 아래 명령은 진단 예시이며 메시 전체를 초기화하는 절차가 아닙니다. Kubernetes/EKS 버전은 [설치 호환성 안내](../01-installation.md)를 확인하세요.
+
+예시는 기존 app 네임스페이스, 8080 포트의 myapp Deployment/Service, istio-ingress 게이트웨이 네임스페이스와 기본 클러스터 DNS suffix를 사용합니다. 실제 리소스와 도메인으로 바꾸세요. Deployment YAML은 새 애플리케이션 전체가 아닌 **기존 Deployment에 병합하는 strategic-merge 조각**입니다. 이번 검토에서 클러스터 배포나 운영 부하 검증은 수행하지 않았습니다.
+
+```bash
+NS=app
+GW_NS=istio-ingress
+ISTIO_NS=istio-system
+: "${POD:?Set the exact application Pod name}"
+kubectl config current-context
+istioctl version
+kubectl -n "$NS" get pod "$POD" -o wide
+```
 
 ## 목차
 
@@ -22,439 +33,238 @@
 
 ### 문제 설명
 
-파드가 종료될 때 Envoy Sidecar가 애플리케이션보다 먼저 종료되어 연결 에러가 발생합니다.
-
-**증상**:
-```
-Connection reset by peer
-Broken pipe
-EOF
-HTTP 503 Service Unavailable
-```
+종료 중 connection reset, broken pipe, EOF, HTTP 503이 발생할 수 있습니다. 증상만으로 Envoy가 먼저 종료되었다고 확정할 수 없습니다. 애플리케이션·프록시 로그, 응답 플래그, Pod 삭제 시점과 EndpointSlice 변경을 함께 확인하세요.
 
 ### 발생 원인
 
-![Pod 종료 시 Kubernetes가 애플리케이션과 Envoy 사이드카에 동시에 SIGTERM을 보내면 Envoy가 먼저 종료되어, 아직 실행 중인 애플리케이션으로 향한 클라이언트 요청이 Connection refused로 실패하고 30초 뒤 SIGKILL로 강제 종료되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-0.png)
+일반 containers에 있는 애플리케이션과 기존 방식의 sidecar는 종료 순서가 보장되지 않습니다. 애플리케이션이 아직 프록시를 필요로 하는데 프록시가 종료될 수도 있고, 애플리케이션이 처리 중인 요청을 끝내기 전에 수신을 중단할 수도 있습니다. Kubernetes native sidecar는 initContainers의 restartPolicy: Always를 사용하며 주 컨테이너가 종료된 뒤 종료합니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-0.html)
-
-**근본 원인**:
-1. Envoy와 애플리케이션이 동시에 SIGTERM을 받음
-2. Envoy가 애플리케이션보다 빨리 종료
-3. 애플리케이션은 아직 요청을 처리 중이지만 Envoy가 이미 종료되어 연결 실패
+Pod 종료 유예에는 preStop 실행이 포함됩니다. 언제나 30초인 것은 아니며 이미 종료된 프로세스를 나중에 다시 강제 종료하지도 않습니다. Endpoint 갱신, 로드 밸런서 전파와 장기 연결도 별도의 실패 구간을 만들 수 있습니다.
 
 ### 해결 방법
 
-#### 방법 1: Envoy Proxy preStop Hook 설정 (권장)
+#### 방법 1: 애플리케이션과 프록시 종료 예산 설정
 
-Istio Proxy 컨테이너에 preStop Hook을 설정하여 활성 연결이 모두 종료될 때까지 대기하도록 합니다.
+다음 annotation은 proxy drain을 설정합니다. preStop hook을 설치하거나 모든 활성 요청의 완료를 무조건 기다리는 것은 **아닙니다**:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
+  namespace: app
 spec:
   template:
     metadata:
       annotations:
-        # Envoy가 활성 연결 종료까지 대기
         proxy.istio.io/config: |
           terminationDrainDuration: 30s
-    spec:
-      terminationGracePeriodSeconds: 60
-      containers:
-      - name: myapp
-        image: myapp:latest
-        ports:
-        - containerPort: 8080
-```
-
-**동작 방식**:
-![Envoy에 terminationDrainDuration을 설정하면 SIGTERM 이후 새 연결만 거부하고 기존 연결은 유지하는 Drain 모드로 진입해, Pod 종료 중 들어온 요청이 정상 응답을 받은 뒤 Envoy와 애플리케이션이 함께 정상 종료됨을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-1.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-1.html)
-
-#### 방법 2: Pod Annotation으로 Envoy 종료 동작 제어
-
-Pod 단위로 Envoy의 종료 동작을 세밀하게 제어할 수 있습니다.
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-spec:
-  template:
-    metadata:
-      annotations:
-        # Envoy가 애플리케이션 시작까지 대기
-        proxy.istio.io/config: |
           holdApplicationUntilProxyStarts: true
-          terminationDrainDuration: 30s
-        # Envoy 종료 타임아웃
-        sidecar.istio.io/terminationGracePeriodSeconds: "60"
+      labels: {}
     spec:
       terminationGracePeriodSeconds: 60
-      containers:
-      - name: myapp
-        image: myapp:latest
 ```
 
-**설정 설명**:
-- `holdApplicationUntilProxyStarts: true`: 애플리케이션보다 Envoy가 먼저 시작
-- `terminationDrainDuration: 30s`: Envoy 종료 시 30초 동안 드레인
-- `terminationGracePeriodSeconds: 60`: 전체 파드 종료 유예 시간
+30초·60초는 예시이며 보편적 최소값이 아닙니다. 애플리케이션 종료, hook과 proxy drain을 함께 계산하세요. holdApplicationUntilProxyStarts는 **시작**에 관한 설정이며 종료 순서 제어가 아닙니다. ProxyConfig 변경은 새 Pod에 적용됩니다.
 
-#### 방법 3: 전역 설정 (IstioOperator)
+1.31의 일반 terminationDrainDuration 경로는 시간 기반입니다. EXIT_ON_ZERO_ACTIVE_CONNECTIONS를 사용하면 agent가 최소 drain 기간 이후 downstream listener 연결 수를 확인하며, 이 경로는 일반 drain 타이머를 고정 상한으로 사용하지 않습니다. Kubernetes 종료 유예와 통계 누락·오류도 영향을 줍니다. 실제 연결 특성으로 검증해야 합니다.
 
-클러스터 전체에 일관된 종료 정책을 적용합니다.
+#### 방법 2: Native sidecar 종료 순서 검토
+
+지원되는 Kubernetes/Istio 조합에서 다음 annotation은 새로 생성되는 주입 대상 Pod에 native injection을 선택합니다:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: app
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/nativeSidecar: 'true'
+      labels: {}
+    spec: {}
+```
+
+Kubernetes 기능은 1.33부터 stable이지만 Istio의 native-sidecar annotation은 Alpha로 문서화되어 있습니다. 실제 주입된 initContainers와 애플리케이션 종료 동작을 확인하세요. 순서만으로 요청 실패 0건이나 Pod 종료 유예를 넘는 무한 대기가 보장되지 않습니다. Ambient 워크로드에는 이 방식으로 설정할 Pod별 Envoy가 없습니다.
+
+sidecar.istio.io/terminationGracePeriodSeconds는 문서화된 annotation이 아닙니다. 실제 spec.terminationGracePeriodSeconds를 설정해야 합니다.
+
+#### 방법 3: 설치 범위 기본값
+
+다음은 **istioctl 설치 입력**이며 제거된 클러스터 내 Istio operator로 reconcile하는 리소스가 아닙니다:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
-metadata:
-  name: istio-controlplane
 spec:
   meshConfig:
     defaultConfig:
       terminationDrainDuration: 30s
       holdApplicationUntilProxyStarts: true
-  values:
-    global:
-      proxy:
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                # Envoy 드레인 시작
-                curl -X POST http://localhost:15000/drain_listeners?graceful
-                # 활성 연결 대기
-                while [ $(netstat -plunt | grep tcp | grep -v TIME_WAIT | wc -l | xargs) -ne 0 ]; do
-                  sleep 1;
-                done
 ```
 
-**권장 설정**:
-- `terminationDrainDuration`: 30초 (활성 연결 드레인 시간)
-- `terminationGracePeriodSeconds`: 60초 (SIGKILL 전 유예 시간)
-- Envoy가 활성 연결을 확인하고 graceful shutdown 수행
+설치 소유 도구를 통해 render 변경을 검토하고 영향받는 워크로드를 계획적으로 롤아웃하세요. 이전 shell/netstat preStop 루프는 시간 제한 없이 listening socket도 세고 proxy 이미지에 유틸리티가 있다고 가정했습니다. 애플리케이션 작업 완료를 신뢰할 수 있게 확인하는 방식이 아닙니다.
 
 ### 검증 방법
 
 ```bash
-# 1. 파드 종료 중 로그 확인
-kubectl logs -f <pod-name> -c istio-proxy --previous
-
-# 2. 종료 시 연결 상태 확인
-kubectl exec <pod-name> -c istio-proxy -- netstat -an | grep ESTABLISHED
-
-# 3. 종료 이벤트 확인
-kubectl get events --field-selector involvedObject.name=<pod-name>
+kubectl -n "$NS" get pod "$POD" -o json
+kubectl -n "$NS" logs -f "$POD" -c istio-proxy
+kubectl -n "$NS" get events --field-selector "involvedObject.name=$POD"
+kubectl -n "$NS" get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=myapp -o yaml
 ```
+
+Pod가 존재할 때 로그를 수집하세요. --previous는 같은 Pod의 이전 컨테이너 인스턴스를 의미하며 “현재 종료 중인 컨테이너”나 임의의 삭제된 Pod 로그를 뜻하지 않습니다.
 
 ### 모범 사례
 
-```yaml
-# 권장 설정 템플릿
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-spec:
-  template:
-    metadata:
-      annotations:
-        # Envoy 종료 동작 제어
-        proxy.istio.io/config: |
-          holdApplicationUntilProxyStarts: true
-          terminationDrainDuration: 30s
-    spec:
-      terminationGracePeriodSeconds: 60
-      containers:
-      - name: myapp
-        image: myapp:latest
-        ports:
-        - containerPort: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          periodSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-        # 선택사항: 애플리케이션 graceful shutdown
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                # Readiness 비활성화 (optional)
-                touch /tmp/not-ready
-                # 애플리케이션 요청 완료 대기
-                sleep 5
-```
-
-**체크리스트**:
-- ✅ **Envoy terminationDrainDuration 설정** (가장 중요!)
-- ✅ **holdApplicationUntilProxyStarts: true** (시작 순서 보장)
-- ✅ **terminationGracePeriodSeconds 충분히 설정** (최소 60초)
-- ✅ ReadinessProbe 설정 (종료 시 빠르게 unhealthy 전환)
-- ✅ 애플리케이션 graceful shutdown 구현 (선택사항)
-- ✅ 모니터링 및 로깅 설정
-
-**핵심**:
-- ❌ **애플리케이션 컨테이너에 sleep을 추가하지 마세요!**
-- ✅ **Envoy가 드레인 모드로 graceful shutdown하도록 설정하세요.**
+애플리케이션 SIGTERM 처리와 실제 readiness 동작을 구현하세요. 애플리케이션이나 probe가 확인하지 않는 /tmp/not-ready 파일은 아무 효과가 없습니다. 제한된 preStop 지연은 전파 시간을 줄 수 있지만 endpoint 수렴 확인이나 애플리케이션 정상 종료의 대체재가 아닙니다. 애플리케이션 sleep을 항상 금지하거나 종료 유예 60초를 보편적 최소값으로 정할 수 없습니다. 쓰기 retry를 끄고 원시 HTTP·비HTTP 실패를 측정하세요. [롤아웃 비교](../comparison/03-sidecar-vs-ambient.md)를 참고하세요.
 
 ## Sidecar 주입 문제
 
 ### 문제 1: Sidecar가 주입되지 않음
 
-**증상**:
-```bash
-kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].name}'
-# 출력: myapp (istio-proxy가 없음)
-```
-
-**원인 및 해결**:
-
-#### 1. Namespace 레이블 누락
+프록시가 없다고 결론 내리기 전에 일반·native sidecar 위치를 모두 확인합니다:
 
 ```bash
-# 확인
-kubectl get namespace <namespace> --show-labels
-
-# 해결
-kubectl label namespace <namespace> istio-injection=enabled
-```
-
-#### 2. Pod Annotation으로 주입 비활성화됨
-
-```yaml
-# 잘못된 설정
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    sidecar.istio.io/inject: "false"  # ← 주입 비활성화
-```
-
-**해결**:
-```yaml
-# 올바른 설정
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    sidecar.istio.io/inject: "true"
-```
-
-#### 3. Istio Sidecar Injector 동작 확인
-
-```bash
-# Sidecar injector webhook 확인
+kubectl -n "$NS" get pod "$POD" -o jsonpath='{.spec.containers[*].name}{"\n"}{.spec.initContainers[*].name}{"\n"}'
+kubectl get namespace "$NS" --show-labels
+kubectl -n "$NS" get deployment myapp -o yaml
+istioctl x check-inject "$POD" -n "$NS"
 kubectl get mutatingwebhookconfigurations
-
-# Istio injector 로그 확인
-kubectl logs -n istio-system -l app=sidecar-injector
+kubectl -n "$ISTIO_NS" get pods -l app=istiod --show-labels
+kubectl -n "$ISTIO_NS" logs -l app=istiod --all-containers=true --tail=200
 ```
+
+Ambient enrollment에는 의도적으로 애플리케이션 sidecar istio-proxy가 없습니다. Sidecar 모드는 namespace revision/tag, Pod template label, hostNetwork, webhook selector와 admission event를 확인하세요. 자동 주입은 host-network Pod와 지정된 시스템 namespace를 제외합니다.
+
+[주입 가이드](../advanced/07-sidecar-injection.md)에 따라 설치에 맞는 revision/tag 또는 기존 injection label을 사용하세요. 충돌하는 istio-injection과 istio.io/rev 선택을 혼합하지 않습니다. Label은 새 Pod에 영향을 주며 기존 Pod에 sidecar를 추가하지 않습니다. 영향을 검토한 뒤 소유 rollout 도구로 의도한 워크로드만 재생성하세요.
+
+Pod별 override는 workload의 Pod template 안에 있는 **label**을 권장합니다:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: app
+spec:
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        sidecar.istio.io/inject: 'true'
+    spec: {}
+```
+
+같은 이름의 annotation은 deprecated입니다. false label은 의도적인 제외일 수 있으므로 무조건 오류로 보고 덮어쓰지 마세요. true label도 모든 webhook 선택·플랫폼 제한을 우회하지는 않습니다. 주입은 Istiod가 처리하며 과거 app=sidecar-injector 로그 선택자는 현재 통합 injector를 찾지 못합니다.
 
 ### 문제 2: Sidecar 리소스 부족
 
-**증상**:
-```
-OOMKilled
-CrashLoopBackOff
-Error: container has runAsNonRoot and image has non-numeric user
-```
+컨테이너 종료 원인, event, 사용량과 throttling을 확인합니다. OOMKilled는 메모리 제한 문제일 수 있지만 CrashLoopBackOff는 다양한 원인의 재시작·대기 상태입니다. runAsNonRoot/non-numeric-user 검증 오류는 security context·image 문제이며 RAM 증설로 해결되지 않습니다.
 
-**해결**:
+측정상 리소스 변경이 필요하면 Pod template에서 request와 limit을 함께 설정합니다. 예시 수량은 워크로드에 맞게 조정해야 합니다:
 
 ```yaml
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  annotations:
-    sidecar.istio.io/proxyCPU: "200m"
-    sidecar.istio.io/proxyMemory: "256Mi"
-    sidecar.istio.io/proxyCPULimit: "1000m"
-    sidecar.istio.io/proxyMemoryLimit: "512Mi"
+  name: myapp
+  namespace: app
 spec:
-  containers:
-  - name: myapp
-    image: myapp:latest
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/proxyCPU: 200m
+        sidecar.istio.io/proxyCPULimit: 1000m
+        sidecar.istio.io/proxyMemory: 256Mi
+        sidecar.istio.io/proxyMemoryLimit: 512Mi
+      labels: {}
+    spec: {}
 ```
+
+새로 주입된 설정과 namespace LimitRange/ResourceQuota를 확인하세요. Admission을 통과하기 위해 이미지 보안 설정을 무작정 덮어쓰지 않습니다.
 
 ## mTLS 연결 실패
 
 ### 문제 설명
 
-**증상**:
-```
-upstream connect error or disconnect/reset before headers
-503 Service Unavailable
-SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
-```
+Upstream connect error, 503, WRONG_VERSION_NUMBER는 TLS, protocol, endpoint 또는 네트워크 원인일 수 있습니다. PeerAuthentication은 **수신 mTLS 허용 방식**을 제어합니다. DestinationRule TLS 설정은 client 측 Envoy의 송신 TLS를 제어합니다. Client의 PeerAuthentication STRICT가 그 client의 mTLS 송신을 강제하는 것은 아닙니다.
 
-### 원인 1: PeerAuthentication 모드 불일치
+### PeerAuthentication과 DestinationRule
 
-![PeerAuthentication STRICT 모드인 Client Service가 DISABLE 모드인 Server Service로 mTLS 연결을 시도하면 서버가 평문 연결을 요구해 연결이 실패하고 503 upstream connect error로 이어지는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-2.png)
+Auto mTLS가 켜져 있고 DestinationRule에 명시적인 TLS override가 없으면 Istio가 알려진 mesh endpoint에 워크로드 mTLS를 선택합니다. 명시적인 DISABLE override는 목적지 STRICT와 충돌할 수 있습니다. 소유 도구로 의도하지 않은 override를 제거하거나 의도적으로 구성한 Istio mTLS 목적지에 ISTIO_MUTUAL을 사용하세요. 임의의 외부 TLS·평문 서비스에 강제하지 않습니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-2.html)
-
-**해결**:
+다음 selector 없는 정책은 호출자들이 strict 적용 준비를 마친 뒤 **app namespace**에 적용하는 예시입니다:
 
 ```yaml
-# 네임스페이스 전체에 일관된 mTLS 정책 적용
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT  # 모든 서비스 STRICT 모드
-```
-
-### 원인 2: DestinationRule과 PeerAuthentication 충돌
-
-```yaml
-# ❌ 잘못된 예
----
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: default
+  namespace: app
 spec:
   mtls:
     mode: STRICT
----
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: myapp
-spec:
-  host: myapp
-  trafficPolicy:
-    tls:
-      mode: DISABLE  # ← 충돌!
 ```
 
-**해결**:
-```yaml
-# ✅ 올바른 예
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: myapp
-spec:
-  host: myapp
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL  # PeerAuthentication과 일치
-```
+설정된 root namespace(보통 istio-system)의 selector 없는 정책은 그 namespace의 서비스만이 아니라 메시 전체 범위입니다. 적용 전 마이그레이션 영향을 확인하세요. Ambient의 transport mTLS는 PeerAuthentication DISABLE로 끌 수 없습니다. 인증과 AuthorizationPolicy는 별개이며 403이 항상 TLS 실패를 뜻하지 않습니다.
 
 ### 디버깅 명령어
 
 ```bash
-# 1. mTLS 상태 확인
-istioctl x describe pod <pod-name> -n <namespace>
-
-# 2. PeerAuthentication 정책 확인
-kubectl get peerauthentication -A
-
-# 3. DestinationRule TLS 설정 확인
-kubectl get destinationrule -A -o yaml | grep -A 5 "tls:"
-
-# 4. Envoy 클러스터 TLS 설정 확인
-istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn <service-name>
+istioctl x describe pod "$POD" -n "$NS"
+kubectl get peerauthentication -A -o yaml
+kubectl get destinationrule -A -o yaml
+istioctl proxy-config clusters "$POD" -n "$NS" \
+  --fqdn myapp.app.svc.cluster.local -o json
+istioctl proxy-config secret "$POD" -n "$NS"
 ```
+
+송신 cluster 설정은 해당 호출자 proxy, 수신 정책은 목적지 proxy에서 확인하세요. Experimental describe는 진단 보조이며 모든 경로 암호화의 증거가 아닙니다. 인증서 유효성, identity, trust domain, 실제 transport socket과 응답 플래그를 확인합니다. Waypoint와 ztunnel 진단은 서로 다르므로 [mTLS 가이드](../security/01-mtls.md)를 참고하세요.
 
 ## VirtualService 라우팅 실패
 
 ### 문제 1: 트래픽이 라우팅되지 않음
 
-**증상**:
-```
-404 Not Found
-default backend - 404
-```
+404는 Envoy나 애플리케이션이 반환할 수 있습니다. Route 변경 전 발생 지점과 응답 상세를 확인하세요. hosts: myapp.example.com에서 내부 Service myapp으로 보내는 VirtualService는 적절한 gateway에 연결되고 요청 Host/authority가 일치하면 **유효합니다**. Frontend host와 backend Service 이름이 같을 필요는 없습니다.
 
-**원인 및 해결**:
+Mesh 트래픽은 요청한 service host를, ingress 트래픽은 gateway가 허용한 domain과 attachment를 확인합니다. 짧은 destination 이름은 설정 리소스의 namespace 기준으로 해석되므로 FQDN이 namespace 혼동을 줄입니다.
 
-#### 잘못된 host 매칭
+### 문제 2: Subset not found 또는 No healthy upstream
+
+다음 완전한 두 리소스는 mesh 트래픽을 지정된 subset으로 보냅니다:
 
 ```yaml
-# ❌ 잘못된 예
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: app
 spec:
   hosts:
-  - myapp.example.com  # ← DNS 이름
+  - myapp.app.svc.cluster.local
   http:
   - route:
     - destination:
-        host: myapp  # ← Kubernetes Service 이름
-```
-
-**해결**:
-```yaml
-# ✅ 올바른 예
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-  namespace: default
-spec:
-  hosts:
-  - myapp  # Kubernetes Service 이름과 정확히 일치
-  - myapp.default.svc.cluster.local  # FQDN도 추가
-  http:
-  - route:
-    - destination:
-        host: myapp
-```
-
-### 문제 2: Subset not found
-
-**증상**:
-```
-no healthy upstream
-subset not found
-```
-
-**원인**:
-```yaml
-# VirtualService는 있지만 DestinationRule이 없음
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  http:
-  - route:
-    - destination:
-        host: myapp
-        subset: v1  # ← Subset이 정의되지 않음
-```
-
-**해결**:
-```yaml
-# DestinationRule 추가
+        host: myapp.app.svc.cluster.local
+        subset: v1
+        port:
+          number: 8080
+    retries:
+      attempts: 0
+---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
+  namespace: app
 spec:
-  host: myapp
+  host: myapp.app.svc.cluster.local
   subsets:
   - name: v1
     labels:
@@ -464,99 +274,53 @@ spec:
       version: v2
 ```
 
+Service가 실제로 version: v1인 ready endpoint를 선택해야 합니다. DestinationRule subset 이름만 맞춰도 Pod가 생성되거나 Service selector·endpoint 상태가 고쳐지지는 않습니다. 목적지 Service port, protocol 선택, 정책 가시성과 경쟁 route를 확인하세요. 예시는 기본 cluster.local suffix를 가정합니다.
+
 ### 디버깅
 
 ```bash
-# 1. VirtualService 검증
-istioctl analyze -n <namespace>
-
-# 2. 라우팅 규칙 확인
-istioctl proxy-config routes <pod-name> -n <namespace>
-
-# 3. VirtualService 상태 확인
-kubectl get virtualservice <name> -n <namespace> -o yaml
+istioctl analyze -n "$NS"
+istioctl proxy-config routes "$POD" -n "$NS"
+istioctl proxy-config endpoints "$POD" -n "$NS"
+kubectl -n "$NS" get svc myapp -o yaml
+kubectl -n "$NS" get pods -l app=myapp --show-labels
+kubectl -n "$NS" get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=myapp -o yaml
 ```
+
+Analyze는 정적 설정 검사 보조입니다. 실제 요청을 운반하는 proxy의 route/cluster/endpoint를 확인하세요. 설정은 즉시 전파되지 않습니다. Ingress가 Service로 보낸 요청에 별도의 mesh-only VirtualService subset 선택이 자동 상속되지도 않습니다.
+
 
 ## Gateway 설정 문제
 
 ### 문제 1: Gateway에 트래픽이 도달하지 않음
 
-**증상**:
-```bash
-curl: (7) Failed to connect to example.com port 443: Connection refused
-```
-
-**원인 및 해결**:
-
-#### 1. Gateway Service 확인
+HTTP 응답 이전의 connection refused나 timeout은 DNS, listener/Service port 불일치, 로드 밸런서 target 누락 또는 네트워크 차단일 수 있습니다. 실제 gateway Deployment/Service부터 찾으세요. Namespace와 이름은 설치 방식에 따라 다릅니다.
 
 ```bash
-# Gateway Service 상태 확인
-kubectl get svc -n istio-system istio-ingressgateway
-
-# External IP 확인
-kubectl get svc -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+kubectl -n "$GW_NS" get svc,pods --show-labels
+kubectl -n "$GW_NS" get gateways.networking.istio.io -o yaml
+kubectl -n "$NS" get virtualservice -o yaml
+# For installations using Kubernetes Gateway API instead:
+kubectl get gatewayclasses.gateway.networking.k8s.io
+kubectl -n "$GW_NS" get gateways.gateway.networking.k8s.io -o yaml
+kubectl -n "$NS" get httproutes.gateway.networking.k8s.io -o yaml
 ```
 
-#### 2. Gateway와 VirtualService 연결 확인
+Service의 loadBalancer ingress를 확인합니다. Provider에 따라 IP, hostname 또는 둘 다 제공합니다. EKS에서는 실제 controller 설정에 맞춰 load balancer target health, target type, security group과 네트워크 경로도 확인하세요. Istiod 재시작으로 AWS target 비정상이 해결되지는 않습니다.
 
-```yaml
-# ❌ 잘못된 예
----
-apiVersion: networking.istio.io/v1
-kind: Gateway
-metadata:
-  name: myapp-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "example.com"
----
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  hosts:
-  - "example.com"
-  gateways:
-  - my-gateway  # ← Gateway 이름 오타!
-```
+Istio Gateway(networking.istio.io)와 Kubernetes Gateway API(gateway.networking.k8s.io)는 다른 리소스입니다. Gateway API에서는 Accepted, Programmed와 HTTPRoute parent의 ResolvedRefs 같은 조건 및 controller event를 확인하세요. Gateway 이름 오타, listener 불일치, route attachment 거부는 외부 연결 장애와 다른 수정이 필요합니다.
 
-**해결**:
-```yaml
-# ✅ 올바른 예
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: myapp
-spec:
-  hosts:
-  - "example.com"
-  gateways:
-  - myapp-gateway  # Gateway 이름과 정확히 일치
-```
+### 문제 2: HTTPS와 Route 연결
 
-### 문제 2: HTTPS 인증서 오류
-
-**증상**:
-```
-SSL certificate problem: self signed certificate
-```
-
-**해결**:
+다음 예시는 **Istio Gateway API**를 사용합니다. Selector를 실제 gateway Pod label로 바꾸고 소유한 domain과 유효한 인증서를 사용하며 Deployment의 Service가 443을 노출하는지 확인하세요. 앞 절에서 정의한 backend subset을 사용합니다:
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: myapp-gateway
+  namespace: istio-ingress
 spec:
   selector:
     istio: ingressgateway
@@ -567,130 +331,146 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: myapp-tls-secret  # ← Secret 이름 정확히 지정
+      credentialName: myapp-tls-secret
     hosts:
-    - "example.com"
+    - myapp.example.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: myapp-ingress
+  namespace: app
+spec:
+  hosts:
+  - myapp.example.com
+  http:
+  - route:
+    - destination:
+        host: myapp.app.svc.cluster.local
+        subset: v1
+        port:
+          number: 8080
+    retries:
+      attempts: 0
+  gateways:
+  - istio-ingress/myapp-gateway
 ```
 
+SIMPLE이 downstream TLS를 종료하므로 route는 http를 사용합니다. TLS PASSTHROUGH listener에는 적절한 TLS/SNI route가 필요합니다. TLS 종료 listener에 tls route만 연결하거나 암호화된 passthrough 내부의 HTTP path를 매칭하려고 하면 안 됩니다.
+
+credentialName은 gateway workload가 접근할 credential을 가리킵니다. 이 예시의 gateway Pod와 TLS Secret은 istio-ingress에 있습니다:
+
 ```bash
-# TLS Secret 생성
-kubectl create secret tls myapp-tls-secret \
-  --cert=path/to/cert.pem \
-  --key=path/to/key.pem \
-  -n istio-system
+kubectl -n "$GW_NS" create secret tls myapp-tls-secret   --cert=path/to/fullchain.pem   --key=path/to/key.pem
 ```
+
+이미 관리 중인 Secret이면 인증서 소유 도구의 갱신 절차를 사용하세요. 이 명령은 인증서를 발급하거나 자체 서명 issuer를 신뢰하게 만들지 않습니다. Domain/SAN, 제공되는 chain, 만료, client trust와 gateway SDS 상태를 확인해야 합니다. 별도 Gateway 설정 객체의 namespace가 항상 gateway workload의 credential namespace를 대체하는 것은 아닙니다.
 
 ## 메모리 및 성능 문제
 
 ### 문제 1: Envoy 메모리 사용량 증가
 
-**증상**:
-```
-OOMKilled
-Memory usage > 1GB per pod
-```
+실제 컨테이너 memory/CPU, limit, 연결 수, route/cluster/listener와 telemetry cardinality를 비교합니다. 관련 없는 큰 ConfigMap이나 Secret이 모든 proxy에 자동 적재되지는 않습니다. 해당 proxy가 소비하는 설정·데이터가 메모리 사용량과 연결되어야 합니다. Memory leak은 버전별 근거가 필요합니다.
 
-**원인**:
-- 너무 많은 리스너/클러스터 생성
-- 큰 ConfigMap/Secret
-- 메모리 누수
-
-**해결**:
+사용하지 않는 설정이 주요 원인이면 Sidecar 리소스로 선택한 **sidecar** workload에 가져오는 설정 범위를 줄일 수 있습니다:
 
 ```yaml
-# Sidecar 리소스로 범위 제한
 apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
-  name: default
-  namespace: default
+  name: myapp-scope
+  namespace: app
 spec:
+  workloadSelector:
+    labels:
+      app: myapp
   egress:
   - hosts:
-    - "./*"  # 같은 네임스페이스만
-    - "istio-system/*"  # istio-system만
+    - ./*
+    - istio-system/*
 ```
 
-```yaml
-# Envoy 리소스 제한
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    sidecar.istio.io/proxyMemory: "512Mi"
-    sidecar.istio.io/proxyMemoryLimit: "1Gi"
-```
+예시는 app과 istio-system의 서비스만 포함합니다. 범위를 좁히기 전에 실제 namespace 간·외부 의존성을 확인하고 Sidecar selector 중첩을 피하세요. 설정 범위 제어이며 egress 방화벽이나 ambient waypoint 정책이 아닙니다. 관측한 동작에 따라 앞의 Pod-template annotation으로 메모리 request·limit을 조정하세요.
 
 ### 문제 2: 높은 지연 시간
 
-**증상**:
-- P99 latency > 1초
-- Timeout 에러 빈번
+P99 1초 초과는 정의한 워크로드 예산과 비교해야 의미가 있습니다. Timeout 변경 전에 애플리케이션 처리, upstream 지연, 포화, CPU throttling, 연결 풀, payload와 retry 증폭을 확인합니다.
 
-**해결**:
+다음은 앞의 myapp VirtualService를 **대체**하며 5초 route deadline과 명시적인 retry 비활성화를 추가합니다:
 
 ```yaml
-# VirtualService에 timeout 설정
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
+  namespace: app
 spec:
+  hosts:
+  - myapp.app.svc.cluster.local
   http:
   - route:
     - destination:
-        host: myapp
-    timeout: 5s  # 전체 요청 타임아웃
+        host: myapp.app.svc.cluster.local
+        subset: v1
+        port:
+          number: 8080
     retries:
-      attempts: 3
-      perTryTimeout: 2s  # 각 재시도 타임아웃
+      attempts: 0
+    timeout: 5s
 ```
+
+Deadline은 대기를 제한할 뿐 backend를 빠르게 만들지 않습니다. 무조건적인 retry는 과부하를 증폭하거나 미확정 쓰기를 반복할 수 있습니다. 특정 멱등 작업에 retry가 적합하면 종단 deadline 안에서 예산을 정하고 실제 시도를 측정하세요. [Retry 및 Timeout](../traffic-management/05-retry-timeout.md)을 참고하세요.
 
 ## 인증서 만료
 
 ### 문제 설명
 
-**증상**:
-```
-x509: certificate has expired
-SSL handshake failed
-```
+x509 만료와 handshake 실패는 workload leaf, 서명 intermediate/root, ingress 인증서 또는 시계 오차 문제일 수 있습니다. 유효기간은 CA/provider와 설정에 따라 달라지므로 “10년”이나 “24시간”이 보편적인 진단 기준이 아닙니다.
 
-**원인**:
-- Istio CA 인증서 만료 (기본 10년)
-- 워크로드 인증서 만료 (기본 24시간, 자동 갱신)
+### 진단과 복구
 
-**해결**:
+실제 공개 trust bundle과 적재된 workload 인증서를 확인합니다:
 
 ```bash
-# 1. CA 인증서 확인
-kubectl get secret istio-ca-secret -n istio-system -o jsonpath='{.data.ca-cert\.pem}' | base64 -d | openssl x509 -noout -dates
-
-# 2. 워크로드 인증서 확인
-istioctl proxy-config secret <pod-name> -n <namespace>
-
-# 3. CA 인증서 재생성
-istioctl x ca root
+# Public trust bundle, not a private CA key.
+kubectl -n "$NS" get configmap istio-ca-root-cert \
+  -o jsonpath='{.data.root-cert\.pem}' > root-cert.pem
+openssl crl2pkcs7 -nocrl -certfile root-cert.pem |
+  openssl pkcs7 -print_certs -text -noout
+istioctl proxy-config secret "$POD" -n "$NS"
+kubectl -n "$ISTIO_NS" logs -l app=istiod --all-containers=true --tail=200
 ```
+
+사용자 지정 통합이면 표준 trust ConfigMap과 다를 수 있으므로 실제 CA provider를 확인하세요. PKCS7 검사는 PEM bundle의 첫 인증서만이 아니라 모든 인증서를 표시합니다. 현재 UTC, CA/CSR 오류, identity token, Istiod/SDS 연결과 인증서 갱신 절차를 함께 확인합니다.
+
+istioctl 1.31에는 x ca root 명령이 없습니다. Leaf가 만료되었다는 이유만으로 CA를 삭제·재생성하지 마세요. 계획하지 않은 trust root 교체는 의존하는 모든 workload를 단절시킬 수 있습니다. 실제 갱신·연결·provider 원인을 고치고 필요한 신뢰 중첩 기간을 포함한 지원 CA 회전 절차를 사용해야 합니다. 복구 절차에 필요한 경우에만 특정 영향받은 workload를 재시작하세요.
 
 ## DNS 해석 실패
 
 ### 문제 설명
 
-**증상**:
-```
-no such host
-DNS resolution failed
+No-such-host나 lookup timeout이면 애플리케이션 DNS, CoreDNS/upstream DNS, Service 존재·search suffix와 Istio DNS capture를 구분합니다.
+
+```bash
+kubectl -n kube-system get svc kube-dns
+kubectl -n kube-system get pods -l k8s-app=kube-dns
+kubectl -n kube-system get endpointslices.discovery.k8s.io \
+  -l kubernetes.io/service-name=kube-dns
+# Run from the affected app container only if it includes these tools.
+kubectl -n "$NS" exec "$POD" -c myapp -- cat /etc/resolv.conf
+kubectl -n "$NS" exec "$POD" -c myapp -- nslookup myapp.app.svc.cluster.local
 ```
 
-**해결**:
+최소 애플리케이션·proxy 이미지에 진단 도구가 있다고 가정하지 마세요. 필요하면 승인된 진단 컨테이너를 사용합니다. UDP/TCP 53 NetworkPolicy, 노드·resolver 연결과 대상 Pod의 dnsPolicy/search 설정을 확인하세요.
+
+ServiceEntry는 Istio에 외부 서비스를 등록합니다. CoreDNS를 복구하거나 공개 DNS record를 만들고 미해결 upstream hostname을 해결해 주는 것은 아닙니다:
 
 ```yaml
-# ServiceEntry로 외부 서비스 등록
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
+  namespace: app
 spec:
   hosts:
   - api.example.com
@@ -702,101 +482,109 @@ spec:
   resolution: DNS
 ```
 
+api.example.com을 실제 외부 hostname으로 바꾸세요. DNS 해석은 upstream endpoint를 결정합니다. 모드·버전·설정에 따라 Istio DNS capture/IP 할당이 synthetic address로 응답할 수 있지만 실제 upstream의 이름 해석·연결 성공을 입증하지는 않습니다. [DNS capture 안내](../advanced/04-dns-cache.md)를 확인하세요. 이미 HTTPS를 보내는 애플리케이션이라면 여기의 HTTPS 선언 때문에 TLS origination을 한 번 더 추가할 필요는 없습니다.
+
 ## Envoy 초기화 타임아웃
 
 ### 문제 설명
 
-**증상**:
-```
-waiting for Envoy proxy to be ready
-Readiness probe failed
-```
+“Waiting for Envoy proxy to be ready”는 xDS/CA 연결, 설정 거부, 리소스, 인증서·token 또는 bootstrap 문제일 수 있습니다. Probe 지연을 늘리기 전에 Pod/init-container 상태, proxy/Istiod 로그, event와 proxy-status를 확인하세요.
 
-**해결**:
+holdApplicationUntilProxyStarts는 proxy 준비까지 애플리케이션 시작을 지연합니다. 준비될 수 없는 Envoy의 원인을 고치지는 않습니다. initialDelaySeconds만 있는 readinessProbe는 probe action이 없어 유효하지 않습니다.
+
+애플리케이션이 실제로 8080의 /ready를 구현한다면 다음 조각으로 구체적인 startup/readiness 동작을 구성할 수 있습니다:
 
 ```yaml
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  annotations:
-    proxy.istio.io/config: |
-      holdApplicationUntilProxyStarts: true
+  name: myapp
+  namespace: app
 spec:
-  containers:
-  - name: myapp
-    image: myapp:latest
-    readinessProbe:
-      initialDelaySeconds: 10  # Envoy 초기화 대기
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: |
+          holdApplicationUntilProxyStarts: true
+      labels: {}
+    spec:
+      containers:
+      - name: myapp
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 2
+          failureThreshold: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 3
 ```
+
+Action과 임계값을 애플리케이션에 맞추세요. StartupProbe는 시작 허용 시간, readiness는 endpoint 자격을 제어합니다. 둘 다 Istiod 연결 장애를 고치지는 않습니다. 주입 후 probe rewrite와 실제 proxy readiness 설정을 확인한 뒤 애플리케이션 probe 실패를 Envoy 초기화 원인으로 판단하세요.
 
 ## 디버깅 도구
 
 ### istioctl 명령어
 
 ```bash
-# 1. 파드 상태 분석
-istioctl x describe pod <pod-name> -n <namespace>
-
-# 2. 구성 검증
 istioctl analyze -A
+istioctl proxy-status
+istioctl proxy-config all "$POD" -n "$NS"
+istioctl proxy-config log "$POD" -n "$NS"
+# Temporarily change levels only on the selected Envoy.
+istioctl proxy-config log "$POD" -n "$NS" --level http:debug
+# Restore the previously recorded levels afterwards; --reset restores defaults.
+istioctl bug-report --include "$NS" --duration 10m
 
-# 3. Envoy 설정 확인
-istioctl proxy-config all <pod-name> -n <namespace>
-
-# 4. Envoy 로그 레벨 변경
-istioctl proxy-config log <pod-name> --level debug
-
-# 5. 버그 리포트 생성
-istioctl bug-report
+# Ambient has ztunnel diagnostics; Envoy commands apply to waypoints.
+istioctl ztunnel-config workloads -n "$ISTIO_NS"
+istioctl ztunnel-config certificates -n "$ISTIO_NS"
 ```
+
+Experimental 명령은 바뀔 수 있고 실제 트래픽 검증을 대체하지 않습니다. 일시적인 debug 전에 로그 수준을 기록하고 나중에 복원하세요. Reset은 기본값이며 기존 사용자 지정 수준과 다를 수 있습니다. 진단 시간을 제한하고 bug-report archive를 공유하기 전에 수집한 설정·로그 데이터를 검토합니다.
 
 ### Envoy Admin API
 
+Loopback에만 포워딩합니다:
+
 ```bash
-# Envoy admin 포트로 포워딩
-kubectl port-forward <pod-name> 15000:15000
+# Keep this command running; use a second terminal for the HTTP requests.
+kubectl -n "$NS" port-forward --address 127.0.0.1 "$POD" 15000:15000
 
-# 1. 클러스터 상태 확인
-curl localhost:15000/clusters
-
-# 2. 통계 확인
-curl localhost:15000/stats/prometheus
-
-# 3. 설정 덤프
-curl localhost:15000/config_dump
-
-# 4. 로깅 레벨 변경
-curl -X POST localhost:15000/logging?level=debug
 ```
+
+다른 터미널:
+
+```bash
+curl --fail --silent --show-error http://127.0.0.1:15000/clusters
+curl --fail --silent --show-error http://127.0.0.1:15000/stats/prometheus
+curl --fail --silent --show-error http://127.0.0.1:15000/config_dump
+```
+
+Sidecar·waypoint의 Envoy용 명령이며 별도 admin 인터페이스를 가진 ztunnel용이 아닙니다. 마치면 port-forward를 종료하세요. 로그 변경에는 앞의 특정 proxy 대상 istioctl을 사용하고 기록한 수준으로 복원합니다.
 
 ### 일반적인 로그 확인
 
 ```bash
-# 애플리케이션 로그
-kubectl logs <pod-name> -c <container-name>
-
-# Envoy 로그
-kubectl logs <pod-name> -c istio-proxy
-
-# 이전 컨테이너 로그 (재시작된 경우)
-kubectl logs <pod-name> -c istio-proxy --previous
-
-# 실시간 로그
-kubectl logs -f <pod-name> -c istio-proxy
+kubectl -n "$NS" logs "$POD" -c myapp
+kubectl -n "$NS" logs "$POD" -c istio-proxy
+# Only when that container has a prior instance in this same Pod:
+kubectl -n "$NS" logs "$POD" -c istio-proxy --previous
+kubectl -n "$NS" logs -f "$POD" -c istio-proxy
 ```
+
+현재 Pod에서 수집하는 것만으로 삭제된 Pod의 로그가 보존되지는 않습니다. 요청 시점, trace/request ID, 응답 플래그와 관련 endpoint·설정 변경을 함께 사건 근거로 보관하세요.
 
 ## 참고 자료
 
-### 공식 문서
-- [Istio Debugging Guide](https://istio.io/latest/docs/ops/diagnostic-tools/)
-- [Istio FAQ](https://istio.io/latest/about/faq/)
-- [Common Problems](https://istio.io/latest/docs/ops/common-problems/)
-
-### 관련 문서
-- [Observability](../observability/README.md)
-- [Security](../security/README.md)
-- [Traffic Management](../traffic-management/README.md)
-
----
-
-**마지막 업데이트**: 2025년 11월 27일
+- [주입 문제 해결](https://istio.io/latest/docs/ops/common-problems/injection/)과 [주입 설정](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+- [네트워크 문제](https://istio.io/latest/docs/ops/common-problems/network-issues/)와 [TLS 방향·auto mTLS](https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/)
+- [Istio annotation](https://istio.io/latest/docs/reference/config/annotations/)과 [릴리스 1.31 proxy 종료 코드](https://github.com/istio/istio/blob/1.31.0/pkg/envoy/agent.go)
+- [Kubernetes Pod 종료](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)와 [native sidecar](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
+- [Proxy 진단](https://istio.io/latest/docs/ops/diagnostic-tools/proxy-cmd/), [CA 통합](https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/), [보안 ingress](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/)
+- [Kubernetes DNS 진단](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/)과 [Istio DNS proxy](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Observability](../observability/README.md), [Security](../security/README.md), [Traffic Management](../traffic-management/README.md)

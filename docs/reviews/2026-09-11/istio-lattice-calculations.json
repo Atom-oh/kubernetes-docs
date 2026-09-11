@@ -1,0 +1,124 @@
+{
+  "date": "2026-09-11",
+  "paths": [
+    "en/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+    "ko/service-mesh/istio/comparison/02-istio-vs-lattice.md"
+  ],
+  "prometheusFixtures": 9,
+  "prometheusAssertions": 19,
+  "cases": [
+    "healthy-no5xx",
+    "all5xx",
+    "zero-status",
+    "4xx-not-in-this-error-definition",
+    "mixed",
+    "missing-denominator-remains-absent",
+    "idle-not-proof-of-health",
+    "millisecond-p95",
+    "reporter-and-namespace-isolation"
+  ],
+  "arithmetic": [
+    {
+      "case": "modeled-total-vCPU",
+      "result": "24.5",
+      "expected": "24.5"
+    },
+    {
+      "case": "five-node-vCPU",
+      "result": "20",
+      "expected": "20"
+    },
+    {
+      "case": "ideal-CPU-node-lower-bound",
+      "result": "7",
+      "expected": "7"
+    },
+    {
+      "case": "100-sidecars-Mi-to-Gi",
+      "result": "12.5",
+      "expected": "12.5"
+    },
+    {
+      "case": "old-English-infrastructure",
+      "result": "865",
+      "expected": "865"
+    },
+    {
+      "case": "old-Korean-with-unsubstantiated10",
+      "result": "875",
+      "expected": "875"
+    },
+    {
+      "case": "old-Korean-annual-infrastructure",
+      "result": "10500",
+      "expected": "10500"
+    },
+    {
+      "case": "old-annual-operations",
+      "result": "39000",
+      "expected": "39000"
+    },
+    {
+      "case": "old-Istio-first-year-inputs",
+      "result": "49500",
+      "expected": "49500"
+    },
+    {
+      "case": "old-one-sided-five-year-contingency",
+      "result": "297500",
+      "expected": "297500"
+    },
+    {
+      "case": "old-Lattice-setup-plus-annual-operations",
+      "result": "4600",
+      "expected": "4600"
+    },
+    {
+      "case": "old-Lattice-first-year-correct-arithmetic",
+      "result": "7108",
+      "expected": "7108"
+    },
+    {
+      "case": "old-Lattice-five-year-setup-once",
+      "result": "31540",
+      "expected": "31540"
+    },
+    {
+      "case": "current-example-service-hours",
+      "result": "91.250",
+      "expected": "91.25"
+    },
+    {
+      "case": "current-example-processed-GB",
+      "result": "250.000",
+      "expected": "250"
+    },
+    {
+      "case": "current-example-networking-base",
+      "result": "341.25",
+      "expected": "341.25"
+    },
+    {
+      "case": "hourly-free-example",
+      "result": "0.00",
+      "expected": "0"
+    },
+    {
+      "case": "four-million-hourly-example",
+      "result": "270.100",
+      "expected": "270.10"
+    },
+    {
+      "case": "bursts-not-monthly-average",
+      "result": "0.030",
+      "expected": "0.03"
+    },
+    {
+      "case": "allowance-not-pooled-between-services",
+      "result": "0.030",
+      "expected": "0.03"
+    }
+  ],
+  "pricingSource": "https://aws.amazon.com/vpc/lattice/pricing/",
+  "limits": "Exact arithmetic on explicit inputs and local Prometheus time-series tests only; no workload performance, actual bill, AWS metrics/query execution, five-year forecast or production savings verified."
+}

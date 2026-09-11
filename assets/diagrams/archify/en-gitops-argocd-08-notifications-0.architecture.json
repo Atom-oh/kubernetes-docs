@@ -32,7 +32,7 @@
           "webhook",
           "github"
         ],
-        "note": "Once a trigger matches, the message rendered from a template is sent to the subscribed services."
+        "note": "Deliver only to configured subscriptions whose conditions match."
       }
     ]
   },
@@ -89,7 +89,8 @@
       "size": [
         190,
         56
-      ]
+      ],
+      "sublabel": "Workflows"
     },
     {
       "id": "email",
@@ -143,7 +144,7 @@
     },
     {
       "kind": "region",
-      "label": "Notification Services",
+      "label": "Configured subscriptions",
       "wraps": [
         "slack",
         "teams",
@@ -195,7 +196,7 @@
         "Trigger — condition that fires a notification",
         "Template — notification message format",
         "Service — notification target (Slack, Email, ...)",
-        "Subscription — links an Application to notifications"
+        "Subscription — selects destination and triggers"
       ]
     }
   ]

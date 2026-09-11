@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
@@ -6,7 +8,8 @@ import {
   extractLocalTargets,
   requiresExplicitReadmeTarget,
   resolveLocalTarget,
-  stripFencedCode
+  stripFencedCode,
+  validateLocalLinks
 } from '../validate-local-links.mjs'
 
 test('stripFencedCode keeps line positions while removing fenced examples', () => {
@@ -75,4 +78,22 @@ test('requiresExplicitReadmeTarget flags local directory-style links', () => {
   assert.equal(requiresExplicitReadmeTarget('./#section'), true)
   assert.equal(requiresExplicitReadmeTarget('./reference/README.md'), false)
   assert.equal(requiresExplicitReadmeTarget('https://example.com/reference/'), false)
+})
+
+test('absolute links to this repository main branch are checked against the checkout', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'repo-link-validation-'))
+  try {
+    fs.mkdirSync(path.join(root, 'en/core'), { recursive: true })
+    fs.writeFileSync(path.join(root, 'en/core/page.md'), '# Page\n')
+    fs.writeFileSync(path.join(root, 'en/README.md'), [
+      '# Index',
+      '[good](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/core/page.md#part)',
+      '[missing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/core/missing.md)',
+      '[historical](https://github.com/Atom-oh/kubernetes-docs/blob/v1.0/en/old.md)',
+      '[other repository](https://github.com/example/other/blob/main/missing.md)'
+    ].join('\n'))
+    const failures = await validateLocalLinks(root, ['en'])
+    assert.equal(failures.length, 1)
+    assert.equal(failures[0].target, 'https://github.com/Atom-oh/kubernetes-docs/blob/main/en/core/missing.md')
+  } finally { fs.rmSync(root, { recursive: true, force: true }) }
 })

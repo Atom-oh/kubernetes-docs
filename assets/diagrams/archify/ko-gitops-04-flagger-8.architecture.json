@@ -7,17 +7,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "entries": {
-        "external": {
-          "label": "GitOps 소스"
-        },
-        "backend": {
-          "label": "컨트롤러"
-        },
-        "frontend": {
-          "label": "워크로드"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -27,7 +17,7 @@
           "git",
           "flux"
         ],
-        "note": "관리 클러스터의 FluxCD가 하나의 Git 저장소를 기준으로 모든 클러스터에 배포를 전파한다."
+        "note": "중앙 Flux 방식은 대상별 kubeConfig/workload identity가 필요하다. Git 저장소 공유만으로 원격 접근이 생기지 않는다."
       },
       {
         "id": "per-cluster-canary",
@@ -62,8 +52,8 @@
     {
       "id": "flux",
       "type": "backend",
-      "label": "FluxCD",
-      "sublabel": "Kustomization 동기화",
+      "label": "Flux remote sync",
+      "sublabel": "명시적 원격 인증",
       "pos": [
         60,
         280
@@ -207,7 +197,7 @@
       "id": "flux-to-a",
       "from": "flux",
       "to": "flagger-a",
-      "label": "클러스터별 전파"
+      "label": "via Kubernetes API"
     },
     {
       "id": "flux-to-b",
@@ -240,18 +230,18 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "GitOps 배포 소스",
+      "title": "중앙 방식의 전제",
       "items": [
-        "관리 클러스터의 FluxCD가 하나의 Git 저장소를 기준으로 모든 클러스터에 배포를 전파한다",
-        "클러스터별 kustomization.yaml 패치로 Canary의 interval, stepWeight, maxWeight를 분리한다"
+        "대상별 원격 인증과 Kustomization 구성",
+        "dependsOn 자기 참조는 staging 승인 게이트가 아님"
       ]
     },
     {
       "dot": "emerald",
-      "title": "클러스터별 Flagger",
+      "title": "환경 승격",
       "items": [
-        "Flagger는 클러스터마다 독립 인스턴스로 배포되며 로컬 리소스만 관리한다",
-        "Primary / Canary 승격과 롤백은 클러스터별로 독립적으로 수행된다"
+        "Flagger는 각 클러스터의 로컬 workload를 조정",
+        "현재 revision 결과 확인 후 다음 Git 변경 승인"
       ]
     }
   ]

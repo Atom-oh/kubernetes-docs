@@ -1,7 +1,7 @@
 # Security
 
-> **Supported Versions**: Istio 1.28
-> **Last Updated**: February 19, 2026
+> **Reviewed Version**: Istio 1.31.0
+> **Last Updated**: September 11, 2026
 
 Istio provides robust security features within the service mesh. Based on the Zero Trust security model, it automatically encrypts service-to-service communication and provides fine-grained access control.
 
@@ -10,9 +10,9 @@ Istio provides robust security features within the service mesh. Based on the Ze
 1. [Security Architecture Overview](#security-architecture-overview)
 2. [Core Security Features](#core-security-features)
 3. [Security Components](#security-components)
-4. [Detailed Documentation](#detailed-documentation)
+4. [Detailed Documentation](#next-steps)
 5. [Security Best Practices](#security-best-practices)
-6. [Security Monitoring](#security-monitoring)
+6. [Security Monitoring](#3-security-monitoring)
 
 ## Security Architecture Overview
 
@@ -20,7 +20,7 @@ Istio provides robust security features within the service mesh. Based on the Ze
   <img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Istio Security Architecture" width="900">
 </p>
 
-Istio implements a **Zero Trust security model** to protect all communication within the service mesh. The security architecture consists of 4 core layers:
+Istio implements a **Zero Trust security model** for enrolled mesh traffic. Traffic exclusions, plaintext clients, and unsupported protocols still need explicit controls. The following describes the main security responsibilities:
 
 ### Security Architecture Layers
 
@@ -28,14 +28,14 @@ Istio implements a **Zero Trust security model** to protect all communication wi
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-security-readme-0.html)
 
-**Core Architecture Components**:
+### Security Components
 
 1. **Control Plane (istiod)**
    - Certificate Authority (CA): X.509 certificate issuance and management
    - Configuration API: Security policy distribution and management
    - Service Discovery: Workload identity management
 
-2. **Data Plane (Envoy Proxy)**
+2. **Data Plane (Envoy sidecars or ambient ztunnel/waypoints)**
    - mTLS Termination Points: Encrypted communication between services
    - Policy Enforcement: Authentication/authorization policy application
    - Security Telemetry: Security metrics collection
@@ -43,7 +43,7 @@ Istio implements a **Zero Trust security model** to protect all communication wi
 3. **Identity Management**
    - Strong identity management based on SPIFFE standard
    - Integration with Kubernetes ServiceAccount
-   - Automatic certificate renewal (default 24 hours)
+   - Default certificate lifetime is 24 hours; rotation occurs before expiry
 
 4. **Policy Engine**
    - Declarative security policies (CRD-based)
@@ -56,11 +56,9 @@ Istio provides the following core security features:
 
 ### 1. Communication Security (mTLS)
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/mtls-migration.svg" alt="mTLS Migration" width="600">
-</p>
+Migrate enrolled workloads from PERMISSIVE to STRICT after verifying all required clients use mTLS.
 
-All service-to-service communication is automatically encrypted. Istio supports gradual migration through **PERMISSIVE** mode.
+Auto mTLS encrypts communication between enrolled mesh peers; PERMISSIVE also accepts plaintext. Use STRICT to require mesh mTLS on the selected inbound workloads.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -76,7 +74,9 @@ spec:
 **Mode Descriptions**:
 - **STRICT**: Only mTLS allowed (recommended for production)
 - **PERMISSIVE**: Both mTLS and plaintext allowed (for migration)
-- **DISABLE**: mTLS disabled
+- **DISABLE**: Disable Istio transport mTLS in sidecar mode; unsupported in ambient
+
+The following policy examples use sidecar selectors. Ambient ztunnel enforces L4 security; JWT and other L7 policies require an appropriate waypoint and targetRefs attachment.
 
 ### 2. Authentication
 
@@ -87,7 +87,7 @@ spec:
 Istio provides two layers of authentication:
 
 - **Peer Authentication**: Service-to-service authentication (mTLS + SPIFFE ID)
-- **Request Authentication**: End-user authentication (JWT + OAuth/OIDC)
+- **Request Authentication**: JWT verification for supported issuers; login/OAuth flows remain external
 
 **Example**:
 ```yaml
@@ -96,10 +96,12 @@ apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
+  namespace: default
 spec:
   jwtRules:
   - issuer: "https://accounts.google.com"
     jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
+    audiences: ["<your-google-client-id>"]
 ```
 
 ### 3. Authorization
@@ -135,9 +137,7 @@ spec:
 
 ### 1. Defense in Depth
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/ops/best-practices/security/security-best-practices.svg" alt="Security Best Practices" width="700">
-</p>
+Combine transport identity, verified request credentials, and explicit authorization rules.
 
 Implement defense in depth by applying security at multiple layers:
 
@@ -161,10 +161,12 @@ apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: require-jwt
+  namespace: default
 spec:
   jwtRules:
   - issuer: "https://your-auth-provider.com"
     jwksUri: "https://your-auth-provider.com/.well-known/jwks.json"
+    audiences: ["<your-api-audience>"]
 ```
 
 **Access Control Layer**:
@@ -174,26 +176,30 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
+  namespace: default
 spec:
-  action: DENY
-  rules:
-  - {}
+  action: ALLOW
+  rules: []
 ---
 # 4. Allow only required access
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-specific
+  namespace: default
 spec:
   action: ALLOW
   rules:
   - from:
     - source:
         principals: ["cluster.local/ns/frontend/sa/webapp"]
+        requestPrincipals: ["*"]
     to:
     - operation:
         methods: ["GET", "POST"]
 ```
+
+RequestAuthentication alone accepts requests without a token. The ALLOW example above requires both the verified peer and a verified request principal; an empty ALLOW policy establishes default deny. A DENY-all rule would take precedence and block those exceptions. These namespace-wide examples affect every matching workload; scope selectors/targetRefs deliberately. AUDIT needs a configured audit implementation, and access logs must be enabled separately.
 
 ### 2. Principle of Least Privilege
 

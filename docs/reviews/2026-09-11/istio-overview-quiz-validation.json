@@ -1,0 +1,60 @@
+{
+  "files": [
+    {
+      "path": "en/quizzes/service-mesh/02-istio-quiz.md",
+      "openEndedQuestions": 11,
+      "yamlDocuments": 15,
+      "validation": [
+        "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+        "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+        "10 Istio manifests passed offline istioctl 1.31.0 validation and released 1.31.0 CRD schemas (where applicable)."
+      ],
+      "fullAnalysisSchemas": 2,
+      "composedRolloutLint": 1,
+      "nativeIOPRenders": 2,
+      "prometheusMetricQueries": 6
+    },
+    {
+      "path": "ko/quizzes/service-mesh/02-istio-quiz.md",
+      "openEndedQuestions": 11,
+      "yamlDocuments": 15,
+      "validation": [
+        "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+        "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+        "10 Istio manifests passed offline istioctl 1.31.0 validation and released 1.31.0 CRD schemas (where applicable)."
+      ],
+      "fullAnalysisSchemas": 2,
+      "composedRolloutLint": 1,
+      "nativeIOPRenders": 2,
+      "prometheusMetricQueries": 6
+    }
+  ],
+  "envoyTypedConfigurations": 2,
+  "conditionCases": 96,
+  "equalLanguageCode": true,
+  "negativeControls": [
+    "originalmixedlocalityrejected",
+    "productionprofilemissing"
+  ],
+  "liveClusterTested": false,
+  "renderedProxyResourcesChecked": true,
+  "prometheusTimeSeries": {
+    "fixtures": 9,
+    "assertions": 43,
+    "source": "ActualENquizexpressions;EN/KOcodeidentitycheckedseparately.",
+    "cases": [
+      "healthy-without5xx",
+      "all5xx-without-success",
+      "mixed90percent",
+      "code0-is-error",
+      "4xx-is-availability-not-business-success",
+      "missing-metrics-remain-empty",
+      "idle-ratios-are-NaN-not-healthy",
+      "histogram-milliseconds-to-seconds",
+      "cpu-selects-container-not-pod-name"
+    ]
+  },
+  "fencedPromQLSyntaxQueries": 8,
+  "prometheusMetricQuerySyntaxCount": 12,
+  "initialFixtureFailure": "Only2-ULPfloatingpointexpectationdifference for0.1; assertionnowuses1e-12numeric tolerance; no documentquerychanged."
+}

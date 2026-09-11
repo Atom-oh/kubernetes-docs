@@ -37,7 +37,7 @@
           "flagger",
           "metrics"
         ],
-        "note": "메트릭 백엔드에서 성공률·지연 시간을 조회해 단계 진행 또는 롤백을 판정한다."
+        "note": "단위·신선도·결측을 확인하고 실패 검사를 누적한다."
       },
       {
         "id": "promote",
@@ -47,7 +47,7 @@
           "primary",
           "alerts"
         ],
-        "note": "모든 단계를 통과하면 Canary spec을 Primary에 복사하고 결과를 알림 채널로 전달한다."
+        "note": "준비된 canary로 서비스하며 primary spec을 갱신하고 Ready를 확인한다."
       }
     ],
     "legend": {
@@ -144,7 +144,7 @@
       "id": "alerts",
       "type": "external",
       "label": "알림 채널",
-      "sublabel": "Slack · Teams",
+      "sublabel": "Slack / Teams 변환기",
       "pos": [
         670,
         460
@@ -158,7 +158,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Flagger 생성 리소스",
+      "label": "관리되는 workload",
       "wraps": [
         "primary",
         "canary"
@@ -219,28 +219,27 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Canary CRD",
+      "title": "Canary / workload",
       "items": [
-        "기존 Deployment를 targetRef로 참조한다 (Deployment 교체 불필요)",
-        "analysis에 트래픽 가중치, 메트릭 임계값, Pre/Post rollout webhook을 정의한다"
+        "targetRef는 원본 workload를 참조",
+        "Git/Helm과 replica·Service 소유권을 분리"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Flagger 생성 리소스",
+      "title": "Primary / Canary",
       "items": [
-        "app-primary Deployment/Service가 안정 버전 트래픽을 처리한다",
-        "원본 app Deployment는 Canary 용도로 쓰이며 배포 중이 아닐 때 replicas 0으로 유지된다",
-        "VirtualService / TrafficSplit이 트래픽 비율을 관리한다"
+        "primary는 Flagger가 생성·승격",
+        "원본 Deployment가 canary; 일반 완료 후 0으로 축소"
       ]
     },
     {
       "dot": "amber",
-      "title": "분석과 알림",
+      "title": "판정과 알림",
       "items": [
-        "Prometheus · Datadog · CloudWatch에서 메트릭을 조회한다",
-        "임계값 통과 시 단계 진행·승격, 실패 시 자동 롤백",
-        "Slack · Teams webhook으로 결과를 알린다"
+        "분석 중 실패 한도 도달 시 rollback",
+        "primary 승격 장애는 별도 복구 경로",
+        "Teams는 native MessageCard 변환 필요"
       ]
     }
   ]

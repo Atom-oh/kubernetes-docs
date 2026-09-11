@@ -1,8 +1,8 @@
 # Istio
 
-> **Supported Versions**: Istio 1.28.0
-> **EKS Version**: 1.34 (Kubernetes 1.28+)
-> **Last Updated**: February 23, 2026
+> **Reviewed**: September 11, 2026 · Istio 1.31 guidance
+
+This overview keeps the earlier chapter URL usable. The maintained [Istio documentation index](istio/README.md) and [installation guide](istio/01-installation.md) own the detailed procedures and compatibility matrix; use them for current setup.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@
 
 ## Introduction
 
-Istio is an open-source service mesh platform for microservices applications. A service mesh is an infrastructure layer that handles service-to-service communication, allowing you to control and observe communication between services without modifying application code.
+Istio is an open-source service mesh platform for microservices applications. A service mesh is an infrastructure layer that handles service-to-service communication, allowing infrastructure-level control and observation of service communication. Application trace-context propagation, graceful shutdown and business idempotency still require application participation.
 
 ### What is a Service Mesh?
 
@@ -28,11 +28,11 @@ A service mesh provides the following core capabilities:
 ### Key Benefits of Istio
 
 - **Platform Independence**: Works in various environments (Kubernetes, VM, etc.)
-- **Transparent Integration**: Can be applied without application code changes
-- **Automatic mTLS**: Automatic encryption of service-to-service communication
+- **Transparent Integration**: Many network controls can be added without changing application business logic
+- **Workload mTLS**: Managed identity and transport protection on enrolled mesh paths; verify enforcement and exceptions
 - **Advanced Traffic Management**: Routing, load balancing, fault injection, etc.
 - **Detailed Metrics**: Detailed metrics on service-to-service communication
-- **Policy Enforcement**: Access control and rate limiting
+- **Policy Enforcement**: Access control and explicitly configured local/global rate limiting
 
 ## Key Features
 
@@ -40,27 +40,27 @@ A service mesh provides the following core capabilities:
 
 Istio provides powerful traffic management capabilities:
 
-- **Gateway**: Route external traffic to the mesh
-- **VirtualService**: Define routing rules between services
+- **Gateways**: Route external traffic; distinguish Istio Gateway resources from Kubernetes Gateway API
+- **VirtualService / HTTPRoute**: Configure routing using the API supported by the selected data plane and controller
 - **DestinationRule**: Configure load balancing and connection pools
 - **Traffic Splitting**: Support for Canary deployments and A/B testing
-- **Argo Rollouts Integration**: Automated progressive delivery
+- **Argo Rollouts Integration**: Progressive delivery with separately configured analysis and failure handling
 
 ### 2. Security
 
 Comprehensive security features:
 
-- **mTLS**: Automatic encryption between services
+- **mTLS**: Identity authentication and encryption for enrolled workload transport
 - **Authorization Policy**: Fine-grained access control
-- **Request Authentication**: JWT-based authentication
-- **Peer Authentication**: Service-to-service authentication policies
+- **Request Authentication**: JWT validation; use AuthorizationPolicy when a JWT must be present
+- **Peer Authentication**: Inbound workload mTLS policy
 
 ### 3. Observability
 
-Complete visibility into the service mesh:
+Telemetry and backend integrations, configured for the selected mode:
 
 - **Metrics**: Prometheus integration
-- **Distributed Tracing**: Jaeger/Zipkin support
+- **Distributed Tracing**: Configured trace provider/backend, such as OpenTelemetry with Jaeger; applications propagate context
 - **Logging**: Access logs and structured logging
 - **Visualization**: Kiali dashboard
 
@@ -68,15 +68,15 @@ Complete visibility into the service mesh:
 
 Service resilience patterns:
 
-- **Circuit Breaker**: Overload prevention
-- **Retry**: Automatic retries
+- **Circuit Breaker**: Connection/request-pool limits; not a guarantee against overload
+- **Retry**: Explicit budgets for retry-safe operations; disable ambiguous write retries
 - **Timeout**: Request timeout configuration
 - **Outlier Detection**: Exclude unhealthy instances
-- **Rate Limiting**: Request rate limiting
+- **Rate Limiting**: Configured local token buckets or a global rate-limit service
 
 ## Architecture Overview
 
-Istio consists of a **Control Plane** and a **Data Plane**.
+Istio consists of a **Control Plane** and a **Data Plane**. The following diagram shows the sidecar form, not the ambient topology.
 
 ![Istiod in the control plane pushes configuration down to the Envoy sidecar proxies running alongside application containers in three data-plane pods, and those proxies establish mutual TLS connections directly with one another.](../.gitbook/assets/en-service-mesh-02-istio-0.png)
 
@@ -87,21 +87,23 @@ Istio consists of a **Control Plane** and a **Data Plane**.
 istiod is the central control component of Istio, providing:
 
 - **Service Discovery**: Maintains the mesh's service registry
-- **Configuration Management**: Stores and distributes Istio configuration
-- **Certificate Management**: Generates and rotates certificates for mTLS
+- **Configuration Management**: Watches configuration, translates it and distributes proxy settings; Kubernetes persists the API resources
+- **Certificate Management**: Manages workload certificate requests and rotation with the configured CA
 
-### Data Plane (Envoy Proxy)
+### Data Plane: Sidecar and Ambient
 
-Envoy is a high-performance proxy deployed as a sidecar in each pod:
+In sidecar mode, Envoy runs alongside each enrolled application Pod:
 
 - **Traffic Routing**: Controls traffic between services
 - **Load Balancing**: Distributes traffic across service instances
 - **Security**: mTLS encryption and authentication
 - **Observability**: Collects metrics, logs, and traces
 
+Ambient uses node-level ztunnel for L4 transport and optional Envoy waypoints for supported L7 features. It does not inject an Envoy into every application Pod. Feature support, policy attachment and resource usage differ by mode; neither a fixed resource-saving percentage nor universal performance superiority follows from this topology. See [Ambient Mode](istio/advanced/01-ambient-mode.md).
+
 ## Detailed Documentation
 
-Detailed guides for all Istio features.
+The links below are a learning map into the maintained subtree. Its index includes additional and newly added topics.
 
 ### 📚 Basic Documentation
 
@@ -133,7 +135,7 @@ Detailed guides for all Istio features.
 | [mTLS](istio/security/01-mtls.md) | Service-to-service mTLS configuration |
 | [Authorization Policy](istio/security/03-authorization.md) | Access control policies |
 | [Request Authentication](istio/security/02-authentication.md) | JWT-based authentication |
-| [Peer Authentication](istio/security/02-authentication.md) | Service-to-service authentication |
+| [Peer Authentication](istio/security/01-mtls.md) | Service-to-service authentication |
 
 ### 📊 Observability
 
@@ -159,7 +161,7 @@ Detailed guides for all Istio features.
 | [Ambient Mode](istio/advanced/01-ambient-mode.md) | Sidecar-less service mesh |
 | [Multi-cluster](istio/advanced/02-multi-cluster.md) | Multi-cluster mesh configuration |
 | [EnvoyFilter](istio/advanced/03-envoy-filter.md) | Envoy customization |
-| [DNS Caching](istio/advanced/04-dns-cache.md) | Performance improvement with DNS caching |
+| [DNS Capture and Caching](istio/advanced/04-dns-cache.md) | DNS capture, resolution and measured cache behavior |
 | [gRPC](istio/advanced/05-grpc.md) | gRPC protocol support |
 | [WebSocket](istio/advanced/06-websocket.md) | WebSocket connection support |
 | [Sidecar Injection](istio/advanced/07-sidecar-injection.md) | Sidecar injection mechanism |
@@ -173,68 +175,21 @@ Detailed guides for all Istio features.
 
 ## Quick Start
 
-### 1. Prerequisites
+1. Check the exact Istio/Kubernetes/EKS compatibility intersection in the [installation guide](istio/01-installation.md). A generic “Kubernetes 1.28+” prerequisite is not sufficient for a current Istio release.
+2. Choose sidecar or ambient and follow that guide's pinned CLI/chart, isolated namespace and platform prerequisites. Do not download an unspecified latest CLI and then change into an old version directory.
+3. Use the matching-version Bookinfo procedure and gateway instructions in the maintained guide. The default profile does not automatically provide an ingress gateway Deployment, and a Gateway configuration object alone does not create every installation's required gateway/LoadBalancer.
+4. Verify the actual gateway address, Service port, route status and HTTP response. A load balancer may publish an IP or hostname; do not assume an AWS-only hostname field or a particular port name.
+5. Install/configure the chosen [observability backends](istio/observability/README.md) before using dashboard commands. Prometheus, Grafana, Kiali and tracing storage are not automatically installed by the default Istio profile.
 
-- Kubernetes cluster (v1.28+)
-- kubectl configured
-- Administrator privileges
-
-### 2. Install Istio
-
-```bash
-# Download Istioctl
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-1.28.0
-export PATH=$PWD/bin:$PATH
-
-# Install with default profile
-istioctl install --set profile=default -y
-
-# Enable Sidecar injection on namespace
-kubectl label namespace default istio-injection=enabled
-```
-
-### 3. Deploy Sample Application
+Basic verification after completing that procedure:
 
 ```bash
-# Deploy Bookinfo sample application
-kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
-
-# Create Gateway
-kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
-
-# Verify installation
-kubectl get pods
-kubectl get svc istio-ingressgateway -n istio-system
+istioctl version
+istioctl analyze -A
+istioctl proxy-status
 ```
 
-### 4. Send Traffic
-
-```bash
-# Check Ingress Gateway address
-export INGRESS_HOST=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-export INGRESS_PORT=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
-export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-
-# Access application
-curl -s "http://${GATEWAY_URL}/productpage"
-```
-
-### 5. Access Observability Tools
-
-```bash
-# Kiali dashboard
-istioctl dashboard kiali
-
-# Prometheus
-istioctl dashboard prometheus
-
-# Grafana
-istioctl dashboard grafana
-
-# Jaeger
-istioctl dashboard jaeger
-```
+Proxy status is only one diagnostic input. Ambient enrollment and ztunnel need their own checks, and a clean analyzer result is not an end-to-end traffic test.
 
 ## Learning Resources
 
@@ -244,16 +199,12 @@ istioctl dashboard jaeger
 - [Istio GitHub Repository](https://github.com/istio/istio)
 - [Envoy Proxy Documentation](https://www.envoyproxy.io/docs/envoy/latest/)
 
-### AWS Related
+### AWS and Community
 
-- [AWS EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [AWS App Mesh vs Istio](https://aws.amazon.com/blogs/containers/choosing-between-aws-app-mesh-and-istio/)
-
-### Community
-
-- [Istio Discuss](https://discuss.istio.io/)
-- [Istio Slack](https://istio.slack.com/)
-- [CNCF Istio Working Group](https://github.com/cncf/tag-app-delivery)
+- [Istio on Amazon EKS](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
+- [Maintained AWS integration guide](istio/04-aws-integration.md)
+- [AWS App Mesh lifecycle notice](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWS states support ends September 30, 2026. Evaluate migration requirements; this is not a new-deployment recommendation.
+- [Istio community, channels and working groups](https://istio.io/latest/get-involved/)
 
 ### Additional Resources
 
@@ -273,7 +224,7 @@ The quiz covers the following topics:
 - Security (mTLS)
 - Gateway and Ingress
 - Observability tools
-- Latest service mesh trends
+- Sidecar and ambient modes
 - Rate Limiting
 - Locality routing
 - Amazon EKS integration

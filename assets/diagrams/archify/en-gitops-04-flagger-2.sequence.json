@@ -2,13 +2,13 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "Canary Analysis with Prometheus Metrics — Detection to Promotion or Rollback",
+    "title": "Flagger Analysis and Promotion",
     "locale": "en",
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
       1600,
-      840
+      880
     ],
     "animation": "trace",
     "views": [
@@ -44,7 +44,7 @@
           "dev",
           "prom"
         ],
-        "note": "If metrics breach thresholds, traffic returns to 0%, the canary is rolled back, and the developer is notified."
+        "note": "A pre-promotion failure threshold restores healthy primary traffic and scales down the original canary."
       },
       {
         "id": "promote",
@@ -55,9 +55,12 @@
           "mesh",
           "dev"
         ],
-        "note": "Once every step passes, the primary is updated and 100% of traffic is routed to it."
+        "note": "Serve canary while updating/verifying primary, then switch back. See the text for promotion-failure exceptions."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "participants": [
     {
@@ -110,12 +113,12 @@
     {
       "from": 472,
       "to": 632,
-      "label": "3. Metrics unhealthy — automatic rollback"
+      "label": "3A. Analysis failure threshold reached (alternative)"
     },
     {
       "from": 646,
-      "to": 780,
-      "label": "4. Promotion"
+      "to": 816,
+      "label": "3B. Final checks pass (alternative)"
     }
   ],
   "messages": [
@@ -124,7 +127,7 @@
       "from": "dev",
       "to": "git",
       "y": 190,
-      "label": "Update image tag"
+      "label": "Reviewed Git change"
     },
     {
       "id": "git-detect",
@@ -177,7 +180,7 @@
       "from": "prom",
       "to": "flagger",
       "y": 498,
-      "label": "Failure response",
+      "label": "Failed check result",
       "variant": "return"
     },
     {
@@ -185,7 +188,7 @@
       "from": "flagger",
       "to": "mesh",
       "y": 536,
-      "label": "Reset traffic (0%)",
+      "label": "Primary 100% / Canary 0%",
       "variant": "security"
     },
     {
@@ -193,7 +196,7 @@
       "from": "flagger",
       "to": "k8s",
       "y": 574,
-      "label": "Roll back canary Deployment",
+      "label": "Canary replicas 0 (spec retained)",
       "variant": "security"
     },
     {
@@ -205,26 +208,34 @@
       "variant": "dashed"
     },
     {
+      "id": "traffic-canary",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 672,
+      "label": "Serve canary during promotion",
+      "variant": "emphasis"
+    },
+    {
       "id": "primary-update",
       "from": "flagger",
       "to": "k8s",
-      "y": 672,
-      "label": "Update primary Deployment",
+      "y": 710,
+      "label": "Update primary spec; wait Ready",
       "variant": "emphasis"
     },
     {
       "id": "traffic-primary",
       "from": "flagger",
       "to": "mesh",
-      "y": 710,
+      "y": 748,
       "label": "Route 100% traffic to primary"
     },
     {
       "id": "done-notify",
       "from": "flagger",
       "to": "dev",
-      "y": 748,
-      "label": "Deployment complete notification",
+      "y": 786,
+      "label": "Notify after final cleanup",
       "variant": "dashed"
     }
   ],
@@ -238,7 +249,7 @@
     {
       "participant": "flagger",
       "from": 292,
-      "to": 756,
+      "to": 794,
       "type": "backend"
     },
     {

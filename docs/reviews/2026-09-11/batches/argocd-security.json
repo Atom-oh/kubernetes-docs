@@ -1,0 +1,154 @@
+[
+  {
+    "path": "ko/gitops/argocd/07-security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full security-source and quiz review; current SSO, secret management, TLS, logging, networking and repository trust examples corrected and statically/synthetically verified.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/secret-management.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/config-management-plugins.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/tls.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/argocd-cmd-params-cm.yaml",
+      "https://github.com/bitnami/sealed-secrets/releases/tag/v0.40.0",
+      "https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0",
+      "https://github.com/argoproj-labs/argocd-vault-plugin/tree/v1.18.1",
+      "https://github.com/viaduct-ai/kustomize-sops/tree/v4.5.1",
+      "https://github.com/getsops/sops/releases/tag/v3.13.3"
+    ],
+    "findings": [
+      "WrongdirectOIDCcallbacks,fictionalIdentityCenterOIDCissuer,SAMLcaDataunencodedPEM,LDAPCAmountmissing,SSOcustomrolesundeclared",
+      "SealedSecretsoldHelmURL404 andcontrollernamemismatch;namespacechangedaftersealing;plaintextpasswordarguments/files;recovery/keyrenewalvssecretrotationunclear",
+      "ESOv1beta1updatedv1/2.10;IRSAserviceAccount/Vaultaudienceandidentityprerequisitesmissing;ESOincorrectlycalledGit-encryptiontool",
+      "AVPmissingCMPsidecar/entrypoint/configmount/UID/token/Vaultrole;oldmaincontaineronlyinstallationreplacedwithcompleteHelmvalues+BYOIprerequisites",
+      "SOPSruletargetfilenamewrong;noautomaticArgoCDdecryption;KSOPSbinary/execflag/KRMannotation/keymountmissing;trustboundariesandplaintextmanifestcacheexplained",
+      "CN-onlyselfsignedTLS,retiredingress-nginxACME/Ingressdefaults,privateGitCAconfusedwithrepo-serverRPCidentity;GatewayAPIfrontend/backendTLSandCA-pathverificationclarified",
+      "Inventedserver.audit.enabled/pathandnonexistentfileloggingreplacedwithJSONstdout/componentlogs/events/APIauditcorrelation;CRI/nativeCloudWatchcollectorfragment",
+      "NetworkPolicyincorrectDNS/labels/components,unrestricted443mislabelledAPI-only,missingadditive-policy/CNI/NAT/dynamicaddressscope;documentaryCIDRsanddependencycaveatsnowexplicit",
+      "Repositorycredentialprefixmatchedorg-suffix,wrongrepositoryvsrepo-credsGitHubAppcase,unscopedtoken/host-keyguidance;GPGkeyringSecret/filenamesandlegacykeys/sourceNamespacesconfusionfixed"
+    ],
+    "validation": [
+      "All4source/quizfullyread;81fences59YAML18Bash4ArgoCRDvalidationspassed",
+      "12ESO/GatewayAPICRDobjectsvalidatedagainstpublisher2.10andEnvoy1.9.1bundledschemas",
+      "4syntheticcrypto checks withverifiedkubeseal0.40/SOPS3.13.3/age1.3.2 passed:strictnamespacebinding,rejectionafterNamespacechange,filename-rulefailurewithoutoverride,encrypt/decryptwithoverride;testkeyscleanedup",
+      "4Helmrenderingspassed:Argo10.8.4AVP&KSOPS,Sealed2.20,ESO2.10;CMPentrypointUID999,mountreferences,separatetmp,tokenonlysidecar,andkubesealcontrollerServicenamematchesverified",
+      "110/110repositorytestsaftersecuritycheckpointpassed",
+      "NoSSOlogin,realSecretbackendaccess,customAVPimagebuild,liveGateway/TLS,CNIenforcementorcontrollerdeploymentperformed;environmentprerequisitesandexampleplaceholdersareexplicit"
+    ],
+    "reviewedSha256": "c16e300c5d5ac21d955bfb159883095d30c47603ca8631548a123546a2799bdf"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/07-security-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full security-source and quiz review; current SSO, secret management, TLS, logging, networking and repository trust examples corrected and statically/synthetically verified.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/secret-management.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/config-management-plugins.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/tls.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/argocd-cmd-params-cm.yaml",
+      "https://github.com/bitnami/sealed-secrets/releases/tag/v0.40.0",
+      "https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0",
+      "https://github.com/argoproj-labs/argocd-vault-plugin/tree/v1.18.1",
+      "https://github.com/viaduct-ai/kustomize-sops/tree/v4.5.1",
+      "https://github.com/getsops/sops/releases/tag/v3.13.3"
+    ],
+    "findings": [
+      "WrongdirectOIDCcallbacks,fictionalIdentityCenterOIDCissuer,SAMLcaDataunencodedPEM,LDAPCAmountmissing,SSOcustomrolesundeclared",
+      "SealedSecretsoldHelmURL404 andcontrollernamemismatch;namespacechangedaftersealing;plaintextpasswordarguments/files;recovery/keyrenewalvssecretrotationunclear",
+      "ESOv1beta1updatedv1/2.10;IRSAserviceAccount/Vaultaudienceandidentityprerequisitesmissing;ESOincorrectlycalledGit-encryptiontool",
+      "AVPmissingCMPsidecar/entrypoint/configmount/UID/token/Vaultrole;oldmaincontaineronlyinstallationreplacedwithcompleteHelmvalues+BYOIprerequisites",
+      "SOPSruletargetfilenamewrong;noautomaticArgoCDdecryption;KSOPSbinary/execflag/KRMannotation/keymountmissing;trustboundariesandplaintextmanifestcacheexplained",
+      "CN-onlyselfsignedTLS,retiredingress-nginxACME/Ingressdefaults,privateGitCAconfusedwithrepo-serverRPCidentity;GatewayAPIfrontend/backendTLSandCA-pathverificationclarified",
+      "Inventedserver.audit.enabled/pathandnonexistentfileloggingreplacedwithJSONstdout/componentlogs/events/APIauditcorrelation;CRI/nativeCloudWatchcollectorfragment",
+      "NetworkPolicyincorrectDNS/labels/components,unrestricted443mislabelledAPI-only,missingadditive-policy/CNI/NAT/dynamicaddressscope;documentaryCIDRsanddependencycaveatsnowexplicit",
+      "Repositorycredentialprefixmatchedorg-suffix,wrongrepositoryvsrepo-credsGitHubAppcase,unscopedtoken/host-keyguidance;GPGkeyringSecret/filenamesandlegacykeys/sourceNamespacesconfusionfixed"
+    ],
+    "validation": [
+      "All4source/quizfullyread;81fences59YAML18Bash4ArgoCRDvalidationspassed",
+      "12ESO/GatewayAPICRDobjectsvalidatedagainstpublisher2.10andEnvoy1.9.1bundledschemas",
+      "4syntheticcrypto checks withverifiedkubeseal0.40/SOPS3.13.3/age1.3.2 passed:strictnamespacebinding,rejectionafterNamespacechange,filename-rulefailurewithoutoverride,encrypt/decryptwithoverride;testkeyscleanedup",
+      "4Helmrenderingspassed:Argo10.8.4AVP&KSOPS,Sealed2.20,ESO2.10;CMPentrypointUID999,mountreferences,separatetmp,tokenonlysidecar,andkubesealcontrollerServicenamematchesverified",
+      "110/110repositorytestsaftersecuritycheckpointpassed",
+      "NoSSOlogin,realSecretbackendaccess,customAVPimagebuild,liveGateway/TLS,CNIenforcementorcontrollerdeploymentperformed;environmentprerequisitesandexampleplaceholdersareexplicit"
+    ],
+    "reviewedSha256": "5a0642d08cbb8b73e9d19b57ccec328fea9bc610b90d7f27e183d5f7f69aa23d"
+  },
+  {
+    "path": "en/gitops/argocd/07-security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full security-source and quiz review; current SSO, secret management, TLS, logging, networking and repository trust examples corrected and statically/synthetically verified.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/secret-management.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/config-management-plugins.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/tls.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/argocd-cmd-params-cm.yaml",
+      "https://github.com/bitnami/sealed-secrets/releases/tag/v0.40.0",
+      "https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0",
+      "https://github.com/argoproj-labs/argocd-vault-plugin/tree/v1.18.1",
+      "https://github.com/viaduct-ai/kustomize-sops/tree/v4.5.1",
+      "https://github.com/getsops/sops/releases/tag/v3.13.3"
+    ],
+    "findings": [
+      "WrongdirectOIDCcallbacks,fictionalIdentityCenterOIDCissuer,SAMLcaDataunencodedPEM,LDAPCAmountmissing,SSOcustomrolesundeclared",
+      "SealedSecretsoldHelmURL404 andcontrollernamemismatch;namespacechangedaftersealing;plaintextpasswordarguments/files;recovery/keyrenewalvssecretrotationunclear",
+      "ESOv1beta1updatedv1/2.10;IRSAserviceAccount/Vaultaudienceandidentityprerequisitesmissing;ESOincorrectlycalledGit-encryptiontool",
+      "AVPmissingCMPsidecar/entrypoint/configmount/UID/token/Vaultrole;oldmaincontaineronlyinstallationreplacedwithcompleteHelmvalues+BYOIprerequisites",
+      "SOPSruletargetfilenamewrong;noautomaticArgoCDdecryption;KSOPSbinary/execflag/KRMannotation/keymountmissing;trustboundariesandplaintextmanifestcacheexplained",
+      "CN-onlyselfsignedTLS,retiredingress-nginxACME/Ingressdefaults,privateGitCAconfusedwithrepo-serverRPCidentity;GatewayAPIfrontend/backendTLSandCA-pathverificationclarified",
+      "Inventedserver.audit.enabled/pathandnonexistentfileloggingreplacedwithJSONstdout/componentlogs/events/APIauditcorrelation;CRI/nativeCloudWatchcollectorfragment",
+      "NetworkPolicyincorrectDNS/labels/components,unrestricted443mislabelledAPI-only,missingadditive-policy/CNI/NAT/dynamicaddressscope;documentaryCIDRsanddependencycaveatsnowexplicit",
+      "Repositorycredentialprefixmatchedorg-suffix,wrongrepositoryvsrepo-credsGitHubAppcase,unscopedtoken/host-keyguidance;GPGkeyringSecret/filenamesandlegacykeys/sourceNamespacesconfusionfixed"
+    ],
+    "validation": [
+      "All4source/quizfullyread;81fences59YAML18Bash4ArgoCRDvalidationspassed",
+      "12ESO/GatewayAPICRDobjectsvalidatedagainstpublisher2.10andEnvoy1.9.1bundledschemas",
+      "4syntheticcrypto checks withverifiedkubeseal0.40/SOPS3.13.3/age1.3.2 passed:strictnamespacebinding,rejectionafterNamespacechange,filename-rulefailurewithoutoverride,encrypt/decryptwithoverride;testkeyscleanedup",
+      "4Helmrenderingspassed:Argo10.8.4AVP&KSOPS,Sealed2.20,ESO2.10;CMPentrypointUID999,mountreferences,separatetmp,tokenonlysidecar,andkubesealcontrollerServicenamematchesverified",
+      "110/110repositorytestsaftersecuritycheckpointpassed",
+      "NoSSOlogin,realSecretbackendaccess,customAVPimagebuild,liveGateway/TLS,CNIenforcementorcontrollerdeploymentperformed;environmentprerequisitesandexampleplaceholdersareexplicit"
+    ],
+    "reviewedSha256": "78c3e07423c2ccf97baeb6c0dad7ba8fcee06d17cd22433d6f1049d6a211871b"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/07-security-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full security-source and quiz review; current SSO, secret management, TLS, logging, networking and repository trust examples corrected and statically/synthetically verified.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/secret-management.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/config-management-plugins.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/tls.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/argocd-cmd-params-cm.yaml",
+      "https://github.com/bitnami/sealed-secrets/releases/tag/v0.40.0",
+      "https://github.com/external-secrets/external-secrets/releases/tag/helm-chart-2.10.0",
+      "https://github.com/argoproj-labs/argocd-vault-plugin/tree/v1.18.1",
+      "https://github.com/viaduct-ai/kustomize-sops/tree/v4.5.1",
+      "https://github.com/getsops/sops/releases/tag/v3.13.3"
+    ],
+    "findings": [
+      "WrongdirectOIDCcallbacks,fictionalIdentityCenterOIDCissuer,SAMLcaDataunencodedPEM,LDAPCAmountmissing,SSOcustomrolesundeclared",
+      "SealedSecretsoldHelmURL404 andcontrollernamemismatch;namespacechangedaftersealing;plaintextpasswordarguments/files;recovery/keyrenewalvssecretrotationunclear",
+      "ESOv1beta1updatedv1/2.10;IRSAserviceAccount/Vaultaudienceandidentityprerequisitesmissing;ESOincorrectlycalledGit-encryptiontool",
+      "AVPmissingCMPsidecar/entrypoint/configmount/UID/token/Vaultrole;oldmaincontaineronlyinstallationreplacedwithcompleteHelmvalues+BYOIprerequisites",
+      "SOPSruletargetfilenamewrong;noautomaticArgoCDdecryption;KSOPSbinary/execflag/KRMannotation/keymountmissing;trustboundariesandplaintextmanifestcacheexplained",
+      "CN-onlyselfsignedTLS,retiredingress-nginxACME/Ingressdefaults,privateGitCAconfusedwithrepo-serverRPCidentity;GatewayAPIfrontend/backendTLSandCA-pathverificationclarified",
+      "Inventedserver.audit.enabled/pathandnonexistentfileloggingreplacedwithJSONstdout/componentlogs/events/APIauditcorrelation;CRI/nativeCloudWatchcollectorfragment",
+      "NetworkPolicyincorrectDNS/labels/components,unrestricted443mislabelledAPI-only,missingadditive-policy/CNI/NAT/dynamicaddressscope;documentaryCIDRsanddependencycaveatsnowexplicit",
+      "Repositorycredentialprefixmatchedorg-suffix,wrongrepositoryvsrepo-credsGitHubAppcase,unscopedtoken/host-keyguidance;GPGkeyringSecret/filenamesandlegacykeys/sourceNamespacesconfusionfixed"
+    ],
+    "validation": [
+      "All4source/quizfullyread;81fences59YAML18Bash4ArgoCRDvalidationspassed",
+      "12ESO/GatewayAPICRDobjectsvalidatedagainstpublisher2.10andEnvoy1.9.1bundledschemas",
+      "4syntheticcrypto checks withverifiedkubeseal0.40/SOPS3.13.3/age1.3.2 passed:strictnamespacebinding,rejectionafterNamespacechange,filename-rulefailurewithoutoverride,encrypt/decryptwithoverride;testkeyscleanedup",
+      "4Helmrenderingspassed:Argo10.8.4AVP&KSOPS,Sealed2.20,ESO2.10;CMPentrypointUID999,mountreferences,separatetmp,tokenonlysidecar,andkubesealcontrollerServicenamematchesverified",
+      "110/110repositorytestsaftersecuritycheckpointpassed",
+      "NoSSOlogin,realSecretbackendaccess,customAVPimagebuild,liveGateway/TLS,CNIenforcementorcontrollerdeploymentperformed;environmentprerequisitesandexampleplaceholdersareexplicit"
+    ],
+    "reviewedSha256": "9d809123c655b9a422e41ca940199badbfe4f9378cebed153bc0df9c76f320ac"
+  }
+]

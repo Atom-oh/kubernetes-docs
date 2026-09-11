@@ -43,19 +43,21 @@ Load balancing distributes traffic across multiple instances to improve overall 
 
 ## Load Balancing Algorithms
 
+The released Istio 1.31.0 default is LEAST_REQUEST. Examples are independent DestinationRules, not a combined same-host configuration. Results depend on endpoint health, request cost, connection reuse, and proxy locality; no algorithm guarantees equal CPU load or constant latency. `consistentHash` is a separate configuration branch, not a `simple: CONSISTENT_HASH` enum value.
+
 Istio provides the following load balancing algorithms.
 
 ### Algorithm Comparison
 
 | Algorithm | Description | Use Cases | Pros | Cons |
 |-----------|-------------|-----------|------|------|
-| **ROUND_ROBIN** | Sequential distribution (default) | Stateless services | Simple, fair | Possible load imbalance |
+| **ROUND_ROBIN** | Sequential distribution (explicit option) | Stateless services | Simple, fair | Possible load imbalance |
 | **LEAST_REQUEST** | Minimum active requests | High-performance APIs, DB connections | Load equalization | Slight overhead |
 | **RANDOM** | Random distribution | High traffic volume | Simple, fast | Short-term imbalance possible |
 | **PASSTHROUGH** | Original destination | TCP proxy, SNI routing | Flexibility | Limited control |
 | **CONSISTENT_HASH** | Hash-based sticky | Session persistence, cache | Sticky sessions | Possible imbalance |
 
-### 1. ROUND_ROBIN (Default)
+### 1. ROUND_ROBIN
 
 Distributes requests sequentially to each endpoint.
 
@@ -90,13 +92,11 @@ spec:
 - Does not consider per-pod load differences
 - Long requests can cause imbalance
 
-### 2. LEAST_REQUEST
+### 2. LEAST_REQUEST (Default)
 
-Routes to the endpoint with the fewest active requests.
+For equally weighted endpoints, Envoy normally samples two available hosts and picks the one with fewer active requests. It does not scan every pod or measure its CPU/database query load. Unequal weights use a different weighted algorithm.
 
-![Before routing a new request, the load balancer checks the active request count on every pod and sends the request to the one with the fewest active requests.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-3.html)
+Default equal-weight LEAST_REQUEST selects the least busy of two random candidate endpoints.
 
 **Configuration Example:**
 
@@ -110,7 +110,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # 60 second warmup (optional)
+      warmup:
+        duration: 60s  # 60 second warmup (optional)
 ```
 
 **Advanced Configuration:**
@@ -125,7 +126,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 120  # New pod warmup
+      warmup:
+        duration: 120s  # New pod warmup
     connectionPool:
       http:
         http2MaxRequests: 100
@@ -205,6 +207,8 @@ spec:
 **Cons:**
 - Limited load balancing control
 
+DestinationRule PASSTHROUGH uses original-destination load balancing. Gateway `tls.mode: PASSTHROUGH` controls TLS termination and is a different setting; SNI routing needs a TLS VirtualService route.
+
 ### 5. LEAST_CONN (Deprecated -> LEAST_REQUEST)
 
 **Note**: `LEAST_CONN` is **deprecated** and replaced by `LEAST_REQUEST`.
@@ -215,7 +219,9 @@ spec:
 trafficPolicy:
   loadBalancer:
     simple: LEAST_CONN
+```
 
+```yaml
 # New version
 trafficPolicy:
   loadBalancer:
@@ -224,7 +230,7 @@ trafficPolicy:
 
 ## Consistent Hash Details
 
-Consistent Hash routes to the same endpoint based on specific attributes to ensure session persistence.
+Consistent Hash provides soft affinity for the same key while endpoint views remain stable. Adding/removing endpoints, health changes, or locality differences can remap requests; it is not durable session storage.
 
 ### Consistent Hash Operation Principle
 
@@ -252,7 +258,7 @@ spec:
 **Use Cases:**
 - Per-user session persistence
 - API key-based routing
-- Per-tenant isolation
+- Tenant-key affinity; enforce isolation separately
 
 ### 2. HTTP Cookie-based
 
@@ -297,7 +303,7 @@ spec:
 
 **Use Cases:**
 - IP-based session persistence
-- Rate limiting (per IP)
+- Affinity for an external per-IP rate limiter; hashing itself does not enforce a rate limit
 - Regional caching
 
 **Cautions:**
@@ -328,7 +334,7 @@ spec:
 
 ### 5. Minimum Ring Size Setting
 
-Set minimum Consistent Hash Ring size to minimize redistribution.
+Tune the number of virtual nodes on the ring to improve distribution of distinct keys; it does not eliminate remapping or hot keys.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -341,15 +347,16 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 1024  # Default: 1024
+        ringHash:
+          minimumRingSize: 1024  # Default: 1024
 ```
 
 **Explanation:**
 - Larger ring size provides more even distribution
-- Reduces proportion of keys redistributed on pod add/remove
+- Does not guarantee a lower remapping fraction when endpoints change
 - Slightly increased memory usage
 
-**Recommended Values:**
+**Illustrative values to benchmark (not universal sizing thresholds):**
 - Small scale (< 10 pods): 1024 (default)
 - Medium scale (10-50 pods): 2048
 - Large scale (50+ pods): 4096
@@ -370,7 +377,8 @@ spec:
           name: "session-id"
           path: "/api"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       http:
         maxRequestsPerConnection: 100
@@ -388,9 +396,9 @@ spec:
 **Cause**: Traffic concentration on specific hash values
 
 **Solutions:**
-- Increase `minimumRingSize`
+- Increase `ringHash.minimumRingSize` only for uneven distribution of distinct keys; a single hot key still maps to one host
 - Use multiple hash key combinations
-- Consider Bounded Load algorithm (not supported by Envoy)
+- Envoy supports bounded-load hashing through hash_balance_factor; Istio DestinationRule does not expose that knob directly
 
 #### 2. Redistribution on Pod Add/Remove
 
@@ -407,6 +415,8 @@ spec:
 - Scale gradually
 
 ## Locality-based Load Balancing
+
+Use either locality `distribute` percentages or explicit `failover`, not both in the same setting. Failover needs health detection and reachable healthy endpoints. Region/zone labels describe topology, not measured distance, and DestinationRule does not establish cross-region networking or service discovery. Use actual node topology values on EKS.
 
 Locality-based Load Balancing prioritizes geographically closer endpoints.
 
@@ -463,6 +473,10 @@ spec:
         failover:
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### Multi-Region Example
@@ -490,13 +504,8 @@ spec:
           to:
             "us-east/*": 90
             "us-west/*": 10
-        failover:
-        - from: us-west
-          to: us-east
-        - from: us-east
-          to: us-west
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -569,7 +578,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
     connectionPool:
       tcp:
         maxConnections: 200
@@ -579,7 +589,7 @@ spec:
         maxRequestsPerConnection: 100
         idleTimeout: 300s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -605,7 +615,8 @@ spec:
         httpCookie:
           name: "session-id"
           ttl: 7200s  # 2 hours
-        minimumRingSize: 2048
+        ringHash:
+          minimumRingSize: 2048
     connectionPool:
       tcp:
         maxConnections: 500
@@ -651,18 +662,13 @@ spec:
           to:
             "eu-central-1/*": 90
             "eu-west-1/*": 10
-        failover:
-        - from: us-west-1
-          to: us-west-2
-        - from: us-east-1
-          to: us-east-2
     connectionPool:
       tcp:
         maxConnections: 1000
       http:
         http2MaxRequests: 2000
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 60s
 ```
@@ -675,18 +681,21 @@ spec:
 
 ### Example 4: Cache Service Optimization
 
+This assumes an HTTP cache service accepting x-cache-key. Native Redis traffic has no HTTP header; use a Redis-aware client/cluster sharding mechanism for Redis keys.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: cache-service-optimized
 spec:
-  host: redis-cache
+  host: http-cache
   trafficPolicy:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-cache-key"
-        minimumRingSize: 4096  # Large ring size to minimize redistribution
+        ringHash:
+          minimumRingSize: 4096  # Large ring size to minimize redistribution
     connectionPool:
       tcp:
         maxConnections: 100
@@ -696,7 +705,7 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 600s
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 10s
       baseEjectionTime: 30s
 ```
@@ -717,23 +726,20 @@ spec:
   host: postgres-primary
   trafficPolicy:
     loadBalancer:
-      simple: LEAST_REQUEST
+      simple: ROUND_ROBIN
     connectionPool:
       tcp:
         maxConnections: 50  # DB connection limit
         connectTimeout: 5s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
 ```
 
 **Use Scenarios:**
 - Database connection pool management
-- Slow query distribution
+- Connection selection only; existing SQL queries are not rebalanced
 - Connection limit enforcement
 
 ### Example 6: High Traffic Processing
@@ -757,7 +763,7 @@ spec:
         maxRequestsPerConnection: 1000
         idleTimeout: 60s
     outlierDetection:
-      consecutiveErrors: 10
+      consecutive5xxErrors: 10
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 20  # Limited ejection at scale
@@ -772,9 +778,7 @@ spec:
 
 ### Decision Tree
 
-![Decision tree asking in turn about session persistence, very high traffic, variable response times, geographic distribution, and TCP proxying to pick CONSISTENT_HASH, RANDOM, LEAST_REQUEST, PASSTHROUGH, or the ROUND_ROBIN default.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-6.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-06-load-balancing-6.html)
+Start with LEAST_REQUEST for HTTP traffic; choose consistent hashing only when soft affinity is needed, and measure other algorithms under representative load.
 
 ### Recommended Algorithms by Service Type
 
@@ -784,12 +788,12 @@ spec:
 | **GraphQL API** | LEAST_REQUEST | Complex query distribution |
 | **gRPC** | LEAST_REQUEST | Streaming load balance |
 | **Web Frontend** | CONSISTENT_HASH (cookie) | Session persistence |
-| **WebSocket** | CONSISTENT_HASH (header) | Connection persistence |
+| **WebSocket** | Optional reconnect affinity | An established connection stays on its upstream |
 | **Cache Service** | CONSISTENT_HASH (header) | Cache hit rate |
 | **Analytics/Log Collection** | RANDOM | Large-scale processing |
-| **Database** | LEAST_REQUEST | Connection pool management |
+| **Database** | Database-aware client/pool; TCP policy as needed | Preserve primary/replica semantics |
 | **Static Content** | ROUND_ROBIN | Simple and sufficient |
-| **Message Queue** | LEAST_REQUEST | Queue load balance |
+| **Message Queue** | Broker/client consumer assignment | HTTP active requests do not measure queue load |
 | **Batch Processing** | LEAST_REQUEST | Job distribution |
 
 ### Selection by Traffic Pattern
@@ -799,17 +803,23 @@ spec:
 trafficPolicy:
   loadBalancer:
     simple: ROUND_ROBIN  # Simple and efficient
+```
 
+```yaml
 # 2. Variable requests (10ms ~ 1s+)
 trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST  # Load adaptive
+```
 
+```yaml
 # 3. Very high traffic (10,000+ RPS)
 trafficPolicy:
   loadBalancer:
     simple: RANDOM  # Minimize overhead
+```
 
+```yaml
 # 4. Session-based (user state)
 trafficPolicy:
   loadBalancer:
@@ -817,7 +827,9 @@ trafficPolicy:
       httpCookie:
         name: "session-id"
         ttl: 3600s
+```
 
+```yaml
 # 5. Multi-region
 trafficPolicy:
   loadBalancer:
@@ -842,7 +854,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST  # Load adaptive
-      warmupDurationSecs: 60  # New pod warmup
+      warmup:
+        duration: 60s  # New pod warmup
 ```
 
 **Bad Example:**
@@ -859,9 +872,9 @@ spec:
       simple: ROUND_ROBIN  # Causes load imbalance
 ```
 
-### 2. Connection Pool Required Settings
+### 2. Tune Connection Pools
 
-Always configure Connection Pool with load balancing:
+Tune optional connection-pool limits from measured demand; these are per-proxy limits, not a global service connection budget:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -873,7 +886,7 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    connectionPool:  # Required
+    connectionPool:  # Optional tuning
       tcp:
         maxConnections: 100
       http:
@@ -895,8 +908,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # Required
-      consecutiveErrors: 5
+    outlierDetection:  # Health-based ejection
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -957,56 +970,41 @@ spec:
       simple: LEAST_REQUEST
       localityLbSetting:
         enabled: true
-        distribute:
-        - from: us-west/*
-          to:
-            "us-west/*": 80
-            "us-east/*": 20
         failover:  # Required
         - from: us-west
           to: us-east
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 ### 6. Monitoring and Metrics
 
 Monitor load balancing effectiveness:
 
-```yaml
-# Prometheus queries
-# Request distribution per pod
-sum by (destination_workload) (rate(istio_requests_total[5m]))
+```promql
+# Per-pod inbound request distribution (assumes scrape labels retain namespace/pod)
+sum by (namespace, pod) (rate(istio_requests_total{reporter="destination"}[5m]))
 
-# Response time per pod
+# Per-pod inbound P95 latency
 histogram_quantile(0.95,
-  sum by (destination_workload, le) (
-    rate(istio_request_duration_milliseconds_bucket[5m])
+  sum by (namespace, pod, le) (
+    rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])
   )
 )
 
-# Active connection count
-sum by (destination_workload) (envoy_cluster_upstream_cx_active)
+# Raw Envoy connection statistics do not have Istio destination_workload labels
+sum by (namespace, pod) (envoy_cluster_upstream_cx_active)
 ```
 
 ### 7. Gradual Application
 
-```yaml
-# Step 1: Default ROUND_ROBIN
-simple: ROUND_ROBIN
-
-# Step 2: LEAST_REQUEST after monitoring
-simple: LEAST_REQUEST
-
-# Step 3: Add Connection Pool
-simple: LEAST_REQUEST
-connectionPool: ...
-
-# Step 4: Add Outlier Detection
-simple: LEAST_REQUEST
-connectionPool: ...
-outlierDetection: ...
-```
+Start with the current LEAST_REQUEST default. Measure representative traffic, then tune the selected algorithm, connection pool, warmup and outlier detection independently. The values in these examples are starting points, not guaranteed performance thresholds.
 
 ### 8. Documentation
+
+The annotation values below are illustrative. Replace the sample latency/load figures with your measurements; they are not benchmark results from this audit. Redis session storage also requires application integration, not a DestinationRule annotation.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1020,7 +1018,7 @@ metadata:
     # Algorithm selection basis
     algorithm-rationale: |
       - LEAST_REQUEST: Response times vary 10ms-500ms
-      - warmupDurationSecs: New pods need 60s to warm up cache
+      - warmup.duration: New pods need 60s to warm up cache
 
     # Test results
     test-results: |
@@ -1032,6 +1030,8 @@ metadata:
     monitoring: |
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
+spec:
+  host: api-service
 ```
 
 ## Troubleshooting
@@ -1045,9 +1045,9 @@ kubectl top pods -n production
 
 # Output:
 # NAME                CPU    MEMORY
-# api-pod-1           80%    2Gi
-# api-pod-2           20%    1Gi
-# api-pod-3           15%    1Gi
+# api-pod-1           800m   2048Mi
+# api-pod-2           200m   1024Mi
+# api-pod-3           150m   1024Mi
 ```
 
 **Causes and Solutions:**
@@ -1065,11 +1065,12 @@ spec:
       simple: LEAST_REQUEST  # Changed
 
 # 2. Add Warmup
-      warmupDurationSecs: 60
+      warmup:
+        duration: 60s
 
 # 3. Add Outlier Detection
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -1098,34 +1099,19 @@ spec:
     loadBalancer:
       consistentHash:
         httpHeaderName: "x-user-id"
-        minimumRingSize: 4096  # Increase 2048 -> 4096
+        ringHash:
+          minimumRingSize: 4096  # Increase 2048 -> 4096
 ```
 
 ### Locality-based Routing Not Working
 
-**Verification Steps:**
+Check the node topology that hosts the workload and the locality in Envoy’s endpoint configuration. Kubernetes/EKS normally supplies region/zone labels on Nodes, not application Pods. Correct the actual node/provisioner configuration; do not invent cloud region/zone labels to force routing.
 
 ```bash
-# 1. Check pod locality labels
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.labels.topology\.kubernetes\.io/region}{"\t"}{.metadata.labels.topology\.kubernetes\.io/zone}{"\n"}{end}'
-
-# 2. Check Istio Proxy configuration
-istioctl proxy-config endpoints pod-name | grep locality
-
-# 3. Check DestinationRule application
-istioctl proxy-config clusters pod-name --fqdn api-service.default.svc.cluster.local -o json | jq '.[] | .localityLbEndpoints'
-```
-
-**Fix:**
-
-```yaml
-# Check and add node labels
-apiVersion: v1
-kind: Node
-metadata:
-  labels:
-    topology.kubernetes.io/region: us-west
-    topology.kubernetes.io/zone: us-west-1
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
+istioctl proxy-config clusters <pod-name> --fqdn api-service.default.svc.cluster.local -o json
 ```
 
 ## References
@@ -1134,3 +1120,10 @@ metadata:
 - [Envoy Load Balancing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancing)
 - [Consistent Hashing](https://www.toptal.com/big-data/consistent-hashing)
 - [Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Primary reference 2](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go)
+- [Primary reference 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)
+- [Primary reference 4](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto)
+- [Primary reference 5](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [Primary reference 6](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/kubectl_top_pod/)

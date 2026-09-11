@@ -14,6 +14,8 @@ Fault Injection은 시스템의 복원력을 테스트하기 위해 의도적으
 8. [Testing Strategies](#testing-strategies)
 9. [모범 사례](#모범-사례)
 
+각 예제는 HTTP 계층의 독립적인 실험입니다. 격리된 네임스페이스에서 시작하고 전체 정상 라우팅 구성을 보존하며 예약 전에 독립적인 정리 경로를 준비하세요. 비율은 일치한 요청에 적용되며 Pod 비율이 아닙니다. 테스트 헤더는 인증이 아니며 대상 다운스트림 호출까지 전파되어야 합니다. 일반 SQL/TCP, 패킷 손실, Pod readiness, 노드 장애는 별도 테스트가 필요합니다.
+
 ## Why Fault Injection?
 
 ### 프로덕션 환경에서의 복원력 테스트
@@ -22,7 +24,7 @@ Fault Injection은 시스템의 복원력을 테스트하기 위해 의도적으
 
 #### 1. **Chaos Engineering의 핵심 원칙**
 
-Netflix의 Chaos Monkey에서 시작된 Chaos Engineering은 **프로덕션 환경에서 장애를 사전에 경험**하고 시스템의 약점을 발견하는 것을 목표로 합니다.
+Netflix의 Chaos Monkey 같은 사례로 널리 알려진 Chaos Engineering은 **프로덕션 환경에서 장애를 사전에 경험**하고 시스템의 약점을 발견하는 것을 목표로 합니다.
 
 ![전통적인 테스트는 개발·스테이징을 거쳐 프로덕션에서 장애를 만나지만, Chaos Engineering은 지속적인 장애 주입으로 약점을 사전에 발견·수정해 복원력 있는 시스템에 이르는 두 흐름을 나란히 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-0.png)
 
@@ -42,11 +44,9 @@ Netflix의 Chaos Monkey에서 시작된 Chaos Engineering은 **프로덕션 환�
 
 #### 3. **Circuit Breaker와 Timeout 설정 검증**
 
-Fault Injection 없이는 Circuit Breaker와 Timeout 설정이 **실제로 작동하는지 확인하기 어렵습니다**.
+Fault Injection은 호출자의 지연/오류 처리를 검사합니다. 프록시 재시도·타임아웃·엔드포인트 제외를 검사하려면 해당 메커니즘이 관측하는 계층에서 장애를 만들어야 합니다.
 
-![서비스 A가 Fault Injection이 적용된 의존 서비스 B에 요청을 보내 지연 또는 실패 응답을 받고, Circuit Breaker가 실제로 작동했는지 모니터링으로 확인하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-1.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-1.html)
+호출자 동작과 프록시 제외를 구분해 검증하세요. 로컬 Abort는 업스트림 엔드포인트 실패가 아니며 주문 서비스의 실제 응답이 그 호출자의 관측값을 결정합니다.
 
 #### 4. **안전한 배포 검증**
 
@@ -92,6 +92,9 @@ spec:
     - destination:
         host: payment-service
         subset: v2
+  - route:
+    - destination:
+        host: payment-service
 ```
 
 **Use Case**:
@@ -156,6 +159,9 @@ spec:
     route:
     - destination:
         host: recommendation-service
+  - route:
+    - destination:
+        host: recommendation-service
 ```
 
 **Use Case**:
@@ -164,6 +170,8 @@ spec:
 - **주의**: 매우 낮은 비율(1-5%)로 시작하고, 영향을 모니터링
 
 ### 4. **Timeout 및 Retry 정책 조정**
+
+Istio는 Fault가 활성화된 동일 클라이언트 라우트에서 timeout/retry 처리를 활성화하지 않습니다. 아래에서 라우트 timeout을 제거한 것은 의도적이며 이 테스트의 기한은 호출자가 집행해야 합니다.
 
 #### 시나리오: 최적의 Timeout 값 찾기
 
@@ -186,57 +194,40 @@ spec:
         percentage:
           value: 100.0
         fixedDelay: 10s  # 10초 지연
-    timeout: 5s  # 5초 timeout 설정
     route:
+    - destination:
+        host: search-service
+  - route:
     - destination:
         host: search-service
 ```
 
 **Use Case**:
-- 현재 timeout 설정(5초)이 적절한지 테스트
-- 10초 지연 시 timeout이 작동하는지 확인
+- 프록시가 10초 지연을 주입할 때 앱/클라이언트의 5초 기한을 검사
+- Istio 라우트 타임아웃은 실제 느린 업스트림 또는 다른 홉의 장애로 검사
 - 사용자 경험을 해치지 않는 최적의 값 찾기
 
-### 5. **Circuit Breaker 동작 검증**
+### 5. **Outlier Detection 동작 검증**
 
-#### 시나리오: Circuit Breaker가 제대로 작동하는지 확인
+로컬 Fault Abort는 업스트림 요청 전 응답하므로 같은 프록시의 엔드포인트별 연속 오류 감지를 검사하지 못합니다. 실제 503을 반환하는 제어된 HTTP 백엔드를 사용하고 제외 여부를 관찰하세요. 예를 들어 테스트 네임스페이스에 Istio httpbin 샘플을 배포한 뒤:
 
 ```yaml
-# DestinationRule: Circuit Breaker 설정
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: reviews-circuit-breaker
+  name: httpbin-outlier-test
 spec:
-  host: reviews
+  host: httpbin
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
+      consecutive5xxErrors: 5
+      interval: 5s
       baseEjectionTime: 30s
----
-# VirtualService: 장애 주입
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: reviews-fault
-spec:
-  hosts:
-  - reviews
-  http:
-  - fault:
-      abort:
-        percentage:
-          value: 60.0  # 60% 실패율
-        httpStatus: 503
-    route:
-    - destination:
-        host: reviews
+      maxEjectionPercent: 100
+      minHealthPercent: 0
 ```
 
-**Use Case**:
-- 60% 실패율에서 Circuit Breaker가 5번 연속 에러 후 작동하는지 확인
-- 30초 후 자동으로 복구되는지 검증
+메시 앱 클라이언트에서 `http://httpbin:8000/status/503`으로 요청하세요. 테스트 엔드포인트 전체 제외를 의도적으로 허용한 설정이며 복구는 제외 이력과 이후 상태에 따라 달라져 정확히 30초가 보장되지 않습니다. 다른 워크로드에는 이 테스트 설정을 적용하지 마세요.
 
 ### 6. **특정 사용자 그룹에 대한 테스트**
 
@@ -352,8 +343,8 @@ spec:
 
 **결과**:
 - 20%의 요청은 3초 지연
-- 10%의 요청은 즉시 503 에러
-- 나머지 70%는 정상 처리
+- Abort와 Delay가 겹칠 수 있어 일부 중단 요청도 먼저 지연됨
+- 두 비율을 서로 배타적인 집단처럼 더하지 말고 겹침을 관찰
 
 ### 2. 조건부 Fault Injection
 
@@ -398,7 +389,7 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage1
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -411,12 +402,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # 2단계: 10% 장애 (모니터링 후 적용)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage2
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -429,12 +422,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # 3단계: 20% 장애 (충분한 검증 후 적용)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage3
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -509,7 +504,7 @@ spec:
 
 ## Real-World Scenarios
 
-### 시나리오 1: 데이터베이스 느린 쿼리 시뮬레이션
+### 시나리오 1: 느린 HTTP 데이터베이스 중계 서비스 시뮬레이션
 
 **상황**: 데이터베이스 쿼리가 간헐적으로 느려지는 경우
 
@@ -518,7 +513,7 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: database-slow-query
-  namespace: production
+  namespace: chaos-tests
 spec:
   hosts:
   - database-service
@@ -526,7 +521,7 @@ spec:
   - fault:
       delay:
         percentage:
-          value: 15.0  # 15%의 쿼리가 느림
+          value: 15.0  # HTTP 요청의 15%를 지연
         fixedDelay: 8s   # 8초 지연
     route:
     - destination:
@@ -547,9 +542,7 @@ spec:
 
 **상황**: 한 서비스의 장애가 다른 서비스로 전파되는지 확인
 
-![결제 서비스에 주입된 장애로 30% 요청이 503으로 실패하면 주문 서비스가 이를 흡수하고, Circuit Breaker로 프론트엔드에 안전하게 전파해 재고 서비스는 영향받지 않는지 확인하는 Cascade Failure 테스트 구성을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-3.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-3.html)
+호출자 동작과 프록시 제외를 구분해 검증하세요. 로컬 Abort는 업스트림 엔드포인트 실패가 아니며 주문 서비스의 실제 응답이 그 호출자의 관측값을 결정합니다.
 
 ```yaml
 # 결제 서비스에 장애 주입
@@ -579,14 +572,14 @@ spec:
   host: order-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **테스트 목표**:
 1. 결제 실패 시 주문 서비스가 graceful하게 처리하는가?
-2. Circuit Breaker가 작동하여 재고 서비스는 정상 작동하는가?
+2. 주문 서비스가 호출자 대상 동작을 유지하는가? 제외 여부는 실제 order-service 응답 오류에 달림
 3. 프론트엔드에 적절한 사용자 메시지가 표시되는가?
 
 ### 시나리오 3: API Rate Limit 상황 테스트
@@ -612,6 +605,9 @@ spec:
           value: 40.0  # 40% 요청이 rate limit
         httpStatus: 429  # Too Many Requests
     route:
+    - destination:
+        host: external-api-service
+  - route:
     - destination:
         host: external-api-service
 ```
@@ -645,6 +641,9 @@ spec:
     route:
     - destination:
         host: us-east-service
+  - route:
+    - destination:
+        host: us-east-service
 ```
 
 **테스트 목표**:
@@ -672,7 +671,7 @@ spec:
     fault:
       abort:
         percentage:
-          value: 25.0  # 25% 파드 실패 (4개 중 1개)
+          value: 25.0  # 일치하는 요청의 25% 실패; Pod는 계속 실행
         httpStatus: 503
       delay:
         percentage:
@@ -682,12 +681,15 @@ spec:
     - destination:
         host: app-service
         subset: v2
+  - route:
+    - destination:
+        host: app-service
 ```
 
 **테스트 목표**:
-1. 배포 중에도 가용성 유지 (최소 75%)
-2. Readiness Probe가 제대로 작동하는가?
-3. Load Balancer가 건강한 파드로만 트래픽 전달하는가?
+1. 주입된 요청 오류에 대한 호출자 동작 측정
+2. Readiness는 제어된 워크로드 상태 변경으로 별도 검사
+3. 정상 엔드포인트 라우팅은 별도 검사; HTTP Abort는 Pod를 unready로 만들지 않음
 
 ## Testing Strategies
 
@@ -716,30 +718,53 @@ kubectl apply -f fault-injection-5percent.yaml
 
 ### 2. Time-Based Testing
 
+다음은 사전 준비 전까지 중지된 예약 템플릿입니다. 테스트 네임스페이스, shell/호환 kubectl을 포함해 직접 빌드·고정한 조직 runner 이미지, 미리 생성한 테스트 VirtualService에 필요한 권한만 가진 chaos-tester ServiceAccount, 같은 리소스의 전체 장애/정상 매니페스트를 담은 chaos-fixtures ConfigMap이 필요합니다. 이미지 주소는 교체할 예시입니다. SIGKILL/노드 손실 시 trap은 실행되지 않으므로 독립 정리 점검도 준비하세요.
+
 특정 시간대에만 장애를 주입:
 
 ```yaml
-# CronJob으로 자동화
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: fault-injection-scheduler
+  namespace: chaos-tests
 spec:
-  schedule: "0 2 * * *"  # 매일 새벽 2시
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 420
+      backoffLimit: 0
       template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
         spec:
+          serviceAccountName: chaos-tester
+          restartPolicy: Never
           containers:
           - name: apply-fault
-            image: bitnami/kubectl
-            command:
-            - /bin/sh
-            - -c
+            image: registry.example.com/ops/chaos-runner:1.0.0
+            command: ["/bin/sh", "-ec"]
+            args:
             - |
-              kubectl apply -f /config/fault-injection.yaml
-              sleep 3600  # 1시간 동안 유지
-              kubectl delete -f /config/fault-injection.yaml
+              cleanup() { kubectl apply -n chaos-tests -f /config/no-fault.yaml; }
+              trap cleanup EXIT
+              trap 'exit 130' INT
+              trap 'exit 143' TERM
+              kubectl apply -n chaos-tests -f /config/fault-injection.yaml
+              sleep 300
+            volumeMounts:
+            - name: fixtures
+              mountPath: /config
+              readOnly: true
+          volumes:
+          - name: fixtures
+            configMap:
+              name: chaos-fixtures
 ```
 
 ### 3. Automated Testing Pipeline
@@ -747,35 +772,39 @@ spec:
 CI/CD 파이프라인에 통합:
 
 ```yaml
-# GitLab CI 예제
-stages:
-  - deploy
-  - fault-injection-test
-  - verify
-  - cleanup
+stages: [fault-injection-test]
 
 fault_injection_test:
   stage: fault-injection-test
   script:
-    # Fault Injection 적용
-    - kubectl apply -f tests/fault-injection.yaml
-
-    # 부하 테스트 실행
+    - kubectl apply -n chaos-tests -f tests/fault-injection.yaml
     - k6 run --vus 100 --duration 5m tests/load-test.js
-
-    # 메트릭 검증
-    - |
-      ERROR_RATE=$(curl -s "http://prometheus:9090/api/v1/query?query=rate(istio_requests_total{response_code=\"500\"}[5m])" | jq '.data.result[0].value[1]')
-      if [ $(echo "$ERROR_RATE > 0.05" | bc) -eq 1 ]; then
-        echo "Error rate too high: $ERROR_RATE"
-        exit 1
-      fi
+    - ./tests/check-fault-metrics.sh
   after_script:
-    # Fault Injection 제거
-    - kubectl delete -f tests/fault-injection.yaml
+    - kubectl apply -n chaos-tests -f tests/no-fault.yaml
+```
+
+테스트 프로젝트의 tests/check-fault-metrics.sh로 아래를 저장하세요. Runner에는 kubectl, k6, curl, jq와 검토한 매니페스트/부하 테스트가 필요합니다. 측정 서비스와 임계값은 가설에 맞게 선택하세요. 의존 서비스에 의도적으로 주입한 오류가 항상 사용자 대상 SLO 실패인 것은 아닙니다. 누락/NaN은 검사 실패로 처리합니다. Runner 손실 후 GitLab after_script가 보장되지는 않고 별도 timeout도 있으므로 정상 구성 복구를 독립적으로 확인하세요.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+: "${PROMETHEUS_URL:?Set the Prometheus base URL}"
+: "${TEST_DESTINATION:?Set the exact destination_service label}"
+: "${ERROR_THRESHOLD:?Set the error-fraction limit for the hypothesis}"
+QUERY="sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\",response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\"}[5m]))"
+curl -fsSG "$PROMETHEUS_URL/api/v1/query" --data-urlencode "query=$QUERY" |
+  jq -e --argjson limit "$ERROR_THRESHOLD" '
+    .status == "success" and
+    (.data.result | length) == 1 and
+    (.data.result[0].value[1] as $v |
+      $v != "NaN" and $v != "+Inf" and $v != "-Inf" and
+      (($v | tonumber) <= $limit))'
 ```
 
 ### 4. Monitoring and Alerting
+
+이 규칙 파일을 Prometheus에 마운트·로드하거나 설치된 Operator의 PrometheusRule을 사용하세요. ConfigMap만 생성해도 알람이 활성화되지는 않습니다. 테스트 서비스로 범위를 제한하고 참조한 Envoy 통계를 활성화하세요.
 
 장애 주입 중 핵심 메트릭 모니터링:
 
@@ -792,7 +821,7 @@ data:
       rules:
       # 에러율 증가
       - alert: HighErrorRate
-        expr: rate(istio_requests_total{response_code=~"5.."}[5m]) > 0.1
+        expr: sum by (destination_service) (rate(istio_requests_total{reporter="source",response_code=~"5.."}[5m])) / sum by (destination_service) (rate(istio_requests_total{reporter="source"}[5m])) > 0.1
         for: 2m
         annotations:
           summary: "High error rate during fault injection"
@@ -806,7 +835,7 @@ data:
 
       # 응답 시간 증가
       - alert: HighLatency
-        expr: histogram_quantile(0.95, rate(istio_request_duration_milliseconds_bucket[5m])) > 3000
+        expr: histogram_quantile(0.95, sum by (destination_service, le) (rate(istio_request_duration_milliseconds_bucket{reporter="source"}[5m]))) > 3000
         for: 5m
         annotations:
           summary: "95th percentile latency > 3s"
@@ -817,11 +846,10 @@ data:
 Blue 환경에 장애를 주입하고 Green 환경과 비교:
 
 ```yaml
-# Blue 환경: Fault Injection
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: app-blue-fault
+  name: app-blue-green-test
 spec:
   hosts:
   - app-service
@@ -839,21 +867,7 @@ spec:
     - destination:
         host: app-service
         subset: blue
----
-# Green 환경: 정상
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: app-green-normal
-spec:
-  hosts:
-  - app-service
-  http:
-  - match:
-    - headers:
-        x-version:
-          exact: "green"
-    route:
+  - route:
     - destination:
         host: app-service
         subset: green
@@ -887,8 +901,7 @@ Fault Injection 적용 전 모니터링 대시보드 준비:
 ### 3. 명확한 레이블 사용
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: payment-fault
   labels:
@@ -903,25 +916,16 @@ metadata:
 ### 4. 자동 롤백 메커니즘
 
 ```bash
-#!/bin/bash
-# Fault Injection 적용
-kubectl apply -f fault-injection.yaml
-
-# 5분간 모니터링
+#!/usr/bin/env bash
+set -euo pipefail
+cleanup() { kubectl apply -n chaos-tests -f tests/no-fault.yaml; }
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+kubectl apply -n chaos-tests -f tests/fault-injection.yaml
 sleep 300
-
-# 에러율 확인
-ERROR_RATE=$(kubectl exec -it prometheus-pod -- \
-  promtool query instant \
-  'rate(istio_requests_total{response_code="500"}[5m])' | \
-  jq '.data.result[0].value[1]')
-
-# 임계값 초과 시 롤백
-if [ $(echo "$ERROR_RATE > 0.1" | bc) -eq 1 ]; then
-  echo "Error rate too high, rolling back..."
-  kubectl delete -f fault-injection.yaml
-  exit 1
-fi
+./tests/check-fault-metrics.sh
+# EXIT restores the full baseline on success or normal failure.
 ```
 
 ### 5. 문서화
@@ -929,19 +933,18 @@ fi
 모든 Fault Injection 테스트를 문서화:
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: api-fault-test
   annotations:
     # 테스트 목적
-    test-purpose: "Verify Circuit Breaker activation"
+    test-purpose: "Verify caller error handling; test upstream ejection separately"
 
     # 예상 동작
     expected-behavior: |
-      - Circuit Breaker opens after 5 consecutive errors
+      - Caller handles the injected error according to the test hypothesis
       - Requests fail fast with 503 error
-      - System recovers after 30 seconds
+      - Restore baseline and verify recovery
 
     # 성공 기준
     success-criteria: |
@@ -950,7 +953,7 @@ metadata:
       - No cascading failures
 
     # 롤백 계획
-    rollback-plan: "kubectl delete vs api-fault-test"
+    rollback-plan: "Restore the reviewed complete no-fault VirtualService"
 ```
 
 ### 6. 프로덕션 환경 주의사항
@@ -963,27 +966,10 @@ metadata:
 
 ### 7. 정기적인 테스트
 
-```yaml
-# 매주 자동 Chaos Test
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: weekly-chaos-test
-spec:
-  schedule: "0 3 * * 0"  # 매주 일요일 새벽 3시
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: chaos-tester
-          containers:
-          - name: chaos-test
-            image: chaos-tester:latest
-            env:
-            - name: FAULT_PERCENTAGE
-              value: "5"
-            - name: DURATION
-              value: "1h"
+```bash
+# Change the prepared scheduler to weekly; suspension/prerequisites still apply
+kubectl patch cronjob fault-injection-scheduler -n chaos-tests --type=merge \
+  -p '{"spec":{"schedule":"0 3 * * 0","timeZone":"Etc/UTC"}}'
 ```
 
 ## 참고 자료
@@ -992,3 +978,11 @@ spec:
 - [Principles of Chaos Engineering](https://principlesofchaos.org/)
 - [Netflix Chaos Engineering](https://netflix.github.io/chaosmonkey/)
 - [Google SRE - Testing for Reliability](https://sre.google/sre-book/testing-reliability/)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Primary reference 2](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
+- [Primary reference 3](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter)
+- [Primary reference 4](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Primary reference 5](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
+- [Primary reference 6](https://docs.gitlab.com/ci/yaml/)
+- [Primary reference 7](https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md)

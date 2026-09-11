@@ -4,21 +4,21 @@ This quiz tests your understanding of the Argo Rollouts Experiment CRD: its reso
 
 1. What is the core purpose of the Experiment CRD?
    - A) Shifting all production traffic to a new version
-   - B) Validating a new version with ephemeral ReplicaSets isolated from production traffic
+   - B) Validating a new version with ephemeral ReplicaSets and analyses
    - C) Storing a Rollout's revision history
    - D) Load testing cluster nodes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Validating a new version with ephemeral ReplicaSets isolated from production traffic**
+**Answer: B) Validating a new version with ephemeral ReplicaSets and analyses**
 
 **Explanation:**
-An Experiment launches ephemeral ReplicaSets and scales them down to 0 when it finishes. By default the experiment Pods receive no production Service traffic, so baseline and canary can be compared without affecting real users.
+An Experiment launches ephemeral ReplicaSets and scales them down to 0 when it finishes. Service selectors and routers must provide the intended isolation. Separate ReplicaSets alone do not guarantee that real users are unaffected.
 
 </details>
 
-2. What happens when an experiment step fails in a Rollout's canary strategy?
+2. What happens when an experiment step ends Failed or Error in a Rollout's canary strategy?
    - A) The step is skipped and the Rollout proceeds to the next step
    - B) The failed experiment is retried automatically
    - C) The Rollout is aborted and the stable version stays in place
@@ -30,11 +30,11 @@ An Experiment launches ephemeral ReplicaSets and scales them down to 0 when it f
 **Answer: C) The Rollout is aborted and the stable version stays in place**
 
 **Explanation:**
-The experiment step is a blocking step. The Rollout only proceeds when the Experiment finishes Successful; if it ends Failed or Inconclusive, the Rollout is aborted, becomes Degraded, and the stable version is preserved.
+The experiment step is a blocking step. The Rollout only proceeds when the Experiment finishes Successful; Failed/Error aborts the Rollout into Degraded. Inconclusive instead sets an InconclusiveExperiment pause for investigation and an operator decision. Abort does not undo database changes or external side effects.
 
 </details>
 
-3. When the `demo-app` Rollout's revision 2 update creates an experiment at its first step (index 0), which name format is correct? (The new version's PodTemplateHash is `74d8d8b4fb`.)
+3. When the `demo-app` Rollout's revision 2 update creates an experiment at its first step (index 0), which base name format is correct when there is no name collision? (The new version's PodTemplateHash is `74d8d8b4fb`.)
    - A) `demo-app-experiment-1`
    - B) `demo-app-74d8d8b4fb-2-0`
    - C) `experiment-demo-app-0-2`
@@ -50,24 +50,24 @@ An Experiment is named `<rollout-name>-<new-version PodTemplateHash>-<revision>-
 
 </details>
 
-4. With no extra configuration, why do experiment Pods receive no production traffic?
+4. When the example Service selects traffic-class=production and experiment Pods have traffic-class=experiment, why are those Pods excluded from that Service?
    - A) Experiment Pods are created in a separate namespace
    - B) Experiment Pods are blocked by a NetworkPolicy
-   - C) Experiment Pods carry a different `rollouts-pod-template-hash` label value than stable Pods, so Service selectors don't match them
+   - C) The Service selector’s traffic-class differs from the experiment Pod label
    - D) Experiment Pods are configured with an always-failing readinessProbe
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Experiment Pods carry a different `rollouts-pod-template-hash` label value than stable Pods, so Service selectors don't match them**
+**Answer: C) The Service selector’s traffic-class differs from the experiment Pod label**
 
 **Explanation:**
-The default isolation is label-based. To intentionally send traffic, either set the `service` attribute on a template to create an experiment-scoped Service, or use `weight` on a Rollout that has trafficRouting configured.
+The example explicitly separates selection sets using labels/selectors. Another Service selecting only the app label could still include experiment Pods. To intentionally send traffic, either set the `service` attribute on a template to create an experiment-scoped Service, or use `weight` on a Rollout that has trafficRouting configured.
 
 </details>
 
 5. What is the prerequisite for sending real traffic to experiment Pods via a template's `weight` field?
-   - A) The Rollout must have trafficRouting configured
+   - A) The Rollout must have trafficRouting that supports weighted Experiments
    - B) The template's replicas must equal the stable replicas
    - C) The AnalysisTemplate must use the web provider
    - D) The Experiment must be created standalone, without a Rollout
@@ -75,10 +75,10 @@ The default isolation is label-based. To intentionally send traffic, either set 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) The Rollout must have trafficRouting configured**
+**Answer: A) The Rollout must have trafficRouting that supports weighted Experiments**
 
 **Explanation:**
-Weight-based distribution requires a traffic provider such as Istio, ALB, or NGINX that can actually split traffic by ratio, so it only works on Rollouts with trafficRouting configured. Without trafficRouting, create an experiment-scoped Service via the `service` attribute and wire up routing yourself.
+Weight belongs to each Rollout experiment-step template. A supporting router such as ALB/Istio is required; ordinary canary weighting does not imply Experiment splitting support. Without trafficRouting, create an experiment-scoped Service via the `service` attribute and wire up routing yourself.
 
 </details>
 
@@ -94,7 +94,7 @@ Weight-based distribution requires a traffic provider such as Istio, ALB, or NGI
 **Answer: B) After 2 failed measurements (failed > failureLimit)**
 
 **Explanation:**
-`failureLimit` is the number of allowed failures; the AnalysisRun is assessed Failed the moment the failure count exceeds it. In our live test, the run failed on the second failure with the message `Metric "success-rate" assessed Failed due to failed (2) > failureLimit (1)`. Likewise, exceeding `inconclusiveLimit` yields Inconclusive, and exceeding `consecutiveErrorLimit` (consecutive collection errors, default 4) yields Error.
+`failureLimit` is the number of allowed failures; the AnalysisRun is assessed Failed the moment the failure count exceeds it. The 1.10.0 implementation compares `failed > failureLimit`. Likewise, exceeding `inconclusiveLimit` yields Inconclusive, and exceeding `consecutiveErrorLimit` (consecutive collection errors, default 4) yields Error.
 
 </details>
 
@@ -126,6 +126,6 @@ The Experiment controller first creates the per-template ReplicaSets and waits u
 **Answer: B) They are scaled down to 0, and any Service created via the `service` attribute is cleaned up**
 
 **Explanation:**
-An Experiment is ephemeral. When the duration elapses or the analysis finishes, the baseline/canary ReplicaSets are scaled down to 0 and the experiment-scoped Service is deleted with them. Only the result (Successful/Failed) propagates to the Rollout, deciding whether to proceed or abort.
+An Experiment is ephemeral. After completion, the default thirty-second scale-down delay precedes scaling replicas to zero. Generated Services are removed after available replicas reach zero. ReplicaSet/AnalysisRun objects may remain under retention policies. Successful advances, Failed/Error aborts, and Inconclusive pauses.
 
 </details>

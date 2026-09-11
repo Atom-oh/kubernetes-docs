@@ -29,12 +29,14 @@ In microservice architecture, it prevents failures from one service from propaga
 
 | Problem | Without Circuit Breaker | With Circuit Breaker |
 |---------|------------------------|----------------------|
-| **Response Time** | Wait until timeout (30s+) | Immediate failure (1ms) |
+| **Response Time** | Wait until timeout (30s+) | Fast rejection after configured limits are reached |
 | **Resource Usage** | Thread/connection exhaustion | Resource protection |
 | **Failure Propagation** | Cascading failures occur | Failure isolation |
 | **Recovery Time** | Manual intervention required | Automatic recovery attempts |
 
 ## Circuit Breaker Overview
+
+The diagram illustrates the generic Closed/Open/Half-Open library pattern. Istio implements resource-based connection-pool circuit breakers and passive per-endpoint outlier ejection; it does not expose a single mesh-wide three-state breaker. Limits/health observations are local to each proxy and upstream cluster/priority, with possible concurrency overshoot. Outlier ejection removes an endpoint from selection temporarily; it does not delete a Pod. Examples below are alternatives.
 
 ![State machine showing the circuit breaker moving from Closed to Open once the consecutive-error threshold is exceeded, to HalfOpen after the wait time elapses, and back to Closed on success or Open on failure.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
 
@@ -61,7 +63,7 @@ spec:
 
 ## Outlier Detection
 
-Outlier Detection automatically removes unhealthy instances.
+Outlier Detection temporarily excludes unhealthy endpoints from load balancing, subject to ejection limits and panic behavior.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -72,14 +74,16 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5        # 5 consecutive errors
+      consecutive5xxErrors: 5        # 5 consecutive errors
       interval: 30s               # Check every 30 seconds
-      baseEjectionTime: 30s       # Remove for 30 seconds
+      baseEjectionTime: 30s       # Minimum; repeated ejection can last longer
       maxEjectionPercent: 50      # Remove up to 50%
-      minHealthPercent: 40        # Maintain at least 40%
+      minHealthPercent: 40        # Below this, disable outlier isolation and use all hosts
 ```
 
 ### Advanced Outlier Detection Settings
+
+Consecutive-error detection can eject inline; `interval` controls periodic sweeps, not a mandatory wait before every ejection. `minHealthPercent` is a fail-open threshold, not a reserved healthy capacity floor. `maxEjectionTime` is an Envoy field not exposed by this Istio DestinationRule API; do not put it in these manifests.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -91,19 +95,18 @@ spec:
   trafficPolicy:
     outlierDetection:
       # Consecutive error based
-      consecutiveGatewayErrors: 5    # 5xx errors 5 times
-      consecutive5xxErrors: 3        # 500~599 errors 3 times
+      consecutiveGatewayErrors: 3    # HTTP 502/503/504
+      consecutive5xxErrors: 5        # All HTTP 5xx
 
       # Time intervals
       interval: 10s                  # Check every 10 seconds
       baseEjectionTime: 30s          # First ejection time
-      maxEjectionTime: 300s          # Maximum ejection time
 
       # Rate limits
       maxEjectionPercent: 50         # Remove up to 50%
-      minHealthPercent: 30           # Maintain at least 30%
+      minHealthPercent: 30           # Fail-open/panic threshold, not a health guarantee
 
-      # Success rate based
+      # Separate local connection errors from upstream response errors
       splitExternalLocalOriginErrors: true
 ```
 
@@ -142,12 +145,14 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 10s
       baseEjectionTime: 30s
 ```
 
 ### Retry Budget Pattern
+
+This budget limits concurrent retries relative to active/pending requests at each proxy cluster; it is not a requests-per-second limit. Retry-safe reads use the retry policy, while other methods explicitly disable it.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -158,13 +163,21 @@ spec:
   hosts:
   - payment-service
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment-service
     retries:
       attempts: 2                    # Minimize retries
       perTryTimeout: 1s              # Fast fail
-      retryOn: retriable-4xx,5xx
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -173,12 +186,15 @@ metadata:
 spec:
   host: payment-service
   trafficPolicy:
+    retryBudget:
+      percent: 20
+      minRetryConcurrency: 3
     connectionPool:
       http:
         http1MaxPendingRequests: 5   # Low queue
         maxRequestsPerConnection: 1  # 1 request per connection
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 5s
       baseEjectionTime: 60s          # Long recovery time
 ```
@@ -201,13 +217,8 @@ spec:
     connectionPool:
       tcp:
         maxConnections: 100          # Maximum 100 connections
-      http:
-        http1MaxPendingRequests: 50  # 50 pending requests
-        http2MaxRequests: 100        # HTTP/2 100 concurrent requests
-        maxRequestsPerConnection: 2  # Maximum 2 requests per connection
-        idleTimeout: 60s             # Idle connection timeout
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
@@ -224,6 +235,8 @@ spec:
 - Prevent database connection pool exhaustion
 - Block cascading failures from slow queries
 - Automatically remove unhealthy instances
+
+Native database protocols only use TCP limits/failure observations here. The per-proxy connection limit is not the database’s global pool size and does not inspect slow SQL queries.
 
 ### 2. maxConnections: 1 Pattern (Single Connection)
 
@@ -245,7 +258,7 @@ spec:
         maxRequestsPerConnection: 1  # 1 request per connection
         h2UpgradePolicy: DO_NOT_UPGRADE  # Prevent HTTP/2 upgrade
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 1 error
+      consecutive5xxErrors: 1           # Block immediately on 1 error
       interval: 10s
       baseEjectionTime: 60s
 ```
@@ -254,6 +267,8 @@ spec:
 - When legacy systems cannot handle concurrent connections
 - When external API rate limits are very strict
 - When sequential processing with a single connection is required
+
+`maxConnections: 1` does not serialize the whole mesh or enforce an external API quota. Multiple proxies each have limits, HTTP/2 can multiplex requests, and `maxRequestsPerConnection: 1` disables reuse rather than guaranteeing single execution. Use an application queue/rate limiter for global coordination.
 
 ### 3. Per-Subset Circuit Breaker
 
@@ -273,7 +288,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 2
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -292,7 +307,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -306,7 +321,7 @@ spec:
           http1MaxPendingRequests: 5
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 1
+        consecutive5xxErrors: 1
         interval: 5s
         baseEjectionTime: 120s
 ```
@@ -338,7 +353,7 @@ spec:
         idleTimeout: 300s
         h2UpgradePolicy: UPGRADE       # Use HTTP/2
     outlierDetection:
-      consecutiveErrors: 10          # Lenient setting
+      consecutive5xxErrors: 10          # Lenient setting
       interval: 60s
       baseEjectionTime: 30s
       maxEjectionPercent: 20         # Remove up to 20% only
@@ -362,7 +377,6 @@ spec:
       # Performance based
       interval: 10s
       baseEjectionTime: 30s
-      maxEjectionTime: 300s          # Maximum 5 minutes
 
       # Dynamic adjustment
       splitExternalLocalOriginErrors: true
@@ -370,6 +384,8 @@ spec:
 ```
 
 ## External Service Circuit Breaker
+
+HTTP examples below expect plaintext HTTP from the app to its sidecar, which originates verified TLS to the real external host on 443. If the app already uses TLS, avoid double TLS and use only policies visible at that layer. Native MongoDB application TLS/authentication remains a separate client/server requirement.
 
 Use with ServiceEntry to protect external services.
 
@@ -385,9 +401,10 @@ spec:
   hosts:
   - api.payment-provider.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -406,12 +423,15 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1  # Minimize connection reuse
     outlierDetection:
-      consecutiveErrors: 3           # Fast blocking
+      consecutive5xxErrors: 3           # Fast blocking
       interval: 30s
       baseEjectionTime: 120s         # Long recovery time
       maxEjectionPercent: 100        # Can completely block
     tls:
-      mode: SIMPLE                   # TLS connection
+      mode: SIMPLE
+      sni: api.payment-provider.com
+      subjectAltNames:
+      - api.payment-provider.com
 ```
 
 ### 2. External Database Circuit Breaker
@@ -443,7 +463,7 @@ spec:
         maxConnections: 50
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
@@ -459,9 +479,10 @@ spec:
   hosts:
   - api.rate-limited-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -475,12 +496,17 @@ spec:
     connectionPool:
       http:
         http1MaxPendingRequests: 1   # Minimize queue
-        maxRequestsPerConnection: 1  # Prevent rate limit exceeding
+        maxRequestsPerConnection: 0  # Reuse connections; not a quota limiter
         idleTimeout: 1s              # Fast connection release
     outlierDetection:
-      consecutiveErrors: 1           # Block immediately on 429 error
+      consecutive5xxErrors: 3           # Default HTTP 5xx detection; not 429
       interval: 60s
-      baseEjectionTime: 300s         # Wait 5 minutes (rate limit reset)
+      baseEjectionTime: 30s          # Independent of provider Retry-After
+    tls:
+      mode: SIMPLE
+      sni: api.rate-limited-service.com
+      subjectAltNames:
+      - api.rate-limited-service.com
 ---
 # VirtualService: Retry settings
 apiVersion: networking.istio.io/v1
@@ -498,6 +524,8 @@ spec:
       attempts: 0                    # Disable retry (rate limit)
     timeout: 10s
 ```
+
+HTTP 429 requires provider-aware throttling and Retry-After handling. Default 5xx outlier detection and connection churn do not enforce an API quota or infer its reset time.
 
 ## Monitoring and Debugging
 
@@ -519,12 +547,12 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 
 ### Key Metrics
 
-```yaml
+```promql
 # Prometheus queries
-# Circuit Breaker Open count
+# Requests circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_open
 
-# Pending request count
+# Pending-request circuit-open gauge (0/1)
 envoy_cluster_circuit_breakers_default_rq_pending_open
 
 # Outlier Detection Ejection
@@ -541,8 +569,8 @@ envoy_cluster_upstream_rq_retry
 
 ```yaml
 # Circuit Breaker Dashboard
-- expr: rate(envoy_cluster_circuit_breakers_default_rq_open[5m])
-  legend: "Circuit Breaker Open Rate"
+- expr: envoy_cluster_circuit_breakers_default_rq_open
+  legend: "Circuit Breaker Open State"
 
 - expr: envoy_cluster_outlier_detection_ejections_active
   legend: "Ejected Instances"
@@ -555,14 +583,14 @@ envoy_cluster_upstream_rq_retry
 
 ```bash
 # Check Proxy configuration
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local
 
 # Check Circuit Breaker settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 
 # Check Outlier Detection settings
-istioctl proxy-config cluster <pod-name> -o json | \
+istioctl proxy-config clusters <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
 
@@ -614,19 +642,19 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 
 # Result:
-# - Up to 15 duplicates possible before Circuit Breaker activates (3 retries x 5 errors)
+# - attempts: 3 allows up to 4 deliveries per original request; the ejection threshold is not a multiplier
 # - Critical operations like payment, inventory deduction get duplicated
 # - Data consistency destroyed
 ```
 
 #### Correct Usage Patterns
 
-**Pattern 1: Circuit Breaker Only (Disable Retry)**
+**Pattern 1: Retry-Safe Reads; No Mesh Retry for Writes**
 
 ```yaml
 # Safe: Read-only + Circuit Breaker
@@ -657,7 +685,7 @@ spec:
   host: product-catalog
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -681,9 +709,6 @@ spec:
     timeout: 10s
     retries:
       attempts: 0  # Disable Retry for POST
-      # Or
-      # attempts: 1
-      # retryOn: connect-failure,refused-stream  # Network only
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -693,40 +718,16 @@ spec:
   host: payment-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **Pattern 2: Application-Level Idempotency + Circuit Breaker**
 
-```python
-# Server: Idempotency Key validation
-@app.route('/payment', methods=['POST'])
-def create_payment():
-    idempotency_key = request.headers.get('X-Idempotency-Key')
+An idempotency key must be bound to the authenticated caller and request payload and recorded atomically with the business mutation/result. A Redis exists check followed by payment and separate cache writes is racy and is not a safe implementation. Use the [atomic idempotency workflow](05-retry-timeout.md) and a downstream idempotency contract/outbox where necessary. Only then use the retry policy below; header presence alone is insufficient.
 
-    if not idempotency_key:
-        return jsonify({"error": "Missing Idempotency-Key"}), 400
 
-    # Check if request was already processed
-    if redis.exists(f"payment:idempotency:{idempotency_key}"):
-        cached_result = redis.get(f"payment:result:{idempotency_key}")
-        return jsonify(json.loads(cached_result)), 200
-
-    # Process new payment
-    try:
-        payment = process_payment(request.json)
-
-        # Cache result (24 hours)
-        redis.setex(f"payment:idempotency:{idempotency_key}", 86400, "1")
-        redis.setex(f"payment:result:{idempotency_key}", 86400,
-                    json.dumps(payment))
-
-        return jsonify(payment), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-```
 
 ```yaml
 # Istio: Retry is safe when Idempotency is guaranteed
@@ -761,12 +762,12 @@ spec:
 | Service Type | Retry | Circuit Breaker | Idempotency Required |
 |-------------|-------|----------------|---------------------|
 | **Product Catalog** | 3 times | Required | Not required |
-| **Shopping Cart** | 3 times | Required | Not required |
+| **Shopping Cart** | Reads only by default | Tune as needed | Required for retryable mutations |
 | **Order Creation** | 0 times | Required | Required |
 | **Payment** | 0 times | Required | Required |
 | **Inventory Deduction** | 0 times | Required | Required |
 | **Points Accumulation** | 0 times | Required | Required |
-| **Notification Sending** | 3 times (idempotent) | Required | Recommended |
+| **Notification Sending** | Only with delivery deduplication | Tune as needed | Delivery/message idempotency required |
 
 #### Connection Pool and Data Consistency
 
@@ -798,7 +799,7 @@ spec:
 **Pre-deployment verification**:
 
 - [ ] Check Retry settings for POST/PUT/DELETE/PATCH requests
-- [ ] Set `attempts: 0` or `retryOn: connect-failure` for non-idempotent requests
+- [ ] Set `attempts: 0` for non-idempotent writes unless a verified application contract permits retries
 - [ ] Review duplicate possibility when combining Circuit Breaker and Retry
 - [ ] Implement Idempotency Key for critical operations (payment, inventory)
 - [ ] Confirm application-level validation logic exists
@@ -837,7 +838,7 @@ spec:
         http1MaxPendingRequests: 100
         maxRequestsPerConnection: 10
     outlierDetection:
-      consecutiveErrors: 10        # Lenient
+      consecutive5xxErrors: 10        # Lenient
       interval: 60s
       baseEjectionTime: 30s
 ```
@@ -856,7 +857,7 @@ spec:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 5
     outlierDetection:
-      consecutiveErrors: 5         # Moderate
+      consecutive5xxErrors: 5         # Moderate
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -870,31 +871,36 @@ connectionPool:
     http1MaxPendingRequests: 100
     maxRequestsPerConnection: 10
 outlierDetection:
-  consecutiveErrors: 10
+  consecutive5xxErrors: 10
+```
 
+```yaml
 # Backend service: Moderate
 connectionPool:
   http:
     http1MaxPendingRequests: 50
     maxRequestsPerConnection: 5
 outlierDetection:
-  consecutiveErrors: 5
+  consecutive5xxErrors: 5
+```
 
-# Database/Cache: Strict
+```yaml
+# Native database/cache TCP example
 connectionPool:
-  http:
-    http1MaxPendingRequests: 10
-    maxRequestsPerConnection: 2
+  tcp:
+    maxConnections: 10
 outlierDetection:
-  consecutiveErrors: 3
+  consecutive5xxErrors: 3
+```
 
+```yaml
 # External API: Very strict
 connectionPool:
   http:
     http1MaxPendingRequests: 5
     maxRequestsPerConnection: 1
 outlierDetection:
-  consecutiveErrors: 1
+  consecutive5xxErrors: 1
 ```
 
 ### 3. Alert Configuration
@@ -917,13 +923,15 @@ groups:
       summary: "Connection pool overflow rate is high"
 
   - alert: HighOutlierEjectionRate
-    expr: rate(envoy_cluster_outlier_detection_ejections_total[5m]) > 5
+    expr: rate(envoy_cluster_outlier_detection_ejections_enforced_total[5m]) > 5
     for: 3m
     annotations:
       summary: "High outlier ejection rate"
 ```
 
 ### 4. Test Scenarios
+
+Run load tests only against a prepared test service. Observe the live metrics separately: proxy-config shows configured thresholds, not whether the circuit is currently open. A 30-second wait does not guarantee endpoint recovery after repeated ejections.
 
 ```bash
 #!/bin/bash
@@ -945,7 +953,7 @@ wait
 
 # 3. Check Circuit Breaker status
 echo "=== Circuit Breaker Status ==="
-istioctl proxy-config cluster <pod> | grep circuit_breakers
+istioctl proxy-config clusters <pod> -o json | jq '.[] | .circuitBreakers'
 
 # 4. Wait for recovery
 echo "=== Waiting for Recovery ==="
@@ -957,6 +965,8 @@ curl -s http://service/api | jq .status
 ```
 
 ### 5. Documentation Template
+
+Replace these illustrative load/recovery figures with measurements; they are not fixed Istio guarantees. Enable the required Envoy statistics and use a local admin port-forward or `istioctl dashboard envoy` when the proxy image lacks curl.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -970,7 +980,7 @@ metadata:
     # Threshold rationale
     threshold-rationale: |
       - maxConnections: 100 (DB connection pool size)
-      - consecutiveErrors: 5 (observed error pattern)
+      - consecutive5xxErrors: 5 (observed error pattern)
       - baseEjectionTime: 30s (average recovery time)
 
     # Test results
@@ -983,7 +993,9 @@ metadata:
     operations: |
       - Monitor: envoy_cluster_circuit_breakers_*
       - Alert: Circuit open > 1min
-      - Rollback: kubectl delete dr my-service-circuit-breaker
+      - Rollback: restore the reviewed previous DestinationRule configuration
+spec:
+  host: my-service
 ```
 
 ## References
@@ -992,3 +1004,10 @@ metadata:
 - [Envoy Circuit Breaking](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
 - [Envoy Outlier Detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
 - [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki/How-it-Works)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Primary reference 2](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking)
+- [Primary reference 3](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Primary reference 4](https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats)
+- [Primary reference 5](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+- [Primary reference 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

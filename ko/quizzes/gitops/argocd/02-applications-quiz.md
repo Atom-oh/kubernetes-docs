@@ -14,7 +14,7 @@
 **정답: B) 애플리케이션의 원하는 상태와 동기화 설정 지정**
 
 **설명:**
-ArgoCD Application은 애플리케이션의 소스(Git 리포지토리, 경로, 리비전)와 대상(클러스터, 네임스페이스)을 정의하는 Kubernetes 커스텀 리소스이며, 동기화 정책과 헬스 체크도 포함합니다.
+ArgoCD Application은 애플리케이션의 소스(Git 리포지토리, 경로, 리비전)와 대상(클러스터, 네임스페이스)을 정의하는 Kubernetes 커스텀 리소스이며, 동기화 정책을 지정합니다. 상태의 health는 controller가 기록하고 사용자 정의 리소스 헬스 체크는 별도 argocd-cm 설정으로 정의합니다.
 
 </details>
 
@@ -34,7 +34,7 @@ ArgoCD Application은 애플리케이션의 소스(Git 리포지토리, 경로, 
 
 </details>
 
-3. Application에서 `spec.source.path` 필드는 무엇을 지정하나요?
+3. Git 소스를 쓰는 Application에서 `spec.source.path` 필드는 무엇을 지정하나요?
    - A) ArgoCD 설치 경로
    - B) 매니페스트가 포함된 Git 리포지토리 내의 디렉토리
    - C) 로컬 파일 시스템 경로
@@ -50,7 +50,7 @@ ArgoCD Application은 애플리케이션의 소스(Git 리포지토리, 경로, 
 
 </details>
 
-4. 아직 존재하지 않는 특정 네임스페이스에 애플리케이션을 배포하려면 어떻게 해야 하나요?
+4. Argo CD가 destination.namespace를 자동으로 생성하도록 하는 내장 sync 옵션은 무엇인가요?
    - A) 먼저 네임스페이스를 수동으로 생성
    - B) syncPolicy.syncOptions에 CreateNamespace=true 사용
    - C) 불가능함
@@ -62,23 +62,23 @@ ArgoCD Application은 애플리케이션의 소스(Git 리포지토리, 경로, 
 **정답: B) syncPolicy.syncOptions에 CreateNamespace=true 사용**
 
 **설명:**
-`syncPolicy.syncOptions`에 `CreateNamespace=true`를 설정하면 ArgoCD가 애플리케이션 리소스를 동기화하기 전에 대상 네임스페이스가 없으면 자동으로 생성합니다.
+`syncPolicy.syncOptions`에 `CreateNamespace=true`를 설정하면 ArgoCD가 애플리케이션 리소스를 동기화하기 전에 대상 네임스페이스가 없으면 생성합니다. 다른 namespace가 manifest에 명시되어 있다고 모두 생성하는 기능은 아니며 AppProject/RBAC 권한도 필요합니다.
 
 </details>
 
 5. `targetRevision: HEAD`와 `targetRevision: main`의 차이점은 무엇인가요?
    - A) 차이 없음
-   - B) HEAD는 항상 기본 브랜치를 가리키고, main은 명시적
+   - B) HEAD는 원격 HEAD를 따르고, main은 명시적인 브랜치 이름
    - C) HEAD가 더 빠름
    - D) main은 웹훅을 지원하고, HEAD는 지원하지 않음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) HEAD는 항상 기본 브랜치를 가리키고, main은 명시적**
+**정답: B) HEAD는 원격 HEAD를 따르고, main은 명시적인 브랜치 이름**
 
 **설명:**
-`HEAD`는 리포지토리의 기본 브랜치가 무엇이든 가리키는 심볼릭 참조이고, `main`은 main 브랜치를 명시적으로 지정합니다. 기본 브랜치가 변경되면 `HEAD`를 사용하는 것이 더 유연합니다.
+`HEAD`는 리포지토리의 기본 브랜치가 무엇이든 가리키는 심볼릭 참조이고, `main`은 main 브랜치를 명시적으로 지정합니다. 기본 브랜치 변경이 배포 대상에도 영향을 줄 수 있습니다. 재현성을 요구하는 릴리스는 검증한 commit/tag 정책을 사용합니다.
 
 </details>
 
@@ -110,7 +110,7 @@ Helm 리포지토리에서 배포할 때는 `source.chart`와 `source.repoURL`�
 **정답: B) 기본 릴리스 이름(Application 이름)을 재정의**
 
 **설명:**
-기본적으로 ArgoCD는 Application 이름을 Helm 릴리스 이름으로 사용합니다. `releaseName`을 명시적으로 설정하면 Helm 릴리스에 다른 이름을 사용할 수 있습니다.
+기본적으로 ArgoCD는 Application 이름을 Helm 릴리스 이름으로 사용합니다. `releaseName`은 템플릿의 Release.Name을 바꿉니다. Argo CD가 일반 Helm release를 저장·운영한다는 뜻은 아닙니다. label 기반 tracking을 사용한다면 chart selector와 추적 label의 상호작용도 확인합니다.
 
 </details>
 
@@ -126,6 +126,6 @@ Helm 리포지토리에서 배포할 때는 `source.chart`와 `source.repoURL`�
 **정답: C) values 파일과 인라인 values 둘 다**
 
 **설명:**
-ArgoCD는 `spec.source.helm.valueFiles`(리포지토리의 파일 참조) 및/또는 `spec.source.helm.values`(인라인 YAML)를 통해 Helm values를 지정하는 것을 지원합니다. 둘 다 함께 사용할 수 있으며, 인라인 values가 우선합니다.
+ArgoCD는 `spec.source.helm.valueFiles`(리포지토리의 파일 참조) 및/또는 `spec.source.helm.values`(인라인 YAML)를 통해 Helm values를 지정하는 것을 지원합니다. valueFiles와 인라인 값을 함께 사용할 수 있습니다. 전체 우선순위는 parameters > valuesObject > values > valueFiles > Chart 기본값이며, valuesObject와 values는 인라인 표현을 중복 사용하지 않는 편이 명확합니다.
 
 </details>

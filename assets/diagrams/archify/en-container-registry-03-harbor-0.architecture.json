@@ -16,7 +16,7 @@
           "core",
           "registry"
         ],
-        "note": "Core authenticates and authorizes Portal requests, then Registry stores and serves the images."
+        "note": "Core handles authentication, authorization and artifact management. Image data flows between clients and Registry."
       },
       {
         "id": "async-security",
@@ -24,8 +24,7 @@
         "focus": [
           "core",
           "jobservice",
-          "trivy",
-          "notary"
+          "trivy"
         ],
         "note": "Core hands replication, GC and scan jobs to Job Service; Trivy scans images for vulnerabilities."
       },
@@ -75,7 +74,7 @@
       "id": "registry",
       "type": "backend",
       "label": "Registry",
-      "sublabel": "Docker Distribution (registry:2)",
+      "sublabel": "OCI Distribution API",
       "pos": [
         120,
         300
@@ -140,20 +139,6 @@
         200,
         60
       ]
-    },
-    {
-      "id": "notary",
-      "type": "security",
-      "label": "Notary",
-      "sublabel": "Image signing (optional)",
-      "pos": [
-        880,
-        560
-      ],
-      "size": [
-        200,
-        60
-      ]
     }
   ],
   "boundaries": [
@@ -167,8 +152,7 @@
         "jobservice",
         "postgres",
         "redis",
-        "trivy",
-        "notary"
+        "trivy"
       ]
     },
     {
@@ -183,8 +167,7 @@
       "kind": "security-group",
       "label": "Security",
       "wraps": [
-        "trivy",
-        "notary"
+        "trivy"
       ]
     }
   ],
@@ -201,7 +184,7 @@
       "id": "core-registry",
       "from": "core",
       "to": "registry",
-      "label": "Image push/pull",
+      "label": "Artifact API",
       "variant": "emphasis"
     },
     {

@@ -1,6 +1,6 @@
 # Traffic Management 퀴즈
 
-> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 23일
+> **검토 버전**: Istio 1.31.0 **EKS 버전**: 1.34–1.36 **마지막 업데이트**: 2026년 9월 11일
 
 이 퀴즈는 Istio의 트래픽 관리 기능에 대한 이해도를 테스트합니다.
 
@@ -13,7 +13,7 @@ VirtualService에 대한 설명으로 **올바른** 것은?
 A. Kubernetes Service를 대체하는 리소스이다\
 B. 로드 밸런싱 알고리즘만 정의할 수 있다\
 C. 라우팅 규칙을 정의하고 트래픽을 제어한다\
-D. Control Plane에서만 작동한다
+D. 모든 애플리케이션 요청을 istiod를 통해 전송한다
 
 <details>
 
@@ -33,12 +33,12 @@ VirtualService는 **라우팅 규칙**을 정의하여 트래픽을 제어하는
   * Header 기반 라우팅
   * 가중치 기반 트래픽 분할
   * Timeout, Retry 설정
-* D (X): VirtualService는 Data Plane의 Envoy에서 실행됩니다
+* D (X): istiod가 VirtualService API 객체를 변환하고 Data Plane의 Envoy가 생성된 라우팅 구성을 적용합니다
 
 **예제:**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -63,7 +63,7 @@ spec:
 **참고 자료:**
 
 * [라우팅](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [VirtualService 개념](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+* [VirtualService 개념](../../../service-mesh/istio/02-basic-concepts.md#1-virtualservice)
 
 </details>
 
@@ -93,7 +93,7 @@ HTTP 경로 기반 라우팅은 **VirtualService**의 역할입니다.
 1. **서브셋 정의 (A - O)**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -135,9 +135,13 @@ spec:
 
 ```yaml
 # VirtualService에서 처리
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
+metadata:
+  name: path-routing-example
 spec:
+  hosts:
+  - api-service
   http:
   - match:
     - uri:
@@ -159,8 +163,8 @@ spec:
 
 **참고 자료:**
 
-* [로드 밸런싱](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/05-load-balancing.md)
-* [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/08-connection-pool.md)
+* [로드 밸런싱](../../../service-mesh/istio/traffic-management/06-load-balancing.md)
+* [Connection Pool](../../../service-mesh/istio/traffic-management/07-circuit-breaker.md)
 
 </details>
 
@@ -171,7 +175,7 @@ spec:
 다음 VirtualService 구성에서 v1과 v2로 가는 트래픽의 비율은?
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -235,27 +239,29 @@ weight 값이 **v1: 80, v2: 20**이므로 트래픽은 **80%가 v1**, **20%가 v
 **Argo Rollouts를 사용한 자동 Canary:**
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-spec:
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: reviews
-      steps:
-      - setWeight: 10
-      - pause: {duration: 2m}
-      - setWeight: 25
-      - pause: {duration: 2m}
-      - setWeight: 50
-      - pause: {duration: 2m}
+# Strategy fragment; merge into a complete Rollout with selector/template
+strategy:
+  canary:
+    trafficRouting:
+      istio:
+        virtualService:
+          name: reviews
+        destinationRule:
+          name: reviews
+          stableSubsetName: v1
+          canarySubsetName: v2
+    steps:
+    - setWeight: 10
+    - pause: {duration: 2m}
+    - setWeight: 25
+    - pause: {duration: 2m}
+    - setWeight: 50
+    - pause: {duration: 2m}
 ```
 
 **참고 자료:**
 
-* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [트래픽 분할](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 * [Argo Rollouts 통합](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -264,93 +270,41 @@ spec:
 
 ### 문제 4: Gateway의 용도
 
-Istio Gateway의 주요 역할로 **적절하지 않은** 것은?
+Istio 인바운드 Gateway 구성의 역할이 **아닌** 것은?
 
-A. 클러스터 외부에서 내부로의 트래픽 진입점\
-B. TLS 종료 및 인증서 관리\
-C. 서비스 간 mTLS 암호화\
-D. 외부 트래픽의 로드 밸런싱
+A. 리스너 포트·프로토콜·허용 호스트 정의\
+B. 인증서 Secret을 이용한 TLS 종료 구성\
+C. 모든 앱 Pod에 프록시를 자동 주입하고 단독으로 전체 east-west 트래픽 보호\
+D. 인바운드 트래픽을 VirtualService 라우팅에 연결
 
 <details>
-
 <summary>정답 및 해설</summary>
 
 **정답: C**
 
-서비스 간 mTLS 암호화는 **Sidecar Envoy**와 **PeerAuthentication**의 역할입니다.
-
-**해설:**
-
-**Gateway의 주요 역할:**
-
-1. **Ingress/Egress 트래픽 진입점 (A - O)**
+Istio Gateway는 기존 게이트웨이 프록시를 구성합니다. 워크로드 등록과 서비스 간 보안에는 Sidecar 또는 Ambient Data Plane과 정책이 필요합니다. Gateway 프록시 자체도 업스트림 mTLS를 시작할 수 있으므로 Gateway가 mTLS를 전혀 사용하지 않는다는 설명도 틀립니다. Gateway는 인증서를 발급하지 않으며 credentialName은 게이트웨이 워크로드 네임스페이스에서 별도로 관리하는 Secret을 참조합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
+  namespace: istio-system
 spec:
   selector:
-    istio: ingressgateway  # Ingress Gateway Pod 선택
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*"
-```
-
-2. **TLS 종료 (B - O)**
-
-```yaml
-spec:
+    istio: ingressgateway
   servers:
   - port:
       number: 443
       name: https
       protocol: HTTPS
+    hosts: [bookinfo.example.com]
     tls:
       mode: SIMPLE
-      credentialName: bookinfo-secret  # TLS 인증서
-    hosts:
-    - bookinfo.example.com
+      credentialName: bookinfo-secret
 ```
 
-3. **외부 트래픽 로드 밸런싱 (D - O)**
-
-* Gateway는 Kubernetes LoadBalancer Service와 연동
-* 외부 트래픽을 클러스터 내부로 분산
-
-4. **서비스 간 mTLS (C - X)**
-
-* 이것은 Sidecar Envoy의 역할입니다:
-
-```yaml
-# PeerAuthentication으로 mTLS 활성화
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-spec:
-  mtls:
-    mode: STRICT
-```
-
-**Gateway vs Sidecar 역할:**
-
-| 기능          | Gateway | Sidecar Envoy |
-| ----------- | ------- | ------------- |
-| 외부 → 내부 트래픽 | ✅       | ❌             |
-| TLS 종료      | ✅       | ❌             |
-| 서비스 간 mTLS  | ❌       | ✅             |
-| 내부 라우팅      | ❌       | ✅             |
-
-**참고 자료:**
-
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+[Gateway와 VirtualService](../../../service-mesh/istio/traffic-management/01-gateway-virtualservice.md)
 
 </details>
 
@@ -361,7 +315,7 @@ spec:
 다음 VirtualService 구성의 의미는?
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -401,6 +355,8 @@ retries:
   attempts: 3          # 최초 요청 이후 최대 3번 재시도
   perTryTimeout: 2s    # 각 전달의 제한 시간
 ```
+
+시간 예시는 retryOn 조건에 해당하는 실패를 가정하며 backoff/처리 오버헤드를 생략합니다. 모든 정책이 타임아웃을 재시도하는 것은 아닙니다.
 
 **실행 시나리오:**
 
@@ -446,7 +402,7 @@ retries:
 # 쓰기 요청: mesh retry 비활성화
 - match:
   - method:
-      regex: "^(POST|PATCH)$"
+      regex: "^(POST|PUT|PATCH|DELETE)$"
   retries:
     attempts: 0
 ```
@@ -471,161 +427,130 @@ retries:
 
 ### 문제 6: Argo Rollouts + Istio Canary 배포
 
-Argo Rollouts와 Istio를 함께 사용하여 자동화된 Canary 배포를 구현하는 과정을 설명하세요. **필수 리소스**(Rollout, VirtualService, DestinationRule, AnalysisTemplate)와 **자동 롤백 조건**을 포함해야 합니다.
+리소스, 적용 순서, 중단 조건을 포함해 메트릭 검증을 사용하는 subset 기반 Canary 배포를 설명하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+Service, stable/canary subset의 DestinationRule, VirtualService 라우트, AnalysisTemplate, 완전한 Rollout을 사용합니다. Argo는 라우트 가중치와 subset 파드 템플릿 해시를 변경하지만 참조할 Istio 리소스를 생성하지 않습니다. Host 기반 통합은 별도의 stable/canary Service를 사용합니다. routes 목록을 명시하면 해당 이름과 일치해야 하며 라우트가 하나면 목록을 생략할 수 있습니다.
 
-**Argo Rollouts + Istio Canary 배포 구현:**
+Sidecar 주입과 호환 Argo Rollouts 컨트롤러/CLI가 준비된 새 실습 네임스페이스를 사용하세요 (검토한 가이드는 v1.10.0). Prometheus Pod 스크래핑에 아래 relabel 규칙을 추가하고 실제 트래픽에 rollout_hash와 reporter="destination" 레이블이 있는지 확인합니다. 안정 버전과 섞인 평균이 아닌 최신 ReplicaSet을 측정합니다.
 
-***
+```yaml
+# 기존 워크로드 Pod scrape job의 relabel_configs 발췌
+- source_labels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]
+  target_label: rollout_hash
+```
 
-**1. Service 생성 (기본 Kubernetes Service)**
+먼저 사전 리소스를 생성합니다:
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: reviews
+  namespace: default
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: reviews  # Rollout의 모든 Pod 선택
-```
-
-***
-
-**2. DestinationRule 정의 (서브셋 정의)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    app: reviews
+---
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-destrule
+  namespace: default
 spec:
   host: reviews
   subsets:
   - name: stable
-    labels: {}  # Rollout이 자동으로 관리
+    labels:
+      app: reviews
   - name: canary
-    labels: {}  # Rollout이 자동으로 관리
-```
-
-**중요**: Rollout은 Pod에 `rollouts-pod-template-hash` 레이블을 자동으로 추가하고, 이 레이블로 서브셋을 구분합니다.
-
-***
-
-**3. VirtualService 정의 (트래픽 분할)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    labels:
+      app: reviews
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
+  namespace: default
 spec:
   hosts:
   - reviews
   http:
-  - name: primary  # Rollout이 참조하는 route 이름 (필수)
+  - name: primary
     route:
     - destination:
         host: reviews
         subset: stable
-      weight: 100  # Rollout이 자동으로 변경
+      weight: 100
     - destination:
         host: reviews
         subset: canary
-      weight: 0    # Rollout이 자동으로 변경
-```
-
-**주요 포인트**:
-
-* `http[].name` 필드는 필수
-* Rollout은 이 VirtualService의 `weight` 값만 자동으로 업데이트
-
-***
-
-**4. AnalysisTemplate 정의 (자동 롤백 조건)**
-
-**성공률 분석:**
-
-```yaml
+      weight: 0
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: success-rate
+  namespace: default
 spec:
   args:
   - name: service-name
-
+  - name: pod-template-hash
   metrics:
   - name: success-rate
     interval: 30s
-    count: 4  # 4번 측정 (총 2분)
-    successCondition: result >= 0.95  # 95% 이상 성공률
-    failureLimit: 2  # 2번 실패하면 자동 롤백
+    count: 4
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] >= 0.95
+    failureLimit: 0
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
-        query: |
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}",
-              response_code!~"5.*"
-            }[2m]
-          ))
-          /
-          sum(rate(
-            istio_requests_total{
-              destination_service_name="{{args.service-name}}"
-            }[2m]
-          ))
-```
-
-**지연시간 분석:**
-
-```yaml
+        query: "sum(rate(\n  istio_requests_total{\n    destination_service_name=\"\
+          {{args.service-name}}\",\n    reporter=\"destination\",\n    rollout_hash=\"\
+          {{args.pod-template-hash}}\",\n    destination_workload_namespace=\"default\"\
+          ,\n    response_code!~\"5.*\"\n  }[2m]\n))\n/\nsum(rate(\n  istio_requests_total{\n\
+          \    destination_service_name=\"{{args.service-name}}\",\n    reporter=\"\
+          destination\",\n    rollout_hash=\"{{args.pod-template-hash}}\",\n    destination_workload_namespace=\"\
+          default\"\n  }[2m]\n))\n"
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: latency
+  namespace: default
 spec:
   args:
   - name: service-name
-
+  - name: pod-template-hash
   metrics:
   - name: latency-p95
     interval: 30s
     count: 4
-    successCondition: result <= 500  # P95 지연시간 500ms 이하
-    failureLimit: 2
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] <= 500
+    failureLimit: 0
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
-        query: |
-          histogram_quantile(0.95,
-            sum(rate(
-              istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}"
-              }[2m]
-            )) by (le)
-          )
+        query: "histogram_quantile(0.95,\n  sum(rate(\n    istio_request_duration_milliseconds_bucket{\n\
+          \      destination_service_name=\"{{args.service-name}}\",\n    reporter=\"\
+          destination\",\n    rollout_hash=\"{{args.pod-template-hash}}\",\n     \
+          \ destination_workload_namespace=\"default\"\n    }[2m]\n  )) by (le)\n\
+          )\n"
 ```
 
-***
-
-**5. Rollout 리소스 정의 (Canary 전략)**
+다음으로 Rollout을 생성합니다:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: reviews
+  namespace: default
 spec:
   replicas: 5
   revisionHistoryLimit: 2
@@ -636,17 +561,22 @@ spec:
     metadata:
       labels:
         app: reviews
+        sidecar.istio.io/inject: 'true'
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v2:1.17.0
+        image: docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
         ports:
         - containerPort: 9080
-
-  # Canary 배포 전략
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 100m
+          limits:
+            memory: 128Mi
+            cpu: 200m
   strategy:
     canary:
-      # Istio VirtualService를 통한 트래픽 제어
       trafficRouting:
         istio:
           virtualService:
@@ -657,107 +587,72 @@ spec:
             name: reviews-destrule
             canarySubsetName: canary
             stableSubsetName: stable
-
-      # Canary 단계 정의
       steps:
-      - setWeight: 10    # 10% 트래픽을 Canary로
+      - setWeight: 10
       - pause:
           duration: 2m
-
-      - setWeight: 25    # 25% 트래픽을 Canary로
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 25
       - pause:
           duration: 2m
-
-      - setWeight: 50    # 50% 트래픽을 Canary로
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 50
       - pause:
           duration: 2m
-
-      - setWeight: 75    # 75% 트래픽을 Canary로
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      - setWeight: 75
       - pause:
           duration: 2m
-
-      # 자동 메트릭 분석
-      analysis:
-        templates:
-        - templateName: success-rate
-        - templateName: latency
-        startingStep: 1
-        args:
-        - name: service-name
-          value: reviews
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 ```
 
-***
-
-**6. 배포 실행 및 모니터링**
+최초 배포는 안정 버전을 만들며 이미지 업데이트에서 Canary 단계를 검증합니다. 각 가중치 단계에는 유한한 inline analysis가 있습니다. failureLimit 0이므로 실패 측정 하나로 진행 중인 롤아웃을 중단하며 누락/NaN은 성공하지 않습니다. 성공하면 다음 단계로 진행합니다. 시간은 트래픽, 수집/분석 간격과 reconciliation에 따라 달라져 수초 이내를 보장하지 않습니다.
 
 ```bash
-# Argo Rollouts 설치
-kubectl create namespace argo-rollouts
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
-
-# 리소스 배포
-kubectl apply -f service.yaml
-kubectl apply -f destination-rule.yaml
-kubectl apply -f virtual-service.yaml
-kubectl apply -f analysis-templates.yaml
-kubectl apply -f rollout.yaml
-
-# 새 버전 배포
-kubectl argo rollouts set image reviews \
-  reviews=istio/examples-bookinfo-reviews-v3:1.17.0
-
-# 배포 상태 실시간 모니터링
 kubectl argo rollouts get rollout reviews --watch
-
-# Rollout 대시보드
-kubectl argo rollouts dashboard
+kubectl get analysisruns
+kubectl argo rollouts set image reviews reviews=istio/examples-bookinfo-reviews-v3:1.20.3
+# 실패한 진행 중 롤아웃 중단; 목표 템플릿을 되돌리는 undo와는 별개
+kubectl argo rollouts abort reviews
 ```
 
-***
-
-**자동 롤백 시나리오:**
-
-**시나리오 1: 에러율 > 5%**
-
-```
-10% Canary → Analysis 시작
-├─ 측정 1 (30초): 에러율 6% → 실패 (1/2)
-├─ 측정 2 (30초): 에러율 7% → 실패 (2/2)
-└─ 자동 롤백 실행 → Stable 100%
-```
-
-**시나리오 2: 지연시간 > 500ms**
-
-```
-25% Canary → Analysis 시작
-├─ 측정 1 (30초): P95 600ms → 실패 (1/2)
-├─ 측정 2 (30초): P95 550ms → 실패 (2/2)
-└─ 자동 롤백 실행 → Stable 100%
-```
-
-**시나리오 3: 모든 메트릭 정상**
-
-```
-10% Canary → Analysis 통과 → 25% Canary
-25% Canary → Analysis 통과 → 50% Canary
-50% Canary → Analysis 통과 → 75% Canary
-75% Canary → Analysis 통과 → 100% Canary
-```
-
-***
-
-**주요 이점:**
-
-1. **완전 자동화**: 사람 개입 없이 배포 진행
-2. **즉시 롤백**: 메트릭 실패 감지 후 수초 내 롤백
-3. **안전한 배포**: 각 단계마다 자동 검증
-4. **일관된 프로세스**: 표준화된 배포 전략
-
-**참고 자료:**
-
-* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+실제 트래픽 전환 전에 구성 전파와 정상 엔드포인트를 확인하고 다른 컨트롤러가 Argo의 가중치/해시를 덮어쓰지 않게 하세요. 설치·실행 사전 요구사항은 [완전한 롤아웃 가이드](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)를 따릅니다.
 
 </details>
 
@@ -765,207 +660,42 @@ kubectl argo rollouts dashboard
 
 ### 문제 7: Blue/Green 배포 vs Canary 배포
 
-Blue/Green 배포와 Canary 배포의 **차이점**을 비교하고, 각각의 **장단점** 및 **사용 시나리오**를 설명하세요.
+트래픽 전환, 리소스, 롤백, 적합한 사용 사례를 비교하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+| 항목 | Blue/Green | Canary |
+| --- | --- | --- |
+| 트래픽 | Preview 검증 후 Active Service selector 전환 | 요청 가중치를 단계적으로 증가 |
+| 검증 | 승격 전/후 분석 | 진행 중 inline/background 분석 |
+| 용량 | 전환 중 두 전체 revision이 필요할 수 있으며 preview 크기 조정 가능 | replica/스케일링 정책에 따라 다르며 stable 전체 용량 유지 시 두 revision 수준까지 증가 가능 |
+| 롤백 | 이전 revision과 용량이 남아 있을 때 되돌림 | 진행 중 abort로 stable 복귀; 승격 후에는 적절한 undo/재배포 |
+| 핵심 장단점 | 단순한 전환, 승격 시 넓은 영향 | 단계별 작은 노출, 더 많은 라우팅/분석 조정 |
 
-**Blue/Green 배포 vs Canary 배포 비교:**
+두 방식 모두 네트워크 관점에서 원자적이지 않습니다. 엔드포인트/프록시 전파와 기존 연결이 영향을 줍니다. DB 마이그레이션이나 외부 부수 효과도 되돌리지 못하므로 공존 기간의 스키마/API 호환성을 유지하세요. Canary weight는 고정 사용자 집단이 아니며 A/B 테스트에는 명시적인 집단 키가 필요합니다.
 
-***
-
-**1. 배포 방식 차이**
-
-**Blue/Green 배포:**
-
-```
-Blue (현재 버전) ──┐
-                   ├─→ [100% 트래픽]
-Green (새 버전) ───┘
-
-단계 1: Blue 100% 활성
-단계 2: Green 배포 및 테스트 (0% 트래픽)
-단계 3: 트래픽 전환 (Blue 0% → Green 100%)
-단계 4: Blue 제거
-```
-
-**Canary 배포:**
-
-```
-Stable (현재 버전) ─→ 90% → 75% → 50% → 0%
-Canary (새 버전) ───→ 10% → 25% → 50% → 100%
-
-점진적으로 트래픽 증가
-```
-
-***
-
-**2. 상세 비교표**
-
-| 항목         | Blue/Green        | Canary                    |
-| ---------- | ----------------- | ------------------------- |
-| **트래픽 전환** | 즉시 100% 전환        | 점진적 증가 (10% → 100%)       |
-| **롤백 속도**  | 즉시 (단일 전환)        | 빠름 (현재 단계에서만)             |
-| **리소스 사용** | 2배 (Blue + Green) | 1배 + 소량 (Stable + Canary) |
-| **위험도**    | 중간 (한 번에 모든 사용자)  | 낮음 (소수 사용자부터)             |
-| **테스트 기간** | 배포 전 충분히 테스트      | 프로덕션에서 점진적 검증             |
-| **복잡도**    | 낮음                | 중간 (메트릭 분석 필요)            |
-| **사용자 영향** | 모든 사용자 동시 영향      | 소수 사용자부터 점진적              |
-
-***
-
-**3. Istio 구현 예제**
-
-**Blue/Green 배포 (Argo Rollouts):**
+Blue/Green은 충분한 사전 검증과 임시 용량이 가능한 릴리스에, Canary는 대표 트래픽과 신뢰할 메트릭으로 점진 검증할 때 적합합니다. Canary가 항상 1배+소량의 용량이라는 가정만으로 선택하지 말고 선택적 dynamicStableScale을 포함한 스케일링 설정을 확인하세요.
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
-spec:
-  replicas: 5
-  strategy:
-    blueGreen:
-      activeService: myapp-active    # Blue (프로덕션)
-      previewService: myapp-preview  # Green (테스트)
-      autoPromotionEnabled: false    # 수동 승인
-      scaleDownDelaySeconds: 30      # Green → Blue 전환 후 30초 뒤 이전 버전 제거
-
-      # 사전 테스트
-      prePromotionAnalysis:
-        templates:
-        - templateName: smoke-tests
-
-      # 사후 검증
-      postPromotionAnalysis:
-        templates:
-        - templateName: performance-tests
+# 완전한 Rollout에 적용할 대안 전략 발췌
+strategy:
+  blueGreen:
+    activeService: myapp-active
+    previewService: myapp-preview
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 600
+    prePromotionAnalysis:
+      templates:
+      - templateName: smoke-tests
+    postPromotionAnalysis:
+      templates:
+      - templateName: post-promotion-tests
 ```
 
-**Canary 배포 (Argo Rollouts):**
+사용 전에 Service와 필수 인자가 맞는 AnalysisTemplate을 생성하고 사후 분석/롤백에 맞는 이전 용량 유지 시간을 정하세요. 하이브리드 전환은 설계한 워크플로우이며 진행 중 strategy 필드를 바꾼다고 자동 전환되지 않습니다.
 
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: myapp
-spec:
-  replicas: 5
-  strategy:
-    canary:
-      trafficRouting:
-        istio:
-          virtualService:
-            name: myapp-vsvc
-      steps:
-      - setWeight: 10
-      - pause: {duration: 2m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-      - setWeight: 25
-      - pause: {duration: 2m}
-      - analysis:
-          templates:
-          - templateName: success-rate
-      - setWeight: 50
-      - pause: {duration: 2m}
-      - setWeight: 100
-```
-
-***
-
-**4. 장단점 비교**
-
-**Blue/Green 장점:**
-
-* ✅ 간단한 구조 (Blue ↔ Green 전환만)
-* ✅ 즉시 롤백 가능 (스위치 전환)
-* ✅ 배포 전 충분한 테스트 가능
-* ✅ 예측 가능한 동작
-
-**Blue/Green 단점:**
-
-* ❌ 2배의 리소스 필요
-* ❌ 전체 사용자에게 동시 영향
-* ❌ 데이터베이스 마이그레이션 복잡
-* ❌ 점진적 검증 불가
-
-**Canary 장점:**
-
-* ✅ 소수 사용자부터 점진적 검증
-* ✅ 리소스 효율적 (1배 + 소량)
-* ✅ 프로덕션 환경에서 실제 검증
-* ✅ 자동 롤백 가능 (메트릭 기반)
-
-**Canary 단점:**
-
-* ❌ 복잡한 구성 (메트릭, 분석)
-* ❌ 모니터링 필수
-* ❌ 긴 배포 시간
-* ❌ 버전 혼재 기간 존재
-
-***
-
-**5. 사용 시나리오**
-
-**Blue/Green 권장 시나리오:**
-
-1. **중요한 릴리스**: 충분한 테스트 후 빠른 전환
-2. **데이터베이스 변경 없음**: 스키마 변경이 없는 경우
-3. **즉시 롤백 필요**: 문제 발생 시 빠른 복구 필요
-4. **충분한 리소스**: 2배 리소스를 감당할 수 있는 경우
-5. **예측 가능한 변경**: 사전 테스트로 충분히 검증 가능
-
-**예시:**
-
-```
-- 주요 기능 릴리스
-- UI 전면 개편
-- API 버전 업그레이드
-- 마케팅 캠페인 연동 (특정 시간에 전환)
-```
-
-**Canary 권장 시나리오:**
-
-1. **실험적 기능**: 소수 사용자에게 먼저 테스트
-2. **리소스 제약**: 2배 리소스를 사용할 수 없는 경우
-3. **점진적 검증**: 프로덕션 환경에서 실제 데이터로 검증
-4. **자동화된 배포**: CI/CD에서 자동으로 배포
-5. **마이크로서비스**: 서비스 간 의존성이 복잡한 경우
-
-**예시:**
-
-```
-- A/B 테스트
-- 성능 최적화
-- 버그 수정
-- 마이너 기능 추가
-- 일일 배포 (Continuous Deployment)
-```
-
-***
-
-**6. 하이브리드 접근**
-
-실제로는 두 전략을 조합하여 사용할 수 있습니다:
-
-```yaml
-# 1단계: Canary로 점진적 검증
-10% → 25% → 50%
-
-# 2단계: Blue/Green으로 최종 전환
-50% → 100% (즉시 전환)
-```
-
-**참고 자료:**
-
-* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Blue/Green 배포](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-%EB%B0%B0%ED%8F%AC)
+[배포 전략과 예제](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 
 </details>
 
@@ -997,7 +727,7 @@ Traffic Mirroring을 사용하여 새 버전을 안전하게 테스트하는 방
 
 * 사용자는 v1의 응답만 받음
 * v2의 응답은 Envoy가 폐기
-* v2의 에러는 사용자에게 영향 없음
+* v2 응답은 클라이언트에 반환되지 않지만 공유 리소스 경쟁과 쓰기 부수 효과는 사용자에게 영향을 줄 수 있음
 
 ***
 
@@ -1006,7 +736,7 @@ Traffic Mirroring을 사용하여 새 버전을 안전하게 테스트하는 방
 **기본 미러링 (100%):**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -1108,9 +838,9 @@ spec:
 ```
 목적: 새 버전의 캐시를 사전에 채움
 
-1. v2 배포 전 미러링으로 캐시 워밍
+1. v2 배포 후 트래픽 전환 전에 미러링으로 캐시 워밍
 2. v2의 캐시가 충분히 채워지면
-3. v2로 전환 시 cold start 없음
+3. 워밍은 캐시 미스를 줄일 수 있지만 cold start 제거를 보장하지 않음
 ```
 
 ***
@@ -1165,12 +895,12 @@ histogram_quantile(0.95,
 - v2: 1000 RPS (미러)
 - 총 부하: 2000 RPS
 
-해결: mirrorPercentage를 50% 이하로 설정
+Shadow 용량과 가설에 맞게 비율 선택; 50%가 공통 안전 기준은 아님
 ```
 
 **⚠️ 부작용 주의:**
 
-```yaml
+```text
 # 쓰기 작업은 미러링하지 마세요!
 
 # ❌ 위험한 예
@@ -1185,9 +915,8 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 ```
 미러링은 리소스와 비용을 증가시킵니다.
 
-- 컴퓨팅 리소스 2배
-- 네트워크 트래픽 2배
-- 데이터베이스 쿼리 2배
+- 100% 미러링은 해당 라우트의 요청 수를 복제
+- CPU, 응답 트래픽, DB 비용은 실제 동작에 따라 달라짐
 
 해결: 짧은 기간만 미러링 (1-2일)
 ```
@@ -1196,7 +925,7 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 
 ```
 미러 트래픽의 응답은 폐기되므로
-응답 내용을 검증할 수 없습니다.
+Istio가 응답 내용을 비교하지 않습니다. 앱 계측이나 별도 Shadow 비교 시스템으로 정확성을 검사할 수 있습니다.
 
 검증 가능:
 - ✅ 에러율
@@ -1204,15 +933,14 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 - ✅ 리소스 사용량
 
 검증 불가:
-- ❌ 응답 데이터 정확성
-- ❌ 비즈니스 로직 검증
+- Istio 미러링만으로는 응답 정확성/비즈니스 검증을 하지 않음
 ```
 
 ***
 
 **6. 모범 사례**
 
-```yaml
+```text
 # ✅ 좋은 예
 1. 읽기 전용 API만 미러링
 2. mirrorPercentage: 50% (부하 감소)
@@ -1221,313 +949,43 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 
 # ❌ 나쁜 예
 1. 쓰기 작업 미러링 (중복 데이터)
-2. mirrorPercentage: 100% (과부하)
+2. mirrorPercentage: 100%를 용량 계획 없이 사용
 3. 장기간 미러링 (비용 증가)
 4. 수동 검증 (느림)
 ```
 
 **참고 자료:**
 
-* [트래픽 미러링](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/04-traffic-mirroring.md)
+* [트래픽 미러링](../../../service-mesh/istio/traffic-management/09-traffic-mirror.md)
 
 </details>
 
 ***
 
-### 문제 9: Locality Load Balancing (Zone Aware Routing)
+### 문제 9: Locality와 크로스 AZ 비용
 
-AWS EKS에서 Istio의 Locality Load Balancing을 사용하여 **크로스 AZ 비용을 절감**하는 방법을 설명하세요. 구성 예시와 **예상 비용 절감액**을 포함해야 합니다.
+EKS locality 라우팅, 장애 조치 요구사항, 측정한 트래픽으로 비용 절감을 산정하는 방법을 설명하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
-
-**Locality Load Balancing 개념:**
-
-Locality Load Balancing은 **같은 가용 영역(AZ) 내 서비스를 우선적으로 라우팅**하여 네트워크 지연시간을 줄이고 크로스 AZ 비용을 절감하는 기능입니다.
-
-***
-
-**1. AWS EKS에서 크로스 AZ 비용**
-
-**비용 구조:**
-
-```
-같은 AZ 트래픽: 무료
-크로스 AZ 트래픽: GB당 $0.01-0.02
-크로스 Region 트래픽: GB당 $0.02-0.09
-```
-
-**예시 계산:**
-
-```
-서비스 A (us-east-1a) → 서비스 B (us-east-1b)
-- 월간 트래픽: 1TB = 1000GB
-- 크로스 AZ 비용: 1000GB × $0.01 = $10/월
-
-만약 80% 트래픽을 같은 AZ로 라우팅하면:
-- 같은 AZ: 800GB × $0 = $0
-- 크로스 AZ: 200GB × $0.01 = $2/월
-- 절감: $8/월 (80%)
-```
-
-***
-
-**2. EKS Pod Topology 레이블**
-
-EKS 노드는 자동으로 topology 레이블이 설정됩니다:
-
-```yaml
-# EKS 노드 레이블 (자동)
-topology.kubernetes.io/region: us-east-1
-topology.kubernetes.io/zone: us-east-1a
-
-# Pod는 노드의 레이블을 상속
-```
-
-***
-
-**3. Locality Load Balancing 구성**
-
-**기본 구성 (같은 AZ 우선):**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        # 같은 AZ에 Pod가 있으면 100% 라우팅
-        # 없으면 자동으로 다른 AZ로 장애 조치
-```
-
-**고급 구성 (가중치 분배):**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        distribute:
-        # us-east-1a에서 시작하는 트래픽
-        - from: us-east-1/us-east-1a/*
-          to:
-            "us-east-1/us-east-1a/*": 80  # 같은 AZ 80%
-            "us-east-1/us-east-1b/*": 20  # 다른 AZ 20% (장애 조치용)
-
-        # us-east-1b에서 시작하는 트래픽
-        - from: us-east-1/us-east-1b/*
-          to:
-            "us-east-1/us-east-1b/*": 80  # 같은 AZ 80%
-            "us-east-1/us-east-1a/*": 20  # 다른 AZ 20% (장애 조치용)
-```
-
-**장애 조치 정책:**
-
-```yaml
-spec:
-  trafficPolicy:
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-        failover:
-        # us-east-1a 장애 시 us-east-1b로
-        - from: us-east-1/us-east-1a
-          to: us-east-1/us-east-1b
-
-        # us-east-1 전체 장애 시 us-west-2로
-        - from: us-east-1
-          to: us-west-2
-```
-
-***
-
-**4. Outlier Detection과 결합**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  trafficPolicy:
-    # Locality Load Balancing
-    loadBalancer:
-      localityLbSetting:
-        enabled: true
-
-    # Outlier Detection (비정상 인스턴스 제외)
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 30s
-      maxEjectionPercent: 50
-```
-
-**동작:**
-
-```
-1. 같은 AZ (us-east-1a) 내 Pod 우선 선택
-2. 5회 연속 실패하면 해당 Pod 제외
-3. 다른 AZ (us-east-1b)의 정상 Pod로 자동 전환
-4. 30초 후 제외된 Pod 재시도
-```
-
-***
-
-**5. 비용 절감 계산**
-
-**시나리오: 대규모 마이크로서비스 아키텍처**
-
-```
-가정:
-- 서비스 수: 20개
-- 각 서비스 간 월간 트래픽: 500GB
-- 총 월간 트래픽: 20 × 20 × 500GB = 200TB
-- 크로스 AZ 비율 (Locality LB 없음): 70%
-- 크로스 AZ 비율 (Locality LB 적용): 20%
-```
-
-**Locality LB 없음:**
-
-```
-크로스 AZ 트래픽: 200TB × 70% = 140TB
-비용: 140,000GB × $0.01 = $1,400/월
-```
-
-**Locality LB 적용:**
-
-```
-크로스 AZ 트래픽: 200TB × 20% = 40TB
-비용: 40,000GB × $0.01 = $400/월
-
-절감액: $1,400 - $400 = $1,000/월 (71% 절감)
-연간 절감액: $1,000 × 12 = $12,000/년
-```
-
-***
-
-**6. 성능 향상**
-
-**지연시간 개선:**
-
-```
-같은 AZ 내 통신: ~1ms
-크로스 AZ 통신: ~2-3ms
-
-Locality LB 적용 시:
-- 평균 지연시간 30-50% 감소
-- P99 지연시간 40-60% 감소
-```
-
-**실제 측정 예시:**
+Istiod는 노드 topology로 locality를 결정하며 Pod가 노드 레이블을 자동 상속하지는 않습니다. 노드와 프록시 엔드포인트 locality를 확인합니다:
 
 ```bash
-# us-east-1a → us-east-1a (같은 AZ)
-$ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
-0.001s
-
-# us-east-1a → us-east-1b (크로스 AZ)
-$ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
-0.003s
+kubectl get pods -o wide
+kubectl get nodes -L topology.kubernetes.io/region,topology.kubernetes.io/zone
+istioctl proxy-config endpoints <pod-name> -o json
 ```
 
-***
-
-**7. 모니터링**
-
-**Prometheus 쿼리:**
-
-```promql
-# Locality별 트래픽 분포
-sum(rate(
-  istio_requests_total[5m]
-)) by (
-  source_workload_namespace,
-  destination_workload_namespace,
-  source_canonical_service,
-  destination_canonical_service
-)
-
-# 크로스 AZ 트래픽 비율
-sum(rate(istio_requests_total{
-  source_cluster="us-east-1a",
-  destination_cluster!="us-east-1a"
-}[5m]))
-/
-sum(rate(istio_requests_total[5m]))
-```
-
-**Grafana 대시보드:**
+가중치 분배 예제:
 
 ```yaml
-패널 1: Locality별 요청 수 (us-east-1a, us-east-1b, us-east-1c)
-패널 2: 크로스 AZ 트래픽 비율 (목표: <20%)
-패널 3: 지연시간 (같은 AZ vs 크로스 AZ)
-패널 4: 예상 비용 (크로스 AZ 트래픽 × $0.01/GB)
-```
-
-***
-
-**8. 주의사항**
-
-**⚠️ 불균형 로드:**
-
-```
-한 AZ에만 모든 트래픽이 집중되면 과부하 발생 가능
-
-해결책:
-- 각 AZ에 충분한 replica 배포
-- HPA (Horizontal Pod Autoscaler) 설정
-- PodDisruptionBudget으로 최소 replica 보장
-```
-
-**⚠️ AZ 장애:**
-
-```
-한 AZ 전체가 장애나면 트래픽이 다른 AZ로 이동
-
-failover 정책 설정 필수:
-- from: us-east-1/us-east-1a
-  to: us-east-1/us-east-1b
-```
-
-**⚠️ Cold Start:**
-
-```
-장애 조치 시 다른 AZ의 Pod가 cold start 상태일 수 있음
-
-해결책:
-- 각 AZ에 최소 1개 replica 유지
-- Readiness Probe로 준비 상태 확인
-```
-
-***
-
-**9. 모범 사례**
-
-```yaml
-# ✅ 권장 구성
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: production-service
+  name: reviews-locality
 spec:
-  host: production-service
+  host: reviews
   trafficPolicy:
     loadBalancer:
       localityLbSetting:
@@ -1535,26 +993,34 @@ spec:
         distribute:
         - from: us-east-1/us-east-1a/*
           to:
-            "us-east-1/us-east-1a/*": 80  # 비용 절감
-            "us-east-1/us-east-1b/*": 15  # 장애 조치
-            "us-east-1/us-east-1c/*": 5   # 추가 백업
-
+            "us-east-1/us-east-1a/*": 80
+            "us-east-1/us-east-1b/*": 20
+        - from: us-east-1/us-east-1b/*
+          to:
+            "us-east-1/us-east-1b/*": 80
+            "us-east-1/us-east-1a/*": 20
     outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
+      consecutive5xxErrors: 5
+      interval: 10s
       baseEjectionTime: 30s
-
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
 ```
 
-**참고 자료:**
+원격 20%는 실제 트래픽이며 대기 중인 장애 조치 용량이 아닙니다. 명시적 failover는 distribute의 대안이며 from/to는 us-east-1 → us-west-2 같은 **리전**이지 region/zone 경로가 아닙니다. 존 장애 조치는 엔드포인트 locality/상태를 사용합니다. 다른 AZ의 정상 용량과 ejection/panic 동작을 검증하세요. PDB는 자발적 중단을 제한할 뿐 replica를 만들거나 AZ 장애를 막지 않습니다.
 
-* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-* [AWS EKS 비용 최적화](../../../service-mesh/istio/best-practices.md#비용-최적화)
+**AWS 요금 인용이 아닌 가정 계산:** 월 과금 대상 200,000GB, 크로스 AZ 비율 70% → 20%, 측정 경로의 유효 요율을 과금 GB당 $0.01로 가정합니다.
+
+| | 변경 전 | 변경 후 |
+| --- | ---: | ---: |
+| 크로스 AZ GB | 140,000 | 40,000 |
+| 가정한 월 요금 | $1,400 | $400 |
+
+가정상 월 $1,000(71.4%), 연 $12,000 절감입니다. 실제 경로별 요율, 방향, LB/NAT/서비스 처리 비용과 측정 바이트를 사용하세요. 서비스 수의 제곱만으로 트래픽을 추정하면 안 됩니다. 현재 요율은 리전·서비스·경로에 따라 다르며 같은 AZ라고 모든 처리 비용이 무료는 아닙니다.
+
+source_cluster/destination_cluster는 AZ가 아닌 클러스터 ID입니다. 표준 Istio 메트릭이 모든 출발/목적지 AZ 레이블을 자동 제공하지 않습니다. 명시적으로 구성한 topology 텔레메트리 또는 VPC Flow Logs와 시점에 맞는 엔드포인트/AZ 매핑, 과금 데이터를 사용하세요. 지연 시간도 제어된 트래픽으로 측정하며 30–60% 같은 고정 개선율은 보장되지 않습니다.
+
+- [AWS EC2 전송 요금](https://aws.amazon.com/ec2/pricing/on-demand/)
+- [VPC Flow Log 필드](https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html)
+- [Locality 가이드](../../../service-mesh/istio/traffic-management/06-load-balancing.md)
 
 </details>
 
@@ -1562,141 +1028,80 @@ spec:
 
 ### 문제 10: Gateway TLS 구성
 
-Istio Gateway에서 **TLS 종료**를 구성하고, **HTTPS 리다이렉트**를 설정하는 방법을 설명하세요. ACM (AWS Certificate Manager) 인증서를 사용하는 경우와 자체 인증서를 사용하는 경우를 모두 포함해야 합니다.
+Istio의 TLS 종료와 ACM 인증서를 사용한 NLB TLS 종료를 비교하고 HTTP 리다이렉트와 인증서 갱신을 설명하세요.
 
 <details>
-
 <summary>예시 답안</summary>
 
-**답변:**
+TLS 종료 방식을 하나 선택합니다. 게이트웨이 워크로드는 istio-system의 istio=ingressgateway 레이블을 사용하며 Service 포트와 AWS Load Balancer Controller가 준비되어 있다고 가정합니다. Service 변경은 해당 설치 도구 설정에 병합하세요. NLB 인증서 ARN과 Istio credentialName은 서로 다른 객체입니다.
 
-**Istio Gateway TLS 구성:**
+**1. Istio에서 TLS 종료**
 
-***
-
-**1. 자체 인증서 사용 (Kubernetes Secret)**
-
-**1단계: TLS 인증서 생성**
+NLB는 TCP 패스스루를 사용합니다. 실습용 인증서는 DNS SAN을 넣고 클라이언트가 명시적으로 신뢰하도록 합니다. 예시 호스트를 관리하는 도메인으로 바꾸세요:
 
 ```bash
-# 자체 서명 인증서 생성 (테스트용)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout bookinfo.key \
-  -out bookinfo.crt \
-  -subj "/CN=bookinfo.example.com"
-
-# 또는 Let's Encrypt 인증서 사용
-certbot certonly --standalone -d bookinfo.example.com
+  -keyout bookinfo.key -out bookinfo.crt \
+  -subj "/CN=bookinfo.example.com" \
+  -addext "subjectAltName=DNS:bookinfo.example.com"
+kubectl create secret tls bookinfo-secret -n istio-system \
+  --key=bookinfo.key --cert=bookinfo.crt
 ```
-
-**2단계: Kubernetes Secret 생성**
-
-```bash
-# Istio가 사용할 Secret 생성
-kubectl create -n istio-system secret tls bookinfo-secret \
-  --key=bookinfo.key \
-  --cert=bookinfo.crt
-
-# Secret 확인
-kubectl get secret bookinfo-secret -n istio-system
-```
-
-**3단계: Gateway 구성 (HTTPS + HTTP → HTTPS 리다이렉트)**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
-  namespace: default
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
   servers:
-  # HTTPS (443 포트)
   - port:
       number: 443
       name: https
       protocol: HTTPS
+    hosts: [bookinfo.example.com]
     tls:
-      mode: SIMPLE  # 단방향 TLS (서버만 인증서)
-      credentialName: bookinfo-secret  # Kubernetes Secret 이름
-    hosts:
-    - bookinfo.example.com
-
-  # HTTP (80 포트) - HTTPS로 리다이렉트
+      mode: SIMPLE
+      credentialName: bookinfo-secret
   - port:
       number: 80
       name: http
       protocol: HTTP
-    hosts:
-    - bookinfo.example.com
+    hosts: [bookinfo.example.com]
     tls:
-      httpsRedirect: true  # HTTP → HTTPS 리다이렉트
-```
-
-**4단계: VirtualService 연결**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+      httpsRedirect: true
+---
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: bookinfo-vs
   namespace: default
 spec:
-  hosts:
-  - bookinfo.example.com
-  gateways:
-  - bookinfo-gateway
+  hosts: [bookinfo.example.com]
+  gateways: [istio-system/bookinfo-gateway]
   http:
-  - match:
-    - uri:
-        prefix: /productpage
-    route:
+  - route:
     - destination:
         host: productpage
         port:
           number: 9080
-    timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
 ```
-
-**5단계: 테스트**
 
 ```bash
-# HTTPS 접속
-curl -v https://bookinfo.example.com/productpage
-
-# HTTP 접속 → HTTPS 리다이렉트 확인
-curl -v http://bookinfo.example.com/productpage
-# 출력:
-# HTTP/1.1 301 Moved Permanently
-# location: https://bookinfo.example.com/productpage
+# INGRESS_HOST is the actual LB hostname; preserve the certificate hostname/SNI
+curl --cacert bookinfo.crt \
+  --connect-to "bookinfo.example.com:443:${INGRESS_HOST}:443" \
+  https://bookinfo.example.com/productpage
+curl -I --connect-to "bookinfo.example.com:80:${INGRESS_HOST}:80" \
+  http://bookinfo.example.com/productpage
 ```
 
-***
+**2. NLB에서 ACM TLS 종료**
 
-**2. AWS ACM 인증서 사용 (NLB Annotation)**
-
-AWS EKS에서는 ACM 인증서를 NLB에서 TLS 종료하는 방법을 권장합니다.
-
-**1단계: ACM 인증서 발급**
-
-```bash
-# AWS Console 또는 CLI로 ACM 인증서 발급
-aws acm request-certificate \
-  --domain-name bookinfo.example.com \
-  --validation-method DNS \
-  --region us-east-1
-
-# ARN 확인
-aws acm list-certificates --region us-east-1
-# 출력: arn:aws:acm:us-east-1:123456789012:certificate/abc123
-```
-
-**2단계: Istio Ingress Gateway Service 수정**
+NLB와 같은 리전에서 DNS 검증을 완료한 ISSUED 상태의 ACM 인증서를 사용하세요. 인증서 요청만으로 검증이 끝나지 않습니다. NLB는 전송 계층 로드 밸런서라 HTTP 리다이렉트를 수행하지 않으며 SSL negotiation policy는 TLS 버전/암호군만 정합니다. 복호화한 443 트래픽과 HTTP 리다이렉트 리스너의 대상 포트를 분리해 루프를 피하세요:
 
 ```yaml
 apiVersion: v1
@@ -1705,69 +1110,68 @@ metadata:
   name: istio-ingressgateway
   namespace: istio-system
   annotations:
-    # NLB 사용
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-
-    # TLS 종료 (ACM 인증서)
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:123456789012:certificate/abc123"
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:123456789012:certificate/replace-with-issued-certificate
     service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-
-    # HTTP → HTTPS 리다이렉트 (NLB 레벨)
-    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS-1-2-2017-01"
-
-    # 크로스 AZ 로드 밸런싱
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
 spec:
   type: LoadBalancer
   selector:
     istio: ingressgateway
     app: istio-ingressgateway
   ports:
-  # HTTP (80) - NLB가 HTTPS(443)로 리다이렉트
   - name: http
     port: 80
     targetPort: 8080
-    protocol: TCP
-
-  # HTTPS (443) - NLB가 TLS 종료 후 8443으로 전달
   - name: https
     port: 443
-    targetPort: 8443
-    protocol: TCP
-```
-
-**3단계: Gateway 구성 (TLS Passthrough)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+    targetPort: 8081
+---
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
   servers:
-  # NLB가 TLS 종료했으므로 HTTP로 수신
   - port:
-      number: 8443
-      name: http
-      protocol: HTTP  # NLB가 이미 TLS 종료함
-    hosts:
-    - bookinfo.example.com
+      number: 80
+      name: http-redirect
+      protocol: HTTP
+    hosts: [bookinfo.example.com]
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: http-after-nlb
+      protocol: HTTP
+    hosts: [bookinfo.example.com]
 ```
 
-***
+이 대안은 앞의 TLS Gateway를 대체하고 같은 VirtualService 연결을 사용합니다. 위 NLB→게이트웨이 구간은 평문입니다. 이 구간도 암호화하려면 서로 맞는 별도 TLS 백엔드 구성을 사용하고 SIMPLE/패스스루 리스너를 혼합하지 마세요.
 
-**3. Mutual TLS (mTLS) - 클라이언트 인증**
+**3. Istio에서 클라이언트 인증서 인증**
 
-클라이언트도 인증서를 제시해야 하는 경우:
+MUTUAL 리스너는 서버 자격 증명과 신뢰할 클라이언트 CA가 들어 있는 Secret을 사용하며 credentialName과 별도 CA 파일 경로를 혼합하지 않습니다:
+
+```bash
+kubectl create secret generic server-cert-secret -n istio-system \
+  --from-file=tls.crt=server.crt --from-file=tls.key=server.key \
+  --from-file=ca.crt=client-ca.crt
+```
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: secure-gateway
+  name: mutual-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway
@@ -1776,157 +1180,31 @@ spec:
       number: 443
       name: https-mutual
       protocol: HTTPS
+    hosts: [secure.example.com]
     tls:
-      mode: MUTUAL  # 양방향 TLS
-      credentialName: server-cert-secret  # 서버 인증서
-      caCertificates: /etc/istio/client-ca/ca-chain.crt  # 클라이언트 CA
-    hosts:
-    - secure.example.com
+      mode: MUTUAL
+      credentialName: server-cert-secret
+      minProtocolVersion: TLSV1_2
 ```
 
-**클라이언트 인증서로 접속:**
-
 ```bash
-curl --cert client.crt --key client.key \
+curl --cacert server-ca.crt --cert client.crt --key client.key \
   https://secure.example.com/api
 ```
 
-***
+해당 호스트의 VirtualService/DNS도 구성하세요. *.example.com SAN은 api.example.com 같은 왼쪽 한 레이블을 포함하며 example.com이나 x.api.example.com은 포함하지 않습니다. SAN을 명시하세요. cipherSuites는 TLS 1.3 이전 암호군용이며 TLS 1.3 암호군을 선택하지 않습니다.
 
-**4. 와일드카드 인증서**
+**4. 인증서 갱신**
 
-여러 서브도메인을 하나의 인증서로:
-
-```bash
-# 와일드카드 인증서 생성
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout wildcard.key \
-  -out wildcard.crt \
-  -subj "/CN=*.example.com"
-
-# Secret 생성
-kubectl create -n istio-system secret tls wildcard-secret \
-  --key=wildcard.key \
-  --cert=wildcard.crt
-```
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: wildcard-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: wildcard-secret
-    hosts:
-    - "*.example.com"  # 모든 서브도메인 허용
-```
-
-**VirtualService로 서브도메인별 라우팅:**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: multi-subdomain
-spec:
-  hosts:
-  - api.example.com
-  - web.example.com
-  - admin.example.com
-  gateways:
-  - wildcard-gateway
-  http:
-  - match:
-    - uri:
-        prefix: /api
-      authority:
-        exact: api.example.com
-    route:
-    - destination:
-        host: api-service
-
-  - match:
-    - authority:
-        exact: web.example.com
-    route:
-    - destination:
-        host: web-service
-
-  - match:
-    - authority:
-        exact: admin.example.com
-    route:
-    - destination:
-        host: admin-service
-```
-
-***
-
-**5. TLS 버전 및 Cipher Suite 설정**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: secure-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: bookinfo-secret
-      minProtocolVersion: TLSV1_2  # TLS 1.2 이상만 허용
-      maxProtocolVersion: TLSV1_3
-      cipherSuites:
-      - ECDHE-ECDSA-AES256-GCM-SHA384
-      - ECDHE-RSA-AES256-GCM-SHA384
-      - ECDHE-ECDSA-AES128-GCM-SHA256
-    hosts:
-    - bookinfo.example.com
-```
-
-***
-
-**6. 인증서 자동 갱신 (cert-manager)**
+cert-manager 1.21은 Kubernetes 1.33–1.36을 지원합니다. 설치/업그레이드 전에 지원 매트릭스를 다시 확인하세요. 클러스터에서 이미 관리하지 않는 경우 검토한 릴리스는 v1.21.1입니다:
 
 ```bash
-# cert-manager 설치
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.yaml
+```
 
-# Let's Encrypt Issuer 생성
-kubectl apply -f - <<EOF
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-    - http01:
-        ingress:
-          class: istio
-EOF
+실제 Ingress/Gateway API/DNS 구성에 맞는 challenge solver를 사용해 Ready인 Issuer/ClusterIssuer를 준비하세요. ingress class 문자열만으로 ACME 검증 경로가 연결되지는 않습니다. 그다음 게이트웨이 워크로드 네임스페이스에 Certificate를 만듭니다:
 
-# Certificate 리소스 생성 (자동 갱신)
-kubectl apply -f - <<EOF
+```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -1935,63 +1213,20 @@ metadata:
 spec:
   secretName: bookinfo-secret
   issuerRef:
-    name: letsencrypt-prod
+    name: configured-issuer
     kind: ClusterIssuer
-  dnsNames:
-  - bookinfo.example.com
-EOF
+  dnsNames: [bookinfo.example.com]
 ```
 
-***
-
-**7. 모범 사례**
-
-```yaml
-# ✅ 권장 구성
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: production-gateway
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  # HTTPS (권장)
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: prod-tls-secret
-      minProtocolVersion: TLSV1_2  # 보안 강화
-    hosts:
-    - "*.example.com"
-
-  # HTTP → HTTPS 리다이렉트
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*.example.com"
-    tls:
-      httpsRedirect: true
+```bash
+kubectl wait --for=condition=Ready certificate/bookinfo-cert -n istio-system --timeout=120s
 ```
 
-**주의사항:**
+Istio는 결과 Secret을 감시하며 갱신은 cert-manager가 수행합니다. 수동 Secret 관리와 충돌하지 않게 하세요. 공개 인바운드는 클라이언트가 신뢰하는 인증서가 필요합니다. 위 자체 서명은 실습 신뢰 설정이며 내부 PKI는 별도의 신뢰 배포와 수명 주기 관리가 필요합니다.
 
-* ✅ TLS 1.2 이상 사용
-* ✅ 강력한 Cipher Suite 설정
-* ✅ 인증서 자동 갱신 (cert-manager)
-* ✅ HTTP → HTTPS 리다이렉트 활성화
-* ❌ 자체 서명 인증서는 프로덕션에 사용 금지
-* ❌ TLS 1.0/1.1 사용 금지
-
-**참고 자료:**
-
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
-* [TLS 구성](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md#tls-%EA%B5%AC%EC%84%B1)
+- [Istio cert-manager 통합](https://istio.io/latest/docs/ops/integrations/certmanager/)
+- [cert-manager 지원 릴리스](https://cert-manager.io/docs/releases/)
+- [AWS 통합 예제](../../../service-mesh/istio/04-aws-integration.md)
 
 </details>
 
@@ -2015,6 +1250,21 @@ spec:
 
 * [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
-* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Gateway](../../../service-mesh/istio/traffic-management/01-gateway-virtualservice.md)
+* [트래픽 분할](../../../service-mesh/istio/traffic-management/04-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
+* [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+* [Primary reference 2](https://istio.io/latest/docs/reference/config/networking/gateway/)
+* [Primary reference 3](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+* [Primary reference 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md)
+* [Primary reference 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md)
+* [Primary reference 6](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md)
+* [Primary reference 7](https://aws.amazon.com/ec2/pricing/on-demand/)
+* [Primary reference 8](https://docs.aws.amazon.com/vpc/latest/userguide/flow-log-records.html)
+* [Primary reference 9](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+* [Primary reference 10](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
+* [Primary reference 11](https://cert-manager.io/docs/releases/)
+* [Primary reference 12](https://istio.io/latest/docs/ops/integrations/certmanager/)
+* [Primary reference 13](https://cert-manager.io/docs/usage/certificate/)
+* [Primary reference 14](https://www.rfc-editor.org/rfc/rfc9525.html)

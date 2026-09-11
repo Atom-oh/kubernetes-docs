@@ -7,23 +7,7 @@
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
-      "entries": {
-        "database": {
-          "label": "Canary CRD 필드"
-        },
-        "backend": {
-          "label": "배포 단계"
-        },
-        "messagebus": {
-          "label": "트래픽 전환"
-        },
-        "security": {
-          "label": "메트릭 분석 게이트"
-        },
-        "cloud": {
-          "label": "승격"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -56,7 +40,7 @@
           "promote",
           "init"
         ],
-        "note": "분석 성공이면 Primary로 승격하고, threshold 횟수만큼 실패하면 롤백합니다."
+        "note": "최종 단계 성공 시 승격한다. 누적 실패 한도 도달 시 분석 중 복구 후 다음 revision을 기다린다."
       }
     ]
   },
@@ -120,8 +104,8 @@
       "lane": "process",
       "col": 0,
       "type": "backend",
-      "label": "초기화",
-      "sublabel": "Primary 생성",
+      "label": "Primary 준비",
+      "sublabel": "초기 생성 / 복구 후 대기",
       "width": 150
     },
     {
@@ -130,7 +114,7 @@
       "col": 1,
       "type": "backend",
       "label": "변경 감지",
-      "sublabel": "새 이미지 · spec 변경",
+      "sublabel": "Pod spec / 추적 설정",
       "width": 150
     },
     {
@@ -156,7 +140,7 @@
       "lane": "process",
       "col": 4,
       "type": "security",
-      "label": "메트릭 분석",
+      "label": "반복 분석",
       "sublabel": "성공률 ≥ 99% · P99 ≤ 500ms",
       "tag": "1분마다",
       "width": 190
@@ -167,7 +151,7 @@
       "col": 5,
       "type": "cloud",
       "label": "승격",
-      "sublabel": "Primary 트래픽 100%",
+      "sublabel": "갱신 · Ready · 전환",
       "width": 150
     }
   ],
@@ -223,14 +207,14 @@
     {
       "from": "metric",
       "to": "promote",
-      "label": "성공",
+      "label": "최종 통과",
       "variant": "emphasis",
       "role": "main"
     },
     {
       "from": "metric",
       "to": "init",
-      "label": "실패 · 롤백",
+      "label": "누적 한도 · 복귀",
       "variant": "security",
       "role": "error"
     }
@@ -238,29 +222,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "트래픽 전환 단계",
+      "title": "가중치 단계",
       "items": [
-        "stepWeight 10 · maxWeight 50 → 10% → 20% → 30% → 40% → 50%",
-        "단계마다 interval 1m 동안 메트릭 분석 후 다음 비율로 이동",
-        "50% 도달 후 승격: Canary spec을 Primary에 복사, 트래픽 100% Primary"
+        "분석: 10 → 20 → 30 → 40 → 50%",
+        "승격에는 primary 갱신과 readiness 대기가 포함"
       ]
     },
     {
       "dot": "amber",
-      "title": "단계별 분석 조건",
+      "title": "지표와 시간",
       "items": [
-        "request-success-rate: thresholdRange.min 99 (5xx 제외 성공률)",
-        "request-duration: thresholdRange.max 500 (P99 ms)",
-        "webhooks: load-test → flagger-loadtester가 부하 테스트 실행"
+        "analysis.interval은 주기; metric.interval은 조회 창",
+        "99% / 500ms는 설명용 SLO 기준"
       ]
     },
     {
       "dot": "rose",
-      "title": "자동 롤백 조건",
+      "title": "실패 판단",
       "items": [
-        "메트릭 조건을 threshold 횟수만큼 충족하지 못할 때",
-        "Canary Pod가 Ready가 아니거나 webhook이 실패를 반환할 때",
-        "롤백 시 트래픽은 Primary로 복귀, Canary는 0으로 축소, 상태 Failed"
+        "failedChecks >= threshold (성공 시 리셋되지 않음)",
+        "readiness deadline과 승격 장애는 별도 확인"
       ]
     }
   ]

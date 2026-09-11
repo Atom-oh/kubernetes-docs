@@ -1,6 +1,6 @@
 # 가이드북 로드맵
 
-> **마지막 업데이트**: 2026년 9월 2일
+> **마지막 업데이트**: 2026년 9월 11일
 
 이 가이드북은 Linux 커널에서 시작해 컨테이너, Kubernetes, Amazon EKS, 네트워킹, 서비스 메시, 스토리지, 데이터베이스, 데이터 파이프라인, AI/ML, 그리고 보안·GitOps·플랫폼 엔지니어링·컨테이너 레지스트리·옵저버빌리티·운영까지 — 클라우드 네이티브 스택 전체를 하나의 서사로 다룹니다. 이 페이지는 전체 지도이자 추천 학습 경로입니다.
 
@@ -30,7 +30,7 @@
 
 ## 실측 벤치마크 시리즈
 
-스펙 시트가 아니라 실제 AWS 리소스에서 직접 측정한 숫자를 담은 문서들입니다:
+기존 AWS 실행에서 보고한 수치를 담은 문서들입니다. 측정 환경·반복 횟수·캐시·원시 기록의 공개 범위와 한계를 먼저 확인하고 현재 용량 계획에는 재측정합니다:
 
 - [Istio sidecar vs ambient 실측](service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — mTLS 데이터플레인별 P50/P99 레이턴시와 rollout 중 503 비율
 - [EBS gp2 vs gp3 실측 벤치마크](storage/01-ebs-gp2-gp3-benchmark.md) — 같은 100GiB에서 IOPS 10배 차이와 gp2 버스트 크레딧 절벽
@@ -40,7 +40,7 @@
 
 ## 다이어그램 공유하기 — LinkedIn·발표용 내보내기
 
-이 가이드북의 모든 인터랙티브 다이어그램은 `https://www.atomai.click/kubernetes-docs/archmaps/<이름>.html`에서 열리고, 뷰어 툴바의 **Export** 버튼(단축키 `E`)이 공유용 파일을 바로 만들어 줍니다. 별도 캡처 도구 없이 다이어그램 페이지 하나로 끝납니다.
+이 가이드북의 인터랙티브 다이어그램은 `https://www.atomai.click/kubernetes-docs/archmaps/<이름>.html`에서 열리고, 뷰어 툴바의 **Export** 버튼(단축키 `E`)이 공유용 파일을 바로 만들어 줍니다. 사용 가능한 메뉴는 해당 뷰어 버전·브라우저 지원·선택 상태에 따라 다릅니다.
 
 ### Export 메뉴 구성
 
@@ -61,7 +61,7 @@
 1. **다이어그램 열기** — 문서에 삽입된 다이어그램 아래의 "전체 화면으로 열기 ↗"(GitBook에서는 "🔍 인터랙티브 다이어그램 보기") 링크를 클릭합니다.
 2. **트레이스 재생 확인** — 툴바의 **Live/Still** 토글이 Live인지 확인합니다. 화살표를 따라 흐르는 이 모션이 영상에 담기는 내용입니다. 발표 리허설이라면 **Presentation stage**(`F`)로 다이어그램에 화면 전체를 내어 주세요.
 3. **Export → WebM**(움직이는 포스트) 또는 **Export → Share Card**(1200×630 정적 미리보기) — WebM은 "Recording 6 seconds of motion…" 표시 후 파일이 내려옵니다.
-4. **포스트** — WebM은 영상으로, Share Card는 이미지로 올리고 원문 문서 URL을 함께 붙입니다. 특정 노드·경로·스토리 장면을 짚어 주려면 Semantic Passport와 Route Probe의 **Copy link**, Story Beat의 **Copy moment**(스토리 챕터가 정의된 다이어그램에서만 보입니다)로 딥링크를 복사해 댓글이나 슬라이드에 넣으세요.
+4. **포스트** — 대상 플랫폼의 현재 업로드 형식을 확인하고 필요하면 WebM을 지원 형식으로 변환합니다. Share Card는 이미지로 올리고 원문 문서 URL을 함께 붙입니다. 특정 노드·경로·스토리 장면을 짚어 주려면 Semantic Passport와 Route Probe의 **Copy link**, Story Beat의 **Copy moment**(스토리 챕터가 정의된 다이어그램에서만 보입니다)로 딥링크를 복사해 댓글이나 슬라이드에 넣으세요.
 
 ### 내보내기의 한계 — 정직하게 말하기
 
@@ -85,4 +85,4 @@ Storage → Database → Data Pipeline(Kafka → Spark → Airflow → Flink) �
 
 ## AI와 함께 읽기
 
-이 가이드북 전체는 llms.txt 표준으로도 제공됩니다 — LLM에게 URL 하나로 전체 콘텐츠를 읽힐 수 있습니다. 엔드포인트와 활용 예시는 [LLM과 함께 읽기](llm-guide.md)에서 확인하세요.
+이 가이드북은 llms.txt 제안 형식의 색인과 원문을 제공합니다. AI 도구의 웹 가져오기 기능이나 MCP 연결이 필요하며, URL 하나만 제공한다고 전체 문서를 자동으로 읽거나 색인한다는 보장은 없습니다. 엔드포인트와 활용 예시는 [LLM과 함께 읽기](llm-guide.md)에서 확인하세요.

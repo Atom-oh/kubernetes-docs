@@ -1,0 +1,233 @@
+{
+  "copied": [
+    {
+      "source": "en/.gitbook/assets/en-core-01-cluster-architecture-0.png",
+      "destination": "cn/.gitbook/assets/en-core-01-cluster-architecture-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-core-01-cluster-architecture-0.png",
+      "destination": "jp/.gitbook/assets/en-core-01-cluster-architecture-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-core-01-cluster-architecture-0.png",
+      "destination": "es/.gitbook/assets/en-core-01-cluster-architecture-0.png"
+    }
+  ],
+  "unresolved": [
+    {
+      "file": "cn/gitops/argocd/README.md",
+      "line": 21,
+      "target": "../../.gitbook/assets/en-gitops-argocd-README-0.png"
+    },
+    {
+      "file": "cn/gitops/argocd/README.md",
+      "line": 68,
+      "target": "../../.gitbook/assets/en-gitops-argocd-README-1.png"
+    },
+    {
+      "file": "cn/labs/observability/README.md",
+      "line": 17,
+      "target": "../../.gitbook/assets/en-labs-observability-README-0.png"
+    },
+    {
+      "file": "cn/labs/observability/README.md",
+      "line": 70,
+      "target": "../../.gitbook/assets/en-labs-observability-README-1.png"
+    },
+    {
+      "file": "cn/labs/observability/README.md",
+      "line": 95,
+      "target": "../../.gitbook/assets/en-labs-observability-README-2.png"
+    },
+    {
+      "file": "cn/service-mesh/istio/README.md",
+      "line": 81,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-0.png"
+    },
+    {
+      "file": "cn/service-mesh/istio/README.md",
+      "line": 87,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-1.png"
+    },
+    {
+      "file": "cn/service-mesh/istio/README.md",
+      "line": 155,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-2.png"
+    },
+    {
+      "file": "cn/service-mesh/istio/README.md",
+      "line": 235,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-3.png"
+    },
+    {
+      "file": "cn/service-mesh/istio/README.md",
+      "line": 290,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-4.png"
+    },
+    {
+      "file": "cn/service-mesh/istio/README.md",
+      "line": 338,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-5.png"
+    },
+    {
+      "file": "cn/service-mesh/istio/comparison/README.md",
+      "line": 72,
+      "target": "../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png"
+    },
+    {
+      "file": "cn/service-mesh/linkerd/README.md",
+      "line": 33,
+      "target": "../../.gitbook/assets/en-service-mesh-linkerd-README-0.png"
+    },
+    {
+      "file": "jp/gitops/argocd/README.md",
+      "line": 21,
+      "target": "../../.gitbook/assets/en-gitops-argocd-README-0.png"
+    },
+    {
+      "file": "jp/gitops/argocd/README.md",
+      "line": 68,
+      "target": "../../.gitbook/assets/en-gitops-argocd-README-1.png"
+    },
+    {
+      "file": "jp/labs/observability/README.md",
+      "line": 17,
+      "target": "../../.gitbook/assets/en-labs-observability-README-0.png"
+    },
+    {
+      "file": "jp/labs/observability/README.md",
+      "line": 70,
+      "target": "../../.gitbook/assets/en-labs-observability-README-1.png"
+    },
+    {
+      "file": "jp/labs/observability/README.md",
+      "line": 95,
+      "target": "../../.gitbook/assets/en-labs-observability-README-2.png"
+    },
+    {
+      "file": "jp/service-mesh/istio/README.md",
+      "line": 81,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-0.png"
+    },
+    {
+      "file": "jp/service-mesh/istio/README.md",
+      "line": 87,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-1.png"
+    },
+    {
+      "file": "jp/service-mesh/istio/README.md",
+      "line": 155,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-2.png"
+    },
+    {
+      "file": "jp/service-mesh/istio/README.md",
+      "line": 235,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-3.png"
+    },
+    {
+      "file": "jp/service-mesh/istio/README.md",
+      "line": 290,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-4.png"
+    },
+    {
+      "file": "jp/service-mesh/istio/README.md",
+      "line": 338,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-5.png"
+    },
+    {
+      "file": "jp/service-mesh/istio/comparison/README.md",
+      "line": 72,
+      "target": "../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png"
+    },
+    {
+      "file": "jp/service-mesh/linkerd/README.md",
+      "line": 33,
+      "target": "../../.gitbook/assets/en-service-mesh-linkerd-README-0.png"
+    },
+    {
+      "file": "es/gitops/argocd/README.md",
+      "line": 21,
+      "target": "../../.gitbook/assets/en-gitops-argocd-README-0.png"
+    },
+    {
+      "file": "es/gitops/argocd/README.md",
+      "line": 68,
+      "target": "../../.gitbook/assets/en-gitops-argocd-README-1.png"
+    },
+    {
+      "file": "es/labs/observability/README.md",
+      "line": 17,
+      "target": "../../.gitbook/assets/en-labs-observability-README-0.png"
+    },
+    {
+      "file": "es/labs/observability/README.md",
+      "line": 70,
+      "target": "../../.gitbook/assets/en-labs-observability-README-1.png"
+    },
+    {
+      "file": "es/labs/observability/README.md",
+      "line": 95,
+      "target": "../../.gitbook/assets/en-labs-observability-README-2.png"
+    },
+    {
+      "file": "es/service-mesh/istio/README.md",
+      "line": 81,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-0.png"
+    },
+    {
+      "file": "es/service-mesh/istio/README.md",
+      "line": 87,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-1.png"
+    },
+    {
+      "file": "es/service-mesh/istio/README.md",
+      "line": 155,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-2.png"
+    },
+    {
+      "file": "es/service-mesh/istio/README.md",
+      "line": 235,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-3.png"
+    },
+    {
+      "file": "es/service-mesh/istio/README.md",
+      "line": 290,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-4.png"
+    },
+    {
+      "file": "es/service-mesh/istio/README.md",
+      "line": 338,
+      "target": "../../.gitbook/assets/en-service-mesh-istio-README-5.png"
+    },
+    {
+      "file": "es/service-mesh/istio/comparison/README.md",
+      "line": 72,
+      "target": "../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png"
+    },
+    {
+      "file": "es/service-mesh/linkerd/README.md",
+      "line": 33,
+      "target": "../../.gitbook/assets/en-service-mesh-linkerd-README-0.png"
+    }
+  ],
+  "repairedLinks": [
+    {
+      "file": "cn/core/01-cluster-architecture.md",
+      "line": 39,
+      "from": "../../.gitbook/assets/en-core-01-cluster-architecture-0.png",
+      "to": "../.gitbook/assets/en-core-01-cluster-architecture-0.png"
+    },
+    {
+      "file": "jp/core/01-cluster-architecture.md",
+      "line": 39,
+      "from": "../../.gitbook/assets/en-core-01-cluster-architecture-0.png",
+      "to": "../.gitbook/assets/en-core-01-cluster-architecture-0.png"
+    },
+    {
+      "file": "es/core/01-cluster-architecture.md",
+      "line": 39,
+      "from": "../../.gitbook/assets/en-core-01-cluster-architecture-0.png",
+      "to": "../.gitbook/assets/en-core-01-cluster-architecture-0.png"
+    }
+  ]
+}

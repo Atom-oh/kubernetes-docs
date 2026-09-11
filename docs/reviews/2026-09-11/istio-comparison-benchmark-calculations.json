@@ -1,0 +1,102 @@
+{
+  "date": "2026-09-11",
+  "scope": "Arithmetic on reported historical counts only; not reproduced measurements.",
+  "checks": [
+    {
+      "name": "sidecarP50DeltaMs",
+      "actual": "1.29",
+      "expected": "1.29",
+      "passed": true
+    },
+    {
+      "name": "ambientL4P50DeltaMs",
+      "actual": "0.04",
+      "expected": "0.04",
+      "passed": true
+    },
+    {
+      "name": "ambientL7P50DeltaMs",
+      "actual": "1.86",
+      "expected": "1.86",
+      "passed": true
+    },
+    {
+      "name": "sidecarTotal",
+      "actual": "60000",
+      "expected": "60000",
+      "passed": true
+    },
+    {
+      "name": "L4Total",
+      "actual": "60000",
+      "expected": "60000",
+      "passed": true
+    },
+    {
+      "name": "L7Total",
+      "actual": "59913",
+      "expected": "59913",
+      "passed": true
+    },
+    {
+      "name": "sidecar503Percent",
+      "actual": "0.5400",
+      "expected": "0.54",
+      "passed": true
+    },
+    {
+      "name": "L7503PercentRounded",
+      "actual": "2.55",
+      "expected": "2.55",
+      "passed": true
+    },
+    {
+      "name": "L7ToSidecarFractionRatioRounded",
+      "actual": "4.72",
+      "expected": "4.72",
+      "passed": true
+    },
+    {
+      "name": "nominalMinusCountedCalls",
+      "actual": "87",
+      "expected": "87",
+      "passed": true
+    },
+    {
+      "name": "hardenedL7Total",
+      "actual": "60000",
+      "expected": "60000",
+      "passed": true
+    },
+    {
+      "name": "hardenedL7503Percent",
+      "actual": "1.0800",
+      "expected": "1.08",
+      "passed": true
+    },
+    {
+      "name": "T2NominalIterationUpperBound",
+      "actual": "6000",
+      "expected": "6000",
+      "passed": true
+    },
+    {
+      "name": "T2NominalAttemptBudgetSeconds",
+      "actual": "8",
+      "expected": "8",
+      "passed": true
+    },
+    {
+      "name": "T2SidecarFinalFailurePercent",
+      "actual": "0.16",
+      "expected": "0.16",
+      "passed": true
+    },
+    {
+      "name": "T2L7FinalFailurePercent",
+      "actual": "0.29",
+      "expected": "0.29",
+      "passed": true
+    }
+  ]
+}

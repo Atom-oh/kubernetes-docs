@@ -37,7 +37,7 @@ ConfigMap is a Kubernetes resource that stores configuration data in key-value p
 </details>
 
 3. What is the difference between resource requests and limits in Kubernetes pods?
-   - A) Requests are the minimum resources a pod can use, limits are the maximum
+   - A) Requests guide scheduling/resource allocation; limits constrain runtime usage
    - B) Requests are the maximum resources a pod can use, limits are the minimum
    - C) Requests are only used for scheduling, limits are only applied at runtime
    - D) Requests only apply to CPU, limits only apply to memory
@@ -46,10 +46,10 @@ ConfigMap is a Kubernetes resource that stores configuration data in key-value p
 
 <summary>Show Answer</summary>
 
-**Answer: A) Requests are the minimum resources a pod can use, limits are the maximum**
+**Answer: A) Requests guide scheduling/resource allocation; limits constrain runtime usage**
 
 **Explanation:**
-Resource requests specify the minimum amount of resources guaranteed to a pod, and the scheduler uses these values when placing pods on nodes. Resource limits specify the maximum amount of resources a pod can use. When these values are exceeded, the pod may be throttled (for CPU) or terminated (for memory).
+Requests reserve scheduling capacity and affect runtime resource allocation; a process can use less than its request. CPU limits are enforced by throttling; memory limits are enforced reactively through OOM killing. Requests do not guarantee immunity from node pressure.
 </details>
 
 4. Which is NOT a method for providing Secret data to pods in Kubernetes?
@@ -68,20 +68,20 @@ Resource requests specify the minimum amount of resources guaranteed to a pod, a
 Methods for providing Secret data to pods in Kubernetes include as environment variables, as a mounted volume, and as image registry credentials. Providing Secrets through a network interface is not supported in Kubernetes.
 </details>
 
-5. Which is NOT a method for creating a ConfigMap in Kubernetes?
+5. Which is NOT a supported input option of `kubectl create configmap`?
    - A) From literal values
    - B) From a file
    - C) From a directory
-   - D) From a network request
+   - D) `--from-url`
    
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: D) From a network request**
+**Answer: D) `--from-url`**
 
 **Explanation:**
-Methods for creating ConfigMaps in Kubernetes include from literal values (`--from-literal`), from a file (`--from-file`), and from a directory (`--from-file=<directory>`). Creating a ConfigMap directly from a network request is not natively supported in Kubernetes.
+Methods for creating ConfigMaps in Kubernetes include from literal values (`--from-literal`), from a file (`--from-file`), and from a directory (`--from-file=<directory>`). There is no `--from-url` flag for this command. ConfigMaps can of course be created through Kubernetes REST API requests, or by applying a manifest fetched from a URL.
 </details>
 
 6. What field is used to specify a pod's service account in Kubernetes?
@@ -116,11 +116,11 @@ In Kubernetes, a pod's service account is specified through the `spec.serviceAcc
 Secret data in Kubernetes is stored encoded in Base64 by default. This is simply encoding, not encryption, so additional security measures are needed. Since Kubernetes 1.13, encryption of Secret data stored in etcd is available.
 </details>
 
-8. Which method of setting environment variables is least recommended in Kubernetes?
-   - A) From a ConfigMap
-   - B) From a Secret
+8. Which approach should be avoided when putting a real password into a Pod manifest?
+   - A) Reference a Secret key
+   - B) Use a protected Secret volume
    - C) Hardcoded directly in the pod spec
-   - D) From the Downward API
+   - D) Retrieve from an external secret manager with workload identity
    
 <details>
 
@@ -129,10 +129,10 @@ Secret data in Kubernetes is stored encoded in Base64 by default. This is simply
 **Answer: C) Hardcoded directly in the pod spec**
 
 **Explanation:**
-Hardcoding environment variables directly in the pod spec violates the principle of separating configuration from code and is not recommended. Using ConfigMaps or Secrets to manage environment variables allows configuration changes without modifying application code, and using the Downward API allows providing pod metadata or resource information as environment variables.
+Avoid literal passwords in manifests and logs. Direct `env.value` is valid for non-sensitive constants; use Secrets or an external store for confidential values. ConfigMaps and the Downward API are not password stores.
 </details>
 
-9. When all containers in a pod have resource requests and limits set, and requests equal limits, what QoS (Quality of Service) class is assigned?
+9. When every container has both CPU and memory requests equal to its limits (with no Pod-level resource settings), what QoS (Quality of Service) class is assigned?
    - A) Guaranteed
    - B) Burstable
    - C) BestEffort
@@ -145,12 +145,12 @@ Hardcoding environment variables directly in the pod spec violates the principle
 **Answer: A) Guaranteed**
 
 **Explanation:**
-The Guaranteed QoS class is assigned when all containers in a pod have resource requests and limits set, and the requests equal the limits. Pods in this class are terminated last when resources are scarce. Burstable is assigned when only some containers have requests and limits set, or when requests and limits differ. BestEffort is assigned when no requests or limits are set.
+The Guaranteed QoS class is assigned when all containers in a pod have resource requests and limits set, and the requests equal the limits. Eviction also considers Pod priority and usage relative to requests; Guaranteed is not an unconditional survival guarantee. Burstable is assigned when only some containers have requests and limits set, or when requests and limits differ. BestEffort is assigned when no requests or limits are set.
 </details>
 
 10. When are changes to ConfigMaps or Secrets automatically reflected in pods?
     - A) Always automatically reflected
-    - B) Only when mounted as a volume
+    - B) Eventually in full volume mounts (excluding subPath)
     - C) Only when used as environment variables
     - D) Never automatically reflected; pod restart required
     
@@ -158,10 +158,10 @@ The Guaranteed QoS class is assigned when all containers in a pod have resource 
 
 <summary>Show Answer</summary>
 
-**Answer: B) Only when mounted as a volume**
+**Answer: B) Eventually in full volume mounts (excluding subPath)**
 
 **Explanation:**
-When ConfigMaps or Secrets are mounted as volumes, Kubernetes periodically updates the mounted files (default is about 1 minute). However, when used as environment variables, they are set only once when the pod is created, so the pod must be restarted to reflect changes. This is because environment variables are set at process startup.
+Mutable full-volume projections update eventually; delay depends on kubelet sync and cache/change-detection settings. `subPath` mounts do not update. Applications must reread files, while environment variables require replacing/restarting the application container or rolling out new Pods.
 </details>
 
 ## Hands-on Questions
@@ -181,6 +181,7 @@ kind: ConfigMap
 metadata:
    name: app-config
 data:
+  app.name: MyApp
   app.properties: |
     app.name=MyApp
     app.version=1.0.0
@@ -218,8 +219,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: app-config
-              key: app.properties
-              subPath: app.name
+              key: app.name
         # Get environment variables from Secret
         - name: DB_USER
           valueFrom:
@@ -259,7 +259,7 @@ kubectl apply -f pod.yaml
 
 5. Verify environment variables:
 ```bash
-kubectl exec app-pod -- env | grep -E 'APP_NAME|DB_'
+kubectl exec app-pod -- sh -c 'test -n "$APP_NAME" && test -n "$DB_PASSWORD" && echo "Configuration available"'
 ```
 
 6. Verify mounted volumes:
@@ -271,7 +271,7 @@ kubectl exec app-pod -- ls -la /etc/secrets
 7. Verify file contents:
 ```bash
 kubectl exec app-pod -- cat /etc/config/app.properties
-kubectl exec app-pod -- cat /etc/secrets/db.user
+kubectl exec app-pod -- test -s /etc/secrets/db.user
 ```
 </details>
 
@@ -436,11 +436,13 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
         - name: CPU_LIMIT
           valueFrom:
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
         - name: MEM_REQUEST
           valueFrom:
             resourceFieldRef:
@@ -471,10 +473,12 @@ spec:
             resourceFieldRef:
               containerName: main
               resource: requests.cpu
+              divisor: "1m"
           - path: "cpu-limit"
             resourceFieldRef:
               containerName: main
               resource: limits.cpu
+              divisor: "1m"
 ```
 
 2. Create pod:

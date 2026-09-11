@@ -1613,14 +1613,14 @@ This architecture follows a clear separation:
 | Platform   | Add-ons, IAM Roles, Access Entries | -                               |
 | Kubernetes | -                                  | NodePool, Deployments, Services |
 
-Kubernetes resources (NodePool definitions, application Deployments) are managed by ArgoCD GitOps. See [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md) for details.
+Kubernetes resources (NodePool definitions, application Deployments) are managed by ArgoCD GitOps. See [GitOps Pipeline Configuration](04-gitops-multi-cluster.md) for details.
 
 ### Cross-References
 
 * [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 * [EKS Security Best Practices](../eks/05-eks-security.md)
 * [NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md)
-* [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [GitOps Pipeline Configuration](04-gitops-multi-cluster.md)
 
 ***
 

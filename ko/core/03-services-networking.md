@@ -1,6 +1,6 @@
 # 서비스와 네트워킹
 
-> **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
+> **지원 버전**: Kubernetes 1.35, 1.36, 1.37
 > **마지막 업데이트**: 2026년 2월 23일
 
 Kubernetes에서 서비스는 포드 집합에 대한 단일 접점을 제공하는 추상화 계층입니다. 이 장에서는 다양한 서비스 유형, 인그레스, 네트워크 정책 등 Kubernetes의 네트워킹 개념에 대해 자세히 알아보겠습니다.
@@ -10,7 +10,7 @@ Kubernetes에서 서비스는 포드 집합에 대한 단일 접점을 제공하
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.34 이상
+- API 서버와 마이너 버전 차이가 1 이내인 kubectl
 - 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
 
 ### 예제 애플리케이션 배포
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
 ---
@@ -86,7 +86,7 @@ Kubernetes는 다양한 유형의 서비스를 제공하여 애플리케이션�
 
 ### 서비스 아키텍처
 
-![외부 클라이언트는 LoadBalancer 또는 NodePort를 거쳐 ClusterIP에 도달하고, 클러스터 내부 클라이언트는 CoreDNS 조회와 ClusterIP 접근을 통해 Endpoints가 가리키는 백엔드 Pod로 연결되며, ExternalName은 DNS CNAME으로 외부 서비스를 가리킨다.](../.gitbook/assets/ko-core-03-services-networking-0.png)
+![Service 네트워킹에서 프록시·로드 밸런서는 EndpointSlice 정보를 사용해 백엔드 Pod로 트래픽을 전달하고, CoreDNS는 Service 이름을 해석하며 ExternalName은 DNS CNAME 별칭을 제공한다.](../.gitbook/assets/ko-core-03-services-networking-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-03-services-networking-0.html)
 
@@ -139,45 +139,6 @@ spec:
   type: NodePort
 ```
 
-ClusterIP는 기본 서비스 유형으로, 클러스터 내부에서만 접근 가능한 IP 주소를 제공합니다.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-  - port: 80
-    targetPort: 9376
-  type: ClusterIP
-```
-
-이 서비스는 클러스터 내부에서 `my-service:80`으로 접근할 수 있습니다.
-
-### NodePort
-
-NodePort 서비스는 모든 노드의 특정 포트를 통해 서비스에 접근할 수 있게 합니다.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-  - port: 80
-    targetPort: 9376
-    nodePort: 30007  # 선택 사항, 지정하지 않으면 30000-32767 범위에서 자동 할당
-  type: NodePort
-```
-
-이 서비스는 클러스터의 모든 노드에서 `<노드 IP>:30007`로 접근할 수 있습니다.
-
 ### LoadBalancer
 
 LoadBalancer 서비스는 클라우드 제공업체의 로드 밸런서를 프로비저닝하여 서비스를 외부에 노출합니다.
@@ -188,7 +149,9 @@ kind: Service
 metadata:
   name: my-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb  # AWS에서 NLB 사용
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
 spec:
   selector:
     app: MyApp
@@ -198,7 +161,7 @@ spec:
   type: LoadBalancer
 ```
 
-이 서비스는 클라우드 제공업체의 로드 밸런서를 통해 외부에서 접근할 수 있습니다.
+이 예시는 AWS Load Balancer Controller, IAM 권한, 적절한 서브넷, 라우팅 가능한 Pod IP가 필요하며 인터넷 공개 NLB를 생성합니다. 내부 로드 밸런서도 가능하고 AWS는 IP 대신 DNS 호스트 이름을 반환할 수 있습니다. EKS Auto Mode는 별도 컨트롤러·클래스와 설정을 사용합니다.
 
 ### ExternalName
 
@@ -238,7 +201,7 @@ spec:
 
 ### 외부 IP
 
-서비스는 외부 IP를 지정하여 외부 리소스를 Kubernetes 서비스로 노출할 수 있습니다.
+`externalIPs`는 관리자가 이미 노드로 라우팅한 IP에서 이 Service를 노출하며 주소를 할당하거나 외부 백엔드를 선택하지 않습니다. v1.36부터 사용 중단되었으므로 새 구성은 지원되는 로드 밸런서나 Gateway 구현을 사용하세요. 아래 문서용 주소는 직접 관리하는 주소로 바꿔야 합니다.
 
 ```yaml
 apiVersion: v1
@@ -252,14 +215,14 @@ spec:
   - port: 80
     targetPort: 9376
   externalIPs:
-  - 80.11.12.10
+  - 198.51.100.32
 ```
 
 ## 인그레스(Ingress)
 
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 경로를 노출하는 API 객체입니다. 인그레스는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅을 제공합니다.
 
-![외부 클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 지나 인그레스 리소스의 host/path 라우팅 규칙에 따라 서비스 A 또는 서비스 B로 분기되고, 각 서비스가 자신의 백엔드 Pod(A-1, A-2 / B-1, B-2)로 부하를 분산하는 경로를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-1.png)
+![Ingress의 host/path 규칙이 프록시·로드 밸런서를 설정하여 서비스 A 또는 B의 백엔드 Pod로 요청을 전달하는 구조이며, Ingress API 객체 자체가 트래픽 홉은 아니다.](../.gitbook/assets/ko-core-03-services-networking-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-03-services-networking-1.html)
 
@@ -267,12 +230,13 @@ spec:
 
 인그레스 리소스를 사용하려면 클러스터에 인그레스 컨트롤러가 실행되고 있어야 합니다. 다양한 인그레스 컨트롤러가 있습니다:
 
-- NGINX 인그레스 컨트롤러
-- AWS ALB 인그레스 컨트롤러
+- AWS Load Balancer Controller
 - GCE 인그레스 컨트롤러
 - Traefik
 - HAProxy
 - Istio 인그레스
+
+커뮤니티 ingress-nginx는 2026년 3월에 유지 관리가 종료되었습니다([공지](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)). 아래 일반 예시는 Traefik 컨트롤러와 `traefik` IngressClass가 설치되어 있다고 가정합니다. Ingress는 패킷이 통과하는 장치가 아닌 구성 API이며 컨트롤러가 실제 프록시·로드 밸런서를 설정합니다.
 
 ### 기본 인그레스
 
@@ -282,7 +246,7 @@ kind: Ingress
 metadata:
   name: minimal-ingress
 spec:
-  ingressClassName: nginx  # 사용할 인그레스 컨트롤러 클래스
+  ingressClassName: traefik  # 사용할 인그레스 컨트롤러 클래스
   rules:
   - host: example.com
     http:
@@ -306,7 +270,7 @@ kind: Ingress
 metadata:
   name: path-based-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: example.com
     http:
@@ -337,7 +301,7 @@ kind: Ingress
 metadata:
   name: name-based-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: foo.example.com
     http:
@@ -371,7 +335,7 @@ kind: Ingress
 metadata:
   name: tls-ingress
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
   - hosts:
     - example.com
@@ -397,9 +361,9 @@ TLS 시크릿 생성:
 kubectl create secret tls example-tls --cert=path/to/cert.crt --key=path/to/key.key
 ```
 
-### AWS ALB 인그레스 컨트롤러
+### AWS Load Balancer Controller
 
-AWS EKS에서는 AWS ALB 인그레스 컨트롤러를 사용하여 Application Load Balancer를 프로비저닝할 수 있습니다.
+AWS EKS에서는 AWS Load Balancer Controller를 사용하여 Application Load Balancer를 프로비저닝할 수 있습니다.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -407,12 +371,13 @@ kind: Ingress
 metadata:
   name: alb-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id
 spec:
+  ingressClassName: alb
   rules:
   - host: example.com
     http:
@@ -430,6 +395,8 @@ spec:
 
 ## 엔드포인트(Endpoints)
 
+레거시 `v1/Endpoints` API는 v1.33부터 사용 중단되었습니다. 새 통합에는 `discovery.k8s.io/v1` EndpointSlice를 사용하세요. 이 객체는 백엔드 정보를 표현하며 트래픽이 API 객체를 통과하지는 않습니다.
+
 엔드포인트는 서비스가 가리키는 포드의 IP 주소와 포트를 저장하는 리소스입니다. 서비스의 셀렉터와 일치하는 포드가 있으면 Kubernetes는 자동으로 엔드포인트 객체를 생성하고 관리합니다.
 
 ```yaml
@@ -444,7 +411,7 @@ subsets:
   - port: 9376
 ```
 
-이 엔드포인트는 `my-service`가 `192.168.1.1:9376`을 가리키도록 합니다.
+수동 백엔드는 **selector가 없는** `my-service` Service와 일치하는 포트가 필요합니다. selector가 있으면 컨트롤러가 백엔드 정보를 덮어쓸 수 있으므로 아래처럼 수동 EndpointSlice를 사용하는 편이 좋습니다.
 
 ### 엔드포인트슬라이스(EndpointSlice)
 
@@ -457,20 +424,20 @@ metadata:
   name: my-service-abc
   labels:
     kubernetes.io/service-name: my-service
+    endpointslice.kubernetes.io/managed-by: docs.example.com
 addressType: IPv4
 ports:
-- name: http
+- name: ""
   protocol: TCP
-  port: 80
+  port: 9376
 endpoints:
 - addresses:
   - "10.1.2.3"
   conditions:
     ready: true
   hostname: pod-1
-  topology:
-    kubernetes.io/hostname: node-1
-    topology.kubernetes.io/zone: us-west-2a
+  nodeName: node-1
+  zone: us-west-2a
 ```
 
 ## 서비스 디스커버리
@@ -482,7 +449,7 @@ Kubernetes는 두 가지 주요 서비스 디스커버리 방법을 제공합니
 
 ### 환경 변수
 
-포드가 생성되면 Kubernetes는 해당 시점에 존재하는 모든 서비스에 대한 환경 변수를 포드에 주입합니다. 예를 들어, `my-service`라는 서비스가 있으면 다음과 같은 환경 변수가 생성됩니다:
+`enableServiceLinks: true`이면 kubelet은 컨테이너 시작 시 같은 네임스페이스에 이미 있는 ClusterIP Service의 변수를 추가합니다. 변수는 자동 갱신되지 않으므로 나중에 생성되는 Service에는 DNS를 사용하세요. 예를 들어, `my-service`라는 서비스가 있으면 다음과 같은 환경 변수가 생성됩니다:
 
 ```
 MY_SERVICE_SERVICE_HOST=10.0.0.11
@@ -579,7 +546,7 @@ spec:
 
 ## 네트워크 정책
 
-네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 네트워크 정책을 사용하려면 네트워크 플러그인이 네트워크 정책을 지원해야 합니다(예: Calico, Cilium, Weave Net).
+네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 네트워크 정책을 사용하려면 네트워크 플러그인이 네트워크 정책을 지원해야 합니다(예: Calico, Cilium).
 
 ![네임스페이스 A의 Frontend·API·Database Pod와 네임스페이스 B의 Monitoring Pod 사이에서 네트워크 정책이 어떤 경로는 허용하고 어떤 경로는 차단하는지 보여준다.](../.gitbook/assets/ko-core-03-services-networking-2.png)
 
@@ -598,7 +565,7 @@ spec:
   - Ingress
 ```
 
-이 네트워크 정책은 모든 포드에 대한 인그레스 트래픽을 차단합니다.
+이 정책은 해당 네임스페이스 파드의 수신을 격리합니다. 표준 NetworkPolicy는 허용 규칙의 합집합이므로 다른 정책이 허용한 트래픽은 계속 허용됩니다. 플러그인의 정책 집행이 필요하며 연결에는 출발지 egress와 목적지 ingress 양쪽의 허용이 필요합니다. 노드 트래픽에는 문서화된 예외가 있습니다.
 
 ### 특정 포드에 대한 인그레스 허용
 
@@ -676,6 +643,8 @@ spec:
 
 이 네트워크 정책은 `app: frontend` 레이블이 있는 포드에서 `app: api` 레이블이 있는 포드의 TCP 포트 8080으로의 이그레스 트래픽과 `purpose: monitoring` 레이블이 있는 네임스페이스의 모든 포드로의 이그레스 트래픽을 허용합니다.
 
+위 egress 예시는 별도 허용 정책이 없으면 DNS도 차단합니다. Service 이름을 사용하는 앱에는 클러스터 DNS 엔드포인트의 TCP/UDP 53을 허용하고 NodeLocal DNS 사용 여부도 반영하세요.
+
 ### CIDR 기반 정책
 
 ```yaml
@@ -709,12 +678,12 @@ spec:
 
 ### Istio
 
-Istio는 인기 있는 서비스 메시 구현 중 하나입니다. Istio는 사이드카 패턴을 사용하여 각 포드에 Envoy 프록시를 주입합니다.
+Istio는 인기 있는 서비스 메시 구현 중 하나입니다. 다이어그램은 등록된 파드에 Envoy를 주입하는 Istio 사이드카 모드입니다. Istio는 다른 데이터 플레인의 ambient 모드도 제공합니다.
 
 #### Istio 가상 서비스
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -741,7 +710,7 @@ spec:
 #### Istio 대상 규칙
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -770,6 +739,8 @@ Linkerd는 경량화된 서비스 메시로, 간단한 설치와 사용이 특�
 
 #### Linkerd 서비스 프로필
 
+다음은 레거시 예시입니다. Linkerd 2.16부터 Gateway API 유형이 ServiceProfile을 대체하며 ServiceProfile은 호환성 목적으로 유지됩니다([현재 문서](https://linkerd.io/2-edge/reference/service-profiles/)).
+
 ```yaml
 apiVersion: linkerd.io/v1alpha2
 kind: ServiceProfile
@@ -796,6 +767,10 @@ spec:
 
 이 서비스 프로필은 `nginx` 서비스에 대한 경로와 재시도 정책을 정의합니다.
 
+## CNI(Container Network Interface)
+
+CNI 플러그인은 파드 네트워크 인터페이스와 IP 주소를 구성합니다. NetworkPolicy 집행은 플러그인이 지원해야 하는 별도 기능입니다.
+
 ## Cilium
 
 ![Kubernetes가 CNI 표준을 통해 Cilium을 CNI 플러그인으로 호출하고, Cilium이 eBPF 프로그램을 Linux 커널에 로드해 커널 내 데이터 경로를 구현하며 Hubble로 네트워크 흐름을 관찰 가능하게 만드는 계층 구조를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-4.png)
@@ -805,7 +780,7 @@ spec:
 [Cilium 세부](../networking/cilium/README.md)
 ### Cilium 소개
 
-Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화된 애플리케이션 간의 네트워크 연결, 보안, 관찰 가능성을 제공하는 오픈 소스 소프트웨어입니다. Kubernetes, Docker, Mesos와 같은 컨테이너 오케스트레이션 플랫폼에서 네트워킹, 보안, 관찰 가능성을 제공하기 위해 설계되었습니다.
+Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화된 애플리케이션 간의 네트워크 연결, 보안, 관찰 가능성을 제공하는 오픈 소스 소프트웨어입니다. 현재 Kubernetes 통합은 CNI 플러그인과 컨트롤러로 네트워킹·보안·관찰 기능을 제공합니다.
 
 #### 주요 특징
 
@@ -841,7 +816,7 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 안전하게 프
 #### eBPF의 주요 특징
 
 1. **커널 내 실행**: eBPF 프로그램은 커널 내에서 직접 실행되어 높은 성능을 제공합니다.
-2. **안전성**: eBPF 검증기는 프로그램이 커널을 손상시키지 않도록 보장합니다.
+2. **안전성**: 검증기는 로드 전에 프로그램 안전성 제약을 검사하지만 커널 버그나 잘못된 정책 로직까지 없다고 보장하지는 않습니다.
 3. **동적 로딩**: 커널을 재부팅하지 않고도 eBPF 프로그램을 로드하고 언로드할 수 있습니다.
 4. **맵**: eBPF 맵은 데이터를 저장하고 사용자 공간과 커널 공간 간에 데이터를 공유하는 데 사용됩니다.
 
@@ -882,7 +857,7 @@ Cilium은 기본적으로 VXLAN을 사용하여 오버레이 네트워킹을 구
 **장점**:
 - 기존 네트워크 인프라와의 호환성
 - 네트워크 토폴로지 독립성
-- 멀티 클러스터 환경에서 IP 충돌 방지
+- 언더레이와 독립된 Pod 주소 사용; 연결된 클러스터에는 여전히 호환되고 중복 없는 주소 계획 필요
 
 **단점**:
 - 캡슐화 오버헤드로 인한 성능 영향
@@ -908,18 +883,9 @@ Cilium은 기본적으로 VXLAN을 사용하여 오버레이 네트워킹을 구
 - 네트워크 토폴로지 제약
 - IP 주소 관리 복잡성
 
-#### 하이브리드 모드
+#### 라우팅 모드 선택
 
-Cilium은 오버레이 네트워킹과 네이티브 라우팅을 결합한 하이브리드 모드도 지원합니다.
-
-**작동 방식**:
-1. 가능한 경우 네이티브 라우팅을 사용합니다.
-2. 네이티브 라우팅이 불가능한 경우 오버레이 네트워킹으로 폴백합니다.
-
-**장점**:
-- 유연성과 성능의 균형
-- 다양한 네트워크 토폴로지 지원
-- 점진적인 마이그레이션 가능
+배포에 맞는 캡슐화 또는 네이티브 라우팅 모드를 명시적으로 선택하세요. 네이티브 경로 실패 시 자동으로 터널로 전환된다고 가정하지 말고 사용 버전의 라우팅·마이그레이션 절차를 따르세요.
 
 #### AWS ENI 모드
 
@@ -962,7 +928,7 @@ spec:
 
 #### L7 정책
 
-Cilium은 L7(애플리케이션 계층) 정책을 지원하여 HTTP, gRPC, Kafka 등의 프로토콜에 대한 세분화된 정책을 정의할 수 있습니다.
+Cilium은 eBPF와 사용자 공간 Envoy 프록시를 함께 사용해 HTTP 규칙 등의 L7 정책을 지원합니다. L7 검사는 전부 커널 안에서 수행되지 않으며 설치 버전의 프로토콜·암호화 제약을 확인해야 합니다.
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1041,6 +1007,9 @@ rm hubble-linux-amd64.tar.gz
 # Hubble 활성화
 cilium hubble enable
 
+# Run in a separate terminal and keep it open
+cilium hubble port-forward
+
 # 네트워크 흐름 관찰
 hubble observe
 
@@ -1048,7 +1017,7 @@ hubble observe
 hubble observe --protocol http
 
 # 특정 포드의 네트워크 흐름 관찰
-hubble observe --pod app=myapp
+hubble observe --pod default/myapp-pod
 
 # 네트워크 정책 위반 관찰
 hubble observe --verdict DROPPED
@@ -1058,38 +1027,35 @@ hubble observe --verdict DROPPED
 
 Amazon EKS에서 Cilium을 구성하는 방법은 다양합니다. 여기서는 몇 가지 일반적인 구성 방법을 살펴보겠습니다.
 
-#### 기본 설치
+#### 설치 전에 CNI 모드 선택
 
-```bash
-# Cilium CLI 설치
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
-sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-rm cilium-linux-amd64.tar.gz
+폐기 가능한 EKS 테스트 클러스터에서 Kubernetes 버전과 호환되는 Cilium 릴리스를 선택하세요. [공식 EKS 설치 문서](https://docs.cilium.io/en/stable/installation/k8s-install-helm/)를 따르며 아래 코드는 완전한 설치·마이그레이션 명령이 아닌 Helm **values 일부**입니다.
 
-# Cilium 설치
-cilium install
+**AWS VPC CNI 체이닝**은 IPAM으로 `aws-node`를 유지합니다:
 
-# 설치 상태 확인
-cilium status
-
-# 연결성 테스트
-cilium connectivity test
+```yaml
+cni:
+  chainingMode: aws-cni
+  exclusive: false
+enableIPv4Masquerade: false
+routingMode: native
 ```
 
-#### AWS ENI 모드 구성
+기존 파드에는 새 CNI 체인이 적용되지 않으므로 통제된 롤아웃으로 재생성해야 합니다. L7 정책이나 kube-proxy 대체를 활성화하기 전에 체이닝 기능 제약을 확인하세요.
 
-```bash
-# AWS ENI 모드로 Cilium 설치
-cilium install --config aws-eni-mode=true
+**Cilium ENI IPAM**은 VPC CNI 대신 Cilium이 ENI를 관리합니다:
 
-# 또는 Helm을 사용한 설치
-helm install cilium cilium/cilium \
-  --namespace kube-system \
-  --set eni.enabled=true \
-  --set ipam.mode=eni \
-  --set egressMasqueradeInterfaces=eth0 \
-  --set tunnel=disabled
+```yaml
+eni:
+  enabled: true
+ipam:
+  mode: eni
+routingMode: native
 ```
+
+이 모드에는 EC2 API 권한과 같은 노드를 `aws-node`가 관리하지 않도록 하는 공식 설치·마이그레이션 절차가 필요합니다. 이 절차 없이 실행 중인 VPC CNI 위에 적용하지 마세요. EKS Auto Mode와 Fargate는 네트워킹을 별도로 관리합니다.
+
+설치 후 `cilium status --wait`와 격리된 테스트 클러스터의 연결성 테스트로 검증하세요. 차트 버전을 고정하고 검토한 values를 업그레이드에도 유지합니다.
 
 #### Hubble 활성화
 
@@ -1167,7 +1133,7 @@ Kubernetes의 네트워킹 기능을 이해하고 활용하면 안전하고 확�
 - [Kubernetes 공식 문서 - 네트워크 정책](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [Kubernetes 공식 문서 - DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
 - [Istio 공식 문서](https://istio.io/latest/docs/)
-- [Linkerd 공식 문서](https://linkerd.io/2.11/overview/)
+- [Linkerd 공식 문서](https://linkerd.io/2-edge/overview/)
 - [Cilium 공식 문서](https://docs.cilium.io/)
 - [CNI 공식 문서](https://github.com/containernetworking/cni)
 

@@ -16,6 +16,8 @@ Traffic Splitting is one of Istio's most powerful features, enabling Canary depl
 
 ## Traffic Splitting Overview
 
+Reviewed against Istio 1.31.0 and Argo Rollouts 1.10.0. These are alternative examples for a disposable test namespace; do not run several Rollouts with the same selector or let manual scripts/GitOps overwrite Rollouts-managed weights and subset hashes. Install the referenced Services, DestinationRules, AnalysisTemplates, gateway and Prometheus before rollout. The first deployment establishes a stable ReplicaSet; canary steps/analysis exercise a subsequent update. Weight controls request distribution, not a stable percentage of users.
+
 Traffic Splitting uses the `weight` field in VirtualService to distribute traffic between multiple service versions by ratio.
 
 ![A VirtualService splits incoming user requests by weight, sending 90 percent to Version 1 and 10 percent to Version 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
@@ -65,10 +67,10 @@ Canary deployment is a strategy that safely validates a new version by deploying
 ```bash
 # Install Argo Rollouts
 kubectl create namespace argo-rollouts
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/download/v1.10.0/install.yaml
 
 # Install Argo Rollouts CLI (optional)
-curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+curl -LO https://github.com/argoproj/argo-rollouts/releases/download/v1.10.0/kubectl-argo-rollouts-linux-amd64
 chmod +x kubectl-argo-rollouts-linux-amd64
 sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
 
@@ -94,11 +96,11 @@ spec:
     metadata:
       labels:
         app: reviews
-        istio-injection: enabled
+        sidecar.istio.io/inject: "true"
     spec:
       containers:
       - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v2:1.17.0
+        image: docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
         ports:
         - containerPort: 9080
         resources:
@@ -130,27 +132,62 @@ spec:
       - pause:
           duration: 2m   # Wait 2 minutes
 
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+
       - setWeight: 25    # 25% traffic to Canary
       - pause:
           duration: 2m
+
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 
       - setWeight: 50    # 50% traffic to Canary
       - pause:
           duration: 2m
 
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+
       - setWeight: 75    # 75% traffic to Canary
       - pause:
           duration: 2m
 
-      # Automatic Metric Analysis
-      analysis:
-        templates:
-        - templateName: success-rate
-        - templateName: latency
-        startingStep: 1  # Start analysis from first step
-        args:
-        - name: service-name
-          value: reviews
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+
 ```
 
 ### Step 3: Create Service
@@ -173,7 +210,7 @@ spec:
 
 ### Step 4: Define VirtualService
 
-**Important**: Argo Rollouts does **NOT** automatically modify VirtualService. The VirtualService must be pre-created, and the Rollout references it to only update weights.
+**Important**: Argo Rollouts updates the weights of the referenced VirtualService routes. It does not create that VirtualService; create it first.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -198,7 +235,7 @@ spec:
 ```
 
 **Key Points**:
-- The `http[].name` field is required (matches the Rollout's `routes` field)
+- Routes explicitly listed in the Rollout need matching `http[].name` values; the routes list can be omitted when there is exactly one route
 - Rollout only automatically updates the `weight` values of this VirtualService
 - Two destinations are required: stable and canary
 
@@ -217,21 +254,27 @@ spec:
   subsets:
   - name: stable
     labels:
-      # Label automatically added by Rollout
-      # rollouts-pod-template-hash: <stable-hash>
+      app: reviews
   - name: canary
     labels:
-      # Label automatically added by Rollout
-      # rollouts-pod-template-hash: <canary-hash>
+      app: reviews
 ```
 
 **Key Points**:
 - Subset names (`stable`, `canary`) must match the Rollout's `stableSubsetName` and `canarySubsetName`
 - Rollout automatically adds the `rollouts-pod-template-hash` label to Pods
 - DestinationRule subsets select Pods based on this label
-- **Leave label selectors empty** - Rollout manages them at runtime
+- Keep stable application labels if needed; Rollout adds and updates the pod-template hash in each subset. Wait for those selectors before sending traffic.
 
 ### Step 6: Define AnalysisTemplate
+
+Before using these canary gates, add this relabeling rule to the Prometheus **pod scrape job that collects workload Istio metrics**. Confirm `rollout_hash` and `reporter="destination"` appear on the scraped series. It identifies the actual canary ReplicaSet passed by `podTemplateHashValue: Latest`; service-wide averages would hide failures in a small canary. Supply representative request traffic; missing or NaN measurements must not promote a release.
+
+```yaml
+# Add to the existing pod scrape job's relabel_configs
+- source_labels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]
+  target_label: rollout_hash
+```
 
 #### Success Rate Analysis
 
@@ -244,13 +287,14 @@ metadata:
 spec:
   args:
   - name: service-name
+  - name: pod-template-hash
 
   metrics:
   - name: success-rate
     interval: 30s
-    count: 4  # 4 measurements (total 2 minutes)
-    successCondition: result >= 0.95  # 95% or higher success rate
-    failureLimit: 2  # Rollback after 2 failures
+    count: 4  # Four measurements; interval is not total elapsed duration
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] >= 0.95
+    failureLimit: 0  # No failed measurement tolerated
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
@@ -258,6 +302,8 @@ spec:
           sum(rate(
             istio_requests_total{
               destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}",
               destination_workload_namespace="default",
               response_code!~"5.*"
             }[2m]
@@ -266,6 +312,8 @@ spec:
           sum(rate(
             istio_requests_total{
               destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}",
               destination_workload_namespace="default"
             }[2m]
           ))
@@ -282,13 +330,14 @@ metadata:
 spec:
   args:
   - name: service-name
+  - name: pod-template-hash
 
   metrics:
   - name: latency-p95
     interval: 30s
     count: 4
-    successCondition: result <= 500  # P95 latency 500ms or less
-    failureLimit: 2
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] <= 500
+    failureLimit: 0
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
@@ -297,6 +346,8 @@ spec:
             sum(rate(
               istio_request_duration_milliseconds_bucket{
                 destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}",
                 destination_workload_namespace="default"
               }[2m]
             )) by (le)
@@ -310,7 +361,7 @@ spec:
 ```bash
 # Start Canary deployment with image update
 kubectl argo rollouts set image reviews \
-  reviews=docker.io/istio/examples-bookinfo-reviews-v3:1.17.0
+  reviews=docker.io/istio/examples-bookinfo-reviews-v3:1.20.3
 
 # Check Rollout status
 kubectl argo rollouts get rollout reviews --watch
@@ -350,6 +401,8 @@ kubectl get pods -l app=reviews --show-labels
 
 ### Advanced Configuration: Metric-based Automatic Progression
 
+Merge this strategy into the complete Rollout above; retain its selector/template. Other shortened Rollout examples below are also overlays, not standalone manifests.
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -383,6 +436,9 @@ spec:
           args:
           - name: service-name
             value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 
       - setWeight: 25
       - pause:
@@ -395,6 +451,9 @@ spec:
           args:
           - name: service-name
             value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 
       - setWeight: 50
       - pause:
@@ -407,6 +466,9 @@ spec:
           args:
           - name: service-name
             value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 
       - setWeight: 75
       - pause:
@@ -419,6 +481,9 @@ spec:
           args:
           - name: service-name
             value: reviews
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 ```
 
 ### Key Considerations
@@ -432,6 +497,7 @@ Argo Rollouts does not create these resources. They must be created before deplo
 kubectl apply -f service.yaml
 kubectl apply -f destination-rule.yaml
 kubectl apply -f virtual-service.yaml
+kubectl apply -f analysis-templates.yaml
 kubectl apply -f rollout.yaml
 ```
 
@@ -448,7 +514,7 @@ These labels are used for subset selection in DestinationRule.
 
 #### 3. HTTP Route Name Required
 
-Each HTTP route in VirtualService must have a `name` field:
+Only explicitly selected routes need the referenced name. Unmanaged header routes need not be named; this example selects `primary`:
 
 ```yaml
 # Wrong example
@@ -456,7 +522,9 @@ http:
 - route:  # No name!
   - destination:
       host: reviews
+```
 
+```yaml
 # Correct example
 http:
 - name: primary  # Required!
@@ -469,10 +537,12 @@ http:
 
 Istio sidecar must be injected into Rollout Pods:
 
-```yaml
+```bash
 # Method 1: Namespace level
 kubectl label namespace default istio-injection=enabled
+```
 
+```yaml
 # Method 2: Pod level
 template:
   metadata:
@@ -481,6 +551,8 @@ template:
 ```
 
 ### Using with VirtualService Match
+
+Tester/region/tier headers must be supplied by a trusted layer if they control privileged access. Unmanaged routes that always select `canary` are not changed by a weight rollback and can continue targeting a scaled-down canary; remove or adjust them as part of abort/cleanup.
 
 Argo Rollouts can be used with VirtualService match conditions. This allows routing only traffic that meets specific conditions to Canary.
 
@@ -659,7 +731,7 @@ spec:
   - match:
     - headers:
         x-app-version:
-          regex: "^3\\.(1[0-9]|[2-9][0-9])\\."  # 3.10.x or higher
+          regex: "^3\\.([1-9][0-9]+)\\.[0-9]+$"  # 3.x.y with minor >= 10; not 4.x
     name: latest-app-version
     route:
     - destination:
@@ -681,7 +753,7 @@ spec:
 
 ### Complete Deployment Example
 
-A basic example deploying all resources at once:
+A combined reference manifest for a new lab installation. Existing deployments need ordered changes and propagation checks; this apply is not atomic:
 
 ```yaml
 ---
@@ -707,9 +779,9 @@ spec:
   host: reviews
   subsets:
   - name: stable
-    labels: {}  # Managed by Rollout
+    labels: {app: reviews}  # Rollout adds the revision hash
   - name: canary
-    labels: {}  # Managed by Rollout
+    labels: {app: reviews}  # Rollout adds the revision hash
 
 ---
 # VirtualService
@@ -750,7 +822,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v1:1.17.0
+        image: istio/examples-bookinfo-reviews-v1:1.20.3
         ports:
         - containerPort: 9080
 
@@ -799,7 +871,9 @@ http:
       weight: 100
     - destination: {host: reviews, subset: canary}
       weight: 0
+```
 
+```yaml
 # Wrong example - match is ignored if primary comes first
 http:
 - name: primary
@@ -954,7 +1028,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v2:1.17.0
+        image: docker.io/istio/examples-bookinfo-reviews-v2:1.20.3
         ports:
         - containerPort: 9080
 
@@ -970,11 +1044,16 @@ spec:
         args:
         - name: service-name
           value: reviews-preview
+        - name: pod-template-hash
+          valueFrom:
+            podTemplateHashValue: Latest
 ```
 
 ## Blue/Green Deployment
 
 Blue/Green deployment maintains two identical production environments and switches traffic instantly. Using Argo Rollouts with Istio enables safe switching and automatic rollback.
+
+Service-selector changes propagate asynchronously and existing connections can continue on the old ReplicaSet. A manual pause is not a failed approval. Pre-promotion failure leaves production on the old version; post-promotion analysis can switch it back while the old ReplicaSet is retained.
 
 ### Argo Rollouts Blue/Green Architecture
 
@@ -1041,6 +1120,7 @@ spec:
       protocol: HTTP
     hosts:
     - reviews.example.com
+    - reviews-preview.example.com
 
 ---
 # VirtualService - Active Service
@@ -1099,7 +1179,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: istio/examples-bookinfo-reviews-v1:1.17.0
+        image: istio/examples-bookinfo-reviews-v1:1.20.3
         ports:
         - containerPort: 9080
 
@@ -1111,10 +1191,10 @@ spec:
 
       # Auto-promotion settings
       autoPromotionEnabled: false  # false: manual approval, true: auto-approve
-      autoPromotionSeconds: 30     # Wait time for auto-promotion
+      autoPromotionSeconds: 30     # Ignored while autoPromotionEnabled=false
 
       # Blue environment retention time
-      scaleDownDelaySeconds: 30    # Delete Blue 30 seconds after switch
+      scaleDownDelaySeconds: 600   # Retain old capacity through the post-promotion checks
       scaleDownDelayRevisionLimit: 2  # Keep up to 2 previous versions
 
       # Pre-test (validate Preview before deployment)
@@ -1124,6 +1204,9 @@ spec:
         args:
         - name: service-name
           value: reviews-preview
+        - name: pod-template-hash
+          valueFrom:
+            podTemplateHashValue: Latest
 
       # Post-verification (validate Active after switch)
       postPromotionAnalysis:
@@ -1132,6 +1215,9 @@ spec:
         args:
         - name: service-name
           value: reviews-active
+        - name: pod-template-hash
+          valueFrom:
+            podTemplateHashValue: Latest
 
       # Anti-affinity (deploy Blue/Green on different nodes)
       antiAffinity:
@@ -1142,6 +1228,8 @@ spec:
 
 #### Pre-test (Smoke Tests)
 
+The Job provider succeeds on Job completion with exit code 0; it does not parse a printed HTTP status as `result`. These tests use the Bookinfo `/health` and `/reviews/0` endpoints. The explicit native-sidecar annotation lets the Job finish while retaining mesh mTLS; it requires supported Kubernetes/Istio native-sidecar behavior. Test this on the selected EKS version.
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
@@ -1150,26 +1238,32 @@ metadata:
 spec:
   args:
   - name: service-name
+  - name: pod-template-hash
 
   metrics:
   # 1. HTTP status code check
   - name: http-status
     interval: 10s
     count: 5
-    successCondition: result == 200
     provider:
       job:
         spec:
+          activeDeadlineSeconds: 60
           template:
+            metadata:
+              labels:
+                sidecar.istio.io/inject: "true"
+              annotations:
+                sidecar.istio.io/nativeSidecar: "true"
             spec:
               containers:
               - name: curl
-                image: curlimages/curl:7.88.1
+                image: curlimages/curl:8.16.0
                 command:
                 - sh
                 - -c
                 - |
-                  curl -s -o /dev/null -w "%{http_code}" http://{{args.service-name}}:9080/health
+                  test "$(curl -fsS -o /dev/null -w "%{http_code}" http://{{args.service-name}}:9080/health)" = 200
               restartPolicy: Never
           backoffLimit: 1
 
@@ -1177,21 +1271,26 @@ spec:
   - name: functional-test
     interval: 10s
     count: 3
-    successCondition: result == true
     provider:
       job:
         spec:
+          activeDeadlineSeconds: 60
           template:
+            metadata:
+              labels:
+                sidecar.istio.io/inject: "true"
+              annotations:
+                sidecar.istio.io/nativeSidecar: "true"
             spec:
               containers:
               - name: test
-                image: appropriate/curl:latest
+                image: curlimages/curl:8.16.0
                 command:
                 - sh
                 - -c
                 - |
                   # API endpoint test
-                  curl -f http://{{args.service-name}}:9080/api/v1/health
+                  curl -fsS http://{{args.service-name}}:9080/reviews/0
               restartPolicy: Never
           backoffLimit: 1
 ```
@@ -1206,13 +1305,14 @@ metadata:
 spec:
   args:
   - name: service-name
+  - name: pod-template-hash
 
   metrics:
   # Prometheus metric-based verification
   - name: error-rate
     interval: 30s
     count: 10
-    successCondition: result < 0.05  # Less than 5% error rate
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] < 0.05
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
@@ -1220,20 +1320,24 @@ spec:
           sum(rate(
             istio_requests_total{
               destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}",
               response_code=~"5.."
             }[1m]
           ))
           /
           sum(rate(
             istio_requests_total{
-              destination_service_name="{{args.service-name}}"
+              destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}"
             }[1m]
           ))
 
   - name: response-time
     interval: 30s
     count: 10
-    successCondition: result < 500  # Less than 500ms
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] < 500
     provider:
       prometheus:
         address: http://prometheus.istio-system:9090
@@ -1241,7 +1345,9 @@ spec:
           histogram_quantile(0.95,
             sum(rate(
               istio_request_duration_milliseconds_bucket{
-                destination_service_name="{{args.service-name}}"
+                destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}"
               }[1m]
             )) by (le)
           )
@@ -1254,7 +1360,7 @@ spec:
 ```bash
 # Start Blue/Green deployment with image update
 kubectl argo rollouts set image reviews \
-  reviews=istio/examples-bookinfo-reviews-v2:1.17.0
+  reviews=istio/examples-bookinfo-reviews-v2:1.20.3
 
 # Check Rollout status
 kubectl argo rollouts get rollout reviews --watch
@@ -1325,7 +1431,7 @@ spec:
   - match:
     - headers:
         cookie:
-          regex: ".*ab_test=a.*"
+          regex: "(^|.*;[ ]*)ab_test=a(;.*|$)"
     route:
     - destination:
         host: myapp
@@ -1335,7 +1441,7 @@ spec:
   - match:
     - headers:
         cookie:
-          regex: ".*ab_test=b.*"
+          regex: "(^|.*;[ ]*)ab_test=b(;.*|$)"
     route:
     - destination:
         host: myapp
@@ -1347,14 +1453,18 @@ spec:
         host: myapp
         subset: version-a
       weight: 50
+      headers:
+        response:
+          add:
+            set-cookie: "ab_test=a; Max-Age=2592000; Path=/; SameSite=Lax"
     - destination:
         host: myapp
         subset: version-b
       weight: 50
-    headers:
-      response:
-        add:
-          Set-Cookie: "ab_test=a; Max-Age=2592000; Path=/"
+      headers:
+        response:
+          add:
+            set-cookie: "ab_test=b; Max-Age=2592000; Path=/; SameSite=Lax"
 ```
 
 ### Header-based A/B Testing
@@ -1434,80 +1544,14 @@ Progressive rollout automatically increases traffic ratio over time. Using Argo 
 
 ### Manual Progressive Rollout
 
+For manual operation, configure explicit pauses and advance one stage only after reviewing the AnalysisRun and actual traffic. A timer plus a raw counter grep is not an error-rate gate. In this controller-managed example use:
+
 ```bash
-#!/bin/bash
-# progressive-rollout.sh
-
-SERVICE="myapp"
-NAMESPACE="default"
-INTERVAL=300  # 5 minutes
-
-# Traffic ratio array
-WEIGHTS=(0 10 25 50 75 100)
-
-for i in "${!WEIGHTS[@]}"; do
-  weight=${WEIGHTS[$i]}
-  prev_weight=$((100 - weight))
-
-  echo "[$i/${#WEIGHTS[@]}] Shifting traffic: v1=$prev_weight%, v2=$weight%"
-
-  kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: ${SERVICE}
-  namespace: ${NAMESPACE}
-spec:
-  hosts:
-  - ${SERVICE}
-  http:
-  - route:
-    - destination:
-        host: ${SERVICE}
-        subset: v1
-      weight: ${prev_weight}
-    - destination:
-        host: ${SERVICE}
-        subset: v2
-      weight: ${weight}
-EOF
-
-  if [ $weight -lt 100 ]; then
-    echo "Waiting ${INTERVAL} seconds before next step..."
-    sleep $INTERVAL
-
-    # Check metrics
-    echo "Checking metrics..."
-    ERROR_RATE=$(kubectl exec -n ${NAMESPACE} -c istio-proxy \
-      $(kubectl get pod -n ${NAMESPACE} -l app=${SERVICE},version=v2 -o jsonpath='{.items[0].metadata.name}') -- \
-      curl -s localhost:15000/stats/prometheus | \
-      grep 'istio_requests_total{response_code="500"}' | \
-      awk '{print $2}')
-
-    if [ "$ERROR_RATE" != "" ] && [ "$ERROR_RATE" -gt 5 ]; then
-      echo "ERROR: High error rate detected ($ERROR_RATE errors). Rolling back!"
-      kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: ${SERVICE}
-  namespace: ${NAMESPACE}
-spec:
-  hosts:
-  - ${SERVICE}
-  http:
-  - route:
-    - destination:
-        host: ${SERVICE}
-        subset: v1
-      weight: 100
-EOF
-      exit 1
-    fi
-  fi
-done
-
-echo "Progressive rollout completed successfully!"
+kubectl argo rollouts get rollout reviews
+kubectl get analysisruns
+kubectl argo rollouts promote reviews
+# If the active rollout fails validation:
+kubectl argo rollouts abort reviews
 ```
 
 ## Using with Traffic Mirroring
@@ -1700,82 +1744,30 @@ spec:
 
 ```promql
 # Requests per version
-sum(rate(istio_requests_total{destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version)
+sum(rate(istio_requests_total{reporter="destination",destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version)
 
 # Error rate per version
-sum(rate(istio_requests_total{destination_service="myapp.default.svc.cluster.local",response_code=~"5.."}[5m])) by (destination_version)
+sum(rate(istio_requests_total{reporter="destination",destination_service="myapp.default.svc.cluster.local",response_code=~"5.."}[5m])) by (destination_version)
 /
-sum(rate(istio_requests_total{destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version)
+sum(rate(istio_requests_total{reporter="destination",destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version)
 
 # Latency per version (P95)
-histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version, le))
+histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination",destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version, le))
 
 # Traffic split ratio
-sum(rate(istio_requests_total{destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version)
+sum(rate(istio_requests_total{reporter="destination",destination_service="myapp.default.svc.cluster.local"}[5m])) by (destination_version)
 /
-sum(rate(istio_requests_total{destination_service="myapp.default.svc.cluster.local"}[5m]))
+scalar(sum(rate(istio_requests_total{reporter="destination",destination_service="myapp.default.svc.cluster.local"}[5m])))
 ```
 
-### Automatic Rollback Script
+### Automatic Rollback
+
+Use the AnalysisTemplates above as the rollout gate. Prometheus counter totals are not rates, and an empty/failed query is not proof of health. Check the latest ReplicaSet’s measurements, minimum traffic, and AnalysisRun phase. Let Argo Rollouts own routing changes; do not apply a competing VirtualService or assume `abort` changes the desired image back. `undo` reverts the desired template, while `abort` stops an active rollout and directs traffic according to the strategy’s stable state. After full promotion, validate the appropriate undo/redeployment path.
 
 ```bash
-#!/bin/bash
-# auto-rollback.sh
-
-SERVICE="myapp"
-NAMESPACE="default"
-ERROR_THRESHOLD=5  # 5% error rate threshold
-LATENCY_THRESHOLD=1000  # 1 second latency threshold
-
-# Collect Canary version metrics
-POD=$(kubectl get pod -n ${NAMESPACE} -l app=${SERVICE},version=v2 -o jsonpath='{.items[0].metadata.name}')
-
-# Check error rate
-ERROR_RATE=$(kubectl exec -n ${NAMESPACE} -c istio-proxy ${POD} -- \
-  curl -s localhost:15000/stats/prometheus | \
-  grep 'istio_requests_total{response_code="500"}' | \
-  awk '{sum+=$2} END {print sum}')
-
-TOTAL_REQUESTS=$(kubectl exec -n ${NAMESPACE} -c istio-proxy ${POD} -- \
-  curl -s localhost:15000/stats/prometheus | \
-  grep 'istio_requests_total' | \
-  grep -v 'response_code' | \
-  awk '{sum+=$2} END {print sum}')
-
-if [ "$TOTAL_REQUESTS" -gt 0 ]; then
-  ERROR_PERCENTAGE=$(echo "scale=2; ($ERROR_RATE / $TOTAL_REQUESTS) * 100" | bc)
-
-  if (( $(echo "$ERROR_PERCENTAGE > $ERROR_THRESHOLD" | bc -l) )); then
-    echo "ERROR: Error rate ${ERROR_PERCENTAGE}% exceeds threshold ${ERROR_THRESHOLD}%"
-    echo "Rolling back to v1..."
-
-    kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: ${SERVICE}
-  namespace: ${NAMESPACE}
-spec:
-  hosts:
-  - ${SERVICE}
-  http:
-  - route:
-    - destination:
-        host: ${SERVICE}
-        subset: v1
-      weight: 100
-EOF
-
-    # Send notification
-    curl -X POST https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
-      -H 'Content-Type: application/json' \
-      -d "{\"text\":\"Warning: ${SERVICE} Canary rollback triggered! Error rate: ${ERROR_PERCENTAGE}%\"}"
-
-    exit 1
-  fi
-fi
-
-echo "Canary metrics within acceptable range"
+kubectl get analysisruns
+kubectl describe analysisrun <analysis-run>
+kubectl argo rollouts get rollout reviews
 ```
 
 ## Troubleshooting
@@ -1794,18 +1786,17 @@ kubectl get pods -n <namespace> --show-labels
 istioctl proxy-config routes <pod-name> -n <namespace> -o json
 
 # 4. Check actual traffic distribution
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl -s localhost:15000/clusters | grep <service-name>
+istioctl proxy-config routes <pod-name> -n <namespace> -o json
 ```
 
 ### Weight Not Behaving as Expected
 
 ```bash
 # Check Envoy cluster weights
-istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn <service-fqdn> -o json
+istioctl proxy-config routes <pod-name> -n <namespace> -o json
 
 # Check endpoint status
-kubectl get endpoints -n <namespace> <service-name> -o yaml
+kubectl get endpointslices -n <namespace> -l kubernetes.io/service-name=<service-name> -o yaml
 
 # Check Pod ready status
 kubectl get pods -n <namespace> -l version=v2
@@ -1866,11 +1857,12 @@ metadata:
 spec:
   args:
   - name: service-name
+  - name: pod-template-hash
   metrics:
   - name: success-rate
     interval: 1m
     count: 10
-    successCondition: result >= 0.95
+    successCondition: len(result) == 1 && !isNaN(result[0]) && result[0] >= 0.95
     failureLimit: 3
     provider:
       prometheus:
@@ -1879,13 +1871,17 @@ spec:
           sum(rate(
             istio_requests_total{
               destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}",
               response_code!~"5.*"
             }[1m]
           ))
           /
           sum(rate(
             istio_requests_total{
-              destination_service_name="{{args.service-name}}"
+              destination_service_name="{{args.service-name}}",
+              reporter="destination",
+              rollout_hash="{{args.pod-template-hash}}"
             }[1m]
           ))
 ---
@@ -1906,13 +1902,15 @@ spec:
           args:
           - name: service-name
             value: myapp
+          - name: pod-template-hash
+            valueFrom:
+              podTemplateHashValue: Latest
 ```
 
 ### 5. Documentation
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Annotation excerpt to merge into an existing VirtualService
 metadata:
   name: myapp-canary
   annotations:
@@ -1921,8 +1919,6 @@ metadata:
     rollout-date: "2025-11-24"
     rollout-plan: "5% -> 10% -> 25% -> 50% -> 100%"
     monitoring-dashboard: "https://grafana.example.com/d/canary"
-spec:
-  # ...
 ```
 
 ## References
@@ -1939,4 +1935,15 @@ spec:
 
 ### Progressive Delivery
 - [Progressive Delivery](https://www.weave.works/blog/what-is-progressive-delivery-all-about)
-- [CNCF Progressive Delivery](https://github.com/cncf/tag-app-delivery/blob/main/progressive-delivery/README.md)
+- [Argo Rollouts progressive delivery concepts](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/concepts.md)
+
+- [Primary reference 1](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md)
+- [Primary reference 2](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md)
+- [Primary reference 3](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/job.md)
+- [Primary reference 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/analysis.md)
+- [Primary reference 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md)
+- [Primary reference 6](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/platform/kube/bookinfo.yaml)
+- [Primary reference 7](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/curl/curl.yaml)
+- [Primary reference 8](https://istio.io/latest/docs/reference/config/annotations/)
+- [Primary reference 9](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Primary reference 10](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)

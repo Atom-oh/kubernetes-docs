@@ -175,6 +175,38 @@ test('archmap viewer pages are marked noindex after the merge', async () => {
   }
 })
 
+test('merged diagram viewers prefer CJK fonts before generic monospace in screen and export code', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'archmap-fonts-'))
+  const source = path.join(root, 'source')
+  const dist = path.join(root, 'dist')
+  const stack = "'JetBrains Mono', ui-monospace, monospace"
+  const viewer = `<html><head><style>body { font-family: ${stack}; }</style></head>
+<body><script id="archify-i18n-data" type="application/json">{}</script>
+<script>const exportFont = "600 12px ${stack}";</script>
+<p>Generator가 만든 파라미터 조합마다 Application 하나가 생성된다</p></body></html>`
+  try {
+    await mkdir(path.join(source, 'archmaps'), { recursive: true })
+    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://example.com/'))
+    await writeFile(path.join(source, 'archmaps', 'ko-example.html'), viewer)
+    await writeFile(path.join(source, 'archmaps', 'jp-example.html'), viewer)
+    await writeFile(path.join(source, 'ordinary.html'), viewer)
+
+    await mergeLocaleOutputs([source], dist)
+    const korean = await readFile(path.join(dist, 'archmaps', 'ko-example.html'), 'utf8')
+    const japanese = await readFile(path.join(dist, 'archmaps', 'jp-example.html'), 'utf8')
+    assert.equal((korean.match(/'JetBrains Mono', 'Noto Sans CJK KR'/g) || []).length, 2)
+    assert.equal((japanese.match(/'JetBrains Mono', 'Noto Sans CJK JP'/g) || []).length, 2)
+    assert.ok(korean.includes('Generator가 만든 파라미터 조합마다'))
+    assert.equal(await readFile(path.join(dist, 'ordinary.html'), 'utf8'), viewer)
+
+    const second = path.join(root, 'second')
+    await mergeLocaleOutputs([dist], second)
+    assert.equal(await readFile(path.join(second, 'archmaps', 'ko-example.html'), 'utf8'), korean)
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
 test('legacy cn/jp/es URLs get redirect stubs to the English page', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'legacy-redirects-'))
   const dist = path.join(root, 'dist')

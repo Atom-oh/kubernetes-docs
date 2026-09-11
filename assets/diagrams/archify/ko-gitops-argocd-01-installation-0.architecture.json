@@ -21,12 +21,11 @@
         "id": "reconcile-path",
         "label": "컨트롤러와 Repo Server",
         "focus": [
-          "ctrl-leader",
-          "ctrl-standby",
+          "controllers",
           "repo",
           "redis-master"
         ],
-        "note": "리더 Application Controller가 Repo Server에서 매니페스트를 받아 비교하고 결과를 Redis에 캐시한다."
+        "note": "Application Controller shard들이 Repo Server에서 매니페스트를 받아 조정하고 Redis 캐시를 사용한다."
       },
       {
         "id": "redis-ha",
@@ -65,7 +64,7 @@
       "sublabel": "ALB / Ingress",
       "pos": [
         60,
-        200
+        80
       ],
       "size": [
         170,
@@ -79,7 +78,7 @@
       "sublabel": "argocd-server · 레플리카 2개 이상",
       "pos": [
         330,
-        200
+        80
       ],
       "size": [
         200,
@@ -87,33 +86,18 @@
       ]
     },
     {
-      "id": "ctrl-standby",
+      "id": "controllers",
       "type": "backend",
-      "label": "Application Controller 2",
-      "sublabel": "스탠바이",
+      "label": "Application Controllers",
+      "sublabel": "클러스터 shard 분산",
       "pos": [
         620,
-        60
+        80
       ],
       "size": [
         210,
         64
       ]
-    },
-    {
-      "id": "ctrl-leader",
-      "type": "backend",
-      "label": "Application Controller 1",
-      "sublabel": "리더 (활성)",
-      "pos": [
-        620,
-        200
-      ],
-      "size": [
-        210,
-        64
-      ],
-      "tag": "Leader"
     },
     {
       "id": "repo",
@@ -122,7 +106,7 @@
       "sublabel": "argocd-repo-server · 레플리카 2개 이상",
       "pos": [
         940,
-        200
+        80
       ],
       "size": [
         220,
@@ -136,7 +120,7 @@
       "sublabel": "단일 writer",
       "pos": [
         620,
-        480
+        360
       ],
       "size": [
         210,
@@ -150,7 +134,7 @@
       "sublabel": "Master에서 복제",
       "pos": [
         620,
-        640
+        520
       ],
       "size": [
         210,
@@ -164,7 +148,7 @@
       "sublabel": "장애 감지 · 자동 페일오버",
       "pos": [
         940,
-        640
+        520
       ],
       "size": [
         220,
@@ -178,8 +162,7 @@
       "label": "ArgoCD HA (argocd 네임스페이스)",
       "wraps": [
         "api",
-        "ctrl-standby",
-        "ctrl-leader",
+        "controllers",
         "repo",
         "redis-master",
         "redis-replica",
@@ -188,10 +171,9 @@
     },
     {
       "kind": "security-group",
-      "label": "Application Controllers (리더 선출)",
+      "label": "Application Controllers (클러스터 샤딩)",
       "wraps": [
-        "ctrl-standby",
-        "ctrl-leader"
+        "controllers"
       ]
     },
     {
@@ -220,18 +202,18 @@
     },
     {
       "id": "ctrl-to-repo",
-      "from": "ctrl-leader",
+      "from": "controllers",
       "to": "repo",
       "label": "매니페스트 요청"
     },
     {
       "id": "ctrl-to-redis",
-      "from": "ctrl-leader",
+      "from": "controllers",
       "to": "redis-master",
       "label": "앱 상태 캐시",
       "labelAt": [
         725,
-        372
+        252
       ]
     },
     {
@@ -247,7 +229,7 @@
       "label": "복제",
       "labelAt": [
         725,
-        592
+        472
       ]
     }
   ],
@@ -256,8 +238,8 @@
       "dot": "violet",
       "title": "Application Controller",
       "items": [
-        "리더 선출 방식으로 동작하며 ARGOCD_CONTROLLER_REPLICAS로 레플리카 수를 지정한다",
-        "대규모 클러스터는 controller.sharding.algorithm: round-robin으로 샤딩한다"
+        "ARGOCD_CONTROLLER_REPLICAS와 실제 replica 수를 일치시켜 클러스터를 shard에 배분한다",
+        "샤딩 방식·재배치·실패 복구를 검증하며, 전역 leader/standby 구조로 보지 않는다"
       ]
     },
     {

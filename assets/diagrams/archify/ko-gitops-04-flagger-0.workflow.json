@@ -7,14 +7,7 @@
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
-      "entries": {
-        "backend": {
-          "label": "배포 단계"
-        },
-        "security": {
-          "label": "롤백"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -26,7 +19,7 @@
           "manualMonitor",
           "manualRollback"
         ],
-        "note": "롤링 업데이트로 전체 트래픽을 한번에 전환하고, 모니터링과 롤백은 사람이 직접 수행합니다."
+        "note": "Deployment도 Pod를 점진적으로 교체한다. SLO 기반 트래픽 제어·복구는 별도 운영 또는 자동화가 필요하다."
       },
       {
         "id": "progressive",
@@ -37,7 +30,7 @@
           "increase",
           "autoRollback"
         ],
-        "note": "소량 트래픽부터 시작해 메트릭을 자동 분석하고, 성공하면 비율을 늘리고 실패하면 자동 롤백합니다."
+        "note": "분석 조건을 통과하면 가중치를 늘린다. 실패 검사가 누적 한도에 도달하면 분석 중 rollback한다."
       }
     ]
   },
@@ -70,7 +63,7 @@
       "lane": "traditional",
       "col": 1,
       "type": "backend",
-      "label": "전체 트래픽 전환",
+      "label": "Pod 점진 교체",
       "width": 130
     },
     {
@@ -78,7 +71,7 @@
       "lane": "traditional",
       "col": 2,
       "type": "backend",
-      "label": "수동 모니터링",
+      "label": "readiness 확인",
       "width": 130
     },
     {
@@ -86,7 +79,7 @@
       "lane": "traditional",
       "col": 3,
       "type": "security",
-      "label": "수동 롤백",
+      "label": "운영·자동화 복구",
       "width": 130
     },
     {
@@ -134,7 +127,9 @@
     {
       "from": "manualMonitor",
       "to": "manualRollback",
-      "role": "error"
+      "role": "error",
+      "label": "문제 시",
+      "variant": "security"
     },
     {
       "from": "smallSlice",
@@ -152,7 +147,7 @@
     {
       "from": "analyze",
       "to": "autoRollback",
-      "label": "실패",
+      "label": "한도 도달",
       "variant": "security",
       "role": "error",
       "route": "bottom-channel",

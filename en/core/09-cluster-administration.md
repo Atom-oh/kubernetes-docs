@@ -1,9 +1,11 @@
 # Kubernetes Cluster Administration
 
-> **Supported Versions**: Kubernetes 1.34 (Released 2025-11-24)
+> **Supported Versions**: Kubernetes 1.34 - 1.36 (EKS standard support as of September 11, 2026)
 > **Last Updated**: February 23, 2026
 
 Kubernetes cluster administration is an important task that includes cluster setup, maintenance, monitoring, troubleshooting, and upgrades. In this chapter, we will explore various aspects of Kubernetes cluster administration and best practices for cluster management in Amazon EKS.
+
+Self-managed kubeadm operations and EKS service operations are distinct. EKS does not expose control-plane hosts, static Pod manifests, or direct etcd access. Treat the blocks below as separate examples, not one script to run sequentially. Check upstream support and add-on compatibility for the actual cluster version.
 
 ## Core Concepts
 
@@ -31,21 +33,18 @@ Kubernetes cluster administration is an important task that includes cluster set
 
 The following tools are required for cluster administration:
 
+Use the [official kubectl installation guide](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/), keeping kubectl within one minor version of the API server. For self-managed clusters, install kubeadm/kubelet from the target minor's `pkgs.k8s.io` repository; the old `1.x.y-00` package examples are obsolete. Choose an exact package version from the configured repository before installation.
+
+Install Helm and k9s from their [official Helm instructions](https://helm.sh/docs/intro/install/) and [k9s releases](https://github.com/derailed/k9s/releases), checking platform architecture and checksums. EKS administration additionally requires an authenticated AWS CLI and a compatible eksctl.
+
 ```bash
-# Install kubectl (Linux)
-curl -LO "https://dl.k8s.io/release/v1.33.3/bin/linux/amd64/kubectl"
-chmod +x kubectl
-sudo mv kubectl /usr/local/bin/
-
-# Install kubeadm (for cluster creation and management)
-sudo apt-get update && sudo apt-get install -y kubeadm=1.33.3-00
-
-# Install Helm (for package management)
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# Install k9s (cluster management UI)
-curl -sS https://webinstall.dev/k9s | bash
+kubectl version --client
+helm version
+k9s version
+# Self-managed nodes only, after configuring the target minor repository:
+apt-cache madison kubeadm
 ```
+
 
 ## Cluster Administration Overview
 
@@ -81,12 +80,12 @@ kubectl logs -n kube-system kube-apiserver-<master-node-name>
 sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # Check API server status
-kubectl get --raw='/healthz'
+kubectl get --raw='/readyz?verbose'
 ```
 
 #### etcd Management
 
-etcd is a distributed key-value store that stores all cluster data for Kubernetes.
+etcd is a distributed key-value store that stores Kubernetes API state.
 
 ```bash
 # etcd backup
@@ -129,7 +128,7 @@ kubectl uncordon <node-name>
 
 ```bash
 # Check control plane component status
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # Check system pod status
 kubectl get pods -n kube-system
@@ -151,7 +150,7 @@ Various tools are available for Kubernetes cluster administration:
 3. **kops**: Tool for creating, upgrading, and managing Kubernetes clusters
 4. **eksctl**: Tool for creating and managing Amazon EKS clusters
 5. **Helm**: Kubernetes application package manager
-6. **Kubernetes Dashboard**: Web-based Kubernetes user interface
+6. **Headlamp**: Kubernetes web UI; the old Kubernetes Dashboard project is archived
 7. **Prometheus & Grafana**: Monitoring and alerting tools
 8. **Fluentd & Elasticsearch**: Logging tools
 
@@ -171,7 +170,7 @@ Control plane components manage the overall state of the cluster:
 
 The following diagram shows Kubernetes control plane components and their interactions:
 
-![Architecture diagram showing etcd, kube-scheduler, kube-controller-manager, and cloud-controller-manager communicating bidirectionally with the kube-apiserver at the center, and a worker node's kubelet communicating bidirectionally with the API server while managing kube-proxy and the container runtime.](../.gitbook/assets/en-core-09-cluster-administration-2.png)
+![Architecture diagram showing etcd, kube-scheduler, kube-controller-manager, and cloud-controller-manager communicating bidirectionally with the kube-apiserver at the center, and a worker node's kubelet communicating bidirectionally with the API server while using the container runtime; kube-proxy independently watches Service/EndpointSlice state.](../.gitbook/assets/en-core-09-cluster-administration-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-2.html)
 
@@ -181,16 +180,22 @@ It is important to monitor the status of control plane components:
 
 ```bash
 # Check control plane component status
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # Check API server logs
 kubectl logs -n kube-system kube-apiserver-<node-name>
 
 # Check etcd status
-kubectl exec -it -n kube-system etcd-<node-name> -- etcdctl endpoint health
+kubectl exec -n kube-system etcd-<node-name> -- etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+  --key=/etc/kubernetes/pki/etcd/healthcheck-client.key endpoint health
 ```
 
 #### Control Plane Component Configuration
+
+The manifest below is only a flag/configuration fragment. It omits the host networking, certificate mounts, and other kubeadm-generated settings; do not replace a running control-plane manifest with this fragment. Match the image to the cluster upgrade plan.
 
 How to manage control plane component configuration:
 
@@ -220,10 +225,12 @@ spec:
     - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
     - --secure-port=6443
     - --service-account-key-file=/etc/kubernetes/pki/sa.pub
+    - --service-account-signing-key-file=/etc/kubernetes/pki/sa.key
+    - --service-account-issuer=https://kubernetes.default.svc.cluster.local
     - --service-cluster-ip-range=10.96.0.0/12
     - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
     - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    image: k8s.gcr.io/kube-apiserver:v1.21.0
+    image: registry.k8s.io/kube-apiserver:v1.36.4
     name: kube-apiserver
 ```
 
@@ -233,7 +240,7 @@ Node components run on each node and manage pods:
 
 1. **kubelet**: Agent running on each node that ensures pods and containers are running
 2. **kube-proxy**: Maintains network rules and handles connection forwarding
-3. **Container Runtime**: Software that runs containers (Docker, containerd, CRI-O, etc.)
+3. **Container Runtime**: Software that runs containers (containerd, CRI-O, or Docker Engine with an external CRI adapter)
 
 #### Node Management
 
@@ -256,8 +263,10 @@ kubectl taint node <node-name> key=value:NoSchedule
 kubectl cordon <node-name>
 
 # Drain node
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+kubectl drain <node-name> --ignore-daemonsets
 ```
+
+Drain may stop on standalone Pods, PDBs, or local data. Investigate instead of adding `--force` or `--delete-emptydir-data` by default; the latter explicitly authorizes emptyDir data loss. Wait for drain and workload health before maintenance.
 
 #### Node Troubleshooting
 
@@ -281,6 +290,17 @@ systemctl status containerd  # When using containerd
 ## Resource Management
 
 Effectively managing resources in a Kubernetes cluster is important for maintaining cluster stability and performance.
+
+### Namespace Management
+
+Use a disposable namespace to practice lifecycle operations. Deleting a namespace deletes its namespaced resources; inspect and back up required data first. `get all` is only a workload subset.
+
+```bash
+kubectl create namespace admin-demo
+kubectl get all -n admin-demo
+# Cleanup only the disposable exercise namespace:
+kubectl delete namespace admin-demo
+```
 
 ### Resource Quotas
 
@@ -357,7 +377,7 @@ spec:
         averageUtilization: 80
 ```
 
-In the above example, the `frontend` deployment automatically scales out when CPU utilization exceeds 80% and scales in when below 80%. It maintains a minimum of 2 and maximum of 10 replicas.
+In the above example, the `frontend` deployment targets average CPU utilization of 80% of requested CPU, subject to tolerance, missing metrics, stabilization windows and scaling policies. It maintains a minimum of 2 and maximum of 10 replicas.
 
 ### Vertical Pod Autoscaler (VPA)
 
@@ -374,7 +394,7 @@ spec:
     kind: Deployment
     name: frontend
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
 ```
 
 In the above example, pods in the `frontend` deployment have their CPU and memory requests automatically adjusted based on actual resource usage.
@@ -388,7 +408,7 @@ Basic requirements of the Kubernetes network model:
 
 1. All pods can communicate with all other pods without NAT
 2. Node agents (kubelet) can communicate with all pods on that node
-3. Pods running in NAT mode can communicate with the outside
+3. External connectivity depends on routing and egress policy; there is no universal Pod NAT-mode requirement
 
 The following diagram shows Kubernetes networking components and communication flows:
 
@@ -404,19 +424,20 @@ Kubernetes implements networking through CNI plugins. Common CNI plugins:
 2. **Flannel**: Provides simple overlay networking
 3. **Cilium**: eBPF-based networking and security solution
 4. **AWS VPC CNI**: CNI integrated with AWS VPC
-5. **Weave Net**: Multi-host container networking solution
+5. **Weave Net (historical)**: Archived; choose a maintained alternative for new installations
 
 #### CNI Plugin Installation and Configuration
 
 CNI plugin installation example (Calico):
 
-```bash
-# Install Calico
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+Choose one CNI or a documented chaining/migration setup. The Calico, Flannel, and Cilium alternatives must not be installed sequentially into the same running cluster. Use a supported, pinned release and the provider-specific instructions; on EKS, follow the VPC CNI or planned alternative-CNI procedure in the [networking chapter](./03-services-networking.md).
 
-# Check Calico status
-kubectl get pods -n kube-system -l k8s-app=calico-node
+```bash
+# Inspect the installed networking components before making changes
+kubectl get daemonsets -A
+kubectl get pods -A -l k8s-app=calico-node
 ```
+
 
 ### Service Networking
 
@@ -521,7 +542,7 @@ Kubernetes authentication and authorization management are core elements of clus
 
 The following diagram shows the Kubernetes authentication and authorization flow:
 
-![Architecture diagram showing a request moving through authentication, authorization, and admission control before reaching the API server, with the concrete authentication methods and authorization modes each stage supports.](../.gitbook/assets/en-core-09-cluster-administration-4.png)
+![Architecture diagram showing a request moving through authentication, authorization, and admission control within the API server, with the concrete authentication methods and authorization modes each stage supports.](../.gitbook/assets/en-core-09-cluster-administration-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-4.html)
 
@@ -540,7 +561,9 @@ Kubernetes supports various authentication methods:
 X.509 certificate creation and management:
 
 ```bash
-# Create Certificate Signing Request (CSR)
+# Generate a protected private key and CSR
+umask 077
+openssl genrsa -out user.key 2048
 openssl req -new -key user.key -out user.csr -subj "/CN=user/O=group"
 
 # Submit CSR to Kubernetes
@@ -558,6 +581,7 @@ EOF
 
 # Approve CSR
 kubectl certificate approve user-csr
+kubectl wait --for=jsonpath='{.status.certificate}' csr/user-csr --timeout=60s
 
 # Get certificate
 kubectl get csr user-csr -o jsonpath='{.status.certificate}' | base64 --decode > user.crt
@@ -601,6 +625,7 @@ rules:
   verbs: ["get", "watch", "list"]
 
 # RoleBinding example
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -634,6 +659,7 @@ rules:
   verbs: ["get", "watch", "list"]
 
 # ClusterRoleBinding example
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -663,6 +689,7 @@ metadata:
   namespace: default
 
 # Grant permissions to service account
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -678,6 +705,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 # Use service account in pod
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -703,9 +731,13 @@ spec:
     runAsUser: 1000
     runAsGroup: 3000
     fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - name: security-context-container
-    image: nginx
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
@@ -740,52 +772,27 @@ Considerations when planning cluster upgrades:
 
 Control plane upgrade using kubeadm:
 
-```bash
-# Check upgrade plan
-kubeadm upgrade plan
+Use the [version-specific kubeadm upgrade procedure](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Enable the target minor's pkgs.k8s.io repository and select an exact published package version; upgrade one minor at a time.
 
-# Upgrade first control plane node
-ssh control-plane-1
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.22.0-00
-sudo kubeadm upgrade apply v1.22.0
+1. Back up etcd and validate workload/add-on compatibility. On the first control-plane node, upgrade kubeadm, run `kubeadm upgrade plan`, then `kubeadm upgrade apply <target-version>`.
+2. On additional control-plane nodes, upgrade kubeadm and run `kubeadm upgrade node`.
+3. Drain each node before upgrading its kubelet. If drain fails, stop the procedure and resolve the cause. Upgrade kubelet/kubectl to compatible versions, reload systemd, restart kubelet, verify Ready and workloads, then uncordon from an administrative client.
+4. On each worker, upgrade kubeadm and run `kubeadm upgrade node`, then perform the drain/kubelet/verification/uncordon sequence. Do not run a generic whole-system upgrade as a substitute for the Kubernetes version-specific procedure.
 
-# Upgrade additional control plane nodes
-ssh control-plane-2
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.22.0-00
-sudo kubeadm upgrade node
-
-# Upgrade kubelet and kubectl
-sudo apt-get install -y kubelet=1.22.0-00 kubectl=1.22.0-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-```
+Run commands on the explicitly identified node or administrative client; a sequence of nested `ssh` sessions is not a multi-node automation script.
 
 ### Worker Node Upgrade
 
 Worker node upgrade process:
 
-```bash
-# Drain node
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+Use the [version-specific kubeadm upgrade procedure](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Enable the target minor's pkgs.k8s.io repository and select an exact published package version; upgrade one minor at a time.
 
-# SSH to node
-ssh <node-name>
+1. Back up etcd and validate workload/add-on compatibility. On the first control-plane node, upgrade kubeadm, run `kubeadm upgrade plan`, then `kubeadm upgrade apply <target-version>`.
+2. On additional control-plane nodes, upgrade kubeadm and run `kubeadm upgrade node`.
+3. Drain each node before upgrading its kubelet. If drain fails, stop the procedure and resolve the cause. Upgrade kubelet/kubectl to compatible versions, reload systemd, restart kubelet, verify Ready and workloads, then uncordon from an administrative client.
+4. On each worker, upgrade kubeadm and run `kubeadm upgrade node`, then perform the drain/kubelet/verification/uncordon sequence. Do not run a generic whole-system upgrade as a substitute for the Kubernetes version-specific procedure.
 
-# Upgrade kubeadm
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.22.0-00
-sudo kubeadm upgrade node
-
-# Upgrade kubelet and kubectl
-sudo apt-get install -y kubelet=1.22.0-00 kubectl=1.22.0-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# Uncordon node
-kubectl uncordon <node-name>
-```
+Run commands on the explicitly identified node or administrative client; a sequence of nested `ssh` sessions is not a multi-node automation script.
 
 ### Upgrade Verification
 
@@ -796,7 +803,7 @@ Verify cluster status after upgrade:
 kubectl get nodes
 
 # Check component status
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # Check pod status
 kubectl get pods --all-namespaces
@@ -829,60 +836,55 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
   snapshot save /backup/etcd-snapshot-$(date +%Y-%m-%d-%H-%M-%S).db
 
 # Check snapshot status
-ETCDCTL_API=3 etcdctl --write-out=table snapshot status /backup/etcd-snapshot-2023-01-01-12-00-00.db
+etcdutl snapshot status --write-out=table /backup/etcd-snapshot-2023-01-01-12-00-00.db
 ```
 
 ### etcd Recovery
 
 Restore from etcd snapshot:
 
+For self-managed disaster recovery, stop all API servers and the affected etcd processes using the distribution-specific runbook. Stopping kubelet alone leaves existing static Pod containers running. Restore into a new directory with a compatible etcdutl; preserve the original data until recovery is verified. This single-member command is an illustration, not a multi-member HA restore:
+
 ```bash
-# Stop all Kubernetes services
-sudo systemctl stop kubelet kube-apiserver kube-controller-manager kube-scheduler
-
-# Backup etcd data directory
-sudo mv /var/lib/etcd /var/lib/etcd.bak
-
-# Restore from snapshot
-ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key \
-  --data-dir=/var/lib/etcd \
-  --initial-cluster=master-1=https://192.168.1.10:2380 \
-  --initial-cluster-token=etcd-cluster-1 \
-  --initial-advertise-peer-urls=https://192.168.1.10:2380 \
-  snapshot restore /backup/etcd-snapshot-2023-01-01-12-00-00.db
-
-# Set permissions
-sudo chown -R etcd:etcd /var/lib/etcd
-
-# Restart Kubernetes services
-sudo systemctl start etcd
-sudo systemctl start kubelet kube-apiserver kube-controller-manager kube-scheduler
+etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
+etcdutl snapshot restore "$SNAPSHOT_FILE" \
+  --data-dir=/var/lib/etcd-restore \
+  --name=etcd-1 \
+  --initial-cluster=etcd-1=https://127.0.0.1:2380 \
+  --initial-cluster-token=restored-cluster \
+  --initial-advertise-peer-urls=https://127.0.0.1:2380 \
+  --bump-revision=1000000000 --mark-compacted
 ```
 
+Set SNAPSHOT_FILE to the verified snapshot. For HA, restore the same snapshot on every member with its unique name/peer URL and the same full membership list. Choose a revision bump exceeding changes since the snapshot. Update the etcd manifest/service to the restored path with correct ownership and certificates, verify quorum/health, then restart API servers/controllers. See the [official recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). EKS users cannot restore managed control-plane etcd directly.
+
 ### Resource Backup
+
+These exports are protected inventories, not a complete portable restore plan. They include Secrets, need restricted permissions/encryption, and do not include PV data. Use `umask 077` and check every command failure; restore CRDs/dependencies in order and remove server-owned metadata as appropriate. `kubectl get all` only returns a subset of resource kinds.
 
 Backup Kubernetes resources as YAML files:
 
 ```bash
-# Backup all resources in all namespaces
+# Export listable resources (includes sensitive Secrets)
+set -eu
+umask 077
 for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
   mkdir -p /backup/resources/$ns
-  for resource in $(kubectl api-resources --namespaced=true -o name); do
-    kubectl get -n $ns $resource -o yaml > /backup/resources/$ns/$resource.yaml
+  for resource in $(kubectl api-resources --verbs=list --namespaced=true -o name); do
+    kubectl get -n "$ns" "$resource" -o yaml > "/backup/resources/$ns/$resource.yaml"
   done
 done
 
 # Backup cluster-scoped resources
 mkdir -p /backup/resources/cluster-scoped
-for resource in $(kubectl api-resources --namespaced=false -o name); do
-  kubectl get $resource -o yaml > /backup/resources/cluster-scoped/$resource.yaml
+for resource in $(kubectl api-resources --verbs=list --namespaced=false -o name); do
+  kubectl get "$resource" -o yaml > "/backup/resources/cluster-scoped/$resource.yaml"
 done
 ```
 
 ### Backup Automation
+
+Self-managed kubeadm example only: replace the tooling image with a verified image containing a compatible etcdctl, match the control-plane label/taint and certificate paths, and create the backup PVC. The selected host must expose etcd at the shown loopback address and allow the PVC mount. This does not run on the managed EKS control plane. Verify the snapshot and copy it to protected external storage; an in-cluster PVC alone is not disaster recovery.
 
 Automate backup tasks with CronJob:
 
@@ -893,35 +895,60 @@ metadata:
   name: etcd-backup
   namespace: kube-system
 spec:
+  concurrencyPolicy: Forbid
   schedule: "0 0 * * *"  # Run daily at midnight
   jobTemplate:
     spec:
       template:
         spec:
+          hostNetwork: true
+          automountServiceAccountToken: false
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
           containers:
           - name: etcd-backup
-            image: bitnami/etcd:latest
+            image: example.invalid/etcd-backup-tools:replace-me
             command:
             - /bin/sh
             - -c
             - |
-              ETCDCTL_API=3 etcdctl --endpoints=https://etcd-client:2379 \
+              set -eu
+              umask 077
+              ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
                 --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-                --cert=/etc/kubernetes/pki/etcd/server.crt \
-                --key=/etc/kubernetes/pki/etcd/server.key \
+                --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+                --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
                 snapshot save /backup/etcd-snapshot-$(date +%Y-%m-%d-%H-%M-%S).db
             volumeMounts:
-            - name: etcd-certs
-              mountPath: /etc/kubernetes/pki/etcd
+            - name: etcd-ca
+              mountPath: /etc/kubernetes/pki/etcd/ca.crt
+              readOnly: true
+            - name: etcd-client-cert
+              mountPath: /etc/kubernetes/pki/etcd/healthcheck-client.crt
+              readOnly: true
+            - name: etcd-client-key
+              mountPath: /etc/kubernetes/pki/etcd/healthcheck-client.key
               readOnly: true
             - name: backup
               mountPath: /backup
           restartPolicy: OnFailure
           volumes:
-          - name: etcd-certs
+          - name: etcd-ca
             hostPath:
-              path: /etc/kubernetes/pki/etcd
-              type: Directory
+              path: /etc/kubernetes/pki/etcd/ca.crt
+              type: File
+          - name: etcd-client-cert
+            hostPath:
+              path: /etc/kubernetes/pki/etcd/healthcheck-client.crt
+              type: File
+          - name: etcd-client-key
+            hostPath:
+              path: /etc/kubernetes/pki/etcd/healthcheck-client.key
+              type: File
           - name: backup
             persistentVolumeClaim:
               claimName: etcd-backup-pvc
@@ -986,23 +1013,20 @@ Tools for Kubernetes cluster logging:
 
 Install EFK stack using Helm:
 
+The standalone Elastic Stack Helm-chart repository is archived. For maintained deployments use Elastic Cloud on Kubernetes (ECK), then define Elasticsearch/Kibana resources and a compatible log collector. The operator installation alone does not create an EFK stack:
+
 ```bash
-# Install Elasticsearch
-helm install elasticsearch elastic/elasticsearch \
-  --namespace logging \
-  --create-namespace
-
-# Install Fluentd
-helm install fluentd fluent/fluentd \
-  --namespace logging
-
-# Install Kibana
-helm install kibana elastic/kibana \
-  --namespace logging \
-  --set service.type=LoadBalancer
+helm repo add elastic https://helm.elastic.co
+helm upgrade --install elastic-operator elastic/eck-operator \
+  --namespace elastic-system --create-namespace \
+  --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
 
+Keep dashboards behind ClusterIP/authenticated access; configure storage, TLS, credentials, collector parsing, and RBAC following the [ECK guide](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart).
+
 #### Log Collection Configuration
+
+This example parses the CRI log envelope rather than assuming Docker JSON. The collector image must include the metadata/output plugins, mount node logs and writable position-file storage, and receive scoped metadata RBAC. Configure TLS/authentication for the actual Elasticsearch service; the placeholder host alone is not a complete ECK integration. Handle partial/multiline records according to the selected collector.
 
 Fluentd configuration example:
 
@@ -1021,8 +1045,10 @@ data:
       tag kubernetes.*
       read_from_head true
       <parse>
-        @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        @type regexp
+        expression /^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$/
+        time_type string
+        time_format %Y-%m-%dT%H:%M:%S.%N%:z
       </parse>
     </source>
 
@@ -1104,7 +1130,7 @@ kubectl get svc <service-name>
 kubectl describe svc <service-name>
 
 # Check endpoints
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 
 # Check DNS
 kubectl run -it --rm --restart=Never busybox --image=busybox -- nslookup <service-name>
@@ -1123,7 +1149,7 @@ Commands for control plane troubleshooting:
 
 ```bash
 # Check component status
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # Check API server logs
 kubectl logs -n kube-system kube-apiserver-<node-name>
@@ -1150,6 +1176,8 @@ The following diagram shows the Amazon EKS cluster architecture and management c
 
 ### EKS Cluster Configuration
 
+Set the real administrator CIDR before changing endpoint access and verify private access remains reachable. A version upgrade must be the next supported minor with compatible add-ons/nodes; do not use the example as a downgrade or skip-minor operation. Poll the returned update ID and stop dependent changes if it fails.
+
 EKS cluster configuration management:
 
 ```bash
@@ -1159,12 +1187,12 @@ aws eks describe-cluster --name my-cluster
 # Update EKS cluster
 aws eks update-cluster-config \
   --name my-cluster \
-  --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true
+  --resources-vpc-config "endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=${ADMIN_CIDR:?Set an approved administrator public CIDR}"
 
 # Update EKS cluster version
 aws eks update-cluster-version \
   --name my-cluster \
-  --kubernetes-version 1.22
+  --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
 ```
 
 ### EKS Node Group Management
@@ -1191,29 +1219,31 @@ aws eks update-nodegroup-version \
 
 ### EKS Add-on Management
 
+Read the current version using `aws eks describe-cluster --name my-cluster --query cluster.version --output text`; use it for add-on discovery and select a compatible pinned version. Review existing configuration/IAM before create/update and do not create an already managed add-on again. The removal example uses `--preserve` to leave the CNI running while removing EKS management; uninstalling live networking is a separate disruptive operation.
+
 EKS add-on management:
 
 ```bash
 # Check available add-ons
-aws eks describe-addon-versions \
-  --kubernetes-version 1.22
+aws eks describe-addon-versions --addon-name vpc-cni \
+  --kubernetes-version "${CLUSTER_VERSION:?Set the actual cluster version}"
 
 # Install add-on
 aws eks create-addon \
   --cluster-name my-cluster \
   --addon-name vpc-cni \
-  --addon-version v1.10.1-eksbuild.1
+  --addon-version "${CNI_ADDON_VERSION:?Select a compatible pinned VPC CNI add-on version}"
 
 # Update add-on
 aws eks update-addon \
   --cluster-name my-cluster \
   --addon-name vpc-cni \
-  --addon-version v1.10.2-eksbuild.1
+  --addon-version "${CNI_ADDON_VERSION:?Select a compatible pinned VPC CNI add-on version}"
 
 # Delete add-on
 aws eks delete-addon \
   --cluster-name my-cluster \
-  --addon-name vpc-cni
+  --addon-name vpc-cni --preserve
 ```
 
 ### EKS Cluster Upgrade
@@ -1224,7 +1254,7 @@ EKS cluster upgrade process:
    ```bash
    aws eks update-cluster-version \
      --name my-cluster \
-     --kubernetes-version 1.22
+     --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
    ```
 
 2. **Add-on Upgrade**:
@@ -1232,7 +1262,7 @@ EKS cluster upgrade process:
    aws eks update-addon \
      --cluster-name my-cluster \
      --addon-name vpc-cni \
-     --addon-version v1.10.2-eksbuild.1
+     --addon-version "${CNI_ADDON_VERSION:?Select a compatible pinned VPC CNI add-on version}"
    ```
 
 3. **Node Group Upgrade**:
@@ -1244,6 +1274,8 @@ EKS cluster upgrade process:
 
 ### EKS Cluster Monitoring
 
+Control-plane logging exports api/audit/authenticator/controllerManager/scheduler logs. Container Insights requires the CloudWatch agent/add-on and scoped telemetry IAM permissions; it is not enabled by update-cluster-logging. The CloudWatch observability add-on installs CloudWatch/Fluent Bit components, not Prometheus/Grafana. See the [official add-on setup](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html).
+
 EKS cluster monitoring tools:
 
 1. **Amazon CloudWatch**: Metrics, logs, alerts
@@ -1251,10 +1283,10 @@ EKS cluster monitoring tools:
 3. **Amazon Managed Grafana**: Metric visualization
 4. **Amazon Managed Service for Prometheus**: Metric collection and storage
 
-Enable CloudWatch Container Insights:
+Enable EKS control-plane logging:
 
 ```bash
-# Enable Container Insights
+# Enable EKS control-plane logs
 eksctl utils update-cluster-logging \
   --enable-types all \
   --cluster my-cluster \
@@ -1327,17 +1359,14 @@ Kubernetes cluster networking manages pod-to-pod communication, service discover
 
 CNI (Container Network Interface) plugins handle networking for Kubernetes clusters.
 
+Choose one CNI or a documented chaining/migration setup. The Calico, Flannel, and Cilium alternatives must not be installed sequentially into the same running cluster. Use a supported, pinned release and the provider-specific instructions; on EKS, follow the VPC CNI or planned alternative-CNI procedure in the [networking chapter](./03-services-networking.md).
+
 ```bash
-# Install Calico CNI
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
-
-# Install Flannel CNI
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-
-# Install Cilium CNI (using Helm)
-helm repo add cilium https://helm.cilium.io/
-helm install cilium cilium/cilium --version 1.14.0 --namespace kube-system
+# Inspect the installed networking components before making changes
+kubectl get daemonsets -A
+kubectl get pods -A -l k8s-app=calico-node
 ```
+
 
 ### CNI Plugin Comparison
 
@@ -1347,7 +1376,7 @@ helm install cilium cilium/cilium --version 1.14.0 --namespace kube-system
 | **Flannel** | VXLAN/host-gateway | No | Medium | Simple setup, limited features |
 | **Cilium** | eBPF | Yes | Very High | L3-L7 policies, high performance |
 | **Weave Net** | VXLAN | Yes | Medium | Encryption support, multi-cluster |
-| **AWS VPC CNI** | AWS VPC | No | High | Optimized for AWS EKS |
+| **AWS VPC CNI** | AWS VPC | Yes, with supported version/configuration | Workload dependent | Native EKS integration |
 
 ### Network Troubleshooting
 
@@ -1366,7 +1395,7 @@ nslookup kubernetes.default.svc.cluster.local
 cat /etc/resolv.conf
 
 # Check service endpoints
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 
 # Check network policies
 kubectl describe networkpolicy -n <namespace>
@@ -1422,10 +1451,10 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: secret-reader
+  name: namespace-reader
 rules:
 - apiGroups: [""]
-  resources: ["secrets"]
+  resources: ["namespaces"]
   verbs: ["get", "watch", "list"]
 ```
 
@@ -1434,34 +1463,41 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: read-secrets-global
+  name: read-namespaces-global
 subjects:
 - kind: Group
-  name: manager
+  name: namespace-viewers
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: secret-reader
+  name: namespace-reader
   apiGroup: rbac.authorization.k8s.io
 ```
 
 ### User Certificate Creation
 
+For self-managed client-certificate authentication, submit a CSR and have an authorized approver verify the requested identity/groups. Do not distribute the cluster CA private key. EKS user access should use IAM/access entries.
+
 ```bash
-# Generate private key
+umask 077
 openssl genrsa -out jane.key 2048
-
-# Create Certificate Signing Request (CSR)
 openssl req -new -key jane.key -out jane.csr -subj "/CN=jane/O=dev"
-
-# Sign certificate with Kubernetes CA
-sudo openssl x509 -req -in jane.csr \
-  -CA /etc/kubernetes/pki/ca.crt \
-  -CAkey /etc/kubernetes/pki/ca.key \
-  -CAcreateserial \
-  -out jane.crt -days 365
-
-# Add user to kubeconfig
+cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: jane-csr
+spec:
+  request: $(base64 < jane.csr | tr -d '\n')
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 86400
+  usages:
+  - client auth
+EOF
+# Authorized approver only, after reviewing the CSR identity:
+kubectl certificate approve jane-csr
+kubectl wait --for=jsonpath='{.status.certificate}' csr/jane-csr --timeout=60s
+kubectl get csr jane-csr -o jsonpath='{.status.certificate}' | base64 --decode > jane.crt
 kubectl config set-credentials jane --client-certificate=jane.crt --client-key=jane.key
 kubectl config set-context jane-context --cluster=kubernetes --user=jane
 ```
@@ -1477,7 +1513,7 @@ kubectl create rolebinding app-service-account-binding \
   --role=pod-reader \
   --serviceaccount=default:app-service-account
 
-# Check service account token
+# Inspect ServiceAccount metadata (projected tokens are not listed here)
 kubectl describe serviceaccount app-service-account
 ```
 
@@ -1510,40 +1546,14 @@ Kubernetes cluster upgrades are necessary to apply new features, security patche
 
 ### Upgrade Using kubeadm
 
-```bash
-# Check current version
-kubeadm version
+Use the [version-specific kubeadm upgrade procedure](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/). Enable the target minor's pkgs.k8s.io repository and select an exact published package version; upgrade one minor at a time.
 
-# Check upgrade plan
-sudo kubeadm upgrade plan
+1. Back up etcd and validate workload/add-on compatibility. On the first control-plane node, upgrade kubeadm, run `kubeadm upgrade plan`, then `kubeadm upgrade apply <target-version>`.
+2. On additional control-plane nodes, upgrade kubeadm and run `kubeadm upgrade node`.
+3. Drain each node before upgrading its kubelet. If drain fails, stop the procedure and resolve the cause. Upgrade kubelet/kubectl to compatible versions, reload systemd, restart kubelet, verify Ready and workloads, then uncordon from an administrative client.
+4. On each worker, upgrade kubeadm and run `kubeadm upgrade node`, then perform the drain/kubelet/verification/uncordon sequence. Do not run a generic whole-system upgrade as a substitute for the Kubernetes version-specific procedure.
 
-# Control plane upgrade
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.33.3-00
-sudo kubeadm upgrade apply v1.33.3
-
-# kubelet upgrade
-sudo apt-get install -y kubelet=1.33.3-00 kubectl=1.33.3-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# Worker node upgrade (on each node)
-# 1. Drain node
-kubectl drain <node-name> --ignore-daemonsets
-
-# 2. kubeadm upgrade
-sudo apt-get update
-sudo apt-get install -y kubeadm=1.33.3-00
-sudo kubeadm upgrade node
-
-# 3. kubelet upgrade
-sudo apt-get install -y kubelet=1.33.3-00 kubectl=1.33.3-00
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# 4. Uncordon node
-kubectl uncordon <node-name>
-```
+Run commands on the explicitly identified node or administrative client; a sequence of nested `ssh` sessions is not a multi-node automation script.
 
 ### Post-Upgrade Verification
 
@@ -1555,7 +1565,7 @@ kubectl version
 kubectl get nodes
 
 # Check component status
-kubectl get componentstatuses
+kubectl get --raw='/readyz?verbose'
 
 # Check workload status
 kubectl get pods -A
@@ -1568,40 +1578,27 @@ Kubernetes cluster backup and recovery is an important part of disaster recovery
 
 etcd is a core component that stores all state information for the cluster.
 
+For self-managed disaster recovery, stop all API servers and the affected etcd processes using the distribution-specific runbook. Stopping kubelet alone leaves existing static Pod containers running. Restore into a new directory with a compatible etcdutl; preserve the original data until recovery is verified. This single-member command is an illustration, not a multi-member HA restore:
+
 ```bash
-# etcd backup
-ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key \
-  snapshot save /backup/etcd-snapshot-$(date +%Y-%m-%d).db
-
-# etcd recovery
-# 1. Stop cluster
-sudo systemctl stop kubelet
-sudo docker stop $(docker ps -q)
-
-# 2. Restore etcd data
-ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-  snapshot restore /backup/etcd-snapshot-2025-11-24.db \
+etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
+etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --data-dir=/var/lib/etcd-restore \
-  --name=master \
-  --initial-cluster=master=https://127.0.0.1:2380 \
-  --initial-cluster-token=etcd-cluster-1 \
-  --initial-advertise-peer-urls=https://127.0.0.1:2380
-
-# 3. Configure to use restored data directory
-sudo mv /var/lib/etcd /var/lib/etcd.bak
-sudo mv /var/lib/etcd-restore /var/lib/etcd
-
-# 4. Restart cluster
-sudo systemctl start kubelet
+  --name=etcd-1 \
+  --initial-cluster=etcd-1=https://127.0.0.1:2380 \
+  --initial-cluster-token=restored-cluster \
+  --initial-advertise-peer-urls=https://127.0.0.1:2380 \
+  --bump-revision=1000000000 --mark-compacted
 ```
+
+Set SNAPSHOT_FILE to the verified snapshot. For HA, restore the same snapshot on every member with its unique name/peer URL and the same full membership list. Choose a revision bump exceeding changes since the snapshot. Update the etcd manifest/service to the restored path with correct ownership and certificates, verify quorum/health, then restart API servers/controllers. See the [official recovery guide](https://etcd.io/docs/v3.6/op-guide/recovery/). EKS users cannot restore managed control-plane etcd directly.
 
 ### Kubernetes Resource Backup
 
 ```bash
-# Backup all resources in all namespaces
+# Export selected resources, not a full cluster backup
+set -eu
+umask 077
 mkdir -p /backup/resources/$(date +%Y-%m-%d)
 for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
   kubectl -n $ns get all -o yaml > /backup/resources/$(date +%Y-%m-%d)/$ns-all.yaml
@@ -1615,17 +1612,20 @@ done
 
 ### Backup and Recovery Using Velero
 
+Select compatible Velero/AWS plugin versions using the official matrix. The IRSA example assumes a configured cluster OIDC provider and a scoped role trusting the velero ServiceAccount. Configure the backup bucket, volume snapshot/file-backup support, encryption, and restore permissions before installation; not every PVC is automatically protected.
+
 Velero is a tool for backing up and recovering Kubernetes cluster resources and persistent volumes.
 
 ```bash
 # Install Velero (using AWS S3 backup storage)
 velero install \
   --provider aws \
-  --plugins velero/velero-plugin-for-aws:v1.7.0 \
+  --plugins "${VELERO_AWS_PLUGIN_IMAGE:?Select a plugin compatible with your Velero release}" \
   --bucket velero-backup \
   --backup-location-config region=us-west-2 \
   --snapshot-location-config region=us-west-2 \
-  --secret-file ./credentials-velero
+  --no-secret \
+  --sa-annotations "eks.amazonaws.com/role-arn=${VELERO_ROLE_ARN:?Set the preconfigured IRSA role ARN}"
 
 # Full cluster backup
 velero backup create full-cluster-backup --include-namespaces '*'
@@ -1647,7 +1647,7 @@ velero restore create --from-backup full-cluster-backup
 | **etcd Snapshot** | Cluster state | Built-in feature, complete state preservation | Volume data not included, manual process | Medium |
 | **Resource YAML Backup** | Kubernetes objects | Simple implementation, selective restore | Volume data not included, relationship complexity | Slow |
 | **Velero** | Resources and volumes | Automation, scheduling, volume snapshots | Additional tool installation required | Fast |
-| **Cloud Provider Snapshots** | Entire cluster | Complete recovery, cloud integration | Cloud dependency, cost | Very Fast |
+| **Cloud Provider Snapshots** | Supported disks/filesystems | Backend-native recovery points | Does not capture the whole Kubernetes/EKS cluster | Depends on data/backend |
 ## Monitoring and Logging
 
 Effective cluster management requires a comprehensive monitoring and logging system. This allows problems to be detected and resolved early.
@@ -1669,36 +1669,28 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
   --create-namespace \
   --set grafana.enabled=true \
-  --set prometheus.service.type=NodePort
+  --set prometheus.service.type=ClusterIP
 
 # Check services
 kubectl get svc -n monitoring
 
 # Access Grafana (using port forwarding)
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
-# Default username: admin, default password: prom-operator
+# Obtain credentials from the configured Grafana Secret; do not assume a published default password
 ```
 
 ### EFK Stack Installation (Elasticsearch, Fluentd, Kibana)
 
+The standalone Elastic Stack Helm-chart repository is archived. For maintained deployments use Elastic Cloud on Kubernetes (ECK), then define Elasticsearch/Kibana resources and a compatible log collector. The operator installation alone does not create an EFK stack:
+
 ```bash
-# Install Elasticsearch and Kibana
 helm repo add elastic https://helm.elastic.co
-helm repo update
-
-helm install elasticsearch elastic/elasticsearch \
-  --namespace logging \
-  --create-namespace \
-  --set replicas=1 \
-  --set minimumMasterNodes=1
-
-helm install kibana elastic/kibana \
-  --namespace logging \
-  --set service.type=NodePort
-
-# Install Fluentd
-kubectl apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
+helm upgrade --install elastic-operator elastic/eck-operator \
+  --namespace elastic-system --create-namespace \
+  --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
+
+Keep dashboards behind ClusterIP/authenticated access; configure storage, TLS, credentials, collector parsing, and RBAC following the [ECK guide](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart).
 
 ### Key Monitoring Metrics
 
@@ -1706,7 +1698,7 @@ kubectl apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-dae
 |-------------|-------------|-------------|-----------------|
 | **Node Metrics** | Node-level resource usage | CPU, memory, disk, network | node-exporter, Prometheus |
 | **Pod Metrics** | Container resource usage | CPU, memory usage, limits | cAdvisor, Prometheus |
-| **Cluster Metrics** | Cluster state and resources | Pod count, node status, events | kube-state-metrics |
+| **Cluster Metrics** | Cluster state and resources | Pod count, node/object status, desired/current replicas | kube-state-metrics |
 | **Application Metrics** | Custom application metrics | Request count, latency, error rate | Prometheus client libraries |
 
 ### Log Collection and Analysis
@@ -1732,34 +1724,34 @@ kubectl logs -l app=nginx -n <namespace>
 
 You can configure alerts using Prometheus Alertmanager:
 
+Create a protected `slack-webhook` Secret with key `url` in monitoring, then merge these Helm values into the existing kube-prometheus-stack release. Do not commit the webhook URL. A standalone ConfigMap is not automatically consumed by the operator.
+
 ```yaml
-# alertmanager-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: alertmanager-config
-  namespace: monitoring
-data:
-  alertmanager.yml: |
+# alertmanager-values.yaml
+alertmanager:
+  alertmanagerSpec:
+    secrets:
+    - slack-webhook
+  config:
     global:
       resolve_timeout: 5m
-      slack_api_url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
-
+      slack_api_url_file: /etc/alertmanager/secrets/slack-webhook/url
     route:
-      receiver: 'slack-notifications'
+      receiver: slack-notifications
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
-      group_by: ['alertname', 'cluster', 'service']
-
+      group_by: [alertname, cluster, service]
     receivers:
-    - name: 'slack-notifications'
+    - name: slack-notifications
       slack_configs:
       - channel: '#alerts'
         send_resolved: true
-        title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
-        text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+        title: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
 ```
+
+Keep the current chart version and other values when upgrading; verify Alertmanager reload/status before relying on notifications.
 ## Troubleshooting
 
 Kubernetes cluster troubleshooting is an important skill for system administrators and operators. A systematic approach is required for effective troubleshooting.
@@ -1775,10 +1767,10 @@ Kubernetes cluster troubleshooting is an important skill for system administrato
 | Problem Type | Symptoms | Diagnostic Commands | Common Solutions |
 |-------------|----------|---------------------|-----------------|
 | **Pod Not Starting** | Pod in Pending or ContainerCreating state | `kubectl describe pod <pod-name>` | Check resource constraints, image availability, volume mounts |
-| **Service Connection Issues** | Cannot access pods through service | `kubectl describe svc <service-name>`, `kubectl get endpoints <service-name>` | Check label selectors, pod status, network policies |
+| **Service Connection Issues** | Cannot access pods through service | `kubectl describe svc <service-name>`, `kubectl get endpointslices -l kubernetes.io/service-name=<service-name>` | Check label selectors, pod status, network policies |
 | **Node Issues** | Node in NotReady state | `kubectl describe node <node-name>`, `kubectl get events` | Check kubelet status, system resources, network connectivity |
 | **DNS Issues** | Cannot connect by service name | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | Check CoreDNS pods, kube-dns service, network policies |
-| **Authentication Issues** | API server access denied | `kubectl auth can-i <verb> <resource>` | Check RBAC settings, certificate validity, service account |
+| **Authentication/Authorization Issues** | API server access denied | `kubectl auth can-i <verb> <resource>` | Check RBAC settings, certificate validity, service account |
 
 ### Pod Troubleshooting
 
@@ -1822,7 +1814,7 @@ ssh <node-ip> 'sudo systemctl status kubelet'
 ```bash
 # Check service and endpoints
 kubectl get svc <service-name>
-kubectl get endpoints <service-name>
+kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 
 # DNS troubleshooting
 kubectl run -it --rm dns-test --image=busybox -- sh
@@ -1839,7 +1831,7 @@ curl <service-name>:<port>
 ```
 ## Amazon EKS Cluster Administration
 
-Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service on AWS where AWS manages the control plane. However, management of nodes, networking, security, etc. is the user's responsibility.
+Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service on AWS where AWS manages the control plane. Customer responsibilities for nodes depend on managed node groups, Auto Mode, Fargate, or self-managed compute; workload security and configuration remain customer responsibilities.
 
 ### EKS Cluster Architecture
 
@@ -1853,7 +1845,7 @@ Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service on AWS w
 # Create cluster using eksctl
 eksctl create cluster \
   --name my-cluster \
-  --version 1.33 \
+  --version 1.36 \
   --region us-west-2 \
   --nodegroup-name standard-workers \
   --node-type t3.medium \
@@ -1862,11 +1854,12 @@ eksctl create cluster \
   --nodes-max 5 \
   --managed
 
-# Create cluster using AWS CLI
+# Alternative: create control plane using AWS CLI (not after the eksctl example)
 aws eks create-cluster \
   --name my-cluster \
   --role-arn arn:aws:iam::123456789012:role/eks-cluster-role \
-  --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345
+  --kubernetes-version 1.36 \
+  --resources-vpc-config "subnetIds=${EKS_SUBNET_IDS:?Set two or more appropriate subnets},securityGroupIds=${EKS_SECURITY_GROUP_ID:?Set the intended security group},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${ADMIN_CIDR:?Set an approved administrator public CIDR}"
 ```
 
 ### Node Group Management
@@ -1890,11 +1883,10 @@ eksctl scale nodegroup \
   --region us-west-2
 
 # Update node group
-eksctl update nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --region us-west-2 \
-  --max-pods-per-node 110
+aws eks update-nodegroup-version \
+  --cluster-name my-cluster \
+  --nodegroup-name my-nodegroup \
+  --region us-west-2
 ```
 
 ### EKS Cluster Upgrade
@@ -1906,7 +1898,7 @@ aws eks describe-cluster --name my-cluster --query "cluster.version"
 # Upgrade cluster control plane
 aws eks update-cluster-version \
   --name my-cluster \
-  --kubernetes-version 1.33
+  --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
 
 # Upgrade managed node group
 aws eks update-nodegroup-version \
@@ -1916,32 +1908,36 @@ aws eks update-nodegroup-version \
 
 ### EKS Cluster Authentication and Authorization
 
-```bash
-# Map IAM user/role to cluster RBAC
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn arn:aws:iam::123456789012:role/admin-role \
-  --group system:masters \
-  --username admin
+The cluster must use `API` or `API_AND_CONFIG_MAP` authentication mode. Plan migration from legacy aws-auth mappings while preserving existing administrator/node access. This example grants a viewer role access only to the default namespace:
 
-# Check aws-auth ConfigMap
-kubectl describe configmap aws-auth -n kube-system
+```bash
+aws eks describe-cluster --name my-cluster --query cluster.accessConfig.authenticationMode
+aws eks create-access-entry --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/cluster-viewer --type STANDARD
+aws eks associate-access-policy --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/cluster-viewer \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy \
+  --access-scope type=namespace,namespaces=default
 ```
+
+See the [EKS access-entry guide](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html). Permissions to manage EKS access entries and Kubernetes workload permissions are separate.
 
 ### EKS Cluster Monitoring
 
+Control-plane logging exports api/audit/authenticator/controllerManager/scheduler logs. Container Insights requires the CloudWatch agent/add-on and scoped telemetry IAM permissions; it is not enabled by update-cluster-logging. The CloudWatch observability add-on installs CloudWatch/Fluent Bit components, not Prometheus/Grafana. See the [official add-on setup](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html).
+
 ```bash
-# Enable CloudWatch Container Insights
+# Enable EKS control-plane logs
 eksctl utils update-cluster-logging \
   --enable-types all \
   --cluster my-cluster \
   --region us-west-2
 
-# Install Prometheus and Grafana (using Amazon EKS add-on)
+# Install CloudWatch observability (not Prometheus/Grafana)
 aws eks create-addon \
   --cluster-name my-cluster \
   --addon-name amazon-cloudwatch-observability \
-  --addon-version v1.1.1-eksbuild.1
+  --addon-version "${CLOUDWATCH_ADDON_VERSION:?Select a compatible add-on version}"
 ```
 ## Cluster Administration Best Practices
 
@@ -2008,7 +2004,7 @@ For effective cluster administration, focus on the following key areas:
 6. **Monitoring and Logging**: Cluster status and performance monitoring
 7. **Troubleshooting**: Systematic troubleshooting approach
 
-When using managed Kubernetes services like Amazon EKS, it is important to understand the shared responsibility model between the service provider and the user. While AWS manages the control plane, management of nodes, networking, security, etc. is still the user's responsibility.
+When using managed Kubernetes services like Amazon EKS, it is important to understand the shared responsibility model between the service provider and the user. AWS manages the control plane, while compute responsibility varies by mode; customers still manage application configuration and security.
 
 By following best practices and utilizing appropriate tools, you can operate a stable, secure, and efficient Kubernetes cluster. Continuous learning and improvement to enhance cluster management capabilities is important.
 

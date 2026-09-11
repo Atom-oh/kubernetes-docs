@@ -9,42 +9,45 @@
     "views": [
       {
         "id": "before",
-        "label": "Before switch",
+        "label": "Analysis",
         "focus": [
           "lb1",
           "blue1",
           "green1"
         ],
-        "note": "All live traffic goes to Blue v1 (primary); Green v2 (canary) is deployed but only standing by."
+        "note": "Primary v1 serves live requests while canary v2 is tested. Mirroring is optional."
       },
       {
         "id": "testing",
-        "label": "Test phase",
+        "label": "Primary update",
         "focus": [
           "lb2",
           "blue2",
           "green2"
         ],
-        "note": "Live traffic still goes to Blue; only mirrored traffic reaches Green while metrics are checked for the configured iterations."
+        "note": "After checks, serve canary while updating primary to v2 and waiting for readiness."
       },
       {
         "id": "after",
-        "label": "After switch",
+        "label": "Complete",
         "focus": [
           "lb3",
           "blue3",
           "green3"
         ],
-        "note": "Once analysis passes, traffic is switched to Green v2 in a single step and Blue v1 becomes standby."
+        "note": "Return to ready primary v2 and scale canary down; this does not retain an old-v1 standby."
       }
     ],
-    "locale": "en"
+    "locale": "en",
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {
       "id": "lb1",
       "type": "cloud",
-      "label": "Load Balancer",
+      "label": "Traffic router",
       "sublabel": "routing",
       "pos": [
         130,
@@ -58,8 +61,8 @@
     {
       "id": "blue1",
       "type": "backend",
-      "label": "Blue · v1",
-      "sublabel": "active (primary)",
+      "label": "Primary",
+      "sublabel": "v1 · live",
       "pos": [
         40,
         260
@@ -72,8 +75,8 @@
     {
       "id": "green1",
       "type": "backend",
-      "label": "Green · v2",
-      "sublabel": "ready (canary)",
+      "label": "Canary",
+      "sublabel": "v2 · test",
       "pos": [
         220,
         260
@@ -86,7 +89,7 @@
     {
       "id": "lb2",
       "type": "cloud",
-      "label": "Load Balancer",
+      "label": "Traffic router",
       "sublabel": "routing",
       "pos": [
         530,
@@ -100,8 +103,8 @@
     {
       "id": "blue2",
       "type": "backend",
-      "label": "Blue · v1",
-      "sublabel": "active (primary)",
+      "label": "Primary",
+      "sublabel": "v1 → v2 · updating",
       "pos": [
         440,
         260
@@ -114,8 +117,8 @@
     {
       "id": "green2",
       "type": "backend",
-      "label": "Green · v2",
-      "sublabel": "under test (canary)",
+      "label": "Canary",
+      "sublabel": "v2 · temporary live",
       "pos": [
         620,
         260
@@ -128,7 +131,7 @@
     {
       "id": "lb3",
       "type": "cloud",
-      "label": "Load Balancer",
+      "label": "Traffic router",
       "sublabel": "routing",
       "pos": [
         930,
@@ -142,8 +145,8 @@
     {
       "id": "blue3",
       "type": "backend",
-      "label": "Blue · v1",
-      "sublabel": "standby",
+      "label": "Primary",
+      "sublabel": "v2 · live",
       "pos": [
         840,
         260
@@ -156,8 +159,8 @@
     {
       "id": "green3",
       "type": "backend",
-      "label": "Green · v2",
-      "sublabel": "active",
+      "label": "Canary",
+      "sublabel": "v2 · replicas 0",
       "pos": [
         1020,
         260
@@ -171,7 +174,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "1. Before switch",
+      "label": "1. Analysis",
       "wraps": [
         "lb1",
         "blue1",
@@ -180,7 +183,7 @@
     },
     {
       "kind": "region",
-      "label": "2. Test phase",
+      "label": "2. Primary update",
       "wraps": [
         "lb2",
         "blue2",
@@ -189,7 +192,7 @@
     },
     {
       "kind": "region",
-      "label": "3. After switch",
+      "label": "3. Complete",
       "wraps": [
         "lb3",
         "blue3",
@@ -210,27 +213,26 @@
     {
       "id": "testing-live",
       "from": "lb2",
-      "to": "blue2",
-      "label": "live traffic 100%",
+      "to": "green2",
+      "label": "temporary live 100%",
       "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top"
     },
     {
       "id": "testing-mirror",
-      "from": "lb2",
-      "to": "green2",
-      "label": "mirrored traffic (mirror)",
+      "from": "lb1",
+      "to": "green1",
+      "label": "optional mirror",
       "variant": "dashed",
       "fromSide": "bottom",
-      "toSide": "top",
-      "labelDx": 40
+      "toSide": "top"
     },
     {
       "id": "after-live",
       "from": "lb3",
-      "to": "green3",
-      "label": "switched traffic 100%",
+      "to": "blue3",
+      "label": "live 100%",
       "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top"
@@ -239,19 +241,18 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Blue-Green analysis settings",
+      "title": "Analysis and promotion",
       "items": [
-        "iterations: number of analysis cycles against Green (replaces stepWeight/maxWeight)",
-        "mirror: true mirrors live traffic to Green for pre-validation",
-        "mirrorWeight: share of traffic to mirror (100 = everything)"
+        "iterations strategy; do not mix with stepWeight/stepWeights",
+        "Failure threshold counts accumulated checks"
       ]
     },
     {
       "dot": "amber",
-      "title": "Switch and rollback",
+      "title": "Operational limits",
       "items": [
-        "After every iteration passes, traffic is switched 100% in one step",
-        "threshold consecutive failures trigger an automatic rollback"
+        "Discarding mirror responses does not prevent writes or load",
+        "An unhealthy primary during promotion needs separate recovery"
       ]
     }
   ]

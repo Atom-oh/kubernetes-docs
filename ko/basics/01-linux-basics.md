@@ -1,6 +1,6 @@
 # Linux 기초
 
-> **지원 버전**: 모든 주요 Linux 배포판 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+) **마지막 업데이트**: 2026년 2월 11일
+> **지원 버전**: 검토한 예제 환경: Ubuntu 24.04 LTS, Debian 13, Amazon Linux 2023; 패키지/서비스 이름은 배포판별로 다름 **마지막 업데이트**: 2026년 9월 11일
 
 Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 기본적인 이해가 필수적입니다. 이 문서에서는 Kubernetes 환경에서 특히 중요한 Linux의 핵심 개념들을 다룹니다.
 
@@ -10,22 +10,19 @@ Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 �
 
 ### 필수 환경
 
-* Linux 운영체제 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+ 권장)
+* Linux 운영체제 (Ubuntu 24.04 LTS, Debian 13 또는 Amazon Linux 2023 권장)
 * 터미널 액세스
 * sudo 권한
 
 ### 클라우드 환경 설정 (선택 사항)
 
-AWS EC2 인스턴스를 사용하는 경우:
+격리된 실습 VM을 사용합니다. AWS에서는 리전/아키텍처에 맞는 AL2023을 선택하며 고정 AMI ID는 다른 리전에서 재사용할 수 없습니다. AWS는 AL2 표준 지원이 2026-06-30 종료되었다고 안내합니다. 아래는 AMI 조회만 수행하므로 인스턴스 생성과 제한된 접근 경로를 별도로 준비한 후 기존 인스턴스에 접속합니다.
 
 ```bash
-# Amazon Linux 2 인스턴스 시작
-aws ec2 run-instances \
-  --image-id ami-0c55b159cbfafe1f0 \
-  --instance-type t3.micro \
-  --key-name your-key-pair \
-  --security-group-ids sg-12345678 \
-  --subnet-id subnet-12345678
+# Read-only AMI discovery; select a kernel-specific parameter when reproducibility is required.
+aws ssm get-parameter --region us-east-1 \
+  --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 \
+  --query Parameter.Value --output text
 
 # SSH 접속
 ssh -i your-key.pem ec2-user@your-instance-public-ip
@@ -37,7 +34,7 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 
 * **VirtualBox + Vagrant**: 가상 머신 환경 구성
 * **WSL2**: Windows에서 Linux 환경 사용
-* **Docker**: 컨테이너 환경에서 실습
+* **Docker**: 기본 셸 실습에 적합하지만 일반 컨테이너에는 전체 systemd 호스트나 호스트 네트워크/커널 변경 권한이 없음
 
 ## 목차
 
@@ -89,7 +86,7 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 | `read()`   | 파일에서 데이터 읽기 | `cat`, `grep`       |
 | `write()`  | 파일에 데이터 쓰기  | `echo`, `tee`       |
 | `socket()` | 네트워크 소켓 생성  | `netstat`, `ss`     |
-| `clone()`  | 네임스페이스 생성   | `unshare`, `docker` |
+| `clone()`  | 태스크 생성 및 플래그에 따른 새 네임스페이스   | `unshare`, `docker` |
 
 ### 리눅스 커널 아키텍처
 
@@ -145,12 +142,12 @@ bg %<작업번호>
 
 * **PID 네임스페이스**: 프로세스 ID 격리, 컨테이너가 자체 PID 1(init)을 가질 수 있게 함
 * **네트워크 네임스페이스**: 네트워크 스택 격리 (인터페이스, IP 주소, 라우팅 테이블, 방화벽 등), 컨테이너 네트워킹의 기반
-* **마운트 네임스페이스**: 파일 시스템 마운트 포인트 격리, 컨테이너별 독립적인 파일 시스템 제공
-* **UTS 네임스페이스**: 호스트명과 도메인명 격리, 각 컨테이너에 고유한 호스트 식별자 부여
+* **마운트 네임스페이스**: 마운트 테이블을 격리하며 실제 파일 내용/루트 격리는 별도 마운트와 루트 구성 필요
+* **UTS 네임스페이스**: 호스트명과 NIS 도메인명 격리(DNS 도메인은 아님), 각 컨테이너에 고유한 호스트 식별자 부여
 * **IPC 네임스페이스**: 프로세스 간 통신 자원 격리 (공유 메모리, 세마포어, 메시지 큐 등), 마이크로서비스 아키텍처에서 서비스 간 격리에 중요
 * **사용자 네임스페이스**: 사용자 및 그룹 ID 격리, 루트리스(rootless) 컨테이너 실행 지원으로 보안 강화
 * **cgroup 네임스페이스**: cgroup 루트 디렉토리 격리, 컨테이너 내부에서 리소스 제한 가시성 제공
-* **시간 네임스페이스**: 시스템 클록 격리, 컨테이너별 독립적인 시간 설정 가능 (Linux 5.6+)
+* **시간 네임스페이스**: CLOCK_MONOTONIC/CLOCK_BOOTTIME 오프셋 격리 (Linux 5.6+); 실제 날짜/시각 CLOCK_REALTIME은 격리하지 않음
 
 ### 네임스페이스 관련 명령어
 
@@ -159,10 +156,10 @@ bg %<작업번호>
 ls -la /proc/<PID>/ns/
 
 # 새로운 네임스페이스에서 명령 실행
-unshare --net --pid --fork --mount-proc bash
+sudo unshare --mount --net --pid --fork --mount-proc bash
 
 # 기존 프로세스의 네임스페이스에 진입
-nsenter --target <PID> --net --pid bash
+sudo nsenter --target <PID> --net --pid bash
 
 # 네트워크 네임스페이스 생성 및 관리
 ip netns add <name>
@@ -172,7 +169,7 @@ ip netns exec <name> <command>
 unshare --user --map-root-user --mount --net bash
 
 # 시간 네임스페이스 사용 (Linux 5.6+)
-unshare --time bash
+sudo unshare --time --fork bash
 ```
 
 ## cgroups (Control Groups)
@@ -184,7 +181,7 @@ cgroups는 프로세스 그룹의 자원 사용을 제한하고 격리하는 Lin
 * **CPU 시간 제한**: 프로세스 그룹이 사용할 수 있는 CPU 시간 제한 및 CPU 코어 할당
 * **메모리 제한**: 프로세스 그룹이 사용할 수 있는 메모리 양 제한 및 OOM(Out of Memory) 동작 제어
 * **블록 I/O 제한**: 디스크 I/O 대역폭 제한 및 우선순위 설정
-* **네트워크 대역폭 제한**: 네트워크 트래픽 제한 (tc와 결합)
+* **네트워크 트래픽 제어**: tc/eBPF와 cgroup 분류를 조합하며 cgroup v2 자체에는 독립적인 대역폭 제한 파일이 없음
 * **장치 접근 제어**: 특정 장치에 대한 접근 제어 및 권한 관리
 * **pids 제어**: 프로세스 생성 수 제한으로 fork 폭탄 방지
 * **freezer**: 프로세스 그룹 일시 중지 및 재개 (컨테이너 일시 중지에 활용)
@@ -204,17 +201,17 @@ ls -la /sys/fs/cgroup/                     # cgroups v2
 ls -la /sys/fs/cgroup/cpu /sys/fs/cgroup/memory  # cgroups v1
 
 # systemd를 통한 cgroups 관리 (현대적인 방식)
-systemctl set-property <서비스명> CPUQuota=20%
-systemctl set-property <서비스명> MemoryLimit=1G
-systemctl set-property <서비스명> IOWeight=500
+sudo systemctl set-property --runtime <서비스명> CPUQuota=20%
+sudo systemctl set-property --runtime <서비스명> MemoryMax=1G
+sudo systemctl set-property --runtime <서비스명> IOWeight=500
 
 # 프로세스의 cgroup 확인
 cat /proc/<PID>/cgroup
 
-# cgroups v2 직접 조작 (고급)
-echo $$ > /sys/fs/cgroup/user.slice/cgroup.procs
-echo "max 100000" > /sys/fs/cgroup/user.slice/memory.max
-echo "100000 500000" > /sys/fs/cgroup/user.slice/memory.high
+# Run only the example command inside a transient cgroup managed by systemd.
+sudo systemd-run --scope -p CPUQuota=20% -p MemoryHigh=768M -p MemoryMax=1G sleep 60
+# memory.max/high take one byte count or "max"; cpu.max takes quota and period.
+# Do not move your shell into systemd-owned user.slice or edit its control files.
 
 # 컨테이너 런타임과 cgroups
 podman stats  # 컨테이너 리소스 사용량 모니터링
@@ -241,11 +238,11 @@ Linux는 단일 루트 디렉토리(`/`)에서 시작하는 계층적 파일 시
 
 ### 파일 시스템 유형
 
-* **ext4**: Linux의 기본 파일 시스템
+* **ext4**: 널리 사용하는 Linux 파일 시스템이며 기본값은 배포판에 따라 다름
 * **XFS**: 대용량 파일 시스템에 적합
 * **Btrfs**: 스냅샷, 압축 등 고급 기능 제공
 * **OverlayFS**: 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현 (컨테이너에서 많이 사용)
-* **tmpfs**: 메모리 기반 임시 파일 시스템
+* **tmpfs**: 메모리 기반 임시 파일 시스템이며 swap이 비활성화되지 않았다면 페이지가 swap될 수 있음
 
 ### 마운트와 볼륨
 
@@ -342,9 +339,9 @@ chmod 1755 <파일명>  # sticky bit 설정
 # SELinux 상태 확인
 getenforce
 
-# SELinux 모드 변경
-setenforce 0  # Permissive 모드
-setenforce 1  # Enforcing 모드
+# 검토된 격리 실습에서만 사용: permissive는 시스템 전체 강제를 해제합니다.
+# sudo setenforce 0
+# 조사 후 원래 모드를 복구하며 일반적인 해결책으로 강제를 해제하지 않습니다.
 
 # AppArmor 상태 확인
 aa-status
@@ -410,20 +407,19 @@ systemctl daemon-reload
 
 ### systemd 유닛 파일 작성
 
-Kubernetes 관련 서비스의 systemd 유닛 파일 예시:
+작은 실습용 서비스로 유닛 구조를 설명합니다. kubelet은 systemctl cat kubelet으로 확인하고 배포판/kubeadm이 관리하는 유닛과 drop-in을 덮어쓰지 않습니다.
 
 ```ini
-# /etc/systemd/system/kubelet.service
+# /etc/systemd/system/linux-basics-demo.service
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Linux basics training service
+Documentation=man:systemd.service(5)
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/kubelet
-Restart=always
-StartLimitInterval=0
+ExecStart=/usr/bin/sleep infinity
+Restart=on-failure
 RestartSec=10
 
 [Install]
@@ -432,18 +428,20 @@ WantedBy=multi-user.target
 
 ### systemd 리소스 제한
 
+위 linux-basics-demo.service를 실습 VM에 저장하고 daemon-reload한 경우에만 아래 속성을 설정합니다. 운영 kubelet/containerd에 이 학습용 제한을 적용하지 않습니다.
+
 ```bash
 # CPU 제한 (20%)
-systemctl set-property kubelet CPUQuota=20%
+sudo systemctl set-property --runtime linux-basics-demo.service CPUQuota=20%
 
 # 메모리 제한 (1GB)
-systemctl set-property kubelet MemoryLimit=1G
+sudo systemctl set-property --runtime linux-basics-demo.service MemoryMax=1G
 
-# I/O 가중치 설정 (100-1000, 기본 100)
-systemctl set-property kubelet IOWeight=500
+# I/O 가중치 설정 (1-10000, 기본 100)
+sudo systemctl set-property --runtime linux-basics-demo.service IOWeight=500
 
 # 설정 확인
-systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
+systemctl show linux-basics-demo.service | grep -E 'CPUQuota|MemoryMax|IOWeight'
 ```
 
 ## 커널 파라미터와 모듈
@@ -452,29 +450,31 @@ systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
 
 sysctl은 실행 중인 커널의 파라미터를 조회하고 변경하는 도구입니다. Kubernetes 클러스터 구성 시 네트워크 및 시스템 파라미터 튜닝에 필수적입니다.
 
-#### Kubernetes에 필요한 주요 sysctl 설정
+#### CNI별 sysctl 설정과 튜닝 예시
+
+아래 값은 모든 Kubernetes 노드의 필수 기본값이 아닙니다. 선택한 IP 계열/CNI/서비스 프록시 요구를 확인합니다. bridge-nf 설정은 br_netfilter를 사용하는 구성에서만 필요합니다. 성능/ARP/conntrack 값은 측정 없이 운영 노드에 적용하지 않습니다. 먼저 현재 값을 기록하고 격리된 실습 VM에서만 변경합니다.
 
 ```bash
 # IP 포워딩 활성화 (컨테이너 네트워킹에 필수)
-sysctl -w net.ipv4.ip_forward=1
-sysctl -w net.ipv6.conf.all.forwarding=1
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo sysctl -w net.ipv6.conf.all.forwarding=1
 
-# 브릿지 트래픽이 iptables를 통과하도록 설정 (CNI 플러그인에 필수)
-sysctl -w net.bridge.bridge-nf-call-iptables=1
-sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+# 브릿지 트래픽이 iptables를 통과하도록 설정 (bridge netfilter가 필요한 CNI 구성에 한함)
+sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
+sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=1
 
 # 최대 파일 디스크립터 수 증가
-sysctl -w fs.file-max=2097152
+sudo sysctl -w fs.file-max=2097152
 
 # 네트워크 성능 튜닝
-sysctl -w net.core.somaxconn=32768
-sysctl -w net.ipv4.tcp_max_syn_backlog=8192
-sysctl -w net.core.netdev_max_backlog=16384
+sudo sysctl -w net.core.somaxconn=32768
+sudo sysctl -w net.ipv4.tcp_max_syn_backlog=8192
+sudo sysctl -w net.core.netdev_max_backlog=16384
 
 # ARP 캐시 설정 (대규모 클러스터)
-sysctl -w net.ipv4.neigh.default.gc_thresh1=80000
-sysctl -w net.ipv4.neigh.default.gc_thresh2=90000
-sysctl -w net.ipv4.neigh.default.gc_thresh3=100000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh1=80000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh2=90000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh3=100000
 
 # 현재 설정 확인
 sysctl net.ipv4.ip_forward
@@ -488,21 +488,21 @@ net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 
 # 설정 적용
-sysctl --system
+sudo sysctl --system
 ```
 
 ### 커널 모듈 관리
 
-많은 CNI 플러그인과 스토리지 드라이버가 특정 커널 모듈을 필요로 합니다.
+모듈은 런타임/CNI/스토리지 선택에 따라 다릅니다. IPVS 모드는 Kubernetes 1.35부터 deprecated이며 아래 IPVS 명령은 기존 IPVS 클러스터용입니다. 새 클러스터에 모든 모듈을 일괄 로드하지 않습니다.
 
 ```bash
 # 모듈 로드
-modprobe overlay  # OverlayFS (컨테이너 스토리지)
-modprobe br_netfilter  # 브릿지 네트워킹
-modprobe ip_vs  # IPVS 로드 밸런싱 (kube-proxy IPVS 모드)
-modprobe ip_vs_rr  # Round Robin 알고리즘
-modprobe ip_vs_wrr  # Weighted Round Robin
-modprobe ip_vs_sh  # Source Hashing
+sudo modprobe overlay  # OverlayFS (컨테이너 스토리지)
+sudo modprobe br_netfilter  # 브릿지 네트워킹
+sudo modprobe ip_vs  # IPVS 로드 밸런싱 (kube-proxy IPVS 모드)
+sudo modprobe ip_vs_rr  # Round Robin 알고리즘
+sudo modprobe ip_vs_wrr  # Weighted Round Robin
+sudo modprobe ip_vs_sh  # Source Hashing
 
 # 로드된 모듈 확인
 lsmod | grep overlay
@@ -514,15 +514,11 @@ modinfo overlay
 # 부팅 시 자동 로드 설정
 cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
 overlay
-br_netfilter
-ip_vs
-ip_vs_rr
-ip_vs_wrr
-ip_vs_sh
+# Add br_netfilter only if required by the chosen CNI.
 EOF
 
 # 모듈 언로드
-modprobe -r <모듈명>
+sudo modprobe -r <모듈명>
 ```
 
 ### 커널 버전 및 기능 확인
@@ -553,7 +549,7 @@ ulimit -a
 # 주요 제한 항목
 ulimit -n      # 열 수 있는 파일 디스크립터 수
 ulimit -u      # 최대 프로세스 수
-ulimit -m      # 최대 메모리 크기
+ulimit -m      # RSS 제한; 최신 Linux에서는 강제되지 않음
 ulimit -v      # 가상 메모리 크기
 
 # 제한 변경 (현재 세션)
@@ -578,13 +574,12 @@ EOF
 
 ### PAM 제한 설정
 
-```bash
-# PAM 설정 확인
-cat /etc/pam.d/common-session
-cat /etc/pam.d/common-session-noninteractive
+limits.conf는 pam_limits를 사용하는 새 로그인 세션에 적용됩니다. 일반 systemd 시스템 서비스에는 자동 적용되지 않으므로 서비스 drop-in의 LimitNOFILE/TasksMax 등을 사용합니다. 기존 세션/프로세스에는 소급 적용되지 않습니다. 배포판별 PAM 체인을 확인하고 common-session에 중복 행을 일괄 추가하지 않습니다.
 
-# limits.conf가 적용되도록 PAM 설정에 추가
-echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
+```bash
+# Inspect the active configuration; PAM file names differ by distribution.
+grep -R pam_limits.so /etc/pam.d
+systemctl show kubelet -p LimitNOFILE -p TasksMax
 ```
 
 ### 프로세스별 리소스 확인
@@ -594,7 +589,7 @@ echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 cat /proc/<PID>/limits
 
 # 특정 프로세스의 파일 디스크립터 확인
-ls -l /proc/<PID>/fd | wc -l
+find /proc/<PID>/fd -mindepth 1 -maxdepth 1 -printf '%f\n' | wc -l
 ```
 
 ## 로그 관리
@@ -622,7 +617,7 @@ journalctl --since yesterday
 journalctl --until "2025-11-24 12:00:00"
 
 # 우선순위별 필터링
-journalctl -p err        # 에러만
+journalctl -p err        # 에러 및 더 높은 심각도 (0-3)
 journalctl -p warning    # 경고 이상
 journalctl -p debug      # 디버그 포함 모두
 
@@ -640,8 +635,8 @@ journalctl --list-boots # 부팅 목록
 journalctl --disk-usage
 
 # 로그 정리
-journalctl --vacuum-time=7d   # 7일 이상된 로그 삭제
-journalctl --vacuum-size=1G   # 1GB 이상 로그 삭제
+journalctl --vacuum-time=7d   # 7일 이전의 보관된 journal 파일 삭제
+journalctl --vacuum-size=1G   # 보관된 journal 총량을 줄이도록 오래된 파일 삭제
 ```
 
 ### journald 설정
@@ -666,8 +661,8 @@ sudo systemctl restart systemd-journald
 
 ```bash
 # syslog 파일 위치
-/var/log/syslog         # Debian/Ubuntu
-/var/log/messages       # RHEL/CentOS
+# /var/log/syslog         # Debian/Ubuntu
+# /var/log/messages       # RHEL/CentOS
 
 # 실시간 로그 확인
 tail -f /var/log/syslog
@@ -679,14 +674,17 @@ grep -i "error" /var/log/syslog
 
 ### 로그 로테이션
 
-로그 파일이 무한정 커지지 않도록 로그 로테이션을 설정합니다.
+일반 애플리케이션 파일에 logrotate를 사용합니다. copytruncate는 복사/잘라내기 사이에 기록이 유실될 수 있으므로 애플리케이션이 지원하면 파일 재열기 방식을 선호합니다. CRI 컨테이너 로그 회전은 kubelet이 관리합니다.
 
 ```bash
 # logrotate 설정
-sudo vi /etc/logrotate.d/kubernetes
+sudo vi /etc/logrotate.d/linux-basics-demo
 
-# 예시 설정
-/var/log/kubernetes/*.log {
+# 파일 내용 (kubelet이 관리하지 않는 애플리케이션 텍스트 로그 전용):
+```
+
+```text
+/var/log/linux-basics-demo/*.log {
     daily
     rotate 7
     missingok
@@ -695,33 +693,35 @@ sudo vi /etc/logrotate.d/kubernetes
     delaycompress
     copytruncate
 }
+```
 
+```bash
 # 수동으로 로테이션 실행
-sudo logrotate -f /etc/logrotate.d/kubernetes
+sudo logrotate -f /etc/logrotate.d/linux-basics-demo
 ```
 
 ## DNS와 네트워크 설정
 
 ### DNS 설정
 
-DNS는 Kubernetes 클러스터 내부 서비스 디스커버리의 핵심입니다.
+호스트의 resolv.conf는 NetworkManager/systemd-resolved 등이 관리할 수 있으므로 먼저 실제 설정을 확인합니다. 8.8.8.8 같은 공용 DNS는 cluster.local 서비스를 확인하지 못합니다. ClusterFirst Pod는 kubelet이 구성한 클러스터 DNS를 사용하며 호스트에 클러스터 검색 접미사를 추가하는 것만으로 연결되지 않습니다.
 
 ```bash
-# DNS 설정 파일
+# On the Linux host
 cat /etc/resolv.conf
-
-# 예시 설정
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-search cluster.local svc.cluster.local
-options ndots:5
-
-# DNS 조회 테스트
-nslookup kubernetes.default.svc.cluster.local
-dig kubernetes.default.svc.cluster.local
-
-# hosts 파일
 cat /etc/hosts
+# If a cluster is available, inspect its actual DNS Service address.
+kubectl -n kube-system get service kube-dns
+# Run inside an existing Pod with DNS utilities and ClusterFirst policy:
+# nslookup kubernetes.default.svc.cluster.local
+```
+
+아래는 Pod resolver 파일의 **형식 예제**이며 IP/네임스페이스/클러스터 도메인을 실제 값으로 바꿔야 합니다. 호스트 파일에 복사하지 않습니다.
+
+```text
+nameserver <cluster-dns-service-ip>
+search <namespace>.svc.cluster.local svc.cluster.local cluster.local
+options ndots:5
 ```
 
 ### systemd-resolved
@@ -744,25 +744,27 @@ resolvectl flush-caches
 
 ### 네트워크 설정 파일
 
+NetworkManager와 netplan 중 배포판이 사용하는 도구를 확인합니다. netplan의 YAML은 셸 명령이 아니며 /etc/netplan 아래 파일에 저장합니다. 원격 연결 중 주소/라우팅을 변경하기 전에 복구 경로를 준비하고 netplan try로 확인합니다.
+
 ```bash
-# NetworkManager (RHEL/CentOS 8+, Ubuntu 18.04+)
 nmcli connection show
 nmcli device status
+# On a netplan-based installation:
+ls /etc/netplan
+```
 
-# netplan (Ubuntu 18.04+)
-cat /etc/netplan/*.yaml
-
-# 예시 netplan 설정
+```yaml
+# Example netplan file: replace eth0 with the actual interface name.
 network:
   version: 2
   ethernets:
     eth0:
       dhcp4: true
-      nameservers:
-        addresses: [8.8.8.8, 8.8.4.4]
+```
 
-# 설정 적용
-sudo netplan apply
+```bash
+sudo netplan generate
+sudo netplan try
 ```
 
 ## 시간 동기화
@@ -771,7 +773,7 @@ sudo netplan apply
 
 ### chronyd (권장)
 
-chronyd는 현대적인 NTP 클라이언트로, ntpd보다 빠르게 시간을 동기화합니다.
+chronyd는 네트워크 조건 변화에 대응하는 NTP 클라이언트/서버입니다. 동기화 성능은 클록, 시간 소스 및 설정에 따라 달라집니다.
 
 ```bash
 # chronyd 설치 (RHEL/CentOS)
@@ -780,7 +782,7 @@ sudo yum install chrony
 # chronyd 설치 (Ubuntu/Debian)
 sudo apt install chrony
 
-# 서비스 상태 확인
+# 설치된 유닛 확인: RHEL/Amazon Linux는 chronyd, Debian/Ubuntu는 chrony.
 systemctl status chronyd
 
 # 시간 동기화 상태 확인
@@ -793,49 +795,48 @@ chronyc sources
 chronyc sourcestats
 
 # 수동 시간 동기화
-sudo chronyc makestep
+# Only during a reviewed maintenance window; stepping can disrupt time-sensitive workloads.
+# sudo chronyc makestep
 ```
 
 ### chronyd 설정
 
-```bash
-# 설정 파일
-sudo vi /etc/chrony.conf
+RHEL 계열은 보통 /etc/chrony.conf, Debian/Ubuntu는 /etc/chrony/chrony.conf를 사용합니다. 배포판의 제공자 설정(EC2의 Amazon Time Sync Service 포함)을 먼저 확인하고 임의의 공용 서버로 덮어쓰지 않습니다. 다음은 파일 내용 예제입니다.
 
-# 주요 설정
-# NTP 서버 설정
-server 0.pool.ntp.org iburst
-server 1.pool.ntp.org iburst
-server 2.pool.ntp.org iburst
-server 3.pool.ntp.org iburst
-
-# 빠른 동기화
+```text
+# Choose an approved reachable time source.
+server <approved-ntp-server> iburst
+# Permit stepping only during the first three clock updates.
 makestep 1.0 3
-
-# 설정 적용
-sudo systemctl restart chronyd
 ```
 
-### timesyncd (Ubuntu 기본)
+```bash
+# Choose the unit actually installed on your distribution:
+systemctl status chronyd.service  # RHEL/Amazon Linux
+systemctl status chrony.service   # Debian/Ubuntu
+chronyc tracking
+chronyc sources
+```
 
-Ubuntu는 기본적으로 systemd-timesyncd를 사용합니다.
+### timesyncd (배포판별 선택)
+
+Ubuntu 25.10부터 기본 시간 동기화는 chrony이며 이전 릴리스/이미지에는 systemd-timesyncd가 사용될 수 있습니다. 활성 시간 서비스 하나를 사용합니다. show-timesync는 timesyncd 전용이며 chrony 상태는 chronyc로 확인합니다.
 
 ```bash
-# 상태 확인
 timedatectl status
-
-# NTP 동기화 상태
+# Only for installations using systemd-timesyncd:
 timedatectl show-timesync --all
+systemctl status systemd-timesyncd
+```
 
-# 설정 파일
-sudo vi /etc/systemd/timesyncd.conf
-
-# 예시 설정
+```ini
+# /etc/systemd/timesyncd.conf: use approved servers for this environment.
 [Time]
-NTP=0.pool.ntp.org 1.pool.ntp.org
-FallbackNTP=time.google.com
+NTP=<approved-ntp-server>
+```
 
-# 서비스 재시작
+```bash
+# After editing a timesyncd installation:
 sudo systemctl restart systemd-timesyncd
 ```
 
@@ -852,7 +853,8 @@ timedatectl list-timezones
 sudo timedatectl set-timezone Asia/Seoul
 
 # 시간 수동 설정 (NTP 비활성화 시)
-sudo timedatectl set-time "2025-11-24 12:00:00"
+: "${LAB_TIME:?Set an intentional time for an isolated VM with NTP disabled}"
+# sudo timedatectl set-time "$LAB_TIME"
 
 # NTP 활성화/비활성화
 sudo timedatectl set-ntp true
@@ -888,11 +890,13 @@ apt show <패키지명>
 apt list --installed
 
 # 저장소 추가 (Kubernetes 예시)
-sudo apt install -y apt-transport-https ca-certificates curl
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | \
+set -o pipefail
+: "${KUBERNETES_MINOR:?Choose a supported cluster-compatible minor, for example v1.37}"
+sudo apt install -y ca-certificates curl gnupg
+sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/deb/Release.key" | \
   sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
-  https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | \
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/deb/ /" | \
   sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # 불필요한 패키지 정리
@@ -928,13 +932,15 @@ yum list installed
 dnf list installed
 
 # 저장소 추가 (Kubernetes 예시)
+: "${KUBERNETES_MINOR:?Choose a supported cluster-compatible minor, for example v1.37}"
 cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
 # 캐시 정리
@@ -953,12 +959,12 @@ sudo apt-mark hold kubelet kubeadm kubectl
 # apt hold 해제
 sudo apt-mark unhold kubelet kubeadm kubectl
 
-# yum (RHEL/CentOS)
-sudo yum install yum-plugin-versionlock
-sudo yum versionlock add kubelet kubeadm kubectl
+# DNF: 배포판이 지원하는 versionlock 플러그인을 먼저 설치합니다.
+# 또는 위 Kubernetes 저장소의 exclude 설정을 사용합니다.
+sudo dnf versionlock add kubelet kubeadm kubectl
 
-# yum versionlock 해제
-sudo yum versionlock delete kubelet kubeadm kubectl
+# versionlock 항목 해제
+sudo dnf versionlock delete kubelet kubeadm kubectl
 ```
 
 ## 주요 Linux 명령어
@@ -1000,7 +1006,7 @@ du -sh <경로>     # 디렉토리 크기
 
 ```bash
 systemctl status <서비스> # 서비스 상태 확인
-systemctl start/stop/restart <서비스> # 서비스 제어
+systemctl restart <서비스> # start/stop도 각각 별도 하위 명령으로 사용
 journalctl -u <서비스> # 서비스 로그 확인
 ```
 
@@ -1016,7 +1022,7 @@ OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하�
 
 ### 네트워크 브릿지와 NAT
 
-컨테이너 네트워킹은 주로 브릿지 인터페이스와 NAT(Network Address Translation)를 사용하여 구현됩니다.
+Docker 기본 bridge 네트워크는 외부 통신에 브릿지/NAT를 사용합니다. Kubernetes CNI는 라우팅, 오버레이 또는 VPC 네이티브 네트워크를 사용할 수 있으며 모든 Pod 간 트래픽에 NAT가 적용되지는 않습니다.
 
 ![단일 호스트에서 두 컨테이너가 veth pair로 docker0 브릿지에 연결되고, iptables NAT 규칙을 거쳐 호스트 eth0을 통해 외부 인터넷과 통신하는 Docker 브리지 네트워킹 구조를 보여준다.](../.gitbook/assets/ko-basics-01-linux-basics-10.png)
 
@@ -1072,3 +1078,24 @@ Linux의 기본 개념과 기능은 Kubernetes와 컨테이너 기술을 이해�
 * [Linux Kernel Documentation](https://www.kernel.org/doc/)
 * [Linux Namespaces](https://man7.org/linux/man-pages/man7/namespaces.7.html)
 * [Control Groups v2](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)
+
+## 검증 참고 자료
+
+- https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+- https://kubernetes.io/docs/concepts/architecture/cgroups/
+- https://man7.org/linux/man-pages/man7/time_namespaces.7.html
+- https://man7.org/linux/man-pages/man2/getrlimit.2.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+- https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- https://ubuntu.com/about/release-cycle
+- https://www.debian.org/releases/
+- https://www.centos.org/centos-linux-eol/
+- https://documentation.ubuntu.com/server/how-to/networking/timedatectl-and-timesyncd/
+- https://aws.amazon.com/amazon-linux-2/faqs/
+- https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
+- https://github.com/logrotate/logrotate/blob/main/logrotate.8.in
+- https://github.com/linux-pam/linux-pam/blob/master/modules/pam_limits/limits.conf.5.xml

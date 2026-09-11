@@ -21,6 +21,7 @@ test('VitePress excludes GitBook-only sources and translated mirrors', () => {
     'README.md',
     'slide/**',
     'CLAUDE.md',
+    'aws-architecture-review-request.md',
     '**/SUMMARY.md',
     'docs/**',
     'assets/**',
@@ -48,6 +49,7 @@ test('a locale build excludes the other published locale', () => {
       'README.md',
       'slide/**',
       'CLAUDE.md',
+      'aws-architecture-review-request.md',
       '**/SUMMARY.md',
       'docs/**',
       'assets/**',
@@ -72,10 +74,10 @@ test('an unsupported VitePress build locale is rejected', () => {
   )
 })
 
-test('VitePress keeps internal asset documentation out of the published page graph', async () => {
+test('VitePress keeps internal review and asset documentation out of the published page graph', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vitepress-page-scope-'))
   try {
-    for (const file of ['index.md', 'ko/topic.md', 'en/topic.md', 'assets/diagrams/_parked/README.md']) {
+    for (const file of ['index.md', 'ko/topic.md', 'en/topic.md', 'assets/diagrams/_parked/README.md', 'aws-architecture-review-request.md']) {
       const target = path.join(root, file)
       fs.mkdirSync(path.dirname(target), { recursive: true })
       fs.writeFileSync(target, '# Page')

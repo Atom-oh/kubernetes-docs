@@ -1,8 +1,8 @@
 # 네트워크 기초 Part 1 퀴즈 — 계층 모델과 링크·라우팅
 
-> **마지막 업데이트**: 2026년 8월 28일
+> **마지막 업데이트**: 2026년 9월 11일
 
-링크 계층과 인터넷·라우팅 계층 11개 프로토콜에 대한 이해도를 테스트합니다.
+링크 계층과 인터넷·라우팅 계층 11개 프로토콜과 메커니즘에 대한 이해도를 테스트합니다.
 
 ## 객관식 문제
 
@@ -18,7 +18,7 @@
 **정답: B) 캡슐화 헤더로 인한 실효 MTU 감소와 ICMP 차단(MTU 블랙홀)**
 
 **설명:**
-오버레이/VPN의 캡슐화 헤더는 실효 MTU를 줄입니다. 작은 패킷(핑)은 통과하지만 MTU를 넘는 큰 패킷은 단편화가 필요한데, ICMP Fragmentation Needed(Type 3 Code 4)가 차단되어 있으면 Path MTU Discovery가 동작하지 못해 큰 응답만 조용히 사라집니다.
+캡슐화는 경로에 실을 수 있는 내부 패킷 크기를 줄입니다. DF가 설정된 IPv4 패킷은 라우터가 단편화할 수 없어 전통적 PMTUD에 ICMP Type 3 Code 4가 필요합니다. IPv6 라우터는 단편화하지 않으며 ICMPv6 Packet Too Big(Type 2)를 사용합니다. 이를 차단하면 블랙홀이 생길 수 있지만 PLPMTUD는 ICMP에 의존하지 않고 크기를 탐색할 수 있습니다.
 
 </details>
 
@@ -34,7 +34,7 @@
 **정답: B) 스위치와 이웃 호스트의 MAC 테이블/ARP 캐시를 새 노드로 갱신하기 위해**
 
 **설명:**
-VIP는 그대로인데 그 VIP를 소유한 노드(MAC)가 바뀌었으므로, 새 액티브 노드가 Gratuitous ARP를 브로드캐스트해 주변 장비의 캐시를 갱신합니다. 이 갱신이 지연되면 페일오버 전환이 느려집니다.
+VIP는 그대로지만 소유 노드나 MAC/포트 위치가 바뀝니다. Gratuitous ARP는 이웃에 IP-to-MAC 정보를 알리고 스위치는 새 포트의 source MAC을 학습할 수 있습니다. 같은 가상 MAC을 유지하는 HA 방식도 있습니다. 이 갱신이 지연되면 페일오버 전환이 느려집니다.
 
 </details>
 
@@ -50,7 +50,7 @@ VIP는 그대로인데 그 VIP를 소유한 노드(MAC)가 바뀌었으므로, �
 **정답: C) OSPF는 AS 내부에서 다익스트라로 최단 경로를 계산하고, BGP는 AS 간에 정책 기반으로 경로를 선택한다**
 
 **설명:**
-OSPF는 링크 상태 기반 IGP로, 영역 내 모든 라우터가 동일한 토폴로지에서 최단 경로를 계산합니다. BGP는 경로 벡터 프로토콜로 AS_PATH, Local Preference, MED 같은 속성으로 "정책적으로 원하는 길"을 고릅니다. Direct Connect나 Site-to-Site VPN의 경로 교환도 BGP입니다.
+OSPF는 링크 상태 기반 IGP로, 영역 내 모든 라우터가 동일한 토폴로지에서 최단 경로를 계산합니다. BGP는 경로 벡터 프로토콜로 AS_PATH, Local Preference, MED 같은 속성으로 "정책적으로 원하는 길"을 고릅니다. Direct Connect는 BGP를 사용하며 Site-to-Site VPN은 지원되는 구성에서 BGP 또는 정적 라우팅을 사용합니다. BGP에는 AS 내부의 iBGP 세션도 있습니다.
 
 </details>
 
@@ -66,11 +66,11 @@ OSPF는 링크 상태 기반 IGP로, 영역 내 모든 라우터가 동일한 �
 **정답: B) L3 장비이면서 L4 포트를 변환하고, 종단 간 연결성이라는 전제를 깨뜨리기 때문에**
 
 **설명:**
-NAT(PAT/NAPT)는 IP 주소뿐 아니라 포트까지 변환하며 세션별 매핑 테이블에 의존합니다. 그 결과 P2P 직접 연결이 어려워졌고, WebRTC는 STUN/TURN(ICE)으로 이를 우회합니다. 클라우드에서는 NAT Gateway의 포트 고갈과 데이터 처리 비용이 실무 이슈입니다.
+포트를 변환하는 NAT(PAT/NAPT)는 IP 주소뿐 아니라 포트까지 변환하며 세션별 매핑 테이블에 의존합니다. 그 결과 P2P 직접 연결이 어려워졌고, WebRTC는 STUN/TURN(ICE)으로 이를 우회합니다. 클라우드에서는 NAT Gateway의 포트 고갈과 데이터 처리 비용이 실무 이슈입니다.
 
 </details>
 
-5. 듀얼 스택으로 IPv6를 도입한 조직에서 가장 흔히 생기는 보안 공백은 무엇인가요?
+5. 듀얼 스택으로 IPv6를 도입한 조직에서 확인해야 할 보안 공백은 무엇인가요?
    - A) IPv6는 암호화를 지원하지 않는다
    - B) IPv4 방화벽 규칙만 관리되고 IPv6 경로에 대한 규칙이 누락된다
    - C) IPv6 주소는 스캔이 더 쉽다
@@ -82,10 +82,28 @@ NAT(PAT/NAPT)는 IP 주소뿐 아니라 포트까지 변환하며 세션별 매�
 **정답: B) IPv4 방화벽 규칙만 관리되고 IPv6 경로에 대한 규칙이 누락된다**
 
 **설명:**
-듀얼 스택은 방화벽 규칙과 보안 정책을 두 벌 관리해야 한다는 뜻입니다. IPv6 경로 규칙 누락은 흔한 보안 공백이고, 클라우드에서는 IPv6가 NAT 없이 동작해 "인터넷에서 직접 도달 가능"이 기본값이 되는 점도 함께 주의해야 합니다.
+듀얼 스택은 방화벽 규칙과 보안 정책을 두 벌 관리해야 한다는 뜻입니다. IPv6 규칙 누락은 위험하지만 IPv6 주소만으로 인터넷에서 접근 가능해지는 것은 아닙니다. 라우트, 보안 그룹과 NACL이 적용되며 egress-only internet gateway로 외부의 새 IPv6 연결을 막을 수 있습니다.
 
 </details>
 
 ---
 
 [학습 자료로 돌아가기](../../basics/06-network-fundamentals-part1.md) | [다음 퀴즈: Part 2](./06-network-fundamentals-part2-quiz.md)
+
+## 검증 참고 자료
+
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html
+- https://www.rfc-editor.org/rfc/rfc894
+- https://www.rfc-editor.org/rfc/rfc6691
+- https://www.rfc-editor.org/rfc/rfc4638
+- https://www.rfc-editor.org/rfc/rfc5227
+- https://www.rfc-editor.org/rfc/rfc792
+- https://www.rfc-editor.org/rfc/rfc8899
+- https://www.rfc-editor.org/rfc/rfc2328
+- https://www.rfc-editor.org/rfc/rfc6811
+- https://docs.kernel.org/networking/bridge.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/egress-only-internet-gateway.html
+- https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNRoutingTypes.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-pricing.html

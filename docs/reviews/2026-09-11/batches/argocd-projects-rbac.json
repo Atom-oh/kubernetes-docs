@@ -1,0 +1,142 @@
+[
+  {
+    "path": "ko/gitops/argocd/06-projects-rbac.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review of project scope, RBAC, SSO/token guidance, orphan monitoring and corresponding diagrams against3.5.2; unsafe and misleading examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/rbac.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/app_project_types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/project_role.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/server/application/application.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/orphaned-resources.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/source-integrity-git-gpg.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/microsoft.md"
+    ],
+    "findings": [
+      "Namespaced quota/limitrange incorrectly in clusterblacklist;Podkinddeny falselyclaimsprivilegedPodprotection;defaultscope/Namespaceownershipoverstated",
+      "Defaultrole:readonly leaks crossprojectread,duplicatedbuiltinroles,overbroaddeveloperactions,wrongnamespace-objectinterpretation,wrongrollback/restartactions andoverride/forceexplanation",
+      "24hemergencyallow opensautosync;weekenddenyoverlapextendsMonday;timezoneimplicit",
+      "LegacyGPGsignatureKeysdeprecatedin3.5,oldsharedkeyreplacedwithclearlyfakeorgkeyplaceholderandnewSourceIntegrity;GPGkeys/sourceNamespacesconfused",
+      "SAMLcaDatarequiresbase64ofwholePEM;Azurebranding/groupclaim/overageconfigurationclarified;inlineCSVcommentsbroken",
+      "Wrong--token-id andtokenidrevocationargument;declarativeiatdoesnotissueJWT;magicargocd-tokenSecrettypeinvalid;CIunverifiedlatestCLI/tokenlogin/pruneexamplesreplaced",
+      "UnsafePostSyncmanaged-by!=argocdConfigMapdeletionremoved;orphanmonitoringnotproofresourceisobsolete",
+      "Diagramsconflateapproleswithproject-editpermission,destinationallowlistwithdeploymentfanout,andnamespacefilterwithruntimeisolation;corrected"
+    ],
+    "validation": [
+      "All4source/quizfullyread;40fences29YAML9Bash23fullAppProjectCRD validationspassed",
+      "23projectrolepolicystructurescheckedagainst3.5.2backendconstraints;CIworkflowpassedofficialactionlint1.7.12",
+      "ArgoCD3.5.2CLIarchivehashverifiedagainstpublisherchecksum+assetdigest;42actualofflineRBACcasespassed (crossproject/default/deny/restart/exec),7additionalCSVfragmentsvalidated",
+      "CLIusedexplicitofflinekubeconfig/localpolicyfiles;actualHOMErestoredonlyforCLIinit,norealcredentials/APIcalls. Expectedbuiltinrolewarningrecorded;noSSOlogin/GPGkeyissuance/tokenissuancewasperformed",
+      "3diagramspassed9/9artifactchecksand4viewportlight/darkvisualcheckswithproductionCJKfonts;finalscreenshotsinspected,PNGsregenerated",
+      "110/110repositorytestsafterRBACcheckpointpassed;finalwhole-sitebuildstillpending"
+    ],
+    "reviewedSha256": "ea7a4b8402c65f0ca12686e4ef86e4b29f18d4d3b9ee611fb2643f71e30addaf"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/06-projects-rbac-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review of project scope, RBAC, SSO/token guidance, orphan monitoring and corresponding diagrams against3.5.2; unsafe and misleading examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/rbac.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/app_project_types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/project_role.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/server/application/application.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/orphaned-resources.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/source-integrity-git-gpg.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/microsoft.md"
+    ],
+    "findings": [
+      "Namespaced quota/limitrange incorrectly in clusterblacklist;Podkinddeny falselyclaimsprivilegedPodprotection;defaultscope/Namespaceownershipoverstated",
+      "Defaultrole:readonly leaks crossprojectread,duplicatedbuiltinroles,overbroaddeveloperactions,wrongnamespace-objectinterpretation,wrongrollback/restartactions andoverride/forceexplanation",
+      "24hemergencyallow opensautosync;weekenddenyoverlapextendsMonday;timezoneimplicit",
+      "LegacyGPGsignatureKeysdeprecatedin3.5,oldsharedkeyreplacedwithclearlyfakeorgkeyplaceholderandnewSourceIntegrity;GPGkeys/sourceNamespacesconfused",
+      "SAMLcaDatarequiresbase64ofwholePEM;Azurebranding/groupclaim/overageconfigurationclarified;inlineCSVcommentsbroken",
+      "Wrong--token-id andtokenidrevocationargument;declarativeiatdoesnotissueJWT;magicargocd-tokenSecrettypeinvalid;CIunverifiedlatestCLI/tokenlogin/pruneexamplesreplaced",
+      "UnsafePostSyncmanaged-by!=argocdConfigMapdeletionremoved;orphanmonitoringnotproofresourceisobsolete",
+      "Diagramsconflateapproleswithproject-editpermission,destinationallowlistwithdeploymentfanout,andnamespacefilterwithruntimeisolation;corrected"
+    ],
+    "validation": [
+      "All4source/quizfullyread;40fences29YAML9Bash23fullAppProjectCRD validationspassed",
+      "23projectrolepolicystructurescheckedagainst3.5.2backendconstraints;CIworkflowpassedofficialactionlint1.7.12",
+      "ArgoCD3.5.2CLIarchivehashverifiedagainstpublisherchecksum+assetdigest;42actualofflineRBACcasespassed (crossproject/default/deny/restart/exec),7additionalCSVfragmentsvalidated",
+      "CLIusedexplicitofflinekubeconfig/localpolicyfiles;actualHOMErestoredonlyforCLIinit,norealcredentials/APIcalls. Expectedbuiltinrolewarningrecorded;noSSOlogin/GPGkeyissuance/tokenissuancewasperformed",
+      "3diagramspassed9/9artifactchecksand4viewportlight/darkvisualcheckswithproductionCJKfonts;finalscreenshotsinspected,PNGsregenerated",
+      "110/110repositorytestsafterRBACcheckpointpassed;finalwhole-sitebuildstillpending"
+    ],
+    "reviewedSha256": "ca8da4b0dcb2233a48246d6a2f85e8158bf1a7a565bb66b3099a8b33c48b62ad"
+  },
+  {
+    "path": "en/gitops/argocd/06-projects-rbac.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review of project scope, RBAC, SSO/token guidance, orphan monitoring and corresponding diagrams against3.5.2; unsafe and misleading examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/rbac.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/app_project_types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/project_role.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/server/application/application.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/orphaned-resources.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/source-integrity-git-gpg.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/microsoft.md"
+    ],
+    "findings": [
+      "Namespaced quota/limitrange incorrectly in clusterblacklist;Podkinddeny falselyclaimsprivilegedPodprotection;defaultscope/Namespaceownershipoverstated",
+      "Defaultrole:readonly leaks crossprojectread,duplicatedbuiltinroles,overbroaddeveloperactions,wrongnamespace-objectinterpretation,wrongrollback/restartactions andoverride/forceexplanation",
+      "24hemergencyallow opensautosync;weekenddenyoverlapextendsMonday;timezoneimplicit",
+      "LegacyGPGsignatureKeysdeprecatedin3.5,oldsharedkeyreplacedwithclearlyfakeorgkeyplaceholderandnewSourceIntegrity;GPGkeys/sourceNamespacesconfused",
+      "SAMLcaDatarequiresbase64ofwholePEM;Azurebranding/groupclaim/overageconfigurationclarified;inlineCSVcommentsbroken",
+      "Wrong--token-id andtokenidrevocationargument;declarativeiatdoesnotissueJWT;magicargocd-tokenSecrettypeinvalid;CIunverifiedlatestCLI/tokenlogin/pruneexamplesreplaced",
+      "UnsafePostSyncmanaged-by!=argocdConfigMapdeletionremoved;orphanmonitoringnotproofresourceisobsolete",
+      "Diagramsconflateapproleswithproject-editpermission,destinationallowlistwithdeploymentfanout,andnamespacefilterwithruntimeisolation;corrected"
+    ],
+    "validation": [
+      "All4source/quizfullyread;40fences29YAML9Bash23fullAppProjectCRD validationspassed",
+      "23projectrolepolicystructurescheckedagainst3.5.2backendconstraints;CIworkflowpassedofficialactionlint1.7.12",
+      "ArgoCD3.5.2CLIarchivehashverifiedagainstpublisherchecksum+assetdigest;42actualofflineRBACcasespassed (crossproject/default/deny/restart/exec),7additionalCSVfragmentsvalidated",
+      "CLIusedexplicitofflinekubeconfig/localpolicyfiles;actualHOMErestoredonlyforCLIinit,norealcredentials/APIcalls. Expectedbuiltinrolewarningrecorded;noSSOlogin/GPGkeyissuance/tokenissuancewasperformed",
+      "3diagramspassed9/9artifactchecksand4viewportlight/darkvisualcheckswithproductionCJKfonts;finalscreenshotsinspected,PNGsregenerated",
+      "110/110repositorytestsafterRBACcheckpointpassed;finalwhole-sitebuildstillpending"
+    ],
+    "reviewedSha256": "9a2ef4887aa5c697f73ceb346e6feffda7302ab31f64fd64a5a948ce7addf251"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/06-projects-rbac-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review of project scope, RBAC, SSO/token guidance, orphan monitoring and corresponding diagrams against3.5.2; unsafe and misleading examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/rbac.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/app_project_types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/project_role.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/server/application/application.go",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/orphaned-resources.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/source-integrity-git-gpg.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/user-management/microsoft.md"
+    ],
+    "findings": [
+      "Namespaced quota/limitrange incorrectly in clusterblacklist;Podkinddeny falselyclaimsprivilegedPodprotection;defaultscope/Namespaceownershipoverstated",
+      "Defaultrole:readonly leaks crossprojectread,duplicatedbuiltinroles,overbroaddeveloperactions,wrongnamespace-objectinterpretation,wrongrollback/restartactions andoverride/forceexplanation",
+      "24hemergencyallow opensautosync;weekenddenyoverlapextendsMonday;timezoneimplicit",
+      "LegacyGPGsignatureKeysdeprecatedin3.5,oldsharedkeyreplacedwithclearlyfakeorgkeyplaceholderandnewSourceIntegrity;GPGkeys/sourceNamespacesconfused",
+      "SAMLcaDatarequiresbase64ofwholePEM;Azurebranding/groupclaim/overageconfigurationclarified;inlineCSVcommentsbroken",
+      "Wrong--token-id andtokenidrevocationargument;declarativeiatdoesnotissueJWT;magicargocd-tokenSecrettypeinvalid;CIunverifiedlatestCLI/tokenlogin/pruneexamplesreplaced",
+      "UnsafePostSyncmanaged-by!=argocdConfigMapdeletionremoved;orphanmonitoringnotproofresourceisobsolete",
+      "Diagramsconflateapproleswithproject-editpermission,destinationallowlistwithdeploymentfanout,andnamespacefilterwithruntimeisolation;corrected"
+    ],
+    "validation": [
+      "All4source/quizfullyread;40fences29YAML9Bash23fullAppProjectCRD validationspassed",
+      "23projectrolepolicystructurescheckedagainst3.5.2backendconstraints;CIworkflowpassedofficialactionlint1.7.12",
+      "ArgoCD3.5.2CLIarchivehashverifiedagainstpublisherchecksum+assetdigest;42actualofflineRBACcasespassed (crossproject/default/deny/restart/exec),7additionalCSVfragmentsvalidated",
+      "CLIusedexplicitofflinekubeconfig/localpolicyfiles;actualHOMErestoredonlyforCLIinit,norealcredentials/APIcalls. Expectedbuiltinrolewarningrecorded;noSSOlogin/GPGkeyissuance/tokenissuancewasperformed",
+      "3diagramspassed9/9artifactchecksand4viewportlight/darkvisualcheckswithproductionCJKfonts;finalscreenshotsinspected,PNGsregenerated",
+      "110/110repositorytestsafterRBACcheckpointpassed;finalwhole-sitebuildstillpending"
+    ],
+    "reviewedSha256": "664e6b0a9293ae2723b4549a92e2935e1b58c7ce647f1f3d7e3537fe3cfa26c2"
+  }
+]

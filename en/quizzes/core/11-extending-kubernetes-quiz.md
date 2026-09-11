@@ -98,7 +98,6 @@ metadata:
 spec:
   serviceAccountName: prometheus
   replicas: 2
-  version: v2.35.0
   serviceMonitorSelector:
     matchLabels:
       team: frontend
@@ -112,7 +111,7 @@ With this simple declarative configuration, the Prometheus Operator automaticall
 - Creating and managing configuration files
 - Automatic discovery of service monitoring targets
 - High availability setup
-- Storage management
+- Storage management when a storage/volumeClaimTemplate is configured
 - Upgrade coordination
 
 Other options are not the main purpose of operators:
@@ -167,7 +166,7 @@ webhooks:
     operations: ["CREATE", "UPDATE"]
     resources: ["pods"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -204,7 +203,7 @@ Key characteristics of the Aggregation Layer:
 - Integrates custom API servers into the URL space of the Kubernetes API server.
 - Custom API servers can have their own storage, business logic, API versions, etc.
 - The main API server proxies requests to the appropriate custom API server.
-- Authentication and authorization are handled by the main API server.
+- The main API server authenticates the user; the extension must verify the authenticating proxy and perform delegated authorization (SubjectAccessReview).
 
 Cases where the Aggregation Layer is used:
 - When complex validation logic is needed
@@ -217,23 +216,23 @@ APIService resource example:
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1alpha1.metrics.k8s.io
+  name: v1beta1.metrics.k8s.io
 spec:
   service:
     name: metrics-server
     namespace: kube-system
   group: metrics.k8s.io
-  version: v1alpha1
-  insecureSkipTLSVerify: true
+  version: v1beta1
+  caBundle: <base64-encoded-serving-ca>
   groupPriorityMinimum: 100
   versionPriority: 100
 ```
 
-This configuration routes requests for the `metrics.k8s.io/v1alpha1` API group to the `metrics-server` service in the `kube-system` namespace.
+This configuration routes requests for the `metrics.k8s.io/v1beta1` API group to the `metrics-server` service in the `kube-system` namespace.
 
 Real examples using the Aggregation Layer:
 - metrics-server: Provides node and pod resource usage metrics
-- service-catalog: Integration with external service brokers
+- service-catalog (archived): historical service-broker integration
 - custom-metrics-apiserver: Provides custom metrics for HPA
 
 Issues with other options:
@@ -280,7 +279,7 @@ func (c *Controller) reconcile(key string) error {
     // Get custom resource
     instance, err := c.customResourceLister.CustomResources(namespace).Get(name)
     if errors.IsNotFound(err) {
-        // Resource deleted - perform cleanup
+        // Already deleted. External cleanup must run earlier using a finalizer.
         return nil
     }
     if err != nil {
@@ -293,7 +292,7 @@ func (c *Controller) reconcile(key string) error {
     // Update status
     instanceCopy := instance.DeepCopy()
     instanceCopy.Status.Phase = "Reconciled"
-    _, err = c.customResourceClient.CustomResources(namespace).UpdateStatus(instanceCopy)
+    _, err = c.customResourceClient.CustomResources(namespace).UpdateStatus(context.TODO(), instanceCopy, metav1.UpdateOptions{})
     return err
 }
 ```
@@ -411,11 +410,11 @@ Benefits of enabling the status subresource:
    - This prevents unauthorized modification of status information.
 
 3. **Conflict Prevention**:
-   - Even if a user updates `spec` while a controller updates `status`, no conflict occurs.
-   - This is because the two fields are updated via separate API requests.
+   - Spec and status are separated, but both share resourceVersion, so concurrent writes can still return 409 Conflict.
+   - Read the latest object and retry/reconcile on conflicts.
 
 4. **Scale Subresource Support**:
-   - Enabling the status subresource also allows enabling the scale subresource.
+   - The scale subresource is configured independently, with specReplicasPath, statusReplicasPath and an optional labelSelectorPath.
    - This enables the use of standard Kubernetes scaling tools like HPA (Horizontal Pod Autoscaler).
 
 Example of enabling status subresource in CRD:
@@ -427,23 +426,29 @@ metadata:
 spec:
   group: stable.example.com
   versions:
-    - name: v1
-      served: true
-      storage: true
-      subresources:
-        status: {}  # Enable status subresource
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                # Spec field definitions...
-            status:
-              type: object
-              properties:
-                # Status field definitions...
+  - name: v1
+    served: true
+    storage: true
+    subresources:
+      status: {}
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              cronSpec:
+                type: string
+              image:
+                type: string
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
+              message:
+                type: string
   scope: Namespaced
   names:
     plural: crontabs
@@ -454,13 +459,11 @@ spec:
 Example of status update from controller:
 ```go
 // Update status only
-statusUpdate := &v1alpha1.MyResource{}
-statusUpdate.Name = instance.Name
-statusUpdate.Namespace = instance.Namespace
+statusUpdate := instance.DeepCopy() // Preserve resourceVersion from a current read.
 statusUpdate.Status.Phase = "Running"
 statusUpdate.Status.Message = "Resource is running"
 
-_, err = c.clientset.MyGroup().MyResources(namespace).UpdateStatus(statusUpdate)
+_, err = c.clientset.MyGroup().MyResources(namespace).UpdateStatus(ctx, statusUpdate, metav1.UpdateOptions{})
 ```
 
 Issues with other options:
@@ -495,7 +498,7 @@ Key characteristics of webhook conversion:
 
 3. **Storage Version Independence**:
    - Even if the storage version changes, clients using previous versions can continue to work.
-   - The webhook handles bidirectional conversion between old and new versions.
+   - The webhook handles bidirectional conversion between served versions; changing storage:true does not rewrite existing data. Migrate stored objects before removing old status.storedVersions entries.
 
 Example of conversion webhook configuration in CRD:
 ```yaml
@@ -506,18 +509,58 @@ metadata:
 spec:
   group: stable.example.com
   versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          # v1 schema definition...
-    - name: v1beta1
-      served: true
-      storage: false
-      schema:
-        openAPIV3Schema:
-          # v1beta1 schema definition...
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        required:
+        - spec
+        properties:
+          spec:
+            type: object
+            required:
+            - cronSpec
+            - image
+            properties:
+              cronSpec:
+                type: string
+              image:
+                type: string
+              replicas:
+                type: integer
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
+  - name: v1beta1
+    served: true
+    storage: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        required:
+        - spec
+        properties:
+          spec:
+            type: object
+            required:
+            - cron
+            - image
+            properties:
+              cron:
+                type: string
+              image:
+                type: string
+              replicas:
+                type: integer
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
   conversion:
     strategy: Webhook
     webhook:
@@ -527,7 +570,8 @@ spec:
           name: crd-conversion-webhook
           path: /convert
         caBundle: <base64-encoded-ca-cert>
-      conversionReviewVersions: ["v1", "v1beta1"]
+      conversionReviewVersions:
+      - v1
   scope: Namespaced
   names:
     plural: crontabs
@@ -537,64 +581,62 @@ spec:
 
 Example of conversion webhook server implementation:
 ```go
-func (s *WebhookServer) ServeConvert(w http.ResponseWriter, r *http.Request) {
-    var body []byte
-    if r.Body != nil {
-        if data, err := ioutil.ReadAll(r.Body); err == nil {
-            body = data
+// Include encoding/json, net/http, fmt and the Kubernetes types below in the server.
+// apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+// "k8s.io/apimachinery/pkg/runtime"
+func convertCron(raw []byte, desired string) ([]byte, error) {
+    var obj map[string]interface{}
+    if err := json.Unmarshal(raw, &obj); err != nil { return nil, err }
+    source, _ := obj["apiVersion"].(string)
+    valid := func(v string) bool { return v == "stable.example.com/v1" || v == "stable.example.com/v1beta1" }
+    if !valid(source) || !valid(desired) || obj["kind"] != "CronTab" {
+        return nil, fmt.Errorf("unsupported CronTab conversion %q -> %q", source, desired)
+    }
+    spec, ok := obj["spec"].(map[string]interface{})
+    if !ok { return nil, fmt.Errorf("spec object required") }
+    if source != desired {
+        oldField, newField := "cron", "cronSpec"
+        if desired == "stable.example.com/v1beta1" { oldField, newField = newField, oldField }
+        value, ok := spec[oldField]
+        if !ok { return nil, fmt.Errorf("missing %s", oldField) }
+        if _, collision := spec[newField]; collision { return nil, fmt.Errorf("ambiguous cron fields") }
+        spec[newField] = value
+        delete(spec, oldField)
+    }
+    obj["apiVersion"] = desired
+    // Preserve metadata (including UID/resourceVersion), status and all other fields.
+    return json.Marshal(obj)
+}
+
+func serveConvert(w http.ResponseWriter, r *http.Request) {
+    var review apiextensionsv1.ConversionReview
+    if r.Method != http.MethodPost || r.Body == nil {
+        http.Error(w, "POST body required", http.StatusBadRequest); return
+    }
+    if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<20)).Decode(&review); err != nil ||
+        review.APIVersion != "apiextensions.k8s.io/v1" || review.Kind != "ConversionReview" ||
+        review.Request == nil || review.Request.UID == "" {
+        http.Error(w, "Invalid ConversionReview v1", http.StatusBadRequest); return
+    }
+    response := &apiextensionsv1.ConversionResponse{
+        UID: review.Request.UID, Result: metav1.Status{Status: "Success"},
+    }
+    for _, obj := range review.Request.Objects {
+        raw, err := convertCron(obj.Raw, review.Request.DesiredAPIVersion)
+        if err != nil {
+            response.Result = metav1.Status{Status: "Failure", Message: err.Error()}
+            response.ConvertedObjects = nil
+            break
         }
+        response.ConvertedObjects = append(response.ConvertedObjects, runtime.RawExtension{Raw: raw})
     }
-
-    // Decode ConversionReview request
-    convertReview := v1.ConversionReview{}
-    if err := json.Unmarshal(body, &convertReview); err != nil {
-        // Error handling
-        return
+    out := apiextensionsv1.ConversionReview{
+        TypeMeta: metav1.TypeMeta{APIVersion: "apiextensions.k8s.io/v1", Kind: "ConversionReview"},
+        Response: response,
     }
-
-    // Perform conversion logic
-    if convertReview.Request.DesiredAPIVersion == "stable.example.com/v1" {
-        // v1beta1 -> v1 conversion
-        for i, obj := range convertReview.Request.Objects {
-            v1beta1Obj := &v1beta1.CronTab{}
-            if err := json.Unmarshal(obj.Raw, v1beta1Obj); err != nil {
-                // Error handling
-                return
-            }
-
-            // Conversion logic
-            v1Obj := &v1.CronTab{
-                Spec: v1.CronTabSpec{
-                    CronSpec: v1beta1Obj.Spec.Cron,  // Field name change
-                    Image: v1beta1Obj.Spec.Image,
-                    Replicas: v1beta1Obj.Spec.Replicas,
-                },
-            }
-
-            // Encode converted object
-            raw, err := json.Marshal(v1Obj)
-            if err != nil {
-                // Error handling
-                return
-            }
-
-            convertReview.Response.ConvertedObjects = append(
-                convertReview.Response.ConvertedObjects,
-                runtime.RawExtension{Raw: raw},
-            )
-        }
-    } else {
-        // v1 -> v1beta1 conversion
-        // Similar logic...
-    }
-
-    // Set response
-    convertReview.Response.UID = convertReview.Request.UID
-    convertReview.Response.Result.Status = "Success"
-
-    // Send response
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(convertReview)
+    _ = json.NewEncoder(w).Encode(out)
 }
 ```
 
@@ -689,7 +731,7 @@ The main difference between Custom Resource Definitions (CRD) and Aggregated API
 - **Limited flexibility**:
   - Storage is limited to etcd.
   - Inherits the behavior of the default API server.
-  - Difficult to implement complex validation or conversion logic.
+  - Supports CEL validation and admission/conversion webhooks; custom storage and nonstandard API behavior remain differentiators.
 - **Extension through webhooks**: Some functionality can be extended through validating webhooks, conversion webhooks, etc.
 
 **Characteristics of Aggregated APIs:**
@@ -732,6 +774,8 @@ Issues with other options:
 - Both CRDs and Aggregated APIs support cluster-scoped and namespace-scoped resources (D is incorrect).
 </details>
 
+> The cronSpec regex only checks a restricted five-field shape using numbers, stars and steps. It does not validate ranges, lists, names or all legal time values. Add a real cron parser in the controller/webhook. A CRD alone does not execute scheduled work.
+
 ## Short Answer Questions
 
 1. Explain how to define custom resources using CustomResourceDefinition (CRD) and how to set validation rules for those resources.
@@ -751,23 +795,43 @@ CRD is a mechanism that extends the Kubernetes API to define new resource types.
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: <plural>.<group>  # e.g., crontabs.stable.example.com
+  name: <plural>.<group>
 spec:
-  group: <api-group>      # e.g., stable.example.com
+  group: <api-group>
   names:
-    kind: <kind-name>     # e.g., CronTab
-    plural: <plural-name> # e.g., crontabs
-    singular: <singular-name>  # e.g., crontab
-    shortNames:           # optional
-    - <short-name>        # e.g., ct
-  scope: Namespaced       # or Cluster
+    kind: <kind-name>
+    plural: <plural-name>
+    singular: <singular-name>
+    shortNames:
+    - <short-name>
+  scope: Namespaced
   versions:
-    - name: <version>     # e.g., v1
-      served: true        # whether to serve via API server
-      storage: true       # whether this is the storage version
-      schema:
-        openAPIV3Schema:
-          # schema definition
+  - name: <version>
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        required:
+        - spec
+        properties:
+          spec:
+            type: object
+            required:
+            - cronSpec
+            - image
+            properties:
+              cronSpec:
+                type: string
+              image:
+                type: string
+              replicas:
+                type: integer
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
 ```
 
 **2. Setting Validation Rules:**
@@ -809,7 +873,7 @@ OpenAPI v3 Schema provides various validation features:
 
 - **Data types**: Specify data types using the `type` field
   ```yaml
-  type: string | number | integer | boolean | array | object
+  type: string  # Choose one supported type, not a pipe-separated union.
   ```
 
 - **String constraints**: Validate string length and patterns
@@ -830,7 +894,7 @@ OpenAPI v3 Schema provides various validation features:
   ```yaml
   minItems: 1
   maxItems: 10
-  uniqueItems: true
+  x-kubernetes-list-type: set
   items:
     type: string
   ```
@@ -845,9 +909,10 @@ OpenAPI v3 Schema provides various validation features:
   default: "default-value"
   ```
 
-- **Additional properties**: Control whether additional properties are allowed
+- **Map values**: Define typed map entries; additionalProperties: false is forbidden in CRDs. Unknown fields are normally pruned.
   ```yaml
-  additionalProperties: false
+  additionalProperties:
+    type: string
   ```
 
 **4. Complete CRD Example:**
@@ -954,11 +1019,7 @@ EOF
 ```
 
 This command will return errors like:
-```
-Error from server (Invalid): error when creating "STDIN": admission webhook "validate-crontab.example.com" denied the request:
-- spec.cronSpec: Invalid value: "invalid-cron-spec": does not match pattern '^(\d+|\*)(/\d+)?(\s+(\d+|\*)(/\d+)?){4}$'
-- spec.replicas: Invalid value: 20: must be less than or equal to 10
-```
+The API server rejects invalid cronSpec/replicas through CRD schema validation. No separate admission webhook is installed in this example; exact error wording varies by version.
 
 **7. Best Practices:**
 
@@ -1006,10 +1067,8 @@ The operator pattern is a Kubernetes extension mechanism that encodes applicatio
 [Operator SDK](https://sdk.operatorframework.io/) is part of Red Hat's Operator Framework and is a tool that simplifies operator development.
 
 ```bash
-# Install Operator SDK
-curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.25.0/operator-sdk_linux_amd64
-chmod +x operator-sdk_linux_amd64
-sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk
+: "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
+# Install a supported released SDK/CLI and verify its checksum before scaffolding.
 
 # Create Go-based operator project
 operator-sdk init --domain example.com --repo github.com/example/my-operator
@@ -1021,8 +1080,8 @@ operator-sdk create api --group apps --version v1alpha1 --kind MyApp --resource 
 make manifests
 
 # Build and deploy operator
-make docker-build docker-push
-make deploy
+make docker-build docker-push IMG="$OPERATOR_IMAGE"
+make deploy IMG="$OPERATOR_IMAGE"
 ```
 
 **2. Using Kubebuilder:**
@@ -1030,9 +1089,8 @@ make deploy
 [Kubebuilder](https://book.kubebuilder.io/) is a framework developed by Kubernetes SIG that provides tools for controller development.
 
 ```bash
-# Install Kubebuilder
-curl -L https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH) | tar -xz -C /tmp/
-sudo mv /tmp/kubebuilder_*/bin/kubebuilder /usr/local/bin/
+: "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
+# Install a supported released SDK/CLI and verify its checksum before scaffolding.
 
 # Initialize project
 kubebuilder init --domain example.com --repo github.com/example/my-operator
@@ -1042,7 +1100,7 @@ kubebuilder create api --group apps --version v1alpha1 --kind MyApp
 
 # Create CRD and deploy controller
 make install
-make deploy
+make deploy IMG="$OPERATOR_IMAGE"
 ```
 
 **3. Controller Implementation:**
@@ -1050,99 +1108,51 @@ make deploy
 The core of an operator is the reconciliation function. This function observes the current state of custom resources and performs necessary tasks.
 
 ```go
-// Reconcile function example
+// Uses the scaffold's client.Client and Scheme. Import controllerutil and sort.
 func (r *MyAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := r.Log.WithValues("myapp", req.NamespacedName)
-
-    // Get custom resource
     var myApp appsv1alpha1.MyApp
     if err := r.Get(ctx, req.NamespacedName, &myApp); err != nil {
-        if errors.IsNotFound(err) {
-            // Resource deleted - perform cleanup
-            return ctrl.Result{}, nil
-        }
-        // Error occurred
-        return ctrl.Result{}, err
+        return ctrl.Result{}, client.IgnoreNotFound(err)
     }
-
-    // 1. Check if required resources exist
-    deployment := &appsv1.Deployment{}
-    err := r.Get(ctx, types.NamespacedName{Name: myApp.Name, Namespace: myApp.Namespace}, deployment)
-    if errors.IsNotFound(err) {
-        // Create deployment if it doesn't exist
-        deployment = r.deploymentForMyApp(&myApp)
-        log.Info("Creating a new Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-        if err := r.Create(ctx, deployment); err != nil {
-            log.Error(err, "Failed to create new Deployment")
-            return ctrl.Result{}, err
+    if !myApp.DeletionTimestamp.IsZero() { return ctrl.Result{}, nil }
+    deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: myApp.Name, Namespace: myApp.Namespace}}
+    _, err := controllerutil.CreateOrUpdate(ctx, r.Client, deployment, func() error {
+        if deployment.UID != "" && !metav1.IsControlledBy(deployment, &myApp) {
+            return fmt.Errorf("refusing to modify Deployment owned by another actor")
         }
-        // Deployment creation successful
-        return ctrl.Result{Requeue: true}, nil
-    } else if err != nil {
-        log.Error(err, "Failed to get Deployment")
-        return ctrl.Result{}, err
-    }
-
-    // 2. Check if deployment is in desired state
-    size := myApp.Spec.Size
-    if *deployment.Spec.Replicas != size {
+        labels := map[string]string{"myapp.example.com/owner-uid": string(myApp.UID)}
+        if deployment.Spec.Selector == nil {
+            deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: labels}
+        }
+        if deployment.Spec.Template.Labels == nil { deployment.Spec.Template.Labels = map[string]string{} }
+        deployment.Spec.Template.Labels["myapp.example.com/owner-uid"] = string(myApp.UID)
+        size := myApp.Spec.Size
         deployment.Spec.Replicas = &size
-        if err := r.Update(ctx, deployment); err != nil {
-            log.Error(err, "Failed to update Deployment")
-            return ctrl.Result{}, err
-        }
-        // Deployment update successful
-        return ctrl.Result{Requeue: true}, nil
-    }
-
-    // 3. Update status
+        keys := []string{}
+        for key := range myApp.Spec.Config { keys = append(keys, key) }
+        sort.Strings(keys) // Stable output avoids unnecessary updates.
+        env := []corev1.EnvVar{}
+        for _, key := range keys { env = append(env, corev1.EnvVar{Name: key, Value: myApp.Spec.Config[key]}) }
+        // This operator owns its application container; update image as well as replicas.
+        deployment.Spec.Template.Spec.Containers = []corev1.Container{{
+            Name: "myapp", Image: myApp.Spec.Image, Env: env,
+            Ports: []corev1.ContainerPort{{ContainerPort: 8080, Name: "http"}},
+        }}
+        return ctrl.SetControllerReference(&myApp, deployment, r.Scheme)
+    })
+    if err != nil { return ctrl.Result{}, err }
     if myApp.Status.AvailableReplicas != deployment.Status.AvailableReplicas {
         myApp.Status.AvailableReplicas = deployment.Status.AvailableReplicas
-        if err := r.Status().Update(ctx, &myApp); err != nil {
-            log.Error(err, "Failed to update MyApp status")
-            return ctrl.Result{}, err
-        }
+        if err := r.Status().Update(ctx, &myApp); err != nil { return ctrl.Result{}, err }
     }
-
     return ctrl.Result{}, nil
 }
 
-// Deployment creation function
-func (r *MyAppReconciler) deploymentForMyApp(m *appsv1alpha1.MyApp) *appsv1.Deployment {
-    ls := labelsForMyApp(m.Name)
-    replicas := m.Spec.Size
-
-    dep := &appsv1.Deployment{
-        ObjectMeta: metav1.ObjectMeta{
-            Name:      m.Name,
-            Namespace: m.Namespace,
-        },
-        Spec: appsv1.DeploymentSpec{
-            Replicas: &replicas,
-            Selector: &metav1.LabelSelector{
-                MatchLabels: ls,
-            },
-            Template: corev1.PodTemplateSpec{
-                ObjectMeta: metav1.ObjectMeta{
-                    Labels: ls,
-                },
-                Spec: corev1.PodSpec{
-                    Containers: []corev1.Container{{
-                        Image: m.Spec.Image,
-                        Name:  "myapp",
-                        Ports: []corev1.ContainerPort{{
-                            ContainerPort: 8080,
-                            Name:          "http",
-                        }},
-                    }},
-                },
-            },
-        },
-    }
-
-    // Set owner reference
-    ctrl.SetControllerReference(m, dep, r.Scheme)
-    return dep
+func (r *MyAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
+    return ctrl.NewControllerManagedBy(mgr).
+        For(&appsv1alpha1.MyApp{}).
+        Owns(&appsv1.Deployment{}).
+        Complete(r)
 }
 ```
 
@@ -1277,8 +1287,8 @@ webhooks:
   clientConfig:
     service:
       namespace: webhook-system
-      name: sidecar-injector
-      path: "/inject"
+      name: webhook-server
+      path: "/mutate"
     caBundle: <base64-encoded-ca-cert>
   rules:
   - apiGroups: [""]
@@ -1286,7 +1296,7 @@ webhooks:
     operations: ["CREATE"]
     resources: ["pods"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -1307,14 +1317,14 @@ webhooks:
 3. **Applying Image Policies:**
    - Modifying image registry URLs
    - Converting image tags to digests
-   - Example: Changing `nginx:latest` to `internal-registry.example.com/nginx:v1.19.0`
+   - Example: Changing `nginx:latest` to `internal-registry.example.com/nginx:1.30.4`
 
 4. **Volume Modifications:**
    - Adding default volume mounts
    - Automatic ConfigMap or Secret mounting
-   - Example: Automatic service account token volume mounting for all pods
+   - Example: ServiceAccount admission already injects projected tokens unless automountServiceAccountToken is false; do not override that opt-out
 
-5. **Applying Network Policies:**
+5. **Pod Network Configuration:**
    - Adding default network settings
    - Modifying DNS configuration
    - Example: Applying specific DNS settings to all pods in a specific namespace
@@ -1327,7 +1337,7 @@ Validating webhooks can validate requests coming into the API server and allow o
 - Cannot modify request objects
 - Can only allow or deny requests
 - Multiple validating webhooks run in parallel
-- All webhooks must allow the request for it to be processed
+- Every matching webhook decision must allow; call errors/timeouts follow failurePolicy, so Ignore can allow a request without a response
 
 **Configuration Example:**
 ```yaml
@@ -1340,7 +1350,7 @@ webhooks:
   clientConfig:
     service:
       namespace: webhook-system
-      name: pod-policy-validator
+      name: webhook-server
       path: "/validate"
     caBundle: <base64-encoded-ca-cert>
   rules:
@@ -1349,7 +1359,7 @@ webhooks:
     operations: ["CREATE", "UPDATE"]
     resources: ["pods"]
     scope: "Namespaced"
-  admissionReviewVersions: ["v1", "v1beta1"]
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
 ```
@@ -1395,170 +1405,181 @@ package main
 
 import (
     "encoding/json"
-    "io/ioutil"
+    "log"
     "net/http"
-
+    "os"
+    "time"
     admissionv1 "k8s.io/api/admission/v1"
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/apimachinery/pkg/runtime/serializer"
+    "k8s.io/apimachinery/pkg/api/resource"
 )
 
-var (
-    runtimeScheme = runtime.NewScheme()
-    codecs        = serializer.NewCodecFactory(runtimeScheme)
-    deserializer  = codecs.UniversalDeserializer()
-)
-
-// Mutating webhook handler
-func mutateHandler(w http.ResponseWriter, r *http.Request) {
-    body, err := ioutil.ReadAll(r.Body)
-    if err != nil {
-        http.Error(w, "Failed to read request body", http.StatusBadRequest)
-        return
+func readPodReview(w http.ResponseWriter, r *http.Request) (*admissionv1.AdmissionRequest, *corev1.Pod, bool) {
+    if r.Method != http.MethodPost || r.Body == nil {
+        http.Error(w, "POST body required", http.StatusBadRequest)
+        return nil, nil, false
     }
-
-    // Decode AdmissionReview request
-    admissionReview := admissionv1.AdmissionReview{}
-    if _, _, err := deserializer.Decode(body, nil, &admissionReview); err != nil {
-        http.Error(w, "Failed to decode request", http.StatusBadRequest)
-        return
+    var review admissionv1.AdmissionReview
+    if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2<<20)).Decode(&review); err != nil {
+        http.Error(w, "Invalid AdmissionReview JSON", http.StatusBadRequest)
+        return nil, nil, false
     }
-
-    // Decode pod object
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Failed to decode pod", http.StatusBadRequest)
-        return
+    req := review.Request
+    if review.APIVersion != "admission.k8s.io/v1" || review.Kind != "AdmissionReview" || req == nil || req.UID == "" {
+        http.Error(w, "AdmissionReview v1 request and UID required", http.StatusBadRequest)
+        return nil, nil, false
     }
-
-    // Create patch (add sidecar container)
-    patch := []map[string]interface{}{
-        {
-            "op": "add",
-            "path": "/spec/containers/-",
-            "value": map[string]interface{}{
-                "name": "sidecar",
-                "image": "sidecar-image:latest",
-                "resources": map[string]interface{}{
-                    "limits": map[string]interface{}{
-                        "cpu": "100m",
-                        "memory": "100Mi",
-                    },
-                    "requests": map[string]interface{}{
-                        "cpu": "50m",
-                        "memory": "50Mi",
-                    },
-                },
-            },
-        },
+    if req.Kind.Group != "" || req.Kind.Version != "v1" || req.Kind.Kind != "Pod" ||
+        (req.Operation != admissionv1.Create && req.Operation != admissionv1.Update) {
+        http.Error(w, "Only Pod CREATE/UPDATE is supported", http.StatusBadRequest)
+        return nil, nil, false
     }
-
-    // Convert patch to JSON
-    patchBytes, err := json.Marshal(patch)
-    if err != nil {
-        http.Error(w, "Failed to marshal patch", http.StatusInternalServerError)
-        return
+    var pod corev1.Pod
+    if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
+        http.Error(w, "Invalid Pod JSON", http.StatusBadRequest)
+        return nil, nil, false
     }
-
-    // Create response
-    admissionResponse := admissionv1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: true,
-        Patch:   patchBytes,
-        PatchType: func() *admissionv1.PatchType {
-            pt := admissionv1.PatchTypeJSONPatch
-            return &pt
-        }(),
-    }
-
-    // Send response
-    admissionReview.Response = &admissionResponse
-    resp, err := json.Marshal(admissionReview)
-    if err != nil {
-        http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
-        return
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    return req, &pod, true
 }
 
-// Validating webhook handler
-func validateHandler(w http.ResponseWriter, r *http.Request) {
-    body, err := ioutil.ReadAll(r.Body)
+func writeReview(w http.ResponseWriter, response admissionv1.AdmissionResponse) {
+    review := admissionv1.AdmissionReview{
+        TypeMeta: metav1.TypeMeta{APIVersion: "admission.k8s.io/v1", Kind: "AdmissionReview"},
+        Response: &response,
+    }
+    data, err := json.Marshal(review)
     if err != nil {
-        http.Error(w, "Failed to read request body", http.StatusBadRequest)
+        http.Error(w, "Response encoding failed", http.StatusInternalServerError)
         return
     }
-
-    // Decode AdmissionReview request
-    admissionReview := admissionv1.AdmissionReview{}
-    if _, _, err := deserializer.Decode(body, nil, &admissionReview); err != nil {
-        http.Error(w, "Failed to decode request", http.StatusBadRequest)
-        return
-    }
-
-    // Decode pod object
-    pod := corev1.Pod{}
-    if err := json.Unmarshal(admissionReview.Request.Object.Raw, &pod); err != nil {
-        http.Error(w, "Failed to decode pod", http.StatusBadRequest)
-        return
-    }
-
-    // Validation logic
-    allowed := true
-    var message string
-
-    // Check for privileged containers
-    for _, container := range pod.Spec.Containers {
-        if container.SecurityContext != nil && container.SecurityContext.Privileged != nil && *container.SecurityContext.Privileged {
-            allowed = false
-            message = "Privileged containers are not allowed"
-            break
-        }
-    }
-
-    // Create response
-    admissionResponse := admissionv1.AdmissionResponse{
-        UID:     admissionReview.Request.UID,
-        Allowed: allowed,
-    }
-
-    if !allowed {
-        admissionResponse.Result = &metav1.Status{
-            Message: message,
-            Status:  "Failure",
-            Reason:  metav1.StatusReasonForbidden,
-            Code:    403,
-        }
-    }
-
-    // Send response
-    admissionReview.Response = &admissionResponse
-    resp, err := json.Marshal(admissionReview)
-    if err != nil {
-        http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
-        return
-    }
-
     w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
+    _, _ = w.Write(data)
+}
+
+func writePatch(w http.ResponseWriter, req *admissionv1.AdmissionRequest, patches []map[string]interface{}) {
+    response := admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
+    if len(patches) > 0 {
+        data, err := json.Marshal(patches)
+        if err != nil {
+            http.Error(w, "Patch encoding failed", http.StatusInternalServerError)
+            return
+        }
+        patchType := admissionv1.PatchTypeJSONPatch
+        response.PatchType, response.Patch = &patchType, data
+    }
+    writeReview(w, response)
+}
+
+func deny(w http.ResponseWriter, req *admissionv1.AdmissionRequest, message string) {
+    writeReview(w, admissionv1.AdmissionResponse{
+        UID: req.UID, Allowed: false,
+        Result: &metav1.Status{Status: "Failure", Reason: metav1.StatusReasonForbidden, Code: 403, Message: message},
+    })
+}
+var sidecarImage string
+
+func mutateHandler(w http.ResponseWriter, r *http.Request) {
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    // This example targets explicitly declared Linux Pods on CREATE only.
+    if req.Operation != admissionv1.Create || pod.Spec.OS == nil || pod.Spec.OS.Name != corev1.Linux {
+        writePatch(w, req, nil)
+        return
+    }
+    if sidecarImage == "" {
+        deny(w, req, "Configure a tested SIDE_CAR_IMAGE first")
+        return
+    }
+    changed, foundVolume, foundSidecar := false, false, false
+    for _, volume := range pod.Spec.Volumes {
+        if volume.Name == "shared-data" {
+            if volume.EmptyDir == nil {
+                deny(w, req, "shared-data is reserved for an emptyDir volume")
+                return
+            }
+            foundVolume = true
+        }
+    }
+    if !foundVolume {
+        pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+            Name: "shared-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+        })
+        changed = true
+    }
+    for i := range pod.Spec.Containers {
+        c := &pod.Spec.Containers[i]
+        if c.Name == "monitoring-sidecar" {
+            if c.Image != sidecarImage {
+                deny(w, req, "monitoring-sidecar name is reserved")
+                return
+            }
+            foundSidecar = true
+        }
+        mounted := false
+        for _, mount := range c.VolumeMounts {
+            if mount.MountPath == "/var/monitoring" {
+                if mount.Name != "shared-data" || mount.SubPath != "" || mount.SubPathExpr != "" {
+                    deny(w, req, "/var/monitoring is reserved for shared-data")
+                    return
+                }
+                mounted = true
+            }
+        }
+        if !mounted {
+            c.VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{Name: "shared-data", MountPath: "/var/monitoring"})
+            changed = true
+        }
+    }
+    if !foundSidecar {
+        pod.Spec.Containers = append(pod.Spec.Containers, corev1.Container{
+            Name: "monitoring-sidecar", Image: sidecarImage,
+            VolumeMounts: []corev1.VolumeMount{{Name: "shared-data", MountPath: "/var/monitoring", ReadOnly: true}},
+            Resources: corev1.ResourceRequirements{
+                Requests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("50m"), corev1.ResourceMemory: resource.MustParse("50Mi")},
+                Limits: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("100m"), corev1.ResourceMemory: resource.MustParse("100Mi")},
+            },
+        })
+        changed = true
+    }
+    if !changed { writePatch(w, req, nil); return }
+    // Whole-array add also works when volumes was absent; preserve all existing entries.
+    writePatch(w, req, []map[string]interface{}{
+        {"op": "add", "path": "/spec/volumes", "value": pod.Spec.Volumes},
+        {"op": "add", "path": "/spec/containers", "value": pod.Spec.Containers},
+    })
+}
+
+func validateHandler(w http.ResponseWriter, r *http.Request) {
+    req, pod, ok := readPodReview(w, r)
+    if !ok { return }
+    contexts := []*corev1.SecurityContext{}
+    for _, c := range pod.Spec.Containers { contexts = append(contexts, c.SecurityContext) }
+    for _, c := range pod.Spec.InitContainers { contexts = append(contexts, c.SecurityContext) }
+    for _, c := range pod.Spec.EphemeralContainers { contexts = append(contexts, c.SecurityContext) }
+    for _, sc := range contexts {
+        if sc != nil && sc.Privileged != nil && *sc.Privileged {
+            deny(w, req, "Privileged containers are not allowed")
+            return
+        }
+    }
+    writeReview(w, admissionv1.AdmissionResponse{UID: req.UID, Allowed: true})
 }
 
 func main() {
-    http.HandleFunc("/mutate", mutateHandler)
-    http.HandleFunc("/validate", validateHandler)
-
-    fmt.Println("Starting webhook server on :8443")
-    http.ListenAndServeTLS(":8443", "tls.crt", "tls.key", nil)
+    sidecarImage = os.Getenv("SIDE_CAR_IMAGE")
+    if sidecarImage == "" { log.Fatal("Set SIDE_CAR_IMAGE to a tested Linux image tag/digest") }
+    mux := http.NewServeMux()
+    mux.HandleFunc("/mutate", mutateHandler)
+    mux.HandleFunc("/validate", validateHandler)
+    server := &http.Server{Addr: ":8443", Handler: mux, ReadHeaderTimeout: 5*time.Second}
+    log.Fatal(server.ListenAndServeTLS("/etc/webhook/certs/tls.crt", "/etc/webhook/certs/tls.key"))
 }
 ```
 
 **4. Webhook Deployment and Configuration:**
 
-Webhook servers are typically deployed within the Kubernetes cluster and require a service and TLS certificates.
+Build the complete server above, replace the server/sidecar image placeholders, and create webhook-system plus webhook-server-tls. The serving certificate must cover webhook-server.webhook-system.svc (and any alternate Service name used), and caBundle must contain its signing CA. The sidecar image must support the application’s filesystem permissions. This illustrates a regular sidecar; configure shutdown/native-sidecar behavior separately for Jobs.
 
 ```yaml
 # Webhook server deployment
@@ -1579,7 +1600,10 @@ spec:
     spec:
       containers:
       - name: server
-        image: webhook-server:latest
+        image: example/webhook-server:REPLACE_WITH_TESTED_RELEASE
+        env:
+        - name: SIDE_CAR_IMAGE
+          value: example/monitoring-agent:REPLACE_WITH_TESTED_RELEASE
         ports:
         - containerPort: 8443
         volumeMounts:
@@ -1613,7 +1637,7 @@ spec:
 - **Scope Limitation**: Apply webhooks only to necessary resources and operations.
 - **Testing**: Thoroughly test webhook behavior in various scenarios.
 - **Monitoring**: Monitor webhook server performance and errors.
-- **Version Management**: Support multiple versions of AdmissionReview in preparation for API version changes.
+- **Version Management**: Advertise only AdmissionReview versions actually implemented and return the same version as the request.
 </details>
 
 ## Hands-on Questions
@@ -1736,9 +1760,9 @@ metadata:
   name: my-webapp
   namespace: default
 spec:
-  image: nginx:1.19
+  image: nginx:1.30.4
   replicas: 3
-  port: 8080
+  port: 80
   env:
     - name: ENV_VAR1
       value: "value1"
@@ -1756,7 +1780,7 @@ status:
 </details>
 
 2. Write a Mutating Admission Webhook configuration that meets the following requirements:
-   - Add sidecar container to all pod creation requests
+   - Add a sidecar to CREATE requests for Pods explicitly declaring spec.os.name: linux
    - Apply only to a specific namespace (monitoring)
    - Webhook service: webhook-service.webhook-system.svc
    - Path: /mutate
@@ -1787,8 +1811,11 @@ webhooks:
     scope: "Namespaced"
   namespaceSelector:
     matchLabels:
-      monitoring-injection: enabled
-  admissionReviewVersions: ["v1", "v1beta1"]
+      kubernetes.io/metadata.name: monitoring
+  matchConditions:
+  - name: explicit-linux-pod
+    expression: "has(object.spec.os) && object.spec.os.name == 'linux'"
+  admissionReviewVersions: ["v1"]
   sideEffects: None
   timeoutSeconds: 5
   failurePolicy: Fail
@@ -1799,7 +1826,7 @@ kind: Namespace
 metadata:
   name: monitoring
   labels:
-    monitoring-injection: enabled
+    kubernetes.io/metadata.name: monitoring
 ```
 
 This configuration has the following characteristics:
@@ -1817,8 +1844,8 @@ This configuration has the following characteristics:
    - Scope: `Namespaced`
 
 3. **Namespace Selector**:
-   - Apply only to namespaces with `monitoring-injection: enabled` label
-   - Add this label to the `monitoring` namespace
+   - Apply only to namespaces with `kubernetes.io/metadata.name: monitoring` label
+   - The API server supplies this immutable name label on the monitoring namespace
 
 4. **Additional Settings**:
    - `admissionReviewVersions`: Supported AdmissionReview API versions
@@ -1828,77 +1855,32 @@ This configuration has the following characteristics:
 
 The webhook server should implement logic like this:
 
-```go
-func mutateHandler(w http.ResponseWriter, r *http.Request) {
-    // Decode request
-    body, _ := ioutil.ReadAll(r.Body)
-    admissionReview := admissionv1.AdmissionReview{}
-    deserializer.Decode(body, nil, &admissionReview)
+Use `mutateHandler` and the common request/response helpers from the complete server above. It creates a missing volumes array, preserves existing entries, prevents duplicate injection, and mounts shared-data in both application and sidecar containers. Reserved name/path conflicts are denied.
 
-    // Decode pod object
-    pod := corev1.Pod{}
-    json.Unmarshal(admissionReview.Request.Object.Raw, &pod)
-
-    // Define sidecar container
-    sidecarContainer := corev1.Container{
-        Name:  "monitoring-sidecar",
-        Image: "monitoring-agent:latest",
-        Resources: corev1.ResourceRequirements{
-            Limits: corev1.ResourceList{
-                corev1.ResourceCPU:    resource.MustParse("100m"),
-                corev1.ResourceMemory: resource.MustParse("100Mi"),
-            },
-            Requests: corev1.ResourceList{
-                corev1.ResourceCPU:    resource.MustParse("50m"),
-                corev1.ResourceMemory: resource.MustParse("50Mi"),
-            },
-        },
-        VolumeMounts: []corev1.VolumeMount{
-            {
-                Name:      "shared-data",
-                MountPath: "/var/monitoring",
-            },
-        },
-    }
-
-    // Create patch
-    patch := []map[string]interface{}{
-        {
-            "op":    "add",
-            "path":  "/spec/containers/-",
-            "value": sidecarContainer,
-        },
-        {
-            "op":   "add",
-            "path": "/spec/volumes/-",
-            "value": map[string]interface{}{
-                "name": "shared-data",
-                "emptyDir": map[string]interface{}{},
-            },
-        },
-    }
-
-    // Convert patch to JSON
-    patchBytes, _ := json.Marshal(patch)
-
-    // Create response
-    admissionResponse := admissionv1.AdmissionResponse{
-        UID:       admissionReview.Request.UID,
-        Allowed:   true,
-        Patch:     patchBytes,
-        PatchType: func() *admissionv1.PatchType {
-            pt := admissionv1.PatchTypeJSONPatch
-            return &pt
-        }(),
-    }
-
-    // Send response
-    admissionReview.Response = &admissionResponse
-    resp, _ := json.Marshal(admissionReview)
-    w.Header().Set("Content-Type", "application/json")
-    w.Write(resp)
-}
-```
-
-This webhook automatically adds a monitoring sidecar container to all pods created in the `monitoring` namespace. The sidecar container uses a monitoring agent image and mounts a shared volume to share data with the main container.
+This webhook automatically adds a monitoring sidecar container to Pods declaring `spec.os.name: linux` created in the `monitoring` namespace. The sidecar container uses a monitoring agent image and mounts a shared volume to share data with the main container.
 </details>
+
+> Controller snippets require the generated project types, client and RBAC. They check Deployment ownership, reconcile image/replicas/environment configuration and use an Owns watch for status changes. Clean up external resources with finalizers before deletion. No Kubernetes/AWS deployment was executed during this review.
+
+## Verification References
+
+- https://kubernetes.io/releases/
+- https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+- https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+- https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/
+- https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/scheduler/apis/config/types.go
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/docs/prerequisites.md
+- https://github.com/kubernetes/cloud-provider-aws/blob/master/examples/existing-cluster/base/aws-cloud-controller-manager-daemonset.yaml
+- https://github.com/kubernetes-sigs/kubebuilder/blob/master/README.md
+- https://github.com/operator-framework/operator-sdk/blob/master/README.md
+- https://github.com/NVIDIA/k8s-device-plugin/blob/main/README.md
+- https://github.com/jaegertracing/jaeger-operator/blob/main/README.md
+- https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/
+- https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://github.com/aws-controllers-k8s/community/blob/main/docs/content/docs/user-docs/install.md
+- https://github.com/aws-controllers-k8s/s3-controller/blob/main/helm/values.yaml

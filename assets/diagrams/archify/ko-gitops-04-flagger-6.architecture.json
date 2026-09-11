@@ -7,17 +7,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "entries": {
-        "external": {
-          "label": "Git 선언 상태"
-        },
-        "backend": {
-          "label": "컨트롤러 / 워크로드"
-        },
-        "frontend": {
-          "label": "트래픽 라우팅"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -29,7 +19,7 @@
           "helm-controller",
           "deployment"
         ],
-        "note": "Git의 HelmRelease를 FluxCD가 가져와 Deployment로 적용한다."
+        "note": "Source는 Git/차트를 가져오고 Kustomize는 HelmRelease를 적용한다. Helm controller가 target workload를 갱신한다."
       },
       {
         "id": "progressive-delivery",
@@ -51,7 +41,7 @@
       "id": "helmrelease",
       "type": "external",
       "label": "HelmRelease YAML",
-      "sublabel": "canary values 포함",
+      "sublabel": "Git desired manifest",
       "pos": [
         40,
         250
@@ -64,8 +54,8 @@
     {
       "id": "source-controller",
       "type": "backend",
-      "label": "Source Controller",
-      "sublabel": "HelmRepository 가져오기",
+      "label": "Flux source / kustomize",
+      "sublabel": "Git → HelmRelease 적용",
       "pos": [
         300,
         170
@@ -121,8 +111,8 @@
     {
       "id": "deployment",
       "type": "backend",
-      "label": "Deployment",
-      "sublabel": "Helm 차트로 생성",
+      "label": "Target / Primary",
+      "sublabel": "소유권이 다른 Deployments",
       "pos": [
         560,
         410
@@ -222,7 +212,7 @@
       "id": "source-to-helm",
       "from": "source-controller",
       "to": "helm-controller",
-      "label": "차트 아티팩트",
+      "label": "HelmRelease / chart",
       "variant": "emphasis",
       "labelDy": 24
     },
@@ -230,7 +220,7 @@
       "id": "helm-to-deployment",
       "from": "helm-controller",
       "to": "deployment",
-      "label": "릴리스 적용",
+      "label": "target spec",
       "variant": "emphasis"
     },
     {
@@ -244,7 +234,7 @@
       "id": "flagger-to-deployment",
       "from": "flagger",
       "to": "deployment",
-      "label": "primary 복제 · 제어",
+      "label": "primary · scale 관리",
       "labelDy": 24
     },
     {
@@ -267,18 +257,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Flux가 관리",
+      "title": "Flux / Helm",
       "items": [
-        "Flagger 자체도 flagger-system 네임스페이스에 HelmRelease로 설치",
-        "애플리케이션 HelmRelease가 Deployment를 생성·갱신"
+        "별도 HelmRelease로 Flagger를 설치",
+        "target template 관리; 생성 Service와 replicas를 덮어쓰지 않음"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Flagger가 관리",
+      "title": "Flagger",
       "items": [
-        "Canary CRD가 대상 Deployment와 분석 조건을 지정",
-        "Primary/Canary Service와 메시(meshProvider: istio) 라우팅 조정"
+        "workload 변경과 Canary 객체를 관찰",
+        "primary·Service·routing 및 분석을 관리"
       ]
     }
   ]

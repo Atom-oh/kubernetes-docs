@@ -1,0 +1,38 @@
+[
+  {
+    "path": "jp/core/02-pods-and-workloads.md",
+    "from": "7e03b7c5c89863e4cd4c7143d64e7da770a5b991^",
+    "reason": "Restore the existing Japanese document deleted by failed translation sync; do not invent a new translation.",
+    "bytes": 47440
+  },
+  {
+    "path": "cn/eks/12-kubernetes-version-roadmap.md",
+    "from": "a454b7e0ca3bf3cb8735b5f030ab3d6778b577aa^",
+    "reason": "Restore document removed by translation synchronization",
+    "bytes": 111686
+  },
+  {
+    "path": "cn/ops/06-scaling-strategies.md",
+    "from": "a454b7e0ca3bf3cb8735b5f030ab3d6778b577aa^",
+    "reason": "Restore document removed by translation synchronization",
+    "bytes": 68952
+  },
+  {
+    "path": "es/eks/12-kubernetes-version-roadmap.md",
+    "from": "a454b7e0ca3bf3cb8735b5f030ab3d6778b577aa^",
+    "reason": "Restore document removed by translation synchronization",
+    "bytes": 122028
+  },
+  {
+    "path": "jp/eks/12-kubernetes-version-roadmap.md",
+    "from": "a454b7e0ca3bf3cb8735b5f030ab3d6778b577aa^",
+    "reason": "Restore document removed by translation synchronization",
+    "bytes": 119847
+  },
+  {
+    "path": "jp/ops/07-observability-alerts.md",
+    "from": "f15d2de57ee7b930464fcc45e1cabfdf7e52b696^",
+    "reason": "Restore document removed by translation synchronization",
+    "bytes": 51687
+  }
+]

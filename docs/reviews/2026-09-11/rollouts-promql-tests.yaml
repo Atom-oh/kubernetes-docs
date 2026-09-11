@@ -1,0 +1,445 @@
+rule_files: []
+evaluation_interval: 1m
+tests:
+- name: en/success-rate/success-rate/healthy
+  interval: 1m
+  input_series:
+  - &id001
+    series: http_requests_total{service="test",namespace="test",rollouts_pod_template_hash="canary",status="200"}
+    values: 0+60x10
+  - &id002
+    series: http_requests_total{service="baseline",namespace="test",rollouts_pod_template_hash="baseline",status="200"}
+    values: 0+60x10
+  - &id003
+    series: http_request_duration_seconds_bucket{service="test",namespace="test",le="0.05"}
+    values: 0+0x10
+  - &id004
+    series: http_request_duration_seconds_bucket{service="test",namespace="test",le="0.1"}
+    values: 0+60x10
+  - &id005
+    series: http_request_duration_seconds_bucket{service="test",namespace="test",le="+Inf"}
+    values: 0+60x10
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n\
+      \  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: en/success-rate/success-rate/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n\
+      \  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples: []
+- name: en/success-rate/success-rate/all-canary-5xx
+  interval: 1m
+  input_series: &id006
+  - series: http_requests_total{service="test",namespace="test",rollouts_pod_template_hash="canary",status="500"}
+    values: 0+60x10
+  - series: http_requests_total{service="baseline",namespace="test",rollouts_pod_template_hash="baseline",status="200"}
+    values: 0+60x10
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n\
+      \  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: en/success-rate/success-rate/zero-traffic-is-nan
+  interval: 1m
+  input_series: &id007
+  - series: http_requests_total{service="test",namespace="test",rollouts_pod_template_hash="canary",status="200"}
+    values: 0+0x10
+  - series: http_requests_total{service="baseline",namespace="test",rollouts_pod_template_hash="baseline",status="200"}
+    values: 0+0x10
+  promql_expr_test:
+  - expr: "((sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n)) or vector(0)) /\n\
+      sum(rate(\n  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n) == bool ((sum(rate(\n  http_requests_total{\n\
+      \    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n  http_requests_total{\n    service=\"\
+      test\"\n  }[5m]\n))\n)"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: ko/error-rate/error-rate/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"5..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n\
+      \  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: ko/error-rate/error-rate/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"5..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n\
+      \  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples: []
+- name: ko/error-rate/error-rate/all-canary-5xx
+  interval: 1m
+  input_series: *id006
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"5..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n\
+      \  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: ko/error-rate/error-rate/zero-traffic-is-nan
+  interval: 1m
+  input_series: *id007
+  promql_expr_test:
+  - expr: "((sum(rate(\n  http_requests_total{\n    service=\"test\",\n    status=~\"5..\"\n  }[5m]\n)) or vector(0)) /\n\
+      sum(rate(\n  http_requests_total{\n    service=\"test\"\n  }[5m]\n))\n) == bool ((sum(rate(\n  http_requests_total{\n\
+      \    service=\"test\",\n    status=~\"5..\"\n  }[5m]\n)) or vector(0)) /\nsum(rate(\n  http_requests_total{\n    service=\"\
+      test\"\n  }[5m]\n))\n)"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: ko/latency-p99/latency-p99/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: "histogram_quantile(0.99,\n  sum(rate(\n    http_request_duration_seconds_bucket{\n      service=\"test\"\n    }[5m]\n\
+      \  )) by (le)\n) * 1000\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 99.5
+- name: ko/latency-p99/latency-p99/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: "histogram_quantile(0.99,\n  sum(rate(\n    http_request_duration_seconds_bucket{\n      service=\"test\"\n    }[5m]\n\
+      \  )) by (le)\n) * 1000\n"
+    eval_time: 5m
+    exp_samples: []
+- name: ko/comprehensive-analysis/success-rate/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: '(sum(rate(http_requests_total{service="test",status=~"2.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      '
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: ko/comprehensive-analysis/success-rate/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: '(sum(rate(http_requests_total{service="test",status=~"2.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      '
+    eval_time: 5m
+    exp_samples: []
+- name: ko/comprehensive-analysis/success-rate/all-canary-5xx
+  interval: 1m
+  input_series: *id006
+  promql_expr_test:
+  - expr: '(sum(rate(http_requests_total{service="test",status=~"2.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      '
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: ko/comprehensive-analysis/success-rate/zero-traffic-is-nan
+  interval: 1m
+  input_series: *id007
+  promql_expr_test:
+  - expr: '((sum(rate(http_requests_total{service="test",status=~"2.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      ) == bool ((sum(rate(http_requests_total{service="test",status=~"2.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      )'
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: ko/comprehensive-analysis/error-rate/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: '(sum(rate(http_requests_total{service="test",status=~"5.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      '
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: ko/comprehensive-analysis/error-rate/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: '(sum(rate(http_requests_total{service="test",status=~"5.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      '
+    eval_time: 5m
+    exp_samples: []
+- name: ko/comprehensive-analysis/error-rate/all-canary-5xx
+  interval: 1m
+  input_series: *id006
+  promql_expr_test:
+  - expr: '(sum(rate(http_requests_total{service="test",status=~"5.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      '
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: ko/comprehensive-analysis/error-rate/zero-traffic-is-nan
+  interval: 1m
+  input_series: *id007
+  promql_expr_test:
+  - expr: '((sum(rate(http_requests_total{service="test",status=~"5.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      ) == bool ((sum(rate(http_requests_total{service="test",status=~"5.."}[5m])) or vector(0)) /
+
+      sum(rate(http_requests_total{service="test"}[5m]))
+
+      )'
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: ko/comprehensive-analysis/latency-p99/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="test"}[5m])) by (le)) * 1000
+
+      '
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 99.5
+- name: ko/comprehensive-analysis/latency-p99/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service="test"}[5m])) by (le)) * 1000
+
+      '
+    eval_time: 5m
+    exp_samples: []
+- name: en/compare-analysis/canary-error-rate-increase/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: "(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n-\n(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"\
+      baseline\",status=~\"5..\"}[5m]))\n  or vector(0)\n) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"baseline\"\
+      }[5m]))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: en/compare-analysis/canary-error-rate-increase/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: "(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n-\n(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"\
+      baseline\",status=~\"5..\"}[5m]))\n  or vector(0)\n) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"baseline\"\
+      }[5m]))\n"
+    eval_time: 5m
+    exp_samples: []
+- name: en/compare-analysis/canary-error-rate-increase/all-canary-5xx
+  interval: 1m
+  input_series: *id006
+  promql_expr_test:
+  - expr: "(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n-\n(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"\
+      baseline\",status=~\"5..\"}[5m]))\n  or vector(0)\n) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"baseline\"\
+      }[5m]))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: en/compare-analysis/canary-error-rate-increase/zero-traffic-is-nan
+  interval: 1m
+  input_series: *id007
+  promql_expr_test:
+  - expr: "((\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n-\n(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"\
+      baseline\",status=~\"5..\"}[5m]))\n  or vector(0)\n) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"baseline\"\
+      }[5m]))\n) == bool ((\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n\
+      \  or vector(0)\n) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n-\n(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"\
+      baseline\",status=~\"5..\"}[5m]))\n  or vector(0)\n) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"baseline\"\
+      }[5m]))\n)"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: en/compare-analysis/canary-absolute-error-rate/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: "(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: en/compare-analysis/canary-absolute-error-rate/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: "(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n"
+    eval_time: 5m
+    exp_samples: []
+- name: en/compare-analysis/canary-absolute-error-rate/all-canary-5xx
+  interval: 1m
+  input_series: *id006
+  promql_expr_test:
+  - expr: "(\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: en/compare-analysis/canary-absolute-error-rate/zero-traffic-is-nan
+  interval: 1m
+  input_series: *id007
+  promql_expr_test:
+  - expr: "((\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n\
+      ) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"}[5m]))\n) == bool ((\n  sum(rate(http_requests_total{rollouts_pod_template_hash=\"\
+      canary\",status=~\"5..\"}[5m]))\n  or vector(0)\n) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"canary\"\
+      }[5m]))\n)"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: en/latency-check/p99-latency/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: "histogram_quantile(0.99,\n  sum(rate(\n    http_request_duration_seconds_bucket{\n      service=\"test\"\n    }[5m]\n\
+      \  )) by (le)\n) * 1000\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 99.5
+- name: en/latency-check/p99-latency/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: "histogram_quantile(0.99,\n  sum(rate(\n    http_request_duration_seconds_bucket{\n      service=\"test\"\n    }[5m]\n\
+      \  )) by (le)\n) * 1000\n"
+    eval_time: 5m
+    exp_samples: []
+- name: en/global-success-rate/success-rate/healthy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n\
+      )) or vector(0)) /\nsum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: en/global-success-rate/success-rate/missing
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n\
+      )) or vector(0)) /\nsum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples: []
+- name: en/global-success-rate/success-rate/all-canary-5xx
+  interval: 1m
+  input_series: *id006
+  promql_expr_test:
+  - expr: "(sum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n\
+      )) or vector(0)) /\nsum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\"\n  }[5m]\n))\n"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0
+- name: en/global-success-rate/success-rate/zero-traffic-is-nan
+  interval: 1m
+  input_series: *id007
+  promql_expr_test:
+  - expr: "((sum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\",\n    status=~\"2..\"\n  }[5m]\n\
+      )) or vector(0)) /\nsum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\"\n  }[5m]\n))\n\
+      ) == bool ((sum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\",\n    status=~\"2..\"\n\
+      \  }[5m]\n)) or vector(0)) /\nsum(rate(\n  http_requests_total{\n    namespace=\"test\",\n    service=\"test\"\n  }[5m]\n\
+      ))\n)"
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 0

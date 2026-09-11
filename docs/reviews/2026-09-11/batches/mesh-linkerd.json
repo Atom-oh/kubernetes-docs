@@ -1,0 +1,326 @@
+[
+  {
+    "path": "en/service-mesh/linkerd/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Read all 216 original lines; corrected release tracks, performance/security claims, current routing/VM support, quick-start prerequisites and quiz links.",
+    "sources": [
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1",
+      "https://linkerd.io/releases/",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1",
+      "https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/",
+      "https://linkerd.io/docs/overview/",
+      "https://linkerd.io/docs/tasks/install/",
+      "https://linkerd.io/docs/features/gateway-api/",
+      "https://linkerd.io/docs/features/request-routing/",
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/protocol-detection/",
+      "https://www.cncf.io/projects/linkerd/",
+      "https://github.com/linkerd/linkerd2",
+      "https://slack.linkerd.io/",
+      "https://buoyant.io/blog",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.7.1",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.8.2",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.8.4",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1"
+    ],
+    "findings": [
+      "Preserved verified August release history. Corrected edge-26.7.1 to the GitHub published date July 21, 2026 (original said July 16), with the undefined-Service-port fix and Gateway API check. Added pinned public edge-26.9.1 context without treating it as a stable distribution version or compatibility guarantee.",
+      "Removed unsupported universal 10MB/<1ms and product complexity/performance rankings. Replaced the redundant figure, whose footer repeated those values, with an accurate component-role table. Both figures were visually reviewed; assets remain unchanged for parent-owned regeneration/source-sync.",
+      "Corrected Istio auto-mTLS/ambient comparison and Cilium authentication-vs-encryption boundaries. Linkerd routing includes Gateway API request properties; SMI is a legacy workflow, while ServiceProfiles remain supported.",
+      "Corrected categorical VM-unsuitable guidance: official mesh expansion supports ExternalWorkload with a separate external identity/bootstrap/network design. Distinguished non-HTTP TCP, opaque and bypassed ports from HTTP-level capabilities.",
+      "Scoped automatic mTLS to eligible meshed TCP peers; default inbound policy accepts unmeshed plaintext. Workload leaf validity/automatic renewal is separate from default one-year issuer/trust-anchor rotation and multicluster shared trust.",
+      "Added exact CLI/distribution and Gateway API prerequisites, render/review stages and CA lifecycle. Replaced namespace-wide live-Deployment round-tripping with intended-workload injection/restart. check --proxy is a data-plane check, not the control plane; Viz requires its own configured extension/backend.",
+      "Replaced the missing own-GitHub quiz README URL with six existing relative quiz paths. Replaced the obsolete /2/overview reference with /docs/overview. No live cluster/AWS operations or destructive sample execution."
+    ],
+    "validation": [
+      "Full original Markdown including three release-note paragraphs, commands, comparison table, diagram and references read in each language.",
+      "Official GitHub release timestamps/bodies and current Linkerd install/mTLS/routing/GatewayAPI/mesh-expansion/protocol/release pages checked.",
+      "Native edge-26.9.1 version plus five command help checks; prior pinned CRD/core offline renders inspected (10/42 resources), fresh offline Viz render parsed (52 resources). Evidence /tmp/mesh-linkerd-validation/readme-render-report.json.",
+      "Both local PNGs visually inspected. Two-document batch: 10 Bash blocks, all relative/own-main/known404 links and fence checks passed; scoped git diff --check clean."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/linkerd/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Read all 216 original lines; corrected release tracks, performance/security claims, current routing/VM support, quick-start prerequisites and quiz links.",
+    "sources": [
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1",
+      "https://linkerd.io/releases/",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1",
+      "https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/",
+      "https://linkerd.io/docs/overview/",
+      "https://linkerd.io/docs/tasks/install/",
+      "https://linkerd.io/docs/features/gateway-api/",
+      "https://linkerd.io/docs/features/request-routing/",
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/protocol-detection/",
+      "https://www.cncf.io/projects/linkerd/",
+      "https://github.com/linkerd/linkerd2",
+      "https://slack.linkerd.io/",
+      "https://buoyant.io/blog",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.7.1",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.8.2",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.8.4",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1"
+    ],
+    "findings": [
+      "Preserved verified August release history. Corrected edge-26.7.1 to the GitHub published date July 21, 2026 (original said July 16), with the undefined-Service-port fix and Gateway API check. Added pinned public edge-26.9.1 context without treating it as a stable distribution version or compatibility guarantee.",
+      "Removed unsupported universal 10MB/<1ms and product complexity/performance rankings. Replaced the redundant figure, whose footer repeated those values, with an accurate component-role table. Both figures were visually reviewed; assets remain unchanged for parent-owned regeneration/source-sync.",
+      "Corrected Istio auto-mTLS/ambient comparison and Cilium authentication-vs-encryption boundaries. Linkerd routing includes Gateway API request properties; SMI is a legacy workflow, while ServiceProfiles remain supported.",
+      "Corrected categorical VM-unsuitable guidance: official mesh expansion supports ExternalWorkload with a separate external identity/bootstrap/network design. Distinguished non-HTTP TCP, opaque and bypassed ports from HTTP-level capabilities.",
+      "Scoped automatic mTLS to eligible meshed TCP peers; default inbound policy accepts unmeshed plaintext. Workload leaf validity/automatic renewal is separate from default one-year issuer/trust-anchor rotation and multicluster shared trust.",
+      "Added exact CLI/distribution and Gateway API prerequisites, render/review stages and CA lifecycle. Replaced namespace-wide live-Deployment round-tripping with intended-workload injection/restart. check --proxy is a data-plane check, not the control plane; Viz requires its own configured extension/backend.",
+      "Replaced the missing own-GitHub quiz README URL with six existing relative quiz paths. Replaced the obsolete /2/overview reference with /docs/overview. No live cluster/AWS operations or destructive sample execution."
+    ],
+    "validation": [
+      "Full original Markdown including three release-note paragraphs, commands, comparison table, diagram and references read in each language.",
+      "Official GitHub release timestamps/bodies and current Linkerd install/mTLS/routing/GatewayAPI/mesh-expansion/protocol/release pages checked.",
+      "Native edge-26.9.1 version plus five command help checks; prior pinned CRD/core offline renders inspected (10/42 resources), fresh offline Viz render parsed (52 resources). Evidence /tmp/mesh-linkerd-validation/readme-render-report.json.",
+      "Both local PNGs visually inspected. Two-document batch: 10 Bash blocks, all relative/own-main/known404 links and fence checks passed; scoped git diff --check clean."
+    ]
+  },
+  {
+    "path": "en/service-mesh/linkerd/01-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full installation guide audited and corrected using pinned source/archive/CLI evidence, including HA, PKI, CNI, Viz, EKS, upgrade and removal.",
+    "sources": [
+      "https://smallstep.com/docs/step-cli/installation/",
+      "https://linkerd.io/docs/features/distributed-tracing/",
+      "https://linkerd.io/releases/",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1",
+      "https://linkerd.io/docs/reference/k8s-versions/",
+      "https://linkerd.io/docs/features/gateway-api/",
+      "https://linkerd.io/docs/tasks/install-helm/",
+      "https://helm.linkerd.io/edge/index.yaml",
+      "https://linkerd.io/docs/features/ha/",
+      "https://linkerd.io/docs/reference/cluster-configuration/",
+      "https://linkerd.io/docs/tasks/generate-certificates/",
+      "https://smallstep.com/docs/step-cli/reference/certificate/create/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/tasks/upgrade/",
+      "https://linkerd.io/docs/tasks/uninstall/",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://run.linkerd.io/install-edge",
+      "https://run.linkerd.io/install",
+      "https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.9.1/pkg/k8s/api.go",
+      "https://helm.linkerd.io/edge/linkerd-control-plane-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd-viz-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd-multicluster-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd2-cni-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd-crds-2026.9.1.tgz",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1"
+    ],
+    "findings": [
+      "Read all1031original lines. Replaced unsupported2.16+ and incorrect plus-only Kubernetes table with documented milestone ranges and released edge minimum1.31/tested1.36 distinction; GatewayAPI1.5.1 prerequisite is explicit and passing preflight is not upper-bound compatibility proof.",
+      "Pinned public CLIedge-26.9.1 and charts2026.9.1 separately. Correct OS asset names and official SHA256 verification cover Linux/macOS and Windows windows.exe; deprecated installer defaults edge and uses LINKERD2_VERSION, not --version. Avoided persistent shell-profile edits and unsupported stable artifact assumptions.",
+      "Kept valid root controller resource keys and Viz dashboard keys after checking archive templates; base-values absence was not treated as proof of unsupported fields. Corrected proxy.logLevel/logFormat and removed ignored namespace.labels. Actual log output adds header/request suppression rules.",
+      "Replaced incorrect hand-built HA settings with packaged values-ha.yaml. Original render had3replicas but noPDB and missing main controller resources; fixed renders have3PDBs, node-required/zone-preferred anti-affinity and Fail injector policy. HA is redundancy, not quorum or an unconditional availability guarantee.",
+      "Corrected Viz persistence map semantics and required accessMode:ReadWriteOnce; original rendered null. Kept valid web port8084 and documented separate admin/readiness9994. Removed fictitious grafana.enabled deployment switch and authentication interpretation of enforcedHostRegexp. Added external-Prometheus alternative and single-replica/Recreate/storage prerequisites.",
+      "Removed unavailable linkerd jaeger and viz upgrade commands. CLIhelp exit0 alone is insufficient because unsupported viz upgrade --help prints parent help. Current tracing needs separate collector/backend and context propagation; legacy Jaeger data/resources need migration and original-owner cleanup.",
+      "CNI must be ready before CNI-enabled control-plane install. Added native/regular inspection and the released Identity bootstrap exception, which deliberately disables native proxy/startup wait. Clarified primary-CNI chaining, Cilium settings and Fargate DaemonSet restriction.",
+      "Removed obsolete EKS1.28 creation and unnecessary destination IAM role. Replaced unauthenticated public Viz ALB recipe with localhost administration and explicit authenticated-ingress requirements. Corrected internal NLB controller class/annotations, TCP transport and unconsumed gateway.resources.",
+      "Upgrade planning preserves owner, trust credentials, intentional values and supported intermediate/skew paths. Extensions rerender install rather than nonexistent upgrade commands. Data-plane version inspection now checks actual images in both container lists.",
+      "Fixed trust-root lookup from ConfigMap, default-vs-external issuer cert keys and all-certificate bundle inspection. Removal now unmeshes applications first, inventories custom resources/namespace ownership, and treats CNI cleanup separately. No destructive command executed.",
+      "Scope limits: Smallstep generation, PowerShell/other-architecture execution, live EKS/CNI, persistent-volume behavior and end-to-end tracing/metrics were not tested. The bundled chart actually defaults to Prometheusv2.55.1/6h; no blind latest-tag compatibility claim. No images in this guide."
+    ],
+    "validation": [
+      "All1031original lines perlocale read, including installation, upgrade and uninstall examples. Original snapshots /tmp/mesh-linkerd-install-original-{en,ko}.md.",
+      "Five chart archives matched official index SHA256; native Linuxarm64 CLI matched release digest/version. Other platform asset metadata verified; no unsupported runtime-testing claim.",
+      "14 offline Helm render cases passed: base/HA/CNI/Viz-persistence/external-Viz/multicluster for each locale, plus CNI and CRD charts. Checked actual requests, log selectors, proxy placement,3PDBs, affinity, PVC, endpoint URL and NLB class/ports. Evidence /tmp/mesh-linkerd-validation/installation-final-report.json.",
+      "Original negative characterization retained: HA lackedPDB/resources; Viz PVC accessMode null. Initial validation expectations were corrected to account for documented Identity regular-sidecar bootstrap and chart-added log suppression, not by altering valid product behavior.",
+      "26Bash blocks perlocale parsed; two actual jq regular/native proxy cases passed. EN/KO Bash/YAML/PowerShell examples identical. Smallstep flags checked against official reference; PowerShell and crypto generation not executed.",
+      "Current6-page Linkerd batch:8YAMLblocks/62Bashblocks, links/fences/duplicatekeys/known404checks0errors. Scopedgitdiffcheckclean. Clean docs:test110/110passed; log /tmp/kubernetes-docs-full-review/docs-test-linkerd-install-clean.log."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/linkerd/01-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full installation guide audited and corrected using pinned source/archive/CLI evidence, including HA, PKI, CNI, Viz, EKS, upgrade and removal.",
+    "sources": [
+      "https://smallstep.com/docs/step-cli/installation/",
+      "https://linkerd.io/docs/features/distributed-tracing/",
+      "https://linkerd.io/releases/",
+      "https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1",
+      "https://linkerd.io/docs/reference/k8s-versions/",
+      "https://linkerd.io/docs/features/gateway-api/",
+      "https://linkerd.io/docs/tasks/install-helm/",
+      "https://helm.linkerd.io/edge/index.yaml",
+      "https://linkerd.io/docs/features/ha/",
+      "https://linkerd.io/docs/reference/cluster-configuration/",
+      "https://linkerd.io/docs/tasks/generate-certificates/",
+      "https://smallstep.com/docs/step-cli/reference/certificate/create/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/tasks/upgrade/",
+      "https://linkerd.io/docs/tasks/uninstall/",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://run.linkerd.io/install-edge",
+      "https://run.linkerd.io/install",
+      "https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.9.1/pkg/k8s/api.go",
+      "https://helm.linkerd.io/edge/linkerd-control-plane-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd-viz-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd-multicluster-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd2-cni-2026.9.1.tgz",
+      "https://helm.linkerd.io/edge/linkerd-crds-2026.9.1.tgz",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1"
+    ],
+    "findings": [
+      "Read all1031original lines. Replaced unsupported2.16+ and incorrect plus-only Kubernetes table with documented milestone ranges and released edge minimum1.31/tested1.36 distinction; GatewayAPI1.5.1 prerequisite is explicit and passing preflight is not upper-bound compatibility proof.",
+      "Pinned public CLIedge-26.9.1 and charts2026.9.1 separately. Correct OS asset names and official SHA256 verification cover Linux/macOS and Windows windows.exe; deprecated installer defaults edge and uses LINKERD2_VERSION, not --version. Avoided persistent shell-profile edits and unsupported stable artifact assumptions.",
+      "Kept valid root controller resource keys and Viz dashboard keys after checking archive templates; base-values absence was not treated as proof of unsupported fields. Corrected proxy.logLevel/logFormat and removed ignored namespace.labels. Actual log output adds header/request suppression rules.",
+      "Replaced incorrect hand-built HA settings with packaged values-ha.yaml. Original render had3replicas but noPDB and missing main controller resources; fixed renders have3PDBs, node-required/zone-preferred anti-affinity and Fail injector policy. HA is redundancy, not quorum or an unconditional availability guarantee.",
+      "Corrected Viz persistence map semantics and required accessMode:ReadWriteOnce; original rendered null. Kept valid web port8084 and documented separate admin/readiness9994. Removed fictitious grafana.enabled deployment switch and authentication interpretation of enforcedHostRegexp. Added external-Prometheus alternative and single-replica/Recreate/storage prerequisites.",
+      "Removed unavailable linkerd jaeger and viz upgrade commands. CLIhelp exit0 alone is insufficient because unsupported viz upgrade --help prints parent help. Current tracing needs separate collector/backend and context propagation; legacy Jaeger data/resources need migration and original-owner cleanup.",
+      "CNI must be ready before CNI-enabled control-plane install. Added native/regular inspection and the released Identity bootstrap exception, which deliberately disables native proxy/startup wait. Clarified primary-CNI chaining, Cilium settings and Fargate DaemonSet restriction.",
+      "Removed obsolete EKS1.28 creation and unnecessary destination IAM role. Replaced unauthenticated public Viz ALB recipe with localhost administration and explicit authenticated-ingress requirements. Corrected internal NLB controller class/annotations, TCP transport and unconsumed gateway.resources.",
+      "Upgrade planning preserves owner, trust credentials, intentional values and supported intermediate/skew paths. Extensions rerender install rather than nonexistent upgrade commands. Data-plane version inspection now checks actual images in both container lists.",
+      "Fixed trust-root lookup from ConfigMap, default-vs-external issuer cert keys and all-certificate bundle inspection. Removal now unmeshes applications first, inventories custom resources/namespace ownership, and treats CNI cleanup separately. No destructive command executed.",
+      "Scope limits: Smallstep generation, PowerShell/other-architecture execution, live EKS/CNI, persistent-volume behavior and end-to-end tracing/metrics were not tested. The bundled chart actually defaults to Prometheusv2.55.1/6h; no blind latest-tag compatibility claim. No images in this guide."
+    ],
+    "validation": [
+      "All1031original lines perlocale read, including installation, upgrade and uninstall examples. Original snapshots /tmp/mesh-linkerd-install-original-{en,ko}.md.",
+      "Five chart archives matched official index SHA256; native Linuxarm64 CLI matched release digest/version. Other platform asset metadata verified; no unsupported runtime-testing claim.",
+      "14 offline Helm render cases passed: base/HA/CNI/Viz-persistence/external-Viz/multicluster for each locale, plus CNI and CRD charts. Checked actual requests, log selectors, proxy placement,3PDBs, affinity, PVC, endpoint URL and NLB class/ports. Evidence /tmp/mesh-linkerd-validation/installation-final-report.json.",
+      "Original negative characterization retained: HA lackedPDB/resources; Viz PVC accessMode null. Initial validation expectations were corrected to account for documented Identity regular-sidecar bootstrap and chart-added log suppression, not by altering valid product behavior.",
+      "26Bash blocks perlocale parsed; two actual jq regular/native proxy cases passed. EN/KO Bash/YAML/PowerShell examples identical. Smallstep flags checked against official reference; PowerShell and crypto generation not executed.",
+      "Current6-page Linkerd batch:8YAMLblocks/62Bashblocks, links/fences/duplicatekeys/known404checks0errors. Scopedgitdiffcheckclean. Clean docs:test110/110passed; log /tmp/kubernetes-docs-full-review/docs-test-linkerd-install-clean.log."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/linkerd/installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All12 installation questions and explanations aligned with the corrected current CLI/chart/HA/PKI/cleanup behavior.",
+    "sources": [
+      "https://linkerd.io/docs/tasks/install/",
+      "https://linkerd.io/docs/tasks/install-helm/",
+      "https://linkerd.io/docs/features/ha/",
+      "https://linkerd.io/docs/tasks/upgrade/",
+      "https://linkerd.io/docs/tasks/uninstall/",
+      "https://linkerd.io/docs/features/distributed-tracing/",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1"
+    ],
+    "findings": [
+      "Read all209original lines and all12answers. Q1 exact public-release/OS/hash selection replaces deprecated installer/stable assumptions; Q2 distinguishes minimum preflight from full compatibility.",
+      "Q3 requires public trust anchor and issuer cert/private key or supported integration, never root key in every proxy. Q4 HA replicas are redundant serving instances, not quorum; Q5 Viz does not deploy Grafana through grafana.enabled.",
+      "Q6 distinguishes NLB TCP passthrough from scheme choice; Q7 includes targetCLI/CRDs/control-plane/extensions/data-plane and retained trust; Q8 command generates CRDs rather than applying them.",
+      "Q9 replaces absent Jaeger subcommand with current tracing prerequisites. Q10 removes app proxies before extensions/control-plane and records CRD deletion scope; Q11 health checks do not prove business logic; Q12 injection applies to eligible new Pods with overrides/exclusions.",
+      "No diagrams/images; source links point to the maintained installation guide."
+    ],
+    "validation": [
+      "Complete209-line originals read perlocale. All12answer choices checked; keysB/B/B/C/C/C/B/B/B/B/C/A agree across languages.",
+      "Aligned with nativeCLI command availability,14render cases and official documentation. Current Linkerd batch link/syntax checks and fullclean docs:test110/110passed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/linkerd/installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All12 installation questions and explanations aligned with the corrected current CLI/chart/HA/PKI/cleanup behavior.",
+    "sources": [
+      "https://linkerd.io/docs/tasks/install/",
+      "https://linkerd.io/docs/tasks/install-helm/",
+      "https://linkerd.io/docs/features/ha/",
+      "https://linkerd.io/docs/tasks/upgrade/",
+      "https://linkerd.io/docs/tasks/uninstall/",
+      "https://linkerd.io/docs/features/distributed-tracing/",
+      "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1"
+    ],
+    "findings": [
+      "Read all209original lines and all12answers. Q1 exact public-release/OS/hash selection replaces deprecated installer/stable assumptions; Q2 distinguishes minimum preflight from full compatibility.",
+      "Q3 requires public trust anchor and issuer cert/private key or supported integration, never root key in every proxy. Q4 HA replicas are redundant serving instances, not quorum; Q5 Viz does not deploy Grafana through grafana.enabled.",
+      "Q6 distinguishes NLB TCP passthrough from scheme choice; Q7 includes targetCLI/CRDs/control-plane/extensions/data-plane and retained trust; Q8 command generates CRDs rather than applying them.",
+      "Q9 replaces absent Jaeger subcommand with current tracing prerequisites. Q10 removes app proxies before extensions/control-plane and records CRD deletion scope; Q11 health checks do not prove business logic; Q12 injection applies to eligible new Pods with overrides/exclusions.",
+      "No diagrams/images; source links point to the maintained installation guide."
+    ],
+    "validation": [
+      "Complete209-line originals read perlocale. All12answer choices checked; keysB/B/B/C/C/C/B/B/B/B/C/A agree across languages.",
+      "Aligned with nativeCLI command availability,14render cases and official documentation. Current Linkerd batch link/syntax checks and fullclean docs:test110/110passed."
+    ]
+  },
+  {
+    "path": "en/service-mesh/linkerd/02-architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/linkerd/02-architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Complete original read; architecture/API/identity/diagram verification in progress.",
+    "sources": [
+      "https://linkerd.io/docs/features/automatic-mtls/",
+      "https://linkerd.io/docs/features/cni/",
+      "https://linkerd.io/docs/features/protocol-detection/"
+    ],
+    "findings": [
+      "Original guide552lines /quiz209lines fully read. Candidate fixes: rootCA wrongly signs leaves; defaulttrustroot Secret vs ConfigMap; Kubernetes DNS identity wrongly described as an Istio-style SPIFFE URI; partialrootrotation procedure.",
+      "Proto service declaration mislabeled Go; old TrafficSplit/controller mapping, invalid ServerAuthorization v1beta2, unsafe/manual incomplete proxy/iptables example, duplicate YAML keys and invalid enabled|disabled value.",
+      "Universal memory/latency/binary-size/CRD-count rankings unsupported; native sidecars/CNI/Identity exception and TCP/opaque/default-mTLS boundaries need alignment.11figures/language queued for semantic visual review."
+    ],
+    "validation": [
+      "All original Markdown read, including every diagram caption and quiz answer; no sample commands executed."
+    ]
+  }
+]

@@ -1,0 +1,162 @@
+{
+  "copied": [
+    {
+      "source": "en/.gitbook/assets/en-gitops-argocd-README-0.png",
+      "destination": "cn/.gitbook/assets/en-gitops-argocd-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-gitops-argocd-README-1.png",
+      "destination": "cn/.gitbook/assets/en-gitops-argocd-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-0.png",
+      "destination": "cn/.gitbook/assets/en-labs-observability-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-1.png",
+      "destination": "cn/.gitbook/assets/en-labs-observability-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-2.png",
+      "destination": "cn/.gitbook/assets/en-labs-observability-README-2.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-0.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-istio-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-1.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-istio-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-2.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-istio-README-2.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-3.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-istio-README-3.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-4.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-istio-README-4.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-5.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-istio-README-5.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-comparison-README-0.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-istio-comparison-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-linkerd-README-0.png",
+      "destination": "cn/.gitbook/assets/en-service-mesh-linkerd-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-gitops-argocd-README-0.png",
+      "destination": "jp/.gitbook/assets/en-gitops-argocd-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-gitops-argocd-README-1.png",
+      "destination": "jp/.gitbook/assets/en-gitops-argocd-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-0.png",
+      "destination": "jp/.gitbook/assets/en-labs-observability-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-1.png",
+      "destination": "jp/.gitbook/assets/en-labs-observability-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-2.png",
+      "destination": "jp/.gitbook/assets/en-labs-observability-README-2.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-0.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-istio-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-1.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-istio-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-2.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-istio-README-2.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-3.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-istio-README-3.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-4.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-istio-README-4.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-5.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-istio-README-5.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-comparison-README-0.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-istio-comparison-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-linkerd-README-0.png",
+      "destination": "jp/.gitbook/assets/en-service-mesh-linkerd-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-gitops-argocd-README-0.png",
+      "destination": "es/.gitbook/assets/en-gitops-argocd-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-gitops-argocd-README-1.png",
+      "destination": "es/.gitbook/assets/en-gitops-argocd-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-0.png",
+      "destination": "es/.gitbook/assets/en-labs-observability-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-1.png",
+      "destination": "es/.gitbook/assets/en-labs-observability-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-labs-observability-README-2.png",
+      "destination": "es/.gitbook/assets/en-labs-observability-README-2.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-0.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-istio-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-1.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-istio-README-1.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-2.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-istio-README-2.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-3.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-istio-README-3.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-4.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-istio-README-4.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-README-5.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-istio-README-5.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-istio-comparison-README-0.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-istio-comparison-README-0.png"
+    },
+    {
+      "source": "en/.gitbook/assets/en-service-mesh-linkerd-README-0.png",
+      "destination": "es/.gitbook/assets/en-service-mesh-linkerd-README-0.png"
+    }
+  ],
+  "unresolved": [],
+  "repairedLinks": []
+}

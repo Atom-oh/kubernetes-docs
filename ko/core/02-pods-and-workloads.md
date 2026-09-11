@@ -1,6 +1,6 @@
 # Kubernetes 파드와 워크로드
 
-> **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
+> **지원 버전**: Kubernetes 1.35, 1.36, 1.37
 > **마지막 업데이트**: 2026년 2월 23일
 
 이 문서에서는 Kubernetes의 기본 실행 단위인 파드(Pod)와 이를 관리하는 다양한 워크로드 리소스에 대해 자세히 설명합니다. 파드의 개념부터 시작하여 디플로이먼트, 스테이트풀셋, 데몬셋 등 다양한 워크로드 리소스의 특징과 사용 사례를 다룹니다.
@@ -10,7 +10,7 @@
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.34 이상
+- API 서버와 마이너 버전 차이가 1 이내인 kubectl
 - 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
 
 ### 예제 애플리케이션 배포
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -65,12 +65,6 @@ kubectl -n workloads-demo get deployments,pods
 - [스테이트풀셋](#스테이트풀셋)
 - [데몬셋](#데몬셋)
 - [잡과 크론잡](#잡과-크론잡)
-- [리소스 관리](#리소스-관리)
-- [파드 중단 예산](#파드-중단-예산)
-- [수평적 파드 자동 확장](#수평적-파드-자동-확장)
-- [수직적 파드 자동 확장](#수직적-파드-자동-확장)
-- [워크로드 모범 사례](#워크로드-모범-사례)
-- [Amazon EKS 워크로드 고려사항](#amazon-eks-워크로드-고려사항)
 
 ## 파드 개념
 
@@ -80,7 +74,7 @@ kubectl -n workloads-demo get deployments,pods
 
 ### 파드의 특징
 
-1. **공유 컨텍스트**: 파드 내의 모든 컨테이너는 동일한 네트워크 네임스페이스, IPC 네임스페이스, UTS 네임스페이스를 공유합니다.
+1. **공유 컨텍스트**: 컨테이너는 파드 네트워크와 보통 IPC를 공유하며 프로세스 네임스페이스 공유에는 `shareProcessNamespace: true`가 필요합니다. 컨테이너 루트 파일시스템은 별개입니다.
 2. **동일한 노드**: 파드의 모든 컨테이너는 항상 같은 노드에서 실행됩니다.
 3. **고유한 IP 주소**: 각 파드는 클러스터 내에서 고유한 IP 주소를 가집니다.
 4. **임시적(Ephemeral)**: 파드는 기본적으로 임시적이며, 장애 발생 시 새로운 파드로 대체될 수 있습니다.
@@ -111,7 +105,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
     volumeMounts:
@@ -121,7 +115,8 @@ spec:
     image: alpine
     command: ["/bin/sh", "-c"]
     args:
-    - while true; do
+    - |
+      while true; do
         echo "현재 시간: $(date)" > /content/index.html;
         sleep 10;
       done
@@ -148,7 +143,10 @@ metadata:
 spec:
   containers:
   - name: web-application
-    image: nginx:1.21
+    image: nginx:1.30.4
+    volumeMounts:
+    - name: log-volume
+      mountPath: /var/log/nginx
     ports:
     - containerPort: 80
     resources:
@@ -182,17 +180,8 @@ spec:
 - 각 컨테이너에 대한 리소스 요청 및 제한 설정
 
 이러한 구성은 마이크로서비스 아키텍처에서 로깅, 모니터링, 프록시 등의 기능을 분리하면서도 밀접하게 연결된 컨테이너를 실행하는 데 적합합니다.
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Pod default;
-    class Container1,Container2 userApp;
-    class Volume dataStore;
-    class IP default;
-```
+
+이 로그 예시는 볼륨 연결 구조를 보여줍니다. Fluentd에는 별도 tail 입력과 출력 설정이 필요하며 디렉토리 마운트만으로 로그를 수집하지는 않습니다. 이미지와 애플리케이션 설정은 운영 버전 권장값이 아닌 예시입니다. 네이티브 사이드카는 `initContainers`에 `restartPolicy: Always`를 사용하며 v1.33부터 Stable입니다. 일반 다중 컨테이너 파드는 시작·종료 순서를 보장하지 않습니다.
 
 ### 파드 정의
 
@@ -208,7 +197,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
     resources:
@@ -246,7 +235,10 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/nginx
   - name: log-collector
     image: fluentd:v1.14
     volumeMounts:
@@ -270,7 +262,7 @@ spec:
   - name: app
     image: myapp:1.0
   - name: ambassador
-    image: envoy:v1.20
+    image: envoyproxy/envoy:v1.20.0
     ports:
     - containerPort: 9901
 ```
@@ -287,6 +279,9 @@ spec:
   containers:
   - name: app
     image: myapp:1.0
+    volumeMounts:
+    - name: app-logs
+      mountPath: /var/log/app
   - name: adapter
     image: adapter:1.0
     volumeMounts:
@@ -320,7 +315,7 @@ spec:
 파드 내의 컨테이너는 다음과 같은 네트워킹 특성을 가집니다:
 
 1. **동일한 IP 주소**: 파드 내의 모든 컨테이너는 동일한 IP 주소를 공유합니다.
-2. **포트 공유**: 파드 내의 컨테이너는 포트 공간을 공유하므로, 동일한 포트를 사용할 수 없습니다.
+2. **포트 공유**: 파드 내의 컨테이너는 포트 공간을 공유하므로, 보통 같은 IP·프로토콜·포트 조합에 동시에 바인딩할 수 없습니다.
 3. **localhost 통신**: 파드 내의 컨테이너는 localhost를 통해 서로 통신할 수 있습니다.
 4. **파드 간 통신**: 각 파드는 고유한 IP 주소를 가지며, 다른 파드와 직접 통신할 수 있습니다.
 
@@ -376,7 +371,7 @@ spec:
 파드 내의 각 컨테이너는 다음과 같은 상태를 가질 수 있습니다:
 
 1. **Waiting**: 컨테이너가 실행되기 전의 상태 (이미지 다운로드 중, 의존성 대기 등)
-2. **Running**: 컨테이너가 문제 없이 실행 중인 상태
+2. **Running**: 프로세스가 실행 중이며 이것만으로 앱의 정상 상태·준비 완료를 의미하지는 않음
 3. **Terminated**: 컨테이너가 실행을 완료했거나 어떤 이유로 실패한 상태
 
 ### 파드 조건(Condition)
@@ -385,7 +380,7 @@ spec:
 
 1. **PodScheduled**: 파드가 노드에 스케줄링되었는지 여부
 2. **ContainersReady**: 파드의 모든 컨테이너가 준비되었는지 여부
-3. **Initialized**: 모든 초기화 컨테이너가 성공적으로 완료되었는지 여부
+3. **Initialized**: 일반 init 컨테이너는 완료되고 재시작 가능한 init 컨테이너(네이티브 사이드카)는 시작되었는지 여부
 4. **Ready**: 파드가 요청을 처리할 수 있고 서비스의 로드 밸런싱 풀에 추가될 수 있는지 여부
 
 ### 컨테이너 프로브(Probe)
@@ -436,8 +431,8 @@ spec:
 1. **API 서버에 삭제 요청**: 사용자 또는 컨트롤러가 파드 삭제 요청
 2. **종료 기간 시작**: 기본 종료 기간(30초) 설정
 3. **API 업데이트**: API 서버가 파드의 삭제 타임스탬프 업데이트
-4. **서비스에서 제거**: 엔드포인트 컨트롤러가 서비스 엔드포인트에서 파드 제거
-5. **SIGTERM 신호**: kubelet이 컨테이너에 SIGTERM 신호 전송
+4. **엔드포인트 갱신**: EndpointSlice가 해당 엔드포인트를 terminating·not ready로 표시하며 전파는 노드 종료와 동시에 진행
+5. **종료 신호**: kubelet은 유예 시간 안에서 preStop 훅을 실행한 뒤 런타임에 종료 신호 요청 (보통 SIGTERM, 이미지·컨테이너 설정으로 변경 가능)
 6. **그레이스풀 종료 대기**: 애플리케이션이 그레이스풀하게 종료될 시간 제공
 7. **SIGKILL 신호**: 종료 기간 후에도 컨테이너가 종료되지 않으면 SIGKILL 신호 전송
 8. **리소스 정리**: kubelet이 파드 리소스 정리
@@ -480,7 +475,7 @@ spec:
 
 2. **비자발적 중단**: 하드웨어 장애, 커널 패닉, 네트워크 분할 등으로 인한 중단
 
-파드 중단 예산(PodDisruptionBudget)을 통해 자발적 중단 시 최소한의 가용성을 보장할 수 있습니다.
+PodDisruptionBudget은 drain처럼 Eviction API를 사용하는 자발적 축출을 제한합니다. 직접 파드 삭제와 Deployment 롤링 업데이트는 이를 우회하므로 롤아웃 가용성을 별도로 설정해야 하며 비자발적 장애를 막지는 못합니다.
 ## 파드 설계 패턴
 
 파드를 설계할 때 고려해야 할 여러 패턴과 모범 사례가 있습니다. 이러한 패턴을 이해하고 적용하면 애플리케이션의 안정성, 확장성, 유지보수성을 향상시킬 수 있습니다.
@@ -514,7 +509,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
   # 파드 템플릿 끝
@@ -556,7 +551,7 @@ spec:
           topologyKey: "kubernetes.io/hostname"
   containers:
   - name: web
-    image: nginx:1.21
+    image: nginx:1.30.4
 ```
 
 ### 노드 어피니티
@@ -587,10 +582,12 @@ spec:
 
 테인트는 노드에 적용되어 특정 파드가 스케줄링되지 않도록 하고, 톨러레이션은 파드에 적용되어 테인트가 있는 노드에 스케줄링될 수 있도록 합니다:
 
-```yaml
+```bash
 # 노드에 테인트 적용
 kubectl taint nodes node1 key=value:NoSchedule
+```
 
+```yaml
 # 파드에 톨러레이션 적용
 apiVersion: v1
 kind: Pod
@@ -666,7 +663,7 @@ metadata:
 value: 1000000
 globalDefault: false
 description: "This priority class should be used for critical pods only."
-
+---
 # 우선순위 클래스를 사용하는 파드
 apiVersion: v1
 kind: Pod
@@ -806,7 +803,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -846,16 +843,16 @@ spec:
 
 ```bash
 # 배포 이력 확인
-kubectl rollout history deployment/nginx-deployment
+kubectl -n workloads-demo rollout history deployment/nginx-deployment
 
 # 특정 버전의 세부 정보 확인
-kubectl rollout history deployment/nginx-deployment --revision=2
+kubectl -n workloads-demo rollout history deployment/nginx-deployment --revision=2
 
 # 이전 버전으로 롤백
-kubectl rollout undo deployment/nginx-deployment
+kubectl -n workloads-demo rollout undo deployment/nginx-deployment
 
 # 특정 버전으로 롤백
-kubectl rollout undo deployment/nginx-deployment --to-revision=2
+kubectl -n workloads-demo rollout undo deployment/nginx-deployment --to-revision=2
 ```
 
 ### 디플로이먼트 스케일링
@@ -864,7 +861,7 @@ kubectl rollout undo deployment/nginx-deployment --to-revision=2
 
 ```bash
 # 명령형 방식으로 스케일링
-kubectl scale deployment/nginx-deployment --replicas=5
+kubectl -n workloads-demo scale deployment/nginx-deployment --replicas=5
 
 # 선언적 방식으로 스케일링 (YAML 파일 수정 후)
 kubectl apply -f deployment.yaml
@@ -876,23 +873,20 @@ kubectl apply -f deployment.yaml
 
 ```bash
 # 롤아웃 일시 중지
-kubectl rollout pause deployment/nginx-deployment
+kubectl -n workloads-demo rollout pause deployment/nginx-deployment
 
 # 여러 변경 사항 적용
-kubectl set image deployment/nginx-deployment nginx=nginx:1.22
-kubectl set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
+kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.4-alpine
+kubectl -n workloads-demo set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
 
 # 롤아웃 재개
-kubectl rollout resume deployment/nginx-deployment
+kubectl -n workloads-demo rollout resume deployment/nginx-deployment
 ```
 
 ### 디플로이먼트 상태
 
-디플로이먼트는 다음과 같은 상태를 가질 수 있습니다:
+Deployment 조건에는 `Progressing`, `Available`, `ReplicaFailure`가 있습니다. 정체된 롤아웃은 `Progressing=False`, 사유 `ProgressDeadlineExceeded`를 보고할 수 있으며 Kubernetes가 자동 롤백하지는 않습니다. “Complete”는 조건 유형이 아니라 롤아웃 완료 상태를 설명하는 표현입니다.
 
-1. **Progressing**: 새 레플리카셋이 생성되거나 스케일업/다운 중
-2. **Complete**: 모든 복제본이 업데이트되고 사용 가능한 상태
-3. **Failed**: 배포 중 오류 발생 (예: 이미지 풀 실패, 리소스 부족 등)
 ## 스테이트풀셋
 
 스테이트풀셋(StatefulSet)은 상태 유지가 필요한 애플리케이션을 위한 워크로드 리소스입니다. 각 파드에 고유한 식별자를 부여하고, 안정적인 네트워크 식별자와 영구 스토리지를 제공합니다.
@@ -927,7 +921,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
           name: web
@@ -1008,88 +1002,42 @@ spec:
 3. **메시지 큐**: RabbitMQ 등
 4. **기타 상태 유지 애플리케이션**: 파일 서버, 세션 저장소 등
 
-### 스테이트풀셋 예시: MySQL 복제
+### 스테이트풀셋 예시: 영구 스토리지를 사용하는 MySQL 인스턴스
+
+이 예시는 단일 MySQL 인스턴스의 안정적인 식별자와 PVC를 보여줍니다. 복제나 데이터베이스 자동 장애 조치는 구성하지 않으며 `replicas`만 늘리면 독립된 데이터베이스가 생성됩니다. 같은 네임스페이스에 `password` 키를 가진 `mysql-secret`과 기본 StorageClass를 준비하거나 적절한 클래스를 명시하세요. 검증된 MySQL 8.4 패치·다이제스트를 사용하고 자격 증명 변경은 Secret 수정뿐 아니라 DB 내부에서도 수행해야 합니다.
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  labels:
-    app: mysql
 spec:
-  ports:
-  - port: 3306
-    name: mysql
   clusterIP: None
   selector:
     app: mysql
+  ports:
+  - name: mysql
+    port: 3306
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql
 spec:
+  serviceName: mysql
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
-  serviceName: mysql
-  replicas: 3
+  podManagementPolicy: OrderedReady
   template:
     metadata:
       labels:
         app: mysql
     spec:
-      initContainers:
-      - name: init-mysql
-        image: mysql:5.7
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          # 파드 인덱스에 따라 서버 ID 생성
-          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-          ordinal=${BASH_REMATCH[1]}
-          echo [mysqld] > /mnt/conf.d/server-id.cnf
-          echo server-id=$((100 + $ordinal)) >> /mnt/conf.d/server-id.cnf
-          # 마스터 또는 슬레이브 구성
-          if [[ $ordinal -eq 0 ]]; then
-            echo [mysqld] > /mnt/conf.d/master.cnf
-            echo log-bin=mysql-bin >> /mnt/conf.d/master.cnf
-          else
-            echo [mysqld] > /mnt/conf.d/slave.cnf
-            echo super-read-only >> /mnt/conf.d/slave.cnf
-          fi
-        volumeMounts:
-        - name: conf
-          mountPath: /mnt/conf.d
-      - name: clone-mysql
-        image: gcr.io/google-samples/xtrabackup:1.0
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          # 첫 번째 파드가 아닌 경우에만 복제 수행
-          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-          ordinal=${BASH_REMATCH[1]}
-          if [[ $ordinal -eq 0 ]]; then
-            exit 0
-          fi
-          # 이전 파드에서 데이터 복제
-          ncat --recv-only mysql-$(($ordinal-1)).mysql 3307 | xbstream -x -C /var/lib/mysql
-          # 백업 준비
-          xtrabackup --prepare --target-dir=/var/lib/mysql
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
       containers:
       - name: mysql
-        image: mysql:5.7
+        image: mysql:8.4
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -1099,78 +1047,39 @@ spec:
         ports:
         - name: mysql
           containerPort: 3306
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
+        startupProbe:
+          tcpSocket:
+            port: mysql
+          periodSeconds: 10
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h 127.0.0.1 -u root -e "SELECT 1"'
+          periodSeconds: 10
+          timeoutSeconds: 5
         resources:
           requests:
             cpu: 500m
             memory: 1Gi
-        livenessProbe:
-          exec:
-            command: ["mysqladmin", "ping"]
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-        readinessProbe:
-          exec:
-            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          timeoutSeconds: 1
-      - name: xtrabackup
-        image: gcr.io/google-samples/xtrabackup:1.0
-        ports:
-        - name: xtrabackup
-          containerPort: 3307
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex
-          cd /var/lib/mysql
-          # 슬레이브 시작
-          if [[ -f xtrabackup_slave_info ]]; then
-            cat xtrabackup_slave_info | sed -E 's/;$//g' > change_master_to.sql
-            mysql -h 127.0.0.1 -e "$(cat change_master_to.sql); RESET SLAVE; START SLAVE;"
-          # 마스터에서 복제한 경우
-          elif [[ -f xtrabackup_binlog_info ]]; then
-            [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-            ordinal=${BASH_REMATCH[1]}
-            [[ $ordinal -eq 0 ]] && exit 0
-            master_host=mysql-0.mysql
-            master_log_file=$(cat xtrabackup_binlog_info | awk '{print $1}')
-            master_log_pos=$(cat xtrabackup_binlog_info | awk '{print $2}')
-            mysql -h 127.0.0.1 -e "CHANGE MASTER TO MASTER_HOST='$master_host', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='$master_log_file', MASTER_LOG_POS=$master_log_pos; RESET SLAVE; START SLAVE;"
-          fi
-          # 백업 서버 시작
-          exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1"
+          limits:
+            memory: 2Gi
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-      volumes:
-      - name: conf
-        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: standard
+      accessModes: [ReadWriteOnce]
       resources:
         requests:
           storage: 10Gi
 ```
+
+복제와 리더 승격은 DB 오퍼레이터 또는 별도로 검증한 복제 운영 절차가 필요합니다. StatefulSet 자체는 이를 제공하지 않습니다. [업스트림 복제 튜토리얼](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/)도 교육용 비보안 기본값을 사용하며 운영용 구성이 아니라고 명시합니다.
 
 ## 데몬셋
 
@@ -1207,7 +1116,7 @@ spec:
         name: fluentd-elasticsearch
     spec:
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
       containers:
       - name: fluentd-elasticsearch
@@ -1221,18 +1130,15 @@ spec:
         volumeMounts:
         - name: varlog
           mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
           readOnly: true
       terminationGracePeriodSeconds: 30
       volumes:
       - name: varlog
         hostPath:
           path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
 ```
+
+CRI 런타임에서는 Docker JSON 로그가 아니라 `/var/log/pods`의 CRI 로그(보통 `/var/log/containers`에서 링크)를 파싱하도록 수집기를 설정하세요. 수집기 입력·출력 구성과 RBAC도 별도로 필요합니다.
 
 ### 데몬셋 업데이트 전략
 
@@ -1264,7 +1170,7 @@ spec:
   template:
     spec:
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
 ```
 
@@ -1274,7 +1180,7 @@ spec:
 
 1. **로그 수집기**: Fluentd, Logstash 등
 2. **모니터링 에이전트**: Prometheus Node Exporter, Datadog Agent 등
-3. **네트워크 플러그인**: Calico, Cilium, Weave Net 등
+3. **네트워크 플러그인**: Calico, Cilium 등
 4. **스토리지 데몬**: Ceph, GlusterFS 등
 5. **보안 에이전트**: Falco, Sysdig 등
 
@@ -1352,7 +1258,7 @@ spec:
 
 #### 잡의 주요 기능
 
-1. **완료 보장**: 지정된 수의 파드가 성공적으로 완료될 때까지 실행
+1. **완료 추적**: 성공한 파드를 추적하며 재시도 제한·기한 초과 시 Job 실패 가능
 2. **병렬 실행**: 여러 파드를 병렬로 실행 가능
 3. **재시도**: 실패한 파드 자동 재시도
 4. **완료 후 정리**: 작업 완료 후 파드 정리 (선택적)
@@ -1440,7 +1346,7 @@ metadata:
   name: hello
 spec:
   schedule: "*/1 * * * *"  # 매분 실행
-  timeZone: "America/New_York"  # 타임존 (Kubernetes 1.24+)
+  timeZone: "America/New_York"  # 타임존 (Kubernetes 1.27부터 Stable)
   concurrencyPolicy: Forbid  # Allow, Forbid, Replace
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -1467,7 +1373,7 @@ spec:
 │ ┌───────────── 시 (0 - 23)
 │ │ ┌───────────── 일 (1 - 31)
 │ │ │ ┌───────────── 월 (1 - 12)
-│ │ │ │ ┌───────────── 요일 (0 - 6) (일요일부터 토요일까지; 7도 일요일)
+│ │ │ │ ┌───────────── 요일 (0 - 6) (일요일부터 토요일까지; 일요일은 0 사용)
 │ │ │ │ │
 │ │ │ │ │
 * * * * *
@@ -1507,7 +1413,8 @@ kind: CronJob
 metadata:
   name: database-backup
 spec:
-  schedule: "0 2 * * *"  # 매일 02:00에 실행
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -1535,8 +1442,13 @@ spec:
             - /bin/sh
             - -c
             - |
-              pg_dump -Fc > /backup/db-$(date +%Y%m%d-%H%M%S).dump
-              find /backup -type f -mtime +7 -delete  # 7일 이상 된 백업 삭제
+              set -eu
+              backup_file="/backup/db-$(date +%Y%m%d-%H%M%S).dump"
+              trap 'rm -f "$backup_file.partial"' EXIT
+              pg_dump -Fc > "$backup_file.partial"
+              pg_restore --list "$backup_file.partial" > /dev/null
+              mv "$backup_file.partial" "$backup_file"
+              find /backup -maxdepth 1 -type f -name 'db-*.dump' -mtime +7 -delete
             volumeMounts:
             - name: backup-volume
               mountPath: /backup
@@ -1546,6 +1458,8 @@ spec:
             persistentVolumeClaim:
               claimName: backup-pvc
 ```
+
+CronJob 일정 실행은 정확히 한 번을 보장하지 않으므로 중복 실행을 견디도록 작성하세요. `Forbid`는 같은 CronJob이 만든 Job에만 적용됩니다. 이력 제한은 Job/Pod 객체를 삭제하며 백업 파일을 지우지 않습니다. 백업 예시는 UTC 02:00에 실행되며 `backup-pvc`, `postgres-secret`, 접근 가능한 DB가 필요합니다. `pg_dump` 메이저 버전은 서버 이상이어야 하며 DB 이름이 `PGUSER`와 다르면 `PGDATABASE`를 지정하세요. 실제 복원 검증은 별도로 수행해야 합니다.
 
 ## 결론
 

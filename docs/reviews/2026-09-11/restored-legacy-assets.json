@@ -1,0 +1,128 @@
+[
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 6435
+  },
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 5489
+  },
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 8817
+  },
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 7090
+  },
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 6820
+  },
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 8484
+  },
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 5758
+  },
+  {
+    "path": "assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg",
+    "status": "restored-original",
+    "from": "20843b3dad5d08f86d4f1a4f55f875aaaa22d7d5^",
+    "bytes": 6899
+  },
+  {
+    "path": "en/.gitbook/assets/en-gitops-argocd-README-0.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 79616
+  },
+  {
+    "path": "en/.gitbook/assets/en-gitops-argocd-README-1.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 66934
+  },
+  {
+    "path": "en/.gitbook/assets/en-labs-observability-README-0.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 120929
+  },
+  {
+    "path": "en/.gitbook/assets/en-labs-observability-README-1.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 40443
+  },
+  {
+    "path": "en/.gitbook/assets/en-labs-observability-README-2.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 61610
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-istio-README-0.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 149298
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-istio-README-1.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 110838
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-istio-README-2.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 75970
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-istio-README-3.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 85288
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-istio-README-4.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 56665
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-istio-README-5.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 102918
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-istio-comparison-README-0.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 124895
+  },
+  {
+    "path": "en/.gitbook/assets/en-service-mesh-linkerd-README-0.png",
+    "status": "restored-original",
+    "from": "ce4a3a13cd0d524c7581058e30f4672b5e05cab2^",
+    "bytes": 99204
+  }
+]

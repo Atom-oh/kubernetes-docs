@@ -1,10 +1,14 @@
 # EKS 클러스터 생성 퀴즈 - Part 1
 
+> **마지막 업데이트**: 2026년 9월 11일
+
+> 명령은 각각 독립된 예제이며 처음부터 끝까지 실행하는 스크립트가 아닙니다. 전용 교육용 계정·클러스터, 검토한 IAM 권한, 전용 임시 kubeconfig(`EXAMPLE_KUBECONFIG`)를 사용하고 예제 ID와 필수 변수를 바꿉니다. 생성 명령은 비용을 발생시킵니다. 이번 감사는 출처·구문·로컬 예제를 검증했으며 AWS 프로비저닝이나 애플리케이션 가용성 검증을 수행하지 않았습니다.
+
 이 퀴즈는 Amazon EKS 클러스터 생성과 관련된 개념, 도구, 모범 사례에 대한 이해를 테스트합니다. 클러스터 생성 방법, VPC 구성, 노드 그룹 설정 등의 주제를 다룹니다.
 
 ## 기본 개념 문제
 
-1. Amazon EKS 클러스터를 생성하는 데 사용할 수 있는 도구가 아닌 것은 무엇인가요?
+1. EKS 컨트롤 플레인을 직접 프로비저닝하는 내장 명령이 없는 도구는 무엇인가요?
    * A) AWS Management Console
    * B) AWS CLI
    * C) eksctl
@@ -16,7 +20,7 @@
 
 **정답: D) kubectl**
 
-**설명:** kubectl은 Kubernetes 클러스터를 관리하기 위한 명령줄 도구이지만, EKS 클러스터를 생성하는 데 사용할 수 없습니다. kubectl은 이미 존재하는 Kubernetes 클러스터에 연결하여 리소스를 관리하는 데 사용됩니다.
+kubectl은 Kubernetes API 리소스를 관리하며 EKS 프로비저닝 내장 명령은 없습니다. 기존 관리 클러스터의 ACK 같은 인프라 컨트롤러가 kubectl로 제출한 리소스를 EKS 클러스터로 조정할 수는 있지만, 이는 컨트롤러 통합이며 kubectl 자체의 AWS 작업은 아닙니다.
 
 Amazon EKS 클러스터를 생성하는 데 사용할 수 있는 도구는 다음과 같습니다:
 
@@ -39,7 +43,7 @@ Amazon EKS 클러스터를 생성하는 데 사용할 수 있는 도구는 다�
 3.  **eksctl**:
 
     * EKS 클러스터 생성을 위해 특별히 설계된 명령줄 도구입니다.
-    * Weaveworks에서 개발한 오픈 소스 도구로, EKS 클러스터 생성 및 관리를 단순화합니다.
+    * Weaveworks에서 시작했으며 현재 프로젝트는 eksctl-io 조직에서 AWS·커뮤니티의 기여로 유지됩니다.
     * 단일 명령으로 클러스터를 생성할 수 있습니다.
 
     ```bash
@@ -54,7 +58,7 @@ Amazon EKS 클러스터를 생성하는 데 사용할 수 있는 도구는 다�
 
     이러한 도구를 사용하면 코드로 EKS 클러스터를 정의하고 배포할 수 있습니다.
 
-kubectl은 클러스터가 생성된 후에 Kubernetes 리소스(포드, 서비스, 배포 등)를 관리하는 데 사용됩니다. EKS 클러스터에 연결하려면 먼저 `aws eks update-kubeconfig` 명령을 사용하여 kubectl 구성을 업데이트해야 합니다.
+kubectl은 클러스터가 생성된 후에 Kubernetes 리소스(포드, 서비스, 배포 등)를 관리하는 데 사용됩니다. EKS 클러스터에 연결하려면 승인된 kubeconfig를 구성해야 하며 보통 `aws eks update-kubeconfig`를 사용합니다.
 
 ```bash
 aws eks update-kubeconfig --name my-cluster --region us-west-2
@@ -82,16 +86,16 @@ aws eks update-kubeconfig --name my-cluster --region us-west-2
 
 1. **최소 2개의 가용 영역(AZ)에 서브넷 필요**:
    * EKS 컨트롤 플레인은 여러 가용 영역에 걸쳐 배포되므로, 클러스터 생성 시 최소 2개의 가용 영역에 서브넷을 지정해야 합니다.
-   * 이는 단일 가용 영역 장애 시에도 클러스터가 계속 작동할 수 있도록 보장합니다.
+   * 리전 컨트롤 플레인 가용성을 위한 조건입니다. 워크로드 가용성에는 복제본 배치·용량·스토리지·종속 서비스 계획도 필요합니다.
 2. **서브넷 유형**:
    * 퍼블릭 서브넷만 사용하거나, 프라이빗 서브넷만 사용하거나, 또는 퍼블릭과 프라이빗 서브넷을 혼합하여 사용할 수 있습니다.
    * 프로덕션 환경에서는 보안을 위해 프라이빗 서브넷에 워커 노드를 배치하고, 퍼블릭 서브넷은 로드 밸런서용으로 사용하는 것이 권장됩니다.
 3. **서브넷 CIDR 크기**:
-   * 각 서브넷은 충분한 IP 주소를 가져야 합니다.
+   * 클러스터 서브넷마다 EKS용 IP가 최소 6개 남아 있어야 하며 AWS는 16개 이상을 권장합니다. 노드·Pod·로드 밸런서 용량은 별도로 계획합니다.
    * EKS는 각 포드에 VPC IP 주소를 할당하므로, 예상되는 포드 수에 따라 충분히 큰 CIDR 블록이 필요합니다.
 4. **태그 요구 사항**:
-   * EKS가 서브넷을 식별하고 적절히 사용할 수 있도록 특정 태그가 필요합니다:
-     * 공유 서브넷: `kubernetes.io/cluster/<cluster-name>: shared`
+   * 아래 태그는 특정 통합의 검색·소유권에 관련되며 모든 EKS 생성의 필수 조건은 아닙니다:
+     * 레거시 또는 컨트롤러별 소유권 태그: `kubernetes.io/cluster/<cluster-name>: shared`
      * 퍼블릭 서브넷: `kubernetes.io/role/elb: 1`
      * 프라이빗 서브넷: `kubernetes.io/role/internal-elb: 1`
 
@@ -106,10 +110,11 @@ metadata:
   region: us-west-2
 
 vpc:
-  cidr: 192.168.0.0/16
+  id: vpc-0123456789abcdef0
   clusterEndpoints:
     publicAccess: true
     privateAccess: true
+  publicAccessCIDRs: ["203.0.113.10/32"]
   subnets:
     private:
       us-west-2a:
@@ -132,129 +137,70 @@ aws eks create-cluster \
   --resources-vpc-config subnetIds=subnet-0123456789abcdef0,subnet-0123456789abcdef1,subnet-0123456789abcdef2,subnet-0123456789abcdef3
 ```
 
-NAT 게이트웨이는 프라이빗 서브넷의 워커 노드가 인터넷에 접근해야 하는 경우에 필요하지만, EKS 클러스터 생성 자체에는 필수 요구 사항이 아닙니다. 퍼블릭 서브넷만 사용하는 경우 NAT 게이트웨이 없이도 클러스터를 생성할 수 있습니다(프로덕션 환경에서는 권장되지 않음).
+NAT 게이트웨이는 가능한 인터넷 출구 중 하나입니다. 필요한 VPC 엔드포인트·미러 이미지·사설 연결 경로가 있다면 인터넷 없이 운영할 수 있습니다. 서브넷을 프라이빗으로 배치하는 것과 인터넷 출구를 제거하는 것은 별도 결정입니다. 예시 VPC/서브넷/CIDR은 실제 값으로 바꿉니다.
 
 </details>
 
-3. Amazon EKS 클러스터를 생성할 때 필요한 IAM 역할은 무엇인가요?
-   * A) EKS 서비스 역할만
-   * B) 노드 인스턴스 역할만
-   * C) EKS 서비스 역할과 노드 인스턴스 역할
-   * D) Fargate 실행 역할
+3. 일반 EKS 컨트롤 플레인과 EC2 워커 노드를 함께 구성할 때 역할 구분으로 올바른 것은 무엇인가요?
+   * A) 클러스터 역할만 필요
+   * B) EC2 노드 역할만 필요
+   * C) 별도의 클러스터 역할과 EC2 노드 역할
+   * D) Fargate 실행 역할로 모두 대체
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: C) EKS 서비스 역할과 노드 인스턴스 역할**
+**정답: C) 별도의 클러스터 역할과 EC2 노드 역할**
 
-**설명:** Amazon EKS 클러스터를 생성하고 운영하기 위해서는 두 가지 주요 IAM 역할이 필요합니다: EKS 서비스 역할과 노드 인스턴스 역할입니다. 이 두 역할은 각각 다른 목적을 가지고 있으며, 클러스터의 올바른 작동을 위해 모두 필요합니다.
+클러스터 역할은 `eks.amazonaws.com`을 신뢰하고 EKS가 클러스터 인프라를 관리할 권한을 제공합니다. 일반 EKS에는 `AmazonEKSClusterPolicy` 또는 동등한 범위가 필요합니다. EC2 노드 역할은 `ec2.amazonaws.com`을 신뢰하고 인스턴스 프로필로 제공됩니다. 관리형 노드 그룹의 인스턴스 프로필은 EKS가 구성하며, 노드 부트스트랩이 IAM 역할을 생성하는 것은 아닙니다.
 
-**1. EKS 서비스 역할 (EKS Cluster Role):**
+EC2 노드의 기본 정책은 `AmazonEKSWorkerNodePolicy`와 `AmazonEC2ContainerRegistryPullOnly` 또는 동등한 최소 권한입니다. CNI 권한도 필요하며 IRSA/Pod Identity의 별도 역할을 권장합니다. 그것을 사용하지 않으면 노드 역할에 해당 CNI 권한이 필요합니다. IPv4의 `AmazonEKS_CNI_Policy`를 IPv6에 그대로 적용하지 않습니다. 스토리지·로드 밸런서·로깅 컨트롤러 권한을 모든 노드에 일괄 부여하는 것은 필수 조건이 아닙니다.
 
-* **목적**: AWS EKS 서비스가 사용자를 대신하여 다른 AWS 서비스를 호출할 수 있도록 허용합니다.
-* **필요한 권한**:
-  * EC2, ELB, CloudWatch, KMS 등의 AWS 서비스에 접근
-  * VPC 리소스 관리
-  * 로그 그룹 생성 및 관리
-* **관리형 정책**: `AmazonEKSClusterPolicy`
-*   **생성 방법**:
-
-    ```bash
-    # AWS CLI를 사용한 역할 생성
-    aws iam create-role \
-      --role-name EKSClusterRole \
-      --assume-role-policy-document file://eks-cluster-trust-policy.json
-
-    # 관리형 정책 연결
-    aws iam attach-role-policy \
-      --role-name EKSClusterRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-    ```
-
-    신뢰 정책 (eks-cluster-trust-policy.json):
-
-    ```json
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Service": "eks.amazonaws.com"
-          },
-          "Action": "sts:AssumeRole"
-        }
-      ]
-    }
-    ```
-
-**2. 노드 인스턴스 역할 (Node Instance Role):**
-
-* **목적**: EKS 워커 노드(EC2 인스턴스)가 AWS 서비스와 상호 작용할 수 있도록 허용합니다.
-* **필요한 권한**:
-  * ECR에서 컨테이너 이미지 가져오기
-  * CloudWatch에 로그 쓰기
-  * EBS/EFS 볼륨 관리
-  * 로드 밸런서 등록/등록 취소
-* **관리형 정책**:
-  * `AmazonEKSWorkerNodePolicy`
-  * `AmazonEC2ContainerRegistryReadOnly`
-  * `AmazonEKS_CNI_Policy`
-*   **생성 방법**:
-
-    ```bash
-    # AWS CLI를 사용한 역할 생성
-    aws iam create-role \
-      --role-name EKSNodeRole \
-      --assume-role-policy-document file://ec2-trust-policy.json
-
-    # 관리형 정책 연결
-    aws iam attach-role-policy \
-      --role-name EKSNodeRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-
-    aws iam attach-role-policy \
-      --role-name EKSNodeRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-
-    aws iam attach-role-policy \
-      --role-name EKSNodeRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-    ```
-
-    신뢰 정책 (ec2-trust-policy.json):
-
-    ```json
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Service": "ec2.amazonaws.com"
-          },
-          "Action": "sts:AssumeRole"
-        }
-      ]
-    }
-    ```
-
-**eksctl을 사용한 역할 자동 생성:**
-
-eksctl을 사용하여 클러스터를 생성할 때, 필요한 IAM 역할을 자동으로 생성할 수 있습니다:
+다음은 새 일반 클러스터/노드 역할의 예제입니다. 승인된 계정·역할에서만 실행하고 오류 발생 시 중단합니다. 기존 역할과 충돌하면 해당 역할에 정책을 덧붙이지 않습니다.
 
 ```bash
-eksctl create cluster --name my-cluster --region us-west-2
+IAM_EXAMPLE_DIR=$(mktemp -d /tmp/eks-iam-example.XXXXXX)
+: "${IAM_EXAMPLE_DIR:?}"
+: "${NEW_CLUSTER_ROLE_NAME:?Choose an unused role name for this example}"
+: "${NEW_NODE_ROLE_NAME:?Choose a different unused role name}"
+cat > "$IAM_EXAMPLE_DIR/cluster-trust.json" << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"Service": "eks.amazonaws.com"},
+    "Action": "sts:AssumeRole"
+  }]
+}
+EOF
+cat > "$IAM_EXAMPLE_DIR/node-trust.json" << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"Service": "ec2.amazonaws.com"},
+    "Action": "sts:AssumeRole"
+  }]
+}
+EOF
+# Attach policies only after successfully creating the new role.
+aws iam create-role --role-name "$NEW_CLUSTER_ROLE_NAME" \
+  --assume-role-policy-document "file://$IAM_EXAMPLE_DIR/cluster-trust.json" &&
+aws iam attach-role-policy --role-name "$NEW_CLUSTER_ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+if aws iam create-role --role-name "$NEW_NODE_ROLE_NAME" \
+  --assume-role-policy-document "file://$IAM_EXAMPLE_DIR/node-trust.json"; then
+  aws iam attach-role-policy --role-name "$NEW_NODE_ROLE_NAME" \
+    --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy &&
+  aws iam attach-role-policy --role-name "$NEW_NODE_ROLE_NAME" \
+    --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly
+fi
 ```
 
-**추가 역할 (선택적):**
+`CreateCluster`만 호출하여 제어면을 만들 때는 EC2 노드 역할이 아직 필요하지 않습니다. EC2 노드 구성 시 추가합니다. Fargate는 별도의 Pod 실행 역할을 쓰며 앱의 AWS 권한과 다릅니다. Auto Mode는 클러스터의 추가 정책·`sts:TagSession`, 최소 노드 정책을 사용하는 별도 역할 구성이 필요합니다. 프로비저닝 사용자의 `iam:PassRole` 등 권한도 따로 검토합니다.
 
-* **Fargate 실행 역할**: Fargate 프로필을 사용하는 경우에만 필요합니다.
-* **서비스 계정 IAM 역할**: IRSA(IAM Roles for Service Accounts)를 사용하는 경우 필요합니다.
-* **ALB 컨트롤러 역할**: AWS Load Balancer Controller를 사용하는 경우 필요합니다.
-
-Fargate 실행 역할은 Fargate 프로필을 사용하는 경우에만 필요하며, 기본 EKS 클러스터 생성에는 필수가 아닙니다. 따라서 EKS 클러스터를 생성하기 위해 필수적으로 필요한 IAM 역할은 EKS 서비스 역할과 노드 인스턴스 역할입니다.
+[Node role requirements](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html) · [Auto Mode roles](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)
 
 </details>
 
@@ -286,13 +232,7 @@ Fargate 실행 역할은 Fargate 프로필을 사용하는 경우에만 필요�
 eksctl create cluster --name my-cluster --region us-west-2
 ```
 
-이 명령어는 다음과 같은 기본 설정으로 클러스터를 생성합니다:
-
-* 2개의 m5.large 노드
-* 새로운 VPC 생성
-* 기본 Amazon Linux 2 AMI 사용
-* 관리형 노드 그룹 사용
-* 필요한 IAM 역할 자동 생성
+기본값은 eksctl 버전에 따라 달라집니다. 아래 파일에서 EKS 버전·AL2023·노드 수·엔드포인트를 명시합니다. 새 VPC·노드·IAM 리소스가 만들어질 수 있으므로 승인된 테스트 계정에서 구성과 비용을 먼저 검토합니다.
 
 **추가 옵션을 포함한 고급 명령어:**
 
@@ -306,8 +246,8 @@ eksctl create cluster \
   --nodes-min 1 \
   --nodes-max 5 \
   --with-oidc \
-  --ssh-access \
-  --ssh-public-key my-key \
+  --node-ami-family AmazonLinux2023 \
+  --node-private-networking \
   --managed
 ```
 
@@ -322,17 +262,24 @@ kind: ClusterConfig
 metadata:
   name: my-cluster
   region: us-west-2
-  version: "1.28"
+  version: "1.36"
 
-nodeGroups:
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs: ["${APPROVED_API_CIDR:?Set your approved client CIDR}"]
+
+managedNodeGroups:
   - name: ng-1
     instanceType: t3.medium
+    amiFamily: AmazonLinux2023
+    privateNetworking: true
     desiredCapacity: 2
     minSize: 1
     maxSize: 3
     ssh:
-      allow: true
-      publicKeyName: my-key
+      allow: false
 EOF
 
 # 구성 파일을 사용한 클러스터 생성
@@ -343,104 +290,82 @@ eksctl create cluster -f cluster.yaml
 
 * `eksctl create-cluster`: 잘못된 명령어 형식입니다. eksctl에서는 하이픈(-)이 아닌 공백을 사용하여 명령어를 구분합니다.
 * `eksctl new cluster`: 'new'는 eksctl의 유효한 명령어가 아닙니다.
-* `eksctl start cluster`: 'start'는 eksctl의 유효한 명령어가 아닙니다. 이미 존재하는 클러스터를 시작하는 개념은 EKS에 적용되지 않습니다.
+* `eksctl start cluster`: 'start'는 eksctl의 유효한 명령어가 아닙니다. 문서화된 수명 주기 명령을 사용해야 합니다.
 
 eksctl은 EKS 클러스터 관리를 위한 다양한 명령어를 제공합니다:
 
 * `eksctl create cluster`: 새 클러스터 생성
 * `eksctl get cluster`: 클러스터 목록 조회
-* `eksctl update cluster`: 클러스터 업데이트
+* `eksctl upgrade cluster`: 클러스터 업데이트
 * `eksctl delete cluster`: 클러스터 삭제
 * `eksctl create nodegroup`: 노드 그룹 추가
 * `eksctl scale nodegroup`: 노드 그룹 크기 조정
 
 </details>
 
-5. Amazon EKS 클러스터를 생성할 때 지정할 수 있는 Kubernetes 버전으로 올바른 것은 무엇인가요?
-   * A) 최신 버전만 지원됨
-   * B) 최신 버전과 이전 2개 버전만 지원됨
-   * C) AWS에서 지원하는 모든 Kubernetes 버전
+5. 새 EKS 클러스터의 Kubernetes 버전은 어디에서 선택하나요?
+   * A) 최신 업스트림 버전만
+   * B) 항상 최신과 이전 2개만
+   * C) 대상 리전에서 EKS가 제공하는 표준/연장 지원 버전
    * D) 모든 Kubernetes 버전
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: C) AWS에서 지원하는 모든 Kubernetes 버전**
+**정답: C) 대상 리전에서 EKS가 제공하는 표준/연장 지원 버전**
 
-**설명:** Amazon EKS 클러스터를 생성할 때는 AWS에서 현재 지원하는 Kubernetes 버전 중에서 선택할 수 있습니다. AWS는 일반적으로 여러 Kubernetes 버전을 동시에 지원하며, 이는 최신 버전과 이전의 몇 가지 버전을 포함합니다.
+EKS 출시일부터 표준 지원 **14개월**, 이어서 추가 요금의 연장 지원 **12개월**을 제공합니다. 2026년 9월 11일 공식 목록은 표준 **1.34–1.36**, 연장 **1.31–1.33**입니다. 업스트림 1.37 출시만으로 EKS 지원을 추정하지 않습니다. 새 클러스터를 만들 수 있는 버전은 대상 리전의 EKS 목록으로 확인합니다.
 
-**EKS의 Kubernetes 버전 지원 정책:**
+연장 지원은 기본 활성화되며 지원 정책과 종료 시점에 따라 제어면이 자동 업그레이드될 수 있습니다. 노드·애드온 갱신은 별도로 계획합니다. 지원 종료 날짜는 AWS 공지를 따르고 업그레이드를 미루는 근거로 최대 지원 기간을 사용하지 않습니다.
 
-1. **지원 기간**:
-   * 각 Kubernetes 버전은 EKS에서 출시된 후 14개월 동안 지원됩니다.
-   * 지원 종료 날짜는 최소 60일 전에 공지됩니다.
-2. **지원되는 버전**:
-   * 일반적으로 EKS는 3-4개의 Kubernetes 버전을 동시에 지원합니다.
-   * 새 버전은 Kubernetes 커뮤니티 출시 후 몇 개월 내에 EKS에서 사용 가능해집니다.
-3.  **버전 확인 방법**:
+다음은 버전 조회·구성 생성·AWS 생성 API·기존 클러스터 업그레이드의 서로 다른 예시입니다. 승인된 대상과 필요한 역할·서브넷·CIDR을 준비하고 생성/업그레이드 명령을 무조건 연속 실행하지 않습니다.
 
-    ```bash
-    # AWS CLI를 사용하여 지원되는 버전 확인
-    aws eks describe-addon-versions | grep kubernetesVersion | sort -u
+```bash
+aws eks describe-cluster-versions --region "${EXAMPLE_REGION:?}" --output table
 
-    # 또는
-    aws eks get-cluster-version-list
-    ```
-4.  **버전 지정 예시**:
+# Generate a versioned config for review; this does not create the cluster.
+EKS_VERSION_DIR=$(mktemp -d /tmp/eks-version.XXXXXX)
+: "${EKS_VERSION_DIR:?}"
+eksctl create cluster --name "${NEW_CLUSTER_NAME:?}" --region "$EXAMPLE_REGION" \
+  --version 1.36 --dry-run > "$EKS_VERSION_DIR/version-example.yaml"
+# Review all generated defaults, AMI, endpoint CIDRs and costs before creating.
 
-    ```bash
-    # eksctl을 사용한 특정 버전 지정
-    eksctl create cluster --name my-cluster --version 1.28 --region us-west-2
+# AWS CLI creation uses --kubernetes-version; the API JSON field is version.
+aws eks create-cluster --name "$NEW_CLUSTER_NAME" --region "$EXAMPLE_REGION" \
+  --kubernetes-version 1.36 --role-arn "${CLUSTER_ROLE_ARN:?}" \
+  --access-config authenticationMode=API \
+  --resources-vpc-config "subnetIds=${SUBNET_A:?},${SUBNET_B:?},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}"
 
-    # AWS CLI를 사용한 특정 버전 지정
-    aws eks create-cluster \
-      --name my-cluster \
-      --kubernetes-version 1.28 \
-      --role-arn arn:aws:iam::123456789012:role/EksClusterRole \
-      --resources-vpc-config subnetIds=subnet-12345,subnet-67890
-    ```
-5.  **버전 업그레이드**:
+# Updating an existing control plane is a separate operation.
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_REGION" \
+  --query cluster.version
+# Only after upgrade-readiness checks and choosing the next supported minor:
+aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?}"
+```
 
-    * 클러스터 생성 후에도 지원되는 버전으로 업그레이드할 수 있습니다.
-    * 일반적으로 한 번에 한 마이너 버전씩 업그레이드하는 것이 권장됩니다.
+제어면 전방 업그레이드는 한 번에 한 마이너씩 수행해야 합니다. 기능 요구 사항, 남은 지원 기간과 애드온/워크로드 호환성을 함께 검토합니다. 이전 버전이 항상 더 안정적이라는 가정 대신 실제 대상 버전으로 검증합니다. 애드온 메타데이터의 버전 문자열을 grep하는 것은 클러스터 지원 목록 조회를 대신하지 못합니다.
 
-    ```bash
-    # 클러스터 버전 업그레이드
-    aws eks update-cluster-version \
-      --name my-cluster \
-      --kubernetes-version 1.28
-    ```
-
-**버전 선택 시 고려 사항:**
-
-1. **안정성**:
-   * 최신 버전은 새로운 기능을 제공하지만, 초기 버그가 있을 수 있습니다.
-   * 안정성이 중요한 프로덕션 환경에서는 검증된 이전 버전을 선택하는 것이 좋을 수 있습니다.
-2. **기능 요구 사항**:
-   * 특정 Kubernetes 기능이 필요한 경우, 해당 기능을 지원하는 최소 버전을 선택해야 합니다.
-3. **지원 기간**:
-   * 장기 지원이 필요한 경우, 최근에 출시된 버전을 선택하여 지원 기간을 최대화할 수 있습니다.
-4. **에코시스템 호환성**:
-   * 사용 중인 도구, 애드온, 운영자 등이 선택한 Kubernetes 버전과 호환되는지 확인해야 합니다.
-
-다른 옵션들의 문제점:
-
-* 최신 버전만 지원되는 것이 아니라, 여러 버전이 동시에 지원됩니다.
-* 지원되는 버전 수는 고정된 "최신 버전과 이전 2개 버전"이 아니라, AWS의 지원 정책에 따라 달라집니다.
-* 모든 Kubernetes 버전이 지원되는 것이 아니라, AWS에서 테스트하고 지원하는 버전만 사용할 수 있습니다.
+[EKS version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
 
 </details>
 
-6\. Amazon EKS 클러스터에서 노드 그룹을 생성할 때 선택할 수 있는 옵션이 아닌 것은 무엇인가요? - A) 관리형 노드 그룹 - B) 자체 관리형 노드 그룹 - C) Fargate 프로필 - D) 서버리스 노드 그룹
+6. EKS 워크로드의 컴퓨팅을 자체적으로 프로비저닝하지 않는 것은 무엇인가요?
+   * A) 관리형 노드 그룹
+   * B) 자체 관리형 노드 그룹
+   * C) Fargate 프로필
+   * D) Kubernetes 네임스페이스
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: D) 서버리스 노드 그룹**
+**정답: D) Kubernetes 네임스페이스**
 
-**설명:** "서버리스 노드 그룹"은 Amazon EKS에 존재하지 않는 개념입니다. EKS에서 워크로드를 실행하기 위한 세 가지 주요 옵션은 관리형 노드 그룹, 자체 관리형 노드 그룹, 그리고 Fargate 프로필입니다.
+네임스페이스는 Kubernetes 리소스를 구분하지만 컴퓨팅을 제공하지는 않습니다. 관리형 EC2 노드 그룹·자체 관리형 EC2 노드·Fargate 프로필은 유효한 실행 방식입니다. EKS Auto Mode도 관리형 노드를 프로비저닝하며 Hybrid Nodes는 고객이 관리하는 온프레미스/엣지 용량을 연결합니다. 모든 방식이 관리형 노드 그룹 API를 사용하는 것은 아닙니다.
+
+
+아래 생성 명령은 기존 클러스터와 사용하지 않는 그룹·프로필 이름에 적용하는 대안입니다. 필수 변수를 검토한 값으로 설정하고 CNI·노드 권한과 프라이빗 서브넷 연결을 확인합니다. Fargate에는 포드 실행 역할, 호환 포드, 프라이빗 서브넷이 필요하며 프로필 자체가 애플리케이션 포드를 만들지는 않습니다.
 
 **1. 관리형 노드 그룹 (Managed Node Groups):**
 
@@ -448,16 +373,16 @@ eksctl은 EKS 클러스터 관리를 위한 다양한 명령어를 제공합니�
   * AWS에서 노드의 프로비저닝 및 수명 주기 관리
   * 자동 EC2 인스턴스 생성 및 등록
   * 자동 ASG(Auto Scaling Group) 구성
-  * 자동 Kubernetes 버전 업그레이드
-  * 손상된 노드 자동 교체
-  * 노드 AMI 자동 업데이트
+  * 운영자가 시작하는 노드 Kubernetes 버전 업데이트
+  * EC2 헬스 교체 및 지원되는 상태 신호·설정에 따른 EKS 노드 복구
+  * 운영자가 시작하는 관리형 AMI 업데이트
 *   **생성 방법**:
 
     ```bash
     # eksctl을 사용한 관리형 노드 그룹 생성
     eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-mng \
+      --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+      --name my-mng --managed --node-ami-family AmazonLinux2023 --node-private-networking \
       --node-type t3.medium \
       --nodes 3 \
       --nodes-min 1 \
@@ -465,12 +390,12 @@ eksctl은 EKS 클러스터 관리를 위한 다양한 명령어를 제공합니�
 
     # AWS CLI를 사용한 관리형 노드 그룹 생성
     aws eks create-nodegroup \
-      --cluster-name my-cluster \
-      --nodegroup-name my-mng \
-      --subnets subnet-12345 subnet-67890 \
+      --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+      --nodegroup-name my-mng --ami-type AL2023_x86_64_STANDARD \
+      --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
       --instance-types t3.medium \
       --scaling-config minSize=1,maxSize=5,desiredSize=3 \
-      --node-role arn:aws:iam::123456789012:role/EksNodeRole
+      --node-role "${NODE_ROLE_ARN:?}"
     ```
 
 **2. 자체 관리형 노드 그룹 (Self-managed Node Groups):**
@@ -485,8 +410,8 @@ eksctl은 EKS 클러스터 관리를 위한 다양한 명령어를 제공합니�
     ```bash
     # eksctl을 사용한 자체 관리형 노드 그룹 생성
     eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-smng \
+      --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+      --name my-smng --node-ami-family AmazonLinux2023 --node-private-networking \
       --node-type t3.medium \
       --nodes 3 \
       --nodes-min 1 \
@@ -508,275 +433,140 @@ eksctl은 EKS 클러스터 관리를 위한 다양한 명령어를 제공합니�
     ```bash
     # eksctl을 사용한 Fargate 프로필 생성
     eksctl create fargateprofile \
-      --cluster my-cluster \
+      --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
       --name my-fargate-profile \
       --namespace my-namespace \
       --labels app=my-app
 
     # AWS CLI를 사용한 Fargate 프로필 생성
     aws eks create-fargate-profile \
-      --cluster-name my-cluster \
+      --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
       --fargate-profile-name my-fargate-profile \
-      --pod-execution-role-arn arn:aws:iam::123456789012:role/FargatePodExecutionRole \
-      --selectors namespace=my-namespace,labels={app=my-app}
+      --pod-execution-role-arn "${FARGATE_EXECUTION_ROLE_ARN:?}" \
+      --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+      --selectors '[{"namespace":"my-namespace","labels":{"app":"my-app"}}]'
     ```
 
 **각 옵션의 비교:**
 
-| 특성      | 관리형 노드 그룹 | 자체 관리형 노드 그룹 | Fargate 프로필      |
-| ------- | --------- | ------------ | ---------------- |
-| 관리 오버헤드 | 낮음        | 높음           | 없음               |
-| 사용자 지정  | 중간        | 높음           | 낮음               |
-| 비용 효율성  | 중간        | 높음 (최적화 시)   | 낮음 (편의성에 비용 지불)  |
-| 확장성     | 자동        | 수동/자동        | 자동               |
-| 사용 사례   | 일반적인 워크로드 | 특수 요구 사항     | 가변적 워크로드, 개발/테스트 |
+| 특성 | 관리형 노드 그룹 | 자체 관리형 노드 | Fargate |
+| --- | --- | --- | --- |
+| 인프라 관리 | AWS가 교체 과정을 관리, 운영자가 업데이트·스케일러 구성 | 운영자가 AMI·부트스트랩·수명 주기 관리 | 호스트는 AWS가 관리, 앱·프로필·요청은 사용자 관리 |
+| 비용 | 인스턴스·사용률·약정·운영 조건에 따라 평가 | 최적화 및 운영 비용을 함께 평가 | 할당된 Pod 크기·실행 시간·제약을 비교 |
+| 확장 | 별도 노드 오토스케일러/정책 필요 | 별도 자동화 필요 | 프로필에 맞는 Pod별 컴퓨팅 제공; 앱 복제본 확장은 별도 |
 
-"서버리스 노드 그룹"이라는 용어는 공식적으로 존재하지 않습니다. Fargate는 서버리스 컨테이너 실행 환경을 제공하지만, 이는 "노드 그룹"이 아닌 "Fargate 프로필"로 구성됩니다. Fargate를 사용하면 노드를 직접 관리할 필요가 없으며, 포드 실행에 필요한 컴퓨팅 리소스만 프로비저닝됩니다.
+Auto Mode의 NodePool과 Fargate 프로필은 EC2 관리형 노드 그룹과 다른 리소스입니다. Fargate에도 워크로드·보안·가용성 관리가 필요하며 계산 비용이 항상 더 높거나 낮다고 단정할 수 없습니다.
 
 </details>
 
-7\. Amazon EKS 클러스터에서 노드 AMI 유형으로 지원되지 않는 것은 무엇인가요? - A) Amazon Linux 2 - B) Amazon Linux 2023 - C) Bottlerocket - D) Ubuntu Core
+7. 새 EKS 1.36 노드용 AWS 게시 EKS 최적화 AMI 계열이 아닌 것은 무엇인가요?
+   * A) Amazon Linux 2023
+   * B) Bottlerocket
+   * C) Windows Server 2022
+   * D) Ubuntu Core
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: D) Ubuntu Core**
 
-**설명:** Ubuntu Core는 Amazon EKS에서 공식적으로 지원하는 노드 AMI 유형이 아닙니다. EKS에서 공식적으로 지원하는 노드 AMI 유형은 Amazon Linux 2, Amazon Linux 2023, Bottlerocket입니다.
+Ubuntu Core를 AWS 게시 EKS 최적화 AMI로 취급하지 않습니다. Ubuntu Server용 Canonical 이미지나 사용자 지정 AMI는 별도의 이미지 게시자·호환성·지원 경로이며, Ubuntu Core와 동일하지 않습니다.
 
-**EKS에서 지원하는 노드 AMI 유형:**
+**현재 예제의 선택지**
 
-1.  **Amazon Linux 2 (AL2)**:
+- **AL2023**: EKS 최적화 AMI와 `nodeadm` 부트스트랩을 사용합니다. Kubernetes 버전·CPU 아키텍처·리전·CNI 호환성을 확인합니다.
+- **Bottlerocket**: 컨테이너 중심 OS이며 설정 방식과 업데이트 절차가 일반 Linux 노드와 다릅니다.
+- **Windows**: 지원되는 Windows Server AMI와 호스트/컨테이너 버전을 맞추고 Windows 네트워킹·인증·시스템 워크로드 요구 사항을 준비합니다. Auto Mode/Fargate용 Windows 노드 예제가 아닙니다.
 
-    * AWS에서 제공하는 기본 Linux 배포판
-    * EKS 최적화 AMI로 제공됨
-    * 대부분의 EKS 워크로드에 권장됨
-    * 장기 지원 및 보안 업데이트
-
-    ```bash
-    # Amazon Linux 2 기반 노드 그룹 생성
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name al2-nodes \
-      --node-ami-family AmazonLinux2
-    ```
-2.  **Amazon Linux 2023 (AL2023)**:
-
-    * Amazon Linux의 최신 버전
-    * 향상된 보안 및 성능
-    * 최신 커널 및 소프트웨어 패키지
-    * EKS 최적화 AMI로 제공됨
-
-    ```bash
-    # Amazon Linux 2023 기반 노드 그룹 생성
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name al2023-nodes \
-      --node-ami-family AmazonLinux2023
-    ```
-3.  **Bottlerocket**:
-
-    * 컨테이너 워크로드에 최적화된 오픈 소스 Linux 기반 OS
-    * 최소화된 공격 표면
-    * 트랜잭션 기반 업데이트
-    * 컨테이너 중심 설계
-
-    ```bash
-    # Bottlerocket 기반 노드 그룹 생성
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name bottlerocket-nodes \
-      --node-ami-family Bottlerocket
-    ```
-
-**기타 지원되는 AMI 옵션:**
-
-1.  **Windows**:
-
-    * Windows Server 2019, 2022 기반 AMI
-    * Windows 컨테이너 워크로드 실행 가능
-
-    ```bash
-    # Windows 기반 노드 그룹 생성
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name windows-nodes \
-      --node-ami-family WindowsServer2022FullContainer
-    ```
-2.  **사용자 지정 AMI**:
-
-    * 특정 요구 사항에 맞게 사용자 지정된 AMI 사용 가능
-    * 자체 관리형 노드 그룹에서 주로 사용
-
-    ```bash
-    # 사용자 지정 AMI 기반 노드 그룹 생성
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name custom-nodes \
-      --node-ami ami-1234567890abcdef0
-    ```
-
-**Ubuntu를 EKS에서 사용하는 방법:**
-
-Ubuntu Core는 공식적으로 지원되지 않지만, 표준 Ubuntu Server AMI를 사용하여 자체 관리형 노드 그룹을 생성할 수 있습니다. 이 경우 다음과 같은 추가 구성이 필요합니다:
-
-1. Ubuntu Server AMI 선택
-2. 필요한 Kubernetes 구성 요소 설치
-3. 부트스트랩 스크립트를 사용하여 노드를 클러스터에 연결
+**AL2는 과거 환경의 이전 대상**입니다. EKS 최적화 AL2 AMI 게시/지원은 2025년 11월 26일, AL2 OS 지원은 2026년 6월 30일에 종료되었습니다. EKS Kubernetes 연장 지원이 AL2 지원을 연장하지 않습니다. 신규 EKS 1.36 배포에 AL2를 권장하지 않습니다.
 
 ```bash
-# Ubuntu 기반 자체 관리형 노드 그룹 생성 예시
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name ubuntu-nodes \
-  --node-ami ami-ubuntu-server-id \
-  --managed=false \
-  --ssh-access \
-  --ssh-public-key my-key \
-  --pre-bootstrap-commands 'apt-get update && apt-get install -y docker.io'
+# Alternative examples; create only the reviewed group needed by your workload.
+eksctl create nodegroup --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}"   --name al2023-nodes --managed --node-ami-family AmazonLinux2023 --node-private-networking
+
+eksctl create nodegroup --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"   --name bottlerocket-nodes --managed --node-ami-family Bottlerocket --node-private-networking
+
+# Only after preparing the cluster for Windows:
+eksctl create nodegroup --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"   --name windows-nodes --managed --node-ami-family WindowsServer2022FullContainer --node-private-networking
 ```
 
-**AMI 선택 시 고려 사항:**
+사용자 지정 AMI는 관리형 노드 그룹의 시작 템플릿에서도 사용할 수 있습니다. AMI를 고정하면 해당 OS/런타임·클러스터 메타데이터·부트스트랩 구성을 검증해야 합니다. 임의 Ubuntu 이미지에 `docker.io`만 설치해 EKS 노드가 된다고 가정하지 않습니다. Canonical의 대상 EKS 버전 이미지와 검토한 eksctl/시작 템플릿 구성을 사용합니다. 시작 템플릿의 `ImageId`, nodegroup `amiType`, 사용자 데이터 병합 제약은 고급 문제에서 구분합니다.
 
-* **보안**: 정기적인 보안 업데이트 및 패치
-* **성능**: 워크로드에 최적화된 커널 및 구성
-* **호환성**: Kubernetes 버전과의 호환성
-* **관리 용이성**: 업데이트 및 유지 관리 프로세스
-* **특수 요구 사항**: GPU 지원, 커널 모듈 등
+이미지 선택은 보안 업데이트, 실제 워크로드 성능, Kubernetes/드라이버 호환성, 운영 방법과 GPU 등 특수 요구 사항에 따라 검토합니다.
 
-Ubuntu Core는 IoT 및 엣지 디바이스를 위한 경량 운영 체제로, EKS 노드로 사용하기 위한 공식 지원이나 최적화가 되어 있지 않습니다. 따라서 EKS 클러스터에서 노드 AMI 유형으로 지원되지 않는 것은 Ubuntu Core입니다.
+[AL2 transition](https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html) · [AL2023/nodeadm](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html) · [Windows prerequisites](https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html)
 
 </details>
 
-8\. Amazon EKS 클러스터의 엔드포인트 액세스 구성에 대한 설명으로 올바른 것은 무엇인가요? - A) 기본적으로 퍼블릭 엔드포인트만 활성화됨 - B) 기본적으로 프라이빗 엔드포인트만 활성화됨 - C) 기본적으로 퍼블릭 및 프라이빗 엔드포인트 모두 활성화됨 - D) 엔드포인트 액세스는 클러스터 생성 후 변경할 수 없음
+8. CreateCluster API에서 엔드포인트 접근 설정을 생략하면 기본값은 무엇인가요?
+   * A) 퍼블릭 활성, 프라이빗 비활성
+   * B) 프라이빗만 활성
+   * C) 두 엔드포인트 모두 활성
+   * D) 생성 후 접근 설정 변경 불가
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: A) 퍼블릭 활성, 프라이빗 비활성**
+
+API 기본값은 퍼블릭 활성·프라이빗 비활성입니다. eksctl, CDK나 콘솔 생성 경로는 다른 값을 명시할 수 있으므로 모든 도구의 기본값으로 일반화하지 않습니다. 접근 설정은 생성 후에도 변경할 수 있습니다.
+
+| 퍼블릭 | 프라이빗 | 접근 경로 |
+| --- | --- | --- |
+| 켬 | 끔 | 공개 엔드포인트와 publicAccessCidrs; 노드/CI의 실제 출구 주소도 검토 |
+| 켬 | 켬 | VPC 내 요청은 사설 경로, 외부는 허용된 공개 CIDR |
+| 끔 | 켬 | VPC 또는 연결된 네트워크의 사설 경로만 사용 |
+| 끔 | 끔 | 유효하지 않은 구성 |
+
+**클러스터 보안 그룹은 프라이빗 엔드포인트와 kubelet 경로를 제어하며 퍼블릭 엔드포인트를 제한하지 않습니다.** `publicAccessCidrs`는 공개 엔드포인트용이고 사설 접근에는 적용되지 않습니다. 네트워크 도달성과 별개로 인증·권한 부여가 필요합니다. IPv4 예제의 CIDR을 실제 승인된 클라이언트 출구 주소로 바꿉니다.
+
+```bash
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query cluster.resourcesVpcConfig
+
+# Select the actual approved client egress CIDR, not an arbitrary example range.
+ENDPOINT_UPDATE_ID=$(aws eks update-cluster-config --name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" \
+  --resources-vpc-config "endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}" \
+  --query update.id --output text)
+: "${ENDPOINT_UPDATE_ID:?Update request failed}"
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$ENDPOINT_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+```
+
+이전 업데이트가 `Successful`인지 확인하고 관리자/CI 네트워크에서 사설 DNS·라우팅·API 접근을 검증한 후에만 공개 접근을 끕니다. 연속된 비동기 요청을 즉시 실행하지 않으며 두 플래그를 하나의 요청에서 함께 설정합니다.
+
+```bash
+# Separate alternative: run only after verifying private DNS/routing/API access
+# from the administration and CI/CD network, and after prior updates succeeded.
+PRIVATE_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true \
+  --query update.id --output text)
+: "${PRIVATE_UPDATE_ID:?Update request failed}"
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$PRIVATE_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+```
+
+프라이빗 API 접근과 인터넷 출구 제거는 별도 설계입니다. 보안 수준은 신원·네트워크·운영 통제를 함께 평가하며 프라이빗 설정만으로 가용성이나 보안을 보장하지 않습니다. VPN/Direct Connect/관리 호스트와 그 연결 비용도 고려합니다. IPv6 엔드포인트와 Hybrid Nodes는 별도 DNS·CIDR 제약이 있으므로 공식 지침을 확인합니다.
+
+[Cluster endpoint access controls](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
+
+</details>
+
+9. Amazon EKS 클러스터에서 노드 그룹의 인스턴스 유형을 선택할 때 고려해야 할 사항이 아닌 것은 무엇인가요?
+   * A) 워크로드 요구 사항 (CPU, 메모리, 스토리지)
+   * B) 비용 최적화
+   * C) 로컬 kubeconfig 컨텍스트 별칭
+   * D) 인스턴스 세대 (예: t3 vs t2)
 
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: A) 기본적으로 퍼블릭 엔드포인트만 활성화됨**
+**정답: C) 로컬 kubeconfig 컨텍스트 별칭**
 
-**설명:** Amazon EKS 클러스터를 생성할 때, 기본적으로 퍼블릭 엔드포인트만 활성화되고 프라이빗 엔드포인트는 비활성화됩니다. 이 구성은 클러스터 생성 후에 변경할 수 있으며, 보안 요구 사항에 따라 다양한 엔드포인트 액세스 구성을 선택할 수 있습니다.
-
-**EKS 클러스터 엔드포인트 액세스 옵션:**
-
-1.  **퍼블릭 엔드포인트만 활성화 (기본 설정)**:
-
-    * 인터넷을 통해 클러스터 API 서버에 접근 가능
-    * 보안 그룹을 통해 접근 제한 가능
-    * 개발 환경이나 테스트 환경에 적합
-
-    ```bash
-    # AWS CLI를 사용한 구성
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=false
-    ```
-2.  **퍼블릭 및 프라이빗 엔드포인트 모두 활성화**:
-
-    * VPC 내부에서 프라이빗 IP를 통한 접근 가능
-    * 인터넷을 통한 접근도 가능
-    * 하이브리드 환경에 적합
-
-    ```bash
-    # AWS CLI를 사용한 구성
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true
-    ```
-3.  **프라이빗 엔드포인트만 활성화**:
-
-    * VPC 내부에서만 클러스터 API 서버에 접근 가능
-    * 인터넷을 통한 접근 불가
-    * 가장 높은 수준의 보안을 제공
-    * 프로덕션 환경에 권장
-
-    ```bash
-    # AWS CLI를 사용한 구성
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
-    ```
-4.  **퍼블릭 액세스 제한**:
-
-    * 특정 CIDR 블록에서만 퍼블릭 엔드포인트 접근 허용
-    * 회사 네트워크 또는 VPN에서만 접근 가능하도록 제한
-
-    ```bash
-    # AWS CLI를 사용한 구성
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=["203.0.113.0/24","198.51.100.0/24"]
-    ```
-
-**eksctl을 사용한 클러스터 생성 시 엔드포인트 구성:**
-
-```yaml
-# cluster.yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-
-metadata:
-  name: my-cluster
-  region: us-west-2
-
-vpc:
-  clusterEndpoints:
-    publicAccess: true   # 퍼블릭 엔드포인트 활성화
-    privateAccess: true  # 프라이빗 엔드포인트 활성화
-  publicAccessCIDRs: ["203.0.113.0/24"]  # 퍼블릭 액세스 제한
-```
-
-```bash
-eksctl create cluster -f cluster.yaml
-```
-
-**엔드포인트 액세스 구성 변경:**
-
-```bash
-# 프라이빗 엔드포인트 활성화
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPrivateAccess=true
-
-# 퍼블릭 엔드포인트 비활성화
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPublicAccess=false
-```
-
-**엔드포인트 액세스 구성 시 고려 사항:**
-
-1. **보안 요구 사항**:
-   * 프라이빗 엔드포인트만 사용하면 가장 높은 수준의 보안 제공
-   * 퍼블릭 액세스가 필요한 경우 CIDR 제한 적용
-2. **네트워크 연결**:
-   * 프라이빗 엔드포인트만 사용하는 경우, VPC 내부 또는 VPN/Direct Connect를 통해서만 접근 가능
-   * 하이브리드 작업 환경에서는 두 엔드포인트 모두 활성화하는 것이 유용할 수 있음
-3. **운영 요구 사항**:
-   * CI/CD 파이프라인, 외부 도구 등이 클러스터에 접근해야 하는 경우 고려
-4. **비용**:
-   * 엔드포인트 구성 자체에는 추가 비용이 없음
-   * 프라이빗 엔드포인트만 사용하는 경우 VPN 또는 Direct Connect 비용 고려
-
-다른 옵션들의 문제점:
-
-* 기본적으로 프라이빗 엔드포인트만 활성화되는 것이 아니라, 퍼블릭 엔드포인트만 활성화됩니다.
-* 기본적으로 퍼블릭 및 프라이빗 엔드포인트 모두 활성화되는 것이 아니라, 퍼블릭 엔드포인트만 활성화됩니다.
-* 엔드포인트 액세스는 클러스터 생성 후에도 변경할 수 있습니다.
-
-</details>
-
-9\. Amazon EKS 클러스터에서 노드 그룹의 인스턴스 유형을 선택할 때 고려해야 할 사항이 아닌 것은 무엇인가요? - A) 워크로드 요구 사항 (CPU, 메모리, 스토리지) - B) 비용 최적화 - C) 가용 영역 수 - D) 인스턴스 세대 (예: t3 vs t2)
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) 가용 영역 수**
-
-**설명:** 가용 영역 수는 노드 그룹의 인스턴스 유형을 선택할 때 직접적인 고려 사항이 아닙니다. 가용 영역은 노드 그룹이 배포되는 위치와 관련이 있으며, 인스턴스 유형 자체의 선택과는 별개입니다. 인스턴스 유형은 워크로드 요구 사항, 비용 최적화, 인스턴스 세대 등을 고려하여 선택해야 합니다.
+kubeconfig 별칭은 로컬 클라이언트의 이름이며 인스턴스 성능·가격·가용성을 바꾸지 않습니다. 반면 요구되는 AZ에서 해당 인스턴스 유형을 제공하는지, 실제 용량과 할당량이 충분한지는 중요한 선택 조건입니다.
 
 **노드 그룹 인스턴스 유형 선택 시 실제 고려 사항:**
 
@@ -792,8 +582,8 @@ aws eks update-cluster-config \
    * 적절한 크기의 인스턴스 선택 (오버프로비저닝 방지)
    * ARM 기반 Graviton 인스턴스(예: m6g, c6g)를 통한 비용 절감
 3. **인스턴스 세대**:
-   * 최신 세대 인스턴스는 일반적으로 더 나은 성능과 비용 효율성 제공
-   * 예: t3는 t2보다 더 나은 성능과 가격 대비 성능 제공
+   * 실제 워크로드에서 세대별 가격·성능을 비교
+   * 버스터블 계열은 CPU 크레딧과 기본 성능도 고려
    * 최신 세대는 향상된 네트워킹, 스토리지 성능 등의 기능 제공
 4. **네트워킹 요구 사항**:
    * 향상된 네트워킹 지원 (ENA, EFA 등)
@@ -809,17 +599,17 @@ aws eks update-cluster-config \
 
 **가용 영역과 노드 그룹 배포:**
 
-가용 영역 수는 인스턴스 유형 선택이 아닌, 노드 그룹 배포 전략과 관련이 있습니다:
+필요한 AZ 범위는 사용할 수 있는 인스턴스 유형에도 영향을 줍니다. 카탈로그에 있는 유형이라고 즉시 용량이 확보되는 것은 아닙니다:
 
 * 노드 그룹은 여러 가용 영역에 걸쳐 배포하여 고가용성 확보
-* 각 가용 영역에 균등하게 노드 배포
+* 노드 용량과 Pod 토폴로지 분산을 계획하고 실제 배치를 확인
 * 리전 내 모든 가용 영역 또는 특정 가용 영역 선택 가능
 
 ```bash
 # 특정 가용 영역에 노드 그룹 배포
 eksctl create nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
+  --cluster "${EXAMPLE_CLUSTER:?}" --region us-west-2 \
+  --name my-nodegroup --managed --node-ami-family AmazonLinux2023 --node-private-networking \
   --node-type m5.large \
   --nodes 3 \
   --nodes-min 1 \
@@ -842,89 +632,17 @@ eksctl create nodegroup \
    * GPU 인스턴스: p3.2xlarge, g4dn.xlarge
    * 가속 컴퓨팅 기능 제공
 
-인스턴스 유형 선택은 워크로드 특성, 비용 제약, 성능 요구 사항 등을 고려하여 결정해야 하며, 가용 영역 수는 인스턴스 유형 자체의 선택보다는 노드 그룹의 배포 전략과 관련이 있습니다.
+위 계열은 예시이며 최신 제품 목록이나 측정된 성능 순위가 아닙니다. 워크로드·가격·아키텍처·드라이버·대상 AZ의 제공 여부와 용량을 함께 검토합니다.
 
 </details>
 
-9\. Amazon EKS 클러스터에서 노드 그룹의 인스턴스 유형을 선택할 때 고려해야 할 사항이 아닌 것은 무엇인가요? - A) 워크로드 요구 사항 (CPU, 메모리, 스토리지) - B) 비용 최적화 - C) 가용 영역 수 - D) 인스턴스 세대 (예: t3 vs t2)
 
-<details>
 
-<summary>정답 보기</summary>
-
-**정답: C) 가용 영역 수**
-
-**설명:** 가용 영역 수는 노드 그룹의 인스턴스 유형을 선택할 때 직접적인 고려 사항이 아닙니다. 가용 영역은 노드 그룹이 배포되는 위치와 관련이 있으며, 인스턴스 유형 자체의 선택과는 별개입니다. 인스턴스 유형은 워크로드 요구 사항, 비용 최적화, 인스턴스 세대 등을 고려하여 선택해야 합니다.
-
-**노드 그룹 인스턴스 유형 선택 시 실제 고려 사항:**
-
-1. **워크로드 요구 사항 (CPU, 메모리, 스토리지)**:
-   * 애플리케이션의 리소스 요구 사항에 맞는 인스턴스 유형 선택
-   * 메모리 집약적 워크로드: r5, r6g 등의 메모리 최적화 인스턴스
-   * 컴퓨팅 집약적 워크로드: c5, c6g 등의 컴퓨팅 최적화 인스턴스
-   * 균형 잡힌 워크로드: m5, m6g 등의 범용 인스턴스
-   * GPU 워크로드: p3, g4dn 등의 가속 컴퓨팅 인스턴스
-2. **비용 최적화**:
-   * 온디맨드 vs 스팟 인스턴스
-   * 예약 인스턴스 또는 Savings Plans 활용
-   * 적절한 크기의 인스턴스 선택 (오버프로비저닝 방지)
-   * ARM 기반 Graviton 인스턴스(예: m6g, c6g)를 통한 비용 절감
-3. **인스턴스 세대**:
-   * 최신 세대 인스턴스는 일반적으로 더 나은 성능과 비용 효율성 제공
-   * 예: t3는 t2보다 더 나은 성능과 가격 대비 성능 제공
-   * 최신 세대는 향상된 네트워킹, 스토리지 성능 등의 기능 제공
-4. **네트워킹 요구 사항**:
-   * 향상된 네트워킹 지원 (ENA, EFA 등)
-   * 네트워크 대역폭 요구 사항
-   * 인스턴스당 최대 포드 수와 관련된 네트워킹 제한
-5. **스토리지 요구 사항**:
-   * 로컬 인스턴스 스토리지 필요 여부 (예: i3, d3 인스턴스)
-   * EBS 최적화 지원
-   * 스토리지 처리량 및 IOPS 요구 사항
-6. **CPU 아키텍처**:
-   * x86 (Intel, AMD) vs ARM (AWS Graviton)
-   * 애플리케이션 호환성 고려
-
-**가용 영역과 노드 그룹 배포:**
-
-가용 영역 수는 인스턴스 유형 선택이 아닌, 노드 그룹 배포 전략과 관련이 있습니다:
-
-* 노드 그룹은 여러 가용 영역에 걸쳐 배포하여 고가용성 확보
-* 각 가용 영역에 균등하게 노드 배포
-* 리전 내 모든 가용 영역 또는 특정 가용 영역 선택 가능
-
-```bash
-# 특정 가용 영역에 노드 그룹 배포
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --node-type m5.large \
-  --nodes 3 \
-  --nodes-min 1 \
-  --nodes-max 5 \
-  --node-zones us-west-2a,us-west-2b
-```
-
-**인스턴스 유형 선택 예시:**
-
-1. **웹 애플리케이션 서버**:
-   * 범용 인스턴스: t3.medium, m5.large
-   * 비용 효율적이면서 균형 잡힌 성능 제공
-2. **데이터베이스**:
-   * 메모리 최적화 인스턴스: r5.xlarge, r6g.xlarge
-   * 높은 메모리 대 CPU 비율 제공
-3. **배치 처리 작업**:
-   * 컴퓨팅 최적화 인스턴스: c5.xlarge, c6g.xlarge
-   * 높은 CPU 성능 제공
-4. **기계 학습 워크로드**:
-   * GPU 인스턴스: p3.2xlarge, g4dn.xlarge
-   * 가속 컴퓨팅 기능 제공
-
-인스턴스 유형 선택은 워크로드 특성, 비용 제약, 성능 요구 사항 등을 고려하여 결정해야 하며, 가용 영역 수는 인스턴스 유형 자체의 선택보다는 노드 그룹의 배포 전략과 관련이 있습니다.
-
-</details>
-
-10\. Amazon EKS 클러스터를 생성한 후 kubectl을 구성하는 올바른 명령어는 무엇인가요? - A) \`aws eks update-kubeconfig --name my-cluster --region us-west-2\` - B) \`aws eks get-kubeconfig --name my-cluster --region us-west-2\` - C) \`kubectl config set-cluster my-cluster --region us-west-2\` - D) \`eksctl configure kubectl --name my-cluster --region us-west-2\`
+10. Amazon EKS 클러스터를 생성한 후 kubectl을 구성하는 올바른 명령어는 무엇인가요?
+   * A) `aws eks update-kubeconfig --name my-cluster --region us-west-2`
+   * B) `aws eks get-kubeconfig --name my-cluster --region us-west-2`
+   * C) `kubectl config set-cluster my-cluster --region us-west-2`
+   * D) `eksctl configure kubectl --name my-cluster --region us-west-2`
 
 <details>
 
@@ -938,8 +656,8 @@ eksctl create nodegroup \
 
 1. **kubeconfig 파일 업데이트**:
    * kubeconfig 파일은 kubectl이 Kubernetes 클러스터와 통신하는 데 필요한 구성 정보를 저장합니다.
-   * 기본적으로 `~/.kube/config` 위치에 저장됩니다.
-   * `aws eks update-kubeconfig` 명령어는 이 파일을 자동으로 업데이트합니다.
+   * 명시한 `--kubeconfig`, `KUBECONFIG`의 첫 경로, `~/.kube/config` 순으로 선택합니다.
+   * 이 명령은 선택한 파일에 클러스터·exec 인증 구성을 병합하고 현재 컨텍스트를 바꾸지만 클러스터 권한을 부여하지는 않습니다.
 2. **명령어 구성 요소**:
    * `--name`: EKS 클러스터 이름
    * `--region`: 클러스터가 위치한 AWS 리전
@@ -948,48 +666,48 @@ eksctl create nodegroup \
 3.  **전체 명령어 예시**:
 
     ```bash
-    aws eks update-kubeconfig --name my-cluster --region us-west-2
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
     ```
 4.  **추가 옵션**:
 
     ```bash
     # 사용자 지정 kubeconfig 파일 사용
-    aws eks update-kubeconfig --name my-cluster --region us-west-2 --kubeconfig ~/.kube/eks-config
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
     # 특정 IAM 역할 사용
-    aws eks update-kubeconfig --name my-cluster --region us-west-2 --role-arn arn:aws:iam::123456789012:role/EksAdminRole
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --role-arn arn:aws:iam::123456789012:role/EksAdminRole --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
     # 별칭 설정
-    aws eks update-kubeconfig --name my-cluster --region us-west-2 --alias my-cluster-alias
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --alias my-cluster-alias --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
     ```
 5.  **구성 확인**:
 
     ```bash
     # 현재 컨텍스트 확인
-    kubectl config current-context
+    kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" config current-context
 
     # 모든 컨텍스트 나열
-    kubectl config get-contexts
+    kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" config get-contexts
 
     # 클러스터 연결 테스트
-    kubectl cluster-info
+    kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" cluster-info
     ```
 
 **다른 옵션들의 문제점:**
 
 * `aws eks get-kubeconfig --name my-cluster --region us-west-2`: 이 명령어는 존재하지 않습니다. AWS CLI에는 `get-kubeconfig` 하위 명령어가 없습니다.
 * `kubectl config set-cluster my-cluster --region us-west-2`: 이 명령어는 구문이 잘못되었습니다. `kubectl config set-cluster`는 `--region` 플래그를 지원하지 않으며, EKS 클러스터에 필요한 인증 정보를 자동으로 구성하지 않습니다.
-* `eksctl configure kubectl --name my-cluster --region us-west-2`: 이 명령어는 존재하지 않습니다. eksctl에는 `configure kubectl` 하위 명령어가 없습니다. eksctl로 클러스터를 생성한 경우, 자동으로 kubeconfig를 구성하지만, 기존 클러스터에 대해서는 `aws eks update-kubeconfig` 명령어를 사용해야 합니다.
+* `eksctl configure kubectl --name my-cluster --region us-west-2`: 이 명령어는 존재하지 않습니다. eksctl에는 `configure kubectl` 하위 명령어가 없습니다. eksctl로 클러스터를 생성한 경우, 자동으로 kubeconfig를 구성하지만, 기존 클러스터에는 `aws eks update-kubeconfig` 또는 `eksctl utils write-kubeconfig`를 사용할 수 있습니다.
 
-**eksctl을 사용한 클러스터 생성 및 구성:**
+**eksctl을 사용한 기존 클러스터 구성 작성:**
 
-eksctl을 사용하여 클러스터를 생성하는 경우, kubeconfig는 자동으로 업데이트됩니다:
+기존 클러스터는 새 클러스터를 만들지 않고 다음과 같이 구성을 작성합니다:
 
 ```bash
-eksctl create cluster --name my-cluster --region us-west-2
+eksctl utils write-kubeconfig --cluster my-cluster --region us-west-2 --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 ```
 
-이 명령어는 클러스터를 생성하고 kubeconfig를 자동으로 업데이트합니다. 그러나 기존 클러스터에 연결하거나, 다른 도구로 생성된 클러스터에 연결하려면 `aws eks update-kubeconfig` 명령어를 사용해야 합니다.
+이 명령은 기존 클러스터의 kubeconfig를 작성합니다. IAM 인증과 access entry/RBAC 권한은 별도로 검증합니다. 클러스터 생성도 비활성화하지 않으면 기본적으로 kubeconfig를 작성합니다.
 
 **여러 클러스터 관리:**
 
@@ -997,13 +715,13 @@ eksctl create cluster --name my-cluster --region us-west-2
 
 ```bash
 # 첫 번째 클러스터 구성
-aws eks update-kubeconfig --name cluster1 --region us-west-2
+aws eks update-kubeconfig --name cluster1 --region us-west-2 --alias cluster1-west --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
 # 두 번째 클러스터 구성
-aws eks update-kubeconfig --name cluster2 --region us-east-1
+aws eks update-kubeconfig --name cluster2 --region us-east-1 --alias cluster2-east --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
 # 컨텍스트 전환
-kubectl config use-context arn:aws:eks:us-west-2:123456789012:cluster/cluster1
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" --context cluster1-west get nodes
 ```
 
 따라서, Amazon EKS 클러스터를 생성한 후 kubectl을 구성하는 올바른 명령어는 `aws eks update-kubeconfig --name my-cluster --region us-west-2`입니다.
@@ -1014,1009 +732,737 @@ kubectl config use-context arn:aws:eks:us-west-2:123456789012:cluster/cluster1
 
 ### 실습 1: eksctl을 사용하여 EKS 클러스터 생성
 
-**시나리오:** 당신은 회사의 DevOps 엔지니어로, 개발 팀을 위한 Amazon EKS 클러스터를 생성해야 합니다. 클러스터는 비용 효율적이면서도 확장 가능해야 하며, 기본적인 보안 설정을 갖추어야 합니다.
+**시나리오:** 개발 팀용 일반 EC2 관리형 노드 그룹 클러스터를 준비합니다. 교육용 설계이며, 검증된 프로덕션 준비 상태나 측정된 비용 결과를 의미하지 않습니다.
 
-**요구사항:**
-
-1. eksctl을 사용하여 EKS 클러스터 생성
-2. 2개의 가용 영역에 걸쳐 배포
-3. t3.medium 인스턴스 타입 사용
-4. 오토스케일링 구성 (최소 2, 최대 5 노드)
-5. 프라이빗 및 퍼블릭 엔드포인트 모두 활성화
-
-**해결 방법:**
+**요구사항:** AZ 두 개, 초기 `t3.medium` AL2023 노드 두 개, 노드 범위 2–5, 프라이빗 노드 네트워킹, 두 API 엔드포인트와 승인된 퍼블릭 CIDR을 사용합니다. 크기 범위만 설정하면 오토스케일러가 설치되는 것은 아닙니다. `t3.medium` 선택 전에 버스터블 인스턴스의 CPU 크레딧, 메모리, IP 용량, 할당량, 실제 워크로드 요구를 확인합니다.
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>해결 방법 보기</summary>
+**1. 도구와 자격 증명 준비.** [Part 1](../../eks/02-eks-cluster-creation-part1.md)의 체크섬 및 아키텍처별 설치 절차를 사용합니다. 예제는 EKS 1.36과 eksctl 0.230.0을 기준으로 검토했으며 실행 전에 리전의 EKS 버전과 클라이언트·애드온 호환성을 확인합니다. `kubectl`은 버전 차이 허용 범위에 맞아야 합니다. 현재 로그인에서 수임할 수 있는 승인된 기존 운영자 IAM 역할을 사용합니다. 프로비저닝 권한과 Kubernetes 접근 권한은 별개입니다.
 
-**1. eksctl 설치 (아직 설치되지 않은 경우)**
+**2. 전용 로컬 구성 생성·검토.** 생성된 이름은 새 교육용 클러스터에 사용합니다. 퍼블릭 CIDR은 실제 허용된 송신 주소 범위로 설정합니다. 두 AZ는 `us-west-2`용 예제이며 인스턴스 제공 여부와 용량을 확인해야 합니다.
 
 ```bash
-# macOS
-brew tap weaveworks/tap
-brew install weaveworks/tap/eksctl
-
-# Linux
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
+# Use a dedicated training account/role with reviewed provisioning permissions.
+aws sts get-caller-identity
 eksctl version
-```
+kubectl version --client
+EKS_LAB_DIR=$(mktemp -d /tmp/eks-creation-lab.XXXXXX)
+: "${EKS_LAB_DIR:?}"
+EKS_LAB_CLUSTER="creation-quiz-$(date +%s)-$$"
+EKS_LAB_REGION=us-west-2
+EKS_LAB_KUBECONFIG="$EKS_LAB_DIR/kubeconfig"
+: "${APPROVED_API_CIDR:?Set your actual approved administration egress CIDR}"
+: "${OPERATOR_ROLE_ARN:?Set an existing IAM role ARN, not an STS session ARN}"
 
-**2. 클러스터 구성 파일 생성**
-
-```bash
-cat > eks-cluster.yaml << EOF
+cat > "$EKS_LAB_DIR/cluster.yaml" << EOF
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
-
 metadata:
-  name: dev-cluster
-  region: us-west-2
-  version: "1.28"
-
+  name: ${EKS_LAB_CLUSTER}
+  region: ${EKS_LAB_REGION}
+  version: "1.36"
+availabilityZones: ["us-west-2a", "us-west-2b"]
 vpc:
   clusterEndpoints:
     publicAccess: true
     privateAccess: true
-
-availabilityZones: ["us-west-2a", "us-west-2b"]
-
+  publicAccessCIDRs: ["${APPROVED_API_CIDR}"]
+accessConfig:
+  authenticationMode: API
+  bootstrapClusterCreatorAdminPermissions: false
+  accessEntries:
+    - principalARN: "${OPERATOR_ROLE_ARN}"
+      type: STANDARD
+      accessPolicies:
+        - policyARN: arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy
+          accessScope:
+            type: cluster
 managedNodeGroups:
-  - name: ng-1
+  - name: dev-ng
+    amiFamily: AmazonLinux2023
     instanceType: t3.medium
     desiredCapacity: 2
     minSize: 2
     maxSize: 5
-    iam:
-      withAddonPolicies:
-        imageBuilder: true
-        autoScaler: true
-        externalDNS: true
-        certManager: true
-        ebs: true
-        albIngress: true
-        cloudWatch: true
+    privateNetworking: true
+    disableIMDSv1: true
     ssh:
       allow: false
-    privateNetworking: true
     tags:
       Environment: development
-      Owner: devops-team
+      Owner: training
 EOF
+
+# Review the local configuration; this command does not create resources.
+eksctl create cluster -f "$EKS_LAB_DIR/cluster.yaml" --dry-run \
+  > "$EKS_LAB_DIR/resolved.yaml"
 ```
 
-**3. 클러스터 생성**
+이 구성은 실습을 위해 지정한 운영자에게 클러스터 관리자 접근을 부여하고 생성자의 자동 관리자 접근은 비활성화합니다. 운영자 역할을 생성하거나 호출자에게 그 역할을 수임할 권한을 주지는 않습니다. eksctl이 필요한 클러스터·노드 역할을 생성하므로 생성된 정책 범위를 검토합니다. 일반 구성에서는 노드 역할에 VPC CNI 권한이 포함될 수 있습니다. 워크로드 격리를 강화하려면 공식 CNI IAM 지침에 따라 전용 `aws-node` 역할을 구성합니다. 나중에 사용할 수도 있다는 이유만으로 이미지 푸시, DNS, 스토리지, 로드 밸런서, 로깅 권한을 모든 노드에 추가하지 않습니다.
+
+**3. 구성과 비용을 검토한 뒤 프로비저닝.** 새 VPC 기본 구성에는 NAT 등 과금되는 인프라가 포함될 수 있습니다. eksctl은 CloudFormation으로 VPC·서브넷·보안 그룹·역할·클러스터·노드 그룹을 생성합니다. 실패하면 일부 리소스가 남을 수 있으므로 완전한 자동 정리를 가정하지 말고 스택 이벤트를 확인합니다.
 
 ```bash
-eksctl create cluster -f eks-cluster.yaml
+# Provisioning step: creates billable AWS resources.
+if eksctl create cluster -f "${EKS_LAB_DIR:?}/cluster.yaml" --write-kubeconfig=false; then
+  EKS_LAB_ARN=$(aws eks describe-cluster \
+    --name "${EKS_LAB_CLUSTER:?}" --region "${EKS_LAB_REGION:?}" \
+    --query cluster.arn --output text)
+  : "${EKS_LAB_ARN:?Could not record the created cluster ARN}"
+  aws eks update-kubeconfig --name "$EKS_LAB_CLUSTER" \
+    --region "$EKS_LAB_REGION" --role-arn "${OPERATOR_ROLE_ARN:?}" \
+    --kubeconfig "${EKS_LAB_KUBECONFIG:?}" --alias "$EKS_LAB_CLUSTER"
+fi
 ```
 
-이 명령어는 다음 작업을 수행합니다:
-
-* CloudFormation 스택 생성
-* VPC 및 서브넷 생성
-* 보안 그룹 구성
-* EKS 클러스터 생성
-* 관리형 노드 그룹 생성
-* 노드 부트스트래핑 및 클러스터 연결
-* kubeconfig 구성
-
-**4. 클러스터 확인**
+**4. 실제 상태·접근·크기 범위 확인.** 클러스터와 노드 그룹의 `ACTIVE`, 노드의 `Ready` 상태를 기다리고 비정상 시스템 포드 및 예상한 AZ 배치를 확인합니다. 생성 요청 성공이나 RBAC 목록 조회만으로 안전하고 정상적인 클러스터임을 입증할 수는 없습니다.
 
 ```bash
-# 클러스터 상태 확인
-eksctl get cluster --name dev-cluster --region us-west-2
-
-# 노드 확인
-kubectl get nodes -o wide
-
-# 시스템 포드 확인
-kubectl get pods -n kube-system
+aws eks describe-cluster --name "${EKS_LAB_CLUSTER:?}" \
+  --region "${EKS_LAB_REGION:?}" \
+  --query 'cluster.{status:status,version:version,endpoint:resourcesVpcConfig,access:accessConfig}'
+aws eks describe-nodegroup --cluster-name "$EKS_LAB_CLUSTER" \
+  --nodegroup-name dev-ng --region "$EKS_LAB_REGION" \
+  --query 'nodegroup.{status:status,scaling:scalingConfig,ami:amiType}'
+kubectl --kubeconfig "${EKS_LAB_KUBECONFIG:?}" config current-context
+kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" get nodes -o wide
+kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" get pods -n kube-system
+kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" auth can-i get nodes
 ```
 
-**5. 클러스터 액세스 구성**
+**5. 필요한 구성 요소만 추가.** Cluster Autoscaler에는 고급 문제 2의 제한된 IAM·서비스 계정·검색 설정이 필요합니다. 크기 범위는 스스로 워크로드 수요에 반응하지 않습니다. `kubectl top`에는 정상 동작하는 Metrics Server가 필요합니다. 검토한 Metrics Server 0.9.0은 Kubernetes 1.34 이상을 지원하며 실제 설치 버전을 확인해야 합니다. 비용 절감이나 적절한 크기를 주장하기 전에 대표 부하를 측정합니다.
+
+**6. 교육용 클러스터 정리.** 실습에서 추가한 LoadBalancer Service·Ingress가 있다면 먼저 삭제하고 컨트롤러가 AWS 리소스를 해제할 때까지 기다립니다. PVC 회수 정책과 보존 볼륨도 확인합니다. 이 실습 자체는 그런 애플리케이션 리소스를 만들지 않습니다. 이후 기록한 클러스터만 삭제합니다:
 
 ```bash
-# kubeconfig 확인
-kubectl config current-context
-
-# 클러스터 정보 확인
-kubectl cluster-info
+# Only after removing this lab's workloads and checking retained resources.
+if CURRENT_LAB_ARN=$(aws eks describe-cluster \
+  --name "${EKS_LAB_CLUSTER:?}" --region "${EKS_LAB_REGION:?}" \
+  --query cluster.arn --output text) &&
+  [ "$CURRENT_LAB_ARN" = "${EKS_LAB_ARN:?Original cluster ARN required}" ]; then
+  eksctl delete cluster --name "$EKS_LAB_CLUSTER" --region "$EKS_LAB_REGION" --wait
+else
+  printf '%s\n' 'Cluster lookup/identity mismatch; no deletion attempted.' >&2
+fi
 ```
 
-**6. 기본 보안 설정 확인**
-
-```bash
-# 네임스페이스 확인
-kubectl get namespaces
-
-# RBAC 설정 확인
-kubectl get clusterroles
-kubectl get clusterrolebindings
-```
-
-**7. 클러스터 리소스 모니터링**
-
-```bash
-# 노드 리소스 사용량 확인
-kubectl top nodes
-
-# 포드 리소스 사용량 확인
-kubectl top pods --all-namespaces
-```
-
-이 실습을 통해 eksctl을 사용하여 비용 효율적이고 확장 가능한 EKS 클러스터를 생성하는 방법을 배웠습니다. t3.medium 인스턴스는 비용 효율적인 선택이며, 오토스케일링 구성을 통해 워크로드에 따라 노드 수를 자동으로 조정할 수 있습니다. 또한 프라이빗 및 퍼블릭 엔드포인트를 모두 활성화하여 내부 및 외부에서 클러스터에 접근할 수 있도록 구성했습니다.
+이후 CloudFormation과 AWS 리소스 목록에서 삭제 실패, 보존 볼륨, 별도 생성한 역할·엔드포인트를 확인합니다. 정리가 확인될 때까지 구성과 ARN 기록을 보관하고, 더 이상 필요하지 않을 때 임시 kubeconfig 디렉터리를 로컬에서 제거합니다.
 
 </details>
 
-\### 실습 2: AWS Management Console을 사용하여 EKS 클러스터 생성
+### 실습 2: AWS Management Console을 사용하여 EKS 클러스터 생성
 
-**시나리오:** 당신은 AWS Management Console을 사용하여 EKS 클러스터를 생성하고 구성해야 합니다. 이 클러스터는 프로덕션 환경을 위한 것으로, 보안과 고가용성이 중요합니다.
-
-**요구사항:**
-
-1. AWS Management Console을 사용하여 EKS 클러스터 생성
-2. 프라이빗 서브넷에 노드 배치
-3. 클러스터 엔드포인트에 대한 퍼블릭 액세스 제한
-4. 관리형 노드 그룹 구성
-5. 필요한 IAM 역할 생성
-
-**해결 방법:**
+**시나리오:** 향후 프로덕션 배포에 참고할 수 있는 일반 관리형 노드 그룹 설계를 검토합니다. 워크로드 크기, 라우팅, IAM, 가용성, 업그레이드, 복구는 환경별 검증이 필요한 가정입니다. 이 감사에서는 해당 구성을 프로비저닝하거나 부하 테스트하지 않았습니다.
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>해결 방법 보기</summary>
+**1. 별도 IAM 역할 준비.**
 
-**1. 필요한 IAM 역할 생성**
+- 클러스터 역할: `eks.amazonaws.com`을 신뢰하고 `AmazonEKSClusterPolicy`를 연결합니다.
+- EC2 노드 역할: `ec2.amazonaws.com`을 신뢰하고 `AmazonEKSWorkerNodePolicy`, `AmazonEC2ContainerRegistryPullOnly`를 연결합니다. 지원되는 경우 VPC CNI에 별도 IRSA·Pod Identity 역할을 부여합니다. 단순한 IPv4 노드 역할 방식을 의도적으로 선택했다면 `AmazonEKS_CNI_Policy`를 명시적으로 연결하고 공유 권한의 한계를 기록합니다.
+- 프로비저닝·운영자 자격 증명: 승인된 리소스 범위의 IAM 권한과 대상 역할의 `iam:PassRole`을 사용합니다. 기존 운영자 역할에 실습용 접근 정책을 연결한 EKS 액세스 항목을 추가합니다. kubeconfig 생성 자체는 Kubernetes 권한을 부여하지 않습니다.
 
-**EKS 클러스터 역할 생성:**
+**2. VPC와 서브넷 검토.** 다음 공식 예제는 계속 참고할 수 있으며 URL의 날짜는 EKS 버전이 아닙니다:
 
-1. AWS Management Console에 로그인하고 IAM 서비스로 이동합니다.
-2. 왼쪽 메뉴에서 "역할"을 선택하고 "역할 생성"을 클릭합니다.
-3. 신뢰할 수 있는 엔터티 유형으로 "AWS 서비스"를 선택합니다.
-4. 사용 사례에서 "EKS"를 선택하고 "EKS - 클러스터"를 선택합니다.
-5. "다음"을 클릭합니다.
-6. `AmazonEKSClusterPolicy`가 자동으로 선택되어 있는지 확인합니다.
-7. "다음"을 클릭합니다.
-8. 역할 이름을 "EKSClusterRole"로 입력하고 "역할 생성"을 클릭합니다.
+```text
+https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
+```
 
-**EKS 노드 역할 생성:**
+고유한 교육용 스택을 생성하기 전에 CloudFormation 템플릿을 읽습니다. 기본값은 **AZ 두 개에 퍼블릭 서브넷 두 개와 프라이빗 서브넷 두 개, 인터넷 게이트웨이, NAT 게이트웨이·EIP 두 개**를 생성합니다. 따라서 인터넷 송신이 가능한 NAT 기반 설계이지 인터넷 차단 클러스터가 아닙니다. 프로덕션에 기본값을 그대로 적용하지 말고 CIDR 중복, AZ, IP 용량, NAT 비용을 검토합니다.
 
-1. IAM 서비스에서 "역할 생성"을 다시 클릭합니다.
-2. 신뢰할 수 있는 엔터티 유형으로 "AWS 서비스"를 선택합니다.
-3. 사용 사례에서 "EC2"를 선택합니다.
-4. "다음"을 클릭합니다.
-5. 다음 정책을 검색하여 선택합니다:
-   * `AmazonEKSWorkerNodePolicy`
-   * `AmazonEC2ContainerRegistryReadOnly`
-   * `AmazonEKS_CNI_Policy`
-6. "다음"을 클릭합니다.
-7. 역할 이름을 "EKSNodeRole"로 입력하고 "역할 생성"을 클릭합니다.
+`VpcId`, `SubnetIds`, `SecurityGroups`를 기록합니다. `SubnetIds`에는 **퍼블릭·프라이빗 서브넷이 모두** 들어 있으므로 각각의 라우팅 테이블을 확인하고 실제 프라이빗 서브넷을 노드에 선택합니다. 출력의 사용자 지정 보안 그룹만으로 필요한 통신 규칙이 모두 있다는 뜻은 아닙니다. EKS 클러스터 보안 그룹, 추가 그룹, 컨트롤 플레인·노드 통신 규칙을 검토합니다.
 
-**2. VPC 및 서브넷 준비**
+**3. 일반 클러스터 생성.** EKS 콘솔의 사용자 지정 구성 경로에서 이 실습은 Auto Mode를 비활성화합니다. EKS 표준 지원 중이며 호환되는 사용 가능 버전(검토 예제는 1.36), 클러스터 서비스 역할, 검토한 VPC·서브넷을 선택합니다.
 
-프로덕션 환경을 위해 적절한 VPC 구성이 필요합니다. AWS CloudFormation 템플릿을 사용하여 EKS에 최적화된 VPC를 생성할 수 있습니다:
+- API 액세스 항목 인증과 지정한 운영자의 권한을 구성합니다. 설명되지 않은 생성자 관리자 기본값에 의존하지 않습니다.
+- 프라이빗 전용 API라면 관리 네트워크의 프라이빗 라우팅·DNS를 먼저 확인합니다. 또는 퍼블릭·프라이빗 접근을 함께 켜고 `publicAccessCidrs`를 승인된 관리 송신 범위로 제한합니다.
+- 일반 EC2 클러스터에는 호환되는 VPC CNI, kube-proxy, CoreDNS 애드온을 유지하고 설정·권한을 검토합니다. 필요한 컨트롤 플레인 로그를 켜되 로그 비용도 반영합니다.
+- 검토 후 생성하고 `ACTIVE`를 기다립니다. 생성 시간은 달라지며 몇 분이라는 예측은 완료 판정 기준이 아닙니다.
 
-1. CloudFormation 콘솔로 이동합니다.
-2. "스택 생성" > "새 리소스 사용(표준)"을 선택합니다.
-3.  Amazon S3 URL에 다음 주소를 입력합니다:
+**4. 관리형 노드 그룹 추가.** EC2 노드 역할, AL2023 x86_64 AMI, 예시 `m5.large`처럼 지원되는 인스턴스 유형을 선택합니다. 예제는 루트 디스크 50 GiB, 원하는 크기 3, 최소 2, 최대 5와 검토한 프라이빗 서브넷을 사용합니다. 이는 크기 예시이지 프로덕션 권장값이 아닙니다. 필요한 접근·IMDS·스토리지 암호화를 구성하고 노드 그룹 `ACTIVE`, 노드 `Ready`를 기다립니다.
 
-    ```
-    https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
-    ```
-4. "다음"을 클릭합니다.
-5. 스택 이름을 "eks-vpc"로 입력합니다.
-6. 기본 파라미터를 그대로 두고 "다음"을 클릭합니다.
-7. 다음 페이지에서도 기본 옵션을 그대로 두고 "다음"을 클릭합니다.
-8. "스택 생성"을 클릭합니다.
-9. 스택 생성이 완료되면 "출력" 탭에서 다음 값을 기록해 둡니다:
-   * VpcId
-   * SubnetIds
-   * SecurityGroups
+**5. 접근과 실제 AWS 보안 그룹 확인.** 콘솔에서 기록한 클러스터 이름과 승인된 운영자 역할을 사용합니다:
 
-**3. EKS 클러스터 생성**
+```bash
+CONSOLE_LAB_DIR=$(mktemp -d /tmp/eks-console-lab.XXXXXX)
+: "${CONSOLE_LAB_DIR:?}"
+CONSOLE_KUBECONFIG="$CONSOLE_LAB_DIR/kubeconfig"
+aws eks update-kubeconfig --name "${CONSOLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --role-arn "${OPERATOR_ROLE_ARN:?}" \
+  --kubeconfig "$CONSOLE_KUBECONFIG" --alias "$CONSOLE_CLUSTER"
+kubectl --kubeconfig "$CONSOLE_KUBECONFIG" get nodes
+kubectl --kubeconfig "$CONSOLE_KUBECONFIG" get pods -n kube-system
 
-1. AWS Management Console에서 EKS 서비스로 이동합니다.
-2. "클러스터 생성"을 클릭합니다.
-3. "클러스터 구성" 페이지에서:
-   * 클러스터 이름: "prod-cluster"
-   * Kubernetes 버전: 최신 버전 선택 (예: 1.28)
-   * 클러스터 서비스 역할: 이전에 생성한 "EKSClusterRole" 선택
-   * "다음"을 클릭합니다.
-4. "네트워킹 지정" 페이지에서:
-   * VPC: 이전에 생성한 VPC 선택
-   * 서브넷: 프라이빗 서브넷만 선택 (퍼블릭 서브넷 선택 해제)
-   * 보안 그룹: 기본 보안 그룹 선택
-   * 클러스터 엔드포인트 액세스:
-     * "프라이빗"을 선택하거나
-     * "퍼블릭 및 프라이빗"을 선택하고 CIDR 블록을 회사 IP 범위로 제한
-   * "다음"을 클릭합니다.
-5. "로깅 구성" 페이지에서:
-   * 필요한 로그 유형 선택 (API 서버, 감사, 인증자, 컨트롤러 관리자, 스케줄러)
-   * "다음"을 클릭합니다.
-6. "애드온 선택" 페이지에서:
-   * 기본 애드온 유지 (kube-proxy, CoreDNS, VPC CNI)
-   * "다음"을 클릭합니다.
-7. 검토 페이지에서 모든 설정을 확인하고 "생성"을 클릭합니다.
-8. 클러스터 생성이 완료될 때까지 기다립니다 (약 15-20분 소요).
+# Security groups are AWS resources; kubeconfig does not contain their rules.
+aws eks describe-cluster --name "$CONSOLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query 'cluster.resourcesVpcConfig.{clusterSG:clusterSecurityGroupId,additionalSGs:securityGroupIds,cidrs:publicAccessCidrs}'
+aws ec2 describe-security-groups --region "$EXAMPLE_REGION" \
+  --group-ids "${REVIEWED_CLUSTER_SG_ID:?Copy the cluster SG ID from the result above}"
+```
 
-**4. 관리형 노드 그룹 생성**
+**6. 선택적 NetworkPolicy 실습.** 먼저 선택한 CNI와 설정이 NetworkPolicy를 적용하는지 확인합니다. AWS VPC CNI의 정책 지원은 활성화되어 있어야 하고 노드·OS 구성도 이를 지원해야 합니다. 다음 인바운드 전용 기본 차단 정책은 새로 만든 빈 실습 네임스페이스에만 적용됩니다. 아웃바운드를 차단하지 않으며 `apply` 성공만으로 실제 정책 적용을 입증하지 못합니다.
 
-1. 클러스터가 생성되면 클러스터 이름을 클릭합니다.
-2. "컴퓨팅" 탭으로 이동하고 "노드 그룹 추가"를 클릭합니다.
-3. "노드 그룹 구성" 페이지에서:
-   * 이름: "prod-nodes"
-   * 노드 IAM 역할: 이전에 생성한 "EKSNodeRole" 선택
-   * "다음"을 클릭합니다.
-4. "컴퓨팅 및 크기 조정 구성" 페이지에서:
-   * AMI 유형: Amazon Linux 2 (x86)
-   * 인스턴스 유형: m5.large 선택
-   * 디스크 크기: 50 GiB
-   * 노드 그룹 크기 조정 구성:
-     * 최소 크기: 2
-     * 최대 크기: 5
-     * 원하는 크기: 3
-   * "다음"을 클릭합니다.
-5. "네트워킹 지정" 페이지에서:
-   * 서브넷: 프라이빗 서브넷만 선택
-   * "다음"을 클릭합니다.
-6. "검토 및 생성" 페이지에서 모든 설정을 확인하고 "생성"을 클릭합니다.
-7. 노드 그룹 생성이 완료될 때까지 기다립니다 (약 5분 소요).
+```bash
+# An optional isolated policy example, after enabling CNI policy enforcement.
+NP_LAB_NAMESPACE="np-quiz-$(date +%s)-$$"
+if kubectl --kubeconfig "${CONSOLE_KUBECONFIG:?}" create namespace "$NP_LAB_NAMESPACE"; then
+  NP_LAB_UID=$(kubectl --kubeconfig "$CONSOLE_KUBECONFIG" \
+    get namespace "$NP_LAB_NAMESPACE" -o jsonpath='{.metadata.uid}')
+  : "${NP_LAB_UID:?Namespace identity lookup failed}"
+  cat > "${CONSOLE_LAB_DIR:?}/default-deny.yaml" << EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: ${NP_LAB_NAMESPACE}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+EOF
+  kubectl --kubeconfig "$CONSOLE_KUBECONFIG" \
+    apply -f "$CONSOLE_LAB_DIR/default-deny.yaml"
+fi
+```
 
-**5. kubectl 구성 및 클러스터 액세스**
+전용 테스트 포드로 허용·거부 트래픽을 확인하고 실제 워크로드에 적용하기 전에 필요한 허용 정책을 추가합니다. 기존 공유 `default` 네임스페이스에는 적용하지 않습니다. 실습이 끝나면 격리된 네임스페이스를 제거합니다:
 
-1. AWS CLI가 설치되어 있는지 확인합니다.
-2.  다음 명령어를 실행하여 kubectl 구성 파일을 업데이트합니다:
+```bash
+# Remove only the namespace created above, after confirming its UID.
+if CURRENT_NP_UID=$(kubectl --kubeconfig "${CONSOLE_KUBECONFIG:?}" \
+  get namespace "${NP_LAB_NAMESPACE:?}" -o jsonpath='{.metadata.uid}') &&
+  [ "$CURRENT_NP_UID" = "${NP_LAB_UID:?Original namespace UID required}" ]; then
+  kubectl --kubeconfig "$CONSOLE_KUBECONFIG" delete namespace "$NP_LAB_NAMESPACE" --wait=true
+else
+  printf '%s\n' 'Namespace lookup/identity mismatch; no deletion attempted.' >&2
+fi
+```
 
-    ```bash
-    aws eks update-kubeconfig --name prod-cluster --region us-west-2
-    ```
-3.  클러스터 연결을 확인합니다:
-
-    ```bash
-    kubectl get nodes
-    kubectl cluster-info
-    ```
-
-**6. 기본 보안 강화**
-
-1.  AWS 보안 그룹 규칙 검토 및 제한:
-
-    ```bash
-    # 현재 컨텍스트의 클러스터 정보 확인
-    kubectl config view --minify
-    ```
-2.  네트워크 정책 적용 (선택 사항):
-
-    ```yaml
-    # default-deny.yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: default-deny
-      namespace: default
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-    ```
-
-    ```bash
-    kubectl apply -f default-deny.yaml
-    ```
-
-이 실습을 통해 AWS Management Console을 사용하여 프로덕션 환경에 적합한 보안 및 고가용성 설정을 갖춘 EKS 클러스터를 생성하는 방법을 배웠습니다. 프라이빗 서브넷에 노드를 배치하고 클러스터 엔드포인트에 대한 퍼블릭 액세스를 제한하여 보안을 강화했으며, 관리형 노드 그룹을 사용하여 노드 관리를 간소화했습니다.
+**7. 콘솔 정리:** 실습 워크로드를 지우고 연결된 클라우드 리소스 해제를 기다린 뒤, 이 실습의 관리형 노드 그룹을 삭제합니다. 완료 후 실습 클러스터를 삭제합니다. EKS 리소스와 외부 의존성이 제거된 후에만 실습 VPC CloudFormation 스택을 삭제합니다. 실습 전용으로 만든 IAM 역할·엔드포인트만 제거하고 공유 리소스는 유지하며 삭제 실패·보존 리소스를 확인합니다. 이 감사에서는 해당 작업을 실행하지 않았습니다.
 
 </details>
 
-\## 고급 주제
+## 고급 주제
 
 다음은 Amazon EKS 클러스터 생성에 관한 고급 주제에 대한 질문입니다. 이 섹션은 EKS 클러스터 생성의 심화 개념과 모범 사례에 대한 이해를 테스트합니다.
 
-1. Amazon EKS 클러스터에서 사용자 지정 시작 템플릿(Launch Template)을 사용하는 주요 이점은 무엇인가요?
-   * A) 클러스터 생성 시간 단축
-   * B) 노드 부트스트랩 스크립트 사용자 지정 및 추가 볼륨 구성 가능
-   * C) 클러스터 컨트롤 플레인 사용자 지정
-   * D) 자동으로 최신 AMI 버전 사용
+1. EKS EC2 관리형 노드 그룹에서 사용자 지정 시작 템플릿을 사용하는 주요 이점은 무엇인가요?
+   * A) 클러스터 생성 시간 단축 보장
+   * B) 노드 사용자 데이터와 볼륨 구성 지정
+   * C) 컨트롤 플레인 플러그인 설치
+   * D) 새 AMI가 게시될 때마다 모든 기존 노드 자동 갱신
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 노드 부트스트랩 스크립트 사용자 지정 및 추가 볼륨 구성 가능**
+**정답: B) 노드 사용자 데이터와 볼륨 구성 지정**
 
-**설명:** Amazon EKS 클러스터에서 사용자 지정 시작 템플릿(Launch Template)을 사용하는 주요 이점은 노드 부트스트랩 스크립트를 사용자 지정하고 추가 볼륨을 구성할 수 있다는 것입니다. 시작 템플릿을 통해 EC2 인스턴스의 다양한 측면을 세밀하게 제어할 수 있으며, 이는 기본 노드 그룹 생성 옵션으로는 불가능한 고급 구성을 가능하게 합니다.
+시작 템플릿은 스토리지, 인스턴스 메타데이터, OS별 사용자 데이터 등 **EC2 관리형 노드 그룹**을 사용자 지정합니다. EKS 컨트롤 플레인이나 EKS Auto Mode 노드를 구성하는 수단은 아닙니다.
 
-**시작 템플릿을 사용한 사용자 지정 가능 항목:**
+**AL2023 사용자 데이터:** MIME multipart 형식을 사용합니다. 템플릿에 `ImageId`가 없어 EKS가 AMI를 선택하면 EKS가 노드 구성을 제공·병합합니다. 사용자 지정 AMI ID가 있으면 고급 문제 5의 완전한 `NodeConfig`를 제공해야 합니다. AL2023의 systemd 서비스가 `nodeadm`을 실행하므로 `/etc/eks/bootstrap.sh`, 중복 `nodeadm init`, 수동 kubelet 시작을 사용하지 않습니다. 추가 소프트웨어는 선택한 OS와 호환되어야 하며 신뢰할 수 있는 패키지 저장소에 연결할 수 있어야 합니다.
 
-1. **부트스트랩 스크립트 사용자 지정**:
-   * 노드가 클러스터에 조인하기 전에 실행되는 사용자 지정 스크립트 정의
-   * 추가 소프트웨어 설치 및 구성
-   * 시스템 설정 조정 (커널 파라미터, 네트워크 설정 등)
-   *   예시:
+다음 최소 예제는 EKS가 AL2023 AMI를 선택하는 경우이며 애플리케이션 디렉터리만 생성합니다:
 
-       ```bash
-       #!/bin/bash
-       # 사용자 지정 부트스트랩 스크립트
-       echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
-       sysctl -p
+```text
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="EKS_CUSTOMIZATION"
 
-       # 추가 패키지 설치
-       yum install -y amazon-cloudwatch-agent
+--EKS_CUSTOMIZATION
+Content-Type: text/x-shellscript; charset="us-ascii"
 
-       # EKS 부트스트랩 스크립트 실행
-       /etc/eks/bootstrap.sh my-cluster --kubelet-extra-args '--node-labels=node.kubernetes.io/role=worker'
-       ```
-2. **추가 볼륨 구성**:
-   * 루트 볼륨 크기, 유형, IOPS 사용자 지정
-   * 데이터, 로그, 임시 스토리지 등을 위한 추가 EBS 볼륨 연결
-   * 인스턴스 스토어 볼륨 구성
-   *   예시:
-
-       ```json
-       {
-         "DeviceName": "/dev/xvda",
-         "Ebs": {
-           "VolumeSize": 100,
-           "VolumeType": "gp3",
-           "Iops": 3000,
-           "Throughput": 125,
-           "DeleteOnTermination": true
-         }
-       },
-       {
-         "DeviceName": "/dev/sdf",
-         "Ebs": {
-           "VolumeSize": 500,
-           "VolumeType": "gp3",
-           "DeleteOnTermination": true
-         }
-       }
-       ```
-3. **고급 네트워킹 구성**:
-   * 향상된 네트워킹 활성화
-   * 다중 네트워크 인터페이스 구성
-   * 배치 그룹 지정
-   *   예시:
-
-       ```json
-       {
-         "NetworkInterfaces": [
-           {
-             "DeviceIndex": 0,
-             "Groups": ["sg-12345"],
-             "DeleteOnTermination": true
-           }
-         ]
-       }
-       ```
-4. **인스턴스 메타데이터 옵션**:
-   * IMDSv2 요구 (보안 강화)
-   * 홉 제한 설정
-   *   예시:
-
-       ```json
-       {
-         "MetadataOptions": {
-           "HttpTokens": "required",
-           "HttpPutResponseHopLimit": 2
-         }
-       }
-       ```
-5. **사용자 데이터 스크립트**:
-   * 인스턴스 시작 시 실행되는 스크립트 제공
-   * 클러스터 조인 전 사용자 지정 구성 수행
-   *   예시:
-
-       ```bash
-       #!/bin/bash
-       # 사용자 데이터 스크립트
-       mkdir -p /opt/app
-       mount -t tmpfs -o size=10G tmpfs /opt/app
-       ```
-
-**시작 템플릿 생성 및 사용 방법:**
-
-1. **AWS Management Console에서 시작 템플릿 생성**:
-   * EC2 콘솔 > 시작 템플릿 > 시작 템플릿 생성
-   * AMI, 인스턴스 유형, 키 페어, 보안 그룹 등 구성
-   * 스토리지, 네트워크 인터페이스, 사용자 데이터 등 고급 설정 구성
-2.  **eksctl을 사용한 시작 템플릿 기반 노드 그룹 생성**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-
-    metadata:
-      name: my-cluster
-      region: us-west-2
-
-    managedNodeGroups:
-      - name: custom-ng
-        launchTemplate:
-          id: lt-12345abcdef
-          version: "1"
-    ```
-3.  **AWS CLI를 사용한 시작 템플릿 기반 노드 그룹 생성**:
-
-    ```bash
-    aws eks create-nodegroup \
-      --cluster-name my-cluster \
-      --nodegroup-name custom-ng \
-      --launch-template id=lt-12345abcdef,version=1 \
-      --subnets subnet-12345 subnet-67890 \
-      --node-role arn:aws:iam::123456789012:role/EKSNodeRole
-    ```
-
-**다른 옵션들의 문제점:**
-
-* **클러스터 생성 시간 단축**: 시작 템플릿 사용이 클러스터 생성 시간을 단축하지는 않습니다. 오히려 추가 구성으로 인해 약간 더 오래 걸릴 수 있습니다.
-* **클러스터 컨트롤 플레인 사용자 지정**: 시작 템플릿은 워커 노드에만 적용되며, EKS 컨트롤 플레인은 AWS에서 관리하므로 시작 템플릿을 통해 사용자 지정할 수 없습니다.
-* **자동으로 최신 AMI 버전 사용**: 시작 템플릿은 특정 AMI ID를 지정하므로, 오히려 AMI 버전을 고정하는 효과가 있습니다. 최신 AMI를 자동으로 사용하려면 시작 템플릿을 사용하지 않거나, 정기적으로 시작 템플릿을 업데이트해야 합니다.
-
-시작 템플릿은 EKS 노드 그룹의 고급 사용자 지정이 필요한 경우에 특히 유용하며, 표준 구성으로는 충족할 수 없는 특수한 요구 사항이 있을 때 사용하는 것이 좋습니다.
-
-</details>
-
-2\. Amazon EKS 클러스터에서 비용 최적화를 위한 전략이 아닌 것은 무엇인가요? - A) 스팟 인스턴스 사용 - B) 클러스터 오토스케일러 구성 - C) 모든 워커 노드에 최신 인스턴스 유형 사용 - D) Fargate 프로필 선택적 사용
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) 모든 워커 노드에 최신 인스턴스 유형 사용**
-
-**설명:** 모든 워커 노드에 최신 인스턴스 유형을 사용하는 것은 반드시 비용 최적화 전략이 아닙니다. 최신 인스턴스 유형은 종종 더 나은 성능과 기능을 제공하지만, 항상 비용 효율적인 것은 아닙니다. 워크로드 요구 사항에 맞는 적절한 인스턴스 유형을 선택하는 것이 더 중요합니다.
-
-**EKS 클러스터의 실제 비용 최적화 전략:**
-
-1. **스팟 인스턴스 사용**:
-   * 온디맨드 인스턴스 대비 최대 90% 비용 절감 가능
-   * 중단 허용 워크로드에 적합 (배치 작업, 개발/테스트 환경 등)
-   *   관리형 노드 그룹에서 스팟 인스턴스 구성:
-
-       ```bash
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name spot-ng \
-         --node-type m5.large \
-         --nodes 2 \
-         --nodes-min 1 \
-         --nodes-max 5 \
-         --spot
-       ```
-   *   여러 인스턴스 유형을 혼합하여 가용성 향상:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: spot-ng
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
-           spot: true
-       ```
-2. **클러스터 오토스케일러 구성**:
-   * 워크로드 요구 사항에 따라 노드 수 자동 조정
-   * 사용하지 않는 노드 자동 제거로 비용 절감
-   *   설치 및 구성:
-
-       ```bash
-       # Helm을 사용한 Cluster Autoscaler 설치
-       helm repo add autoscaler https://kubernetes.github.io/autoscaler
-
-       helm install cluster-autoscaler autoscaler/cluster-autoscaler \
-         --namespace kube-system \
-         --set autoDiscovery.clusterName=my-cluster \
-         --set awsRegion=us-west-2 \
-         --set rbac.create=true
-       ```
-3. **Fargate 프로필 선택적 사용**:
-   * 서버리스 컨테이너 실행 환경으로 노드 관리 오버헤드 제거
-   * 사용한 리소스에 대해서만 비용 지불
-   * 간헐적 워크로드나 개발/테스트 환경에 적합
-   *   특정 네임스페이스나 레이블에 대해서만 Fargate 사용:
-
-       ```bash
-       eksctl create fargateprofile \
-         --cluster my-cluster \
-         --name fp-dev \
-         --namespace dev
-       ```
-4. **적절한 인스턴스 크기 선택**:
-   * 워크로드 요구 사항에 맞는 인스턴스 크기 선택
-   * 오버프로비저닝 방지
-   *   리소스 사용량 모니터링 및 분석:
-
-       ```bash
-       kubectl top nodes
-       kubectl top pods --all-namespaces
-       ```
-5. **Graviton(ARM) 기반 인스턴스 사용**:
-   * x86 기반 인스턴스 대비 최대 40% 비용 절감 가능
-   * 동등한 성능 제공
-   * 호환성 확인 필요
-   *   예시:
-
-       ```bash
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name arm-ng \
-         --node-type m6g.large \
-         --nodes 2
-       ```
-6. **예약 인스턴스 또는 Savings Plans 활용**:
-   * 장기 약정을 통한 비용 절감
-   * 예측 가능한 워크로드에 적합
-   * 온디맨드 대비 최대 72% 비용 절감 가능
-7. **리소스 요청 및 제한 최적화**:
-   * 포드 리소스 요청을 적절히 설정하여 노드 활용도 향상
-   * 오버프로비저닝 방지
-   *   예시:
-
-       ```yaml
-       resources:
-         requests:
-           cpu: 100m
-           memory: 128Mi
-         limits:
-           cpu: 500m
-           memory: 256Mi
-       ```
-8. **비용 모니터링 및 분석**:
-   * AWS Cost Explorer 사용
-   * Kubernetes 비용 할당 태그 설정
-   * 타사 비용 모니터링 도구 활용 (Kubecost, CloudHealth 등)
-
-**최신 인스턴스 유형 사용의 문제점:**
-
-1. **비용 증가**:
-   * 최신 인스턴스 유형은 종종 이전 세대보다 비쌀 수 있음
-   * 모든 워크로드가 최신 인스턴스의 기능을 필요로 하지 않음
-2. **오버프로비저닝**:
-   * 워크로드 요구 사항을 초과하는 리소스 제공
-   * 불필요한 비용 발생
-3. **가용성 제한**:
-   * 최신 인스턴스 유형은 모든 리전이나 가용 영역에서 사용하지 못할 수 있음
-   * 특히 스팟 인스턴스로 사용 시 가용성 제한
-4. **호환성 문제**:
-   * 일부 워크로드는 특정 인스턴스 유형에서 최적화되어 있을 수 있음
-   * 새로운 인스턴스 유형으로 전환 시 테스트 필요
-
-비용 최적화를 위해서는 워크로드 특성, 리소스 요구 사항, 가용성 요구 사항 등을 종합적으로 고려하여 적절한 인스턴스 유형과 크기를 선택하는 것이 중요합니다. 최신 인스턴스 유형이 항상 비용 효율적인 선택은 아니며, 워크로드에 맞는 적절한 인스턴스 유형을 선택하는 것이 더 중요합니다.
-
-</details>
-
-3\. Amazon EKS 클러스터에서 프라이빗 클러스터를 구성하는 올바른 방법은 무엇인가요? - A) 프라이빗 서브넷에만 노드 배치 및 퍼블릭 엔드포인트 비활성화 - B) 프라이빗 서브넷에만 노드 배치 및 퍼블릭 엔드포인트 활성화 - C) 퍼블릭 서브넷에 노드 배치 및 퍼블릭 엔드포인트 비활성화 - D) VPC 엔드포인트 없이 프라이빗 서브넷에만 노드 배치
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: A) 프라이빗 서브넷에만 노드 배치 및 퍼블릭 엔드포인트 비활성화**
-
-**설명:** Amazon EKS 클러스터에서 완전한 프라이빗 클러스터를 구성하려면 프라이빗 서브넷에만 노드를 배치하고 퍼블릭 엔드포인트를 비활성화해야 합니다. 이렇게 하면 클러스터의 Kubernetes API 서버가 인터넷에서 접근할 수 없게 되고, 모든 트래픽이 VPC 내에서만 이루어집니다.
-
-**프라이빗 EKS 클러스터 구성 요소:**
-
-1. **엔드포인트 액세스 구성**:
-   * 퍼블릭 엔드포인트 비활성화
-   * 프라이빗 엔드포인트 활성화
-   *   AWS CLI 구성 예시:
-
-       ```bash
-       aws eks update-cluster-config \
-         --name my-cluster \
-         --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
-       ```
-   *   eksctl 구성 예시:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       vpc:
-         clusterEndpoints:
-           publicAccess: false
-           privateAccess: true
-       ```
-2. **노드 배치**:
-   * 프라이빗 서브넷에만 노드 배치
-   * 퍼블릭 IP 할당 없음
-   *   관리형 노드 그룹 구성 예시:
-
-       ```bash
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name private-ng \
-         --node-type m5.large \
-         --nodes 3 \
-         --node-private-networking \
-         --subnet-ids subnet-private1,subnet-private2
-       ```
-3.  **VPC 엔드포인트 구성**: 프라이빗 클러스터가 AWS 서비스에 접근하기 위해 필요한 VPC 엔드포인트:
-
-    * com.amazonaws.region.ecr.api
-    * com.amazonaws.region.ecr.dkr
-    * com.amazonaws.region.s3
-    * com.amazonaws.region.logs (선택 사항)
-    * com.amazonaws.region.sts (선택 사항)
-
-    ```bash
-    # ECR API 엔드포인트 생성
-    aws ec2 create-vpc-endpoint \
-      --vpc-id vpc-12345 \
-      --service-name com.amazonaws.us-west-2.ecr.api \
-      --vpc-endpoint-type Interface \
-      --subnet-ids subnet-private1 subnet-private2 \
-      --security-group-ids sg-12345 \
-      --private-dns-enabled
-
-    # ECR Docker 엔드포인트 생성
-    aws ec2 create-vpc-endpoint \
-      --vpc-id vpc-12345 \
-      --service-name com.amazonaws.us-west-2.ecr.dkr \
-      --vpc-endpoint-type Interface \
-      --subnet-ids subnet-private1 subnet-private2 \
-      --security-group-ids sg-12345 \
-      --private-dns-enabled
-
-    # S3 엔드포인트 생성 (게이트웨이 유형)
-    aws ec2 create-vpc-endpoint \
-      --vpc-id vpc-12345 \
-      --service-name com.amazonaws.us-west-2.s3 \
-      --vpc-endpoint-type Gateway \
-      --route-table-ids rtb-12345
-    ```
-4. **네트워크 구성**:
-   * 프라이빗 서브넷에 NAT 게이트웨이 또는 VPC 엔드포인트 필요
-   * 보안 그룹 규칙으로 트래픽 제한
-   * 라우팅 테이블 구성
-
-**프라이빗 클러스터 접근 방법:**
-
-1. **VPN 또는 Direct Connect를 통한 접근**:
-   * AWS Client VPN
-   * AWS Site-to-Site VPN
-   * AWS Direct Connect
-2.  **배스천 호스트(Bastion Host)를 통한 접근**:
-
-    * 퍼블릭 서브넷에 배스천 호스트 배치
-    * 배스천 호스트에서 클러스터 API 서버에 접근
-
-    ```bash
-    # 배스천 호스트에서 kubeconfig 구성
-    aws eks update-kubeconfig --name my-cluster --region us-west-2
-    ```
-3. **AWS Systems Manager Session Manager를 통한 접근**:
-   * 인터넷 게이트웨이 없이 EC2 인스턴스에 접근
-   * IAM 권한 및 로깅을 통한 접근 제어
-
-**다른 옵션들의 문제점:**
-
-* **프라이빗 서브넷에만 노드 배치 및 퍼블릭 엔드포인트 활성화**: 퍼블릭 엔드포인트가 활성화되어 있으면 인터넷에서 클러스터 API 서버에 접근할 수 있으므로 완전한 프라이빗 클러스터가 아닙니다. 보안 그룹이나 CIDR 제한으로 접근을 제한할 수 있지만, 여전히 퍼블릭 네트워크에 노출됩니다.
-* **퍼블릭 서브넷에 노드 배치 및 퍼블릭 엔드포인트 비활성화**: 노드가 퍼블릭 서브넷에 있으면 인터넷에서 직접 접근할 수 있으므로 완전한 프라이빗 클러스터가 아닙니다. 보안 그룹으로 접근을 제한할 수 있지만, 노드에 퍼블릭 IP가 할당될 수 있습니다.
-* **VPC 엔드포인트 없이 프라이빗 서브넷에만 노드 배치**: VPC 엔드포인트 없이 프라이빗 서브넷에 노드를 배치하면 노드가 ECR, S3 등의 AWS 서비스에 접근할 수 없게 됩니다. 이 경우 NAT 게이트웨이를 통해 인터넷에 접근해야 하므로, 완전한 프라이빗 클러스터 구성이 아닙니다.
-
-프라이빗 EKS 클러스터는 높은 수준의 보안이 요구되는 환경에 적합하며, 모든 클러스터 트래픽이 VPC 내에서만 이루어지도록 보장합니다. 그러나 구성이 더 복잡하고, 클러스터 접근을 위한 추가 인프라(VPN, Direct Connect, 배스천 호스트 등)가 필요할 수 있습니다.
-
-</details>
-
-4\. Amazon EKS 클러스터에서 노드 그룹 업그레이드 전략으로 올바르지 않은 것은 무엇인가요? - A) 롤링 업그레이드 - B) 블루/그린 배포 - C) 인플레이스 업그레이드 - D) 캐니리 배포
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: C) 인플레이스 업그레이드**
-
-**설명:** "인플레이스 업그레이드"는 Amazon EKS 노드 그룹의 공식적인 업그레이드 전략이 아닙니다. EKS 관리형 노드 그룹은 기본적으로 롤링 업그레이드 방식을 사용하며, 자체 관리형 노드 그룹의 경우 블루/그린 배포나 캐니리 배포와 같은 전략을 구현할 수 있습니다.
-
-**EKS 노드 그룹 업그레이드 전략:**
-
-1. **롤링 업그레이드 (Rolling Upgrade)**:
-   * EKS 관리형 노드 그룹의 기본 업그레이드 방식
-   * 노드를 하나씩 교체하여 워크로드 중단 최소화
-   * 프로세스:
-     1. 새 노드 생성
-     2. 기존 노드에 코드네이션(cordoning) 적용 (새 포드 스케줄링 방지)
-     3. 기존 노드에서 포드 드레이닝(draining) (포드 이전)
-     4. 기존 노드 종료
-     5. 다음 노드에 대해 반복
-   *   구성 예시:
-
-       ```bash
-       # 관리형 노드 그룹 업그레이드
-       aws eks update-nodegroup-version \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup
-
-       # 업그레이드 상태 확인
-       aws eks describe-update \
-         --name <update-id> \
-         --nodegroup-name my-nodegroup \
-         --cluster-name my-cluster
-       ```
-2. **블루/그린 배포 (Blue/Green Deployment)**:
-   * 완전히 새로운 노드 그룹 생성 후 트래픽 전환
-   * 롤백이 쉽고 위험이 낮음
-   * 리소스 사용량이 일시적으로 증가 (두 배의 노드 실행)
-   * 구현 단계:
-     1. 새 노드 그룹 생성 (그린)
-     2. 새 노드 그룹에 워크로드 배포 및 테스트
-     3. 트래픽을 새 노드 그룹으로 전환
-     4. 기존 노드 그룹 삭제 (블루)
-   *   구성 예시:
-
-       ```bash
-       # 새 노드 그룹 생성
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name my-nodegroup-v2 \
-         --node-type m5.large \
-         --nodes 3 \
-         --node-ami-family AmazonLinux2
-
-       # 노드 레이블 확인
-       kubectl get nodes --show-labels
-
-       # 기존 노드 그룹 삭제
-       eksctl delete nodegroup \
-         --cluster my-cluster \
-         --name my-nodegroup-v1
-       ```
-3. **캐니리 배포 (Canary Deployment)**:
-   * 일부 노드만 먼저 업그레이드하여 위험 최소화
-   * 문제 발생 시 영향 범위 제한
-   * 점진적인 롤아웃 가능
-   * 구현 단계:
-     1. 소규모 새 노드 그룹 생성
-     2. 일부 워크로드를 새 노드 그룹으로 이동
-     3. 모니터링 및 검증
-     4. 문제가 없으면 나머지 노드 업그레이드
-   *   구성 예시:
-
-       ```bash
-       # 캐니리 노드 그룹 생성 (소규모)
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name canary-ng \
-         --node-type m5.large \
-         --nodes 1 \
-         --node-labels "deployment=canary"
-
-       # 특정 워크로드를 캐니리 노드에 배포
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: my-app
-       spec:
-         template:
-           spec:
-             nodeSelector:
-               deployment: canary
-       ```
-
-**인플레이스 업그레이드의 문제점:**
-
-"인플레이스 업그레이드"라는 용어는 기존 노드를 종료하지 않고 그 자리에서 업그레이드하는 것을 의미할 수 있습니다. 이는 다음과 같은 이유로 EKS 노드 그룹에 적합하지 않습니다:
-
-1. **불변 인프라 원칙 위반**:
-   * 클라우드 네이티브 환경에서는 리소스를 수정하기보다 교체하는 것이 권장됨
-   * 노드 구성 드리프트 방지
-2. **업그레이드 실패 위험**:
-   * 인플레이스 업그레이드 중 실패 시 노드 상태가 불안정해질 수 있음
-   * 롤백이 어려움
-3. **EKS 노드 AMI 구조**:
-   * EKS 최적화 AMI는 버전별로 다른 AMI ID를 가짐
-   * 인플레이스 업그레이드로는 AMI 변경 불가
-4. **관리형 노드 그룹 제한**:
-   * EKS 관리형 노드 그룹은 인플레이스 업그레이드를 지원하지 않음
-   * 항상 롤링 업그레이드 방식 사용
-
-**노드 그룹 업그레이드 모범 사례:**
-
-1.  **PodDisruptionBudget 구성**:
-
-    * 업그레이드 중 애플리케이션 가용성 보장
-
-    ```yaml
-    apiVersion: policy/v1
-    kind: PodDisruptionBudget
-    metadata:
-      name: app-pdb
-    spec:
-      minAvailable: 2  # 또는 maxUnavailable: 1
-      selector:
-        matchLabels:
-          app: my-app
-    ```
-2. **충분한 리소스 확보**:
-   * 노드 드레이닝 중 포드 재배치를 위한 여유 용량 필요
-   * 클러스터 오토스케일러 구성 고려
-3. **업그레이드 전 테스트**:
-   * 비프로덕션 환경에서 먼저 업그레이드 테스트
-   * 애플리케이션 호환성 확인
-4. **모니터링 강화**:
-   * 업그레이드 중 및 후 시스템 모니터링
-   * 이상 징후 조기 발견
-
-EKS 노드 그룹 업그레이드는 워크로드 중단을 최소화하면서 보안 패치, 버그 수정, 새로운 기능을 적용하기 위한 중요한 작업입니다. 롤링 업그레이드, 블루/그린 배포, 캐니리 배포와 같은 전략을 상황에 맞게 선택하여 안전하게 업그레이드를 수행해야 합니다.
-
-</details>
-
-5\. Amazon EKS 클러스터에서 노드 부트스트랩 과정 중 발생하는 일이 아닌 것은 무엇인가요? - A) kubelet 구성 및 시작 - B) 클러스터 컨트롤 플레인 구성 요소 설치 - C) AWS IAM Authenticator 구성 - D) 노드를 클러스터에 등록
-
-<details>
-
-<summary>정답 보기</summary>
-
-**정답: B) 클러스터 컨트롤 플레인 구성 요소 설치**
-
-**설명:** Amazon EKS 노드 부트스트랩 과정 중에는 클러스터 컨트롤 플레인 구성 요소를 설치하지 않습니다. EKS는 관리형 서비스로, 컨트롤 플레인(API 서버, 컨트롤러 관리자, 스케줄러 등)은 AWS에서 관리하며 워커 노드와는 별도로 실행됩니다. 노드 부트스트랩 과정에서는 노드가 기존 EKS 클러스터에 연결되기 위한 구성만 수행합니다.
-
-**EKS 노드 부트스트랩 과정에서 실제로 발생하는 일:**
-
-1. **kubelet 구성 및 시작**:
-   * kubelet 구성 파일 생성 (`/etc/kubernetes/kubelet/kubelet-config.json`)
-   * 클러스터 엔드포인트, 인증서, 클러스터 DNS 등 설정
-   * kubelet 서비스 시작
-   *   예시 구성:
-
-       ```json
-       {
-         "kind": "KubeletConfiguration",
-         "apiVersion": "kubelet.config.k8s.io/v1beta1",
-         "address": "0.0.0.0",
-         "authentication": {
-           "anonymous": {
-             "enabled": false
-           },
-           "webhook": {
-             "cacheTTL": "2m0s",
-             "enabled": true
-           },
-           "x509": {
-             "clientCAFile": "/etc/kubernetes/pki/ca.crt"
-           }
-         },
-         "clusterDomain": "cluster.local",
-         "clusterDNS": ["10.100.0.10"],
-         "podCIDR": "",
-         "maxPods": 58
-       }
-       ```
-2. **AWS IAM Authenticator 구성**:
-   * IAM 인증을 위한 aws-iam-authenticator 설정
-   * kubeconfig 파일 생성
-   * 노드 IAM 역할 구성
-   *   예시 구성:
-
-       ```yaml
-       apiVersion: v1
-       kind: Config
-       clusters:
-       - cluster:
-           certificate-authority: /etc/kubernetes/pki/ca.crt
-           server: https://my-cluster.eks.amazonaws.com
-         name: kubernetes
-       contexts:
-       - context:
-           cluster: kubernetes
-           user: kubelet
-         name: kubelet
-       current-context: kubelet
-       users:
-       - name: kubelet
-         user:
-           exec:
-             apiVersion: client.authentication.k8s.io/v1beta1
-             command: aws-iam-authenticator
-             args:
-               - token
-               - -i
-               - my-cluster
-               - --role
-               - arn:aws:iam::123456789012:role/EKSNodeRole
-       ```
-3. **노드를 클러스터에 등록**:
-   * 노드 객체 생성
-   * 노드 레이블 및 테인트 설정
-   * 클러스터 API 서버에 등록
-   *   예시 로그:
-
-       ```
-       Node my-node-1 successfully registered with API server
-       ```
-4. **CNI 플러그인 구성**:
-   * Amazon VPC CNI 플러그인 구성
-   * 포드 네트워킹 설정
-   * IP 주소 할당 구성
-   *   예시 구성:
-
-       ```json
-       {
-         "cniVersion": "0.3.1",
-         "name": "aws-vpc",
-         "plugins": [
-           {
-             "name": "aws-vpc",
-             "type": "vpc-cni",
-             "vethPrefix": "eni",
-             "mtu": "9001",
-             "ipam": {
-               "type": "aws-cni"
-             }
-           }
-         ]
-       }
-       ```
-5. **kube-proxy 설정**:
-   * 클러스터 네트워킹을 위한 kube-proxy 구성
-   * 서비스 IP 라우팅 설정
-   *   예시 구성:
-
-       ```yaml
-       apiVersion: kubeproxy.config.k8s.io/v1alpha1
-       kind: KubeProxyConfiguration
-       bindAddress: 0.0.0.0
-       clientConnection:
-         acceptContentTypes: ""
-         burst: 10
-         contentType: application/vnd.kubernetes.protobuf
-         kubeconfig: /var/lib/kube-proxy/kubeconfig
-         qps: 5
-       ```
-6. **노드 레이블 및 테인트 적용**:
-   * 인스턴스 유형, 가용 영역 등에 기반한 레이블 설정
-   * 사용자 지정 레이블 적용
-   * 필요한 경우 테인트 적용
-   *   예시 명령:
-
-       ```bash
-       kubectl label node my-node-1 eks.amazonaws.com/nodegroup=my-nodegroup
-       kubectl label node my-node-1 topology.kubernetes.io/zone=us-west-2a
-       ```
-
-**부트스트랩 스크립트:**
-
-EKS 노드 부트스트랩은 `/etc/eks/bootstrap.sh` 스크립트를 통해 수행됩니다. 이 스크립트는 다음과 같은 매개변수를 받을 수 있습니다:
-
-```bash
-/etc/eks/bootstrap.sh my-cluster \
-  --kubelet-extra-args '--node-labels=node.kubernetes.io/role=worker' \
-  --b64-cluster-ca <base64-encoded-ca> \
-  --apiserver-endpoint <api-server-endpoint> \
-  --dns-cluster-ip 10.100.0.10
-```
-
-사용자 지정 시작 템플릿을 사용하는 경우, 사용자 데이터 섹션에서 이 스크립트를 호출하여 추가 구성을 수행할 수 있습니다:
-
-```bash
 #!/bin/bash
-set -ex
-/etc/eks/bootstrap.sh my-cluster \
-  --kubelet-extra-args '--node-labels=environment=prod,node-type=worker' \
-  --max-pods 110
+set -euo pipefail
+install -d -m 0755 /opt/company
+
+--EKS_CUSTOMIZATION--
 ```
 
-**클러스터 컨트롤 플레인 구성 요소:**
+**스토리지:** 다음은 올바른 `LaunchTemplateData` 조각입니다. AMI의 루트 디바이스 이름을 확인합니다. 볼륨 연결만으로 포맷이나 마운트가 이루어지지는 않습니다. 두 예제 볼륨은 암호화되지만 인스턴스 종료 시 삭제됩니다. 노드 교체 후에도 보존할 애플리케이션 데이터에는 CSI 기반 PV와 적절한 회수·백업 정책을 사용합니다.
 
-EKS 클러스터의 컨트롤 플레인 구성 요소는 AWS에서 관리하며, 노드 부트스트랩 과정과는 별개입니다:
+```json
+{
+  "BlockDeviceMappings": [
+    {
+      "DeviceName": "/dev/xvda",
+      "Ebs": {
+        "VolumeSize": 100,
+        "VolumeType": "gp3",
+        "Iops": 3000,
+        "Throughput": 125,
+        "Encrypted": true,
+        "DeleteOnTermination": true
+      }
+    },
+    {
+      "DeviceName": "/dev/sdf",
+      "Ebs": {
+        "VolumeSize": 500,
+        "VolumeType": "gp3",
+        "Encrypted": true,
+        "DeleteOnTermination": true
+      }
+    }
+  ]
+}
+```
 
-* API 서버
-* 컨트롤러 관리자
-* 스케줄러
-* etcd
-* CoreDNS
+**네트워킹과 메타데이터:** 예제 보안 그룹을 컨트롤 플레인, 노드, DNS, 워크로드 통신에 필요한 규칙을 갖춘 실제 그룹으로 바꿉니다. 사용자 지정 보안 그룹을 제공하면 EKS가 클러스터 보안 그룹을 자동으로 추가하지 않습니다. 보안 그룹은 인스턴스 수준 또는 네트워크 인터페이스 수준 중 한 곳에 지정합니다.
 
-이러한 구성 요소는 AWS에서 관리하는 인프라에서 실행되며, 고가용성과 확장성을 보장합니다. 노드는 이러한 컨트롤 플레인 구성 요소에 연결되기만 하고, 직접 설치하거나 관리하지 않습니다.
+```json
+{
+  "NetworkInterfaces": [
+    {
+      "DeviceIndex": 0,
+      "Groups": ["sg-0123456789abcdef0"],
+      "DeleteOnTermination": true
+    }
+  ],
+  "MetadataOptions": {
+    "HttpEndpoint": "enabled",
+    "HttpTokens": "required",
+    "HttpPutResponseHopLimit": 1
+  }
+}
+```
 
-따라서, Amazon EKS 노드 부트스트랩 과정 중 발생하지 않는 일은 "클러스터 컨트롤 플레인 구성 요소 설치"입니다.
+홉 제한 1은 포드가 노드 자격 증명 대신 IRSA 또는 EKS Pod Identity를 사용하는 조건입니다. 컨테이너에서 IMDSv2에 접근해야 하는 워크로드에는 홉 제한 2가 필요할 수 있습니다. 이 설정이나 IMDSv2가 `hostNetwork` 포드를 격리하는 경계는 아닙니다. 다중 인터페이스, 배치 설정, 인스턴스 스토어는 인스턴스 유형과 EKS 시작 템플릿 제한에 맞아야 하며 모든 조합에서 사용할 수 있는 옵션은 아닙니다.
+
+**노드 그룹 생성:** 실제 ID, 권한, 네트워크 경로를 검토한 뒤 eksctl 구성 또는 AWS CLI 예제 중 하나를 선택합니다. 아래 두 예제는 순서대로 실행하는 절차가 아닙니다:
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: custom-ng
+    launchTemplate:
+      id: lt-0123456789abcdef0
+      version: "1"
+    subnets: ["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"]
+```
+
+```bash
+# Use an existing reviewed template version and a new node group name.
+aws eks create-nodegroup \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${NEW_NODEGROUP_NAME:?}" \
+  --launch-template "id=${LAUNCH_TEMPLATE_ID:?},version=${LAUNCH_TEMPLATE_VERSION:?}" \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --node-role "${NODE_ROLE_ARN:?}"
+```
+
+시작 템플릿에는 `SubnetId`와 `IamInstanceProfile`을 넣지 않습니다. 서브넷과 노드 IAM 역할은 노드 그룹 요청에 지정합니다. 시작 템플릿 사용 시 노드 그룹의 `diskSize`, `remoteAccess`를 중복 지정하지 않습니다. 인스턴스 유형은 템플릿 또는 노드 그룹 요청 중 한 곳에서 설정합니다. `ImageId`가 있으면 노드 그룹의 `amiType`, `releaseVersion`, `version`을 생략하고 사용자 지정 AMI의 kubelet과 컨트롤 플레인 버전 호환성을 확인합니다.
+
+명시적인 `ImageId`는 AMI를 고정하지만, 이를 생략한 템플릿은 EKS가 선택하는 AMI를 사용할 수 있습니다. 어느 경우에도 새 AMI가 게시될 때 기존 노드가 자동 갱신되지는 않습니다. 사용자 지정 템플릿 변경은 **같은** 템플릿의 새 버전을 만든 뒤 명시적으로 노드 그룹을 업데이트해야 하며, 이 과정에서 인스턴스가 교체됩니다.
+
+참고: [시작 템플릿 제한](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html), [CreateNodegroup 필드](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html), [AL2023 초기화](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html).
 
 </details>
+
+2. EKS 비용 최적화를 위해 그 자체만으로는 충분하지 않은 접근 방식은 무엇인가요?
+   * A) 중단 허용 워크로드에 Spot 사용
+   * B) Cluster Autoscaler와 권한 구성
+   * C) 측정 없이 모든 워크로드에 최신 인스턴스 세대 선택
+   * D) 워크로드 요구와 총비용에 따라 Fargate 선택적 평가
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 측정 없이 모든 워크로드에 최신 인스턴스 세대 선택**
+
+모든 노드를 최신 세대라는 이유만으로 선택하는 것은 충분한 비용 분석이 아닙니다. 워크로드의 아키텍처, 처리량, 지연 시간, 메모리, 리전 가용성, 중단 허용도를 비교해야 합니다. 새 세대가 더 경제적일 수도 있으며, 같은 작업량에 대해 신형이나 구형이 항상 더 저렴한 것은 아닙니다.
+
+1. **Spot과 유형 분산:** AWS의 Spot 온디맨드 대비 최대 90% 할인은 가능한 가격 할인이지 이 실습에서 측정하거나 보장한 절감률이 아닙니다. 중단과 대체 용량을 고려합니다. Cluster Autoscaler는 첫 번째 인스턴스 유형으로 스케줄링을 시뮬레이션하므로 한 그룹의 혼합 유형은 CPU·메모리·GPU 크기를 맞춥니다. 로컬 디스크 의존성은 별도로 확인합니다.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: spot-ng
+    amiFamily: AmazonLinux2023
+    instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
+    spot: true
+    privateNetworking: true
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 5
+```
+
+2. **Cluster Autoscaler:** 최소·최대 크기는 확장 범위만 설정합니다. 스케줄링할 수 없는 포드와 제거 가능한 용량에 따라 원하는 용량을 변경하려면 컨트롤러와 권한이 필요합니다. 모든 노드에 광범위한 오토스케일링 권한을 부여하지 않습니다. 다음 **신규 설치** 전에 `kube-system/cluster-autoscaler` 서비스 계정과 해당 계정으로 OIDC 신뢰를 제한한 전용 IRSA 역할 또는 지원되는 Pod Identity 구성을 준비합니다. 용량 변경 권한은 대상 클러스터의 Auto Scaling 그룹으로 제한하고, 해당 그룹에 `k8s.io/cluster-autoscaler/enabled=true`, `k8s.io/cluster-autoscaler/<cluster-name>=owned` 태그를 설정합니다. 노드 그룹 리소스에 태그가 있다는 사실만으로 ASG 검색 구성이 완료되지는 않습니다.
+
+컨트롤러 마이너 버전은 클러스터와 같아야 합니다. 차트 9.59.0의 기본 컨트롤러는 1.35.0이므로 EKS 1.36 예제에서는 1.36.1을 명시합니다. 다른 클러스터 버전에는 그에 맞는 컨트롤러를 선택합니다. 같은 그룹을 관리하는 기존 CA 설치가 없는지도 확인합니다.
+
+```bash
+# EKS 1.36 example: first prepare the dedicated service account/IAM role
+# and discovery tags on the target Auto Scaling groups.
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update autoscaler
+helm install cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.59.0 --namespace kube-system \
+  --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  --set-string "autoDiscovery.clusterName=${EXAMPLE_CLUSTER:?}" \
+  --set-string "awsRegion=${EXAMPLE_REGION:?}" \
+  --set-string image.tag=v1.36.1 \
+  --set rbac.serviceAccount.create=false \
+  --set-string rbac.serviceAccount.name=cluster-autoscaler \
+  --wait --timeout 5m
+```
+
+3. **Fargate와 적정 크기:** Fargate는 호스트 관리 부담을 줄이지만 실제 CPU 사용량만이 아니라 할당 리소스와 실행 시간을 기준으로 과금합니다. 지원되는 포드와 프라이빗 서브넷에 프로필을 맞추고 EC2와 총비용을 비교합니다. `kubectl top`에는 Metrics Server가 필요하며 짧은 측정만으로 용량 계획을 확정할 수 없습니다.
+4. **Graviton:** ARM 노드 그룹 생성 전에 ARM64 이미지와 의존성을 검증합니다. 특정 세대의 “최대 40% 향상된 가격 대비 성능”은 모든 환경의 40% 요금 감소나 동일 성능을 보장하는 문장이 아닙니다.
+
+```bash
+# Metrics Server must already be installed and healthy.
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" top nodes
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" top pods --all-namespaces
+
+# Alternative compute examples: each creates separately billed resources.
+eksctl create fargateprofile --cluster "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --name fp-dev --namespace dev
+eksctl create nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --name arm-ng \
+  --managed --node-ami-family AmazonLinux2023 \
+  --node-type m6g.large --nodes 2 --node-private-networking
+```
+
+5. **약정:** Reserved Instances와 Savings Plans는 조건에 맞는 예측 가능한 사용량의 비용을 줄일 수 있습니다. 최대 72%와 같은 홍보 수치는 상품, 기간, 결제 방식, 사용량에 따라 달라지며 사용하지 않는 약정은 절감 효과를 없앨 수 있습니다.
+6. **요청과 제한:** 대표적인 부하를 측정한 뒤 값을 선택합니다. 요청은 스케줄링과 오토스케일러 판단에 영향을 주고 지나치게 낮은 제한은 CPU 스로틀링이나 OOM 종료를 일으킬 수 있습니다. 다음은 컨테이너별 예시 값입니다:
+
+```yaml
+# Fragment inside spec.template.spec.containers[].
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+```
+
+7. **비용 할당:** Cost Explorer와 구성된 비용 할당 보고서·도구를 사용합니다. Kubernetes 레이블이 자동으로 활성 AWS 비용 할당 태그가 되지는 않습니다. 컨트롤 플레인, 해당하는 Auto Mode 수수료, 스토리지, 로드 밸런서, NAT, 전송, 로깅 비용도 포함합니다.
+
+참고: [EKS의 CA](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html), [CA 차트](https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler), [CA 1.36.1](https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1), [Spot 요금](https://aws.amazon.com/ec2/spot/), [Fargate 요금](https://aws.amazon.com/fargate/pricing/), [Graviton](https://aws.amazon.com/ec2/graviton/), [Savings Plans](https://aws.amazon.com/savingsplans/).
+
+</details>
+
+3. Kubernetes API의 프라이빗 전용 접근과 노드·포드의 아웃바운드 인터넷 차단을 모두 충족하는 설계는 무엇인가요?
+   * A) 프라이빗 API, 인터넷 송신 경로 없는 프라이빗 노드 서브넷, 필요한 서비스 엔드포인트와 관리 경로
+   * B) API·송신 설정은 그대로 두고 노드만 프라이빗 서브넷에 배치
+   * C) 퍼블릭·프라이빗 Kubernetes API 엔드포인트를 모두 비활성화
+   * D) 퍼블릭 API만 끄고 제한 없는 NAT 송신 유지
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: A) 프라이빗 API, 인터넷 송신 경로 없는 프라이빗 노드 서브넷, 필요한 서비스 엔드포인트와 관리 경로**
+
+**Kubernetes API에 누가 접근할 수 있는가**와 **노드·포드가 어디로 통신할 수 있는가**는 별도 결정입니다. 프라이빗 전용 API가 NAT 경로를 제거하거나 워크로드의 외부 통신을 차단하거나 모든 패킷이 한 VPC 안에 머무르도록 보장하지는 않습니다. 라우팅, DNS, 보안 그룹, 권한이 허용하면 연결된 다른 네트워크에서도 프라이빗 API에 접근할 수 있습니다.
+
+이 문제의 요구사항은 프라이빗 전용 API와 노드·포드의 아웃바운드 인터넷 차단을 모두 포함합니다. 프라이빗 엔드포인트를 켜고 퍼블릭 엔드포인트를 끄며, 인터넷으로 나가는 경로가 없는 프라이빗 노드 서브넷을 사용하고 필요한 서비스 엔드포인트·레지스트리 이미지·관리 경로를 마련합니다.
+
+**엔드포인트 전환:** 먼저 프라이빗 접근을 활성화하고 해당 업데이트의 성공을 기다린 뒤, 사용할 프라이빗 네트워크에서 인증된 `kubectl` 접근을 확인합니다. 그 후에만 아래 프라이빗 전용 전환 예제를 사용합니다. 반환된 업데이트가 `Successful`인지 확인하고 접근을 다시 점검합니다. 퍼블릭 엔드포인트는 클러스터 보안 그룹이 아니라 `publicAccessCidrs`로 제한합니다. 클러스터 보안 그룹은 프라이빗 엔드포인트 통신에 적용됩니다.
+
+```bash
+# Separate alternative: run only after verifying private DNS/routing/API access
+# from the administration and CI/CD network, and after prior updates succeeded.
+PRIVATE_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true \
+  --query update.id --output text)
+: "${PRIVATE_UPDATE_ID:?Update request failed}"
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$PRIVATE_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+```
+
+**노드 배치:** 다음 조각은 기존 VPC와 프라이빗 서브넷을 사용합니다. 실제 ID와 경로를 확인해야 합니다. 이 구성 자체가 VPC 엔드포인트를 만들거나 기존 NAT 경로를 제거하지는 않습니다. 인터넷만 연결된 별도 워크스테이션에서 eksctl을 실행한다고 프라이빗 전용 Kubernetes API에 접근할 수 있는 것은 아닙니다.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+vpc:
+  id: vpc-0123456789abcdef0
+  clusterEndpoints:
+    publicAccess: false
+    privateAccess: true
+  subnets:
+    private:
+      us-west-2a:
+        id: subnet-0123456789abcdef0
+      us-west-2b:
+        id: subnet-0123456789abcdef1
+managedNodeGroups:
+  - name: private-ng
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    desiredCapacity: 3
+    privateNetworking: true
+```
+
+**AWS 서비스 연결:** 아래 ECR·S3 예제는 전체 설계의 일부입니다. private DNS 중복 충돌을 피하도록 기존 엔드포인트를 먼저 확인합니다. 인터페이스 엔드포인트에는 private DNS와 대상 클라이언트의 HTTPS 인바운드 허용이 필요합니다. S3 게이트웨이 엔드포인트에는 프라이빗 라우팅 테이블 및 적절한 엔드포인트·버킷 정책이 필요합니다.
+
+```bash
+# Example fragments for a reviewed no-internet VPC design.
+# Interface endpoint SG must allow HTTPS from the intended nodes/clients.
+aws ec2 create-vpc-endpoint --region "${EXAMPLE_REGION:?}" \
+  --vpc-id "${EXAMPLE_VPC:?}" \
+  --service-name "com.amazonaws.${EXAMPLE_REGION}.ecr.api" \
+  --vpc-endpoint-type Interface --private-dns-enabled \
+  --subnet-ids "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --security-group-ids "${ENDPOINT_SG_ID:?}"
+aws ec2 create-vpc-endpoint --region "${EXAMPLE_REGION:?}" \
+  --vpc-id "${EXAMPLE_VPC:?}" \
+  --service-name "com.amazonaws.${EXAMPLE_REGION}.ecr.dkr" \
+  --vpc-endpoint-type Interface --private-dns-enabled \
+  --subnet-ids "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --security-group-ids "${ENDPOINT_SG_ID:?}"
+aws ec2 create-vpc-endpoint --region "${EXAMPLE_REGION:?}" \
+  --vpc-id "${EXAMPLE_VPC:?}" \
+  --service-name "com.amazonaws.${EXAMPLE_REGION}.s3" \
+  --vpc-endpoint-type Gateway \
+  --route-table-ids "${PRIVATE_ROUTE_TABLE_A:?}" "${PRIVATE_ROUTE_TABLE_B:?}"
+```
+
+| 의존성 | 인터넷 경로가 없을 때의 프라이빗 연결 |
+| --- | --- |
+| 프라이빗 ECR 이미지 풀 | `ecr.api`, `ecr.dkr`, S3 게이트웨이; 퍼블릭 이미지를 접근 가능한 프라이빗 레지스트리에 복사 |
+| 노드·CNI가 사용하는 EC2 API | `ec2`와 적절한 권한·엔드포인트 정책 |
+| IRSA 자격 증명 | 리전 `sts`; SDK가 리전 엔드포인트를 사용하도록 구성 |
+| VPC 내부의 OIDC discovery/JWKS 접근 | IAM OIDC 공급자 설정 등에 `oidc-eks` 사용; STS와 별도 |
+| EKS Pod Identity 자격 증명 | `eks-auth`와 지원되는 Pod Identity Agent·구성 |
+| EKS 관리 API | `eks`; Kubernetes API 프라이빗 엔드포인트를 대체하지 않음 |
+| 로그·오토스케일링·로드 밸런싱·SSM | 실제 사용하는 서비스의 엔드포인트와 권한; SSM 메시징 연결도 필요 |
+
+엔드포인트 서비스와 DNS 이름은 리전·파티션에 따라 다릅니다. 이미지 레지스트리, 패키지 다운로드, 외부 API, 애드온 기능 등 전체 의존성을 확인합니다. 한 AWS 서비스의 엔드포인트가 인터넷 연결 전체를 대체하지는 않습니다.
+
+**관리 접근:** 라우팅된 VPN·Direct Connect 연결, 프라이빗 접근이 가능한 통제된 호스트, 적절히 구성한 SSM 세션을 사용합니다. 배스천에 반드시 퍼블릭 IP가 필요한 것은 아닙니다. SSM에도 에이전트, IAM 권한, 서비스 연결이 필요합니다.
+
+프라이빗 API와 NAT를 사용하는 프라이빗 노드 역시 유효한 EKS 설계이지만 이 문제의 인터넷 송신 차단 조건에는 맞지 않습니다. 또한 서브넷의 퍼블릭 경로만으로 개별 노드의 인터넷 접근 가능성을 단정할 수 없으며, 주소 할당과 보안 통제가 함께 작용합니다.
+
+참고: [프라이빗 클러스터 요구사항](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [API 엔드포인트 접근](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html), [EKS PrivateLink와 OIDC](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html).
+
+</details>
+
+4. 새 노드 AMI를 적용하는 EKS 관리형 노드 그룹의 방식이 아닌 것은 무엇인가요?
+   * A) 관리형 롤링 업데이트로 인스턴스 교체
+   * B) 별도 블루/그린 노드 그룹 생성 및 검증
+   * C) 인스턴스 교체 대신 실행 중인 인스턴스의 OS 패키지만 갱신
+   * D) 확대 교체 전에 작은 캐니리 노드 그룹에서 새 AMI 검증
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 인스턴스 교체 대신 실행 중인 인스턴스의 OS 패키지만 갱신**
+
+EKS 관리형 노드 그룹의 업데이트는 EC2 인스턴스를 교체합니다. 실행 중인 인스턴스의 OS 패키지를 갱신하는 것은 관리형 AMI 업데이트 방식이 아닙니다. 모든 “인플레이스 업그레이드”가 지원되지 않는다는 모호한 설명은 피해야 합니다. AWS는 노드 그룹 리소스를 유지하면서 시작 템플릿의 AMI 버전을 바꾸는 경우에도 이 표현을 사용하며, 이 경우에도 인스턴스는 교체됩니다.
+
+**롤링 업데이트:** `DEFAULT`는 기존 노드를 제거하기 전에 대체 용량을 생성합니다. `MINIMAL`은 선택한 기존 노드를 먼저 종료하고 대체 노드를 만들 수 있습니다. `maxUnavailable`의 기본값은 1이지만 변경할 수 있으므로 항상 한 번에 정확히 한 노드만 교체하는 것은 아닙니다. 할당량, AZ 용량, 포드 배치, 업데이트 전략을 확인합니다. 사용자 지정 AMI이면 같은 시작 템플릿의 새 버전을 명시합니다. 다음 명령은 EKS가 AMI를 선택하는 경우의 예제입니다:
+
+```bash
+# EKS-selected AMI case: inspect first, then initiate a reviewed update.
+aws eks describe-nodegroup \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --region "${EXAMPLE_REGION:?}" \
+  --query 'nodegroup.{status:status,version:version,ami:amiType,release:releaseVersion,update:updateConfig}'
+if NODE_UPDATE_ID=$(aws eks update-nodegroup-version \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --region "${EXAMPLE_REGION:?}" --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" \
+    --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$NODE_UPDATE_ID" \
+    --region "$EXAMPLE_REGION" \
+    --query 'update.{status:status,errors:errors}'
+fi
+```
+
+반환된 업데이트 ID를 기록하고 최종 상태까지 `describe-update`를 반복합니다. API 요청 접수 성공은 업데이트 완료가 아닙니다. 실패하면 보고된 오류를 조사한 뒤 진행합니다. PDB가 축출을 막으면 `PodEvictionFailure`가 발생할 수 있으며, 명령을 끝내기 위해 `--force`로 우회하지 않습니다.
+
+**블루/그린:** 호환되는 AL2023 노드 그룹을 별도로 만들고 워크로드 스케줄링과 준비 상태를 시험한 뒤 점진적으로 이동합니다. 애플리케이션 점검, 볼륨·AZ 제약, 롤백 조건이 충족될 때까지 기존 용량을 유지합니다. 노드 레이블 조회만으로 검증이 끝나지는 않으며, 트래픽은 노드 그룹 이름이 아니라 Service 엔드포인트·포드를 따릅니다. 새 그룹 생성 직후 기존 그룹을 자동 삭제하지 않습니다.
+
+**캐니리:** 별도 레이블과 테인트가 있는 작은 그룹을 사용합니다. 테인트는 관계없는 포드의 배치를 제한하며 테스트 워크로드만 이를 선택하고 허용합니다. 허용 조건이 맞는 시스템 DaemonSet은 여전히 실행될 수 있습니다. 다음은 기존 테스트 클러스터용 구성 예제입니다:
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: canary-ng
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 2
+    privateNetworking: true
+    labels:
+      example.com/upgrade-track: canary
+    taints:
+      - key: example.com/upgrade-track
+        value: canary
+        effect: NoSchedule
+```
+
+전용 테스트 컨텍스트에서 사용하지 않는 `upgrade-lab` 네임스페이스를 먼저 만든 뒤 다음 완전한 예제 Deployment를 적용합니다. 실제 캐니리는 애플리케이션 의존성과 대표 트래픽도 검증해야 합니다. 이 NGINX 포드는 기본 스케줄링과 준비 상태만 확인합니다.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upgrade-canary
+  namespace: upgrade-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upgrade-canary
+  template:
+    metadata:
+      labels:
+        app: upgrade-canary
+    spec:
+      nodeSelector:
+        example.com/upgrade-track: canary
+      tolerations:
+        - key: example.com/upgrade-track
+          operator: Equal
+          value: canary
+          effect: NoSchedule
+      containers:
+        - name: nginx
+          image: nginx:1.30.4
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+```
+
+**중단 예산과 용량:** 다음 별도 예제는 `app-namespace`의 실제 `my-app` 워크로드를 전제로 하며, 일반적으로 준비된 복제본이 3개 이상 있어야 합니다. 위의 단일 복제본 캐니리용 PDB가 아닙니다:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: app-pdb
+  namespace: app-namespace
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: my-app
+```
+
+PDB는 축출 API로 처리되는 자발적 축출을 제한합니다. 가용성을 보장하거나 하드웨어 장애를 막거나 직접적인 Pod·Deployment 삭제를 막지는 않습니다. `minAvailable: 2`는 정상 포드가 두 개뿐이면 축출을 차단합니다. 여유 용량, 토폴로지, 프로브, 종료 동작, 장애 복구를 확인합니다. 블루/그린이나 캐니리 계획만으로 안전한 롤백이 입증되지는 않으며 상태 저장 데이터는 특히 주의해야 합니다.
+
+참고: [관리형 업데이트 동작](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html), [AL2023 전환](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html), [포드 중단 예산](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/).
+
+</details>
+
+5. EKS 최적화 AL2023 EC2 노드 부트스트랩이 하는 일이 아닌 것은 무엇인가요?
+   * A) kubelet/컨테이너 런타임 구성
+   * B) AWS 관리형 제어면 구성 요소를 워커에 설치
+   * C) 노드 클라이언트 인증·연결 구성
+   * D) 노드 등록
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) AWS 관리형 제어면 구성 요소를 워커에 설치**
+
+워커에 API 서버·etcd·컨트롤러 관리자·스케줄러를 설치하지 않습니다. 이들은 AWS 관리형 제어면에 속합니다. **일반 EKS의 CoreDNS는 데이터 플레인의 클러스터 애드온이며 이 제어면 목록에 포함되지 않습니다.**
+
+AL2023 EKS 최적화 AMI는 `nodeadm`으로 containerd와 kubelet을 구성합니다. `nodeadm-config`는 사용자 데이터 전에 기본 구성을 만들고 `nodeadm-run`은 이후 구성을 완료하고 데몬을 실행합니다. AMI가 자동 실행하므로 사용자 데이터에서 `nodeadm init`을 추가로 호출하지 않습니다. AL2의 `/etc/eks/bootstrap.sh`를 현재 AL2023 경로로 제시하지 않습니다.
+
+**노드 연결과 네트워킹의 구분**
+
+1. 프로비저닝 단계에서 노드 IAM 역할·인스턴스 프로필과 필요한 노드 접근 권한을 준비합니다. 부트스트랩이 IAM 역할을 생성하지 않습니다. AMI의 생성된 kubeconfig/인증 경로를 사용하며 인스턴스 역할을 불필요하게 다시 AssumeRole하는 수동 kubeconfig를 만들지 않습니다.
+2. kubelet이 노드를 등록합니다. 준비 상태에는 클러스터 연결뿐 아니라 런타임·CNI 상태도 영향을 줍니다.
+3. 일반 EKS의 `aws-node`, `kube-proxy`, CoreDNS는 클러스터 애드온으로 배포·관리합니다. 호스트 부트스트랩이 이 애드온 전체를 설치한다는 뜻이 아닙니다. CNI 파일을 임의로 덮어쓰지 않습니다.
+4. 제공자 소유 `eks.amazonaws.com/nodegroup`·`topology.kubernetes.io/zone` 레이블을 수동으로 조작하지 않습니다. 사용자 레이블/taint는 노드 그룹·프로비저너 설정에서 관리합니다.
+
+**NodeConfig 입력 예제**
+
+아래는 관리 워크스테이션에서 기존 IPv4 클러스터의 실제 메타데이터로 사용자 데이터를 생성합니다. 검토한 EKS 최적화 AL2023 기반 사용자 AMI/자체 관리 노드용이며, 사용자 AMI ID가 없는 관리형 노드 그룹은 EKS의 메타데이터 생성·병합 경로를 따릅니다. `NodeConfig`는 호스트 부트스트랩 설정으로 `kubectl apply`할 일반 Kubernetes 리소스가 아닙니다.
+
+```bash
+# Run on the administration workstation to prepare reviewed IPv4 node user data.
+NODE_CONFIG_DIR=$(mktemp -d /tmp/eks-nodeconfig.XXXXXX)
+: "${NODE_CONFIG_DIR:?}"
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query cluster --output json > "$NODE_CONFIG_DIR/cluster.json" || exit 1
+
+jq -e '
+  (.name | type == "string" and length > 0) and
+  (.endpoint | startswith("https://")) and
+  (.certificateAuthority.data | type == "string" and length > 0) and
+  (.kubernetesNetworkConfig.ipFamily == "ipv4") and
+  (.kubernetesNetworkConfig.serviceIpv4Cidr | type == "string" and length > 0)
+' "$NODE_CONFIG_DIR/cluster.json" >/dev/null || exit 1
+
+jq '{
+  apiVersion: "node.eks.aws/v1alpha1",
+  kind: "NodeConfig",
+  spec: {
+    cluster: {
+      name: .name,
+      apiServerEndpoint: .endpoint,
+      certificateAuthority: .certificateAuthority.data,
+      cidr: .kubernetesNetworkConfig.serviceIpv4Cidr
+    }
+  }
+}' "$NODE_CONFIG_DIR/cluster.json" > "$NODE_CONFIG_DIR/nodeconfig.json" || exit 1
+
+{
+  printf 'MIME-Version: 1.0\n'
+  printf 'Content-Type: multipart/mixed; boundary="EKS_NODE_CONFIG"\n\n'
+  printf '%s\n' '--EKS_NODE_CONFIG' 'Content-Type: application/node.eks.aws' ''
+  cat "$NODE_CONFIG_DIR/nodeconfig.json"
+  printf '\n%s\n' '--EKS_NODE_CONFIG--'
+} > "$NODE_CONFIG_DIR/user-data.mime"
+printf 'Review user data: %s\n' "$NODE_CONFIG_DIR/user-data.mime"
+# An EC2 LaunchTemplateData.UserData JSON field needs the MIME file base64 encoded.
+# The console user-data editor can accept raw text when its encoding option is set accordingly.
+```
+
+DNS 서비스 주소와 maxPods를 모든 노드에 동일한 상수로 고정하지 않습니다. 클러스터 서비스 CIDR, 인스턴스/CNI/프리픽스 구성과 공식 계산 규칙을 따릅니다. 아래 명령은 일반 EC2 구성의 확인 예시이며 Auto Mode/Fargate에서는 관리 구성 요소가 다릅니다.
+
+```bash
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
+  -L eks.amazonaws.com/nodegroup,topology.kubernetes.io/zone
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" describe node "${EXAMPLE_NODE:?}"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get daemonset aws-node kube-proxy
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get deployment coredns
+```
+
+노드 조인·데몬 실행·네트워크나 실측 로그는 이 감사에서 실행/수집하지 않았습니다.
+
+[AL2023/nodeadm lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html) · [NodeConfig API](https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/)
+
+</details>
+
+## 공식 참고 자료
+
+- [EKS supported versions](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [EKS node IAM role](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)
+- [VPC CNI IAM role](https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html)
+- [NetworkPolicy prerequisites](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
+- [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
+- [Metrics Server requirements](https://github.com/kubernetes-sigs/metrics-server#requirements)
+- [eksctl configuration schema](https://schema.eksctl.io/)

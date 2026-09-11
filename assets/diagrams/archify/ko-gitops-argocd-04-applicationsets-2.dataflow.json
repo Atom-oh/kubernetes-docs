@@ -15,7 +15,7 @@
           "override",
           "merge"
         ],
-        "note": "spec.template 기본값과 generators[].template 오버라이드가 Deep Merge 단계로 들어간다."
+        "note": "spec.template과 generators[].list.template 또는 clusters.template이 병합됩니다."
       },
       {
         "id": "result",
@@ -28,8 +28,8 @@
       }
     ],
     "viewBox": [
-      680,
-      540
+      1040,
+      400
     ],
     "legend": {
       "mode": "auto",
@@ -68,19 +68,20 @@
       "id": "override",
       "type": "backend",
       "label": "생성기별 오버라이드",
-      "sublabel": "generators[].template",
+      "sublabel": "list / clusters template",
       "stage": 0,
-      "row": 2,
+      "row": 1,
       "tag": "우선 적용"
     },
     {
       "id": "merge",
-      "type": "cloud",
+      "type": "backend",
       "label": "Deep Merge",
       "sublabel": "key-by-key override",
       "stage": 1,
-      "row": 1,
-      "tag": "병합"
+      "row": 0,
+      "tag": "병합",
+      "yOffset": 57
     },
     {
       "id": "final",
@@ -88,8 +89,9 @@
       "label": "최종 템플릿",
       "sublabel": "Application spec",
       "stage": 2,
-      "row": 1,
-      "tag": "생성기 요소별"
+      "row": 0,
+      "tag": "생성기 요소별",
+      "yOffset": 57
     }
   ],
   "flows": [
@@ -107,14 +109,18 @@
       "to": "merge",
       "label": "오버라이드",
       "classification": "해당 생성기 결과에만 적용",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelAt": [
+        208,
+        314
+      ]
     },
     {
       "id": "merged-out",
       "from": "merge",
       "to": "final",
       "label": "병합 결과",
-      "classification": "오버라이드가 기본값보다 항상 우선",
+      "classification": "생성기별 지정 값 적용",
       "variant": "emphasis",
       "labelDy": 53
     }
@@ -124,18 +130,18 @@
       "dot": "orange",
       "title": "병합 규칙",
       "items": [
-        "같은 키가 양쪽에 있으면 generators[].template 값이 spec.template 값을 덮어쓴다",
-        "오버라이드에 없는 키는 기본 템플릿 값이 그대로 유지된다",
-        "오버라이드는 해당 생성기가 만든 요소에만 적용된다"
+        "생성기별 template으로 기본 template의 필드를 재정의한다",
+        "명시하지 않은 설정은 기본 템플릿에서 가져온다",
+        "Matrix/Merge 자식의 template 오버라이드는 지원하지 않는다"
       ]
     },
     {
       "dot": "slate",
       "title": "페이지 예시",
       "items": [
-        "list 생성기: metadata.annotations에 custom-annotation 추가",
-        "clusters 생성기(staging): syncPolicy.automated.prune을 false로 덮어씀",
-        "기본 템플릿: prune true, selfHeal true"
+        "list: custom-annotation 추가",
+        "clusters(staging): targetRevision과 대상 클러스터 재정의",
+        "기본 템플릿: main 리비전과 로컬 클러스터"
       ]
     }
   ]

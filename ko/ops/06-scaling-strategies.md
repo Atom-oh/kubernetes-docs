@@ -1264,7 +1264,7 @@ spec:
 
 스케일 다운 시 어떤 Pod를 먼저 종료할지 제어할 수 있습니다.
 
-> 상세 스케줄러 내용은 [스케줄링 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md)를 참조하세요.
+> 상세 스케줄러 내용은 [스케줄링 가이드](../scheduling/01-custom-scheduler-part1.md)를 참조하세요.
 
 ### 4.1 Pod Deletion Cost 개념
 
@@ -2109,7 +2109,7 @@ spec:
 * [EKS Spot Best Practices](https://aws.github.io/aws-eks-best-practices/cost_optimization/spot/)
 * [Pod Deletion Cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
 * [KEDA 가이드](../autoscaling/01-keda.md)
-* [스케줄링 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md)
+* [스케줄링 가이드](../scheduling/01-custom-scheduler-part1.md)
 
 ***
 

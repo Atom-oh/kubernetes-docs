@@ -1,0 +1,158 @@
+[
+  {
+    "path": "ko/gitops/argocd/02-applications.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed Application source/spec, Helm/OCI/multi-source, health/hooks, diff exclusions, App-of-Apps and rollback guidance against3.5.2; quiz ambiguity and outdated examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go",
+      "https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go",
+      "https://github.com/stefanprodan/podinfo/releases/tag/6.15.0",
+      "https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.0.0"
+    ],
+    "findings": [
+      "Reference skeletons activate mutually exclusive engines/destinations or repeat keys; distinguish schema catalog from applyable examples",
+      "Old Bitnami/kube-prometheus-stack/loki-stack charts and adminPassword=admin",
+      "External $values source missing ref, incorrect general OCI/Helm OCI URL forms",
+      "Application.kustomize.images expects strings, not native Kustomization image objects",
+      "Lua missing status/conditions defaults, wrong certmanager.io key, ARN existence used as ACK health",
+      "Health table falsely equates Service health with endpoints; observed generation/state semantics omitted",
+      "Hooks need proper phases/health, selective-sync caveat, repeatable named Job cleanup and shell failure propagation",
+      "IgnoreDifferences overly broad for images/resources/all managers; diff vs sync/first-create caveats missing",
+      "App-of-Apps trust/finalizer/child health/wave gating incomplete; Helm template missing root values",
+      "Rollback requires automated sync disabled and does not update Git/data; final declarative example lacks project/destination",
+      "Quiz has ambiguous namespace question and missing OCI/path/Helm lifecycle/values precedence scope"
+    ],
+    "validation": [
+      "60 code fences classified; non-template YAML parsed with duplicate-key rejection; Bash syntax checked",
+      "22 full non-template Application specs passed official3.5.2 CRD schema",
+      "Two documented Helm templates rendered from documented values, producing3KO+1EN valid child Applications",
+      "Podinfo6.15.0 chart digest checked against publisher index; renderer confirmed parameters replicaCount3 overrides valuesObject2 and service remains ClusterIP",
+      "kube-prometheus-stack90.0.0 publication and Grafana existingSecret schema verified",
+      "Hook workflow source/HTML/PNG corrected;9/9 showcase checks and four desktop viewports passed; final large-light screenshot inspected",
+      "ACK Lua statically reviewed against official condition definitions; no Lua runtime or live Argo/AWS resources executed"
+    ],
+    "reviewedSha256": "91e71580b2b96ffc8b3a5d9329a7aed2c38df99880a795770f87a54f91f19e0d"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/02-applications-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed Application source/spec, Helm/OCI/multi-source, health/hooks, diff exclusions, App-of-Apps and rollback guidance against3.5.2; quiz ambiguity and outdated examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go",
+      "https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go",
+      "https://github.com/stefanprodan/podinfo/releases/tag/6.15.0",
+      "https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.0.0"
+    ],
+    "findings": [
+      "Reference skeletons activate mutually exclusive engines/destinations or repeat keys; distinguish schema catalog from applyable examples",
+      "Old Bitnami/kube-prometheus-stack/loki-stack charts and adminPassword=admin",
+      "External $values source missing ref, incorrect general OCI/Helm OCI URL forms",
+      "Application.kustomize.images expects strings, not native Kustomization image objects",
+      "Lua missing status/conditions defaults, wrong certmanager.io key, ARN existence used as ACK health",
+      "Health table falsely equates Service health with endpoints; observed generation/state semantics omitted",
+      "Hooks need proper phases/health, selective-sync caveat, repeatable named Job cleanup and shell failure propagation",
+      "IgnoreDifferences overly broad for images/resources/all managers; diff vs sync/first-create caveats missing",
+      "App-of-Apps trust/finalizer/child health/wave gating incomplete; Helm template missing root values",
+      "Rollback requires automated sync disabled and does not update Git/data; final declarative example lacks project/destination",
+      "Quiz has ambiguous namespace question and missing OCI/path/Helm lifecycle/values precedence scope"
+    ],
+    "validation": [
+      "60 code fences classified; non-template YAML parsed with duplicate-key rejection; Bash syntax checked",
+      "22 full non-template Application specs passed official3.5.2 CRD schema",
+      "Two documented Helm templates rendered from documented values, producing3KO+1EN valid child Applications",
+      "Podinfo6.15.0 chart digest checked against publisher index; renderer confirmed parameters replicaCount3 overrides valuesObject2 and service remains ClusterIP",
+      "kube-prometheus-stack90.0.0 publication and Grafana existingSecret schema verified",
+      "Hook workflow source/HTML/PNG corrected;9/9 showcase checks and four desktop viewports passed; final large-light screenshot inspected",
+      "ACK Lua statically reviewed against official condition definitions; no Lua runtime or live Argo/AWS resources executed"
+    ],
+    "reviewedSha256": "7e84c6eb20857348e86385137843020f2c3829c1afe9e0858243b8a5560559e2"
+  },
+  {
+    "path": "en/gitops/argocd/02-applications.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed Application source/spec, Helm/OCI/multi-source, health/hooks, diff exclusions, App-of-Apps and rollback guidance against3.5.2; quiz ambiguity and outdated examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go",
+      "https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go",
+      "https://github.com/stefanprodan/podinfo/releases/tag/6.15.0",
+      "https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.0.0"
+    ],
+    "findings": [
+      "Reference skeletons activate mutually exclusive engines/destinations or repeat keys; distinguish schema catalog from applyable examples",
+      "Old Bitnami/kube-prometheus-stack/loki-stack charts and adminPassword=admin",
+      "External $values source missing ref, incorrect general OCI/Helm OCI URL forms",
+      "Application.kustomize.images expects strings, not native Kustomization image objects",
+      "Lua missing status/conditions defaults, wrong certmanager.io key, ARN existence used as ACK health",
+      "Health table falsely equates Service health with endpoints; observed generation/state semantics omitted",
+      "Hooks need proper phases/health, selective-sync caveat, repeatable named Job cleanup and shell failure propagation",
+      "IgnoreDifferences overly broad for images/resources/all managers; diff vs sync/first-create caveats missing",
+      "App-of-Apps trust/finalizer/child health/wave gating incomplete; Helm template missing root values",
+      "Rollback requires automated sync disabled and does not update Git/data; final declarative example lacks project/destination",
+      "Quiz has ambiguous namespace question and missing OCI/path/Helm lifecycle/values precedence scope"
+    ],
+    "validation": [
+      "60 code fences classified; non-template YAML parsed with duplicate-key rejection; Bash syntax checked",
+      "22 full non-template Application specs passed official3.5.2 CRD schema",
+      "Two documented Helm templates rendered from documented values, producing3KO+1EN valid child Applications",
+      "Podinfo6.15.0 chart digest checked against publisher index; renderer confirmed parameters replicaCount3 overrides valuesObject2 and service remains ClusterIP",
+      "kube-prometheus-stack90.0.0 publication and Grafana existingSecret schema verified",
+      "Hook workflow source/HTML/PNG corrected;9/9 showcase checks and four desktop viewports passed; final large-light screenshot inspected",
+      "ACK Lua statically reviewed against official condition definitions; no Lua runtime or live Argo/AWS resources executed"
+    ],
+    "reviewedSha256": "c18990cb25c9ddd52ff4ecdec9016d7e3577dafc5addb493fd58c7952d16a2c0"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/02-applications-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed Application source/spec, Helm/OCI/multi-source, health/hooks, diff exclusions, App-of-Apps and rollback guidance against3.5.2; quiz ambiguity and outdated examples corrected.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md",
+      "https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go",
+      "https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go",
+      "https://github.com/stefanprodan/podinfo/releases/tag/6.15.0",
+      "https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.0.0"
+    ],
+    "findings": [
+      "Reference skeletons activate mutually exclusive engines/destinations or repeat keys; distinguish schema catalog from applyable examples",
+      "Old Bitnami/kube-prometheus-stack/loki-stack charts and adminPassword=admin",
+      "External $values source missing ref, incorrect general OCI/Helm OCI URL forms",
+      "Application.kustomize.images expects strings, not native Kustomization image objects",
+      "Lua missing status/conditions defaults, wrong certmanager.io key, ARN existence used as ACK health",
+      "Health table falsely equates Service health with endpoints; observed generation/state semantics omitted",
+      "Hooks need proper phases/health, selective-sync caveat, repeatable named Job cleanup and shell failure propagation",
+      "IgnoreDifferences overly broad for images/resources/all managers; diff vs sync/first-create caveats missing",
+      "App-of-Apps trust/finalizer/child health/wave gating incomplete; Helm template missing root values",
+      "Rollback requires automated sync disabled and does not update Git/data; final declarative example lacks project/destination",
+      "Quiz has ambiguous namespace question and missing OCI/path/Helm lifecycle/values precedence scope"
+    ],
+    "validation": [
+      "60 code fences classified; non-template YAML parsed with duplicate-key rejection; Bash syntax checked",
+      "22 full non-template Application specs passed official3.5.2 CRD schema",
+      "Two documented Helm templates rendered from documented values, producing3KO+1EN valid child Applications",
+      "Podinfo6.15.0 chart digest checked against publisher index; renderer confirmed parameters replicaCount3 overrides valuesObject2 and service remains ClusterIP",
+      "kube-prometheus-stack90.0.0 publication and Grafana existingSecret schema verified",
+      "Hook workflow source/HTML/PNG corrected;9/9 showcase checks and four desktop viewports passed; final large-light screenshot inspected",
+      "ACK Lua statically reviewed against official condition definitions; no Lua runtime or live Argo/AWS resources executed"
+    ],
+    "reviewedSha256": "2264b5998bbec695654d4da4564bae5263cee9647714acdc40adf66a0645de35"
+  }
+]

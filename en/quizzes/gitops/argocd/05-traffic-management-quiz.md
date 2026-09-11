@@ -18,7 +18,7 @@ Argo Rollouts is a Kubernetes controller that provides advanced deployment capab
 
 </details>
 
-2. Which deployment strategy gradually shifts traffic from the old version to the new version?
+2. Which strategy validates a new version through explicit traffic-weight steps and analysis gates?
    - A) Recreate
    - B) Rolling Update
    - C) Canary
@@ -36,17 +36,17 @@ Canary deployments gradually shift traffic from the old version to the new versi
 
 3. In a Blue-Green deployment with Argo Rollouts, what happens during promotion?
    - A) The blue environment is deleted
-   - B) Traffic is switched from the stable (blue) to the preview (green) service
+   - B) The active Service selector is changed to the new ReplicaSet
    - C) Both versions run simultaneously forever
    - D) A new environment is created
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Traffic is switched from the stable (blue) to the preview (green) service**
+**Answer: B) The active Service selector is changed to the new ReplicaSet**
 
 **Explanation:**
-In Blue-Green deployments, promotion switches traffic from the current stable version to the preview version by updating the active service selector. The old ReplicaSet is scaled down after promotion.
+In Blue-Green deployments, promotion switches traffic from the current stable version to the preview version by updating the active service selector. Old ReplicaSet scale-down follows analysis and delay settings; data-plane propagation is not instantaneous.
 
 </details>
 
@@ -66,7 +66,7 @@ AnalysisTemplates define metrics to query (from Prometheus, Datadog, etc.) and s
 
 </details>
 
-5. Which Ingress controller has native integration with Argo Rollouts for traffic splitting?
+5. Which providers have native traffic-management integrations in Argo Rollouts?
    - A) Traefik only
    - B) NGINX Ingress only
    - C) Multiple including NGINX, ALB, Istio, and Traefik
@@ -78,11 +78,11 @@ AnalysisTemplates define metrics to query (from Prometheus, Datadog, etc.) and s
 **Answer: C) Multiple including NGINX, ALB, Istio, and Traefik**
 
 **Explanation:**
-Argo Rollouts has native traffic management integrations with multiple ingress controllers and service meshes including NGINX Ingress, AWS ALB, Istio, Linkerd, SMI, and Traefik.
+Argo Rollouts has native traffic management integrations with multiple ingress controllers and service meshes including AWS ALB, Istio, Traefik and APISIX. Retained ingress-nginx/SMI API support does not mean those projects remain maintained; there is no separate native Linkerd field.
 
 </details>
 
-6. What does the `setWeight` step do in a Canary strategy?
+6. With a traffic router and default maxTrafficWeight=100, what does setWeight configure?
    - A) Sets the CPU weight for pods
    - B) Sets the percentage of traffic to route to the canary version
    - C) Sets the importance of the deployment
@@ -94,23 +94,23 @@ Argo Rollouts has native traffic management integrations with multiple ingress c
 **Answer: B) Sets the percentage of traffic to route to the canary version**
 
 **Explanation:**
-The `setWeight` step in a canary strategy configures what percentage of traffic should be routed to the canary (new) version. For example, `setWeight: 20` routes 20% of traffic to the canary.
+The `setWeight` step in a canary strategy configures what percentage of traffic should be routed to the canary (new) version. For example, setWeight:20 requests relative weight20/100. Observed percentages vary with samples, connections and cookies. Without a router, it approximates the ratio using Pod counts.
 
 </details>
 
-7. What happens when an AnalysisRun fails during a canary deployment?
+7. What happens when an analysis linked to the Rollout reaches AnalysisRun phase Failed?
    - A) The deployment continues regardless
    - B) An alert is sent but nothing else happens
-   - C) The rollout is automatically aborted and rolled back
+   - C) The rollout is aborted and traffic returns to stable
    - D) The cluster is shut down
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) The rollout is automatically aborted and rolled back**
+**Answer: C) The rollout is aborted and traffic returns to stable**
 
 **Explanation:**
-When an AnalysisRun fails (metrics exceed failure thresholds), Argo Rollouts automatically aborts the rollout and initiates a rollback to the stable version, preventing bad deployments from affecting all traffic.
+When an AnalysisRun fails (metrics exceed failure thresholds), Argo Rollouts aborts the rollout and returns traffic to stable. It does not revert Git or database changes. failureLimit distinguishes failed measurements from a failed AnalysisRun; Inconclusive pauses for investigation.
 
 </details>
 
@@ -142,7 +142,7 @@ Adding a `pause` step without a duration creates an indefinite pause that requir
 **Answer: B) Manipulate an HTTPRoute via the Gateway API plugin (`trafficRouting.plugins`)**
 
 **Explanation:**
-Kong has no native Argo Rollouts integration — there is no `trafficRouting.kong` field. It is supported only through argoproj-labs' Gateway API plugin, which manipulates a standard HTTPRoute resource. Other Gateway API-compliant controllers, such as Traefik and kgateway, use the same plugin.
+Kong has no native Argo Rollouts integration — there is no `trafficRouting.kong` field. This chapter uses argoproj-labs' Gateway API plugin, which manipulates a standard HTTPRoute resource. Other Gateway API-compliant controllers, such as Traefik and kgateway, use the same plugin.
 
 </details>
 
@@ -158,6 +158,6 @@ Kong has no native Argo Rollouts integration — there is no `trafficRouting.kon
 **Answer: C) The HTTPRoute's `backendRefs[].weight`**
 
 **Explanation:**
-The Gateway API plugin directly updates the standard Gateway API HTTPRoute resource's `backendRefs[].weight` values at each setWeight step. This is a universal mechanism that applies identically to any controller implementing Gateway API — Kong, Traefik, kgateway, and others.
+The Gateway API plugin directly updates the standard Gateway API HTTPRoute resource's `backendRefs[].weight` values at each setWeight step. This mechanism can work with compatible controllers; verify the installed CRDs, supported Route features and actual data-plane convergence.
 
 </details>

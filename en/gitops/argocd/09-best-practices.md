@@ -1,9 +1,10 @@
 # ArgoCD Best Practices
 
-> **Supported Versions**: ArgoCD v2.9+
-> **Last Updated**: February 22, 2026
+> **Supported Versions**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1
+> **Last Updated**: September 11, 2026
 
 ## Table of Contents
+
 - [Repository Structure](#repository-structure)
 - [Environment Promotion](#environment-promotion)
 - [Resource Management](#resource-management)
@@ -54,12 +55,16 @@ gitops-repo/
 - Single source of truth
 - Easy cross-application changes
 - Simplified CI/CD
-- Atomic multi-app updates
+- One atomic Git commit can describe multiple apps; their cluster deployments are not one atomic transaction
 
 **Cons:**
 - Can become large
 - Access control complexity
 - Single point of failure
+
+![Diagram comparing a monorepo, where one Git repository holds the app-a, app-b, and infra directories, with a polyrepo, where the same components are split into three independent Git repositories: app-a-repo, app-b-repo, and infra-repo.](../../.gitbook/assets/en-gitops-argocd-09-best-practices-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-09-best-practices-0.html)
 
 ### Polyrepo Pattern
 
@@ -127,11 +132,11 @@ gitops-root/
 
 ### Git Branch Strategy
 
-![Diagram comparing a monorepo, where one Git repository holds the app-a, app-b, and infra directories, with a polyrepo, where the same components are split into three independent Git repositories: app-a-repo, app-b-repo, and infra-repo.](../../.gitbook/assets/en-gitops-argocd-09-best-practices-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-09-best-practices-0.html)
+Long-lived environment branches are one option; directory-based overlays on a shared main branch often reduce branch divergence. App of Apps is an administrative capability: restrict access to the root repository and child Application creation. A manual production sync is a separate gate from a reviewed Git change.
 
 ### Directory-Based Promotion
+
+Promote the same tested artifact without rebuilding it per environment. These examples assume existing bases and registry-enforced immutable tags; prefer digests when tag immutability is not guaranteed. Changing the contents of a mutable tag does not itself update Git or a Deployment Pod template. The base image name is `my-app`; apply name/tag transformations together in the overlay. An overlay matching an old name will not update an image already renamed by the base.
 
 ```yaml
 # overlays/dev/kustomization.yaml
@@ -140,200 +145,206 @@ kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: myapp
-    newTag: dev-abc1234
+  - name: my-app
+    newName: my-registry/my-app
+    newTag: v1.2.3
 
+---
 # overlays/staging/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: myapp
-    newTag: v1.2.3-rc1
+  - name: my-app
+    newName: my-registry/my-app
+    newTag: v1.2.3
 
+---
 # overlays/production/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: myapp
+  - name: my-app
+    newName: my-registry/my-app
     newTag: v1.2.3
 ```
 
 ### Automated Promotion Pipeline
 
+This workflow opens a PR for an **already tested digest**. Adapt the example registry and overlay path. Supply `GITOPS_PR_TOKEN` using a GitHub App token or scoped token with contents/pull requests write access to the target repository. Changes made with the default GITHUB_TOKEN have follow-up workflow trigger restrictions; verify required checks can run. Enforce review, tests, and artifact policies through repository rulesets/branch protection.
+
 ```yaml
-# .github/workflows/promote.yaml
-name: Promote to Production
+name: Promote tested image to production
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to promote'
+      digest:
+        description: 'Tested image digest (sha256: followed by 64 hex characters)'
         required: true
-
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: promote-production
+  cancel-in-progress: false
 jobs:
   promote:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Update production overlay
-        run: |
-          cd overlays/production
-          kustomize edit set image myapp=myregistry/myapp:${{ github.event.inputs.version }}
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          title: "Promote ${{ github.event.inputs.version }} to production"
-          branch: promote/${{ github.event.inputs.version }}
-          commit-message: "chore: promote ${{ github.event.inputs.version }} to production"
+          persist-credentials: false
+      - name: Install verified Kustomize
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_dir="$RUNNER_TEMP/kustomize-bin"
+          mkdir -p "$tool_dir"
+          cd "$tool_dir"
+          curl -fsSL -o kustomize.tar.gz \
+            https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_linux_amd64.tar.gz
+          echo "029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d  kustomize.tar.gz" | sha256sum -c -
+          tar -xzf kustomize.tar.gz kustomize
+          echo "$tool_dir" >> "$GITHUB_PATH"
+      - name: Update production overlay
+        env:
+          IMAGE_DIGEST: ${{ inputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
+          cd overlays/production
+          kustomize edit set image "my-app=my-registry/my-app@${IMAGE_DIGEST}"
+          kustomize build . > /dev/null
+      - name: Create reviewed promotion PR
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.GITOPS_PR_TOKEN }}
+          branch: promote-production
+          title: 'Promote tested image to production'
+          commit-message: 'chore: promote tested image digest'
+          add-paths: overlays/production/kustomization.yaml
+          body: |
+            Promote the already tested image digest: ${{ inputs.digest }}
+            Require the repository's validation and approval checks before merging.
 ```
 
 ## Resource Management
 
-### ArgoCD Component Resources
+### Component Resources
+
+These Chart 10.8.4 values are **measurement starting points**, not a guaranteed sizing table. Merge them into your existing values and retain one deployment owner. The chart supplies the correct container names and workload types; avoid incomplete Deployment patches that accidentally add a container.
 
 ```yaml
-# Helm values for production
+fullnameOverride: argocd
 controller:
+  replicas: 1
   resources:
     requests:
       cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 2000m
-      memory: 2Gi
-
-server:
-  resources:
-    requests:
-      cpu: 250m
-      memory: 256Mi
-    limits:
-      cpu: 1000m
       memory: 1Gi
-
-repoServer:
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
     limits:
-      cpu: 2000m
-      memory: 2Gi
-
-redis:
+      cpu: '2'
+      memory: 4Gi
+server:
+  replicas: 2
   resources:
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 256Mi
     limits:
       cpu: 500m
       memory: 512Mi
+repoServer:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: '1'
+      memory: 2Gi
 ```
 
-### Resource Limits by Scale
+| Measurement | Tuning direction |
+|---|---|
+| Manifest time, concurrent requests, repository size | repo-server CPU/memory, parallelism, disk |
+| Resource counts per cluster and watch/cache memory | Controller memory and cluster distribution |
+| Reconciliation/sync queue delay and API throttling | Processor concurrency together with target API capacity |
+| CPU throttling, OOM, and restarts | Requests/limits together with concurrent execution |
 
-| Scale | Applications | Controller CPU | Controller Memory | Repo Server CPU | Repo Server Memory |
-|-------|--------------|----------------|-------------------|-----------------|-------------------|
-| Small | < 50 | 500m | 512Mi | 500m | 512Mi |
-| Medium | 50-200 | 1000m | 1Gi | 1000m | 1Gi |
-| Large | 200-500 | 2000m | 2Gi | 2000m | 2Gi |
-| X-Large | > 500 | 4000m | 4Gi | 4000m | 4Gi |
+Application count alone does not establish a 100/500-app sharding threshold. Redis is a rebuildable cache, but cache loss can cause recomputation load and latency. Apply the node/anti-affinity/PDB prerequisites in the [HA installation section](01-installation.md#high-availability-setup). Do not blindly replicate every component.
 
-### Horizontal Pod Autoscaler
+### Optional repo-server HPA
+
+This requires Metrics Server and CPU requests. With HPA enabled, it owns the replica count. CPU scaling does not explain every manifest-generation bottleneck; scaling solely on persistent cache memory can keep unnecessary replicas running.
 
 ```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: argocd-repo-server
-  namespace: argocd
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: argocd-repo-server
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 80
+repoServer:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: null
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
 ```
 
 ## Performance Tuning
 
-### Controller Optimization
+### Configuration Location and Meaning
+
+Merge these into the same Helm values. `configs.params` produces `argocd-cmd-params-cm`; `configs.cm` produces `argocd-cm`. Values consumed through command-line/environment settings require the affected controller/repo-server/server rollout; verify the rendered Pod and startup logs.
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-  namespace: argocd
-data:
-  # Reduce reconciliation frequency
-  controller.status.processors: "50"
-  controller.operation.processors: "25"
-  controller.self.heal.timeout.seconds: "5"
-
-  # Increase cache TTL
-  controller.repo.server.timeout.seconds: "180"
-
-  # Sharding for large deployments
-  controller.sharding.algorithm: round-robin
+configs:
+  params:
+    controller.status.processors: '20'
+    controller.operation.processors: '10'
+    controller.repo.server.timeout.seconds: '180'
+    server.repo.server.timeout.seconds: '180'
+    reposerver.parallelism.limit: '2'
+    reposerver.repo.cache.expiration: 24h
+    reposerver.git.request.timeout: 30s
+    reposerver.git.lsremote.parallelism.limit: '5'
+  cm:
+    timeout.reconciliation: 300s
+    timeout.reconciliation.jitter: 60s
+    application.resourceTrackingMethod: annotation
+repoServer:
+  env:
+  - name: ARGOCD_EXEC_TIMEOUT
+    value: 2m
 ```
 
-### Repo Server Optimization
+- Status/operation processors control concurrency, not polling frequency; 20/10 are the default concurrency values.
+- The 180-second repo-server RPC timeout, two-minute tool execution timeout, and thirty-second Git request timeout are different limits. Identify the slow stage and cancellation behavior before increasing them.
+- `reposerver.parallelism.limit` limits concurrent manifest generation, not cache TTL. Load-test it against memory/process limits.
+- Default periodic reconciliation is 120 seconds plus up to 60 seconds of jitter. The example uses 300 + 60 seconds (five–six minutes); webhooks and other refresh causes are separate.
+- `application.resourceTrackingMethod` sets resource tracking, not refresh frequency. Review migration effects before changing an existing tracking method.
+
+### Sharding Multiple Destination Clusters
+
+The default sharding unit is the destination **cluster**. Increasing replicas does not evenly distribute all Applications targeting one cluster. The chart coordinates StatefulSet replicas with `ARGOCD_CONTROLLER_REPLICAS`. Round-robin/consistent-hashing and dynamic cluster distribution are experimental in this version; do not present them as universal production defaults.
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-  namespace: argocd
-data:
-  # Increase parallelism
-  reposerver.parallelism.limit: "10"
-
-  # Cache settings
-  reposerver.repo.cache.expiration: "24h"
-
-  # Git optimization
-  reposerver.git.request.timeout: "60s"
-  reposerver.git.lsremote.parallelism: "5"
+controller:
+  replicas: 3
+configs:
+  params:
+    controller.sharding.algorithm: legacy
 ```
 
-### Redis Optimization
+### Application Boundaries and HPA
 
-```yaml
-# For high-traffic deployments, use Redis HA
-redis-ha:
-  enabled: true
-  redis:
-    config:
-      maxmemory: "512mb"
-      maxmemory-policy: "allkeys-lru"
-  haproxy:
-    enabled: true
-    replicas: 3
-```
+Split large Applications along ownership and lifecycle boundaries. Arbitrary resource-kind splits complicate Secret/Service/Deployment dependencies and deletion order. Child Applications in App of Apps are not a single atomic deployment.
 
-### Application-Level Optimization
+This example assumes an existing `workloads` project, destination namespace, and HPA controlling Deployment `my-app`. Prefer omitting replicas from Git; where necessary, scope diff/apply exclusions to that resource. Match `ignoreDifferences.name` to the final name after any Kustomize prefix/suffix. `ApplyOutOfSyncOnly` optimizes apply targets; it does not change sync frequency.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -342,380 +353,286 @@ metadata:
   name: large-app
   namespace: argocd
 spec:
-  # Reduce sync frequency for stable apps
+  project: workloads
+  source:
+    repoURL: https://github.com/myorg/gitops.git
+    targetRevision: main
+    path: overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-app-production
   syncPolicy:
     automated:
+      enabled: true
       prune: true
       selfHeal: true
     syncOptions:
-      - ApplyOutOfSyncOnly=true  # Only apply changed resources
-
-  # Ignore frequently changing fields
+    - ApplyOutOfSyncOnly=true
+    - RespectIgnoreDifferences=true
   ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas
-    - group: "*"
-      kind: "*"
-      managedFieldsManagers:
-        - kube-controller-manager
+  - group: apps
+    kind: Deployment
+    name: my-app
+    namespace: my-app-production
+    jsonPointers:
+    - /spec/replicas
 ```
 
 ## Disaster Recovery
 
-### Backup Strategy
+### Backup Scope
+
+`argocd admin export` exports Applications/AppProjects/ApplicationSets, four core ConfigMaps, and selected Argo CD Secrets. It is **not a full namespace backup**. Do not assume cmd-params, Notifications/CMP configuration, and separately managed TLS/notification Secrets are all included. Check configured additional Application/ApplicationSet namespaces as well.
+
+Use the matching CLI version, a verified kubecontext, the `age` tool, and an approved public recipient. Keep private identities separately and test decryption/recovery. The supplemental snapshot encrypts all namespace ConfigMaps/Secrets, potentially including Helm release Secrets. Select the required objects during recovery; do not blindly apply the whole supplemental snapshot.
 
 ```bash
-#!/bin/bash
-# backup-argocd.sh
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+: "${ARGO_BACKUP_RECIPIENT:?Set the approved age public recipient}"
+ARGO_BACKUP_DIR="./argocd-backup-$(date -u +%Y%m%dT%H%M%SZ)"
+mkdir -m 700 "$ARGO_BACKUP_DIR"
+kubectl config current-context
+kubectl get configmap argocd-cm -n argocd -o name
 
-BACKUP_DIR="/backups/argocd/$(date +%Y%m%d)"
-mkdir -p $BACKUP_DIR
+argocd admin export -n argocd |
+  age --recipient "$ARGO_BACKUP_RECIPIENT" --output "$ARGO_BACKUP_DIR/data.yaml.age.tmp"
+mv "$ARGO_BACKUP_DIR/data.yaml.age.tmp" "$ARGO_BACKUP_DIR/data.yaml.age"
 
-# Backup Applications
-kubectl get applications -n argocd -o yaml > $BACKUP_DIR/applications.yaml
-
-# Backup AppProjects
-kubectl get appprojects -n argocd -o yaml > $BACKUP_DIR/appprojects.yaml
-
-# Backup Repositories
-kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=repository -o yaml > $BACKUP_DIR/repositories.yaml
-
-# Backup Repo Credentials
-kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=repo-creds -o yaml > $BACKUP_DIR/repo-creds.yaml
-
-# Backup Clusters
-kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=cluster -o yaml > $BACKUP_DIR/clusters.yaml
-
-# Backup ConfigMaps
-kubectl get configmaps -n argocd -o yaml > $BACKUP_DIR/configmaps.yaml
-
-# Backup RBAC
-kubectl get configmap argocd-rbac-cm -n argocd -o yaml > $BACKUP_DIR/rbac.yaml
-
-echo "Backup completed: $BACKUP_DIR"
+# Supplement: all namespace ConfigMaps/Secrets, including custom configuration.
+kubectl get configmaps,secrets -n argocd -o yaml |
+  age --recipient "$ARGO_BACKUP_RECIPIENT" --output "$ARGO_BACKUP_DIR/namespace-config.yaml.age.tmp"
+mv "$ARGO_BACKUP_DIR/namespace-config.yaml.age.tmp" "$ARGO_BACKUP_DIR/namespace-config.yaml.age"
 ```
 
-### Restore Procedure
+Also retain pinned installation manifests/Helm values, CRDs and extension controllers, and recovery procedures for external secrets/KMS, SSO, DNS, and certificates. Application databases/PVs need separate backups. Choose backup frequency and retention from your RPO/RTO and access policy.
 
-```bash
-#!/bin/bash
-# restore-argocd.sh
+### Velero Configuration Backup Alternative
 
-BACKUP_DIR=$1
-
-if [ -z "$BACKUP_DIR" ]; then
-  echo "Usage: restore-argocd.sh <backup-dir>"
-  exit 1
-fi
-
-# Ensure ArgoCD is installed
-kubectl get namespace argocd || kubectl create namespace argocd
-
-# Restore in order
-kubectl apply -f $BACKUP_DIR/configmaps.yaml
-kubectl apply -f $BACKUP_DIR/rbac.yaml
-kubectl apply -f $BACKUP_DIR/repo-creds.yaml
-kubectl apply -f $BACKUP_DIR/repositories.yaml
-kubectl apply -f $BACKUP_DIR/clusters.yaml
-kubectl apply -f $BACKUP_DIR/appprojects.yaml
-kubectl apply -f $BACKUP_DIR/applications.yaml
-
-# Restart ArgoCD components
-kubectl rollout restart deployment -n argocd
-
-echo "Restore completed"
-```
-
-### Multi-Region DR
+This Schedule assumes an installed Velero and an available `aws-s3` BackupStorageLocation. Verify schedule timezone, encryption, and access control. A part-of label selector can omit user-created Applications, so the example has no such filter. CRD/installation/PV recovery remains a separate part of DR.
 
 ```yaml
-# Primary region ArgoCD manages secondary
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+apiVersion: velero.io/v1
+kind: Schedule
 metadata:
-  name: argocd-dr
-  namespace: argocd
+  name: argocd-config-backup
+  namespace: velero
 spec:
-  project: platform
-  source:
-    repoURL: https://github.com/myorg/gitops-platform.git
-    targetRevision: HEAD
-    path: argocd
-  destination:
-    server: https://dr-region.k8s.local  # DR cluster
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: false  # Don't auto-prune in DR
-      selfHeal: true
+  schedule: 0 2 * * *
+  template:
+    includedNamespaces:
+    - argocd
+    includedResources:
+    - applications.argoproj.io
+    - applicationsets.argoproj.io
+    - appprojects.argoproj.io
+    - secrets
+    - configmaps
+    includeClusterResources: false
+    storageLocation: aws-s3
+    ttl: 720h0m0s
 ```
+
+### Staged Recovery
+
+First prepare an **isolated recovery installation** using the original version and installation method. Establish one active manager so the primary and recovery instances do not mutate the same workloads concurrently. For the default StatefulSet layout, stop Application and ApplicationSet controllers while inspecting import changes. Adapt the workload type for dynamic distribution.
+
+```bash
+set -euo pipefail
+umask 077
+: "${ARGO_BACKUP_FILE:?Set the encrypted data.yaml.age path}"
+: "${ARGO_BACKUP_IDENTITY:?Set the protected age identity file}"
+
+# Fresh, isolated recovery installation: default StatefulSet controller layout.
+kubectl config current-context
+kubectl scale statefulset/argocd-application-controller -n argocd --replicas=0
+kubectl scale deployment/argocd-applicationset-controller -n argocd --replicas=0
+
+ARGO_RESTORE_DIR="$(mktemp -d)"
+trap 'rm -rf "$ARGO_RESTORE_DIR"' EXIT
+age --decrypt --identity "$ARGO_BACKUP_IDENTITY" "$ARGO_BACKUP_FILE" \
+  > "$ARGO_RESTORE_DIR/data.yaml"
+argocd admin import -n argocd --dry-run "$ARGO_RESTORE_DIR/data.yaml"
+# Keep controllers stopped while reviewing the recovery copy and destinations.
+```
+
+Review the protected recovery file in the same shell: destination clusters/namespaces, repository/cluster credentials, deletion finalizers, automated sync policies, and stored `operation` fields. To hold automatic sync, update both Applications and ApplicationSet templates and remove pending operations from the recovery copy. Check whether the Git/Helm source would revert these holds before restarting controllers.
+
+```bash
+argocd admin import -n argocd "$ARGO_RESTORE_DIR/data.yaml"
+```
+
+Recover the needed supplemental ConfigMaps/Secrets and external dependencies, then restore controller replicas from the reviewed installation configuration. Inspect representative Application diffs/health before resuming deployments individually. An all-app sync, import `--prune`, or namespace deletion is not a default recovery step.
 
 ## Upgrade Strategies
 
-### Pre-Upgrade Checklist
+### Version and Installation Ownership
 
-1. **Review release notes** for breaking changes
-2. **Backup current state** (applications, projects, secrets)
-3. **Test in non-production** environment first
-4. **Schedule maintenance window** if needed
-5. **Notify stakeholders**
-
-### Rolling Upgrade
+The example targets a reviewed 3.5.x patch update to 3.5.2, not an unconditional jump from 2.x or older minors. Review every intervening minor/major migration note, tested Kubernetes combination, and CRD/RBAC/SSO/CMP change in non-production. Preserve the existing manifest/Helm/GitOps owner. Do not apply this self-managed procedure to the EKS managed Argo CD capability.
 
 ```bash
-# 1. Update ArgoCD manifests
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.0/manifests/install.yaml
-
-# 2. Wait for rollout
-kubectl rollout status deployment argocd-server -n argocd
-kubectl rollout status deployment argocd-repo-server -n argocd
-kubectl rollout status deployment argocd-application-controller -n argocd
-
-# 3. Verify
+# Example: reviewed 3.5.x patch upgrade to 3.5.2, manifest-managed non-HA install.
+kubectl config current-context
+argocd version
+kubectl apply --server-side -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+kubectl rollout status deployment/argocd-server -n argocd --timeout=5m
+kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=5m
+kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=5m
+kubectl rollout status deployment/argocd-applicationset-controller -n argocd --timeout=5m
+kubectl rollout status deployment/argocd-notifications-controller -n argocd --timeout=5m
 argocd version
 argocd app list
 ```
 
-### Blue-Green Upgrade
+For an HA manifest installation use `manifests/ha/install.yaml`; for custom overlays update and render the pinned base. Server-side apply handles large CRDs. Inspect field-ownership conflicts first; use the official guide’s `--force-conflicts` only for an intended ownership transfer. Successful Pod rollouts do not complete migration, SSO, diff, and sync validation.
+
+### Alternative for Helm-Managed Installations
 
 ```bash
-# 1. Install new version in separate namespace
-kubectl create namespace argocd-new
-kubectl apply -n argocd-new -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.0/manifests/install.yaml
-
-# 2. Migrate configuration
-kubectl get configmap argocd-cm -n argocd -o yaml | sed 's/namespace: argocd/namespace: argocd-new/' | kubectl apply -f -
-kubectl get configmap argocd-rbac-cm -n argocd -o yaml | sed 's/namespace: argocd/namespace: argocd-new/' | kubectl apply -f -
-
-# 3. Test new installation
-kubectl port-forward svc/argocd-server -n argocd-new 8081:443
-
-# 4. Switch traffic (update ingress/load balancer)
-# 5. Decommission old installation
-kubectl delete namespace argocd
-kubectl rename namespace argocd-new argocd
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update argo
+helm upgrade argocd argo/argo-cd --version 10.8.4 \
+  --namespace argocd -f reviewed-values.yaml --dry-run=server --hide-secret
+# After reviewing the dry run and the version-specific migration notes:
+helm upgrade argocd argo/argo-cd --version 10.8.4 \
+  --namespace argocd -f reviewed-values.yaml --wait --timeout 10m
 ```
+
+`--hide-secret` suppresses Secret manifests in dry-run output; also check for sensitive values embedded elsewhere. CRD, persisted data, and integration changes may not be reversed by an image rollback, so retain a tested backup/recovery plan.
+
+### Limits of Side-by-Side Validation
+
+Two namespaces on one cluster still share CRDs and other cluster-scoped resources. Changing only the installation namespace does not rewrite ClusterRoleBinding subjects. Kubernetes has no `kubectl rename namespace` command. Prefer validating in a separate cluster and explicitly plan credentials, tracking/instance IDs, active controllers, and traffic cutover. Deleting the old namespace can cascade through Application finalizers into managed workloads.
 
 ## Troubleshooting
 
-### Common Issues and Solutions
-
-#### Sync Failures
+### Inspect Sync and Differences
 
 ```bash
-# Check application events
+argocd app get my-app
+argocd app diff my-app
+argocd app history my-app
+argocd app resources my-app
 kubectl describe application my-app -n argocd
-
-# Check application controller logs
 kubectl logs -n argocd -l app.kubernetes.io/name=argocd-application-controller --tail=100
 
-# Force refresh
+# Re-check desired state after identifying the cause; this does not apply resources.
 argocd app get my-app --refresh
-
-# Hard refresh (clear cache)
+# Invalidates the cached target manifests for this Application; use sparingly.
 argocd app get my-app --hard-refresh
 ```
 
-#### Repository Connection Issues
+`--force` is not a generic troubleshooting option and can recreate resources. Hard refresh does not apply or roll back workloads, but regenerates manifests; avoid repeatedly running it across all apps.
+
+### Repositories and Webhooks
 
 ```bash
-# Test repository connectivity
 argocd repo list
 argocd repo get https://github.com/myorg/myrepo.git
-
-# Check repo server logs
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-repo-server --tail=100
-
-# Verify credentials
-kubectl get secret -n argocd -l argocd.argoproj.io/secret-type=repository
+kubectl logs -n argocd deployment/argocd-repo-server --tail=100
+kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=repository
+kubectl logs -n argocd deployment/argocd-server --tail=100 | grep -i webhook
 ```
 
-#### Out of Memory (OOM)
+Check TLS/SSH trust, credential scope, DNS/egress, and provider webhook signatures, URL, and delivery logs. Listing Secret names does not require printing credential values. `argocd repo update --repo-cache-expiration` is not a valid cache-configuration command.
+
+### OOM and Slow Processing
 
 ```bash
-# Check current memory usage
 kubectl top pods -n argocd
-
-# Increase limits
-kubectl patch deployment argocd-repo-server -n argocd -p '
-{
-  "spec": {
-    "template": {
-      "spec": {
-        "containers": [{
-          "name": "argocd-repo-server",
-          "resources": {
-            "limits": {"memory": "4Gi"},
-            "requests": {"memory": "2Gi"}
-          }
-        }]
-      }
-    }
-  }
-}'
+kubectl get pods -n argocd
+kubectl describe pods -n argocd -l app.kubernetes.io/name=argocd-repo-server
+argocd app get my-app -o json |
+  jq '.status.operationState | {phase, startedAt, finishedAt}'
 ```
 
-#### Slow Sync
+Distinguish OOMKilled from CPU throttling, clone-disk pressure, large manifests, Git timeouts, and API throttling. Adjust resources/concurrency through the Helm/Git owner. Deleting all repo-server Pods does not clear Redis manifest cache and adds interruption/clone load.
+
+### Additional Checks
 
 ```bash
-# Check sync duration
-argocd app get my-app -o json | jq '.status.operationState.finishedAt, .status.operationState.startedAt'
-
-# Enable debug logging
-kubectl patch configmap argocd-cmd-params-cm -n argocd -p '{"data":{"controller.log.level":"debug"}}'
-
-# Check for large manifests
-argocd app manifests my-app | wc -l
-```
-
-### Debugging Commands Cheat Sheet
-
-```bash
-# Application status
-argocd app get <app-name>
-argocd app get <app-name> -o json | jq '.status'
-
-# Diff between desired and live
-argocd app diff <app-name>
-
-# View manifests
-argocd app manifests <app-name>
-
-# Sync with debug
-argocd app sync <app-name> --debug
-
-# View all applications
+argocd app manifests my-app
 argocd app list -o wide
-
-# Check cluster connectivity
 argocd cluster list
-argocd cluster get <cluster-url>
-
-# View logs
+argocd cluster get https://my-target-cluster.example.com
+kubectl logs -n argocd statefulset/argocd-application-controller --tail=100
 kubectl logs -n argocd deployment/argocd-server --tail=100
 kubectl logs -n argocd deployment/argocd-repo-server --tail=100
-kubectl logs -n argocd deployment/argocd-application-controller --tail=100
-
-# Clear application cache
-argocd app get <app-name> --hard-refresh
-
-# Force reconciliation
-kubectl patch application <app-name> -n argocd -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' --type merge
 ```
+
+Rendered manifests can include generated Secrets; keep them out of shared logs. The default controller is a StatefulSet; inspect the actual Deployment if dynamic distribution is enabled. Scope temporary debug logging to the affected component and manage its rollout and removal.
 
 ## EKS Best Practices
 
-### IRSA Configuration
+### AWS Credentials
 
-```yaml
-# Service account with IRSA
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: argocd-application-controller
-  namespace: argocd
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-Controller
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: argocd-repo-server
-  namespace: argocd
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-RepoServer
-```
+A ServiceAccount role ARN alone does not complete target EKS access. Configure controller/server EKS authentication, assume-role permissions, target EKS access entries or legacy auth mapping, and Kubernetes RBAC. Give repo-server a separate least-privilege role only when S3/OCI/CMP access requires it. IRSA OIDC trust or a Pod Identity association is also required; this is not the same as image-pull authorization. Follow the [EKS installation section](01-installation.md#argocd-on-amazon-eks) for the actual destination and service accounts.
 
-### ALB Ingress with WAF
+### Internal ALB with HTTPS
+
+This requires AWS Load Balancer Controller, administrator connectivity to the VPC, matching DNS/ACM certificate, restricted security groups, and SSO. Replace the certificate ARN and hostname. The backend remains HTTPS with `server.insecure=false`; CLI access through this single HTTP target group uses `--grpc-web`.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: argocd-server
+  name: argocd
   namespace: argocd
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:123456789012:certificate/xxx
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-west-2:123456789012:regional/webacl/argocd/xxx
-    alb.ingress.kubernetes.io/shield-advanced-protection: "true"
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+    alb.ingress.kubernetes.io/backend-protocol: HTTPS
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:123456789012:certificate/REPLACE_WITH_CERTIFICATE_ID
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
 spec:
+  ingressClassName: alb
   rules:
-    - host: argocd.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 443
+  - host: argocd.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 443
 ```
 
-### EKS Cluster Upgrades
+Attach a reviewed regional WAF Web ACL in the same region through its separate annotation. Verify the ALB access-log bucket policy and region. Do not enable subscription/cost-bearing options such as Shield Advanced by default.
 
-When upgrading EKS clusters managed by ArgoCD:
+### EKS Version Upgrades
 
-1. **Update ArgoCD cluster secret** with new API endpoint if changed
-2. **Test connectivity** after upgrade
-3. **Re-sync applications** to verify compatibility
-4. **Update Kubernetes version** in Application manifests if hardcoded
+Check the tested current/target EKS and Argo CD combinations, add-on/CRD/node/kubelet compatibility, and removed APIs. Upgrade EKS control planes one minor at a time; node/add-on updates are separate. An in-place version update does not require changing the existing API endpoint. A replacement cluster does require endpoint/CA/access updates.
+
+If holding automatic sync, record the original settings and change their Git/ApplicationSet owner. A CLI-only child Application change can be reverted by its parent. After connectivity, diff, and sample-sync verification, restore the **original** prune/selfHeal/automated policy instead of unconditionally enabling automation.
 
 ## Production Checklist
 
-### Security
+- [ ] Verify SSO/RBAC/TLS and recovery access before disabling the default admin
+- [ ] Encrypt/externalize secrets and scope repository/cluster credentials
+- [ ] Measure resources, concurrency, and whether cluster sharding is needed
+- [ ] Verify HA nodes/anti-affinity/PDBs and component-specific replicas/leader election
+- [ ] Validate metrics/ServiceMonitor selection and alert delivery; collect JSON logs and Kubernetes audit/events
+- [ ] Enforce AppProject source/destination, sync windows, and reviewed promotion PRs
+- [ ] Test encrypted backup decryption, supplemental configuration recovery, and single-manager DR
+- [ ] Maintain version-specific upgrade, troubleshooting, and configuration restoration runbooks
 
-- [ ] SSO configured and tested
-- [ ] RBAC policies implemented
-- [ ] TLS enabled for all endpoints
-- [ ] Secrets stored externally (not in Git)
-- [ ] Network policies applied
-- [ ] Audit logging enabled
-- [ ] Repository credentials secured
-- [ ] Admin password changed from default
+## References
 
-### High Availability
-
-- [ ] Multiple replicas for all components
-- [ ] Redis HA enabled
-- [ ] Controller sharding configured (if > 100 apps)
-- [ ] Resource limits set appropriately
-- [ ] HPA configured for repo-server
-- [ ] PodDisruptionBudgets configured
-
-### Monitoring
-
-- [ ] Prometheus metrics enabled
-- [ ] ServiceMonitor configured
-- [ ] Dashboards created (Grafana)
-- [ ] Alerts configured for:
-  - [ ] Sync failures
-  - [ ] Health degradation
-  - [ ] High memory usage
-  - [ ] API server errors
-
-### Backup & DR
-
-- [ ] Backup script configured
-- [ ] Backup schedule set (daily minimum)
-- [ ] Restore procedure documented and tested
-- [ ] DR site configured (if required)
-
-### Operations
-
-- [ ] Notification services configured
-- [ ] Sync windows defined for production
-- [ ] Projects configured per team/environment
-- [ ] Repository structure documented
-- [ ] Upgrade procedure documented
-- [ ] Runbook created for common issues
+- [Best practices](https://argo-cd.readthedocs.io/en/release-3.5/user-guide/best_practices/)
+- [High availability and scaling](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/high_availability/)
+- [Backup implementation and scope](https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/admin/backup.go)
+- [Upgrade guide](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/upgrading/overview/)
+- [Chart 10.8.4 values](https://github.com/argoproj/argo-helm/blob/argo-cd-10.8.4/charts/argo-cd/values.yaml)
+- [Kustomize bundled version](https://github.com/argoproj/argo-cd/blob/v3.5.2/hack/tool-versions.sh)
+- [Velero schedules](https://velero.io/docs/main/backup-reference/#schedule-a-backup)
 
 ## Quiz
 
-To test what you've learned, try the [ArgoCD best practices quiz](../../quizzes/gitops/argocd/09-best-practices-quiz.md).
+Try the [best practices quiz](../../quizzes/gitops/argocd/09-best-practices-quiz.md).

@@ -18,23 +18,23 @@ ServiceEntry는 Istio 서비스 메시에 외부 서비스를 등록하여 메�
 
 ### 외부 서비스 관리의 필요성
 
-Istio 메시는 기본적으로 외부 서비스에 대한 트래픽을 제어하지 않습니다. ServiceEntry를 사용하면:
+ALLOW_ANY에서는 미등록 외부 목적지가 제한적인 정책/텔레메트리로 통과할 수 있습니다. ServiceEntry는 목적지를 등록해 호환 프록시 정책을 적용할 수 있게 하며 접근 제어 규칙 자체는 아닙니다.
 
-![ServiceEntry 없이는 외부 API로 나가는 트래픽이 모니터링도 정책도 Circuit Breaker도 없는 블랙홀이지만, ServiceEntry로 등록하면 동일한 트래픽에 모니터링·정책·Circuit Breaker가 모두 적용됨을 두 패널로 비교해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-12-service-entry-0.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-12-service-entry-0.html)
+등록은 목적지별 구성을 가능하게 하며 실제 모니터링·TLS·트래픽 제어는 프로토콜과 적용한 정책에 따라 달라집니다.
 
 ### 주요 이점
 
 | 기능 | ServiceEntry 없이 | ServiceEntry 사용 |
 |------|------------------|------------------|
-| **모니터링** | 블랙홀 | 전체 메트릭 수집 |
+| **모니터링** | 제한적 패스스루 텔레메트리 | 프로토콜별 텔레메트리; HTTP는 L7 가시성 필요 |
 | **트래픽 제어** | 불가능 | Timeout, Retry, Circuit Breaker |
-| **보안** | 제한적 | mTLS, 인증서 관리 |
-| **Egress Control** | 모든 외부 트래픽 허용 | 명시적 허용/차단 |
+| **보안** | 앱 TLS는 계속 적용 가능 | TLS/mTLS 별도 구성; 외부 인증서 자동 발급 없음 |
+| **Egress Control** | Depends on outbound/network policy | Registry and routing configuration; network enforcement is separate |
 | **서비스 디스커버리** | 수동 관리 | 자동 DNS 조회 |
 
 ## ServiceEntry 개요
+
+각 예제는 독립적인 Sidecar 구성입니다. ServiceEntry는 istiod/프록시의 설정 입력이며 네트워크 홉이 아닙니다. addresses는 서비스/VIP 트래픽 식별용이고 endpoints는 실제 업스트림입니다. resolution은 프록시 조회를 제어하며 앱 DNS를 생성하지 않으므로 가상 호스트에는 DNS 레코드 또는 DNS 캡처가 필요합니다. VM 프록시 등록이나 ID 자격 증명 발급도 별도입니다.
 
 ServiceEntry는 외부 서비스를 Istio 서비스 레지스트리에 추가합니다.
 
@@ -62,7 +62,7 @@ spec:
 
 ## Resolution 모드
 
-ServiceEntry는 4가지 주소 해석 모드를 지원합니다.
+Istio 1.31 API는 다섯 가지 주소 해석 모드를 정의합니다.
 
 ### 1. DNS Resolution
 
@@ -145,9 +145,13 @@ spec:
 - 클라이언트 측 로드 밸런싱
 - TCP/TLS 프록시
 
-### 4. DNS_ROUND_ROBIN Resolution (Deprecated)
+### 4. DNS_ROUND_ROBIN Resolution
 
-DNS 라운드 로빈을 사용합니다 (현재는 DNS 모드로 통합).
+지원되는 모드이며 사용 중단되지 않았습니다. 전체 DNS 엔드포인트 집합을 사용하는 DNS 모드와 달리 새 연결 시 첫 DNS 주소를 사용하고 DNS 레코드가 바뀌어도 기존 연결을 유지합니다. DNS 엔드포인트 변경으로 연결 풀이 계속 재생성되는 것을 피해야 하는 서비스에 적합합니다.
+
+### 5. DYNAMIC_DNS Resolution
+
+요청의 HTTP Host/SNI를 이용해 와일드카드 목적지를 조회합니다. 사용 가능 여부는 릴리스·Data Plane·waypoint 구성에 따라 달라지며 호스트명을 복원할 수 없는 불투명 TCP에는 적용할 수 없습니다. 모드별 요구사항을 확인하세요. 아래 구체적인 와일드카드 예제는 Sidecar NONE 모드를 사용합니다.
 
 ## Location 설정
 
@@ -172,7 +176,7 @@ spec:
 ```
 
 **특징**:
-- mTLS가 적용되지 않음
+- 적절한 DestinationRule과 서버 신뢰 구성이 있으면 외부 TLS/mTLS 가능
 - Egress Gateway를 통해 나갈 수 있음
 - 외부 트래픽으로 분류
 
@@ -221,9 +225,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -237,14 +242,23 @@ spec:
   hosts:
   - api.payment-gateway.com
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: api.payment-gateway.com
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - route:
+    - destination:
+        host: api.payment-gateway.com
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 # DestinationRule: Circuit Breaker
 apiVersion: networking.istio.io/v1
@@ -260,12 +274,16 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
-      mode: SIMPLE  # TLS 연결
+      mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames: [api.payment-gateway.com]
 ```
+
+이 Origination 구성에서는 앱이 로컬 Sidecar에 HTTP를 보내고 프록시가 검증된 HTTPS를 업스트림에 전송합니다. 앱이 직접 시작한 HTTPS와 중복 사용하지 마세요. 결제 쓰기는 재시도 활성화 전에 앱 멱등 계약이 필요합니다.
 
 ### 2. 외부 데이터베이스 등록
 
@@ -298,12 +316,14 @@ spec:
         maxConnections: 100
         connectTimeout: 5s
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 60s
       baseEjectionTime: 60s
 ```
 
 ### 3. 와일드카드 도메인 등록
+
+RDS TLS와 인증서 검증은 현재 RDS CA 번들을 사용해 DB 드라이버에서 구성하세요. TCP 등록이 DB 인증이나 SSL 협상을 설정하지는 않습니다. 같은 포트의 외부 DB가 여러 개면 DNS 캡처/고유 서비스 VIP로 포트만으로 구분하는 모호함을 피하세요.
 
 #### 시나리오: AWS S3 버킷 접근
 
@@ -315,8 +335,8 @@ metadata:
 spec:
   hosts:
   - "*.s3.amazonaws.com"
-  - "*.s3.*.amazonaws.com"
-  - "*.s3-*.amazonaws.com"
+  - "*.s3.us-west-2.amazonaws.com"
+  - "s3.us-west-2.amazonaws.com"
   ports:
   - number: 443
     name: https
@@ -324,6 +344,8 @@ spec:
   location: MESH_EXTERNAL
   resolution: NONE  # 와일드카드는 NONE 사용
 ```
+
+와일드카드는 호스트 앞부분 접두사만 유효합니다. 이름 중간에 *를 넣지 말고 실제 리전별 접미사를 나열하세요. Sidecar 예제이며 모든 S3 엔드포인트 유형을 포함하거나 IAM 권한을 부여하지 않습니다.
 
 ### 4. 여러 엔드포인트가 있는 외부 서비스
 
@@ -338,11 +360,38 @@ spec:
   hosts:
   - api.global-service.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
+  endpoints:
+  - address: us-west.api.global-service.com
+    labels:
+      region: us-west
+  - address: eu-central.api.global-service.com
+    labels:
+      region: eu-central
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: multi-region-api
+spec:
+  host: api.global-service.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.global-service.com
+      subjectAltNames: [api.global-service.com]
+  subsets:
+  - name: us-west
+    labels:
+      region: us-west
+  - name: eu-central
+    labels:
+      region: eu-central
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -352,36 +401,28 @@ spec:
   hosts:
   - api.global-service.com
   http:
-  # 지역별 라우팅
   - match:
     - headers:
         x-region:
-          exact: "us-west"
+          exact: us-west
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: us-west.api.global-service.com
-
+        subset: us-west
   - match:
     - headers:
         x-region:
-          exact: "eu-central"
+          exact: eu-central
     route:
     - destination:
         host: api.global-service.com
-      headers:
-        request:
-          set:
-            Host: eu-central.api.global-service.com
-
-  # 기본 라우팅
+        subset: eu-central
   - route:
     - destination:
         host: api.global-service.com
 ```
+
+두 리전 엔드포인트가 동일한 정식 API 호스트/인증서를 제공해야 합니다. HTTP Host 헤더만 바꿔도 프록시가 선택한 DNS 엔드포인트가 바뀌지는 않습니다. 앱은 로컬 HTTP를 사용하고 업스트림 TLS는 위처럼 생성합니다.
 
 ### 5. TCP 서비스 등록
 
@@ -394,10 +435,9 @@ metadata:
   name: external-redis
 spec:
   hosts:
-  - redis.external-cluster.com
+  - redis-primary.external-cluster.com
   addresses:
   - 203.0.113.10
-  - 203.0.113.11
   ports:
   - number: 6379
     name: tcp
@@ -408,16 +448,13 @@ spec:
   - address: 203.0.113.10
     labels:
       instance: primary
-  - address: 203.0.113.11
-    labels:
-      instance: replica
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-redis-lb
 spec:
-  host: redis.external-cluster.com
+  host: redis-primary.external-cluster.com
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -426,6 +463,8 @@ spec:
         maxConnections: 50
         connectTimeout: 3s
 ```
+
+이 예제는 쓰기 가능한 primary만 선택합니다. Replica 읽기는 별도 등록하거나 Redis 클러스터 전용 클라이언트를 사용하세요. 일반 Round Robin은 primary/replica 및 샤딩 의미를 보존하지 못합니다. 예시 IP는 연결 가능한 실제 값으로 바꾸세요.
 
 ## Egress Gateway와 조합
 
@@ -454,14 +493,15 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
   servers:
   - port:
       number: 443
-      name: https
-      protocol: HTTPS
+      name: tls
+      protocol: TLS
     hosts:
     - api.example.com
     tls:
@@ -477,12 +517,14 @@ spec:
   - api.example.com
   gateways:
   - mesh
-  - egress-gateway
-  http:
+  - istio-system/egress-gateway
+  tls:
   - match:
     - gateways:
       - mesh
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
@@ -490,8 +532,10 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-gateway
+      - istio-system/egress-gateway
       port: 443
+      sniHosts:
+      - api.example.com
     route:
     - destination:
         host: api.example.com
@@ -513,6 +557,7 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
+    targetPort: 443
   - number: 443
     name: https
     protocol: HTTPS
@@ -546,9 +591,10 @@ spec:
   hosts:
   - mtls-api.example.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -561,10 +607,14 @@ spec:
   trafficPolicy:
     tls:
       mode: MUTUAL
+      sni: mtls-api.example.com
+      subjectAltNames: [mtls-api.example.com]
       clientCertificate: /etc/certs/client-cert.pem
       privateKey: /etc/certs/client-key.pem
       caCertificates: /etc/certs/ca-cert.pem
 ```
+
+인증서/키 파일을 프록시 컨테이너에 마운트하고 인증서 관리 절차로 갱신하세요. 외부 서버는 클라이언트 CA를 신뢰해야 하며 ServiceEntry가 이 자격 증명을 발급하지 않습니다. 로컬 HTTP에서 프록시가 mTLS를 시작하는 구성이며 앱 TLS 위의 이중 계층이 아닙니다.
 
 ### SNI Routing
 
@@ -573,6 +623,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: egress-sni-gateway
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
@@ -597,7 +648,7 @@ spec:
   - api2.example.com
   gateways:
   - mesh
-  - egress-sni-gateway
+  - istio-system/egress-sni-gateway
   tls:
   - match:
     - gateways:
@@ -612,7 +663,7 @@ spec:
           number: 443
   - match:
     - gateways:
-      - egress-sni-gateway
+      - istio-system/egress-sni-gateway
       port: 443
       sniHosts:
       - api.example.com
@@ -621,7 +672,31 @@ spec:
         host: api.example.com
         port:
           number: 443
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - istio-system/egress-sni-gateway
+      port: 443
+      sniHosts:
+      - api2.example.com
+    route:
+    - destination:
+        host: api2.example.com
+        port:
+          number: 443
 ```
+
+[Egress 제어](11-egress-control.md)에 따라 Egress Gateway 워크로드/ClusterIP Service를 설치하고 두 외부 호스트를 ServiceEntry로 등록하세요. SNI 규칙은 전달을 구성하지만 모든 트래픽의 게이트웨이 경유를 강제하지는 않으므로 네트워크 정책으로 경계를 집행하세요.
 
 ## 모니터링 및 제어
 
@@ -633,29 +708,31 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
   curl localhost:15000/stats/prometheus | grep "api.example.com"
 
 # Egress 트래픽 메트릭
-istio_requests_total{destination_service_name="api.example.com"}
+istio_requests_total{reporter="source",destination_service_name="api.example.com"}
 ```
 
 ### Prometheus 쿼리
 
-```yaml
+쿼리 전에 실제 레이블을 확인하세요. HTTP 요청/오류/지연 메트릭은 TLS Origination 등 L7 가시성이 필요하며 불투명 HTTPS/TCP는 연결/바이트 메트릭을 제공합니다. 외부 ServiceEntry의 namespace 레이블이 빈 문자열이라고 가정하지 마세요.
+
+```promql
 # 외부 서비스 요청 수
-sum(rate(istio_requests_total{destination_service_namespace="",destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # 외부 서비스 에러율
-sum(rate(istio_requests_total{destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
-sum(rate(istio_requests_total{destination_service_name="api.example.com"}[5m]))
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com",response_code=~"5.."}[5m])) /
+sum(rate(istio_requests_total{reporter="source",destination_service_name="api.example.com"}[5m]))
 
 # 외부 서비스 응답 시간
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket{destination_service_name="api.example.com"}[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="api.example.com"}[5m])) by (le)
 )
 ```
 
-### Egress 트래픽 차단
+### 미등록 목적지 탐지
 
 ```yaml
-# 기본적으로 모든 Egress 차단
+# 레지스트리/구성 제어이며 방화벽이 아님
 apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
@@ -667,8 +744,10 @@ spec:
     - "./*"  # 같은 네임스페이스만 허용
     - "istio-system/*"  # istio-system 허용
   outboundTrafficPolicy:
-    mode: REGISTRY_ONLY  # ServiceEntry에 등록된 것만 허용
+    mode: REGISTRY_ONLY  # 알려진 Kubernetes/ServiceEntry 목적지
 ```
+
+Sidecar 구성 범위와 REGISTRY_ONLY는 보안 경계가 아닙니다. 강제 Egress 제어는 네트워크 정책/방화벽과 해당하는 AuthorizationPolicy로 집행하세요.
 
 ## 모범 사례
 
@@ -696,7 +775,7 @@ spec:
   resolution: DNS
 ```
 
-### 2. Circuit Breaker 필수 적용
+### 2. 프로토콜에 맞는 복원력 정책 조정
 
 ```yaml
 # 외부 서비스는 항상 Circuit Breaker 적용
@@ -712,7 +791,7 @@ spec:
         http1MaxPendingRequests: 10
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
 ```
@@ -747,7 +826,7 @@ spec:
 # - 보안 정책 일관성
 ```
 
-### 5. 네임스페이스별 격리
+### 5. 네임스페이스별 구성 가시성
 
 ```yaml
 # 네임스페이스별로 ServiceEntry 격리
@@ -769,8 +848,7 @@ spec:
 ### 6. 문서화 템플릿
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
+# Metadata excerpt; replace illustrative SLA/cost values with the actual service contract
 metadata:
   name: external-service
   annotations:
@@ -800,3 +878,12 @@ metadata:
 - [Istio Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
 - [Istio TLS Origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
 - [Envoy External Services](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/service_discovery)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+- [Primary reference 2](https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/)
+- [Primary reference 3](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+- [Primary reference 4](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+- [Primary reference 5](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/)
+- [Primary reference 6](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)
+- [Primary reference 7](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
+- [Primary reference 8](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html)

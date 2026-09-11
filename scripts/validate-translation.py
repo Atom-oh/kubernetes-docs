@@ -14,6 +14,7 @@ Exit 0 if the translation passes, 1 otherwise (reason printed to stderr).
 """
 import re
 import sys
+from collections import Counter
 
 
 def counts(text):
@@ -21,6 +22,41 @@ def counts(text):
         "headings": len(re.findall(r"^#{1,6} ", text, re.MULTILINE)),
         "fences": text.count("```"),
     }
+
+def code_blocks(text):
+    """Keep code bytes and fence languages unchanged, including quoted fences."""
+    blocks = []
+    marker = None
+    language = None
+    body = []
+    for line in text.splitlines():
+        match = re.match(r"^\s*(?:>\s*)*(`{3,}|~{3,})(.*)$", line)
+        if marker is None:
+            if match:
+                marker, language = match.group(1), match.group(2).strip()
+                body = []
+        elif (match and match.group(1)[0] == marker[0]
+              and len(match.group(1)) >= len(marker) and not match.group(2).strip()):
+            blocks.append((language, "\n".join(body)))
+            marker = None
+        else:
+            body.append(line)
+    if marker is not None:
+        raise ValueError("unclosed code fence")
+    return blocks
+
+
+def link_targets(text):
+    patterns = [
+        r"!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))",
+        r"<(?:a|img)\b[^>]*?\b(?:href|src)=[\"']([^\"']+)[\"']",
+        r"^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))",
+    ]
+    targets = []
+    for pattern in patterns:
+        for match in re.finditer(pattern, text, re.MULTILINE | re.IGNORECASE):
+            targets.append(next(value for value in match.groups() if value is not None))
+    return Counter(targets)
 
 
 def main():
@@ -48,6 +84,16 @@ def main():
             f"code fence count mismatch: src={src_c['fences']} dst={dst_c['fences']} ({dst_path})",
             file=sys.stderr,
         )
+        return 1
+    try:
+        if code_blocks(src) != code_blocks(dst):
+            print(f"code block content/language mismatch: {dst_path}", file=sys.stderr)
+            return 1
+    except ValueError as error:
+        print(f"{error}: {dst_path}", file=sys.stderr)
+        return 1
+    if link_targets(src) != link_targets(dst):
+        print(f"link/image target mismatch: {dst_path}", file=sys.stderr)
         return 1
 
     ratio = len(dst) / max(len(src), 1)

@@ -401,4 +401,4 @@ kubectl get ciliumendpoint -A
 
 ***
 
-[학습 자료로 돌아가기](../../../networking/cilium/glossary.md) | [Cilium 퀴즈 목록](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/networking/cilium/README.md)
+[학습 자료로 돌아가기](../../../networking/cilium/glossary.md) | [Cilium 퀴즈 목록](../../README.md#cilium)

@@ -4,7 +4,7 @@ This quiz tests your understanding of Kubernetes storage concepts, volume types,
 
 ## Multiple Choice Questions
 
-1. What storage resource in Kubernetes persists data even when a pod is restarted?
+1. Which resource provides application storage with a lifecycle independent of an ordinary Pod being deleted and recreated?
    - A) ConfigMap
    - B) Secret
    - C) PersistentVolume
@@ -52,20 +52,20 @@ PersistentVolumeClaim (PVC) is how users request PersistentVolumes. A PVC repres
 StorageClass provides a way for administrators to describe the "classes" of storage they offer. Different classes may map to service levels, backup policies, or arbitrary policies determined by the cluster administrator. Using StorageClass, PVs can be dynamically provisioned when PVCs are created.
 </details>
 
-4. What policy in Kubernetes automatically deletes a PersistentVolumeClaim when a pod is deleted?
+4. Does deleting an ordinary Pod automatically delete a separately created PVC referenced by it?
    - A) Delete
    - B) Retain
    - C) Recycle
-   - D) This functionality is not provided
+   - D) No; the separately created PVC remains
    
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: D) This functionality is not provided**
+**Answer: D) No; the separately created PVC remains**
 
 **Explanation:**
-Kubernetes does not provide built-in functionality to automatically delete PVCs when pods are deleted. PVCs exist independently of pods and are retained even when pods are deleted. This is a design choice to prevent data loss. For StatefulSets, you can configure PVC deletion policies using `persistentVolumeClaimRetentionPolicy`.
+A separately created PVC is not owned by the Pod and remains when that Pod is deleted. Generic ephemeral volume PVCs are different: they are owned by the Pod and garbage-collected with it. StatefulSet `persistentVolumeClaimRetentionPolicy` can delete template PVCs on set deletion or scale-down; PV reclaim policy determines subsequent storage cleanup.
 </details>
 
 5. Which of the following is NOT a PersistentVolume access mode?
@@ -81,7 +81,7 @@ Kubernetes does not provide built-in functionality to automatically delete PVCs 
 **Answer: D) WriteOnlyMany**
 
 **Explanation:**
-The access modes for PersistentVolumes in Kubernetes are ReadWriteOnce (RWO), ReadOnlyMany (ROX), and ReadWriteMany (RWX). WriteOnlyMany does not exist as an access mode. ReadWriteOnce allows read-write mounting by a single node, ReadOnlyMany allows read-only mounting by multiple nodes, and ReadWriteMany allows read-write mounting by multiple nodes.
+The access modes for PersistentVolumes in Kubernetes are ReadWriteOnce (RWO), ReadOnlyMany (ROX), and ReadWriteMany (RWX), and ReadWriteOncePod (RWOP, CSI only). WriteOnlyMany does not exist as an access mode. ReadWriteOnce allows read-write mounting by a single node, ReadOnlyMany allows read-only mounting by multiple nodes, and ReadWriteMany allows read-write mounting by multiple nodes.
 </details>
 
 6. Which PersistentVolume Reclaim Policy releases the resource without deleting the volume?
@@ -104,7 +104,7 @@ The Retain policy preserves the PV and its data after the PVC is deleted. The vo
    - A) hostPath
    - B) emptyDir
    - C) nfs
-   - D) awsElasticBlockStore
+   - D) persistentVolumeClaim
    
 <details>
 
@@ -116,8 +116,8 @@ The Retain policy preserves the PV and its data after the PVC is deleted. The vo
 An emptyDir volume is first created when a pod is assigned to a node and exists only as long as that pod is running on that node. As the name suggests, the volume is initially empty. All containers in the pod can read and write the same files in the emptyDir volume, though the volume can be mounted at the same or different paths in each container. When a pod is removed from a node for any reason, the data in the emptyDir is permanently deleted.
 </details>
 
-8. What storage provisioner is used by default in AWS EKS?
-   - A) kubernetes.io/aws-ebs
+8. Which provisioner identifies the standard Amazon EBS CSI driver (not EKS Auto Mode)?
+   - A) ebs.csi.aws.com
    - B) kubernetes.io/gce-pd
    - C) kubernetes.io/azure-disk
    - D) kubernetes.io/nfs
@@ -126,10 +126,10 @@ An emptyDir volume is first created when a pod is assigned to a node and exists 
 
 <summary>Show Answer</summary>
 
-**Answer: A) kubernetes.io/aws-ebs**
+**Answer: A) ebs.csi.aws.com**
 
 **Explanation:**
-AWS EKS uses AWS EBS (Elastic Block Store) by default to provide persistent storage. The provisioner name is 'kubernetes.io/aws-ebs'. This provisioner automatically creates and manages EBS volumes when PVCs are created. AWS EKS supports various EBS volume types including gp2, gp3, io1, sc1, and st1.
+The standard EBS CSI driver uses `ebs.csi.aws.com`; its driver and IAM permissions must be installed/configured. A cluster does not automatically have a suitable default StorageClass. EKS Auto Mode uses `ebs.csi.eks.amazonaws.com`. The legacy in-tree provisioner should not be used for new examples.
 </details>
 
 9. What is the correct field name for volume claim templates used in StatefulSets?
@@ -214,7 +214,7 @@ deletionPolicy: Delete
 
 3. **Advanced Storage Features**: Supports advanced features like volume snapshots, cloning, and resizing in a standardized way.
 
-4. **Enhanced Security**: CSI drivers run with limited privileges and can be granted only the necessary permissions.
+4. **Enhanced Security**: Scope controller IAM/RBAC to required operations. CSI node plugins commonly need privileged host access to mount volumes, so review their permissions separately.
 
 5. **Diverse Storage Options**: Easily integrate cloud provider, open source, and commercial storage solutions.
 
@@ -223,13 +223,8 @@ deletionPolicy: Delete
 **Real-World Implementation Example (AWS EBS CSI Driver):**
 
 ```bash
-# Install AWS EBS CSI Driver (using Helm)
-helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
-  --namespace kube-system \
-  --set enableVolumeScheduling=true \
-  --set enableVolumeResizing=true \
-  --set enableVolumeSnapshot=true
+# First install the EKS EBS CSI add-on with its IAM role using the official guide.
+# Snapshot support additionally needs snapshot CRDs and the snapshot controller.
 
 # Create StorageClass
 kubectl apply -f - <<EOF
@@ -248,203 +243,23 @@ EOF
 CSI is a core part of the Kubernetes storage ecosystem, enabling integration of various storage solutions and utilization of advanced storage features.
 </details>
 
-2. Design a highly available database cluster using StatefulSet and PersistentVolume, and explain the data persistence and backup strategy.
+2. Design a highly available database cluster using StatefulSet and persistent storage. Distinguish Kubernetes responsibilities from database replication, and explain backup and recovery requirements.
 
 <details>
-
 <summary>Show Answer</summary>
 
 **Answer:**
 
-**Highly Available Database Cluster Design:**
+1. Use stable Pod identities, a headless Service, and a separate PVC per database member. Spread members across nodes/zones. Each EBS volume remains in one Availability Zone; recovering into another zone requires a restored volume or database replication.
+2. Configure a database operator or an independently tested replication system for unique server IDs, initial data synchronization, primary election, fencing, replication credentials, and client routing. A StatefulSet with three replicas alone does not create an HA database.
+3. Provision encrypted EBS volumes through `ebs.csi.aws.com`, with `WaitForFirstConsumer`, a suitable gp3 `iops` value, and a deliberate reclaim policy. `Retain` preserves backing storage after claim deletion; it is not a backup and does not prevent all deletion paths.
+4. A ConfigMap does not expand shell expressions such as `${HOSTNAME##*-}`. Generate instance-specific configuration in an init container; execute SQL only after MySQL has started. Exec probes do not expand `${VARIABLE}` without a shell.
+5. For CSI snapshots, install snapshot CRDs/controller and use an EBS `VolumeSnapshotClass`. Quiesce writes or use database-aware backups for consistent recovery points, and verify restore size/driver compatibility.
+6. For logical backups, use an image containing the compatible database tools and any upload tool (a stock MySQL image does not include AWS CLI). Use a dedicated database backup user and scoped AWS identity. Fail the Job on dump/upload errors, retain a successful backup outside the Pod, and test restoration. Job history retention does not retain backup files.
+7. Monitor replication lag, storage utilization, backup age/failures, and restore tests. Document recovery-point and recovery-time objectives and test failover under node and zone loss.
 
-1. **Architecture Overview**:
-  - Database cluster configured as a StatefulSet with 3 or more replicas
-  - Each pod assigned a unique PersistentVolume
-  - Stable network identifiers provided through a headless service
-  - Master-slave configuration through leader election mechanism
+See the [EBS CSI installation guide](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) and the chapter's snapshot/retention examples.
 
-2. **StorageClass Setup**:
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fast-storage
-provisioner: kubernetes.io/aws-ebs
-parameters:
-  type: gp3
-  iopsPerGB: "3000"
-  encrypted: "true"
-reclaimPolicy: Retain
-allowVolumeExpansion: true
-volumeBindingMode: WaitForFirstConsumer
-```
-
-3. **Create Headless Service**:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: db-cluster
-spec:
-  clusterIP: None
-  selector:
-    app: database
-    ports:
-      - port: 3306
-    name: db
-```
-
-4. **Manage Configuration with ConfigMap**:
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: db-config
-data:
-  my.cnf: |
-    [mysqld]
-    server-id = ${HOSTNAME##*-}
-    log_bin = /var/lib/mysql/mysql-bin.log
-    binlog_format = ROW
-    sync_binlog = 1
-    innodb_flush_log_at_trx_commit = 1
-```
-
-5. **StatefulSet Definition**:
-```yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: db-cluster
-spec:
-  serviceName: db-cluster
-  replicas: 3
-  selector:
-    matchLabels:
-      app: database
-  template:
-    metadata:
-      labels:
-        app: database
-    spec:
-      initContainers:
-        - name: init-config
-          image: busybox
-          command: ['sh', '-c', 'cp /config-map/my.cnf /etc/mysql/conf.d/']
-          volumeMounts:
-            - name: config-map
-              mountPath: /config-map
-            - name: config-dir
-              mountPath: /etc/mysql/conf.d/
-      containers:
-        - name: mysql
-          image: mysql:8.0
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: password
-          ports:
-            - containerPort: 3306
-              name: db
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/mysql
-            - name: config-dir
-              mountPath: /etc/mysql/conf.d/
-          readinessProbe:
-            exec:
-              command: ["mysql", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "-e", "SELECT 1"]
-            initialDelaySeconds: 30
-            periodSeconds: 10
-      volumes:
-        - name: config-map
-          configMap:
-            name: db-config
-        - name: config-dir
-          emptyDir: {}
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: "fast-storage"
-        resources:
-          requests:
-            storage: 50Gi
-```
-
-**Data Persistence and Backup Strategy:**
-
-1. **Ensuring Data Persistence**:
-  - Use `reclaimPolicy: Retain` to protect PVs from accidental deletion
-  - Enable durability settings in the database engine (e.g., MySQL's `sync_binlog=1`, `innodb_flush_log_at_trx_commit=1`)
-  - Ensure data redundancy through replication
-
-2. **Backup Strategy**:
-  - **Regular VolumeSnapshot Creation**:
-```yaml
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshot
-metadata:
-  name: db-snapshot-{{date}}
-spec:
-  volumeSnapshotClassName: csi-snapshot-class
-  source:
-    persistentVolumeClaimName: data-db-cluster-0
-```
-
-  - **Database Logical Backup**:
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: db-backup
-spec:
-  schedule: "0 2 * * *"  # Runs daily at 02:00
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: backup
-              image: mysql:8.0
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  mysqldump -h db-cluster-0.db-cluster -u root -p"${MYSQL_ROOT_PASSWORD}" --all-databases > /backup/full-backup-$(date +%Y%m%d).sql
-                  aws s3 cp /backup/full-backup-$(date +%Y%m%d).sql s3://my-backup-bucket/
-              env:
-                - name: MYSQL_ROOT_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: mysql-secret
-                      key: password
-              volumeMounts:
-                - name: backup-volume
-                  mountPath: /backup
-          volumes:
-            - name: backup-volume
-              emptyDir: {}
-          restartPolicy: OnFailure
-```
-
-  - **Backup Verification and Recovery Testing**: Regularly perform recovery tests from backups to verify backup validity
-
-3. **Disaster Recovery Strategy**:
-  - Distribute pods across multiple availability zones
-  - Replicate backups across regions
-  - Implement automated recovery procedures
-
-4. **Monitoring and Alerting**:
-  - Set up alerts for backup job success/failure
-  - Monitor storage usage
-  - Monitor replication lag
-
-This design combines StatefulSet's stable network identifiers with PersistentVolume's data persistence to provide a highly available database cluster. The multi-layered backup strategy prevents data loss in various failure scenarios.
 </details>
 
 ## Conclusion

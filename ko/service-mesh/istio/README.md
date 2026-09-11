@@ -1,36 +1,14 @@
 # Istio
 
-> **마지막 업데이트**: 2026년 8월 31일
+> **마지막 업데이트**: 2026년 9월 11일
 
 Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다.
 
-### 2026년 8월 업데이트: Istio 1.30.4 / 1.29.7 보안 패치 릴리스
+### 2026년 9월 검토: 지원 릴리스
 
-2026년 8월 27일 Istio 1.30.4와 1.29.7 패치 릴리스가 공개되었습니다. 이번 릴리스는 **보안 수정([ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/))을 포함하므로 우선 적용을 권장**합니다:
+Istio 1.31.0은 GA이며 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)는 2026년 8월 31일 게시되었습니다. 신규 설치 예제는 1.31.0과 두 제품의 지원 범위가 겹치는 EKS Kubernetes 1.34–1.36을 사용합니다. Istio 1.31은 Kubernetes 1.32–1.36을 지원하며, EKS 표준 지원은 현재 1.34–1.36입니다. 설치 전에 [Istio 지원 매트릭스](https://istio.io/latest/docs/releases/supported-releases/)와 [EKS 버전 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 다시 확인하세요.
 
-- **Envoy CVE 13건 수정**: HTTP/2 트레일러 처리의 heap use-after-free(CVE-2026-73513), `ignore_path_parameters_in_path_matching`을 통한 RBAC 우회(CVE-2026-73553), HTTP/2 중복 Host 헤더로 인한 메모리 고갈(CVE-2026-73550) 등
-- **Istio CVE 1건 수정**: 사이드카 프록시에서 `BackendTLSPolicy`의 CA 참조가 해석되지 않으면 평문(plaintext)으로 fail-open 되던 문제(GHSA-qm8v-g4f9-qhjx)
-- 그 외 원격 클러스터 자격 증명 로테이션 후 네트워크 게이트웨이/엔드포인트가 사라지던 멀티클러스터 버그 등 다수의 안정성 수정
-
-한편 차기 버전 1.31의 릴리스 후보도 8월 25-27일 사이 rc.2부터 rc.4까지 이어져 정식 릴리스가 임박했습니다. 자세한 내용은 [1.30.4 공식 발표](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.4/)를 참고하세요.
-
-### 2026년 8월 업데이트: Istio 1.31 RC 단계 진입
-
-2026년 8월 19일 1.31.0-beta.2에 이어 같은 날 첫 릴리스 후보인 [1.31.0-rc.0](https://github.com/istio/istio/releases)이 공개되어, 차기 마이너 버전 1.31이 RC(release candidate) 단계에 진입했습니다. RC는 GA 직전 최종 검증용 프리릴리스로, 정식 릴리스가 임박했다는 신호입니다. 프로덕션에는 여전히 정식(GA) 릴리스를 사용하세요.
-
-### 2026년 8월 업데이트: Istio 1.31 베타 단계 진입
-
-차기 마이너 버전 Istio 1.31의 릴리스 절차가 진행 중입니다. 2026년 8월 11일 1.31.0-alpha.2에 이어 8월 13일 1.31.0-beta.0, 8월 14일 1.31.0-beta.1이 공개되었습니다. 알파/베타는 프로덕션 용도가 아닌 사전 검증용 프리릴리스이므로, 정식(GA) 릴리스 전 새 기능을 미리 테스트하려는 경우에만 사용하세요. 자세한 내용은 [Istio 릴리스 페이지](https://github.com/istio/istio/releases)를 참고하세요.
-
-### 2026년 7월 업데이트: Istio 1.30.3 / 1.29.6 패치 릴리스
-
-2026년 7월 16일 Istio 1.30.3과 1.29.6 패치 릴리스가 공개되었습니다. 1.30.3의 주요 변경 사항:
-
-- Ambient 모드에서 워크로드/서비스 주소 변경 시 XDS 푸시를 영향받는 waypoint로만 한정해 istiod 확장성 개선
-- 원격 클러스터 시크릿(자격 증명/토큰 로테이션) 갱신을 istiod가 재시작 없이 반영하지 못하던 버그 수정
-- pilot 노드 untaint 컨트롤러의 taint 이름을 `PILOT_NODE_UNTAINT_CONTROLLERS_TAINT_NAME` 환경 변수로 커스터마이징 가능
-
-자세한 내용은 [공식 발표](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/)를 참고하세요.
+검토일 기준 Istio 1.30과 1.29도 지원됩니다. 해당 브랜치는 Envoy 취약점, BackendTLSPolicy의 fail-open, EnvoyFilter의 Control Plane 서비스 거부를 수정한 [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/)을 적용하려면 최소 1.30.4 또는 1.29.7이 필요합니다. Istio 1.28은 지원이 종료되었습니다. Istio 1.31 차트는 `https://blob.istio.io/istio-release/charts`를 사용하며 기존 Google 호스팅 저장소에는 신규 릴리스가 게시되지 않습니다.
 
 ## 목차
 
@@ -57,7 +35,7 @@ Istio는 마이크로서비스를 연결, 보호, 제어 및 관찰하기 위한
 
 <div align="center"><img src="https://istio.io/latest/img/service-mesh.svg" alt="Istio Service Mesh" width="800"></div>
 
-서비스 메시는 마이크로서비스 간의 통신을 관리하는 인프라 계층입니다. Istio는 각 서비스에 Sidecar Proxy (Envoy)를 배치하여 모든 네트워크 트래픽을 가로채고 제어합니다. 이를 통해 애플리케이션 코드 수정 없이 다음과 같은 기능을 제공합니다:
+서비스 메시는 마이크로서비스 간의 통신을 관리하는 인프라 계층입니다. Istio는 Envoy 사이드카와 Ambient 모드(노드별 ztunnel 및 선택적 L7 waypoint)를 지원합니다. 프록시는 메시에 등록된 트래픽을 처리하며 제외된 트래픽과 미지원 프로토콜은 적용 범위 밖입니다. 이를 통해 애플리케이션 코드 수정 없이 다음과 같은 기능을 제공합니다:
 
 * **트래픽 라우팅**: 지능형 라우팅, 로드 밸런싱, Canary 배포
 * **보안**: 자동 mTLS, 인증, 권한 부여
@@ -70,9 +48,11 @@ Istio는 마이크로서비스를 연결, 보호, 제어 및 관찰하기 위한
 
 <p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="Application with Istio"><br><em>Istio가 적용된 애플리케이션 - 각 서비스에 Envoy Proxy가 Sidecar로 배포됨</em></p>
 
-Istio를 적용하면 각 마이크로서비스에 Envoy Proxy가 Sidecar 컨테이너로 자동 배포되어, 모든 네트워크 트래픽을 투명하게 가로채고 제어합니다.
+위 Bookinfo 그림은 Sidecar 모드를 설명합니다. 자동 주입은 등록된 네임스페이스 또는 워크로드에서 새로 생성되는 파드에 적용되며 Ambient 모드는 사이드카를 주입하지 않습니다.
 
 ## 서비스 메시가 정말 필요한가?
+
+아래 서비스 개수와 체크리스트 점수는 논의를 위한 예시이며 Istio 요구사항이 아닙니다. 작은 환경도 보안 요구에 따라 메시가 필요할 수 있습니다. 의사결정 그림의 수치도 예시 기준입니다.
 
 서비스 메시는 강력한 도구이지만, 모든 상황에 적합한 것은 아닙니다. 도입 전에 신중한 검토가 필요합니다.
 
@@ -104,7 +84,7 @@ Istio를 적용하면 각 마이크로서비스에 Envoy Proxy가 Sidecar 컨테
 * 서비스 간 자동 mTLS 암호화
 * SPIFFE 기반 Identity 관리
 * 세밀한 인증/인가 정책
-* 암호화된 통신 보장
+* mTLS를 강제한 메시 트래픽의 암호화; 자동 mTLS만으로는 평문 클라이언트를 차단하지 않음
 
 **대안 없이는 달성 어려움**:
 
@@ -148,7 +128,7 @@ spec:
 **Service Mesh 장점**:
 
 * 애플리케이션 코드 수정 없이 자동 메트릭 수집
-* 분산 추적 (Distributed Tracing) 자동 구현
+* 프록시의 추적 span 생성; 요청을 연결하려면 애플리케이션의 추적 헤더 전파 필요
 * 통일된 로깅 형식
 * 서비스 토폴로지 시각화 (Kiali)
 
@@ -162,7 +142,7 @@ spec:
 
 **대신 사용**:
 
-* Kubernetes Ingress Controller (NGINX, Traefik)
+* 유지보수 중인 Kubernetes Gateway API 또는 Ingress 컨트롤러
 * 간단한 로드 밸런서
 * Application-level 구현
 
@@ -172,12 +152,12 @@ spec:
 
 * Service Mesh 운영 복잡도 > 얻는 이점
 * 5-10개 서비스는 수동 관리 가능
-* NetworkPolicy로 충분한 보안
+* CNI가 지원하면 NetworkPolicy로 L3/L4 격리 가능; mTLS나 HTTP 인가는 제공하지 않음
 
 **대안**:
 
 ```yaml
-# Kubernetes NetworkPolicy로 충분
+# L3/L4 인바운드 격리; NetworkPolicy를 지원하는 CNI 필요
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -212,13 +192,11 @@ spec:
 
 **Service Mesh 오버헤드**:
 
-* 지연 시간: +1-3ms (P50), +5-10ms (P99)
-* CPU: 파드당 +10-20%
-* 메모리: 파드당 +50-100MB (Sidecar 모드)
+실제 트래픽, 프록시 구성, 텔레메트리 설정으로 지연 시간과 CPU·메모리를 측정하세요. [공식 성능 문서](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)의 Istio 1.24 벤치마크는 과거의 특정 조건에서 측정한 결과이며 다른 버전이나 워크로드의 보장값이 아닙니다.
 
 **대안 고려**:
 
-* Ambient Mode (리소스 사용량 90% 절감)
+* Ambient 모드 (공유 L4 프록시 사용; 절감 효과는 트래픽과 waypoint 배치에 따라 달라짐)
 * CNI 기반 솔루션 (Cilium)
 * Application-level 최적화
 
@@ -227,12 +205,12 @@ spec:
 | 기능            | Service Mesh                              | CNI (Cilium) | Ingress Controller | App-level |
 | ------------- | ----------------------------------------- | ------------ | ------------------ | --------- |
 | **L7 트래픽 관리** | ✅ 완벽 지원                                   | ⚠️ 제한적       | ⚠️ Ingress만        | ✅ 가능      |
-| **mTLS 자동화**  | ✅ 완벽 지원                                   | ✅ 가능         | ❌ 미지원              | ❌ 수동 구현   |
-| **분산 추적**     | ✅ 자동                                      | ❌ 미지원        | ❌ 미지원              | ⚠️ 수동 구현  |
+| **mTLS 자동화**  | ✅ 완벽 지원                                   | ⚠️ 상호 인증과 암호화는 별도         | ❌ 미지원              | ❌ 수동 구현   |
+| **분산 추적**     | ⚠️ 추적 컨텍스트 전파 필요                                      | ❌ 미지원        | ❌ 미지원              | ⚠️ 수동 구현  |
 | **L3/L4 정책**  | ✅ 지원                                      | ✅ 완벽 지원      | ❌ 미지원              | ❌ 미지원     |
 | **운영 복잡도**    | 🔴 높음                                     | 🟡 중간        | 🟢 낮음              | 🟡 중간     |
 | **리소스 오버헤드**  | <p>🔴 높음 (Sidecar)<br>🟢 낮음 (Ambient)</p> | 🟢 낮음        | 🟢 낮음              | 🟢 없음     |
-| **적합한 규모**    | 10+ 서비스                                   | 모든 규모        | 소규모                | 소규모       |
+| **적합한 규모**    | 요구사항에 따라 결정                                   | 모든 규모        | 소규모                | 소규모       |
 
 ### CNI 기반 솔루션 (Cilium)
 
@@ -247,7 +225,7 @@ Cilium은 eBPF 기반으로 **네트워크 레벨**에서 많은 기능을 제�
 * L3/L4 네트워크 정책이 주요 목적
 * 높은 성능이 핵심 요구사항
 * Service Mesh 운영 부담 회피
-* 간단한 mTLS 및 관찰성만 필요
+* 네트워크 정책과 관찰성이 주요 목적; Cilium 상호 인증 외에 페이로드 기밀성을 위한 WireGuard/IPsec 암호화 필요
 
 **참고**: [Cilium 문서](../../networking/cilium/README.md)
 
@@ -311,7 +289,7 @@ Service Mesh가 필요하다고 판단되면, 점진적으로 도입하세요:
 
 1.  **트래픽 관리**
 
-    <div align="center"><img src="https://istio.io/latest/docs/concepts/traffic-management/request-routing.svg" alt="Traffic Routing" width="500"></div>
+    VirtualService는 라우트를 선택하고 DestinationRule은 subset과 목적지 트래픽 정책을 정의합니다.
 
     * 지능형 라우팅 및 로드 밸런싱
     * A/B 테스트, Canary 배포, Blue/Green 배포
@@ -329,7 +307,7 @@ Service Mesh가 필요하다고 판단되면, 점진적으로 도입하세요:
 
     <div align="center"><img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service Graph" width="700"></div>
 
-    * 자동 메트릭, 로그, 트레이스 생성
+    * 프록시 메트릭과 설정을 통한 액세스 로그·추적 생성
     * Prometheus, Grafana, Jaeger, Kiali 통합
     * 서비스 토폴로지 시각화
     * 실시간 트래픽 모니터링
@@ -351,13 +329,14 @@ Istio는 Control Plane과 Data Plane으로 구성됩니다:
 
 **Control Plane (istiod)**:
 
-* **Pilot**: 서비스 디스커버리, 트래픽 라우팅 규칙 관리
-* **Citadel**: 인증서 생성 및 관리, mTLS 활성화
-* **Galley**: 구성 검증 및 배포
+* 서비스 디스커버리와 프록시 구성 (과거 Pilot의 역할)
+* 인증 기관과 ID 관리 (과거 Citadel의 역할)
+* 구성 검증; Galley는 퇴역한 독립 구성 요소이며 현재 별도 서비스가 아님
 
 **Data Plane**:
 
-* **Envoy Proxy**: 각 파드에 사이드카로 배포되어 모든 네트워크 트래픽을 가로채고 제어
+* **Sidecar 모드**: 등록된 파드별 Envoy
+* **Ambient 모드**: L4 보안을 위한 노드별 ztunnel과 L7 처리를 위한 선택적 waypoint
 
 ### Amazon EKS에서 Istio 사용의 이점
 
@@ -367,7 +346,7 @@ Istio는 Control Plane과 Data Plane으로 구성됩니다:
    * Kubernetes Native API 사용
 2. **강화된 보안**
    * 서비스 간 자동 암호화
-   * AWS IAM과 통합된 인증
+   * EKS Pod Identity 또는 IRSA를 통한 AWS API 접근; Istio 워크로드 ID는 Kubernetes 서비스 계정 기반
    * 세밀한 권한 제어
 3. **향상된 관찰성**
    * Amazon CloudWatch와 통합
@@ -380,7 +359,7 @@ Istio는 Control Plane과 Data Plane으로 구성됩니다:
 
 ### 시작하기
 
-<div align="center"><img src="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-gateway-example/gateway-api-topology.svg" alt="Gateway API Architecture" width="600"></div>
+[Gateway API guide](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
 
 Istio를 처음 사용하신다면 다음 순서로 문서를 읽어보세요:
 
@@ -392,6 +371,8 @@ Istio를 처음 사용하신다면 다음 순서로 문서를 읽어보세요:
 6. [**모범 사례**](best-practices.md): 프로덕션 환경에서의 권장 사항
 
 ### 실습 예제
+
+아래 라우팅 발췌 예제에는 일치하는 Service와 DestinationRule subset(`v1`/`v2`)이 필요합니다. 트래픽 관리 장을 함께 참고하세요.
 
 각 섹션에는 실제로 작동하는 YAML 예제가 포함되어 있습니다. 모든 예제는 다음과 같이 클릭하여 복사할 수 있도록 구성되어 있습니다:
 
@@ -415,8 +396,13 @@ spec:
 
 * [Istio 공식 문서](https://istio.io/latest/docs/)
 * [Istio GitHub](https://github.com/istio/istio)
-* [AWS EKS 워크숍 - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
-* [Istio 커뮤니티](https://discuss.istio.io/)
+* [Istio EKS 플랫폼 가이드](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
+* [Istio 커뮤니티](https://istio.io/latest/get-involved/)
+
+
+* [Tracing and application header propagation](https://istio.io/latest/docs/tasks/observability/distributed-tracing/overview/)
+* [Kubernetes NetworkPolicy capabilities](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+* [Cilium mutual authentication](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/mutual-authentication/)
 
 ### 퀴즈
 

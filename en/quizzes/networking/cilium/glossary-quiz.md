@@ -401,4 +401,4 @@ kubectl get ciliumendpoint -A
 
 ***
 
-[Return to Learning Materials](../../../networking/cilium/glossary.md) | [Cilium Quiz List](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/networking/cilium/README.md)
+[Return to Learning Materials](../../../networking/cilium/glossary.md) | [Cilium Quiz List](../../README.md#cilium)

@@ -1,0 +1,316 @@
+[
+  {
+    "path": "ko/service-mesh/istio/security/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed security overview; corrected default-deny composition, token requirements, mode scope and broken diagrams.",
+    "sources": [
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/"
+    ],
+    "findings": [
+      "Replaced DENY-all plus ALLOW contradiction with empty ALLOW default-deny and a peer+request-principal exception.",
+      "Clarified auto mTLS/STRICT/ambient scope, certificate lifetime vs renewal interval, JWT verification vs login, and audit prerequisites.",
+      "Removed verified 404 mtls-migration/security-best-practices figures and replaced them with relevant explanations.",
+      "Fixed TOC targets and added explicit audience placeholders."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "7 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable)."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/security/02-authentication.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed authentication guide; corrected token requirements, audiences, Cognito/Keycloak behavior and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/",
+      "https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html",
+      "https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-id-token.html",
+      "https://www.keycloak.org/migration/migrating-to-quarkus",
+      "https://www.keycloak.org/securing-apps/oidc-layers"
+    ],
+    "findings": [
+      "Distinguished JWT validation from requiring credentials and from OAuth login/refresh/introspection; scoped examples and supplied expected audience placeholders.",
+      "Added Cognito access token token_use/client_id policy, distinguished optional resource-bound aud from ID-token aud.",
+      "Updated Keycloak default realm paths while documenting configurable legacy /auth prefix.",
+      "Replaced Base64/echo token decoding with URL-safe padded local decoding and non-echo input; decoded claims are explicitly untrusted.",
+      "Changed combined JWT policy to a credential-requiring ALLOW rule and documented ambient attachments/revocation limitations."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "9 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable)."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/security/03-authorization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed authorization guide; corrected evaluation order, default deny, audit claims and missing sections.",
+    "sources": [
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/"
+    ],
+    "findings": [
+      "Replaced sequential rule-order description with CUSTOM/DENY/ALLOW semantics and rule/ALLOW union behavior.",
+      "Made default-deny baseline an empty ALLOW policy; explained explicit DENY-all and broad ALLOW interactions.",
+      "Corrected automatic audit logging claim and qualified the diagram as a single conjunctive rule.",
+      "Added missing practical/best-practice sections with mTLS/JWT/TCP/ambient prerequisites and effective-policy diagnostics."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "7 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable)."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/security/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed security overview; corrected default-deny composition, token requirements, mode scope and broken diagrams.",
+    "sources": [
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/"
+    ],
+    "findings": [
+      "Replaced DENY-all plus ALLOW contradiction with empty ALLOW default-deny and a peer+request-principal exception.",
+      "Clarified auto mTLS/STRICT/ambient scope, certificate lifetime vs renewal interval, JWT verification vs login, and audit prerequisites.",
+      "Removed verified 404 mtls-migration/security-best-practices figures and replaced them with relevant explanations.",
+      "Fixed TOC targets and added explicit audience placeholders."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "7 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable)."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/security/02-authentication.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed authentication guide; corrected token requirements, audiences, Cognito/Keycloak behavior and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/",
+      "https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html",
+      "https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-id-token.html",
+      "https://www.keycloak.org/migration/migrating-to-quarkus",
+      "https://www.keycloak.org/securing-apps/oidc-layers"
+    ],
+    "findings": [
+      "Distinguished JWT validation from requiring credentials and from OAuth login/refresh/introspection; scoped examples and supplied expected audience placeholders.",
+      "Added Cognito access token token_use/client_id policy, distinguished optional resource-bound aud from ID-token aud.",
+      "Updated Keycloak default realm paths while documenting configurable legacy /auth prefix.",
+      "Replaced Base64/echo token decoding with URL-safe padded local decoding and non-echo input; decoded claims are explicitly untrusted.",
+      "Changed combined JWT policy to a credential-requiring ALLOW rule and documented ambient attachments/revocation limitations."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "9 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable)."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/security/03-authorization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed authorization guide; corrected evaluation order, default deny, audit claims and missing sections.",
+    "sources": [
+      "https://istio.io/latest/docs/concepts/security/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/"
+    ],
+    "findings": [
+      "Replaced sequential rule-order description with CUSTOM/DENY/ALLOW semantics and rule/ALLOW union behavior.",
+      "Made default-deny baseline an empty ALLOW policy; explained explicit DENY-all and broad ALLOW interactions.",
+      "Corrected automatic audit logging claim and qualified the diagram as a single conjunctive rule.",
+      "Added missing practical/best-practice sections with mTLS/JWT/TCP/ambient prerequisites and effective-policy diagnostics."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "7 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable)."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/security/01-mtls.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed and corrected mTLS lifecycle, AWS edge integrations, egress, diagnostics and metrics.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/",
+      "https://istio.io/latest/docs/reference/commands/pilot-agent/",
+      "https://cert-manager.io/docs/usage/istio-csr/installation/",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/mutual-authentication.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/",
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/enable-mtls-distributions.html",
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewer-mtls-headers.html",
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/trust-stores-certificate-management.html",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-ec2-ntp.html",
+      "https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/security/pkg/nodeagent/cache/monitoring.go",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/cmd/pilot-agent/status/server.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats"
+    ],
+    "findings": [
+      "Corrected default CA hierarchy and 24-hour leaf lifetime/half-life renewal; public certificate inspection no longer prints CA private keys or assumes fixed SDS ordering.",
+      "Replaced incompatible cert-manager cacerts/PCA list-certificates recipe with supported istio-csr prerequisites, pinned root and issuer configuration; removed unsupported CITADEL variables and unsafe one-step root replacement.",
+      "Replaced NLB annotations with ALB Ingress mTLS, correct gateway service ports and HTTPS target limitations; removed disconnected bootstrap ConfigMap and unsafe header-only authorization.",
+      "Verified current CloudFront viewer mTLS support and corrected ViewerMtlsConfig, ETag/full-config update, HTTP/2 requirement, trust-store refresh, actual certificate headers, cache isolation and origin-trust assumptions.",
+      "Corrected HTTP-to-TLS/mTLS origination and egress gateway protocol/routes/SDS credentials.",
+      "Replaced removed authn tls-check, Time Sync HTTP request, invented skew grace variable, circular-dependency explanation and universal port15008 NetworkPolicy.",
+      "Replaced nonexistent handshake histogram/always-firing leaf alerts with verified istio_agent_cert_expiry_seconds and distinct adoption/HTTP-error metrics; corrected TLS1.3 meshMTLS field and Graviton acceleration claims.",
+      "Preserved historical EKS benchmark values and qualified inability to isolate cryptographic overhead. Removed 404 cert-hierarchy image and inaccurate local hierarchy/CloudFront figures; external archmap sources for figures1/3 need regeneration outside write scope. Retained correct hop diagrams with explicit separate-session explanation."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "21 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Two IstioOperator input examples rendered offline; batch duplicate-key YAML, Bash syntax and link checks passed.",
+      "Visually inspected local figures1–4; removed inaccurate figures1/3 and qualified historical end-to-end title on figure4."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/security/01-mtls.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed and corrected mTLS lifecycle, AWS edge integrations, egress, diagnostics and metrics.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/",
+      "https://istio.io/latest/docs/reference/commands/pilot-agent/",
+      "https://cert-manager.io/docs/usage/istio-csr/installation/",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/mutual-authentication.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/",
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/enable-mtls-distributions.html",
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewer-mtls-headers.html",
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/trust-stores-certificate-management.html",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-ec2-ntp.html",
+      "https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/security/pkg/nodeagent/cache/monitoring.go",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/cmd/pilot-agent/status/server.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats"
+    ],
+    "findings": [
+      "Corrected default CA hierarchy and 24-hour leaf lifetime/half-life renewal; public certificate inspection no longer prints CA private keys or assumes fixed SDS ordering.",
+      "Replaced incompatible cert-manager cacerts/PCA list-certificates recipe with supported istio-csr prerequisites, pinned root and issuer configuration; removed unsupported CITADEL variables and unsafe one-step root replacement.",
+      "Replaced NLB annotations with ALB Ingress mTLS, correct gateway service ports and HTTPS target limitations; removed disconnected bootstrap ConfigMap and unsafe header-only authorization.",
+      "Verified current CloudFront viewer mTLS support and corrected ViewerMtlsConfig, ETag/full-config update, HTTP/2 requirement, trust-store refresh, actual certificate headers, cache isolation and origin-trust assumptions.",
+      "Corrected HTTP-to-TLS/mTLS origination and egress gateway protocol/routes/SDS credentials.",
+      "Replaced removed authn tls-check, Time Sync HTTP request, invented skew grace variable, circular-dependency explanation and universal port15008 NetworkPolicy.",
+      "Replaced nonexistent handshake histogram/always-firing leaf alerts with verified istio_agent_cert_expiry_seconds and distinct adoption/HTTP-error metrics; corrected TLS1.3 meshMTLS field and Graviton acceleration claims.",
+      "Preserved historical EKS benchmark values and qualified inability to isolate cryptographic overhead. Removed 404 cert-hierarchy image and inaccurate local hierarchy/CloudFront figures; external archmap sources for figures1/3 need regeneration outside write scope. Retained correct hop diagrams with explicit separate-session explanation."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "21 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Two IstioOperator input examples rendered offline; batch duplicate-key YAML, Bash syntax and link checks passed.",
+      "Visually inspected local figures1–4; removed inaccurate figures1/3 and qualified historical end-to-end title on figure4."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/istio/security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed all questions; repaired answer semantics, executable resource examples, diagnostics, diagrams and links.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/",
+      "https://istio.io/latest/docs/reference/commands/pilot-agent/",
+      "https://istio.io/latest/docs/ops/configuration/mesh/app-health-check/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/",
+      "https://istio.io/latest/docs/tasks/observability/logs/access-log/",
+      "https://istio.io/latest/docs/reference/config/telemetry/",
+      "https://istio.io/latest/docs/tasks/security/authorization/authz-dry-run/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/advanced/substitution_formatter",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/advanced/attributes",
+      "https://www.keycloak.org/securing-apps/oidc-layers",
+      "https://www.keycloak.org/docs/latest/server_admin/index.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-logs-FluentBit.html",
+      "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/inputs/tail.md",
+      "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/parser.md"
+    ],
+    "findings": [
+      "Corrected supported matrix and all broken own-repository links to maintained local authentication/authorization/mTLS chapters.",
+      "MC answers A/B/A/B/C verified. Clarified sole-policy empty ALLOW behavior, CUSTOM/DENY/ALLOW ordering and ALLOW union; fixed missing-token 403 vs invalid-token401 and preserved expired JWT timestamp as historical structure only.",
+      "Replaced wrong eight-hour renewal/automatic intermediate/private-key output/on-disk cert assumptions with 24-hour requested TTL and half-life agent renewal. Removed inaccurate certificate-lifecycle figure1; external archmap source needs regeneration.",
+      "Completed Deployment selector/labels and marked application image placeholder; distinguished Kubernetes API RBAC from mesh identity.",
+      "Consolidated duplicated default-deny examples into complete namespace-scoped policy sets with explicit SA/application/port prerequisites, real gateway workload ports, probe-rewrite and scrape distinctions; fixed TCP Postgres tests vs HTTP403 assumption.",
+      "Replaced JWT-only-at-gateway flow with RequestAuthentication at every enforcing proxy, required application token propagation, Keycloak realm_access.roles and audience settings, role-conjunctive policies, HTTPS+PKCE login, and scalar claim-header API instead of broken Lua JSON decoding.",
+      "Replaced ineffective outbound AuthorizationPolicy and TLS-passthrough/HTTP mismatches with complete HTTP-to-egress-mTLS-to-external-TLS routing and gateway authorization, plus explicit independent network bypass controls.",
+      "Corrected AUDIT plugin requirement, stdout-vs-Elasticsearch confusion, disconnected Fluent Bit ConfigMap claims, invented metrics/labels, Logs Insights query escaping and generic retention mandates; added real provider/Telemetry and bounded security_operation metrics.",
+      "Corrected namespace-isolation direction, misleading time-based Lua authorization, global/default namespace confusion, removed authn tls-check, and production-readiness claims inferred from quiz score.",
+      "Replaced15 trailing-space hard breaks with explicit backslash Markdown breaks; multiple-choice options remain separated. Scoped git diff --check passes."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "44 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "All 10 questions fully read in original source, then edited answers reviewed; MC keys A/B/A/B/C checked.",
+      "Two IstioOperator examples per language rendered offline. Batch validation:128 YAML blocks,44 Bash blocks, balanced details/fences, local targets and known404 checks passed.",
+      "2026-09-11 parent checkpoint regression verified; changes are structural only."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/istio/security.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed all questions; repaired answer semantics, executable resource examples, diagnostics, diagrams and links.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/security/authorization-policy/",
+      "https://istio.io/latest/docs/reference/config/security/request_authentication/",
+      "https://istio.io/latest/docs/reference/config/security/peer_authentication/",
+      "https://istio.io/latest/docs/reference/commands/pilot-agent/",
+      "https://istio.io/latest/docs/ops/configuration/mesh/app-health-check/",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/",
+      "https://istio.io/latest/docs/tasks/observability/logs/access-log/",
+      "https://istio.io/latest/docs/reference/config/telemetry/",
+      "https://istio.io/latest/docs/tasks/security/authorization/authz-dry-run/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/advanced/substitution_formatter",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/advanced/attributes",
+      "https://www.keycloak.org/securing-apps/oidc-layers",
+      "https://www.keycloak.org/docs/latest/server_admin/index.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-logs-FluentBit.html",
+      "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/inputs/tail.md",
+      "https://raw.githubusercontent.com/fluent/fluent-bit-docs/master/pipeline/filters/parser.md"
+    ],
+    "findings": [
+      "Corrected supported matrix and all broken own-repository links to maintained local authentication/authorization/mTLS chapters.",
+      "MC answers A/B/A/B/C verified. Clarified sole-policy empty ALLOW behavior, CUSTOM/DENY/ALLOW ordering and ALLOW union; fixed missing-token 403 vs invalid-token401 and preserved expired JWT timestamp as historical structure only.",
+      "Replaced wrong eight-hour renewal/automatic intermediate/private-key output/on-disk cert assumptions with 24-hour requested TTL and half-life agent renewal. Removed inaccurate certificate-lifecycle figure1; external archmap source needs regeneration.",
+      "Completed Deployment selector/labels and marked application image placeholder; distinguished Kubernetes API RBAC from mesh identity.",
+      "Consolidated duplicated default-deny examples into complete namespace-scoped policy sets with explicit SA/application/port prerequisites, real gateway workload ports, probe-rewrite and scrape distinctions; fixed TCP Postgres tests vs HTTP403 assumption.",
+      "Replaced JWT-only-at-gateway flow with RequestAuthentication at every enforcing proxy, required application token propagation, Keycloak realm_access.roles and audience settings, role-conjunctive policies, HTTPS+PKCE login, and scalar claim-header API instead of broken Lua JSON decoding.",
+      "Replaced ineffective outbound AuthorizationPolicy and TLS-passthrough/HTTP mismatches with complete HTTP-to-egress-mTLS-to-external-TLS routing and gateway authorization, plus explicit independent network bypass controls.",
+      "Corrected AUDIT plugin requirement, stdout-vs-Elasticsearch confusion, disconnected Fluent Bit ConfigMap claims, invented metrics/labels, Logs Insights query escaping and generic retention mandates; added real provider/Telemetry and bounded security_operation metrics.",
+      "Corrected namespace-isolation direction, misleading time-based Lua authorization, global/default namespace confusion, removed authn tls-check, and production-readiness claims inferred from quiz score."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "44 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "All 10 questions fully read in original source, then edited answers reviewed; MC keys A/B/A/B/C checked.",
+      "Two IstioOperator examples per language rendered offline. Batch validation:128 YAML blocks,44 Bash blocks, balanced details/fences, local targets and known404 checks passed."
+    ]
+  }
+]

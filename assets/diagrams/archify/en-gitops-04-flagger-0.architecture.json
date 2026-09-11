@@ -8,17 +8,7 @@
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
-      "entries": {
-        "backend": {
-          "label": "Flux controller"
-        },
-        "external": {
-          "label": "External system"
-        },
-        "cloud": {
-          "label": "Cluster resource"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -54,7 +44,7 @@
           "notification",
           "flagger"
         ],
-        "note": "Image Automation commits new tags back to Git; the Notification Controller delivers alerts."
+        "note": "Image controllers update marked YAML on a branch; PR merging is separate. A configured receiver handles Flagger events."
       }
     ]
   },
@@ -116,7 +106,7 @@
     {
       "id": "imageauto",
       "type": "backend",
-      "label": "Image Automation",
+      "label": "Image controllers",
       "pos": [
         320,
         220
@@ -125,7 +115,7 @@
         170,
         60
       ],
-      "sublabel": "Controller"
+      "sublabel": "Reflector + Automation"
     },
     {
       "id": "kustomize",
@@ -156,7 +146,7 @@
     {
       "id": "notification",
       "type": "backend",
-      "label": "Notification Controller",
+      "label": "Event receiver",
       "pos": [
         320,
         480
@@ -164,7 +154,8 @@
       "size": [
         170,
         60
-      ]
+      ],
+      "sublabel": "separately configured"
     },
     {
       "id": "flagger",
@@ -233,7 +224,7 @@
     },
     {
       "kind": "region",
-      "label": "Flux GitOps Toolkit",
+      "label": "Delivery controllers / adapters",
       "wraps": [
         "source",
         "imageauto",
@@ -245,7 +236,7 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes Cluster",
+      "label": "Managed resources",
       "wraps": [
         "deployments",
         "services",
@@ -285,7 +276,7 @@
       "id": "imageauto-git",
       "from": "imageauto",
       "to": "git",
-      "label": "commit",
+      "label": "push branch",
       "variant": "dashed"
     },
     {
@@ -316,9 +307,18 @@
     },
     {
       "id": "notification-flagger",
-      "from": "notification",
-      "to": "flagger",
-      "label": "alerts"
+      "from": "flagger",
+      "to": "notification",
+      "label": "events"
+    },
+    {
+      "id": "routes-mesh",
+      "from": "routes",
+      "to": "mesh",
+      "label": "provider implements routes",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
     }
   ]
 }

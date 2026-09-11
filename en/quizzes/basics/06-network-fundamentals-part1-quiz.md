@@ -1,8 +1,8 @@
 # Network Fundamentals Part 1 Quiz — Layer Model, Link and Routing
 
-> **Last Updated**: August 28, 2026
+> **Last Updated**: September 11, 2026
 
-Tests your understanding of the 11 link-layer and internet/routing-layer protocols.
+Tests your understanding of the 11 link-layer and internet/routing-layer protocols and mechanisms.
 
 ## Multiple Choice Questions
 
@@ -18,7 +18,7 @@ Tests your understanding of the 11 link-layer and internet/routing-layer protoco
 **Answer: B) Reduced effective MTU from encapsulation headers plus blocked ICMP (an MTU black hole)**
 
 **Explanation:**
-Overlay/VPN encapsulation headers shrink the effective MTU. Small packets (pings) get through, but packets above the MTU need fragmentation — and if ICMP Fragmentation Needed (Type 3 Code 4) is blocked, Path MTU Discovery cannot work, so large responses silently disappear.
+Encapsulation reduces the inner packet size that fits the path. IPv4 packets with DF set cannot be fragmented by routers; classical PMTUD needs ICMP Type 3 Code 4. IPv6 routers never fragment and use ICMPv6 Packet Too Big (Type 2). Blocking those messages can cause black holes, although PLPMTUD can probe sizes without relying on ICMP.
 
 </details>
 
@@ -34,7 +34,7 @@ Overlay/VPN encapsulation headers shrink the effective MTU. Small packets (pings
 **Answer: B) To refresh the MAC tables/ARP caches of switches and neighboring hosts to point at the new node**
 
 **Explanation:**
-The VIP stays the same but the node (MAC) that owns it has changed, so the new active node broadcasts a Gratuitous ARP to update the caches of surrounding devices. If this refresh is delayed, failover cutover is slow.
+The VIP remains, but its owner or MAC/port location changes. Gratuitous ARP announces the IP-to-MAC mapping to neighbors, while the switch can learn the source MAC on its new port. Some HA designs keep the same virtual MAC. If this refresh is delayed, failover cutover is slow.
 
 </details>
 
@@ -50,7 +50,7 @@ The VIP stays the same but the node (MAC) that owns it has changed, so the new a
 **Answer: C) OSPF computes shortest paths with Dijkstra inside an AS, while BGP selects paths between ASes based on policy**
 
 **Explanation:**
-OSPF is a link-state IGP: every router in an area shares the same topology and computes shortest paths on it. BGP is a path-vector protocol that picks "the path policy prefers" using attributes such as AS_PATH, Local Preference, and MED. Route exchange over Direct Connect and Site-to-Site VPN is also BGP.
+OSPF is a link-state IGP: every router in an area shares the same topology and computes shortest paths on it. BGP is a path-vector protocol that picks "the path policy prefers" using attributes such as AS_PATH, Local Preference, and MED. Direct Connect uses BGP; Site-to-Site VPN supports BGP or static routing in supported configurations. BGP also has intra-AS iBGP sessions.
 
 </details>
 
@@ -66,11 +66,11 @@ OSPF is a link-state IGP: every router in an area shares the same topology and c
 **Answer: B) Because it is an L3 device that rewrites L4 ports, and it breaks the premise of end-to-end connectivity**
 
 **Explanation:**
-NAT (PAT/NAPT) rewrites not just IP addresses but ports, and depends on a per-session mapping table. As a result direct P2P connections became hard, and WebRTC works around it with STUN/TURN (ICE). In the cloud, NAT Gateway port exhaustion and data processing charges are the practical issues.
+Port-translating NAT (PAT/NAPT) rewrites not just IP addresses but ports, and depends on a per-session mapping table. As a result direct P2P connections became hard, and WebRTC works around it with STUN/TURN (ICE). In the cloud, NAT Gateway port exhaustion and data processing charges are the practical issues.
 
 </details>
 
-5. In an organization adopting IPv6 via dual stack, what is the most common security gap?
+5. In an organization adopting IPv6 via dual stack, which security gap should be checked?
    - A) IPv6 does not support encryption
    - B) Only IPv4 firewall rules are maintained, and rules for the IPv6 path are missing
    - C) IPv6 addresses are easier to scan
@@ -82,10 +82,28 @@ NAT (PAT/NAPT) rewrites not just IP addresses but ports, and depends on a per-se
 **Answer: B) Only IPv4 firewall rules are maintained, and rules for the IPv6 path are missing**
 
 **Explanation:**
-Dual stack means maintaining two sets of firewall rules and security policies. Missing rules on the IPv6 path is a common gap — and note that in the cloud IPv6 works without NAT, so "directly reachable from the internet" becomes the default posture.
+Dual stack means maintaining two sets of firewall rules and security policies. Missing IPv6 rules is a risk, but an IPv6 address alone does not imply internet reachability. Routes, security groups and NACLs still apply; an egress-only internet gateway can prevent unsolicited inbound IPv6 connections.
 
 </details>
 
 ---
 
 [Back to Study Material](../../basics/06-network-fundamentals-part1.md) | [Next Quiz: Part 2](./06-network-fundamentals-part2-quiz.md)
+
+## Verification References
+
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html
+- https://www.rfc-editor.org/rfc/rfc894
+- https://www.rfc-editor.org/rfc/rfc6691
+- https://www.rfc-editor.org/rfc/rfc4638
+- https://www.rfc-editor.org/rfc/rfc5227
+- https://www.rfc-editor.org/rfc/rfc792
+- https://www.rfc-editor.org/rfc/rfc8899
+- https://www.rfc-editor.org/rfc/rfc2328
+- https://www.rfc-editor.org/rfc/rfc6811
+- https://docs.kernel.org/networking/bridge.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/egress-only-internet-gateway.html
+- https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNRoutingTypes.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-scenarios.html
+- https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-pricing.html

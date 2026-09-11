@@ -122,7 +122,16 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 
 이 문서의 내용을 테스트하려면 다음 퀴즈를 풀어보세요:
 
-* [EKS Hybrid Nodes 퀴즈](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/eks-hybrid-nodes/README.md)
+* [EKS Hybrid Nodes 사전 요구사항 퀴즈](../quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+* [EKS Hybrid Nodes 네트워크 구성 퀴즈](../quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+* [EKS Hybrid Nodes 에어갭 환경 구성 퀴즈](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+* [EKS Hybrid Nodes 노드 부트스트래핑 퀴즈](../quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+* [EKS Hybrid Nodes GPU 통합 퀴즈](../quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+* [EKS Hybrid Nodes 워크로드 배치 퀴즈](../quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+* [노드 라이프사이클 관리 퀴즈](../quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+* [EKS Hybrid Nodes 운영 퀴즈](../quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+* [베어메탈 서버 OS 설치 퀴즈](../quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+* [EKS Hybrid Nodes Gateway 퀴즈](../quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ### 관련 문서
 

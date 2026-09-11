@@ -15,22 +15,19 @@
           "sync",
           "postsync"
         ],
-        "note": "PreSync 훅 → Sync → PostSync 훅 순서로 실행됩니다. 각 훅은 argocd.argoproj.io/hook 어노테이션으로 지정합니다."
+        "note": "PreSync 성공 후 Sync를 적용하고, Sync 성공 및 리소스 Healthy 확인 후 PostSync를 실행한다."
       },
       {
         "id": "failure-path",
         "label": "실패 시 전환",
         "focus": [
+          "presync",
           "sync",
           "postsync",
           "syncfail"
         ],
-        "note": "Sync 또는 PostSync 훅이 실패하면 SyncFail 훅이 실행되어 정리·알림 작업을 수행합니다."
+        "note": "실행 가능한 동기화 작업이 실패하면 SyncFail 처리를 시도한다. 사전 manifest 해석 오류 등 모든 오류의 정리를 보장하지는 않는다."
       }
-    ],
-    "viewBox": [
-      1100,
-      420
     ],
     "legend": {
       "mode": "auto",
@@ -79,6 +76,10 @@
       {
         "from": "sync",
         "to": "syncfail"
+      },
+      {
+        "from": "presync",
+        "to": "syncfail"
       }
     ]
   },
@@ -96,10 +97,11 @@
       "id": "sync",
       "lane": "hooks",
       "col": 1,
-      "type": "cloud",
+      "type": "backend",
       "label": "Sync",
-      "sublabel": "동기화 실행",
-      "tag": "sync"
+      "sublabel": "매니페스트 · Sync 훅 적용",
+      "tag": "sync",
+      "width": 144
     },
     {
       "id": "postsync",
@@ -107,14 +109,15 @@
       "col": 2,
       "type": "backend",
       "label": "PostSync Hook",
-      "sublabel": "동기화 후",
-      "tag": "post-sync"
+      "sublabel": "Sync 성공 · Healthy 이후",
+      "tag": "post-sync",
+      "width": 144
     },
     {
       "id": "syncfail",
       "lane": "failure",
       "col": 3,
-      "type": "security",
+      "type": "backend",
       "label": "SyncFail Hook",
       "sublabel": "동기화 실패 시",
       "tag": "sync-fail"
@@ -131,7 +134,8 @@
       "from": "sync",
       "to": "postsync",
       "variant": "emphasis",
-      "role": "main"
+      "role": "main",
+      "label": "성공 · Healthy"
     },
     {
       "from": "sync",
@@ -146,26 +150,32 @@
       "label": "실패 시",
       "variant": "security",
       "role": "error"
+    },
+    {
+      "from": "presync",
+      "to": "syncfail",
+      "label": "실패 시",
+      "variant": "security",
+      "role": "error"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "훅 유형과 용도",
+      "title": "동기화 훅",
       "items": [
-        "PreSync — 동기화 전: DB 마이그레이션, 백업",
-        "Sync — 동기화 중: 특정 순서가 필요한 리소스",
-        "PostSync — 동기화 후: 테스트, 알림",
-        "SyncFail — 동기화 실패 시: 정리, 알림"
+        "PreSync → Sync → Healthy 확인 → PostSync",
+        "명시적 selective sync에서는 훅을 실행하지 않는다",
+        "3.5.2 ApplyOutOfSyncOnly는 훅과 이력을 유지한다"
       ]
     },
     {
       "dot": "amber",
-      "title": "훅 어노테이션",
+      "title": "삭제와 실패 처리",
       "items": [
-        "argocd.argoproj.io/hook: PreSync | Sync | PostSync | SyncFail | Skip",
-        "argocd.argoproj.io/hook-delete-policy: HookSucceeded | HookFailed | BeforeHookCreation",
-        "Skip 훅은 동기화에서 제외되는 수동 관리 리소스에 사용"
+        "PreDelete/PostDelete는 Application 삭제용이며 이 동기화 흐름과 별개다",
+        "고정 이름 훅에는 BeforeHookCreation 등 재실행·정리 정책을 지정한다",
+        "훅 실패는 데이터베이스나 Git을 자동 rollback하지 않는다"
       ]
     }
   ]

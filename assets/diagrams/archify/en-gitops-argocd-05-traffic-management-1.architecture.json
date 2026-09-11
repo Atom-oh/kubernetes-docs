@@ -13,10 +13,7 @@
           "label": "Load balancer"
         },
         "backend": {
-          "label": "Application version"
-        },
-        "external": {
-          "label": "Cleanup target"
+          "label": "Version / scaling"
         }
       }
     },
@@ -33,13 +30,13 @@
       },
       {
         "id": "switch",
-        "label": "Instant switch",
+        "label": "Selector switch",
         "focus": [
           "blue-before",
           "green-after",
           "lb-after"
         ],
-        "note": "The activeService selector flips to Green, moving all production traffic to v2.0.0 at once."
+        "note": "The active Service selector changes to Green. Propagation and existing-connection draining take time."
       },
       {
         "id": "after",
@@ -50,7 +47,7 @@
           "blue-after",
           "scale-down"
         ],
-        "note": "The previous version Blue v1.0.0 stays up for scaleDownDelaySeconds as a rollback target, then scales down."
+        "note": "Old replica scale-down follows post-analysis and delay settings; revision history may remain after scaling to zero."
       }
     ],
     "viewBox": [
@@ -145,9 +142,9 @@
     },
     {
       "id": "scale-down",
-      "type": "external",
+      "type": "backend",
       "label": "Scale down",
-      "sublabel": "after scaleDownDelaySeconds",
+      "sublabel": "after analysis / delay",
       "pos": [
         720,
         410
@@ -200,7 +197,7 @@
       "id": "switch",
       "from": "blue-before",
       "to": "green-after",
-      "label": "switch",
+      "label": "selector change",
       "variant": "emphasis"
     },
     {
@@ -223,7 +220,7 @@
       "id": "blue-to-scale-down",
       "from": "blue-after",
       "to": "scale-down",
-      "label": "to be removed",
+      "label": "replicas: 0",
       "variant": "dashed",
       "labelDy": 24
     }
@@ -242,9 +239,9 @@
       "dot": "orange",
       "title": "After switch",
       "items": [
-        "autoPromotionEnabled or manual promotion switches traffic instantly",
-        "postPromotionAnalysis checks the success rate after the switch",
-        "Blue scales down after scaleDownDelaySeconds"
+        "Automatic or manual promotion changes the active selector",
+        "Post-promotion analysis checks behavior after the switch",
+        "Scale down the old ReplicaSet after analysis / delay conditions"
       ]
     }
   ]

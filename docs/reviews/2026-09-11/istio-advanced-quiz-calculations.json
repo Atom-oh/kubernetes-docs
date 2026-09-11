@@ -1,0 +1,88 @@
+{
+  "documents": [
+    "en/quizzes/service-mesh/istio/advanced.md",
+    "ko/quizzes/service-mesh/istio/advanced.md"
+  ],
+  "fixtures": 10,
+  "assertions": 29,
+  "cases": [
+    "healthy-no5xx",
+    "all5xx-no2xx",
+    "all4xx",
+    "zero-status",
+    "mixed",
+    "low-volume",
+    "idle-NaN-not-success",
+    "missing-not-success",
+    "ms-to-seconds-quantile",
+    "reporter-namespace-isolation"
+  ],
+  "arithmetic": [
+    {
+      "name": "1000pod-memory-saving-percent",
+      "result": 98.6,
+      "expected": 98.6
+    },
+    {
+      "name": "1000pod-cpu-saving-percent",
+      "result": 98.5,
+      "expected": 98.5
+    },
+    {
+      "name": "500pod-memory-saving-percent",
+      "result": 98.2,
+      "expected": 98.2
+    },
+    {
+      "name": "500pod-cpu-saving-percent",
+      "result": 98.0,
+      "expected": 98.0
+    },
+    {
+      "name": "one-node-month",
+      "result": 183.96,
+      "expected": 183.96
+    },
+    {
+      "name": "five-node-month",
+      "result": 919.8,
+      "expected": 919.8
+    },
+    {
+      "name": "thirteen-node-month",
+      "result": 2391.48,
+      "expected": 2391.48
+    },
+    {
+      "name": "five-node-vCPU",
+      "result": 20.0,
+      "expected": 20.0
+    },
+    {
+      "name": "proxy-only-node-lower-bound",
+      "result": 13.0,
+      "expected": 13.0
+    },
+    {
+      "name": "mean-ms",
+      "result": 47.038327526132406,
+      "expected": 47.04
+    },
+    {
+      "name": "p95-ms",
+      "result": 48.57142857142857,
+      "expected": 48.57
+    },
+    {
+      "name": "p99-ms",
+      "result": 50.0,
+      "expected": 50.0
+    },
+    {
+      "name": "RPS-increase",
+      "result": 87.60129659643437,
+      "expected": 87.6
+    }
+  ],
+  "historicalBenchmark": "OriginalEKS1.34/Istio1.28.0/R5/us-east-1/APIfigures retained as unverified historical claims; no new benchmark or cost quotation."
+}

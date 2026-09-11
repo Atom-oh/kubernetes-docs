@@ -1,5 +1,5 @@
 # Amazon ECR Quiz
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 11, 2026
 
 1. What is the primary difference between Amazon ECR Private and Amazon ECR Public?
    - A) ECR Private is free, ECR Public is paid
@@ -13,11 +13,11 @@
 **Answer: B) ECR Private requires authentication for all operations, ECR Public allows anonymous pulls**
 
 **Explanation:**
-Amazon ECR Private requires AWS authentication for all push and pull operations, making it suitable for proprietary images. ECR Public (public.ecr.aws) allows anonymous pulls for publicly shared images while still requiring authentication to push. ECR Public is hosted in us-east-1 but serves content globally.
+Private push/pull operations require authentication. Public images allow anonymous pulls, while publishing and management require authentication. Public API endpoints are listed for us-east-1 and us-west-2 and images are distributed through global URLs.
 
 </details>
 
-2. Which command retrieves an authentication token for Amazon ECR?
+2. Which CLI command emits the ECR password directly for use with `docker login --password-stdin`?
    - A) `aws ecr get-authorization-token`
    - B) `aws ecr get-login-password`
    - C) `aws ecr login`
@@ -29,7 +29,7 @@ Amazon ECR Private requires AWS authentication for all push and pull operations,
 **Answer: B) `aws ecr get-login-password`**
 
 **Explanation:**
-The `aws ecr get-login-password` command retrieves a temporary authentication token that can be piped to `docker login`. The full command is typically: `aws ecr get-login-password --region REGION | docker login --username AWS --password-stdin ACCOUNT.dkr.ecr.REGION.amazonaws.com`. The older `get-authorization-token` returns a base64-encoded token requiring additional processing.
+`get-login-password` prints the password suitable for stdin. `get-authorization-token` is also a valid API/CLI operation, but returns an encoded authorization token requiring decoding.
 
 </details>
 
@@ -45,23 +45,23 @@ The `aws ecr get-login-password` command retrieves a temporary authentication to
 **Answer: A) The rule with the lowest `rulePriority` number wins**
 
 **Explanation:**
-ECR lifecycle policy rules are evaluated by `rulePriority`, where lower numbers have higher priority. When multiple rules could match the same image, only the rule with the lowest priority number is applied. This allows you to create exception rules (low priority number) that protect specific images from more general cleanup rules (higher priority numbers).
+All rules are evaluated first, then their results are applied by priority. Lower numbers have higher priority; an image matching a higher-priority rule's tagging requirements cannot be expired by a lower-priority rule. This is not an ordered short-circuit evaluation of the rules themselves.
 
 </details>
 
 4. Which pattern syntax does ECR lifecycle policy `tagPatternList` use?
    - A) Regular expressions (regex)
-   - B) Glob patterns with wildcards (* and ?)
+   - B) The documented `*` wildcard pattern
    - C) SQL LIKE patterns
    - D) Exact string matching only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Glob patterns with wildcards (* and ?)**
+**Answer: B) The documented `*` wildcard pattern**
 
 **Explanation:**
-ECR lifecycle policy `tagPatternList` uses glob-style pattern matching, not regex. The `*` matches any sequence of characters and `?` matches any single character. For example, `prod-*` matches `prod-v1`, `prod-release`, etc. This is a common source of confusion since many other AWS services use regex.
+Use the documented `*` wildcard, with at most four stars per string. Do not assume regex, character classes or full Unix glob behavior. `v*` selects a prefix; CI must validate the release version format.
 
 </details>
 
@@ -113,7 +113,7 @@ The `aws_ecr_lifecycle_policy` Terraform resource attaches a lifecycle policy to
 
 </details>
 
-8. How does EKS authenticate to ECR when using IAM Roles for Service Accounts (IRSA)?
+8. Which identity normally supplies initial ECR image-pull permissions on EC2-backed EKS nodes?
    - A) Using a static access key stored in a Secret
    - B) The kubelet directly uses the node's IAM role
    - C) Pods assume an IAM role via OIDC federation and use temporary credentials
@@ -122,10 +122,10 @@ The `aws_ecr_lifecycle_policy` Terraform resource attaches a lifecycle policy to
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Pods assume an IAM role via OIDC federation and use temporary credentials**
+**Answer: B) The kubelet directly uses the node's IAM role**
 
 **Explanation:**
-With IRSA, Pods are associated with a Kubernetes ServiceAccount that is linked to an IAM role via OIDC federation. When a Pod needs to pull from ECR, it assumes the IAM role and receives temporary credentials. This provides fine-grained access control without storing long-term credentials and follows the principle of least privilege.
+Kubelet pulls the image before the application starts, using the node's image-pull credentials. Fargate uses its Pod execution role. IRSA/Pod Identity supply workload SDK credentials after the Pod starts; they do not replace that bootstrap image-pull identity.
 
 </details>
 
@@ -145,18 +145,18 @@ Immutable tags prevent overwriting existing image tags. Once an image is pushed 
 
 </details>
 
-10. When configuring ECR cross-region replication, what is replicated to the destination region?
+10. Which description of ECR cross-region replication is correct?
     - A) Only image manifests
-    - B) Images, tags, and repository settings (but not lifecycle policies)
+    - B) Eligible images and tags are replicated asynchronously; destination settings are managed separately
     - C) Everything including lifecycle policies and permissions
-    - D) Only images pushed after replication is enabled
+    - D) All pre-existing images are automatically backfilled
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Images, tags, and repository settings (but not lifecycle policies)**
+**Answer: B) Eligible images and tags are replicated asynchronously; destination settings are managed separately**
 
 **Explanation:**
-ECR cross-region replication copies images and their tags to destination regions, and repositories are created automatically if they don't exist. However, lifecycle policies and repository permissions (resource-based policies) are NOT replicated and must be configured separately in each region. Replication applies to images pushed after the rule is created; existing images can be replicated by re-pushing them.
+Images pushed or restored after replication configuration are eligible. Existing content is not automatically backfilled. Destination repository settings, permissions and lifecycle policies are configured independently, for example using creation templates. Verify the required destination digest before relying on replication for recovery.
 
 </details>

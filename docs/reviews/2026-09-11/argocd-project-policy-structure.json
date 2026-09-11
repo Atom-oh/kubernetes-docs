@@ -1,0 +1,143 @@
+{
+  "note": "Static structural checks against3.5.2 validatePolicy constraints; not live project creation.",
+  "projects": [
+    {
+      "locale": "ko",
+      "fence": 1,
+      "project": "production",
+      "roles": 3
+    },
+    {
+      "locale": "ko",
+      "fence": 2,
+      "project": "development",
+      "roles": 1
+    },
+    {
+      "locale": "ko",
+      "fence": 3,
+      "project": "staging",
+      "roles": 1
+    },
+    {
+      "locale": "ko",
+      "fence": 4,
+      "project": "production",
+      "roles": 2
+    },
+    {
+      "locale": "ko",
+      "fence": 7,
+      "project": "my-project",
+      "roles": 3
+    },
+    {
+      "locale": "ko",
+      "fence": 13,
+      "project": "frontend",
+      "roles": 2
+    },
+    {
+      "locale": "ko",
+      "fence": 13,
+      "project": "backend",
+      "roles": 2
+    },
+    {
+      "locale": "ko",
+      "fence": 14,
+      "project": "development",
+      "roles": 1
+    },
+    {
+      "locale": "ko",
+      "fence": 14,
+      "project": "staging",
+      "roles": 1
+    },
+    {
+      "locale": "ko",
+      "fence": 14,
+      "project": "production",
+      "roles": 1
+    },
+    {
+      "locale": "ko",
+      "fence": 15,
+      "project": "tenant-a",
+      "roles": 1
+    },
+    {
+      "locale": "ko",
+      "fence": 15,
+      "project": "tenant-b",
+      "roles": 1
+    },
+    {
+      "locale": "en",
+      "fence": 1,
+      "project": "my-project",
+      "roles": 1
+    },
+    {
+      "locale": "en",
+      "fence": 2,
+      "project": "default",
+      "roles": 0
+    },
+    {
+      "locale": "en",
+      "fence": 3,
+      "project": "default",
+      "roles": 0
+    },
+    {
+      "locale": "en",
+      "fence": 4,
+      "project": "team-frontend",
+      "roles": 3
+    },
+    {
+      "locale": "en",
+      "fence": 5,
+      "project": "production",
+      "roles": 2
+    },
+    {
+      "locale": "en",
+      "fence": 6,
+      "project": "platform",
+      "roles": 1
+    },
+    {
+      "locale": "en",
+      "fence": 10,
+      "project": "team-a",
+      "roles": 1
+    },
+    {
+      "locale": "en",
+      "fence": 10,
+      "project": "team-b",
+      "roles": 1
+    },
+    {
+      "locale": "en",
+      "fence": 11,
+      "project": "development",
+      "roles": 0
+    },
+    {
+      "locale": "en",
+      "fence": 11,
+      "project": "production",
+      "roles": 0
+    },
+    {
+      "locale": "en",
+      "fence": 14,
+      "project": "my-project",
+      "roles": 0
+    }
+  ]
+}

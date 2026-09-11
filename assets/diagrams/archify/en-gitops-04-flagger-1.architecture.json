@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Flagger Control Loop — Core Components",
+    "title": "Flagger Components",
     "locale": "en",
     "output": "en-gitops-04-flagger-1.html",
     "quality_profile": "showcase",
@@ -14,7 +14,7 @@
     "views": [
       {
         "id": "detect",
-        "label": "1. Detect canary",
+        "label": "Detect",
         "focus": [
           "crd",
           "flagger",
@@ -24,7 +24,7 @@
       },
       {
         "id": "shift",
-        "label": "2. Shift traffic",
+        "label": "Route",
         "focus": [
           "flagger",
           "traffic"
@@ -33,24 +33,27 @@
       },
       {
         "id": "analyze",
-        "label": "3. Analyze metrics",
+        "label": "Measure",
         "focus": [
           "flagger",
           "metrics"
         ],
-        "note": "Queries the metrics backend for success rate and latency to decide whether to advance or roll back."
+        "note": "Validate units, freshness and missing data; failed checks accumulate."
       },
       {
         "id": "promote",
-        "label": "4. Promote and notify",
+        "label": "Promote",
         "focus": [
           "flagger",
           "primary",
           "alerts"
         ],
-        "note": "Once every step passes, the canary spec is copied to the primary and the result is sent to the alert channels."
+        "note": "Serve through the ready canary while updating primary, then verify readiness."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {
@@ -142,7 +145,7 @@
       "id": "alerts",
       "type": "external",
       "label": "Alert channels",
-      "sublabel": "Slack · Teams",
+      "sublabel": "Slack / Teams adapter",
       "pos": [
         670,
         460
@@ -156,7 +159,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Created by Flagger",
+      "label": "Managed workloads",
       "wraps": [
         "primary",
         "canary"
@@ -217,28 +220,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Canary CRD",
+      "title": "Ownership",
       "items": [
-        "References the existing Deployment via targetRef (no Deployment replacement needed)",
-        "analysis defines traffic weights, metric thresholds, and pre/post-rollout webhooks"
+        "targetRef: existing workload",
+        "Git/Helm: Pod-template ownership"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Created by Flagger",
+      "title": "Lifecycle",
       "items": [
-        "The app-primary Deployment/Service serves stable-version traffic",
-        "The original app Deployment is used as the canary and stays at 0 replicas when no rollout is running",
-        "A VirtualService / TrafficSplit manages the traffic ratio"
+        "primary: created and promoted",
+        "original canary: normally 0 after completion"
       ]
     },
     {
       "dot": "amber",
-      "title": "Analysis and alerting",
+      "title": "Failure handling",
       "items": [
-        "Queries metrics from Prometheus, Datadog, or CloudWatch",
-        "Advances and promotes when thresholds pass; rolls back automatically on failure",
-        "Reports the result through Slack / Teams webhooks"
+        "Analysis failure limit: restore primary",
+        "Primary promotion fault: separate recovery"
       ]
     }
   ]

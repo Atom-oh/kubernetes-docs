@@ -4,7 +4,7 @@
 
 ## 객관식 문제
 
-1. Kubernetes 스케줄러가 포드를 노드에 할당하는 과정에서 첫 번째 단계는 무엇인가요?
+1. 노드 후보를 평가하는 필터링·스코어링·바인딩 중 먼저 수행되는 단계는 무엇인가요?
    - A) 노드에 점수 매기기
    - B) 노드 필터링
    - C) 포드 우선순위 결정
@@ -79,7 +79,7 @@ Kubernetes 스케줄러는 포드를 노드에 할당할 때 다음과 같은 �
 
 선점(Preemption)은 우선순위가 높은 포드가 스케줄링될 때 리소스가 부족한 경우, 스케줄러가 우선순위가 낮은 포드를 종료하여 리소스를 확보하는 프로세스입니다.
 
-이 메커니즘을 통해 중요한 워크로드가 클러스터 리소스 부족 상황에서도 스케줄링될 수 있도록 보장할 수 있습니다. 예를 들어, 프로덕션 워크로드에 높은 우선순위를 부여하고 개발/테스트 워크로드에 낮은 우선순위를 부여하면, 리소스 경합 시 프로덕션 워크로드가 우선적으로 실행됩니다.
+이 메커니즘은 중요한 워크로드의 배치 가능성을 높이지만 제약 조건·용량 부족이 남으면 스케줄링을 보장하지 못합니다. 예를 들어, 프로덕션 워크로드에 높은 우선순위를 부여하고 개발/테스트 워크로드에 낮은 우선순위를 부여하면, 리소스 경합 시 프로덕션 워크로드가 우선적으로 실행됩니다.
 </details>
 
 5. 노드 셀렉터(Node Selector)와 노드 어피니티(Node Affinity)의 주요 차이점은 무엇인가요?
@@ -103,7 +103,7 @@ Kubernetes 스케줄러는 포드를 노드에 할당할 때 다음과 같은 �
 또한 노드 어피니티는 `In`, `NotIn`, `Exists`, `DoesNotExist`, `Gt`, `Lt` 등의 연산자를 사용하여 더 복잡한 조건을 표현할 수 있습니다.
 </details>
 
-6. Kubernetes에서 포드 축출(Pod Eviction)이 발생하는 주요 원인은 무엇인가요?
+6. Kubernetes에서 노드 압력 축출(Node-pressure Eviction)을 발생시키는 주요 원인은 무엇인가요?
    - A) 포드의 우선순위가 낮을 때
    - B) 노드의 리소스(메모리, 디스크 등)가 부족할 때
    - C) 포드가 너무 오래 실행되었을 때
@@ -117,18 +117,13 @@ Kubernetes 스케줄러는 포드를 노드에 할당할 때 다음과 같은 �
 **설명:**
 Kubernetes에서 포드 축출(Pod Eviction)은 주로 노드의 리소스가 부족할 때 발생합니다. kubelet은 노드의 메모리, 디스크 공간, PID 등의 리소스 사용량을 모니터링하고, 특정 임계값을 초과하면 포드 축출을 시작합니다.
 
-축출 프로세스는 다음과 같은 순서로 진행됩니다:
-1. BestEffort QoS 클래스의 포드(리소스 요청 및 제한이 없는 포드)
-2. Burstable QoS 클래스의 포드(리소스 요청은 있지만 제한이 없거나 요청보다 높은 포드)
-3. Guaranteed QoS 클래스의 포드(리소스 요청과 제한이 동일한 포드)
-
-또한 각 QoS 클래스 내에서는 포드의 우선순위와 리소스 사용량을 고려하여 축출할 포드를 선택합니다.
+축출 대상은 요청 초과 사용 여부, 파드 우선순위, 요청 대비 사용량으로 정합니다. QoS 클래스만으로 고정된 순서를 정하지 않으며 디스크·PID 압력도 고려해야 합니다.
 
 노드 유지 보수, 노드 풀 크기 조정, 노드 장애 등의 이유로도 포드 축출이 발생할 수 있습니다.
 </details>
 
 7. Kubernetes에서 DaemonSet 포드의 스케줄링 특성은 무엇인가요?
-   - A) 모든 노드에 하나씩 스케줄링된다
+   - A) 실행 조건을 만족하는 대상 노드마다 하나씩 스케줄링된다
    - B) 특정 레이블이 있는 노드에만 스케줄링된다
    - C) 기본 스케줄러를 사용하지 않고 직접 노드에 배치된다
    - D) 항상 마스터 노드에 스케줄링된다
@@ -136,7 +131,7 @@ Kubernetes에서 포드 축출(Pod Eviction)은 주로 노드의 리소스가 �
 <details>
 <summary>정답 보기</summary>
 
-**정답: A) 모든 노드에 하나씩 스케줄링된다**
+**정답: A) 실행 조건을 만족하는 대상 노드마다 하나씩 스케줄링된다**
 
 **설명:**
 DaemonSet은 클러스터의 모든 노드(또는 노드 셀렉터를 사용하는 경우 선택된 노드)에 포드의 복사본을 하나씩 실행하도록 설계된 워크로드 리소스입니다. 새 노드가 클러스터에 추가되면 DaemonSet 컨트롤러는 자동으로 해당 노드에 포드를 배치합니다.
@@ -146,30 +141,22 @@ DaemonSet은 일반적으로 로깅 에이전트, 모니터링 에이전트, 네
 Kubernetes 1.12 이전에는 DaemonSet 컨트롤러가 기본 스케줄러를 우회하고 직접 노드에 포드를 배치했습니다(옵션 C). 그러나 1.12 이후에는 기본 스케줄러를 사용하여 DaemonSet 포드를 스케줄링합니다.
 </details>
 
-8. Kubernetes에서 QoS(Quality of Service) 클래스 중 가장 높은 우선순위를 가지는 것은 무엇인가요?
+8. 파드 수준 리소스 설정 없이 모든 컨테이너의 CPU·메모리 요청이 각각 제한과 같은 경우 QoS 클래스는 무엇인가요?
    - A) BestEffort
    - B) Burstable
    - C) Guaranteed
    - D) Critical
-   
+
 <details>
 <summary>정답 보기</summary>
 
 **정답: C) Guaranteed**
 
 **설명:**
-Kubernetes에서는 포드의 리소스 요청(requests)과 제한(limits) 설정에 따라 세 가지 QoS(Quality of Service) 클래스를 정의합니다:
-
-1. **Guaranteed**: 모든 컨테이너가 CPU와 메모리에 대한 요청과 제한을 명시적으로 설정하고, 요청과 제한이 동일한 경우입니다. 이 클래스는 가장 높은 우선순위를 가지며, 리소스 부족 시 마지막으로 축출됩니다.
-
-2. **Burstable**: 적어도 하나의 컨테이너가 CPU나 메모리에 대한 요청을 설정했지만, 모든 컨테이너의 요청과 제한이 동일하지 않은 경우입니다. 이 클래스는 중간 우선순위를 가집니다.
-
-3. **BestEffort**: 어떤 컨테이너도 CPU나 메모리에 대한 요청이나 제한을 설정하지 않은 경우입니다. 이 클래스는 가장 낮은 우선순위를 가지며, 리소스 부족 시 가장 먼저 축출됩니다.
-
-리소스 부족 상황에서 kubelet은 BestEffort 포드를 먼저 축출하고, 그 다음으로 Burstable 포드를, 마지막으로 Guaranteed 포드를 축출합니다.
+Guaranteed는 모든 컨테이너의 CPU·메모리 요청과 제한이 각각 같은 경우입니다. CPU·메모리 요청·제한이 전혀 없으면 BestEffort이고 그 사이의 구성은 Burstable입니다. 파드 수준 리소스를 사용하는 경우에는 별도의 QoS 기준도 적용됩니다. QoS는 PriorityClass가 아니며 Guaranteed도 장애·축출에서 무조건 보호되지 않습니다.
 </details>
 
-9. 노드에 `node-role.kubernetes.io/master:NoSchedule` 테인트가 적용되어 있을 때, 이 노드에 포드를 스케줄링하기 위해 필요한 것은 무엇인가요?
+9. 노드에 `node-role.kubernetes.io/control-plane:NoSchedule` 테인트가 적용되어 있을 때, 이 노드에 포드를 스케줄링하기 위해 필요한 것은 무엇인가요?
    - A) 노드 어피니티 규칙
    - B) 포드 어피니티 규칙
    - C) 해당 테인트에 대한 톨러레이션
@@ -181,13 +168,13 @@ Kubernetes에서는 포드의 리소스 요청(requests)과 제한(limits) 설�
 **정답: C) 해당 테인트에 대한 톨러레이션**
 
 **설명:**
-노드에 `node-role.kubernetes.io/master:NoSchedule` 테인트가 적용되어 있으면, 기본적으로 포드는 해당 노드에 스케줄링되지 않습니다. 이 노드에 포드를 스케줄링하려면, 포드에 해당 테인트에 대한 톨러레이션을 추가해야 합니다.
+노드에 `node-role.kubernetes.io/control-plane:NoSchedule` 테인트가 적용되어 있으면, 기본적으로 포드는 해당 노드에 스케줄링되지 않습니다. 이 노드에 포드를 스케줄링하려면, 포드에 해당 테인트에 대한 톨러레이션을 추가해야 합니다.
 
 예를 들어, 다음과 같은 톨러레이션을 포드 스펙에 추가할 수 있습니다:
 
 ```yaml
 tolerations:
-- key: "node-role.kubernetes.io/master"
+- key: "node-role.kubernetes.io/control-plane"
   operator: "Exists"
   effect: "NoSchedule"
 ```
@@ -197,17 +184,17 @@ tolerations:
 
 10. Kubernetes에서 포드 중단 예산(PodDisruptionBudget)의 주요 목적은 무엇인가요?
     - A) 포드의 리소스 사용량 제한
-    - B) 자발적 중단 중에도 애플리케이션 가용성 보장
+    - B) Eviction API를 통한 자발적 축출 수 제한
     - C) 포드 스케줄링 우선순위 설정
     - D) 포드 재시작 정책 정의
     
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 자발적 중단 중에도 애플리케이션 가용성 보장**
+**정답: B) Eviction API를 통한 자발적 축출 수 제한**
 
 **설명:**
-PodDisruptionBudget(PDB)은 노드 드레인, 클러스터 업그레이드 등 자발적 중단(voluntary disruption) 상황에서 동시에 사용 불가능해질 수 있는 포드 수를 제한하여 애플리케이션의 최소 가용성을 보장합니다.
+PodDisruptionBudget(PDB)은 노드 드레인, 클러스터 업그레이드 등 자발적 중단(voluntary disruption) 상황에서 동시에 사용 불가능해질 수 있는 포드 수를 제한하여 애플리케이션의 최소 가용성을 유지하도록 Eviction API 요청을 제한합니다. 직접 파드 삭제·컨트롤러 롤아웃·노드 압력 축출은 이 검사를 우회합니다.
 </details>
 
 ## 주관식 문제
@@ -222,23 +209,23 @@ Kubernetes 스케줄러의 필터링 단계에서 사용되는 주요 필터(pre
 
 1. **NodeResourcesFit**: 포드의 리소스 요청(CPU, 메모리 등)을 충족할 수 있는 노드를 필터링합니다. 노드의 할당 가능한 리소스가 포드의 요청보다 적으면 해당 노드는 필터링됩니다.
 
-2. **NodeName**: 포드 스펙에 `nodeName` 필드가 지정된 경우, 해당 이름의 노드만 선택합니다. 이는 가장 높은 우선순위를 가진 필터입니다.
+2. **NodeName**: 포드 스펙에 `nodeName` 필드가 지정된 경우, 해당 이름의 노드만 선택합니다. 일반적인 `spec.nodeName` 직접 지정은 스케줄러를 우회하므로 필터 우선순위로 설명하면 안 됩니다.
 
 3. **NodeUnschedulable**: `Unschedulable` 플래그가 설정된 노드(예: 유지 보수 모드의 노드)를 필터링합니다.
 
 4. **NodeAffinity**: 포드의 노드 어피니티 규칙을 충족하는 노드만 선택합니다.
 
-5. **PodAffinity**: 포드의 포드 어피니티 규칙을 충족하는 노드만 선택합니다.
+5. **InterPodAffinity**: 파드 어피니티·안티-어피니티를 함께 검사합니다.
 
-6. **PodAntiAffinity**: 포드의 포드 안티-어피니티 규칙을 충족하는 노드만 선택합니다.
+6. **PodTopologySpread**: 토폴로지 분산 제약을 검사합니다.
 
 7. **TaintToleration**: 포드가 톨러레이션하지 않는 테인트가 있는 노드를 필터링합니다.
 
 8. **NodePorts**: 포드가 요청하는 포트가 이미 노드에서 사용 중인 경우 해당 노드를 필터링합니다.
 
-9. **VolumeRestrictions**: 포드가 요청하는 볼륨 유형을 노드가 지원하는지 확인합니다.
+9. **VolumeBinding**: PVC 바인딩과 볼륨 토폴로지 제약을 검사합니다.
 
-10. **EBSLimits**, **GCEPDLimits**, **AzureDiskLimits**: 클라우드 제공자별 볼륨 제한을 확인합니다.
+10. **NodeVolumeLimits**: CSI 드라이버가 보고한 노드별 볼륨 연결 한도를 검사합니다.
 
 (위 중 세 가지 이상만 설명하면 됩니다)
 </details>
@@ -355,7 +342,7 @@ spec:
    
    b. 가장 적합한 노드를 선택합니다(선점으로 인한 영향이 최소화되는 노드).
    
-   c. 선택된 노드에서 우선순위가 낮은 포드에 종료 신호를 보냅니다. 이때 여러 포드를 선점해야 할 수도 있습니다.
+   c. API를 통해 선택된 노드의 낮은 우선순위 파드 삭제를 요청하며 kubelet·런타임이 종료합니다. 이때 여러 포드를 선점해야 할 수도 있습니다.
    
    d. 선점된 포드가 정상적으로 종료되고 리소스가 확보되면, 우선순위가 높은 포드가 해당 노드에 스케줄링됩니다.
 
@@ -364,8 +351,8 @@ spec:
 
 **6. 선점 제한 사항:**
 - 우선순위가 같거나 높은 포드는 선점되지 않습니다.
-- 시스템 크리티컬 포드(예: kube-system 네임스페이스의 핵심 구성 요소)는 특별히 보호됩니다.
-- PodDisruptionBudget은 선점 중에도 고려됩니다.
+- 시스템 PriorityClass는 사용자 정의 클래스보다 높은 값으로 보호하지만 kube-system 네임스페이스 자체가 선점 면제를 의미하지는 않습니다.
+- PodDisruptionBudget은 best-effort로 고려되며 위반을 피할 수 없는 경우에도 선점할 수 있습니다.
 
 **7. 이벤트 기록:**
 선점이 발생하면 이벤트가 기록되어 어떤 포드가 왜 선점되었는지 추적할 수 있습니다.
@@ -402,20 +389,16 @@ kubelet에 의해 관리되며, 노드의 리소스 부족 상황에 대응하�
   - `nodefs.inodesFree < 5%` (기본값)
   - `imagefs.available < 15%` (기본값)
 - **PID 부족**: 사용 가능한 프로세스 ID가 임계값 아래로 떨어질 때
-  - `pid.available < 10%` (기본값)
+  - PID 임계값은 명시적으로 설정해야 하며 기본 10% 임계값은 없습니다.
 
 **심각도 수준:**
-- **소프트 축출(Soft Eviction)**: 유예 기간이 있으며, 임계값을 초과한 후 일정 시간(기본값: 5분) 동안 지속되면 축출이 시작됩니다.
-  - 예: `eviction-soft-grace-period.memory.available=1m30s`
+- **소프트 축출(Soft Eviction)**: 유예 기간이 있으며, 임계값을 초과한 후 명시한 유예 시간 동안 지속되면 축출이 시작됩니다. 소프트 임계값·유예 기간은 기본 5분으로 제공되지 않습니다.
+  - 예: `evictionSoftGracePeriod: {memory.available: "1m30s"}`
 - **하드 축출(Hard Eviction)**: 즉시 축출이 시작됩니다.
   - 예: `eviction-hard=memory.available<100Mi`
 
-**축출 순서:**
-1. BestEffort QoS 클래스의 포드(리소스 요청 및 제한이 없는 포드)
-2. Burstable QoS 클래스의 포드(리소스 요청은 있지만 제한이 없거나 요청보다 높은 포드)
-3. Guaranteed QoS 클래스의 포드(리소스 요청과 제한이 동일한 포드)
-
-각 QoS 클래스 내에서는 포드의 우선순위와 리소스 사용량을 고려하여 축출할 포드를 선택합니다.
+**축출 대상 선택:**
+요청 초과 사용 여부, 파드 우선순위, 요청 대비 사용량을 기준으로 선택합니다. QoS만으로 BestEffort → Burstable → Guaranteed 순서를 강제하지 않습니다. 위 memory/nodefs 기본값은 Linux 기준이며 Windows의 기본 메모리 임계값은 다릅니다. 하드 임계값은 유예 없이 종료할 수 있고 소프트 종료 유예는 `evictionMaxPodGracePeriod`에도 영향을 받습니다.
 
 **2. API 서버 수준 축출 (API Server-level Eviction)**
 
@@ -425,13 +408,13 @@ kubelet에 의해 관리되며, 노드의 리소스 부족 상황에 대응하�
 - **노드 드레이닝(Node Draining)**: 노드 유지 보수, 업그레이드, 삭제 등을 위해 노드의 모든 포드를 축출
   - `kubectl drain <node-name>`
 - **테인트 기반 축출**: 노드에 `NoExecute` 효과가 있는 테인트를 추가하고, 해당 테인트를 톨러레이션하지 않는 포드 축출
-- **API 직접 호출**: 포드 삭제 API를 직접 호출하여 포드 축출
+- **Eviction API 호출**: `policy/v1` Eviction 하위 리소스를 사용합니다. 일반 Pod DELETE와 구분되며 직접 삭제는 PDB를 검사하지 않습니다.
 
 **제약 조건:**
 - **PodDisruptionBudget(PDB)**: 자발적 중단 중에도 애플리케이션의 가용성을 보장하기 위한 제약 조건
   - `minAvailable`: 중단 중에도 항상 사용 가능해야 하는 최소 포드 수 또는 비율
   - `maxUnavailable`: 중단 중에 사용할 수 없게 될 수 있는 최대 포드 수 또는 비율
-- PDB는 API 서버 수준 축출에만 적용되며, 노드 수준 축출에는 적용되지 않습니다.
+- PDB는 Eviction API 요청을 제한합니다. 직접 Pod DELETE, NoExecute 테인트 축출, 노드 압력 축출은 이 게이트를 우회합니다.
 
 **3. 기타 축출 시나리오**
 
@@ -453,14 +436,14 @@ kubelet에 의해 관리되며, 노드의 리소스 부족 상황에 대응하�
 <summary>정답 보기</summary>
 
 **정답:**
-DaemonSet은 기본 스케줄러를 거치지 않고 각 노드에 정확히 하나의 포드를 배치하도록 설계되어 있어, 클러스터의 모든(또는 노드 셀렉터로 지정된) 노드에 자동으로 포드가 생성됩니다. 노드가 추가되면 자동으로 새 포드가 스케줄링되고, 노드가 제거되면 해당 포드도 함께 정리됩니다. 반면 일반 포드(Deployment 등)는 스케줄러가 리소스 요청, 어피니티, 테인트/톨러레이션 등을 평가하여 지정된 replica 수만큼 적절한 노드를 선택해 배치하며, 노드 수와 포드 수가 1:1로 고정되지 않습니다.
+현재 DaemonSet 컨트롤러는 대상 노드에 맞는 어피니티를 가진 파드를 생성하고 기본 스케줄러가 이를 바인딩하므로, 클러스터의 모든(또는 노드 셀렉터로 지정된) 노드에 자동으로 포드가 생성됩니다. 노드가 추가되면 자동으로 새 포드가 스케줄링되고, 노드가 제거되면 해당 포드도 함께 정리됩니다. 반면 일반 포드(Deployment 등)는 스케줄러가 리소스 요청, 어피니티, 테인트/톨러레이션 등을 평가하여 지정된 replica 수만큼 적절한 노드를 선택해 배치하며, 노드 수와 포드 수가 1:1로 고정되지 않습니다.
 </details>
 
 ## 실습 문제
 
 1. 다음 요구 사항에 맞는 노드 어피니티(Node Affinity) 설정을 포함한 포드 매니페스트를 작성하세요:
    - 포드 이름: web-server
-   - 이미지: nginx:latest
+   - 이미지: nginx:1.30.4
    - 가용 영역(zone)이 "us-east-1a" 또는 "us-east-1b"인 노드에만 스케줄링
    - 인스턴스 타입(instance-type)이 "m5.large"인 노드 선호
 
@@ -477,7 +460,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:latest
+    image: nginx:1.30.4
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -502,13 +485,13 @@ spec:
 - `requiredDuringSchedulingIgnoredDuringExecution`: 포드는 반드시 "us-east-1a" 또는 "us-east-1b" 가용 영역에 있는 노드에만 스케줄링됩니다. 이 조건을 만족하는 노드가 없으면 포드는 스케줄링되지 않습니다.
 - `preferredDuringSchedulingIgnoredDuringExecution`: 가능하다면 "m5.large" 인스턴스 타입의 노드에 스케줄링됩니다. 이러한 노드가 없어도 포드는 다른 적합한 노드에 스케줄링될 수 있습니다.
 
-`topology.kubernetes.io/zone`과 `node.kubernetes.io/instance-type`은 Kubernetes에서 자동으로 설정되는 표준 노드 레이블입니다.
+`topology.kubernetes.io/zone`과 `node.kubernetes.io/instance-type`은 표준 노드 레이블이며 EKS 같은 클라우드 통합이 값을 설정합니다. 모든 자체 관리형 노드에 자동으로 존재한다고 가정하지 말고 확인하세요.
 </details>
 
 2. 다음 요구 사항에 맞는 테인트(Taint)와 톨러레이션(Toleration) 설정을 작성하세요:
    - 노드 이름: worker-1
    - 테인트: dedicated=database:NoSchedule
-   - 데이터베이스 포드(이름: postgres-db, 이미지: postgres:13)에 적절한 톨러레이션 추가
+   - 데이터베이스 포드(이름: postgres-db, 이미지: postgres:17)에 적절한 톨러레이션 추가
 
 <details>
 <summary>정답 보기</summary>
@@ -520,7 +503,7 @@ spec:
 kubectl taint nodes worker-1 dedicated=database:NoSchedule
 ```
 
-데이터베이스 포드 매니페스트:
+데이터베이스 포드 매니페스트(같은 네임스페이스에 `password` 키를 가진 `postgres-credentials` Secret을 먼저 생성하세요. 이 예시는 배치 설명용이며 영구 DB에는 PVC가 필요합니다):
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -529,10 +512,13 @@ metadata:
 spec:
   containers:
   - name: postgres
-    image: postgres:13
+    image: postgres:17
     env:
     - name: POSTGRES_PASSWORD
-      value: "password"  # 실제 환경에서는 Secret을 사용해야 합니다
+      valueFrom:
+        secretKeyRef:
+          name: postgres-credentials
+          key: password
   tolerations:
   - key: "dedicated"
     operator: "Equal"
@@ -553,7 +539,7 @@ spec:
 
 3. 다음 요구 사항에 맞는 포드 어피니티(Pod Affinity) 및 안티-어피니티(Anti-Affinity) 설정을 포함한 디플로이먼트 매니페스트를 작성하세요:
    - 디플로이먼트 이름: web-frontend
-   - 이미지: nginx:latest
+   - 이미지: nginx:1.30.4
    - 레플리카: 3
    - app=cache 레이블이 있는 포드와 같은 노드에 배치(어피니티)
    - 같은 디플로이먼트의 다른 포드와는 다른 노드에 배치(안티-어피니티)
@@ -599,7 +585,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: nginx
-        image: nginx:latest
+        image: nginx:1.30.4
 ```
 
 이 디플로이먼트 매니페스트는 다음과 같은 어피니티 규칙을 설정합니다:
@@ -614,14 +600,14 @@ spec:
    - `topologyKey: "kubernetes.io/hostname"`은 다른 호스트(노드)에 배치되어야 함을 의미합니다.
    - `requiredDuringSchedulingIgnoredDuringExecution`은 이 조건이 반드시 충족되어야 함을 의미합니다.
 
-이 설정을 통해 각 `web-frontend` 포드는 `cache` 포드가 있는 노드에 배치되지만, 다른 `web-frontend` 포드와는 다른 노드에 배치됩니다. 이는 캐시 접근 지연 시간을 최소화하면서도 고가용성을 보장하는 데 유용합니다.
+이 설정을 통해 각 `web-frontend` 포드는 `cache` 포드가 있는 노드에 배치되지만, 다른 `web-frontend` 포드와는 다른 노드에 배치됩니다. 세 복제본을 모두 배치하려면 같은 네임스페이스의 cache 파드가 적격 노드 최소 3개에 있어야 합니다. 그렇지 않으면 일부 파드가 Pending에 남습니다.
 </details>
 
 4. 다음 요구 사항에 맞는 PriorityClass와 이를 사용하는 포드 매니페스트를 작성하세요:
    - PriorityClass 이름: high-priority
    - 우선순위 값: 100000
    - 포드 이름: critical-service
-   - 이미지: nginx:latest
+   - 이미지: nginx:1.30.4
    - QoS 클래스: Guaranteed (CPU 요청 및 제한: 500m, 메모리 요청 및 제한: 512Mi)
 
 <details>
@@ -650,7 +636,7 @@ spec:
   priorityClassName: high-priority
   containers:
   - name: nginx
-    image: nginx:latest
+    image: nginx:1.30.4
     resources:
       requests:
         cpu: 500m
@@ -670,13 +656,13 @@ Guaranteed QoS 클래스는 다음 조건을 만족해야 합니다:
 2. 각 컨테이너의 CPU 요청과 CPU 제한이 동일해야 합니다.
 3. 각 컨테이너의 메모리 요청과 메모리 제한이 동일해야 합니다.
 
-이 포드는 리소스 부족 상황에서 가장 마지막에 축출되며, 스케줄링 시 다른 낮은 우선순위 포드보다 먼저 고려됩니다.
+스케줄링에서 높은 우선순위가 고려되지만 축출 면제는 아닙니다. 실제 축출은 노드 압력, 요청 대비 사용량과 우선순위에 따라 달라집니다.
 </details>
 
 5. 다음 요구 사항에 맞는 PodDisruptionBudget 매니페스트를 작성하세요:
    - 이름: web-pdb
    - 대상 포드 셀렉터: app=web-server
-   - 항상 최소 2개의 포드가 사용 가능하도록 설정
+   - 정상적인 Eviction API 축출을 최소 2개 Available 조건으로 제한
 
 <details>
 <summary>정답 보기</summary>
@@ -697,9 +683,9 @@ spec:
 
 이 PodDisruptionBudget(PDB)은 다음과 같이 작동합니다:
 - `app=web-server` 레이블이 있는 포드에 적용됩니다.
-- `minAvailable: 2`는 자발적 중단(예: 노드 드레이닝, 클러스터 업그레이드) 중에도 항상 최소 2개의 포드가 사용 가능해야 함을 의미합니다.
+- `minAvailable: 2`는 자발적 중단(예: 노드 드레이닝, 클러스터 업그레이드) 중에 Available 수를 최소 2개로 유지하도록 Eviction API를 제한합니다. 가용성을 직접 생성·보장하는 설정은 아닙니다.
 
-대안으로, `maxUnavailable`을 사용할 수도 있습니다:
+원하는 복제본이 3개인 워크로드에서는 다음 `maxUnavailable: 1`이 같은 효과를 낼 수 있습니다:
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -793,7 +779,7 @@ Descheduler는 클러스터 관리자가 설정한 정책에 따라 주기적으
 
    - A) `node.kubernetes.io/not-ready` - 노드가 준비되지 않은 상태
    - B) `node.kubernetes.io/unreachable` - 노드가 도달할 수 없는 상태
-   - C) `node.kubernetes.io/out-of-disk` - 노드의 디스크 공간 부족
+   - C) `node.kubernetes.io/unschedulable` - 노드의 스케줄링 비활성화
    - D) `node.kubernetes.io/high-load` - 노드의 부하가 높은 상태
 
 <details>
@@ -810,7 +796,7 @@ Kubernetes에서 자동으로 적용하는 노드 상태 테인트는 다음과 
 
 2. **`node.kubernetes.io/unreachable`**: 노드 컨트롤러가 노드에 연결할 수 없을 때 적용됩니다. 네트워크 문제나 노드 장애로 인해 발생할 수 있습니다.
 
-3. **`node.kubernetes.io/out-of-disk`**: 노드의 디스크 공간이 부족할 때 적용됩니다.
+3. **`node.kubernetes.io/unschedulable`**: 노드가 스케줄 불가로 표시된 상태와 관련됩니다. 레거시 `out-of-disk`는 현재 자동 테인트가 아닙니다.
 
 4. **`node.kubernetes.io/memory-pressure`**: 노드의 메모리 압박이 있을 때 적용됩니다.
 
@@ -820,7 +806,7 @@ Kubernetes에서 자동으로 적용하는 노드 상태 테인트는 다음과 
 
 7. **`node.kubernetes.io/network-unavailable`**: 노드의 네트워크가 올바르게 구성되지 않았을 때 적용됩니다.
 
-이러한 테인트는 기본적으로 `NoExecute` 효과를 가질 수 있으며, 이 경우 해당 테인트를 톨러레이션하지 않는 포드는 노드에서 축출됩니다. 포드는 `tolerationSeconds` 필드를 사용하여 이러한 상태가 일시적인 경우 일정 시간 동안 노드에 남아있을 수 있습니다.
+not-ready·unreachable에는 NoExecute 기반 축출과 기본 300초 톨러레이션이 관련됩니다. memory/disk/pid-pressure 같은 압력 테인트는 일반적으로 NoSchedule이며 기존 파드의 압력 축출은 kubelet의 별도 메커니즘입니다. 포드는 `tolerationSeconds` 필드를 사용하여 이러한 상태가 일시적인 경우 일정 시간 동안 노드에 남아있을 수 있습니다.
 
 중요한 시스템 포드는 이러한 테인트에 대한 톨러레이션을 기본적으로 가지고 있어 노드 문제 시에도 계속 실행될 수 있습니다.
 </details>
@@ -844,7 +830,7 @@ Kubernetes에서 자동으로 적용하는 노드 상태 테인트는 다음과 
 
 1. **토폴로지 도메인**: `topologyKey` 필드를 사용하여 포드를 분산시킬 토폴로지 도메인을 지정합니다. 예를 들어, `topology.kubernetes.io/zone`은 가용 영역 간에 포드를 분산시킵니다.
 
-2. **최대 편차(maxSkew)**: 토폴로지 도메인 간 포드 수의 최대 허용 차이를 지정합니다. 예를 들어, `maxSkew: 1`은 어떤 두 도메인 간의 포드 수 차이가 최대 1이어야 함을 의미합니다.
+2. **최대 편차(maxSkew)**: 토폴로지 도메인 간 포드 수의 최대 허용 차이를 지정합니다. DoNotSchedule에서는 대상 도메인의 일치 파드 수와 전역 최소값의 차이를 제한합니다. 적격 도메인이 minDomains 미만이면 최소값을 0으로 계산하며 ScheduleAnyway에서는 선호 점수로 작동합니다.
 
 3. **불만족 시 동작(whenUnsatisfiable)**: 제약 조건을 만족할 수 없을 때의 동작을 지정합니다:
    - `DoNotSchedule`: 제약 조건을 만족할 수 없으면 포드를 스케줄링하지 않습니다.
@@ -858,6 +844,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: example-pod
+  labels:
+    app: web-server
 spec:
   topologySpreadConstraints:
   - maxSkew: 1
@@ -891,23 +879,9 @@ spec:
 **설명:**
 Kubernetes에서 QoS(Quality of Service) 클래스는 리소스 부족 상황에서 포드의 축출 우선순위를 결정하는 중요한 요소입니다. 그러나 리소스 부족 시 Guaranteed QoS 클래스의 포드가 가장 먼저 축출된다는 설명은 잘못되었습니다. 실제로는 정반대입니다.
 
-QoS 클래스와 축출 우선순위의 올바른 관계는 다음과 같습니다:
+BestEffort는 CPU·메모리 요청·제한이 없고, Guaranteed는 컨테이너 수준 구성에서 모든 CPU·메모리 요청이 각각 제한과 같습니다. 나머지는 Burstable이며 파드 수준 리소스에는 별도 기준이 있습니다.
 
-1. **BestEffort** (가장 낮은 우선순위):
-   - 모든 컨테이너가 CPU와 메모리에 대한 요청과 제한을 지정하지 않은 경우
-   - 리소스 부족 시 가장 먼저 축출됩니다.
-
-2. **Burstable** (중간 우선순위):
-   - 적어도 하나의 컨테이너가 CPU나 메모리에 대한 요청을 지정했지만, 모든 컨테이너가 Guaranteed 조건을 만족하지 않는 경우
-   - BestEffort 포드가 모두 축출된 후에 축출 대상이 됩니다.
-   - 같은 Burstable 클래스 내에서는 실제 메모리 사용량 대비 요청의 비율이 높은 포드가 먼저 축출됩니다.
-
-3. **Guaranteed** (가장 높은 우선순위):
-   - 모든 컨테이너가 CPU와 메모리에 대한 요청과 제한을 명시적으로 설정하고, 각 컨테이너의 요청과 제한이 동일한 경우
-   - 리소스 부족 시 마지막으로 축출됩니다.
-   - 시스템이 극도로 압박받는 상황에서만 축출 대상이 됩니다.
-
-이러한 축출 우선순위는 노드의 리소스(특히 메모리)가 부족할 때 kubelet의 축출 관리자에 의해 적용됩니다. 이는 중요한 워크로드에 Guaranteed QoS 클래스를 할당하여 리소스 부족 상황에서도 계속 실행되도록 보장하는 데 유용합니다.
+kubelet은 QoS 자체로 순서를 정하지 않고 요청 초과 사용 여부, 파드 우선순위, 요청 대비 사용량을 평가합니다. 특히 디스크 압력에는 CPU·메모리 QoS만으로 예상할 수 없는 조건이 있습니다. Guaranteed도 시스템 데몬의 과다 사용이나 노드 장애에서 생존을 보장하지 않습니다.
 
 QoS 클래스는 포드의 리소스 요청과 제한 설정에 따라 자동으로 할당되며, 포드 스펙에서 직접 지정할 수 없습니다.
 </details>
