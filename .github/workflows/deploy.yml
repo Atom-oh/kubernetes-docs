@@ -16,7 +16,9 @@ concurrency:
 
 jobs:
   build:
-    runs-on: kubernetes-docs-arm
+    # A fresh hosted ARM VM (4 CPU / 16 GB for public repositories) avoids
+    # self-hosted runner shutdowns interrupting the build before upload.
+    runs-on: ubuntu-24.04-arm
     env:
       # Only ko/en are published now (see docs/superpowers/plans/2026-08-19-
       # vitepress-ko-en-docs.md), built sequentially so VitePress never holds
