@@ -70,7 +70,7 @@ Cilium은 Linux eBPF 데이터플레인과 Kubernetes 통합으로 네트워킹,
 | eBPF | 검증과 기능 요건을 따르는 커널 hook의 프로그램/map, 실제 성능은 측정 필요 |
 | L3/L4와 L7 정책 | L7은 지원 Envoy/DNS proxy 경로 필요, Kafka 인지 L7은 1.20에서 제거되었지만 Kafka 연결의 L4 제어는 가능 |
 | kube-proxy 교체 | 선택적인 Service 처리, DSR·Maglev·XDP는 별도 설정/토폴로지 조건 |
-| 암호화 | 투명 IPsec/WireGuard와 별도의 beta ztunnel 워크로드 mTLS는 다른 설정 |
+| 암호화 | `encryption.type`에서 `ipsec`, `wireguard`, beta `ztunnel`을 선택하며, ztunnel 워크로드 mTLS는 별도의 enrollment·bootstrap·트래픽·정책 전제가 필요 |
 | Hubble | 네트워크/proxy flow와 서비스 맵 관측, 자동 end-to-end 애플리케이션 tracing이 아님 |
 | ClusterMesh / BGP | ClusterMesh는 identity·신뢰·네트워크 도달성 필요, BGP는 광고 기능이며 내부 라우팅을 설정하지 않음 |
 

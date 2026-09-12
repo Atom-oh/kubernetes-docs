@@ -2,25 +2,29 @@
   {
     "path": "ko/data-on-eks/airflow/02-helm-deployment.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+    "status": "fixed",
+    "summary": "Reviewed3.3.1/chart1.22 defaultsCelery/3.2.2,versionguardcounterexample,stableSecrets,FABinteractiveadmin,DBURI/TLS/KEDAclientconstraints,executorlatency/isolation/runtimequalifiers,KEDAexplicit10/300vsdefault5/30,queue/executor/aliasSQL,replicacapsandPVCretention.5chartrenders+schemas18fences36questionsrelativeLinks,2figures6viewportsreverifiedafterreboot;24PostgreSQLcasespassedbeforebootwithtemporaryrawlogsnowlost.",
+    "reviewedSha256": "420baa6bd56961276e7bab06ab61754419df786dfb35321737d467049ee75063"
   },
   {
     "path": "ko/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+    "status": "fixed",
+    "summary": "Reviewed3.3.1/chart1.22 defaultsCelery/3.2.2,versionguardcounterexample,stableSecrets,FABinteractiveadmin,DBURI/TLS/KEDAclientconstraints,executorlatency/isolation/runtimequalifiers,KEDAexplicit10/300vsdefault5/30,queue/executor/aliasSQL,replicacapsandPVCretention.5chartrenders+schemas18fences36questionsrelativeLinks,2figures6viewportsreverifiedafterreboot;24PostgreSQLcasespassedbeforebootwithtemporaryrawlogsnowlost.",
+    "reviewedSha256": "a76bb892bd32bc267d9c88927b4f94c1f0950ea3823dc9a5dfc8269c24b1555f"
   },
   {
     "path": "en/data-on-eks/airflow/02-helm-deployment.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+    "status": "fixed",
+    "summary": "Reviewed3.3.1/chart1.22 defaultsCelery/3.2.2,versionguardcounterexample,stableSecrets,FABinteractiveadmin,DBURI/TLS/KEDAclientconstraints,executorlatency/isolation/runtimequalifiers,KEDAexplicit10/300vsdefault5/30,queue/executor/aliasSQL,replicacapsandPVCretention.5chartrenders+schemas18fences36questionsrelativeLinks,2figures6viewportsreverifiedafterreboot;24PostgreSQLcasespassedbeforebootwithtemporaryrawlogsnowlost.",
+    "reviewedSha256": "192ed173844e267a9d4964e5a9258967830d318e6071c265e076401fc3bf089a"
   },
   {
     "path": "en/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+    "status": "fixed",
+    "summary": "Reviewed3.3.1/chart1.22 defaultsCelery/3.2.2,versionguardcounterexample,stableSecrets,FABinteractiveadmin,DBURI/TLS/KEDAclientconstraints,executorlatency/isolation/runtimequalifiers,KEDAexplicit10/300vsdefault5/30,queue/executor/aliasSQL,replicacapsandPVCretention.5chartrenders+schemas18fences36questionsrelativeLinks,2figures6viewportsreverifiedafterreboot;24PostgreSQLcasespassedbeforebootwithtemporaryrawlogsnowlost.",
+    "reviewedSha256": "dc71fba7db5716a0f003a2f95514a16b782c7761a929d86ac1817f7b81af3880"
   }
 ]

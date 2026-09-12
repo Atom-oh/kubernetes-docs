@@ -1320,8 +1320,8 @@ jobs:
         echo '029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d  kustomize.tgz' | sha256sum --check
         tar -xzf kustomize.tgz kustomize
         mkdir -p .flag-schemas rendered
-        curl -fsSL https://raw.githubusercontent.com/open-feature/flagd-schemas/v0.2.13/json/flags.json -o .flag-schemas/flags.json
-        curl -fsSL https://raw.githubusercontent.com/open-feature/flagd-schemas/v0.2.13/json/targeting.json -o .flag-schemas/targeting.json
+        curl -fsSL https://raw.githubusercontent.com/open-feature/flagd-schemas/58d732724359b272001ee6a5b8b7a96c549397e4/json/flags.json -o .flag-schemas/flags.json
+        curl -fsSL https://raw.githubusercontent.com/open-feature/flagd-schemas/58d732724359b272001ee6a5b8b7a96c549397e4/json/targeting.json -o .flag-schemas/targeting.json
         echo 'a9b065cc3e140d10a5e139a3f2bbd2f24d4fe8a728ce824a5f2a1231ed60680b  .flag-schemas/flags.json' | sha256sum --check
         echo 'fb94d3d24f0edab22b28d1895ee045c698eed0ff8d4c151c791a92a07738a605  .flag-schemas/targeting.json' | sha256sum --check
         python -m pip install PyYAML==6.0.3 jsonschema==4.26.0

@@ -80,7 +80,7 @@ kubeProxyReplacement는 Cilium Service 처리를 요청합니다. API/bootstrap 
 **정답: A) IPsec과 WireGuard**
 
 **설명:**
-encryption.type은 모드/플랫폼 조건을 가진 IPsec과 WireGuard를 사용합니다. 별도의 beta ztunnel 워크로드 mTLS는 다른 설정이므로 Cilium이 TLS를 전혀 사용하지 않는다는 설명은 틀립니다.
+이 문항의 기존 암호화 방식 쌍은 IPsec과 WireGuard입니다. 같은 `encryption.type` 키에서 워크로드 mTLS용 beta `ztunnel`도 선택할 수 있으며, namespace enrollment·CA/bootstrap·트래픽·정책 전제를 따로 확인해야 합니다. 서로 다른 모드를 같은 키로 선택하므로 Cilium이 TLS를 전혀 사용하지 않는다는 설명은 틀립니다.
 
 </details>
 

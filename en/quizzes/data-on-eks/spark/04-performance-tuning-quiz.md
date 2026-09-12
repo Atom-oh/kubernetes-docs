@@ -1,6 +1,6 @@
 # Part 4: Performance and Cost Tuning Quiz
 
-Spark 4.2.0 / Karpenter 1.14 기준 · September 2026.
+Baseline: Spark 4.2.0 / Karpenter 1.14 · September 2026.
 
 ## 1. Are R-series and NVMe always fastest for shuffle?
 

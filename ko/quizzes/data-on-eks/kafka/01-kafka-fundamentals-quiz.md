@@ -56,7 +56,7 @@ Kafka 4.3 Java KafkaConsumer의 기본값은 true, 간격 기본값은 5000 ms�
 
 4. 다음 중 컨슈머 그룹 리밸런싱을 유발하는 상황이 아닌 것은 무엇인가요?
    - A) 새 컨슈머가 그룹에 참여
-   - B) Classic 프로토콜의 Classic 프로토콜의 컨슈머가 `session.timeout.ms` 내에 하트비트를 보내지 못함
+   - B) Classic 프로토콜의 컨슈머가 `session.timeout.ms` 내에 하트비트를 보내지 못함
    - C) 토픽의 파티션 수가 변경됨
    - D) 프로듀서가 `acks=all`로 메시지를 전송함
 

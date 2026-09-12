@@ -408,6 +408,8 @@ PRESERVE asks EKS to retain existing custom settings when resolving conflicts; i
 
 ## 3. Node-Level Troubleshooting
 
+<a id="node-join-diagnosis"></a>
+
 ### Node Join Failure Diagnosis
 
 These are hypotheses to test against the instance/NodeClaim, bootstrap logs, endpoint reachability and authentication mode—not eight guaranteed root causes.
@@ -1241,113 +1243,148 @@ An existing EBS volume cannot attach across AZs simply because the class uses Wa
 
 ## 7. Observability Architecture
 
-### Container Insights Setup
+### Inspect Existing Collection
+
+Do not install the old v1.0.0 add-on as an incident-response shortcut. Select a currently compatible add-on/chart and one owner using the [monitoring setup guide](06-eks-monitoring-logging.md). Inspect IAM/Pod Identity, logging/metrics settings, node applicability and automatic instrumentation/restart options before a change. Recent operator releases can affect application instrumentation and rollout; installing two owners can conflict.
 
 ```bash
-# Install CloudWatch Agent and Fluent Bit
-aws eks create-addon \
-  --cluster-name my-cluster \
+# Read-only: inspect the installed owner/version rather than installing during triage.
+: "${AWS_REGION:?}"; : "${CLUSTER_NAME:?}"; : "${KUBE_CONTEXT:?}"
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
   --addon-name amazon-cloudwatch-observability \
-  --addon-version v1.0.0-eksbuild.1
-
-# Or install with Helm
-helm repo add aws-observability https://aws-observability.github.io/helm-charts
-helm install amazon-cloudwatch-observability \
-  aws-observability/amazon-cloudwatch-observability \
-  --namespace amazon-cloudwatch --create-namespace \
-  --set clusterName=my-cluster \
-  --set region=ap-northeast-2
+  --query 'addon.{Version:addonVersion,Status:status,Issues:health.issues,Configuration:configurationValues,Role:serviceAccountRoleArn,PodIdentity:podIdentityAssociations}'
+kubectl --context "$KUBE_CONTEXT" -n amazon-cloudwatch get pods,deployments,daemonsets -o wide
+# If Helm owns the installation, inspect that existing release instead.
+helm list -n amazon-cloudwatch --kube-context "$KUBE_CONTEXT"
 ```
+An absent add-on may mean Helm owns collection or that the component is not installed. Pod Running/add-on ACTIVE does not prove delivery, coverage or user-visible health. Verify scrape targets, IAM/network/TLS, ingestion errors, retention and costs; the examples below assume those prerequisites, not a tested production platform.
 
-### PromQL Query Examples
+### PromQL: Define What Each Metric Measures
 
-#### CPU Throttling Detection
+Queries assume a **single-cluster, correctly labeled dataset** and the selected diagnostics-example namespace. Add the real cluster/job selectors for a shared backend. cAdvisor and kube-state-metrics must be collected; these series are not created merely by writing a query. Aggregation removes duplicate exporter-instance labels only within that stated scope. Check timestamps, Pod/container identity and version-specific metric availability, including last-termination metrics.
+
+#### Fraction of throttled CFS periods per container
 
 ```promql
-# CPU throttling ratio
-sum(rate(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (pod, namespace)
-/
-sum(rate(container_cpu_cfs_periods_total{container!=""}[5m])) by (pod, namespace)
-> 0.5
-
-# Top 10 pods with high CPU throttling
-topk(10,
-  sum(rate(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (pod, namespace)
-  /
-  sum(rate(container_cpu_cfs_periods_total{container!=""}[5m])) by (pod, namespace)
-)
+sum by (namespace,pod,container) (rate(container_cpu_cfs_throttled_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m]))
+/ on (namespace,pod,container) (sum by (namespace,pod,container) (rate(container_cpu_cfs_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])) > 0)
 ```
 
-#### OOMKilled Event Detection
+#### Top ten containers by throttled-period fraction
 
 ```promql
-# Pods with OOMKilled
-kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
-
-# OOMKilled count in last hour
-sum(changes(kube_pod_container_status_restarts_total[1h])) by (pod, namespace)
-* on (pod, namespace) group_left
-kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}
-
-# Pods with high memory usage (OOM risk)
-(
-  sum(container_memory_working_set_bytes{container!=""}) by (pod, namespace)
-  /
-  sum(kube_pod_container_resource_limits{resource="memory"}) by (pod, namespace)
-) > 0.9
+topk(10, sum by (namespace,pod,container) (rate(container_cpu_cfs_throttled_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m]))
+/ on (namespace,pod,container) (sum by (namespace,pod,container) (rate(container_cpu_cfs_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])) > 0))
 ```
 
-#### Pod Restart Rate
+#### Last reported termination reason is OOM; not a new-event count
 
 ```promql
-# Restart count in last hour
-sum(increase(kube_pod_container_status_restarts_total[1h])) by (pod, namespace) > 3
-
-# Top 10 pods with most restarts
-topk(10, sum(increase(kube_pod_container_status_restarts_total[1h])) by (pod, namespace))
-
-# Pods in CrashLoopBackOff state
-kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
+max by (namespace,pod,container) (kube_pod_container_status_last_terminated_reason{namespace="diagnostics-example",reason="OOMKilled"} == 1)
 ```
 
-### CloudWatch Logs Insights Search Patterns
+#### Recent restart increase whose last reported reason is OOM; not exact OOM counts
 
-```sql
--- Error log search
+```promql
+(max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m])) > 0)
+and on (namespace,pod,container) (max by (namespace,pod,container) (kube_pod_container_status_last_terminated_reason{namespace="diagnostics-example",reason="OOMKilled"} == 1))
+```
+
+#### Working set / positive configured memory limit per container
+
+```promql
+max by (namespace,pod,container) (container_memory_working_set_bytes{namespace="diagnostics-example",container!="",container!="POD"})
+/ on (namespace,pod,container)
+max by (namespace,pod,container) (kube_pod_container_resource_limits{namespace="diagnostics-example",resource="memory",unit="byte"} > 0)
+```
+
+#### Estimated regular-container restart increase per Pod over15minutes
+
+```promql
+sum by (namespace,pod) (max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m])))
+```
+
+#### Top ten Pods by estimated restart increase
+
+```promql
+topk(10, sum by (namespace,pod) (max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m]))))
+```
+
+#### Currently reported CrashLoopBackOff waiting reason
+
+```promql
+max by (namespace,pod,container) (kube_pod_container_status_waiting_reason{namespace="diagnostics-example",reason="CrashLoopBackOff"} == 1)
+```
+
+#### Active non-deleting Pods with Ready=false, including Running Pods
+
+```promql
+((1 - max by (namespace,pod) (kube_pod_status_ready{namespace="diagnostics-example",condition="true"})) > 0)
+and on (namespace,pod) (max by (namespace,pod) (kube_pod_status_phase{namespace="diagnostics-example",phase=~"Pending|Running|Unknown"} == 1))
+unless on (namespace,pod) kube_pod_deletion_timestamp{namespace="diagnostics-example"}
+```
+
+Throttled CFS periods are not CPU utilization or a percentage of elapsed CPU time. Memory ratios include only containers with a positive configured limit; missing limits/data are not zero utilization. increase() is a reset-aware, extrapolated counter estimate and can be fractional; changes(restarts_total) counts observed value changes, not OOM events. Last termination reason plus a restart increase is a correlation, not an exact OOM-event count or proof that memory leaked. CrashLoopBackOff is checked through the waiting reason, not inferred from every restart.
+
+The readiness query includes Running-but-NotReady Pods and excludes terminal/deleting Pods. These examples do not replace separate scrape/absent-target monitoring. No returned series must not be interpreted as proof of healthy workloads.
+
+### CloudWatch Logs Insights
+
+Run each block separately against the appropriate log group/time window. The kubernetes.* fields depend on the collector schema; inspect actual records. Error-message counts and OOM keywords are diagnostic clues rather than request-error rates or complete failure histories.
+
+#### Error-message samples, not a request-error rate
+
+```text
 fields @timestamp, @message, kubernetes.pod_name, kubernetes.namespace_name
+| filter kubernetes.namespace_name = "diagnostics-example"
 | filter @message like /error|Error|ERROR|exception|Exception|EXCEPTION/
 | sort @timestamp desc
 | limit 100
+```
 
--- Specific pod logs
+#### One Pod in the selected namespace
+
+```text
 fields @timestamp, @message
-| filter kubernetes.pod_name = "my-pod-name"
+| filter kubernetes.namespace_name = "diagnostics-example" and kubernetes.pod_name = "REPLACE_WITH_OBSERVED_POD"
 | sort @timestamp desc
-| limit 500
+| limit 100
+```
 
--- Response time analysis (when app logs include response time)
+#### Application response-time field, only if the log format defines it
+
+```text
 fields @timestamp, @message
+| filter kubernetes.namespace_name = "diagnostics-example"
 | parse @message /response_time=(?<response_time>\d+)ms/
-| stats avg(response_time) as avg_response, max(response_time) as max_response by bin(5m)
+| filter ispresent(response_time)
+| stats avg(response_time) as avg_response_ms, max(response_time) as max_response_ms by bin(5m)
+```
 
--- OOMKilled event tracking
+#### OOM-related log messages requiring correlation
+
+```text
 fields @timestamp, @message
 | filter @message like /OOMKilled|Out of memory|oom-kill/
 | sort @timestamp desc
 | limit 50
 ```
 
-### PrometheusRule Example
+### PrometheusRule Selection and Alerts
+
+Replace the release label with the value required by the intended Prometheus ruleSelector and verify ruleNamespaceSelector. A CRD being accepted does not prove the rule was loaded or notifications work. Thresholds and durations are examples to tune against the workload SLO; alerts do not authorize automatic deletion/restart.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: eks-alerts
+  name: reviewed-eks-diagnostics
   namespace: monitoring
+  labels:
+    release: REPLACE_WITH_SELECTED_PROMETHEUS_RELEASE
 spec:
   groups:
-  - name: eks-node-alerts
+  - name: reviewed-eks-diagnostics
     rules:
     - alert: NodeNotReady
       expr: kube_node_status_condition{condition="Ready",status="true"} == 0
@@ -1355,301 +1392,470 @@ spec:
       labels:
         severity: critical
       annotations:
-        summary: "Node {{ $labels.node }} is in NotReady state"
-        description: "Node has been in NotReady state for more than 5 minutes. Immediate attention required."
-
+        summary: Node {{ $labels.node }} reports Ready=false/unknown; inspect the
+          node condition and heartbeat.
     - alert: NodeMemoryPressure
-      expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+      expr: kube_node_status_condition{condition="MemoryPressure",status="true"} ==
+        1
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "Memory pressure on node {{ $labels.node }}"
-
+        summary: Node {{ $labels.node }} reports MemoryPressure.
     - alert: NodeDiskPressure
-      expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+      expr: kube_node_status_condition{condition="DiskPressure",status="true"} ==
+        1
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "Disk pressure on node {{ $labels.node }}"
-
-  - name: eks-pod-alerts
-    rules:
+        summary: Node {{ $labels.node }} reports DiskPressure.
     - alert: PodCrashLooping
-      expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
+      expr: max by (namespace,pod,container) (kube_pod_container_status_waiting_reason{namespace="diagnostics-example",reason="CrashLoopBackOff"}
+        == 1)
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+        summary: '{{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}
+          reports CrashLoopBackOff.'
+    - alert: ActivePodNotReady
+      expr: '((1 - max by (namespace,pod) (kube_pod_status_ready{namespace="diagnostics-example",condition="true"}))
+        > 0)
 
-    - alert: PodNotReady
-      expr: |
-        sum by (namespace, pod) (
-          max by(namespace, pod) (kube_pod_status_phase{phase=~"Pending|Unknown"}) *
-          on(namespace, pod) group_left(owner_kind)
-          topk by(namespace, pod) (1, max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"}))
-        ) > 0
+        and on (namespace,pod) (max by (namespace,pod) (kube_pod_status_phase{namespace="diagnostics-example",phase=~"Pending|Running|Unknown"}
+        == 1))
+
+        unless on (namespace,pod) kube_pod_deletion_timestamp{namespace="diagnostics-example"}'
       for: 15m
       labels:
         severity: warning
       annotations:
-        summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has not been Ready for more than 15 minutes"
+        summary: Active Pod {{ $labels.namespace }}/{{ $labels.pod }} is not Ready.
+    - alert: ContainerRecentOOM
+      expr: '(max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m]))
+        > 0)
 
-    - alert: ContainerOOMKilled
-      expr: kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+        and on (namespace,pod,container) (max by (namespace,pod,container) (kube_pod_container_status_last_terminated_reason{namespace="diagnostics-example",reason="OOMKilled"}
+        == 1))'
       for: 0m
       labels:
         severity: warning
       annotations:
-        summary: "Container {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} was OOMKilled"
-
-  - name: eks-resource-alerts
-    rules:
+        summary: Recent restart and last reported OOM for {{ $labels.namespace }}/{{
+          $labels.pod }}/{{ $labels.container }}; verify events.
     - alert: HighCPUThrottling
-      expr: |
-        sum(rate(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (pod, namespace)
-        /
-        sum(rate(container_cpu_cfs_periods_total{container!=""}[5m])) by (pod, namespace)
-        > 0.5
+      expr: '(sum by (namespace,pod,container) (rate(container_cpu_cfs_throttled_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m]))
+
+        / on (namespace,pod,container) (sum by (namespace,pod,container) (rate(container_cpu_cfs_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m]))
+        > 0)) > 0.5'
       for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "CPU throttling for pod {{ $labels.namespace }}/{{ $labels.pod }} exceeds 50%"
+        summary: More than50% of CFS periods were throttled for {{ $labels.namespace
+          }}/{{ $labels.pod }}/{{ $labels.container }}.
 ```
+```bash
+# Read-only: this rule must be selected by the intended Prometheus instance.
+kubectl --context "$KUBE_CONTEXT" -n monitoring get prometheus -o json | jq '[
+  .items[] | {name:.metadata.name,ruleSelector:.spec.ruleSelector,ruleNamespaceSelector:.spec.ruleNamespaceSelector}
+]'
+kubectl --context "$KUBE_CONTEXT" -n monitoring get prometheusrule reviewed-eks-diagnostics -o yaml
+```
+### ADOT Collector: Explicit Pipelines and Prerequisites
 
-### ADOT (AWS Distro for OpenTelemetry) Configuration
+The example uses the reviewed Operator0.158.0 v1beta1 object-shaped config and ADOT0.50.0 components. Prepare the namespace, Operator/CRDs, receiver TLS Secret, trusted client CA and an appropriately configured ServiceAccount AWS identity. The Role below grants only Kubernetes Pod discovery; it does not grant X-Ray, CloudWatch Logs or AMP access. Review exporter IAM permissions and real Region/log-group/workspace inputs before deployment. The sample is not executed or claimed production-ready.
 
 ```yaml
-# ADOT Collector configuration
-apiVersion: opentelemetry.io/v1alpha1
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: adot-diagnostics
+  namespace: diagnostics-example
+```
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: adot-pod-discovery
+  namespace: diagnostics-example
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+```
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: adot-pod-discovery
+  namespace: diagnostics-example
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: adot-pod-discovery
+subjects:
+- kind: ServiceAccount
+  name: adot-diagnostics
+  namespace: diagnostics-example
+```
+```yaml
+apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  name: adot-collector
-  namespace: opentelemetry
+  name: adot-diagnostics
+  namespace: diagnostics-example
 spec:
   mode: deployment
-  serviceAccount: adot-collector
-  config: |
+  replicas: 1
+  image: public.ecr.aws/aws-observability/aws-otel-collector:v0.50.0
+  serviceAccount: adot-diagnostics
+  env:
+  - name: AWS_REGION
+    value: us-west-2
+  - name: AWS_EC2_METADATA_DISABLED
+    value: 'true'
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: '1'
+      memory: 512Mi
+  volumes:
+  - name: receiver-tls
+    secret:
+      secretName: otel-receiver-tls
+  volumeMounts:
+  - name: receiver-tls
+    mountPath: /etc/otel/tls
+    readOnly: true
+  config:
     receivers:
       otlp:
         protocols:
           grpc:
             endpoint: 0.0.0.0:4317
+            tls:
+              cert_file: /etc/otel/tls/tls.crt
+              key_file: /etc/otel/tls/tls.key
           http:
             endpoint: 0.0.0.0:4318
+            tls:
+              cert_file: /etc/otel/tls/tls.crt
+              key_file: /etc/otel/tls/tls.key
       prometheus:
         config:
           scrape_configs:
-            - job_name: 'kubernetes-pods'
-              kubernetes_sd_configs:
-                - role: pod
-              relabel_configs:
-                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-                  action: keep
-                  regex: true
-
+          - job_name: owned-pod-metrics
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                - diagnostics-example
+            relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_annotation_prometheus_io_scrape
+              action: keep
+              regex: 'true'
+            - source_labels:
+              - __meta_kubernetes_pod_phase
+              action: keep
+              regex: Running
+            - source_labels:
+              - __meta_kubernetes_pod_container_port_name
+              action: keep
+              regex: metrics
+            - source_labels:
+              - __meta_kubernetes_pod_container_port_protocol
+              action: keep
+              regex: TCP
+            - source_labels:
+              - __meta_kubernetes_pod_annotation_prometheus_io_path
+              action: replace
+              target_label: __metrics_path__
+              regex: (.+)
+            - source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
+            - source_labels:
+              - __meta_kubernetes_pod_container_name
+              target_label: container
     processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
       batch:
         timeout: 30s
         send_batch_size: 8192
-      memory_limiter:
-        limit_mib: 500
-        spike_limit_mib: 100
-        check_interval: 5s
-
     exporters:
       awsxray:
-        region: ap-northeast-2
+        region: us-west-2
+        local_mode: true
+        no_verify_ssl: false
+        index_all_attributes: false
+        telemetry:
+          enabled: false
       awsemf:
-        region: ap-northeast-2
-        namespace: ContainerInsights
-        log_group_name: '/aws/containerinsights/{ClusterName}/performance'
+        region: us-west-2
+        namespace: EKS/DiagnosticsExample
+        log_group_name: /aws/eks/REPLACE_WITH_CLUSTER/otel-metrics
+        log_stream_name: adot-diagnostics
+        dimension_rollup_option: NoDimensionRollup
+        resource_to_telemetry_conversion:
+          enabled: false
       prometheusremotewrite:
-        endpoint: "https://aps-workspaces.ap-northeast-2.amazonaws.com/workspaces/ws-xxxxx/api/v1/remote_write"
+        endpoint: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/REPLACE_WITH_WORKSPACE_ID/api/v1/remote_write
         auth:
           authenticator: sigv4auth
         resource_to_telemetry_conversion:
-          enabled: true
-
+          enabled: false
     extensions:
       sigv4auth:
-        region: ap-northeast-2
-        service: "aps"
-
+        region: us-west-2
+        service: aps
+      health_check:
+        endpoint: 0.0.0.0:13133
     service:
-      extensions: [sigv4auth]
+      extensions:
+      - sigv4auth
+      - health_check
       pipelines:
         traces:
-          receivers: [otlp]
-          processors: [batch, memory_limiter]
-          exporters: [awsxray]
+          receivers:
+          - otlp
+          processors:
+          - memory_limiter
+          - batch
+          exporters:
+          - awsxray
         metrics:
-          receivers: [otlp, prometheus]
-          processors: [batch, memory_limiter]
-          exporters: [awsemf, prometheusremotewrite]
+          receivers:
+          - otlp
+          - prometheus
+          processors:
+          - memory_limiter
+          - batch
+          exporters:
+          - awsemf
+          - prometheusremotewrite
 ```
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: adot-otlp-ingress
+  namespace: diagnostics-example
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: opentelemetry-operator
+      app.kubernetes.io/instance: diagnostics-example.adot-diagnostics
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          telemetry-client: 'true'
+    ports:
+    - protocol: TCP
+      port: 4317
+    - protocol: TCP
+      port: 4318
+```
+OTLP clients must trust the certificate and use the correct generated Service, protocol and4317/4318 port. NetworkPolicy enforcement must exist; the policy selects only Collector Pods and allows labeled clients in the same namespace. Configure metrics-target TLS/auth and workload ingress policies where required. Prometheus discovery is limited to one namespace and opts in only annotated Running Pods with a TCP port named metrics; the port comes from that endpoint, avoiding an unconfigured annotation-port rewrite.
+
+One replica avoids duplicating every scrape in this example; scaling requires target sharding/allocator design. memory_limiter precedes batch, but memory/batch settings do not guarantee lossless delivery. AWS X-Ray receives traces, awsemf writes metrics through CloudWatch Logs, and AMP receives SigV4-authenticated remote write. Custom EKS/DiagnosticsExample metrics are not automatically the Container Insights schema/dashboard. Fixed log names avoid an unresolved {ClusterName} becoming undefined; exporter resource attributes can still affect routing, so constrain producer data and IAM. Do not convert every resource attribute into a metric label without a cardinality review.
+
+Keep application service identity and propagation intact; a Collector alone does not instrument all requests or defeat sampling gaps. Remove unused exporters and their pipeline references together. No telemetry, requests to AWS, application restart, Collector or Operator installation occurred in this audit.
+
+[CloudWatch setup](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html) · [Pod metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md) · [Operator API](https://github.com/open-telemetry/opentelemetry-operator/releases/tag/v0.158.0) · [ADOT component versions](https://github.com/aws-observability/aws-otel-collector/blob/v0.50.0/go.mod) · [Prometheus receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/receiver/prometheusreceiver) · [EMF exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awsemfexporter)
 
 ---
 
 ## 8. Failure Detection Architecture
 
-### 4-Layer Detection Pipeline
+### Four-Layer Detection Pipeline
 
 ![Four-stage EKS failure detection pipeline showing metrics, logs, traces, and events flowing from data sources through collection tools (CloudWatch Agent, Fluent Bit, ADOT Collector, Prometheus) into an analysis layer (CloudWatch Logs Insights, metric alarms, anomaly detection, composite alarms) and out to alerting channels (SNS, Slack, PagerDuty, EventBridge).](../.gitbook/assets/en-eks-11-eks-advanced-debugging-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-11-eks-advanced-debugging-3.html)
 
-### Reference Architecture 1: AWS Native
+The figure shows conceptual alternatives, not a fully connected deployment. Collection, storage/query, alarm evaluation and notification each need configuration, identity, network access and evidence of successful delivery. Trace analysis also needs the configured trace backend; Logs Insights does not turn every trace into an alarm automatically.
 
-```yaml
-# Fluent Bit ConfigMap for CloudWatch
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: amazon-cloudwatch
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Grace         30
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
+### AWS-Native Log Collection: Configuration Contract
 
-    [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/fluent-bit/state/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+The following is a Fluent Bit configuration example for reviewed Linux nodes, not an installed DaemonSet. Use an existing managed owner or the [complete monitoring setup](06-eks-monitoring-logging.md); do not install a second competing collector. The process needs read-only host log mounts, Kubernetes metadata RBAC, an appropriate AWS identity, and writable **separate** checkpoint/buffer directories. Define AWS_REGION, CLUSTER_NAME and NODE_NAME through the deployment/Downward API. Pre-create and authorize the destination log group because auto_create_group is false.
 
-    [FILTER]
-        Name                kubernetes
-        Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix     kube.var.log.containers.
-        Merge_Log           On
-        Merge_Log_Key       log_processed
-        K8S-Logging.Parser  On
-        K8S-Logging.Exclude Off
+```text
+[SERVICE]
+    Flush                   5
+    Grace                   30
+    Log_Level               info
+    Daemon                  off
+    storage.path            /var/fluent-bit/buffer
+    storage.sync            normal
+    storage.checksum        on
+    storage.max_chunks_up   32
 
-    [OUTPUT]
-        Name                cloudwatch_logs
-        Match               kube.*
-        region              ap-northeast-2
-        log_group_name      /aws/eks/my-cluster/containers
-        log_stream_prefix   fluentbit-
-        auto_create_group   true
+[INPUT]
+    Name                    tail
+    Tag                     kube.*
+    Path                    /var/log/containers/*.log
+    Exclude_Path            /var/log/containers/*_amazon-cloudwatch_*.log
+    multiline.parser        cri
+    DB                      /var/fluent-bit/state/containers.db
+    Mem_Buf_Limit           50MB
+    Skip_Long_Lines         On
+    Refresh_Interval        10
+    storage.type            filesystem
+
+[FILTER]
+    Name                    kubernetes
+    Match                   kube.*
+    Kube_URL                https://kubernetes.default.svc:443
+    Kube_CA_File            /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    Kube_Token_File         /var/run/secrets/kubernetes.io/serviceaccount/token
+    Kube_Tag_Prefix         kube.var.log.containers.
+    Merge_Log               On
+    Merge_Log_Key           log_processed
+    K8S-Logging.Exclude      Off
+
+[OUTPUT]
+    Name                    cloudwatch_logs
+    Match                   kube.*
+    region                  ${AWS_REGION}
+    log_group_name          /aws/eks/${CLUSTER_NAME}/containers
+    log_stream_name         ${NODE_NAME}
+    auto_create_group       false
+    storage.total_limit_size 100M
 ```
+The built-in cri multiline parser handles the CRI stream/partial-record format used by containerd; a Docker JSON parser is a different format. Adjust the self-log exclusion to the actual agent namespace. log_processed contains merged application JSON and informs the metric-filter example below. Filesystem buffering and DB checkpoints solve different problems: they do not guarantee lossless or exactly-once delivery. A full output queue discards oldest chunks, long-line skipping can lose records, and container/node rotation can remove unread data. Size limits, retention, disk availability and IAM/KMS failures need monitoring. Fargate/Auto Mode/Windows have their supported collection paths; this host-mounted example is not universally portable.
 
-### Reference Architecture 2: Open Source Stack
+### Alertmanager: Loaded Configuration and Secret Files
+
+For Prometheus Operator, use a Secret containing the key alertmanager.yaml and reference it with the existing Alertmanager spec.configSecret. A ConfigMap named alertmanager-config is not automatically consumed. The following is a **spec fragment** to integrate with the reviewed Helm/operator owner, not a new complete Alertmanager deployment. The separate Secrets must supply url/key entries, mounted under /etc/alertmanager/secrets/<secret-name>/.
 
 ```yaml
-# Prometheus + Alertmanager + Grafana
----
-# Alertmanager configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: alertmanager-config
-  namespace: monitoring
-data:
-  alertmanager.yml: |
-    global:
-      resolve_timeout: 5m
-      slack_api_url: 'https://hooks.slack.com/services/xxx/yyy/zzz'
-
-    route:
-      group_by: ['alertname', 'namespace', 'severity']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 4h
-      receiver: 'default-receiver'
-      routes:
-        - match:
-            severity: critical
-          receiver: 'pagerduty-critical'
-          continue: true
-        - match:
-            severity: warning
-          receiver: 'slack-warnings'
-
-    receivers:
-      - name: 'default-receiver'
-        slack_configs:
-          - channel: '#alerts-default'
-            send_resolved: true
-
-      - name: 'pagerduty-critical'
-        pagerduty_configs:
-          - service_key: '<pagerduty-service-key>'
-            severity: critical
-
-      - name: 'slack-warnings'
-        slack_configs:
-          - channel: '#alerts-warnings'
-            send_resolved: true
-            title: '{{ .Status | toUpper }}: {{ .CommonAnnotations.summary }}'
-            text: '{{ .CommonAnnotations.description }}'
-
-    inhibit_rules:
-      - source_match:
-          severity: 'critical'
-        target_match:
-          severity: 'warning'
-        equal: ['alertname', 'namespace']
+spec:
+  configSecret: alertmanager-reviewed
+  secrets:
+  - alertmanager-slack
+  - alertmanager-pagerduty
 ```
-
-### Detection Patterns
-
-#### Threshold-based Detection
-
 ```yaml
-# CloudWatch Alarm
-aws cloudwatch put-metric-alarm \
-  --alarm-name "EKS-High-CPU-Usage" \
-  --alarm-description "EKS node CPU usage exceeds 80%" \
-  --metric-name node_cpu_utilization \
-  --namespace ContainerInsights \
-  --statistic Average \
-  --period 300 \
-  --threshold 80 \
-  --comparison-operator GreaterThanThreshold \
-  --dimensions Name=ClusterName,Value=my-cluster \
-  --evaluation-periods 3 \
-  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-alerts
+global:
+  resolve_timeout: 5m
+  slack_api_url_file: /etc/alertmanager/secrets/alertmanager-slack/url
+route:
+  receiver: default
+  group_by:
+  - alertname
+  - cluster
+  - namespace
+  - pod
+  - node
+  - severity
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - matchers:
+    - severity="critical"
+    receiver: critical
+  - matchers:
+    - severity="warning"
+    receiver: warnings
+receivers:
+- name: default
+  slack_configs:
+  - channel: '#alerts-default'
+    send_resolved: true
+- name: critical
+  slack_configs:
+  - channel: '#incidents'
+    send_resolved: true
+  pagerduty_configs:
+  - routing_key_file: /etc/alertmanager/secrets/alertmanager-pagerduty/key
+    severity: critical
+- name: warnings
+  slack_configs:
+  - channel: '#alerts-warnings'
+    send_resolved: true
+    title: '{{ .Status | toUpper }}: {{ .CommonAnnotations.summary }}'
+    text: '{{ .CommonAnnotations.description }}'
+inhibit_rules:
+- source_matchers:
+  - severity="critical"
+  target_matchers:
+  - severity="warning"
+  equal:
+  - alertname
+  - cluster
+  - namespace
+  - pod
+  - container
+  - node
 ```
+This configuration sends critical alerts to both Slack and PagerDuty through one receiver, warnings to Slack, and other alerts to the default receiver. continue:true does not also invoke a parent/default receiver after a child match. Current matchers/source_matchers/target_matchers avoid deprecated mapping syntax. Inhibition equal labels include resource identity; missing labels compare as empty, so review the actual label contract to avoid suppressing a different Pod/node. Validate loaded configuration, routes and transport separately. Parsing and synthetic routing are not proof that Slack/PagerDuty accepted a notification; email/SMS need additional explicit wiring.
 
-#### Anomaly Detection
+### CloudWatch Threshold, Anomaly and Composite Alarms
 
-```yaml
-# CloudWatch Anomaly Detection Alarm
-aws cloudwatch put-anomaly-detector \
-  --namespace ContainerInsights \
-  --metric-name pod_cpu_utilization \
-  --stat Average \
-  --dimensions Name=ClusterName,Value=my-cluster
+Use actual metric dimensions, units and statistic. A list-metrics filter can return series with more dimensions than the filter; select one **complete** published dimension set. Container Insights must be configured; the custom ADOT metric namespace in the previous section is not a substitute. node_cpu_utilization is different from a Pod CPU/request/limit ratio. Alarm names, topic ARNs and cluster values below are examples; review existing names before commands that can replace their configuration. Notification topics, access/KMS policies and recipients must be prepared separately.
 
-aws cloudwatch put-metric-alarm \
-  --alarm-name "EKS-Anomaly-CPU" \
-  --alarm-description "Abnormal CPU usage pattern detected" \
-  --metrics '[
+```bash
+# Read-only: select an actual published metric and its complete dimension set.
+: "${AWS_REGION:?}"; : "${CLUSTER_NAME:?}"
+aws cloudwatch list-metrics --region "$AWS_REGION" --namespace ContainerInsights \
+  --metric-name node_cpu_utilization --dimensions "Name=ClusterName,Value=$CLUSTER_NAME" \
+  --query 'Metrics[].{Name:MetricName,Namespace:Namespace,Dimensions:Dimensions}'
+```
+```bash
+# MUTATION: creates/replaces this named alarm and can trigger configured notifications.
+: "${AWS_REGION:?}"; : "${SNS_TOPIC_ARN:?Use the owned topic ARN}"
+: "${METRIC_DIMENSIONS_FILE:?JSON array containing one reviewed complete dimension set}"
+aws cloudwatch put-metric-alarm --region "$AWS_REGION" \
+  --alarm-name owned-eks-high-cpu --alarm-description "Example node CPU utilization threshold" \
+  --namespace ContainerInsights --metric-name node_cpu_utilization \
+  --dimensions "file://$METRIC_DIMENSIONS_FILE" --statistic Average \
+  --period 300 --evaluation-periods 3 --datapoints-to-alarm 3 \
+  --threshold 80 --comparison-operator GreaterThanThreshold \
+  --treat-missing-data missing --alarm-actions "$SNS_TOPIC_ARN"
+```
+The example uses three300-second periods and three breaching datapoints: a15-minute evaluation window, not a guaranteed two-minute detection time. TreatMissingData=missing preserves missing-data state; choose a different policy only for a metric whose semantics justify it. Inspect initial INSUFFICIENT_DATA and state transitions rather than assuming creation means a working alarm.
+
+The anomaly example follows the API’s anomaly-specific metric/band structure: m1 is the measured series and ad1 is the band selected by ThresholdMetricId. The model, period, statistic and dimensions must match. A model needs suitable data/training and is not a guarantee of outage prediction. The JSON’s literal example dimensions must be replaced to match the reviewed dimensions file before use.
+
+```json
+{
+  "AlarmName": "owned-eks-anomaly-cpu",
+  "AlarmDescription": "Example anomaly model for an observed Container Insights metric",
+  "Metrics": [
     {
       "Id": "m1",
+      "ReturnData": true,
       "MetricStat": {
         "Metric": {
           "Namespace": "ContainerInsights",
-          "MetricName": "pod_cpu_utilization",
-          "Dimensions": [{"Name": "ClusterName", "Value": "my-cluster"}]
+          "MetricName": "node_cpu_utilization",
+          "Dimensions": [
+            {
+              "Name": "ClusterName",
+              "Value": "REPLACE_WITH_CLUSTER"
+            }
+          ]
         },
         "Period": 300,
         "Stat": "Average"
@@ -1659,102 +1865,150 @@ aws cloudwatch put-metric-alarm \
       "Id": "ad1",
       "Expression": "ANOMALY_DETECTION_BAND(m1, 2)"
     }
-  ]' \
-  --threshold-metric-id ad1 \
-  --comparison-operator LessThanLowerOrGreaterThanUpperThreshold \
-  --evaluation-periods 3 \
-  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-anomaly-alerts
+  ],
+  "EvaluationPeriods": 3,
+  "ThresholdMetricId": "ad1",
+  "ComparisonOperator": "LessThanLowerOrGreaterThanUpperThreshold",
+  "TreatMissingData": "missing",
+  "AlarmActions": [
+    "arn:aws:sns:us-west-2:123456789012:owned-eks-alerts"
+  ]
+}
 ```
+```bash
+# MUTATIONS: same observed metric/statistic/dimensions as the reviewed model.
+aws cloudwatch put-anomaly-detector --region "$AWS_REGION" \
+  --namespace ContainerInsights --metric-name node_cpu_utilization --stat Average \
+  --dimensions "file://$METRIC_DIMENSIONS_FILE"
+# Replace the example cluster/topic/metric dimensions in the JSON before this request.
+aws cloudwatch put-metric-alarm --region "$AWS_REGION" --cli-input-json file://anomaly-alarm-reviewed.json
+```
+```bash
+# Read-only prerequisites: both named alarms must exist and have understood state.
+aws cloudwatch describe-alarms --region "$AWS_REGION" \
+  --alarm-names owned-eks-high-cpu owned-eks-high-memory
+# MUTATION: the AND policy requires both alarms to be ALARM.
+aws cloudwatch put-composite-alarm --region "$AWS_REGION" \
+  --alarm-name owned-eks-combined-resource \
+  --alarm-rule 'ALARM("owned-eks-high-cpu") AND ALARM("owned-eks-high-memory")' \
+  --alarm-actions "$SNS_TOPIC_ARN"
+```
+The composite example assumes both referenced alarms already exist in the appropriate account/Region; it intentionally requires both to be ALARM. AND and OR express different incident policies, not interchangeable resilience guarantees. An anomaly-model alarm cannot have Auto Scaling actions as documented by PutMetricAlarm.
 
-#### Composite Alarm
+### Log-Based Metrics
+
+The following pattern expects Fluent Bit’s merged JSON at log_processed.level. Adapt it to actual records and a log-group class that supports metric filters; do not copy a space-delimited pattern with multiple ellipses. A filter counts matching log events from its creation onward, not historical requests or unique errors. defaultValue=0 does not prove log delivery when no events arrive.
 
 ```bash
-# Create composite alarm
-aws cloudwatch put-composite-alarm \
-  --alarm-name "EKS-Critical-State" \
-  --alarm-description "Cluster critical state" \
-  --alarm-rule "ALARM(EKS-High-CPU-Usage) AND ALARM(EKS-High-Memory-Usage)" \
-  --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:eks-critical-alerts \
-  --ok-actions arn:aws:sns:ap-northeast-2:123456789012:eks-resolved
+# MUTATION: structured JSON must actually contain log_processed.level.
+aws logs put-metric-filter --region "$AWS_REGION" \
+  --log-group-name "/aws/eks/$CLUSTER_NAME/containers" \
+  --filter-name OwnedApplicationErrors \
+  --filter-pattern '{ $.log_processed.level = "ERROR" }' \
+  --metric-transformations "metricName=ApplicationErrors,metricNamespace=EKS/$CLUSTER_NAME/Application,metricValue=1,defaultValue=0,unit=Count"
 ```
+### Maturity Targets and Automation Boundaries
 
-#### Log-based Metrics
+The original30/15/5/2-minute MTTD values are retained as unverified planning targets. The configurations here do not demonstrate those results; measure occurrence/detection/restoration timestamps consistently across incidents. ML/anomaly detection does not by itself establish predictive accuracy or authorize remediation.
 
-```bash
-# Extract metrics from logs
-aws logs put-metric-filter \
-  --log-group-name "/aws/eks/my-cluster/containers" \
-  --filter-name "ErrorCount" \
-  --filter-pattern "[..., level=\"ERROR\", ...]" \
-  --metric-transformations \
-    metricName=ApplicationErrors,metricNamespace=EKS/Application,metricValue=1
-```
+| Level | Original illustrative MTTD target | Capability to verify |
+| --- | --- | --- |
+| Basic | 30 minutes | Basic metrics and manual log investigation |
+| Reactive | 15 minutes | Tuned thresholds, log metrics and dashboards |
+| Proactive | 5 minutes | Correlated alarms and reviewed runbooks |
+| Predictive design goal | 2 minutes | Validated prediction, bounded automation and controlled exercises |
 
-### Maturity Model
+### EventBridge → Lambda Diagnostic Intake
 
-| Level | Description | MTTD Target | Key Capabilities |
-|-------|-------------|-------------|------------------|
-| **Level 1** | Basic | 30 minutes | Basic metric alerts, manual log search |
-| **Level 2** | Reactive | 15 minutes | Threshold alerts, log-based alerts, basic dashboards |
-| **Level 3** | Proactive | 5 minutes | Anomaly detection, composite alarms, automated runbooks |
-| **Level 4** | Predictive | 2 minutes | ML-based prediction, auto-remediation, chaos engineering |
+Use an exact account/Region/alarm rule and explicit target invocation authorization. The example classifies an event and logs a small diagnostic request; it has no Kubernetes/AWS mutation client. An aggregate alarm does not reliably identify a Pod name/namespace/UID, so deleting a guessed Pod is not an appropriate default CrashLoopBackOff repair.
 
-### EventBridge + Lambda Auto-Remediation
-
-```yaml
-# EventBridge Rule
+```json
 {
-  "source": ["aws.cloudwatch"],
-  "detail-type": ["CloudWatch Alarm State Change"],
+  "source": [
+    "aws.cloudwatch"
+  ],
+  "detail-type": [
+    "CloudWatch Alarm State Change"
+  ],
+  "account": [
+    "123456789012"
+  ],
+  "region": [
+    "us-west-2"
+  ],
+  "resources": [
+    "arn:aws:cloudwatch:us-west-2:123456789012:alarm:owned-eks-pod-crashlooping"
+  ],
   "detail": {
-    "alarmName": ["EKS-Pod-CrashLooping"],
+    "alarmName": [
+      "owned-eks-pod-crashlooping"
+    ],
     "state": {
-      "value": ["ALARM"]
+      "value": [
+        "ALARM"
+      ]
     }
   }
 }
 ```
-
 ```python
-# Lambda auto-remediation function
-import boto3
+"""EventBridge alarm intake example: classification/logging only, no AWS or Kubernetes client."""
+import datetime
 import json
-from kubernetes import client, config
+import os
 
-def lambda_handler(event, context):
-    alarm_name = event['detail']['alarmName']
+def classify_alarm(event, expected_alarm_arn, now):
+    parts=expected_alarm_arn.split(':',5)
+    if len(parts)!=6 or parts[2]!='cloudwatch' or not parts[5].startswith('alarm:'):
+        raise ValueError('Configure one exact CloudWatch alarm ARN')
+    if not isinstance(event,dict):
+        return {'status':'ignored','reason':'invalid event'}
+    detail=event.get('detail')
+    state=detail.get('state') if isinstance(detail,dict) else None
+    resources=event.get('resources')
+    if (event.get('source')!='aws.cloudwatch'
+        or event.get('detail-type')!='CloudWatch Alarm State Change'
+        or event.get('account')!=parts[4] or event.get('region')!=parts[3]
+        or not isinstance(resources,list) or expected_alarm_arn not in resources
+        or not isinstance(state,dict) or state.get('value')!='ALARM'
+        or detail.get('alarmName')!=parts[5][len('alarm:'):]):
+        return {'status':'ignored','reason':'outside configured alarm/state'}
+    event_id=event.get('id')
+    if not isinstance(event_id,str) or not 1<=len(event_id)<=128:
+        return {'status':'ignored','reason':'missing or invalid event ID'}
+    try:
+        changed=datetime.datetime.fromisoformat(state['timestamp'].replace('Z','+00:00'))
+        if changed.tzinfo is None or now.tzinfo is None:
+            raise ValueError('Timezone required')
+        age=(now-changed).total_seconds()
+    except (KeyError,TypeError,ValueError,AttributeError):
+        return {'status':'ignored','reason':'invalid timestamp'}
+    if age < -300 or age > 3600:
+        return {'status':'ignored','reason':'outside example event-age window'}
+    return {'status':'diagnostic_request','event_id':event_id,
+            'alarm_arn':expected_alarm_arn,'state_changed_at':changed.isoformat(),
+            'action':'inspect evidence and select a reviewed runbook'}
 
-    # Get EKS cluster credentials
-    eks = boto3.client('eks')
-    cluster_info = eks.describe_cluster(name='my-cluster')
-
-    # Configure Kubernetes client
-    # ... (kubeconfig setup)
-
-    # Restart CrashLooping pod
-    if 'CrashLooping' in alarm_name:
-        v1 = client.CoreV1Api()
-        # Delete problem pod (Deployment will recreate)
-        v1.delete_namespaced_pod(
-            name=extract_pod_name(event),
-            namespace=extract_namespace(event),
-            body=client.V1DeleteOptions()
-        )
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Auto-remediation executed')
-    }
+def lambda_handler(event,context):
+    result=classify_alarm(event,os.environ['EXPECTED_ALARM_ARN'],
+                          datetime.datetime.now(datetime.timezone.utc))
+    print(json.dumps(result))
+    return result
 ```
+Set EXPECTED_ALARM_ARN to the exact owned alarm. The one-hour age window/five-minute future tolerance are example policy choices. Restrict real Lambda invokers; checking event fields is not cryptographic origin verification. EventBridge’s asynchronous invocation does not forward the returned dictionary as an action: a real diagnostic queue/workflow must be explicitly connected. Logging this selection is not “auto-remediation executed.”
 
-### Alert Channel Matrix by Severity
+Before enabling a mutation runbook, implement identity/UID revalidation, durable event-id deduplication, rate limits, least privilege, concurrency control, workload/data/PDB checks, rollback and post-action verification. Retries or duplicate events must not trigger repeated deletion. None of those production mutation controls is claimed implemented by this classifier.
 
-| Severity | Slack | PagerDuty | Email | SMS | Auto-Remediation |
-|----------|-------|-----------|-------|-----|------------------|
-| **P1 Critical** | #incidents | Immediate | Team Lead | On-call | Yes |
-| **P2 High** | #alerts-high | 15min delay | Team | - | Conditional |
-| **P3 Medium** | #alerts | - | Team | - | No |
-| **P4 Low** | #alerts-low | - | Daily digest | - | No |
+| Example severity | Slack | PagerDuty | Other channels | Mutation policy |
+| --- | --- | --- | --- | --- |
+| P1 Critical | Incidents | Immediate policy | Team lead/on-call email or SMS if wired | Only a reviewed, scoped runbook |
+| P2 High | High alerts | Example15-minute escalation | Team email if wired | Conditional review |
+| P3 Medium | Alerts | Optional | Team email if wired | No automatic change by default |
+| P4 Low | Low alerts | None | Example daily digest | No automatic change |
+
+This is a routing policy example, not proof that every channel is deployed or will deliver on time. No alarms, topics, policies, Lambda functions, cloud resources or notifications were created/executed in this audit.
+
+[Fluent Bit CRI parsing](https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing) · [Buffering limits](https://docs.fluentbit.io/manual/administration/buffering-and-storage) · [CloudWatch output](https://docs.fluentbit.io/manual/pipeline/outputs/cloudwatch) · [Alertmanager0.34 configuration](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md) · [PutMetricAlarm examples](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html) · [Metric dimensions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)
 
 ---
 

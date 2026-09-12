@@ -320,7 +320,7 @@ df -h /var/lib/containerd
 crictl ps -a | head
 ```
 
-A node that **never appears** in `kubectl get nodes` (join failure: IAM role/access entry, subnet routing, security group, AMI mismatch) is a separate topic → [EKS Advanced Debugging — Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-failure-diagnosis-8-common-causes), [EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues). For Karpenter nodes, start with the NodeClaim check in [section 10](#10-eks-karpenter-does-not-launch-a-node).
+A node that **never appears** in `kubectl get nodes` (join failure: IAM role/access entry, subnet routing, security group, AMI mismatch) is a separate topic → [EKS Advanced Debugging — Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-diagnosis), [EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues). For Karpenter nodes, start with the NodeClaim check in [section 10](#10-eks-karpenter-does-not-launch-a-node).
 
 ### 7. PVC stuck in `Pending`
 

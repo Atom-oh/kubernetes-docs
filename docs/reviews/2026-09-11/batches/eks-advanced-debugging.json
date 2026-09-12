@@ -3,7 +3,7 @@
     "path": "en/eks/11-eks-advanced-debugging.md",
     "fullyRead": true,
     "status": "needs_followup",
-    "summary": "Full original read; source sections1-6 plusreadiness corrected. Storagevalidation,observability/detection/quickref andallquizzesremainactive.",
+    "summary": "Full original read; source1-8/readiness corrected. DetectionAPI/syntax finalchecks,quickref/sourceclosure and20quizsections remain active.",
     "sources": [
       "https://github.com/kubernetes-sigs/node-readiness-controller/releases/tag/v0.5.0",
       "https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/user-guide/concepts.md",
@@ -31,7 +31,15 @@
       "https://docs.aws.amazon.com/eks/latest/userguide/security-iam-awsmanpol.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html",
       "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-      "https://github.com/kubernetes-sigs/aws-efs-csi-driver"
+      "https://github.com/kubernetes-sigs/aws-efs-csi-driver",
+      "https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/internal/manifests/manifestutils/labels.go",
+      "https://github.com/aws-observability/aws-otel-collector/blob/v0.50.0/go.mod",
+      "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awsemfexporter",
+      "https://github.com/prometheus/prometheus/releases/tag/v3.14.0",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
+      "https://docs.fluentbit.io/manual/administration/buffering-and-storage",
+      "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing",
+      "https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md"
     ],
     "findings": [
       "Triage filtersmissRunning-notReady/CrashLoop,includecompletedJobs;deploymentgrepfalse;Service spec.type fieldselectorunsupported; VPC-CNIdefaultkube-systemnotamazon-vpc-cni-system.",
@@ -71,7 +79,9 @@
       "Nodeownershipvssubnettags/networkdirection/privateendpoints/provisionerbootstrap;AutoModeNodeDiagnostic+explicitprivilegeddebugsupportpreserved;noimmediatehostrestart/prune/logdeletion;PIDtasks/pressurevsusage;MNGissueexactcauses andimmutableCIDR;Karpentermodemetadata/ceilings.",
       "Podphasevscontainerstate/UID/Ready fixed;boundedcontainerlogs;ephemeral/copy/node distinct mutations,actualprofiles/runtime/image/identity/volumes/cleanup limits;noautomaticprivileged/chrootpromise;boundedreviewedrollout;HPArequests/multimetrics/VPAcoordination/probegates corrected.",
       "CNIimplementation/ENIownership scoped;prefix contiguousspace/warmoverride/maxPods;customnetworkingcompleteprereqs+ENIConfig labelmapping rather than blindtoggle/provisioning. AutoDNS distinction/resolvercontext/notgenericndotsfix;Corefileexample notoverwrite;EndpointSlices;NPAND/OR/additive+DNS;boundeddiagnostictraffic/capture.",
-      "Storagepairedwritescompletedbeforeparentbranchtransition;reporttailnowrecovered. RemovedblanketCSIResource*mutationpolicy/defaultfinalizernulling;currentV2tagscopes/KMS/identity;namespaceUID-awarePVCconsumers/protection/reclaim/EFSquota/APidentity;actualtopology/WFFC/Autoencryptedtrue nuance."
+      "Storagepairedwritescompletedbeforeparentbranchtransition;reporttailnowrecovered. RemovedblanketCSIResource*mutationpolicy/defaultfinalizernulling;currentV2tagscopes/KMS/identity;namespaceUID-awarePVCconsumers/protection/reclaim/EFSquota/APidentity;actualtopology/WFFC/Autoencryptedtrue nuance.",
+      "Observability: no incident-time obsolete addon install; scoped metric definitions/positive denominators/duplicate handling; restart changes notOOMcount/lastreasoncorrelation; RunningNotReady included. PromRule selection explicit; Operatorv1beta1objectconfig,ADOT0.50 pinnedcomponentcontract,namespaceRBAC/TLS/NP/ports/identity andpipeline destinations/cardinality/replica assumptions.",
+      "Detection:CRI/host/RBAC/IAM/checkpoint-vs-buffer/lossbounds;AMSecretkey/configSecret+secretfiles andcriticalfanout/modernmatchers/resourceinhibition. ExactCWdimension/band/missingdata/evaluationwindow andstructuredJSONlogfilter;oldMTTDtargetsretainedunverified. ReplacednonfunctionalPoddeleteLambda withboundedno-mutationclassifier andexplicitasync/dedup/runbooklimits."
     ],
     "validation": [
       "Full read ranges1-450,451-900,901-1400,1401-1849; originalSHA256:ec7a1c7ba546c3560a547bcce562e9decf8202e2e30959103e554ea018c72b56",
@@ -86,14 +96,19 @@
       "Workloadsection20Bashsyntax/4nativeK8sHPA+Podobjects passed;pairedcodeidentical. Nativekubectldebug4mockAPIcasesvalidatedseparately;noruntime/admission/image/realprivilegeexecution.",
       "Networksection14Bash/4K8s/2ENIConfigCRD/4JSONfragmentsand3jqmetadatafixturespassed;CNIchart1.23.0releasedCRD;pairedcodeidentical. No network/cluster/cloud change/test execution.",
       "Parenttransitionedsharedbranchto docs/review-followup-2026-09-12 andrestoredstash;verifiedworkload/networksectionhashesmatch;noagentbranch/indexoperation. Storagevalidationpending.",
-      "Storage:10Bash/6nativeK8sobjects,5syntheticjqcases(no/mixedconsumers,exactPVattachments,omittedvsemptySC),7CLI2.36.44requestmodelspass;pairedcodeidentical. Noactualcloud/storageaction."
+      "Storage:10Bash/6nativeK8sobjects,5syntheticjqcases(no/mixedconsumers,exactPVattachments,omittedvsemptySC),7CLI2.36.44requestmodelspass;pairedcodeidentical. Noactualcloud/storageaction.",
+      "Promtool3.14 restored from officialsha256;9queries7rules2syntheticscenarios11assertionspass,childRSS72224KiB/GOMEMLIMIT256MiB. No live Prometheus/cloud/notifications.",
+      "Section7:4Bash/12YAML/8nativeK8s/4vendorCRDs/18PromQLblocks pairedidentical;Operator0.158+PrometheusOperator0.93.1schemas/scrapeparser/RBAC+immutablelabelgraphpass. Oldstringconfignegativepass. SchemaRSS397792KiB;PromQLRSS72224KiB. No live Collector/API/ingestion.",
+      "Editvalidationcaught unsupported podMetadata proposal; corrected to source-verified immutable operator labels before passing final schemas. Component config checked against ADOT0.50go.mod-contrib0.158 references; no runtimeclaim.",
+      "AM0.34config+3routecases+undefinedreceivernegativepassed;Operator0.93.1specfragmentpassed;classifier1positive+11ignored+badconfigcasepassed;childRSS17964KiB. No delivery or cloud/server execution.",
+      "Section8:10Bash/4YAML/4JSON/2Python/2FluentBit-text blocks pairedidentical;7CLI2.36.44inputmodelcasespass. Alarm semantics/CRI options source-checked; no actual cloud/filter/notification orFluentBit runtime. See detection-syntax-validation.json."
     ]
   },
   {
     "path": "ko/eks/11-eks-advanced-debugging.md",
     "fullyRead": true,
     "status": "needs_followup",
-    "summary": "Full original read; source sections1-6 plusreadiness corrected. Storagevalidation,observability/detection/quickref andallquizzesremainactive.",
+    "summary": "Full original read; source1-8/readiness corrected. DetectionAPI/syntax finalchecks,quickref/sourceclosure and20quizsections remain active.",
     "sources": [
       "https://github.com/kubernetes-sigs/node-readiness-controller/releases/tag/v0.5.0",
       "https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/user-guide/concepts.md",
@@ -121,7 +136,15 @@
       "https://docs.aws.amazon.com/eks/latest/userguide/security-iam-awsmanpol.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html",
       "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-      "https://github.com/kubernetes-sigs/aws-efs-csi-driver"
+      "https://github.com/kubernetes-sigs/aws-efs-csi-driver",
+      "https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/internal/manifests/manifestutils/labels.go",
+      "https://github.com/aws-observability/aws-otel-collector/blob/v0.50.0/go.mod",
+      "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awsemfexporter",
+      "https://github.com/prometheus/prometheus/releases/tag/v3.14.0",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
+      "https://docs.fluentbit.io/manual/administration/buffering-and-storage",
+      "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing",
+      "https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md"
     ],
     "findings": [
       "KO text/code independently read; confirms same first450 defects as EN: invalidServicefieldselector/phase-onlytriage,unsafeunboundedcollection/falsecompletion,legacyaws-authadminreplacement,non-JWTEKStokendecode/IRSAsecretprints,projection24hclaim,blindaddonOVERWRITE,join/SSMcleanupassumptions. DatesalreadySep9do notbumpuntilsubstantiveverification.",
@@ -136,7 +159,9 @@
       "Nodeownershipvssubnettags/networkdirection/privateendpoints/provisionerbootstrap;AutoModeNodeDiagnostic+explicitprivilegeddebugsupportpreserved;noimmediatehostrestart/prune/logdeletion;PIDtasks/pressurevsusage;MNGissueexactcauses andimmutableCIDR;Karpentermodemetadata/ceilings.",
       "Podphasevscontainerstate/UID/Ready fixed;boundedcontainerlogs;ephemeral/copy/node distinct mutations,actualprofiles/runtime/image/identity/volumes/cleanup limits;noautomaticprivileged/chrootpromise;boundedreviewedrollout;HPArequests/multimetrics/VPAcoordination/probegates corrected.",
       "CNIimplementation/ENIownership scoped;prefix contiguousspace/warmoverride/maxPods;customnetworkingcompleteprereqs+ENIConfig labelmapping rather than blindtoggle/provisioning. AutoDNS distinction/resolvercontext/notgenericndotsfix;Corefileexample notoverwrite;EndpointSlices;NPAND/OR/additive+DNS;boundeddiagnostictraffic/capture.",
-      "Storagepairedwritescompletedbeforeparentbranchtransition;reporttailnowrecovered. RemovedblanketCSIResource*mutationpolicy/defaultfinalizernulling;currentV2tagscopes/KMS/identity;namespaceUID-awarePVCconsumers/protection/reclaim/EFSquota/APidentity;actualtopology/WFFC/Autoencryptedtrue nuance."
+      "Storagepairedwritescompletedbeforeparentbranchtransition;reporttailnowrecovered. RemovedblanketCSIResource*mutationpolicy/defaultfinalizernulling;currentV2tagscopes/KMS/identity;namespaceUID-awarePVCconsumers/protection/reclaim/EFSquota/APidentity;actualtopology/WFFC/Autoencryptedtrue nuance.",
+      "Observability: no incident-time obsolete addon install; scoped metric definitions/positive denominators/duplicate handling; restart changes notOOMcount/lastreasoncorrelation; RunningNotReady included. PromRule selection explicit; Operatorv1beta1objectconfig,ADOT0.50 pinnedcomponentcontract,namespaceRBAC/TLS/NP/ports/identity andpipeline destinations/cardinality/replica assumptions.",
+      "Detection:CRI/host/RBAC/IAM/checkpoint-vs-buffer/lossbounds;AMSecretkey/configSecret+secretfiles andcriticalfanout/modernmatchers/resourceinhibition. ExactCWdimension/band/missingdata/evaluationwindow andstructuredJSONlogfilter;oldMTTDtargetsretainedunverified. ReplacednonfunctionalPoddeleteLambda withboundedno-mutationclassifier andexplicitasync/dedup/runbooklimits."
     ],
     "validation": [
       "Fullread1-450,451-1000,1001-1500,1501-1849; originalSHA256:3ce4e0f51c4e400d829dc2c1f5c29b18ae02f9c28eae42ae7c86aa7e05a65595",
@@ -151,7 +176,12 @@
       "Workloadsection20Bashsyntax/4nativeK8sHPA+Podobjects passed;pairedcodeidentical. Nativekubectldebug4mockAPIcasesvalidatedseparately;noruntime/admission/image/realprivilegeexecution.",
       "Networksection14Bash/4K8s/2ENIConfigCRD/4JSONfragmentsand3jqmetadatafixturespassed;CNIchart1.23.0releasedCRD;pairedcodeidentical. No network/cluster/cloud change/test execution.",
       "Parenttransitionedsharedbranchto docs/review-followup-2026-09-12 andrestoredstash;verifiedworkload/networksectionhashesmatch;noagentbranch/indexoperation. Storagevalidationpending.",
-      "Storage:10Bash/6nativeK8sobjects,5syntheticjqcases(no/mixedconsumers,exactPVattachments,omittedvsemptySC),7CLI2.36.44requestmodelspass;pairedcodeidentical. Noactualcloud/storageaction."
+      "Storage:10Bash/6nativeK8sobjects,5syntheticjqcases(no/mixedconsumers,exactPVattachments,omittedvsemptySC),7CLI2.36.44requestmodelspass;pairedcodeidentical. Noactualcloud/storageaction.",
+      "Promtool3.14 restored from officialsha256;9queries7rules2syntheticscenarios11assertionspass,childRSS72224KiB/GOMEMLIMIT256MiB. No live Prometheus/cloud/notifications.",
+      "Section7:4Bash/12YAML/8nativeK8s/4vendorCRDs/18PromQLblocks pairedidentical;Operator0.158+PrometheusOperator0.93.1schemas/scrapeparser/RBAC+immutablelabelgraphpass. Oldstringconfignegativepass. SchemaRSS397792KiB;PromQLRSS72224KiB. No live Collector/API/ingestion.",
+      "Editvalidationcaught unsupported podMetadata proposal; corrected to source-verified immutable operator labels before passing final schemas. Component config checked against ADOT0.50go.mod-contrib0.158 references; no runtimeclaim.",
+      "AM0.34config+3routecases+undefinedreceivernegativepassed;Operator0.93.1specfragmentpassed;classifier1positive+11ignored+badconfigcasepassed;childRSS17964KiB. No delivery or cloud/server execution.",
+      "Section8:10Bash/4YAML/4JSON/2Python/2FluentBit-text blocks pairedidentical;7CLI2.36.44inputmodelcasespass. Alarm semantics/CRI options source-checked; no actual cloud/filter/notification orFluentBit runtime. See detection-syntax-validation.json."
     ]
   },
   {

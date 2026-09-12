@@ -1,7 +1,7 @@
 {
   "date": "2026-09-11",
-  "documents": 250,
-  "passed": 250,
+  "documents": 254,
+  "passed": 254,
   "results": [
     {
       "path": "en/networking/01-vpc-cni.md",
@@ -1337,6 +1337,381 @@
           "tag": "h2",
           "id": "ebpf-성능-및-모니터링"
         }
+      ]
+    },
+    {
+      "path": "en/networking/cilium/03-networking.md",
+      "sha256": "3b09a0059bbb4b0e116c1b5ab1b30b51bb0ac3fa902b6818f8a9ed34c16e04df",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "networking-models-and-vxlan"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h3",
+          "id": "network-analysis-tools"
+        },
+        {
+          "tag": "h2",
+          "id": "container-networking-model-comparison"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-networking-modes"
+        },
+        {
+          "tag": "h2",
+          "id": "vxlan-technology-deep-dive"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-packet-structure"
+        },
+        {
+          "tag": "h3",
+          "id": "mtu-budget"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-vs-other-encapsulations"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium-s-overlay-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "routing-mechanisms"
+        },
+        {
+          "tag": "h3",
+          "id": "encapsulation"
+        },
+        {
+          "tag": "h3",
+          "id": "native-routing"
+        },
+        {
+          "tag": "h2",
+          "id": "performance-optimization-techniques"
+        },
+        {
+          "tag": "h2",
+          "id": "cloud-provider-specific-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-cilium-networking-mode-configuration-and-performance-testing"
+        },
+        {
+          "tag": "h3",
+          "id": "select-one-mode-on-a-fresh-prepared-cluster"
+        },
+        {
+          "tag": "h3",
+          "id": "network-performance-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "sources"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "networking-models-and-vxlan",
+        "lab-environment-setup",
+        "network-analysis-tools",
+        "container-networking-model-comparison",
+        "cilium-networking-modes",
+        "vxlan-technology-deep-dive",
+        "vxlan-packet-structure",
+        "mtu-budget",
+        "vxlan-vs-other-encapsulations",
+        "cilium-s-overlay-networking",
+        "routing-mechanisms",
+        "encapsulation",
+        "native-routing",
+        "performance-optimization-techniques",
+        "cloud-provider-specific-networking",
+        "lab-cilium-networking-mode-configuration-and-performance-testing",
+        "select-one-mode-on-a-fresh-prepared-cluster",
+        "network-performance-testing",
+        "sources",
+        "quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/03-networking-quiz.md",
+      "sha256": "870d0c4340e9762bf531df6cee792ee1d3f46a65441422ecaf09005d8c915e68",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-networking-validation-exercises"
+        },
+        {
+          "tag": "h2",
+          "id": "prerequisites"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-installation-and-basic-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-network-policy-testing"
+        },
+        {
+          "tag": "h3",
+          "id": "create-an-isolated-test-namespace-and-workloads"
+        },
+        {
+          "tag": "h3",
+          "id": "apply-and-check-the-policy"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-hubble-visibility-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-performance-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-optional-advanced-feature-checks"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-compatibility-checks"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-troubleshooting"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-cleanup"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-limits-and-references"
+        }
+      ],
+      "renderedIds": [
+        "cilium-networking-validation-exercises",
+        "prerequisites",
+        "_1-installation-and-basic-testing",
+        "_2-network-policy-testing",
+        "create-an-isolated-test-namespace-and-workloads",
+        "apply-and-check-the-policy",
+        "_3-hubble-visibility-testing",
+        "_4-performance-testing",
+        "_5-optional-advanced-feature-checks",
+        "_6-compatibility-checks",
+        "_7-troubleshooting",
+        "_8-cleanup",
+        "validation-limits-and-references"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/03-networking.md",
+      "sha256": "e552c34f3eef0d4aa90d6a422c571766bb30085e9a9875c5eb332e1056618a0c",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "네트워킹-모델-및-vxlan"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-분석-도구"
+        },
+        {
+          "tag": "h2",
+          "id": "컨테이너-네트워킹-모델-비교"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-네트워킹-모드"
+        },
+        {
+          "tag": "h2",
+          "id": "vxlan-기술-심층-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-패킷-구조"
+        },
+        {
+          "tag": "h3",
+          "id": "mtu-계산"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan과-다른-캡슐화-비교"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium의-오버레이-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "라우팅-메커니즘"
+        },
+        {
+          "tag": "h3",
+          "id": "캡슐화"
+        },
+        {
+          "tag": "h3",
+          "id": "네이티브-라우팅"
+        },
+        {
+          "tag": "h2",
+          "id": "성능-최적화-기법"
+        },
+        {
+          "tag": "h2",
+          "id": "클라우드-제공업체별-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-cilium-네트워킹-모드-구성-및-성능-테스트"
+        },
+        {
+          "tag": "h3",
+          "id": "준비된-새-클러스터에서-한-모드-선택"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-성능-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "네트워킹-모델-및-vxlan",
+        "실습-환경-설정",
+        "네트워크-분석-도구",
+        "컨테이너-네트워킹-모델-비교",
+        "cilium-네트워킹-모드",
+        "vxlan-기술-심층-분석",
+        "vxlan-기술-심층-분석",
+        "vxlan-패킷-구조",
+        "mtu-계산",
+        "vxlan과-다른-캡슐화-비교",
+        "cilium의-오버레이-네트워킹",
+        "라우팅-메커니즘",
+        "캡슐화",
+        "네이티브-라우팅",
+        "성능-최적화-기법",
+        "클라우드-제공업체별-네트워킹",
+        "실습-cilium-네트워킹-모드-구성-및-성능-테스트",
+        "준비된-새-클러스터에서-한-모드-선택",
+        "네트워크-성능-테스트",
+        "참고-자료",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/03-networking-quiz.md",
+      "sha256": "9aadee19d5232ed424cd1f5556f9a61f35dcbf600376e72a09560abc5c2cd962",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-네트워킹-검증-실습"
+        },
+        {
+          "tag": "h2",
+          "id": "사전-요구-사항"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-설치-및-기본-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-네트워크-정책-테스트"
+        },
+        {
+          "tag": "h3",
+          "id": "독립적인-namespace와-workload-생성"
+        },
+        {
+          "tag": "h3",
+          "id": "정책-적용과-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-hubble-가시성-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-성능-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-선택적-고급-기능-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-호환성-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-문제-해결"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-정리"
+        },
+        {
+          "tag": "h2",
+          "id": "검증-한계와-참고-자료"
+        }
+      ],
+      "renderedIds": [
+        "cilium-네트워킹-검증-실습",
+        "사전-요구-사항",
+        "_1-설치-및-기본-테스트",
+        "_2-네트워크-정책-테스트",
+        "독립적인-namespace와-workload-생성",
+        "정책-적용과-확인",
+        "_3-hubble-가시성-테스트",
+        "_4-성능-테스트",
+        "_5-선택적-고급-기능-확인",
+        "_6-호환성-확인",
+        "_7-문제-해결",
+        "_8-정리",
+        "검증-한계와-참고-자료"
       ]
     }
   ],

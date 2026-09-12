@@ -70,7 +70,7 @@ Cilium provides networking, security and observability through a Linux eBPF data
 | eBPF | Programs/maps at kernel hooks, subject to verification and feature requirements; performance must be measured |
 | L3/L4 and L7 policy | L7 needs the supported Envoy/DNS proxy path; Kafka-aware L7 policy was removed in 1.20, while L4 rules can still govern Kafka connections |
 | kube-proxy replacement | Optional Service handling; DSR, Maglev and XDP have their own configuration/topology constraints |
-| Encryption | Transparent IPsec/WireGuard modes; separate beta ztunnel workload mTLS is not the same setting |
+| Encryption | `encryption.type` selects `ipsec`, `wireguard`, or beta `ztunnel`; ztunnel workload mTLS has its own enrollment, bootstrap, traffic and policy prerequisites |
 | Hubble | Network/proxy flow observations and service maps, not automatic end-to-end application tracing |
 | ClusterMesh / BGP | ClusterMesh needs identity, trust and network reachability; BGP advertises routes but does not program internal cluster routing |
 
