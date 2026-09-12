@@ -216,24 +216,26 @@ def submit_and_wait(
         "state": "submitting",
     }
     request_path = journal_path.parent / f"{request['TrainingJobName']}-request.json"
-    # Share the lifecycle lock through acceptance so cleanup cannot run in
-    # the gap between request reservation and a confirmed submission record.
-    with _submission_lock(journal_path, inventory_path):
-        if journal_path.exists() or request_path.exists():
-            raise FileExistsError("Submission evidence already exists; reconcile before retrying")
-        _write_journal(request_path, request, create=True)
-        _write_journal(journal_path, journal, create=True)
-        try:
-            client.create_training_job(**request)
-        except BaseException:
-            # A lost response may hide successful creation; do not stop a
-            # name that could refer to a preexisting job.
-            journal["state"] = "submission_unknown"
-            _write_journal(journal_path, journal)
-            raise
-        journal["state"] = "submitted"
-        _write_journal(journal_path, journal)
+    accepted = False
+    terminal = False
     try:
+        # Include post-acceptance persistence and lock exit in the stop handler.
+        with _submission_lock(journal_path, inventory_path):
+            if journal_path.exists() or request_path.exists():
+                raise FileExistsError("Submission evidence already exists; reconcile before retrying")
+            _write_journal(request_path, request, create=True)
+            _write_journal(journal_path, journal, create=True)
+            try:
+                client.create_training_job(**request)
+            except BaseException:
+                # A lost response may hide successful creation; do not stop
+                # a name that could refer to a preexisting job.
+                journal["state"] = "submission_unknown"
+                _write_journal(journal_path, journal)
+                raise
+            accepted = True
+            journal["state"] = "submitted"
+            _write_journal(journal_path, journal)
         waiter = client.get_waiter("training_job_completed_or_stopped")
         try:
             waiter.wait(
@@ -252,18 +254,31 @@ def submit_and_wait(
             description = client.describe_training_job(
                 TrainingJobName=request["TrainingJobName"]
             )
-    except BaseException:
-        try:
-            client.stop_training_job(TrainingJobName=request["TrainingJobName"])
-            journal["state"] = "stop_requested"
-        except Exception as error:
-            journal["state"] = "stop_unconfirmed"
-            journal["error_type"] = type(error).__name__
+        terminal = description["TrainingJobStatus"] in {"Completed", "Failed", "Stopped"}
+        if not terminal:
+            raise RuntimeError("Training monitor returned a nonterminal state")
+        journal["state"] = description["TrainingJobStatus"]
         _write_journal(journal_path, journal)
+        return description
+    except BaseException:
+        if accepted and not terminal:
+            try:
+                client.stop_training_job(TrainingJobName=request["TrainingJobName"])
+                journal["state"] = "stop_requested"
+            except BaseException as error:
+                journal["state"] = "stop_unconfirmed"
+                journal["error_type"] = type(error).__name__
+            try:
+                _write_journal(journal_path, journal)
+            except BaseException:
+                # Preserve the original failure; the stop attempt must not
+                # depend on a functioning disk or a second successful write.
+                print(
+                    "Stop attempt made, but its journal could not be saved. "
+                    "Reconcile the recorded job name with AWS before retrying.",
+                    file=sys.stderr,
+                )
         raise
-    journal["state"] = description["TrainingJobStatus"]
-    _write_journal(journal_path, journal)
-    return description
 
 
 def parse_args() -> argparse.Namespace:

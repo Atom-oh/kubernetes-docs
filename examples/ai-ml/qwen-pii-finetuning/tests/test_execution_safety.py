@@ -144,3 +144,64 @@ def test_submission_holds_the_shared_cleanup_lock_through_acceptance(tmp_path):
         journal_path=tmp_path / f"{request['TrainingJobName']}-job.json",
         inventory_path=inventory_path, client=client,
     )
+
+
+@pytest.mark.parametrize("error", [OSError("disk full"), KeyboardInterrupt()])
+def test_accepted_job_is_stopped_if_submitted_journal_write_fails(
+    tmp_path, monkeypatch, error
+):
+    original = sagemaker_train._write_journal
+    client = Mock()
+    path = tmp_path / "job.json"
+
+    def write(target, value, **kwargs):
+        if value.get("state") == "submitted":
+            raise error
+        original(target, value, **kwargs)
+
+    monkeypatch.setattr(sagemaker_train, "_write_journal", write)
+    with pytest.raises(type(error)):
+        sagemaker_train.submit_and_wait(
+            build_request(), "ap-northeast-2", journal_path=path, client=client
+        )
+    client.create_training_job.assert_called_once()
+    client.stop_training_job.assert_called_once()
+    client.get_waiter.assert_not_called()
+    assert json.loads(path.read_text())["state"] == "stop_requested"
+
+
+def test_stop_is_attempted_even_when_all_post_acceptance_writes_fail(tmp_path, monkeypatch):
+    original = sagemaker_train._write_journal
+    client = Mock()
+
+    def write(target, value, **kwargs):
+        if value.get("state") in {"submitted", "stop_requested", "stop_unconfirmed"}:
+            raise OSError("disk full")
+        original(target, value, **kwargs)
+
+    monkeypatch.setattr(sagemaker_train, "_write_journal", write)
+    with pytest.raises(OSError):
+        sagemaker_train.submit_and_wait(
+            build_request(), "ap-northeast-2",
+            journal_path=tmp_path / "job.json", client=client,
+        )
+    client.stop_training_job.assert_called_once()
+
+
+def test_terminal_journal_failure_does_not_stop_an_already_completed_job(tmp_path, monkeypatch):
+    original = sagemaker_train._write_journal
+    client = Mock()
+    client.describe_training_job.return_value = {"TrainingJobStatus": "Completed"}
+
+    def write(target, value, **kwargs):
+        if value.get("state") == "Completed":
+            raise OSError("disk full")
+        original(target, value, **kwargs)
+
+    monkeypatch.setattr(sagemaker_train, "_write_journal", write)
+    with pytest.raises(OSError):
+        sagemaker_train.submit_and_wait(
+            build_request(), "ap-northeast-2",
+            journal_path=tmp_path / "job.json", client=client,
+        )
+    client.stop_training_job.assert_not_called()
