@@ -56,7 +56,6 @@ test('expectedQuizPath maps content files to quizzes/<path>-quiz.md', () => {
 
 test('expectedQuizPath exempts READMEs, SUMMARY, quizzes, labs, and news', () => {
   assert.equal(expectedQuizPath('README.md'), null)
-  assert.equal(expectedQuizPath('statistics.md'), null)
   assert.equal(expectedQuizPath('networking/README.md'), null)
   assert.equal(expectedQuizPath('SUMMARY.md'), null)
   assert.equal(expectedQuizPath('quizzes/basics/01-linux-basics-quiz.md'), null)

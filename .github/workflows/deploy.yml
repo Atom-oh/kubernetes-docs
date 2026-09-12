@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  schedule:
-    # Refresh the public aggregate snapshot daily (GitHub schedules may be delayed).
-    - cron: '37 3 * * *'
 
 permissions:
   contents: read
@@ -19,9 +16,6 @@ concurrency:
 
 jobs:
   build:
-    if: >-
-      github.event_name != 'schedule' ||
-      (vars.GA4_PROPERTY_ID != '' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GA4_SERVICE_ACCOUNT != '')
     # A fresh hosted ARM VM (4 CPU / 16 GB for public repositories) avoids
     # self-hosted runner shutdowns interrupting the build before upload.
     runs-on: ubuntu-24.04-arm
@@ -43,28 +37,6 @@ jobs:
       - uses: actions/configure-pages@v4
       - run: npm ci
       - run: npm run docs:validate
-      - name: Read GA4 aggregates with a short-lived Google token
-        id: analytics-auth
-        if: >-
-          github.ref == 'refs/heads/main' &&
-          vars.GA4_PROPERTY_ID != '' &&
-          vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' &&
-          vars.GA4_SERVICE_ACCOUNT != ''
-        continue-on-error: true
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
-        with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GA4_SERVICE_ACCOUNT }}
-          token_format: access_token
-          access_token_scopes: https://www.googleapis.com/auth/analytics.readonly
-          access_token_lifetime: 300s
-          create_credentials_file: false
-          export_environment_variables: false
-      - name: Refresh public visitor statistics
-        run: node scripts/fetch-public-statistics.mjs
-        env:
-          GA4_PROPERTY_ID: ${{ vars.GA4_PROPERTY_ID }}
-          GA4_ACCESS_TOKEN: ${{ steps.analytics-auth.outputs.access_token }}
       - run: npm run docs:build
       - run: mkdir -p .vitepress/dist/assets && cp assets/*.html .vitepress/dist/assets/
       - uses: actions/upload-pages-artifact@v3

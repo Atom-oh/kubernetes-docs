@@ -157,7 +157,6 @@ test('markdownAlternateUrl is absent for quizzes, labs, locale roots, and other 
   assert.equal(markdownAlternateUrl('en/labs/basics/01-lab.md'), undefined)
   assert.equal(markdownAlternateUrl('ko/index.md'), undefined)
   assert.equal(markdownAlternateUrl('404.md'), undefined)
-  assert.equal(markdownAlternateUrl('ko/statistics.md'), undefined)
 })
 
 test('extractDescription returns undefined when there is no body paragraph', () => {
