@@ -1,12 +1,14 @@
 # Part 3: SageMaker AI and MLflow Execution
 
-> **Last Updated**: September 2, 2026
+> **Documentation Reviewed**: September 12, 2026
 
 ## Execution Notice
 
-The commands in this chapter describe committed implementation under `examples/ai-ml/qwen-pii-finetuning/`. The recorded September 1, 2026 validation nevertheless **stopped before Training Job submission**. Runnable implementation is not evidence of completed GPU training.
+**The committed GPU execution path is currently blocked because its image reached end of patch.** The official catalog gives `2026-08-06` as the patch end for `2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker`. `src/runtime_contract.py` checks this boundary before preflight, provisioning, Training Job submission, EKS creation, and training. Update the image, `torch`, and dependency cohort together and validate a GPU smoke run; removing the date check alone is not a runtime upgrade.
 
-For new managed MLflow deployments, the path uses a **SageMaker MLflow App**, not the legacy Tracking Server resource. The App is a standalone HTTP server for tracking runs and experiments and is connected here to an S3 artifact store through a scoped IAM role.
+This chapter describes the corrected contract in `examples/ai-ml/qwen-pii-finetuning/`. Local tests, request previews, and owned-resource cleanup remain available. The September 1, 2026 AWS experiment **stopped before training submission**. This review also performed no AWS resource creation or GPU training.
+
+AWS recommends **MLflow Apps** for new SageMaker managed MLflow deployments. Existing Tracking Servers are a separate resource. Current App documentation lists MLflow `3.10`; this historical example pins its client and EKS server to `3.1.4`. A successful local 3.1.4 artifact export does not validate full compatibility with the managed App. Include that pairing in the runtime upgrade validation.
 
 ## Eight Steps on the Managed Path
 
@@ -15,12 +17,12 @@ For new managed MLflow deployments, the path uses a **SageMaker MLflow App**, no
 ```bash
 cd examples/ai-ml/qwen-pii-finetuning
 export AWS_REGION=ap-northeast-2
-./launch/aws/preflight.sh
+python3 src/runtime_contract.py --check-execution
 ```
 
-Preflight checks the required tools, caller identity, Region, `ml.g6e.4xlarge` Training Job quota, EC2 GPU vCPU quota, PyTorch DLC, and collisions with existing `qwen-pii-*` Apps, clusters, buckets, IAM roles, and Unified Studio projects.
+Today this command should fail with the end-of-patch explanation. After upgrading the example to a supported runtime, set administrator-verified `EXPECTED_ACCOUNT_ID`, `DATAZONE_DOMAIN_ID`, `DATAZONE_PROJECT_PROFILE_ID`, and `DATAZONE_OWNER_GROUP_ID`, then run `./launch/aws/preflight.sh`. These variables contain resource identifiers, not passwords or service-account keys.
 
-It refuses to begin when an old `results/resource-inventory.json` or experiment resource remains.
+Preflight checks tools, caller, Region, quotas, DLC, and existing experiment collisions. It does not reconstruct a domain, profile, or group from a display name or STS role string. An empty list proves neither universal absence nor permission for later creation. Review ownership of resources sharing a prefix; do not delete them indiscriminately.
 
 ### 2. Build the Source Bundle
 
@@ -28,93 +30,69 @@ It refuses to begin when an old `results/resource-inventory.json` or experiment 
 ./launch/aws/build_source_bundle.sh
 ```
 
-The bundle contains only:
+The bundle includes `src/*.py`, `config/experiment.yaml`, `requirements.lock`, and an identical `requirements.txt`. It does not recursively package data or local credential files. It does not detect sensitive values embedded directly in source or configuration, so inspect the bundle. Its SHA-256 identifies **that build**; tar timestamps are not guaranteed reproducible.
 
-- `src/*.py`
-- `config/experiment.yaml`
-- `requirements.lock` and an identical `requirements.txt`
+### 3. Create the MLflow App and Unified Studio Project
 
-Datasets, raw predictions, and local credentials are excluded.
-
-### 3. Upload the Dataset
-
-The inventory created by `provision.sh` records an execution-specific prefix and `source_s3_uri`. An approved CI artifact publisher uploads the bundle and four data files under this layout:
-
-```text
-qwen-pii/<experiment-id>/source/source.tar.gz
-qwen-pii/<experiment-id>/dataset/train.jsonl
-qwen-pii/<experiment-id>/dataset/validation.jsonl
-qwen-pii/<experiment-id>/dataset/test.jsonl
-qwen-pii/<experiment-id>/dataset/dataset-manifest.json
-```
-
-Compare remote object hashes with the split SHA-256 values in `data/dataset-manifest.json`. Never publish the bucket name or presigned URLs in documentation or logs.
-
-### 4. Create the MLflow App and Unified Studio Project
+This is an **AWS mutation and billable-resource step**, available only after runtime and permission validation.
 
 ```bash
 ./launch/aws/provision.sh
 ```
 
-The script:
+It creates an experiment bucket, execution and MLflow roles, an MLflow App, and a project with owner membership. The bucket uses Block Public Access, AES-256, and versioning; IAM policies are checked with Access Analyzer. App readiness is `Created`/`Updated`. Project `ACTIVE` does not establish successful deployment of every project environment.
 
-1. creates a temporary S3 bucket with Block Public Access, AES-256 encryption, and versioning;
-2. creates the SageMaker execution and MLflow roles;
-3. validates IAM policies with Access Analyzer;
-4. creates the App with `create-mlflow-app`;
-5. waits for `Created` or `Updated`;
-6. finds an enabled `All capabilities` project profile;
-7. finds the caller role's DataZone group profile and assigns `PROJECT_OWNER` membership during project creation;
-8. writes every created resource to the inventory.
+The private inventory distinguishes creation intent from successful responses. A name collision or lost response does not authorize deletion by name. Error cleanup operates on confirmed ownership; unknown creation requires reconciliation. A forcibly stopped process or instance may never execute a shell trap.
 
-An error or interrupt writes the latest inventory and invokes teardown.
+### 4. Upload the Dataset
+
+Create the bucket and inventory before uploading. Validate the five inputs:
+
+```bash
+python3 -m launch.aws.upload_inputs \
+  --inventory results/resource-inventory.json
+# Actual S3 upload and SHA-256 readback verification:
+python3 -m launch.aws.upload_inputs \
+  --inventory results/resource-inventory.json --execute
+```
+
+Inputs are `generated/source.tar.gz`, `data/{train,validation,test}.jsonl`, and `data/dataset-manifest.json`. The helper checks split hashes, bucket account ownership, and experiment tags, then writes the execution-specific `qwen-pii/<experiment-id>/source/` and `dataset/` prefixes. It reads objects back to compare SHA-256. This small synthetic example limits each file to 64 MiB. A failed upload may leave some objects, so preserve the inventory.
+
+Use identifiers and hashes in private operational records. Presigned URLs carry access authority and must not be posted in public documentation or logs.
 
 ### 5. Submit the SageMaker Training Job Request
 
-Smoke request:
-
 ```bash
-python3 launch/sagemaker_train.py \
-  --mode smoke \
-  --inventory results/resource-inventory.json
+python3 -m launch.sagemaker_train \
+  --mode smoke --inventory results/resource-inventory.json
 ```
 
-Only after smoke completion and log-safety review:
+By default this writes `<job-name>-request.json` without submitting to AWS. After validating a supported runtime, add `--execute` to submit. Full execution separately requires `--mode full --execute`. The launcher does not automatically approve smoke evidence or input hashes.
 
-```bash
-python3 launch/sagemaker_train.py \
-  --mode full \
-  --inventory results/resource-inventory.json
-```
+The config is read from `/opt/ml/code/config/experiment.yaml` in the source bundle. The four data files live in `/opt/ml/input/data/dataset/`. Build the local `--config` and bundle from the same source so they agree.
 
-Both modes use the same `ml.g6e.4xlarge`, 300 GiB volume, `10,800`-second maximum runtime, source bundle, dataset channel, and MLflow App. The intended difference is `10` versus `80` steps.
+Before submission, the launcher writes `<job-name>-job.json`. For a job whose creation succeeded, monitor failure or interruption triggers a stop request attempt. `stop_requested` does not mean termination is confirmed. Reconcile AWS state and ownership after `submission_unknown`, `stop_unconfirmed`, or host loss; do not overwrite an existing journal to resubmit.
 
-> **Recorded result**: neither Training Job command was executed during the September 1 validation.
+The historical config specifies one `ml.g6e.4xlarge`, 300 GiB, smoke 10/full 80 steps, and `MaxRuntimeInSeconds: 10800`. That limit does not cap total cost including termination, uploads, MLflow, S3, and other resources.
 
 ### 6. Smoke/Full Gate
 
-A successful smoke Job alone is insufficient. Require all of the following:
-
-- terminal Training Job status is `Completed`;
-- CloudWatch contains no source text, entity values, mappings, or raw completions;
-- MLflow parameters and tags contain only non-sensitive configuration;
-- aggregate metrics and dataset hashes were exported;
-- the adapter inventory contains only allowed files;
-- leakage and round-trip evaluation completed without errors.
+Before re-enabling execution, validate the supported image, dependencies, and MLflow pairing. Then inspect smoke terminal status, dataset hashes, metrics, and adapter files. Review logs and MLflow for source text, entity values, mappings, or raw completions. **An artifact filename allowlist does not prove safe contents.** This procedure does not imply an automated PII scanner has been implemented.
 
 ### 7. Export Aggregate Results
 
-The training entry point is designed to produce:
-
-| File | Contents |
+| File | Meaning |
 |---|---|
-| `resolved-config.json` | resolved environment and step count |
-| `dependency-versions.json` | pinned dependency versions |
-| `baseline-metrics.json` | aggregate base-model evaluation |
-| `tuned-metrics.json` | aggregate adapter evaluation |
-| `run-summary.json` | timing, peak GPU memory, aggregate metrics, adapter inventory |
+| `dataset-manifest.json` | generator settings, counts, split hashes |
+| `resolved-config.json` | actual settings, environment, steps |
+| `dependency-versions.json` | observed installed versions; not a complete lock guarantee |
+| `baseline-metrics.json`, `tuned-metrics.json` | aggregate evaluation on the same test split |
+| `run-summary.json` | phase timings, metrics, adapter inventory |
+| `adapter/adapter_config.json`, `adapter/adapter_model.safetensors` | final adapters preserved in MLflow |
 
-Raw prediction JSONL and token mappings are not publishable result artifacts.
+SageMaker `/opt/ml/model` output and MLflow artifacts have different storage locations. Download and verify required results before deleting the bucket or App. Review adapter contents and access permissions before sharing them. Raw predictions, token mappings, and all intermediate checkpoints are not exported.
+
+`peak_gpu_memory_bytes` is the default CUDA device's PyTorch allocated-memory peak after a reset following model loading. It is not total GPU memory, load-time peak, or a sum across devices. No training results exist to justify publishing performance gains or a cost comparison.
 
 ### 8. Teardown and Verification
 
@@ -123,54 +101,59 @@ Raw prediction JSONL and token mappings are not publishable result artifacts.
 ./launch/aws/verify_cleanup.sh
 ```
 
-Inventory-driven teardown removes the MLflow App, Unified Studio project, Training Job log streams, versioned S3 objects and bucket, and IAM inline policies and roles. Verification rechecks the App, project, bucket, roles, EKS clusters, EC2 instances, and tagged resources; it fails if anything remains.
+Check and stop recorded training jobs first. When training records exist, teardown stops again to prevent deleting their artifact bucket before export. Only after separately preserving required SageMaker/MLflow artifacts should you proceed with:
+
+```bash
+./launch/aws/teardown.sh results/resource-inventory.json \
+  --discard-training-artifacts
+```
+
+This flag does not perform a backup. Shared teardown also stops while owned EKS resources remain. Complete verified export/deletion through the EKS path or the manual recovery below first. It then cleans up confirmed-owned App, project, S3, and IAM resources. AWS `AccessDenied`, transport failures, deletion timeouts, and per-object S3 errors must not count as absence. Old inventories without ownership evidence require administrator reconciliation. This tool does not delete the shared TrainingJobs log group or unrelated resources.
+
+Remaining or unknown states fail verification. Success is scoped to the queried account, Region, inventory, and checks; it does not prove an empty AWS account. Incomplete cleanup or a retained cluster can continue incurring charges.
 
 ## EKS + MLflow Comparison Path
 
-The Kubernetes entry point uses the same source and dataset:
+After the runtime upgrade, entry points are `./launch/eks/run.sh smoke` and, after separate review, `./launch/eks/run.sh full`. Today they stop at the end-of-patch guard.
 
-```bash
-./launch/eks/run.sh smoke
-```
-
-Only after smoke approval:
-
-```bash
-./launch/eks/run.sh full
-```
-
-| Item | Implementation |
+| Item | Example contract and limitation |
 |---|---|
-| Cluster | ephemeral Amazon EKS `1.36` |
-| GPU node | one `g6e.4xlarge` with encrypted 300 GiB gp3 |
-| GPU plugin | NVIDIA device plugin `0.20.0` |
-| MLflow | namespace-internal ClusterIP, not public |
-| Data | the same S3 objects through four-hour presigned URLs |
-| Job retries | `backoffLimit: 0` |
-| Deadline | `activeDeadlineSeconds: 10800` |
-| Export | build aggregate JSON inside the MLflow Pod, then `kubectl cp` |
-| Shutdown | a shell trap deletes the cluster on success, failure, or interrupt |
+| Cluster | template EKS `1.36`, one `g6e.4xlarge`; recheck regional availability and support |
+| GPU plugin | `0.20.0` pin; validate with the new DLC, AMI, and driver |
+| kubeconfig | per-run file and explicit context; reject preexisting cluster collisions |
+| MLflow | ClusterIP, SQLite, `emptyDir`; no application authentication, durable storage, or tenant isolation |
+| Data | presigned URLs request four hours; earlier STS credential expiry shortens validity |
+| Job | `backoffLimit: 0`, `activeDeadlineSeconds: 10800`; not guaranteed reclamation of all resources within three hours during failures |
+| Export | archive eight artifacts and SHA-256 values from exactly one completed run for the selected mode |
+| Shutdown | clean up the owned cluster after export/hash verification; an export failure can retain it for recovery |
 
-The EKS path must also keep source text and raw completions out of stdout. The `run.sh` log tail assumes the training code emits only safety-reviewed aggregate logs.
+Training and MLflow Pod `emptyDir` data disappears with Pod or cluster deletion. The per-run `results/eks-<mode>.<suffix>/mlflow-export-<mode>.tar.gz` and export receipt are local files, not an off-host backup. Copy them to separate approved storage and verify cleanup.
 
-> **Recorded result**: the EKS GPU cluster and Job were also not executed during the September 1 validation.
+A failed training run with no completed run/export cannot meet the automatic deletion condition. Reconcile the private inventory's account, cluster ARN, creation time, ownership tags, and stack IDs with AWS; recover or explicitly discard required results, then delete **that owned cluster only** with `eksctl delete cluster --name ... --region ... --wait`. Partial creation or lost responses also require manual reconciliation. Run `verify_cleanup.sh` afterward and investigate resources retained by stack deletion. Do not fabricate ownership flags to bypass verification.
 
 ## Observed Errors and Stop Conditions
 
-| Condition | Observation or Guard | Handling |
-|---|---|---|
-| MLflow App status | `Created`/`Updated` are ready; `Deleted` is terminal | do not wait for a nonexistent App `ACTIVE` status |
-| custom project tags | a domain can reject custom resource tags | remove prohibited project tags |
-| project membership | a caller without membership cannot manage the project | assign the role group profile as `PROJECT_OWNER` at creation |
-| Service Quotas throttling | repeated queries can be throttled | adaptive retry with bounded attempts |
-| partial creation failure | an error can occur after some resources exist | update inventory at each stage and trap teardown |
-| remaining project | deletion is impossible without owner authorization | stop before GPU creation and require domain-owner action |
+| Condition | Handling |
+|---|---|
+| DLC reached end of patch | block creation/training; upgrade the runtime cohort |
+| wrong config path | read config from the source bundle |
+| name collision or lost creation response | refuse automatic deletion without ownership |
+| missing or failed export | do not declare success before verifying adapters and aggregate files |
+| query authorization error or deletion timeout | record unknown/failure |
+| historical project membership omission | reconcile with domain administrator and project owner |
 
 ## Choosing a Path
 
-- Choose SageMaker AI when you want managed Training Job and current managed MLflow App lifecycles.
-- Choose EKS when Kubernetes policy, scheduling, and shared observability outweigh direct cluster and MLflow operations.
-- For a comparison, freeze configuration and dataset hashes and vary only the execution environment.
+SageMaker reduces Training Job and MLflow operational work, while artifact retention, permissions, and experiment cleanup still require action. EKS provides Kubernetes control and adds responsibility for clusters, GPU plugins, and MLflow storage. Record configuration, data hashes, model revision, actual dependencies, and GPU environment together when comparing them.
+
+## Primary Sources
+
+- [AWS DLC PyTorch 2.8 catalog and patch end](https://github.com/aws/deep-learning-containers/blob/main/docs/src/data/pytorch-training/2.8-gpu-sagemaker.yml)
+- [SageMaker Training Toolkit code directory](https://github.com/aws/sagemaker-training-toolkit/blob/master/src/sagemaker_training/entry_point.py)
+- [MLflow App setup](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow-app-setup.html)
+- [SageMaker MLflow versions](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow.html)
+- [S3 presigned URL expiration](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html)
+- [Kubernetes Job failure and termination](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
 
 Previous: [Part 2 — Synthetic PII data and tokenization](02-pii-data-tokenization.md)
 

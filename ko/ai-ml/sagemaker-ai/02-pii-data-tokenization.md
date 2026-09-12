@@ -1,104 +1,152 @@
 # Part 2: 합성 PII 데이터와 결정론적 토큰화
 
-> **마지막 업데이트**: 2026년 9월 2일
+> 구현·문서 검토: 2026-09-12. Generator 1.0.0 / seed 42의 기존 데이터 해시는 유지했습니다.
 
-## 학습 계약
+## 추출 후보와 치환을 분리
 
-모델 프롬프트는 문서에서 허용된 PII 유형을 찾아 **원문 그대로** 반환하도록 제한합니다. 출력 형식은 한 줄당 하나의 `TYPE<TAB>ORIGINAL`입니다.
+모델 출력 계약은 한 줄당 `TYPE<TAB>ORIGINAL`입니다.
+다음은 합성 예시이며 모델이 문서를 직접 다시 작성하지 않습니다.
 
 ```text
 PERSON	김가상
 EMAIL	synthetic.ko.408@example.com
 ```
 
-이 값은 저장소의 `review-sample.jsonl`에서 가져온 완전 합성 예시입니다. 숫자형 식별자는 문서 예시에서 노출하지 않습니다.
+Parser는 허용 유형과 source 일치를 검사합니다. 이 검사는 값이 실제 PII인지,
+유형이 맞는지 또는 모델이 모든 PII를 찾았는지를 증명하지 않습니다.
+최종 치환과 원문 표기 복원은 별도 코드가 담당하며 token mapping은 민감한 값으로 취급합니다.
 
-모델 출력으로 바로 원문을 수정하지 않는 이유는 세 가지입니다.
+## 데이터와 평가 범위
 
-- 모델이 존재하지 않는 값을 만들면 source-containment 검사에서 제거할 수 있습니다.
-- 원문 위치와 길이를 기준으로 치환 순서를 결정해 중첩·부분 일치를 제어할 수 있습니다.
-- token mapping을 메모리 안에서만 유지하고 로그에는 남기지 않을 수 있습니다.
+총 2,200개 문서이며 split별 한국어/영어 비율은 80/20입니다.
+구현 수정 후 다시 생성해 기존 manifest 해시가 유지되는 것을 확인했습니다.
 
-## 데이터셋 구성
+| Split | Records | Korean | English | SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| train | 1,600 | 1,280 | 320 | `b98429fef0b103f24e8eaded069cbd2f6def5fbf8c083a5c7baf366c9fc1d21a` |
+| validation | 200 | 160 | 40 | `25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820` |
+| test | 400 | 320 | 80 | `6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21` |
 
-생성기 버전은 `1.0.0`, seed는 `42`입니다.
+유형은 PERSON, RRN, DOB, REL, ADDRESS, PHONE, EMAIL, ACCOUNT, CARD입니다.
+이는 이 실험의 annotation 정책입니다. 관계 단어는 positive에 포함되고 회사
+대표번호 등 일부 문자열은 negative 문서에 포함됩니다.
+모든 업무에 통용되는 민감도 분류라고 해석하지 않습니다.
 
-| Split | 레코드 | 한국어 | 영어 | SHA-256 |
-|---|---:|---:|---:|---|
-| Train | 1,600 | 1,280 | 320 | `b98429fef0b103f24e8eaded069cbd2f6def5fbf8c083a5c7baf366c9fc1d21a` |
-| Validation | 200 | 160 | 40 | `25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820` |
-| Test | 400 | 320 | 80 | `6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21` |
-| **합계** | **2,200** | **1,760 (80%)** | **440 (20%)** | split별 고정 |
+생성기는 정해진 template·작은 이름 목록·합성 숫자를 사용합니다.
+RRN/CARD는 예제의 checksum 함수에 실패하도록 만들지만 이것만으로 공식 유효성이나
+미할당을 증명하지는 않습니다. PHONE은 합성 placeholder이며 국가별 번호 형식이나
+공식 예약 대역을 검증한 것이 아닙니다. 고객 자료를 사용하지 않았다는 사실과
+실제 식별자 검증은 다릅니다.
 
-동일 실험을 재현하려면 레코드 수뿐 아니라 세 split 해시가 모두 일치해야 합니다.
+Train/validation/test의 record/hash가 다르더라도 template·이름·표현은 공유될 수 있습니다.
+이 데이터의 성능을 실제 업무나 unseen entity/template 일반화 성능으로 제시하지 않습니다.
+실제 평가에는 별도 holdout과 annotation 검토가 필요합니다.
 
-## 9개 엔터티 유형
+## 원문 표기를 복원하는 치환 파이프라인
 
-| 유형 | 의미 | 합성 패턴 예 |
-|---|---|---|
-| `PERSON` | 사람 이름 | `김가상`, `Taylor Sample` |
-| `RRN` | 주민등록번호 형태의 무효 체크섬 값 | 실제 값은 문서에 게시하지 않음 |
-| `DOB` | 생년월일 | 합성 날짜 |
-| `REL` | 가족·신청인 관계 | `보호자`, `guardian` |
-| `ADDRESS` | 주소 | 가상 도시와 예시 주소 |
-| `PHONE` | 전화번호 | 예약·가상 번호 대역 |
-| `EMAIL` | 이메일 | `synthetic.*@example.com` |
-| `ACCOUNT` | 계좌번호 형태 | 합성 숫자, 실제 계좌 아님 |
-| `CARD` | 카드번호 형태 | Luhn 검사를 의도적으로 통과하지 않음 |
+수정한 구현은 다음 순서를 따릅니다.
 
-빈 PII 문서도 포함해 모델이 항상 무언가를 출력하는 과잉 추출을 측정합니다. 한국어 데이터에는 OCR 공백, 구분자 변형, NFD 문자열도 포함됩니다.
-
-## 결정론적 치환 파이프라인
-
-`src/pii_tokens.py`의 순서는 다음과 같습니다.
-
-1. source text와 모델 출력을 NFC로 정규화합니다.
-2. `<think>...</think>` 블록을 제거하고 tab이 있는 행만 읽습니다.
-3. 유형을 whitelist와 대조하고 빈 값·중복을 제거합니다.
-4. 값 또는 허용 변형이 source text 안에 실제로 존재하는지 확인합니다.
-5. 원문에서 처음 나타난 위치, 긴 문자열 우선 순서로 엔터티를 정렬합니다.
-6. 유형별 counter를 사용해 `[PERSON_1]`, `[EMAIL_1]` 같은 토큰을 만듭니다.
-7. 원본 표기와 제한된 변형을 하나의 정규식으로 합쳐 한 번에 치환합니다.
-8. mapping으로 다시 조립했을 때 NFC 원문과 동일한지 round-trip을 검사합니다.
-
-예를 들면 다음과 같습니다.
+1. Source와 값을 NFC로 정규화하고 type/value의 바깥 공백을 정리합니다.
+2. 완결된 `<think>...</think>` 블록을 제거하고 tab이 있는 행에서 허용 유형과 비어 있지 않은 값을 읽습니다.
+3. 중복 후보를 제거하고 literal 또는 제한된 variant가 source에 실제로 일치하는지 확인합니다.
+   숫자 경계는 parser와 치환에서 같은 규칙을 사용합니다.
+4. Literal prediction은 다른 prediction이 만든 variant보다 우선합니다.
+   같은 값에 여러 type이 있으면 고정 우선순위를 적용하며 의미적 정답을 추론하지는 않습니다.
+5. 긴 pattern 우선의 정규식으로 source를 한 번 스캔합니다.
+6. **실제 일치한 NFC 표기와 type별**로 source 순서에 따라 token을 할당합니다.
+   같은 표기는 재사용하고, 공백·구분자가 다른 표기는 복원을 위해 별도 token을 사용합니다.
+7. Source에 이미 있는 token 모양 문자열은 새 token 이름에서 제외합니다.
+8. Mapping에는 **실제로 가린 source 표기**를 저장하고,
+   `spans`에는 NFC source의 반열린 구간 `[start, end)`을 기록합니다.
 
 ```text
-입력:  성명 김가상 / 이메일 synthetic.ko.408@example.com
-출력:  성명 [PERSON_1] / 이메일 [EMAIL_1]
+Source: 김가상 / 김 가 상 / [PERSON_1]
+Candidate: PERSON	김가상
+Masked: [PERSON_2] / [PERSON_3] / [PERSON_1]
 ```
 
-`PERSON`의 공백·tab 변형, `RRN`·전화·카드·계좌·날짜의 제한된 구분자 변형만 허용합니다. 임의의 fuzzy matching은 오탐과 과잉 치환을 키우므로 사용하지 않습니다.
+기존 marker는 그대로 남고 두 표기는 각각 복원됩니다.
+Token 번호가 항상 1부터 시작하는 것은 아니며, token 일치가 동일한 실세계 인물을
+판별한다는 뜻도 아닙니다.
 
-## 평가 지표
+`PERSON` variant는 공백을 제거한 2–6문자 이름의 제한된 공백/tab/줄바꿈 형태입니다.
+숫자형 variant는 정해진 숫자·공백·구분자만 정규화합니다. 임의의 문자를 제거해
+숫자만 맞추지 않습니다. Source에 없는 `alias123456`을 ACCOUNT 후보로 주었다고
+source의 `123456`을 찾아 통과시키지 않습니다. 문자가 포함된 원본 값도 실제
+source에 literal로 있으면 일치할 수 있습니다. 공식 전화/계좌/신분번호 validator는 아닙니다.
 
-| 지표 | 정의 | 실패가 의미하는 것 |
-|---|---|---|
-| entity precision / recall / F1 | `(TYPE, NFC ORIGINAL)` 집합의 TP/FP/FN | 누락 또는 잘못된 추출 |
-| document leakage rate | 치환 후 정답 원문이 하나라도 남은 문서 비율 | 마스킹 실패 |
-| entity leakage rate | 남아 있는 정답 엔터티 비율 | 부분 누출 |
-| over-redaction rate | 정답에 없는 엔터티를 치환한 비율 | 과잉 마스킹 |
-| hallucination rate | TSV처럼 보이지만 source에 없는 행 비율 | 모델 환각 |
-| parse success rate | 출력 계약을 파싱할 수 있는 문서 비율 | 형식 불안정 |
-| deterministic rate | 엔터티 순서를 뒤집어도 같은 결과가 나오는 비율 | 순서 의존 버그 |
-| round-trip rate | mapping으로 복원한 결과가 원문과 같은 비율 | 손실 치환 |
+`reassemble_text`는 알려진 token을 한 번 치환하고 모르는 token은 보존합니다.
+Round-trip 비교는 평가 코드가 수행합니다. NFC 동일성을 검사하므로 원래 NFD byte
+표현까지 동일하다는 의미는 아닙니다.
 
-이 지표 코드는 로컬 테스트를 통과했지만, GPU 학습이 미실행이므로 fine-tuned 모델의 측정값은 아직 없습니다.
+## Placeholder 내용 대신 source 구간으로 누출 확인
 
-## 학습 레코드 형태
+기존 구현은 치환 결과에 정답 original 전체가 남아 있는지만 검사했습니다.
+이는 다음 두 경우에 잘못된 결과를 냈습니다.
 
-각 JSONL 레코드는 `source_text`, source-order `entities`, `target_tsv`를 가집니다. 학습 시에는 system/user prompt와 assistant completion으로 변환하고, completion에만 loss를 적용합니다.
+- 정답 `Alpha Beta` 중 `Alpha`만 가리면 전체 문자열이 없어져 누출이 0으로 나왔습니다.
+- 원문 값이 `PERSON`이면 생성한 `[PERSON_1]` 안에 그 단어가 있어 누출로 오인했습니다.
 
-```text
-System: 허용 유형만 TYPE<TAB>ORIGINAL 형식으로 추출
-User:   합성 문서
-Assistant:
-PERSON	김가상
-EMAIL	synthetic.ko.408@example.com
-```
+수정한 평가는 source에서 찾은 정답 값/허용 variant의 각 구간이 실제 치환 구간의
+합집합으로 **완전히 가려졌는지** 확인합니다. 반복 등장도 모두 확인합니다.
+부분 구간이나 구분자가 남으면 이 보수적인 coverage 지표에서는 미가림으로 셉니다.
+Token 이름의 문자나 숫자는 source 노출로 세지 않습니다.
 
-raw source와 completion은 런타임 입력이며 MLflow parameter/tag로 기록하지 않습니다.
+Gold schema에는 annotation offset이 없으므로 구간은 알려진 값을 source에서
+검색해 추론합니다. 실제 PII를 새로 탐지하는 검사가 아니며 문맥상 민감하지 않은
+동일 문자열도 일치할 수 있습니다. Annotation 정책에 맞게 해석하며 개인정보
+보호의 완전성을 보증하는 값으로 사용하지 않습니다.
 
-이전: [Part 1 — 플랫폼 아키텍처](01-platform-architecture.md)
+## 평가 지표의 정확한 의미
 
-다음: [Part 3 — SageMaker AI와 MLflow 실행](03-sagemaker-mlflow-execution.md)
+| 결과 필드 | 계산 의미 |
+| --- | --- |
+| entity/per_type precision·recall·F1 | 문서별 정규화 `(TYPE, ORIGINAL)` 집합의 TP/FP/FN 합산 |
+| documents.leak_rate | 정답 구간에 미가림이 있는 문서 / 전체 문서 |
+| entities.leak_rate | 일치 구간 중 미가림이 있는 고유 정답 pair / 고유 정답 pair |
+| entities.over_redaction_rate | 기존 이름을 유지한 **추가 추출 pair 비율**, 즉 FP / predicted pair |
+| entities.hallucination_rate | Source에 일치하지 않는 허용 유형의 비어 있지 않은 TSV row / 해당 row |
+| parse.success_rate | Caller의 parse_success flag가 True인 문서 비율 |
+| tokenization.deterministic_rate | 후보 순서를 뒤집었을 때 masked text·mapping·spans가 같은 비율 |
+| tokenization.round_trip_rate | Mapping 복원 결과가 NFC source와 같은 비율 |
+
+Entity F1은 span-level NER F1이 아닙니다. 문서 안의 같은 pair는 중복 제거하고,
+서로 다른 문서의 같은 값은 별도로 셉니다. Type은 trim/uppercase, 값은 trim/NFC로 비교합니다.
+Variant로 완전히 가려도 model ORIGINAL과 gold 표기가 다르면 FP/FN이 생길 수 있습니다.
+따라서 기존 over_redaction 필드도 실제로 불필요하게 지운 문자 비율과 동일하지 않습니다.
+
+Hallucination은 parse flag와 별도로 source 일치 여부를 계산합니다.
+허용되지 않은 type이나 일반 prose는 해당 row 분모에 포함되지 않습니다.
+현재 inference helper는 빈 출력 또는 하나 이상의 source-matching row가 있으면
+parse flag를 True로 설정하므로 **모든 행이 완전한 형식이라는 증거가 아닙니다**.
+평가기는 False flag의 후보를 entity 예측에서 제외합니다.
+
+분모가 0이면 rate는 0이며 빈 entity 집합의 F1도 이 구현에서는 0입니다.
+Duplicate record/prediction ID, 평가 대상에 없는 prediction ID, source와 맞지 않는
+gold annotation은 오류로 거부합니다. 오류 메시지에 raw entity 값을 넣지 않습니다.
+
+## 학습 레코드와 검증 범위
+
+JSONL은 `source_text`, `entities`, `target_tsv`를 가지며 loader는 system/user prompt와
+assistant completion으로 변환합니다. Trainer는 completion-only loss를 요청하지만
+실제 tokenizer/template·길이 제한·loss mask와 GPU 실행은 별도로 검증해야 합니다.
+원문·completion·mapping을 일반 로그나 MLflow parameter/tag에 기록하지 않는 정책을 유지합니다.
+
+기존 placeholder 충돌, 표기 복원 손실, 숫자 variant 오허용과 평가 오류를 재현한 뒤 수정했습니다.
+로컬 테스트 50개가 통과했고, 기존 2,200개 정답을 예측으로 입력한 oracle 점검에서
+해시·결정론·복원·coverage를 확인했습니다.
+**Oracle 점검은 모델 예측 결과나 fine-tuned F1 측정이 아닙니다.**
+GPU 학습이나 실제 고객 PII 처리는 수행하지 않았습니다.
+
+## 참고 자료
+
+- [Synthetic generator](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/data/generate_dataset.py)
+- [Dataset manifest](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/data/dataset-manifest.json)
+- [Parser and replacement](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/src/pii_tokens.py)
+- [Evaluation implementation](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/src/metrics.py)
+
+[Previous: Platform architecture](01-platform-architecture.md)
+
+[Next: SageMaker / MLflow execution](03-sagemaker-mlflow-execution.md)
+
+[Quiz](../../quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)

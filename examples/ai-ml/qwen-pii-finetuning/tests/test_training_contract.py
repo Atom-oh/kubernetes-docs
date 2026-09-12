@@ -4,6 +4,7 @@ from src.train import (
     adapter_file_inventory,
     build_resolved_config,
     format_training_text,
+    log_adapter_artifacts,
 )
 
 
@@ -53,3 +54,21 @@ def test_adapter_inventory_is_stable_and_excludes_other_artifacts(tmp_path):
         {"name": "adapter_config.json", "bytes": 2},
         {"name": "adapter_model.safetensors", "bytes": 7},
     ]
+
+
+def test_adapter_weights_are_logged_before_ephemeral_storage_is_deleted(tmp_path):
+    from unittest.mock import Mock
+
+    (tmp_path / "adapter_model.safetensors").write_bytes(b"adapter")
+    (tmp_path / "adapter_config.json").write_text("{}")
+    (tmp_path / "raw-predictions.jsonl").write_text("private")
+    mlflow = Mock()
+    log_adapter_artifacts(mlflow, tmp_path)
+    assert [call.args[0] for call in mlflow.log_artifact.call_args_list] == [
+        str(tmp_path / "adapter_config.json"),
+        str(tmp_path / "adapter_model.safetensors"),
+    ]
+    assert all(
+        call.kwargs == {"artifact_path": "adapter"}
+        for call in mlflow.log_artifact.call_args_list
+    )

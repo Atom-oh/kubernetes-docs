@@ -18,6 +18,7 @@ from src.dataset import (
 )
 from src.metrics import evaluate_predictions
 from src.pii_tokens import THINK_PATTERN, VALID_TYPES, parse_tsv
+from src.runtime_contract import require_supported_baseline
 
 
 DEPENDENCIES = (
@@ -68,6 +69,15 @@ def adapter_file_inventory(output_dir: Path) -> list[dict]:
         for path in sorted(Path(output_dir).rglob("*"), key=lambda item: item.name)
         if path.is_file() and path.name in allowed
     ]
+
+
+def log_adapter_artifacts(mlflow, output_dir: Path) -> None:
+    """Preserve final adapters; never upload raw predictions or checkpoints."""
+    for name in ("adapter_config.json", "adapter_model.safetensors"):
+        path = Path(output_dir) / name
+        if not path.is_file() or path.is_symlink():
+            raise ValueError(f"Expected a regular final adapter file: {name}")
+        mlflow.log_artifact(str(path), artifact_path="adapter")
 
 
 def _completion_is_parseable(content: str, source_text: str) -> bool:
@@ -173,6 +183,7 @@ def _write_json(path: Path, value: dict) -> None:
 
 
 def run_training(args: argparse.Namespace) -> None:
+    require_supported_baseline()
     import mlflow
     import torch
     from peft import LoraConfig, prepare_model_for_kbit_training
@@ -328,6 +339,7 @@ def run_training(args: argparse.Namespace) -> None:
         train_result = trainer.train()
         training_seconds = time.monotonic() - train_started
         trainer.save_model(str(output_dir))
+        log_adapter_artifacts(mlflow, output_dir)
 
         trainer.model.config.use_cache = True
         tuned_started = time.monotonic()

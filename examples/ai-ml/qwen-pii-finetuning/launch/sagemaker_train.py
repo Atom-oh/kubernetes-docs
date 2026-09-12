@@ -1,16 +1,38 @@
 """Submit and monitor the SageMaker AI Qwen PII training job."""
 
 import argparse
+import hashlib
 import json
+import os
+import re
+import signal
 import sys
 from datetime import date, datetime
 from pathlib import Path
 
 import yaml
 
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from src.runtime_contract import require_supported_baseline
+
 
 DLC_ACCOUNT = "763104351884"
 DLC_TAG = "2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker"
+
+
+def training_job_name(experiment_id: str, mode: str) -> str:
+    if mode not in {"smoke", "full"} or not re.fullmatch(
+        r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?", experiment_id
+    ):
+        raise ValueError("Invalid experiment ID or mode")
+    name = f"{experiment_id}-{mode}"
+    if len(name) <= 63:
+        return name
+    digest = hashlib.sha256(experiment_id.encode()).hexdigest()[:12]
+    prefix = experiment_id[: 63 - len(digest) - len(mode) - 2].rstrip("-")
+    return f"{prefix}-{digest}-{mode}"
 
 
 def _image_uri(region: str) -> str:
@@ -37,7 +59,7 @@ def build_training_job_request(
         if mode == "smoke"
         else config["training"]["max_steps"]
     )
-    job_name = f"{experiment_id}-{mode}"[:63].rstrip("-")
+    job_name = training_job_name(experiment_id, mode)
     dataset_root = "/opt/ml/input/data/dataset"
     return {
         "TrainingJobName": job_name,
@@ -78,7 +100,7 @@ def build_training_job_request(
         },
         "EnableManagedSpotTraining": False,
         "HyperParameters": {
-            "config": f"{dataset_root}/experiment.yaml",
+            "config": "/opt/ml/code/config/experiment.yaml",
             "train-jsonl": f"{dataset_root}/train.jsonl",
             "validation-jsonl": f"{dataset_root}/validation.jsonl",
             "test-jsonl": f"{dataset_root}/test.jsonl",
@@ -133,41 +155,87 @@ def _sanitized_description(description: dict) -> dict:
     }
 
 
-def submit_and_wait(request: dict, region: str) -> dict:
-    """Submit one training job and return its terminal description."""
+def _write_journal(path: Path, value: dict, *, create: bool = False) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    target = path if create else path.with_suffix(".tmp")
+    flags = os.O_WRONLY | os.O_CREAT | (os.O_EXCL if create else os.O_TRUNC)
+    with os.fdopen(os.open(target, flags, 0o600), "w", encoding="utf-8") as stream:
+        stream.write(json.dumps(value, indent=2, sort_keys=True) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    if not create:
+        target.replace(path)
+
+
+def submit_and_wait(
+    request: dict, region: str, *, journal_path: Path, client=None
+) -> dict:
+    """Record intent before submission; stop confirmed new jobs on monitor failure.
+
+    A requested stop is asynchronous. Host loss/SIGKILL cannot run handlers.
+    The journal must be reconciled with DescribeTrainingJob before any retry.
+    """
     import boto3
     from botocore.config import Config
     from botocore.exceptions import WaiterError
 
-    client = boto3.Session(region_name=region).client(
-        "sagemaker",
-        config=Config(
-            retries={"total_max_attempts": 5, "mode": "adaptive"},
-            connect_timeout=10,
-            read_timeout=60,
-        ),
-    )
-    client.create_training_job(**request)
-    waiter = client.get_waiter("training_job_completed_or_stopped")
+    if client is None:
+        require_supported_baseline()
+        client = boto3.Session(region_name=region).client(
+            "sagemaker",
+            config=Config(
+                retries={"total_max_attempts": 5, "mode": "adaptive"},
+                connect_timeout=10,
+                read_timeout=60,
+            ),
+        )
+    journal = {
+        "training_job_name": request["TrainingJobName"],
+        "region": region,
+        "state": "submitting",
+    }
+    _write_journal(journal_path, journal, create=True)
     try:
-        waiter.wait(
-            TrainingJobName=request["TrainingJobName"],
-            WaiterConfig={"Delay": 30, "MaxAttempts": 370},
-        )
-    except WaiterError:
-        description = client.describe_training_job(
-            TrainingJobName=request["TrainingJobName"]
-        )
-        if description["TrainingJobStatus"] not in {
-            "Completed",
-            "Failed",
-            "Stopped",
-        }:
-            raise
-        return description
-    return client.describe_training_job(
-        TrainingJobName=request["TrainingJobName"]
-    )
+        client.create_training_job(**request)
+    except BaseException:
+        # A lost response may hide successful creation; do not stop a name
+        # that could refer to someone else's preexisting job.
+        journal["state"] = "submission_unknown"
+        _write_journal(journal_path, journal)
+        raise
+    try:
+        journal["state"] = "submitted"
+        _write_journal(journal_path, journal)
+        waiter = client.get_waiter("training_job_completed_or_stopped")
+        try:
+            waiter.wait(
+                TrainingJobName=request["TrainingJobName"],
+                WaiterConfig={"Delay": 30, "MaxAttempts": 370},
+            )
+        except WaiterError:
+            description = client.describe_training_job(
+                TrainingJobName=request["TrainingJobName"]
+            )
+            if description["TrainingJobStatus"] not in {
+                "Completed", "Failed", "Stopped"
+            }:
+                raise
+        else:
+            description = client.describe_training_job(
+                TrainingJobName=request["TrainingJobName"]
+            )
+    except BaseException:
+        try:
+            client.stop_training_job(TrainingJobName=request["TrainingJobName"])
+            journal["state"] = "stop_requested"
+        except Exception as error:
+            journal["state"] = "stop_unconfirmed"
+            journal["error_type"] = type(error).__name__
+        _write_journal(journal_path, journal)
+        raise
+    journal["state"] = description["TrainingJobStatus"]
+    _write_journal(journal_path, journal)
+    return description
 
 
 def parse_args() -> argparse.Namespace:
@@ -182,18 +250,37 @@ def parse_args() -> argparse.Namespace:
         / "experiment.yaml",
     )
     parser.add_argument("--source-s3-uri")
+    parser.add_argument(
+        "--execute", action="store_true",
+        help="Submit the billable job. Without this flag only write its request.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    if args.execute:
+        require_supported_baseline()
     inventory = json.loads(args.inventory.read_text(encoding="utf-8"))
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     source_s3_uri = args.source_s3_uri or inventory["source_s3_uri"]
     request = build_training_job_request(
         config, inventory, args.mode, source_s3_uri
     )
-    description = submit_and_wait(request, inventory["region"])
+    request_path = args.inventory.parent / f"{request['TrainingJobName']}-request.json"
+    _write_journal(request_path, request)
+    if not args.execute:
+        print(f"Request written to {request_path}; no job submitted.")
+        return 0
+    # Python's default SIGTERM exits without running the monitoring handler.
+    def interrupted(_signum, _frame):
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGTERM, interrupted)
+    description = submit_and_wait(
+        request, inventory["region"],
+        journal_path=args.inventory.parent / f"{request['TrainingJobName']}-job.json",
+    )
     result_path = (
         Path(__file__).resolve().parents[1]
         / "results"

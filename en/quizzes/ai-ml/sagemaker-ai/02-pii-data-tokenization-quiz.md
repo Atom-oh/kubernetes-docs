@@ -2,76 +2,86 @@
 
 ## Multiple Choice Questions
 
-1. What is the model output contract?
-   - A) Free-form Markdown
-   - B) A JSON object
-   - C) One `TYPE<TAB>ORIGINAL` row per entity
-   - D) The final masked document
+1. What is the model output contract and its limit?
+
+   - A) Always generate a correct anonymous document
+   - B) Every source string is PII
+   - C) Candidate TYPE/TAB/ORIGINAL rows; evaluate omissions/misclassification separately
+   - D) Return project membership
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C**
 
-Each allowed type and exact source value are separated by a tab.
+Source matching establishes occurrence, not semantic correctness or complete detection.
+
 </details>
 
-2. What is the purpose of source-containment validation?
-   - A) Accept invented values
-   - B) Reject hallucinated values absent from the source
-   - C) Compress the dataset
-   - D) Measure GPU memory
+2. How are differently spaced names and a preexisting [PERSON_1] handled?
+
+   - A) Overwrite every spelling with one mapping value
+   - B) Use reversible per-spelling tokens and avoid existing marker names
+   - C) Always restore the old marker as a new name
+   - D) Arbitrarily shorten the source
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-A value or allowed variant must occur in the source before replacement.
+Identical type/spelling reuses a token; different spellings get separate tokens mapped to actual source text.
+
 </details>
 
-3. What are the dataset splits?
-   - A) 1,600 / 200 / 400
-   - B) 2,000 / 100 / 100
-   - C) 1,100 / 550 / 550
-   - D) 400 / 200 / 1,600
+3. Which statement about splits and validation scope is correct?
+
+   - A) There are 1,600/200/400 records; templates/names may be shared across splits
+   - B) Different hashes prove real-workload generalization
+   - C) Checksum failure proves official non-assignment
+   - D) Every PHONE is an officially reserved number
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: A**
 
-Train/validation/test contain 1,600/200/400 records, for 2,200 total.
+Existing generator-1.0.0 hashes are retained; distinguish synthetic-template tests from real-workload evaluation.
+
 </details>
 
-4. Which check belongs to deterministic tokenization?
-   - A) Reversed entity order must produce a different result
-   - B) Mapping-based restoration must reproduce the source
-   - C) Unlimited fuzzy matching
-   - D) Logging token mappings as MLflow tags
+4. How does corrected leakage evaluation handle masking only Alpha in gold Alpha Beta?
+
+   - A) Always report zero because the full string disappeared
+   - B) Detect an uncovered part of the gold source span
+   - C) Search only placeholder names
+   - D) Override leakage to zero after a successful round trip
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-Round-trip validation detects lossy replacement.
+It checks complete source-span coverage by the union of replacements. Restoration and complete detection are separate metrics.
+
 </details>
 
-5. Why is there no fine-tuned F1 result?
-   - A) No F1 implementation exists
-   - B) No test set exists
-   - C) GPU training and tuned evaluation were not executed
-   - D) Only one entity type exists
+5. What does the 2,200-record oracle check using answer TSV establish?
+
+   - A) Measured fine-tuned model F1
+   - B) GPU throughput
+   - C) Evaluator/restoration/hash sanity, not model-output quality
+   - D) Guaranteed detection of all real PII
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C**
 
-The metric code was validated, but no tuned run was produced.
+Fifty local tests and the oracle check passed; no GPU training or fine-tuned evaluation ran.
+
 </details>
 
 ---
 
-[Return to learning materials](../../../ai-ml/sagemaker-ai/02-pii-data-tokenization.md)
+[Return to Learning Materials](../../../ai-ml/sagemaker-ai/02-pii-data-tokenization.md)

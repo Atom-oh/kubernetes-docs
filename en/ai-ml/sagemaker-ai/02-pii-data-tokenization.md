@@ -1,104 +1,161 @@
 # Part 2: Synthetic PII Data and Deterministic Tokenization
 
-> **Last Updated**: September 2, 2026
+> Implementation and documentation reviewed: 2026-09-12. Generator 1.0.0, seed 42 and existing dataset hashes are preserved.
 
-## Training Contract
+## Extraction is separate from replacement
 
-The prompt restricts the model to finding allowed PII types and copying each value **exactly as it appears** in the document. The output contract is one `TYPE<TAB>ORIGINAL` row per entity.
+The model emits candidate `TYPE<TAB>ORIGINAL` rows:
 
 ```text
 PERSON	Taylor Sample
 EMAIL	synthetic.en.1494@example.com
 ```
 
-These are fully synthetic values from the repository's `review-sample.jsonl`. Numeric identifiers are deliberately omitted from the published example.
+These are synthetic examples. The model does not edit the source document.
+Type and source-match checks reject some invalid candidates, but do not prove
+that a value is PII, its type is correct, or every PII entity was found.
+Treat the replacement mapping as sensitive.
 
-Model output is not allowed to edit the document directly:
+## Dataset and evaluation scope
 
-- A value invented by the model can be rejected by source-containment validation.
-- Source position and string length determine replacement order, controlling overlaps and partial matches.
-- The token mapping can remain in memory instead of being logged.
-
-## Dataset Composition
-
-The generator version is `1.0.0` and the seed is `42`.
+The dataset has 2,200 records with an 80/20 Korean/English split in each partition.
+Regeneration after the implementation changes preserved all manifest hashes.
 
 | Split | Records | Korean | English | SHA-256 |
-|---|---:|---:|---:|---|
-| Train | 1,600 | 1,280 | 320 | `b98429fef0b103f24e8eaded069cbd2f6def5fbf8c083a5c7baf366c9fc1d21a` |
-| Validation | 200 | 160 | 40 | `25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820` |
-| Test | 400 | 320 | 80 | `6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21` |
-| **Total** | **2,200** | **1,760 (80%)** | **440 (20%)** | fixed per split |
+| --- | ---: | ---: | ---: | --- |
+| train | 1,600 | 1,280 | 320 | `b98429fef0b103f24e8eaded069cbd2f6def5fbf8c083a5c7baf366c9fc1d21a` |
+| validation | 200 | 160 | 40 | `25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820` |
+| test | 400 | 320 | 80 | `6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21` |
 
-A reproducible rerun must match all three split hashes, not merely the row counts.
+The nine labels are PERSON, RRN, DOB, REL, ADDRESS, PHONE, EMAIL, ACCOUNT and CARD.
+These are experiment-specific annotation rules. For example, relationship words
+can be positive, while company-switchboard strings appear in negative documents.
+They are not a universal sensitivity taxonomy.
 
-## Nine Entity Types
+The generator uses fixed templates, small name vocabularies and synthetic numbers.
+RRN/CARD values fail the example checksum functions; that alone does not establish
+official identifier validity or non-assignment. PHONE values are synthetic
+placeholders, not validated national formats or official reserved ranges.
+No customer data is used, but that differs from authoritative identifier validation.
 
-| Type | Meaning | Synthetic Pattern |
-|---|---|---|
-| `PERSON` | person name | `Kim Example`, `Taylor Sample` |
-| `RRN` | Korean resident-number shape with an invalid checksum | full values are not published |
-| `DOB` | date of birth | synthetic date |
-| `REL` | family/applicant relationship | `guardian`, `parent` |
-| `ADDRESS` | address | fictional city and example address |
-| `PHONE` | phone number | reserved or fictional range |
-| `EMAIL` | email address | `synthetic.*@example.com` |
-| `ACCOUNT` | account-number shape | synthetic digits, not a real account |
-| `CARD` | card-number shape | deliberately fails the Luhn check |
+Different records and hashes do not ensure independent templates or entity
+vocabularies across train/validation/test. Do not present this dataset as a
+real-workload generalization benchmark. Use separate holdouts and reviewed
+annotations for that purpose.
 
-The dataset also contains documents with no PII so the evaluation can detect a model that always extracts something. Korean examples include OCR spacing, delimiter variants, and NFD strings.
+## Reversible source-spelling replacement
 
-## Deterministic Replacement Pipeline
+The implementation now follows this sequence:
 
-`src/pii_tokens.py` applies these steps:
-
-1. Normalize the source text and completion to NFC.
-2. Remove `<think>...</think>` blocks and read only rows containing a tab.
-3. Enforce the type whitelist and remove empty or duplicate rows.
-4. Confirm that each value or an allowed variant is present in the source text.
-5. Sort entities by first source position, then prefer longer strings.
-6. Create per-type tokens such as `[PERSON_1]` and `[EMAIL_1]`.
-7. Combine original forms and limited variants into one regular expression and replace once.
-8. Reassemble with the in-memory mapping and verify an NFC-identical round trip.
-
-Example:
-
-```text
-Input:  Name Taylor Sample / Email synthetic.en.1494@example.com
-Output: Name [PERSON_1] / Email [EMAIL_1]
-```
-
-Only bounded variants are accepted: spacing/tab variants for `PERSON`, and delimiter variants for RRN-shaped values, phones, cards, accounts, and dates. Unbounded fuzzy matching is avoided because it increases false positives and over-redaction.
-
-## Evaluation Metrics
-
-| Metric | Definition | What Failure Means |
-|---|---|---|
-| entity precision / recall / F1 | TP/FP/FN over `(TYPE, NFC ORIGINAL)` sets | missed or incorrect extraction |
-| document leakage rate | documents retaining at least one expected original value | masking failure |
-| entity leakage rate | expected entities still present after replacement | partial leakage |
-| over-redaction rate | predicted entities absent from the answer set | excessive masking |
-| hallucination rate | TSV-like rows whose values are absent from the source | model hallucination |
-| parse success rate | documents whose output satisfies the parsing contract | unstable format |
-| deterministic rate | identical output when entity order is reversed | order-dependent bug |
-| round-trip rate | restored text equals the original | lossy replacement |
-
-The metric implementation passed local tests, but no fine-tuned measurements exist because GPU training was not executed.
-
-## Training Record Shape
-
-Each JSONL record contains `source_text`, source-ordered `entities`, and `target_tsv`. Training converts it into a system/user prompt and assistant completion, with loss applied only to the completion.
+1. Normalize source/values to NFC and trim outer type/value whitespace.
+2. Remove complete `<think>...</think>` blocks, then read tab-separated allowed types and nonempty values.
+3. Deduplicate candidates and require a literal or limited variant to match the source.
+   Parsing and replacement use the same numeric boundaries.
+4. Prefer literal predictions over variants generated from other predictions.
+   A fixed type priority resolves multiple types for one value; it does not infer semantic truth.
+5. Scan the source once, with longer patterns first.
+6. Assign tokens in actual source order by **type and matched NFC spelling**.
+   Identical spellings reuse a token; different spacing/separators receive separate tokens.
+7. Skip token names already present in the original source.
+8. Store the actual matched spelling in the mapping and record half-open
+   `[start, end)` replacement spans in NFC source coordinates.
 
 ```text
-System: Extract only allowed types as TYPE<TAB>ORIGINAL
-User:   synthetic document
-Assistant:
-PERSON	Taylor Sample
-EMAIL	synthetic.en.1494@example.com
+Source: 김가상 / 김 가 상 / [PERSON_1]
+Candidate: PERSON	김가상
+Masked: [PERSON_2] / [PERSON_3] / [PERSON_1]
 ```
 
-Raw source text and completions are runtime inputs and are never written to MLflow parameters or tags.
+The original marker remains unchanged and each source spelling can be restored.
+Token numbering need not start at one. Token equality is not real-world entity
+identity resolution.
 
-Previous: [Part 1 — Platform architecture](01-platform-architecture.md)
+`PERSON` variants cover limited uniform spacing/tab/newline forms for names of
+2–6 characters after whitespace removal. Numeric variants only normalize the
+permitted digit/whitespace/separator characters. They no longer discard invented
+letters to manufacture a source match: an absent `alias123456` is not accepted
+merely because `123456` occurs in the source. An alphanumeric original can still
+match literally. These rules are not official phone/account/identity validators.
 
-Next: [Part 3 — SageMaker AI and MLflow execution](03-sagemaker-mlflow-execution.md)
+`reassemble_text` performs one replacement pass for known tokens and preserves
+unknown tokens. The evaluator checks round trips. Equality is against NFC source
+text, not byte-identical restoration of an original NFD representation.
+
+## Measure remaining source spans, not placeholder contents
+
+The earlier evaluator searched for complete gold strings in the masked text.
+This produced two incorrect results:
+
+- Masking only `Alpha` in the gold entity `Alpha Beta` removed the complete
+  string and incorrectly reported no leakage.
+- Masking a literal gold value `PERSON` produced `[PERSON_1]`, whose label was
+  incorrectly counted as leaked source text.
+
+The corrected evaluator checks whether the union of actual replacement spans
+fully covers every matched occurrence of each gold value or permitted variant.
+It examines repeated occurrences too. Partial coverage, including an uncovered
+separator, counts as uncovered under this conservative metric. Characters inside
+generated token names are not treated as source exposure.
+
+Gold records have values rather than annotation offsets, so these spans are
+inferred through source matching. This is not new PII detection and can match a
+contextually non-sensitive occurrence of the same string. Interpret coverage
+against the annotation policy, not as a privacy guarantee.
+
+## Exact meanings of the metrics
+
+| Result field | Calculation |
+| --- | --- |
+| entity/per_type precision, recall, F1 | Sum TP/FP/FN over per-document normalized `(TYPE, ORIGINAL)` sets |
+| documents.leak_rate | Documents with an uncovered gold span divided by all documents |
+| entities.leak_rate | Unique gold pairs with any uncovered occurrence divided by unique gold pairs |
+| entities.over_redaction_rate | Legacy field name for **extra predicted-pair rate**: FP / predicted pairs |
+| entities.hallucination_rate | Nonempty allowed-type TSV rows without a source match divided by those rows |
+| parse.success_rate | Fraction of documents whose caller-provided parse_success flag is True |
+| tokenization.deterministic_rate | Fraction with identical masked text, mapping and spans after reversing candidate order |
+| tokenization.round_trip_rate | Fraction restoring to the NFC source |
+
+Entity F1 is not span-level NER F1. Duplicate pairs within a document are removed;
+the same pair in different documents counts separately. Types are trimmed and
+uppercased; values are trimmed and NFC-normalized. A valid variant can mask the
+source completely while differing from the gold's exact spelling and producing
+FP/FN. The legacy over-redaction field therefore does not directly measure
+unnecessarily removed characters.
+
+Hallucination uses source matching independently of the parse flag. Unknown types
+and ordinary prose are outside its row denominator. The current inference helper
+marks an empty output or an output containing at least one usable source-matching
+row as parseable; this is **not strict validation of every output line**.
+The evaluator excludes entity predictions when that flag is False.
+
+Zero denominators return zero, including F1 for empty entity sets. Duplicate
+record/prediction IDs, predictions for unknown records and gold annotations that
+cannot match the source are rejected. Errors do not echo raw entity values.
+
+## Training records and validation
+
+JSONL records contain `source_text`, `entities` and `target_tsv`. The loader
+constructs system/user prompts and assistant completions. The trainer requests
+completion-only loss; validate the actual tokenizer/template, truncation and loss
+mask during execution. Keep source, completions and mappings out of ordinary
+logs and MLflow parameters/tags.
+
+Regression tests reproduced token collisions, lossy variant restoration, numeric
+variant over-acceptance and evaluation errors before the fixes.
+All 50 local tests pass. A 2,200-record ground-truth oracle check also verifies
+hash preservation, determinism, restoration and coverage.
+**Oracle sanity results are not model predictions or fine-tuned F1 measurements.**
+No GPU training or real-customer PII processing was performed.
+
+## References
+
+- [Synthetic generator](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/data/generate_dataset.py)
+- [Dataset manifest](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/data/dataset-manifest.json)
+- [Parser and replacement](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/src/pii_tokens.py)
+- [Evaluation implementation](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/src/metrics.py)
+
+[Previous: Platform architecture](01-platform-architecture.md)
+
+[Next: SageMaker / MLflow execution](03-sagemaker-mlflow-execution.md)
+
+[Quiz](../../quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)

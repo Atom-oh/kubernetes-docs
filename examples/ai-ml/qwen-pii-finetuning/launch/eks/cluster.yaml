@@ -4,6 +4,10 @@ metadata:
   name: ${EXPERIMENT_ID}
   region: ap-northeast-2
   version: "1.36"
+  tags:
+    Experiment: qwen-pii-finetuning
+    ExperimentId: ${BASE_EXPERIMENT_ID}
+    OwnershipToken: ${OWNERSHIP_TOKEN}
 iam:
   withOIDC: true
 managedNodeGroups:
@@ -21,4 +25,5 @@ managedNodeGroups:
       workload: qwen-pii-training
     tags:
       Experiment: qwen-pii-finetuning
-      ExperimentId: ${EXPERIMENT_ID}
+      ExperimentId: ${BASE_EXPERIMENT_ID}
+      OwnershipToken: ${OWNERSHIP_TOKEN}

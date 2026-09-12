@@ -7,100 +7,61 @@ export AWS_MAX_ATTEMPTS=10
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PACKAGE_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
+# This pinned cohort is executable only while its upstream patch support is current.
+"${PYTHON:-python3}" "$PACKAGE_ROOT/src/runtime_contract.py" --check-execution
 RESULTS_DIR="$PACKAGE_ROOT/results"
 INVENTORY="$RESULTS_DIR/resource-inventory.json"
 TEARDOWN="$SCRIPT_DIR/teardown.sh"
 REGION=ap-northeast-2
+umask 077
+PYTHON=${PYTHON:-python3}
+HELPER="$SCRIPT_DIR/lifecycle.py"
+# All supplied DataZone IDs and the caller account are validated before mutation.
+ACCOUNT_ID=$("$PYTHON" "$HELPER" inputs)
 TIMESTAMP=$(date -u +%Y%m%d%H%M%S)
-EXPERIMENT_ID=${EXPERIMENT_ID:-qwen-pii-$TIMESTAMP}
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-BUCKET_NAME="sagemaker-qwen-pii-${ACCOUNT_ID}-${TIMESTAMP}"
+SUFFIX=$("$PYTHON" -c 'import uuid; print(uuid.uuid4().hex[:12])')
+EXPERIMENT_ID=${EXPERIMENT_ID:-qwen-pii-$TIMESTAMP-$SUFFIX}
+if [[ ! "$EXPERIMENT_ID" =~ ^qwen-pii-[0-9A-Za-z-]+$ || ${#EXPERIMENT_ID} -gt 50 ]]; then
+  printf 'Experiment ID must be qwen-pii-* and at most 50 characters.\n' >&2
+  exit 1
+fi
+BUCKET_NAME="sagemaker-qwen-pii-${ACCOUNT_ID}-${SUFFIX}"
 EXECUTION_ROLE_NAME="${EXPERIMENT_ID}-exec"
 MLFLOW_ROLE_NAME="${EXPERIMENT_ID}-mlflow"
-EXECUTION_ROLE_ARN=""
-MLFLOW_ROLE_ARN=""
-MLFLOW_APP_ARN=""
-UNIFIED_DOMAIN_ID=""
-PROJECT_PROFILE_ID=""
-PROJECT_ID=""
-PROJECT_OWNER_GROUP_ID=""
-CREATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
+UNIFIED_DOMAIN_ID=$DATAZONE_DOMAIN_ID
+PROJECT_PROFILE_ID=$DATAZONE_PROJECT_PROFILE_ID
+PROJECT_OWNER_GROUP_ID=$DATAZONE_OWNER_GROUP_ID
+export EXPERIMENT_ID BUCKET_NAME EXECUTION_ROLE_NAME MLFLOW_ROLE_NAME
 mkdir -p "$RESULTS_DIR"
-if [[ -e "$INVENTORY" ]]; then
-  printf 'Refusing to overwrite existing inventory: %s\n' "$INVENTORY" >&2
-  exit 1
-fi
-if [[ ! "$EXPERIMENT_ID" =~ ^qwen-pii-[0-9A-Za-z-]+$ ]]; then
-  printf 'Unsafe experiment ID: %s\n' "$EXPERIMENT_ID" >&2
-  exit 1
-fi
-
-write_inventory() {
-  jq -n \
-    --arg experiment_id "$EXPERIMENT_ID" \
-    --arg region "$REGION" \
-    --arg bucket_name "$BUCKET_NAME" \
-    --arg execution_role_name "$EXECUTION_ROLE_NAME" \
-    --arg execution_role_arn "$EXECUTION_ROLE_ARN" \
-    --arg mlflow_role_name "$MLFLOW_ROLE_NAME" \
-    --arg mlflow_role_arn "$MLFLOW_ROLE_ARN" \
-    --arg mlflow_app_arn "$MLFLOW_APP_ARN" \
-    --arg unified_domain_id "$UNIFIED_DOMAIN_ID" \
-    --arg project_profile_id "$PROJECT_PROFILE_ID" \
-    --arg project_id "$PROJECT_ID" \
-    --arg project_owner_group_id "$PROJECT_OWNER_GROUP_ID" \
-    --arg source_s3_uri "s3://${BUCKET_NAME}/qwen-pii/${EXPERIMENT_ID}/source/source.tar.gz" \
-    --arg created_at "$CREATED_AT" \
-    '{
-      experiment_id: $experiment_id,
-      region: $region,
-      bucket_name: $bucket_name,
-      execution_role_name: $execution_role_name,
-      execution_role_arn: $execution_role_arn,
-      mlflow_role_name: $mlflow_role_name,
-      mlflow_role_arn: $mlflow_role_arn,
-      mlflow_app_arn: $mlflow_app_arn,
-      unified_domain_id: $unified_domain_id,
-      project_profile_id: $project_profile_id,
-      project_id: $project_id,
-      project_owner_group_id: $project_owner_group_id,
-      source_s3_uri: $source_s3_uri,
-      created_at: $created_at
-    }' > "${INVENTORY}.tmp"
-  mv "${INVENTORY}.tmp" "$INVENTORY"
-}
-
-cleanup_on_error() {
+# Keep a run lock separate from the helper's short inventory-update lock.
+exec 9>"$RESULTS_DIR/provision.lock"
+flock -n 9 || { printf 'Another provisioning process is active.\n' >&2; exit 1; }
+"$PYTHON" "$HELPER" init "$INVENTORY"
+finalize() {
   status=$?
-  trap - ERR INT TERM
-  write_inventory
-  if [[ -x "$TEARDOWN" ]]; then
-    "$TEARDOWN" "$INVENTORY" || true
+  trap - EXIT INT TERM
+  if ((status != 0)); then
+    printf 'Provisioning interrupted; checking confirmed ownership for cleanup.\n' >&2
+    if ! "$TEARDOWN" "$INVENTORY"; then
+      printf 'Cleanup incomplete. Preserve %s; reconcile partial/unknown creation manually. Costs may continue.\n' "$INVENTORY" >&2
+    fi
   fi
   exit "$status"
 }
-trap cleanup_on_error ERR INT TERM
-
-aws s3api create-bucket \
-  --bucket "$BUCKET_NAME" \
-  --region "$REGION" \
-  --create-bucket-configuration "LocationConstraint=$REGION" >/dev/null
-aws s3api put-public-access-block \
-  --bucket "$BUCKET_NAME" \
+trap finalize EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+jq -nc --arg bucket "$BUCKET_NAME" --arg region "$REGION" \
+  '{Bucket:$bucket,CreateBucketConfiguration:{LocationConstraint:$region}}' |
+  "$PYTHON" "$HELPER" create "$INVENTORY" bucket >/dev/null
+aws s3api put-public-access-block --bucket "$BUCKET_NAME" --expected-bucket-owner "$ACCOUNT_ID" \
   --public-access-block-configuration \
   'BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true'
-aws s3api put-bucket-encryption \
-  --bucket "$BUCKET_NAME" \
+aws s3api put-bucket-encryption --bucket "$BUCKET_NAME" --expected-bucket-owner "$ACCOUNT_ID" \
   --server-side-encryption-configuration \
   '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
-aws s3api put-bucket-versioning \
-  --bucket "$BUCKET_NAME" \
+aws s3api put-bucket-versioning --bucket "$BUCKET_NAME" --expected-bucket-owner "$ACCOUNT_ID" \
   --versioning-configuration Status=Enabled
-aws s3api put-bucket-tagging \
-  --bucket "$BUCKET_NAME" \
-  --tagging "TagSet=[{Key=Experiment,Value=qwen-pii-finetuning},{Key=ExperimentId,Value=$EXPERIMENT_ID}]"
-write_inventory
 
 TRUST_POLICY=$(jq -nc \
   --arg account "$ACCOUNT_ID" \
@@ -118,21 +79,14 @@ TRUST_POLICY=$(jq -nc \
     }]
   }')
 
-EXECUTION_ROLE_ARN=$(aws iam create-role \
-  --role-name "$EXECUTION_ROLE_NAME" \
-  --assume-role-policy-document "$TRUST_POLICY" \
-  --tags Key=Experiment,Value=qwen-pii-finetuning Key=ExperimentId,Value="$EXPERIMENT_ID" \
-  --query Role.Arn \
-  --output text)
-MLFLOW_ROLE_ARN=$(aws iam create-role \
-  --role-name "$MLFLOW_ROLE_NAME" \
-  --assume-role-policy-document "$TRUST_POLICY" \
-  --tags Key=Experiment,Value=qwen-pii-finetuning Key=ExperimentId,Value="$EXPERIMENT_ID" \
-  --query Role.Arn \
-  --output text)
+EXECUTION_ROLE_ARN=$(jq -nc --arg name "$EXECUTION_ROLE_NAME" --arg policy "$TRUST_POLICY" \
+  '{RoleName:$name,AssumeRolePolicyDocument:$policy}' |
+  "$PYTHON" "$HELPER" create "$INVENTORY" execution_role | jq -er '.Role.Arn')
+MLFLOW_ROLE_ARN=$(jq -nc --arg name "$MLFLOW_ROLE_NAME" --arg policy "$TRUST_POLICY" \
+  '{RoleName:$name,AssumeRolePolicyDocument:$policy}' |
+  "$PYTHON" "$HELPER" create "$INVENTORY" mlflow_role | jq -er '.Role.Arn')
 aws iam wait role-exists --role-name "$EXECUTION_ROLE_NAME"
 aws iam wait role-exists --role-name "$MLFLOW_ROLE_NAME"
-write_inventory
 
 MLFLOW_S3_POLICY=$(jq -nc \
   --arg bucket "arn:aws:s3:::${BUCKET_NAME}" \
@@ -177,17 +131,12 @@ aws iam put-role-policy \
   --policy-document "$MLFLOW_S3_POLICY"
 
 sleep 10
-APP_RESPONSE=$(aws sagemaker create-mlflow-app \
-  --region "$REGION" \
-  --name "$EXPERIMENT_ID" \
-  --artifact-store-uri "s3://${BUCKET_NAME}/mlflow-artifacts" \
-  --role-arn "$MLFLOW_ROLE_ARN" \
-  --model-registration-mode AutoModelRegistrationDisabled \
-  --account-default-status DISABLED \
-  --tags Key=Experiment,Value=qwen-pii-finetuning Key=ExperimentId,Value="$EXPERIMENT_ID" \
-  --output json)
-MLFLOW_APP_ARN=$(jq -r '.Arn' <<<"$APP_RESPONSE")
-write_inventory
+APP_RESPONSE=$(jq -nc --arg name "$EXPERIMENT_ID" \
+  --arg store "s3://${BUCKET_NAME}/mlflow-artifacts" --arg role "$MLFLOW_ROLE_ARN" \
+  '{Name:$name,ArtifactStoreUri:$store,RoleArn:$role,
+    ModelRegistrationMode:"AutoModelRegistrationDisabled",AccountDefaultStatus:"DISABLED"}' |
+  "$PYTHON" "$HELPER" create "$INVENTORY" mlflow_app)
+MLFLOW_APP_ARN=$(jq -er '.Arn' <<<"$APP_RESPONSE")
 
 for _attempt in $(seq 1 40); do
   APP_STATUS=$(aws sagemaker describe-mlflow-app \
@@ -261,51 +210,12 @@ aws iam put-role-policy \
   --policy-name "${EXPERIMENT_ID}-execution" \
   --policy-document "$EXECUTION_POLICY"
 
-UNIFIED_DOMAIN_ID=$(aws datazone list-domains \
-  --region "$REGION" \
-  --query "items[?name=='sagemaker_hyper'].id | [0]" \
-  --output text)
-if [[ -z "$UNIFIED_DOMAIN_ID" || "$UNIFIED_DOMAIN_ID" == "None" ]]; then
-  printf 'Unified Studio domain sagemaker_hyper not found.\n' >&2
-  exit 1
-fi
-PROJECT_PROFILE_ID=$(aws datazone list-project-profiles \
-  --region "$REGION" \
-  --domain-identifier "$UNIFIED_DOMAIN_ID" \
-  --query "items[?name=='All capabilities' && status=='ENABLED'].id | [0]" \
-  --output text)
-if [[ -z "$PROJECT_PROFILE_ID" || "$PROJECT_PROFILE_ID" == "None" ]]; then
-  printf 'Enabled All capabilities project profile not found.\n' >&2
-  exit 1
-fi
-CALLER_ARN=$(aws sts get-caller-identity --query Arn --output text)
-CALLER_ROLE_NAME=$(sed -E 's#^arn:aws:sts::[0-9]+:assumed-role/([^/]+)/.*#\1#' <<<"$CALLER_ARN")
-CALLER_IAM_ARN="arn:aws:iam::${ACCOUNT_ID}:role/${CALLER_ROLE_NAME}"
-PROJECT_OWNER_GROUP_ID=$(aws datazone search-user-profiles \
-  --region "$REGION" \
-  --domain-identifier "$UNIFIED_DOMAIN_ID" \
-  --user-type DATAZONE_IAM_USER \
-  --search-text "$CALLER_ROLE_NAME" \
-  --output json | jq -r \
-  --arg arn "$CALLER_IAM_ARN" \
-  '[.items[]? | select(.details.iam.arn == $arn) | .details.iam.groupProfileId][0] // empty')
-if [[ -z "$PROJECT_OWNER_GROUP_ID" ]]; then
-  printf 'DataZone group profile not found for %s.\n' "$CALLER_IAM_ARN" >&2
-  exit 1
-fi
-MEMBERSHIP_ASSIGNMENTS=$(jq -nc \
-  --arg group "$PROJECT_OWNER_GROUP_ID" \
-  '[{member: {groupIdentifier: $group}, designation: "PROJECT_OWNER"}]')
-PROJECT_ID=$(aws datazone create-project \
-  --region "$REGION" \
-  --domain-identifier "$UNIFIED_DOMAIN_ID" \
-  --name "$EXPERIMENT_ID" \
-  --description "Ephemeral Qwen PII fine-tuning validation project" \
-  --project-profile-id "$PROJECT_PROFILE_ID" \
-  --membership-assignments "$MEMBERSHIP_ASSIGNMENTS" \
-  --query id \
-  --output text)
-write_inventory
+PROJECT_ID=$(jq -nc --arg domain "$UNIFIED_DOMAIN_ID" --arg name "$EXPERIMENT_ID" \
+  --arg profile "$PROJECT_PROFILE_ID" --arg group "$PROJECT_OWNER_GROUP_ID" \
+  '{domainIdentifier:$domain,name:$name,projectProfileId:$profile,
+    description:"Ephemeral Qwen PII fine-tuning validation project",
+    membershipAssignments:[{member:{groupIdentifier:$group},designation:"PROJECT_OWNER"}]}' |
+  "$PYTHON" "$HELPER" create "$INVENTORY" project | jq -er '.id')
 
 for _attempt in $(seq 1 60); do
   PROJECT_STATUS=$(aws datazone get-project \
@@ -328,6 +238,5 @@ if [[ "${PROJECT_STATUS:-}" != "ACTIVE" ]]; then
   exit 1
 fi
 
-write_inventory
-trap - ERR INT TERM
+trap - EXIT INT TERM
 printf 'Provisioned experiment %s; inventory: %s\n' "$EXPERIMENT_ID" "$INVENTORY"

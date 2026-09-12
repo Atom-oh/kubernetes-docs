@@ -44,6 +44,8 @@ class Entity:
 class TokenizationResult:
     masked_text: str
     mapping: dict[str, str]
+    # Half-open offsets into the NFC source, not into the replacement text.
+    spans: tuple[tuple[int, int], ...] = ()
 
 
 def parse_tsv(content: str, source_text: str) -> list[Entity]:
@@ -69,7 +71,7 @@ def parse_tsv(content: str, source_text: str) -> list[Entity]:
 
 
 def pseudonymize_text(text: str, entities: list[Entity]) -> TokenizationResult:
-    """Replace entities with deterministic source-order tokens."""
+    """Replace source spellings with deterministic, reversible tokens."""
     source = unicodedata.normalize("NFC", text)
     grouped: OrderedDict[str, list[str]] = OrderedDict()
     positions: dict[str, int] = {}
@@ -97,51 +99,63 @@ def pseudonymize_text(text: str, entities: list[Entity]) -> TokenizationResult:
         return (1, 0, -len(original), original)
 
     ordered = sorted(grouped.items(), key=sort_key)
-    counters: dict[str, int] = {}
-    token_by_original: OrderedDict[str, str] = OrderedDict()
     chosen_type: dict[str, str] = {}
-    mapping: dict[str, str] = {}
 
     for original, types in ordered:
-        entity_type = _pick_type(types)
-        counters[entity_type] = counters.get(entity_type, 0) + 1
-        token_key = f"{entity_type}_{counters[entity_type]}"
-        token_by_original[original] = f"[{token_key}]"
-        chosen_type[original] = entity_type
-        mapping[token_key] = original
+        chosen_type[original] = _pick_type(types)
 
-    if not token_by_original:
+    if not chosen_type:
         return TokenizationResult(source, {})
 
     originals: list[tuple[str, str]] = []
     variants: list[tuple[str, str]] = []
-    for original, token in token_by_original.items():
-        originals.append((original, token))
+    for original, entity_type in chosen_type.items():
+        originals.append((original, entity_type))
         variants.extend(
-            (variant, token)
-            for variant in _generate_variants(original, chosen_type[original])
+            (variant, entity_type)
+            for variant in _generate_variants(original, entity_type)
         )
 
+    # A literal prediction wins over another prediction's generated variant.
     lookup: dict[str, str] = {}
-    for pattern, token in originals + variants:
+    for pattern, entity_type in originals + variants:
         normalized = unicodedata.normalize("NFC", pattern)
         if normalized and normalized not in lookup:
-            lookup[normalized] = token
+            lookup[normalized] = entity_type
 
-    alternation: list[str] = []
-    for pattern in sorted(lookup, key=lambda value: (-len(value), value)):
-        escaped = re.escape(pattern)
-        if pattern.isdigit():
-            alternation.append(f"(?<!\\d){escaped}(?!\\d)")
-        else:
-            alternation.append(escaped)
+    alternation = [
+        _literal_pattern(pattern)
+        for pattern in sorted(lookup, key=lambda value: (-len(value), value))
+    ]
 
     if not alternation:
-        return TokenizationResult(source, mapping)
+        return TokenizationResult(source, {})
 
+    counters: dict[str, int] = {}
+    token_by_surface: dict[tuple[str, str], str] = {}
+    mapping: dict[str, str] = {}
+    reserved_tokens = set(TOKEN_PATTERN.findall(source))
+    spans: list[tuple[int, int]] = []
     combined = re.compile("|".join(alternation))
-    masked = combined.sub(lambda match: lookup[match.group(0)], source)
-    return TokenizationResult(masked, mapping)
+
+    def replace(match: re.Match) -> str:
+        surface = match.group(0)
+        entity_type = lookup[surface]
+        surface_key = (entity_type, surface)
+        if surface_key not in token_by_surface:
+            number = counters.get(entity_type, 0) + 1
+            while f"[{entity_type}_{number}]" in reserved_tokens:
+                number += 1
+            counters[entity_type] = number
+            token_key = f"{entity_type}_{number}"
+            token_by_surface[surface_key] = f"[{token_key}]"
+            # Store the actual matched spelling, including separators/whitespace.
+            mapping[token_key] = surface
+        spans.append(match.span())
+        return token_by_surface[surface_key]
+
+    masked = combined.sub(replace, source)
+    return TokenizationResult(masked, mapping, tuple(spans))
 
 
 def reassemble_text(masked_text: str, mapping: dict[str, str]) -> str:
@@ -162,18 +176,45 @@ def _pick_type(types: list[str]) -> str:
 
 
 def _first_source_position(source: str, original: str, entity_type: str) -> int:
-    candidates = [original, *_generate_variants(original, entity_type)]
-    positions = [
-        source.find(unicodedata.normalize("NFC", candidate))
-        for candidate in candidates
-    ]
-    found = [position for position in positions if position >= 0]
-    return min(found) if found else -1
+    spans = find_entity_spans(source, Entity(entity_type, original))
+    return spans[0][0] if spans else -1
+
+
+def _literal_pattern(value: str) -> str:
+    escaped = re.escape(value)
+    return f"(?<!\\d){escaped}(?!\\d)" if value.isdigit() else escaped
+
+
+def find_entity_spans(text: str, entity: Entity) -> tuple[tuple[int, int], ...]:
+    """Find supported, non-overlapping value occurrences in the NFC source."""
+    source = unicodedata.normalize("NFC", text)
+    entity_type = entity.type.strip().upper()
+    original = unicodedata.normalize("NFC", entity.original.strip())
+    if entity_type not in VALID_TYPES or not original:
+        return ()
+    candidates = {original, *_generate_variants(original, entity_type)}
+    pattern = "|".join(
+        _literal_pattern(value)
+        for value in sorted(candidates, key=lambda value: (-len(value), value))
+    )
+    return tuple(match.span() for match in re.finditer(pattern, source))
 
 
 def _generate_variants(original: str, entity_type: str) -> list[str]:
     variants: list[str] = []
     compact_spaces = re.sub(r"\s+", "", original)
+
+    if entity_type in {"RRN", "PHONE", "CARD", "ACCOUNT", "DOB"}:
+        separators = "-.()" if entity_type == "PHONE" else "-."
+        if entity_type == "PHONE":
+            separators += "+"
+        if any(
+            not (char.isdecimal() or char.isspace() or char in separators)
+            for char in original
+        ):
+            # Numeric normalization must not turn invented words into matches.
+            # The original remains eligible for a literal source match.
+            return []
 
     if entity_type == "PERSON":
         characters = list(compact_spaces)
