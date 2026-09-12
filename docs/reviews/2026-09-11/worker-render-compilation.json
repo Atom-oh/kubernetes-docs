@@ -1,7 +1,7 @@
 {
   "date": "2026-09-11",
-  "documents": 246,
-  "passed": 246,
+  "documents": 254,
+  "passed": 254,
   "results": [
     {
       "path": "en/networking/01-vpc-cni.md",
@@ -1038,6 +1038,681 @@
     {
       "path": "ko/service-mesh/linkerd/README.md",
       "errors": []
+    },
+    {
+      "path": "en/networking/cilium/02-ebpf.md",
+      "sha256": "3a94f29492f26630b46d29b4ff14a6a32a1de8fce1129cc0bde773ebc1c2f810",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "ebpf-technology-deep-dive"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h2",
+          "id": "introduction-to-ebpf-technology-and-historical-background"
+        },
+        {
+          "tag": "h3",
+          "id": "from-bpf-to-ebpf-history-of-evolution"
+        },
+        {
+          "tag": "h3",
+          "id": "technical-evolution-of-ebpf-key-features-by-kernel-version"
+        },
+        {
+          "tag": "h3",
+          "id": "growth-and-application-areas"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-vs-traditional-kernel-modules-paradigm-shift"
+        },
+        {
+          "tag": "h2",
+          "id": "in-depth-analysis-of-ebpf-architecture-inside-the-kernel"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-description-of-ebpf-architecture-components"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-analysis-of-ebpf-program-lifecycle"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-program-types-and-characteristics"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-maps-core-of-data-sharing-and-state-storage"
+        },
+        {
+          "tag": "h2",
+          "id": "utilizing-ebpf-in-cilium-innovation-in-container-networking"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-architecture-and-the-role-of-ebpf"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-analysis-of-cilium-s-ebpf-datapath"
+        },
+        {
+          "tag": "h3",
+          "id": "detailed-description-of-cilium-s-major-ebpf-programs"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-s-ebpf-map-usage"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-based-features-and-their-boundaries"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-ebpf-program-development-and-debugging"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-basic-ebpf-program-development"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-advanced-ebpf-program-using-maps"
+        },
+        {
+          "tag": "h4",
+          "id": "user-space-application-and-attachment-lifetime"
+        },
+        {
+          "tag": "h4",
+          "id": "compile-and-run"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-exploring-and-debugging-cilium-ebpf-programs"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-performance-analysis-and-optimization"
+        },
+        {
+          "tag": "h3",
+          "id": "_5-troubleshooting-tips"
+        },
+        {
+          "tag": "h2",
+          "id": "sources"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "sha256": "e58f49d7cb28b8a08e159f748ce798dde3433b88c6e8bca6abce9a07b4736cd4",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-ebpf-quiz"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-basic-concepts"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-and-cilium"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-programming"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-performance-and-monitoring"
+        }
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/02-ebpf.md",
+      "sha256": "5c28dea019cb5787b84d0c0c564c6e7f16890b442a51c49031e5fefed2d02bdb",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "ebpf-기술-심층-분석"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-기술-소개-및-역사적-배경"
+        },
+        {
+          "tag": "h3",
+          "id": "bpf에서-ebpf로-발전-역사"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf의-기술적-진화-커널-버전별-주요-기능"
+        },
+        {
+          "tag": "h3",
+          "id": "생태계-성장과-활용-분야"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf와-전통적-커널-모듈-비교"
+        },
+        {
+          "tag": "h2",
+          "id": "커널-내부-ebpf-아키텍처-심층-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-아키텍처-구성-요소-상세-설명"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-프로그램-생명주기-상세-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-프로그램-유형과-특성"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-맵-데이터-공유와-상태-저장의-핵심"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium에서의-ebpf-활용-컨테이너-네트워킹의-혁신"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-아키텍처와-ebpf의-역할"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-ebpf-데이터플레인-상세-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-주요-ebpf-프로그램-상세-설명"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium의-ebpf-맵-활용"
+        },
+        {
+          "tag": "h3",
+          "id": "ebpf-기반-기능과-경계"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-ebpf-프로그램-개발-및-디버깅"
+        },
+        {
+          "tag": "h3",
+          "id": "_1-기본-ebpf-프로그램-개발"
+        },
+        {
+          "tag": "h3",
+          "id": "_2-맵을-활용한-고급-ebpf-프로그램"
+        },
+        {
+          "tag": "h4",
+          "id": "사용자-공간-애플리케이션과-연결-수명"
+        },
+        {
+          "tag": "h4",
+          "id": "컴파일-및-실행"
+        },
+        {
+          "tag": "h3",
+          "id": "_3-cilium-ebpf-프로그램-탐색-및-디버깅"
+        },
+        {
+          "tag": "h3",
+          "id": "_4-성능-분석-및-최적화"
+        },
+        {
+          "tag": "h3",
+          "id": "_5-문제-해결-팁"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "sha256": "a2154a73497a9a017266e1f2af5479e93f85c33fceb19acb7988d442cd35504a",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-ebpf-퀴즈"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-기본-개념"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf와-cilium"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-프로그래밍"
+        },
+        {
+          "tag": "h2",
+          "id": "ebpf-성능-및-모니터링"
+        }
+      ]
+    },
+    {
+      "path": "en/networking/cilium/03-networking.md",
+      "sha256": "3b09a0059bbb4b0e116c1b5ab1b30b51bb0ac3fa902b6818f8a9ed34c16e04df",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "networking-models-and-vxlan"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-environment-setup"
+        },
+        {
+          "tag": "h3",
+          "id": "network-analysis-tools"
+        },
+        {
+          "tag": "h2",
+          "id": "container-networking-model-comparison"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-networking-modes"
+        },
+        {
+          "tag": "h2",
+          "id": "vxlan-technology-deep-dive"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-packet-structure"
+        },
+        {
+          "tag": "h3",
+          "id": "mtu-budget"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-vs-other-encapsulations"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium-s-overlay-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "routing-mechanisms"
+        },
+        {
+          "tag": "h3",
+          "id": "encapsulation"
+        },
+        {
+          "tag": "h3",
+          "id": "native-routing"
+        },
+        {
+          "tag": "h2",
+          "id": "performance-optimization-techniques"
+        },
+        {
+          "tag": "h2",
+          "id": "cloud-provider-specific-networking"
+        },
+        {
+          "tag": "h2",
+          "id": "lab-cilium-networking-mode-configuration-and-performance-testing"
+        },
+        {
+          "tag": "h3",
+          "id": "select-one-mode-on-a-fresh-prepared-cluster"
+        },
+        {
+          "tag": "h3",
+          "id": "network-performance-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "sources"
+        },
+        {
+          "tag": "h2",
+          "id": "quiz"
+        }
+      ],
+      "renderedIds": [
+        "networking-models-and-vxlan",
+        "lab-environment-setup",
+        "network-analysis-tools",
+        "container-networking-model-comparison",
+        "cilium-networking-modes",
+        "vxlan-technology-deep-dive",
+        "vxlan-packet-structure",
+        "mtu-budget",
+        "vxlan-vs-other-encapsulations",
+        "cilium-s-overlay-networking",
+        "routing-mechanisms",
+        "encapsulation",
+        "native-routing",
+        "performance-optimization-techniques",
+        "cloud-provider-specific-networking",
+        "lab-cilium-networking-mode-configuration-and-performance-testing",
+        "select-one-mode-on-a-fresh-prepared-cluster",
+        "network-performance-testing",
+        "sources",
+        "quiz"
+      ]
+    },
+    {
+      "path": "en/quizzes/networking/cilium/03-networking-quiz.md",
+      "sha256": "870d0c4340e9762bf531df6cee792ee1d3f46a65441422ecaf09005d8c915e68",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-networking-validation-exercises"
+        },
+        {
+          "tag": "h2",
+          "id": "prerequisites"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-installation-and-basic-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-network-policy-testing"
+        },
+        {
+          "tag": "h3",
+          "id": "create-an-isolated-test-namespace-and-workloads"
+        },
+        {
+          "tag": "h3",
+          "id": "apply-and-check-the-policy"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-hubble-visibility-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-performance-testing"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-optional-advanced-feature-checks"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-compatibility-checks"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-troubleshooting"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-cleanup"
+        },
+        {
+          "tag": "h2",
+          "id": "validation-limits-and-references"
+        }
+      ],
+      "renderedIds": [
+        "cilium-networking-validation-exercises",
+        "prerequisites",
+        "_1-installation-and-basic-testing",
+        "_2-network-policy-testing",
+        "create-an-isolated-test-namespace-and-workloads",
+        "apply-and-check-the-policy",
+        "_3-hubble-visibility-testing",
+        "_4-performance-testing",
+        "_5-optional-advanced-feature-checks",
+        "_6-compatibility-checks",
+        "_7-troubleshooting",
+        "_8-cleanup",
+        "validation-limits-and-references"
+      ]
+    },
+    {
+      "path": "ko/networking/cilium/03-networking.md",
+      "sha256": "e552c34f3eef0d4aa90d6a422c571766bb30085e9a9875c5eb332e1056618a0c",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "네트워킹-모델-및-vxlan"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-환경-설정"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-분석-도구"
+        },
+        {
+          "tag": "h2",
+          "id": "컨테이너-네트워킹-모델-비교"
+        },
+        {
+          "tag": "h3",
+          "id": "cilium-네트워킹-모드"
+        },
+        {
+          "tag": "h2",
+          "id": "vxlan-기술-심층-분석"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan-패킷-구조"
+        },
+        {
+          "tag": "h3",
+          "id": "mtu-계산"
+        },
+        {
+          "tag": "h3",
+          "id": "vxlan과-다른-캡슐화-비교"
+        },
+        {
+          "tag": "h2",
+          "id": "cilium의-오버레이-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "라우팅-메커니즘"
+        },
+        {
+          "tag": "h3",
+          "id": "캡슐화"
+        },
+        {
+          "tag": "h3",
+          "id": "네이티브-라우팅"
+        },
+        {
+          "tag": "h2",
+          "id": "성능-최적화-기법"
+        },
+        {
+          "tag": "h2",
+          "id": "클라우드-제공업체별-네트워킹"
+        },
+        {
+          "tag": "h2",
+          "id": "실습-cilium-네트워킹-모드-구성-및-성능-테스트"
+        },
+        {
+          "tag": "h3",
+          "id": "준비된-새-클러스터에서-한-모드-선택"
+        },
+        {
+          "tag": "h3",
+          "id": "네트워크-성능-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "참고-자료"
+        },
+        {
+          "tag": "h2",
+          "id": "퀴즈"
+        }
+      ],
+      "renderedIds": [
+        "네트워킹-모델-및-vxlan",
+        "실습-환경-설정",
+        "네트워크-분석-도구",
+        "컨테이너-네트워킹-모델-비교",
+        "cilium-네트워킹-모드",
+        "vxlan-기술-심층-분석",
+        "vxlan-기술-심층-분석",
+        "vxlan-패킷-구조",
+        "mtu-계산",
+        "vxlan과-다른-캡슐화-비교",
+        "cilium의-오버레이-네트워킹",
+        "라우팅-메커니즘",
+        "캡슐화",
+        "네이티브-라우팅",
+        "성능-최적화-기법",
+        "클라우드-제공업체별-네트워킹",
+        "실습-cilium-네트워킹-모드-구성-및-성능-테스트",
+        "준비된-새-클러스터에서-한-모드-선택",
+        "네트워크-성능-테스트",
+        "참고-자료",
+        "퀴즈"
+      ]
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/03-networking-quiz.md",
+      "sha256": "9aadee19d5232ed424cd1f5556f9a61f35dcbf600376e72a09560abc5c2cd962",
+      "passed": true,
+      "errors": [],
+      "oneH1": true,
+      "headings": [
+        {
+          "tag": "h1",
+          "id": "cilium-네트워킹-검증-실습"
+        },
+        {
+          "tag": "h2",
+          "id": "사전-요구-사항"
+        },
+        {
+          "tag": "h2",
+          "id": "_1-설치-및-기본-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_2-네트워크-정책-테스트"
+        },
+        {
+          "tag": "h3",
+          "id": "독립적인-namespace와-workload-생성"
+        },
+        {
+          "tag": "h3",
+          "id": "정책-적용과-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_3-hubble-가시성-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_4-성능-테스트"
+        },
+        {
+          "tag": "h2",
+          "id": "_5-선택적-고급-기능-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_6-호환성-확인"
+        },
+        {
+          "tag": "h2",
+          "id": "_7-문제-해결"
+        },
+        {
+          "tag": "h2",
+          "id": "_8-정리"
+        },
+        {
+          "tag": "h2",
+          "id": "검증-한계와-참고-자료"
+        }
+      ],
+      "renderedIds": [
+        "cilium-네트워킹-검증-실습",
+        "사전-요구-사항",
+        "_1-설치-및-기본-테스트",
+        "_2-네트워크-정책-테스트",
+        "독립적인-namespace와-workload-생성",
+        "정책-적용과-확인",
+        "_3-hubble-가시성-테스트",
+        "_4-성능-테스트",
+        "_5-선택적-고급-기능-확인",
+        "_6-호환성-확인",
+        "_7-문제-해결",
+        "_8-정리",
+        "검증-한계와-참고-자료"
+      ]
     }
   ],
   "followup": {

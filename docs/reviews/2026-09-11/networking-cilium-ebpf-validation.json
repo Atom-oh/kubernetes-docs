@@ -1,0 +1,702 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T13:59:52.622879+00:00",
+  "scope": [
+    "en/networking/cilium/02-ebpf.md",
+    "en/quizzes/networking/cilium/02-ebpf-quiz.md",
+    "ko/networking/cilium/02-ebpf.md",
+    "ko/quizzes/networking/cilium/02-ebpf-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "guideLinesPerLanguage": 1269,
+    "quizLinesPerLanguage": 252,
+    "quizQuestionsPerLanguage": 20
+  },
+  "checks": {
+    "hostNative": 13,
+    "counterCases": 6,
+    "readerCases": 4,
+    "unsafeMutationDetected": true,
+    "bashBlocks": 12,
+    "quizQuestions": 40,
+    "kernelVersionTransitions": 17,
+    "ciliumSourceAssertions": 11,
+    "ciliumSourceTreeChecks": 9,
+    "markdownVue": 4,
+    "gitDiffCheck": "passed"
+  },
+  "files": [
+    {
+      "path": "en/networking/cilium/02-ebpf.md",
+      "sha256": "3a94f29492f26630b46d29b4ff14a6a32a1de8fce1129cc0bde773ebc1c2f810",
+      "codeBlocks": 11,
+      "localTargets": [
+        "../../.gitbook/assets/en-networking-cilium-02-ebpf-1.png",
+        "../../quizzes/networking/cilium/02-ebpf-quiz.md"
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "sha256": "e58f49d7cb28b8a08e159f748ce798dde3433b88c6e8bca6abce9a07b4736cd4",
+      "codeBlocks": 0,
+      "localTargets": [
+        "../../../networking/cilium/02-ebpf.md"
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/networking/cilium/02-ebpf.md",
+      "sha256": "5c28dea019cb5787b84d0c0c564c6e7f16890b442a51c49031e5fefed2d02bdb",
+      "codeBlocks": 11,
+      "localTargets": [
+        "../../.gitbook/assets/ko-networking-cilium-02-ebpf-1.png",
+        "../../quizzes/networking/cilium/02-ebpf-quiz.md"
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "sha256": "a2154a73497a9a017266e1f2af5479e93f85c33fceb19acb7988d442cd35504a",
+      "codeBlocks": 0,
+      "localTargets": [
+        "../../../networking/cilium/02-ebpf.md"
+      ],
+      "passed": true
+    }
+  ],
+  "kernelTransitions": [
+    {
+      "feature": "extended ISA",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v3.14/include/linux/filter.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v3.15/include/linux/filter.h",
+      "marker": "BPF_ALU64"
+    },
+    {
+      "feature": "x86 JIT",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v3.15/arch/x86/net/bpf_jit_comp.c",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v3.16/arch/x86/net/bpf_jit_comp.c",
+      "marker": "BPF_ALU64"
+    },
+    {
+      "feature": "HASH",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v3.18/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v3.19/include/uapi/linux/bpf.h",
+      "marker": "BPF_MAP_TYPE_HASH"
+    },
+    {
+      "feature": "KPROBE",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v4.0/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v4.1/include/uapi/linux/bpf.h",
+      "marker": "BPF_PROG_TYPE_KPROBE"
+    },
+    {
+      "feature": "tail calls",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v4.1/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v4.2/include/uapi/linux/bpf.h",
+      "marker": "BPF_MAP_TYPE_PROG_ARRAY"
+    },
+    {
+      "feature": "XDP",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v4.7/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v4.8/include/uapi/linux/bpf.h",
+      "marker": "BPF_PROG_TYPE_XDP"
+    },
+    {
+      "feature": "LRU",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v4.9/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v4.10/include/uapi/linux/bpf.h",
+      "marker": "BPF_MAP_TYPE_LRU_HASH"
+    },
+    {
+      "feature": "BPF-to-BPF",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v4.15/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v4.16/include/uapi/linux/bpf.h",
+      "marker": "BPF_PSEUDO_CALL"
+    },
+    {
+      "feature": "raw tracepoints",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v4.16/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v4.17/include/uapi/linux/bpf.h",
+      "marker": "BPF_PROG_TYPE_RAW_TRACEPOINT"
+    },
+    {
+      "feature": "BTF",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v4.17/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v4.18/include/uapi/linux/bpf.h",
+      "marker": "BPF_BTF_LOAD"
+    },
+    {
+      "feature": "global map data",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v5.1/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v5.2/include/uapi/linux/bpf.h",
+      "marker": "BPF_PSEUDO_MAP_VALUE"
+    },
+    {
+      "feature": "links",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v5.6/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v5.7/include/uapi/linux/bpf.h",
+      "marker": "BPF_LINK_CREATE"
+    },
+    {
+      "feature": "ringbuf",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v5.7/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v5.8/include/uapi/linux/bpf.h",
+      "marker": "BPF_MAP_TYPE_RINGBUF"
+    },
+    {
+      "feature": "sleepable",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v5.9/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v5.10/include/uapi/linux/bpf.h",
+      "marker": "BPF_F_SLEEPABLE"
+    },
+    {
+      "feature": "timers",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v5.14/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v5.15/include/uapi/linux/bpf.h",
+      "marker": "timer_init"
+    },
+    {
+      "feature": "dynptr",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v5.18/include/uapi/linux/bpf.h",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v5.19/include/uapi/linux/bpf.h",
+      "marker": "dynptr"
+    },
+    {
+      "feature": "typed allocation",
+      "before": "https://raw.githubusercontent.com/torvalds/linux/v6.1/kernel/bpf/helpers.c",
+      "after": "https://raw.githubusercontent.com/torvalds/linux/v6.2/kernel/bpf/helpers.c",
+      "marker": "bpf_obj_new_impl"
+    }
+  ],
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/cilium/cilium",
+      "cacheKey": "5c2c7e826679",
+      "fetchedAt": "2026-09-12T13:53:41.570046+00:00",
+      "status": 200,
+      "sha256": "a9084e02b93b1c7d0a7f6ec17c5a443b5ee8bfc38489d99d63c75191f16a827d"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/git/trees/v1.20.1?recursive=1",
+      "cacheKey": "de443d87a570",
+      "fetchedAt": "2026-09-12T13:55:00.432133+00:00",
+      "status": 200,
+      "sha256": "546e3178ee9be59d089fd4ed8317da7e28583ded88ff025029835eacefc8e5fa"
+    },
+    {
+      "url": "https://api.github.com/repos/torvalds/linux/commits/2589726d12a1",
+      "cacheKey": "fbc6f7a9c7ed",
+      "fetchedAt": "2026-09-12T13:54:59.594143+00:00",
+      "status": 200,
+      "sha256": "445d44708f1938061db87dd24abe0cc8c2f022e02e619cc5e908efad7e08e1d2"
+    },
+    {
+      "url": "https://docs.kernel.org/bpf/bpf_design_QA.html",
+      "cacheKey": "3af9be68b1cd",
+      "fetchedAt": "2026-09-12T13:49:55.976762+00:00",
+      "status": 200,
+      "sha256": "79122ae707e63eebe98587e4aeb3f05673c8f19d4ebc81df79975e7395b963da"
+    },
+    {
+      "url": "https://docs.kernel.org/bpf/bpf_licensing.html",
+      "cacheKey": "f356af72488e",
+      "fetchedAt": "2026-09-12T13:49:56.328327+00:00",
+      "status": 200,
+      "sha256": "7c968de3641b198c39efcccfdc0a46abb53a003a60667d309be40a0f2a890420"
+    },
+    {
+      "url": "https://docs.kernel.org/bpf/ringbuf.html",
+      "cacheKey": "23a0ec8d3c2d",
+      "fetchedAt": "2026-09-12T13:49:56.375571+00:00",
+      "status": 200,
+      "sha256": "ece8280d5b0c0b636efe0665a018ca676c98f96ccb437b9a0ed29e8e1b4bf7d4"
+    },
+    {
+      "url": "https://docs.kernel.org/bpf/verifier.html",
+      "cacheKey": "8f7fd3e526af",
+      "fetchedAt": "2026-09-12T13:49:56.038288+00:00",
+      "status": 200,
+      "sha256": "903e974d5dc9269307e6671e3e3715802ba053c1f9bc6ca7d00c6cc2c67b5d2a"
+    },
+    {
+      "url": "https://docs.kernel.org/userspace-api/seccomp_filter.html",
+      "cacheKey": "db8ed45ffe2a",
+      "fetchedAt": "2026-09-12T13:49:56.685124+00:00",
+      "status": 200,
+      "sha256": "633a4ffa1c9b525eecc5303841bacb8b4e8b2785c78e6f5a6c51dccd3bc2d42f"
+    },
+    {
+      "url": "https://ebpf.foundation/",
+      "cacheKey": "041e52cf76dd",
+      "fetchedAt": "2026-09-12T13:53:43.554549+00:00",
+      "status": 200,
+      "sha256": "31077b3b8ea2b0965609673b519809aca394c7296e04fbd187d668faaacad1fd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_bpf_lb_list.md",
+      "cacheKey": "3713d61766cd",
+      "fetchedAt": "2026-09-12T13:49:59.968799+00:00",
+      "status": 200,
+      "sha256": "1dc165117e1a5015b089e3c731eec68d85889ed46973809398904b91726096be"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_get.md",
+      "cacheKey": "4aa397169e78",
+      "fetchedAt": "2026-09-12T13:53:42.053218+00:00",
+      "status": 200,
+      "sha256": "9b79c4f1ac684838cceff43df2bac6e67b9b0b356d5ccacb42c4ae031077eff5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_map_get.md",
+      "cacheKey": "4937fb423b9c",
+      "fetchedAt": "2026-09-12T13:49:59.719747+00:00",
+      "status": 200,
+      "sha256": "1fb70b5d9a14b78d0271471f2adcf9cc60b1b3ceabc2788d39b4db674707042b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_monitor.md",
+      "cacheKey": "f580d7e092e5",
+      "fetchedAt": "2026-09-12T13:50:00.204016+00:00",
+      "status": 200,
+      "sha256": "b9b51ce7ca4300c9733a22e007ae741980f2176fe98edccb393088f901fe3dda"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_service_list.md",
+      "cacheKey": "d7bcc0d06487",
+      "fetchedAt": "2026-09-12T13:49:59.947990+00:00",
+      "status": 200,
+      "sha256": "6fe766a22f9b861f05090d665a2cded64967b13eba1b89174bb98a534a57cc88"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_status.md",
+      "cacheKey": "bb3d7574d7cd",
+      "fetchedAt": "2026-09-12T13:53:42.187266+00:00",
+      "status": 200,
+      "sha256": "587297b1c5d69b0c73c68bcddb17a9993be682e229de84fa7711998ea7852606"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "cacheKey": "68e8148446c9",
+      "fetchedAt": "2026-09-12T13:53:41.051310+00:00",
+      "status": 200,
+      "sha256": "4119df582c01582bc082c529b6faf29167d07f129c1cec2583117fc37e2e4b13"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+      "cacheKey": "22e54ce1b17d",
+      "fetchedAt": "2026-09-12T13:53:41.306083+00:00",
+      "status": 200,
+      "sha256": "04b670a1456958399883f3a99abbb783d9b3df77380de62ccf311d1cbf525ed2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "cacheKey": "47d0fa2d6ec0",
+      "fetchedAt": "2026-09-12T13:53:41.218485+00:00",
+      "status": 200,
+      "sha256": "608ef0b3a0fd0e39ca15044baf83a68f62ec635c50630c747005d920d8f0167d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade.rst",
+      "cacheKey": "b2908395146d",
+      "fetchedAt": "2026-09-12T13:56:49.514950+00:00",
+      "status": 200,
+      "sha256": "0b21f2d581aa95a7558ac17832e2c7ba8682d50265761db1eecb423ad557864d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "cacheKey": "6050aa75f1a1",
+      "fetchedAt": "2026-09-12T13:56:49.743616+00:00",
+      "status": 200,
+      "sha256": "6cfda4c36fd22aeaa063a67034c747675a381fba2d9eabaef4d642153e0293c0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption.rst",
+      "cacheKey": "cc4b4773f5d6",
+      "fetchedAt": "2026-09-12T13:53:41.452480+00:00",
+      "status": 200,
+      "sha256": "0b36f6be9c5dc3bb5c9a9a7746c01c450d1beb0cf5e684978f036bfa925c4241"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "cacheKey": "f79fc9587de7",
+      "fetchedAt": "2026-09-12T13:56:49.524401+00:00",
+      "status": 200,
+      "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/bpf/bpf_sock.c",
+      "cacheKey": "ecc3f1cdaab5",
+      "fetchedAt": "2026-09-12T13:53:41.695951+00:00",
+      "status": 200,
+      "sha256": "fe3695574ba5a3b3103b36634f6488f63a55d9968d9fcc8a0231ec4d6f6935ab"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/bpf/lib/lb.h",
+      "cacheKey": "58c75720b0a1",
+      "fetchedAt": "2026-09-12T13:53:41.813771+00:00",
+      "status": 200,
+      "sha256": "52d52a42d124c00a0267eaeb42bee2d987c117722a48df31e1e3cfae7ede3ddc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/bpf/lib/policy.h",
+      "cacheKey": "8da83192c191",
+      "fetchedAt": "2026-09-12T13:53:41.932455+00:00",
+      "status": 200,
+      "sha256": "a1199ea55778520b78eaf978f0aa1da6199067790b392420e48a4eca8b1e0508"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/loadbalancer/maps/types.go",
+      "cacheKey": "8177012ea98b",
+      "fetchedAt": "2026-09-12T13:49:59.477376+00:00",
+      "status": 200,
+      "sha256": "8e6098e6665b252059095e55007b4939fb5809214a4d2a78f943de4287d2c654"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/maps/ctmap/ctmap.go",
+      "cacheKey": "bdb628c775a3",
+      "fetchedAt": "2026-09-12T13:49:59.477932+00:00",
+      "status": 200,
+      "sha256": "95bee1172c79a99816a8d326835cb88f0ece028245c900b333bbae6b6e5c1158"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/maps/ipcache/ipcache.go",
+      "cacheKey": "9107438f4735",
+      "fetchedAt": "2026-09-12T13:49:58.964498+00:00",
+      "status": 200,
+      "sha256": "5bd1c2a31fad108d7a92954ef0adee9d1398c62ab0bbe047155b430deed910f1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/maps/lxcmap/lxcmap.go",
+      "cacheKey": "9c659ae5255f",
+      "fetchedAt": "2026-09-12T13:49:58.730443+00:00",
+      "status": 200,
+      "sha256": "c35ba50390a2fb614b28b4cf534f765e28d3dfb7e54ab85634c08b778506ceca"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/maps/metricsmap/metricsmap.go",
+      "cacheKey": "4a296c5278cc",
+      "fetchedAt": "2026-09-12T13:49:59.727497+00:00",
+      "status": 200,
+      "sha256": "a7fb499991799dbcb01e21d9bb21d38b17c43268a570f7da67627b56fc1f2a9d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/maps/policymap/policymap.go",
+      "cacheKey": "85df71f4addb",
+      "fetchedAt": "2026-09-12T13:49:59.172083+00:00",
+      "status": 200,
+      "sha256": "d014e815804eec560fb479edd82598de9feb8825cb2f4dc3acdd64a96ce2688d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/l4.go",
+      "cacheKey": "5490cb39fd52",
+      "fetchedAt": "2026-09-12T13:58:29.689387+00:00",
+      "status": 200,
+      "sha256": "5bb9ad3e308c5d4ea595b51b5c15efac0c329658d08e11af68c6097f1a7cbc99"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iovisor/bcc/master/README.md",
+      "cacheKey": "8b087254c816",
+      "fetchedAt": "2026-09-12T13:53:42.409005+00:00",
+      "status": 200,
+      "sha256": "e01188a35e1a5b5805303b0ad46021a50cb8a073daa4150253532f94a2ee5e7f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/libbpf/bpftool/v7.7.0/docs/bpftool-prog.rst",
+      "cacheKey": "f88eca5cc3e6",
+      "fetchedAt": "2026-09-12T13:50:00.439543+00:00",
+      "status": 200,
+      "sha256": "fe27b5c5b7ab338dbe6ca3160fb402b3ff19da8043a8fa719263d9626df59915"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v3.14/include/linux/filter.h",
+      "cacheKey": "6ab20f22c1d3",
+      "fetchedAt": "2026-09-12T13:54:55.566281+00:00",
+      "status": 200,
+      "sha256": "47f224ffb495f4635abd6a54366ae1771bb559c314fe9cba5bc97e977059abb8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v3.15/arch/x86/net/bpf_jit_comp.c",
+      "cacheKey": "e263e30a3862",
+      "fetchedAt": "2026-09-12T13:54:55.991565+00:00",
+      "status": 200,
+      "sha256": "a85f39c8beda35e8652425a5a20e45be2710f383ec4e4bff330247e8ab9bec13"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v3.15/include/linux/filter.h",
+      "cacheKey": "0dfac8b35f4a",
+      "fetchedAt": "2026-09-12T13:54:51.091893+00:00",
+      "status": 200,
+      "sha256": "df59c5db5f5240ada807b6bf6a44876c41c60ef15d828ca25a50144df943fa26"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v3.16/arch/x86/net/bpf_jit_comp.c",
+      "cacheKey": "42e80ccac179",
+      "fetchedAt": "2026-09-12T13:54:51.105553+00:00",
+      "status": 200,
+      "sha256": "0e41f3e0a7f271011cd703a4c48e63439d04d423ee18dce11498f530f372e072"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v3.18/include/uapi/linux/bpf.h",
+      "cacheKey": "bb0bb9399fa7",
+      "fetchedAt": "2026-09-12T13:49:57.166731+00:00",
+      "status": 200,
+      "sha256": "fb8c5b42a3e8aa4f945517391cc14c6fd9447dacd4408de81fdbdb76abae3e3b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v3.19/include/uapi/linux/bpf.h",
+      "cacheKey": "a8904c5fbc56",
+      "fetchedAt": "2026-09-12T13:49:57.662300+00:00",
+      "status": 200,
+      "sha256": "31334df5332c6efd776211ba83a865352328a244dfca05d44a36e0e4140b8809"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.0/include/uapi/linux/bpf.h",
+      "cacheKey": "4dc0bd2b2628",
+      "fetchedAt": "2026-09-12T13:54:56.044011+00:00",
+      "status": 200,
+      "sha256": "31334df5332c6efd776211ba83a865352328a244dfca05d44a36e0e4140b8809"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.1/include/uapi/linux/bpf.h",
+      "cacheKey": "defcc5d6a5d5",
+      "fetchedAt": "2026-09-12T13:54:51.600097+00:00",
+      "status": 200,
+      "sha256": "0132a81167b6fd5735198425b072fcad31f57aefb8d816e75709f993c6c4950f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.10/include/uapi/linux/bpf.h",
+      "cacheKey": "8e2bc96316e4",
+      "fetchedAt": "2026-09-12T13:54:52.716390+00:00",
+      "status": 200,
+      "sha256": "a17ff16d8ac8dd4c38630c40ed581bca161d0753dd319ae85b6e1e33c4c4445e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.15/include/uapi/linux/bpf.h",
+      "cacheKey": "cbd7240a61e9",
+      "fetchedAt": "2026-09-12T13:54:56.991551+00:00",
+      "status": 200,
+      "sha256": "41558b1f8296dac553f2ff00396867741b12e7b198d92807b0fde537fe5d3761"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.16/include/uapi/linux/bpf.h",
+      "cacheKey": "fc7208fdb36e",
+      "fetchedAt": "2026-09-12T13:54:52.592515+00:00",
+      "status": 200,
+      "sha256": "b29ee69add815c0e1877da988eae758911837be1b877f403a375896533b38409"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.17/include/uapi/linux/bpf.h",
+      "cacheKey": "5d3751d899fa",
+      "fetchedAt": "2026-09-12T13:54:53.148700+00:00",
+      "status": 200,
+      "sha256": "8e037ed80836a5ac2f3cf8885e0040276471d431e95a42c2532209da450dd4fb"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.18/include/uapi/linux/bpf.h",
+      "cacheKey": "3131d43bec5c",
+      "fetchedAt": "2026-09-12T13:54:53.227499+00:00",
+      "status": 200,
+      "sha256": "d4abd651cfbb1e6c033e1780535ffc64f4745a6f9420afb97b19088c76c0e114"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.2/include/uapi/linux/bpf.h",
+      "cacheKey": "53d0fc0f93d1",
+      "fetchedAt": "2026-09-12T13:54:51.592635+00:00",
+      "status": 200,
+      "sha256": "18d68337b3d8e99bf924380a3aaf04f30103a29e8cff850820cbcd6af4a24d84"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.7/include/uapi/linux/bpf.h",
+      "cacheKey": "ab40f6c02841",
+      "fetchedAt": "2026-09-12T13:54:56.468483+00:00",
+      "status": 200,
+      "sha256": "7787fd753a6eb2958fead484a7a92a2050466911a39b2b82f1e86831bd31c674"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.8/include/uapi/linux/bpf.h",
+      "cacheKey": "4c59c04cd168",
+      "fetchedAt": "2026-09-12T13:54:52.092757+00:00",
+      "status": 200,
+      "sha256": "166012f6f2dd42fc6dcd036974c7e5e04f0e12318495c3a1ff21de660b5a2b63"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v4.9/include/uapi/linux/bpf.h",
+      "cacheKey": "64c61bbb84e5",
+      "fetchedAt": "2026-09-12T13:54:56.598565+00:00",
+      "status": 200,
+      "sha256": "a6c8facbc057541f6962cdfe7d6ca08dfaacf1c1a2e7b318964bf70b1f448ef0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.1/include/uapi/linux/bpf.h",
+      "cacheKey": "93e95f82369c",
+      "fetchedAt": "2026-09-12T13:54:57.222506+00:00",
+      "status": 200,
+      "sha256": "4b568fad34bf5775ae9f26024c849315e521b7772aefae6a8b2b2939c932497c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.10/include/uapi/linux/bpf.h",
+      "cacheKey": "076d5ba59d25",
+      "fetchedAt": "2026-09-12T13:54:54.441201+00:00",
+      "status": 200,
+      "sha256": "540f1032a563427fbb4eb00010e2bd93e24714588e3487c97fbcf2dacf521baf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.14/include/uapi/linux/bpf.h",
+      "cacheKey": "b8f81fef919c",
+      "fetchedAt": "2026-09-12T13:54:58.139968+00:00",
+      "status": 200,
+      "sha256": "0ceae6dbefec29fc4ee3667f4c5776f00597590fd8dc6d9550ef9bf250c44380"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.15/include/uapi/linux/bpf.h",
+      "cacheKey": "dda4f10bfcde",
+      "fetchedAt": "2026-09-12T13:54:54.924340+00:00",
+      "status": 200,
+      "sha256": "2a18595b95a7ce4fb902d9beee4c55ddb6bc5a84cf1d89ff5cd7ee616a77733e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.18/include/uapi/linux/bpf.h",
+      "cacheKey": "95747a4caddf",
+      "fetchedAt": "2026-09-12T13:54:58.513660+00:00",
+      "status": 200,
+      "sha256": "ad161305272f39edaf7547315db4b6da94653fcc74c3c15f0b1ecc70fe02a2c2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.19/include/uapi/linux/bpf.h",
+      "cacheKey": "483b039689ab",
+      "fetchedAt": "2026-09-12T13:54:55.079528+00:00",
+      "status": 200,
+      "sha256": "24354ba2c980f34726b5f9d6a8e00f1deb137a3dbbd32f9f9607ef16bf0cdf75"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.2/include/uapi/linux/bpf.h",
+      "cacheKey": "4bee5536b099",
+      "fetchedAt": "2026-09-12T13:54:53.764240+00:00",
+      "status": 200,
+      "sha256": "f6dbf1257d390323515e7cb91286726014d5e12176a273bf15ca6e9f4b7fc2fd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.2/kernel/bpf/verifier.c",
+      "cacheKey": "9891e4f7b195",
+      "fetchedAt": "2026-09-12T13:54:59.949488+00:00",
+      "status": 200,
+      "sha256": "3fb276098d9d527f6bc80e57aea044c4a4797a37ba1bbceb83635524a40628c2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.3/kernel/bpf/verifier.c",
+      "cacheKey": "6a1ed4ea860f",
+      "fetchedAt": "2026-09-12T13:54:59.427819+00:00",
+      "status": 200,
+      "sha256": "5d22381fd88054609df8f7d8e30a94dca326f91ca2b9f09049b49c9f44d17bf1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.6/include/uapi/linux/bpf.h",
+      "cacheKey": "7b645e707650",
+      "fetchedAt": "2026-09-12T13:54:57.621952+00:00",
+      "status": 200,
+      "sha256": "e08595f50c7d124e104c7d6bae51486fb1fda467b77f6f537241338399c8b46c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.7/include/uapi/linux/bpf.h",
+      "cacheKey": "ecda398bdc1b",
+      "fetchedAt": "2026-09-12T13:54:53.854089+00:00",
+      "status": 200,
+      "sha256": "c6c89e2be5f89355cfb77819cfaa6eb1dae5d6f13ff7a9083f975bf2fb9bbee7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.8/include/uapi/linux/bpf.h",
+      "cacheKey": "2c7b2aa508a0",
+      "fetchedAt": "2026-09-12T13:54:54.389689+00:00",
+      "status": 200,
+      "sha256": "dd0120b08f383f65c06269305214686b19fae8fff76573f3cd2d7e27cf4902c3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v5.9/include/uapi/linux/bpf.h",
+      "cacheKey": "c72c937ae7c6",
+      "fetchedAt": "2026-09-12T13:54:57.857053+00:00",
+      "status": 200,
+      "sha256": "1cbaaf9e683d1865cecb7e4b2bb93fbfd11e26e1b1b8fba0888893ef20664326"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.1/kernel/bpf/helpers.c",
+      "cacheKey": "0860fefb1564",
+      "fetchedAt": "2026-09-12T13:54:58.676334+00:00",
+      "status": 200,
+      "sha256": "dbb5f980481e7ff7e61aaf299547f799d18424b94771ba4a7c880831c2d36401"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/fs/exec.c",
+      "cacheKey": "9aa3496ef19b",
+      "fetchedAt": "2026-09-12T13:49:58.437131+00:00",
+      "status": 200,
+      "sha256": "98f1bd0885d273637457bd6709d393b8deefd2b009ac273f9fc3d26d8509ccb5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/linux/bpf.h",
+      "cacheKey": "ec50af9fda3c",
+      "fetchedAt": "2026-09-12T13:49:58.932299+00:00",
+      "status": 200,
+      "sha256": "452109aa66652137b04d9bc5a4e1c6d83a4d4f7dfc6e70b607779ed1cc588e43"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/kernel/bpf/syscall.c",
+      "cacheKey": "559d469b068c",
+      "fetchedAt": "2026-09-12T13:49:57.980720+00:00",
+      "status": 200,
+      "sha256": "cb98915b60c7cc9f94345da5104a130dd23905aaf578acc2f35b46403b6e4ed9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.2/kernel/bpf/helpers.c",
+      "cacheKey": "d40cf375b52b",
+      "fetchedAt": "2026-09-12T13:54:55.483270+00:00",
+      "status": 200,
+      "sha256": "95ebe9eb4f8424a0ca4a2f689c4b3de82489cf2de41af2b08ef407d15a2535cc"
+    },
+    {
+      "url": "https://www.tcpdump.org/papers/bpf-usenix93.pdf",
+      "cacheKey": "08aff3cfaae6",
+      "fetchedAt": "2026-09-12T13:49:58.497055+00:00",
+      "status": 200,
+      "sha256": "048674d52f91ef5da8717dbcfa605d157882d7a8a3059ad4e9df86905ea8497e"
+    }
+  ],
+  "artifactDirectory": ".vitepress/cache/networking-cilium-ebpf-audit",
+  "persistentSourceCache": ".vitepress/cache/mesh-primary-cache.sqlite3",
+  "findings": [
+    "Replaced removed legacy libbpf maps declarations and undefined u32/u64 examples with BTF .maps and exact types.",
+    "Old bpftool load-only examples never attached tracepoints; current loader checks one program before loading, owns attachment/link lifetime, checks errors and closes resources.",
+    "Counter now distinguishes execve attempts from successful sched_process_exec events; bounded comm keys are not unique executable paths. Capacity and selected loss counters are explicit.",
+    "Native two-thread helper simulation proves BPF_NOEXIST+lookup+atomic increment retains both counts; BPF_ANY mutation loses one. Reader starts with NULL, bounds strings and handles next-key/count/loss failures.",
+    "Corrected kernel milestones with17 predecessor/release source comparisons, plus3.18syscall/3.19maps and5.3bounded-loop evidence. Preserved1992preprint/1993USENIX distinction.",
+    "Removed absolute verifier/crash/performance guarantees; clarified interpreter/JIT, GPL-helper restrictions, CO-RE limits, unstable tracepoint/kfunc ABI and1M/4096instruction versus analysis limits.",
+    "Corrected ringbuf MPSC, map/reference/pin lifetimes, perCPU concurrency and buffer layout, socket-filter capture semantics, nonexistent UPROBE enum and hook-specific returns.",
+    "Current Cilium source maps are cilium_lxc/IPCachev2/policyv3/CT/LB/metrics families; replaced fabricated source filenames and generic map keys.",
+    "Corrected socket/TC/optionalXDP service paths, userspace L7 proxy versus kernel encryption, removed KafkaL7 API, Beta ztunnel distinction and no QoS guarantees.",
+    "Updated node-local cilium-dbg commands, cached map versus kernel view, Hubble Relay/HTTP403 visibility, profile metric arguments and trace_pipe versus verifier logs.",
+    "Included documented RHEL8.10 equivalent kernel backport, AMD64/AArch64 and separate native-Cilium Clang18.1 requirement.",
+    "Reviewed all40quiz answers; kept20questions per language and aligned explanations. Removed whitespace-only blank lines in Korean quiz."
+  ],
+  "figures": {
+    "actuallyViewed": 4,
+    "removedReferences": [
+      "en-networking-cilium-02-ebpf-0",
+      "ko-networking-cilium-02-ebpf-0"
+    ],
+    "retainedWithCaption": [
+      "en-networking-cilium-02-ebpf-1",
+      "ko-networking-cilium-02-ebpf-1"
+    ],
+    "reason": "Figure0 claimed verifier safety guarantee and a mandatory JIT→VM path; corrected prose preserves the useful explanation. Figure1 retained as logical roles with deployment/metrics caveats.",
+    "externalRepair": "If parent reuses figure0 or foreign translations, regenerate from corrected source and use automated source-sync; no foreign prose or asset edits."
+  },
+  "limitations": [
+    "No Clang BPF-target compilation, kernel verifier/load/attach, production workload test, cloud mutation or cluster deployment performed.",
+    "Native helper simulations validate specified C logic; they do not emulate kernel verifier or all kernel concurrency/lifetime semantics.",
+    "docs.cilium.io v1.20 pages returned403 after restart; same-version official GitHub documentation/source fetched200.403 is not classified as a broken404.",
+    "Host restart destroyed /tmp primary responses and draft scripts before source application. Current chapter sources/scripts/evidence restored to persistent cache; closed batches were not repeated.",
+    "No full VitePress build/devserver or repository-wide build/test was run under the new resource policy. Latest current validation is the bounded suite recorded here."
+  ]
+}

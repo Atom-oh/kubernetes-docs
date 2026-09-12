@@ -356,7 +356,7 @@ Replace tfvars with a real absolute file path.
 ```bash
 DOCS_TFVARS="/absolute/path/to/production.cluster.tfvars.json"
 terraform -chdir=terraform/02-cluster plan \
-  -var-file="$DOCS_TFVARS" -var="kubernetes_version=$DOCS_TARGET" -out=upgrade.tfplan
+  -var-file="$DOCS_TFVARS" -var="cluster_version=$DOCS_TARGET" -out=upgrade.tfplan
 terraform -chdir=terraform/02-cluster show upgrade.tfplan
 # Apply the reviewed saved plan:
 terraform -chdir=terraform/02-cluster apply upgrade.tfplan

@@ -47,4 +47,11 @@ for (const locale of ['ko', 'en']) {
     assert.deepEqual(errors, [])
     assert.match(html, /update\/&lt;group&gt;\/&lt;kind&gt;\/&lt;namespace&gt;\/&lt;name&gt;/)
   })
+
+  test(`${locale}: EKS diagnostic paths with placeholders compile as literal text`, async () => {
+    const source = await readFile(new URL(`../../${locale}/eks/11-eks-advanced-debugging.md`, import.meta.url), 'utf8')
+    const { html, errors } = await render(source)
+    assert.deepEqual(errors, [])
+    assert.match(html, /\/etc\/alertmanager\/secrets\/&lt;secret-name&gt;\//)
+  })
 }

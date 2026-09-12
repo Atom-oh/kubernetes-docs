@@ -7,19 +7,19 @@
     "en/quizzes/networking/**"
   ],
   "inventory": 108,
-  "fullyRead": 80,
-  "fixedAndValidated": 76,
-  "currentBatch": "networking-cilium eBPF",
+  "fullyRead": 88,
+  "fixedAndValidated": 84,
+  "currentBatch": "networking-cilium IPAM-policy",
   "currentFiles": [
-    "en/networking/cilium/02-ebpf.md",
-    "en/quizzes/networking/cilium/02-ebpf-quiz.md",
-    "ko/networking/cilium/02-ebpf.md",
-    "ko/quizzes/networking/cilium/02-ebpf-quiz.md"
+    "en/networking/cilium/04-ipam-policy.md",
+    "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+    "ko/networking/cilium/04-ipam-policy.md",
+    "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md"
   ],
   "remaining": {
     "root": 0,
     "calico": 0,
-    "cilium": 32
+    "cilium": 24
   },
   "completedSubbatches": [
     {
@@ -121,14 +121,24 @@
       "name": "cilium-introduction",
       "documents": 4,
       "report": "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json"
+    },
+    {
+      "name": "cilium-ebpf",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-ebpf-validation.json"
+    },
+    {
+      "name": "cilium-networking",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-networking-validation.json"
     }
   ],
   "perDocumentReport": "docs/reviews/2026-09-11/batches/networking-cilium.json",
   "blockers": [],
   "pendingValidation": [
-    "en/networking/cilium/02-ebpf.md",
-    "en/quizzes/networking/cilium/02-ebpf-quiz.md",
-    "ko/networking/cilium/02-ebpf.md",
-    "ko/quizzes/networking/cilium/02-ebpf-quiz.md"
+    "en/networking/cilium/04-ipam-policy.md",
+    "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+    "ko/networking/cilium/04-ipam-policy.md",
+    "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md"
   ]
 }

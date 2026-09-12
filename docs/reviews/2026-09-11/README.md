@@ -2,14 +2,15 @@
 
 This is a progress report, not a claim that the full corpus has been semantically reviewed.
 
-- Initial inventory: 2701 Markdown documents across five languages; current inventory includes 2709 after restoring deleted translations.
-- Fully read source/quiz/lab files recorded so far: 692 (680 fixed, 0 verified, 8 with follow-up).
+- Initial inventory: 2701 Markdown documents across five languages; the current coverage inventory includes 2707 existing documents after restoration and removal of retired site utilities.
+- Fully read source/quiz/lab files recorded so far: 704 (692 fixed, 0 verified, 12 with follow-up).
 - Source files are maintained in Korean and English; translations are checked structurally and repaired through automation.
 
 | Batch | Files recorded | Fixed | Verified | Follow-up |
 |---|---:|---:|---:|---:|
+| [airflow-dag-patterns](batches/airflow-dag-patterns.json) | 4 | 0 | 0 | 4 |
 | [airflow-foundation](batches/airflow-foundation.json) | 6 | 6 | 0 | 0 |
-| [airflow-helm](batches/airflow-helm.json) | 4 | 0 | 0 | 0 |
+| [airflow-helm](batches/airflow-helm.json) | 4 | 4 | 0 | 0 |
 | [argocd-applications](batches/argocd-applications.json) | 4 | 4 | 0 | 0 |
 | [argocd-appsets](batches/argocd-appsets.json) | 4 | 4 | 0 | 0 |
 | [argocd-best-practices](batches/argocd-best-practices.json) | 4 | 4 | 0 | 0 |
@@ -74,15 +75,15 @@ This is a progress report, not a claim that the full corpus has been semanticall
 | [mesh-linkerd](batches/mesh-linkerd.json) | 28 | 28 | 0 | 0 |
 | [mesh-other-istio-overview](batches/mesh-other-istio-overview.json) | 4 | 4 | 0 | 0 |
 | [networking-calico](batches/networking-calico.json) | 42 | 42 | 0 | 0 |
-| [networking-cilium](batches/networking-cilium.json) | 10 | 6 | 0 | 4 |
+| [networking-cilium](batches/networking-cilium.json) | 18 | 14 | 0 | 4 |
 | [networking-foundation](batches/networking-foundation.json) | 28 | 28 | 0 | 0 |
 | [ops-ci-pipelines](batches/ops-ci-pipelines.json) | 4 | 4 | 0 | 0 |
 | [ops-event-capacity](batches/ops-event-capacity.json) | 4 | 4 | 0 | 0 |
 | [ops-finops-cost-platform](batches/ops-finops-cost-platform.json) | 4 | 4 | 0 | 0 |
 | [ops-gitops-automation](batches/ops-gitops-automation.json) | 4 | 4 | 0 | 0 |
 | [ops-gitops-multicluster](batches/ops-gitops-multicluster.json) | 4 | 4 | 0 | 0 |
-| [ops-infrastructure-advanced](batches/ops-infrastructure-advanced.json) | 4 | 4 | 0 | 0 |
 | [ops-infrastructure](batches/ops-infrastructure.json) | 4 | 4 | 0 | 0 |
+| [ops-infrastructure-advanced](batches/ops-infrastructure-advanced.json) | 4 | 4 | 0 | 0 |
 | [ops-observability-alerts](batches/ops-observability-alerts.json) | 4 | 4 | 0 | 0 |
 | [ops-observability-analysis](batches/ops-observability-analysis.json) | 4 | 4 | 0 | 0 |
 | [ops-observability-stack](batches/ops-observability-stack.json) | 4 | 4 | 0 | 0 |
