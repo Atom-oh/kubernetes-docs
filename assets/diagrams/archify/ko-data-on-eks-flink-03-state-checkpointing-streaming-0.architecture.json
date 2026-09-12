@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kafka에서 S3/Iceberg로 가는 Flink 스트리밍 패턴",
+    "title": "Flink state와 sink commit의 경계",
     "output": "ko-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -19,7 +19,7 @@
           "flink",
           "rocksdb"
         ],
-        "note": "MSK 소스 토픽을 읽은 Flink Job이 TaskManager의 RocksDB 상태 백엔드에 오퍼레이터 상태를 둔다."
+        "note": "State와 source 재생·sink 전달 조건을 함께 검증합니다."
       },
       {
         "id": "checkpoint",
@@ -29,7 +29,7 @@
           "rocksdb",
           "s3ckpt"
         ],
-        "note": "RocksDB 상태를 일정 주기로 S3 체크포인트 스토리지에 스냅숏으로 남긴다."
+        "note": "Shared SST 참조·compaction·retention과 복구 가능한 저장소를 확인합니다."
       },
       {
         "id": "sinks",
@@ -39,25 +39,11 @@
           "kafkaout",
           "iceberg"
         ],
-        "note": "KafkaSink는 EXACTLY_ONCE 2PC로 Kafka 출력 토픽에, Dynamic Iceberg Sink는 S3 위 Iceberg 테이블에 쓴다."
+        "note": "각 sink에 맞는 runtime/connector를 선택하며 sink 간 전역 atomic commit은 보장되지 않습니다."
       }
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
-        },
-        "database": {
-          "label": "데이터 저장소"
-        },
-        "messagebus": {
-          "label": "메시지 버스"
-        }
-      }
+      "mode": "hidden"
     }
   },
   "components": [
@@ -78,43 +64,43 @@
     {
       "id": "flink",
       "type": "backend",
-      "label": "Flink Job",
-      "sublabel": "스트림 처리",
+      "label": "Flink runtime",
+      "sublabel": "Connector별 version profile",
       "pos": [
-        480,
+        445,
         300
       ],
       "size": [
-        150,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "rocksdb",
       "type": "database",
-      "label": "RocksDB",
-      "sublabel": "상태 백엔드",
+      "label": "RocksDB keyed state",
+      "sublabel": "Memory / local SST",
       "pos": [
-        480,
+        435,
         100
       ],
       "size": [
-        150,
-        60
+        240,
+        64
       ]
     },
     {
       "id": "s3ckpt",
       "type": "cloud",
-      "label": "S3 체크포인트",
-      "sublabel": "스토리지",
+      "label": "S3 checkpoint storage",
+      "sublabel": "Shared SST + metadata",
       "pos": [
-        480,
+        435,
         500
       ],
       "size": [
-        150,
-        60
+        240,
+        64
       ]
     },
     {
@@ -127,22 +113,22 @@
         180
       ],
       "size": [
-        170,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "iceberg",
       "type": "cloud",
       "label": "S3 / Iceberg",
-      "sublabel": "테이블",
+      "sublabel": "Catalog / table commits",
       "pos": [
         1000,
         420
       ],
       "size": [
-        170,
-        60
+        230,
+        64
       ]
     }
   ],
@@ -167,7 +153,7 @@
       "id": "flink-state",
       "from": "flink",
       "to": "rocksdb",
-      "label": "오퍼레이터 상태",
+      "label": "Keyed state",
       "fromSide": "top",
       "toSide": "bottom"
     },
@@ -175,7 +161,7 @@
       "id": "checkpoint",
       "from": "flink",
       "to": "s3ckpt",
-      "label": "주기적 체크포인트",
+      "label": "Checkpoint / restore",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top",
@@ -185,30 +171,38 @@
       "id": "kafka-sink",
       "from": "flink",
       "to": "kafkaout",
-      "label": "KafkaSink · EXACTLY_ONCE 2PC"
+      "label": "Checkpoint → transaction commit"
     },
     {
       "id": "iceberg-sink",
       "from": "flink",
       "to": "iceberg",
-      "label": "Dynamic Iceberg Sink"
+      "label": "DynamicRecord → table commit"
     }
   ],
   "cards": [
     {
       "dot": "amber",
-      "title": "체크포인트",
+      "title": "Checkpoint state",
       "items": [
-        "EmbeddedRocksDBStateBackend 상태를 S3에 주기적으로 스냅숏",
-        "증분 체크포인트는 변경된 SSTable 파일만 전송"
+        "Shared SST 참조와 compaction 영향",
+        "Storage·retention·restore 조건"
       ]
     },
     {
       "dot": "emerald",
-      "title": "정확히 한 번 전달",
+      "title": "Sink commit",
       "items": [
-        "KafkaWriter는 열린 Kafka 트랜잭션 안에 레코드를 기록",
-        "체크포인트 완료 후 KafkaCommitter가 트랜잭션을 커밋"
+        "Kafka: checkpoint + transaction + read_committed",
+        "Sink / table 간 전역 transaction 아님"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "검증한 version profile",
+      "items": [
+        "Kafka 5.0.0-2.2 / Flink 2.2.1",
+        "Iceberg 1.11.0 / Flink 2.1.3"
       ]
     }
   ]

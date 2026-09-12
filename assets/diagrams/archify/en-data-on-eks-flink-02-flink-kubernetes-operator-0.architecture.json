@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Flink Kubernetes Operator: Resource Management and Autoscaling",
+    "title": "Flink Operator and Native-mode scaling",
     "locale": "en",
     "output": "en-data-on-eks-flink-02-flink-kubernetes-operator-0.html",
     "quality_profile": "showcase",
@@ -12,17 +12,7 @@
       620
     ],
     "legend": {
-      "entries": {
-        "external": {
-          "label": "Custom resource (CR)"
-        },
-        "backend": {
-          "label": "Controller / Pod"
-        },
-        "database": {
-          "label": "Metrics"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -47,7 +37,7 @@
           "autoscaler",
           "operator"
         ],
-        "note": "The autoscaler reads per-vertex metrics emitted by the pods; once a threshold is crossed it triggers a last-state rescale via the operator."
+        "note": "Evaluate rates, backlog, pressure and constraints; apply overrides only when enabled, through in-place scaling or redeployment."
       }
     ]
   },
@@ -56,7 +46,7 @@
       "id": "cr-deployment",
       "type": "external",
       "label": "FlinkDeployment CR",
-      "sublabel": "Application-mode cluster + job",
+      "sublabel": "Application / Session cluster",
       "pos": [
         180,
         40
@@ -138,9 +128,9 @@
     },
     {
       "id": "metrics",
-      "type": "database",
-      "label": "Per-vertex metrics",
-      "sublabel": "busy time · backlog · processing rate",
+      "type": "backend",
+      "label": "Flink REST metrics",
+      "sublabel": "Rates · backlog · pressure",
       "pos": [
         340,
         480
@@ -172,20 +162,22 @@
       "id": "op-manage-jm",
       "from": "operator",
       "to": "jobmanager",
-      "label": "manages · triggers last-state rescale",
+      "label": "In-place / redeploy",
       "variant": "emphasis",
-      "labelDy": 24
-    },
-    {
-      "id": "op-manage-tm",
-      "from": "operator",
-      "to": "taskmanager",
-      "label": "manages"
+      "labelAt": [
+        460,
+        290
+      ]
     },
     {
       "id": "jm-to-tm",
       "from": "jobmanager",
-      "to": "taskmanager"
+      "to": "taskmanager",
+      "label": "Native allocation / tasks",
+      "labelAt": [
+        610,
+        312
+      ]
     },
     {
       "id": "jm-emit",
@@ -212,28 +204,26 @@
       "id": "as-threshold",
       "from": "autoscaler",
       "to": "operator",
-      "label": "threshold crossed",
+      "label": "Enabled + constraints",
       "variant": "emphasis",
-      "labelDy": -34
+      "labelDy": -25
     }
   ],
   "cards": [
     {
       "dot": "amber",
-      "title": "What the autoscaler reads",
+      "title": "Evaluation inputs",
       "items": [
-        "Source backlog and source incoming rate",
-        "Per-vertex record processing (output) rate",
-        "Busy time / backpressured time per vertex — no CPU or memory metrics"
+        "Rates, edge ratios and backlog target",
+        "Memory/GC pressure, quotas and scaling limits"
       ]
     },
     {
       "dot": "orange",
-      "title": "last-state rescale",
+      "title": "Applying scaling",
       "items": [
-        "Restores from the latest checkpoint metadata without a fresh savepoint",
-        "Works even when the job is unhealthy, so the autoscaler leans on it continuously",
-        "Usable with FlinkSessionJob since operator 1.10.0"
+        "Begin with recommendations in observation mode",
+        "Validate state recovery and in-place/redeploy paths"
       ]
     }
   ]
