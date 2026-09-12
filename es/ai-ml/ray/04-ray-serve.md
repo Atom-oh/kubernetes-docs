@@ -1,85 +1,121 @@
 # Parte 4: Ray Serve
 
-> **Versiones compatibles**: Ray 2.57.0
-> **Última actualización**: August 20, 2026
+> **Base de la revisión**: Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
 
-## Configuración del entorno de laboratorio
+## Entorno y alcance de la validación
 
-Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y entorno:
+Se comprobó un pequeño ejemplo de respuesta en CPU con Python 3.12 y `ray[serve]==2.58.0`. En este entorno, el módulo de HAProxy importaba Jinja2 aunque la instalación del extra no lo había proporcionado; añadir explícitamente `Jinja2==3.1.6` corrigió la importación. Otros entornos pueden tenerlo ya a través de otra dependencia.
 
-### Herramientas necesarias
+El extra `ray[llm]` añade dependencias de inferencia de gran tamaño como vLLM. No se instaló aquí, y no se ejecutaron pesos de modelo, GPU ni cargas de trabajo en EKS. La validación siguiente cubre la configuración de Serve, las respuestas HTTP y las llamadas mediante DeploymentHandle.
 
-* Python 3.10+
-* `pip install "ray[serve]"` para implementaciones generales de Ray Serve, o `pip install "ray[llm]"` si planeas seguir la sección de Ray Serve LLM a continuación; instala vLLM y dependencias relacionadas que `ray[serve]` no incluye
-* kubectl v1.34 o posterior, dirigido a un clúster de Amazon EKS operativo, si planeas probar la ruta de RayService
-* Un par `NodePool`/`EC2NodeClass` con capacidad de GPU aprovisionado mediante Karpenter, si planeas servir modelos respaldados por GPU
+## Deployments, applications y rutas de las solicitudes
 
-## Qué es Ray Serve
+Un **Deployment** de Serve administra réplicas de actors; es distinto de un Deployment de Kubernetes. Varios actors de réplica pueden ubicarse en un mismo Pod de Ray, por lo que el número de réplicas y el de Pods no son intercambiables.
 
-La [Parte 1](01-architecture.md) presentó el actor como la primitiva de Ray para objetos Python con estado y direccionables que mantienen el estado en memoria entre llamadas. Ray Serve es una biblioteca de servicio de modelos creada directamente sobre esa primitiva: una implementación de Serve se implementa como un actor de Ray, o un grupo de réplicas de actor, y Ray Serve enruta las solicitudes HTTP o gRPC entrantes a esas réplicas. Un modelo que se carga una vez en la memoria de una réplica puede entonces responder a muchas solicitudes sin volver a cargarlo, que es exactamente el patrón para el que se diseñaron los actores.
+Una **Application** (aplicación) contiene uno o varios deployments y un deployment de ingress. Los DeploymentHandles pueden conectar el preprocesamiento y la inferencia sin que cada llamada interna atraviese HTTP ni sea necesario crear un Service de Kubernetes por deployment.
 
-Una sola implementación escala horizontalmente simplemente añadiendo más réplicas de actor detrás del enrutador de solicitudes de Ray Serve, de la misma manera que escala en Ray cualquier servicio respaldado por actores. Más interesante aún, Ray Serve permite que varias implementaciones se compongan en una canalización de servicio, denominada aplicación. Un ejemplo común es una canalización de dos pasos: una implementación maneja el preprocesamiento (tokenización, redimensionamiento de imágenes, extracción de características) y entrega su salida a una segunda implementación que ejecuta la inferencia real del modelo. Cada implementación de esa canalización puede escalarse, versionarse y asignarse recursos de forma independiente, porque cada una sigue siendo, internamente, solo un grupo de réplicas de actor.
+El Controller administra el estado de control de Serve y los ciclos de vida de los actors. Los proxies reciben tráfico HTTP/gRPC y lo reenvían a los deployments. La ubicación predeterminada del proxy en 2.58.0 es **`EveryNode` en los nodos que alojan réplicas**. `HeadOnly` y `Disabled` pueden seleccionarse explícitamente. El valor predeterminado de solo head de una página de arquitectura más antigua no debe prevalecer sobre el contrato actual de la API.
 
-```mermaid
-graph LR
-    C[Client] -->|HTTP / gRPC| ING[Ray Serve<br/>Ingress]
-    ING --> D1
+Distingue las colas de los llamadores en los proxies/handles de las solicitudes en curso asignadas a las réplicas. Revisa los handlers síncronos/asíncronos, el trabajo bloqueante, los timeouts y el comportamiento de cancelación en la aplicación.
 
-    subgraph APP["Application"]
-        D1["Deployment: Preprocess<br/>(actor replicas)"] --> D2["Deployment: Model Inference<br/>(actor replicas)"]
-    end
+## Pequeño ejemplo local de HTTP/Handle
 
-    D2 --> RESP[Response]
+Esto valida las API de respuesta en lugar de la inferencia de modelos. La comprobación real utilizó un puerto de loopback privado disponible y confirmó HTTP 200 y `double(4) == 8`.
 
-    SA["Ray Serve Autoscaler<br/>(per-deployment replica count)"] -.watches queue depth /<br/>ongoing requests.-> D1
-    SA -.-> D2
+```python
+import requests
+import ray
+from ray import serve
 
-    RA["Ray / KubeRay Autoscaler<br/>(worker Pod count)"] -.watches pending<br/>actor placement.-> SA
-    KP["Karpenter<br/>(node count)"] -.provisions nodes for<br/>pending worker Pods.-> RA
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+    serve.start(proxy_location="HeadOnly",
+                http_options={"host": "127.0.0.1", "port": 18080})
 
-    style D1 fill:#4fc3f7
-    style D2 fill:#ce93d8
-    style SA fill:#ffb74d
-    style RA fill:#ffb74d
-    style KP fill:#81c784
+    @serve.deployment(num_replicas=1,
+                      ray_actor_options={"num_cpus": 1},
+                      max_ongoing_requests=2, max_queued_requests=4)
+    class Echo:
+        async def __call__(self, request):
+            return {"echo": request.query_params.get("value", "")}
+        def double(self, value):
+            return value * 2
+
+    handle = serve.run(Echo.bind(), name="echo", route_prefix="/echo")
+    response = requests.get("http://127.0.0.1:18080/echo",
+                            params={"value": "fixture"}, timeout=15)
+    assert response.status_code == 200
+    assert response.json() == {"echo": "fixture"}
+    assert handle.double.remote(4).result(timeout_s=15) == 8
+finally:
+    serve.shutdown()
+    ray.shutdown()
 ```
 
-## Ray Serve LLM
+Ejecútalo en un proceso de ejercicio separado con el puerto 18080 disponible. Los recursos lógicos de Ray y el tamaño del object store no son límites de memoria/CPU del sistema operativo para todo el proceso. `serve.shutdown()` detiene la instancia de Serve conectada; no uses la limpieza de este ejemplo contra un clúster de producción compartido.
 
-El servicio de modelos de lenguaje grandes es un patrón lo suficientemente distinto — procesamiento por lotes continuo, transmisión de tokens y una estructura de solicitud compatible con OpenAI — como para que Ray proporcione un conjunto dedicado de bloques de construcción: el módulo `ray.serve.llm`. En lugar de ensamblar manualmente una implementación que gestione por sí misma una instancia del motor vLLM, `ray.serve.llm` proporciona construcciones de nivel superior diseñadas específicamente para el servicio de LLM, superpuestas sobre el modelo general de implementación de Ray Serve descrito anteriormente.
+## Réplicas, autoscaling y backpressure
 
-`ray.serve.llm` documenta vLLM como su motor de inferencia compatible, y su API compatible con OpenAI está diseñada para alinearse estrechamente con el propio servidor compatible con OpenAI de vLLM, por lo que la mayoría de los `engine_kwargs` que funcionan con una invocación simple de `vllm serve` se trasladan. En la práctica, eso significa que las mismas capacidades de producción de Ray Serve — escalado automático, servicio de múltiples modelos y la ubicación habitual de actores distribuidos de Ray — también se aplican al servicio de LLM, mientras que la infraestructura específica de LLM (cargar y configurar el motor vLLM, exponer un endpoint compatible con OpenAI) la maneja `ray.serve.llm` en vez de algo que construyas manualmente. Consulta la documentación actual de `docs.ray.io/en/latest/serve/llm/` para conocer la superficie de configuración exacta antes de depender de nombres de campos específicos, ya que esta es una de las áreas de Ray Serve que evoluciona más activamente.
+Distingue estos valores predeterminados verificados de 2.58.0:
 
-## Escalado automático de una implementación de Serve
+| Configuración | Valor o significado |
+|---|---|
+| Deployment predeterminado | una réplica, autoscaling sin configurar |
+| `num_replicas="auto"` | aplica mín. 1, máx. 100, objetivo de solicitudes en curso 2 |
+| `AutoscalingConfig()` directo | mín. 1, **máx. 1**; omitir el máximo restringe la expansión |
+| `max_ongoing_requests` | solicitudes enviadas a una réplica sin respuesta; predeterminado 5 |
+| `max_queued_requests` | límite de cola en **cada llamador** (proxy/handle); predeterminado -1, ilimitado |
+| Retardo de escalado | predeterminado: 30 segundos al escalar hacia arriba/600 segundos hacia abajo; no es la latencia real de readiness |
 
-Las implementaciones de Ray Serve tienen su propia capa de escalado automático, separada del escalado automático a nivel de clúster cubierto en la [Parte 2](02-kuberay-operator.md). Mientras que el escalador automático de Ray/KubeRay decide cuántos Pod de worker necesita un RayCluster, el escalador automático de Ray Serve responde una pregunta más acotada un nivel por encima: ¿cuántas réplicas de actor necesita *esta implementación específica* ahora mismo, según la carga de solicitudes que está recibiendo? Ray Serve compara la cantidad de solicitudes en curso por réplica — en cola más en vuelo — con un valor objetivo, y escala las réplicas hacia arriba o hacia abajo para mantener la carga real cerca de ese objetivo, dentro de un recuento mínimo y máximo de réplicas configurado.
+El objetivo de autoscaling observa la carga de solicitudes; es distinto del máximo de solicitudes en curso y de un límite global de cola. Superar los límites de cola puede generar un BackPressureError en los handles o devolver HTTP 503 de forma predeterminada. La configuración de backpressure puede personalizar la respuesta HTTP.
 
-Esto proporciona el ya conocido esquema de escalado automático de tres niveles de este sitio de documentación para una aplicación de Serve que se ejecuta en EKS:
+Ajusta en conjunto el mín./máx., las ventanas/retardos de medición, los arranques en frío, la carga de modelos, el batching y el tiempo real de procesamiento. Escalar a cero con `min_replicas=0` no elimina la latencia de reinicio. Un número deseado de réplicas no garantiza que todas las réplicas estén listas.
 
-1. **El escalador automático de Ray Serve** decide cuántas réplicas de actor necesita una implementación, según la carga de solicitudes.
-2. **El escalador automático de Ray/KubeRay** (cubierto en la [Parte 2](02-kuberay-operator.md)) decide cuántos Pod de worker de Ray necesita el RayCluster subyacente, según la ubicación de actores pendiente, incluidas las réplicas que acaba de solicitar el escalador automático de Ray Serve.
-3. **Karpenter** decide cuántos nodos EC2 se necesitan para ejecutar realmente esos Pod de worker, el mismo mecanismo descrito en [Karpenter](../../autoscaling/02-karpenter.md).
+## Capas de control en EKS
 
-Cada capa solo ve la capa inmediatamente inferior. El escalador automático de Ray Serve no tiene idea de si una nueva réplica se ubica en un nodo existente o activa uno nuevo; simplemente solicita más réplicas. Si esa solicitud se convierte en un nuevo nodo EC2 — y cuánto tarda — es responsabilidad de Karpenter, una capa más abajo.
+1. Serve ajusta los objetivos de réplicas del deployment a partir de la carga de solicitudes y de la política.
+2. Ray ubica los actors/bundles; el autoscaling de Ray habilitado y KubeRay pueden ajustar la capacidad de los Pods de worker.
+3. Kubernetes ubica los Pods y un provisioner como Karpenter suministra capacidad de nodos cuando es necesario.
 
-## Inferencia de GPU
+**Un actor pendiente no se convierte automáticamente en un Pod Pending ni en un nodo EC2.** Los Pods de Ray existentes pueden ganar capacidad libre, o los límites de grupo, la ubicación y las cuotas pueden impedir el avance. Inspecciona la demanda y el estado de readiness en cada capa.
 
-Una implementación de inferencia de modelos que necesita una GPU solicita una de la misma manera que cualquier otra carga de trabajo de Ray: mediante la solicitud normal de recursos por actor de Ray, el mismo mecanismo que cubre la [Parte 3](03-ray-train-tune.md) para los workers de Ray Train y Ray Tune. Ray Serve programa las réplicas de actor de esa implementación en workers que pueden satisfacer el recuento de GPU solicitado y — como se cubrió en la [Parte 2](02-kuberay-operator.md) — la especificación de Pod del grupo de workers es la que realmente anuncia la capacidad de GPU al programador de Ray en primer lugar.
+![HTTP/Handle requests reach Serve proxies and deployment replicas. Actor targets, Ray Pod capacity, and Kubernetes node provisioning are separate layers without a one-to-one actor/Pod/node mapping.](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
 
-Aquí también es donde el escalado automático de Ray Serve y el tiempo de aprovisionamiento de nodos de Karpenter interactúan exactamente como lo hacen para otras cargas de trabajo de GPU en este sitio: cuando el escalador automático de Ray Serve decide que una implementación de inferencia necesita otra réplica y ninguno de los Pod de worker de GPU existentes tiene espacio, esa solicitud de réplica se convierte en un Pod pendiente, y Karpenter debe aprovisionar un nuevo nodo EC2 respaldado por GPU antes de que la réplica pueda realmente comenzar a servir tráfico. Una aplicación de servicio que escale agresivamente su recuento de réplicas de GPU debe considerar ese tiempo de aprovisionamiento; consulta [Karpenter](../../autoscaling/02-karpenter.md) para entender con mayor profundidad cómo funciona la latencia de aprovisionamiento de nodos para los tipos de instancia de GPU.
+[Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-04-ray-serve-0.html)
 
-## RayService en producción
+## Inferencia en GPU y Ray Serve LLM
 
-Ejecutar una aplicación de Serve por sí sola, fuera de Kubernetes, está bien para el desarrollo local, pero las implementaciones de producción en EKS usan el CRD `RayService` presentado en la [Parte 2](02-kuberay-operator.md). RayService gestiona el RayCluster subyacente y la aplicación de Serve implementada sobre él como una unidad, y es específicamente el recurso que admite desplegar una nueva versión de aplicación, o una especificación de RayCluster modificada, con el objetivo de no descartar solicitudes en vuelo; consulta las notas de la versión actual de KubeRay para conocer la madurez y los requisitos previos de esta ruta de actualización. Este documento no vuelve a explicar la mecánica del CRD de RayService; consulta la Parte 2 para ello.
+Las réplicas de GPU ordinarias utilizan opciones de recursos de Ray como `ray_actor_options`. Alinea los dispositivos, los drivers, los límites del Pod y la precedencia de los recursos estructurados de Ray/rayStartParams. Como explica la [Parte 2](02-kuberay-operator.md), los límites del Pod no siempre son el único valor configurado.
 
-En la práctica, esto significa que la topología de implementación descrita anteriormente en este documento — una aplicación compuesta por una o más implementaciones, cada una escalando automáticamente su propio recuento de réplicas de actor — es de la que un objeto `RayService` gestiona el ciclo de vida en un clúster EKS real, mientras que los niveles de escalado automático de Ray/KubeRay y Karpenter siguen operando por debajo exactamente como lo hacen para cualquier otro RayCluster.
+API como `LLMConfig` y `build_openai_app` proporcionan una capa de configuración de LLM independiente. La documentación y el paquete de 2.58.0 muestran **backends de vLLM y SGLang**. Las dependencias verificadas de `ray[llm]` incluyen `vllm[audio]==0.26.0` y paquetes NIXL; esto no implica que también estén instaladas todas las dependencias de SGLang.
 
-## Próximos pasos
+Distingue `model_loading_config`, `deployment_config`, `engine_kwargs` y `server_cls`. Comprueba los campos específicos del motor y las combinaciones admitidas en lugar de suponer que toda opción de la CLI `vllm serve` se transfiere sin cambios. Los backends pueden diferir en los nombres de las opciones de tensor-parallel y en la ubicación de los workers. Algunas API están en beta, y las rutas más antiguas de LLMServer/LLMRouter tienen avisos de deprecación.
 
-Este es el final de esta serie de Ray de cuatro partes. La [Parte 1](01-architecture.md) cubrió las primitivas principales de Ray: tareas, actores y el almacén de objetos. La [Parte 2](02-kuberay-operator.md) cubrió la ejecución declarativa de clústeres de Ray en Kubernetes mediante los CRD `RayCluster`, `RayJob` y `RayService` de KubeRay, y la división del escalado automático entre Ray/KubeRay y Karpenter. La [Parte 3](03-ray-train-tune.md) cubrió el entrenamiento distribuido y el ajuste de hiperparámetros sobre ese clúster. Esta parte cerró el ciclo con Ray Serve: implementaciones creadas sobre la primitiva de actor de la Parte 1, compuestas en aplicaciones, escaladas automáticamente según su propia métrica de carga de solicitudes y — en producción — gestionadas de extremo a extremo mediante el CRD RayService de la Parte 2.
+Valida por separado el acceso al modelo, la revisión, las descargas de pesos, la compatibilidad del motor/CUDA/driver, la caché KV y los recursos de paralelismo de tensores/pipeline. Un formato de solicitud compatible con OpenAI no establece autenticación, seguridad ni una cobertura de características idéntica. La comprobación de Echo en CPU no demuestra el rendimiento ni la compatibilidad de LLM.
 
-[Volver a la página principal](./README.md)
+## RayService y actualizaciones operativas
 
-## Cuestionario
+RayService es una opción para la administración declarativa del ciclo de vida de las aplicaciones de Serve y de los RayClusters en EKS, no un requisito universal para toda implementación en producción. Distingue los cambios de configuración de la aplicación de los cambios del clúster, y `NewCluster` de las estrategias de actualización incremental basadas en Gateway.
 
-Para comprobar lo que has aprendido en este capítulo, prueba el [Cuestionario del tema](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md).
+La feature gate incremental habilitada de KubeRay 1.7 aún requiere Gateway APIs/implementación, capacidad libre, readiness y condiciones de drenaje. Prueba las solicitudes en streaming y de larga duración frente a los límites de apagado. No describas toda actualización como una pérdida de solicitudes garantizada de cero.
+
+Las opciones de arranque con alcance de clúster, como las opciones HTTP, tienen límites de actualización dinámica. Los cambios en un deployment pueden ser una reconfiguración ligera o el reemplazo de actors. Las réplicas reiniciadas o reemplazadas asumen los costes de inicialización del modelo y de recuperación del estado.
+
+## Control de acceso y límites
+
+Restringe por separado los puntos de entrada de la API/dashboard/cliente, el acceso a los artefactos del modelo y el acceso de los usuarios de la aplicación. Los tokens del clúster de Ray y ClusterIP no implementan automáticamente autenticación/autorización para todos los endpoints de Serve. Revisa las entradas, respuestas, prompts y logs sensibles, y configura límites de cola, timeout y recursos.
+
+Las comprobaciones de aquí cubren la configuración/los decoradores nativos y una aplicación HTTP/Handle mínima de un solo nodo. No se realizaron pruebas de carga de autoscaling, ejecución de GPU/LLM, failover multinodo ni despliegues de RayService.
+
+## Fuentes principales
+
+- [Serve 2.58.0](https://docs.ray.io/en/releases-2.58.0/serve/index.html)
+- [Autoscaling](https://docs.ray.io/en/releases-2.58.0/serve/autoscaling-guide.html)
+- [Serve LLM](https://docs.ray.io/en/releases-2.58.0/serve/llm/index.html)
+- [Serve APIs and proxy defaults](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
+- [Serve configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
+- [Replica/queue configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+
+[Página principal](README.md) · [Cuestionario](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

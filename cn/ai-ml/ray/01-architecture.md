@@ -1,117 +1,118 @@
 # 第 1 部分：Ray 架构
 
-> **支持的版本**: Ray 2.57.0
-> **最后更新**: August 20, 2026
+> **审查基线**：Ray 2.58.0 · 2026-09-12
 
 ## 实验环境设置
 
-若要跟随本文档中的示例操作，你需要以下工具和环境：
+本地示例使用 Python 3.12、`ray==2.58.0` 和 `numpy==2.2.6` 进行了验证。其中的任务、actor 和 ObjectRef 检查不需要 GPU、训练模型或 Kubernetes。启用 dashboard 等功能时，请单独检查相关的额外依赖项。
 
-### 必需工具
-
-* Python 3.10 或更高版本
-* `pip install ray[default]`（`default` extra 会引入后续示例所用的 dashboard 和 cluster-launcher 依赖项；普通的 `pip install ray` 只会安装本文档所示的核心 API）
-* 一台具有几个可用 CPU 核心的本地计算机或 VM 足以运行以下示例 — 第 1 部分不需要集群
+该示例显式配置了两个逻辑 CPU 和一个 80 MiB 的对象存储，然后关闭 Ray。Ray 资源设置并不是操作系统对总 CPU/RAM 的限制；控制进程和 worker 进程还需要额外的内存。
 
 ## 什么是 Ray？
 
-Ray 是一个用于扩展 Python 工作负载的开源分布式计算框架。它不像仅用于训练或仅用于服务的工具那样，是为某一种特定工作负载构建的框架。相反，Ray 提供了一小组通用原语，让你只需进行相对较少的重写，就能将普通 Python 代码运行在许多 CPU 核心或多台机器上。
-
-这些原语足够通用，能够覆盖广泛的使用场景：并行化临时的一批函数调用、运行分布式模型训练、在许多试验中进行超参数搜索，或在可扩展的推理端点后提供模型服务。Ray 的高级库 — Ray Train、Ray Tune 和 Ray Serve，下面会简要介绍，并在本系列后续部分深入讲解 — 都构建在相同的底层原语之上，而不是彼此无关的独立工具。这一共享基础是 Ray 与由各自拥有执行模型、恰好被打包在一起的单点工具生态系统之间的关键架构差异。
+Ray Core 提供远程函数（任务）、有状态远程实例（actor）、ObjectRef 和每节点对象存储。Train、Tune 和 Serve 构建于这一基础之上。共享 Core 并不能消除它们自身的控制器、重试、检查点或框架通信逻辑。
 
 ## 核心原语
 
-Ray 的编程模型基于三种原语：任务、actor 和对象存储。
-
 ### 任务
 
-**任务**是由 Ray 在远程运行，而非在调用进程中运行的无状态函数。通过向普通 Python 函数应用 `@ray.remote` 装饰器，可以将其转换为任务。调用已装饰的函数会立即返回一个 future（`ObjectRef`），而不会阻塞到函数完成；Ray 会在集群资源池中的某个 worker 上调度实际执行。由于任务在调用之间不携带状态，Ray 可以自由地在任何有可用容量的 worker 上运行任意给定调用，这正是任务易于横向扩展的原因。
+应用 `@ray.remote` 后，通过 **`f.remote(...)`** 提交。将其作为普通的 `f(...)` 调用是错误的。单返回值示例会产生一个 `ObjectRef`，可使用 `ray.get()` 读取。
 
-任务非常适合易于并行化的工作：将同一个函数应用于许多独立输入、运行许多独立模拟，或预处理许多数据分片。由于每次任务调用都是独立且无状态的，Ray 可以在整个集群中调度大量任务，而无需跟踪一次调用与下一次调用之间的任何关系。
+以无状态方式调用任务并不能保证它是没有副作用的纯函数。文件/数据库修改需要针对重试制定幂等性策略。worker 可以被复用；偶然存续的模块全局缓存不同于显式状态管理。
 
-### Actors
+Ray 会跟踪依赖关系。将上游 ObjectRef 作为顶层参数传递给另一个任务，会创建对该值就绪的依赖。任务不一定彼此独立。
 
-**actor** 是任务的有状态对应项。向 Python 类应用 `@ray.remote` 会将其转换为 actor：Ray 会在某个 worker 上实例化该类，并将该实例作为长期运行的远程进程保持存活，而不是进行一次调用后返回并消失。随后，对 actor handle 的方法调用会被路由到同一个存活实例，因此存储在实例上的状态 — 模型权重、计数器、开放连接 — 会在调用之间保持不变。
+### Actor
 
-每当你需要在调用之间保留状态时，actor 都是正确的原语：累积计数器、保留在内存中而非为每个请求重新加载的已加载模型，或逐步推进的有状态模拟。任务和 actor 是互补而非竞争的选择 — 典型的 Ray 应用程序会混合使用两者，对无状态的并行工作使用任务，并在需要持久状态的地方使用 actor。
+`Actor.remote()` 会创建远程实例的句柄；`handle.method.remote()` 会向其提交方法。该实例内存中的计数器、连接或模型可以在多次调用间复用。
+
+这不是自动的持久化存储。在 2.58.0 中，`max_restarts` 默认为 0。配置重启会重新运行构造函数；它不会自动恢复应用程序状态。请分别设计检查点和恢复机制，并区分同步、async 和 threaded actor 的并发性/顺序。
 
 ### 对象存储
 
-**对象存储**是一个分布式共享内存存储，用于保存任务和 actor 彼此传递的对象 — 函数参数、返回值，以及显式放入其中的任何其他内容。集群中的每个节点都会运行自己的本地对象存储，Ray 会根据需要协调它们之间的数据移动，从而让一个 worker 上运行的任务能够读取另一个 worker 生成的对象。
+远程值是不可变的，可以存储或复制到节点本地对象存储中。对一个值的引用并不会让每个节点共享同一块物理内存区域。跨节点访问可能涉及传输和序列化开销。
 
-对象存储对于大型对象尤其重要：大型 NumPy 数组、数据集分片或模型权重。Ray 不必将此类对象序列化并复制到每个需要它的进程中，而是可以在一个节点的共享内存中保留一份副本，让多个本地进程读取它，而不在每个进程自身的内存中重复存储。这使得 Ray 能够在任务和 actor 之间高效移动大型数据，而不是在每次调用时都付出序列化和复制的成本。
+**同一节点上的 NumPy 数组** 可以通过只读共享内存视图读取。修改前请复制它们。这并不意味着所有 Python 对象、跨节点传输或 GPU tensor/模型权重都具有零拷贝行为。小值和大值也可能使用不同的传输路径。
+
+## 小型本地示例
+
+此示例检查 API 行为，而不是训练性能或基准测试。
+
+```python
+import ray
+import numpy as np
+
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+
+    @ray.remote(num_cpus=1)
+    def twice(value):
+        return value * 2
+
+    first = twice.remote(2)
+    second = twice.remote(first)  # ObjectRef dependency
+    assert ray.get(second, timeout=15) == 8
+
+    @ray.remote(num_cpus=1)
+    class Counter:
+        def __init__(self):
+            self.value = 0
+        def increment(self):
+            self.value += 1
+            return self.value
+
+    counter = Counter.remote()
+    assert ray.get([counter.increment.remote(),
+                    counter.increment.remote()], timeout=15) == [1, 2]
+    ref = ray.put(np.arange(256_000, dtype=np.int64))
+    array = ray.get(ref, timeout=15)
+    assert not array.flags.writeable
+finally:
+    ray.shutdown()
+```
+
+小型单节点练习并不能证明多节点故障恢复、GPU 内存共享或网络性能。
 
 ## 集群架构：Head Node 和 Worker Node
 
-Ray 集群由一个 **head node（头节点）** 和任意数量的 **worker node（工作节点）** 组成。每个节点 — 无论是 head 还是 worker — 都运行 Ray 进程，并向集群的共享资源池贡献 CPU、GPU 和内存。
+head 运行包括 **Global Control Service (GCS)** 在内的集群控制组件。Raylet、worker 进程和本地对象存储参与 head 与 worker 上的执行和数据移动。head 可以声明零个逻辑 CPU 来限制用户任务调度；它不必提供与 worker 相同的计算资源。
 
-除了 worker 所做的工作外，head node 还承担一些额外职责：
+driver 执行顶层应用程序。它不一定运行在 head 上；调度位置取决于提交方式。autoscaler 也是一个已配置的部署组件，并不意味着每次本地 `ray.init()` 都会自动配置更多 worker。
 
-* **Global Control Store (GCS)**：集群的元数据存储，用于跟踪哪些 actor 和对象存在及其所在位置，以及调度和故障恢复所依赖的其他集群状态。
-* **Driver process**：如果你在 head node 上运行顶层 Ray 脚本或交互式会话，执行该脚本的 driver 位于此处，并将任务和 actor 调用提交到集群中。
-* **Autoscaler**：当集群的待处理工作负载需要更多资源时请求额外 worker node，以及在不再需要时移除空闲 worker 的进程。
+GCS 管理 actor、节点和 placement group 等集群元数据。**不要将其描述为所有对象元数据的集中式所有者。** 创建原始 ObjectRef 的进程是对象所有者，并且可能不同于计算该值的 worker。
 
-Worker node 用于运行任务和 actor，并将其 CPU、GPU 和内存添加到整个集群使用的资源池中。Ray 调度模型的一个关键特性由此而来：Ray 根据集群的合并资源池调度任务和 actor，而不是孤立地针对任一节点的资源进行调度。请求两个 CPU 的任务可以落到集群中任何有两个空闲 CPU 的节点上 — 调度器不会像你可能手动将工作放置到特定机器上那样预先选择一个节点。
+### 资源调度
 
-```mermaid
-flowchart TB
-    subgraph Head["Head Node"]
-        GCS["Global Control Store<br/>(cluster metadata)"]
-        Driver["Driver Process<br/>(if run on head)"]
-        Autoscaler["Autoscaler"]
-    end
+Ray 在选择候选节点时会考虑集群状态，但**每个任务/actor 都必须能容纳在一个可行节点上**。两个各有一个空闲 CPU 的节点无法共同执行一个需要两个 CPU 的任务。可行性、可用性、数据局部性以及 placement/label/affinity 约束都很重要。
 
-    subgraph W1["Worker Node 1"]
-        T1["Tasks"]
-        A1["Actors"]
-    end
+逻辑 CPU/GPU 资源用于指导准入和调度。`num_cpus=1` 并不会强制进程中的每个 OS thread 都运行在一个物理核心上。请分别配置容器 requests/limits 和库线程数。
 
-    subgraph W2["Worker Node 2"]
-        T2["Tasks"]
-        A2["Actors"]
-    end
+![Ray head 的 GCS 与每节点 raylet、本地对象存储以及任务/actor 执行相互独立。图中展示了 driver ObjectRef 依赖关系和跨节点对象传输；对象所有权元数据并非全部集中在 GCS 中。](../../.gitbook/assets/en-ai-ml-ray-01-architecture-0.png)
 
-    subgraph W3["Worker Node N"]
-        T3["Tasks"]
-        A3["Actors"]
-    end
+[交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-01-architecture-0.html)
 
-    OS[("Distributed Object Store<br/>(shared across all nodes)")]
+## 故障恢复和高级库
 
-    Head --> W1
-    Head --> W2
-    Head --> W3
+默认情况下，GCS 在内存中运行；head 故障后的恢复需要额外配置持久化后端。2.58.0 文档将受支持的外部 Redis 与嵌入式 RocksDB **alpha** 区分开来。恢复 GCS 元数据并不会恢复每个 actor 的应用程序状态或对象值。
 
-    W1 --- OS
-    W2 --- OS
-    W3 --- OS
-    Head --- OS
-```
+对象恢复取决于所有权、lineage 以及重试/重建资格。不要将 `ray.put()` 值等同于可重新计算的任务输出，也不要将对象溢写等同于长期备份。
 
-每个节点都参与分布式对象存储，因此一个 worker node 上的任务生成的对象可由另一个 worker node 上运行的任务或 actor 读取，Ray 会处理它们之间的数据移动。
+Train、Tune 和 Serve 会复用 Core，同时添加训练检查点、trial 调度和 serving controller 等策略。框架 collectives 和其他训练通信不能全部描述为通过单一对象存储路径的流量。
 
-## 构建于相同基础之上的高级库
+## 为什么这在 Kubernetes 上很重要
 
-Ray 提供了多个面向特定 ML 工作负载的高级库，它们都构建在上述任务、actor 和对象存储之上，而非引入各自独立的执行模型：
+KubeRay 会将 RayCluster、RayJob 和 RayService 等 CR 协调为 Ray Pod 和相关资源。Ray 任务/actor 调度、Kubernetes Pod 调度，以及 Karpenter 等工具实际配置 EC2，属于不同层面。KubeRay 并不是会自动为应用程序选择 Train、Tune 或 Serve 的调度器。
 
-* **Ray Train** 可在许多 worker 之间分布模型训练，本系列的[第 3 部分：Ray Train 和 Ray Tune](./03-ray-train-tune.md)对此进行了介绍。
-* **Ray Tune** 可并行地在许多试验中执行超参数搜索，也将在第 3 部分中介绍。
-* **Ray Serve** 可在可扩展的服务层后部署模型，本系列的[第 4 部分：Ray Serve](./04-ray-serve.md)对此进行了介绍。
+## 主要来源
 
-这一共享基础值得明确指出：Ray 并非将为某一种工作负载类型各自重新实现调度、容错和数据移动的独立工具打包在一起，而是在其核心原语中一次性实现这些关注点，并让每个高级库复用它们。分布式训练和超参数调优在底层都是作为 Ray actor 或任务运行的 worker，并通过与普通 `@ray.remote` 函数相同的对象存储交换数据。
+- [Ray 2.58.0 发布版](https://github.com/ray-project/ray/releases/tag/ray-2.58.0)
+- [对象](https://docs.ray.io/en/releases-2.58.0/ray-core/objects.html)
+- [序列化和 NumPy 零拷贝](https://docs.ray.io/en/releases-2.58.0/ray-core/objects/serialization.html)
+- [调度](https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/index.html)
+- [逻辑资源](https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/resources.html)
+- [Actor 故障容错](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/actors.html)
+- [对象故障容错](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/objects.html)
+- [GCS 故障容错](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/gcs.html)
 
-截至本文撰写时，Ray 2.57.0 是最新的稳定版本。Ray 3.0 开发线是值得了解的未来背景，但尚未发布，因此本文档不依赖于其任何特定功能。
-
-## 这对 Kubernetes 为什么重要
-
-Ray 有自己的集群概念 — head node、worker node，以及扩展或缩减 worker 队列的 autoscaler — 这与 Kubernetes 自己的调度和自动扩缩容属于不同层次。在 Kubernetes 上运行 Ray 意味着需要将 Ray 集群的形态（一个 head、一定数量的 worker，每个都具有特定资源需求）转换为 Kubernetes 调度器能够实际理解并放置到 EKS 节点上的 Kubernetes 对象，例如 Pod 和 Deployment。这种转换正是本系列接下来[第 2 部分：KubeRay Operator](./02-kuberay-operator.md)所涵盖的问题。
-
-## 后续步骤
-
-本文档介绍了 Ray 是什么、它的三种核心原语（任务、actor 和对象存储），以及 Ray 集群的 head node 和 worker node 如何协作，在共享资源池中调度工作。[第 2 部分：KubeRay Operator](./02-kuberay-operator.md)介绍 KubeRay operator 如何将此 Ray 集群模型映射到 EKS 上的原生 Kubernetes 资源。[第 3 部分：Ray Train 和 Ray Tune](./03-ray-train-tune.md)和[第 4 部分：Ray Serve](./04-ray-serve.md)则分别在这里介绍的原语基础上构建训练和服务工作负载。
-
-[返回主页面](./README.md)
-
-## 测验
-
-若要测试你在本章中学到的内容，请尝试[主题测验](../../quizzes/ai-ml/ray/01-architecture-quiz.md)。
+[下一篇：KubeRay](02-kuberay-operator.md) · [主页](README.md) · [测验](../../quizzes/ai-ml/ray/01-architecture-quiz.md)

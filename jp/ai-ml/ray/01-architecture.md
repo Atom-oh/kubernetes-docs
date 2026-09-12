@@ -1,117 +1,118 @@
-# パート 1: Ray アーキテクチャ
+# Part 1: Ray アーキテクチャ
 
-> **サポート対象バージョン**: Ray 2.57.0
-> **最終更新**: August 20, 2026
+> **レビュー基準**: Ray 2.58.0 · 2026-09-12
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、次のツールと環境が必要です。
+ローカルの例は、Python 3.12、`ray==2.58.0`、および `numpy==2.2.6` で確認しました。タスク、actor、ObjectRef の確認には、GPU、学習済みモデル、Kubernetes は不要です。ダッシュボードなどの機能を有効にする場合は、関連する追加依存関係を別途確認してください。
 
-### 必要なツール
-
-* Python 3.10 以降
-* `pip install ray[default]`（`default` extra は、後の例で使用する dashboard と cluster-launcher の依存関係を導入します。通常の `pip install ray` では、このドキュメントで紹介するコア API のみが導入されます）
-* 以下の例を実行するには、いくつかの空き CPU コアを持つローカルマシンまたは VM で十分です。パート 1 では cluster は必要ありません
+この例では、2 個の論理 CPU と 80 MiB の object store を明示的に設定した後、Ray をシャットダウンします。Ray のリソース設定は、CPU/RAM 全体に対するオペレーティングシステムの制限ではありません。control プロセスと worker プロセスには追加のメモリが必要です。
 
 ## Ray とは？
 
-Ray は、Python ワークロードをスケールさせるためのオープンソースの分散コンピューティングフレームワークです。training 専用または serving 専用のツールのように、特定の 1 つのワークロード向けに構築されたフレームワークではありません。代わりに Ray は、汎用的なプリミティブの小さなセットを提供します。これにより、通常の Python コードを大幅に書き換えることなく、多数の CPU コアや多数のマシンにわたって実行できます。
+Ray Core は、リモート関数（task）、状態を持つリモートインスタンス（actor）、ObjectRef、ノードごとの object store を提供します。Train、Tune、Serve はこの基盤の上に構築されます。Core を共有していても、各ライブラリ独自の controller、retry、checkpoint、フレームワークの通信ロジックが不要になるわけではありません。
 
-これらのプリミティブは、幅広いユースケースをカバーするほど汎用的です。たとえば、その場限りの関数呼び出しバッチの並列化、分散モデル training の実行、多数の trial にわたる hyperparameter search、スケーラブルな inference endpoint の背後でのモデル serving などです。以下で簡単に紹介し、本シリーズの後半で詳しく扱う Ray Train、Ray Tune、Ray Serve などの Ray の上位レベルライブラリはすべて、独立して無関係なツールではなく、同じ基盤プリミティブ上に構築されています。この共有基盤こそが、それぞれ独自の実行モデルを持ちながらまとめてバンドルされた point tool のエコシステムと Ray を区別する、重要なアーキテクチャ上の特徴です。
-
-## コアプリミティブ
-
-Ray のプログラミングモデルは、task、actor、object store という 3 つのプリミティブに基づいています。
+## Core プリミティブ
 
 ### Task
 
-**task** は、呼び出し元プロセス内ではなく、Ray がリモートで実行するステートレスな関数です。通常の Python 関数に `@ray.remote` decorator を適用すると、task に変換できます。decorator を適用した関数を呼び出すと、関数が完了するまでブロックするのではなく、future（`ObjectRef`）がすぐに返されます。Ray は実際の実行を cluster の resource pool 内にある worker にスケジュールします。task は呼び出し間で state を持たないため、Ray は空き容量のある任意の worker で特定の呼び出しを実行できます。これが task を容易に scale out できる理由です。
+`@ray.remote` を適用した後は、**`f.remote(...)`** を使用して送信します。通常の `f(...)` として呼び出すのは誤りです。単一の戻り値を返す例では ObjectRef が生成され、`ray.get()` で読み取れます。
 
-Task は、embarrassingly parallel な作業に自然に適しています。たとえば、多数の独立した input への同一関数の適用、多数の独立した simulation の実行、多数のデータ shard の前処理などです。各 task 呼び出しは独立しておりステートレスであるため、Ray はある呼び出しと次の呼び出しの関係を追跡する必要なく、cluster 全体に多数の task をスケジュールできます。
+task をステートレスに呼び出しても、副作用のない純粋関数であることは保証されません。ファイルやデータベースの変更には、retry に備えた冪等性戦略が必要です。worker は再利用される可能性があります。偶発的に存続するモジュールグローバルの cache は、明示的な状態管理とは異なります。
+
+Ray は依存関係を追跡します。upstream の ObjectRef を別の task にトップレベル引数として渡すと、その値の準備完了に対する依存関係が作成されます。task が必ずしも互いに独立しているとは限りません。
 
 ### Actor
 
-**actor** は、task に対応するステートフルなプリミティブです。Python class に `@ray.remote` を適用すると actor になります。Ray は worker 上で class をインスタンス化し、1 回の呼び出し後に返って消えるのではなく、そのインスタンスを長期間存続するリモート process として維持します。actor handle に対する method 呼び出しは、その同じ存続中のインスタンスにルーティングされるため、インスタンスに保存された state（モデルの weight、counter、開いている connection）は呼び出し間で保持されます。
+`Actor.remote()` はリモートインスタンスへの handle を作成し、`handle.method.remote()` はそのメソッドを送信します。そのインスタンスのメモリ内にある counter、connection、model は、複数の呼び出しで再利用できます。
 
-Actor は、呼び出し間で state を保持する必要がある場合に適したプリミティブです。たとえば、累積する counter、リクエストごとに再ロードするのではなく memory に常駐させる loaded model、呼び出しごとに進行するステートフルな simulation などです。task と actor は競合する選択肢ではなく補完関係にあります。一般的な Ray application では両方を組み合わせ、ステートレスな並列作業には task を、state を保持する必要がある箇所には actor を使用します。
+これは自動的な永続ストレージではありません。2.58.0 では、`max_restarts` のデフォルト値は 0 です。restart を設定すると constructor は再実行されますが、アプリケーションの状態が自動的に復元されるわけではありません。checkpoint と recovery は個別に設計し、同期、async、threaded の actor における concurrency と順序付けを区別してください。
 
 ### Object Store
 
-**object store** は、task と actor が相互に渡す object（関数の argument、return value、明示的に配置されたその他すべて）を保持する、分散型 shared-memory store です。cluster 内の各 node は独自のローカル object store を実行し、ある worker 上で実行中の task が別の worker で生成された object を読み取れるよう、必要に応じて Ray がそれらの間のデータ移動を調整します。
+リモート値は不変であり、ノードローカルの object store に保存または複製できます。1 つの値への参照があっても、すべてのノードが 1 つの物理メモリ領域を共有するわけではありません。ノード間アクセスには、転送とシリアライズのコストが発生する場合があります。
 
-object store が最も重要になるのは、大きな object を扱う場合です。たとえば、大きな NumPy array、dataset shard、モデルの weight などです。このような object を必要とする各 process に serialize してコピーする代わりに、Ray は node 上の shared memory に 1 つのコピーを保持し、複数のローカル process が各 process 固有の memory に複製せずに読み取れるようにします。これにより Ray は、呼び出しごとに serialization と copy のコストを負担するのではなく、task と actor 間で大きなデータを効率的に移動できます。
+**同じノード上の NumPy array** は、読み取り専用の共有メモリ view を通じて読み取れます。変更前にコピーしてください。これは、すべての Python object、ノード間転送、GPU tensor/model weight に対する zero-copy 動作を意味するものではありません。小さい値と大きい値では、異なる転送パスが使用されることもあります。
 
-## Cluster アーキテクチャ: Head Node と Worker Node
+## 小規模なローカル例
 
-Ray cluster は、1 つの **head node** と任意の数の **worker node** で構成されます。head と worker を問わず、すべての node は Ray process を実行し、CPU、GPU、memory を cluster の共有 resource pool に提供します。
+これは API の動作を確認するものであり、学習パフォーマンスやベンチマークを確認するものではありません。
 
-head node は、worker が担う機能に加えて、いくつかの追加の責務を実行します。
+```python
+import ray
+import numpy as np
 
-* **Global Control Store (GCS)**: cluster の metadata store。どの actor と object が存在し、どこに配置されているかに加え、scheduling と fault recovery が依存するその他の cluster state を追跡します。
-* **Driver process**: 最上位の Ray script または interactive session を head node で実行する場合、その script を実行する driver はそこに存在し、task と actor 呼び出しを cluster に送信します。
-* **Autoscaler**: cluster の保留中の workload がより多くの resource を必要とする場合に追加の worker node を要求し、不要になった idle worker を削除する process です。
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
 
-worker node は、task と actor を実行し、cluster 全体で利用する pool に CPU、GPU、memory を追加するために存在します。Ray の scheduling model の重要な特性は、ここから導かれます。Ray は task と actor を、個別の node の resource を単独で対象にするのではなく、cluster 全体で結合された resource pool を対象にスケジュールします。2 CPU を要求する task は、2 CPU が空いている cluster 内の任意の node に配置できます。scheduler は、特定の machine に作業を手動で配置する場合のように、事前に node を選択するわけではありません。
+    @ray.remote(num_cpus=1)
+    def twice(value):
+        return value * 2
 
-```mermaid
-flowchart TB
-    subgraph Head["Head Node"]
-        GCS["Global Control Store<br/>(cluster metadata)"]
-        Driver["Driver Process<br/>(if run on head)"]
-        Autoscaler["Autoscaler"]
-    end
+    first = twice.remote(2)
+    second = twice.remote(first)  # ObjectRef dependency
+    assert ray.get(second, timeout=15) == 8
 
-    subgraph W1["Worker Node 1"]
-        T1["Tasks"]
-        A1["Actors"]
-    end
+    @ray.remote(num_cpus=1)
+    class Counter:
+        def __init__(self):
+            self.value = 0
+        def increment(self):
+            self.value += 1
+            return self.value
 
-    subgraph W2["Worker Node 2"]
-        T2["Tasks"]
-        A2["Actors"]
-    end
-
-    subgraph W3["Worker Node N"]
-        T3["Tasks"]
-        A3["Actors"]
-    end
-
-    OS[("Distributed Object Store<br/>(shared across all nodes)")]
-
-    Head --> W1
-    Head --> W2
-    Head --> W3
-
-    W1 --- OS
-    W2 --- OS
-    W3 --- OS
-    Head --- OS
+    counter = Counter.remote()
+    assert ray.get([counter.increment.remote(),
+                    counter.increment.remote()], timeout=15) == [1, 2]
+    ref = ray.put(np.arange(256_000, dtype=np.int64))
+    array = ray.get(ref, timeout=15)
+    assert not array.flags.writeable
+finally:
+    ray.shutdown()
 ```
 
-すべての node は分散 object store に参加しているため、ある worker node 上の task によって生成された object は、別の worker node 上で実行される task または actor が読み取れます。これらの間のデータ移動は Ray が処理します。
+小規模な単一ノードの演習だけでは、複数ノードでの障害回復、GPU メモリ共有、ネットワークパフォーマンスを確立できません。
 
-## 同じ基盤上に構築された上位レベルライブラリ
+## クラスターアーキテクチャ: Head Node と Worker Node
 
-Ray には、特定の ML workload に対応する複数の上位レベルライブラリが含まれています。これらはすべて、独自の別の実行モデルを導入するのではなく、前述の task、actor、object store の上に構築されています。
+head は、**Global Control Service (GCS)** を含むクラスター制御コンポーネントを実行します。Raylet、worker プロセス、ローカル object store は、head と worker 上の実行およびデータ移動に関与します。head は、ユーザー task の配置を制限するために 0 個の論理 CPU を公開できます。worker と同じコンピューティングリソースを提供する必要はありません。
 
-* **Ray Train** は多くの worker にわたってモデル training を分散します。本シリーズの[パート 3: Ray Train と Ray Tune](./03-ray-train-tune.md)で扱います。
-* **Ray Tune** は、多数の trial にわたって hyperparameter search を並列実行します。こちらもパート 3 で扱います。
-* **Ray Serve** は、スケーラブルな serving layer の背後にモデルを deploy します。本シリーズの[パート 4: Ray Serve](./04-ray-serve.md)で扱います。
+Driver はトップレベルのアプリケーションを実行します。必ずしも head 上で実行する必要はなく、配置は送信方法に依存します。autoscaler も構成されたデプロイメントコンポーネントであり、すべてのローカル `ray.init()` が自動的に worker を追加プロビジョニングすることを保証するものではありません。
 
-この共有基盤は明示的に強調する価値があります。各 workload type のために scheduling、fault tolerance、data movement を個別に再実装する別々の tool をバンドルするのではなく、Ray はこれらの関心事をコアプリミティブで 1 回だけ実装し、各上位レベルライブラリがそれらを再利用できるようにします。分散 training と hyperparameter tuning は、根本的には Ray actor または task として実行される worker であり、通常の `@ray.remote` 関数が使用するのと同じ object store を介してデータを交換します。
+GCS は、actor、node、placement group などのクラスター metadata を管理します。**これをすべての object metadata の集中管理者として説明してはいけません。** 元の ObjectRef を作成したプロセスが object owner であり、値を計算する worker とは異なる場合があります。
 
-本稿執筆時点で、Ray 2.57.0 は最新の安定版リリースです。将来の文脈として知っておく価値のある Ray 3.0 development line は存在しますが、まだリリースされていないため、このドキュメントはそれに固有の内容には依存していません。
+### リソース配置
+
+Ray は候補を選択する際にクラスターの状態を考慮しますが、**各 task/actor は実行可能な 1 つの node に収まる必要があります**。それぞれ空き CPU が 1 つある 2 つの node で、単一の 2 CPU task を共同実行することはできません。実行可能性、可用性、データローカリティ、配置/label/affinity の制約がすべて重要です。
+
+論理 CPU/GPU リソースは、admission と scheduling の指針になります。`num_cpus=1` を指定しても、プロセス内のすべての OS thread が 1 つの物理 core に強制的に固定されるわけではありません。container の request/limit とライブラリの thread 数は個別に設定してください。
+
+![Ray head の GCS は、ノードごとの raylet、ローカル object store、task/actor の実行とは別のものです。Driver の ObjectRef 依存関係とノード間 object 転送が示されています。object ownership metadata のすべてが GCS に集中管理されているわけではありません。](../../.gitbook/assets/en-ai-ml-ray-01-architecture-0.png)
+
+[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-01-architecture-0.html)
+
+## 障害回復と上位レベルのライブラリ
+
+GCS はデフォルトではメモリ内にあります。head 障害後の recovery には、追加の durable-backend 設定が必要です。2.58.0 のドキュメントでは、サポート対象の外部 Redis と、組み込み RocksDB **alpha** が区別されています。GCS metadata を回復しても、すべての actor のアプリケーション状態や object 値が復元されるわけではありません。
+
+object recovery は、ownership、lineage、retry/reconstruction の適格性に依存します。`ray.put()` の値を再計算可能な task 出力と同一視したり、object spilling を長期バックアップと同一視したりしないでください。
+
+Train、Tune、Serve は Core を再利用しつつ、training checkpoint、trial scheduling、serving controller などのポリシーを追加します。フレームワークの collective やその他の training 通信を、すべて 1 つの object-store パスを経由するトラフィックとして説明することはできません。
 
 ## Kubernetes でこれが重要な理由
 
-Ray には、head node、worker node、worker fleet を拡大または縮小する autoscaler という独自の cluster 概念があります。これは Kubernetes 自身の scheduling と autoscaling とは異なる layer です。Kubernetes 上で Ray を実行する場合、Ray cluster の構成（1 つの head、一定数の worker、それぞれの resource requirement）を、Kubernetes scheduler が実際に理解し EKS node に配置できる Pod や Deployment などの Kubernetes object に変換する必要があります。この変換こそが、本シリーズの次の[パート 2: KubeRay Operator](./02-kuberay-operator.md)で扱う問題です。
+KubeRay は、RayCluster、RayJob、RayService などの CR を Ray Pod および関連リソースに reconcile します。Ray の task/actor scheduling、Kubernetes Pod 配置、Karpenter などのツールによる実際の EC2 プロビジョニングは、別々のレイヤーです。KubeRay は、アプリケーション向けに Train、Tune、Serve を自動的に選択する dispatcher ではありません。
 
-## 次のステップ
+## 主な情報源
 
-このドキュメントでは、Ray とは何か、その 3 つのコアプリミティブ（task、actor、object store）、そして Ray cluster の head node と worker node が共有 resource pool 全体で作業をスケジュールするためにどのように連携するかを説明しました。[パート 2: KubeRay Operator](./02-kuberay-operator.md)では、KubeRay operator がこの Ray cluster model を EKS 上の native Kubernetes resource にどのようにマッピングするかを扱います。[パート 3: Ray Train と Ray Tune](./03-ray-train-tune.md)および[パート 4: Ray Serve](./04-ray-serve.md)では、それぞれ training workload と serving workload のために、ここで紹介したプリミティブをさらに活用します。
+- [Ray 2.58.0 リリース](https://github.com/ray-project/ray/releases/tag/ray-2.58.0)
+- [Object](https://docs.ray.io/en/releases-2.58.0/ray-core/objects.html)
+- [シリアライゼーションと NumPy zero-copy](https://docs.ray.io/en/releases-2.58.0/ray-core/objects/serialization.html)
+- [スケジューリング](https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/index.html)
+- [論理リソース](https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/resources.html)
+- [Actor の障害耐性](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/actors.html)
+- [Object の障害耐性](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/objects.html)
+- [GCS の障害耐性](https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/gcs.html)
 
-[メインページに戻る](./README.md)
-
-## クイズ
-
-この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/ai-ml/ray/01-architecture-quiz.md)に挑戦してください。
+[次へ: KubeRay](02-kuberay-operator.md) · [メインページ](README.md) · [クイズ](../../quizzes/ai-ml/ray/01-architecture-quiz.md)

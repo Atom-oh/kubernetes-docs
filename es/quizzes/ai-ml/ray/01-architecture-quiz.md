@@ -1,163 +1,137 @@
 # Cuestionario de arquitectura de Ray
 
-Este cuestionario evalúa tu comprensión de las primitivas principales de Ray (tasks, actors y el object store), la arquitectura de clúster de Ray (head node y worker nodes), y cómo las bibliotecas de nivel superior de Ray se basan en esa misma base.
-
 ## Preguntas de opción múltiple
 
-1. ¿Qué es Ray, fundamentalmente?
-   - A) Un framework específico de dominio creado únicamente para el entrenamiento distribuido de modelos
-   - B) Un framework de computación distribuida de código abierto para escalar cargas de trabajo de Python, basado en un pequeño conjunto de primitivas de propósito general
-   - C) Un scheduler nativo de Kubernetes que reemplaza al kube-scheduler predeterminado
-   - D) Un producto administrado de serving de modelos sin API de programación
+1. ¿Cómo se envía una función remota?
+   - A) Llamar a f(...) normalmente
+   - B) Usar f.remote(...) en la función @ray.remote
+   - C) Llamar únicamente a ray.get(f)
+   - D) Crear un Pod para cada llamada
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un framework de computación distribuida de código abierto para escalar cargas de trabajo de Python, basado en un pequeño conjunto de primitivas de propósito general**
+**Respuesta: B**
 
-**Explicación:**
-Ray no está creado para un único tipo de carga de trabajo. Proporciona primitivas de propósito general — tasks, actors y el object store — que admiten casos de uso que van desde tasks paralelas ad hoc hasta entrenamiento distribuido, ajuste de hiperparámetros y serving de modelos.
+El ejemplo de retorno único produce un ObjectRef; ray.get lee su valor.
 </details>
 
-2. ¿Qué es una task de Ray?
-   - A) Un objeto remoto con estado y de larga duración creado al aplicar `@ray.remote` a una clase
-   - B) Una función sin estado que Ray ejecuta de forma remota, creada al aplicar `@ray.remote` a una función
-   - C) El proceso que administra los metadatos del clúster en el head node
-   - D) Un fragmento del object store distribuido
+2. ¿Todas las tareas de Ray son independientes y no tienen efectos secundarios?
+   - A) Sí; Ray nunca rastrea dependencias
+   - B) No; se deben considerar las dependencias de ObjectRef, los efectos secundarios y los reintentos
+   - C) Solo los actors devuelven ObjectRefs
+   - D) Cada función se ejecuta exactamente una vez
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una función sin estado que Ray ejecuta de forma remota, creada al aplicar `@ray.remote` a una función**
+**Respuesta: B**
 
-**Explicación:**
-Una task es una función remota sin estado. Al llamarla, devuelve un future de inmediato y Ray programa la ejecución real en algún worker con capacidad disponible. Como las tasks no conservan estado entre llamadas, Ray puede ejecutar cualquier llamada en cualquier worker con capacidad.
+Una unidad de ejecución sin estado no garantiza pureza ni ejecución exactamente una vez.
 </details>
 
-3. ¿Qué distingue a un actor de una task?
-   - A) Un actor no tiene estado, mientras que una task conserva el estado entre llamadas
-   - B) Un actor es una instancia remota con estado y de larga duración creada a partir de una clase, cuyo estado persiste entre llamadas a métodos
-   - C) Un actor solo puede ejecutarse en el head node
-   - D) Un actor no puede crearse con el decorador `@ray.remote`
+3. ¿Qué afirmación sobre el estado de un actor es correcta?
+   - A) La memoria de la instancia persiste entre llamadas; la recuperación ante fallos es independiente
+   - B) Todo el estado es automáticamente duradero
+   - C) Los actors se ejecutan solo en el head
+   - D) Habilitar reinicios restaura la memoria anterior
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un actor es una instancia remota con estado y de larga duración creada a partir de una clase, cuyo estado persiste entre llamadas a métodos**
+**Respuesta: A**
 
-**Explicación:**
-Aplicar `@ray.remote` a una clase la convierte en un actor. Ray mantiene la instancia resultante activa como un proceso remoto de larga duración, por lo que el estado almacenado en ella — como los pesos de un modelo cargado o un contador — persiste entre llamadas a métodos, a diferencia de una task sin estado.
+max_restarts vuelve a ejecutar el constructor; no reemplaza la recuperación mediante checkpoints.
 </details>
 
-4. ¿Qué problema resuelve principalmente el object store distribuido de Ray?
-   - A) Reemplaza la necesidad de un head node en un clúster de Ray
-   - B) Evita la copia innecesaria de objetos grandes al permitir leerlos desde memoria compartida en lugar de volver a serializarlos en cada proceso que los necesita
-   - C) Almacena la configuración del autoscaler del clúster
-   - D) Programa tasks en worker nodes específicos
+4. ¿Qué alcance de zero-copy se verificó?
+   - A) Todos los objetos de Python y la memoria de GPU
+   - B) Una RAM física compartida por cada nodo
+   - C) Vistas de memoria compartida de NumPy de solo lectura en el mismo nodo
+   - D) Costo de transferencia de red cero en todos los casos
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Evita la copia innecesaria de objetos grandes al permitir leerlos desde memoria compartida en lugar de volver a serializarlos en cada proceso que los necesita**
+**Respuesta: C**
 
-**Explicación:**
-El object store es un almacén distribuido de memoria compartida para los objetos que se pasan entre tasks y actors. Para objetos grandes, como datasets o pesos de modelos, esto evita el costo de serialización y copia de duplicar el objeto en cada proceso que lo necesita.
+La mutación requiere una copia. No lo generalices a otros objetos, GPU ni transferencias entre nodos.
 </details>
 
-5. ¿Qué se ejecuta en el head node de un clúster de Ray, además de lo que se ejecuta en los worker nodes?
-   - A) Solo el object store distribuido
-   - B) El Global Control Store (GCS), el proceso driver (si se ejecuta allí) y el autoscaler
-   - C) Solo las tasks y los actors enviados por los usuarios
-   - D) Un control plane de Kubernetes independiente
+5. ¿Cuál es el nombre y la función de GCS?
+   - A) Global Control Service; metadatos del clúster, como actors, nodos y placement groups
+   - B) GPU Copy Store para todos los pesos
+   - C) Global Control Store; el único propietario de todos los metadatos de ObjectRef
+   - D) Reemplazo del servidor de API de Kubernetes
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El Global Control Store (GCS), el proceso driver (si se ejecuta allí) y el autoscaler**
+**Respuesta: A**
 
-**Explicación:**
-El head node ejecuta el GCS (metadatos del clúster), el proceso driver si allí se ejecuta un script o una sesión de nivel superior, y el autoscaler, además de aportar CPU/GPU/memoria al pool de recursos de la misma manera que lo hacen los worker nodes.
+Los metadatos de propiedad de objetos pertenecen al proceso que crea el ObjectRef original, no universalmente al GCS.
 </details>
 
-6. ¿Cómo programa Ray las tasks y los actors en un clúster?
-   - A) Según los recursos de cada nodo de forma aislada, lo que requiere que el usuario elija un nodo específico para cada task
-   - B) Según el pool de recursos combinado del clúster, de modo que una task puede ubicarse en cualquier nodo con suficientes recursos libres
-   - C) Solo en el head node, y los worker nodes se usan únicamente para almacenamiento
-   - D) De forma aleatoria, sin considerar la CPU, GPU o memoria disponibles
+6. ¿Pueden dos nodos con una CPU libre cada uno ejecutar una tarea de dos CPU?
+   - A) Siempre, porque su suma es dos
+   - B) Ray divide automáticamente la tarea por la mitad
+   - C) No; la tarea debe caber en un único nodo viable
+   - D) Los requisitos de CPU nunca importan si hay memoria disponible
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Según el pool de recursos combinado del clúster, de modo que una task puede ubicarse en cualquier nodo con suficientes recursos libres**
+**Respuesta: C**
 
-**Explicación:**
-Ray programa el trabajo según el pool de recursos de todo el clúster, en lugar de hacerlo por nodo. Una task que solicita una cantidad determinada de CPU puede ejecutarse en cualquier nodo del clúster que tenga esa capacidad libre.
+La selección a nivel de clúster sigue dependiendo de la viabilidad de recursos a nivel de nodo.
 </details>
 
-7. ¿Qué tienen en común Ray Train, Ray Tune y Ray Serve desde el punto de vista arquitectónico?
-   - A) Cada uno implementa su propio sistema independiente de programación y tolerancia a fallos, sin depender del núcleo de Ray
-   - B) Todos se basan en las mismas tasks, actors y object store subyacentes que las primitivas principales de Ray
-   - C) Solo pueden ejecutarse fuera de un clúster de Ray
-   - D) Reemplazan la necesidad de un head node
+7. ¿Qué significa num_cpus=1?
+   - A) El SO fija todos los threads a un core
+   - B) Un requisito lógico de scheduling/admisión de Ray, independiente de los límites del SO
+   - C) Un core físico dedicado garantizado
+   - D) Un límite automático de memoria de GPU
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Todos se basan en las mismas tasks, actors y object store subyacentes que las primitivas principales de Ray**
+**Respuesta: B**
 
-**Explicación:**
-Las bibliotecas de nivel superior de Ray para entrenamiento, ajuste y serving reutilizan las mismas primitivas en lugar de volver a implementar por separado la programación y el movimiento de datos para cada carga de trabajo. Esta base compartida es la distinción arquitectónica clave de Ray frente a agrupar herramientas puntuales no relacionadas.
+Los límites del contenedor y la configuración de threads de las bibliotecas son independientes.
 </details>
 
-8. ¿Por qué ejecutar Ray en Kubernetes requiere algo más allá del propio concepto de clúster de Ray?
-   - A) Porque Ray no puede ejecutarse dentro de contenedores
-   - B) Porque la forma de clúster head/worker de Ray es una capa distinta de la propia programación de Kubernetes, por lo que algo debe traducir esa forma a objetos de Kubernetes como Pods y Deployments
-   - C) Porque Kubernetes no admite autoscaling
-   - D) Porque las tasks de Ray no pueden usar recursos de CPU en los nodos de Kubernetes
+8. ¿Qué hace KubeRay?
+   - A) Elige automáticamente Train, Tune o Serve para la aplicación
+   - B) Reconcilia los CR de Ray y los ciclos de vida de los Pod en Kubernetes
+   - C) Reemplaza kube-scheduler
+   - D) Crea una nueva instancia EC2 para cada tarea de Ray
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Porque la forma de clúster head/worker de Ray es una capa distinta de la propia programación de Kubernetes, por lo que algo debe traducir esa forma a objetos de Kubernetes como Pods y Deployments**
+**Respuesta: B**
 
-**Explicación:**
-La propia noción de Ray de un clúster (head node, worker nodes y autoscaler) no se asigna automáticamente al modelo de programación de Kubernetes. Algo tiene que traducir la forma de un clúster de Ray a Pods y Deployments que el scheduler de Kubernetes entienda — esa traducción es lo que proporciona KubeRay.
+El scheduling del trabajo de Ray, la ubicación de Pod y el aprovisionamiento de EC2 son capas independientes.
 </details>
 
 ## Preguntas de respuesta corta
 
-9. Un compañero de equipo está decidiendo si implementar una parte de la lógica como una task de Ray o un actor de Ray. Necesita mantener un modelo de machine learning cargado en memoria a lo largo de muchas solicitudes entrantes, en lugar de volver a cargarlo cada vez. ¿Qué primitiva debería usar y por qué?
+9. ¿Por qué un actor es adecuado para mantener un modelo residente entre solicitudes?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Un actor, porque es una instancia remota con estado y de larga duración — el modelo cargado puede mantenerse en el estado del actor y reutilizarse en muchas llamadas a métodos, en lugar de volver a cargarse en cada llamada, como requeriría una task sin estado.**
-
-**Explicación:**
-Las tasks no tienen estado y completan una única llamada; no hay ningún lugar en una task donde mantener un modelo cargado residente entre llamadas. La instancia de un actor permanece activa como proceso remoto, por lo que el estado, como los pesos de un modelo cargado, persiste entre las llamadas realizadas mediante el handle del actor.
+Una instancia remota explícita posee el estado. No dependas para la corrección de la reutilización incidental de la caché global del task-worker. Los fallos de actor siguen requiriendo un diseño de checkpoints y recuperación.
 </details>
 
-10. ¿Por qué Ray implementa la programación, la tolerancia a fallos y el movimiento de datos una sola vez en sus primitivas principales en vez de una vez por biblioteca de nivel superior (Train, Tune, Serve)?
+10. ¿Por qué separar la recuperación de GCS de la recuperación de objetos y actors de la aplicación?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: Debido a que Ray Train, Ray Tune y Ray Serve se basan todos en las mismas tasks, actors y object store, cada biblioteca reutiliza esa implementación compartida en lugar de volver a implementar por separado la programación y el movimiento de datos para su propia carga de trabajo.**
-
-**Explicación:**
-Esta base compartida es la distinción arquitectónica clave de Ray frente a un ecosistema de herramientas puntuales independientes, cada una con su propio modelo de ejecución, que simplemente se agrupan juntas. Una ejecución de entrenamiento distribuido y una exploración de hiperparámetros son ambas, internamente, workers que se ejecutan como actors o tasks de Ray e intercambian datos mediante el mismo object store.
+Los metadatos duraderos del clúster, la recuperación de propiedad/linaje/valor de objetos y los checkpoints de actors resuelven problemas diferentes. La configuración de Redis o RocksDB alpha por sí sola no restaura todos los valores ni el estado de la aplicación.
 </details>
 
 ---
 
-[Volver a los materiales de aprendizaje](../../../ai-ml/ray/01-architecture.md) | [Siguiente cuestionario: KubeRay Operator](./02-kuberay-operator-quiz.md)
+[Volver a los materiales de aprendizaje](../../../ai-ml/ray/01-architecture.md)

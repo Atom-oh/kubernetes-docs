@@ -1,89 +1,106 @@
-# パート3：EKS での MLflow のデプロイ
+# Part 3: EKS での MLflow のデプロイ
 
-> **サポート対象バージョン**: MLflow 3.15.1, Kubernetes 1.34+
-> **最終更新**: August 19, 2026
+> **レビュー基準**: MLflow 3.16.0 · community chart 1.11.7 · 2026-09-12
 
-## Lab 環境のセットアップ
+## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
+サポートされる EKS Kubernetes バージョン、互換性のある kubectl、Helm 3、メタデータデータベース、Artifact ストレージを準備します。`kubectl >=1.34` のような下限指定では、すべての API server との互換性は保証されません。実際の cluster について、client/server のバージョンスキュー・ポリシーを確認してください。
 
-### 必要なツール
+この章は、ダウンロードした chart、ネイティブの Helm rendering、MLflow 3.16.0 server source に基づいています。**AWS のプロビジョニング、RDS 接続、S3 uploads、または EKS deployment の成功を保証するものではありません。** ローカルの SQLite/API チェックについては [Part 1](01-tracking.md)、Registry チェックについては [Part 2](02-model-registry.md) を参照してください。
 
-* 稼働中の Amazon EKS クラスターを指す kubectl v1.34 以降
-* コミュニティ Helm chart のインストール方法を選ぶ場合は Helm v3
-* backend store 用の既存の Amazon RDS または Aurora PostgreSQL インスタンス（またはそれをプロビジョニングする能力）
-* artifact store 用の S3 bucket
-* tracking server にその S3 bucket へのアクセスを付与する IRSA role または EKS Pod Identity association
+## MLflow の Tracking Server を EKS で実行する理由
 
-## MLflow Tracking Server を EKS で実行する理由
+Kubernetes の deployment、observability、IAM のパターンを再利用できますが、server、database、artifact、access control、backup、upgrade に対する責任は負うことになります。SageMaker MLflow Apps やその他の managed registry は代替手段ですが、サポートされる version、authentication、feature、cost が必ずしも同一とは限りません。
 
-ここでのトレードオフは、このドキュメントサイトで扱う他のセルフホスト型 ML インフラストラクチャと同じパターンに従います。すでに EKS を運用しているチームは、別個の運用モデルを学ぶ代わりに、MLflow についてもクラスター上の他のすべてと同じ deployment manifest、observability stack、IAM パターン（IRSA または Pod Identity）を再利用できます。その代償として、そのチームは、Databricks 管理の MLflow や SageMaker の MLflow 互換 tracking 機能のようなマネージドな代替サービスに training code を向けるのではなく、backend store や artifact store とともに tracking server プロセス自体を運用することになります。どちらの選択も普遍的に正しいわけではありません。チームが既存の Kubernetes 運用領域にサービスをもう 1 つ追加したいか、あるいは運用するサービスを 1 つ減らしたいかにかかっています。
+チームで共有するために、必ずしも個別の新しい RDS および S3 resource をプロビジョニングする必要はありません。小規模な SQLite/PVC 演習は可能です。本番アーキテクチャは concurrency、durability、recovery の要件に基づいて選択してください。
 
 ## アーキテクチャ
 
-EKS 上の本番 MLflow デプロイには 3 つの構成要素があり、実際のチームが tracking server を共有するようになると、どれも省略できません。
+| レイヤー | 確認すべき責務と状態 |
+|---|---|
+| HTTP server | SDK API、UI、artifact proxy、authentication、authorization、host/CORS policy、worker |
+| メタデータデータベース | experiment/run/metric/model/registry のメタデータ、pool、migration、backup |
+| Artifact store | model/data/plot file、bucket/prefix、IAM、encryption、retention |
+| Authentication store | 選択した auth mechanism の user/permission database、session/signing secret、cache |
+| オプション機能の状態 | 有効な job、tracing/evaluation、gateway feature で使用される queue、cache、一時 file |
 
-**MLflow Tracking Server。** これは `mlflow server` を実行するコンテナで、client SDK（`mlflow.log_metric`、`mlflow.log_artifact` など）が通信する REST API と、人々が experiment や run を閲覧する Web UI の両方を公開します。設計上 stateless であり、すべての永続的な状態は backend store と artifact store に存在するため、Service と Ingress（通常は ALB をプロビジョニングする AWS Load Balancer Controller が背後にある）を前面に配置した Kubernetes Deployment に自然に適合します。
+PostgreSQL と S3 を使用しても、すべての feature が stateless になるわけではありません。たとえば、Pod ローカルの basic-auth SQLite database では、replica ごとに異なる user や permission が残る可能性があります。OIDC-plugin cache と job storage は個別に確認してください。
 
-**Backend store。** MLflow のデフォルトの backend store はローカルの SQLite file です。これは laptop で 1 人の experimenter が使うには問題ありませんが、複数のプロセスが同時に書き込む必要が出た瞬間に破綻します。SQLite は、共有チーム用 tracking server に必要なレベルの同時アクセスをサポートしていません。AWS では、標準的な置き換えは実際のリレーショナル database です。Amazon RDS for PostgreSQL、または事前にサイズを決めるのではなく database を tracking load に応じてスケールさせたい場合は Aurora Serverless v2 を使用します。backend store には、MLflow のすべての構造化 metadata（experiment、run、parameter、metric、registered model、model version、alias（[パート2](02-model-registry.md) を参照））が格納されます。SQL でクエリ可能であることの恩恵を受けるものすべてです。
+SQLite は relational database であり、serialized write で複数の process をサポートします。2 人目の user が接続しただけで直ちに失敗するわけではありません。ただし、個別の Pod ローカル SQLite file は shared database ではありません。shared file にも writer、filesystem-locking、recovery の制約があります。本番用 PostgreSQL の選択は、これらの要件と関連付けてください。
 
-**Artifact store。** Backend store の行は小さいですが、MLflow がそれらと一緒にログに記録するものは多くの場合そうではありません。シリアル化された model、plot、dataset、その他の大きなバイナリ object は、database ではなく別の artifact store に格納されます。AWS では Amazon S3 を使用します。tracking server はデフォルト artifact root として設定された S3 URI 配下に artifact を書き込み、読み取ります。また client は、server の設定に応じて tracking server の proxy 経由または直接の S3 access で artifact を取得します。
+![保護されたアクセスは、メタデータ/authentication database と S3 artifact を使用する MLflow server につながります。S3 IAM permission と PostgreSQL login permission は別個のものであり、replica をスケールする前に shared state を外部化します。](../../.gitbook/assets/en-ai-ml-mlflow-03-eks-deployment-0.png)
 
-```mermaid
-graph LR
-    U["Training Script /<br/>MLflow UI User"] -->|HTTPS| ALB[ALB / Ingress]
-    ALB --> SVC[Kubernetes Service]
-    SVC --> P1[Tracking Server Pod]
-    SVC --> P2[Tracking Server Pod]
+[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-03-eks-deployment-0.html)
 
-    SA["ServiceAccount<br/>(IRSA / Pod Identity annotated)"] -.grants S3 access.-> P1
-    SA -.grants S3 access.-> P2
+## インストール方法と Version Pin
 
-    P1 --> DB[("RDS / Aurora<br/>PostgreSQL<br/>(backend store)")]
-    P2 --> DB
-    P1 --> S3[("S3 bucket<br/>(artifact store)")]
-    P2 --> S3
+| 方法 | 検証した内容 |
+|---|---|
+| Community chart | `community-charts/mlflow` 1.11.7 をダウンロード/render したもの。appVersion 3.16.0、default image は `burakince/mlflow` |
+| MLflow repository chart | `v3.16.0/charts` には appVersion 3.15.2 の chart 0.1.1 が含まれる。source tag、chart version、image version は異なる |
+| Direct manifest | file ベースの credential delivery、networking、authentication、migration policy で直接制御が必要な場合の選択肢 |
 
-    style DB fill:#4fc3f7
-    style S3 fill:#81c784
-```
+upstream repository 内の source は、同一 version の OCI package が公開済みであることを証明しません。レビュー時に official OCI chart 0.1.1 の pull は `not found` を返したため、検証済みのインストール command としてここでは提示しません。
 
-## インストール方法
-
-上記の構成要素をクラスターで実行するには、実用的な方法が 2 つあります。
-
-**独自の manifest を作成する。** `mlflow server` コンテナ用の Deployment、その前面の Service、外部に公開するための Ingress（または type `LoadBalancer` の Service）を作成し、backend store の接続文字列と S3 artifact root を、コンテナの環境変数または command-line flag として渡します。これにより、YAML を自分で保守する代わりに、あらゆる詳細を完全に制御できます。
-
-**コミュニティ Helm chart を使用する。** `community-charts/helm-charts` プロジェクトは、このユースケース専用の MLflow chart を維持しています。
+以下の command は、discovery、download、rendering により chart default を確認します。本番用 value は、以下のチェックを使用して別途準備してください。
 
 ```bash
 helm repo add community-charts https://community-charts.github.io/helm-charts
-helm repo update
-helm search repo community-charts/mlflow
+helm repo update community-charts
+helm show chart community-charts/mlflow --version 1.11.7
+helm pull community-charts/mlflow --version 1.11.7 --untar --untardir ./vendor
+helm show values community-charts/mlflow --version 1.11.7 > values.reference.yaml
+helm template mlflow ./vendor/mlflow --namespace mlflow -f values.reference.yaml > rendered.yaml
 ```
 
-この chart は、概念レベルで上記の構成要素の設定を公開します。SQLite ではなく外部 database 接続を backend store に指定すること、S3 bucket を artifact store に指定すること、そして replica count、resource request、Ingress 設定など通常の Kubernetes に関する事項です。これらは chart version 間で変更される可能性があるため、デプロイ前に正確な `values.yaml` key と現在の default について chart 自身のドキュメントを確認してください。
+適用前に、render された image/digest、ServiceAccount、credential delivery、CLI argument、probe、Service、Ingress を確認してください。この chart の default は upstream MLflow image ではなく community image です。その database driver、AWS SDK、authentication plugin も確認してください。
 
-どちらの方法でも、同じ runtime architecture に到達します。1 つ以上の stateless tracking server Pod、それらすべてが接続する database、それらすべてが接続する S3 bucket です。
+### 重要な Chart 1.11.7 の Default
 
-## Artifact store への IAM アクセス
+- Default には `replicaCount: 1`、`auth.enabled: false`、`ingress.enabled: false` が含まれます。
+- `backendStore.defaultSqlitePath: ":memory:"` は in-memory metadata を設定します。**これは upstream CLI の新しい SQLite-file default とは異なります。** default の chart installation は durable な本番 service ではありません。
+- 外部 PostgreSQL は `backendStore.postgres.*` を使用し、credential reference は `backendStore.existingDatabaseSecret.*` を使用します。
+- `artifactRoot.s3.*` を `artifactRoot.proxiedArtifactStorage: true` と合わせて確認してください。native rendering は `--artifacts-destination=s3://...` と `--serve-artifacts` を生成しました。
+- Basic-auth database setting は `auth.postgres.*` の下で個別に設定します。tracking database を変更しても、authentication state が自動的に共有されるわけではありません。
+- `backendStore.databaseMigration: true` は Pod init-container path を追加します。複数の replica が同時に migration を実行できるようにする前に、backup、1 回の調整された migration phase、compatibility check を計画してください。
 
-tracking server Pod には、S3 artifact bucket 内の object を読み書きするための AWS permission が必要です。たとえば、その bucket の prefix にスコープを限定した `s3:PutObject` や `s3:GetObject` です。EKS で IAM role を Kubernetes ServiceAccount にバインドするための長年の仕組みは IRSA（IAM Roles for Service Accounts）です。これは ServiceAccount に `eks.amazonaws.com/role-arn` を annotation として付与し、それを使用する Pod がその role の一時的な credential を受け取れるようにします。EKS Pod Identity は IAM role を Pod にバインドする新しい仕組みであり、workload にかかわらず、一般に EKS 上で新しい IAM-to-pod binding を作成する際の推奨 default になりつつあります。どちらの仕組みでも、static AWS credential を tracking server の環境および設定から除外できます。新しい MLflow デプロイでは、Pod Identity がよりモダンな出発点であり、IRSA はすでにそれを標準化しているクラスターやチームでは引き続き有効な選択肢です。
+実際の value や Secret なしで名前を埋めても、本番セットアップは完了しません。この chart の一部の database/authentication reference は、**container environment variable** を通じて渡されます。SecretKeyRef は Git 内の plaintext value を避けますが、process environment への露出を排除するものではありません。policy により environment 内の secret value が禁止される場合は、Secrets Manager/SSM または同等の store から提供される credential file と、それらの file を消費する deployment を準備してください。static AWS key を Helm value や image に配置しないでください。
 
-## 運用上の注意
+## IAM と Database Authentication
 
-**複数の replica を実行する。** Postgres を backend に持つ tracking server は stateless です。すべての共有状態は Pod ではなく database と S3 に存在するため、可用性のために Service と Ingress の背後で複数の replica を安全に実行できます。これは SQLite を backend に持つ単一プロセスのデフォルトとは重要な違いです。SQLite は concurrent writer を許容しないため、安全にスケールアウトすることがまったくできません。
+S3 permission は対象の bucket/prefix に限定してください。実際の operation に応じて、`GetObject`、`PutObject`、listing、multipart、KMS permission を確認してください。proxy mode では server の AWS permission を使用し、direct artifact mode では client permission を使用します。既存の experiment URI は、server flag を変更しただけでは書き換えられません。
 
-**health probe を設定する。** 長時間実行される Kubernetes service と同様に、tracking server の health endpoint に対して readiness probe と liveness probe を設定してください。これにより、Service は実際に request を処理できる Pod にのみ traffic をルーティングし、停止状態の Pod は自動的に再起動されます。release により異なる場合があるため、想定で決めるのではなく、実行している MLflow version に対して正確な health-check path を確認してください。
+EKS Pod Identity には Agent、association、サポートされる SDK が必要であり、Linux EC2 worker が対象です。Fargate や Windows Pod では常に利用可能とは限りません。IRSA も、サポート対象の configuration 内では別の選択肢です。ServiceAccount 名または annotation を 1 つ指定しただけでは、IAM trust、association、SDK setup は完了しません。
 
-**書き込みパターンに合わせて database をサイズ設定する。** ログに記録されるすべての parameter、metric、metric step は backend store への書き込みです。そのため、metric を高頻度（たとえば epoch ごとではなく step ごと）に記録する training job は、database に実際の負荷をかけます。Aurora Serverless v2 は、database を年間を通じてピーク load に合わせてサイズ設定することなく、training run による突発的な tracking load を吸収できるため、特に検討する価値があります。
+S3 用 IAM role が PostgreSQL login を自動的に認可するわけではありません。database network access、TLS validation、user/credential、または別途設定した IAM database authentication を確認してください。意図しない node-role credential fallback を防ぐため、IMDS と SDK configuration をレビューしてください。
 
-## 次のステップ
+## Server Access と Health Check
 
-これで 3 部構成の MLflow シリーズは終わりです。[パート1](01-tracking.md) では experiment と run のログ記録を扱い、[パート2](02-model-registry.md) では Model Registry で training 済み model に安定した version 付きの identity を与えることを扱い、このパートでは EKS 上での tracking server、backend store、artifact store の実行を扱いました。model に registered version または alias がある場合、多くのチームが次に行う自然なステップは、その特定の version を serving system（KServe、カスタム FastAPI または Flask wrapper、SageMaker、あるいはまったく別のもの）にロードすることです。この serving layer はそれ自体が幅広い topic であり、このシリーズの範囲外です。
+ClusterIP、private ALB、TLS は networking または transport control を提供しますが、user ごとの MLflow permission に代わるものではありません。直接的な public ALB exposure を前提とせず、組織で保護された ingress architecture を使用してください。
 
-[メインページに戻る](./README.md)
+実際の caller に対して MLflow 3.16.0 の `allowed_hosts` と CORS origin を設定してください。この community chart では、対応する CLI argument を `extraArgs.allowedHosts` と `extraArgs.corsAllowedOrigins` で設定できます。Host/CORS restriction は login や authorization に代わるものではありません。basic-auth は 3.16.0 で default により fail-closed authorization へ変更されたため、既存の auth plugin と endpoint compatibility を検証してください。
 
-## クイズ
+検証済みの health endpoint は **`/health`** であり、`"OK", 200` を返す実装です。これは HTTP process の応答性を確認するものであり、継続的な RDS/S3 connectivity や user authorization を確認するものではありません。この release では health endpoint を host validation の対象外とします。`static-prefix`、ingress rewrite、plugin を使用する場合は、実際の service path を確認してください。
 
-この章で学んだ内容をテストするには、[トピッククイズ](../../quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md) に挑戦してください。
+## 運用上の注意点
+
+replica をスケールする前に、metadata/auth database、session secret、有効な queue/cache を共有または外部化し、failover をテストしてください。その後、topology spread、PDB、readiness、resource limit を適用してください。2 つの Pod だけでは high availability は保証されません。
+
+1 回の API call が常に 1 回の SQL write とは限りません。batch logging、transaction、trace payload、metric history、worker ごとの connection pool をまとめて測定してください。replica/worker 全体の pool は合算されます。1 つの pool の configuration だけでは、database connection の総需要は把握できません。
+
+Aurora Serverless v2 は設定された capacity range と connection、I/O、transaction の制約内で動作します。無制限の burst を吸収したり、より低い cost を保証したりするものではありません。測定した load と recovery requirement に対して provisioned RDS/Aurora と比較してください。
+
+metadata/auth database と artifact を一緒に backup し、restore をテストしてください。`mlflow gc` などの permanent deletion tool は、routine cleanup に追加するのではなく retention policy に照らしてレビューしてください。model alias の変更と serving の再デプロイも別個の operation です。
+
+## 主要な情報源
+
+- [MLflow 3.16.0 release](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [Tracking server architecture](https://mlflow.org/docs/3.16.0/self-hosting/architecture/tracking-server/)
+- [Community chart](https://github.com/community-charts/helm-charts/tree/main/charts/mlflow)
+- [MLflow repository chart](https://github.com/mlflow/mlflow/tree/v3.16.0/charts)
+- [Server health implementation](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/server/__init__.py)
+- [EKS Pod Identity の制限](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+- [SQLite のユースケースと concurrency](https://www.sqlite.org/whentouse.html)
+- [Aurora Serverless v2 の capacity configuration](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.setting-capacity.html)
+
+[メインページ](README.md) · [クイズ](../../quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)

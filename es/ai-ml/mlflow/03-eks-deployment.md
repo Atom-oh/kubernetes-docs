@@ -1,89 +1,106 @@
-# Parte 3: Implementación de MLflow en EKS
+# Parte 3: Despliegue de MLflow en EKS
 
-> **Versiones compatibles**: MLflow 3.15.1, Kubernetes 1.34+
-> **Última actualización**: August 19, 2026
+> **Base de revisión**: MLflow 3.16.0 · chart comunitario 1.11.7 · 2026-09-12
 
 ## Configuración del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitará las siguientes herramientas y entorno:
+Prepare una versión de Kubernetes compatible en EKS, un kubectl compatible, Helm 3, una base de datos de metadatos y almacenamiento de artefactos. Un límite inferior como `kubectl >=1.34` no garantiza la compatibilidad con todos los API server. Consulte la política de desfase de versiones (version skew) entre cliente y servidor para el clúster real.
 
-### Herramientas necesarias
-
-* kubectl v1.34 o posterior, configurado para un clúster de Amazon EKS operativo
-* Helm v3, si elige la ruta de instalación mediante el chart Helm de la comunidad
-* Una instancia existente de Amazon RDS o Aurora PostgreSQL para el backend store (o la capacidad de aprovisionar una)
-* Un bucket de S3 para el artifact store
-* Un rol de IRSA o una asociación de EKS Pod Identity que conceda al tracking server acceso a ese bucket de S3
+Este capítulo se basa en un chart descargado, en el renderizado nativo de Helm y en el código fuente del servidor de MLflow 3.16.0. **No acredita un aprovisionamiento correcto en AWS, conectividad con RDS, cargas a S3 ni un despliegue en EKS.** Consulte la [Parte 1](01-tracking.md) para las comprobaciones locales de SQLite/API y la [Parte 2](02-model-registry.md) para las comprobaciones del Registry.
 
 ## Por qué ejecutar el Tracking Server de MLflow en EKS
 
-La compensación aquí sigue el mismo patrón que otra infraestructura de ML autogestionada cubierta en este sitio de documentación. Un equipo que ya ejecuta EKS puede reutilizar los mismos manifiestos de implementación, la pila de observabilidad y los patrones de IAM (IRSA o Pod Identity) para MLflow que para todo lo demás en el clúster, en lugar de aprender un modelo operativo independiente. A cambio, ese equipo asume la operación del proceso del tracking server, junto con su backend store y artifact store, en vez de dirigir el código de entrenamiento a una alternativa administrada — MLflow administrado por Databricks o la capacidad de tracking compatible con MLflow de SageMaker, por ejemplo. Ninguna de las dos opciones es universalmente correcta; depende de si el equipo quiere un servicio más en su superficie operativa existente de Kubernetes, o un servicio menos que operar por completo.
+Puede reutilizar los patrones de despliegue, observabilidad e IAM de Kubernetes, asumiendo a cambio la responsabilidad sobre servidores, bases de datos, artefactos, control de acceso, copias de seguridad y actualizaciones. SageMaker MLflow Apps y otros Registry administrados son alternativas; sus versiones compatibles, autenticación, funcionalidades y coste no son necesariamente idénticos.
+
+Compartir el entorno con un equipo no obliga automáticamente a aprovisionar nuevos recursos separados de RDS y S3. Es posible realizar ejercicios pequeños con SQLite/PVC; elija la arquitectura de producción a partir de los requisitos de concurrencia, durabilidad y recuperación.
 
 ## Arquitectura
 
-Una implementación de MLflow en producción en EKS tiene tres componentes, y ninguno de ellos es opcional una vez que equipos reales comparten el tracking server.
+| Capa | Responsabilidad y estado que se debe inspeccionar |
+|---|---|
+| Servidor HTTP | API del SDK, UI, proxy de artefactos; autenticación, autorización, política de host/CORS, workers |
+| Base de datos de metadatos | metadatos de experimentos/ejecuciones/métricas/modelos/registry; pools, migraciones, copias de seguridad |
+| Almacén de artefactos | archivos de modelos/datos/gráficos; bucket/prefijo, IAM, cifrado, retención |
+| Almacén de autenticación | base de datos de usuarios/permisos, secretos de sesión/firma, caché del mecanismo de autenticación elegido |
+| Estado de funcionalidades opcionales | colas, cachés y archivos temporales usados por los jobs habilitados, por el tracing/evaluación o por las funcionalidades de gateway |
 
-**MLflow Tracking Server.** Es un contenedor que ejecuta `mlflow server` y expone tanto la API REST con la que se comunican los SDK de cliente (`mlflow.log_metric`, `mlflow.log_artifact`, etcétera) como la UI web donde las personas consultan experimentos y runs. No tiene estado por diseño — todo el estado persistente reside en el backend store y el artifact store — por lo que encaja naturalmente en un Kubernetes Deployment, situado detrás de un Service y un Ingress (normalmente respaldado por AWS Load Balancer Controller, que aprovisiona un ALB).
+PostgreSQL junto con S3 no convierte todas las funcionalidades en stateless. Por ejemplo, las bases de datos SQLite locales al Pod para basic-auth pueden dejar réplicas con usuarios o permisos distintos. Revise por separado las cachés del plugin OIDC y el almacenamiento de los jobs.
 
-**Backend store.** El backend store predeterminado de MLflow es un archivo SQLite local, que funciona bien para una sola persona que experimenta en una laptop, pero deja de ser adecuado en cuanto más de un proceso necesita escribir de forma concurrente — SQLite simplemente no admite el nivel de acceso concurrente que requiere un tracking server compartido por un equipo. En AWS, el reemplazo estándar es una base de datos relacional real: Amazon RDS para PostgreSQL, o Aurora Serverless v2 si desea que la base de datos escale según la carga de tracking en lugar de dimensionarla por adelantado. El backend store contiene todos los metadatos estructurados de MLflow — experimentos, runs, parámetros, métricas, modelos registrados, versiones de modelos y alias (consulte la [Parte 2](02-model-registry.md)) — todo aquello que se beneficia de poder consultarse con SQL.
+SQLite es una base de datos relacional y admite varios procesos con escrituras serializadas. No falla de inmediato cuando se conecta un segundo usuario. Sin embargo, archivos SQLite separados y locales al Pod no constituyen una base de datos compartida; incluso los archivos compartidos tienen restricciones de escritor, de bloqueo del sistema de archivos y de recuperación. Relacione la elección de PostgreSQL en producción con esos requisitos.
 
-**Artifact store.** Las filas del backend store son pequeñas; las cosas que MLflow registra junto con ellas a menudo no lo son. Los modelos serializados, gráficos, datasets y otros objetos binarios grandes van a un artifact store independiente en lugar de a la base de datos. En AWS, es Amazon S3: el tracking server escribe y lee artifacts bajo un URI de S3 configurado como la raíz de artifacts predeterminada, y los clientes obtienen artifacts a través del proxy del tracking server o con acceso directo a S3, según cómo esté configurado el servidor.
+![El acceso protegido conduce a servidores MLflow que usan bases de datos de metadatos/autenticación y artefactos en S3. Los permisos IAM de S3 y los permisos de inicio de sesión de PostgreSQL son independientes; el estado compartido se externaliza antes de escalar réplicas.](../../.gitbook/assets/en-ai-ml-mlflow-03-eks-deployment-0.png)
 
-```mermaid
-graph LR
-    U["Training Script /<br/>MLflow UI User"] -->|HTTPS| ALB[ALB / Ingress]
-    ALB --> SVC[Kubernetes Service]
-    SVC --> P1[Tracking Server Pod]
-    SVC --> P2[Tracking Server Pod]
+[Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-03-eks-deployment-0.html)
 
-    SA["ServiceAccount<br/>(IRSA / Pod Identity annotated)"] -.grants S3 access.-> P1
-    SA -.grants S3 access.-> P2
+## Enfoques de instalación y fijación de versiones
 
-    P1 --> DB[("RDS / Aurora<br/>PostgreSQL<br/>(backend store)")]
-    P2 --> DB
-    P1 --> S3[("S3 bucket<br/>(artifact store)")]
-    P2 --> S3
+| Vía | Qué se verificó |
+|---|---|
+| Chart comunitario | se descargó/renderizó `community-charts/mlflow` 1.11.7; appVersion 3.16.0, imagen por defecto `burakince/mlflow` |
+| Chart del repositorio de MLflow | `v3.16.0/charts` contiene el chart 0.1.1 con appVersion 3.15.2; el tag del código fuente, la versión del chart y la versión de la imagen difieren |
+| Manifiestos directos | una opción cuando se necesita control directo sobre la entrega de credenciales basada en archivos, la red, la autenticación o las políticas de migración |
 
-    style DB fill:#4fc3f7
-    style S3 fill:#81c784
-```
+Que el código exista en el repositorio upstream no demuestra que se publique un paquete OCI con la misma versión. La descarga del chart OCI oficial 0.1.1 devolvió `not found` durante la revisión, por lo que aquí no se presenta como un comando de instalación verificado.
 
-## Enfoques de instalación
-
-Hay dos rutas prácticas para poner en ejecución los componentes anteriores en un clúster.
-
-**Escriba sus propios manifiestos.** Un Deployment para el contenedor de `mlflow server`, un Service delante de él y un Ingress (o un Service de tipo `LoadBalancer`) para exponerlo externamente, con la cadena de conexión del backend store y la raíz de artifacts de S3 proporcionadas como variables de entorno o indicadores de línea de comandos en el contenedor. Esto proporciona control total sobre cada detalle, a costa de mantener el YAML usted mismo.
-
-**Use un chart Helm de la comunidad.** El proyecto `community-charts/helm-charts` mantiene un chart de MLflow precisamente para este caso de uso:
+Estos comandos inspeccionan los valores por defecto del chart mediante descubrimiento, descarga y renderizado. Prepare los values de producción por separado usando las comprobaciones siguientes.
 
 ```bash
 helm repo add community-charts https://community-charts.github.io/helm-charts
-helm repo update
-helm search repo community-charts/mlflow
+helm repo update community-charts
+helm show chart community-charts/mlflow --version 1.11.7
+helm pull community-charts/mlflow --version 1.11.7 --untar --untardir ./vendor
+helm show values community-charts/mlflow --version 1.11.7 > values.reference.yaml
+helm template mlflow ./vendor/mlflow --namespace mlflow -f values.reference.yaml > rendered.yaml
 ```
 
-El chart expone configuración para los componentes descritos anteriormente a nivel conceptual — dirigir el backend store a una conexión de base de datos externa en lugar de SQLite, dirigir el artifact store a un bucket de S3 y las consideraciones habituales de Kubernetes como el número de réplicas, las solicitudes de recursos y la configuración de Ingress. Consulte la documentación propia del chart para conocer las claves exactas de `values.yaml` y los valores predeterminados actuales antes de implementarlo, ya que pueden cambiar entre versiones del chart.
+Inspeccione la imagen/digest renderizados, el ServiceAccount, la entrega de credenciales, los argumentos de CLI, las probes, el Service y el Ingress antes de aplicar. El chart usa por defecto una imagen comunitaria en lugar de la imagen upstream de MLflow; verifique también sus drivers de base de datos, el AWS SDK y los plugins de autenticación.
 
-Cualquiera de las dos rutas llega a la misma arquitectura de tiempo de ejecución: uno o más Pods de tracking server sin estado, una base de datos a la que todos apuntan y un bucket de S3 al que todos apuntan.
+### Valores por defecto importantes del chart 1.11.7
 
-## Acceso de IAM al Artifact Store
+- Los valores por defecto incluyen `replicaCount: 1`, `auth.enabled: false` e `ingress.enabled: false`.
+- `backendStore.defaultSqlitePath: ":memory:"` configura los metadatos en memoria. **Esto difiere del nuevo valor por defecto de archivo SQLite de la CLI upstream.** Una instalación del chart con los valores por defecto no es un servicio de producción duradero.
+- PostgreSQL externo se configura con `backendStore.postgres.*`; las referencias a credenciales usan `backendStore.existingDatabaseSecret.*`.
+- Revise `artifactRoot.s3.*` junto con `artifactRoot.proxiedArtifactStorage: true`. El renderizado nativo produjo `--artifacts-destination=s3://...` y `--serve-artifacts`.
+- La configuración de la base de datos de basic-auth es independiente y se encuentra en `auth.postgres.*`. Cambiar la base de datos de tracking no comparte automáticamente el estado de autenticación.
+- `backendStore.databaseMigration: true` añade una ruta de init-container en el Pod. Planifique copias de seguridad, una única fase de migración coordinada y comprobaciones de compatibilidad antes de permitir que varias réplicas migren de forma concurrente.
 
-El Pod del tracking server necesita permisos de AWS para leer y escribir objetos en el bucket de artifacts de S3 — por ejemplo, `s3:PutObject` y `s3:GetObject` restringidos al prefijo de ese bucket. En EKS, el mecanismo establecido desde hace tiempo para vincular un rol de IAM a una Kubernetes ServiceAccount es IRSA (IAM Roles for Service Accounts), que anota la ServiceAccount con `eks.amazonaws.com/role-arn` para que los Pods que la usan reciban credenciales temporales para ese rol. EKS Pod Identity es el mecanismo más reciente para vincular roles de IAM a Pods y es cada vez más el valor predeterminado recomendado para nuevos vínculos de IAM a Pod en EKS en general, independientemente de la carga de trabajo. Ambos mecanismos mantienen las credenciales estáticas de AWS fuera del entorno y la configuración del tracking server: para una nueva implementación de MLflow, Pod Identity es el punto de partida más moderno, mientras que IRSA sigue siendo una opción válida en clústeres o equipos ya estandarizados en ella.
+Rellenar nombres sin valores reales ni Secrets no completa la configuración de producción. Algunas referencias de base de datos/autenticación de este chart se entregan a través de **variables de entorno del contenedor**. SecretKeyRef evita valores en texto plano en Git, pero no elimina la exposición en el entorno del proceso. Cuando la política prohíba valores secretos en el entorno, prepare archivos de credenciales suministrados desde Secrets Manager/SSM o un almacén equivalente, y un despliegue que consuma esos archivos. No incluya claves estáticas de AWS en los values de Helm ni en las imágenes.
+
+## IAM y autenticación de base de datos
+
+Limite los permisos de S3 al bucket/prefijo previsto. Según las operaciones reales, revise los permisos de `GetObject`, `PutObject`, listado, multipart y KMS. El modo proxy usa los permisos AWS del servidor; el modo de artefactos directo usa los permisos del cliente. Los URI de experimentos existentes no se reescriben solo por cambiar los flags del servidor.
+
+EKS Pod Identity requiere el Agent, la asociación y un SDK compatible, y está dirigido a workers EC2 con Linux. No está disponible de forma universal para Pods de Fargate o de Windows. IRSA sigue siendo otra opción dentro de sus configuraciones compatibles. Especificar el nombre de un ServiceAccount o una anotación no completa la confianza IAM, la asociación ni la configuración del SDK.
+
+Un rol de IAM para S3 no autoriza automáticamente el inicio de sesión en PostgreSQL. Verifique el acceso de red a la base de datos, la validación de TLS, los usuarios/credenciales o la autenticación IAM de base de datos configurada por separado. Revise la configuración de IMDS y del SDK para evitar un uso involuntario de las credenciales del rol del nodo como alternativa (fallback).
+
+## Acceso al servidor y comprobaciones de salud
+
+ClusterIP, los ALB privados y TLS proporcionan controles de red o de transporte; no sustituyen los permisos de MLflow por usuario. Utilice la arquitectura de ingress protegido de la organización en lugar de asumir una exposición pública directa mediante ALB.
+
+Configure `allowed_hosts` y los orígenes CORS de MLflow 3.16.0 para los llamantes reales. En este chart comunitario, los argumentos de CLI correspondientes se pueden establecer mediante `extraArgs.allowedHosts` y `extraArgs.corsAllowedOrigins`. Las restricciones de host/CORS no sustituyen el inicio de sesión ni la autorización. En la versión 3.16.0, basic-auth pasó a una autorización fail-closed por defecto, así que valide la compatibilidad de los plugins de autenticación existentes y de los endpoints.
+
+El endpoint de salud verificado es **`/health`**, implementado como un retorno de `"OK", 200`. Comprueba la capacidad de respuesta del proceso HTTP, no la conectividad continua con RDS/S3 ni la autorización del usuario. Esta versión exime a los endpoints de salud de la validación de host. Compruebe las rutas reales del servicio cuando use `static-prefix`, reescrituras de ingress o plugins.
 
 ## Notas operativas
 
-**Ejecute más de una réplica.** Como un tracking server respaldado por Postgres no tiene estado — todo el estado compartido reside en la base de datos y S3, no en el Pod — es seguro ejecutar varias réplicas detrás del Service y el Ingress para disponer de disponibilidad. Esta es una diferencia significativa respecto al valor predeterminado de un solo proceso respaldado por SQLite, que no se puede escalar horizontalmente de forma segura, ya que SQLite no tolera escritores concurrentes.
+Antes de escalar réplicas, comparta o externalice las bases de datos de metadatos/autenticación, los secretos de sesión y las colas/cachés habilitadas; pruebe el failover. Después aplique topology spread, PDB, readiness y límites de recursos. Dos Pods por sí solos no garantizan alta disponibilidad.
 
-**Configure probes de estado.** Al igual que con cualquier servicio de Kubernetes de larga ejecución, configure probes de readiness y liveness para el endpoint de estado del tracking server, de modo que el Service solo enrute tráfico a Pods que realmente puedan atender solicitudes y que un Pod bloqueado se reinicie automáticamente. Confirme la ruta exacta de health check con la versión de MLflow que esté ejecutando en lugar de asumir una, ya que puede variar según la versión.
+Una llamada a la API no siempre equivale a una escritura SQL. Mida en conjunto el logging por lotes, las transacciones, las cargas de trazas, el historial de métricas y los pools de conexiones por worker. Los pools de las distintas réplicas/workers se suman; la configuración de un pool no describe la demanda total de conexiones a la base de datos.
 
-**Dimensione la base de datos según su patrón de escritura.** Cada parámetro, métrica y paso de métrica registrado supone una escritura en el backend store, por lo que los trabajos de entrenamiento que registran métricas a alta frecuencia (por paso en lugar de por época, por ejemplo) ejercen una carga real sobre la base de datos. Vale la pena considerar Aurora Serverless v2 específicamente porque puede absorber una carga de tracking irregular procedente de una ejecución de entrenamiento sin exigir que la base de datos se dimensione para la carga máxima durante todo el año.
+Aurora Serverless v2 opera dentro de los rangos de capacidad configurados y de las restricciones de conexiones, E/S y transacciones. No absorbe picos ilimitados ni garantiza un coste menor. Compárelo con RDS/Aurora provisionado frente a la carga medida y los requisitos de recuperación.
 
-## Próximos pasos
+Realice copias de seguridad de las bases de datos de metadatos/autenticación y de los artefactos en conjunto, y pruebe la restauración. Evalúe las herramientas de borrado permanente, como `mlflow gc`, frente a la política de retención, en lugar de añadirlas como limpieza rutinaria. Los cambios de alias de modelos y el redespliegue del serving son también operaciones independientes.
 
-Este es el final de esta serie de tres partes sobre MLflow: la [Parte 1](01-tracking.md) cubrió el registro de experimentos y runs; la [Parte 2](02-model-registry.md) cubrió cómo dar a los modelos entrenados una identidad estable y versionada en el Model Registry; y esta parte cubrió la ejecución del tracking server, el backend store y el artifact store en EKS. Una vez que un modelo tiene una versión o alias registrado, el siguiente paso natural que dan muchos equipos es cargar esa versión específica en un sistema de serving — KServe, un wrapper personalizado de FastAPI o Flask, SageMaker u otra alternativa por completo. Esa capa de serving es por sí misma un tema amplio y queda fuera del alcance de esta serie.
+## Fuentes principales
 
-[Volver a la página principal](./README.md)
+- [MLflow 3.16.0 release](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [Arquitectura del tracking server](https://mlflow.org/docs/3.16.0/self-hosting/architecture/tracking-server/)
+- [Chart comunitario](https://github.com/community-charts/helm-charts/tree/main/charts/mlflow)
+- [Chart del repositorio de MLflow](https://github.com/mlflow/mlflow/tree/v3.16.0/charts)
+- [Implementación de la salud del servidor](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/server/__init__.py)
+- [Restricciones de EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+- [Casos de uso y concurrencia de SQLite](https://www.sqlite.org/whentouse.html)
+- [Configuración de capacidad de Aurora Serverless v2](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.setting-capacity.html)
 
-## Cuestionario
-
-Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario del tema](../../quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md).
+[Página principal](README.md) · [Cuestionario](../../quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)

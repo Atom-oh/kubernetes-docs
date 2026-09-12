@@ -1,163 +1,137 @@
-# Ray Train と Ray Tune クイズ
+# Ray Train / Tune クイズ
 
-このクイズでは、Ray Train（Trainer、ScalingConfig、checkpointing）、Ray Tune、および両者を組み合わせた分散 hyperparameter tuning についての理解を確認します。
+## 選択式問題
 
-## 多肢選択問題
-
-1. Ray Train は、分散トレーニングスクリプトにおけるどの問題を主に解決しますか？
-   - A) PyTorch などのトレーニングフレームワークを新しいトレーニング API に置き換える
-   - B) worker process の起動、communication group の設定、checkpoint の調整に関する定型処理を担う
-   - C) 実行開始前にトレーニングデータへ自動的にラベル付けする
-   - D) トレーニングを完全に CPU 上で実行することで GPU を不要にする
+1. Ray Train が自動的に実装しないものはどれですか？
+   - A) 基盤となる worker の協調
+   - B) Framework の process group セットアップ
+   - C) すべての model/data partition/state save-and-restore ロジック
+   - D) Ray リソースリクエスト
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) worker process の起動、communication group の設定、checkpoint の調整に関する定型処理を担う**
+**回答: C**
 
-**解説:**
-Ray Train は Ray の task および actor primitives 上に構築され、分散トレーニングの定型処理、つまり割り当てられた resource ごとに 1 つの worker を起動し、worker 間 communication group（たとえば PyTorch DDP process group）を設定し、checkpointing を調整する処理を引き受けます。これにより、一般的な framework API 向けに書かれたトレーニングスクリプトは、作成者がその調整を手作業で実装しなくてもスケールできます。
+model/data-loader の統合と、実際の model、optimizer、checkpoint ロジックを用意します。
 </details>
 
-2. 次のうち、Ray Train V2 を最も適切に説明しているものはどれですか？
-   - A) 以前の Ray Train リリースとは無関係の、完全に別の製品
-   - B) 既存の `ray.train.torch.TorchTrainer` import path の背後にある書き直された実装であり、以前の世代の trainer class が内部で動作していた方法を統合・簡素化したもの
-   - C) CPU ベースのトレーニングのみをサポートする Ray Train のバージョン
-   - D) Ray がドキュメントを提供しなくなった deprecated API
+2. 2.58.0 で確認された Train V2 のデフォルトはどれですか？
+   - A) environment variable が未設定の場合は V2
+   - B) V1 のみ実行可能
+   - C) TorchTrainer の import が削除された
+   - D) Ray extras が PyTorch を自動的にインストールする
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) 既存の `ray.train.torch.TorchTrainer` import path の背後にある書き直された実装であり、以前の世代の trainer class が内部で動作していた方法を統合・簡素化したもの**
+**回答: A**
 
-**解説:**
-Ray Train の API surface は時代とともに進化してきましたが、ユーザー向けの import path（PyTorch の場合は `ray.train.torch.TorchTrainer`）は変更されていません。変更されたのはその背後の実装です。この書き直しがいつ default になったかという正確な version history は、推測せずに現在の Ray documentation で確認するのが最善です。
+古い implementation を明示的に選択する実行と区別します。Framework は別途必要な dependency です。
 </details>
 
-3. Ray Train における `ScalingConfig` の役割は何ですか？
-   - A) 起動する worker 数と、それぞれが必要とする resources（GPU など）を指定する
-   - B) トレーニング時に使用する neural network architecture を定義する
-   - C) optimizer の learning rate schedule を設定する
-   - D) Ray cluster が実行される cloud region を構成する
+3. V2 で legacy trainer_resources を設定すると何が起こりますか？
+   - A) 常により多くの controller CPU を予約する
+   - B) deprecation error が発生する
+   - C) GPU 数が増加する
+   - D) Tune trial 数が変わる
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: A) 起動する worker 数と、それぞれが必要とする resources（GPU など）を指定する**
+**回答: B**
 
-**解説:**
-`ScalingConfig` は、起動する worker 数と、それぞれに GPU が必要かどうかを Trainer に伝えます。Trainer はこれを使用して、他の Ray task や actor と同様に、基盤となる Ray cluster に対応する resources を要求します。
+controller、training worker、Tune driver のリソーススコープは異なります。
 </details>
 
-4. worker failure 後の recovery を可能にする以外に、Ray Train の checkpointing にはどのような目的がありますか？
-   - A) storage を節約するためにトレーニング dataset を圧縮する
-   - B) hyperparameter-tuning の判断や model registration など、workflow の後続 step にトレーニング済み model を引き渡す
-   - C) model を production serving endpoint に自動的に deploy する
-   - D) ScalingConfig を不要にする
+4. Checkpoint.from_directory は何をしますか？
+   - A) すべての model/optimizer/RNG state を自動的にキャプチャする
+   - B) ユーザーが用意した checkpoint directory 内のファイルを参照する
+   - C) model をデプロイする
+   - D) dataset を匿名化する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) hyperparameter-tuning の判断や model registration など、workflow の後続 step にトレーニング済み model を引き渡す**
+**回答: B**
 
-**解説:**
-report された checkpoint は、トレーニングを再開するのに十分な state（通常は model weights と optimizer state）を取得しますが、次に続く処理への handoff point としても機能します。たとえば tuning の判断や、結果を model version として登録する処理です。これは、この documentation site の他の箇所で扱う model registry pattern と概念的に似ています。
+recovery payload を実装し、get_checkpoint から返される checkpoint をロードします。
 </details>
 
-5. Ray Tune は何をしますか？
-   - A) cluster 全体で多数の training trial を並列実行し、pluggable search algorithm を用いて次に試す hyperparameter combination を決定する
-   - B) 一度に 1 つの hyperparameter だけを順次 tuning する
-   - C) あらゆる分散トレーニング workload で Ray Train を完全に置き換える
-   - D) Ray の core primitives とは無関係な Kubernetes CRD ベースの controller である
+5. 2.58.0 の V2 report 参加ルールはどれですか？
+   - A) rank 0 のみが呼び出す
+   - B) すべての worker が同じ回数 barrier に到達する
+   - C) すべての metric が自動的に平均化される
+   - D) checkpoint なしでは呼び出せない
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: A) cluster 全体で多数の training trial を並列実行し、pluggable search algorithm を用いて次に試す hyperparameter combination を決定する**
+**回答: B**
 
-**解説:**
-Ray Tune は Ray 上に構築された hyperparameter tuning library です。各 trial は 1 つの hyperparameter combination でトレーニングし、結果を report します。Tune の search algorithm はその結果を利用して、次に試す内容を決定します。これは Kubeflow ecosystem で Katib が提供するものと概念的には並行していますが、別個の Kubernetes CRD ベース system ではなく Ray native です。
+rank 0 のみがファイルを保存する場合でも、他の worker は checkpoint=None を report します。
 </details>
 
-6. 分散トレーニングを必要とする model に対して、Ray Tune は一般に Ray Train とどのように組み合わせられますか？
-   - A) Tune と Train は一緒に使用できないため、team はどちらか一方を選択する必要がある
-   - B) Tune は探索対象の trainable として Ray Train の `Trainer` を wrap するため、各 trial はそれぞれ独自の分散 Ray Train run になる
-   - C) Ray Train が最初に完了まで実行され、その後で初めて Ray Tune が別の cluster 上で開始される
-   - D) Tune が Trainer の ScalingConfig を独自の resource model で置き換える
+6. max_failures=0 はすべての retry を無効にしますか？
+   - A) はい
+   - B) いいえ。controller と preemption の retry には個別の設定があります
+   - C) 常に無限 retry を意味する
+   - D) Karpenter の retry のみを無効にする
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) Tune は探索対象の trainable として Ray Train の `Trainer` を wrap するため、各 trial はそれぞれ独自の分散 Ray Train run になる**
+**回答: B**
 
-**解説:**
-一般的な pattern では、Tune に trainable として Ray Train の `Trainer` を渡します。その場合、各 hyperparameter trial はそれ自体が分散 Ray Train run となり、複数の GPU または node にまたがる可能性があります。これは、1 つの trial が妥当な時間内に完了するために分散トレーニングを必要とする場合に有用です。
+controller_failure_limit と max_preemption_failures の確認済みデフォルトはいずれも -1 です。
 </details>
 
-7. EKS 上の KubeRay-managed autoscaler が、Ray Train または Ray Tune job の実際の resource demand に反応するのはなぜですか？
-   - A) Ray Train と Ray Tune は、他の Ray workload と同様に、Ray の通常の task/actor resource-request mechanism を通じて CPU と GPU を要求するため
-   - B) Ray Train と Ray Tune は Ray の scheduler を迂回して Kubernetes API server と直接通信するため
-   - C) job を実行する前に、cluster を常に固定サイズで provision する必要があるため
-   - D) Karpenter がトレーニング process 自体の内部で GPU utilization を監視するため
+7. 現在の V2 Train/Tune 統合パターンはどれですか？
+   - A) V2 Trainer instance を直接 Tuner に渡す
+   - B) function trainable 内で Trainer を構築して fit し、必要に応じて callback を接続する
+   - C) ライブラリを組み合わせることはできない
+   - D) 常に別の Kubernetes cluster が必要である
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: A) Ray Train と Ray Tune は、他の Ray workload と同様に、Ray の通常の task/actor resource-request mechanism を通じて CPU と GPU を要求するため**
+**回答: B**
 
-**解説:**
-どちらの library も、トレーニングや tuning に固有の別経路を使わず、Ray の通常の task/actor resource-request mechanism を通じて resources を要求します。これにより、Part 2 で扱った autoscaler は実際の demand に反応できます。つまり、Tune sweep がより多くの concurrent trial を起動すると追加の worker node を要求し、trial が終了すると scale back down します。固定サイズの cluster を事前に用意する必要はありません。
+V2 Trainer を直接入力すると、native check で TuneError が発生しました。統合には wiring とリソース計画が必要です。
 </details>
 
-8. EKS 上で Ray Train run の分散 worker に必要な co-scheduling により、どのような実用上の問題が生じる可能性がありますか？
-   - A) ない。Ray Train worker が同時に開始する必要はない
-   - B) autoscaler が妥当な時間内に要求されたすべての worker を provision できない場合、最後の数個の GPU worker が起動するのを待って training run が停止する可能性がある
-   - C) Co-scheduling が問題になるのは Ray Tune のみであり、Ray Train では決して問題にならない
-   - D) checkpointing が co-scheduling の遅延を自動的に解決する
+8. TuneReportCallback は何を転送しますか？
+   - A) 自動的に平均化された worker metric
+   - B) 2 回目の checkpoint upload
+   - C) 最初の worker の metric dictionary と既存の checkpoint path
+   - D) Tune session の外部でも常に動作する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) autoscaler が妥当な時間内に要求されたすべての worker を provision できない場合、最後の数個の GPU worker が起動するのを待って training run が停止する可能性がある**
+**回答: C**
 
-**解説:**
-1 つの Ray Train run に含まれる worker は通常、co-schedule される必要があります。つまり、communication group を確立する前に、すべてが起動し、割り当てられた GPU を保持している必要があります。これは、この documentation site の他の箇所で説明する gang-scheduling の必要性と似ています。GPU node pool の provisioning lead time は、CPU node より長く予測しにくいことが多いため、training job の実際の開始時刻は、要求されたすべての worker をどれだけ速く co-schedule できるかに依存します。
+Tune session 内で構築します。metric aggregation は別途実行します。
 </details>
 
-## 短答問題
+## 短答式問題
 
-9. Ray Train の `Trainer` と `ScalingConfig` がそれぞれ何を行うか、および両者がどのように連携して分散トレーニング job を実行するかを説明してください。
+9. なぜ trial driver と Train worker をまとめて予算化する必要があるのですか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-Trainer（`TorchTrainer` など）は、model の構築、batch の反復処理、loss の計算、optimizer の step 実行といった通常の model-training logic を含む、ユーザー提供の training function を wrap します。Trainer は、基盤となる framework の data-parallel training が期待する分散 process group（たとえば PyTorch DDP process group）内で、その function を worker ごとに 1 回起動する役割を担います。そのため、training function 自体がこの調整を手作業で設定する必要はありません。
-
-`ScalingConfig` は、起動する worker 数と、GPU が必要かどうかなど各 worker が必要とする resources を Trainer に伝えます。Trainer は `ScalingConfig` を使用して、Ray の通常の task/actor resource-request mechanism を通じ、基盤となる Ray cluster に対応する resources を要求します。Trainer は training logic と調整を提供し、`ScalingConfig` は Trainer がその logic をスケールさせる resource shape を提供します。
+driver は、ネストされた worker または placement group に必要なリソースを占有する可能性があります。concurrency、worker bundle、cluster 境界、および node ごとの実現可能性をまとめて確認します。
 </details>
 
-10. Ray Tune と Ray Train を組み合わせることが有用な理由、およびその組み合わせによる resource request が EKS 上の cluster autoscaling とどのように連携するかを説明してください。
+10. scalar Tune の成功例だけでは何を確認できませんか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-一部の model はトレーニングの cost が高く、1 つの hyperparameter trial 自体が、妥当な時間内に完了するために分散（multi-GPU または multi-node）トレーニングを必要とします。2 つの library を組み合わせなければ、team は分散トレーニング job に対して hyperparameter を serial に tuning するか、search phase 中は分散トレーニングを諦める必要があります。Ray Tune は Ray Train の `Trainer` を trainable として wrap できるため、各 trial は独自の分散 Ray Train run になり、Tune は次に試す hyperparameter combination を決定しながら、そのような run を複数同時に実行できます。
-
-すべての trial のすべての worker は、依然として Ray の通常の task/actor resource-request mechanism を通じて CPU と GPU を要求するため、EKS 上の KubeRay-managed autoscaler は、単一の事前宣言された shape ではなく、アクティブなすべての trial を合わせた real-time resource demand を認識します。Tune sweep がより多くの concurrent trial を起動すると追加の worker node を provision でき、trial の終了に応じて scale back down できます。そのため、最大規模の sweep に合わせて cluster を事前にサイズ設定する必要はありません。
+これは model accuracy、PyTorch/DDP または GPU performance、multi-node checkpoint recovery、EKS autoscaling を証明するものではありません。API と 2 つの scalar trial 結果の収集を確認するものです。
 </details>
 
 ---
 
-[学習教材に戻る](../../../ai-ml/ray/03-ray-train-tune.md) | [次のクイズ: Ray Serve](./04-ray-serve-quiz.md)
+[学習教材に戻る](../../../ai-ml/ray/03-ray-train-tune.md)

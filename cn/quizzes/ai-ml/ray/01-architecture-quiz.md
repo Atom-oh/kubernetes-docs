@@ -1,163 +1,137 @@
 # Ray 架构测验
 
-本测验检验你对 Ray 核心原语（task、actor、object store）、Ray 集群架构（head node、worker node），以及 Ray 的高层库如何构建在同一基础之上的理解。
+## 选择题
 
-## 单项选择题
-
-1. 从根本上说，Ray 是什么？
-   - A) 一个仅为分布式模型训练构建的特定领域框架
-   - B) 一个用于扩展 Python 工作负载的开源分布式计算框架，围绕一组少量的通用原语构建
-   - C) 一个替代默认 kube-scheduler 的 Kubernetes 原生调度器
-   - D) 一个没有编程 API 的托管模型服务产品
+1. 如何提交远程函数？
+   - A) 正常调用 f(...)
+   - B) 在 @ray.remote 函数上使用 f.remote(...)
+   - C) 仅调用 ray.get(f)
+   - D) 为每次调用创建一个 Pod
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 一个用于扩展 Python 工作负载的开源分布式计算框架，围绕一组少量的通用原语构建**
+**答案：B**
 
-**说明：**
-Ray 并非为某一种工作负载类型而构建。它提供通用原语——task、actor 和 object store——支持从临时并行 task 到分布式训练、超参数调优和模型服务等各种用例。
+单返回值示例会产生一个 ObjectRef；ray.get 读取其值。
 </details>
 
-2. 什么是 Ray task？
-   - A) 通过将 `@ray.remote` 应用于 class 而创建的有状态、长生命周期远程对象
-   - B) 通过将 `@ray.remote` 应用于 function 而创建、由 Ray 远程运行的无状态函数
-   - C) 在 head node 上管理集群元数据的进程
-   - D) 分布式 object store 的一个分片
+2. 所有 Ray 任务都是相互独立且无副作用的吗？
+   - A) 是；Ray 从不跟踪依赖关系
+   - B) 否；需要考虑 ObjectRef 依赖关系、副作用和重试
+   - C) 只有 actor 会返回 ObjectRef
+   - D) 每个函数都恰好执行一次
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 通过将 `@ray.remote` 应用于 function 而创建、由 Ray 远程运行的无状态函数**
+**答案：B**
 
-**说明：**
-task 是无状态的远程函数。调用它会立即返回一个 future，而 Ray 会在某个具有可用容量的 worker 上调度实际执行。由于 task 不会在调用之间保留状态，Ray 可以在任何有容量的 worker 上运行任意一次调用。
+无状态执行单元并不保证纯函数或恰好执行一次。
 </details>
 
-3. actor 与 task 的区别是什么？
-   - A) actor 是无状态的，而 task 会在调用之间保留状态
-   - B) actor 是从 class 创建的长生命周期、有状态远程实例，其状态会在 method 调用之间持续保留
-   - C) actor 只能在 head node 上运行
-   - D) actor 无法使用 `@ray.remote` decorator 创建
+3. 关于 actor 状态，哪项说法是准确的？
+   - A) 实例内存在调用之间持续存在；故障恢复是独立的
+   - B) 所有状态都会自动持久化
+   - C) actor 仅在 head 节点上运行
+   - D) 启用重启会恢复之前的内存
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) actor 是从 class 创建的长生命周期、有状态远程实例，其状态会在 method 调用之间持续保留**
+**答案：A**
 
-**说明：**
-将 `@ray.remote` 应用于 class 会将其转换为 actor。Ray 会将生成的实例作为长生命周期的远程进程保持运行，因此其中存储的状态——例如已加载的模型权重或计数器——会在 method 调用之间持续保留，这与无状态 task 不同。
+max_restarts 会重新运行构造函数；它不会替代 checkpoint 恢复。
 </details>
 
-4. Ray 的分布式 object store 主要解决什么问题？
-   - A) 它取代 Ray 集群中 head node 的需要
-   - B) 它允许从共享内存读取大型对象，而不是将其重新序列化到每个需要它的进程中，从而避免不必要的复制
-   - C) 它存储集群的 autoscaler 配置
-   - D) 它将 task 调度到特定 worker node 上
+4. 已验证的零拷贝范围是什么？
+   - A) 所有 Python 对象和 GPU 内存
+   - B) 每个节点共享的一块物理 RAM
+   - C) 同一节点上只读的 NumPy 共享内存视图
+   - D) 所有情况下网络传输成本均为零
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 它允许从共享内存读取大型对象，而不是将其重新序列化到每个需要它的进程中，从而避免不必要的复制**
+**答案：C**
 
-**说明：**
-object store 是用于在 task 和 actor 之间传递对象的分布式共享内存存储。对于 dataset 或模型权重等大型对象，这避免了将对象复制到每个需要它的进程中所产生的序列化和复制成本。
+修改需要复制。不要将其泛化到其他对象、GPU 或跨节点传输。
 </details>
 
-5. 除了 worker node 上运行的内容外，Ray 集群的 head node 上还运行什么？
-   - A) 仅分布式 object store
-   - B) Global Control Store (GCS)、driver process（如果在那里运行）和 autoscaler
-   - C) 仅用户提交的 task 和 actor
-   - D) 独立的 Kubernetes control plane
+5. GCS 的名称和作用是什么？
+   - A) Global Control Service；存储 actor、节点和 placement group 等集群元数据
+   - B) 用于存储所有权重的 GPU Copy Store
+   - C) Global Control Store；所有 ObjectRef 元数据的唯一所有者
+   - D) Kubernetes API server 的替代品
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) Global Control Store (GCS)、driver process（如果在那里运行）和 autoscaler**
+**答案：A**
 
-**说明：**
-head node 运行 GCS（集群元数据）、driver process（如果顶层脚本或会话在那里运行）和 autoscaler；此外，它还像 worker node 一样，为资源池贡献 CPU/GPU/memory。
+Object ownership 元数据属于创建原始 ObjectRef 的进程，而不是普遍属于 GCS。
 </details>
 
-6. Ray 如何在集群中调度 task 和 actor？
-   - A) 针对每个 node 的资源单独进行调度，要求用户为每个 task 选择特定 node
-   - B) 针对集群合并后的资源池进行调度，因此 task 可以落在任何拥有足够空闲资源的 node 上
-   - C) 仅在 head node 上运行，worker node 仅用于存储
-   - D) 随机调度，不考虑可用的 CPU、GPU 或 memory
+6. 两个节点各有一个空闲 CPU 时，能否执行一个需要两个 CPU 的任务？
+   - A) 总是可以，因为它们的总和为两个
+   - B) Ray 会自动将任务拆分成两半
+   - C) 不可以；该任务必须能放入一个可行的节点
+   - D) 如果内存可用，CPU 要求永远无关紧要
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 针对集群合并后的资源池进行调度，因此 task 可以落在任何拥有足够空闲资源的 node 上**
+**答案：C**
 
-**说明：**
-Ray 针对整个集群的资源池而不是单个 node 进行工作调度。请求给定 CPU 数量的 task 可以在集群中任何具有该空闲容量的 node 上运行。
+集群级别的选择仍取决于节点级别的资源可行性。
 </details>
 
-7. 在架构上，Ray Train、Ray Tune 和 Ray Serve 有什么共同点？
-   - A) 每个都实现了自己的独立调度和容错系统，不依赖 Ray 核心
-   - B) 它们都构建在与 Ray 核心原语相同的底层 task、actor 和 object store 之上
-   - C) 它们只能在 Ray 集群外运行
-   - D) 它们取代了 head node 的需要
+7. num_cpus=1 表示什么？
+   - A) OS 将所有线程固定到一个核心
+   - B) 逻辑上的 Ray 调度/准入要求，与 OS 限制分离
+   - C) 保证独占一个物理核心
+   - D) 自动施加 GPU 内存限制
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 它们都构建在与 Ray 核心原语相同的底层 task、actor 和 object store 之上**
+**答案：B**
 
-**说明：**
-Ray 用于训练、调优和服务的高层库复用相同的原语，而不是为每种工作负载分别重新实现调度和数据移动。这一共享基础是 Ray 与将互不相关的点工具捆绑在一起的模式相比的关键架构区别。
+Container 限制和库的线程设置是独立的。
 </details>
 
-8. 为什么在 Kubernetes 上运行 Ray 需要 Ray 自身集群概念之外的机制？
-   - A) 因为 Ray 无法在 container 内运行
-   - B) 因为 Ray 的 head/worker 集群形态与 Kubernetes 自己的调度处于不同层级，所以需要某种机制将该形态转换为 Pods 和 Deployments 等 Kubernetes 对象
-   - C) 因为 Kubernetes 不支持 autoscaling
-   - D) 因为 Ray task 无法使用 Kubernetes node 上的 CPU 资源
+8. KubeRay 的作用是什么？
+   - A) 自动为应用选择 Train、Tune 或 Serve
+   - B) 在 Kubernetes 上协调 Ray CR 和 Pod 生命周期
+   - C) 替代 kube-scheduler
+   - D) 为每个 Ray 任务创建一个新的 EC2 实例
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B) 因为 Ray 的 head/worker 集群形态与 Kubernetes 自己的调度处于不同层级，所以需要某种机制将该形态转换为 Pods 和 Deployments 等 Kubernetes 对象**
+**答案：B**
 
-**说明：**
-Ray 自身的集群概念（head node、worker node、autoscaler）不会自动映射到 Kubernetes 的调度模型。必须有某种机制将 Ray 集群的形态转换为 Kubernetes scheduler 能够理解的 Pods 和 Deployments——这项转换正是 KubeRay 提供的功能。
+Ray 工作调度、Pod 放置和 EC2 预置是不同的层。
 </details>
 
 ## 简答题
 
-9. 一位团队成员正在决定将一段逻辑实现为 Ray task 还是 Ray actor。他们需要让一个 machine learning model 在内存中保持加载状态，以处理许多传入请求，而不是每次都重新加载。应该使用哪个原语，为什么？
+9. 为什么 actor 适合在请求之间保持模型常驻？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：应使用 actor，因为它是长生命周期、有状态的远程实例——已加载的 model 可以保存在 actor 的状态中，并在多次 method 调用之间复用，而不是像无状态 task 那样需要在每次调用时重新加载。**
-
-**说明：**
-task 是无状态的，并在完成一次调用后结束；task 没有可以在调用之间保留已加载 model 的位置。actor 的实例作为远程进程保持运行，因此通过 actor handle 发起调用时，已加载的模型权重等状态会持续保留。
+显式远程实例拥有该状态。不要依赖偶然的任务 worker 全局缓存复用来保证正确性。actor 故障仍需要 checkpoint 和恢复设计。
 </details>
 
-10. 为什么 Ray 在其核心原语中一次性实现调度、容错和数据移动，而不是在每个高层库（Train、Tune、Serve）中分别实现一次？
+10. 为什么要将 GCS 恢复与对象及 actor 的应用恢复分开？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：因为 Ray Train、Ray Tune 和 Ray Serve 都构建在相同的 task、actor 和 object store 之上，所以每个库都复用这项共享实现，而不是针对自己的工作负载分别重新实现调度和数据移动。**
-
-**说明：**
-这一共享基础是 Ray 与由多个独立点工具组成的生态系统相比的关键架构区别；后者的每个工具都有自己的执行模型，只是恰好被捆绑在一起。分布式训练运行和超参数扫描在底层都是以 Ray actor 或 task 形式运行的 worker，通过相同的 object store 交换数据。
+持久化集群元数据、对象所有权/谱系/值恢复以及 actor checkpoint 解决的是不同问题。仅 Redis 或 alpha RocksDB 配置无法恢复所有值和应用状态。
 </details>
 
 ---
 
-[返回学习材料](../../../ai-ml/ray/01-architecture.md) | [下一测验：KubeRay Operator](./02-kuberay-operator-quiz.md)
+[返回学习材料](../../../ai-ml/ray/01-architecture.md)
