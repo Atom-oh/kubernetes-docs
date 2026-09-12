@@ -5,7 +5,7 @@
     "title": "Kubeflow Trainer 조정 흐름",
     "output": "ko-ai-ml-kubeflow-05-training-operator-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "mode": "auto",
       "entries": {
@@ -46,7 +46,7 @@
           "w",
           "svc"
         ],
-        "note": "컨트롤러가 JobSet/PodGroup을 만들면 워커 Pod가 all-or-nothing으로 스케줄되고 헤드리스 Service로 서로를 찾는다."
+        "note": "JobSet은 실행을 관리하며 PodGroup·gang scheduling은 별도 정책과 scheduler가 필요합니다."
       },
       {
         "id": "report",
@@ -56,7 +56,7 @@
           "c",
           "st"
         ],
-        "note": "워커가 전달한 진행 상황과 메트릭을 컨트롤러가 TrainJob.status에 반영한다."
+        "note": "trainerStatus는 기본 false인 alpha gate와 애플리케이션의 명시적 보고가 필요합니다."
       }
     ]
   },
@@ -107,7 +107,7 @@
       "id": "st",
       "type": "database",
       "label": "TrainJob.status",
-      "sublabel": "진행 상황 · 메트릭 · 완료 여부",
+      "sublabel": "조건 / 선택적 trainerStatus",
       "pos": [
         840,
         220
@@ -120,8 +120,8 @@
     {
       "id": "js",
       "type": "backend",
-      "label": "JobSet / PodGroup",
-      "sublabel": "갱 스케줄된 워커 Pod",
+      "label": "JobSet",
+      "sublabel": "PodGroup 정책은 선택 사항",
       "pos": [
         330,
         390
@@ -134,8 +134,8 @@
     {
       "id": "w",
       "type": "cloud",
-      "label": "워커 Pod 0..N",
-      "sublabel": "RANK=0 · RANK=1 · … · RANK=N",
+      "label": "학습 Pod / 프로세스",
+      "sublabel": "Pod·프로세스·EC2 수 구분",
       "pos": [
         330,
         560
@@ -208,7 +208,7 @@
       "id": "w-c",
       "from": "w",
       "to": "c",
-      "label": "진행/메트릭 전달",
+      "label": "opt-in 상태 보고",
       "fromSide": "left",
       "toSide": "left",
       "via": [
@@ -222,7 +222,8 @@
         ]
       ],
       "labelSegment": 1,
-      "labelDx": -52
+      "labelDx": -52,
+      "variant": "dashed"
     },
     {
       "id": "c-st",
@@ -234,20 +235,19 @@
   "cards": [
     {
       "dot": "violet",
-      "title": "TrainJob과 런타임의 분리",
+      "title": "TrainJob과 런타임",
       "items": [
-        "TrainJob: 스크립트, 인자, 워커 수 — 실행마다 생성",
-        "ClusterTrainingRuntime: 이미지, 분산 실행 메커니즘 — 플랫폼 팀이 한 번 정의",
-        "StorageClass ↔ PVC와 비슷한 템플릿/인스턴스 관계"
+        "TrainJob: 실행별 명령·자원; Runtime: 재사용 템플릿·ML policy",
+        "2.2의 RuntimePatches와 2.3의 CRD·hook 변경을 구분합니다."
       ]
     },
     {
       "dot": "orange",
-      "title": "분산 학습 기본 요소",
+      "title": "조건부 기능",
       "items": [
-        "헤드리스 Service: Pod IP 대신 안정적인 DNS 이름으로 피어 탐색",
-        "주입된 환경 변수: RANK · WORLD_SIZE · MASTER_ADDR 역할을 런타임이 일반화",
-        "갱 스케줄링: 모든 워커가 함께 스케줄되어야 학습 시작"
+        "기본 Torch runtime에는 podGroupPolicy가 없습니다.",
+        "TrainJobStatus alpha gate는 기본 false입니다.",
+        "노드 순차 생성과 동기식 프로세스 rendezvous는 별도입니다."
       ]
     }
   ]

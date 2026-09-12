@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-kubeflow-05-training-operator-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "mode": "auto",
       "entries": {
@@ -47,7 +47,7 @@
           "w",
           "svc"
         ],
-        "note": "The controller creates a JobSet/PodGroup; worker Pods are scheduled all-or-nothing and find each other via the headless Service."
+        "note": "JobSet manages execution; PodGroup/gang scheduling requires separate policy and scheduler integration."
       },
       {
         "id": "report",
@@ -57,7 +57,7 @@
           "c",
           "st"
         ],
-        "note": "Workers report progress and metrics; the controller writes them into TrainJob.status."
+        "note": "trainerStatus needs the default-off alpha gate and explicit application reporting."
       }
     ]
   },
@@ -108,7 +108,7 @@
       "id": "st",
       "type": "database",
       "label": "TrainJob.status",
-      "sublabel": "progress · metrics · completion",
+      "sublabel": "conditions / optional trainerStatus",
       "pos": [
         840,
         220
@@ -121,8 +121,8 @@
     {
       "id": "js",
       "type": "backend",
-      "label": "JobSet / PodGroup",
-      "sublabel": "gang-scheduled worker Pods",
+      "label": "JobSet",
+      "sublabel": "optional PodGroup policy",
       "pos": [
         330,
         390
@@ -135,8 +135,8 @@
     {
       "id": "w",
       "type": "cloud",
-      "label": "Worker Pod 0..N",
-      "sublabel": "RANK=0 · RANK=1 · … · RANK=N",
+      "label": "Training Pods / processes",
+      "sublabel": "Pod / process / EC2 counts differ",
       "pos": [
         330,
         560
@@ -209,7 +209,7 @@
       "id": "w-c",
       "from": "w",
       "to": "c",
-      "label": "progress / metrics",
+      "label": "opt-in status",
       "fromSide": "left",
       "toSide": "left",
       "via": [
@@ -223,7 +223,8 @@
         ]
       ],
       "labelSegment": 1,
-      "labelDx": -52
+      "labelDx": -52,
+      "variant": "dashed"
     },
     {
       "id": "c-st",
@@ -235,20 +236,19 @@
   "cards": [
     {
       "dot": "violet",
-      "title": "TrainJob vs. runtime split",
+      "title": "TrainJob and runtimes",
       "items": [
-        "TrainJob: script, args, worker count — created per run",
-        "ClusterTrainingRuntime: image, distributed launch mechanics — defined once by the platform team",
-        "Template/instance relationship, like StorageClass ↔ PVC"
+        "TrainJob: run settings; runtime: reusable template and ML policy",
+        "Distinguish 2.2 RuntimePatches from 2.3 CRD/hook changes."
       ]
     },
     {
       "dot": "orange",
-      "title": "Distributed training primitives",
+      "title": "Conditional capabilities",
       "items": [
-        "Headless Service: stable DNS names for peers instead of Pod IPs",
-        "Injected env vars: the runtime generalizes the RANK · WORLD_SIZE · MASTER_ADDR role",
-        "Gang scheduling: all workers must be scheduled together before training starts"
+        "Default Torch runtime has no podGroupPolicy.",
+        "TrainJobStatus alpha gate defaults false.",
+        "Sequential node creation differs from synchronous process rendezvous."
       ]
     }
   ]

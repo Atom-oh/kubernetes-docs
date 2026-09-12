@@ -1,0 +1,44 @@
+[
+  {
+    "path": "ko/ai-ml/kubeflow/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f91f501b975d63c3c3ce2073da6ab8e4212bafa9f7ac534bdc933e0bd8249f4c",
+    "summary": "Reviewed pinned 26.03.1 distribution and current KFP/Profile implementations; corrected release/legacy AWS installation, graduation, API and identity/isolation claims; updated examples, quizzes and diagrams."
+  },
+  {
+    "path": "ko/ai-ml/kubeflow/01-architecture-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "ac8e554f7f4c57a2f88da419949aec4dd3d4908380f93a5e007c9d296124625c",
+    "summary": "Reviewed pinned 26.03.1 distribution and current KFP/Profile implementations; corrected release/legacy AWS installation, graduation, API and identity/isolation claims; updated examples, quizzes and diagrams."
+  },
+  {
+    "path": "en/ai-ml/kubeflow/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "a4fce03a05e2466e435cd04f7e3e8ca3d3ec376bee9f1db638f6f9ac623f950c",
+    "summary": "Reviewed pinned 26.03.1 distribution and current KFP/Profile implementations; corrected release/legacy AWS installation, graduation, API and identity/isolation claims; updated examples, quizzes and diagrams."
+  },
+  {
+    "path": "en/ai-ml/kubeflow/01-architecture-installation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "d3a81da8e74ada4c74fd5d36929c020acb5d85f6a4fb72cf057a7c2cc3fcf54b",
+    "summary": "Reviewed pinned 26.03.1 distribution and current KFP/Profile implementations; corrected release/legacy AWS installation, graduation, API and identity/isolation claims; updated examples, quizzes and diagrams."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b495bc8634c87bbef4d675ca91cf23046913ef46504965d5fb9cc3fc09bc5cb5",
+    "summary": "Reviewed pinned 26.03.1 distribution and current KFP/Profile implementations; corrected release/legacy AWS installation, graduation, API and identity/isolation claims; updated examples, quizzes and diagrams."
+  },
+  {
+    "path": "en/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "c1af96f2e3c28c66152a8402648018d1310d9fc5737b16f008f8813d9ceb03e2",
+    "summary": "Reviewed pinned 26.03.1 distribution and current KFP/Profile implementations; corrected release/legacy AWS installation, graduation, API and identity/isolation claims; updated examples, quizzes and diagrams."
+  }
+]

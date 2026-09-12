@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-kubeflow-02-pipelines-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "mode": "auto",
       "entries": {
@@ -32,7 +32,7 @@
           "pipeline",
           "compiler"
         ],
-        "note": "The SDK's job ends at producing IR YAML — a backend-agnostic PipelineSpec."
+        "note": "Compilation produces IR; the package also provides client and runtime support."
       },
       {
         "id": "backend",
@@ -43,7 +43,7 @@
           "argo",
           "pods"
         ],
-        "note": "From the API server onward the backend owns the run: IR YAML becomes an Argo Workflow and Argo schedules each step as a Pod."
+        "note": "Argo sequences work and creates Pods; Kubernetes places Pods on nodes."
       },
       {
         "id": "storage",
@@ -53,7 +53,7 @@
           "objectstore",
           "mlmd"
         ],
-        "note": "Component Pods write artifacts to the object store and record execution and artifact metadata in MLMD."
+        "note": "Launcher/runtime handles artifact transfer and metadata. Bytes and MLMD records are separate."
       }
     ]
   },
@@ -118,7 +118,7 @@
       "id": "argo",
       "type": "backend",
       "label": "Argo Workflow Controller",
-      "sublabel": "schedules steps",
+      "sublabel": "sequence / create Pods",
       "pos": [
         950,
         280
@@ -131,8 +131,8 @@
     {
       "id": "pods",
       "type": "cloud",
-      "label": "Component Pods execute",
-      "sublabel": "one Pod per step",
+      "label": "driver / launcher / work",
+      "sublabel": "K8s places Pods on nodes",
       "pos": [
         660,
         280
@@ -202,7 +202,7 @@
       "id": "compiler-apiserver",
       "from": "compiler",
       "to": "apiserver",
-      "label": "submit IR YAML",
+      "label": "upload / create Run",
       "variant": "emphasis"
     },
     {
@@ -226,7 +226,7 @@
       "id": "pods-objectstore",
       "from": "pods",
       "to": "objectstore",
-      "label": "write artifacts",
+      "label": "artifact read / write",
       "labelDy": 60
     },
     {
@@ -234,29 +234,23 @@
       "from": "pods",
       "to": "mlmd",
       "label": "record metadata"
-    },
-    {
-      "id": "objectstore-mlmd",
-      "from": "objectstore",
-      "to": "mlmd",
-      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "KFP v2: IR YAML",
+      "title": "IR and execution",
       "items": [
-        "A Python pipeline compiles into a backend-agnostic PipelineSpec (IR YAML)",
-        "The API server stores the IR YAML and re-submits it on every Run — not a one-shot Argo manifest"
+        "Upload alone does not execute; backend compatibility still matters.",
+        "Cache keys use artifact IDs and configuration, not file-byte hashes."
       ]
     },
     {
       "dot": "amber",
-      "title": "EKS-Specific Artifact Storage",
+      "title": "Storage and identity",
       "items": [
-        "Default is in-cluster MinIO",
-        "Pointing at S3 requires an IRSA role or EKS Pod Identity on the pipeline-runner ServiceAccount"
+        "S3 is metered and needs root/provider/permission configuration.",
+        "Inspect actual execution ServiceAccounts and API-server access."
       ]
     }
   ]

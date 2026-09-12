@@ -2,11 +2,11 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kubeflow Component Map",
+    "title": "Kubeflow components and explicit integrations",
     "locale": "en",
     "output": "en-ai-ml-kubeflow-readme-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1080,
       560
@@ -17,7 +17,7 @@
       "id": "dashboard",
       "type": "frontend",
       "label": "Central Dashboard",
-      "sublabel": "Profile-based multi-tenancy",
+      "sublabel": "component UI navigation",
       "pos": [
         40,
         250
@@ -102,38 +102,68 @@
     {
       "id": "dash-notebooks",
       "from": "dashboard",
-      "to": "notebooks"
+      "to": "notebooks",
+      "label": "UI link"
     },
     {
       "id": "dash-pipelines",
       "from": "dashboard",
       "to": "pipelines",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "label": "UI link",
+      "labelAt": [
+        300,
+        335
+      ]
     },
     {
       "id": "dash-katib",
       "from": "dashboard",
-      "to": "katib"
+      "to": "katib",
+      "label": "UI link"
     },
     {
       "id": "pipelines-trainer",
       "from": "pipelines",
       "to": "trainer",
-      "label": "runs training steps",
-      "variant": "emphasis"
+      "label": "submit if implemented",
+      "variant": "dashed"
     },
     {
       "id": "katib-trainer",
       "from": "katib",
       "to": "trainer",
-      "label": "runs Trial training"
+      "label": "configured Trial",
+      "variant": "dashed"
     },
     {
       "id": "trainer-kserve",
       "from": "trainer",
       "to": "kserve",
-      "label": "trained model",
-      "variant": "emphasis"
+      "label": "separate deployment",
+      "variant": "dashed",
+      "labelAt": [
+        845,
+        335
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "UI and workloads",
+      "items": [
+        "Dashboard is not a training dispatcher or universal authorization layer.",
+        "Pipelines and Katib require explicit integration to use Trainer."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Model lifecycle",
+      "items": [
+        "KServe deployment and promotion are separate steps.",
+        "Hub and Spark Operator in 26.03.1 are outside this diagram."
+      ]
     }
   ]
 }

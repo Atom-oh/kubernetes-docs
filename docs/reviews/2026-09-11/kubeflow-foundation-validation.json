@@ -1,0 +1,716 @@
+{
+  "reviewedAt": "2026-09-12T20:46:44.650900+00:00",
+  "status": "passed",
+  "scope": {
+    "documents": 6,
+    "quizQuestions": 16,
+    "figures": 4
+  },
+  "baseline": {
+    "distribution": "26.03.1",
+    "dashboard": "2.0.0",
+    "pipelines": "2.16.1"
+  },
+  "findingsCorrected": [
+    "CNCF graduation does not certify deployment compliance",
+    "Current Community bundle is distinct from legacy AWS1.7 release with broken new-install warning",
+    "Dashboard navigation is not universal controller dispatch; not all KFP concepts are CRDs",
+    "Profile quota optional; network/storage/IAM/app boundaries separate; namespace deletion ownership explicit",
+    "KFP current IRSA/fromEnv provider path supersedes historical v1-only assumption; no untested Pod Identity guarantee",
+    "Explicit model deployment and Trainer integration; no automatic promotion"
+  ],
+  "markdownCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/kubeflow/README.md",
+        "sha256": "f91f501b975d63c3c3ce2073da6ab8e4212bafa9f7ac534bdc933e0bd8249f4c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-on-eks-딥다이브"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "컴포넌트-맵"
+          },
+          {
+            "tag": "h2",
+            "id": "왜-eks에서-운영하는가"
+          },
+          {
+            "tag": "h2",
+            "id": "현재-제공-중인-문서"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-on-eks-딥다이브",
+          "개요",
+          "컴포넌트-맵",
+          "왜-eks에서-운영하는가",
+          "현재-제공-중인-문서"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/README.md",
+        "sha256": "a4fce03a05e2466e435cd04f7e3e8ca3d3ec376bee9f1db638f6f9ac623f950c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-on-eks-deep-dive"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "component-map"
+          },
+          {
+            "tag": "h2",
+            "id": "why-run-this-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "currently-covered"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-on-eks-deep-dive",
+          "overview",
+          "component-map",
+          "why-run-this-on-eks",
+          "currently-covered"
+        ]
+      },
+      {
+        "path": "ko/ai-ml/kubeflow/01-architecture-installation.md",
+        "sha256": "ac8e554f7f4c57a2f88da419949aec4dd3d4908380f93a5e007c9d296124625c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-eks에서의-kubeflow-아키텍처와-설치"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "kubeflow란-무엇인가"
+          },
+          {
+            "tag": "h3",
+            "id": "cncf-졸업-—-2026년-8월-17일"
+          },
+          {
+            "tag": "h2",
+            "id": "릴리스-모델과-현재-기준"
+          },
+          {
+            "tag": "h2",
+            "id": "컴포넌트-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "profile-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "eks에서의-설치-방식"
+          },
+          {
+            "tag": "h3",
+            "id": "적용-전에-렌더링하기"
+          },
+          {
+            "tag": "h2",
+            "id": "iam-접근-패턴-irsa-kfpv2-pod-identity"
+          },
+          {
+            "tag": "h2",
+            "id": "관리형-대안-대신-eks에서-운영하는-이유"
+          },
+          {
+            "tag": "h2",
+            "id": "근거와-검증"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "part-1-eks에서의-kubeflow-아키텍처와-설치",
+          "실습-환경-준비",
+          "kubeflow란-무엇인가",
+          "cncf-졸업-—-2026년-8월-17일",
+          "릴리스-모델과-현재-기준",
+          "컴포넌트-아키텍처",
+          "profile-예제",
+          "eks에서의-설치-방식",
+          "적용-전에-렌더링하기",
+          "iam-접근-패턴-irsa-kfpv2-pod-identity",
+          "관리형-대안-대신-eks에서-운영하는-이유",
+          "근거와-검증",
+          "다음-단계",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/01-architecture-installation.md",
+        "sha256": "d3a81da8e74ada4c74fd5d36929c020acb5d85f6a4fb72cf057a7c2cc3fcf54b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-kubeflow-architecture-and-installation-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "preparing-the-environment"
+          },
+          {
+            "tag": "h2",
+            "id": "what-is-kubeflow"
+          },
+          {
+            "tag": "h3",
+            "id": "cncf-graduation-—-august-17-2026"
+          },
+          {
+            "tag": "h2",
+            "id": "release-model-and-current-baseline"
+          },
+          {
+            "tag": "h2",
+            "id": "component-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "profile-example"
+          },
+          {
+            "tag": "h2",
+            "id": "installation-paths-on-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "render-before-applying"
+          },
+          {
+            "tag": "h2",
+            "id": "iam-access-patterns-irsa-kfpv2-and-pod-identity"
+          },
+          {
+            "tag": "h2",
+            "id": "why-run-this-on-eks-instead-of-a-managed-alternative"
+          },
+          {
+            "tag": "h2",
+            "id": "sources-and-validation"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "part-1-kubeflow-architecture-and-installation-on-eks",
+          "preparing-the-environment",
+          "what-is-kubeflow",
+          "cncf-graduation-—-august-17-2026",
+          "release-model-and-current-baseline",
+          "component-architecture",
+          "profile-example",
+          "installation-paths-on-eks",
+          "render-before-applying",
+          "iam-access-patterns-irsa-kfpv2-and-pod-identity",
+          "why-run-this-on-eks-instead-of-a-managed-alternative",
+          "sources-and-validation",
+          "next-steps",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
+        "sha256": "b495bc8634c87bbef4d675ca91cf23046913ef46504965d5fb9cc3fc09bc5cb5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-아키텍처와-eks-설치-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-아키텍처와-eks-설치-퀴즈",
+          "객관식-문제",
+          "단답형-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
+        "sha256": "c1af96f2e3c28c66152a8402648018d1310d9fc5737b16f008f8813d9ceb03e2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-architecture-and-installation-on-eks-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-architecture-and-installation-on-eks-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "profileRender": {
+    "distributionTag": "26.03.1",
+    "renderer": "kubectl1.36.2/kustomize5.8.1",
+    "overlay": "profile-controller/overlays/kubeflow",
+    "resources": {
+      "CustomResourceDefinition": 1,
+      "ServiceAccount": 1,
+      "Role": 1,
+      "ClusterRole": 2,
+      "RoleBinding": 1,
+      "ClusterRoleBinding": 1,
+      "ConfigMap": 2,
+      "Service": 1,
+      "Deployment": 1,
+      "VirtualService": 1,
+      "NetworkPolicy": 1,
+      "AuthorizationPolicy": 1
+    },
+    "deployments": [
+      {
+        "name": "profiles-deployment",
+        "namespace": "kubeflow",
+        "containers": [
+          {
+            "name": "access-management",
+            "image": "ghcr.io/kubeflow/dashboard/access-management:v2.0.0"
+          },
+          {
+            "name": "manager",
+            "image": "ghcr.io/kubeflow/dashboard/profile-controller:v2.0.0"
+          }
+        ]
+      }
+    ],
+    "namespaceResources": [],
+    "scope": "NativeKustomizerenderonly;noAPIadmission/controller/cloudcalls",
+    "totalResources": 14
+  },
+  "profileSchema": {
+    "status": "passed",
+    "schema": "Profile v1 bundled in Community Distribution 26.03.1",
+    "examples": [
+      {
+        "path": "ko/ai-ml/kubeflow/01-architecture-installation.md",
+        "passed": true,
+        "sourceSha256": "ac8e554f7f4c57a2f88da419949aec4dd3d4908380f93a5e007c9d296124625c",
+        "profileName": "team-a",
+        "quotaKeys": [
+          "requests.cpu",
+          "requests.memory",
+          "requests.nvidia.com/gpu",
+          "persistentvolumeclaims"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/01-architecture-installation.md",
+        "passed": true,
+        "sourceSha256": "d3a81da8e74ada4c74fd5d36929c020acb5d85f6a4fb72cf057a7c2cc3fcf54b",
+        "profileName": "team-a",
+        "quotaKeys": [
+          "requests.cpu",
+          "requests.memory",
+          "requests.nvidia.com/gpu",
+          "persistentvolumeclaims"
+        ]
+      }
+    ],
+    "negativeTypeRejected": true,
+    "quotaOptional": true,
+    "clusterScoped": true,
+    "resourcesRendered": 14,
+    "limitations": [
+      "JSON Schema only; no API admission, CEL, controller, network isolation or AWS execution."
+    ]
+  },
+  "responsiveChecks": [
+    {
+      "status": "passed",
+      "cases": [
+        {
+          "locale": "ko",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "75c2958cac802210a22c6d73b5f57cf30f10faed016ffdfb42691a9b5d3d63e0"
+        },
+        {
+          "locale": "ko",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "75c2958cac802210a22c6d73b5f57cf30f10faed016ffdfb42691a9b5d3d63e0"
+        },
+        {
+          "locale": "ko",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "75c2958cac802210a22c6d73b5f57cf30f10faed016ffdfb42691a9b5d3d63e0"
+        },
+        {
+          "locale": "en",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "e2f9318ef707b8924ad3e73d06a1f8f9fce22ebde2fd7b1de61c5c4baf94d122"
+        },
+        {
+          "locale": "en",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "e2f9318ef707b8924ad3e73d06a1f8f9fce22ebde2fd7b1de61c5c4baf94d122"
+        },
+        {
+          "locale": "en",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "e2f9318ef707b8924ad3e73d06a1f8f9fce22ebde2fd7b1de61c5c4baf94d122"
+        }
+      ],
+      "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+    },
+    {
+      "status": "passed",
+      "cases": [
+        {
+          "locale": "ko",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "c436eac0ac3f048197fffaddb4fc97bfa8e2935b0ce706a0999800e6df18becf"
+        },
+        {
+          "locale": "ko",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "c436eac0ac3f048197fffaddb4fc97bfa8e2935b0ce706a0999800e6df18becf"
+        },
+        {
+          "locale": "ko",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "c436eac0ac3f048197fffaddb4fc97bfa8e2935b0ce706a0999800e6df18becf"
+        },
+        {
+          "locale": "en",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "ba0e27b4ee7bc39cf00e807c6e01651cf5612374d1be2f8ef4a7eebebb84d20c"
+        },
+        {
+          "locale": "en",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "ba0e27b4ee7bc39cf00e807c6e01651cf5612374d1be2f8ef4a7eebebb84d20c"
+        },
+        {
+          "locale": "en",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "ba0e27b4ee7bc39cf00e807c6e01651cf5612374d1be2f8ef4a7eebebb84d20c"
+        }
+      ],
+      "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-kubeflow-readme-0",
+      "layoutPassed": true,
+      "pngSha256": "e1dad1fec704f95affc0b720d1eb3d31bba7e67e84f0a3d176789ef9e315ea72",
+      "htmlSha256": "75c2958cac802210a22c6d73b5f57cf30f10faed016ffdfb42691a9b5d3d63e0"
+    },
+    {
+      "name": "ko-ai-ml-kubeflow-01-architecture-installation-0",
+      "layoutPassed": true,
+      "pngSha256": "3ebc6fb03df6f5492fa82b9ba724caddf406d7ecd3bdde712fa9072cb6886df8",
+      "htmlSha256": "c436eac0ac3f048197fffaddb4fc97bfa8e2935b0ce706a0999800e6df18becf"
+    },
+    {
+      "name": "en-ai-ml-kubeflow-readme-0",
+      "layoutPassed": true,
+      "pngSha256": "f23cca16cd92377afe54737d374a428c8974301090f3dc1b43f5e98c5b5ced3c",
+      "htmlSha256": "e2f9318ef707b8924ad3e73d06a1f8f9fce22ebde2fd7b1de61c5c4baf94d122"
+    },
+    {
+      "name": "en-ai-ml-kubeflow-01-architecture-installation-0",
+      "layoutPassed": true,
+      "pngSha256": "e746c2b025710e543177c8fc47da06ec66448ec20361eb5c4091eae2e42e57b6",
+      "htmlSha256": "ba0e27b4ee7bc39cf00e807c6e01651cf5612374d1be2f8ef4a7eebebb84d20c"
+    }
+  ],
+  "sourceLinks": [
+    {
+      "url": "https://github.com/awslabs/kubeflow-manifests/releases/tag/v1.7.0-aws-b1.0.3",
+      "status": 200,
+      "finalUrl": "https://github.com/awslabs/kubeflow-manifests/releases/tag/v1.7.0-aws-b1.0.3",
+      "bytes": 217722
+    },
+    {
+      "url": "https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md",
+      "bytes": 574889
+    },
+    {
+      "url": "https://github.com/kubeflow/community-distribution/releases/tag/26.03.1",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/community-distribution/releases/tag/26.03.1",
+      "bytes": 257994
+    },
+    {
+      "url": "https://github.com/kubeflow/dashboard/blob/v2.0.0/components/profile-controller/controllers/profile_controller.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/dashboard/blob/v2.0.0/components/profile-controller/controllers/profile_controller.go",
+      "bytes": 702569
+    },
+    {
+      "url": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/objectstore/object_store.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/objectstore/object_store.go",
+      "bytes": 441400
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-01-architecture-installation-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-01-architecture-installation-0.html",
+      "bytes": 706810
+    },
+    {
+      "url": "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/",
+      "bytes": 165865
+    },
+    {
+      "url": "https://www.kubeflow.org/docs/components/pipelines/operator-guides/configure-object-store/",
+      "status": 200,
+      "finalUrl": "https://www.kubeflow.org/docs/components/pipelines/operator-guides/configure-object-store/",
+      "bytes": 181728
+    },
+    {
+      "url": "https://github.com/kubeflow/dashboard/blob/v2.0.0/components/profile-controller/controllers/plugin_iam.go",
+      "status": 200
+    }
+  ],
+  "limitations": [
+    "No full local VitePress build; hosted CI required before merge.",
+    "Native Kustomize/JSON Schema only, not Kubernetes admission, EKS deployment or AWS identity validation.",
+    "Initial Chromium navigation process exited; rerun of identical architecture input passed all 6 cases. No resource exhaustion was observed."
+  ]
+}

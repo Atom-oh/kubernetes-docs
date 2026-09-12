@@ -1,0 +1,281 @@
+{
+  "checkedAt": "2026-09-12T20:54:12.317791+00:00",
+  "pr": 227,
+  "reviewedHead": "9b466848db282da5cf13d3d80da7266440216bc8",
+  "mergeCommit": "88fe7026ffdf30da8291e7a6dc83562bb53db9b8",
+  "deploymentRun": 34717907070,
+  "deploymentStatus": "success",
+  "pages": [
+    {
+      "path": "en/ai-ml/mlflow/01-tracking.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/mlflow/01-tracking",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-mlflow-01-tracking-0.BDu3NkUu.png",
+          "status": 200,
+          "sha256": "55095953f869f8c89f6f4506c22ea6c177d142bf913ba3783cf48519339780d8",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/mlflow/02-model-registry.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/mlflow/02-model-registry",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-mlflow-02-model-registry-0.N4hYhufQ.png",
+          "status": 200,
+          "sha256": "3cc8e86eb2643be6e0d141277e63c0872dec6300eb059edd8fc5df7b3c62bb99",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/mlflow/03-eks-deployment.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/mlflow/03-eks-deployment",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-mlflow-03-eks-deployment-0.Dr0hrdyD.png",
+          "status": 200,
+          "sha256": "ebe0dd6564ac61ff97d8b9468fac1f21e179ff4e15a37a91c316ba30c6f1513a",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/mlflow/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/mlflow/",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-mlflow-readme-0.OxXivIUC.png",
+          "status": 200,
+          "sha256": "5ca877ff6f82597ff6752b6cd658e70256b3758be784ce8f0fef7654bc4447d4",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/ray/01-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/ray/01-architecture",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-ray-01-architecture-0.e45p7y2J.png",
+          "status": 200,
+          "sha256": "520d2583a1a8e4943017f03f426466408d99213d5115aafcdfe45d7cd0a69240",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/ray/02-kuberay-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/ray/02-kuberay-operator",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-ray-02-kuberay-operator-0.0gHubpC-.png",
+          "status": 200,
+          "sha256": "6962000926d7217b68685446d923187be3b3aee52d57d5060c8e461e5b77eca7",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/ray/03-ray-train-tune.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/ray/03-ray-train-tune",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-ray-03-ray-train-tune-0.JEluKsiT.png",
+          "status": 200,
+          "sha256": "15ac2a96e443b30c42f0cba472359b840471f4836746d9bb949765335e248904",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/ray/04-ray-serve.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/ray/04-ray-serve",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-ray-04-ray-serve-0.ClB84EAT.png",
+          "status": 200,
+          "sha256": "ccf6dc0c34e7cece82b0abc0fc023450ed3ef12dd0f1c2d1327abcba21baa191",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/ray/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/ray/",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-ray-readme-0.CYTJsK-Z.png",
+          "status": 200,
+          "sha256": "cd098fb0d4280f69998cc84ec598dcc1df6769a16fd1301cbc956d5986c6b52b",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/mlflow/01-tracking.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/mlflow/01-tracking",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-mlflow-01-tracking-0.C2eGo4Aj.png",
+          "status": 200,
+          "sha256": "68b72bb8c10b0fed075a453ca255028998342e1f4f400a468026323b4fd56fbe",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/mlflow/02-model-registry.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/mlflow/02-model-registry",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-mlflow-02-model-registry-0.BFLEvlmP.png",
+          "status": 200,
+          "sha256": "4c6261e70615724a102cad73bb1dd1e1598bac1c50c6ecdc681b777c4c36f22f",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/mlflow/03-eks-deployment.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/mlflow/03-eks-deployment",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-mlflow-03-eks-deployment-0.DY1JDtAn.png",
+          "status": 200,
+          "sha256": "bf5e0d454d9668b0e2ff583ddb06364cb68a97e2997ff24cde63793780a0ec35",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/mlflow/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/mlflow/",
+      "status": 200,
+      "baselineVisible": "3.16.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-mlflow-readme-0.DHWwalGW.png",
+          "status": 200,
+          "sha256": "60fd4cbd437b60a2de4efaab8476bf6f5a79e7911e549a9274e54da259f0a6fc",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/ray/01-architecture.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/ray/01-architecture",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-ray-01-architecture-0.cE8ypjrd.png",
+          "status": 200,
+          "sha256": "bfd7220b407ff63d5f0f0e0b70a2772add7e227437e7860edaa7eb881c7c28d2",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/ray/02-kuberay-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/ray/02-kuberay-operator",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-ray-02-kuberay-operator-0.D5wns35t.png",
+          "status": 200,
+          "sha256": "6edc4e38cc971a195aeaf323feaa51c853fee9c62cac6d4da06e00700d30c2f8",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/ray/03-ray-train-tune.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/ray/03-ray-train-tune",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-ray-03-ray-train-tune-0.YwRCWTFW.png",
+          "status": 200,
+          "sha256": "3451aa3154876d758dbeff6fb46c32b5e21da23e4a9e5d2111449dc7d6bc9e49",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/ray/04-ray-serve.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/ray/04-ray-serve",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-ray-04-ray-serve-0.kGvz-7XR.png",
+          "status": 200,
+          "sha256": "a1286fb60587e579a3258f7445aeda0a3507c21a9062f254210f6117bd6ec357",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/ray/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/ray/",
+      "status": 200,
+      "baselineVisible": "2.58.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-ray-readme-0.NDIDLEUq.png",
+          "status": 200,
+          "sha256": "f3fba21c45a26e2fab710a91febea4d42ab9a2d5fbeda481ffb4aa2217ee71db",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "scope": "HTTP fetch only. No browser JavaScript or synthetic GA4 events. Published hashed img URLs verified against reviewed PNGs."
+}
