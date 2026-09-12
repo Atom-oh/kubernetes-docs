@@ -50,8 +50,9 @@ It did not load model weights, run GPU training, or call AWS services.
 
 Build the bundle locally with `./launch/aws/build_source_bundle.sh`. With a
 private inventory, `python3 -m launch.sagemaker_train --mode smoke --inventory
-results/resource-inventory.json` writes a request preview only. Actual
-submission requires `--execute` and a supported runtime.
+results/resource-inventory.json` writes a unique preview under `results/previews/`.
+It never replaces request/journal evidence for a submitted job. Actual submission
+requires `--execute` and a supported runtime.
 
 Provisioning requires explicit administrator-verified `EXPECTED_ACCOUNT_ID`, `DATAZONE_DOMAIN_ID`,
 `DATAZONE_PROJECT_PROFILE_ID`, and `DATAZONE_OWNER_GROUP_ID`. Create the
@@ -64,6 +65,10 @@ Cleanup is not guaranteed by shell traps; query errors remain unknown and
 old inventories without ownership evidence require manual reconciliation.
 EKS exports aggregate artifacts and final adapters before cluster deletion.
 An export failure can retain the cluster for recovery, with continuing charges.
+EKS input downloads use ServiceAccount-scoped AWS permissions and verify the
+five uploaded inputs against their manifest hashes and expected bucket account.
+Export metadata must match the inventory's experiment, cluster, and execution
+identifiers before it can authorize cleanup.
 Shared teardown refuses remaining EKS resources. After preserving SageMaker
 results, use `./launch/aws/teardown.sh results/resource-inventory.json
 --discard-training-artifacts` to acknowledge removal of the experiment bucket.

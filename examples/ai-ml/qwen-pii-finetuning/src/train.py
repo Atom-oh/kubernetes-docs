@@ -172,6 +172,12 @@ def _safe_log_params(mlflow, resolved: dict, versions: dict[str, str]) -> None:
         "dataset_test_count": resolved["dataset"]["test"],
     }
     params.update({f"version_{key}": value for key, value in versions.items()})
+    if resolved["run_environment"] == "eks":
+        for key in ("experiment_id", "cluster_name", "execution_id"):
+            value = os.environ.get(f"QWEN_{key.upper()}")
+            if not value:
+                raise ValueError(f"Missing EKS execution provenance: {key}")
+            params[key] = value
     mlflow.log_params(params)
 
 

@@ -14,12 +14,19 @@ EKS = Path(__file__).resolve().parents[1] / "launch/eks"
 sys.path.insert(0, str(EKS))
 from verify_export import ARTIFACTS, verify_archive
 
+PROVENANCE = {
+    "experiment_id": "qwen-pii-fixture",
+    "cluster_name": "qwen-pii-fixture-smoke-eks",
+    "execution_id": "00000000-0000-4000-8000-000000000001",
+}
 
-def archive(tmp_path, corrupt=False, extra=False):
+
+def archive(tmp_path, corrupt=False, extra=False, provenance=None):
     data = {name: b'{"synthetic":"fixture"}' for name in ARTIFACTS}
     manifest = {
         "run_id": "a" * 32, "run_name": "eks-smoke", "status": "FINISHED",
         "params": {"run_environment": "eks"},
+        "provenance": PROVENANCE if provenance is None else provenance,
         "artifacts": [{"path": name, "bytes": len(value),
                        "sha256": hashlib.sha256(value).hexdigest()} for name, value in data.items()],
     }
@@ -38,7 +45,7 @@ def archive(tmp_path, corrupt=False, extra=False):
 
 
 def test_archive_all_required_artifacts_round_trip(tmp_path):
-    receipt = verify_archive(archive(tmp_path), "smoke")
+    receipt = verify_archive(archive(tmp_path), "smoke", PROVENANCE)
     assert receipt["verified"] and len(receipt["sha256"]) == 64
 
 
@@ -46,15 +53,20 @@ def test_archive_all_required_artifacts_round_trip(tmp_path):
 def test_export_verifier_in_fresh_python_process(tmp_path, entrypoint):
     import subprocess
     path = archive(tmp_path)
+    expected = tmp_path / "expected.json"
+    expected.write_text(json.dumps(PROVENANCE))
     if entrypoint == "module":
-        command = [sys.executable, "-m", "launch.eks.verify_export", str(path), "--mode", "smoke"]
+        command = [sys.executable, "-m", "launch.eks.verify_export", str(path), "--mode", "smoke",
+                   "--expected-provenance", str(expected)]
     elif entrypoint == "script":
-        command = [sys.executable, str(EKS / "verify_export.py"), str(path), "--mode", "smoke"]
+        command = [sys.executable, str(EKS / "verify_export.py"), str(path), "--mode", "smoke",
+                   "--expected-provenance", str(expected)]
     else:
         command = [sys.executable, "-c",
                    "from launch.eks.verify_export import verify_archive; "
-                   "import json,sys; print(json.dumps(verify_archive(sys.argv[1], 'smoke')))",
-                   str(path)]
+                   "import json,sys; print(json.dumps(verify_archive(sys.argv[1], 'smoke', "
+                   "json.load(open(sys.argv[2])))))",
+                   str(path), str(expected)]
     result = subprocess.run(command, cwd=EKS.parents[1], capture_output=True,
                             text=True, timeout=10)
     assert result.returncode == 0, result.stderr
@@ -64,12 +76,12 @@ def test_export_verifier_in_fresh_python_process(tmp_path, entrypoint):
 @pytest.mark.parametrize("kwargs", [{"corrupt": True}, {"extra": True}])
 def test_archive_rejects_bad_content(tmp_path, kwargs):
     with pytest.raises(ValueError):
-        verify_archive(archive(tmp_path, **kwargs), "smoke")
+        verify_archive(archive(tmp_path, **kwargs), "smoke", PROVENANCE)
 
 
 def test_archive_rejects_other_mode(tmp_path):
     with pytest.raises(ValueError):
-        verify_archive(archive(tmp_path), "full")
+        verify_archive(archive(tmp_path), "full", PROVENANCE)
 
 
 def test_preexisting_cluster_blocks_plan(tmp_path):
@@ -87,21 +99,30 @@ def test_unknown_cluster_read_blocks_plan(tmp_path):
 
 
 def test_partial_create_intent_is_persistent(tmp_path):
-    lc = lifecycle(tmp_path, eks=Client(describe_cluster=error("ResourceNotFoundException")))
+    lc = lifecycle(tmp_path, eks=Client(describe_cluster=error("ResourceNotFoundException")),
+                   iam=Client(get_role=error("NoSuchEntity")))
     lc.stack = lambda name: None
     name = "qwen-pii-fixture-smoke-eks"
     lc.eks_plan(name, tmp_path / "kubeconfig")
     saved = json.loads(lc.path.read_text())["resources"]["eks:" + name]
     assert saved["state"] == "creating" and saved["created"] is False
-    assert len(saved["stack_names"]) == 2
+    assert len(saved["stack_names"]) == 3
+    assert saved["expected_export"]["experiment_id"] == lc.data["experiment_id"]
+    assert saved["expected_export"]["cluster_name"] == name
+    import uuid
+    assert uuid.UUID(saved["expected_export"]["execution_id"]).version == 4
+    assert saved["workload_identity"]["role_name"].startswith("qwen-input-")
     with pytest.raises(RecoveryRequired):
         lc.teardown()
 
 
 def test_bad_export_cannot_reach_cloud_delete(tmp_path):
     lc = lifecycle(tmp_path)
+    lc.data["resources"]["eks:" + PROVENANCE["cluster_name"]] = {
+        "created": True, "state": "owned", "expected_export": PROVENANCE,
+    }
     with pytest.raises(ValueError):
-        lc.eks_delete("not-even-recorded", archive(tmp_path, corrupt=True), "smoke")
+        lc.eks_delete(PROVENANCE["cluster_name"], archive(tmp_path, corrupt=True), "smoke")
     assert lc.clients["sts"].calls == []
 
 
@@ -111,6 +132,7 @@ def test_eks_delete_failure_is_nonzero_and_preserves_owned_state(tmp_path, monke
     name = "qwen-pii-fixture-smoke-eks"
     lc.data["resources"]["eks:" + name] = {
         "created": True, "state": "owned", "kubeconfig": str(tmp_path / "kubeconfig"),
+        "expected_export": PROVENANCE,
     }
     lc.probe = lambda _: True
     def fail(*args, **kwargs):
@@ -146,3 +168,57 @@ def test_provision_finalizer_handles_explicit_exit_and_signals(action, code):
     assert result.returncode == code
     assert "CLEANUP_CALLED" in result.stdout
     assert "Cleanup incomplete" in result.stderr
+
+
+@pytest.mark.parametrize("field", ["experiment_id", "cluster_name", "execution_id"])
+def test_unrelated_same_mode_archive_never_calls_delete(tmp_path, monkeypatch, field):
+    import subprocess
+    lc = lifecycle(tmp_path)
+    name = PROVENANCE["cluster_name"]
+    lc.data["resources"]["eks:" + name] = {
+        "created": True, "state": "owned", "expected_export": dict(PROVENANCE),
+        "kubeconfig": str(tmp_path / "kubeconfig"),
+    }
+    lc.probe = lambda _: True
+    calls = []
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: calls.append(args))
+    other = dict(PROVENANCE)
+    other[field] = ("00000000-0000-4000-8000-000000000002"
+                    if field == "execution_id" else "other-experiment")
+    with pytest.raises(ValueError, match="provenance"):
+        lc.eks_delete(name, archive(tmp_path, provenance=other), "smoke")
+    assert calls == []
+    assert lc.clients["sts"].calls == []
+    assert lc.data["resources"]["eks:" + name]["state"] == "owned"
+
+
+def test_legacy_owned_record_without_provenance_refuses_delete(tmp_path, monkeypatch):
+    import subprocess
+    lc = lifecycle(tmp_path)
+    name = PROVENANCE["cluster_name"]
+    lc.data["resources"]["eks:" + name] = {"created": True, "state": "owned"}
+    calls = []
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: calls.append(a))
+    with pytest.raises(RecoveryRequired, match="provenance"):
+        lc.eks_delete(name, archive(tmp_path), "smoke")
+    assert calls == []
+
+
+def test_matching_export_allows_only_recorded_cluster_deletion(tmp_path, monkeypatch):
+    import subprocess
+    lc = lifecycle(tmp_path)
+    name = PROVENANCE["cluster_name"]
+    lc.data["resources"]["eks:" + name] = {
+        "created": True, "state": "owned", "expected_export": dict(PROVENANCE),
+        "kubeconfig": str(tmp_path / "kubeconfig"),
+    }
+    states = iter([True, False])
+    lc.probe = lambda _: next(states)
+    calls = []
+    def delete(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0)
+    monkeypatch.setattr(subprocess, "run", delete)
+    lc.eks_delete(name, archive(tmp_path), "smoke")
+    assert len(calls) == 1 and calls[0][calls[0].index("--name") + 1] == name
+    assert lc.data["resources"]["eks:" + name]["state"] == "deleted"

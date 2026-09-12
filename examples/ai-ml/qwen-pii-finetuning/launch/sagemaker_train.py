@@ -1,12 +1,15 @@
 """Submit and monitor the SageMaker AI Qwen PII training job."""
 
 import argparse
+from contextlib import contextmanager
+import fcntl
 import hashlib
 import json
 import os
 import re
 import signal
 import sys
+import uuid
 from datetime import date, datetime
 from pathlib import Path
 
@@ -157,18 +160,36 @@ def _sanitized_description(description: dict) -> dict:
 
 def _write_journal(path: Path, value: dict, *, create: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    target = path if create else path.with_suffix(".tmp")
-    flags = os.O_WRONLY | os.O_CREAT | (os.O_EXCL if create else os.O_TRUNC)
+    target = path if create else path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     with os.fdopen(os.open(target, flags, 0o600), "w", encoding="utf-8") as stream:
         stream.write(json.dumps(value, indent=2, sort_keys=True) + "\n")
         stream.flush()
         os.fsync(stream.fileno())
     if not create:
         target.replace(path)
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+@contextmanager
+def _submission_lock(journal_path: Path, inventory_path: Path | None):
+    lock_path = (
+        Path(str(inventory_path) + ".lock")
+        if inventory_path else journal_path.with_suffix(".lock")
+    )
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with os.fdopen(os.open(lock_path, os.O_WRONLY | os.O_CREAT, 0o600), "w") as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
 
 
 def submit_and_wait(
-    request: dict, region: str, *, journal_path: Path, client=None
+    request: dict, region: str, *, journal_path: Path,
+    inventory_path: Path | None = None, client=None
 ) -> dict:
     """Record intent before submission; stop confirmed new jobs on monitor failure.
 
@@ -194,18 +215,25 @@ def submit_and_wait(
         "region": region,
         "state": "submitting",
     }
-    _write_journal(journal_path, journal, create=True)
-    try:
-        client.create_training_job(**request)
-    except BaseException:
-        # A lost response may hide successful creation; do not stop a name
-        # that could refer to someone else's preexisting job.
-        journal["state"] = "submission_unknown"
-        _write_journal(journal_path, journal)
-        raise
-    try:
+    request_path = journal_path.parent / f"{request['TrainingJobName']}-request.json"
+    # Share the lifecycle lock through acceptance so cleanup cannot run in
+    # the gap between request reservation and a confirmed submission record.
+    with _submission_lock(journal_path, inventory_path):
+        if journal_path.exists() or request_path.exists():
+            raise FileExistsError("Submission evidence already exists; reconcile before retrying")
+        _write_journal(request_path, request, create=True)
+        _write_journal(journal_path, journal, create=True)
+        try:
+            client.create_training_job(**request)
+        except BaseException:
+            # A lost response may hide successful creation; do not stop a
+            # name that could refer to a preexisting job.
+            journal["state"] = "submission_unknown"
+            _write_journal(journal_path, journal)
+            raise
         journal["state"] = "submitted"
         _write_journal(journal_path, journal)
+    try:
         waiter = client.get_waiter("training_job_completed_or_stopped")
         try:
             waiter.wait(
@@ -267,10 +295,13 @@ def main() -> int:
     request = build_training_job_request(
         config, inventory, args.mode, source_s3_uri
     )
-    request_path = args.inventory.parent / f"{request['TrainingJobName']}-request.json"
-    _write_journal(request_path, request)
     if not args.execute:
-        print(f"Request written to {request_path}; no job submitted.")
+        preview_path = (
+            args.inventory.parent / "previews"
+            / f"{request['TrainingJobName']}-{uuid.uuid4().hex}.json"
+        )
+        _write_journal(preview_path, request, create=True)
+        print(f"Preview written to {preview_path}; no job submitted.")
         return 0
     # Python's default SIGTERM exits without running the monitoring handler.
     def interrupted(_signum, _frame):
@@ -280,6 +311,7 @@ def main() -> int:
     description = submit_and_wait(
         request, inventory["region"],
         journal_path=args.inventory.parent / f"{request['TrainingJobName']}-job.json",
+        inventory_path=args.inventory,
     )
     result_path = (
         Path(__file__).resolve().parents[1]

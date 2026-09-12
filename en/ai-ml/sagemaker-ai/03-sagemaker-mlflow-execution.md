@@ -14,6 +14,8 @@ AWS recommends **MLflow Apps** for new SageMaker managed MLflow deployments. Exi
 
 ### 1. Read-Only Preflight
 
+Run these commands with the **Python 3.12 virtual environment activated** and the package README's dependencies installed.
+
 ```bash
 cd examples/ai-ml/qwen-pii-finetuning
 export AWS_REGION=ap-northeast-2
@@ -67,11 +69,11 @@ python3 -m launch.sagemaker_train \
   --mode smoke --inventory results/resource-inventory.json
 ```
 
-By default this writes `<job-name>-request.json` without submitting to AWS. After validating a supported runtime, add `--execute` to submit. Full execution separately requires `--mode full --execute`. The launcher does not automatically approve smoke evidence or input hashes.
+By default this writes a uniquely named JSON file under `results/previews/` without submitting to AWS. It does not overwrite the submitted `<job-name>-request.json` or `<job-name>-job.json`. After validating a supported runtime, add `--execute` to submit. Full execution separately requires `--mode full --execute`. The launcher does not automatically approve smoke evidence or input hashes.
 
 The config is read from `/opt/ml/code/config/experiment.yaml` in the source bundle. The four data files live in `/opt/ml/input/data/dataset/`. Build the local `--config` and bundle from the same source so they agree.
 
-Before submission, the launcher writes `<job-name>-job.json`. For a job whose creation succeeded, monitor failure or interruption triggers a stop request attempt. `stop_requested` does not mean termination is confirmed. Reconcile AWS state and ownership after `submission_unknown`, `stop_unconfirmed`, or host loss; do not overwrite an existing journal to resubmit.
+Before submission, the launcher reserves both request and job journal under the cleanup tool's shared lock. For a job whose creation succeeded, monitor failure or interruption triggers a stop request attempt. `stop_requested` does not mean termination is confirmed. Reconcile AWS state and ownership after `submission_unknown`, `stop_unconfirmed`, or host loss; do not overwrite an existing journal or orphan request to resubmit.
 
 The historical config specifies one `ml.g6e.4xlarge`, 300 GiB, smoke 10/full 80 steps, and `MaxRuntimeInSeconds: 10800`. That limit does not cap total cost including termination, uploads, MLflow, S3, and other resources.
 
@@ -122,10 +124,12 @@ After the runtime upgrade, entry points are `./launch/eks/run.sh smoke` and, aft
 | GPU plugin | `0.20.0` pin; validate with the new DLC, AMI, and driver |
 | kubeconfig | per-run file and explicit context; reject preexisting cluster collisions |
 | MLflow | ClusterIP, SQLite, `emptyDir`; no application authentication, durable storage, or tenant isolation |
-| Data | presigned URLs request four hours; earlier STS credential expiry shortens validity |
+| Data | S3 SDK with ServiceAccount-scoped AWS permissions; verify manifest SHA-256 and bucket account |
 | Job | `backoffLimit: 0`, `activeDeadlineSeconds: 10800`; not guaranteed reclamation of all resources within three hours during failures |
-| Export | archive eight artifacts and SHA-256 values from exactly one completed run for the selected mode |
+| Export | verify eight artifacts and SHA-256 from a completed run matching the experiment, cluster, and execution IDs |
 | Shutdown | clean up the owned cluster after export/hash verification; an export failure can retain it for recovery |
+
+The input loader reads code and upload hashes from a ConfigMap, then uses EKS Pod Identity to download only five S3 objects. The ServiceAccount is `qwen-input-reader`; the Pod Identity Agent, supported SDK, and association are required. EC2 instance metadata credential fallback is disabled. This does not remove the expired-DLC execution gate.
 
 Training and MLflow Pod `emptyDir` data disappears with Pod or cluster deletion. The per-run `results/eks-<mode>.<suffix>/mlflow-export-<mode>.tar.gz` and export receipt are local files, not an off-host backup. Copy them to separate approved storage and verify cleanup.
 
@@ -153,6 +157,7 @@ SageMaker reduces Training Job and MLflow operational work, while artifact reten
 - [MLflow App setup](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow-app-setup.html)
 - [SageMaker MLflow versions](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow.html)
 - [S3 presigned URL expiration](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html)
+- [EKS Pod Identity behavior and restrictions](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
 - [Kubernetes Job failure and termination](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
 
 Previous: [Part 2 — Synthetic PII data and tokenization](02-pii-data-tokenization.md)

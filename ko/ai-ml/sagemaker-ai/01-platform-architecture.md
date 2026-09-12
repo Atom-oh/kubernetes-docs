@@ -31,13 +31,14 @@ Resource ID/ARN은 private inventory에서 필요할 수 있으며 공개 보고
 | --- | --- | --- |
 | 실행 | 관리형 Training Job | 이 실험을 위해 준비한 GPU Job/cluster |
 | 추적 | SageMaker MLflow App | ClusterIP MLflow |
-| 데이터 | S3 input channel | 예제 launcher의 만료되는 presigned URL |
+| 데이터 | S3 input channel | ServiceAccount 범위의 AWS 권한으로 S3 SDK 다운로드 |
 | 수명 | Job 종료와 외부 App/bucket 등의 정리를 구분 | 결과 export 후 소유한 임시 자원 정리 |
 
 Training Job이나 namespace/Job이라는 단위만으로 강한 격리가 자동 완성되지는 않습니다.
 실제 IAM/SA, network, storage, endpoint·MLflow 접근과 container 설정을 검증합니다.
-EKS에서도 IRSA/Pod Identity 같은 전달 방식을 설계할 수 있으며 presigned URL은 이
-예제의 선택입니다. 만료·재시도·log/manifest 노출을 고려합니다.
+EKS 경로는 ServiceAccount에 연결한 workload identity와 SDK credential chain을
+사용합니다. Pod 환경 변수에 presigned URL을 넣지 않으며 입력 manifest의
+SHA-256과 버킷 소유 계정도 확인합니다.
 
 비교에는 config·split hash·학습/평가 코드·step 수뿐 아니라 model/tokenizer revision,
 image digest, 실제 transitive dependency, CUDA/driver·hardware와 decoding 설정도 필요합니다.

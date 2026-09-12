@@ -31,13 +31,14 @@ Resource IDs/ARNs can be necessary in private inventory, distinct from public re
 | --- | --- | --- |
 | Execution | Managed Training Job | GPU Job/cluster prepared for this experiment |
 | Tracking | SageMaker MLflow App | ClusterIP MLflow |
-| Data | S3 input channel | Expiring presigned URLs used by the example launcher |
+| Data | S3 input channel | S3 SDK downloads with ServiceAccount-scoped AWS permissions |
 | Lifecycle | Distinguish job termination from cleanup of external Apps/buckets | Export results, then reclaim owned temporary resources |
 
 A Training Job or namespace/Job boundary does not automatically complete security
 isolation. Verify actual IAM/service accounts, networking, storage, endpoint/MLflow
-access and container configuration. EKS can also use IRSA/Pod Identity; presigned
-URLs are this example's choice and require expiry/retry/exposure handling.
+access and container configuration. The EKS path uses workload identity through
+its ServiceAccount and the SDK credential chain. It does not put presigned bearer
+URLs in Pod environment values; it verifies input-manifest SHA-256 and bucket ownership.
 
 Comparison requires configuration, split hashes, training/evaluation code and
 step counts, plus model/tokenizer revisions, image digests, transitive dependencies,

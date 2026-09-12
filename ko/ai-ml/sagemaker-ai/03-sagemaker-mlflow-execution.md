@@ -14,6 +14,8 @@
 
 ### 1. Read-only preflight
 
+명령은 패키지 README의 의존성을 설치한 **Python 3.12 가상환경을 활성화한 상태**에서 실행합니다.
+
 ```bash
 cd examples/ai-ml/qwen-pii-finetuning
 export AWS_REGION=ap-northeast-2
@@ -67,11 +69,11 @@ python3 -m launch.sagemaker_train \
   --mode smoke --inventory results/resource-inventory.json
 ```
 
-기본 동작은 `<job-name>-request.json` 작성이며 AWS 제출은 하지 않습니다. 지원되는 런타임 검증 후 `--execute`를 붙여야 실제 제출합니다. full은 별도로 `--mode full --execute`를 지정합니다. 성공한 smoke나 입력 해시 확인을 launcher가 자동 승인하는 것은 아닙니다.
+기본 동작은 `results/previews/` 아래 고유한 미리보기 JSON을 작성하며 AWS 제출은 하지 않습니다. 실제 제출 기록인 `<job-name>-request.json`과 `<job-name>-job.json`은 덮어쓰지 않습니다. 지원되는 런타임 검증 후 `--execute`를 붙여야 실제 제출합니다. full은 별도로 `--mode full --execute`를 지정합니다. 성공한 smoke나 입력 해시 확인을 launcher가 자동 승인하는 것은 아닙니다.
 
 설정 파일은 소스 번들의 `/opt/ml/code/config/experiment.yaml`에서 읽습니다. 데이터 channel의 `/opt/ml/input/data/dataset/`에는 네 데이터 파일이 있습니다. 로컬 `--config`와 번들 설정이 일치하도록 같은 소스에서 생성해야 합니다.
 
-제출 전에 `<job-name>-job.json`을 기록합니다. 생성 성공을 확인한 작업은 모니터링 오류·인터럽트 시 중지 요청을 시도합니다. `stop_requested`는 종료 확인이 아닙니다. `submission_unknown`·`stop_unconfirmed` 또는 호스트 강제 종료 뒤에는 AWS 상태·소유권을 대조해야 하며, 기존 journal을 덮어써 재제출하지 않습니다.
+제출 전에 request와 job journal을 함께 예약하고 정리 도구와 공유하는 잠금을 사용합니다. 생성 성공을 확인한 작업은 모니터링 오류·인터럽트 시 중지 요청을 시도합니다. `stop_requested`는 종료 확인이 아닙니다. `submission_unknown`·`stop_unconfirmed` 또는 호스트 강제 종료 뒤에는 AWS 상태·소유권을 대조해야 하며, 기존 journal이나 고립된 request를 덮어써 재제출하지 않습니다.
 
 현재 설정은 `ml.g6e.4xlarge` 한 대, 300 GiB, smoke 10/full 80 step, `MaxRuntimeInSeconds: 10800`입니다. runtime 제한은 종료·업로드 시간, MLflow·S3 등 다른 자원 비용까지 포함한 전체 비용 상한이 아닙니다.
 
@@ -122,10 +124,12 @@ SageMaker의 `/opt/ml/model` 출력과 MLflow artifact는 보존 위치가 다�
 | GPU plugin | `0.20.0` pin; 새 DLC·AMI·driver와 함께 검증 |
 | kubeconfig | 실행별 파일과 명시적 context, 기존 클러스터 충돌 거부 |
 | MLflow | ClusterIP·SQLite·`emptyDir`; 인증·영속성·멀티테넌트 격리가 제공되는 구성은 아님 |
-| 데이터 | 요청 만료 4시간인 presigned URL; STS credential이 먼저 만료되면 더 일찍 실패 |
+| 데이터 | ServiceAccount의 AWS 권한과 SDK로 읽고 manifest SHA-256·버킷 계정을 검증 |
 | Job | `backoffLimit: 0`, `activeDeadlineSeconds: 10800`; 장애 시 정확히 3시간 내 모든 자원 회수 보장 아님 |
-| export | 완료한 해당 mode run 하나의 8개 artifact와 SHA-256을 archive로 내려받음 |
+| export | 실험·클러스터·실행 ID가 일치하는 완료 run의 8개 artifact와 SHA-256을 검증 |
 | 종료 | export와 해시 검증 성공 후 소유 클러스터 정리; export 실패 시 복구를 위해 남길 수 있음 |
+
+입력 로더는 ConfigMap에 있는 코드와 업로드 hash manifest를 읽고, EKS Pod Identity로 다섯 S3 객체만 다운로드합니다. ServiceAccount는 `qwen-input-reader`이며 Pod Identity Agent·지원 SDK·연결 설정이 필요합니다. EC2 instance metadata credential fallback은 끕니다. 이것은 현재 지원 종료 DLC의 실행 차단을 해제하는 절차가 아닙니다.
 
 학습 Pod와 MLflow Pod의 `emptyDir`는 Pod/클러스터 삭제 시 사라집니다. 실행별 `results/eks-<mode>.<suffix>/mlflow-export-<mode>.tar.gz`와 export receipt를 호스트에 받는 것만으로 원격 백업이 되지는 않습니다. 별도 보관 위치에 복사하고 정리 결과를 확인해야 합니다.
 
@@ -153,6 +157,7 @@ SageMaker는 Training Job과 MLflow 관리 부담을 줄여 주지만 artifact �
 - [MLflow App 설정](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow-app-setup.html)
 - [SageMaker MLflow 버전](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow.html)
 - [S3 presigned URL 만료](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html)
+- [EKS Pod Identity의 동작과 제약](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
 - [Kubernetes Job의 실패·종료](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
 
 이전: [Part 2 — 합성 PII 데이터와 토큰화](02-pii-data-tokenization.md)

@@ -13,11 +13,12 @@ def load_documents(name: str) -> list[dict]:
         "${EXPERIMENT_ID}": "qwen-pii-unit-test",
         "${MODE}": "smoke",
         "${STEPS}": "10",
-        "${SOURCE_URL}": "https://example.com/source",
-        "${TRAIN_URL}": "https://example.com/train",
-        "${VALIDATION_URL}": "https://example.com/validation",
-        "${TEST_URL}": "https://example.com/test",
-        "${MANIFEST_URL}": "https://example.com/manifest",
+        "${BASE_EXPERIMENT_ID}": "qwen-pii-unit-test",
+        "${BUCKET_NAME}": "qwen-fixture",
+        "${ACCOUNT_ID}": "111122223333",
+        "${OWNERSHIP_TOKEN}": "fixture-token",
+        "${INPUT_ROLE_NAME}": "qwen-input-fixture",
+        "${EXECUTION_ID}": "00000000-0000-4000-8000-000000000001",
     }
     for old, new in replacements.items():
         text = text.replace(old, new)
@@ -66,4 +67,4 @@ def test_training_job_requests_one_gpu_and_disables_automatic_retries():
     assert container["image"].endswith(
         "pytorch-training:2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker"
     )
-    assert container["env"][0]["name"] == "SOURCE_URL"
+    assert container["env"][0]["name"] == "QWEN_INPUT_BUCKET"

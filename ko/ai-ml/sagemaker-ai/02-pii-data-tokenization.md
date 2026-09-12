@@ -27,7 +27,18 @@ Parser는 허용 유형과 source 일치를 검사합니다. 이 검사는 값�
 | validation | 200 | 160 | 40 | `25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820` |
 | test | 400 | 320 | 80 | `6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21` |
 
-유형은 PERSON, RRN, DOB, REL, ADDRESS, PHONE, EMAIL, ACCOUNT, CARD입니다.
+| Label | 이 실험에서의 의미 |
+| --- | --- |
+| PERSON | 사람 이름 |
+| RRN | 주민등록번호 형태의 식별자 |
+| DOB | 생년월일 |
+| REL | 가족·관계 표현 |
+| ADDRESS | 주소 |
+| PHONE | 전화번호 |
+| EMAIL | 이메일 주소 |
+| ACCOUNT | 계좌번호 |
+| CARD | 결제 카드 번호 |
+
 이는 이 실험의 annotation 정책입니다. 관계 단어는 positive에 포함되고 회사
 대표번호 등 일부 문자열은 negative 문서에 포함됩니다.
 모든 업무에 통용되는 민감도 분류라고 해석하지 않습니다.

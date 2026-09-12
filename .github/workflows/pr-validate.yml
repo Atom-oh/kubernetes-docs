@@ -12,6 +12,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'examples/ai-ml/qwen-pii-finetuning/**'
+      - 'examples/eks/spot-production/**'
       - '.vitepress/**'
       - '.github/workflows/pr-validate.yml'
       - '.github/workflows/deploy.yml'
@@ -47,6 +48,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run docs:validate
+      - name: Validate Spot experiment measurement tools
+        run: python3 -B -m unittest discover -s examples/eks/spot-production -p 'test_*.py'
 
   build:
     needs: validate

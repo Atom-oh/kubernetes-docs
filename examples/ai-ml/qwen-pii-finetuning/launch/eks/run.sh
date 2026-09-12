@@ -53,15 +53,21 @@ trap finalize EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-# Check staged input existence before allocating GPU resources. The parent upload
-# command validates content hashes; presigning alone does not establish existence.
+# Validate the private hash receipt and bootstrap code before allocating resources.
+test -f "$SCRIPT_DIR/download_inputs.py"
+"$PYTHON" "$HELPER" input-manifest "$INVENTORY" --output "$RENDER_DIR/input-manifest.json"
 for key in source/source.tar.gz dataset/train.jsonl dataset/validation.jsonl dataset/test.jsonl dataset/dataset-manifest.json; do
   aws s3api head-object --region "$REGION" --bucket "$BUCKET_NAME" \
     --expected-bucket-owner "$ACCOUNT_ID" --key "qwen-pii/${BASE_EXPERIMENT_ID}/${key}" >/dev/null
 done
-export EXPERIMENT_ID BASE_EXPERIMENT_ID OWNERSHIP_TOKEN MODE STEPS
+export EXPERIMENT_ID BASE_EXPERIMENT_ID OWNERSHIP_TOKEN MODE STEPS BUCKET_NAME ACCOUNT_ID
 "$PYTHON" "$HELPER" eks-plan "$INVENTORY" "$EXPERIMENT_ID" --kubeconfig "$KUBECONFIG"
-envsubst '${EXPERIMENT_ID} ${BASE_EXPERIMENT_ID} ${OWNERSHIP_TOKEN}' \
+jq -e --arg key "eks:$EXPERIMENT_ID" '.resources[$key].expected_export' \
+  "$INVENTORY" > "$RENDER_DIR/expected-export.json"
+EXECUTION_ID=$(jq -er '.execution_id' "$RENDER_DIR/expected-export.json")
+INPUT_ROLE_NAME=$(jq -er --arg key "eks:$EXPERIMENT_ID" '.resources[$key].workload_identity.role_name' "$INVENTORY")
+export EXECUTION_ID INPUT_ROLE_NAME
+envsubst '${EXPERIMENT_ID} ${BASE_EXPERIMENT_ID} ${OWNERSHIP_TOKEN} ${BUCKET_NAME} ${ACCOUNT_ID} ${INPUT_ROLE_NAME}' \
   < "$SCRIPT_DIR/cluster.yaml" > "$RENDER_DIR/cluster.yaml"
 # Failure never grants cleanup ownership. The creating journal survives host loss.
 eksctl create cluster -f "$RENDER_DIR/cluster.yaml" \
@@ -71,6 +77,11 @@ aws eks update-kubeconfig --name "$EXPERIMENT_ID" --region "$REGION" \
   --kubeconfig "$KUBECONFIG" --alias "$EXPERIMENT_ID" >/dev/null
 
 kubectl apply -f "$SCRIPT_DIR/namespace.yaml"
+kubectl rollout status daemonset/eks-pod-identity-agent --namespace kube-system --timeout=5m
+kubectl create configmap qwen-pii-input-loader --namespace qwen-pii \
+  --from-file=download_inputs.py="$SCRIPT_DIR/download_inputs.py" \
+  --from-file=input-manifest.json="$RENDER_DIR/input-manifest.json" \
+  --dry-run=client -o yaml | kubectl apply -f -
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin --force-update >/dev/null
 helm repo update nvdp >/dev/null
 helm upgrade --install nvidia-device-plugin nvdp/nvidia-device-plugin \
@@ -119,15 +130,8 @@ kubectl rollout status deployment/mlflow \
   --namespace qwen-pii \
   --timeout=10m
 
-OBJECT_ROOT="s3://${BUCKET_NAME}/qwen-pii/${BASE_EXPERIMENT_ID}"
-SOURCE_URL=$(aws s3 presign "${OBJECT_ROOT}/source/source.tar.gz" --expires-in 14400)
-TRAIN_URL=$(aws s3 presign "${OBJECT_ROOT}/dataset/train.jsonl" --expires-in 14400)
-VALIDATION_URL=$(aws s3 presign "${OBJECT_ROOT}/dataset/validation.jsonl" --expires-in 14400)
-TEST_URL=$(aws s3 presign "${OBJECT_ROOT}/dataset/test.jsonl" --expires-in 14400)
-MANIFEST_URL=$(aws s3 presign "${OBJECT_ROOT}/dataset/dataset-manifest.json" --expires-in 14400)
-export SOURCE_URL TRAIN_URL VALIDATION_URL TEST_URL MANIFEST_URL
-
-envsubst < "$SCRIPT_DIR/training-job.yaml" > "$RENDER_DIR/training-job.yaml"
+envsubst '${MODE} ${STEPS} ${EXPERIMENT_ID} ${BASE_EXPERIMENT_ID} ${BUCKET_NAME} ${ACCOUNT_ID} ${EXECUTION_ID}' \
+  < "$SCRIPT_DIR/training-job.yaml" > "$RENDER_DIR/training-job.yaml"
 kubectl apply -f "$RENDER_DIR/training-job.yaml"
 if ! kubectl wait \
   --namespace qwen-pii \
@@ -146,10 +150,13 @@ kubectl cp \
   "$SCRIPT_DIR/export_mlflow.py" \
   "qwen-pii/${MLFLOW_POD}:/tmp/export_mlflow.py"
 kubectl exec --namespace qwen-pii "$MLFLOW_POD" -- \
-  python /tmp/export_mlflow.py --mode "$MODE"
+  python /tmp/export_mlflow.py --mode "$MODE" \
+    --experiment-id "$BASE_EXPERIMENT_ID" --cluster-name "$EXPERIMENT_ID" \
+    --execution-id "$EXECUTION_ID"
 ARCHIVE="$RENDER_DIR/mlflow-export-${MODE}.tar.gz"
 kubectl cp "qwen-pii/${MLFLOW_POD}:/tmp/mlflow-export-${MODE}.tar.gz" "$ARCHIVE"
-"$PYTHON" "$SCRIPT_DIR/verify_export.py" "$ARCHIVE" --mode "$MODE" > "$RENDER_DIR/export-receipt.json"
+"$PYTHON" "$SCRIPT_DIR/verify_export.py" "$ARCHIVE" --mode "$MODE" \
+  --expected-provenance "$RENDER_DIR/expected-export.json" > "$RENDER_DIR/export-receipt.json"
 # Rechecks local hashes and owned cluster/stack identities; failures stay nonzero.
 "$PYTHON" "$HELPER" eks-delete "$INVENTORY" "$EXPERIMENT_ID" --archive "$ARCHIVE" --mode "$MODE"
 CLUSTER_DELETED=1

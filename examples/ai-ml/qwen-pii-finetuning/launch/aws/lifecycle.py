@@ -251,7 +251,8 @@ class Lifecycle:
                     rows = self.stack_resources(stack["StackId"])
                     require(all(row["ResourceStatus"] == "DELETE_COMPLETE" for row in rows),
                             "Deleted EKS stack has retained/unconfirmed resources; manual recovery required")
-            return cluster is not None or stacks_present
+            workload_present = self.probe_workload_identity(resource)
+            return cluster is not None or stacks_present or workload_present
         else:
             raise RecoveryRequired("Unknown resource kind")
         return True
@@ -422,6 +423,47 @@ class Lifecycle:
             "list_stack_resources").paginate(StackName=stack_id)
                 for row in page["StackResourceSummaries"]]
 
+    def input_manifest(self, output):
+        prefix = "qwen-pii/" + self.data["experiment_id"] + "/"
+        expected = {prefix + suffix for suffix in (
+            "source/source.tar.gz", "dataset/train.jsonl", "dataset/validation.jsonl",
+            "dataset/test.jsonl", "dataset/dataset-manifest.json")}
+        entries = json.loads((self.path.parent / "uploaded-inputs.json").read_text())["verified"]
+        require(len(entries) == 5 and {e["key"] for e in entries} == expected,
+                "Uploaded input manifest does not match this experiment's five keys")
+        require(all(re.fullmatch(r"[a-f0-9]{64}", e["sha256"]) for e in entries),
+                "Input manifest has invalid SHA-256 values")
+        atomic_json(Path(output), {"verified": [
+            {"key": e["key"], "sha256": e["sha256"]} for e in entries]})
+
+    def probe_workload_identity(self, resource):
+        """Check recorded Pod Identity/agent/role identities, including after CP deletion."""
+        w = resource.get("workload_identity")
+        require(w and "role" in w and "association" in w and "addon" in w,
+                "EKS workload identity is unrecorded; manual recovery required")
+        role = absent_call(self.clients["iam"].get_role, {"NoSuchEntity"},
+                           RoleName=w["role_name"])
+        if role is not None:
+            require(all(role["Role"][k] == w["role"][k] for k in ("Arn", "RoleId")),
+                    "Workload role identity mismatch")
+        association = absent_call(
+            self.clients["eks"].describe_pod_identity_association,
+            {"ResourceNotFoundException"}, clusterName=resource["name"],
+            associationId=w["association"]["associationId"])
+        if association is not None:
+            a = association["association"]
+            require(all(a[k] == w["association"][k] for k in
+                        ("associationId", "associationArn", "roleArn", "namespace", "serviceAccount"))
+                    and self.tagged([{"Key": k, "Value": v} for k, v in a.get("tags", {}).items()]),
+                    "Pod Identity association ownership mismatch")
+        addon = absent_call(self.clients["eks"].describe_addon, {"ResourceNotFoundException"},
+                            clusterName=resource["name"], addonName=w["addon_name"])
+        if addon is not None:
+            require(addon["addon"]["addonArn"] == w["addon"]["addonArn"]
+                    and str(addon["addon"]["createdAt"]) == w["addon"]["createdAt"],
+                    "Pod Identity agent identity mismatch")
+        return role is not None or association is not None or addon is not None
+
     def eks_plan(self, name, kubeconfig):
         self.account()
         require(name.startswith(self.data["experiment_id"] + "-")
@@ -429,11 +471,21 @@ class Lifecycle:
         require("eks:" + name not in self.data["resources"], "EKS attempt already journaled; manual recovery required")
         require(absent_call(self.clients["eks"].describe_cluster, {"ResourceNotFoundException"},
                             name=name) is None, "EKS cluster already exists")
-        stacks = ["eksctl-" + name + "-cluster", "eksctl-" + name + "-nodegroup-gpu"]
+        execution_id = str(uuid.uuid4())
+        role_name = "qwen-input-" + execution_id.replace("-", "")[:24]
+        namespace, service_account = "qwen-pii", "qwen-input-reader"
+        stacks = ["eksctl-" + name + "-cluster", "eksctl-" + name + "-nodegroup-gpu",
+                  "eksctl-" + name + "-podidentityrole-" + namespace + "-" + service_account]
         require(all(self.stack(n) is None for n in stacks), "Pre-existing EKS stack; refuse creation")
+        require(absent_call(self.clients["iam"].get_role, {"NoSuchEntity"},
+                            RoleName=role_name) is None, "Workload role already exists; not owned")
         self.data["resources"]["eks:" + name] = {
             "kind": "eks", "name": name, "state": "creating", "created": False,
             "stack_names": stacks, "kubeconfig": str(Path(kubeconfig).resolve()),
+            "expected_export": {"experiment_id": self.data["experiment_id"],
+                                "cluster_name": name, "execution_id": execution_id},
+            "workload_identity": {"namespace": namespace, "service_account": service_account,
+                                  "role_name": role_name, "addon_name": "eks-pod-identity-agent"},
         }
         self.data["eks_clusters"].append(name)
         self.save()
@@ -455,6 +507,31 @@ class Lifecycle:
                            "resources": [{"type": row["ResourceType"],
                                           "id": row.get("PhysicalResourceId")}
                                          for row in rows]})
+        w = r["workload_identity"]
+        require(any(item["type"] == "AWS::IAM::Role" and item["id"] == w["role_name"]
+                    for s in stacks for item in s["resources"]),
+                "Workload IAM role is not in the owned stacks")
+        role = self.clients["iam"].get_role(RoleName=w["role_name"])["Role"]
+        require(role["Arn"] == "arn:aws:iam::%s:role/%s" % (self.data["account_id"], w["role_name"]),
+                "Unexpected workload role ARN")
+        associations = [a for page in self.clients["eks"].get_paginator(
+            "list_pod_identity_associations").paginate(
+                clusterName=name, namespace=w["namespace"], serviceAccount=w["service_account"])
+                        for a in page["associations"]]
+        require(len(associations) == 1, "Pod Identity association is missing/ambiguous")
+        association = self.clients["eks"].describe_pod_identity_association(
+            clusterName=name, associationId=associations[0]["associationId"])["association"]
+        require(association["roleArn"] == role["Arn"]
+                and association["namespace"] == w["namespace"]
+                and association["serviceAccount"] == w["service_account"]
+                and self.tagged([{"Key": k, "Value": v} for k, v in association.get("tags", {}).items()]),
+                "Pod Identity association does not match owned workload role")
+        addon = self.clients["eks"].describe_addon(clusterName=name, addonName=w["addon_name"])["addon"]
+        require(addon["status"] == "ACTIVE", "Pod Identity agent is not ACTIVE")
+        w["role"] = {"Arn": role["Arn"], "RoleId": role["RoleId"]}
+        w["association"] = {k: association[k] for k in
+                            ("associationId", "associationArn", "roleArn", "namespace", "serviceAccount")}
+        w["addon"] = {"addonArn": addon["addonArn"], "createdAt": str(addon["createdAt"])}
         r.update(created=True, state="owned",
                  identity={"arn": c["arn"], "createdAt": str(c["createdAt"]),
                            "endpoint": c["endpoint"], "stacks": stacks})
@@ -464,10 +541,15 @@ class Lifecycle:
         # Hash verification is local and precedes any destructive request.
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "eks"))
         from verify_export import verify_archive
-        verify_archive(Path(archive), mode)
-        self.account()
-        r = self.data["resources"]["eks:" + name]
+        r = self.data["resources"].get("eks:" + name)
+        require(r is not None, "EKS attempt is not recorded")
         require(r["created"] and r["state"] == "owned", "EKS is not confirmed owned")
+        expected = r.get("expected_export")
+        require(expected and expected.get("experiment_id") == self.data["experiment_id"]
+                and expected.get("cluster_name") == name,
+                "Expected export provenance is absent/mismatched; manual recovery required")
+        verify_archive(Path(archive), mode, expected)
+        self.account()
         require(self.probe(r), "EKS unexpectedly absent; inspect residual stacks")
         env = dict(os.environ, KUBECONFIG=r["kubeconfig"])
         subprocess.run(["eksctl", "delete", "cluster", "--name", name,
@@ -482,12 +564,14 @@ class Lifecycle:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["inputs", "init", "create", "teardown", "verify",
-                                            "eks-plan", "eks-confirm", "eks-delete", "check"])
+                                            "eks-plan", "eks-confirm", "eks-delete", "check",
+                                            "input-manifest"])
     parser.add_argument("inventory", nargs="?")
     parser.add_argument("resource", nargs="?")
     parser.add_argument("--kubeconfig")
     parser.add_argument("--archive")
     parser.add_argument("--mode", choices=["smoke", "full"])
+    parser.add_argument("--output")
     parser.add_argument("--discard-training-artifacts", action="store_true")
     args = parser.parse_args()
     try:
@@ -515,6 +599,10 @@ def main():
             initialize(args.inventory, fields)
             return 0
         require(args.inventory and Path(args.inventory).is_file(), "Inventory is required")
+        if args.command == "input-manifest":
+            require(args.output, "Output path is required")
+            Lifecycle(args.inventory, clients={}).input_manifest(args.output)
+            return 0
         # One operation at a time; fail rather than queue a stale destructive plan.
         with open(args.inventory + ".lock", "a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

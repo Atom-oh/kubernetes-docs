@@ -27,7 +27,18 @@ Regeneration after the implementation changes preserved all manifest hashes.
 | validation | 200 | 160 | 40 | `25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820` |
 | test | 400 | 320 | 80 | `6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21` |
 
-The nine labels are PERSON, RRN, DOB, REL, ADDRESS, PHONE, EMAIL, ACCOUNT and CARD.
+| Label | Meaning in this experiment |
+| --- | --- |
+| PERSON | Person name |
+| RRN | Korean resident-registration-number-shaped identifier |
+| DOB | Date of birth |
+| REL | Family or relationship expression |
+| ADDRESS | Address |
+| PHONE | Phone number |
+| EMAIL | Email address |
+| ACCOUNT | Bank account number |
+| CARD | Payment card number |
+
 These are experiment-specific annotation rules. For example, relationship words
 can be positive, while company-switchboard strings appear in negative documents.
 They are not a universal sensitivity taxonomy.
