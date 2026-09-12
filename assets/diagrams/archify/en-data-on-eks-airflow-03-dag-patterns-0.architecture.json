@@ -9,38 +9,38 @@
     "animation": "trace",
     "viewBox": [
       1040,
-      640
+      560
     ],
     "views": [
       {
         "id": "launch",
-        "label": "Pod launch path",
+        "label": "Pod launch",
         "focus": [
           "dag",
           "kpo",
           "pod"
         ],
-        "note": "extract_orders invokes KubernetesPodOperator.execute(); the operator builds the Pod from pod_template_file plus constructor overrides."
+        "note": "A worker runs KPO. Template merging and admission form the workload pod."
       },
       {
-        "id": "isolation",
-        "label": "Isolation and permissions",
+        "id": "identity",
+        "label": "Identity / placement",
         "focus": [
           "pod",
           "sa",
           "node"
         ],
-        "note": "The task pod runs under an IRSA-annotated ServiceAccount and is scheduled onto a tainted, dedicated node pool."
+        "note": "Workload identity differs from caller API permissions; actual pod constraints govern placement."
       },
       {
         "id": "report",
-        "label": "Status reporting",
+        "label": "Task state",
         "focus": [
           "pod",
           "kpo",
           "af"
         ],
-        "note": "Pod completion status flows back to the operator, which reports task success or failure to the Airflow scheduler and metadata DB."
+        "note": "Observed outcomes are reported through the Task SDK/supervisor Execution API path."
       }
     ]
   },
@@ -48,11 +48,11 @@
     {
       "id": "dag",
       "type": "frontend",
-      "label": "DAG code",
-      "sublabel": "extract_orders task",
+      "label": "Airflow worker",
+      "sublabel": "kpo_smoke.run_smoke",
       "pos": [
         420,
-        40
+        30
       ],
       "size": [
         220,
@@ -61,12 +61,12 @@
     },
     {
       "id": "af",
-      "type": "database",
-      "label": "Airflow scheduler",
-      "sublabel": "metadata DB",
+      "type": "backend",
+      "label": "Execution API",
+      "sublabel": "Task SDK / supervisor",
       "pos": [
         60,
-        200
+        170
       ],
       "size": [
         220,
@@ -77,10 +77,10 @@
       "id": "kpo",
       "type": "backend",
       "label": "KubernetesPodOperator",
-      "sublabel": ".execute()",
+      "sublabel": "Build / observe workload Pod",
       "pos": [
         420,
-        200
+        170
       ],
       "size": [
         220,
@@ -90,11 +90,11 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "Pod",
-      "sublabel": "created from pod_template_file",
+      "label": "Workload Pod",
+      "sublabel": "airflow-workloads namespace",
       "pos": [
         420,
-        370
+        320
       ],
       "size": [
         220,
@@ -105,11 +105,11 @@
     {
       "id": "sa",
       "type": "security",
-      "label": "ServiceAccount",
-      "sublabel": "orders-extractor-sa (IRSA role annotation)",
+      "label": "Workload ServiceAccount",
+      "sublabel": "workload-smoke; AWS role optional",
       "pos": [
         60,
-        530
+        440
       ],
       "size": [
         260,
@@ -119,11 +119,11 @@
     {
       "id": "node",
       "type": "cloud",
-      "label": "Tainted dedicated node pool",
-      "sublabel": "dedicated NodeGroup / NodePool",
+      "label": "Kubernetes placement",
+      "sublabel": "Optional NodePool constraints",
       "pos": [
         740,
-        530
+        440
       ],
       "size": [
         260,
@@ -142,11 +142,11 @@
       "id": "kpo-to-pod",
       "from": "kpo",
       "to": "pod",
-      "label": "builds Pod from pod_template_file + constructor overrides",
+      "label": "Template + merge + Kubernetes API",
       "variant": "emphasis",
       "labelAt": [
         523,
-        317
+        280
       ]
     },
     {
@@ -173,53 +173,52 @@
       "via": [
         [
           720,
-          402
+          352
         ],
         [
           720,
-          232
+          202
         ]
       ],
       "labelAt": [
         720,
-        317
+        280
       ]
     },
     {
       "id": "kpo-to-af",
       "from": "kpo",
       "to": "af",
-      "label": "reports task success/failure",
+      "label": "Task state via supervisor",
       "labelAt": [
         350,
-        196
+        154
       ]
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Pod spec precedence",
+      "title": "Pod configuration",
       "items": [
-        "pod_template_file supplies the shared defaults",
-        "Constructor arguments such as image, cmds/arguments and service_account_name override the same fields in the template",
-        "Jinja templates ({{ ds }}) are rendered before the Pod is built"
+        "Lists may append; empty values may inherit",
+        "Inspect dry_run and admitted pod"
       ]
     },
     {
       "dot": "amber",
-      "title": "Dedicated node pool",
+      "title": "Placement",
       "items": [
-        "tolerations + nodeAffinity match the workload=airflow-tasks taint",
-        "Avoids competing with unrelated workloads on shared nodes and scales purely on task pod demand"
+        "Match selectors and tolerations to real nodes",
+        "Account for capacity and interruption"
       ]
     },
     {
       "dot": "rose",
-      "title": "IRSA per task",
+      "title": "Separate identities",
       "items": [
-        "Annotate the ServiceAccount with eks.amazonaws.com/role-arn",
-        "A permission boundary separate from the Airflow control-plane components' role"
+        "Airflow caller needs Kubernetes permissions",
+        "Workload AWS access requires explicit setup"
       ]
     }
   ]

@@ -15,27 +15,36 @@
           "s3",
           "sch",
           "dag",
+          "api",
           "pod"
         ],
-        "note": "KubernetesPodOperator uses the DAG and kube_config.yaml synced from S3 to create a pod on a separate EKS cluster."
+        "note": "Worker subnet DNS/HTTPS connectivity and authentication enable workload submission."
       },
       {
         "id": "auth-path",
         "label": "Authorization",
         "focus": [
           "iam",
+          "api",
           "pod"
         ],
-        "note": "eksctl iamidentitymapping binds the MWAA execution role into EKS RBAC so the pod creation is allowed."
+        "note": "Bind the access-entry group through namespace RBAC. Child pod AWS permissions are separate."
       }
-    ]
+    ],
+    "viewBox": [
+      1280,
+      620
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {
       "id": "sch",
       "type": "backend",
-      "label": "MWAA scheduler / workers",
-      "sublabel": "patched and scaled by AWS",
+      "label": "MWAA managed runtime",
+      "sublabel": "Connected to customer private subnets",
       "pos": [
         80,
         80
@@ -48,8 +57,8 @@
     {
       "id": "dag",
       "type": "backend",
-      "label": "DAG: KubernetesPodOperator",
-      "sublabel": "in_cluster=False · config_file=kube_config.yaml",
+      "label": "MWAA worker: KPO",
+      "sublabel": "in_cluster=False · kubeconfig exec",
       "tag": "DAG",
       "pos": [
         80,
@@ -77,28 +86,42 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "Pod created by the operator",
-      "sublabel": "data processing workload",
+      "label": "Workload Pod",
+      "sublabel": "data-processing / workload-smoke",
       "pos": [
-        760,
+        960,
         250
       ],
       "size": [
-        260,
+        250,
         64
       ]
     },
     {
       "id": "iam",
       "type": "security",
-      "label": "eksctl iamidentitymapping",
-      "sublabel": "MWAA execution role → RBAC",
+      "label": "EKS access entry + RBAC",
+      "sublabel": "Execution role → namespace group",
       "pos": [
-        760,
+        510,
         470
       ],
       "size": [
-        280,
+        320,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "EKS API",
+      "sublabel": "Authentication + namespace rights",
+      "pos": [
+        600,
+        250
+      ],
+      "size": [
+        240,
         64
       ]
     }
@@ -116,6 +139,7 @@
       "kind": "region",
       "label": "Your EKS Cluster (separate infra)",
       "wraps": [
+        "api",
         "pod"
       ]
     }
@@ -140,18 +164,51 @@
     {
       "id": "dag-pod",
       "from": "dag",
-      "to": "pod",
-      "label": "creates pod via kube_config.yaml",
+      "to": "api",
+      "label": "HTTPS 443 + IAM",
       "variant": "emphasis"
     },
     {
       "id": "iam-rbac",
       "from": "iam",
-      "to": "pod",
-      "label": "grants MWAA execution role access to EKS RBAC",
+      "to": "api",
+      "label": "group / RoleBinding",
       "variant": "security",
       "fromSide": "top",
       "toSide": "bottom"
+    },
+    {
+      "id": "api-pod",
+      "from": "api",
+      "to": "pod",
+      "label": "create / watch",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Connectivity",
+      "items": [
+        "Worker subnet → EKS API DNS / HTTPS",
+        "kubeconfig exec → MWAA execution role"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Permission boundaries",
+      "items": [
+        "Access entry group → namespace RoleBinding",
+        "Workload AWS identity configured separately"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Operations",
+      "items": [
+        "S3 delivery + constraints + parsing checks",
+        "DAG health, capacity and upgrades still matter"
+      ]
     }
   ]
 }

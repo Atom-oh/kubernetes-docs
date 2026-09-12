@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/data-on-eks/airflow/05-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed HA and existing Airflow2 support, DB writer quiescence and restore/Fernet dependencies, cleanup preview/error exit/archive limits, server/worker/API secrets paths, task-only S3 upload after execution, OTel environment configuration, actual scaling and IAM/RBAC/NetworkPolicy boundaries; corrected20quizanswers.",
+    "reviewedSha256": "1565c81e0fecc5124d5f28e835acc98fca6c060b7c979abf76c9d270e8431e93"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed HA and existing Airflow2 support, DB writer quiescence and restore/Fernet dependencies, cleanup preview/error exit/archive limits, server/worker/API secrets paths, task-only S3 upload after execution, OTel environment configuration, actual scaling and IAM/RBAC/NetworkPolicy boundaries; corrected20quizanswers.",
+    "reviewedSha256": "3c3b93818500fc700382338a77176b6768b49e1617e8bfdffdda7530c3062829"
+  },
+  {
+    "path": "en/data-on-eks/airflow/05-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed HA and existing Airflow2 support, DB writer quiescence and restore/Fernet dependencies, cleanup preview/error exit/archive limits, server/worker/API secrets paths, task-only S3 upload after execution, OTel environment configuration, actual scaling and IAM/RBAC/NetworkPolicy boundaries; corrected20quizanswers.",
+    "reviewedSha256": "d31d1e47d73c816f5f447f693c690bb7f0defe8615754f37d8aa444d26c059de"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed HA and existing Airflow2 support, DB writer quiescence and restore/Fernet dependencies, cleanup preview/error exit/archive limits, server/worker/API secrets paths, task-only S3 upload after execution, OTel environment configuration, actual scaling and IAM/RBAC/NetworkPolicy boundaries; corrected20quizanswers.",
+    "reviewedSha256": "a6caa4298dadde56b8f7e11869adf6576e66351b3c8a60c3deb37b21ab3b4312"
+  }
+]

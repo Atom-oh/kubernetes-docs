@@ -2,25 +2,29 @@
   {
     "path": "ko/data-on-eks/airflow/03-dag-patterns.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread;verifyKPOphysicalPodcounts/reattachment/deferral,nonemptyandlistmergeprecedence,container_resources/cleanupAPI,caller-vs-childRBAC/identity,bundlecodeversionlimits,SparkstaleCOMPLETED/namespace/failurewait andnativeSparkoperatoralternative."
+    "status": "fixed",
+    "summary": "Reviewed Airflow3.3.1/provider10.21.0: physical pod counts; exclusive template selection and field-specific merge behavior; complete smoke DAG/RBAC; caller versus workload identity; cleanup API; bundle rerun precedence; Spark generated-CR compatibility; quiz corrections and regenerated ko/en figures.",
+    "reviewedSha256": "dee737feb082820aeacb2a24bc62235c602297020990c42b81b2243dfd411771"
   },
   {
     "path": "ko/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread;verifyKPOphysicalPodcounts/reattachment/deferral,nonemptyandlistmergeprecedence,container_resources/cleanupAPI,caller-vs-childRBAC/identity,bundlecodeversionlimits,SparkstaleCOMPLETED/namespace/failurewait andnativeSparkoperatoralternative."
+    "status": "fixed",
+    "summary": "Reviewed Airflow3.3.1/provider10.21.0: physical pod counts; exclusive template selection and field-specific merge behavior; complete smoke DAG/RBAC; caller versus workload identity; cleanup API; bundle rerun precedence; Spark generated-CR compatibility; quiz corrections and regenerated ko/en figures.",
+    "reviewedSha256": "dc36870f05c0be086a8f9e0a3562b2f0668dbd3ed6db6659cbedb349f9f899b8"
   },
   {
     "path": "en/data-on-eks/airflow/03-dag-patterns.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread;verifyKPOphysicalPodcounts/reattachment/deferral,nonemptyandlistmergeprecedence,container_resources/cleanupAPI,caller-vs-childRBAC/identity,bundlecodeversionlimits,SparkstaleCOMPLETED/namespace/failurewait andnativeSparkoperatoralternative."
+    "status": "fixed",
+    "summary": "Reviewed Airflow3.3.1/provider10.21.0: physical pod counts; exclusive template selection and field-specific merge behavior; complete smoke DAG/RBAC; caller versus workload identity; cleanup API; bundle rerun precedence; Spark generated-CR compatibility; quiz corrections and regenerated ko/en figures.",
+    "reviewedSha256": "65721fec6a09e4f165ff45289c2a57ecaee371041667687f38cbbcd392a4edc1"
   },
   {
     "path": "en/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread;verifyKPOphysicalPodcounts/reattachment/deferral,nonemptyandlistmergeprecedence,container_resources/cleanupAPI,caller-vs-childRBAC/identity,bundlecodeversionlimits,SparkstaleCOMPLETED/namespace/failurewait andnativeSparkoperatoralternative."
+    "status": "fixed",
+    "summary": "Reviewed Airflow3.3.1/provider10.21.0: physical pod counts; exclusive template selection and field-specific merge behavior; complete smoke DAG/RBAC; caller versus workload identity; cleanup API; bundle rerun precedence; Spark generated-CR compatibility; quiz corrections and regenerated ko/en figures.",
+    "reviewedSha256": "3b3d55095a3e39708831aafbf2a03c2ad9e399f62add6e4af5f9402be32229e7"
   }
 ]

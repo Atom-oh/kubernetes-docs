@@ -1,0 +1,26 @@
+[
+  {
+    "path": "ko/data-on-eks/flink/02-flink-kubernetes-operator.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+  },
+  {
+    "path": "en/data-on-eks/flink/02-flink-kubernetes-operator.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+  },
+  {
+    "path": "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+  }
+]

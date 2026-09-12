@@ -2,22 +2,12 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Flink Kubernetes Operator와 Flink 클러스터 아키텍처",
+    "title": "Flink Native 모드의 제어 흐름",
     "output": "ko-data-on-eks-flink-readme-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "entries": {
-        "external": {
-          "label": "운영자"
-        },
-        "cloud": {
-          "label": "Kubernetes 컨트롤 플레인"
-        },
-        "backend": {
-          "label": "Flink Operator / Flink Pod"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -29,7 +19,7 @@
           "operator",
           "jobmanager"
         ],
-        "note": "FlinkDeployment/FlinkSessionJob CR을 적용하면 Operator가 이를 감시하고 JobManager Pod를 원하는 상태로 조정한다."
+        "note": "FlinkDeployment로 cluster를 관리하고 FlinkSessionJob으로 기존 Session cluster에 job을 제출합니다."
       },
       {
         "id": "resource-manager",
@@ -213,26 +203,24 @@
       "dot": "orange",
       "title": "Flink Kubernetes Operator",
       "items": [
-        "FlinkDeployment(Application/Session 클러스터)와 FlinkSessionJob CR로 원하는 상태를 선언",
-        "stateless · savepoint · last-state 업그레이드 모드로 변경을 안전하게 적용",
-        "내장 오토스케일러가 잡 그래프의 vertex 단위로 재조정"
+        "Native와 Standalone 모두 지원",
+        "Cluster/job lifecycle과 upgrade 조건 관리"
       ]
     },
     {
       "dot": "cyan",
       "title": "JobManager",
       "items": [
-        "잡 그래프 생성, 체크포인트 조율, 작업 스케줄링을 담당하는 컨트롤 플레인",
-        "레코드를 직접 처리하지 않음",
-        "내부 Kubernetes ResourceManager가 API Server와 직접 통신해 TaskManager Pod를 동적으로 요청 · 반납"
+        "Graph 생성 위치는 제출 모드에 따름",
+        "Native ResourceManager는 Kubernetes API 사용"
       ]
     },
     {
       "dot": "emerald",
       "title": "TaskManager",
       "items": [
-        "태스크 슬롯(Task Slot) 안에서 오퍼레이터 서브태스크를 실행하는 워커",
-        "고정 워커 풀을 미리 프로비저닝할 필요 없음 (YARN 노드 매니저와 대비)"
+        "Slot sharing과 operator chaining",
+        "Pod 용량과 node capacity는 별도 계층"
       ]
     }
   ]

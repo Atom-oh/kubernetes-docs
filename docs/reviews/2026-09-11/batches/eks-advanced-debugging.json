@@ -2,8 +2,8 @@
   {
     "path": "en/eks/11-eks-advanced-debugging.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Full original read; source1-8/readiness corrected. DetectionAPI/syntax finalchecks,quickref/sourceclosure and20quizsections remain active.",
+    "status": "fixed",
+    "summary": "Entire1849-lineoriginalfullyread; paired2123-line source corrections completed and validated. CurrentAPI/credential/protection/metrics/collector/automation semantics fixed; no live cloud/cluster/benchmark claims.",
     "sources": [
       "https://github.com/kubernetes-sigs/node-readiness-controller/releases/tag/v0.5.0",
       "https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/user-guide/concepts.md",
@@ -39,7 +39,15 @@
       "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
       "https://docs.fluentbit.io/manual/administration/buffering-and-storage",
       "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing",
-      "https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md"
+      "https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md",
+      "https://github.com/yannh/kubeconform",
+      "https://github.com/derailed/k9s",
+      "https://github.com/awslabs/eks-node-viewer",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html",
+      "https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh",
+      "https://github.com/open-telemetry/opentelemetry-operator/releases/tag/v0.158.0",
+      "https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.93.1",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html"
     ],
     "findings": [
       "Triage filtersmissRunning-notReady/CrashLoop,includecompletedJobs;deploymentgrepfalse;Service spec.type fieldselectorunsupported; VPC-CNIdefaultkube-systemnotamazon-vpc-cni-system.",
@@ -81,7 +89,8 @@
       "CNIimplementation/ENIownership scoped;prefix contiguousspace/warmoverride/maxPods;customnetworkingcompleteprereqs+ENIConfig labelmapping rather than blindtoggle/provisioning. AutoDNS distinction/resolvercontext/notgenericndotsfix;Corefileexample notoverwrite;EndpointSlices;NPAND/OR/additive+DNS;boundeddiagnostictraffic/capture.",
       "Storagepairedwritescompletedbeforeparentbranchtransition;reporttailnowrecovered. RemovedblanketCSIResource*mutationpolicy/defaultfinalizernulling;currentV2tagscopes/KMS/identity;namespaceUID-awarePVCconsumers/protection/reclaim/EFSquota/APidentity;actualtopology/WFFC/Autoencryptedtrue nuance.",
       "Observability: no incident-time obsolete addon install; scoped metric definitions/positive denominators/duplicate handling; restart changes notOOMcount/lastreasoncorrelation; RunningNotReady included. PromRule selection explicit; Operatorv1beta1objectconfig,ADOT0.50 pinnedcomponentcontract,namespaceRBAC/TLS/NP/ports/identity andpipeline destinations/cardinality/replica assumptions.",
-      "Detection:CRI/host/RBAC/IAM/checkpoint-vs-buffer/lossbounds;AMSecretkey/configSecret+secretfiles andcriticalfanout/modernmatchers/resourceinhibition. ExactCWdimension/band/missingdata/evaluationwindow andstructuredJSONlogfilter;oldMTTDtargetsretainedunverified. ReplacednonfunctionalPoddeleteLambda withboundedno-mutationclassifier andexplicitasync/dedup/runbooklimits."
+      "Detection:CRI/host/RBAC/IAM/checkpoint-vs-buffer/lossbounds;AMSecretkey/configSecret+secretfiles andcriticalfanout/modernmatchers/resourceinhibition. ExactCWdimension/band/missingdata/evaluationwindow andstructuredJSONlogfilter;oldMTTDtargetsretainedunverified. ReplacednonfunctionalPoddeleteLambda withboundedno-mutationclassifier andexplicitasync/dedup/runbooklimits.",
+      "Quickrefcauseclaimsqualified;removeddefaultforce-delete/fullSecretdata/unsafeunscopedmutations;metadataoutputstillrequiresreadpermission. Toollimitscurrentandnode-viewerrequestsnotusage;logcollectorURLverifiedreachable/revisionreview/privatearchiveworkflow. DeadEKSLens404replacedofficialbestpractices;versionheaderreviewbaselineandverifiedSep12date."
     ],
     "validation": [
       "Full read ranges1-450,451-900,901-1400,1401-1849; originalSHA256:ec7a1c7ba546c3560a547bcce562e9decf8202e2e30959103e554ea018c72b56",
@@ -101,14 +110,17 @@
       "Section7:4Bash/12YAML/8nativeK8s/4vendorCRDs/18PromQLblocks pairedidentical;Operator0.158+PrometheusOperator0.93.1schemas/scrapeparser/RBAC+immutablelabelgraphpass. Oldstringconfignegativepass. SchemaRSS397792KiB;PromQLRSS72224KiB. No live Collector/API/ingestion.",
       "Editvalidationcaught unsupported podMetadata proposal; corrected to source-verified immutable operator labels before passing final schemas. Component config checked against ADOT0.50go.mod-contrib0.158 references; no runtimeclaim.",
       "AM0.34config+3routecases+undefinedreceivernegativepassed;Operator0.93.1specfragmentpassed;classifier1positive+11ignored+badconfigcasepassed;childRSS17964KiB. No delivery or cloud/server execution.",
-      "Section8:10Bash/4YAML/4JSON/2Python/2FluentBit-text blocks pairedidentical;7CLI2.36.44inputmodelcasespass. Alarm semantics/CRI options source-checked; no actual cloud/filter/notification orFluentBit runtime. See detection-syntax-validation.json."
+      "Section8:10Bash/4YAML/4JSON/2Python/2FluentBit-text blocks pairedidentical;7CLI2.36.44inputmodelcasespass. Alarm semantics/CRI options source-checked; no actual cloud/filter/notification orFluentBit runtime. See detection-syntax-validation.json.",
+      "Whole sourcepair:104Bash40YAML8JSON2Python18PromQL26textfences;26native+10vendorobjects;2AMconfigs+2AMspecfragments;16localrefsresolve;codeidentical/gitdiffcheckpass. MaxRSS430180KiB. source-pair-validation.json.",
+      "FinalSHA256:058410ef76c33acd15fc7c2434891bb11996e3524982eb8c3ebe5d6d1bb4bb82",
+      "Finalcurrent-sourcehashrefresh:complete source syntax/schema/parity/link validation rerun after prior proof hash mismatch;prior receipt preserved as source-pair-validation-before-final-refresh.json;new receipt covers current2123lines/locale,maximumRSS420012KiB."
     ]
   },
   {
     "path": "ko/eks/11-eks-advanced-debugging.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Full original read; source1-8/readiness corrected. DetectionAPI/syntax finalchecks,quickref/sourceclosure and20quizsections remain active.",
+    "status": "fixed",
+    "summary": "Entire1849-lineoriginalfullyread; paired2123-line source corrections completed and validated. CurrentAPI/credential/protection/metrics/collector/automation semantics fixed; no live cloud/cluster/benchmark claims.",
     "sources": [
       "https://github.com/kubernetes-sigs/node-readiness-controller/releases/tag/v0.5.0",
       "https://github.com/kubernetes-sigs/node-readiness-controller/blob/v0.5.0/docs/book/src/user-guide/concepts.md",
@@ -144,7 +156,15 @@
       "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
       "https://docs.fluentbit.io/manual/administration/buffering-and-storage",
       "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing",
-      "https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md"
+      "https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md",
+      "https://github.com/yannh/kubeconform",
+      "https://github.com/derailed/k9s",
+      "https://github.com/awslabs/eks-node-viewer",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html",
+      "https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh",
+      "https://github.com/open-telemetry/opentelemetry-operator/releases/tag/v0.158.0",
+      "https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.93.1",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html"
     ],
     "findings": [
       "KO text/code independently read; confirms same first450 defects as EN: invalidServicefieldselector/phase-onlytriage,unsafeunboundedcollection/falsecompletion,legacyaws-authadminreplacement,non-JWTEKStokendecode/IRSAsecretprints,projection24hclaim,blindaddonOVERWRITE,join/SSMcleanupassumptions. DatesalreadySep9do notbumpuntilsubstantiveverification.",
@@ -161,7 +181,8 @@
       "CNIimplementation/ENIownership scoped;prefix contiguousspace/warmoverride/maxPods;customnetworkingcompleteprereqs+ENIConfig labelmapping rather than blindtoggle/provisioning. AutoDNS distinction/resolvercontext/notgenericndotsfix;Corefileexample notoverwrite;EndpointSlices;NPAND/OR/additive+DNS;boundeddiagnostictraffic/capture.",
       "Storagepairedwritescompletedbeforeparentbranchtransition;reporttailnowrecovered. RemovedblanketCSIResource*mutationpolicy/defaultfinalizernulling;currentV2tagscopes/KMS/identity;namespaceUID-awarePVCconsumers/protection/reclaim/EFSquota/APidentity;actualtopology/WFFC/Autoencryptedtrue nuance.",
       "Observability: no incident-time obsolete addon install; scoped metric definitions/positive denominators/duplicate handling; restart changes notOOMcount/lastreasoncorrelation; RunningNotReady included. PromRule selection explicit; Operatorv1beta1objectconfig,ADOT0.50 pinnedcomponentcontract,namespaceRBAC/TLS/NP/ports/identity andpipeline destinations/cardinality/replica assumptions.",
-      "Detection:CRI/host/RBAC/IAM/checkpoint-vs-buffer/lossbounds;AMSecretkey/configSecret+secretfiles andcriticalfanout/modernmatchers/resourceinhibition. ExactCWdimension/band/missingdata/evaluationwindow andstructuredJSONlogfilter;oldMTTDtargetsretainedunverified. ReplacednonfunctionalPoddeleteLambda withboundedno-mutationclassifier andexplicitasync/dedup/runbooklimits."
+      "Detection:CRI/host/RBAC/IAM/checkpoint-vs-buffer/lossbounds;AMSecretkey/configSecret+secretfiles andcriticalfanout/modernmatchers/resourceinhibition. ExactCWdimension/band/missingdata/evaluationwindow andstructuredJSONlogfilter;oldMTTDtargetsretainedunverified. ReplacednonfunctionalPoddeleteLambda withboundedno-mutationclassifier andexplicitasync/dedup/runbooklimits.",
+      "Quickrefcauseclaimsqualified;removeddefaultforce-delete/fullSecretdata/unsafeunscopedmutations;metadataoutputstillrequiresreadpermission. Toollimitscurrentandnode-viewerrequestsnotusage;logcollectorURLverifiedreachable/revisionreview/privatearchiveworkflow. DeadEKSLens404replacedofficialbestpractices;versionheaderreviewbaselineandverifiedSep12date."
     ],
     "validation": [
       "Fullread1-450,451-1000,1001-1500,1501-1849; originalSHA256:3ce4e0f51c4e400d829dc2c1f5c29b18ae02f9c28eae42ae7c86aa7e05a65595",
@@ -181,15 +202,28 @@
       "Section7:4Bash/12YAML/8nativeK8s/4vendorCRDs/18PromQLblocks pairedidentical;Operator0.158+PrometheusOperator0.93.1schemas/scrapeparser/RBAC+immutablelabelgraphpass. Oldstringconfignegativepass. SchemaRSS397792KiB;PromQLRSS72224KiB. No live Collector/API/ingestion.",
       "Editvalidationcaught unsupported podMetadata proposal; corrected to source-verified immutable operator labels before passing final schemas. Component config checked against ADOT0.50go.mod-contrib0.158 references; no runtimeclaim.",
       "AM0.34config+3routecases+undefinedreceivernegativepassed;Operator0.93.1specfragmentpassed;classifier1positive+11ignored+badconfigcasepassed;childRSS17964KiB. No delivery or cloud/server execution.",
-      "Section8:10Bash/4YAML/4JSON/2Python/2FluentBit-text blocks pairedidentical;7CLI2.36.44inputmodelcasespass. Alarm semantics/CRI options source-checked; no actual cloud/filter/notification orFluentBit runtime. See detection-syntax-validation.json."
+      "Section8:10Bash/4YAML/4JSON/2Python/2FluentBit-text blocks pairedidentical;7CLI2.36.44inputmodelcasespass. Alarm semantics/CRI options source-checked; no actual cloud/filter/notification orFluentBit runtime. See detection-syntax-validation.json.",
+      "Whole sourcepair:104Bash40YAML8JSON2Python18PromQL26textfences;26native+10vendorobjects;2AMconfigs+2AMspecfragments;16localrefsresolve;codeidentical/gitdiffcheckpass. MaxRSS430180KiB. source-pair-validation.json.",
+      "FinalSHA256:4a284892410b6f6100647749112e709d8d61d7f8fbd2de54f904a7ea1ad6324e",
+      "Finalcurrent-sourcehashrefresh:complete source syntax/schema/parity/link validation rerun after prior proof hash mismatch;prior receipt preserved as source-pair-validation-before-final-refresh.json;new receipt covers current2123lines/locale,maximumRSS420012KiB."
     ]
   },
   {
     "path": "en/quizzes/eks/11-eks-advanced-debugging-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "All1014ENquizlinesread;10MCQ/5short/3hands-on/2advanced defects mapped to source. KOquizfullread andcurrentprimaryverification/fixes pending.",
-    "sources": [],
+    "status": "fixed",
+    "summary": "Fully read original; all20questions corrected in both locales and paired with the fixed source. Native schema/syntax/PromQL and synthetic query-polling validation passed; historical RCA explicitly unverified.",
+    "sources": [
+      "https://prometheus.io/docs/prometheus/latest/querying/functions/",
+      "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetQueryResults.html",
+      "https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/node-health.html",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://raw.githubusercontent.com/prometheus/node_exporter/master/collector/processes_linux.go",
+      "https://github.com/prometheus/node_exporter#disabled-by-default",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/staging/src/k8s.io/kubelet/config/v1beta1/types.go"
+    ],
     "findings": [
       "Q1/short1controlplanelogsoptin,sqlqueriesinsidebash/multiplequeries;cost/async/logARNaudit403format.",
       "Q2wrongquestion/answer:copy-to doesnotaddephemeralcontainerexistingPod;targetruntimeprocessnamespace/CopyPodrisks/profiles/imagesmutations.",
@@ -211,28 +245,54 @@
       "Adv2sourcecurl-kunauthhealthdiagnosticincorrect;nodeavailabilitypermission/AutoBottlerocket/AL2historicexample;NodeExporterPIDmetricnamesverifycurrentcollector/denominator vsLinuxpidmax.",
       "Adv2NPDv0.8.13staleandDaemonSetmissingtemplatelabels/RBAC/settingsmetrics;preferexistingEKSnodeagentmanagedrepairpathwithprereqsnoblindduplicatehostdaemon.",
       "Adv2KarpenternotautomaticallyrepairNotReadybydefault withoutfeaturegate/version/thresholds;evictionHardpartialoverridecanzerootherdefaults,pid/TGP/OSbootstrapfieldownership.",
-      "HistoricalRCA2024dates/3nodes45Pods45minutes/memoryleakassertionareillustrativeunverifiedtemplate;preserveoriginalvalueswithnoinventedexecution/provenance."
+      "HistoricalRCA2024dates/3nodes45Pods45minutes/memoryleakassertionareillustrativeunverifiedtemplate;preserveoriginalvalueswithnoinventedexecution/provenance.",
+      "MCQ:logsoptin/QLseparate,Q2copyvsexistingPodcorrected,NotReadyhypotheses,positiveCPUlimitunits/scope,nodedefaultgeneralnotprivileged,CrashLoopreasonnotallrestarts,Span/sampling/oldJaegerrecipe,AutoDNSandmetricssampling semantics.",
+      "Short/hands-on: stable ephemeral API and immutable entry, rate/reset/units, no implicit privileged chroot, explicitly defined nonoverlapping recovery intervals, restart UID/dedup semantics, scoped bounded CrashLoop evidence without secret dumps, separate JSON-field audit QL and bounded Complete-only query polling.",
+      "Advanced: slow-request ratio denominator/positive traffic, throughput≠latency, GC/counter units, dashboard design not fictional import schema, longer-window p99 not average/prediction; scoped node identity/EC2 Maximum/verified TLS, real processes metrics opt-in, provider-specific repair and forceful semantics, kubelet default merge/grace periods; original2024 RCA numbers preserved as unverified template with hypothetical cause and no fabricated completion."
     ],
     "validation": [
       "Fullread1-520,521-1014;originalSHA256:6e55949855696379aa971ad44935accd24c60ff48924514673873f2974b30073",
-      "No EKS11edits or live cloud/cluster commands."
+      "No EKS11edits or live cloud/cluster commands.",
+      "Whole-quiz:20questions/locale;keyBBBCDCABAB;paired executable code identical;30Bash+6strictPrometheusRuleYAML+4JSON+42PromQLfences;git diff --check passed.",
+      "NativePromtool3.14.0:21distinctqueries and8rules parsed;2syntheticscenarios/10expressionassertions passed (restartUID/duplicatereplicas,positiveCPUlimits,25%slowrequestfraction,missingtelemetry).",
+      "Actualaudit403BashwithmockAWS:11success/failure/polling/privatefilecases passed;36currentAWSCLI2.36.44service-modelvalidations;noactualAWSquery.",
+      "Kubeletmergefragmentfields verified againstKubernetesv1.36.2types;maximumquizvalidationRSS416444KiB;nohost/cluster/cloud/fullbuild/devserver/benchmarkexecution.",
+      "Persistentproof:.vitepress/cache/core-audit/eks-advanced-debugging/{quiz-pair-validation.json,quiz-query-validation.json}"
     ]
   },
   {
     "path": "ko/quizzes/eks/11-eks-advanced-debugging-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "All1014KOquizlinesindependentlyread; all20questionsmappedagainstEN/source. Currentprimaryverification/pairedfixes andnativevalidation pending.",
-    "sources": [],
+    "status": "fixed",
+    "summary": "Fully read original; all20questions corrected in both locales and paired with the fixed source. Native schema/syntax/PromQL and synthetic query-polling validation passed; historical RCA explicitly unverified.",
+    "sources": [
+      "https://prometheus.io/docs/prometheus/latest/querying/functions/",
+      "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetQueryResults.html",
+      "https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/",
+      "https://karpenter.sh/docs/concepts/disruption/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/node-health.html",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://raw.githubusercontent.com/prometheus/node_exporter/master/collector/processes_linux.go",
+      "https://github.com/prometheus/node_exporter#disabled-by-default",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/staging/src/k8s.io/kubelet/config/v1beta1/types.go"
+    ],
     "findings": [
       "KOquizindependentlyread1-520; confirmsQ2existingPodvscopy-toincorrectanswer,defaultdebugprivilegedfalse,Q3unsupportedmostcommoncauseclaim,CPUlimitratio/scope,jaegerexporteroldschema,CoreDNSAuto/queryloggingexceptions,topwindowandephemeralfeaturegatehistoricalissues. NoteactualKOQ7nodehostnameap-northeast2versusENuswest2regionaldifference.",
       "KOquizremaining521-1014fullread:MTTRdecompositiondoublecounts;counterincreaseinterpretation;CrashLoopdebugcopyenv/configleaks;403queriesbrittleJSON/noquerypoll;rate-not-ratioslowrequests,networkbytes-notlatency,pseudoGrafanaschema,1hp99-notaverage.",
       "NPDincompletemanifest/oldversion,NodeExportermetricsandKarpenterrepairprereqspendingprimary;TLS-k/HPA/nodecleanupunsafeassumptions.",
-      "Preserveoriginal2024KSTexample(ENPST),3nodes45Pods45min asunverifiedillustrativetemplate;donotfabricateincidentorcleanupcompletion."
+      "Preserveoriginal2024KSTexample(ENPST),3nodes45Pods45min asunverifiedillustrativetemplate;donotfabricateincidentorcleanupcompletion.",
+      "MCQ:logsoptin/QLseparate,Q2copyvsexistingPodcorrected,NotReadyhypotheses,positiveCPUlimitunits/scope,nodedefaultgeneralnotprivileged,CrashLoopreasonnotallrestarts,Span/sampling/oldJaegerrecipe,AutoDNSandmetricssampling semantics.",
+      "Short/hands-on: stable ephemeral API and immutable entry, rate/reset/units, no implicit privileged chroot, explicitly defined nonoverlapping recovery intervals, restart UID/dedup semantics, scoped bounded CrashLoop evidence without secret dumps, separate JSON-field audit QL and bounded Complete-only query polling.",
+      "Advanced: slow-request ratio denominator/positive traffic, throughput≠latency, GC/counter units, dashboard design not fictional import schema, longer-window p99 not average/prediction; scoped node identity/EC2 Maximum/verified TLS, real processes metrics opt-in, provider-specific repair and forceful semantics, kubelet default merge/grace periods; original2024 RCA numbers preserved as unverified template with hypothetical cause and no fabricated completion."
     ],
     "validation": [
       "Fullread1-520,521-1014;originalSHA256:b2fff2ac8474086b367c9d4f90edca21f136ac04273faeb7abf08894bdc351f8",
-      "NoEKS11edits/liveactions."
+      "NoEKS11edits/liveactions.",
+      "Whole-quiz:20questions/locale;keyBBBCDCABAB;paired executable code identical;30Bash+6strictPrometheusRuleYAML+4JSON+42PromQLfences;git diff --check passed.",
+      "NativePromtool3.14.0:21distinctqueries and8rules parsed;2syntheticscenarios/10expressionassertions passed (restartUID/duplicatereplicas,positiveCPUlimits,25%slowrequestfraction,missingtelemetry).",
+      "Actualaudit403BashwithmockAWS:11success/failure/polling/privatefilecases passed;36currentAWSCLI2.36.44service-modelvalidations;noactualAWSquery.",
+      "Kubeletmergefragmentfields verified againstKubernetesv1.36.2types;maximumquizvalidationRSS416444KiB;nohost/cluster/cloud/fullbuild/devserver/benchmarkexecution.",
+      "Persistentproof:.vitepress/cache/core-audit/eks-advanced-debugging/{quiz-pair-validation.json,quiz-query-validation.json}"
     ]
   }
 ]

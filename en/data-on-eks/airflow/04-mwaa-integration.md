@@ -1,137 +1,318 @@
 # Part 4: Amazon MWAA Integration
 
-> **Last Updated**: July 15, 2026
+> Reviewed: 2026-09-12; MWAA Airflow 3.3.1 / Python 3.12; Kubernetes provider 10.21.0.
 
-## Lab Environment Setup
+This chapter targets **provisioned Amazon MWAA environments** submitting work to
+customer EKS clusters. **MWAA Serverless**, with YAML workflow definitions, is a
+separate deployment option; do not transfer this environment/DAG-file/cost model
+to it unchanged.
 
-To follow along with the examples in this document, you will need the following tools and environment:
+## 1. Management boundaries and current versions
 
-### Required Tools
+MWAA schedulers/workers use AWS-managed Fargate infrastructure connected to private
+subnets in the selected customer VPC. AWS also manages the metadata database.
+The service is therefore not unrelated to your VPC. However, **MWAA scheduler pods
+are not deployed into your EKS cluster for kubectl management**.
+In Airflow 3, the MWAA webserver also hosts the Execution API.
 
-* AWS CLI v2 (for managing the MWAA environment and IAM identity mappings)
-* `eksctl` (for creating the IAM identity mapping into the target EKS cluster's RBAC)
-* An Amazon MWAA environment (any recent version; the KubernetesPodOperator pattern in this document doesn't depend on which MWAA version you're running)
-* An EKS cluster (1.30+) separate from MWAA's own infrastructure, with `kubectl` access
+AWS operates the underlying service. You still manage DAGs, dependencies, IAM,
+VPC connectivity, capacity settings, alarms, recovery procedures and upgrades to
+supported versions. Managed infrastructure does not remove environment failures
+or capacity planning.
 
-Parts 1–3 covered running Airflow's full control plane — api-server, scheduler, dag-processor, triggerer — yourself on EKS, including native Kubernetes integration via `KubernetesPodOperator` and git-native DAG delivery via `GitDagBundle`. This part covers Amazon MWAA, AWS's fully managed Airflow control plane, and the trade-offs against running Airflow yourself. It also covers the one pattern that matters most for an EKS-centric platform: how an MWAA-hosted DAG can still target and drive workloads on your own EKS cluster.
+The official support table lists Airflow **3.3.1 available since 2026-09-01** and
+3.2.1 since 2026-05-19. Upstream 3.3.1 was released on 2026-08-12.
+Instead of assuming a fixed three-month delay, check the required patch, providers,
+region and actual environment version. Existing environments do not automatically
+switch to each newly supported Airflow release.
 
-## What "Managed" Means for MWAA
-
-MWAA (Managed Workflows for Apache Airflow) provisions and runs the scheduler, the api-server (Airflow 3's replacement for the old webserver, covered in Part 1), the dag-processor, and the worker fleet entirely on AWS-managed infrastructure inside AWS's own account boundary — not inside your VPC's EKS cluster. That has one direct consequence worth stating plainly: **there is no `kubectl` into the Airflow control plane itself**. You can't `kubectl get pods -n airflow` and see the MWAA scheduler the way you would for a self-managed deployment from Part 2. Environment health, scaling, and patching are entirely AWS's responsibility, surfaced through CloudWatch metrics/logs and the MWAA console/API rather than through Kubernetes primitives.
-
-## Amazon MWAA vs. Self-Managed Airflow on EKS
-
-The two approaches agree on what Airflow is — DAGs, a scheduler, a metadata database — but disagree sharply on where the control plane runs and how much of it you can touch, and on how quickly each one adopts new Airflow releases.
-
-| Aspect | Self-Managed Airflow on EKS (Parts 1–3) | Amazon MWAA |
+| Aspect | Self-managed Airflow on EKS | Provisioned MWAA |
 | --- | --- | --- |
-| **Where the control plane runs** | Your own EKS cluster, as Deployments you can inspect and scale | AWS-managed infrastructure outside your cluster — no direct Kubernetes access to it |
-| **Operational burden** | You own upgrades, HA configuration, and executor tuning | AWS handles patching, scaling, and availability of every control-plane component |
-| **Version currency** | Adopt any upstream Airflow release as soon as it ships | Lags upstream — MWAA added Airflow 3.2 support in **April 2026**, roughly three months after Airflow's own 3.2 release, and after MWAA had first bridged forward with Airflow 2.11 in January 2026 |
-| **Plugin delivery** | A plugins folder baked into your image or mounted as a volume | A zipped `plugins.zip` uploaded to an S3 bucket |
-| **Python dependencies** | Installed however you build your worker/scheduler image — root and system packages allowed | A `requirements.txt` uploaded to S3, resolved by MWAA's build-time dependency resolution — no root or system-package installs |
-| **DAG delivery** | Git-sync sidecar, or — as of Part 3 — Airflow 3's native `GitDagBundle` pulling DAGs directly from a git repo, no S3 step involved | DAGs synced from an S3 bucket only; no git-sync or DAG-bundle support of any kind |
-| **Kubernetes access from DAGs** | Native — `KubernetesPodOperator` runs with `in_cluster=True` against the same cluster the DAG lives in | Indirect — `KubernetesPodOperator` with `in_cluster=False` and an uploaded kubeconfig, targeting a separate EKS cluster (see below) |
-| **Customization** | Full control over executor mix, base images, scheduler/DAG-processor tuning | Limited to whatever MWAA's environment configuration exposes |
+| Operations | Design Kubernetes resources, database, upgrades and recovery | AWS manages the service infrastructure; users still own DAGs, permissions, connectivity, capacity choices and upgrades |
+| Versions/executors | Validate your chosen combinations | Choose within supported runtime/configuration options |
+| Python packages | Build your own images or other delivery mechanisms | S3 requirements.txt with matching version constraints |
+| System dependencies | Configure within image/node policies | Startup scripts can install Linux runtimes; validate support, startup time and networking |
+| DAG delivery | Configure GitDagBundle, git-sync or other paths | Documented baseline: S3 DAG folder and supporting-file synchronization |
+| External workloads | Use KPO and other integrations for separate images | KPO/EKS integration can also run separate workload images |
 
-### Why choose MWAA
+Startup scripts run before requirements installation and Airflow startup; official
+examples include sudo-based runtime installation. A blanket prohibition on system
+packages is therefore incorrect. This capability is different from unrestricted
+replacement of the managed base image or executor.
 
-* Your team is AWS-only and wants zero infrastructure to patch, scale, or keep highly available for the Airflow control plane itself
-* Your DAGs are pure Python/PyPI workloads — no custom system packages, no exotic executors — so MWAA's `requirements.txt`/`plugins.zip` model is not a limitation in practice
-* Operational appetite for running yet another stateful Kubernetes workload is low, and Airflow being a few months behind upstream is an acceptable trade-off
+This example uses Git → CI → S3 → MWAA. S3 delivery alone does not prove that every
+Airflow 3 bundle capability is unavailable. Validate allowed configuration and
+support for a particular MWAA release before adopting a separate bundle setup.
+Both Git polling and S3 synchronization include parsing delays; neither guarantees
+execution immediately after a push or merge.
 
-### Why keep self-managed Airflow on EKS anyway
+## 2. Three requirements for EKS access
 
-* You need a long time horizon on custom executors, custom Docker images, or per-task isolation strategies that go beyond what MWAA's environment configuration exposes
-* You want the latest upstream Airflow features (a new executor, a new DAG-bundle type) as soon as they ship, rather than waiting for MWAA to catch up
-* You need multi-cloud or on-prem portability that a fully AWS-managed control plane can't give you
-* At scale, self-hosting can meaningfully undercut MWAA on cost — teams running large, well-tuned self-managed deployments report **30–60% lower spend** than a poorly-tuned MWAA setup at comparable throughput. That number depends heavily on traffic pattern and how much engineering time you're willing to put into tuning it — it is not a guarantee, and it has to be weighed against the ongoing engineering effort self-hosting requires.
+1. **Networking:** Worker subnets need DNS and HTTPS 443 access to the EKS API
+   endpoint. For private endpoints, check routes, security groups and DNS.
+   Adding authentication does not resolve a connection timeout.
+2. **Authentication:** The MWAA execution role must be recognized through an EKS
+   access entry or an existing aws-auth configuration. The kubeconfig exec plugin
+   uses IAM credentials available at execution time.
+3. **Authorization:** Bind the mapped Kubernetes group to a namespace Role.
+   EKS authentication, Kubernetes RBAC and the child pod's AWS data permissions
+   are distinct layers.
 
-### The DAG-Delivery Gap in Practice
+Use an existing MWAA 3.3.1 environment, an existing EKS cluster, AWS CLI v2 and
+kubectl. Check current EKS support and provider/client compatibility.
+This chapter does not require a new cluster or broad administrator identity.
 
-The DAG-delivery difference in the table above is more than a checkbox. Part 3's `GitDagBundle` means a self-managed deployment picks up a new DAG the moment it's pushed to a tracked branch — the dag-processor pulls directly from git on its own polling interval. MWAA has no equivalent: every DAG change has to land as a file in the environment's S3 bucket first, whether that's a manual `aws s3 sync` or a CI step that does the same. It's not a large gap operationally once you've scripted the sync step, but it is one more moving part between "merged to main" and "running in the scheduler" compared to self-managed Airflow's git-native path.
+### Access entry and namespace RBAC
 
-## Driving an EKS Cluster from MWAA
-
-Even though MWAA's own control plane isn't on your EKS cluster, an MWAA DAG can still target and manage workloads on an EKS cluster you do control — the same `KubernetesPodOperator` from Part 3, pointed outward instead of in-cluster.
-
-![A DAG on the AWS-managed MWAA scheduler uses KubernetesPodOperator with in_cluster=False and a synced kube_config.yaml to create a pod on a separate EKS cluster, authorized by an eksctl iamidentitymapping that binds the MWAA execution role to EKS RBAC.](../../.gitbook/assets/en-data-on-eks-airflow-04-mwaa-integration-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-airflow-04-mwaa-integration-0.html)
-
-Because MWAA's execution environment has no in-cluster Kubernetes API access, `KubernetesPodOperator` has to authenticate the same way any external client would: with a kubeconfig file and an IAM identity that the target cluster's RBAC trusts.
-
-### 1. Bind the MWAA execution role into the EKS cluster's RBAC
-
-The MWAA environment runs under an execution role. Before that role can create pods on your EKS cluster, the cluster's `aws-auth` configuration needs to know about it:
+The following setup is performed by a cluster administrator. Replace the role ARN,
+cluster and region, and inspect any existing access entry first.
 
 ```bash
-eksctl create iamidentitymapping \
-  --cluster data-eks-cluster \
-  --region us-east-1 \
-  --arn arn:aws:iam::123456789012:role/mwaa-execution-role-my-environment \
-  --username mwaa-executor \
-  --group mwaa-pod-launcher
+aws eks describe-cluster \
+  --name data-eks-cluster --region us-east-1 \
+  --query 'cluster.accessConfig.authenticationMode'
+
+# Administrator action; API or API_AND_CONFIG_MAP mode is required.
+aws eks create-access-entry \
+  --cluster-name data-eks-cluster --region us-east-1 \
+  --principal-arn arn:aws:iam::123456789012:role/mwaa-execution-role-my-environment \
+  --type STANDARD \
+  --kubernetes-groups mwaa-pod-launcher
 ```
 
-`--group mwaa-pod-launcher` should map to a Kubernetes `ClusterRole`/`ClusterRoleBinding` scoped to exactly what the DAGs need (creating/reading pods in a specific namespace, say) rather than something as broad as `system:masters` — the identity mapping only decides *who* the MWAA role is inside the cluster; a separate RBAC binding decides *what* it can do.
+Access entries also work in API_AND_CONFIG_MAP mode. Editing aws-auth does not grant
+access in API-only mode. For legacy CONFIG_MAP clusters, use the existing mapping
+or plan a migration. Authentication-mode transitions include irreversible changes,
+so this example does not silently change the mode.
 
-### 2. Generate and stage the kubeconfig
+Save and apply workload-access.yaml below. The RoleBinding limits this grant to
+data-processing. A ClusterRoleBinding does not express that namespace boundary.
 
-Generate a kubeconfig against the target cluster, then upload it to the MWAA environment's S3 bucket alongside your DAGs (MWAA doesn't sync arbitrary files, but a kubeconfig sitting next to your DAG files is picked up like any other file the DAG code references at runtime):
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-processing
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: workload-smoke
+  namespace: data-processing
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mwaa-pod-launcher
+  namespace: data-processing
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - patch
+  - delete
+- apiGroups:
+  - ''
+  resources:
+  - pods/log
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mwaa-pod-launcher
+  namespace: data-processing
+subjects:
+- kind: Group
+  name: mwaa-pod-launcher
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mwaa-pod-launcher
+```
+
+The Role can affect pods throughout that namespace. Other access-policy/RBAC grants
+are additive, so inspect the complete permission set. Use admission controls for
+untrusted authors who could select other service accounts or dangerous pod specs.
+This synchronous example does not require XCom/exec permissions.
+
+## 3. Kubeconfig and dependency delivery
+
+Generate a fresh file rather than merging personal kubeconfig contexts into the
+artifact. Its generating administrator needs eks:DescribeCluster on the target.
 
 ```bash
+set -eu
+mkdir -p ./mwaa-staging
+test ! -e ./mwaa-staging/kube_config.yaml
 aws eks update-kubeconfig \
-  --name data-eks-cluster \
-  --region us-east-1 \
-  --kubeconfig ./kube_config.yaml
-
-aws s3 cp ./kube_config.yaml s3://my-mwaa-environment-bucket/dags/kube_config.yaml
+  --name data-eks-cluster --region us-east-1 \
+  --alias data-eks-cluster \
+  --kubeconfig ./mwaa-staging/kube_config.yaml
 ```
 
-### 3. Add the provider and write the DAG
+Inspect the generated cluster, context, CA and exec.command. Remove exec.env entries
+that refer to a developer's local AWS_PROFILE so the MWAA execution role's default
+credential chain can be used. Do not add exec --role arguments unless a separate
+role assumption is intended. Do not store long-lived keys or a static token.
+Verify the aws executable and get-token path in the MWAA runtime as well.
 
-`requirements.txt` needs the Kubernetes provider:
+The following requirements.txt targets **this chapter's 3.3.1/Python 3.12 environment**.
+First inspect providers already included in the image; validate actual installed
+versions after additions or changes. Do not use an unversioned apache-airflow extra
+to unintentionally change core Airflow.
 
+```text
+--constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.3.1/constraints-3.12.txt
+apache-airflow-providers-cncf-kubernetes==10.21.0
 ```
-apache-airflow[cncf.kubernetes]
+
+Enable bucket versioning and Block Public Access as required by MWAA.
+After uploading requirements.txt, update the environment's referenced object
+version and check installation logs. Overwriting the object alone is not the
+entire dependency-update procedure.
+
+Preserve this structure under the configured S3 DAG prefix. Review the generated
+kube_config.yaml before placing it beside the DAG.
+
+```text
+dags/
+  mwaa_eks_smoke.py
+  kube_config.yaml
+  templates/
+    base-pod-template.yaml
 ```
 
-The DAG task then sets `in_cluster=False` and points `config_file` at the kubeconfig MWAA synced down alongside the DAG:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: airflow-kpo-smoke
+spec:
+  serviceAccountName: workload-smoke
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: base
+    image: python:3.12-slim
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+```
 
 ```python
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from airflow.sdk import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 
-process_data = KubernetesPodOperator(
-    task_id="process_data_on_eks",
-    name="process-data",
-    namespace="data-processing",
-    image="123456789012.dkr.ecr.us-east-1.amazonaws.com/data-etl:latest",
-    cmds=["python", "process.py"],
-    in_cluster=False,
-    config_file="/usr/local/airflow/dags/kube_config.yaml",
-    is_delete_operator_pod=True,
-)
+BUNDLE_DIR = Path(__file__).resolve().parent
+
+with DAG(
+    dag_id="mwaa_eks_smoke",
+    start_date=datetime(2026, 9, 1, tzinfo=timezone.utc),
+    schedule=None,
+    catchup=False,
+) as dag:
+    run_smoke = KubernetesPodOperator(
+        task_id="run_smoke",
+        name="mwaa-eks-smoke",
+        namespace="data-processing",
+        image="python:3.12-slim",
+        cmds=["python", "-B", "-c"],
+        arguments=["import sys; print('MWAA_EKS_OK run_id=' + sys.argv[1])", "{{ run_id }}"],
+        pod_template_file=str(BUNDLE_DIR / "templates/base-pod-template.yaml"),
+        in_cluster=False,
+        config_file=str(BUNDLE_DIR / "kube_config.yaml"),
+        service_account_name="workload-smoke",
+        random_name_suffix=True,
+        reattach_on_restart=True,
+        deferrable=False,
+        do_xcom_push=False,
+        get_logs=True,
+        log_events_on_failure=False,
+        startup_timeout_seconds=120,
+        active_deadline_seconds=180,
+        execution_timeout=timedelta(minutes=5),
+        on_finish_action="delete_pod",
+        on_kill_action="delete_pod",
+    )
 ```
 
-This is the one integration path that matters most for an otherwise EKS-centric platform: MWAA can be the orchestration layer while the actual data processing pods still run — and are still owned, scaled, and observed — on your EKS cluster.
+![An MWAA worker reaches EKS through network connectivity, IAM authentication and namespace RBAC to run a separate workload pod.](../../.gitbook/assets/en-data-on-eks-airflow-04-mwaa-integration-0.png)
 
-## Decision Guide
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-airflow-04-mwaa-integration-0.html)
 
-* **Are your DAGs pure Python/PyPI with no custom executors or system packages?** → Yes: MWAA is a reasonable fit / No: lean self-managed
-* **Do you need the newest upstream Airflow features the same month they ship?** → Yes: self-managed / No: MWAA's few-month lag is tolerable
-* **Is multi-cloud or on-prem portability a hard requirement?** → Yes: self-managed on EKS / No: MWAA is worth evaluating
-* **Do you want zero infrastructure to patch/scale for the Airflow control plane itself, and is that worth a version lag?** → Yes: MWAA / No: self-managed
-* **Are you already running most of your data workloads on EKS (Kafka via Strimzi, Spark) and want one operational surface?** → Yes: self-managed Airflow fits that pattern more naturally / No: MWAA's isolation from your cluster is less of a downside
+## 4. Verify execution and choose an operating model
 
-As with MSK vs. Strimzi in the Kafka series, many teams run both: MWAA for lower-stakes, PyPI-only pipelines, and self-managed Airflow on EKS for pipelines that need custom executors, tighter version currency, or deep integration with the rest of an EKS-native data platform.
+After successful DAG parsing, manually trigger mwaa_eks_smoke and inspect task
+status and MWAA_EKS_OK logs. While running, inspect the pod's actual service account,
+image and resources. Deletion after success is configured cleanup behavior.
+Use MWAA CloudWatch task logging for retained logs.
 
-## Next Steps
+| Symptom | Boundary to inspect |
+| --- | --- |
+| DNS/connection timeout | Worker subnet → EKS API routes, DNS and security groups |
+| Unauthorized | Exec credentials, actual IAM role and access entry |
+| Forbidden | Namespace, group, RoleBinding and required verbs |
+| ImagePullBackOff | EKS node/Fargate image-pull identity and registry connectivity |
+| DAG import/exec-binary error | Installed MWAA packages, synchronized files and aws executable |
 
-This document covered what MWAA's managed control plane does and doesn't give you — no direct Kubernetes access to the scheduler/api-server/workers themselves, a few-month lag behind upstream Airflow, and S3-based plugin/dependency/DAG delivery instead of Parts 1–3's git-native workflow — along with the `KubernetesPodOperator` + `in_cluster=False` + IAM identity mapping pattern that lets an MWAA DAG still drive workloads on your own EKS cluster. Whether you land on MWAA, self-managed Airflow on EKS, or a mix of both, the decision guide above is the same trade-off analysis you'll see recur across every managed-vs-self-managed choice in this Data on EKS series.
+The workload pod does not automatically inherit the MWAA execution role.
+Real S3 work needs separate data permissions, such as IRSA or Pod Identity for its
+service account. KPO can run other images; MWAA is not limited to PyPI-only or
+low-importance pipelines.
 
-[Return to Main Page](./README.md)
+Compare executor/runtime flexibility, supported versions, operating capacity,
+network boundaries and recovery requirements. For cost, hold throughput/latency
+targets constant and include environment class/worker range, EKS, database,
+storage, NAT, logging and engineering effort. Do not base the choice on an
+unsupported claim of 30–60% self-hosting savings.
 
-## Quiz
+## Validation scope and references
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md).
+The version table, official constraints, provider source and example Python/YAML/
+shell structure were reviewed. No MWAA update, EKS access-entry creation, RBAC
+application or end-to-end execution was performed. Verify account-specific
+connectivity and execution using the checks above.
+
+
+- [MWAA supported versions and availability dates](https://docs.aws.amazon.com/mwaa/latest/userguide/airflow-versions.html)
+- [MWAA architecture](https://docs.aws.amazon.com/mwaa/latest/userguide/what-is-mwaa.html)
+- [Startup scripts and Linux runtimes](https://docs.aws.amazon.com/mwaa/latest/userguide/using-startup-script.html)
+- [Python dependencies and constraints](https://docs.aws.amazon.com/mwaa/latest/userguide/working-dags-dependencies.html)
+- [MWAA with EKS](https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-eks-example.html)
+- [EKS access management](https://aws.amazon.com/blogs/containers/a-deep-dive-into-simplified-amazon-eks-access-management-controls/)
+- [MWAA Serverless](https://docs.aws.amazon.com/mwaa/latest/mwaa-serverless-userguide/what-is-mwaa-serverless.html)
+
+[Part 5: Operations](05-operations.md)
+
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
