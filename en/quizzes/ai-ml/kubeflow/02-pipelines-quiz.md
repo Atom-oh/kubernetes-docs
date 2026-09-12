@@ -4,7 +4,7 @@ This quiz tests your understanding of Kubeflow Pipelines' architecture, the KFP 
 
 ## Multiple Choice Questions
 
-1. What workflow engine does the Kubeflow Pipelines backend use under the hood to actually schedule and run the Pods for a pipeline's steps?
+1. Which engine manages workflow sequencing and Pod creation in the open-source KFP 2.16.1 backend used here?
    - A) Apache Airflow
    - B) Argo Workflows
    - C) Tekton Pipelines
@@ -17,7 +17,7 @@ This quiz tests your understanding of Kubeflow Pipelines' architecture, the KFP 
 **Answer: B) Argo Workflows**
 
 **Explanation:**
-KFP's backend is built on Argo Workflows. Once a compiled pipeline reaches the KFP API server, it's translated into an Argo `Workflow` resource, and Argo's controller creates and sequences the Pods. KFP layers a Python SDK, UI, Experiment/Run tracking, and the MLMD store on top of that.
+This backend translates IR for a Run into Argo Workflow resources. Argo manages order and Pod creation; the Kubernetes scheduler places Pods on nodes. Uploading a pipeline alone does not create a Run.
 </details>
 
 2. What is the key architectural difference between the KFP v1 SDK compiler and the KFP v2 SDK compiler?
@@ -33,10 +33,10 @@ KFP's backend is built on Argo Workflows. Once a compiled pipeline reaches the K
 **Answer: B) v1 compiles directly to Argo Workflow YAML; v2 compiles to a backend-agnostic Intermediate Representation (IR) YAML**
 
 **Explanation:**
-The v1 SDK's `dsl-compile` produced an Argo-specific `Workflow` YAML manifest directly. The v2 SDK compiles to a backend-agnostic IR YAML (`PipelineSpec`) describing the DAG, components, and typed artifacts; the KFP backend translates that IR into an Argo `Workflow` at submission time.
+The v1 SDK's `dsl-compile` produced an Argo-specific `Workflow` YAML manifest directly. The v2 SDK compiles to a backend-agnostic IR YAML (`PipelineSpec`) describing the DAG, components, and typed artifacts; this backend translates IR for Run creation, subject to backend version and platform-extension compatibility.
 </details>
 
-3. Which Kubeflow Pipelines component is responsible for recording every component execution, its inputs/outputs, and the artifacts it touched — enabling lineage tracing in the KFP UI?
+3. Which Kubeflow Pipelines component is responsible for recording registered executions and their input/output artifact relationships — enabling lineage tracing in the KFP UI?
    - A) The Argo Workflow Controller
    - B) The ML Metadata (MLMD) store
    - C) The MinIO artifact store
@@ -49,7 +49,7 @@ The v1 SDK's `dsl-compile` produced an Argo-specific `Workflow` YAML manifest di
 **Answer: B) The ML Metadata (MLMD) store**
 
 **Explanation:**
-MLMD (typically MySQL-backed) records every component execution along with its inputs, outputs, and touched artifacts. This is what lets the KFP UI trace a trained model backward through the exact dataset and code that produced it, across runs.
+MLMD stores registered execution/artifact relationships, not every external side effect or the integrity of file bytes. Record code/data revisions and hashes for reproducibility.
 </details>
 
 4. In the KFP v2 SDK, how does a component declare that it produces a typed artifact of kind `Dataset` for downstream components to consume?
@@ -65,12 +65,12 @@ MLMD (typically MySQL-backed) records every component execution along with its i
 **Answer: B) By declaring a parameter typed as `Output[Dataset]`**
 
 **Explanation:**
-KFP v2 gives artifacts first-class types (`Dataset`, `Model`, `Metrics`, etc.). A component parameter typed `Output[Dataset]` tells the SDK to provision a storage path and wire that artifact into any downstream component that declares a matching `Input[Dataset]` parameter.
+KFP v2 gives artifacts first-class types (`Dataset`, `Model`, `Metrics`, etc.). A component parameter typed `Output[Dataset]` declares the type and wiring; the runtime prepares paths and transfers that artifact into any downstream component that declares a matching `Input[Dataset]` parameter.
 </details>
 
-5. What is KFP's default artifact storage backend if nothing is reconfigured, and what does the `awslabs/kubeflow-manifests` project's S3 pattern change about it?
+5. What is needed to use S3 instead of MinIO in the reviewed default installation?
    - A) The default is S3; the pattern switches it to MinIO
-   - B) The default is an in-cluster MinIO deployment; the pattern reconfigures the pipeline root and artifact store credentials to use S3 instead
+   - B) Configure pipeline root, provider and credential chain for S3 instead of the bundled MinIO
    - C) There is no default artifact store — one must always be configured manually
    - D) The default is EFS; the pattern switches it to EBS
 
@@ -78,15 +78,15 @@ KFP v2 gives artifacts first-class types (`Dataset`, `Model`, `Metrics`, etc.). 
 
 <summary>Show Answer</summary>
 
-**Answer: B) The default is an in-cluster MinIO deployment; the pattern reconfigures the pipeline root and artifact store credentials to use S3 instead**
+**Answer: B) Configure pipeline root, provider and credential chain for S3 instead of the bundled MinIO**
 
 **Explanation:**
-KFP ships with an in-cluster MinIO deployment as its default artifact store. On EKS, that means running an extra stateful service duplicating what S3 already provides. `awslabs/kubeflow-manifests` documents reconfiguring the pipeline root and artifact credentials so components read/write directly to S3.
+The default bundle includes MinIO, but other installations and imported artifact URIs can differ. Use the current KFP object-store guide. S3 has storage/request/transfer charges; the legacy AWS distribution guide is not a verified current-version installation recipe.
 </details>
 
-6. When KFP's artifact store is pointed at S3 instead of in-cluster MinIO, what identity mechanism becomes directly relevant for the KFP pipeline pods (e.g., the `pipeline-runner` ServiceAccount)?
+6. When KFP's artifact store is pointed at S3 instead of in-cluster MinIO, what identity mechanism becomes directly relevant for the actual Run execution ServiceAccount and artifact-accessing components?
    - A) None — S3 access works without any AWS identity configuration
-   - B) IRSA or EKS Pod Identity, granting the ServiceAccount permissions on the S3 bucket
+   - B) IRSA or Pod Identity with verified SDK, trust, runtime support and scoped S3 permissions
    - C) A hardcoded AWS access key baked into every component's container image
    - D) Kubernetes RBAC alone is sufficient for S3 access
 
@@ -94,7 +94,7 @@ KFP ships with an in-cluster MinIO deployment as its default artifact store. On 
 
 <summary>Show Answer</summary>
 
-**Answer: B) IRSA or EKS Pod Identity, granting the ServiceAccount permissions on the S3 bucket**
+**Answer: B) IRSA or Pod Identity with verified SDK, trust, runtime support and scoped S3 permissions**
 
 **Explanation:**
 Once artifact reads/writes go straight to AWS rather than to the in-cluster MinIO endpoint, the ServiceAccount the KFP pipeline pods run under needs an IRSA role or EKS Pod Identity association with permissions on that S3 bucket.
@@ -118,7 +118,7 @@ Inside the `@dsl.pipeline`-decorated function, `prep_task.outputs["output_datase
 
 8. How does KFP decide whether to reuse a cached result instead of re-running a component?
    - A) It always re-runs every component regardless of inputs
-   - B) It hashes the component's inputs (parameter values, input artifact content, and the component's own definition) and reuses cached outputs on a matching hash from a previous successful execution
+   - B) It hashes the component's inputs (parameter values, input artifact names/IDs, and container image/command, output specifications and related configuration) and reuses cached outputs on a matching hash from a previous successful execution
    - C) It re-runs components only if the pipeline name has changed
    - D) Caching is based solely on wall-clock time since the last run
 
@@ -126,10 +126,12 @@ Inside the `@dsl.pipeline`-decorated function, `prep_task.outputs["output_datase
 
 <summary>Show Answer</summary>
 
-**Answer: B) It hashes the component's inputs (parameter values, input artifact content, and the component's own definition) and reuses cached outputs on a matching hash from a previous successful execution**
+**Answer: B) It hashes the component's inputs (parameter values, input artifact names/IDs, and container image/command, output specifications and related configuration) and reuses cached outputs on a matching hash from a previous successful execution**
 
 **Explanation:**
-KFP caches a component's execution by hashing its inputs. A later run submitting a component with a matching input hash skips re-execution and reuses the previously cached outputs.
+The 2.16.1 key uses parameter values, artifact IDs and container/output configuration, not a fresh hash of file bytes. Mutating bytes or an image tag can leave the key unchanged. Lookup is scoped by pipeline name and namespace.
+
+File contents, mutable image tags and external state do not automatically invalidate the key. Record data versions/hashes as explicit inputs or disable caching.
 </details>
 
 ## Short Answer Questions
@@ -140,7 +142,7 @@ KFP caches a component's execution by hashing its inputs. A later run submitting
 
 <summary>Show Answer</summary>
 
-**Answer: Per component, via `set_caching_options(enable_caching=False)` on the task; per run, via the caching toggle exposed in the KFP UI's Run submission dialog.**
+**Answer: Per component, via `set_caching_options(enable_caching=False)` on the task; per run, via an authenticated client submission with `enable_caching=False`.**
 
 **Explanation:**
 `prep_task.set_caching_options(enable_caching=False)` disables caching for one specific component task within the pipeline function. Alternatively, the entire pipeline submission's caching can be disabled at Run-submission time rather than component-by-component.
@@ -152,10 +154,10 @@ KFP caches a component's execution by hashing its inputs. A later run submitting
 
 <summary>Show Answer</summary>
 
-**Answer: It produces an Intermediate Representation (IR) YAML — a backend-agnostic `PipelineSpec`. Once at the API server, the backend translates that IR YAML into an Argo `Workflow`, which Argo's controller then schedules as Pods.**
+**Answer: It produces an Intermediate Representation (IR) YAML — a backend-agnostic `PipelineSpec`. After upload and Run creation, this backend translates the IR YAML into an Argo `Workflow`, whose Pod creation is managed by Argo and node placement by Kubernetes.**
 
 **Explanation:**
-The KFP SDK's job ends at producing IR YAML. Everything from the API server onward — translation to Argo Workflow and Pod scheduling — is the backend's responsibility, which is what makes the IR YAML backend-agnostic in principle.
+Compilation produces IR; the package also provides client APIs and Python runtime support. Run creation triggers backend workflow processing. Backend IR versions and platform extensions must be compatible.
 </details>
 
 ## Hands-on Questions
@@ -171,7 +173,7 @@ The KFP SDK's job ends at producing IR YAML. Everything from the API server onwa
 from kfp import dsl
 from kfp.dsl import Dataset, Output
 
-@dsl.component(base_image="python:3.11-slim")
+@dsl.component(base_image="python:3.12-slim", packages_to_install=["pandas==2.3.3"])
 def prepare_data(output_dataset: Output[Dataset]):
     import pandas as pd
 
@@ -180,7 +182,7 @@ def prepare_data(output_dataset: Output[Dataset]):
 ```
 
 **Explanation:**
-`output_dataset: Output[Dataset]` declares a typed artifact output; the SDK provisions `output_dataset.path` as the storage location the component writes to, which downstream components can then declare as an `Input[Dataset]`.
+`output_dataset: Output[Dataset]` declares a typed artifact output; the runtime prepares `output_dataset.path` as the storage location the component writes to, which downstream components can then declare as an `Input[Dataset]`.
 </details>
 
 12. Write a `@dsl.pipeline` function that wires `prepare_data`'s output into a `train_model` component's `input_dataset` parameter.
@@ -215,7 +217,7 @@ prep_task.set_caching_options(enable_caching=False)
 ```
 
 **Explanation:**
-Calling `set_caching_options(enable_caching=False)` on a task object within the pipeline function disables caching for that specific component's execution, forcing it to re-run even if a matching cached result from a prior run exists.
+Calling `set_caching_options(enable_caching=False)` on a task object within the pipeline function disables caching in that compiled task. An explicit enable_caching value at Run submission can override it; leave that option None to preserve the compiled setting.
 </details>
 
 ---

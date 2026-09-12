@@ -64,7 +64,7 @@ Instead of one CRD and controller per framework, Trainer v2 introduces `TrainJob
 **Answer: B) `ClusterTrainingRuntime`**
 
 **Explanation:**
-`ClusterTrainingRuntime` (or the namespace-scoped `TrainingRuntime`) is the reusable template a platform team defines once, covering the container image and distributed launch mechanics. Individual `TrainJob`s reference it by name and supply only the run-specific script, arguments, and worker count.
+`ClusterTrainingRuntime` (or the namespace-scoped `TrainingRuntime`) is the reusable template a platform team defines once, covering the container image and distributed launch mechanics. Individual TrainJobs reference kind/name and supply allowed run-specific settings. numNodes is training Pod count, not necessarily EC2 instance count.
 
 </details>
 
@@ -80,39 +80,39 @@ Instead of one CRD and controller per framework, Trainer v2 introduces `TrainJob
 **Answer: B) JAX and XGBoost**
 
 **Explanation:**
-According to Kubeflow Trainer's [release notes](https://github.com/kubeflow/trainer/releases), v2.2 (released around March 2026) added first-class JAX and XGBoost training runtimes alongside existing PyTorch support, along with enhanced observability and Flux Framework integration for HPC-style workloads.
+According to Kubeflow Trainer's [release notes](https://github.com/kubeflow/trainer/releases), v2.2 (released March 20, 2026) added first-class JAX and XGBoost training runtimes alongside existing PyTorch support, with Flux policy/integration. trainerStatus is an alpha TrainJobStatus-gated feature, disabled by default, requiring explicit application reporting.
 
 </details>
 
-6. Which statement most accurately describes the current state of the v1-to-Trainer-v2 migration as of the Kubeflow Community Distribution 26.03 release?
+6. Which statement most accurately describes the current state of the v1-to-Trainer-v2 migration as of the Kubeflow Community Distribution 26.03.1 release?
    - A) The migration is fully complete; the legacy Training Operator has been removed from all distributions
-   - B) The legacy Training Operator (1.9.2) is still bundled alongside Trainer v2 in the 26.03 distribution, and migrating existing jobs to `TrainJob` is an active, ongoing transition for many teams
+   - B) The legacy Training Operator (1.9.2) is still bundled alongside Trainer v2 in the 26.03.1 distribution, and legacy jobs and TrainJob need a separately validated migration
    - C) Kubeflow Trainer v2 was deprecated in favor of reverting to the v1 CRDs
    - D) `TrainJob` and `PyTorchJob` are simply two names for the identical CRD
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The legacy Training Operator (1.9.2) is still bundled alongside Trainer v2 in the 26.03 distribution, and migrating existing jobs to `TrainJob` is an active, ongoing transition for many teams**
+**Answer: B) The legacy Training Operator (1.9.2) is still bundled alongside Trainer v2 in the 26.03.1 distribution, and legacy jobs and TrainJob need a separately validated migration**
 
 **Explanation:**
-The Kubeflow Community Distribution 26.03 still ships the legacy Training Operator 1.9.2 alongside Trainer v2, reflecting that the two coexist and that many teams are still mid-migration rather than having completed a full cutover to `TrainJob`.
+The Kubeflow Community Distribution 26.03.1 still ships the legacy Training Operator 1.9.2 alongside Trainer v2, showing that both APIs are provided, not any particular team’s migration progress.
 
 </details>
 
-7. Why do distributed training jobs typically require gang scheduling?
+7. Why can optional gang scheduling help synchronous distributed training?
    - A) Kubernetes requires all Pods in a namespace to be gang-scheduled by default
-   - B) All workers generally need to be scheduled and running together before training can start; partial scheduling wastes GPU capacity and can deadlock
+   - B) It can reduce partial resource allocation while a job cannot obtain all workers required for communication
    - C) Gang scheduling is required only for stateless web workloads
    - D) It is a billing requirement imposed by cloud providers
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) All workers generally need to be scheduled and running together before training can start; partial scheduling wastes GPU capacity and can deadlock**
+**Answer: B) It can reduce partial resource allocation while a job cannot obtain all workers required for communication**
 
 **Explanation:**
-A distributed training job that gets only some of its required workers scheduled can wait indefinitely for the rest, wasting held GPU capacity and potentially deadlocking. Gang-scheduling primitives group a job's Pods as an all-or-nothing scheduling unit to avoid this.
+Fixed-size synchronous jobs need the required processes at rendezvous. Trainer does not enable gang scheduling automatically; the default Torch runtime has no podGroupPolicy. Configure scheduler/CRDs/policy separately. Sequential node provisioning can succeed within timeout bounds.
 
 </details>
 
@@ -126,7 +126,7 @@ A distributed training job that gets only some of its required workers scheduled
 **Answer:** It gives each worker Pod a stable, resolvable DNS name so other workers can discover it, instead of relying on Pod IPs that can change on reschedule.
 
 **Explanation:**
-Distributed training workers need to find each other reliably; a headless Service in front of the worker Pods provides stable DNS-based discovery that survives individual Pod rescheduling.
+Distributed training workers need to find each other reliably; a headless Service in front of the worker Pods supports DNS-based discovery with suitable Pod naming/hostname/subdomain and networking. It does not preserve process state or IPs.
 
 </details>
 
@@ -135,7 +135,7 @@ Distributed training workers need to find each other reliably; a headless Servic
 <details>
 <summary>Show Answer</summary>
 
-**Answer:** Katib commonly templates a `TrainJob` as the underlying training job for each Trial, injecting that Trial's chosen hyperparameter values as script arguments, and reads back the reported metrics to guide the search.
+**Answer:** With compatible templates, runtime, status conditions and metric collection, Katib can create a TrainJob for each Trial, injecting that Trial's chosen hyperparameter values as script arguments, and reads back the reported metrics to guide the search.
 
 **Explanation:**
 Katib itself doesn't need to know about distributed-launch mechanics — it stamps out a `TrainJob` per Trial against a runtime the platform team already defined, keeping the hyperparameter-search logic decoupled from the training execution mechanics.
@@ -150,7 +150,7 @@ Katib itself doesn't need to know about distributed-launch mechanics — it stam
 **Answer:** The "Migrating to Kubeflow Trainer v2" guide on kubeflow.org.
 
 **Explanation:**
-This document covers the conceptual shift and mechanics at a high level but deliberately does not restate every migration step; the official kubeflow.org migration guide is the authoritative source for the concrete field-by-field mapping.
+This document covers the conceptual shift and mechanics at a high level but deliberately does not restate every migration step; the [pinned official guide](https://github.com/kubeflow/trainer/blob/v2.3.0/docs/operator-guides/migration.md) provides a PyTorchJob example, not an exhaustive mapping for every framework/field. Compare actual launch roles, retries, storage and networking.
 
 </details>
 

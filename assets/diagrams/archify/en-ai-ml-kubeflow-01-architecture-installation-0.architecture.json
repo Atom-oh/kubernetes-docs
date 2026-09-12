@@ -2,134 +2,159 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kubeflow Component Architecture",
-    "output": "en-ai-ml-kubeflow-01-architecture-installation-0.html",
+    "title": "Kubeflow access and control boundaries",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "none",
+    "viewBox": [
+      1200,
+      600
+    ],
+    "locale": "en"
   },
   "components": [
     {
-      "id": "gateway",
+      "id": "identity",
       "type": "security",
-      "label": "Istio Ingress Gateway",
-      "sublabel": "AuthN / AuthZ",
+      "label": "Identity and gateway",
+      "sublabel": "IdP / oauth2-proxy / Istio",
       "pos": [
         30,
-        220
+        70
       ],
       "size": [
-        190,
-        60
+        270,
+        78
       ]
     },
     {
-      "id": "dashboard",
-      "type": "backend",
-      "label": "Central Dashboard",
-      "sublabel": "single UI entry point",
+      "id": "ui",
+      "type": "frontend",
+      "label": "Dashboard and web apps",
+      "sublabel": "navigation and component requests",
       "pos": [
-        290,
-        220
+        445,
+        70
       ],
       "size": [
-        190,
-        60
+        270,
+        78
+      ]
+    },
+    {
+      "id": "apps",
+      "type": "backend",
+      "label": "Component APIs",
+      "sublabel": "KFP API / authorization / storage",
+      "pos": [
+        885,
+        70
+      ],
+      "size": [
+        270,
+        78
       ]
     },
     {
       "id": "profile",
       "type": "backend",
-      "label": "Profile Controller",
-      "sublabel": "team-a / team-b namespaces",
+      "label": "Profile Controller / KFAM",
+      "sublabel": "ownership / access / optional quota",
       "pos": [
-        550,
-        60
+        30,
+        370
       ],
       "size": [
-        210,
-        60
+        270,
+        78
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "RBAC / resource state",
+      "pos": [
+        445,
+        370
+      ],
+      "size": [
+        270,
+        78
       ]
     },
     {
       "id": "controllers",
       "type": "backend",
-      "label": "Component Controllers",
-      "sublabel": "Pipelines \u00b7 Notebook \u00b7 Katib \u00b7 Trainer \u00b7 KServe",
+      "label": "Workload controllers",
+      "sublabel": "Notebook / Katib / Trainer / KServe",
       "pos": [
-        550,
-        360
+        875,
+        370
       ],
       "size": [
-        220,
-        70
-      ]
-    },
-    {
-      "id": "apiserver",
-      "type": "backend",
-      "label": "Kubernetes API Server",
-      "sublabel": "shared control plane",
-      "pos": [
-        840,
-        220
-      ],
-      "size": [
-        190,
-        60
+        290,
+        78
       ]
     }
   ],
   "connections": [
     {
-      "id": "gateway-dashboard",
-      "from": "gateway",
-      "to": "dashboard",
-      "label": "authenticated request",
+      "id": "authenticated",
+      "from": "identity",
+      "to": "ui",
+      "label": "authenticated UI request"
+    },
+    {
+      "id": "component-requests",
+      "from": "ui",
+      "to": "apps",
+      "label": "component-specific requests"
+    },
+    {
+      "id": "profile-reconcile",
+      "from": "profile",
+      "to": "api",
+      "label": "namespace / policy reconciliation",
       "labelAt": [
-        255,
-        216
+        373,
+        480
       ]
     },
     {
-      "id": "dashboard-profile",
-      "from": "dashboard",
-      "to": "profile",
-      "label": "namespace routing"
-    },
-    {
-      "id": "dashboard-controllers",
-      "from": "dashboard",
-      "to": "controllers",
-      "label": "component calls"
-    },
-    {
-      "id": "profile-api",
-      "from": "profile",
-      "to": "apiserver",
-      "label": "reconcile"
-    },
-    {
-      "id": "controllers-api",
+      "id": "workload-reconcile",
       "from": "controllers",
-      "to": "apiserver",
-      "label": "reconcile"
+      "to": "api",
+      "label": "supported resource reconciliation",
+      "labelAt": [
+        795,
+        480
+      ]
+    },
+    {
+      "id": "app-kubernetes",
+      "from": "apps",
+      "to": "api",
+      "label": "K8s calls where implemented",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Multi-tenancy",
+      "title": "Profile scope",
       "items": [
-        "a Profile Controller reconciles namespace, RBAC, quota, and AuthorizationPolicy per team",
-        "the Central Dashboard is the single UI entry point"
+        "Managed quota is created only with resourceQuotaSpec.hard.",
+        "NetworkPolicy, storage, AWS IAM and app authorization are separate."
       ]
     },
     {
-      "dot": "emerald",
-      "title": "Components",
+      "dot": "amber",
+      "title": "APIs and data",
       "items": [
-        "Pipelines, Notebooks, Katib, Trainer, and KServe each run their own controller",
-        "every controller reconciles state through the shared Kubernetes API server"
+        "KFP Run/Experiment concepts are not universally CRDs.",
+        "Dashboard does not dispatch work to every controller."
       ]
     }
   ]

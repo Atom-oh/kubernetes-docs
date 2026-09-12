@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-kubeflow-04-katib-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1200,
       740
@@ -53,7 +53,7 @@
           "trialn",
           "sidecar"
         ],
-        "note": "Each proposal becomes a Trial training job; metrics reported by the sidecar inform the next round of proposals."
+        "note": "Trial jobs report through pull collectors or Push to DB manager."
       },
       {
         "id": "finish",
@@ -63,7 +63,7 @@
           "succeeded",
           "record"
         ],
-        "note": "Once maxTrialCount or the target objective is reached, the best Trial's hyperparameters and metric are recorded on status."
+        "note": "Controller evaluates goal/count/failure/suggestion completion. Succeeded is not quality certification."
       }
     ]
   },
@@ -71,7 +71,7 @@
     {
       "id": "experiment",
       "type": "frontend",
-      "label": "Experiment CRD created",
+      "label": "Experiment object created",
       "sublabel": "objective · parameters · trialTemplate",
       "pos": [
         40,
@@ -114,7 +114,7 @@
       "id": "propose",
       "type": "backend",
       "label": "Proposes hyperparameter set(s)",
-      "sublabel": "bounded by parallelTrialCount",
+      "sublabel": "Trial concurrency, not GPU count",
       "pos": [
         500,
         300
@@ -169,8 +169,8 @@
     {
       "id": "sidecar",
       "type": "messagebus",
-      "label": "Reports objective metric",
-      "sublabel": "metrics-collector sidecar",
+      "label": "Metrics through DB manager",
+      "sublabel": "pull collector / Push",
       "pos": [
         500,
         580
@@ -183,8 +183,8 @@
     {
       "id": "succeeded",
       "type": "database",
-      "label": "Experiment marked Succeeded",
-      "sublabel": "stop condition met",
+      "label": "Controller terminal decision",
+      "sublabel": "Succeeded / Failed",
       "pos": [
         960,
         150
@@ -197,8 +197,8 @@
     {
       "id": "record",
       "type": "database",
-      "label": "Best Trial recorded",
-      "sublabel": "hyperparameters + metric on status",
+      "label": "Current best observation",
+      "sublabel": "currentOptimalTrial / conditions",
       "pos": [
         960,
         300
@@ -295,10 +295,26 @@
     },
     {
       "id": "sugg-succeeded",
-      "from": "suggestion",
+      "from": "controller",
       "to": "succeeded",
-      "label": "maxTrialCount reached or target objective hit",
-      "variant": "emphasis"
+      "label": "termination conditions",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          800,
+          62
+        ],
+        [
+          800,
+          182
+        ]
+      ],
+      "labelAt": [
+        850,
+        110
+      ]
     },
     {
       "id": "succeeded-record",
@@ -306,6 +322,24 @@
       "to": "record",
       "fromSide": "bottom",
       "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Resource demand",
+      "items": [
+        "Concurrent Trials × Pods per Trial × resources per Pod + overhead",
+        "maxTrialCount is neither successful-training count nor spending cap."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "0.19.0 medianstop",
+      "items": [
+        "Unlike the documented median, code computes a mean of stored averages.",
+        "Defaults: min_trials_required=3 / start_step=4"
+      ]
     }
   ]
 }

@@ -1,92 +1,102 @@
 # Part 4: Katib — Hyperparameter Tuning and AutoML
 
-> **Supported Versions**: Katib 0.19.0, Kubeflow Community Distribution 26.03
-> **Last Updated**: August 19, 2026
+> **Supported Versions**: Katib 0.19.0, Kubeflow Community Distribution 26.03.1
+> **Last Updated**: September 12, 2026
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you will need the following tools and environment:
-
-### Required Tools
-
-* kubectl v1.34 or later, pointed at a cluster with Kubeflow installed (see Part 1)
-* Access to a user Profile (namespace) in the Kubeflow Central Dashboard, to submit Experiments
-* A GPU-enabled `NodePool`/`EC2NodeClass` pair configured via [Karpenter](../../autoscaling/02-karpenter.md), if you plan to run GPU-backed Trials
-* A working training job template to reference from `trialTemplate` (e.g. a `TrainJob`/`ClusterTrainingRuntime` pair from Part 5, or a plain Kubernetes `Job`)
+Use Katib 0.19.0 controllers, DB manager/storage, required Suggestion images and namespace permissions to create Experiments. Distinguish full-platform Profile access from standalone installation. GPU capacity is optional; Karpenter is one provisioner.
 
 ## What Katib Is
 
-Earlier parts of this series covered the Kubeflow notebook and pipeline layers. This document covers **Katib**, Kubeflow's Kubernetes-native hyperparameter tuning and AutoML component. Katib turns "which learning rate, batch size, and network depth should I use?" into a declarative, cluster-scheduled search rather than a manual loop of edit-run-inspect, and it does so by composing ordinary Kubernetes objects — Custom Resources, pods, and services — rather than a bespoke scheduler bolted onto the side of the cluster.
+Katib supports hyperparameter optimization (HPO) and neural architecture search (NAS). An `Experiment` defines objective/search space/algorithm/Trial template; `Suggestion` and its algorithm service propose candidates; a `Trial` manages one candidate execution. How previous results influence suggestions depends on the algorithm.
 
-Katib automates hyperparameter optimization (HPO) and neural architecture search by running many training jobs in parallel, each with a different combination of hyperparameters, and using the results to decide which combinations to try next. It is built around three cooperating pieces:
+These are **custom resource objects** defined by CRDs, not new CRD definitions installed for every run. The Trial controller creates the configured job resource; that job's controller and Kubernetes handle Pod creation and node placement. The 0.19.0 default trialResources includes `TrainJob.v1alpha1.trainer.kubeflow.org`, Kubernetes Job and legacy training-job kinds. Match the actual Trainer API/runtime, permissions, success/failure conditions and collector target Pods/containers; compatibility is not automatic.
 
-* **Experiment** — a CRD describing one tuning run: the objective to optimize, the search space of hyperparameters, the search algorithm to use, and a template describing how to run one training job.
-* **Trial** — a CRD, created by the Katib controller, representing a single training run with one specific hyperparameter combination. An Experiment with `maxTrialCount: 50` will, over its lifetime, spawn up to 50 Trials.
-* **Suggestion** — a service (also backed by a CRD) that implements the search algorithm. It receives results from completed and in-progress Trials and proposes the next hyperparameter set(s) to try.
-
-The relationship is hierarchical: one Experiment owns many Trials, and each Trial owns the actual training job (a Kubernetes `Job`, or a training-job resource such as a `TrainJob` when integrated with Kubeflow Trainer — see Part 5) that Kubernetes schedules and runs like any other workload. Because everything is a CRD, `kubectl get experiments`, `kubectl get trials`, and `kubectl describe` on any of them behave exactly as they would for a Deployment or Job — there is no separate CLI or UI required to inspect state, though the Katib UI (part of the Kubeflow Central Dashboard) gives a visual view of trial progress and metric curves.
+Inspect state with `kubectl get experiments.kubeflow.org` and `kubectl get trials.kubeflow.org`. These are distinct from KFP's similarly named Experiment API.
 
 ## Search Algorithms
 
-Katib ships with a pluggable set of search algorithms, exposed through the Suggestion service. Each algorithm answers the same question — "given results so far, what should the next Trial(s) try?" — with a different strategy and a different tradeoff between exploration cost and search efficiency.
+Algorithm names must match installed KatibConfig entries and Suggestion images. The 0.19.0 default configuration includes:
 
-| Algorithm | Good for | Conceptual behavior |
-|---|---|---|
-| **Random search** | A cheap baseline, or a very large/poorly understood search space | Samples hyperparameter combinations independently and uniformly at random from the defined space. No memory of past trials. |
-| **Grid search** | Small, low-dimensional search spaces where exhaustive coverage is affordable | Enumerates every combination of the discrete values provided for each hyperparameter. Guarantees full coverage but scales combinatorially with the number of parameters. |
-| **Bayesian optimization** | Expensive-to-train models where each Trial's cost matters and informed sampling pays off | Builds a probabilistic model of how hyperparameters map to the objective metric, and uses that model to pick the next point(s) most likely to improve on the best result seen so far. Converges in fewer trials than random search for many workloads, at the cost of some sequential dependency between suggestions. |
-| **Hyperband** | Workloads where "does this look promising early?" is a cheap, informative signal (e.g., loss curves after a few epochs) | Runs many configurations with a small resource budget, aggressively discards the worst performers, and reallocates the freed budget to the survivors for longer runs. Trades exhaustive per-config information for early pruning. |
-| **CMA-ES and other advanced strategies** | Continuous, higher-dimensional search spaces, or workloads that benefit from population-style search (e.g., population-based training) | Evolve a population or distribution of candidate configurations over successive generations, adapting the sampling distribution based on which candidates performed well. Conceptually closer to evolutionary/optimization algorithms than to simple sampling. |
+| Name | Strategy and constraints |
+| --- | --- |
+| `random` | Sampling the configured space/distributions; not necessarily uniform for every parameter |
+| `grid` | Finite combinations; goals, failures or Trial limits can prevent exhaustive execution |
+| `bayesianoptimization`, `tpe`, `multivariate-tpe` | Different model-based candidate strategies; fewer Trials or an optimum is not guaranteed |
+| `hyperband` | Resource budgets and successive halving; training code must honor the budget parameter |
+| `cmaes`, `sobol` | Covariance-adaptation evolution and low-discrepancy sampling respectively, not the same algorithm |
+| `pbt` | Population-based training with checkpoint-sharing requirements; distinct from CMA-ES |
+| `enas`, `darts` | Architecture-search algorithms with their own templates/dependencies |
 
-Which algorithm to choose is a function of how expensive each Trial is and how much structure the search space has. Random search is a reasonable default to establish a baseline; Bayesian optimization and Hyperband are the more common choices once training a single Trial is costly enough that reducing the total number of Trials materially matters.
+The PBT guide requires an RWX volume and `resumePolicy: FromVolume`. Changing an algorithm name does not make arbitrary training code compatible.
 
 ## Anatomy of an Experiment
 
-An Experiment's spec has three parts that matter most for understanding how a tuning run behaves:
+| Field | Meaning |
+| --- | --- |
+| `objective` | Metric name, maximize/minimize and optional target |
+| `parameters` | double/int/discrete/categorical spaces, ranges/lists/distributions |
+| `algorithm` | Installed Suggestion algorithm and settings |
+| `trialTemplate` | trialParameters substitution and job spec, primary container/Pod selection, success/failure conditions |
+| `parallelTrialCount` | Concurrently processed Trials, not Pod/GPU/EC2 count |
+| `maxTrialCount` | Completion-count stopping criterion, not successful-training count or immutable lifetime cost cap |
+| `maxFailedTrialCount` | Failure threshold including failed and metrics-unavailable Trials |
+| `metricsCollectorSpec` / `earlyStopping` | Metric reporting and separate early-stopping configuration |
 
-* **`objective`** — names the metric to optimize (e.g., `accuracy` or `loss`) and the goal (`maximize` or `minimize`), along with an optional target value that, if reached, can be used to stop the Experiment early as "good enough."
-* **`parameters`** — the search space: one entry per hyperparameter, each with a name, a type, and either a continuous range (min/max, useful for something like a learning rate) or a discrete list of values (useful for something like an optimizer choice or a categorical architecture flag).
-* **`trialTemplate`** — describes how each Trial's actual training job gets built: a template for the underlying job spec, with placeholders that get substituted with the specific hyperparameter values the Suggestion service proposed for that Trial. In current Kubeflow deployments this template commonly points at a training job resource managed by **Kubeflow Trainer** (covered in depth in Part 5) — Katib's job here is to decide *what values* to inject, not to re-implement how a distributed training job runs.
+Goal attainment, completed-count limit or exhausted suggestions can end successfully; failure thresholds or Suggestion errors can fail the Experiment. Completion status counts succeeded, failed, killed, early-stopped and metrics-unavailable Trials. Resume policy and spec changes also affect lifecycle, so do not treat maxTrialCount as an immutable lifetime creation or spending limit.
 
-Two additional Experiment-level fields shape how the search is executed rather than what it searches:
+`Succeeded` is a control-loop outcome, not a model-quality certification. `status.currentOptimalTrial` describes the best collected observation; missing metrics can leave no usable best model.
 
-* **`parallelTrialCount`** — how many Trials may run concurrently.
-* **`maxTrialCount`** — the total number of Trials the Experiment will run across its lifetime before stopping (regardless of whether a target objective value was hit).
+## Early Stopping and the 0.19.0 medianstop Implementation
 
-## Early Stopping
+Early stopping can terminate an in-progress Trial. The official guide requires `StdOut`/`File` collectors and timestamped logs. Do not assume equivalent support for every collector or arbitrary training loop. Defaults are `min_trials_required=3` and `start_step=4`.
 
-Not every Trial needs to run to completion to know it isn't going to win. Katib supports **early stopping**, where a Trial that is clearly underperforming partway through training is terminated before it consumes its full resource allocation. A commonly used approach is the **median-stopping rule**: at a given point in training, a Trial's intermediate objective value is compared against the median of other Trials' intermediate values at the same point; if it falls meaningfully short, the Trial is stopped rather than allowed to run to completion for a result that's already unlikely to be competitive.
+**Distinguish the documented rule from this release's implementation.** The official guide describes a median of completed-Trial running averages. In v0.19.0, however, `get_median_value` stores each successful Trial's average over its first start_step observations and returns the **arithmetic mean** of those stored averages. Executing the unchanged function locally with `[1, 2, 100]` produced about 34.333, not the statistical median 2. The algorithm name does not guarantee a median calculation in this release.
 
-Early stopping and algorithms like Hyperband solve a related problem — not wasting compute on training that isn't going anywhere — but they operate at different levels: Hyperband is a *search strategy* that decides how much budget to give each configuration up front, while early stopping is a *runtime check* applied to a Trial that's already in flight based on how it's progressing relative to its peers.
+Hyperband's budget allocation and the early-stopping service are separate configuration/execution paths. Validate the risk of discarding promising candidates and the effects of metric format, reporting frequency and budget parameters.
 
 ## How an Experiment Runs, End to End
 
-![Katib tuning loop: an Experiment CRD triggers the Katib controller to create a Suggestion service that proposes hyperparameter sets for parallel Trial training jobs; a metrics-collector sidecar reports each objective metric back to the Suggestion service until maxTrialCount or the target objective is reached, when the Experiment is marked Succeeded and the best Trial is recorded on its status.](../../.gitbook/assets/en-ai-ml-kubeflow-04-katib-0.png)
+![Experiment and Suggestion generate candidates; Trial jobs report metrics through DB manager. Goals, completion counts and failure conditions determine termination.](../../.gitbook/assets/en-ai-ml-kubeflow-04-katib-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-04-katib-0.html)
 
-The loop works like this: the Katib controller reconciles the Experiment and starts a Suggestion service for the requested algorithm. The Suggestion service proposes one or more hyperparameter combinations, bounded by `parallelTrialCount`. The controller creates a Trial CRD, and its underlying training job, for each proposal. As Trials report results, those results feed back into the Suggestion service to inform the next round of proposals. The loop continues until `maxTrialCount` is reached or the objective's target value is satisfied. Throughout, the Experiment's status is continuously updated with the best-performing Trial observed so far. Once the Experiment completes, that best Trial's hyperparameters and metric value are what's recorded as the final result.
+The Experiment controller requests candidates through Suggestion resources and creates Trial objects. Trial and training-job controllers drive execution, while metrics are reported through DB manager. Algorithms consume results according to their implementation. Inspect termination conditions and remaining child jobs; optimal hyperparameters are not themselves a deployable model artifact.
 
 ## Metrics Collection
 
-A training job doesn't natively know it's part of a Katib Experiment, so Katib needs a way to pull the objective metric back out of each Trial's pod. This is done via a **metrics-collector sidecar** injected into the Trial pod alongside the training container. The sidecar's job is to observe the training container's output — typically by tailing stdout/log files for a recognizable metric pattern, or by scraping a metrics endpoint the training code exposes — and report the parsed objective metric value back to Katib's metrics store.
+| Mode | Configuration and constraints |
+| --- | --- |
+| `StdOut` | Default pull mode; extracts metrics from the primary container's log format |
+| `File` | TEXT or line-delimited JSON; configure path and filters |
+| `TensorFlowEvent` | Event-file directory, including compatible TensorBoard writers |
+| `Custom` | User-supplied collector implementation; arbitrary HTTP scraping is not a built-in default |
+| `Push` | Training code calls SDK `report_metrics()` to DB manager; a collector sidecar is not always required |
 
-This sidecar pattern is what keeps the training code itself mostly Katib-agnostic: a training script that already prints its accuracy or loss per epoch in a parseable format doesn't need to be rewritten to integrate with Katib — the collector does the extraction. It also means the choice of collection strategy (log parsing vs. endpoint scraping) matters for how reliably and how frequently Katib can observe intermediate progress, which in turn affects how well early stopping and Hyperband-style algorithms can act on that progress.
+Pull injection needs namespace label `katib.kubeflow.org/metrics-collector-injection: enabled`, a working webhook and correct target Pod/container selection. Distributed training needs an explicit reporting-rank policy. Validate metric names, numeric format, timestamps, connectivity and policies. A successful training job does not guarantee metrics were collected.
 
-## Running Katib Experiments on EKS: Resource Pressure
+## Capacity and Cost on EKS
 
-Katib's concurrency knobs interact directly with cluster capacity in ways that matter more on EKS than they might in a fixed, over-provisioned on-prem cluster:
+Demand is roughly **concurrent Trials × Pods per Trial × resources per Pod**, plus collector/Suggestion/database overhead. If each Trial has two Pods requesting four GPUs each, parallelTrialCount 8 can request 64 GPUs, not eight.
 
-* **`parallelTrialCount` multiplies resource demand.** Each concurrent Trial is a full training job — if individual Trials request GPUs, a `parallelTrialCount` of 8 means 8 concurrent GPU requests hitting the cluster at once, not 8 requests spread out over time. An Experiment that looks modest on paper (`maxTrialCount: 100`) can still produce a sharp, short-lived spike in demand if `parallelTrialCount` is set high.
-* **Cluster autoscaling has to keep pace.** On EKS, this pressure is typically absorbed by [Karpenter](../../autoscaling/02-karpenter.md) provisioning new GPU-backed nodes in response to the burst of pending Trial pods. Because GPU instance types often have longer provisioning lead times than general-purpose instances, a high `parallelTrialCount` can leave early Trials waiting on nodes rather than actually training — worth watching for in Trial pod events before assuming the Suggestion algorithm itself is slow.
-* **Tune `parallelTrialCount` and `maxTrialCount` together, not independently.** A lower `parallelTrialCount` with a longer-running Experiment is often gentler on shared cluster capacity than a high `parallelTrialCount` finishing the same total Trials faster — the right balance depends on whether the cluster is dedicated to the tuning run or shared with other workloads.
-* **Early stopping directly reduces wasted spend.** Because each terminated-early Trial frees its GPU allocation sooner, the median-stopping rule (see "Early Stopping" above) isn't just a search-efficiency optimization — on EKS it's also a direct lever on how much GPU-hour cost a tuning run accumulates before converging on a good hyperparameter set.
+For Pending Pods inspect events, scheduling constraints, quotas, NodePool/EC2 capacity, drivers and bootstrap state. Karpenter cannot always supply capacity, and higher concurrency does not guarantee shorter total runtime. Early stopping can release Pod resources while EC2 charges continue for retained nodes.
+
+Configure total-Trial criteria, concurrency, job retries/distributed size, deadlines and data retention together. Verify metric collection and termination with a small CPU workload before increasing GPU scale.
+
+## Validation and Sources
+
+The v0.19.0 configuration, controller/API, collector paths and medianstop source were inspected. The unchanged medianstop function was executed locally with preloaded successful-Trial history and network calls blocked. No Experiment or GPU workload was run.
+
+- [0.19.0 default KatibConfig](https://github.com/kubeflow/katib/blob/v0.19.0/manifests/v1beta1/installs/katib-standalone/katib-config.yaml)
+- [Experiment status decisions](https://github.com/kubeflow/katib/blob/v0.19.0/pkg/controller.v1beta1/experiment/util/status_util.go)
+- [medianstop implementation](https://github.com/kubeflow/katib/blob/v0.19.0/pkg/earlystopping/v1beta1/medianstop/service.py)
+- [Metrics collector guide](https://www.kubeflow.org/docs/components/katib/user-guides/metrics-collector/)
+- [Early stopping guide](https://www.kubeflow.org/docs/components/katib/user-guides/early-stopping/)
 
 ## Next Steps
 
-Katib turns hyperparameter search into a Kubernetes-native control loop: an Experiment describes the objective and search space, a Suggestion service proposes hyperparameter combinations using a pluggable search algorithm, Trials run those combinations as ordinary training jobs, and a metrics-collector sidecar reports results back so the search can converge on a best configuration. On EKS, the practical lever is coordinating `parallelTrialCount`/`maxTrialCount` with autoscaling capacity — particularly for GPU-backed Trials — so a tuning run's concurrency doesn't outrun how fast the cluster can actually provision nodes for it.
-
-Part 5 covers **Kubeflow Trainer**, the component that Katib's `trialTemplate` typically delegates to for actually running each Trial's distributed training job.
+Continue with distributed-training APIs and runtimes in [Part 5: Trainer](05-training-operator.md).
 
 [Return to Main Page](./README.md)
 
