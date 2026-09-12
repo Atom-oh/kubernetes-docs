@@ -1,1269 +1,590 @@
 # eBPF 기술 심층 분석
 
-> **지원 버전**: Linux 커널 4.19+  
-> **마지막 업데이트**: 2026년 2월 22일
+> **검토 기준**: Cilium 1.20.1, Linux 5.10+ 또는 문서화된 동등 백포트(예: RHEL 8.10의 4.18 커널), 테스트된 Kubernetes 1.33–1.36. 개별 BPF 기능에는 별도 조건이 있습니다.
+> **최종 검토**: 2026년 9월 12일
 
 ## 실습 환경 설정
 
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+유지보수되는 배포판, 아래 tracepoint, 추적 프로그램을 로드할 권한이 있는 일회용 Linux 개발 VM을 사용합니다. Cilium 설치와 별개 실습이므로 실험용 프로그램을 클러스터 노드에 로드하지 않습니다. 검증기 설명의 소스 기준은 Linux 6.12이며 모든 6.12 배포판에서 모든 기능이 활성화되어 있다는 뜻은 아닙니다.
 
-### 필수 도구
-- Linux 커널 4.19 이상 (5.10+ 권장)
-- bpftool, libbpf-dev, clang, llvm
-- bcc (BPF Compiler Collection)
-
-### 환경 설정
+BPF 백엔드가 있는 Clang, 대상 아키텍처의 UAPI 헤더, libbpf 1.x 개발 헤더·라이브러리, libelf, zlib, C 컴파일러와 bpftool이 필요합니다. BCC와 bpftrace는 선택 가능한 다른 도구입니다. Debian/Ubuntu에서는 보통 `clang`, `libbpf-dev`, `libelf-dev`, `zlib1g-dev`, `build-essential`, `pkg-config`를 사용하지만 bpftool 패키징은 배포판·커널에 따라 다릅니다. 모든 Debian 시스템에 `linux-tools-generic`이 맞는다고 가정하지 않습니다. Cilium은 AMD64/AArch64 호스트를 문서화하며 컨테이너 이미지 밖에서 Cilium을 네이티브 실행할 때는 Clang/LLVM 18.1+가 추가로 필요합니다. 이는 작은 추적 실습의 요구사항과 별개입니다.
 
 ```bash
-# Ubuntu/Debian 시스템에서 필요한 패키지 설치
-sudo apt-get update
-sudo apt-get install -y build-essential clang llvm libelf-dev libbpf-dev bpftool linux-tools-common linux-tools-generic
-
-# BCC 설치
-sudo apt-get install -y bpfcc-tools python3-bpfcc
-
-# 커널 버전 확인
 uname -r
-
-# eBPF 기능 지원 확인
-bpftool feature
+clang --version
+clang --print-targets
+pkg-config --modversion libbpf
+bpftool version
+test -r /sys/kernel/tracing/events/syscalls/sys_enter_execve/format
+test -r /sys/kernel/tracing/events/sched/sched_process_exec/format
+# 준비된 실습 VM에서만 BPF 기능을 능동적으로 탐색합니다.
+sudo bpftool feature probe kernel
 ```
+
+Tracefs가 마운트되어 있고 접근 가능해야 합니다. 일부 시스템에서는 `/sys/kernel/debug/tracing`에 노출됩니다. 커널 설정, capability, lockdown/LSM 정책, 컨테이너 제약 때문에 컨테이너 root도 로드·연결하지 못할 수 있습니다. `CAP_BPF` 하나가 모든 추적 권한을 뜻하지 않으며 필요한 권한은 커널, 프로그램 타입, BPF token 위임에 따라 다릅니다.
+
+**검증 범위:** 예제는 libbpf 1.7 헤더를 사용한 호스트 C 문법 검사, 사용자 공간 링크, 결정적인 헬퍼 시뮬레이션을 통과했습니다. Clang BPF 대상 컴파일, 실행 커널 검증기와 실제 tracepoint 연결은 준비된 VM에서 추가 검증해야 합니다. 운영 환경 검증이나 무손실 추적을 보장하는 예제가 아닙니다.
 
 ## eBPF 기술 소개 및 역사적 배경
 
-eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 안전하게 프로그램을 실행할 수 있는 혁신적인 기술입니다. 이 기술은 커널을 수정하지 않고도 커널의 동작을 확장하고 관찰할 수 있는 강력한 메커니즘을 제공합니다. 현대 클라우드 네이티브 환경에서 eBPF는 네트워킹, 보안, 모니터링 및 성능 분석 분야에서 혁명적인 변화를 가져왔습니다.
+eBPF는 허용된 프로그램을 Linux의 지원 훅에서 실행하여 커널 동작을 관찰하거나 제어합니다. 검증기는 메모리 접근과 실행을 제한하지만 커널, 검증기, JIT, 헬퍼의 버그 가능성은 남습니다. 검증 통과가 호스트 장애 불가능이나 의도한 정책의 정확성을 보장하지는 않습니다.
 
-### BPF에서 eBPF로: 진화의 역사
+### BPF에서 eBPF로: 발전 역사
 
-#### 초기 BPF의 탄생과 한계 (1992-2013)
-1992년, UC 버클리의 Steven McCanne와 Van Jacobson은 "The BSD Packet Filter: A New Architecture for User-level Packet Capture"라는 논문을 발표하며 Berkeley Packet Filter(BPF)를 소개했습니다. 이 기술은 네트워크 패킷 필터링을 위한 혁신적인 접근 방식을 제시했습니다.
+McCanne과 Jacobson의 *The BSD Packet Filter: A New Architecture for User-level Packet Capture*에는 1992년 12월 19일 사전 원고 날짜와 1993년 1월 25–29일 Winter USENIX 발표가 함께 명시되어 있습니다. 연도를 인용할 때 이 차이를 보존합니다. Classic BPF는 32비트 A/X 레지스터와 scratch 메모리로 필터링하여 불필요한 사용자 공간 패킷 복사를 줄였습니다. 제한된 명령어 집합이 현대 CPU에서 실행할 수 없다는 뜻은 아닙니다.
 
-BPF는 다음과 같은 핵심 개념을 도입했습니다:
-- **인-커널 가상 머신**: 커널 내에서 안전하게 사용자 정의 코드 실행
-- **레지스터 기반 설계**: 스택 기반보다 효율적인 실행 모델
-- **안전성 보장**: 무한 루프 방지 및 메모리 접근 제한
-- **패킷 필터링 최적화**: 불필요한 패킷 복사 방지
-
-초기 BPF는 주로 tcpdump와 같은 네트워크 모니터링 도구에서 사용되었으며, 다음과 같은 한계를 가지고 있었습니다:
-- 제한된 명령어 세트 (2개의 32비트 레지스터만 사용)
-- 제한된 프로그램 크기 (최대 4096개 명령어)
-- 제한된 기능 (주로 패킷 필터링에만 사용)
-- 사용자 공간과의 제한된 상호작용
-- 현대적인 CPU 아키텍처 활용 불가
-
-이러한 한계에도 불구하고, BPF는 20년 이상 Linux 커널의 중요한 부분으로 남아있었습니다.
-
-#### eBPF의 탄생과 초기 발전 (2013-2016)
-2013년, PLUMgrid의 Alexei Starovoitov는 기존 BPF의 한계를 극복하기 위해 extended BPF(eBPF)를 제안했습니다. 이 제안은 BPF를 현대적인 프로세서 아키텍처에 맞게 완전히 재설계하는 것을 목표로 했습니다.
-
-eBPF의 초기 설계 목표는 다음과 같았습니다:
-- 64비트 아키텍처 지원
-- 더 많은 레지스터 (10개 → 현재 11개)
-- 더 큰 스택 공간 (512바이트)
-- 맵(maps)을 통한 상태 저장 및 사용자 공간과의 통신
-- 다양한 이벤트에 연결 가능한 범용성
-
-주요 발전 단계:
-- **2014년 5월 (Linux 커널 3.15)**: 초기 eBPF 인프라가 Linux 커널에 통합
-  - 새로운 eBPF 명령어 세트 도입
-  - 기존 cBPF(classic BPF)에서 eBPF로의 변환 레이어 추가
-  - 초기 eBPF 맵 유형 도입 (해시, 배열)
-
-- **2014년 12월 (Linux 커널 3.18)**: eBPF JIT(Just-In-Time) 컴파일러 도입
-  - x86_64 아키텍처에 대한 JIT 컴파일 지원
-  - 실행 성능 대폭 향상
-  - 테일 콜(tail call) 기능 추가로 프로그램 체이닝 가능
-
-- **2015년 6월 (Linux 커널 4.1)**: eBPF 맵(maps) 기능 확장
-  - 사용자 공간과 커널 공간 간 데이터 공유 메커니즘 강화
-  - 새로운 맵 유형 추가 (LRU 해시, 스택 트레이스)
-  - eBPF 프로그램을 kprobe와 연결하는 기능 추가
-
-- **2016년 1월 (Linux 커널 4.4)**: XDP(eXpress Data Path) 도입
-  - 네트워크 드라이버 레벨에서 고성능 패킷 처리 가능
-  - 패킷이 커널 네트워크 스택에 진입하기 전에 처리
-  - 초당 수백만 패킷 처리 가능한 성능
-
-- **2016년 7월 (Linux 커널 4.7)**: 추가적인 eBPF 프로그램 유형 도입
-  - 트래픽 제어(TC) 프로그램 지원
-  - 소켓 필터링 기능 강화
-  - 헬퍼 함수 확장
-
-이 시기에 eBPF는 단순한 패킷 필터링 도구에서 범용 커널 프로그래밍 인프라로 진화하기 시작했으며, 네트워킹 분야를 넘어 다양한 용도로 확장되었습니다.
-
-#### 현대 eBPF 생태계의 성장과 혁신 (2017-현재)
-2017년 이후, eBPF는 클라우드 네이티브 컴퓨팅의 핵심 기술로 자리잡기 시작했으며, 다양한 프로젝트와 기업들이 이 기술을 채택하기 시작했습니다.
-
-##### 주요 프로젝트 및 기술적 발전:
-
-- **2017년**: 
-  - **Cilium 프로젝트 시작**: eBPF를 컨테이너 네트워킹 및 보안에 활용하는 최초의 주요 프로젝트
-  - **BCC(BPF Compiler Collection)**: eBPF 프로그램 개발을 위한 고수준 도구 모음 등장
-  - **Linux 커널 4.10-4.14**: cgroup, 소켓, 트레이스포인트 프로그램 유형 추가
-
-- **2018년**: 
-  - **Linux 커널 4.18**: BTF(BPF Type Format) 도입, CO-RE(Compile Once – Run Everywhere) 지원 기반 마련
-  - **bpftrace**: DTrace 스타일의 고수준 추적 언어 등장
-  - **Facebook Katran**: eBPF 기반 L4 로드 밸런서 오픈소스화
-
-- **2019년**: 
-  - **Linux 커널 5.0-5.3**: BPF-to-BPF 함수 호출 지원, raw tracepoint 프로그램 추가
-  - **Falco**: eBPF 기반 런타임 보안 모니터링 도구 인기 상승
-  - **Hubble**: Cilium 기반 네트워크 관찰성 도구 등장
-
-- **2020년**: 
-  - **Linux 커널 5.5-5.10**: BPF 링크 추상화, 글로벌 변수, 슬립 기능, 루프 지원
-  - **libbpf**: 사용자 공간 라이브러리 성숙화
-  - **eBPF Foundation 설립**: 기술 발전을 위한 공식 조직 형성
-  - **Isovalent(Cilium 개발사) 시리즈 A 투자 유치**: 상용 eBPF 솔루션 등장
-
-- **2021년**: 
-  - **Linux 커널 5.11-5.15**: 메모리 할당 기능, 타이머 지원, 동적 포인터 추가
-  - **Kubernetes와의 통합 강화**: 서비스 메시, 네트워킹, 보안 영역에서 채택 확대
-  - **상용 제품 출시**: 다수의 기업이 eBPF 기반 제품 출시
-
-- **2022년-현재**: 
-  - **Linux 커널 6.0+**: 지속적인 기능 확장 및 최적화
-  - **클라우드 네이티브 표준 기술화**: CNCF 프로젝트와의 통합 확대
-  - **eBPF Summit**: 전용 컨퍼런스 개최 및 커뮤니티 성장
-  - **주요 클라우드 제공업체 채택**: AWS, GCP, Azure 등에서 eBPF 기술 활용
-
-##### 현재 eBPF 활용 분야:
-
-1. **네트워킹**:
-   - 컨테이너 네트워킹 (Cilium, Calico)
-   - 로드 밸런싱 (Katran, Cilium)
-   - 패킷 필터링 및 방화벽 (bpfilter)
-   - 네트워크 가속화 (XDP 기반 솔루션)
-
-2. **보안**:
-   - 런타임 보안 모니터링 (Falco, Tracee)
-   - 침입 탐지 시스템 (Tetragon)
-   - 시스템 콜 필터링 (seccomp-bpf)
-   - 권한 관리 (LSM BPF)
-
-3. **관찰성**:
-   - 시스템 모니터링 및 추적 (bpftrace, BCC)
-   - 성능 분석 (BPF Performance Tools)
-   - 분산 추적 (Hubble)
-   - 메트릭 수집 (eBPF Exporter)
-
-4. **서비스 메시**:
-   - 사이드카 없는 서비스 메시 (Cilium Service Mesh)
-   - L7 프록시 및 로드 밸런싱
-   - 트래픽 관리 및 라우팅
-
-5. **스토리지**:
-   - 블록 I/O 추적 및 최적화
-   - 파일 시스템 모니터링
-   - 캐시 성능 분석
+확장 BPF는 64비트 명령어 집합, R0–R10의 레지스터 11개(R10은 읽기 전용 프레임 포인터), 일반적으로 512바이트로 제한되는 스택, 맵과 다양한 프로그램 타입을 추가했습니다. 범용 레지스터가 역사적으로 10개에서 11개로 늘어났다는 뜻은 아닙니다. 함수·tail call 조합에는 추가 스택 제약이 있습니다.
 
 ### eBPF의 기술적 진화: 커널 버전별 주요 기능
 
-eBPF의 기술적 발전은 Linux 커널의 여러 버전에 걸쳐 점진적으로 이루어졌으며, 각 버전마다 중요한 기능들이 추가되었습니다. 아래 표는 주요 커널 버전별 eBPF 기능 추가 내역을 보여줍니다:
+버전이 고정된 업스트림 소스에서 확인한 주요 변화입니다. 배포판 지원표는 아니며 백포트, 빌드 옵션, 아키텍처와 헬퍼 지원은 다를 수 있습니다.
 
-| 커널 버전 | 연도 | 주요 eBPF 기능 추가 | 기술적 의미 |
-|----------|------|-------------------|------------|
-| 3.15 | 2014 | 초기 eBPF 인프라 도입 | 새로운 명령어 세트, 레지스터 확장 |
-| 3.18 | 2014 | JIT 컴파일러 추가 | 실행 성능 대폭 향상 |
-| 4.1 | 2015 | eBPF 맵 기능, 사용자 공간 API | 상태 저장 및 데이터 공유 가능 |
-| 4.4 | 2016 | XDP(eXpress Data Path) 도입 | 초고속 패킷 처리 가능 |
-| 4.7 | 2016 | 추가 프로그램 유형, 테일 콜 지원 | 프로그램 체이닝 및 확장성 향상 |
-| 4.10 | 2017 | 소켓 및 cgroup 프로그램 | 네트워크 소켓 제어, 컨테이너 지원 |
-| 4.14 | 2017 | XDP 오프로드, 더 많은 헬퍼 함수 | 하드웨어 가속화 지원 |
-| 4.18 | 2018 | BTF(BPF Type Format) 도입 | CO-RE 지원 기반 마련 |
-| 5.0 | 2019 | BPF-to-BPF 함수 호출 지원 | 모듈화 및 코드 재사용 가능 |
-| 5.5 | 2020 | BPF 링크 추상화, 글로벌 변수 | 프로그램 관리 개선 |
-| 5.8 | 2020 | 루프 지원 (bounded loops) | 프로그래밍 유연성 향상 |
-| 5.10 | 2020 | 슬립 기능 | 비동기 프로그래밍 가능 |
-| 5.13 | 2021 | 메모리 할당 기능 | 동적 메모리 관리 가능 |
-| 5.15 | 2021 | 타이머 지원 | 시간 기반 이벤트 처리 |
-| 6.0+ | 2022+ | 지속적인 기능 확장 및 최적화 | 완전한 프로그래밍 환경으로 발전 |
+| Kernel | 주요 변화 |
+|---|---|
+| [3.15](https://github.com/torvalds/linux/blob/v3.15/include/linux/filter.h) | 확장 명령어 집합과 내부 classic BPF 변환 |
+| [3.16](https://github.com/torvalds/linux/blob/v3.16/arch/x86/net/bpf_jit_comp.c) | x86 확장 BPF JIT |
+| [3.18](https://github.com/torvalds/linux/blob/v3.18/include/uapi/linux/bpf.h) | BPF 시스템 호출·검증 기반; 아직 사용 가능한 HASH/ARRAY 타입 없음 |
+| [3.19](https://github.com/torvalds/linux/blob/v3.19/include/uapi/linux/bpf.h) | HASH/ARRAY 맵과 socket-filter 프로그램 타입 |
+| [4.1](https://github.com/torvalds/linux/blob/v4.1/include/uapi/linux/bpf.h) | KPROBE와 TC SCHED_CLS/SCHED_ACT |
+| [4.2](https://github.com/torvalds/linux/blob/v4.2/include/uapi/linux/bpf.h) | PROG_ARRAY와 tail call |
+| [4.8](https://github.com/torvalds/linux/blob/v4.8/include/uapi/linux/bpf.h) | XDP 프로그램 타입 |
+| [4.10](https://github.com/torvalds/linux/blob/v4.10/include/uapi/linux/bpf.h) | LRU 해시 맵 |
+| [4.16](https://github.com/torvalds/linux/blob/v4.16/include/uapi/linux/bpf.h) | BPF-to-BPF 함수 호출 |
+| [4.17](https://github.com/torvalds/linux/blob/v4.17/include/uapi/linux/bpf.h) | Raw tracepoint |
+| [4.18](https://github.com/torvalds/linux/blob/v4.18/include/uapi/linux/bpf.h) | BTF 로드 API |
+| [5.2](https://github.com/torvalds/linux/blob/v5.2/include/uapi/linux/bpf.h) | 전역 데이터에 사용하는 맵 값 직접 접근 |
+| [5.7](https://github.com/torvalds/linux/blob/v5.7/include/uapi/linux/bpf.h) | BPF link API와 BPF LSM |
+| [5.8](https://github.com/torvalds/linux/blob/v5.8/include/uapi/linux/bpf.h) | BPF 링 버퍼 |
+| [5.10](https://github.com/torvalds/linux/blob/v5.10/include/uapi/linux/bpf.h) | 지원되는 연결 타입의 sleepable 프로그램 |
+| [5.15](https://github.com/torvalds/linux/blob/v5.15/include/uapi/linux/bpf.h) | BPF 타이머 헬퍼 |
+| [5.19](https://github.com/torvalds/linux/blob/v5.19/include/uapi/linux/bpf.h) | 동적 포인터 헬퍼 |
+| [6.2](https://github.com/torvalds/linux/blob/v6.2/kernel/bpf/helpers.c) | 타입이 있는 객체 할당 kfunc; 임의 malloc과는 다름 |
 
-이러한 발전을 통해 eBPF는 단순한 패킷 필터에서 완전한 프로그래밍 환경으로 진화했으며, 현재는 Linux 커널의 가장 중요한 기술 중 하나로 자리매김했습니다. 특히 CO-RE(Compile Once – Run Everywhere) 기능의 도입으로 eBPF 프로그램의 이식성이 크게 향상되어, 다양한 커널 버전에서 재컴파일 없이 동일한 프로그램을 실행할 수 있게 되었습니다.
+Bounded loop는 Linux 5.3에 도입되었습니다. [업스트림 검증기 변경](https://github.com/torvalds/linux/commit/2589726d12a1b12eaaa93c7f1ea64287e383c7a5)은 루프 분석과 상태 가지치기를 설명합니다. 설계 FAQ에 남아 있는 “루프 미구현” 문단을 현재 기능 안내로 사용하면 안 됩니다. 제한된 루프도 검증 복잡도 한도를 초과할 수 있습니다.
 
-### eBPF vs 전통적인 커널 모듈: 패러다임의 변화
+### 생태계 성장과 활용 분야
 
-eBPF는 Linux 커널을 확장하는 방식에 있어 전통적인 커널 모듈과 근본적으로 다른 접근 방식을 제공합니다. 이 차이점을 이해하는 것은 eBPF의 혁신성을 파악하는 데 중요합니다.
+Cilium 공개 저장소는 2015년 12월 생성되었으므로 프로젝트가 2017년에 처음 시작되었다는 설명은 부정확합니다. 저장소 생성일이 정확한 제품 출시일이나 “최초의 주요 프로젝트”라는 순위의 근거는 아닙니다.
+
+| 분야 | 예와 경계 |
+|---|---|
+| 네트워킹 | Cilium/Calico 데이터플레인, Katran 로드밸런싱, XDP 필터링 |
+| 런타임 보안 | Falco, Tracee, Tetragon의 커널 이벤트 활용; 차단 기능은 제품·훅에 따라 다름 |
+| 추적 | Python/Lua 프런트엔드를 포함한 BCC, bpftrace, 스토리지·블록 I/O 추적 |
+| 네트워크 관측 | Hubble의 플로우·프록시 이벤트; 플로우 그래프가 분산 애플리케이션 span 추적은 아님 |
+| 서비스 메시 | Cilium이 커널 전달과 사용자 공간 프록시를 조합하여 지원되는 L7 기능 제공 |
+| 커뮤니티 | eBPF Foundation이 생태계를 지원하며 투자·성숙도가 호환성 기준은 아님 |
+
+`seccomp-bpf`는 시스템 호출 판단에 classic BPF 필터 인터페이스를 사용합니다. Linux가 내부에서 classic 필터를 변환할 수 있지만 일반 eBPF 프로그램·맵·헬퍼 API와 같지는 않습니다.
+
+### eBPF와 전통적 커널 모듈 비교
 
 | 특성 | eBPF | 커널 모듈 |
-|------|------|----------|
-| **안전성** | 검증기를 통한 안전 보장, 커널 충돌 불가능 | 커널 패닉 가능성 있음, 전체 시스템 안정성에 영향 |
-| **배포 방식** | 런타임에 동적 로드, 바이너리 호환성 유지 | 커널 버전별 재컴파일 필요, 호환성 문제 발생 가능 |
-| **업그레이드** | 커널 재부팅 없이 실시간 업데이트 가능 | 대부분 재부팅 필요, 서비스 중단 발생 |
-| **성능** | JIT 컴파일로 최적화, 네이티브에 근접한 성능 | 네이티브 성능, 직접적인 커널 접근 |
-| **개발 복잡성** | 제한된 환경, 특수 도구 필요, 디버깅 어려움 | 완전한 커널 API 접근, 표준 디버깅 도구 사용 가능 |
-| **권한 모델** | 제한된 권한, 샌드박스 환경 | 완전한 커널 권한, 무제한 접근 |
-| **이식성** | CO-RE(Compile Once – Run Everywhere) 지원 | 커널 버전별 재컴파일 필요 |
-| **배포 범위** | 프로덕션 환경에 안전하게 배포 가능 | 주로 벤더 제공 커널 모듈에 한정 |
+|---|---|---|
+| 안전성 | 검증기로 실행 제한; 구현 버그와 운영 위험은 남음 | 더 넓은 네이티브 커널 접근; 버그로 호스트 장애 가능 |
+| 배포 | 지원 프로그램은 재부팅 없이 로드·연결 가능 | 의존성·사용 상태가 허용하면 많은 모듈도 재부팅 없이 로드·해제 가능 |
+| 호환성 | 명령어·헬퍼 ABI와 기능 조건; CO-RE는 지원되는 타입 접근 재배치 | 커널·모듈 ABI, 설정, 배포판 지원에 의존 |
+| 성능 | 흔히 JIT 사용; 훅·프로그램·워크로드에 따른 오버헤드 | 네이티브 실행도 워크로드에 따른 비용 발생 |
+| 개발 | 제한된 context, 헬퍼·kfunc, 검증기 한도 | 커널 API와 일반적인 커널 개발 제약 |
+| 권한 | 로드·연결을 위한 적절한 권한 또는 위임 필요 | 특권 로드; 서명·lockdown 제약 가능 |
 
-eBPF의 가장 큰 혁신은 안전성과 동적 로드 기능입니다. 전통적인 커널 모듈은 커널 내부에서 제한 없이 실행되어 버그가 있을 경우 전체 시스템을 불안정하게 만들 수 있습니다. 반면 eBPF 프로그램은 커널의 검증기를 통과해야만 로드될 수 있으며, 이 검증기는 메모리 접근, 무한 루프, 커널 충돌 가능성 등을 철저히 검사합니다.
+두 방식 모두 운영 검증이 필요합니다. 모듈이 벤더 구현으로만 제한되지 않으며 eBPF라는 이유만으로 운영 배포가 안전해지지 않습니다.
 
-## 커널 내 eBPF 아키텍처 심층 분석
-
-> **핵심 개념**: eBPF는 Linux 커널 내에서 샌드박스 가상 머신으로 작동하며, 커널 코드를 수정하지 않고도 커널 동작을 확장할 수 있습니다.
-
-eBPF는 단순한 기술이 아닌 완전한 기술 스택으로, 커널 내부의 가상 머신부터 사용자 공간 라이브러리까지 다양한 구성 요소로 이루어져 있습니다. 이 아키텍처를 이해하는 것은 eBPF의 강력함과 유연성을 파악하는 데 필수적입니다.
-
-### eBPF 아키텍처 상세 다이어그램
-
-![사용자 공간의 로더가 eBPF 프로그램을 커널의 검증기에 전달하면, 검증기·JIT 컴파일러를 거쳐 eBPF 가상 머신이 이를 실행하고, 이 가상 머신이 다양한 커널 훅 포인트에 연결되며 eBPF 맵을 통해 사용자 공간과 데이터를 주고받는 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-02-ebpf-0.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-02-ebpf-0.html)
+## 커널 내부 eBPF 아키텍처 심층 분석
 
 ### eBPF 아키텍처 구성 요소 상세 설명
 
-#### 1. 사용자 공간 구성 요소
+사용자 공간에서 Clang은 C를 BPF ELF로 컴파일하고 Rust는 자체 컴파일러·도구 생태계를 사용합니다. libbpf는 ELF section, 맵, 재배치, 로드와 지원되는 연결 API를 처리합니다. BCC는 상위 API, bpftrace는 추적 언어를 제공합니다.
 
-**개발 도구 및 라이브러리**:
-- **Clang/LLVM**: eBPF 프로그램을 C 또는 Rust에서 eBPF 바이트코드로 컴파일
-- **libbpf**: 저수준 eBPF 조작 라이브러리, 커널과 직접 상호작용
-- **BCC(BPF Compiler Collection)**: Python 및 Lua 바인딩을 제공하는 고수준 라이브러리
-- **bpftrace**: eBPF 기반 추적 언어, DTrace와 유사한 문법 제공
+CO-RE는 BTF와 재배치로 지원되는 타입·필드 접근을 조정합니다. 없는 헬퍼, 프로그램 타입, 커널 설정을 제공하거나 임의의 아키텍처·커널 간 호환성을 보장하지 않습니다. BTF를 쓴다고 커널 내부 구조, tracepoint 형식, kfunc가 안정적인 ABI가 되지는 않습니다.
 
-**CO-RE(Compile Once – Run Everywhere)**:
-- BTF(BPF Type Format)를 사용하여 커널 버전 간 이식성 제공
-- 다양한 커널 버전에서 재컴파일 없이 동일한 eBPF 프로그램 실행 가능
-- 구조체 재배치(struct relocation) 기능으로 커널 구조체 변경에 대응
+커널 검증기는 프로그램 타입, context, 헬퍼와 권한을 검사합니다. JIT는 허용된 BPF를 네이티브 명령어로 변환할 수 있으며 인터프리터는 지원 환경의 다른 실행 방식입니다. JIT 출력이 반드시 별도 VM 단계를 다시 통과하는 구조는 아닙니다. 연결 단계가 로드된 프로그램과 훅을 연결하며 로드만으로 tracepoint를 구독하지 않습니다.
 
-#### 2. 커널 공간 구성 요소
+### eBPF 프로그램 생명주기 상세 분석
 
-**eBPF 런타임**:
-- **eBPF 검증기(Verifier)**: 프로그램의 안전성을 보장하는 핵심 구성 요소
-  - 무한 루프 방지
-  - 유효한 메모리 접근만 허용
-  - 커널 안정성 보장
-  - 권한 검사
-  
-- **JIT(Just-In-Time) 컴파일러**: 
-  - eBPF 바이트코드를 네이티브 머신 코드로 변환
-  - 아키텍처별 최적화 (x86_64, ARM64, RISC-V 등)
-  - 실행 성능 대폭 향상
+1. **개발:** 훅/context와 맵·라이선스 메타데이터를 정의합니다. 모든 프로그램에 GPL 호환성이 필요한 것은 아니지만 GPL 전용 헬퍼와 일부 타입·kfunc에는 제한이 있습니다. 이 추적 예제는 헬퍼에 맞춰 GPL 메타데이터를 사용합니다.
+2. **컴파일:** 대상 도구·헤더로 BPF ELF와 필요한 debug/BTF 정보를 만듭니다.
+3. **열기·로드:** ELF를 읽고 맵을 생성하거나 명시적으로 재사용하며 재배치와 BPF 로드 API를 수행합니다. 검증과 선택적 JIT는 로드 중 발생합니다.
+4. **연결:** 적절한 API를 사용합니다. libbpf는 아래 `SEC("tracepoint/...")`에서 훅을 추론할 수 있으며 link/연결의 수명을 유지해야 합니다.
+5. **실행·관찰:** 이벤트가 프로그램을 호출하고 사용자 공간이 맵·버퍼를 읽습니다. 샘플링·용량 제한 때문에 관측이 누락될 수 있습니다.
+6. **갱신·해제:** 필요한 경우에만 호환 맵·link·pin을 의도적으로 유지합니다. 이 실습에서는 link와 object를 닫아 자원을 해제합니다.
 
-- **eBPF 가상 머신**:
-  - 11개의 레지스터
-  - 512바이트 스택
-  - 헬퍼 함수를 통한 커널 기능 접근
-  - 테일 콜(tail call) 지원으로 프로그램 체이닝
+Linux 6.12에서 BPF 권한이 있는 로드 경로의 프로그램 길이는 최대 1,000,000개 명령어, 비특권 경로는 4,096개로 제한됩니다. 검증기에는 별도로 1,000,000개 명령어의 **분석 복잡도** 한도가 있습니다. 더 작은 프로그램도 검증에 실패할 수 있습니다. 비특권 BPF는 비활성화된 경우가 많으며 token/capability와 프로그램 타입 검사도 적용됩니다.
 
-**eBPF 맵 시스템**:
-- 키-값 저장소로 구현된 데이터 구조
-- 커널 공간과 사용자 공간 간 데이터 공유
-- 다양한 맵 유형 지원:
-  - **BPF_MAP_TYPE_HASH**: 일반적인 해시 테이블
-  - **BPF_MAP_TYPE_ARRAY**: 고정 크기 배열
-  - **BPF_MAP_TYPE_LRU_HASH**: 최근 사용 항목 추적
-  - **BPF_MAP_TYPE_RINGBUF**: 고성능 링 버퍼
-  - **BPF_MAP_TYPE_STACK_TRACE**: 스택 트레이스 저장
-  - **BPF_MAP_TYPE_SOCKHASH**: 소켓 참조 저장
-  - **BPF_MAP_TYPE_DEVMAP**: 네트워크 디바이스 참조
-  - **BPF_MAP_TYPE_PROG_ARRAY**: eBPF 프로그램 참조
+### eBPF 프로그램 유형과 특성
 
-**훅 포인트(Hook Points)**:
+| 훅 / 프로그램 타입 | 용도와 반환값의 경계 |
+|---|---|
+| XDP / `BPF_PROG_TYPE_XDP` | Native driver XDP는 skb 할당 전에 실행하며 generic/offload 모드는 다름. `XDP_DROP`, `PASS`, `TX`, `REDIRECT`는 동작이지 처리량 보장이 아님 |
+| TC / `SCHED_CLS`, `SCHED_ACT` | Ingress/egress 패킷 분류·동작. Classifier의 `TC_ACT_*` 의미에는 적절한 direct-action 설정 필요 |
+| Socket filter / `SOCKET_FILTER` | 소켓 패킷 전달: 0은 폐기, 양수 캡처 길이는 절단 가능. 생성·connect 정책은 다른 훅 사용 |
+| kprobe/uprobe / `KPROBE` | 커널·사용자 공간 probe. 별도 `BPF_PROG_TYPE_UPROBE` 없음. 인라이닝·금지 목록·심볼 존재가 연결 제한 |
+| Tracepoint / `TRACEPOINT` | 정적 이벤트 context. 대상 format 확인 필요; 안정적인 커널 ABI 보장 아님 |
+| Perf event / `PERF_EVENT` | 성능 샘플링; 반환 동작은 perf-event 통합에 따름 |
+| cgroup / `CGROUP_SKB`, `CGROUP_SOCK`, `CGROUP_SOCK_ADDR` 등 | 네트워크·소켓 제어; context와 허용·거부 규칙이 다름 |
+| LSM / `LSM` | MAC 방식은 보통 이전 오류를 유지하고 0/오류 반환; cgroup-LSM 허용 의미는 다름 |
+| Socket operations / `SOCK_OPS` | TCP 콜백; 동작·reply 필드·헬퍼 지원 확인 필요 |
+| fentry/fexit / `TRACING` | 지원 대상의 BTF 기반 함수 추적; 대상·연결 제약은 남음 |
 
-eBPF 프로그램은 커널 내 다양한 지점에 연결될 수 있으며, 이러한 지점을 훅 포인트라고 합니다. 각 훅 포인트는 특정 이벤트나 작업이 발생할 때 eBPF 프로그램을 실행할 수 있게 해줍니다. 주요 훅 포인트는 다음과 같습니다:
-
-- **XDP(eXpress Data Path)**: 
-  - 네트워크 드라이버 수준에서 패킷 처리
-  - NIC에서 패킷이 커널에 진입하기 전 처리
-  - 최고 성능의 패킷 처리 지점 (초당 수천만 패킷 처리 가능)
-  - 가능한 작업: 패킷 드롭, 패스, 리다이렉션, 수정
-  - 사용 사례: DDoS 방어, 패킷 필터링, 로드 밸런싱
-  - 하드웨어 오프로드 지원 (특정 NIC에서)
-  
-- **Traffic Control(TC)**: 
-  - 네트워크 스택의 트래픽 제어 계층
-  - 인그레스/이그레스 큐잉 지점
-  - XDP보다 더 많은 컨텍스트 제공
-  - 패킷 헤더 및 페이로드 수정 가능
-  - 사용 사례: 네트워크 정책, NAT, 패킷 변환
-  - 인그레스(ingress)와 이그레스(egress) 모두 지원
-
-- **소켓 필터**: 
-  - 소켓 수준에서 패킷 필터링
-  - 특정 소켓에 연결된 프로그램
-  - 사용자 공간 애플리케이션의 소켓 작업 제어
-  - 사용 사례: 애플리케이션별 패킷 필터링, 소켓 수준 통계
-  - 소켓 생성, 바인딩, 연결 시점에 적용 가능
-
-- **Kprobes/Uprobes**: 
-  - 커널/사용자 공간 함수 동적 추적
-  - 함수 진입/반환 시 실행
-  - 임의의 커널 함수 후킹 가능
-  - 사용 사례: 성능 분석, 디버깅, 보안 모니터링
-  - 동적으로 추가/제거 가능
-  - 오버헤드 있음 (프로덕션 환경에서 주의 필요)
-
-- **Tracepoints**: 
-  - 커널 내 정적으로 정의된 추적점
-  - 안정적인 ABI 제공 (커널 버전 간 호환성)
-  - 주요 커널 이벤트에 대한 추적 지원
-  - 사용 사례: 시스템 콜 추적, 블록 I/O 모니터링, 네트워크 이벤트 추적
-  - Kprobes보다 낮은 오버헤드
-
-- **Perf Events**: 
-  - 성능 모니터링 이벤트
-  - CPU 성능 카운터 접근
-  - 하드웨어/소프트웨어 이벤트 모니터링
-  - 사용 사례: CPU 사용률 분석, 캐시 미스 추적, 분기 예측 실패 모니터링
-  - 정밀한 성능 측정 가능
-
-- **LSM(Linux Security Module)**: 
-  - 보안 정책 적용
-  - 시스템 콜 보안 검사
-  - 권한 검증 및 접근 제어
-  - 사용 사례: 컨테이너 보안, 권한 상승 탐지, 파일 접근 제어
-  - 커널 5.7+ 지원
-
-- **Cgroups**: 
-  - 컨테이너 리소스 제어
-  - 컨테이너별 정책 적용
-  - 리소스 사용량 제한 및 모니터링
-  - 사용 사례: 컨테이너 네트워크 정책, 리소스 제한, 격리
-  - 컨테이너 오케스트레이션 환경에서 중요
-
-### eBPF 프로그램 라이프사이클 상세 분석
-
-eBPF 프로그램은 개발부터 실행까지 여러 단계를 거칩니다. 이 과정을 이해하면 eBPF의 작동 방식과 제약 조건을 더 명확히 파악할 수 있습니다.
-
-1. **개발 단계**:
-   - C, Rust 등 고수준 언어로 프로그램 작성
-   - 커널 헤더 및 eBPF 헬퍼 함수 사용
-   - BTF 정보 활용 (CO-RE 지원을 위해)
-   - 섹션 정의 (`SEC()` 매크로 사용)
-   - 라이센스 명시 (GPL 호환 필요)
-
-2. **컴파일 단계**:
-   - Clang/LLVM을 사용하여 eBPF 바이트코드로 컴파일
-   - `-target bpf` 옵션으로 eBPF 타겟 지정
-   - BTF 및 디버깅 정보 생성
-   - ELF 파일 형식으로 출력
-
-3. **로드 단계**:
-   - `bpf()` 시스템 콜을 통해 커널에 프로그램 로드
-   - libbpf 또는 BCC 라이브러리가 이 과정 처리
-   - 프로그램 유형 및 연결할 훅 지정
-   - 필요한 맵 생성
-
-4. **검증 단계**:
-   - 커널 내 검증기가 프로그램 안전성 검사
-   - 제어 흐름 그래프(CFG) 분석
-   - 메모리 접근 검증
-   - 무한 루프 방지
-   - 권한 검사
-   - 실패 시 상세한 오류 메시지 제공
-
-5. **JIT 컴파일 단계**:
-   - 바이트코드를 호스트 아키텍처의 네이티브 코드로 변환
-   - 아키텍처별 최적화 적용
-   - 실행 성능 향상
-   - 대부분의 아키텍처에서 지원 (x86_64, ARM64, RISC-V 등)
-
-6. **연결 단계**:
-   - 특정 커널 이벤트(훅)에 프로그램 연결
-   - 필요한 맵 생성 및 초기화
-   - 프로그램 메타데이터 설정
-   - 파일 디스크립터 관리
-
-7. **실행 단계**:
-   - 이벤트 발생 시 프로그램 실행
-   - 컨텍스트 데이터 접근
-   - 결정에 따른 패킷/이벤트 처리
-   - 헬퍼 함수 호출
-
-8. **데이터 교환 단계**:
-   - eBPF 맵을 통한 데이터 저장 및 검색
-   - 사용자 공간 애플리케이션과 통신
-   - 성능 메트릭, 상태 정보 등 공유
-   - 이벤트 통지 (perf 이벤트 버퍼, 링 버퍼 등)
-
-9. **업데이트/언로드 단계**:
-   - 필요 시 프로그램 동적 업데이트
-   - 사용 완료 후 프로그램 언로드
-   - 관련 리소스 정리
-   - 맵 데이터 유지 또는 삭제
-
-### eBPF 프로그램 유형과 특징
-
-eBPF 프로그램은 연결되는 훅 포인트에 따라 다양한 유형으로 분류됩니다. 각 프로그램 유형은 특정 컨텍스트와 기능을 가지고 있습니다:
-
-1. **XDP (eXpress Data Path) 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_XDP`
-   - 컨텍스트: 네트워크 패킷 데이터, 인터페이스 정보
-   - 반환 값: `XDP_DROP`, `XDP_PASS`, `XDP_TX`, `XDP_REDIRECT` 등
-   - 특징: 최고 성능의 패킷 처리, 드라이버/하드웨어 수준 실행
-
-2. **트래픽 제어(TC) 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_SCHED_CLS`, `BPF_PROG_TYPE_SCHED_ACT`
-   - 컨텍스트: 네트워크 패킷 데이터, 스케줄링 정보
-   - 반환 값: `TC_ACT_OK`, `TC_ACT_SHOT`, `TC_ACT_REDIRECT` 등
-   - 특징: 패킷 분류 및 조작, 인그레스/이그레스 지원
-
-3. **소켓 필터 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_SOCKET_FILTER`
-   - 컨텍스트: 소켓 버퍼 데이터
-   - 반환 값: 0 (패킷 드롭) 또는 패킷 길이 (패킷 허용)
-   - 특징: 소켓 수준 패킷 필터링, tcpdump와 유사한 기능
-
-4. **kprobe/uprobe 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_KPROBE`, `BPF_PROG_TYPE_UPROBE`
-   - 컨텍스트: 함수 인자, 레지스터 값
-   - 반환 값: 정수 (의미 없음)
-   - 특징: 동적 함수 추적, 디버깅 및 프로파일링
-
-5. **tracepoint 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_TRACEPOINT`
-   - 컨텍스트: 트레이스포인트 정의 구조체
-   - 반환 값: 정수 (의미 없음)
-   - 특징: 안정적인 커널 추적점, 버전 간 호환성
-
-6. **perf 이벤트 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_PERF_EVENT`
-   - 컨텍스트: 성능 이벤트 데이터
-   - 반환 값: 정수 (의미 없음)
-   - 특징: 하드웨어/소프트웨어 성능 이벤트 모니터링
-
-7. **cgroup 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_CGROUP_SKB`, `BPF_PROG_TYPE_CGROUP_SOCK` 등
-   - 컨텍스트: cgroup 정보, 소켓/패킷 데이터
-   - 반환 값: 0 (거부) 또는 1 (허용)
-   - 특징: 컨테이너별 네트워크 정책, 리소스 제어
-
-8. **LSM(Linux Security Module) 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_LSM`
-   - 컨텍스트: 보안 관련 작업 정보
-   - 반환 값: 0 (허용) 또는 오류 코드 (거부)
-   - 특징: 보안 정책 적용, 권한 검사
-
-9. **소켓 작업 프로그램**:
-   - 프로그램 유형: `BPF_PROG_TYPE_SOCK_OPS`
-   - 컨텍스트: 소켓 작업 정보
-   - 반환 값: 정수 (의미 없음)
-   - 특징: TCP 연결 제어, 소켓 옵션 설정
-
-10. **fentry/fexit 프로그램**:
-    - 프로그램 유형: `BPF_PROG_TYPE_TRACING`
-    - 컨텍스트: 함수 인자, 반환 값
-    - 반환 값: 정수 (의미 없음)
-    - 특징: 저오버헤드 함수 추적, kprobe보다 효율적
-
-### 간단한 eBPF 프로그램 예제 및 설명
-
-다음은 시스템 콜 실행을 추적하는 간단한 eBPF 프로그램 예제입니다:
-
-```c
-// hello_world.c
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-
-// 프로그램 섹션 정의 - 이 프로그램은 execve 시스템 콜 진입 시 실행됨
-SEC("tracepoint/syscalls/sys_enter_execve")
-int hello_execve(void *ctx) {
-    // 간단한 메시지 출력
-    char msg[] = "Hello, eBPF!";
-    bpf_trace_printk(msg, sizeof(msg));
-    return 0;
-}
-
-// 라이센스 정의 (GPL 호환 필요)
-char LICENSE[] SEC("license") = "GPL";
-```
-
-**코드 설명**:
-1. **헤더 파일**: 필요한 eBPF 관련 헤더 포함
-2. **섹션 정의**: `SEC()` 매크로로 프로그램 유형과 연결 지점 지정
-3. **프로그램 함수**: `execve` 시스템 콜 실행 시 호출될 함수
-4. **컨텍스트 매개변수**: 이벤트 관련 데이터 포함
-5. **헬퍼 함수 사용**: `bpf_trace_printk()`로 디버그 메시지 출력
-6. **라이센스 지정**: GPL 호환 라이센스 필요 (커널 심볼 접근 위해)
-
-**컴파일 및 실행**:
-```bash
-# 컴파일
-clang -O2 -target bpf -c hello_world.c -o hello_world.o
-
-# 로드 및 실행
-bpftool prog load hello_world.o /sys/fs/bpf/hello_world
-
-# 출력 확인
-cat /sys/kernel/debug/tracing/trace_pipe
-```
-
-**실행 결과**:
-```
-<...>-1234  [001] d... 123456.789012: bpf_trace_printk: Hello, eBPF!
-<...>-5678  [002] d... 123456.789102: bpf_trace_printk: Hello, eBPF!
-```
-
-이 간단한 예제는 eBPF의 기본 개념을 보여줍니다. 실제 애플리케이션에서는 더 복잡한 로직과 맵을 사용하여 데이터를 수집하고 분석할 수 있습니다.
+필요한 가시성·제어로 훅을 선택합니다. XDP에는 후단 스택 context 일부가 없고 TC는 skb 기반 트래픽을 처리합니다. Tracepoint/probe 관측이 자동으로 정책을 집행하는 것은 아닙니다. 타입 간 context 구조나 반환 코드를 그대로 복사하지 않습니다.
 
 ### eBPF 맵: 데이터 공유와 상태 저장의 핵심
 
-eBPF 맵은 eBPF 프로그램과 사용자 공간 애플리케이션 간의 데이터 공유를 위한 키-값 저장소입니다. 이 맵은 eBPF 프로그램이 상태를 유지하고, 사용자 공간과 통신하는 핵심 메커니즘입니다.
+맵은 FD, 로드된 프로그램, 명시적인 bpffs pin 등의 참조가 남아 있는 동안 존재합니다. Pin은 디스크 영속 저장이 아니며 재부팅 후 내용도 보존하지 않습니다. 재로드 시 이전 맵을 자동 재사용하지 않습니다.
 
-#### eBPF 맵의 기본 개념
+| 타입 | 용도와 제약 |
+|---|---|
+| `HASH` | 용량 제한 키·값 테이블. 가득 차면 삽입 실패 가능. 평균 상수 시간 조회가 지연 보장은 아님 |
+| `ARRAY` | 유효 인덱스의 값은 미리 할당되고 0으로 초기화됨. 0이 없는 해시 엔트리를 뜻하지 않음 |
+| `LRU_HASH` | LRU 방식 축출 캐시; 무손실 누적 카운터가 아님 |
+| `RINGBUF` | CPU 간 다중 생산자·단일 소비자; key/value 크기 0, 2의 거듭제곱 바이트 용량; 예약 실패 시 블로킹하지 않음 |
+| `PERF_EVENT_ARRAY` | CPU별 perf 채널; 사용자 공간 설정·소비와 유실 레코드 집계 필요 |
+| `PROG_ARRAY` | Tail call 프로그램 참조; 대상 호환성과 호출 한도 적용 |
+| `PERCPU_HASH` / `PERCPU_ARRAY` | CPU 간 경합 감소; 모든 race 제거는 아님. 사용자 공간은 모든 possible CPU 슬롯·패딩 고려 |
+| `SOCKMAP` / `SOCKHASH` | 지원되는 리다이렉션·프로그램의 소켓 참조; 임의 소켓 동작 훅이 아님 |
 
-eBPF 맵은 다음과 같은 특성을 가집니다:
+libbpf 1.x에서 `struct bpf_map_def SEC("maps")`가 제거되었습니다. 다음 BTF 선언은 실제 타입으로 여덟 맵 범주를 보여줍니다. 필요한 맵을 적절한 프로그램과 조합해야 하며 선언만으로 이벤트 파이프라인이 완성되지 않습니다.
 
-- **영구 저장소**: 프로그램이 재로드되어도 데이터 유지
-- **다양한 데이터 구조**: 해시 테이블, 배열, 큐, 스택 등 다양한 형태 지원
-- **동시성 지원**: 여러 CPU에서 동시 접근 가능
-- **크기 제한**: 생성 시 최대 크기 지정 필요
-- **유연한 키/값 형식**: 다양한 데이터 유형 저장 가능
-- **양방향 접근**: 커널 공간과 사용자 공간 모두에서 접근 가능
-
-#### 주요 맵 유형과 사용 사례
-
-1. **해시 맵 (BPF_MAP_TYPE_HASH)**:
-   - 일반적인 키-값 저장소
-   - O(1) 시간 복잡도의 조회 성능
-   - 동적 크기 관리 (최대 항목 수 제한)
-   - 사용 사례: 연결 추적, 세션 정보 저장, 카운터
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") connection_map = {
-         .type = BPF_MAP_TYPE_HASH,
-         .key_size = sizeof(struct connection_key),
-         .value_size = sizeof(struct connection_info),
-         .max_entries = 1024,
-     };
-     ```
-
-2. **배열 맵 (BPF_MAP_TYPE_ARRAY)**:
-   - 인덱스 기반 고정 크기 배열
-   - 매우 빠른 조회 성능
-   - 모든 항목이 미리 할당됨
-   - 사용 사례: 전역 설정, 통계, 빠른 조회가 필요한 데이터
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") config_array = {
-         .type = BPF_MAP_TYPE_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(struct config),
-         .max_entries = 1,
-     };
-     ```
-
-3. **LRU 해시 맵 (BPF_MAP_TYPE_LRU_HASH)**:
-   - 최근 사용 항목 추적 기능이 있는 해시 맵
-   - 최대 항목 수 초과 시 가장 오래된 항목 자동 제거
-   - 캐시 구현에 적합
-   - 사용 사례: 연결 캐시, 경로 캐시
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") connection_cache = {
-         .type = BPF_MAP_TYPE_LRU_HASH,
-         .key_size = sizeof(struct connection_key),
-         .value_size = sizeof(struct connection_info),
-         .max_entries = 10000,
-     };
-     ```
-
-4. **링 버퍼 (BPF_MAP_TYPE_RINGBUF)**:
-   - 생산자-소비자 모델의 고성능 버퍼
-   - 단일 생산자, 단일 소비자 지원
-   - 이벤트 기반 통지 지원
-   - 사용 사례: 로그 수집, 이벤트 전달, 고성능 데이터 스트리밍
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") events = {
-         .type = BPF_MAP_TYPE_RINGBUF,
-         .max_entries = 256 * 1024, // 256 KB
-     };
-     ```
-
-5. **퍼프 이벤트 배열 (BPF_MAP_TYPE_PERF_EVENT_ARRAY)**:
-   - 성능 이벤트 데이터 전송
-   - 커널에서 사용자 공간으로 이벤트 전달
-   - 사용 사례: 추적 이벤트, 성능 데이터 수집
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") perf_events = {
-         .type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-         .key_size = sizeof(int),
-         .value_size = sizeof(u32),
-         .max_entries = 128,
-     };
-     ```
-
-6. **프로그램 배열 (BPF_MAP_TYPE_PROG_ARRAY)**:
-   - 다른 eBPF 프로그램 참조 저장
-   - 테일 콜 구현에 사용
-   - 프로그램 체이닝 가능
-   - 사용 사례: 복잡한 처리 로직 모듈화, 조건부 실행
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") jump_table = {
-         .type = BPF_MAP_TYPE_PROG_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(u32),
-         .max_entries = 10,
-     };
-     ```
-
-7. **CPU별 맵 (BPF_MAP_TYPE_PERCPU_HASH/ARRAY)**:
-   - CPU별로 독립적인 데이터 저장
-   - 동시성 문제 없이 고성능 접근 가능
-   - 사용 사례: 고성능 카운터, CPU별 통계
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") cpu_stats = {
-         .type = BPF_MAP_TYPE_PERCPU_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(struct stats),
-         .max_entries = 1,
-     };
-     ```
-
-8. **소켓 맵 (BPF_MAP_TYPE_SOCKMAP)**:
-   - 소켓 참조 저장
-   - 소켓 간 리다이렉션 지원
-   - 사용 사례: 소켓 가속화, 프록시 구현
-   - 예시 코드:
-     ```c
-     struct bpf_map_def SEC("maps") socket_map = {
-         .type = BPF_MAP_TYPE_SOCKMAP,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(u32),
-         .max_entries = 1024,
-     };
-     ```
-
-#### eBPF 맵 작업 예제
-
-다음은 eBPF 프로그램에서 맵을 사용하는 간단한 예제입니다:
+**`map_types.bpf.c`**
 
 ```c
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 
-// 맵 정의
-struct bpf_map_def SEC("maps") counter_map = {
-    .type = BPF_MAP_TYPE_ARRAY,
-    .key_size = sizeof(u32),
-    .value_size = sizeof(u64),
-    .max_entries = 1,
-};
-
-SEC("tracepoint/syscalls/sys_enter_execve")
-int count_execve(void *ctx) {
-    u32 key = 0;
-    u64 *value, init_val = 1;
-    
-    // 맵에서 값 조회
-    value = bpf_map_lookup_elem(&counter_map, &key);
-    if (value) {
-        // 값이 존재하면 증가
-        __sync_fetch_and_add(value, 1);
-    } else {
-        // 값이 없으면 초기화
-        bpf_map_update_elem(&counter_map, &key, &init_val, BPF_ANY);
-    }
-    
-    return 0;
-}
-
-char LICENSE[] SEC("license") = "GPL";
-```
-
-사용자 공간에서 맵 접근:
-
-```c
-#include <bpf/bpf.h>
-#include <stdio.h>
-
-int main() {
-    // 맵 파일 디스크립터 열기
-    int map_fd = bpf_obj_get("/sys/fs/bpf/counter_map");
-    if (map_fd < 0) {
-        perror("Failed to open map");
-        return 1;
-    }
-    
-    // 맵에서 값 조회
-    u32 key = 0;
-    u64 value;
-    if (bpf_map_lookup_elem(map_fd, &key, &value) == 0) {
-        printf("execve count: %llu\n", value);
-    } else {
-        perror("Failed to lookup value");
-    }
-    
-    return 0;
-}
-```
-
-## Cilium에서의 eBPF 활용: 컨테이너 네트워킹의 혁신
-
-Cilium은 eBPF를 활용하여 컨테이너 네트워킹, 로드 밸런싱, 네트워크 정책 및 가시성을 구현하는 오픈소스 프로젝트입니다. Kubernetes와 같은 컨테이너 오케스트레이션 플랫폼에서 네트워킹 및 보안 기능을 제공합니다.
-
-### Cilium 아키텍처와 eBPF의 역할
-
-Cilium은 다음과 같은 구성 요소로 이루어져 있으며, 각 구성 요소에서 eBPF가 중요한 역할을 합니다:
-
-![Kubernetes API Server·Cilium Operator·Cilium CLI·Hubble로 이루어진 클러스터 컴포넌트와, 각 워커 노드에서 실행되는 Cilium Agent가 eBPF 프로그램을 로드하고 eBPF 맵을 관리하며 Pod 트래픽을 커널 수준에서 처리하는 Cilium 아키텍처를 보여준다.](../../.gitbook/assets/ko-networking-cilium-02-ebpf-1.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-02-ebpf-1.html)
-
-#### 주요 구성 요소:
-
-1. **Cilium Agent**:
-   - 각 노드에서 실행되는 데몬
-   - eBPF 프로그램 컴파일 및 로드
-   - 엔드포인트 관리 및 정책 적용
-   - 네트워크 토폴로지 검색
-   - 상태 모니터링 및 메트릭 수집
-
-2. **Cilium Operator**:
-   - 클러스터 전체 리소스 관리
-   - CRD(Custom Resource Definition) 처리
-   - 노드 간 조정
-   - 클러스터 범위 기능 관리
-
-3. **eBPF 프로그램**:
-   - XDP 및 TC 훅에 연결된 데이터 경로 프로그램
-   - 소켓 수준 로드 밸런싱 프로그램
-   - 연결 추적 프로그램
-   - 네트워크 정책 적용 프로그램
-
-4. **eBPF 맵**:
-   - 엔드포인트 정보 저장
-   - 정책 규칙 저장
-   - 연결 추적 상태 관리
-   - 로드 밸런싱 서비스 정보
-
-5. **Hubble**:
-   - eBPF 기반 네트워크 관찰성 플랫폼
-   - 네트워크 흐름 모니터링
-   - 보안 가시성 제공
-   - 성능 분석 및 문제 해결
-
-### Cilium의 eBPF 데이터 경로 상세 분석
-
-Cilium의 데이터 경로는 eBPF 프로그램을 통해 구현되며, 패킷이 네트워크 스택을 통과하는 여러 지점에서 처리됩니다:
-
-1. **패킷 수신 (XDP/TC 인그레스)**:
-   - 네트워크 인터페이스에서 패킷 수신
-   - XDP 또는 TC 훅에서 패킷 인터셉트
-   - 초기 필터링 및 DDOS 방어
-   - 패킷 유형 분류 (로컬/포워딩/호스트)
-
-2. **신원 확인**:
-   - 패킷의 출발지/목적지 IP 및 포트 분석
-   - Kubernetes 엔드포인트 식별
-   - 서비스 백엔드 확인
-   - 컨텍스트 정보 수집
-
-3. **정책 적용**:
-   - 네트워크 정책 규칙 확인
-   - L3/L4 정책 적용 (IP/포트 기반)
-   - L7 정책 적용 (HTTP/gRPC/DNS 등)
-   - 정책 결정에 따른 허용/거부
-
-4. **연결 추적**:
-   - 연결 상태 추적 및 관리
-   - 상태 기반 방화벽 기능
-   - NAT 상태 유지
-   - 연결 타임아웃 관리
-
-5. **NAT 및 로드 밸런싱**:
-   - 필요한 경우 주소 변환 수행
-   - 서비스 로드 밸런싱 (일관된 해싱, 세션 어피니티)
-   - DSR(Direct Server Return) 지원
-   - 헬스 체크 기반 엔드포인트 선택
-
-6. **패킷 전달**:
-   - 대상 엔드포인트로 패킷 전달
-   - 오버레이 또는 네이티브 라우팅
-   - 패킷 캡슐화/디캡슐화 (필요 시)
-   - 패킷 변환 및 최적화
-
-7. **모니터링 및 가시성**:
-   - 흐름 정보 수집
-   - 메트릭 업데이트
-   - 이벤트 생성
-   - 디버그 정보 기록
-
-### Cilium의 주요 eBPF 프로그램 상세 설명
-
-Cilium은 다양한 eBPF 프로그램을 사용하여 컨테이너 네트워킹 기능을 구현합니다:
-
-1. **bpf_lxc.c**: 엔드포인트 간 통신 처리
-   - 컨테이너 네트워크 네임스페이스와 호스트 간 통신 처리
-   - 정책 적용 및 연결 추적
-   - 엔드포인트 식별 및 라우팅
-   - 주요 함수: `handle_xgress`, `__tail_handle_ipv{4,6}`
-
-2. **bpf_overlay.c**: 오버레이 네트워크 처리
-   - VXLAN/Geneve 캡슐화 및 디캡슐화
-   - 노드 간 패킷 라우팅
-   - 터널 키 관리
-   - 주요 함수: `from_overlay`, `to_overlay`
-
-3. **bpf_host.c**: 호스트 네트워킹 처리
-   - 호스트 네트워크 스택과 컨테이너 간 통신
-   - 호스트 방화벽 기능
-   - 호스트 기반 서비스 처리
-   - 주요 함수: `handle_netdev`, `handle_from_host`
-
-4. **bpf_xdp.c**: XDP 기반 패킷 처리
-   - 초기 패킷 필터링
-   - DDoS 방어
-   - 고성능 패킷 드롭 및 리다이렉션
-   - 주요 함수: `cilium_xdp_entry`
-
-5. **bpf_sock.c**: 소켓 수준 로드 밸런싱
-   - 소켓 생성 시 로드 밸런싱
-   - 커넥션 추적 우회
-   - 고성능 서비스 접근
-   - 주요 함수: `sock4_load_balancer`, `sock6_load_balancer`
-
-6. **bpf_lb.c**: 서비스 로드 밸런싱
-   - Kubernetes 서비스 구현
-   - 백엔드 선택 및 NAT
-   - 세션 어피니티 지원
-   - 주요 함수: `lb{4,6}_service`
-
-7. **bpf_network.c**: 네트워크 정책 적용
-   - L3/L4 정책 적용
-   - 정책 결정 캐싱
-   - 정책 통계 수집
-   - 주요 함수: `policy_can_access`, `policy_apply_verdict`
-
-### Cilium의 eBPF 맵 활용
-
-Cilium은 다양한 eBPF 맵을 사용하여 상태를 저장하고 데이터를 공유합니다:
-
-1. **endpoints_map**: 엔드포인트 정보 저장
-   - 키: 엔드포인트 ID
-   - 값: 엔드포인트 메타데이터 (IP, 보안 ID, 인터페이스 등)
-   - 용도: 패킷 라우팅, 정책 적용
-
-2. **connection_map**: 연결 추적 정보
-   - 키: 연결 튜플 (src IP/port, dst IP/port, protocol)
-   - 값: 연결 상태, 타임스탬프, 통계
-   - 용도: 상태 기반 방화벽, NAT 추적
-
-3. **policy_map**: 네트워크 정책 규칙
-   - 키: 정책 식별자
-   - 값: 정책 규칙 (허용/거부, 포트, 프로토콜 등)
-   - 용도: 네트워크 정책 적용
-
-4. **lb_map**: 로드 밸런싱 서비스 정보
-   - 키: 서비스 주소 (가상 IP:포트)
-   - 값: 백엔드 목록, 선택 알고리즘, 상태
-   - 용도: 서비스 로드 밸런싱
-
-5. **tunnel_map**: 오버레이 네트워크 정보
-   - 키: 원격 노드 IP
-   - 값: 터널 엔드포인트 정보
-   - 용도: 노드 간 패킷 라우팅
-
-6. **metrics_map**: 성능 메트릭 수집
-   - 키: 메트릭 유형
-   - 값: 카운터, 게이지 등
-   - 용도: 모니터링 및 디버깅
-
-### Cilium의 eBPF 기반 기능
-
-Cilium은 eBPF를 활용하여 다음과 같은 고급 네트워킹 및 보안 기능을 제공합니다:
-
-1. **Kubernetes 네트워크 정책**:
-   - 네임스페이스, 파드, 서비스 수준 정책
-   - L3/L4/L7 정책 지원
-   - CIDR 기반 필터링
-   - 클러스터 내/외부 통신 제어
-
-2. **투명한 암호화**:
-   - WireGuard 또는 IPsec 기반 노드 간 암호화
-   - 제로 구성 설정
-   - 성능 최적화된 구현
-   - 키 관리 자동화
-
-3. **서비스 메시 기능**:
-   - L7 프록시 통합
-   - HTTP, gRPC, Kafka 프로토콜 인식
-   - 헤더 기반 라우팅
-   - 사이드카 없는 서비스 메시
-
-4. **로드 밸런싱**:
-   - 일관된 해싱 알고리즘
-   - 세션 어피니티
-   - 마이크로서비스 간 로드 밸런싱
-   - DSR(Direct Server Return) 지원
-
-5. **관찰성 및 모니터링**:
-   - 네트워크 흐름 가시성
-   - 서비스 의존성 맵
-   - 성능 병목 식별
-   - 보안 이벤트 감지
-
-6. **대역폭 관리**:
-   - 엔드포인트별 대역폭 제한
-   - 트래픽 우선순위 지정
-   - 혼잡 제어
-   - 서비스 품질(QoS) 보장
-
-7. **멀티 클러스터 네트워킹**:
-   - 클러스터 간 연결
-   - 글로벌 서비스 라우팅
-   - 일관된 정책 적용
-   - 페더레이션 지원
-
-## 실습: eBPF 프로그램 개발 및 디버깅
-
-이 섹션에서는 eBPF 프로그램을 직접 개발하고 디버깅하는 방법을 실습을 통해 알아봅니다. 기본적인 eBPF 프로그램부터 시작하여 Cilium의 eBPF 기능을 탐색하는 방법까지 다룹니다.
-
-### 1. 기본 eBPF 프로그램 개발
-
-#### 1.1 시스템 콜 추적 프로그램
-
-다음은 `execve` 시스템 콜을 추적하는 간단한 eBPF 프로그램입니다:
-
-```c
-// hello_ebpf.c
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-
-// 프로그램이 실행될 트레이스포인트 지정
-SEC("tracepoint/syscalls/sys_enter_execve")
-int hello_execve(void *ctx) {
-    // 디버그 메시지 출력
-    char msg[] = "Hello, eBPF! Process executed.";
-    bpf_trace_printk(msg, sizeof(msg));
-    return 0;
-}
-
-// GPL 호환 라이센스 명시 (필수)
-char LICENSE[] SEC("license") = "GPL";
-```
-
-#### 1.2 컴파일 및 로드
-
-```bash
-# 필요한 패키지 설치 확인
-sudo apt-get update
-sudo apt-get install -y clang llvm libelf-dev libbpf-dev bpftool
-
-# 컴파일
-clang -O2 -target bpf -c hello_ebpf.c -o hello_ebpf.o
-
-# 프로그램 로드
-sudo bpftool prog load hello_ebpf.o /sys/fs/bpf/hello_execve
-
-# 출력 확인
-sudo cat /sys/kernel/debug/tracing/trace_pipe
-```
-
-실행 결과:
-```
-<...>-1234  [001] d... 123456.789012: bpf_trace_printk: Hello, eBPF! Process executed.
-<...>-5678  [002] d... 123456.789102: bpf_trace_printk: Hello, eBPF! Process executed.
-```
-
-#### 1.3 프로그램 정보 확인
-
-```bash
-# 로드된 eBPF 프로그램 목록 확인
-sudo bpftool prog list
-
-# 특정 프로그램 상세 정보 확인
-sudo bpftool prog show id 123
-
-# 프로그램 바이트코드 덤프
-sudo bpftool prog dump xlated id 123
-```
-
-### 2. 맵을 사용한 고급 eBPF 프로그램
-
-#### 2.1 프로세스 실행 카운터 프로그램
-
-다음은 맵을 사용하여 프로세스 실행 횟수를 추적하는 프로그램입니다:
-
-```c
-// process_counter.c
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <linux/sched.h>
-
-// 프로세스 이름을 저장할 구조체
-struct process_key {
-    char comm[16];
-};
-
-// 맵 정의
+/* Definitions only; combine the needed maps with a suitable program. */
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
     __uint(max_entries, 1024);
-    __type(key, struct process_key);
-    __type(value, u64);
-} process_map SEC(".maps");
+    __type(key, __u32);
+    __type(value, __u64);
+} hash_counts SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} total SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u64);
+} cache SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_RINGBUF);
+    __uint(max_entries, 256 * 1024);
+} events SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+    __type(key, __u32);
+    __type(value, __u32);
+    /* libbpf determines max_entries from the number of possible CPUs. */
+} perf_events SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+    __uint(max_entries, 10);
+    __type(key, __u32);
+    __type(value, __u32);
+} jump_table SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} cpu_counts SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_SOCKMAP);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u32);
+} sockets SEC(".maps");
+```
+
+공유 카운터는 원자적 증가가 필요합니다. 새 해시 키에는 `BPF_NOEXIST` 삽입 후 실제로 만들어진 엔트리를 조회·증가시켜야 합니다. `BPF_ANY` 초기화는 다른 CPU의 카운트를 덮어쓸 수 있습니다. 배열의 유효 인덱스에는 엔트리가 이미 존재합니다.
+
+## Cilium에서의 eBPF 활용: 컨테이너 네트워킹의 혁신
+
+### Cilium 아키텍처와 eBPF의 역할
+
+![Cilium 논리 역할: Kubernetes 상태와 Operator, 노드별 에이전트, 커널 프로그램·맵과 Hubble 플로우 관측.](../../.gitbook/assets/ko-networking-cilium-02-ebpf-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-02-ebpf-1.html)
+
+그림은 논리적 역할이며 필수 위치나 단일 컴파일 파이프라인이 아닙니다. CLI는 클러스터 밖에서 실행할 수 있고 에이전트는 적격 관리 노드에서 실행합니다. 프로그램 빌드·로드는 버전·기능에 따라 다릅니다. Hubble Relay는 플로우를 집계하며 Prometheus 메트릭은 별도 엔드포인트입니다.
+
+에이전트는 endpoint, identity, 정책, 데이터플레인 상태를 조정합니다. Operator는 설정된 identity/IPAM 생명주기 같은 클러스터 작업을 담당하며 패킷 전달 경로가 아닙니다. Hubble은 BPF 플로우 정보와 사용자 공간 프록시 이벤트를 조합합니다.
+
+### Cilium eBPF 데이터플레인 상세 분석
+
+다음은 협력하는 기능이며 모든 패킷의 고정 처리 순서가 아닙니다.
+
+1. **진입:** 소켓 훅은 패킷 생성 전 Service 백엔드를 결정할 수 있고 TC는 패킷 경로를 처리합니다. 선택적 XDP 가속은 지원되는 외부 트래픽에 적용합니다.
+2. **Identity·정책:** IP/identity와 endpoint 정책으로 L3/L4 접근을 제어합니다. 지원되는 HTTP/gRPC 정책은 Envoy, DNS는 DNS 프록시를 사용하며 L7 파싱·집행 전체가 BPF는 아닙니다.
+3. **상태·변환:** conntrack, service/backend, reverse-NAT, affinity 맵은 역할이 다르며 모든 패킷에서 백엔드를 다시 선택하지 않습니다.
+4. **전달:** native routing 또는 설정된 overlay를 사용합니다. DSR dispatch·반환 경로에는 모드에 맞는 네트워크 조건이 필요합니다.
+5. **관찰:** 데이터플레인 카운터·이벤트와 프록시 이벤트에는 설정·수집 유실의 한계가 있습니다.
+
+백엔드 readiness는 제어플레인 상태와 해당 health 메커니즘에서 얻으며 모든 애플리케이션을 BPF가 probe한다는 뜻은 아닙니다. Maglev, affinity, DSR, 가속은 선택 기능이지 항상 적용되는 기본값이 아닙니다.
+
+### Cilium 주요 eBPF 프로그램 상세 설명
+
+| Cilium 1.20.1 소스 | 역할 |
+|---|---|
+| `bpf/bpf_lxc.c` | Endpoint 패킷 경로, 정책, conntrack과 전달 |
+| `bpf/bpf_overlay.c` | Overlay 패킷 경로 |
+| `bpf/bpf_host.c` | 호스트·장치 경로와 지원되는 host firewall 처리 |
+| `bpf/bpf_xdp.c` | 설정된 로드밸런서 가속 등을 포함한 XDP 경로 |
+| `bpf/bpf_sock.c` | connect/sendmsg/recvmsg 서비스 변환 등의 socket-address 훅 |
+| `bpf/lib/lb.h` | 공통 로드밸런싱 헬퍼 |
+| `bpf/lib/policy.h` | 공통 정책 헬퍼 |
+
+이 릴리스에는 최상위 `bpf_lb.c`, `bpf_network.c` 파일이 없습니다. 함수명·기능 조건은 변하므로 개념적인 이름을 소스 파일로 가정하지 말고 정확한 버전을 확인합니다.
+
+### Cilium의 eBPF 맵 활용
+
+다음 예는 안정적인 맵 레이아웃 API가 아닙니다.
+
+| 이름 / 계열 | 키와 역할 |
+|---|---|
+| `cilium_lxc` | 주소·주소 계열 → endpoint 전달 메타데이터. 단순 endpoint ID가 아님 |
+| `cilium_ipcache_v2` | Prefix, 주소 계열, 클러스터 context → identity·터널 메타데이터 |
+| `cilium_policy_v3_<endpoint>` | Identity, 방향, 프로토콜, 목적지 포트와 prefix → 정책 엔트리 |
+| `cilium_ct4_global`, `cilium_ct6_global`, `cilium_ct_any4_global` 등 | 연결 tuple 상태. 실제 맵은 프로토콜·주소 계열·설정에 따름 |
+| `cilium_lb4_services_v2` / `cilium_lb6_services_v2` | 주소·포트, 프로토콜, scope, backend slot → 서비스 메타데이터·백엔드 참조. 백엔드 레코드는 별도 맵 |
+| `cilium_metrics` | 사유, 방향, 소스 위치 키 → 패킷·바이트 카운터 |
+
+`cilium-dbg map get`은 사용자 공간 캐시이며 항상 최신 커널 덤프가 아닙니다. 버전에 맞는 `cilium-dbg bpf ...` 디코더나 bpftool의 지원 커널 뷰를 사용합니다. 문제 해결 편의상 Cilium 맵에 원시 바이트를 쓰지 않습니다.
+
+### eBPF 기반 기능과 경계
+
+- **정책:** Kubernetes NetworkPolicy는 L3/L4 의미를 제공하고 Cilium 리소스가 지원 기능을 확장합니다. 무제한 L4 허용이 겹치는 L7 제한을 우회할 수 있으므로 합쳐진 정책을 확인합니다.
+- **암호화:** WireGuard/IPsec 모드에서는 BPF가 해당 커널 시설로 트래픽을 유도하며 암호 연산 전체를 BPF 명령어로 수행하지 않습니다. 모드에 맞는 키·포트·MTU·범위를 설정합니다. IPsec과 WireGuard 키 운영은 다릅니다.
+- **서비스 메시:** 사용자 공간 프록시가 지원 L7 처리를 제공합니다. Kafka L7 정책은 제거되었습니다. Beta workload mTLS/ztunnel에는 별도 조건이 있으며 노드 암호화로 자동 활성화되지 않습니다.
+- **대역폭:** EDT/bandwidth-manager와 혼잡 제어가 종단 간 QoS나 처리량을 보장하지 않습니다.
+- **다중 클러스터:** Cluster Mesh에는 연결, identity, 주소와 호환 설정이 필요하며 모든 정책 객체를 자동 동기화하거나 라우팅을 자동 해결하지 않습니다.
+
+## 실습: eBPF 프로그램 개발 및 디버깅
+
+### 1. 기본 eBPF 프로그램 개발
+
+새 실습 디렉터리에 표시된 파일명으로 저장합니다. 이 프로그램은 이후 실패하는 경우까지 포함해 `execve` **시도**를 기록합니다. `execveat`은 별도 syscall 진입 tracepoint입니다. Debug 출력은 공유되고 잡음이 많아 운영 이벤트 전송 방식이 아닙니다. `SEC()`가 타입·훅을 지정하며 GPL 메타데이터는 사용한 헬퍼에 맞춘 것입니다.
+
+**`hello.bpf.c`**
+
+```c
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
 SEC("tracepoint/syscalls/sys_enter_execve")
-int count_execve(void *ctx) {
-    struct process_key key = {};
-    u64 *count, zero = 1;
-    
-    // 현재 프로세스 이름 가져오기
-    bpf_get_current_comm(&key.comm, sizeof(key.comm));
-    
-    // 맵에서 카운터 조회
-    count = bpf_map_lookup_elem(&process_map, &key);
-    if (count) {
-        // 카운터 증가
-        __sync_fetch_and_add(count, 1);
-    } else {
-        // 새 항목 추가
-        bpf_map_update_elem(&process_map, &key, &zero, BPF_ANY);
-    }
-    
+int hello_execve(void *ctx)
+{
+    (void)ctx;
+    char message[] = "execve attempt\n";
+    bpf_trace_printk(message, sizeof(message));
     return 0;
 }
 
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-#### 2.2 사용자 공간 애플리케이션
+### 2. 맵을 활용한 고급 eBPF 프로그램
 
-맵 데이터를 읽는 사용자 공간 프로그램:
+참조 커널에서 `sched_process_exec`는 실행 전환 성공 후 발생합니다. 종료 문자를 포함해 최대 16바이트인 짧은 task 이름 `comm`별로 집계하며 고유 실행 파일 경로·프로세스 ID가 아닙니다. 이름은 충돌·변경될 수 있습니다. 호스트 관측이며 자동으로 특정 Pod에 한정되지 않습니다.
+
+맵에는 최대 1,024개 이름을 보관합니다. `lost_events[0]`은 이름 조회 실패, `[1]`은 용량 부족 등 사용 가능한 카운터 엔트리를 얻지 못한 이벤트 수입니다. 모든 관측 실패를 포함하지 않으며 64비트 카운터도 overflow할 수 있습니다. 실습은 집계 중 엔트리를 삭제하지 않습니다.
+
+**`exec_shared.h`**
 
 ```c
-// process_reader.c
-#include <stdio.h>
-#include <stdlib.h>
-#include <bpf/libbpf.h>
-#include <bpf/bpf.h>
-#include <unistd.h>
-
-struct process_key {
-    char comm[16];
+#ifndef EXEC_SHARED_H
+#define EXEC_SHARED_H
+#define COMM_BYTES 16
+#define MAX_COMMANDS 1024
+struct comm_key {
+    char comm[COMM_BYTES];
 };
+#endif
+```
 
-int main() {
-    // 맵 파일 디스크립터 열기
-    int map_fd = bpf_obj_get("/sys/fs/bpf/process_map");
-    if (map_fd < 0) {
-        perror("Failed to open map");
+**`exec_count.bpf.c`**
+
+```c
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#include "exec_shared.h"
+
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, MAX_COMMANDS);
+    __type(key, struct comm_key);
+    __type(value, __u64);
+} exec_counts SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 2);
+    __type(key, __u32);
+    __type(value, __u64);
+} lost_events SEC(".maps");
+
+static __always_inline void record_loss(__u32 reason)
+{
+    __u64 *lost = bpf_map_lookup_elem(&lost_events, &reason);
+    if (lost)
+        __sync_fetch_and_add(lost, 1);
+}
+
+SEC("tracepoint/sched/sched_process_exec")
+int count_exec(void *ctx)
+{
+    (void)ctx;
+    struct comm_key key = {};
+    __u64 zero = 0;
+    if (bpf_get_current_comm(key.comm, sizeof(key.comm)) != 0) {
+        record_loss(0);
+        return 0;
+    }
+
+    __u64 *count = bpf_map_lookup_elem(&exec_counts, &key);
+    if (!count) {
+        /* A competing CPU may insert first; never overwrite its count. */
+        bpf_map_update_elem(&exec_counts, &key, &zero, BPF_NOEXIST);
+        count = bpf_map_lookup_elem(&exec_counts, &key);
+    }
+    if (count)
+        __sync_fetch_and_add(count, 1);
+    else
+        record_loss(1);
+    return 0;
+}
+
+char LICENSE[] SEC("license") = "GPL";
+```
+
+#### 사용자 공간 애플리케이션과 연결 수명
+
+이 로더는 두 예제 object 중 하나를 받아 프로그램이 정확히 하나인지 확인하고 연결한 뒤 Ctrl-C/SIGTERM까지 link를 유지합니다. Pin을 가정하지 않고 같은 object에서 카운터 맵 FD를 얻습니다. NULL부터 제한된 횟수로 순회하는 비원자적 실시간 표본입니다.
+
+**`run_bpf.c`**
+
+```c
+#define _POSIX_C_SOURCE 200809L
+#include <errno.h>
+#include <inttypes.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include "exec_shared.h"
+
+static volatile sig_atomic_t stopping;
+
+static void stop(int signal_number)
+{
+    (void)signal_number;
+    stopping = 1;
+}
+
+static int dump_counts(int map_fd, int lost_fd)
+{
+    struct comm_key current, next;
+    const struct comm_key *previous = NULL;
+    unsigned int seen = 0;
+
+    while (seen < MAX_COMMANDS) {
+        if (bpf_map_get_next_key(map_fd, previous, &next) != 0) {
+            if (errno == ENOENT)
+                break;
+            perror("get next key");
+            return -1;
+        }
+        __u64 value;
+        if (bpf_map_lookup_elem(map_fd, &next, &value) == 0)
+            printf("%.*s: %" PRIu64 "\n", COMM_BYTES, next.comm,
+                   (uint64_t)value);
+        else if (errno != ENOENT) {
+            perror("lookup count");
+            return -1;
+        }
+        current = next;
+        previous = &current;
+        seen++;
+    }
+    for (__u32 reason = 0; reason < 2; reason++) {
+        __u64 value;
+        if (bpf_map_lookup_elem(lost_fd, &reason, &value) != 0) {
+            perror("lookup loss");
+            return -1;
+        }
+        printf("lost[%u]: %" PRIu64 "\n", reason, (uint64_t)value);
+    }
+    if (fflush(stdout) != 0) {
+        perror("flush output");
+        return -1;
+    }
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    struct bpf_object *object = NULL;
+    struct bpf_link *link = NULL;
+    int result = 1;
+    if (argc != 2) {
+        fprintf(stderr, "usage: %s OBJECT.bpf.o\n", argv[0]);
+        return 2;
+    }
+    struct sigaction action = {.sa_handler = stop};
+    sigemptyset(&action.sa_mask);
+    if (sigaction(SIGINT, &action, NULL) || sigaction(SIGTERM, &action, NULL)) {
+        perror("sigaction");
         return 1;
     }
-    
-    // 맵 항목 순회
-    struct process_key key, next_key;
-    u64 value;
-    
-    while (bpf_map_get_next_key(map_fd, &key, &next_key) == 0) {
-        if (bpf_map_lookup_elem(map_fd, &next_key, &value) == 0) {
-            printf("Process: %-16s Count: %llu\n", next_key.comm, value);
-        }
-        key = next_key;
+    object = bpf_object__open_file(argv[1], NULL);
+    if (!object) {
+        perror("open BPF object");
+        return 1;
     }
-    
-    return 0;
+    struct bpf_program *program = bpf_object__next_program(object, NULL);
+    if (!program || bpf_object__next_program(object, program)) {
+        fprintf(stderr, "expected exactly one program\n");
+        goto cleanup;
+    }
+    if (bpf_object__load(object) != 0) {
+        fprintf(stderr, "load failed; inspect libbpf/verifier diagnostics\n");
+        goto cleanup;
+    }
+    int counts = bpf_object__find_map_fd_by_name(object, "exec_counts");
+    int losses = bpf_object__find_map_fd_by_name(object, "lost_events");
+    if (counts >= 0 && losses < 0) {
+        fprintf(stderr, "counter object is missing lost_events\n");
+        goto cleanup;
+    }
+    link = bpf_program__attach(program);
+    if (!link) {
+        perror("attach tracepoint");
+        goto cleanup;
+    }
+    fprintf(stderr, "Attached; Ctrl-C detaches. Counts are live samples.\n");
+    result = 0;
+    while (!stopping) {
+        if (counts >= 0 && dump_counts(counts, losses) != 0) {
+            result = 1;
+            break;
+        }
+        sleep(2);
+    }
+cleanup:
+    bpf_link__destroy(link);
+    bpf_object__close(object);
+    return result;
 }
 ```
 
-#### 2.3 컴파일 및 실행
+#### 컴파일 및 실행
+
+Debian/Ubuntu multiarch에서는 GCC의 multiarch 경로가 UAPI `asm/` 헤더를 제공합니다. 다른 배포판은 경로를 조정합니다. `-g`가 `.maps`용 BTF를 생성합니다. 준비된 VM의 터미널 A에서 컴파일하고 로더를 시작합니다.
 
 ```bash
-# eBPF 프로그램 컴파일
-clang -O2 -target bpf -c process_counter.c -o process_counter.o
-
-# 사용자 공간 프로그램 컴파일
-gcc -o process_reader process_reader.c -lbpf
-
-# eBPF 프로그램 로드
-sudo bpftool prog load process_counter.o /sys/fs/bpf/process_counter map name process_map /sys/fs/bpf/process_map
-
-# 맵 핀 확인
-ls -la /sys/fs/bpf/
-
-# 몇 가지 명령어 실행하여 카운터 증가
-ls -la
-echo "Hello"
-find . -name "*.c"
-
-# 결과 확인
-sudo ./process_reader
+MULTIARCH=$(gcc -print-multiarch)
+test -n "$MULTIARCH"
+clang -O2 -g -target bpf -I"/usr/include/$MULTIARCH" \
+  -c hello.bpf.c -o hello.bpf.o
+clang -O2 -g -target bpf -I"/usr/include/$MULTIARCH" \
+  -c exec_count.bpf.c -o exec_count.bpf.o
+cc -O2 -Wall -Wextra run_bpf.c -o run_bpf \
+  $(pkg-config --cflags --libs libbpf)
+sudo ./run_bpf hello.bpf.o
 ```
+
+터미널 B에서 `sudo cat /sys/kernel/tracing/trace_pipe`를 읽고 C에서 `/usr/bin/true` 같은 외부 실행 파일을 호출합니다. Hello 로더를 Ctrl-C로 종료한 뒤 `sudo ./run_bpf exec_count.bpf.o`를 실행합니다. 다른 터미널에서 명령을 호출하며 이름별 값 변화를 확인합니다. 관측 도구와 다른 호스트 활동도 이벤트를 만들므로 고정 총합·PID를 약속하지 않습니다. 실패한 `execve`는 hello 출력에 나타날 수 있지만 `sched_process_exec`를 만들지 않아야 합니다.
+
+`bpftool prog load OBJECT PIN`만으로는 이 tracepoint에 연결하지 않습니다. 예제는 명시적으로 link를 소유합니다. Pin·재사용은 별도 수명 결정이며 `pinmaps`와 `map ... pinned ...`는 서로 바꿔 쓸 수 없습니다. 로더 종료로 pin하지 않은 자원을 해제합니다.
 
 ### 3. Cilium eBPF 프로그램 탐색 및 디버깅
 
-Cilium은 다양한 eBPF 프로그램과 맵을 사용합니다. 이를 탐색하고 디버깅하는 방법을 알아봅니다.
-
-#### 3.1 Cilium eBPF 맵 확인
+이미 준비된 클러스터와 올바른 kubeconfig context를 사용합니다. 대상 Pod의 노드에 있는 에이전트를 선택하며 endpoint ID는 노드별 값입니다. 아래 자리표시자를 실제 값으로 바꿉니다.
 
 ```bash
-# Cilium eBPF 맵 목록 확인
-cilium bpf maps list
-
-# 특정 맵 내용 확인
-cilium bpf maps get cilium_policy_00001
-
-# 엔드포인트 정보 확인
-cilium endpoint list
-
-# 특정 엔드포인트의 eBPF 프로그램 확인
-cilium bpf endpoint list -e 1234
+kubectl config current-context
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+export CILIUM_POD=cilium-REPLACE-WITH-ACTUAL-POD
+export ENDPOINT_ID=REPLACE-WITH-NODE-LOCAL-ID
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint get "$ENDPOINT_ID"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg map list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg service list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --frontends
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --backends
 ```
 
-#### 3.2 Cilium 네트워크 정책 디버깅
+`kubectl get networkpolicy,ciliumnetworkpolicy -n YOUR_NAMESPACE`와 해당 cluster-wide 정책을 별도로 확인합니다. Endpoint에 실현된 상태와 실제 플로우를 비교합니다. 제거된 `policy trace`와 폐기 예정인 `policy get`은 이를 대신하지 못합니다.
+
+Monitor는 한 번에 하나씩 실행하고 Ctrl-C로 종료합니다.
 
 ```bash
-# 네트워크 정책 상태 확인
-cilium policy get
-
-# 특정 엔드포인트의 정책 확인
-cilium endpoint get 1234 -o json | jq '.policy'
-
-# 정책 추적 활성화
-cilium policy trace --src-k8s-pod default:app-frontend --dst-k8s-pod default:app-backend -p TCP --dport 80
-
-# 정책 디버그 모드 활성화
-cilium config Debug=true
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent --   cilium-dbg monitor --related-to "$ENDPOINT_ID" --type drop
 ```
 
-#### 3.3 Cilium 서비스 로드 밸런싱 확인
+발행된 정책 판단은 `--type policy-verdict`, 제공되는 프록시 이벤트는 `--type l7`로 확인합니다. 가시성은 설정에 따르며 HTTP 거부는 네트워크 DROPPED 대신 HTTP 403일 수 있습니다.
+
+Hubble Relay가 활성화되어 있다면 `cilium hubble port-forward`를 유지하고 다음을 실행합니다.
 
 ```bash
-# 서비스 목록 확인
-cilium service list
-
-# 서비스 백엔드 확인
-cilium service get 1
-
-# 로드 밸런서 맵 확인
-cilium bpf lb list
-
-# 특정 서비스의 백엔드 상태 확인
-cilium bpf lb maglev list
+hubble status
+hubble observe --namespace default --last 20
+hubble observe --protocol http --last 20
+hubble observe --namespace default --last 20 --output json
 ```
 
-#### 3.4 Cilium 네트워크 흐름 모니터링
-
-```bash
-# 네트워크 흐름 모니터링 활성화
-cilium monitor
-
-# 특정 엔드포인트의 흐름만 모니터링
-cilium monitor --related-to 1234
-
-# 드롭된 패킷만 모니터링
-cilium monitor --type drop
-
-# L7 프로토콜 흐름 모니터링
-cilium monitor --type l7
-```
-
-#### 3.5 Hubble을 사용한 고급 관찰성
-
-```bash
-# Hubble 활성화 확인
-cilium status | grep Hubble
-
-# Hubble UI 접근
-kubectl port-forward -n kube-system svc/hubble-ui 12000:80
-
-# 특정 네임스페이스의 흐름 관찰
-hubble observe --namespace default
-
-# HTTP 요청 관찰
-hubble observe --protocol http
-
-# 서비스 의존성 맵 생성
-hubble observe --output json | jq
-```
+JSON을 `jq`로 전달해도 서비스 의존성 그래프가 생성되지 않습니다. 활성화된 Hubble UI에서 서비스 맵을 제공합니다(`cilium hubble ui`). HTTP 가시성에는 지원되는 프록시/L7 경로가 필요하며 암호화된 애플리케이션 내용을 자동 해독하지 않습니다.
 
 ### 4. 성능 분석 및 최적화
 
-#### 4.1 eBPF 프로그램 성능 분석
+Profiling 권한·지원이 있는 통제된 노드에서 실제 프로그램 ID를 확인합니다. 다음은 로컬 커널 상태 대상 명령이며 이번 감사에서 실행하지 않았습니다.
 
 ```bash
-# eBPF 프로그램 실행 시간 측정
-bpftool prog profile name hello_execve
-
-# 특정 맵의 조회 성능 측정
-bpftool map dump name process_map -p
-
-# 커널 함수 호출 추적
-bpftrace -e 'kprobe:bpf_prog_run { @start[arg0] = nsecs; } kretprobe:bpf_prog_run /@start[arg0]/ { @runtime_ns[arg0] = nsecs - @start[arg0]; delete(@start[arg0]); }'
+sudo bpftool prog show
+export PROG_ID=REPLACE-WITH-ACTUAL-ID
+sudo bpftool prog show id "$PROG_ID"
+sudo bpftool prog dump xlated id "$PROG_ID"
+sudo bpftool prog profile id "$PROG_ID" duration 10 cycles instructions
 ```
 
-#### 4.2 Cilium 성능 최적화
+Profiling에는 metric 이름과 적절한 커널·PMU 지원이 필요합니다. `bpftool -p map dump ...`는 내용을 보기 좋게 출력하며 조회 지연을 측정하지 않습니다. `perf`/bpftrace를 사용할 때 대상 심볼, probe와 인자를 확인합니다. Kretprobe는 명시적인 연계 없이 진입 `arg0`를 신뢰할 수 있게 제공하지 않습니다.
 
-```bash
-# Cilium 데이터 경로 최적화 설정 확인
-cilium config | grep -E 'EnableAutoDirectRouting|EnableBPFMasquerade|EnableIPv4Masquerade'
+프로토콜, 패킷 크기, 동시성, 정책, 암호화, 프록시와 라우팅을 기록하고 전체 워크로드를 측정합니다. XDP/native routing 변경 전 설치 Helm 값과 `cilium-dbg status --verbose`를 확인합니다. 빠른 훅이나 합성 결과가 애플리케이션 지연 감소를 증명하지 않습니다.
 
-# XDP 가속 활성화 상태 확인
-cilium status | grep XDP
+### 5. 문제 해결 팁
 
-# 네이티브 라우팅 모드 확인
-cilium status | grep Routing
+| 증상 | 확인 사항 |
+|---|---|
+| C 빌드 실패 | UAPI/libbpf 헤더, BPF compiler target, `__u32`/`__u64`, BTF용 `-g` |
+| 검증기 거부 | 로더 stderr·검증기 로그, 경계·스택 초기화, 헬퍼, 라이선스, 복잡도 |
+| 로드했지만 이벤트 없음 | 연결/link 수명, 정확한 tracepoint, 이벤트 유발과 권한 |
+| 맵 데이터 누락 | 같은 맵인지, 삽입 오류·용량, 키 의미, 참조·pin 수명 |
+| 예상과 다른 Cilium 플로우 | 노드·endpoint, 합쳐진 의도·실현 정책, 라우트·백엔드, L7 프록시 |
+| Hubble 누락 | Relay, 필터, 설정된 가시성, 유실 이벤트 보고 |
 
-# 성능 메트릭 확인
-cilium metrics list
-```
+`trace_pipe`는 추적 출력이며 검증기 진단 로그가 아닙니다. 격리 VM의 의도적인 로드 시험에서는 bpftool `-d`로 로더·검증기 진단을 보지만 로드로 연결·동작까지 증명하지 못합니다. 테스트를 통과시키기 위해 정책을 끄거나 운영 권한을 확대하거나 맵을 변경하지 않습니다.
 
-### 5. 문제 해결 및 디버깅 팁
+## 참고 자료
 
-#### 5.1 eBPF 프로그램 검증 오류 디버깅
-
-```bash
-# 검증기 로그 확인
-sudo cat /sys/kernel/debug/tracing/trace_pipe | grep "bpf_verifier"
-
-# 프로그램 로드 시 상세 로그 활성화
-sudo bpftool prog load hello_ebpf.o /sys/fs/bpf/hello_execve -d
-
-# 커널 로그 확인
-dmesg | grep bpf
-```
-
-#### 5.2 Cilium 문제 해결
-
-```bash
-# Cilium 상태 확인
-cilium status --verbose
-
-# Cilium 에이전트 로그 확인
-kubectl logs -n kube-system -l k8s-app=cilium
-
-# 엔드포인트 상태 확인
-cilium endpoint list | grep "not-ready"
-
-# 건강 상태 확인
-cilium status --all-health
-
-# 연결성 테스트
-cilium connectivity test
-```
-
-#### 5.3 일반적인 문제 해결 방법
-
-1. **eBPF 프로그램이 로드되지 않는 경우**:
-   - 커널 버전 확인 (4.19+ 필요)
-   - 필요한 권한 확인 (CAP_BPF, CAP_SYS_ADMIN)
-   - 검증기 오류 메시지 확인
-
-2. **맵 접근 오류**:
-   - 맵 경로 및 권한 확인
-   - 맵 유형 및 키/값 크기 확인
-   - 파일 디스크립터 한계 확인
-
-3. **Cilium 네트워크 연결 문제**:
-   - 엔드포인트 상태 확인
-   - 정책 규칙 확인
-   - 라우팅 테이블 확인
-   - CNI 구성 확인
-
-4. **성능 문제**:
-   - eBPF 프로그램 복잡도 확인
-   - 맵 크기 및 조회 패턴 최적화
-   - JIT 컴파일러 활성화 확인
-   - 하드웨어 오프로드 가능성 검토
-
-[메인 페이지로 돌아가기](README.md)
+- [Original BPF paper](https://www.tcpdump.org/papers/bpf-usenix93.pdf), [Linux BPF design Q&A](https://docs.kernel.org/bpf/bpf_design_QA.html), [verifier](https://docs.kernel.org/bpf/verifier.html), [ring buffer](https://docs.kernel.org/bpf/ringbuf.html), [licensing](https://docs.kernel.org/bpf/bpf_licensing.html), [seccomp](https://docs.kernel.org/userspace-api/seccomp_filter.html)
+- [Linux 6.12 BPF loading](https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c), [exec event placement](https://github.com/torvalds/linux/blob/v6.12/fs/exec.c), [libbpf 1.7](https://github.com/libbpf/libbpf/tree/v1.7.0), [bpftool 7.7](https://github.com/libbpf/bpftool/releases/tag/v7.7.0)
+- [Cilium 1.20.1 BPF source](https://github.com/cilium/cilium/tree/v1.20.1/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.1/Documentation/cmdref)
+- [Cilium system requirements](https://docs.cilium.io/en/v1.20/operations/system_requirements/), [Kubernetes compatibility](https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/), [kube-proxy replacement](https://docs.cilium.io/en/v1.20/network/kubernetes/kubeproxy-free/), [encryption](https://docs.cilium.io/en/v1.20/security/network/encryption/)
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/networking/cilium/02-ebpf-quiz.md)를 풀어보세요.
+[이해도 확인하기](../../quizzes/networking/cilium/02-ebpf-quiz.md).

@@ -4,10 +4,10 @@
   "branch": "audit/full-content-2026-09",
   "latestCoverage": {
     "documents": 2709,
-    "fullyRead": 692,
-    "fixed": 680,
-    "verified": 4,
-    "followup": 8
+    "fullyRead": 696,
+    "fixed": 684,
+    "verified": 0,
+    "followup": 12
   },
   "parentCompleted": [
     "ko/en container-registry all 5 articles and 4 quizzes each (18 files)",
@@ -788,15 +788,26 @@
       "privateState": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics-connection.json"
     },
     "statisticsRemoval": {
-      "status": "cleanupcodecomplete/118testspass/link-image-paritypass/fullbuildrunning/reviewrequestedPeirce",
+      "status": "PR220created HEAD7885e131;118tests/link-image-paritypassafterreboot;hostedPRbuildrunning;latestHEADnativeAI+contentqualityreviewrequested;notmerged",
       "worktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics",
       "branch": "fix/ga4-dashboard-only",
       "base": "54c446c1",
       "change": "Revert PR218 ba541316 without commit, plus docs/operations/search-and-analytics.md updated for GA4 property396631876 only. RemovesstatsUIpages/footer/nav/publicJSON/serverfetch/OIDCauth/dailyschedule. Analytics.mjs+GA4measurementG-GWVLEW5JLL+docs_page_viewpreserved. node_modules pre-existinguntrackedsymlinkNEVERstage.",
       "validation": "/tmp/kubernetes-docs-full-review/ga4-dashboard-only-validate.log:118/118allpass+links/assets/parity. Fullbuild custom staging /dev/shm but samebuildfunctions/localecommands, script /tmp/.../ga4-dashboard-build.mjs, log /tmp/.../ga4-dashboard-build.log.",
       "buildSession": 45305,
-      "review": "PeirceinterruptedbrieflyforreadOnlyreviewthenshouldresumeoriginalauditscope",
-      "next": "Finishfullbuild/browserQA;reviewresolve;commit/pushPR;waitchecks;mergeauthorized;verifydeployliveandGAinterceptwithoutcountingtestvisits. Continuewholecontentaudit."
+      "review": "Peirce resumed forREADONLY latestHEAD code+contentreview; reporttarget worktree/.vitepress/cache/ga4-dashboard-only/ai-review.json",
+      "next": "Wait currentPRCIbuild;fixCriticalMajorifanyandrerunexactHEADreview;requirecontentquality>=85;mergewithoutfurtherconfirmationwhenallpass;verifyliveGA4tag/eventswithcollectionintercepted.",
+      "pr": 220,
+      "head": "7885e131d1da12db4a90b6503e215b065b622936",
+      "localBuild": "INTERRUPTED byinstance stop/start; /tmp and/dev/shm lost. Do notrestartfullbuild. Bounded1GBdevpreviewalsoOOM; stopped. No localfullbuildorbrowserpass claimed.",
+      "ciRun": 34697080975
+    },
+    "instanceIncident": {
+      "observed": "2026-09-12T13:26Z restart",
+      "evidence": "/home/atomoh/kubernetes-docs/.vitepress/cache/incidents/2026-09-12/incident-summary.json",
+      "confirmed": "ConsoleStopInstances skipOsShutdown=true thenStart. Swap100%,rootdiskmax99.95%;EC2statuschecksnormal, noOOMkernelentryfound. Resourcepressureplausiblecauseofunresponsiveness,notprovenOOM.",
+      "prevention": "FullbuildoffloadedtoGitHubhostedARMPRCI. No large localbuild. Persist logs/checkpoints underworkspaceEBS nottmp. Do notkillotheruserprocesses orresizecloudresourcewithoutauthorization.",
+      "recovery": "Sourceedits+90batchledgerspreserved. Temporarytestfixturesandlongbuildoutputs lost; reconstituteonlynecessaryfromdurablereports/code. Latestrootgitc817a1fd/75e16992 containfollowupedits;do notrepeatclosedreviews."
     }
   },
   "aggregationScope": "Counts reflect the batch records. Historical worker/check fields are not the latest PR validation or a whole-corpus completion claim.",

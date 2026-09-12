@@ -1,1269 +1,590 @@
 # eBPF Technology Deep Dive
 
-> **Supported Versions**: Linux kernel 4.19+
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1, Linux 5.10+ or a documented equivalent backport (for example RHEL 8.10's 4.18 kernel), tested Kubernetes 1.33–1.36. Individual BPF features have separate requirements.
+> **Last reviewed**: September 12, 2026
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you will need the following tools and environment:
+Use a disposable Linux development VM with a maintained distribution, the tracepoints used below, and permission to load tracing programs. This is separate from installing Cilium; do not load experimental programs on cluster nodes. Linux 6.12 is the source reference for the verifier discussion, not a claim that all 6.12 distributions enable every feature.
 
-### Required Tools
-- Linux kernel 4.19 or later (5.10+ recommended)
-- bpftool, libbpf-dev, clang, llvm
-- bcc (BPF Compiler Collection)
-
-### Environment Setup
+Required tools are Clang with the BPF backend, target-architecture UAPI headers, libbpf 1.x development headers/libraries, libelf, zlib, a C compiler and bpftool. BCC and bpftrace are optional alternatives. Debian/Ubuntu package names commonly include `clang`, `libbpf-dev`, `libelf-dev`, `zlib1g-dev`, `build-essential` and `pkg-config`; bpftool packaging depends on the distribution/kernel. Do not assume `linux-tools-generic` is available or appropriate on every Debian system. Cilium documents AMD64/AArch64 hosts; running Cilium natively outside its container image additionally requires Clang/LLVM 18.1+, which is a separate requirement from this small tracing lab.
 
 ```bash
-# Install required packages on Ubuntu/Debian systems
-sudo apt-get update
-sudo apt-get install -y build-essential clang llvm libelf-dev libbpf-dev bpftool linux-tools-common linux-tools-generic
-
-# Install BCC
-sudo apt-get install -y bpfcc-tools python3-bpfcc
-
-# Check kernel version
 uname -r
-
-# Check eBPF feature support
-bpftool feature
+clang --version
+clang --print-targets
+pkg-config --modversion libbpf
+bpftool version
+test -r /sys/kernel/tracing/events/syscalls/sys_enter_execve/format
+test -r /sys/kernel/tracing/events/sched/sched_process_exec/format
+# Active feature probing: run only on the prepared lab VM.
+sudo bpftool feature probe kernel
 ```
+
+Tracefs must be mounted and accessible; some systems expose it under `/sys/kernel/debug/tracing`. Kernel configuration, capabilities, lockdown/LSM policy and container restrictions can prevent loading or attachment even as container root. `CAP_BPF` alone is not a universal tracing permission; requirements depend on kernel, program type and BPF-token delegation.
+
+**Validation boundary:** these examples passed host C syntax checks against libbpf 1.7, userspace linking and deterministic helper simulations. Clang BPF-target compilation, the running kernel verifier and live tracepoint attachment still require validation in the prepared VM. They are not production-tested or lossless tracing recipes.
 
 ## Introduction to eBPF Technology and Historical Background
 
-eBPF (extended Berkeley Packet Filter) is a revolutionary technology that allows programs to run safely within the Linux kernel. This technology provides a powerful mechanism to extend and observe kernel behavior without modifying the kernel code. In modern cloud-native environments, eBPF has brought revolutionary changes in networking, security, monitoring, and performance analysis.
+eBPF lets approved programs execute at supported Linux hooks to observe or influence kernel behavior. Verification restricts memory access and execution, but kernel, verifier, JIT and helper bugs remain possible. Acceptance does not prove that a host cannot crash or that the program implements the intended policy.
 
 ### From BPF to eBPF: History of Evolution
 
-#### Birth and Limitations of Early BPF (1992-2013)
-In 1992, Steven McCanne and Van Jacobson from UC Berkeley published a paper titled "The BSD Packet Filter: A New Architecture for User-level Packet Capture" introducing the Berkeley Packet Filter (BPF). This technology presented an innovative approach to network packet filtering.
+McCanne and Jacobson's *The BSD Packet Filter: A New Architecture for User-level Packet Capture* has a December 19, 1992 preprint date and identifies its presentation at Winter USENIX, January 25–29, 1993. Preserve that distinction when citing the year. Classic BPF uses the 32-bit A/X registers and scratch memory for filtering, avoiding unnecessary packet copies to userspace. Its restricted instruction set does not mean it cannot execute on modern CPUs.
 
-BPF introduced the following core concepts:
-- **In-kernel Virtual Machine**: Safely execute user-defined code within the kernel
-- **Register-based Design**: More efficient execution model than stack-based
-- **Safety Guarantees**: Infinite loop prevention and memory access restrictions
-- **Packet Filtering Optimization**: Prevention of unnecessary packet copying
-
-Early BPF was primarily used in network monitoring tools like tcpdump and had the following limitations:
-- Limited instruction set (only 2 32-bit registers)
-- Limited program size (maximum 4096 instructions)
-- Limited functionality (mainly used for packet filtering)
-- Limited interaction with user space
-- Unable to utilize modern CPU architectures
-
-Despite these limitations, BPF remained an important part of the Linux kernel for over 20 years.
-
-#### Birth and Early Development of eBPF (2013-2016)
-In 2013, Alexei Starovoitov from PLUMgrid proposed extended BPF (eBPF) to overcome the limitations of existing BPF. This proposal aimed to completely redesign BPF to match modern processor architectures.
-
-Initial design goals of eBPF included:
-- 64-bit architecture support
-- More registers (10 → currently 11)
-- Larger stack space (512 bytes)
-- State storage and communication with user space through maps
-- General-purpose capability to attach to various events
-
-Key development stages:
-- **May 2014 (Linux kernel 3.15)**: Initial eBPF infrastructure integrated into Linux kernel
-  - Introduction of new eBPF instruction set
-  - Addition of translation layer from classic BPF (cBPF) to eBPF
-  - Introduction of initial eBPF map types (hash, array)
-
-- **December 2014 (Linux kernel 3.18)**: Introduction of eBPF JIT (Just-In-Time) compiler
-  - JIT compilation support for x86_64 architecture
-  - Significant improvement in execution performance
-  - Addition of tail call functionality for program chaining
-
-- **June 2015 (Linux kernel 4.1)**: eBPF maps functionality expansion
-  - Enhanced mechanism for data sharing between user space and kernel space
-  - Addition of new map types (LRU hash, stack trace)
-  - Addition of ability to attach eBPF programs to kprobes
-
-- **January 2016 (Linux kernel 4.4)**: Introduction of XDP (eXpress Data Path)
-  - High-performance packet processing possible at network driver level
-  - Processing packets before entering kernel network stack
-  - Performance capable of processing millions of packets per second
-
-- **July 2016 (Linux kernel 4.7)**: Introduction of additional eBPF program types
-  - Traffic control (TC) program support
-  - Enhanced socket filtering capabilities
-  - Helper function expansion
-
-During this period, eBPF began evolving from a simple packet filtering tool to a general-purpose kernel programming infrastructure, expanding to various uses beyond networking.
-
-#### Growth and Innovation of Modern eBPF Ecosystem (2017-Present)
-Since 2017, eBPF has established itself as a core technology of cloud-native computing, with various projects and companies adopting this technology.
-
-##### Major Projects and Technical Developments:
-
-- **2017**:
-  - **Cilium Project Started**: First major project utilizing eBPF for container networking and security
-  - **BCC (BPF Compiler Collection)**: Emergence of high-level tool collection for eBPF program development
-  - **Linux kernel 4.10-4.14**: Addition of cgroup, socket, tracepoint program types
-
-- **2018**:
-  - **Linux kernel 4.18**: Introduction of BTF (BPF Type Format), laying foundation for CO-RE (Compile Once – Run Everywhere) support
-  - **bpftrace**: Emergence of DTrace-style high-level tracing language
-  - **Facebook Katran**: Open-sourcing of eBPF-based L4 load balancer
-
-- **2019**:
-  - **Linux kernel 5.0-5.3**: BPF-to-BPF function call support, addition of raw tracepoint programs
-  - **Falco**: Rising popularity of eBPF-based runtime security monitoring tool
-  - **Hubble**: Emergence of Cilium-based network observability tool
-
-- **2020**:
-  - **Linux kernel 5.5-5.10**: BPF link abstraction, global variables, sleep capability, loop support
-  - **libbpf**: Maturation of user-space library
-  - **eBPF Foundation Established**: Formation of official organization for technology advancement
-  - **Isovalent (Cilium developer) Series A Investment**: Emergence of commercial eBPF solutions
-
-- **2021**:
-  - **Linux kernel 5.11-5.15**: Memory allocation functionality, timer support, dynamic pointer addition
-  - **Enhanced Kubernetes Integration**: Expanded adoption in service mesh, networking, security domains
-  - **Commercial Product Launches**: Multiple companies launching eBPF-based products
-
-- **2022-Present**:
-  - **Linux kernel 6.0+**: Continuous feature expansion and optimization
-  - **Standardization as Cloud-Native Technology**: Expanded integration with CNCF projects
-  - **eBPF Summit**: Dedicated conference and community growth
-  - **Major Cloud Provider Adoption**: AWS, GCP, Azure utilizing eBPF technology
-
-##### Current eBPF Application Areas:
-
-1. **Networking**:
-   - Container networking (Cilium, Calico)
-   - Load balancing (Katran, Cilium)
-   - Packet filtering and firewalls (bpfilter)
-   - Network acceleration (XDP-based solutions)
-
-2. **Security**:
-   - Runtime security monitoring (Falco, Tracee)
-   - Intrusion detection systems (Tetragon)
-   - System call filtering (seccomp-bpf)
-   - Permission management (LSM BPF)
-
-3. **Observability**:
-   - System monitoring and tracing (bpftrace, BCC)
-   - Performance analysis (BPF Performance Tools)
-   - Distributed tracing (Hubble)
-   - Metrics collection (eBPF Exporter)
-
-4. **Service Mesh**:
-   - Sidecar-less service mesh (Cilium Service Mesh)
-   - L7 proxy and load balancing
-   - Traffic management and routing
-
-5. **Storage**:
-   - Block I/O tracing and optimization
-   - File system monitoring
-   - Cache performance analysis
+Extended BPF added a 64-bit instruction set with eleven registers R0–R10 (R10 is the read-only frame pointer), a commonly limited 512-byte stack, maps and more program types. This is not a historical change from ten to eleven general-purpose registers. Function/tail-call combinations can impose additional stack limits.
 
 ### Technical Evolution of eBPF: Key Features by Kernel Version
 
-The technical advancement of eBPF has been gradual across several Linux kernel versions, with important features added in each version. The table below shows the major eBPF feature additions by kernel version:
+These selected upstream milestones were checked against versioned source. They are not a distribution support matrix; backports, build options, architectures and helpers differ.
 
-| Kernel Version | Year | Major eBPF Feature Added | Technical Significance |
-|---------------|------|-------------------------|----------------------|
-| 3.15 | 2014 | Initial eBPF infrastructure introduction | New instruction set, register expansion |
-| 3.18 | 2014 | JIT compiler addition | Significant execution performance improvement |
-| 4.1 | 2015 | eBPF maps functionality, user-space API | State storage and data sharing possible |
-| 4.4 | 2016 | XDP (eXpress Data Path) introduction | Ultra-fast packet processing possible |
-| 4.7 | 2016 | Additional program types, tail call support | Program chaining and scalability improvement |
-| 4.10 | 2017 | Socket and cgroup programs | Network socket control, container support |
-| 4.14 | 2017 | XDP offload, more helper functions | Hardware acceleration support |
-| 4.18 | 2018 | BTF (BPF Type Format) introduction | Foundation for CO-RE support |
-| 5.0 | 2019 | BPF-to-BPF function call support | Modularization and code reuse possible |
-| 5.5 | 2020 | BPF link abstraction, global variables | Improved program management |
-| 5.8 | 2020 | Loop support (bounded loops) | Enhanced programming flexibility |
-| 5.10 | 2020 | Sleep capability | Asynchronous programming possible |
-| 5.13 | 2021 | Memory allocation functionality | Dynamic memory management possible |
-| 5.15 | 2021 | Timer support | Time-based event handling |
-| 6.0+ | 2022+ | Continuous feature expansion and optimization | Evolution to complete programming environment |
+| Kernel | Selected milestone |
+|---|---|
+| [3.15](https://github.com/torvalds/linux/blob/v3.15/include/linux/filter.h) | Extended instruction set; internal classic-BPF translation |
+| [3.16](https://github.com/torvalds/linux/blob/v3.16/arch/x86/net/bpf_jit_comp.c) | x86 extended-BPF JIT |
+| [3.18](https://github.com/torvalds/linux/blob/v3.18/include/uapi/linux/bpf.h) | BPF syscall/verification infrastructure; no usable HASH/ARRAY map types yet |
+| [3.19](https://github.com/torvalds/linux/blob/v3.19/include/uapi/linux/bpf.h) | HASH/ARRAY maps and socket-filter program type |
+| [4.1](https://github.com/torvalds/linux/blob/v4.1/include/uapi/linux/bpf.h) | KPROBE and TC SCHED_CLS/SCHED_ACT |
+| [4.2](https://github.com/torvalds/linux/blob/v4.2/include/uapi/linux/bpf.h) | PROG_ARRAY and tail calls |
+| [4.8](https://github.com/torvalds/linux/blob/v4.8/include/uapi/linux/bpf.h) | XDP program type |
+| [4.10](https://github.com/torvalds/linux/blob/v4.10/include/uapi/linux/bpf.h) | LRU hash maps |
+| [4.16](https://github.com/torvalds/linux/blob/v4.16/include/uapi/linux/bpf.h) | BPF-to-BPF function calls |
+| [4.17](https://github.com/torvalds/linux/blob/v4.17/include/uapi/linux/bpf.h) | Raw tracepoints |
+| [4.18](https://github.com/torvalds/linux/blob/v4.18/include/uapi/linux/bpf.h) | BTF load API |
+| [5.2](https://github.com/torvalds/linux/blob/v5.2/include/uapi/linux/bpf.h) | Direct map-value access used for global data |
+| [5.7](https://github.com/torvalds/linux/blob/v5.7/include/uapi/linux/bpf.h) | BPF link API and BPF LSM |
+| [5.8](https://github.com/torvalds/linux/blob/v5.8/include/uapi/linux/bpf.h) | BPF ring buffer |
+| [5.10](https://github.com/torvalds/linux/blob/v5.10/include/uapi/linux/bpf.h) | Sleepable programs for supported attachment types |
+| [5.15](https://github.com/torvalds/linux/blob/v5.15/include/uapi/linux/bpf.h) | BPF timer helpers |
+| [5.19](https://github.com/torvalds/linux/blob/v5.19/include/uapi/linux/bpf.h) | Dynamic-pointer helpers |
+| [6.2](https://github.com/torvalds/linux/blob/v6.2/kernel/bpf/helpers.c) | Typed object-allocation kfuncs, not unrestricted malloc |
 
-Through these developments, eBPF has evolved from a simple packet filter to a complete programming environment and is now one of the most important technologies in the Linux kernel. In particular, the introduction of the CO-RE (Compile Once – Run Everywhere) feature has greatly improved the portability of eBPF programs, allowing the same program to run without recompilation across various kernel versions.
+Bounded loops arrived in Linux 5.3; the [upstream verifier change](https://github.com/torvalds/linux/commit/2589726d12a1b12eaaa93c7f1ea64287e383c7a5) explains loop analysis and state pruning. An old “loops are not implemented” paragraph remaining in the design FAQ is not current feature guidance. Bounded loops can still exceed verifier complexity limits.
+
+### Growth and Application Areas
+
+Cilium's public repository was created in December 2015; “project started in 2017” is inaccurate. Repository creation is not an exact product-launch date or proof of “first major project” status.
+
+| Area | Examples and boundaries |
+|---|---|
+| Networking | Cilium/Calico datapaths, Katran load balancing and XDP filtering |
+| Runtime security | Falco, Tracee and Tetragon use kernel events; enforcement depends on product and hooks |
+| Tracing | BCC (including Python/Lua frontends), bpftrace, storage and block-I/O tracing |
+| Network observability | Hubble flow/proxy events; flow graphs are not distributed application-span tracing |
+| Service mesh | Cilium combines kernel forwarding with userspace proxies for supported L7 features |
+| Community | The eBPF Foundation supports the ecosystem; funding and project maturity are not compatibility criteria |
+
+`seccomp-bpf` uses the classic BPF filter interface for system-call decisions. Linux may internally translate classic filters, but this is not the general eBPF program/map/helper API.
 
 ### eBPF vs Traditional Kernel Modules: Paradigm Shift
 
-eBPF provides a fundamentally different approach to extending the Linux kernel compared to traditional kernel modules. Understanding these differences is important for grasping the innovation of eBPF.
+| Characteristic | eBPF | Kernel module |
+|---|---|---|
+| Safety | Verifier-constrained; implementation bugs and operational risk remain | Broader native kernel access; bugs can destabilize the host |
+| Deployment | Supported programs can be loaded/attached without reboot | Many modules can also load/unload without reboot when dependencies and usage permit |
+| Compatibility | Instruction/helper ABI and feature requirements; CO-RE can relocate supported type accesses | Kernel/module ABI, configuration and distribution support |
+| Performance | Often JIT-compiled; hook, program and workload determine overhead | Native execution also has workload-dependent costs |
+| Development | Restricted context, helpers/kfuncs and verifier limits | Kernel API and ordinary kernel development constraints |
+| Permissions | Appropriate privileges or delegation for loading/attachment | Privileged loading; signing/lockdown may restrict it |
 
-| Characteristic | eBPF | Kernel Module |
-|---------------|------|---------------|
-| **Safety** | Safety guaranteed through verifier, kernel crash impossible | Kernel panic possible, affects overall system stability |
-| **Deployment** | Dynamic loading at runtime, binary compatibility maintained | Recompilation required per kernel version, compatibility issues possible |
-| **Upgrade** | Real-time updates possible without kernel reboot | Mostly requires reboot, service interruption |
-| **Performance** | Optimized through JIT compilation, near-native performance | Native performance, direct kernel access |
-| **Development Complexity** | Restricted environment, special tools needed, debugging difficult | Full kernel API access, standard debugging tools available |
-| **Permission Model** | Limited permissions, sandboxed environment | Full kernel permissions, unlimited access |
-| **Portability** | CO-RE (Compile Once – Run Everywhere) support | Recompilation required per kernel version |
-| **Deployment Scope** | Can be safely deployed in production environments | Mostly limited to vendor-provided kernel modules |
-
-The biggest innovation of eBPF is its safety and dynamic loading capability. Traditional kernel modules run without restrictions inside the kernel, and bugs can destabilize the entire system. In contrast, eBPF programs can only be loaded after passing the kernel's verifier, which thoroughly checks for memory access, infinite loops, and kernel crash possibilities.
+Both require operational testing. Modules are not limited to vendor implementations, and eBPF does not inherently make production rollout safe.
 
 ## In-depth Analysis of eBPF Architecture Inside the Kernel
 
-> **Key Concept**: eBPF operates as a sandboxed virtual machine inside the Linux kernel, allowing kernel behavior to be extended without modifying kernel code.
-
-eBPF is not just a simple technology but a complete technology stack consisting of various components from the virtual machine inside the kernel to user-space libraries. Understanding this architecture is essential for grasping the power and flexibility of eBPF.
-
-### Detailed eBPF Architecture Diagram
-
-![Diagram showing how a user-space application and compiler toolchain load a program through loader libraries, past the kernel's eBPF verifier and JIT compiler, into a virtual machine that attaches to kernel hook points and exchanges data with eBPF maps.](../../.gitbook/assets/en-networking-cilium-02-ebpf-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-02-ebpf-0.html)
-
 ### Detailed Description of eBPF Architecture Components
 
-#### 1. User Space Components
+In userspace, Clang compiles C to BPF ELF; Rust uses its own compiler/toolchain ecosystem. libbpf handles ELF sections, maps, relocations, loading and supported attachment APIs. BCC provides higher-level APIs; bpftrace provides a tracing language.
 
-**Development Tools and Libraries**:
-- **Clang/LLVM**: Compiles eBPF programs from C or Rust to eBPF bytecode
-- **libbpf**: Low-level eBPF manipulation library, direct interaction with kernel
-- **BCC (BPF Compiler Collection)**: High-level library providing Python and Lua bindings
-- **bpftrace**: eBPF-based tracing language, similar syntax to DTrace
+CO-RE uses BTF and relocations to adapt supported type/field accesses. It does not supply missing helpers, program types or kernel configuration, nor guarantee arbitrary cross-architecture/kernel compatibility. Kernel internal structures, tracepoint formats and kfuncs are not stable ABI merely because a program uses BTF.
 
-**CO-RE (Compile Once – Run Everywhere)**:
-- Provides portability across kernel versions using BTF (BPF Type Format)
-- Run the same eBPF program across various kernel versions without recompilation
-- Responds to kernel structure changes with struct relocation functionality
-
-#### 2. Kernel Space Components
-
-**eBPF Runtime**:
-- **eBPF Verifier**: Core component that guarantees program safety
-  - Infinite loop prevention
-  - Only valid memory access allowed
-  - Kernel stability guarantee
-  - Permission checking
-
-- **JIT (Just-In-Time) Compiler**:
-  - Converts eBPF bytecode to native machine code
-  - Architecture-specific optimization (x86_64, ARM64, RISC-V, etc.)
-  - Significantly improved execution performance
-
-- **eBPF Virtual Machine**:
-  - 11 registers
-  - 512-byte stack
-  - Kernel function access through helper functions
-  - Tail call support for program chaining
-
-**eBPF Map System**:
-- Data structures implemented as key-value stores
-- Data sharing between kernel space and user space
-- Support for various map types:
-  - **BPF_MAP_TYPE_HASH**: General hash table
-  - **BPF_MAP_TYPE_ARRAY**: Fixed-size array
-  - **BPF_MAP_TYPE_LRU_HASH**: Tracks recently used items
-  - **BPF_MAP_TYPE_RINGBUF**: High-performance ring buffer
-  - **BPF_MAP_TYPE_STACK_TRACE**: Stack trace storage
-  - **BPF_MAP_TYPE_SOCKHASH**: Socket reference storage
-  - **BPF_MAP_TYPE_DEVMAP**: Network device reference
-  - **BPF_MAP_TYPE_PROG_ARRAY**: eBPF program reference
-
-**Hook Points**:
-
-eBPF programs can be attached to various points within the kernel, called hook points. Each hook point allows eBPF programs to execute when specific events or operations occur. The main hook points are:
-
-- **XDP (eXpress Data Path)**:
-  - Packet processing at network driver level
-  - Processes packets from NIC before entering kernel
-  - Highest performance packet processing point (capable of processing tens of millions of packets per second)
-  - Possible actions: packet drop, pass, redirect, modify
-  - Use cases: DDoS defense, packet filtering, load balancing
-  - Hardware offload support (on specific NICs)
-
-- **Traffic Control (TC)**:
-  - Traffic control layer of network stack
-  - Ingress/egress queuing point
-  - Provides more context than XDP
-  - Packet header and payload modification possible
-  - Use cases: Network policy, NAT, packet transformation
-  - Supports both ingress and egress
-
-- **Socket Filter**:
-  - Packet filtering at socket level
-  - Programs attached to specific sockets
-  - Controls socket operations of user-space applications
-  - Use cases: Per-application packet filtering, socket-level statistics
-  - Can be applied at socket creation, binding, connection time
-
-- **Kprobes/Uprobes**:
-  - Dynamic tracing of kernel/user-space functions
-  - Executes on function entry/return
-  - Can hook arbitrary kernel functions
-  - Use cases: Performance analysis, debugging, security monitoring
-  - Can be dynamically added/removed
-  - Has overhead (caution needed in production environments)
-
-- **Tracepoints**:
-  - Statically defined trace points within kernel
-  - Provides stable ABI (compatibility across kernel versions)
-  - Tracing support for major kernel events
-  - Use cases: System call tracing, block I/O monitoring, network event tracing
-  - Lower overhead than Kprobes
-
-- **Perf Events**:
-  - Performance monitoring events
-  - CPU performance counter access
-  - Hardware/software event monitoring
-  - Use cases: CPU usage analysis, cache miss tracking, branch prediction failure monitoring
-  - Precise performance measurement possible
-
-- **LSM (Linux Security Module)**:
-  - Security policy application
-  - System call security checks
-  - Permission verification and access control
-  - Use cases: Container security, privilege escalation detection, file access control
-  - Kernel 5.7+ support
-
-- **Cgroups**:
-  - Container resource control
-  - Per-container policy application
-  - Resource usage limiting and monitoring
-  - Use cases: Container network policy, resource limiting, isolation
-  - Important in container orchestration environments
+In the kernel, the verifier checks a program for its type, context, helpers and permissions. JIT can translate accepted BPF into native instructions; an interpreter is another execution mechanism where supported. JIT output does not then pass through a mandatory second VM stage. Attachment connects the loaded program to a hook; loading alone does not subscribe to tracepoints.
 
 ### Detailed Analysis of eBPF Program Lifecycle
 
-eBPF programs go through several stages from development to execution. Understanding this process helps clarify how eBPF works and its constraints.
+1. **Develop:** select hook/context and define maps/license metadata. Not all programs require GPL compatibility, but GPL-only helpers and certain types/kfuncs impose restrictions. These tracing samples use GPL metadata for their helpers.
+2. **Compile:** create BPF ELF and required debug/BTF information with the target toolchain and headers.
+3. **Open/load:** parse ELF, create or explicitly reuse maps, relocate and invoke the BPF load API. Verification and optional JIT occur during loading.
+4. **Attach:** use the appropriate API. libbpf can infer these tracepoints from `SEC("tracepoint/...")`. Keep the link/attachment alive.
+5. **Run/observe:** events invoke the program; userspace reads maps/buffers. Sampling and capacity limits can lose observations.
+6. **Update/unload:** keep compatible maps/links/pins only deliberately. Destroy this lab's link and close its object to release resources.
 
-1. **Development Stage**:
-   - Write programs in high-level languages like C, Rust
-   - Use kernel headers and eBPF helper functions
-   - Utilize BTF information (for CO-RE support)
-   - Define sections (using `SEC()` macro)
-   - Specify license (GPL compatible required)
-
-2. **Compilation Stage**:
-   - Compile to eBPF bytecode using Clang/LLVM
-   - Specify eBPF target with `-target bpf` option
-   - Generate BTF and debugging information
-   - Output in ELF file format
-
-3. **Loading Stage**:
-   - Load program into kernel through `bpf()` system call
-   - libbpf or BCC library handles this process
-   - Specify program type and hook to attach
-   - Create necessary maps
-
-4. **Verification Stage**:
-   - In-kernel verifier checks program safety
-   - Control flow graph (CFG) analysis
-   - Memory access verification
-   - Infinite loop prevention
-   - Permission checking
-   - Detailed error messages provided on failure
-
-5. **JIT Compilation Stage**:
-   - Convert bytecode to native code for host architecture
-   - Apply architecture-specific optimizations
-   - Improve execution performance
-   - Supported on most architectures (x86_64, ARM64, RISC-V, etc.)
-
-6. **Attachment Stage**:
-   - Attach program to specific kernel events (hooks)
-   - Create and initialize necessary maps
-   - Set program metadata
-   - Manage file descriptors
-
-7. **Execution Stage**:
-   - Program executes when events occur
-   - Access context data
-   - Process packets/events according to decisions
-   - Call helper functions
-
-8. **Data Exchange Stage**:
-   - Store and retrieve data through eBPF maps
-   - Communicate with user-space applications
-   - Share performance metrics, state information, etc.
-   - Event notification (perf event buffer, ring buffer, etc.)
-
-9. **Update/Unload Stage**:
-   - Dynamic program updates if needed
-   - Unload program after use completion
-   - Clean up related resources
-   - Maintain or delete map data
+In Linux 6.12, program length is limited to up to 1,000,000 instructions for the BPF-capable loading path and 4,096 for the unprivileged path. The verifier separately has a 1,000,000-instruction **analysis complexity** limit. Smaller programs can fail verification. Unprivileged BPF is often disabled; token/capability and program-type checks still apply.
 
 ### eBPF Program Types and Characteristics
 
-eBPF programs are classified into various types depending on the hook point they attach to. Each program type has specific context and capabilities:
+| Hook / program type | Purpose and return-value boundary |
+|---|---|
+| XDP / `BPF_PROG_TYPE_XDP` | Native driver XDP runs before skb allocation; generic/offloaded modes differ. `XDP_DROP`, `PASS`, `TX`, `REDIRECT` are actions, not throughput guarantees |
+| TC / `SCHED_CLS`, `SCHED_ACT` | Ingress/egress packet classification/actions. Classifier `TC_ACT_*` semantics require appropriate direct-action setup |
+| Socket filter / `SOCKET_FILTER` | Socket packet delivery: zero drops, positive capture length may truncate. Creation/connect policies use other hooks |
+| kprobe/uprobe / `KPROBE` | Kernel/userspace probes; there is no separate `BPF_PROG_TYPE_UPROBE`. Inlining, blacklists and symbol availability constrain attachment |
+| Tracepoint / `TRACEPOINT` | Statically declared event context; inspect the target format. Not a guaranteed stable kernel ABI |
+| Perf event / `PERF_EVENT` | Performance sampling; return behavior depends on its perf-event integration |
+| cgroup / `CGROUP_SKB`, `CGROUP_SOCK`, `CGROUP_SOCK_ADDR`, etc. | Network/socket control; context and allow/deny conventions vary |
+| LSM / `LSM` | MAC-style programs normally preserve earlier errors and return zero/error; cgroup-LSM has different grant semantics |
+| Socket operations / `SOCK_OPS` | TCP callbacks; operation, reply fields and helper support matter |
+| fentry/fexit / `TRACING` | BTF-based function tracing where supported; target and attachment constraints remain |
 
-1. **XDP (eXpress Data Path) Programs**:
-   - Program type: `BPF_PROG_TYPE_XDP`
-   - Context: Network packet data, interface information
-   - Return values: `XDP_DROP`, `XDP_PASS`, `XDP_TX`, `XDP_REDIRECT`, etc.
-   - Features: Highest performance packet processing, driver/hardware level execution
-
-2. **Traffic Control (TC) Programs**:
-   - Program types: `BPF_PROG_TYPE_SCHED_CLS`, `BPF_PROG_TYPE_SCHED_ACT`
-   - Context: Network packet data, scheduling information
-   - Return values: `TC_ACT_OK`, `TC_ACT_SHOT`, `TC_ACT_REDIRECT`, etc.
-   - Features: Packet classification and manipulation, ingress/egress support
-
-3. **Socket Filter Programs**:
-   - Program type: `BPF_PROG_TYPE_SOCKET_FILTER`
-   - Context: Socket buffer data
-   - Return values: 0 (drop packet) or packet length (allow packet)
-   - Features: Socket-level packet filtering, similar functionality to tcpdump
-
-4. **kprobe/uprobe Programs**:
-   - Program types: `BPF_PROG_TYPE_KPROBE`, `BPF_PROG_TYPE_UPROBE`
-   - Context: Function arguments, register values
-   - Return values: Integer (no meaning)
-   - Features: Dynamic function tracing, debugging and profiling
-
-5. **tracepoint Programs**:
-   - Program type: `BPF_PROG_TYPE_TRACEPOINT`
-   - Context: Tracepoint definition struct
-   - Return values: Integer (no meaning)
-   - Features: Stable kernel trace points, version compatibility
-
-6. **perf Event Programs**:
-   - Program type: `BPF_PROG_TYPE_PERF_EVENT`
-   - Context: Performance event data
-   - Return values: Integer (no meaning)
-   - Features: Hardware/software performance event monitoring
-
-7. **cgroup Programs**:
-   - Program types: `BPF_PROG_TYPE_CGROUP_SKB`, `BPF_PROG_TYPE_CGROUP_SOCK`, etc.
-   - Context: cgroup information, socket/packet data
-   - Return values: 0 (deny) or 1 (allow)
-   - Features: Per-container network policy, resource control
-
-8. **LSM (Linux Security Module) Programs**:
-   - Program type: `BPF_PROG_TYPE_LSM`
-   - Context: Security-related operation information
-   - Return values: 0 (allow) or error code (deny)
-   - Features: Security policy application, permission checking
-
-9. **Socket Operations Programs**:
-   - Program type: `BPF_PROG_TYPE_SOCK_OPS`
-   - Context: Socket operation information
-   - Return values: Integer (no meaning)
-   - Features: TCP connection control, socket option setting
-
-10. **fentry/fexit Programs**:
-    - Program type: `BPF_PROG_TYPE_TRACING`
-    - Context: Function arguments, return values
-    - Return values: Integer (no meaning)
-    - Features: Low-overhead function tracing, more efficient than kprobe
-
-### Simple eBPF Program Example and Explanation
-
-The following is a simple eBPF program example that traces system call execution:
-
-```c
-// hello_world.c
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-
-// Program section definition - this program executes on execve system call entry
-SEC("tracepoint/syscalls/sys_enter_execve")
-int hello_execve(void *ctx) {
-    // Print simple message
-    char msg[] = "Hello, eBPF!";
-    bpf_trace_printk(msg, sizeof(msg));
-    return 0;
-}
-
-// License definition (GPL compatible required)
-char LICENSE[] SEC("license") = "GPL";
-```
-
-**Code Explanation**:
-1. **Header files**: Include necessary eBPF-related headers
-2. **Section definition**: Specify program type and attachment point with `SEC()` macro
-3. **Program function**: Function called when `execve` system call executes
-4. **Context parameter**: Contains event-related data
-5. **Helper function usage**: Output debug message with `bpf_trace_printk()`
-6. **License specification**: GPL compatible license required (for kernel symbol access)
-
-**Compile and Run**:
-```bash
-# Compile
-clang -O2 -target bpf -c hello_world.c -o hello_world.o
-
-# Load and run
-bpftool prog load hello_world.o /sys/fs/bpf/hello_world
-
-# Check output
-cat /sys/kernel/debug/tracing/trace_pipe
-```
-
-**Execution Result**:
-```
-<...>-1234  [001] d... 123456.789012: bpf_trace_printk: Hello, eBPF!
-<...>-5678  [002] d... 123456.789102: bpf_trace_printk: Hello, eBPF!
-```
-
-This simple example demonstrates the basic concepts of eBPF. In real applications, more complex logic and maps can be used to collect and analyze data.
+Select hooks by visibility/control needs. XDP lacks some later-stack context; TC handles skb-backed traffic; tracepoint/probe observation does not automatically enforce network policy. Do not copy context structs or return codes across program types.
 
 ### eBPF Maps: Core of Data Sharing and State Storage
 
-eBPF maps are key-value stores for data sharing between eBPF programs and user-space applications. These maps are the core mechanism for eBPF programs to maintain state and communicate with user space.
+Maps live while references remain, such as FDs, loaded programs or explicit bpffs pins. Pins are not disk persistence and do not preserve map contents across reboot. Reloading does not automatically reuse the old map.
 
-#### Basic Concepts of eBPF Maps
+| Type | Use and constraint |
+|---|---|
+| `HASH` | Bounded key/value table; insertion can fail when full. Expected constant-time lookup is not a latency guarantee |
+| `ARRAY` | Preallocated, zero-initialized values at valid indices; zero is not a missing hash entry |
+| `LRU_HASH` | Bounded cache with LRU-style eviction, not a lossless cumulative counter |
+| `RINGBUF` | Multiple producers/single consumer across CPUs; key/value sizes zero, power-of-two byte capacity; failed reservations do not block |
+| `PERF_EVENT_ARRAY` | Per-CPU perf channels; userspace must provision/consume events and track lost records |
+| `PROG_ARRAY` | Tail-call program references; compatible targets and call limits apply |
+| `PERCPU_HASH` / `PERCPU_ARRAY` | Less cross-CPU contention, not universally race-free. Userspace reads all possible-CPU slots with required padding |
+| `SOCKMAP` / `SOCKHASH` | Socket references for supported redirection/programs, not arbitrary socket-operation hooks |
 
-eBPF maps have the following characteristics:
+libbpf 1.x removed `struct bpf_map_def SEC("maps")`. These BTF-style definitions illustrate eight map categories using actual types. Combine needed maps with a suitable program; the declarations alone are not an event pipeline.
 
-- **Persistent Storage**: Data persists even when programs are reloaded
-- **Various Data Structures**: Support for various forms including hash tables, arrays, queues, stacks
-- **Concurrency Support**: Concurrent access from multiple CPUs possible
-- **Size Limitation**: Maximum size must be specified at creation
-- **Flexible Key/Value Format**: Various data types can be stored
-- **Bidirectional Access**: Accessible from both kernel space and user space
-
-#### Main Map Types and Use Cases
-
-1. **Hash Map (BPF_MAP_TYPE_HASH)**:
-   - General key-value store
-   - O(1) time complexity lookup performance
-   - Dynamic size management (limited by max entries)
-   - Use cases: Connection tracking, session information storage, counters
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") connection_map = {
-         .type = BPF_MAP_TYPE_HASH,
-         .key_size = sizeof(struct connection_key),
-         .value_size = sizeof(struct connection_info),
-         .max_entries = 1024,
-     };
-     ```
-
-2. **Array Map (BPF_MAP_TYPE_ARRAY)**:
-   - Index-based fixed-size array
-   - Very fast lookup performance
-   - All entries pre-allocated
-   - Use cases: Global settings, statistics, data requiring fast lookup
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") config_array = {
-         .type = BPF_MAP_TYPE_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(struct config),
-         .max_entries = 1,
-     };
-     ```
-
-3. **LRU Hash Map (BPF_MAP_TYPE_LRU_HASH)**:
-   - Hash map with least recently used item tracking
-   - Automatically removes oldest entries when max entries exceeded
-   - Suitable for cache implementation
-   - Use cases: Connection cache, route cache
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") connection_cache = {
-         .type = BPF_MAP_TYPE_LRU_HASH,
-         .key_size = sizeof(struct connection_key),
-         .value_size = sizeof(struct connection_info),
-         .max_entries = 10000,
-     };
-     ```
-
-4. **Ring Buffer (BPF_MAP_TYPE_RINGBUF)**:
-   - High-performance buffer with producer-consumer model
-   - Single producer, single consumer support
-   - Event-based notification support
-   - Use cases: Log collection, event delivery, high-performance data streaming
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") events = {
-         .type = BPF_MAP_TYPE_RINGBUF,
-         .max_entries = 256 * 1024, // 256 KB
-     };
-     ```
-
-5. **Perf Event Array (BPF_MAP_TYPE_PERF_EVENT_ARRAY)**:
-   - Performance event data transmission
-   - Event delivery from kernel to user space
-   - Use cases: Trace events, performance data collection
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") perf_events = {
-         .type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-         .key_size = sizeof(int),
-         .value_size = sizeof(u32),
-         .max_entries = 128,
-     };
-     ```
-
-6. **Program Array (BPF_MAP_TYPE_PROG_ARRAY)**:
-   - Stores references to other eBPF programs
-   - Used for tail call implementation
-   - Program chaining possible
-   - Use cases: Complex processing logic modularization, conditional execution
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") jump_table = {
-         .type = BPF_MAP_TYPE_PROG_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(u32),
-         .max_entries = 10,
-     };
-     ```
-
-7. **Per-CPU Maps (BPF_MAP_TYPE_PERCPU_HASH/ARRAY)**:
-   - Independent data storage per CPU
-   - High-performance access without concurrency issues
-   - Use cases: High-performance counters, per-CPU statistics
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") cpu_stats = {
-         .type = BPF_MAP_TYPE_PERCPU_ARRAY,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(struct stats),
-         .max_entries = 1,
-     };
-     ```
-
-8. **Socket Map (BPF_MAP_TYPE_SOCKMAP)**:
-   - Socket reference storage
-   - Socket-to-socket redirection support
-   - Use cases: Socket acceleration, proxy implementation
-   - Example code:
-     ```c
-     struct bpf_map_def SEC("maps") socket_map = {
-         .type = BPF_MAP_TYPE_SOCKMAP,
-         .key_size = sizeof(u32),
-         .value_size = sizeof(u32),
-         .max_entries = 1024,
-     };
-     ```
-
-#### eBPF Map Operation Example
-
-The following is a simple example of using maps in an eBPF program:
+**`map_types.bpf.c`**
 
 ```c
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 
-// Map definition
-struct bpf_map_def SEC("maps") counter_map = {
-    .type = BPF_MAP_TYPE_ARRAY,
-    .key_size = sizeof(u32),
-    .value_size = sizeof(u64),
-    .max_entries = 1,
-};
+/* Definitions only; combine the needed maps with a suitable program. */
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u64);
+} hash_counts SEC(".maps");
 
-SEC("tracepoint/syscalls/sys_enter_execve")
-int count_execve(void *ctx) {
-    u32 key = 0;
-    u64 *value, init_val = 1;
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} total SEC(".maps");
 
-    // Lookup value from map
-    value = bpf_map_lookup_elem(&counter_map, &key);
-    if (value) {
-        // Increment if value exists
-        __sync_fetch_and_add(value, 1);
-    } else {
-        // Initialize if value doesn't exist
-        bpf_map_update_elem(&counter_map, &key, &init_val, BPF_ANY);
-    }
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u64);
+} cache SEC(".maps");
 
-    return 0;
-}
+struct {
+    __uint(type, BPF_MAP_TYPE_RINGBUF);
+    __uint(max_entries, 256 * 1024);
+} events SEC(".maps");
 
-char LICENSE[] SEC("license") = "GPL";
+struct {
+    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+    __type(key, __u32);
+    __type(value, __u32);
+    /* libbpf determines max_entries from the number of possible CPUs. */
+} perf_events SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+    __uint(max_entries, 10);
+    __type(key, __u32);
+    __type(value, __u32);
+} jump_table SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} cpu_counts SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_SOCKMAP);
+    __uint(max_entries, 1024);
+    __type(key, __u32);
+    __type(value, __u32);
+} sockets SEC(".maps");
 ```
 
-Accessing map from user space:
-
-```c
-#include <bpf/bpf.h>
-#include <stdio.h>
-
-int main() {
-    // Open map file descriptor
-    int map_fd = bpf_obj_get("/sys/fs/bpf/counter_map");
-    if (map_fd < 0) {
-        perror("Failed to open map");
-        return 1;
-    }
-
-    // Lookup value from map
-    u32 key = 0;
-    u64 value;
-    if (bpf_map_lookup_elem(map_fd, &key, &value) == 0) {
-        printf("execve count: %llu\n", value);
-    } else {
-        perror("Failed to lookup value");
-    }
-
-    return 0;
-}
-```
+Shared counters need atomic increments. New hash keys need `BPF_NOEXIST` insertion followed by lookup/increment of the winning entry; `BPF_ANY` initialization can overwrite another CPU's count. Array entries already exist at valid indices.
 
 ## Utilizing eBPF in Cilium: Innovation in Container Networking
 
-Cilium is an open-source project that utilizes eBPF to implement container networking, load balancing, network policy, and visibility. It provides networking and security capabilities for container orchestration platforms like Kubernetes.
-
 ### Cilium Architecture and the Role of eBPF
 
-Cilium consists of the following components, with eBPF playing an important role in each:
-
-![Cilium architecture showing the cluster-level components (Kubernetes API Server, Cilium Operator, Cilium CLI, Hubble) and the per-node Cilium Agent that syncs state with the API server, loads eBPF programs, manages eBPF maps, and processes pod packets in the kernel.](../../.gitbook/assets/en-networking-cilium-02-ebpf-1.png)
+![Cilium logical roles: Kubernetes state and Operator, per-node agents, kernel programs/maps and Hubble flow observations.](../../.gitbook/assets/en-networking-cilium-02-ebpf-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-02-ebpf-1.html)
 
-#### Key Components:
+The diagram shows logical responsibilities, not mandatory locations or a single compilation pipeline. CLI can run outside the cluster; agents run on eligible managed nodes. Program build/load details vary by version/feature. Hubble Relay aggregates flows; Prometheus metrics use separate endpoints.
 
-1. **Cilium Agent**:
-   - Daemon running on each node
-   - eBPF program compilation and loading
-   - Endpoint management and policy application
-   - Network topology discovery
-   - State monitoring and metrics collection
-
-2. **Cilium Operator**:
-   - Cluster-wide resource management
-   - CRD (Custom Resource Definition) processing
-   - Inter-node coordination
-   - Cluster-scope feature management
-
-3. **eBPF Programs**:
-   - Datapath programs attached to XDP and TC hooks
-   - Socket-level load balancing programs
-   - Connection tracking programs
-   - Network policy enforcement programs
-
-4. **eBPF Maps**:
-   - Endpoint information storage
-   - Policy rule storage
-   - Connection tracking state management
-   - Load balancing service information
-
-5. **Hubble**:
-   - eBPF-based network observability platform
-   - Network flow monitoring
-   - Security visibility
-   - Performance analysis and troubleshooting
+The agent reconciles endpoints, identities, policy and datapath state. The Operator handles configured cluster-wide tasks such as identity/IPAM lifecycle; it is not the packet-forwarding path. Hubble combines BPF flow information with userspace proxy events.
 
 ### Detailed Analysis of Cilium's eBPF Datapath
 
-Cilium's datapath is implemented through eBPF programs, processing packets at multiple points as they pass through the network stack:
+These are cooperating functions, not a fixed order for every packet:
 
-1. **Packet Reception (XDP/TC Ingress)**:
-   - Packet reception at network interface
-   - Packet interception at XDP or TC hook
-   - Initial filtering and DDOS defense
-   - Packet type classification (local/forwarding/host)
+1. **Entry:** socket hooks can resolve Service backends before a packet exists; TC handles packet paths; optional XDP acceleration handles supported external traffic.
+2. **Identity/policy:** IP/identity and endpoint policy control L3/L4 access. Supported HTTP/gRPC policy uses Envoy and DNS policy uses the DNS proxy; L7 parsing/enforcement is not entirely BPF.
+3. **State/translation:** conntrack, service/backend, reverse-NAT and affinity maps have different roles. Not every packet repeats backend selection.
+4. **Forwarding:** native routing or configured overlay carries traffic. DSR dispatch/return paths require the selected mode's network prerequisites.
+5. **Observation:** datapath counters/events and proxy events have configuration and collection-loss limits.
 
-2. **Identity Verification**:
-   - Analysis of packet source/destination IP and port
-   - Kubernetes endpoint identification
-   - Service backend verification
-   - Context information collection
-
-3. **Policy Application**:
-   - Network policy rule checking
-   - L3/L4 policy application (IP/port based)
-   - L7 policy application (HTTP/gRPC/DNS, etc.)
-   - Allow/deny based on policy decision
-
-4. **Connection Tracking**:
-   - Connection state tracking and management
-   - Stateful firewall functionality
-   - NAT state maintenance
-   - Connection timeout management
-
-5. **NAT and Load Balancing**:
-   - Address translation when needed
-   - Service load balancing (consistent hashing, session affinity)
-   - DSR (Direct Server Return) support
-   - Health check-based endpoint selection
-
-6. **Packet Forwarding**:
-   - Packet forwarding to destination endpoint
-   - Overlay or native routing
-   - Packet encapsulation/decapsulation (if needed)
-   - Packet transformation and optimization
-
-7. **Monitoring and Visibility**:
-   - Flow information collection
-   - Metrics update
-   - Event generation
-   - Debug information recording
+Backend readiness comes from control-plane state and applicable health mechanisms, not a universal BPF application probe. Maglev, affinity, DSR and acceleration are feature choices, not universal defaults.
 
 ### Detailed Description of Cilium's Major eBPF Programs
 
-Cilium uses various eBPF programs to implement container networking functionality:
+| Cilium 1.20.1 source | Role |
+|---|---|
+| `bpf/bpf_lxc.c` | Endpoint packet path, policy, conntrack and forwarding |
+| `bpf/bpf_overlay.c` | Overlay packet path |
+| `bpf/bpf_host.c` | Host/device path and supported host-firewall processing |
+| `bpf/bpf_xdp.c` | XDP path, including configured load-balancer acceleration |
+| `bpf/bpf_sock.c` | Socket-address hooks including connect/sendmsg/recvmsg service translation |
+| `bpf/lib/lb.h` | Shared load-balancing helpers |
+| `bpf/lib/policy.h` | Shared policy helpers |
 
-1. **bpf_lxc.c**: Endpoint-to-endpoint communication handling
-   - Communication handling between container network namespace and host
-   - Policy application and connection tracking
-   - Endpoint identification and routing
-   - Key functions: `handle_xgress`, `__tail_handle_ipv{4,6}`
-
-2. **bpf_overlay.c**: Overlay network handling
-   - VXLAN/Geneve encapsulation and decapsulation
-   - Inter-node packet routing
-   - Tunnel key management
-   - Key functions: `from_overlay`, `to_overlay`
-
-3. **bpf_host.c**: Host networking handling
-   - Communication between host network stack and containers
-   - Host firewall functionality
-   - Host-based service handling
-   - Key functions: `handle_netdev`, `handle_from_host`
-
-4. **bpf_xdp.c**: XDP-based packet processing
-   - Early packet filtering
-   - DDoS defense
-   - High-performance packet drop and redirect
-   - Key functions: `cilium_xdp_entry`
-
-5. **bpf_sock.c**: Socket-level load balancing
-   - Load balancing at socket creation
-   - Connection tracking bypass
-   - High-performance service access
-   - Key functions: `sock4_load_balancer`, `sock6_load_balancer`
-
-6. **bpf_lb.c**: Service load balancing
-   - Kubernetes service implementation
-   - Backend selection and NAT
-   - Session affinity support
-   - Key functions: `lb{4,6}_service`
-
-7. **bpf_network.c**: Network policy application
-   - L3/L4 policy application
-   - Policy decision caching
-   - Policy statistics collection
-   - Key functions: `policy_can_access`, `policy_apply_verdict`
+There are no top-level `bpf_lb.c` or `bpf_network.c` files in this release. Function names and feature gates change; inspect the exact release instead of treating conceptual names as source files.
 
 ### Cilium's eBPF Map Usage
 
-Cilium uses various eBPF maps to store state and share data:
+These examples are not a stable map-layout API:
 
-1. **endpoints_map**: Endpoint information storage
-   - Key: Endpoint ID
-   - Value: Endpoint metadata (IP, security ID, interface, etc.)
-   - Purpose: Packet routing, policy application
+| Name / family | Key and role |
+|---|---|
+| `cilium_lxc` | Address/family → endpoint forwarding metadata; not simply endpoint ID |
+| `cilium_ipcache_v2` | Prefix, address family, cluster context → identity/tunnel metadata |
+| `cilium_policy_v3_<endpoint>` | Identity, direction, protocol, destination port and prefix → policy entry |
+| `cilium_ct4_global`, `cilium_ct6_global`, `cilium_ct_any4_global`, etc. | Connection-tuple state; actual maps depend on protocol/family/configuration |
+| `cilium_lb4_services_v2` / `cilium_lb6_services_v2` | Address/port, protocol, scope and backend slot → service metadata/backend reference; backend records are separate maps |
+| `cilium_metrics` | Reason, direction and source-location key → packet/byte counters |
 
-2. **connection_map**: Connection tracking information
-   - Key: Connection tuple (src IP/port, dst IP/port, protocol)
-   - Value: Connection state, timestamp, statistics
-   - Purpose: Stateful firewall, NAT tracking
+`cilium-dbg map get` displays userspace-cached content, not necessarily a fresh kernel dump. Use matching `cilium-dbg bpf ...` decoders or bpftool for their supported kernel views. Do not write raw bytes into Cilium maps as a troubleshooting shortcut.
 
-3. **policy_map**: Network policy rules
-   - Key: Policy identifier
-   - Value: Policy rules (allow/deny, port, protocol, etc.)
-   - Purpose: Network policy application
+### eBPF-based Features and Their Boundaries
 
-4. **lb_map**: Load balancing service information
-   - Key: Service address (virtual IP:port)
-   - Value: Backend list, selection algorithm, state
-   - Purpose: Service load balancing
-
-5. **tunnel_map**: Overlay network information
-   - Key: Remote node IP
-   - Value: Tunnel endpoint information
-   - Purpose: Inter-node packet routing
-
-6. **metrics_map**: Performance metrics collection
-   - Key: Metric type
-   - Value: Counters, gauges, etc.
-   - Purpose: Monitoring and debugging
-
-### Cilium's eBPF-based Features
-
-Cilium provides the following advanced networking and security features using eBPF:
-
-1. **Kubernetes Network Policies**:
-   - Namespace, pod, service-level policies
-   - L3/L4/L7 policy support
-   - CIDR-based filtering
-   - Intra/extra-cluster communication control
-
-2. **Transparent Encryption**:
-   - WireGuard or IPsec-based inter-node encryption
-   - Zero configuration setup
-   - Performance-optimized implementation
-   - Automated key management
-
-3. **Service Mesh Features**:
-   - L7 proxy integration
-   - HTTP, gRPC, Kafka protocol awareness
-   - Header-based routing
-   - Sidecar-less service mesh
-
-4. **Load Balancing**:
-   - Consistent hashing algorithm
-   - Session affinity
-   - Microservice load balancing
-   - DSR (Direct Server Return) support
-
-5. **Observability and Monitoring**:
-   - Network flow visibility
-   - Service dependency maps
-   - Performance bottleneck identification
-   - Security event detection
-
-6. **Bandwidth Management**:
-   - Per-endpoint bandwidth limiting
-   - Traffic prioritization
-   - Congestion control
-   - Quality of Service (QoS) guarantee
-
-7. **Multi-cluster Networking**:
-   - Inter-cluster connectivity
-   - Global service routing
-   - Consistent policy application
-   - Federation support
+- **Policy:** Kubernetes NetworkPolicy has L3/L4 semantics; Cilium resources add supported capabilities. Unrestricted L4 allow can bypass an overlapping L7-restricted allow; inspect combined policy.
+- **Encryption:** in WireGuard/IPsec modes, BPF steers traffic into those kernel facilities; cryptography is not solely BPF instructions. Configure keys, ports, MTU and traffic coverage for the chosen mode. IPsec and WireGuard key operations differ.
+- **Service mesh:** userspace proxies supply supported L7 processing. Kafka L7 policy is removed. Beta workload mTLS/ztunnel has separate prerequisites and is not implied by node encryption.
+- **Bandwidth:** EDT/bandwidth-manager and congestion control do not guarantee end-to-end QoS or throughput.
+- **Multi-cluster:** Cluster Mesh requires connectivity, identities, addressing and compatible configuration; it does not automatically synchronize every policy object or solve routing.
 
 ## Lab: eBPF Program Development and Debugging
 
-This section covers hands-on experience developing and debugging eBPF programs. We'll start with basic eBPF programs and explore Cilium's eBPF features.
-
 ### 1. Basic eBPF Program Development
 
-#### 1.1 System Call Tracing Program
+Save the named files in a new lab directory. This program records `execve` **attempts**, including later failures. `execveat` has a different syscall-entry tracepoint. Debug print is shared/noisy and is not a production event transport. `SEC()` supplies the intended type/hook; the GPL metadata suits the helper used here.
 
-The following is a simple eBPF program that traces the `execve` system call:
+**`hello.bpf.c`**
 
 ```c
-// hello_ebpf.c
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 
-// Specify tracepoint for program execution
 SEC("tracepoint/syscalls/sys_enter_execve")
-int hello_execve(void *ctx) {
-    // Output debug message
-    char msg[] = "Hello, eBPF! Process executed.";
-    bpf_trace_printk(msg, sizeof(msg));
+int hello_execve(void *ctx)
+{
+    (void)ctx;
+    char message[] = "execve attempt\n";
+    bpf_trace_printk(message, sizeof(message));
     return 0;
 }
 
-// Specify GPL compatible license (required)
 char LICENSE[] SEC("license") = "GPL";
-```
-
-#### 1.2 Compile and Load
-
-```bash
-# Verify required packages are installed
-sudo apt-get update
-sudo apt-get install -y clang llvm libelf-dev libbpf-dev bpftool
-
-# Compile
-clang -O2 -target bpf -c hello_ebpf.c -o hello_ebpf.o
-
-# Load program
-sudo bpftool prog load hello_ebpf.o /sys/fs/bpf/hello_execve
-
-# Check output
-sudo cat /sys/kernel/debug/tracing/trace_pipe
-```
-
-Execution result:
-```
-<...>-1234  [001] d... 123456.789012: bpf_trace_printk: Hello, eBPF! Process executed.
-<...>-5678  [002] d... 123456.789102: bpf_trace_printk: Hello, eBPF! Process executed.
-```
-
-#### 1.3 Check Program Information
-
-```bash
-# List loaded eBPF programs
-sudo bpftool prog list
-
-# Check specific program details
-sudo bpftool prog show id 123
-
-# Dump program bytecode
-sudo bpftool prog dump xlated id 123
 ```
 
 ### 2. Advanced eBPF Program Using Maps
 
-#### 2.1 Process Execution Counter Program
+`sched_process_exec` is emitted after a successful execution transition in the referenced kernel. Count by `comm`, a short task name of at most 16 bytes including termination, not a unique executable path/process identity. Names can collide/change. This observes the host, not automatically one Pod.
 
-The following is a program that tracks process execution counts using maps:
+The map holds at most 1,024 names. `lost_events[0]` counts name-read failures and `[1]` events without a usable counter entry, including capacity exhaustion. These do not cover every possible collection failure; 64-bit counters can wrap. The lab does not delete entries while counting.
+
+**`exec_shared.h`**
 
 ```c
-// process_counter.c
+#ifndef EXEC_SHARED_H
+#define EXEC_SHARED_H
+#define COMM_BYTES 16
+#define MAX_COMMANDS 1024
+struct comm_key {
+    char comm[COMM_BYTES];
+};
+#endif
+```
+
+**`exec_count.bpf.c`**
+
+```c
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
-#include <linux/sched.h>
+#include "exec_shared.h"
 
-// Struct to store process name
-struct process_key {
-    char comm[16];
-};
-
-// Map definition
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
-    __uint(max_entries, 1024);
-    __type(key, struct process_key);
-    __type(value, u64);
-} process_map SEC(".maps");
+    __uint(max_entries, MAX_COMMANDS);
+    __type(key, struct comm_key);
+    __type(value, __u64);
+} exec_counts SEC(".maps");
 
-SEC("tracepoint/syscalls/sys_enter_execve")
-int count_execve(void *ctx) {
-    struct process_key key = {};
-    u64 *count, zero = 1;
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 2);
+    __type(key, __u32);
+    __type(value, __u64);
+} lost_events SEC(".maps");
 
-    // Get current process name
-    bpf_get_current_comm(&key.comm, sizeof(key.comm));
+static __always_inline void record_loss(__u32 reason)
+{
+    __u64 *lost = bpf_map_lookup_elem(&lost_events, &reason);
+    if (lost)
+        __sync_fetch_and_add(lost, 1);
+}
 
-    // Lookup counter from map
-    count = bpf_map_lookup_elem(&process_map, &key);
-    if (count) {
-        // Increment counter
-        __sync_fetch_and_add(count, 1);
-    } else {
-        // Add new entry
-        bpf_map_update_elem(&process_map, &key, &zero, BPF_ANY);
+SEC("tracepoint/sched/sched_process_exec")
+int count_exec(void *ctx)
+{
+    (void)ctx;
+    struct comm_key key = {};
+    __u64 zero = 0;
+    if (bpf_get_current_comm(key.comm, sizeof(key.comm)) != 0) {
+        record_loss(0);
+        return 0;
     }
 
+    __u64 *count = bpf_map_lookup_elem(&exec_counts, &key);
+    if (!count) {
+        /* A competing CPU may insert first; never overwrite its count. */
+        bpf_map_update_elem(&exec_counts, &key, &zero, BPF_NOEXIST);
+        count = bpf_map_lookup_elem(&exec_counts, &key);
+    }
+    if (count)
+        __sync_fetch_and_add(count, 1);
+    else
+        record_loss(1);
     return 0;
 }
 
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-#### 2.2 User-space Application
+#### User-space Application and Attachment Lifetime
 
-User-space program to read map data:
+This loader accepts either sample object, loads exactly one program, attaches it and retains the link until Ctrl-C/SIGTERM. It reads counter map FDs from the same object rather than assuming pins exist. Iteration starts with NULL and produces a bounded, non-atomic live sample.
+
+**`run_bpf.c`**
 
 ```c
-// process_reader.c
+#define _POSIX_C_SOURCE 200809L
+#include <errno.h>
+#include <inttypes.h>
+#include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <bpf/libbpf.h>
-#include <bpf/bpf.h>
+#include <stdint.h>
 #include <unistd.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include "exec_shared.h"
 
-struct process_key {
-    char comm[16];
-};
+static volatile sig_atomic_t stopping;
 
-int main() {
-    // Open map file descriptor
-    int map_fd = bpf_obj_get("/sys/fs/bpf/process_map");
-    if (map_fd < 0) {
-        perror("Failed to open map");
+static void stop(int signal_number)
+{
+    (void)signal_number;
+    stopping = 1;
+}
+
+static int dump_counts(int map_fd, int lost_fd)
+{
+    struct comm_key current, next;
+    const struct comm_key *previous = NULL;
+    unsigned int seen = 0;
+
+    while (seen < MAX_COMMANDS) {
+        if (bpf_map_get_next_key(map_fd, previous, &next) != 0) {
+            if (errno == ENOENT)
+                break;
+            perror("get next key");
+            return -1;
+        }
+        __u64 value;
+        if (bpf_map_lookup_elem(map_fd, &next, &value) == 0)
+            printf("%.*s: %" PRIu64 "\n", COMM_BYTES, next.comm,
+                   (uint64_t)value);
+        else if (errno != ENOENT) {
+            perror("lookup count");
+            return -1;
+        }
+        current = next;
+        previous = &current;
+        seen++;
+    }
+    for (__u32 reason = 0; reason < 2; reason++) {
+        __u64 value;
+        if (bpf_map_lookup_elem(lost_fd, &reason, &value) != 0) {
+            perror("lookup loss");
+            return -1;
+        }
+        printf("lost[%u]: %" PRIu64 "\n", reason, (uint64_t)value);
+    }
+    if (fflush(stdout) != 0) {
+        perror("flush output");
+        return -1;
+    }
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    struct bpf_object *object = NULL;
+    struct bpf_link *link = NULL;
+    int result = 1;
+    if (argc != 2) {
+        fprintf(stderr, "usage: %s OBJECT.bpf.o\n", argv[0]);
+        return 2;
+    }
+    struct sigaction action = {.sa_handler = stop};
+    sigemptyset(&action.sa_mask);
+    if (sigaction(SIGINT, &action, NULL) || sigaction(SIGTERM, &action, NULL)) {
+        perror("sigaction");
         return 1;
     }
-
-    // Iterate through map entries
-    struct process_key key, next_key;
-    u64 value;
-
-    while (bpf_map_get_next_key(map_fd, &key, &next_key) == 0) {
-        if (bpf_map_lookup_elem(map_fd, &next_key, &value) == 0) {
-            printf("Process: %-16s Count: %llu\n", next_key.comm, value);
-        }
-        key = next_key;
+    object = bpf_object__open_file(argv[1], NULL);
+    if (!object) {
+        perror("open BPF object");
+        return 1;
     }
-
-    return 0;
+    struct bpf_program *program = bpf_object__next_program(object, NULL);
+    if (!program || bpf_object__next_program(object, program)) {
+        fprintf(stderr, "expected exactly one program\n");
+        goto cleanup;
+    }
+    if (bpf_object__load(object) != 0) {
+        fprintf(stderr, "load failed; inspect libbpf/verifier diagnostics\n");
+        goto cleanup;
+    }
+    int counts = bpf_object__find_map_fd_by_name(object, "exec_counts");
+    int losses = bpf_object__find_map_fd_by_name(object, "lost_events");
+    if (counts >= 0 && losses < 0) {
+        fprintf(stderr, "counter object is missing lost_events\n");
+        goto cleanup;
+    }
+    link = bpf_program__attach(program);
+    if (!link) {
+        perror("attach tracepoint");
+        goto cleanup;
+    }
+    fprintf(stderr, "Attached; Ctrl-C detaches. Counts are live samples.\n");
+    result = 0;
+    while (!stopping) {
+        if (counts >= 0 && dump_counts(counts, losses) != 0) {
+            result = 1;
+            break;
+        }
+        sleep(2);
+    }
+cleanup:
+    bpf_link__destroy(link);
+    bpf_object__close(object);
+    return result;
 }
 ```
 
-#### 2.3 Compile and Run
+#### Compile and Run
+
+On Debian/Ubuntu multiarch installations, GCC's multiarch directory supplies UAPI `asm/` headers; adjust paths for other distributions. `-g` supplies BTF for `.maps`. Compile and start the loader in terminal A on the prepared VM:
 
 ```bash
-# Compile eBPF program
-clang -O2 -target bpf -c process_counter.c -o process_counter.o
-
-# Compile user-space program
-gcc -o process_reader process_reader.c -lbpf
-
-# Load eBPF program
-sudo bpftool prog load process_counter.o /sys/fs/bpf/process_counter map name process_map /sys/fs/bpf/process_map
-
-# Check map pin
-ls -la /sys/fs/bpf/
-
-# Run some commands to increment counters
-ls -la
-echo "Hello"
-find . -name "*.c"
-
-# Check results
-sudo ./process_reader
+MULTIARCH=$(gcc -print-multiarch)
+test -n "$MULTIARCH"
+clang -O2 -g -target bpf -I"/usr/include/$MULTIARCH" \
+  -c hello.bpf.c -o hello.bpf.o
+clang -O2 -g -target bpf -I"/usr/include/$MULTIARCH" \
+  -c exec_count.bpf.c -o exec_count.bpf.o
+cc -O2 -Wall -Wextra run_bpf.c -o run_bpf \
+  $(pkg-config --cflags --libs libbpf)
+sudo ./run_bpf hello.bpf.o
 ```
+
+In terminal B read `sudo cat /sys/kernel/tracing/trace_pipe`; run an external executable such as `/usr/bin/true` in terminal C. Stop the hello loader with Ctrl-C, then run `sudo ./run_bpf exec_count.bpf.o`. Observe changing name/count pairs while executing commands in another terminal. The observer and other host activity also generate events, so no fixed total/PID is promised. Failed `execve` attempts can appear in hello output but should not emit `sched_process_exec`.
+
+`bpftool prog load OBJECT PIN` alone does not attach this tracepoint. The example deliberately owns a link. Explicit pinning/reuse is a separate lifecycle decision: `pinmaps` and `map ... pinned ...` are not interchangeable syntax. Closing this loader releases its unpinned resources.
 
 ### 3. Exploring and Debugging Cilium eBPF Programs
 
-Cilium uses various eBPF programs and maps. Let's learn how to explore and debug them.
-
-#### 3.1 Check Cilium eBPF Maps
+Use an already prepared cluster and correct kubeconfig context. Select the agent on the affected Pod's node; endpoint IDs are node-local. Replace the explicit placeholders:
 
 ```bash
-# List Cilium eBPF maps
-cilium bpf maps list
-
-# Check specific map contents
-cilium bpf maps get cilium_policy_00001
-
-# Check endpoint information
-cilium endpoint list
-
-# Check eBPF programs for specific endpoint
-cilium bpf endpoint list -e 1234
+kubectl config current-context
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+export CILIUM_POD=cilium-REPLACE-WITH-ACTUAL-POD
+export ENDPOINT_ID=REPLACE-WITH-NODE-LOCAL-ID
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint get "$ENDPOINT_ID"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg map list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg service list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --frontends
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg bpf lb list --backends
 ```
 
-#### 3.2 Debug Cilium Network Policies
+Inspect desired policies with `kubectl get networkpolicy,ciliumnetworkpolicy -n YOUR_NAMESPACE` and applicable cluster-wide policies separately. Compare endpoint realized state with actual flows. Removed `policy trace` and deprecated `policy get` are not substitutes.
+
+Run one monitor at a time, stopping with Ctrl-C:
 
 ```bash
-# Check network policy status
-cilium policy get
-
-# Check policy for specific endpoint
-cilium endpoint get 1234 -o json | jq '.policy'
-
-# Enable policy tracing
-cilium policy trace --src-k8s-pod default:app-frontend --dst-k8s-pod default:app-backend -p TCP --dport 80
-
-# Enable policy debug mode
-cilium config Debug=true
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent --   cilium-dbg monitor --related-to "$ENDPOINT_ID" --type drop
 ```
 
-#### 3.3 Check Cilium Service Load Balancing
+Use `--type policy-verdict` for emitted policy decisions or `--type l7` for available proxy events. Visibility depends on configuration. HTTP rejection may be HTTP 403 rather than a network DROPPED verdict.
+
+For enabled Hubble Relay, keep `cilium hubble port-forward` running, then use:
 
 ```bash
-# List services
-cilium service list
-
-# Check service backends
-cilium service get 1
-
-# Check load balancer map
-cilium bpf lb list
-
-# Check backend status for specific service
-cilium bpf lb maglev list
+hubble status
+hubble observe --namespace default --last 20
+hubble observe --protocol http --last 20
+hubble observe --namespace default --last 20 --output json
 ```
 
-#### 3.4 Monitor Cilium Network Flows
-
-```bash
-# Enable network flow monitoring
-cilium monitor
-
-# Monitor flows for specific endpoint only
-cilium monitor --related-to 1234
-
-# Monitor dropped packets only
-cilium monitor --type drop
-
-# Monitor L7 protocol flows
-cilium monitor --type l7
-```
-
-#### 3.5 Advanced Observability with Hubble
-
-```bash
-# Check Hubble status
-cilium status | grep Hubble
-
-# Access Hubble UI
-kubectl port-forward -n kube-system svc/hubble-ui 12000:80
-
-# Observe flows for specific namespace
-hubble observe --namespace default
-
-# Observe HTTP requests
-hubble observe --protocol http
-
-# Generate service dependency map
-hubble observe --output json | jq
-```
+JSON piped to `jq` is not a service-dependency graph. Enabled Hubble UI supplies a service map (`cilium hubble ui`). HTTP visibility needs a supported proxy/L7 path; encrypted application content is not automatically decoded.
 
 ### 4. Performance Analysis and Optimization
 
-#### 4.1 eBPF Program Performance Analysis
+On a controlled node with profiling permissions/support, inspect actual program IDs. These commands target local kernel state and were not executed by this audit:
 
 ```bash
-# Measure eBPF program execution time
-bpftool prog profile name hello_execve
-
-# Measure specific map lookup performance
-bpftool map dump name process_map -p
-
-# Trace kernel function calls
-bpftrace -e 'kprobe:bpf_prog_run { @start[arg0] = nsecs; } kretprobe:bpf_prog_run /@start[arg0]/ { @runtime_ns[arg0] = nsecs - @start[arg0]; delete(@start[arg0]); }'
+sudo bpftool prog show
+export PROG_ID=REPLACE-WITH-ACTUAL-ID
+sudo bpftool prog show id "$PROG_ID"
+sudo bpftool prog dump xlated id "$PROG_ID"
+sudo bpftool prog profile id "$PROG_ID" duration 10 cycles instructions
 ```
 
-#### 4.2 Cilium Performance Optimization
+Profiling needs metric names and suitable kernel/PMU support. `bpftool -p map dump ...` pretty-prints content, not lookup latency. `perf`/bpftrace can profile workloads, but verify target symbols, probe availability and arguments. A kretprobe does not reliably expose entry `arg0` without explicit correlation.
 
-```bash
-# Check Cilium datapath optimization settings
-cilium config | grep -E 'EnableAutoDirectRouting|EnableBPFMasquerade|EnableIPv4Masquerade'
-
-# Check XDP acceleration status
-cilium status | grep XDP
-
-# Check native routing mode
-cilium status | grep Routing
-
-# Check performance metrics
-cilium metrics list
-```
+Record protocol, packet size, concurrency, policy, encryption, proxy and routing when measuring the complete workload. Inspect installed Helm values and `cilium-dbg status --verbose` before changing XDP/native routing. A faster hook or synthetic result does not prove lower application latency.
 
 ### 5. Troubleshooting Tips
 
-#### 5.1 Debug eBPF Program Verification Errors
+| Symptom | Check |
+|---|---|
+| C build fails | Correct UAPI/libbpf headers, BPF compiler target, `__u32`/`__u64`, `-g` for BTF |
+| Verifier rejection | Loader stderr/verifier log, bounds, stack initialization, helpers, license and complexity |
+| Loaded but no events | Attachment/link lifetime, exact tracepoint, trigger and permissions |
+| Missing map data | Same map instance, insertion errors/capacity, key meaning, reference/pin lifetime |
+| Wrong Cilium flow | Correct node/endpoint, combined desired/realized policy, route/backend state, L7 proxy behavior |
+| Missing Hubble records | Relay, filters, configured visibility and lost-event reporting |
 
-```bash
-# Check verifier logs
-sudo cat /sys/kernel/debug/tracing/trace_pipe | grep "bpf_verifier"
+`trace_pipe` contains trace output, not verifier diagnostics. For an intentional load test in the isolated VM, bpftool `-d` gives loader/verifier diagnostics; loading still does not prove attachment or behavior. Do not disable policy, expand production privileges or rewrite maps to make a test pass.
 
-# Enable detailed logs during program load
-sudo bpftool prog load hello_ebpf.o /sys/fs/bpf/hello_execve -d
+## Sources
 
-# Check kernel logs
-dmesg | grep bpf
-```
-
-#### 5.2 Cilium Troubleshooting
-
-```bash
-# Check Cilium status
-cilium status --verbose
-
-# Check Cilium agent logs
-kubectl logs -n kube-system -l k8s-app=cilium
-
-# Check endpoint status
-cilium endpoint list | grep "not-ready"
-
-# Check health status
-cilium status --all-health
-
-# Connectivity test
-cilium connectivity test
-```
-
-#### 5.3 Common Troubleshooting Methods
-
-1. **eBPF program won't load**:
-   - Check kernel version (4.19+ required)
-   - Check required permissions (CAP_BPF, CAP_SYS_ADMIN)
-   - Check verifier error messages
-
-2. **Map access errors**:
-   - Check map path and permissions
-   - Check map type and key/value sizes
-   - Check file descriptor limits
-
-3. **Cilium network connectivity issues**:
-   - Check endpoint status
-   - Check policy rules
-   - Check routing tables
-   - Check CNI configuration
-
-4. **Performance issues**:
-   - Check eBPF program complexity
-   - Optimize map size and lookup patterns
-   - Verify JIT compiler is enabled
-   - Consider hardware offload possibilities
-
-[Return to Main Page](README.md)
+- [Original BPF paper](https://www.tcpdump.org/papers/bpf-usenix93.pdf), [Linux BPF design Q&A](https://docs.kernel.org/bpf/bpf_design_QA.html), [verifier](https://docs.kernel.org/bpf/verifier.html), [ring buffer](https://docs.kernel.org/bpf/ringbuf.html), [licensing](https://docs.kernel.org/bpf/bpf_licensing.html), [seccomp](https://docs.kernel.org/userspace-api/seccomp_filter.html)
+- [Linux 6.12 BPF loading](https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c), [exec event placement](https://github.com/torvalds/linux/blob/v6.12/fs/exec.c), [libbpf 1.7](https://github.com/libbpf/libbpf/tree/v1.7.0), [bpftool 7.7](https://github.com/libbpf/bpftool/releases/tag/v7.7.0)
+- [Cilium 1.20.1 BPF source](https://github.com/cilium/cilium/tree/v1.20.1/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.1/Documentation/cmdref)
+- [Cilium system requirements](https://docs.cilium.io/en/v1.20/operations/system_requirements/), [Kubernetes compatibility](https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/), [kube-proxy replacement](https://docs.cilium.io/en/v1.20/network/kubernetes/kubeproxy-free/), [encryption](https://docs.cilium.io/en/v1.20/security/network/encryption/)
 
 ## Quiz
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/networking/cilium/02-ebpf-quiz.md).
+[Check your understanding](../../quizzes/networking/cilium/02-ebpf-quiz.md).

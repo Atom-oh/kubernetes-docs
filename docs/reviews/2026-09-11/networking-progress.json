@@ -7,19 +7,19 @@
     "en/quizzes/networking/**"
   ],
   "inventory": 108,
-  "fullyRead": 80,
-  "fixedAndValidated": 76,
-  "currentBatch": "networking-cilium eBPF",
+  "fullyRead": 84,
+  "fixedAndValidated": 80,
+  "currentBatch": "networking-cilium networking",
   "currentFiles": [
-    "en/networking/cilium/02-ebpf.md",
-    "en/quizzes/networking/cilium/02-ebpf-quiz.md",
-    "ko/networking/cilium/02-ebpf.md",
-    "ko/quizzes/networking/cilium/02-ebpf-quiz.md"
+    "en/networking/cilium/03-networking.md",
+    "en/quizzes/networking/cilium/03-networking-quiz.md",
+    "ko/networking/cilium/03-networking.md",
+    "ko/quizzes/networking/cilium/03-networking-quiz.md"
   ],
   "remaining": {
     "root": 0,
     "calico": 0,
-    "cilium": 32
+    "cilium": 28
   },
   "completedSubbatches": [
     {
@@ -121,14 +121,19 @@
       "name": "cilium-introduction",
       "documents": 4,
       "report": "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json"
+    },
+    {
+      "name": "cilium-ebpf",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-ebpf-validation.json"
     }
   ],
   "perDocumentReport": "docs/reviews/2026-09-11/batches/networking-cilium.json",
   "blockers": [],
   "pendingValidation": [
-    "en/networking/cilium/02-ebpf.md",
-    "en/quizzes/networking/cilium/02-ebpf-quiz.md",
-    "ko/networking/cilium/02-ebpf.md",
-    "ko/quizzes/networking/cilium/02-ebpf-quiz.md"
+    "en/networking/cilium/03-networking.md",
+    "en/quizzes/networking/cilium/03-networking-quiz.md",
+    "ko/networking/cilium/03-networking.md",
+    "ko/quizzes/networking/cilium/03-networking-quiz.md"
   ]
 }
