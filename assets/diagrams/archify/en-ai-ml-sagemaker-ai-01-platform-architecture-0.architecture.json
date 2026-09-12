@@ -12,7 +12,7 @@
     ],
     "repository": {
       "url": "https://github.com/Atom-oh/kubernetes-docs",
-      "revision": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051"
+      "revision": "2ad43f6a0ee602874fc788c22fe0a225a68dc092"
     }
   },
   "components": [
@@ -339,7 +339,7 @@
       "dot": "emerald",
       "title": "Validation scope and dates",
       "items": [
-        "Sep 12: 121 CPU regression tests",
+        "Sep 12: 125 CPU regression tests",
         "09-01: historical AWS provisioning observations"
       ]
     },

@@ -95,7 +95,7 @@
     },
     {
       "path": "examples/ai-ml/qwen-pii-finetuning/launch/sagemaker_train.py",
-      "sha256": "507e89d3e0797868fc8ee41d130a2ae8fa02fedef59e485f7c281d8f79d6cc0b"
+      "sha256": "2b241536fe0ba46a87de6c9c4dbe18c0ee738bdd5d21f7beaf0dfd79f822cb33"
     },
     {
       "path": "examples/ai-ml/qwen-pii-finetuning/src/train.py",
@@ -119,7 +119,7 @@
     },
     {
       "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_execution_safety.py",
-      "sha256": "dca13da80927500b0fc590aad442edab6db4307ad585c973228004ca298de489"
+      "sha256": "a92a59af4de7ee4e2a8094300834b09015503fb7283f5d64b4e370d8fb11a93b"
     },
     {
       "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_mlflow_export.py",
@@ -141,5 +141,22 @@
       "path": "ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
       "sha256": "0c5056f0559667a52a69e0643e847fd366146b84a99ae43cba9eb59b1d1c92b6"
     }
-  ]
+  ],
+  "secondReview": {
+    "reviewedHead": "e1d4d0874f3afc17184384defd32750f5537b627",
+    "coverage": "70/70",
+    "contentScore": "88.5/90",
+    "remainingFinding": "QWEN-R2-001",
+    "fixCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092",
+    "fix": "Accepted/terminal state and outer stop handler include post-acceptance journal writes and lock exit. Stop attempt precedes best-effort persistence; ambiguous create remains outside name-based stopping.",
+    "regressions": [
+      "OSError writing submitted",
+      "KeyboardInterrupt writing submitted",
+      "persistent post-acceptance write errors",
+      "terminal persistence error does not stop completed job"
+    ],
+    "pythonTestsPassed": 125,
+    "newHeadReview": "pending"
+  },
+  "sourceHashesCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092"
 }
