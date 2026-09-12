@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-ray-04-ray-serve-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1160,
       700
@@ -22,7 +22,7 @@
           "inference",
           "response"
         ],
-        "note": "A client request passes through the Ray Serve ingress into the Preprocess → Model Inference deployments and returns as a response."
+        "note": "Proxies differ from application ingress deployments; internal calls can use DeploymentHandles."
       },
       {
         "id": "autoscaling-chain",
@@ -34,7 +34,7 @@
           "preprocess",
           "inference"
         ],
-        "note": "Each layer only sees the layer immediately below it: replica count → worker Pod count → node count."
+        "note": "Check desired and ready capacity at each layer. Actors, Pods, and nodes are not one-to-one."
       }
     ]
   },
@@ -56,8 +56,8 @@
     {
       "id": "ingress",
       "type": "frontend",
-      "label": "Ray Serve Ingress",
-      "sublabel": "request router",
+      "label": "Serve proxy",
+      "sublabel": "HTTP / gRPC routing",
       "pos": [
         230,
         120
@@ -112,8 +112,8 @@
     {
       "id": "serve-autoscaler",
       "type": "backend",
-      "label": "Ray Serve Autoscaler",
-      "sublabel": "per-deployment replica count",
+      "label": "Serve controller",
+      "sublabel": "replica goals / autoscaling",
       "pos": [
         590,
         310
@@ -126,8 +126,8 @@
     {
       "id": "kuberay-autoscaler",
       "type": "backend",
-      "label": "Ray / KubeRay Autoscaler",
-      "sublabel": "worker Pod count",
+      "label": "Ray / KubeRay",
+      "sublabel": "actor placement / Pod capacity",
       "pos": [
         590,
         450
@@ -140,8 +140,8 @@
     {
       "id": "karpenter",
       "type": "cloud",
-      "label": "Karpenter",
-      "sublabel": "EC2 node count",
+      "label": "K8s + node provisioner",
+      "sublabel": "Pod placement / EC2 capacity",
       "pos": [
         590,
         590
@@ -180,7 +180,12 @@
       "id": "preprocess-to-inference",
       "from": "preprocess",
       "to": "inference",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "label": "DeploymentHandle",
+      "labelAt": [
+        690,
+        106
+      ]
     },
     {
       "id": "inference-to-response",
@@ -192,7 +197,7 @@
       "id": "serve-watches-preprocess",
       "from": "serve-autoscaler",
       "to": "preprocess",
-      "label": "watches queue depth / ongoing requests",
+      "label": "request metrics / targets",
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "bottom"
@@ -209,7 +214,7 @@
       "id": "kuberay-watches-serve",
       "from": "kuberay-autoscaler",
       "to": "serve-autoscaler",
-      "label": "watches pending actor placement",
+      "label": "actor capacity if needed",
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "bottom"
@@ -218,7 +223,7 @@
       "id": "karpenter-watches-kuberay",
       "from": "karpenter",
       "to": "kuberay-autoscaler",
-      "label": "provisions nodes for pending worker Pods",
+      "label": "Pod / node capacity if needed",
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "bottom"
@@ -227,20 +232,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Request path",
+      "title": "Request handling",
       "items": [
-        "Ray Serve routes HTTP/gRPC requests to a deployment's actor replicas",
-        "The Preprocess → Model Inference deployments compose one application",
-        "Each deployment is scaled, versioned, and resourced independently"
+        "Distinguish caller queues from requests assigned to replicas",
+        "Serve deployments use actor replicas, not Kubernetes Deployment objects"
       ]
     },
     {
       "dot": "amber",
-      "title": "Three-tier autoscaling",
+      "title": "Conditional scaling",
       "items": [
-        "Ray Serve Autoscaler: compares ongoing requests per replica (queued + in-flight) against a target and adjusts replicas",
-        "Ray/KubeRay Autoscaler: decides worker Pod count from pending actor placement",
-        "Karpenter: decides how many EC2 nodes are needed to run the pending worker Pods"
+        "Existing capacity, group bounds, placement, and readiness affect scaling",
+        "A new actor does not imply one new Pod or EC2 node"
       ]
     }
   ]
