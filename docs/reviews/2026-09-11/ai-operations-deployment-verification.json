@@ -1,0 +1,239 @@
+{
+  "checkedAt": "2026-09-12T23:29:42.665516+00:00",
+  "pr": 233,
+  "reviewedHead": "693e2379791c3b68ea676136651690c8b188373d",
+  "mergeCommit": "a16d5937ad6d47a94c011ce1221a2cbe08ecb88f",
+  "deploymentRun": 34725124061,
+  "deploymentStatus": "success",
+  "pages": [
+    {
+      "path": "en/ai-ml/04-inference-frameworks.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/04-inference-frameworks",
+      "status": 200,
+      "baselineVisible": "1.4.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-04-inference-frameworks-0.B5uz-5dV.png",
+          "status": 200,
+          "sha256": "279264beeac50d00be2874c55ac93e86879497a4788adbd375d24ec36ce3f2c1",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-04-inference-frameworks-1.C3_JORiB.png",
+          "status": 200,
+          "sha256": "cb0b6505eaf6c200c8f4e8623bbb535f1d797243a1068211bda23e9d3c71f273",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-04-inference-frameworks-2.Bir1vAAZ.png",
+          "status": 200,
+          "sha256": "f36faa0d9d088774cf7ac50f648bb073311d9292ccdc2ff2193cba6c051ee502",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-04-inference-frameworks-3.zLMX-zRA.png",
+          "status": 200,
+          "sha256": "33e73b1946d5c22a73383c739e9686ab2766221ff0408c77403e456e6602b3a2",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/05-model-training.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/05-model-training",
+      "status": 200,
+      "baselineVisible": "1.2.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-05-model-training-0.Dbei96S7.png",
+          "status": 200,
+          "sha256": "316733e9dd2c23811d08df8aa2e878bc8b7c24af49d0b68d6c14ed35d3bb0e00",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-05-model-training-1.BByD91aQ.png",
+          "status": 200,
+          "sha256": "9c2bea0b145cd96e0ac6c97f0de8c6fd5feb82ee426e04fa9e59e217b0dc94f6",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-05-model-training-2.DM90zmLA.png",
+          "status": 200,
+          "sha256": "5f93c3fb2275ffd5ed8058b0e270e82bcf18a79aea290a2f40215f2c085b3f44",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/06-ai-infrastructure.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/06-ai-infrastructure",
+      "status": 200,
+      "baselineVisible": "4.4.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-06-ai-infrastructure-0.wZfbkFGL.png",
+          "status": 200,
+          "sha256": "29464e53ca9b75ecc16b28593d5cb94f27bb4de90e1121cef13bd515435859c2",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-06-ai-infrastructure-1.B-d_PBjw.png",
+          "status": 200,
+          "sha256": "b9e662f313fa2ff96ed22cd788b6059f25a0e7af1288774c0935d1f4c93df040",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-06-ai-infrastructure-2.sPTdx8q7.png",
+          "status": 200,
+          "sha256": "e2a71754358aa7c1bb29518ac2e6d0e0dae40c5e03dd2d40dedaebba614f2b94",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/07-ai-ml-best-practices.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/07-ai-ml-best-practices",
+      "status": 200,
+      "baselineVisible": "1.14.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-07-ai-ml-best-practices-0.CVhmu8_0.png",
+          "status": 200,
+          "sha256": "7b76b1636e079b7502aec22b07238687adff2e8f64032d56b5d87aaf1445aa8b",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-07-ai-ml-best-practices-1.D_3HBcz9.png",
+          "status": 200,
+          "sha256": "f94b18b859feb917c4540365e10f123f82bbe8a8cb3e189dedd7611eda3372d4",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-07-ai-ml-best-practices-2.CQmG7IuI.png",
+          "status": 200,
+          "sha256": "f4b3224cee6b16f0d7fd0bffd612e95812b56ca02b553f6d95004773152de9ab",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/04-inference-frameworks.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/04-inference-frameworks",
+      "status": 200,
+      "baselineVisible": "1.4.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-04-inference-frameworks-0.Dpkf1vGn.png",
+          "status": 200,
+          "sha256": "a221778ad65449b749e27c8993d44770dd0ede97dcd059fb949ac324d183743e",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-04-inference-frameworks-1.Di787JYz.png",
+          "status": 200,
+          "sha256": "695489351ac5cef8bb19f5fb2d9719f71cfb92f89ba9a815919c284b1e4ac2a6",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-04-inference-frameworks-2.CyPTsfOp.png",
+          "status": 200,
+          "sha256": "6171a65a46cf8464476203785bcb6ae1632d9e92c89e09f8cc94641d88a0d49f",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-04-inference-frameworks-3.15kBb8-1.png",
+          "status": 200,
+          "sha256": "20ab9840500d59d6bb23a4beadf346bf3160b7814f23044794ee5b33cc6071a6",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/05-model-training.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/05-model-training",
+      "status": 200,
+      "baselineVisible": "1.2.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-05-model-training-0._iMza2JV.png",
+          "status": 200,
+          "sha256": "7d221994ffdf2d5073c525e6667ef77ef8503a6f349d485b3d1494902fdaf4b7",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-05-model-training-1.t5GqTYBo.png",
+          "status": 200,
+          "sha256": "6bcdd6bae5867c3970e2a20afba3a482e4b7937d4077e0d074b6b9b59334037e",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-05-model-training-2.CIo9D2mh.png",
+          "status": 200,
+          "sha256": "b1a4e5b75aaed05ce6be2aa47057ad0e0208a92b210883b6a51e54e713aee6cf",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/06-ai-infrastructure.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/06-ai-infrastructure",
+      "status": 200,
+      "baselineVisible": "4.4.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-06-ai-infrastructure-0.B_k6HK0o.png",
+          "status": 200,
+          "sha256": "884ebd60e5a55f7776d30dad96c52765208c6cad996bc9c355af6351d8f9fa33",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-06-ai-infrastructure-1.78_MDr6K.png",
+          "status": 200,
+          "sha256": "a837e50b32833a2f8a80f01441b8f4e6d7dc85d848410c22fbd92fc6e121bb6a",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-06-ai-infrastructure-2.C930QePd.png",
+          "status": 200,
+          "sha256": "4c7a59ec5f5df8e795dc6677cb4f0fc0e851baaf19b70d4004b165c2a433f141",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/07-ai-ml-best-practices.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/07-ai-ml-best-practices",
+      "status": 200,
+      "baselineVisible": "1.14.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-07-ai-ml-best-practices-0.COwbtOmK.png",
+          "status": 200,
+          "sha256": "f42249d9dc810709e9541db77c4bf9df0ac33e0f0bf17424128a8269191fed40",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-07-ai-ml-best-practices-1.DALy_17v.png",
+          "status": 200,
+          "sha256": "2010a2a5c29a3567441e09adc9d461da99a8ce0984b528aa08739dfbe8086202",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-07-ai-ml-best-practices-2.BmQgge_k.png",
+          "status": 200,
+          "sha256": "c64700abc9497210961e99df7174b11eb83c7189de26da6176b1b363de5e15fb",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "scope": "HTTP fetch only. No browser JavaScript or synthetic GA4 events. Published hashed img URLs verified against reviewed PNGs."
+}

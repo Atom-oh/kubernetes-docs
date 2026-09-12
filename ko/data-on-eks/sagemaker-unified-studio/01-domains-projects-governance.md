@@ -1,138 +1,153 @@
 # Part 4: Domain, Project, Membership 거버넌스
 
-> **마지막 업데이트**: 2026년 9월 2일
+> 문서 검토: 2026-09-12. Qwen provisioning 결과는 과거 실험 기록이며 현재 계정 상태를 재검증하지 않았습니다.
 
-## 왜 이 장이 필요한가
+Qwen 실험 기록의 세 번째 시도는 project 생성 후 caller의 membership 문제로
+조회·삭제가 거부되었다고 보고합니다. 학습은 시작되지 않았습니다.
+이 사례를 모든 Unified Studio domain의 현재 상태나 모든 권한 실패의 유일한
+원인으로 일반화하지 않습니다.
 
-Qwen PII 검증은 GPU나 모델 코드가 아니라 Unified Studio project membership에서 멈췄습니다. 세 번째 provisioning 시도에서 project는 생성됐지만 호출 역할의 group profile이 project member로 추가되지 않았고, 그 결과 조회·삭제가 거부됐습니다.
+## 1. 객체와 identity를 구분
 
-이 사례는 IAM 권한과 Unified Studio 내부 권한이 서로 다른 계층임을 보여줍니다.
+| 객체/역할 | 의미 |
+| --- | --- |
+| Unified domain / domain unit | 거버넌스 경계와 내부 조직 계층 |
+| Project profile / blueprint | 도구·environment provision 구성과 허용된 account/region |
+| Project | 협업·도구·자원 공유 경계 |
+| User/group profile | SSO identity 또는 등록된 IAM role 등의 서비스 내부 표현 |
+| Membership designation | PROJECT_OWNER, PROJECT_CONTRIBUTOR 등 project 관리 범위 |
+| Project execution role | Project에서 AWS 데이터·compute에 접근하는 실행 identity |
+| Catalog asset | 설명·schema·location 등 거버넌스 대상 메타데이터 |
 
-## 객체 모델
+IAM-based와 Identity Center-based domain의 설정·로그인 방식을 먼저 확인합니다.
+Project member role과 execution role은 역할이 다르며 실제 ARN이 같을 수도 있습니다.
+IAM-based project에서는 멤버들이 project execution role을 통한 데이터/compute
+접근을 공유합니다. Owner designation만으로 사용자별 데이터 권한이 자동 분리되지 않습니다.
+Identity-based 접근이나 Trusted Identity Propagation을 쓰면 해당 모델도 함께 검증합니다.
 
-| 객체 | 역할 | 운영 질문 |
-|---|---|---|
-| **SageMaker unified domain** | 사용자, project profile, catalog, 정책을 묶는 최상위 거버넌스 경계 | 어느 조직·계정·리전이 이 domain을 운영하는가? |
-| **Domain unit** | domain 안의 조직 계층 | project와 정책을 어느 조직 단위에 배치하는가? |
-| **Blueprint** | 도구·자원을 provision하는 구성 | 어떤 서비스와 리전에 자원을 만들 수 있는가? |
-| **Project profile** | blueprint 모음으로 만든 project 템플릿 | 누가 이 profile로 project를 만들 수 있는가? |
-| **Project** | 한 use case의 협업·파일·도구·자원 공유 경계 | owner와 member는 누구이며 삭제 책임자는 누구인가? |
-| **Catalog asset** | 데이터의 설명, schema, 위치, 구독 가능한 메타데이터 | 원본 데이터 대신 어떤 메타데이터를 게시하는가? |
-| **User/group profile** | SSO 사용자·그룹 또는 IAM role을 나타내는 내부 profile | 자동화 role의 group profile이 membership에 포함됐는가? |
-| **Membership** | project와 profile 사이의 owner/member association | 생성·조회·멤버 관리·삭제를 누가 할 수 있는가? |
+AWS user-management 문서는 domain에 추가된 IAM role의 group profile과, 그 role을
+통해 로그인한 사용자의 session user profile을 구분합니다.
+Membership은 role group profile로 관리할 수 있으며 rolePrincipalARN을 사용한
+CreateGroupProfile은 **profile 등록**이지 IAM role 자체를 만드는 API가 아닙니다.
+Project execution role의 자동 profile/membership 처리와 automation caller의 권한도
+동일하다고 가정하지 않습니다.
 
-AWS 문서의 project 정의처럼, project는 collaboration boundary입니다. 강한 보안 격리가 필요하면 project만 믿지 말고 별도 AWS 계정과 데이터·네트워크 경계를 함께 사용합니다.
+## 2. Profile 이름은 도구 준비 상태가 아님
 
-## Project profile과 All capabilities
+All capabilities는 blueprint 묶음의 template 이름입니다. Profile은 blueprint를
+project 생성 때 provision하거나 나중에 on-demand로 활성화하도록 설정할 수 있습니다.
+필요한 service·account·region·network와 profile 사용 권한을 확인합니다.
 
-Project profile은 project를 만드는 상위 템플릿이며 blueprint의 묶음입니다. `All capabilities` template은 Tooling blueprint를 바탕으로 시작하고, 관리자가 필요에 따라 다음 capability를 구성합니다.
+프로필 이름으로 처음 검색된 결과만 선택하지 말고 의도한 profile ID와 설정을
+확인합니다. Qwen 실험에 필요한 범위가 작다면 필요한 capability만 제공하는 profile을
+검토할 수 있지만, 조직의 승인된 구성과 실제 의존성을 먼저 확인합니다.
+Unified Studio project가 없는 일반 SageMaker/EKS 학습 경로와도 구분합니다.
 
-- `MLExperiments`
-- `Workflows`
-- `LakehouseCatalog`
-- `EmrOnEc2`
-- `RedshiftServerless`
-- `LakeHouseDatabase`
-- `EmrServerless`
-- `AmazonBedrockGenerativeAI`
+## 3. IAM, membership, 데이터 권한
 
-이름이 `All capabilities`라고 해서 모든 blueprint가 즉시 준비됐다고 가정하지 않습니다. profile이 enabled인지, 필요한 blueprint가 대상 리전에 enabled인지, project 생성 권한을 누가 가졌는지 확인해야 합니다.
+IAM action 허용은 서비스 내부 project ownership을 대신하지 않습니다.
+반대로 project owner라도 IAM·SCP·resource policy·데이터 접근 정책의 제한을
+무시할 수 없습니다. 일반 member/contributor라는 이유만으로 삭제할 수 있는 것도
+아닙니다. 삭제 경로에 필요한 project owner 또는 관리 권한을 확인합니다.
 
-Qwen 예제는 enabled `All capabilities` profile을 찾지만, 학습 자체에는 모든 capability가 필요하지 않습니다. 조직 표준에 맞춘 custom profile로 Tooling과 ML experiment 범위만 제공하는 편이 더 적절할 수 있습니다.
-
-## IAM 권한과 DataZone authorization
-
-두 권한 계층을 분리해 생각합니다.
-
-| 계층 | 허용하는 것 | 충분하지 않은 것 |
-|---|---|---|
-| IAM | `CreateProject`, `ListProjects`, `DeleteProject` 같은 API 호출 시도 | 특정 project의 owner/member association |
-| Unified Studio/DataZone authorization | domain owner, project owner, project member의 context별 작업 | AWS API에 접근할 IAM permission |
-
-IAM role이 domain에 추가되면 Unified Studio는 group profile을 만듭니다. project membership과 access policy는 이 group profile을 통해 관리됩니다.
-
-프로젝트 생성 시 실행 role의 group profile을 owner로 함께 지정하는 형태는 다음과 같습니다.
+현재 CreateProject API는 membershipAssignments를 받습니다.
+다음은 **요청 구조 예시**이며 domain/profile/group ID를 권한 있게 조회한 실제 값으로
+바꿔야 합니다.
 
 ```json
-[
-  {
-    "member": {
-      "groupIdentifier": "<execution-role-group-profile>"
-    },
-    "designation": "PROJECT_OWNER"
-  }
-]
+{
+  "domainIdentifier": "dzd-1111111111111111",
+  "name": "docs-governance-example",
+  "projectProfileId": "c1111111111111",
+  "membershipAssignments": [
+    {
+      "member": {
+        "groupIdentifier": "11111111-1111-1111-1111-111111111111"
+      },
+      "designation": "PROJECT_OWNER"
+    }
+  ]
+}
 ```
 
-project owner는 project member를 추가·제거하고 asset 게시 같은 project-level 작업을 관리할 수 있습니다.
 
-## 안전한 생성 순서
+member는 tagged union이므로 groupIdentifier와 userIdentifier 중 **하나만** 넣습니다.
+같은 요청에 membership을 포함하면 별도 후속 요청이 실패하는 간극을 줄일 수 있지만,
+전체 project/environment provision의 transaction 원자성·rollback을 보장한다는 뜻은 아닙니다.
+CreateProject 응답과 실제 membership을 다시 확인합니다. Timeout 뒤 이름만 보고
+새 project를 반복 생성하지 말고 기존 요청의 결과와 inventory를 먼저 확인합니다.
 
-1. `ListDomains`와 조직 설정으로 대상 domain을 확인합니다.
-2. enabled project profile과 필요한 blueprint/region readiness를 확인합니다.
-3. 호출 IAM role에 대응하는 group profile을 찾습니다.
-4. project 생성 요청에 owner membership을 원자적으로 포함합니다.
-5. project가 `ACTIVE`가 될 때까지 상태를 확인합니다.
-6. owner context에서 project 조회와 member 관리를 검증합니다.
-7. 그 뒤에만 MLflow App과 GPU 실행 경로를 승인합니다.
+## 4. 생성·도구 준비 순서
 
-membership을 생성 후 별도 단계로 추가하면, 중간 실패 시 “프로젝트는 있으나 자동화 역할은 접근할 수 없는” 상태가 생길 수 있습니다.
+1. 의도한 account/region/domain 유형과 profile ID를 확인합니다.
+2. Caller login/profile, 필요한 owner/admin 및 execution-role 권한을 구분합니다.
+3. 필요한 blueprint가 on-create인지 on-demand인지 확인하고 승인된 구성을 준비합니다.
+4. CreateProject와 membership 결과를 저장·재조회합니다.
+5. projectStatus와 environmentDeploymentDetails를 따로 확인합니다.
+6. 필요한 environment/tool의 준비, 실제 read/write 권한을 확인한 뒤 다음 compute 단계를 진행합니다.
 
-## Tag 정책과 project 생성
+projectStatus=ACTIVE는 environment/tool이 전부 준비됐다는 뜻이 아닙니다.
+overallDeploymentStatus에는 PENDING_DEPLOYMENT, IN_PROGRESS, SUCCESSFUL,
+FAILED_VALIDATION, FAILED_DEPLOYMENT 등이 있습니다. On-demand로 의도적으로
+아직 만들지 않은 도구까지 모두 실패로 취급하지 말고 **이번 작업에 필요한 것**을 확인합니다.
 
-두 번째 provisioning 시도에서는 domain이 custom project resource tag를 거부했습니다. 일반 AWS resource에 사용한 실험 tag를 Unified Studio project 생성에도 무조건 전달하면 안 됩니다.
+## 5. Tag 오류와 catalog 공개 범위
 
-- domain/project profile 정책이 허용하는 tag만 사용합니다.
-- lifecycle 추적은 로컬 inventory와 안전한 resource name prefix로 보완합니다.
-- tag 거부 시 project 생성 요청만 수정하고, 이미 만든 App·S3·IAM은 teardown합니다.
+현재 API에는 resourceTags가 있습니다. 과거 실험의 tag 거부는 그 domain/요청의
+실패 기록이며 “Unified Studio는 tag를 지원하지 않는다”는 뜻이 아닙니다.
+실제 정책·값·원본 오류를 확인하고, 부분 실패 정리는 inventory에서 이번 실행이
+생성했고 정리 권한이 있는 자원으로 한정합니다. Shared bucket/role을 prefix만 보고
+일괄 삭제하는 근거로 사용하지 않습니다.
 
-## Catalog asset 설계
+공개 문서에는 실험 횟수, 합성 데이터 schema·레코드 수, generator version/seed/hash,
+소유·보존 원칙 같은 검토에 필요한 정보를 싣습니다. 실제 PII, credential,
+presigned URL 또는 재식별용 mapping을 공개 산출물에 넣지 않습니다.
 
-PII 학습 데이터는 실제 고객 PII가 아니라 합성 데이터라도 최소 공개 원칙을 따릅니다.
+권한 통제된 **내부 catalog**에서는 데이터 발견/접근을 위해 storage location과
+resource identifier가 필요할 수 있습니다. 공개 웹 문서의 식별자 비공개 원칙을
+내부 catalog의 모든 location metadata 금지로 일반화하지 않습니다.
+Metadata 공개, subscription 승인과 실제 데이터 권한 부여도 별도 단계입니다.
 
-게시하기 적합한 메타데이터:
+## 6. 삭제와 부재 검증
 
-- split별 레코드 수와 언어 비율
-- schema와 9개 entity type
-- generator version, seed, SHA-256
-- 소유 팀, 보존 기간, 승인된 사용 목적
+1. 보존할 데이터와 이번 실행의 소유 자원·의존성을 확인합니다.
+2. 권한 있는 owner/admin context에서 해당 project의 작업을 중단하고 정리 범위를 확정합니다.
+3. Project와 연결된 environment·managed 자원의 lifecycle에 맞춰 삭제합니다.
+4. DELETING/DELETE_FAILED 등 상태와 오류를 확인하고 완료를 재검증합니다.
+5. 관련 account/region에서 남는 외부 App·S3·IAM·compute 자원을 inventory와 대조합니다.
 
-게시하지 않는 값:
+GetProject의 AccessDenied는 부재 증거가 아닙니다.
+빈 ListProjects 결과도 visibility·filter·pagination이 제한되어 있으면 충분하지 않습니다.
+의도한 domain/identity와 모든 page를 확인하고, 권한 있는 get/list 결과 및 외부 자원
+inventory를 함께 사용합니다. Project 삭제가 외부 서비스 자원까지 모두 정리한다는
+보장은 없으므로 데이터 보존과 소유권에 맞춰 별도 확인합니다.
 
-- source text 전체
-- entity original 값
-- raw model completion
-- token mapping
-- presigned URL이나 내부 storage 식별자
+## 7. Qwen 실험의 역사적 검증 범위
 
-## 삭제와 잔존 확인
+저장된 validation JSON의 날짜는 **2026-09-01**입니다.
+기록에는 세 번 모두 trainingStarted=false, 세 번째 뒤 project 1개 잔존,
+App/S3/IAM 실험 자원 정리가 담겨 있습니다. 9월 2일 문서는 당시 ACTIVE 재확인을
+보고합니다. 이 장의 검토는 그 기록과 현재 공개 API 문서를 대조한 것이며,
+현재 account에서 project가 존재·삭제되었는지 확인한 결과는 아닙니다.
 
-안전한 삭제는 “delete API가 성공했다”에서 끝나지 않습니다.
+재개 시에는 최신 inventory와 ownership을 다시 확인해야 합니다.
+이 문서 수정 과정에서 project·membership·IAM·GPU 자원을 생성하거나 삭제하지 않았습니다.
+요청 예시는 AWS CLI의 **로컬 output-skeleton 검증**으로 구조를 검사했고,
+member에 두 identity 종류를 함께 넣은 변형은 ParameterValidation으로 거부됐습니다.
+실제 API authorization이나 environment provision 성공으로 해석하지 않습니다.
 
-1. 새 GPU 실행을 막습니다.
-2. project의 owner membership을 확인합니다.
-3. project에 연결된 environment와 resource를 정리합니다.
-4. project 삭제를 요청합니다.
-5. `ListProjects`에서 대상이 사라질 때까지 재확인합니다.
-6. App, S3, IAM, EKS, EC2와 tag inventory를 별도로 검사합니다.
-7. 잔존 개수가 0일 때만 inventory를 닫습니다.
+## 참고 자료
 
-`GetProject`가 authorization 오류를 반환하더라도 project가 없다고 간주하면 안 됩니다. 존재 확인과 teardown 검증에는 권한이 허용되는 list API를 사용하고, list 결과의 정확한 ID는 문서에 게시하지 않습니다.
+- [IAM-based domains](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/iam-based-domains.html)
+- [Project member and execution roles](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/projects-iam-based-domains.html)
+- [User and group profiles](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/user-management.html)
+- [CreateProject request and deployment status](https://docs.aws.amazon.com/boto3/latest/reference/services/datazone/client/create_project.html)
+- [All capabilities profiles and on-demand provisioning](https://docs.aws.amazon.com/help-panel/sagemaker-unified-studio/latest/console/project-profiles-all-capabilities-hp.html)
+- [Project deletion and external resources](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/userguide/delete-project.html)
+- [Recorded Qwen provisioning validation](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json)
 
-## 2026년 9월 2일 상태
+[Previous: SageMaker AI / MLflow](../../ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
 
-읽기 전용 재확인 결과:
+[Next: Validation results](../../ai-ml/sagemaker-ai/04-validation-results.md)
 
-| 항목 | 상태 |
-|---|---|
-| `qwen-pii-*` Unified Studio project | 1개 |
-| project status | `ACTIVE` |
-| SageMaker MLflow App | 잔존 없음 |
-| 실험 S3/IAM 자원 | 잔존 없음 |
-| 필요한 조치 | domain owner 삭제 또는 실행 role에 owner membership 부여 후 삭제 |
-
-이 project가 제거되기 전에는 preflight가 새 실행을 차단해야 합니다.
-
-이전: [Part 3 — SageMaker AI와 MLflow 실행](../../ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
-
-다음: [Part 5 — 실제 검증 결과](../../ai-ml/sagemaker-ai/04-validation-results.md)
+[Quiz](../../quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)

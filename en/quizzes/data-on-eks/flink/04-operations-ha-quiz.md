@@ -1,204 +1,150 @@
-# Part 4: Operations, High Availability, and Managed Flink Quiz
+# Operations, HA and Managed Flink Quiz
 
-This quiz tests your understanding of how Kubernetes-native HA works without Zookeeper, what ConfigMaps store for HA, the two-tier relationship between the Flink autoscaler and Karpenter, and when to choose Amazon Managed Service for Apache Flink over self-managed Flink on EKS.
+Check collection paths, memory/recovery boundaries and managed-service support.
 
-## Multiple Choice Questions
-
-1. What replaces Zookeeper in Flink's Kubernetes-native High Availability (FLIP-144)?
-   - A) An etcd cluster deployed alongside Flink
-   - B) The Kubernetes leader-election API plus ConfigMaps
-   - C) A dedicated Raft consensus sidecar
-   - D) AWS Systems Manager Parameter Store
+1. Which resource does the reviewed Kubernetes HA leader election use?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The Kubernetes leader-election API plus ConfigMaps**
+**Answer:** Fabric8 ConfigMapLock, relying on Kubernetes control-plane availability.
 
-**Explanation:**
-Kubernetes-native HA, available since Flink 1.12, uses the same leader-election primitive other Kubernetes controllers rely on to decide which JobManager replica is active, and stores the leader's address and HA metadata in ConfigMaps. No external Zookeeper ensemble needs to be deployed, upgraded, or backed up.
+**Explanation:** It does not add a separate leader-election server or invariably use Lease resources. ZooKeeper HA is also a supported alternative.
+
 </details>
 
-2. What does the ConfigMap used by Flink's Kubernetes-native HA actually store?
-   - A) The full checkpoint data for the job
-   - B) The active leader's address and HA metadata (JobGraph store, checkpoint pointers)
-   - C) A copy of the TaskManager's RocksDB state
-   - D) The Flink Kubernetes Operator's Helm values
+2. Do HA ConfigMaps, HA storageDir and checkpoint directories store the same data?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The active leader's address and HA metadata (JobGraph store, checkpoint pointers)**
+**Answer:** ConfigMaps hold leader information/references, HA storageDir holds JM recovery metadata/job graphs, and checkpoint directories preserve checkpoint state.
 
-**Explanation:**
-The ConfigMap stores the currently active JobManager's address so other components can find it, plus HA metadata — pointers to the JobGraph store and checkpoints — needed to recover the job on a new leader after failover. The actual JobGraph and checkpoint data live in the durable storage referenced by `high-availability.storageDir` (e.g., S3), not in the ConfigMap itself.
+**Explanation:** One HA path setting does not prepare every state file or recovery permission.
+
 </details>
 
-3. What RBAC permissions does the JobManager's `ServiceAccount` need for Kubernetes-native HA to work?
-   - A) Cluster-wide admin access
-   - B) Read-only access to `Pod` objects
-   - C) `get`/`list`/`watch`/`create`/`update`/`patch`/`delete` on `ConfigMap` objects in its namespace
-   - D) Write access to `PersistentVolumeClaim` objects
+3. Does an HA-only ConfigMap Role provide all Native Flink permissions?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) `get`/`list`/`watch`/`create`/`update`/`patch`/`delete` on `ConfigMap` objects in its namespace**
+**Answer:** No. Native resource management also requires pod/service and other appropriate permissions.
 
-**Explanation:**
-Because the JobManager talks to the Kubernetes API directly to run leader election and read/write HA metadata, its `ServiceAccount` needs a namespaced `Role` granting exactly these verbs on `configmaps` — nothing broader like cluster-wide admin access. Without this Role bound via a `RoleBinding`, HA configuration fails silently: the pod comes up, but leader election and failover never actually function.
+**Explanation:** Check each caller's needs and inspect API errors, logs and restarts; failures are not always silent.
+
 </details>
 
-4. In the two-tier autoscaling relationship between the Flink autoscaler and Karpenter, what does the Flink autoscaler control?
-   - A) EC2 instance types and node provisioning directly
-   - B) Per-vertex parallelism, based on job-internal metrics like backpressure and busy time
-   - C) Karpenter's `NodePool` consolidation settings
-   - D) The Kubernetes scheduler's bin-packing algorithm
+4. What do the Flink and node autoscalers primarily adjust?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Per-vertex parallelism, based on job-internal metrics like backpressure and busy time**
+**Answer:** Vertex parallelism and node capacity, respectively.
 
-**Explanation:**
-The Flink Kubernetes Operator's built-in autoscaler watches per-vertex metrics (backpressure, busy time, lag) and adjusts how much parallelism each operator needs — a job-internal decision with no knowledge of the underlying nodes. Karpenter is the separate, node-level loop that reacts to the resulting TaskManager pod count.
+**Explanation:** Pressure, quotas, state recovery and placement couple the loops; Flink does not universally act first.
+
 </details>
 
-5. Why does Karpenter provision new EC2 nodes in this two-tier stack?
-   - A) It independently monitors Flink's checkpoint metrics
-   - B) It reacts to TaskManager pods that become unschedulable after the autoscaler increases parallelism
-   - C) It directly queries the Flink REST API for parallelism settings
-   - D) It provisions nodes on a fixed schedule regardless of pod state
+5. Must Karpenter create a node for every Pending pod?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It reacts to TaskManager pods that become unschedulable after the autoscaler increases parallelism**
+**Answer:** No. Distinguish unschedulable pods from image-pull, PVC, admission and other causes.
 
-**Explanation:**
-Karpenter has no knowledge of *why* TaskManager pods exist — only that pending, unschedulable pods need capacity. When the Flink autoscaler raises parallelism and more TaskManager pods are requested, some may be unschedulable on existing nodes; Karpenter reacts to that signal by provisioning new EC2 capacity. The job-level decision always happens first, and the node-level decision only reacts to its consequences.
+**Explanation:** Constraints, resource requests, instance availability and quotas can prevent provisioning.
+
 </details>
 
-6. What can go wrong if the Flink autoscaler scales parallelism up faster than Karpenter's `NodePool` can provision matching nodes?
-   - A) The job crashes with an out-of-memory error
-   - B) New TaskManager pods sit `Pending` longer than expected, stalling the scale-up
-   - C) Flink automatically falls back to the heap state backend
-   - D) The Kubernetes API server rejects further pod creation requests
+6. Does a consolidation delay longer than Flink stabilization prevent interruptions?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) New TaskManager pods sit `Pending` longer than expected, stalling the scale-up**
+**Answer:** No guarantee follows; node failure, Spot reclamation and drift can occur independently.
 
-**Explanation:**
-If the autoscaler's parallelism increases faster than Karpenter can provision matching EC2 capacity, new TaskManager pods remain `Pending` for longer than expected, which stalls the very scale-up the autoscaler triggered. This is the same kind of mismatch the Spark performance-tuning document describes for Karpenter and Dynamic Resource Allocation.
+**Explanation:** Test provisioning, restoration, backlog catch-up and disruption/PDB policies together.
+
 </details>
 
-7. Who manages JobManager High Availability in Amazon Managed Service for Apache Flink?
-   - A) The customer, via a self-configured RBAC Role
-   - B) AWS, automatically across multiple Availability Zones
-   - C) A Zookeeper ensemble provisioned by the customer
-   - D) The Flink Kubernetes Operator running inside the managed service
+7. Does managed Flink 2.3 support imply availability of every upstream feature?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) AWS, automatically across multiple Availability Zones**
+**Answer:** No. Check the Java 17/Python 3.12 combination and service-specific exclusions.
 
-**Explanation:**
-Amazon Managed Service for Apache Flink is fully managed and serverless — there are no clusters, hosts, or Kubernetes objects to provision, and JobManager HA (the concern that requires a manually configured RBAC Role and `flinkConfiguration` on self-managed EKS) is handled by AWS automatically across multiple AZs.
+**Explanation:** Restrictions include Java 21, ForSt, Native S3, custom telemetry and Studio. Separate AWS infrastructure HA from application/state responsibilities.
+
 </details>
 
-8. Which of the following is a concrete reason to run Flink yourself on EKS rather than use Amazon Managed Service for Apache Flink?
-   - A) You want to avoid ever configuring an RBAC Role
-   - B) Cost control via EC2 Spot Instances matters at your scale, and AWS has published guidance on optimizing Flink-on-EKS costs with Spot
-   - C) Amazon Managed Service for Apache Flink cannot run any version of Flink 2.x
-   - D) Self-managed Flink requires no monitoring setup at all
+8. How should managed KPU costs be compared with EKS Spot?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Cost control via EC2 Spot Instances matters at your scale, and AWS has published guidance on optimizing Flink-on-EKS costs with Spot**
+**Answer:** Compare total cost and operations at equivalent throughput, latency and recovery objectives.
 
-**Explanation:**
-Amazon Managed Service for Apache Flink bills on a usage-based (KPU) model that doesn't expose a Spot-like cost lever. Teams that need fine-grained autoscaler tuning, want to control costs via Spot Instances, or already run other workloads (like Kafka-on-EKS via Strimzi) through the same GitOps/observability pipeline benefit from self-managing Flink on EKS instead. As of March 2026, the managed service does support Flink 2.2, so option C is incorrect.
+**Explanation:** Include orchestration and related storage/network costs for KPUs and interruption/recovery costs for Spot.
+
 </details>
 
-## Short Answer Questions
-
-9. In one sentence, explain why Flink's Kubernetes-native HA doesn't need a separate quorum ensemble the way Zookeeper-based HA did.
+9. Do RocksDB managed memory and network buffers share one pool?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: Kubernetes' own leader-election API already provides the leader-election primitive, so Flink doesn't need to run and size a separate Zookeeper quorum for that purpose.**
+**Answer:** They are separate budget regions.
 
-**Explanation:**
-What you still control under Kubernetes-native HA is how many JobManager replicas the `FlinkDeployment` runs — more than one gives a warm standby ready to take over on failover — but there's no separate consensus ensemble to size and operate, unlike the Zookeeper-based approach it replaces.
+**Explanation:** In the checked 4GiB configuration, changing managed fraction from 0.4 to 0.5 left network unchanged and reduced task heap. Budgets differ from measured RSS.
+
 </details>
 
-10. What must `high-availability.storageDir` point to, and why?
+10. What should be checked when a PodMonitor exists but has no targets?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: Durable, shared storage (such as S3) reachable by any pod that could become the new leader, because it's where the actual JobGraph and checkpoint pointers are stored — the ConfigMap only holds a pointer to that location plus the leader's address.**
+**Answer:** Prometheus monitor/namespace selectors, real pod labels, named ports, target namespaces and discovery permissions.
 
-**Explanation:**
-If `storageDir` isn't durable and shared, a new leader elected after a failover wouldn't be able to reach the JobGraph and checkpoint data needed to recover the job, defeating the purpose of HA.
+**Explanation:** This chart's Operator pod lacked a default instance label. Deployment metadata is not automatically a pod label.
+
 </details>
 
-11. Describe the two separate signals that the Flink autoscaler and Karpenter each react to in the two-tier autoscaling stack.
+11. Is block-cache-usage a ratio, and is a Flink Counter always a Prometheus Counter?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: The Flink autoscaler reacts to per-vertex job metrics (backpressure, busy time, lag) to decide operator parallelism. Karpenter reacts to the resulting TaskManager pod scheduling state (pending/unschedulable pods, or empty nodes) to decide EC2 capacity.**
+**Answer:** No. Cache usage is bytes, and the reviewed reporter exports Flink Counters as Gauges.
 
-**Explanation:**
-These are two independent control loops with no direct knowledge of each other — the Flink autoscaler doesn't know about nodes, and Karpenter doesn't know about job-internal metrics — but they're coupled because the autoscaler's parallelism decision changes the pod count Karpenter then reacts to.
+**Explanation:** Interpret cache capacity/hit/miss too. Histograms map to Summaries; inspect exported TYPE and labels.
+
 </details>
 
-## Hands-on Questions
-
-12. Write the `flinkConfiguration` snippet that enables Kubernetes-native HA on a `FlinkDeployment`, with the HA metadata stored at `s3://my-flink-bucket/ha/` and cluster ID `my-flink-cluster`.
+12. Should kubernetes.cluster-id be set directly in an Operator-managed CR?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer:**
-```yaml
-high-availability.type: kubernetes
-high-availability.storageDir: s3://my-flink-bucket/ha/
-kubernetes.cluster-id: my-flink-cluster
-```
+**Answer:** No. The 1.15 validator forbids it; identity is managed from CR name/namespace.
 
-**Explanation:**
-`high-availability.type: kubernetes` selects Kubernetes-native HA (as opposed to the legacy Zookeeper-based option). `high-availability.storageDir` points to the durable, shared location for JobGraph and checkpoint data. `kubernetes.cluster-id` scopes the HA ConfigMaps to this specific cluster so multiple Flink clusters in the same namespace don't collide.
+**Explanation:** Do not blindly copy low-level CLI configuration. kubernetes.namespace and high-availability.cluster-id are also restricted.
+
 </details>
 
-13. Write the RBAC `Role` (rules only) that grants a Flink `ServiceAccount` in namespace `flink` the permissions it needs on `ConfigMap` objects for Kubernetes-native HA.
+13. Do two JM replicas and a completed checklist guarantee instant, uninterrupted recovery?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer:**
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: flink-ha-role
-  namespace: flink
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-```
+**Answer:** No. Validate election, node/AZ placement, storage, state restoration, replay time and actual results.
 
-**Explanation:**
-The JobManager needs to create, read, update, and delete ConfigMaps in its own namespace to run leader election and manage HA metadata. This `Role` must be bound to the JobManager's `ServiceAccount` via a `RoleBinding` for HA to actually function — without it, HA configuration fails silently.
+**Explanation:** Keeping defaults can be valid. Measured SLO/recovery outcomes and operating ownership matter beyond settings.
+
 </details>
 
 ---
 
-[Return to Learning Materials](../../../data-on-eks/flink/04-operations-ha.md) | [Previous Quiz: State Backends and Checkpointing](./03-state-checkpointing-streaming-quiz.md)
+[Return to Learning Materials](../../../data-on-eks/flink/04-operations-ha.md) | [Flink](../../../data-on-eks/flink/README.md)

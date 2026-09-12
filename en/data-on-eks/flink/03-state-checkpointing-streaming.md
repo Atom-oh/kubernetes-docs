@@ -1,210 +1,445 @@
-# Part 3: State, Checkpointing, and Streaming Patterns
+# Part 3: State, Checkpointing and Streaming Patterns
 
-> **Last Updated**: July 15, 2026
+> Reviewed: 2026-09-12. Operator 1.15.0. Kafka examples use Flink 2.2.1; Iceberg examples use a separate Flink 2.1.3 combination.
 
-## Why State Management Is Flink's Hard Problem
+State is the data remembered by aggregation, joins and deduplication. Not every
+window retains every input record: incremental SUM/COUNT aggregations can keep
+accumulators. Stateless processing can also lose or duplicate output through source
+replay, acknowledgement or external-write failures. Validate **internal state,
+replayable sources and sink commit guarantees** together.
 
-A stateless stream processor just transforms each record and forwards it — nothing to remember, nothing to lose. Most real jobs aren't that simple: a windowed aggregation needs to remember every record it's seen in the current window, a join needs to remember one side while waiting for the other, and deduplication needs to remember which keys it has already processed. That remembered data is **state**, and it has to survive TaskManager crashes, Pod evictions, and rolling upgrades without corrupting results or silently dropping data. Everything in this part — state backends, checkpoints, savepoints, exactly-once sinks — exists to answer one question: how does a Flink job keep its state correct across failures while still keeping up with the input rate?
+## 1. Pin compatible combinations first
 
-This assumes a Flink cluster is already running on EKS via the Kubernetes Operator, as covered in Part 2. The jobs described here are what actually runs on top of that cluster.
-
-## State Backends: HashMap vs RocksDB
-
-Flink stores operator state in a **state backend**, and the choice of backend determines where that state physically lives and how it scales.
-
-| | HashMapStateBackend | EmbeddedRocksDBStateBackend |
+| Example | Flink | Additional dependencies |
 | --- | --- | --- |
-| **Storage location** | On-heap (JVM heap objects) | Off-heap, spills to local disk (RocksDB instance per TaskManager slot) |
-| **Access speed** | Fastest — plain Java object access | Slower — every read/write goes through RocksDB's (de)serialization path |
-| **State size limit** | Bounded by available heap memory | Bounded by local disk, so state can far exceed available memory |
-| **Checkpoint type** | Full checkpoint only | Supports incremental checkpoints |
-| **GC pressure** | Higher — large state means large heap, longer GC pauses | Lower — state lives off-heap, so the JVM heap stays small regardless of state size |
-| **Best fit** | Small state, latency-sensitive jobs (simple aggregations, low-cardinality keys) | Large state (high-cardinality keys, long windows, large joins) — the production default at scale |
+| Kafka sink/SQL | 2.2.1 / Java 17 | flink-connector-kafka 5.0.0-2.2, connector-base and required SQL/runtime/format modules |
+| Dynamic Iceberg sink | 2.1.3 / Java 17 | iceberg-flink-runtime-2.1 1.11.0 |
 
-The trade-off is straightforward: HashMapStateBackend is faster per-operation because state lives as native Java objects on the heap, but that only works while total state size stays comfortably inside the TaskManager's memory budget. Once state grows — millions of keys, wide session windows, large stream-stream joins — heap-resident state starts fighting the JVM's garbage collector, and eventually you just run out of memory. EmbeddedRocksDBStateBackend trades some per-record latency (RocksDB serializes every key/value access) for the ability to spill state to local SSD, so state size is no longer capped by RAM. For any job whose state is expected to grow past a few hundred MB per TaskManager, RocksDB is the right default; keep HashMap for small, bounded state where the extra speed is worth the memory ceiling.
+The official Iceberg 1.11.0 distribution lists runtime JARs for Flink 2.1, 2.0 and
+1.20. A 2.1 JAR on Flink 2.2.1 is not presented as a validated combination.
+The Java helpers below compile against their respective combinations; execution
+still needs sources, security, catalogs and storage configuration.
 
-Selecting a backend is a single config value:
+## 2. State backends differ from checkpoint storage
 
-```yaml
-# flink-conf.yaml (or FlinkDeployment.spec.flinkConfiguration)
-state.backend.type: rocksdb
-execution.checkpointing.incremental: true
-```
-
-## Checkpoints: How Flink Recovers From Failure
-
-A **checkpoint** is a consistent, point-in-time snapshot of every operator's state across the whole job, taken automatically on a fixed interval while the job keeps running. If a TaskManager crashes, the JobManager restarts the affected tasks and restores their state from the most recent completed checkpoint, so processing resumes from a known-consistent point instead of from scratch.
-
-```yaml
-execution.checkpointing.interval: 60s
-execution.checkpointing.mode: EXACTLY_ONCE
-execution.checkpointing.timeout: 10min
-execution.checkpointing.min-pause: 30s
-```
-
-### Incremental Checkpoints
-
-With `EmbeddedRocksDBStateBackend`, a full checkpoint means re-uploading every key's current value on every checkpoint — expensive once state is large. Turning on incremental checkpointing changes what gets persisted:
-
-```yaml
-execution.checkpointing.incremental: true
-```
-
-Instead of a full snapshot, each incremental checkpoint persists only the RocksDB SSTable files that changed since the previous checkpoint, plus a manifest that records which older SSTable files (from earlier checkpoints) are still valid and needed to reconstruct the full state. This is a direct trade of network/time cost during the checkpoint for a small amount of recovery complexity:
-
-* **Checkpoint cost drops** — only deltas are transferred, so checkpoint duration and network/storage cost scale with the rate of change, not with total state size.
-* **Recovery cost shifts** — restoring from an incremental checkpoint means fetching the current delta plus every prior file the manifest still references, which can mean more individual file fetches than a full checkpoint's single snapshot. If checkpoint storage is network-bound (e.g., a slow path to S3), recovery can actually be slower than restoring a full checkpoint. If the bottleneck is CPU or IOPS on the TaskManager instead, incremental checkpoints usually recover faster because there's simply less total data to write back to RocksDB.
-
-## Checkpoint Storage vs Savepoints
-
-Both checkpoints and savepoints are persisted through Flink's filesystem-based checkpoint storage backend, which on EKS almost always means S3 (HDFS, GCS, and Azure Blob Storage are the equivalents outside AWS):
-
-```yaml
-execution.checkpointing.dir: s3://my-flink-checkpoints/checkpoints
-execution.checkpointing.savepoint-dir: s3://my-flink-checkpoints/savepoints
-```
-
-Despite sharing the same storage mechanism, checkpoints and savepoints serve different purposes and should not be thought of as the same thing with different names:
-
-| | Checkpoints | Savepoints |
+| Backend | Characteristics | Limits to examine |
 | --- | --- | --- |
-| **Triggered by** | Flink automatically, on a fixed interval | A user or operator, explicitly |
-| **Purpose** | Failure recovery | Planned upgrades, migrations, version bumps |
-| **Lifecycle** | Flink manages retention, expires old ones automatically | Retained until manually deleted — treated as a durable artifact |
-| **Used by** | Automatic task restart | The Flink Kubernetes Operator's `last-state` upgrade mode (Part 2), or a manual `flink savepoint` / stop-with-savepoint |
+| HashMap | Keyed state stored as JVM heap objects | Heap, GC and serialization cost; measure for the workload |
+| EmbeddedRocksDB | Serialized keyed state in local RocksDB; uses native memory/cache and disk | Requires managed/native memory, I/O and CPU as well as disk |
+| ForSt | Disaggregated state using remote-filesystem SSTs and local cache | Experimental in 2.2; check async-state APIs and snapshot restrictions |
 
-The Operator's `last-state` upgrade mode from Part 2 actually restores from the **last checkpoint**, not a savepoint — that's what makes it fast and fully automatic, at the cost of being tied to a specific job graph. For a deliberate version bump, schema change, or migration to a different cluster, take an explicit savepoint first:
+RocksDB does not mean exactly one instance per slot or that every operator-state/
+user object is off heap. Keyed operators can have separate backends; instances in
+a slot can share managed-memory budgets/caches. Operator state, timers, buffers
+and user objects also consume memory.
 
+Avoid an arbitrary MB threshold that mandates RocksDB. Compare state shape,
+serialization, GC/I/O and checkpoint/restore times. ForSt also supports incremental
+snapshots, so incrementality is not exclusive to RocksDB. This lab uses RocksDB.
+
+### What incremental checkpoints reduce
+
+RocksDB checkpoints persist new SST files and metadata while referencing reusable
+shared SSTs. They do not directly diff logical key changes. Compaction can rewrite
+large files even when the logical change is small.
+
+Restore needs every file referenced by the chosen checkpoint, not sequential replay
+of all historical checkpoints. Full checkpoints are not invariably single files.
+Native SST restore can avoid rebuilding RocksDB from canonical key/value state,
+but transfer volume, file count, network and I/O can make recovery faster or slower.
+Do not independently expire shared S3 files still referenced by active checkpoints.
+
+## 3. Actual prerequisites for S3 state preservation
+
+Use Part 2's Operator, data-processing namespace and chart-created Role/flink.
+Prepare the bucket/prefix and IAM role and replace the example values below.
+Verify read/write/list, cleanup/delete, multipart and any KMS permissions by path.
+A service-account annotation does not create an IAM role or configure OIDC trust.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink-state
+  namespace: data-processing
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/flink-state-checkpoints
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flink-state
+  namespace: data-processing
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: flink
+subjects:
+- kind: ServiceAccount
+  name: flink-state
+  namespace: data-processing
+```
+
+This FlinkDeployment uses IRSA, enables the S3 plugin for both JM/TM and uses
+emptyDir for local RocksDB files. Recoverable state after pod/node loss resides
+in S3. fsGroup matches this image's flink UID/GID 9999.
+
+There is a material version limit: the reviewed 2.2.1 S3 Hadoop plugin contains
+**Hadoop 3.3.4 and AWS SDK for Java 1.12.779**. SDK 1.x reached end of support on
+2025-12-31. This example uses the artifact's actual v1 credential classes; it is
+not a validated SDK v2 configuration. For production, assess upstream filesystem
+support/security and compatible runtime/connector alternatives. Do not replace
+isolated JARs or provider class names across SDK generations indiscriminately.
+
+```yaml
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: flink-state-demo
+  namespace: data-processing
+spec:
+  image: flink:2.2.1-java17
+  flinkVersion: v2_2
+  mode: native
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: '2'
+    state.backend.type: rocksdb
+    state.backend.rocksdb.localdir: /opt/flink/state
+    execution.checkpointing.storage: filesystem
+    execution.checkpointing.dir: s3://replace-with-your-bucket/flink-state-demo/checkpoints
+    execution.checkpointing.savepoint-dir: s3://replace-with-your-bucket/flink-state-demo/savepoints
+    execution.checkpointing.interval: 2 s
+    execution.checkpointing.mode: EXACTLY_ONCE
+    execution.checkpointing.timeout: 10 min
+    execution.checkpointing.min-pause: 30 s
+    execution.checkpointing.incremental: 'true'
+    execution.checkpointing.num-retained: '3'
+    execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+    high-availability.type: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
+    high-availability.storageDir: s3://replace-with-your-bucket/flink-state-demo/ha
+    fs.s3a.aws.credentials.provider: com.amazonaws.auth.WebIdentityTokenCredentialsProvider
+  serviceAccount: flink-state
+  jobManager:
+    resource:
+      memory: 2048m
+      cpu: 1
+  taskManager:
+    resource:
+      memory: 2048m
+      cpu: 1
+  job:
+    jarURI: local:///opt/flink/examples/streaming/StateMachineExample.jar
+    parallelism: 2
+    upgradeMode: last-state
+    state: running
+    args:
+    - --backend
+    - rocksdb
+    - --checkpoint-dir
+    - s3://replace-with-your-bucket/flink-state-demo/checkpoints
+    - --incremental-checkpoints
+    - 'true'
+  podTemplate:
+    spec:
+      securityContext:
+        fsGroup: 9999
+      containers:
+      - name: flink-main-container
+        env:
+        - name: ENABLE_BUILT_IN_PLUGINS
+          value: flink-s3-fs-hadoop-2.2.1.jar
+        volumeMounts:
+        - name: rocksdb-local
+          mountPath: /opt/flink/state
+      volumes:
+      - name: rocksdb-local
+        emptyDir: {}
+```
+
+StateMachineExample explicitly sets the checkpoint interval to **two seconds in
+code**. The example configuration matches it. min-pause=30 seconds and checkpoint
+duration mean actual snapshots do not occur at a fixed two-second cadence.
+Application code can override a 60-second configuration value; inspect effective
+runtime settings.
+
+For Pod Identity, prepare the service-account association, Agent and networking
+instead of the IRSA setup. With this v1 artifact, verify a container-credential
+path such as com.amazonaws.auth.DefaultAWSCredentialsProviderChain.
+Version 1.12.779 meets the documented Pod Identity minimum of 1.12.746, but remains
+an end-of-support SDK. Inspect earlier environment/IRSA/other credential sources too.
+
+After deployment, verify completed checkpoints, S3 metadata/data files, restart/
+restore and application results beyond merely Running status. EmptyDir is not a
+durable backup. No actual AWS deployment or failure recovery was executed in this review.
+
+## 4. Checkpoint and savepoint lifecycle
+
+| Aspect | Checkpoint | Savepoint |
+| --- | --- | --- |
+| Typical purpose | State/source positions for failure recovery | Deliberate restore, upgrade or fork point |
+| Trigger | Periodic or explicit request | User/Operator request; automation can create them periodically |
+| Retention | Count, externalized retention and job-termination policy | User/Operator policy and restore ownership |
+| Format/storage | JobManager or filesystem storage, among other choices | Canonical/native formats and accessible storage |
+
+Savepoints are not automatically permanent, and checkpoints are not always in S3.
+Canonical format targets backend portability; native format is backend-specific.
+Validate state schema, UIDs, serializers, maximum parallelism and version compatibility.
+
+CLAIM/NO_CLAIM restore modes affect snapshot ownership and deletion responsibility.
+A first RocksDB checkpoint after NO_CLAIM restoration can be full to establish
+independence. Do not delete a snapshot while recovery still depends on it.
+Operator last-state can use accessible HA metadata or the last checkpoint/savepoint;
+it is not invariably a single most-recent checkpoint file.
+
+### Request a fresh savepoint through a unique CR
+
+generateName assigns a new name on creation, avoiding reuse of a completed
+resource that could mistake an old snapshot for a new success.
+
+```yaml
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkStateSnapshot
+metadata:
+  generateName: flink-state-before-upgrade-
+  namespace: data-processing
+spec:
+  jobReference:
+    kind: FlinkDeployment
+    name: flink-state-demo
+  savepoint:
+    formatType: CANONICAL
+    disposeOnDelete: false
+```
 ```bash
-kubectl exec -n flink deploy/order-events-processor -- \
-  flink savepoint <job-id> s3://my-flink-checkpoints/savepoints
+kubectl create -f savepoint.yaml
+kubectl get flinkstatesnapshots -n data-processing --watch
 ```
 
-Or, using the `FlinkStateSnapshot` CRD the Operator exposes for the same purpose, so the savepoint lifecycle is managed declaratively alongside the rest of the job's Kubernetes manifests instead of through an imperative CLI call.
+Inspect the new CR's status.state=COMPLETED and status.path. Investigate error/job
+state for FAILED or ABANDONED results. disposeOnDelete=false is this example's
+retention choice, distinct from the default true and Operator cleanup policies.
+Record who deletes retained files.
 
-## Exactly-Once Delivery to Kafka
+## 5. Kafka exactly-once requires checkpoints, transactions and consumers
 
-This site's [Kafka on EKS](../kafka/01-kafka-fundamentals.md) section covers Kafka's own durability and partitioning model in depth — this section covers how Flink's `KafkaSink` layers exactly-once semantics on top of it when Flink is the producer.
+KafkaSink EXACTLY_ONCE commits Kafka transactions in coordination with checkpoint
+completion. It requires replayable sources, recoverable state and correct sink
+configuration; downstream consumers must use read_committed.
+It does not create one global atomic transaction across all subtasks, partitions
+and other sink systems.
+A Kafka transaction can span topics/partitions; the separate transactions of
+multiple sink subtasks are not one transaction for the entire Flink checkpoint.
 
-`KafkaSink` configured with `DeliveryGuarantee.EXACTLY_ONCE` uses Kafka's transactional producer API through a two-phase-commit (2PC) protocol that's tied directly into Flink's own checkpointing:
-
-1. Between checkpoints, the **KafkaWriter** writes records to Kafka inside an open Kafka transaction — the data is on the broker, but it isn't visible to consumers with `isolation.level=read_committed` yet.
-2. When a Flink checkpoint completes successfully across the whole job, the **KafkaCommitter** commits the corresponding Kafka transaction — only then do the written records become visible downstream.
-3. If the job fails before a checkpoint completes, Flink restores from the last checkpoint and the uncommitted Kafka transaction is aborted (or times out), so no partial output is ever exposed.
+This helper compiles with Kafka connector 5.0.0-2.2 and Flink 2.2.1.
+The caller supplies the input stream, actual bootstrap servers, TLS/SASL producer
+settings and timeout, and executes the application. It is not a Kafka-cluster
+installation recipe.
 
 ```java
-KafkaSink<String> sink = KafkaSink.<String>builder()
-    .setBootstrapServers("my-msk-cluster:9092")
-    .setRecordSerializer(KafkaRecordSerializationSchema.builder()
-        .setTopic("orders-enriched")
-        .setValueSerializationSchema(new SimpleStringSchema())
-        .build())
-    .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
-    .setTransactionalIdPrefix("orders-enrichment-job")
-    .build();
+import java.util.Properties;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.connector.base.DeliveryGuarantee;
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+import org.apache.flink.connector.kafka.sink.KafkaSink;
+import org.apache.flink.streaming.api.datastream.DataStream;
+
+public final class KafkaExample {
+    private KafkaExample() {}
+
+    public static void attach(
+            DataStream<String> input,
+            String bootstrapServers,
+            String transactionalIdPrefix,
+            int transactionTimeoutMs,
+            Properties securityProperties) {
+        if (transactionTimeoutMs <= 0 || transactionalIdPrefix.isBlank()) {
+            throw new IllegalArgumentException("Positive timeout and a unique stable prefix are required");
+        }
+        Properties producer = new Properties();
+        producer.putAll(securityProperties);
+        producer.setProperty("transaction.timeout.ms", Integer.toString(transactionTimeoutMs));
+        input.getExecutionEnvironment().enableCheckpointing(60_000);
+
+        KafkaSink<String> sink = KafkaSink.<String>builder()
+                .setBootstrapServers(bootstrapServers)
+                .setKafkaProducerConfig(producer)
+                .setRecordSerializer(KafkaRecordSerializationSchema.<String>builder()
+                        .setTopic("orders-enriched")
+                        .setValueSerializationSchema(new SimpleStringSchema())
+                        .build())
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(transactionalIdPrefix)
+                .build();
+        input.sinkTo(sink).name("orders-enriched").uid("orders-enriched-sink");
+    }
+}
 ```
 
-A stable `transactionalIdPrefix` is required — Flink derives each subtask's actual transactional ID from this prefix, and on restore it needs to line up with the IDs the previous run's committer created so it can correctly resolve any transaction left open by the failure.
+transactionalIdPrefix must be unique across independent concurrent sinks/jobs on
+the same Kafka cluster and stable across restarts. Changing it can leave earlier
+transactions un-aborted and block read_committed progress until timeout.
+Blindly sharing it across blue/green runs risks fencing/conflicts.
 
-Two caveats are worth planning around before turning this on:
+The 5.0.0 builder defaults its transaction timeout to **one hour**. Match the broker's
+allowed maximum and allow enough time for worst-case checkpoints/restarts/recovery.
+A configuration label cannot restore exactly-once guarantees after transaction expiry.
 
-* **Output latency**: since a Kafka transaction only commits once the enclosing Flink checkpoint completes, downstream consumers reading with `read_committed` see output roughly one checkpoint interval late. A 60-second checkpoint interval means up to ~60 seconds of added latency, end to end.
-* **Transaction coordinator load**: shortening the checkpoint interval to reduce that latency has a cost on the Kafka side — every checkpoint cycle opens a fresh transaction per sink subtask, and pushing checkpoint intervals down to just a few seconds across many parallel subtasks can flood the broker's transaction coordinator with transactional IDs to track. Tune checkpoint interval as a balance between acceptable output latency and coordinator load, not purely for recovery speed.
+A 60-second checkpoint interval is not an upper bound of 60 seconds of added latency.
+Waiting, checkpoint duration, commit, failures/retries and consumer lag contribute.
+Short intervals increase commit/metadata load. Default INCREMENTING naming creates
+new IDs; optional POOLING reuses IDs and requires Kafka 3+, extra topic-read
+permissions and a documented migration procedure. Not every configuration creates
+new transaction IDs indefinitely.
 
-## Streaming Patterns: Kafka to S3/Iceberg
+## 6. Dynamic Iceberg sink: real APIs and a separate runtime
 
-The most common pattern this site sees paired with Kafka on EKS is streaming data from MSK through Flink and landing it in Apache Iceberg tables on S3 for downstream analytics.
-
-![A Flink job consuming an MSK source topic keeps operator state in RocksDB inside its TaskManagers, periodically checkpoints that state to S3, and writes results to a Kafka output topic via KafkaSink (EXACTLY_ONCE 2PC) and to Iceberg tables on S3 via the Dynamic Iceberg Sink.](../../.gitbook/assets/en-data-on-eks-flink-03-state-checkpointing-streaming-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-flink-03-state-checkpointing-streaming-0.html)
-
-### Dynamic Iceberg Sink
-
-Flink's Dynamic Iceberg Sink, which landed in the Iceberg Flink connector in November 2025, extends the existing Iceberg sink to write to **multiple Iceberg tables from a single sink**, choosing the destination table per record and evolving each table's schema automatically as the record content requires. Conceptually:
+This helper targets Iceberg 1.11.0 / Flink 2.1.3.
+Input RowData fields are target_table STRING, id BIGINT and value STRING; it is
+**insert-only**. The caller provides a CatalogLoader configured for the catalog,
+warehouse and authentication. Restrict destination table names to trusted/allowed values.
 
 ```java
-// Illustrative — the table/schema for each record is derived from its content
-// at runtime rather than fixed at job-graph construction time.
-DynamicIcebergSink.forRecords(stream)
-    .withTableIdentifierSelector(record -> record.getTargetTable())
-    .withSchemaEvolutionEnabled(true)
-    .build();
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.table.data.GenericRowData;
+import org.apache.flink.table.data.RowData;
+import org.apache.iceberg.DistributionMode;
+import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.flink.CatalogLoader;
+import org.apache.iceberg.flink.sink.dynamic.DynamicIcebergSink;
+import org.apache.iceberg.flink.sink.dynamic.DynamicRecord;
+import org.apache.iceberg.types.Types;
+
+public final class IcebergExample {
+    private IcebergExample() {}
+    private static final Schema PAYLOAD_SCHEMA = new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.optional(2, "value", Types.StringType.get()));
+
+    // Insert-only input RowData: target_table STRING, id BIGINT, value STRING.
+    // The caller supplies an authenticated, authorized CatalogLoader.
+    public static void attach(DataStream<RowData> input, CatalogLoader catalogLoader) {
+        input.getExecutionEnvironment().enableCheckpointing(60_000);
+        DynamicIcebergSink.forInput(input)
+                .generator((row, out) -> {
+                    TableIdentifier target = TableIdentifier.of("docs", row.getString(0).toString());
+                    GenericRowData payload = GenericRowData.of(
+                            row.getLong(1), row.isNullAt(2) ? null : row.getString(2));
+                    out.collect(new DynamicRecord(
+                            target, "main", PAYLOAD_SCHEMA, payload,
+                            PartitionSpec.unpartitioned(), DistributionMode.HASH, 2));
+                })
+                .catalogLoader(catalogLoader)
+                .uidPrefix("docs-dynamic-iceberg")
+                .writeParallelism(2)
+                .append();
+    }
+}
 ```
 
-This is a strong fit for CDC fan-out: a single Debezium-sourced Kafka topic (or one topic per source table) carrying inserts/updates/deletes across many source tables can be routed to a matching Iceberg table per record, with new columns picked up automatically as upstream schemas change — without hand-maintaining one sink per table.
+The actual API is forInput → generator → catalogLoader → append.
+A generator emits zero or more records to a Collector rather than returning one
+record. The older forRecords/withTableIdentifierSelector/withSchemaEvolutionEnabled
+example did not exist in this release.
 
-### When You Don't Need Flink
+Each DynamicRecord supplies a target, schema, RowData and partition specification.
+Evolution follows supported changes and configuration; it does not automatically
+solve arbitrary renames/type changes. CDC updates/deletes require RowKind, equality
+fields, upsert and table-format validation. Do not use this insert-only helper as
+a complete CDC processor. Multiple-table commits and simultaneous Kafka/Iceberg
+outputs are not a global atomic commit.
 
-Flink is not the only way to get data from MSK into Iceberg on S3, and it's worth being deliberate about when its programmability actually earns its operational cost:
+For simpler ingestion, consider MSK → Firehose → S3 Tables/Iceberg or an MSK Connect
+sink. Check supported sources/networking, authentication, catalog/table format,
+row operations/keys, buffering and failure handling. For example, Firehose Iceberg
+documents V2/Parquet/MOR requirements. Managed infrastructure does not remove the
+need to validate configuration, schemas and delivery semantics.
 
-* **MSK → Data Firehose → S3 Tables/Iceberg**: a fully managed, no-code path. Firehose can write directly to S3 Tables (Iceberg-backed) with basic format conversion and buffering, no cluster to run at all.
-* **MSK Connect + an Iceberg sink connector**: a Kafka Connect connector (running on the managed MSK Connect service) writes topic data straight into Iceberg tables, giving connector-level configuration without a general-purpose stream processor.
-* **Flink on EKS**: reach for this when the pipeline needs actual computation — joins, windowed aggregation, per-record routing logic, complex event-time handling, or the dynamic multi-table fan-out described above. If the job is a straight passthrough or simple format conversion, a Firehose or MSK Connect pipeline is less to build and less to operate.
+![State checkpoints and sink commits are separate boundaries; Kafka and Iceberg examples use their listed runtime profiles.](../../.gitbook/assets/en-data-on-eks-flink-03-state-checkpointing-streaming-0.png)
 
-## Flink SQL / Table API vs DataStream API
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-flink-03-state-checkpointing-streaming-0.html)
 
-Flink offers two different programming surfaces, and picking the right one up front avoids rewriting a job later:
+## 7. SQL, time attributes and late data
 
-| | Flink SQL / Table API | DataStream API |
-| --- | --- | --- |
-| **Best for** | Typical ETL, aggregation, windowing, joins expressible in SQL | Custom operators, complex event-time/state logic, fine-grained control |
-| **Amount of code** | Low — declarative queries | Higher — explicit operator chains in Java/Python/Scala |
-| **Built-in connectors** | Kafka, Iceberg, JDBC, and others ship as SQL connectors out of the box | Same connectors available, but wired up imperatively |
-| **Control over internals** | Limited — the planner decides operator behavior | Full control over checkpointing barriers, backpressure handling, custom state access |
-| **Recommended starting point** | Yes, for most jobs | Only when SQL/Table API can't express the required logic |
+SQL/Table API expresses relational transformations/aggregation; DataStream exposes
+custom state, timers and operator logic. SQL also offers advanced features, and
+DataStream does not allow arbitrary bypass of checkpoint barriers/backpressure.
+Check 2.x public APIs and connector/format JARs. Kafka/Iceberg/JDBC are not always
+all bundled, and not every historical Scala API remains supported.
 
-A simple windowed aggregation is genuinely less code in SQL:
+This planning example includes the table definition and watermark.
+Before execution, match broker/security settings and JSON fields/time encoding
+to the actual source.
 
 ```sql
-SELECT
-  window_start,
-  window_end,
-  customer_id,
-  SUM(amount) AS total_amount
-FROM TABLE(
-  TUMBLE(TABLE orders, DESCRIPTOR(event_time), INTERVAL '1' MINUTE))
+-- Schema/planning example. Supply real broker/authentication settings before execution.
+CREATE TEMPORARY TABLE orders (
+  customer_id STRING,
+  amount DECIMAL(12,2),
+  event_time TIMESTAMP(3),
+  WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'topic' = 'orders',
+  'properties.bootstrap.servers' = 'kafka.example.invalid:9093',
+  'properties.group.id' = 'docs-orders',
+  'scan.startup.mode' = 'earliest-offset',
+  'format' = 'json'
+);
+
+SELECT window_start, window_end, customer_id, SUM(amount) AS total_amount
+FROM TABLE(TUMBLE(TABLE orders, DESCRIPTOR(event_time), INTERVAL '1' MINUTE))
 GROUP BY window_start, window_end, customer_id;
 ```
 
-The same logic in DataStream API requires an explicit `KeyedStream`, a windowing call, and a custom aggregate function — more code, but necessary once the job needs something the Table API planner doesn't expose, such as manual control over checkpoint alignment or a hand-written operator with custom state.
+The Flink 2.2.1 planner accepts this query and rejects a plain TIMESTAMP column
+without the watermark/time attribute. This is planning validation, not a Kafka
+read or executed window-result test.
 
-## Windowing and Watermarks
+A watermark estimates event-time progress; it does not guarantee that older
+events cannot arrive. Event timestamps are not automatically present on every
+record. Configure timestamp extraction, watermark strategy and input idleness.
+Slow/idle inputs can stall progress, while resumed inputs can produce late data.
 
-Both APIs sit on the same event-time model. Every record carries an event-time timestamp, and **watermarks** are a heuristic signal — periodically injected into the stream — that assert "no more records with a timestamp older than this watermark should arrive." Windows use watermarks to decide when they're safe to close and emit a result, rather than relying on wall-clock (processing) time, which would produce inconsistent results if consumers lag or replay historical data.
+- Tumbling: fixed-size, non-overlapping windows.
+- Sliding: fixed size plus a slide interval; smaller slides produce overlap.
+- Session: based on event-time gaps and watermark progress, not merely a wall-clock idle timer.
 
-The standard window types cover most use cases:
+With DataStream allowedLateness>0, retained window state can accept late records
+and fire updated results. After cleanup, late records are dropped or sent to an
+explicitly configured late-data side output. allowedLateness alone does not create
+that output. Do not generalize SQL-window behavior from this DataStream option.
 
-* **Tumbling windows**: fixed-size, non-overlapping (e.g., "every 1-minute bucket").
-* **Sliding windows**: fixed-size, overlapping at a smaller step (e.g., "the last 5 minutes, recomputed every 1 minute").
-* **Session windows**: dynamically sized, closing after a gap of inactivity longer than a configured timeout — useful for grouping bursts of activity per key (e.g., a user session) without a fixed window boundary.
+## Validation scope
 
-Late data — records arriving after their window's watermark has already passed — is either dropped or routed to a **side output** for separate handling, depending on the configured `allowedLateness`.
+The two runtime-specific Java helpers compiled with release 17 as the target.
+Checks covered valid/missing-watermark SQL planning, v1 credential classes in the
+S3 plugin archive, CRD/YAML structure and released source. Local Java tooling used
+Corretto 21; no Java 17 cluster execution, AWS/Kafka/Iceberg connection, CDC or
+failure-recovery test was performed.
 
-## Lab Environment Setup
+## References
 
-To follow along with the patterns in this part, you'll need:
+- [Flink 2.2 state backends](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/state_backends/)
+- [Checkpoint configuration](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/fault-tolerance/checkpointing/)
+- [Savepoints and ownership](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/savepoints/)
+- [S3 filesystem plugins](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/filesystems/s3/)
+- [S3 plugin dependencies](https://github.com/apache/flink/blob/release-2.2.1/flink-filesystems/flink-s3-fs-base/pom.xml)
+- [Bundled StateMachineExample](https://github.com/apache/flink/blob/release-2.2.1/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/statemachine/StateMachineExample.java)
+- [Operator snapshots](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/docs/content/docs/custom-resource/snapshots.md)
+- [Kafka connector 5.0.0 sink](https://github.com/apache/flink-connector-kafka/blob/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/KafkaSink.java)
+- [Kafka transaction naming](https://github.com/apache/flink-connector-kafka/blob/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/TransactionNamingStrategy.java)
+- [Iceberg release/runtime matrix](https://iceberg.apache.org/releases/)
+- [Iceberg 1.11 DynamicIcebergSink](https://github.com/apache/iceberg/blob/apache-iceberg-1.11.0/flink/v2.1/flink/src/main/java/org/apache/iceberg/flink/sink/dynamic/DynamicIcebergSink.java)
+- [Windows and late data](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/operators/windows/)
+- [Watermarks and idleness](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/event-time/generating_watermarks/)
+- [EKS Pod Identity SDK requirements](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html)
+- [AWS SDK for Java 1.x support status](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/document-history.html)
+- [Firehose Iceberg prerequisites](https://docs.aws.amazon.com/firehose/latest/dev/apache-iceberg-prereq.html)
 
-* `kubectl` access to the EKS cluster used in Part 2, with the Flink Kubernetes Operator installed and a `FlinkDeployment`/`FlinkSessionJob` already running.
-* An S3 bucket for checkpoint and savepoint storage, with the Flink job's IRSA role granted `s3:PutObject`/`s3:GetObject`/`s3:ListBucket` on it:
+[Part 4: Operations and HA](04-operations-ha.md)
 
-```bash
-aws s3 mb s3://my-flink-checkpoints --region us-east-1
-```
+[README](README.md)
 
-* (Optional) An MSK cluster reachable from the Flink job's VPC/subnets, with a topic created for the source and/or sink used in the exactly-once examples above.
-
-```bash
-kubectl get flinkdeployment -n flink
-kubectl logs -n flink deploy/order-events-processor
-```
-
-## What's Next
-
-This part covered how Flink keeps state correct and recoverable — state backends, checkpoints versus savepoints, exactly-once delivery to Kafka, and the streaming patterns that connect MSK to Iceberg on S3. The next part in this series moves from job-level concerns to cluster-level operations: monitoring, scaling, and running Flink on EKS in production.
-
-[Return to Main Page](./README.md)
-
-## Quiz
-
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md).
+[Quiz](../../quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)

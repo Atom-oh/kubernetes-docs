@@ -1,0 +1,303 @@
+{
+  "status": "passed",
+  "files": [
+    "ko/data-on-eks/sagemaker-unified-studio/README.md",
+    "ko/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+    "ko/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+    "en/data-on-eks/sagemaker-unified-studio/README.md",
+    "en/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+    "en/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md"
+  ],
+  "fences": 2,
+  "quizQuestions": 10,
+  "relativeLinks": 16,
+  "apiShapeValidation": {
+    "cases": [
+      {
+        "case": "create-project",
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "case": "invalid-both-member-kinds",
+        "returncode": 252,
+        "stderr": "aws: [ERROR]: An error occurred (ParamValidation): Parameter validation failed:\nInvalid number of parameters set for tagged union structure membershipAssignments[0].member. Can only set one of the following keys: userIdentifier. groupIdentifier."
+      }
+    ],
+    "scope": "AWS CLI output-skeleton local input validation only; no DataZone API operation, resources or membership created."
+  },
+  "historicalEvidence": {
+    "path": "examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json",
+    "sha256": "26dc4903bf07003838fd17eb1402f4aab5133e3ff4e79e3c8ff3f69e94fdbc7f",
+    "date": "2026-09-01",
+    "meaning": "Historicalblocked-before-trainingandresidual1record;noassertionofcurrentAWSstate."
+  },
+  "existingRegressionTest": "node --test scripts/__tests__/sagemaker-qwen-pii-validation.test.mjs:1/1passed",
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/sagemaker-unified-studio/README.md",
+        "sha256": "2a0f179b9c32079f34a90d7bb91fde6271baaf369f5183752a5588b47c027841",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sagemaker-unified-studio-거버넌스"
+          },
+          {
+            "tag": "h2",
+            "id": "이-섹션에서-확인할-것"
+          },
+          {
+            "tag": "h2",
+            "id": "실험-기록과-현재-상태를-구분"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "sagemaker-unified-studio-거버넌스",
+          "이-섹션에서-확인할-것",
+          "실험-기록과-현재-상태를-구분",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/sagemaker-unified-studio/README.md",
+        "sha256": "205b21759cb3502f463f9b1f6db79d09cda8de74cee9f9e4d71d2ee4e1ac09b2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sagemaker-unified-studio-governance"
+          },
+          {
+            "tag": "h2",
+            "id": "boundaries-covered"
+          },
+          {
+            "tag": "h2",
+            "id": "distinguish-historical-evidence-from-current-state"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "sagemaker-unified-studio-governance",
+          "boundaries-covered",
+          "distinguish-historical-evidence-from-current-state",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+        "sha256": "a784bdef2d20ff5fe08c19c4c6fa932dbf855afd8f806799bbad5a76a042165f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-domain-project-membership-거버넌스"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-객체와-identity를-구분"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-profile-이름은-도구-준비-상태가-아님"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-iam-membership-데이터-권한"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-생성·도구-준비-순서"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-tag-오류와-catalog-공개-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-삭제와-부재-검증"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-qwen-실험의-역사적-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-4-domain-project-membership-거버넌스",
+          "_1-객체와-identity를-구분",
+          "_2-profile-이름은-도구-준비-상태가-아님",
+          "_3-iam-membership-데이터-권한",
+          "_4-생성·도구-준비-순서",
+          "_5-tag-오류와-catalog-공개-범위",
+          "_6-삭제와-부재-검증",
+          "_7-qwen-실험의-역사적-검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+        "sha256": "8fd74cfcd4b3dcea3f87d91096c466c542a04716f521e6b07480709f8cc96cc0",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-domain-project-and-membership-governance"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-distinguish-objects-and-identities"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-a-profile-name-does-not-prove-tool-readiness"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-iam-membership-and-data-authorization"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-project-and-tool-readiness-sequence"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-tag-failures-and-catalog-disclosure"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-deletion-and-absence-verification"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-historical-scope-of-the-qwen-validation"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "part-4-domain-project-and-membership-governance",
+          "_1-distinguish-objects-and-identities",
+          "_2-a-profile-name-does-not-prove-tool-readiness",
+          "_3-iam-membership-and-data-authorization",
+          "_4-project-and-tool-readiness-sequence",
+          "_5-tag-failures-and-catalog-disclosure",
+          "_6-deletion-and-absence-verification",
+          "_7-historical-scope-of-the-qwen-validation",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+        "sha256": "106d6c6468f9e4a9d063b1db63002b84f32086a3c1808cdd93f7d34dc64fd363",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "unified-studio-domain과-project-거버넌스-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          }
+        ],
+        "renderedIds": [
+          "unified-studio-domain과-project-거버넌스-퀴즈",
+          "객관식-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+        "sha256": "4de42a21fb745eb4204ee00b2c39cad290c8da62cee5b56af5ba14eb7b7df274",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "unified-studio-domain-and-project-governance-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          }
+        ],
+        "renderedIds": [
+          "unified-studio-domain-and-project-governance-quiz",
+          "multiple-choice-questions"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "name": "create-project",
+      "url": "https://docs.aws.amazon.com/boto3/latest/reference/services/datazone/client/create_project.html",
+      "bytes": 100091,
+      "sha256": "eb824a59b201450f95a903e03ebef8810948cb5da6bdb78c547409c16995009b"
+    },
+    {
+      "name": "users",
+      "url": "https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/user-management.html",
+      "bytes": 20207,
+      "sha256": "c8e503777e456332372605556397bb26ffbfeff86b9d35f0621438a58f1aed47"
+    },
+    {
+      "name": "iam-domains",
+      "url": "https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/iam-based-domains.html",
+      "bytes": 15051,
+      "sha256": "3de01e1ccbf1a3d766a8637df822a547cfb1e342afe466a093fa71521cdfcda2"
+    },
+    {
+      "name": "iam-projects",
+      "url": "https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/projects-iam-based-domains.html",
+      "bytes": 15304,
+      "sha256": "75d5445bfeada62fa24d1621469a659fd21661598b24e445eddab28d34312928"
+    },
+    {
+      "name": "profiles",
+      "url": "https://docs.aws.amazon.com/help-panel/sagemaker-unified-studio/latest/console/project-profiles-all-capabilities-hp.html",
+      "bytes": 2165,
+      "sha256": "33375defb152eb9eff765676196806addead45c3af304349e7e61228911fe2b9"
+    },
+    {
+      "name": "delete",
+      "url": "https://docs.aws.amazon.com/sagemaker-unified-studio/latest/userguide/delete-project.html",
+      "bytes": 14343,
+      "sha256": "7620ac7cc0c982c40374f62eaba4f6077b1eff72d9ee2fce7d9fe7c8e387842b"
+    },
+    {
+      "name": "delete-iam",
+      "url": "https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/delete-project-iam-based.html",
+      "bytes": 14396,
+      "sha256": "8e0f80061c1253c5375dfced4bd156fd27a864efac838a836de4936bc48f259b"
+    }
+  ],
+  "limits": "No live DataZone, IAM, SageMaker, GPU or deletion operation. CLI output-skeleton is local input validation and produces synthetic output, not provisioning evidence."
+}

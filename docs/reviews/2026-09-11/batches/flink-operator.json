@@ -2,25 +2,29 @@
   {
     "path": "ko/data-on-eks/flink/02-flink-kubernetes-operator.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+    "status": "fixed",
+    "summary": "Reviewed Operator1.15/Flink2.2.1: cert-manager requirement and scoped chart/jobRBAC;digest-pinned image;bundled stateless example;Runningcondition/stalegeneration limits;stateful/S3prerequisites;fallback/inplacescaling;currentautoscalerkeys/edge ratios/backlogtarget/memorypressure/alignment;40quizanswers/2figures.",
+    "reviewedSha256": "347e0fc58ec7297da52942bc37ebc96de4118ca678d237d7dae8262f4f4f84ce"
   },
   {
     "path": "ko/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+    "status": "fixed",
+    "summary": "Reviewed Operator1.15/Flink2.2.1: cert-manager requirement and scoped chart/jobRBAC;digest-pinned image;bundled stateless example;Runningcondition/stalegeneration limits;stateful/S3prerequisites;fallback/inplacescaling;currentautoscalerkeys/edge ratios/backlogtarget/memorypressure/alignment;40quizanswers/2figures.",
+    "reviewedSha256": "2effcbed07ed54495d9e592f75d0efa34413c422567b8bc70ee5d4b54bb21d24"
   },
   {
     "path": "en/data-on-eks/flink/02-flink-kubernetes-operator.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+    "status": "fixed",
+    "summary": "Reviewed Operator1.15/Flink2.2.1: cert-manager requirement and scoped chart/jobRBAC;digest-pinned image;bundled stateless example;Runningcondition/stalegeneration limits;stateful/S3prerequisites;fallback/inplacescaling;currentautoscalerkeys/edge ratios/backlogtarget/memorypressure/alignment;40quizanswers/2figures.",
+    "reviewedSha256": "8909c5a29c2963dc90d06fc6fe0f448560c783ad470632756e4641c3e6527e36"
   },
   {
     "path": "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fullread4files. Verifychartcert/RBAC/watchnamespaceandreadiness;repairmissingapplicationJAR/S3plugin/checkpoint/HAprereqs;verifylast-stateSessionJob,autoscalingrealizer/memory/backlog/divisors,ConditionsandBlueGreenclaims;40quizquestions+2figures."
+    "status": "fixed",
+    "summary": "Reviewed Operator1.15/Flink2.2.1: cert-manager requirement and scoped chart/jobRBAC;digest-pinned image;bundled stateless example;Runningcondition/stalegeneration limits;stateful/S3prerequisites;fallback/inplacescaling;currentautoscalerkeys/edge ratios/backlogtarget/memorypressure/alignment;40quizanswers/2figures.",
+    "reviewedSha256": "c79401b87494483e3f92a678574d542ffb30af9a6bd2af9ffed6856c8129f951"
   }
 ]
