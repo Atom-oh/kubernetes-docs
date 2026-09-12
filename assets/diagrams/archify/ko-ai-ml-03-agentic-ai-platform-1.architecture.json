@@ -5,7 +5,7 @@
     "title": "네 가지 핵심 기술 과제",
     "output": "ko-ai-ml-03-agentic-ai-platform-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1000,
       580
@@ -64,7 +64,7 @@
     {
       "id": "cost",
       "type": "external",
-      "label": "4. 실시간 비용 최적화",
+      "label": "4. 비용 관측과 예산 제어",
       "pos": [
         60,
         390
@@ -78,7 +78,7 @@
       "id": "gpu-solution",
       "type": "backend",
       "label": "MIG · Time-Slicing",
-      "sublabel": "Karpenter",
+      "sublabel": "장치별 격리·배치 조건",
       "pos": [
         650,
         60
@@ -105,8 +105,8 @@
     {
       "id": "workflow-solution",
       "type": "backend",
-      "label": "LangGraph",
-      "sublabel": "Kagent",
+      "label": "LangGraph / Kagent ADK",
+      "sublabel": "별도 runtime과 통합 경계",
       "pos": [
         650,
         280
@@ -120,7 +120,7 @@
       "id": "cost-solution",
       "type": "backend",
       "label": "Langfuse",
-      "sublabel": "Prompt Cache",
+      "sublabel": "측정 + 권한별 cache",
       "pos": [
         650,
         390
@@ -144,7 +144,7 @@
     },
     {
       "kind": "region",
-      "label": "해결 방안",
+      "label": "조건을 검증할 도구",
       "wraps": [
         "gpu-solution",
         "llm-solution",
@@ -177,6 +177,17 @@
       "from": "cost",
       "to": "cost-solution",
       "label": "캐싱 · 배치 · 티어링"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "효과를 검증하는 기준",
+      "items": [
+        "MIG와 time-slicing은 같은 격리 수준이 아닙니다.",
+        "provider 변환과 model Pod 선택은 다른 계층입니다.",
+        "Langfuse 추정 비용은 청구서나 강제 예산 한도가 아닙니다."
+      ]
     }
   ]
 }

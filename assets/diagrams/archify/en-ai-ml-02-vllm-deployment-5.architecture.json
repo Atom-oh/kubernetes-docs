@@ -5,7 +5,7 @@
     "title": "vLLM Monitoring and Logging",
     "output": "en-ai-ml-02-vllm-deployment-5.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "metrics",
@@ -40,7 +40,7 @@
           "elasticsearch",
           "kibana"
         ],
-        "note": "Fluentd tails the vLLM container logs and ships them to CloudWatch Logs and ElasticSearch."
+        "note": "Distinguish CRI/app logs and configure output permissions."
       }
     ],
     "locale": "en"
@@ -78,7 +78,7 @@
       "id": "vllm-metrics",
       "type": "backend",
       "label": "vLLM Metrics",
-      "sublabel": "metrics :8001",
+      "sublabel": "/metrics :8000",
       "pos": [
         40,
         280
@@ -120,7 +120,7 @@
     {
       "id": "alertmanager",
       "type": "backend",
-      "label": "Alert Manager",
+      "label": "Alertmanager",
       "sublabel": "alert routing",
       "pos": [
         580,
@@ -162,7 +162,7 @@
     {
       "id": "fluentd",
       "type": "backend",
-      "label": "Fluentd",
+      "label": "Log collector",
       "sublabel": "log collection",
       "pos": [
         320,
@@ -190,7 +190,7 @@
     {
       "id": "elasticsearch",
       "type": "database",
-      "label": "ElasticSearch",
+      "label": "Elasticsearch",
       "sublabel": "log index",
       "pos": [
         580,
@@ -315,18 +315,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Metrics",
+      "title": "Actual metrics",
       "items": [
-        "A ServiceMonitor scrapes the vllm-metrics Service (:8001) every 15s",
-        "Grafana dashboards and Alert Manager alerts are built on Prometheus data"
+        "vllm:e2e_request_latency_seconds / generation_tokens_total",
+        "kv_cache_usage_perc:1means100%; not VRAM bytes."
       ]
     },
     {
       "dot": "violet",
-      "title": "Logs",
+      "title": "Collection and protection",
       "items": [
-        "Fluentd tails /var/log/containers/vllm-*.log",
-        "Shipped to the CloudWatch Logs group /eks/vllm/logs (us-west-2)"
+        "Match Service label, named port and namespace.",
+        "API keys do not protect every metrics/operational endpoint."
       ]
     }
   ]

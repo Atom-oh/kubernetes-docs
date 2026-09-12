@@ -2,10 +2,10 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "vLLM 아키텍처",
+    "title": "vLLM 기능과 검증할 효과",
     "output": "ko-ai-ml-03-agentic-ai-platform-2.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       900,
       540
@@ -17,7 +17,7 @@
           "label": "vLLM 핵심 기술"
         },
         "external": {
-          "label": "성능 이점"
+          "label": "측정 항목"
         }
       }
     }
@@ -81,8 +81,8 @@
     {
       "id": "memory",
       "type": "external",
-      "label": "메모리 효율 95%+",
-      "sublabel": "GPU 메모리를 KV 캐시에 할당",
+      "label": "KV 파편화 관리",
+      "sublabel": "weights / KV / workspace 구분",
       "pos": [
         620,
         60
@@ -95,7 +95,7 @@
     {
       "id": "throughput",
       "type": "external",
-      "label": "처리량 24x 향상",
+      "label": "처리량과 대기시간",
       "pos": [
         620,
         160
@@ -103,13 +103,14 @@
       "size": [
         220,
         64
-      ]
+      ],
+      "sublabel": "동시성·token 예산 영향"
     },
     {
       "id": "latency",
       "type": "external",
-      "label": "지연시간 최소화",
-      "sublabel": "TTFT 50-80% 단축",
+      "label": "재사용 가능한 prefix",
+      "sublabel": "조건별 TTFT 측정",
       "pos": [
         620,
         260
@@ -122,8 +123,8 @@
     {
       "id": "context",
       "type": "external",
-      "label": "긴 컨텍스트 지원",
-      "sublabel": "혼합 프롬프트 지연 안정화",
+      "label": "Prefill / decode 조율",
+      "sublabel": "긴 문맥의 메모리 예산",
       "pos": [
         620,
         360
@@ -147,7 +148,7 @@
     },
     {
       "kind": "region",
-      "label": "성능 이점",
+      "label": "측정으로 확인",
       "wraps": [
         "memory",
         "throughput",
@@ -161,45 +162,36 @@
       "id": "paged-to-memory",
       "from": "paged-attention",
       "to": "memory",
-      "label": "--gpu-memory-utilization 0.95",
+      "label": "블록 단위 관리",
       "variant": "emphasis"
     },
     {
       "id": "batching-to-throughput",
       "from": "continuous-batching",
-      "to": "throughput"
+      "to": "throughput",
+      "label": "요청 조합에 따라 달라짐"
     },
     {
       "id": "prefix-to-latency",
       "from": "prefix-caching",
       "to": "latency",
-      "label": "반복 시스템 프롬프트 캐싱"
+      "label": "KV 재사용 조건"
     },
     {
       "id": "chunked-to-context",
       "from": "chunked-prefill",
       "to": "context",
-      "label": "--max-num-batched-tokens 32768"
+      "label": "scheduler 예산"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "vLLM 튜닝 포인트",
+      "title": "고정 성능 보장 없음",
       "items": [
-        "KV Cache 관리: GPU 메모리의 95%를 KV 캐시에 할당, --block-size 16",
-        "Prefix 캐싱: 동일한 시스템 프롬프트를 쓰는 요청의 TTFT를 50-80% 단축",
-        "Chunked Prefill: 긴 프롬프트와 짧은 프롬프트가 혼합된 워크로드의 응답 지연시간 안정화"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Deployment 플래그",
-      "items": [
-        "--gpu-memory-utilization 0.95",
-        "--enable-prefix-caching",
-        "--enable-chunked-prefill",
-        "--max-num-batched-tokens 32768"
+        "gpu-memory-utilization은 KV만의 비율이 아닙니다.",
+        "prefix KV cache와 전체 응답 cache는 다릅니다.",
+        "이미지·모델·driver를 고정하고 latency/throughput을 측정합니다."
       ]
     }
   ]

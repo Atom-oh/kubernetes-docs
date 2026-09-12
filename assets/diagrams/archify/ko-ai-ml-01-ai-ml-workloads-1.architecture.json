@@ -5,7 +5,7 @@
     "title": "EKS에서의 AI/ML 인프라 구성",
     "output": "ko-ai-ml-01-ai-ml-workloads-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "cloud": {
@@ -46,7 +46,7 @@
           "storage",
           "networking"
         ],
-        "note": "모든 노드 그룹이 같은 스토리지 계층과 네트워킹 계층을 사용한다."
+        "note": "필요한 storage/network 경로와 권한을 노드·워크로드별로 구성합니다."
       },
       {
         "id": "aws-services",
@@ -105,7 +105,7 @@
       "id": "inference",
       "type": "backend",
       "label": "추론 노드 그룹",
-      "sublabel": "g4dn.xlarge · inf1.24xlarge · trn1.32xlarge",
+      "sublabel": "CPU / GPU / Neuron 런타임",
       "pos": [
         430,
         430
@@ -175,7 +175,7 @@
     },
     {
       "kind": "region",
-      "label": "Amazon EKS",
+      "label": "EKS 워크로드와 연동 경로",
       "wraps": [
         "eks",
         "training",
@@ -235,6 +235,16 @@
       "id": "cpu-networking",
       "from": "cpu",
       "to": "networking"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "예시 구성",
+      "items": [
+        "인스턴스는 예시이며 리전·할당량·소프트웨어 호환성을 확인합니다.",
+        "스토리지 공유와 데이터 권한은 자동 설정되지 않습니다."
+      ]
     }
   ]
 }

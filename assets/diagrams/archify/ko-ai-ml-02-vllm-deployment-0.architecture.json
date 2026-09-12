@@ -5,7 +5,7 @@
     "title": "vLLM 아키텍처",
     "output": "ko-ai-ml-02-vllm-deployment-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1380,
       520
@@ -48,7 +48,7 @@
           "kvcache",
           "apiserver"
         ],
-        "note": "스케줄러와 모델 로더가 추론 엔진에 입력을 주고, 엔진은 KV 캐시 관리자와 OpenAI 호환 API 서버로 이어진다."
+        "note": "API 요청은 scheduler와 engine에서 처리되며 loader와 KV manager가 실행을 지원합니다."
       }
     ]
   },
@@ -57,7 +57,7 @@
       "id": "batching",
       "type": "external",
       "label": "연속 배치 처리",
-      "sublabel": "GPU 활용도 극대화",
+      "sublabel": "대기·token 예산 존재",
       "pos": [
         50,
         70
@@ -99,7 +99,7 @@
       "id": "quant",
       "type": "external",
       "label": "양자화",
-      "sublabel": "INT8 / INT4 / FP16",
+      "sublabel": "가중치 / KV 형식 구분",
       "pos": [
         50,
         340
@@ -113,7 +113,7 @@
       "id": "throughput",
       "type": "cloud",
       "label": "높은 처리량",
-      "sublabel": "최대 2배 향상",
+      "sublabel": "효과는 workload별 검증",
       "pos": [
         330,
         70
@@ -127,7 +127,7 @@
       "id": "scalability",
       "type": "cloud",
       "label": "확장성",
-      "sublabel": "175B+ 파라미터 모델",
+      "sublabel": "모델·backend 조건",
       "pos": [
         330,
         160
@@ -141,7 +141,7 @@
       "id": "memory",
       "type": "cloud",
       "label": "메모리 효율성",
-      "sublabel": "최대 2배 향상",
+      "sublabel": "효과는 workload별 검증",
       "pos": [
         330,
         250
@@ -157,8 +157,8 @@
       "label": "요청 스케줄러",
       "sublabel": "동적 배치",
       "pos": [
-        610,
-        130
+        880,
+        40
       ],
       "size": [
         170,
@@ -172,7 +172,7 @@
       "sublabel": "모델 가중치 로드",
       "pos": [
         610,
-        290
+        350
       ],
       "size": [
         170,
@@ -185,7 +185,7 @@
       "label": "추론 엔진",
       "sublabel": "vLLM Engine",
       "pos": [
-        880,
+        1150,
         210
       ],
       "size": [
@@ -200,7 +200,7 @@
       "sublabel": "블록 단위 KV 캐시",
       "pos": [
         1150,
-        130
+        380
       ],
       "size": [
         170,
@@ -213,8 +213,8 @@
       "label": "API 서버",
       "sublabel": "OpenAI 호환 API",
       "pos": [
-        1150,
-        290
+        610,
+        40
       ],
       "size": [
         170,
@@ -294,13 +294,30 @@
       "from": "engine",
       "to": "kvcache",
       "label": "KV 블록",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1265,
+        325
+      ]
     },
     {
-      "id": "engine-apiserver",
-      "from": "engine",
-      "to": "apiserver",
-      "label": "응답"
+      "id": "api-scheduler",
+      "from": "apiserver",
+      "to": "scheduler",
+      "label": "요청",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "실행 경계",
+      "items": [
+        "기능만으로 고정 배수 성능이나 대기 없는 응답을 보장하지 않습니다.",
+        "v0.29 Model Runner V2는 내부 runner이며 API 버전이 아닙니다."
+      ]
     }
   ]
 }

@@ -5,7 +5,7 @@
     "title": "vLLM을 위한 EKS 인프라 구성",
     "output": "ko-ai-ml-02-vllm-deployment-2.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1000,
       640
@@ -33,7 +33,7 @@
           "s3",
           "ebs"
         ],
-        "note": "S3에 저장한 모델을 FSx for Lustre로 내려받고, 노드가 거기서 모델 가중치를 빠르게 로드한다."
+        "note": "FSx/S3/로컬 cache는 선택 경로이며 Hugging Face 다운로드와 S3 전송은 다릅니다."
       },
       {
         "id": "aws-services",
@@ -183,7 +183,7 @@
       "id": "fsx",
       "type": "database",
       "label": "FSx for Lustre",
-      "sublabel": "모델 가중치 (RWX)",
+      "sublabel": "선택적 공유 모델 저장소",
       "pos": [
         720,
         220
@@ -336,30 +336,18 @@
   ],
   "cards": [
     {
-      "dot": "orange",
-      "title": "GPU 노드 유형",
-      "items": [
-        "p5.48xlarge: 8x H100 80GB (최고 성능)",
-        "p4d.24xlarge: 8x A100 40/80GB",
-        "g6.12xlarge: 4x L4 24GB (비용 효율적)",
-        "g5.12xlarge: 4x A10G 24GB"
-      ]
-    },
-    {
       "dot": "cyan",
-      "title": "모델 스토리지",
+      "title": "모델 준비",
       "items": [
-        "FSx for Lustre SCRATCH_2, 1200GiB, ReadWriteMany PVC",
-        "Hugging Face 모델을 S3에 저장한 뒤 Job으로 FSx에 다운로드"
+        "모든 worker가 동일한 revision과 경로를 사용해야 합니다.",
+        "FSx staticPV/PVC와 dynamic provisioning을 구분합니다."
       ]
     },
     {
       "dot": "slate",
-      "title": "AWS 서비스",
+      "title": "인프라",
       "items": [
-        "ECR: vLLM 컨테이너 이미지",
-        "CloudWatch: 지표와 로그 수집",
-        "IAM: 노드와 Pod 권한"
+        "이미지·AMI·driver·GPU·IAM·스토리지 경로를 함께 검증합니다."
       ]
     }
   ]

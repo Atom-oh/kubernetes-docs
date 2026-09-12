@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-02-vllm-deployment-3.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "external": {
@@ -49,7 +49,7 @@
           "pod1",
           "fsx"
         ],
-        "note": "One pod uses all 8 GPUs of the node with tensor-parallel-size=8."
+        "note": "Example uses one GPU for a small model; actual GPU execution is unverified."
       },
       {
         "id": "multi-node",
@@ -59,7 +59,7 @@
           "nccl",
           "pod3"
         ],
-        "note": "One pod per node, with NCCL handling GPU-to-GPU communication across nodes."
+        "note": "0.29 uses nnodes/node-rank/headless or a prepared Ray cluster."
       },
       {
         "id": "model-storage",
@@ -71,7 +71,7 @@
           "fsx",
           "s3"
         ],
-        "note": "Models are downloaded from S3 to FSx for Lustre, and every pod mounts the same PVC."
+        "note": "Prepare the same model revision; storage backend is a deployment choice."
       }
     ]
   },
@@ -93,8 +93,8 @@
     {
       "id": "lb",
       "type": "frontend",
-      "label": "Load Balancer",
-      "sublabel": "Service type: LoadBalancer",
+      "label": "Authenticated entry",
+      "sublabel": "internal Service / gateway",
       "pos": [
         300,
         40
@@ -108,7 +108,7 @@
       "id": "svc",
       "type": "frontend",
       "label": "Kubernetes Service",
-      "sublabel": "vllm-inference :8000",
+      "sublabel": "selected replica / group",
       "pos": [
         590,
         40
@@ -122,7 +122,7 @@
       "id": "pod1",
       "type": "backend",
       "label": "vLLM Pod",
-      "sublabel": "8 GPUs · tensor-parallel-size=8",
+      "sublabel": "example:1GPU / Qwen3-0.6B",
       "pos": [
         60,
         240
@@ -136,7 +136,7 @@
       "id": "pod2",
       "type": "backend",
       "label": "vLLM Pod 0",
-      "sublabel": "Node 0 · 8 GPUs",
+      "sublabel": "node-rank0 / API",
       "pos": [
         420,
         240
@@ -164,7 +164,7 @@
       "id": "pod3",
       "type": "backend",
       "label": "vLLM Pod 1",
-      "sublabel": "Node 1 · 8 GPUs",
+      "sublabel": "node-rank1 / headless",
       "pos": [
         900,
         240
@@ -177,8 +177,8 @@
     {
       "id": "fsx",
       "type": "database",
-      "label": "FSx for Lustre",
-      "sublabel": "vllm-models-pvc (RWX)",
+      "label": "Consistent model path",
+      "sublabel": "shared FS or per-node cache",
       "pos": [
         420,
         440
@@ -314,26 +314,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Single Node Deployment",
+      "title": "Single-GPU example",
       "items": [
-        "One pod uses 8 GPUs with tensor-parallel-size=8",
-        "A Service of type LoadBalancer exposes port 8000"
+        "v0.29.0-cu129 amd64 digest + pinned Qwen revision",
+        "ClusterIP / Recreate / startupProbe; not zero-downtime"
       ]
     },
     {
       "dot": "violet",
-      "title": "Multi-Node Distributed Deployment",
+      "title": "Multi-node",
       "items": [
-        "hostfile: vllm-inference-0/1, slots=8 each",
-        "GPU communication across nodes runs over NCCL"
-      ]
-    },
-    {
-      "dot": "amber",
-      "title": "Shared Storage",
-      "items": [
-        "Every pod mounts the FSx for Lustre PVC (ReadWriteMany)",
-        "Hugging Face models are stored in S3 and downloaded to FSx by a Job"
+        "TP8 × PP2 illustrates one16GPU group.",
+        "Restrict internal communication to a trusted network."
       ]
     }
   ]

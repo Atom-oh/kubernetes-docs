@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-03-agentic-ai-platform-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "external": {
@@ -28,7 +28,7 @@
           "evaluate",
           "result"
         ],
-        "note": "From goal setting through planning, execution and evaluation, the loop either completes or returns to planning."
+        "note": "Check evidence and retry budgets; exhaustion must not become unsupported success."
       },
       {
         "id": "traits",
@@ -65,7 +65,7 @@
       "id": "execution",
       "type": "external",
       "label": "Tool-based Execution",
-      "sublabel": "APIs · DBs · executors",
+      "sublabel": "validated scope / input",
       "pos": [
         440,
         70
@@ -79,7 +79,7 @@
       "id": "memory",
       "type": "external",
       "label": "State and Memory Management",
-      "sublabel": "long-running task state",
+      "sublabel": "bind tenant / session",
       "pos": [
         610,
         70
@@ -93,7 +93,7 @@
       "id": "iteration",
       "type": "external",
       "label": "Iterative Improvement",
-      "sublabel": "evaluate · revise plan",
+      "sublabel": "retry / time / cost limits",
       "pos": [
         830,
         70
@@ -145,7 +145,7 @@
     {
       "id": "evaluate",
       "type": "backend",
-      "label": "Evaluation",
+      "label": "Evidence / budget",
       "pos": [
         830,
         300
@@ -158,7 +158,7 @@
     {
       "id": "result",
       "type": "backend",
-      "label": "Return Result",
+      "label": "Result or abstention",
       "pos": [
         1040,
         300
@@ -215,14 +215,18 @@
       "id": "evaluate-result",
       "from": "evaluate",
       "to": "result",
-      "label": "Complete",
-      "variant": "emphasis"
+      "label": "success / budget exhausted",
+      "variant": "emphasis",
+      "labelAt": [
+        1010,
+        280
+      ]
     },
     {
       "id": "evaluate-plan",
       "from": "evaluate",
       "to": "plan",
-      "label": "Improvement needed",
+      "label": "bounded retry",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "bottom"
@@ -259,12 +263,11 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Agentic AI Characteristics",
+      "title": "Execution boundaries",
       "items": [
-        "Autonomous planning: decomposes complex tasks into subtasks and determines execution order",
-        "Tool-based execution: uses external APIs, databases, code executors and other tools",
-        "Iterative improvement: evaluates execution results and revises the plan when needed",
-        "State management: maintains state and memory across long-running tasks"
+        "Tool servers enforce authorization, validation, approval and idempotency.",
+        "Checkpoint storage is neither authentication nor automatic recovery.",
+        "Distinguish proposed plans from executed and verified results."
       ]
     }
   ]

@@ -5,7 +5,7 @@
     "title": "AI/ML 워크로드 최적화",
     "output": "ko-ai-ml-01-ai-ml-workloads-5.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "performance-path",
@@ -16,7 +16,7 @@
           "storage-opt",
           "performance"
         ],
-        "note": "GPU·분산 훈련·스토리지 최적화가 모두 성능 향상으로 이어진다."
+        "note": "각 최적화의 효과는 실제 workload에서 측정해야 합니다."
       },
       {
         "id": "cost-path",
@@ -25,7 +25,7 @@
           "cost-opt",
           "cost-reduction"
         ],
-        "note": "Spot 인스턴스, 자동 스케일링, 하이브리드 노드로 GPU 비용을 줄인다."
+        "note": "Spot·스케일링은 복구·노드 회수를 포함해 비용을 검증해야 합니다."
       }
     ],
     "legend": {
@@ -50,7 +50,7 @@
       "id": "gpu-opt",
       "type": "backend",
       "label": "GPU 최적화",
-      "sublabel": "GPU 메모리 오버커밋 · GPU 공유 · NVIDIA MPS",
+      "sublabel": "정밀도 / 메모리 / 공유 조건",
       "pos": [
         60,
         70
@@ -92,7 +92,7 @@
       "id": "cost-opt",
       "type": "cloud",
       "label": "비용 최적화",
-      "sublabel": "Spot 인스턴스 · 자동 스케일링 · 하이브리드 노드",
+      "sublabel": "Spot / scaling / 노드 혼합",
       "pos": [
         60,
         380
@@ -106,7 +106,7 @@
       "id": "performance",
       "type": "external",
       "label": "성능 향상",
-      "sublabel": "GPU·훈련·스토리지 최적화의 결과",
+      "sublabel": "측정으로 검증할 목표",
       "pos": [
         600,
         170
@@ -120,7 +120,7 @@
       "id": "cost-reduction",
       "type": "external",
       "label": "비용 절감",
-      "sublabel": "GPU 인프라 비용 절감",
+      "sublabel": "성능·복구를 포함한 총비용",
       "pos": [
         600,
         380

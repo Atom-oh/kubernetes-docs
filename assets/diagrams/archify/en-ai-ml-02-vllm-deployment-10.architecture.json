@@ -2,252 +2,115 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "vLLM Autoscaling Structure",
-    "locale": "en",
-    "output": "en-ai-ml-02-vllm-deployment-10.html",
+    "title": "vLLM scaling and capacity boundaries",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "views": [
-      {
-        "id": "pod-scaling",
-        "label": "Pod Scaling",
-        "focus": [
-          "cpu",
-          "rps",
-          "queue",
-          "gpu",
-          "hpa",
-          "keda",
-          "custom"
-        ],
-        "note": "CPU utilization feeds the HPA, request rate and queue length feed KEDA, GPU utilization feeds custom metrics; all adjust the vLLM pod count."
-      },
-      {
-        "id": "node-scaling",
-        "label": "Node Scaling",
-        "focus": [
-          "hpa",
-          "keda",
-          "custom",
-          "karpenter",
-          "ca",
-          "spot"
-        ],
-        "note": "When more pods outgrow the GPU nodes, Karpenter or Cluster Autoscaler adds nodes, and Karpenter can cut cost with Spot instances."
-      }
-    ]
+    "animation": "none",
+    "viewBox": [
+      1190,
+      430
+    ],
+    "locale": "en"
   },
   "components": [
     {
-      "id": "cpu",
+      "id": "metrics",
       "type": "external",
-      "label": "CPU Utilization",
+      "label": "Validated metrics",
+      "sublabel": "queue / request / utilization",
       "pos": [
-        40,
-        60
+        30,
+        80
       ],
       "size": [
-        160,
-        56
+        250,
+        75
       ]
     },
     {
-      "id": "rps",
-      "type": "external",
-      "label": "Requests Per Second",
-      "pos": [
-        40,
-        150
-      ],
-      "size": [
-        160,
-        56
-      ]
-    },
-    {
-      "id": "queue",
-      "type": "external",
-      "label": "Queue Length",
-      "pos": [
-        40,
-        240
-      ],
-      "size": [
-        160,
-        56
-      ]
-    },
-    {
-      "id": "gpu",
-      "type": "external",
-      "label": "GPU Utilization",
-      "pos": [
-        40,
-        360
-      ],
-      "size": [
-        160,
-        56
-      ]
-    },
-    {
-      "id": "hpa",
+      "id": "scaler",
       "type": "backend",
-      "label": "HorizontalPodAutoscaler",
-      "sublabel": "autoscaling/v2",
+      "label": "One Pod scaling owner",
+      "sublabel": "HPA or KEDA / adapter",
       "pos": [
-        360,
-        60
+        465,
+        80
       ],
       "size": [
-        200,
-        56
+        250,
+        75
       ]
     },
     {
-      "id": "keda",
+      "id": "pods",
       "type": "backend",
-      "label": "KEDA",
-      "sublabel": "event-driven scaler",
+      "label": "Independent model replicas",
+      "sublabel": "readiness / load / drain",
       "pos": [
-        360,
-        195
+        900,
+        80
       ],
       "size": [
-        200,
-        56
+        250,
+        75
       ]
     },
     {
-      "id": "custom",
-      "type": "backend",
-      "label": "Custom Metrics",
-      "sublabel": "GPU-metric based",
-      "pos": [
-        360,
-        360
-      ],
-      "size": [
-        200,
-        56
-      ]
-    },
-    {
-      "id": "karpenter",
+      "id": "capacity",
       "type": "cloud",
-      "label": "Karpenter",
-      "sublabel": "NodePool · EC2NodeClass",
+      "label": "Node capacity owner",
+      "sublabel": "Karpenter or Cluster Autoscaler",
       "pos": [
-        720,
-        120
+        900,
+        300
       ],
       "size": [
-        200,
-        56
-      ]
-    },
-    {
-      "id": "spot",
-      "type": "cloud",
-      "label": "Spot Instances",
-      "sublabel": "cost savings",
-      "pos": [
-        720,
-        240
-      ],
-      "size": [
-        200,
-        56
-      ]
-    },
-    {
-      "id": "ca",
-      "type": "cloud",
-      "label": "Cluster Autoscaler",
-      "pos": [
-        720,
-        360
-      ],
-      "size": [
-        200,
-        56
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Scaling Triggers",
-      "wraps": [
-        "cpu",
-        "rps",
-        "queue",
-        "gpu"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Pod Scaling",
-      "wraps": [
-        "hpa",
-        "keda",
-        "custom"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Node Scaling",
-      "wraps": [
-        "karpenter",
-        "spot",
-        "ca"
+        250,
+        75
       ]
     }
   ],
   "connections": [
     {
-      "id": "cpu-hpa",
-      "from": "cpu",
-      "to": "hpa"
+      "id": "metrics-scaler",
+      "from": "metrics",
+      "to": "scaler",
+      "label": "observed signal"
     },
     {
-      "id": "rps-keda",
-      "from": "rps",
-      "to": "keda"
+      "id": "scaler-pods",
+      "from": "scaler",
+      "to": "pods",
+      "label": "desired replica count"
     },
     {
-      "id": "queue-keda",
-      "from": "queue",
-      "to": "keda"
-    },
-    {
-      "id": "gpu-custom",
-      "from": "gpu",
-      "to": "custom",
-      "variant": "emphasis"
-    },
-    {
-      "id": "hpa-karpenter",
-      "from": "hpa",
-      "to": "karpenter",
-      "label": "GPU nodes exhausted"
-    },
-    {
-      "id": "keda-karpenter",
-      "from": "keda",
-      "to": "karpenter"
-    },
-    {
-      "id": "custom-ca",
-      "from": "custom",
-      "to": "ca"
-    },
-    {
-      "id": "karpenter-spot",
-      "from": "karpenter",
-      "to": "spot",
+      "id": "pods-capacity",
+      "from": "pods",
+      "to": "capacity",
+      "label": "scheduling demand",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelAt": [
+        1055,
+        245
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Scaling unit",
+      "items": [
+        "A TP/PP worker group has a different lifecycle from independent replicas.",
+        "Avoid competing scalers or node owners for the same target."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Capacity and cost",
+      "items": [
+        "Check available GPUs, quotas, AMI/policy and model load time.",
+        "EC2 charges can remain after Pod reduction until node termination."
+      ]
     }
   ]
 }
