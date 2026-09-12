@@ -45,7 +45,7 @@
       "id": "model",
       "type": "backend",
       "label": "Selected model Pod",
-      "sublabel": "app=vllm :8000",
+      "sublabel": "app=vllm-demo :8000",
       "pos": [
         910,
         80

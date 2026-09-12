@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "reviewedAt": "2026-09-12T21:59:02.419837+00:00",
+  "reviewedAt": "2026-09-12T22:08:39.003452+00:00",
   "scope": {
     "documents": 4,
     "quizQuestions": 40,
@@ -1364,126 +1364,6 @@
         "sourceSha256": "a3885ee8a2f6ee291b737a472d73fd6ad22a2653e5738bfb0040c79c1ff33662"
       },
       {
-        "figure": 3,
-        "locale": "ko",
-        "width": 375,
-        "passed": true,
-        "innerWidth": 375,
-        "scrollWidth": 375,
-        "svg": 2,
-        "toolbar": {
-          "x": 16,
-          "y": 16,
-          "width": 343,
-          "height": 96,
-          "top": 16,
-          "right": 359,
-          "bottom": 112,
-          "left": 16
-        },
-        "sourceSha256": "f08fa2710f30238081da551004c70b1f3964f0d68d27fbaba8d9ea0396146d83"
-      },
-      {
-        "figure": 3,
-        "locale": "ko",
-        "width": 768,
-        "passed": true,
-        "innerWidth": 768,
-        "scrollWidth": 768,
-        "svg": 2,
-        "toolbar": {
-          "x": 32,
-          "y": 32,
-          "width": 704,
-          "height": 44,
-          "top": 32,
-          "right": 736,
-          "bottom": 76,
-          "left": 32
-        },
-        "sourceSha256": "f08fa2710f30238081da551004c70b1f3964f0d68d27fbaba8d9ea0396146d83"
-      },
-      {
-        "figure": 3,
-        "locale": "ko",
-        "width": 1920,
-        "passed": true,
-        "innerWidth": 1920,
-        "scrollWidth": 1920,
-        "svg": 2,
-        "toolbar": {
-          "x": 1496.359375,
-          "y": 16,
-          "width": 407.640625,
-          "height": 44,
-          "top": 16,
-          "right": 1904,
-          "bottom": 60,
-          "left": 1496.359375
-        },
-        "sourceSha256": "f08fa2710f30238081da551004c70b1f3964f0d68d27fbaba8d9ea0396146d83"
-      },
-      {
-        "figure": 3,
-        "locale": "en",
-        "width": 375,
-        "passed": true,
-        "innerWidth": 375,
-        "scrollWidth": 375,
-        "svg": 2,
-        "toolbar": {
-          "x": 16,
-          "y": 16,
-          "width": 343,
-          "height": 96,
-          "top": 16,
-          "right": 359,
-          "bottom": 112,
-          "left": 16
-        },
-        "sourceSha256": "c65d4a5f81a29c8330a4f6fd7ded752f94bcfc610fa93ff2ceb20bbc7b95dfe2"
-      },
-      {
-        "figure": 3,
-        "locale": "en",
-        "width": 768,
-        "passed": true,
-        "innerWidth": 768,
-        "scrollWidth": 768,
-        "svg": 2,
-        "toolbar": {
-          "x": 32,
-          "y": 32,
-          "width": 704,
-          "height": 44,
-          "top": 32,
-          "right": 736,
-          "bottom": 76,
-          "left": 32
-        },
-        "sourceSha256": "c65d4a5f81a29c8330a4f6fd7ded752f94bcfc610fa93ff2ceb20bbc7b95dfe2"
-      },
-      {
-        "figure": 3,
-        "locale": "en",
-        "width": 1920,
-        "passed": true,
-        "innerWidth": 1920,
-        "scrollWidth": 1920,
-        "svg": 2,
-        "toolbar": {
-          "x": 1496.359375,
-          "y": 16,
-          "width": 407.640625,
-          "height": 44,
-          "top": 16,
-          "right": 1904,
-          "bottom": 60,
-          "left": 1496.359375
-        },
-        "sourceSha256": "c65d4a5f81a29c8330a4f6fd7ded752f94bcfc610fa93ff2ceb20bbc7b95dfe2"
-      },
-      {
         "figure": 4,
         "locale": "ko",
         "width": 375,
@@ -1602,9 +1482,130 @@
           "left": 1496.359375
         },
         "sourceSha256": "7a1780f7b5146db17c6415707dd278188380d89dbe767e0e53724df29c0c9783"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "ba9f2c1325a3f69a63028054b9087291c8e192e7a94e361cf4d454350438350a"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "ba9f2c1325a3f69a63028054b9087291c8e192e7a94e361cf4d454350438350a"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "ba9f2c1325a3f69a63028054b9087291c8e192e7a94e361cf4d454350438350a"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "20d0d25ee6355aa1e11ed66e788c3716655bac6ea97716b13eac5bbddcee2267"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "20d0d25ee6355aa1e11ed66e788c3716655bac6ea97716b13eac5bbddcee2267"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "20d0d25ee6355aa1e11ed66e788c3716655bac6ea97716b13eac5bbddcee2267"
       }
     ],
-    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build.",
+    "carriedUnchangedAfterShaVerification": 24
   },
   "pngs": [
     {
@@ -1621,7 +1622,7 @@
     },
     {
       "path": "ko/.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-3.png",
-      "sha256": "b3c986c8df3a1d801c3b40651c360021cfb8aa805867d519984a35ef4b7316c8"
+      "sha256": "e4ff1913b9156301e87b32d6f2440761a47a48ea0eb11f3992aedd4ee6322b37"
     },
     {
       "path": "ko/.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-4.png",
@@ -1641,7 +1642,7 @@
     },
     {
       "path": "en/.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png",
-      "sha256": "4695e9d8b70f2c995fc56341d558d5e27a07df08abca4dda314aee366b6f4620"
+      "sha256": "7931c885f8e9b6f43a86ab3f32cae4e932b5e43acea698fcb39a19360cf36ca9"
     },
     {
       "path": "en/.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png",
