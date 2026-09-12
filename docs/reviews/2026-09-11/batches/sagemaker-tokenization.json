@@ -4,7 +4,7 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed docsandfixedPIIcode:reversiblesurface-specifictokens/reservedmarkeravoidance/NFCspans;numericboundariesandnoinvented-letterstripping;source-spancoverageleakage,normalizedunique-paircounts/denominators/hallucinationflagindependence/strictIDandgoldvalidation;precisemetriclimitationsanddatasetnotgeneralization;50CPUtests+2200oracle(no model).",
-    "reviewedSha256": "5f80f5be24ad667afccfc7b4ebe47195d49d5a48b21b1f076b5384889dbe9b04"
+    "reviewedSha256": "b008ee6536fa78dde16b41bbb144582295f40a800d2fdba8d4b4223ba5f9f18f"
   },
   {
     "path": "ko/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
@@ -18,7 +18,7 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed docsandfixedPIIcode:reversiblesurface-specifictokens/reservedmarkeravoidance/NFCspans;numericboundariesandnoinvented-letterstripping;source-spancoverageleakage,normalizedunique-paircounts/denominators/hallucinationflagindependence/strictIDandgoldvalidation;precisemetriclimitationsanddatasetnotgeneralization;50CPUtests+2200oracle(no model).",
-    "reviewedSha256": "d8080a4dbd26a8d6ca8f55ce3a3f060ab71f42e91f456fe4029f6ade58ff23c1"
+    "reviewedSha256": "c2f8c390ba8e5e1716b3603d2af83ff95bb256761dd4078bccf35b09ed80d212"
   },
   {
     "path": "en/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",

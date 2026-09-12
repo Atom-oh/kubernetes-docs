@@ -472,9 +472,9 @@
   ],
   "limits": "NoGPUtraining/inferencequality/memory/costvalidation;nocurrentAWSresidualquery. Proposedconfigurationandcomponenttestsarenotendtoendproof.",
   "executionFollowup": {
-    "pythonTestsPassed": 100,
+    "pythonTestsPassed": 121,
     "runtimeGuard": "PyTorch2.8 end-of-patch2026-08-06; GPUexecutionblocked",
-    "diagramSourceCommit": "86fcb8b3868092621130ea1e26dc6beb070c3b48",
+    "diagramSourceCommit": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051",
     "figures": {
       "ko": {
         "checksPassed": 9,
@@ -513,7 +513,7 @@
             "bottom": 112,
             "left": 16
           },
-          "sourceSha256": "dd1e357b639fc6157abd26ef5bcfacd3c1f3dc52217d56925e0e6cd7a29645a3"
+          "sourceSha256": "d8556ea63163b6762f2ed284fbf64f890ae7da13fe369ac9e2ebba486195da91"
         },
         {
           "locale": "ko",
@@ -532,7 +532,7 @@
             "bottom": 76,
             "left": 32
           },
-          "sourceSha256": "dd1e357b639fc6157abd26ef5bcfacd3c1f3dc52217d56925e0e6cd7a29645a3"
+          "sourceSha256": "d8556ea63163b6762f2ed284fbf64f890ae7da13fe369ac9e2ebba486195da91"
         },
         {
           "locale": "ko",
@@ -551,7 +551,7 @@
             "bottom": 60,
             "left": 1496.359375
           },
-          "sourceSha256": "dd1e357b639fc6157abd26ef5bcfacd3c1f3dc52217d56925e0e6cd7a29645a3"
+          "sourceSha256": "d8556ea63163b6762f2ed284fbf64f890ae7da13fe369ac9e2ebba486195da91"
         },
         {
           "locale": "en",
@@ -570,7 +570,7 @@
             "bottom": 112,
             "left": 16
           },
-          "sourceSha256": "a417abc5699f16f73073d24c8fea4d3523b97fa999b5eba632b89c686d322520"
+          "sourceSha256": "1a8b48ebb4e15efda50a78399b346604fe893393d6269da61a4a90b6077b9ce7"
         },
         {
           "locale": "en",
@@ -589,7 +589,7 @@
             "bottom": 76,
             "left": 32
           },
-          "sourceSha256": "a417abc5699f16f73073d24c8fea4d3523b97fa999b5eba632b89c686d322520"
+          "sourceSha256": "1a8b48ebb4e15efda50a78399b346604fe893393d6269da61a4a90b6077b9ce7"
         },
         {
           "locale": "en",
@@ -608,11 +608,17 @@
             "bottom": 60,
             "left": 1496.359375
           },
-          "sourceSha256": "a417abc5699f16f73073d24c8fea4d3523b97fa999b5eba632b89c686d322520"
+          "sourceSha256": "1a8b48ebb4e15efda50a78399b346604fe893393d6269da61a4a90b6077b9ce7"
         }
       ],
       "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
     },
-    "pngVisualInspection": "both current PNGs reviewed after metrics+adapter label correction"
+    "pngVisualInspection": "Both final121test/scopedS3SDK/source0a9f2ffc PNGs inspected"
+  },
+  "prReviewFollowup": {
+    "fixRecord": "sagemaker-review-fixes.json",
+    "codeCommit": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051",
+    "pythonTestsPassed": 121,
+    "newHeadReview": "pending"
   }
 }

@@ -229,5 +229,11 @@
     "passed": 100,
     "python": "3.12",
     "installed": "pytest8.4.2/PyYAML6.0.3/boto3 1.42.97 only"
+  },
+  "prReviewFollowup": {
+    "fixRecord": "sagemaker-review-fixes.json",
+    "codeCommit": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051",
+    "pythonTestsPassed": 121,
+    "newHeadReview": "pending"
   }
 }

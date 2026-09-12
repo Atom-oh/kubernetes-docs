@@ -218,5 +218,11 @@
     "LatestHEADAIreview+requiredCI+merge stillrequired",
     "Refreshsource-backedfoundationdiagramrevisionaftercodecommit;synccurrenttestcountafterremainingSageMakercodereview"
   ],
-  "limits": "CPU-onlysyntheticdataandgroundtruthoracle;noactualmodelpredictions/training/GPU/AWS/realcustomerPII.ThisisnotaspanNERbenchmarkorprivacyguarantee."
+  "limits": "CPU-onlysyntheticdataandgroundtruthoracle;noactualmodelpredictions/training/GPU/AWS/realcustomerPII.ThisisnotaspanNERbenchmarkorprivacyguarantee.",
+  "prReviewFollowup": {
+    "fixRecord": "sagemaker-review-fixes.json",
+    "codeCommit": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051",
+    "pythonTestsPassed": 121,
+    "newHeadReview": "pending"
+  }
 }

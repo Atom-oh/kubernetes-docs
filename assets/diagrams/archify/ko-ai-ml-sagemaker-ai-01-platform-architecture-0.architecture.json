@@ -11,7 +11,7 @@
     ],
     "repository": {
       "url": "https://github.com/Atom-oh/kubernetes-docs",
-      "revision": "86fcb8b3868092621130ea1e26dc6beb070c3b48"
+      "revision": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051"
     }
   },
   "components": [
@@ -305,7 +305,7 @@
       "id": "s3-eks",
       "from": "s3",
       "to": "eksJob",
-      "label": "presigned source + data",
+      "label": "scoped S3 SDK reads",
       "fromSide": "bottom",
       "toSide": "left"
     },
@@ -338,7 +338,7 @@
       "dot": "emerald",
       "title": "검증 범위와 날짜",
       "items": [
-        "09-12: CPU 회귀 검사 100개",
+        "09-12: CPU 회귀 검사 121개",
         "09-01: AWS provisioning 관측 기록"
       ]
     },

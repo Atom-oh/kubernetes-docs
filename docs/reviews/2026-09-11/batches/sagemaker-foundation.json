@@ -11,7 +11,7 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
-    "reviewedSha256": "6befaac271b3c077798fdca93934a3e0bc6fb7a98809fdb6f728eb74b731d1d6"
+    "reviewedSha256": "5a03432de6e5ed7daa60b665f3c50e975ff1627ebe9f1f7a9eed6cdf45d1fd17"
   },
   {
     "path": "ko/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
@@ -32,7 +32,7 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
-    "reviewedSha256": "763c813a925d6ce03c09055f9ef7c76b02f6d3293deb1b9d2a3cb5ef9fee1559"
+    "reviewedSha256": "8eb4c25489f6921cabb3f3e230c92a997e69d0f9ff93e2068c243dcefb893b26"
   },
   {
     "path": "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
@@ -45,7 +45,7 @@
     "path": "examples/ai-ml/qwen-pii-finetuning/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "2714e0a7abbeee2b63caf65b678a644f2ac8b84c8fb6b95290e76ef4f6e5cf2f",
+    "reviewedSha256": "3c4c621883838ec1f5959bcb69b90b26f7388f0f8e4b8293470036b6730b9e1e",
     "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures."
   }
 ]
