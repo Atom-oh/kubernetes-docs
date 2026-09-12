@@ -14,41 +14,36 @@
           "s3",
           "sch",
           "dag",
+          "api",
           "pod"
         ],
-        "note": "S3에서 동기화된 DAG와 kube_config.yaml로 KubernetesPodOperator가 별도 EKS 클러스터에 Pod를 만든다."
+        "note": "Worker subnet의 DNS·HTTPS 연결과 인증 후 workload를 실행합니다."
       },
       {
         "id": "auth-path",
         "label": "권한 부여",
         "focus": [
           "iam",
+          "api",
           "pod"
         ],
-        "note": "eksctl iamidentitymapping이 MWAA 실행 역할을 EKS RBAC에 바인딩해 Pod 생성을 허용한다."
+        "note": "Access entry의 group과 namespace RoleBinding을 연결합니다. Child Pod의 AWS 권한은 별도입니다."
       }
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
-        },
-        "security": {
-          "label": "보안 구성 요소"
-        }
-      }
-    }
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1280,
+      620
+    ]
   },
   "components": [
     {
       "id": "sch",
       "type": "backend",
-      "label": "MWAA scheduler / 워커",
-      "sublabel": "AWS가 패치·스케일 관리",
+      "label": "MWAA managed runtime",
+      "sublabel": "사용자 VPC private subnet 연결",
       "pos": [
         80,
         80
@@ -61,8 +56,8 @@
     {
       "id": "dag",
       "type": "backend",
-      "label": "DAG: KubernetesPodOperator",
-      "sublabel": "in_cluster=False · config_file=kube_config.yaml",
+      "label": "MWAA worker: KPO",
+      "sublabel": "in_cluster=False · kubeconfig exec",
       "tag": "DAG",
       "pos": [
         80,
@@ -90,28 +85,42 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "Operator가 생성한 Pod",
-      "sublabel": "데이터 처리 워크로드",
+      "label": "Workload Pod",
+      "sublabel": "data-processing / workload-smoke",
       "pos": [
-        760,
+        960,
         250
       ],
       "size": [
-        260,
+        250,
         64
       ]
     },
     {
       "id": "iam",
       "type": "security",
-      "label": "eksctl iamidentitymapping",
-      "sublabel": "MWAA 실행 역할 → RBAC",
+      "label": "EKS access entry + RBAC",
+      "sublabel": "Execution role → namespace group",
       "pos": [
-        760,
+        510,
         470
       ],
       "size": [
-        280,
+        320,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "EKS API",
+      "sublabel": "인증 + namespace 권한",
+      "pos": [
+        600,
+        250
+      ],
+      "size": [
+        240,
         64
       ]
     }
@@ -129,6 +138,7 @@
       "kind": "region",
       "label": "사용자의 EKS 클러스터 (별도 인프라)",
       "wraps": [
+        "api",
         "pod"
       ]
     }
@@ -153,18 +163,51 @@
     {
       "id": "dag-pod",
       "from": "dag",
-      "to": "pod",
-      "label": "kube_config.yaml로 Pod 생성",
+      "to": "api",
+      "label": "HTTPS 443 + IAM",
       "variant": "emphasis"
     },
     {
       "id": "iam-rbac",
       "from": "iam",
-      "to": "pod",
-      "label": "MWAA 실행 역할에 EKS RBAC 접근 권한 부여",
+      "to": "api",
+      "label": "group / RoleBinding",
       "variant": "security",
       "fromSide": "top",
       "toSide": "bottom"
+    },
+    {
+      "id": "api-pod",
+      "from": "api",
+      "to": "pod",
+      "label": "create / watch",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "연결",
+      "items": [
+        "Worker subnet → EKS API DNS / HTTPS",
+        "kubeconfig exec → MWAA execution role"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "권한 경계",
+      "items": [
+        "Access entry group → namespace RoleBinding",
+        "Workload AWS identity configured separately"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "운영",
+      "items": [
+        "S3 delivery + constraints + parsing checks",
+        "DAG health, capacity and upgrades still matter"
+      ]
     }
   ]
 }

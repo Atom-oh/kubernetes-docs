@@ -1,7 +1,7 @@
 # EKS 고급 디버깅과 장애 대응
 
-> **지원 버전**: EKS 1.28+, kubectl 1.28+
-> **마지막 업데이트**: 2026년 9월 9일
+> **검토 기준**: Kubernetes 1.36 schema·kubectl 1.36.2; 현재 지원 EKS와 호환 component release 선택
+> **마지막 업데이트**: 2026년 9월 12일
 
 Amazon EKS 클러스터의 안정적인 운영을 위해서는 체계적인 장애 대응 프레임워크와 고급 디버깅 기술이 필수입니다. 이 문서에서는 프로덕션 환경에서 발생하는 복잡한 문제들을 신속하게 진단하고 해결하기 위한 실전 가이드를 제공합니다.
 
@@ -171,7 +171,7 @@ aws eks describe-update --region "$AWS_REGION" --name "$CLUSTER_NAME" \
 
 각 블록을 Bash·SQL이 아닌 **별도의 Logs Insights QL query**로 실행합니다. Console·StartQuery 요청에서 정확한 log group·기간을 선택합니다. CloudWatch가 발견한 EKS JSON audit field를 사용하므로 pipeline이 형식을 바꾸면 실제 record·중첩 log parsing을 확인합니다. 검색 결과가 없다고 서비스 정상·log 전송을 증명하지는 않습니다.
 
-#### API error messages
+#### API 오류 메시지
 
 ```text
 fields @timestamp, @message
@@ -181,7 +181,7 @@ fields @timestamp, @message
 | limit 100
 ```
 
-#### Error counts within the selected time window
+#### 선택한 시간 구간의 오류 수
 
 ```text
 fields @timestamp, @message
@@ -190,7 +190,7 @@ fields @timestamp, @message
 | stats count(*) as error_count by bin(5m)
 ```
 
-#### Authenticator messages requiring inspection
+#### 검토가 필요한 Authenticator 메시지
 
 ```text
 fields @timestamp, @message
@@ -200,7 +200,7 @@ fields @timestamp, @message
 | limit 50
 ```
 
-#### Structured audit authentication/authorization denials
+#### 구조화된 audit 로그의 인증·인가 거부
 
 ```text
 fields @timestamp, user.username, verb, objectRef.resource, objectRef.namespace, responseStatus.code
@@ -210,7 +210,7 @@ fields @timestamp, user.username, verb, objectRef.resource, objectRef.namespace,
 | limit 100
 ```
 
-#### Structured audit activity for one reviewed identity
+#### 검토 대상 identity의 구조화된 audit 활동
 
 ```text
 fields @timestamp, user.username, verb, objectRef.resource, objectRef.namespace, responseStatus.code
@@ -220,7 +220,7 @@ fields @timestamp, user.username, verb, objectRef.resource, objectRef.namespace,
 | limit 50
 ```
 
-#### Audit 429 events by identity and resource
+#### identity와 resource별 audit 429 이벤트
 
 ```text
 fields user.username, verb, objectRef.resource, responseStatus.code
@@ -231,7 +231,7 @@ fields user.username, verb, objectRef.resource, responseStatus.code
 | limit 50
 ```
 
-#### API request volume, not necessarily throttling
+#### API 요청량 — throttling 발생 여부와 구분
 
 ```text
 fields user.username, verb, objectRef.resource
@@ -1453,7 +1453,7 @@ spec:
       labels:
         severity: warning
       annotations:
-        summary: More than50% of CFS periods were throttled for {{ $labels.namespace
+        summary: More than 50% of CFS periods were throttled for {{ $labels.namespace
           }}/{{ $labels.pod }}/{{ $labels.container }}.
 ```
 ```bash
@@ -1465,7 +1465,7 @@ kubectl --context "$KUBE_CONTEXT" -n monitoring get prometheusrule reviewed-eks-
 ```
 ### ADOT Collector: 명시적 Pipeline·전제
 
-예시는 검토한 Operator0.158.0의 v1beta1 object config와 ADOT0.50.0 component를 사용합니다. Namespace·Operator/CRD·receiver TLS Secret·client CA 신뢰·적절한 ServiceAccount AWS identity를 준비합니다. 아래 Role은 Kubernetes Pod discovery 권한이며 X-Ray·CloudWatch Logs·AMP 권한이 아닙니다. 배포 전 exporter IAM·실제 region/log-group/workspace 입력을 검토합니다. 실행하거나 production 준비 완료라고 주장하지 않습니다.
+예시는 검토한 Operator 0.158.0의 v1beta1 object config와 ADOT 0.50.0 component를 사용합니다. Namespace·Operator/CRD·receiver TLS Secret·client CA 신뢰·적절한 ServiceAccount AWS identity를 준비합니다. 아래 Role은 Kubernetes Pod discovery 권한이며 X-Ray·CloudWatch Logs·AMP 권한이 아닙니다. 배포 전 exporter IAM·실제 region/log-group/workspace 입력을 검토합니다. 실행하거나 production 준비 완료라고 주장하지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -2014,112 +2014,93 @@ EXPECTED_ALARM_ARN에는 정확한 소유 alarm을 지정합니다. 한 시간 a
 
 ## 9. 빠른 참조
 
-### 오류 패턴 조회 테이블
+### 증상 해석 후 변경 선택
 
-| 증상 | 원인 | 해결 방법 |
-|------|------|-----------|
-| **CrashLoopBackOff** | 애플리케이션 크래시, 잘못된 명령, 누락된 의존성 | `kubectl logs --previous`, 애플리케이션 코드/설정 검토 |
-| **ImagePullBackOff** | 이미지 없음, 잘못된 태그, 인증 실패 | 이미지 이름 확인, `imagePullSecrets` 검토 |
-| **OOMKilled** | 메모리 제한 초과 | 메모리 limit 증가, 메모리 누수 수정 |
-| **CreateContainerConfigError** | ConfigMap/Secret 누락, 잘못된 참조 | `kubectl describe pod`, 참조된 리소스 존재 확인 |
-| **Pending (리소스)** | CPU/메모리 요청을 충족하는 노드 없음 | 노드 스케일 업, 리소스 요청 조정 |
-| **Pending (스케줄링)** | nodeSelector, affinity, taint 불일치 | `kubectl describe pod`의 Events 섹션 확인 |
-| **ContainerCreating (지연)** | 볼륨 마운트 실패, 네트워크 플러그인 문제 | PVC 상태, CNI 파드 상태 확인 |
-| **ErrImagePull** | 이미지 레지스트리 연결 실패 | 네트워크 연결, ECR 엔드포인트 확인 |
-| **RunContainerError** | 잘못된 컨테이너 설정, securityContext 문제 | `kubectl describe pod`, securityContext 검토 |
-| **PostStartHookError** | postStart 훅 실패 | 훅 명령어 검토, 타임아웃 조정 |
-| **PreStopHookError** | preStop 훅 실패 | 훅 명령어 검토, terminationGracePeriodSeconds 조정 |
-| **FailedScheduling** | 리소스 부족, PVC 바인딩 대기 | 노드 리소스, PVC 상태 확인 |
-| **FailedMount** | 볼륨 마운트 실패, CSI 드라이버 문제 | CSI 드라이버 로그, PV/PVC 상태 확인 |
-| **NetworkNotReady** | CNI 플러그인 미준비 | aws-node 파드 상태, CNI 로그 확인 |
-| **NodeNotReady** | kubelet 문제, 네트워크 단절 | kubelet 로그, 노드 상태 확인 |
-| **Evicted** | 노드 리소스 압력 (디스크, 메모리) | 노드 리소스 정리, 리소스 limit 조정 |
-| **BackOff** | 재시도 백오프 상태 | 이전 에러 로그 확인, 근본 원인 해결 |
-| **InvalidImageName** | 잘못된 이미지 이름 형식 | 이미지 이름 문법 확인 |
+| 증상 | 근거·해석 |
+| --- | --- |
+| CrashLoopBackOff | Container 종료·재시작 반복의 backoff; exit code·last state·probe·현재/이전 log 확인. RestartAlways에서는 exit0도 반복 가능 |
+| ImagePullBackOff | Pull 실패 뒤 retry 지연; 선행 오류·image/tag/digest·platform·pull identity·registry/network/CA/rate limit 확인 |
+| ErrImagePull | Pull 시도 실패이며 network 문제나 앱 IRSA 문제로 단정하지 않음 |
+| OOMKilled | Runtime reason·memory limit/working set·node 근거 대조; exit137 또는 높은 사용량만으로 leak을 증명하지 못함 |
+| CreateContainerConfigError | ConfigMap/Secret/volume·namespace/key 참조 확인; credential 값 dump 금지 |
+| Pending: resource | Requests·init/Pod overhead·allocatable·Pod limit·실제 event를 비교한 뒤 provisioning 판단 |
+| Pending: placement | Selector/affinity/taint/topology/storage 확인; 의도된 Pending일 수 있음 |
+| ContainerCreating | Pod phase가 아닌 container reason/표시; runtime·image·CNI·volume 설정 확인 |
+| RunContainerError | 실제 runtime/security/command 오류 확인; 보편적인 restart 해결은 없음 |
+| postStart hook 실패 | Handler·앱 초기화 확인. ENTRYPOINT보다 먼저 끝나는 순서 보장이 없고 일반 timeoutSeconds field도 없음 |
+| preStop hook 실패 | Hook 시간을 포함한 grace period·handler 오류 확인; 강제 종료는 정상 draining이 아님 |
+| FailedScheduling | PVC/affinity/resource 등 전체 message 확인; CPU 부족으로 단정하지 않음 |
+| FailedMount | CSI owner·claim·attachment/topology·권한·backend/network 확인; finalizer 일괄 제거 금지 |
+| NetworkNotReady | 실제 node networking 구현·readiness 확인; 표준 aws-node 명령은 mode별 적용 |
+| NodeNotReady | Ready=False와 heartbeat 부재 Unknown을 구분하고 node/EC2/runtime/network 근거 확인 |
+| Evicted | Node pressure·ephemeral storage·Pod reason 확인; limit 증가·log 삭제가 자동 해결은 아님 |
+| BackOff | Retry 동작이며 조사 대상은 선행 실패 원인 |
+| InvalidImageName | Image reference 문법 확인; 정상 registry 해석 이전 실패 |
 
-### 필수 kubectl 명령어 치트시트
-
-```bash
-# 클러스터 상태
-kubectl cluster-info
-kubectl get nodes -o wide
-kubectl top nodes
-
-# 파드 디버깅
-kubectl get pods -A -o wide
-kubectl describe pod <pod> -n <ns>
-kubectl logs <pod> -n <ns> --tail=100 -f
-kubectl logs <pod> -n <ns> --previous
-kubectl exec -it <pod> -n <ns> -- /bin/sh
-
-# 이벤트
-kubectl get events -A --sort-by='.lastTimestamp'
-kubectl get events -n <ns> --field-selector type=Warning
-
-# 리소스 사용량
-kubectl top pods -A --sort-by=memory
-kubectl top pods -A --sort-by=cpu
-
-# 디버그 컨테이너
-kubectl debug -it <pod> --image=busybox --target=<container>
-kubectl debug node/<node> -it --image=ubuntu
-
-# 네트워크 테스트
-kubectl run test --image=nicolaka/netshoot -it --rm -- /bin/bash
-
-# 강제 삭제
-kubectl delete pod <pod> -n <ns> --grace-period=0 --force
-
-# 롤아웃
-kubectl rollout status deployment/<deploy> -n <ns>
-kubectl rollout undo deployment/<deploy> -n <ns>
-kubectl rollout restart deployment/<deploy> -n <ns>
-
-# 스케일링
-kubectl scale deployment <deploy> -n <ns> --replicas=3
-
-# ConfigMap/Secret
-kubectl get configmap -n <ns> -o yaml
-kubectl get secret -n <ns> -o yaml
-
-# 서비스 엔드포인트
-kubectl get endpoints -n <ns>
-kubectl describe svc <service> -n <ns>
-```
-
-### 도구 추천
-
-| 도구 | 용도 | 설치/사용 |
-|------|------|-----------|
-| **netshoot** | 네트워크 디버깅 | `kubectl run net --image=nicolaka/netshoot -it --rm` |
-| **eks-node-viewer** | 노드 리소스 시각화 | `go install github.com/awslabs/eks-node-viewer/cmd/eks-node-viewer@latest` |
-| **crictl** | 컨테이너 런타임 디버깅 | 노드에서 `sudo crictl ps`, `sudo crictl logs` |
-| **kubeval** | YAML 검증 | `kubeval deployment.yaml` |
-| **stern** | 멀티 파드 로그 | `stern <pod-pattern> -n <namespace>` |
-| **k9s** | TUI 클러스터 관리 | `k9s -n <namespace>` |
-| **kubectx/kubens** | 컨텍스트/네임스페이스 전환 | `kubectx <context>`, `kubens <namespace>` |
-
-### EKS Log Collector (AWS Support용)
+### 범위를 지정한 조회 명령
 
 ```bash
-# EKS Log Collector 다운로드 및 실행
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh
-chmod +x eks-log-collector.sh
-
-# 로그 수집 실행
-sudo ./eks-log-collector.sh
-
-# 수집된 로그는 /var/log/eks_i-xxxx_$(date +%Y-%m-%d_%H-%M-%S).tar.gz에 저장
-# AWS Support 케이스에 첨부하여 제출
+# Use the account/context guard and the actual namespace/Pod/container from triage.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o wide
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events --field-selector type=Warning
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" -c "$CONTAINER_NAME" --since=15m --tail=100
+# Run separately: previous-container logs may not exist.
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" -c "$CONTAINER_NAME" --previous --tail=100
 ```
+```bash
+# Authorized reads; print names/keys only, not configuration or Secret values.
+: "${CONFIGMAP_NAME:?Set one relevant ConfigMap}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get configmap "$CONFIGMAP_NAME" -o json | jq '{
+  name:.metadata.name,textKeys:(.data // {} | keys),binaryKeys:(.binaryData // {} | keys)
+}'
+: "${SECRET_NAME:?Set one Secret whose read permission is explicitly authorized}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get secret "$SECRET_NAME" -o json | jq '{
+  name:.metadata.name,type:.type,keyNames:(.data // {} | keys)
+}'
+```
+Secret 명령은 표시만 줄이며 API에서 Secret을 요청하므로 Secret-read 권한이 필요합니다. 인가 경계가 아닙니다. Event timestamp는 집계된 발생을 나타낼 수 있고 top은 과거 전체·순간의 진실이 아닌 최근 sample입니다. Endpoint는 앞의 EndpointSlice 절차로 확인합니다.
 
-수집되는 정보:
-- 시스템 정보 (OS, 커널, 메모리, CPU)
-- kubelet 로그 및 설정
-- containerd 로그 및 설정
-- CNI 플러그인 로그
-- 네트워크 설정 (iptables, 라우팅)
-- 디스크 사용량
+Pod 생성/debug/exec·rollout undo/restart·scale·drain/repair·delete는 별도로 검토한 운영 단계에 둡니다. Force delete는 API 객체를 지우지만 이전 process 종료를 증명하지 않아 중복 writer를 만들 수 있습니다. 이를 기본 triage에 넣거나 data/eviction 보호를 우회하지 않습니다.
+
+### 도구 선택
+
+| Tool | Use and boundary |
+| --- | --- |
+| netshoot | Reviewed diagnostic image/toolbox; creating a Pod and sending traffic require the scoped workflow above |
+| eks-node-viewer | Scheduled Pod requests versus node allocatable capacity, not actual Pod CPU/memory usage; review release and cluster/AWS access |
+| crictl | CRI state/log inspection on an authorized compatible host and configured runtime endpoint |
+| kubeconform | Pin the Kubernetes schema version and provide CRD schemas; missing/skipped schemas are not successful validation |
+| stern | Multi-Pod log inspection with explicit context/namespace/selectors and bounded output |
+| k9s | Interactive TUI; use documented readonly mode and appropriate RBAC when inspection is intended |
+| kubectx/kubens | Change local default context/namespace; explicit context flags are safer for shared diagnostic procedures |
+
+장애 전에 검토한 release를 준비하고 unpinned go install @latest를 복구 절차로 실행하지 않습니다. Kubeconform은 로컬·오프라인 schema를 지원하지만 admission webhook·runtime을 실행해 검증하지는 않습니다. Server-side dry-run은 대상 API에 접속하며 offline check와 다릅니다. K9s는 --readonly를 지원하지만 기본이 read-only는 아닙니다. 감사에서 도구 benchmark·interactive session을 실행하지 않았습니다.
+
+### 소유 Support Case용 EKS Log Collector
+
+공식 EKS log-collector 경로는 이번 검토에서 접근 가능했습니다. Repository가 옮겨졌다고 추정해 바꾸지 않습니다. Host/system/runtime/network 정보를 수집하고 archive를 쓰므로 호환·인가된 node에서 현재 공식 절차와 검토한 revision을 사용합니다. Auto Mode는 NodeDiagnostic·문서화된 debug-container 경로를 사용하며 일반 직접 SSH가 아닙니다.
+
+```bash
+# Download only; do not automatically execute a newly downloaded host script.
+set -euo pipefail
+: "${EVIDENCE_PARENT:?Set an existing private evidence directory}"
+: "${COLLECTOR_REF:?Set a reviewed full 40-character commit SHA from the official repository}"
+[[ "$COLLECTOR_REF" =~ ^[0-9a-fA-F]{40}$ ]]
+test -d "$EVIDENCE_PARENT"
+umask 077
+COLLECTOR_DIR=$(mktemp -d "$EVIDENCE_PARENT/eks-support.XXXXXXXX")
+curl --fail --location --silent --show-error --connect-timeout 5 --max-time 30 \
+  "https://raw.githubusercontent.com/awslabs/amazon-eks-ami/$COLLECTOR_REF/log-collector-script/linux/eks-log-collector.sh" \
+  --output "$COLLECTOR_DIR/eks-log-collector.sh"
+sha256sum "$COLLECTOR_DIR/eks-log-collector.sh"
+```
+Digest는 별도로 검토한 artifact 기록과 비교합니다. Sha256sum 출력만으로 인증된 것은 아닙니다. Collector 실행은 disk/CPU·민감 정보 영향을 고려한 별도 인가 host 작업입니다. Archive를 검사·삭제 처리한 뒤 소유 AWS Support case에 수동 첨부합니다. Kubeconfig/key·앱 log·endpoint·env 정보가 공개 공유에 안전하다고 가정하지 않습니다. 감사에서 support archive를 생성·업로드하지 않았습니다.
+
+[Kubeconform](https://github.com/yannh/kubeconform) · [K9s](https://github.com/derailed/k9s) · [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) · [EKS troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 
 ---
 
@@ -2131,10 +2112,12 @@ sudo ./eks-log-collector.sh
 
 ### 다음 문서
 
+다음 version 계획 주제는 [Kubernetes version roadmap](12-kubernetes-version-roadmap.md)에서 확인합니다.
+
 EKS 클러스터를 온프레미스 환경과 통합하는 방법을 알아보려면 [EKS Hybrid Nodes](../eks-hybrid-nodes/README.md)를 참조하세요.
 
 ### 추가 학습 자료
 
 - [AWS EKS 공식 문서 - 문제 해결](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 - [Kubernetes 공식 문서 - 디버깅](https://kubernetes.io/docs/tasks/debug/)
-- [AWS Well-Architected Framework - EKS 렌즈](https://docs.aws.amazon.com/wellarchitected/latest/eks-lens/welcome.html)
+- [Amazon EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)

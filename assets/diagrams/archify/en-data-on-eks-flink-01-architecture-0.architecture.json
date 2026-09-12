@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "JobManager <-> TaskManager Flow on Kubernetes",
+    "title": "Flink Native roles and shareable task slots",
     "locale": "en",
     "output": "en-data-on-eks-flink-01-architecture-0.html",
     "quality_profile": "showcase",
@@ -40,7 +40,10 @@
         ],
         "note": "In native Kubernetes deployment the Kubernetes ResourceManager requests and releases TaskManager pods on demand."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {
@@ -88,7 +91,7 @@
     {
       "id": "jg",
       "type": "backend",
-      "label": "Job Graph & Scheduler",
+      "label": "JobMaster / Scheduler",
       "sublabel": "deploys subtasks",
       "pos": [
         440,
@@ -117,7 +120,7 @@
       "id": "s1",
       "type": "backend",
       "label": "Task Slot 1",
-      "sublabel": "one subtask",
+      "sublabel": "Sharing / chaining possible",
       "pos": [
         60,
         390
@@ -131,7 +134,7 @@
       "id": "s2",
       "type": "backend",
       "label": "Task Slot 2",
-      "sublabel": "one subtask",
+      "sublabel": "Sharing / chaining possible",
       "pos": [
         60,
         500
@@ -159,7 +162,7 @@
       "id": "s3",
       "type": "backend",
       "label": "Task Slot 1",
-      "sublabel": "one subtask",
+      "sublabel": "Sharing / chaining possible",
       "pos": [
         850,
         390
@@ -173,7 +176,7 @@
       "id": "s4",
       "type": "backend",
       "label": "Task Slot 2",
-      "sublabel": "one subtask",
+      "sublabel": "Sharing / chaining possible",
       "pos": [
         850,
         500
@@ -236,14 +239,14 @@
       "id": "rm-tm1",
       "from": "rm",
       "to": "tm1",
-      "label": "requests / releases pods",
+      "label": "Pod allocation via K8s API",
       "variant": "emphasis"
     },
     {
       "id": "rm-tm2",
       "from": "rm",
       "to": "tm2",
-      "label": "requests / releases pods",
+      "label": "Pod allocation via K8s API",
       "variant": "emphasis"
     },
     {
@@ -286,28 +289,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "JobManager (JM)",
+      "title": "JobManager",
       "items": [
-        "Control plane of the Flink cluster — runs as its own pod",
-        "Builds the job graph, coordinates checkpoints, schedules work onto TaskManagers",
-        "Serves the REST API and Web UI"
+        "Coordinates execution, checkpoints and recovery",
+        "Application main() runs on the JM"
       ]
     },
     {
       "dot": "emerald",
-      "title": "TaskManager (TM)",
+      "title": "TaskManager / Slots",
       "items": [
-        "Worker process that actually executes the job — one pod per TaskManager",
-        "Offers one or more task slots; each slot runs one operator subtask",
-        "With slot sharing, the slots a job needs is usually its maximum operator parallelism"
+        "Several operator tasks can share a slot",
+        "A slot does not itself isolate CPU"
       ]
     },
     {
       "dot": "orange",
-      "title": "Kubernetes ResourceManager",
+      "title": "Native ResourceManager",
       "items": [
-        "Talks to the Kubernetes API server to request and release TaskManager pods",
-        "Used only in native Kubernetes deployment — absent in standalone-on-Kubernetes"
+        "Requests/releases pods through the Kubernetes API",
+        "Subject to idle timeouts, capacity and profiles"
       ]
     }
   ]

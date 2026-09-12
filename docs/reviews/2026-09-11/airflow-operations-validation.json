@@ -1,0 +1,320 @@
+{
+  "status": "passed",
+  "files": 4,
+  "fences": 14,
+  "quizQuestions": 20,
+  "relativeLinks": 8,
+  "versions": {
+    "airflow": "3.3.1",
+    "chart": "1.22.0",
+    "amazonProvider": "9.34.0"
+  },
+  "configChecks": "All published airflow.cfg keys exist in released3.3.1 configuration schema.",
+  "uploadMethod": {
+    "status": "passed",
+    "sourceSha256": "e16152b8e5c1396063dd271c63bc4f3150be33fb8f0d8068d4b8edde5c5b9224",
+    "cases": [
+      {
+        "name": "success-retain",
+        "passed": true
+      },
+      {
+        "name": "success-delete",
+        "passed": true
+      },
+      {
+        "name": "failed-retain",
+        "passed": true
+      },
+      {
+        "name": "absolute-path",
+        "passed": true
+      },
+      {
+        "name": "missing-file",
+        "passed": true
+      }
+    ],
+    "scope": "Unchanged released upload method; real local filesystem, stubbed write success/failure. No AWS SDK, S3 access, Airflow task process or end-to-end upload."
+  },
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/airflow/05-operations.md",
+        "sha256": "1565c81e0fecc5124d5f28e835acc98fca6c060b7c979abf76c9d270e8431e93",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-5-운영과-보안"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-scheduler-ha는-데이터베이스와-함께-검증"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-백업·복원·마이그레이션"
+          },
+          {
+            "tag": "h3",
+            "id": "이력-정리는-보존-정책에-따라"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-fernet과-secrets-조회-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-s3-task-로그는-모든-로그의-즉시-streaming이-아님"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-metrics-전송과-실제-수집-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-autoscaling과-보안-경계"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-운영-인수-기준"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-5-운영과-보안",
+          "_1-scheduler-ha는-데이터베이스와-함께-검증",
+          "_2-백업·복원·마이그레이션",
+          "이력-정리는-보존-정책에-따라",
+          "_3-fernet과-secrets-조회-경로",
+          "_4-s3-task-로그는-모든-로그의-즉시-streaming이-아님",
+          "_5-metrics-전송과-실제-수집-경로",
+          "_6-autoscaling과-보안-경계",
+          "_7-운영-인수-기준",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/airflow/05-operations.md",
+        "sha256": "d31d1e47d73c816f5f447f693c690bb7f0defe8615754f37d8aa444d26c059de",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-5-operations-and-security"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-validate-scheduler-ha-together-with-the-database"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-backup-restore-and-migration"
+          },
+          {
+            "tag": "h3",
+            "id": "apply-a-deliberate-history-retention-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-fernet-and-secret-resolution-paths"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-s3-task-logs-are-not-instant-streaming-of-every-component-log"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-metrics-transport-and-collection"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-autoscaling-and-security-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-operational-acceptance"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope-and-references"
+          }
+        ],
+        "renderedIds": [
+          "part-5-operations-and-security",
+          "_1-validate-scheduler-ha-together-with-the-database",
+          "_2-backup-restore-and-migration",
+          "apply-a-deliberate-history-retention-policy",
+          "_3-fernet-and-secret-resolution-paths",
+          "_4-s3-task-logs-are-not-instant-streaming-of-every-component-log",
+          "_5-metrics-transport-and-collection",
+          "_6-autoscaling-and-security-boundaries",
+          "_7-operational-acceptance",
+          "validation-scope-and-references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+        "sha256": "3c3b93818500fc700382338a77176b6768b49e1617e8bfdffdda7530c3062829",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-5-운영과-보안-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "part-5-운영과-보안-퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/airflow/05-operations-quiz.md",
+        "sha256": "a6caa4298dadde56b8f7e11869adf6576e66351b3c8a60c3deb37b21ab3b4312",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-5-operations-and-security-quiz"
+          }
+        ],
+        "renderedIds": [
+          "part-5-operations-and-security-quiz"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "name": "scheduler",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/scheduler.html",
+      "resolvedUrl": "https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/scheduler.html",
+      "sha256": "da603d04ca4c53a2c0bda2a86782d7c058698586738eae891e8bbe5dcd1f3615",
+      "bytes": 127875
+    },
+    {
+      "name": "secrets",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/security/secrets/secrets-backend/index.html",
+      "resolvedUrl": "https://airflow.apache.org/docs/apache-airflow/3.3.1/security/secrets/secrets-backend/index.html",
+      "sha256": "3691824689ea4f3ff59337041613b3e3e524ede2654666af400ea5fe71347a49",
+      "bytes": 120424
+    },
+    {
+      "name": "fernet",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/security/secrets/fernet.html",
+      "resolvedUrl": "https://airflow.apache.org/docs/apache-airflow/3.3.1/security/secrets/fernet.html",
+      "sha256": "86e96a716aa88939755e4a0a1d73735459930f18217ef416a49d3276b713f3b7",
+      "bytes": 106228
+    },
+    {
+      "name": "logging",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/logging-monitoring/logging-tasks.html",
+      "resolvedUrl": "https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/logging-monitoring/logging-tasks.html",
+      "sha256": "f7af683fbbc6c3d4ef9c676e49326c4763dfdc5db4b6a71bccad3f65ed1d19e4",
+      "bytes": 128816
+    },
+    {
+      "name": "metrics",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/logging-monitoring/metrics.html",
+      "resolvedUrl": "https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/logging-monitoring/metrics.html",
+      "sha256": "9ceb7273a7c34352693eedd637b51af6ae4285fc875dc90e65c223732e82a5a6",
+      "bytes": 178592
+    },
+    {
+      "name": "upgrade",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/upgrading.html",
+      "resolvedUrl": "https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/upgrading.html",
+      "sha256": "faf2a20e7feece411a3450d6ac6d64ec70ec32428f01304f77c50867f9ab0d56",
+      "bytes": 140652
+    },
+    {
+      "name": "cli",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/cli-and-env-variables-ref.html",
+      "resolvedUrl": "https://airflow.apache.org/docs/apache-airflow/3.3.1/cli-and-env-variables-ref.html",
+      "sha256": "8dc17b09fa32f3891b2cbea8015406498740efddeea609bec3826e501113f0a9",
+      "bytes": 555533
+    },
+    {
+      "name": "s3py",
+      "url": "https://raw.githubusercontent.com/apache/airflow/providers-amazon/9.34.0/providers/amazon/src/airflow/providers/amazon/aws/log/s3_task_handler.py",
+      "resolvedUrl": "https://raw.githubusercontent.com/apache/airflow/providers-amazon/9.34.0/providers/amazon/src/airflow/providers/amazon/aws/log/s3_task_handler.py",
+      "sha256": "e16152b8e5c1396063dd271c63bc4f3150be33fb8f0d8068d4b8edde5c5b9224",
+      "bytes": 12307
+    },
+    {
+      "name": "secretsmanagerpy",
+      "url": "https://raw.githubusercontent.com/apache/airflow/providers-amazon/9.34.0/providers/amazon/src/airflow/providers/amazon/aws/secrets/secrets_manager.py",
+      "resolvedUrl": "https://raw.githubusercontent.com/apache/airflow/providers-amazon/9.34.0/providers/amazon/src/airflow/providers/amazon/aws/secrets/secrets_manager.py",
+      "sha256": "05c8d0824fe713de397a6b1b812a27fa82569e470e093de323f69f52b0fd5cde",
+      "bytes": 17435
+    },
+    {
+      "name": "config",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/airflow-core/src/airflow/config_templates/config.yml",
+      "resolvedUrl": "https://raw.githubusercontent.com/apache/airflow/3.3.1/airflow-core/src/airflow/config_templates/config.yml",
+      "sha256": "754b2259a6903dca974fe654d363cb6e8f4ccdddf5d89e7d7ee564349bcc7e68",
+      "bytes": 139069
+    },
+    {
+      "name": "sdklog",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/task-sdk/src/airflow/sdk/log.py",
+      "bytes": 10139,
+      "sha256": "6aec7345f7e81da2d1f115fc62c0c074a28ed20491143a010d96f45bd46b700b"
+    },
+    {
+      "name": "supervisor",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/task-sdk/src/airflow/sdk/execution_time/supervisor.py",
+      "bytes": 107440,
+      "sha256": "66ecd0ab87f7f3dec5668d774f21dabd5edd05ed54471081e963b325976283fb"
+    },
+    {
+      "name": "sdkcontext",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/task-sdk/src/airflow/sdk/execution_time/context.py",
+      "bytes": 55972,
+      "sha256": "710cdeeb6e09fb80e1b14859e134778e073bc386fc9601bec9df693014e99bea"
+    },
+    {
+      "name": "otel",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/airflow-core/src/airflow/metrics/otel_logger.py",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "metricsinit",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/airflow-core/src/airflow/stats.py",
+      "bytes": 1506,
+      "sha256": "1b0012aa14c61abb1c7f71c3530e2ff0918eefa56f82fce42c32142c8f4d9c83"
+    },
+    {
+      "name": "otelshared",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/task-sdk/src/airflow/sdk/observability/metrics/otel_logger.py",
+      "bytes": 2576,
+      "sha256": "ac6962dfa4b990b71c8874dbec6a7c8beeee86d62884a3212bccbaa5dcc6391c"
+    },
+    {
+      "name": "sdkstats",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/task-sdk/src/airflow/sdk/observability/stats.py",
+      "bytes": 1227,
+      "sha256": "7887e0ad495cfbd8ee41659006ef0c8b3fc0034615627fb1ca878e857a283ffa"
+    },
+    {
+      "name": "sdkconfig",
+      "url": "https://raw.githubusercontent.com/apache/airflow/3.3.1/task-sdk/src/airflow/sdk/configuration.py",
+      "bytes": 13226,
+      "sha256": "6cacf018f67729f201569b39cb377acce649fff4b301d08941f02e6d74b79b9e"
+    }
+  ],
+  "limits": "No database/AWS mutation, secret retrieval, S3 API, live Airflow process, Collector ingestion or recovery drill. Source/configuration/example validation and local filesystem behavior only."
+}

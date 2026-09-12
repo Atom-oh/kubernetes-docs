@@ -4,10 +4,10 @@
   "branch": "audit/full-content-2026-09",
   "latestCoverage": {
     "documents": 2707,
-    "fullyRead": 704,
-    "fixed": 692,
+    "fullyRead": 726,
+    "fixed": 718,
     "verified": 0,
-    "followup": 12
+    "followup": 8
   },
   "parentCompleted": [
     "ko/en container-registry all 5 articles and 4 quizzes each (18 files)",
@@ -811,6 +811,36 @@
       "confirmed": "ConsoleStopInstances skipOsShutdown=true thenStart. Swap100%,rootdiskmax99.95%;EC2statuschecksnormal, noOOMkernelentryfound. Resourcepressureplausiblecauseofunresponsiveness,notprovenOOM.",
       "prevention": "FullbuildoffloadedtoGitHubhostedARMPRCI. No large localbuild. Persist logs/checkpoints underworkspaceEBS nottmp. Do notkillotheruserprocesses orresizecloudresourcewithoutauthorization.",
       "recovery": "Sourceedits+90batchledgerspreserved. Temporarytestfixturesandlongbuildoutputs lost; reconstituteonlynecessaryfromdurablereports/code. Latestrootgitc817a1fd/75e16992 containfollowupedits;do notrepeatclosedreviews."
+    },
+    "airflowDagPatterns": {
+      "status": "COMPLETE4filesfixed/30questions/13releasedmergemethodcases/2diagrams/6responsivecases",
+      "sources": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns/sources",
+      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns",
+      "next": "Airflow04MWAA,05operations, then Flink/UnifiedStudio/AI remaining",
+      "resourcePolicy": "NofullVitepress/localdevserver;boundedtests;persistallartifactsworkspace.",
+      "evidence": "docs/reviews/2026-09-11/airflow-dag-patterns-validation.json"
+    },
+    "airflowMwaa": {
+      "status": "COMPLETE4files/24questions/2diagrams/6responsivecases",
+      "evidence": "docs/reviews/2026-09-11/airflow-mwaa-validation.json",
+      "next": "Airflow05operations then Flink/UnifiedStudio/AI remaining"
+    },
+    "airflowOperations": {
+      "status": "COMPLETE4files/20questions/5nativeuploadfilecases",
+      "evidence": "docs/reviews/2026-09-11/airflow-operations-validation.json",
+      "next": "Flink README01–04,UnifiedStudioREADME01,AIremaining"
+    },
+    "flinkFoundation": {
+      "status": "COMPLETE6files/16questions/4figures/12responsivecases",
+      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-flink",
+      "evidence": "docs/reviews/2026-09-11/flink-foundation-validation.json",
+      "next": "Flink02Operator,03state/checkpoints,04operations;UnifiedStudioREADME01;AIremaining"
+    },
+    "flinkOperator": {
+      "status": "4filesfullyread;primarysources/chartchecked;public02noteditedyet",
+      "workspace": ".vitepress/cache/content-review-flink/operator",
+      "checkpoint": ".vitepress/cache/content-review-flink/operator/work-in-progress.json",
+      "next": "Continue02then03/04;UnifiedStudio/AIremaining"
     }
   },
   "aggregationScope": "Counts reflect existing document paths and committed batch records, grouping followup/needs_followup together. Other worker/check fields are historical checkpoints, not a whole-corpus completion claim.",

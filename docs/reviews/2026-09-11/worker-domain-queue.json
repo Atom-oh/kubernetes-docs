@@ -38,8 +38,8 @@
       },
       "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
       "fullyRead": 88,
-      "fixedAndValidated": 84,
-      "currentBatch": "networking-cilium IPAM-policy",
+      "fixedAndValidated": 88,
+      "currentBatch": "networking-cilium L2-L7",
       "progress": "docs/reviews/2026-09-11/networking-progress.json"
     },
     {
@@ -106,10 +106,10 @@
   "latestWorkerCheckpoint": {
     "date": "2026-09-12",
     "fullyRead": 258,
-    "fixedAndValidated": 254,
-    "current": "Current networking-cilium IPAM-policy: 4/4 sources fully read; primary verification/fixes pending. Last completed read: ko/quizzes/networking/cilium/04-ipam-policy-quiz.md.",
+    "fixedAndValidated": 258,
+    "current": "Cilium04IPAM-policy4complete. Next05L2-L7fourselected,unread.258read/complete;20Cilium+116observabilityremain.",
     "remaining": {
-      "networkingPending": 4,
+      "networkingPending": 0,
       "networkingUnread": 20,
       "observability": 116
     },

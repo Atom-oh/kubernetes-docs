@@ -2,22 +2,12 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Flink Kubernetes Operator and Flink Cluster Architecture",
+    "title": "Flink Native-mode control flow",
     "output": "en-data-on-eks-flink-readme-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "entries": {
-        "external": {
-          "label": "Operator (human)"
-        },
-        "cloud": {
-          "label": "Kubernetes control plane"
-        },
-        "backend": {
-          "label": "Flink Operator / Flink pods"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -29,7 +19,7 @@
           "operator",
           "jobmanager"
         ],
-        "note": "Applying a FlinkDeployment/FlinkSessionJob CR lets the Operator watch it and reconcile the JobManager pod to the desired state."
+        "note": "FlinkDeployment manages the cluster; FlinkSessionJob submits to an existing Session cluster."
       },
       {
         "id": "resource-manager",
@@ -214,26 +204,24 @@
       "dot": "orange",
       "title": "Flink Kubernetes Operator",
       "items": [
-        "Desired state is declared with FlinkDeployment (Application/Session clusters) and FlinkSessionJob CRs",
-        "Applies changes safely via stateless, savepoint, or last-state upgrade modes",
-        "Built-in autoscaler rescales individual job-graph vertices"
+        "Supports Native and Standalone",
+        "Manages cluster/job lifecycle and upgrade conditions"
       ]
     },
     {
       "dot": "cyan",
       "title": "JobManager",
       "items": [
-        "Control plane: builds the job graph, coordinates checkpoints, schedules work",
-        "Does not process any records itself",
-        "Its Kubernetes ResourceManager talks directly to the API server to request and release TaskManager pods dynamically"
+        "Graph preparation depends on submission mode",
+        "Native ResourceManager uses the Kubernetes API"
       ]
     },
     {
       "dot": "emerald",
       "title": "TaskManager",
       "items": [
-        "Workers that execute operator subtasks inside task slots",
-        "No fixed worker pool has to be pre-provisioned (unlike YARN node managers)"
+        "Slot sharing and operator chaining",
+        "Pod allocation and node capacity are separate layers"
       ]
     }
   ]

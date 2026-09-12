@@ -1,0 +1,155 @@
+[
+  {
+    "path": "en/eks/12-kubernetes-version-roadmap.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All original content fully read. Foundation2–3 validated; historical1.29section paired corrections applied, next1.30–1.36/recipes and5–9/quizzes.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/releases/patch-releases/",
+      "https://kubernetes.io/docs/reference/deprecation-policy/",
+      "https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go",
+      "https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-guide/"
+    ],
+    "findings": [
+      "Header Supported1.29-1.36 conflates historical coverage withcurrentEKSsupport. Refresh exactofficialAWSdates/status/prices, no upstreamlatestinference.",
+      "Releasephaseweek0/10/11 timeline and betaAPIvsbetafeature/default/GA-gateremoval blanketclaims needofficialvalidation. Kubeadm v1beta3 and featuregateexamples obsolete, configz doesnotproveall effectivegates; metrics grepassumeslabels/exposure.",
+      "Auto-upgrade onlyCP ignoresAutoMode;60-dayforcewindowdiagram requiresprimary. EKS/EKSDistro announcementdates/supportmustseparate.",
+      "KMSv1/v2keyhierarchyandconstantlatencyoverclaim;selfmanagedencryptionconfignotEKScustomization;RWOPCSIprereqs.",
+      "Historicalfeaturegraduationsseveralwrong:sidecar1.29beta(notnewalpha),loadbalancerIPmodealpha/beta,MinDomainsGA,NodeLogQueryGAclaim,flowcontrolv1beta2removal.",
+      "VAPregistrylookalikeprefix+unguardedoptionalinitContainers+noephemeralcoverage/binding;resourcepolicyregularonly. SchedulinggateindexremoveunsafeandgatedPodnotautomaticnodeprovisioning;HPArequests/multimetricsprereqs.",
+      "Contextualloggingdoesnotautomaticallyenrichallmessages;logoutputinBashfence. Recursivereadonly/UserNS/RelaxedEnv(name notvalue)/SELinux graduations wrong.",
+      "AppArmorDeploymentmissingselector/template.labels;OS/kernelprofileprereqs. JobPodReplacementPolicy andothergraduationdatesverify.",
+      "DRA1.31claimsbetav1beta1 likelywrongreleasedv1alpha3;sidecaralpha/betadatesduplicatedwrong;startuporderreadinessandshutdownbudgetnotabsolute guarantee. Envoy/FluentBitmanifestnotconfiguredservice-meshandproduction-readyoverclaim;dbmigrationcommentwrongorder.",
+      "StructuredAuthzGA usesv1 notv1beta1;CELmatchconditionsnotindependentauthorizer,resourceAttributesguard,chainAllowshortcircuitnotuniversaldenyfilter.",
+      "AutoPVCprotectioncleanupGA1.32fictional/falsehistoricalhang-immediateoutput;distinguishPVreclaimpolicydeletionprotectionfromlongstandingPVCprotection.",
+      "VACv1beta1historicalnowv1current,driverfeatureandAPIaccess/configprereqs,partialPVCmanifestnotcompletecreates. UserNSUIDmappingnot65534offset guarantee.",
+      "nftablesbeta1.31vs1.32;DRA/MultiCIDRalphaclaims;1.33enhancement64vs18+20+24 arithmeticneeddeprecatedcount. SidecarGAfeaturegate-notnecessarilyremovedsameversion.",
+      "ServiceCIDRupstreamAPIavailabilitydoesnotproveEKSServiceCIDRmutable;trafficDistributionvstopologyawarehintsgradestatusnotidentical;crossAZcost0.01needdirection/serviceexceptions.",
+      "JobsuccessPolicyPodspecmissingrestartPolicy;onlyIndexed/successvsfailurecriteria andteardownneedexplain.",
+      "InPlace resize unconditional no-restart/fullstabilityfalse;resizePolicy/runtime/resourceconstraint/deferred/unsupportedcases andcontroller-templatecoordination. .status.resize removedreplacedconditions/allocatedResourcesStatus fields needexactschema. HistoricalalphaCPU-onlylikelyfalse.",
+      "DRAstablev1ResourceClaim requestsneeds exactly wrapper, CELattributeswrong .stringValue shape;driverinstallation/ResourceSlice/vendorlabels/count/NUMAprerequisites;DRAdoesnotremovelegacydeviceplugins.",
+      "Namespaceordereddeletionnotall dependencygraph/finalizerresolution guarantee;actualfeatureversion/Pods-firstscopeverify. Transcriptnotexecution.",
+      "KYAMLclaimsclusteradmissionvalidator/warnings/anchorsrejected/metrics entirelymisdescribed;it is outputformat, verifyreleasedflags/env/stages. Removefictionalexecutionwhilepreserveformatlesson.",
+      "PodLevelResources/ImageVolume/UserNS/nftables/CRDratchetingGA dates mixed,58and60releasecounts arithmeticmissingdeprecateditems.",
+      "MutatingAdmissionPolicyrequiredreinvocationPolicy/binding missing;v1beta1historical/currentv1verify. Ownership/costlabelshouldnotblindoverwrite.",
+      "VPAupdateMode InPlace mustverifycurrentVPArelease/schema/featureflags,notassumeK8s1.35enough;InPlaceOrRecreatefallbackneedsdisclosure.",
+      "NativegangschedulingPodGroupfields minMember/scheduleTimeoutSeconds likelyforeignCRDshape;nativeWorkload/PodGroupapi/featuregates/current1.35exactverify. JobmissingrestartPolicy andnativeassociationfield notlabel. SeveralotherGA/betagateshistoricalstatestotallysuspect.",
+      "1.36stats/regionrollout/gategraduationsneedprimary;MAPidempotency/orderingguaranteefalse,CEL indexOf andmapJSONPatch syntaxnativeverify;preserveclaimedEKS1.36.1testtablebutclearlyunverifiedprovenance, no newexecutionclaim.",
+      "MAPnamespaceguardnotalonefailurePolicyFail safe;policycompilepropagationnotfixedfewseconds;atomiclistJSONPatchrestrictprecise;existingresizePolicyoverwriteunintentional.",
+      "1.36userNSGA≠gateimmediatelyremoved,needsruntime/kernel/podoptin;noeliminatesotherisolationorallappsunchanged. KYAMLclusteradmissionenforcementfictional;gangGA/v1PodGroupminMembernativewrongneedsprimary.",
+      "CPUinplaceresizezero-downtime/no-connections-drop unconditionalguaranteeswrong;memoryshrinkNotRequiredstatusvsRestartContainerbehavior;podlevelresizegate/stageCPUmgralignmentreview.",
+      "PhaseawareQoS requiresCPUandmemoryreq=limits forallregular/init/sidecar,notCPUalone;startedtruewithoutstartupProbeandstateresetsonthecontainerrestart;50mservingcapacityunverified.",
+      "Go resizer:cluster-widewatch/patchRBAC arbitraryoptinannotations;noUID/resourceVersionpreconditions (name reuse),unboundedTODOrequests/noqueues/retry/backoff/shutdown/cacheSynccheck/leader coordination;processedMapneverGC,markerafteracceptedpatchnotkubeletcompletionandstuckonrestart;unknowntriggerdefaults permissively,delayparseerrorzero/firstcontaineronly;noCPU-only/downscale/QoS/containername/quantity validation. Claimidenticalworkloadbehavior/productionneedsqualified.",
+      "DemobusyboxstartupProbe sleeps8s withdefaulttimeout1s;maincommandnevercreatesreadyfile,contradictsclaimedstartup-passlogs. Preserve2026June28/EKS1.36.1/containerd2.2.3/200m→50m/0restarts table asunverifiedhistoricalclaim;APIpatchaccepted+samecontainerIDnotproofactualcgroupresize orzeroappimpact.",
+      "Full20featuregraduationmatrix/KEPs requireofficialcrosscheck (GatewayCRDindependentK8sversions cannotGA1.26;wrongKEPnumbersKYAML/Gang likely). ImportantnotblanketdeleteREALrecentfeatures.",
+      "APIdeprecationpolicyGA12monthremovalfalse;beta9months/3releasesrulesmatchlaterof;removedflowcontrolv1beta2=1.29/v1beta3=1.32,HPA v2beta1=1.25,v2beta2=1.26,authorization-mode stillsupported,currentIPVSdeprecationvsremovalreconcile.",
+      "Deprecationscript comparesGETpreferredapiVersion cannotdetectoldclientusage;labelsallbetaAPIsdeprecatedfalse;Helmreleasenamesambiguousacrossnamespaces,stderrhidden/alwaysAuditComplete andsecretmanifestdump risks. NeedexactretiredGVK/sourceaudit+requestmetrics/logs.",
+      "EKSallGAalwaysenabled/alphaNEVER/nodegatecontrolSupportticketblanketwrong;selectnode/metricmissingnotproof;add-onmatrixinventedminsemverdoesnotmodelEKSbuild/computecompat,ADOTappvscollectorversion;useofficialDescribeAddonVersionsinput.",
+      "AutoModefixedn-1andalladdonsautomaticallymanagedwrong;built-inDNSvsmixednodeaddons;currentCPUpgradenodesworkflow/rollbacksourcealreadyverified.",
+      "EksctlmanagedNodeGroups[].kubelet.featureGates invalidschema;AL2023nodeadm/AMIownershipandservergatesdistinction;stagingmutationsneedscoping,versioncompat/noautoexecution.",
+      "Staging verificationstill.status.resize/mutationnoUID/namespace/context;checklists GAmeanssafe,etcdbackupschedulecustomeraccess,converttoolnotdeprecationdetector;liveAPIhealthgatesincomplete.",
+      "Pluto/kubentcommands exactnativecheckneeded;betaapidiscoverynotusage/deprecation,allCRDwebhooksnotdeprecated;silentfailfalseComplete outputs.",
+      "Addonalignmentdefaultqueryselectcompatforanyversionnotexacttarget/platform;arraynested/default≠latest/noRegion/unquotedargs/silencederrors;handlecompute/arch andAuto.",
+      "Rollback REAL7day butpreviouscompletedupgrade/eligibleversion/readiness/nodes-first/nofixedimmediate guarantee;Autoexplicitrequested notautomaticfailure rollback. Taintdoesnotshifttraffic/existingPods;blindaddonOVERWRITE/datarollbackdanger. ReuseclosedEKS08.",
+      "Future1.37alreadyreleasedbyreviewdateusecurrentreleaseevidence-notpromiseGA1.37;GPUsharing/Sigstore/confidential ecosystemnotbuiltinuniversal;quarterlycontradictsevery4months;n-1notuniversalrequirement.",
+      "FIXEDfoundation:minor-vsmajor/patch14monthpolicy,betafeaturevsnewbetaAPI,GAAPIversusgate-removalrule,version-specificnodeconfigurationandmetricslimits;exactUTC EKSsupportdates Jan27release1.35,6currentversions,pricebaselineversustotal,STANDARD/EXTENDED andAutoMode/EOLnotify/rollbacknuance.7stalefoundationdiagramembedscommentedforparentrepair;cycle1retainedwithapproximate-weekqualifier.",
+      "FIXED4.1:KMSv2no cachesize/identityisreadmigrationnotwritefallback;v1stilllegacy/notremoved1.31;EKSdefaultallAPIencryption1.28not1.29/noPVCimplication;RWOPCSIminimumsnotkernelisolation;sidecarbeta1.29andothergraduations/APIremovalscorrected;unmeasuredproxythresholdremoved."
+    ],
+    "validation": [
+      "Fullreadcoverage1-2857;original snapshot/hash in persistent eks-version-roadmap/progress.json.",
+      "No cloud/cluster actions or benchmark reruns. Native/schema verification pending after paired full reads.",
+      "Foundation2–3only:6Bashsyntax+2YAMLfragments/pairedcodeidentical,all6calendarrows matched exact currentAWSHTML,DecimalpricingarithmeticandDescribeClusterVersionsinputmodel,gitdiffcheckpassed;noAWSquery. Persistent foundation-validation.json.",
+      "Section4.1only:6YAMLparsed;2PVCand2wrappedsidecarPodspecvalidatedagainstK8sv1.36.2schema;2KMSv2primarycontractchecks;pairedcodeidentical/gitdiffcheck;noKMS/runtime/cloudexecution. Persistent release129-validation.json."
+    ]
+  },
+  {
+    "path": "ko/eks/12-kubernetes-version-roadmap.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All original content fully read. Foundation2–3 validated; historical1.29section paired corrections applied, next1.30–1.36/recipes and5–9/quizzes.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/releases/patch-releases/",
+      "https://kubernetes.io/docs/reference/deprecation-policy/",
+      "https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/",
+      "https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go",
+      "https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-guide/"
+    ],
+    "findings": [
+      "KOindependentlyread:releaseweeksdiffEN,minorcalledmajor;betamin1release/GAalwayssafeandgateafter2 universalwrong. Incompletekube-apiserverPod(noimage/name)notEKSvisiblepods;countereffectivegateclaims.",
+      "KOadditionalKMSv2cachesizeinvalidv1-only;identityplaintextfallbackonwritefailureFALSE(firstprovidermustsucceed);EKS1.29defaultKMSv2datecheck. RWOPkernel-levelblockguaranteefalse.",
+      "KOsidecar1.29betaalreadycorrect(unlikeEN);preserveandalign. KOcurrentversionsapproximateestimatednotecontradictsactualsupportcalendar.",
+      "VAPnoavailabilityriskoverclaim;KOhas(map[index]) CELmacroinvalid,usekeymembership;PodlevelrunAsNonRootinheritanceignored;separatevalidationfragmentintentandbindingprerequisites. Readinessgatepatchindexpreconditions;HPA2702KEPdiffEN2273.",
+      "KOadditionalStructuredAuthz request.namespace nonexistent(SARrequestresourceAttributes);v1alreadycorrectunlikeEN,webhook-firstchangespolicy semantics;hotreloadactualsourceverify.",
+      "KO1.32VACGAwrongcontradicts1.34;rawvolumeclasschangeisasync/cooldown/IAM/CSIprereqs,notuniversalzerodowntime.",
+      "KOsidecarlifecyclefeatureexistedbeforeGA;hardterminationbudgetlimits finalreverseordering;Istioimage-aloneisnotfunctionalmesh,FluentBitunconfigured,syntheticpatternnotproductionready.",
+      "KOVPAInPlace1.33requirecurrentreleasedVPAshape/gates;currentstatusresizelegacyfields;ServiceCIDREKSavailability,topologyannotationhintvsdistributionnotidentical mechanisms;Jobno restartPolicy.",
+      "KODRAopaque.parameters.raw inventedwrapper/vendorpluginconfig, matchAttribute hardconstraintnotpreference;v1requestsneeds exactly, APIdoesnotautomaticallysupplytimeslicing/MPS/MIG;templateGPUdriverprereqs.",
+      "KOvLLMparallel4usesclaimtemplatecount1;opaqueGPUsharingconfigandvendorattributesneedactualdriver notclaimednativeguarantee.",
+      "KOVAC64000iops4000throughputwithoutvolumetype currentgp3limitsmustverify;CronJobchangesPVCdefaultnamespace/noSA/RBAC/timeZone/concurrency/cooldown/asyncoutcomes. Keepillustrativetimes/numericintentbutmakevalidboundscoped.",
+      "KOimagePullPolicyIfNotPresentOrNewer purported1.34alpha/1.35beta requiresprimaryschema (likelyinvented);NodeMaintenanceMode/StatefulSetresize/Deploymentrollingresize claimednativefeaturesneedprimary.",
+      "KYAMLbackendYAML1.2universal claimswrong;duplicate data keys inexampleyaml;notEKSsupportticketfeaturegate. Gang1.35examplejustschedulingGate neverremoving≠gangscheduler;GA1.36nativePodGroupwrongshape.",
+      "KO MAP/phaseawarebugs sameEN:determinism≠idempotency,namespaceguardnotaloneFail-safe,atomiclistvsSMPexplanationwrongMAPsupportsJSONPatch/ApplyConfiguration,proofunverified,started!=provenstartupwithoutprobe,Guaranteedmemory/initconditions.",
+      "KOcompletecontrollerreadconfirmssamenameUIDrace,TODOno deadlines,unknowntrigger/delaybadparse,startupstatusscope,processedMapmarkermeansacceptednotapplied;KOnginxdemodiffENbrokenbusyboxprobe,namespaceabsent.",
+      "KOrecordedEKS1.36.1/2.2.3AL2023arm64/200m50mstatsunchangedunverified;restart0sameIDdoesnotprove cgroupactualallocationorrequestavailability. NativeSAcleanupnotallpre1.24Secrets manuallycreatedtokensneedclassification;devicehealthstatus wrongPodresourceClaimStatusespath.",
+      "KOmatrixKEPdifferences/timelinenumerous;KOdepremovalsectionassertsiptablesREMOVED1.34/SAautotokencreationremoved1.33/exportremoved1.35/hostnetworkproxydeprecation—verifyversionedprimary,donotpreserveincorrectcurrentguidance.",
+      "KOplutoAPIusageavailabilityconfusion;EKSupstreamIAMnotuniversallyunsupported;GAavailability/gatenode/APIpathneedprecise;addonmatrixtoynotcompatibilitysupportmatrix,blindpinnedCNIupdateOVERWRITE.",
+      "KOeksctlAutoClusterConfigiscreationnotupgradefile;PDBnotrequirednoravailabilityguarantee,n-1ENwrong;managedbuiltinvsordinaryaddons andupdateeligibilityworkflowseparate.",
+      "KOchecklistAL2023SSMpathmissesarch/standardcomponent;featuregateYAMLinsideBash invalid,retiredgatefalsecanbreakstartup;API/Helmchecksprintpartialthenclaimcomplete.",
+      "KOclusternameextractedfromarbitrarycontextunsafe,awslistaddonsTEXTincludesADDONStokennoquery/namespaceaccountguard;wronggeneralmandatoryaddonorder/Autoexceptions.",
+      "KOrollbacktaints-nottraffic/native7dayprereqs/addonOVERWRITEpreservechangesasEN. Terraformnodegroupmissingnode_role_arn/subnet_ids,hardcodedaddonbuilds+overwrite anddependencydoesnotprovecompatibility;STANDARDpolicyforcesEOLupgradeimplications.",
+      "KOfuturecontradictscurrentGAsections,forecasted1.37alreadyreleased,Gateway1.2oldnotlatesttarget;historicalroadmap2025Nov/2026Mar/Julvaluespreserveasplanningexamplewitholdaddonversionscompatibilityunverified,notbenchmark. DRAcoreisnotCRD,nftablesnotautomaticdefaulttransition.",
+      "KOsourceslinks2025/08/no-day2025/12/no-day2026/04/no-day brokenneedofficialexactreleaseURLs;extended-supportandkubectl-convertcanonicalpagesverify;KOmissingdirectquizlinkaddmatchingfullreadquiz.",
+      "FIXEDfoundation:minor-vsmajor/patch14monthpolicy,betafeaturevsnewbetaAPI,GAAPIversusgate-removalrule,version-specificnodeconfigurationandmetricslimits;exactUTC EKSsupportdates Jan27release1.35,6currentversions,pricebaselineversustotal,STANDARD/EXTENDED andAutoMode/EOLnotify/rollbacknuance.7stalefoundationdiagramembedscommentedforparentrepair;cycle1retainedwithapproximate-weekqualifier.",
+      "FIXED4.1:KMSv2no cachesize/identityisreadmigrationnotwritefallback;v1stilllegacy/notremoved1.31;EKSdefaultallAPIencryption1.28not1.29/noPVCimplication;RWOPCSIminimumsnotkernelisolation;sidecarbeta1.29andothergraduations/APIremovalscorrected;unmeasuredproxythresholdremoved."
+    ],
+    "validation": [
+      "Fullreadcoverage1-2891;originalsnapshot/hash persisted.",
+      "No cloud/cluster writes or historical benchmark rerun; all purported live outputs remain unverified pending provenance review.",
+      "Foundation2–3only:6Bashsyntax+2YAMLfragments/pairedcodeidentical,all6calendarrows matched exact currentAWSHTML,DecimalpricingarithmeticandDescribeClusterVersionsinputmodel,gitdiffcheckpassed;noAWSquery. Persistent foundation-validation.json.",
+      "Section4.1only:6YAMLparsed;2PVCand2wrappedsidecarPodspecvalidatedagainstK8sv1.36.2schema;2KMSv2primarycontractchecks;pairedcodeidentical/gitdiffcheck;noKMS/runtime/cloudexecution. Persistent release129-validation.json."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks/12-kubernetes-version-roadmap-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All143originalquizlines/8questions fully read; paired corrections pending official version/reference reconciliation.",
+    "sources": [],
+    "findings": [
+      "All8originalquestions read. Q1upstreammaintenanceperiodneedscurrentprimary;Q2pricingbaseline/defaultpolicy;Q3sidecarorderingboundedbyshutdownbudget.",
+      "Q4unconditionalrestart-freewording/QoS/runtime limits;Q5DRAredesignbeta1.32alreadymoreaccuratethansource,preserveandverify;Q6optionalparamsarenotnecessarilyCRDs.",
+      "Q7clientoutputKYAMLsemanticscloserthanbody butcurrentstatusquestiondated1.35needsreconcile;KUBECTL_KYAMLversionbehaviorverify. Q8convertisnotdeprecationauditor andfixedaddonorder/currentnodes/Autoexceptions/securitysupportphrasing."
+    ],
+    "validation": [
+      "Fullreadcoverage1-143;originalsnapshot/hash persisted;noeditsyet."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks/12-kubernetes-version-roadmap-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All143originalquizlines/8questions fully read; paired corrections pending official version/reference reconciliation.",
+    "sources": [],
+    "findings": [
+      "All8originalquestions read. Q1upstreammaintenanceperiodneedscurrentprimary;Q2pricingbaseline/defaultpolicy;Q3sidecarorderingboundedbyshutdownbudget.",
+      "Q4unconditionalrestart-freewording/QoS/runtime limits;Q5DRAredesignbeta1.32alreadymoreaccuratethansource,preserveandverify;Q6optionalparamsarenotnecessarilyCRDs.",
+      "Q7clientoutputKYAMLsemanticscloserthanbody butcurrentstatusquestiondated1.35needsreconcile;KUBECTL_KYAMLversionbehaviorverify. Q8convertisnotdeprecationauditor andfixedaddonorder/currentnodes/Autoexceptions/securitysupportphrasing."
+    ],
+    "validation": [
+      "Fullreadcoverage1-143;originalsnapshot/hash persisted;noeditsyet."
+    ]
+  }
+]

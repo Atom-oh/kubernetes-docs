@@ -6,15 +6,15 @@
   "coverage": {
     "serviceMeshInventory": 170,
     "fullyRead": 258,
-    "fixedAndValidated": 254,
-    "fullyReadPendingValidation": 4,
+    "fixedAndValidated": 258,
+    "fullyReadPendingValidation": 0,
     "serviceMeshUnread": 0,
     "networkingQueued": 20,
     "observabilityAndLabsQueued": 116,
     "totalAssignedMarkdownInventory": 394,
     "totalUnreadInventory": 136,
     "networkingFullyRead": 88,
-    "networkingFixedAndValidated": 84
+    "networkingFixedAndValidated": 88
   },
   "completedBatches": [
     "istio-foundation (16)",
@@ -40,19 +40,20 @@
     "networking-cilium-readme2",
     "networking-cilium-introduction4",
     "networking-cilium-ebpf4",
-    "networking-cilium-networking4"
+    "networking-cilium-networking4",
+    "networking-cilium-ipam-policy4"
   ],
-  "activeBatch": "networking-cilium IPAM-policy",
+  "activeBatch": "networking-cilium L2-L7",
   "currentFiles": [
-    "en/networking/cilium/04-ipam-policy.md",
-    "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
-    "ko/networking/cilium/04-ipam-policy.md",
-    "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md"
+    "en/networking/cilium/05-l2-l7-networking.md",
+    "en/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
+    "ko/networking/cilium/05-l2-l7-networking.md",
+    "ko/quizzes/networking/cilium/05-l2-l7-networking-quiz.md"
   ],
-  "currentWork": "Cilium04IPAM-policyall4fullread258total/254complete.04sourcesunedited. IPAMschema/ownership/migrationfactsverified;2wrongfiguresviewed. DNS/layer3/ClusterMeshverification+fixesnext;see .vitepress/cache/networking-cilium-ipam-audit/work-in-progress.json.",
+  "currentWork": "Cilium04IPAM-policy4complete. Next05L2-L7fourselected,unread.258read/complete;20Cilium+116observabilityremain.",
   "nextSteps": [
-    "Finish04primaryDNS/layer3/ClusterMeshreview;applyschema/config/policy/routeinventory/quiz40fixes;boundedvalidationandreport.",
-    "ContinueCilium05–07/glossary/networking-concepts20,thenobservability116."
+    "FullyreadCilium05L2-L7guides/quizzes4;verifycurrentAPIs/commands/proxy/datapathandapplyconcretefixes.",
+    "ContinueCilium06–07/glossary/networking-concepts16thenobservability116."
   ],
   "blockers": [],
   "knownLimitations": [
@@ -123,7 +124,8 @@
     "docs/reviews/2026-09-11/networking-cilium-readme-validation.json",
     "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json",
     "docs/reviews/2026-09-11/networking-cilium-ebpf-validation.json",
-    "docs/reviews/2026-09-11/networking-cilium-networking-validation.json"
+    "docs/reviews/2026-09-11/networking-cilium-networking-validation.json",
+    "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json"
   ],
   "temporaryArtifacts": {
     "sourceCache": "/tmp/istio-foundation-sources/ (SHA256(url)[:12].html is raw; .txt is extracted text)",
@@ -1151,7 +1153,7 @@
       ]
     }
   ],
-  "latestParentCheckpoint": "ParentmergedPR219+220 into root reviewbranch;26incomingstats/CIpaths only,workersources/checkpoints preserved;GA4dashboardonly;fullbuildhostedCIonly.",
+  "latestParentCheckpoint": "Parentresumedaftercompaction;PR220onsitestatscleanupcomplete,mainintegratedinroot;latestHEADAIreview+CIbeforeautomergeparentowned.Workercontinuesoriginalaudit,nofulllocalbuild/devserver.",
   "resolvedExecutionIssues": [
     "/tmp inode exhaustion (free bytes14GB, free inodes0) prevented sandbox startup. Removed only own /tmp/mesh-go-cache disposable compilation cache; artifacts/module sources/reports retained; execution resumed.",
     "Second/tmpinodeexhaustion occurred duringArgoEnglishread. Removedonlyownregenerated/tmp/mesh-go-cache;freeinodes1418immediatelyaftercleanupandreadingresumed.Parentinformedofrecurrence. CachemayneedrebuildifextendingGovalidatoragain."
@@ -1331,21 +1333,39 @@
     "policy": "No full VitePress/devserver/repository-wide builds; bounded native checks; Node heap<=1GiB; evidence/scripts stay in persistent cache/reports; no checkout/reset/commit/push or cloud mutations."
   },
   "latestBoundedValidation": {
-    "chapter": "Cilium03networking",
-    "report": "docs/reviews/2026-09-11/networking-cilium-networking-validation.json",
-    "objects": 10,
-    "bashBlocks": 36,
-    "guidedExercises": 16,
-    "valuesProfiles": 3,
-    "mtuCases": 6,
-    "negativeFixtures": 4,
-    "cleanupFixtures": 4,
+    "chapter": "Cilium04IPAM-policy",
+    "report": "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json",
+    "objects": 28,
+    "HelmFragments": 8,
+    "BashBlocks": 14,
+    "MCQs": 40,
+    "jqCases": 13,
+    "DNSmodels": 16,
+    "HTTPmodels": 8,
+    "poolModels": 5,
     "renderedFiles": 4
   },
-  "currentReadFiles": [
-    "en/networking/cilium/04-ipam-policy.md",
-    "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
-    "ko/networking/cilium/04-ipam-policy.md",
-    "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md"
+  "currentReadFiles": [],
+  "scopeExternalFollowups": [
+    {
+      "path": "en/eks-hybrid-nodes/02-network-configuration.md",
+      "lines": [
+        1057,
+        1058,
+        1156
+      ],
+      "finding": "Existing snippets still select spec.addresses[0]/podCIDRs[0] and generate ip route add. Parent should review typed address/family and actual next-hop prerequisites; worker did not fully audit or edit this outside-scope file.",
+      "basis": "Exactsnippetsearch+currentCiliumNodeAPIsemantics;currentchapter'snativejqfixtureprovesfirstaddresscanbeCiliumInternalIP."
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/02-network-configuration.md",
+      "lines": [
+        1057,
+        1058,
+        1156
+      ],
+      "finding": "Existing snippets still select spec.addresses[0]/podCIDRs[0] and generate ip route add. Parent should review typed address/family and actual next-hop prerequisites; worker did not fully audit or edit this outside-scope file.",
+      "basis": "Exactsnippetsearch+currentCiliumNodeAPIsemantics;currentchapter'snativejqfixtureprovesfirstaddresscanbeCiliumInternalIP."
+    }
   ]
 }

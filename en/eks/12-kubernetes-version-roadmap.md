@@ -1,6 +1,6 @@
 # Kubernetes Version Features and Roadmap
 
-> **Supported Versions**: Kubernetes 1.29 - 1.36
+> **Historical coverage**: Kubernetes 1.29–1.36; current EKS support is listed separately
 > **Last Updated**: July 15, 2026
 
 Kubernetes evolves rapidly, with three releases per year introducing new features, graduating existing ones, and deprecating old APIs. For enterprise teams running Amazon EKS, understanding the version landscape is essential for planning upgrades, adopting new capabilities at the right time, and avoiding disruptions from deprecations. This document provides a comprehensive, version-by-version reference covering Kubernetes 1.29 through 1.36, with EKS-specific guidance for each release.
@@ -58,174 +58,121 @@ After reading this document, you will be able to:
 
 ## 2. Kubernetes Release Cycle
 
-### Release Cadence
+### Cadence and release phases
 
-Kubernetes follows a predictable release cadence with approximately three releases per year, spaced roughly four months apart.
+Kubernetes normally publishes about three **minor** releases each year, roughly four months apart. Patch releases have a separate, usually monthly cadence. Upstream patch branches are supported for roughly 14 months: about 12 months of normal maintenance followed by a two-month maintenance period for CVEs and critical fixes. This is separate from EKS’s 14-month standard support window, which starts on the EKS release date.
+
+The release team publishes deadlines for enhancement inclusion, code freeze, stabilization and release candidates. The original “week 15” diagram is a schematic cycle, not a guaranteed schedule or a universal week-number table. Follow the target release’s schedule and exception process.
 
 ![Workflow showing the Kubernetes annual release cycle: three releases a year, each passing through Enhancement Freeze, Code Freeze, and test-and-stabilize before the official release roughly every four months.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-1.html)
 
-### Typical Release Timeline
+### Feature maturity, API stability and feature gates
 
-Each release follows a structured timeline spanning approximately 15 weeks:
+| Stage | Interpretation |
+|---|---|
+| Alpha | Usually disabled by default; behavior/API can change or disappear. Check the exact gate and prerequisites. |
+| Beta | Tested more broadly, but defaults and compatibility still depend on the feature/version. Some beta gates remain disabled. |
+| Stable / GA | API stability commitments apply; this does not certify a particular workload, driver, OS or deployment as safe. |
 
-| Phase | Duration | Description |
-|-------|----------|-------------|
-| **Enhancements Freeze** | Week 0 | All features must have approved KEPs (Kubernetes Enhancement Proposals) |
-| **Code Freeze** | ~Week 10 | No new feature code; focus on bug fixes and tests |
-| **Beta Release** | ~Week 11 | Pre-release for testing |
-| **RC (Release Candidate)** | ~Week 13 | Final testing phase |
-| **General Availability** | ~Week 15 | Official release |
+Since 1.24, **new beta APIs** are disabled by default; previously enabled beta APIs and new versions of existing beta APIs are treated differently. API serving configuration and feature gates are related but distinct. Do not infer that every beta feature requires opt-in or that every stable feature needs no workload configuration.
 
-### Feature Maturity Model
+A GA API version cannot be removed within the same Kubernetes major version. That rule differs from feature-gate removal: a beta-to-GA gate has a minimum deprecation window of six months or two releases, whichever is longer. The actual removal release must be checked. A locked or removed gate cannot be treated as a supported disable switch. For example, the released 1.36.2 source still contains the locked `SidecarContainers` gate; GA in 1.33 does not itself prove removal in 1.35.
 
-Kubernetes uses a three-stage graduation model for all features. Understanding these stages is critical for production planning.
-
-![Lifecycle diagram of the three-stage Kubernetes feature maturity model, Alpha graduating to Beta and then to GA, with the stability and production-readiness guarantees of each stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-2.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-2.html)
-
-**Key policy changes to be aware of:**
-
-- **Since Kubernetes 1.24**: Beta APIs are no longer enabled by default in new clusters. New beta features require explicit opt-in via feature gates.
-- **Since Kubernetes 1.28**: Feature gates for GA features are removed after two releases, meaning the feature becomes permanently enabled.
-
-### Feature Gates
-
-Feature gates are key-value pairs that control whether a feature is enabled or disabled. They are the mechanism through which the alpha/beta/GA maturity model is enforced.
+The following is a **historical configuration fragment**, not a complete KubeletConfiguration or an EKS control-plane modification. On a current node use its exact version’s supported configuration; do not copy retired gates into a new bootstrap file.
 
 ```yaml
-# Example: Enabling feature gates on the kubelet
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
+# Historical fragment for a self-managed Kubernetes 1.33 test node.
+# Merge through the supported node bootstrap/configuration mechanism.
 featureGates:
-  InPlacePodVerticalScaling: true    # Enable in-place pod resize (beta in 1.33)
-  UserNamespacesSupport: true         # Enable user namespaces (beta in 1.33)
+  InPlacePodVerticalScaling: true
+  UserNamespacesSupport: true
 ```
 
-```yaml
-# Example: Enabling feature gates on the API server (EKS managed - informational only)
-# Note: In EKS, control plane feature gates are managed by AWS.
-# You cannot directly modify API server flags on EKS.
-apiVersion: kubeadm.k8s.io/v1beta3
-kind: ClusterConfiguration
-apiServer:
-  extraArgs:
-    feature-gates: "ValidatingAdmissionPolicy=true,StructuredAuthorizationConfiguration=true"
-```
+AWS manages EKS control-plane configuration; customers cannot edit an EKS kube-apiserver static Pod or pass arbitrary server flags. The EKS version FAQ says alpha features are unsupported. Changing a gate on a self-managed node cannot enable an unavailable control-plane API. Check AWS’s feature-specific guidance and the node runtime/OS requirements.
 
-**Checking enabled feature gates in your cluster:**
+The node `configz` endpoint shows configuration for the selected kubelet; omitted defaults and control-plane behavior are not established by that output. `/metrics` requires appropriate non-resource URL authorization, and feature metrics may be unavailable or have additional labels. Neither missing output nor an access error means “disabled.”
 
 ```bash
-# List all feature gates and their status on a node's kubelet
-kubectl get --raw /api/v1/nodes/<node-name>/proxy/configz | jq '.kubeletconfig.featureGates'
-
-# Check API server feature gates (requires API server access logs)
-kubectl get --raw /metrics | grep kubernetes_feature_enabled
-
-# Check specific feature gate status
-kubectl get --raw /metrics | grep 'kubernetes_feature_enabled{name="InPlacePodVerticalScaling"}'
+# Authorized, read-only diagnostics; these endpoints may be restricted.
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?Choose the actual node}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get --raw="/api/v1/nodes/$NODE_NAME/proxy/configz" | jq '.kubeletconfig.featureGates'
 ```
 
-### SIG Governance Structure
+```bash
+# Run separately; absence of a metric is not proof that a feature is disabled.
+: "${KUBE_CONTEXT:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get --raw='/metrics' \
+  | awk '/^kubernetes_feature_enabled/ { print }'
+```
 
-Kubernetes development is organized into Special Interest Groups (SIGs). Understanding which SIG owns a feature helps you track its progress and find relevant documentation.
+### SIGs and enhancement proposals
 
-| SIG | Scope | Key Features in This Document |
-|-----|-------|-------------------------------|
-| **SIG Node** | Kubelet, container runtime, pod lifecycle | Sidecar Containers, In-Place Pod Resize, User Namespaces |
-| **SIG Auth** | Authentication, authorization, security policy | StructuredAuthorizationConfiguration, CEL Admission |
-| **SIG Network** | Networking, Service, Ingress, DNS | Gateway API, ServiceCIDR/IPAddress, Topology Aware Routing |
-| **SIG Storage** | PV/PVC, CSI, volume management | VolumeAttributesClass, ReadWriteOncePod |
-| **SIG Scheduling** | Scheduler, Pod Scheduling Readiness | Pod Scheduling Readiness, Gang Scheduling |
-| **SIG Apps** | Workload controllers (Deployment, StatefulSet, Job) | Job Success Policy, Sidecar Containers |
-| **SIG API Machinery** | API server, CRDs, admission control | CEL Admission, KYAML |
-| **SIG Autoscaling** | HPA, VPA, cluster autoscaling | HPA Container Resource Metrics |
+SIGs own related areas: Node (runtime/lifecycle), Auth (authentication/authorization), Network (Service routing), Storage (CSI/volumes), Scheduling, Apps, API Machinery, Instrumentation and Autoscaling. Major enhancements use a KEP with motivation, design, graduation criteria, testing and production-readiness review. A planned milestone is not a release commitment; confirm the released API and feature-gate history.
+
+[Upstream patch policy](https://kubernetes.io/releases/patch-releases/) · [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) · [Deprecation policy](https://kubernetes.io/docs/reference/deprecation-policy/) · [Kubernetes 1.36.2 gate implementation](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go)
 
 ---
 
 ## 3. EKS Version Support Matrix
 
-### Support Tiers
+### Support periods and price basis
 
-Amazon EKS provides two tiers of version support:
+| Tier | Period from EKS availability | Version-support fee |
+|---|---|---|
+| Standard | First 14 months | $0.10 per cluster-hour |
+| Extended | Next 12 months | $0.60 total per cluster-hour ($0.10 + $0.50) |
 
-| Tier | Duration | Pricing | Description |
-|------|----------|---------|-------------|
-| **Standard Support** | 14 months from EKS release | $0.10/cluster/hour | Full feature support, security patches, bug fixes |
-| **Extended Support** | Additional 12 months | $0.60/cluster/hour | Security patches and critical bug fixes only |
+These are the published version-support fees, not total cluster operating costs. Provisioned Control Plane tiers, compute, Auto Mode/Hybrid Nodes, other capabilities, storage and networking can add charges. At a constant rate for 365 days, the corresponding fees are $876 and $5,256 per cluster: an additional $4,380. A 730-hour monthly illustration gives $73 and $438. These are arithmetic examples, not measured bills.
 
-> **Cost Impact**: Extended support costs 6x the standard support price. For a single cluster running 24/7, this translates to approximately $5,256/year in extended support vs. $876/year in standard support -- an additional $4,380 per cluster per year.
+### Verified support calendar — September 12, 2026 (UTC)
 
-### Version Lifecycle Diagram
+| Version | Upstream release | EKS release | Standard support ends | Extended support ends | Status on review date |
+|---|---|---|---|---|---|
+| 1.31 | 2024-08-13 | 2024-09-26 | 2025-11-26 | 2026-11-26 | Extended |
+| 1.32 | 2024-12-11 | 2025-01-23 | 2026-03-23 | 2027-03-23 | Extended |
+| 1.33 | 2025-04-23 | 2025-05-29 | 2026-07-29 | 2027-07-29 | Extended |
+| 1.34 | 2025-08-27 | 2025-10-02 | 2026-12-02 | 2027-12-02 | Standard |
+| 1.35 | 2025-12-17 | 2026-01-27 | 2027-03-27 | 2028-03-27 | Standard |
+| 1.36 | 2026-04-22 | 2026-06-02 | 2027-08-02 | 2028-08-02 | Standard |
+
+The current AWS calendar offers 1.31–1.36; 1.29 and 1.30 are retained in this chapter only as historical feature coverage, not supported deployment targets. Upstream 1.37 availability does not establish EKS support. Billing for extended support starts at the beginning of the listed standard-support end date in UTC. Recheck the live calendar/API before a scheduled change; month-only dates in future AWS calendars are estimates.
+
+The calendar dates EKS 1.35 availability to **January 27, 2026**, and 1.36 to **June 2, 2026**. An EKS Distro announcement date is a separate release event, so the earlier January 28 combined label should not replace the EKS calendar. Feature details belong to the corresponding version sections below and retain their runtime/admission prerequisites. EKS version rollback and control-plane scaling/SLA topics are covered in [EKS Upgrades](08-eks-upgrades.md).
+
+```bash
+# Read-only when executed with your normal authorized AWS identity.
+: "${AWS_REGION:?Choose the intended Region}"
+aws eks describe-cluster-versions --region "$AWS_REGION" --no-cli-pager \
+  --query clusterVersions --output json
+```
+
+This prints the service’s version records rather than assuming the first array element is the newest version or reusing an old example’s status. No AWS query was executed during this audit.
+
+### Upgrade policy and automatic upgrades
+
+`EXTENDED` is the default cluster upgrade policy. A cluster using `STANDARD` can be automatically upgraded after standard support ends; remaining on a version through extended support is a deliberate cost/lifecycle choice. After extended support ends, EKS gradually upgrades remaining control planes to a supported version. AWS does not promise an exact upgrade time and says there is no notification immediately before that automatic update. The at-least-60-day notice describes the announced **end of standard support**, not a new 60-day grace period after extended support or a guaranteed 60/30/7-day notification sequence.
+
+Managed node groups, self-managed nodes, Fargate Pods and Hybrid Nodes require their respective update/replacement workflows. Auto Mode nodes can update automatically; ordinary installed add-ons still need compatibility and ownership review. Maintain matching node/control-plane versions where practical rather than treating the maximum supported skew as a target. Check workload readiness and actual update status, not just the control-plane version string. An end-of-extended-support automatic upgrade cannot be rolled back using EKS’s native seven-day feature; see the upgrade chapter for eligibility and node-first rollback ordering.
+
+[EKS support calendar and FAQ](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) · [EKS pricing](https://aws.amazon.com/eks/pricing/)
+
+<!-- Parent diagram repair pending: stage/default guarantees and support status/notification timing are stale.
+![Lifecycle diagram of the three-stage Kubernetes feature maturity model, Alpha graduating to Beta and then to GA, with the stability and production-readiness guarantees of each stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-2.html)
 
 ![Diagram of the Amazon EKS version lifecycle: 14 months of standard support then 12 months of extended support at six times the price, with versions 1.29 to 1.36 grouped by release year and their release and support end dates.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-3.html)
 
-### Detailed Version Support Matrix
-
-The table below tracks each Kubernetes version supported by EKS, including upstream release dates, EKS availability, and support end dates.
-
-| K8s Version | Code Name | Upstream Release | EKS Release | Standard Support End | Extended Support End | Current Status |
-|-------------|-----------|-----------------|-------------|---------------------|---------------------|----------------|
-| **1.29** | Mandala | Dec 2023 | Jan 2024 | Mar 2025 | Mar 2026 | End of Support |
-| **1.30** | Uwubernetes | Apr 2024 | May 2024 | Jul 2025 | Jul 2026 | End of Support |
-| **1.31** | Elli | Aug 2024 | Sep 2024 | Nov 2025 | Nov 2026 | Extended Support |
-| **1.32** | Penelope | Dec 2024 | Jan 2025 | Mar 2026 | Mar 2027 | Extended Support |
-| **1.33** | Octarine | Apr 2025 | May 2025 | Jul 2026 | Jul 2027 | Extended Support |
-| **1.34** | Of Wind & Will | Aug 2025 | Oct 2025 | Dec 2026 | Dec 2027 | Standard Support |
-| **1.35** | Timbernetes | Dec 2025 | Jan 2026 | Mar 2027 | Mar 2028 | Standard Support |
-| **1.36** | ハル (Haru) | Apr 2026 | Jun 2026 | Aug 2027 | Aug 2028 | Standard Support |
-
-Source: [Amazon EKS Kubernetes release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html); status column as of September 2026.
-
-> **Note**: EKS release dates typically lag upstream Kubernetes releases by 1-2 months. AWS uses this time to validate the release, integrate with EKS-managed add-ons, and ensure compatibility with AWS services.
-
-### Auto-Upgrade Behavior
-
-When a Kubernetes version reaches end of support (including extended support), EKS will automatically upgrade your cluster:
-
 ![Flowchart showing what happens when an EKS Kubernetes version approaches end of life: clusters may continue on paid extended support, but once a 60-day deprecation notice expires without a user upgrade, AWS force-upgrades the cluster.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-5.html)
 
-**Important**: Auto-upgrades only update the control plane. You must still upgrade your node groups, add-ons, and self-managed components manually. A forced control plane upgrade without corresponding node and add-on upgrades can cause workload disruptions.
-
-### Recent EKS Version Support Announcements (2026)
-
-AWS made several announcements in 2026 affecting EKS version support:
-
-| Date | Announcement | Highlights |
-|:---:|------|------|
-| 2026-06-02 | EKS & EKS Distro begin supporting Kubernetes 1.36 | User Namespaces GA, Mutating Admission Policies, In-Place Pod Vertical Scaling, Resource Health Status, EKS Cluster Insights pre-upgrade checks |
-| 2026-01-28 | EKS & EKS Distro begin supporting Kubernetes 1.35 | In-Place Pod Resource Updates, PreferSameNode Traffic Distribution, Node Topology Labels via Downward API, Image Volumes |
-
-#### Kubernetes 1.36 Support (June 2, 2026)
-
-Amazon EKS and EKS Distro began supporting Kubernetes 1.36. The announcement highlighted (see section 4.8 below for implementation detail):
-
-- **User Namespaces (GA)**: Maps the container's root user to an unprivileged host user, strengthening multi-tenant isolation
-- **Mutating Admission Policies**: CEL-based mutation with no webhook server required
-- **In-Place Pod Vertical Scaling**: Adjust CPU/memory without restarting the pod
-- **Resource Health Status**: Surfaces device health and hardware failure conditions in Pod status
-- **EKS Cluster Insights**: Pre-upgrade checks for deprecated API usage and add-on compatibility
-
-> Source: [Amazon EKS Distro now supports Kubernetes version 1.36](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-distro-kubernetes-version-1-36/)
-
-#### Kubernetes 1.35 Support (January 28, 2026)
-
-Amazon EKS and EKS Distro began supporting Kubernetes 1.35, adding:
-
-- **In-Place Pod Resource Updates** -- the same restart-free resource adjustment capability covered as In-Place Pod Vertical Scaling GA in section 4.7
-- **PreferSameNode Traffic Distribution** -- prefer routing traffic to endpoints on the same node
-- **Node Topology Labels via Downward API** -- expose node topology labels to pods
-- **Image Volumes** -- mount OCI images as volumes to deliver data and ML models
-
-> Source: [Amazon EKS Distro now supports Kubernetes version 1.35](https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-eks-distro-kubernetes-version-1-35)
-
-> **Related announcements**: EKS version rollback support (July 1, 2026) and the new control plane 99.99% SLA / 8XL scaling tier (March 20, 2026) are covered in the [EKS Upgrades](08-eks-upgrades.md) document, since they relate directly to the upgrade process rather than Kubernetes version features.
+-->
 
 ---
 
@@ -235,102 +182,82 @@ This section provides a detailed breakdown of features introduced, graduated, an
 
 ### 4.1 Kubernetes 1.29 "Mandala" (December 2023)
 
-**Theme**: Named after the geometric art form symbolizing the universe, reflecting the community's holistic approach to this release.
-
-**Release Stats**: 49 enhancements -- 11 Stable, 19 Beta, 19 Alpha
+The December 13, 2023 release announcement lists **49 enhancements: 11 stable, 19 beta and 19 alpha**. These are historical release counts, not a claim that 1.29 remains supported by EKS. The diagram’s default/production labels are generalizations; use the per-feature gate history and runtime requirements described above.
 
 ![Diagram showing the 49 enhancements in Kubernetes 1.29 "Mandala" split by maturity stage into 11 Stable (GA), 19 Beta, and 19 Alpha, with representative features for each stage.](../.gitbook/assets/en-eks-12-kubernetes-version-roadmap-6.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-12-kubernetes-version-roadmap-6.html)
 
-#### Key Graduated Features (GA)
+#### KMS v2 encryption at rest — GA
 
-**KMS v2 Encryption**
+KMS v2 improves envelope-encryption performance by deriving single-use data encryption keys from a secret seed and using the KMS plugin when protecting/rotating that seed, rather than requiring a new remote encryption operation for every object write. Both envelope-encryption designs use data-encryption and key-encryption layers; KMS v1 was not a “single-layer” design. The improvement is not a constant-latency guarantee.
 
-KMS v2 for Kubernetes Secrets encryption at rest reached GA, providing significant performance improvements over KMS v1.
+KMS v1 was deprecated in 1.28 and disabled by default in 1.29. The current upstream KMS guide still documents its legacy implementation; the old claim that it was removed in 1.31 was incorrect. Prefer the supported v2 migration path.
 
-| Aspect | KMS v1 | KMS v2 |
-|--------|--------|--------|
-| Encryption calls per write | 1 per object | 1 per DEK rotation |
-| Performance | High latency at scale | Near-constant latency |
-| Key hierarchy | Single layer | Two-layer (KEK + DEK) |
-| Status | Deprecated in 1.28 | GA in 1.29 |
+This configuration is for an administrator-managed upstream API server with a reviewed, installed v2 plugin at the stated socket. It is **not an EKS control-plane manifest**. KMS v2 does not accept `cachesize`. The trailing `identity` provider permits reading existing plaintext during migration; it is not plaintext fallback when the first provider fails to encrypt a write. Review the encryption migration and remove plaintext-read support only after validating the migration.
 
 ```yaml
-# KMS v2 EncryptionConfiguration
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
-  - resources:
-      - secrets
-    providers:
-      - kms:
-          apiVersion: v2
-          name: aws-encryption-provider
-          endpoint: unix:///var/run/kmsplugin/socket.sock
-          timeout: 3s
-      - identity: {}
+- resources:
+  - secrets
+  providers:
+  - kms:
+      apiVersion: v2
+      name: reviewed-kms-provider
+      endpoint: unix:///var/run/kmsplugin/socket.sock
+      timeout: 3s
+  - identity: {}
 ```
 
-**ReadWriteOncePod PV Access Mode**
+**EKS distinction:** Current AWS guidance provides default KMS v2 envelope encryption for all Kubernetes API data on EKS 1.28 and later, using an AWS-owned key unless a customer-managed key is configured. This covers API data such as Secrets and ConfigMaps, not arbitrary node or EBS volume data. Do not infer it only starts with EKS 1.29 or apply this upstream file to EKS.
 
-The `ReadWriteOncePod` (RWOP) access mode graduated to GA. This ensures that a PersistentVolume can only be mounted as read-write by a single Pod in the entire cluster, providing stronger data safety guarantees than `ReadWriteOnce` (which allows multiple pods on the same node).
+#### ReadWriteOncePod — GA
+
+`ReadWriteOncePod` constrains a PVC to one Pod across the cluster. `ReadWriteOnce` instead permits multiple Pods on one node. RWOP requires a compatible CSI volume/driver; the upstream minimum sidecars are csi-provisioner 3.0.0, csi-attacher 3.3.0 and csi-resizer 1.3.0. These are feature minimums, not recommended current releases. Select supported versions for the actual cluster and provisioner.
+
+The example requires the existing `version-lab` namespace and an appropriate `reviewed-csi-class`. Access-mode coordination is not a kernel security boundary against privileged host access, a database leader-election protocol, or a substitute for application fencing and backups.
 
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: database-pvc
+  namespace: version-lab
 spec:
   accessModes:
-    - ReadWriteOncePod    # Only one pod can mount this volume
-  storageClassName: gp3
+  - ReadWriteOncePod
+  storageClassName: reviewed-csi-class
   resources:
     requests:
       storage: 100Gi
 ```
 
-**Other GA Features in 1.29**:
-- `NodeExpandSecret` for CSI volume expansion with credentials
-- `KubeletTracing` for kubelet-level distributed tracing
-- `ReadWriteOncePod` PersistentVolume access mode
-- `MinDomainsInPodTopologySpread` for topology spread constraints
+#### Selected beta and alpha features
 
-#### Key Beta Features
+| Feature | State in 1.29 | Meaning |
+|---|---|---|
+| SidecarContainers | Beta, enabled by default | Restartable init containers; alpha was 1.28 and GA is 1.33 |
+| NFTablesProxyMode | Alpha, disabled by default | A Linux Service-proxy backend; kernel, CNI and NodePort behavior must be checked |
+| LoadBalancerIPMode | Alpha | A controller-reported LoadBalancer ingress status mode, not an arbitrary Pod field |
+| PodSchedulingReadiness | Beta | Scheduling gates delay consideration by the scheduler |
+| NodeLogQuery | Alpha | Node-log query support requires the applicable kubelet configuration/access |
+| KubeletTracing | Beta | It did not become GA in 1.29; GA is 1.34 |
+| MinDomainsInPodTopologySpread | Beta | GA follows in 1.30 |
 
-**nftables-based kube-proxy (Alpha)**
+A native sidecar uses the following **Pod-spec fragment**. Replace the illustrative image with a reviewed implementation and configure its actual log pipeline. This is not an installed Fluent Bit deployment. Startup proceeds after the sidecar has started (and its startup probe succeeds, if present); readiness and graceful shutdown still require correct probes, application behavior and a sufficient termination budget.
 
-A new kube-proxy backend using nftables instead of iptables was introduced as alpha. This is significant because nftables offers better performance and scalability than iptables, especially in clusters with thousands of Services.
-
-```bash
-# Check current kube-proxy mode
-kubectl get configmap kube-proxy-config -n kube-system -o yaml | grep mode
-
-# nftables mode (alpha in 1.29 - requires feature gate)
-# mode: nftables
+```yaml
+initContainers:
+- name: log-helper
+  image: example.invalid/version-lab/log-helper:reviewed
+  restartPolicy: Always
 ```
 
-| Proxy Mode | Maturity in 1.29 | Rule Complexity | Performance at Scale |
-|-----------|-------------------|-----------------|---------------------|
-| iptables | Stable (default) | O(n) per packet | Degrades >5000 services |
-| IPVS | Stable | O(1) lookup | Good at scale |
-| nftables | Alpha | O(1) lookup | Excellent at scale |
+The release also graduated CSI `NodeExpandSecret`, allowing a driver’s node-side expansion request to carry the appropriate credentials. The deprecated `flowcontrol.apiserver.k8s.io/v1beta2` endpoint stopped being served in 1.29; use the stable `v1` API and review its field changes. `SecurityContextDeny` was deprecated earlier and removed in 1.30, not newly deprecated in 1.29. No universal “5,000 Services” performance threshold or measured proxy benchmark is established here.
 
-**Load Balancer IP Mode**
-
-The `LoadBalancerIPMode` feature (beta) allows Services of type LoadBalancer to specify how the load balancer IP is handled, improving compatibility with cloud provider implementations.
-
-#### Key Alpha Features
-
-- **SidecarContainers** (initContainer with `restartPolicy: Always`) -- a landmark feature beginning its journey
-- **PodLifecycleSleepAction** -- adds `sleep` action to pod lifecycle hooks
-- **Unknown Version Interoperability Proxy** -- proxy requests for unknown API versions
-
-#### Deprecations in 1.29
-
-- `flowcontrol.apiserver.k8s.io/v1beta2` deprecated (removed in 1.32)
-- `SecurityContextDeny` admission plugin deprecated
-- In-tree cloud provider integrations continue deprecation path
+[Kubernetes 1.29 release](https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/) · [KMS provider](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/) · [EKS envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html) · [Persistent volumes and RWOP](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) · [API migration guide](https://kubernetes.io/docs/reference/using-api/deprecation-guide/)
 
 ---
 

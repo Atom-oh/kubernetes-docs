@@ -8,38 +8,38 @@
     "animation": "trace",
     "viewBox": [
       1040,
-      640
+      560
     ],
     "views": [
       {
         "id": "launch",
-        "label": "Pod 생성 경로",
+        "label": "Pod launch",
         "focus": [
           "dag",
           "kpo",
           "pod"
         ],
-        "note": "DAG 코드의 extract_orders 태스크가 KubernetesPodOperator.execute()를 호출하고, 오퍼레이터가 pod_template_file과 생성자 오버라이드로 Pod를 만든다."
+        "note": "Worker가 KPO를 실행합니다. Template 병합과 admission을 거쳐 workload Pod가 생성됩니다."
       },
       {
-        "id": "isolation",
-        "label": "격리와 권한",
+        "id": "identity",
+        "label": "Identity / placement",
         "focus": [
           "pod",
           "sa",
           "node"
         ],
-        "note": "태스크 Pod는 IRSA 어노테이션이 달린 ServiceAccount로 실행되고, taint가 걸린 전용 노드 풀에 스케줄링된다."
+        "note": "Workload identity와 caller API 권한은 별도이며 node 배치는 실제 Pod 조건에 따릅니다."
       },
       {
         "id": "report",
-        "label": "상태 보고",
+        "label": "Task state",
         "focus": [
           "pod",
           "kpo",
           "af"
         ],
-        "note": "Pod 완료 상태가 오퍼레이터로 전달되고, 오퍼레이터가 태스크 성공/실패를 Airflow scheduler와 메타데이터 DB에 보고한다."
+        "note": "KPO가 관찰한 결과를 Task SDK/supervisor의 Execution API 경로로 보고합니다."
       }
     ],
     "legend": {
@@ -50,11 +50,11 @@
     {
       "id": "dag",
       "type": "frontend",
-      "label": "DAG 코드",
-      "sublabel": "extract_orders 태스크",
+      "label": "Airflow worker",
+      "sublabel": "kpo_smoke.run_smoke",
       "pos": [
         420,
-        40
+        30
       ],
       "size": [
         220,
@@ -63,12 +63,12 @@
     },
     {
       "id": "af",
-      "type": "database",
-      "label": "Airflow scheduler",
-      "sublabel": "메타데이터 DB",
+      "type": "backend",
+      "label": "Execution API",
+      "sublabel": "Task SDK / supervisor",
       "pos": [
         60,
-        200
+        170
       ],
       "size": [
         220,
@@ -79,10 +79,10 @@
       "id": "kpo",
       "type": "backend",
       "label": "KubernetesPodOperator",
-      "sublabel": ".execute()",
+      "sublabel": "workload Pod 생성·관찰",
       "pos": [
         420,
-        200
+        170
       ],
       "size": [
         220,
@@ -92,11 +92,11 @@
     {
       "id": "pod",
       "type": "backend",
-      "label": "Pod",
-      "sublabel": "pod_template_file로부터 생성",
+      "label": "Workload Pod",
+      "sublabel": "airflow-workloads namespace",
       "pos": [
         420,
-        370
+        320
       ],
       "size": [
         220,
@@ -107,11 +107,11 @@
     {
       "id": "sa",
       "type": "security",
-      "label": "ServiceAccount",
-      "sublabel": "orders-extractor-sa (IRSA 역할 어노테이션)",
+      "label": "Workload ServiceAccount",
+      "sublabel": "workload-smoke; AWS 역할은 별도 설정",
       "pos": [
         60,
-        530
+        440
       ],
       "size": [
         260,
@@ -121,11 +121,11 @@
     {
       "id": "node",
       "type": "cloud",
-      "label": "taint가 걸린 전용 노드 풀",
-      "sublabel": "별도 NodeGroup / NodePool",
+      "label": "Kubernetes placement",
+      "sublabel": "선택한 NodePool 배치 조건",
       "pos": [
         740,
-        530
+        440
       ],
       "size": [
         260,
@@ -144,84 +144,83 @@
       "id": "kpo-to-pod",
       "from": "kpo",
       "to": "pod",
-      "label": "pod_template_file + 생성자 오버라이드로 Pod 생성",
+      "label": "Template 병합 + Kubernetes API",
       "variant": "emphasis",
       "labelAt": [
         523,
-        317
+        280
       ]
     },
     {
       "id": "pod-to-sa",
       "from": "pod",
       "to": "sa",
-      "label": "실행 주체",
+      "label": "Workload 실행 ID",
       "variant": "security"
     },
     {
       "id": "pod-to-node",
       "from": "pod",
       "to": "node",
-      "label": "스케줄링 위치"
+      "label": "Pod 배치"
     },
     {
       "id": "pod-to-kpo",
       "from": "pod",
       "to": "kpo",
-      "label": "완료 상태 전달",
+      "label": "Pod 상태 관찰",
       "variant": "dashed",
       "fromSide": "right",
       "toSide": "right",
       "via": [
         [
           720,
-          402
+          352
         ],
         [
           720,
-          232
+          202
         ]
       ],
       "labelAt": [
         720,
-        317
+        280
       ]
     },
     {
       "id": "kpo-to-af",
       "from": "kpo",
       "to": "af",
-      "label": "태스크 성공/실패 보고",
+      "label": "Supervisor로 task 상태 보고",
       "labelAt": [
         350,
-        196
+        154
       ]
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Pod 스펙 우선순위",
+      "title": "Pod 설정",
       "items": [
-        "pod_template_file이 공통 기본값을 제공한다",
-        "image, cmds/arguments, service_account_name 등 생성자 인자가 템플릿의 같은 필드보다 우선한다",
-        "Jinja 템플릿({{ ds }})은 Pod 생성 전에 렌더링된다"
+        "목록은 추가되고 빈 값은 기존 설정을 유지할 수 있음",
+        "dry_run과 admission 이후 Pod 확인"
       ]
     },
     {
       "dot": "amber",
-      "title": "전용 노드 풀",
+      "title": "Node 배치",
       "items": [
-        "tolerations + nodeAffinity로 workload=airflow-tasks taint에 맞춘다",
-        "공용 노드의 다른 워크로드와 자원 경합을 피하고 태스크 수요만으로 독립 스케일한다"
+        "실제 node의 selector·toleration 조건 확인",
+        "용량과 중단·복구 경로를 함께 고려"
       ]
     },
     {
       "dot": "rose",
-      "title": "태스크별 IRSA",
+      "title": "실행 주체별 ID",
       "items": [
-        "ServiceAccount에 eks.amazonaws.com/role-arn 어노테이션을 단다",
-        "Airflow 컨트롤 플레인 컴포넌트의 역할과 분리된 권한 경계다"
+        "Airflow caller에는 Kubernetes API 권한",
+        "Workload의 AWS 접근은 별도 구성"
       ]
     }
   ]

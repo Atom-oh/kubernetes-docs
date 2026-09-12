@@ -1,0 +1,383 @@
+{
+  "status": "passed",
+  "files": [
+    "ko/data-on-eks/airflow/04-mwaa-integration.md",
+    "ko/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+    "en/data-on-eks/airflow/04-mwaa-integration.md",
+    "en/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md"
+  ],
+  "versions": {
+    "airflow": "3.3.1",
+    "python": "3.12",
+    "provider": "10.21.0",
+    "availability": "2026-09-01"
+  },
+  "fences": 14,
+  "quizQuestions": 24,
+  "relativeLinks": 10,
+  "kubernetesModels": "Four Namespace/ServiceAccount/Role/RoleBinding objects deserialized; namespace and group binding checked.",
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/airflow/04-mwaa-integration.md",
+        "sha256": "406d7dadbc057e462bae05e248ade05717406f03d5247209061bbf9bba1f84a2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-amazon-mwaa-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-관리-범위와-현재-버전"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-eks-연결의-세-가지-조건"
+          },
+          {
+            "tag": "h3",
+            "id": "access-entry와-namespace-rbac"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-kubeconfig와-의존성-배포"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-실행-확인과-제품-선택"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-4-amazon-mwaa-통합",
+          "_1-관리-범위와-현재-버전",
+          "_2-eks-연결의-세-가지-조건",
+          "access-entry와-namespace-rbac",
+          "_3-kubeconfig와-의존성-배포",
+          "_4-실행-확인과-제품-선택",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/airflow/04-mwaa-integration.md",
+        "sha256": "a8a8482c7744e2f6f4cc1960d162f1f5f506ea64f121ee4491cb3f530e72fd41",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-amazon-mwaa-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-management-boundaries-and-current-versions"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-three-requirements-for-eks-access"
+          },
+          {
+            "tag": "h3",
+            "id": "access-entry-and-namespace-rbac"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-kubeconfig-and-dependency-delivery"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-verify-execution-and-choose-an-operating-model"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope-and-references"
+          }
+        ],
+        "renderedIds": [
+          "part-4-amazon-mwaa-integration",
+          "_1-management-boundaries-and-current-versions",
+          "_2-three-requirements-for-eks-access",
+          "access-entry-and-namespace-rbac",
+          "_3-kubeconfig-and-dependency-delivery",
+          "_4-verify-execution-and-choose-an-operating-model",
+          "validation-scope-and-references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+        "sha256": "61e848c94af314df7fe8946fc6e728ae321ef4fb43ec523f4f5fd1668449a326",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "mwaa-통합-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "mwaa-통합-퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
+        "sha256": "a647bb81efa81a8d44b7a2d402fdfa587db03356321e67a70fe26d93e88579a9",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "mwaa-integration-quiz"
+          }
+        ],
+        "renderedIds": [
+          "mwaa-integration-quiz"
+        ]
+      }
+    ]
+  },
+  "diagramDeliveries": [
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-data-on-eks-airflow-04-mwaa-integration-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-data-on-eks-airflow-04-mwaa-integration-0.html",
+      "specification": {
+        "sha256": "00efce98332192a0d6234d03f7412f28214570bc8b930cc858d44b732492e524",
+        "bytes": 4132
+      },
+      "artifact": {
+        "sha256": "090f2a2ad99c2d1794678e0e647d06ff29b478d0b1cfd58f4fd44a82bb556b5b",
+        "bytes": 707646
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-data-on-eks-airflow-04-mwaa-integration-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-data-on-eks-airflow-04-mwaa-integration-0.html",
+      "specification": {
+        "sha256": "35b22afb197cafb3a2a9897d617a9ab98ef3a6ef1868ddba932f0d1a428132d9",
+        "bytes": 4151
+      },
+      "artifact": {
+        "sha256": "21d98863bb1ca949579b3422967ef2e9b057dd9cd497ea007926ddd82d24b111",
+        "bytes": 707592
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "090f2a2ad99c2d1794678e0e647d06ff29b478d0b1cfd58f4fd44a82bb556b5b"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "090f2a2ad99c2d1794678e0e647d06ff29b478d0b1cfd58f4fd44a82bb556b5b"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "090f2a2ad99c2d1794678e0e647d06ff29b478d0b1cfd58f4fd44a82bb556b5b"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "21d98863bb1ca949579b3422967ef2e9b057dd9cd497ea007926ddd82d24b111"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "21d98863bb1ca949579b3422967ef2e9b057dd9cd497ea007926ddd82d24b111"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "21d98863bb1ca949579b3422967ef2e9b057dd9cd497ea007926ddd82d24b111"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngVisualInspection": "Both current ko/en PNGs inspected; clear separation of network, access entry/RBAC, EKS API and workload; no clipped labels/cards.",
+  "sources": [
+    {
+      "name": "overview",
+      "url": "https://docs.aws.amazon.com/mwaa/latest/userguide/what-is-mwaa.html",
+      "sha256": "7d30c0edfb88e33c583396b819d619c979625e52694601f83da9a1785ca2b509",
+      "bytes": 20154
+    },
+    {
+      "name": "eks",
+      "url": "https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-eks-example.html",
+      "sha256": "4e60e85402df5c0f6194b4925679ec59837c8e50fed18e839e8b4af3a33f1156",
+      "bytes": 38625
+    },
+    {
+      "name": "startup",
+      "url": "https://docs.aws.amazon.com/mwaa/latest/userguide/using-startup-script.html",
+      "sha256": "59202c3191ec2187db58b7e5827606f73507559e414474860e5e7ef68e20c601",
+      "bytes": 37604
+    },
+    {
+      "name": "dependencies",
+      "url": "https://docs.aws.amazon.com/mwaa/latest/userguide/working-dags-dependencies.html",
+      "sha256": "7437b17c64dd284d1be6bd78d82ae6bfccb40293e4a68ef4c6c2510a0b646d97",
+      "bytes": 41245
+    },
+    {
+      "name": "v32",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-mwaa-now-supports-apache-airflow-3-2/",
+      "sha256": "8564aeaa0b74ece4a2bd147ea5d3aebf93bc7af75ff6a8c53698f634068feb40",
+      "bytes": 322571
+    },
+    {
+      "name": "versions",
+      "url": "https://docs.aws.amazon.com/mwaa/latest/userguide/airflow-versions.html",
+      "sha256": "485c004dc14ca479d3dbe53d858fa92f5eb29d93986eac9aff6f565f518726d8",
+      "bytes": 35628
+    },
+    {
+      "name": "constraints331",
+      "url": "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.1/constraints-3.12.txt",
+      "sha256": "ecc0b5b2902beb8a2127e8d38776a3d43a7bb5ea68cf86a1d77db1b16841c699",
+      "bytes": 18628
+    },
+    {
+      "name": "access",
+      "url": "https://aws.amazon.com/blogs/containers/a-deep-dive-into-simplified-amazon-eks-access-management-controls/",
+      "sha256": "a12e5be27a2c42e48726c4c6f40853d4df6f407c268276c4e77d8c6d9f7c93ee",
+      "bytes": 1382927
+    },
+    {
+      "name": "serverless",
+      "url": "https://docs.aws.amazon.com/mwaa/latest/mwaa-serverless-userguide/what-is-mwaa-serverless.html",
+      "sha256": "6cee6156161e6b6237ed560910aeb9e57da8e340eda6ad188730e68b7c9b82b7",
+      "bytes": 27284
+    },
+    {
+      "name": "s3",
+      "url": "https://docs.aws.amazon.com/help-panel/mwaa/latest/console/hp-dag-s3.html",
+      "sha256": "5c4942f3b6a237368dc92f83887b3ca0c96009f22f771a4999b385f37ef365bd",
+      "bytes": 5422
+    }
+  ],
+  "limits": "No MWAA update, EKS access entry, Kubernetes admission/RBAC application, IAM mutation or live task. Official version/constraint/source review and bounded example/render verification only."
+}

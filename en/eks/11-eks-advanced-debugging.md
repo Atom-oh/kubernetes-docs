@@ -1,7 +1,7 @@
 # EKS Advanced Debugging and Incident Response
 
-> **Supported Versions**: EKS 1.28+, kubectl 1.28+
-> **Last Updated**: September 9, 2026
+> **Review baseline**: Kubernetes 1.36 schemas and kubectl 1.36.2; choose a currently supported EKS version and compatible component releases
+> **Last Updated**: September 12, 2026
 
 For stable operation of Amazon EKS clusters, a systematic incident response framework and advanced debugging skills are essential. This document provides a practical guide for quickly diagnosing and resolving complex issues that occur in production environments.
 
@@ -1453,7 +1453,7 @@ spec:
       labels:
         severity: warning
       annotations:
-        summary: More than50% of CFS periods were throttled for {{ $labels.namespace
+        summary: More than 50% of CFS periods were throttled for {{ $labels.namespace
           }}/{{ $labels.pod }}/{{ $labels.container }}.
 ```
 ```bash
@@ -1465,7 +1465,7 @@ kubectl --context "$KUBE_CONTEXT" -n monitoring get prometheusrule reviewed-eks-
 ```
 ### ADOT Collector: Explicit Pipelines and Prerequisites
 
-The example uses the reviewed Operator0.158.0 v1beta1 object-shaped config and ADOT0.50.0 components. Prepare the namespace, Operator/CRDs, receiver TLS Secret, trusted client CA and an appropriately configured ServiceAccount AWS identity. The Role below grants only Kubernetes Pod discovery; it does not grant X-Ray, CloudWatch Logs or AMP access. Review exporter IAM permissions and real Region/log-group/workspace inputs before deployment. The sample is not executed or claimed production-ready.
+The example uses the reviewed Operator 0.158.0 v1beta1 object-shaped config and ADOT 0.50.0 components. Prepare the namespace, Operator/CRDs, receiver TLS Secret, trusted client CA and an appropriately configured ServiceAccount AWS identity. The Role below grants only Kubernetes Pod discovery; it does not grant X-Ray, CloudWatch Logs or AMP access. Review exporter IAM permissions and real Region/log-group/workspace inputs before deployment. The sample is not executed or claimed production-ready.
 
 ```yaml
 apiVersion: v1
@@ -1675,7 +1675,7 @@ spec:
     - protocol: TCP
       port: 4318
 ```
-OTLP clients must trust the certificate and use the correct generated Service, protocol and4317/4318 port. NetworkPolicy enforcement must exist; the policy selects only Collector Pods and allows labeled clients in the same namespace. Configure metrics-target TLS/auth and workload ingress policies where required. Prometheus discovery is limited to one namespace and opts in only annotated Running Pods with a TCP port named metrics; the port comes from that endpoint, avoiding an unconfigured annotation-port rewrite.
+OTLP clients must trust the certificate and use the correct generated Service, protocol and 4317/4318 port. NetworkPolicy enforcement must exist; the policy selects only Collector Pods and allows labeled clients in the same namespace. Configure metrics-target TLS/auth and workload ingress policies where required. Prometheus discovery is limited to one namespace and opts in only annotated Running Pods with a TCP port named metrics; the port comes from that endpoint, avoiding an unconfigured annotation-port rewrite.
 
 One replica avoids duplicating every scrape in this example; scaling requires target sharding/allocator design. memory_limiter precedes batch, but memory/batch settings do not guarantee lossless delivery. AWS X-Ray receives traces, awsemf writes metrics through CloudWatch Logs, and AMP receives SigV4-authenticated remote write. Custom EKS/DiagnosticsExample metrics are not automatically the Container Insights schema/dashboard. Fixed log names avoid an unresolved {ClusterName} becoming undefined; exporter resource attributes can still affect routing, so constrain producer data and IAM. Do not convert every resource attribute into a metric label without a cardinality review.
 
@@ -1834,7 +1834,7 @@ aws cloudwatch put-metric-alarm --region "$AWS_REGION" \
   --threshold 80 --comparison-operator GreaterThanThreshold \
   --treat-missing-data missing --alarm-actions "$SNS_TOPIC_ARN"
 ```
-The example uses three300-second periods and three breaching datapoints: a15-minute evaluation window, not a guaranteed two-minute detection time. TreatMissingData=missing preserves missing-data state; choose a different policy only for a metric whose semantics justify it. Inspect initial INSUFFICIENT_DATA and state transitions rather than assuming creation means a working alarm.
+The example uses three 300-second periods and three breaching datapoints: a 15-minute evaluation window, not a guaranteed two-minute detection time. TreatMissingData=missing preserves missing-data state; choose a different policy only for a metric whose semantics justify it. Inspect initial INSUFFICIENT_DATA and state transitions rather than assuming creation means a working alarm.
 
 The anomaly example follows the API’s anomaly-specific metric/band structure: m1 is the measured series and ad1 is the band selected by ThresholdMetricId. The model, period, statistic and dimensions must match. A model needs suitable data/training and is not a guarantee of outage prediction. The JSON’s literal example dimensions must be replaced to match the reviewed dimensions file before use.
 
@@ -1909,7 +1909,7 @@ aws logs put-metric-filter --region "$AWS_REGION" \
 ```
 ### Maturity Targets and Automation Boundaries
 
-The original30/15/5/2-minute MTTD values are retained as unverified planning targets. The configurations here do not demonstrate those results; measure occurrence/detection/restoration timestamps consistently across incidents. ML/anomaly detection does not by itself establish predictive accuracy or authorize remediation.
+The original 30/15/5/2-minute MTTD values are retained as unverified planning targets. The configurations here do not demonstrate those results; measure occurrence/detection/restoration timestamps consistently across incidents. ML/anomaly detection does not by itself establish predictive accuracy or authorize remediation.
 
 | Level | Original illustrative MTTD target | Capability to verify |
 | --- | --- | --- |
@@ -2002,7 +2002,7 @@ Before enabling a mutation runbook, implement identity/UID revalidation, durable
 | Example severity | Slack | PagerDuty | Other channels | Mutation policy |
 | --- | --- | --- | --- | --- |
 | P1 Critical | Incidents | Immediate policy | Team lead/on-call email or SMS if wired | Only a reviewed, scoped runbook |
-| P2 High | High alerts | Example15-minute escalation | Team email if wired | Conditional review |
+| P2 High | High alerts | Example 15-minute escalation | Team email if wired | Conditional review |
 | P3 Medium | Alerts | Optional | Team email if wired | No automatic change by default |
 | P4 Low | Low alerts | None | Example daily digest | No automatic change |
 
@@ -2014,112 +2014,93 @@ This is a routing policy example, not proof that every channel is deployed or wi
 
 ## 9. Quick Reference
 
-### Error Pattern Lookup Table
+### Interpret Symptoms Before Choosing a Change
 
-| Symptom | Cause | Resolution |
-|---------|-------|------------|
-| **CrashLoopBackOff** | Application crash, invalid command, missing dependencies | `kubectl logs --previous`, review application code/config |
-| **ImagePullBackOff** | Image not found, wrong tag, authentication failure | Verify image name, review `imagePullSecrets` |
-| **OOMKilled** | Memory limit exceeded | Increase memory limit, fix memory leak |
-| **CreateContainerConfigError** | Missing ConfigMap/Secret, invalid reference | `kubectl describe pod`, verify referenced resources exist |
-| **Pending (resources)** | No node with sufficient CPU/memory | Scale up nodes, adjust resource requests |
-| **Pending (scheduling)** | nodeSelector, affinity, taint mismatch | Check Events section in `kubectl describe pod` |
-| **ContainerCreating (delayed)** | Volume mount failure, network plugin issue | Check PVC status, CNI pod status |
-| **ErrImagePull** | Cannot connect to image registry | Check network connectivity, ECR endpoints |
-| **RunContainerError** | Invalid container config, securityContext issue | `kubectl describe pod`, review securityContext |
-| **PostStartHookError** | postStart hook failed | Review hook command, adjust timeout |
-| **PreStopHookError** | preStop hook failed | Review hook command, adjust terminationGracePeriodSeconds |
-| **FailedScheduling** | Resource shortage, PVC binding pending | Check node resources, PVC status |
-| **FailedMount** | Volume mount failed, CSI driver issue | Check CSI driver logs, PV/PVC status |
-| **NetworkNotReady** | CNI plugin not ready | Check aws-node pod status, CNI logs |
-| **NodeNotReady** | kubelet issue, network disconnection | Check kubelet logs, node status |
-| **Evicted** | Node resource pressure (disk, memory) | Clean node resources, adjust resource limits |
-| **BackOff** | Retry backoff state | Check previous error logs, resolve root cause |
-| **InvalidImageName** | Invalid image name format | Verify image name syntax |
+| Symptom | Evidence and interpretation |
+| --- | --- |
+| CrashLoopBackOff | Repeated container exits/restarts with backoff; inspect exit code, last state, probes and current/previous logs. Exit0 with restartAlways can also loop |
+| ImagePullBackOff | Retry delay after a pull failure; inspect the earlier error, image/tag/digest, platform, pull identity, registry/network/CA/rate limits |
+| ErrImagePull | Pull attempt failed; it is not proof of network failure alone or of an application IRSA problem |
+| OOMKilled | Correlate the runtime reason, memory limit/working set and node evidence; exit137 alone or high usage alone does not prove a leak |
+| CreateContainerConfigError | Check referenced ConfigMap/Secret/volume and namespace/keys; avoid dumping credential values |
+| Pending: resources | Compare requests, init/Pod overhead, allocatable resources, Pod limits and actual scheduling events before provisioning |
+| Pending: placement | Inspect selector/affinity/taints/topology/storage constraints; some Pending states are intentional |
+| ContainerCreating | A container status reason/display, not a Pod phase; inspect runtime, image, CNI and volume setup |
+| RunContainerError | Inspect the actual runtime/security/command error; no universal restart fix |
+| postStart hook failure | Inspect the handler and application startup; postStart does not guarantee ordering before ENTRYPOINT and has no general timeoutSeconds field |
+| preStop hook failure | Inspect handler errors and the grace-period budget, which includes hook time; forced termination is not successful draining |
+| FailedScheduling | Read the full message, including PVC/affinity/resource constraints, rather than assuming CPU shortage |
+| FailedMount | Check CSI ownership, claims, attachment/topology, permissions and backend/network health; do not remove all finalizers |
+| NetworkNotReady | Inspect the actual node networking implementation and readiness evidence; standard aws-node commands are mode-specific |
+| NodeNotReady | Separate Ready=False from missing-heartbeat Unknown and inspect node/EC2/runtime/network evidence |
+| Evicted | Check node-pressure/ephemeral-storage evidence and the Pod reason; increasing limits or deleting logs is not automatically a repair |
+| BackOff | A retry behavior; the preceding failure explains what to investigate |
+| InvalidImageName | Validate the image reference syntax; this precedes successful registry resolution |
 
-### Essential kubectl Commands Cheatsheet
-
-```bash
-# Cluster status
-kubectl cluster-info
-kubectl get nodes -o wide
-kubectl top nodes
-
-# Pod debugging
-kubectl get pods -A -o wide
-kubectl describe pod <pod> -n <ns>
-kubectl logs <pod> -n <ns> --tail=100 -f
-kubectl logs <pod> -n <ns> --previous
-kubectl exec -it <pod> -n <ns> -- /bin/sh
-
-# Events
-kubectl get events -A --sort-by='.lastTimestamp'
-kubectl get events -n <ns> --field-selector type=Warning
-
-# Resource usage
-kubectl top pods -A --sort-by=memory
-kubectl top pods -A --sort-by=cpu
-
-# Debug containers
-kubectl debug -it <pod> --image=busybox --target=<container>
-kubectl debug node/<node> -it --image=ubuntu
-
-# Network test
-kubectl run test --image=nicolaka/netshoot -it --rm -- /bin/bash
-
-# Force delete
-kubectl delete pod <pod> -n <ns> --grace-period=0 --force
-
-# Rollout
-kubectl rollout status deployment/<deploy> -n <ns>
-kubectl rollout undo deployment/<deploy> -n <ns>
-kubectl rollout restart deployment/<deploy> -n <ns>
-
-# Scaling
-kubectl scale deployment <deploy> -n <ns> --replicas=3
-
-# ConfigMap/Secret
-kubectl get configmap -n <ns> -o yaml
-kubectl get secret -n <ns> -o yaml
-
-# Service endpoints
-kubectl get endpoints -n <ns>
-kubectl describe svc <service> -n <ns>
-```
-
-### Tool Recommendations
-
-| Tool | Purpose | Installation/Usage |
-|------|---------|-------------------|
-| **netshoot** | Network debugging | `kubectl run net --image=nicolaka/netshoot -it --rm` |
-| **eks-node-viewer** | Node resource visualization | `go install github.com/awslabs/eks-node-viewer/cmd/eks-node-viewer@latest` |
-| **crictl** | Container runtime debugging | On node: `sudo crictl ps`, `sudo crictl logs` |
-| **kubeval** | YAML validation | `kubeval deployment.yaml` |
-| **stern** | Multi-pod logging | `stern <pod-pattern> -n <namespace>` |
-| **k9s** | TUI cluster management | `k9s -n <namespace>` |
-| **kubectx/kubens** | Context/namespace switching | `kubectx <context>`, `kubens <namespace>` |
-
-### EKS Log Collector (For AWS Support)
+### Scoped Read Commands
 
 ```bash
-# Download and run EKS Log Collector
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh
-chmod +x eks-log-collector.sh
-
-# Run log collection
-sudo ./eks-log-collector.sh
-
-# Collected logs are saved to /var/log/eks_i-xxxx_$(date +%Y-%m-%d_%H-%M-%S).tar.gz
-# Attach to AWS Support case for submission
+# Use the account/context guard and the actual namespace/Pod/container from triage.
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"; : "${CONTAINER_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" get nodes -o wide
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o wide
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events --field-selector type=Warning
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" -c "$CONTAINER_NAME" --since=15m --tail=100
+# Run separately: previous-container logs may not exist.
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" -c "$CONTAINER_NAME" --previous --tail=100
 ```
+```bash
+# Authorized reads; print names/keys only, not configuration or Secret values.
+: "${CONFIGMAP_NAME:?Set one relevant ConfigMap}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get configmap "$CONFIGMAP_NAME" -o json | jq '{
+  name:.metadata.name,textKeys:(.data // {} | keys),binaryKeys:(.binaryData // {} | keys)
+}'
+: "${SECRET_NAME:?Set one Secret whose read permission is explicitly authorized}"
+kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get secret "$SECRET_NAME" -o json | jq '{
+  name:.metadata.name,type:.type,keyNames:(.data // {} | keys)
+}'
+```
+The Secret command reduces displayed output but still requests a Secret from the API and requires Secret-read permission; it is not an authorization boundary. Event timestamps can represent aggregated occurrences, and top is a recent metric sample rather than historical/instantaneous truth. For endpoints use the EndpointSlice workflow above.
 
-Information collected:
-- System information (OS, kernel, memory, CPU)
-- kubelet logs and configuration
-- containerd logs and configuration
-- CNI plugin logs
-- Network configuration (iptables, routing)
-- Disk usage
+Keep Pod creation/debug/exec, rollout undo/restart, scaling, drain/repair and deletion in their separately reviewed operational steps. Force-deleting a Pod removes its API object without proving the old process stopped; it can cause duplicate writers. Do not put that command in routine triage or use it to bypass data/eviction safeguards.
+
+### Tool Selection
+
+| Tool | Use and boundary |
+| --- | --- |
+| netshoot | Reviewed diagnostic image/toolbox; creating a Pod and sending traffic require the scoped workflow above |
+| eks-node-viewer | Scheduled Pod requests versus node allocatable capacity, not actual Pod CPU/memory usage; review release and cluster/AWS access |
+| crictl | CRI state/log inspection on an authorized compatible host and configured runtime endpoint |
+| kubeconform | Pin the Kubernetes schema version and provide CRD schemas; missing/skipped schemas are not successful validation |
+| stern | Multi-Pod log inspection with explicit context/namespace/selectors and bounded output |
+| k9s | Interactive TUI; use documented readonly mode and appropriate RBAC when inspection is intended |
+| kubectx/kubens | Change local default context/namespace; explicit context flags are safer for shared diagnostic procedures |
+
+Choose reviewed releases before an incident; do not run unpinned go install @latest as a repair. Kubeconform supports local/offline schema locations; schema validation does not execute admission webhooks or prove runtime behavior. Server-side dry-run contacts the selected API server and is different from an offline check. K9s supports --readonly; it is not read-only by default. No tool benchmark or interactive session was run in this audit.
+
+### EKS Log Collector for an Owned Support Case
+
+The official EKS log-collector path was reachable during this review; it is not replaced based on an assumed repository move. It collects host/system/runtime/network information and writes an archive. Use only the current official instructions for a compatible, authorized node and review the collector revision. Auto Mode recommends NodeDiagnostic and supports its documented debug-container path, not ordinary direct SSH access.
+
+```bash
+# Download only; do not automatically execute a newly downloaded host script.
+set -euo pipefail
+: "${EVIDENCE_PARENT:?Set an existing private evidence directory}"
+: "${COLLECTOR_REF:?Set a reviewed full 40-character commit SHA from the official repository}"
+[[ "$COLLECTOR_REF" =~ ^[0-9a-fA-F]{40}$ ]]
+test -d "$EVIDENCE_PARENT"
+umask 077
+COLLECTOR_DIR=$(mktemp -d "$EVIDENCE_PARENT/eks-support.XXXXXXXX")
+curl --fail --location --silent --show-error --connect-timeout 5 --max-time 30 \
+  "https://raw.githubusercontent.com/awslabs/amazon-eks-ami/$COLLECTOR_REF/log-collector-script/linux/eks-log-collector.sh" \
+  --output "$COLLECTOR_DIR/eks-log-collector.sh"
+sha256sum "$COLLECTOR_DIR/eks-log-collector.sh"
+```
+Compare the digest to your independently reviewed artifact record; merely printing sha256sum is not authentication. Running the collector is a separate authorized host action with disk/CPU and sensitive-data implications. Inspect/redact the archive before manually attaching it to an owned AWS Support case. Kubeconfig/key material, application logs, endpoint addresses and environment details must not be assumed safe for public sharing. No support archive was generated or uploaded in this audit.
+
+[Kubeconform](https://github.com/yannh/kubeconform) · [K9s](https://github.com/derailed/k9s) · [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) · [EKS troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 
 ---
 
@@ -2131,10 +2112,12 @@ To test your understanding of the content covered in this document, try the [EKS
 
 ### Next Document
 
+Review the [Kubernetes version roadmap](12-kubernetes-version-roadmap.md) for the version-planning topic that follows this chapter.
+
 To learn how to integrate EKS clusters with on-premises environments, see [EKS Hybrid Nodes](../eks-hybrid-nodes/README.md).
 
 ### Additional Learning Resources
 
 - [AWS EKS Official Documentation - Troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 - [Kubernetes Official Documentation - Debugging](https://kubernetes.io/docs/tasks/debug/)
-- [AWS Well-Architected Framework - EKS Lens](https://docs.aws.amazon.com/wellarchitected/latest/eks-lens/welcome.html)
+- [Amazon EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
