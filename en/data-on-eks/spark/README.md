@@ -1,60 +1,66 @@
 # Spark on EKS Deep Dive
 
-## Overview
+> **Review baseline**: Apache Spark 4.2.0, Kubernetes 1.34 or later\
+> **Last reviewed**: September 12, 2026
 
-Apache Spark is the workhorse for large-scale batch ETL, SQL analytics, and streaming workloads, and Kubernetes has been a first-class Spark cluster manager since Spark 2.3 — alongside Standalone and YARN. On EKS, running Spark means the same Kubernetes API server that schedules every other workload also schedules Spark's driver and executor pods, with no separate Spark cluster infrastructure to stand up or maintain. Teams typically reach this either by calling `spark-submit` directly, by wrapping jobs in a Kubernetes-native **Spark Operator** CRD, or by running on **Amazon EMR on EKS**, AWS's managed Spark runtime that layers on top of an existing EKS cluster.
+Apache Spark runs batch, SQL, streaming and other distributed data workloads.
+Native Kubernetes support was introduced in Spark 2.3; client-mode support followed
+in 2.4. Spark 4.2.0 documents Kubernetes **1.34+** as its prerequisite.
+Use kubectl compatible with the actual EKS version rather than an old fixed minimum.
 
-> **Supported Versions**: Apache Spark 4.2, Kubernetes 1.30+
-> **Last Updated**: July 15, 2026
+Spark can use the Kubernetes capacity/control plane you already operate without a
+separate Spark Standalone master or YARN ResourceManager. You still operate or
+provision node capacity, images, identity, networking, storage and observability.
+YARN ResourceManager/NodeManager are YARN components, not Spark-specific daemons.
 
-## Core Architecture Concepts
+## Execution responsibilities
 
-Unlike YARN, Spark on Kubernetes has no persistent cluster-manager daemons — there's no ResourceManager or NodeManager running around the clock waiting for work. Instead, `spark-submit` talks directly to the Kubernetes API server and creates a single **driver pod**. That driver pod is the cluster manager for the duration of the job: once it starts running, it calls back into the Kubernetes API itself to create and manage the **executor pods** it needs, based on `spark.executor.instances` or Dynamic Resource Allocation. Executors register with the driver, receive tasks, and report status and results back — all over a direct driver-to-executor connection, with Kubernetes only involved in pod scheduling and lifecycle, not task coordination.
+In **cluster deploy mode**, the submitting client asks the Kubernetes API to create
+the driver pod. Kubernetes admission, scheduling and node kubelets handle pod
+placement/startup. The Spark driver requests executor pods and coordinates Spark
+stages/tasks; it does not replace the Kubernetes scheduler.
 
-![A diagram showing spark-submit asking the Kubernetes API Server to create a driver pod, the driver pod requesting the API Server schedule three executor pods, and each executor pod registering and reporting status directly back to the driver pod.](../../.gitbook/assets/en-data-on-eks-spark-readme-0.png)
+Executors register and communicate directly with the driver for Spark work.
+Kubernetes continues to manage their pod lifecycle. In **client mode**, the driver
+runs with the submitting application, either in a pod or on another host; it must
+be reachable from executors. Both modes support Spark applications.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-readme-0.html)
+![Cluster-mode Spark submission through the Kubernetes API, with pod placement and startup separated from the driver's Spark task coordination.](../../.gitbook/assets/en-data-on-eks-spark-readme-0.png)
 
-## Deep Dive Table of Contents
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-readme-0.html)
 
-**[1. Spark on Kubernetes Fundamentals](01-spark-fundamentals.md)**
-- Cluster-mode-only `spark-submit`: how the driver pod creates and manages its own executor pods
-- Dynamic Resource Allocation (DRA) on Kubernetes — and why there's no External Shuffle Service to fall back on
-- Graceful executor decommissioning when a pod is about to terminate
+## Chapters
 
-**[2. Spark Operator](02-spark-operator.md)**
-- `apache/spark-kubernetes-operator` vs. `kubeflow/spark-operator` — governance, maturity, and which one fits your cluster
-- The `SparkApplication` CRD and lifecycle management (`restartPolicy`, status reporting)
-- The mutating admission webhook that injects driver/executor pod customizations
-- Monitoring hook-in and EKS deployment considerations
+1. [Spark on Kubernetes fundamentals](01-spark-fundamentals.md): cluster/client
+   submission, resource mapping, dynamic allocation and decommissioning conditions.
+2. [Spark Operator](02-spark-operator.md): distinguish the Apache and Kubeflow
+   operators, their APIs, job lifecycle, submission and monitoring.
+3. [EMR on EKS](03-emr-on-eks.md): virtual clusters, job submission and execution
+   identities; distinguish managed runtime features from EKS capacity operations.
+4. [Performance and cost](04-performance-tuning.md): shuffle/storage/CPU/memory
+   bottlenecks, suitable node capabilities, Spot recovery, and executor versus node scaling.
+5. [Best practices and security](05-best-practices.md): Kubernetes and AWS identity,
+   data access, event logs/history, metrics, network policy and recovery.
 
-**[3. Amazon EMR on EKS](03-emr-on-eks.md)**
-- Virtual clusters: registering an EKS namespace with the EMR control plane
-- The `StartJobRun` API vs. `kubectl apply`-based submission
-- Job execution IAM roles and onboarding them to a virtual cluster
-- EMR on EKS vs. the self-managed Spark Operator — when to use which
-
-**[4. Performance and Cost Tuning](04-performance-tuning.md)**
-- Node type selection for shuffle-heavy jobs: R-series instances with local NVMe instance store
-- Spot Instances for executors, paired with graceful decommissioning to avoid losing job progress
-- Karpenter and Dynamic Resource Allocation as two coupled — but independent — scaling loops
-- Driver/executor resource sizing and cost optimization
-
-**[5. Best Practices and Security](05-best-practices.md)**
-- Secure, credential-free S3 access with IRSA
-- Monitoring with the native `PrometheusServlet` vs. the JMX Prometheus Exporter, plus the Spark History Server
-- Security hardening beyond IAM/IRSA (RBAC, network policy)
-- A production-readiness checklist
+Spark **dynamic resource allocation** adjusts executors within an application.
+It is distinct from Kubernetes Dynamic Resource Allocation for devices and from
+node autoscaling. Decommissioning can reduce recomputation, but cannot guarantee
+that every block survives a forced termination.
 
 ## References
 
-- [Running Spark on Kubernetes (Apache Spark Documentation)](https://spark.apache.org/docs/latest/running-on-kubernetes.html)
-- [apache/spark-kubernetes-operator](https://github.com/apache/spark-kubernetes-operator)
-- [kubeflow/spark-operator](https://github.com/kubeflow/spark-operator)
-- [Amazon EMR on EKS Concepts](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-concepts.html)
-- [Best Practices for Running Spark on Amazon EKS](https://aws.amazon.com/blogs/containers/best-practices-for-running-spark-on-amazon-eks/)
-- [AWS Data on EKS Project](https://awslabs.github.io/data-on-eks/)
+- [Spark 4.2.0 on Kubernetes](https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html)
+- [Spark 4.2.0 configuration](https://spark.apache.org/docs/4.2.0/configuration.html)
+- [Spark 4.2.0 dynamic allocation alternatives](https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation)
+- [Driver resource mapping](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala)
+- [Executor resources and decommission hook](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala)
+- [Official decommission script](https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh)
+- [Official Spark image tags](https://github.com/docker-library/official-images/blob/master/library/spark)
+
+- [Apache Spark Kubernetes Operator](https://github.com/apache/spark-kubernetes-operator)
+- [Kubeflow Spark Operator](https://github.com/kubeflow/spark-operator)
+- [EMR on EKS concepts](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-concepts.html)
 
 ## Quiz
 
-To test what you've learned in this section, try the [Spark Fundamentals Quiz](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md).
+[Spark fundamentals quiz](../../quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)

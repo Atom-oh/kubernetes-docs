@@ -1,175 +1,163 @@
-# Upgrade Operations Quiz
+# EKS upgrade operations quiz
 
-> **Related Document**: [Upgrade Operations](../../ops/11-upgrade-operations.md)
+> **Related document**: [EKS upgrades](../../ops/11-upgrade-operations.md)
 
-## Multiple Choice Questions
+## 1. How many intermediate minor versions can an EKS control-plane upgrade skip?
 
-### 1. How long does AWS support each EKS Kubernetes version under standard support?
-
-- A) 6 months
-- B) 12 months
-- C) 14 months
-- D) 24 months
+- A) Zero: advance to the next minor each time
+- B) One
+- C) Two
+- D) Unlimited
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) 14 months**
+**Answer: A**
 
-**Explanation:**
-AWS provides 14 months of standard support for each Kubernetes version on EKS. After that, clusters can be migrated to extended support (additional cost) or must be upgraded. Planning upgrades within the standard support window is recommended.
+For example, 1.34→1.36 must pass through 1.35. Kubelet skew allowances are distinct from control-plane upgrade steps.
 
 </details>
 
-### 2. What tool detects deprecated Kubernetes APIs in your cluster?
+## 2. How should an absent CoreDNS Deployment in pure Auto Mode be interpreted?
 
-- A) kubectl
-- B) Pluto
-- C) Helm
-- D) Terraform
+- A) It always means DNS is broken
+- B) Check the node system-service DNS and actual behavior
+- C) Always install a self-managed Karpenter
+- D) Delete CoreDNS Deployments from every cluster
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Pluto**
+**Answer: B**
 
-**Explanation:**
-Pluto scans Kubernetes manifests, Helm releases, and live clusters for deprecated or removed API versions. It helps identify resources that need updating before upgrading to a version where those APIs no longer exist.
+Mixed clusters must retain DNS Deployments and add-ons required by non-Auto nodes.
 
 </details>
 
-### 3. What is the purpose of Velero in EKS upgrade operations?
+## 3. Which statement about Velero 1.18.2 restore create -o json is correct?
 
-- A) To upgrade the Kubernetes version
-- B) To backup and restore cluster resources before upgrade
-- C) To monitor cluster performance
-- D) To manage node groups
+- A) It completes an actual restore
+- B) It is entirely offline
+- C) It does not create the object but can perform discovery/Backup reads
+- D) It is valid only together with --dry-run
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) To backup and restore cluster resources before upgrade**
+**Answer: C**
 
-**Explanation:**
-Velero provides backup and restore capabilities for Kubernetes resources and persistent volumes. Taking a Velero backup before upgrades enables recovery if the upgrade causes issues, providing a safety net for the operation.
+restore create has no such --dry-run flag. Output-only review and actual isolated restore testing are different.
 
 </details>
 
-### 4. In the Terraform 3-Layer architecture, what is the correct upgrade order?
+## 4. What should a preflight tool do on an API error or wrong kubecontext?
 
-- A) Workload -> Platform -> Foundation
-- B) Platform -> Foundation -> Workload
-- C) Foundation -> Platform -> Workload
-- D) All layers simultaneously
+- A) Treat empty results as healthy
+- B) Fail as unknown/mismatched context and investigate
+- C) Automatically switch context and upgrade
+- D) Delete PDBs
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Foundation -> Platform -> Workload**
+**Answer: B**
 
-**Explanation:**
-The upgrade order follows dependencies: Foundation (VPC, IAM) first since Platform depends on it, then Platform (EKS cluster) since Workload depends on it, finally Workload (applications). This ensures each layer's dependencies are already upgraded.
+Running alone does not establish Pod readiness; Deployment generation and rollout status also matter.
 
 </details>
 
-### 5. In EKS Auto Mode, what happens to nodes during a Kubernetes version upgrade?
+## 5. What is a basic eligibility condition for EKS native rollback?
 
-- A) Nodes upgrade in-place without restart
-- B) Nodes are automatically replaced with new version nodes
-- C) Nodes must be manually deleted
-- D) Nodes are not affected by version upgrades
+- A) Any cluster newly created at its current version
+- B) Meet eligibility, including initiation within seven days of upgrade completion to the previous minor
+- C) Any previous version at any time
+- D) An etcd backup bypasses every restriction
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Nodes are automatically replaced with new version nodes**
+**Answer: B**
 
-**Explanation:**
-After upgrading the EKS control plane, Auto Mode automatically rotates nodes to match the new version. This process cordons old nodes, drains workloads, and provisions new nodes with the updated kubelet version.
+Also check target support, EXTENDED policy, ACTIVE status and incompatible EKS features.
 
 </details>
 
-### 6. What should be verified with Pod Disruption Budgets (PDBs) before upgrade?
+## 6. If cluster status is ACTIVE during Auto Mode node rollback, what does it mean?
 
-- A) That no PDBs exist
-- B) That PDBs allow enough disruption for rolling node replacement
-- C) That PDBs are set to zero
-- D) That PDBs reference correct API versions
+- A) Rollback is fully complete
+- B) The CP may still serve the current version; inspect the update ID
+- C) Node rollback is impossible
+- D) Immediately delete the previous cluster
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) That PDBs allow enough disruption for rolling node replacement**
+**Answer: B**
 
-**Explanation:**
-PDBs that are too restrictive (e.g., maxUnavailable: 0 with minAvailable: 100%) can block node draining during upgrades. Before upgrading, ensure PDBs allow sufficient disruption for the rolling replacement process to proceed.
+Auto Mode adjusts nodes first. Node timeout defaults to 720 minutes; a client wait timeout does not cancel AWS.
 
 </details>
 
-### 7. What is the blue/green upgrade strategy for EKS clusters?
+## 7. What does rollback --force bypass?
 
-- A) Upgrading both clusters simultaneously
-- B) Creating a new cluster with the new version and gradually shifting traffic
-- C) Upgrading in-place with rollback capability
-- D) Running both versions on the same nodes
+- A) The seven-day window and all PDBs
+- B) All disruption and data compatibility
+- C) Insight checks, not eligibility or Auto Mode disruption controls
+- D) etcd data preservation
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Creating a new cluster with the new version and gradually shifting traffic**
+**Answer: C**
 
-**Explanation:**
-Blue/green upgrade creates a new "green" cluster running the target Kubernetes version alongside the existing "blue" cluster. Traffic is gradually shifted using weighted routing, allowing easy rollback by shifting traffic back to blue if issues arise.
+ERROR/UNKNOWN blocks rollback while WARNING is advisory. Force is not the baseline recovery path.
 
 </details>
 
-### 8. What post-upgrade validation should be performed?
+## 8. What is not automatically restored to historical state by native version rollback?
 
-- A) Only check if pods are running
-- B) Verify node status, pod health, addon functionality, and application behavior
-- C) No validation is needed
-- D) Only run Pluto again
+- A) API server minor version
+- B) Auto Mode node version adjustment
+- C) Add-ons, apps, etcd objects and PV data
+- D) Control-plane component versions
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Verify node status, pod health, addon functionality, and application behavior**
+**Answer: C**
 
-**Explanation:**
-Post-upgrade validation should include: all nodes Ready, pods Running, cluster addons (CoreDNS, kube-proxy, CNI) functional, ingress/egress working, storage operations successful, and application-specific health checks passing.
+Ordinary managed node groups need separate UpdateNodegroupVersion handling. Version rollback differs from snapshot restoration.
 
 </details>
 
-### 9. How does EKS extended support differ from standard support?
+## 9. Which statement about setting an NLB target-group weight to zero is correct?
 
-- A) Extended support is free
-- B) Extended support provides additional months beyond standard at additional cost
-- C) Extended support only covers security patches
-- D) Extended support is only for Fargate
+- A) Existing connections are always preserved to completion
+- B) Existing connections can close after a short period; test retry/session behavior
+- C) Weights must sum to 100
+- D) NLB does not support weighted TGs
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Extended support provides additional months beyond standard at additional cost**
+**Answer: B**
 
-**Explanation:**
-EKS extended support allows clusters to run on older Kubernetes versions beyond the 14-month standard window, but at additional per-cluster-hour cost. This provides flexibility for organizations that need more time to upgrade.
+Weights are relative values from 0–999. Distinguish ordinary changes from zero-weight transition; TLS listeners do not support TG stickiness.
 
 </details>
 
-### 10. When upgrading, why is it important to check addon compatibility?
+## 10. What should be verified before decommissioning Blue?
 
-- A) Addons are automatically upgraded
-- B) Some addon versions are only compatible with specific Kubernetes versions
-- C) Addons don't affect upgrades
-- D) Addons must be removed before upgrade
+- A) Destroy immediately when weight is zero
+- B) Review shared resources/TG references, data compatibility, recovery period and ownership
+- C) One HTTP 200 proves all data consistency
+- D) Shared EFS removes the need to review concurrent writers
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Some addon versions are only compatible with specific Kubernetes versions**
+**Answer: B**
 
-**Explanation:**
-EKS managed addons (VPC CNI, CoreDNS, kube-proxy) and third-party addons have version compatibility matrices with Kubernetes versions. Upgrading to an incompatible addon version can break cluster functionality. Check and plan addon upgrades alongside the cluster upgrade.
+Account for TG lifecycle on Auto Mode TGB/cluster deletion and shared listeners. Namespace changes do not guarantee consumer/DB/DNS isolation.
 
 </details>

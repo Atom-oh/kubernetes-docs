@@ -4,105 +4,98 @@
 
 ## 객관식 문제
 
-### 1. Amazon EKS 네이티브 Kubernetes 버전 롤백(2026년 7월 GA)의 유효 기간은?
+### 1. EKS 네이티브 롤백의 7일은 무엇을 뜻하나요?
 
-- A) 24시간
-- B) 7일
-- C) 30일
-- D) 무제한
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: B) 7일**
-
-**설명:**
-EKS 네이티브 롤백은 업그레이드 후 7일 이내, 한 번에 마이너 버전 1개를 되돌릴 수 있습니다. 대상 버전으로 새로 생성된 클러스터, 7일 초과, 이미 재업그레이드된 경우 등은 롤백 대상에서 제외됩니다.
-
-</details>
-
-### 2. Zonal In-Place 업그레이드에서 트래픽을 zone 밖으로 빼는 데 사용하는 메커니즘은?
-
-- A) kubectl drain
-- B) Target Group weight 조정
-- C) DNS TTL 만료 대기
-- D) 클러스터 재생성
+- A) 롤백 완료에 반드시 필요한 시간
+- B) 업그레이드 완료 후 롤백을 시작할 수 있는 자격 기간
+- C) 노드의 최대 수명
+- D) 애드온 자동 복원 기간
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Target Group weight 조정**
+**정답: B) 업그레이드 완료 후 롤백을 시작할 수 있는 자격 기간**
 
-**설명:**
-클러스터 내부 리소스를 건드리지 않고, TargetGroupBinding으로 연결된 로드밸런서의 Target Group weight를 조정해 특정 zone으로의 트래픽을 줄이거나 끊습니다. AZ 장애처럼 예기치 않은 상황에는 ARC Zonal Shift가 자동으로 이 역할을 대신합니다.
+바로 이전 마이너 버전으로 롤백을 시작할 수 있는 기간입니다. 생성 버전·지원 상태·후속 업그레이드·호환성 조건도 충족해야 합니다. Auto Mode는 노드를 먼저 되돌리며 애드온·애플리케이션·데이터 변경은 자동 복원하지 않습니다.
 
 </details>
 
-### 3. Kafka KIP-392(Follower Fetching)를 활성화하기 위해 브로커에 설정해야 하는 것은?
+### 2. NLB 타겟 그룹 weight를 0으로 바꾼 뒤 확인할 사항은?
 
-- A) `auto.leader.rebalance.enable=true`
-- B) `replica.selector.class=RackAwareReplicaSelector`
-- C) `unclean.leader.election.enable=true`
-- D) `min.insync.replicas=2`
+- A) 기존 연결도 모두 즉시 종료된다
+- B) TargetGroupBinding이 다른 클러스터로 이동한다
+- C) 새 플로우 감소와 기존 플로우 종료를 별도로 확인한다
+- D) ARC가 모든 다른 클러스터의 weight를 자동 수정한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `replica.selector.class=RackAwareReplicaSelector`**
+**정답: C) 새 플로우 감소와 기존 플로우 종료를 별도로 확인한다**
 
-**설명:**
-브로커에 `replica.selector.class`를 `RackAwareReplicaSelector`로 설정하고 `broker.rack`(AZ ID)을 지정해야 합니다. 컨슈머 쪽은 `client.rack` 속성에 자기 AZ ID를 설정해야 같은 rack의 팔로워로 fetch가 재전송됩니다.
+일반적인 가중치 변경은 새 플로우 분배에 영향을 주지만, 현재 NLB 가이드는 weight 0 전환 시 잠시 후 기존 연결도 종료된다고 설명합니다. 따라서 자연 종료만을 기다린다고 가정하지 않고 재연결·재시도 영향을 검증합니다. NewFlowCount·ActiveFlowCount와 오류율을 확인한 후 노드를 변경합니다. TGB에는 weight 필드가 없고, EKS zonal shift도 클러스터 간 weight를 자동 변경하지 않습니다.
 
 </details>
 
-### 4. Read 비율이 99% 이상인 워크로드에 Valkey GLIDE에서 권장되는 `ReadFrom` 전략은?
+### 3. Kafka KIP-392 설정의 올바른 조합은?
 
-- A) `PRIMARY`
-- B) `PREFER_REPLICA`
-- C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`
-- D) 랜덤 분산
+- A) broker.rack만 지정하면 모든 컨슈머가 자동 설정된다
+- B) RackAwareReplicaSelector, broker.rack, 일치하는 consumer client.rack
+- C) unclean.leader.election.enable=true만 설정
+- D) consumer AZ 이름과 broker AZ ID는 달라도 된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`**
+**정답: B) RackAwareReplicaSelector, broker.rack, 일치하는 consumer client.rack**
 
-**설명:**
-같은 AZ의 replica를 먼저 시도하고, 없으면 같은 AZ의 primary, 최후에 다른 AZ로 폴백합니다. Read가 압도적으로 많은 워크로드에서 비용 절감과 가용성의 균형점으로 권장됩니다. HotelTrader 사례에서 이 전략 도입으로 인터-AZ 전송비가 95% 절감되었습니다.
+replica.selector.class의 전체 클래스 이름은 org.apache.kafka.common.replica.RackAwareReplicaSelector입니다. Strimzi Kafka CR의 rack 설정은 브로커를 구성하며 일반 애플리케이션 컨슈머는 별도 설정합니다. 로컬 replica가 없으면 리더로 폴백합니다.
 
 </details>
 
-### 5. Amazon Aurora의 기본 reader endpoint에 대한 설명으로 옳은 것은?
+### 4. GLIDE AZ_AFFINITY_REPLICAS_AND_PRIMARY의 우선순위는?
 
-- A) 같은 AZ의 replica에 자동으로 우선권을 준다
-- B) AZ를 고려하지 않는 라운드로빈 DNS다
-- C) 항상 primary로만 요청을 보낸다
-- D) AWS Advanced JDBC Wrapper 없이는 사용할 수 없다
+- A) 항상 primary만
+- B) 같은 AZ replica → 같은 AZ primary → 다른 AZ의 replica 또는 primary
+- C) 항상 다른 AZ replica
+- D) 같은 AZ가 없으면 무조건 오류
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) AZ를 고려하지 않는 라운드로빈 DNS다**
+**정답: B) 같은 AZ replica → 같은 AZ primary → 다른 AZ의 replica 또는 primary**
 
-**설명:**
-Aurora의 기본 reader endpoint는 AZ affinity가 없는 라운드로빈 DNS입니다. AZ별 커스텀 엔드포인트를 만들거나 AWS Advanced JDBC Wrapper의 `fastestResponse` 전략으로 우회할 수 있지만, 완전한 AZ affinity 자체는 `aws-advanced-jdbc-wrapper` 저장소에 아직 열려 있는 기능 요청입니다.
+서버 AZ 정보와 client_az가 맞아야 합니다. replica 읽기의 지연된 데이터를 허용하는지 먼저 판단하며 read 비율만으로 선택하지 않습니다. HotelTrader의 개선 수치는 요청 배칭을 함께 적용한 사례 결과입니다.
 
 </details>
 
-### 6. 파드가 자신이 속한 AZ를 알아내는 방법에 대한 설명 중 옳지 않은 것은?
+### 5. Aurora 기본 reader endpoint에 대한 올바른 설명은?
 
-- A) EC2 IMDS를 직접 조회해서 알아낼 수 있다
-- B) Kyverno mutating policy로 노드 라벨을 파드 annotation에 주입할 수 있다
-- C) Kubernetes Downward API가 노드의 zone 라벨을 파드에 기본으로 주입해준다
-- D) Strimzi 같은 오퍼레이터는 rack-awareness를 내장 기능으로 제공한다
+- A) 각 SQL 쿼리를 다른 replica에 보낸다
+- B) 같은 AZ reader를 반드시 선택한다
+- C) 연결 단위로 분산하며 replica가 없으면 writer에 연결될 수 있다
+- D) JDBC Wrapper 없이는 접속할 수 없다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Kubernetes Downward API가 노드의 zone 라벨을 파드에 기본으로 주입해준다**
+**정답: C) 연결 단위로 분산하며 replica가 없으면 writer에 연결될 수 있다**
 
-**설명:**
-Downward API는 노드의 `topology.kubernetes.io/zone` 라벨을 파드에 자동으로 주입해주지 않습니다. 그래서 IMDS 직접 조회, Kyverno를 통한 admission 시점 라벨 복사, 또는 Strimzi처럼 오퍼레이터가 내장 지원하는 방식 중 하나가 필요합니다.
+AZ 우선 선택을 보장하지 않습니다. AZ별 READER custom endpoint는 멤버와 폴백을 관리해야 합니다. JDBC fastestResponse는 응답 시간 기반이며 강제 AZ 제약이 아닙니다. 기능 요청 #1139는 2025년 종료됐습니다.
 
 </details>
 
+### 6. 파드의 AZ 발견에 대한 설명 중 옳지 않은 것은?
+
+- A) 일반 Pod 생성 admission에서 스케줄러가 고른 노드를 항상 알 수 있다
+- B) AWS MSK의 Kyverno 예제는 Pod/binding 요청을 사용한다
+- C) Downward API의 spec.nodeName을 초기화 구성 요소에 전달할 수 있다
+- D) IMDS 접근은 환경과 보안 설정에 따라 제한될 수 있다
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: A) 일반 Pod 생성 admission에서 스케줄러가 고른 노드를 항상 알 수 있다**
+
+일반적인 Pod 생성 시점에는 아직 노드가 선택되지 않았습니다. binding 시점 주입이나 스케줄링 후 조회가 필요합니다. Downward API는 노드 라벨을 직접 조회하지 않고, Strimzi가 별도 애플리케이션 컨슈머까지 자동 구성하지도 않습니다.
+
+</details>

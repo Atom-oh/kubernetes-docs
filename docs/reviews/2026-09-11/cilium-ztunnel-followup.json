@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-11",
+  "files": [
+    "en/service-mesh/cilium-service-mesh/README.md",
+    "en/service-mesh/cilium-service-mesh/01-architecture.md",
+    "en/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+    "en/service-mesh/istio/README.md",
+    "en/service-mesh/istio/comparison/README.md",
+    "en/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+    "en/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+    "en/quizzes/service-mesh/istio/comparison.md",
+    "ko/service-mesh/cilium-service-mesh/README.md",
+    "ko/service-mesh/cilium-service-mesh/01-architecture.md",
+    "ko/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+    "ko/service-mesh/istio/README.md",
+    "ko/service-mesh/istio/comparison/README.md",
+    "ko/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+    "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+    "ko/quizzes/service-mesh/istio/comparison.md"
+  ],
+  "sources": [
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
+  ],
+  "purpose": "Distinguish established out-of-band Cilium authentication from actual released1.20.1ztunnelbeta;preservefeaturewithconstraintsandhistoricalmeasurementboundaries.",
+  "validation": [
+    "16previouslyfullyreadfiles;noadditionalcoveragecount",
+    "scopedgitdiffcheckpassed",
+    "docs:test118/118passed"
+  ],
+  "knownLimits": [
+    "No liveztunnel/cluster/AWSdeployment. Securityguide/quiz4fullyreadbutstillpendingcompletefix.",
+    "Older /tmp README/architecture/comparison writers predate thiscollateralfollowup. Do notrerunthemovercurrentpublishedprose."
+  ],
+  "artifact": "/tmp/mesh-cilium-ztunnel-followup.py"
+}

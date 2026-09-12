@@ -1,143 +1,135 @@
 # Tekton Pipelines 퀴즈
 
-1. Tekton이 Jenkins나 GitHub Actions 대비 Kubernetes 환경에서 유리한 점은?
-   - A) Tekton이 더 많은 플러그인을 제공
-   - B) CRD 기반으로 파이프라인을 Kubernetes 리소스로 관리하여 GitOps, RBAC, 네임스페이스 격리 적용 가능
-   - C) Tekton이 더 빠른 실행 속도를 제공
-   - D) Tekton이 무료이고 다른 도구는 유료
+1. Task, TaskRun, Workspace의 관계를 올바르게 설명한 것은?
+   - A) Task 정의 자체가 실행 중인 Pod이다
+   - B) TaskRun이 Task를 실행하며 Workspace는 volume 바인딩 필드이다
+   - C) Workspace는 항상 독립 CRD이다
+   - D) 같은 Pod의 Step은 서로 완전히 격리된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) CRD 기반으로 파이프라인을 Kubernetes 리소스로 관리하여 GitOps, RBAC, 네임스페이스 격리 적용 가능**
+**정답: B) TaskRun이 Task를 실행하며 Workspace는 volume 바인딩 필드이다**
 
-**설명:**
-Tekton은 Task, Pipeline, PipelineRun 등을 Kubernetes CRD로 정의합니다. 이를 통해 파이프라인을 Git에서 선언적으로 관리(GitOps), Kubernetes RBAC로 접근 제어, 네임스페이스별 격리, kubectl로 관리할 수 있습니다. 각 Step이 별도 컨테이너에서 실행되어 격리성도 높습니다.
+Task/Pipeline은 정의, Run은 실행 인스턴스입니다. 같은 Pod의 Step은 네트워크와 volume을 공유하므로 상호 불신 코드의 보안 경계가 아닙니다.
 
 </details>
 
 ---
 
-2. Tekton Pipeline에서 Task 간 데이터를 공유하는 방법은?
-   - A) 환경 변수로 전달
-   - B) Workspace(PVC)를 통해 파일 시스템을 공유하고, Results로 작은 데이터를 전달
-   - C) ConfigMap에 저장
-   - D) Task 간 직접 네트워크 통신
+2. 서로 다른 TaskRun 사이에서 소스를 공유할 때 맞는 설명은?
+   - A) emptyDir가 다른 Pod에도 같은 파일을 제공한다
+   - B) 실행별 PVC를 사용할 수 있으며 RWO/RWX 자체는 신뢰 경계가 아니다
+   - C) 같은 PVC에 subPath만 다르면 외부 PR과 release를 안전하게 공유할 수 있다
+   - D) Result는 항상 무제한 문자열이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Workspace(PVC)를 통해 파일 시스템을 공유하고, Results로 작은 데이터를 전달**
+**정답: B) 실행별 PVC를 사용할 수 있으며 RWO/RWX 자체는 신뢰 경계가 아니다**
 
-**설명:**
-Workspace는 PVC 기반으로 Task 간 파일 시스템을 공유합니다. 소스 코드 클론 후 빌드 Task에서 사용하는 패턴에 적합합니다. Results는 작은 문자열 데이터(이미지 태그, 커밋 SHA 등)를 Task 간 전달할 때 사용하며, `$(tasks.task-name.results.result-name)`으로 참조합니다.
+volumeClaimTemplate으로 실행별 PVC를 만들고 신뢰 수준이 다른 실행과 writable 저장소를 공유하지 않습니다. 작은 값은 Result, 큰 보고서는 아티팩트 저장소를 사용합니다.
 
 </details>
 
 ---
 
-3. Tekton Triggers의 EventListener가 하는 역할은?
-   - A) 이벤트를 생성하여 외부 시스템으로 전송
-   - B) Webhook 요청을 수신하고, TriggerBinding/TriggerTemplate을 통해 PipelineRun을 자동 생성
-   - C) 파이프라인 실행 결과를 모니터링
-   - D) Git 리포지토리를 주기적으로 폴링
+3. GitHub HMAC 검증을 통과한 외부 PR을 처리할 때 올바른 것은?
+   - A) release와 같은 IRSA·서명 권한을 사용한다
+   - B) 별도 신뢰 수준의 실행 환경과 제한된 권한으로 처리한다
+   - C) HMAC이 있으므로 PR의 셸 명령을 script에 그대로 삽입한다
+   - D) 검증된 요청은 항상 main push이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Webhook 요청을 수신하고, TriggerBinding/TriggerTemplate을 통해 PipelineRun을 자동 생성**
+**정답: B) 별도 신뢰 수준의 실행 환경과 제한된 권한으로 처리한다**
 
-**설명:**
-EventListener는 HTTP 엔드포인트로 Webhook 요청(GitHub Push, PR 이벤트 등)을 수신합니다. Interceptor가 요청을 검증/필터링하고, TriggerBinding이 페이로드에서 파라미터를 추출하며, TriggerTemplate이 이 파라미터로 PipelineRun을 생성합니다.
+HMAC은 전달 출처를 확인할 뿐 코드에 배포 권한을 부여하지 않습니다. 본문의 privileged CI 경로는 승인 저장소의 보호된 main push만 대상으로 합니다.
 
 </details>
 
 ---
 
-4. Tekton Chains가 제공하는 Supply Chain Security 기능은?
-   - A) 컨테이너 이미지의 취약점을 스캔
-   - B) TaskRun/PipelineRun의 결과물(이미지)에 자동으로 서명하고 SLSA Provenance를 생성
-   - C) 네트워크 트래픽을 암호화
-   - D) RBAC 정책을 자동 생성
+4. Chains의 slsa/v1 formatter는 어떤 provenance 버전인가?
+   - A) SLSA provenance v1.0
+   - B) SLSA provenance v0.2이며 v1.0은 slsa/v2alpha3 또는 slsa/v2alpha4 사용
+   - C) 어떤 버전이든 서명 키가 자동 결정
+   - D) Kubernetes v1 API 버전과 항상 같음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) TaskRun/PipelineRun의 결과물(이미지)에 자동으로 서명하고 SLSA Provenance를 생성**
+**정답: B) SLSA provenance v0.2이며 v1.0은 slsa/v2alpha3 또는 slsa/v2alpha4 사용**
 
-**설명:**
-Tekton Chains는 TaskRun이 완료된 후 자동으로 OCI 이미지에 Cosign/Sigstore로 서명하고, SLSA Provenance(빌드 메타데이터, 소스 정보, 빌드 단계 등)를 생성합니다. 이를 통해 소프트웨어 공급망 보안을 강화하고, 이미지의 출처와 무결성을 검증할 수 있습니다.
+formatter 이름과 SLSA 명세 버전은 다릅니다. Pipeline-level provenance는 Pipeline 종료 후 만들어지며 별도 검증·승격 절차가 필요합니다.
 
 </details>
 
 ---
 
-5. Tekton Pipeline에서 `finally` Task의 목적은?
-   - A) 파이프라인의 첫 번째 Task로 실행
-   - B) 파이프라인의 성공/실패와 관계없이 항상 마지막에 실행되는 정리 작업
-   - C) 조건부로 실행되는 Task
-   - D) 병렬로 실행되는 Task
+5. finally Task에 대해 맞는 설명은?
+   - A) 어떤 오류·취소·timeout에서도 반드시 실행된다
+   - B) 일반 Task 종료 후 실행하지만 누락 Result·취소·timeout 등으로 skip되거나 실행되지 못할 수 있다
+   - C) 항상 선언 순서대로 하나씩 실행된다
+   - D) 없는 이미지 Result도 자동 기본값을 제공한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 파이프라인의 성공/실패와 관계없이 항상 마지막에 실행되는 정리 작업**
+**정답: B) 일반 Task 종료 후 실행하지만 누락 Result·취소·timeout 등으로 skip되거나 실행되지 못할 수 있다**
 
-**설명:**
-`finally` Task는 파이프라인의 다른 모든 Task가 완료된 후 항상 실행됩니다. 빌드 실패 시에도 실행되므로, 임시 리소스 정리, 알림 전송, 테스트 결과 보고 등의 작업에 적합합니다. try-catch-finally 패턴의 finally 블록과 유사합니다.
+본문의 최종 리포트는 run 이름과 tasks.status만 참조합니다. 여러 finally Task의 순서를 가정하지 않으며 별도 timeout도 확인합니다.
 
 </details>
 
 ---
 
-6. ArgoCD + Tekton 통합 아키텍처에서 CI/CD를 분리하는 이유는?
-   - A) Tekton이 CD를 지원하지 않으므로
-   - B) CI(빌드/테스트)와 CD(배포)의 관심사를 분리하여 보안, 감사, 롤백을 개선
-   - C) ArgoCD가 CI를 지원하지 않으므로
-   - D) 두 도구의 라이선스가 다르므로
+6. CI 성공과 chains.tekton.dev/signed=true를 확인한 뒤 무엇이 필요한가?
+   - A) 즉시 임의 태그를 production에 배포
+   - B) 신뢰된 키·digest·builder·소스 provenance를 검증하고 GitOps 변경을 리뷰
+   - C) 서명 JSON 내용을 검증 없이 base64 decode만 수행
+   - D) ArgoCD가 애플리케이션 이미지를 직접 pull하는지 확인
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) CI(빌드/테스트)와 CD(배포)의 관심사를 분리하여 보안, 감사, 롤백을 개선**
+**정답: B) 신뢰된 키·digest·builder·소스 provenance를 검증하고 GitOps 변경을 리뷰**
 
-**설명:**
-Tekton이 CI(소스 클론, 테스트, 빌드, 이미지 Push)를 담당하고, ArgoCD가 CD(Git 기반 선언적 배포)를 담당하는 분리 아키텍처를 구성합니다. CI는 이미지 태그를 Git에 커밋하고, ArgoCD가 이 변경을 감지하여 배포합니다. 이를 통해 배포 권한 분리, Git 기반 감사 추적, 선언적 롤백이 가능합니다.
+signed annotation은 암호학적 검증이나 승인 자체가 아닙니다. ArgoCD는 manifest를 동기화하고 실제 image pull은 kubelet/runtime이 담당합니다.
 
 </details>
 
 ---
 
-7. Tekton의 Interceptor 중 CEL Interceptor의 활용 사례는?
-   - A) GitHub 서명을 검증
-   - B) CEL 표현식으로 Webhook 페이로드를 필터링하고 변환 (특정 브랜치, 파일 경로 등)
-   - C) GitLab 토큰을 검증
-   - D) Bitbucket 이벤트를 처리
+7. Pipelines 1.16의 controller ServiceMonitor에서 확인할 포트와 counter는?
+   - A) metrics / pipelinerun_count
+   - B) http-metrics / tekton_pipelines_controller_pipelinerun_total
+   - C) http / 모든 namespace별 counter가 자동 제공
+   - D) 9097 / running duration histogram
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) CEL 표현식으로 Webhook 페이로드를 필터링하고 변환 (특정 브랜치, 파일 경로 등)**
+**정답: B) http-metrics / tekton_pipelines_controller_pipelinerun_total**
 
-**설명:**
-CEL(Common Expression Language) Interceptor는 Webhook 페이로드에 대해 CEL 표현식으로 필터링과 변환을 수행합니다. 예를 들어 `body.ref == 'refs/heads/main'`으로 main 브랜치 Push만 필터링하거나, `body.commits.exists(c, c.modified.exists(f, f.startsWith('src/')))`로 특정 경로 변경만 트리거할 수 있습니다.
+실제 Service label·포트와 Prometheus selector를 맞춰야 합니다. 현재 완료 counter는 status만 가지며 namespace를 임의로 붙여 조회할 수 없습니다.
 
 </details>
 
 ---
 
-8. Tekton의 PipelineRun 정리(Cleanup) 전략으로 적절한 것은?
-   - A) 모든 PipelineRun을 영구적으로 보관
-   - B) TTL 기반 자동 삭제와 성공/실패별 보존 기간을 설정하여 리소스를 관리
-   - C) 수동으로만 삭제
-   - D) PipelineRun은 자동으로 삭제됨
+8. coschedule=workspaces에서 volumeClaimTemplate PVC의 완료 후 기본 동작은?
+   - A) 항상 즉시 삭제
+   - B) 유지하며 정확한 true 값의 auto-cleanup annotation으로 완료 시 정리를 선택할 수 있다
+   - C) 기존 사용자가 지정한 PVC도 무조건 삭제
+   - D) PipelineRun은 기본 7일 TTL 후 삭제
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) TTL 기반 자동 삭제와 성공/실패별 보존 기간을 설정하여 리소스를 관리**
+**정답: B) 유지하며 정확한 true 값의 auto-cleanup annotation으로 완료 시 정리를 선택할 수 있다**
 
-**설명:**
-PipelineRun과 TaskRun은 실행 후 etcd에 남아 스토리지를 소비합니다. Tekton의 결과 정리 설정(`keep`, `keep-since`)이나 CronJob 기반 정리 스크립트로 오래된 실행 기록을 자동 삭제합니다. 실패한 실행은 디버깅을 위해 더 오래 보존하는 것이 일반적입니다.
+다른 coschedule 모드와 기존 PVC의 생명 주기는 다릅니다. 실행 기록 삭제 전에는 완료 시각·보관 정책·로그/서명 아카이브를 확인해야 합니다.
 
 </details>

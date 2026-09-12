@@ -1,179 +1,163 @@
-# 이벤트 용량 계획 플레이북 퀴즈
+# 이벤트 용량 계획 퀴즈
 
-1. KEDA에서 복수 트리거(Cron + Prometheus + SQS)를 동시에 설정했을 때, 최종 replica 수는 어떻게 결정되나요?
-   - A) 모든 트리거의 평균값
-   - B) 가장 낮은 값 (MIN)
-   - C) 가장 높은 값 (MAX)
-   - D) 첫 번째 트리거의 값
+> **관련 문서**: [이벤트 용량 계획](../../ops/12-event-capacity-planning.md)
+
+## 1. KEDA의 여러 metric이 있는 경우 최종 목표에 대한 올바른 설명은?
+
+- A) 모든 값을 더한다
+- B) HPA가 metric별 권고의 최댓값과 behavior/min/max 제약을 적용한다
+- C) Cron이면 Ready Pod 수를 보장한다
+- D) metrics가 항상 최대 상한을 정한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 가장 높은 값 (MAX)**
+**정답: B**
 
-**설명:**
-KEDA는 복수 트리거가 설정된 경우 각 트리거가 요구하는 replica 수 중 가장 높은 값을 선택합니다. 이를 통해 "Cron으로 바닥을 잡고, 메트릭으로 천장을 결정"하는 패턴이 가능합니다. 예를 들어, Cron이 100을 요구하고 Prometheus가 150을 요구하면 150이 적용됩니다.
+Cron은 기간 중 수요 바닥이고 maxReplicaCount 등이 상한입니다. 실제 준비는 별도 검증합니다.
 
 </details>
 
----
+## 2. 5필드 Cron으로 특정 날짜의 행사를 설정할 때 주의할 점은?
 
-2. Pause Pod 패턴에서 실제 워크로드가 배치될 때 Pause Pod가 축출되는 원리는 무엇인가요?
-   - A) Pod의 리소스 요청이 작아서 자동 교체
-   - B) PriorityClass의 value가 낮아서 Preemption 발생
-   - C) DaemonSet이라서 자동으로 재배치
-   - D) TTL이 만료되어 자동 삭제
+- A) 연도가 자동 포함된다
+- B) 한 번 실행하면 자동 삭제된다
+- C) 연도 필드가 없어 다음 해에도 반복될 수 있고 timezone/DST 검증이 필요하다
+- D) 항상 UTC로만 실행된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) PriorityClass의 value가 낮아서 Preemption 발생**
+**정답: C**
 
-**설명:**
-Pause Pod에는 value: -10의 낮은 PriorityClass가 할당됩니다. 실제 워크로드(기본 priority 0 이상)가 스케줄링될 Node 공간이 부족할 때, Kubernetes Scheduler는 낮은 priority의 Pod를 축출(preemption)하여 공간을 확보합니다. 이를 통해 Node가 미리 프로비저닝된 상태에서 즉시 실제 워크로드를 배치할 수 있습니다.
+예제의 연간 반복과 시작/종료 경계를 시험했습니다. 행사 후 이벤트 설정을 정리해야 합니다.
 
 </details>
 
----
+## 3. 정적 Karpenter NodePool의 올바른 조건은?
 
-3. 플래시 세일 이벤트에서 KEDA Cron 트리거의 시작 시간을 이벤트 시작 30분 전으로 설정하는 이유는?
-   - A) KEDA의 폴링 간격이 30분이라서
-   - B) Cron 트리거는 정확한 시간에 동작하지 않아서
-   - C) Node 프로비저닝과 Pod 스케줄링에 시간이 필요하므로
-   - D) AWS API 호출 제한을 피하기 위해
+- A) weight만 올리면 정적 용량이 생긴다
+- B) replicas를 사용하며 weight 없이 limits.nodes를 설정한다
+- C) 언제든 replicas를 삭제해 dynamic으로 전환한다
+- D) scale 동작이 모든 NodePool budget에 막힌다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Node 프로비저닝과 Pod 스케줄링에 시간이 필요하므로**
+**정답: B**
 
-**설명:**
-KEDA가 Pod를 스케일 업하면 Karpenter가 새 Node를 프로비저닝하는 데 60-90초, Pod 스케줄링과 컨테이너 시작에 추가 시간이 소요됩니다. 이벤트 시작 30분 전에 미리 스케일링을 시작하면 모든 Pod가 Ready 상태가 되어 첫 트래픽 급증을 안정적으로 처리할 수 있습니다.
+정적/동적 모드를 구별합니다. 정적 scale은 NodePool disruption budget을 우회하지만 PDB를 고려합니다.
 
 </details>
 
----
+## 4. Placeholder Deployment 목표 수를 인계 후에도 유지하면?
 
-4. EC2 Capacity Reservation의 `instance_match_criteria`를 `targeted`로 설정하는 이유는?
-   - A) 비용을 절감하기 위해
-   - B) 특정 Karpenter NodePool만 해당 예약을 사용하도록 제한하기 위해
-   - C) Spot 인스턴스와 함께 사용하기 위해
-   - D) Multi-AZ 배포를 위해
+- A) 항상 추가 비용 없이 유지된다
+- B) 선점된 placeholder를 재생성하여 추가 노드를 만들 수 있다
+- C) Karpenter가 자동으로 desired를 0으로 만든다
+- D) 실제 앱이 항상 즉시 Ready가 된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 특정 Karpenter NodePool만 해당 예약을 사용하도록 제한하기 위해**
+**정답: B**
 
-**설명:**
-`targeted` 설정은 명시적으로 해당 Capacity Reservation을 참조하는 인스턴스만 예약을 사용할 수 있도록 합니다. 이를 통해 이벤트 전용 Karpenter NodePool(capacityReservationSelectorTerms로 매칭)만 예약된 용량을 사용하고, 일반 워크로드가 예약을 소진하는 것을 방지합니다.
+유지/만료 조건, placeholder 수 제거와 실제 앱 준비를 함께 검증합니다.
 
 </details>
 
----
+## 5. 30% 추가 용량이 한 AZ 장애 대응을 보장하나요?
 
-5. Karpenter NodePool의 `weight` 필드 값이 높으면 어떤 효과가 있나요?
-   - A) Node 프로비저닝 속도가 빨라진다
-   - B) 해당 NodePool이 다른 NodePool보다 우선 사용된다
-   - C) 더 많은 Node를 프로비저닝할 수 있다
-   - D) 비용이 더 낮은 인스턴스를 선택한다
+- A) 항상 보장한다
+- B) 인스턴스가 On-Demand이면 보장한다
+- C) 배치와 잔존 처리량을 계산해야 하며 보장하지 않는다
+- D) PDB만 있으면 보장한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 해당 NodePool이 다른 NodePool보다 우선 사용된다**
+**정답: C**
 
-**설명:**
-Karpenter에서 여러 NodePool이 Pending Pod의 요구사항을 충족할 수 있는 경우, weight 값이 높은 NodePool이 우선 선택됩니다. 이벤트 NodePool에 weight: 100을 설정하면 기본 NodePool(weight: 10 등)보다 우선 사용되어 이벤트 전용 Node 구성(인스턴스 타입, capacity type 등)이 적용됩니다.
+15/11 노드 예제는 큰 AZ 손실 시 기준 피크를 충족하지 못합니다. 계산 입력 자체도 측정으로 검증해야 합니다.
 
 </details>
 
----
+## 6. targeted Capacity Reservation의 의미는?
 
-6. 이벤트 후 스케일 다운 시 HPA의 `scaleDown.policies`에서 `type: Percent, value: 10, periodSeconds: 120`의 의미는?
-   - A) 120초 안에 전체의 10%까지 축소
-   - B) 120초마다 현재 Pod 수의 10%씩 축소
-   - C) 10초마다 120개씩 축소
-   - D) 최소 10개를 유지하며 120초 후 전체 축소
+- A) 특정 NodePool만 사용할 수 있는 보안 ACL
+- B) 명시적으로 참조하고 조건이 맞는 인스턴스가 사용
+- C) 모든 기존 인스턴스에 자동 적용
+- D) On-Demand 할인 상품
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 120초마다 현재 Pod 수의 10%씩 축소**
+**정답: B**
 
-**설명:**
-HPA의 scaleDown behavior에서 `type: Percent, value: 10, periodSeconds: 120`은 120초(2분)마다 현재 replica 수의 최대 10%까지 축소할 수 있다는 의미입니다. 200개 Pod가 있다면 2분마다 최대 20개씩 줄어들어, 급격한 축소로 인한 서비스 불안정을 방지합니다.
+IAM/공유·AZ·타입·platform·tenancy와 실제 예약 사용 상태를 확인합니다. RI와도 다릅니다.
 
 </details>
 
----
+## 7. 즉시 예약을 D-30에 만들고 미래 end_date만 지정하면?
 
-7. 용량 계획 워크시트에서 안전 마진(Safety Margin)으로 30%를 추가하는 주된 이유는?
-   - A) AWS 인스턴스 가격 변동 대비
-   - B) 예측과 실제 트래픽의 차이, Pod 시작 시간, 비균등 부하 분산 등을 고려
-   - C) Kubernetes 시스템 Pod가 사용하는 리소스 때문
-   - D) 네트워크 대역폭 제한 때문
+- A) 행사 시작까지 무료 대기
+- B) end_date가 미래 시작을 의미
+- C) 미사용 활성 구간도 과금될 수 있다
+- D) 사용 중 인스턴스와 예약을 항상 두 번 과금
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 예측과 실제 트래픽의 차이, Pod 시작 시간, 비균등 부하 분산 등을 고려**
+**정답: C**
 
-**설명:**
-안전 마진 30%는 여러 불확실성을 흡수합니다: (1) 트래픽 예측이 정확하지 않을 수 있음, (2) Pod가 동시에 준비되지 않음, (3) 부하가 Pod 간 균등하게 분산되지 않음, (4) 일부 Node/Pod 장애 가능성. 이전 이벤트의 포스트모템 데이터를 기반으로 마진율을 조정할 수 있습니다.
+활성 구간을 비용 모델에 포함합니다. 예약을 소비하는 인스턴스를 이중으로 더하지 않습니다.
 
 </details>
 
----
+## 8. CloudWatch scaler의 metricStat과 minMetricValue를 올바르게 설명한 것은?
 
-8. 이미지 사전 캐싱(Image Pre-Caching) DaemonSet에서 initContainers를 사용하는 이유는?
-   - A) 이미지를 실행한 후 종료하여 리소스를 절약하기 위해
-   - B) 이미지를 Node에 다운로드(pull)하고 종료하여 캐시만 남기기 위해
-   - C) 이미지 버전을 검증하기 위해
-   - D) Container Registry에 인증하기 위해
+- A) metricStatType이 올바른 필드다
+- B) minMetricValue는 항상 활성화 threshold다
+- C) metricStat은 통계 선택, minMetricValue는 NoData fallback이며 ignoreNullValues=false가 우선한다
+- D) Sum은 모든 rate gauge에 적합하다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 이미지를 Node에 다운로드(pull)하고 종료하여 캐시만 남기기 위해**
+**정답: C**
 
-**설명:**
-DaemonSet의 initContainers는 모든 Node에서 실행되어 컨테이너 이미지를 pull합니다. `echo cached`만 실행하고 종료하지만, 이미지는 Node의 로컬 캐시에 남습니다. 이후 실제 워크로드 Pod가 스케줄링될 때 이미지 pull 시간(수십 초~수 분)을 절약하여 Pod 시작 시간을 단축합니다.
+요청 delta/count와 rate/cumulative counter를 구별하고 period·collection window·게시 지연을 확인합니다.
 
 </details>
 
----
+## 9. 메트릭 지연 때 KEDA 관리 Deployment에 대한 올바른 대응은?
 
-9. D-30 타임라인에서 부하 테스트를 목표 RPM의 120%로 실행하는 이유는?
-   - A) AWS에서 높은 트래픽을 사전 승인받기 위해
-   - B) 목표 트래픽 이상에서도 시스템이 안정적인지 확인하고 병목을 미리 발견하기 위해
-   - C) KEDA 트리거의 threshold를 정확히 산출하기 위해
-   - D) 비용 계산의 정확도를 높이기 위해
+- A) Deployment만 scale하면 항상 유지된다
+- B) HPA 이름은 항상 Deployment와 같다
+- C) 승인된 상한 안에서 ScaledObject floor와 GitOps 소유권을 검토한다
+- D) 상한 없이 새 NodePool을 만든다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 목표 트래픽 이상에서도 시스템이 안정적인지 확인하고 병목을 미리 발견하기 위해**
+**정답: C**
 
-**설명:**
-이벤트 시 실제 트래픽이 예상을 초과할 수 있으므로, 120% 부하 테스트를 통해: (1) 예상 이상의 트래픽에서도 시스템 안정성 확인, (2) DB 커넥션, 네트워크 대역폭, API 게이트웨이 등의 병목 사전 발견, (3) 스케일링 동작(KEDA→HPA→Karpenter 체인)의 실제 검증이 가능합니다.
+직접 HPA/Deployment 변경은 reconcile로 덮어쓸 수 있습니다. 원래 값을 기록하고 복원합니다.
 
 </details>
 
----
+## 10. 행사 종료와 이미지 준비에 대한 올바른 설명은?
 
-10. Spot 인스턴스를 이벤트에 사용할 때 On-Demand를 권장하는 상황으로 가장 적절한 것은?
-    - A) 이벤트 지속 시간이 4시간 이상일 때
-    - B) Spot 절감율이 60% 이상일 때
-    - C) 매출에 직접 영향을 미치고 중단이 허용되지 않는 핵심 서비스일 때
-    - D) 워크로드에 재시도(retry) 로직이 구현되어 있을 때
+- A) 모든 이미지에서 sh echo가 동작하고 캐시는 영구적이다
+- B) 30분 후 NodePool을 삭제하면 항상 안전하다
+- C) 앱 준비·cache 제약을 확인하고 baseline trigger와 실제 노드/예약 종료를 검증한다
+- D) ScaledObject 삭제는 항상 원래 replica를 복원한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 매출에 직접 영향을 미치고 중단이 허용되지 않는 핵심 서비스일 때**
+**정답: C**
 
-**설명:**
-Spot 인스턴스는 AWS에 의해 2분 경고 후 회수될 수 있습니다. 플래시 세일의 주문 처리 서비스처럼 매출에 직접 영향을 주는 핵심 서비스는 On-Demand를 사용하여 가용성을 보장해야 합니다. 반면, 이메일 발송이나 로그 처리 같은 보조 서비스는 재시도 로직이 있다면 Spot으로 비용을 절감할 수 있습니다.
+기동/GC/아키텍처/권한은 이미지별로 다릅니다. 소유 controller와 삭제 수명주기를 고려해 정리합니다.
 
 </details>

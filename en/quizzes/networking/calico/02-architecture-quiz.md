@@ -1,7 +1,7 @@
 # Calico Architecture Quiz
 
 > **Related Document**: [Calico Architecture](../../../networking/calico/02-architecture.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
@@ -17,7 +17,7 @@
 **Answer: B) Policy enforcement and interface management on each node**
 
 **Explanation:**
-Felix is the core agent running on each node in a Calico cluster. Its primary responsibilities include interface management (creating Pod veth pairs), routing table programming, iptables/eBPF rule management, and network policy enforcement. Felix ensures that the dataplane is configured correctly to implement the desired network policies.
+Felix reconciles endpoint interface settings, applicable routes and kernel policy. In full Calico Linux networking, the container runtime invokes the CNI/IPAM chain to allocate addresses and create Pod veth interfaces. Felix is not directly called with CNI ADD and does not own Pod IP allocation.
 
 </details>
 
@@ -33,7 +33,7 @@ Felix is the core agent running on each node in a Calico cluster. Its primary re
 **Answer: B) BIRD Internet Routing Daemon - handles BGP routing**
 
 **Explanation:**
-BIRD (BIRD Internet Routing Daemon) is the BGP agent in Calico responsible for managing BGP peer connections, exchanging and propagating routes between nodes, and optionally functioning as a Route Reflector. BIRD enables Calico's native BGP capabilities for direct routing without encapsulation.
+BIRD manages BGP sessions and route exchange when that backend is enabled. It can act as a route reflector and synchronize routes with the kernel through its kernel protocol. BGP can coexist with encapsulation; enabling BGP does not itself guarantee unencapsulated forwarding. Workload packets do not flow through the BIRD process.
 
 </details>
 
@@ -49,23 +49,23 @@ BIRD (BIRD Internet Routing Daemon) is the BGP agent in Calico responsible for m
 **Answer: B) Dynamically generating BIRD configuration files**
 
 **Explanation:**
-confd is responsible for dynamically generating BIRD configuration files based on templates. It monitors the Calico datastore for changes in BGP configuration, node information, and peer settings, then automatically updates BIRD's configuration to reflect these changes without manual intervention.
+confd watches the relevant datastore state and renders the installed BIRD templates. It checks the result and invokes the configured reload command. The generated file is not the durable configuration source; change BGP API resources instead of editing generated bird.cfg.
 
 </details>
 
-4. When should Typha be deployed in a Calico cluster?
+4. Which statement about deploying Typha is accurate?
    - A) Always, regardless of cluster size
-   - B) Only for clusters with more than 50 nodes
+   - B) Operator installations can deploy Typha below 50 nodes; use the installed version's scaling logic and actual workload requirements
    - C) Only when using eBPF mode
    - D) Only for multi-cluster deployments
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Only for clusters with more than 50 nodes**
+**Answer: B) Operator installations can deploy Typha below 50 nodes; use the installed version's scaling logic and actual workload requirements**
 
 **Explanation:**
-Typha is recommended for clusters with 50 or more nodes. Without Typha, each Felix instance connects directly to the datastore, which can overwhelm the API server in large clusters. Typha aggregates datastore connections and provides cached data to Felix instances, significantly reducing API server load.
+Typha reduces direct datastore update fan-out to Felix. It is not universally mandatory only above 50 nodes, nor required in every non-operator installation. Operator 1.42.6 scales it for small clusters too, using counted-node logic and checking Linux placement capacity.
 
 </details>
 
@@ -81,43 +81,43 @@ Typha is recommended for clusters with 50 or more nodes. Without Typha, each Fel
 **Answer: B) etcd and Kubernetes API**
 
 **Explanation:**
-Calico supports two datastore options: a dedicated etcd cluster or the Kubernetes API (using CRDs). The Kubernetes API datastore is recommended for most deployments as it simplifies operations by using the existing Kubernetes infrastructure. The etcd datastore is used for non-Kubernetes deployments or when specific etcd features are required.
+Calico has Kubernetes API and direct etcdv3 datastore paths with feature/installation constraints. The Kubernetes API path still uses Kubernetes' backing storage but needs no separate Calico etcd cluster. Direct etcd needs its own TLS, credentials, availability and backup design; node count alone is not a reason to switch.
 
 </details>
 
-6. Which controllers are included in kube-controllers?
+6. Which controllers does operator 1.42.6 select for its standard Open Source kube-controllers deployment?
    - A) Only Policy Controller
-   - B) Policy, Namespace, ServiceAccount, WorkloadEndpoint, and Node Controllers
+   - B) node and loadbalancer
    - C) Only Node and Policy Controllers
    - D) Only WorkloadEndpoint Controller
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Policy, Namespace, ServiceAccount, WorkloadEndpoint, and Node Controllers**
+**Answer: B) node and loadbalancer**
 
 **Explanation:**
-kube-controllers includes multiple controllers that synchronize between Kubernetes and the Calico datastore: Policy Controller (NetworkPolicy synchronization), Namespace Controller (namespace profile management), ServiceAccount Controller (service account synchronization), WorkloadEndpoint Controller (endpoint cleanup), and Node Controller (node information synchronization).
+The pinned operator renderer starts node and loadbalancer for its normal Open Source deployment. Policy, namespace, serviceaccount and workloadendpoint controllers also exist for applicable datastore/configuration paths, but they are not all necessarily enabled. ServiceAccount profiles do not grant Kubernetes RBAC.
 
 </details>
 
-7. What is the recommended formula for calculating Typha replicas in large clusters?
+7. For 500 counted nodes, what desired Typha replica count does operator 1.42.6's scale function return?
    - A) 1 replica per 50 nodes
-   - B) Node count divided by 200, minimum 3
+   - B) 4 replicas, from floor(500 / 200) + 2
    - C) Fixed at 5 replicas
    - D) 1 replica per 100 nodes, minimum 1
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Node count divided by 200, minimum 3**
+**Answer: B) 4 replicas, from floor(500 / 200) + 2**
 
 **Explanation:**
-The recommended formula for Typha replicas is: node count / 200, with a minimum of 3 replicas for high availability. For example, a 500-node cluster would need at least 3 replicas (500/200 = 2.5, rounded up to minimum 3), while a 1000-node cluster would need 5 replicas.
+For more than four counted nodes, this version computes max(3, floor(N / 200) + 2), so 500 gives 4. One or two nodes give 1; three or four give 2. At 1,000 the result is 7. The autoscaler excludes unschedulable nodes and AKS virtual nodes and checks available Linux nodes; the result is not a throughput guarantee.
 
 </details>
 
-8. In Calico's packet flow, which component is responsible for programming routing tables on the node?
+8. Which Calico agent reconciles local workload route and kernel-policy state?
    - A) BIRD
    - B) confd
    - C) Felix
@@ -129,7 +129,7 @@ The recommended formula for Typha replicas is: node count / 200, with a minimum 
 **Answer: C) Felix**
 
 **Explanation:**
-Felix is responsible for programming the routing tables on each node. While BIRD handles BGP route exchange between nodes, Felix takes the route information and programs it into the Linux kernel's routing tables. Felix also manages iptables/eBPF rules for policy enforcement.
+Felix handles local workload route/policy reconciliation. This does not mean it is the only component touching routes: the CNI creates initial interface/routes, and BIRD's kernel protocol can install BGP-learned routes. confd generates BIRD configuration; Typha distributes cached state.
 
 </details>
 
@@ -145,15 +145,15 @@ Felix is responsible for programming the routing tables on each node. While BIRD
 **Answer: B) 5473**
 
 **Explanation:**
-Typha listens on port 5473 (calico-typha) for connections from Felix instances. This is the default port configured in Typha deployments for receiving connections from the calico-node pods running on each node in the cluster.
+TCP 5473 is Typha's default synchronization listener for clients such as Felix. It is separate from metrics and health ports, and is not an application-traffic proxy. The operator also configures TLS trust and client identity.
 
 </details>
 
 10. Which FelixConfiguration setting enables eBPF mode?
-    - A) ebpfEnabled: true
-    - B) bpfEnabled: true
-    - C) dataplaneMode: ebpf
-    - D) useEbpf: true
+   - A) ebpfEnabled: true
+   - B) bpfEnabled: true
+   - C) dataplaneMode: ebpf
+   - D) useEbpf: true
 
 <details>
 <summary>Show Answer</summary>
@@ -161,15 +161,15 @@ Typha listens on port 5473 (calico-typha) for connections from Felix instances. 
 **Answer: B) bpfEnabled: true**
 
 **Explanation:**
-To enable eBPF mode in Calico, you set `bpfEnabled: true` in the FelixConfiguration resource. This switches the dataplane from iptables to eBPF, providing improved performance and enabling features like Direct Server Return (DSR) and kube-proxy replacement.
+bpfEnabled is a valid low-level FelixConfiguration field. For an operator-managed installation, use the supported Installation linuxDataplane setting and coordinate kube-proxy and API reachability. Changing one boolean is not a complete, validated migration or a guarantee that every eBPF feature is available.
 
 </details>
 
 11. What happens to Felix instances when Typha is not deployed in a large cluster?
-    - A) Felix instances fail to start
-    - B) Each Felix connects directly to the datastore, potentially overwhelming the API server
-    - C) Network policies are not enforced
-    - D) BGP peering fails
+   - A) Felix instances fail to start
+   - B) Each Felix connects directly to the datastore, potentially overwhelming the API server
+   - C) Network policies are not enforced
+   - D) BGP peering fails
 
 <details>
 <summary>Show Answer</summary>
@@ -177,15 +177,15 @@ To enable eBPF mode in Calico, you set `bpfEnabled: true` in the FelixConfigurat
 **Answer: B) Each Felix connects directly to the datastore, potentially overwhelming the API server**
 
 **Explanation:**
-Without Typha, every Felix instance on every node maintains its own connection to the datastore (Kubernetes API server). In large clusters with hundreds of nodes, this can overwhelm the API server with watch connections and data transfers. Typha solves this by aggregating connections and caching data.
+Direct watches can increase datastore/API load as node count and update volume grow. This is a capacity concern, not a guarantee that policies or BGP stop working without Typha. Even with Typha, other components still access the Kubernetes API.
 
 </details>
 
 12. What is the health check port for Felix by default?
-    - A) 8080
-    - B) 9091
-    - C) 9099
-    - D) 10250
+   - A) 8080
+   - B) 9091
+   - C) 9099
+   - D) 10250
 
 <details>
 <summary>Show Answer</summary>
@@ -193,10 +193,10 @@ Without Typha, every Felix instance on every node maintains its own connection t
 **Answer: C) 9099**
 
 **Explanation:**
-By default, Felix's health check endpoint listens on port 9099 when `healthEnabled: true` is set in FelixConfiguration. This port is used by Kubernetes liveness and readiness probes to verify that Felix is running correctly on each node.
+Felix's default health port is 9099 when health serving is enabled, with localhost as the default bind address. Probe/network settings must match the actual deployment; a request to localhost on an administrator laptop does not inspect a node. The usual metrics port is 9091.
 
 </details>
 
 ---
 
-[Return to Learning Materials](../../../networking/calico/02-architecture.md) | [Previous Quiz: Introduction](./01-introduction-quiz.md) | [Next Quiz: Networking Modes](./03-networking-modes-quiz.md)
+[Learning material](../../../networking/calico/02-architecture.md) | [Previous quiz](01-introduction-quiz.md) | [Next quiz](03-networking-modes-quiz.md)

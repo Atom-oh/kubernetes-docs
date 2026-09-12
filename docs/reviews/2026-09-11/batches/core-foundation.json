@@ -605,7 +605,8 @@
       "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
       "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
       "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
-      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html"
     ],
     "findings": [
       "Replaced Secret-value logging with presence checks; aligned --from-file keys; added subPath and eventual-update caveats, correct 1 MiB limits and immutable fields.",
@@ -613,14 +614,16 @@
       "Rebuilt AppConfig example using container-agent variables and local HTTP retrieval; replaced fictional native FargateProfile with eksctl configuration.",
       "Fixed duplicate KMS key creation/wrong EKS API and documented default API-data encryption; removed invalid ACK fields and unsafe no-recovery deletion.",
       "Replaced broken/overprivileged CDK cluster snippet with a typed grantRead helper; corrected invalid configMapKeyRef.subPath and quiz request/QoS/CLI/update explanations.",
-      "Parent diagram followup: configuration overview should not imply native ConfigMaps auto-reload applications, that KSOPS encrypts already-created Secrets, or that ASCP syncs Kubernetes Secrets by default."
+      "Parent diagram followup: configuration overview should not imply native ConfigMaps auto-reload applications, that KSOPS encrypts already-created Secrets, or that ASCP syncs Kubernetes Secrets by default.",
+      "Current specific Hybrid Nodes add-on guide supports appropriately configured Pod Identity Agent and AWS Secrets Store CSI provider; removed an overly broad EC2-only prerequisite. Fargate limitation retained."
     ],
     "validation": [
       "Full sequential read complete in both languages and quizzes.",
       "Full read and official-source checks completed",
       "Static validation: 30 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
       "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
-      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed.",
+      "Follow-up prose cross-check against official Hybrid Nodes add-on guide; no code or cluster execution changed."
     ]
   },
   {
@@ -680,7 +683,8 @@
       "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_externalsecrets.yaml",
       "https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crds/bases/external-secrets.io_secretstores.yaml",
       "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml",
-      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml"
+      "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html"
     ],
     "findings": [
       "Replaced Secret-value logging with presence checks; aligned --from-file keys; added subPath and eventual-update caveats, correct 1 MiB limits and immutable fields.",
@@ -688,14 +692,16 @@
       "Rebuilt AppConfig example using container-agent variables and local HTTP retrieval; replaced fictional native FargateProfile with eksctl configuration.",
       "Fixed duplicate KMS key creation/wrong EKS API and documented default API-data encryption; removed invalid ACK fields and unsafe no-recovery deletion.",
       "Replaced broken/overprivileged CDK cluster snippet with a typed grantRead helper; corrected invalid configMapKeyRef.subPath and quiz request/QoS/CLI/update explanations.",
-      "Parent diagram followup: configuration overview should not imply native ConfigMaps auto-reload applications, that KSOPS encrypts already-created Secrets, or that ASCP syncs Kubernetes Secrets by default."
+      "Parent diagram followup: configuration overview should not imply native ConfigMaps auto-reload applications, that KSOPS encrypts already-created Secrets, or that ASCP syncs Kubernetes Secrets by default.",
+      "Current specific Hybrid Nodes add-on guide supports appropriately configured Pod Identity Agent and AWS Secrets Store CSI provider; removed an overly broad EC2-only prerequisite. Fargate limitation retained."
     ],
     "validation": [
       "Full sequential read complete in both languages and quizzes.",
       "Full read and official-source checks completed",
       "Static validation: 30 built-in Kubernetes manifests passed v1.37 OpenAPI structural validation (including shell heredocs; IntOrString/Quantity types handled). CRDs/component configuration require their own schemas; no cluster execution.",
       "Applicable ESO v1, ACK Secret and CSI snapshot manifests passed official CRD structural-schema validation; no deployment performed.",
-      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed."
+      "Final static checks: one H1; balanced code fences; YAML duplicate-key parsing clean; internal paths/heading anchors resolve; scoped git diff --check clean. No cloud/cluster commands executed.",
+      "Follow-up prose cross-check against official Hybrid Nodes add-on guide; no code or cluster execution changed."
     ]
   },
   {

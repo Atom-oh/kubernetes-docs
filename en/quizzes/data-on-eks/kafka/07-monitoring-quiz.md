@@ -1,222 +1,139 @@
 # Part 7: Monitoring Quiz
 
-This quiz tests your understanding of how Strimzi exposes metrics, what the core broker metrics mean, how consumer lag is measured, and how the KEDA Kafka scaler is configured.
+Review actual metric names, scrape scope/missing data, lag and authenticated KEDA behavior.
 
-## Multiple Choice Questions
-
-1. What does Strimzi run inside each broker container to convert JMX metrics into a form Prometheus can scrape?
-   - A) A Fluent Bit sidecar
-   - B) A Prometheus JMX Exporter (JVM Java agent)
-   - C) An OpenTelemetry Collector DaemonSet
-   - D) cAdvisor
+## 1. How does this chapter's JMX approach run, and is it Strimzi's only metrics option?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
+JMX Exporter runs as a Java agent in the same JVM. Strimzi also supports strimziMetricsReporter. Review naming, configuration and dashboards when switching.
 
-**Answer: B) A Prometheus JMX Exporter (JVM Java agent)**
-
-**Explanation:**
-When `metricsConfig` is configured on the `Kafka` CR, Strimzi automatically enables a Prometheus JMX Exporter inside each broker (and Connect, etc.) container — not as a separate sidecar container, but as a Java agent loaded into the same JVM process. This exporter reads JVM-internal JMX MBean values, renames them according to relabeling rules, and exposes them in Prometheus text format at a `/metrics` HTTP endpoint. Fluent Bit is a log collector and cAdvisor collects container resource metrics — neither serves this purpose.
 </details>
 
-2. What kind of resource does `Kafka.spec.kafka.metricsConfig` reference to obtain the JMX Exporter's relabeling rules?
-   - A) Secret
-   - B) PersistentVolumeClaim
-   - C) ConfigMap
-   - D) CustomResourceDefinition
+## 2. How do JMX MBean mapping rules differ from PodMonitor relabeling?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
+The ConfigMap's JMX rules map MBeans to metric names/labels. PodMonitor relabeling is a separate discovery step that supplies target context such as namespace, kafka_cluster and role.
 
-**Answer: C) ConfigMap**
-
-**Explanation:**
-`metricsConfig.valueFrom.configMapKeyRef` points to the name and key of a `ConfigMap` containing the relabeling rules (in YAML). Strimzi mounts this rules file into the container running the JMX Exporter Java agent so it knows which JMX MBeans map to which Prometheus metric names and labels. A `Secret` is for sensitive values like certificates or credentials and is not used for this purpose.
 </details>
 
-3. What is the healthy value for the `kafka_server_replicamanager_underreplicatedpartitions` metric?
-   - A) It should equal the number of brokers
-   - B) It should equal the number of partitions
-   - C) It should always be 0
-   - D) It should always be 1
+## 3. Does UnderReplicatedPartitions above zero mean data has already been lost?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
+No. The healthy steady-state value is zero, but failures, lag or planned operations can increase it. Check duration, under-min-ISR/offline partitions and the cause.
 
-**Answer: C) It should always be 0**
-
-**Explanation:**
-This metric counts the partitions led by a given broker whose in-sync replica (ISR) set is smaller than the configured replication factor. Under normal operation every follower should be keeping up with the leader, so this value should be 0. A value above 0 signals that some replicas are falling behind — often due to network latency, broker overload, or disk I/O bottlenecks — and is a direct risk to data durability if the leader then fails with an insufficient ISR.
 </details>
 
-4. What should the cluster-wide sum of `kafka_controller_kafkacontroller_activecontrollercount` be under healthy operation?
-   - A) 0
-   - B) Equal to the number of brokers
-   - C) Exactly 1
-   - D) Equal to the number of controller candidates
+## 4. Can an active-controller sum of two immediately be diagnosed as split brain?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Exactly 1**
+No. First check cluster scope, duplicate targets, stale samples and scrape timing. The expected steady-state sum for one cluster's controllers is one.
 
-**Explanation:**
-Each broker/controller exposes whether it is currently the active controller as 0 or 1. Summing this across the cluster should yield exactly 1 under healthy operation. A sum of 0 means there is no active controller (leader election in progress, or a failure); a sum of 2 or more suggests a serious anomaly such as a split-brain condition and warrants immediate investigation.
 </details>
 
-5. If the Request Handler Idle Ratio stays persistently low (for example, below 10%), what should you suspect first?
-   - A) Disk capacity is running low
-   - B) The broker is approaching saturation on CPU/thread resources
-   - C) The ZooKeeper connection has dropped
-   - D) A consumer group is rebalancing
+## 5. What should be correlated with a low BrokerRequestHandlerAvgIdlePercent?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) The broker is approaching saturation on CPU/thread resources**
+Correlate CPU, GC, I/O, request latency/queues and throughput. It indicates busy handlers, not a conclusive CPU-only diagnosis or an automatic reason to add threads/brokers.
 
-**Explanation:**
-The Request Handler Idle Ratio is the fraction of time a broker's request-handling thread pool sits idle. A low value means the thread pool is constantly busy processing requests, signaling the broker is nearing its CPU or thread capacity limits. Persistently low values are a cue to consider scaling out brokers, rebalancing partitions, or tuning thread pool size.
 </details>
 
-6. Why don't the broker metrics Strimzi exposes by default include consumer group lag?
-   - A) Consumer lag is sensitive information that cannot be exposed for security reasons
-   - B) Computing lag requires correlating a consumer group's committed offsets with a topic's latest offsets, but the JMX Exporter only reads the broker's own JMX MBeans
-   - C) The Strimzi version used is too old to support it
-   - D) Consumer lag can only be measured from the client side
+## 6. Does broker JMX mapping alone calculate consumer-group lag?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Computing lag requires correlating a consumer group's committed offsets with a topic's latest offsets, but the JMX Exporter only reads the broker's own JMX MBeans**
+No. It requires group committed offsets and partition-end offsets. This chapter uses Strimzi Kafka Exporter; KEDA independently queries Kafka APIs.
 
-**Explanation:**
-The JMX Exporter Java agent only reads and exposes JMX MBeans internal to the broker process (replication state, throughput, controller status, etc.). Consumer lag is the difference between a consumer group's last committed offset and a topic's latest (log end) offset, which requires querying both values separately through the Kafka Admin API. This is why consumer lag is typically measured with a dedicated tool such as `kafka-lag-exporter`.
 </details>
 
-7. Which community exporter is introduced in this document for measuring consumer lag?
-   - A) node-exporter
-   - B) kafka-lag-exporter
-   - C) blackbox-exporter
-   - D) kube-state-metrics
+## 7. Name the chosen Kafka Exporter lag metric/group label and describe the older project's status.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) kafka-lag-exporter**
+`kafka_consumergroup_lag` and `consumergroup`. The older seglo/kafka-lag-exporter is archived; do not confuse its kafka_consumergroup_group_lag/group convention with this exporter.
 
-**Explanation:**
-`kafka-lag-exporter` is a community project that periodically queries a consumer group's committed offsets and each topic's latest offsets via the Kafka Admin API, then exposes metrics such as `kafka_consumergroup_group_lag` in Prometheus format. `node-exporter` collects host system metrics, `blackbox-exporter` probes endpoints, and `kube-state-metrics` reports Kubernetes object state — none of these serve this purpose.
 </details>
 
-8. When scraping Strimzi-managed Kafka broker pods in a Prometheus Operator environment, which CRD is more reliable than targeting a fixed `Service`?
-   - A) ServiceMonitor
-   - B) PodMonitor
-   - C) Probe
-   - D) AlertmanagerConfig
+## 8. Is PodMonitor always more reliable than ServiceMonitor?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) PodMonitor**
+No. ServiceMonitor works with a correct Service and selectors. This chapter chooses direct pod discovery; verify Prometheus label/namespace selectors, RBAC, networking and duplicate scrapes.
 
-**Explanation:**
-Brokers run as individual pods managed by Strimzi. A `PodMonitor` that selects pods directly by label (such as `strimzi.io/cluster`) discovers scrape targets more reliably than a `ServiceMonitor`, which targets a fixed `Service` endpoint. `Probe` is for blackbox-style endpoint checks, and `AlertmanagerConfig` configures alert routing — neither is for pod-level metric scraping.
 </details>
 
-9. In a `PrometheusRule` alert for under-replicated partitions, what does `for: 5m` do?
-   - A) It scrapes metrics every 5 minutes
-   - B) The condition must hold true continuously for 5 minutes before the alert actually fires
-   - C) The alert automatically resolves 5 minutes after firing
-   - D) It computes a 5-minute average of the value
+## 9. Explain for: 5m and missing-data behavior in a PrometheusRule.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) The condition must hold true continuously for 5 minutes before the alert actually fires**
+The condition must remain present and true for five minutes before firing. It is not a scrape interval or average. A missing metric family can make a sum comparison empty, so include absent and scrape-coverage checks.
 
-**Explanation:**
-In a Prometheus alerting rule, the `for` field means the condition in `expr` must remain true for the specified duration before the alert transitions from `pending` to `firing`. Setting `for: 5m` reduces noisy alerts caused by momentary spikes and ensures alerts only fire for genuinely persistent problems.
 </details>
 
-10. How does KEDA's Kafka scaler determine a consumer group's lag?
-    - A) By scraping the Prometheus metrics exposed by kafka-lag-exporter
-    - B) By querying the Kafka Admin API directly
-    - C) By parsing the broker's JMX Exporter `/metrics` endpoint
-    - D) By reading offsets stored in ZooKeeper
+## 10. Does the KEDA Kafka scaler require a Prometheus lag exporter?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) By querying the Kafka Admin API directly**
+No. It queries Kafka APIs directly and needs its own broker reachability, TLS, authentication and Secret access. This is a different path from the dashboard exporter.
 
-**Explanation:**
-KEDA's Kafka scaler calls the Kafka Admin API directly, using trigger parameters like `bootstrapServers`, `consumerGroup`, and `topic`, to determine a consumer group's lag. This means a separate Prometheus exporter such as `kafka-lag-exporter` is not strictly required for scaling decisions (though it remains useful for dashboards and alerting). ZooKeeper no longer stores offsets in KRaft mode.
 </details>
 
-## Short Answer Questions
-
-11. Define consumer lag in one sentence.
+## 11. Does lag = 0 prove that business processing is complete?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: The difference, per partition, between the latest produced offset (the log end offset) and the offset a consumer group has last committed.**
+No. It normally measures log-end next offset minus committed next offset. Early commits or data/collection conditions can differ from business completion. Compaction and transactions can also make it differ from a physical record count.
 
-**Explanation:**
-Consumer lag measures, in units of offsets, how many messages a consumer has not yet processed. A lag of 0 means the consumer has caught up to the latest message; steadily increasing lag signals the consumer's processing rate can't keep up with the produce rate.
 </details>
 
-12. What is the name of the component Strimzi uses to convert a Kafka broker's JMX metrics into a `/metrics` HTTP endpoint?
+## 12. How should bytesin_total and idle_percent be queried?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: Prometheus JMX Exporter (a JVM Java agent)**
+Use rate(...[5m]) on the bytesin_total counter for per-second throughput. idle_percent is already a ratio gauge; observe it directly rather than applying rate again.
 
-**Explanation:**
-The JMX Exporter reads JVM JMX MBean values, renames and relabels them according to configured rules, and exposes them in a Prometheus-scrapeable text format at a `/metrics` path. When `metricsConfig` is set, Strimzi automatically enables this as a Java agent inside the same JVM process on component containers such as brokers — not as a separate sidecar container.
 </details>
 
-13. In a KEDA `ScaledObject`'s Kafka trigger, what parameter sets the per-partition lag value above which additional replicas are added?
+## 13. Explain lagThreshold=50 with minReplicaCount=1.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: `lagThreshold`**
+The target is 50 effective total lag per replica; roughly ceil(total lag/50) is subject to HPA/scaler adjustments and limits. It does not create multiple consumers for each partition. With min=1, inspect HPA scale-down behavior, not zero-scaling activation/cooldown.
 
-**Explanation:**
-`lagThreshold` is the acceptable per-partition lag value; every time the actual lag crosses a multiple of this value, the HPA that KEDA manages adds another replica. For example, with `lagThreshold: "50"` and a partition lag of 120, roughly 2-3 replicas would be calculated as needed. Separately, `activationLagThreshold` determines whether the initial scale-up from 0 to 1 replica happens at all.
 </details>
 
-14. What pair of metrics can serve as a leading indicator before under-replicated partitions increase, describing how often replicas leave or rejoin the ISR set?
+## 14. What do ISR changes and topic throughput reveal, and what are their limits?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: ISR Shrink Rate and ISR Expand Rate (`isrshrinkspersec`, `isrexpandspersec`)**
+Rates of ISR shrink/expand counters reveal churn to correlate with replication health. Topic aggregate throughput alone cannot identify a hot partition; add partition/client observations.
 
-**Explanation:**
-ISR Shrink Rate is the per-second rate at which replicas drop out of the ISR set, and ISR Expand Rate is the rate at which they rejoin. Frequent shrinks indicate followers are repeatedly falling behind the leader, which often precedes a rise in under-replicated partitions — making it a useful early-warning signal.
 </details>
 
-## Hands-on Questions
-
-15. Write the YAML for a `Kafka` CR's `metricsConfig` that references a `ConfigMap` named `kafka-metrics` with key `kafka-metrics-config.yml`.
+## 15. Write the patch that adds the chapter's metricsConfig and Kafka Exporter to the existing Kafka resource.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer:**
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
-kind: Kafka
-metadata:
-  name: my-cluster
-  namespace: kafka
 spec:
   kafka:
     metricsConfig:
@@ -225,72 +142,71 @@ spec:
         configMapKeyRef:
           name: kafka-metrics
           key: kafka-metrics-config.yml
+  kafkaExporter:
+    topicRegex: ^orders$
+    groupRegex: ^order-processor$
+    showAllOffsets: true
+    template:
+      pod:
+        metadata:
+          labels:
+            docs.example.com/kafka-monitor: lag
 ```
 
-**Explanation:**
-`type: jmxPrometheusExporter` is currently the only metrics exposition type Strimzi supports, and `valueFrom.configMapKeyRef` specifies the `ConfigMap` holding the relabeling rules and the key within it. Once applied, the Strimzi Cluster Operator automatically enables the JMX Exporter Java agent inside broker containers and mounts the referenced rules file.
+Create metrics-config.yaml first, then use `kubectl -n kafka patch kafka my-cluster --type=merge --patch-file metrics.patch.yaml`. This is not a complete Kafka creation manifest and preserves existing authentication/listeners.
+
 </details>
 
-16. Write a KEDA `ScaledObject` that scales the `order-consumer` `Deployment` between 1 and 10 replicas based on the lag of consumer group `order-consumer-group` on topic `orders`, using a per-partition lag threshold of 50.
+## 16. Write the ScaledObject that uses TLS/SCRAM and a TriggerAuthentication in the same namespace.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer:**
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: order-consumer-scaler
-  namespace: default
+  namespace: kafka
 spec:
   scaleTargetRef:
     name: order-consumer
   minReplicaCount: 1
   maxReplicaCount: 10
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
   triggers:
-    - type: kafka
-      metadata:
-        bootstrapServers: my-cluster-kafka-bootstrap.kafka.svc:9092
-        consumerGroup: order-consumer-group
-        topic: orders
-        lagThreshold: "50"
+  - type: kafka
+    metadata:
+      bootstrapServers: my-cluster-kafka-bootstrap.kafka.svc:9093
+      version: 4.3.1
+      consumerGroup: order-processor
+      topic: orders
+      tls: enable
+      sasl: scram_sha512
+      lagThreshold: '50'
+      allowIdleConsumers: 'false'
+      offsetResetPolicy: earliest
+    authenticationRef:
+      name: kafka-lag-auth
 ```
 
-**Explanation:**
-`scaleTargetRef.name` identifies the target `Deployment`, while `minReplicaCount`/`maxReplicaCount` bound the scaling range. `type: kafka` under `triggers` selects the Kafka scaler, and its `metadata` supplies the bootstrap servers, consumer group, topic, and lag threshold. The KEDA Operator uses this resource to create and manage a standard Kubernetes HPA.
+This requires the chapter's keda-auth.yaml and existing kafka/order-consumer Deployment. The application must consume as order-processor. The maximum of 10 fits Part 2's 12 partitions; adjust it for other topologies.
+
 </details>
 
-17. Write a `PrometheusRule` that fires a `warning`-severity alert when under-replicated partitions stay above 0 for at least 5 minutes.
+## 17. How should cluster scope, for and missing-data handling be separated in an under-replication alert?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer:**
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: kafka-broker-alerts
-  namespace: kafka
-spec:
-  groups:
-    - name: kafka-broker.rules
-      rules:
-        - alert: KafkaUnderReplicatedPartitions
-          expr: sum(kafka_server_replicamanager_underreplicatedpartitions) > 0
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Kafka cluster has under-replicated partitions"
-            description: "Under-replicated partitions have been above 0 for over 5 minutes."
-```
+Scope the gauge to namespace="kafka", kafka_cluster="my-cluster", sum per cluster, and apply for:5m to >0. Add separate node scrape-coverage and controller-metric-missing rules. For lag, also monitor exporter failure, missing expected groups and negative committed offsets.
 
-**Explanation:**
-The `expr` sums under-replicated partitions across the cluster and checks whether the total is above 0. `for: 5m` requires the condition to hold for 5 minutes before the alert transitions to `firing`, reducing noise from momentary spikes. `labels.severity` classifies the alert's severity for use in Alertmanager routing.
 </details>
 
 ---
 
-[Return to Learning Materials](../../../data-on-eks/kafka/07-monitoring.md) | [Previous Quiz: MSK Integration](./06-msk-integration-quiz.md) | [Next Quiz: Best Practices](./08-best-practices-quiz.md)
+[Return to learning material](../../../data-on-eks/kafka/07-monitoring.md) | [Previous quiz](./06-msk-integration-quiz.md) | [Next quiz](./08-best-practices-quiz.md)

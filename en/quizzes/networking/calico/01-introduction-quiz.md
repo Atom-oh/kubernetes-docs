@@ -1,7 +1,7 @@
 # Calico Introduction Quiz
 
 > **Related Document**: [Calico Introduction](../../../networking/calico/01-introduction.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
@@ -17,59 +17,59 @@
 **Answer: B) 2014**
 
 **Explanation:**
-Project Calico was started in 2014 at Metaswitch. It has since grown to become one of the most widely used Kubernetes CNI plugins globally. In 2016, Tigera was founded to commercialize Calico, and in 2019, Calico Enterprise was released.
+Project Calico's origins are in 2014 at Metaswitch. Tigera was formed in 2016. Do not conflate the project's origin with later product launches or Calico release dates.
 
 </details>
 
-2. Which company founded Tigera and commercialized Calico?
+2. Which company is Calico's primary maintainer and supplies Calico Enterprise and Cloud?
    - A) Google
    - B) Red Hat
-   - C) Metaswitch founders
+   - C) Tigera
    - D) VMware
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Metaswitch founders**
+**Answer: C) Tigera**
 
 **Explanation:**
-Tigera was founded in 2016 by the original creators of Project Calico from Metaswitch. Tigera now maintains both the open-source Calico project and offers commercial products including Calico Enterprise and Calico Cloud.
+Tigera maintains Calico with community contributors and supplies commercial offerings. “Metaswitch founders” is a description of people, not the name of the company being asked for. A CNCF Landscape listing does not mean CNCF governs the project.
 
 </details>
 
-3. Which of the following is NOT a core feature of Calico?
+3. Which statement is NOT true of the default Calico installation?
    - A) BGP-based routing
-   - B) Built-in service mesh with sidecar injection
+   - B) It automatically injects Istio sidecars into every Pod
    - C) Kubernetes standard and extended network policies
    - D) Support for eBPF dataplane
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Built-in service mesh with sidecar injection**
+**Answer: B) It automatically injects Istio sidecars into every Pod**
 
 **Explanation:**
-Calico provides high-performance networking with BGP-based routing, powerful network policies (both Kubernetes standard and Calico extended), and eBPF dataplane support. However, unlike Cilium, Calico does not include a built-in service mesh. Service mesh functionality is available separately through Calico Enterprise or by integrating with other service mesh solutions like Istio.
+Calico provides networking, policy and selectable data planes. Mesh integrations are separate capabilities/configuration, not automatic injection of Istio sidecars by this lab's installation. Cilium mesh functions also require their own configuration; a CNI comparison should not imply that every mesh feature is enabled by default.
 
 </details>
 
-4. What is the primary advantage of Calico's BGP-based networking compared to traditional overlay networks?
+4. What can an unencapsulated Calico topology with correctly configured BGP and underlay routes provide?
    - A) Simpler configuration
    - B) Better security encryption
-   - C) Direct routing without encapsulation overhead
+   - C) Routing without overlay encapsulation headers, where the underlay supports Pod routes
    - D) Built-in DNS resolution
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Direct routing without encapsulation overhead**
+**Answer: C) Routing without overlay encapsulation headers, where the underlay supports Pod routes**
 
 **Explanation:**
-BGP-based networking in Calico enables direct routing of packets between nodes without the overhead of encapsulation (like VXLAN or IPIP). This results in better network performance, lower latency, and easier integration with existing network infrastructure. Traditional overlay networks add encapsulation headers which increase packet size and processing overhead.
+BGP distributes routes. If the underlay can route Pod addresses and encapsulation is disabled, packets need no IPIP/VXLAN wrapper. BGP can also coexist with IPIP, so enabling BGP alone does not remove encapsulation. It neither encrypts traffic nor guarantees lower latency for every workload.
 
 </details>
 
-5. Which environments does Calico support?
+5. Across which environments can the appropriate Calico configurations and product editions be used?
    - A) Cloud only
    - B) On-premises only
    - C) Cloud, on-premises, and hybrid
@@ -81,23 +81,23 @@ BGP-based networking in Calico enables direct routing of packets between nodes w
 **Answer: C) Cloud, on-premises, and hybrid**
 
 **Explanation:**
-Calico is a versatile networking solution that supports multiple environments including public cloud (AWS, Azure, GCP), on-premises data centers, and hybrid deployments. It can also be used with virtual machines and bare-metal workloads, not just Kubernetes containers.
+Calico has cloud, on-premises and hybrid use cases, but platform/kernel/data-plane and edition limitations still apply. GKE Dataplane V2 specifically uses Cilium rather than Calico. VM and Windows capabilities are not identical to Linux Kubernetes capabilities.
 
 </details>
 
-6. What dataplane options does Calico support?
+6. Which list includes supported Calico Linux data-plane choices?
    - A) iptables only
    - B) eBPF only
-   - C) iptables and eBPF
+   - C) iptables, nftables and eBPF
    - D) IPVS only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) iptables and eBPF**
+**Answer: C) iptables, nftables and eBPF**
 
 **Explanation:**
-Calico supports both iptables and eBPF dataplanes. The iptables dataplane is the traditional and most mature option, while eBPF mode was introduced in 2020 and provides improved performance with lower CPU usage. Users can choose the dataplane that best fits their requirements and kernel version support.
+Calico supports these Linux data-plane choices. Encapsulation modes such as VXLAN/IPIP are a different choice, and IPVS is a kube-proxy backend rather than a complete Calico data plane. Select using kernel, platform and feature requirements; the lab explicitly uses iptables.
 
 </details>
 
@@ -113,7 +113,7 @@ Calico supports both iptables and eBPF dataplanes. The iptables dataplane is the
 **Answer: B) A command-line tool for managing Calico resources**
 
 **Explanation:**
-calicoctl is a command-line interface tool for managing Calico resources such as network policies, IP pools, BGP configurations, and nodes. It provides direct access to the Calico datastore and is essential for troubleshooting, diagnostics, and advanced configuration tasks that may not be easily accomplished through kubectl alone.
+calicoctl manages Calico resources and offers diagnostics such as IPAM/BGP operations. Use a matching client version. Many routine resource operations can instead use kubectl with the Calico API server. calicoctl node status requires an appropriate node environment; a laptop kubeconfig alone is insufficient.
 
 </details>
 
@@ -129,7 +129,7 @@ calicoctl is a command-line interface tool for managing Calico resources such as
 **Answer: B) Calico Enterprise is the commercial version built on top of Calico OSS**
 
 **Explanation:**
-Calico Enterprise is Tigera's commercial offering that builds upon the open-source Calico project. It adds enterprise features such as advanced threat detection, compliance reporting, multi-cluster management, and commercial support. The core networking and policy functionality is shared between both versions.
+Enterprise builds on Calico technology with commercial features and support. Open Source also includes policy tiers and Goldmane/Whisker observability and can run in production. Consult the current feature matrix rather than assuming every advanced feature is paid or that OSS is only for small clusters.
 
 </details>
 
@@ -145,15 +145,15 @@ Calico Enterprise is Tigera's commercial offering that builds upon the open-sour
 **Answer: C) 2020**
 
 **Explanation:**
-Calico introduced eBPF dataplane support in 2020. This was a significant milestone that allowed Calico to provide improved performance with features like Direct Server Return (DSR), connection-time load balancing, and the ability to replace kube-proxy, all while using less CPU than the iptables dataplane.
+The official February 25, 2020 announcement introduced the new data plane as a tech preview for Calico 3.13. It was not a GA announcement. eBPF executes in the Linux kernel and can replace parts of conventional packet processing, not the kernel itself. Performance depends on the measured workload.
 
 </details>
 
 10. What is Calico Cloud?
-    - A) A managed Kubernetes service
-    - B) A SaaS platform for Calico network security
-    - C) A cloud storage solution
-    - D) A CDN service for Kubernetes
+   - A) A managed Kubernetes service
+   - B) A SaaS platform for Calico network security
+   - C) A cloud storage solution
+   - D) A CDN service for Kubernetes
 
 <details>
 <summary>Show Answer</summary>
@@ -161,10 +161,10 @@ Calico introduced eBPF dataplane support in 2020. This was a significant milesto
 **Answer: B) A SaaS platform for Calico network security**
 
 **Explanation:**
-Calico Cloud, launched in 2022, is a SaaS (Software as a Service) offering from Tigera that provides Calico Enterprise features as a managed service. It simplifies deployment and management of advanced network security, observability, and compliance features without the operational overhead of self-managing the enterprise components.
+Calico Cloud is Tigera's SaaS offering for network security and observability. It is not a Kubernetes hosting service, object store or CDN. Features and responsibilities differ from self-managed Enterprise; cluster integration/configuration is still required. The earlier unsupported 2022 launch date is unnecessary to this definition.
 
 </details>
 
 ---
 
-[Return to Learning Materials](../../../networking/calico/01-introduction.md) | [Next Quiz: Architecture](./02-architecture-quiz.md)
+[Return to Learning Materials](../../../networking/calico/01-introduction.md) | [Next Quiz: Architecture](02-architecture-quiz.md)

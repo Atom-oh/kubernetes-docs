@@ -1,209 +1,195 @@
 # Linkerd Multi-cluster Quiz
 
-This quiz tests your understanding of Linkerd multi-cluster features.
+Based on the [multi-cluster guide](../../../service-mesh/linkerd/06-multi-cluster.md), reviewed September 11, 2026.
 
-## Quiz Questions
+### 1. What is a core mechanism in Linkerd multicluster?
 
-### 1. What is the core concept of Linkerd multi-cluster architecture?
-
-A. Mesh federation
-B. Service mirroring
-C. Cluster merging
-D. Global load balancer
+- A. Merging Kubernetes clusters
+- B. Service mirroring
+- C. Automatically replicating every application write
+- D. A mandatory global load balancer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Service mirroring**
+**Answer: B**
 
-**Explanation:**
-Linkerd uses a service mirroring architecture. Exported services from remote clusters appear as mirror services in the local cluster, accessible like local services.
+**Explanation:** A source controller watches selected service information through a target Kubernetes API and creates local discovery resources. This is not request shadowing or data replication. Hierarchical, flat and federated modes have different network requirements.
 
 </details>
 
-### 2. What must be shared for mTLS communication between two clusters?
+### 2. What must the clusters trust for mesh mTLS?
 
-A. Identity Issuer
-B. Trust Anchor
-C. Workload certificates
-D. Kubernetes Secret
+- A. The same issuer private key
+- B. The relevant public trust-anchor bundle and issuer chains
+- C. One shared workload private key
+- D. Identical Kubernetes Secret objects everywhere
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Trust Anchor**
+**Answer: B**
 
-**Explanation:**
-For two clusters to mutually trust each other, they must share the same Trust Anchor (Root CA). Each cluster can have separate Identity Issuers, but they must be signed by the same Trust Anchor.
+**Explanation:** A common root is the simplest setup; a suitable shared bundle may contain multiple roots. Per-cluster issuers can have separate keys. Existing proxies need a coordinated trust-bundle transition, and public roots must be distinguished from signing keys.
 
 </details>
 
-### 3. What label is used to export a service to other clusters?
+### 3. Which is the default export label for hierarchical gateway-mode mirroring?
 
-A. linkerd.io/exported: "true"
-B. mirror.linkerd.io/exported: "true"
-C. multicluster.linkerd.io/export: "enabled"
-D. linkerd.io/multicluster: "export"
+- A. linkerd.io/exported: "true"
+- B. mirror.linkerd.io/exported: "true"
+- C. multicluster.linkerd.io/export: "enabled"
+- D. linkerd.io/multicluster: "export"
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. mirror.linkerd.io/exported: "true"**
+**Answer: B**
 
-**Explanation:**
-Adding the `mirror.linkerd.io/exported: "true"` label to a service makes it mirrored by other linked clusters.
+**Explanation:** The default hierarchical selector matches mirror.linkerd.io/exported=true. Flat mode uses remote-discovery and federated membership uses mirror.linkerd.io/federated=member. Labels affect discovery for matching Links/RBAC; they are not an access-control boundary.
 
 </details>
 
-### 4. What is the naming format for mirror services?
+### 4. What is the usual mirrored Service name?
 
-A. `<service>.<cluster>`
-B. `<service>-<cluster>`
-C. `<cluster>-<service>`
-D. `<service>@<cluster>`
+- A. `<service>.<cluster>`
+- B. `<service>-<Link cluster name>`
+- C. `<cluster>-<service>`
+- D. `<service>@<cluster>`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. `<service>-<cluster>`**
+**Answer: B**
 
-**Explanation:**
-Mirror services are created in the format `<original-service-name>-<original-cluster-name>`. Example: The web service from the west cluster is mirrored as web-west in the east cluster.
+**Explanation:** The web Service imported from a Link named west normally becomes web-west in the corresponding namespace. The Link cluster name is an alias and need not equal an EKS physical cluster name. Namespace creation is not enabled by default.
 
 </details>
 
-### 5. What is the purpose of the `linkerd multicluster link` command?
+### 5. What does the current link-gen command produce?
 
-A. Network connection between two clusters
-B. Register remote cluster credentials locally
-C. Configure service-to-service traffic routing
-D. Certificate exchange
+- A. VPC routes and gateway load balancers
+- B. A Link and two credential Secrets for the source cluster
+- C. A replicated application database
+- D. New workload certificates for every Pod
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Register remote cluster credentials locally**
+**Answer: B**
 
-**Explanation:**
-`linkerd multicluster link --cluster-name <name>` generates the current cluster's credentials (gateway address, service account token, etc.) to be registered in another cluster.
+**Explanation:** Generating with context west and applying to east lets East discover West. The chart’s controllers list supplies the source mirror controller. The old link command is deprecated. Generated kubeconfig data is sensitive and must contain a reachable API endpoint and usable CA data.
 
 </details>
 
-### 6. What command checks the status of multi-cluster gateways?
+### 6. Which command reports target gateway probe statistics?
 
-A. `linkerd multicluster status`
-B. `linkerd multicluster gateways`
-C. `linkerd multicluster check`
-D. `kubectl get gateway`
+- A. linkerd multicluster status
+- B. linkerd multicluster gateways
+- C. kubectl get gateway
+- D. linkerd gateway inspect
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. `linkerd multicluster gateways`**
+**Answer: B**
 
-**Explanation:**
-`linkerd multicluster gateways` shows the gateway status of linked clusters. It displays ALIVE, NUM_SVC (number of mirrored services), and LATENCY.
+**Explanation:** gateways reports the configured target gateway probe, not every application’s health. The probe is run by the source mirror controller. Flat-only links do not require a gateway, so use Link/endpoint/Pod connectivity diagnostics for them.
 
 </details>
 
-### 7. What is the recommended configuration for gateways in EKS multi-cluster?
+### 7. Which load-balancer setup is used in the guide’s AWS Load Balancer Controller example?
 
-A. ClusterIP service
-B. NodePort service
-C. NLB (Network Load Balancer)
-D. ALB (Application Load Balancer)
+- A. A public ALB terminating the mesh’s TLS
+- B. An arbitrary ClusterIP reachable automatically across Regions
+- C. An internal TCP NLB selected with service.k8s.aws/nlb
+- D. The legacy nlb annotation automatically proves IP-target ownership
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. NLB (Network Load Balancer)**
+**Answer: C**
 
-**Explanation:**
-NLB is recommended for multi-cluster gateways on EKS. It's optimized for TCP/TLS traffic and configured with the `service.beta.kubernetes.io/aws-load-balancer-type: "nlb"` annotation.
+**Explanation:** The example assumes that controller, supported annotations and prepared private connectivity. EKS Auto Mode has a different class/owner. Reachability of gateway data, probe and remote Kubernetes API paths must be checked separately.
 
 </details>
 
-### 8. What backend services are used when splitting traffic between local and remote clusters with TrafficSplit?
+### 8. What backends can the current HTTPRoute example use for local/remote distribution?
 
-A. Local service and remote gateway
-B. Local service and mirror service
-C. Local service only
-D. Direct reference to remote service
+- A. A local Service and an arbitrary remote Pod IP in another API server
+- B. A local backend Service and a locally imported mirror Service
+- C. Only the local Service
+- D. An automatic database replica set
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Local service and mirror service**
+**Answer: B**
 
-**Explanation:**
-TrafficSplit backends specify the local service (e.g., web) and mirror service (e.g., web-west). Traffic to the mirror service is automatically routed to the remote cluster's gateway.
+**Explanation:** The example uses web-local and web-west through an apex Service. Relative weights are not an automatic standby policy; 100/0 does not independently switch to the zero-weight backend on failure. SMI/Failover extensions are deprecated; flat federation has separate requirements and behavior.
 
 </details>
 
-### 9. What is NOT a role of the mirror controller in multi-cluster environments?
+### 9. Which is not a mirror controller’s role?
 
-A. Watch remote services
-B. Create/update mirror services
-C. Issue certificates
-D. Synchronize endpoints
+- A. Watch selected remote Services
+- B. Create/update local mirrors
+- C. Issue workload certificates
+- D. Maintain mode-appropriate discovery/endpoint information
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Issue certificates**
+**Answer: C**
 
-**Explanation:**
-The service mirror controller watches exported services in remote clusters, creates/updates mirror services locally, and synchronizes endpoints. Certificate issuance is the Identity Controller's role.
+**Explanation:** Identity issues workload certificates. The selected mirror controller still maintains legacy Endpoints for hierarchical services, while remote-discovery mode can intentionally remove local Endpoints and rely on destination-side remote discovery.
 
 </details>
 
-### 10. What AWS service is used for private connectivity between two EKS clusters?
+### 10. Which can provide routed private VPC connectivity when configured appropriately?
 
-A. Direct Connect only
-B. VPC Peering or Transit Gateway
-C. Route 53 only
-D. CloudFront
+- A. Route53 alone
+- B. VPC peering or suitable Transit Gateway routing
+- C. CloudFront alone
+- D. An EKS management interface endpoint automatically supplies flat Pod routing
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. VPC Peering or Transit Gateway**
+**Answer: B**
 
-**Explanation:**
-For private connectivity between EKS clusters, use VPC Peering (direct connection between two VPCs) or Transit Gateway (hub-and-spoke model). Configure the gateway with an internal NLB.
+**Explanation:** Routes, unique reachable addresses, DNS and security controls still matter. PrivateLink supplies access to selected services/resources and is not the same as VPC peering. An EKS interface endpoint is not the cluster’s Kubernetes API endpoint.
 
 </details>
 
-### 11. How do you allow access only to specific remote services in a multi-cluster environment?
+### 11. How can a final server authorize a preserved remote workload identity?
 
-A. NetworkPolicy
-B. ServerAuthorization with SPIFFE ID
-C. AWS Security Group
-D. Kubernetes RBAC
+- A. Treat the AWS account name as an implicit mesh identity
+- B. Use Linkerd authorization with the actual DNS-form identity in flat/federated mode
+- C. Use the obsolete SPIFFE URI example through any gateway
+- D. Assume a public export label authenticates callers
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. ServerAuthorization with SPIFFE ID**
+**Answer: B**
 
-**Explanation:**
-Control access by specifying specific SPIFFE IDs from the remote cluster in ServerAuthorization's meshTLS.identities. Example: `spiffe://root.linkerd.cluster.local/ns/production/sa/api-gateway`
+**Explanation:** Hierarchical gateways lose the original caller identity at the final server. Flat/federated paths preserve it. Same ServiceAccount/namespace/trust-domain names can identify workloads in more than one cluster; the policy does not automatically prove an East-only origin.
 
 </details>
 
-### 12. What does the `linkerd multicluster check` command NOT verify?
+### 12. What does multicluster infrastructure checking not establish?
 
-A. Link resource status
-B. Gateway connectivity
-C. Application business logic
-D. Service mirror controller status
+- A. Whether Link configuration has detectable errors
+- B. Whether configured remote access/probes have detectable failures
+- C. Application business correctness or guaranteed regional recovery
+- D. Whether mirror components have detectable configuration problems
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Application business logic**
+**Answer: C**
 
-**Explanation:**
-`linkerd multicluster check` verifies multi-cluster infrastructure status including Link resources, gateways, service mirror controller, and certificates. It does not verify application logic.
+**Explanation:** The checks help diagnose configuration, credentials and infrastructure. They do not establish data consistency, safe write retries, capacity or business behavior after failover. Verify actual workload outcomes separately.
 
 </details>

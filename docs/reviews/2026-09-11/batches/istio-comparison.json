@@ -14,7 +14,10 @@
       "https://istio.io/latest/docs/setup/install/virtual-machine/",
       "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/index.rst",
       "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
-      "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html"
+      "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Full316-line original read. Preserved3comparisonlinks,selection/usecases,architecture/platformtables,migrationand5FAQs; removedunsourcedfeaturestars/resource/latencyrankings andorganizationsize-as-productselector.",
@@ -25,13 +28,15 @@
       "Sidecar/ambientindexnowattributesrecordedEKSobservationswithactualversions/window/raw503andclientretrydistinction;nofixedcoretieroruniversalreliabilityconclusion. Detailedbenchmarkreviewremainsqueued,notclaimedverifiedbyindexread.",
       "Repaired5ownGitHubtargetsperlanguage:duplicateistio/istioarchitecture/traffic/security/observabilityandnonexistentvpc-latticepathnowcorrectrelativeMDlinks.",
       "Visuallycheckedoverviewfigureinbothlanguages;removedredundantdecisiontreewhichroutesallnonK8sworkloadstoConsul/KongandomitscurrentVM/Ciliumchoices. Replacedwithcapability/evidencetable;parent-ownedarchmapsneedsemanticregeneration.",
-      "No deployment,productionperformanceorpricingvalidationclaim;optionalvendor/distributiontermsmustbecheckedforactualselection."
+      "No deployment,productionperformanceorpricingvalidationclaim;optionalvendor/distributiontermsmustbecheckedforactualselection.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
       "Fenced YAML parsed; no live cluster or AWS mutation executed.",
       "Comparisonindexpairpassedrelative/ownmain/known404/fences/detailsvalidation;scopedgitdiff--checkclean. Officialpagesfetchedandcontentinspected;Ciliumbot403handledwithreleasedprimaryrepositorysource.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -49,7 +54,10 @@
       "https://istio.io/latest/docs/setup/install/virtual-machine/",
       "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/index.rst",
       "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
-      "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html"
+      "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Full316-line original read. Preserved3comparisonlinks,selection/usecases,architecture/platformtables,migrationand5FAQs; removedunsourcedfeaturestars/resource/latencyrankings andorganizationsize-as-productselector.",
@@ -60,13 +68,15 @@
       "Sidecar/ambientindexnowattributesrecordedEKSobservationswithactualversions/window/raw503andclientretrydistinction;nofixedcoretieroruniversalreliabilityconclusion. Detailedbenchmarkreviewremainsqueued,notclaimedverifiedbyindexread.",
       "Repaired5ownGitHubtargetsperlanguage:duplicateistio/istioarchitecture/traffic/security/observabilityandnonexistentvpc-latticepathnowcorrectrelativeMDlinks.",
       "Visuallycheckedoverviewfigureinbothlanguages;removedredundantdecisiontreewhichroutesallnonK8sworkloadstoConsul/KongandomitscurrentVM/Ciliumchoices. Replacedwithcapability/evidencetable;parent-ownedarchmapsneedsemanticregeneration.",
-      "No deployment,productionperformanceorpricingvalidationclaim;optionalvendor/distributiontermsmustbecheckedforactualselection."
+      "No deployment,productionperformanceorpricingvalidationclaim;optionalvendor/distributiontermsmustbecheckedforactualselection.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
       "Fenced YAML parsed; no live cluster or AWS mutation executed.",
       "Comparisonindexpairpassedrelative/ownmain/known404/fences/detailsvalidation;scopedgitdiff--checkclean. Officialpagesfetchedandcontentinspected;Ciliumbot403handledwithreleasedprimaryrepositorysource.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -108,7 +118,10 @@
       "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1",
       "https://api.github.com/repos/hashicorp/consul/releases/latest",
       "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml",
-      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst"
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Read all 1,212 original lines in each language, including all code and 19 figure descriptions; visually inspected all 38 figures. Snapshots: /tmp/mesh-comparison01-original-{en,ko}.md.",
@@ -124,7 +137,8 @@
       "Fixed Istio nonexistent production profile and obsolete bundled-addon values; revision handoff includes legacy-label precedence and staged workload rollout, not a direct1.24→1.31 or zero-error guarantee. Linkerd install now includes CRDs/GatewayAPI prerequisites and distinguishes control-plane upgrades from workload rollout. Kong/Consul commands render pinned charts with explicitly external reviewed values.",
       "Corrected Consul2.0.4 application license to BUSL1.1 with its stated later MPL change conditions; chart MPL metadata is a different artifact. Removed enterprise-only Linkerd HA and single-vendor support assumptions. Repaired the duplicate istio/istio repository architecture URL to ../03-architecture.md.",
       "Retained figures0,2,3,4,16 with accurate schematic scope. Removed redundant/misleading figures1,5,6,7,8,9,10,11,12,13,14,15,17,18: outdated client-based topology, omitted/wrong gateway paths, invented CP metric aggregation, scope/default assumptions, guaranteed zero-disruption, unsupported rankings and incorrect VM exclusions. Preserved useful explanations and historical numerical inputs in prose/tables. Parent-owned archmaps need semantic regeneration; foreign translations remain untouched.",
-      "No AWS/cluster, authentication, live traffic, Redis, production capacity, upgrade or disaster-recovery exercise was run. The document states the real environment prerequisites and limits of schema/render checks."
+      "No AWS/cluster, authentication, live traffic, Redis, production capacity, upgrade or disaster-recovery exercise was run. The document states the real environment prerequisites and limits of schema/render checks.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
@@ -138,7 +152,8 @@
       "Offline chart renders produced59 Kong and29 Consul CRDs; Linkerd offline generation produced10 CRDs and the control plane. Five documented CLI help checks passed. These do not validate the unspecified environment values or deploy controllers.",
       "Final Consul subset filter strings match official ServiceResolver examples. All30 current resource checks across the pair passed after the final change. Four-document comparison batch has22 YAML/10 Bash blocks and no duplicate-key, fence, relative/own-main or known404 errors.",
       "Focused retry regression14/14 passed; scoped git diff --check is clean. No shared script was changed. Detailed evidence: /tmp/mesh-comparison01-validation/report.json and retry-test.log.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -180,7 +195,10 @@
       "https://api.github.com/repos/linkerd/linkerd2/releases/tags/edge-26.9.1",
       "https://api.github.com/repos/hashicorp/consul/releases/latest",
       "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml",
-      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst"
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Read all 1,212 original lines in each language, including all code and 19 figure descriptions; visually inspected all 38 figures. Snapshots: /tmp/mesh-comparison01-original-{en,ko}.md.",
@@ -196,7 +214,8 @@
       "Fixed Istio nonexistent production profile and obsolete bundled-addon values; revision handoff includes legacy-label precedence and staged workload rollout, not a direct1.24→1.31 or zero-error guarantee. Linkerd install now includes CRDs/GatewayAPI prerequisites and distinguishes control-plane upgrades from workload rollout. Kong/Consul commands render pinned charts with explicitly external reviewed values.",
       "Corrected Consul2.0.4 application license to BUSL1.1 with its stated later MPL change conditions; chart MPL metadata is a different artifact. Removed enterprise-only Linkerd HA and single-vendor support assumptions. Repaired the duplicate istio/istio repository architecture URL to ../03-architecture.md.",
       "Retained figures0,2,3,4,16 with accurate schematic scope. Removed redundant/misleading figures1,5,6,7,8,9,10,11,12,13,14,15,17,18: outdated client-based topology, omitted/wrong gateway paths, invented CP metric aggregation, scope/default assumptions, guaranteed zero-disruption, unsupported rankings and incorrect VM exclusions. Preserved useful explanations and historical numerical inputs in prose/tables. Parent-owned archmaps need semantic regeneration; foreign translations remain untouched.",
-      "No AWS/cluster, authentication, live traffic, Redis, production capacity, upgrade or disaster-recovery exercise was run. The document states the real environment prerequisites and limits of schema/render checks."
+      "No AWS/cluster, authentication, live traffic, Redis, production capacity, upgrade or disaster-recovery exercise was run. The document states the real environment prerequisites and limits of schema/render checks.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
@@ -210,7 +229,8 @@
       "Offline chart renders produced59 Kong and29 Consul CRDs; Linkerd offline generation produced10 CRDs and the control plane. Five documented CLI help checks passed. These do not validate the unspecified environment values or deploy controllers.",
       "Final Consul subset filter strings match official ServiceResolver examples. All30 current resource checks across the pair passed after the final change. Four-document comparison batch has22 YAML/10 Bash blocks and no duplicate-key, fence, relative/own-main or known404 errors.",
       "Focused retry regression14/14 passed; scoped git diff --check is clean. No shared script was changed. Detailed evidence: /tmp/mesh-comparison01-validation/report.json and retry-test.log.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -374,7 +394,10 @@
       "https://github.com/fortio/fortio/blob/v1.69.4/Dockerfile",
       "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/index.rst",
       "https://hub.docker.com/v2/repositories/fortio/fortio/tags/1.69.4",
-      "https://hub.docker.com/v2/repositories/library/python/tags/3.12-alpine"
+      "https://hub.docker.com/v2/repositories/library/python/tags/3.12-alpine",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Preserved reported Istio1.30.2/EKS1.36.2/Fortio1.69.4 versions, August21 date, all measured numeric tables; explicitly separated revised illustration from unarchived historical procedure. No independent replication claimed.",
@@ -387,7 +410,8 @@
       "Corrected historical GatewayAPI1.1 compatibility claim with released1.30.2 dependency1.5.1 evidence; ambient VirtualService Alpha and unsupported GatewayAPI mixing disclosed. Fixed L7 canary placement and HTTPRoute Service vs DestinationRule subsets.",
       "Added explicit kubeconfig/context/API-server guards and pinned CLI path, bounded rollout logging and structured Fortio output. Driver does not launch T2 churn automatically; actual coordination/log retention/observer completeness documented.",
       "Follow-up: raw historical artifacts and exact run settings unavailable; original T2 counts9135/7229 conflict with300s×20cap. No safety/frequency inference from zero duplicate reports. Container/runtime/live CNI/enrollment/production-load behavior not tested; durable ledger and postcommit response-loss investigation still required.",
-      "No image references in this document; Cilium rendered documentation403 avoided by citing verified released official source."
+      "No image references in this document; Cilium rendered documentation403 avoided by citing verified released official source.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Full original955lines read including all scripts/tables/conclusions.",
@@ -397,7 +421,8 @@
       "Actual embedded Python per-language loopback tests5/5 passed; original harness red5/5, then fixed. Host Python3.9 only; container3.12 not executed.",
       "16 Decimal/integer arithmetic checks passed; artifact docs/reviews/2026-09-11/istio-comparison-benchmark-calculations.json.",
       "Detailed native/local evidence: /tmp/mesh-comparison03-validation/report.json and en/ko-harness.log; nativeFortio stdout JSON characterized against3 localhost calls under /tmp/mesh-comparison03-tools.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -419,7 +444,10 @@
       "https://github.com/fortio/fortio/blob/v1.69.4/Dockerfile",
       "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/index.rst",
       "https://hub.docker.com/v2/repositories/fortio/fortio/tags/1.69.4",
-      "https://hub.docker.com/v2/repositories/library/python/tags/3.12-alpine"
+      "https://hub.docker.com/v2/repositories/library/python/tags/3.12-alpine",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Preserved reported Istio1.30.2/EKS1.36.2/Fortio1.69.4 versions, August21 date, all measured numeric tables; explicitly separated revised illustration from unarchived historical procedure. No independent replication claimed.",
@@ -432,7 +460,8 @@
       "Corrected historical GatewayAPI1.1 compatibility claim with released1.30.2 dependency1.5.1 evidence; ambient VirtualService Alpha and unsupported GatewayAPI mixing disclosed. Fixed L7 canary placement and HTTPRoute Service vs DestinationRule subsets.",
       "Added explicit kubeconfig/context/API-server guards and pinned CLI path, bounded rollout logging and structured Fortio output. Driver does not launch T2 churn automatically; actual coordination/log retention/observer completeness documented.",
       "Follow-up: raw historical artifacts and exact run settings unavailable; original T2 counts9135/7229 conflict with300s×20cap. No safety/frequency inference from zero duplicate reports. Container/runtime/live CNI/enrollment/production-load behavior not tested; durable ledger and postcommit response-loss investigation still required.",
-      "No image references in this document; Cilium rendered documentation403 avoided by citing verified released official source."
+      "No image references in this document; Cilium rendered documentation403 avoided by citing verified released official source.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Full original955lines read including all scripts/tables/conclusions.",
@@ -442,7 +471,8 @@
       "Actual embedded Python per-language loopback tests5/5 passed; original harness red5/5, then fixed. Host Python3.9 only; container3.12 not executed.",
       "16 Decimal/integer arithmetic checks passed; artifact docs/reviews/2026-09-11/istio-comparison-benchmark-calculations.json.",
       "Detailed native/local evidence: /tmp/mesh-comparison03-validation/report.json and en/ko-harness.log; nativeFortio stdout JSON characterized against3 localhost calls under /tmp/mesh-comparison03-tools.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -460,20 +490,25 @@
       "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
       "https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/",
       "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
-      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst"
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Q1 no longer asserts unproven waypoint/IP-reuse root cause. Q2 preserves actual denominators/non-HTTP failures, corrects L7 highest socket count and removes intrinsic product/stability conclusions.",
       "Q3 scopes HBONE15008 finding and requires inner-port/source/identity checks; Q4 explains ambiguous writes independently of unproven race, rejects safety/frequency inference from incompleteT2 observer.",
       "Q5 requires explicit write attempts0, raw outcomes/counters/deliveries plus matched exposure and repeated tests; Q6 documents Cilium1.20.1 mutual-authentication Beta, out-of-band identity vs separately configured encryption.",
       "Historical test versions are not current compatibility labels. Nativeztunnel preview is not implied by required authentication; separate feature/platform evidence remains for later Cilium batch.",
-      "All local learning/reference paths retained to maintained subtree; no diagrams/images."
+      "All local learning/reference paths retained to maintained subtree; no diagrams/images.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "All174original lines including6 complete questions/answers/references read.",
       "All6 answer choices reviewed; keysB/B/B/B/C/B agree in both languages.",
       "Measurements and arithmetic checked against corrected comparison03; official feature semantics checked against released source.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -491,20 +526,25 @@
       "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
       "https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/",
       "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
-      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst"
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "Q1 no longer asserts unproven waypoint/IP-reuse root cause. Q2 preserves actual denominators/non-HTTP failures, corrects L7 highest socket count and removes intrinsic product/stability conclusions.",
       "Q3 scopes HBONE15008 finding and requires inner-port/source/identity checks; Q4 explains ambiguous writes independently of unproven race, rejects safety/frequency inference from incompleteT2 observer.",
       "Q5 requires explicit write attempts0, raw outcomes/counters/deliveries plus matched exposure and repeated tests; Q6 documents Cilium1.20.1 mutual-authentication Beta, out-of-band identity vs separately configured encryption.",
       "Historical test versions are not current compatibility labels. Nativeztunnel preview is not implied by required authentication; separate feature/platform evidence remains for later Cilium batch.",
-      "All local learning/reference paths retained to maintained subtree; no diagrams/images."
+      "All local learning/reference paths retained to maintained subtree; no diagrams/images.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "All174original lines including6 complete questions/answers/references read.",
       "All6 answer choices reviewed; keysB/B/B/B/C/B agree in both languages.",
       "Measurements and arithmetic checked against corrected comparison03; official feature semantics checked against released source.",
-      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean."
+      "Final comparison batch:10 documents,56 YAML blocks,44 Bash blocks; duplicate-key/fence/details/relative+own-repository links and known404/410 checks0errors; scoped git diff --check clean.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   }
 ]

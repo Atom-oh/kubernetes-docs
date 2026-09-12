@@ -1,0 +1,174 @@
+[
+  {
+    "path": "en/eks/04-eks-storage-part1.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected storage lifecycle/access modes, real CSI capabilities, guarded add-on/EFS setup, EBS snapshot/expansion and reclaim semantics; paired schemas and mocked workflows pass.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3files-csi.html",
+      "https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.66.0/docs/parameters.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.66.0/pkg/cloud/cloud.go",
+      "https://raw.githubusercontent.com/kubernetes-csi/csi-lib-utils/v0.24.0/accessmodes/access_modes.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/docs/parameters.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/pkg/driver/controller.go",
+      "https://docs.aws.amazon.com/efs/latest/ug/manage-fs-access-create-delete-mount-targets.html",
+      "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html"
+    ],
+    "findings": [
+      "Corrected generic volume lifetime/rawblock, PVC ownership and RWOone-node versus RWOPone-Pod; accessmodeisnotcompletewriteauthorization.",
+      "Preserved realMay5,2026EC2InstanceStoreCSIGA withephemeraldata caveat; addedofficialMountpointandS3Files/EFSCSI3+pathsinsteadofS3cannotmount. Replacedunsupportedperformancerankingwithcapabilityconstraints.",
+      "ReplacedAWSAPIliteral latest withcatalog-selectedaddonversion, PodIdentity/IAMprereqs,kubeconfigendpointcheck andexistingowner guards; distinguishedAutoMode/Fargate/Hybrid compute support.",
+      "CanonicalEBSfstypekey,Retain,allowVolumeExpansion and complete namespaced consumers; fsTypeisdeprecatedaccepted/no-op, notunknown-parameterrejection.",
+      "Addedsnapshotclass/controllerrequirements,readyToUse/restore-size checks,newPVCrestore,applicationconsistencyandPVresizebehavior; noPVcapacitymanualpatch.",
+      "ReplacedambiguousEFSName/SGlookupsandall-subnetloopwithreturnedIDs,twoAZ/VPCpreflight,actualclientSG,boundedreadinessandpartialcreationrecords.",
+      "EFS5Giisnotquota; explicitAPUID/GID/uniquedirectory/TLS, nodemountIAMidentity,staticPV/PVCbinding andcross-namespace reuseAccessPoint risk clarified.",
+      "GeneralPurpose/MaxIOandthroughputmodesqualified; currentOneZoneElasticisrealandretained. Regional/OneZonefailurepropertiesnotperformanceguarantees.",
+      "OrdinaryEBSAZscopednetworkstorage distinguishedfromrealnode-localcachefeature; io2rawblockMultiAttachpreservedwithcoordinationconstraints.",
+      "CorrectedSCreclaimPolicyversusPVfield,defaultclassoptout/multipledefaults,driver-dependentDelete(EFSAPversusdata)androot-directorydeletionflag. FSxs3ImportPathvalid; incompatibleSCRATCHpersistentthroughput/backupparamsremoved.",
+      "Parentdiagram2needscontrollerattachversusnode-mountrolecorrection;embedscommented, noassetfileedits."
+    ],
+    "validation": [
+      "Fulloriginal490linesreadinthislocale; hashes/readrangesstored beforeedits.",
+      "Pairedstaticchecks:12Bashblocks,30nativeKubernetes1.36objects,4snapshot8.6CRDobjects,12embeddedPythonblocks,12locallinks;PVC/Pod/classreferences andscopeddiffcheck pass.",
+      "36mockedflows:EFSsetup18casesandEBS/EFSaddon18cases;wrongAZ/VPC/SG/token/context/version/owner andAPI/readiness failures prevent later mutations. AllAWS/Kubernetes commands stubbed.",
+      "4actualAWSCLIinput-skeletonchecks, EKSAddonActivewaitermodel andEFSCreateFileSystemshapevalidate withoutAPIrequests.",
+      "NoAWScreation,volumeattach/mount,filesystemresize,snapshotrestoreorperformancebenchmarkexecuted. Evidence:/tmp/eks-storage-part1-audit/{source-static-validation,source-flow-validation,source-cli-validation}.json."
+    ]
+  },
+  {
+    "path": "ko/eks/04-eks-storage-part1.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected storage lifecycle/access modes, real CSI capabilities, guarded add-on/EFS setup, EBS snapshot/expansion and reclaim semantics; paired schemas and mocked workflows pass.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3files-csi.html",
+      "https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://kubernetes.io/docs/concepts/storage/storage-classes/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.66.0/docs/parameters.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.66.0/pkg/cloud/cloud.go",
+      "https://raw.githubusercontent.com/kubernetes-csi/csi-lib-utils/v0.24.0/accessmodes/access_modes.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/docs/parameters.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/pkg/driver/controller.go",
+      "https://docs.aws.amazon.com/efs/latest/ug/manage-fs-access-create-delete-mount-targets.html",
+      "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html"
+    ],
+    "findings": [
+      "Corrected generic volume lifetime/rawblock, PVC ownership and RWOone-node versus RWOPone-Pod; accessmodeisnotcompletewriteauthorization.",
+      "Preserved realMay5,2026EC2InstanceStoreCSIGA withephemeraldata caveat; addedofficialMountpointandS3Files/EFSCSI3+pathsinsteadofS3cannotmount. Replacedunsupportedperformancerankingwithcapabilityconstraints.",
+      "ReplacedAWSAPIliteral latest withcatalog-selectedaddonversion, PodIdentity/IAMprereqs,kubeconfigendpointcheck andexistingowner guards; distinguishedAutoMode/Fargate/Hybrid compute support.",
+      "CanonicalEBSfstypekey,Retain,allowVolumeExpansion and complete namespaced consumers; fsTypeisdeprecatedaccepted/no-op, notunknown-parameterrejection.",
+      "Addedsnapshotclass/controllerrequirements,readyToUse/restore-size checks,newPVCrestore,applicationconsistencyandPVresizebehavior; noPVcapacitymanualpatch.",
+      "ReplacedambiguousEFSName/SGlookupsandall-subnetloopwithreturnedIDs,twoAZ/VPCpreflight,actualclientSG,boundedreadinessandpartialcreationrecords.",
+      "EFS5Giisnotquota; explicitAPUID/GID/uniquedirectory/TLS, nodemountIAMidentity,staticPV/PVCbinding andcross-namespace reuseAccessPoint risk clarified.",
+      "GeneralPurpose/MaxIOandthroughputmodesqualified; currentOneZoneElasticisrealandretained. Regional/OneZonefailurepropertiesnotperformanceguarantees.",
+      "OrdinaryEBSAZscopednetworkstorage distinguishedfromrealnode-localcachefeature; io2rawblockMultiAttachpreservedwithcoordinationconstraints.",
+      "CorrectedSCreclaimPolicyversusPVfield,defaultclassoptout/multipledefaults,driver-dependentDelete(EFSAPversusdata)androot-directorydeletionflag. FSxs3ImportPathvalid; incompatibleSCRATCHpersistentthroughput/backupparamsremoved.",
+      "Parentdiagram2needscontrollerattachversusnode-mountrolecorrection;embedscommented, noassetfileedits."
+    ],
+    "validation": [
+      "Fulloriginal490linesreadinthislocale; hashes/readrangesstored beforeedits.",
+      "Pairedstaticchecks:12Bashblocks,30nativeKubernetes1.36objects,4snapshot8.6CRDobjects,12embeddedPythonblocks,12locallinks;PVC/Pod/classreferences andscopeddiffcheck pass.",
+      "36mockedflows:EFSsetup18casesandEBS/EFSaddon18cases;wrongAZ/VPC/SG/token/context/version/owner andAPI/readiness failures prevent later mutations. AllAWS/Kubernetes commands stubbed.",
+      "4actualAWSCLIinput-skeletonchecks, EKSAddonActivewaitermodel andEFSCreateFileSystemshapevalidate withoutAPIrequests.",
+      "NoAWScreation,volumeattach/mount,filesystemresize,snapshotrestoreorperformancebenchmarkexecuted. Evidence:/tmp/eks-storage-part1-audit/{source-static-validation,source-flow-validation,source-cli-validation}.json."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks/04-eks-storage-part1-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected seven original storage topics, added eight foundation checks, repaired real database-PVC/snapshot references and replaced unsafe retention deletion with a scoped preview; local validation passes.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3files-csi.html",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.66.0/pkg/cloud/cloud.go",
+      "https://raw.githubusercontent.com/kubernetes-csi/csi-lib-utils/v0.24.0/accessmodes/access_modes.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/docs/parameters.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/v1.10.0/pkg/driver/controller.go",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://www.postgresql.org/support/versioning/",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/postgres",
+      "https://raw.githubusercontent.com/docker-library/postgres/cfa338619f694df7c72b8c15c3b52adc4392cfe9/14/trixie/Dockerfile",
+      "https://raw.githubusercontent.com/docker-library/postgres/cfa338619f694df7c72b8c15c3b52adc4392cfe9/docker-entrypoint.sh"
+    ],
+    "findings": [
+      "Preserved seven actual original questions1,2,4,6,7,9,10; normalized1–7 and added eight source-aligned checks, giving15questions/10MC perlocale.",
+      "Separated EBS add-on availability from automatic installation and compute ownership; old inlineIAMpolicy replaced by reviewedcurrentV2/trust prerequisites; officialS3CSI/S3Files restored to explanation.",
+      "Corrected ambiguous EFSmultiPodquestion, RWOone-node/multiplePod versusRWOP, io2rawblockMultiAttach, AZscope and filesystem/application coordination; no universalEBSonlyRWO claim.",
+      "EFSnamespace/SC/PVC examples now validseparateYAML; no5Giquota/noautomaticallplanning/SLA guarantee, explicitAPidentity andmountpath prerequisites.",
+      "Podreplacement/detach/reattach conditionaldatarecovery explained; original10–30secondreattachestimate retained asunverifiedhistorical, notmeasuredRTO/SLA. PDB/probes/spread do notreplicatedata orpreventallfailures.",
+      "Snapshotclass/CRD/controller/consistency/readyToUse/restore-size andseparatelifecyclefixed; uniquenamecreator plus scopedUTCtimestampretentionpreview replacefloating/unownedCronJobs andbrokenunscopedjqdelete. Previewdeletesnothing.",
+      "Database snapshot nowtargets actualgenerateddata-postgres-0, unuseddatabase-dataPVCremoved, headlessService/Secretfile/PGDATA/explicitretention wired. PostgreSQL14major retained, current14.24patch andNov12,2026supportendverified; noDBmajorupgradeclaimed.",
+      "gp316000IOPS/1000MiBps choices retained butnotcalleduniversalmax; currentRegional80000/2000subjecttoratios/instanceconstraints andOutpostsexceptiondocumented.",
+      "SharedEFSconfiguration example nowseed/read-onlyreaders; existingfilepreserved andnginxunsupportedautoconfigclaimremoved.",
+      "FSxSCRATCHpersistent-onlythroughputremoved; s3ImportPathconfirmedvalidandretained. Trainingtemplate separatescode/data, explicit4completions/4parallelworkers/16aggregateGPUs andpreparedimage/datasetconditions; nofakeMLrun/performanceguarantee.",
+      "RemovedPodSecurityPolicy recommendation; currentPodSecurity/securityContext/IAM/TLSandexplicitblueprintvalidationlimits."
+    ],
+    "validation": [
+      "Read everyoriginal1–1145line inthreechunks beforeedits; originalSHA/rangesstored.",
+      "Pairedstaticvalidation:8Bash,32nativeKubernetes1.36objects,6snapshot8.6objects,2embeddedPythonblocks,2locallinks;15Q/10MC perlocale. HeadlessService/PVC references andactualStatefulSet-snapshotbinding verified; no unuseddatabase-data claim.",
+      "12retention/creation cases validate namespace,label,PVC,readiness,deletion,timezones,malformedtime andcreation/waitfailureguards. Old jq fromnow expression failure reproduced without executingdeletepipeline.",
+      "2localconfigseedcases verify creation andpreservation ofexistingcontents; sync mocked, noEFS mount. OfficialPostgreSQLimage sources confirmUID/GID999,PGDATAandPOSTGRES_PASSWORD_FILE support.",
+      "GPU aggregate16 andindexed4tasksemanticschecked;trainingimageisexplicitplaceholder, notexecuted. NoAWSvolumeI/O,DBstartup,snapshotrestore,trainingorbenchmarkrun.",
+      "Evidence:/tmp/eks-storage-part1-audit/{quiz-static-validation,quiz-retention-validation,config-seed-validation,official-verification}.json;scopedgitdiffcheckpasses."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks/04-eks-storage-part1-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected seven original storage topics, added eight foundation checks, repaired real database-PVC/snapshot references and replaced unsafe retention deletion with a scoped preview; local validation passes.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/s3files-csi.html",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.66.0/pkg/cloud/cloud.go",
+      "https://raw.githubusercontent.com/kubernetes-csi/csi-lib-utils/v0.24.0/accessmodes/access_modes.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/docs/parameters.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/v1.10.0/pkg/driver/controller.go",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://www.postgresql.org/support/versioning/",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/postgres",
+      "https://raw.githubusercontent.com/docker-library/postgres/cfa338619f694df7c72b8c15c3b52adc4392cfe9/14/trixie/Dockerfile",
+      "https://raw.githubusercontent.com/docker-library/postgres/cfa338619f694df7c72b8c15c3b52adc4392cfe9/docker-entrypoint.sh"
+    ],
+    "findings": [
+      "Preserved seven actual original questions1,2,4,6,7,9,10; normalized1–7 and added eight source-aligned checks, giving15questions/10MC perlocale.",
+      "Separated EBS add-on availability from automatic installation and compute ownership; old inlineIAMpolicy replaced by reviewedcurrentV2/trust prerequisites; officialS3CSI/S3Files restored to explanation.",
+      "Corrected ambiguous EFSmultiPodquestion, RWOone-node/multiplePod versusRWOP, io2rawblockMultiAttach, AZscope and filesystem/application coordination; no universalEBSonlyRWO claim.",
+      "EFSnamespace/SC/PVC examples now validseparateYAML; no5Giquota/noautomaticallplanning/SLA guarantee, explicitAPidentity andmountpath prerequisites.",
+      "Podreplacement/detach/reattach conditionaldatarecovery explained; original10–30secondreattachestimate retained asunverifiedhistorical, notmeasuredRTO/SLA. PDB/probes/spread do notreplicatedata orpreventallfailures.",
+      "Snapshotclass/CRD/controller/consistency/readyToUse/restore-size andseparatelifecyclefixed; uniquenamecreator plus scopedUTCtimestampretentionpreview replacefloating/unownedCronJobs andbrokenunscopedjqdelete. Previewdeletesnothing.",
+      "Database snapshot nowtargets actualgenerateddata-postgres-0, unuseddatabase-dataPVCremoved, headlessService/Secretfile/PGDATA/explicitretention wired. PostgreSQL14major retained, current14.24patch andNov12,2026supportendverified; noDBmajorupgradeclaimed.",
+      "gp316000IOPS/1000MiBps choices retained butnotcalleduniversalmax; currentRegional80000/2000subjecttoratios/instanceconstraints andOutpostsexceptiondocumented.",
+      "SharedEFSconfiguration example nowseed/read-onlyreaders; existingfilepreserved andnginxunsupportedautoconfigclaimremoved.",
+      "FSxSCRATCHpersistent-onlythroughputremoved; s3ImportPathconfirmedvalidandretained. Trainingtemplate separatescode/data, explicit4completions/4parallelworkers/16aggregateGPUs andpreparedimage/datasetconditions; nofakeMLrun/performanceguarantee.",
+      "RemovedPodSecurityPolicy recommendation; currentPodSecurity/securityContext/IAM/TLSandexplicitblueprintvalidationlimits."
+    ],
+    "validation": [
+      "Read everyoriginal1–1154line inthreechunks beforeedits; originalSHA/rangesstored.",
+      "Pairedstaticvalidation:8Bash,32nativeKubernetes1.36objects,6snapshot8.6objects,2embeddedPythonblocks,2locallinks;15Q/10MC perlocale. HeadlessService/PVC references andactualStatefulSet-snapshotbinding verified; no unuseddatabase-data claim.",
+      "12retention/creation cases validate namespace,label,PVC,readiness,deletion,timezones,malformedtime andcreation/waitfailureguards. Old jq fromnow expression failure reproduced without executingdeletepipeline.",
+      "2localconfigseedcases verify creation andpreservation ofexistingcontents; sync mocked, noEFS mount. OfficialPostgreSQLimage sources confirmUID/GID999,PGDATAandPOSTGRES_PASSWORD_FILE support.",
+      "GPU aggregate16 andindexed4tasksemanticschecked;trainingimageisexplicitplaceholder, notexecuted. NoAWSvolumeI/O,DBstartup,snapshotrestore,trainingorbenchmarkrun.",
+      "Evidence:/tmp/eks-storage-part1-audit/{quiz-static-validation,quiz-retention-validation,config-seed-validation,official-verification}.json;scopedgitdiffcheckpasses."
+    ]
+  }
+]

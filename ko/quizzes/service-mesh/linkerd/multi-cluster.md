@@ -1,209 +1,195 @@
 # Linkerd 다중 클러스터 퀴즈
 
-이 퀴즈는 Linkerd 다중 클러스터 기능에 대한 이해를 테스트합니다.
+2026년 9월 11일 검토한 [다중 클러스터 가이드](../../../service-mesh/linkerd/06-multi-cluster.md)를 기준으로 합니다.
 
-## 퀴즈 문제
+### 1. Linkerd multicluster의 핵심 메커니즘은?
 
-### 1. Linkerd 다중 클러스터 아키텍처의 핵심 개념은?
-
-A. 메시 페더레이션
-B. 서비스 미러링
-C. 클러스터 병합
-D. 글로벌 로드밸런서
+- A. Kubernetes cluster 병합
+- B. Service mirroring
+- C. 모든 애플리케이션 쓰기 자동 복제
+- D. 필수 global load balancer
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 서비스 미러링**
+**정답: B**
 
-**설명:**
-Linkerd는 서비스 미러링 아키텍처를 사용합니다. 원격 클러스터의 내보낸 서비스가 로컬 클러스터에 미러 서비스로 나타나, 로컬 서비스처럼 접근할 수 있습니다.
+**설명:** Source controller가 대상 Kubernetes API에서 선택한 서비스 정보를 감시하고 local discovery 리소스를 만듭니다. 요청 shadowing이나 데이터 복제가 아닙니다. Hierarchical/flat/federated 모드는 network 요구사항이 다릅니다.
 
 </details>
 
-### 2. 두 클러스터 간 mTLS 통신을 위해 공유해야 하는 것은?
+### 2. Mesh mTLS를 위해 cluster가 신뢰해야 하는 것은?
 
-A. Identity Issuer
-B. Trust Anchor
-C. 워크로드 인증서
-D. Kubernetes Secret
+- A. 동일한 issuer private key
+- B. 관련 공개 trust-anchor bundle과 issuer chain
+- C. 공유 workload private key 하나
+- D. 모든 위치의 동일한 Kubernetes Secret 객체
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. Trust Anchor**
+**정답: B**
 
-**설명:**
-두 클러스터가 상호 신뢰하려면 동일한 Trust Anchor(Root CA)를 공유해야 합니다. 각 클러스터는 별도의 Identity Issuer를 가질 수 있지만, 같은 Trust Anchor에서 서명되어야 합니다.
+**설명:** 공통 root가 가장 단순하지만 적절한 공유 bundle에 여러 root가 있어도 됩니다. Cluster별 issuer key는 분리할 수 있습니다. 기존 proxy의 trust bundle 전환은 조정해야 하며 공개 root와 signing key를 구분합니다.
 
 </details>
 
-### 3. 서비스를 다른 클러스터에 내보내기 위한 레이블은?
+### 3. Hierarchical gateway 모드의 기본 export label은?
 
-A. linkerd.io/exported: "true"
-B. mirror.linkerd.io/exported: "true"
-C. multicluster.linkerd.io/export: "enabled"
-D. linkerd.io/multicluster: "export"
+- A. linkerd.io/exported: "true"
+- B. mirror.linkerd.io/exported: "true"
+- C. multicluster.linkerd.io/export: "enabled"
+- D. linkerd.io/multicluster: "export"
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. mirror.linkerd.io/exported: "true"**
+**정답: B**
 
-**설명:**
-서비스에 `mirror.linkerd.io/exported: "true"` 레이블을 추가하면 다른 연결된 클러스터에서 해당 서비스를 미러링합니다.
+**설명:** 기본 hierarchical selector는 mirror.linkerd.io/exported=true입니다. Flat은 remote-discovery, federated member는 mirror.linkerd.io/federated=member를 사용합니다. Label은 Link/RBAC에 맞는 discovery를 선택하며 접근 제어 경계가 아닙니다.
 
 </details>
 
-### 4. 미러 서비스의 이름 형식은?
+### 4. 일반적인 mirror Service 이름은?
 
-A. `<service>.<cluster>`
-B. `<service>-<cluster>`
-C. `<cluster>-<service>`
-D. `<service>@<cluster>`
+- A. `<service>.<cluster>`
+- B. `<service>-<Link cluster name>`
+- C. `<cluster>-<service>`
+- D. `<service>@<cluster>`
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. `<service>-<cluster>`**
+**정답: B**
 
-**설명:**
-미러 서비스는 `<원본 서비스 이름>-<원본 클러스터 이름>` 형식으로 생성됩니다. 예: west 클러스터의 web 서비스는 east 클러스터에서 web-west로 미러됩니다.
+**설명:** west라는 Link에서 import한 web Service는 대응하는 namespace에서 보통 web-west입니다. Link cluster name은 alias이며 실제 EKS cluster 이름과 같을 필요는 없습니다. Namespace 자동 생성은 기본 활성화가 아닙니다.
 
 </details>
 
-### 5. `linkerd multicluster link` 명령어의 역할은?
+### 5. 현재 link-gen 명령이 생성하는 것은?
 
-A. 두 클러스터의 네트워크 연결
-B. 원격 클러스터 자격 증명을 로컬에 등록
-C. 서비스 간 트래픽 라우팅 설정
-D. 인증서 교환
+- A. VPC route와 gateway load balancer
+- B. Source cluster에 적용할 Link와 credential Secret 두 개
+- C. 복제된 애플리케이션 데이터베이스
+- D. 모든 Pod의 새 workload 인증서
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 원격 클러스터 자격 증명을 로컬에 등록**
+**정답: B**
 
-**설명:**
-`linkerd multicluster link --cluster-name <name>`은 현재 클러스터의 자격 증명(게이트웨이 주소, 서비스 계정 토큰 등)을 생성하여 다른 클러스터에 등록할 수 있게 합니다.
+**설명:** Context west에서 생성하고 east에 적용하면 East가 West를 발견합니다. Source mirror controller는 chart의 controllers 목록으로 구성합니다. 이전 link는 deprecated입니다. 생성한 kubeconfig는 민감하며 접근 가능한 API endpoint와 사용 가능한 CA 데이터가 필요합니다.
 
 </details>
 
-### 6. 다중 클러스터 게이트웨이의 상태를 확인하는 명령어는?
+### 6. 대상 gateway probe 통계를 표시하는 명령은?
 
-A. `linkerd multicluster status`
-B. `linkerd multicluster gateways`
-C. `linkerd multicluster check`
-D. `kubectl get gateway`
+- A. linkerd multicluster status
+- B. linkerd multicluster gateways
+- C. kubectl get gateway
+- D. linkerd gateway inspect
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. `linkerd multicluster gateways`**
+**정답: B**
 
-**설명:**
-`linkerd multicluster gateways`는 연결된 클러스터의 게이트웨이 상태를 보여줍니다. ALIVE, NUM_SVC(미러 서비스 수), LATENCY를 확인할 수 있습니다.
+**설명:** gateways는 설정한 대상 gateway probe를 표시하며 모든 애플리케이션의 건강 상태는 아닙니다. Probe는 source mirror controller가 수행합니다. Flat-only Link에는 gateway가 필요하지 않으므로 Link/endpoint/Pod 연결을 진단합니다.
 
 </details>
 
-### 7. EKS 다중 클러스터에서 게이트웨이에 권장되는 설정은?
+### 7. 가이드의 AWS Load Balancer Controller 예제에 사용하는 구성은?
 
-A. ClusterIP 서비스
-B. NodePort 서비스
-C. NLB (Network Load Balancer)
-D. ALB (Application Load Balancer)
+- A. Mesh TLS를 종료하는 public ALB
+- B. Region 간에 자동 접근되는 임의 ClusterIP
+- C. service.k8s.aws/nlb로 선택한 internal TCP NLB
+- D. 이전 nlb annotation만으로 IP target 소유권 보장
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. NLB (Network Load Balancer)**
+**정답: C**
 
-**설명:**
-EKS에서 다중 클러스터 게이트웨이는 NLB를 권장합니다. TCP/TLS 트래픽에 최적화되어 있으며, `service.beta.kubernetes.io/aws-load-balancer-type: "nlb"` 어노테이션으로 설정합니다.
+**설명:** 해당 controller, 지원되는 annotation, 준비된 private 연결을 가정합니다. EKS Auto Mode는 class/소유자가 다릅니다. Gateway data, probe, 원격 Kubernetes API 경로를 각각 확인해야 합니다.
 
 </details>
 
-### 8. TrafficSplit으로 로컬과 원격 클러스터 간 트래픽 분할 시 백엔드 서비스는?
+### 8. 현재 HTTPRoute 예제의 local/remote 분배 backend는?
 
-A. 로컬 서비스와 원격 게이트웨이
-B. 로컬 서비스와 미러 서비스
-C. 로컬 서비스만
-D. 원격 서비스 직접 참조
+- A. Local Service와 다른 API server의 임의 remote Pod IP
+- B. Local backend Service와 local에 import한 mirror Service
+- C. Local Service만
+- D. 자동 database replica set
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 로컬 서비스와 미러 서비스**
+**정답: B**
 
-**설명:**
-TrafficSplit 백엔드에 로컬 서비스(예: web)와 미러 서비스(예: web-west)를 지정합니다. 미러 서비스로 가는 트래픽은 자동으로 원격 클러스터의 게이트웨이로 라우팅됩니다.
+**설명:** Apex Service에서 web-local과 web-west를 사용합니다. 상대 가중치는 자동 standby 정책이 아니며 100/0만으로 실패 시 가중치 0인 backend로 전환되지 않습니다. SMI/Failover extension은 deprecated이며 flat federation에는 별도 요구사항과 동작이 있습니다.
 
 </details>
 
-### 9. 다중 클러스터 환경에서 미러 컨트롤러의 역할이 아닌 것은?
+### 9. Mirror controller의 역할이 아닌 것은?
 
-A. 원격 서비스 감시
-B. 미러 서비스 생성/업데이트
-C. 인증서 발급
-D. 엔드포인트 동기화
+- A. 선택한 remote Service 감시
+- B. Local mirror 생성/갱신
+- C. Workload 인증서 발급
+- D. 모드에 맞는 discovery/endpoint 정보 관리
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. 인증서 발급**
+**정답: C**
 
-**설명:**
-서비스 미러 컨트롤러는 원격 클러스터의 내보낸 서비스를 감시하고, 로컬에 미러 서비스를 생성/업데이트하고, 엔드포인트를 동기화합니다. 인증서 발급은 Identity Controller의 역할입니다.
+**설명:** Workload 인증서는 Identity가 발급합니다. 선택한 mirror controller는 hierarchical 서비스의 이전 Endpoints를 유지합니다. Remote-discovery 모드는 의도적으로 local Endpoints를 제거하고 destination의 원격 조회를 사용할 수 있습니다.
 
 </details>
 
-### 10. 두 EKS 클러스터 간 프라이빗 연결을 위한 AWS 서비스는?
+### 10. 적절히 구성하면 VPC 간 routed private 연결을 제공하는 것은?
 
-A. Direct Connect만
-B. VPC Peering 또는 Transit Gateway
-C. Route 53만
-D. CloudFront
+- A. Route53만
+- B. VPC peering 또는 적합한 Transit Gateway routing
+- C. CloudFront만
+- D. EKS management interface endpoint가 자동으로 제공하는 flat Pod routing
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. VPC Peering 또는 Transit Gateway**
+**정답: B**
 
-**설명:**
-EKS 클러스터 간 프라이빗 연결을 위해 VPC Peering(두 VPC 직접 연결) 또는 Transit Gateway(허브 앤 스포크 모델)를 사용합니다. 게이트웨이는 internal NLB로 설정합니다.
+**설명:** Route, 고유하고 접근 가능한 address, DNS, security 제어가 필요합니다. PrivateLink는 선택한 service/resource 접근을 제공하며 VPC peering과 다릅니다. EKS interface endpoint는 cluster Kubernetes API endpoint가 아닙니다.
 
 </details>
 
-### 11. 다중 클러스터 환경에서 특정 원격 서비스만 접근을 허용하는 방법은?
+### 11. 최종 server에서 보존된 remote workload identity를 인가하는 방법은?
 
-A. NetworkPolicy
-B. ServerAuthorization with SPIFFE ID
-C. AWS Security Group
-D. Kubernetes RBAC
+- A. AWS account 이름을 암묵적인 mesh identity로 취급
+- B. Flat/federated 모드의 실제 DNS 형식 identity로 Linkerd 인가 구성
+- C. 어떤 gateway에서도 이전 SPIFFE URI 예제 사용
+- D. Public export label이 caller를 인증한다고 가정
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. ServerAuthorization with SPIFFE ID**
+**정답: B**
 
-**설명:**
-ServerAuthorization의 meshTLS.identities에 원격 클러스터의 특정 SPIFFE ID를 지정하여 접근을 제어합니다. 예: `spiffe://root.linkerd.cluster.local/ns/production/sa/api-gateway`
+**설명:** Hierarchical gateway를 거치면 최종 server에서 원래 caller identity가 보존되지 않습니다. Flat/federated는 보존합니다. ServiceAccount/namespace/trust-domain 이름이 같으면 여러 cluster에서 같은 identity일 수 있으므로 정책이 자동으로 East-only 출처를 증명하지 않습니다.
 
 </details>
 
-### 12. `linkerd multicluster check` 명령어가 확인하지 않는 것은?
+### 12. Multicluster 인프라 검사로 입증되지 않는 것은?
 
-A. Link 리소스 상태
-B. 게이트웨이 연결
-C. 애플리케이션 비즈니스 로직
-D. 서비스 미러 컨트롤러 상태
+- A. 검사로 발견 가능한 Link 설정 오류
+- B. 설정된 remote 접근/probe의 검사 가능한 실패
+- C. 애플리케이션 business 정확성과 보장된 Region 복구
+- D. Mirror component의 검사 가능한 설정 문제
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. 애플리케이션 비즈니스 로직**
+**정답: C**
 
-**설명:**
-`linkerd multicluster check`는 Link 리소스, 게이트웨이, 서비스 미러 컨트롤러, 인증서 등 다중 클러스터 인프라 상태를 확인합니다. 애플리케이션 로직은 확인하지 않습니다.
+**설명:** 검사는 설정, credential, 인프라 진단에 도움이 됩니다. Failover 뒤 데이터 일관성, 안전한 쓰기 재시도, 용량, business 동작을 입증하지는 않습니다. 실제 workload 결과를 별도로 검증합니다.
 
 </details>

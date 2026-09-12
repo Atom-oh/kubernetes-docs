@@ -1,0 +1,160 @@
+[
+  {
+    "path": "en/eks/08-eks-upgrades.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All1101original linesfullyread;pairedsourcecorrectedandlocalhelper/native/schema/CI/paritycheckscompleted. Matching quizzes are now also complete.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/integration-backup.html",
+      "https://kubernetes.io/docs/setup/release/version-skew-policy/",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_NodegroupUpdateConfig.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateNodegroupVersion.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cluster-upgrades.html",
+      "https://github.com/actions/checkout/releases/tag/v7.0.1",
+      "https://github.com/aws-actions/configure-aws-credentials/releases/tag/v6.2.4",
+      "https://github.com/actions/upload-artifact/releases/tag/v7.0.1"
+    ],
+    "findings": [
+      "EKS14+12monthsupportand60daystandard-supportnotice;catalognotaddonlist;historicalversionpathsqualified;currentnodealignmentvsallowed3-minorskewandaddonbridgeorderdistinguished.",
+      "Read-onlyaccount/context/targetinventory;APIusagecannotbeinferredfromimages/currentobjectapiVersion/betastrings;AWSBackup/Velerooptionsreplaceinapplicablemanagedetcdsnapshot/getallbackupclaims.",
+      "ExactUpdateIDstatuspollerfailsonAPI/failure/cancel/unknown/clienttimeout;ACTIVEisnotoperationSuccess;no nonexistentupdate-successfulwaiter;clienttimeoutdoesnotcancelserviceoperation.",
+      "MNGDEFAULT/MINIMALandforce/PDBdistinctions;explicitversion/AMI/customLTpaths;removedfail-openEC2terminationandgenericSSMyumloops;single-nodeboundeddrainstopsbeforedeletion;scalingconfigurationdoesnotrespectPDBs.",
+      "Ownedadd-onselection/configschema/identity/bridgeversions;no firstarraylatest,no--preserveeksctlflag,no automaticmanagedversionupgrade;pureAutoNodeDNSversusmixedDeploymentretention;selfmanagedchartCRD/IAM/valuesmigrationqualified.",
+      "CurrentJuly2026rollbackpreservedwith7dayeligibility,previousminor,creation/support/prerequisitechecks;MNG/manual/hybrid/Fargate/Autoorder;forceinsightonly;AutoACTIVEphase/120..10080mindefault720/cancellation/TGP;data/addonsnotrestored;CF/Gitrevertnotautomaticrollback.",
+      "BoundedLinuxEC2smokeusesuniquenamespace,explicitSC,writerconsumerbeforewait,readacrossJobs,rollout/scale/20HTTPrequests,UIDguardedcleanupandevidence;notbenchmarkorfullSLOproof.",
+      "Read-onlydiagnosticsreplacechecklogsmutations;readinessonlymanualGitHubOIDCworkflowwithverifiedNode24Actionpins,isolatedkubeconfig/artifact;sourcefigures1/2/3/6/7hiddenpendingparentrepair."
+    ],
+    "validation": [
+      "FulloriginalreadsandSHArecordedbeforeedits;source-validation.json:74Bash/6Python/2workflowblocks/20localrefs,pairedcodeparityandgitdiffcheckpassed.",
+      "6preflight+7pollersyntheticcasespassed;7nativeKubernetes1.36smokeobjects/3shellchecks/6syntheticworkflowcasespassed;namespacecollision/failure/UIDcleanupandPVCconsumerorderchecked.",
+      "Actualparentcachedactionlintpassedafterfixingjob-envrunnercontextuse;Actionpins/runtimeinputsverifiedfromofficialGitHubrelease/manifests;noGitHubworkflowexecuted.",
+      "PrivateAWSCLI2.36.44/eksctl0.229nativehelpandparserchecksconfirmflags/missingwaiter.7positiveoutput-skeletoncasespassed;CLIaccepted119timeoutinlocalskeletonmode,soAWSdocumentedrangeisnotclaimedlocallyenforced.",
+      "NoAWS/Kubernetesupgrade,rollback,termination,backup,portforward,imageexecution,loadbenchmarkorapplicationdeployment. Callerconfig/CIrunner/IAM/actualhealthremaindeployment-specific. Parentassetrepairsrecordeddiagram-review.json."
+    ]
+  },
+  {
+    "path": "ko/eks/08-eks-upgrades.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All1101original linesfullyread;pairedsourcecorrectedandlocalhelper/native/schema/CI/paritycheckscompleted. Matching quizzes are now also complete.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/integration-backup.html",
+      "https://kubernetes.io/docs/setup/release/version-skew-policy/",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_NodegroupUpdateConfig.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateNodegroupVersion.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cluster-upgrades.html",
+      "https://github.com/actions/checkout/releases/tag/v7.0.1",
+      "https://github.com/aws-actions/configure-aws-credentials/releases/tag/v6.2.4",
+      "https://github.com/actions/upload-artifact/releases/tag/v7.0.1"
+    ],
+    "findings": [
+      "EKS14+12monthsupportand60daystandard-supportnotice;catalognotaddonlist;historicalversionpathsqualified;currentnodealignmentvsallowed3-minorskewandaddonbridgeorderdistinguished.",
+      "Read-onlyaccount/context/targetinventory;APIusagecannotbeinferredfromimages/currentobjectapiVersion/betastrings;AWSBackup/Velerooptionsreplaceinapplicablemanagedetcdsnapshot/getallbackupclaims.",
+      "ExactUpdateIDstatuspollerfailsonAPI/failure/cancel/unknown/clienttimeout;ACTIVEisnotoperationSuccess;no nonexistentupdate-successfulwaiter;clienttimeoutdoesnotcancelserviceoperation.",
+      "MNGDEFAULT/MINIMALandforce/PDBdistinctions;explicitversion/AMI/customLTpaths;removedfail-openEC2terminationandgenericSSMyumloops;single-nodeboundeddrainstopsbeforedeletion;scalingconfigurationdoesnotrespectPDBs.",
+      "Ownedadd-onselection/configschema/identity/bridgeversions;no firstarraylatest,no--preserveeksctlflag,no automaticmanagedversionupgrade;pureAutoNodeDNSversusmixedDeploymentretention;selfmanagedchartCRD/IAM/valuesmigrationqualified.",
+      "CurrentJuly2026rollbackpreservedwith7dayeligibility,previousminor,creation/support/prerequisitechecks;MNG/manual/hybrid/Fargate/Autoorder;forceinsightonly;AutoACTIVEphase/120..10080mindefault720/cancellation/TGP;data/addonsnotrestored;CF/Gitrevertnotautomaticrollback.",
+      "BoundedLinuxEC2smokeusesuniquenamespace,explicitSC,writerconsumerbeforewait,readacrossJobs,rollout/scale/20HTTPrequests,UIDguardedcleanupandevidence;notbenchmarkorfullSLOproof.",
+      "Read-onlydiagnosticsreplacechecklogsmutations;readinessonlymanualGitHubOIDCworkflowwithverifiedNode24Actionpins,isolatedkubeconfig/artifact;sourcefigures1/2/3/6/7hiddenpendingparentrepair."
+    ],
+    "validation": [
+      "FulloriginalreadsandSHArecordedbeforeedits;source-validation.json:74Bash/6Python/2workflowblocks/20localrefs,pairedcodeparityandgitdiffcheckpassed.",
+      "6preflight+7pollersyntheticcasespassed;7nativeKubernetes1.36smokeobjects/3shellchecks/6syntheticworkflowcasespassed;namespacecollision/failure/UIDcleanupandPVCconsumerorderchecked.",
+      "Actualparentcachedactionlintpassedafterfixingjob-envrunnercontextuse;Actionpins/runtimeinputsverifiedfromofficialGitHubrelease/manifests;noGitHubworkflowexecuted.",
+      "PrivateAWSCLI2.36.44/eksctl0.229nativehelpandparserchecksconfirmflags/missingwaiter.7positiveoutput-skeletoncasespassed;CLIaccepted119timeoutinlocalskeletonmode,soAWSdocumentedrangeisnotclaimedlocallyenforced.",
+      "NoAWS/Kubernetesupgrade,rollback,termination,backup,portforward,imageexecution,loadbenchmarkorapplicationdeployment. Callerconfig/CIrunner/IAM/actualhealthremaindeployment-specific. Parentassetrepairsrecordeddiagram-review.json."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks/08-eks-upgrades-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Entire original fully read (EN1081/KO2352 lines); all six questions and expanded examples corrected in both languages, with bounded local validation completed.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/integration-backup.html",
+      "https://kubernetes.io/docs/setup/release/version-skew-policy/",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_NodegroupUpdateConfig.html",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-guide/",
+      "https://pluto.docs.fairwinds.com/",
+      "https://github.com/doitintl/kube-no-trouble",
+      "https://docs.aws.amazon.com/eks/latest/userguide/updating-an-add-on.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon",
+      "https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/persistent_volume_claim_v1",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://prometheus.io/docs/prometheus/latest/querying/functions/"
+    ],
+    "findings": [
+      "ENquiz1-500read:wrongclusterversioncatalog/deprecatedmetricandAPIinventoryclaim;pluto/kubentcommandsverify;oldtestcluster1.27->1.28andfabricatedall-compatibleplan;2-minorskewstale;CPfirstneedsprereqalignmentandHAminversiondistinction;20-30minunsourcednotbenchmark;getallnotbackup;MNGautomaticrollbackclaim;preferredaffinityandinvalidDeploymentthenimmediatedeleteoldgroup;YAMLfencecontainsshell;PDBnoavailabilityguarantee.",
+      "ENquiz501-1081fullread:alladdon-after-CP/automaticmanagedpatchingclaimswrongequipment;first-arraylatestnotcontract;aws-nodeConfigMapnotcompleteCNIbackup;checkinglogsreconfigurescluster;unquotedplaceholders;incident2023reportillustrative/unsupportedcauseclaim;common-namesmokesnoawaitcleanup,PVCnoSC/readback/recreatecheck,infinitewgetload;undefinedvalidation*.sh/validation-toolsimageandRBAC;outputdirmissing;managedcontrolplanemetricsvisibilityqualified.",
+      "Q1-Q2 fixed: catalog/API-client evidence, Pluto commands, historical removal table, three-minor/HA skew, node-current versus node-target order, exact request waiter, backup coverage, qualified timing, Terraform ownership and rehearsal template parity.",
+      "Q3-Q4 fixed: MNG strategy/PDB/force/custom AMI semantics, no automatic rollback, blue-green capacity retained and phased drain/retirement, complete canary, corrected create versus upgrade flags, compatible addon ordering/configuration/schema, split Terraform conflicts, owned Helm upgrades and Auto Mode distinctions.",
+      "Q5-Q6 fixed: bounded read-only diagnosis, hypothesis/incident provenance, current rollback eligibility/order/force/cancel semantics, canonical unique-namespace PVC writer-reader smoke, honest coverage, consuming Terraform fixture with readiness/WFFC, wired dashboard with Ready-active-Pod and CPU-rate/memory queries."
+    ],
+    "validation": [
+      "Fullread1-500,501-1081;originalSHArecorded;no cloud/runtimeexecution.",
+      "Currentprimaryrollback/update/AutoRollbackpagesread;CLI2.36.44andeksctl0.229help/nativeparserchecksrecorded.NoAWSAPIrequests. Sourcesandconflictsinignoredcacheverified-facts.json.",
+      "quiz-pair-validation.json:30 Bash/4 YAML/6 Kubernetes1.36 native objects/8 HCL/4 Markdown templates/2 dashboards/4 local refs; six questions,24 options,key CBBCCC and paired code parity passed. Terraform fmt and git diff --check passed.",
+      "AWS provider6.64.0 with Terraform1.15.7 locally validated Q2/Q3/Q4 without errors/warnings; existing provider symlinks, no init/plan/apply/cloud APIs. Q6 Kubernetes provider unavailable: HCL syntax and official resource-field documentation checked, no provider-runtime validation claimed.",
+      "quiz-diagnostic-validation.json:5 synthetic cases verify invalid-kind zero queries, API-denied fail-closed and exact operation selectors. quiz-dashboard-validation.json:10 expressions pass synthetic Promtool3.14 tests for Ready versus Running, completed-Pod exclusion, duplicate reduction, CPU rate, memory and absent metrics.",
+      "Canonical source preflight/poller/PVC smoke validation reused; CLI2.36.44/eksctl0.229/Pluto native command metadata checked. No live AWS/Kubernetes/image/Grafana/load/backup execution. Historical2023incident/timing illustrations explicitly lack supplied measured provenance."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks/08-eks-upgrades-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Entire original fully read (EN1081/KO2352 lines); all six questions and expanded examples corrected in both languages, with bounded local validation completed.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/integration-backup.html",
+      "https://kubernetes.io/docs/setup/release/version-skew-policy/",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_NodegroupUpdateConfig.html",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-guide/",
+      "https://pluto.docs.fairwinds.com/",
+      "https://github.com/doitintl/kube-no-trouble",
+      "https://docs.aws.amazon.com/eks/latest/userguide/updating-an-add-on.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon",
+      "https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/persistent_volume_claim_v1",
+      "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+      "https://prometheus.io/docs/prometheus/latest/querying/functions/"
+    ],
+    "findings": [
+      "KOquiz501-1000read:TFignore_changes=[]doesnotwait;postvalidationcreates/deletesexistingtest-upgradenamespaceandfakeSuccess;managedupdatescriptreturns0onfailedstatus/no deadline;bluegreenuserconfirmationdoesnotgatefailedcreation/drain;TFactive_versionturnsoffbluebeforevalidation, max_size=0invalid, desired_sizeignore_changesconflictswithintendedswitch.",
+      "KOquiz1001-1500read:TFblue/greenbothinvalidmax0/desiredignored;addonloopfirstarrayselection/sleep30/no requestterminalstatus/fakecomplete;TFresolve_conflictslegacyPRESERVEcreateinvalid/currentproviderfieldsrequired;bulkHelmupgradeswithoutpins/values/CRD/IAM/versionmatch/await;awsconfiguregetregionignoresenv;CA skip-system-pods falseunrelatedunsafechange.",
+      "KOquiz1501-2000read:diagnosticbundlehasunquotedargs/unboundedpodspecdump/partialfailurefalsecomplete;rollbackscriptcreatesold1.27poolwithouteligibility/healththenfail-opendrain/delete;nestedMarkdowntroubleshootingguidecontainsadditionalplaceholders/componentstatus/OVERWRITErollbackloss;Q6repeatsunsafecommon-namessmoketests,unboundedload,PVCPodwithoutwait/readback/cleanup/explicitSC.",
+      "KOquiz2001-2352fullreadcomplete:comprehensivevalidationusesfixednamespaceandignorederrors/sleeps,createsPVCnoconsumerWaitForFirstConsumerdeadlockthenclaimscomplete,headercountaserrorPod,cleanupcanremoveexistingnamespace;TerraformvalidationPVCunmounted/defaultSC/waitdeadlockandscope provider prereqs;GrafanaCMunwired,running!=ready,CPUcountervsrate/percentunits/memorydedup. All4originalsfullyread.",
+      "Q1-Q2 fixed: catalog/API-client evidence, Pluto commands, historical removal table, three-minor/HA skew, node-current versus node-target order, exact request waiter, backup coverage, qualified timing, Terraform ownership and rehearsal template parity.",
+      "Q3-Q4 fixed: MNG strategy/PDB/force/custom AMI semantics, no automatic rollback, blue-green capacity retained and phased drain/retirement, complete canary, corrected create versus upgrade flags, compatible addon ordering/configuration/schema, split Terraform conflicts, owned Helm upgrades and Auto Mode distinctions.",
+      "Q5-Q6 fixed: bounded read-only diagnosis, hypothesis/incident provenance, current rollback eligibility/order/force/cancel semantics, canonical unique-namespace PVC writer-reader smoke, honest coverage, consuming Terraform fixture with readiness/WFFC, wired dashboard with Ready-active-Pod and CPU-rate/memory queries."
+    ],
+    "validation": [
+      "Fullread1-500,501-1000,1001-1500,1501-2000,2001-2352;originalSHArecorded.NoAWS/clusterexecutions.",
+      "Currentprimaryrollback/update/AutoRollbackpagesread;CLI2.36.44andeksctl0.229help/nativeparserchecksrecorded.NoAWSAPIrequests. Sourcesandconflictsinignoredcacheverified-facts.json.",
+      "quiz-pair-validation.json:30 Bash/4 YAML/6 Kubernetes1.36 native objects/8 HCL/4 Markdown templates/2 dashboards/4 local refs; six questions,24 options,key CBBCCC and paired code parity passed. Terraform fmt and git diff --check passed.",
+      "AWS provider6.64.0 with Terraform1.15.7 locally validated Q2/Q3/Q4 without errors/warnings; existing provider symlinks, no init/plan/apply/cloud APIs. Q6 Kubernetes provider unavailable: HCL syntax and official resource-field documentation checked, no provider-runtime validation claimed.",
+      "quiz-diagnostic-validation.json:5 synthetic cases verify invalid-kind zero queries, API-denied fail-closed and exact operation selectors. quiz-dashboard-validation.json:10 expressions pass synthetic Promtool3.14 tests for Ready versus Running, completed-Pod exclusion, duplicate reduction, CPU rate, memory and absent metrics.",
+      "Canonical source preflight/poller/PVC smoke validation reused; CLI2.36.44/eksctl0.229/Pluto native command metadata checked. No live AWS/Kubernetes/image/Grafana/load/backup execution. Historical2023incident/timing illustrations explicitly lack supplied measured provenance."
+    ]
+  }
+]

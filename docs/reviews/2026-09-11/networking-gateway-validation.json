@@ -1,0 +1,702 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T00:45:45.046167+00:00",
+  "auditFolderAnchor": "2026-09-11 retained per user; review continued2026-09-12",
+  "files": [
+    {
+      "path": "en/networking/04-gateway-api.md",
+      "sha256": "d88bf04d8263f8aeef2c358f1f792e636247b08ffc3e6142d348a80b4a73da54"
+    },
+    {
+      "path": "en/quizzes/networking/04-gateway-api-quiz.md",
+      "sha256": "2b9cfd76b05285f2335ebb5ad4ef9dc38c96a2b3684e68a2dc38987034577948"
+    },
+    {
+      "path": "ko/networking/04-gateway-api.md",
+      "sha256": "c6a6b9ed010749eac194ce7ddd4303cfe5919071b7af575559c43a70ee913564"
+    },
+    {
+      "path": "ko/quizzes/networking/04-gateway-api-quiz.md",
+      "sha256": "af247903c91cfa0bf093b75a11d0b204275a91cffd9f70aef20299a0b0b3c4a6"
+    }
+  ],
+  "sources": {
+    "gatewayRelease": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/gateway-api/releases/tags/v1.6.0",
+      "key": "fd2bea20e615"
+    },
+    "standardCRDs": {
+      "url": "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml",
+      "key": "1bc9fd191183"
+    },
+    "experimentalCRDs": {
+      "url": "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/experimental-install.yaml",
+      "key": "794ad80426bd"
+    },
+    "versioning": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/site/content/en/docs/concepts/versioning.md",
+      "key": "cd176f8fcf3e"
+    },
+    "conformance": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/site/content/en/docs/concepts/conformance.md",
+      "key": "a79434903a9f"
+    },
+    "ReferenceGrant": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/site/content/en/reference/api-types/referencegrant.md",
+      "key": "48eaad076020"
+    },
+    "TLS": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.0/site/content/en/guides/user-guides/tls.md",
+      "key": "90b1dcee5d03"
+    },
+    "IstioGateway": {
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/",
+      "key": "c4d3b91e0435"
+    },
+    "IstioConversion": {
+      "url": "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/config/kube/gateway/conversion.go",
+      "key": "650123a93693"
+    },
+    "IstioController": {
+      "url": "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/config/kube/gateway/controller.go",
+      "key": "4cd700c35ab8"
+    },
+    "CiliumGateway": {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+      "key": "b39c0ea53b22"
+    },
+    "EnvoyMatrix": {
+      "url": "https://raw.githubusercontent.com/envoyproxy/gateway/v1.9.1/site/content/en/news/releases/matrix.md",
+      "key": "4f8430ccfcf1"
+    },
+    "EnvoyUDP": {
+      "url": "https://raw.githubusercontent.com/envoyproxy/gateway/v1.9.1/site/content/en/v1.9/tasks/traffic/udp-routing.md",
+      "key": "c75433647152"
+    },
+    "EnvoyTLS": {
+      "url": "https://raw.githubusercontent.com/envoyproxy/gateway/v1.9.1/site/content/en/v1.9/tasks/security/tls-passthrough.md",
+      "key": "2e56de503954"
+    },
+    "LBC300": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/aws-load-balancer-controller/releases/tags/v3.0.0",
+      "key": "68a5385dcbd3"
+    },
+    "LBC340": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/aws-load-balancer-controller/releases/tags/v3.4.0",
+      "key": "5a3826fb9ede"
+    },
+    "LBCMigrationCLI": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress2gateway/lbc_migrate_reference.md",
+      "key": "71ea47839034"
+    },
+    "LBCMigrationGuide": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress2gateway/migrate_from_ingress.md",
+      "key": "636b5ea73ae8"
+    },
+    "LBCGateway": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/gateway.md",
+      "key": "b20445a2962c"
+    },
+    "LatticeTLS": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/tls-route.md",
+      "key": "d8a9fb73474b"
+    },
+    "ContourRelease": {
+      "url": "https://api.github.com/repos/projectcontour/contour/releases/latest",
+      "key": "479bbd2dd061"
+    },
+    "ContourGateway": {
+      "url": "https://raw.githubusercontent.com/projectcontour/contour/v1.33.7/site/content/docs/main/config/gateway-api.md",
+      "key": "2d8658f61948"
+    },
+    "ContourMatrix": {
+      "url": "https://raw.githubusercontent.com/projectcontour/contour/v1.33.7/site/content/resources/compatibility-matrix.md",
+      "key": "98fc791b4167"
+    },
+    "ContourGoMod": {
+      "url": "https://raw.githubusercontent.com/projectcontour/contour/v1.33.7/go.mod",
+      "key": "6df6709a492a"
+    },
+    "NGFRelease": {
+      "url": "https://api.github.com/repos/nginx/nginx-gateway-fabric/releases/latest",
+      "key": "a3a2393d3336"
+    },
+    "NGFChangelog": {
+      "url": "https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.7.0/CHANGELOG.md",
+      "key": "9d4b10adb711"
+    },
+    "NGFValues": {
+      "url": "https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.7.0/charts/nginx-gateway-fabric/values.yaml",
+      "key": "20bff4ac450f"
+    },
+    "TraefikController": {
+      "url": "https://raw.githubusercontent.com/traefik/traefik/master/pkg/provider/kubernetes/gateway/kubernetes.go",
+      "key": "8b0fb26c608b"
+    },
+    "IngressNginxRetirement": {
+      "url": "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "key": "5c477eabbb6d"
+    },
+    "CiliumAPIVersion": {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/conf.py",
+      "key": "749cf3308343"
+    },
+    "LegacyAnnotations": {
+      "url": "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/docs/user-guide/nginx-configuration/annotations.md",
+      "key": "faced7915913"
+    },
+    "LegacyConfigMap": {
+      "url": "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/docs/user-guide/nginx-configuration/configmap.md",
+      "key": "879a506b85ae"
+    }
+  },
+  "validation": {
+    "schemaObjects": 90,
+    "listenerFragments": 4,
+    "commentOnlyFragments": 6,
+    "bashBlocks": 2,
+    "servedVersions": {
+      "BackendTLSPolicy": [
+        "v1"
+      ],
+      "GatewayClass": [
+        "v1",
+        "v1beta1"
+      ],
+      "Gateway": [
+        "v1",
+        "v1beta1"
+      ],
+      "GRPCRoute": [
+        "v1"
+      ],
+      "HTTPRoute": [
+        "v1",
+        "v1beta1"
+      ],
+      "ListenerSet": [
+        "v1"
+      ],
+      "ReferenceGrant": [
+        "v1",
+        "v1beta1"
+      ],
+      "TCPRoute": [
+        "v1"
+      ],
+      "TLSRoute": [
+        "v1"
+      ],
+      "UDPRoute": [
+        "v1"
+      ]
+    },
+    "scenarios": [
+      {
+        "locale": "en",
+        "parentReferences": [
+          {
+            "route": "basic-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "advanced-matching",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "filtered-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "canary-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "resilient-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "grpc-route",
+            "gateway": "multi-protocol-gateway",
+            "listener": "grpc",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "database-route",
+            "gateway": "multi-protocol-gateway",
+            "listener": "database",
+            "protocol": "TCP"
+          },
+          {
+            "route": "tcp-loadbalance",
+            "gateway": "multi-protocol-gateway",
+            "listener": "tcp",
+            "protocol": "TCP"
+          },
+          {
+            "route": "tls-passthrough-route",
+            "gateway": "multi-protocol-gateway",
+            "listener": "tcp-passthrough",
+            "protocol": "TLS"
+          },
+          {
+            "route": "dns-route",
+            "gateway": "udp-gateway",
+            "listener": "udp",
+            "protocol": "UDP"
+          },
+          {
+            "route": "api-route",
+            "gateway": "migration-gateway",
+            "listener": "http",
+            "protocol": "HTTP"
+          },
+          {
+            "route": "api-route-https",
+            "gateway": "migration-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "lattice-route",
+            "gateway": "my-network",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "alb-internal-route",
+            "gateway": "internal-gateway",
+            "listener": "http",
+            "protocol": "HTTP"
+          },
+          {
+            "route": "quiz-split",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "shared-api",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "quiz-rewrite",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "quiz-grpc",
+            "gateway": "multi-protocol-gateway",
+            "listener": "grpc",
+            "protocol": "HTTPS"
+          }
+        ],
+        "mirrorCases": [
+          {
+            "method": "GET",
+            "path": "/mirror",
+            "matchesMirror": true
+          },
+          {
+            "method": "GET",
+            "path": "/mirror/child",
+            "matchesMirror": true
+          },
+          {
+            "method": "POST",
+            "path": "/mirror",
+            "matchesMirror": false
+          },
+          {
+            "method": "GET",
+            "path": "/mirrored",
+            "matchesMirror": false
+          },
+          {
+            "method": "GET",
+            "path": "/api",
+            "matchesMirror": false
+          }
+        ],
+        "rewritePathCases": [
+          {
+            "inputPath": "/api/v1",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/"
+          },
+          {
+            "inputPath": "/api/v1/users",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/users"
+          },
+          {
+            "inputPath": "/api/v2",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/"
+          },
+          {
+            "inputPath": "/api/v2/users",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/users"
+          }
+        ],
+        "MigrationRedirect308MatchesDocumentedDefault": true,
+        "LegacyRegexVsPathPrefixDifferencesExplicit": true,
+        "ALBGeneratedServiceAndNamespaceCorrect": true,
+        "IstioClusterIPPatchCorrect": true,
+        "MigrationSecretGrantCorrect": true,
+        "LatticeServiceAuthReferenceCorrect": true
+      },
+      {
+        "locale": "ko",
+        "parentReferences": [
+          {
+            "route": "basic-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "advanced-matching",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "filtered-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "canary-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "resilient-route",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "grpc-route",
+            "gateway": "multi-protocol-gateway",
+            "listener": "grpc",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "database-route",
+            "gateway": "multi-protocol-gateway",
+            "listener": "database",
+            "protocol": "TCP"
+          },
+          {
+            "route": "tcp-loadbalance",
+            "gateway": "multi-protocol-gateway",
+            "listener": "tcp",
+            "protocol": "TCP"
+          },
+          {
+            "route": "tls-passthrough-route",
+            "gateway": "multi-protocol-gateway",
+            "listener": "tcp-passthrough",
+            "protocol": "TLS"
+          },
+          {
+            "route": "dns-route",
+            "gateway": "udp-gateway",
+            "listener": "udp",
+            "protocol": "UDP"
+          },
+          {
+            "route": "api-route",
+            "gateway": "migration-gateway",
+            "listener": "http",
+            "protocol": "HTTP"
+          },
+          {
+            "route": "api-route-https",
+            "gateway": "migration-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "lattice-route",
+            "gateway": "my-network",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "alb-internal-route",
+            "gateway": "internal-gateway",
+            "listener": "http",
+            "protocol": "HTTP"
+          },
+          {
+            "route": "quiz-split",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "shared-api",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "quiz-rewrite",
+            "gateway": "production-gateway",
+            "listener": "https",
+            "protocol": "HTTPS"
+          },
+          {
+            "route": "quiz-grpc",
+            "gateway": "multi-protocol-gateway",
+            "listener": "grpc",
+            "protocol": "HTTPS"
+          }
+        ],
+        "mirrorCases": [
+          {
+            "method": "GET",
+            "path": "/mirror",
+            "matchesMirror": true
+          },
+          {
+            "method": "GET",
+            "path": "/mirror/child",
+            "matchesMirror": true
+          },
+          {
+            "method": "POST",
+            "path": "/mirror",
+            "matchesMirror": false
+          },
+          {
+            "method": "GET",
+            "path": "/mirrored",
+            "matchesMirror": false
+          },
+          {
+            "method": "GET",
+            "path": "/api",
+            "matchesMirror": false
+          }
+        ],
+        "rewritePathCases": [
+          {
+            "inputPath": "/api/v1",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/"
+          },
+          {
+            "inputPath": "/api/v1/users",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/users"
+          },
+          {
+            "inputPath": "/api/v2",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/"
+          },
+          {
+            "inputPath": "/api/v2/users",
+            "oldConstantRewrite": "/",
+            "correctedFullPath": "/",
+            "previousIncorrectPrefixRewrite": "/users"
+          }
+        ],
+        "MigrationRedirect308MatchesDocumentedDefault": true,
+        "LegacyRegexVsPathPrefixDifferencesExplicit": true,
+        "ALBGeneratedServiceAndNamespaceCorrect": true,
+        "IstioClusterIPPatchCorrect": true,
+        "MigrationSecretGrantCorrect": true,
+        "LatticeServiceAuthReferenceCorrect": true
+      }
+    ],
+    "negativeRegressionEvidence": {
+      "en": {
+        "duplicateFilterMatchMakesMirrorUnreachable": true,
+        "redirectNotBoundToHTTP": true,
+        "grpcParentListenerAbsentFromBasicGateway": true,
+        "twoTCPRoutesSameListener": true,
+        "TLSRouteUsesUnservedStandardAPI": "gateway.networking.k8s.io/v1alpha2",
+        "ALBBackendNameIncorrect": "internal-gateway"
+      },
+      "ko": {
+        "duplicateFilterMatchMakesMirrorUnreachable": true,
+        "redirectNotBoundToHTTP": true,
+        "grpcParentListenerAbsentFromBasicGateway": true,
+        "twoTCPRoutesSameListener": true,
+        "TLSRouteUsesUnservedStandardAPI": "gateway.networking.k8s.io/v1alpha2",
+        "ALBBackendNameIncorrect": "internal-gateway"
+      }
+    },
+    "limits": [
+      "No live Kubernetes/AWS deployment, DNS cutover, identity-provider request or production traffic test.",
+      "Strict released CRD/Kubernetes schemas plus selected TLS constraints were checked; this is not complete API-server admission/CEL execution.",
+      "Parent/listener/namespace/reference and path checks are local models of the documented scenarios; they do not prove controller reconciliation, TLS Secret/backend existence, query-string or application-runtime parity.",
+      "The Lattice unused Secret reference is the documented controller-specific managed-certificate behavior; other TLS Secrets must be provisioned by the reader.",
+      "lbc-migrate availability/options verified from release/source documentation; the CLI was not built or executed in this batch."
+    ]
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/04-gateway-api.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/04-gateway-api-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/04-gateway-api.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/04-gateway-api-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batchCheck": {
+    "batch": "networking-foundation",
+    "documents": 20,
+    "yamlBlocks": 160,
+    "shellBlocks": 106,
+    "errors": []
+  },
+  "referenceHTTP": [
+    {
+      "url": "https://gateway-api.sigs.k8s.io/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/e286fe16d6cb.txt"
+    },
+    {
+      "url": "https://gateway.envoyproxy.io/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/38bbf0e2ba19.txt"
+    },
+    {
+      "url": "https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/ed7fdf5883d9.txt"
+    },
+    {
+      "url": "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/858596968319.txt"
+    },
+    {
+      "url": "https://github.com/envoyproxy/gateway/blob/v1.9.1/site/content/en/news/releases/matrix.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/74c6ae35f3b1.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/lbc_migrate_reference.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/8efec19d46da.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/migrate_from_ingress.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/69359fe5b54a.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/gateway-api",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/3f2086df283f.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/docs/concepts/versioning.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/77a1652256d5.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/reference/api-types/referencegrant.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/b3674a0bccda.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/990278904096.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/b065444f585c.txt"
+    },
+    {
+      "url": "https://github.com/nginx/nginx-gateway-fabric/blob/v2.7.0/CHANGELOG.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/9122109ff5ed.txt"
+    },
+    {
+      "url": "https://github.com/projectcontour/contour/releases/tag/v1.33.7",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/d6bcafab67d6.txt"
+    },
+    {
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/c4d3b91e0435.txt"
+    },
+    {
+      "url": "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/5c477eabbb6d.txt"
+    }
+  ],
+  "docsTest": {
+    "tests": 118,
+    "pass": 118,
+    "fail": 0,
+    "log": "/tmp/networking-gateway-validation/docs-test.log",
+    "environment": "login:false/env-i/OTELoff; local child processes allowed by escalation"
+  },
+  "gitDiffCheck": 0,
+  "figures": {
+    "viewed": 4,
+    "retained": 4,
+    "descriptionFixes": "Independent design goals and implementation-specific Gateway mapping; reference-owner responsibilities clarified. Assets/foreign prose unchanged."
+  },
+  "linkReplacement": {
+    "old": "https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/",
+    "candidateSnapshot": "404/410 in parent check",
+    "workerLiveCheck": "403; not independently asserted as404",
+    "replacement": "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+    "replacementHTTP": 200
+  },
+  "artifacts": "/tmp/networking-gateway-validation"
+}

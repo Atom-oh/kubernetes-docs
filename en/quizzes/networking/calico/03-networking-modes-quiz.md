@@ -1,11 +1,11 @@
 # Calico Networking Modes Quiz
 
 > **Related Document**: [Calico Networking Modes](../../../networking/calico/03-networking-modes.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
-1. What is the overhead in bytes added by IPIP encapsulation?
+1. For Calico IPIP with an outer IPv4 header without options, how much header overhead is added?
    - A) 8 bytes
    - B) 20 bytes
    - C) 50 bytes
@@ -17,11 +17,11 @@
 **Answer: B) 20 bytes**
 
 **Explanation:**
-IPIP (IP-in-IP) encapsulation adds 20 bytes of overhead to each packet. This is the size of an additional IP header that wraps the original packet. This is more efficient than VXLAN which adds 50 bytes of overhead, making IPIP better for performance when encapsulation is required.
+The added IPv4 header is 20 bytes without options. Calico IPIP is IPv4-only. Smaller headers leave more payload space but do not independently prove lower latency or higher throughput on every NIC/kernel/workload.
 
 </details>
 
-2. What is the overhead in bytes added by VXLAN encapsulation?
+2. For outer-IPv4 VXLAN without extra inner VLAN tags, what overhead is added above the Pod IP packet?
    - A) 20 bytes
    - B) 30 bytes
    - C) 50 bytes
@@ -33,7 +33,7 @@ IPIP (IP-in-IP) encapsulation adds 20 bytes of overhead to each packet. This is 
 **Answer: C) 50 bytes**
 
 **Explanation:**
-VXLAN encapsulation adds approximately 50 bytes of overhead to each packet. This includes the outer Ethernet header (14 bytes), outer IP header (20 bytes), UDP header (8 bytes), and VXLAN header (8 bytes). While this is more than IPIP's 20 bytes, VXLAN has better compatibility with various network environments.
+The 50 bytes are outer IPv4 20 + UDP 8 + VXLAN 8 + inner Ethernet 14. The outer Ethernet header is outside the underlay IP MTU. Outer IPv6 changes the overhead to 70 bytes. TCP and UDP also have different inner transport-header sizes.
 
 </details>
 
@@ -49,7 +49,7 @@ VXLAN encapsulation adds approximately 50 bytes of overhead to each packet. This
 **Answer: C) Uses encapsulation only for cross-subnet traffic**
 
 **Explanation:**
-CrossSubnet mode is an optimization that only applies encapsulation (IPIP or VXLAN) when traffic crosses subnet boundaries. Traffic between nodes in the same subnet uses direct routing without encapsulation. This provides the best of both worlds: direct routing where possible and encapsulation only when necessary.
+CrossSubnet compares the relevant node addresses and configured subnet masks. Same-subnet inter-node traffic can avoid encapsulation, while a different node subnet uses the selected IPIP/VXLAN encapsulation. It is not an AZ/Region detector or a service that creates inter-site connectivity.
 
 </details>
 
@@ -65,23 +65,23 @@ CrossSubnet mode is an optimization that only applies encapsulation (IPIP or VXL
 **Answer: B) The underlying network must be able to route pod CIDR traffic**
 
 **Explanation:**
-Direct routing mode requires that the underlying network infrastructure can route the pod CIDR traffic between nodes. This typically means either using BGP to advertise pod routes to the network infrastructure, or having static routes configured. Without this, packets destined for pod IPs on other nodes would be dropped by the network.
+The underlay and return path must route Pod addresses. BGP is one approach, but static routing and supported Felix cluster-route programming can also be used. Calico 3.32's operator clusterRoutingMode can select Felix for non-VXLAN cluster routes; external BGP advertisements still require BGP.
 
 </details>
 
-5. Which networking mode generally provides better performance: IPIP or VXLAN?
+5. Which performance comparison between IPIP and VXLAN is justified?
    - A) VXLAN is always faster
-   - B) IPIP is generally faster due to lower overhead
+   - B) Performance depends on the actual NIC/offloads, kernel/data plane, packet sizes, routes and workload
    - C) They have identical performance
-   - D) Performance depends on the Kubernetes version
+   - D) Only the Kubernetes version determines performance
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) IPIP is generally faster due to lower overhead**
+**Answer: B) Performance depends on the actual NIC/offloads, kernel/data plane, packet sizes, routes and workload**
 
 **Explanation:**
-IPIP generally provides better performance than VXLAN because it has lower encapsulation overhead (20 bytes vs 50 bytes). Less overhead means more space for actual payload data and less processing required for encapsulation/decapsulation. However, VXLAN has broader compatibility and better hardware offload support.
+IPIP has a smaller IPv4 encapsulation header, while offloads and implementation details can change performance. Neither mode is universally fastest. The earlier bilingual benchmark records disagree and lack complete provenance, so they are retained as reports rather than used as performance guarantees.
 
 </details>
 
@@ -97,27 +97,27 @@ IPIP generally provides better performance than VXLAN because it has lower encap
 **Answer: C) Always, CrossSubnet, Never**
 
 **Explanation:**
-The ipipMode field in an IPPool accepts three values: `Always` (always use IPIP encapsulation), `CrossSubnet` (use IPIP only for cross-subnet traffic), and `Never` (disable IPIP). These same options are also available for vxlanMode to configure VXLAN encapsulation behavior.
+ipipMode and vxlanMode accept Always, CrossSubnet and Never. Always concerns eligible inter-node traffic, not a same-node physical tunnel. The operator pool's separate encapsulation field uses values such as IPIPCrossSubnet or VXLANCrossSubnet; do not mix the two APIs.
 
 </details>
 
 7. What does the natOutgoing setting control in an IPPool?
    - A) Whether pods can receive incoming NAT traffic
-   - B) Whether pod traffic leaving the cluster is masqueraded
+   - B) Whether eligible traffic from this pool to destinations outside all Calico IPPools is source-NATed
    - C) Whether NAT is applied between pods
    - D) Whether the node performs NAT for external services
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Whether pod traffic leaving the cluster is masqueraded**
+**Answer: B) Whether eligible traffic from this pool to destinations outside all Calico IPPools is source-NATed**
 
 **Explanation:**
-The `natOutgoing` setting controls whether traffic from pods in this IP pool is masqueraded (SNAT) when leaving the cluster. When set to true, the source IP of outgoing traffic is changed to the node's IP, allowing pods to communicate with external resources even when pod IPs are not routable outside the cluster.
+The usual predicate is destination outside all Calico IPPools, not simply outside the cluster. A disabled pool can still define a no-NAT destination range, and additional Felix exclusions can include host IPs. NAT does not authorize traffic or guarantee external return routing.
 
 </details>
 
-8. What UDP port does VXLAN use by default?
+8. What is Calico's default VXLAN UDP port?
    - A) 4789
    - B) 8472
    - C) 8080
@@ -129,47 +129,47 @@ The `natOutgoing` setting controls whether traffic from pods in this IP pool is 
 **Answer: A) 4789**
 
 **Explanation:**
-VXLAN uses UDP port 4789 by default, as specified by IANA. This is the standard port used across different VXLAN implementations. Some older implementations (like early Flannel versions) used port 8472, but Calico follows the standard port 4789.
+Calico's default is UDP 4789 and it is configurable. Other current VXLAN implementations can use 8472; it is not only an obsolete-port convention. IPIP uses IP protocol 4, which is not a TCP/UDP port.
 
 </details>
 
-9. Why might VXLAN be preferred over IPIP in Azure environments?
+9. Why does the Calico overlay guide prefer a suitable VXLAN configuration over IPIP for Calico-owned networking on Azure?
    - A) Azure provides VXLAN hardware acceleration
-   - B) IPIP (IP protocol 4) is not well supported in Azure
+   - B) The Calico overlay guide identifies Azure as an environment where VXLAN is supported and IPIP is not
    - C) VXLAN is required by Azure policy
    - D) Azure automatically configures VXLAN
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) IPIP (IP protocol 4) is not well supported in Azure**
+**Answer: B) The Calico overlay guide identifies Azure as an environment where VXLAN is supported and IPIP is not**
 
 **Explanation:**
-Azure has limited support for IPIP encapsulation because IP protocol 4 may be blocked or have issues in Azure's network. VXLAN, being UDP-based, works more reliably in Azure environments. This is a common recommendation when deploying Calico on Azure Kubernetes Service (AKS) or Azure VMs.
+This is a Calico networking support boundary, not proof that every AKS deployment should install a Calico overlay. Select the actual provider CNI/policy integration. Adding a UDR does not make an unsupported IPIP encapsulation pattern supported.
 
 </details>
 
-10. How should MTU be optimized when using VXLAN encapsulation with a standard 1500 byte network MTU?
-    - A) Set pod MTU to 1500
-    - B) Set pod MTU to 1450 (1500 - 50 bytes overhead)
-    - C) MTU adjustment is automatic
-    - D) Set pod MTU to 1400
+10. With a real 1500-byte underlay IP MTU, outer IPv4 and no other encapsulation, what is the VXLAN Pod IP MTU budget?
+   - A) Set pod MTU to 1500
+   - B) 1450 bytes: 1500 minus 50
+   - C) 1500, because automatic detection eliminates encapsulation overhead
+   - D) Set pod MTU to 1400
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Set pod MTU to 1450 (1500 - 50 bytes overhead)**
+**Answer: B) 1450 bytes: 1500 minus 50**
 
 **Explanation:**
-When using VXLAN with a 1500 byte network MTU, the pod MTU should be set to approximately 1450 bytes (1500 - 50 bytes VXLAN overhead) to avoid fragmentation. For IPIP, the pod MTU would be 1480 bytes (1500 - 20 bytes overhead). Proper MTU configuration prevents performance issues caused by packet fragmentation.
+The IPv4 VXLAN overhead is 50, leaving 1450 bytes for the Pod IP packet under these assumptions. Outer IPv6, encryption, a smaller physical path or an eBPF Service path can change the budget. Automatic MTU detection can choose a value, but it must reflect the real modes and paths.
 
 </details>
 
 11. What interface is created on nodes when IPIP mode is enabled?
-    - A) vxlan.calico
-    - B) tunl0
-    - C) cali0
-    - D) ipip0
+   - A) vxlan.calico
+   - B) tunl0
+   - C) cali0
+   - D) ipip0
 
 <details>
 <summary>Show Answer</summary>
@@ -177,26 +177,26 @@ When using VXLAN with a 1500 byte network MTU, the pod MTU should be set to appr
 **Answer: B) tunl0**
 
 **Explanation:**
-When IPIP mode is enabled, Calico creates a `tunl0` tunnel interface on each node. This interface is used for IPIP encapsulation of traffic between nodes. The tunl0 interface handles the encapsulation and decapsulation of packets as they enter and leave the IPIP tunnel.
+tunl0 is the usual Linux IPIP tunnel interface in this configuration. It is relevant only where IPIP is enabled/supported. It does not provide encryption and is not the interface for all Calico networking modes.
 
 </details>
 
-12. What is the best practice for migrating from IPIP to VXLAN mode in a running cluster?
-    - A) Directly change the IPPool configuration
-    - B) Create a new IPPool with VXLAN, migrate workloads, then delete the old pool
-    - C) Restart all nodes simultaneously
-    - D) Migration is not supported; rebuild the cluster
+12. When migrating addresses to a different Calico IPPool, which principle is appropriate?
+   - A) Directly change the IPPool configuration
+   - B) Verify a compatible non-overlapping pool, control new allocations, migrate workloads/dependencies and retire the old pool only after checks
+   - C) Restart all nodes simultaneously
+   - D) Migration is not supported; rebuild the cluster
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Create a new IPPool with VXLAN, migrate workloads, then delete the old pool**
+**Answer: B) Verify a compatible non-overlapping pool, control new allocations, migrate workloads/dependencies and retire the old pool only after checks**
 
 **Explanation:**
-The recommended approach for migrating between encapsulation modes is to create a new IPPool with the desired settings, gradually migrate workloads to use the new pool (by recreating pods or using node selectors), and then delete the old pool once migration is complete. This approach minimizes disruption and allows for rollback if issues occur.
+A CIDR/IPPool migration is different from an encapsulation-only change. Plan owner, cluster-CIDR compatibility, MTU, old explicit pool requests, remaining allocations and application rollout. Operator nodeSelector !all does not block explicit requested pools. Do not delete a pool merely because a few replacement Pods have new addresses; tunnel/other allocations and NAT/routing effects can remain.
 
 </details>
 
 ---
 
-[Return to Learning Materials](../../../networking/calico/03-networking-modes.md) | [Previous Quiz: Architecture](./02-architecture-quiz.md) | [Next Quiz: BGP Deep Dive](./04-bgp-deep-dive-quiz.md)
+[Learning material](../../../networking/calico/03-networking-modes.md) | [Previous quiz](02-architecture-quiz.md) | [Next quiz](04-bgp-deep-dive-quiz.md)

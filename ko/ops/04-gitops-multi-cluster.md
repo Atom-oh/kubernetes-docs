@@ -1,2355 +1,691 @@
 # ArgoCD 멀티클러스터 배포와 IAM Identity Center
 
-> **지원 버전**: ArgoCD 2.10+, EKS 1.28+, External Secrets Operator 0.9+
-> **마지막 업데이트**: 2026년 2월 23일
+> **검토 기준**: Argo CD 3.5.2 / Helm chart 10.8.4, Terraform 1.15.7 / Helm Provider 3.3.0, ESO 2.10.0\
+> **마지막 검토**: 2026년 9월 11일. 로컬 스키마·렌더링·테스트 대역을 검증했습니다. 실제 EKS 설치, SSO 로그인과 Secrets Manager 조회는 실행하지 않았습니다.
 
-< [이전: CI 파이프라인](./03-ci-pipelines.md) | [목차](./README.md) | [다음: GitOps 자동화](./05-gitops-automation.md) >
+< [이전: CI 파이프라인](03-ci-pipelines.md) | [목차](README.md) | [다음: GitOps 자동화](05-gitops-automation.md) >
 
----
-
-이 문서에서는 ArgoCD를 사용하여 여러 EKS 클러스터에 애플리케이션을 배포하고, IAM Identity Center(AWS SSO)와 통합하여 중앙 집중식 인증 및 권한 관리를 구현하는 방법을 설명합니다.
-
-## 목차
-
-- [멀티클러스터 아키텍처](#멀티클러스터-아키텍처)
-- [ArgoCD Terraform 설치](#argocd-terraform-설치)
-- [NodePool GitOps 관리](#nodepool-gitops-관리)
-- [ApplicationSet 전략](#applicationset-전략)
-- [IAM Identity Center SSO](#iam-identity-center-sso)
-- [시크릿 관리](#시크릿-관리)
-
----
+이 장은 관리 EKS(Hub)의 Argo CD가 두 워크로드 EKS(Spoke)를 관리하는 구성을 다룹니다. 앞 장의 CI는 승인한 이미지 digest를 만들고, 검토된 Git 변경이 배포할 digest를 선택합니다. 중앙 관리가 각 클러스터의 인증·인가·네트워크 구성을 대신하지는 않습니다.
 
 ## 멀티클러스터 아키텍처
 
-멀티클러스터 GitOps 아키텍처는 중앙 관리 클러스터(Hub)에서 여러 워크로드 클러스터(Spoke)를 관리하는 Hub-Spoke 모델을 기반으로 합니다.
+| 위치 | 책임 | 필요한 접근 |
+|---|---|---|
+| Hub의 Application Controller | 목표 상태 비교·동기화 | 대상 EKS API와 허용된 Kubernetes 리소스 |
+| Hub의 Server/ApplicationSet | 사용자 요청·클러스터 관련 작업 | 기능에 필요한 대상 인증과 Hub Secret |
+| Repo Server | Git·Helm source 렌더링 | 승인된 저장소와 실제 저장소 자격 증명 |
+| Spoke | 애플리케이션·NodePool 실행 | 대상 IAM principal의 EKS Access Entry와 RBAC |
+| ESO | 외부 값을 Kubernetes Secret으로 동기화 | 실제 ESO 컨트롤러 역할의 지정된 secret 읽기 |
 
-### Hub-Spoke 모델 개요
+Blue/Green은 클러스터 식별자입니다. 아래 예제의 워커 NodePool은 서로 다른 AZ로 제한하지만 EKS 제어 영역은 리전 서비스입니다. Hub 장애가 실행 중인 Spoke Pod를 바로 중단시키지는 않아도 배포·동기화를 멈출 수 있습니다. Hub의 광범위한 자격 증명이 탈취되면 여러 Spoke에 영향을 줄 수 있습니다. Git 이력만으로 실제 수동 변경·로그인·데이터 변경까지 모두 감사되지는 않습니다.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Management Cluster (Hub)                          │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                            ArgoCD                                    │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │   │
-│  │  │  API Server  │  │ Repo Server  │  │  Controller  │               │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘               │   │
-│  │                                                                      │   │
-│  │  ┌──────────────────────────────────────────────────┐               │   │
-│  │  │              ApplicationSet Controller            │               │   │
-│  │  └──────────────────────────────────────────────────┘               │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-└────────────────────────────────────┬────────────────────────────────────────┘
-                                     │
-                    ┌────────────────┴────────────────┐
-                    │                                 │
-                    ▼                                 ▼
-┌─────────────────────────────────┐   ┌─────────────────────────────────┐
-│     Blue Cluster (Spoke)        │   │     Green Cluster (Spoke)       │
-│     ap-northeast-2a             │   │     ap-northeast-2c             │
-│  ┌───────────────────────────┐  │   │  ┌───────────────────────────┐  │
-│  │   Production Workloads    │  │   │  │   Production Workloads    │  │
-│  ├───────────────────────────┤  │   │  ├───────────────────────────┤  │
-│  │   - Frontend Apps         │  │   │  │   - Frontend Apps         │  │
-│  │   - Backend Services      │  │   │  │   - Backend Services      │  │
-│  │   - Data Processing       │  │   │  │   - Data Processing       │  │
-│  └───────────────────────────┘  │   │  └───────────────────────────┘  │
-│  ┌───────────────────────────┐  │   │  ┌───────────────────────────┐  │
-│  │   NodePools (Karpenter)   │  │   │  │   NodePools (Karpenter)   │  │
-│  │   - general-purpose       │  │   │  │   - general-purpose       │  │
-│  │   - compute-optimized     │  │   │  │   - compute-optimized     │  │
-│  │   - data-processing       │  │   │  │   - data-processing       │  │
-│  └───────────────────────────┘  │   │  └───────────────────────────┘  │
-└─────────────────────────────────┘   └─────────────────────────────────┘
-```
+### 대상 클러스터의 선행 조건
 
-### Hub-Spoke 모델의 장점
+1. Hub의 Application Controller 및 기능상 필요한 Server/ApplicationSet ServiceAccount에 지원되는 Pod Identity 또는 IRSA 경로를 구성합니다. Repo Server의 Git/ECR 접근과 별개입니다.
+2. 관리 역할에는 **정확한 대상 역할 ARN**에 대한 `sts:AssumeRole`을 허용하고, 대상 역할은 해당 관리 역할만 신뢰하게 합니다.
+3. 대상 EKS의 인증 모드를 확인하고 대상 역할의 Access Entry를 준비합니다. `demo-app` namespace의 필요한 리소스만 허용하는 access policy/RBAC와, 인프라 관리용 NodePool 권한을 구분합니다. 아래 예제에서 namespace는 미리 만듭니다.
+4. Hub에서 대상 private API endpoint로의 DNS·라우팅·보안 그룹 접근을 확인합니다. IAM 권한이 있어도 네트워크가 없으면 연결되지 않습니다.
 
-| 장점 | 설명 |
-|------|------|
-| **중앙 집중식 관리** | 단일 ArgoCD 인스턴스에서 모든 클러스터의 배포를 관리하여 운영 복잡성 감소 |
-| **일관된 배포** | ApplicationSet을 통해 여러 클러스터에 동일한 정책과 구성을 일관되게 적용 |
-| **감사 추적** | 모든 배포 변경 사항이 Git에 기록되어 완전한 감사 추적 가능 |
-| **권한 분리** | Hub 클러스터에서만 배포 권한을 관리하여 보안 강화 |
-| **재해 복구** | 클러스터 간 독립성을 유지하면서 신속한 장애 복구 가능 |
+구체적인 역할·Access Entry 절차는 [Argo CD 설치](../gitops/argocd/01-installation.md)와 [EKS 접근 관리](../eks/02-eks-cluster-creation-part3.md)를 사용합니다. `aws-auth`의 `mapRoles` 전체를 덮어쓰거나 기본적으로 `system:masters`를 부여하지 않습니다.
 
-### 클러스터 등록 패턴
+Argo CD 3.5.2의 `awsAuthConfig.roleARN` 경로는 대상 역할을 AssumeRole하지만 별도의 ExternalId를 설정하는 필드가 없습니다. 대상 trust에 전달되지 않는 `sts:ExternalId` 조건을 넣으면 인증이 실패합니다. 그런 조건이 필요한 환경은 이를 지원하는 별도 인증 경로를 설계해야 합니다.
+
+### 실제 endpoint로 선언적 등록
+
+다음 스크립트를 각 대상에 대해 실행합니다. `CLUSTER_COLOR`와 대상 이름·역할을 바꾸면 서로 다른 Secret을 생성하며, kubeconfig의 기본 context를 변경하지 않습니다. 일반 namespace 접근 범위는 `demo-app`으로 제한하고 NodePool 관리를 위해 cluster resource 조회를 켭니다. 이것이 대상 RBAC 권한을 생성하는 것은 아닙니다.
 
 ```bash
-# 클러스터 등록 스크립트
-#!/bin/bash
-
-# 변수 설정
-MANAGEMENT_CLUSTER="management-cluster"
-BLUE_CLUSTER="blue-cluster"
-GREEN_CLUSTER="green-cluster"
-ARGOCD_NAMESPACE="argocd"
-
-# Management 클러스터 컨텍스트로 전환
-kubectl config use-context ${MANAGEMENT_CLUSTER}
-
-# ArgoCD CLI 로그인
-argocd login argocd.example.com --username admin --password ${ARGOCD_PASSWORD}
-
-# Blue 클러스터 등록
-aws eks update-kubeconfig --name ${BLUE_CLUSTER} --region ap-northeast-2 --alias ${BLUE_CLUSTER}
-argocd cluster add ${BLUE_CLUSTER} \
-  --name blue-production \
-  --label environment=production \
-  --label region=ap-northeast-2 \
-  --label zone=ap-northeast-2a
-
-# Green 클러스터 등록
-aws eks update-kubeconfig --name ${GREEN_CLUSTER} --region ap-northeast-2 --alias ${GREEN_CLUSTER}
-argocd cluster add ${GREEN_CLUSTER} \
-  --name green-production \
-  --label environment=production \
-  --label region=ap-northeast-2 \
-  --label zone=ap-northeast-2c
-
-# 등록된 클러스터 확인
-argocd cluster list
+# fixtures/register-cluster.sh
+#!/usr/bin/env bash
+set -euo pipefail
+: "${ARGOCD_CONTEXT:?Set the hub kubeconfig context}"
+: "${TARGET_EKS_NAME:?Set the actual target EKS cluster name}"
+: "${TARGET_AWS_REGION:?Set the target AWS region}"
+: "${TARGET_ROLE_ARN:?Set the pre-authorized target role ARN}"
+: "${CLUSTER_COLOR:?Set blue or green}"
+case "$CLUSTER_COLOR" in blue|green) ;; *) exit 2 ;; esac
+[[ "$TARGET_ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/.+ ]] || exit 2
+umask 077
+REVIEW_TMP="$(mktemp -d)"
+trap 'rm -rf -- "$REVIEW_TMP"' EXIT
+aws eks describe-cluster --name "$TARGET_EKS_NAME" --region "$TARGET_AWS_REGION" \
+  --query 'cluster.{name:name,server:endpoint,ca:certificateAuthority.data}' \
+  --output json > "$REVIEW_TMP/cluster.json"
+jq -e '(.name | type == "string" and length > 0)
+  and (.server | type == "string" and startswith("https://"))
+  and (.ca | type == "string" and length > 0)' "$REVIEW_TMP/cluster.json" >/dev/null
+jq --arg role "$TARGET_ROLE_ARN" --arg color "$CLUSTER_COLOR" '{
+  apiVersion:"v1",kind:"Secret",
+  metadata:{name:("workload-"+$color),namespace:"argocd",labels:{
+    "argocd.argoproj.io/secret-type":"cluster",
+    "environment":"production","cluster-color":$color,"gitops-target":"true"
+  }},
+  type:"Opaque",
+  stringData:{
+    name:("workload-"+$color),server:.server,namespaces:"demo-app",
+    clusterResources:"true",
+    config:({
+      awsAuthConfig:{clusterName:.name,roleARN:$role},
+      tlsClientConfig:{insecure:false,caData:.ca}
+    }|tojson)
+  }
+}' "$REVIEW_TMP/cluster.json" > "$REVIEW_TMP/secret.json"
+kubectl --context "$ARGOCD_CONTEXT" apply -f "$REVIEW_TMP/secret.json"
 ```
 
----
+EKS 조회 명령을 실행하는 운영자와 Hub Pod가 사용하는 역할은 별개입니다. Secret의 endpoint·CA를 가짜 EKS 호스트명으로 추측하지 않습니다. 추가 namespace가 필요하면 Secret의 `namespaces`, AppProject와 대상 권한을 함께 수정합니다. 캐시가 불필요한 리소스를 감시하지 않게 하려면 대상 RBAC와 `resource.respectRBAC` 등 Argo CD 캐시 설정도 검토합니다.
+
+`argocd cluster add <kubeconfig-context>`는 다른 등록 방법이며 대상 ServiceAccount/RBAC를 만들 수 있습니다. 단순한 읽기 명령이 아닙니다. CLI 로그인은 대화형 또는 SSO를 사용하고 비밀번호를 명령행 인자로 넘기지 않습니다.
 
 ## ArgoCD Terraform 설치
 
-Terraform을 사용하여 고가용성(HA) ArgoCD를 설치하고 구성합니다.
-
-### Helm Provider 설정
+기존 Hub EKS와 설치 권한·AWS CLI가 있는 실행 환경을 전제로 합니다. Helm Provider 3은 `kubernetes = { ... }` 객체를 사용합니다. 단기 EKS 토큰을 Terraform data source/state에 저장하는 대신 exec 인증으로 받습니다. AWS Provider에만 별도 assume_role을 설정했다면 exec의 AWS CLI도 동일한 의도된 자격 증명을 사용하도록 구성해야 합니다.
 
 ```hcl
-# providers.tf - Terraform 프로바이더 설정
-
+# terraform/main.tf
 terraform {
-  required_version = ">= 1.5.0"
-
+  required_version = ">= 1.10, < 2.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.25"
+      version = "= 6.64.0"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.12"
+      version = "= 3.3.0"
     }
   }
-
-  backend "s3" {
-    bucket         = "terraform-state-bucket"
-    key            = "argocd/terraform.tfstate"
-    region         = "ap-northeast-2"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
-  }
+  backend "s3" {}
 }
 
 provider "aws" {
   region = var.aws_region
-
-  default_tags {
-    tags = {
-      Environment = var.environment
-      ManagedBy   = "terraform"
-      Project     = "gitops-platform"
-    }
-  }
 }
 
-# EKS 클러스터 데이터 소스
-data "aws_eks_cluster" "management" {
+data "aws_eks_cluster" "hub" {
   name = var.management_cluster_name
-}
-
-data "aws_eks_cluster_auth" "management" {
-  name = var.management_cluster_name
-}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.management.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.management.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.management.token
 }
 
 provider "helm" {
-  kubernetes {
-    host                   = data.aws_eks_cluster.management.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.management.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.management.token
-  }
-}
-```
-
-### HA ArgoCD 배포
-
-```hcl
-# argocd.tf - ArgoCD HA 배포
-
-locals {
-  argocd_namespace = "argocd"
-  argocd_version   = "7.3.6"  # Helm 차트 버전 (ArgoCD 2.12.x)
-}
-
-# ArgoCD 네임스페이스 생성
-resource "kubernetes_namespace" "argocd" {
-  metadata {
-    name = local.argocd_namespace
-
-    labels = {
-      "app.kubernetes.io/managed-by" = "terraform"
-      "istio-injection"              = "disabled"
+  kubernetes = {
+    host                   = data.aws_eks_cluster.hub.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.hub.certificate_authority[0].data)
+    exec = {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", var.management_cluster_name, "--region", var.aws_region]
     }
   }
 }
 
-# ArgoCD Helm 설치
 resource "helm_release" "argocd" {
-  name       = "argocd"
-  namespace  = kubernetes_namespace.argocd.metadata[0].name
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  version    = local.argocd_version
-
-  timeout = 600
-  wait    = true
-
-  values = [
-    yamlencode({
-      # 전역 설정
-      global = {
-        domain = var.argocd_domain
-        logging = {
-          level  = "info"
-          format = "json"
-        }
-      }
-
-      # HA 설정 - Controller
-      controller = {
-        replicas = 2
-
-        resources = {
-          limits = {
-            cpu    = "2"
-            memory = "2Gi"
-          }
-          requests = {
-            cpu    = "500m"
-            memory = "512Mi"
-          }
-        }
-
-        # Controller 설정
-        env = [
-          {
-            name  = "ARGOCD_CONTROLLER_REPLICAS"
-            value = "2"
-          }
-        ]
-
-        metrics = {
-          enabled = true
-          serviceMonitor = {
-            enabled = true
-          }
-        }
-
-        # Pod Anti-Affinity (HA)
-        affinity = {
-          podAntiAffinity = {
-            preferredDuringSchedulingIgnoredDuringExecution = [
-              {
-                weight = 100
-                podAffinityTerm = {
-                  labelSelector = {
-                    matchLabels = {
-                      "app.kubernetes.io/name" = "argocd-application-controller"
-                    }
-                  }
-                  topologyKey = "kubernetes.io/hostname"
-                }
-              }
-            ]
-          }
-        }
-      }
-
-      # Server 설정
-      server = {
-        replicas = 3
-
-        autoscaling = {
-          enabled     = true
-          minReplicas = 3
-          maxReplicas = 10
-          targetCPUUtilizationPercentage = 70
-        }
-
-        resources = {
-          limits = {
-            cpu    = "1"
-            memory = "1Gi"
-          }
-          requests = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-        }
-
-        # Ingress 설정
-        ingress = {
-          enabled = true
-          ingressClassName = "alb"
-          annotations = {
-            "alb.ingress.kubernetes.io/scheme"       = "internet-facing"
-            "alb.ingress.kubernetes.io/target-type"  = "ip"
-            "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTPS\":443}]"
-            "alb.ingress.kubernetes.io/ssl-redirect" = "443"
-            "alb.ingress.kubernetes.io/certificate-arn" = var.acm_certificate_arn
-            "alb.ingress.kubernetes.io/healthcheck-path" = "/healthz"
-          }
-          hosts = [var.argocd_domain]
-          tls = [
-            {
-              hosts = [var.argocd_domain]
-            }
-          ]
-        }
-
-        # HTTPS 비활성화 (ALB에서 TLS 종료)
-        extraArgs = [
-          "--insecure"
-        ]
-
-        metrics = {
-          enabled = true
-          serviceMonitor = {
-            enabled = true
-          }
-        }
-
-        # Pod Anti-Affinity
-        affinity = {
-          podAntiAffinity = {
-            preferredDuringSchedulingIgnoredDuringExecution = [
-              {
-                weight = 100
-                podAffinityTerm = {
-                  labelSelector = {
-                    matchLabels = {
-                      "app.kubernetes.io/name" = "argocd-server"
-                    }
-                  }
-                  topologyKey = "kubernetes.io/hostname"
-                }
-              }
-            ]
-          }
-        }
-      }
-
-      # Repo Server 설정
-      repoServer = {
-        replicas = 3
-
-        autoscaling = {
-          enabled     = true
-          minReplicas = 3
-          maxReplicas = 10
-          targetCPUUtilizationPercentage = 70
-        }
-
-        resources = {
-          limits = {
-            cpu    = "2"
-            memory = "2Gi"
-          }
-          requests = {
-            cpu    = "500m"
-            memory = "512Mi"
-          }
-        }
-
-        # Git 자격 증명 볼륨
-        volumes = [
-          {
-            name = "custom-tools"
-            emptyDir = {}
-          }
-        ]
-
-        volumeMounts = [
-          {
-            name      = "custom-tools"
-            mountPath = "/custom-tools"
-          }
-        ]
-
-        # Init Container (Helm, Kustomize 등 도구 설치)
-        initContainers = [
-          {
-            name  = "download-tools"
-            image = "alpine:3.18"
-            command = ["sh", "-c"]
-            args = [<<-EOT
-              # Helm 설치
-              wget https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz
-              tar -xvf helm-v3.14.0-linux-amd64.tar.gz
-              mv linux-amd64/helm /custom-tools/helm
-
-              # AWS CLI 설치 (ECR 인증용)
-              apk add --no-cache aws-cli
-
-              chmod +x /custom-tools/*
-              EOT
-            ]
-            volumeMounts = [
-              {
-                name      = "custom-tools"
-                mountPath = "/custom-tools"
-              }
-            ]
-          }
-        ]
-
-        metrics = {
-          enabled = true
-          serviceMonitor = {
-            enabled = true
-          }
-        }
-      }
-
-      # Redis HA 설정
-      redis-ha = {
-        enabled = true
-
-        replicas = 3
-
-        haproxy = {
-          enabled  = true
-          replicas = 3
-        }
-
-        redis = {
-          resources = {
-            limits = {
-              cpu    = "500m"
-              memory = "512Mi"
-            }
-            requests = {
-              cpu    = "100m"
-              memory = "128Mi"
-            }
-          }
-        }
-
-        exporter = {
-          enabled = true
-        }
-      }
-
-      # 단일 Redis 비활성화 (redis-ha 사용)
-      redis = {
-        enabled = false
-      }
-
-      # ApplicationSet Controller
-      applicationSet = {
-        replicas = 2
-
-        resources = {
-          limits = {
-            cpu    = "500m"
-            memory = "512Mi"
-          }
-          requests = {
-            cpu    = "100m"
-            memory = "128Mi"
-          }
-        }
-
-        metrics = {
-          enabled = true
-          serviceMonitor = {
-            enabled = true
-          }
-        }
-      }
-
-      # Notifications Controller
-      notifications = {
-        enabled = true
-
-        resources = {
-          limits = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-          requests = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-        }
-
-        metrics = {
-          enabled = true
-          serviceMonitor = {
-            enabled = true
-          }
-        }
-      }
-
-      # Dex (OIDC) 비활성화 - IAM Identity Center 사용
-      dex = {
-        enabled = false
-      }
-
-      # 설정 ConfigMap
-      configs = {
-        cm = {
-          # 애플리케이션 재동기화 주기
-          "timeout.reconciliation" = "180s"
-
-          # 리소스 추적 방법
-          "application.resourceTrackingMethod" = "annotation"
-
-          # 헬스 체크 사용자 정의
-          "resource.customizations.health.argoproj.io_Application" = <<-EOT
-            hs = {}
-            hs.status = "Healthy"
-            hs.message = ""
-            if obj.status ~= nil then
-              if obj.status.health ~= nil then
-                hs.status = obj.status.health.status
-                hs.message = obj.status.health.message
-              end
-            end
-            return hs
-            EOT
-        }
-
-        params = {
-          # 서버 설정
-          "server.insecure" = true
-
-          # Controller 설정
-          "controller.status.processors"   = "20"
-          "controller.operation.processors" = "10"
-          "controller.repo.server.timeout.seconds" = "180"
-
-          # Repo Server 설정
-          "reposerver.parallelism.limit" = "10"
-        }
-
-        # 저장소 자격 증명 템플릿
-        credentialTemplates = {
-          github-https = {
-            url      = "https://github.com/myorg"
-            username = "git"
-            password = var.github_token
-          }
-        }
-
-        # 저장소 등록
-        repositories = {
-          app-repo = {
-            url  = "https://github.com/myorg/app-manifests"
-            name = "app-manifests"
-          }
-          infra-repo = {
-            url  = "https://github.com/myorg/infra-manifests"
-            name = "infra-manifests"
-          }
-        }
-      }
-
-      # RBAC 설정
-      rbac = {
-        create = true
-
-        policy = {
-          csv = <<-EOT
-            # 관리자 역할
-            p, role:admin, applications, *, */*, allow
-            p, role:admin, clusters, *, *, allow
-            p, role:admin, repositories, *, *, allow
-            p, role:admin, projects, *, *, allow
-            p, role:admin, logs, *, *, allow
-            p, role:admin, exec, *, *, allow
-
-            # 개발자 역할
-            p, role:developer, applications, get, */*, allow
-            p, role:developer, applications, sync, */*, allow
-            p, role:developer, applications, action/*, */*, allow
-            p, role:developer, logs, get, */*, allow
-            p, role:developer, repositories, get, *, allow
-            p, role:developer, projects, get, *, allow
-
-            # 읽기 전용 역할
-            p, role:readonly, applications, get, */*, allow
-            p, role:readonly, logs, get, */*, allow
-            p, role:readonly, repositories, get, *, allow
-            p, role:readonly, projects, get, *, allow
-            p, role:readonly, clusters, get, *, allow
-
-            # 그룹 매핑 (IAM Identity Center)
-            g, PlatformAdmins, role:admin
-            g, Developers, role:developer
-            g, Viewers, role:readonly
-            EOT
-
-          default = "role:readonly"
-        }
-      }
-    })
-  ]
+  name             = "argocd"
+  namespace        = "argocd"
+  create_namespace = true
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "10.8.4"
+  timeout          = 900
+  wait             = true
+  values           = [file("${path.module}/argocd-values.yaml")]
 }
 ```
 
-### 변수 정의
-
 ```hcl
-# variables.tf
-
+# terraform/variables.tf
 variable "aws_region" {
-  description = "AWS 리전"
-  type        = string
-  default     = "ap-northeast-2"
-}
-
-variable "environment" {
-  description = "환경 이름"
-  type        = string
-  default     = "production"
+  type    = string
+  default = "ap-northeast-2"
 }
 
 variable "management_cluster_name" {
-  description = "Management EKS 클러스터 이름"
-  type        = string
-}
-
-variable "argocd_domain" {
-  description = "ArgoCD 도메인"
-  type        = string
-}
-
-variable "acm_certificate_arn" {
-  description = "ACM 인증서 ARN"
-  type        = string
-}
-
-variable "github_token" {
-  description = "GitHub Personal Access Token"
-  type        = string
-  sensitive   = true
+  type = string
+  validation {
+    condition     = can(regex("^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$", var.management_cluster_name))
+    error_message = "Use the actual EKS management cluster name."
+  }
 }
 ```
 
----
+별도 `backend.hcl`에 [01장](01-infrastructure-setup.md)의 계정·환경별 버킷, 고유 state key, `encrypt = true`, `use_lockfile = true`를 지정합니다. `terraform init -backend-config=backend.hcl` 후 plan을 검토합니다. 예전 DynamoDB 잠금 설정이나 다른 root의 state key를 그대로 복사하지 않습니다.
+
+같은 디렉터리에 아래 `argocd-values.yaml`을 저장합니다. [검토된 설치 가이드](../gitops/argocd/01-installation.md)의 HA 시작 구성입니다. Helm이 소유하는 ConfigMap을 별도 Terraform 리소스나 kubectl로 중복 관리하지 않습니다.
+
+```yaml
+# fixtures/argocd-values.yaml
+fullnameOverride: argocd
+global:
+  domain: argocd.example.com
+configs:
+  params:
+    server.insecure: false
+  cm:
+    url: https://argocd.example.com
+    users.anonymous.enabled: 'false'
+    exec.enabled: 'false'
+controller:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: '1'
+      memory: 2Gi
+  pdb:
+    enabled: true
+    minAvailable: 1
+server:
+  replicas: 2
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  pdb:
+    enabled: true
+    minAvailable: 1
+repoServer:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: '1'
+      memory: 1Gi
+  pdb:
+    enabled: true
+    minAvailable: 1
+applicationSet:
+  replicas: 2
+  pdb:
+    enabled: true
+    minAvailable: 1
+notifications:
+  enabled: true
+redis:
+  enabled: false
+redis-ha:
+  enabled: true
+  replicas: 3
+  persistentVolume:
+    enabled: false
+  haproxy:
+    enabled: true
+    replicas: 3
+```
+
+이 구성은 HTTPS ClusterIP이며 외부 Ingress는 끕니다. 실제 SSO에는 사용자가 접근할 수 있는 HTTPS 도메인과 정확한 라우팅이 필요합니다. [설치 가이드의 ALB 예제](../gitops/argocd/01-installation.md)를 연결할 때 backend HTTPS와 `server.insecure=false`를 맞춥니다. HTTP로 전환한다면 health check와 backend protocol도 함께 맞춰야 합니다. native gRPC와 gRPC-Web 경로도 구분합니다.
+
+Application Controller의 여러 replica는 **클러스터 sharding**이며 모두 standby인 단일 leader 모델이 아닙니다. ApplicationSet은 별도의 leader election을 사용합니다. Server는 stateless이므로 replica가 늘었다는 이유만으로 sticky session이 필수가 되지 않습니다. Dex는 번들 저장소 구성을 고려해 기본 1개로 유지합니다.
+
+Redis는 재구성 가능한 캐시이고 핵심 설정은 Kubernetes 객체에 있습니다. Redis HA는 모든 장애에서 무중단을 보장하지 않습니다. Replica·PDB·노드 분산과 충분한 용량을 함께 설계하며, PDB가 AZ 장애나 강제 종료까지 막는 것은 아닙니다. ServiceMonitor는 Prometheus Operator CRD가 준비된 뒤 켭니다.
 
 ## NodePool GitOps 관리
 
-EKS Auto Mode의 NodePool은 Kubernetes CRD(Custom Resource Definition)로 정의되므로, Terraform이 아닌 ArgoCD를 통해 GitOps 방식으로 관리하는 것이 적합합니다. 이를 통해 NodePool 변경 사항을 Git에서 추적하고, 여러 클러스터에 일관되게 적용할 수 있습니다.
+NodePool은 Kubernetes CRD여서 Argo CD로 관리할 수 있지만 Terraform으로 관리할 수 없다는 뜻은 아닙니다. 한 리소스에 하나의 소유 방식을 정합니다. 기존 built-in NodePool이나 Terraform 소유 리소스를 같은 이름으로 무심코 인수하지 않습니다.
 
-### 왜 NodePool을 ArgoCD로 관리하는가?
+다음은 `default` Auto Mode NodeClass가 준비된 예제입니다. 기본 NodeClass의 subnet 선택 범위와 대상 AZ가 맞아야 합니다. 아래 파일 구조를 그대로 준비합니다.
 
-| Terraform 관리 | ArgoCD 관리 |
-|---------------|-------------|
-| 인프라 프로비저닝에 적합 | Kubernetes 리소스 관리에 적합 |
-| 상태 파일 관리 필요 | Git이 단일 진실의 원천 |
-| 수동 `terraform apply` 필요 | 자동 동기화 및 자체 치유 |
-| 클러스터별 별도 관리 | 멀티클러스터 일관성 유지 |
-
-### Blue 클러스터 NodePool 예제
+```text
+nodepools/
+  base/kustomization.yaml
+  base/nodepool.yaml
+  overlays/blue/kustomization.yaml
+  overlays/green/kustomization.yaml
+```
 
 ```yaml
-# manifests/nodepools/blue-cluster/general-purpose.yaml
+# nodepools/base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - nodepool.yaml
+```
+
+```yaml
+# nodepools/base/nodepool.yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: general-purpose
-  labels:
-    cluster: blue
-    environment: production
-    managed-by: argocd
+  name: workloads
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=confirm,Delete=confirm
 spec:
   template:
     metadata:
       labels:
-        cluster: blue
-        nodepool: general-purpose
+        workload-type: applications
     spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-generation
-          operator: Gt
-          values: ["5"]
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values: ["ap-northeast-2a"]  # Blue 클러스터 - AZ-a
-
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
-
-  limits:
-    cpu: 1000
-    memory: 2000Gi
-
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 5m
-    budgets:
-      - nodes: "20%"
-
-  weight: 100
-
----
-# manifests/nodepools/blue-cluster/compute-optimized.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: compute-optimized
-  labels:
-    cluster: blue
-    environment: production
-    managed-by: argocd
-spec:
-  template:
-    metadata:
-      labels:
-        cluster: blue
-        nodepool: compute-optimized
-    spec:
       requirements:
         - key: kubernetes.io/arch
           operator: In
-          values: ["amd64"]
+          values: [amd64, arm64]
         - key: karpenter.sh/capacity-type
           operator: In
-          values: ["on-demand"]
-        - key: karpenter.k8s.aws/instance-category
+          values: [on-demand]
+        - key: node.kubernetes.io/instance-type
           operator: In
-          values: ["c"]
-        - key: karpenter.k8s.aws/instance-family
-          operator: In
-          values: ["c7i", "c7a", "c6i"]
-        - key: karpenter.k8s.aws/instance-size
-          operator: In
-          values: ["xlarge", "2xlarge", "4xlarge"]
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values: ["ap-northeast-2a"]
-
-      taints:
-        - key: workload-type
-          value: compute-intensive
-          effect: NoSchedule
-
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: default
-
+          values: [m7i.large, m7i.xlarge, m7g.large, m7g.xlarge]
   limits:
-    cpu: 500
-    memory: 1000Gi
-
+    cpu: "100"
+    memory: 200Gi
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 10m
     budgets:
       - nodes: "10%"
-
-  weight: 50
-```
-
-### Green 클러스터 NodePool 예제
-
-```yaml
-# manifests/nodepools/green-cluster/general-purpose.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: general-purpose
-  labels:
-    cluster: green
-    environment: production
-    managed-by: argocd
-spec:
-  template:
-    metadata:
-      labels:
-        cluster: green
-        nodepool: general-purpose
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["c", "m", "r"]
-        - key: karpenter.k8s.aws/instance-generation
-          operator: Gt
-          values: ["5"]
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values: ["ap-northeast-2c"]  # Green 클러스터 - AZ-c
-
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: default
-
-  limits:
-    cpu: 1000
-    memory: 2000Gi
-
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 5m
-    budgets:
-      - nodes: "20%"
-
-  weight: 100
-
----
-# manifests/nodepools/green-cluster/compute-optimized.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: compute-optimized
-  labels:
-    cluster: green
-    environment: production
-    managed-by: argocd
-spec:
-  template:
-    metadata:
-      labels:
-        cluster: green
-        nodepool: compute-optimized
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["c"]
-        - key: karpenter.k8s.aws/instance-family
-          operator: In
-          values: ["c7i", "c7a", "c6i"]
-        - key: karpenter.k8s.aws/instance-size
-          operator: In
-          values: ["xlarge", "2xlarge", "4xlarge"]
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values: ["ap-northeast-2c"]
-
-      taints:
-        - key: workload-type
-          value: compute-intensive
-          effect: NoSchedule
-
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: default
-
-  limits:
-    cpu: 500
-    memory: 1000Gi
-
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 10m
-    budgets:
-      - nodes: "10%"
-
-  weight: 50
-```
-
-### Data Processing NodePool (전용)
-
-```yaml
-# manifests/nodepools/shared/data-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: data-processing
-  labels:
-    environment: production
-    workload-type: data
-    managed-by: argocd
-spec:
-  template:
-    metadata:
-      labels:
-        nodepool: data-processing
-        workload-type: data
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand"]  # 데이터 워크로드는 On-Demand만
-        - key: karpenter.k8s.aws/instance-category
-          operator: In
-          values: ["r", "i"]  # 메모리/스토리지 최적화
-        - key: karpenter.k8s.aws/instance-family
-          operator: In
-          values: ["r7i", "r7a", "i4i", "im4gn"]
-        - key: karpenter.k8s.aws/instance-size
-          operator: In
-          values: ["2xlarge", "4xlarge", "8xlarge"]
-        # Zone Affinity는 클러스터별로 오버라이드
-
-      taints:
-        - key: workload-type
-          value: data-processing
-          effect: NoSchedule
-
-      nodeClassRef:
-        group: eks.amazonaws.com
-        kind: NodeClass
-        name: data-optimized
-
-  limits:
-    cpu: 200
-    memory: 800Gi
-
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 30m  # 데이터 워크로드는 더 긴 대기 시간
-    budgets:
-      - nodes: "5%"  # 보수적인 중단 예산
-
-  weight: 30
-
----
-# manifests/nodepools/shared/data-nodeclass.yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: data-optimized
-spec:
-  amiSelectorTerms:
-    - alias: al2023@latest
-
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      rootVolume: true
-      ebs:
-        volumeSize: 100Gi
-        volumeType: gp3
-        iops: 4000
-        throughput: 250
-        encrypted: true
-        deleteOnTermination: true
-
-    # 추가 데이터 볼륨
-    - deviceName: /dev/xvdb
-      ebs:
-        volumeSize: 500Gi
-        volumeType: gp3
-        iops: 10000
-        throughput: 500
-        encrypted: true
-        deleteOnTermination: true
-
-  instanceStorePolicy: RAID0
-
-  tags:
-    Purpose: data-processing
-    DataClassification: confidential
-```
-
-### NodePool 관리용 ArgoCD Application
-
-```yaml
-# applications/nodepool-management.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: nodepool-blue-cluster
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: infrastructure
-  source:
-    repoURL: https://github.com/myorg/infra-manifests
-    targetRevision: main
-    path: manifests/nodepools/blue-cluster
-
-  destination:
-    server: https://blue-cluster.ap-northeast-2.eks.amazonaws.com
-    namespace: kube-system
-
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-      allowEmpty: false
-    syncOptions:
-      - CreateNamespace=false
-      - ServerSideApply=true
-      - RespectIgnoreDifferences=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: nodepool-green-cluster
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: infrastructure
-  source:
-    repoURL: https://github.com/myorg/infra-manifests
-    targetRevision: main
-    path: manifests/nodepools/green-cluster
-
-  destination:
-    server: https://green-cluster.ap-northeast-2.eks.amazonaws.com
-    namespace: kube-system
-
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - ServerSideApply=true
-```
-
----
-
-## ApplicationSet 전략
-
-ApplicationSet은 여러 클러스터나 환경에 애플리케이션을 효율적으로 배포하기 위한 ArgoCD의 기능입니다. 다양한 Generator를 사용하여 동적으로 Application을 생성합니다.
-
-### Cluster Generator
-
-등록된 모든 클러스터 또는 특정 레이블의 클러스터에 애플리케이션을 배포합니다.
-
-```yaml
-# applicationsets/cluster-generator.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: platform-services
-  namespace: argocd
-spec:
-  generators:
-    # 모든 프로덕션 클러스터에 배포
-    - clusters:
-        selector:
-          matchLabels:
-            environment: production
-
-  template:
-    metadata:
-      name: '{{name}}-platform-services'
-      labels:
-        cluster: '{{name}}'
-        environment: '{{metadata.labels.environment}}'
-    spec:
-      project: platform
-      source:
-        repoURL: https://github.com/myorg/platform-manifests
-        targetRevision: main
-        path: platform-services/overlays/{{metadata.labels.environment}}
-        kustomize:
-          namePrefix: '{{name}}-'
-
-      destination:
-        server: '{{server}}'
-        namespace: platform
-
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ServerSideApply=true
-
----
-# 특정 클러스터 그룹에 배포
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: monitoring-stack
-  namespace: argocd
-spec:
-  generators:
-    - clusters:
-        selector:
-          matchExpressions:
-            - key: environment
-              operator: In
-              values: ["production", "staging"]
-            - key: region
-              operator: In
-              values: ["ap-northeast-2"]
-
-  template:
-    metadata:
-      name: '{{name}}-monitoring'
-    spec:
-      project: observability
-      source:
-        repoURL: https://github.com/myorg/observability-manifests
-        targetRevision: main
-        path: monitoring
-        helm:
-          valueFiles:
-            - values-{{metadata.labels.environment}}.yaml
-
-      destination:
-        server: '{{server}}'
-        namespace: monitoring
-
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-```
-
-### Git Generator
-
-Git 저장소의 디렉토리 구조 또는 파일을 기반으로 Application을 생성합니다.
-
-```yaml
-# applicationsets/git-directory-generator.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: microservices
-  namespace: argocd
-spec:
-  generators:
-    # 디렉토리 기반 생성
-    - git:
-        repoURL: https://github.com/myorg/app-manifests
-        revision: main
-        directories:
-          - path: apps/*
-          - path: apps/*/overlays/production
-            exclude: true  # 직접 경로는 제외
-
-  template:
-    metadata:
-      name: '{{path.basename}}'
-      labels:
-        app: '{{path.basename}}'
-    spec:
-      project: applications
-      source:
-        repoURL: https://github.com/myorg/app-manifests
-        targetRevision: main
-        path: '{{path}}/overlays/production'
-
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: '{{path.basename}}'
-
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-
----
-# 파일 기반 생성 (JSON/YAML 설정 파일)
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: apps-from-config
-  namespace: argocd
-spec:
-  generators:
-    - git:
-        repoURL: https://github.com/myorg/app-manifests
-        revision: main
-        files:
-          - path: config/apps/*.yaml
-
-  template:
-    metadata:
-      name: '{{name}}'
-      labels:
-        team: '{{team}}'
-        tier: '{{tier}}'
-    spec:
-      project: '{{project}}'
-      source:
-        repoURL: '{{repoURL}}'
-        targetRevision: '{{targetRevision}}'
-        path: '{{path}}'
-        helm:
-          valueFiles:
-            - '{{valuesFile}}'
-
-      destination:
-        server: '{{destinationServer}}'
-        namespace: '{{namespace}}'
-
-      syncPolicy:
-        automated:
-          prune: '{{prune}}'
-          selfHeal: '{{selfHeal}}'
 ```
 
 ```yaml
-# config/apps/user-service.yaml (예제 설정 파일)
-name: user-service
-team: backend
-tier: api
-project: applications
-repoURL: https://github.com/myorg/user-service
-targetRevision: main
-path: deploy/helm
-valuesFile: values-production.yaml
-destinationServer: https://kubernetes.default.svc
-namespace: backend
-prune: true
-selfHeal: true
+# nodepools/overlays/blue/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      group: karpenter.sh
+      version: v1
+      kind: NodePool
+      name: workloads
+    patch: |
+      - op: add
+        path: /spec/template/metadata/labels/cluster-color
+        value: blue
+      - op: add
+        path: /spec/template/spec/requirements/-
+        value:
+          key: topology.kubernetes.io/zone
+          operator: In
+          values: [ap-northeast-2a]
 ```
 
-### Matrix Generator
-
-여러 Generator를 조합하여 클러스터 × 애플리케이션 매트릭스를 생성합니다.
-
 ```yaml
-# applicationsets/matrix-generator.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: multi-cluster-apps
-  namespace: argocd
-spec:
-  generators:
-    # Matrix: 클러스터 × 앱
-    - matrix:
-        generators:
-          # 첫 번째: 클러스터 목록
-          - clusters:
-              selector:
-                matchLabels:
-                  environment: production
-
-          # 두 번째: 앱 목록 (Git 디렉토리)
-          - git:
-              repoURL: https://github.com/myorg/app-manifests
-              revision: main
-              directories:
-                - path: apps/*
-
-  template:
-    metadata:
-      name: '{{name}}-{{path.basename}}'
-      labels:
-        cluster: '{{name}}'
-        app: '{{path.basename}}'
-    spec:
-      project: applications
-      source:
-        repoURL: https://github.com/myorg/app-manifests
-        targetRevision: main
-        path: '{{path}}/overlays/{{metadata.labels.environment}}'
-        kustomize:
-          commonAnnotations:
-            cluster: '{{name}}'
-            zone: '{{metadata.labels.zone}}'
-
-      destination:
-        server: '{{server}}'
-        namespace: '{{path.basename}}'
-
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ServerSideApply=true
-
----
-# 중첩 Matrix (클러스터 × 환경 × 앱)
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: nested-matrix-apps
-  namespace: argocd
-spec:
-  generators:
-    - matrix:
-        generators:
-          - clusters:
-              selector:
-                matchLabels:
-                  type: workload
-
-          - matrix:
-              generators:
-                - list:
-                    elements:
-                      - environment: staging
-                        namespace: staging
-                      - environment: production
-                        namespace: prod
-
-                - git:
-                    repoURL: https://github.com/myorg/app-manifests
-                    revision: main
-                    directories:
-                      - path: microservices/*
-
-  template:
-    metadata:
-      name: '{{name}}-{{environment}}-{{path.basename}}'
-    spec:
-      project: default
-      source:
-        repoURL: https://github.com/myorg/app-manifests
-        targetRevision: main
-        path: '{{path}}/overlays/{{environment}}'
-
-      destination:
-        server: '{{server}}'
-        namespace: '{{namespace}}-{{path.basename}}'
+# nodepools/overlays/green/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      group: karpenter.sh
+      version: v1
+      kind: NodePool
+      name: workloads
+    patch: |
+      - op: add
+        path: /spec/template/metadata/labels/cluster-color
+        value: green
+      - op: add
+        path: /spec/template/spec/requirements/-
+        value:
+          key: topology.kubernetes.io/zone
+          operator: In
+          values: [ap-northeast-2c]
 ```
 
-### PR Generator (프리뷰 환경)
+`kustomize build nodepools/overlays/blue`와 green을 각각 검토합니다. 표준 instance-type 조건을 사용하므로 self-managed Karpenter의 `karpenter.k8s.aws/*` 키를 Auto Mode에 섞지 않습니다. 스케줄할 Pod에도 필요한 `workload-type`/아키텍처/배치 조건을 맞춰야 합니다.
 
-Pull Request 기반으로 프리뷰 환경을 자동 생성합니다.
+Auto Mode `NodeClass`에 self-managed `EC2NodeClass`의 `amiSelectorTerms`, `blockDeviceMappings`, `instanceStorePolicy`를 복사하지 않습니다. 커스텀 Auto Mode NodeClass에는 실제 node role·subnet·security group 선택자와 지원되는 `ephemeralStorage` 등을 사용하며, 별도 node role이면 필요한 Auto Mode node access entry도 준비합니다. DB 영속 데이터는 임시 디스크와 별도로 설계합니다. [NodePool/NodeClass 가이드](../eks-auto-mode/02-nodepool-configuration.md)를 참고합니다.
+
+### 프로젝트와 수동 승인
+
+다음 두 AppProject를 Hub에 생성하고 Git URL을 실제 승인된 저장소로 바꿉니다. 대상 이름은 앞의 등록 스크립트와 같습니다. 인프라 프로젝트에는 NodePool만, 애플리케이션 프로젝트에는 필요한 namespaced 종류만 허용합니다. AppProject는 Kubernetes RBAC나 비신뢰 코드의 sandbox를 대신하지 않습니다.
 
 ```yaml
-# applicationsets/pr-generator.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: preview-environments
-  namespace: argocd
-spec:
-  generators:
-    - pullRequest:
-        github:
-          owner: myorg
-          repo: myapp
-          tokenRef:
-            secretName: github-token
-            key: token
-          labels:
-            - preview
-            - deploy
-        requeueAfterSeconds: 60
-
-  template:
-    metadata:
-      name: 'preview-{{branch_slug}}-{{number}}'
-      labels:
-        app: myapp
-        type: preview
-        pr: '{{number}}'
-      annotations:
-        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: preview-notifications
-    spec:
-      project: previews
-      source:
-        repoURL: https://github.com/myorg/myapp
-        targetRevision: '{{head_sha}}'
-        path: deploy/preview
-        kustomize:
-          namePrefix: 'pr-{{number}}-'
-          commonLabels:
-            app.kubernetes.io/instance: 'pr-{{number}}'
-          images:
-            - 'myapp={{head_short_sha}}'
-
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: 'preview-{{number}}'
-
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-
-      # TTL: PR 병합/닫힘 후 자동 삭제
-      info:
-        - name: PR
-          value: 'https://github.com/myorg/myapp/pull/{{number}}'
-
----
-# 프리뷰 환경 정리를 위한 Project 설정
+# fixtures/projects.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: previews
+  name: infrastructure
   namespace: argocd
 spec:
-  description: Preview environments for pull requests
-  sourceRepos:
-    - 'https://github.com/myorg/*'
-
+  sourceRepos: [https://github.com/REPLACE_ORG/infra-manifests.git]
   destinations:
-    - namespace: 'preview-*'
-      server: https://kubernetes.default.svc
-
+    - name: workload-blue
+      namespace: demo-app
+    - name: workload-green
+      namespace: demo-app
   clusterResourceWhitelist:
-    - group: ''
-      kind: Namespace
-
-  orphanedResources:
-    warn: true
-    ignore:
-      - group: ''
-        kind: ConfigMap
-        name: kube-root-ca.crt
-```
-
-### Sync Wave 기반 배포
-
-`sync-wave` 어노테이션을 사용하여 리소스 배포 순서를 제어합니다.
-
-```yaml
-# manifests/app/base/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"  # 마지막에 배포
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    # ...
-
+    - group: karpenter.sh
+      kind: NodePool
+  namespaceResourceWhitelist: []
 ---
-# manifests/app/base/configmap.yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
 metadata:
-  name: myapp-config
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"  # 첫 번째로 생성
-data:
-  # ...
-
----
-# manifests/app/base/service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: myapp
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"  # 두 번째로 생성
+  name: applications
+  namespace: argocd
 spec:
-  # ...
-
----
-# manifests/app/base/hpa.yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: myapp
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"  # Deployment 후 생성
-spec:
-  # ...
+  sourceRepos: [https://github.com/REPLACE_ORG/app-manifests.git]
+  destinations:
+    - name: workload-blue
+      namespace: demo-app
+    - name: workload-green
+      namespace: demo-app
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
 ```
 
 ```yaml
-# applicationsets/wave-based-deployment.yaml
+# fixtures/nodepool-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nodepools-blue
+  namespace: argocd
+spec:
+  project: infrastructure
+  source:
+    repoURL: https://github.com/REPLACE_ORG/infra-manifests.git
+    targetRevision: main
+    path: nodepools/overlays/blue
+  destination:
+    name: workload-blue
+    namespace: demo-app
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+```
+
+Green은 Application 이름·destination·overlay 경로를 함께 바꿉니다. NodePool 예제는 자동 동기화를 켜지 않고 변경을 먼저 검토합니다. Application에는 cascade finalizer를 넣지 않았고 NodePool에 삭제·prune 확인 옵션을 둡니다. `automated.prune=false`만으로 모든 삭제 경로가 막히는 것은 아닙니다.
+
+NodePool 변경은 drift와 노드 교체로 이어질 수 있습니다. Disruption budget은 적용되는 자발적 중단을 제한하며 만료·Spot interruption·강제 삭제에 대한 만능 보호가 아닙니다. Auto Mode 노드 수명 제한, PDB, drain 시간과 대체 용량을 함께 고려합니다.
+
+## ApplicationSet 전략
+
+Generator가 만들어 내는 Application과 실제 배포 경로를 먼저 확인합니다. 예제는 기존 `demo-app` namespace를 사용합니다. Git 저장소의 application 경로에는 유효한 Kustomization과 서로 충돌하지 않는 이름의 리소스가 있어야 합니다.
+
+### Cluster Generator
+
+앞에서 등록한 `gitops-target=true` 클러스터만 선택합니다. 다음 Cluster 예제와 뒤의 Matrix 예제는 **대안**입니다. 같은 frontend 리소스를 두 Application에서 동시에 관리하지 않습니다.
+
+```yaml
+# fixtures/cluster-appset.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: staged-rollout
+  name: frontend-clusters
   namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: [missingkey=error]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
-    - list:
-        elements:
-          - cluster: staging
-            server: https://staging.eks.amazonaws.com
-            wave: "1"
-          - cluster: production-blue
-            server: https://blue.eks.amazonaws.com
-            wave: "2"
-          - cluster: production-green
-            server: https://green.eks.amazonaws.com
-            wave: "3"
-
+    - clusters:
+        selector:
+          matchLabels:
+            gitops-target: "true"
+            environment: production
   template:
     metadata:
-      name: 'myapp-{{cluster}}'
-      annotations:
-        argocd.argoproj.io/sync-wave: '{{wave}}'
+      name: '{{.nameNormalized}}-frontend'
     spec:
       project: applications
       source:
-        repoURL: https://github.com/myorg/app-manifests
+        repoURL: https://github.com/REPLACE_ORG/app-manifests.git
         targetRevision: main
-        path: myapp/overlays/{{cluster}}
-
+        path: 'apps/frontend/overlays/{{index .metadata.labels "cluster-color"}}'
       destination:
-        server: '{{server}}'
-        namespace: myapp
-
+        name: '{{.name}}'
+        namespace: demo-app
       syncPolicy:
         automated:
-          prune: true
+          prune: false
           selfHeal: true
-        syncOptions:
-          - ApplyOutOfSyncOnly=true
 ```
 
----
+`nameNormalized`는 Kubernetes 이름에 적합한 값이고 `name`은 등록된 대상 이름입니다. 하이픈이 있는 label은 Go template의 `index`로 조회합니다. Git file generator에서 읽는 설정에는 `sourcePath` 같은 이름을 사용해 generator의 `.path` 메타데이터와 충돌시키지 않습니다.
+
+### Matrix와 Git Directory Generator
+
+```yaml
+# fixtures/matrix-appset.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: application-matrix
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: [missingkey=error]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  gitops-target: "true"
+                  environment: production
+          - git:
+              repoURL: https://github.com/REPLACE_ORG/app-manifests.git
+              revision: main
+              directories:
+                - path: apps/*
+                - path: apps/internal
+                  exclude: true
+  template:
+    metadata:
+      name: '{{.nameNormalized}}-{{.path.basenameNormalized}}'
+    spec:
+      project: applications
+      source:
+        repoURL: https://github.com/REPLACE_ORG/app-manifests.git
+        targetRevision: main
+        path: '{{.path.path}}/overlays/{{index .metadata.labels "cluster-color"}}'
+      destination:
+        name: '{{.name}}'
+        namespace: demo-app
+      syncPolicy:
+        automated:
+          prune: false
+          selfHeal: true
+```
+
+이 Matrix에는 **두 개의 자식 generator**가 있습니다. 두 클러스터 × 세 앱이면 조건에 맞는 조합 여섯 개를 생성합니다. 조합 generator를 무제한 깊이로 중첩할 수는 없습니다. `apps/internal` 자체를 제외하며, `apps/internal/*`만 제외해 부모 디렉터리까지 사라진다고 가정하지 않습니다.
+
+Go template은 문자열 필드에 적용됩니다. `prune: '{{.prune}}'`처럼 boolean 필드에 문자열 템플릿을 넣거나 YAML key에 `if`를 쓰지 않습니다. boolean은 명시적으로 두고 조건부 객체가 필요하면 검증한 `templatePatch`를 사용합니다. 경로·project·destination을 외부 입력으로 자유롭게 바꾸는 템플릿은 권한 상승 경로를 만들 수 있습니다.
+
+`preserveResourcesOnDeletion=true`는 생성 Application 삭제 시 리소스 보존을 위한 선택입니다. 기존 finalizer를 자동으로 제거하는 이행 절차가 아니며, Application의 명시적 prune·수동 삭제와도 별개입니다. Git에서 빠진 리소스를 언제 정리할지 운영 절차를 정합니다.
+
+### 순서와 PR 프리뷰
+
+- 한 Application의 sync wave는 해당 sync에서 리소스 적용 순서를 정합니다. ApplicationSet이 생성한 Application들에 wave 번호만 붙여도 클러스터 간 배포가 순차 실행되는 것은 아닙니다.
+- 클러스터 간 승인·건강 상태 기반 진행은 별도 promotion workflow 또는 지원되는 ApplicationSet RollingSync를 사용합니다. RollingSync의 feature 설정·health gate·자동 동기화 제약은 [ApplicationSet 가이드](../gitops/argocd/04-applicationsets.md)를 따릅니다.
+- PR generator는 PR 코드와 manifest를 실행할 수 있습니다. 보호된 별도 preview 클러스터·제한된 AppProject/RBAC·리소스 할당량과 검증된 이미지 digest를 사용합니다. `preview` label 하나가 신뢰 경계를 만들지 않습니다.
+- PR이 닫혀 generator 결과에서 사라지면 Application 삭제 정책이 적용됩니다. `info` 필드는 TTL이 아니며 `CreateNamespace=true`로 생긴 namespace가 항상 함께 삭제되는 것도 아닙니다. finalizer·보존 정책·namespace 정리 주체를 별도로 정합니다.
+
+실행 가능한 PR·templatePatch·RollingSync 예제는 [검토된 ApplicationSet 문서](../gitops/argocd/04-applicationsets.md)에 있습니다.
 
 ## IAM Identity Center SSO
 
-IAM Identity Center(이전 AWS SSO)를 ArgoCD와 통합하여 중앙 집중식 인증 및 권한 관리를 구현합니다.
+이 장은 Argo CD 공식 Identity Center 가이드의 **SAML 2.0 + Dex** 경로를 사용합니다. Identity Center의 OAuth/trusted identity propagation 기능을 임의의 Argo CD OIDC issuer로 바꾸어 쓰지 않습니다. SAML sign-in URL은 OIDC discovery endpoint가 아닙니다.
 
-### SAML 2.0 구성
+1. IAM Identity Center **Applications**에서 자체 SAML 2.0 애플리케이션을 만듭니다.
+2. 실제 도메인의 ACS URL과 audience를 `https://argocd.example.com/api/dex/callback`에 맞춥니다. 사용자/그룹을 애플리케이션에 할당합니다.
+3. 해당 **애플리케이션의** sign-in URL과 서명 인증서를 받습니다. 외부 IdP를 Identity Center에 연결하는 identity-source metadata와 혼동하지 않습니다.
+4. `email` 같은 필요한 사용자 속성을 지원되는 매핑으로 전달합니다. 정확한 매핑·subject·값은 실제 assertion으로 확인합니다.
+5. 인증서의 BEGIN/END 줄을 포함한 전체 PEM을 base64로 인코딩해 `caData`에 넣습니다. 서명 검증을 끄지 않습니다.
 
-```hcl
-# iam-identity-center.tf - SAML Provider 설정
-
-# SAML 메타데이터 다운로드 URL
-# IAM Identity Center Console -> Settings -> Identity source -> SAML 2.0 metadata file
-
-# SAML Identity Provider 생성
-resource "aws_iam_saml_provider" "identity_center" {
-  name                   = "IAMIdentityCenter"
-  saml_metadata_document = file("${path.module}/saml-metadata.xml")
-
-  tags = {
-    Purpose = "ArgoCD SSO Integration"
-  }
-}
-
-# ArgoCD용 IAM 역할 (SAML 인증용)
-resource "aws_iam_role" "argocd_sso" {
-  name = "ArgoCD-SSO-Role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = aws_iam_saml_provider.identity_center.arn
-        }
-        Action = "sts:AssumeRoleWithSAML"
-        Condition = {
-          StringEquals = {
-            "SAML:aud" = "https://signin.aws.amazon.com/saml"
-          }
-        }
-      }
-    ]
-  })
-}
-```
-
-### ArgoCD SAML 설정
+다음 값을 Helm이 관리하는 `argocd-values.yaml`에 병합합니다. raw PEM·가짜 인증서·placeholder URL 상태로 로그인할 수는 없습니다.
 
 ```yaml
-# argocd-cm ConfigMap - SAML/OIDC 설정
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cm
-  namespace: argocd
-data:
-  # ArgoCD 서버 URL
-  url: https://argocd.example.com
-
-  # SAML 설정 (IAM Identity Center)
-  dex.config: |
-    connectors:
-      - type: saml
-        id: aws-sso
-        name: AWS IAM Identity Center
-        config:
-          # IAM Identity Center SAML 엔드포인트
-          ssoURL: https://portal.sso.ap-northeast-2.amazonaws.com/saml/assertion/xxxxxxxxxxxx
-
-          # ArgoCD SAML Callback URL
-          # IAM Identity Center 애플리케이션에 등록 필요
-          redirectURI: https://argocd.example.com/api/dex/callback
-
-          # Entity ID (IAM Identity Center에서 설정)
-          entityIssuer: https://argocd.example.com/api/dex/callback
-
-          # SAML 응답 서명 검증용 CA 인증서
-          caData: |
-            -----BEGIN CERTIFICATE-----
-            MIIDXTCCAkWgAwIBAgIJAJC1...
-            -----END CERTIFICATE-----
-
-          # 사용자 속성 매핑
-          usernameAttr: email
-          emailAttr: email
-          groupsAttr: groups
-
-          # 그룹 구분자 (IAM Identity Center에서 그룹을 ','로 구분)
-          groupsDelim: ","
-
-  # OIDC 설정 (대안)
-  oidc.config: |
-    name: AWS IAM Identity Center
-    issuer: https://portal.sso.ap-northeast-2.amazonaws.com/saml/assertion/xxxxxxxxxxxx
-    clientID: arn:aws:sso::123456789012:application/ssoins-xxxxxxxxxx/apl-xxxxxxxxxx
-    clientSecret: $oidc.aws-sso.clientSecret
-    requestedScopes:
-      - openid
-      - email
-      - groups
-    requestedIDTokenClaims:
-      groups:
-        essential: true
+# fixtures/sso-values.yaml
+# Merge into the Helm-owned argocd-values.yaml after configuring the SAML app.
+dex:
+  enabled: true
+configs:
+  cm:
+    url: https://argocd.example.com
+    dex.config: |
+      connectors:
+        - type: saml
+          id: identity-center
+          name: AWS IAM Identity Center
+          config:
+            ssoURL: https://REPLACE_WITH_APPLICATION_SIGN_IN_URL
+            caData: BASE64_OF_COMPLETE_APPLICATION_SIGNING_CERTIFICATE_PEM
+            entityIssuer: https://argocd.example.com/api/dex/callback
+            redirectURI: https://argocd.example.com/api/dex/callback
+            usernameAttr: email
+            emailAttr: email
+  rbac:
+    policy.default: role:authenticated
+    scopes: '[email]'
+    policy.csv: |
+      p, role:application-viewer, applications, get, applications/*, allow
+      p, role:application-operator, applications, get, applications/*, allow
+      p, role:application-operator, applications, sync, applications/*, allow
+      g, viewer@example.com, role:application-viewer
+      g, operator@example.com, role:application-operator
 ```
 
-```yaml
-# argocd-secret - OIDC 클라이언트 시크릿
-apiVersion: v1
-kind: Secret
-metadata:
-  name: argocd-secret
-  namespace: argocd
-type: Opaque
-stringData:
-  oidc.aws-sso.clientSecret: "your-oidc-client-secret"
-```
+이 최소 예제는 Identity Center에서 전달되는 **검증된 이메일**을 명시적으로 매핑합니다. 실제 조직이 관리하는 정확한 주소로 바꾸고 계정 변경·퇴사 시 매핑도 관리합니다. 기본 `role:authenticated`에는 권한을 주지 않았습니다. 기본 역할을 `role:readonly`로 주면 모든 로그인 사용자가 그 권한을 받으며 나중의 deny로 제거할 수 없습니다.
 
-### 그룹-역할 매핑
+**그룹 할당과 groups assertion은 다릅니다.** Argo CD의 Identity Center 가이드도 그룹 attribute 매핑을 AWS 공식 지원 방식이 아닌 workaround로 설명합니다. 그룹이 자동 전달된다고 가정하거나 표시 이름과 Group ID를 혼용하지 않습니다. 그룹 기반 RBAC가 필요하면 지원되는 IdP 경로와 실제 claim을 먼저 검증하고 `groupsAttr`, `scopes`, 정책의 정확한 값을 함께 설정합니다.
 
-```yaml
-# argocd-rbac-cm ConfigMap - RBAC 설정
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-rbac-cm
-  namespace: argocd
-data:
-  policy.default: role:readonly
-  scopes: '[groups, email]'
+Argo CD 로그인에 IAM SAML provider나 `sts:AssumeRoleWithSAML` 역할을 만드는 것은 필요하지 않습니다. 이는 AWS 역할 federation과 다른 흐름입니다. Argo CD RBAC·EKS IAM·Kubernetes RBAC도 자동으로 같은 권한이 되지 않습니다.
 
-  policy.csv: |
-    # ========================================
-    # 역할 정의
-    # ========================================
-
-    # 관리자 역할 - 모든 권한
-    p, role:admin, applications, *, */*, allow
-    p, role:admin, clusters, *, *, allow
-    p, role:admin, repositories, *, *, allow
-    p, role:admin, projects, *, *, allow
-    p, role:admin, accounts, *, *, allow
-    p, role:admin, gpgkeys, *, *, allow
-    p, role:admin, logs, *, *, allow
-    p, role:admin, exec, *, *, allow
-    p, role:admin, extensions, *, *, allow
-
-    # 개발자 역할 - 앱 관리 권한
-    p, role:developer, applications, get, */*, allow
-    p, role:developer, applications, create, */*, allow
-    p, role:developer, applications, update, */*, allow
-    p, role:developer, applications, delete, */*, allow
-    p, role:developer, applications, sync, */*, allow
-    p, role:developer, applications, override, */*, allow
-    p, role:developer, applications, action/*, */*, allow
-    p, role:developer, logs, get, */*, allow
-    p, role:developer, repositories, get, *, allow
-    p, role:developer, projects, get, *, allow
-    p, role:developer, clusters, get, *, allow
-
-    # SRE 역할 - 인프라 관리 권한
-    p, role:sre, applications, *, */*, allow
-    p, role:sre, clusters, get, *, allow
-    p, role:sre, repositories, get, *, allow
-    p, role:sre, projects, get, *, allow
-    p, role:sre, logs, get, */*, allow
-    p, role:sre, exec, create, */*, allow
-
-    # 읽기 전용 역할
-    p, role:readonly, applications, get, */*, allow
-    p, role:readonly, logs, get, */*, allow
-    p, role:readonly, repositories, get, *, allow
-    p, role:readonly, projects, get, *, allow
-    p, role:readonly, clusters, get, *, allow
-
-    # ========================================
-    # IAM Identity Center 그룹 매핑
-    # ========================================
-
-    # Platform Admins 그룹 -> admin 역할
-    g, PlatformAdmins, role:admin
-
-    # SRE Team 그룹 -> sre 역할
-    g, SRETeam, role:sre
-
-    # Developers 그룹 -> developer 역할
-    g, Developers, role:developer
-
-    # Viewers 그룹 -> readonly 역할
-    g, Viewers, role:readonly
-
-    # ========================================
-    # 프로젝트별 세분화된 권한
-    # ========================================
-
-    # Backend 팀 - backend 프로젝트만 관리
-    p, role:backend-dev, applications, *, backend/*, allow
-    p, role:backend-dev, logs, get, backend/*, allow
-    g, BackendTeam, role:backend-dev
-
-    # Frontend 팀 - frontend 프로젝트만 관리
-    p, role:frontend-dev, applications, *, frontend/*, allow
-    p, role:frontend-dev, logs, get, frontend/*, allow
-    g, FrontendTeam, role:frontend-dev
-
-    # Data 팀 - data 프로젝트만 관리
-    p, role:data-dev, applications, *, data/*, allow
-    p, role:data-dev, logs, get, data/*, allow
-    g, DataTeam, role:data-dev
-```
-
-### Kubernetes RBAC 통합
-
-```yaml
-# kubernetes-rbac.yaml - EKS 클러스터 RBAC 설정
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: argocd-application-controller-cluster-role
-rules:
-  - apiGroups:
-      - '*'
-    resources:
-      - '*'
-    verbs:
-      - '*'
-  - nonResourceURLs:
-      - '*'
-    verbs:
-      - '*'
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: argocd-application-controller-cluster-role-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: argocd-application-controller-cluster-role
-subjects:
-  - kind: ServiceAccount
-    name: argocd-application-controller
-    namespace: argocd
-
----
-# 개발자용 제한된 ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: developer-role
-rules:
-  - apiGroups: [""]
-    resources: ["pods", "pods/log", "services", "configmaps"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods/exec"]
-    verbs: ["create"]
-
----
-# SRE용 확장된 ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: sre-role
-rules:
-  - apiGroups: ["*"]
-    resources: ["*"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods/exec", "pods/portforward"]
-    verbs: ["create"]
-  - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets", "statefulsets"]
-    verbs: ["patch", "update"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["delete"]
-```
-
-### SSO 트러블슈팅
-
-```yaml
-# SSO 문제 해결을 위한 디버그 설정
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-  namespace: argocd
-data:
-  # Dex 디버그 로깅 활성화
-  dex.server.log.level: debug
-
-  # ArgoCD Server 디버그 로깅
-  server.log.level: debug
-```
-
-**일반적인 SSO 문제 및 해결 방법:**
-
-| 문제 | 원인 | 해결 방법 |
-|------|------|----------|
-| "Invalid redirect_uri" | SAML ACS URL 불일치 | IAM Identity Center 앱 설정에서 ACS URL 확인 |
-| "User not found" | 그룹 속성 미전달 | SAML 응답에 groups 속성 포함 확인 |
-| "Access denied" | RBAC 매핑 오류 | policy.csv 그룹 이름 정확히 일치 확인 |
-| "Certificate error" | CA 인증서 만료 | SAML 메타데이터 재다운로드 및 업데이트 |
-
-```bash
-# SSO 디버깅 명령어
-# Dex 로그 확인
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-dex-server -f
-
-# ArgoCD Server 로그 확인
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server -f
-
-# SAML 응답 디코딩 (브라우저 개발자 도구에서 캡처 후)
-echo "BASE64_ENCODED_SAML_RESPONSE" | base64 -d | xmllint --format -
-```
-
----
+SSO 사용자와 최소 한 명의 승인된 관리자 및 복구 경로를 확인한 뒤에만 로컬 admin을 끕니다. Debug 로그나 SAML assertion에는 개인 정보와 인증 자료가 포함될 수 있으므로 공유 로그에 출력하지 않습니다. ACS/audience, 서명 인증서·시간, 사용자 할당, attribute, RBAC를 구분해서 진단합니다.
 
 ## 시크릿 관리
 
-External Secrets Operator(ESO)를 사용하여 AWS Secrets Manager의 시크릿을 Kubernetes Secret으로 동기화합니다.
-
-### External Secrets Operator 설치
-
-```hcl
-# external-secrets.tf - ESO Helm 설치
-
-resource "helm_release" "external_secrets" {
-  name       = "external-secrets"
-  namespace  = "external-secrets"
-  repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
-  version    = "0.9.13"
-
-  create_namespace = true
-
-  values = [
-    yamlencode({
-      installCRDs = true
-
-      replicaCount = 2
-
-      serviceAccount = {
-        create = true
-        name   = "external-secrets"
-        annotations = {
-          "eks.amazonaws.com/role-arn" = aws_iam_role.external_secrets.arn
-        }
-      }
-
-      resources = {
-        limits = {
-          cpu    = "500m"
-          memory = "512Mi"
-        }
-        requests = {
-          cpu    = "100m"
-          memory = "128Mi"
-        }
-      }
-
-      webhook = {
-        replicaCount = 2
-        resources = {
-          limits = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-          requests = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-        }
-      }
-
-      certController = {
-        replicaCount = 2
-        resources = {
-          limits = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-          requests = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-        }
-      }
-
-      metrics = {
-        enabled = true
-        serviceMonitor = {
-          enabled = true
-        }
-      }
-    })
-  ]
-}
-
-# IAM 역할 (Pod Identity 사용)
-resource "aws_iam_role" "external_secrets" {
-  name = "ExternalSecretsRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "external_secrets" {
-  name = "secrets-access"
-  role = aws_iam_role.external_secrets.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "SecretsManagerAccess"
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret",
-          "secretsmanager:ListSecretVersionIds"
-        ]
-        Resource = "arn:aws:secretsmanager:ap-northeast-2:*:secret:*"
-      },
-      {
-        Sid    = "KMSDecrypt"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "kms:ViaService" = "secretsmanager.ap-northeast-2.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_eks_pod_identity_association" "external_secrets" {
-  cluster_name    = var.cluster_name
-  namespace       = "external-secrets"
-  service_account = "external-secrets"
-  role_arn        = aws_iam_role.external_secrets.arn
-}
-```
-
-### SecretStore / ClusterSecretStore 설정
+각 Spoke에 ESO 2.10.0과 v1 CRD를 설치합니다. [01장](01-infrastructure-setup.md)의 `external-secrets` namespace/ServiceAccount에 대한 Pod Identity association과 지정한 secret ARN의 읽기 권한을 재사용합니다. Hub의 역할만 연결해도 Spoke ESO가 그 권한을 받는 것은 아닙니다.
 
 ```yaml
-# cluster-secret-store.yaml - 클러스터 전역 SecretStore
-apiVersion: external-secrets.io/v1beta1
-kind: ClusterSecretStore
-metadata:
-  name: aws-secrets-manager
-spec:
-  provider:
-    aws:
-      service: SecretsManager
-      region: ap-northeast-2
-      auth:
-        jwt:
-          serviceAccountRef:
-            name: external-secrets
-            namespace: external-secrets
+# fixtures/eso-values.yaml
+# Reuse the existing external-secrets ServiceAccount Pod Identity association.
+installCRDs: true
+replicaCount: 2
+leaderElect: true
+serviceAccount:
+  create: true
+  name: external-secrets
+  annotations: {}
+serviceMonitor:
+  enabled: false
+```
 
----
-# namespace-scoped SecretStore
-apiVersion: external-secrets.io/v1beta1
+```bash
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+helm upgrade --install external-secrets external-secrets/external-secrets \
+  --version 2.10.0 --namespace external-secrets --create-namespace \
+  --kube-context "$TARGET_CONTEXT" --values eso-values.yaml
+```
+
+Pod Identity는 **실제로 실행 중인 ESO 컨트롤러**의 기본 AWS credential chain을 사용합니다. 아래 SecretStore에는 `auth.jwt.serviceAccountRef`나 IRSA annotation을 넣지 않습니다. ESO는 다른 namespace의 ServiceAccount를 지정해 그 계정의 Pod Identity를 가장할 수 없습니다.
+
+```yaml
+# fixtures/external-secrets.yaml
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
-  name: aws-secrets-manager
-  namespace: myapp
+  name: application-config
+  namespace: demo-app
 spec:
   provider:
     aws:
       service: SecretsManager
       region: ap-northeast-2
-      auth:
-        jwt:
-          serviceAccountRef:
-            name: myapp-secrets-sa
-            namespace: myapp
-
 ---
-# Parameter Store 사용시
-apiVersion: external-secrets.io/v1beta1
-kind: ClusterSecretStore
-metadata:
-  name: aws-parameter-store
-spec:
-  provider:
-    aws:
-      service: ParameterStore
-      region: ap-northeast-2
-      auth:
-        jwt:
-          serviceAccountRef:
-            name: external-secrets
-            namespace: external-secrets
-```
-
-### ExternalSecret CRD 예제
-
-```yaml
-# external-secret.yaml - 기본 사용 예제
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: myapp-secrets
-  namespace: myapp
-spec:
-  refreshInterval: 1h  # 동기화 주기
-
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
-
-  target:
-    name: myapp-secrets  # 생성될 K8s Secret 이름
-    creationPolicy: Owner
-    deletionPolicy: Retain
-
-  # 전체 시크릿 가져오기
-  dataFrom:
-    - extract:
-        key: myapp/production/config
-
----
-# 선택적 필드 매핑
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: database-credentials
-  namespace: myapp
+  namespace: demo-app
 spec:
-  refreshInterval: 30m
-
+  refreshPolicy: Periodic
+  refreshInterval: 1h
   secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
-
+    name: application-config
+    kind: SecretStore
   target:
     name: database-credentials
     creationPolicy: Owner
-    template:
-      type: Opaque
-      data:
-        # 템플릿으로 데이터 변환
-        DATABASE_URL: "postgresql://{{ .username }}:{{ .password }}@{{ .host }}:{{ .port }}/{{ .database }}"
-
+    deletionPolicy: Retain
   data:
     - secretKey: username
       remoteRef:
         key: myapp/production/database
         property: username
-
     - secretKey: password
       remoteRef:
         key: myapp/production/database
         property: password
-
+        version: AWSCURRENT
     - secretKey: host
       remoteRef:
         key: myapp/production/database
         property: host
-
     - secretKey: port
       remoteRef:
         key: myapp/production/database
         property: port
-
     - secretKey: database
       remoteRef:
         key: myapp/production/database
         property: dbname
-
----
-# 여러 시크릿 소스 조합
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: combined-secrets
-  namespace: myapp
-spec:
-  refreshInterval: 1h
-
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
-
-  target:
-    name: combined-secrets
-    creationPolicy: Owner
-
-  data:
-    # Secrets Manager에서 가져오기
-    - secretKey: DB_PASSWORD
-      remoteRef:
-        key: myapp/production/database
-        property: password
-
-    - secretKey: API_KEY
-      remoteRef:
-        key: myapp/production/api-keys
-        property: stripe-key
-
-  dataFrom:
-    # 전체 시크릿 가져오기
-    - extract:
-        key: myapp/production/feature-flags
 ```
 
-### 시크릿 로테이션 전략
+`myapp/production/database`에는 username/password/host/port/dbname 필드가 있어야 하고 ESO IAM policy가 그 정확한 secret ARN을 허용해야 합니다. 고객 관리 KMS 키이면 해당 키의 복호화 권한과 key policy도 필요합니다. 예제는 검색·write 권한을 요구하지 않는 이름 기반 읽기입니다.
 
-```yaml
-# secret-rotation.yaml - 자동 로테이션 설정
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: rotating-secret
-  namespace: myapp
-  annotations:
-    # ArgoCD 동기화에서 제외 (ESO가 관리)
-    argocd.argoproj.io/compare-options: IgnoreExtraneous
-spec:
-  refreshInterval: 5m  # 짧은 주기로 로테이션된 값 반영
+DB URL은 비밀번호의 `@`, `:`, `/` 등을 단순 문자열로 이어 붙이지 말고 애플리케이션의 URL builder로 구성합니다. Secret의 환경 변수 값은 이미 실행 중인 Pod에 자동 반영되지 않으므로 reload/restart 전략도 필요합니다.
 
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
+namespace별 SecretStore라도 동일한 controller 역할이면 IAM 격리까지 자동으로 생기지 않습니다. 별도 controller 역할/범위 또는 검토된 `provider.aws.role` AssumeRole 경로, Store 수정 권한과 admission 정책을 함께 설계합니다. IRSA의 `auth.jwt.serviceAccountRef`는 다른 인증 방식이며 OIDC trust와 해당 SA가 필요합니다.
 
-  target:
-    name: rotating-credentials
-    creationPolicy: Owner
-    deletionPolicy: Retain
+### 소유권·갱신·로테이션
 
-  data:
-    - secretKey: current-password
-      remoteRef:
-        key: myapp/rotating/credentials
-        property: password
-        version: AWSCURRENT  # 현재 버전
+- Git/Argo CD는 ExternalSecret을, ESO는 생성된 Secret을 소유합니다. 같은 Secret 필드를 Helm/Git/ESO가 동시에 덮어쓰지 않게 합니다. ESO CRD·controller·Store를 ExternalSecret보다 먼저 준비하고 건강 상태를 확인합니다.
+- `refreshInterval`은 값을 다시 읽는 주기이며 Secrets Manager의 암호 변경·인증서 발급을 수행하지 않습니다. 회전 Lambda/네트워크/DB 권한·서비스별 회전 기능은 별도 구성입니다.
+- `AWSCURRENT`와 `AWSPREVIOUS`는 version stage입니다. `AWSPREVIOUS`가 아직 없으면 이를 필수로 요청한 전체 동기화가 실패할 수 있습니다. 이전 암호가 지금도 유효하거나 DB rollback을 제공한다고 가정하지 않습니다.
+- `creationPolicy: Owner`와 `deletionPolicy: Retain`은 서로 다른 수명 주기 조건입니다. 외부 값 삭제 시 retain 설정이 ExternalSecret 자체 삭제에 따른 ownerReference 정리까지 막지는 않습니다.
+- `IgnoreExtraneous`는 비교 상태와 관련된 옵션이며 관리 중인 ExternalSecret을 sync/prune 대상에서 자동 제외하는 설정이 아닙니다.
+- `PushSecret`은 AWS에 쓰는 기능입니다. 읽기 전용 역할로는 동작하지 않으며 create/update/tag 및 선택 기능의 추가 권한, 충돌·삭제·암호화 정책을 검토해야 합니다. 두 방향 동기화를 무심코 연결하지 않습니다.
 
-    - secretKey: previous-password
-      remoteRef:
-        key: myapp/rotating/credentials
-        property: password
-        version: AWSPREVIOUS  # 이전 버전 (롤백용)
-```
+## 확인 순서
 
-```hcl
-# secrets-manager-rotation.tf - AWS Secrets Manager 자동 로테이션
+Hub 설치와 HTTPS 접근 → 대상 역할/Access Entry/RBAC/네트워크 → 클러스터 Secret → AppProject → NodePool 수동 동기화 → ApplicationSet 생성 결과 → SSO의 실제 사용자별 허용/거부 → ESO Ready와 애플리케이션 reload 순서로 확인합니다. Secret 값을 출력하지 않고 상태·조건과 오류만 확인합니다.
 
-resource "aws_secretsmanager_secret" "database_credentials" {
-  name        = "myapp/production/database"
-  description = "Database credentials for myapp"
+## 참고 자료
 
-  tags = {
-    Application = "myapp"
-    Environment = "production"
-  }
-}
+- [Argo CD Identity Center SAML](https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/identity-center/)
+- [IAM Identity Center 자체 SAML 애플리케이션](https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html)
+- [IAM Identity Center 속성 매핑](https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html)
+- [ESO 2.10 AWS 인증](https://external-secrets.io/v2.10.0/provider/aws-access/)
+- [Helm Provider](https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs)
+- [프로젝트·RBAC](../gitops/argocd/06-projects-rbac.md)
+- [이 장의 퀴즈](../quizzes/ops/04-gitops-multi-cluster-quiz.md)
 
-resource "aws_secretsmanager_secret_rotation" "database_credentials" {
-  secret_id           = aws_secretsmanager_secret.database_credentials.id
-  rotation_lambda_arn = aws_lambda_function.secret_rotation.arn
-
-  rotation_rules {
-    automatically_after_days = 30
-  }
-}
-```
-
-### ESO Pod Identity 설정
-
-```yaml
-# eso-pod-identity.yaml - 네임스페이스별 Pod Identity
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: myapp-secrets-sa
-  namespace: myapp
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/MyAppSecretsRole
-
----
-# 해당 ServiceAccount에 대한 SecretStore
-apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
-metadata:
-  name: myapp-secrets-store
-  namespace: myapp
-spec:
-  provider:
-    aws:
-      service: SecretsManager
-      region: ap-northeast-2
-      auth:
-        jwt:
-          serviceAccountRef:
-            name: myapp-secrets-sa
-```
-
-```hcl
-# 네임스페이스별 IAM 역할 (최소 권한 원칙)
-resource "aws_iam_role" "myapp_secrets" {
-  name = "MyAppSecretsRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "myapp_secrets" {
-  name = "myapp-secrets-access"
-  role = aws_iam_role.myapp_secrets.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret"
-        ]
-        # 특정 시크릿만 접근 허용
-        Resource = [
-          "arn:aws:secretsmanager:ap-northeast-2:*:secret:myapp/*"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_eks_pod_identity_association" "myapp_secrets" {
-  cluster_name    = var.cluster_name
-  namespace       = "myapp"
-  service_account = "myapp-secrets-sa"
-  role_arn        = aws_iam_role.myapp_secrets.arn
-}
-```
-
----
-
-## 요약
-
-이 문서에서 다룬 주요 내용:
-
-1. **멀티클러스터 아키텍처**: Hub-Spoke 모델을 통한 중앙 집중식 GitOps 관리, 클러스터 등록 및 관리 패턴
-
-2. **ArgoCD Terraform 설치**: Helm을 통한 HA ArgoCD 배포, Server/Controller/Repo Server/Redis 설정, Ingress 및 메트릭 구성
-
-3. **NodePool GitOps 관리**: Kubernetes CRD인 NodePool을 ArgoCD로 관리하는 이유, 클러스터별 NodePool 설정, 데이터 처리 전용 NodePool
-
-4. **ApplicationSet 전략**: Cluster/Git/Matrix/PR Generator 활용, 멀티클러스터 배포, Sync Wave 기반 순차 배포
-
-5. **IAM Identity Center SSO**: SAML 2.0 구성, 그룹-역할 매핑, Kubernetes RBAC 통합, 트러블슈팅
-
-6. **시크릿 관리**: External Secrets Operator 설치, SecretStore/ClusterSecretStore 설정, ExternalSecret CRD, 시크릿 로테이션
-
----
-
-## 관련 문서
-
-- [CI 파이프라인](./03-ci-pipelines.md)
-- [ArgoCD 기초](../gitops/argocd/README.md)
-- [NodePool 구성](../eks-auto-mode/02-nodepool-configuration.md)
-- [GitOps 자동화](./05-gitops-automation.md)
-
----
-
-## 퀴즈
-
-이 장에서 배운 내용을 테스트하려면 [ArgoCD 멀티클러스터 퀴즈](../quizzes/ops/04-gitops-multi-cluster-quiz.md)를 풀어보세요.
+< [이전: CI 파이프라인](03-ci-pipelines.md) | [목차](README.md) | [다음: GitOps 자동화](05-gitops-automation.md) >

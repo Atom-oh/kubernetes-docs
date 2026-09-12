@@ -2,14 +2,14 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "KIP-392 Follower Fetching — Redirect to the Same-AZ Follower",
+    "title": "KIP-392: preferred-replica hint and local reads",
     "locale": "en",
     "quality_profile": "showcase",
     "animation": "trace",
     "column_fit": "spread",
     "viewBox": [
-      900,
-      560
+      1080,
+      600
     ],
     "legend": {
       "entries": {
@@ -49,12 +49,12 @@
     {
       "from": 165,
       "to": 300,
-      "label": "1. Fetch from the leader — learn the preferred replica"
+      "label": "1. Leader supplies a preferred-replica hint"
     },
     {
       "from": 325,
       "to": 470,
-      "label": "2. Fetch from the same-AZ follower — no inter-AZ cost"
+      "label": "2. Read locally · fall back to leader if unavailable"
     }
   ],
   "messages": [
@@ -71,9 +71,9 @@
       "from": "leader",
       "to": "consumer",
       "y": 265,
-      "label": "\"Go to the AZ-a follower\" (preferred replica hint)",
+      "label": "Preferred-replica hint (when available)",
       "variant": "return",
-      "note": "RackAwareReplicaSelector matches broker.rack against client.rack"
+      "note": "Match broker.rack and client.rack"
     },
     {
       "id": "fetch-follower",
@@ -88,7 +88,7 @@
       "from": "follower",
       "to": "consumer",
       "y": 430,
-      "label": "Returns data (same AZ, no inter-AZ cost)",
+      "label": "Return data · replication traffic is separate",
       "variant": "emphasis"
     }
   ],

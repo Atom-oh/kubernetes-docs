@@ -1,161 +1,181 @@
 # Part 1: Kafka Fundamentals
 
-> **Supported Versions**: Apache Kafka 3.9 (KRaft mode)\
-> **Last Updated**: July 9, 2026
+> **Reviewed**: 2026-09-12. Apache Kafka 4.3.1, supported by Strimzi 1.2.0.
+> **Validation**: Nineteen checks used Kafka 4.3.1's actual configuration classes for validity, defaults and conflicts. No broker or EKS cluster was started.
 
-## What is Apache Kafka?
+## 1. Brokers, Topics and Partitions
 
-Apache Kafka is a distributed event streaming platform built for handling high-volume, real-time data streams. Originally developed at LinkedIn and later open-sourced as an Apache project, it is widely used for log aggregation, metrics pipelines, event-driven microservices, and change data capture (CDC) pipelines.
+Kafka stores events in partition logs, allowing producers and consumers to progress independently. A broker can store partition replicas from several topics; it need not hold an entire topic.
 
-This document covers the core concepts you need before running Kafka on EKS: brokers, topics, partitions, consumer groups, replication, and KRaft. Part 2 walks through deploying these concepts on a real EKS cluster using the Strimzi Operator.
+| Term | Meaning |
+| --- | --- |
+| Broker | Server role storing data replicas and handling requests |
+| Topic | Logical event category |
+| Partition | An ordered append log; retention and compaction can remove records |
+| Offset | A position within one partition, not a global ID; deletion and transactions can leave visible gaps |
+| Replication factor | Number of partition replicas, managed through creation/reassignment metadata |
+| Leader / follower | Leaders handle writes and followers replicate; configured follower fetching can serve consumer reads |
+| ISR | Replicas sufficiently synchronized with the leader, including the leader itself |
 
-## 1. Kafka Architecture Basics
+![Example KafkaConsumer group with three consumers assigned three partitions; generally one consumer may own several partitions](../../.gitbook/assets/en-data-on-eks-kafka-01-kafka-fundamentals-0.png)
 
-### Core Terminology
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-kafka-01-kafka-fundamentals-0.html)
 
-* **Broker**: A Kafka server process that stores messages and serves client requests. A Kafka cluster is typically made up of several brokers.
-* **Topic**: A logical channel used to categorize messages, such as `orders` or `payments`.
-* **Partition**: The physical unit a topic is split into. Each partition is an ordered, append-only, immutable log.
-* **Offset**: A sequential, unique number assigned to each message within a partition. Consumers track "how far they've read" using offsets.
-* **Replication Factor**: The number of brokers a partition's data is copied to, protecting against data loss when a broker fails.
-* **Leader/Follower Replica**: For each partition, one replica is designated the leader and handles all reads and writes; the remaining follower replicas copy data from the leader.
-* **ISR (In-Sync Replicas)**: The set of replicas that are sufficiently caught up with the leader. When a write is sent with `acks=all`, it is only considered successful once every replica in the ISR has received the message.
+The 3:3 diagram is one example. With KafkaConsumer `subscribe()` automatic group assignment, one partition is assigned to one group member at a time; one member can own multiple partitions. Manual `assign()` usage is managed separately. Multiple groups can independently consume the same topic. Kafka 4.x Share Groups/KafkaShareConsumer use a different sharing and acknowledgement model.
 
-### Producer -> Partitions -> Consumer Group Flow
+## 2. Ordering and Partition Keys
 
-![A producer writes to three leader partitions of the orders topic spread across three brokers, and each partition is read by exactly one consumer in the order-processor consumer group, showing the one-to-one partition-to-consumer assignment.](../../.gitbook/assets/en-data-on-eks-kafka-01-kafka-fundamentals-0.png)
+Kafka defines log order **within a partition**. It does not automatically establish global topic order or business-event timestamp order.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-kafka-01-kafka-fundamentals-0.html)
+Consistent same-key routing requires consistent serialization, partitioning and partition count. Increasing partition count can change hash-based mapping. Custom partitioners and explicitly chosen partitions also affect routing. Multiple producers, retries and parallel application processing require their own ordering contract.
 
-Producers write messages to a topic, and Kafka spreads those messages across multiple brokers at the partition level. Consumers that belong to the same consumer group split up the partitions between them (roughly one-to-one) and consume messages in parallel.
+Null-key routing depends on the client/partitioner. High key cardinality alone does not guarantee balanced load; a few disproportionately frequent keys can still create hot partitions.
 
-## 2. Partitions and Ordering Guarantees
-
-Partition count is the single most important factor governing a cluster's parallel throughput. More partitions let more consumers work concurrently, but too many partitions increase metadata overhead and open file handles on the brokers.
-
-> **Key Concept**: Kafka does **not** guarantee ordering across an entire topic. Ordering is only guaranteed **within a single partition**.
-
-### Partition Key Selection Strategies
-
-When a producer sends a message with a key, Kafka routes it to a partition based on a hash of that key. The same key is always routed to the same partition, which is how you preserve ordering between events that share a key.
-
-| Strategy | Description | Example Use Case |
-| --- | --- | --- |
-| No key (null) | Round-robin or sticky partitioner spreads messages across partitions | Log ingestion where ordering doesn't matter |
-| Entity ID as key | Pins events for the same entity to the same partition | Preserving order of status events for a given order ID |
-| Custom partitioner | Routes partitions based on business rules | Isolating a specific customer's traffic to a dedicated partition |
+This command creates a topic in an **already reachable cluster with at least three brokers**. Add `--command-config client.properties` for authenticated listeners. Do not apply it unchanged to the single-node learning configuration below.
 
 ```bash
-# Create a topic with 6 partitions and a replication factor of 3
-kafka-topics.sh --create \
-  --bootstrap-server localhost:9092 \
-  --topic orders \
-  --partitions 6 \
-  --replication-factor 3 \
+: "${DOCS_BOOTSTRAP:?Set the existing Kafka bootstrap host:port}"
+kafka-topics.sh --create --bootstrap-server "$DOCS_BOOTSTRAP" \
+  --topic orders --partitions 6 --replication-factor 3 \
   --config min.insync.replicas=2
 ```
 
-A poorly chosen key can create a "hot partition" where traffic concentrates on a single partition, so make sure the key has enough cardinality (a large enough number of distinct values) to spread load evenly.
+## 3. Consumer Groups and Offsets
 
-## 3. Consumer Groups and Rebalancing
+Partition-based groups can have idle members when consumers outnumber partitions. Producer throughput, disks, networking and application processing also affect concurrency; partition count alone does not predict throughput.
 
-### How Consumer Groups Work
+### Distinguish group protocols
 
-Consumers that share the same `group.id` form a **consumer group**. Kafka automatically assigns a topic's partitions across the consumer instances in the group, and each partition is read by exactly one consumer within that group (if there are more consumers than partitions, some consumers sit idle).
+The Kafka 4.3 Java consumer defaults `group.protocol` to `classic`.
 
-### What Triggers a Rebalance
+| Choice | Assignment and timeouts |
+| --- | --- |
+| `classic` | Client assignors and `session.timeout.ms` / `heartbeat.interval.ms` |
+| `consumer` | Server assignors and broker `group.consumer.session.timeout.ms` / `group.consumer.heartbeat.interval.ms` |
 
-* A new consumer joins the group
-* An existing consumer leaves the group (graceful shutdown) or is detected as departed via heartbeat timeout
-* The number of partitions on the topic changes
-* A consumer fails to send a heartbeat within `session.timeout.ms`, or exceeds `max.poll.interval.ms` because processing takes too long
+Classic eager rebalance revokes a broad set of assignments. CooperativeStickyAssignor incrementally moves partitions that need reassignment. The newer consumer protocol also performs server-side incremental reconciliation. Not every rebalance necessarily pauses the whole group. Do not carry classic client assignor/timeout assumptions into the new protocol.
 
-Consumption pauses briefly for the affected group while a rebalance is in progress, so overly frequent rebalances hurt throughput. Using the `CooperativeStickyAssignor` minimizes partition movement during a rebalance and reduces its cost.
+`max.poll.interval.ms` defaults to 300000 ms. With static membership (`group.instance.id`), exceeding it does not immediately reassign partitions: the consumer stops heartbeats, and the applicable session timeout also affects reassignment.
 
-### Offset Commit Strategies
+### Offsets and business completion
 
-| Strategy | Configuration | Characteristics |
-| --- | --- | --- |
-| Auto-commit | `enable.auto.commit=true` (default) | Convenient periodic commits, but offsets can be committed before processing finishes, risking message loss |
-| Manual commit (sync) | `enable.auto.commit=false` + `commitSync()` | Commits only after processing completes — safer, but lower throughput |
-| Manual commit (async) | `enable.auto.commit=false` + `commitAsync()` | Higher throughput, but the application must handle commit failures itself |
+A committed offset generally identifies the next position to read. Client fetch position and completed external work are different facts. With asynchronous/parallel processing, do not commit past records whose work is still unfinished.
 
-### Delivery Semantics
+| Method | Meaning and consideration |
+| --- | --- |
+| Auto commit | `enable.auto.commit=true`, default interval 5000 ms; does not determine business completion |
+| `commitSync()` | Waits for the call; latency impact depends on batching and frequency |
+| `commitAsync()` | Track failures/progress through callbacks; do not blindly retry stale offsets and move committed progress backwards |
 
-* **At-most-once**: The offset is committed before the message is processed. Messages can be lost on failure.
-* **At-least-once**: The offset is committed after processing (the commonly recommended default). Messages may be reprocessed on failure, so consumer logic should be designed to be idempotent.
-* **Exactly-once**: Combining the producer's idempotent option with the transactional API (`transactional.id`) achieves exactly-once processing within Kafka (topic-to-topic). Exactly-once processing that spans external systems requires additional design work (for example, an exactly-once sink connector in Kafka Connect).
+Commit-before-processing can lose work after failure; commit-after-processing can repeat effects during recovery. Test failures, restarts and rebalances together with the application output.
 
-## 4. KRaft: Kafka Without ZooKeeper
+## 4. The Scope of Exactly-Once
 
-Historically, Kafka relied on a separate ZooKeeper ensemble to manage cluster metadata — topic/partition information, ACLs, and controller election. Starting with Kafka 3.3, **KRaft (Kafka Raft metadata mode)** became production-ready (GA), and **Kafka 4.0 (released in March 2025)** removed ZooKeeper mode entirely, making KRaft the only supported metadata management mechanism.
+`enable.idempotence` prevents duplicate log writes of the same producer transmission during retry. It is not a general deduplication key for an application submitting the same business event as a new send.
 
-### KRaft Architecture
+For Kafka-to-Kafka processing, commit output records and the **next input offsets** in the same transaction, and have consumers read with `read_committed`. Setting a `transactional.id` string does not implement that processing logic. External databases/APIs require separate sink transaction, idempotency and recovery contracts.
 
-Instead of a separate ZooKeeper cluster, KRaft designates a subset of the Kafka broker processes to act as the **controller quorum**.
-
-* **Controller Voter**: A node that participates in the Raft consensus protocol and replicates the metadata log (typically an odd number, such as 3 or 5, for quorum).
-* **Active Controller**: The single voter elected as leader that actually processes cluster metadata changes — partition leader election, topic creation, and so on.
-* Controller and broker roles can be combined in the same process (`process.roles=broker,controller`) for smaller clusters, or split into dedicated controller-only nodes (`process.roles=controller`) for larger deployments.
-
-### Before / After Comparison
-
-| Aspect | ZooKeeper-based (default through Kafka 3.x) | KRaft-based (GA in 3.3+, only mode in 4.0+) |
-| --- | --- | --- |
-| Metadata storage | Separate ZooKeeper ensemble | Kafka's own internal metadata topic (`__cluster_metadata`) |
-| Clusters required | Two — the Kafka cluster and the ZooKeeper cluster | One — just the Kafka cluster |
-| Controller election | Leader election via ZooKeeper ephemeral znodes | Active controller elected via Raft consensus |
-| Metadata scalability | ZooKeeper load grows with partition count | Log-based replication scales better for large partition counts |
-| Kubernetes operational overhead | Requires a ZooKeeper StatefulSet, separate PVCs, and separate monitoring | No separate component to manage — just Kafka broker/controller pods |
-
-This difference matters a lot in Kubernetes/EKS environments. ZooKeeper-based deployments required running both a Kafka StatefulSet and a ZooKeeper StatefulSet, and duplicating network policies, PodDisruptionBudgets, and monitoring across both components. KRaft eliminates that operational burden and reduces the number of resource types an operator like Strimzi needs to manage. The Strimzi-based deployment covered in Part 2 uses KRaft mode by default.
-
-### Sample KRaft Node Configuration (server.properties)
+**`producer.properties`**
 
 ```properties
-# This node acts as both broker and controller (suitable for small clusters)
-process.roles=broker,controller
-node.id=1
-
-# List of controller quorum voters (node.id@host:port)
-controller.quorum.voters=1@kafka-0.kafka-headless:9093,2@kafka-1.kafka-headless:9093,3@kafka-2.kafka-headless:9093
-
-listeners=BROKER://:9092,CONTROLLER://:9093
-controller.listener.names=CONTROLLER
-inter.broker.listener.name=BROKER
-
-log.dirs=/var/lib/kafka/data
+bootstrap.servers=127.0.0.1:19092
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.StringSerializer
+acks=all
+enable.idempotence=true
+transactional.id=orders-writer-1
+max.in.flight.requests.per.connection=5
+delivery.timeout.ms=120000
 ```
 
-## 5. Replication and Durability Settings
+**`consumer.properties`**
 
-How confident a producer can be that a message was "safely stored" depends on the combination of three settings.
+```properties
+bootstrap.servers=127.0.0.1:19092
+key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+group.id=order-processor
+group.protocol=consumer
+enable.auto.commit=false
+isolation.level=read_committed
+max.poll.interval.ms=300000
+```
 
-* **`replication.factor`** (topic-level setting): Determines how many brokers a partition's data is copied to. A minimum of 3 is recommended, which tolerates up to two simultaneous broker failures without losing data.
-* **`min.insync.replicas`** (topic-level setting): When a write is sent with `acks=all`, this specifies the minimum number of ISR members that must have the message for the write to be considered successful. A common combination is `replication.factor=3` with `min.insync.replicas=2`, which keeps writes available even if one broker fails.
-* **`acks`** (producer-level setting): Determines how much confirmation the producer waits for before considering a write complete.
+Transactional processing includes `initTransactions()`, `beginTransaction()`, output sends, `sendOffsetsToTransaction(...)`, `commitTransaction()` and abort/recovery handling. Concurrent producers need distinct transactional IDs; design stable logical-writer restart and fencing behavior.
 
-| `acks` value | Behavior | Durability | Latency/Throughput |
-| --- | --- | --- | --- |
-| `0` | Producer does not wait for any response | Lowest (messages can be lost right after sending) | Fastest |
-| `1` | Considered successful once the leader has written it | Medium (unreplicated data can be lost if the leader fails) | Fast |
-| `all` (`-1`) | Considered successful only once every ISR replica has written it | Highest | Relatively slower |
+Explicit idempotence requires `acks=all`, `retries>0` and `max.in.flight.requests.per.connection<=5`. Conflicts raise ConfigException. Implicit default idempotence can be disabled by conflicting settings. A large retries value does not override deadlines such as `delivery.timeout.ms`.
+
+## 5. KRaft Metadata
+
+KRaft arrived as early access in Kafka 2.8, became production-ready in 3.3, and is the only mode after ZooKeeper removal in Kafka 4.0. Dedicated controller processes need not serve broker data traffic, so controllers are not necessarily a subset of data brokers.
+
+Controller voters replicate the metadata Raft log, with one active controller. Production deployments commonly use three or five voters. Even-sized groups also have a calculable majority; odd sizes use resources efficiently for the same failure tolerance.
+
+`__cluster_metadata` names the internal metadata log, not an ordinary application topic managed through KafkaProducer/KafkaConsumer. Removing ZooKeeper does not remove responsibility for controller quorum, storage, upgrades and monitoring.
+
+### Dynamic and static quorums
+
+Dynamic quorums use `controller.quorum.bootstrap.servers` as discovery seeds, not voter membership. Initial storage formatting and quorum bootstrap must agree on cluster ID, directory IDs and initial voters. Use supported controller addition/removal procedures for changes.
+
+Static `controller.quorum.voters` is still supported in Kafka 4.3.1. Do not set it for a dynamic quorum. Merely changing seed addresses does not automatically migrate a static quorum.
+
+This file is for **single-node local learning**, not HA. It uses loopback PLAINTEXT listeners. Before startup, a new data directory needs the appropriate storage format/bootstrap procedure. Never arbitrarily format existing Kafka data.
+
+**`combined-lab.properties`**
+
+```properties
+# Local, single-node configuration for learning; not an HA deployment.
+process.roles=broker,controller
+node.id=1
+controller.quorum.bootstrap.servers=127.0.0.1:19093
+listeners=BROKER://127.0.0.1:19092,CONTROLLER://127.0.0.1:19093
+advertised.listeners=BROKER://127.0.0.1:19092,CONTROLLER://127.0.0.1:19093
+listener.security.protocol.map=BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+controller.listener.names=CONTROLLER
+inter.broker.listener.name=BROKER
+log.dirs=./kafka-lab-data
+# Single-node internal-topic settings are for this lab only.
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+share.coordinator.state.topic.replication.factor=1
+share.coordinator.state.topic.min.isr=1
+```
+
+A custom `BROKER` listener needs an explicit protocol mapping. Kafka 4.3.1 can supply a PLAINTEXT mapping for the default controller-only `CONTROLLER` listener in relevant configurations; a missing mapping line does not make every controller configuration invalid.
+
+On EKS, use the settings, certificates and storage generated by Strimzi in Part 2. Do not edit Operator-managed Pod server.properties directly. Configure required TLS, authentication and authorization for production listeners.
+
+## 6. Replication, Write Availability and Durability
+
+RF=3 alone does not guarantee that all data survives any two broker failures. Consider actual replication progress, the ISR at acknowledgement, eligible leader election, storage/network failures and controller quorum.
+
+If all three replicas initially belong to a healthy ISR, a partition using `min.insync.replicas=2` and `acks=all` can continue with two ISR members after one broker failure while other conditions hold. Leader transition can still cause errors/retries. Writes fail or are rejected below the minimum ISR, with error details depending on timing.
+
+| acks | Acknowledgement | Interpretation |
+| --- | --- | --- |
+| `0` | No broker response awaited | Storage is unconfirmed; returned offset is -1 |
+| `1` | Leader responds after recording | Risk of leader loss before follower replication |
+| `all` / `-1` | Wait for the current full ISR | Evaluate alongside minimum ISR, replication and leader-election policy |
+
+`acks=all` does not mean every disk completed fsync on every record. Nor does acks alone guarantee throughput or p99 rankings. Measure acknowledgement cost with comparable load, batching and networking.
+
+You can change minimum ISR as follows. Changing the replication factor itself requires replica reassignment, not adding `replication.factor` as an ordinary topic config.
 
 ```bash
-# Dynamically change min.insync.replicas on an existing topic
-kafka-configs.sh --bootstrap-server localhost:9092 \
+kafka-configs.sh --bootstrap-server "$DOCS_BOOTSTRAP" \
   --alter --entity-type topics --entity-name orders \
   --add-config min.insync.replicas=2
 ```
 
-A common production-grade combination is `replication.factor=3`, `min.insync.replicas=2`, producer `acks=all`, and `enable.idempotence=true`. This combination survives a single broker failure without data loss, and the idempotent producer setting prevents duplicate writes caused by network retries. Note that `acks=all` adds latency compared to `acks=1`, so latency-sensitive workloads that can tolerate some data loss (such as metrics ingestion) sometimes trade durability for speed by choosing `acks=1`.
 
-## Next Steps
+## Next Steps and References
 
-This document covered Kafka's core concepts — the broker/topic/partition model, the scope of ordering guarantees, consumer group rebalancing, the shift to KRaft, and replication/durability settings. Part 2 covers deploying all of these concepts as a KRaft-based Kafka cluster on Amazon EKS using the **Strimzi Operator**.
-
-[Return to Main Page](./README.md)
-
-## Quiz
-
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md).
+- [Strimzi Operator](./02-strimzi-operator.md)
+- [Kafka overview](./README.md)
+- [Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+- [Kafka design](https://kafka.apache.org/43/design/design/)
+- [Consumer configurations](https://kafka.apache.org/43/configuration/consumer-configs/)
+- [Producer configurations](https://kafka.apache.org/43/configuration/producer-configs/)
+- [KRaft operations](https://kafka.apache.org/43/operations/kraft/)
+- [Strimzi 1.2.0 release and migration notice](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)

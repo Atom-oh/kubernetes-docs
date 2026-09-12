@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "EMR on EKS 작업 제출 흐름 — StartJobRun",
+    "title": "EMR on EKS: StartJobRun 실행과 관측",
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
@@ -19,7 +19,7 @@
           "label": "내부 호출"
         },
         "security": {
-          "label": "실행 역할 바인딩"
+          "label": "IAM role credentials"
         },
         "dashed": {
           "label": "비동기 보고"
@@ -32,97 +32,124 @@
       "id": "user",
       "type": "external",
       "label": "사용자 / SDK",
-      "sublabel": "CLI · 콘솔 · Step Functions"
+      "sublabel": "AWS API caller"
     },
     {
       "id": "emr",
       "type": "cloud",
-      "label": "EMR 컨트롤 플레인",
-      "sublabel": "emr-containers API"
+      "label": "EMR control plane",
+      "sublabel": "VC → namespace"
     },
     {
-      "id": "vc",
+      "id": "kube",
       "type": "backend",
-      "label": "가상 클러스터",
-      "sublabel": "EKS 네임스페이스 (예: emr-spark)"
+      "label": "Kubernetes",
+      "sublabel": "API / placement"
     },
     {
-      "id": "driver",
+      "id": "spark",
       "type": "backend",
-      "label": "드라이버 Pod",
-      "sublabel": "일반 EKS Pod"
+      "label": "Spark workload",
+      "sublabel": "Submitter / driver / executors"
     },
     {
-      "id": "executor",
-      "type": "backend",
-      "label": "Executor Pod",
-      "sublabel": "드라이버가 요청"
+      "id": "logs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "Configured sink"
     }
   ],
   "messages": [
     {
-      "id": "start-job-run",
+      "id": "start",
       "from": "user",
       "to": "emr",
-      "y": 200,
+      "y": 165,
       "label": "StartJobRun",
       "variant": "emphasis",
-      "note": "virtual-cluster-id · execution-role-arn · release-label"
+      "note": "VC ID · role ARN · release label"
     },
     {
-      "id": "target-namespace",
+      "id": "accepted",
       "from": "emr",
-      "to": "vc",
-      "y": 258,
-      "label": "가상 클러스터에 매핑된 네임스페이스 지정"
+      "to": "user",
+      "y": 204,
+      "label": "Job ID 반환",
+      "variant": "dashed",
+      "note": "접수 ≠ 완료"
     },
     {
-      "id": "create-driver",
-      "from": "vc",
-      "to": "driver",
-      "y": 312,
-      "label": "작업 실행 역할(IRSA 방식 바인딩)로 드라이버 Pod 생성",
-      "variant": "security"
+      "id": "submit",
+      "from": "emr",
+      "to": "kube",
+      "y": 243,
+      "label": "Submitter Pod 생성 요청",
+      "variant": "default"
     },
     {
-      "id": "request-executors",
-      "from": "driver",
-      "to": "executor",
-      "y": 366,
-      "label": "드라이버가 Executor Pod 요청"
+      "id": "place-submitter",
+      "from": "kube",
+      "to": "spark",
+      "y": 282,
+      "label": "Submitter 배치·시작",
+      "variant": "default"
     },
     {
-      "id": "report-back",
-      "from": "driver",
+      "id": "pod-requests",
+      "from": "spark",
+      "to": "kube",
+      "y": 321,
+      "label": "Driver / executor Pod 요청",
+      "variant": "default",
+      "note": "Submitter → driver, driver → executors"
+    },
+    {
+      "id": "pod-starts",
+      "from": "kube",
+      "to": "spark",
+      "y": 360,
+      "label": "Pod 배치·시작",
+      "variant": "security",
+      "note": "IRSA / Pod Identity; driver가 Spark task 할당"
+    },
+    {
+      "id": "log-output",
+      "from": "spark",
+      "to": "logs",
+      "y": 399,
+      "label": "설정된 작업 로그 전송",
+      "variant": "dashed",
+      "note": "Submitter / driver / executors"
+    },
+    {
+      "id": "status",
+      "from": "kube",
       "to": "emr",
-      "y": 448,
-      "label": "상태 · 로그(CloudWatch) · 메트릭 보고",
+      "y": 438,
+      "label": "관찰된 Pod/job 상태",
       "variant": "dashed"
+    },
+    {
+      "id": "describe",
+      "from": "user",
+      "to": "emr",
+      "y": 477,
+      "label": "DescribeJobRun",
+      "variant": "emphasis",
+      "note": "최종 상태와 출력 확인"
     }
   ],
   "activations": [
     {
       "participant": "emr",
-      "from": 194,
-      "to": 456,
+      "from": 159,
+      "to": 487,
       "type": "cloud"
     },
     {
-      "participant": "vc",
-      "from": 252,
-      "to": 318,
-      "type": "backend"
-    },
-    {
-      "participant": "driver",
-      "from": 306,
-      "to": 454,
-      "type": "backend"
-    },
-    {
-      "participant": "executor",
-      "from": 360,
-      "to": 454,
+      "participant": "spark",
+      "from": 276,
+      "to": 447,
       "type": "backend"
     }
   ]

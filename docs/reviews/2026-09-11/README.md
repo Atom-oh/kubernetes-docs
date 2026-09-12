@@ -2,12 +2,14 @@
 
 This is a progress report, not a claim that the full corpus has been semantically reviewed.
 
-- Initial inventory: 2701 Markdown documents across five languages; current inventory includes 2707 after restoring deleted translations.
-- Fully read source/quiz/lab files recorded so far: 364 (350 fixed, 0 verified, 14 with follow-up).
+- Initial inventory: 2701 Markdown documents across five languages; current inventory includes 2709 after restoring deleted translations.
+- Fully read source/quiz/lab files recorded so far: 692 (680 fixed, 0 verified, 8 with follow-up).
 - Source files are maintained in Korean and English; translations are checked structurally and repaired through automation.
 
 | Batch | Files recorded | Fixed | Verified | Follow-up |
 |---|---:|---:|---:|---:|
+| [airflow-foundation](batches/airflow-foundation.json) | 6 | 6 | 0 | 0 |
+| [airflow-helm](batches/airflow-helm.json) | 4 | 0 | 0 | 0 |
 | [argocd-applications](batches/argocd-applications.json) | 4 | 4 | 0 | 0 |
 | [argocd-appsets](batches/argocd-appsets.json) | 4 | 4 | 0 | 0 |
 | [argocd-best-practices](batches/argocd-best-practices.json) | 4 | 4 | 0 | 0 |
@@ -23,12 +25,29 @@ This is a progress report, not a claim that the full corpus has been semanticall
 | [container-registry](batches/container-registry.json) | 18 | 18 | 0 | 0 |
 | [core-foundation](batches/core-foundation.json) | 24 | 24 | 0 | 0 |
 | [core-rest](batches/core-rest.json) | 20 | 20 | 0 | 0 |
+| [data-foundation](batches/data-foundation.json) | 6 | 6 | 0 | 0 |
+| [eks-advanced-debugging](batches/eks-advanced-debugging.json) | 4 | 0 | 0 | 4 |
+| [eks-cost-optimization](batches/eks-cost-optimization.json) | 4 | 4 | 0 | 0 |
+| [eks-creation-conclusion](batches/eks-creation-conclusion.json) | 2 | 2 | 0 | 0 |
 | [eks-creation-overview](batches/eks-creation-overview.json) | 2 | 2 | 0 | 0 |
-| [eks-creation-part1](batches/eks-creation-part1.json) | 4 | 2 | 0 | 2 |
-| [eks-creation-part2](batches/eks-creation-part2.json) | 4 | 2 | 0 | 2 |
-| [eks-creation-part3](batches/eks-creation-part3.json) | 2 | 0 | 0 | 2 |
+| [eks-creation-part1](batches/eks-creation-part1.json) | 4 | 4 | 0 | 0 |
+| [eks-creation-part2](batches/eks-creation-part2.json) | 4 | 4 | 0 | 0 |
+| [eks-creation-part3](batches/eks-creation-part3.json) | 4 | 4 | 0 | 0 |
+| [eks-creation-part4](batches/eks-creation-part4.json) | 4 | 4 | 0 | 0 |
+| [eks-creation-part5](batches/eks-creation-part5.json) | 4 | 4 | 0 | 0 |
 | [eks-introduction](batches/eks-introduction.json) | 4 | 4 | 0 | 0 |
-| [feature-flags](batches/feature-flags.json) | 4 | 0 | 0 | 4 |
+| [eks-monitoring-logging](batches/eks-monitoring-logging.json) | 4 | 4 | 0 | 0 |
+| [eks-networking-part1](batches/eks-networking-part1.json) | 4 | 4 | 0 | 0 |
+| [eks-networking-part2](batches/eks-networking-part2.json) | 4 | 4 | 0 | 0 |
+| [eks-networking-part3](batches/eks-networking-part3.json) | 4 | 4 | 0 | 0 |
+| [eks-resiliency](batches/eks-resiliency.json) | 4 | 4 | 0 | 0 |
+| [eks-security-chapter](batches/eks-security-chapter.json) | 4 | 4 | 0 | 0 |
+| [eks-storage-part1](batches/eks-storage-part1.json) | 4 | 4 | 0 | 0 |
+| [eks-storage-part2](batches/eks-storage-part2.json) | 4 | 4 | 0 | 0 |
+| [eks-storage-part3](batches/eks-storage-part3.json) | 4 | 4 | 0 | 0 |
+| [eks-troubleshooting](batches/eks-troubleshooting.json) | 4 | 4 | 0 | 0 |
+| [eks-upgrades](batches/eks-upgrades.json) | 4 | 4 | 0 | 0 |
+| [feature-flags](batches/feature-flags.json) | 4 | 4 | 0 | 0 |
 | [flagger](batches/flagger.json) | 4 | 4 | 0 | 0 |
 | [flux](batches/flux.json) | 4 | 4 | 0 | 0 |
 | [gitops-overviews](batches/gitops-overviews.json) | 6 | 6 | 0 | 0 |
@@ -41,9 +60,43 @@ This is a progress report, not a claim that the full corpus has been semanticall
 | [istio-security](batches/istio-security.json) | 10 | 10 | 0 | 0 |
 | [istio-traffic](batches/istio-traffic.json) | 30 | 30 | 0 | 0 |
 | [istio-troubleshooting](batches/istio-troubleshooting.json) | 2 | 2 | 0 | 0 |
+| [kafka-benchmark](batches/kafka-benchmark.json) | 4 | 4 | 0 | 0 |
+| [kafka-best-practices](batches/kafka-best-practices.json) | 4 | 4 | 0 | 0 |
+| [kafka-connect-mirrormaker](batches/kafka-connect-mirrormaker.json) | 4 | 4 | 0 | 0 |
+| [kafka-foundation](batches/kafka-foundation.json) | 6 | 6 | 0 | 0 |
+| [kafka-monitoring](batches/kafka-monitoring.json) | 4 | 4 | 0 | 0 |
+| [kafka-msk-integration](batches/kafka-msk-integration.json) | 4 | 4 | 0 | 0 |
+| [kafka-operations](batches/kafka-operations.json) | 4 | 4 | 0 | 0 |
+| [kafka-schema-registry](batches/kafka-schema-registry.json) | 4 | 4 | 0 | 0 |
+| [kafka-strimzi-operator](batches/kafka-strimzi-operator.json) | 4 | 4 | 0 | 0 |
 | [labs-foundations](batches/labs-foundations.json) | 14 | 14 | 0 | 0 |
-| [mesh-linkerd](batches/mesh-linkerd.json) | 10 | 6 | 0 | 4 |
+| [mesh-cilium](batches/mesh-cilium.json) | 24 | 24 | 0 | 0 |
+| [mesh-linkerd](batches/mesh-linkerd.json) | 28 | 28 | 0 | 0 |
 | [mesh-other-istio-overview](batches/mesh-other-istio-overview.json) | 4 | 4 | 0 | 0 |
+| [networking-calico](batches/networking-calico.json) | 42 | 42 | 0 | 0 |
+| [networking-cilium](batches/networking-cilium.json) | 10 | 6 | 0 | 4 |
+| [networking-foundation](batches/networking-foundation.json) | 28 | 28 | 0 | 0 |
+| [ops-ci-pipelines](batches/ops-ci-pipelines.json) | 4 | 4 | 0 | 0 |
+| [ops-event-capacity](batches/ops-event-capacity.json) | 4 | 4 | 0 | 0 |
+| [ops-finops-cost-platform](batches/ops-finops-cost-platform.json) | 4 | 4 | 0 | 0 |
+| [ops-gitops-automation](batches/ops-gitops-automation.json) | 4 | 4 | 0 | 0 |
+| [ops-gitops-multicluster](batches/ops-gitops-multicluster.json) | 4 | 4 | 0 | 0 |
+| [ops-infrastructure-advanced](batches/ops-infrastructure-advanced.json) | 4 | 4 | 0 | 0 |
+| [ops-infrastructure](batches/ops-infrastructure.json) | 4 | 4 | 0 | 0 |
+| [ops-observability-alerts](batches/ops-observability-alerts.json) | 4 | 4 | 0 | 0 |
+| [ops-observability-analysis](batches/ops-observability-analysis.json) | 4 | 4 | 0 | 0 |
+| [ops-observability-stack](batches/ops-observability-stack.json) | 4 | 4 | 0 | 0 |
+| [ops-resource-optimization](batches/ops-resource-optimization.json) | 4 | 4 | 0 | 0 |
+| [ops-scaling-strategies](batches/ops-scaling-strategies.json) | 4 | 4 | 0 | 0 |
+| [ops-tekton-pipelines](batches/ops-tekton-pipelines.json) | 4 | 4 | 0 | 0 |
+| [ops-troubleshooting](batches/ops-troubleshooting.json) | 4 | 4 | 0 | 0 |
+| [ops-upgrade-operations](batches/ops-upgrade-operations.json) | 4 | 4 | 0 | 0 |
+| [ops-zonal-foundation](batches/ops-zonal-foundation.json) | 6 | 6 | 0 | 0 |
+| [spark-best-practices](batches/spark-best-practices.json) | 4 | 4 | 0 | 0 |
+| [spark-emr](batches/spark-emr.json) | 4 | 4 | 0 | 0 |
+| [spark-foundation](batches/spark-foundation.json) | 6 | 6 | 0 | 0 |
+| [spark-operator](batches/spark-operator.json) | 4 | 4 | 0 | 0 |
+| [spark-performance](batches/spark-performance.json) | 4 | 4 | 0 | 0 |
 | [storage-database](batches/storage-database.json) | 12 | 12 | 0 | 0 |
 
 ## Mechanical findings

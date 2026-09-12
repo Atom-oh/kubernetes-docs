@@ -2,12 +2,12 @@
   "schema_version": 1,
   "diagram_type": "dataflow",
   "meta": {
-    "title": "모던 데이터 파이프라인 해부 — 5개 계층",
+    "title": "데이터 파이프라인의 다섯 역할",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
       1080,
-      760
+      540
     ],
     "legend": {
       "mode": "hidden"
@@ -45,7 +45,7 @@
       "label": "IoT · 외부 API",
       "sublabel": "이벤트 발생원",
       "stage": 0,
-      "row": 4
+      "row": 2
     },
     {
       "id": "batch",
@@ -61,13 +61,13 @@
       "label": "스트리밍 큐",
       "sublabel": "Kafka · Kinesis",
       "stage": 1,
-      "row": 4
+      "row": 2
     },
     {
       "id": "lake",
       "type": "database",
       "label": "데이터 레이크",
-      "sublabel": "원본 · 저비용",
+      "sublabel": "원본 · 정제본 보존",
       "stage": 2,
       "row": 0
     },
@@ -75,9 +75,9 @@
       "id": "dwh",
       "type": "database",
       "label": "웨어하우스",
-      "sublabel": "분석 쿼리 최적화",
+      "sublabel": "적재 후 SQL 변환·분석",
       "stage": 2,
-      "row": 2
+      "row": 1
     },
     {
       "id": "spark",
@@ -93,7 +93,7 @@
       "label": "스트림 처리",
       "sublabel": "Flink · KStreams",
       "stage": 3,
-      "row": 4
+      "row": 2
     },
     {
       "id": "bi",
@@ -109,7 +109,7 @@
       "label": "ML·API",
       "sublabel": "feature store",
       "stage": 4,
-      "row": 4
+      "row": 2
     }
   ],
   "flows": [
@@ -117,7 +117,7 @@
       "id": "app-batch",
       "from": "app",
       "to": "batch",
-      "label": "스냅샷 · CDC"
+      "label": "스냅샷 · 증분 추출"
     },
     {
       "id": "iot-stream",
@@ -137,14 +137,14 @@
       "id": "stream-lake",
       "from": "stream",
       "to": "lake",
-      "label": "원본 보존",
+      "label": "커넥터로 보존",
       "variant": "dashed"
     },
     {
       "id": "lake-dwh",
       "from": "lake",
       "to": "dwh",
-      "label": "정제 적재 (ELT)",
+      "label": "원본 적재 후 SQL 변환",
       "variant": "default",
       "labelDy": 24
     },
@@ -168,13 +168,20 @@
       "from": "dwh",
       "to": "bi",
       "label": "SQL 분석",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "route": "straight"
     },
     {
       "id": "flink-ml",
       "from": "flink",
       "to": "ml",
       "label": "실시간 피처"
+    },
+    {
+      "id": "spark-bi",
+      "from": "spark",
+      "to": "bi",
+      "label": "집계 결과"
     }
   ]
 }

@@ -2,41 +2,42 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Spark Operator 동작 방식",
+    "title": "Kubeflow Spark Operator 실행 흐름",
     "output": "ko-data-on-eks-spark-02-spark-operator-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
       {
         "id": "submit",
-        "label": "제출과 감시",
+        "label": "제출·admission",
         "focus": [
           "apply",
           "watch",
           "webhook",
           "driver"
         ],
-        "note": "kubectl apply로 만든 SparkApplication CR을 Controller가 감시하고, Webhook을 거쳐 Driver Pod를 생성한다."
+        "note": "Controller가 spark-submit을 실행하고 Kubernetes admission이 Pod를 처리합니다."
       },
       {
         "id": "run",
-        "label": "Driver가 이끄는 실행",
+        "label": "Driver·executor 실행",
         "focus": [
           "driver",
           "executor",
           "run"
         ],
-        "note": "Operator는 Driver Pod까지만 직접 관여하고, Executor Pod는 Driver가 Kubernetes API에 직접 요청한다."
+        "note": "Driver가 executor를 요청합니다. Kubernetes는 Pod를 배치하고 driver는 Spark task를 할당합니다."
       },
       {
         "id": "loop",
-        "label": "상태 보고 루프",
+        "label": "상태 조정·재시도",
         "focus": [
-          "run",
+          "driver",
+          "executor",
           "status",
           "watch"
         ],
-        "note": "진행 상황이 CR .status에 기록되고 Controller의 감시 루프로 되돌아간다."
+        "note": "Operator는 driver·executor 상태를 관찰하고 CR 상태·재시도·정리를 관리합니다."
       }
     ],
     "legend": {
@@ -67,15 +68,15 @@
     },
     {
       "id": "operator",
-      "label": "Spark Operator"
+      "label": "Kubeflow Controller"
     },
     {
       "id": "admission",
-      "label": "Mutating Admission Webhook"
+      "label": "Kubernetes Admission"
     },
     {
       "id": "spark",
-      "label": "Spark Driver / Executor"
+      "label": "Spark Pods on Kubernetes"
     }
   ],
   "mainPath": [
@@ -102,8 +103,8 @@
       "lane": "operator",
       "col": 1,
       "type": "backend",
-      "label": "Controller가 CR 감시",
-      "sublabel": "reconcile loop",
+      "label": "Controller 제출",
+      "sublabel": "spark-submit",
       "tag": "컨트롤 루프",
       "width": 176
     },
@@ -112,17 +113,17 @@
       "lane": "admission",
       "col": 2,
       "type": "security",
-      "label": "Pod 커스터마이징 주입",
-      "sublabel": "driver/executor pod",
+      "label": "Kubernetes admission",
+      "sublabel": "Kubeflow Pod mutator",
       "width": 176
     },
     {
       "id": "driver",
-      "lane": "operator",
+      "lane": "spark",
       "col": 3,
-      "type": "backend",
-      "label": "Driver Pod 생성",
-      "sublabel": "spark-driver",
+      "type": "cloud",
+      "label": "Driver Pod 실행",
+      "sublabel": "Kubernetes 배치",
       "width": 176
     },
     {
@@ -130,8 +131,8 @@
       "lane": "spark",
       "col": 4,
       "type": "cloud",
-      "label": "Executor Pod 요청",
-      "sublabel": "Driver가 직접 요청",
+      "label": "Executor 요청",
+      "sublabel": "driver → Kubernetes API",
       "width": 176
     },
     {
@@ -139,8 +140,8 @@
       "lane": "spark",
       "col": 5,
       "type": "cloud",
-      "label": "Spark 작업 실행",
-      "sublabel": "executor에서 실행",
+      "label": "Spark task 실행",
+      "sublabel": "driver가 작업 할당",
       "width": 176
     },
     {
@@ -148,8 +149,8 @@
       "lane": "operator",
       "col": 5,
       "type": "database",
-      "label": "진행 상황 기록",
-      "sublabel": "CR .status",
+      "label": "Pod 상태 관찰",
+      "sublabel": "driver + executor → CR",
       "width": 176
     }
   ],
@@ -169,15 +170,13 @@
     {
       "id": "webhook-to-driver",
       "from": "webhook",
-      "to": "driver",
-      "fromSide": "right",
-      "toSide": "bottom"
+      "to": "driver"
     },
     {
       "id": "driver-to-executor",
       "from": "driver",
       "to": "executor",
-      "label": "Kubernetes API"
+      "label": "admission + placement"
     },
     {
       "id": "executor-to-run",
@@ -188,13 +187,13 @@
       "id": "run-to-status",
       "from": "run",
       "to": "status",
-      "label": "상태 보고"
+      "label": "Pod watch"
     },
     {
       "id": "status-to-watch",
       "from": "status",
       "to": "watch",
-      "label": "다시 감시",
+      "label": "reconcile / retry",
       "variant": "dashed",
       "role": "return"
     }

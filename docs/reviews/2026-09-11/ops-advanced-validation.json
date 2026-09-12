@@ -1,0 +1,252 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "schemaRoots": {
+    "nlb": {
+      "format_version": "1.0",
+      "valid": true,
+      "error_count": 0,
+      "warning_count": 0,
+      "diagnostics": []
+    },
+    "dns": {
+      "format_version": "1.0",
+      "valid": true,
+      "error_count": 0,
+      "warning_count": 0,
+      "diagnostics": []
+    }
+  },
+  "terraformMockCases": {
+    "nlb": 6,
+    "dns": 3,
+    "note": "AWS provider fully mocked; positive NLB cases use virtual apply to resolve IAM policy values. No real AWS apply."
+  },
+  "pythonCases": [
+    {
+      "case": "default_preview",
+      "status": "proposal",
+      "writes": 0
+    },
+    {
+      "case": "enabled_apply",
+      "status": "weights_updated",
+      "writes": 1
+    },
+    {
+      "case": "duplicate_after_apply",
+      "status": "already_shifted",
+      "writes": 0
+    },
+    {
+      "case": "green_alarm",
+      "status": "weights_updated",
+      "writes": 1
+    },
+    {
+      "case": "direct_cloudwatch_envelope",
+      "status": "unsupported_envelope",
+      "writes": 0
+    },
+    {
+      "case": "non_record",
+      "status": "invalid_record",
+      "writes": 0
+    },
+    {
+      "case": "output_topic_rejected",
+      "status": "ignored_source",
+      "writes": 0
+    },
+    {
+      "case": "non_alarm",
+      "status": "ignored_state",
+      "writes": 0
+    },
+    {
+      "case": "unknown_alarm",
+      "status": "ignored_alarm",
+      "writes": 0
+    },
+    {
+      "case": "wrong_account",
+      "status": "ignored_alarm",
+      "writes": 0
+    },
+    {
+      "case": "expired",
+      "status": "stale_message",
+      "writes": 0
+    },
+    {
+      "case": "future",
+      "status": "stale_message",
+      "writes": 0
+    },
+    {
+      "case": "naive_time",
+      "status": "invalid_message",
+      "writes": 0
+    },
+    {
+      "case": "malformed_json",
+      "status": "invalid_message",
+      "writes": 0
+    },
+    {
+      "case": "source_alarm_cleared",
+      "status": "alarm_state_changed",
+      "writes": 0
+    },
+    {
+      "case": "destination_alarm_bad",
+      "status": "alarm_state_changed",
+      "writes": 0
+    },
+    {
+      "case": "different_transition",
+      "status": "stale_transition",
+      "writes": 0
+    },
+    {
+      "case": "source_recovered",
+      "status": "source_recovered",
+      "writes": 0
+    },
+    {
+      "case": "no_destination",
+      "status": "destination_not_ready",
+      "writes": 0
+    },
+    {
+      "case": "capacity_count_gate",
+      "status": "destination_not_ready",
+      "writes": 0
+    },
+    {
+      "case": "external_listener_change",
+      "status": "concurrent_change",
+      "writes": 0
+    },
+    {
+      "case": "destination_changes",
+      "status": "destination_changed",
+      "writes": 0
+    },
+    {
+      "case": "notification_failure_not_retried",
+      "status": "weights_updated",
+      "writes": 1
+    },
+    {
+      "case": "unexpected_target_rejected",
+      "status": "ValueError",
+      "writes": 0
+    },
+    {
+      "case": "notification_loop_config_rejected",
+      "status": "ValueError",
+      "writes": 0
+    }
+  ],
+  "manualCases": [
+    {
+      "case": "apply",
+      "applied": true,
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "case": "abort",
+      "applied": false,
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "case": "automatic",
+      "applied": false,
+      "exitCode": 1,
+      "passed": true
+    },
+    {
+      "case": "unhealthy",
+      "applied": false,
+      "exitCode": 1,
+      "passed": true
+    },
+    {
+      "case": "plan-fails",
+      "applied": false,
+      "exitCode": 1,
+      "passed": true
+    },
+    {
+      "case": "leading-zero",
+      "applied": true,
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "case": "relative-max",
+      "applied": true,
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "case": "zero",
+      "applied": false,
+      "exitCode": 2,
+      "passed": true
+    },
+    {
+      "case": "negative",
+      "applied": false,
+      "exitCode": 2,
+      "passed": true
+    },
+    {
+      "case": "decimal",
+      "applied": false,
+      "exitCode": 2,
+      "passed": true
+    },
+    {
+      "case": "overflow",
+      "applied": false,
+      "exitCode": 2,
+      "passed": true
+    },
+    {
+      "case": "expression",
+      "applied": false,
+      "exitCode": 2,
+      "passed": true
+    }
+  ],
+  "yaml": {
+    "coreObjectsValidated": 4,
+    "tgbCrdValidated": true,
+    "nodePool": "fields and Pod requirement/toleration consistency checked; managed AutoMode CRD not fetched from a live cluster",
+    "missingSecret": "postgresql-auth intentionally supplied by the documented external secret workflow",
+    "liveKubernetesCalls": 0,
+    "status": "passed"
+  },
+  "fences": {
+    "hcl": 12,
+    "yaml": 8,
+    "python": 2,
+    "text": 2,
+    "bash": 6
+  },
+  "sourceFixtureParity": true,
+  "localLinks": {
+    "files": 4,
+    "errors": 0
+  },
+  "lambdaZipSha256": "8a92bd34607df6ef8bd12a59fffb73d0412197f628c0a82f2eb7eaf41dbfcdd6",
+  "limits": [
+    "No live NLB cutover, AWS policy simulation, Lambda invocation, SNS delivery, PostgreSQL bootstrap, or Kubernetes deployment.",
+    "Default is proposal-only. Optional mutation is single-listener and point-in-time, not an atomic cross-writer transaction; production requires capacity/SLO/writer coordination.",
+    "Managed AutoMode NodePool CRD was not fetched from a cluster; fields and Pod/taint/zone consistency reviewed against the documented API."
+  ]
+}

@@ -49,7 +49,9 @@ These are candidates, not automatic product recommendations. A tracing backend o
 | Consul service mesh | Envoy sidecars with Consul discovery/control plane | Documented Kubernetes, VM and other runtime integrations; verify the selected edition/version and proxy compatibility |
 | Cilium | eBPF network datapath plus proxies such as Envoy for L7 | Verify enabled components and platform support; not an entirely proxy-free L7 implementation |
 
-Cilium 1.20.1 documents mutual authentication as **Beta**, with an out-of-band handshake. Traffic encryption requires separate WireGuard/IPsec configuration; the authentication feature is not equivalent to automatically wrapping every application connection in an Istio-style TLS session. Its documented Cluster Mesh and external-mTLS limitations also matter.
+Cilium 1.20.1 documents out-of-band mutual authentication as **Beta**, with an out-of-band handshake. Traffic encryption requires separate WireGuard/IPsec configuration; the authentication feature is not equivalent to automatically wrapping every application connection in an Istio-style TLS session. Its documented Cluster Mesh and external-mTLS limitations also matter.
+
+Cilium 1.20.1 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
 
 Linkerd's project milestone version and installed artifact are different choices. The official release page lists Linkerd 2.20 and its corresponding edge release; the open-source project publishes edge artifacts, while stable artifacts come from vendors. Check release guidance, Kubernetes compatibility, update/support terms and any subscription cost. Do not infer the artifact/channel from an old documentation link.
 

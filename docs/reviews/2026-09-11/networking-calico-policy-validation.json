@@ -1,0 +1,689 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T04:57:45.666126+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/05-network-policy.md",
+      "sha256": "a0b4ab9581f80d7f66c36e4e5719593161ff069f53678ceb4c1a5d9959439ba6"
+    },
+    {
+      "path": "en/quizzes/networking/calico/05-network-policy-quiz.md",
+      "sha256": "3b53de91e6478b84fa873d89de0f98c81c83ab4debd712561e57cda8614d1142"
+    },
+    {
+      "path": "ko/networking/calico/05-network-policy.md",
+      "sha256": "2311cdf23eaf0469553d4b8bd4842848051931f1bd17ce049d461a706e8d6642"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/05-network-policy-quiz.md",
+      "sha256": "55e0ddfd13cff6cedcdc2f7e2e8880ed3e23ee6330b27c8116797594114933ad"
+    }
+  ],
+  "sources": {
+    "NetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/networkpolicy",
+      "key": "72c09bf8ede0",
+      "rawSHA256": "80a2a2aefa60687671a32b821dcfb6934cfb0f2c486c9f448e59449b7639d8f7"
+    },
+    "GlobalNetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy",
+      "key": "7b7de74c5e4b",
+      "rawSHA256": "b9706dc8127e2b7f62fde0cd3623fe56d5174ff2218b96b3117e9a5bbfad5dab"
+    },
+    "Tier": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/tier",
+      "key": "f764a1eb86af",
+      "rawSHA256": "3bc43f84a197676eb2c61523f53b426173f2e782f3a32fc6c96b24d69558233a"
+    },
+    "HostEndpoint": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/hostendpoint",
+      "key": "78b0701a72a1",
+      "rawSHA256": "2466d2ed4bf2325064c0d538a6265dbf5e6f72679df6e3959a59a64d1eaa1804"
+    },
+    "KubeControllers": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig",
+      "key": "26086bec9e79",
+      "rawSHA256": "0e49ee53bee1b7fabe0702e188589e295ec53614470c2631f0b3c1c82121e9aa"
+    },
+    "KubernetesNetworkPolicy": {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "key": "953450b4076f",
+      "rawSHA256": "d537cebf90aee2ca121c56a6cda0b52969f99be62cdb54692dfe5bef7a95da02"
+    },
+    "KubernetesRBAC": {
+      "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+      "key": "6be4067ddcf7",
+      "rawSHA256": "0ceb425b9f8f6e8c47fd7496735cfab1c148b2c87f74681f7e6c08b9f86076c6"
+    },
+    "OpenSourceALP": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy",
+      "key": "840092fbe105",
+      "rawSHA256": "b44b3bd940171e01946c97fce0788df94bada4642b821c1a8271484bfec439b9"
+    },
+    "TierRBAC": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/policy-tiers/rbac-tiered-policies",
+      "key": "c801839725e9",
+      "rawSHA256": "9719021ed4de51b2a7b10b69c647b60a619319de17446574fb19dc8acb3452bf"
+    },
+    "TierGuide": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy",
+      "key": "64f52e7e7420",
+      "rawSHA256": "b6bd08bdd8edc5e20d3826a539c231c29112ec032a0899e97f0816b625071d16"
+    },
+    "StagedPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/staged-network-policies",
+      "key": "23a56028a57a",
+      "rawSHA256": "a03174b927a7e41c0a93318427298977021c2d8ec59cd70ededdd50ba1e1400b"
+    },
+    "HostProtection": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/hosts/protect-hosts",
+      "key": "a6d33dcda0bc",
+      "rawSHA256": "366322c49f2ef67a1e9e2656798c5349d6aaf345e7616bc6b542a901ebf75b1b"
+    },
+    "Failsafe": {
+      "url": "https://docs.tigera.io/calico/latest/reference/host-endpoints/failsafe",
+      "key": "e56987cc8b9b",
+      "rawSHA256": "c73c702798fcd15f9a7ee3d609f0edbb5ce9b588fe5e1283fd4bcc48ba246655"
+    },
+    "PreDNAT": {
+      "url": "https://docs.tigera.io/calico/latest/reference/host-endpoints/pre-dnat",
+      "key": "df588436befa",
+      "rawSHA256": "9512ce820bbfd83111c54efa2e68910e0882adcd667f2cb0c169534bc274d768"
+    },
+    "Forwarded": {
+      "url": "https://docs.tigera.io/calico/latest/reference/host-endpoints/forwarded",
+      "key": "19209e309c8b",
+      "rawSHA256": "c44def7afa4d6bd6419b5799d4d91f1eddabd974bbc8757496afadd32d04ae5f"
+    },
+    "EnterpriseDomains": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy",
+      "key": "eb4790c977ec",
+      "rawSHA256": "390b67015e7a9b19925bf05697e1b3d5ac4d5759ccd8fa677869c16e03cb0d05"
+    },
+    "TierSource": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/api/pkg/apis/projectcalico/v3/tier.go",
+      "key": "cb878c6aba61",
+      "rawSHA256": "d8b1c496615b32341fc3bc0c4fee9b8aa9ab99866bdeb8b1d100a760a23b6d36"
+    },
+    "EndpointRules": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/rules/endpoints.go",
+      "key": "e5666af232a9",
+      "rawSHA256": "d160979ee493fcfeaeb4da627de914e7147d718478736d76e7335b1205dc0a86"
+    },
+    "Validator": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/libcalico-go/lib/validator/v3/validator.go",
+      "key": "be7225e20613",
+      "rawSHA256": "ee3cc18c8d569ef469c8bcf3a16bddaf09967ba4776507948dfd64f9297d153c"
+    },
+    "NativeV3RBAC": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/webhooks/pkg/rbac/rbac.go",
+      "key": "80966474d357",
+      "rawSHA256": "e885f25309d528aa18cbba1386dad31f646154ce24315ad74f6be46643819de7"
+    },
+    "TierAuthorizer": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/apiserver/pkg/registry/projectcalico/authorizer/authorizer.go",
+      "key": "722d1edcb8d7",
+      "rawSHA256": "097b8c78ac897f50524968b43e2692fd9c5473b6be306a192730246936426512"
+    },
+    "CalicoctlGet": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/get.go",
+      "key": "21ca066b1797",
+      "rawSHA256": "97f845abc66d49b4807c6804e2f7e79a5ed9bbd0042feedd4835a547b7831d6f"
+    },
+    "CalicoctlCommands": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/calicoctl.go",
+      "key": "bd766fcc4111",
+      "rawSHA256": "3f13bd9fd250fdad55583e8e11630fca5d868fb84542991b7a5d7ccdf77d0122"
+    },
+    "releasedCRDs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d",
+      "rawSHA256": "cb46786692404fb7955c6d31329c667d0dd8f1ff4821dc7869d0156c93d3a859"
+    },
+    "PolicyLogs": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/policy-rules/log-rules",
+      "key": "426e3c6cde3a",
+      "rawSHA256": "66504021fd162f073b1e970a97ff45354ed0463776395453abf2975d269579f7"
+    },
+    "ComponentMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics",
+      "key": "84f7a45d1395",
+      "rawSHA256": "87d6596864356c9fcc3904727e200e334de889af5ca67f042643309203a8e44d"
+    },
+    "PolicyRenderer": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/rules/policy.go",
+      "key": "2bff741448fa",
+      "rawSHA256": "832633c7c43b11a19e01fd6dc8109e6516f8294259d66d7c391be1804cf436a3"
+    }
+  },
+  "findings": [
+    "Entire original EN1341/KO1404 guides and EN250/KO246 15-question quizzes read before fixes. All6figures actually viewed.",
+    "Current baseline Calico3.32.2 and Kubernetes-tested1.34–1.36; standard aggregated API/Kubernetes datastore prerequisites explicit. Examples use isolated demo namespace and are separate patterns, not production-tested manifest bundle.",
+    "Corrected Kubernetes additive allow/endpoint-direction semantics, same-entry namespace+pod AND vs separate-entry OR, reply behavior, existing-connection/NAT limits, and existing named-port/endPort support.",
+    "Fixed duplicate selector/destination YAML keys, numeric-port protocol omissions, server destination-v-source ports, namespace identity labels, global(expr) selector misuse, literal namespace/tenant interpolation, and broad cluster/system/host selection.",
+    "Preserved valid Open Source3.32 tiers, staged policies and HTTP/Dikastes integration. HTTP requires configured ALP/CSI/Envoy/identity; no claim that genericEnvoy or HTTPfield alone activates it. CalicoALPguide1.28.1 recommendation not blindly upgraded or treated as all-version compatibility.",
+    "Separated commercial Enterprise3.23 domain examples from OSS (expected OSS schema rejection), corrected DNSwildcard1+components/multiplelevels, trustedDNS/IPvsHTTPidentity limitations, duplicate destination maps and unsupported OSSdnsTrustedServers. policySyncPathPrefix isALPsync,notDNSenablement.",
+    "Tier source constants default1e6/kube-admin1e3/kube-baseline1e7, selectedendpoint+direction/defaultActionDeny, Profilefallback and hoststageexceptions corrected. Removed earlyPass that bypassed later PCI/restricted-data policy; security/platformdefaultActionPass preserves checkingallguardrails.",
+    "Calico tier.networkpolicies/tier.globalnetworkpolicies pseudo-resource plus synthetic tier.* and getTier RBAC preserved and correctly bound. Generic Kubernetes resourceNames isnotglob. Nativev3admissioncannotfilterGET/LIST/WATCH; authcan-i alone cannotverifycombinedtierchecks.",
+    "NetworkSets use controlledlabels/scopes; fictionalcountry/maliciousIPrangesrelabelledasexamples. Overlapdenybeforeallow; tenantpoliciesuseexplicitvalueswithlabel/RBACownership. RFC1918notclusteronly.",
+    "HostEndpoint creation separatedfromdefaultEndpointToHostAction/InstallationhostPorts. AutoHEPviaKubeControllersmergepatchpreservescontrollerchoices. FailsafeSSH22preventsclaimofbastion-onlypolicy; manualHEPexampleexplicitlyincompletefirewallwithmanagement/egressprereqs. Removedkubelet10255defaultopen.",
+    "DoNotTrack/preDNAThostonly,applyOnForwardrequired,mutualexclusion,statelessrequest+responseports,andnoend-of-stage-defaultdrop corrected. PreDNATingressonly seesoriginaldestination; NodePortexampledoesnotclaimdirectPodLBcoverage.",
+    "Currentcalicoctlhasnopolicy-trace; effectivepolicyrequiresalltiers,bothendpoints,labels,Service/NATpath. readinessnotlatencybenchmark; iptablesLogkernelvsFelixstdout; stagedpolicyavailableOSSwithWhiskerpolicies.pending. Removedunsourcedpolicy-countperformancebounds.",
+    "All30originalquizanswersreviewed; ambiguousKOdefaultdenyoptionsandkube-proxy-irrelevantclaimfixed. Added4RBAC/portquestions;34answer-optionpairsaligned.6figures1retainedwithcaption5inaccurate/duplicatedrefsremoved;assetsunchanged."
+  ],
+  "validation": {
+    "schemaObjects": 79,
+    "bashBlocks": 12,
+    "commercialExamples": [
+      {
+        "path": "en",
+        "explicitlyMarkedEnterprise": true,
+        "OSS3_32SchemaRejectsDomains": true,
+        "primaryReferenceChecked": true,
+        "EnterpriseRuntimeNotTested": true
+      },
+      {
+        "path": "ko",
+        "explicitlyMarkedEnterprise": true,
+        "OSS3_32SchemaRejectsDomains": true,
+        "primaryReferenceChecked": true,
+        "EnterpriseRuntimeNotTested": true
+      }
+    ],
+    "semanticRules": 115,
+    "quizAnswers": 34,
+    "flowModels": [
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "backend",
+        "destinationNamespace": "calico-demo",
+        "port": 8080,
+        "protocol": "TCP",
+        "allowed": true,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "backend",
+        "destinationNamespace": "calico-demo",
+        "port": 5432,
+        "protocol": "TCP",
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "database",
+        "destinationNamespace": "calico-demo",
+        "port": 5432,
+        "protocol": "TCP",
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "backend",
+        "sourceNamespace": "calico-demo",
+        "destination": "database",
+        "destinationNamespace": "calico-demo",
+        "port": 5432,
+        "protocol": "TCP",
+        "allowed": true,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "other",
+        "sourceNamespace": "calico-demo",
+        "destination": "backend",
+        "destinationNamespace": "calico-demo",
+        "port": 8080,
+        "protocol": "TCP",
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "backend",
+        "destinationNamespace": "other",
+        "port": 8080,
+        "protocol": "TCP",
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "dns",
+        "destinationNamespace": "kube-system",
+        "port": 53,
+        "protocol": "UDP",
+        "allowed": true,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "dns",
+        "destinationNamespace": "kube-system",
+        "port": 53,
+        "protocol": "TCP",
+        "allowed": true,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "dns",
+        "destinationNamespace": "calico-demo",
+        "port": 53,
+        "protocol": "UDP",
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "frontend",
+        "sourceNamespace": "calico-demo",
+        "destination": "dns",
+        "destinationNamespace": "calico-demo",
+        "port": 53,
+        "protocol": "TCP",
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "microservices/DNS",
+        "source": "database",
+        "sourceNamespace": "calico-demo",
+        "destination": "backend",
+        "destinationNamespace": "calico-demo",
+        "port": 8080,
+        "protocol": "TCP",
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "earlyPassBypassesLaterRestrictedData",
+        "fixed": "Deny",
+        "counterfactualEarlyPass": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "securityEndOfTierPass",
+        "restrictedSource": false,
+        "decision": "Deny",
+        "modelOnly": true
+      },
+      {
+        "case": "securityEndOfTierPass",
+        "restrictedSource": true,
+        "decision": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "literalTenant",
+        "sourceTenant": "team-a",
+        "destinationTenant": "team-a",
+        "decision": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "literalTenant",
+        "sourceTenant": "team-b",
+        "destinationTenant": "team-a",
+        "decision": "Deny",
+        "modelOnly": true
+      },
+      {
+        "case": "literalTenant",
+        "sourceTenant": null,
+        "destinationTenant": "team-a",
+        "decision": "Deny",
+        "modelOnly": true
+      }
+    ],
+    "RBACModels": [
+      {
+        "tier": "application",
+        "namespace": "calico-demo",
+        "verb": "create",
+        "getBinding": true,
+        "editBinding": true,
+        "allowed": true,
+        "modelOnly": true
+      },
+      {
+        "tier": "application",
+        "namespace": "other",
+        "verb": "create",
+        "getBinding": true,
+        "editBinding": true,
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "tier": "security",
+        "namespace": "calico-demo",
+        "verb": "create",
+        "getBinding": true,
+        "editBinding": true,
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "tier": "application",
+        "namespace": "calico-demo",
+        "verb": "delete",
+        "getBinding": true,
+        "editBinding": true,
+        "allowed": true,
+        "modelOnly": true
+      },
+      {
+        "tier": "application",
+        "namespace": "calico-demo",
+        "verb": "create",
+        "getBinding": false,
+        "editBinding": true,
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "tier": "application",
+        "namespace": "calico-demo",
+        "verb": "create",
+        "getBinding": true,
+        "editBinding": false,
+        "allowed": false,
+        "modelOnly": true
+      },
+      {
+        "case": "ordinaryResourceNotPseudoWildcard",
+        "allowed": false,
+        "modelOnly": true
+      }
+    ],
+    "hostStageModels": [
+      {
+        "case": "preDNAT",
+        "source": "10.0.0.25",
+        "port": 30080,
+        "stageDecision": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "preDNAT",
+        "source": "192.0.2.25",
+        "port": 30080,
+        "stageDecision": "Deny",
+        "modelOnly": true
+      },
+      {
+        "case": "preDNAT",
+        "source": "192.0.2.25",
+        "port": 30081,
+        "stageDecision": "Continue",
+        "modelOnly": true
+      },
+      {
+        "case": "untrackedDNS",
+        "direction": "ingress",
+        "protocol": "TCP",
+        "sourcePort": 49152,
+        "destinationPort": 53,
+        "stageDecision": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "untrackedDNS",
+        "direction": "egress",
+        "protocol": "TCP",
+        "sourcePort": 53,
+        "destinationPort": 49152,
+        "stageDecision": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "untrackedDNS",
+        "direction": "egress",
+        "protocol": "TCP",
+        "sourcePort": 49152,
+        "destinationPort": 53,
+        "stageDecision": "Continue",
+        "modelOnly": true
+      },
+      {
+        "case": "untrackedDNS",
+        "direction": "ingress",
+        "protocol": "UDP",
+        "sourcePort": 49152,
+        "destinationPort": 53,
+        "stageDecision": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "untrackedDNS",
+        "direction": "egress",
+        "protocol": "UDP",
+        "sourcePort": 53,
+        "destinationPort": 49152,
+        "stageDecision": "Allow",
+        "modelOnly": true
+      },
+      {
+        "case": "untrackedDNS",
+        "direction": "egress",
+        "protocol": "UDP",
+        "sourcePort": 49152,
+        "destinationPort": 53,
+        "stageDecision": "Continue",
+        "modelOnly": true
+      }
+    ],
+    "selectorModels": [
+      {
+        "case": "KubernetesSameEntryAND",
+        "namespace": "calico-demo",
+        "app": "frontend",
+        "matched": true,
+        "modelOnly": true
+      },
+      {
+        "case": "KubernetesSameEntryAND",
+        "namespace": "calico-demo",
+        "app": "other",
+        "matched": false,
+        "modelOnly": true
+      },
+      {
+        "case": "KubernetesSameEntryAND",
+        "namespace": "other",
+        "app": "frontend",
+        "matched": false,
+        "modelOnly": true
+      },
+      {
+        "case": "KubernetesSameEntryAND",
+        "namespace": "other",
+        "app": "other",
+        "matched": false,
+        "modelOnly": true
+      }
+    ],
+    "DNSModels": [
+      {
+        "pattern": "*.example.com",
+        "domain": "example.com",
+        "matched": false,
+        "modelOnly": true
+      },
+      {
+        "pattern": "*.example.com",
+        "domain": "api.example.com",
+        "matched": true,
+        "modelOnly": true
+      },
+      {
+        "pattern": "*.example.com",
+        "domain": "deep.api.example.com",
+        "matched": true,
+        "modelOnly": true
+      },
+      {
+        "pattern": "*.example.com",
+        "domain": "notexample.com",
+        "matched": false,
+        "modelOnly": true
+      }
+    ],
+    "figures": {
+      "viewed": 6,
+      "retained": 1,
+      "removedReferences": 5
+    },
+    "limitations": [
+      "Offline schema and source-derived semantic checks; no live API server admission, enforcement dataplane, commercial DNS engine, Istio/Dikastes integration, host firewall or production performance test.",
+      "Flow/RBAC/selector/DNS/host-stage models intentionally cover the documented subset and are not full Calico implementations.",
+      "Commercial DNS examples remain explicitly separated and are expected to fail the Open Source schema."
+    ]
+  },
+  "originalSchemaFindings": [
+    {
+      "language": "en",
+      "block": 14,
+      "kind": "FelixConfiguration",
+      "name": "default",
+      "schemaErrors": [
+        "Additional properties are not allowed ('dnsTrustedServers' was unexpected)"
+      ]
+    },
+    {
+      "language": "en",
+      "block": 15,
+      "yamlError": "('duplicate key', 'destination')"
+    },
+    {
+      "language": "en",
+      "block": 16,
+      "kind": "GlobalNetworkPolicy",
+      "name": "dns-wildcards",
+      "schemaErrors": [
+        "Additional properties are not allowed ('domains' was unexpected)"
+      ]
+    },
+    {
+      "language": "en",
+      "block": 27,
+      "yamlError": "('duplicate key', 'destination')"
+    },
+    {
+      "language": "ko",
+      "block": 3,
+      "yamlError": "('duplicate key', 'selector')"
+    },
+    {
+      "language": "ko",
+      "block": 16,
+      "kind": "GlobalNetworkPolicy",
+      "name": "allow-specific-domains",
+      "schemaErrors": [
+        "Additional properties are not allowed ('domains' was unexpected)",
+        "Additional properties are not allowed ('domains' was unexpected)",
+        "Additional properties are not allowed ('domains' was unexpected)"
+      ]
+    },
+    {
+      "language": "ko",
+      "block": 25,
+      "kind": "GlobalNetworkPolicy",
+      "name": "controlled-egress",
+      "schemaErrors": [
+        "Additional properties are not allowed ('domains' was unexpected)"
+      ]
+    }
+  ],
+  "render": {
+    "passed": 4,
+    "total": 4
+  },
+  "docsTest": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-calico-policy-validation/docs-test.log"
+  },
+  "diffCheck": "All assigned ko/en mesh/networking/observability guide/quiz/lab scopes clean.",
+  "figures": [
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-05-network-policy-0.png",
+      "actuallyViewed": true,
+      "action": "Retained with explicit new-connection/reply/isolation-scope caption.",
+      "findings": "Connection arrows must distinguish new flows from allowed return traffic and absence of other controls.",
+      "retained": true
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-05-network-policy-1.png",
+      "actuallyViewed": true,
+      "action": "Removed inaccurate/redundant reference; replaced by current capability/evaluation prose and tables. Asset unchanged.",
+      "findings": "Tier diagrams wrongly conflate no-match with Pass/profile fallback, wrong default-tier order/infinity, and universal final-default-tier claim.",
+      "retained": false
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-05-network-policy-2.png",
+      "actuallyViewed": true,
+      "action": "Removed inaccurate/redundant reference; replaced by current capability/evaluation prose and tables. Asset unchanged.",
+      "findings": "Tier diagrams wrongly conflate no-match with Pass/profile fallback, wrong default-tier order/infinity, and universal final-default-tier claim.",
+      "retained": false
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-05-network-policy-0.png",
+      "actuallyViewed": true,
+      "action": "Removed inaccurate/redundant reference; replaced by current capability/evaluation prose and tables. Asset unchanged.",
+      "findings": "API capability progression misleading and DNS/L7 prerequisites missing; replace with current capability table.",
+      "retained": false
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-05-network-policy-1.png",
+      "actuallyViewed": true,
+      "action": "Removed inaccurate/redundant reference; replaced by current capability/evaluation prose and tables. Asset unchanged.",
+      "findings": "Tier diagrams wrongly conflate no-match with Pass/profile fallback, wrong default-tier order/infinity, and universal final-default-tier claim.",
+      "retained": false
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-05-network-policy-2.png",
+      "actuallyViewed": true,
+      "action": "Removed inaccurate/redundant reference; replaced by current capability/evaluation prose and tables. Asset unchanged.",
+      "findings": "Tier diagrams wrongly conflate no-match with Pass/profile fallback, wrong default-tier order/infinity, and universal final-default-tier claim.",
+      "retained": false
+    }
+  ],
+  "primaryDocumentationDiscrepancies": [
+    "CurrentNetworkPolicyAPIparagraphsaysPassjumpsdirectlytoProfiles;currentTierdocs+releasedFelixrendererconfirmnextapplicableTierthenProfiles.",
+    "Tierguidesometextcallsdefaulttierlastbutcurrentconstants/guidealsoincludehigher-orderkube-baseline;correctedqualifiedordering.",
+    "StagedguideintrotableusesStagedCalicoNetworkPolicybutactualexample/releasedCRDkindisStagedNetworkPolicy;usedactualkind."
+  ],
+  "artifacts": [
+    "/tmp/networking-calico-policy-validation",
+    "/tmp/networking-calico-policy-sources.json",
+    "/tmp/networking-calico-policy-check.py"
+  ],
+  "ebpfFollowup": {
+    "files": [
+      "en/networking/calico/05-network-policy.md",
+      "ko/networking/calico/05-network-policy.md"
+    ],
+    "finding": "ExplicitSCTPunsupportedBPFscope;currentlast-updatedheaderformat;source installguide;2renderspassed.",
+    "evidence": "docs/reviews/2026-09-11/networking-calico-ebpf-validation.json"
+  }
+}

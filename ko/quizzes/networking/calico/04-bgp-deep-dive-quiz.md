@@ -1,7 +1,7 @@
 # Calico BGP 심화 퀴즈
 
 > **관련 문서**: [Calico BGP 심화](../../../networking/calico/04-bgp-deep-dive.md)
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 퀴즈
 
@@ -37,7 +37,7 @@ iBGP(Internal BGP)는 동일한 자율 시스템(AS) 내의 라우터 간 통신
 
 </details>
 
-3. Private AS 번호 범위는 무엇입니까?
+3. 16비트 Private AS 번호 범위는 무엇입니까?
    - A) 1-1000
    - B) 10000-50000
    - C) 64512-65534
@@ -49,7 +49,7 @@ iBGP(Internal BGP)는 동일한 자율 시스템(AS) 내의 라우터 간 통신
 **정답: C) 64512-65534**
 
 **설명:**
-Private AS 번호 범위는 64512-65534입니다. 이 범위의 AS 번호는 인터넷에 광고되지 않으며, 내부 네트워크나 프라이빗 환경에서 사용됩니다.
+16비트 프라이빗 범위는 64512–65534이고 32비트 범위는 4200000000–4294967294입니다. ASN은 네트워크를 식별하는 번호이지 자체적으로 라우팅 불가능한 IP 주소가 아닙니다. 글로벌 인터넷에 경로를 광고하기 전에 프라이빗 ASN이 포함된 AS_PATH를 적절히 처리해야 합니다.
 
 </details>
 
@@ -113,14 +113,14 @@ Route Reflector는 iBGP에서 full-mesh 요구 사항을 제거합니다. 클라
 **정답: B) routeReflectorClusterID**
 
 **설명:**
-Route Reflector 노드는 Node 리소스의 spec.bgp.routeReflectorClusterID 필드를 설정하여 구성합니다. 이 ID는 Route Reflector 클러스터를 식별하는 데 사용됩니다.
+Calico Node의 spec.bgp.routeReflectorClusterID가 RR 역할을 지정합니다. Kubernetes datastore에서는 기존 Kubernetes Node의 projectcalico.org/RouteReflectorClusterID annotation을 사용하여 주소 등 다른 필드를 보존할 수 있습니다. 설정 즉시 해당 노드가 자동 mesh에서 제외되므로 전환 순서를 계획해야 합니다.
 
 </details>
 
 8. BGPPeer의 nodeSelector 필드 용도는 무엇입니까?
    - A) 어떤 Pod가 BGP를 사용할지 선택
    - B) 어떤 노드가 이 피어와 BGP 세션을 맺을지 선택
-   - C) BGP 라우트를 수신할 노드 선택
+   - C) 수신 허용 경로의 CIDR 선택
    - D) BGP 인증을 사용할 노드 선택
 
 <details>
@@ -161,23 +161,23 @@ ipipMode는 IPPool 리소스에서 설정합니다. BGPConfiguration에서는 AS
 **정답: D) Pod IP**
 
 **설명:**
-BGPConfiguration의 serviceExternalIPs, serviceLoadBalancerIPs, serviceClusterIPs를 통해 각각 External IP, LoadBalancer IP, Cluster IP를 광고할 수 있습니다. Pod IP는 별도 설정 없이 자동으로 BGP를 통해 교환됩니다.
+Service 광고 필드는 serviceExternalIPs, serviceLoadBalancerIPs, serviceClusterIPs입니다. Pod IP는 Service IP가 아닙니다. Pod 경로 교환도 BGP 활성화, IPAM·라우팅 모드 및 export 정책에 좌우되며 모든 설치에서 자동 광고되는 것은 아닙니다.
 
 </details>
 
-11. nodeToNodeMeshEnabled를 false로 설정하는 상황은?
-    - A) 클러스터가 10개 미만의 노드일 때
-    - B) Route Reflector를 사용할 때
-    - C) VXLAN 모드를 사용할 때
-    - D) Network Policy를 비활성화할 때
+11. 기존 full-mesh를 Route Reflector로 전환할 때 자동 mesh를 끄는 적절한 시점은?
+    - A) RR 레이블을 붙이기 전에
+    - B) 대체 RR 세션·경로·next hop·실제 트래픽을 검증한 후
+    - C) BGPFilter 객체 하나를 만든 직후
+    - D) RR의 실제 세션 상태와 무관하게
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Route Reflector를 사용할 때**
+**정답: B) 대체 RR 세션·경로·next hop·실제 트래픽을 검증한 후**
 
 **설명:**
-Route Reflector를 사용하면 노드들이 Route Reflector에게만 피어링하므로 full-mesh가 필요 없습니다. 이 경우 nodeToNodeMeshEnabled를 false로 설정하여 불필요한 피어링을 방지합니다.
+준비된 RR 노드에 역할과 명시적 피어링을 구성하고 양쪽 RR·클라이언트에서 경로와 대표 트래픽을 검증한 뒤 mesh를 끕니다. RR 지정 노드는 자동 mesh에서 즉시 제외되지만 전환 중 일반 클라이언트의 mesh를 유지할 수 있습니다.
 
 </details>
 
@@ -185,7 +185,7 @@ Route Reflector를 사용하면 노드들이 Route Reflector에게만 피어링�
     - A) BGP 세션 암호화
     - B) 라우트에 메타데이터 태그를 추가하여 필터링/정책 적용
     - C) BGP 피어 인증
-    - D) 라우트 우선순위 설정
+    - D) Pod의 MTU 변경
 
 <details>
 <summary>정답 보기</summary>
@@ -193,7 +193,7 @@ Route Reflector를 사용하면 노드들이 Route Reflector에게만 피어링�
 **정답: B) 라우트에 메타데이터 태그를 추가하여 필터링/정책 적용**
 
 **설명:**
-BGP 커뮤니티는 라우트에 태그를 추가하여 라우팅 정책을 적용하는 데 사용됩니다. 예를 들어, 특정 커뮤니티가 태그된 라우트만 특정 피어에게 광고하도록 필터링할 수 있습니다.
+커뮤니티는 라우트에 태그를 추가하여 별도의 라우터 정책이 필터링·우선순위 등에 활용하게 합니다. 임의 태그 이름이나 값 자체로 우선순위·차단을 보장하지 않습니다. 표준 커뮤니티는 두 개의 16비트 값, large community는 세 개의 32비트 값입니다.
 
 </details>
 
@@ -209,7 +209,7 @@ BGP 커뮤니티는 라우트에 태그를 추가하여 라우팅 정책을 적�
 **정답: B) BGP 세션의 무결성 및 피어 인증**
 
 **설명:**
-MD5 인증은 BGP 세션의 TCP 연결에 대한 무결성을 보장하고, 허가된 피어만 세션을 맺을 수 있도록 합니다. 이는 BGP 하이재킹과 같은 공격을 방지합니다.
+TCP MD5 signature는 공유 비밀을 사용하여 BGP 트래픽을 인증합니다. 암호화하거나 인증된 피어가 보낸 경로의 정당성을 보장하지 않으므로 경로 필터링도 필요합니다.
 
 </details>
 
@@ -225,22 +225,54 @@ MD5 인증은 BGP 세션의 TCP 연결에 대한 무결성을 보장하고, 허�
 **정답: B) BGP 프로세스 재시작 시 라우팅 중단 최소화**
 
 **설명:**
-Graceful Restart를 사용하면 BGP 프로세스가 재시작되는 동안 피어가 기존 라우트를 일정 시간 유지하여 트래픽 중단을 최소화합니다.
+피어와 Graceful Restart capability를 협상하고 전달 경로가 계속 동작할 때 재시작 중 경로 유지가 도움이 됩니다. 전달 경로가 사라지면 stale 경로 때문에 blackhole이 생길 수 있으므로 무중단을 보장하지 않습니다.
 
 </details>
 
 15. BIRD 상태를 확인하는 명령어는 무엇입니까?
     - A) birdctl status
-    - B) birdcl show protocols
+    - B) birdcl -s /var/run/calico/bird.ctl show protocols
     - C) bird --status
     - D) calicoctl bird status
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) birdcl show protocols**
+**정답: B) birdcl -s /var/run/calico/bird.ctl show protocols**
 
 **설명:**
-birdcl은 BIRD 클라이언트로, `birdcl show protocols` 명령으로 BGP 피어 상태를 확인할 수 있습니다. Calico 노드 Pod 내에서 실행합니다.
+대상 calico-node 컨테이너에서 IPv4 control socket을 명시하여 실행합니다. BGP 외 kernel·device 프로토콜도 조회되며 show protocols all과 실제 프로토콜 이름으로 상세 상태를 확인할 수 있습니다. IPv6는 birdcl6와 /var/run/calico/bird6.ctl을 사용하고 BGP 비활성화 설치에는 BIRD가 없을 수 있습니다.
+
+</details>
+
+16. IPv4 기본 경로만 수신 허용하려면 어떤 규칙을 사용합니까?
+    - A) Accept와 In 0.0.0.0/0
+    - B) Accept와 Equal 0.0.0.0/0
+    - C) Reject와 NotIn 0.0.0.0/0
+    - D) 빈 필터
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) Accept와 Equal 0.0.0.0/0**
+
+**설명:**
+Equal은 정확한 /0 경로만 매칭합니다. In /0은 모든 IPv4 경로, NotIn /0은 어떤 IPv4 경로도 매칭하지 않습니다. BGPFilter는 미일치 시 기본 Accept이므로 허용 목록에는 마지막 무조건 Reject도 필요합니다.
+
+</details>
+
+17. prefixAdvertisements에 10.244.0.0/16을 지정하면 무엇을 합니까?
+    - A) 언제나 새 /16 경로 생성
+    - B) 모든 /26을 /16으로 대체
+    - C) 범위에 일치하는 기존 경로에 커뮤니티 추가
+    - D) Service 주소 할당
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 범위에 일치하는 기존 경로에 커뮤니티 추가**
+
+**설명:**
+현재 renderer는 Pod 경로를 포함해 일치하는 기존 경로에 커뮤니티를 추가하며 경로 생성·주소 할당·블록 집계는 하지 않습니다. 앞선 BGPFilter의 명시적 export Accept가 기본 태깅을 건너뛸 수 있으므로 규칙 내 operation이 필요할 수 있습니다.
 
 </details>

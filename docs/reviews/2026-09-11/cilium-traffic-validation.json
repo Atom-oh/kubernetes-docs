@@ -1,0 +1,1149 @@
+{
+  "date": "2026-09-11",
+  "files": [
+    "en/service-mesh/cilium-service-mesh/02-traffic-management.md",
+    "en/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+    "ko/service-mesh/cilium-service-mesh/02-traffic-management.md",
+    "ko/quizzes/service-mesh/cilium-service-mesh/traffic-management.md"
+  ],
+  "sources": [
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer3.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/installation.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml",
+    "https://github.com/cilium/proxy/blob/766ccfb37260a43e9d228837aa84ce3faf9f64e7/envoy_build_config/extensions_build_config.bzl",
+    "https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/config/route/v3/route_components.proto",
+    "https://github.com/envoyproxy/envoy/blob/v1.37.5/source/common/router/retry_state_impl.cc",
+    "https://github.com/envoyproxy/envoy/blob/v1.37.5/source/common/router/router.cc",
+    "https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/extensions/http/early_header_mutation/header_mutation/v3/header_mutation.proto",
+    "https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto",
+    "https://github.com/envoyproxy/envoy/blob/v1.37.5/docs/root/faq/configuration/timeouts.rst",
+    "https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.1/apis/v1/httproute_types.go",
+    "https://kafka.apache.org/41/security/authorization-and-acls/",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+    "https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml"
+  ],
+  "nativeAndSchema": {
+    "originalNative": [
+      {
+        "name": "my-service-config",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:20.916][1451489][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/my-service-config.json': error adding listener '127.0.0.1:18080': no filter chains specified"
+      },
+      {
+        "name": "path-routing",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:20.943][1451492][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/path-routing.json': route: unknown cluster 'default/users-service'"
+      },
+      {
+        "name": "header-routing",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:20.969][1451496][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/header-routing.json': route: unknown cluster 'default/api-v2'"
+      },
+      {
+        "name": "method-routing",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:20.995][1451499][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/method-routing.json': route: unknown cluster 'default/read-service'"
+      },
+      {
+        "name": "l7-load-balancing",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "canary-deployment",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.046][1451505][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/canary-deployment.json': route: unknown weighted cluster 'default/frontend-stable'"
+      },
+      {
+        "name": "header-canary",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.072][1451508][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/header-canary.json': route: unknown cluster 'default/api-canary'"
+      },
+      {
+        "name": "retry-config",
+        "exitCode": 1,
+        "error": "            \"name\": \"x-envoy-retriable-on\",\n                                    \"exact_match\": \"true\"\n                                  }\n                                ],\n                                \"retry_priority\": {\n                                  \"name\": \"envoy.retry_priorities.previous_priorities\",\n                                  \"typed_config\": {\n                                    \"@type\": \"type.googleapis.com/envoy.extensions.retry.priority.previous_priorities.v3.PreviousPrioritiesConfig\",\n                                    \"update_frequency\": 2\n                                  }\n                                }\n                              }\n                            }\n                          }\n                        ]\n                      }\n                    ]\n                  },\n                  \"http_filters\": [\n                    {\n                      \"name\": \"envoy.filters.http.router\",\n                      \"typed_config\": {\n                        \"@type\": \"type.googleapis.com/envoy.extensions.filters.http.router.v3.Router\"\n                      }\n                    }\n                  ]\n                }\n              }\n            ]\n          }\n        ],\n        \"address\": {\n          \"socket_address\": {\n            \"address\": \"127.0.0.1\",\n            \"port_value\": 18080\n          }\n        }\n      }\n    ],\n    \"clusters\": []\n  }\n}"
+      },
+      {
+        "name": "timeout-config",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.123][1451513][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/timeout-config.json': route: unknown cluster 'default/slow-service'"
+      },
+      {
+        "name": "local-ratelimit",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.149][1451516][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/local-ratelimit.json': route: unknown cluster 'default/api-service'"
+      },
+      {
+        "name": "per-route-ratelimit",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.176][1451519][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/per-route-ratelimit.json': route: unknown cluster 'default/api-service'"
+      },
+      {
+        "name": "url-rewrite",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.203][1451522][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/url-rewrite.json': route: unknown cluster 'default/users-service'"
+      },
+      {
+        "name": "header-manipulation",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.228][1451525][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/header-manipulation.json': Protobuf message (type envoy.config.bootstrap.v3.Bootstrap reason INVALID_ARGUMENT: invalid JSON in   envoy.config.bootstrap.v3.Bootstrap @   static_resources.listeners[0].filter_chains[0].filters[0].typed_config.<any>.route_config.virtual_hosts[0].routes[0].route:   message envoy.config.route.v3.RouteAction, near 55:56 (offset 2082): no such field: 'request_headers_to_add') has unknown fields"
+      },
+      {
+        "name": "traffic-mirror",
+        "exitCode": 1,
+        "error": "[2026-09-11 18:12:21.255][1451527][critical][main] [external/envoy/source/server/config_validation/server.cc:76] error initializing configuration '/tmp/mesh-cilium-traffic-validation/original/traffic-mirror.json': route: unknown cluster 'default/production-backend'"
+      }
+    ],
+    "originalSchemas": [
+      {
+        "name": "my-service-config",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "path-routing",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "header-routing",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "method-routing",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "l7-http-policy",
+        "kind": "CiliumNetworkPolicy",
+        "errors": []
+      },
+      {
+        "name": "kafka-l7-policy",
+        "kind": "CiliumNetworkPolicy",
+        "errors": [
+          "{'kafka': [{'apiKey': 'produce', 'topic': 'orders'}, {'apiKey': 'produce', 'topic': 'events'}]} is not valid under any of the given schemas",
+          "{'kafka': [{'apiKey': 'fetch', 'topic': 'orders'}, {'apiKey': 'fetch', 'topic': 'events'}, {'apiKey': 'offsetcommit', 'topic': 'orders'}, {'apiKey': 'offsetfetch', 'topic': 'orders'}]} is not valid under any of the given schemas",
+          "Unknown L7 field: kafka (not defined by the released CRD; rules object also fails oneOf)",
+          "Unknown L7 field: kafka (not defined by the released CRD; rules object also fails oneOf)"
+        ]
+      },
+      {
+        "name": "dns-l7-policy",
+        "kind": "CiliumNetworkPolicy",
+        "errors": []
+      },
+      {
+        "name": "grpc-l7-policy",
+        "kind": "CiliumNetworkPolicy",
+        "errors": []
+      },
+      {
+        "name": "l7-load-balancing",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "canary-deployment",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "header-canary",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "retry-config",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "timeout-config",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "local-ratelimit",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "per-route-ratelimit",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "url-rewrite",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "header-manipulation",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      },
+      {
+        "name": "cilium",
+        "kind": "GatewayClass",
+        "errors": []
+      },
+      {
+        "name": "api-gateway",
+        "kind": "Gateway",
+        "errors": []
+      },
+      {
+        "name": "api-routes",
+        "kind": "HTTPRoute",
+        "errors": []
+      },
+      {
+        "name": "advanced-routes",
+        "kind": "HTTPRoute",
+        "errors": []
+      },
+      {
+        "name": "traffic-mirror",
+        "kind": "CiliumEnvoyConfig",
+        "errors": []
+      }
+    ],
+    "correctedNative": [
+      {
+        "name": "my-service-config",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "path-routing",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "header-routing",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "method-routing",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "l7-load-balancing",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "canary-deployment",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "header-canary",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "retry-config",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "timeout-config",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "local-ratelimit",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "per-route-ratelimit",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "url-rewrite",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "header-manipulation",
+        "exitCode": 0,
+        "error": ""
+      },
+      {
+        "name": "traffic-mirror",
+        "exitCode": 0,
+        "error": ""
+      }
+    ],
+    "schemas": {
+      "en": [
+        {
+          "name": "my-service-config",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "path-routing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "header-routing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "method-routing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "l7-http-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "kafka-l4-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "dns-l7-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "grpc-l7-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "l7-load-balancing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "canary-deployment",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "header-canary",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "retry-config",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "timeout-config",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "local-ratelimit",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "per-route-ratelimit",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "url-rewrite",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "header-manipulation",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "cilium",
+          "kind": "GatewayClass",
+          "errors": []
+        },
+        {
+          "name": "api-gateway",
+          "kind": "Gateway",
+          "errors": []
+        },
+        {
+          "name": "api-routes",
+          "kind": "HTTPRoute",
+          "errors": []
+        },
+        {
+          "name": "advanced-routes",
+          "kind": "HTTPRoute",
+          "errors": []
+        },
+        {
+          "name": "traffic-mirror",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        }
+      ],
+      "ko": [
+        {
+          "name": "my-service-config",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "path-routing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "header-routing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "method-routing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "l7-http-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "kafka-l4-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "dns-l7-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "grpc-l7-policy",
+          "kind": "CiliumNetworkPolicy",
+          "errors": []
+        },
+        {
+          "name": "l7-load-balancing",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "canary-deployment",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "header-canary",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "retry-config",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "timeout-config",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "local-ratelimit",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "per-route-ratelimit",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "url-rewrite",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "header-manipulation",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        },
+        {
+          "name": "cilium",
+          "kind": "GatewayClass",
+          "errors": []
+        },
+        {
+          "name": "api-gateway",
+          "kind": "Gateway",
+          "errors": []
+        },
+        {
+          "name": "api-routes",
+          "kind": "HTTPRoute",
+          "errors": []
+        },
+        {
+          "name": "advanced-routes",
+          "kind": "HTTPRoute",
+          "errors": []
+        },
+        {
+          "name": "traffic-mirror",
+          "kind": "CiliumEnvoyConfig",
+          "errors": []
+        }
+      ]
+    },
+    "codeParity": true,
+    "boundary": "Native Cilium-pinned Envoy1.37.5 with synthetic loopback listener/endpoints; EDS converted to STATIC for standalone validation. This is not Cilium parser/xDS/BPF/platform deployment validation. CRD checks omit CEL/admission and live controller reconciliation."
+  },
+  "functional": {
+    "nativeVersion": "Cilium Envoy1.37.5/766ccfb37260a43e9d228837aa84ce3faf9f64e7",
+    "checks": [
+      {
+        "case": "path /users",
+        "actual": [
+          200,
+          "default/users-service"
+        ],
+        "expected": [
+          200,
+          "default/users-service"
+        ]
+      },
+      {
+        "case": "path /users/42?active=1",
+        "actual": [
+          200,
+          "default/users-service"
+        ],
+        "expected": [
+          200,
+          "default/users-service"
+        ]
+      },
+      {
+        "case": "path /orders/1",
+        "actual": [
+          200,
+          "default/orders-service"
+        ],
+        "expected": [
+          200,
+          "default/orders-service"
+        ]
+      },
+      {
+        "case": "path /products",
+        "actual": [
+          200,
+          "default/products-service"
+        ],
+        "expected": [
+          200,
+          "default/products-service"
+        ]
+      },
+      {
+        "case": "fallback /users-old",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "case": "fallback /unknown",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "case": "header {}",
+        "actual": "default/api-v1",
+        "expected": "default/api-v1"
+      },
+      {
+        "case": "header {\"X-API-Version\": \"v2\"}",
+        "actual": "default/api-v2",
+        "expected": "default/api-v2"
+      },
+      {
+        "case": "header {\"X-Beta-User\": \"true\"}",
+        "actual": "default/api-beta",
+        "expected": "default/api-beta"
+      },
+      {
+        "case": "header {\"X-API-Version\": \"v2\", \"X-Beta-User\": \"true\"}",
+        "actual": "default/api-v2",
+        "expected": "default/api-v2"
+      },
+      {
+        "case": "method GET",
+        "actual": [
+          200,
+          "default/read-service"
+        ],
+        "expected": [
+          200,
+          "default/read-service"
+        ]
+      },
+      {
+        "case": "method HEAD",
+        "actual": [
+          200,
+          "default/read-service"
+        ],
+        "expected": [
+          200,
+          "default/read-service"
+        ]
+      },
+      {
+        "case": "method POST",
+        "actual": [
+          200,
+          "default/write-service"
+        ],
+        "expected": [
+          200,
+          "default/write-service"
+        ]
+      },
+      {
+        "case": "method PUT",
+        "actual": [
+          200,
+          "default/write-service"
+        ],
+        "expected": [
+          200,
+          "default/write-service"
+        ]
+      },
+      {
+        "case": "method DELETE",
+        "actual": [
+          200,
+          "default/write-service"
+        ],
+        "expected": [
+          200,
+          "default/write-service"
+        ]
+      },
+      {
+        "case": "method PATCH",
+        "actual": [
+          200,
+          "default/write-service"
+        ],
+        "expected": [
+          200,
+          "default/write-service"
+        ]
+      },
+      {
+        "case": "unsupported OPTIONS",
+        "actual": 405,
+        "expected": 405
+      },
+      {
+        "case": "retry count GET",
+        "actual": [
+          503,
+          3
+        ],
+        "expected": [
+          503,
+          3
+        ]
+      },
+      {
+        "case": "retry count POST",
+        "actual": [
+          503,
+          1
+        ],
+        "expected": [
+          503,
+          1
+        ]
+      },
+      {
+        "case": "retry count PUT",
+        "actual": [
+          503,
+          1
+        ],
+        "expected": [
+          503,
+          1
+        ]
+      },
+      {
+        "case": "retry count PATCH",
+        "actual": [
+          503,
+          1
+        ],
+        "expected": [
+          503,
+          1
+        ]
+      },
+      {
+        "case": "retry count DELETE",
+        "actual": [
+          503,
+          1
+        ],
+        "expected": [
+          503,
+          1
+        ]
+      },
+      {
+        "case": "retry count HEAD",
+        "actual": [
+          503,
+          1
+        ],
+        "expected": [
+          503,
+          1
+        ]
+      },
+      {
+        "case": "retry count OPTIONS",
+        "actual": [
+          503,
+          1
+        ],
+        "expected": [
+          503,
+          1
+        ]
+      },
+      {
+        "case": "caller retry controls removed",
+        "actual": false,
+        "expected": false
+      },
+      {
+        "case": "timeout route /long-running",
+        "actual": "300000",
+        "expected": "300000"
+      },
+      {
+        "case": "timeout route /long-running/job",
+        "actual": "300000",
+        "expected": "300000"
+      },
+      {
+        "case": "timeout route /ordinary",
+        "actual": "60000",
+        "expected": "60000"
+      },
+      {
+        "case": "timeout route /long-runningsuffix",
+        "actual": "60000",
+        "expected": "60000"
+      },
+      {
+        "case": "timeout route /streaming",
+        "actual": "60000",
+        "expected": "60000"
+      },
+      {
+        "case": "stream overall timeout disabled",
+        "actual": null,
+        "expected": "absent or0"
+      },
+      {
+        "case": "rewrite /api/v1/users/42?active=1",
+        "actual": [
+          200,
+          "/users/42?active=1"
+        ],
+        "expected": [
+          200,
+          "/users/42?active=1"
+        ]
+      },
+      {
+        "case": "rewrite /v2/users?active=1",
+        "actual": [
+          200,
+          "/api/v2/users?active=1"
+        ],
+        "expected": [
+          200,
+          "/api/v2/users?active=1"
+        ]
+      },
+      {
+        "case": "rewrite /v2/users",
+        "actual": [
+          200,
+          "/api/v2/users"
+        ],
+        "expected": [
+          200,
+          "/api/v2/users"
+        ]
+      },
+      {
+        "case": "rewrite /legacy",
+        "actual": [
+          200,
+          "/"
+        ],
+        "expected": [
+          200,
+          "/"
+        ]
+      },
+      {
+        "case": "rewritten authority /legacy",
+        "actual": "legacy.internal.svc.cluster.local",
+        "expected": "legacy.internal.svc.cluster.local"
+      },
+      {
+        "case": "rewrite /legacy/item",
+        "actual": [
+          200,
+          "/item"
+        ],
+        "expected": [
+          200,
+          "/item"
+        ]
+      },
+      {
+        "case": "rewritten authority /legacy/item",
+        "actual": "legacy.internal.svc.cluster.local",
+        "expected": "legacy.internal.svc.cluster.local"
+      },
+      {
+        "case": "rewrite boundary",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "case": "auth bucket10",
+        "actual": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          429,
+          429
+        ],
+        "expected": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          429,
+          429
+        ]
+      },
+      {
+        "case": "path auth-extra uses other bucket",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "case": "search separate bucket",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "case": "actual rate-limit response",
+        "actual": [
+          429,
+          "0"
+        ],
+        "expected": [
+          429,
+          "0"
+        ]
+      },
+      {
+        "case": "original rate-limit remains disabled",
+        "actual": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "expected": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "case": "mirror GET",
+        "actual": [
+          200,
+          1,
+          1
+        ],
+        "expected": [
+          200,
+          1,
+          1
+        ]
+      },
+      {
+        "case": "mirror POST",
+        "actual": [
+          200,
+          1,
+          0
+        ],
+        "expected": [
+          200,
+          1,
+          0
+        ]
+      },
+      {
+        "case": "mirror HEAD",
+        "actual": [
+          200,
+          1,
+          1
+        ],
+        "expected": [
+          200,
+          1,
+          1
+        ]
+      },
+      {
+        "case": "mirror PATCH",
+        "actual": [
+          200,
+          1,
+          0
+        ],
+        "expected": [
+          200,
+          1,
+          0
+        ]
+      },
+      {
+        "case": "request header applied",
+        "actual": [
+          200,
+          "cilium-envoy"
+        ],
+        "expected": [
+          200,
+          "cilium-envoy"
+        ]
+      },
+      {
+        "case": "response header applied",
+        "actual": "cilium-service-mesh",
+        "expected": "cilium-service-mesh"
+      },
+      {
+        "case": "original path formatter",
+        "actual": "/headers",
+        "expected": "/headers"
+      }
+    ],
+    "count": 51,
+    "limits": "Loopback HTTP fixtures and STATIC replacement for EDS only; no Cilium BPF, live Kubernetes, AWS, real production traffic or long-running stream soak."
+  },
+  "extra": {
+    "algorithms": [
+      {
+        "name": "original-merged-algorithms",
+        "exitCode": 1
+      },
+      {
+        "name": "ROUND_ROBIN",
+        "exitCode": 0
+      },
+      {
+        "name": "LEAST_REQUEST",
+        "exitCode": 0
+      },
+      {
+        "name": "RANDOM",
+        "exitCode": 0
+      },
+      {
+        "name": "RING_HASH",
+        "exitCode": 0
+      },
+      {
+        "name": "MAGLEV",
+        "exitCode": 0
+      }
+    ],
+    "helm": [
+      {
+        "name": "baseline",
+        "objects": 25,
+        "healthCheck": "true"
+      },
+      {
+        "name": "ignored-old-health-flag",
+        "objects": 25,
+        "healthCheck": "true"
+      },
+      {
+        "name": "actual-health-flag",
+        "objects": 25,
+        "healthCheck": "false"
+      },
+      {
+        "name": "document-l4",
+        "objects": 25,
+        "healthCheck": "true"
+      }
+    ],
+    "quizCountPerLocale": 12,
+    "codeParity": true
+  },
+  "binaryArtifacts": {
+    "image": "quay.io/cilium/cilium-envoy@sha256:75b8094c7127736a2ffd2dce3945e0931cb6df21b0372ff661940eca26730b91",
+    "arm64Manifest": "sha256:cb70c451a0eea34b94788e544f5bff293134b83644dcf78f3088b9d796e12b37",
+    "layer": {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:b35ad7b744f3706183c867b647c5ee6d6e09e2f1ec7d8cf6689b78ba470ab96d",
+      "size": 37492765
+    },
+    "selected": [
+      {
+        "source": "usr/bin/cilium-envoy",
+        "path": "/tmp/mesh-cilium-tools/cilium-envoy-1.37.5",
+        "size": 73853104,
+        "sha256": "189c02a193be6f88b120dc14daf36a27b9067a2922d80e45906d4c5908905892"
+      },
+      {
+        "source": "usr/bin/cilium-envoy-starter",
+        "path": "/tmp/mesh-cilium-tools/cilium-envoy-starter-1.37.5",
+        "size": 715608,
+        "sha256": "1e0baa446c1cdfba5e2c69fdd7e2efad67bb6b8258509f16c76045efc22ea3c6"
+      }
+    ],
+    "digestChainVerified": true
+  },
+  "runtimeLibraries": {
+    "verifiedLayer": "sha256:d23996caa910b8e5029375ee7c7ec02ef8bae3d85194897323e7145071299ac9",
+    "libraries": [
+      {
+        "source": "usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+        "sha256": "49005ef8e9db9a45691ff875e6ca18dd8723c7ec5c1a863a276a1186dbf22774",
+        "bytes": 203968
+      },
+      {
+        "source": "usr/lib/aarch64-linux-gnu/libc.so.6",
+        "sha256": "6e3cc56b98887cb3cc2a9fe78b6dd4610184aa27bd05d592cb287db93e82d494",
+        "bytes": 1722920
+      },
+      {
+        "source": "usr/lib/aarch64-linux-gnu/libdl.so.2",
+        "sha256": "f196e378b444da9e982e8930e1595e9ad6a723d890e0647bc60d8fcf581a93c8",
+        "bytes": 67440
+      },
+      {
+        "source": "usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+        "sha256": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20",
+        "bytes": 133696
+      },
+      {
+        "source": "usr/lib/aarch64-linux-gnu/libm.so.6",
+        "sha256": "24be585ff27080ba6301d8b3e1c92a54a3832829a9efde744cad4b876a73681a",
+        "bytes": 591800
+      },
+      {
+        "source": "usr/lib/aarch64-linux-gnu/libpthread.so.0",
+        "sha256": "1ce5833f596169e194b95a6f288c98d80b7b907a1ded2389746cd00235b3a456",
+        "bytes": 67440
+      },
+      {
+        "source": "usr/lib/aarch64-linux-gnu/libresolv.so.2",
+        "sha256": "3a3f98f872eedaef02ef828bcf00fa3100b6259d3ceb25887ef36228ab50ebdd",
+        "bytes": 67720
+      },
+      {
+        "source": "usr/lib/aarch64-linux-gnu/librt.so.1",
+        "sha256": "8e38ca286d0bbb7acc9a6741ecd26c6e76924ec69eb9196ee20f70fa91350e12",
+        "bytes": 67512
+      }
+    ]
+  },
+  "docsTest": "118/118",
+  "figureReview": {
+    "visuallyReviewed": 4,
+    "retainedPerLocale": [
+      0
+    ],
+    "removedPerLocale": [
+      1
+    ],
+    "reason": "0qualified aslogicalcapabilitygroups ratherthanmandatorypacketpath;1wronglyattributedEnvoy65537tablesizetoCiliumeBPF. CorrectCiliumdefault16381/supported65521 vsEnvoy65537inprose."
+  },
+  "limitations": [
+    "Native tests run the exact Cilium proxy binary against synthetic local HTTP endpoints with EDS replaced by STATIC; no Cilium BPF/xDS parser, Kubernetes controller reconciliation, AWS provisioning or production load/security claim.",
+    "CRD JSON-schema checks do not evaluate CEL or live admission/controller conditions.",
+    "Initial sandbox native attempts failed before config processing because localIPv4socketprobe wasblocked; retained under /tmp/mesh-cilium-traffic-validation/sandbox-original. Successful unsandboxed clean-environment validation follows.",
+    "Two fixture connection resets occurred on owned proxy shutdown after assertions; all51functionalassertionspassed. These were test-teardown events, not document/runtime deployment defects.",
+    "Parent must regenerate/backfill obsolete external archmap sources before reuse by generatedtranslations; no foreignprose/assetsedited."
+  ]
+}

@@ -1007,7 +1007,7 @@ spec:
 
 #### SQSSource (AWS 연동)
 
-보관된 TriggerMesh 예제를1.23 core의 alpha IntegrationSource로 대체했습니다. 기존 전용 테스트 큐와 IRSA 역할을 준비하고 ReceiveMessage/DeleteMessage/GetQueueAttributes/GetQueueUrl 권한을 해당 큐로 제한하세요. 실행하면 메시지를 소비·삭제하며 이번 감사에서는 배포하지 않았습니다. autoCreateQueue는 false입니다. 실제 adapter의 CloudEvent type/source와 승인·가시성 시간 제한·실패 동작을 확인해야 하며 수동 주문 이벤트용 Trigger 필터를 그대로 적용할 수 있다고 가정하지 마세요. EKS Pod Identity는 지원되는 EC2 Pod에서만 대안이며 Fargate에서는 사용할 수 없습니다.
+보관된 TriggerMesh 예제를1.23 core의 alpha IntegrationSource로 대체했습니다. 기존 전용 테스트 큐와 IRSA 역할을 준비하고 ReceiveMessage/DeleteMessage/GetQueueAttributes/GetQueueUrl 권한을 해당 큐로 제한하세요. 실행하면 메시지를 소비·삭제하며 이번 감사에서는 배포하지 않았습니다. autoCreateQueue는 false입니다. 실제 adapter의 CloudEvent type/source와 승인·가시성 시간 제한·실패 동작을 확인해야 하며 수동 주문 이벤트용 Trigger 필터를 그대로 적용할 수 있다고 가정하지 마세요. EKS Pod Identity는 선택한 EKS 컴퓨팅·에이전트·SDK가 지원할 때 사용할 수 있는 대안이며 Fargate에서는 지원되지 않습니다.
 
 ```yaml
 apiVersion: v1

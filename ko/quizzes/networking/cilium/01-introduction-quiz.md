@@ -1,406 +1,367 @@
 # Cilium 소개 및 기본 개념 퀴즈
 
-이 퀴즈는 Cilium의 기본 개념, eBPF 기술, 아키텍처, 주요 구성 요소, CNI 비교 등에 대한 이해도를 테스트합니다.
+> **기준**: Cilium 1.20.1 / CLI 0.20.0. **마지막 업데이트**: 2026년 9월 12일
 
 ## 객관식 문제
 
-1. Cilium의 핵심 기술로, 커널 내에서 프로그래밍 가능한 데이터 경로를 제공하는 것은 무엇인가요?
+1. Cilium의 프로그래밍 가능한 커널 데이터패스를 제공하는 기술은?
    - A) iptables
    - B) eBPF
    - C) VXLAN
    - D) IPsec
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: B) eBPF**
 
 **설명:**
-eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 안전하게 프로그램을 실행할 수 있는 기술입니다. Cilium은 eBPF를 활용하여 커널 수준에서 네트워킹, 보안, 관찰 가능성 기능을 구현합니다. 이를 통해 iptables 기반 솔루션보다 훨씬 높은 성능과 유연성을 제공하며, 커널을 재컴파일하지 않고도 동적으로 네트워크 정책을 적용할 수 있습니다.
+Cilium은 지원 kernel hook에 검증된 eBPF 프로그램을 로드합니다. 네트워킹/관측성 기능을 구현하지만 모든 대안보다 높은 성능을 보장하지는 않으므로 선택한 워크로드와 설정을 측정해야 합니다.
+
 </details>
 
-2. Cilium이 제공하는 네트워크 정책은 어떤 계층까지 지원하나요?
-   - A) L3 (네트워크 계층)만
-   - B) L3-L4 (네트워크 및 전송 계층)
-   - C) L3-L7 (네트워크부터 애플리케이션 계층)
-   - D) L2-L3 (데이터 링크 및 네트워크 계층)
+2. 필요한 통합을 갖춘 Cilium이 지원할 수 있는 정책 계층은?
+   - A) L3만
+   - B) L3–L4만
+   - C) L3/L4 및 지원되는 L7 프로토콜
+   - D) L2–L3만
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: C) L3-L7 (네트워크부터 애플리케이션 계층)**
+**정답: C) L3/L4 및 지원되는 L7 프로토콜**
 
 **설명:**
-Cilium은 L3(IP), L4(TCP/UDP 포트)뿐만 아니라 L7(애플리케이션 계층)까지 네트워크 정책을 지원합니다. 이는 HTTP 메서드, 경로, 헤더, gRPC 메서드, Kafka 주제 등 애플리케이션 수준의 트래픽을 필터링할 수 있음을 의미합니다. 이러한 API 인식 네트워킹은 마이크로서비스 아키텍처에서 세밀한 보안 정책을 구현하는 데 매우 유용합니다.
+HTTP/DNS 정책에는 지원 proxy 경로가 필요하고 암호화된 HTTP에는 알맞은 termination/통합이 필요합니다. Kafka 인지 L7 규칙은 1.20에서 제거되었지만 Kafka 연결의 L4 제어는 가능합니다.
+
 </details>
 
-3. Cilium에서 네트워크 가시성과 모니터링을 제공하는 도구는 무엇인가요?
+3. Cilium에서 네트워크 flow 가시성을 제공하는 컴포넌트는?
    - A) Prometheus
    - B) Hubble
    - C) Grafana
    - D) Jaeger
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: B) Hubble**
 
 **설명:**
-Hubble은 Cilium의 네트워크 관찰성 계층으로, eBPF를 활용하여 네트워크 흐름을 실시간으로 모니터링하고 분석합니다. Hubble은 서비스 간 의존성 맵 생성, 네트워크 정책 위반 감지, HTTP/gRPC/DNS 요청 추적, 네트워크 레이턴시 측정 등의 기능을 제공합니다. Prometheus와 Grafana는 메트릭 수집 및 시각화 도구이고, Jaeger는 분산 추적 도구입니다.
+Hubble은 네트워크/proxy flow와 서비스 관계를 관측합니다. HTTP 가시성은 proxy 경로에 달려 있습니다. 완전한 애플리케이션 trace가 자동 생성되지는 않으며 Prometheus 메트릭과 분산 tracing은 별도 목적입니다.
+
 </details>
 
-4. Cilium의 분산 로드 밸런싱 기능은 어떤 Kubernetes 구성 요소를 대체할 수 있나요?
+4. 지원 구성에서 Cilium이 대체할 수 있는 Kubernetes Service 컴포넌트는?
    - A) CoreDNS
    - B) kube-proxy
    - C) etcd
    - D) kubelet
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: B) kube-proxy**
 
 **설명:**
-Cilium은 kube-proxy를 완전히 대체할 수 있는 eBPF 기반 서비스 로드 밸런싱을 제공합니다. kube-proxy는 iptables나 IPVS를 사용하여 서비스 트래픽을 백엔드 포드로 라우팅하지만, Cilium은 eBPF를 사용하여 더 높은 성능과 확장성을 제공합니다. Cilium의 kube-proxy 대체 모드를 활성화하면 DSR(Direct Server Return), Maglev 해싱, 소켓 수준 로드 밸런싱 등의 고급 기능도 사용할 수 있습니다.
+kubeProxyReplacement는 Cilium Service 처리를 요청합니다. API/bootstrap 접근과 전환 전제가 필요하며 DSR/Maglev/XDP는 자동 성능 보장이 아닌 별도 선택입니다.
+
 </details>
 
-5. Cilium에서 지원하는 노드 간 트래픽 암호화 방식이 아닌 것은 무엇인가요?
-   - A) IPsec
-   - B) WireGuard
-   - C) TLS
-   - D) 둘 다 지원 (A와 B)
+5. Cilium의 투명 네트워크 암호화 모드 두 가지는?
+   - A) IPsec과 WireGuard
+   - B) TLS와 SSH
+   - C) GRE와 HTTP
+   - D) DNS와 VXLAN
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: C) TLS**
+**정답: A) IPsec과 WireGuard**
 
 **설명:**
-Cilium은 노드 간 트래픽 암호화를 위해 IPsec과 WireGuard 두 가지 방식을 지원합니다. IPsec은 전통적인 VPN 프로토콜 스위트로 널리 사용되며, WireGuard는 더 현대적이고 간단하며 빠른 VPN 프로토콜입니다. TLS는 애플리케이션 계층의 암호화 프로토콜로, Cilium의 네트워크 계층 암호화와는 다른 용도로 사용됩니다. Cilium에서는 설정 옵션을 통해 IPsec 또는 WireGuard 중 하나를 선택하여 투명한 네트워크 암호화를 구현할 수 있습니다.
+encryption.type은 모드/플랫폼 조건을 가진 IPsec과 WireGuard를 사용합니다. 별도의 beta ztunnel 워크로드 mTLS는 다른 설정이므로 Cilium이 TLS를 전혀 사용하지 않는다는 설명은 틀립니다.
+
 </details>
 
-6. Cilium의 멀티 클러스터 네트워킹 기능을 무엇이라고 부르나요?
+6. Cilium의 멀티클러스터 연결 기능 이름은?
    - A) Cluster Federation
-   - B) Cluster Mesh
+   - B) ClusterMesh
    - C) Multi-Cluster Network
    - D) Global Cluster
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) Cluster Mesh**
+**정답: B) ClusterMesh**
 
 **설명:**
-Cluster Mesh는 Cilium의 멀티 클러스터 네트워킹 기능으로, 여러 Kubernetes 클러스터를 연결하여 단일 네트워크처럼 작동하게 합니다. Cluster Mesh를 사용하면 클러스터 간 서비스 디스커버리, 로드 밸런싱, 네트워크 정책 적용이 가능합니다. 이 기능은 하이브리드 클라우드, 멀티 클라우드, 재해 복구 시나리오에서 유용하며, 각 클러스터의 포드가 다른 클러스터의 서비스에 직접 접근할 수 있게 해줍니다.
+ClusterMesh는 identity, 신뢰, 네트워크 도달성을 설정한 호환 클러스터를 연결합니다. Underlay 전체를 만들거나 모든 Service를 자동으로 전역 공개하지는 않습니다.
+
 </details>
 
-7. 다음 중 Cilium에서 패킷 처리 성능을 최적화하기 위해 사용하는 기술은 무엇인가요?
+7. Cilium이 선택적 초기 패킷/로드밸런싱 가속에 사용할 수 있는 기술은?
    - A) DPDK
-   - B) XDP (eXpress Data Path)
+   - B) XDP
    - C) RDMA
    - D) SR-IOV
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) XDP (eXpress Data Path)**
+**정답: B) XDP**
 
 **설명:**
-XDP(eXpress Data Path)는 eBPF 기반 기술로, 네트워크 드라이버 수준에서 패킷을 처리할 수 있게 해줍니다. XDP는 커널 네트워크 스택을 바이패스하여 매우 높은 성능(초당 수백만 패킷)의 패킷 처리를 가능하게 합니다. Cilium은 XDP를 활용하여 DDoS 방어, 고성능 로드 밸런싱, 패킷 필터링 등을 구현합니다. DPDK, RDMA, SR-IOV도 고성능 네트워킹 기술이지만, Cilium의 핵심 기술은 eBPF/XDP입니다.
+XDP는 지원 hook/driver에서 일부 트래픽을 일찍 처리할 수 있습니다. 모든 패킷이 XDP를 거치지는 않으며 활성화만으로 초당 패킷 수나 완전한 DDoS 방어가 보장되지 않습니다.
+
 </details>
 
-8. Cilium 1.18 버전에서 지원하는 최소 Linux 커널 버전은 무엇인가요?
+8. 문서화된 vendor backport 동등 조건을 제외한 Cilium 1.20의 일반 업스트림 Linux 커널 기준은?
    - A) 3.10
    - B) 4.9
    - C) 4.19
    - D) 5.10
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: C) 4.19**
+**정답: D) 5.10**
 
 **설명:**
-Cilium 1.18은 Linux 커널 4.19 이상을 필요로 합니다. 이는 Cilium이 사용하는 eBPF 기능들이 이 버전 이상에서 완전히 지원되기 때문입니다. 더 최신 커널 버전(5.x 이상)을 사용하면 추가적인 eBPF 기능과 더 나은 성능을 얻을 수 있습니다. 예를 들어, XDP 네이티브 모드, BPF-to-BPF 함수 호출, BTF(BPF Type Format) 등의 고급 기능은 더 최신 커널에서 더 잘 지원됩니다.
+현재 요구사항은 Linux 5.10 이상이며 RHEL 8.10의 backport된 4.18 같은 명시적 동등 조건이 있습니다. 개별 기능에는 더 최신 커널이 필요할 수 있고 워크스테이션 OS가 아닌 노드/VM 커널을 확인해야 합니다.
+
 </details>
 
-9. 다음 CNI 플러그인 중 eBPF 기반이 아닌 것은 무엇인가요?
-   - A) Cilium
-   - B) Calico (eBPF 모드)
-   - C) Flannel
-   - D) 둘 다 eBPF 기반이 아님 (C만 해당)
+9. Cilium의 eBPF 데이터플레인 없이 VXLAN/host-gw 연결을 제공하는 선택지는?
+   - A) Cilium native routing
+   - B) Calico BPF 모드
+   - C) Flannel VXLAN/host-gw
+   - D) Cilium netkit 모드
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: C) Flannel**
+**정답: C) Flannel VXLAN/host-gw**
 
 **설명:**
-Flannel은 VXLAN이나 host-gw를 사용하는 간단한 오버레이 네트워크 솔루션으로, eBPF를 사용하지 않습니다. 반면 Cilium은 처음부터 eBPF 기반으로 설계되었고, Calico도 최근 버전에서 eBPF 데이터 플레인 모드를 지원합니다. Flannel은 설정이 간단하고 리소스 사용량이 적지만, L7 네트워크 정책이나 고급 관찰성 기능은 제공하지 않습니다.
+Flannel 연결 backend는 다른 구현입니다. 선택적 정책 컨트롤러나 다른 정책 통합은 별도 평가해야 하며 보편적인 자원/성능 등급으로 비교하지 마세요.
+
 </details>
 
-10. Cilium 네트워크 정책의 API 버전은 무엇인가요?
-    - A) networking.k8s.io/v1
-    - B) cilium.io/v1
-    - C) cilium.io/v2
-    - D) policy.cilium.io/v1
+10. CiliumNetworkPolicy의 API 버전은?
+   - A) networking.k8s.io/v1
+   - B) cilium.io/v1
+   - C) cilium.io/v2
+   - D) policy.cilium.io/v1
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: C) cilium.io/v2**
 
 **설명:**
-CiliumNetworkPolicy는 `cilium.io/v2` API 버전을 사용합니다. 이는 표준 Kubernetes NetworkPolicy(`networking.k8s.io/v1`)와 별개로, Cilium의 고급 기능(L7 정책, DNS 기반 정책, 엔드포인트 셀렉터 등)을 지원하기 위한 CRD(Custom Resource Definition)입니다. Cilium은 표준 Kubernetes NetworkPolicy도 지원하지만, CiliumNetworkPolicy를 사용하면 더 세밀한 제어가 가능합니다.
+표준 Kubernetes NetworkPolicy와 별도 CRD/API입니다. 실제 기능은 Cilium 버전과 dataplane/proxy 구성에 따라 달라집니다.
+
 </details>
 
 ## 단답형 문제
 
-11. Cilium의 각 노드에서 실행되며 eBPF 프로그램을 로딩하고 네트워크 정책을 구현하는 핵심 구성 요소의 이름은 무엇인가요?
+11. 노드별 endpoint와 eBPF 정책을 설정하는 컴포넌트는?
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: Cilium Agent**
 
 **설명:**
-Cilium Agent는 각 Kubernetes 노드에서 DaemonSet으로 실행되는 Cilium의 핵심 구성 요소입니다. Agent의 주요 책임은 eBPF 프로그램을 커널에 로딩 및 관리, 네트워크 정책 구현 및 적용, 서비스 로드 밸런싱 수행, IP 주소 관리(IPAM), 네트워크 엔드포인트 관리, 메트릭 및 로그 수집, API 서버와의 통신 등입니다. Cilium Agent는 로컬 노드의 모든 네트워킹 작업을 담당합니다.
+Agent는 노드 로컬 작업을 수행합니다. 컨테이너 런타임/CNI 플러그인, operator, proxy, 호스트 OS도 각 책임이 있으므로 모든 네트워킹 작업을 Agent가 소유하지는 않습니다.
+
 </details>
 
-12. Cilium에서 클러스터 전체에서 실행되며 CRD 동기화, IP 할당 조정 등의 작업을 수행하는 구성 요소는 무엇인가요?
+12. 클러스터 수준 할당/controller 작업을 조정하는 컴포넌트는?
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: Cilium Operator**
 
 **설명:**
-Cilium Operator는 클러스터 전체에서 단일 인스턴스로 실행되는 Kubernetes Operator입니다. Agent가 각 노드의 로컬 작업을 담당하는 반면, Operator는 클러스터 전체 수준의 작업을 담당합니다. 주요 기능으로는 CiliumIdentity 및 CiliumEndpoint CRD 관리, 클러스터 수준 IPAM 관리, 노드 간 CIDR 할당 조정, 가비지 컬렉션(사용되지 않는 리소스 정리), Cluster Mesh 연결 관리 등이 있습니다.
+여러 replica를 사용할 수 있으며 검토한 차트 기본값은 2이고 해당 작업에는 leader election을 사용합니다. 책임은 IPAM/identity 모드에 따라 다릅니다. 본질적으로 단일 인스턴스나 모든 ClusterMesh 연결의 유일한 소유자가 아닙니다.
+
 </details>
 
-13. Cilium의 연결성 문제를 진단하기 위해 사용하는 CLI 명령어는 무엇인가요?
+13. Cilium connectivity 테스트 워크로드를 실행하는 CLI 명령은?
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: cilium connectivity test**
 
 **설명:**
-`cilium connectivity test` 명령어는 Cilium 클러스터의 네트워크 연결성을 종합적으로 테스트합니다. 이 명령어는 포드 간 통신, 서비스 연결, 외부 연결, 네트워크 정책 적용 등 다양한 시나리오를 자동으로 테스트합니다. 테스트 결과는 성공/실패로 표시되며, 실패한 테스트에 대한 상세 정보를 제공합니다. 이 외에도 `cilium status`로 Cilium 상태를 확인하고, `cilium monitor`로 실시간 트래픽을 모니터링할 수 있습니다.
+워크로드/정책을 생성하므로 승인한 테스트 환경과 권한이 필요합니다. 읽기 전용 조사는 cilium status, endpoint 진단, Hubble부터 시작하세요. 관리 명령 cilium monitor는 현재 Agent 진단 인터페이스가 아닙니다.
+
 </details>
 
-14. Cilium에서 포드의 보안 신원을 나타내는 숫자 식별자를 무엇이라고 부르나요?
+14. Endpoint의 보안 관련 레이블에 대응하는 숫자 식별자는?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: Identity (또는 Security Identity, Cilium Identity)**
+**정답: Security identity (Cilium identity)**
 
 **설명:**
-Cilium Identity는 포드의 레이블 집합을 기반으로 생성되는 숫자 식별자입니다. 동일한 레이블을 가진 모든 포드는 동일한 Identity를 공유합니다. 이 접근 방식은 IP 주소 대신 Identity를 사용하여 네트워크 정책을 적용할 수 있게 해주어, 포드 IP가 변경되어도 정책이 일관되게 유지됩니다. Identity 기반 정책은 확장성이 뛰어나며, 대규모 클러스터에서도 효율적으로 동작합니다.
+해당 할당 범위의 선택된 보안 레이블 집합이 identity를 결정합니다. Namespace 파생 레이블도 다를 수 있으므로 같은 app 값만으로 같다고 판단할 수 없습니다. 숫자 ID는 할당되며 영구적인 전역 hash가 아닙니다.
+
 </details>
 
-15. 컨테이너 런타임과 네트워크 플러그인 간의 표준 인터페이스를 정의하는 CNCF 프로젝트의 약자는 무엇인가요?
+15. 컨테이너 네트워크 플러그인 인터페이스를 정의하는 규격은?
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답: CNI (Container Network Interface)**
 
 **설명:**
-CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플러그인 간의 표준 인터페이스를 정의하는 CNCF 프로젝트입니다. Kubernetes에서 kubelet은 CNI 인터페이스를 통해 네트워크 플러그인(Cilium, Calico, Flannel 등)과 통신합니다. CNI는 컨테이너 추가/제거 시 네트워크 설정을 위한 표준 API를 정의하며, 플러그인 아키텍처를 통해 다양한 네트워킹 솔루션을 통합할 수 있습니다.
+Kubelet은 CRI로 런타임과 통신하고 런타임이 CNI를 호출합니다. CNI는 네트워크 설정/결과와 설정/제거를 다루며 kubelet의 이전 CNI 설정 플래그는 Kubernetes 1.24에서 제거되었습니다.
+
 </details>
 
 ## 실습 문제
 
-16. Cilium CLI를 사용하여 Kubernetes 클러스터에 Cilium 1.18.0을 설치하는 명령어를 작성하세요.
+16. 설치한 CLI, 준비한 lab values, 명시적인 context로 Cilium 1.20.1을 새로 설치하는 명령을 작성하세요.
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답:**
+
 ```bash
-# Cilium CLI 설치
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
-sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
-rm cilium-linux-amd64.tar.gz
-
-# Cilium 설치
-cilium install --version 1.18.0
-
-# 설치 상태 확인
-cilium status
-
-# 연결성 테스트
-cilium connectivity test
+CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
+cilium version --client
+cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.1 \
+  --values cilium-lab-values.yaml
+cilium status --context "$CILIUM_LAB_CONTEXT" --wait
 ```
 
 **설명:**
-위 명령어는 먼저 Cilium CLI 바이너리를 다운로드하여 `/usr/local/bin`에 설치합니다. 그 후 `cilium install` 명령어로 지정된 버전의 Cilium을 Kubernetes 클러스터에 설치합니다. 설치 후 `cilium status`로 모든 구성 요소가 정상적으로 실행 중인지 확인하고, `cilium connectivity test`로 네트워크 연결성을 검증합니다. Helm을 사용한 설치도 가능하며, 이 경우 더 세밀한 설정 옵션을 지정할 수 있습니다.
+본문의 환경/CNI 소유권, CIDR, values 전제를 준비해야 합니다. 기존 release라면 설치를 건너뛰고 소유자의 업그레이드 경로를 사용하세요. Status가 허용/거부 트래픽 테스트를 대신하지는 않습니다.
+
 </details>
 
-17. frontend 포드에서 backend 포드의 8080 포트로의 TCP 트래픽만 허용하는 CiliumNetworkPolicy를 작성하세요.
+17. cilium-intro-demo에서 frontend Pod의 backend TCP 8080 ingress를 허용하는 정책을 작성하세요.
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답:**
+
 ```yaml
-apiVersion: "cilium.io/v2"
+apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: "allow-frontend-backend"
-  namespace: default
+  name: allow-frontend-backend
+  namespace: cilium-intro-demo
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
+      k8s:app: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:app: frontend
+        k8s:io.kubernetes.pod.namespace: cilium-intro-demo
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
 ```
 
 **설명:**
-이 CiliumNetworkPolicy는 `app: backend` 레이블을 가진 포드에 대해, `app: frontend` 레이블을 가진 포드로부터의 TCP 8080 포트 인그레스 트래픽만 허용합니다. `endpointSelector`는 정책이 적용될 대상 포드를 선택하고, `ingress` 섹션은 허용될 수신 트래픽을 정의합니다. `fromEndpoints`로 소스 포드를 지정하고, `toPorts`로 허용될 포트와 프로토콜을 지정합니다. 이 정책이 적용되면 다른 포드에서 backend로의 트래픽은 차단됩니다.
+네임스페이스와 워크로드가 있어야 합니다. 출발 namespace를 명시하여 다른 namespace의 같은 레이블까지 허용하지 않습니다. 다른 allow/deny 정책과 host 트래픽이 결과를 바꾸며 HTTP 필터링이나 egress 제한 규칙은 아닙니다.
+
 </details>
 
-18. kube-proxy 대체 모드를 활성화하여 Cilium을 설치하는 명령어와 DSR(Direct Server Return) 모드를 활성화하는 설정을 작성하세요.
+18. kube-proxy 교체와 native-routing DSR/Geneve dispatch를 요청하는 부분 values를 작성하고 남은 전제를 설명하세요.
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답:**
-```bash
-# kube-proxy 대체 및 DSR 모드로 Cilium 설치
-cilium install --version 1.18.0 \
-  --set kubeProxyReplacement=true \
-  --set loadBalancer.mode=dsr
 
-# 또는 Helm을 사용한 설치
-helm install cilium cilium/cilium --version 1.18.0 \
-  --namespace kube-system \
-  --set kubeProxyReplacement=true \
-  --set loadBalancer.mode=dsr \
-  --set k8sServiceHost=<API_SERVER_IP> \
-  --set k8sServicePort=<API_SERVER_PORT>
-
-# 설치 확인
-cilium status --verbose
+```yaml
+kubeProxyReplacement: true
+k8sServiceHost: api.lab.example.internal
+k8sServicePort: 443
+routingMode: native
+tunnelProtocol: geneve
+ipv4NativeRoutingCIDR: 10.244.0.0/16
+loadBalancer:
+  mode: dsr
+  dsrDispatch: geneve
 ```
 
 **설명:**
-`kubeProxyReplacement=true` 옵션은 Cilium이 kube-proxy의 모든 기능을 대체하도록 설정합니다. 이 모드에서는 기존 kube-proxy를 제거하거나 비활성화해야 합니다. `loadBalancer.mode=dsr`은 Direct Server Return 모드를 활성화하여, 응답 트래픽이 로드 밸런서를 거치지 않고 직접 클라이언트로 전송되도록 합니다. DSR 모드는 로드 밸런서의 병목 현상을 제거하고 대역폭을 절약하며, 특히 대용량 응답을 처리할 때 효과적입니다.
+별도 native 구성이며 VXLAN 실습에 DSR을 켜라는 명령이 아닙니다. API host/port, native-routing CIDR을 실제 준비한 값으로 변경하세요. API/bootstrap DNS, underlay Pod 경로, Geneve/MTU, 반환/출발지 주소 경로를 확인한 후 지원되는 kube-proxy 전환 절차를 따릅니다. 정적 values가 클라우드 LB 호환성이나 모든 병목 제거를 보장하지는 않습니다.
+
 </details>
 
-19. Cilium의 상태를 확인하고, 특정 포드의 엔드포인트 정보와 적용된 네트워크 정책을 조회하는 명령어를 작성하세요.
+19. 클러스터 상태, 선택한 backend endpoint의 로컬 상태, 원하는 정책 리소스를 조회하는 명령을 작성하세요.
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답:**
+
 ```bash
-# Cilium 전체 상태 확인
-cilium status
+CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
+CILIUM_LAB_NS=cilium-intro-demo
+BACKEND_POD=replace-with-actual-backend-pod
+cilium status --context "$CILIUM_LAB_CONTEXT" --verbose
+kubectl --context "$CILIUM_LAB_CONTEXT" get pod "$BACKEND_POD" -n "$CILIUM_LAB_NS" -o wide
+kubectl --context "$CILIUM_LAB_CONTEXT" get pods -n kube-system -l k8s-app=cilium -o wide
 
-# 상세 상태 확인 (모든 구성 요소)
-cilium status --verbose
-
-# 모든 엔드포인트 목록 조회
-cilium endpoint list
-
-# 특정 엔드포인트의 상세 정보 조회 (endpoint ID 사용)
-cilium endpoint get <endpoint_id>
-
-# 포드 이름으로 엔드포인트 조회
-kubectl exec -n kube-system <cilium-agent-pod> -- cilium endpoint list | grep <pod-name>
-
-# 적용된 네트워크 정책 조회
-cilium policy get
-
-# 특정 엔드포인트에 적용된 정책 조회
-cilium endpoint get <endpoint_id> -o json | jq '.status.policy'
-
-# 실시간 트래픽 모니터링
-cilium monitor
+# Choose the agent on the backend Pod's node.
+CILIUM_AGENT_POD=replace-with-agent-pod-on-that-node
+kubectl --context "$CILIUM_LAB_CONTEXT" exec -n kube-system "$CILIUM_AGENT_POD" \
+  -c cilium-agent -- cilium-dbg endpoint list
+kubectl --context "$CILIUM_LAB_CONTEXT" exec -n kube-system "$CILIUM_AGENT_POD" \
+  -c cilium-agent -- cilium-dbg endpoint get "pod-name:$CILIUM_LAB_NS:$BACKEND_POD"
+kubectl --context "$CILIUM_LAB_CONTEXT" get networkpolicy -n "$CILIUM_LAB_NS" -o yaml
+kubectl --context "$CILIUM_LAB_CONTEXT" get cnp -n "$CILIUM_LAB_NS" -o yaml
+kubectl --context "$CILIUM_LAB_CONTEXT" get ccnp -o yaml
 ```
 
 **설명:**
-`cilium status`는 Cilium Agent, Operator, Hubble 등 모든 구성 요소의 상태를 보여줍니다. `cilium endpoint list`는 현재 노드의 모든 엔드포인트(포드)를 나열하며, 각 엔드포인트의 ID, 상태, 레이블, Identity 등을 확인할 수 있습니다. `cilium policy get`은 클러스터에 적용된 모든 네트워크 정책을 조회합니다. `cilium monitor`는 실시간으로 네트워크 트래픽을 모니터링하여 패킷 흐름, 정책 적용, 드롭된 패킷 등을 확인할 수 있습니다.
+Endpoint 식별자와 realized 상태는 선택한 agent/노드에 속합니다. cilium-dbg가 지원하는 Pod 식별자를 사용하세요. kubectl은 desired 정책 리소스를 읽으며 적용 성공의 증거가 아닙니다. cilium-dbg policy get은 deprecated이고 관리 cilium endpoint/policy/monitor 명령과 동일하지 않습니다.
+
 </details>
 
-20. Hubble을 활성화하고 Hubble CLI를 사용하여 네트워크 흐름을 관찰하는 명령어를 작성하세요.
+20. 클라이언트 도구가 있는 상태에서 기존 lab release의 Hubble을 활성화하고 flow를 관찰하세요.
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답:**
+
 ```bash
-# Hubble이 활성화된 Cilium 설치
-cilium install --version 1.18.0 \
-  --set hubble.enabled=true \
-  --set hubble.relay.enabled=true \
-  --set hubble.ui.enabled=true
+# Terminal 1; the lab Cilium release and client tools must already exist.
+CILIUM_LAB_CONTEXT=replace-with-nonproduction-context
+cilium hubble enable --context "$CILIUM_LAB_CONTEXT" --ui
+cilium hubble port-forward --context "$CILIUM_LAB_CONTEXT" --port-forward 4245
+```
 
-# 기존 Cilium에서 Hubble 활성화
-cilium hubble enable
-
-# Hubble CLI 설치
-export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz
-sudo tar xzvfC hubble-linux-amd64.tar.gz /usr/local/bin
-rm hubble-linux-amd64.tar.gz
-
-# Hubble 포트 포워딩
-cilium hubble port-forward &
-
-# 네트워크 흐름 관찰
-hubble observe
-
-# 특정 네임스페이스의 흐름 관찰
-hubble observe --namespace default
-
-# 특정 포드의 흐름 관찰
-hubble observe --pod default/frontend
-
-# HTTP 트래픽만 필터링
-hubble observe --protocol http
-
-# 드롭된 패킷만 관찰
-hubble observe --verdict DROPPED
-
-# Hubble UI 접근 (별도 터미널)
-cilium hubble ui
+```bash
+# Terminal 2, with the port-forward still running.
+BACKEND_POD=replace-with-actual-backend-pod
+hubble observe --server 127.0.0.1:4245 --namespace cilium-intro-demo
+hubble observe --server 127.0.0.1:4245 --pod "cilium-intro-demo/$BACKEND_POD"
+hubble observe --server 127.0.0.1:4245 --protocol http
+hubble observe --server 127.0.0.1:4245 --verdict DROPPED
 ```
 
 **설명:**
-Hubble은 Cilium의 관찰성 계층으로, eBPF를 활용하여 네트워크 흐름을 실시간으로 모니터링합니다. `hubble.enabled=true`로 Hubble을 활성화하고, `hubble.relay.enabled=true`로 Hubble Relay를 활성화하여 클러스터 전체의 흐름을 수집합니다. `hubble.ui.enabled=true`는 웹 기반 UI를 활성화합니다. `hubble observe` 명령어는 다양한 필터 옵션을 제공하여 특정 네임스페이스, 포드, 프로토콜, 판정(verdict) 등을 기준으로 트래픽을 필터링할 수 있습니다.
+GitOps 소유 release라면 CLI 변경 대신 소유 Helm values를 바꾸고 이미 활성화되어 있으면 enable을 건너뜁니다. Foreground port-forward를 유지하고 TLS Relay에는 client TLS를 설정해야 합니다. HTTP event는 지원 L7 proxy 경로가 필요하며 DROPPED가 모든 애플리케이션 실패를 뜻하지는 않습니다. UI는 별도 터미널에서 같은 명시적 context로 cilium hubble ui를 사용하세요.
+
 </details>
 
----
-
-[학습 자료로 돌아가기](../../../networking/cilium/01-introduction.md) | [다음 퀴즈: eBPF 기초](./02-ebpf-quiz.md)
+[학습 자료로 돌아가기](../../../networking/cilium/01-introduction.md) | [다음 퀴즈: eBPF 기초](02-ebpf-quiz.md)

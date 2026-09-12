@@ -1,0 +1,290 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T02:01:25.560406+00:00",
+  "files": [
+    {
+      "path": "en/networking/06-pod-network-benchmark.md",
+      "sha256": "d21402e8c77a3e253b07b8ce5b53d37ab3787499ad14412a966de5f9803ac1b9"
+    },
+    {
+      "path": "en/quizzes/networking/06-pod-network-benchmark-quiz.md",
+      "sha256": "513ca0022828122ef42260f536984bd9d5689df0954cc829b4df14fbafbe14bd"
+    },
+    {
+      "path": "ko/networking/06-pod-network-benchmark.md",
+      "sha256": "1b85467152be5c707317fdce757f39f6825b458aabbd75305fbcd17bff711670"
+    },
+    {
+      "path": "ko/quizzes/networking/06-pod-network-benchmark-quiz.md",
+      "sha256": "3d0c9d266d01a72e8815eb0cafa2e1e14a89f8ed04eaaa99c98a879f5aef454c"
+    }
+  ],
+  "sources": {
+    "EC2Bandwidth": {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "key": "0c9b8701b9e0"
+    },
+    "EC2Pricing": {
+      "url": "https://aws.amazon.com/ec2/pricing/on-demand/",
+      "key": "e0bded851e40"
+    },
+    "CURTransfer": {
+      "url": "https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html",
+      "key": "567c3cc16612"
+    },
+    "CURLineItems": {
+      "url": "https://docs.aws.amazon.com/cur/latest/userguide/Lineitem-columns.html",
+      "key": "11a9569e8d5e"
+    },
+    "K8sDNS": {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/",
+      "key": "9c3e04d359b8"
+    },
+    "K8sService": {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "key": "fb91f3263e90"
+    },
+    "K8s136Service": {
+      "url": "https://raw.githubusercontent.com/kubernetes/website/release-1.36/content/en/docs/concepts/services-networking/service.md",
+      "key": "706d53ce41ff"
+    },
+    "NodeLocalDNS": {
+      "url": "https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/",
+      "key": "2a0e5e04f9e9"
+    },
+    "AutoModeDNS": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "key": "6e8f49a19d70"
+    },
+    "CoreDNSCache": {
+      "url": "https://coredns.io/plugins/cache/",
+      "key": "f52e30c01b83"
+    },
+    "CoreDNSKubernetes": {
+      "url": "https://coredns.io/plugins/kubernetes/",
+      "key": "fe835a0b74be"
+    },
+    "CoreDNSAutopath": {
+      "url": "https://coredns.io/plugins/autopath/",
+      "key": "6befec24f904"
+    },
+    "GlibcQuery": {
+      "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.41/resolv/res_query.c",
+      "key": "4a9437b8c51e"
+    },
+    "GlibcSend": {
+      "url": "https://raw.githubusercontent.com/bminor/glibc/glibc-2.41/resolv/res_send.c",
+      "key": "b4a90e43d829"
+    },
+    "Curl": {
+      "url": "https://curl.se/docs/manpage.html",
+      "key": "2b2686afaf41"
+    },
+    "FortioRelease": {
+      "url": "https://api.github.com/repos/fortio/fortio/releases/tags/v1.69.5",
+      "key": "15c3a997498e"
+    },
+    "FortioStats": {
+      "url": "https://raw.githubusercontent.com/fortio/fortio/v1.69.5/stats/stats.go",
+      "key": "597f2c828a17"
+    },
+    "FortioCLI": {
+      "url": "https://raw.githubusercontent.com/fortio/fortio/v1.69.5/cli/fortio_main.go",
+      "key": "c9c00ef7a051"
+    },
+    "NetshootDockerfile": {
+      "url": "https://raw.githubusercontent.com/nicolaka/netshoot/v0.14/Dockerfile",
+      "key": "fc7569369e93"
+    },
+    "NetshootFetch": {
+      "url": "https://raw.githubusercontent.com/nicolaka/netshoot/v0.14/build/fetch_binaries.sh",
+      "key": "5c3882d27bac"
+    },
+    "IperfCPU": {
+      "url": "https://raw.githubusercontent.com/esnet/iperf/3.19/src/iperf_util.c",
+      "key": "e02870f970cf"
+    },
+    "KarpenterDisruption": {
+      "url": "https://karpenter.sh/docs/concepts/disruption/",
+      "key": "400aaa4620d2"
+    },
+    "M5Network": {
+      "url": "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "key": "26adc3b707cc"
+    },
+    "KubectlExec": {
+      "url": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_exec/",
+      "key": "50a447aaf51f"
+    },
+    "KubeProxy": {
+      "url": "https://kubernetes.io/docs/reference/networking/virtual-ips/",
+      "key": "0d6d4e2641a7"
+    },
+    "ENAMetrics": {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-network-performance-ena.html",
+      "key": "7bb963423cf9"
+    }
+  },
+  "checks": {
+    "preservation": {
+      "en": {
+        "historicalTablesUnchanged": 11,
+        "historicalYAMLBlocksUnchanged": 2,
+        "costTableRelabelledAsModel": true
+      },
+      "ko": {
+        "historicalTablesUnchanged": 11,
+        "historicalYAMLBlocksUnchanged": 2,
+        "costTableRelabelledAsModel": true
+      }
+    },
+    "resourceSchemas": 14,
+    "bashBlocks": 16,
+    "quizAnswers": 20,
+    "dnsHelperCases": [
+      {
+        "language": "en",
+        "mode": "first",
+        "resolverCalls": 1,
+        "mockDNSOnly": true
+      },
+      {
+        "language": "en",
+        "mode": "warm",
+        "resolverCalls": 21,
+        "mockDNSOnly": true
+      },
+      {
+        "language": "ko",
+        "mode": "first",
+        "resolverCalls": 1,
+        "mockDNSOnly": true
+      },
+      {
+        "language": "ko",
+        "mode": "warm",
+        "resolverCalls": 21,
+        "mockDNSOnly": true
+      }
+    ],
+    "arithmetic": {
+      "sustainedPayloadBytes": 223376179200,
+      "allCrossAZIperfPayloadBytes": 260633264128,
+      "HTTPp50CrossMinusSameAZMs": "0.243",
+      "NewConnectionCrossP50IncreaseMs": "0.813",
+      "FixedPoolQPSReductionPercent": "33.51338717635754538135923339",
+      "sustainedDecimalPayloadModelUSD": "4.467523584",
+      "allCrossAZDecimalPayloadModelUSD": "5.21266528256",
+      "monthly1GbpsDecimalModelUSD": "6480.00",
+      "monthly100MiBpsRF3DecimalModelUSD": "10871.635968",
+      "DNSQueryModel": {
+        "resolutionsPerSecond": 1000,
+        "tenQueryForm": 10000,
+        "twoQueryForm": 2000,
+        "NXDOMAIN": 8000,
+        "modelNotMeasured": true
+      }
+    },
+    "nativeFortio": {
+      "tool": "OfficialFortio1.69.5linux_arm64",
+      "cases": [
+        {
+          "case": "coarse",
+          "resolutionSeconds": "1",
+          "calls": 30,
+          "jsonStdoutValid": true,
+          "histogramBoundsUseObservedMinMax": true,
+          "p50MatchesReleasedInterpolation": true,
+          "occupiedBuckets": 1
+        },
+        {
+          "case": "default-ms",
+          "resolutionSeconds": "0.001",
+          "calls": 30,
+          "jsonStdoutValid": true,
+          "histogramBoundsUseObservedMinMax": true,
+          "p50MatchesReleasedInterpolation": true,
+          "occupiedBuckets": 1
+        },
+        {
+          "case": "fine",
+          "resolutionSeconds": "0.00001",
+          "calls": 30,
+          "jsonStdoutValid": true,
+          "histogramBoundsUseObservedMinMax": true,
+          "p50MatchesReleasedInterpolation": true,
+          "occupiedBuckets": 5
+        },
+        {
+          "case": "new-connection",
+          "resolutionSeconds": "0.00001",
+          "calls": 30,
+          "jsonStdoutValid": true,
+          "histogramBoundsUseObservedMinMax": true,
+          "p50MatchesReleasedInterpolation": true,
+          "occupiedBuckets": 7
+        }
+      ],
+      "limits": "Bounded localhost HTTP checks only; no EKS/network performance reproduction. Diagnostic timings are stored separately and are not substituted into historical benchmark tables."
+    },
+    "limits": [
+      "No EKS deployment, live AWS benchmark or billing invoice verification.",
+      "Bash/schema and mocked DNS-helper checks do not validate cluster scheduling/security/network behavior.",
+      "Historical image digests and raw packet/benchmark artifacts are not supplied by the original page.",
+      "Decimal payload GB is an explicit original cost-model assumption, not proven EC2 metering conversion.",
+      "Four viewed diagrams retained as historical illustrations with correcting captions; external archmap source text remains a parent-owned followup."
+    ]
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/06-pod-network-benchmark.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/06-pod-network-benchmark.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/06-pod-network-benchmark-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/06-pod-network-benchmark-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batchValidation": {
+    "documents": 28,
+    "yamlBlocks": 164,
+    "shellBlocks": 122,
+    "errors": []
+  },
+  "docsTest": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-pod-benchmark-validation/docs-test.log",
+    "environment": "login:false env-i OTELoff; local child execution authorized"
+  },
+  "scopeDiffCheck": "passed",
+  "imageReview": {
+    "viewed": 4,
+    "retained": 4,
+    "captionsCorrected": true,
+    "externalRepair": [
+      "public/archmaps/en-networking-06-pod-network-benchmark-0.html: align historical cost-model/TTL/wire-timing captions before parent regenerates PNG",
+      "public/archmaps/en-networking-06-pod-network-benchmark-1.html: align historical cost-model/TTL/wire-timing captions before parent regenerates PNG",
+      "public/archmaps/ko-networking-06-pod-network-benchmark-0.html: align historical cost-model/TTL/wire-timing captions before parent regenerates PNG",
+      "public/archmaps/ko-networking-06-pod-network-benchmark-1.html: align historical cost-model/TTL/wire-timing captions before parent regenerates PNG"
+    ]
+  },
+  "artifacts": "/tmp/networking-pod-benchmark-validation"
+}

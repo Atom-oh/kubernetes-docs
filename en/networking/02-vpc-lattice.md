@@ -1,1473 +1,937 @@
 # VPC Lattice
 
-Amazon VPC Lattice is an AWS application networking service that allows you to securely connect and manage services across different VPCs and accounts. This document explains the concepts, architecture, integration methods with Amazon EKS, and best practices for VPC Lattice.
+Amazon VPC Lattice connects applications across VPCs and AWS accounts. This chapter explains the resource model, an EKS integration, routing, IAM authorization, monitoring, and troubleshooting.
+
+> Reviewed on 2026-09-11 against AWS Gateway API Controller **v2.1.3** and Gateway API **v1.5.0**. The examples describe configuration and validation steps; they have not been deployed to an AWS account as part of this review.
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [EKS and VPC Lattice Integration](#eks-and-vpc-lattice-integration)
-4. [Installation and Configuration](#installation-and-configuration)
-5. [Service Management](#service-management)
-6. [Routing and Traffic Management](#routing-and-traffic-management)
-7. [Security and Authentication](#security-and-authentication)
-8. [Monitoring and Logging](#monitoring-and-logging)
-9. [Best Practices](#best-practices)
-10. [Troubleshooting](#troubleshooting)
-11. [Conclusion](#conclusion)
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [EKS and VPC Lattice Integration](#eks-and-vpc-lattice-integration)
+- [Installation and Configuration](#installation-and-configuration)
+- [Service Management](#service-management)
+- [Routing and Traffic Management](#routing-and-traffic-management)
+- [Security and Authentication](#security-and-authentication)
+- [Monitoring and Logging](#monitoring-and-logging)
+- [Best Practices](#best-practices)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
 
 ## Overview
 
 ### What is VPC Lattice?
 
-Amazon VPC Lattice is a fully managed application networking service for service-to-service connectivity, security, and monitoring. Key features include:
+VPC Lattice provides application networking without requiring a proxy beside every application. A **service network** groups services and resource configurations and connects them to authorized consumers. Services provide listeners, routing rules, target groups, and service DNS names.
 
-- **Service Network**: A logical boundary that connects services across multiple VPCs and accounts
-- **Service Discovery**: Automatic discovery of services within the service network
-- **Traffic Management**: Support for routing rules, weighted routing, and path-based routing
-- **Authentication and Authorization**: Access control through AWS IAM and resource policies
-- **Observability**: Integrated monitoring, logging, and tracing capabilities
+The current product also connects **resource configurations** through resource gateways, including resources such as RDS databases that use TCP. This resource access model is distinct from an HTTP service backed by a target group; service-network/service IAM auth policies do not authorize resource-configuration traffic. A **service network VPC endpoint**, powered by PrivateLink, can provide access from clients reached through peering, Transit Gateway, Direct Connect, or VPN. A direct VPC association alone does not extend access to clients behind a transit gateway or peering connection.
 
-### Key Use Cases
+Typical uses include cross-account application APIs, communication between EKS and other compute services, and shared data-resource access. Association, routing, security groups, authentication, and application authorization still require configuration.
 
-1. **Microservices Architecture**: Simplify and secure communication between microservices
-2. **Multi-Account Environments**: Secure communication between services across multiple AWS accounts
-3. **Hybrid Workloads**: Communication between containerized and non-containerized workloads
-4. **Service Mesh Alternative**: Provide lightweight service mesh functionality to reduce complexity
-5. **Multi-Cluster Connectivity**: Simplify service communication between multiple EKS clusters
+### Comparison with Other Services
 
-### VPC Lattice vs Other Services
+| Service | Main responsibility | Important distinction |
+|---|---|---|
+| VPC Lattice | Private application and resource connectivity | HTTP/HTTPS/gRPC service routing and separate TLS/TCP resource capabilities; not an Internet API front door |
+| API Gateway | Managed API endpoints and API management | REST, HTTP, or WebSocket APIs have different features; GraphQL is not a separate API Gateway API type |
+| AWS App Mesh | Envoy-based service mesh | AWS will end support on **2026-09-30**; as of this review that date is upcoming. Plan migration instead of a new installation |
+| Transit Gateway | Network connectivity using IP routing | Connects networks; it does not replace per-service HTTP routing and authorization |
+| Istio / Linkerd / Cilium | Mesh capabilities implemented with their respective data planes | Features and operating costs differ. Sidecars are not mandatory in every mesh architecture |
 
-#### VPC Lattice vs API Gateway
-
-| Feature | VPC Lattice | API Gateway |
-|---------|------------|------------|
-| Primary Use | Internal service-to-service communication | External API exposure |
-| Network Location | Inside VPC | Internet-connected |
-| Protocols | HTTP/HTTPS, gRPC | HTTP/HTTPS, WebSocket, REST, GraphQL |
-| Authentication | AWS IAM, resource policies | IAM, Lambda authorizers, Cognito |
-| Scalability | Auto-scaling | Auto-scaling |
-| Pricing | Hourly + data throughput | Request count + data throughput |
-
-#### VPC Lattice vs AWS App Mesh
-
-| Feature | VPC Lattice | AWS App Mesh |
-|---------|------------|-------------|
-| Architecture | Managed service | Sidecar proxy-based |
-| Complexity | Low | Medium |
-| Protocols | HTTP/HTTPS, gRPC | HTTP/HTTPS, gRPC, TCP |
-| Service Discovery | Built-in | AWS Cloud Map integration |
-| Traffic Control | Basic routing rules | Advanced traffic control |
-| Observability | CloudWatch integration | Detailed metrics via Envoy |
-
-#### VPC Lattice vs Transit Gateway
-
-| Feature | VPC Lattice | Transit Gateway |
-|---------|------------|----------------|
-| Primary Use | Service-to-service communication | VPC-to-VPC network connectivity |
-| Abstraction Level | Service level | Network level |
-| Protocol | Application layer (L7) | Network layer (L3) |
-| Routing | Service name-based | IP-based |
-| Security | Service-level policies | Security groups, NACLs |
+VPC Lattice eliminates the need to operate its managed data plane, but does not promise lower total cost or identical mesh functionality. Compare request/data/resource charges, controller operations, identity requirements, retries, routing features, and observability for the actual workload. See the [Istio–Lattice comparison](../service-mesh/istio/comparison/02-istio-vs-lattice.md).
 
 ## Architecture
 
-### VPC Lattice Components
+### Components and Traffic Flow
 
-VPC Lattice consists of the following main components:
+| Component | Responsibility |
+|---|---|
+| Service network | Logical grouping and associations; optional IAM authorization boundary |
+| Service | Application endpoint with its own DNS name |
+| Listener and rules | Belong to a **service**; select actions and target groups |
+| Target group | Registered instance, IP, Lambda, or ALB targets, with target-type-specific behavior |
+| VPC association | Allows clients in an associated VPC to access the network, subject to security controls |
+| Service network VPC endpoint | PrivateLink-based access, including supported transit/on-premises paths |
+| Resource configuration / resource gateway | Separate resource access model, including TCP/database resources |
 
-1. **Service Network**: A logical boundary for service-to-service communication
-2. **Service**: An endpoint representing an application or microservice
-3. **Target Group**: A set of targets to route traffic to a service
-4. **Listener**: A process that handles connection requests to a service
-5. **Rule**: Defines how a listener routes traffic
-6. **VPC Association**: Connects a VPC to a service network
+![Three VPCs in two AWS accounts associate with a service network, whose services use target groups for EC2, EKS, and Lambda workloads.](../.gitbook/assets/en-networking-02-vpc-lattice-1.png)
 
-![A client request enters a VPC Lattice service network, which applies routing rules to reach one of three services, each forwarding traffic to target-group pods running in separate VPCs.](../.gitbook/assets/en-networking-02-vpc-lattice-0.png)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-1.html)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-0.html)
+The figure shows logical associations, not a single router process. Access also depends on network reachability and the applicable policies. A request resolves the **service's** DNS name, reaches its listener, passes the applicable authorization checks, and is routed to a target according to the listener rules. A target group describes destinations; it is not another application hop.
 
-### Service Network Architecture
-
-The service network is a core component of VPC Lattice that connects services across multiple VPCs and accounts.
-
-![Three VPCs from two AWS accounts associate into one shared service network, which registers three services that each route through their own target group to a different compute target — an EC2 instance, an EKS pod, and a Lambda function.](../.gitbook/assets/en-networking-02-vpc-lattice-1.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-1.html)
-
-### Traffic Flow
-
-How traffic flows in VPC Lattice:
-
-1. Client sends a request to the VPC Lattice service DNS name
-2. VPC Lattice receives the request and processes it according to listener rules
-3. Listener rules route the request to the appropriate target group
-4. Target group forwards the request to registered targets (EC2, EKS pods, Lambda, etc.)
-5. Target processes the response and returns it to the client
-
-![Sequence showing a client request passing through VPC Lattice, a service's listener rules, and a target group before reaching an EKS pod, then the response tracing the same path back to the client.](../.gitbook/assets/en-networking-02-vpc-lattice-2.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-2.html)
-
-### Service Discovery
-
-VPC Lattice automatically provides service discovery within the service network:
-
-1. Each service has a unique DNS name (`service-name.vpc-lattice-svcs.region.on.aws`)
-2. Clients access services using this DNS name
-3. VPC Lattice handles DNS resolution and routing
-4. Services are accessible from all VPCs connected to the service network
+Use `get-service --query dnsEntry` or the controller's route annotation to discover the real domain. Do not construct one from the service name and service-network ID. An assigned name contains service-specific identifiers; recreating a service can change it.
 
 ### Security Model
 
-VPC Lattice provides the following security mechanisms:
-
-1. **Network Isolation**: Service network provides a logically isolated environment
-2. **Authentication and Authorization**: Service access control through AWS IAM
-3. **Resource Policies**: Fine-grained access control for services and service networks
-4. **TLS Encryption**: Encryption of service-to-service communication
-5. **VPC Security Groups**: Additional security layer for targets
+Network access, IAM authorization, and encryption are separate controls. `AWS_IAM` requires a supported signed request and appropriate policies. `NONE` disables IAM authentication at that particular layer; it does not bypass another layer's IAM policy, security groups, or application authorization. HTTPS protects client-to-Lattice traffic. Backend HTTP remains plaintext unless backend TLS is explicitly configured.
 
 ## EKS and VPC Lattice Integration
 
-### Integration Architecture
+The AWS Gateway API Controller reconciles Kubernetes resources into VPC Lattice resources:
 
-The integration of Amazon EKS and VPC Lattice consists of the following components:
+| Kubernetes resource | Lattice interpretation |
+|---|---|
+| GatewayClass | Selects `application-networking.k8s.aws/gateway-api-controller` |
+| Gateway | Refers to a service network by the **Gateway name**, without its namespace |
+| HTTPRoute / GRPCRoute | Creates a service with its own domain and listener/routing configuration |
+| Backend Service and its endpoints | Define target groups and registered pod endpoints |
+| TargetGroupPolicy | Configures the target group's protocol and health checks |
+| IAMAuthPolicy | Attaches an auth policy to a Gateway's network or a Route's service |
+| AccessLogPolicy | Configures a target resource's access-log destination |
 
-1. **AWS Gateway API Controller**: Transforms Kubernetes Gateway API into VPC Lattice resources
-2. **Kubernetes Gateway API**: Standard Kubernetes API for service routing
-3. **VPC Lattice Service Network**: Service network to which EKS clusters connect
-4. **VPC Lattice Service**: VPC Lattice services mapped to Kubernetes services
-5. **VPC Lattice Target Group**: Target groups mapped to Kubernetes pods
+Two Gateways with the same name can refer to the same service network even when their Kubernetes namespaces differ. A Gateway alone does **not** create the network or one shared ingress IP. The network can be managed externally, with the controller's `defaultServiceNetwork` option for simple cases, or with the controller's ServiceNetwork CRD. Choose one owner for each cloud resource.
 
-![The Gateway API Controller in an EKS cluster transforms Gateway API resources into a VPC Lattice service and target group that registers the backing Kubernetes pod, while a client application in another VPC reaches that pod by sending requests to the service through the service network.](../.gitbook/assets/en-networking-02-vpc-lattice-3.png)
+The examples below use an externally managed network and VPC association. They leave `defaultServiceNetwork` unset and do not attach a VpcAssociationPolicy to that association. If adopting the CRD-based model, manage the network, VPC association, and authorization as separate resources; do not also manage the same resources with CloudFormation.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-3.html)
-
-### Benefits of Integration
-
-Integrating EKS with VPC Lattice provides the following benefits:
-
-1. **Standardized API**: Consistent service management through Kubernetes Gateway API
-2. **Cross-Cluster Communication**: Seamless communication between multiple EKS clusters
-3. **Hybrid Workloads**: Communication between EKS pods and non-containerized workloads
-4. **Centralized Management**: Manage all service networks from AWS console
-5. **Unified Observability**: Integrated monitoring and logging through CloudWatch and CloudTrail
-6. **Simplified Service Mesh**: Provide service mesh functionality without sidecars
-
-### VPC Lattice as a Service Mesh Alternative
-
-VPC Lattice can be an alternative to traditional service meshes (Istio, Linkerd, etc.) for the following reasons:
-
-1. **Low Complexity**: Provides service mesh functionality without sidecar proxies
-2. **Reduced Management Overhead**: Fully managed service by AWS
-3. **Resource Efficiency**: Reduced resource usage without sidecar proxies
-4. **AWS Service Integration**: Seamless integration with AWS service ecosystem
-
-| Feature | VPC Lattice | Traditional Service Mesh |
-|---------|------------|-----------------|
-| Service Discovery | Built-in | Requires separate configuration |
-| Traffic Routing | Supported | Supported |
-| Traffic Splitting | Supported | Supported |
-| Detailed Traffic Control | Limited | Extensive |
-| Sidecar Proxy | Not required | Required |
-| Management Complexity | Low | High |
-| Resource Overhead | Low | High |
-| Observability | CloudWatch integration | Various tool support |
 ## Installation and Configuration
 
 ### Prerequisites
 
-Prerequisites for integrating VPC Lattice with EKS:
+The controller's v2.1 upgrade guide requires **Kubernetes 1.31 or later** and Gateway API **1.5 or later**. This example pins the version against which v2.1 was built, **1.5.0**. This minimum is not an EKS support matrix or proof of compatibility with every newer Gateway API release. Check the EKS version lifecycle and all controllers that share the Gateway API CRDs before changing them. In particular, a v2.0 controller can fail after the TLSRoute storage/API transition introduced with Gateway API 1.5.
 
-1. **Amazon EKS Cluster**: Kubernetes version 1.23 or higher
-2. **IAM Permissions**: Permissions to create and manage VPC Lattice resources
-3. **VPC Setup**: VPC with private subnets
-4. **AWS CLI**: Latest version of AWS CLI
-5. **kubectl**: Latest version of kubectl
-6. **Helm**: (Optional) Helm 3 for AWS Gateway API Controller installation
-
-### Installing AWS Gateway API Controller
-
-AWS Gateway API Controller is responsible for transforming Kubernetes Gateway API resources into VPC Lattice resources.
-
-#### Installation Using Helm
+Use a supported EKS cluster, matching `kubectl`, Helm, AWS CLI v2, and an operator role permitted to configure the intended resources. The sample backend assumes Linux pods with IPs reachable by VPC Lattice. Confirm the cluster's CNI, subnet capacity, endpoint readiness, DNS, and network-policy configuration.
 
 ```bash
-# Add Helm repository
-helm repo add eks https://aws.github.io/eks-charts
-helm repo update
-
-# Install AWS Gateway API Controller
-helm install gateway-api-controller eks/aws-gateway-controller \
-  --namespace aws-gateway-controller \
-  --create-namespace \
-  --set serviceAccount.create=true \
-  --set serviceAccount.name=aws-gateway-controller \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::<AWS_ACCOUNT_ID>:role/AmazonGatewayControllerRole
+export AWS_REGION=us-west-2
+export CLUSTER_NAME=my-cluster
+export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+export VPC_ID="$(aws eks describe-cluster --name "$CLUSTER_NAME" \
+  --query 'cluster.resourcesVpcConfig.vpcId' --output text)"
+export NETWORK_NAME=my-network
+export ASSOCIATION_SG_ID=sg-0123456789abcdef0
+kubectl config current-context
+kubectl version
 ```
 
-#### Installation Using YAML Manifests
-
-1. Service account and RBAC setup:
-
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: aws-gateway-controller
-  namespace: aws-gateway-controller
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::<AWS_ACCOUNT_ID>:role/AmazonGatewayControllerRole
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: aws-gateway-controller
-rules:
-- apiGroups: ["gateway.networking.k8s.io"]
-  resources: ["gatewayclasses", "gateways", "httproutes"]
-  verbs: ["get", "list", "watch", "update", "patch"]
-- apiGroups: [""]
-  resources: ["services", "secrets", "namespaces"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["create", "patch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: aws-gateway-controller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: aws-gateway-controller
-subjects:
-- kind: ServiceAccount
-  name: aws-gateway-controller
-  namespace: aws-gateway-controller
-```
-
-2. Controller deployment:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aws-gateway-controller
-  namespace: aws-gateway-controller
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: aws-gateway-controller
-  template:
-    metadata:
-      labels:
-        app: aws-gateway-controller
-    spec:
-      serviceAccountName: aws-gateway-controller
-      containers:
-      - name: controller
-        image: public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller:v1.0.0
-        args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=:8080
-        - --leader-elect
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 10m
-            memory: 64Mi
-```
+Replace the example security group ID. The VPC-association security group must allow **approved clients** on TCP 443. Backend pod/node security groups must allow the applicable Lattice managed prefix list on the actual backend/health port, TCP 8080 here. Inspect the groups attached to the real pod ENI or node ENI instead of assuming that every node uses the EKS cluster security group. Also permit the EKS control plane to reach the controller webhook on its required port. Do not open every port to the entire Internet.
 
 ### IAM Role Setup
 
-The AWS Gateway API Controller requires appropriate IAM permissions to manage VPC Lattice resources.
+The **controller role** manages cloud resources. The **caller role** signs application requests and needs `vpc-lattice-svcs:Invoke`; they are different roles.
 
-#### IRSA (IAM Roles for Service Accounts) Setup
+Use EKS Pod Identity on supported nodes, or IRSA. The IRSA example below assumes the cluster's IAM OIDC provider already exists and creates a dedicated service account. For Pod Identity, use the current EKS add-on and an association for this same namespace/service account, with the appropriate trust policy; do not also rely on an IRSA annotation for the same example.
+
+The release's recommended controller policy includes broad `vpc-lattice:*` and logging/tagging permissions. Treat it as an upstream starting point, **not a least-privilege policy**. Review its resource scope and enabled features, retain the constrained service-linked-role conditions, and save the reviewed policy before creating it. Reuse an existing reviewed policy ARN instead of creating duplicate policies on later runs.
 
 ```bash
-# Create IAM policy
-cat <<EOF > vpc-lattice-policy.json
+curl --fail --location --output controller-policy-upstream.json \
+  https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/files/controller-installation/recommended-inline-policy.json
+
+# Use the policy reviewed for this account and the enabled controller features.
+export REVIEWED_POLICY_FILE=controller-policy-reviewed.json
+test -s "$REVIEWED_POLICY_FILE"
+export CONTROLLER_POLICY_ARN="$(aws iam create-policy \
+  --policy-name VPCLatticeControllerPolicy \
+  --policy-document "file://$REVIEWED_POLICY_FILE" \
+  --query Policy.Arn --output text)"
+
+# Prerequisite: this cluster's IAM OIDC provider already exists.
+eksctl create iamserviceaccount \
+  --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --namespace aws-application-networking-system \
+  --name gateway-api-controller \
+  --attach-policy-arn "$CONTROLLER_POLICY_ARN" \
+  --approve
+```
+
+An existing service account needs an intentional ownership/role migration; the example does not overwrite it automatically.
+
+### Install the Released Controller
+
+```bash
+curl --fail --location --output gateway-api-v1.5.0.yaml \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+# Inspect changes first if any Gateway API controller is already installed.
+kubectl apply --server-side -f gateway-api-v1.5.0.yaml
+
+helm pull oci://public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller-chart \
+  --version v2.1.3
+helm show crds ./aws-gateway-controller-chart-v2.1.3.tgz > lattice-crds.yaml
+kubectl apply --server-side -f lattice-crds.yaml
+
+helm install gateway-api-controller ./aws-gateway-controller-chart-v2.1.3.tgz \
+  --namespace aws-application-networking-system --create-namespace \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=gateway-api-controller \
+  --set-string awsRegion="$AWS_REGION" \
+  --set-string awsAccountId="$AWS_ACCOUNT_ID" \
+  --set-string clusterVpcId="$VPC_ID" \
+  --set-string clusterName="$CLUSTER_NAME" \
+  --wait --timeout 5m
+
+kubectl -n aws-application-networking-system get pods
+kubectl -n aws-application-networking-system logs \
+  -l control-plane=gateway-api-controller -c manager --tail=100
+```
+
+For an existing Helm release, use a reviewed `helm upgrade` plan with its saved values. Helm does not automatically upgrade CRDs in `crds/`; review their changes separately. Do not remove shared Gateway API CRDs or admission policies to make an upgrade pass.
+
+For manifest-based delivery, render this **same chart** with `helm template --include-crds`, using the same values and service-account choice, then review and apply the resulting manifest. This preserves the released RBAC, EndpointSlice watches, leader-election permissions, and webhook configuration. Do not use the obsolete hand-written v1.0 deployment. The chart generates webhook certificates unless supplied explicitly or managed through its cert-manager option; keep the webhook Secret and CA bundle consistent during upgrades instead of independently regenerating one.
+
+### Create the Service Network
+
+Choose **CLI or CloudFormation**, not both for the same network. The CLI example creates an `AWS_IAM` network. Until an applicable Allow policy is installed and propagated, requests are denied.
+
+Save the following as `api-auth-policy.json`, replacing the account and caller role. The network policy deliberately permits only this demo's `/api` endpoint and subpaths. A production network needs a reviewed policy covering its intended services and callers.
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "vpc-lattice:*",
-        "ec2:DescribeVpcs",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeSecurityGroups",
-        "elasticloadbalancing:DescribeTargetGroups",
-        "elasticloadbalancing:DescribeTargetHealth",
-        "elasticloadbalancing:RegisterTargets",
-        "elasticloadbalancing:DeregisterTargets"
-      ],
-      "Resource": "*"
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:role/MyAppRole"
+      },
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "vpc-lattice-svcs:RequestPath": [
+            "/api",
+            "/api/*"
+          ]
+        }
+      }
     }
   ]
 }
-EOF
-
-aws iam create-policy \
-  --policy-name AmazonGatewayControllerPolicy \
-  --policy-document file://vpc-lattice-policy.json
-
-# Create IAM role and associate with service account
-eksctl create iamserviceaccount \
-  --name aws-gateway-controller \
-  --namespace aws-gateway-controller \
-  --cluster <CLUSTER_NAME> \
-  --attach-policy-arn arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AmazonGatewayControllerPolicy \
-  --approve \
-  --override-existing-serviceaccounts
 ```
-
-### Creating VPC Lattice Service Network
-
-VPC Lattice service networks can be created through AWS Management Console, AWS CLI, or AWS CloudFormation.
-
-#### Creation Using AWS CLI
 
 ```bash
-# Create service network
-aws vpc-lattice create-service-network \
-  --name my-service-network \
-  --auth-type AWS_IAM
+aws vpc-lattice create-service-network --name "$NETWORK_NAME" \
+  --auth-type AWS_IAM > service-network.json
+export SERVICE_NETWORK_ID="$(python3 -c \
+  'import json; print(json.load(open("service-network.json"))["id"])')"
+export SERVICE_NETWORK_ARN="$(python3 -c \
+  'import json; print(json.load(open("service-network.json"))["arn"])')"
 
-# Store service network ID
-SERVICE_NETWORK_ID=$(aws vpc-lattice list-service-networks \
-  --query "items[?name=='my-service-network'].id" \
-  --output text)
-
-# Associate VPC with service network
 aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --vpc-identifier <VPC_ID> \
-  --security-group-ids <SECURITY_GROUP_ID>
+  --service-network-identifier "$SERVICE_NETWORK_ID" \
+  --vpc-identifier "$VPC_ID" --security-group-ids "$ASSOCIATION_SG_ID"
+
+# Save the reviewed policy below as api-auth-policy.json, then compact it.
+python3 -c 'import json; print(json.dumps(json.load(open("api-auth-policy.json")),separators=(",",":")))' \
+  > api-auth-policy.compact.json
+aws vpc-lattice put-auth-policy --resource-identifier "$SERVICE_NETWORK_ID" \
+  --policy file://api-auth-policy.compact.json
+aws vpc-lattice get-service-network --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-auth-policy --resource-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice list-service-network-vpc-associations \
+  --service-network-identifier "$SERVICE_NETWORK_ID"
 ```
 
-#### Creation Using AWS CloudFormation
+Verify that the association is `ACTIVE`, the network still has `authType: AWS_IAM`, and `get-auth-policy` returns the intended policy before exposing a route. Policy propagation can take a few minutes.
+
+The equivalent **network and association** CloudFormation template is:
 
 ```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: VPC Lattice service network and client VPC association
+Parameters:
+  NetworkName:
+    Type: String
+    Default: my-network
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+    Description: Must match the Kubernetes Gateway name
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC containing the intended clients
+  AssociationSecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Existing security groups allowing approved clients on listener ports
 Resources:
-  MyServiceNetwork:
+  ServiceNetwork:
     Type: AWS::VpcLattice::ServiceNetwork
     Properties:
-      Name: my-service-network
+      Name: {Ref: NetworkName}
       AuthType: AWS_IAM
-
-  MyVpcAssociation:
+  ClientAssociation:
     Type: AWS::VpcLattice::ServiceNetworkVpcAssociation
     Properties:
-      ServiceNetworkIdentifier: !Ref MyServiceNetwork
-      VpcIdentifier: !Ref MyVPC
-      SecurityGroupIds:
-        - !Ref MySecurityGroup
+      ServiceNetworkIdentifier: {Ref: ServiceNetwork}
+      VpcIdentifier: {Ref: VpcId}
+      SecurityGroupIds: {Ref: AssociationSecurityGroupIds}
+Outputs:
+  ServiceNetworkArn:
+    Description: ARN used for authorization and sharing
+    Value: {Fn::GetAtt: [ServiceNetwork, Arn]}
+  ServiceNetworkId:
+    Description: ID used with VPC Lattice API operations
+    Value: {Fn::GetAtt: [ServiceNetwork, Id]}
 ```
 
-### Configuring Gateway API Resources
+This template does not attach an auth policy. Add an auth-policy resource in the same ownership model, or apply the reviewed network policy explicitly before testing requests. Obtain the network ID/ARN from stack outputs. Validate the template and inspect a change set before deployment; the example does not create the VPC or its security groups.
 
-Configure Kubernetes Gateway API resources to integrate with VPC Lattice.
+### Gateway and Application
 
-#### 1. Create GatewayClass
-
-GatewayClass defines the implementation of Gateway resources.
+Save and apply this as `gateway.yaml`. The Gateway name must match `my-network` created above.
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lattice-demo
+---
+apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: amazon-vpc-lattice
 spec:
   controllerName: application-networking.k8s.aws/gateway-api-controller
-```
-
-#### 2. Create Gateway
-
-Gateway defines how traffic enters the cluster.
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
-```
-
-#### 3. Create HTTPRoute
-
-HTTPRoute defines how HTTP traffic is routed to services.
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: my-http-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: my-service
-      port: 8080
-```
-
-### Service and Pod Configuration
-
-Configure Kubernetes services and pods to integrate with VPC Lattice.
-
-#### 1. Create Service
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-  namespace: default
-spec:
-  selector:
-    app: my-app
-  ports:
-  - port: 8080
-    targetPort: 8080
-  type: ClusterIP
-```
-
-#### 2. Create Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  namespace: default
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: my-app
-  template:
-    metadata:
-      labels:
-        app: my-app
-    spec:
-      containers:
-      - name: my-container
-        image: nginx:latest
-        ports:
-        - containerPort: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-```
-
-## Service Management
-
-### Creating VPC Lattice Services
-
-VPC Lattice services can be created directly through AWS Management Console, AWS CLI, or AWS CloudFormation, or indirectly through Kubernetes Gateway API.
-
-#### Direct Creation Using AWS CLI
-
-```bash
-# Create target group
-aws vpc-lattice create-target-group \
-  --name my-target-group \
-  --type INSTANCE \
-  --config '{"port":80,"protocol":"HTTP","vpcIdentifier":"<VPC_ID>","healthCheck":{"enabled":true,"protocol":"HTTP","path":"/health","port":80,"healthCheckIntervalSeconds":30,"healthCheckTimeoutSeconds":5,"healthyThresholdCount":5,"unhealthyThresholdCount":2}}'
-
-# Store target group ID
-TARGET_GROUP_ID=$(aws vpc-lattice list-target-groups \
-  --query "items[?name=='my-target-group'].id" \
-  --output text)
-
-# Create service
-aws vpc-lattice create-service \
-  --name my-service \
-  --auth-type AWS_IAM
-
-# Store service ID
-SERVICE_ID=$(aws vpc-lattice list-services \
-  --query "items[?name=='my-service'].id" \
-  --output text)
-
-# Create listener
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --name my-listener \
-  --protocol HTTP \
-  --port 80 \
-  --default-action '{"forward":{"targetGroups":[{"targetGroupIdentifier":"'$TARGET_GROUP_ID'"}]}}'
-
-# Associate service with service network
-aws vpc-lattice create-service-network-service-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --service-identifier $SERVICE_ID
-```
-
-#### Indirect Creation Using Kubernetes Gateway API
-
-When you create Gateway API resources, the AWS Gateway API Controller automatically creates VPC Lattice resources.
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: my-http-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: my-service
-      port: 8080
-```
-
-### Service Discovery and Access
-
-VPC Lattice services are automatically assigned DNS names and are discoverable within the service network.
-
-#### DNS Name Format
-
-```
-<service-name>.<service-network-id>.vpc-lattice-svcs.<region>.on.aws
-```
-
-#### Service Access Example
-
-```bash
-# Query service DNS name
-SERVICE_DNS=$(aws vpc-lattice get-service \
-  --service-identifier $SERVICE_ID \
-  --query "dnsEntry.domainName" \
-  --output text)
-
-# Access service
-curl -v http://$SERVICE_DNS/api
-```
-
-### Updating and Deleting Services
-
-#### Updating Services Using AWS CLI
-
-```bash
-# Update service
-aws vpc-lattice update-service \
-  --service-identifier $SERVICE_ID \
-  --auth-type NONE
-
-# Update listener
-aws vpc-lattice update-listener \
-  --service-identifier $SERVICE_ID \
-  --listener-identifier <LISTENER_ID> \
-  --default-action '{"forward":{"targetGroups":[{"targetGroupIdentifier":"'$TARGET_GROUP_ID'","weight":100}]}}'
-```
-
-#### Deleting Services Using AWS CLI
-
-```bash
-# Dissociate from service network
-aws vpc-lattice delete-service-network-service-association \
-  --service-network-service-association-identifier <ASSOCIATION_ID>
-
-# Delete listener
-aws vpc-lattice delete-listener \
-  --service-identifier $SERVICE_ID \
-  --listener-identifier <LISTENER_ID>
-
-# Delete service
-aws vpc-lattice delete-service \
-  --service-identifier $SERVICE_ID
-
-# Delete target group
-aws vpc-lattice delete-target-group \
-  --target-group-identifier $TARGET_GROUP_ID
-```
-
-#### Service Management Using Kubernetes Gateway API
-
-When you update or delete Gateway API resources, the AWS Gateway API Controller automatically updates or deletes VPC Lattice resources.
-
-```bash
-# Update HTTPRoute
-kubectl apply -f updated-http-route.yaml
-
-# Delete HTTPRoute
-kubectl delete httproute my-http-route
-
-# Delete Gateway
-kubectl delete gateway my-gateway
-```
-
-## Routing and Traffic Management
-
-### Basic Routing
-
-VPC Lattice provides various routing options including path-based routing, header-based routing, and weighted routing.
-
-#### Path-based Routing
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: path-based-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api/v1
-    backendRefs:
-    - name: service-v1
-      port: 8080
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api/v2
-    backendRefs:
-    - name: service-v2
-      port: 8080
-```
-
-#### Header-based Routing
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: header-based-route
-  namespace: default
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - headers:
-      - name: "version"
-        value: "v1"
-    backendRefs:
-    - name: service-v1
-      port: 8080
-  - matches:
-    - headers:
-      - name: "version"
-        value: "v2"
-    backendRefs:
-    - name: service-v2
-      port: 8080
-```
-
-### Traffic Splitting and Canary Deployment
-
-VPC Lattice supports traffic splitting and canary deployments through weighted routing.
-
-#### Weighted Routing Using AWS CLI
-
-```bash
-# Set up weighted routing
-aws vpc-lattice update-listener \
-  --service-identifier $SERVICE_ID \
-  --listener-identifier <LISTENER_ID> \
-  --default-action '{
-    "forward": {
-      "targetGroups": [
-        {
-          "targetGroupIdentifier": "'$TARGET_GROUP_ID_V1'",
-          "weight": 80
-        },
-        {
-          "targetGroupIdentifier": "'$TARGET_GROUP_ID_V2'",
-          "weight": 20
-        }
-      ]
-    }
-  }'
-```
-
-#### Weighted Routing Using Kubernetes Gateway API
-
-Currently, Kubernetes Gateway API does not directly support weighted routing, but the AWS Gateway API Controller supports this feature through annotations.
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: weighted-route
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/traffic-weights: |
-      {
-        "service-v1": 80,
-        "service-v2": 20
-      }
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: service-v1
-      port: 8080
-    - name: service-v2
-      port: 8080
-```
-
-### Health Check Configuration
-
-VPC Lattice supports health checks for target groups.
-
-#### Health Check Configuration Using AWS CLI
-
-```bash
-# Update health check configuration
-aws vpc-lattice update-target-group \
-  --target-group-identifier $TARGET_GROUP_ID \
-  --health-check '{
-    "enabled": true,
-    "protocol": "HTTP",
-    "path": "/health",
-    "port": 8080,
-    "healthCheckIntervalSeconds": 30,
-    "healthCheckTimeoutSeconds": 5,
-    "healthyThresholdCount": 5,
-    "unhealthyThresholdCount": 2,
-    "matcher": {
-      "httpCode": "200-299"
-    }
-  }'
-```
-
-#### Health Check Configuration Using Kubernetes Gateway API
-
-The AWS Gateway API Controller supports health check configuration through annotations.
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: health-check-route
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/health-check: |
-      {
-        "enabled": true,
-        "protocol": "HTTP",
-        "path": "/health",
-        "port": 8080,
-        "intervalSeconds": 30,
-        "timeoutSeconds": 5,
-        "healthyThresholdCount": 5,
-        "unhealthyThresholdCount": 2,
-        "matcher": {
-          "httpCode": "200-299"
-        }
-      }
-spec:
-  parentRefs:
-  - name: my-gateway
-    kind: Gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: my-service
-      port: 8080
-```
-## Security and Authentication
-
-### Authentication Methods
-
-VPC Lattice supports the following authentication methods:
-
-1. **AWS IAM**: Authentication using AWS Identity and Access Management
-2. **No Authentication**: Allow all requests without authentication
-
-#### Configuring AWS IAM Authentication
-
-```bash
-# Create service with IAM authentication
-aws vpc-lattice create-service \
-  --name my-service \
-  --auth-type AWS_IAM
-```
-
-#### Configuring IAM Authentication Using Kubernetes Gateway API
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-    application-networking.k8s.aws/auth-type: "AWS_IAM"
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
-```
-
-### Resource Policies
-
-VPC Lattice provides fine-grained access control for services and service networks through resource policies.
-
-#### Setting Service Resource Policy
-
-```bash
-# Set service resource policy
-aws vpc-lattice put-resource-policy \
-  --resource-arn arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:service/<SERVICE_ID> \
-  --policy '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "AWS": "arn:aws:iam::<ACCOUNT_ID>:role/MyRole"
-        },
-        "Action": "vpc-lattice:Invoke",
-        "Resource": "arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:service/<SERVICE_ID>"
-      }
-    ]
-  }'
-```
-
-#### Setting Service Network Resource Policy
-
-```bash
-# Set service network resource policy
-aws vpc-lattice put-resource-policy \
-  --resource-arn arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID> \
-  --policy '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "AWS": "arn:aws:iam::<ACCOUNT_ID>:role/MyRole"
-        },
-        "Action": [
-          "vpc-lattice:CreateServiceNetworkVpcAssociation",
-          "vpc-lattice:CreateServiceNetworkServiceAssociation"
-        ],
-        "Resource": "arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID>"
-      }
-    ]
-  }'
-```
-
-### Cross-Account Access
-
-VPC Lattice supports communication between services across multiple AWS accounts through service networks.
-
-#### Sharing Service Network Cross-Account
-
-1. Share service network using AWS RAM (Resource Access Manager):
-
-```bash
-# Share service network
-aws ram create-resource-share \
-  --name my-service-network-share \
-  --resource-arns arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID> \
-  --principals arn:aws:organizations::o-<ORGANIZATION_ID>:organization
-
-# Or share with specific account
-aws ram create-resource-share \
-  --name my-service-network-share \
-  --resource-arns arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:servicenetwork/<SERVICE_NETWORK_ID> \
-  --principals <TARGET_ACCOUNT_ID>
-```
-
-2. Accept shared service network in target account:
-
-```bash
-# Accept share invitation
-aws ram accept-resource-share-invitation \
-  --resource-share-invitation-arn arn:aws:ram:<REGION>:<ACCOUNT_ID>:resource-share-invitation/<INVITATION_ID>
-```
-
-3. Connect VPC to shared service network in target account:
-
-```bash
-# VPC association
-aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier <SERVICE_NETWORK_ID> \
-  --vpc-identifier <VPC_ID> \
-  --security-group-ids <SECURITY_GROUP_ID>
-```
-
-### TLS Configuration
-
-VPC Lattice supports TLS encryption for services.
-
-#### TLS Configuration Using AWS CLI
-
-```bash
-# Create or import ACM certificate
-CERTIFICATE_ARN=$(aws acm request-certificate \
-  --domain-name my-service.example.com \
-  --validation-method DNS \
-  --query CertificateArn \
-  --output text)
-
-# Create TLS listener
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --name my-tls-listener \
-  --protocol HTTPS \
-  --port 443 \
-  --tls '{
-    "certificateArn": "'$CERTIFICATE_ARN'",
-    "mode": "STRICT"
-  }' \
-  --default-action '{
-    "forward": {
-      "targetGroups": [
-        {
-          "targetGroupIdentifier": "'$TARGET_GROUP_ID'"
-        }
-      ]
-    }
-  }'
-```
-
-#### TLS Configuration Using Kubernetes Gateway API
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: my-tls-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
+  name: my-network
+  namespace: lattice-demo
 spec:
   gatewayClassName: amazon-vpc-lattice
   listeners:
   - name: https
-    port: 443
     protocol: HTTPS
+    port: 443
     tls:
       mode: Terminate
       certificateRefs:
-      - kind: Secret
-        name: my-tls-cert
+      - name: unused
 ```
+
+`certificateRefs: [{name: unused}]` follows this controller's documented configuration: it satisfies the Gateway API TLS configuration but this controller does not read a Kubernetes TLS Secret there. With no custom hostname, Lattice supplies a certificate for its generated domain. This is **controller-specific**, not a portable certificate-management recipe.
+
+Save the following as `stable.yaml`. It configures NGINX to actually listen on 8080 and serve `/health`; declaring `containerPort` alone would not do either.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-stable
+  namespace: lattice-demo
+data:
+  nginx.conf: |
+    worker_processes 1;
+    pid /tmp/nginx.pid;
+    error_log stderr notice;
+    events { worker_connections 1024; }
+    http {
+        access_log /dev/stdout;
+        default_type application/json;
+        client_body_temp_path /tmp/client_temp;
+        proxy_temp_path /tmp/proxy_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
+        server {
+            listen 8080;
+            location = /health { return 200 '{"status":"ok"}\n'; }
+            location = /api { return 200 '{"version":"stable"}\n'; }
+            location /api/ { return 200 '{"version":"stable"}\n'; }
+            location / { return 404 '{"error":"not found"}\n'; }
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-stable
+  namespace: lattice-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels: &id001
+      app: lattice-demo
+      version: stable
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: app
+        image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+        command:
+        - nginx
+        args:
+        - -c
+        - /etc/lattice/nginx.conf
+        - -g
+        - daemon off;
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 250m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: config
+          mountPath: /etc/lattice
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        configMap:
+          name: service-stable
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-stable
+  namespace: lattice-demo
+spec:
+  selector:
+    app: lattice-demo
+    version: stable
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+```
+
+Create `canary.yaml` from the same three objects, changing every `service-stable` name to `service-canary`, both selector/template `version: stable` labels to `version: canary`, and the JSON response value `"stable"` to `"canary"`. Keep `app: lattice-demo`, the port, and the health endpoint unchanged. Apply both files in `lattice-demo`. The pinned image has Linux AMD64 and ARM64 variants. Resource requests and replica counts are demonstration settings, not measured production sizing.
+
+Save and apply the following `TargetGroupPolicy`; create an equivalent `canary-health` policy targeting `service-canary`.
+
+```yaml
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: TargetGroupPolicy
+metadata:
+  name: stable-health
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: ''
+    kind: Service
+    name: service-stable
+  protocol: HTTP
+  protocolVersion: HTTP1
+  healthCheck:
+    enabled: true
+    protocol: HTTP
+    protocolVersion: HTTP1
+    port: 8080
+    path: /health
+    intervalSeconds: 30
+    timeoutSeconds: 5
+    healthyThresholdCount: 2
+    unhealthyThresholdCount: 2
+    statusMatch: '200'
+```
+
+The CRD uses `intervalSeconds`, `timeoutSeconds`, and `statusMatch`. The AWS CLI uses different field names, shown later. Changing the protocol/version can replace a target group; deleting the policy reverts its settings, including the default HTTP/HTTP1 behavior.
+
+## Service Management
+
+### Create a Service Through HTTPRoute
+
+Save this as `api-route.yaml`. Also save the IAMAuthPolicy below as `api-iam.yaml`. Apply the application and health policies, then the route and auth policy. Keep the network-level `AWS_IAM` policy active while reconciliation creates and secures the route's service.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api
+  namespace: lattice-demo
+spec:
+  parentRefs:
+  - name: my-network
+    sectionName: https
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: service-stable
+      port: 8080
+      weight: 90
+    - name: service-canary
+      port: 8080
+      weight: 10
+```
+
+```yaml
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: IAMAuthPolicy
+metadata:
+  name: api-caller
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: api
+  policy: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/MyAppRole"},"Action":"vpc-lattice-svcs:Invoke","Resource":"*","Condition":{"StringLike":{"vpc-lattice-svcs:RequestPath":["/api","/api/*"]}}}]}'
+```
+
+`spec.policy` is a JSON **string**. This CRD enables `AWS_IAM` on the target service; an auth-type annotation or ConfigMap containing a policy does not replace it. A policy targeting `Gateway` would instead manage the network's policy, so it must not compete with the externally managed network policy in this example.
+
+Inspect `Accepted` / `ResolvedRefs` and policy status, the relevant AWS resource state, and backend readiness. A successful `kubectl apply` is not proof that cloud reconciliation or log delivery succeeded.
+
+```bash
+kubectl -n lattice-demo get gateway my-network -o yaml
+kubectl -n lattice-demo get httproute api -o yaml
+kubectl -n lattice-demo get iamauthpolicy api-caller -o yaml
+kubectl -n lattice-demo get endpointslices \
+  -l kubernetes.io/service-name=service-stable
+kubectl -n lattice-demo rollout status deployment/service-stable --timeout=120s
+kubectl -n lattice-demo rollout status deployment/service-canary --timeout=120s
+
+export SERVICE_DNS="$(kubectl -n lattice-demo get httproute api \
+  -o jsonpath='{.metadata.annotations.application-networking\.k8s\.aws/lattice-assigned-domain-name}')"
+test -n "$SERVICE_DNS"
+# A caller inside the associated VPC, with MyAppRole credentials, runs:
+lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVICE_DNS}/api"
+```
+
+Set up the signed client in the next section before running the last command. Run it from an authorized network location with **caller-role** credentials. Your workstation needs an appropriate network path as well as AWS credentials.
+
+### Signed HTTPS Client
+
+Save this as `lattice_get.py`. It uses the default AWS credential provider chain, freezes the credentials for each request, signs for **`vpc-lattice-svcs`**, and sets **`UNSIGNED-PAYLOAD`** as required by VPC Lattice. It validates TLS, does not follow redirects with a stale signature, and does not automatically retry requests.
+
+```python
+import argparse
+import ssl
+import sys
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
+
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.exceptions import BotoCoreError
+from botocore.session import Session
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def signed_request(url: str, region: str, credentials) -> Request:
+    parts = urlsplit(url)
+    if (parts.scheme != "https" or not parts.hostname or parts.username
+            or parts.password or parts.fragment):
+        raise ValueError("Use an HTTPS URL without user info or a fragment")
+    request = AWSRequest(method="GET", url=url, headers={
+        "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+    })
+    request.context["payload_signing_enabled"] = False
+    SigV4Auth(credentials, "vpc-lattice-svcs", region).add_auth(request)
+    return Request(url, method="GET", headers=dict(request.headers.items()))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--region", required=True)
+    parser.add_argument("url")
+    args = parser.parse_args()
+    try:
+        provider = Session().get_credentials()
+        if provider is None:
+            raise ValueError("No AWS credentials available")
+        request = signed_request(args.url, args.region, provider.get_frozen_credentials())
+        opener = build_opener(NoRedirect(), HTTPSHandler(context=ssl.create_default_context()))
+        with opener.open(request, timeout=10) as response:
+            print(response.status)
+            print(response.read(1048576).decode("utf-8", errors="replace"))
+        return 0
+    except HTTPError as exc:
+        print(f"HTTP {exc.code}; check the policy and access logs", file=sys.stderr)
+    except (URLError, BotoCoreError, ValueError) as exc:
+        print(f"Request failed: {type(exc).__name__}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+```bash
+python3.12 -m venv lattice-client
+lattice-client/bin/python -m pip install 'botocore==1.43.93'
+lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVICE_DNS}/api"
+```
+
+This GET-only example was checked with Python 3.12 and botocore 1.43.93. Workloads should use their configured Pod Identity or IRSA credentials. Do not copy static credentials or signed headers into manifests, logs, or support tickets. SigV4A is also supported by VPC Lattice; this example uses regional SigV4.
+
+### Direct AWS API Management
+
+The following is an **alternative** for independently managed resources. Use a reachable, stable backend IP serving HTTP on 8080 and `/health`; a temporary pod IP requires a controller to track replacements. Do not manually change an HTTPRoute-owned service and expect the controller to retain the change.
+
+```bash
+# Separate API-managed example; do not use for controller-managed resources.
+export TARGET_IP=10.0.1.25
+export TARGET_GROUP_ID="$(aws vpc-lattice create-target-group \
+  --name api-manual --type IP \
+  --config "{\"port\":8080,\"protocol\":\"HTTP\",\"protocolVersion\":\"HTTP1\",\"vpcIdentifier\":\"${VPC_ID}\"}" \
+  --query id --output text)"
+aws vpc-lattice register-targets --target-group-identifier "$TARGET_GROUP_ID" \
+  --targets "id=$TARGET_IP,port=8080"
+export SERVICE_ID="$(aws vpc-lattice create-service \
+  --name api-manual --auth-type AWS_IAM --query id --output text)"
+aws vpc-lattice put-auth-policy --resource-identifier "$SERVICE_ID" \
+  --policy file://api-auth-policy.compact.json
+export LISTENER_ID="$(aws vpc-lattice create-listener \
+  --service-identifier "$SERVICE_ID" --name https --protocol HTTPS --port 443 \
+  --default-action "{\"forward\":{\"targetGroups\":[{\"targetGroupIdentifier\":\"${TARGET_GROUP_ID}\",\"weight\":1}]}}" \
+  --query id --output text)"
+aws vpc-lattice create-service-network-service-association \
+  --service-identifier "$SERVICE_ID" --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice list-targets --target-group-identifier "$TARGET_GROUP_ID"
+aws vpc-lattice get-service --service-identifier "$SERVICE_ID" --query dnsEntry
+```
+
+Wait for healthy targets and active associations before calling the discovered HTTPS domain. This example uses an AWS-managed certificate for the generated domain, not a custom domain.
+
+### Updating and Deleting Services
+
+For Kubernetes-owned resources, change the Route, backend workload, or policy manifest and verify reconciliation. For API-owned resources, use the corresponding update API and check its resulting state. Capture resource IDs from responses rather than selecting the first service in the account.
+
+Before removal, identify all consumers, network associations, listeners/rules, target-group references, and ownership. Remove the specific route/service associations and service resources in dependency order, then unused target groups. A shared Gateway/network can affect other namespaces or accounts. Retain the controller until finalizers and cloud cleanup complete; do not use blanket deletes.
+
+**Deleting IAMAuthPolicy disables IAM authentication on its target (`NONE`) before detaching the policy.** It is not a way to deny access or safely roll back authorization. Keep a restrictive policy while removing a service, and verify the remaining network/service controls.
+
+## Routing and Traffic Management
+
+### Path and Header Matching
+
+The route above matches `/api` and its path subtree. To add an explicit header-based canary rule, replace the **same** HTTPRoute with:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api
+  namespace: lattice-demo
+spec:
+  parentRefs:
+  - name: my-network
+    sectionName: https
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+      headers:
+      - name: x-version
+        value: canary
+    backendRefs:
+    - name: service-canary
+      port: 8080
+      weight: 1
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: service-stable
+      port: 8080
+      weight: 90
+    - name: service-canary
+      port: 8080
+      weight: 10
+```
+
+The controller documents case-insensitive path matching, one method match per rule, up to five header matches, and no query-parameter matching. Do not assume that every Gateway API filter or match is implemented. A separate HTTPRoute creates another Lattice service/domain, rather than automatically adding a rule to the first service.
+
+### Weighted Routing
+
+`backendRefs.weight: 90` and `10` are native Gateway API configuration; no weighted-routing annotation is needed. They express a relative distribution, not an exact result for ten requests. Verify both versions' endpoints, health, errors, and latency over an appropriate sample before increasing the canary weight.
+
+For independently managed AWS resources:
+
+```bash
+# TG_STABLE and TG_CANARY are existing target groups managed by this API workflow.
+aws vpc-lattice create-rule --service-identifier "$SERVICE_ID" \
+  --listener-identifier "$LISTENER_ID" --name api-canary --priority 10 \
+  --match '{"httpMatch":{"pathMatch":{"match":{"prefix":"/api"},"caseSensitive":false}}}' \
+  --action "{\"forward\":{\"targetGroups\":[{\"targetGroupIdentifier\":\"${TG_STABLE}\",\"weight\":90},{\"targetGroupIdentifier\":\"${TG_CANARY}\",\"weight\":10}]}}"
+```
+
+The CLI prefix match is a lexical prefix; review boundary behavior separately from Kubernetes `PathPrefix` semantics. Routing matches are not an authorization boundary. Do not use a path-routing test as proof that an IAM policy covers all normalized or encoded path variants.
+
+### Health Checks
+
+The Kubernetes example uses `TargetGroupPolicy`. The equivalent API update is:
+
+```bash
+aws vpc-lattice update-target-group --target-group-identifier "$TARGET_GROUP_ID" \
+  --health-check '{"enabled":true,"protocol":"HTTP","protocolVersion":"HTTP1","port":8080,"path":"/health","healthCheckIntervalSeconds":30,"healthCheckTimeoutSeconds":5,"healthyThresholdCount":2,"unhealthyThresholdCount":2,"matcher":{"httpCode":"200"}}'
+```
+
+Health checks assess readiness according to thresholds; they do not guarantee availability or zero downtime. HTTP1 target groups enable them by default, while HTTP2 requires explicit consideration. gRPC targets use HTTP1/HTTP2 health checks, and Lambda/ALB target types have different health-check behavior. Check the current target-type documentation instead of applying the pod example to every target.
+
+## Security and Authentication
+
+### Auth Policies and Caller Permissions
+
+`put-auth-policy` / `get-auth-policy` manage invocation authorization. `put-resource-policy` is a different management/sharing API. Use the **`vpc-lattice-svcs:Invoke`** action for callers.
+
+When both network and service use `AWS_IAM`, the caller's identity policy and **both** applicable auth policies must permit access. An explicit Deny wins. `NONE` on one resource does not cancel another resource's IAM requirement. Direct traffic to a Kubernetes ClusterIP/Pod IP bypasses Lattice auth; protect those paths with appropriate network and application controls.
+
+`StringEquals` does not interpret `/api/*` as a wildcard. The example uses `StringLike` and includes `/api` as well as `/api/*`. IAM condition matching and application path normalization can differ from controller routing. For administrative functionality, prefer a dedicated service restricted to administrative roles and retain application authorization; do not add a broad general Allow and assume a path wildcard protects every alias.
+
+### Cross-Account Access
+
+RAM sharing allows association with the shared entity; it does not itself grant application invocation. The network/service auth policies, caller permissions, association security groups, and network path must still allow the request.
+
+```bash
+# Owner account: choose a verified account ID or the actual Organizations ARN.
+export CONSUMER_ACCOUNT_ID=111122223333
+aws ram create-resource-share --name lattice-network-share \
+  --resource-arns "$SERVICE_NETWORK_ARN" --principals "$CONSUMER_ACCOUNT_ID"
+
+# Consumer account: inspect invitations only when the sharing mode requires one.
+aws ram get-resource-share-invitations
+# After verifying the owner, resources, and intended permissions:
+aws ram accept-resource-share-invitation \
+  --resource-share-invitation-arn "$VERIFIED_INVITATION_ARN"
+
+# Run with consumer credentials and that account's VPC/security group values.
+aws vpc-lattice create-service-network-vpc-association \
+  --service-network-identifier "$SERVICE_NETWORK_ARN" \
+  --vpc-identifier "$CONSUMER_VPC_ID" \
+  --security-group-ids "$CONSUMER_ASSOCIATION_SG_ID"
+```
+
+With Organizations sharing enabled, consumers inside the organization receive access without an invitation. Other supported sharing arrangements require invitation acceptance. To share with an organization or OU, use its **actual ARN from Organizations**, including the management-account identifier, rather than composing one from a member-account ID.
+
+Owners can share services, networks, and resource configurations, not individual IAM roles as RAM consumers. Stopping a share prevents new associations but **does not remove existing associations**. Review them explicitly when revoking access.
+
+### TLS and Custom Domains
+
+The sample Gateway exposes only HTTPS. For a custom hostname, create the service with that hostname, obtain a matching ACM certificate, and configure DNS to the actual assigned domain. Only one custom domain is supported per service and it cannot be changed after service creation.
+
+For the controller, set the HTTPRoute's `spec.hostnames` and the Gateway listener's `tls.options["application-networking.k8s.aws/certificate-arn"]`, or use its documented ACM discovery. Do not put private keys in an annotation. ExternalDNS automation additionally needs its controller, permissions, and the DNSEndpoint CRD; setting a hostname alone is not proof that DNS records exist.
+
+```bash
+# For an API-managed service created with the required custom domain name:
+aws vpc-lattice update-service --service-identifier "$SERVICE_ID" \
+  --certificate-arn "$ACM_CERTIFICATE_ARN"
+# Create an HTTPS listener separately if the service does not already have one.
+# create-listener uses --protocol HTTPS; there is no --tls mode=STRICT option.
+```
+
+Client-facing HTTPS and backend TLS are separate. A backend `TargetGroupPolicy` with `protocol: HTTPS` also needs a backend that actually speaks TLS and a compatible HTTPS health check. VPC Lattice **does not validate backend certificates**; this encrypts the connection without authenticating the backend's certificate identity. Use the separate TLSRoute/TLS passthrough model when that is the intended design, and review its feature limitations.
 
 ## Monitoring and Logging
 
-### CloudWatch Metrics
+### CloudWatch Metrics, Dashboard, and Alarm
 
-VPC Lattice provides various CloudWatch metrics to monitor service performance and status.
+Service metrics use the **`AWS/VpcLattice`** namespace:
 
-#### Key Metrics
+| Metric | Meaning / statistic |
+|---|---|
+| `TotalRequestCount` | Request count; `Sum` |
+| `HTTPCode_4XX_Count` | 4xx responses; `Sum` |
+| `HTTPCode_5XX_Count` | 5xx responses; `Sum` |
+| `RequestTime` | Request duration in **milliseconds**; average or a suitable percentile |
 
-| Metric Name | Description | Dimensions |
-|------------|------|------|
-| RequestCount | Number of processed requests | ServiceId, ServiceName, TargetGroupId |
-| HTTP_4XX_Count | Number of 4XX HTTP response codes | ServiceId, ServiceName, TargetGroupId |
-| HTTP_5XX_Count | Number of 5XX HTTP response codes | ServiceId, ServiceName, TargetGroupId |
-| ProcessedBytes | Number of processed bytes | ServiceId, ServiceName, TargetGroupId |
-| TargetProcessingTime | Target processing time (ms) | ServiceId, ServiceName, TargetGroupId |
-| HealthyTargetCount | Number of healthy targets | TargetGroupId |
-| UnhealthyTargetCount | Number of unhealthy targets | TargetGroupId |
-
-#### Creating CloudWatch Dashboard
+Service metrics use the `Service` dimension, optionally with `AvailabilityZone`; target-group metrics use `TargetGroup`. A name such as `ServiceName=my-service` does not identify these metrics. Discover the actual dimension values/set:
 
 ```bash
-# Create CloudWatch dashboard
-aws cloudwatch put-dashboard \
-  --dashboard-name VPCLatticeMonitoring \
-  --dashboard-body '{
-    "widgets": [
-      {
-        "type": "metric",
-        "x": 0,
-        "y": 0,
-        "width": 12,
-        "height": 6,
-        "properties": {
-          "metrics": [
-            ["AWS/VpcLattice", "RequestCount", "ServiceName", "my-service"]
-          ],
-          "period": 60,
-          "stat": "Sum",
-          "region": "<REGION>",
-          "title": "Request Count"
-        }
-      },
-      {
-        "type": "metric",
-        "x": 12,
-        "y": 0,
-        "width": 12,
-        "height": 6,
-        "properties": {
-          "metrics": [
-            ["AWS/VpcLattice", "HTTP_4XX_Count", "ServiceName", "my-service"],
-            ["AWS/VpcLattice", "HTTP_5XX_Count", "ServiceName", "my-service"]
-          ],
-          "period": 60,
-          "stat": "Sum",
-          "region": "<REGION>",
-          "title": "Error Count"
-        }
-      }
-    ]
-  }'
+aws cloudwatch list-metrics --namespace AWS/VpcLattice \
+  --metric-name HTTPCode_5XX_Count --dimensions Name=Service > metrics.json
+python3 - <<'PY'
+import json
+for metric in json.load(open("metrics.json"))["Metrics"]:
+    print(json.dumps(metric["Dimensions"]))
+PY
 ```
 
-### CloudWatch Alarms
+After traffic has produced metrics, select the intended service's **service-wide** dimension array and save it as `service-dimensions.json`. Do not arbitrarily select the first result or mix an AZ metric with an aggregate. Verify the identifier against the service being observed. Build `dashboard.json` with:
 
-Set up CloudWatch alarms for VPC Lattice metrics to detect issues early.
+```python
+import json
+import os
+
+dimensions = json.load(open("service-dimensions.json"))
+if {d["Name"] for d in dimensions} != {"Service"}:
+    raise ValueError("Select the service-wide metric, without AvailabilityZone")
+pairs = [item for d in dimensions for item in (d["Name"], d["Value"])]
+dashboard = {"widgets": [{
+    "type": "metric", "width": 12, "height": 6,
+    "properties": {
+        "title": "VPC Lattice requests and errors",
+        "region": os.environ["AWS_REGION"], "period": 60, "stat": "Sum",
+        "metrics": [["AWS/VpcLattice", name, *pairs] for name in
+                    ("TotalRequestCount", "HTTPCode_4XX_Count", "HTTPCode_5XX_Count")],
+    },
+}]}
+with open("dashboard.json", "w") as output:
+    json.dump(dashboard, output)
+```
 
 ```bash
-# Create 5XX error alarm
-aws cloudwatch put-metric-alarm \
-  --alarm-name VPCLattice-5XX-Errors \
-  --alarm-description "Alarm when 5XX errors exceed threshold" \
-  --metric-name HTTP_5XX_Count \
-  --namespace AWS/VpcLattice \
-  --dimensions Name=ServiceName,Value=my-service \
-  --statistic Sum \
-  --period 60 \
-  --evaluation-periods 5 \
-  --threshold 10 \
-  --comparison-operator GreaterThanThreshold \
-  --alarm-actions arn:aws:sns:<REGION>:<ACCOUNT_ID>:my-alert-topic
+aws cloudwatch put-dashboard --dashboard-name VPCLattice \
+  --dashboard-body file://dashboard.json
+aws cloudwatch put-metric-alarm --alarm-name LatticeApi5xx \
+  --namespace AWS/VpcLattice --metric-name HTTPCode_5XX_Count \
+  --dimensions file://service-dimensions.json \
+  --statistic Sum --period 60 --evaluation-periods 3 --datapoints-to-alarm 2 \
+  --threshold 5 --comparison-operator GreaterThanThreshold \
+  --treat-missing-data missing
 ```
+
+The alarm means **more than five 5xx responses per minute in two of three periods**, not a 5% error rate. Configure reviewed alarm actions separately if notifications are required. The missing-data choice is explicit: metrics are published after traffic begins, and NoData must not be silently treated as proof of health. Dashboard and alarm settings are examples, not workload-specific SLOs.
 
 ### Access Logging
 
-VPC Lattice can send access logs for services to Amazon S3, Amazon CloudWatch Logs, or Amazon Kinesis Data Firehose.
-
-#### Configuring S3 Access Logging
+For CloudWatch Logs, use an existing destination or create a dedicated log group with a retention policy:
 
 ```bash
-# Create S3 bucket
-aws s3 mb s3://vpc-lattice-access-logs-<ACCOUNT_ID>
+export LOG_GROUP=/aws/vendedlogs/vpc-lattice/api
+aws logs create-log-group --log-group-name "$LOG_GROUP"
+aws logs put-retention-policy --log-group-name "$LOG_GROUP" --retention-in-days 30
+export LOG_DESTINATION_ARN="arn:aws:logs:${AWS_REGION}:${AWS_ACCOUNT_ID}:log-group:${LOG_GROUP}:*"
 
-# Set bucket policy
-aws s3api put-bucket-policy \
-  --bucket vpc-lattice-access-logs-<ACCOUNT_ID> \
-  --policy '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "Service": "delivery.logs.amazonaws.com"
-        },
-        "Action": "s3:PutObject",
-        "Resource": "arn:aws:s3:::vpc-lattice-access-logs-<ACCOUNT_ID>/*",
-        "Condition": {
-          "StringEquals": {
-            "s3:x-amz-acl": "bucket-owner-full-control"
-          }
-        }
-      }
-    ]
-  }'
-
-# Enable access logging
+# API-managed service only; for an HTTPRoute use AccessLogPolicy below instead.
 aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:s3:::vpc-lattice-access-logs-<ACCOUNT_ID> \
-  --destination-name my-s3-logs
+  --resource-identifier "$SERVICE_ID" --destination-arn "$LOG_DESTINATION_ARN"
 ```
 
-#### Configuring CloudWatch Logs Access Logging
+The setup principal also needs the documented log-delivery permissions. AWS can create/update the log resource policy when the setup principal has the necessary permissions; otherwise preconfigure it. Verify the `delivery.logs.amazonaws.com` permissions and source-account/source-ARN conditions.
 
-```bash
-# Create log group
-aws logs create-log-group \
-  --log-group-name /aws/vpc-lattice/my-service
-
-# Enable access logging
-aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:logs:<REGION>:<ACCOUNT_ID>:log-group:/aws/vpc-lattice/my-service \
-  --destination-name my-cloudwatch-logs
-```
-
-### AWS X-Ray Integration
-
-VPC Lattice integrates with AWS X-Ray to support distributed tracing.
-
-#### Enabling X-Ray Tracing
-
-```bash
-# Enable X-Ray tracing
-aws vpc-lattice update-service \
-  --service-identifier $SERVICE_ID \
-  --auth-type AWS_IAM \
-  --tracing-config '{
-    "enabled": true
-  }'
-```
-
-#### Enabling X-Ray Tracing Using Kubernetes Gateway API
+For the Kubernetes-managed route, use this **instead of** a competing CLI-created subscription:
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: AccessLogPolicy
 metadata:
-  name: my-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/service-network-id: <SERVICE_NETWORK_ID>
-    application-networking.k8s.aws/xray-tracing: "enabled"
+  name: api-logs
+  namespace: lattice-demo
 spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: api
+  destinationArn: arn:aws:logs:us-west-2:123456789012:log-group:/aws/vendedlogs/vpc-lattice/api:*
 ```
+
+Replace the ARN and confirm policy status plus actual delivered events. A policy can target a Gateway for network logs or a Route for service logs. There can be one destination of each supported destination type per target.
+
+For S3, use a reviewed destination bucket with Block Public Access, encryption, retention/lifecycle rules, and appropriate delivery permissions:
+
+```bash
+# Existing reviewed destination bucket; no policy is overwritten by this snippet.
+aws vpc-lattice create-access-log-subscription \
+  --resource-identifier "$SERVICE_ID" --destination-arn "$LOG_BUCKET_ARN"
+```
+
+S3 delivery requires the documented `s3:GetBucketAcl` and `s3:PutObject` permissions for `delivery.logs.amazonaws.com`, the delivery prefix, `aws:SourceAccount`, and `aws:SourceArn` conditions. Existing policies must be merged, not overwritten. SSE-KMS requires a supported customer-managed key and its delivery key policy. `--destination-name` is not an access-log-subscription parameter.
+
+### Log Analysis and Tracing
+
+HTTP service access logs contain fields such as `sourceIpPort`, `requestMethod`, `requestPath`, `responseCode`, `durationMS`, `callerPrincipal`, and `authDeniedReason`. Resource/TCP logs have a different schema.
+
+```bash
+END_TIME="$(python3 -c 'import time; print(int(time.time()))')"
+START_TIME="$((END_TIME - 3600))"
+QUERY_ID="$(aws logs start-query --log-group-name "$LOG_GROUP" \
+  --start-time "$START_TIME" --end-time "$END_TIME" \
+  --query-string 'fields @timestamp, sourceIpPort, requestMethod, requestPath, responseCode, durationMS, callerPrincipal, authDeniedReason | filter responseCode >= 400 | sort @timestamp desc | limit 100' \
+  --query queryId --output text)"
+aws logs get-query-results --query-id "$QUERY_ID"
+# Repeat get-query-results until Complete; Failed/Cancelled/Timeout are errors.
+```
+
+VPC Lattice has no `update-service --tracing-config` option or controller annotation that automatically instruments applications for X-Ray. Instrument the applications with OpenTelemetry/ADOT or the appropriate tracing SDK, propagate trace context, and configure export/sampling. Correlate application traces with access logs and request IDs; a client-supplied request ID is not an authenticated identity.
 
 ## Best Practices
 
-### Design and Architecture
-
-1. **Service Network Design**
-   - Separate service networks by logical boundaries
-   - Separate service networks by environment (development, staging, production)
-   - Separate service networks based on security requirements
-
-2. **Service Naming Conventions**
-   - Use consistent naming conventions
-   - Include environment, service type, version in names
-   - Example: `<env>-<service-name>-<version>`
-
-3. **Target Group Design**
-   - Place targets with similar characteristics in the same target group
-   - Optimize health check path and interval
-   - Set appropriate unhealthy threshold
-
-### Performance Optimization
-
-1. **Health Check Optimization**
-   - Set appropriate health check interval (not too short)
-   - Implement lightweight health check endpoints
-   - Configure health check path to verify critical dependencies
-
-2. **Connection Reuse**
-   - Implement client-side connection pooling
-   - Use Keep-Alive headers
-   - Optimize connection timeout
-
-3. **Caching Strategy**
-   - Implement client-side caching for static content
-   - Optimize Cache-Control headers
-   - Integrate CDN if needed
-
-### Security Hardening
-
-1. **Principle of Least Privilege**
-   - Grant only minimum required permissions
-   - Create service-specific IAM policies
-   - Regular permission review and audit
-
-2. **Network Security**
-   - Restrict traffic using security groups
-   - Open only required ports
-   - Consider using VPC endpoints
-
-3. **Encryption**
-   - Use TLS for data encryption in transit
-   - Use latest TLS versions and cipher suites
-   - Configure automatic certificate renewal
-
-### Monitoring and Observability
-
-1. **Comprehensive Monitoring**
-   - Create CloudWatch dashboards for all services
-   - Set up alarms for key metrics
-   - Implement log analysis and anomaly detection
-
-2. **Logging Strategy**
-   - Enable access logging for all services
-   - Set log retention policies
-   - Integrate log analysis tools
-
-3. **Distributed Tracing**
-   - Enable X-Ray tracing
-   - Implement trace correlation between services
-   - Analyze and visualize trace data
-
-### Cost Optimization
-
-1. **Resource Usage Monitoring**
-   - Track service and target group usage
-   - Identify and remove unused resources
-   - Use cost allocation tags
-
-2. **Traffic Optimization**
-   - Reduce unnecessary requests
-   - Optimize response sizes
-   - Implement batch processing (when possible)
-
-3. **Auto Scaling**
-   - Auto scale targets based on traffic patterns
-   - Implement scheduled scaling (for predictable traffic patterns)
-   - Optimize scaling thresholds
+- **Design and ownership:** Use clear network/service naming and environment boundaries. Account for same-named Gateways across namespaces, shared network consumers, quotas, and the ownership of each policy and association.
+- **Deployment:** Keep stable and canary backends independently selectable. Check endpoints, target health, and authorization before shifting weights. Record rollback criteria and preserve the last known configuration.
+- **Performance:** Use bounded timeouts and appropriate connection reuse. Make health endpoints lightweight and meaningful. Cache or batch only where application semantics permit it. Private Lattice services do not become CDN origins merely by enabling caching.
+- **Security:** Separate management and caller roles; keep credentials out of manifests. Test permitted and denied roles, root paths and subpaths, direct-backend access, and TLS behavior. Do not delete an IAM policy CRD to deny traffic.
+- **Observability:** Monitor request count, error count/rate, latency, target health, and missing telemetry separately. Retain access logs for the required period and instrument application traces explicitly.
+- **Cost:** Review current regional service/resource, request, data-processing, endpoint, and logging charges for the chosen model. Use tags, remove only confirmed unused resources, and size backend autoscaling separately from the managed Lattice data plane.
 
 ## Troubleshooting
 
-### Common Issues and Solutions
-
-#### 1. Connectivity Issues
-
-**Issue**: Client cannot connect to VPC Lattice service
-
-**Solution**:
-- Check connectivity between VPC and service network
-- Verify security group rules
-- Check DNS resolution
-- Check target status
+Use identifiers from the controller annotations/status and AWS inventory. Do not assume the direct-API sample's `$SERVICE_ID` is the Kubernetes route's service.
 
 ```bash
-# Check VPC association
 aws vpc-lattice list-service-network-vpc-associations \
-  --service-network-identifier $SERVICE_NETWORK_ID
-
-# Check target status
-aws vpc-lattice list-targets \
-  --target-group-identifier $TARGET_GROUP_ID
+  --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice list-service-network-service-associations \
+  --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-service --service-identifier "$SERVICE_ID"
+aws vpc-lattice get-auth-policy --resource-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-auth-policy --resource-identifier "$SERVICE_ID"
+aws vpc-lattice list-listeners --service-identifier "$SERVICE_ID"
+aws vpc-lattice list-rules --service-identifier "$SERVICE_ID" \
+  --listener-identifier "$LISTENER_ID"
+aws vpc-lattice get-target-group --target-group-identifier "$TARGET_GROUP_ID"
+aws vpc-lattice list-targets --target-group-identifier "$TARGET_GROUP_ID"
 ```
 
-#### 2. Authentication Issues
+| Symptom | Check |
+|---|---|
+| DNS/connectivity failure | Actual assigned DNS, client VPC association or endpoint path, association state, SGs, NACLs, pod reachability |
+| 403/auth failure | Caller role, credential expiry and signing region/service, `UNSIGNED-PAYLOAD`, both auth layers, propagation, denied-reason log fields |
+| Wrong route or version | Route conditions, listener/rule priority and matches, target group membership, weights, distinct Route domains |
+| Unhealthy targets | Actual listening port, `/health`, HTTP vs HTTPS, readiness, SGs, target type and health-check thresholds |
+| No logs/metrics | Destination permissions and delivery state, correct metric dimensions, initial traffic, retention, query status |
+| Controller reconciliation failure | `manager` logs, IAM role, EndpointSlices, CRD version compatibility, webhook and leader-election status |
 
-**Issue**: Client receives authentication error
-
-**Solution**:
-- Verify IAM policies and permissions
-- Check resource policies
-- Check signature version and headers
-- Check temporary credential expiration
+Use a bounded metric interval without relying on GNU-only `date -d`:
 
 ```bash
-# Check resource policy
-aws vpc-lattice get-resource-policy \
-  --resource-arn arn:aws:vpc-lattice:<REGION>:<ACCOUNT_ID>:service/<SERVICE_ID>
+export METRIC_END="$(python3 -c 'from datetime import datetime,timezone; print(datetime.now(timezone.utc).isoformat())')"
+export METRIC_START="$(python3 -c 'from datetime import datetime,timedelta,timezone; print((datetime.now(timezone.utc)-timedelta(hours=1)).isoformat())')"
+aws cloudwatch get-metric-statistics --namespace AWS/VpcLattice \
+  --metric-name HTTPCode_5XX_Count --dimensions file://service-dimensions.json \
+  --start-time "$METRIC_START" --end-time "$METRIC_END" \
+  --period 60 --statistics Sum
 ```
 
-#### 3. Routing Issues
-
-**Issue**: Request is routed to wrong target
-
-**Solution**:
-- Check listener rules and priorities
-- Check path patterns and match conditions
-- Check target group configuration
-- Check weighted routing settings
-
-```bash
-# Check listener rules
-aws vpc-lattice list-listeners \
-  --service-identifier $SERVICE_ID
-
-# Check target group
-aws vpc-lattice get-target-group \
-  --target-group-identifier $TARGET_GROUP_ID
-```
-
-#### 4. Health Check Failures
-
-**Issue**: Target is failing health checks
-
-**Solution**:
-- Check health check endpoint availability
-- Check health check configuration
-- Check target application logs
-- Check network connectivity
-
-```bash
-# Check health check configuration
-aws vpc-lattice get-target-group \
-  --target-group-identifier $TARGET_GROUP_ID \
-  --query "config.healthCheck"
-
-# Check target status
-aws vpc-lattice list-targets \
-  --target-group-identifier $TARGET_GROUP_ID
-```
-
-### Logging and Debugging
-
-#### 1. Access Log Analysis
-
-You can analyze VPC Lattice access logs to diagnose issues.
-
-```bash
-# Download access logs from S3
-aws s3 cp s3://vpc-lattice-access-logs-<ACCOUNT_ID>/ . --recursive
-
-# Query access logs from CloudWatch Logs
-aws logs start-query \
-  --log-group-name /aws/vpc-lattice/my-service \
-  --start-time $(date -d '1 hour ago' +%s) \
-  --end-time $(date +%s) \
-  --query-string 'fields @timestamp, client_ip, request_path, status_code, request_processing_time | filter status_code >= 400'
-```
-
-#### 2. CloudWatch Metrics Analysis
-
-You can analyze CloudWatch metrics to diagnose performance issues.
-
-```bash
-# Query request count metrics
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/VpcLattice \
-  --metric-name RequestCount \
-  --dimensions Name=ServiceName,Value=my-service \
-  --start-time $(date -d '1 hour ago' -u +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 60 \
-  --statistics Sum
-
-# Query error metrics
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/VpcLattice \
-  --metric-name HTTP_5XX_Count \
-  --dimensions Name=ServiceName,Value=my-service \
-  --start-time $(date -d '1 hour ago' -u +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 60 \
-  --statistics Sum
-```
-
-#### 3. X-Ray Trace Analysis
-
-You can analyze distributed traces using AWS X-Ray.
-
-```bash
-# Query X-Ray traces
-aws xray get-service-graph \
-  --start-time $(date -d '1 hour ago' +%s) \
-  --end-time $(date +%s)
-
-# Query specific trace
-aws xray batch-get-traces \
-  --trace-ids <TRACE_ID>
-```
-
-### AWS Support and Troubleshooting Tools
-
-#### 1. Creating AWS Support Cases
-
-For severe issues, you can create AWS support cases.
-
-```bash
-# Create AWS support case
-aws support create-case \
-  --subject "VPC Lattice Connectivity Issue" \
-  --service-code vpc-lattice \
-  --category-code connectivity \
-  --severity-code urgent \
-  --communication-body "We are experiencing connectivity issues with our VPC Lattice service. Service ID: $SERVICE_ID" \
-  --language en
-```
-
-#### 2. AWS Resource Health Check
-
-You can check AWS service status through the AWS Health Dashboard.
-
-```bash
-# Check AWS Health events
-aws health describe-events \
-  --filter 'eventTypeCategories=issue,scheduledChange,accountNotification' \
-  --region <REGION>
-```
-
-## Conclusion
-
-Amazon VPC Lattice is an AWS application networking service that allows you to securely connect and manage services across different VPCs and accounts. Through integration with EKS, it provides service mesh functionality in Kubernetes environments in a simplified manner.
-
-This document covered the following content:
-
-1. **Overview**: Concepts of VPC Lattice, key use cases, and comparison with other services
-2. **Architecture**: VPC Lattice components, service network architecture, and traffic flow
-3. **EKS and VPC Lattice Integration**: Integration through AWS Gateway API Controller and its benefits
-4. **Installation and Configuration**: AWS Gateway API Controller installation, IAM role setup, and service network creation
-5. **Service Management**: VPC Lattice service creation, discovery, access, update, and deletion
-6. **Routing and Traffic Management**: Basic routing, traffic splitting, canary deployment, and health checks
-7. **Security and Authentication**: Authentication methods, resource policies, cross-account access, and TLS configuration
-8. **Monitoring and Logging**: CloudWatch metrics, alarms, access logging, and X-Ray integration
-9. **Best Practices**: Design, performance, security, monitoring, and cost optimization
-10. **Troubleshooting**: Common issues and solutions, logging and debugging
-
-Effectively implementing and managing VPC Lattice reduces the complexity of microservices architecture, enhances security of service-to-service communication, and improves observability. As an AWS managed service, it provides the benefits of a service mesh while minimizing operational overhead.
+For an AWS service incident, consult AWS Health and relevant account events. Account-specific API access and support operations depend on the applicable plan and endpoints. A support case should include reviewed resource IDs, time range, failure symptoms, and redacted logs. Select current service/category/severity options for the account; do not paste a hard-coded `urgent` case-creation command.
 
 ## References
 
-- [Amazon VPC Lattice Official Documentation](https://docs.aws.amazon.com/vpc-lattice/)
-- [AWS Gateway API Controller Official Documentation](https://github.com/aws/aws-application-networking-k8s)
-- [Kubernetes Gateway API Documentation](https://gateway-api.sigs.k8s.io/)
-- [Amazon EKS Workshop - VPC Lattice](https://www.eksworkshop.com/networking/vpc-lattice/)
-- [AWS Blog - VPC Lattice Introduction](https://aws.amazon.com/blogs/aws/amazon-vpc-lattice-a-new-application-networking-service/)
-- [AWS Blog - EKS and VPC Lattice Integration](https://aws.amazon.com/blogs/containers/amazon-eks-and-vpc-lattice-integration/)
-- [AWS re:Invent 2022 - VPC Lattice Session](https://www.youtube.com/watch?v=bGHZlJGQl1I)
-- [AWS Samples - VPC Lattice Examples](https://github.com/aws-samples/aws-vpc-lattice-examples)
+- [VPC Lattice overview](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
+- [Service network associations](https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html)
+- [Controller v2.1.3 installation](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/deploy.md)
+- [Controller v2.1 upgrade requirements](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/upgrading-v2-0-x-to-v2-1-y.md)
+- [Controller API reference](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs/api-types)
+- [Controller HTTPS and backend TLS](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/https.md)
+- [VPC Lattice auth policies](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
+- [Signing requests](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
+- [Sharing entities](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sharing.html)
+- [CloudWatch metrics](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-cloudwatch.html)
+- [Access logs](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
+- [CloudWatch Logs delivery permissions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-CWL.html)
+- [S3 delivery permissions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-S3.html)
 
 ## Quiz
 
-To test what you've learned in this chapter, try the [VPC Lattice quiz](../quizzes/networking/02-vpc-lattice-quiz.md).
+Test your understanding with the [VPC Lattice quiz](../quizzes/networking/02-vpc-lattice-quiz.md).

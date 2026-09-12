@@ -201,10 +201,14 @@ mTLS 데이터 플레인 선택과 HTTP retry 정책은 별개입니다. Sidecar
 | Istio sidecar | 워크로드별 SPIFFE 인증서 기반 mTLS | 각 Pod의 Envoy | 비멱등 핵심 경로의 보수적인 기준선 |
 | Istio ambient L4 | ztunnel 간 HBONE 워크로드 mTLS | 없음 | Istio mTLS와 L4 정책만 필요할 때 첫 후보 |
 | Istio ambient L7 | HBONE + waypoint Envoy | 공유 waypoint | HTTP 라우팅·L7 정책이 필요한 서비스에만 추가 |
-| Cilium | identity 상호 인증과 WireGuard/IPsec 같은 전송 암호화를 별도 선택 | L3/L4 암호화 계층에는 없음 | 기존 Cilium 데이터 플레인에서 identity 정책과 네트워크 암호화가 목적일 때 |
+| Cilium out-of-band + WireGuard/IPsec | identity 상호 인증과 WireGuard/IPsec 같은 전송 암호화를 별도 선택 | L3/L4 암호화 계층에는 없음 | 기존 Cilium 데이터 플레인에서 identity 정책과 네트워크 암호화가 목적일 때 |
 
 
 Cilium 행은 L3/L4 인증·암호화 계층에 관한 설명이며 선택적인 L7 프록시 기능이 없다는 뜻은 아닙니다. 여기서는 Cilium의 성능과 롤아웃 동작을 측정하지 않았습니다.
+
+Cilium 1.20.1에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
+
+Ztunnel 베타는 이 장에 보고한 측정에 포함되지 않았습니다.
 
 > **운영 원칙:** mTLS만 필요하면 ambient L4부터 검증하고, L7 정책이나 east-west HTTP 라우팅이 필요한 서비스에만 waypoint를 추가합니다. 쓰기 retry를 끈 상태의 ambient 전체 오류가 워크로드 오류 예산을 초과하면 핵심 비멱등 경로의 sidecar 기준선을 유지합니다. 애플리케이션 retry와 멱등성도 별도로 관리해야 합니다.
 

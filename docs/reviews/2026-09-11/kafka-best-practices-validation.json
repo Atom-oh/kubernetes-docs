@@ -1,0 +1,234 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/08-best-practices.md",
+    "ko/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+    "en/data-on-eks/kafka/08-best-practices.md",
+    "en/quizzes/data-on-eks/kafka/08-best-practices-quiz.md"
+  ],
+  "sources": [
+    "https://kafka.apache.org/43/configuration/producer-configs/",
+    "https://kafka.apache.org/43/configuration/consumer-configs/",
+    "https://kafka.apache.org/43/operations/tiered-storage/",
+    "https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java",
+    "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java",
+    "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+    "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+    "https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html"
+  ],
+  "findings": [
+    "Replaced PartitionCount-headercount with currentTopicCommand partitionrow inventory inclLeader:none; logicalpartitionsvsreplicaplacement distinguished.",
+    "Removed universalpartitionlimits/resource-costformulas, scopedJavaMurmur2serializedkeys, salting/order/compaction/joins consequences andnon-universalremapping.",
+    "Correctedacks/minISR/idempotenceconflicts/batch.size/defaultlinger/deadline/compressionandend-to-endtransactionclaims.",
+    "Explicitclassicconsumerprofile, staticmembertimeoutlimits, actualenvironmentresolutioninsteadliteralPOD_NAME, synchronousprocess-before-commit andabort-on-failure; warnedagainstuncoordinatedthreadpool.",
+    "CorrectedclientsCAvsclusterCA, listenerexposuretypevsTLSauthentication, separatev1mTLSuserandadditionallistenerpreservingSCRAMbaseline.",
+    "CorrectedonepeerANDvsseparateOR andadditiveCNIpolicysemantics; explicitcrossnamespacecredentialdistribution/rotationrequirements.",
+    "StorageClassencryptedtrue/WaitForFirstConsumer/Retain; AutoModenodediskencryptionnotdynamicPVCproof, parameterdefaultfalsecurrentdoc, no retroactiveencryption.",
+    "TieredStoragecurrentcustompluginintegration, retention3d/50GiBperpartition, asynccompactionnotstoragecap, Spot/rack/AZandPDBlimits; removedcheckboxproductionguarantee.",
+    "Updatedall36questions, addedPart9navigation; native12+partition8+9schemaobjects/26fencespass; nofigures."
+  ],
+  "validation": {
+    "partitionCases": [
+      "topic headers differ from partition count",
+      "replica/leader distributions counted separately",
+      "Leader none recognized",
+      "empty/malformed/duplicate output rejected",
+      "empty/malformed/duplicate output rejected",
+      "empty/malformed/duplicate output rejected",
+      "empty/malformed/duplicate output rejected",
+      "empty/malformed/duplicate output rejected"
+    ],
+    "partitionSummary": {
+      "visible_topics": 2,
+      "logical_partitions": 5,
+      "replica_assignments": 15,
+      "partitions_by_topic": {
+        "events": 2,
+        "orders": 3
+      },
+      "leaders_by_broker": {
+        "3": 2,
+        "4": 1,
+        "5": 1
+      },
+      "replicas_by_broker": {
+        "3": 5,
+        "4": 5,
+        "5": 5
+      },
+      "offline_partitions": [
+        {
+          "topic": "events",
+          "partition": 1
+        }
+      ]
+    },
+    "schemaObjects": [
+      {
+        "source": "baseline plus additional mTLS listener",
+        "kind": "Kafka",
+        "name": "my-cluster"
+      },
+      {
+        "source": "mtls-user.yaml",
+        "kind": "KafkaUser",
+        "name": "order-service-mtls"
+      },
+      {
+        "source": "storageclass.yaml",
+        "kind": "StorageClass",
+        "name": "gp3-kafka-encrypted"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/08-best-practices.md",
+        "kind": "KafkaUser",
+        "name": "order-service-mtls"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/08-best-practices.md",
+        "kind": "StorageClass",
+        "name": "gp3-kafka-encrypted"
+      },
+      {
+        "source": "ko/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+        "kind": "KafkaUser",
+        "name": "order-service-mtls"
+      },
+      {
+        "source": "en/data-on-eks/kafka/08-best-practices.md",
+        "kind": "KafkaUser",
+        "name": "order-service-mtls"
+      },
+      {
+        "source": "en/data-on-eks/kafka/08-best-practices.md",
+        "kind": "StorageClass",
+        "name": "gp3-kafka-encrypted"
+      },
+      {
+        "source": "en/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+        "kind": "KafkaUser",
+        "name": "order-service-mtls"
+      }
+    ],
+    "native": {
+      "status": "passed",
+      "stdout": "PASS producer explicit idempotence and acks all\nPASS producer batch and linger\nPASS explicit idempotence rejects incompatible acks\nPASS classic profile and manual commit\nPASS Java Properties does not expand environment variables\nPASS resolved static member identity applied\nPASS unresolved/empty static identity rejected\nPASS unresolved/empty static identity rejected\nPASS unresolved/empty static identity rejected\nPASS all records processed before next offset commit\nPASS processing failure propagates before commit\nPASS partition increase remaps some but not all fixture keys\nPASS 12 native checks; remapped=62, unchanged=38\n",
+      "scope": "Native Kafka431 config, Properties interpolation, MockConsumer process-before-commit and BuiltInPartitioner; no broker/network calls."
+    },
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "python"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "java"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "java"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "java"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/08-best-practices.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "python"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "java"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "java"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "java"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/08-best-practices.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/08-best-practices-quiz.md",
+        "language": "yaml"
+      }
+    ],
+    "relativeLinks": 12,
+    "quizQuestions": 36,
+    "limits": "Native Kafka config/Properties/MockConsumer/partitioner tests, current CLI-output fixtures and resource schemas. No TLS/CNI/CA rotation or AWS/storage changes. Java application-loop fragments require the described application handler/lifecycle."
+  },
+  "notes": [
+    "Strimzi officialTLSchaptercontains misleadingCA-key-to-clientwording; guidecorrectlyusesUserOperatorissuedcerts,notCAprivatekeys.",
+    "AutoModeautosecure root/dataencryptionstatementnotgeneralizedtoPVC;create-storage-classparameterencrypteddefaultfalseverified.",
+    "No actualAWS/cluster changes; localnativehelperonlyMockConsumer/config/hash, notproductionapplicationproof."
+  ]
+}

@@ -1,0 +1,188 @@
+[
+  {
+    "path": "ko/data-on-eks/spark/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full Spark foundation review; actual4.2 native/template behavior and corrected diagrams verified.",
+    "sources": [
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh",
+      "https://github.com/docker-library/official-images/blob/master/library/spark",
+      "https://spark.apache.org/docs/4.2.0/configuration.html",
+      "https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation",
+      "https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html"
+    ],
+    "findings": [
+      "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+      "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+      "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+      "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+      "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+      "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+      "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+      "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+      "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+    ],
+    "validation": [
+      "spark-foundation-validation.json"
+    ],
+    "reviewedSha256": "68ea140f39fb2154dcfcd6dfbe3cdd2bbab3ee319d494597c0d04538d8271100"
+  },
+  {
+    "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full Spark foundation review; actual4.2 native/template behavior and corrected diagrams verified.",
+    "sources": [
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh",
+      "https://github.com/docker-library/official-images/blob/master/library/spark",
+      "https://spark.apache.org/docs/4.2.0/configuration.html",
+      "https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation",
+      "https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html"
+    ],
+    "findings": [
+      "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+      "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+      "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+      "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+      "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+      "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+      "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+      "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+      "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+    ],
+    "validation": [
+      "spark-foundation-validation.json"
+    ],
+    "reviewedSha256": "aa18574dc400f49077c48219ccbfadefdcb1289d6d5dfa0f0a1887fc30a583d8"
+  },
+  {
+    "path": "en/data-on-eks/spark/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full Spark foundation review; actual4.2 native/template behavior and corrected diagrams verified.",
+    "sources": [
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh",
+      "https://github.com/docker-library/official-images/blob/master/library/spark",
+      "https://spark.apache.org/docs/4.2.0/configuration.html",
+      "https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation",
+      "https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html"
+    ],
+    "findings": [
+      "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+      "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+      "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+      "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+      "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+      "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+      "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+      "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+      "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+    ],
+    "validation": [
+      "spark-foundation-validation.json"
+    ],
+    "reviewedSha256": "ec4068f1ff6158aaa7bc32bedd45034092e098e3118ba0005f7b93a7addd2d8c"
+  },
+  {
+    "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full Spark foundation review; actual4.2 native/template behavior and corrected diagrams verified.",
+    "sources": [
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh",
+      "https://github.com/docker-library/official-images/blob/master/library/spark",
+      "https://spark.apache.org/docs/4.2.0/configuration.html",
+      "https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation",
+      "https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html"
+    ],
+    "findings": [
+      "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+      "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+      "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+      "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+      "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+      "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+      "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+      "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+      "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+    ],
+    "validation": [
+      "spark-foundation-validation.json"
+    ],
+    "reviewedSha256": "661ad9fa4e2a8954cb1cebaae63fb26175904d7a44ccd15fd6e338bccbb5c383"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full Spark foundation review; actual4.2 native/template behavior and corrected diagrams verified.",
+    "sources": [
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh",
+      "https://github.com/docker-library/official-images/blob/master/library/spark",
+      "https://spark.apache.org/docs/4.2.0/configuration.html",
+      "https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation",
+      "https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html"
+    ],
+    "findings": [
+      "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+      "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+      "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+      "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+      "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+      "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+      "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+      "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+      "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+    ],
+    "validation": [
+      "spark-foundation-validation.json"
+    ],
+    "reviewedSha256": "76947f0edb623651cc4e50318ce07fb20c9591f31304e8337e556c4f84595293"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full Spark foundation review; actual4.2 native/template behavior and corrected diagrams verified.",
+    "sources": [
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala",
+      "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh",
+      "https://github.com/docker-library/official-images/blob/master/library/spark",
+      "https://spark.apache.org/docs/4.2.0/configuration.html",
+      "https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation",
+      "https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html"
+    ],
+    "findings": [
+      "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+      "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+      "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+      "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+      "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+      "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+      "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+      "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+      "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+    ],
+    "validation": [
+      "spark-foundation-validation.json"
+    ],
+    "reviewedSha256": "bdceeb7de27f65b95277a6ef29d999dc9022f2d9a60ba42acdc8548cab70dac5"
+  }
+]

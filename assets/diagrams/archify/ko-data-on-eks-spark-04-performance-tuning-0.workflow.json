@@ -17,7 +17,7 @@
           "provision_node",
           "pods_running"
         ],
-        "note": "DRA가 태스크 백로그를 보고 Executor 파드를 요청하면, Pending 파드를 본 Karpenter가 EC2 노드를 늘린다."
+        "note": "DRA가 executor 수량을 결정하고 Kubernetes allocator가 Pod를 요청합니다. Karpenter는 스케줄링 조건에 맞는 노드를 공급합니다."
       },
       {
         "id": "scale-in",
@@ -29,7 +29,7 @@
           "deprovision_node",
           "pending_tasks"
         ],
-        "note": "태스크가 소진되면 DRA가 유휴 Executor를 해제하고, 비어버린 노드를 Karpenter가 consolidateAfter 뒤 회수한다."
+        "note": "Idle/cache/shuffle 조건으로 executor를 해제합니다. WhenEmpty 후보·지연·disruption 조건을 확인한 뒤 노드를 정리합니다."
       }
     ],
     "legend": {
@@ -103,7 +103,7 @@
       "col": 1,
       "type": "backend",
       "label": "Executor 파드 추가 요청",
-      "sublabel": "DRA가 백로그 감지",
+      "sublabel": "DRA → K8s allocator",
       "width": 180
     },
     {
@@ -140,7 +140,7 @@
       "col": 4,
       "type": "backend",
       "label": "유휴 Executor 파드 해제",
-      "sublabel": "executorIdleTimeout",
+      "sublabel": "idle / cache / shuffle",
       "width": 180
     },
     {
@@ -148,8 +148,8 @@
       "lane": "k8s",
       "col": 5,
       "type": "frontend",
-      "label": "노드가 비어버림",
-      "sublabel": "Executor 파드 0개",
+      "label": "노드 정리 후보",
+      "sublabel": "WhenEmpty 정책 기준",
       "width": 180
     },
     {
@@ -158,7 +158,7 @@
       "col": 5,
       "type": "cloud",
       "label": "Karpenter가 노드 회수",
-      "sublabel": "빈 노드 통합(consolidation)",
+      "sublabel": "delay + disruption checks",
       "width": 180
     }
   ],
@@ -201,7 +201,7 @@
     {
       "from": "node_empty",
       "to": "deprovision_node",
-      "label": "consolidateAfter 경과",
+      "label": "정책·지연·budget 확인",
       "variant": "dashed"
     },
     {
@@ -224,7 +224,8 @@
           24,
           120
         ]
-      ]
+      ],
+      "label": "새 작업 도착"
     }
   ]
 }

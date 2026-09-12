@@ -1,0 +1,172 @@
+{
+  "date": "2026-09-11",
+  "pullRequest": 218,
+  "mergeCommit": "ba54131649f73dd577f571fe3b53010c41ef353d",
+  "deploymentRun": 34609565483,
+  "deploymentResult": "success",
+  "finishedAt": "2026-09-11T14:31:46Z",
+  "ga4PropertyId": "396631876",
+  "ga4ActualData": "not connected; owner has no Google Cloud project/WIF/GA4 Viewer service account yet",
+  "repositoryVariable": "GA4_PROPERTY_ID set and read back; other configuration pending",
+  "localTests": 114,
+  "review": "one P2 synchronous retry failure reproduced in actual Chromium and fixed; three regressions added",
+  "browsers": {
+    "browser": "Regular Playwright; Browser plugin not available",
+    "analyticsRequests": "External scripts fulfilled locally; no actual visits sent",
+    "results": [
+      {
+        "locale": "ko",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "mode": "ready",
+        "status": "pass",
+        "snapshotRequests": 2
+      },
+      {
+        "locale": "en",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "mode": "ready",
+        "status": "pass",
+        "snapshotRequests": 2
+      },
+      {
+        "locale": "ko",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "mode": "ready",
+        "status": "pass",
+        "snapshotRequests": 1
+      },
+      {
+        "locale": "en",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "mode": "ready",
+        "status": "pass",
+        "snapshotRequests": 1
+      },
+      {
+        "mode": "real",
+        "status": "pass"
+      },
+      {
+        "mode": "unavailable",
+        "status": "pass"
+      },
+      {
+        "mode": "retry",
+        "status": "pass"
+      },
+      {
+        "mode": "sync-retry",
+        "status": "pass"
+      },
+      {
+        "mode": "legacy-signal",
+        "status": "pass"
+      },
+      {
+        "mode": "stale",
+        "status": "pass"
+      },
+      {
+        "mode": "empty",
+        "status": "pass"
+      },
+      {
+        "mode": "limited",
+        "status": "pass"
+      }
+    ]
+  },
+  "liveHttp": [
+    {
+      "path": "ko/statistics",
+      "status": 200,
+      "url": "https://www.atomai.click/kubernetes-docs/ko/statistics",
+      "bytes": 168414,
+      "lastModified": "Fri, 11 Sep 2026 14:31:37 GMT",
+      "hasStatisticsMenu": true,
+      "noindex": true
+    },
+    {
+      "path": "en/statistics",
+      "status": 200,
+      "url": "https://www.atomai.click/kubernetes-docs/en/statistics",
+      "bytes": 168808,
+      "lastModified": "Fri, 11 Sep 2026 14:31:37 GMT",
+      "hasStatisticsMenu": true,
+      "noindex": true
+    },
+    {
+      "path": "site-statistics.json",
+      "status": 200,
+      "url": "https://www.atomai.click/kubernetes-docs/site-statistics.json",
+      "bytes": 52,
+      "lastModified": "Fri, 11 Sep 2026 14:31:35 GMT",
+      "data": {
+        "schemaVersion": 1,
+        "status": "unavailable"
+      }
+    },
+    {
+      "path": "ko/service-mesh/istio/01-installation",
+      "status": 200,
+      "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/01-installation",
+      "bytes": 484537,
+      "lastModified": "Fri, 11 Sep 2026 14:31:37 GMT",
+      "hasStatisticsMenu": true,
+      "noindex": false
+    }
+  ],
+  "liveBrowser": {
+    "externalAnalytics": "blocked; no visits sent",
+    "results": [
+      {
+        "locale": "ko",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "status": "pass",
+        "data": "actual published unavailable snapshot; no fixtures",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/statistics"
+      },
+      {
+        "locale": "ko",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "pass",
+        "data": "actual published unavailable snapshot; no fixtures",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/statistics"
+      },
+      {
+        "locale": "en",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "pass",
+        "data": "actual published unavailable snapshot; no fixtures",
+        "url": "https://www.atomai.click/kubernetes-docs/en/statistics"
+      }
+    ]
+  },
+  "screenshots": "Actual live ko390 inspected; fixture screenshots clearly synthetic; ko390+en1920dark inspected",
+  "limitations": [
+    "No real GA4 report was queried.",
+    "Google Cloud project/OIDC and GA4 Viewer setup requires owner authentication.",
+    "Only ko/en VitePress routes verified; GitBook custom Vue rendering not claimed."
+  ]
+}

@@ -2,148 +2,124 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "Pause Pod 동작 원리 — D-7 사전 확보와 D-Day 축출",
     "quality_profile": "showcase",
     "column_fit": "spread",
+    "animation": "trace",
     "viewBox": [
-      900,
+      1040,
       640
     ],
-    "animation": "trace",
-    "legend": {
-      "mode": "auto",
-      "entries": {
-        "default": {
-          "label": "일반 호출"
-        },
-        "emphasis": {
-          "label": "핵심 호출"
-        },
-        "return": {
-          "label": "응답"
-        }
-      }
-    }
+    "title": "Placeholder 용량 인계"
   },
   "participants": [
     {
-      "id": "pm",
-      "type": "external",
-      "label": "PM",
-      "sublabel": "PM/기획자"
-    },
-    {
       "id": "ops",
       "type": "security",
-      "label": "인프라팀",
-      "sublabel": "Ops"
+      "label": "운영자"
     },
     {
-      "id": "workload",
-      "type": "frontend",
-      "label": "실제 워크로드",
-      "sublabel": "이벤트 서비스 Pod"
-    },
-    {
-      "id": "k8s",
+      "id": "placeholder",
       "type": "backend",
-      "label": "Kubernetes",
-      "sublabel": "스케줄러"
+      "label": "Placeholder",
+      "sublabel": "선택적 패턴"
     },
     {
-      "id": "karpenter",
+      "id": "capacity",
       "type": "cloud",
-      "label": "Karpenter",
-      "sublabel": "Node 프로비저닝"
+      "label": "노드 계층",
+      "sublabel": "Karpenter / kubelet"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "실제 앱"
     }
   ],
   "segments": [
     {
-      "from": 160,
-      "to": 350,
-      "label": "D-7 — Pause Pod로 Node 사전 확보"
+      "from": 155,
+      "to": 305,
+      "label": "사전 용량 확보 · 제약 확인"
     },
     {
-      "from": 370,
-      "to": 520,
-      "label": "D-Day — 실제 워크로드가 Pause Pod 축출"
+      "from": 325,
+      "to": 535,
+      "label": "노드 유지 조건 확인 후 인계"
     }
   ],
   "messages": [
     {
-      "id": "d7-info",
-      "from": "pm",
-      "to": "ops",
-      "y": 190,
-      "label": "D-7: 이벤트 정보 전달"
-    },
-    {
-      "id": "deploy-pause",
+      "id": "prepare",
       "from": "ops",
-      "to": "k8s",
+      "to": "placeholder",
+      "y": 185,
+      "label": "저우선순위 배치"
+    },
+    {
+      "id": "demand",
+      "from": "placeholder",
+      "to": "capacity",
       "y": 230,
-      "label": "Pause Pod 배포 (replicas: 20)",
-      "variant": "emphasis"
+      "label": "배치 가능한 용량 필요"
     },
     {
-      "id": "pending",
-      "from": "k8s",
-      "to": "karpenter",
-      "y": 270,
-      "label": "Pending Pod 감지"
-    },
-    {
-      "id": "provision",
-      "from": "karpenter",
-      "to": "k8s",
-      "y": 310,
-      "label": "Node 20대 프로비저닝",
-      "variant": "return",
-      "note": "Pause Pod가 Node를 차지한 채 대기"
-    },
-    {
-      "id": "dday-start",
-      "from": "pm",
+      "id": "nodes",
+      "from": "capacity",
       "to": "ops",
-      "y": 400,
-      "label": "D-Day: 이벤트 시작"
+      "y": 275,
+      "label": "노드 Ready 확인",
+      "variant": "return"
     },
     {
-      "id": "scale-up",
-      "from": "workload",
-      "to": "k8s",
-      "y": 440,
-      "label": "워크로드 스케일 업",
+      "id": "stop",
+      "from": "ops",
+      "to": "placeholder",
+      "y": 355,
+      "label": "인계 전 desired = 0",
       "variant": "emphasis"
     },
     {
-      "id": "evict",
-      "from": "k8s",
-      "to": "workload",
-      "y": 490,
-      "label": "Pause Pod 축출, 즉시 배치",
-      "variant": "return",
-      "note": "낮은 PriorityClass의 Pause Pod가 선점되고 새 Pod가 즉시 스케줄링됨"
+      "id": "scale",
+      "from": "ops",
+      "to": "app",
+      "y": 400,
+      "label": "앱 사전 확장",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ready",
+      "from": "app",
+      "to": "ops",
+      "y": 445,
+      "label": "Ready · 워밍업 검증",
+      "variant": "return"
+    },
+    {
+      "id": "traffic",
+      "from": "ops",
+      "to": "app",
+      "y": 500,
+      "label": "검증 후 트래픽 허용"
     }
   ],
   "activations": [
     {
-      "participant": "k8s",
-      "from": 225,
-      "to": 320,
+      "participant": "placeholder",
+      "from": 180,
+      "to": 365,
       "type": "backend"
     },
     {
-      "participant": "karpenter",
-      "from": 265,
-      "to": 315,
+      "participant": "capacity",
+      "from": 225,
+      "to": 285,
       "type": "cloud"
     },
     {
-      "participant": "k8s",
-      "from": 435,
-      "to": 500,
-      "type": "backend"
+      "participant": "app",
+      "from": 395,
+      "to": 510,
+      "type": "frontend"
     }
   ]
 }

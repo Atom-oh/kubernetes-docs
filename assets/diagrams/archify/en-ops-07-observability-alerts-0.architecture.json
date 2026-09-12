@@ -7,8 +7,8 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1220,
-      720
+      1040,
+      460
     ],
     "locale": "en"
   },
@@ -16,14 +16,28 @@
     {
       "id": "rules",
       "type": "messagebus",
-      "label": "PrometheusRule CRD",
-      "sublabel": "Alerting · recording rules",
+      "label": "PrometheusRule",
+      "sublabel": "Kubernetes rule resource",
       "pos": [
-        40,
+        30,
         110
       ],
       "size": [
-        250,
+        210,
+        80
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Prometheus Operator",
+      "sublabel": "Select and render config",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        210,
         80
       ]
     },
@@ -31,13 +45,13 @@
       "id": "prometheus",
       "type": "backend",
       "label": "Prometheus",
-      "sublabel": "Evaluates rules on interval",
+      "sublabel": "Evaluate rules on metrics",
       "pos": [
-        40,
-        350
+        550,
+        110
       ],
       "size": [
-        250,
+        210,
         80
       ]
     },
@@ -45,70 +59,28 @@
       "id": "am",
       "type": "backend",
       "label": "Alertmanager",
-      "sublabel": "Grouping · inhibition · routing",
+      "sublabel": "Group, inhibit and route",
       "pos": [
-        410,
-        230
+        810,
+        110
       ],
       "size": [
-        260,
-        84
+        200,
+        80
       ]
     },
     {
-      "id": "slack",
+      "id": "receivers",
       "type": "external",
-      "label": "Slack",
-      "sublabel": "warning by default",
+      "label": "Configured receivers",
+      "sublabel": "Slack / PagerDuty",
       "pos": [
-        800,
-        90
+        810,
+        300
       ],
       "size": [
-        210,
-        76
-      ]
-    },
-    {
-      "id": "pagerduty",
-      "type": "external",
-      "label": "PagerDuty",
-      "sublabel": "critical on-call",
-      "pos": [
-        800,
-        230
-      ],
-      "size": [
-        210,
-        76
-      ]
-    },
-    {
-      "id": "email",
-      "type": "external",
-      "label": "Email",
-      "sublabel": "info · weekly review",
-      "pos": [
-        800,
-        370
-      ],
-      "size": [
-        210,
-        76
-      ]
-    },
-    {
-      "id": "webhook",
-      "type": "external",
-      "label": "Webhook",
-      "sublabel": "Internal system hook",
-      "pos": [
-        800,
-        510
-      ],
-      "size": [
-        210,
-        76
+        200,
+        80
       ]
     }
   ],
@@ -118,75 +90,83 @@
       "label": "Kubernetes cluster",
       "wraps": [
         "rules",
+        "operator",
         "prometheus",
         "am"
       ],
-      "pad": 36
+      "pad": 16
     }
   ],
   "connections": [
     {
-      "id": "rules-prom",
+      "id": "rule-operator",
       "from": "rules",
+      "to": "operator",
+      "label": "Selectors",
+      "labelAt": [
+        265,
+        95
+      ]
+    },
+    {
+      "id": "operator-prom",
+      "from": "operator",
       "to": "prometheus",
-      "label": "selected by label",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDy": 80
+      "label": "Rule config",
+      "labelAt": [
+        525,
+        95
+      ]
     },
     {
       "id": "prom-am",
       "from": "prometheus",
       "to": "am",
-      "label": "sends firing alerts"
+      "label": "Alert updates",
+      "labelAt": [
+        785,
+        95
+      ]
     },
     {
-      "id": "am-slack",
+      "id": "am-receivers",
       "from": "am",
-      "to": "slack"
-    },
-    {
-      "id": "am-pd",
-      "from": "am",
-      "to": "pagerduty"
-    },
-    {
-      "id": "am-email",
-      "from": "am",
-      "to": "email"
-    },
-    {
-      "id": "am-webhook",
-      "from": "am",
-      "to": "webhook"
+      "to": "receivers",
+      "label": "Route and deliver",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        910,
+        245
+      ]
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "From rule to notification",
+      "title": "Operator and Prometheus",
       "items": [
-        "A PrometheusRule CRD declares the condition, the for duration, and its labels and annotations",
-        "Prometheus picks up its own rules through a label selector such as release, then evaluates them on an interval",
-        "Once the condition holds for the whole for duration, the alert turns Firing and goes to Alertmanager"
+        "The Operator selects rules by namespace/labels and renders configuration",
+        "Prometheus evaluates those rules against collected metrics",
+        "Firing does not prove successful external notification"
       ]
     },
     {
       "dot": "emerald",
-      "title": "What Alertmanager does",
+      "title": "Explicit delivery policy",
       "items": [
-        "It groups alerts with a shared cause so notifications do not flood",
-        "It inhibits downstream alerts while an upstream failure is active",
-        "It routes to receivers based on the severity label"
+        "Grouping uses configured labels, not automatic root-cause discovery",
+        "Inhibition must match the intended entity and scope",
+        "Test continue behavior and the final fallback route"
       ]
     },
     {
       "dot": "amber",
-      "title": "Response by severity",
+      "title": "Receivers and response policy",
       "items": [
-        "critical — outage or data-loss risk, within 5 minutes, PagerDuty and phone",
-        "warning — degradation or a latent problem, within business hours, Slack and email",
-        "info — informational, weekly review, email and dashboards"
+        "This example sends critical alerts to PagerDuty and the selected Slack route",
+        "Email and other webhooks require their own integration configuration",
+        "Severity and response targets are organization policy, not a built-in SLA"
       ]
     }
   ]

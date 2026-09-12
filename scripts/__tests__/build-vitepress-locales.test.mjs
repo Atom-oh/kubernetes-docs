@@ -175,7 +175,7 @@ test('archmap viewer pages are marked noindex after the merge', async () => {
   }
 })
 
-test('merged diagram viewers prefer CJK fonts before generic monospace in screen and export code', async () => {
+test('merged diagram viewers normalize CJK fonts and mobile toolbars without changing ordinary pages', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'archmap-fonts-'))
   const source = path.join(root, 'source')
   const dist = path.join(root, 'dist')
@@ -197,6 +197,8 @@ test('merged diagram viewers prefer CJK fonts before generic monospace in screen
     assert.equal((korean.match(/'JetBrains Mono', 'Noto Sans CJK KR'/g) || []).length, 2)
     assert.equal((japanese.match(/'JetBrains Mono', 'Noto Sans CJK JP'/g) || []).length, 2)
     assert.ok(korean.includes('Generator가 만든 파라미터 조합마다'))
+    assert.equal((korean.match(/id="docs-archmap-responsive"/g) || []).length, 1)
+    assert.equal((japanese.match(/id="docs-archmap-responsive"/g) || []).length, 1)
     assert.equal(await readFile(path.join(dist, 'ordinary.html'), 'utf8'), viewer)
 
     const second = path.join(root, 'second')

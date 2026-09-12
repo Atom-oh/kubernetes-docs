@@ -57,8 +57,8 @@
   {
     "path": "en/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
+    "status": "fixed",
+    "summary": "Fully reviewed and fixed15questions and2exercises, including verified EKS CLI version flag and previously reported semantic/operational corrections.",
     "sources": [
       "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
@@ -87,7 +87,8 @@
       "https://github.com/kubernetes-sigs/metrics-server#requirements",
       "https://schema.eksctl.io/",
       "https://nginx.org/en/CHANGES-1.30",
-      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/create-cluster.html"
     ],
     "findings": [
       "Ambiguous kubectl/no-controller, node-role/compute, AMI and AZ-selection questions; unsupported AL2/newcluster1.28 guidance.",
@@ -101,7 +102,7 @@
       "Corrected CA chart9.59.0 default1.35.0 with explicit controller1.36.1 for EKS1.36; require dedicated identity and ASG discovery tags.",
       "Preserved example sizing and published up-to discount numbers as conditional examples, removed production/availability/cost guarantees; no measured performance asserted.",
       "Replaced unsafe shared-namespace policy exercise and unguarded cleanup with unique lab resources, dedicated kubeconfig and cluster-ARN/namespace-UID checks.",
-      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. The interim audit error was corrected in commands, prose and reports; API JSON field version and eksctl --version were preserved."
     ],
     "validation": [
       "Sequential full read of1-350,351-700,701-1050,1051-1400,1401-1750,1751-1980. No cloud operations.",
@@ -109,14 +110,15 @@
       "Offline Helm9.59.0 render:7 native objects;imagev1.36.1,existing service account and ASG discovery verified.",
       "14 local fixture cases passed:4 NodeConfig metadata/MIME cases,6 cleanup identity/lookup cases,4 IAM creation/attachment cases. jq and MIME parser exercised; AWS/kubectl mutations mocked.",
       "Scoped git diff --check passed; artifacts /tmp/eks-creation-part1-audit/validation.json. No actual cloud provision, node bootstrap, traffic test or benchmark.",
-      "Follow-on paired canary image pin corrected to officially verified NGINX stable1.30.4; no measured benchmark changed or image executed."
+      "Follow-on paired canary image pin corrected to officially verified NGINX stable1.30.4; no measured benchmark changed or image executed.",
+      "Version-option correction independently checked with3distinct literal commands across6paired docs using the actual localAWSCLI2.35.11 input-skeleton parser. --kubernetes-version is required; wrong--version reproduced exit0/CLIversion-only. No AWS calls. Evidence:/tmp/eks-cli-flag-correction-2026-09-11.json."
     ]
   },
   {
     "path": "ko/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
+    "status": "fixed",
+    "summary": "Fully reviewed and fixed15questions and2exercises, including verified EKS CLI version flag and previously reported semantic/operational corrections.",
     "sources": [
       "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
@@ -145,7 +147,8 @@
       "https://github.com/kubernetes-sigs/metrics-server#requirements",
       "https://schema.eksctl.io/",
       "https://nginx.org/en/CHANGES-1.30",
-      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/create-cluster.html"
     ],
     "findings": [
       "Ambiguous kubectl/no-controller, node-role/compute, AMI and AZ-selection questions; unsupported AL2/newcluster1.28 guidance.",
@@ -160,7 +163,7 @@
       "Corrected CA chart9.59.0 default1.35.0 with explicit controller1.36.1 for EKS1.36; require dedicated identity and ASG discovery tags.",
       "Preserved example sizing and published up-to discount numbers as conditional examples, removed production/availability/cost guarantees; no measured performance asserted.",
       "Replaced unsafe shared-namespace policy exercise and unguarded cleanup with unique lab resources, dedicated kubeconfig and cluster-ARN/namespace-UID checks.",
-      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. The interim audit error was corrected in commands, prose and reports; API JSON field version and eksctl --version were preserved."
     ],
     "validation": [
       "Sequential full read1-350,351-700,701-1050,1051-1400,1401-1750,1751-2022. No operations executed.",
@@ -168,7 +171,8 @@
       "Offline Helm9.59.0 render:7 native objects;imagev1.36.1,existing service account and ASG discovery verified.",
       "14 local fixture cases passed:4 NodeConfig metadata/MIME cases,6 cleanup identity/lookup cases,4 IAM creation/attachment cases. jq and MIME parser exercised; AWS/kubectl mutations mocked.",
       "Scoped git diff --check passed; artifacts /tmp/eks-creation-part1-audit/validation.json. No actual cloud provision, node bootstrap, traffic test or benchmark.",
-      "Follow-on paired canary image pin corrected to officially verified NGINX stable1.30.4; no measured benchmark changed or image executed."
+      "Follow-on paired canary image pin corrected to officially verified NGINX stable1.30.4; no measured benchmark changed or image executed.",
+      "Version-option correction independently checked with3distinct literal commands across6paired docs using the actual localAWSCLI2.35.11 input-skeleton parser. --kubernetes-version is required; wrong--version reproduced exit0/CLIversion-only. No AWS calls. Evidence:/tmp/eks-cli-flag-correction-2026-09-11.json."
     ]
   }
 ]

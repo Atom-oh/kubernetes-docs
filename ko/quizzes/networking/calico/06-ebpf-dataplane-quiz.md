@@ -1,39 +1,39 @@
 # Calico eBPF 데이터플레인 퀴즈
 
 > **관련 문서**: [Calico eBPF 데이터플레인](../../../networking/calico/06-ebpf-dataplane.md)
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 퀴즈
 
-1. Calico eBPF 모드를 사용하기 위한 최소 Linux 커널 버전은 무엇입니까?
+1. Calico 3.32 eBPF 가이드의 일반 Linux 최소 커널은 무엇입니까? (명시된 RHEL 백포트 예외 제외)
    - A) 4.9+
    - B) 5.0+
-   - C) 5.3+ (권장 5.8+)
+   - C) 5.10+
    - D) 6.0+
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 5.3+ (권장 5.8+)**
+**정답: C) 5.10+**
 
 **설명:**
-Calico eBPF 모드는 Linux 커널 5.3 이상에서 동작하며, 최적의 성능과 기능을 위해 5.8 이상을 권장합니다. 5.8 버전부터 추가된 eBPF 기능들이 Calico의 고급 기능을 더 잘 지원합니다.
+일반 기준은 5.10이며 RHEL 8.4의 4.18.0-305 이상은 문서화된 백포트 예외입니다. eBPF Log 규칙은 5.16, 문서화된 QoS 대역폭 제어는 6.6/TCX가 필요합니다. OS·커널 이름만으로 전체 플랫폼 호환성을 보장하지 않습니다.
 
 </details>
 
-2. eBPF 모드가 iptables 모드 대비 제공하는 처리량 향상은 대략 얼마입니까?
+2. Calico eBPF 전환의 성능 향상은 어떻게 판단해야 합니까?
    - A) 5-10%
-   - B) 20-40%
+   - B) 실제 부하·설정에서 측정하며 보편적인 고정 비율은 없음
    - C) 50-70%
    - D) 100% 이상
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 20-40%**
+**정답: B) 실제 부하·설정에서 측정하며 보편적인 고정 비율은 없음**
 
 **설명:**
-eBPF 모드는 iptables 모드 대비 처리량이 약 20-40% 향상되고, 지연 시간은 20-30% 감소합니다. 이는 eBPF가 커널 내에서 직접 패킷을 처리하여 컨텍스트 스위칭과 규칙 검색 오버헤드를 줄이기 때문입니다.
+iptables와 eBPF는 모두 커널에서 패킷을 처리합니다. 차이는 트래픽 경로·규칙·conntrack·CPU/NIC·로그·부하에 좌우됩니다. 기존의 서로 다른 보고값은 원자료가 없으며 20–40% 향상이나 일정한 정책 비용을 보장하지 않습니다.
 
 </details>
 
@@ -49,7 +49,7 @@ eBPF 모드는 iptables 모드 대비 처리량이 약 20-40% 향상되고, 지�
 **정답: B) /sys/fs/bpf**
 
 **설명:**
-eBPF 프로그램과 맵을 저장하고 공유하기 위해 `/sys/fs/bpf` 파일시스템이 마운트되어 있어야 합니다. 이 BPF 파일시스템은 eBPF 오브젝트들을 영구적으로 저장하고 여러 프로그램 간에 공유할 수 있게 합니다.
+bpffs는 pin한 BPF 객체를 프로세스 사이에서 유지·공유하게 합니다. 영구 디스크 저장소는 아니므로 호스트 재부팅 후에도 객체가 자동 보존되는 것은 아닙니다. Calico가 필요한 프로그램·맵을 다시 구성해야 합니다.
 
 </details>
 
@@ -65,7 +65,7 @@ eBPF 프로그램과 맵을 저장하고 공유하기 위해 `/sys/fs/bpf` 파�
 **정답: B) eBPF 프로그램의 타입 정보 제공 및 커널 구조체 접근**
 
 **설명:**
-BTF(BPF Type Format)는 eBPF 프로그램이 커널 데이터 구조에 안전하게 접근할 수 있도록 타입 정보를 제공합니다. 이를 통해 CO-RE(Compile Once - Run Everywhere) 기능이 가능해져, 한 번 컴파일된 eBPF 프로그램이 다양한 커널 버전에서 동작할 수 있습니다.
+BTF는 CO-RE relocation과 도구가 사용하는 타입 정보입니다. verifier의 안전성 검사와는 별개이며 모든 커널에서 바이너리가 동작한다고 보장하지 않습니다. Calico 릴리스의 기능 검사·객체 선택과 실제 노드 조건을 확인해야 합니다.
 
 </details>
 
@@ -81,7 +81,7 @@ BTF(BPF Type Format)는 eBPF 프로그램이 커널 데이터 구조에 안전�
 **정답: B) 응답 트래픽이 로드밸런서를 거치지 않고 클라이언트로 직접 반환됨**
 
 **설명:**
-DSR(Direct Server Return)은 서버의 응답 트래픽이 로드밸런서를 거치지 않고 클라이언트에게 직접 전송되는 방식입니다. 이를 통해 로드밸런서의 부하를 줄이고, 지연 시간을 감소시키며, 전체 네트워크 대역폭을 절약할 수 있습니다.
+원격 backend 노드가 Kubernetes Service 요청을 처음 전달한 노드를 거치지 않고 응답할 수 있습니다. 소스 변환은 Calico가 처리하며 호환되는 fabric과 반환 경로가 필요합니다. 모든 외부 클라우드 로드 밸런서를 우회하거나 지원한다는 뜻은 아닙니다.
 
 </details>
 
@@ -97,11 +97,11 @@ DSR(Direct Server Return)은 서버의 응답 트래픽이 로드밸런서를 �
 **정답: B) TCP 연결 설정 시점에 목적지 Pod를 결정하여 이후 모든 패킷을 동일 Pod로 전송**
 
 **설명:**
-Connect-time 로드밸런싱은 TCP 연결이 설정되는 시점(connect 시스템 콜)에 목적지 Pod를 결정합니다. 한 번 결정된 목적지는 해당 연결의 모든 패킷에 적용되어, NAT 테이블 조회 없이 효율적인 패킷 처리가 가능합니다.
+지원되는 TCP connect() 시점에 Service 목적지를 backend로 바꿉니다. Enabled 모드에는 UDP 소켓 hook도 포함할 수 있습니다. 해당 Service DNAT 경로를 줄이는 기능이며 모든 정책·라우팅·conntrack·다른 NAT를 제거하지는 않습니다. DSR과도 별도 기능입니다.
 
 </details>
 
-7. eBPF 모드에서 kube-proxy를 대체하려면 FelixConfiguration에서 어떤 설정을 활성화해야 합니까?
+7. kube-proxy가 만든 iptables 규칙의 정리를 제어하는 Felix 필드는 무엇입니까?
    - A) bpfKubeProxyEnabled: true
    - B) bpfKubeProxyIptablesCleanupEnabled: true
    - C) kubeProxyReplacement: strict
@@ -113,7 +113,7 @@ Connect-time 로드밸런싱은 TCP 연결이 설정되는 시점(connect 시스
 **정답: B) bpfKubeProxyIptablesCleanupEnabled: true**
 
 **설명:**
-`bpfKubeProxyIptablesCleanupEnabled: true` 설정은 kube-proxy가 생성한 iptables 규칙을 정리하고 eBPF가 Service 처리를 담당하도록 합니다. 이 설정과 함께 kube-proxy DaemonSet을 비활성화하거나 삭제해야 완전한 대체가 이루어집니다.
+bpfKubeProxyIptablesCleanupEnabled는 기존 kube-proxy 규칙 정리만 제어하며 Service 처리 활성화 스위치가 아닙니다. kube-proxy를 유지해야 하는 플랫폼은 cleanup을 false로 하고 health-server 충돌도 피해야 합니다. 삭제를 일반적인 대체 절차로 사용하지 마세요.
 
 </details>
 
@@ -129,11 +129,11 @@ Connect-time 로드밸런싱은 TCP 연결이 설정되는 시점(connect 시스
 **정답: B) eBPF 프로그램과 사용자 공간 간 데이터 공유 및 상태 저장**
 
 **설명:**
-BPF 맵은 키-값 저장소로, eBPF 프로그램이 상태를 저장하고 사용자 공간 프로그램과 데이터를 공유하는 데 사용됩니다. Calico에서는 연결 추적, 정책 규칙, Service 엔드포인트 정보 등을 BPF 맵에 저장하여 빠른 조회가 가능합니다.
+맵에는 route·NAT·conntrack·affinity와 프로그램/counter/IP-set 보조 데이터를 저장합니다. 해시·LRU 해시·LPM trie 등 유형이 다르며 정책 전체를 하나의 O(1) tuple→action map으로 처리하는 것은 아닙니다.
 
 </details>
 
-9. XDP(eXpress Data Path)와 TC(Traffic Control) eBPF 프로그램의 주요 차이점은?
+9. Native driver XDP와 TC eBPF 프로그램의 주요 차이점은?
    - A) XDP는 드라이버 레벨에서 패킷을 처리하고, TC는 네트워크 스택에서 처리
    - B) XDP는 egress만, TC는 ingress만 처리
    - C) XDP는 IPv6만, TC는 IPv4만 지원
@@ -145,7 +145,7 @@ BPF 맵은 키-값 저장소로, eBPF 프로그램이 상태를 저장하고 사
 **정답: A) XDP는 드라이버 레벨에서 패킷을 처리하고, TC는 네트워크 스택에서 처리**
 
 **설명:**
-XDP는 네트워크 드라이버 레벨에서 패킷이 커널 네트워크 스택에 도달하기 전에 처리하여 최고의 성능을 제공합니다. TC(Traffic Control) eBPF는 네트워크 스택 내에서 동작하며, 더 많은 패킷 메타데이터에 접근할 수 있지만 XDP보다는 약간 느립니다.
+Native XDP는 skb 할당 전 처리할 수 있고 TC는 skb 문맥을 사용합니다. Generic XDP에는 이미 skb가 있으며 더 뒤에서 실행됩니다. driver·하드웨어·프로그램 지원에 따라 달라지므로 항상 더 빠르다고 보장하지 않습니다.
 
 </details>
 
@@ -161,7 +161,7 @@ XDP는 네트워크 드라이버 레벨에서 패킷이 커널 네트워크 스�
 **정답: B) bpfEnabled: true**
 
 **설명:**
-FelixConfiguration에서 `bpfEnabled: true`를 설정하면 eBPF 데이터플레인이 활성화됩니다. 추가로 `bpfDataIfacePattern`으로 데이터 인터페이스 패턴을 지정하고, `bpfExternalServiceMode`로 외부 서비스 모드를 설정할 수 있습니다.
+Felix 필드는 bpfEnabled: true이며 독립 manifest 설치에서 사용합니다. Operator 설치는 Installation.spec.calicoNetwork.linuxDataplane: BPF를 통해 전환합니다. 설치 소유권·직접 API 접근·kube-proxy 조정·클러스터 전환 조건을 유지해야 합니다.
 
 </details>
 
@@ -177,7 +177,7 @@ FelixConfiguration에서 `bpfEnabled: true`를 설정하면 eBPF 데이터플레
 **정답: A) DSR은 응답이 직접 반환되고, Tunnel은 요청과 동일한 경로로 반환**
 
 **설명:**
-`bpfExternalServiceMode: DSR`은 응답 트래픽이 원래 노드를 거치지 않고 클라이언트로 직접 반환됩니다. `Tunnel` 모드는 응답이 요청과 동일한 경로(원래 노드)를 통해 반환됩니다. DSR은 성능이 더 좋지만 일부 네트워크 환경에서 호환성 문제가 있을 수 있습니다.
+원격 backend의 Tunnel 모드는 요청·응답이 ingress 노드/터널 경로를 사용하고 DSR은 요청을 터널링한 뒤 응답을 직접 반환합니다. 두 모드 모두 VXLAN·MTU를 고려해야 하며 DSR에는 소스 검증·외부 로드 밸런서 경로 제약도 있습니다.
 
 </details>
 
@@ -193,6 +193,6 @@ FelixConfiguration에서 `bpfEnabled: true`를 설정하면 eBPF 데이터플레
 **정답: B) bpftool**
 
 **설명:**
-`bpftool`은 eBPF 프로그램과 맵을 검사하고 디버깅하는 공식 도구입니다. `bpftool prog list`로 로드된 프로그램을 확인하고, `bpftool map dump`로 맵 내용을 확인할 수 있습니다. Calico는 추가로 `calico-bpf` 명령어를 제공하여 Calico 특화 eBPF 정보를 조회할 수 있습니다.
+bpftool은 실제 BPF program/map ID와 상태를 조회합니다. node 이미지의 Calico 전용 도구는 calico-node -bpf로 실행하며 help 하위 명령을 사용합니다. policy dump에는 인터페이스와 hook을 모두 지정하고 단순 목록만으로 통신 성공을 판단하지 마세요.
 
 </details>

@@ -1,147 +1,131 @@
 # Amazon VPC CNI Quiz
 
-The following questions test your understanding of Amazon VPC CNI.
+Reviewed September 11, 2026 against the [VPC CNI guide](../../networking/01-vpc-cni.md) and its primary references.
 
----
+## 1. What does IPAMD do on standard EKS Linux EC2 nodes?
 
-1. What is the primary role of IPAMD (L-IPAM Daemon) in VPC CNI?
-   - A) Managing Pod DNS settings
-   - B) Pre-allocating and managing ENIs and IP addresses
-   - C) Applying Network Policies
-   - D) Encrypting inter-node traffic
+- A. Manage every Pod's DNS application settings
+- B. Maintain ordinary ENI/IP allocation pools for Pod networking
+- C. Replace the network policy controller
+- D. Encrypt all inter-node traffic
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Pre-allocating and managing ENIs and IP addresses**
+**Answer: B. Maintain ordinary ENI/IP allocation pools for Pod networking**
 
-**Explanation:**
-IPAMD (L-IPAM Daemon) is a daemon running on each node that manages ENIs (Elastic Network Interfaces) and pre-allocates IP addresses so that IPs can be quickly assigned when Pods are created. The CNI Binary is called by kubelet, receives IPs from IPAMD, and sets up Pod network namespaces.
+The container runtime invokes the CNI binary, which requests addressing and configures the Pod sandbox. IPAMD maintains the relevant address pools. Windows, Fargate and Auto Mode management paths differ.
 
 </details>
 
----
+## 2. What is the IPv4 allocation difference between secondary-IP and prefix modes?
 
-2. What is the key difference between Secondary IP mode and Prefix Delegation mode?
-   - A) Secondary IP supports only IPv6, Prefix Delegation supports only IPv4
-   - B) Secondary IP allocates individual IPs, Prefix Delegation allocates /28 prefixes (16 IPs)
-   - C) Secondary IP is only for EKS, Prefix Delegation is only for self-managed clusters
-   - D) Secondary IP uses overlay networks, Prefix Delegation uses direct routing
+- A. Only secondary-IP mode supports IPv6
+- B. Secondary-IP mode allocates individual addresses; IPv4 prefix mode allocates /28 blocks with 16 addresses
+- C. Prefix mode removes kubelet Pod limits
+- D. Prefix mode creates free space in an exhausted subnet
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Secondary IP allocates individual IPs, Prefix Delegation allocates /28 prefixes (16 IPs)**
+**Answer: B. Secondary-IP mode allocates individual addresses; IPv4 prefix mode allocates /28 blocks with 16 addresses**
 
-**Explanation:**
-Secondary IP mode assigns individual IP addresses one at a time to each ENI, while Prefix Delegation mode assigns /28 IPv4 prefixes (16 IPs) at once. This allows running more Pods per node and also improves IP allocation speed.
+Prefix mode needs supported hardware and contiguous blocks. Allocation still consumes subnet space, and warm targets can reserve unused addresses. IPv6 uses /80 prefixes; EKS does not provide dual-stack Pods/Services.
 
 </details>
 
----
+## 3. How does the legacy m5.large secondary-IPv4 bootstrap calculation produce 29?
 
-3. Why is the maximum Pod count for an m5.large instance 29 with VPC CNI?
-   - A) Because Kubernetes has a default limit of 29
-   - B) Maximum 3 ENIs × 10 IPs per ENI = 30, minus ENI count (3) for primary IPs
-   - C) Limited by an AWS soft limit
-   - D) Limited by VPC subnet size
+- A. Kubernetes always limits all nodes to 29
+- B. 3 × (10 − 1) + 2 = 29
+- C. 3 × 10 − 3 = 29
+- D. 29 is the size of every subnet
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Maximum 3 ENIs × 10 IPs per ENI = 30, minus ENI count (3) for primary IPs**
+**Answer: B. 3 × (10 − 1) + 2 = 29**
 
-**Explanation:**
-The maximum Pod count in VPC CNI is calculated as (Number of ENIs × IPs per ENI) - Number of ENIs. The m5.large supports up to 3 ENIs with 10 IPv4 addresses per ENI. Since each ENI's Primary IP is used by the node, (3 × 10) - 3 = 27. The actual number may vary slightly due to host networking Pods and additional factors.
+There are three ENIs with ten IPv4 slots each. Removing each ENI's primary slot leaves 27 ordinary secondary addresses; the historical formula adds two host-network system Pods. It is not a universal current capacity limit—prefixes, SGPP, kubelet caps and resources change the interpretation.
 
 </details>
 
----
+## 4. What does WARM_IP_TARGET specify?
 
-4. What is the purpose of the WARM_IP_TARGET environment variable?
-   - A) Setting the maximum number of IPs that can be assigned to Pods
-   - B) Setting the number of spare IPs to pre-allocate on each node
-   - C) Limiting the total number of IPs across the cluster
-   - D) Setting the TTL (Time To Live) for IP addresses
+- A. The hard maximum Pod count
+- B. A target number of free addresses available for ordinary assignments
+- C. The cluster-wide address quota
+- D. An address TTL
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Setting the number of spare IPs to pre-allocate on each node**
+**Answer: B. A target number of free addresses available for ordinary assignments**
 
-**Explanation:**
-WARM_IP_TARGET controls the number of spare IPs that IPAMD pre-allocates on each node. This ensures IPs are available immediately when new Pods are created. A larger value speeds up Pod startup but uses more IPs, while a smaller value improves IP efficiency but may slow down Pod startup.
+MINIMUM_IP_TARGET is the floor for total allocated addresses. These IP targets override the warm ENI/prefix strategy; prefix-sized allocation still applies. Choose values from measured demand, churn, address space and API behavior.
 
 </details>
 
----
+## 5. Which statement about native EKS network policy is correct?
 
-5. Which statement about VPC CNI's native Network Policy support is correct?
-   - A) It uses Calico internally to enforce Network Policies
-   - B) It supports native eBPF-based Network Policy starting from v1.14
-   - C) Network Policy is not supported on EKS
-   - D) It uses iptables to enforce Network Policies
+- A. VPC CNI internally runs Calico
+- B. Standard eBPF policy was introduced in 1.14, but current platform/version and opt-in conditions still apply
+- C. It automatically covers Windows and Fargate
+- D. Enabling it guarantees every standalone Pod is reliably enforced
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It supports native eBPF-based Network Policy starting from v1.14**
+**Answer: B. Standard eBPF policy was introduced in 1.14, but current platform/version and opt-in conditions still apply**
 
-**Explanation:**
-Starting from VPC CNI v1.14, native Kubernetes Network Policy based on eBPF is supported. Previously, a separate Network Policy engine like Calico was needed, but now VPC CNI itself can process standard Kubernetes NetworkPolicy resources.
+The reviewed 1.23 setup uses the configured policy controller and aws-eks-nodeagent. Current EKS guidance includes EC2 Linux, controller-managed Pods and Service/container-port conditions. Standard startup mode allows traffic while rules are resolved; strict startup behavior is a separate deliberate choice.
 
 </details>
 
----
+## 6. What does custom networking with ENIConfig provide?
 
-6. What is the main purpose of using Custom Networking (ENIConfig)?
-   - A) Customizing Pod DNS server settings
-   - B) Assigning Pod IPs from a different subnet than the node
-   - C) Installing custom CNI plugins
-   - D) Renaming the node's network interface
+- A. A replacement DNS server
+- B. Pod address allocation from selected subnets/security groups distinct from the node's default configuration
+- C. Automatic migration of existing Pods after adding a CIDR
+- D. Automatic removal of overlapping routes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Assigning Pod IPs from a different subnet than the node**
+**Answer: B. Pod address allocation from selected subnets/security groups distinct from the node's default configuration**
 
-**Explanation:**
-Custom Networking uses ENIConfig CRDs to assign Pod IPs from a different subnet than the node. This is useful when node subnet IPs are insufficient, when different security groups need to be applied to Pods, or when node and Pod networks need separation. It is typically used with Secondary CIDRs (e.g., 100.64.0.0/16).
+Configure actual same-AZ resources, enable custom networking and select ENIConfig through the intended node label/annotation. An explicit annotation overrides the label. New CIDR/subnet creation alone does not move existing Pods or supply all routes and permissions.
 
 </details>
 
----
+## 7. How do trunk and branch interfaces work for SGPP on eligible EC2 nodes?
 
-7. What are the roles of Trunk ENI and Branch ENI in per-Pod Security Group feature?
-   - A) Trunk ENI handles external traffic, Branch ENI handles internal traffic
-   - B) Trunk ENI is the node's main ENI hosting Branch ENIs, Branch ENIs are virtual ENIs assigned to each Pod
-   - C) Trunk ENI is for IPv4, Branch ENI is for IPv6
-   - D) Trunk ENI and Branch ENI perform identical roles
+- A. The trunk is always the primary eth0 interface
+- B. The controller attaches an additional trunk ENI and associates branch interfaces used by selected Pods
+- C. The two names mean IPv4 and IPv6 respectively
+- D. Prefix delegation multiplies the branch-Pod limit by 16
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Trunk ENI is the node's main ENI hosting Branch ENIs, Branch ENIs are virtual ENIs assigned to each Pod**
+**Answer: B. The controller attaches an additional trunk ENI and associates branch interfaces used by selected Pods**
 
-**Explanation:**
-Per-Pod Security Groups use a Trunk/Branch ENI architecture. The Trunk ENI is the main ENI attached to the node that hosts multiple Branch ENIs. Branch ENIs are virtual network interfaces assigned to each Pod, enabling independent AWS Security Group enforcement. This allows fine-grained network security control at the Pod level.
+The trunk is an additional interface, not the primary ENI. Supported instance types, controller/IAM and real security-group rules are prerequisites. Fargate follows a separate managed path. SGPP is unsupported on Windows/Auto Mode, while the EKS service guide documents IPv6 support under its conditions.
 
 </details>
 
----
+## 8. Which is an inappropriate default response to IP exhaustion?
 
-8. Which is NOT an effective solution for IP exhaustion issues?
-   - A) Enable Prefix Delegation
-   - B) Add Secondary CIDR
-   - C) Switch all Pods to host network mode
-   - D) Use Custom Networking with dedicated Pod subnets
+- A. Check contiguous prefix space and hardware before considering prefix delegation
+- B. Plan additional CIDRs/subnets and workload adoption when capacity is insufficient
+- C. Switch every workload to hostNetwork to bypass ordinary Pod addressing
+- D. Consider custom networking and measured warm-target tuning
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Switch all Pods to host network mode**
+**Answer: C. Switch every workload to hostNetwork to bypass ordinary Pod addressing**
 
-**Explanation:**
-Running all Pods in host network mode (`hostNetwork: true`) would technically resolve IP allocation issues, but it eliminates network isolation between Pods and can cause port conflicts, making it an impractical solution. Proper solutions for IP exhaustion include enabling Prefix Delegation, adding Secondary CIDRs, using Custom Networking, and tuning WARM_IP_TARGET.
+Changing all workloads to hostNetwork changes isolation and port behavior and is not a general capacity fix. Diagnose address exhaustion, prefix fragmentation, ENI limits, kubelet capacity and API errors separately. Prefix delegation cannot create missing subnet addresses.
 
 </details>

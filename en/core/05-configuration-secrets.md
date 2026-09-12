@@ -936,7 +936,7 @@ spec:
         secretProviderClass: aws-parameters
 ```
 
-Create `parameter-reader` with an IRSA role or Pod Identity association granting `ssm:GetParameters` for the two parameter ARNs and, if needed, scoped KMS decryption. The earlier Secrets Manager role does not provide SSM permissions. ASCP requires compatible EC2 nodes; the CSI mount does not work on Fargate.
+Create `parameter-reader` with an IRSA role or Pod Identity association granting `ssm:GetParameters` for the two parameter ARNs and, if needed, scoped KMS decryption. The earlier Secrets Manager role does not provide SSM permissions. ASCP requires a supported node/add-on combination; the CSI mount does not work on Fargate. Hybrid Nodes require the explicitly supported add-on version and credential configuration.
 
 ### Dynamic Configuration with AWS AppConfig
 

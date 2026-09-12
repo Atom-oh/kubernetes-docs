@@ -1,0 +1,445 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "versions": {
+    "terraform": "1.15.7",
+    "awsProvider": "6.64.0",
+    "eksModule": "21.25.0",
+    "vpcModule": "6.7.2",
+    "podIdentityModule": "2.9.0"
+  },
+  "originalFailure": "Real terraform init resolves EKS20.37.2 and reproduces four unsupported network/storage module arguments.",
+  "rootSchemaValidation": [
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/ko/00-shared",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 10.8
+    },
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/ko/01-network",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 12.0
+    },
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/ko/02-cluster",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 3.3
+    },
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/ko/03-platform",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 12.1
+    },
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/en/00-shared/bootstrap",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 10.8
+    },
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/en/01-network",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 12.0
+    },
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/en/02-cluster",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 14.3
+    },
+    {
+      "root": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-terraform/fixed/en/03-platform",
+      "fmt": {
+        "exitCode": 0
+      },
+      "init": {
+        "exitCode": 0
+      },
+      "validate": {
+        "exitCode": 0,
+        "valid": true,
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      "seconds": 10.8
+    }
+  ],
+  "finalBootstrapValidation": [
+    {
+      "format_version": "1.0",
+      "valid": true,
+      "error_count": 0,
+      "warning_count": 0,
+      "diagnostics": []
+    },
+    {
+      "format_version": "1.0",
+      "valid": true,
+      "error_count": 0,
+      "warning_count": 0,
+      "diagnostics": []
+    }
+  ],
+  "fences": {
+    "text": 5,
+    "hcl": 36,
+    "bash": 11
+  },
+  "mappedFixtureFiles": 32,
+  "clusterMockPlanCases": 4,
+  "platformMockPlanCases": 4,
+  "smokeScriptCases": [
+    {
+      "case": "success",
+      "exitCode": 0,
+      "cleanupRequested": true,
+      "passed": true
+    },
+    {
+      "case": "mixed-success",
+      "exitCode": 0,
+      "cleanupRequested": true,
+      "passed": true
+    },
+    {
+      "case": "empty-system-pods",
+      "exitCode": 0,
+      "cleanupRequested": true,
+      "passed": true
+    },
+    {
+      "case": "version-fail",
+      "exitCode": 4,
+      "cleanupRequested": false,
+      "passed": true
+    },
+    {
+      "case": "rollout-fail",
+      "exitCode": 1,
+      "cleanupRequested": false,
+      "passed": true
+    },
+    {
+      "case": "no-pool",
+      "exitCode": 1,
+      "cleanupRequested": false,
+      "passed": true
+    },
+    {
+      "case": "namespace-fail",
+      "exitCode": 1,
+      "cleanupRequested": false,
+      "passed": true
+    },
+    {
+      "case": "job-create-fail",
+      "exitCode": 1,
+      "cleanupRequested": true,
+      "passed": true
+    },
+    {
+      "case": "dns-fail",
+      "exitCode": 1,
+      "cleanupRequested": true,
+      "passed": true
+    },
+    {
+      "case": "crashloop",
+      "exitCode": 1,
+      "cleanupRequested": true,
+      "passed": true
+    },
+    {
+      "case": "uid-changed",
+      "exitCode": 0,
+      "cleanupRequested": false,
+      "passed": true
+    },
+    {
+      "case": "already-removed",
+      "exitCode": 0,
+      "cleanupRequested": false,
+      "passed": true
+    },
+    {
+      "case": "delete-fail",
+      "exitCode": 1,
+      "cleanupRequested": true,
+      "passed": true
+    },
+    {
+      "case": "second-fail",
+      "exitCode": 1,
+      "cleanupRequested": true,
+      "passed": true
+    }
+  ],
+  "deploymentRecipeCases": [
+    {
+      "language": "ko",
+      "case": "success",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "language": "ko",
+      "case": "mixed-success",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "language": "ko",
+      "case": "catalog-fail",
+      "exitCode": 4,
+      "passed": true
+    },
+    {
+      "language": "ko",
+      "case": "no-compatible",
+      "exitCode": 4,
+      "passed": true
+    },
+    {
+      "language": "ko",
+      "case": "network-plan-fail",
+      "exitCode": 1,
+      "passed": true
+    },
+    {
+      "language": "ko",
+      "case": "missing-admin",
+      "exitCode": 1,
+      "passed": true
+    },
+    {
+      "language": "en",
+      "case": "success",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "language": "en",
+      "case": "mixed-success",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "language": "en",
+      "case": "catalog-fail",
+      "exitCode": 4,
+      "passed": true
+    },
+    {
+      "language": "en",
+      "case": "no-compatible",
+      "exitCode": 4,
+      "passed": true
+    },
+    {
+      "language": "en",
+      "case": "network-plan-fail",
+      "exitCode": 1,
+      "passed": true
+    },
+    {
+      "language": "en",
+      "case": "missing-admin",
+      "exitCode": 1,
+      "passed": true
+    }
+  ],
+  "diagramCount": 3,
+  "localLinks": {
+    "files": 4,
+    "errors": 0
+  },
+  "busyboxManifest": {
+    "source": "https://registry-1.docker.io/v2/library/busybox/manifests/stable",
+    "digest": "sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "platforms": [
+      {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v5"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v6"
+      },
+      {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v7"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "arm64",
+        "os": "linux",
+        "variant": "v8"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "386",
+        "os": "linux"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "ppc64le",
+        "os": "linux"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "riscv64",
+        "os": "linux"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "s390x",
+        "os": "linux"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    ],
+    "image": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662"
+  },
+  "scope": "Mock provider/state plans and fake kubectl/aws/Terraform apply scripts only. No live AWS resource creation, cluster deployment, DNS workload run, IAM authorization simulation, or live CoreDNS compatibility catalog query. CMK decryption needs the documented extra role/key-policy permissions.",
+  "autoModeDnsCorrection": {
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html",
+      "https://aws.amazon.com/blogs/containers/faster-nodes-smarter-scaling-whats-new-inside-amazon-elastic-kubernetes-service-amazon-eks-auto-mode/"
+    ],
+    "pureAutoMode": "node-local CoreDNS, addon false by default",
+    "mixedNodes": "enable_coredns_addon=true with pinned compatible version",
+    "platformSchema": [
+      {
+        "format_version": "1.0",
+        "valid": true,
+        "error_count": 0,
+        "warning_count": 0,
+        "diagnostics": []
+      },
+      {
+        "format_version": "1.0",
+        "valid": true,
+        "error_count": 0,
+        "warning_count": 0,
+        "diagnostics": []
+      }
+    ],
+    "cases": "14 smoke,12 deployment,4 platform mock plans passed"
+  }
+}

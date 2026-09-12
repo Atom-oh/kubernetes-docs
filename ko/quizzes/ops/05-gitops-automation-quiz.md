@@ -21,7 +21,7 @@ Atlantis는 GitHub/GitLab Pull Request에서 Terraform plan과 apply를 자동�
 
 </details>
 
-### 2. Terraform Cloud의 Run Trigger 기능의 용도는 무엇인가요?
+### 2. HCP Terraform의 Run Trigger 기능의 용도는 무엇인가요?
 
 - A) 수동 실행만 허용
 - B) 특정 워크스페이스 적용 완료 시 다른 워크스페이스 자동 실행
@@ -34,7 +34,7 @@ Atlantis는 GitHub/GitLab Pull Request에서 Terraform plan과 apply를 자동�
 **정답: B) 특정 워크스페이스 적용 완료 시 다른 워크스페이스 자동 실행**
 
 **설명:**
-Run Trigger를 사용하면 한 워크스페이스의 apply가 완료될 때 연결된 다른 워크스페이스의 run을 자동으로 트리거할 수 있습니다. 예를 들어, Network 워크스페이스 적용 후 Cluster 워크스페이스가 자동으로 실행되도록 설정하여 계층적 인프라 배포를 자동화할 수 있습니다.
+Run Trigger는 상위 workspace의 성공한 apply 후 하위 run을 대기열에 넣습니다. 일반 auto_apply와 auto_apply_run_trigger는 별도 설정이며 trigger가 출력 값 전달이나 자동 승인을 대신하지 않습니다. 예를 들어, Network 워크스페이스 적용 후 Cluster 워크스페이스가 자동으로 실행되도록 설정하여 계층적 인프라 배포를 자동화할 수 있습니다.
 
 </details>
 
@@ -51,24 +51,24 @@ Run Trigger를 사용하면 한 워크스페이스의 apply가 완료될 때 연
 **정답: B) 새 이미지 태그 감지 후 Git 저장소의 매니페스트 자동 업데이트**
 
 **설명:**
-FluxCD의 Image Automation Controller는 ImageRepository로 레지스트리를 모니터링하고, ImagePolicy에 정의된 규칙에 따라 새 이미지 태그를 감지합니다. 새 버전이 발견되면 ImageUpdateAutomation이 Git 저장소의 Kubernetes 매니페스트에서 이미지 태그를 자동으로 업데이트하고 커밋합니다.
+Image-reflector-controller가 ImageRepository를 스캔하고 ImagePolicy를 평가합니다. 별도의 image-automation-controller가 선택 결과와 Setters marker를 사용합니다. 새 버전이 발견되면 ImageUpdateAutomation이 Git 저장소의 Kubernetes 매니페스트에서 이미지 태그를 자동으로 업데이트하고 커밋합니다.
 
 </details>
 
 ### 4. ArgoCD와 FluxCD의 주요 차이점은 무엇인가요?
 
 - A) ArgoCD만 Helm을 지원
-- B) ArgoCD는 Pull 방식 UI 중심, FluxCD는 Git 기반 선언적 방식
+- B) 둘 다 선언적 reconciliation을 사용하며 UI와 API/컨트롤러 구성 방식이 다름
 - C) FluxCD만 멀티 클러스터 지원
 - D) 차이점 없음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) ArgoCD는 Pull 방식 UI 중심, FluxCD는 Git 기반 선언적 방식**
+**정답: B) 둘 다 선언적 reconciliation을 사용하며 UI와 API/컨트롤러 구성 방식이 다름**
 
 **설명:**
-ArgoCD는 강력한 웹 UI를 제공하고 Application CRD로 배포를 관리합니다. FluxCD는 UI 없이 GitRepository, Kustomization 같은 CRD들을 Git에 선언적으로 정의하여 관리합니다. ArgoCD는 운영자 친화적이고, FluxCD는 완전한 GitOps 원칙에 더 충실합니다.
+ArgoCD는 강력한 웹 UI를 제공하고 Application CRD로 배포를 관리합니다. FluxCD는 GitRepository, Kustomization 등 여러 CRD와 controller를 사용합니다. ArgoCD도 여러 컴포넌트로 구성됩니다. 어느 도구가 더 GitOps에 충실하거나 모든 환경에서 더 효율적이라고 단정할 수는 없습니다.
 
 </details>
 
@@ -102,7 +102,7 @@ atlantis.yaml의 autoplan 설정을 활성화하면 PR이 생성되거나 업데
 **정답: B) 중앙 집중식 사용자 인증 및 RBAC 관리**
 
 **설명:**
-IAM Identity Center(구 AWS SSO)를 ArgoCD와 연동하면 AWS 조직의 사용자/그룹을 ArgoCD 인증에 사용할 수 있습니다. SAML/OIDC 연동을 통해 사용자는 별도 계정 없이 SSO로 로그인하고, 그룹 멤버십에 따라 ArgoCD RBAC 권한이 자동 적용됩니다.
+IAM Identity Center(구 AWS SSO)를 ArgoCD와 연동하면 AWS 조직의 사용자/그룹을 ArgoCD 인증에 사용할 수 있습니다. 이 문서군은 공식 Identity Center 가이드의 SAML + Dex 경로를 사용합니다. 애플리케이션 할당과 실제 assertion 속성 전달은 다르며, 검증한 이메일 또는 지원되는 그룹 claim에 맞춰 ArgoCD RBAC를 따로 구성해야 합니다.
 
 </details>
 
@@ -123,20 +123,19 @@ GitRepository의 interval은 FluxCD가 Git 저장소의 변경 사항을 확인�
 
 </details>
 
-### 8. AIOps 기반 GitOps에서 트래픽 이상 탐지 시 가중치를 자동 변경하는 접근 방식의 핵심 구성요소가 아닌 것은 무엇인가요?
+### 8. AIOps 분석에서 이상 후보를 찾은 뒤 트래픽 변경 전에 필요한 것은 무엇인가요?
 
-- A) 메트릭 수집 시스템 (Prometheus)
-- B) 이상 탐지 알고리즘/ML 모델
-- C) 수동 kubectl 명령 실행
-- D) Git 저장소 자동 업데이트 메커니즘
+- A) 이상치 점수만 확인하고 모든 listener를 덮어쓰기
+- B) 데이터 신선도·대상 건강 상태·현재 설정·승인·용량을 검증하기
+- C) 데이터가 없으면 정상으로 보고 100/0을 복원하기
+- D) 승인 버튼을 보내면 승인된 것으로 간주하기
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 수동 kubectl 명령 실행**
+**정답: B) 데이터 신선도·대상 건강 상태·현재 설정·승인·용량을 검증하기**
 
-**설명:**
-AIOps 기반 자동화는 수동 개입 없이 동작해야 합니다. 핵심 구성요소는 메트릭 수집(Prometheus), 이상 탐지(ML 모델 또는 규칙 기반), 자동 대응(Git 저장소 업데이트 또는 Kubernetes API 호출)입니다. 수동 kubectl 명령은 자동화와 반대되는 개념입니다.
+**설명:** 이상 탐지는 실행 허가가 아닙니다. 누락·오래된 데이터는 정상의 증거가 아니며, 별도 실행기는 승인·만료·현재 revision과 대상의 상태를 확인해야 합니다. 본문의 분석 도구는 보고서만 생성하고 어떤 리소스도 변경하지 않습니다.
 
 </details>
 
@@ -157,7 +156,7 @@ External Secrets Operator(ESO)는 AWS Secrets Manager, HashiCorp Vault, Azure Ke
 
 </details>
 
-### 10. Terraform Cloud의 Sentinel Policy의 주요 용도는 무엇인가요?
+### 10. HCP Terraform의 Sentinel Policy의 주요 용도는 무엇인가요?
 
 - A) 로그 수집
 - B) 인프라 변경에 대한 정책 기반 규정 준수 검사
@@ -170,6 +169,6 @@ External Secrets Operator(ESO)는 AWS Secrets Manager, HashiCorp Vault, Azure Ke
 **정답: B) 인프라 변경에 대한 정책 기반 규정 준수 검사**
 
 **설명:**
-Sentinel은 Terraform Cloud/Enterprise의 정책 엔진입니다. terraform plan 결과를 검사하여 보안, 비용, 규정 준수 등의 정책을 적용합니다. 예를 들어, "퍼블릭 IP가 있는 리소스 금지", "특정 리전만 허용", "태그 필수" 같은 규칙을 정의하고 위반 시 apply를 차단할 수 있습니다.
+Sentinel은 HCP Terraform/Enterprise의 정책 엔진입니다. terraform plan 결과를 검사하여 보안, 비용, 규정 준수 등의 정책을 적용합니다. 예를 들어, "퍼블릭 IP가 있는 리소스 금지", "특정 리전만 허용", "태그 필수" 같은 규칙을 정의할 수 있습니다. 실제 차단 여부는 policy set의 적용 대상과 enforcement 설정에 달려 있으며, 예제 정책은 지정한 리소스·필드만 검사합니다.
 
 </details>

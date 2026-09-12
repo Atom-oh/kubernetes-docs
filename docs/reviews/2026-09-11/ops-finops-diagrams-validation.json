@@ -1,0 +1,66 @@
+{
+  "diagrams": [
+    {
+      "stem": "ko-ops-13-finops-cost-platform-0",
+      "specSha256": "3fbb0fa1f4f899078962fa1804ce5719b403deb9ea4fcf3baf6e842592b8477c",
+      "htmlSha256": "933229085b89423955169b3a1e9cc2861e32e9067756f1e66ef80b3ee9491767",
+      "pngSha256": "e70bcff5c74fe0a6f8157df7e8c0085d5889ef87f6e74b1a51196bf5f229a497",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-ops-13-finops-cost-platform-1",
+      "specSha256": "22b7cd9c43870ace885a34675d0db5799faa89173733b2c2465907ec3f6d35e4",
+      "htmlSha256": "96b04bda9ee89a9e87592e136f6f299a66852845b8c2df6d545ef6fbffe98916",
+      "pngSha256": "29d85a527e87a6598350202a86712e0bbdca734aedf7c24849b4da65b2ac6008",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-ops-13-finops-cost-platform-2",
+      "specSha256": "4b260b555d8414bc03110b9a86643492daa9994a7184e26b6d1d39ec68da8a05",
+      "htmlSha256": "73f898e08397de79a9362bfc41891632a3628cd3db8fa7965d40a0b703f25a2a",
+      "pngSha256": "edab3633c621fed4e6354f56e252285d137fbf189bbfe7f52e1d4dc5ed9fea5a",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-13-finops-cost-platform-0",
+      "specSha256": "78401d68461c0d7c0be0e9180f51dd4d0b0b92594a50f439ce34ef1e686fa41b",
+      "htmlSha256": "104a50b870803708528035fef2b7943504bcf0a1b4971e36c55c1afabdef583d",
+      "pngSha256": "4be93997305ce418359a554d6c4c2b21b6e42f912b4ef9c29e2a8b5be62ed212",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-13-finops-cost-platform-1",
+      "specSha256": "64802c38e3d2db9c52055f4278eacc5c2600163a0e4f6fa262c5a517c4a03fd2",
+      "htmlSha256": "ca1396854f1a5020b6ca26aa841c2486ec706cdbe83c6551d0b7e1d350a63ba8",
+      "pngSha256": "be5d94ca6314e190d72fd137e8bb3d180024ec4f0d2c7bb48cf3a5c4c56173ce",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-13-finops-cost-platform-2",
+      "specSha256": "6fb8dbb0ac0ff489e96728263a2c89a207404e6208718b2af386c3649fbc1af4",
+      "htmlSha256": "8ef043ed2ec28204cba332d9f49cd38644540b90ffc1f0b42e819fabd301fabf",
+      "pngSha256": "8f2bc68de78e1f5a0fdc9c970e359eb7e94e97c0306df331e0a24d250789d1bf",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    }
+  ],
+  "date": "2026-09-12",
+  "limits": "Local screenshots and current artifact receipts; production deployment pending full audit."
+}

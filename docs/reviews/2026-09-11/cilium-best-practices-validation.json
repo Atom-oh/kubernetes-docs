@@ -1,0 +1,154 @@
+{
+  "date": "2026-09-11",
+  "fullyReadOriginalLinesPerLocale": 794,
+  "validation": {
+    "helm": {
+      "base": {
+        "objects": 32,
+        "exit": 0
+      },
+      "security": {
+        "objects": 48,
+        "exit": 0
+      },
+      "maps": {
+        "objects": 32,
+        "exit": 0
+      },
+      "performance": {
+        "objects": 32,
+        "exit": 0
+      },
+      "coexist": {
+        "objects": 32,
+        "exit": 0
+      },
+      "coexist_kpr": {
+        "objects": 32,
+        "exit": 0
+      },
+      "l34": {
+        "objects": 28,
+        "exit": 0
+      },
+      "monitor": {
+        "objects": 35,
+        "exit": 0
+      },
+      "debug": {
+        "objects": 32,
+        "exit": 0
+      },
+      "eni": {
+        "objects": 32,
+        "exit": 0
+      }
+    },
+    "originalIgnoredKeys": "Old bpf map/clock/socket/FIB and enableAWSSecurityGroups fields render an unchanged ConfigMap.",
+    "originalAgentResourcesRejected": "coalesce.go:237: warning: skipped value for cilium.agent: Not a table.\nError: values don't meet the specifications of the schema(s) in the following chart(s):\ncilium:\n- at '/agent': got object, want boolean",
+    "originalDebugMapRejected": "Error: values don't meet the specifications of the schema(s) in the following chart(s):\ncilium:\n- at '/debug/verbose': got object, want null or string",
+    "schemas": 5,
+    "explicitJobLabels": [
+      "cilium-agent",
+      "cilium-envoy"
+    ],
+    "nativeEnvoy": {
+      "exit": 0,
+      "proto": [
+        {
+          "path": "reviews:reviews-listener"
+        },
+        {
+          "path": "reviews:default/reviews-v1"
+        },
+        {
+          "path": "reviews:default/reviews-v2"
+        }
+      ]
+    },
+    "istioNativeValidation": "\"/tmp/mesh-cilium-best-validation/istio.yaml\" is valid",
+    "codeParity": true,
+    "dashboardQuerySyntax": 4,
+    "limits": [
+      "No live AWS/Cilium/Istio deployment or CNI migration performed.",
+      "JSON Schema/native configuration validation does not establish policy equivalence or production capacity.",
+      "PromQL actual-series fixtures and rendered Markdown recorded separately."
+    ]
+  },
+  "prometheus": {
+    "version": "3.14.0",
+    "scenarios": 12,
+    "alertAssertions": 36,
+    "exit": 0
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/service-mesh/cilium-service-mesh/06-best-practices.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/service-mesh/cilium-service-mesh/06-best-practices.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/service-mesh/cilium-service-mesh/README.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/service-mesh/cilium-service-mesh/README.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "tests": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/kubernetes-docs-full-review/docs-test-cilium-best-clean.log"
+  },
+  "sources": [
+    "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/performance/tuning.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/upgrade.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/upgrade-warning.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/k8s-install-migration.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst",
+    "https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_envoy_admin_config.md",
+    "https://docs.kernel.org/networking/ip-sysctl.html",
+    "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_policies.html"
+  ],
+  "artifacts": "/tmp/mesh-cilium-best-validation",
+  "images": {
+    "visuallyReviewed": 6,
+    "removedIndexes": [
+      0,
+      1,
+      2
+    ],
+    "reason": "Unsourced latency values, incomplete CNI migration and blanket CNP-deletion rollback embedded in original figures; useful concepts retained as sourced prose/tables. Parent-owned diagrams need semantic regeneration if reused; foreign text only via source-sync."
+  },
+  "sourceDiscrepancy": {
+    "topic": "Cilium ENI IPv6",
+    "primaryGeneral": "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst",
+    "primaryEKS": "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst",
+    "finding": "General ENI reference documents IPv6 Beta, while EKS installation still says IPv4-only. Both READMEs and best-practices explicitly describe discrepancy and use IPv4 examples without denying Beta or asserting EKS IPv6 deployment validation."
+  },
+  "scope": {
+    "noAWSProvisioning": true,
+    "noLiveClusterValidation": true,
+    "noForeignProseEdits": true
+  }
+}

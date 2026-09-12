@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Strimzi-Managed Kafka Cluster Reconciliation Flow",
+    "title": "Strimzi reconciliation — simplified relationships",
     "output": "en-data-on-eks-kafka-readme-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -30,7 +30,7 @@
           "broker2",
           "controller"
         ],
-        "note": "The Operator creates and reconciles broker Pods and a KRaft controller Pod. There is no ZooKeeper."
+        "note": "Only representative Pods are shown. Design broker replication and controller quorum separately."
       },
       {
         "id": "storage",
@@ -43,7 +43,7 @@
           "pvc2",
           "pvc3"
         ],
-        "note": "Each Pod stores its log and metadata on a gp3 PVC provisioned by the EBS CSI driver."
+        "note": "This depicts per-Pod persistent volumes. Match StorageClass and the actual CSI/Auto Mode provisioner."
       }
     ],
     "locale": "en"
@@ -81,7 +81,7 @@
       "id": "strimzi",
       "type": "backend",
       "label": "Strimzi Operator",
-      "sublabel": "watches & reconciles CRDs",
+      "sublabel": "reconcile custom resources",
       "pos": [
         470,
         310
@@ -124,7 +124,7 @@
       "id": "controller",
       "type": "messagebus",
       "label": "Controller Pod",
-      "sublabel": "kraft-controller",
+      "sublabel": "example quorum member",
       "pos": [
         820,
         480
@@ -138,7 +138,7 @@
       "id": "pvc1",
       "type": "database",
       "label": "EBS gp3 PVC",
-      "sublabel": "ebs-csi",
+      "sublabel": "StorageClass provisioner",
       "pos": [
         120,
         630
@@ -152,7 +152,7 @@
       "id": "pvc2",
       "type": "database",
       "label": "EBS gp3 PVC",
-      "sublabel": "ebs-csi",
+      "sublabel": "StorageClass provisioner",
       "pos": [
         470,
         630
@@ -166,7 +166,7 @@
       "id": "pvc3",
       "type": "database",
       "label": "EBS gp3 PVC",
-      "sublabel": "ebs-csi",
+      "sublabel": "StorageClass provisioner",
       "pos": [
         820,
         630
@@ -250,25 +250,24 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "Declarative management",
+      "title": "Strimzi 1.2",
       "items": [
-        "Declare the desired state in the Kafka and KafkaNodePool CRDs",
-        "The Strimzi Operator creates and reconciles Pods, PVCs, Services, and Secrets"
+        "Kafka / KafkaNodePool: v1",
+        "Convert beta APIs first"
       ]
     },
     {
       "dot": "violet",
-      "title": "KRaft mode",
+      "title": "KRaft",
       "items": [
-        "A controller quorum manages metadata without ZooKeeper",
-        "As of Kafka 4.0, KRaft is the only metadata mechanism"
+        "Replica counts are illustrative"
       ]
     },
     {
       "dot": "slate",
       "title": "Storage",
       "items": [
-        "Every broker and controller Pod uses its own EBS gp3 PVC"
+        "State, storage and recovery policy"
       ]
     }
   ]

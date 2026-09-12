@@ -71,7 +71,9 @@ The official proxy overview also describes a built-in L4 proxy for development/t
 
 ### Cilium in the Same Decision
 
-Cilium combines an eBPF network datapath with proxies such as Envoy for L7 parsing/policy. It is not entirely proxy-free L7 networking. Cilium 1.20.1 mutual authentication is Beta and uses an out-of-band handshake; WireGuard/IPsec encryption is a separate requirement. See the [Cilium mesh guide](../../cilium-service-mesh/README.md) for its actual feature and Cluster Mesh constraints.
+Cilium combines an eBPF network datapath with proxies such as Envoy for L7 parsing/policy. It is not entirely proxy-free L7 networking. Cilium 1.20.1 out-of-band mutual authentication is Beta and uses an out-of-band handshake; WireGuard/IPsec encryption is a separate requirement. See the [Cilium mesh guide](../../cilium-service-mesh/README.md) for its actual feature and Cluster Mesh constraints.
+
+Cilium 1.20.1 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
 
 ## Performance Evidence
 

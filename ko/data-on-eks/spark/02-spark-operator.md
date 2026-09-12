@@ -1,259 +1,533 @@
 # Part 2: Spark Operator
 
-> **지원 버전**: Kubernetes 1.34+ (apache/spark-kubernetes-operator 0.9.0) 또는 Kubernetes 1.28+ (kubeflow/spark-operator 2.5.0)\
-> **마지막 업데이트**: 2026년 7월 15일
+> **검토 기준**: Kubeflow operator/chart 2.5.2; Apache operator 1.0.0 / chart 1.8.0\
+> **예제 런타임**: Kubeflow는 controller 제출 런타임과 맞춘 Spark 4.0.4, Apache 예제는 Spark 4.2.0\
+> **최종 검토**: 2026년 9월 12일
 
-## 실습 환경 설정
+## 별개의 프로젝트와 API
 
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+두 프로젝트는 독립적으로 관리되며 같은 매니페스트를 서로 바꿔 사용하는 구현체가
+아닙니다. 필요한 API·수명주기, 기존 리소스와 런타임 조합·운영 시험으로 선택합니다.
+오래되었다거나 채택이 많다는 근거 없는 주장으로 호환성을 보장하지 않습니다.
 
-### 필수 도구
+| 항목 | Kubeflow Spark Operator | Apache Spark Kubernetes Operator |
+| --- | --- | --- |
+| 검토 릴리스 | 2.5.2 | 1.0.0 |
+| Helm chart | 2.5.2 | **1.8.0**; chart와 앱 버전이 다름 |
+| 여기서 사용하는 API | sparkoperator.k8s.io/v1beta2 | spark.apache.org/v1 |
+| 주요 리소스 | SparkApplication·ScheduledSparkApplication, 별도 SparkConnect API | SparkApplication·SparkCluster |
+| 설정 모델 | type/mode/driver/executor/restartPolicy | runtimeVersions/driverSpec/executorSpec/applicationTolerations/sparkConf |
+| 해당 chart의 admission 방식 | Mutating·validating webhook | 같은 방식의 Pod mutating webhook을 설치하지 않음 |
 
-* kubectl v1.28 이상 (apache/spark-kubernetes-operator를 사용할 경우 v1.34 이상)
-* Helm v3.12 이상
-* 작동하는 Kubernetes 클러스터 (Amazon EKS 권장)
-* S3 접근 권한이 부여된 IRSA 역할 또는 EKS Pod Identity 연결 (입력 데이터 읽기와 작업 결과 쓰기용)
+Apache의 SparkCluster는 상주 Spark cluster를 관리할 수 있으며 네이티브 Kubernetes
+SparkApplication과 다른 실행 모델입니다. Comet/Gluten 예제도 적합한 plugin
+바이너리·이미지·classpath·설정과 런타임·아키텍처 호환성을 요구합니다.
+Operator 설치만으로 가속이 켜지거나 특정 Operator가 항상 더 적합해지지는 않습니다.
 
-## 두 개의 Operator, 하나의 선택
+두 API group은 존재할 수 있지만 공존에는 watch 범위·이름·webhook selector·RBAC를
+설계해야 합니다. 아래 실습은 **설치 경로 하나**를 선택합니다. 모호한 sparkapp
+약어 대신 API group까지 지정한 리소스 이름을 사용합니다.
 
-`spark-submit --master k8s://...`를 직접 실행하는 방식은 단발성 작업에는 문제가 없지만, 상태를 Kubernetes 네이티브하게 추적하거나 실패한 드라이버를 재시도하거나 Git에서 작업 스펙을 선언적으로 버전 관리할 방법을 제공하지 않습니다. Spark Operator는 Spark 애플리케이션을 CRD로 감싸서 이 공백을 채웁니다. 원하는 작업을 `kubectl apply`로 선언하면 Operator가 제출, 재시도, 상태 보고를 대신 처리합니다.
+## Reconciliation이 더하는 기능
 
-2026년 중반 기준으로 활발히 관리되는 옵션이 두 가지 존재하며, 둘 중 하나를 고르는 것은 형식적인 선택이 아니라 실제 의사결정입니다.
+spark-submit도 완료를 기다리고 Pod·로그·UI·event log로 상태를 확인할 수 있으며
+스크립트·properties·template을 Git에서 관리할 수 있습니다. 본질적으로
+fire-and-forget만 가능한 도구는 아닙니다. 그 자체로 Operator 관리
+SparkApplication CR·스케줄 controller·자동 애플리케이션 재시도를 추가하지는 않습니다.
 
-### apache/spark-kubernetes-operator
+Kubeflow는 의도적으로 spark.kubernetes.submission.waitAppCompletion=false로
+제출한 뒤 Pod·애플리케이션 상태를 조정합니다. Executor Pod도 관찰하고 수명주기
+정리를 수행하므로 “driver에만 관여한다”는 설명은 틀립니다. Executor 용량 요청과
+Spark task 할당은 여전히 Spark driver의 역할입니다.
 
-2023년 11월 SPIP(Spark Improvement Proposal)로 제안되어 Apache Software Foundation 거버넌스 하에 처음부터 새로 만들어진 Operator입니다 — 기존 Kubeflow 커뮤니티 프로젝트를 되살린 것이 아니라 완전히 새로운 프로젝트입니다. 최신 릴리스인 0.9.0(2026년 5월)은 Kubernetes v1.34~v1.36과 Spark 3.5/4.0/4.1을 지원하며(4.2.0 프리뷰까지 테스트됨), Spark 프로젝트 자체가 만든 Operator이다 보니 Spark 4의 가속 엔진인 Apache DataFusion Comet, Apache Gluten과의 네이티브 연동을 별도의 접착 코드 없이 제공합니다.
+## 작업 namespace와 ID 준비
 
-### kubeflow/spark-operator
+클러스터와 호환되는 kubectl·Helm을 사용합니다. 이 예제 chart는 Kubernetes 1.36
+기준으로 렌더링했으며 Apache의 Spark 4.2 작업은 Kubernetes 1.34+가 필요합니다.
+오래된 README 표를 현재 권장 최소 Kubernetes 버전으로 해석하지 않습니다.
 
-더 오래되었고 더 성숙하며 훨씬 널리 채택된 커뮤니티 Operator입니다. 여전히 활발히 개발되고 있으며, v2.5.0에서는 alpha 기능 게이트, 네임스페이스 라벨 기반 감시(watch), Python API 자동 생성, SparkConnect 웹훅 검증이 추가되었으며, 수년간 Helm을 주요 설치 방식으로 배포해 왔습니다.
+Kubeflow controller의 고정 Dockerfile은 제출용 Spark **4.0.4**를 사용합니다.
+실습도 4.0.4로 맞췄으며 Part 1의 직접 Spark 4.2 제출과 구분합니다.
+SparkApplication의 sparkVersion이 controller 안의 Spark를 업그레이드하지는
+않습니다. 다른 제출자·작업 런타임 조합은 명시적으로 검증합니다.
 
-### 어떤 것을 선택해야 할까?
+어느 chart든 먼저 job-rbac.yaml을 저장·적용합니다. Part 1과 같은 namespace 범위
+작업 권한이며 driver·executor ID를 분리합니다. 같은 이름을 이미 사용하면 기존
+리소스를 검토합니다.
 
-| 고려사항 | apache/spark-kubernetes-operator | kubeflow/spark-operator |
-|---|---|---|
-| 거버넌스 | Apache Software Foundation, Spark 프로젝트 네이티브 | CNCF 인접 커뮤니티 프로젝트 |
-| 성숙도/채택도 | 신생, 설치 기반이 작음 | 성숙하고 프로덕션에 널리 배포됨 |
-| Spark 버전 정합성 | Spark 4 가속 기능(Comet, Gluten)에 대한 1급 지원 | Spark 3.x/4.x 전반을 폭넓게 지원(가속 특화는 아님) |
-| Kubernetes 최소 버전 | 1.34+ | 1.28+ |
-| 적합한 상황 | 이미 Spark 4와 DataFusion Comet/Gluten으로 표준화하려는 팀 | 검증된 Operator가 필요하거나 이미 Kubeflow 생태계를 사용하는 팀 |
-
-둘 중 어느 쪽이 절대적으로 "더 우월"하지는 않습니다. 이 문서는 두 가지를 모두 소개하지만, 오늘날 더 흔하게 배포되는 kubeflow/spark-operator를 기준으로 실습 예제를 진행합니다.
-
-## `spark-submit` 대비 Operator가 주는 것
-
-`spark-submit`은 fire-and-forget 방식입니다. 드라이버 Pod가 한 번 생성되면 "이건 실패 시 재시도되어야 할 Spark 작업"이라는 개념 자체가 Kubernetes에 존재하지 않습니다. 드라이버가 죽어도 아무것도 재제출하지 않고, 상태를 확인할 CRD도 없습니다.
-
-Operator는 두 가지 방식으로 이 문제를 해결합니다.
-
-* **라이프사이클 관리** — `SparkApplication`을 제출하면 제어권이 Operator로 넘어가고, Operator는 드라이버 Pod를 감시하며 스펙에 선언된 `restartPolicy`(`Never`, `OnFailure`, `Always`, 재시도 횟수와 백오프 간격까지 설정 가능)를 적용합니다. `SUBMITTED`, `RUNNING`, `COMPLETED`, `FAILED` 같은 작업 상태는 CR의 `.status` 필드에 그대로 노출되므로, `kubectl get sparkapplication` 한 번으로 `spark-submit`만으로는 알 수 없었던 정보를 확인할 수 있습니다.
-* **Mutating Admission Webhook** — 두 Operator 모두 드라이버/executor Pod 생성 요청을 가로채는 mutating admission webhook을 등록하고, `spec.driver`/`spec.executor`에 선언된 커스터마이징(추가 볼륨, 사이드카, affinity 규칙, secret 마운트, 환경 변수)을 주입합니다. 그래서 `--conf spark.kubernetes.driver.podTemplateFile`로 pod 템플릿을 직접 만들어 `spark-submit`에 전달할 필요 없이, `SparkApplication` YAML에 볼륨 마운트를 바로 선언할 수 있는 것입니다.
-
-## 설치
-
-### 방법 1: kubeflow/spark-operator (Helm, 권장)
-
-```bash
-# Spark Operator Helm 저장소 추가
-helm repo add spark-operator https://kubeflow.github.io/spark-operator
-helm repo update
-
-# spark-operator 네임스페이스에 설치
-helm install spark-operator spark-operator/spark-operator \
-  --namespace spark-operator \
-  --create-namespace \
-  --version 2.5.0 \
-  --set webhook.enable=true
-
-# 설치 확인
-kubectl get pods -n spark-operator
-kubectl get crd | grep sparkoperator
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spark-jobs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-executor
+  namespace: spark-jobs
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - services
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - delete
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-driver
+  namespace: spark-jobs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: spark-driver
+subjects:
+- kind: ServiceAccount
+  name: spark-driver
+  namespace: spark-jobs
 ```
 
-`--set webhook.enable=true`는 위에서 설명한 mutating admission webhook을 활성화합니다. 이 설정 없이는 `spec.driver`/`spec.executor`에 선언한 pod 템플릿 커스터마이징이 조용히 무시됩니다.
-
-### 방법 2: apache/spark-kubernetes-operator (Helm)
-
-클러스터가 Kubernetes 1.34+ 이상이고 Spark 4/DataFusion Comet에 대한 1급 지원이 필요하다면 ASF Operator를 대신 설치합니다.
-
 ```bash
-# ASF Spark Kubernetes Operator Helm 저장소 추가
-helm repo add spark-kubernetes-operator https://apache.github.io/spark-kubernetes-operator
-helm repo update
-
-# spark-operator 네임스페이스에 설치
-# 차트 버전 1.7.0이 앱 버전 0.9.0을 패키징합니다 -- Operator의 Helm 차트 버전과
-# 앱 버전은 별도로 관리되므로, 여기서는 차트 버전을 지정합니다.
-helm install spark-kubernetes-operator spark-kubernetes-operator/spark-kubernetes-operator \
-  --namespace spark-operator \
-  --create-namespace \
-  --version 1.7.0
-
-# 설치 확인
-kubectl get pods -n spark-operator
-kubectl get crd | grep spark.apache.org
+kubectl apply -f job-rbac.yaml
 ```
 
-두 Operator는 같은 네임스페이스를 동시에 감시하도록 설계되지 않았습니다 — 클러스터당(또는 의도적으로 나눠 쓴다면 네임스페이스당) 하나만 선택하세요. ASF Operator는 CRD를 kubeflow의 `sparkoperator.k8s.io`가 아닌 `spark.apache.org` API 그룹 아래에 정의합니다. 이 문서의 나머지 부분은 실제 예제가 가장 많이 존재하는 kubeflow/spark-operator의 CRD를 기준으로 설명합니다.
+SparkPi는 AWS 데이터 권한이 필요하지 않습니다. Operator의 API 권한, driver의
+API 권한과 AWS 데이터 권한은 별개입니다.
 
-## 핵심 CRD
+## 경로 A: Kubeflow 설치
 
-### SparkApplication
+kubeflow-values.yaml로 저장합니다. 기본 chart는 설치 namespace가 아닌 default를
+감시하므로 **감시 namespace와 작업 namespace를 일치**시켜야 합니다.
+여기서는 spark-jobs에서 작업을 실행하고 앞에서 준비한 작업 RBAC를 재사용합니다.
+리소스와 제출 동시성은 측정·조정할 실습 시작값입니다.
+
+```yaml
+spark:
+  jobNamespaces:
+  - spark-jobs
+  jobNamespaceSelector: ''
+  serviceAccount:
+    create: false
+  rbac:
+    create: false
+webhook:
+  enable: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: '1'
+      memory: 512Mi
+controller:
+  workers: 2
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: '2'
+      memory: 2Gi
+```
+
+2.5.2의 webhook.enable 기본값은 이미 **true**입니다. 명시는 선택을 문서화하며
+플래그를 생략하면 꺼진다는 뜻이 아닙니다. 일부 설정은 admission, 다른 설정은
+네이티브 Spark 설정으로 변환하므로 webhook을 끈다고 모든 설정이 무시되지는 않습니다.
+
+아래 checksum은 **GitHub release asset** 메타데이터와 다운로드한 파일이
+일치하는 값입니다. 검토 당시 repository index의 digest가 달라 직접 검증한
+릴리스 archive로 설치하도록 작성했습니다.
+
+```bash
+# Fresh installation after reviewing/applying job-rbac.yaml.
+curl --fail --location --silent --show-error 'https://github.com/kubeflow/spark-operator/releases/download/v2.5.2/spark-operator-2.5.2.tgz' -o spark-operator-2.5.2.tgz
+printf '%s\n' '762be5b8632ecfe12eb20fff54450ddae0427f09506422107c508a0d1d38655b  spark-operator-2.5.2.tgz' | sha256sum --check -
+helm install spark-operator ./spark-operator-2.5.2.tgz \
+  --namespace spark-operator --create-namespace \
+  --values kubeflow-values.yaml --wait --timeout 5m
+kubectl -n spark-operator get deployments,pods
+```
+
+새 설치용 예제입니다. 업그레이드는 CRD 이전 절차를 검토합니다. 일반적인 Helm
+upgrade는 crds/의 CRD를 자동 교체하지 않으며 이 chart의 hook.upgradeCrd는
+명시적 선택입니다. CRD 삭제는 해당 custom resource에도 영향을 주므로 일상적인
+업그레이드 절차로 사용하지 않습니다.
+
+EKS에서는 control plane→webhook Service/endpoint, 서버 인증서·CA bundle과
+selector를 확인합니다. 이 chart의 서버 포트는 9443이며 failurePolicy=Fail에서
+webhook 장애가 일치하는 admission을 막을 수 있습니다. Deployment Ready만으로
+Spark 작업의 admission 성공을 보장하지 않습니다.
+
+## Kubeflow SparkApplication
+
+spark-pi.yaml로 저장합니다. 불명확한 S3 객체나 없는 ETL 클래스 대신 고정 이미지에
+들어 있는 실제 예제를 사용합니다.
 
 ```yaml
 apiVersion: sparkoperator.k8s.io/v1beta2
 kind: SparkApplication
 metadata:
-  name: word-count
-  namespace: spark-operator
+  name: spark-pi
+  namespace: spark-jobs
 spec:
   type: Scala
   mode: cluster
-  image: "apache/spark:3.5.3"
+  image: apache/spark:4.0.4@sha256:94ad730f7510002d8a1615de269f27cdeca4d4eef51657384db3fa9246b5a4d8
   imagePullPolicy: IfNotPresent
-  mainClass: org.apache.spark.examples.JavaWordCount
-  mainApplicationFile: "local:///opt/spark/examples/jars/spark-examples.jar"
+  mainClass: org.apache.spark.examples.SparkPi
+  mainApplicationFile: local:///opt/spark/examples/jars/spark-examples_2.13-4.0.4.jar
   arguments:
-    - "s3a://my-bucket/input/sample.txt"
-  sparkVersion: "3.5.3"
+  - '10'
+  sparkVersion: 4.0.4
   restartPolicy:
     type: OnFailure
     onFailureRetries: 3
-    onFailureRetryInterval: 10
+    onFailureRetryInterval: 30
     onSubmissionFailureRetries: 3
-    onSubmissionFailureRetryInterval: 20
+    onSubmissionFailureRetryInterval: 30
   driver:
     cores: 1
-    memory: "1g"
+    coreLimit: '1'
+    memory: 1g
     serviceAccount: spark-driver
+    podSecurityContext: &id001
+      runAsNonRoot: true
+      runAsUser: 185
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext: &id002
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
   executor:
     cores: 1
+    coreLimit: '1'
     instances: 2
-    memory: "2g"
+    memory: 1g
+    serviceAccount: spark-executor
+    terminationGracePeriodSeconds: 60
+    podSecurityContext: *id001
+    securityContext: *id002
 ```
 
-`type`과 `mode`는 각각 `spark-submit`의 언어/`--class` 지정과 `--deploy-mode` 플래그에 대응합니다. Operator의 진짜 가치는 `restartPolicy`에서 나옵니다 — `OnFailure`와 `onFailureRetries`를 조합하면 순수 `spark-submit`에는 존재하지 않는 드라이버 자동 재제출이 가능해집니다.
+이 버전은 driver.serviceAccount와 **executor.serviceAccount 모두** 지원합니다.
+재시도는 컨테이너 하나의 제자리 재시작이 아닌 제출·애플리케이션 시도에 적용됩니다.
+재실행은 출력 작업을 반복할 수 있으므로 실제 작업에는 멱등성·트랜잭션을 설계합니다.
 
-### ScheduledSparkApplication
+Executor grace 필드는 Kubeflow Pod mutator가 적용하며 Part 1에서 확인한 Spark
+4.2의 native template 덮어쓰기와 다른 경로입니다. Decommission·custom lifecycle을
+사용한다면 Operator·Spark·webhook 조합이 실제 Pod에 어떻게 반영되는지 확인합니다.
 
-일별 ETL 작업처럼 반복 실행이 필요한 작업이라면, `spark-submit`을 호출하는 별도의 `CronJob` 같은 외부 스케줄러 없이 `ScheduledSparkApplication`이 `SparkApplication` 템플릿을 cron 스케줄로 감쌉니다.
+```bash
+kubectl apply -f spark-pi.yaml
+kubectl -n spark-jobs get sparkapplications.sparkoperator.k8s.io spark-pi \
+  -o jsonpath='{.status.applicationState.state}{"\n"}'
+kubectl -n spark-jobs describe sparkapplications.sparkoperator.k8s.io spark-pi
+DRIVER_POD="$(kubectl -n spark-jobs get sparkapplications.sparkoperator.k8s.io spark-pi \
+  -o jsonpath='{.status.driverInfo.podName}')"
+: "${DRIVER_POD:?Driver pod name is not available yet; inspect submission events}"
+kubectl -n spark-jobs logs "$DRIVER_POD"
+```
+
+제출 실패를 포함한 현재 status·event를 확인한 뒤 실제 driver Pod 이름으로 로그를
+봅니다. kubectl get -w는 중단할 때까지 계속되는 watch이지 성공까지 기다리는 유한
+단계가 아닙니다. COMPLETED는 프로세스 완료 상태이며 외부 데이터셋의 정확성 증거는 아닙니다.
+
+### UTC를 명시한 스케줄
+
+scheduled-spark-pi.yaml로 저장합니다. 같은 Pi 예제를 예약하며 실제 ETL은 패키징·
+검증한 프로그램으로 바꿉니다.
 
 ```yaml
 apiVersion: sparkoperator.k8s.io/v1beta2
 kind: ScheduledSparkApplication
 metadata:
-  name: daily-etl
-  namespace: spark-operator
+  name: daily-spark-pi
+  namespace: spark-jobs
 spec:
-  schedule: "0 2 * * *"
+  schedule: 0 2 * * *
+  timeZone: UTC
   concurrencyPolicy: Forbid
+  successfulRunHistoryLimit: 2
+  failedRunHistoryLimit: 2
   template:
     type: Scala
     mode: cluster
-    image: "apache/spark:3.5.3"
-    mainClass: com.example.DailyEtlJob
-    mainApplicationFile: "s3a://my-bucket/jars/daily-etl.jar"
-    sparkVersion: "3.5.3"
+    image: apache/spark:4.0.4@sha256:94ad730f7510002d8a1615de269f27cdeca4d4eef51657384db3fa9246b5a4d8
+    imagePullPolicy: IfNotPresent
+    mainClass: org.apache.spark.examples.SparkPi
+    mainApplicationFile: local:///opt/spark/examples/jars/spark-examples_2.13-4.0.4.jar
+    arguments:
+    - '10'
+    sparkVersion: 4.0.4
     restartPolicy:
       type: OnFailure
-      onFailureRetries: 2
+      onFailureRetries: 3
       onFailureRetryInterval: 30
+      onSubmissionFailureRetries: 3
+      onSubmissionFailureRetryInterval: 30
     driver:
       cores: 1
-      memory: "2g"
+      coreLimit: '1'
+      memory: 1g
       serviceAccount: spark-driver
+      podSecurityContext: &id001
+        runAsNonRoot: true
+        runAsUser: 185
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext: &id002
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
     executor:
-      cores: 2
-      instances: 4
-      memory: "4g"
+      cores: 1
+      coreLimit: '1'
+      instances: 2
+      memory: 1g
+      serviceAccount: spark-executor
+      terminationGracePeriodSeconds: 60
+      podSecurityContext: *id001
+      securityContext: *id002
 ```
 
-`concurrencyPolicy: Forbid`는 이전 스케줄 실행이 끝나지 않았다면 새 실행을 건너뛰도록 합니다 — 실행이 겹치면 결과물이 오염될 수 있는 작업에 유용합니다.
-
-## 동작 방식
-
-![kubectl apply로 생성된 SparkApplication CR을 Operator Controller가 감시하며 Webhook 주입, Driver/Executor Pod 생성, Spark 작업 실행을 거쳐 진행 상황이 CR .status에 기록되고 다시 Controller의 감시 루프로 돌아오는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-spark-02-spark-operator-0.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-spark-02-spark-operator-0.html)
-
-Operator의 컨트롤 루프는 드라이버 Pod까지만 직접 관여합니다. 드라이버 자신은 순수 `spark-submit`과 마찬가지로 Kubernetes API에 직접 요청해 자신의 executor를 생성합니다. Operator가 더해주는 가치는 그 주변 계층입니다 — 제출, 웹훅 기반 pod 커스터마이징, 재시작 처리, 상태 보고.
-
-## EKS 배포 고려사항
-
-### 1. IRSA를 통한 S3 접근
-
-EKS에서 Spark 작업은 보통 로컬/EBS 스토리지가 아니라 S3에서 데이터를 읽고 씁니다. 따라서 드라이버와 executor Pod 모두 AWS 자격 증명이 필요합니다. 고정 키를 심는 대신, 전용 ServiceAccount에 IAM 역할을 연결(annotate)하고 이를 `SparkApplication` 스펙에서 참조합니다.
-
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: spark-driver
-  namespace: spark-operator
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/spark-s3-access
-```
-
-```yaml
-spec:
-  driver:
-    serviceAccount: spark-driver
-  executor:
-    serviceAccount: spark-driver
-```
-
-EKS Pod Identity webhook(또는 IRSA 대신 EKS Pod Identity 연결을 사용한다면 해당 메커니즘)이 드라이버와 executor Pod 모두에 임시 AWS 자격 증명을 자동으로 주입합니다 — `spark.hadoop.fs.s3a.access.key` 같은 고정 자격 증명을 작업 스펙 어디에도 넣을 필요가 없습니다.
-
-### 2. 셔플/스크래치 스토리지
-
-Spark의 셔플과 spill 연산은 `spark.local.dir`에 기록되며, 별도로 설정하지 않으면 노드의 루트 EBS 볼륨 위에 있는 `emptyDir` 볼륨이 기본값으로 사용됩니다. 셔플이 많은 작업은 이 공간을 쉽게 소진하거나 처리량에서 병목을 겪을 수 있습니다. 별도의 `emptyDir`(가능하다면 인스턴스 스토어 NVMe가 있는 노드로)를 마운트하는 것이 좋습니다.
-
-```yaml
-spec:
-  driver:
-    volumes:
-      - name: spark-local-dir
-        emptyDir: {}
-  executor:
-    volumes:
-      - name: spark-local-dir
-        emptyDir: {}
-```
-
-이렇게 `spec.driver`/`spec.executor`에 선언한 `volumes` 블록이 실제 실행 중인 Pod에 반영되는 것도 mutating admission webhook 덕분입니다.
-
-### 3. 모니터링 연동
-
-kubeflow/spark-operator의 Helm 차트는 드라이버/executor JVM에 JMX Prometheus Exporter Java 에이전트를 기본으로 연결해주므로, Spark 이미지에 별도로 `-javaagent` 플래그를 추가하지 않아도 태스크 수, 셔플 읽기/쓰기, GC 정지 시간 같은 Spark 내부 메트릭을 Prometheus 형식으로 노출할 수 있습니다. 이 절에서는 이러한 연동 지점이 존재한다는 사실만 짚고, 전체 메트릭 설정과 권장 대시보드는 [Part 5: 모범 사례](./05-best-practices.md)에서 다룹니다.
-
-## 배포 절차
+2.5.2는 timeZone 필드를 지원하며 기본값은 controller의 Local입니다.
+예제는 **UTC 02:00**입니다. Forbid는 이 예약 리소스의 이전 실행을 확인할 뿐 재시도·
+수동 실행·다른 scheduler의 중복 효과까지 막지는 않습니다. History limit은 자식 실행
+기록의 보존 수이며 데이터 백업이 아닙니다.
 
 ```bash
-# 1. Operator 실행 확인
-kubectl get pods -n spark-operator
-
-# 2. SparkApplication 적용
-kubectl apply -f word-count.yaml -n spark-operator
-
-# 3. 상태 확인 (COMPLETED 상태가 될 때까지 대기)
-kubectl get sparkapplication -n spark-operator -w
-kubectl describe sparkapplication word-count -n spark-operator
-
-# 4. 드라이버 로그 확인
-kubectl logs word-count-driver -n spark-operator
-
-# 5. 정리
-kubectl delete sparkapplication word-count -n spark-operator
+kubectl apply -f scheduled-spark-pi.yaml
+kubectl -n spark-jobs get scheduledsparkapplications.sparkoperator.k8s.io daily-spark-pi -o yaml
+# Stop future schedule triggers; this does not itself terminate an active child run.
+kubectl -n spark-jobs patch scheduledsparkapplications.sparkoperator.k8s.io daily-spark-pi \
+  --type=merge -p '{"spec":{"suspend":true}}'
 ```
 
-`kubectl describe sparkapplication`은 `kubectl get pods`와 드라이버 로그를 일일이 조합해야 알 수 있던 드라이버/executor 상태 전이와 이벤트를 한 번에 보여줍니다 — 이것이 순수 `spark-submit`에는 없는 CRD 네이티브 상태 추적입니다.
+## 경로 B: Apache Operator
+
+실습에서 **경로 A 대신** 선택할 때 apache-values.yaml을 사용합니다.
+spark-jobs를 감시하고 Operator는 namespace Role을 사용하며 기존 작업 ID를
+재사용합니다. Chart 주석에 오래된 속성명이 있을 수 있지만 렌더링된 설정은
+spark.kubernetes.operator.watchedNamespaces=spark-jobs입니다.
+
+```yaml
+workloadResources:
+  namespaces:
+    create: false
+    overrideWatchedNamespaces: true
+    data:
+    - spark-jobs
+  serviceAccount:
+    create: false
+  role:
+    create: false
+  clusterRole:
+    create: false
+  roleBinding:
+    create: false
+operatorRbac:
+  clusterRole:
+    create: false
+  clusterRoleBinding:
+    create: false
+  role:
+    create: true
+  roleBinding:
+    create: true
+```
+
+```bash
+# Fresh installation after reviewing/applying job-rbac.yaml.
+curl --fail --location --silent --show-error 'https://github.com/apache/spark-kubernetes-operator/releases/download/1.0.0/spark-kubernetes-operator-1.8.0.tgz' -o spark-kubernetes-operator-1.8.0.tgz
+printf '%s\n' '7536a8849b8a7c242283d0e393b5e0ec56365f34ec93717b158c76dfa1036a06  spark-kubernetes-operator-1.8.0.tgz' | sha256sum --check -
+helm install asf-spark-operator ./spark-kubernetes-operator-1.8.0.tgz \
+  --namespace spark-operator-asf --create-namespace \
+  --values apache-values.yaml --wait --timeout 5m
+kubectl -n spark-operator-asf get deployments,pods
+```
+
+Apache 릴리스의 수명주기·실행 이미지는 Kubeflow와 다릅니다. 공개된 이미지를
+사용하며 작업의 Java 버전으로 Operator 이미지의 Java 요구사항까지 추정하지 않습니다.
+
+다음 v1 예제는 Spark 4.2.0을 사용하고 잠시 리소스를 유지해 관찰할 수 있게 합니다.
+
+```yaml
+apiVersion: spark.apache.org/v1
+kind: SparkApplication
+metadata:
+  name: spark-pi-asf
+  namespace: spark-jobs
+spec:
+  runtimeVersions:
+    sparkVersion: 4.2.0
+  mainClass: org.apache.spark.examples.SparkPi
+  jars: local:///opt/spark/examples/jars/spark-examples.jar
+  driverArgs:
+  - '10'
+  sparkConf:
+    spark.kubernetes.namespace: spark-jobs
+    spark.kubernetes.container.image: spark:4.2.0-scala2.13-java21-ubuntu
+    spark.kubernetes.authenticate.driver.serviceAccountName: spark-driver
+    spark.kubernetes.authenticate.executor.serviceAccountName: spark-executor
+    spark.executor.instances: '2'
+  applicationTolerations:
+    resourceRetainPolicy: Always
+    ttlAfterStopMillis: 600000
+```
+
+ttlAfterStopMillis: 600000은 마지막 종료 후 controller가 애플리케이션과 연관
+리소스를 정리하는 TTL입니다. resourceRetainPolicy: Always는 Operator가 만든
+리소스를 정리 시점까지 유지하지만 driver 자체의 executor/service 삭제 설정을
+덮어쓰거나 재시도 간 리소스 보존을 보장하지 않습니다.
+
+
+```bash
+kubectl apply -f apache-spark-pi.yaml
+kubectl -n spark-jobs get sparkapplications.spark.apache.org spark-pi-asf -o yaml
+```
+
+이 릴리스는 이전 v1beta1도 제공하지만 새 예제는 v1을 사용합니다.
+Kubeflow 리소스의 apiVersion만 바꿔서는 필드·상태·재시도·보존 정책이 이전되지 않습니다.
+Kubeflow ScheduledSparkApplication이나 restartPolicy 스키마를 Apache API에
+그대로 적용하지 않습니다.
+
+## Pod 생성 주변의 동작
+
+![Kubeflow가 Kubernetes admission을 거쳐 Spark 작업을 제출하고 driver·executor 상태를 관찰해 application status를 갱신하는 흐름.](../../.gitbook/assets/ko-data-on-eks-spark-02-spark-operator-0.png)
+
+[인터랙티브 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-spark-02-spark-operator-0.html)
+
+Webhook은 Kubernetes admission 과정이며 노드 배치나 Spark task 스케줄링을
+대체하지 않습니다. 그림은 **Kubeflow**를 설명하며 두 Operator의 API·구조를
+같은 것으로 취급하지 않습니다.
+
+## 스토리지·인증·메트릭
+
+### 스크래치 볼륨의 올바른 위치
+
+Kubeflow에서 볼륨은 **spec.volumes**, 마운트는 driver/executor 아래에 둡니다.
+spec.driver.volumes·spec.executor.volumes는 이 CRD의 필드가 아닙니다.
+다음은 완전한 Kubeflow 예제에 적용할 merge patch입니다.
+
+```yaml
+spec:
+  volumes:
+  - name: spark-local-dir-scratch
+    emptyDir:
+      sizeLimit: 8Gi
+  driver:
+    volumeMounts:
+    - name: spark-local-dir-scratch
+      mountPath: /var/data/spark-local
+  executor:
+    volumeMounts:
+    - name: spark-local-dir-scratch
+      mountPath: /var/data/spark-local
+```
+
+```bash
+kubectl -n spark-jobs patch sparkapplications.sparkoperator.k8s.io spark-pi \
+  --type=merge --patch-file scratch.patch.yaml
+```
+
+실제 작업 실행 전에 볼륨을 구성합니다. 애플리케이션 변경은 재제출을 유발할 수
+있습니다. JSON merge patch는 배열을 교체하므로 기존 볼륨·mount가 있는 작업에서는
+기존 항목도 합쳐서 patch를 작성합니다.
+
+
+spark-local-dir- 접두사는 특별 처리됩니다. Operator가 네이티브 Spark 볼륨 설정으로
+변환하고 일반 Pod volume mutator는 이를 건너뜁니다. 다른 사용자 볼륨은 webhook
+경로를 사용할 수 있습니다. 모든 필드가 한 방식으로 구현된다고 가정하지 않습니다.
+
+emptyDir 하나를 더 만든다고 별도 물리 디스크나 NVMe를 선택하지는 않습니다.
+Memory 방식이 아니면 노드에 구성된 파일시스템을 사용합니다. Kubelet·컨테이너
+파일시스템은 EBS·instance store 등 실제 구성에 달려 있습니다. 노드 저장소나
+적절한 영속 볼륨을 구성·확인하고 ephemeral-storage request/limit과 disk pressure를
+계획합니다.
+
+### IRSA와 Pod Identity 구분
+
+S3 작업에는 driver/executor의 실제 데이터 권한·신뢰/연결과 호환 Hadoop S3A/AWS
+라이브러리·credential provider가 필요합니다. 기본 이미지, ARN annotation이나
+s3a:// 문자열만으로 완성되지 않습니다. Artifact/template을 읽는 프로세스의
+권한도 해당 경로에 맞게 검토합니다.
+
+- **IRSA**는 service account role annotation, OIDC trust와 web identity 교환을 사용합니다.
+- **EKS Pod Identity**는 association·Agent·container credential 경로를 사용하며
+  IRSA role annotation이 그 연결을 대신하지 않습니다.
+- Kubernetes RBAC는 S3 권한을 주지 않습니다. 임시 자격증명을 사용하고 실제 Pod의
+  유효 ID·데이터 접근을 검증합니다.
+
+완전한 데이터 접근·보안 예제는 Part 5에서 다룹니다. 고정 AWS 키를 작업 스펙이나
+이미지에 넣지 않습니다.
+
+### Controller 메트릭과 작업 JMX 구분
+
+Chart의 기본 Prometheus endpoint 8080은 **Operator** 메트릭입니다.
+모든 Spark JVM에 JMX agent가 자동 추가되는 것은 아닙니다.
+작업 모니터링은 애플리케이션에서 명시적으로 구성하고 이미지의 exporter JAR·설정과
+수집·탐색이 필요합니다. Spark native endpoint와 event/history log도 별도 방식입니다.
+세부 내용은 [Part 5](./05-best-practices.md)를 참고합니다.
+
+## 정리와 검증 범위
+
+예약을 먼저 멈추고 parent 삭제의 자식 리소스 영향도 확인합니다.
+의도한 API group을 지정해 데모 리소스를 정리합니다.
+
+```bash
+# Kubeflow demo resources, if installed:
+kubectl -n spark-jobs delete scheduledsparkapplications.sparkoperator.k8s.io daily-spark-pi
+kubectl -n spark-jobs delete sparkapplications.sparkoperator.k8s.io spark-pi
+# Apache demo resource, if installed:
+kubectl -n spark-jobs delete sparkapplications.spark.apache.org spark-pi-asf
+```
+
+Chart 렌더링과 릴리스 CRD 검사는 리소스 형식·namespace·설정 경로를 확인합니다.
+실제 webhook·controller/runtime 조합·S3 접근·데이터 정확성·재시도 복구 성공을
+증명하지 않습니다. 실제 작업 적용 전 생성 Pod·status·출력을 검증합니다.
+
+- [Kubeflow Spark Operator 2.5.2](https://github.com/kubeflow/spark-operator/releases/tag/v2.5.2)
+- [Kubeflow 2.5.2 application API](https://github.com/kubeflow/spark-operator/blob/v2.5.2/api/v1beta2/sparkapplication_types.go)
+- [Kubeflow 2.5.2 scheduled API](https://github.com/kubeflow/spark-operator/blob/v2.5.2/api/v1beta2/scheduledsparkapplication_types.go)
+- [Kubeflow submission/configuration conversion](https://github.com/kubeflow/spark-operator/blob/v2.5.2/internal/controller/sparkapplication/submission.go)
+- [Kubeflow pod mutator](https://github.com/kubeflow/spark-operator/blob/v2.5.2/internal/webhook/sparkpod_defaulter.go)
+- [Apache operator 1.0.0](https://github.com/apache/spark-kubernetes-operator/releases/tag/1.0.0)
+- [Apache operator configuration](https://github.com/apache/spark-kubernetes-operator/blob/1.0.0/docs/configuration.md)
+- [Apache Comet example and prerequisites](https://github.com/apache/spark-kubernetes-operator/blob/1.0.0/examples/pi-with-comet.yaml)
+- [Apache Gluten example and prerequisites](https://github.com/apache/spark-kubernetes-operator/blob/1.0.0/examples/pi-with-gluten.yaml)
+- [Spark Kubernetes configuration](https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html)
 
 ## 다음 단계
 
-Operator를 통해 작업을 제출하고 모니터링할 수 있게 되었다면, 다음으로 마주치는 질문은 보통 "직접 운영할지, AWS에 맡길지"입니다. 이 트레이드오프와 EMR on EKS의 virtual cluster 모델은 [Part 3: EMR on EKS](./03-emr-on-eks.md)에서 다룹니다.
+[Part 3: EMR on EKS](./03-emr-on-eks.md)
 
 [메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/spark/02-spark-operator-quiz.md)를 풀어보세요.
+[주제 퀴즈](../../quizzes/data-on-eks/spark/02-spark-operator-quiz.md)

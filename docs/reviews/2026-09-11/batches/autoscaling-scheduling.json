@@ -465,7 +465,8 @@
       "https://github.com/hashicorp/terraform-provider-kubernetes/blob/main/kubernetes/data_source_kubernetes_service_v1.go",
       "https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html",
       "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
-      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html"
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html"
     ],
     "findings": [
       "Verified Serving/Eventing/Kourier1.23.0 and Operator1.23.1 releases; corrected operator namespace, Operator-managed Kourier namespace, NLB-versus-ALB explanation, supported-version assumptions and fresh-install/upgrade boundaries. CNCF graduation date corrected to September11,2025 from the official project page.",
@@ -479,7 +480,8 @@
       "Updated OpenTelemetry metrics/export prerequisites, current instrument names, actual control-plane ServiceMonitor port/labels and Grafana dashboard structure. Request metrics use explicit OTLP receiver/translation assumptions; Activator traffic is not a cold-start counter. Eventing metric migration limitations are documented.",
       "Replaced immediate sys.exit shutdown sketch with server-managed graceful handling; verified Go1.27.1 builder tag, clarified unbuilt15MB estimate, corrected image-cache assumptions, GPU resource headroom/feature flags and read-only PVC multi-node/access constraints. No GPU/model/runtime benchmark performed.",
       "Preserved the original Korean cost table byte-for-byte and original3.06/73.44/12.24 monetary assumptions; mirrored them in English as unverified illustrations. Added separate conditional arithmetic corrections without changing historical values or fabricating measurements/current prices.",
-      "Parent asset followup: Knative figures0,2,3,4 should reflect workload namespace placement, template-only Revision creation, conditional Activator routing and ScaledJob separation; captions corrected. All production integrations, live scaling/routing, Kafka/SQS delivery, S3 persistence, DNS/TLS issuance and Grafana ingestion remain explicitly unverified."
+      "Parent asset followup: Knative figures0,2,3,4 should reflect workload namespace placement, template-only Revision creation, conditional Activator routing and ScaledJob separation; captions corrected. All production integrations, live scaling/routing, Kafka/SQS delivery, S3 persistence, DNS/TLS issuance and Grafana ingestion remain explicitly unverified.",
+      "Current specific Hybrid Nodes add-on guide supports appropriately configured Pod Identity Agent and AWS Secrets Store CSI provider; removed an overly broad EC2-only prerequisite. Fargate limitation retained."
     ],
     "validation": [
       "All original content fully read before substantive edits: English1721lines, Korean2004lines, both143-line/eight-question quizzes. Useful Korean-only consumer/DLS/filter/cost concepts were reflected in the English chapter.",
@@ -489,7 +491,8 @@
       "Eight offline Python3.12 tests with real CloudEvents/Flask/boto3 and botocore Stubber passed: structured producer, extension validation, receipt validation, binary preservation, sanitized headers, source+id identity, duplicate412 handling and409/403/network failure responses.",
       "Two JSON rollout patches per language applied to local copies of the base Service and preserved environment, ServiceAccount, probes and resources. Original Korean estimate table stayed byte-for-byte unchanged; monetary values retained.",
       "All tests/build-related commands used login:false plus env-i with minimal PATH/LANG/CI and disabled OTEL/Claude telemetry; SDK tests used empty AWS config files, disabled IMDS and dummy credentials. Home settings/shared renderer files were not modified.",
-      "No AWS/Kubernetes changes, real event publishing, bucket writes, image build, Terraform plan/apply, live metrics export or production scaling/performance tests were executed."
+      "No AWS/Kubernetes changes, real event publishing, bucket writes, image build, Terraform plan/apply, live metrics export or production scaling/performance tests were executed.",
+      "Follow-up prose cross-check against official Hybrid Nodes add-on guide; no code or cluster execution changed."
     ]
   },
   {
@@ -530,7 +533,8 @@
       "https://github.com/hashicorp/terraform-provider-kubernetes/blob/main/kubernetes/data_source_kubernetes_service_v1.go",
       "https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html",
       "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
-      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html"
+      "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html"
     ],
     "findings": [
       "Verified Serving/Eventing/Kourier1.23.0 and Operator1.23.1 releases; corrected operator namespace, Operator-managed Kourier namespace, NLB-versus-ALB explanation, supported-version assumptions and fresh-install/upgrade boundaries. CNCF graduation date corrected to September11,2025 from the official project page.",
@@ -544,7 +548,8 @@
       "Updated OpenTelemetry metrics/export prerequisites, current instrument names, actual control-plane ServiceMonitor port/labels and Grafana dashboard structure. Request metrics use explicit OTLP receiver/translation assumptions; Activator traffic is not a cold-start counter. Eventing metric migration limitations are documented.",
       "Replaced immediate sys.exit shutdown sketch with server-managed graceful handling; verified Go1.27.1 builder tag, clarified unbuilt15MB estimate, corrected image-cache assumptions, GPU resource headroom/feature flags and read-only PVC multi-node/access constraints. No GPU/model/runtime benchmark performed.",
       "Preserved the original Korean cost table byte-for-byte and original3.06/73.44/12.24 monetary assumptions; mirrored them in English as unverified illustrations. Added separate conditional arithmetic corrections without changing historical values or fabricating measurements/current prices.",
-      "Parent asset followup: Knative figures0,2,3,4 should reflect workload namespace placement, template-only Revision creation, conditional Activator routing and ScaledJob separation; captions corrected. All production integrations, live scaling/routing, Kafka/SQS delivery, S3 persistence, DNS/TLS issuance and Grafana ingestion remain explicitly unverified."
+      "Parent asset followup: Knative figures0,2,3,4 should reflect workload namespace placement, template-only Revision creation, conditional Activator routing and ScaledJob separation; captions corrected. All production integrations, live scaling/routing, Kafka/SQS delivery, S3 persistence, DNS/TLS issuance and Grafana ingestion remain explicitly unverified.",
+      "Current specific Hybrid Nodes add-on guide supports appropriately configured Pod Identity Agent and AWS Secrets Store CSI provider; removed an overly broad EC2-only prerequisite. Fargate limitation retained."
     ],
     "validation": [
       "All original content fully read before substantive edits: English1721lines, Korean2004lines, both143-line/eight-question quizzes. Useful Korean-only consumer/DLS/filter/cost concepts were reflected in the English chapter.",
@@ -554,7 +559,8 @@
       "Eight offline Python3.12 tests with real CloudEvents/Flask/boto3 and botocore Stubber passed: structured producer, extension validation, receipt validation, binary preservation, sanitized headers, source+id identity, duplicate412 handling and409/403/network failure responses.",
       "Two JSON rollout patches per language applied to local copies of the base Service and preserved environment, ServiceAccount, probes and resources. Original Korean estimate table stayed byte-for-byte unchanged; monetary values retained.",
       "All tests/build-related commands used login:false plus env-i with minimal PATH/LANG/CI and disabled OTEL/Claude telemetry; SDK tests used empty AWS config files, disabled IMDS and dummy credentials. Home settings/shared renderer files were not modified.",
-      "No AWS/Kubernetes changes, real event publishing, bucket writes, image build, Terraform plan/apply, live metrics export or production scaling/performance tests were executed."
+      "No AWS/Kubernetes changes, real event publishing, bucket writes, image build, Terraform plan/apply, live metrics export or production scaling/performance tests were executed.",
+      "Follow-up prose cross-check against official Hybrid Nodes add-on guide; no code or cluster execution changed."
     ]
   },
   {

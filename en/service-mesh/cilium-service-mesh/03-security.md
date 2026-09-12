@@ -1,159 +1,180 @@
 # Cilium Service Mesh Security
 
-> **Supported Versions**: Cilium 1.16+, Kubernetes 1.28+
-> **Last Updated**: August 21, 2026
+> **Reviewed**: September 11, 2026 · Cilium/chart 1.20.1 · bundled SPIRE 1.15.2. See the [overview](./README.md) for tested Kubernetes/EKS versions and platform requirements.
 
 ## Overview
 
-Cilium security has three distinct layers:
+Evaluate three separate controls: workload authorization, peer authentication and application-data encryption. Cilium's out-of-band mutual authentication, WireGuard/IPsec transport encryption and the separate ztunnel mTLS beta have different requirements and limitations.
 
-1. **Identity-based authorization:** Cilium Identity and eBPF policy decide which workloads may communicate.
-2. **Mutual authentication:** Cilium mutual authentication with SPIFFE/SPIRE verifies peer identity through an **out-of-band** handshake separate from the application data connection.
-3. **Data encryption:** with the established implementation, WireGuard/IPsec must be enabled separately to encrypt payloads. Where supported, the native ztunnel mTLS preview encrypts workload traffic with TLS.
-
-These capabilities can be combined, but they are not automatically equivalent to Istio `PeerAuthentication` `STRICT` workload mTLS. Evaluate identity authorization, peer authentication, and encryption in transit as separate requirements.
+The policy examples below describe the ordinary Cilium policy/out-of-band-authentication path. **Do not assume they retain the same L4 enforcement when ztunnel encryption is enabled**; the beta limitation is explained below.
 
 ## Security Architecture
 
-![Workload traffic is authorized by Cilium Identity and eBPF policy, while SPIFFE/SPIRE-based out-of-band mutual authentication and WireGuard/IPsec or native ztunnel mTLS payload encryption operate as separate layers.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
+![Logical separation of identity/policy, out-of-band authentication and optional encryption choices.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
 
+These boxes group responsibilities rather than certify that every combination preserves all policies. In particular, ztunnel beta uses a distinct identity/data path, and its default CA does not require the SPIRE integration shown for out-of-band authentication.
+
 ## Mutual Authentication and Data Encryption
 
-### Established Cilium mutual authentication
+### Established Cilium Mutual Authentication
 
-Cilium mutual authentication verifies both endpoint identities before a connection is allowed, but the established authentication handshake is separate from the application data path. Do not assume that `authentication.mode: required` alone TLS-encrypts the payload of the existing data connection. Configure [WireGuard or IPsec](https://docs.cilium.io/en/stable/security/network/encryption/) when data confidentiality is required.
+The out-of-band mechanism is still documented as **beta/incomplete** in Cilium 1.20.1. Cilium agents authenticate Cilium security identities using SPIRE-provided SVIDs; the application connection does not itself become TLS because a network-policy rule requires authentication.
 
-![Pod A's connection request goes through the Cilium agent, SPIRE SVID authentication, and the out-of-band auth handshake before the policy-allowed data connection.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
+![Illustrative out-of-band authentication exchange between agents before policy-protected traffic proceeds.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
+Authentication records are cached for identity relationships. The diagram is not a new certificate/handshake for every HTTP request or necessarily every application connection. Apply explicit authorization rules as well as authentication requirements.
+
 ### Native mTLS via ztunnel (2026 Update)
 
-The Cilium native mTLS design announced in March 2026 uses a ztunnel model to combine mutual authentication with actual payload encryption on a workload-mTLS path. It is a different data plane from established out-of-band mutual authentication plus WireGuard/IPsec. The stack has three cooperating components:
-
-- **SPIRE** — issues workload identity and X.509 certificates (same role as in the SPIRE-based configuration below)
-- **Cilium** — installs iptables rules that transparently redirect outbound pod traffic to ztunnel on port 15001
-- **ztunnel** — a per-node proxy (not a per-pod sidecar) that performs the actual mTLS handshake and encrypts pod-to-pod traffic
-
-This retains the "no per-pod sidecar, no application changes" property, while the TLS handshake runs in a dedicated per-node process. Check the current preview status and platform support before adoption; do not treat it as an automatic replacement for the operationally mature Istio `STRICT` mTLS path.
-
-See the [Cilium blog post on native mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/) for the full architecture writeup.
-
-### When to choose Cilium vs. Istio for mTLS
-
-- **Choose Cilium** when the requirement is efficient L3/L4 identity policy and network encryption on a data plane that already runs Cilium — no additional sidecar or per-service proxy to operate, and CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy already express the access rules you need.
-- **Choose Istio** when the requirement is mature workload-certificate mTLS with `PeerAuthentication` `STRICT` semantics, or Istio-native L7 policy/routing (the kind `AuthorizationPolicy`, retry, and traffic-shifting rules covered in the [sidecar vs. ambient comparison](../istio/comparison/03-sidecar-vs-ambient.md)) — Cilium's established mutual authentication is out-of-band and does not carry that policy surface.
-- Do not decide based on the encryption layer alone: Cilium's WireGuard/IPsec and its native ztunnel mTLS preview both encrypt payloads, but neither one alone reproduces Istio `PeerAuthentication` `STRICT`'s combination of workload identity issuance, policy enforcement, and payload encryption in one switch.
-
-### SPIRE-based Mutual Authentication Configuration
+Cilium 1.20.1 contains **Ztunnel Transparent Encryption (Beta)**. Select it with this mode fragment, after preparing the required bootstrap/CA material:
 
 ```yaml
-# values.yaml - SPIRE integration configuration
+encryption:
+  enabled: true
+  type: ztunnel
+  ztunnel:
+    ca:
+      type: internal
+```
+
+The released default uses Cilium's internal CA option. A `cilium-ztunnel-secrets` Secret supplies `bootstrap-private.key`, `bootstrap-root.crt`, `ca-private.key` and `ca-root.crt`; the official generation script is an example, not a complete production PKI/rotation design. The chart's `bootstrapRootCert` option alone supplies only a public certificate and does not generate the private keys required by the internal CA.
+
+The Cilium agent configures iptables redirection in enrolled Pods' network namespaces, sends workload state to the node's ztunnel, and serves its control/certificate interfaces. The chart creates the `ztunnel-cilium` DaemonSet. Namespace enrollment uses `io.cilium/mtls-enabled=true`; installing the mode alone does not enroll all namespaces.
+
+The released guide specifies these boundaries:
+
+- Both source and destination workloads must be enrolled; enrolled-to-unenrolled communication is not supported.
+- Enrollment is namespace-based; per-Pod enrollment is not supported. Host-networked Pods cannot be enrolled.
+- Only TCP is redirected for mTLS; UDP and other protocols are outside this encryption path.
+- ClusterMesh is not supported, and the kernel must support the required iptables operations.
+- Encryption occurs before packets leave the Pod. Ordinary L4 policies therefore do not work on this path except when directly targeting HBONE port 15008.
+
+This integration uses a namespace/service-account workload identity model. It differs from the numeric `/identity/<id>` SPIFFE path used by out-of-band authentication.
+
+Read-only checks for a prepared test installation include:
+
+```bash
+kubectl -n kube-system get daemonset ztunnel-cilium
+kubectl get namespaces -l io.cilium/mtls-enabled=true
+kubectl -n kube-system get configmap cilium-config -o yaml
+```
+
+A namespace label, healthy proxy or packet observed on port 15008 alone does not prove all expected traffic is encrypted and authorized. Check successful enrollment, both ends of the chosen path, certificate identity/trust and unsupported traffic cases.
+
+### When to Choose Cilium vs. Istio for mTLS
+
+Choose against the required identity, authorization and traffic coverage. An existing Cilium deployment may use identity policy plus WireGuard/IPsec, or evaluate the separate ztunnel beta within its limitations. Account for the additional proxies, CA and operational dependencies actually enabled.
+
+Istio provides workload-proxy mTLS in sidecar and ambient modes with their own feature/platform boundaries. `PeerAuthentication` `STRICT` is an inbound mTLS requirement; it does not by itself issue identities, install proxies or authorize every caller. Do not reduce the comparison to a single encryption switch. The [sidecar/ambient chapter](../istio/comparison/03-sidecar-vs-ambient.md) preserves its actual measured versions and scenarios.
+
+### SPIRE-Based Mutual Authentication Configuration
+
+For **out-of-band** authentication, merge this overlay into the installation's reviewed values:
+
+```yaml
 authentication:
+  enabled: true
   mutual:
     spire:
       enabled: true
+      trustDomain: spiffe.cilium
+      agentSocketPath: /run/spire/sockets/agent/agent.sock
       install:
         enabled: true
-        namespace: cilium-spire
-
         server:
-          # SPIRE Server configuration
-          replicas: 1
           dataStorage:
             enabled: true
             size: 1Gi
-            storageClass: gp3
-
-          # Trust Domain configuration
-          trustDomain: cluster.local
-
-          # CA configuration
-          ca:
-            # Use internal CA
-            keyType: ec-p256
-            ttl: 24h
-
-          # Node Attestor configuration
-          nodeAttestor:
-            k8sPsat:
-              enabled: true
-
-        agent:
-          # SPIRE Agent configuration
-          socketPath: /run/spire/sockets/agent.sock
-
-          # Workload Attestor configuration
-          workloadAttestor:
-            k8s:
-              enabled: true
-              disableContainerSelectors: false
 ```
+
+Prepare a suitable StorageClass/PV for the SPIRE StatefulSet. A class named `gp3` is not automatically present on every EKS cluster. `authentication.enabled` is required; trust domain and agent socket settings belong under `authentication.mutual.spire`, not beneath `install.server` or `install.agent`. The bundled chart does not implement the former `server.replicas`, `server.nodeAttestor`, `agent.workloadAttestor` or `server.ca.ttl` examples.
+
+The SPIRE Server attests agents and signs SVIDs. Agents perform workload attestation; the Cilium integration additionally delegates retrieval and registers entries for Cilium security identities. Enabling SPIRE alone neither enforces authentication on all traffic nor enables WireGuard/IPsec.
 
 ### Mutual Authentication Policy Enforcement
 
+`authentication` is an **object inside an ingress/egress allow rule**. It is not an array and not a top-level `spec.authentication` switch. This cluster-scoped policy deliberately selects one application/namespace:
+
 ```yaml
-# Require mutual authentication cluster-wide
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: enforce-mtls
+  name: production-backend-auth
 spec:
-  endpointSelector: {}
-  authentication:
-  - mode: required
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: production
+      k8s:app: backend
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: production
+        k8s:app: frontend
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
+    authentication:
+      mode: required
 ```
 
 ### Per-Namespace Mutual Authentication
 
+This namespaced example selects workloads in `production` and permits authenticated peers from that namespace on TCP 8080:
+
 ```yaml
-# Apply mutual authentication to a specific namespace
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: namespace-mtls
+  name: namespace-auth
   namespace: production
 spec:
   endpointSelector: {}
   ingress:
   - fromEndpoints:
-    - {}
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: production
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
     authentication:
-    - mode: required
-  egress:
-  - toEndpoints:
-    - {}
-    authentication:
-    - mode: required
+      mode: required
 ```
+
+It is an illustrative same-namespace allowance, not least privilege for every application. Other ports, clients, probes and existing policy grants must be assessed separately. It affects ingress; it does not silently configure a complete egress dependency policy.
 
 ### Per-Service Mutual Authentication
 
 ```yaml
-# Enforce mutual authentication between specific services
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: service-mtls
+  name: service-auth
   namespace: default
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
-    authentication:
-    - mode: required
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
+    authentication:
+      mode: required
 ```
+
+Here the source and destination labels describe workloads, not an end user's login. Kubernetes permissions must control who can create workloads, change those labels or use their service accounts.
 
 ## CiliumNetworkPolicy L7 Rules
 
@@ -168,112 +189,90 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: api-server
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: api-server
   ingress:
-  # Read-only access
   - fromEndpoints:
     - matchLabels:
-        role: reader
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:role: reader
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: GET
-          path: "/api/.*"
-
-  # Admin access
+        - method: ^GET$
+          path: ^/api/.*$
   - fromEndpoints:
     - matchLabels:
-        role: admin
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:role: admin
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: ".*"
-          path: "/api/.*"
+        - method: ^(GET|POST|PUT|PATCH|DELETE)$
+          path: ^/api/.*$
           headers:
-          - "Authorization: Bearer .*"
-
-  # Health checks
+          - Authorization
   - fromEndpoints:
     - matchLabels:
-        app: monitoring
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:app: monitoring
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: GET
-          path: "/health"
-        - method: GET
-          path: "/metrics"
+        - method: ^GET$
+          path: ^/health$
+        - method: ^GET$
+          path: ^/metrics$
 ```
 
+HTTP rules within a rule are alternatives. `headers: [Authorization]` requires presence only: it does not validate a bearer token, its signature, expiry or permissions. The former `Authorization: Bearer .*` string was not a JWT verifier or a general regular-expression value match. Perform application authentication and authorization independently.
+
+An HTTP path policy requires a supported inspectable L7 path. Application TLS, probes and other dependency traffic need the relevant configuration; a port number alone does not turn on TLS.
+
 ### Kafka L7 Security Policy
+
+The old `rules.kafka` object is rejected by the Cilium 1.20.1 L7 schema. The replacement below limits **network reachability only**:
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: kafka-security
+  name: kafka-network-boundary
   namespace: kafka
 spec:
   endpointSelector:
     matchLabels:
-      app: kafka
-
+      k8s:io.kubernetes.pod.namespace: kafka
+      k8s:app: kafka
   ingress:
-  # Producer - allow writing to specific topics only
   - fromEndpoints:
     - matchLabels:
-        role: producer
+        k8s:io.kubernetes.pod.namespace: kafka
+        k8s:role: producer
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        - apiKey: produce
-          topic: "orders"
-        - apiKey: produce
-          topic: "events"
-        - apiKey: metadata
-
-  # Consumer - allow reading from specific topics only
   - fromEndpoints:
     - matchLabels:
-        role: consumer
+        k8s:io.kubernetes.pod.namespace: kafka
+        k8s:role: consumer
     toPorts:
     - ports:
-      - port: "9092"
+      - port: '9092'
         protocol: TCP
-      rules:
-        kafka:
-        - apiKey: fetch
-          topic: "orders"
-        - apiKey: fetch
-          topic: "events"
-        - apiKey: listoffsets
-          topic: "orders"
-        - apiKey: listoffsets
-          topic: "events"
-        - apiKey: metadata
-        - apiKey: findcoordinator
-        - apiKey: joingroup
-        - apiKey: heartbeat
-        - apiKey: leavegroup
-        - apiKey: syncgroup
-        - apiKey: offsetcommit
-          topic: "orders"
-        - apiKey: offsetfetch
-          topic: "orders"
 ```
+
+Configure the actual Kafka listener's TLS/SASL and broker ACLs for produce/fetch, topics and consumer groups. Removing an obsolete L7 rule leaves L4 access; it does not preserve topic-level authorization.
 
 ### DNS L7 Security Policy
 
@@ -286,243 +285,194 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: web-application
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: web-application
   egress:
-  # Restrict DNS queries
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
+      - port: '53'
+        protocol: TCP
       rules:
         dns:
-        # Allow internal services only
-        - matchPattern: "*.svc.cluster.local"
-        # Allow specific external domains only
-        - matchName: "api.stripe.com"
-        - matchName: "api.aws.amazon.com"
-        - matchPattern: "*.s3.amazonaws.com"
-
-  # Egress to allowed external services
+        - matchPattern: '*.*.svc.cluster.local'
+        - matchName: api.stripe.com
+        - matchName: sts.us-east-1.amazonaws.com
   - toFQDNs:
-    - matchName: "api.stripe.com"
-    - matchName: "api.aws.amazon.com"
-    - matchPattern: "*.s3.amazonaws.com"
+    - matchName: api.stripe.com
+    - matchName: sts.us-east-1.amazonaws.com
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
 ```
 
-## Mutual Authentication
+The example assumes CoreDNS endpoints labeled `k8s-app=kube-dns` in `kube-system`, plus the ordinary `cluster.local` DNS suffix. It allows UDP and TCP DNS. A Service FQDN contains both service and namespace labels, so `*.*.svc.cluster.local` differs from the former `*.svc.cluster.local`.
 
-> This section configures the `authentication.mode` policy examples. For what mutual authentication does and does not cover (out-of-band handshake, separate from payload encryption), see [Mutual Authentication and Data Encryption](#mutual-authentication-and-data-encryption) above.
+External HTTPS permission is separate from DNS query permission. `sts.us-east-1.amazonaws.com` is a specific regional AWS endpoint; AWS does not use the former `api.aws.amazon.com` as a universal API endpoint. Select the actual SDK region/service endpoints, including any relevant IPv6/dual-stack or private-endpoint variants. Internal DNS answers are not an automatic grant to connect to every internal Service.
+
+Review resolver search-list behavior and NodeLocal DNS if enabled. Broad S3 wildcards can allow destinations beyond one intended bucket, and a DNS/IP policy is not a guarantee against exfiltration through allowed destinations.
+
+## Mutual Authentication
 
 ### Authentication Modes
 
-```yaml
-# Cilium authentication mode options
+| Mode | Meaning in the out-of-band policy API |
+|---|---|
+| `required` | Require successful authentication for the matched allowed traffic |
+| `disabled` | Explicit authentication exemption for that matched rule |
+| `test-always-fail` | Test mode that deliberately fails authentication |
 
-# 1. disabled - no authentication (default)
-authentication:
-- mode: disabled
-
-# 2. optional - use authentication if possible, otherwise allow
-authentication:
-- mode: optional
-
-# 3. required - authentication required
-authentication:
-- mode: required
-
-# 4. test-always-fail - for testing (always fails)
-authentication:
-- mode: test-always-fail
-```
+There is no `optional` mode in the released schema. Absence of an explicit requirement differs from a carefully scoped exemption when other rules overlap; inspect the resulting policy rather than assuming authentication rules behave like ordinary independent allow grants.
 
 ### Mutual Authentication Policy Examples
+
+An exemption is explicit, narrow and should be justified:
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: mutual-auth-policy
+  name: authentication-exception
   namespace: production
 spec:
   endpointSelector:
     matchLabels:
-      app: secure-service
-
+      k8s:io.kubernetes.pod.namespace: production
+      k8s:app: secure-service
   ingress:
-  # Allow authenticated clients only
   - fromEndpoints:
     - matchLabels:
-        app: trusted-client
-    authentication:
-    - mode: required
+        k8s:io.kubernetes.pod.namespace: production
+        k8s:app: trusted-client
     toPorts:
     - ports:
-      - port: "443"
+      - port: '443'
         protocol: TCP
-
-  # Optional authentication for monitoring
+    authentication:
+      mode: required
   - fromEndpoints:
     - matchLabels:
-        app: prometheus
-    authentication:
-    - mode: optional
+        k8s:io.kubernetes.pod.namespace: monitoring
+        k8s:app: prometheus
     toPorts:
     - ports:
-      - port: "9090"
+      - port: '9090'
         protocol: TCP
-```
-
-### SPIFFE ID-based Authentication
-
-```yaml
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: spiffe-auth
-  namespace: default
-spec:
-  endpointSelector:
-    matchLabels:
-      app: database
-
-  ingress:
-  # Allow specific SPIFFE ID only
-  - fromEndpoints:
-    - matchLabels:
-        app: backend
     authentication:
-    - mode: required
-      # SPIFFE ID verification is performed automatically
-      # spiffe://cluster.local/ns/default/sa/backend
+      mode: disabled
 ```
+
+The Prometheus rule is **disabled authentication**, not “authenticate if possible.” It grants only the stated monitoring workload and port. TLS on either application's listening port is a separate application configuration.
+
+### SPIFFE ID-Based Authentication
+
+For the default **out-of-band** SPIRE trust domain, a Cilium security identity has this form:
+
+```text
+spiffe://spiffe.cilium/identity/<numeric-security-identity>
+```
+
+Select the permitted peers through endpoint/identity policy; the `authentication` object has no arbitrary SPIFFE-ID allow-list field. Changing a comment to an Istio-style `/ns/.../sa/...` URI does not constrain access. The ztunnel beta described above uses a separate workload identity model.
 
 ## Encryption
 
-> This section configures the payload-encryption mechanisms (WireGuard/IPsec) introduced conceptually in [Mutual Authentication and Data Encryption](#mutual-authentication-and-data-encryption) above — encryption is a separate choice from mutual authentication, not a byproduct of it.
-
 ### WireGuard Transparent Encryption
 
-WireGuard encrypts all Pod-to-Pod traffic at the Linux kernel level:
-
 ```yaml
-# values.yaml - Enable WireGuard
 encryption:
   enabled: true
   type: wireguard
-
-  wireguard:
-    # Userspace fallback (when kernel support unavailable)
-    userspaceFallback: true
-
-  # Node-to-node encryption
-  nodeEncryption: true
 ```
 
-```bash
-# Check WireGuard status
-cilium status | grep Encryption
+Cilium creates node key pairs and distributes public keys through CiliumNode information. Supported traffic between Cilium-managed Pods on **different nodes** is encrypted; same-node traffic is not. The kernel must provide WireGuard support. The chart has no `encryption.wireguard.userspaceFallback` option.
 
-# Expected output
-Encryption:              Wireguard  [NodeEncryption: Enabled, cilium_wg0 (Pubkey: xxx, Port: 51871, Peers: 2)]
-
-# Check WireGuard peers
-cilium encrypt status
-
-# Expected output
-Encryption: Wireguard
-Keys in use: 1
-Max Seq. Number: 0x0
-Errors: 0
-```
+Allow the required node-to-node UDP 51871 path and account for MTU/encapsulation. AWS VPC CNI chaining has additional MTU requirements, including the documented `cni.enableRouteMTUForCNIChaining` setting; follow the selected installation mode rather than applying it blindly.
 
 #### WireGuard Architecture
 
-![The cilium_wg0 WireGuard interfaces on Node A and Node B carry pod-to-pod traffic through a ChaCha20-Poly1305 encrypted tunnel.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
+![Logical management of inter-node WireGuard by Cilium agents, with encryption performed by the kernel WireGuard interfaces.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
+
+The Agent box represents management/key distribution, not a userspace transit hop for every packet. Capturing on the WireGuard interface can show plaintext inner packets; verify the correct outer network path when assessing encryption.
+
+Node-to-node coverage is a separate beta option:
+
+```yaml
+encryption:
+  enabled: true
+  type: wireguard
+  nodeEncryption: true
+```
+
+Control-plane nodes are excluded from node encryption by default to avoid key-update bootstrap failures. The released traffic matrix also identifies exclusions involving XDP acceleration, non-Geneve DSR and egress-gateway replies. The client-to-cluster leg of an external request is not encrypted by node WireGuard.
 
 ### IPsec Encryption
 
 ```yaml
-# values.yaml - Enable IPsec
 encryption:
   enabled: true
   type: ipsec
-
   ipsec:
-    # IPsec interface
-    interface: ""
-
-    # Key rotation interval
-    keyRotationDuration: "5m"
-
-    # Encryption interface
-    mountPath: /etc/ipsec
-
-# Generate IPsec key
-# kubectl create secret generic -n kube-system cilium-ipsec-keys \
-#   --from-literal=keys="3 rfc4106(gcm(aes)) $(openssl rand -hex 20) 128"
+    secretName: cilium-ipsec-keys
+    keyFile: keys
+    keyWatcher: true
+    keyRotationDuration: 5m
 ```
+
+The Secret must exist in Cilium's namespace. For the documented AES-GCM example, its `keys` entry has the shape:
+
+```text
+3+ rfc4106(gcm(aes)) <fresh-20-byte-random-value-in-hex> 128
+```
+
+The `+` selects per-tunnel derived keys. The old global-key form without `+` was deprecated for security reasons; do not copy it as current guidance. Generate and protect fresh key material through the documented CLI/Secret workflow rather than reusing a sample key.
+
+`keyRotationDuration: 5m` is a transition/old-key-cleanup grace period after a key change, **not a scheduler that generates a new key every five minutes**. Update key IDs and material through the supported rotation procedure, coordinate all clusters if using ClusterMesh, and do not rotate while nodes are on mixed versions during an upgrade.
+
+Check ESP/firewall support, the actual encryption interfaces and native-routing CIDR. Current IPsec requires the documented transparent DNS-proxy behavior with L7, does not support CNI chaining or host policies, and does not encrypt same-node traffic.
 
 ### Encryption Comparison
 
-| Feature | WireGuard | IPsec |
-|---------|-----------|-------|
-| Performance | Very High | High |
-| Configuration Complexity | Low | Medium |
-| Kernel Support | 5.6+ (built-in) | All versions |
-| Encryption Algorithm | ChaCha20Poly1305 | AES-GCM, etc. |
-| Key Management | Automatic | Manual/Automatic |
-| Standard | Non-standard | IETF Standard |
+| Topic | WireGuard | IPsec | ztunnel beta |
+|---|---|---|---|
+| Keys/identity | Node-generated key pairs | Distributed key material with per-tunnel derivation | Workload mTLS certificates and bootstrap/CA material |
+| Data path | Kernel WireGuard interfaces | Kernel IPsec/XFRM | Per-node TLS proxy and Pod-namespace redirection |
+| Same-node/coverage | Same-node traffic not encrypted; use released traffic matrix | Same-node traffic not encrypted; mode limitations apply | Both endpoints enrolled; TCP only; policy limitations apply |
+| Cipher configuration | WireGuard protocol's ChaCha20-Poly1305 suite | Kernel-supported configured algorithms, such as AES-GCM | TLS negotiated by the supported proxy |
+| Performance | Measure the actual CPU, MTU and traffic mix | Measure algorithm/hardware, tunnel and single-tunnel decryption constraints | Measure proxy, TLS and workload overhead; not part of the older comparison benchmarks |
 
-## Identity-based Security
+Transparent encryption can also have an endpoint-discovery window in which a permitted unknown destination is treated as external. Cilium documents restricted egress and encryption strict modes as mitigations, with specific limitations: strict egress is IPv4/CIDR-dependent; strict ingress requires WireGuard and managed interfaces and is not supported with CNI chaining. Do not interpret “encryption enabled” as proof of fail-closed protection for every path.
+
+## Identity-Based Security
 
 ### Cilium Identity
 
-Cilium applies security policies based on identity instead of IP:
-
-![A pod's label set is hashed into a numeric identity, which is used to look up the eBPF policy map and produce an allow/deny decision.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-3.html)
+Cilium allocates a numeric identity for an identity-relevant label set; several Pods can share it. This is not a user-computed hash or a permanent Pod identifier.
 
 ### Identity Components
 
 ```bash
-# Identity label composition
-# - k8s:io.kubernetes.pod.namespace
-# - k8s:io.cilium.k8s.policy.serviceaccount
-# - k8s:app
-# - k8s:version
-# - Other user-defined labels
-
-# List identities
-cilium identity list
-
-# Example output
-IDENTITY   LABELS
-1          reserved:host
-2          reserved:world
-3          reserved:unmanaged
-4          reserved:health
-5          reserved:init
-6          reserved:remote-node
-12345      k8s:app=frontend,k8s:io.kubernetes.pod.namespace=default
-12346      k8s:app=backend,k8s:io.kubernetes.pod.namespace=default
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+CILIUM_POD='<agent-on-the-workload-node>'
+kubectl -n default get ciliumendpoints
+kubectl get ciliumidentities
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg identity list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg encrypt status
 ```
 
-### Identity-based Policy
+Namespace, service-account and selected workload labels can contribute. IDs 1–6 correspond to host, world, unmanaged, health, init and remote-node; allocated workload IDs depend on the installation. Inspect the agent on the relevant node and keep full command failures/status.
+
+### Identity-Based Policy
 
 ```yaml
-# Identity-based network policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -531,40 +481,43 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
-
+      k8s:io.kubernetes.pod.namespace: default
+      k8s:app: backend
   ingress:
-  # Allow only Pods with specific labels (Identity)
   - fromEndpoints:
     - matchLabels:
-        app: frontend
-        environment: production
+        k8s:io.kubernetes.pod.namespace: default
+        k8s:app: frontend
+        k8s:environment: production
     toPorts:
     - ports:
-      - port: "8080"
-
-  # Allow specific service from another namespace
+      - port: '8080'
+        protocol: TCP
   - fromEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: monitoring
-        app: prometheus
+        k8s:app: prometheus
     toPorts:
     - ports:
-      - port: "9090"
+      - port: '9090'
+        protocol: TCP
 ```
 
 ### IP vs Identity Comparison
 
-![IP-based security requires a policy update whenever a Pod IP changes, while identity-based security is unaffected by IP churn.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
+![Identity selectors avoid manually rewriting address lists for each Pod change, while Cilium still maintains address-to-identity state.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
+
+Policy selectors can remain stable across IP churn. Cilium must still update endpoint/IP-cache state, and an identity can be garbage-collected and reallocated; the diagram does not promise an immutable numeric ID after every restart.
 
 ## External PKI Integration
 
 ### cert-manager Integration
 
+These objects illustrate producing an upstream CA Secret. They **do not connect that Secret to SPIRE by themselves**:
+
 ```yaml
-# Certificate management with cert-manager
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -580,144 +533,170 @@ metadata:
   namespace: cilium-spire
 spec:
   secretName: spire-ca-secret
-  duration: 8760h  # 1 year
-  renewBefore: 720h  # Renew 30 days before expiry
+  duration: 8760h
+  renewBefore: 720h
   isCA: true
   privateKey:
     algorithm: ECDSA
     size: 256
+    rotationPolicy: Always
+  usages:
+  - cert sign
+  - crl sign
   subject:
     organizations:
     - Cilium
-  commonName: SPIRE CA
+  commonName: SPIRE upstream CA
   issuerRef:
     name: cilium-ca-issuer
     kind: ClusterIssuer
+    group: cert-manager.io
 ```
+
+Prepare a valid signing CA/key in `cilium-ca-secret` in cert-manager's configured cluster-resource namespace, with sufficient remaining lifetime. Validate CA constraints, signing usages and trust chains. The one-year duration is an example subordinate-CA lifetime, not a universal recommendation.
+
+An externally managed SPIRE server must use a supported UpstreamAuthority and access the required mounted material or issuer API. For a disk authority joining an existing PKI, SPIRE requires `cert_file_path`, `key_file_path` and a trusted-root `bundle_file_path`; plan reload/rotation and trust overlap. A Kubernetes Secret update alone is not proof that every certificate consumer has adopted the new CA.
+
+Do not replace the bundled SPIRE ConfigMap with a partial unrelated file. For externally operated SPIRE, review Cilium's external-server address, trust-domain, delegated-identity registration and authentication prerequisites separately.
 
 ### Vault Integration
 
-```yaml
-# Use Vault as CA in SPIRE
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: spire-server-config
-  namespace: cilium-spire
-data:
-  server.conf: |
-    server {
-      trust_domain = "cluster.local"
+The following is only a **plugin fragment** for an independently configured SPIRE 1.15.2 server, not a complete server configuration or Kubernetes Deployment:
 
-      ca_subject = {
-        country = ["US"]
-        organization = ["MyOrg"]
-        common_name = ""
-      }
-
-      # Vault UpstreamAuthority
-      UpstreamAuthority "vault" {
-        plugin_data {
-          vault_addr = "https://vault.vault.svc:8200"
-          pki_mount_path = "pki"
-          ca_cert_path = "/vault/ca/ca.crt"
-          token_path = "/vault/token/token"
-        }
+```hcl
+plugins {
+  UpstreamAuthority "vault" {
+    plugin_data {
+      vault_addr = "https://vault.vault.svc:8200"
+      pki_mount_point = "pki"
+      ca_cert_path = "/vault/ca/ca.crt"
+      k8s_auth {
+        k8s_auth_mount_point = "kubernetes"
+        k8s_auth_role_name = "spire-upstream"
+        token_path = "/var/run/secrets/vault/token"
       }
     }
+  }
+}
 ```
+
+Plugins belong in top-level `plugins`, not inside `server`. The field is `pki_mount_point`; `token_path` belongs inside `k8s_auth` here. The token is a projected Kubernetes service-account token for the configured Vault auth role, not a generic Vault token file.
+
+Prepare the token projection/audience and Vault Kubernetes auth configuration, bind the role to the intended SPIRE workload, mount the TLS CA used to verify Vault, and grant the required PKI sign-intermediate operation. Coordinate SPIRE `ca_ttl`, Vault PKI TTLs, workload trust and rotation. This guide does not claim those external dependencies have been deployed or tested.
 
 ## Zero Trust Networking
 
 ### Default Deny Policy
 
+This cluster-scoped resource deliberately targets the isolated `policy-lab` namespace:
+
 ```yaml
-# Cluster-wide default deny
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: default-deny
+  name: policy-lab-default-deny
+spec:
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: policy-lab
+  enableDefaultDeny:
+    ingress: true
+    egress: true
+  ingress: []
+  egress: []
+```
+
+The `enableDefaultDeny` flags are explicit: an empty Cilium ingress/egress array by itself does not supply rules that turn on default-deny. Do not transfer that assumption from Kubernetes NetworkPolicy examples.
+
+Add specific dependencies, such as DNS, as separate allow rules:
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: policy-lab-dns
+  namespace: policy-lab
 spec:
   endpointSelector: {}
-  ingress:
-  - fromEndpoints:
-    - matchLabels:
-        reserved:host: ""
   egress:
   - toEndpoints:
     - matchLabels:
-        reserved:host: ""
-  - toEndpoints:
-    - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
+      - port: '53'
+        protocol: TCP
 ```
+
+There is no universal requirement to allow every host-network flow. Assess actual kubelet/probe, resolver and host-policy behavior. These examples do not change Cilium's host handling or defend against a compromised privileged node.
 
 ### Least Privilege Access
 
+This example assumes a Cilium-managed gateway workload labeled `app=ingress-gateway` in `edge`, frontend/database workloads in `production` and a working SPIRE integration:
+
 ```yaml
-# Production namespace security policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: production-security
   namespace: production
 spec:
-  # Apply to all Pods
-  endpointSelector: {}
-
-  # Default deny
-  ingressDeny:
-  - fromEntities:
-    - world
-
-  # Allow rules
+  endpointSelector:
+    matchLabels:
+      k8s:io.kubernetes.pod.namespace: production
+      k8s:app: api
   ingress:
-  # Allow communication within same namespace
   - fromEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: production
-    authentication:
-    - mode: required
-
-  # Allow access from Ingress Controller
-  - fromEndpoints:
-    - matchLabels:
-        k8s:io.kubernetes.pod.namespace: ingress-nginx
-        app: nginx-ingress
+        k8s:app: frontend
     toPorts:
     - ports:
-      - port: "8080"
-
+      - port: '8080'
+        protocol: TCP
+    authentication:
+      mode: required
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: edge
+        k8s:app: ingress-gateway
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
   egress:
-  # DNS
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-dns
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "53"
+      - port: '53'
         protocol: UDP
-
-  # Communication within same namespace
+      - port: '53'
+        protocol: TCP
   - toEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: production
+        k8s:app: database
+    toPorts:
+    - ports:
+      - port: '5432'
+        protocol: TCP
     authentication:
-    - mode: required
+      mode: required
 ```
+
+Use the labels and identities actually observed in the selected gateway implementation. Cilium's own node Envoy ingress/Gateway path and external load balancers can expose different identities; an arbitrary Pod label is not interchangeable with `reserved:ingress` or an external client address. The former retired ingress-nginx example is not a required dependency.
 
 ### Microsegmentation
 
+These application-tier policies retain explicit DNS access for tiers that initiate Service lookups. They assume the same gateway model and the stated listening ports:
+
 ```yaml
-# 3-tier architecture security
----
-# Frontend policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -726,24 +705,39 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      tier: frontend
-
+      k8s:io.kubernetes.pod.namespace: app
+      k8s:tier: frontend
   ingress:
-  - fromEntities:
-    - world
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: edge
+        k8s:app: ingress-gateway
     toPorts:
     - ports:
-      - port: "443"
-
+      - port: '443'
+        protocol: TCP
   egress:
   - toEndpoints:
     - matchLabels:
-        tier: backend
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: backend
+    toPorts:
+    - ports:
+      - port: '8080'
+        protocol: TCP
+    authentication:
+      mode: required
 ---
-# Backend policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -752,29 +746,41 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      tier: backend
-
+      k8s:io.kubernetes.pod.namespace: app
+      k8s:tier: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        tier: frontend
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: frontend
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
+        protocol: TCP
     authentication:
-    - mode: required
-
+      mode: required
   egress:
   - toEndpoints:
     - matchLabels:
-        tier: database
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
     toPorts:
     - ports:
-      - port: "5432"
+      - port: '53'
+        protocol: UDP
+      - port: '53'
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: database
+    toPorts:
+    - ports:
+      - port: '5432'
+        protocol: TCP
     authentication:
-    - mode: required
+      mode: required
 ---
-# Database policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -783,98 +789,112 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      tier: database
-
+      k8s:io.kubernetes.pod.namespace: app
+      k8s:tier: database
+  enableDefaultDeny:
+    egress: true
   ingress:
   - fromEndpoints:
     - matchLabels:
-        tier: backend
+        k8s:io.kubernetes.pod.namespace: app
+        k8s:tier: backend
     toPorts:
     - ports:
-      - port: "5432"
+      - port: '5432'
+        protocol: TCP
     authentication:
-    - mode: required
-
-  # No external egress (data exfiltration prevention)
-  egressDeny:
-  - toEntities:
-    - world
+      mode: required
+  egress: []
 ```
+
+The database explicitly enables egress default-deny with no egress allow rule; stateful replies to allowed connections are still permitted. Add real backup, replication, authentication or other dependencies deliberately. Restricting network paths is not complete prevention of data extraction through an otherwise authorized database/application request.
 
 ## Security Auditing and Monitoring
 
 ### Policy Audit Mode
 
-```yaml
-# Test policy in audit mode
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: audit-policy
-  namespace: default
-  annotations:
-    # Audit mode - logging only, no blocking
-    cilium.io/audit-mode: "true"
-spec:
-  endpointSelector:
-    matchLabels:
-      app: backend
+`cilium.io/audit-mode: "true"` is not a supported per-policy audit switch. A policy carrying that arbitrary annotation can still enforce normally.
 
-  ingress:
-  - fromEndpoints:
-    - matchLabels:
-        app: frontend
-    toPorts:
-    - ports:
-      - port: "8080"
+For an **isolated endpoint test**, the actual mutable endpoint option is `PolicyAuditMode`. Inspect the local endpoint, temporarily enable it, and restore enforcement after the controlled observation:
+
+```bash
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint list
+ENDPOINT_ID='<local-endpoint-id-in-the-isolated-test>'
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint config "$ENDPOINT_ID"
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint config "$ENDPOINT_ID" PolicyAuditMode=true
+# Observe the controlled test, then restore enforcement.
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg endpoint config "$ENDPOINT_ID" PolicyAuditMode=false
 ```
+
+This changes enforcement on that endpoint rather than attaching audit behavior to one policy object. Do not infer that every L7 denial or every security failure becomes an allowed audit event; verify the specific datapath/proxy behavior. `enableDefaultDeny: false` is also not an equivalent L7 audit mode.
 
 ### Policy Violation Monitoring
 
 ```bash
-# Observe policy violations with Hubble
-hubble observe --verdict DROPPED
-
-# Dropped traffic in specific namespace
-hubble observe --namespace production --verdict DROPPED
-
-# Policy violation statistics
-hubble observe --verdict DROPPED -o json | jq -r '.flow | "\(.source.namespace)/\(.source.pod_name) -> \(.destination.namespace)/\(.destination.pod_name)"' | sort | uniq -c | sort -rn
+# Terminal 1
+cilium hubble port-forward --port-forward 4245
+# Terminal 2
+hubble observe --server localhost:4245 --namespace production --verdict DROPPED --last 100
+hubble observe --server localhost:4245 --namespace production --verdict DROPPED --drop-reason-desc POLICY_DENIED --last 100
+hubble observe --server localhost:4245 --namespace policy-lab --verdict AUDIT --last 100
 ```
+
+`DROPPED` includes causes other than policy denial. The reason-filtered query focuses on reported policy-denied drops; L7/application authorization failures need their own observation. `AUDIT` is distinct from `DROPPED`. `--last 100` is bounded history, and Relay can return that count per connected Hubble instance; it is not a complete cluster traffic counter. Add `--follow` only when a streaming observation is intended.
 
 ### Prometheus Metrics
 
 ```yaml
-# Collect security-related metrics
+prometheus:
+  enabled: true
 hubble:
+  enabled: true
   metrics:
     enabled:
     - dns
     - drop
     - flow
-    - http
+    - httpV2
     - icmp
     - port-distribution
     - tcp
-
-# Useful metrics
-# - cilium_drop_count_total: Packets dropped by policy
-# - cilium_policy_verdict: Policy decisions (allow/deny)
-# - cilium_forward_count_total: Forwarded packets
 ```
+
+The agent and Hubble exporter need Prometheus discovery/scraping in addition to these enablement flags. `httpV2` replaces deprecated `http`; do not enable both. HTTP metrics need corresponding L7 visibility.
+
+- `cilium_drop_count_total` counts dropped packets by reason/direction, not exclusively policy violations.
+- `cilium_forward_count_total` counts forwarded packets, not successful application requests.
+- Hubble's `drop` exporter exposes flow-drop information as `hubble_drop_total`; it is not the same accounting unit as the agent packet counter.
+- The former `cilium_policy_verdict` metric name was not a documented metric. Use actual policy-verdict events or the metrics exposed by the selected exporter instead.
 
 ## Next Steps
 
-- [Observability](./04-observability.md): Security monitoring with Hubble
-- [Ingress & Gateway](./05-ingress-gateway.md): External traffic security
-- [Best Practices](./06-best-practices.md): Production security configuration
+- [Observability](./04-observability.md)
+- [Ingress & Gateway](./05-ingress-gateway.md)
+- [Best Practices](./06-best-practices.md)
+- [Security Quiz](../../quizzes/service-mesh/cilium-service-mesh/security.md)
 
 ## References
 
-- [Cilium Network Policy Documentation](https://docs.cilium.io/en/stable/security/policy/)
-- [Cilium Mutual Authentication](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/)
-- [Cilium Encryption Documentation](https://docs.cilium.io/en/stable/security/network/encryption/)
-- [Cilium Native mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)
-- [Istio PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
-- [SPIFFE/SPIRE Documentation](https://spiffe.io/docs/latest/)
-- [Zero Trust Architecture - NIST](https://www.nist.gov/publications/zero-trust-architecture)
+- [Cilium1.20.1 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Authentication example/API shape](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst)
+- [Cilium1.20.1 CNP schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+- [Cilium1.20.1 ztunnel beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
+- [Ztunnel CA implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go)
+- [Ztunnel bootstrap example](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes-ztunnel/generate-secrets.sh)
+- [Encryption scope/strict mode](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption.rst)
+- [WireGuard](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
+- [IPsec and key rotation](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
+- [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [HTTP/DNS policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
+- [Default-deny behavior](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/intro.rst)
+- [Explicit default-deny API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go)
+- [Mutable endpoint audit option](https://github.com/cilium/cilium/blob/v1.20.1/pkg/option/endpoint.go)
+- [Endpoint configuration CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_config.md)
+- [Metrics](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
+- [SPIRE1.15.2 server configuration](https://github.com/spiffe/spire/blob/v1.15.2/doc/spire_server.md)
+- [SPIRE Vault authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_vault.md)
+- [SPIRE disk authority](https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_disk.md)
+- [Kafka ACLs](https://kafka.apache.org/41/security/authorization-and-acls/)
+- [AWS STS endpoints](https://docs.aws.amazon.com/general/latest/gr/sts.html)
+- [WireGuard protocol](https://www.wireguard.com/protocol/)
+- [NIST Zero Trust Architecture — further reading](https://www.nist.gov/publications/zero-trust-architecture)

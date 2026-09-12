@@ -1,0 +1,174 @@
+{
+  "files": [
+    {
+      "path": "en/service-mesh/cilium-service-mesh/README.md",
+      "yamlDocuments": 3,
+      "releasedCNPSchemaChecks": 1,
+      "bashBlocks": 3
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/README.md",
+      "yamlDocuments": 3,
+      "releasedCNPSchemaChecks": 1,
+      "bashBlocks": 3
+    }
+  ],
+  "codeParity": true,
+  "chartCases": [
+    {
+      "case": "baseline",
+      "objects": 25,
+      "components": [
+        "DaemonSet/cilium",
+        "DaemonSet/cilium-envoy",
+        "Deployment/cilium-operator"
+      ],
+      "selectedConfig": {
+        "enable-l7-proxy": "true",
+        "envoy-node-locality-enabled": "false",
+        "external-envoy-proxy": "true",
+        "envoy-base-id": "0",
+        "envoy-access-log-enabled": "true",
+        "envoy-access-log-buffer-size": "4096",
+        "envoy-keep-cap-netbindservice": "false",
+        "envoy-xds-mode": "ads"
+      }
+    },
+    {
+      "case": "ignored-proxy-disable",
+      "objects": 25,
+      "components": [
+        "DaemonSet/cilium",
+        "DaemonSet/cilium-envoy",
+        "Deployment/cilium-operator"
+      ],
+      "selectedConfig": {
+        "enable-l7-proxy": "true",
+        "envoy-node-locality-enabled": "false",
+        "external-envoy-proxy": "true",
+        "envoy-base-id": "0",
+        "envoy-access-log-enabled": "true",
+        "envoy-access-log-buffer-size": "4096",
+        "envoy-keep-cap-netbindservice": "false",
+        "envoy-xds-mode": "ads"
+      }
+    },
+    {
+      "case": "actual-l7-disable",
+      "objects": 21,
+      "components": [
+        "DaemonSet/cilium",
+        "Deployment/cilium-operator"
+      ],
+      "selectedConfig": {
+        "enable-l7-proxy": "false",
+        "envoy-node-locality-enabled": "false",
+        "external-envoy-proxy": "false",
+        "envoy-base-id": "0",
+        "envoy-access-log-enabled": "true",
+        "envoy-access-log-buffer-size": "4096",
+        "envoy-keep-cap-netbindservice": "false",
+        "envoy-xds-mode": "ads"
+      }
+    },
+    {
+      "case": "features",
+      "objects": 36,
+      "components": [
+        "DaemonSet/cilium",
+        "DaemonSet/cilium-envoy",
+        "Deployment/cilium-operator",
+        "Deployment/hubble-relay",
+        "Deployment/hubble-ui"
+      ],
+      "selectedConfig": {
+        "enable-l7-proxy": "true",
+        "envoy-node-locality-enabled": "false",
+        "external-envoy-proxy": "true",
+        "envoy-base-id": "0",
+        "envoy-access-log-enabled": "true",
+        "envoy-access-log-buffer-size": "4096",
+        "envoy-keep-cap-netbindservice": "false",
+        "envoy-xds-mode": "ads"
+      }
+    },
+    {
+      "case": "auth-missing-enabled",
+      "exitCode": 1,
+      "error": "Error: execution error at (cilium/templates/validate.yaml:140:7): SPIRE integration requires .Values.authentication.enabled=true and .Values.authentication.mutual.spire.enabled=true\n\nUse --debug flag to render out invalid YAML\n"
+    },
+    {
+      "case": "auth-enabled",
+      "objects": 41,
+      "components": [
+        "DaemonSet/cilium",
+        "DaemonSet/cilium-envoy",
+        "DaemonSet/spire-agent",
+        "Deployment/cilium-operator",
+        "StatefulSet/spire-server"
+      ],
+      "selectedConfig": {
+        "enable-l7-proxy": "true",
+        "mesh-auth-spire-agent-socket": "/run/spire/sockets/agent/agent.sock",
+        "mesh-auth-spire-server-address": "spire-server.cilium-spire.svc:8081",
+        "mesh-auth-spire-server-connection-timeout": "30s",
+        "mesh-auth-spire-admin-socket": "/run/spire/sockets/admin.sock",
+        "envoy-node-locality-enabled": "false",
+        "external-envoy-proxy": "true",
+        "envoy-base-id": "0",
+        "envoy-access-log-enabled": "true",
+        "envoy-access-log-buffer-size": "4096",
+        "envoy-keep-cap-netbindservice": "false",
+        "envoy-xds-mode": "ads"
+      }
+    }
+  ],
+  "CLIArtifacts": "/tmp/mesh-cilium-tools/artifacts.json",
+  "nativeHubbleFilters": [
+    {
+      "case": "original",
+      "exitCode": 1,
+      "output": "invalid argument \"productpage\" for \"--to-service\" flag: filters --to-service and --namespace cannot be combined\n"
+    },
+    {
+      "case": "qualified",
+      "exitCode": 0,
+      "output": "allowlist:\n    - '{\"destination_service\":[\"bookinfo/productpage\"]}'\n"
+    },
+    {
+      "case": "namespace-http",
+      "exitCode": 0,
+      "output": "allowlist:\n    - '{\"source_pod\":[\"bookinfo/\"],\"protocol\":[\"http\"]}'\n    - '{\"destination_pod\":[\"bookinfo/\"],\"protocol\":[\"http\"]}'\n"
+    }
+  ],
+  "SPIREStorage": "StatefulSet RWO volume claim template required",
+  "authenticationDoesNotEnableWireGuardOrIPsec": true,
+  "limits": [
+    "No live CNI install/upgrade/replacement, AWS resources or policy enforcement",
+    "CNP schema checks do not execute policy datapath behavior or admission CEL",
+    "Helm/CLI validation and source evidence do not establish beta authentication production readiness"
+  ],
+  "sources": [
+    "https://github.com/cilium/cilium/releases/tag/v1.20.1",
+    "https://github.com/cilium/cilium-cli/releases/tag/v0.20.0",
+    "https://github.com/cilium/hubble/releases/tag/v1.19.4",
+    "https://helm.cilium.io/index.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/.github/actions/eks/k8s-versions.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/conf.py",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/installation.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/installation.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/cni-chaining-aws-cni.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/cni-chaining-limitations.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst",
+    "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+  ],
+  "artifacts": "/tmp/mesh-cilium-readme-validation",
+  "testLog": "/tmp/kubernetes-docs-full-review/docs-test-cilium-readme-clean.log",
+  "fullSuiteTail": "ered positions\n  ---\n  duration_ms: 0.202932\n  type: 'test'\n  ...\n# Subtest: structuredData omits the breadcrumb node for a page with no trail\nok 118 - structuredData omits the breadcrumb node for a page with no trail\n  ---\n  duration_ms: 0.067776\n  type: 'test'\n  ...\n1..118\n# tests 118\n# suites 0\n# pass 118\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2797.211851\n"
+}

@@ -1,0 +1,174 @@
+[
+  {
+    "path": "ko/ops/02-infrastructure-advanced.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked both complete guides/quizzes with separate NLB/DNS architectures, constrained proposal/opt-in failover, reliable manual changes, valid data placement and explicit lifecycle/availability limits.",
+    "findings": [
+      "Blue/green is not equivalent to single-AZ workers; shared dependencies and rollback timing do not guarantee zero downtime/cost or instant isolation. Align with corrected ops01/15.",
+      "KO NLB cross-zone=false contradicts target groups confined to different AZs and global weight shifting; no SG at NLB creation; explicit target-group names conflict with create_before_destroy; TCP80 forwarding to TLS443 is not HTTPS redirect.",
+      "Weights are integer0..999 relative values; sum100 not required. KO file(ERROR) validation misuse, EN tfvars repeats same keys four times. Routine -target and -auto-approve pathways need reviewable full plans and validated bounds.",
+      "Manual static Pod-IP attachments drift and can conflict with controller ownership; use separate TGB per cluster/service with prereqs/ports/TLS explicit.",
+      "DNS weighted/failover records point to the SAME NLB so do not select clusters; KO names differ so not even one weighted record group. Per-color health names also resolve shared NLB; need distinct real endpoints as a separate design. TTL is not recovery SLA.",
+      "State names/keys/provider versions incomplete; align account-qualified backend with ops01. EN failover folder references NLB resources from another root; backend configuration missing.",
+      "Postgres examples lack required password/bootstrap/Service and KO PGDATA subdir; EN PVC StorageClass name mismatch. AutoMode uses ebs.csi.eks.amazonaws.com. Redis affinity namespace/zone-vs-node wording, fake myapp image, Kafka7.5 ZooKeeper/nonnumeric brokerID/incomplete listeners misleading.",
+      "NodePool requirements vs NodeClass subnet selectors and Pod nodeSelector semantics; missing tolerations/selection for dedicated database pool; spread constraints cannot create missing domains.",
+      "Lambda event envelopes mismatch direct CloudWatch/SNS; both action paths cause duplicate/invalid invocation. EN handler index.handler vs zip failover.py; listener ARN contains no port, so wrong HTTP/TLS TG mapping.",
+      "KO no destination-health check; EN checks onlyHTTPthenchangesboth. Both lack event freshness/idempotency/cooldown/single-writer/capacity guard. Health alarms can flap or miss empty/no-data target sets.",
+      "Notification publishes into alarm input SNS topic (extra erroneous deliveries); separate channels. Missing hashes/packaging/source for scheduled health_check function; EN missing Lambda resource. IAMModifyListener/logs too broad.",
+      "Manual scripts permit arithmetic expression injection/negative or zero steps, assumeinitial100/0, defaulttargetgreen, ignoreactual state/SLO and partiallymutate multiplelisteners. Need validated exact maps and negative tests."
+    ],
+    "sources": [
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-cloudwatch-metrics.html",
+      "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-weighted.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-actions-Lambda.html",
+      "https://docs.aws.amazon.com/service-authorization/latest/reference/list_elbv2.html",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html",
+      "https://github.com/kubernetes/kubernetes/blob/v1.36.2/api/openapi-spec/swagger.json",
+      "https://github.com/docker-library/postgres/blob/master/17/bookworm/Dockerfile"
+    ],
+    "validation": [
+      "Two actual AWS6.64 Terraform schemas pass;6NLB+3DNS mock-provider cases pass.",
+      "25 Python fake-client cases checked against actual botocore input models;12 manual fake-CLI cases pass.",
+      "4 core Kubernetes objects and TGB CRD validated; Pod/NodePool label/taint/zone/service/PVC references checked.",
+      "Lambda ZIP entrypoint+vendored dependencies+CRC+source identity checked;all Bash/Python fences parse;sharedHCLmatchesfixtures.",
+      "Four source/quiz pages local-link/H1 checks pass;2diagrams9/9+4viewport/themechecks+actualscreenshotsinspected+PNGsdecoded.",
+      "docs/reviews/2026-09-11/ops-advanced-validation.json"
+    ],
+    "reviewedSha256": "bee32814c0e20418117380b145531f199b5767539ff69dd62d2924ac253bc015"
+  },
+  {
+    "path": "ko/quizzes/ops/02-infrastructure-advanced-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked both complete guides/quizzes with separate NLB/DNS architectures, constrained proposal/opt-in failover, reliable manual changes, valid data placement and explicit lifecycle/availability limits.",
+    "findings": [
+      "Blue/green is not equivalent to single-AZ workers; shared dependencies and rollback timing do not guarantee zero downtime/cost or instant isolation. Align with corrected ops01/15.",
+      "KO NLB cross-zone=false contradicts target groups confined to different AZs and global weight shifting; no SG at NLB creation; explicit target-group names conflict with create_before_destroy; TCP80 forwarding to TLS443 is not HTTPS redirect.",
+      "Weights are integer0..999 relative values; sum100 not required. KO file(ERROR) validation misuse, EN tfvars repeats same keys four times. Routine -target and -auto-approve pathways need reviewable full plans and validated bounds.",
+      "Manual static Pod-IP attachments drift and can conflict with controller ownership; use separate TGB per cluster/service with prereqs/ports/TLS explicit.",
+      "DNS weighted/failover records point to the SAME NLB so do not select clusters; KO names differ so not even one weighted record group. Per-color health names also resolve shared NLB; need distinct real endpoints as a separate design. TTL is not recovery SLA.",
+      "State names/keys/provider versions incomplete; align account-qualified backend with ops01. EN failover folder references NLB resources from another root; backend configuration missing.",
+      "Postgres examples lack required password/bootstrap/Service and KO PGDATA subdir; EN PVC StorageClass name mismatch. AutoMode uses ebs.csi.eks.amazonaws.com. Redis affinity namespace/zone-vs-node wording, fake myapp image, Kafka7.5 ZooKeeper/nonnumeric brokerID/incomplete listeners misleading.",
+      "NodePool requirements vs NodeClass subnet selectors and Pod nodeSelector semantics; missing tolerations/selection for dedicated database pool; spread constraints cannot create missing domains.",
+      "Lambda event envelopes mismatch direct CloudWatch/SNS; both action paths cause duplicate/invalid invocation. EN handler index.handler vs zip failover.py; listener ARN contains no port, so wrong HTTP/TLS TG mapping.",
+      "KO no destination-health check; EN checks onlyHTTPthenchangesboth. Both lack event freshness/idempotency/cooldown/single-writer/capacity guard. Health alarms can flap or miss empty/no-data target sets.",
+      "Notification publishes into alarm input SNS topic (extra erroneous deliveries); separate channels. Missing hashes/packaging/source for scheduled health_check function; EN missing Lambda resource. IAMModifyListener/logs too broad.",
+      "Manual scripts permit arithmetic expression injection/negative or zero steps, assumeinitial100/0, defaulttargetgreen, ignoreactual state/SLO and partiallymutate multiplelisteners. Need validated exact maps and negative tests."
+    ],
+    "sources": [
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-cloudwatch-metrics.html",
+      "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-weighted.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-actions-Lambda.html",
+      "https://docs.aws.amazon.com/service-authorization/latest/reference/list_elbv2.html",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html",
+      "https://github.com/kubernetes/kubernetes/blob/v1.36.2/api/openapi-spec/swagger.json",
+      "https://github.com/docker-library/postgres/blob/master/17/bookworm/Dockerfile"
+    ],
+    "validation": [
+      "Two actual AWS6.64 Terraform schemas pass;6NLB+3DNS mock-provider cases pass.",
+      "25 Python fake-client cases checked against actual botocore input models;12 manual fake-CLI cases pass.",
+      "4 core Kubernetes objects and TGB CRD validated; Pod/NodePool label/taint/zone/service/PVC references checked.",
+      "Lambda ZIP entrypoint+vendored dependencies+CRC+source identity checked;all Bash/Python fences parse;sharedHCLmatchesfixtures.",
+      "Four source/quiz pages local-link/H1 checks pass;2diagrams9/9+4viewport/themechecks+actualscreenshotsinspected+PNGsdecoded.",
+      "docs/reviews/2026-09-11/ops-advanced-validation.json"
+    ],
+    "reviewedSha256": "fc859c3eaca9f3d43912b8abb8c309db5cb294fb2c03a18c668bfe923e6d0ddc"
+  },
+  {
+    "path": "en/ops/02-infrastructure-advanced.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked both complete guides/quizzes with separate NLB/DNS architectures, constrained proposal/opt-in failover, reliable manual changes, valid data placement and explicit lifecycle/availability limits.",
+    "findings": [
+      "Blue/green is not equivalent to single-AZ workers; shared dependencies and rollback timing do not guarantee zero downtime/cost or instant isolation. Align with corrected ops01/15.",
+      "KO NLB cross-zone=false contradicts target groups confined to different AZs and global weight shifting; no SG at NLB creation; explicit target-group names conflict with create_before_destroy; TCP80 forwarding to TLS443 is not HTTPS redirect.",
+      "Weights are integer0..999 relative values; sum100 not required. KO file(ERROR) validation misuse, EN tfvars repeats same keys four times. Routine -target and -auto-approve pathways need reviewable full plans and validated bounds.",
+      "Manual static Pod-IP attachments drift and can conflict with controller ownership; use separate TGB per cluster/service with prereqs/ports/TLS explicit.",
+      "DNS weighted/failover records point to the SAME NLB so do not select clusters; KO names differ so not even one weighted record group. Per-color health names also resolve shared NLB; need distinct real endpoints as a separate design. TTL is not recovery SLA.",
+      "State names/keys/provider versions incomplete; align account-qualified backend with ops01. EN failover folder references NLB resources from another root; backend configuration missing.",
+      "Postgres examples lack required password/bootstrap/Service and KO PGDATA subdir; EN PVC StorageClass name mismatch. AutoMode uses ebs.csi.eks.amazonaws.com. Redis affinity namespace/zone-vs-node wording, fake myapp image, Kafka7.5 ZooKeeper/nonnumeric brokerID/incomplete listeners misleading.",
+      "NodePool requirements vs NodeClass subnet selectors and Pod nodeSelector semantics; missing tolerations/selection for dedicated database pool; spread constraints cannot create missing domains.",
+      "Lambda event envelopes mismatch direct CloudWatch/SNS; both action paths cause duplicate/invalid invocation. EN handler index.handler vs zip failover.py; listener ARN contains no port, so wrong HTTP/TLS TG mapping.",
+      "KO no destination-health check; EN checks onlyHTTPthenchangesboth. Both lack event freshness/idempotency/cooldown/single-writer/capacity guard. Health alarms can flap or miss empty/no-data target sets.",
+      "Notification publishes into alarm input SNS topic (extra erroneous deliveries); separate channels. Missing hashes/packaging/source for scheduled health_check function; EN missing Lambda resource. IAMModifyListener/logs too broad.",
+      "Manual scripts permit arithmetic expression injection/negative or zero steps, assumeinitial100/0, defaulttargetgreen, ignoreactual state/SLO and partiallymutate multiplelisteners. Need validated exact maps and negative tests."
+    ],
+    "sources": [
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-cloudwatch-metrics.html",
+      "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-weighted.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-actions-Lambda.html",
+      "https://docs.aws.amazon.com/service-authorization/latest/reference/list_elbv2.html",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html",
+      "https://github.com/kubernetes/kubernetes/blob/v1.36.2/api/openapi-spec/swagger.json",
+      "https://github.com/docker-library/postgres/blob/master/17/bookworm/Dockerfile"
+    ],
+    "validation": [
+      "Two actual AWS6.64 Terraform schemas pass;6NLB+3DNS mock-provider cases pass.",
+      "25 Python fake-client cases checked against actual botocore input models;12 manual fake-CLI cases pass.",
+      "4 core Kubernetes objects and TGB CRD validated; Pod/NodePool label/taint/zone/service/PVC references checked.",
+      "Lambda ZIP entrypoint+vendored dependencies+CRC+source identity checked;all Bash/Python fences parse;sharedHCLmatchesfixtures.",
+      "Four source/quiz pages local-link/H1 checks pass;2diagrams9/9+4viewport/themechecks+actualscreenshotsinspected+PNGsdecoded.",
+      "docs/reviews/2026-09-11/ops-advanced-validation.json"
+    ],
+    "reviewedSha256": "29e5ee4c5ecd47e9f8465aa3098167dc66bc61ab8639787a11fae3784bf992c8"
+  },
+  {
+    "path": "en/quizzes/ops/02-infrastructure-advanced-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked both complete guides/quizzes with separate NLB/DNS architectures, constrained proposal/opt-in failover, reliable manual changes, valid data placement and explicit lifecycle/availability limits.",
+    "findings": [
+      "Blue/green is not equivalent to single-AZ workers; shared dependencies and rollback timing do not guarantee zero downtime/cost or instant isolation. Align with corrected ops01/15.",
+      "KO NLB cross-zone=false contradicts target groups confined to different AZs and global weight shifting; no SG at NLB creation; explicit target-group names conflict with create_before_destroy; TCP80 forwarding to TLS443 is not HTTPS redirect.",
+      "Weights are integer0..999 relative values; sum100 not required. KO file(ERROR) validation misuse, EN tfvars repeats same keys four times. Routine -target and -auto-approve pathways need reviewable full plans and validated bounds.",
+      "Manual static Pod-IP attachments drift and can conflict with controller ownership; use separate TGB per cluster/service with prereqs/ports/TLS explicit.",
+      "DNS weighted/failover records point to the SAME NLB so do not select clusters; KO names differ so not even one weighted record group. Per-color health names also resolve shared NLB; need distinct real endpoints as a separate design. TTL is not recovery SLA.",
+      "State names/keys/provider versions incomplete; align account-qualified backend with ops01. EN failover folder references NLB resources from another root; backend configuration missing.",
+      "Postgres examples lack required password/bootstrap/Service and KO PGDATA subdir; EN PVC StorageClass name mismatch. AutoMode uses ebs.csi.eks.amazonaws.com. Redis affinity namespace/zone-vs-node wording, fake myapp image, Kafka7.5 ZooKeeper/nonnumeric brokerID/incomplete listeners misleading.",
+      "NodePool requirements vs NodeClass subnet selectors and Pod nodeSelector semantics; missing tolerations/selection for dedicated database pool; spread constraints cannot create missing domains.",
+      "Lambda event envelopes mismatch direct CloudWatch/SNS; both action paths cause duplicate/invalid invocation. EN handler index.handler vs zip failover.py; listener ARN contains no port, so wrong HTTP/TLS TG mapping.",
+      "KO no destination-health check; EN checks onlyHTTPthenchangesboth. Both lack event freshness/idempotency/cooldown/single-writer/capacity guard. Health alarms can flap or miss empty/no-data target sets.",
+      "Notification publishes into alarm input SNS topic (extra erroneous deliveries); separate channels. Missing hashes/packaging/source for scheduled health_check function; EN missing Lambda resource. IAMModifyListener/logs too broad.",
+      "Manual scripts permit arithmetic expression injection/negative or zero steps, assumeinitial100/0, defaulttargetgreen, ignoreactual state/SLO and partiallymutate multiplelisteners. Need validated exact maps and negative tests."
+    ],
+    "sources": [
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-cloudwatch-metrics.html",
+      "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-weighted.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-actions-Lambda.html",
+      "https://docs.aws.amazon.com/service-authorization/latest/reference/list_elbv2.html",
+      "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html",
+      "https://github.com/kubernetes/kubernetes/blob/v1.36.2/api/openapi-spec/swagger.json",
+      "https://github.com/docker-library/postgres/blob/master/17/bookworm/Dockerfile"
+    ],
+    "validation": [
+      "Two actual AWS6.64 Terraform schemas pass;6NLB+3DNS mock-provider cases pass.",
+      "25 Python fake-client cases checked against actual botocore input models;12 manual fake-CLI cases pass.",
+      "4 core Kubernetes objects and TGB CRD validated; Pod/NodePool label/taint/zone/service/PVC references checked.",
+      "Lambda ZIP entrypoint+vendored dependencies+CRC+source identity checked;all Bash/Python fences parse;sharedHCLmatchesfixtures.",
+      "Four source/quiz pages local-link/H1 checks pass;2diagrams9/9+4viewport/themechecks+actualscreenshotsinspected+PNGsdecoded.",
+      "docs/reviews/2026-09-11/ops-advanced-validation.json"
+    ],
+    "reviewedSha256": "8cd67489ef90e42b01fc20f30af5eb44c20d008638db7f43dcae9b3a2e59d8f8"
+  }
+]

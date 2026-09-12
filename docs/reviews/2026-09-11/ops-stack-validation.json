@@ -1,0 +1,139 @@
+{
+  "status": "passed_with_live_environment_limits",
+  "date": "2026-09-11",
+  "documents": [
+    "ko/ops/09-observability-stack.md",
+    "ko/quizzes/ops/09-observability-stack-quiz.md",
+    "en/ops/09-observability-stack.md",
+    "en/quizzes/ops/09-observability-stack-quiz.md"
+  ],
+  "charts": [
+    {
+      "name": "loki.tgz",
+      "url": "https://github.com/grafana-community/helm-charts/releases/download/loki-18.12.2/loki-18.12.2.tgz",
+      "sha256": "d552fea874240a47b8298a02d11a25d6ef614cd9b5b48d74c78d30db712ae626",
+      "verifiedDigest": true
+    },
+    {
+      "name": "tempo.tgz",
+      "url": "https://github.com/grafana-community/helm-charts/releases/download/tempo-3.0.0/tempo-3.0.0.tgz",
+      "sha256": "4118a1ddc4c2a5e666e8f4d9a9648d5a067bccf901ce5ddb39bcbbb9c1670721",
+      "verifiedDigest": true
+    },
+    {
+      "name": "tempo-distributed.tgz",
+      "url": "https://github.com/grafana-community/helm-charts/releases/download/tempo-distributed-3.5.1/tempo-distributed-3.5.1.tgz",
+      "sha256": "f182b1c078be2c833c7c175a7fc1b7334520204fac8c4ee01ca6f4282659591c",
+      "verifiedDigest": true
+    },
+    {
+      "name": "alloy.tgz",
+      "url": "https://github.com/grafana/helm-charts/releases/download/alloy-1.12.1/alloy-1.12.1.tgz",
+      "sha256": "cdd1ec39f99c3c506d5b521156d72236ea143c089f50da6b64398f831734829c",
+      "verifiedDigest": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "loki-render",
+      "exitCode": 0
+    },
+    {
+      "name": "tempo-lab-render",
+      "exitCode": 0
+    },
+    {
+      "name": "tempo-distributed-render",
+      "exitCode": 0
+    },
+    {
+      "name": "alloy-render",
+      "exitCode": 0
+    },
+    {
+      "name": "prometheus-render",
+      "exitCode": 0
+    },
+    {
+      "name": "amp-render",
+      "exitCode": 0
+    },
+    {
+      "name": "loki-native",
+      "exitCode": 0
+    },
+    {
+      "name": "tempo-lab-native",
+      "exitCode": 0
+    },
+    {
+      "name": "tempo-distributed-native",
+      "exitCode": 0
+    },
+    {
+      "name": "collector-native",
+      "exitCode": 0
+    },
+    {
+      "name": "alloy-native",
+      "exitCode": 0
+    },
+    {
+      "name": "rendered-storage-services-identity-sampling-contracts",
+      "status": "pass"
+    }
+  ],
+  "kubernetes": {
+    "nativeObjects": 234,
+    "failures": [],
+    "schema": "Kubernetes1.36.2OpenAPI;optionalnullsnormalizedtoabsent"
+  },
+  "fences": 60,
+  "quizzes": 20,
+  "queries": {
+    "count": 18,
+    "syntaxErrors": 0,
+    "parsers": "Grafana lezer LogQL0.4.2 TraceQL1.0.3 with Node24.21"
+  },
+  "terraform": {
+    "version": "1.15.7",
+    "provider": "aws6.64.0",
+    "validate": "passed",
+    "mockTests": 2,
+    "realCloudActions": false
+  },
+  "fixtureSha256": {
+    ".vitepress/cache/content-review-stack/loki-values.yaml": "3c59fe86e7c586c9437cd34ea2d2ccc1f1e14257da3e2626d76cf57fe92c4acd",
+    ".vitepress/cache/content-review-stack/tempo-lab-values.yaml": "039000f4ce343063a1961abc681f42b5801de3051405176e42f918fcb8bdf853",
+    ".vitepress/cache/content-review-stack/tempo-distributed-values.yaml": "756b45fbdc495276e421f5d7ea106d20025138ceff66ecfef26b462a8a3e922e",
+    ".vitepress/cache/content-review-stack/logs.alloy": "2c6876d4de1063e9e9a53cf58cd9f4f3960dfe927f1e64fb05641edccc76e58c",
+    ".vitepress/cache/content-review-stack/alloy-values.yaml": "042a1a3e4a193be3aa1773b18cf63ecd74b8c8e07d105af45cec7ad8adb1b8b4",
+    ".vitepress/cache/content-review-stack/alloy-rbac.yaml": "fc7f04383bcdf5fbb9b907b36ceb4ae5f5f7055f92490f19b46d7fe2d9980cd4",
+    ".vitepress/cache/content-review-stack/collector.yaml": "be1fa336eba688c4abc4e7ab8ba6856a915fa654d967135ab133424c3dababcf",
+    ".vitepress/cache/content-review-stack/collector-deployment.yaml": "1cabe057c9d4b11e4f8c24937320195a039b6417a3c78bef264982a16709ebb7",
+    ".vitepress/cache/content-review-stack/prometheus-values.yaml": "cc652cae37ab039576ff501c32f7fb9fd94ee09fe83a244bfa6040ce667e1a16",
+    ".vitepress/cache/content-review-stack/amp-values.yaml": "a91a1b68777fcd4d613de4c352b3896d17a4d67f3d679b55f8f18fc72218b1b9",
+    ".vitepress/cache/content-review-stack/datasources.yaml": "b5be13b63788a6acb770388b23a2a51f9a4dbe8745d19dba9b68f53fad138619",
+    ".vitepress/cache/content-review-stack/amp.tf": "3ac7441972089e27a150759bf64f6ce8bbd909a15b419aab16bc8b26fbad4801",
+    ".vitepress/cache/content-review-stack/dashboard-configmap.yaml": "f3d6465bfd315f4c489039de6dc967d10023d126b9dbe37a8ca0edc6fb556631"
+  },
+  "findings": [
+    "LokiSSDdeprecatedand4.0removal;communitychart18.12.2;oldmixedchartvaluesremoved.",
+    "ActualPVCinspectioncaughtsilentlyignoredLoki20GiandmissingaccessModes;claimsnowrendergp3/20Gi/RWO.",
+    "Tempo3.0.3Kafka/microservicesversusmonolithicmigrationrewritten;removedingester/compactor/SSB/local_blocksconfigs;sharedstorecompactionandtenantoverrideboundaries.",
+    "Tempochart3.0.0Jaegernullparentbreaksrender;disablechildreninstead;legacyServiceportsremainbutnativeprotocolsdisabled.",
+    "Tempo-distributed3.5.1missingbackendWorkerPDBdefaultrequiresoverride;unsupportedblockbuilder/liveStorepersistencekeysremoved.",
+    "KafkaSASLPLAINdoesnotimplyTLS/MSKIAMsupport;exampleisexplicitisolatedvalidationstartingpoint.",
+    "AlloyAPIlogsnotCRIfiletail;singleRecreatewithnamespacedRBACavoidspernodealldiscoveryduplicatesbutdoesnotclaimHA.",
+    "Collector0.160actualnativepipelineandcurrenttelemetryreaders;singletracesampler/traceaffinity/late/headloss/ORpolicyandbatchtriggerlimitsemantics.",
+    "AMP1095dayretentionnot150hardmax;scopedwriterreaderIRSAroles,exactSAsub/aud,HAclusterand__replica__,noautomaticworkspacefederation/downsampling.",
+    "GrafanaKPSdefaultDatasourcekeyfoundunder sidecar.datasources;fixedduplicateprometheusUIDthroughactualrenderedConfigMapchecks;threebaseUIDsplusexplicitAMPoverlaylistassembly.",
+    "LogQLnumericerrorfilters/linevsbyterateandTraceQLintrinsics/hierarchy/spanaggregationcorrected;20matchingquizquestions."
+  ],
+  "limitations": [
+    "No live EKS/Kafka/S3/Grafana login/AWS writes or queries.",
+    "No load, retention deletion, Kafka recovery, TLS or full write-query deployment test claimed.",
+    "Native and schema tests do not guarantee cloud permissions or capacity.",
+    "No source image references in this chapter; no diagrams generated."
+  ]
+}

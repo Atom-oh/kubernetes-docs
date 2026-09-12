@@ -1,209 +1,197 @@
 # Cilium Service Mesh Ingress & Gateway Quiz
 
-This quiz tests your understanding of Cilium Ingress Controller, Gateway API, TLS termination, and EKS integration patterns.
+Review baseline: Cilium 1.20.1, Gateway API 1.6.1 and AWS LBC 3.5.0. Read the [guide](../../../service-mesh/cilium-service-mesh/05-ingress-gateway.md) and its primary sources.
 
 ## Quiz Questions
 
-### 1. What does 'shared' mode mean in Cilium Ingress Controller's loadbalancerMode option?
+### 1. What does Cilium Ingress `loadbalancerMode: shared` share?
 
-A. Creates a separate load balancer for each Ingress
-B. All Ingresses share one load balancer
-C. Uses NodePort only without load balancer
-D. Handles only internal traffic
+- A. One frontend across every controller in the cluster
+- B. The shared Cilium Ingress Service for resources using that mode
+- C. Only an internal NodePort
+- D. Every Gateway API Gateway automatically
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. All Ingresses share one load balancer**
+**Answer: B. The shared Cilium Ingress Service for resources using that mode**
 
-**Explanation:**
-The loadbalancerMode: shared setting makes all Ingress resources use a single shared load balancer. This is cost-effective, while dedicated mode creates a separate load balancer for each Ingress.
+The setting applies to Cilium-managed Ingress resources using shared mode. Dedicated-mode overrides and other controllers are separate. A shared GatewayClass also does not imply one shared cloud load balancer.
 
 </details>
 
-### 2. What is the role of the parentRefs field in Gateway API's HTTPRoute?
+### 2. How does an HTTPRoute explicitly attach only to a Gateway's HTTPS listener?
 
-A. Define parent Pod
-B. Specify which Gateway this route connects to
-C. Reference parent namespace
-D. Define policies to inherit
+- A. Name a parent Pod
+- B. Use `parentRefs` with the Gateway name and `sectionName: https`
+- C. Set only the Route namespace
+- D. Use an arbitrary listener annotation
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Specify which Gateway this route connects to**
+**Answer: B. Use `parentRefs` with the Gateway name and `sectionName: https`**
 
-**Explanation:**
-parentRefs specifies which Gateway the HTTPRoute connects to. By referencing the Gateway's name and namespace, it determines which listener the route applies to.
+The section name must match the listener, its `allowedRoutes` must permit attachment, and the hostname/protocol must be compatible. Inspect the correct parent status entry for Accepted/ResolvedRefs; a parent reference alone does not prove reachability.
 
 </details>
 
-### 3. What annotation enables TLS passthrough in Cilium Ingress?
+### 3. Which Cilium Ingress annotation enables TLS passthrough?
 
-A. ingress.cilium.io/tls-mode: passthrough
-B. ingress.cilium.io/tls-passthrough: "true"
-C. cilium.io/tls: passthrough
-D. nginx.ingress.kubernetes.io/ssl-passthrough
+- A. `ingress.cilium.io/tls-mode: passthrough`
+- B. `ingress.cilium.io/tls-passthrough: "true"`
+- C. `cilium.io/tls: passthrough`
+- D. An nginx-specific annotation
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. ingress.cilium.io/tls-passthrough: "true"**
+**Answer: B. `ingress.cilium.io/tls-passthrough: "true"`**
 
-**Explanation:**
-The `ingress.cilium.io/tls-passthrough: "true"` annotation forwards TLS traffic directly to the backend service without terminating it. This is useful when the backend needs to handle TLS.
+The backend terminates TLS. The Ingress requires a host and path `/`; Cilium uses SNI rather than inspecting HTTP paths. The backend sees the Envoy/node connection, not the original client socket address.
 
 </details>
 
-### 4. What field is used in Gateway API's Gateway resource to support multiple protocols?
+### 4. Where are a Gateway's protocol and port configured?
 
-A. protocols
-B. listeners
-C. endpoints
-D. handlers
+- A. `protocols`
+- B. `listeners`
+- C. `endpoints`
+- D. `handlers`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. listeners**
+**Answer: B. `listeners`**
 
-**Explanation:**
-Multiple listeners can be defined in the Gateway's listeners field to support various protocols such as HTTP, HTTPS, TCP, TLS. Each listener can configure protocol, port, hostname, etc. individually.
+Each listener defines its protocol/port and applicable hostname/TLS/attachment settings. Actual protocol combinations depend on the controller. For example, LBC 3.5 does not support mixing its L4/NLB and L7/ALB listeners in one Gateway.
 
 </details>
 
-### 5. What annotation is required to use NLB with Cilium Ingress on EKS?
+### 5. Which configuration selects AWS LBC for the guide's Cilium shared Ingress NLB frontend?
 
-A. service.kubernetes.io/load-balancer-type: nlb
-B. service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-C. eks.amazonaws.com/load-balancer: nlb
-D. aws.load-balancer/type: network
+- A. Only the legacy `aws-load-balancer-type: nlb` annotation
+- B. Service `spec.loadBalancerClass: service.k8s.aws/nlb`, instance targets and allocated NodePorts
+- C. IP targets without checking EndpointSlices
+- D. An arbitrary EKS namespace label
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. service.beta.kubernetes.io/aws-load-balancer-type: "nlb"**
+**Answer: B. Service `spec.loadBalancerClass: service.k8s.aws/nlb`, instance targets and allocated NodePorts**
 
-**Explanation:**
-To use Network Load Balancer on AWS EKS, add the `service.beta.kubernetes.io/aws-load-balancer-type: "nlb"` annotation to the service. Additional annotations like scheme, target-type can further configure NLB behavior.
+The Helm equivalent is `ingressController.service.loadBalancerClass`. Cilium's L7 shared Ingress EndpointSlice is synthetic and lacks Pod target references; LBC's IP resolver skips it. EC2 instance/NodePort prerequisites still need validation.
 
 </details>
 
-### 6. What filter type is used to configure URL rewriting in Gateway API's HTTPRoute?
+### 6. Which HTTPRoute filter rewrites the upstream hostname/path without redirecting the client?
 
-A. PathRewrite
-B. URLRewrite
-C. RequestTransform
-D. PathModifier
+- A. `PathRewrite`
+- B. `URLRewrite`
+- C. `RequestTransform`
+- D. `RequestRedirect`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. URLRewrite**
+**Answer: B. `URLRewrite`**
 
-**Explanation:**
-In the HTTPRoute's filters section, type: URLRewrite is used to rewrite request URLs. Both path and hostname can be modified.
+URLRewrite changes the request forwarded to the backend. RequestRedirect returns a redirect to the client. Header values in the guide are literal strings, not automatic UUID or latency generation.
 
 </details>
 
-### 7. What Gateway setting is needed to allow cross-namespace routing in Cilium Gateway API?
+### 7. Which listener setting restricts cross-namespace Route attachment to namespaces with an approved label?
 
-A. allowedRoutes.namespaces.from: All
-B. allowedRoutes.namespaces.from: Selector
-C. crossNamespace: true
-D. routes.scope: cluster
+- A. `allowedRoutes.namespaces.from: All`
+- B. `allowedRoutes.namespaces.from: Selector` with a matching selector
+- C. `crossNamespace: true`
+- D. `routes.scope: cluster`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. allowedRoutes.namespaces.from: Selector**
+**Answer: B. `allowedRoutes.namespaces.from: Selector` with a matching selector**
 
-**Explanation:**
-In Gateway's listeners, setting allowedRoutes.namespaces.from: Selector allows routes only from namespaces with specific labels using a selector. 'All' allows all namespaces, and 'Same' allows only the same namespace.
+All also permits cross-namespace attachment, but does not restrict it by label. Same restricts it to the Gateway namespace. A cross-namespace backend Service reference additionally needs ReferenceGrant in the backend namespace; that is a separate check.
 
 </details>
 
-### 8. What Envoy resource type is used to configure service health checks in CiliumEnvoyConfig?
+### 8. Where are Envoy active health checks configured?
 
-A. envoy.config.listener.v3.Listener
-B. envoy.config.cluster.v3.Cluster
-C. envoy.config.route.v3.Route
-D. envoy.config.endpoint.v3.Endpoint
+- A. Listener's name
+- B. Cluster's `health_checks`
+- C. Route's name
+- D. Endpoint's namespace
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. envoy.config.cluster.v3.Cluster**
+**Answer: B. Cluster's `health_checks`**
 
-**Explanation:**
-Health check settings are defined in the health_checks field of the Cluster resource. HTTP health checks, TCP health checks, intervals, thresholds, etc. can be configured.
+A usable CEC still needs a Service→Listener→route→Cluster chain. HTTP health host/path must work on the actual backend. The expected status interval excludes its upper bound, so start 200/end 300 covers all 2xx.
 
 </details>
 
-### 9. What is the recommended statusCode when redirecting from HTTP to HTTPS in Gateway API?
+### 9. Which permanent redirect preserves the request method/body, and how should the HTTP→HTTPS Route attach?
 
-A. 302 (Found)
-B. 307 (Temporary Redirect)
-C. 301 (Moved Permanently)
-D. 303 (See Other)
+- A. 302 on both HTTP and HTTPS
+- B. 307 on both HTTP and HTTPS
+- C. 308 on the HTTP listener only
+- D. 303 on the HTTPS listener only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. 301 (Moved Permanently)**
+**Answer: C. 308 on the HTTP listener only**
 
-**Explanation:**
-For permanent redirect from HTTP to HTTPS, status code 301 is recommended. This informs browsers and search engines that the URL has permanently changed, which is beneficial for caching and SEO.
+308 is permanent and preserves method/body; 307 is its temporary counterpart. Binding the scheme redirect only to HTTP avoids an HTTPS self-redirect loop. Redirects cannot protect data already sent in the initial plaintext request.
 
 </details>
 
-### 10. What is the main difference between Cilium and AWS Load Balancer Controller?
+### 10. Which cost and capability comparison is accurate?
 
-A. Cilium only supports L4
-B. AWS LBC provides lower latency
-C. Cilium uses only node resources without additional LB costs
-D. AWS LBC fully supports Gateway API
+- A. Cilium never needs a cloud load balancer
+- B. AWS LBC is always faster
+- C. Cilium node/proxy costs can coexist with cloud LB charges; compare version-specific features
+- D. Every controller supports every Gateway API feature
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Cilium uses only node resources without additional LB costs**
+**Answer: C. Cilium node/proxy costs can coexist with cloud LB charges; compare version-specific features**
 
-**Explanation:**
-Cilium Ingress/Gateway handles external traffic using node's eBPF and Envoy, so there are no separate AWS load balancer costs. In contrast, AWS LBC provisions ALB/NLB incurring additional costs.
+Cilium can run behind ALB/NLB, which still incur charges. LBC 3.5 maps HTTP/GRPC Routes to ALB and TCP/UDP/TLS Routes to NLB. Workload mTLS and ACM server certificates are different mechanisms; performance requires comparable measurements.
 
 </details>
 
-### 11. What is TCPRoute used for in Gateway API?
+### 11. What does TCPRoute do in the guide's Gateway API 1.6.1 baseline?
 
-A. HTTP traffic routing
-B. Traffic requiring TLS termination
-C. Raw TCP traffic routing (non-HTTP)
-D. UDP traffic only
+- A. Inspect HTTP paths
+- B. Terminate TLS by default
+- C. Forward an opaque TCP stream using the served v1 API
+- D. Handle UDP only
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Raw TCP traffic routing (non-HTTP)**
+**Answer: C. Forward an opaque TCP stream using the served v1 API**
 
-**Explanation:**
-TCPRoute is used to route raw TCP traffic that is not HTTP, such as database connections and message queues. It works with Gateway's TCP listener to provide external access to non-HTTP services.
+TCP can carry HTTP or TLS, but TCPRoute does not gain their L7 semantics. The old TCPRoute v1alpha2 API is not served in this baseline. TLSRoute v1 instead requires a compatible TLS passthrough listener for SNI routing.
 
 </details>
 
-### 12. What NLB setting is used to preserve client IP in Cilium Ingress?
+### 12. If NLB PPv2 is enabled for this Cilium Ingress topology, what must be coordinated?
 
-A. X-Forwarded-For header
-B. Proxy Protocol
-C. Disable Source NAT
-D. Direct Server Return
+- A. Only a client X-Forwarded-For header
+- B. Both the NLB sender and Cilium `enableProxyProtocol` receiver, health checks and trusted access path
+- C. No receiver change is needed
+- D. PPv2 is mandatory for every NLB
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Proxy Protocol**
+**Answer: B. Both the NLB sender and Cilium `enableProxyProtocol` receiver, health checks and trusted access path**
 
-**Explanation:**
-To preserve client IP with NLB, Proxy Protocol must be enabled. Use the `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"` annotation. Envoy extracts the original client IP from the Proxy Protocol header.
+The parser requires a PROXY header, so enabling one side alone breaks traffic. PPv2 is optional; client-IP preservation also depends on target type/attributes. AWS LBC warns against PPv2 with instance targets and externalTrafficPolicy Local. PROXY metadata is not authenticated identity.
 
 </details>

@@ -1,0 +1,334 @@
+[
+  {
+    "path": "en/networking/cilium/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full560-line README audit; current baseline/CLI/Helm/policy/platform guidance and historical metadata corrected with native offline checks.",
+    "sources": [
+      "https://api.github.com/advisories/GHSA-fm8w-2m5w-9j7r",
+      "https://api.github.com/repos/cilium/cilium/releases/latest",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.17.18",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.18.12",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.18.13",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.19.6",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.19.7",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0-rc.0",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0-rc.1",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.1",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.21.0-pre.0",
+      "https://api.github.com/repos/cilium/cilium/security-advisories/GHSA-fm8w-2m5w-9j7r",
+      "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_list.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_map_list.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_metrics_list.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/installation/requirements-eks.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/eni.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/backends.md",
+      "https://raw.githubusercontent.com/flannel-io/flannel/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes/apimachinery/v0.36.0/pkg/api/resource/quantity.go",
+      "https://www.eksworkshop.com/beginner/115_cilium/"
+    ],
+    "findings": [
+      "Original560linesinbothlanguagesfullyread. CurrentexamplespinnedCilium/chart1.20.1,CLI0.20.0,Hubble1.19.4;Kubernetestested1.33–36andLinux5.10/distributionbackportrequirementsreplaceobsolete1.16/4.9andunboundedcompatibility.",
+      "Historicalreleaseversions/datesretainedandverifiedviaGitHubAPIs(UTC). Gatewayaccesslogsapply1.19.6/1.18.12,notevery1.17release;restart/affinityfixesspecific1.19.6. VRRP/IGMPbackport1.18.13;DeltaADSclaimbelongs1.20announcement. 1100contributorsiscommunitysize,notreleaseauthors;77→16MBreportedbinarysizesretainedasunrepeatedupstreamclaim. KOinplacemigrationno longerpromiseszero downtime.",
+      "Advisorymetadatarequiresdistinction:projectGHSAAPIpublishedJuly6,globalGitHubrecordSept3. Earlyworkerprogressclaimusingglobaldatecorrectedintheconversation,docsandreport. Vulnerable1.19.0–4/fixed1.19.5rangescrosscheckedagainstbothprimaryrecords.",
+      "ActualCNIcomparisonseparatesdataplane/routing/IPAM;CalicoOSSfeatures,FlannelWireGuard/optionalSIGsnetpolcontroller,VPCnativeNPcorrected. Removedunsupportedperformancehierarchy/mandatoryTG/AppMesh/dedicatedCiliumAPIServer assumptions. HubbleflowRelayisnotmetrics pipeline;XDPnotuniversalpacketpath.",
+      "UnverifiedciliumEKSaddon/buildandunsafeaws-nodedeletionrecipe removed. ENIreplacement/chaining/noncloudpoolseparated;actualchartvaluesandIAMroleplaceholder/taint/nodecapacity/API-DNS/CNIownershippreconditions explicit. AutoMode/Fargate/Windows boundaries;HybridAWSbuildmatrixnotarbitraryupstream. ENIIPv6beta-vsEKSIPv4docsconflictdocumented.",
+      "Removedtunnel/strictoptionsandpartialrawConfigMapreplacement;nativechartrejectsbothlegacyoptions. KPRbool/APIbootstrap,IPsecSecret/rotation andXDP/DSRconstraints clarified. Commandsarepreparedclusterexamples,notproductiontestedcloudcreation.",
+      "L4/L7/DNSexamples nowindifferenttestnamespaces;explicitpeerNSpreventsaccidentalL4bypass. DNSresolverpermissionadded,wideamazonawswildcardremoved;DNSderivedIPauthorizationdistinguishedfromTLS/HTTPauthorizationandsharedIPlimitations. L7denialcanbeHTTP403,notDROPPEDverdict.",
+      "HubblemetricsviaHelmhttpV2,notnonexistentCLI--metrics;CLIinstall/Relayportforwardandflowvsmetrics explained. Managementciliumvsagentcilium-dbg commands corrected;performance runnerisconnectivityperf,notfilteredtestname. NativeHubble5syntheticfiltercasespassed.",
+      "Twoarchitectureimagesactuallyviewed;removedredundantincorrectrefsandinteractiveURLs,retainedassets. EKSworkshopoldpathreturns200butredirectshome;replacedwithactualcurrentprimaryEKSsource,notassumedworkingchapter."
+    ],
+    "validation": [
+      "93schemaobjectchecks:6publishedpolicies+87objectsfrom3actualHelmrenders(25ENI,25chaining,37clusterpool). Builtinoptionalnull/Quantitydecodingnormalizationdocumented;rawchartoutputsretained.",
+      "14bashblocksandbothlocale codeparitychecked. ActualchartrejectslegacytunnelandkubeProxyReplacement=strict;3newprofilesrendercorrectselectedconfiguration.",
+      "NativeCLI8help/versionchecksand5HubbleprotobufJSONfiltercasespass. No live cluster or performance commands executed.",
+      "2currentMarkdown→Vuecompilationspass;networking-cilium2filemechanicalscan12YAML/14shellblocks0errors;scopedgitdiffcheckclean.",
+      "Clean-envdocs:test118/118,0fail;earlierretryregressionsremainpassing.",
+      "docs/reviews/2026-09-11/networking-cilium-readme-validation.json"
+    ]
+  },
+  {
+    "path": "ko/networking/cilium/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full560-line README audit; current baseline/CLI/Helm/policy/platform guidance and historical metadata corrected with native offline checks.",
+    "sources": [
+      "https://api.github.com/advisories/GHSA-fm8w-2m5w-9j7r",
+      "https://api.github.com/repos/cilium/cilium/releases/latest",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.17.18",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.18.12",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.18.13",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.19.6",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.19.7",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0-rc.0",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0-rc.1",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.1",
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.21.0-pre.0",
+      "https://api.github.com/repos/cilium/cilium/security-advisories/GHSA-fm8w-2m5w-9j7r",
+      "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_list.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_map_list.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_metrics_list.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/installation/requirements-eks.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/eni.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/backends.md",
+      "https://raw.githubusercontent.com/flannel-io/flannel/master/README.md",
+      "https://raw.githubusercontent.com/kubernetes/apimachinery/v0.36.0/pkg/api/resource/quantity.go",
+      "https://www.eksworkshop.com/beginner/115_cilium/"
+    ],
+    "findings": [
+      "Original560linesinbothlanguagesfullyread. CurrentexamplespinnedCilium/chart1.20.1,CLI0.20.0,Hubble1.19.4;Kubernetestested1.33–36andLinux5.10/distributionbackportrequirementsreplaceobsolete1.16/4.9andunboundedcompatibility.",
+      "Historicalreleaseversions/datesretainedandverifiedviaGitHubAPIs(UTC). Gatewayaccesslogsapply1.19.6/1.18.12,notevery1.17release;restart/affinityfixesspecific1.19.6. VRRP/IGMPbackport1.18.13;DeltaADSclaimbelongs1.20announcement. 1100contributorsiscommunitysize,notreleaseauthors;77→16MBreportedbinarysizesretainedasunrepeatedupstreamclaim. KOinplacemigrationno longerpromiseszero downtime.",
+      "Advisorymetadatarequiresdistinction:projectGHSAAPIpublishedJuly6,globalGitHubrecordSept3. Earlyworkerprogressclaimusingglobaldatecorrectedintheconversation,docsandreport. Vulnerable1.19.0–4/fixed1.19.5rangescrosscheckedagainstbothprimaryrecords.",
+      "ActualCNIcomparisonseparatesdataplane/routing/IPAM;CalicoOSSfeatures,FlannelWireGuard/optionalSIGsnetpolcontroller,VPCnativeNPcorrected. Removedunsupportedperformancehierarchy/mandatoryTG/AppMesh/dedicatedCiliumAPIServer assumptions. HubbleflowRelayisnotmetrics pipeline;XDPnotuniversalpacketpath.",
+      "UnverifiedciliumEKSaddon/buildandunsafeaws-nodedeletionrecipe removed. ENIreplacement/chaining/noncloudpoolseparated;actualchartvaluesandIAMroleplaceholder/taint/nodecapacity/API-DNS/CNIownershippreconditions explicit. AutoMode/Fargate/Windows boundaries;HybridAWSbuildmatrixnotarbitraryupstream. ENIIPv6beta-vsEKSIPv4docsconflictdocumented.",
+      "Removedtunnel/strictoptionsandpartialrawConfigMapreplacement;nativechartrejectsbothlegacyoptions. KPRbool/APIbootstrap,IPsecSecret/rotation andXDP/DSRconstraints clarified. Commandsarepreparedclusterexamples,notproductiontestedcloudcreation.",
+      "L4/L7/DNSexamples nowindifferenttestnamespaces;explicitpeerNSpreventsaccidentalL4bypass. DNSresolverpermissionadded,wideamazonawswildcardremoved;DNSderivedIPauthorizationdistinguishedfromTLS/HTTPauthorizationandsharedIPlimitations. L7denialcanbeHTTP403,notDROPPEDverdict.",
+      "HubblemetricsviaHelmhttpV2,notnonexistentCLI--metrics;CLIinstall/Relayportforwardandflowvsmetrics explained. Managementciliumvsagentcilium-dbg commands corrected;performance runnerisconnectivityperf,notfilteredtestname. NativeHubble5syntheticfiltercasespassed.",
+      "Twoarchitectureimagesactuallyviewed;removedredundantincorrectrefsandinteractiveURLs,retainedassets. EKSworkshopoldpathreturns200butredirectshome;replacedwithactualcurrentprimaryEKSsource,notassumedworkingchapter."
+    ],
+    "validation": [
+      "93schemaobjectchecks:6publishedpolicies+87objectsfrom3actualHelmrenders(25ENI,25chaining,37clusterpool). Builtinoptionalnull/Quantitydecodingnormalizationdocumented;rawchartoutputsretained.",
+      "14bashblocksandbothlocale codeparitychecked. ActualchartrejectslegacytunnelandkubeProxyReplacement=strict;3newprofilesrendercorrectselectedconfiguration.",
+      "NativeCLI8help/versionchecksand5HubbleprotobufJSONfiltercasespass. No live cluster or performance commands executed.",
+      "2currentMarkdown→Vuecompilationspass;networking-cilium2filemechanicalscan12YAML/14shellblocks0errors;scopedgitdiffcheckclean.",
+      "Clean-envdocs:test118/118,0fail;earlierretryregressionsremainpassing.",
+      "docs/reviews/2026-09-11/networking-cilium-readme-validation.json"
+    ]
+  },
+  {
+    "path": "en/networking/cilium/01-introduction.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full introduction/lab and20-question quiz review perlanguage; current compatibility, runtime/identity roles, scoped policy and valid CLI/DSR examples corrected with bounded offline proof.",
+    "sources": [
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "https://api.github.com/repos/weaveworks/weave",
+      "https://helm.cilium.io/cilium-1.20.1.tgz",
+      "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_policy_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/gettingstarted/terminology.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "https://raw.githubusercontent.com/containernetworking/cni/main/README.md"
+    ],
+    "findings": [
+      "FullyreadoriginalEN164/KO165guidesand406lines/20questionsineachquiz. Preserved40questions(20MCQ,10short,10hands-on) whilecorrectingtheiranswers/explanations.",
+      "Current1.20.1/CLI0.20/Hubble1.19.4baseline,K8stested1.33–36,standardkernel5.10+withvendorbackportexceptionsandkubectlone-minorskewreplaceunboundedcompatibility/kernel4.19. RemovedduplicateuncheckedlatestAMD64downloads;profile-specificpreparedlabvaluesandexplicitcontextprovided.",
+      "CNIruntimeownershipcorrected:KubeletCRI→runtimeCNI,notdirectkubeletCNIflagsafter1.24. CiliumDockerlibnetwork/Mesoscurrenttargetclaimremoved. Calico/Flannel/VPCcomparisonsalignedwithreviewedREADME;originalWeaveupstreamarchivedmetadata verified.",
+      "QuizKafka-awareL7removedin1.20;HTTP/DNSproxyrequirementsandHubbleflowvsapplicationtracing clarified. EncryptionquestionnowasksIPsec/WireGuardpairwithoutfalselydenyingseparateztunnelTLSbeta. XDP/DSR/performance/multiclusterrequirementsbounded.",
+      "Operatornotintrinsicsingleton:actualchartreplicas2;scopeandtaskleadershipqualified. Identityusessecurity-relevantlabels/allocation,notallPodlabelsorpermanentglobalhash;namespace/app-labelassumptionscorrected. Legacyterminologydefaultsnotblindlycopied.",
+      "Labdefines/applystepforcilium-intro-demoNamespaceandpeer-scopedCNP;guides/quizpolicyidentical. Testserver/clientworkloads,defaultlabelhandling,competingpolicies/hosttrafficconditionsareexplicit;noapplicationserverdeploymentorliveenforcementguarantee.",
+      "Hands-onDSRanswerpartialnativeGeneveprofilewithAPIhost/port/nativeCIDRinputsandreturnpathrequirements;rendersseparatelyfromVXLANlab. Currentcilium-dbgendpointgetpod-nameidentifieranddesiredK8spolicyqueriesreplacewrongmanagementcommands/deprecatedpolicyget. ForegroundHubbleportforwardandinstalledclientprerequisitescorrected.",
+      "Twofiguresactuallyviewed;redundantincorrectreferencesremovedduetoobsoletekubelet-CNIcontract,removedKafkaL7andhash/performance/iptablesbypassclaims. Accuratecomponentprosekept;assets/foreignproseunchanged."
+    ],
+    "validation": [
+      "6publishedKubernetes/CNPschemaobjects,14bashblocks,40questionstructure/answerchecks,guide/quizpolicyidentityandbilingualcodeparitypassed.",
+      "ReusedidenticalREADMEclusterpoolvaluesvalidation;newpartialDSRsettingsrenderedwithactualchart1.20.1inpreparednativefixture:37objects,selectednative/Geneve/KPRtrue/DSRconfigverified,operatorreplicas2.",
+      "5nativeCLIhelpchecksandnativeHubblePodfilter3syntheticflows passed;noactualinstall/connectivity/DSRtrafficrun.",
+      "4Markdown→Vuecompilationspassed;networking-cilium6filemechanicalscan22YAML/28shellblocks0errors;scopedgitdiffcheckclean. No matching inbound anchors found by targetedlinksearch.",
+      "Clean-envdocs:test118/118,0fail.",
+      "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json"
+    ]
+  },
+  {
+    "path": "en/quizzes/networking/cilium/01-introduction-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full introduction/lab and20-question quiz review perlanguage; current compatibility, runtime/identity roles, scoped policy and valid CLI/DSR examples corrected with bounded offline proof.",
+    "sources": [
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "https://api.github.com/repos/weaveworks/weave",
+      "https://helm.cilium.io/cilium-1.20.1.tgz",
+      "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_policy_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/gettingstarted/terminology.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "https://raw.githubusercontent.com/containernetworking/cni/main/README.md"
+    ],
+    "findings": [
+      "FullyreadoriginalEN164/KO165guidesand406lines/20questionsineachquiz. Preserved40questions(20MCQ,10short,10hands-on) whilecorrectingtheiranswers/explanations.",
+      "Current1.20.1/CLI0.20/Hubble1.19.4baseline,K8stested1.33–36,standardkernel5.10+withvendorbackportexceptionsandkubectlone-minorskewreplaceunboundedcompatibility/kernel4.19. RemovedduplicateuncheckedlatestAMD64downloads;profile-specificpreparedlabvaluesandexplicitcontextprovided.",
+      "CNIruntimeownershipcorrected:KubeletCRI→runtimeCNI,notdirectkubeletCNIflagsafter1.24. CiliumDockerlibnetwork/Mesoscurrenttargetclaimremoved. Calico/Flannel/VPCcomparisonsalignedwithreviewedREADME;originalWeaveupstreamarchivedmetadata verified.",
+      "QuizKafka-awareL7removedin1.20;HTTP/DNSproxyrequirementsandHubbleflowvsapplicationtracing clarified. EncryptionquestionnowasksIPsec/WireGuardpairwithoutfalselydenyingseparateztunnelTLSbeta. XDP/DSR/performance/multiclusterrequirementsbounded.",
+      "Operatornotintrinsicsingleton:actualchartreplicas2;scopeandtaskleadershipqualified. Identityusessecurity-relevantlabels/allocation,notallPodlabelsorpermanentglobalhash;namespace/app-labelassumptionscorrected. Legacyterminologydefaultsnotblindlycopied.",
+      "Labdefines/applystepforcilium-intro-demoNamespaceandpeer-scopedCNP;guides/quizpolicyidentical. Testserver/clientworkloads,defaultlabelhandling,competingpolicies/hosttrafficconditionsareexplicit;noapplicationserverdeploymentorliveenforcementguarantee.",
+      "Hands-onDSRanswerpartialnativeGeneveprofilewithAPIhost/port/nativeCIDRinputsandreturnpathrequirements;rendersseparatelyfromVXLANlab. Currentcilium-dbgendpointgetpod-nameidentifieranddesiredK8spolicyqueriesreplacewrongmanagementcommands/deprecatedpolicyget. ForegroundHubbleportforwardandinstalledclientprerequisitescorrected.",
+      "Twofiguresactuallyviewed;redundantincorrectreferencesremovedduetoobsoletekubelet-CNIcontract,removedKafkaL7andhash/performance/iptablesbypassclaims. Accuratecomponentprosekept;assets/foreignproseunchanged."
+    ],
+    "validation": [
+      "6publishedKubernetes/CNPschemaobjects,14bashblocks,40questionstructure/answerchecks,guide/quizpolicyidentityandbilingualcodeparitypassed.",
+      "ReusedidenticalREADMEclusterpoolvaluesvalidation;newpartialDSRsettingsrenderedwithactualchart1.20.1inpreparednativefixture:37objects,selectednative/Geneve/KPRtrue/DSRconfigverified,operatorreplicas2.",
+      "5nativeCLIhelpchecksandnativeHubblePodfilter3syntheticflows passed;noactualinstall/connectivity/DSRtrafficrun.",
+      "4Markdown→Vuecompilationspassed;networking-cilium6filemechanicalscan22YAML/28shellblocks0errors;scopedgitdiffcheckclean. No matching inbound anchors found by targetedlinksearch.",
+      "Clean-envdocs:test118/118,0fail.",
+      "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json"
+    ]
+  },
+  {
+    "path": "ko/networking/cilium/01-introduction.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full introduction/lab and20-question quiz review perlanguage; current compatibility, runtime/identity roles, scoped policy and valid CLI/DSR examples corrected with bounded offline proof.",
+    "sources": [
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "https://api.github.com/repos/weaveworks/weave",
+      "https://helm.cilium.io/cilium-1.20.1.tgz",
+      "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_policy_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/gettingstarted/terminology.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "https://raw.githubusercontent.com/containernetworking/cni/main/README.md"
+    ],
+    "findings": [
+      "FullyreadoriginalEN164/KO165guidesand406lines/20questionsineachquiz. Preserved40questions(20MCQ,10short,10hands-on) whilecorrectingtheiranswers/explanations.",
+      "Current1.20.1/CLI0.20/Hubble1.19.4baseline,K8stested1.33–36,standardkernel5.10+withvendorbackportexceptionsandkubectlone-minorskewreplaceunboundedcompatibility/kernel4.19. RemovedduplicateuncheckedlatestAMD64downloads;profile-specificpreparedlabvaluesandexplicitcontextprovided.",
+      "CNIruntimeownershipcorrected:KubeletCRI→runtimeCNI,notdirectkubeletCNIflagsafter1.24. CiliumDockerlibnetwork/Mesoscurrenttargetclaimremoved. Calico/Flannel/VPCcomparisonsalignedwithreviewedREADME;originalWeaveupstreamarchivedmetadata verified.",
+      "QuizKafka-awareL7removedin1.20;HTTP/DNSproxyrequirementsandHubbleflowvsapplicationtracing clarified. EncryptionquestionnowasksIPsec/WireGuardpairwithoutfalselydenyingseparateztunnelTLSbeta. XDP/DSR/performance/multiclusterrequirementsbounded.",
+      "Operatornotintrinsicsingleton:actualchartreplicas2;scopeandtaskleadershipqualified. Identityusessecurity-relevantlabels/allocation,notallPodlabelsorpermanentglobalhash;namespace/app-labelassumptionscorrected. Legacyterminologydefaultsnotblindlycopied.",
+      "Labdefines/applystepforcilium-intro-demoNamespaceandpeer-scopedCNP;guides/quizpolicyidentical. Testserver/clientworkloads,defaultlabelhandling,competingpolicies/hosttrafficconditionsareexplicit;noapplicationserverdeploymentorliveenforcementguarantee.",
+      "Hands-onDSRanswerpartialnativeGeneveprofilewithAPIhost/port/nativeCIDRinputsandreturnpathrequirements;rendersseparatelyfromVXLANlab. Currentcilium-dbgendpointgetpod-nameidentifieranddesiredK8spolicyqueriesreplacewrongmanagementcommands/deprecatedpolicyget. ForegroundHubbleportforwardandinstalledclientprerequisitescorrected.",
+      "Twofiguresactuallyviewed;redundantincorrectreferencesremovedduetoobsoletekubelet-CNIcontract,removedKafkaL7andhash/performance/iptablesbypassclaims. Accuratecomponentprosekept;assets/foreignproseunchanged."
+    ],
+    "validation": [
+      "6publishedKubernetes/CNPschemaobjects,14bashblocks,40questionstructure/answerchecks,guide/quizpolicyidentityandbilingualcodeparitypassed.",
+      "ReusedidenticalREADMEclusterpoolvaluesvalidation;newpartialDSRsettingsrenderedwithactualchart1.20.1inpreparednativefixture:37objects,selectednative/Geneve/KPRtrue/DSRconfigverified,operatorreplicas2.",
+      "5nativeCLIhelpchecksandnativeHubblePodfilter3syntheticflows passed;noactualinstall/connectivity/DSRtrafficrun.",
+      "4Markdown→Vuecompilationspassed;networking-cilium6filemechanicalscan22YAML/28shellblocks0errors;scopedgitdiffcheckclean. No matching inbound anchors found by targetedlinksearch.",
+      "Clean-envdocs:test118/118,0fail.",
+      "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json"
+    ]
+  },
+  {
+    "path": "ko/quizzes/networking/cilium/01-introduction-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full introduction/lab and20-question quiz review perlanguage; current compatibility, runtime/identity roles, scoped policy and valid CLI/DSR examples corrected with bounded offline proof.",
+    "sources": [
+      "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "https://api.github.com/repos/weaveworks/weave",
+      "https://helm.cilium.io/cilium-1.20.1.tgz",
+      "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_policy_get.md",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/gettingstarted/terminology.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "https://raw.githubusercontent.com/containernetworking/cni/main/README.md"
+    ],
+    "findings": [
+      "FullyreadoriginalEN164/KO165guidesand406lines/20questionsineachquiz. Preserved40questions(20MCQ,10short,10hands-on) whilecorrectingtheiranswers/explanations.",
+      "Current1.20.1/CLI0.20/Hubble1.19.4baseline,K8stested1.33–36,standardkernel5.10+withvendorbackportexceptionsandkubectlone-minorskewreplaceunboundedcompatibility/kernel4.19. RemovedduplicateuncheckedlatestAMD64downloads;profile-specificpreparedlabvaluesandexplicitcontextprovided.",
+      "CNIruntimeownershipcorrected:KubeletCRI→runtimeCNI,notdirectkubeletCNIflagsafter1.24. CiliumDockerlibnetwork/Mesoscurrenttargetclaimremoved. Calico/Flannel/VPCcomparisonsalignedwithreviewedREADME;originalWeaveupstreamarchivedmetadata verified.",
+      "QuizKafka-awareL7removedin1.20;HTTP/DNSproxyrequirementsandHubbleflowvsapplicationtracing clarified. EncryptionquestionnowasksIPsec/WireGuardpairwithoutfalselydenyingseparateztunnelTLSbeta. XDP/DSR/performance/multiclusterrequirementsbounded.",
+      "Operatornotintrinsicsingleton:actualchartreplicas2;scopeandtaskleadershipqualified. Identityusessecurity-relevantlabels/allocation,notallPodlabelsorpermanentglobalhash;namespace/app-labelassumptionscorrected. Legacyterminologydefaultsnotblindlycopied.",
+      "Labdefines/applystepforcilium-intro-demoNamespaceandpeer-scopedCNP;guides/quizpolicyidentical. Testserver/clientworkloads,defaultlabelhandling,competingpolicies/hosttrafficconditionsareexplicit;noapplicationserverdeploymentorliveenforcementguarantee.",
+      "Hands-onDSRanswerpartialnativeGeneveprofilewithAPIhost/port/nativeCIDRinputsandreturnpathrequirements;rendersseparatelyfromVXLANlab. Currentcilium-dbgendpointgetpod-nameidentifieranddesiredK8spolicyqueriesreplacewrongmanagementcommands/deprecatedpolicyget. ForegroundHubbleportforwardandinstalledclientprerequisitescorrected.",
+      "Twofiguresactuallyviewed;redundantincorrectreferencesremovedduetoobsoletekubelet-CNIcontract,removedKafkaL7andhash/performance/iptablesbypassclaims. Accuratecomponentprosekept;assets/foreignproseunchanged."
+    ],
+    "validation": [
+      "6publishedKubernetes/CNPschemaobjects,14bashblocks,40questionstructure/answerchecks,guide/quizpolicyidentityandbilingualcodeparitypassed.",
+      "ReusedidenticalREADMEclusterpoolvaluesvalidation;newpartialDSRsettingsrenderedwithactualchart1.20.1inpreparednativefixture:37objects,selectednative/Geneve/KPRtrue/DSRconfigverified,operatorreplicas2.",
+      "5nativeCLIhelpchecksandnativeHubblePodfilter3syntheticflows passed;noactualinstall/connectivity/DSRtrafficrun.",
+      "4Markdown→Vuecompilationspassed;networking-cilium6filemechanicalscan22YAML/28shellblocks0errors;scopedgitdiffcheckclean. No matching inbound anchors found by targetedlinksearch.",
+      "Clean-envdocs:test118/118,0fail.",
+      "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json"
+    ]
+  },
+  {
+    "path": "en/networking/cilium/02-ebpf.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All1269original lines read in four nontruncated chunks; primary verification/fixes pending.",
+    "sources": [],
+    "findings": [
+      "HistoricalBPFpaper/date/kernelmilestones(XDP/maps/tailcalls/boundedloops/BPFlink/timers/dynptr),Cilium/Foundationdateslikelywrong;mustverifyprimarywithoutinventingnewbenchmarkhistory.",
+      "Absoluteverifiercrash/safety/module-reboot/CO-REallkernel/GPLrequiredclaimsfalseoroverbroad;socketfiltervscgroupsock/Uprobeprogramenum/tracepointABI/context/returnvaluesneedcurrentkernelchecks.",
+      "Legacybpf_map_defSECmaps andu32/u64 compileissues;ringbufsingleproducerfalse;perCPU/persistence/arrayfallback/concurrencyclaimswrong.",
+      "Load-onlytracepointsneverattached,fakeexpectedoutput,missingmappins/wrongbpftoolmapargument,counterrace/execveattempt-vs-success/commsemantics,userreaderuninitializedkey/fdleak/printfneedfix.",
+      "InventedCiliumbpf_network.c/bpf_lb.c/functions/mapnames/keylayouts;CiliumL7inkernel/Kafka/zero-configencryption/QoSguaranteeswrong.",
+      "OldmanagementCLI agentcommands,policytrace,JSONshape,perfmapdumptiming,bpftracekretarg0correlation,verifiertracepipeandcapability/kernelclaimsneedfix."
+    ],
+    "validation": [
+      "Read original1–310,311–630,631–950,951–1269;noeditsyet."
+    ]
+  },
+  {
+    "path": "en/quizzes/networking/cilium/02-ebpf-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All252original lines read; kernel/libbpf/Cilium primary verification and repairs pending.",
+    "sources": [],
+    "findings": [
+      "Samepairedguidehistoricaltimeline/API/map/attach/reader/concurrency/CLI issues;allsourceand20quizquestionsreadbeforeedits.",
+      "Quizabsoluteverifiercrashguarantee,allBPFencryption,TC-onlyKPR,universalperformance,4096instructionmax,andoldmanagementCLImustbe corrected."
+    ],
+    "validation": [
+      "Entire original consumed withouttruncation;guidechunks1–310,311–630,631–950,951–1269;quiz252lines20questions."
+    ]
+  },
+  {
+    "path": "ko/networking/cilium/02-ebpf.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All1269original lines read; kernel/libbpf/Cilium primary verification and repairs pending.",
+    "sources": [],
+    "findings": [
+      "Samepairedguidehistoricaltimeline/API/map/attach/reader/concurrency/CLI issues;allsourceand20quizquestionsreadbeforeedits.",
+      "Quizabsoluteverifiercrashguarantee,allBPFencryption,TC-onlyKPR,universalperformance,4096instructionmax,andoldmanagementCLImustbe corrected."
+    ],
+    "validation": [
+      "Entire original consumed withouttruncation;guidechunks1–310,311–630,631–950,951–1269;quiz252lines20questions."
+    ]
+  },
+  {
+    "path": "ko/quizzes/networking/cilium/02-ebpf-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "summary": "All252original lines read; kernel/libbpf/Cilium primary verification and repairs pending.",
+    "sources": [],
+    "findings": [
+      "Samepairedguidehistoricaltimeline/API/map/attach/reader/concurrency/CLI issues;allsourceand20quizquestionsreadbeforeedits.",
+      "Quizabsoluteverifiercrashguarantee,allBPFencryption,TC-onlyKPR,universalperformance,4096instructionmax,andoldmanagementCLImustbe corrected."
+    ],
+    "validation": [
+      "Entire original consumed withouttruncation;guidechunks1–310,311–630,631–950,951–1269;quiz252lines20questions."
+    ]
+  }
+]

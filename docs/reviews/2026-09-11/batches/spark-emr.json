@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Separated StartJobRun from independently installed EMR Spark Operator; current4.0.2-amzn-0 releases, IRSA/PodIdentity7.3+, CAM setup, accepted id/status/token semantics, Studio endpoints, logs/customization/cleanup. 36quizquestions14fences2requestschemas+negativecases;2CLIoutputchecks6toolresponseARNerrorsdisclosed;2figuresdesktop+4mobile. LocalupstreamSpark4.2Python3.12smoke10rows/sum45passed, notEMRruntime/cloudtest.",
+    "reviewedSha256": "ed61f8e8e127a4a1f3a4b71149e40f313bcd46c0edf387036a712cc9c3d4268a"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Separated StartJobRun from independently installed EMR Spark Operator; current4.0.2-amzn-0 releases, IRSA/PodIdentity7.3+, CAM setup, accepted id/status/token semantics, Studio endpoints, logs/customization/cleanup. 36quizquestions14fences2requestschemas+negativecases;2CLIoutputchecks6toolresponseARNerrorsdisclosed;2figuresdesktop+4mobile. LocalupstreamSpark4.2Python3.12smoke10rows/sum45passed, notEMRruntime/cloudtest.",
+    "reviewedSha256": "331d4f6ffc35fb98a0f8fc0b495c7fb1b47d61b100850b9362d44f2f0fe2fbba"
+  },
+  {
+    "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Separated StartJobRun from independently installed EMR Spark Operator; current4.0.2-amzn-0 releases, IRSA/PodIdentity7.3+, CAM setup, accepted id/status/token semantics, Studio endpoints, logs/customization/cleanup. 36quizquestions14fences2requestschemas+negativecases;2CLIoutputchecks6toolresponseARNerrorsdisclosed;2figuresdesktop+4mobile. LocalupstreamSpark4.2Python3.12smoke10rows/sum45passed, notEMRruntime/cloudtest.",
+    "reviewedSha256": "e0f762b1ddc9a475928ad427053ca1e24a95be6486b71359859cf4f435f39374"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Separated StartJobRun from independently installed EMR Spark Operator; current4.0.2-amzn-0 releases, IRSA/PodIdentity7.3+, CAM setup, accepted id/status/token semantics, Studio endpoints, logs/customization/cleanup. 36quizquestions14fences2requestschemas+negativecases;2CLIoutputchecks6toolresponseARNerrorsdisclosed;2figuresdesktop+4mobile. LocalupstreamSpark4.2Python3.12smoke10rows/sum45passed, notEMRruntime/cloudtest.",
+    "reviewedSha256": "eba4b901c9f3ee0f9ec8523b5d0c647048e042b055b7eb1a560add360b0473a0"
+  }
+]

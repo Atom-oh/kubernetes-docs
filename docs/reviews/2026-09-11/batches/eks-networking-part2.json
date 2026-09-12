@@ -1,0 +1,176 @@
+[
+  {
+    "path": "en/eks/03-eks-networking-part2.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected controller ownership, load-balancer/network-policy semantics and released LBC/Gateway API configuration; paired static schemas pass.",
+    "sources": [
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/config/crd/gateway/gateway-crds.yaml",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/pkg/config/feature_gates.go",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html",
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/l4gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/l7gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/loadbalancerconfig.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/targetgroupconfig.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/annotations.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/security_groups.md",
+      "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml",
+      "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+    ],
+    "findings": [
+      "Corrected ClusterIP/NodePort reachability versus authorization; explicit internal NLB class/IP targets, legacy CLB scope, ALB Ingress ownership and private routed clients.",
+      "Pinned controller chart and IAM-policy release; documented pre-existing Pod Identity/IRSA trust, rendering before install, separate CRD upgrade ownership and real backend port requirements.",
+      "Corrected target-type, cross-zone, proxy-protocol and redirect annotations; custom frontend SG rules remain owner-managed and backend rules are a separate choice.",
+      "Removed unsafe Calico VXLAN overlay application on VPC CNI; native EKS policy supported, policy-only Calico alternative cannot run simultaneously with native enforcement.",
+      "Explained selected ingress/egress directions, additive allows, independent alternative examples, NAT-visible source IP and scoped DNS/external HTTPS allowance.",
+      "Gateway examples aligned to LBC3.5.0/GatewayAPI1.6.0: standard v1 TCP/UDP routes, real default-enabled feature gates, pinned gateway CRD path, separate ALB/NLB Gateway.",
+      "Replaced unsupported Secret certificateRefs with ACM LoadBalancerConfiguration, explicit HTTPS parent attachment and IP-target defaults; hostname intersection and backend service prerequisites stated.",
+      "Replaced automatic ALB HTTP3 and invented annotations with actual NLB QUIC listener config and IP/no-SG/backend prerequisites; retained as partial configuration, not production-tested recipe.",
+      "Corrected Gateway SG config and out-of-band group-empty TargetGroupName backend; controller conformance limits and external target ownership documented.",
+      "Diagram prose reviewed: parent repairs needed for paired indices1,3,4,6; embeds commented. Indices0/2 qualified as logical examples,5 retained. No asset files changed."
+    ],
+    "validation": [
+      "Read all original646 lines in this locale; exact ranges and SHA saved before edits.",
+      "Paired checks passed:8 Bash blocks,18 native Kubernetes1.36 objects,24 GatewayAPI1.6/LBC3.5 vendor objects,4annotation fragments,2JSON fragments,2local links; scoped diff check and code parity.",
+      "Feature gate names/defaults checked against released Go source; both v1 TCPRoute/UDPRoute served in official standard CRDs. CRD JSON schemas evaluated, CEL and controller reconciliation not executed.",
+      "No cluster installation or AWS mutation. Evidence:/tmp/eks-networking-part2-audit/{source-validation,official-verification,progress}.json."
+    ]
+  },
+  {
+    "path": "ko/eks/03-eks-networking-part2.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected controller ownership, load-balancer/network-policy semantics and released LBC/Gateway API configuration; paired static schemas pass.",
+    "sources": [
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/config/crd/gateway/gateway-crds.yaml",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/pkg/config/feature_gates.go",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html",
+      "https://kubernetes.io/docs/concepts/services-networking/service/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/l4gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/l7gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/loadbalancerconfig.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/targetgroupconfig.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/annotations.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/security_groups.md",
+      "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml",
+      "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+      "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+    ],
+    "findings": [
+      "Corrected ClusterIP/NodePort reachability versus authorization; explicit internal NLB class/IP targets, legacy CLB scope, ALB Ingress ownership and private routed clients.",
+      "Pinned controller chart and IAM-policy release; documented pre-existing Pod Identity/IRSA trust, rendering before install, separate CRD upgrade ownership and real backend port requirements.",
+      "Corrected target-type, cross-zone, proxy-protocol and redirect annotations; custom frontend SG rules remain owner-managed and backend rules are a separate choice.",
+      "Removed unsafe Calico VXLAN overlay application on VPC CNI; native EKS policy supported, policy-only Calico alternative cannot run simultaneously with native enforcement.",
+      "Explained selected ingress/egress directions, additive allows, independent alternative examples, NAT-visible source IP and scoped DNS/external HTTPS allowance.",
+      "Gateway examples aligned to LBC3.5.0/GatewayAPI1.6.0: standard v1 TCP/UDP routes, real default-enabled feature gates, pinned gateway CRD path, separate ALB/NLB Gateway.",
+      "Replaced unsupported Secret certificateRefs with ACM LoadBalancerConfiguration, explicit HTTPS parent attachment and IP-target defaults; hostname intersection and backend service prerequisites stated.",
+      "Replaced automatic ALB HTTP3 and invented annotations with actual NLB QUIC listener config and IP/no-SG/backend prerequisites; retained as partial configuration, not production-tested recipe.",
+      "Corrected Gateway SG config and out-of-band group-empty TargetGroupName backend; controller conformance limits and external target ownership documented.",
+      "Diagram prose reviewed: parent repairs needed for paired indices1,3,4,6; embeds commented. Indices0/2 qualified as logical examples,5 retained. No asset files changed."
+    ],
+    "validation": [
+      "Read all original646 lines in this locale; exact ranges and SHA saved before edits.",
+      "Paired checks passed:8 Bash blocks,18 native Kubernetes1.36 objects,24 GatewayAPI1.6/LBC3.5 vendor objects,4annotation fragments,2JSON fragments,2local links; scoped diff check and code parity.",
+      "Feature gate names/defaults checked against released Go source; both v1 TCPRoute/UDPRoute served in official standard CRDs. CRD JSON schemas evaluated, CEL and controller reconciliation not executed.",
+      "No cluster installation or AWS mutation. Evidence:/tmp/eks-networking-part2-audit/{source-validation,official-verification,progress}.json."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks/03-eks-networking-part2-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected all13 original topics and added2 checks; PrivateLink/WAF/controller semantics and bounded routing lab validated locally.",
+    "sources": [
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/pkg/config/feature_gates.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/annotations.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/security_groups.md",
+      "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml",
+      "https://docs.aws.amazon.com/vpc/latest/privatelink/create-endpoint-service.html",
+      "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://istio.io/latest/docs/ops/deployment/architecture/",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+      "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html",
+      "https://istio.io/latest/docs/ambient/architecture/",
+      "https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v1.13.1/config/crd/bases/appmesh.k8s.aws_meshes.yaml",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html",
+      "https://istio.io/latest/news/releases/1.8.x/announcing-1.8/change-notes/",
+      "https://istio.io/latest/docs/ops/integrations/prometheus/"
+    ],
+    "findings": [
+      "Corrected IngressClass selection, internal ALB routed reachability, custom SG/inbound-CIDR behavior and real Route53 setup; removed node-failure immunity/performance guarantees from IP-target comparison.",
+      "Replaced PrivateLink multiple-choice question with a correct answer: NLB-IP does not create endpoint services and neither internal scheme nor IP targets are universally required. Exact DNSName lookup replaces broken hostname splitting; explicit provider/consumer/acceptance/domain-verification steps and creation preflight added.",
+      "Removed floating Calico installation and malformed/global allow-all examples; explained policy-only engine choice, native VPC CNI incompatibility, scoped DNS/HTTPS policy and additive semantics.",
+      "Corrected custom SG Name-tag lookup and backend-rule ownership; balanced reuse risks and removed mislabeled SG tags/TLS recommendations.",
+      "Corrected NLB client-IP defaults across TCP/TLS and UDP/TCP_UDP/QUIC/TCP_QUIC, NodePort SNAT, PrivateLink/translation/TGW/hairpin limitations and proxy-protocol prerequisites.",
+      "Corrected WAF REGIONAL ARN and attachment boundary; empty default-Allow ACL blocks nothing. Added explicit Count-only training rule and CLI-v2 literal-byte mode; separated ALB S3 logs from WAF logging and controller/security-admin permissions.",
+      "Replaced broken nginx8080/health lab with three distinct restricted HTTP workloads that actually listen8080; bounded namespace/UID cleanup, internal ALB, HTTPS/SNI-preserving tests, apex-alias correction and referenced weighted action.",
+      "Service-mesh topic retained with sidecar/shared-IP versus ambient distinction, compute/privilege/policy/telemetry prerequisites, AppMesh September30,2026 retirement and migration scope. Removed unsupported install/tracing fields and dual injectors; otherworker service-mesh files untouched.",
+      "Original <10ms and10–15% overhead figures preserved as unverified historical estimates; no measurement or benchmark execution invented.",
+      "Gateway questions corrected for actual ALBGatewayAPI/NLBGatewayAPI gates, standard v1TCPRoute/UDPRoute, ACM LoadBalancerConfiguration and policy union. Fifteen questions/ten multiple-choice answers now consistent in both locales."
+    ],
+    "validation": [
+      "Fully read original1–1602 in three recorded chunks before edits; SHA and original snapshot retained.",
+      "Paired static checks:18Bash,16native Kubernetes1.36 objects,2Gateway vendor objects,2annotation fragments,2JSON,6local links; code parity and scoped diff check pass. Fifteen questions/tenMC per locale.",
+      "Twenty-three mocked cases test routing-lab success/failure, workload/rollout guards, hostname/curl checks, UID cleanup and exact NLB lookup. Seven shell-rendered native objects validate; embedded Python syntax and newline escaping verified.",
+      "Five additional provider preflight cases ensure missing variables stop before creation and failed creation stops before permissions; four real AWSCLI input-skeleton option checks make no AWS requests. WAF parameters validate against installed botocore service model without creating a client.",
+      "Twelve real loopback HTTP requests across three extracted backend handlers pass for /health,/api,/admin,/. Local harness changes only bind/startup to127.0.0.1/ephemeral port; local Python runtime used, not the image. No ALB/EKS/PrivateLink/WAF runtime execution.",
+      "Evidence:/tmp/eks-networking-part2-audit/{quiz-validation,quiz-flow-validation,final-validation,http-runtime-validation,official-verification}.json. No cloud changes or mesh-file edits."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks/03-eks-networking-part2-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read; corrected all13 original topics and added2 checks; PrivateLink/WAF/controller semantics and bounded routing lab validated locally.",
+    "sources": [
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/gateway.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/pkg/config/feature_gates.go",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/annotations.md",
+      "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/security_groups.md",
+      "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml",
+      "https://docs.aws.amazon.com/vpc/latest/privatelink/create-endpoint-service.html",
+      "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://istio.io/latest/docs/ops/deployment/architecture/",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+      "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html",
+      "https://istio.io/latest/docs/ambient/architecture/",
+      "https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v1.13.1/config/crd/bases/appmesh.k8s.aws_meshes.yaml",
+      "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html",
+      "https://istio.io/latest/news/releases/1.8.x/announcing-1.8/change-notes/",
+      "https://istio.io/latest/docs/ops/integrations/prometheus/"
+    ],
+    "findings": [
+      "Corrected IngressClass selection, internal ALB routed reachability, custom SG/inbound-CIDR behavior and real Route53 setup; removed node-failure immunity/performance guarantees from IP-target comparison.",
+      "Replaced PrivateLink multiple-choice question with a correct answer: NLB-IP does not create endpoint services and neither internal scheme nor IP targets are universally required. Exact DNSName lookup replaces broken hostname splitting; explicit provider/consumer/acceptance/domain-verification steps and creation preflight added.",
+      "Removed floating Calico installation and malformed/global allow-all examples; explained policy-only engine choice, native VPC CNI incompatibility, scoped DNS/HTTPS policy and additive semantics.",
+      "Corrected custom SG Name-tag lookup and backend-rule ownership; balanced reuse risks and removed mislabeled SG tags/TLS recommendations.",
+      "Corrected NLB client-IP defaults across TCP/TLS and UDP/TCP_UDP/QUIC/TCP_QUIC, NodePort SNAT, PrivateLink/translation/TGW/hairpin limitations and proxy-protocol prerequisites.",
+      "Corrected WAF REGIONAL ARN and attachment boundary; empty default-Allow ACL blocks nothing. Added explicit Count-only training rule and CLI-v2 literal-byte mode; separated ALB S3 logs from WAF logging and controller/security-admin permissions.",
+      "Replaced broken nginx8080/health lab with three distinct restricted HTTP workloads that actually listen8080; bounded namespace/UID cleanup, internal ALB, HTTPS/SNI-preserving tests, apex-alias correction and referenced weighted action.",
+      "Service-mesh topic retained with sidecar/shared-IP versus ambient distinction, compute/privilege/policy/telemetry prerequisites, AppMesh September30,2026 retirement and migration scope. Removed unsupported install/tracing fields and dual injectors; otherworker service-mesh files untouched.",
+      "Original <10ms and10–15% overhead figures preserved as unverified historical estimates; no measurement or benchmark execution invented.",
+      "Gateway questions corrected for actual ALBGatewayAPI/NLBGatewayAPI gates, standard v1TCPRoute/UDPRoute, ACM LoadBalancerConfiguration and policy union. Fifteen questions/ten multiple-choice answers now consistent in both locales."
+    ],
+    "validation": [
+      "Fully read original1–1617 in three recorded chunks before edits; SHA and original snapshot retained.",
+      "Paired static checks:18Bash,16native Kubernetes1.36 objects,2Gateway vendor objects,2annotation fragments,2JSON,6local links; code parity and scoped diff check pass. Fifteen questions/tenMC per locale.",
+      "Twenty-three mocked cases test routing-lab success/failure, workload/rollout guards, hostname/curl checks, UID cleanup and exact NLB lookup. Seven shell-rendered native objects validate; embedded Python syntax and newline escaping verified.",
+      "Five additional provider preflight cases ensure missing variables stop before creation and failed creation stops before permissions; four real AWSCLI input-skeleton option checks make no AWS requests. WAF parameters validate against installed botocore service model without creating a client.",
+      "Twelve real loopback HTTP requests across three extracted backend handlers pass for /health,/api,/admin,/. Local harness changes only bind/startup to127.0.0.1/ephemeral port; local Python runtime used, not the image. No ALB/EKS/PrivateLink/WAF runtime execution.",
+      "Evidence:/tmp/eks-networking-part2-audit/{quiz-validation,quiz-flow-validation,final-validation,http-runtime-validation,official-verification}.json. No cloud changes or mesh-file edits."
+    ]
+  }
+]

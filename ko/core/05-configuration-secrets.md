@@ -121,7 +121,7 @@ data:
   # 단순 키-값 쌍
   database.host: "mysql"
   database.port: "3306"
-  
+
   # 파일 형태의 구성
   config.yaml: |
     server:
@@ -940,7 +940,7 @@ spec:
         secretProviderClass: aws-parameters
 ```
 
-`parameter-reader`에 두 파라미터 ARN의 `ssm:GetParameters` 및 필요한 범위의 KMS 복호화 권한을 가진 IRSA 역할 또는 Pod Identity 연결을 준비하세요. 앞의 Secrets Manager 역할에는 SSM 권한이 없습니다. ASCP는 호환 EC2 노드가 필요하며 Fargate에서는 이 CSI 마운트를 사용할 수 없습니다.
+`parameter-reader`에 두 파라미터 ARN의 `ssm:GetParameters` 및 필요한 범위의 KMS 복호화 권한을 가진 IRSA 역할 또는 Pod Identity 연결을 준비하세요. 앞의 Secrets Manager 역할에는 SSM 권한이 없습니다. ASCP에는 지원되는 노드·애드온 조합이 필요하며 Fargate에서는 이 CSI 마운트를 사용할 수 없습니다. Hybrid Nodes는 명시적으로 지원되는 애드온 버전과 자격 증명 구성이 필요합니다.
 
 ### AWS AppConfig를 사용한 동적 구성
 

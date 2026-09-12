@@ -223,9 +223,13 @@ Cilium은 eBPF 기반으로 **네트워크 레벨**에서 많은 기능을 제�
 **Cilium이 더 적합한 경우**:
 
 * L3/L4 네트워크 정책이 주요 목적
-* 높은 성능이 핵심 요구사항
-* Service Mesh 운영 부담 회피
-* 네트워크 정책과 관찰성이 주요 목적; Cilium 상호 인증 외에 페이로드 기밀성을 위한 WireGuard/IPsec 암호화 필요
+* 필요한 정책·암호화 설정에서 측정한 성능이 워크로드 요구사항을 충족
+* 필요한 지원 기능을 갖춘 기존 Cilium 배포를 재사용
+* 네트워크 정책과 관찰성이 주요 목적; Cilium out-of-band 상호 인증 외에 페이로드 기밀성을 위한 WireGuard/IPsec 암호화 필요
+
+Cilium 1.20.1에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
+
+그림은 CNI 역할을 강조하며 Cilium에도 L7 Envoy 기능이 있습니다. 구성 요소 수와 운영 비용은 선택한 모드에 따라 달라집니다.
 
 **참고**: [Cilium 문서](../../networking/cilium/README.md)
 

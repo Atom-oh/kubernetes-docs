@@ -1,0 +1,743 @@
+{
+  "date": "2026-09-11",
+  "documents": 170,
+  "passed": 170,
+  "results": [
+    {
+      "path": "en/quizzes/service-mesh/02-istio-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/security.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/advanced.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/basic.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/comparison.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/resilience.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/security.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/istio/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/installation.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/security.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/02-istio.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/01-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/02-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/03-security.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/04-observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/06-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/cilium-service-mesh/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/02-basic-concepts.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/03-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/04-aws-integration.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/01-ambient-mode.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/02-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/03-envoy-filter.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/04-dns-cache.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/05-grpc.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/06-websocket.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/07-sidecar-injection.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/08-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/10-keda-autoscaling.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/advanced/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/glossary.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/01-metrics.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/02-tracing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/03-logging.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/04-dashboards.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/observability/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/01-outlier-detection.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/02-rate-limiting.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/03-zone-aware-routing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/resilience/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/01-mtls.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/02-authentication.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/03-authorization.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/security/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/01-gateway-virtualservice.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/02-routing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/03-destination-rule.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/05-retry-timeout.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/06-load-balancing.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/07-circuit-breaker.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/08-fault-injection.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/09-traffic-mirror.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/10-session-affinity.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/11-egress-control.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/12-service-entry.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/13-workload-entry.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/traffic-management/README.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/istio/troubleshooting/common-errors.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/02-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/03-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/04-security.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/05-observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/06-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/07-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "en/service-mesh/linkerd/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/02-istio-quiz.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/advanced.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/basic.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/comparison.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/resilience.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/istio/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/installation.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/02-istio.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/01-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/02-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/03-security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/04-observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/06-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/02-basic-concepts.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/03-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/04-aws-integration.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/01-ambient-mode.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/02-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/03-envoy-filter.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/04-dns-cache.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/05-grpc.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/06-websocket.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/07-sidecar-injection.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/08-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/10-keda-autoscaling.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/advanced/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/02-istio-vs-lattice.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/glossary.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/01-metrics.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/02-tracing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/03-logging.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/04-dashboards.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/observability/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/01-outlier-detection.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/02-rate-limiting.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/03-zone-aware-routing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/resilience/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/01-mtls.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/02-authentication.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/03-authorization.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/security/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/01-gateway-virtualservice.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/02-routing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/03-destination-rule.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/04-traffic-splitting.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/05-retry-timeout.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/06-load-balancing.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/07-circuit-breaker.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/08-fault-injection.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/09-traffic-mirror.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/10-session-affinity.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/11-egress-control.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/12-service-entry.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/13-workload-entry.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/traffic-management/README.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/istio/troubleshooting/common-errors.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/01-installation.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/02-architecture.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/03-traffic-management.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/04-security.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/05-observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/06-multi-cluster.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/07-best-practices.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/linkerd/README.md",
+      "errors": []
+    }
+  ],
+  "followup": {
+    "originalFailures": [
+      {
+        "path": "en/quizzes/service-mesh/linkerd/multi-cluster.md",
+        "errors": [
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag."
+        ]
+      },
+      {
+        "path": "ko/quizzes/service-mesh/linkerd/multi-cluster.md",
+        "errors": [
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag.",
+          "Element is missing end tag."
+        ]
+      }
+    ],
+    "method": "Recompiled the only two changed files after the160-document pass; other158unchanged results retained."
+  },
+  "architectureOriginalErrors": [
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": [
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag."
+      ]
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/architecture.md",
+      "errors": [
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag.",
+        "Element is missing end tag."
+      ]
+    }
+  ],
+  "fix": "Wrapped literal URI/Service-name placeholders in code spans in4previouslyreviewedquizzes; current Markdown/Vue compiler with actual repository markdown config now160/160passes.",
+  "observabilityFollowup": "Four new reviewed pages compiled after edits; earlier160 unchanged results retained.",
+  "ingressFollowup": {
+    "newDocuments": 4,
+    "report": "docs/reviews/2026-09-11/cilium-ingress-validation.json"
+  },
+  "bestPracticesFollowup": {
+    "newDocuments": 2,
+    "recheckedREADME": 2,
+    "report": "docs/reviews/2026-09-11/cilium-best-practices-validation.json"
+  }
+}

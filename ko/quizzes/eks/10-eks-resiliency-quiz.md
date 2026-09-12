@@ -1,5 +1,10 @@
 # Amazon EKS 고가용성 및 복원력 퀴즈
 
+> **예제 API 기준**: Kubernetes 1.36; 공식 근거·예제 전제는 [본문](../../eks/10-eks-resiliency.md)과 동일합니다.
+> **마지막 업데이트**: 2026년 9월 12일
+
+설정·수치는 예시이며 감사에서 cloud 자원·chaos·workload·benchmark를 실행하지 않았습니다. 소유 test 범위에서 placeholder를 교체한 뒤 배포합니다.
+
 이 퀴즈는 Amazon EKS 클러스터의 고가용성(HA), 복원력, Multi-AZ 배포, Cell-Based Architecture, Chaos Engineering, PodDisruptionBudget, Topology Spread Constraints에 대한 이해를 테스트합니다.
 
 ## 퀴즈 개요
@@ -12,103 +17,139 @@
 
 ## 객관식 문제
 
-### 1. Amazon EKS에서 Multi-AZ 배포의 가장 큰 이점은 무엇인가요?
+### 1. EKS workload를 Multi-AZ로 배치하는 주요 복원력 이점은 무엇인가요?
 
-A. 비용 절감
-B. 단일 AZ 장애 시에도 애플리케이션 가용성 유지
-C. 네트워크 지연 시간 증가
-D. 관리 복잡성 감소
+A. 자동 비용 절감
+B. 용량·data·routing 준비 시 한 AZ 장애 후 서비스 지속을 지원
+C. 지연시간 증가 자체
+D. 운영 복잡성 제거
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 단일 AZ 장애 시에도 애플리케이션 가용성 유지**
+**정답: B. 용량·data·routing 준비 시 한 AZ 장애 후 서비스 지속을 지원**
 
-**설명:**
-Multi-AZ 배포의 핵심 이점은 단일 가용 영역(AZ)에 장애가 발생하더라도 다른 AZ에서 워크로드가 계속 실행될 수 있어 애플리케이션의 가용성을 유지할 수 있다는 것입니다.
-
-**Multi-AZ 배포의 주요 이점:**
-- 단일 AZ 장애 시 자동 페일오버
-- 데이터센터 수준의 장애 복원력
-- 99.99% 이상의 가용성 달성 가능
-- 지역 내 재해 복구 능력 향상
+Multi-AZ는 장애 영역 설계를 개선하지만 자동 workload·data failover나 99.99% 가용성을 보장하지 않습니다. Region 전체 장애도 해결하지 않습니다. 동일 용량 node 6개를 3 AZ에 균등 배치하면 하나의 AZ 손실 후 4개가 남는 예시이며 실제 Pod·용량을 확인해야 합니다. 아래는 실행하지 않은 provisioning 입력입니다. 1.36은 장의 기준이며 생성 전 현재 region의 EKS·AMI 지원을 확인합니다.
 
 ```yaml
-# Multi-AZ를 위한 노드 그룹 구성 예시
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: ha-cluster
-  region: ap-northeast-2
-nodeGroups:
-  - name: ng-multi-az
-    instanceType: m5.large
-    desiredCapacity: 6
-    availabilityZones: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
+  name: owned-ha-example
+  region: us-west-2
+  version: '1.36'
+managedNodeGroups:
+- name: ng-multi-az
+  instanceType: m5.large
+  desiredCapacity: 6
+  availabilityZones:
+  - us-west-2a
+  - us-west-2b
+  - us-west-2c
 ```
 
 </details>
 
-### 2. PodDisruptionBudget(PDB)의 주요 목적은 무엇인가요?
+### 2. PodDisruptionBudget은 무엇을 제한하나요?
 
-A. Pod의 CPU 사용량 제한
-B. 자발적 중단 시 최소 가용 Pod 수 보장
-C. Pod 간 네트워크 트래픽 제어
-D. Pod의 메모리 사용량 모니터링
+A. Pod CPU 사용량
+B. Workload 가용성을 고려하는 지원 자발적 eviction
+C. 모든 Pod 간 traffic
+D. 모든 Pod 종료 원인
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 자발적 중단 시 최소 가용 Pod 수 보장**
+**정답: B. Workload 가용성을 고려하는 지원 자발적 eviction**
 
-**설명:**
-PodDisruptionBudget(PDB)은 노드 드레인, 클러스터 업그레이드, 자동 스케일링 등 자발적 중단(Voluntary Disruption) 상황에서 최소한의 Pod가 항상 실행 상태를 유지하도록 보장합니다.
+PDB는 협력하는 drain·유지보수·autoscaler가 사용하는 Eviction API를 제한합니다. 직접 Pod 삭제, Deployment rollout·scale-down, 비자발적 장애를 보호하지는 않습니다. minAvailable·maxUnavailable 중 하나를 선택하고 대상 controller workload label을 일치시킵니다. 아래 percentage PDB와 함께 중복 적용하는 것이 아닌 대안입니다.
 
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: web-app-pdb
+  namespace: resilience-demo
 spec:
-  minAvailable: 2  # 또는 maxUnavailable: 1
+  minAvailable: 2
   selector:
     matchLabels:
       app: web-app
 ```
 
-**PDB의 핵심 기능:**
-- `minAvailable`: 항상 유지해야 할 최소 Pod 수
-- `maxUnavailable`: 동시에 중단될 수 있는 최대 Pod 수
-- 롤링 업데이트 및 노드 유지보수 시 서비스 연속성 보장
-
 </details>
 
-### 3. Topology Spread Constraints에서 `whenUnsatisfiable: DoNotSchedule`의 의미는 무엇인가요?
+### 3. whenUnsatisfiable: DoNotSchedule은 어떤 동작인가요?
 
-A. 제약 조건을 만족하지 못하면 Pod를 아무 노드에나 스케줄링
-B. 제약 조건을 만족하지 못하면 Pod 스케줄링을 거부
-C. 제약 조건을 무시하고 항상 스케줄링
-D. 제약 조건 위반 시 기존 Pod를 삭제
+A. 제약과 무관하게 어디든 배치
+B. Spread 제약을 만족하는 eligible node가 없으면 새 Pod를 미배치 상태로 유지
+C. 모든 scheduling 제약 무시
+D. 기존 Pod를 삭제해 균형 복원
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 제약 조건을 만족하지 못하면 Pod 스케줄링을 거부**
+**정답: B. Spread 제약을 만족하는 eligible node가 없으면 새 Pod를 미배치 상태로 유지**
 
-**설명:**
-`whenUnsatisfiable: DoNotSchedule`은 토폴로지 분산 제약 조건을 만족시킬 수 없는 경우 해당 Pod의 스케줄링을 거부합니다. 이는 엄격한 분산 정책을 적용할 때 사용됩니다.
+API server가 Pod 객체 생성을 거부한다는 뜻이 아닌 scheduling filter입니다. ScheduleAnyway도 이 spread rule만 선호도로 바꾸며 resource·affinity·taint·storage 조건은 남습니다. 완전한 Deployment 예시의 placeholder image·앱 health path는 적용 전에 교체합니다. minDomains=2는 eligible zone 두 개가 남을 때 N-1 계산을 허용하지만 초기 3 AZ 점유·용량 생성을 강제하지 않습니다.
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-app
+  namespace: resilience-demo
 spec:
   replicas: 6
+  selector:
+    matchLabels:
+      app: web-app
   template:
+    metadata:
+      labels:
+        app: web-app
     spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: app
+        image: registry.example.com/team/web-app:replace-with-reviewed-digest
+        ports:
+        - name: http
+          containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 5
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
       topologySpreadConstraints:
       - maxSkew: 1
+        minDomains: 2
         topologyKey: topology.kubernetes.io/zone
         whenUnsatisfiable: DoNotSchedule
         labelSelector:
@@ -116,380 +157,289 @@ spec:
             app: web-app
 ```
 
-**whenUnsatisfiable 옵션:**
-- `DoNotSchedule`: 제약 조건 미충족 시 스케줄링 거부 (Hard 제약)
-- `ScheduleAnyway`: 제약 조건을 최대한 만족시키되, 불가능하면 어디든 스케줄링 (Soft 제약)
-
 </details>
 
-### 4. Cell-Based Architecture에서 "Cell"의 주요 특징으로 올바르지 않은 것은?
+### 4. Cell 기반 아키텍처의 목표가 아닌 것은 무엇인가요?
 
-A. 독립적으로 배포 및 확장 가능
-B. 장애가 전체 시스템으로 전파됨
-C. 자체 완결적인 기능 단위
-D. 다른 Cell과 느슨하게 결합
+A. 독립 배포·확장
+B. Cell 장애를 전체 시스템으로 전파
+C. 자체 완결된 기능 단위
+D. 다른 cell과의 제한한 결합
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 장애가 전체 시스템으로 전파됨**
+**정답: B. Cell 장애를 전체 시스템으로 전파**
 
-**설명:**
-Cell-Based Architecture의 핵심 목적은 장애 격리입니다. 각 Cell은 독립적으로 동작하여 한 Cell의 장애가 다른 Cell로 전파되지 않도록 설계됩니다.
-
-**Cell-Based Architecture의 핵심 원칙:**
-1. **장애 격리**: 한 Cell의 장애가 다른 Cell에 영향을 주지 않음
-2. **독립적 배포**: 각 Cell을 개별적으로 업데이트 가능
-3. **수평적 확장**: Cell 단위로 용량 확장
-4. **자체 완결성**: 각 Cell이 필요한 모든 구성 요소 포함
+격리는 구현·검증할 설계 속성이며 Namespace label만으로 생기는 보장이 아닙니다. Routing·admission limit·용량·data 의존성을 분리하고 공유 node·control plane·DNS·router를 고려합니다. 아래 namespace는 그룹만 표현하며 quota·NetworkPolicy도 물리적 장애 영역을 만들지 않습니다.
 
 ```yaml
-# Cell 단위 네임스페이스 구성 예시
 apiVersion: v1
 kind: Namespace
 metadata:
   name: cell-a
   labels:
     cell: a
-    region: ap-northeast-2
----
+```
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
   name: cell-b
   labels:
     cell: b
-    region: ap-northeast-2
 ```
 
 </details>
 
-### 5. Chaos Engineering에서 "Steady State Hypothesis"의 의미는 무엇인가요?
+### 5. 카오스 엔지니어링의 steady-state hypothesis는 무엇인가요?
 
-A. 시스템을 항상 정지 상태로 유지
-B. 실험 전후로 시스템이 정상 동작함을 검증하는 기준
-C. 카오스 실험을 중단하는 조건
-D. 시스템의 최대 부하 상태
+A. 서비스를 정지 상태로 유지
+B. 장애 전·중·후 허용 동작에 대한 측정 가능한 가설
+C. 실험 중단 명령만
+D. 가능한 최대 부하
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 실험 전후로 시스템이 정상 동작함을 검증하는 기준**
+**정답: B. 장애 전·중·후 허용 동작에 대한 측정 가능한 가설**
 
-**설명:**
-Steady State Hypothesis는 시스템의 "정상" 상태를 정의하는 측정 가능한 지표입니다. 카오스 실험 전에 이 가설이 참인지 확인하고, 실험 후에도 시스템이 이 상태로 돌아오는지 검증합니다.
+실험 전에 사용자 관점 metric·기간·missing-data 처리·abort threshold를 정의합니다. 기존 p99<200ms·오류<0.1%·처리량>1000req/s·Ready Pod>99%는 관측값이 아닌 예시 기준입니다. Ready Pod 비율은 요청 가용성이 아닙니다. 검토한 Litmus CRD에는 ChaosExperiment.spec.definition.steadyState가 없습니다. 아래 JSON은 Kubernetes resource가 아닌 검토 계획입니다.
 
-**Steady State 지표 예시:**
-- 응답 시간 < 200ms (p99)
-- 에러율 < 0.1%
-- 처리량 > 1000 req/s
-- Pod 가용률 > 99%
-
-```yaml
-# Litmus Chaos 실험 정의 예시
-apiVersion: litmuschaos.io/v1alpha1
-kind: ChaosExperiment
-metadata:
-  name: pod-delete
-spec:
-  definition:
-    steadyState:
-      metrics:
-        - name: response_time_p99
-          threshold: 200
-          comparison: lessThan
-        - name: error_rate
-          threshold: 0.1
-          comparison: lessThan
+```json
+{
+  "scenario": "one bounded test fault",
+  "hypothesis": {
+    "p99_latency_seconds": "<0.2",
+    "error_percentage": "<0.1",
+    "request_rate_per_second": ">1000",
+    "ready_pod_percentage": ">99"
+  },
+  "required_observations": [
+    "baseline",
+    "during fault",
+    "recovery",
+    "missing data"
+  ],
+  "abort": "Set an independent measured threshold and recovery owner before execution"
+}
 ```
 
 </details>
 
-### 6. EKS에서 Zone-Aware Routing을 구현하기 위한 Service 설정은 무엇인가요?
+### 6. Kubernetes 1.36 기준에서 같은 zone 선호도를 표현하는 Service 필드는 무엇인가요?
 
-A. `service.kubernetes.io/topology-aware-hints: auto`
-B. `service.kubernetes.io/zone-routing: enabled`
-C. `service.kubernetes.io/local-only: true`
-D. `service.kubernetes.io/cross-zone: disabled`
+A. spec.trafficDistribution: PreferSameZone
+B. spec.zoneRouting: enabled
+C. spec.localOnly: true
+D. spec.crossZone: disabled
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A. `service.kubernetes.io/topology-aware-hints: auto`**
+**정답: A. spec.trafficDistribution: PreferSameZone**
 
-**설명:**
-Kubernetes 1.23+에서 도입된 Topology Aware Hints를 사용하면 kube-proxy가 같은 Zone 내의 엔드포인트로 트래픽을 우선 라우팅하여 Cross-AZ 트래픽 비용과 지연 시간을 줄일 수 있습니다.
+PreferSameZone·PreferSameNode는 1.35부터 GA입니다. 엄격한 격리·비용 절감 보장이 아닌 선호입니다. PreferClose는 이전 alias이고 topology-mode=Auto annotation은 별도 hint 휴리스틱을 사용합니다. topology-aware-hints는 legacy 안내입니다. Proxy 구현·EndpointSlice·Local traffic policy 우선순위를 확인합니다.
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-service
-  annotations:
-    service.kubernetes.io/topology-aware-hints: auto
+  name: web-app
+  namespace: resilience-demo
 spec:
   selector:
     app: web-app
   ports:
-  - port: 80
-    targetPort: 8080
+  - name: http
+    port: 80
+    targetPort: http
+  trafficDistribution: PreferSameZone
 ```
-
-**Zone-Aware Routing의 이점:**
-- Cross-AZ 데이터 전송 비용 절감
-- 네트워크 지연 시간 감소
-- 같은 Zone 내 트래픽 유지로 안정성 향상
 
 </details>
 
-### 7. PDB에서 `maxUnavailable: 25%`를 설정하고 replicas가 8개일 때, 동시에 중단될 수 있는 최대 Pod 수는?
+### 7. 정상 replica 8개·진행 중 disruption 없음·maxUnavailable: 25%일 때 명목상 eviction 허용 수는?
 
-A. 1개
-B. 2개
-C. 3개
-D. 4개
+A. 1
+B. 2
+C. 3
+D. 4
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 2개**
+**정답: B. 2**
 
-**설명:**
-`maxUnavailable: 25%`는 전체 replicas의 25%까지 동시에 중단될 수 있음을 의미합니다. 8개의 25%는 2개입니다 (8 × 0.25 = 2).
+ceil(8×0.25)=2입니다. 두 PDB percentage 형식 모두 내림이 아닌 올림입니다. Replica 3개의 maxUnavailable 25%는 ceil(0.75)=1, minAvailable 75%는 ceil(2.25)=3개 정상 Pod를 요구합니다. 비정상·진행 중 disruption이 budget을 소비하며 모든 장애에서 항상 6개가 실행된다는 보장이 아닙니다.
 
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: app-pdb
+  name: web-app-pdb-percentage
+  namespace: resilience-demo
 spec:
-  maxUnavailable: 25%  # 8개 중 2개까지 중단 가능
   selector:
     matchLabels:
       app: web-app
-```
-
-**계산 방식:**
-- 백분율은 내림 처리됨
-- replicas = 8, maxUnavailable = 25%
-- 8 × 0.25 = 2개 (소수점 이하 내림)
-- 따라서 최소 6개의 Pod가 항상 실행 상태 유지
-
-</details>
-
-### 8. Litmus Chaos에서 제공하는 실험 유형이 아닌 것은?
-
-A. pod-delete
-B. node-drain
-C. network-loss
-D. cluster-delete
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: D. cluster-delete**
-
-**설명:**
-Litmus Chaos는 클러스터 전체를 삭제하는 실험은 제공하지 않습니다. Chaos Engineering의 목적은 통제된 환경에서 시스템 복원력을 테스트하는 것이지, 전체 인프라를 파괴하는 것이 아닙니다.
-
-**Litmus Chaos 주요 실험 유형:**
-- **Pod 레벨**: pod-delete, pod-cpu-hog, pod-memory-hog, pod-network-loss
-- **Node 레벨**: node-drain, node-cpu-hog, node-memory-hog, node-taint
-- **Network 레벨**: network-loss, network-latency, network-corruption
-- **AWS 특화**: ec2-terminate, ebs-loss, az-chaos
-
-```bash
-# Litmus Chaos 설치
-kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v2.14.0.yaml
+  maxUnavailable: 25%
 ```
 
 </details>
 
-### 9. EKS Control Plane의 고가용성은 어떻게 보장되나요?
+### 8. 검토한 Litmus operator·catalog에 대한 설명 중 틀린 것은?
 
-A. 사용자가 직접 Multi-AZ 구성 필요
-B. AWS가 자동으로 여러 AZ에 걸쳐 관리
-C. 단일 AZ에서만 실행됨
-D. 수동 페일오버 구성 필요
+A. pod-delete는 catalog fault
+B. node-drain은 instance termination과 다름
+C. pod-network-loss는 catalog fault
+D. cluster-delete는 전체 EKS cluster를 지우는 표준 fault
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. AWS가 자동으로 여러 AZ에 걸쳐 관리**
+**정답: D. cluster-delete는 전체 EKS cluster를 지우는 표준 fault**
 
-**설명:**
-Amazon EKS Control Plane은 AWS에 의해 완전 관리되며, 자동으로 여러 가용 영역에 걸쳐 고가용성으로 배포됩니다. etcd 데이터도 여러 AZ에 복제됩니다.
+검토한 catalog에는 정확한 Pod·node fault명이 있으며 주장한 cluster-delete는 없습니다. network-loss·ec2-terminate 같은 일반 표현을 유효 ID로 추정하지 않습니다. 현재 AWS catalog에는 aws-az-chaos·ebs-loss-by-id/by-tag·ec2-stop-by-id/by-tag가 있습니다. 실제 fault 정의·RBAC·runner image를 확인합니다. Operator만 설치해도 모든 실험이 생기지는 않으며 3.31.0 operator에는 ChaosHub·ChaosSchedule이 없습니다.
 
-**EKS Control Plane HA 특징:**
-- 자동 Multi-AZ 배포 (최소 2개 AZ)
-- API 서버 자동 스케일링
-- etcd 데이터 자동 복제 및 백업
-- 자동 장애 감지 및 복구
-- 99.95% SLA 보장
-
-**사용자 책임 영역:**
-- 데이터 플레인(노드) Multi-AZ 구성
-- 워크로드 Pod 분산 배치
-- PDB 및 Topology Spread 설정
 
 </details>
 
-### 10. Topology Spread Constraints에서 `maxSkew`의 의미는 무엇인가요?
+### 9. Regional EKS control-plane 가용성은 누가 관리하나요?
 
-A. 최대 Pod 수
-B. 토폴로지 도메인 간 Pod 수 차이의 최대 허용치
-C. 최소 노드 수
-D. 최대 노드당 Pod 수
+A. 사용자가 API server를 수동 배치
+B. AWS가 regional control plane을 3 AZ에 걸쳐 관리
+C. 항상 단일 AZ control plane
+D. 사용자가 managed EKS etcd failover를 구현
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 토폴로지 도메인 간 Pod 수 차이의 최대 허용치**
+**정답: B. AWS가 regional control plane을 3 AZ에 걸쳐 관리**
 
-**설명:**
-`maxSkew`는 서로 다른 토폴로지 도메인(예: AZ, 노드) 간에 허용되는 Pod 수 차이의 최대값입니다. 예를 들어 `maxSkew: 1`이면 어떤 두 도메인 간에도 Pod 수 차이가 1을 초과할 수 없습니다.
+Regional EKS의 managed control plane은 3 AZ에 분산되며 고객 subnet의 최소 2 AZ 요구와 다릅니다. Standard endpoint 월 SLA는 99.95%, Provisioned는 99.99%이며 service-credit 조건·측정 간격이 다릅니다. 앱 가용성 보장이나 고객 workload·PV backup은 아니며 workload·data-plane 배치·data 복구·SLO 측정은 고객 책임입니다.
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-spec:
-  template:
-    spec:
-      topologySpreadConstraints:
-      - maxSkew: 1  # 도메인 간 최대 1개 차이
-        topologyKey: topology.kubernetes.io/zone
-        whenUnsatisfiable: DoNotSchedule
-        labelSelector:
-          matchLabels:
-            app: web-app
-```
 
-**maxSkew 예시 (replicas=6, 3개 AZ):**
-- maxSkew=1: Zone-A(2), Zone-B(2), Zone-C(2) - 균등 분산
-- maxSkew=2: Zone-A(3), Zone-B(2), Zone-C(1) - 허용됨
-- maxSkew=1 위반: Zone-A(4), Zone-B(1), Zone-C(1) - 스케줄링 거부
+</details>
+
+### 10. DoNotSchedule에서 새 Pod 배치 시 maxSkew가 제한하는 것은?
+
+A. 전체 Pod 최대 수
+B. 후보 domain count와 global minimum의 차이
+C. 최소 node 수
+D. Node당 최대 Pod 수
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B. 후보 domain count와 global minimum의 차이**
+
+Eligible domain·minDomains가 global minimum을 결정하며 eligible 수가 minDomains보다 적으면 minimum은 0입니다. 두 zone의 2/2 상태라도 minDomains=3·maxSkew=1이면 replacement가 막힐 수 있습니다. 2/2/2는 정상 예시이지 영구 불변식이 아닙니다. 3/2/1은 skew 2 예시이며 4/1/1의 많은 쪽에 추가 배치는 실패할 수 있습니다. 기존 Pod를 자동 재배치·삭제하지 않습니다.
+
 
 </details>
 
 ## 단답형 문제
 
-### 1. EKS에서 Cross-AZ 데이터 전송 비용을 줄이기 위한 Service 어노테이션은 무엇인가요?
+### 1. Kubernetes 1.36 Service에서 같은 zone 선호도를 표현하는 필드는?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답:** `service.kubernetes.io/topology-aware-hints: auto`
-
-**설명:**
-이 어노테이션을 Service에 추가하면 Kubernetes가 Topology Aware Hints를 활성화하여 같은 AZ 내의 엔드포인트로 트래픽을 우선 라우팅합니다.
+spec.trafficDistribution: PreferSameZone입니다. 선호도이므로 실제 routing·cost를 측정합니다. Legacy topology-aware-hints annotation은 현재 답이 아닙니다. Local traffic policy와 실제 Service 구현을 확인합니다.
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    service.kubernetes.io/topology-aware-hints: auto
+  name: web-app
+  namespace: resilience-demo
+spec:
+  selector:
+    app: web-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  trafficDistribution: PreferSameZone
 ```
 
 </details>
 
-### 2. PodDisruptionBudget에서 "자발적 중단(Voluntary Disruption)"의 예시 3가지를 작성하세요.
+### 2. PDB를 고려한 자발적 eviction을 사용할 수 있는 동작 세 가지와 우회 경로를 구분하세요.
 
 <details>
 <summary>정답 보기</summary>
 
-**정답:**
-1. 노드 드레인 (kubectl drain)
-2. 클러스터 업그레이드
-3. 클러스터 오토스케일러에 의한 노드 축소 (Scale-down)
+예: Eviction을 사용하는 kubectl drain, Eviction 기반 drain을 수행하는 upgrade, PDB와 협력하는 node autoscaler scale-down입니다. 구현·force 옵션을 확인합니다. Deployment·StatefulSet rollout, 직접 kubectl delete pod, 일부 cloud desired-capacity 변경은 같은 PDB admission을 사용하지 않습니다. Cordon만으로 기존 Pod가 퇴거되지 않습니다. PDB가 hardware 장애·kernel panic·OOM을 막지는 못합니다.
 
-**추가 예시:**
-- Deployment/StatefulSet의 롤링 업데이트
-- 수동 Pod 삭제 (kubectl delete pod)
-- 노드 유지보수를 위한 cordon/drain
-
-**비자발적 중단(Involuntary Disruption) 예시:**
-- 하드웨어 장애
-- 커널 패닉
-- VM 삭제
-- OOM Kill
 
 </details>
 
-### 3. Chaos Engineering의 4가지 핵심 원칙을 나열하세요.
+### 3. 유용한 chaos 실험을 위한 네 가지 제어를 설명하세요.
 
 <details>
 <summary>정답 보기</summary>
 
-**정답:**
-1. **Steady State 가설 수립**: 정상 상태를 정의하는 측정 가능한 지표 설정
-2. **실제 이벤트 시뮬레이션**: 실제 발생 가능한 장애 상황 재현
-3. **프로덕션 환경에서 실험**: 가능한 실제 환경에서 테스트
-4. **폭발 반경 최소화**: 실험의 영향 범위를 제한하고 자동 중단 조건 설정
+측정 가능한 정상 상태 가설, 실제적인 제한된 fault, 대표 환경과 필요 시 명시적 production 권한, 독립 관찰·중단 threshold·복구 책임자를 통한 영향 범위 제한입니다. 자동화·사후 분석은 반복성을 돕지만 production 실험이 필수라거나 data가 자동 복원된다는 뜻은 아닙니다.
 
-**추가 원칙:**
-- 실험 자동화로 지속적 검증
-- 결과 분석 및 시스템 개선
 
 </details>
 
-### 4. EKS 노드 그룹을 Multi-AZ로 구성할 때 최소 권장 AZ 수는 몇 개인가요?
+### 4. 이 workload 예시가 세 AZ를 사용하는 이유와 EKS node-group 최소 요구 여부는?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답:** 3개
-
-**설명:**
-3개 이상의 AZ에 걸쳐 노드를 분산 배치하면:
-- 단일 AZ 장애 시에도 2/3 용량 유지
-- Quorum 기반 시스템(예: etcd)의 안정성 보장
-- 더 균등한 워크로드 분산 가능
+동일 용량 세 zone에 workload·의존성까지 분산하면 한 zone 손실 후 기존 용량 2/3가 남는 설계입니다. 모든 node-group API의 최소 요구는 아닙니다. EKS cluster subnet은 최소 두 AZ, regional managed control plane은 세 AZ이며 고객 node-group AZ가 managed etcd 배치를 정하지 않습니다. Region·instance type·storage·workload 조건에 맞는 zone을 선택합니다.
 
 ```yaml
-# eksctl Multi-AZ 노드 그룹 구성
-nodeGroups:
-  - name: ng-multi-az
-    availabilityZones:
-      - ap-northeast-2a
-      - ap-northeast-2b
-      - ap-northeast-2c
-    desiredCapacity: 6
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: owned-ha-example
+  region: us-west-2
+  version: '1.36'
+managedNodeGroups:
+- name: ng-multi-az
+  instanceType: m5.large
+  desiredCapacity: 6
+  availabilityZones:
+  - us-west-2a
+  - us-west-2b
+  - us-west-2c
 ```
 
 </details>
 
-### 5. Cell-Based Architecture에서 트래픽을 특정 Cell로 라우팅하는 방법은 무엇인가요?
+### 5. Routing layer는 traffic을 cell에 어떻게 할당해야 하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답:** 라우팅 레이어(예: API Gateway, Service Mesh, Load Balancer)에서 사용자/테넌트 ID 기반으로 특정 Cell로 트래픽을 분배합니다.
-
-**구현 방법:**
-1. **해시 기반 라우팅**: 사용자 ID를 해시하여 Cell 결정
-2. **명시적 매핑**: 사용자-Cell 매핑 테이블 유지
-3. **지역 기반**: 지리적 위치에 따른 Cell 할당
+신뢰하는 tenant identity와 안정적 hash·명시적 mapping·지역 할당을 사용합니다. Router는 authorization·용량·data 위치를 검증해야 하며 임의 client x-cell-id를 tenant 권한으로 믿지 않습니다. 아래 mesh는 등록된 destination Service·정책을 전제합니다. 알 수 없거나 신뢰하지 않는 cell ID는 거부·기본 처리 정책이 필요합니다. Namespace·ConfigMap만으로 격리·failover를 구현하지는 못합니다.
 
 ```yaml
-# Istio VirtualService를 통한 Cell 라우팅 예시
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: cell-router
+  name: cell-routing-example
+  namespace: resilience-demo
 spec:
+  hosts:
+  - cell-router.resilience-demo.svc.cluster.local
   http:
   - match:
     - headers:
         x-cell-id:
-          exact: "cell-a"
+          exact: cell-a
     route:
     - destination:
         host: app.cell-a.svc.cluster.local
   - match:
     - headers:
         x-cell-id:
-          exact: "cell-b"
+          exact: cell-b
     route:
     - destination:
         host: app.cell-b.svc.cluster.local
@@ -499,60 +449,49 @@ spec:
 
 ## 실습 문제
 
-### 1. 다음 요구사항을 만족하는 PodDisruptionBudget YAML을 작성하세요.
-- 이름: api-server-pdb
-- 대상: label이 `app: api-server`인 Pod
-- 최소 3개의 Pod가 항상 실행 상태 유지
+### 1. app=api-server의 PDB를 고려한 eviction 이후 가용 replica 세 개를 요구하는 api-server-pdb를 작성하세요.
 
 <details>
 <summary>정답 보기</summary>
+
+고객 앱 label이며 AWS가 관리하는 Kubernetes API server를 설정하는 것이 아닙니다. Namespace·일치하는 controller workload가 존재해야 합니다. Ready 5개·진행 중 disruption 없음이면 허용 2개라는 예시이며 replica 3개면 정상 eviction 여유가 없습니다. 기존 출력이 실측이라고 가정하지 말고 실제 status를 확인합니다.
 
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: api-server-pdb
+  namespace: resilience-demo
 spec:
   minAvailable: 3
   selector:
     matchLabels:
       app: api-server
 ```
-
-**검증 명령어:**
 ```bash
-# PDB 생성
-kubectl apply -f api-server-pdb.yaml
-
-# PDB 상태 확인
-kubectl get pdb api-server-pdb
-
-# 상세 정보 확인
-kubectl describe pdb api-server-pdb
-```
-
-**예상 출력:**
-```
-NAME              MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
-api-server-pdb    3               N/A               2                     10s
+# Prerequisite: the owned test namespace and matching application already exist.
+: "${KUBE_CONTEXT:?Set the owned test context}"
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo get pods -l app=api-server
+# MUTATION: apply only this reviewed PDB file.
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo apply -f api-server-pdb.yaml
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo describe pdb api-server-pdb
 ```
 
 </details>
 
-### 2. 3개의 AZ에 균등하게 Pod를 분산시키는 Topology Spread Constraints를 포함한 Deployment를 작성하세요.
-- Deployment 이름: web-frontend
-- replicas: 6
-- maxSkew: 1
-- 분산 키: topology.kubernetes.io/zone
+### 2. Replica 여섯 개와 zone spread rule의 web-frontend를 작성하고 AZ 손실 시 trade-off를 설명하세요.
 
 <details>
 <summary>정답 보기</summary>
+
+완전한 예시는 N-1 상황에 maxSkew=1·minDomains=2를 사용합니다. 초기 3-zone 배치·잔여 용량은 별도 검증하며 자동 재배치·zonal PVC 이동을 하지 않습니다. 앱 placeholder image·health path를 바꾸고 resource를 조정합니다. 통제한 적용 후 모든 Pod에 node·zone label이 있다고 가정하지 말고 아래 Python 보고를 사용합니다.
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-frontend
+  namespace: resilience-demo
 spec:
   replicas: 6
   selector:
@@ -563,223 +502,306 @@ spec:
       labels:
         app: web-frontend
     spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: app
+        image: registry.example.com/team/web-app:replace-with-reviewed-digest
+        ports:
+        - name: http
+          containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 5
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
       topologySpreadConstraints:
       - maxSkew: 1
+        minDomains: 2
         topologyKey: topology.kubernetes.io/zone
         whenUnsatisfiable: DoNotSchedule
         labelSelector:
           matchLabels:
             app: web-frontend
-      containers:
-      - name: web
-        image: nginx:latest
-        ports:
-        - containerPort: 80
 ```
-
-**검증 명령어:**
 ```bash
-# Deployment 생성
-kubectl apply -f web-frontend.yaml
-
-# Pod 분산 확인
-kubectl get pods -l app=web-frontend -o wide
-
-# Zone별 Pod 수 확인
-kubectl get pods -l app=web-frontend -o jsonpath='{range .items[*]}{.spec.nodeName}{"\n"}{end}' | \
-  xargs -I {} kubectl get node {} -o jsonpath='{.metadata.labels.topology\.kubernetes\.io/zone}{"\n"}' | \
-  sort | uniq -c
+# MUTATION: replace the image/health contract and review this exact file first.
+: "${KUBE_CONTEXT:?Set the owned test context}"
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo apply -f web-frontend.yaml
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo rollout status deployment/web-frontend --timeout=5m
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo get pods -l app=web-frontend -o json > frontend-pods.json
+kubectl --context "$KUBE_CONTEXT" get nodes -o json > frontend-nodes.json
 ```
-
-**예상 출력:**
-```
-2 ap-northeast-2a
-2 ap-northeast-2b
-2 ap-northeast-2c
+```python
+import collections, json
+from pathlib import Path
+pods = json.loads(Path("frontend-pods.json").read_text())["items"]
+nodes = json.loads(Path("frontend-nodes.json").read_text())["items"]
+zones = {n["metadata"]["name"]: n["metadata"].get("labels", {}).get("topology.kubernetes.io/zone", "<unlabeled>") for n in nodes}
+counts, ready = collections.Counter(), collections.Counter()
+for pod in pods:
+    if pod["metadata"].get("deletionTimestamp"):
+        continue
+    node = pod.get("spec", {}).get("nodeName")
+    zone = zones.get(node, "<unknown-node>") if node else "<unscheduled>"
+    counts[zone] += 1
+    if any(c.get("type") == "Ready" and c.get("status") == "True" for c in pod.get("status", {}).get("conditions", [])):
+        ready[zone] += 1
+print(json.dumps({"activePodsByZone": dict(counts), "readyPodsByZone": dict(ready)}, indent=2))
 ```
 
 </details>
 
-### 3. Litmus Chaos를 사용하여 특정 Pod를 삭제하는 Chaos 실험을 정의하세요.
-- 대상: namespace가 `production`, label이 `app: payment-service`인 Pod
-- 실험 시간: 30초
-- 삭제할 Pod 수: 1개
+### 3. 검토한 test Pod 한 개로 제한한 30초 Litmus Pod 삭제 실험을 중지 상태로 준비하세요.
 
 <details>
 <summary>정답 보기</summary>
+
+전체 production selector가 아닌 resilience-demo의 소유 payment-service test workload를 사용합니다. UID·owner 확인 후 TARGET_PODS를 현재 정확한 이름으로 바꿉니다. Operator·pod-delete ChaosExperiment·검증한 runner/helper image·제한한 RBAC가 준비되어야 합니다. Duration·interval은 반복 삭제 시도를 만들 수 있으므로 30초 동안 정확히 한 번 삭제한다는 증명이 아닙니다. 한 번의 선택한 삭제 action이 필요하면 본문의 FIS COUNT(1)과 별도 IAM·RBAC 전제를 사용합니다. 여기서는 fault를 실행하지 않습니다.
 
 ```yaml
 apiVersion: litmuschaos.io/v1alpha1
 kind: ChaosEngine
 metadata:
-  name: payment-pod-delete
-  namespace: production
+  name: payment-pod-delete-review
+  namespace: resilience-demo
 spec:
+  engineState: stop
   appinfo:
-    appns: production
-    applabel: app=payment-service
+    appns: resilience-demo
+    applabel: app=payment-service,experiment-approved=true
     appkind: deployment
-  engineState: active
-  chaosServiceAccount: litmus-admin
+  chaosServiceAccount: pod-delete-sa
   experiments:
   - name: pod-delete
     spec:
       components:
         env:
         - name: TOTAL_CHAOS_DURATION
-          value: "30"
+          value: '30'
         - name: CHAOS_INTERVAL
-          value: "10"
-        - name: PODS_AFFECTED_PERC
-          value: "100"
-        - name: TARGET_PODS
-          value: ""
+          value: '10'
         - name: FORCE
-          value: "false"
+          value: 'false'
+        - name: TARGET_PODS
+          value: REPLACE_WITH_ONE_REVIEWED_POD_NAME
+        - name: PODS_AFFECTED_PERC
+          value: '100'
 ```
-
-**사전 준비:**
 ```bash
-# Litmus Chaos Operator 설치
-kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v2.14.0.yaml
-
-# ChaosExperiment CRD 설치
-kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.14.0?file=charts/generic/pod-delete/experiment.yaml
-
-# ServiceAccount 생성
-kubectl apply -f https://hub.litmuschaos.io/api/chaos/2.14.0?file=charts/generic/pod-delete/rbac.yaml -n production
+# Read-only: resolve an exact current Pod name/UID before filling TARGET_PODS.
+: "${KUBE_CONTEXT:?Set the owned test context}"
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo get pods \
+  -l 'app=payment-service,experiment-approved=true' -o wide
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo get chaosexperiment pod-delete
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo get serviceaccount pod-delete-sa
+# MUTATION: this reviewed file must still have engineState: stop.
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo apply -f payment-pod-delete-review.yaml
 ```
-
-**검증 명령어:**
 ```bash
-# Chaos 실험 실행
-kubectl apply -f payment-pod-delete.yaml
-
-# 실험 상태 확인
-kubectl get chaosengine payment-pod-delete -n production
-
-# 실험 결과 확인
-kubectl get chaosresult payment-pod-delete-pod-delete -n production -o yaml
+# Read-only observation; no experiment is started by these commands.
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo get chaosengine payment-pod-delete-review -o yaml
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo get chaosresult
 ```
 
 </details>
 
 ## 심화 문제
 
-### 1. 금융 서비스 회사에서 EKS 클러스터의 99.99% 가용성을 달성하기 위한 아키텍처를 설계하세요. Multi-AZ, Cell-Based Architecture, PDB, Chaos Engineering을 모두 활용한 종합적인 전략을 제시하세요.
+### 1. 99.99% 가용성 SLO를 목표로 하는 금융 서비스 workload를 설계하고 검증할 항목을 설명하세요.
 
 <details>
 <summary>정답 보기</summary>
 
-**99.99% 가용성 달성을 위한 종합 아키텍처:**
+99.99%는 다음 resource만으로 보장되는 수치가 아닌 workload SLO입니다. 365일의 시간 기반 산술 budget은 연 52.56분이며 기존 “약 52분”은 근삿값입니다. EKS SLA는 별도의 월 service-credit 약정이고 요청 기반 가용성은 분모도 다릅니다. 핵심 사용자 흐름·부분 장애·측정 기간·RTO/RPO·alert를 정의합니다.
 
-**1. Multi-Region + Multi-AZ 구성:**
+Primary·secondary region의 data·identity·DNS·routing·관측·용량을 독립적으로 사용할 수 있게 준비합니다. 복제 지연·write 승격·충돌·복구 책임자를 검증하며 Multi-AZ·Active-Active만으로 무손실이 보장되지 않습니다. 아래 기존 규모 수치는 실측 용량·실행 배포가 아닌 설계 예시입니다.
+
+#### Multi-AZ node input and cell resources
+
 ```yaml
-# Primary Region (ap-northeast-2)
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: finance-primary
-  region: ap-northeast-2
-nodeGroups:
-  - name: ng-critical
-    instanceType: m5.xlarge
-    desiredCapacity: 9
-    availabilityZones: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
-    labels:
-      criticality: high
+  name: finance-primary-example
+  region: us-west-2
+  version: '1.36'
+managedNodeGroups:
+- name: ng-critical
+  instanceType: m5.xlarge
+  desiredCapacity: 9
+  availabilityZones:
+  - us-west-2a
+  - us-west-2b
+  - us-west-2c
+  labels:
+    criticality: high
 ```
-
-**2. Cell-Based Architecture 적용:**
 ```yaml
-# Cell 단위 격리
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: cell-korea-1
+  name: finance-cell
   labels:
-    cell: korea-1
-    region: ap-northeast-2
----
-# Cell별 리소스 쿼터
+    cell: finance
+```
+```yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: cell-quota
-  namespace: cell-korea-1
+  namespace: finance-cell
 spec:
   hard:
-    requests.cpu: "100"
+    requests.cpu: '100'
     requests.memory: 200Gi
-    limits.cpu: "200"
+    limits.cpu: '200'
     limits.memory: 400Gi
 ```
+Quota가 node를 예약하거나 공유 의존성을 격리하지는 않습니다. 본문의 router·network-policy·data 경계를 추가 검토합니다. 아래 strict hostname anti-affinity의 replica 9개에는 criticality=high인 eligible node 9개가 필요하며 30개 확장에도 그에 맞는 용량이 필요합니다. Strict 조건은 의도적으로 Pending을 만들 수 있습니다. Placeholder image·health contract·region/version/instance 가용성을 먼저 확인합니다.
 
-**3. 강력한 PDB 정책:**
+#### Placement and eviction budget
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: finance-cell
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: payment-api
+  template:
+    metadata:
+      labels:
+        app: payment-api
+        tier: critical
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: app
+        image: registry.example.com/team/web-app:replace-with-reviewed-digest
+        ports:
+        - name: http
+          containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 5
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      topologySpreadConstraints:
+      - maxSkew: 1
+        minDomains: 2
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: payment-api
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: payment-api
+      nodeSelector:
+        criticality: high
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: payment-api
+            topologyKey: kubernetes.io/hostname
+```
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: critical-service-pdb
+  namespace: finance-cell
 spec:
-  minAvailable: 80%  # 항상 80% 이상 가용
+  minAvailable: 80%
   selector:
     matchLabels:
-      tier: critical
+      app: payment-api
 ```
+정상 replica 9개의 minAvailable 80%는 올림해 8개이며 다른 차감 전 명목상 정상 eviction 여유는 1개입니다. 모든 rollout·cloud scale-down·AZ 장애를 제한하지 않습니다. minDomains=2는 설명한 N-1 계산을 지원하며 자동 evacuation·data migration이 아닙니다.
 
-**4. Topology Spread + Anti-Affinity:**
-```yaml
-spec:
-  topologySpreadConstraints:
-  - maxSkew: 1
-    topologyKey: topology.kubernetes.io/zone
-    whenUnsatisfiable: DoNotSchedule
-  - maxSkew: 1
-    topologyKey: kubernetes.io/hostname
-    whenUnsatisfiable: ScheduleAnyway
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            app: payment-api
-        topologyKey: kubernetes.io/hostname
-```
+#### HPA with an actual target and metric contract
 
-**5. Chaos Engineering 프로그램:**
 ```yaml
-# 주기적 Chaos 실험 (GameDay)
-apiVersion: litmuschaos.io/v1alpha1
-kind: ChaosSchedule
-metadata:
-  name: weekly-resilience-test
-spec:
-  schedule:
-    type: repeat
-    repeat:
-      timeRange:
-        startTime: "2024-01-01T02:00:00Z"
-        endTime: "2024-12-31T04:00:00Z"
-      workDays:
-        includedDays: "Sun"
-  engineSpec:
-    experiments:
-    - name: pod-delete
-    - name: node-drain
-    - name: network-loss
-```
-
-**6. 모니터링 및 자동 복구:**
-```yaml
-# HPA + 자동 복구
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: critical-service-hpa
+  namespace: finance-cell
 spec:
-  minReplicas: 6
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: payment-api
+  minReplicas: 9
   maxReplicas: 30
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 0
@@ -788,63 +810,72 @@ spec:
         value: 100
         periodSeconds: 15
 ```
+CPU resource metric에는 정상 Metrics Server와 관련 container CPU request가 필요합니다. Replica 증가가 memory leak·DB 포화·zonal volume 제약을 해결하지는 않습니다. Replica field·GitOps·HPA 소유권을 일치시킵니다.
 
-**SLA 계산:**
-- 99.99% = 연간 약 52분 다운타임
-- Multi-AZ: 단일 AZ 장애 대응
-- Multi-Region: 리전 장애 대응
-- Cell 격리: 영향 범위 제한
-- 자동 복구: MTTR 최소화
+정기 game day는 소유 scheduler·승인한 workflow로 검토한 개별 실험을 호출하고 정확한 target·ID·abort 신호·다음 실험 전 복구를 기록합니다. 기존 2024 ChaosSchedule은 기간이 만료되었고 Litmus 3.31.0 CRD에도 없으므로 날짜만 바꿔 해결할 수 없습니다. 99.99% 주장은 주간 schedule이 아니라 실제 SLI·훈련 근거가 필요합니다.
 
 </details>
 
-### 2. 대규모 이커머스 플랫폼에서 블랙프라이데이 트래픽 급증(10배)에 대비한 EKS 복원력 전략을 수립하세요. Pre-scaling, Chaos Engineering 검증, 장애 시나리오별 대응 방안을 포함하세요.
+### 2. 10배 Black Friday traffic 시나리오의 사전 확장과 제한된 장애 복구를 설계하세요.
 
 <details>
 <summary>정답 보기</summary>
 
-**블랙프라이데이 트래픽 급증 대비 전략:**
+10배는 실측 결과가 아닌 test 목표입니다. Request mix·CPU/memory·warm-up·연결·queue·DB·외부 service quota를 모델링하고 목표 traffic 중 한 AZ 손실까지 계산합니다. NodePool limit는 **사전 생성·예약 용량이 아닌 provisioning 상한**입니다. 기존 EC2NodeClass·AMI/IAM·subnet/IP·instance type이 설계를 지원해야 합니다. 자발적 disruption budget 0도 interruption·repair·모든 강제 종료를 막지 않습니다.
 
-**1. 사전 용량 계획 (Pre-scaling):**
+#### Capacity settings to validate
+
 ```yaml
-# Karpenter NodePool - 급증 대비 구성
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: blackfriday
+  name: blackfriday-example
 spec:
   template:
     spec:
-      # default라는 이름의 EC2NodeClass가 미리 정의되어 있다고 가정
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
-        name: default
+        name: reviewed-test-class
       requirements:
       - key: node.kubernetes.io/instance-type
         operator: In
-        values: ["m5.2xlarge", "m5.4xlarge", "c5.2xlarge", "c5.4xlarge"]
+        values:
+        - m5.2xlarge
+        - m5.4xlarge
+        - c5.2xlarge
+        - c5.4xlarge
       - key: topology.kubernetes.io/zone
         operator: In
-        values: ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
+        values:
+        - us-west-2a
+        - us-west-2b
+        - us-west-2c
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
   limits:
     cpu: 2000
     memory: 4000Gi
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
----
-# HPA 사전 스케일링
+    budgets:
+    - nodes: '0'
+```
+```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: product-catalog-hpa
+  namespace: resilience-demo
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: product-catalog
-  minReplicas: 50  # 평소 10 -> 블랙프라이데이 50
+  minReplicas: 50
   maxReplicas: 500
   metrics:
   - type: Resource
@@ -852,116 +883,123 @@ spec:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 60  # 여유있게 60%
+        averageUtilization: 60
+  behavior:
+    scaleDown:
+      selectPolicy: Disabled
 ```
+기존 평시 10→minimum 50/max 500은 예시이며 replica floor 5배가 처리량 10배를 증명하지 않습니다. HPA는 CPU request·정상 metric이 있는 기존 product-catalog Deployment를 전제합니다. ScaleDown 비활성화는 HPA scale-in을 막고 scale-up은 허용하며 전체 HPA 정지가 아닙니다. 행사 전 Ready Pod·건강한 endpoint·실제 확보한 node/headroom을 확인하고 이후 검토한 평시 policy로 복원합니다.
 
-**2. 트래픽 급증 전 Chaos Engineering 검증:**
+행사 전 대표 test load에서 본문의 검토한 개별 실험을 수행합니다. 제한된 Pod fault, 통제한 zonal shift·network 시나리오, 의존성 지연을 구분합니다. Node-drain을 AZ 전체 장애라 하지 않고 TARGET_PODS에 label selector를 넣거나 미검토 fault를 하나의 active production engine에 합치지 않습니다. 실패·no-data·실제 복원을 포함해 기록합니다.
+
+#### Scenario response plan
+
+| 상황 | 근거 | 검토할 대응 |
+| --- | --- | --- |
+| AZ 장애 | Endpoint·고객 health·node·data 가용성 | 지원 ARC·수동 shift와 검증한 잔여 용량; topology spread만으로 Pod를 evacuation하지 않음 |
+| DB 지연 | Query·connection·복제 metric | Retry·동시성 제한, 필요 시 writer 승격 runbook; 임의 read replica로 전환하지 않음 |
+| OOM·memory 증가 | Limit·working set·restart·앱 근거 | Resource·앱 원인 수정; CPU HPA가 자동 OOM 복구는 아님 |
+| Traffic 급증 | Request mix·backlog·포화·고객 오류 | Admission·rate limit·검증한 확장; public·개인화 의미가 안전한 data만 cache |
+
+#### Circuit breaker and metrics
+
 ```yaml
-# 부하 테스트 + Chaos 조합
-apiVersion: litmuschaos.io/v1alpha1
-kind: ChaosEngine
-metadata:
-  name: blackfriday-prep-test
-spec:
-  experiments:
-  # 시나리오 1: 트래픽 10배 + Pod 30% 장애
-  - name: pod-delete
-    spec:
-      components:
-        env:
-        - name: PODS_AFFECTED_PERC
-          value: "30"
-        - name: TOTAL_CHAOS_DURATION
-          value: "300"
-  # 시나리오 2: 트래픽 10배 + AZ 장애
-  - name: node-drain
-    spec:
-      components:
-        env:
-        - name: TARGET_NODE_LABEL
-          value: "topology.kubernetes.io/zone=ap-northeast-2a"
-  # 시나리오 3: 트래픽 10배 + DB 지연
-  - name: pod-network-latency
-    spec:
-      components:
-        env:
-        - name: TARGET_PODS
-          value: "app=mysql"
-        - name: NETWORK_LATENCY
-          value: "500"
-```
-
-**3. 장애 시나리오별 대응 방안:**
-
-| 시나리오 | 감지 | 자동 대응 | 수동 대응 |
-|---------|------|----------|----------|
-| AZ 장애 | CloudWatch Alarm | Topology Spread로 자동 분산 | Route53 Failover |
-| DB 지연 | Latency Alert | Circuit Breaker 활성화 | Read Replica 전환 |
-| 메모리 부족 | OOM Alert | HPA Scale-out | Node 추가 |
-| 트래픽 폭주 | TPS Alert | Rate Limiting | CDN 캐시 확대 |
-
-**4. Circuit Breaker 패턴:**
-```yaml
-# Istio DestinationRule - Circuit Breaker
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: product-catalog-cb
+  name: product-catalog-circuit-breaker
+  namespace: resilience-demo
 spec:
-  host: product-catalog
+  host: product-catalog.resilience-demo.svc.cluster.local
   trafficPolicy:
     connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
       http:
-        h2UpgradePolicy: UPGRADE
         http1MaxPendingRequests: 1000
         http2MaxRequests: 2000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
     outlierDetection:
       consecutive5xxErrors: 5
+      consecutiveGatewayErrors: 5
       interval: 10s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
+      minHealthPercent: 30
+      splitExternalLocalOriginErrors: true
 ```
+Proxy pool 제한·outlier detection이 backend 용량을 예약하지는 않습니다. 본문의 timeout·idempotency 원칙으로 조정합니다. 아래 query는 명시한 counter·classic histogram·job/namespace/status label을 제공하는 **앱 instrumentation**과 kube-state-metrics가 필요하며 EKS가 자동 제공하지 않습니다. 관련 status series를 초기화하고 scrape 범위를 확인합니다. 분모 0·sample 없음은 가용성 100%가 아닌 근거 없음입니다. Pod 지표는 완료·삭제 중 Pod를 제외하지만 앱 SLI가 아닙니다.
 
-**5. 실시간 모니터링 대시보드:**
+Request rate
+
 ```promql
-# Grafana 대시보드 쿼리
-# 1. 전체 TPS
-sum(rate(http_requests_total[1m]))
-
-# 2. 에러율
-sum(rate(http_requests_total{status=~"5.."}[1m])) / sum(rate(http_requests_total[1m])) * 100
-
-# 3. P99 응답시간
-histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))
-
-# 4. Pod 가용률
-sum(kube_pod_status_ready{condition="true"}) / sum(kube_pod_status_ready) * 100
+sum(rate(http_requests_total{job="product-catalog",namespace="resilience-demo"}[5m]))
 ```
 
-**6. 롤백 계획:**
+5xx percentage
+
+```promql
+100 * sum(rate(http_requests_total{job="product-catalog",namespace="resilience-demo",status=~"5.."}[5m]))
+/ sum(rate(http_requests_total{job="product-catalog",namespace="resilience-demo"}[5m]))
+and on() (sum(rate(http_requests_total{job="product-catalog",namespace="resilience-demo"}[5m])) > 0)
+```
+
+Classic-histogram p99 seconds
+
+```promql
+histogram_quantile(0.99,
+  sum by (le) (rate(http_request_duration_seconds_bucket{job="product-catalog",namespace="resilience-demo"}[5m]))
+)
+```
+
+Active test-namespace Ready Pod percentage, not request availability
+
+```promql
+100 *
+sum(
+  kube_pod_status_ready{namespace="resilience-demo",condition="true"}
+  and on (namespace,pod)
+  (kube_pod_status_phase{namespace="resilience-demo",phase=~"Pending|Running|Unknown"} == 1)
+  unless on (namespace,pod) kube_pod_deletion_timestamp{namespace="resilience-demo"}
+)
+/
+count(
+  (kube_pod_status_phase{namespace="resilience-demo",phase=~"Pending|Running|Unknown"} == 1)
+  unless on (namespace,pod) kube_pod_deletion_timestamp{namespace="resilience-demo"}
+)
+```
+
+#### Workload rollback and separately reviewed controls
+
 ```bash
-#!/bin/bash
-# Emergency Rollback Script
-NAMESPACE="production"
-DEPLOYMENT="product-catalog"
-
-# 1. 이전 버전으로 롤백
-kubectl rollout undo deployment/$DEPLOYMENT -n $NAMESPACE
-
-# 2. HPA 일시 중지
-kubectl patch hpa $DEPLOYMENT-hpa -n $NAMESPACE -p '{"spec":{"minReplicas":100}}'
-
-# 3. Feature Flag 비활성화
-curl -X POST "https://feature-flags.internal/api/v1/flags/blackfriday-features/disable"
-
-# 4. CDN 캐시 연장
-aws cloudfront update-distribution --id $CF_DIST_ID --default-cache-behavior "DefaultTTL=86400"
+# MUTATION: workload revision rollback only, after data/schema and GitOps review.
+set -euo pipefail
+: "${KUBE_CONTEXT:?Set the verified owned context}"
+: "${REVIEWED_REVISION:?Set an inspected compatible Deployment revision}"
+[[ "$REVIEWED_REVISION" =~ ^[1-9][0-9]*$ ]]
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo rollout history deployment/product-catalog
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo rollout undo deployment/product-catalog \
+  --to-revision="$REVIEWED_REVISION"
+kubectl --context "$KUBE_CONTEXT" -n resilience-demo rollout status deployment/product-catalog --timeout=5m
 ```
+Rollback 전 GitOps·HPA 소유권을 조정합니다. Rollout undo는 DB·PVC rollback이나 EKS control-plane downgrade가 아닙니다. minReplicas를 100으로 올려도 HPA는 정지하지 않습니다. 필요하면 HPA behavior와 기록한 복원 계획을 사용합니다. Feature flag는 실제 인증된 관리 API/SDK·검토한 대상 flag를 사용하며 범용 무인증 disable URL을 가정하지 않습니다.
 
-**테스트 일정:**
-- D-14: 기본 Chaos 테스트
-- D-7: 전체 시나리오 GameDay
-- D-3: 최종 확인 및 Pre-scaling
-- D-Day: 실시간 모니터링 및 대응
+CloudFront는 기존 전체 configuration과 ETag를 비공개 파일로 먼저 가져옵니다.
+
+```bash
+# Read-only preparation; output can include sensitive origin configuration.
+set -euo pipefail
+umask 077
+: "${CF_DIST_ID:?Set the exact owned CloudFront distribution ID}"
+test ! -e cloudfront-current-private.json
+aws cloudfront get-distribution-config --id "$CF_DIST_ID" > cloudfront-current-private.json
+```
+Cache policy·cookie·authorization·개인화 content를 검토합니다. 변경에는 유효한 전체 DistributionConfig와 일치하는 IfMatch ETag가 필요하며 update-distribution에 --default-cache-behavior shortcut은 없습니다. 전체 설정을 별도로 준비·검토하고 배포 완료·복원 계획을 확인합니다. 거래·사용자별 응답에 일괄 24시간 TTL을 적용하지 않습니다.
+
+기존 D-14 기본 test, D-7 game day, D-3 최종 검증·사전 확장, D-Day 관찰 일정은 계획 예시로 보존하며 여기서 runtime 결과는 검증하지 않았습니다.
+
+[CloudFront update API](https://docs.aws.amazon.com/cli/latest/reference/cloudfront/update-distribution.html) · [HPA behavior](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) · [kube-state-metrics Pod metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)
 
 </details>

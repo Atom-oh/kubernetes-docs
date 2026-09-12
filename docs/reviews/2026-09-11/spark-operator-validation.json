@@ -1,0 +1,578 @@
+{
+  "schemaObjects": [
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "ClusterRole",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "ClusterRole",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "ClusterRoleBinding",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "ClusterRoleBinding",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "Role",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "Role",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "Role",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "Role",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "RoleBinding",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "RoleBinding",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "RoleBinding",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "RoleBinding",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "Service",
+      "name": "spark-operator-webhook-svc"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "Deployment",
+      "name": "spark-operator-controller"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "Deployment",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "MutatingWebhookConfiguration",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "kubeflow-render.yaml",
+      "kind": "ValidatingWebhookConfiguration",
+      "name": "spark-operator-webhook"
+    },
+    {
+      "source": "apache-render.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-operator"
+    },
+    {
+      "source": "apache-render.yaml",
+      "kind": "ConfigMap",
+      "name": "spark-kubernetes-operator-configuration"
+    },
+    {
+      "source": "apache-render.yaml",
+      "kind": "Role",
+      "name": "spark-operator-role"
+    },
+    {
+      "source": "apache-render.yaml",
+      "kind": "RoleBinding",
+      "name": "spark-operator-rolebinding"
+    },
+    {
+      "source": "apache-render.yaml",
+      "kind": "Deployment",
+      "name": "spark-kubernetes-operator"
+    },
+    {
+      "source": "apache-render.yaml",
+      "kind": "Pod",
+      "name": "spark-kubernetes-operator-test-operator-rbac"
+    },
+    {
+      "source": "apache-render.yaml",
+      "kind": "Pod",
+      "name": "spark-kubernetes-operator-test-workload-rbac"
+    },
+    {
+      "source": "job-rbac.yaml",
+      "kind": "Namespace",
+      "name": "spark-jobs"
+    },
+    {
+      "source": "job-rbac.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-driver"
+    },
+    {
+      "source": "job-rbac.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-executor"
+    },
+    {
+      "source": "job-rbac.yaml",
+      "kind": "Role",
+      "name": "spark-driver"
+    },
+    {
+      "source": "job-rbac.yaml",
+      "kind": "RoleBinding",
+      "name": "spark-driver"
+    },
+    {
+      "source": "spark-pi.yaml",
+      "kind": "SparkApplication",
+      "name": "spark-pi"
+    },
+    {
+      "source": "scheduled-spark-pi.yaml",
+      "kind": "ScheduledSparkApplication",
+      "name": "daily-spark-pi"
+    },
+    {
+      "source": "apache-spark-pi.yaml",
+      "kind": "SparkApplication",
+      "name": "spark-pi-asf"
+    },
+    {
+      "source": "merged scratch patch",
+      "kind": "SparkApplication",
+      "name": "spark-pi"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "Namespace",
+      "name": "spark-jobs"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "ServiceAccount",
+      "name": "spark-driver"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "ServiceAccount",
+      "name": "spark-executor"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "Role",
+      "name": "spark-driver"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "RoleBinding",
+      "name": "spark-driver"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "SparkApplication",
+      "name": "spark-pi"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "ScheduledSparkApplication",
+      "name": "daily-spark-pi"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md",
+      "kind": "SparkApplication",
+      "name": "spark-pi-asf"
+    },
+    {
+      "source": "ko/data-on-eks/spark/02-spark-operator.md:patch",
+      "kind": "SparkApplication",
+      "name": "spark-pi"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "Namespace",
+      "name": "spark-jobs"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "ServiceAccount",
+      "name": "spark-driver"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "ServiceAccount",
+      "name": "spark-executor"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "Role",
+      "name": "spark-driver"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "RoleBinding",
+      "name": "spark-driver"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "SparkApplication",
+      "name": "spark-pi"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "ScheduledSparkApplication",
+      "name": "daily-spark-pi"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md",
+      "kind": "SparkApplication",
+      "name": "spark-pi-asf"
+    },
+    {
+      "source": "en/data-on-eks/spark/02-spark-operator.md:patch",
+      "kind": "SparkApplication",
+      "name": "spark-pi"
+    }
+  ],
+  "charts": [
+    {
+      "chart": "kubeflow",
+      "objects": 22,
+      "watchNamespace": "spark-jobs"
+    },
+    {
+      "chart": "apache",
+      "objects": 9,
+      "watchNamespace": "spark-jobs"
+    }
+  ],
+  "negativeCases": [
+    "Reject spec.driver.volumes",
+    "Reject spec.executor.volumes",
+    "Reject API-only Kubeflow-to-Apache migration"
+  ],
+  "fences": [
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/02-spark-operator.md",
+      "language": "bash"
+    }
+  ],
+  "relativeLinks": 12,
+  "quizQuestions": 40,
+  "images": [
+    "en/.gitbook/assets/en-data-on-eks-spark-02-spark-operator-0.png",
+    "ko/.gitbook/assets/ko-data-on-eks-spark-02-spark-operator-0.png"
+  ],
+  "artifactChecks": [
+    {
+      "name": "kubeflow",
+      "chartVersion": "2.5.2",
+      "appVersion": "2.5.2",
+      "url": "https://github.com/kubeflow/spark-operator/releases/download/v2.5.2/spark-operator-2.5.2.tgz",
+      "sha256": "762be5b8632ecfe12eb20fff54450ddae0427f09506422107c508a0d1d38655b",
+      "releaseDigestVerified": true,
+      "indexDigest": "1bb6f4389594bd718875ec860ac30ffab0829166c90f43f5debf66808e3101c4",
+      "indexMatches": false,
+      "assetUpdatedAt": "2026-07-31T01:07:00Z"
+    },
+    {
+      "name": "apache",
+      "chartVersion": "1.8.0",
+      "appVersion": "1.0.0",
+      "url": "https://github.com/apache/spark-kubernetes-operator/releases/download/1.0.0/spark-kubernetes-operator-1.8.0.tgz",
+      "sha256": "7536a8849b8a7c242283d0e393b5e0ec56365f34ec93717b158c76dfa1036a06",
+      "releaseDigestVerified": true,
+      "indexDigest": "7536a8849b8a7c242283d0e393b5e0ec56365f34ec93717b158c76dfa1036a06",
+      "indexMatches": true,
+      "assetUpdatedAt": "2026-07-26T22:08:32Z"
+    }
+  ],
+  "limits": "Local Helm rendering and strict CRD/Kubernetes schema checks only; no Kubernetes/AWS submission. Controller-runtime compatibility, admission connectivity, actual pod mutation, retries, data access and output correctness require live-environment testing.",
+  "diagrams": [
+    {
+      "stem": "ko-data-on-eks-spark-02-spark-operator-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    },
+    {
+      "stem": "en-data-on-eks-spark-02-spark-operator-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    }
+  ],
+  "mobile": [
+    {
+      "name": "en-data-on-eks-spark-02-spark-operator-0.html",
+      "width": 375,
+      "sourceSha256": "dfc0adb0dad5074329d62e73ccd525666973d724d1f100f4bd2b89a7d46c7860",
+      "viewerSha256": "ad028b3c5805ede8c89b9b67a76ac1a5bb8fa9daafd3f323bc06de28b122855f",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-spark-02-spark-operator-0.html",
+      "width": 375,
+      "sourceSha256": "8baf4fc1e876da29d7cf92728ad1ec079ded84429bd3ca8621a28921cffa5c0a",
+      "viewerSha256": "20e54e41d4eb4d367ead5fb0540109d2f4ec0ef8cad8ea798ca64336937d3152",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-spark-02-spark-operator-0.html",
+      "width": 768,
+      "sourceSha256": "dfc0adb0dad5074329d62e73ccd525666973d724d1f100f4bd2b89a7d46c7860",
+      "viewerSha256": "ad028b3c5805ede8c89b9b67a76ac1a5bb8fa9daafd3f323bc06de28b122855f",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-spark-02-spark-operator-0.html",
+      "width": 768,
+      "sourceSha256": "8baf4fc1e876da29d7cf92728ad1ec079ded84429bd3ca8621a28921cffa5c0a",
+      "viewerSha256": "20e54e41d4eb4d367ead5fb0540109d2f4ec0ef8cad8ea798ca64336937d3152",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    }
+  ],
+  "pngVisualInspection": "Both regenerated locale PNGs inspected together; readable, no clipped nodes or labels."
+}

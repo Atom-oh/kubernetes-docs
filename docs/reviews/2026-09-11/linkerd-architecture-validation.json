@@ -1,0 +1,48 @@
+{
+  "files": [
+    {
+      "path": "en/service-mesh/linkerd/02-architecture.md",
+      "releasedPolicySchemas": 3,
+      "yamlDocuments": 6,
+      "bashBlocks": 4,
+      "quizQuestions": 12
+    },
+    {
+      "path": "ko/service-mesh/linkerd/02-architecture.md",
+      "releasedPolicySchemas": 3,
+      "yamlDocuments": 6,
+      "bashBlocks": 4,
+      "quizQuestions": 12
+    }
+  ],
+  "nativeCLI": "edge-26.9.1",
+  "localReadOnlyAPICases": [
+    "default annotation transform",
+    "checked-native: placement/resources/DNS identity",
+    "checked-regular: placement/resources/DNS identity"
+  ],
+  "manualPrecedence": {
+    "inputCpuAnnotation": "700m",
+    "cpuFlag": "100m",
+    "renderedCpuRequest": "700m",
+    "inputLogAnnotation": "debug",
+    "renderedLog": "debug,[{headers}]=off,[{request}]=off"
+  },
+  "fixtureGetPaths": [
+    "/api/v1/namespaces/linkerd/configmaps/linkerd-config",
+    "/api/v1/namespaces/linkerd/pods",
+    "/api/v1/namespaces/linkerd/serviceaccounts",
+    "/api/v1/nodes",
+    "/api/v1/pods",
+    "/api/v1/services",
+    "/apis/apps/v1/namespaces/linkerd/replicasets",
+    "/version"
+  ],
+  "protobufMethodsMatched": 2,
+  "equalLanguageCode": true,
+  "limitations": [
+    "Local read-only API fixture, no live Kubernetes/AWS calls or Pod execution.",
+    "Protocol excerpt matched to pinned v0.20.0 source, not compiled as a standalone incomplete proto file.",
+    "Certificate refresh was inspected in the exact published Rust source; no claim of executing rotations or renewal under live load."
+  ]
+}

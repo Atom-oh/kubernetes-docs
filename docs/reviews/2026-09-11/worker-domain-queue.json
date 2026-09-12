@@ -4,7 +4,7 @@
   "sequence": [
     {
       "domain": "service-mesh",
-      "status": "active",
+      "status": "complete",
       "scope": [
         "ko/service-mesh/**",
         "en/service-mesh/**",
@@ -17,11 +17,14 @@
         "en": 85,
         "ko": 85
       },
-      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim."
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
+      "fullyRead": 170,
+      "fixedAndValidated": 170,
+      "coverage": "docs/reviews/2026-09-11/service-mesh-coverage.json"
     },
     {
       "domain": "networking",
-      "status": "queued",
+      "status": "active",
       "scope": [
         "ko/networking/**",
         "en/networking/**",
@@ -33,7 +36,11 @@
         "en": 54,
         "ko": 54
       },
-      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim."
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
+      "fullyRead": 80,
+      "fixedAndValidated": 76,
+      "currentBatch": "networking-cilium eBPF",
+      "progress": "docs/reviews/2026-09-11/networking-progress.json"
     },
     {
       "domain": "observability",
@@ -70,5 +77,44 @@
   "extraAuthorizedWritePaths": [
     "scripts/__tests__/service-mesh-mtls-retry-guidance.test.mjs"
   ],
-  "parentCurrentOwnership": "Registry/Harbor/best practices and repository audit tooling, plus previously assigned other domains and mechanical/translation fixes."
+  "parentCurrentOwnership": "Shared frontend/statistics/analytics workflows, other previously assigned domains and mechanical/translation pipelines; no GA4credentials supplied in worker context. Max2workers; no delegation.",
+  "networkingSteering": [
+    {
+      "topic": "EKS AutoMode node-local CoreDNS",
+      "sourceUrls": [
+        "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html",
+        "https://aws.amazon.com/blogs/containers/faster-nodes-smarter-scaling-whats-new-inside-amazon-elastic-kubernetes-service-amazon-eks-auto-mode/"
+      ],
+      "parentVerified": "PureAuto noCoreDNSDeployment/addon; node-localCoreDNSsystemd. MixednonAuto requiresDeployment. Localfirstquerydoesnotpreventupstreamforwarding.",
+      "workerAction": "Verifycurrentprimarywhilefullyreadingassignednetworkingdocs; correctuniversalCoreDNSDeployment/network-localityclaims. NoOpsedits."
+    },
+    {
+      "topic": "NLB forward target-group stickiness",
+      "sourceUrls": [
+        "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+        "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_TargetGroupStickinessConfig.html"
+      ],
+      "verified": "Non-TLSNLBforwardtarget-groupstickinesssupported;TLSexcluded.DurationSecondsisALB-only;NLBexamplemustnotinvent3600-secondtimer.Enabledbooleanonlyasapplicable.Weight0closesexistingconnectionsaftershortperiod.",
+      "sourceCache": [
+        "/tmp/istio-foundation-sources/650b0f39e45b.txt",
+        "/tmp/istio-foundation-sources/43fa51437f6a.txt"
+      ],
+      "currentScopeCheck": "No TargetGroupStickinessConfig/DurationSeconds use in currentLBC/Gatewaydocs/quizzes;existingALBcookieattributesremainALB-specific."
+    }
+  ],
+  "latestWorkerCheckpoint": {
+    "date": "2026-09-11",
+    "fullyRead": 250,
+    "fixedAndValidated": 246,
+    "current": "Cilium02eBPF4fullyread;primaryverificationpending",
+    "remaining": {
+      "networkingPending": 4,
+      "networkingUnread": 28,
+      "observabilityUnread": 116
+    },
+    "blockers": []
+  },
+  "latestParentNote": "ParentOps13then14/data/AI/news;root~0.8GBfree.No large installs;onlyown-cachecleanup.",
+  "parentRendererSteering": "Parentownsarchmap-responsive.mjs;newmobileartifacttestsnormalizeArchmapFontsTHENnormalizeArchmapResponsiveLayout;productionnormalizationonly<=960pxnonembed/nonpresent."
 }

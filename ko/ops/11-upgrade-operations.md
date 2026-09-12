@@ -1,1672 +1,811 @@
-# EKS 업그레이드: Auto Mode 무중단 업그레이드
+# EKS 업그레이드: Auto Mode, 롤백과 Blue/Green
 
-> **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 9월 9일
+> 검토: 2026-09-12. 명령 검증: AWS CLI 2.36.44, Pluto 5.24.3, Velero 1.18.2.
+> 예시 전환은 1.35 → 1.36이며 실제 대상은 리전에서 조회합니다.
 
-< [이전: 리소스 최적화](./10-resource-optimization.md) | [목차](./README.md) | [다음: 이벤트 용량 계획](./12-event-capacity-planning.md) >
+컨트롤 플레인·노드·애드온·앱·데이터를 함께 계획합니다.
+Auto Mode와 PDB만으로 무중단을 보장하지 않습니다. 여유 용량, readiness,
+재연결, 세션, 저장 상태와 복구를 검증해 가용성 목표를 충족합니다.
 
----
+## 1. 버전과 관리 주체
 
-이 문서에서는 EKS Auto Mode 환경에서 무중단 업그레이드를 수행하는 방법을 설명합니다. 업그레이드 계획부터 사전 체크리스트, Auto Mode 특화 업그레이드, 블루/그린 전략, 그리고 사후 검증까지 실전 운영에 필요한 모든 내용을 다룹니다.
+상류 Kubernetes는 최근 **세 minor release**를 유지합니다.
+“현재 버전 + 세 개 이전 버전”이라는 설명과 다릅니다.
+EKS 수명은 별도이며 일반적으로 EKS 출시 후 표준 지원 14개월, 연장 지원 12개월입니다.
+정확한 날짜·지원 정책·리전 가용성은 조회 시점의 API와 공식 수명주기를 확인합니다.
 
-## 목차
-
-1. [업그레이드 계획](#1-업그레이드-계획)
-2. [사전 체크리스트](#2-사전-체크리스트)
-3. [Auto Mode 업그레이드](#3-auto-mode-업그레이드)
-4. [블루/그린 업그레이드](#4-블루그린-업그레이드)
-5. [사후 검증](#5-사후-검증)
-
----
-
-## 1. 업그레이드 계획
-
-### Kubernetes 버전 지원 정책 (N-3)
-
-Kubernetes는 최근 3개의 마이너 버전(N, N-1, N-2)만 공식 지원합니다. EKS는 이보다 넓은 범위를 지원하지만, 보안 패치와 버그 수정은 주로 최신 버전에 집중됩니다.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Kubernetes 버전 지원 범위                      │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   1.27 ──── 1.28 ──── 1.29 ──── 1.30 ──── 1.31 ──── 1.32       │
-│    │         │         │         │         │         │          │
-│    ▼         ▼         ▼         ▼         ▼         ▼          │
-│  지원종료   Extended   N-2       N-1        N      Preview       │
-│             Support                      (최신)                  │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### EKS 버전 생명주기
-
-EKS 버전은 두 가지 지원 단계를 거칩니다:
-
-| 지원 단계 | 기간 | 특징 | 비용 |
-|----------|------|------|------|
-| **Standard Support** | 출시 후 ~14개월 | 모든 패치, 보안 업데이트 제공 | 기본 요금 |
-| **Extended Support** | Standard 종료 후 ~12개월 | 중요 보안 패치만 제공 | 추가 비용 ($0.60/cluster/hour) |
+일반 EKS 기본 제어 플레인 요금은 표준 지원 $0.10/시간,
+연장 지원 **총 $0.60/시간($0.10 + $0.50)**입니다. $0.60이 추가분은 아닙니다.
+Auto Mode·컴퓨팅·스토리지·네트워크와 별도 control plane capacity 요금은 포함되지 않습니다.
 
 ```bash
-# 현재 EKS 버전 지원 상태 확인
-aws eks describe-addon-versions --kubernetes-version 1.30 \
-  --query 'addons[0].addonVersions[0].compatibilities[0]'
-
-# 클러스터 현재 버전 확인
-aws eks describe-cluster --name my-cluster \
-  --query 'cluster.version' --output text
+DOCS_CLUSTER="my-cluster"
+DOCS_REGION="ap-northeast-2"
+DOCS_CONTEXT="my-cluster-context"
+DOCS_TARGET="1.36"
+aws eks describe-cluster --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --query 'cluster.{version:version,status:status,platform:platformVersion,policy:upgradePolicy}'
+aws eks describe-cluster-versions --region "$DOCS_REGION" \
+  --cluster-versions "$DOCS_TARGET" --output json
+kubectl --context "$DOCS_CONTEXT" get nodes -o wide
 ```
 
-### 버전 호환성 매트릭스
+`describe-addon-versions`는 애드온 호환성용이며 클러스터 지원 종료일 조회가 아닙니다.
+EKS 컨트롤 플레인은 다음 minor로 한 단계씩 진행하며 중간 minor를 건너뛰지 않습니다.
+현재 지원 버전의 kubelet은 API server보다 새로울 수 없고 상류 정책상 최대 세 minor 이전을
+허용하는 조건이 있습니다. 이것을 노드를 계속 오래된 버전으로 유지하라는 권장으로 해석하지 않습니다.
+노드를 현재 CP 버전에 정렬한 뒤 다음 업그레이드를 진행하도록 계획하고,
+EKS 관리 노드·Fargate·자가 관리·Hybrid의 개별 조건을 확인합니다. kubectl은 CP와 ±1 minor를 사용합니다.
 
-| EKS 버전 | K8s 버전 | 주요 기능 | CoreDNS | VPC CNI | kube-proxy | 지원 상태 |
-|---------|---------|----------|---------|---------|------------|----------|
-| 1.32 | 1.32.x | DRA GA, CEL Admission | v1.11.4 | v1.19.2 | v1.32.0 | Preview |
-| 1.31 | 1.31.x | AppArmor GA, nftables | v1.11.3 | v1.19.0 | v1.31.3 | Standard |
-| 1.30 | 1.30.x | Pod Scheduling Readiness | v1.11.1 | v1.18.5 | v1.30.6 | Standard |
-| 1.29 | 1.29.x | ReadWriteOncePod GA | v1.11.1 | v1.18.2 | v1.29.10 | Standard |
-| 1.28 | 1.28.x | Sidecar Containers | v1.10.1 | v1.16.4 | v1.28.13 | Extended |
-| 1.27 | 1.27.x | In-place Pod Resize | v1.10.1 | v1.15.1 | v1.27.16 | Extended |
+| 구성 | 업데이트 책임 |
+|---|---|
+| 순수 Auto Mode | 서비스가 노드·네트워크·블록 스토리지·LB 기능 등을 관리 |
+| 일반/자가 관리/Hybrid 노드 | 노드·CNI·DNS·proxy·드라이버·컨트롤러를 별도 계획 |
+| 혼합 클러스터 | 일반 노드가 사용하는 애드온을 유지하며 Auto Mode 경로와 구별 |
+| 앱·자가 관리 컨트롤러·EKS 애드온 | 사용자가 설치한 버전·설정·CRD 호환성을 확인 |
 
-### Add-on 버전 요구사항
+순수 Auto Mode는 노드 system service의 CoreDNS를 사용합니다.
+CoreDNS Deployment가 없다는 이유만으로 장애로 판정하지 않습니다. 일반 노드가 섞이면 필요한
+DNS Deployment를 유지합니다. Auto Mode에 일반 노드용 aws-node/kube-proxy/Pod Identity agent
+Pod를 무조건 설치하거나 고정 label로 존재를 검사하지 않습니다.
+호환성 때문에 CP보다 먼저 필요한 준비 작업도 있어 “CP → 모든 애드온 → 노드”는 보편적 순서가 아닙니다.
 
-각 EKS 버전에 맞는 Add-on 버전을 사용해야 합니다:
+| API 안정성 | 사용 중단 정책 |
+|---|---|
+| GA | deprecated로 표시할 수 있지만 같은 Kubernetes major 안에서 제거하지 않는 정책 |
+| Beta | deprecation 후 최소 9개월 또는 3 minor 중 긴 기간을 거쳐 serving 제거 |
+| Alpha | 사전 deprecation 없이 릴리스에서 제거될 수 있음 |
+
+CLI flag·metric 정책은 API version 정책과 다릅니다.
+과거 애드온/기능 표 대신 대상 migration guide와 실제 설치 버전·architecture·platformVersion·
+compute type을 대조합니다.
+
+## 2. 사전 점검
+
+Upgrade insights는 시점·수집 범위에 한계가 있습니다.
+공식 업그레이드 문서는 일부 insight 문제에 `--force`를 강제하던 기능이 일시 철회된 상태임을
+안내합니다. 이를 뒤의 **rollback readiness ERROR/UNKNOWN 차단**과 혼동하지 않습니다.
+API가 요청을 받아주는 것만으로 검증이 끝나지는 않습니다.
 
 ```bash
-# 특정 EKS 버전에서 지원되는 Add-on 버전 조회
-aws eks describe-addon-versions \
-  --kubernetes-version 1.30 \
-  --addon-name vpc-cni \
-  --query 'addons[0].addonVersions[*].addonVersion' \
-  --output table
-
-# 현재 클러스터의 Add-on 버전 확인
-aws eks list-addons --cluster-name my-cluster --output table
-aws eks describe-addon --cluster-name my-cluster --addon-name vpc-cni \
-  --query 'addon.addonVersion'
+aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --filter "{\"categories\":[\"UPGRADE_READINESS\"],\"kubernetesVersions\":[\"$DOCS_TARGET\"]}"
+pluto detect-files -d manifests/ --target-versions "k8s=v${DOCS_TARGET}.0" -o json > pluto-report.json
+pluto detect-helm --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
+pluto detect-api-resources --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 ```
 
-### Kubernetes Deprecation 정책
+Pluto 5.24.3은 문제 없음 0, deprecated 발견 2, removed 발견 3을 구별합니다.
+이를 모두 “미설치”로 처리하거나 `|| true`로 성공 처리하지 않습니다.
+JSON은 객체이며 항목은 `.items // []`에서 셉니다. 문제 없는 응답에는 items가 없을 수 있습니다.
+`detect-all-in-cluster`도 유효합니다. 공식 release의 OS/architecture와 checksum을 확인합니다.
 
-Kubernetes API는 명확한 사용 중단(deprecation) 정책을 따릅니다:
+실행 중 리소스 조회는 API server 변환으로 원래 API version을 놓칠 수 있습니다.
+Git·렌더링한 Helm/Kustomize·Helm release·API warning/audit·실제 client 호출을 함께 봅니다.
+Pluto의 다른 component target도 실제 Istio/cert-manager 버전과 맞춥니다.
 
-| API 유형 | 사용 중단 후 제거까지 | 예시 |
-|---------|---------------------|------|
-| GA (v1) | 12개월 또는 3개 릴리스 | `policy/v1` PodDisruptionBudget |
-| Beta (v1beta1) | 9개월 또는 3개 릴리스 | `networking.k8s.io/v1beta1` Ingress |
-| Alpha (v1alpha1) | 다음 릴리스에서 변경 가능 | 실험적 기능 |
+다음 읽기 전용 도구는 EKS와 kubecontext endpoint를 비교하고 Node/Pod Ready,
+Deployment generation/rollout, PDB와 실제 설치된 애드온을 검사합니다.
+프록시 kubeconfig는 직접 EKS endpoint와 다를 수 있어 별도 확인합니다.
 
-**주요 Deprecation 이력**:
+```python
+# preflight.py
+"""Read-only upgrade review report. A clean report is not upgrade authorization."""
+import argparse
+import json
+import re
+import subprocess
+import sys
+
+
+class CheckError(RuntimeError):
+    pass
+
+
+def command(argv):
+    result = subprocess.run(argv, capture_output=True, text=True, timeout=60)
+    if result.returncode:
+        raise CheckError(f"{argv[0]} query failed (exit {result.returncode}); inspect permissions and connectivity")
+    return result.stdout.strip()
+
+
+def decode(text):
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise CheckError("A command returned invalid JSON") from error
+    if not isinstance(value, dict):
+        raise CheckError("Expected a JSON object from the command")
+    return value
+
+
+def assess(cluster, target, nodes, pods, deployments, pdbs, addons):
+    findings = []
+    if cluster.get("status") != "ACTIVE":
+        findings.append("Cluster is not ACTIVE")
+    current = cluster.get("version", "")
+    if not re.fullmatch(r"1\.\d+", current) or int(target.split(".")[1]) != int(current.split(".")[1]) + 1:
+        findings.append("Target must be exactly the next minor version")
+    for node in nodes:
+        ready = next((c.get("status") for c in node.get("status", {}).get("conditions", []) if c.get("type") == "Ready"), None)
+        if ready != "True":
+            findings.append(f"Node {node['metadata']['name']}: Ready={ready or 'missing'}")
+        version = node.get("status", {}).get("nodeInfo", {}).get("kubeletVersion", "")
+        minor = re.match(r"^v?(1\.\d+)\.", version)
+        if not minor or minor.group(1) != current:
+            findings.append(f"Node {node['metadata']['name']}: kubelet={version or 'unknown'}; review version alignment and supported skew")
+    for pod in pods:
+        metadata, status = pod["metadata"], pod.get("status", {})
+        name = f"{metadata.get('namespace', 'default')}/{metadata['name']}"
+        if metadata.get("deletionTimestamp"):
+            findings.append(f"Pod {name}: terminating")
+            continue
+        if status.get("phase") == "Succeeded":
+            continue
+        ready = any(c.get("type") == "Ready" and c.get("status") == "True" for c in status.get("conditions", []))
+        if status.get("phase") != "Running" or not ready:
+            findings.append(f"Pod {name}: phase={status.get('phase', 'unknown')}, Ready={ready}")
+    for deployment in deployments:
+        metadata = deployment["metadata"]
+        spec, status = deployment.get("spec", {}), deployment.get("status", {})
+        desired = spec.get("replicas", 1)
+        current_generation = status.get("observedGeneration", 0) >= metadata.get("generation", 1)
+        rolled_out = all(status.get(key, 0) >= desired for key in ("updatedReplicas", "readyReplicas", "availableReplicas"))
+        if not current_generation or not rolled_out:
+            findings.append(f"Deployment {metadata.get('namespace', 'default')}/{metadata['name']}: rollout incomplete")
+    for pdb in pdbs:
+        metadata, status = pdb["metadata"], pdb.get("status", {})
+        name = f"{metadata.get('namespace', 'default')}/{metadata['name']}"
+        if status.get("observedGeneration", 0) < metadata.get("generation", 1):
+            findings.append(f"PDB {name}: status is stale or missing")
+        elif status.get("expectedPods", 0) > 0 and status.get("disruptionsAllowed", 0) == 0:
+            findings.append(f"PDB {name}: no disruptions currently allowed; assess affected nodes and workloads")
+    for addon in addons:
+        if addon["status"] != "ACTIVE":
+            findings.append(f"Add-on {addon['name']}: status={addon['status']}")
+        if not addon["currentVersionAdvertisedForTarget"]:
+            findings.append(f"Add-on {addon['name']}: current version not advertised for target")
+    return findings
+
+
+def collect(args, execute=command):
+    def aws(operation, *params):
+        return decode(execute(["aws", "eks", operation, "--region", args.region,
+                               "--output", "json", "--no-cli-pager", *params]))
+
+    def kube(resource):
+        result = decode(execute(["kubectl", "--context", args.context, "get", resource, "-A", "-o", "json"]))
+        if not isinstance(result.get("items"), list):
+            raise CheckError(f"Missing items list for {resource}")
+        return result["items"]
+
+    cluster = aws("describe-cluster", "--name", args.cluster,
+                  "--query", "cluster.{name:name,status:status,version:version,endpoint:endpoint,platformVersion:platformVersion,computeConfig:computeConfig}")
+    server = execute(["kubectl", "--context", args.context, "config", "view", "--minify",
+                      "-o", "jsonpath={.clusters[0].cluster.server}"])
+    if not cluster.get("endpoint") or server.rstrip("/") != cluster["endpoint"].rstrip("/"):
+        raise CheckError("Kubernetes context does not point at the selected EKS endpoint")
+    versions = aws("describe-cluster-versions", "--cluster-versions", args.target)
+    advertised = versions.get("clusterVersions", [])
+    if not any(v.get("clusterVersion") == args.target for v in advertised):
+        raise CheckError("Target version is not advertised by EKS in this region")
+    insights = aws("list-insights", "--cluster-name", args.cluster,
+                   "--filter", json.dumps({"categories":["UPGRADE_READINESS"], "kubernetesVersions":[args.target]}))
+    addon_names = aws("list-addons", "--cluster-name", args.cluster).get("addons")
+    if not isinstance(addon_names, list):
+        raise CheckError("Missing add-on list")
+    addons = []
+    for name in addon_names:
+        installed = aws("describe-addon", "--cluster-name", args.cluster, "--addon-name", name,
+                        "--query", "addon.{name:addonName,version:addonVersion,status:status}")
+        available = aws("describe-addon-versions", "--addon-name", name, "--kubernetes-version", args.target)
+        matches = [version for entry in available.get("addons", [])
+                   if entry.get("addonName") == name
+                   for version in entry.get("addonVersions", [])
+                   if version.get("addonVersion") == installed["version"]
+                   and any(c.get("clusterVersion") == args.target for c in version.get("compatibilities", []))]
+        addons.append({**installed, "currentVersionAdvertisedForTarget": bool(matches),
+                       "matchingVersionMetadata": matches})
+    nodes, pods, deployments, pdbs = (kube(name) for name in ("nodes", "pods", "deployments", "pdb"))
+    findings = assess(cluster, args.target, nodes, pods, deployments, pdbs, addons)
+    if not nodes:
+        findings.append("No nodes returned; verify intended compute capacity separately")
+    if not isinstance(insights.get("insights"), list):
+        raise CheckError("Missing upgrade insight list")
+    if not insights["insights"]:
+        findings.append("No target-version upgrade insights returned; review coverage and freshness")
+    for insight in insights.get("insights", []):
+        status = insight.get("insightStatus", {}).get("status", "UNKNOWN")
+        if status != "PASSING":
+            findings.append(f"Upgrade insight {insight.get('id', 'unknown')}: {status}")
+    return {
+        "cluster": args.cluster, "region": args.region, "context": args.context,
+        "currentVersion": cluster["version"], "targetVersion": args.target,
+        "platformVersion": cluster.get("platformVersion"),
+        "computeConfig": cluster.get("computeConfig"),
+        "nodeVersions": {n["metadata"]["name"]:n.get("status", {}).get("nodeInfo", {}).get("kubeletVersion") for n in nodes},
+        "observedCounts": {"nodes":len(nodes), "pods":len(pods), "deployments":len(deployments), "pdbs":len(pdbs)},
+        "reportStatus": "review-required" if findings else "checks-collected",
+        "findings": findings, "targetVersionMetadata": advertised,
+        "addons": addons, "upgradeInsights": insights.get("insights", []),
+        "limits": [
+            "No mutation was performed. checks-collected is not permission to upgrade.",
+            "Version advertisement does not validate all architecture/platform/compute-type combinations or configuration migrations.",
+            "Readiness snapshots do not prove application, storage, DNS, capacity, backup or recovery behavior.",
+            "No control-plane version change or IaC plan should run automatically from this report."
+        ]
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cluster", required=True)
+    parser.add_argument("--region", required=True)
+    parser.add_argument("--context", required=True)
+    parser.add_argument("--target", required=True)
+    args = parser.parse_args()
+    if not re.fullmatch(r"1\.\d+", args.target):
+        parser.error("--target must be an EKS minor version such as 1.36")
+    try:
+        report = collect(args)
+    except (CheckError, KeyError, TypeError, subprocess.TimeoutExpired, OSError) as error:
+        print(json.dumps({"reportStatus":"unknown", "error":str(error)}, indent=2))
+        return 1
+    print(json.dumps(report, indent=2))
+    return 2 if report["findings"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+```bash
+python3 preflight.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --context "$DOCS_CONTEXT" --target "$DOCS_TARGET" > preflight-report.json
+```
+
+exit 0은 나열한 점검 수집, 2는 검토 항목, 1은 결과를 알 수 없는 오류입니다.
+0이 자동 업그레이드 승인이나 전체 앱 정상 판정은 아닙니다.
+광고된 애드온 버전도 architecture/platform/compute type과 설정 migration을 별도로 확인합니다.
+
+PDB maxUnavailable이 1이어도 이미 unhealthy한 Pod나 중첩 PDB 때문에 allowance가 0일 수 있습니다.
+AlwaysAllow는 unhealthy Pod 퇴거 동작을 바꾸며 서비스 가용성을 보장하지 않습니다.
 
 ```yaml
-# 1.29에서 제거된 API
-- flowcontrol.apiserver.k8s.io/v1beta2 → v1beta3
-- autoscaling/v2beta1 HPA → autoscaling/v2
-
-# 1.32에서 제거 예정
-- flowcontrol.apiserver.k8s.io/v1beta3 → v1
-```
-
-### 업그레이드 타임라인 권장사항
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      업그레이드 타임라인 권장                             │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  새 버전 출시                                                            │
-│      │                                                                  │
-│      ├── +30일: Dev/Test 환경 업그레이드 및 테스트                        │
-│      │                                                                  │
-│      ├── +60일: Staging 환경 업그레이드                                  │
-│      │                                                                  │
-│      ├── +90일: Production 업그레이드 계획 확정                          │
-│      │                                                                  │
-│      └── +120일: Production 업그레이드 실행                              │
-│                                                                         │
-│  EOL 알림 (60일 전)                                                      │
-│      │                                                                  │
-│      └── Extended Support 시작 전 업그레이드 완료 권장                   │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 2. 사전 체크리스트
-
-### Deprecated API 탐지 (pluto)
-
-`pluto`는 Kubernetes 매니페스트에서 사용 중단된 API를 탐지하는 도구입니다.
-
-```bash
-# pluto 설치
-brew install FairwindsOps/tap/pluto
-# 또는
-curl -L -o pluto.tar.gz \
-  https://github.com/FairwindsOps/pluto/releases/latest/download/pluto_linux_amd64.tar.gz
-tar -xzf pluto.tar.gz && sudo mv pluto /usr/local/bin/
-
-# 파일 기반 탐지
-pluto detect-files -d manifests/
-pluto detect-files -d helm-charts/ -o wide
-
-# Helm 릴리스 탐지
-pluto detect-helm -o wide
-pluto detect-helm --target-versions k8s=v1.30.0
-
-# 클러스터 내 리소스 탐지
-pluto detect-api-resources -o wide
-pluto detect-api-resources --target-versions k8s=v1.30.0
-```
-
-**pluto 출력 예시**:
-
-```
-NAME                           KIND                VERSION              REPLACEMENT                    REMOVED   DEPRECATED   REPL AVAIL
-ingress-old                    Ingress             extensions/v1beta1   networking.k8s.io/v1           true      true         true
-my-pdb                         PodDisruptionBudget policy/v1beta1       policy/v1                      true      true         true
-horizontal-pod-autoscaler      HorizontalPodAuto.. autoscaling/v2beta1  autoscaling/v2                 true      true         true
-```
-
-### PodDisruptionBudget (PDB) 감사
-
-업그레이드 중 노드 drain이 실패하지 않도록 PDB를 검증합니다.
-
-```bash
-# 모든 PDB 상태 확인
-kubectl get pdb -A -o wide
-
-# PDB가 disruption을 허용하는지 확인
-kubectl get pdb -A -o custom-columns=\
-'NAMESPACE:.metadata.namespace,NAME:.metadata.name,MIN-AVAILABLE:.spec.minAvailable,MAX-UNAVAILABLE:.spec.maxUnavailable,ALLOWED-DISRUPTIONS:.status.disruptionsAllowed,CURRENT:.status.currentHealthy,DESIRED:.status.desiredHealthy'
-```
-
-**문제가 되는 PDB 패턴**:
-
-```yaml
-# 문제: minAvailable이 replicas와 같음 (disruption 불가)
+# pdb.yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: blocking-pdb
+  name: api
+  namespace: production
 spec:
-  minAvailable: 3  # Deployment replicas도 3이면 drain 불가
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
   selector:
     matchLabels:
-      app: my-app
----
-# 권장: maxUnavailable 사용
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: safe-pdb
-spec:
-  maxUnavailable: 1  # 최소 1개 Pod는 항상 disruption 허용
-  selector:
-    matchLabels:
-      app: my-app
+      app: api
 ```
 
-```bash
-# 문제가 있는 PDB 탐지 스크립트
-kubectl get pdb -A -o json | jq -r '
-  .items[] |
-  select(.status.disruptionsAllowed == 0) |
-  "\(.metadata.namespace)/\(.metadata.name): BLOCKED - disruptionsAllowed=0"
-'
-```
-
-### ETCD 및 애플리케이션 상태 백업
-
-EKS는 컨트롤 플레인(etcd 포함)을 관리하므로 직접 백업은 불필요합니다. 그러나 애플리케이션 상태는 별도로 백업해야 합니다.
-
-```bash
-# Velero 설치 확인
-velero version
-
-# 백업 스케줄 생성
-velero schedule create pre-upgrade-backup \
-  --schedule="0 2 * * *" \
-  --include-namespaces=default,production \
-  --include-resources=deployments,services,configmaps,secrets,pvc
-
-# 업그레이드 전 수동 백업
-velero backup create upgrade-$(date +%Y%m%d-%H%M%S) \
-  --include-namespaces=default,production \
-  --wait
-
-# 백업 상태 확인
-velero backup describe upgrade-20250615-100000
-velero backup logs upgrade-20250615-100000
-```
-
-**Velero 복원 테스트**:
-
-```bash
-# 복원 테스트 (dry-run)
-velero restore create --from-backup upgrade-20250615-100000 \
-  --namespace-mappings default:default-restore-test \
-  --dry-run
-
-# 실제 복원 (테스트 네임스페이스로)
-velero restore create test-restore \
-  --from-backup upgrade-20250615-100000 \
-  --namespace-mappings production:production-restore-test
-
-# 복원 결과 확인
-velero restore describe test-restore
-kubectl get all -n production-restore-test
-```
-
-### Add-on 호환성 확인 스크립트
-
-```bash
-#!/bin/bash
-# addon-compatibility-check.sh
-
-CLUSTER_NAME="${1:-my-cluster}"
-TARGET_VERSION="${2:-1.30}"
-
-echo "=== Add-on 호환성 확인: EKS $TARGET_VERSION ==="
-
-# 현재 설치된 Add-on 목록
-ADDONS=$(aws eks list-addons --cluster-name $CLUSTER_NAME --query 'addons[]' --output text)
-
-for ADDON in $ADDONS; do
-    echo ""
-    echo "--- $ADDON ---"
-
-    # 현재 버전
-    CURRENT=$(aws eks describe-addon --cluster-name $CLUSTER_NAME --addon-name $ADDON \
-        --query 'addon.addonVersion' --output text)
-    echo "현재 버전: $CURRENT"
-
-    # 대상 버전에서 지원하는 버전들
-    echo "EKS $TARGET_VERSION 호환 버전:"
-    aws eks describe-addon-versions \
-        --kubernetes-version $TARGET_VERSION \
-        --addon-name $ADDON \
-        --query 'addons[0].addonVersions[*].addonVersion' \
-        --output table
-
-    # 호환성 확인
-    COMPATIBLE=$(aws eks describe-addon-versions \
-        --kubernetes-version $TARGET_VERSION \
-        --addon-name $ADDON \
-        --query "addons[0].addonVersions[?addonVersion=='$CURRENT'].compatibilities[0].clusterVersion" \
-        --output text)
-
-    if [ -z "$COMPATIBLE" ] || [ "$COMPATIBLE" == "None" ]; then
-        echo "⚠️  경고: 현재 버전 $CURRENT은 EKS $TARGET_VERSION와 호환되지 않을 수 있습니다"
-    else
-        echo "✅ 호환됨"
-    fi
-done
-```
-
-### 노드 상태 검증
-
-```bash
-#!/bin/bash
-# node-health-check.sh
-
-echo "=== 노드 상태 확인 ==="
-
-# 노드 상태 요약
-echo ""
-echo "--- 노드 상태 ---"
-kubectl get nodes -o custom-columns=\
-'NAME:.metadata.name,STATUS:.status.conditions[?(@.type=="Ready")].status,VERSION:.status.nodeInfo.kubeletVersion,AGE:.metadata.creationTimestamp'
-
-# NotReady 노드 확인
-NOT_READY=$(kubectl get nodes --field-selector status.phase!=Running -o name 2>/dev/null | wc -l)
-if [ "$NOT_READY" -gt 0 ]; then
-    echo ""
-    echo "⚠️  NotReady 노드 발견:"
-    kubectl get nodes --field-selector status.phase!=Running
-fi
-
-# 노드 조건 확인
-echo ""
-echo "--- 노드 조건 (문제 있는 항목) ---"
-kubectl get nodes -o json | jq -r '
-  .items[] |
-  .metadata.name as $name |
-  .status.conditions[] |
-  select(.status == "True" and .type != "Ready") |
-  "\($name): \(.type) = \(.status) - \(.message)"
-'
-
-# 노드 리소스 압박 확인
-echo ""
-echo "--- 리소스 압박 상태 ---"
-kubectl describe nodes | grep -A5 "Conditions:" | grep -E "(MemoryPressure|DiskPressure|PIDPressure)"
-```
-
-### 애플리케이션 상태 검증
-
-```bash
-#!/bin/bash
-# app-health-check.sh
-
-echo "=== 애플리케이션 상태 확인 ==="
-
-# Pod 상태 요약
-echo ""
-echo "--- Pod 상태 요약 ---"
-kubectl get pods -A --field-selector status.phase!=Running,status.phase!=Succeeded \
-  -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,STATUS:.status.phase,RESTARTS:.status.containerStatuses[0].restartCount'
-
-# CrashLoopBackOff 상태 Pod 확인
-echo ""
-echo "--- CrashLoopBackOff Pod ---"
-kubectl get pods -A -o json | jq -r '
-  .items[] |
-  select(.status.containerStatuses != null) |
-  select(.status.containerStatuses[].state.waiting.reason == "CrashLoopBackOff") |
-  "\(.metadata.namespace)/\(.metadata.name)"
-'
-
-# Deployment 상태
-echo ""
-echo "--- Deployment 상태 ---"
-kubectl get deployments -A -o custom-columns=\
-'NAMESPACE:.metadata.namespace,NAME:.metadata.name,READY:.status.readyReplicas,DESIRED:.spec.replicas,AVAILABLE:.status.availableReplicas'
-
-# 업그레이드 차단 가능성 있는 리소스
-echo ""
-echo "--- HPA 상태 ---"
-kubectl get hpa -A
-```
-
-### 종합 사전 체크 스크립트
-
-```bash
-#!/bin/bash
-# pre-upgrade-check.sh
-
-set -e
-
-CLUSTER_NAME="${1:-my-cluster}"
-TARGET_VERSION="${2:-1.30}"
-REPORT_FILE="pre-upgrade-report-$(date +%Y%m%d-%H%M%S).txt"
-
-echo "=== EKS 업그레이드 사전 체크 ===" | tee $REPORT_FILE
-echo "클러스터: $CLUSTER_NAME" | tee -a $REPORT_FILE
-echo "대상 버전: $TARGET_VERSION" | tee -a $REPORT_FILE
-echo "시간: $(date)" | tee -a $REPORT_FILE
-echo "" | tee -a $REPORT_FILE
-
-# 1. 현재 클러스터 정보
-echo "### 1. 현재 클러스터 정보 ###" | tee -a $REPORT_FILE
-CURRENT_VERSION=$(aws eks describe-cluster --name $CLUSTER_NAME \
-  --query 'cluster.version' --output text)
-echo "현재 버전: $CURRENT_VERSION" | tee -a $REPORT_FILE
-
-# 2. Deprecated API 확인
-echo "" | tee -a $REPORT_FILE
-echo "### 2. Deprecated API 확인 ###" | tee -a $REPORT_FILE
-if command -v pluto &> /dev/null; then
-    pluto detect-api-resources --target-versions k8s=v$TARGET_VERSION.0 2>&1 | tee -a $REPORT_FILE
-else
-    echo "pluto가 설치되지 않음. 설치 후 재실행하세요." | tee -a $REPORT_FILE
-fi
-
-# 3. PDB 상태 확인
-echo "" | tee -a $REPORT_FILE
-echo "### 3. PDB 상태 확인 ###" | tee -a $REPORT_FILE
-BLOCKED_PDB=$(kubectl get pdb -A -o json | jq -r '.items[] | select(.status.disruptionsAllowed == 0) | "\(.metadata.namespace)/\(.metadata.name)"')
-if [ -n "$BLOCKED_PDB" ]; then
-    echo "⚠️  경고: Disruption 불가 PDB 발견:" | tee -a $REPORT_FILE
-    echo "$BLOCKED_PDB" | tee -a $REPORT_FILE
-else
-    echo "✅ 모든 PDB가 disruption 허용" | tee -a $REPORT_FILE
-fi
-
-# 4. 노드 상태 확인
-echo "" | tee -a $REPORT_FILE
-echo "### 4. 노드 상태 확인 ###" | tee -a $REPORT_FILE
-NOT_READY_NODES=$(kubectl get nodes --no-headers | grep -v " Ready" | wc -l)
-if [ "$NOT_READY_NODES" -gt 0 ]; then
-    echo "⚠️  경고: NotReady 노드 $NOT_READY_NODES개 발견" | tee -a $REPORT_FILE
-    kubectl get nodes --no-headers | grep -v " Ready" | tee -a $REPORT_FILE
-else
-    echo "✅ 모든 노드 Ready 상태" | tee -a $REPORT_FILE
-fi
-
-# 5. Pod 상태 확인
-echo "" | tee -a $REPORT_FILE
-echo "### 5. Pod 상태 확인 ###" | tee -a $REPORT_FILE
-FAILED_PODS=$(kubectl get pods -A --field-selector status.phase=Failed --no-headers 2>/dev/null | wc -l)
-PENDING_PODS=$(kubectl get pods -A --field-selector status.phase=Pending --no-headers 2>/dev/null | wc -l)
-echo "Failed Pods: $FAILED_PODS" | tee -a $REPORT_FILE
-echo "Pending Pods: $PENDING_PODS" | tee -a $REPORT_FILE
-
-# 6. Add-on 호환성
-echo "" | tee -a $REPORT_FILE
-echo "### 6. Add-on 호환성 ###" | tee -a $REPORT_FILE
-ADDONS=$(aws eks list-addons --cluster-name $CLUSTER_NAME --query 'addons[]' --output text)
-for ADDON in $ADDONS; do
-    CURRENT=$(aws eks describe-addon --cluster-name $CLUSTER_NAME --addon-name $ADDON \
-        --query 'addon.addonVersion' --output text)
-    echo "$ADDON: $CURRENT" | tee -a $REPORT_FILE
-done
-
-# 7. Velero 백업 확인
-echo "" | tee -a $REPORT_FILE
-echo "### 7. 최근 백업 상태 ###" | tee -a $REPORT_FILE
-if command -v velero &> /dev/null; then
-    velero backup get --selector '!velero.io/schedule-name' 2>&1 | head -10 | tee -a $REPORT_FILE
-else
-    echo "Velero가 설치되지 않음" | tee -a $REPORT_FILE
-fi
-
-# 최종 결과
-echo "" | tee -a $REPORT_FILE
-echo "### 최종 결과 ###" | tee -a $REPORT_FILE
-if [ "$NOT_READY_NODES" -eq 0 ] && [ -z "$BLOCKED_PDB" ]; then
-    echo "✅ 업그레이드 준비 완료" | tee -a $REPORT_FILE
-else
-    echo "⚠️  업그레이드 전 위 경고 사항 해결 필요" | tee -a $REPORT_FILE
-fi
-
-echo ""
-echo "리포트 저장됨: $REPORT_FILE"
-```
-
----
-
-## 3. Auto Mode 업그레이드
-
-### Terraform 3-Layer 업그레이드 순서
-
-EKS Auto Mode에서는 Terraform의 3-Layer 구조를 순차적으로 업그레이드합니다.
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    Auto Mode 업그레이드 순서                              │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  Step 1: 02-cluster Layer                                               │
-│  ├── cluster_version 변수 업데이트                                       │
-│  └── terraform apply → 컨트롤 플레인 업그레이드                          │
-│                    │                                                    │
-│                    ▼                                                    │
-│  Step 2: 대기                                                           │
-│  └── 컨트롤 플레인 업그레이드 완료 대기 (~10-15분)                        │
-│                    │                                                    │
-│                    ▼                                                    │
-│  Step 3: 03-platform Layer                                              │
-│  ├── Add-on 버전 업데이트                                                │
-│  └── terraform apply → Add-on 업그레이드                                │
-│                    │                                                    │
-│                    ▼                                                    │
-│  Step 4: NodePool 자동 교체                                              │
-│  └── Karpenter Drift Detection → 노드 자동 교체                         │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Step 1: 02-cluster Layer 업데이트
-
-```hcl
-# terraform/02-cluster/variables.tf
-variable "cluster_version" {
-  description = "EKS cluster version"
-  type        = string
-  default     = "1.30"  # 1.29 → 1.30으로 업데이트
-}
-
-variable "cluster_name" {
-  description = "EKS cluster name"
-  type        = string
-}
-```
-
-```hcl
-# terraform/02-cluster/main.tf
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
-
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version  # 변수로 관리
-
-  # Auto Mode 활성화
-  cluster_compute_config = {
-    enabled    = true
-    node_pools = ["general-purpose", "system"]
-  }
-
-  vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
-  subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
-
-  # 클러스터 업그레이드 설정
-  cluster_upgrade_policy = {
-    support_type = "STANDARD"  # EXTENDED로 변경 시 추가 비용 발생
-  }
-
-  tags = local.common_tags
-}
-```
-
-```bash
-# 클러스터 업그레이드 실행
-cd terraform/02-cluster
-
-# Plan 확인
-terraform plan -var="cluster_version=1.30"
-
-# Apply 실행
-terraform apply -var="cluster_version=1.30"
-```
-
-### Step 2: 컨트롤 플레인 업그레이드 대기
-
-```bash
-#!/bin/bash
-# wait-for-control-plane.sh
-
-CLUSTER_NAME="${1:-my-cluster}"
-TARGET_VERSION="${2:-1.30}"
-
-echo "컨트롤 플레인 업그레이드 대기 중..."
-
-while true; do
-    STATUS=$(aws eks describe-cluster --name $CLUSTER_NAME \
-        --query 'cluster.status' --output text)
-    VERSION=$(aws eks describe-cluster --name $CLUSTER_NAME \
-        --query 'cluster.version' --output text)
-
-    echo "상태: $STATUS, 버전: $VERSION"
-
-    if [ "$STATUS" == "ACTIVE" ] && [ "$VERSION" == "$TARGET_VERSION" ]; then
-        echo "✅ 컨트롤 플레인 업그레이드 완료!"
-        break
-    fi
-
-    sleep 30
-done
-```
-
-### Step 3: 03-platform Layer Add-on 업데이트
-
-```hcl
-# terraform/03-platform/variables.tf
-variable "addon_versions" {
-  description = "EKS Add-on versions"
-  type = object({
-    coredns            = string
-    kube_proxy         = string
-    vpc_cni            = string
-    eks_pod_identity   = string
-  })
-  default = {
-    coredns            = "v1.11.1-eksbuild.11"
-    kube_proxy         = "v1.30.6-eksbuild.3"
-    vpc_cni            = "v1.18.5-eksbuild.1"
-    eks_pod_identity   = "v1.3.4-eksbuild.1"
-  }
-}
-```
-
-```hcl
-# terraform/03-platform/addons.tf
-resource "aws_eks_addon" "coredns" {
-  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  addon_name    = "coredns"
-  addon_version = var.addon_versions.coredns
-
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "PRESERVE"
-
-  configuration_values = jsonencode({
-    replicaCount = 2
-    resources = {
-      limits = {
-        cpu    = "100m"
-        memory = "150Mi"
-      }
-      requests = {
-        cpu    = "100m"
-        memory = "70Mi"
-      }
-    }
-  })
-}
-
-resource "aws_eks_addon" "kube_proxy" {
-  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  addon_name    = "kube-proxy"
-  addon_version = var.addon_versions.kube_proxy
-
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "PRESERVE"
-}
-
-resource "aws_eks_addon" "vpc_cni" {
-  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  addon_name    = "vpc-cni"
-  addon_version = var.addon_versions.vpc_cni
-
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "PRESERVE"
-
-  configuration_values = jsonencode({
-    enableNetworkPolicy = "true"
-    env = {
-      ENABLE_PREFIX_DELEGATION = "true"
-      WARM_PREFIX_TARGET       = "1"
-    }
-  })
-}
-
-resource "aws_eks_addon" "eks_pod_identity" {
-  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  addon_name    = "eks-pod-identity-agent"
-  addon_version = var.addon_versions.eks_pod_identity
-
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "PRESERVE"
-}
-```
-
-```bash
-# Add-on 업그레이드 실행
-cd terraform/03-platform
-terraform apply
-```
-
-### Step 4: NodePool 자동 교체 (Karpenter Drift Detection)
-
-Auto Mode에서는 컨트롤 플레인 업그레이드 후 Karpenter가 자동으로 노드를 교체합니다.
-
-**Drift Detection 동작 원리**:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    Karpenter Drift Detection                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  1. 컨트롤 플레인 업그레이드 (1.29 → 1.30)                               │
-│                    │                                                    │
-│                    ▼                                                    │
-│  2. Karpenter가 노드 AMI 버전 확인                                       │
-│     - 현재 노드: AMI 1.29                                               │
-│     - 최신 AMI: 1.30                                                    │
-│                    │                                                    │
-│                    ▼                                                    │
-│  3. Drift 감지 → 노드에 "Drifted" 상태 표시                              │
-│                    │                                                    │
-│                    ▼                                                    │
-│  4. 새 노드 프로비저닝 (AMI 1.30)                                        │
-│                    │                                                    │
-│                    ▼                                                    │
-│  5. 기존 노드 Cordon → Pod 퇴거 → 노드 종료                             │
-│     (PDB 준수)                                                          │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-**노드 교체 모니터링**:
-
-```bash
-# Drift 상태 확인
-kubectl get nodes -L karpenter.sh/nodepool,karpenter.sh/capacity-type
-
-# NodeClaim 상태 확인
-kubectl get nodeclaims -o wide
-
-# Drifted 노드 확인
-kubectl get nodeclaims -o json | jq -r '
-  .items[] |
-  select(.status.conditions[] | select(.type == "Drifted" and .status == "True")) |
-  "\(.metadata.name): Drifted"
-'
-
-# 실시간 노드 교체 모니터링
-watch -n 5 'kubectl get nodes -o wide && echo "" && kubectl get nodeclaims -o wide'
-```
-
-### Graceful 노드 드레인 프로세스
+Node phase나 Pod Running만으로 정상 판정하지 않습니다. 0 replica Deployment, 종료된 Job,
+빈 selector의 PDB도 구별합니다. EndpointSlice의 ready/serving/terminating 조건과 Service selector를
+확인하며 selector 없는 Service/ExternalName에 일반 Pod endpoint를 요구하지 않습니다.
+
+## 3. 백업과 복원 검증
+
+EKS의 관리형 백업은 고객이 임의 etcd snapshot으로 복원할 수 있다는 뜻이 아닙니다.
+Git/IaC·Kubernetes 객체·PV 데이터·외부 DB·권한·암호화 키와 복구 절차를 구분합니다.
+Velero의 BackupStorageLocation, plugin/CSI snapshot 구성과 IAM이 먼저 준비되어야 합니다.
+아래는 production을 명시적으로 선택한 Schedule입니다.
+기본 Backup CLI는 `*` 네임스페이스를 포함하며 velero 전체를 자동 제외한다고 가정하지 않습니다.
 
 ```yaml
-# NodePool 설정에서 disruption 정책 확인
-apiVersion: karpenter.sh/v1
-kind: NodePool
+# backup-schedule.yaml
+apiVersion: velero.io/v1
+kind: Schedule
 metadata:
-  name: default
+  name: production-daily
+  namespace: velero
 spec:
+  schedule: "CRON_TZ=UTC 0 2 * * *"
   template:
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-      nodeClassRef:
-        group: eks.amazonaws.com   # EKS Auto Mode 관리형 NodeClass
-        kind: NodeClass
-        name: default
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 1m
-    budgets:
-      - nodes: "10%"  # 동시에 교체되는 노드 비율 제한
+    includedNamespaces:
+      - production
+    storageLocation: default
+    snapshotVolumes: true
+    defaultVolumesToFsBackup: false
+    ttl: 720h
 ```
 
 ```bash
-# 노드 드레인 진행 상황 확인
-kubectl get events --field-selector reason=DisruptingNode -w
-
-# Pod 퇴거 상황 확인
-kubectl get events --field-selector reason=Evicted -w
-
-# 특정 노드의 Pod 확인
-NODE_NAME="ip-10-0-1-123.ap-northeast-2.compute.internal"
-kubectl get pods -A --field-selector spec.nodeName=$NODE_NAME
+DOCS_BACKUP="pre-upgrade-$(date -u +%Y%m%dT%H%M%SZ)"
+velero --kubecontext "$DOCS_CONTEXT" backup create "$DOCS_BACKUP" \
+  --include-namespaces production --snapshot-volumes --ttl 720h --wait
+velero --kubecontext "$DOCS_CONTEXT" backup describe "$DOCS_BACKUP" --details
+velero --kubecontext "$DOCS_CONTEXT" backup logs "$DOCS_BACKUP"
 ```
 
-### 업그레이드 진행 모니터링
+Completed가 앱 정합성과 모든 볼륨 복구를 보장하지 않습니다. errors/warnings,
+snapshot/data-mover 결과, 제외된 볼륨과 DB quiesce/replication을 확인합니다.
+PVC/PV 객체만 백업하는 것은 앱·Secret·Service·데이터를 포함한 전체 백업과 다릅니다.
+파일 시스템 백업에는 별도 node-agent와 볼륨 설정이 필요합니다.
+
+Velero 1.18.2의 `restore create`에는 `--dry-run`이 없습니다.
+`-o yaml/json`은 Restore를 출력하고 생성하지 않지만 discovery와 Backup 읽기는 수행합니다.
+완전한 오프라인 검사나 복원 성공 시험으로 부르지 않습니다.
 
 ```bash
-#!/bin/bash
-# monitor-upgrade.sh
-
-echo "=== 업그레이드 진행 모니터링 ==="
-
-while true; do
-    clear
-    echo "시간: $(date)"
-    echo ""
-
-    echo "--- 노드 상태 ---"
-    kubectl get nodes -o custom-columns=\
-'NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion,STATUS:.status.conditions[?(@.type=="Ready")].status,AGE:.metadata.creationTimestamp' \
-    | sort -k2
-
-    echo ""
-    echo "--- NodeClaim 상태 ---"
-    kubectl get nodeclaims -o custom-columns=\
-'NAME:.metadata.name,NODEPOOL:.metadata.labels.karpenter\.sh/nodepool,READY:.status.conditions[?(@.type=="Ready")].status,DRIFTED:.status.conditions[?(@.type=="Drifted")].status'
-
-    echo ""
-    echo "--- 버전별 노드 수 ---"
-    kubectl get nodes -o json | jq -r '
-      [.items[].status.nodeInfo.kubeletVersion] |
-      group_by(.) |
-      map({version: .[0], count: length}) |
-      .[] |
-      "\(.version): \(.count)개"
-    '
-
-    echo ""
-    echo "--- 최근 이벤트 ---"
-    kubectl get events -A --sort-by='.lastTimestamp' | grep -E "(Drifted|Evicted|DisruptingNode|ProvisionedNode)" | tail -5
-
-    sleep 10
-done
+velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
+  --from-backup "$DOCS_BACKUP" --include-namespaces production \
+  --namespace-mappings production:restore-test -o yaml > restore-plan.yaml
 ```
 
-**Prometheus 쿼리로 업그레이드 상태 확인**:
+실제 복원 시험은 격리된 테스트 환경에서 수행합니다. 네임스페이스 mapping만으로
+CronJob·consumer·외부 DB·DNS/LB 변경이 격리되지 않습니다.
+테스트 클러스터의 backup storage 쓰기 소유권, snapshot region/AZ, KMS/IAM을 확인합니다.
+필요하면 읽기 전용 BackupStorageLocation으로 동기화합니다.
+복원 생성·Pod 실행·볼륨 attach·무결성·앱 동작을 각각 시험하며 정리 때 원래 백업을 삭제하지 않습니다.
 
-```promql
-# 버전별 노드 수
-count by (kubelet_version) (kube_node_info)
+## 4. 컨트롤 플레인과 노드 업데이트
 
-# Ready 상태가 아닌 노드 수
-count(kube_node_status_condition{condition="Ready", status="false"})
-
-# 최근 생성된 노드 (1시간 이내)
-count(time() - kube_node_created < 3600)
-
-# Pending Pod 수
-count(kube_pod_status_phase{phase="Pending"})
-```
-
-### 업그레이드 중단 처리
+아래는 [인프라 설정 장](./01-infrastructure-setup.md)의 기존 cluster layer 예제입니다.
+새 state로 동일 클러스터를 중복 생성하거나 VPC/IAM을 다시 만들지 않습니다.
+module/provider major 전환과 Kubernetes minor 전환은 변경 범위를 각각 검토합니다.
+과거 EKS module v20의 입력 이름을 현행 module과 섞지 않습니다.
+tfvars는 실제 파일의 절대 경로로 바꿉니다.
 
 ```bash
-# NodePool disruption 일시 중지
-kubectl annotate nodepool default karpenter.sh/do-not-disrupt="true"
-
-# 재개
-kubectl annotate nodepool default karpenter.sh/do-not-disrupt-
-
-# 특정 노드 보호
-kubectl annotate node ip-10-0-1-123.ap-northeast-2.compute.internal \
-  karpenter.sh/do-not-disrupt="true"
+DOCS_TFVARS="/absolute/path/to/production.cluster.tfvars.json"
+terraform -chdir=terraform/02-cluster plan \
+  -var-file="$DOCS_TFVARS" -var="kubernetes_version=$DOCS_TARGET" -out=upgrade.tfplan
+terraform -chdir=terraform/02-cluster show upgrade.tfplan
+# Apply the reviewed saved plan:
+terraform -chdir=terraform/02-cluster apply upgrade.tfplan
 ```
 
-### 롤백 고려사항
-
-컨트롤 플레인은 롤백이 불가능합니다. 따라서:
-
-1. **업그레이드 전**: 반드시 테스트 환경에서 검증
-2. **문제 발생 시**: 블루/그린 전략으로 이전 버전 클러스터로 트래픽 전환
-3. **Add-on 롤백**: 이전 버전으로 downgrade 가능
+CLI를 변경 수단으로 선택하면 IaC와 동시에 같은 값을 변경하지 않습니다.
+다음은 실제 변경 명령이며 사전 검토 후 실행합니다. 반환된 update ID를 기록합니다.
 
 ```bash
-# Add-on 버전 downgrade (필요시)
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name vpc-cni \
-  --addon-version v1.18.2-eksbuild.1 \
-  --resolve-conflicts OVERWRITE
+DOCS_UPDATE_ID=$(aws eks update-cluster-version \
+  --name "$DOCS_CLUSTER" --region "$DOCS_REGION" --kubernetes-version "$DOCS_TARGET" \
+  --query 'update.id' --output text)
+printf '%s\n' "$DOCS_UPDATE_ID"
 ```
 
----
+```python
+# wait_update.py
+"""Observe a known EKS update ID; a client timeout never cancels the AWS operation."""
+import argparse
+import json
+import subprocess
+import sys
+import time
 
-## 4. 블루/그린 업그레이드
 
-### 전략 개요
+def wait_for_update(fetch, timeout, interval=15, clock=time.monotonic, sleep=time.sleep):
+    deadline = clock() + timeout
+    while True:
+        update = fetch()
+        status = update.get("status")
+        if status in ("Successful", "Failed", "Cancelled"):
+            return {"status": status, "errors": update.get("errors", [])}
+        if status not in ("InProgress", "Cancelling"):
+            raise RuntimeError(f"Unexpected update status: {status!r}")
+        remaining = deadline-clock()
+        if remaining <= 0:
+            return {"status":"ClientTimeout", "lastServerStatus":status,
+                    "note":"AWS update may still be running; resume observation with the same update ID."}
+        sleep(min(interval, remaining))
 
-블루/그린 업그레이드는 새 버전 클러스터를 기존 클러스터와 병렬로 운영하며 점진적으로 트래픽을 전환하는 전략입니다.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        블루/그린 업그레이드 아키텍처                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│                              Route 53                                       │
-│                                 │                                           │
-│                    ┌────────────┴────────────┐                              │
-│                    ▼                         ▼                              │
-│              NLB (Blue)                 NLB (Green)                         │
-│              Weight: 0%                 Weight: 100%                        │
-│                    │                         │                              │
-│           ┌───────┴───────┐         ┌───────┴───────┐                      │
-│           ▼               ▼         ▼               ▼                      │
-│      ┌─────────┐    ┌─────────┐ ┌─────────┐   ┌─────────┐                  │
-│      │ EKS 1.29│    │ Nodes   │ │ EKS 1.30│   │ Nodes   │                  │
-│      │ (Blue)  │    │         │ │ (Green) │   │         │                  │
-│      └─────────┘    └─────────┘ └─────────┘   └─────────┘                  │
-│                                                                             │
-│      ←── 이전 버전 (유지) ──→   ←── 새 버전 (활성) ──→                      │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cluster", required=True)
+    parser.add_argument("--region", required=True)
+    parser.add_argument("--update-id", required=True)
+    parser.add_argument("--timeout-seconds", type=int, default=5400)
+    args = parser.parse_args()
+    if args.timeout_seconds <= 0:
+        parser.error("timeout must be positive")
 
-### Step 1: 새 버전 클러스터 생성
+    def fetch():
+        process = subprocess.run([
+            "aws","eks","describe-update","--name",args.cluster,"--region",args.region,
+            "--update-id",args.update_id,"--output","json","--no-cli-pager",
+        ],capture_output=True,text=True,timeout=60)
+        if process.returncode:
+            raise RuntimeError(f"describe-update failed (exit {process.returncode}); state is unknown")
+        update = json.loads(process.stdout)["update"]
+        if update.get("id") != args.update_id:
+            raise RuntimeError("Response update ID did not match")
+        return update
 
-```hcl
-# terraform/02-cluster-green/variables.tf
-variable "cluster_name" {
-  description = "EKS cluster name"
-  type        = string
-  default     = "my-cluster-green"
-}
+    try:
+        result = wait_for_update(fetch, args.timeout_seconds)
+    except (RuntimeError, ValueError, KeyError, OSError, subprocess.TimeoutExpired) as error:
+        print(json.dumps({"updateId":args.update_id,"status":"Unknown","error":str(error)}))
+        return 1
+    print(json.dumps({"updateId":args.update_id, **result},indent=2))
+    return 0 if result["status"] == "Successful" else (2 if result["status"] == "ClientTimeout" else 1)
 
-variable "cluster_version" {
-  description = "EKS cluster version"
-  type        = string
-  default     = "1.30"
-}
 
-variable "cluster_color" {
-  description = "Cluster color for blue/green deployment"
-  type        = string
-  default     = "green"
-}
-```
-
-```hcl
-# terraform/02-cluster-green/main.tf
-module "eks_green" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
-
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
-
-  cluster_compute_config = {
-    enabled    = true
-    node_pools = ["general-purpose", "system"]
-  }
-
-  # Blue 클러스터와 동일한 VPC 사용
-  vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
-  subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
-
-  tags = merge(local.common_tags, {
-    "cluster-color" = var.cluster_color
-    "eks-version"   = var.cluster_version
-  })
-}
-
-# ArgoCD 등록을 위한 출력
-output "cluster_endpoint" {
-  value = module.eks_green.cluster_endpoint
-}
-
-output "cluster_certificate_authority_data" {
-  value = module.eks_green.cluster_certificate_authority_data
-}
-
-output "cluster_name" {
-  value = module.eks_green.cluster_name
-}
+if __name__ == "__main__":
+    sys.exit(main())
 ```
 
 ```bash
-# Green 클러스터 생성
-cd terraform/02-cluster-green
-terraform init
-terraform apply
+python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --update-id "$DOCS_UPDATE_ID" --timeout-seconds 5400
 ```
 
-### Step 2: Platform Layer 배포
+exit 0은 update Successful, 1은 실패/취소/조회 오류, 2는 클라이언트 timeout입니다.
+timeout은 AWS 작업 취소가 아닙니다. 같은 ID로 관찰을 재개합니다.
+컨트롤 플레인 업그레이드는 시작 후 임의 pause/stop할 수 없습니다.
+`aws eks wait cluster-active`만으로 노드 교체 완료까지 판정하지 않습니다.
+마지막에 실제 cluster version과 노드·앱을 다시 확인합니다.
+
+Auto Mode는 CP 업데이트 후 새 버전 노드로 점진적으로 교체합니다.
+Auto Mode AMI를 고객 EC2NodeClass의 `al2023@latest`로 선택하는 구조가 아닙니다.
+일반 관리 노드·자가 관리·Hybrid·기존 Fargate Pod는 별도 교체가 필요합니다.
+EKS 애드온도 모두 자동 업데이트되지 않습니다. 검토한 버전과
+`describe-addon-configuration` 스키마로 설정 보존/변경을 계획하며 OVERWRITE를 일괄 적용하지 않습니다.
+
+### Disruption 제약
+
+적용되는 NodePool budget 중 더 엄격한 제약을 따릅니다.
+10%와 1은 “적어도 1개”라는 OR 조건이 아닙니다.
+반올림, 삭제/NotReady 노드와 UTC schedule을 고려합니다.
+scheduled budget 하나만 추가하면 그 밖의 시간에 자동 금지되는 것도 아닙니다.
+
+voluntary drift를 막을 때는 기존 budget 목록을 보존·검토한 뒤
+`nodes: "0", reasons: [Drifted]` 정책을 추가하고 원래 정책으로 복구합니다.
+NodePool metadata의 do-not-disrupt annotation은 이 pause 기능이 아닙니다.
+노드/Pod annotation과 budget도 interruption·만료·종료 grace period의 모든 경로를 막지 않습니다.
+
+| 수동 drain 옵션 | 의미 |
+|---|---|
+| `--ignore-daemonsets` | DaemonSet Pod를 삭제하지 않고 제외 |
+| `--delete-emptydir-data` | emptyDir 데이터 손실 허용 |
+| `--disable-eviction` | Eviction API 대신 삭제하여 PDB 보호 우회 |
+
+DaemonSet은 eligible node에 실행됩니다. 강제 삭제/PDB 우회를 자동 복구로 사용하지 않습니다.
+
+## 5. 네이티브 Kubernetes 버전 롤백
+
+EKS는 **업그레이드 완료 후 7일 안에 시작하는 이전 minor 롤백**을 지원합니다.
+“컨트롤 플레인은 항상 롤백 불가”라는 설명은 현재 기준으로 잘못되었습니다.
+현재 버전으로 생성한 클러스터, 만료된 자격 창, end-of-extended-support 자동 업그레이드,
+대상 버전이 지원하지 않는 EKS 기능 등은 제한됩니다.
+연속 업그레이드 후에는 현재의 바로 이전 minor만 대상으로 합니다.
+연장 지원 버전으로 돌아가려면 upgrade policy와 비용 조건도 맞춰야 합니다.
+
+| 항목 | 처리 |
+|---|---|
+| API server/제어 플레인 | 이전 Kubernetes minor와 그 버전의 최신 platform version |
+| Auto Mode 노드 | 서비스가 **노드부터** 조정한 뒤 CP 롤백 |
+| 일반 관리 노드 그룹 | 사용자가 UpdateNodegroupVersion으로 먼저 조정 |
+| 자가 관리/Hybrid | 사용자가 먼저 호환 노드로 교체 |
+| Fargate | 기존 Pod kubelet 직접 downgrade 미지원. 별도 교체/호환성 계획 필요 |
+| 애드온·앱·etcd 객체·PV 데이터 | 과거 snapshot으로 복원되지 않음 |
+
+이는 데이터 복원이나 즉각적인 traffic failback이 아닙니다.
+새 API/필드·컨트롤러·DB schema와 이전 버전의 호환성을 검증합니다.
 
 ```bash
-# Green 클러스터에 Platform 컴포넌트 배포
-cd terraform/03-platform-green
-terraform init
-terraform apply
-
-# kubeconfig 업데이트
-aws eks update-kubeconfig --name my-cluster-green --alias green
+aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --filter '{"categories":["ROLLBACK_READINESS"]}'
+DOCS_PREVIOUS="1.35"
+DOCS_ROLLBACK_ID=$(aws eks update-cluster-version \
+  --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --kubernetes-version "$DOCS_PREVIOUS" --rollback-config timeoutMinutes=1440 \
+  --query 'update.id' --output text)
+python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --update-id "$DOCS_ROLLBACK_ID" --timeout-seconds 5400
 ```
 
-### Step 3: ArgoCD Hub에 새 클러스터 등록
+이 rollback-config 옵션은 검증한 CLI 2.36.44에서 지원합니다.
+작업 환경의 이전 CLI 2.35.11은 인식하지 못했습니다. 옵션 오류를 기능 부재로 오해하지 않고
+공식 CLI를 업데이트하거나 지원되는 API/SDK를 사용합니다. 별도 `aws eks rollback-cluster` 명령은 없습니다.
+
+Rollback readiness의 ERROR/UNKNOWN은 차단하고 WARNING은 advisory입니다.
+force는 insight 검사를 우회할 수 있지만 자격 조건과 Auto Mode disruption 제약을 해제하지 않습니다.
+기본 예제는 force를 사용하지 않습니다.
+
+### Auto Mode 관찰과 취소
+
+노드 롤백 중에는 CP가 새 버전으로 계속 동작하고 cluster status도 ACTIVE입니다.
+노드가 대상 skew를 충족하면 insights를 다시 검사한 뒤 CP를 롤백하므로 update ID로 관찰합니다.
+노드 단계 timeout은 기본 720분(12시간), 범위 120–10,080분이며 정확한 순간의 timer가 아니라
+지정 시간보다 일찍 발생하지 않는 하한 성격입니다.
+7일 **시작 자격 창**과 시작된 작업의 node timeout을 구별합니다.
+timeout이면 CP는 현재 버전에 남고 노드는 다시 현재 버전으로 drift하며 update는 Failed가 됩니다.
+
+Drift budget 0과 노드 do-not-disrupt는 진행을 막을 수 있습니다.
+PDB/Pod do-not-disrupt는 TerminationGracePeriod까지 지연시킬 수 있으며 영구적인 보호가 아닙니다.
+노드 단계에서는 best-effort cancel이 가능하지만 진행 중인 개별 disruption은 마무리될 수 있습니다.
+CP 롤백이 시작되면 취소할 수 없습니다.
 
 ```bash
-# ArgoCD CLI로 Green 클러스터 등록
-argocd cluster add green \
-  --name my-cluster-green \
-  --label env=production \
-  --label color=green \
-  --label eks-version=1.30
-
-# 또는 Secret으로 등록
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-cluster-green
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: cluster
-    env: production
-    color: green
-    eks-version: "1.30"
-stringData:
-  name: my-cluster-green
-  server: https://XXXXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com
-  config: |
-    {
-      "execProviderConfig": {
-        "command": "argocd-k8s-auth",
-        "args": ["aws", "--cluster-name", "my-cluster-green"],
-        "apiVersion": "client.authentication.k8s.io/v1beta1"
-      },
-      "tlsClientConfig": {
-        "insecure": false,
-        "caData": "LS0tLS1CRUdJTi..."
-      }
-    }
-EOF
+aws eks cancel-update --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
+  --update-id "$DOCS_ROLLBACK_ID"
 ```
 
-### Step 4: ArgoCD ApplicationSet 설정
+취소 완료 후 노드는 현재 CP 버전으로 다시 drift합니다.
+IaC timeout이 AWS 작업을 멈추는 것은 아니며 CloudFormation stack rollback도 자동 Kubernetes
+버전 롤백이 아닙니다. CLI/API로 바꿨다면 실제 버전과 IaC의 의도를 맞춘 뒤 다음 plan을 만듭니다.
+
+## 6. Blue/Green
+
+Green은 별도 상태·이름으로 만들고 DNS·공유 NLB·DB 소유권을 Blue 삭제 범위와 분리합니다.
+[멀티 클러스터 GitOps](./04-gitops-multi-cluster.md)의 실제 endpoint/CA, workload identity,
+assume-role, EKS access entry와 Kubernetes RBAC 절차로 등록합니다.
+cluster Secret은 Green이 아니라 **Hub context**에 적용합니다.
+
+다음 ApplicationSet은 Green만 선택하고 자동 sync를 켜지 않습니다.
+production AppProject/namespace, 실제 저장소와 승인된 revision이 필요합니다.
+URL/SHA placeholder를 교체하고 worker/consumer/CronJob의 양쪽 동시 활성화를 방지합니다.
+cluster label 변경으로 생성된 Application이 제거될 수 있어 preserveResourcesOnDeletion을 설정했습니다.
+리소스 보존은 관리 인계가 아닙니다. 색상/selector 변경 전 최종 GitOps 소유권을 계획합니다.
 
 ```yaml
-# argocd/applicationsets/apps.yaml
+# applicationset.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: production-apps
+  name: upgrade-validation
   namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - matrix:
         generators:
-          # 클러스터 선택 (label selector)
           - clusters:
               selector:
                 matchLabels:
-                  env: production
-                  # color: green  # 특정 색상만 선택 시
-          # 배포할 앱 목록
+                  environment: production
+                  cluster-color: green
           - list:
               elements:
-                - app: api-server
-                  namespace: default
-                - app: web-frontend
-                  namespace: default
-                - app: worker
-                  namespace: default
+                - app: api
+                  namespace: production
   template:
     metadata:
-      name: '{{.app}}-{{.name}}'
+      name: '{{.app}}-{{.nameNormalized}}'
+      labels:
+        migration: upgrade-validation
+        cluster-color: '{{index .metadata.labels "cluster-color"}}'
     spec:
-      project: default
+      project: production
       source:
-        repoURL: https://github.com/myorg/k8s-manifests.git
-        targetRevision: main
+        repoURL: https://github.com/your-org/platform-manifests.git
+        targetRevision: REPLACE_WITH_REVIEWED_COMMIT_SHA
         path: 'apps/{{.app}}'
       destination:
         server: '{{.server}}'
         namespace: '{{.namespace}}'
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
 ```
 
 ```bash
-# ApplicationSet 적용
-kubectl apply -f argocd/applicationsets/apps.yaml
-
-# 동기화 상태 확인
-argocd app list --selector env=production
+kubectl --context argocd-hub apply -f applicationset.yaml
+argocd app list --selector migration=upgrade-validation
+# Use the actual generated Application name:
+argocd app diff api-my-cluster-green
+argocd app sync api-my-cluster-green
+argocd app wait api-my-cluster-green --sync --health --timeout 300
 ```
 
-### Step 5: Smoke Test
+Git revision으로 되돌리려면 승인된 Git 상태로 복원해 sync합니다.
+`argocd app rollback`의 인자는 SHA가 아니라 deployment history ID입니다.
+자동 sync/ApplicationSet desired state와 충돌하면 다시 변경될 수 있습니다.
+
+### Green 직접 시험
+
+Running Pod와 정상 TCP 연결만으로 DB·메시지·readiness 동작을 입증하지 않습니다.
+Green에 직접 도달하는 경로를 사용하며 HTTPS는 실제 hostname의 SNI/Host와 인증서 검증을 유지합니다.
+NLB의 AWS hostname을 서비스 TLS hostname처럼 쓰지 않습니다.
+예를 들어 실제 HTTPS 443 Service라면 별도 터미널에서:
 
 ```bash
-#!/bin/bash
-# smoke-test.sh
-
-CLUSTER_NAME="${1:-my-cluster-green}"
-NAMESPACE="${2:-default}"
-
-echo "=== Smoke Test: $CLUSTER_NAME ==="
-
-# kubeconfig 전환
-aws eks update-kubeconfig --name $CLUSTER_NAME
-
-# 1. 노드 상태 확인
-echo ""
-echo "--- 노드 상태 ---"
-kubectl get nodes
-
-# 2. 핵심 Pod 상태 확인
-echo ""
-echo "--- 핵심 Pod 상태 ---"
-kubectl get pods -n kube-system
-kubectl get pods -n $NAMESPACE
-
-# 3. 서비스 엔드포인트 확인
-echo ""
-echo "--- 서비스 엔드포인트 ---"
-kubectl get svc -n $NAMESPACE
-
-# 4. HTTP 헬스체크
-echo ""
-echo "--- HTTP 헬스체크 ---"
-API_ENDPOINT=$(kubectl get svc api-server -n $NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-if [ -n "$API_ENDPOINT" ]; then
-    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$API_ENDPOINT/health)
-    echo "API Server Health: $HTTP_STATUS"
-    if [ "$HTTP_STATUS" == "200" ]; then
-        echo "✅ API Server 정상"
-    else
-        echo "❌ API Server 비정상"
-        exit 1
-    fi
-fi
-
-# 5. 데이터베이스 연결 테스트
-echo ""
-echo "--- DB 연결 테스트 ---"
-kubectl exec -n $NAMESPACE deploy/api-server -- \
-  curl -s localhost:8080/health/db | jq .
-
-# 6. 메시지 큐 연결 테스트
-echo ""
-echo "--- MQ 연결 테스트 ---"
-kubectl exec -n $NAMESPACE deploy/worker -- \
-  curl -s localhost:8080/health/mq | jq .
-
-echo ""
-echo "=== Smoke Test 완료 ==="
+kubectl --context green -n production port-forward --address 127.0.0.1 svc/api 18443:443
 ```
 
-### Step 6: NLB 가중치 전환
+다른 터미널에서 실제 hostname·경로·응답 계약으로 확인합니다.
 
 ```bash
-#!/bin/bash
-# nlb-weight-shift.sh
-
-BLUE_TG_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:123456789012:targetgroup/blue-tg/xxxxx"
-GREEN_TG_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:123456789012:targetgroup/green-tg/xxxxx"
-LISTENER_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:123456789012:listener/net/my-nlb/xxxxx/xxxxx"
-
-shift_weight() {
-    local BLUE_WEIGHT=$1
-    local GREEN_WEIGHT=$2
-
-    echo "트래픽 전환: Blue=$BLUE_WEIGHT%, Green=$GREEN_WEIGHT%"
-
-    aws elbv2 modify-listener \
-        --listener-arn $LISTENER_ARN \
-        --default-actions Type=forward,ForwardConfig="{
-            TargetGroups=[
-                {TargetGroupArn=$BLUE_TG_ARN,Weight=$BLUE_WEIGHT},
-                {TargetGroupArn=$GREEN_TG_ARN,Weight=$GREEN_WEIGHT}
-            ]
-        }"
-}
-
-# 단계별 전환
-echo "=== NLB 가중치 전환 시작 ==="
-
-echo "Step 1: 10% 전환"
-shift_weight 90 10
-echo "5분 대기 후 메트릭 확인..."
-sleep 300
-
-echo "Step 2: 50% 전환"
-shift_weight 50 50
-echo "5분 대기 후 메트릭 확인..."
-sleep 300
-
-echo "Step 3: 90% 전환"
-shift_weight 10 90
-echo "5분 대기 후 메트릭 확인..."
-sleep 300
-
-echo "Step 4: 100% 전환"
-shift_weight 0 100
-
-echo "=== 전환 완료 ==="
+DOCS_SERVICE_HOST="api.example.com"
+DOCS_HTTP_CODE=$(curl --silent --show-error --fail --connect-timeout 5 --max-time 15 \
+  --connect-to "$DOCS_SERVICE_HOST:443:127.0.0.1:18443" \
+  --output /tmp/green-health-response --write-out '%{http_code}' \
+  "https://$DOCS_SERVICE_HOST/health/ready") || exit 1
+test "$DOCS_HTTP_CODE" = "200" || exit 1
 ```
 
-**Terraform으로 NLB 가중치 관리**:
+### NLB 가중치
 
-```hcl
-# terraform/04-traffic/variables.tf
-variable "blue_weight" {
-  description = "Traffic weight for blue cluster"
-  type        = number
-  default     = 0
-}
+NLB weighted target groups는 지원됩니다. 값은 0–999의 **상대 가중치**이며 합계가 100일 필요는 없습니다.
+새 연결의 기대 비중이지 요청/바이트/기존 세션의 정확한 비율이 아닙니다.
+각 클러스터의 별도 TG에 healthy target이 실제 등록되어야 합니다.
+TGB·target type·네트워크/보안 그룹은 [인프라 고급](./02-infrastructure-advanced.md)을 참조합니다.
 
-variable "green_weight" {
-  description = "Traffic weight for green cluster"
-  type        = number
-  default     = 100
-}
-```
+일반 가중치 변경은 새 연결에 적용되지만 **0으로 바꾸면 짧은 시간 후 기존 연결도 닫힐 수 있습니다.**
+무중단 draining과 같지 않으며 연결 수명·재시도·세션을 시험합니다.
+TCP/UDP/TCP_UDP는 target-group stickiness를 지원하지만 TLS listener는 지원하지 않습니다.
+TCP forward stickiness를 ALB 전용 기능으로 제거하지 않습니다.
+API의 DurationSeconds는 ALB용으로 설명되어 있으므로 NLB에 같은 시간 보장을 복사하지 않습니다.
 
-```hcl
-# terraform/04-traffic/nlb.tf
-resource "aws_lb_listener" "app" {
-  load_balancer_arn = aws_lb.app.arn
-  port              = 443
-  protocol          = "TLS"
-  certificate_arn   = var.certificate_arn
+다음 도구는 JSON 생성만 수행합니다. 실제 listener protocol,
+두 TG의 VPC/프로토콜/IP family·health·기존 stickiness를 먼저 확인합니다.
 
-  default_action {
-    type = "forward"
+```python
+# traffic_action.py
+"""Generate one NLB action for review. This program does not call AWS."""
+import argparse
+import json
+import re
 
-    forward {
-      target_group {
-        arn    = aws_lb_target_group.blue.arn
-        weight = var.blue_weight
-      }
 
-      target_group {
-        arn    = aws_lb_target_group.green.arn
-        weight = var.green_weight
-      }
+def action(listener, blue, green, blue_weight, green_weight, protocol="TCP", sticky=False):
+    if not re.fullmatch(r"arn:[a-z0-9-]+:elasticloadbalancing:[a-z0-9-]+:\d{12}:listener/net/[^/]+/[^/]+/[^/]+", listener):
+        raise ValueError("Expected a Network Load Balancer listener ARN")
+    for target in (blue, green):
+        if not re.fullmatch(r"arn:[a-z0-9-]+:elasticloadbalancing:[a-z0-9-]+:\d{12}:targetgroup/[^/]+/[^/]+", target):
+            raise ValueError("Invalid target group ARN")
+    if blue == green:
+        raise ValueError("Blue and green must be separate target groups")
+    if any(type(weight) is not int or not 0 <= weight <= 999 for weight in (blue_weight, green_weight)):
+        raise ValueError("Weights must be integers from 0 to 999")
+    if blue_weight + green_weight == 0:
+        raise ValueError("At least one target group must have a positive weight")
+    if protocol not in ("TCP","TLS","UDP","TCP_UDP"):
+        raise ValueError("Select the actual listener protocol")
+    if type(sticky) is not bool:
+        raise ValueError("sticky must be a boolean")
+    if protocol == "TLS" and sticky:
+        raise ValueError("TLS listeners do not support target group stickiness")
+    forward = {
+        "TargetGroups":[{"TargetGroupArn":blue,"Weight":blue_weight},
+                        {"TargetGroupArn":green,"Weight":green_weight}],
+        "TargetGroupStickinessConfig":{"Enabled":sticky},
     }
-  }
-}
+    return {"ListenerArn":listener,"DefaultActions":[{"Type":"forward","ForwardConfig":forward}]}
+
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--listener-arn",required=True)
+    parser.add_argument("--blue-arn",required=True)
+    parser.add_argument("--green-arn",required=True)
+    parser.add_argument("--blue-weight",type=int,required=True)
+    parser.add_argument("--green-weight",type=int,required=True)
+    parser.add_argument("--protocol",choices=["TCP","TLS","UDP","TCP_UDP"],default="TCP")
+    parser.add_argument("--sticky",action="store_true")
+    args=parser.parse_args()
+    try:
+        result=action(args.listener_arn,args.blue_arn,args.green_arn,args.blue_weight,args.green_weight,
+                      args.protocol,args.sticky)
+    except ValueError as error:
+        parser.error(str(error))
+    print(json.dumps(result,indent=2))
+
+
+if __name__=="__main__":
+    main()
 ```
 
 ```bash
-# 가중치 변경
-terraform apply -var="blue_weight=50" -var="green_weight=50"
+python3 traffic_action.py --listener-arn "$DOCS_LISTENER_ARN" \
+  --blue-arn "$DOCS_BLUE_TG_ARN" --green-arn "$DOCS_GREEN_TG_ARN" \
+  --blue-weight 90 --green-weight 10 --protocol TCP > traffic-action.json
+# After reviewing this one stage and target health:
+aws elbv2 modify-listener --region "$DOCS_REGION" --cli-input-json file://traffic-action.json
+aws elbv2 describe-listeners --region "$DOCS_REGION" \
+  --listener-arns "$DOCS_LISTENER_ARN" --output json
 ```
 
-### Step 7: 이전 클러스터 제거
+세 ARN 변수는 실제 값으로 먼저 설정합니다. 타이머만으로 다음 비중으로 자동 진행하지 않습니다.
+단계별 SLO·신규/기존 연결·오류·세션을 관찰합니다. weight 0, target 비정상,
+cross-zone 설정도 시험하며 다른 TG로 자동 failover될 것이라 가정하지 않습니다.
+shared NLB의 Green을 직접 검증할 때는 별도 Service 검증 경로를 사용합니다.
 
-```bash
-# Blue 클러스터 트래픽이 0%인지 확인
-aws elbv2 describe-listeners --listener-arns $LISTENER_ARN \
-  --query 'Listeners[0].DefaultActions[0].ForwardConfig.TargetGroups'
+### 데이터와 정리
 
-# ArgoCD에서 Blue 클러스터 제거
-argocd cluster rm my-cluster-blue
+외부 RDS/ElastiCache·공유 EFS를 써도 schema·권한·캐시 형식·동시 writer/consumer 전환은 남습니다.
+같은 파일시스템을 연결하거나 SQL count 한 번을 실행하는 것만으로 정합성을 보장하지 않습니다.
+snapshot region/AZ·스토리지 클래스·KMS와 마지막 쓰기 이후 RPO도 확인합니다.
 
-# Terraform으로 Blue 클러스터 삭제
-cd terraform/02-cluster-blue
-terraform destroy
+Blue는 합의한 관찰/복구 기간과 데이터 호환성 확인 전까지 유지합니다.
+weight 0인 TG도 listener에서 아직 참조될 수 있습니다.
+Auto Mode의 TGB/클러스터 삭제는 연관 TG 삭제 수명주기에 영향을 주므로,
+공유 listener의 Blue TG 참조를 제거하고 소유권·IaC·삭제 순서를 확인한 뒤 정리합니다.
+일반 자가 관리 LB Controller의 외부 TG 수명주기와 혼동하지 않습니다.
+traffic shift 직후 terraform destroy를 자동 실행하지 않습니다.
 
-# 정리 완료 확인
-aws eks list-clusters
-```
+이미 worker 배치를 AZ별 클러스터로 나눴다면 한 클러스터씩 in-place 업데이트할 수도 있습니다.
+각 EKS 제어 플레인이 단일 AZ라는 뜻은 아닙니다.
+다른 클러스터의 여유 용량·상태 호환성과 native rollback 자격/소요 시간을 확인합니다.
+7일 롤백 창은 즉시 Blue failback을 보장하는 기능이 아닙니다.
 
-### 롤백 절차
+## 7. 사후 검증
 
-문제 발생 시 트래픽을 다시 Blue로 전환합니다.
-
-```bash
-#!/bin/bash
-# rollback.sh
-
-echo "=== 롤백 시작 ==="
-
-# 즉시 Blue로 100% 전환
-aws elbv2 modify-listener \
-    --listener-arn $LISTENER_ARN \
-    --default-actions Type=forward,ForwardConfig="{
-        TargetGroups=[
-            {TargetGroupArn=$BLUE_TG_ARN,Weight=100},
-            {TargetGroupArn=$GREEN_TG_ARN,Weight=0}
-        ]
-    }"
-
-echo "트래픽이 Blue 클러스터로 전환되었습니다."
-
-# 롤백 원인 분석을 위한 로그 수집
-kubectl --context=green logs -n kube-system -l app=coredns --tail=100 > rollback-coredns.log
-kubectl --context=green get events -A --sort-by='.lastTimestamp' > rollback-events.log
-
-echo "=== 롤백 완료 ==="
-```
-
-### Stateful 워크로드 마이그레이션
-
-데이터베이스 등 상태가 있는 워크로드는 별도 마이그레이션이 필요합니다.
-
-```bash
-# PVC 데이터 마이그레이션 (Velero 사용)
-
-# Blue 클러스터에서 백업
-velero backup create stateful-migration \
-  --include-namespaces=database \
-  --include-resources=pvc,pv \
-  --snapshot-volumes
-
-# Green 클러스터에서 복원
-velero restore create stateful-migration-restore \
-  --from-backup stateful-migration \
-  --include-namespaces=database
-
-# 데이터 정합성 확인
-kubectl --context=green exec -n database deploy/postgres -- \
-  psql -U postgres -c "SELECT count(*) FROM important_table;"
-```
-
-### 대안: 네이티브 롤백을 활용한 Zonal In-Place 업그레이드
-
-Amazon EKS가 네이티브 Kubernetes 버전 롤백을 지원하게 되면서(2026년 7월), [NLB 가중치 타겟 그룹](02-infrastructure-advanced.md#nlb-가중치-타겟-그룹)으로 이미 zone별 클러스터를 운영 중인 팀이라면 두 번째 클러스터 플릿을 상시 유지하는 대신 더 가벼운 대안을 쓸 수 있습니다: 각 zonal 클러스터를 zone 하나씩 in-place로 업그레이드하고, 기존 가중치 라우팅은 업그레이드 중 트래픽을 빼는 용도로만 쓰고, 문제가 생기면 별도 클러스터가 아니라 EKS의 네이티브 롤백을 안전망으로 사용하는 방식입니다.
-
-```
-┌────────────────────────────────────────────────────────────┐
-│        Zonal In-Place 업그레이드 (롤백을 안전망으로)          │
-├────────────────────────────────────────────────────────────┤
-│                                                              │
-│   ┌─────────────┐     ┌─────────────┐    ┌─────────────┐   │
-│   │   AZ-a      │◄────│    NLB      │───►│   AZ-c      │   │
-│   │  1.30→1.31  │     │  가중치      │    │   1.30      │   │
-│   └─────────────┘     └─────────────┘    └─────────────┘   │
-│                                                              │
-│   1. NLB 가중치 이동: AZ-a → 0%, AZ-c → 100%                 │
-│   2. AZ-a 컨트롤 플레인 + 노드를 in-place로 업그레이드          │
-│   3. AZ-a 검증 후 가중치를 다시 50/50으로 복원                 │
-│   4. AZ-c도 동일하게 반복                                     │
-│   5. 업그레이드 후 AZ-a에 문제가 생기면, 세 번째 클러스터를      │
-│      만드는 대신 EKS 네이티브 롤백(컨트롤 플레인만, N→N-1,      │
-│      7일 이내)을 사용                                        │
-└────────────────────────────────────────────────────────────┘
-```
-
-**Blue/Green 플릿을 상시 유지하는 것보다 이 방식이 나은 경우:**
-- 원래 가용성 때문에 zonal 클러스터를 운영 중이고, 업그레이드만을 위한 게 아닌 경우
-- 클러스터 플릿 두 벌을 상시 운영하는 비용을 피하고 싶은 경우
-- 즉각적인 클러스터 단위 failback보다 ~7일 롤백 유효기간을 감내할 수 있는 경우
-
-**이 섹션의 완전한 Blue/Green 플릿을 유지해야 하는 경우:**
-- 전환 전에 완전히 분리된 클러스터에서 신규 버전을 실제 프로덕션 트래픽으로 검증해야 하는 경우 — 네이티브 롤백은 컨트롤 플레인만 되돌리며, in-place로 변경한 노드/AMI/애드온은 되돌리지 않습니다
-- 롤백 가능 조건을 충족하지 못하는 경우(대상 버전으로 생성된 클러스터, 7일 초과, 이미 재업그레이드됨, 또는 하위 호환 안 되는 기능 활성화) — [EKS 업그레이드 전략 — 롤백 절차](../eks/08-eks-upgrades.md#롤백-절차) 참고
-
-(출처: [Kubernetes 버전 롤백을 사용하여 Amazon EKS 클러스터를 자신 있게 업그레이드하세요](https://aws.amazon.com/ko/blogs/korea/upgrade-amazon-eks-clusters-with-confidence-using-kubernetes-version-rollbacks/), 2026년 7월)
-
----
-
-## 5. 사후 검증
-
-### 종합 헬스체크 스크립트
-
-```bash
-#!/bin/bash
-# post-upgrade-check.sh
-
-CLUSTER_NAME="${1:-my-cluster}"
-
-echo "=== 업그레이드 사후 검증: $CLUSTER_NAME ==="
-echo "시간: $(date)"
-echo ""
-
-# 1. 노드 상태 검증
-echo "### 1. 노드 상태 ###"
-echo ""
-
-# 모든 노드 Ready 확인
-NOT_READY=$(kubectl get nodes --no-headers | grep -v " Ready" | wc -l)
-if [ "$NOT_READY" -gt 0 ]; then
-    echo "❌ NotReady 노드 발견: $NOT_READY개"
-    kubectl get nodes | grep -v " Ready"
-else
-    echo "✅ 모든 노드 Ready"
-fi
-
-# 노드 버전 일관성 확인
-echo ""
-echo "노드 버전 분포:"
-kubectl get nodes -o json | jq -r '
-  [.items[].status.nodeInfo.kubeletVersion] |
-  group_by(.) |
-  map({version: .[0], count: length}) |
-  .[] |
-  "  \(.version): \(.count)개"
-'
-
-# 2. Pod 상태 검증
-echo ""
-echo "### 2. Pod 상태 ###"
-echo ""
-
-# 전체 Pod 상태 요약
-TOTAL_PODS=$(kubectl get pods -A --no-headers | wc -l)
-RUNNING_PODS=$(kubectl get pods -A --no-headers | grep " Running" | wc -l)
-COMPLETED_PODS=$(kubectl get pods -A --no-headers | grep " Completed\| Succeeded" | wc -l)
-PENDING_PODS=$(kubectl get pods -A --field-selector status.phase=Pending --no-headers 2>/dev/null | wc -l)
-FAILED_PODS=$(kubectl get pods -A --field-selector status.phase=Failed --no-headers 2>/dev/null | wc -l)
-
-echo "  전체: $TOTAL_PODS"
-echo "  Running: $RUNNING_PODS"
-echo "  Completed/Succeeded: $COMPLETED_PODS"
-echo "  Pending: $PENDING_PODS"
-echo "  Failed: $FAILED_PODS"
-
-if [ "$PENDING_PODS" -gt 0 ] || [ "$FAILED_PODS" -gt 0 ]; then
-    echo ""
-    echo "⚠️  문제 Pod 목록:"
-    kubectl get pods -A --field-selector 'status.phase!=Running,status.phase!=Succeeded' \
-      -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,STATUS:.status.phase'
-fi
-
-# 3. 서비스 엔드포인트 검증
-echo ""
-echo "### 3. 서비스 엔드포인트 ###"
-echo ""
-
-# 엔드포인트가 없는 서비스 확인
-kubectl get endpoints -A -o json | jq -r '
-  .items[] |
-  select(.subsets == null or .subsets == []) |
-  "\(.metadata.namespace)/\(.metadata.name): No endpoints"
-' | while read line; do
-    if [ -n "$line" ]; then
-        echo "⚠️  $line"
-    fi
-done
-
-# 4. Ingress/LoadBalancer 검증
-echo ""
-echo "### 4. Ingress/LoadBalancer ###"
-echo ""
-
-# LoadBalancer 타입 서비스 확인
-kubectl get svc -A -o json | jq -r '
-  .items[] |
-  select(.spec.type == "LoadBalancer") |
-  "\(.metadata.namespace)/\(.metadata.name): \(.status.loadBalancer.ingress[0].hostname // "Pending")"
-'
-
-# 5. 핵심 시스템 컴포넌트 확인
-echo ""
-echo "### 5. 시스템 컴포넌트 ###"
-echo ""
-
-COMPONENTS=("coredns" "kube-proxy" "vpc-cni" "eks-pod-identity-agent")
-for COMP in "${COMPONENTS[@]}"; do
-    STATUS=$(kubectl get pods -n kube-system -l "k8s-app=$COMP" -o jsonpath='{.items[0].status.phase}' 2>/dev/null)
-    if [ "$STATUS" == "Running" ]; then
-        echo "✅ $COMP: Running"
-    else
-        echo "❌ $COMP: $STATUS"
-    fi
-done
-
-# 6. Add-on 버전 확인
-echo ""
-echo "### 6. Add-on 버전 ###"
-echo ""
-
-aws eks list-addons --cluster-name $CLUSTER_NAME --query 'addons[]' --output text | while read ADDON; do
-    VERSION=$(aws eks describe-addon --cluster-name $CLUSTER_NAME --addon-name $ADDON \
-        --query 'addon.addonVersion' --output text)
-    STATUS=$(aws eks describe-addon --cluster-name $CLUSTER_NAME --addon-name $ADDON \
-        --query 'addon.status' --output text)
-    echo "  $ADDON: $VERSION ($STATUS)"
-done
-
-echo ""
-echo "=== 검증 완료 ==="
-```
-
-### Smoke Test 예시
-
-```bash
-#!/bin/bash
-# smoke-test-detailed.sh
-
-NAMESPACE="${1:-default}"
-BASE_URL="${2:-http://localhost:8080}"
-
-echo "=== Smoke Test ==="
-
-# HTTP 엔드포인트 체크
-test_endpoint() {
-    local NAME=$1
-    local URL=$2
-    local EXPECTED=$3
-
-    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" --max-time 10)
-    if [ "$RESPONSE" == "$EXPECTED" ]; then
-        echo "✅ $NAME: $RESPONSE"
-        return 0
-    else
-        echo "❌ $NAME: Expected $EXPECTED, Got $RESPONSE"
-        return 1
-    fi
-}
-
-echo ""
-echo "--- HTTP 엔드포인트 ---"
-test_endpoint "Health" "$BASE_URL/health" "200"
-test_endpoint "Ready" "$BASE_URL/ready" "200"
-test_endpoint "API Root" "$BASE_URL/api/v1" "200"
-
-# 데이터베이스 연결
-echo ""
-echo "--- 데이터베이스 연결 ---"
-DB_CHECK=$(kubectl exec -n $NAMESPACE deploy/api-server -- \
-  curl -s localhost:8080/health/db 2>/dev/null | jq -r '.status')
-if [ "$DB_CHECK" == "healthy" ]; then
-    echo "✅ Database: Connected"
-else
-    echo "❌ Database: $DB_CHECK"
-fi
-
-# Redis/Cache 연결
-echo ""
-echo "--- Cache 연결 ---"
-CACHE_CHECK=$(kubectl exec -n $NAMESPACE deploy/api-server -- \
-  curl -s localhost:8080/health/cache 2>/dev/null | jq -r '.status')
-if [ "$CACHE_CHECK" == "healthy" ]; then
-    echo "✅ Cache: Connected"
-else
-    echo "❌ Cache: $CACHE_CHECK"
-fi
-
-# 메시지 큐 연결
-echo ""
-echo "--- Message Queue ---"
-MQ_CHECK=$(kubectl exec -n $NAMESPACE deploy/worker -- \
-  curl -s localhost:8080/health/mq 2>/dev/null | jq -r '.status')
-if [ "$MQ_CHECK" == "healthy" ]; then
-    echo "✅ Message Queue: Connected"
-else
-    echo "❌ Message Queue: $MQ_CHECK"
-fi
-
-echo ""
-echo "=== Smoke Test 완료 ==="
-```
-
-### 메트릭 비교 (Before/After)
+update Successful 뒤에도 실제 버전, Node/Pod Ready, controller generation, DNS·입출력 네트워크,
+스토리지·권한·앱 기능과 배치 작업을 확인합니다.
+`count`는 0인 condition/phase gauge도 셉니다. 아래처럼 값을 집계하며 수집 데이터가 없다는 것을
+정상 0으로 바꾸지 않습니다. 다중 클러스터에서는 실제 cluster label을 수집 경로에 설정합니다.
 
 ```promql
-# 에러율 비교 (Before: 1시간 전 ~ 30분 전, After: 최근 30분)
+count by (cluster, kubelet_version) (
+  max by (cluster, node, kubelet_version) (kube_node_info)
+)
+```
 
-# Before 에러율
-sum(rate(http_requests_total{status=~"5.."}[30m] offset 1h))
+```promql
+sum by (cluster) (
+  max by (cluster, node) (
+    kube_node_status_condition{condition="Ready",status=~"false|unknown"}
+  )
+)
+```
+
+```promql
+sum by (cluster) (
+  max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending"})
+)
+```
+
+Pod restart 수는 reschedule 수가 아닙니다. Auto Mode의 컨트롤러 메트릭이
+자가 관리 Karpenter Pod에서 scrape된다고 가정하지 않습니다.
+아래 앱 쿼리는 실제 `service="api"` label과 metric 계약이 있어야 합니다.
+분모가 0이면 오류율을 정상 0으로 만들지 않고, error series가 없지만 트래픽은 있는 경우만 0을 채웁니다.
+
+```promql
+(
+  sum by (cluster, service) (rate(http_requests_total{service="api",status=~"5.."}[5m]))
+  or
+  0 * sum by (cluster, service) (rate(http_requests_total{service="api"}[5m]))
+)
 /
-sum(rate(http_requests_total[30m] offset 1h))
-
-# After 에러율
-sum(rate(http_requests_total{status=~"5.."}[30m]))
-/
-sum(rate(http_requests_total[30m]))
-
-# 레이턴시 비교 (P99)
-
-# Before P99
-histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[30m] offset 1h))
-
-# After P99
-histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[30m]))
-
-# 리소스 사용률 비교
-
-# Before CPU 사용률
-avg(rate(container_cpu_usage_seconds_total{namespace="default"}[30m] offset 1h))
-
-# After CPU 사용률
-avg(rate(container_cpu_usage_seconds_total{namespace="default"}[30m]))
-
-# Before Memory 사용률
-avg(container_memory_working_set_bytes{namespace="default"} offset 1h)
-
-# After Memory 사용률
-avg(container_memory_working_set_bytes{namespace="default"})
+(
+  sum by (cluster, service) (rate(http_requests_total{service="api"}[5m])) > 0
+)
 ```
 
-**Grafana 대시보드 쿼리 예시**:
-
-```yaml
-# grafana-dashboard-upgrade-comparison.yaml
-panels:
-  - title: "Error Rate Comparison"
-    type: timeseries
-    targets:
-      - expr: |
-          sum(rate(http_requests_total{status=~"5.."}[$__rate_interval]))
-          /
-          sum(rate(http_requests_total[$__rate_interval]))
-        legendFormat: "Current"
-      - expr: |
-          sum(rate(http_requests_total{status=~"5.."}[$__rate_interval] offset 2h))
-          /
-          sum(rate(http_requests_total[$__rate_interval] offset 2h))
-        legendFormat: "Before Upgrade (2h ago)"
-
-  - title: "P99 Latency Comparison"
-    type: timeseries
-    targets:
-      - expr: |
-          histogram_quantile(0.99,
-            sum(rate(http_request_duration_seconds_bucket[$__rate_interval])) by (le)
-          )
-        legendFormat: "Current P99"
-      - expr: |
-          histogram_quantile(0.99,
-            sum(rate(http_request_duration_seconds_bucket[$__rate_interval] offset 2h)) by (le)
-          )
-        legendFormat: "Before Upgrade P99"
+```promql
+histogram_quantile(0.99,
+  sum by (cluster, service, le) (
+    rate(http_request_duration_seconds_bucket{service="api"}[5m])
+  )
+)
 ```
 
-### 사후 모니터링 기간
+과거와 비교할 때 분자/분모/bucket에 같은 offset을 사용합니다.
+`[30m] offset 1h`는 현재 기준 **90–60분 전** 구간이며 60–30분 전이 아닙니다.
+Blue/Green은 요청량·route·샘플 수·부하 조건이 달라질 수 있어 동일한 cohort로 비교합니다.
+72시간이 주간 패턴 전체를 포함한다고 말하지 않습니다. 배치/주말/업무 주기와 rollback 자격 창을
+함께 고려해 관찰 기간을 정합니다.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        사후 모니터링 권장 기간                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  업그레이드 완료                                                          │
-│        │                                                                │
-│        ├── 0-1시간: 집중 모니터링                                        │
-│        │   - 에러율, 레이턴시 급증 감시                                   │
-│        │   - 핵심 서비스 헬스체크 연속 실행                               │
-│        │                                                                │
-│        ├── 1-4시간: 정상 모니터링                                        │
-│        │   - 알림 임계값 민감도 상향 유지                                 │
-│        │   - 주기적 메트릭 확인                                          │
-│        │                                                                │
-│        ├── 4-24시간: 표준 모니터링                                       │
-│        │   - 일일 트래픽 패턴 완전 경과                                   │
-│        │   - 배치 작업 정상 완료 확인                                     │
-│        │                                                                │
-│        └── 24-72시간: 안정화 확인                                        │
-│            - 주간 패턴까지 모니터링 (주말 트래픽 포함)                     │
-│            - 업그레이드 완료 선언                                        │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+Grafana는 [스택 장](./09-observability-stack.md)의 명시적 UID와 완전한 dashboard provisioning을
+사용합니다. 부분 panel YAML/JSON을 import 가능한 전체 dashboard라고 제시하지 않습니다.
+변경 전/후 버전, update ID, 계획·실제 소요 시간, 실패/복구 결과와 다음 점검을 기록합니다.
 
-### 운영 문서 업데이트
+이 장의 검토는 합성 입력으로 점검/대기/라우팅 도구, 공식 CLI parser, Velero의 GET-only 출력
+동작과 manifest/query를 확인했습니다. 실제 EKS 업그레이드·롤백, NLB 변경, snapshot/복원이나
+애플리케이션 부하 시험을 실행한 것은 아닙니다.
 
-업그레이드 완료 후 다음 문서를 업데이트합니다:
+## 공식 자료
 
-```markdown
-# 클러스터 버전 이력
-
-| 날짜 | 이전 버전 | 새 버전 | 담당자 | 비고 |
-|------|----------|--------|--------|------|
-| 2025-06-15 | 1.29 | 1.30 | DevOps팀 | Auto Mode 업그레이드, 무중단 완료 |
-| 2025-03-10 | 1.28 | 1.29 | DevOps팀 | 블루/그린 전략 사용 |
-
-# Add-on 버전 현황
-
-| Add-on | 버전 | 최종 업데이트 |
-|--------|------|--------------|
-| CoreDNS | v1.11.1-eksbuild.11 | 2025-06-15 |
-| kube-proxy | v1.30.6-eksbuild.3 | 2025-06-15 |
-| VPC CNI | v1.18.5-eksbuild.1 | 2025-06-15 |
-| EKS Pod Identity | v1.3.4-eksbuild.1 | 2025-06-15 |
-
-# 알려진 이슈
-
-- 없음
-
-# 다음 업그레이드 예정
-
-- 2025년 9월: EKS 1.31 업그레이드 예정
-- 사전 체크 시작: 2025년 8월
-```
-
----
-
-## 참고 자료
-
-- [EKS 업그레이드 개념](../eks/08-eks-upgrades.md)
-- [노드 생명주기 관리](../eks-auto-mode/07-node-lifecycle.md)
-- [AWS EKS 업그레이드 모범 사례](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
-- [Kubernetes 버전 스큐 정책](https://kubernetes.io/releases/version-skew-policy/)
-- [pluto - Deprecated API 탐지 도구](https://github.com/FairwindsOps/pluto)
-- [Velero - Kubernetes 백업/복원](https://velero.io/docs/)
+- [EKS update](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [EKS rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+- [Auto Mode rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)
+- [Auto Mode upgrades](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
+- [EKS pricing](https://aws.amazon.com/eks/pricing/)
+- [Kubernetes version skew](https://kubernetes.io/releases/version-skew-policy/)
+- [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
+- [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
+- [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
+- [NLB listeners](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 
 ---
 

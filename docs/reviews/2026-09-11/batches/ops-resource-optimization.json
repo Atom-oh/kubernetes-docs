@@ -1,0 +1,218 @@
+[
+  {
+    "path": "ko/ops/10-resource-optimization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete resource optimization guides/quizzes corrected with runnable language examples, native runtime/metrics/profiling evidence, matched Kubernetes manifests and query calculation tests.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://go.dev/blog/container-aware-gomaxprocs",
+      "https://go.dev/doc/gc-guide",
+      "https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html",
+      "https://openjdk.org/jeps/474",
+      "https://openjdk.org/jeps/490",
+      "https://docs.spring.io/spring-boot/appendix/application-properties/index.html",
+      "https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0",
+      "https://gunicorn.org/reference/settings/",
+      "https://flask.palletsprojects.com/en/stable/changes/",
+      "https://nodejs.org/download/release/v24.21.0/docs/api/cli.html",
+      "https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html"
+    ],
+    "validation": [
+      "ops-resource-optimization-validation.json",
+      "62fences;20questions;11Kubernetes/CRDobjects;8standalonequeries;12recording+3alertswith9calculationcases",
+      "ActualJava/Spring/JMX/NMT/JFR,Flask/Gunicorn,Node,Go1.27.1,Rust/Tokioruntimechecks"
+    ],
+    "initialCandidates": [
+      "Requestsnotabsoluteperformanceguarantee;defaultingLimitRange/QoS/allcontainersvsPodlevelresources;nodepressureevictionrankingnotfixedQoSorder;OOMreactive/processvscontainerphase;memorylivenessprobeunsafe.",
+      "Cgroupv1/v2paths,CPUquotaaggregateandthrottleperiodratiovspercenttime;throttlingcanreduceThroughput;fixedp70/p99/75%/5%/languagebenchclaimsnotuniversal.",
+      "VPAupperBoundnotlimitanduncappedTargetsemantics;Auto deprecated Recreate vsInPlaceOrRecreate;HPAInitialstillrequestdenominatorinteraction;Goldilockspinnedchart/VPAprereqs.",
+      "Missingimage/selectors/template labels/nativeDeploymentfields;AutoModeNodePoolwrongeksAPIinsteadkarpenter.sh/v1 andmissingnodeClassRef;binpackingallocatableoverhead/inaccuratememoryarithmetic;placeholdercapacitynotguarantee.",
+      "JAVAO​​PTSnotautomatic;JAVA_TOOL_OPTIONS/entrypointcontract,MaxRAMpercentageergonomicsnotruntimeresize/constantnonheap;JDKZGenerationalversionremoval;GCthreadformulasandvendorShenandoahsupport;SpringBootmanagementexportpath/probedetails/JFRstorageandSIGKILLlimits.",
+      "JMXregexcompositeattributes/counterunits/dashboardsmetricmismatch;MicrometerGCbucketsneedhistconfiguration,GCpause/processCPUratioinvalidGCoverhead;loadedclassesgaugevsunloadcounter.",
+      "PythonGunicornhostCPUcount/cgroupv1only,WEB_CONCURRENCYignored,asyncASGIvsWSGI/uvicorn.workersdeprecated,Flaskbefore_first_requestremovedanddebugmemoryroute;preloadforkunsafeclients/tracemallocnativeexclusions.",
+      "NodeisMasterdeprecated/hostcount,workerforkcrashloopandshutdown,perprocessoldspacevsRSSandUVthreadpoolnotnetworkallIO;expose-gcNODE_OPTIONScheckcurrentversionbeforeclaim.",
+      "Go1.25containerawareGOMAXPROCS/updatepolicyvsautomaxprocsrounding;missingruntime/fmtimports,cgroupmax/errorhandling;GOMEMLIMITsoftGoheapnotallRSS,GCcapcanexceed;RustnoGCnotdeterministicmemory/latency,Tokioenvvsbuilderpriorityandblockingthreads,oldjemalloccrate.",
+      "PromQLlabelmismatch/crosscluster/denominatorzero/doublescrape,parentcgroup;OOMreasonisgaugeandlatestreasoncannotcounteveryOOM;countPendingcountszerovalues;nodepodcountdividingglobalnodeswrong;deploymentownerregexunreliable;rawutilizationnotconsolidationdecision;dashboardJSONpartialmissingvariables/dataSource/histogramheatmap."
+    ],
+    "reviewedSha256": "49e8b449054b0cc6a8fa7425b252005f3d6c523240ae9eca1c34c41fb2d71f86",
+    "findings": [
+      "Reworkedresource/QoS/cgroupv1v2semantics:requestsnotexclusiveallocation;evictionnotabsoluteQoSorder;memoryOOMreactiveandcontainerreasonnotPodphase;removedmemorythresholdlivenessrestart.",
+      "Replaceduniversalp70/p99/heap75/workerformulas/languageperformanceclaimswithmeasuredsizingandfailurecapacitymath;20%capacityreserve1000/(200*.8)=7.",
+      "VPAupperBoundnotlimit;Auto deprecatedRecreate,InitialcanalterHPAdenominator;currentVPA/GoldilocksreferencesfromOps06.",
+      "JVMusesJAVA_TOOL_OPTIONS/directjavaentrypoint;completeBoot4.1.1project/deploymentandcurrentActuatorproperties/probes;heapoutsideRSS/NMT/JFR/SIGKILLlimitations.",
+      "NativeJMXtestprovedGCObjectNameordernamefirst/typeGarbageCollectorsecondandscalarattributeformat;6JMXmetricsverifiedandCollectionTimemsconvertedseconds. Originalheapregexwasvalid.",
+      "Micrometernamesverifiedactualruntime:loadedclassesgaugevsjvm_classes_loaded_count_classes_totalcounter;process_cpu_time_ns_total;explicitGCpausehistograms;pausewalltimedoesnotmeasureGCprocessCPUratio.",
+      "Node24 NODE_OPTIONS --expose-gc is VALID (avoidedfalsefinding);forcedGCnotuniversalleakfix;oldspace!=RSS,multipleworkerbudgetsandUVthreadpoolscopeexplained;boundedserverhealth/SIGTERMtested.",
+      "Flask3before_first_requestremoved;completeFlask/Gunicorn26WSGIappactualWEB_CONCURRENCY/configandgracefulstop;explicitlocaltracemallocnotpublicdebugendpoint;Gunicorn26nativeASGIsupportpreserved;controlsockdisabled.",
+      "Go1.25+container-awaredefaultsrequirelanguageversion/GODEBUGcontext;Go1.27.1tested;manualoverrideupdatesandGOMAXPROCS0querycorrect;GOMEMLIMITsoftmanagedmemorynotRSScap;missingimports/cgroupDIYremoved.",
+      "JDK21ZGenerationalvalid,JDK24obsolete,JDK25stillobsoletewarningexpiryundefined:didnotfalselyclaim25startuprejection. Java17doesnotsupportsameflag.",
+      "RustnoGCnotdeterministicmemory/latency;Tokio1.53.1testedexplicitENVworkers;builderoverrideandblockingpooldistinction;removeduniversalallocatorperformanceclaims.",
+      "PromQL9calculationcasescheckduplicates/crosscluster/zerodenom/oldOOM/recentrestart/Pendingvalues/nodepodcounts. Latestreasonnotcounterorcompleteeventhistory;ownershipregexandrawheatmapclaimsremoved.",
+      "CompleteK8sobjectswithimages/selectors;AutoModeNodePoolkarpenter.sh/v1+NodeClasseksgroup/default;actualallocatable/overheadbinpacking;placeholdernotEC2reservation,PriorityNevernotvictimprotection. Pause3.10.2confirmedK8s1.36.2source."
+    ]
+  },
+  {
+    "path": "ko/quizzes/ops/10-resource-optimization-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete resource optimization guides/quizzes corrected with runnable language examples, native runtime/metrics/profiling evidence, matched Kubernetes manifests and query calculation tests.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://go.dev/blog/container-aware-gomaxprocs",
+      "https://go.dev/doc/gc-guide",
+      "https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html",
+      "https://openjdk.org/jeps/474",
+      "https://openjdk.org/jeps/490",
+      "https://docs.spring.io/spring-boot/appendix/application-properties/index.html",
+      "https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0",
+      "https://gunicorn.org/reference/settings/",
+      "https://flask.palletsprojects.com/en/stable/changes/",
+      "https://nodejs.org/download/release/v24.21.0/docs/api/cli.html",
+      "https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html"
+    ],
+    "validation": [
+      "ops-resource-optimization-validation.json",
+      "62fences;20questions;11Kubernetes/CRDobjects;8standalonequeries;12recording+3alertswith9calculationcases",
+      "ActualJava/Spring/JMX/NMT/JFR,Flask/Gunicorn,Node,Go1.27.1,Rust/Tokioruntimechecks"
+    ],
+    "initialCandidates": [
+      "Requestsnotabsoluteperformanceguarantee;defaultingLimitRange/QoS/allcontainersvsPodlevelresources;nodepressureevictionrankingnotfixedQoSorder;OOMreactive/processvscontainerphase;memorylivenessprobeunsafe.",
+      "Cgroupv1/v2paths,CPUquotaaggregateandthrottleperiodratiovspercenttime;throttlingcanreduceThroughput;fixedp70/p99/75%/5%/languagebenchclaimsnotuniversal.",
+      "VPAupperBoundnotlimitanduncappedTargetsemantics;Auto deprecated Recreate vsInPlaceOrRecreate;HPAInitialstillrequestdenominatorinteraction;Goldilockspinnedchart/VPAprereqs.",
+      "Missingimage/selectors/template labels/nativeDeploymentfields;AutoModeNodePoolwrongeksAPIinsteadkarpenter.sh/v1 andmissingnodeClassRef;binpackingallocatableoverhead/inaccuratememoryarithmetic;placeholdercapacitynotguarantee.",
+      "JAVAO​​PTSnotautomatic;JAVA_TOOL_OPTIONS/entrypointcontract,MaxRAMpercentageergonomicsnotruntimeresize/constantnonheap;JDKZGenerationalversionremoval;GCthreadformulasandvendorShenandoahsupport;SpringBootmanagementexportpath/probedetails/JFRstorageandSIGKILLlimits.",
+      "JMXregexcompositeattributes/counterunits/dashboardsmetricmismatch;MicrometerGCbucketsneedhistconfiguration,GCpause/processCPUratioinvalidGCoverhead;loadedclassesgaugevsunloadcounter.",
+      "PythonGunicornhostCPUcount/cgroupv1only,WEB_CONCURRENCYignored,asyncASGIvsWSGI/uvicorn.workersdeprecated,Flaskbefore_first_requestremovedanddebugmemoryroute;preloadforkunsafeclients/tracemallocnativeexclusions.",
+      "NodeisMasterdeprecated/hostcount,workerforkcrashloopandshutdown,perprocessoldspacevsRSSandUVthreadpoolnotnetworkallIO;expose-gcNODE_OPTIONScheckcurrentversionbeforeclaim.",
+      "Go1.25containerawareGOMAXPROCS/updatepolicyvsautomaxprocsrounding;missingruntime/fmtimports,cgroupmax/errorhandling;GOMEMLIMITsoftGoheapnotallRSS,GCcapcanexceed;RustnoGCnotdeterministicmemory/latency,Tokioenvvsbuilderpriorityandblockingthreads,oldjemalloccrate.",
+      "PromQLlabelmismatch/crosscluster/denominatorzero/doublescrape,parentcgroup;OOMreasonisgaugeandlatestreasoncannotcounteveryOOM;countPendingcountszerovalues;nodepodcountdividingglobalnodeswrong;deploymentownerregexunreliable;rawutilizationnotconsolidationdecision;dashboardJSONpartialmissingvariables/dataSource/histogramheatmap."
+    ],
+    "reviewedSha256": "82002d462f0d20dd2f71092142eea795418d70f140e024ca402d0d59a98c9261",
+    "findings": [
+      "Reworkedresource/QoS/cgroupv1v2semantics:requestsnotexclusiveallocation;evictionnotabsoluteQoSorder;memoryOOMreactiveandcontainerreasonnotPodphase;removedmemorythresholdlivenessrestart.",
+      "Replaceduniversalp70/p99/heap75/workerformulas/languageperformanceclaimswithmeasuredsizingandfailurecapacitymath;20%capacityreserve1000/(200*.8)=7.",
+      "VPAupperBoundnotlimit;Auto deprecatedRecreate,InitialcanalterHPAdenominator;currentVPA/GoldilocksreferencesfromOps06.",
+      "JVMusesJAVA_TOOL_OPTIONS/directjavaentrypoint;completeBoot4.1.1project/deploymentandcurrentActuatorproperties/probes;heapoutsideRSS/NMT/JFR/SIGKILLlimitations.",
+      "NativeJMXtestprovedGCObjectNameordernamefirst/typeGarbageCollectorsecondandscalarattributeformat;6JMXmetricsverifiedandCollectionTimemsconvertedseconds. Originalheapregexwasvalid.",
+      "Micrometernamesverifiedactualruntime:loadedclassesgaugevsjvm_classes_loaded_count_classes_totalcounter;process_cpu_time_ns_total;explicitGCpausehistograms;pausewalltimedoesnotmeasureGCprocessCPUratio.",
+      "Node24 NODE_OPTIONS --expose-gc is VALID (avoidedfalsefinding);forcedGCnotuniversalleakfix;oldspace!=RSS,multipleworkerbudgetsandUVthreadpoolscopeexplained;boundedserverhealth/SIGTERMtested.",
+      "Flask3before_first_requestremoved;completeFlask/Gunicorn26WSGIappactualWEB_CONCURRENCY/configandgracefulstop;explicitlocaltracemallocnotpublicdebugendpoint;Gunicorn26nativeASGIsupportpreserved;controlsockdisabled.",
+      "Go1.25+container-awaredefaultsrequirelanguageversion/GODEBUGcontext;Go1.27.1tested;manualoverrideupdatesandGOMAXPROCS0querycorrect;GOMEMLIMITsoftmanagedmemorynotRSScap;missingimports/cgroupDIYremoved.",
+      "JDK21ZGenerationalvalid,JDK24obsolete,JDK25stillobsoletewarningexpiryundefined:didnotfalselyclaim25startuprejection. Java17doesnotsupportsameflag.",
+      "RustnoGCnotdeterministicmemory/latency;Tokio1.53.1testedexplicitENVworkers;builderoverrideandblockingpooldistinction;removeduniversalallocatorperformanceclaims.",
+      "PromQL9calculationcasescheckduplicates/crosscluster/zerodenom/oldOOM/recentrestart/Pendingvalues/nodepodcounts. Latestreasonnotcounterorcompleteeventhistory;ownershipregexandrawheatmapclaimsremoved.",
+      "CompleteK8sobjectswithimages/selectors;AutoModeNodePoolkarpenter.sh/v1+NodeClasseksgroup/default;actualallocatable/overheadbinpacking;placeholdernotEC2reservation,PriorityNevernotvictimprotection. Pause3.10.2confirmedK8s1.36.2source."
+    ]
+  },
+  {
+    "path": "en/ops/10-resource-optimization.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete resource optimization guides/quizzes corrected with runnable language examples, native runtime/metrics/profiling evidence, matched Kubernetes manifests and query calculation tests.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://go.dev/blog/container-aware-gomaxprocs",
+      "https://go.dev/doc/gc-guide",
+      "https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html",
+      "https://openjdk.org/jeps/474",
+      "https://openjdk.org/jeps/490",
+      "https://docs.spring.io/spring-boot/appendix/application-properties/index.html",
+      "https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0",
+      "https://gunicorn.org/reference/settings/",
+      "https://flask.palletsprojects.com/en/stable/changes/",
+      "https://nodejs.org/download/release/v24.21.0/docs/api/cli.html",
+      "https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html"
+    ],
+    "validation": [
+      "ops-resource-optimization-validation.json",
+      "62fences;20questions;11Kubernetes/CRDobjects;8standalonequeries;12recording+3alertswith9calculationcases",
+      "ActualJava/Spring/JMX/NMT/JFR,Flask/Gunicorn,Node,Go1.27.1,Rust/Tokioruntimechecks"
+    ],
+    "initialCandidates": [
+      "Requestsnotabsoluteperformanceguarantee;defaultingLimitRange/QoS/allcontainersvsPodlevelresources;nodepressureevictionrankingnotfixedQoSorder;OOMreactive/processvscontainerphase;memorylivenessprobeunsafe.",
+      "Cgroupv1/v2paths,CPUquotaaggregateandthrottleperiodratiovspercenttime;throttlingcanreduceThroughput;fixedp70/p99/75%/5%/languagebenchclaimsnotuniversal.",
+      "VPAupperBoundnotlimitanduncappedTargetsemantics;Auto deprecated Recreate vsInPlaceOrRecreate;HPAInitialstillrequestdenominatorinteraction;Goldilockspinnedchart/VPAprereqs.",
+      "Missingimage/selectors/template labels/nativeDeploymentfields;AutoModeNodePoolwrongeksAPIinsteadkarpenter.sh/v1 andmissingnodeClassRef;binpackingallocatableoverhead/inaccuratememoryarithmetic;placeholdercapacitynotguarantee.",
+      "JAVAO​​PTSnotautomatic;JAVA_TOOL_OPTIONS/entrypointcontract,MaxRAMpercentageergonomicsnotruntimeresize/constantnonheap;JDKZGenerationalversionremoval;GCthreadformulasandvendorShenandoahsupport;SpringBootmanagementexportpath/probedetails/JFRstorageandSIGKILLlimits.",
+      "JMXregexcompositeattributes/counterunits/dashboardsmetricmismatch;MicrometerGCbucketsneedhistconfiguration,GCpause/processCPUratioinvalidGCoverhead;loadedclassesgaugevsunloadcounter.",
+      "PythonGunicornhostCPUcount/cgroupv1only,WEB_CONCURRENCYignored,asyncASGIvsWSGI/uvicorn.workersdeprecated,Flaskbefore_first_requestremovedanddebugmemoryroute;preloadforkunsafeclients/tracemallocnativeexclusions.",
+      "NodeisMasterdeprecated/hostcount,workerforkcrashloopandshutdown,perprocessoldspacevsRSSandUVthreadpoolnotnetworkallIO;expose-gcNODE_OPTIONScheckcurrentversionbeforeclaim.",
+      "Go1.25containerawareGOMAXPROCS/updatepolicyvsautomaxprocsrounding;missingruntime/fmtimports,cgroupmax/errorhandling;GOMEMLIMITsoftGoheapnotallRSS,GCcapcanexceed;RustnoGCnotdeterministicmemory/latency,Tokioenvvsbuilderpriorityandblockingthreads,oldjemalloccrate.",
+      "PromQLlabelmismatch/crosscluster/denominatorzero/doublescrape,parentcgroup;OOMreasonisgaugeandlatestreasoncannotcounteveryOOM;countPendingcountszerovalues;nodepodcountdividingglobalnodeswrong;deploymentownerregexunreliable;rawutilizationnotconsolidationdecision;dashboardJSONpartialmissingvariables/dataSource/histogramheatmap."
+    ],
+    "reviewedSha256": "bca8db3e32f975eb23c1e12bcd3b29e57f7b33257c01ea57cacad5a90b10c35d",
+    "findings": [
+      "Reworkedresource/QoS/cgroupv1v2semantics:requestsnotexclusiveallocation;evictionnotabsoluteQoSorder;memoryOOMreactiveandcontainerreasonnotPodphase;removedmemorythresholdlivenessrestart.",
+      "Replaceduniversalp70/p99/heap75/workerformulas/languageperformanceclaimswithmeasuredsizingandfailurecapacitymath;20%capacityreserve1000/(200*.8)=7.",
+      "VPAupperBoundnotlimit;Auto deprecatedRecreate,InitialcanalterHPAdenominator;currentVPA/GoldilocksreferencesfromOps06.",
+      "JVMusesJAVA_TOOL_OPTIONS/directjavaentrypoint;completeBoot4.1.1project/deploymentandcurrentActuatorproperties/probes;heapoutsideRSS/NMT/JFR/SIGKILLlimitations.",
+      "NativeJMXtestprovedGCObjectNameordernamefirst/typeGarbageCollectorsecondandscalarattributeformat;6JMXmetricsverifiedandCollectionTimemsconvertedseconds. Originalheapregexwasvalid.",
+      "Micrometernamesverifiedactualruntime:loadedclassesgaugevsjvm_classes_loaded_count_classes_totalcounter;process_cpu_time_ns_total;explicitGCpausehistograms;pausewalltimedoesnotmeasureGCprocessCPUratio.",
+      "Node24 NODE_OPTIONS --expose-gc is VALID (avoidedfalsefinding);forcedGCnotuniversalleakfix;oldspace!=RSS,multipleworkerbudgetsandUVthreadpoolscopeexplained;boundedserverhealth/SIGTERMtested.",
+      "Flask3before_first_requestremoved;completeFlask/Gunicorn26WSGIappactualWEB_CONCURRENCY/configandgracefulstop;explicitlocaltracemallocnotpublicdebugendpoint;Gunicorn26nativeASGIsupportpreserved;controlsockdisabled.",
+      "Go1.25+container-awaredefaultsrequirelanguageversion/GODEBUGcontext;Go1.27.1tested;manualoverrideupdatesandGOMAXPROCS0querycorrect;GOMEMLIMITsoftmanagedmemorynotRSScap;missingimports/cgroupDIYremoved.",
+      "JDK21ZGenerationalvalid,JDK24obsolete,JDK25stillobsoletewarningexpiryundefined:didnotfalselyclaim25startuprejection. Java17doesnotsupportsameflag.",
+      "RustnoGCnotdeterministicmemory/latency;Tokio1.53.1testedexplicitENVworkers;builderoverrideandblockingpooldistinction;removeduniversalallocatorperformanceclaims.",
+      "PromQL9calculationcasescheckduplicates/crosscluster/zerodenom/oldOOM/recentrestart/Pendingvalues/nodepodcounts. Latestreasonnotcounterorcompleteeventhistory;ownershipregexandrawheatmapclaimsremoved.",
+      "CompleteK8sobjectswithimages/selectors;AutoModeNodePoolkarpenter.sh/v1+NodeClasseksgroup/default;actualallocatable/overheadbinpacking;placeholdernotEC2reservation,PriorityNevernotvictimprotection. Pause3.10.2confirmedK8s1.36.2source."
+    ]
+  },
+  {
+    "path": "en/quizzes/ops/10-resource-optimization-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete resource optimization guides/quizzes corrected with runnable language examples, native runtime/metrics/profiling evidence, matched Kubernetes manifests and query calculation tests.",
+    "sources": [
+      "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://go.dev/blog/container-aware-gomaxprocs",
+      "https://go.dev/doc/gc-guide",
+      "https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html",
+      "https://openjdk.org/jeps/474",
+      "https://openjdk.org/jeps/490",
+      "https://docs.spring.io/spring-boot/appendix/application-properties/index.html",
+      "https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0",
+      "https://gunicorn.org/reference/settings/",
+      "https://flask.palletsprojects.com/en/stable/changes/",
+      "https://nodejs.org/download/release/v24.21.0/docs/api/cli.html",
+      "https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html"
+    ],
+    "validation": [
+      "ops-resource-optimization-validation.json",
+      "62fences;20questions;11Kubernetes/CRDobjects;8standalonequeries;12recording+3alertswith9calculationcases",
+      "ActualJava/Spring/JMX/NMT/JFR,Flask/Gunicorn,Node,Go1.27.1,Rust/Tokioruntimechecks"
+    ],
+    "initialCandidates": [
+      "Requestsnotabsoluteperformanceguarantee;defaultingLimitRange/QoS/allcontainersvsPodlevelresources;nodepressureevictionrankingnotfixedQoSorder;OOMreactive/processvscontainerphase;memorylivenessprobeunsafe.",
+      "Cgroupv1/v2paths,CPUquotaaggregateandthrottleperiodratiovspercenttime;throttlingcanreduceThroughput;fixedp70/p99/75%/5%/languagebenchclaimsnotuniversal.",
+      "VPAupperBoundnotlimitanduncappedTargetsemantics;Auto deprecated Recreate vsInPlaceOrRecreate;HPAInitialstillrequestdenominatorinteraction;Goldilockspinnedchart/VPAprereqs.",
+      "Missingimage/selectors/template labels/nativeDeploymentfields;AutoModeNodePoolwrongeksAPIinsteadkarpenter.sh/v1 andmissingnodeClassRef;binpackingallocatableoverhead/inaccuratememoryarithmetic;placeholdercapacitynotguarantee.",
+      "JAVAO​​PTSnotautomatic;JAVA_TOOL_OPTIONS/entrypointcontract,MaxRAMpercentageergonomicsnotruntimeresize/constantnonheap;JDKZGenerationalversionremoval;GCthreadformulasandvendorShenandoahsupport;SpringBootmanagementexportpath/probedetails/JFRstorageandSIGKILLlimits.",
+      "JMXregexcompositeattributes/counterunits/dashboardsmetricmismatch;MicrometerGCbucketsneedhistconfiguration,GCpause/processCPUratioinvalidGCoverhead;loadedclassesgaugevsunloadcounter.",
+      "PythonGunicornhostCPUcount/cgroupv1only,WEB_CONCURRENCYignored,asyncASGIvsWSGI/uvicorn.workersdeprecated,Flaskbefore_first_requestremovedanddebugmemoryroute;preloadforkunsafeclients/tracemallocnativeexclusions.",
+      "NodeisMasterdeprecated/hostcount,workerforkcrashloopandshutdown,perprocessoldspacevsRSSandUVthreadpoolnotnetworkallIO;expose-gcNODE_OPTIONScheckcurrentversionbeforeclaim.",
+      "Go1.25containerawareGOMAXPROCS/updatepolicyvsautomaxprocsrounding;missingruntime/fmtimports,cgroupmax/errorhandling;GOMEMLIMITsoftGoheapnotallRSS,GCcapcanexceed;RustnoGCnotdeterministicmemory/latency,Tokioenvvsbuilderpriorityandblockingthreads,oldjemalloccrate.",
+      "PromQLlabelmismatch/crosscluster/denominatorzero/doublescrape,parentcgroup;OOMreasonisgaugeandlatestreasoncannotcounteveryOOM;countPendingcountszerovalues;nodepodcountdividingglobalnodeswrong;deploymentownerregexunreliable;rawutilizationnotconsolidationdecision;dashboardJSONpartialmissingvariables/dataSource/histogramheatmap."
+    ],
+    "reviewedSha256": "252f85aa8ecc5d0f20f94f0fb6a5a918a5b0e2d74f6d2fea90bff7ffb40648f1",
+    "findings": [
+      "Reworkedresource/QoS/cgroupv1v2semantics:requestsnotexclusiveallocation;evictionnotabsoluteQoSorder;memoryOOMreactiveandcontainerreasonnotPodphase;removedmemorythresholdlivenessrestart.",
+      "Replaceduniversalp70/p99/heap75/workerformulas/languageperformanceclaimswithmeasuredsizingandfailurecapacitymath;20%capacityreserve1000/(200*.8)=7.",
+      "VPAupperBoundnotlimit;Auto deprecatedRecreate,InitialcanalterHPAdenominator;currentVPA/GoldilocksreferencesfromOps06.",
+      "JVMusesJAVA_TOOL_OPTIONS/directjavaentrypoint;completeBoot4.1.1project/deploymentandcurrentActuatorproperties/probes;heapoutsideRSS/NMT/JFR/SIGKILLlimitations.",
+      "NativeJMXtestprovedGCObjectNameordernamefirst/typeGarbageCollectorsecondandscalarattributeformat;6JMXmetricsverifiedandCollectionTimemsconvertedseconds. Originalheapregexwasvalid.",
+      "Micrometernamesverifiedactualruntime:loadedclassesgaugevsjvm_classes_loaded_count_classes_totalcounter;process_cpu_time_ns_total;explicitGCpausehistograms;pausewalltimedoesnotmeasureGCprocessCPUratio.",
+      "Node24 NODE_OPTIONS --expose-gc is VALID (avoidedfalsefinding);forcedGCnotuniversalleakfix;oldspace!=RSS,multipleworkerbudgetsandUVthreadpoolscopeexplained;boundedserverhealth/SIGTERMtested.",
+      "Flask3before_first_requestremoved;completeFlask/Gunicorn26WSGIappactualWEB_CONCURRENCY/configandgracefulstop;explicitlocaltracemallocnotpublicdebugendpoint;Gunicorn26nativeASGIsupportpreserved;controlsockdisabled.",
+      "Go1.25+container-awaredefaultsrequirelanguageversion/GODEBUGcontext;Go1.27.1tested;manualoverrideupdatesandGOMAXPROCS0querycorrect;GOMEMLIMITsoftmanagedmemorynotRSScap;missingimports/cgroupDIYremoved.",
+      "JDK21ZGenerationalvalid,JDK24obsolete,JDK25stillobsoletewarningexpiryundefined:didnotfalselyclaim25startuprejection. Java17doesnotsupportsameflag.",
+      "RustnoGCnotdeterministicmemory/latency;Tokio1.53.1testedexplicitENVworkers;builderoverrideandblockingpooldistinction;removeduniversalallocatorperformanceclaims.",
+      "PromQL9calculationcasescheckduplicates/crosscluster/zerodenom/oldOOM/recentrestart/Pendingvalues/nodepodcounts. Latestreasonnotcounterorcompleteeventhistory;ownershipregexandrawheatmapclaimsremoved.",
+      "CompleteK8sobjectswithimages/selectors;AutoModeNodePoolkarpenter.sh/v1+NodeClasseksgroup/default;actualallocatable/overheadbinpacking;placeholdernotEC2reservation,PriorityNevernotvictimprotection. Pause3.10.2confirmedK8s1.36.2source."
+    ]
+  }
+]

@@ -1,0 +1,164 @@
+[
+  {
+    "path": "ko/data-on-eks/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete conceptual review; factual corrections, quizzes and four diagrams validated.",
+    "sources": [
+      "https://attic.apache.org/projects/sqoop.html",
+      "https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/",
+      "https://airflow.apache.org/docs/apache-airflow/stable/index.html",
+      "https://spark.apache.org/docs/latest/streaming/index.html",
+      "https://kafka.apache.org/43/design/design/",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html"
+    ],
+    "validation": [
+      "data-foundation-validation.json"
+    ],
+    "reviewedSha256": "6896ab063e096e279c7ed62d38cce224ec063ee376bf8dddfec552ba4cfab7fe",
+    "findings": [
+      "Corrected ETL versus ELT order in article, quiz and dataflow figure.",
+      "Replaced retired Sqoop example; clarified bounded/stream processing and non-guaranteed latency/accuracy.",
+      "Qualified Kafka replay by retained records/compaction and separated replay from end-to-end exactly-once sink semantics.",
+      "Clarified CDC/schema compatibility scope and distinction between Airflow operators and Kubernetes controllers.",
+      "Removed unsupported claims of universal brokerautoscaling/tenantisolation/costsavings and clarified managedworkspace/EMRonEKS ownership.",
+      "Corrected Airflow→Kafka broker implication; changed Kafka→Spark storage claim to event consumption; added missing Spark output and compacted dataflow layout."
+    ]
+  },
+  {
+    "path": "ko/data-on-eks/01-data-pipeline-anatomy.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete conceptual review; factual corrections, quizzes and four diagrams validated.",
+    "sources": [
+      "https://attic.apache.org/projects/sqoop.html",
+      "https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/",
+      "https://airflow.apache.org/docs/apache-airflow/stable/index.html",
+      "https://spark.apache.org/docs/latest/streaming/index.html",
+      "https://kafka.apache.org/43/design/design/",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html"
+    ],
+    "validation": [
+      "data-foundation-validation.json"
+    ],
+    "reviewedSha256": "a61f99053eb7a4f814c32eeb62073d33adebf2021d103d46b4291b3f02ab075b",
+    "findings": [
+      "Corrected ETL versus ELT order in article, quiz and dataflow figure.",
+      "Replaced retired Sqoop example; clarified bounded/stream processing and non-guaranteed latency/accuracy.",
+      "Qualified Kafka replay by retained records/compaction and separated replay from end-to-end exactly-once sink semantics.",
+      "Clarified CDC/schema compatibility scope and distinction between Airflow operators and Kubernetes controllers.",
+      "Removed unsupported claims of universal brokerautoscaling/tenantisolation/costsavings and clarified managedworkspace/EMRonEKS ownership.",
+      "Corrected Airflow→Kafka broker implication; changed Kafka→Spark storage claim to event consumption; added missing Spark output and compacted dataflow layout."
+    ]
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete conceptual review; factual corrections, quizzes and four diagrams validated.",
+    "sources": [
+      "https://attic.apache.org/projects/sqoop.html",
+      "https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/",
+      "https://airflow.apache.org/docs/apache-airflow/stable/index.html",
+      "https://spark.apache.org/docs/latest/streaming/index.html",
+      "https://kafka.apache.org/43/design/design/",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html"
+    ],
+    "validation": [
+      "data-foundation-validation.json"
+    ],
+    "reviewedSha256": "4e05649e8ae611637053bb102caeb95cdc44a8bc83df41bde83497cc7ab74645",
+    "findings": [
+      "Corrected ETL versus ELT order in article, quiz and dataflow figure.",
+      "Replaced retired Sqoop example; clarified bounded/stream processing and non-guaranteed latency/accuracy.",
+      "Qualified Kafka replay by retained records/compaction and separated replay from end-to-end exactly-once sink semantics.",
+      "Clarified CDC/schema compatibility scope and distinction between Airflow operators and Kubernetes controllers.",
+      "Removed unsupported claims of universal brokerautoscaling/tenantisolation/costsavings and clarified managedworkspace/EMRonEKS ownership.",
+      "Corrected Airflow→Kafka broker implication; changed Kafka→Spark storage claim to event consumption; added missing Spark output and compacted dataflow layout."
+    ]
+  },
+  {
+    "path": "en/data-on-eks/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete conceptual review; factual corrections, quizzes and four diagrams validated.",
+    "sources": [
+      "https://attic.apache.org/projects/sqoop.html",
+      "https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/",
+      "https://airflow.apache.org/docs/apache-airflow/stable/index.html",
+      "https://spark.apache.org/docs/latest/streaming/index.html",
+      "https://kafka.apache.org/43/design/design/",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html"
+    ],
+    "validation": [
+      "data-foundation-validation.json"
+    ],
+    "reviewedSha256": "e4a9e00c9bd9337213fc08811d13dfec1e77487d5688e2291a424496ad765d1e",
+    "findings": [
+      "Corrected ETL versus ELT order in article, quiz and dataflow figure.",
+      "Replaced retired Sqoop example; clarified bounded/stream processing and non-guaranteed latency/accuracy.",
+      "Qualified Kafka replay by retained records/compaction and separated replay from end-to-end exactly-once sink semantics.",
+      "Clarified CDC/schema compatibility scope and distinction between Airflow operators and Kubernetes controllers.",
+      "Removed unsupported claims of universal brokerautoscaling/tenantisolation/costsavings and clarified managedworkspace/EMRonEKS ownership.",
+      "Corrected Airflow→Kafka broker implication; changed Kafka→Spark storage claim to event consumption; added missing Spark output and compacted dataflow layout."
+    ]
+  },
+  {
+    "path": "en/data-on-eks/01-data-pipeline-anatomy.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete conceptual review; factual corrections, quizzes and four diagrams validated.",
+    "sources": [
+      "https://attic.apache.org/projects/sqoop.html",
+      "https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/",
+      "https://airflow.apache.org/docs/apache-airflow/stable/index.html",
+      "https://spark.apache.org/docs/latest/streaming/index.html",
+      "https://kafka.apache.org/43/design/design/",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html"
+    ],
+    "validation": [
+      "data-foundation-validation.json"
+    ],
+    "reviewedSha256": "937ddd9eca1ee1dff1f4ac81c818a74a3948f4ac1a3ec31cc36508a54b6bbc2c",
+    "findings": [
+      "Corrected ETL versus ELT order in article, quiz and dataflow figure.",
+      "Replaced retired Sqoop example; clarified bounded/stream processing and non-guaranteed latency/accuracy.",
+      "Qualified Kafka replay by retained records/compaction and separated replay from end-to-end exactly-once sink semantics.",
+      "Clarified CDC/schema compatibility scope and distinction between Airflow operators and Kubernetes controllers.",
+      "Removed unsupported claims of universal brokerautoscaling/tenantisolation/costsavings and clarified managedworkspace/EMRonEKS ownership.",
+      "Corrected Airflow→Kafka broker implication; changed Kafka→Spark storage claim to event consumption; added missing Spark output and compacted dataflow layout."
+    ]
+  },
+  {
+    "path": "en/quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete conceptual review; factual corrections, quizzes and four diagrams validated.",
+    "sources": [
+      "https://attic.apache.org/projects/sqoop.html",
+      "https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/",
+      "https://airflow.apache.org/docs/apache-airflow/stable/index.html",
+      "https://spark.apache.org/docs/latest/streaming/index.html",
+      "https://kafka.apache.org/43/design/design/",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/data-warehousing-on-aws/data-processing.html"
+    ],
+    "validation": [
+      "data-foundation-validation.json"
+    ],
+    "reviewedSha256": "67de4574d23f0a92b48df3efdc8d509510aa417143f7b23fae135651e84a3ad0",
+    "findings": [
+      "Corrected ETL versus ELT order in article, quiz and dataflow figure.",
+      "Replaced retired Sqoop example; clarified bounded/stream processing and non-guaranteed latency/accuracy.",
+      "Qualified Kafka replay by retained records/compaction and separated replay from end-to-end exactly-once sink semantics.",
+      "Clarified CDC/schema compatibility scope and distinction between Airflow operators and Kubernetes controllers.",
+      "Removed unsupported claims of universal brokerautoscaling/tenantisolation/costsavings and clarified managedworkspace/EMRonEKS ownership.",
+      "Corrected Airflow→Kafka broker implication; changed Kafka→Spark storage claim to event consumption; added missing Spark output and compacted dataflow layout."
+    ]
+  }
+]

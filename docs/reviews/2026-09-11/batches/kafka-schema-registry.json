@@ -1,0 +1,122 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/04-schema-registry.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source/quiz review and local schema/Avro validation completed.",
+    "sources": [
+      "https://avro.apache.org/docs/1.12.0/specification/",
+      "https://protobuf.dev/programming-guides/proto3/#updating",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html",
+      "https://github.com/Aiven-Open/karapace/tree/6.2.3",
+      "https://github.com/Apicurio/apicurio-registry/tree/3.3.3",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/util/KafkaAdminUtil.java",
+      "https://github.com/confluentinc/schema-registry/blob/master/LICENSE"
+    ],
+    "findings": [
+      "Corrected Karapace Protobuf support, component license scope, registry migration and serializer/wire-format caveats.",
+      "Fixed Avro logicalType nesting; validated reader defaults, conditional forward compatibility on removal, numeric promotion and non-transitive history.",
+      "Replaced plaintext old-cluster deployment with Apicurio 3.3.3/Strimzi v1 precreated topics, scoped ACLs, TLS/SCRAM, explicit hostname verification and current health management port.",
+      "Verified KafkaSQL journal/snapshots/events initialization, default no-compaction/no-retention checks, random group replay and separate snapshot-file persistence.",
+      "Registered the same canonical schema under orders-value using ccompat/v7 and explicit BACKWARD_TRANSITIVE; separated producer serializer from consumer deserializer settings.",
+      "Updated all 36 quiz questions and preserved chapter navigation; no images in these files."
+    ],
+    "validation": [
+      "kafka-schema-registry-validation.json"
+    ],
+    "reviewedSha256": "afdb00e593b8d1e7e9d177f4d48a30ad7b6fce67ab569b5d1b81db4a45bb3002"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source/quiz review and local schema/Avro validation completed.",
+    "sources": [
+      "https://avro.apache.org/docs/1.12.0/specification/",
+      "https://protobuf.dev/programming-guides/proto3/#updating",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html",
+      "https://github.com/Aiven-Open/karapace/tree/6.2.3",
+      "https://github.com/Apicurio/apicurio-registry/tree/3.3.3",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/util/KafkaAdminUtil.java",
+      "https://github.com/confluentinc/schema-registry/blob/master/LICENSE"
+    ],
+    "findings": [
+      "Corrected Karapace Protobuf support, component license scope, registry migration and serializer/wire-format caveats.",
+      "Fixed Avro logicalType nesting; validated reader defaults, conditional forward compatibility on removal, numeric promotion and non-transitive history.",
+      "Replaced plaintext old-cluster deployment with Apicurio 3.3.3/Strimzi v1 precreated topics, scoped ACLs, TLS/SCRAM, explicit hostname verification and current health management port.",
+      "Verified KafkaSQL journal/snapshots/events initialization, default no-compaction/no-retention checks, random group replay and separate snapshot-file persistence.",
+      "Registered the same canonical schema under orders-value using ccompat/v7 and explicit BACKWARD_TRANSITIVE; separated producer serializer from consumer deserializer settings.",
+      "Updated all 36 quiz questions and preserved chapter navigation; no images in these files."
+    ],
+    "validation": [
+      "kafka-schema-registry-validation.json"
+    ],
+    "reviewedSha256": "13dc8a897859898e31254480a1c8ded974ba370ac2276b63946386ea440aaff8"
+  },
+  {
+    "path": "en/data-on-eks/kafka/04-schema-registry.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source/quiz review and local schema/Avro validation completed.",
+    "sources": [
+      "https://avro.apache.org/docs/1.12.0/specification/",
+      "https://protobuf.dev/programming-guides/proto3/#updating",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html",
+      "https://github.com/Aiven-Open/karapace/tree/6.2.3",
+      "https://github.com/Apicurio/apicurio-registry/tree/3.3.3",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/util/KafkaAdminUtil.java",
+      "https://github.com/confluentinc/schema-registry/blob/master/LICENSE"
+    ],
+    "findings": [
+      "Corrected Karapace Protobuf support, component license scope, registry migration and serializer/wire-format caveats.",
+      "Fixed Avro logicalType nesting; validated reader defaults, conditional forward compatibility on removal, numeric promotion and non-transitive history.",
+      "Replaced plaintext old-cluster deployment with Apicurio 3.3.3/Strimzi v1 precreated topics, scoped ACLs, TLS/SCRAM, explicit hostname verification and current health management port.",
+      "Verified KafkaSQL journal/snapshots/events initialization, default no-compaction/no-retention checks, random group replay and separate snapshot-file persistence.",
+      "Registered the same canonical schema under orders-value using ccompat/v7 and explicit BACKWARD_TRANSITIVE; separated producer serializer from consumer deserializer settings.",
+      "Updated all 36 quiz questions and preserved chapter navigation; no images in these files."
+    ],
+    "validation": [
+      "kafka-schema-registry-validation.json"
+    ],
+    "reviewedSha256": "9eafdcd6e66b5a05423dda16b919bb03b300190118776bcf4901df3823be661d"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full source/quiz review and local schema/Avro validation completed.",
+    "sources": [
+      "https://avro.apache.org/docs/1.12.0/specification/",
+      "https://protobuf.dev/programming-guides/proto3/#updating",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html",
+      "https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html",
+      "https://github.com/Aiven-Open/karapace/tree/6.2.3",
+      "https://github.com/Apicurio/apicurio-registry/tree/3.3.3",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java",
+      "https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/util/KafkaAdminUtil.java",
+      "https://github.com/confluentinc/schema-registry/blob/master/LICENSE"
+    ],
+    "findings": [
+      "Corrected Karapace Protobuf support, component license scope, registry migration and serializer/wire-format caveats.",
+      "Fixed Avro logicalType nesting; validated reader defaults, conditional forward compatibility on removal, numeric promotion and non-transitive history.",
+      "Replaced plaintext old-cluster deployment with Apicurio 3.3.3/Strimzi v1 precreated topics, scoped ACLs, TLS/SCRAM, explicit hostname verification and current health management port.",
+      "Verified KafkaSQL journal/snapshots/events initialization, default no-compaction/no-retention checks, random group replay and separate snapshot-file persistence.",
+      "Registered the same canonical schema under orders-value using ccompat/v7 and explicit BACKWARD_TRANSITIVE; separated producer serializer from consumer deserializer settings.",
+      "Updated all 36 quiz questions and preserved chapter navigation; no images in these files."
+    ],
+    "validation": [
+      "kafka-schema-registry-validation.json"
+    ],
+    "reviewedSha256": "1a7935f7fc1cc74f94f93fa45670bb6af8d65d176bd7daf84908273eb0d51896"
+  }
+]

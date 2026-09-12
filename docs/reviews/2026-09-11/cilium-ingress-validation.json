@@ -1,0 +1,669 @@
+{
+  "date": "2026-09-11",
+  "baseline": {
+    "cilium": "1.20.1",
+    "gatewayAPI": "1.6.1",
+    "awsLBC": "3.5.0",
+    "envoy": "1.37.5"
+  },
+  "fullyReadOriginals": {
+    "guideLinesPerLocale": 825,
+    "quizLinesPerLocale": 209
+  },
+  "validation": {
+    "original": {
+      "schemas": [
+        {
+          "kind": "GatewayClass",
+          "name": "cilium",
+          "errors": []
+        },
+        {
+          "kind": "Gateway",
+          "name": "main-gateway",
+          "errors": []
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "api-routes",
+          "errors": []
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "canary-route",
+          "errors": []
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "transform-route",
+          "errors": []
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "redirect-route",
+          "errors": []
+        },
+        {
+          "kind": "TCPRoute",
+          "name": "tcp-route",
+          "errors": [
+            "Requested API version is not served"
+          ]
+        },
+        {
+          "kind": "TLSRoute",
+          "name": "tls-route",
+          "errors": [
+            "Requested API version is not served"
+          ]
+        },
+        {
+          "kind": "GatewayClass",
+          "name": "cilium-shared",
+          "errors": []
+        },
+        {
+          "kind": "Gateway",
+          "name": "team-a-gateway",
+          "errors": []
+        },
+        {
+          "kind": "Gateway",
+          "name": "team-b-gateway",
+          "errors": []
+        },
+        {
+          "kind": "Gateway",
+          "name": "shared-gateway",
+          "errors": [
+            "HTTPS listener lacks certificate reference"
+          ]
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "app-route",
+          "errors": []
+        },
+        {
+          "kind": "CiliumEnvoyConfig",
+          "name": "health-check-config",
+          "errors": []
+        },
+        {
+          "kind": "CiliumEnvoyConfig",
+          "name": "connection-pool",
+          "errors": []
+        }
+      ],
+      "references": [
+        {
+          "kind": "HTTPRoute",
+          "name": "api-routes",
+          "issues": []
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "canary-route",
+          "issues": []
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "transform-route",
+          "issues": []
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "redirect-route",
+          "issues": [
+            "HTTPS scheme redirect attaches to HTTPS listener"
+          ]
+        },
+        {
+          "kind": "TCPRoute",
+          "name": "tcp-route",
+          "issues": []
+        },
+        {
+          "kind": "TLSRoute",
+          "name": "tls-route",
+          "issues": [
+            "TLSRoute lacks TLS passthrough listener"
+          ]
+        },
+        {
+          "kind": "HTTPRoute",
+          "name": "app-route",
+          "issues": []
+        },
+        {
+          "kind": "CiliumEnvoyConfig",
+          "name": "health-check-config",
+          "issues": [
+            "CEC has no listener/route chain"
+          ]
+        },
+        {
+          "kind": "CiliumEnvoyConfig",
+          "name": "connection-pool",
+          "issues": [
+            "CEC has no listener/route chain"
+          ]
+        }
+      ],
+      "yamlBlocks": 20
+    },
+    "corrected": {
+      "en": {
+        "schemas": [
+          {
+            "kind": "Gateway",
+            "name": "main-gateway",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "api-routes",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "canary-route",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "transform-route",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-http",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-path",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-host",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "tcp-gateway",
+            "errors": []
+          },
+          {
+            "kind": "TCPRoute",
+            "name": "tcp-route",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "tls-gateway",
+            "errors": []
+          },
+          {
+            "kind": "TLSRoute",
+            "name": "tls-route",
+            "errors": []
+          },
+          {
+            "kind": "GatewayClass",
+            "name": "cilium-shared",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "team-a-gateway",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "team-b-gateway",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "shared-gateway",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "app-route",
+            "errors": []
+          },
+          {
+            "kind": "ReferenceGrant",
+            "name": "allow-app-team",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "shared-api-route",
+            "errors": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "health-check-config",
+            "errors": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "connection-pool",
+            "errors": []
+          }
+        ],
+        "references": [
+          {
+            "kind": "HTTPRoute",
+            "name": "api-routes",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "canary-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "transform-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-http",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-path",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-host",
+            "issues": []
+          },
+          {
+            "kind": "TCPRoute",
+            "name": "tcp-route",
+            "issues": []
+          },
+          {
+            "kind": "TLSRoute",
+            "name": "tls-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "app-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "shared-api-route",
+            "issues": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "health-check-config",
+            "issues": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "connection-pool",
+            "issues": []
+          }
+        ],
+        "yamlBlocks": 20
+      },
+      "ko": {
+        "schemas": [
+          {
+            "kind": "Gateway",
+            "name": "main-gateway",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "api-routes",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "canary-route",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "transform-route",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-http",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-path",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-host",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "tcp-gateway",
+            "errors": []
+          },
+          {
+            "kind": "TCPRoute",
+            "name": "tcp-route",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "tls-gateway",
+            "errors": []
+          },
+          {
+            "kind": "TLSRoute",
+            "name": "tls-route",
+            "errors": []
+          },
+          {
+            "kind": "GatewayClass",
+            "name": "cilium-shared",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "team-a-gateway",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "team-b-gateway",
+            "errors": []
+          },
+          {
+            "kind": "Gateway",
+            "name": "shared-gateway",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "app-route",
+            "errors": []
+          },
+          {
+            "kind": "ReferenceGrant",
+            "name": "allow-app-team",
+            "errors": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "shared-api-route",
+            "errors": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "health-check-config",
+            "errors": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "connection-pool",
+            "errors": []
+          }
+        ],
+        "references": [
+          {
+            "kind": "HTTPRoute",
+            "name": "api-routes",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "canary-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "transform-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-http",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-path",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "redirect-host",
+            "issues": []
+          },
+          {
+            "kind": "TCPRoute",
+            "name": "tcp-route",
+            "issues": []
+          },
+          {
+            "kind": "TLSRoute",
+            "name": "tls-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "app-route",
+            "issues": []
+          },
+          {
+            "kind": "HTTPRoute",
+            "name": "shared-api-route",
+            "issues": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "health-check-config",
+            "issues": []
+          },
+          {
+            "kind": "CiliumEnvoyConfig",
+            "name": "connection-pool",
+            "issues": []
+          }
+        ],
+        "yamlBlocks": 20
+      }
+    },
+    "codeParity": true,
+    "ignoredOldKeys": "Original ingressClassName/gatewayClassName/secretNamespace leave ConfigMap unchanged and IngressClass remains cilium.",
+    "helm": {
+      "base": 32,
+      "ignored": 32,
+      "nlb": 32,
+      "pp": 32,
+      "gateway": 39
+    },
+    "nlbFrontend": {
+      "namespace": "kube-system",
+      "class": "service.k8s.aws/nlb",
+      "dummyEndpoint": {
+        "addresses": [
+          "192.192.192.192"
+        ],
+        "conditions": {
+          "ready": true
+        }
+      }
+    },
+    "envoyProto": [
+      {
+        "path": "health-check-config:health-check-config-listener"
+      },
+      {
+        "path": "health-check-config:default/my-service"
+      },
+      {
+        "path": "connection-pool:connection-pool-listener"
+      },
+      {
+        "path": "connection-pool:default/high-traffic-service"
+      }
+    ],
+    "nativeEnvoy": [
+      {
+        "name": "health-check-config",
+        "exit": 0
+      },
+      {
+        "name": "connection-pool",
+        "exit": 0
+      }
+    ],
+    "quiz": {
+      "en": 12,
+      "ko": 12
+    },
+    "limits": [
+      "No AWS or Kubernetes deployment, controller reconciliation or BPF execution.",
+      "CRD JSON Schema plus explicit served-version/reference checks do not execute Kubernetes CEL/admission.",
+      "Native Envoy validation replaces dynamic EDS/address allocation with loopback STATIC fixtures; no production health/capacity guarantee.",
+      "Source-link HTTP results and PromQL/runtime fixtures recorded separately."
+    ]
+  },
+  "runtime": {
+    "envoy": "Cilium1.37.5",
+    "plainStatuses": [
+      200,
+      503,
+      200
+    ],
+    "plainHTTPRejectedByPPListener": true,
+    "validPPv2ObservedClient": "203.0.113.10",
+    "actualHCMLabel": "envoy_http_conn_manager_prefix",
+    "actualResponseClassLabel": "envoy_response_code_class",
+    "requestCount": 3,
+    "response5xx": 1,
+    "durationAverageMilliseconds": 50.833333333333336,
+    "limitations": "Local Envoy mechanics only; no NLB, Cilium BPF redirection or real target registration exercised. PPv2 source metadata in the test is synthetic and unauthenticated."
+  },
+  "promql": {
+    "promtool": "3.14.0",
+    "scenarios": 12,
+    "expressionAssertions": 12,
+    "exit": 0
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/service-mesh/cilium-service-mesh/05-ingress-gateway.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "tests": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/kubernetes-docs-full-review/docs-test-cilium-ingress-clean.log"
+  },
+  "sourceLinks": [
+    {
+      "url": "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/ingress.rst",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/47f192a014f1.txt"
+    },
+    {
+      "url": "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/ingress-reference.rst",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/1e30f6904833.txt"
+    },
+    {
+      "url": "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/858596968319.txt"
+    },
+    {
+      "url": "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/d107ab2f44bf.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/gateway-api/tree/v1.6.1/config/crd/standard",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/47964f539c7d.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/affe50702502.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/7eda9c84bf99.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/gateway/gateway.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/91b51b3d7a37.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/bfd1d72ef363.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/650b0f39e45b.txt"
+    },
+    {
+      "url": "https://www.envoyproxy.io/docs/envoy/v1.37.5/configuration/http/http_conn_man/stats",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/f144c249d0cb.txt"
+    }
+  ],
+  "artifacts": "/tmp/mesh-cilium-ingress-validation",
+  "figures": {
+    "reviewed": 6,
+    "retained": [
+      0,
+      1
+    ],
+    "removed": [
+      2
+    ],
+    "reason": "Comparison figure repeats unsupported latency/cost/mTLS/Gateway API claims; accurate table replaces it. Retained logical diagrams explicitly distinguish configuration vs packet path and unvalidated hybrid composition. Parent owns source diagram regeneration/foreign backfill."
+  }
+}
