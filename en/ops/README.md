@@ -1,6 +1,6 @@
 # Operations Guide
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 12, 2026
 
 This section provides a production operations guide for EKS Auto Mode environments. It covers infrastructure provisioning with Terraform, CI/CD pipelines, GitOps-based deployment, scaling, observability, resource optimization, and upgrades.
 
@@ -46,6 +46,7 @@ Before starting this operations guide, ensure familiarity with:
 | 14 | [Tekton Pipelines](./14-tekton-pipelines.md) | Kubernetes-native CI pipelines |
 | 15 | [Zonal Cluster Operations](./15-zonal-operations-guide.md) | LB weight shifting and TargetGroupBinding, native rollback, Kafka/Redis/Aurora AZ-affine reads |
 | 16 | [Troubleshooting Playbook](./16-troubleshooting-playbook.md) | Symptom → diagnosis → cause → fix: Pending/ImagePull/CrashLoop/NotReady/PVC, IRSA, VPC CNI, Karpenter, kubectl cheat sheet |
+| 17 | [EKS Spot Production Experiments](./17-spot-production-experiments.md) | Interruption, concurrent reclamation, fallback, result records, SLO/cost assessment, rollback |
 
 ---
 

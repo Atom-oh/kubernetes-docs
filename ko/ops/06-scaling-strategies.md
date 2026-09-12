@@ -1,5 +1,7 @@
 # 스케일링 전략
 
+> **운영 적용 검증**: Spot 도입 전 [EKS Spot 운영 적용 실험과 결과 판정](./17-spot-production-experiments.md)에서 실제 회수·폴백·정합성·비용을 검증합니다. 구성 예시나 예상 절감률은 실측 결과가 아닙니다.
+
 > **검토 기준**: Prometheus Adapter 0.12.0 / chart 5.3.0, KEDA 2.20.2, VPA 1.7.1 / 공식 chart 0.12.0, Goldilocks 4.16.1 / chart 11.1.0\
 > **마지막 검토**: 2026년 9월 11일. 버전별 차트·CRD·Kubernetes OpenAPI와 로컬 렌더링을 검증했습니다. 실제 클러스터 설치·부하 시험·SQS/DB 조회·Pod resize는 실행하지 않았습니다.
 
