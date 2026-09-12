@@ -1,48 +1,46 @@
-# Kubeflow on EKS 深入解析
+# EKS 上的 Kubeflow 深入解析
 
-> **支持的版本**: Kubeflow Community Distribution 26.03
-> **最后更新**: August 19, 2026
+> **审核基线**: Kubeflow Community Distribution 26.03.1
+> **最后更新**: September 12, 2026
 
 ## 概述
 
-Kubeflow 是一个面向 Kubernetes 的开源机器学习平台。它以一组 Kubernetes 原生 controllers 和 CRDs 的形式，而非单一的单体应用程序，整合了团队端到端运行 ML workloads 所需的组件——pipeline 编排、notebook、超参数调优、分布式训练和模型服务。2026 年 8 月 17 日，CNCF 宣布 Kubeflow 毕业（它于 2023 年作为孵化项目加入），此前已完成独立安全审计并成立正式指导委员会——这有力地表明该项目已具备生产成熟度。
+Kubeflow 提供基于 Kubernetes 的工具，用于 ML pipeline、notebook、调优、训练和服务。Community Distribution 汇集了组件修订版本、共享服务和仪表板；各个项目也有各自的发布版本和安装要求。
 
-## 组件地图
+CNCF [于 2026 年 8 月 17 日宣布 Kubeflow 毕业](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/)。这认可了项目的成熟度和治理情况，包括独立的安全审计。但这并不认证特定 EKS 部署的安全性或法规合规性。
 
-| 组件 | 解决的问题 | CRD / 核心概念 | 深入解析 |
-|-----------|--------------------|---------------------|-----------|
-| **Central Dashboard & Profiles** | 多租户访问、按用户隔离 namespace | Profile (namespace) | [第 1 部分](01-architecture-installation.md) |
-| **Kubeflow Pipelines** | 将多步骤 ML workflows 编排为 DAG | `Pipeline`, `Run`, `Experiment` | [第 2 部分](02-pipelines.md) |
-| **Kubeflow Notebooks** | 托管的、按用户划分的 Jupyter/RStudio/VS Code 环境 | `Notebook` | [第 3 部分](03-notebooks.md) |
-| **Katib** | 超参数调优和 AutoML | `Experiment`, `Trial`, `Suggestion` | [第 4 部分](04-katib.md) |
-| **Kubeflow Trainer** | 跨框架的分布式模型训练 | `TrainJob`, `ClusterTrainingRuntime` | [第 5 部分](05-training-operator.md) |
-| **KServe** | 模型服务和推理 | `InferenceService` | [第 6 部分](06-kserve.md) |
+## 组件映射
 
-```mermaid
-graph LR
-    D[Central Dashboard] --> N[Notebooks]
-    D --> P[Pipelines]
-    D --> K[Katib]
-    P -->|templates trials as| T[Kubeflow Trainer]
-    K -->|tunes via| T
-    T -->|trained model| S[KServe]
+| 组件 | 用途 | API 或概念 | 指南 |
+| --- | --- | --- | --- |
+| Dashboard、Profiles、访问管理 | UI 导航、namespace 所有权和成员资格 | 集群范围的 `Profile`；可选配额 | [第 1 部分](01-architecture-installation.md) |
+| Pipelines | 编译和执行工作流；跟踪运行和 artifact | Pipeline/Run/Experiment APIs；可选 Kubernetes Native API 模式会添加 `Pipeline`/`PipelineVersion` CRD | [第 2 部分](02-pipelines.md) |
+| Notebooks | 用户 notebook 工作负载 | `Notebook`；image 和 PVC 配置 | [第 3 部分](03-notebooks.md) |
+| Katib | 超参数搜索和 trial | `Experiment`、`Trial`、`Suggestion` CRD | [第 4 部分](04-katib.md) |
+| Trainer | 使用已配置 runtime 的分布式训练 | `TrainJob`、`TrainingRuntime`、`ClusterTrainingRuntime` | [第 5 部分](05-training-operator.md) |
+| KServe | 模型推理服务 | `InferenceService`；特定模式的依赖项 | [第 6 部分](06-kserve.md) |
 
-    style D fill:#4fc3f7
-    style P fill:#81c784
-    style K fill:#ffb74d
-    style T fill:#ce93d8
-    style S fill:#e57373
-```
+此映射涵盖本指南的范围，而非整个 distribution。26.03.1 版本还包括 Hub/model registry 和 Spark Operator。KFP Experiment 并非 Katib Experiment CRD。
+
+![Kubeflow 组件映射，区分仪表板导航与显式配置的 pipeline、调优、训练和模型部署集成。](../../.gitbook/assets/en-ai-ml-kubeflow-readme-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-readme-0.html)
+
+仪表板链接各组件 UI。只有当 Pipelines 和 Katib 的实现明确提交受支持的训练资源时，它们才会使用 Trainer。将训练产物连接到 KServe 需要单独的部署步骤；该图并不表示自动模型晋升。
 
 ## 为什么在 EKS 上运行
 
-Kubeflow 的组件设计为可在任何符合规范的 Kubernetes cluster 上运行，这意味着本文档站点已涵盖的 EKS 运维实践——由 Karpenter 驱动的自动扩缩容（包括 GPU node pools）、用于访问 AWS service 的 IRSA/Pod Identity、EBS/S3 storage integration，以及使用 Prometheus/Grafana 的可观测性——可直接应用于 ML workloads，无需构建独立的 ML 专用平台。与完全托管的替代方案（例如 Amazon SageMaker）相比，其权衡与 [EKS 上的数据](../../data-on-eks/README.md) 中所述相同：以更多运维责任（Operator 升级、storage/identity wiring）换取整个 cluster 上所有 workloads 共享的单一部署/可观测性模型，并能够独立运行 Kubeflow 的任一组件，而无需一次性采用整个平台。
+现有 EKS 平台可与 ML 工作负载共享容量管理、存储集成、工作负载身份和监控。兼容性仍取决于 Kubernetes 版本、CPU 架构、image、网络、存储 driver 和身份验证。仅 Kubernetes 一致性并不足够；发布文档指出 ARM64 image 覆盖范围不完整。
 
-## 当前已涵盖内容
+团队仍需负责组件/CRD 升级、租户授权、持久数据、凭证和恢复。[Amazon SageMaker AI](../sagemaker-ai/README.md) 减少了部分基础设施责任，但数据访问、应用程序正确性、模型质量和成本控制仍需要责任人。请根据所需接口、运维能力和工作负载约束进行选择。
 
-1. [第 1 部分：Kubeflow 在 EKS 上的架构和安装](01-architecture-installation.md) — 组件架构、CNCF 毕业背景、通过 EKS 上的 `awslabs/kubeflow-manifests` 安装
-2. [第 2 部分：Kubeflow Pipelines](02-pipelines.md) — KFP SDK v2、基于 IR 的 pipeline 编译、由 S3 支持的 artifact storage
-3. [第 3 部分：Kubeflow Notebooks](03-notebooks.md) — 按用户划分的 notebook servers、基于 Profile 的多租户、GPU 调度
-4. [第 4 部分：Katib — 超参数调优和 AutoML](04-katib.md) — Experiment/Trial/Suggestion 模型、搜索算法、提前停止
-5. [第 5 部分：Kubeflow Trainer 和分布式训练](05-training-operator.md) — 从 v1 Training Operator 到 Kubeflow Trainer v2 的迁移、TrainJob/TrainingRuntime
-6. [第 6 部分：KServe — Kubernetes 上的模型服务](06-kserve.md) — InferenceService、Serverless 与 Raw Deployment 模式、金丝雀发布
+## 当前涵盖内容
+
+1. [第 1 部分：EKS 上的架构与安装](01-architecture-installation.md) — 当前社区版本、旧版 AWS distribution 的限制、Profiles、身份和 manifest 渲染。
+2. [第 2 部分：Pipelines](02-pipelines.md) — SDK v2、编译、执行和 artifact 存储。
+3. [第 3 部分：Notebooks](03-notebooks.md) — 工作负载、Profiles、存储和 GPU 放置。
+4. [第 4 部分：Katib](04-katib.md) — experiment、trial、搜索和早停。
+5. [第 5 部分：Trainer](05-training-operator.md) — 旧版 Training Operator 和 Trainer v2 APIs。
+6. [第 6 部分：KServe](06-kserve.md) — 推理资源、部署模式和 rollout。
+
+请使用每章的组件基线。在选择安装方式之前，请查看 [26.03.1 版本发布](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1) 和 [固定版本清单](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md)。

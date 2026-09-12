@@ -1,141 +1,130 @@
-# Cuestionario de Kubeflow Notebooks
+# Cuestionario sobre Kubeflow Notebooks
 
-Este cuestionario evalúa tu comprensión de la arquitectura de Kubeflow Notebooks, su modelo de multi-tenencia basado en Profile, el comportamiento del almacenamiento y la eliminación por inactividad, la programación de GPU en EKS y las imágenes personalizadas de notebooks.
+Referencia: Notebooks 1.11.0 / Community Distribution 26.03.1.
 
 ## Preguntas de opción múltiple
 
-1. ¿Qué mecanismo nativo de Kubernetes utiliza Kubeflow Notebooks para convertir las selecciones del spawner de un usuario (imagen, CPU/memoria/GPU, almacenamiento) en un servidor de notebooks en ejecución?
-   - A) Un script de shell que el dashboard ejecuta directamente contra `kubectl`
-   - B) Un recurso personalizado `Notebook` que un controlador reconcilia en un StatefulSet/pod
-   - C) Un cron job que consulta la base de datos del dashboard cada minuto
-   - D) Un Helm chart que el usuario instala manualmente
+1. ¿Qué reconcilia el controlador de Notebook?
+
+   - A) Un proceso de navegador en la laptop del usuario
+   - B) StatefulSet, Service y recursos de enrutamiento configurados desde un Notebook CR
+   - C) Una instancia EC2 para cada usuario
+   - D) Solo un panel de HTML
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un recurso personalizado `Notebook` que un controlador reconcilia en un StatefulSet/pod**
+**Respuesta: B) StatefulSet, Service y recursos de enrutamiento configurados desde un Notebook CR**
 
-**Explicación:**
-El spawner del Central Dashboard crea un recurso personalizado `Notebook` que describe el entorno deseado. Un controlador observa ese recurso y lo reconcilia en objetos ordinarios de Kubernetes (un StatefulSet/pod con la imagen, los recursos y el PVC solicitados), en lugar de que el dashboard cree pods directamente.
+El controlador de StatefulSet crea Pods y Kubernetes los programa. El panel es un punto de entrada de UI.
 </details>
 
-2. A partir de Kubeflow Community Distribution 26.03, ¿cuál es el estado preciso de Kubeflow Notebooks v2?
-   - A) Ya está en GA y ha reemplazado completamente a v1
-   - B) Aún no existe, ni siquiera como alpha
-   - C) Se acerca a su lanzamiento, con manifiestos alpha disponibles para probar los nuevos CRD `Workspace`/`WorkspaceKind`, pero aún no está en GA
-   - D) Fue cancelado a favor de mantener v1 indefinidamente
+2. ¿Cuál es la referencia de versión precisa aquí?
+
+   - A) Todos los componentes son Workspaces GA
+   - B) Notebooks v1.11.0; 26.03.1 denomina a Workspaces beta mientras que sus imágenes son v2.0.0-alpha.3
+   - C) Notebook y Workspace son API idénticas
+   - D) v1 tiene una fecha de finalización de soporte confirmada en este capítulo
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Se acerca a su lanzamiento, con manifiestos alpha disponibles para probar los nuevos CRD `Workspace`/`WorkspaceKind`, pero aún no está en GA**
+**Respuesta: B) Notebooks v1.11.0; 26.03.1 denomina a Workspaces beta mientras que sus imágenes son v2.0.0-alpha.3**
 
-**Explicación:**
-En el momento de la distribución 26.03, Notebooks v2 — creado en torno a los nuevos recursos personalizados `Workspace` y `WorkspaceKind` — cuenta con manifiestos alpha disponibles para pruebas, pero no ha alcanzado la disponibilidad general. El CRD `Notebook` de v1 sigue siendo la arquitectura utilizada en producción y se espera que pase a un estado de solo mantenimiento cuando v2 esté listo para GA.
+Las descripciones de las versiones y las etiquetas de imagen difieren. Verifica la compatibilidad real con API/migración en vez de inferir GA o una fecha de retirada de v1.
 </details>
 
-3. ¿Qué es un Profile en el contexto del modelo de multi-tenencia de Kubeflow Notebooks?
-   - A) El tema de UI y los atajos de teclado guardados de un usuario para notebooks
-   - B) Una construcción de un namespace por usuario que aprovisiona enlaces RBAC y políticas de autorización de Istio que delimitan el acceso de ese usuario
-   - C) Un registro de las imágenes que un usuario ha generado previamente
-   - D) Una cuenta de facturación vinculada a la identidad de AWS IAM de un usuario
+3. ¿Un Profile aísla automáticamente cada notebook de todos los demás usuarios?
+
+   - A) Sí, incluidos AWS y el almacenamiento
+   - B) No; los Profiles se pueden compartir y la red, el almacenamiento, IAM y la autorización de aplicaciones siguen siendo independientes
+   - C) Sí, porque los namespaces bloquean los paquetes de red
+   - D) Sí, porque RBAC cancela todos los permisos no relacionados
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Una construcción de un namespace por usuario que aprovisiona enlaces RBAC y políticas de autorización de Istio que delimitan el acceso de ese usuario**
+**Respuesta: B) No; los Profiles se pueden compartir y la red, el almacenamiento, IAM y la autorización de aplicaciones siguen siendo independientes**
 
-**Explicación:**
-Un Profile aprovisiona un namespace dedicado para un usuario (o equipo), enlaces RBAC que delimitan sus permisos a ese namespace y una `AuthorizationPolicy` de Istio que restringe qué identidades pueden llegar a los servicios dentro de él. Los notebooks siempre se crean dentro de un namespace de Profile, lo que aísla por defecto el notebook de un usuario del de otro.
+La UI completa selecciona un namespace de Profile. El Notebook CRD en sí no requiere un objeto Profile en cada namespace.
 </details>
 
-4. ¿Por qué el PersistentVolumeClaim de un notebook es importante para su resiliencia ante reinicios de pods?
-   - A) El PVC se elimina y se vuelve a crear automáticamente cada vez que se reinicia el pod
-   - B) El claim, no el pod, es el objeto duradero: los archivos y paquetes instalados montados desde él sobreviven a los reinicios de pods, al reemplazo de nodos o a un ciclo de detención/inicio
-   - C) Los PVC solo importan para las imágenes de RStudio, no para JupyterLab
-   - D) El PVC solo se utiliza para almacenar logs, no archivos de usuario
+4. ¿Qué sobrevive al reemplazo de un Pod de notebook?
+
+   - A) Toda la memoria de procesos
+   - B) Cada paquete instalado en cualquier lugar del contenedor
+   - C) Los datos en volúmenes persistentes conservados; los paquetes de la capa de contenedor y la memoria del kernel no
+   - D) Cada instancia EC2 adjunta
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) El claim, no el pod, es el objeto duradero: los archivos y paquetes instalados montados desde él sobreviven a los reinicios de pods, al reemplazo de nodos o a un ciclo de detención/inicio**
+**Respuesta: C) Los datos en volúmenes persistentes conservados; los paquetes de la capa de contenedor y la memoria del kernel no**
 
-**Explicación:**
-El spawner permite a un usuario adjuntar un PVC que normalmente se monta en el directorio principal del notebook. Como el PVC persiste independientemente del ciclo de vida del pod, el trabajo de un usuario se conserva entre reinicios de pods, reemplazos de nodos o ciclos intencionales de detención/inicio; y la eliminación por inactividad, que detiene en lugar de eliminar el notebook, deja el PVC intacto.
+Revisa las ubicaciones de montaje, el ciclo de vida de PVC/volúmenes y las copias de seguridad. ReadWriteOnce es un modo de acceso de un solo nodo, no una garantía de un solo Pod.
 </details>
 
-5. ¿Por qué la eliminación por inactividad es especialmente importante para los notebooks con GPU?
-   - A) Los notebooks no pueden solicitar GPU en absoluto, por lo que la eliminación es irrelevante para ellos
-   - B) Un notebook pod en ejecución mantiene su asignación de GPU mientras exista, independientemente de su uso activo, por lo que un notebook de GPU inactivo puede ocupar capacidad costosa durante horas
-   - C) La eliminación borra el PVC del notebook para liberar memoria de GPU
-   - D) Los nodos de GPU requieren un reinicio completo del clúster para recuperar capacidad, que la eliminación activa
+5. ¿Cuáles son los valores predeterminados inspeccionados para la eliminación por inactividad?
+
+   - A) Habilitada, con un umbral de inactividad de un minuto
+   - B) Deshabilitada; umbral de inactividad de 1440 minutos, período de comprobación de 1 minuto
+   - C) Habilitada para cada proceso de RStudio y shell
+   - D) Deshabilitada solo para notebooks de GPU
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Un notebook pod en ejecución mantiene su asignación de GPU mientras exista, independientemente de su uso activo, por lo que un notebook de GPU inactivo puede ocupar capacidad costosa durante horas**
+**Respuesta: B) Deshabilitada; umbral de inactividad de 1440 minutos, período de comprobación de 1 minuto**
 
-**Explicación:**
-Un notebook pod mantiene continuamente la asignación de CPU, memoria y GPU solicitada mientras está en ejecución, independientemente de que alguien lo esté utilizando activamente. La eliminación por inactividad detiene (sin eliminar) los notebooks inactivos tras un período configurado, lo que es especialmente valioso para los notebooks de GPU, ya que de otro modo un servidor con GPU inactivo podría retener indefinidamente una costosa capacidad de aceleración.
+El culler usa la actividad del kernel de Jupyter. Los resultados fallidos/vacíos de la API dejan sin cambios la actividad anterior y aun así pueden llevar a la detención. Prueba la imagen y la ruta de acceso reales.
 </details>
 
-6. ¿Cómo solicita acceso a GPU un notebook pod en EKS y cómo interactúa esto con el escalado automático del clúster?
-   - A) Utiliza un programador de GPU dedicado solo para Notebooks, separado del resto del clúster
-   - B) Establece `resources.limits."nvidia.com/gpu"` como cualquier otro pod, compitiendo por los mismos node pools con capacidad de GPU (por ejemplo, NodePools administrados por Karpenter) utilizados por los trabajos de entrenamiento y las cargas de trabajo de inferencia
-   - C) El acceso a GPU para notebooks debe ser asignado manualmente por un administrador mediante SSH al nodo
-   - D) Los notebook pods no pueden solicitar GPU; solo los endpoints de KServe pueden hacerlo
+6. ¿Cómo representa v1.11.0 un Notebook detenido?
+
+   - A) spec.replicas: 0
+   - B) Presencia de kubeflow-resource-stopped; el controlador establece las réplicas de StatefulSet en cero
+   - C) El valor de anotación false significa en ejecución
+   - D) Eliminando su PVC
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Establece `resources.limits."nvidia.com/gpu"` como cualquier otro pod, compitiendo por los mismos node pools con capacidad de GPU (por ejemplo, NodePools administrados por Karpenter) utilizados por los trabajos de entrenamiento y las cargas de trabajo de inferencia**
+**Respuesta: B) Presencia de kubeflow-resource-stopped; el controlador establece las réplicas de StatefulSet en cero**
 
-**Explicación:**
-La selección de GPU del spawner se traduce en una solicitud de recursos estándar `nvidia.com/gpu` en la especificación del pod, anunciada como asignable por el plugin de dispositivos NVIDIA. No se trata de un subsistema de GPU separado: el notebook pod compite por los mismos node pools de GPU que cualquier otra carga de trabajo de GPU y, en EKS, esa capacidad se aprovisiona habitualmente de forma dinámica mediante Karpenter.
+NotebookSpec no tiene un campo replicas. Reanúdalo eliminando la anotación. Incluso una cadena false sigue contando como presente.
 </details>
 
-7. ¿Cuál es la razón típica por la que los equipos crean imágenes personalizadas de notebooks en lugar de utilizar las imágenes estándar del spawner tal como están?
-   - A) Kubeflow requiere imágenes personalizadas y las imágenes estándar no pueden utilizarse en absoluto
-   - B) Para proporcionar a cada científico de datos un entorno idéntico y reproducible con dependencias específicas del equipo preinstaladas, en lugar de instalar paquetes manualmente dentro de un contenedor en ejecución
-   - C) Las imágenes estándar no admiten montajes de PVC
-   - D) Las imágenes personalizadas eliminan la necesidad de un namespace de Profile
+7. ¿Qué garantiza un digest de imagen personalizado?
+
+   - A) Todos los usuarios tienen entornos de ejecución completos idénticos
+   - B) El contenido de imagen referenciado; los datos montados y los cambios en tiempo de ejecución aún pueden diferir
+   - C) Compatibilidad automática con todos los controladores de GPU
+   - D) Que las restricciones de imagen de UI no se puedan omitir mediante la API
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Para proporcionar a cada científico de datos un entorno idéntico y reproducible con dependencias específicas del equipo preinstaladas, en lugar de instalar paquetes manualmente dentro de un contenedor en ejecución**
+**Respuesta: B) El contenido de imagen referenciado; los datos montados y los cambios en tiempo de ejecución aún pueden diferir**
 
-**Explicación:**
-La mayoría de los equipos de producción crean imágenes personalizadas sobre una imagen base ascendente de Kubeflow/Jupyter, incorporando paquetes fijos de Python/R, bibliotecas internas y versiones coincidentes de frameworks de GPU; después, envían la imagen a un registry (por ejemplo, Amazon ECR en EKS) y la referencian directamente desde el spawner. Esto garantiza que dos usuarios con la misma etiqueta de imagen obtengan conjuntos de paquetes idénticos, en lugar de divergir debido a instalaciones manuales.
+Usa comportamiento probado de prefijo de servidor/puerto/UID, dependencias y arquitectura. Una etiqueta mutable por sí sola no fija los bytes de la imagen.
 </details>
 
 ## Preguntas de respuesta corta
 
-8. En una o dos frases, explica cómo interactúa la solicitud de GPU de un notebook pod con Karpenter en EKS y por qué esto importa para el costo.
+8. ¿Por qué detener un notebook de GPU inactivo no garantiza un ahorro de costos inmediato?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-Cuando la especificación de un notebook Pod solicita recursos `nvidia.com/gpu` y ningún nodo existente tiene capacidad, Karpenter aprovisiona una nueva instancia EC2 con GPU para satisfacer el Pod pendiente; dado que las instancias de GPU son costosas, la eliminación por inactividad y el ajuste correcto de las solicitudes de GPU de los notebooks controlan directamente cuánta capacidad de GPU no utilizada paga un equipo entre sesiones activas.
+Las solicitudes de Pod pueden liberarse, pero otras cargas de trabajo, PDB, los límites/políticas de interrupción de NodePool y la gestión de capacidad afectan la terminación del nodo. Los cargos de EC2 pueden continuar mientras el nodo permanezca en ejecución.
 </details>
 
-9. ¿Qué proporciona el aislamiento de Istio por namespace a un Profile de Kubeflow que RBAC de namespace de Kubernetes por sí solo no proporcionaría?
+9. ¿En qué se diferencian RBAC, la autorización de Istio y NetworkPolicy para los notebooks?
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta:**
-RBAC controla quién puede crear/leer/modificar objetos de la API de Kubernetes en un namespace, pero no dice nada sobre el tráfico de red; la `AuthorizationPolicy` por namespace de Istio restringe adicionalmente qué servicios pueden enviar solicitudes realmente al notebook Pod de un usuario en la capa de red, proporcionando aislamiento entre los servidores de notebooks de los usuarios incluso si RBAC por sí solo hubiera permitido cierto acceso a objetos entre namespaces.
+RBAC gobierna las acciones de la API de Kubernetes. La autorización de Istio controla las solicitudes gestionadas por proxies y políticas configurados. NetworkPolicy gobierna el tráfico de red de Pod permitido cuando el CNI la aplica. Ninguna por sí sola garantiza el aislamiento de almacenamiento/IAM/aplicación.
 </details>
 
 ---
