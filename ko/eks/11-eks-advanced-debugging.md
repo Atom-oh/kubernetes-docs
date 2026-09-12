@@ -1263,34 +1263,34 @@ Add-on 부재는 Helm 관리 또는 미설치일 수 있습니다. Pod Running·
 
 Query는 **단일 cluster의 올바른 label을 가진 dataset**과 diagnostics-example namespace를 전제합니다. 공유 backend에서는 실제 cluster/job selector를 추가합니다. cAdvisor·kube-state-metrics 수집이 필요하며 query를 작성한다고 series가 생기지 않습니다. 집계는 명시한 범위 안의 중복 exporter-instance label만 제거합니다. Timestamp·Pod/container identity·last-termination 지표 등 version별 제공 여부를 확인합니다.
 
-#### Fraction of throttled CFS periods per container
+#### 컨테이너별 throttling이 발생한 CFS period 비율
 
 ```promql
 sum by (namespace,pod,container) (rate(container_cpu_cfs_throttled_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m]))
 / on (namespace,pod,container) (sum by (namespace,pod,container) (rate(container_cpu_cfs_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])) > 0)
 ```
 
-#### Top ten containers by throttled-period fraction
+#### throttling period 비율이 높은 컨테이너 10개
 
 ```promql
 topk(10, sum by (namespace,pod,container) (rate(container_cpu_cfs_throttled_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m]))
 / on (namespace,pod,container) (sum by (namespace,pod,container) (rate(container_cpu_cfs_periods_total{namespace="diagnostics-example",container!="",container!="POD"}[5m])) > 0))
 ```
 
-#### Last reported termination reason is OOM; not a new-event count
+#### 마지막 종료 원인이 OOM인 상태 — 신규 이벤트 수를 의미하지 않음
 
 ```promql
 max by (namespace,pod,container) (kube_pod_container_status_last_terminated_reason{namespace="diagnostics-example",reason="OOMKilled"} == 1)
 ```
 
-#### Recent restart increase whose last reported reason is OOM; not exact OOM counts
+#### 최근 재시작이 증가하고 마지막 종료 원인이 OOM인 컨테이너 — 정확한 OOM 횟수와 구분
 
 ```promql
 (max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m])) > 0)
 and on (namespace,pod,container) (max by (namespace,pod,container) (kube_pod_container_status_last_terminated_reason{namespace="diagnostics-example",reason="OOMKilled"} == 1))
 ```
 
-#### Working set / positive configured memory limit per container
+#### 컨테이너별 working set과 0보다 큰 설정 memory limit의 비율
 
 ```promql
 max by (namespace,pod,container) (container_memory_working_set_bytes{namespace="diagnostics-example",container!="",container!="POD"})
@@ -1298,25 +1298,25 @@ max by (namespace,pod,container) (container_memory_working_set_bytes{namespace="
 max by (namespace,pod,container) (kube_pod_container_resource_limits{namespace="diagnostics-example",resource="memory",unit="byte"} > 0)
 ```
 
-#### Estimated regular-container restart increase per Pod over15minutes
+#### Pod별 일반 컨테이너의 최근 15분 재시작 증가 추정치
 
 ```promql
 sum by (namespace,pod) (max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m])))
 ```
 
-#### Top ten Pods by estimated restart increase
+#### 재시작 증가 추정치가 높은 Pod 10개
 
 ```promql
 topk(10, sum by (namespace,pod) (max by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace="diagnostics-example"}[15m]))))
 ```
 
-#### Currently reported CrashLoopBackOff waiting reason
+#### 현재 대기 사유가 CrashLoopBackOff로 보고된 컨테이너
 
 ```promql
 max by (namespace,pod,container) (kube_pod_container_status_waiting_reason{namespace="diagnostics-example",reason="CrashLoopBackOff"} == 1)
 ```
 
-#### Active non-deleting Pods with Ready=false, including Running Pods
+#### 삭제 중이 아닌 활성 Pod의 Ready=false 상태 — Running Pod 포함
 
 ```promql
 ((1 - max by (namespace,pod) (kube_pod_status_ready{namespace="diagnostics-example",condition="true"})) > 0)
@@ -1332,7 +1332,7 @@ Readiness query는 Running-but-NotReady를 포함하고 종료·삭제 중 Pod�
 
 각 블록을 적절한 log group·기간에 별도로 실행합니다. Kubernetes.* field는 collector schema에 의존하므로 실제 record를 확인합니다. Error 문구·OOM keyword는 진단 단서이며 요청 오류율·전체 장애 이력이 아닙니다.
 
-#### Error-message samples, not a request-error rate
+#### 오류 메시지 표본 — 요청 오류율과 구분
 
 ```text
 fields @timestamp, @message, kubernetes.pod_name, kubernetes.namespace_name
@@ -1342,7 +1342,7 @@ fields @timestamp, @message, kubernetes.pod_name, kubernetes.namespace_name
 | limit 100
 ```
 
-#### One Pod in the selected namespace
+#### 선택한 namespace의 특정 Pod
 
 ```text
 fields @timestamp, @message
@@ -1351,7 +1351,7 @@ fields @timestamp, @message
 | limit 100
 ```
 
-#### Application response-time field, only if the log format defines it
+#### 로그 형식에 정의된 경우에만 사용하는 애플리케이션 응답 시간 필드
 
 ```text
 fields @timestamp, @message
@@ -1361,7 +1361,7 @@ fields @timestamp, @message
 | stats avg(response_time) as avg_response_ms, max(response_time) as max_response_ms by bin(5m)
 ```
 
-#### OOM-related log messages requiring correlation
+#### 다른 지표와 함께 확인해야 하는 OOM 관련 로그 메시지
 
 ```text
 fields @timestamp, @message
@@ -1911,12 +1911,12 @@ aws logs put-metric-filter --region "$AWS_REGION" \
 
 기존 MTTD 30/15/5/2분은 검증하지 않은 계획 목표로 보존합니다. 여기 설정이 그 결과를 증명하지는 않습니다. Incident마다 발생·감지·복원 timestamp를 같은 기준으로 측정합니다. ML/anomaly detection만으로 예측 정확도·복구 권한이 생기지 않습니다.
 
-| Level | Original illustrative MTTD target | Capability to verify |
+| 단계 | 기존 MTTD 목표 예시 | 확인할 역량 |
 | --- | --- | --- |
-| Basic | 30 minutes | Basic metrics and manual log investigation |
-| Reactive | 15 minutes | Tuned thresholds, log metrics and dashboards |
-| Proactive | 5 minutes | Correlated alarms and reviewed runbooks |
-| Predictive design goal | 2 minutes | Validated prediction, bounded automation and controlled exercises |
+| 기본 | 30분 | 기본 metrics와 수동 log 조사 |
+| 반응형 | 15분 | 조정된 임계값, log 기반 metrics와 대시보드 |
+| 선제형 | 5분 | 연관 분석한 alarm과 검토된 runbook |
+| 예측형 설계 목표 | 2분 | 검증된 예측, 범위를 제한한 자동화와 통제된 훈련 |
 
 ### EventBridge → Lambda 진단 접수
 
@@ -1999,12 +1999,12 @@ EXPECTED_ALARM_ARN에는 정확한 소유 alarm을 지정합니다. 한 시간 a
 
 변경 runbook을 활성화하기 전에 identity/UID 재확인, 영구 event-id 중복 제거, rate limit, 최소 권한, 동시성 제어, workload/data/PDB 확인, rollback·사후 검증을 구현합니다. Retry·중복 event가 반복 삭제를 일으키면 안 됩니다. 이 classifier가 해당 production 변경 제어를 구현했다고 주장하지 않습니다.
 
-| Example severity | Slack | PagerDuty | Other channels | Mutation policy |
+| 심각도 예시 | Slack | PagerDuty | 기타 채널 | 변경 실행 정책 |
 | --- | --- | --- | --- | --- |
-| P1 Critical | Incidents | Immediate policy | Team lead/on-call email or SMS if wired | Only a reviewed, scoped runbook |
-| P2 High | High alerts | Example15-minute escalation | Team email if wired | Conditional review |
-| P3 Medium | Alerts | Optional | Team email if wired | No automatic change by default |
-| P4 Low | Low alerts | None | Example daily digest | No automatic change |
+| P1 치명 | 사고 알림 | 즉시 호출 정책 | 연동된 경우 팀장·온콜 이메일 또는 SMS | 검토되고 범위가 제한된 runbook만 실행 |
+| P2 높음 | 높은 우선순위 알림 | 15분 후 에스컬레이션 예시 | 연동된 경우 팀 이메일 | 조건부 검토 |
+| P3 중간 | 알림 | 선택 사항 | 연동된 경우 팀 이메일 | 기본적으로 자동 변경 없음 |
+| P4 낮음 | 낮은 우선순위 알림 | 없음 | 일일 요약 예시 | 자동 변경 없음 |
 
 이는 routing 정책 예시이며 모든 channel의 배포·정시 전송 증명이 아닙니다. 감사에서 alarm·topic·policy·Lambda·cloud 자원을 생성하거나 알림·복구를 실행하지 않았습니다.
 
