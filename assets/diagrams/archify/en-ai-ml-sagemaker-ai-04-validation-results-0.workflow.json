@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "SageMaker Qwen PII Validation Workflow and Stop Point",
+    "title": "SageMaker Qwen PII · September 1–2, 2026 record",
     "locale": "en",
     "output": "public/archmaps/en-ai-ml-sagemaker-ai-04-validation-results-0.html",
     "animation": "none",
@@ -36,13 +36,13 @@
       },
       {
         "id": "stop-before-spend",
-        "label": "Stop before spend",
+        "label": "Before GPU training",
         "focus": [
           "partialCleanup",
           "blocked",
           "trainingNotRun"
         ],
-        "note": "One project remained, so GPU training did not start."
+        "note": "One project remained in the September 2 record; this is neither current state nor a zero-total-cost claim."
       }
     ]
   },
@@ -161,7 +161,7 @@
       "col": 1,
       "type": "database",
       "label": "Partial cleanup",
-      "tag": "VERIFIED",
+      "tag": "RECORDED",
       "width": 110
     },
     {
@@ -179,7 +179,7 @@
       "col": 5,
       "type": "external",
       "label": "GPU training skipped",
-      "tag": "NO SPEND",
+      "tag": "NO GPU RUN",
       "width": 142
     }
   ],
@@ -240,7 +240,7 @@
     {
       "from": "blocked",
       "to": "trainingNotRun",
-      "label": "stop before spend",
+      "label": "before GPU run",
       "variant": "security",
       "role": "main"
     }
@@ -248,7 +248,7 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Observed facts",
+      "title": "Historical observations · Sep 1–2",
       "items": [
         "2,200 synthetic records · 30 Python tests · read-only preflight passed",
         "SageMaker MLflow App 3.10.1 · App status contract mismatch",
@@ -262,7 +262,8 @@
       "items": [
         "The SageMaker Training Job was not executed",
         "The EKS GPU Job was not executed",
-        "No fine-tuned F1, training duration, or GPU cost was measured"
+        "No fine-tuned F1, training duration, or GPU cost was measured",
+        "Current AWS residual state and total charges were not rechecked"
       ]
     }
   ]

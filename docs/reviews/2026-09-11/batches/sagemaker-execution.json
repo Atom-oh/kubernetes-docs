@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "73419bc35573be52b371feb558d87efbc0547966890e57da80bf8786d1c1f8ff",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-execution-validation.json. Publicationreviewpending."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0d39f1a6d71ff94506efd32740240aa1048f8b3755ad4003d906e2bfdf1047b3",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-execution-validation.json. Publicationreviewpending."
+  },
+  {
+    "path": "en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "04de65e98bc72f91a3525c46c5bae667bdd7da54095c223f60b1ebf0719f6d15",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-execution-validation.json. Publicationreviewpending."
+  },
+  {
+    "path": "en/quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "ecf9c05f35962ed2e63249626ef3844f1b153fc747e5a8e481fb1f9005685bf1",
+    "summary": "Full read, corrected against implementation/historical primary evidence, validated with 100CPU tests and targetedMarkdowncompile. See sagemaker-execution-validation.json. Publicationreviewpending."
+  }
+]

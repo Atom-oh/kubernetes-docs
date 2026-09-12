@@ -5,10 +5,13 @@
     "title": "SageMaker Qwen PII 파인튜닝 목표 아키텍처",
     "quality_profile": "showcase",
     "animation": "none",
-    "viewBox": [1320, 760],
+    "viewBox": [
+      1320,
+      760
+    ],
     "repository": {
       "url": "https://github.com/Atom-oh/kubernetes-docs",
-      "revision": "16e8dea531b9d0f501bd3e390d6effc86e4d0cce"
+      "revision": "86fcb8b3868092621130ea1e26dc6beb070c3b48"
     }
   },
   "components": [
@@ -17,8 +20,14 @@
       "type": "backend",
       "label": "합성 PII 데이터 생성기",
       "sublabel": "2,200 records · seed 42",
-      "pos": [35, 270],
-      "size": [165, 76],
+      "pos": [
+        35,
+        270
+      ],
+      "size": [
+        165,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/data/generate_dataset.py",
@@ -31,8 +40,14 @@
       "type": "database",
       "label": "Amazon S3",
       "sublabel": "dataset · source · artifacts",
-      "pos": [240, 270],
-      "size": [165, 76],
+      "pos": [
+        240,
+        270
+      ],
+      "size": [
+        165,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/data/dataset-manifest.json",
@@ -45,9 +60,15 @@
       "type": "cloud",
       "label": "SageMaker Unified Studio",
       "sublabel": "project · catalog · membership",
-      "tag": "AWS에서 일부 검증",
-      "pos": [225, 70],
-      "size": [195, 78],
+      "tag": "09-01 부분 관측",
+      "pos": [
+        225,
+        70
+      ],
+      "size": [
+        195,
+        78
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/provision.sh",
@@ -59,10 +80,16 @@
       "id": "training",
       "type": "cloud",
       "label": "SageMaker AI Training Job",
-      "sublabel": "ml.g6e.4xlarge · 3h limit",
+      "sublabel": "ml.g6e.4xlarge · runtime 3h",
       "tag": "미실행",
-      "pos": [445, 270],
-      "size": [180, 76],
+      "pos": [
+        445,
+        270
+      ],
+      "size": [
+        180,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/sagemaker_train.py",
@@ -74,10 +101,16 @@
       "id": "qwen",
       "type": "backend",
       "label": "Qwen3-30B-A3B",
-      "sublabel": "4-bit NF4 · QLoRA",
+      "sublabel": "30.5B total / 3.3B active",
       "tag": "목표 설계",
-      "pos": [665, 270],
-      "size": [170, 76],
+      "pos": [
+        665,
+        270
+      ],
+      "size": [
+        170,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml",
@@ -92,15 +125,25 @@
     {
       "id": "evaluation",
       "type": "backend",
-      "label": "집계 평가",
+      "label": "토큰화·집계 평가",
       "sublabel": "F1 · leakage · round-trip",
       "tag": "코드 검증",
-      "pos": [875, 270],
-      "size": [170, 76],
+      "pos": [
+        875,
+        270
+      ],
+      "size": [
+        170,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/src/metrics.py",
           "label": "metrics"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/src/pii_tokens.py",
+          "label": "replacement"
         }
       ]
     },
@@ -108,10 +151,16 @@
       "id": "managedMlflow",
       "type": "cloud",
       "label": "SageMaker MLflow App",
-      "sublabel": "aggregate-only tracking",
-      "tag": "3.10.1 관측",
-      "pos": [1085, 270],
-      "size": [195, 76],
+      "sublabel": "metrics + adapter artifacts",
+      "tag": "09-01: 3.10.1",
+      "pos": [
+        1085,
+        270
+      ],
+      "size": [
+        195,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json",
@@ -125,8 +174,14 @@
       "label": "EKS GPU Job",
       "sublabel": "same source + dataset",
       "tag": "미실행",
-      "pos": [445, 485],
-      "size": [180, 76],
+      "pos": [
+        445,
+        485
+      ],
+      "size": [
+        180,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/training-job.yaml",
@@ -140,8 +195,14 @@
       "label": "MLflow on EKS",
       "sublabel": "ClusterIP · ephemeral",
       "tag": "미실행",
-      "pos": [690, 485],
-      "size": [180, 76],
+      "pos": [
+        690,
+        485
+      ],
+      "size": [
+        180,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/mlflow.yaml",
@@ -153,9 +214,15 @@
       "id": "inventory",
       "type": "security",
       "label": "Resource Inventory & Teardown",
-      "sublabel": "create · export · delete · verify",
-      "pos": [1040, 485],
-      "size": [230, 76],
+      "sublabel": "Owned resources / private IDs",
+      "pos": [
+        1040,
+        485
+      ],
+      "size": [
+        230,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/teardown.sh",
@@ -269,18 +336,19 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "검증된 범위",
+      "title": "검증 범위와 날짜",
       "items": [
-        "합성 데이터 · 토큰화 · 평가 · 요청 계약",
-        "AWS preflight · MLflow App · 프로젝트 생성 경로"
+        "09-12: CPU 회귀 검사 100개",
+        "09-01: AWS provisioning 관측 기록"
       ]
     },
     {
       "dot": "amber",
       "title": "목표 설계",
       "items": [
-        "SageMaker와 EKS GPU 학습은 실행되지 않았다",
-        "이 다이어그램은 완료 증빙이 아니라 재실행 설계다"
+        "GPU 학습·품질·메모리는 검증되지 않음",
+        "결정론적 치환은 탐지 완전성을 보장하지 않음",
+        "PyTorch 2.8 지원 종료로 GPU 실행 차단"
       ]
     }
   ]

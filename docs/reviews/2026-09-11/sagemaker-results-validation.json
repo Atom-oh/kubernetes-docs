@@ -1,0 +1,337 @@
+{
+  "reviewedAt": "2026-09-12T17:55:49.085415+00:00",
+  "awsOperations": 0,
+  "gpuTraining": false,
+  "modelWeightsDownloaded": false,
+  "pythonTests": {
+    "passed": 100,
+    "command": "python -m pytest tests -q",
+    "scope": "CPU local and injected AWS clients; not a live workflow"
+  },
+  "markdownCompilation": {
+    "passed": 19,
+    "nodeHeapMiB": 512
+  },
+  "sourceHashes": [
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml",
+      "sha256": "0bc1d6d727067583bb49ae969be48f6f7989163112114bc68e9023909a47a2ed"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/data/__init__.py",
+      "sha256": "0720855235ecb73c0c1013982327017ef80510cbdb19710c0f0d0b1d7570a1c0"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/data/generate_dataset.py",
+      "sha256": "763affde22e32ed2d85b12f5a1afb5b6b3ece3d86778a375bcf597c6d02c359a"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/__init__.py",
+      "sha256": "20b050303008172ff253d2aa7967691f9c9ecad259ad0e1dddbba85515219609"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/build_source_bundle.sh",
+      "sha256": "14320d4891bcd1474518f41ac319963bcbd494ba4c6a1e5ba1f0dd7c3ee77496"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/lifecycle.py",
+      "sha256": "ab0ff3570067945870e317a21aa71b6acbc6abc6710a130a19f2d3f329e3bb02"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/preflight.sh",
+      "sha256": "63872e227def85794fbdb811d47656ec712ebdf89d64f48efa95af4a0c13a13e"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/provision.sh",
+      "sha256": "6bf9dcabfa54403c4910ae4450a5c2a4bf2085c2e736f725d50536a163525b89"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/teardown.sh",
+      "sha256": "10ed006192dc353bfe8e3d1d3b7f40ccc09df68d786cb39f83c662fb79ff604c"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/upload_inputs.py",
+      "sha256": "55abb2c5773ed7731fa8dcfd3f8eb0dd2a9ba29171d284f43199a5b1a9e016e4"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/verify_cleanup.sh",
+      "sha256": "f1cdeebf6670f13b67aaeb908aeda1762024b5091f339421478ace8236346f88"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/cluster.yaml",
+      "sha256": "9991fbde3680f6e5bef77fff862d1757a93a037d048208d03cd75301ea03c147"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/export_mlflow.py",
+      "sha256": "194daf45d1b2e12973c888fe1e66894be283b664318e62ecc936b27c797b0376"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/mlflow.yaml",
+      "sha256": "78b0c7a83592d585c305e5d03000dd459b521ef2d31b7487815195545e21f71f"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/namespace.yaml",
+      "sha256": "4207f0235bf853cc9235ac22ddc5b8c66b1b37d06195669df51bd6ce8b7871f5"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/run.sh",
+      "sha256": "1c67d6e5a8cf463e5fe0441eafafc35e8860cae83526b40fe9590e7a8f58a9b6"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/training-job.yaml",
+      "sha256": "0663cdc7cf7b954cd776c0b74088ad31dab0097461526391d6a093dea25e133c"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/verify_export.py",
+      "sha256": "e1f1b6b050d631391581522c10d218e482608c8dc160632d169ffbc518f6fb16"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/sagemaker_train.py",
+      "sha256": "0bef40e3e50012a5ae02aac4407273dbbecf66a100a9ed37a4862125550f8a23"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/__init__.py",
+      "sha256": "3b2edad48bbe1a515075ddfbb45010bccc494dcf7e8220e8fda43a5bbf2cbcea"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/dataset.py",
+      "sha256": "f83b999dcd852a9eaf2b41bef5c0524685b27595dcf04d6801d57a5acd813bf4"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/evaluate.py",
+      "sha256": "1d86cd65998c6a9274ebfd741eeb4da946fcdda195beb161888296ec637078f0"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/metrics.py",
+      "sha256": "52ad5177f7ca037c8aa282e2b26dd959c76ce628df9b9bb641ad6d23b6922a63"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/pii_tokens.py",
+      "sha256": "7611c569d581b812ecf129413d1c2a7cd5052ce1340ab3b2dc65a3f673ff3d6b"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/runtime_contract.py",
+      "sha256": "4974edbdfe17d025e7fd498bdff5f7a56b3c2a7d2410a37786eb4d64103232fa"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/train.py",
+      "sha256": "5ce1936ee6ddafc596e0efcbc2133c7c2c38537c352d82f068d6756c869dfb30"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_config_parity.py",
+      "sha256": "d706c5a0303e47df52b5366a6f5998bd9301cae0493fdb16dee3399610e8bb97"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_dataset.py",
+      "sha256": "9dd809ca11d05530cd1dd4944c851b67a517c9c4ac53c09deb6869885d761a05"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_eks_lifecycle.py",
+      "sha256": "deeb26acf070cff5919da5026613ffa52f50ac9411b9515169f8cde7567d1080"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_eks_manifests.py",
+      "sha256": "4fa19aaeef0ed26816a72b818b3dffd5538091e2eb9622f5be6889eddde36d6f"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_execution_safety.py",
+      "sha256": "3e0f9e125edb93becfa70a9e8876f79d226e9db95936792fec34b0a84231d1fb"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_lifecycle_safety.py",
+      "sha256": "8227aa840e987b79de31fb159a5215cb0ed2dbd2dcfdd1fff482e5f860c65569"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_metrics.py",
+      "sha256": "e5668ced28d2a799250d3ee388f987bd5f5043f50ed7ff4daff9c6e078b48935"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_mlflow_export.py",
+      "sha256": "d5804b48f096a33ad6258ba12cd585b228719bedcbcbecda92ab90156d385e07"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_pii_tokens.py",
+      "sha256": "fc8be0987d60c49f85c1eba18888c8b649e13adc363fbce9bdd11aa5b0332e4f"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_runtime_contract.py",
+      "sha256": "a4bd1178f2e54683e8ee4d6d4367096cd05e789c08e9c7033696bfdd2fd58435"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_sagemaker_request.py",
+      "sha256": "1346cdf54935a7ddb1e0fbf2cec45420b47b856cd60d734531731f256e851f5f"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_training_contract.py",
+      "sha256": "43a5e512778fe26279839fd066c63cb11fb3577a902996e0fee1b26fb8717e59"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_upload_inputs.py",
+      "sha256": "4b6f53d2eea4e386d2ff34f42380985a2cf39585d5afe77dd9d11baf865272ef"
+    }
+  ],
+  "integration": "pending latest-HEAD AI/content review and hosted CI; GPU execution intentionally blocked until supported runtime cohort is validated",
+  "scope": "Historical evidence review, not a new AWS run",
+  "historicalEvidence": [
+    "examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json",
+    "docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md"
+  ],
+  "findings": [
+    "Keep30testsandoneprojectasdatedhistoricalobservations",
+    "Do notinfercurrentstatefromSep1-2record",
+    "NoGPUrunisnotzerototalexperimentcost",
+    "Listabsenceandpermissionerrorsarenotdeletionproof",
+    "Ownership-onlyrerungateandsupportedruntimegate"
+  ],
+  "figures": {
+    "ko": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    },
+    "en": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    },
+    "responsive": {
+      "status": "passed",
+      "cases": [
+        {
+          "locale": "ko",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "1f4358e007028cda8b9305e548b248a9acce5292de2873b4de3f3ad9ee4f44f3"
+        },
+        {
+          "locale": "ko",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "1f4358e007028cda8b9305e548b248a9acce5292de2873b4de3f3ad9ee4f44f3"
+        },
+        {
+          "locale": "ko",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "1f4358e007028cda8b9305e548b248a9acce5292de2873b4de3f3ad9ee4f44f3"
+        },
+        {
+          "locale": "en",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "ff2ec527a4bdb6d2cacb3bd4574d442a9e9127770693721cae0ff446fe1d6dbf"
+        },
+        {
+          "locale": "en",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "ff2ec527a4bdb6d2cacb3bd4574d442a9e9127770693721cae0ff446fe1d6dbf"
+        },
+        {
+          "locale": "en",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "ff2ec527a4bdb6d2cacb3bd4574d442a9e9127770693721cae0ff446fe1d6dbf"
+        }
+      ],
+      "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+    },
+    "pngVisualInspection": "both reviewed; dated title, no GPU run, no currentstate/zero-totalcostclaim"
+  },
+  "siteValidation": {
+    "nodeTestsPassed": 122,
+    "links": "passed",
+    "pngAssets": "passed",
+    "languageParity": "passed",
+    "fullBuild": "deferred to hosted ARM CI"
+  },
+  "minimalEnvironmentTests": {
+    "passed": 100,
+    "python": "3.12",
+    "installed": "pytest8.4.2/PyYAML6.0.3/boto3 1.42.97 only"
+  }
+}

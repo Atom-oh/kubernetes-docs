@@ -6,10 +6,13 @@
     "locale": "en",
     "quality_profile": "showcase",
     "animation": "none",
-    "viewBox": [1320, 760],
+    "viewBox": [
+      1320,
+      760
+    ],
     "repository": {
       "url": "https://github.com/Atom-oh/kubernetes-docs",
-      "revision": "16e8dea531b9d0f501bd3e390d6effc86e4d0cce"
+      "revision": "86fcb8b3868092621130ea1e26dc6beb070c3b48"
     }
   },
   "components": [
@@ -18,8 +21,14 @@
       "type": "backend",
       "label": "Synthetic PII Generator",
       "sublabel": "2,200 records · seed 42",
-      "pos": [35, 270],
-      "size": [165, 76],
+      "pos": [
+        35,
+        270
+      ],
+      "size": [
+        165,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/data/generate_dataset.py",
@@ -32,8 +41,14 @@
       "type": "database",
       "label": "Amazon S3",
       "sublabel": "dataset · source · artifacts",
-      "pos": [240, 270],
-      "size": [165, 76],
+      "pos": [
+        240,
+        270
+      ],
+      "size": [
+        165,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/data/dataset-manifest.json",
@@ -46,9 +61,15 @@
       "type": "cloud",
       "label": "SageMaker Unified Studio",
       "sublabel": "project · catalog · membership",
-      "tag": "Partially observed in AWS",
-      "pos": [225, 70],
-      "size": [195, 78],
+      "tag": "Observed: 2026-09-01",
+      "pos": [
+        225,
+        70
+      ],
+      "size": [
+        195,
+        78
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/provision.sh",
@@ -60,10 +81,16 @@
       "id": "training",
       "type": "cloud",
       "label": "SageMaker AI Training Job",
-      "sublabel": "ml.g6e.4xlarge · 3h limit",
+      "sublabel": "ml.g6e.4xlarge · runtime 3h",
       "tag": "Not executed",
-      "pos": [445, 270],
-      "size": [180, 76],
+      "pos": [
+        445,
+        270
+      ],
+      "size": [
+        180,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/sagemaker_train.py",
@@ -75,10 +102,16 @@
       "id": "qwen",
       "type": "backend",
       "label": "Qwen3-30B-A3B",
-      "sublabel": "4-bit NF4 · QLoRA",
+      "sublabel": "30.5B total / 3.3B active",
       "tag": "Target design",
-      "pos": [665, 270],
-      "size": [170, 76],
+      "pos": [
+        665,
+        270
+      ],
+      "size": [
+        170,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml",
@@ -93,15 +126,25 @@
     {
       "id": "evaluation",
       "type": "backend",
-      "label": "Aggregate Evaluation",
+      "label": "Tokenization / metrics",
       "sublabel": "F1 · leakage · round-trip",
       "tag": "Code validated",
-      "pos": [875, 270],
-      "size": [170, 76],
+      "pos": [
+        875,
+        270
+      ],
+      "size": [
+        170,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/src/metrics.py",
           "label": "metrics"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/src/pii_tokens.py",
+          "label": "replacement"
         }
       ]
     },
@@ -109,10 +152,16 @@
       "id": "managedMlflow",
       "type": "cloud",
       "label": "SageMaker MLflow App",
-      "sublabel": "aggregate-only tracking",
-      "tag": "3.10.1 observed",
-      "pos": [1085, 270],
-      "size": [195, 76],
+      "sublabel": "metrics + adapter artifacts",
+      "tag": "09-01: 3.10.1",
+      "pos": [
+        1085,
+        270
+      ],
+      "size": [
+        195,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json",
@@ -126,8 +175,14 @@
       "label": "EKS GPU Job",
       "sublabel": "same source + dataset",
       "tag": "Not executed",
-      "pos": [445, 485],
-      "size": [180, 76],
+      "pos": [
+        445,
+        485
+      ],
+      "size": [
+        180,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/training-job.yaml",
@@ -141,8 +196,14 @@
       "label": "MLflow on EKS",
       "sublabel": "ClusterIP · ephemeral",
       "tag": "Not executed",
-      "pos": [690, 485],
-      "size": [180, 76],
+      "pos": [
+        690,
+        485
+      ],
+      "size": [
+        180,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/mlflow.yaml",
@@ -154,9 +215,15 @@
       "id": "inventory",
       "type": "security",
       "label": "Resource Inventory & Teardown",
-      "sublabel": "create · export · delete · verify",
-      "pos": [1040, 485],
-      "size": [230, 76],
+      "sublabel": "Owned resources / private IDs",
+      "pos": [
+        1040,
+        485
+      ],
+      "size": [
+        230,
+        76
+      ],
       "sources": [
         {
           "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/teardown.sh",
@@ -270,18 +337,19 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Validated Scope",
+      "title": "Validation scope and dates",
       "items": [
-        "Synthetic data · tokenization · evaluation · request contracts",
-        "AWS preflight · MLflow App · project creation path"
+        "Sep 12: 100 CPU regression tests",
+        "09-01: historical AWS provisioning observations"
       ]
     },
     {
       "dot": "amber",
       "title": "Target Design",
       "items": [
-        "SageMaker and EKS GPU training were not executed",
-        "This diagram is a rerun design, not completion evidence"
+        "GPU training, quality and memory remain unverified",
+        "Deterministic replacement does not prove complete detection",
+        "GPU execution blocked: PyTorch 2.8 end of patch"
       ]
     }
   ]
