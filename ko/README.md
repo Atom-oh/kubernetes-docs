@@ -341,6 +341,7 @@
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [트러블슈팅 플레이북](./ops/16-troubleshooting-playbook.md) | [퀴즈](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
+17. [EKS Spot 운영 적용 실험과 결과 판정](./ops/17-spot-production-experiments.md) | [퀴즈](./quizzes/ops/17-spot-production-experiments-quiz.md)
 
 ## 실습 가이드
 

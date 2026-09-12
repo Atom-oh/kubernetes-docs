@@ -1,5 +1,7 @@
 # Scaling Strategies
 
+> **Production validation**: Before adopting Spot, use [EKS Spot Production Experiments and Result Assessment](./17-spot-production-experiments.md) to verify reclamation, fallback, correctness, and cost. Configuration examples and projected savings are not measurements.
+
 > **Review baseline**: Prometheus Adapter 0.12.0 / chart 5.3.0, KEDA 2.20.2, VPA 1.7.1 / official chart 0.12.0, Goldilocks 4.16.1 / chart 11.1.0\
 > **Last reviewed**: September 11, 2026. Versioned charts, CRDs, Kubernetes OpenAPI and local rendering were checked. No live installation, load test, SQS/database access or Pod resize was performed.
 

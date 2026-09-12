@@ -380,6 +380,7 @@
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [Zonal 클러스터 운영 전략](ops/15-zonal-operations-guide.md)
   * [트러블슈팅 플레이북](ops/16-troubleshooting-playbook.md)
+  * [EKS Spot 운영 적용 실험과 결과 판정](ops/17-spot-production-experiments.md)
 
 ## Lab Guides
 
@@ -685,3 +686,4 @@
   * [Tekton Pipelines 퀴즈](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Zonal 클러스터 운영 전략 퀴즈](quizzes/ops/15-zonal-operations-guide-quiz.md)
   * [트러블슈팅 플레이북 퀴즈](quizzes/ops/16-troubleshooting-playbook-quiz.md)
+  * [EKS Spot 운영 적용 실험 퀴즈](quizzes/ops/17-spot-production-experiments-quiz.md)
