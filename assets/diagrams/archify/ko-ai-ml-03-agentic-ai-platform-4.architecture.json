@@ -2,240 +2,161 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kagent 아키텍처",
-    "output": "ko-ai-ml-03-agentic-ai-platform-4.html",
+    "title": "Kagent0.10.1: 선언과 실행 경계",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
-      900,
-      560
+      1250,
+      570
     ],
-    "views": [
-      {
-        "id": "control",
-        "label": "Kagent 제어 경로",
-        "focus": [
-          "controller",
-          "crd",
-          "runtime"
-        ],
-        "note": "Kagent Controller가 Agent CRD를 조정(reconcile)해 Agent Runtime을 기동한다."
-      },
-      {
-        "id": "agent",
-        "label": "AI 에이전트 구성요소",
-        "focus": [
-          "llm",
-          "tools",
-          "memory",
-          "state",
-          "runtime"
-        ],
-        "note": "LLM 백엔드·도구 세트·메모리 스토어·상태 관리가 각각 추론, 실행, 저장/조회, 관리 역할로 Runtime에 연결된다."
-      }
-    ]
+    "output": "ko-ai-ml-03-agentic-ai-platform-4.html"
   },
   "components": [
+    {
+      "id": "agent",
+      "type": "cloud",
+      "label": "Agent custom resource",
+      "sublabel": "kagent.dev/v1alpha2",
+      "pos": [
+        40,
+        75
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
     {
       "id": "controller",
       "type": "backend",
       "label": "Kagent Controller",
-      "sublabel": "Kubernetes 컨트롤러",
+      "sublabel": "참조 해석·workload 조정",
       "pos": [
-        620,
-        60
+        490,
+        75
       ],
       "size": [
-        200,
-        60
-      ]
-    },
-    {
-      "id": "crd",
-      "type": "security",
-      "label": "Agent CRD",
-      "sublabel": "kagent.dev/v1alpha1 Agent",
-      "pos": [
-        620,
-        190
-      ],
-      "size": [
-        200,
-        60
+        235,
+        76
       ]
     },
     {
       "id": "runtime",
       "type": "backend",
-      "label": "Agent Runtime",
-      "sublabel": "에이전트 실행 환경",
+      "label": "Go / Python ADK",
+      "sublabel": "예제 runtime:go",
       "pos": [
-        620,
-        340
+        940,
+        75
       ],
       "size": [
-        200,
-        110
+        235,
+        76
       ]
     },
     {
-      "id": "llm",
+      "id": "model",
       "type": "external",
-      "label": "LLM 백엔드",
-      "sublabel": "LiteLLM 게이트웨이 경유",
+      "label": "ModelConfig",
+      "sublabel": "승인된 model backend",
       "pos": [
-        60,
-        80
+        40,
+        365
       ],
       "size": [
-        190,
-        60
+        235,
+        76
       ]
     },
     {
-      "id": "tools",
-      "type": "cloud",
-      "label": "도구 세트",
-      "sublabel": "HTTP / Milvus / Python 도구",
+      "id": "mcp",
+      "type": "external",
+      "label": "RemoteMCPServer",
+      "sublabel": "서버가 도구 권한 적용",
       "pos": [
-        60,
-        200
+        490,
+        365
       ],
       "size": [
-        190,
-        60
+        235,
+        76
       ]
     },
     {
-      "id": "memory",
+      "id": "storage",
       "type": "database",
-      "label": "메모리 스토어",
-      "sublabel": "Redis",
+      "label": "세션·메모리 저장",
+      "sublabel": "설정·tenant 경계 확인",
       "pos": [
-        60,
-        320
+        940,
+        365
       ],
       "size": [
-        190,
-        60
-      ]
-    },
-    {
-      "id": "state",
-      "type": "database",
-      "label": "상태 관리",
-      "sublabel": "에이전트 상태",
-      "pos": [
-        60,
-        440
-      ],
-      "size": [
-        190,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Kagent 아키텍처",
-      "wraps": [
-        "controller",
-        "crd",
-        "runtime"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "AI 에이전트",
-      "wraps": [
-        "llm",
-        "tools",
-        "memory",
-        "state"
+        235,
+        76
       ]
     }
   ],
   "connections": [
     {
-      "id": "controller-crd",
+      "id": "watch",
+      "from": "agent",
+      "to": "controller",
+      "label": "감시 / reconcile"
+    },
+    {
+      "id": "deploy",
       "from": "controller",
-      "to": "crd",
-      "label": "감시 / 조정",
-      "variant": "emphasis",
-      "labelAt": [
-        720,
-        134
-      ]
+      "to": "runtime",
+      "label": "Deployment 조정",
+      "variant": "emphasis"
     },
     {
-      "id": "crd-runtime",
-      "from": "crd",
-      "to": "runtime",
-      "label": "기동",
-      "variant": "emphasis",
-      "labelAt": [
-        720,
-        264
-      ]
+      "id": "model-ref",
+      "from": "model",
+      "to": "controller",
+      "label": "modelConfig",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
     },
     {
-      "id": "llm-runtime",
-      "from": "llm",
-      "to": "runtime",
-      "label": "추론",
-      "labelAt": [
-        330,
-        110
-      ]
+      "id": "mcp-call",
+      "from": "runtime",
+      "to": "mcp",
+      "label": "허용된 도구 호출",
+      "fromSide": "bottom",
+      "toSide": "right"
     },
     {
-      "id": "tools-runtime",
-      "from": "tools",
-      "to": "runtime",
-      "label": "실행",
+      "id": "state",
+      "from": "runtime",
+      "to": "storage",
+      "label": "구성된 저장 경로",
+      "fromSide": "bottom",
+      "toSide": "top",
       "labelAt": [
-        330,
-        230
-      ]
-    },
-    {
-      "id": "memory-runtime",
-      "from": "memory",
-      "to": "runtime",
-      "label": "저장 / 조회",
-      "labelAt": [
-        330,
-        350
-      ]
-    },
-    {
-      "id": "state-runtime",
-      "from": "state",
-      "to": "runtime",
-      "label": "관리",
-      "labelAt": [
-        330,
-        470
+        1060,
+        250
       ]
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Agent CRD 스펙 (예시)",
+      "title": "CRD와 Agent 인스턴스",
       "items": [
-        "llm: provider litellm, model llama3-70b",
-        "tools: web_search(http), document_search(milvus), calculator(python)",
-        "memory: redis, ttl 3600"
+        "CRD가 API를 정의하고 controller가 Agent 리소스를 조정합니다.",
+        "LangGraph는 별도 프레임워크이며 연결 시 명시적 통합이 필요합니다."
       ]
     },
     {
-      "dot": "emerald",
-      "title": "라이프사이클 관리",
+      "dot": "cyan",
+      "title": "credential과 도구 권한",
       "items": [
-        "Kagent는 Kubernetes 네이티브 AI 에이전트 라이프사이클 관리 도구",
-        "replicas 2, autoscaling 2~10 (CPU 70%)"
+        "OpenAI apiKeySecret의 기본 translator는 secret 환경 변수를 만듭니다.",
+        "파일 credential 정책은 검증한 BYO/runtime/gateway 경로가 필요합니다.",
+        "도구 이름이나 replicas만으로 권한·HA가 보장되지 않습니다."
       ]
     }
   ]

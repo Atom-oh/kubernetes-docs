@@ -1,9 +1,9 @@
 # Building an Agentic AI Platform on EKS
 
-> **Supported Versions**: EKS 1.31+, vLLM 0.6+, Karpenter 1.0+
-> **Last Updated**: September 9, 2026
+> **Review baseline**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
+> **Last Updated**: September 12, 2026
 
-Agentic AI goes beyond simple question-answering to autonomously create plans, use tools, and iteratively achieve goals. This chapter covers how to build a production-grade Agentic AI platform on EKS.
+Agentic AI goes beyond simple question-answering to autonomously create plans, use tools, and iteratively achieve goals. This chapter covers how to design an Agentic AI platform and its operating boundaries on EKS.
 
 ## 1. Agentic AI Platform Overview
 
@@ -11,7 +11,7 @@ Agentic AI goes beyond simple question-answering to autonomously create plans, u
 
 Agentic AI is an autonomous AI system with the following characteristics:
 
-![An agentic AI system applies four characteristics -- autonomous planning, tool-based execution, iterative improvement, and state/memory management -- onto a goal-plan-execute-evaluate loop that either returns to planning or completes.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png)
+![Goal, planning, execution and evaluation with authorization, evidence and retry budgets, ending in a result or abstention.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-0.html)
 
@@ -20,7 +20,7 @@ Agentic AI is an autonomous AI system with the following characteristics:
 3. **Iterative Improvement**: Evaluates execution results and modifies plans as needed.
 4. **State Management**: Maintains state and memory for long-running tasks.
 
-### Why Kubernetes is Needed
+### When to Choose Kubernetes
 
 Kubernetes provides the following core capabilities for Agentic AI platforms:
 
@@ -28,267 +28,30 @@ Kubernetes provides the following core capabilities for Agentic AI platforms:
 |-------------|---------------------|
 | GPU Orchestration | Device Plugin, GPU Operator, MIG |
 | Auto Scaling | HPA, VPA, Karpenter |
-| Multi-tenant Isolation | Namespace, NetworkPolicy, ResourceQuota |
-| High Availability | ReplicaSet, PodDisruptionBudget |
-| Service Mesh | Istio, Gateway API |
+| Multi-tenant Isolation | RBAC, Namespace, enforced NetworkPolicy, workload identity |
+| High Availability | replicas, probes, placement and recovery tests |
+| Service Mesh | configured gateway/mesh implementation |
 | Cost Optimization | Spot instances, Node consolidation |
 
 ### Four Key Technical Challenges
 
 Key challenges to solve when building an Agentic AI platform:
 
-![Four technical challenges in running agentic AI at scale -- GPU resource management, multi-LLM integration, workflow orchestration, and real-time cost optimization -- each paired with the tools and techniques that address it.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
+![GPU placement, provider integration, distinct LangGraph and Kagent ADK runtimes, and cost measurement with enforced budgets.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-1.html)
 
 ---
 
-## 2. GPU Infrastructure Configuration
+## 2. GPU and Cost Baselines
 
-### GPU Instance Type Comparison
+Agents using external model APIs do not necessarily need GPUs. Self-hosted inference requires device selection based on weights/precision, KV cache, concurrency, CPU architecture and driver compatibility. Use the [reviewed GPU guide](01-ai-ml-workloads.md) and avoid duplicate driver/toolkit installation on AL2023 NVIDIA AMIs.
 
-Major GPU instance types available on AWS:
+MIG partitions supported GPUs. Time-slicing within one MIG instance does not add memory/fault isolation between its sharing workloads; it is not a software security boundary. Likewise, 80 GB does not generally fit 70B FP16 weights.
 
-| Instance | GPU | GPU Memory | Use Case | Hourly Cost (On-Demand) |
-|----------|-----|------------|----------|------------------------|
-| **p5.48xlarge** | 8x H100 | 640GB | Large-scale training, very large model inference | ~$98.32 |
-| **p4d.24xlarge** | 8x A100 | 320GB | Distributed training, 70B+ model inference | ~$32.77 |
-| **g5.xlarge** | 1x A10G | 24GB | Small-medium model inference | ~$1.01 |
-| **g5.48xlarge** | 8x A10G | 192GB | Multi-model serving | ~$16.29 |
-| **g6.xlarge** | 1x L4 | 24GB | Cost-effective inference | ~$0.80 |
-| **g6.48xlarge** | 8x L4 | 192GB | Large-scale inference cluster | ~$13.35 |
-| **inf2.xlarge** | 1x Inferentia2 | 32GB | AWS-optimized inference | ~$0.76 |
+GPU Operator Helm values are different from ConfigMap/HelmRelease resources. Passing a Flux HelmRelease as helm --values does not apply the intended settings. MIG manager ConfigMap references, profile node labels and plugin strategy must agree. device-plugin.config labels select a configuration key, not the ConfigMap name. MIG reconfiguration can disrupt workloads and was not executed in this audit.
 
-### Multi-Instance GPU (MIG) Configuration
-
-NVIDIA A100/H100 GPUs can be physically partitioned through MIG to isolate multiple workloads.
-
-#### MIG Profiles (A100 80GB Reference)
-
-| Profile | GPU Memory | SM Count | Use Case |
-|---------|-----------|----------|----------|
-| 1g.10gb | 10GB | 14 | Small model inference, development |
-| 2g.20gb | 20GB | 28 | 7B model inference |
-| 3g.40gb | 40GB | 42 | 13B model inference |
-| 4g.40gb | 40GB | 56 | Large batch inference |
-| 7g.80gb | 80GB | 98 | 70B model, training |
-
-#### NVIDIA GPU Operator Deployment
-
-```yaml
-# gpu-operator-values.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gpu-operator-config
-  namespace: gpu-operator
-data:
-  mig.strategy: "mixed"  # single or mixed
----
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: gpu-operator
-  namespace: gpu-operator
-spec:
-  interval: 10m
-  chart:
-    spec:
-      chart: gpu-operator
-      version: "v24.9.0"
-      sourceRef:
-        kind: HelmRepository
-        name: nvidia
-        namespace: flux-system
-  values:
-    operator:
-      defaultRuntime: containerd
-    mig:
-      strategy: mixed
-    devicePlugin:
-      enabled: true
-      config:
-        name: time-slicing-config
-        default: any
-    gfd:
-      enabled: true
-    dcgmExporter:
-      enabled: true
-      serviceMonitor:
-        enabled: true
-```
-
-```bash
-# GPU Operator installation
-helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-helm repo update
-
-helm install gpu-operator nvidia/gpu-operator \
-  --namespace gpu-operator \
-  --create-namespace \
-  --values gpu-operator-values.yaml
-
-# Check MIG configuration
-kubectl get nodes -l nvidia.com/mig.capable=true \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.status.allocatable}{"\n"}{end}'
-```
-
-#### MIG Partition Configuration
-
-```yaml
-# mig-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mig-parted-config
-  namespace: gpu-operator
-data:
-  config.yaml: |
-    version: v1
-    mig-configs:
-      # Development environment: Small partitions for many users
-      development:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "1g.10gb": 7
-
-      # Production: Medium-sized partitions
-      production-inference:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "2g.20gb": 3
-            "1g.10gb": 1
-
-      # Large models: Full GPU usage
-      large-model:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "7g.80gb": 1
-```
-
-### Time-Slicing Configuration
-
-For GPUs that don't support MIG (A10G, L4, etc.), Time-Slicing allows GPU sharing.
-
-```yaml
-# time-slicing-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: time-slicing-config
-  namespace: gpu-operator
-data:
-  any: |
-    version: v1
-    flags:
-      migStrategy: none
-    sharing:
-      timeSlicing:
-        renameByDefault: false
-        failRequestsGreaterThanOne: false
-        resources:
-          - name: nvidia.com/gpu
-            replicas: 4  # Split one GPU into 4
----
-# Apply Time-Slicing to node
-apiVersion: v1
-kind: Node
-metadata:
-  name: gpu-node-1
-  labels:
-    nvidia.com/device-plugin.config: time-slicing-config
-```
-
-#### MIG vs Time-Slicing Comparison
-
-| Characteristic | MIG | Time-Slicing |
-|----------------|-----|--------------|
-| **Isolation Level** | Hardware isolation (memory, SM) | Software isolation (time division) |
-| **Supported GPUs** | A100, H100 | All NVIDIA GPUs |
-| **Memory Guarantee** | Guaranteed | Shared (contention possible) |
-| **Overhead** | Low | Context switching overhead |
-| **Flexibility** | Requires reconfiguration | Dynamically adjustable |
-| **Use Cases** | Production, multi-tenant | Development, batch processing |
-
-### Karpenter NodePool Configuration
-
-```yaml
-# gpu-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-inference
-spec:
-  template:
-    metadata:
-      labels:
-        workload-type: inference
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - g5.xlarge
-            - g5.2xlarge
-            - g5.4xlarge
-            - g6.xlarge
-            - g6.2xlarge
-        - key: "karpenter.k8s.aws/instance-gpu-count"
-          operator: Gt
-          values: ["0"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodes
-      taints:
-        - key: nvidia.com/gpu
-          value: "true"
-          effect: NoSchedule
-  limits:
-    nvidia.com/gpu: 100
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 5m
-    budgets:
-      - nodes: "20%"
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-nodes
-spec:
-  amiSelectorTerms:
-    - alias: al2023@latest
-  role: KarpenterNodeRole-${CLUSTER_NAME}
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ${CLUSTER_NAME}
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ${CLUSTER_NAME}
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 200Gi
-        volumeType: gp3
-        iops: 10000
-        throughput: 500
-        deleteOnTermination: true
-  tags:
-    Environment: production
-    Workload: ai-inference
-```
-
----
+Prices need region/OS/purchase mode/date and quota context. The previous unsourced hourly table and fixed savings percentages are not current pricing evidence. Compare self-hosted total GPU idle time, storage/transfer, operation and recovery cost against measured successful throughput.
 
 ## 3. Model Serving (vLLM)
 
@@ -296,248 +59,15 @@ spec:
 
 vLLM provides high-performance LLM inference through the following core technologies:
 
-![Four vLLM core technologies -- PagedAttention, continuous batching, prefix caching, and chunked prefill -- each mapped to the performance benefit it delivers: memory efficiency, throughput, latency, or long-context support.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
+![PagedAttention, continuous batching, prefix caching and chunked prefill, with workload-dependent memory, throughput and latency measurements.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-2.html)
 
-### vLLM Deployment Configuration
+### Reviewed Serving Path
 
-```yaml
-# vllm-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vllm-llama3-70b
-  namespace: ai-inference
-  labels:
-    app: vllm
-    model: llama3-70b
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vllm
-      model: llama3-70b
-  template:
-    metadata:
-      labels:
-        app: vllm
-        model: llama3-70b
-    spec:
-      nodeSelector:
-        workload-type: inference
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Equal
-          value: "true"
-          effect: NoSchedule
-      containers:
-        - name: vllm
-          image: vllm/vllm-openai:v0.6.4
-          ports:
-            - containerPort: 8000
-              name: http
-          env:
-            - name: HUGGING_FACE_HUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: huggingface-token
-                  key: token
-            - name: VLLM_ATTENTION_BACKEND
-              value: "FLASH_ATTN"
-          args:
-            - "--model"
-            - "meta-llama/Meta-Llama-3-70B-Instruct"
-            - "--tensor-parallel-size"
-            - "4"
-            - "--gpu-memory-utilization"
-            - "0.95"
-            - "--max-model-len"
-            - "8192"
-            - "--enable-prefix-caching"
-            - "--enable-chunked-prefill"
-            - "--max-num-batched-tokens"
-            - "32768"
-            - "--trust-remote-code"
-          resources:
-            requests:
-              nvidia.com/gpu: 4
-              memory: "200Gi"
-              cpu: "32"
-            limits:
-              nvidia.com/gpu: 4
-              memory: "250Gi"
-              cpu: "48"
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 300
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 600
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-          volumeMounts:
-            - name: model-cache
-              mountPath: /root/.cache/huggingface
-            - name: shm
-              mountPath: /dev/shm
-      volumes:
-        - name: model-cache
-          persistentVolumeClaim:
-            claimName: model-cache-pvc
-        - name: shm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 64Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-llama3-70b
-  namespace: ai-inference
-spec:
-  selector:
-    app: vllm
-    model: llama3-70b
-  ports:
-    - port: 8000
-      targetPort: 8000
-      name: http
-  type: ClusterIP
-```
+Use the [current vLLM guide](02-vllm-deployment.md) for 0.29.0 image/model revisions, startup probes, private Service and actual CLI options. A single-GPU NodePool cannot place the former four-GPU/200Gi Pod. Distinguish TP/PP groups from independent replicas and calculate memory needs.
 
-### Performance Optimization Settings
-
-#### Tensor Parallelism
-
-Distributing large models across multiple GPUs:
-
-```yaml
-# Recommended settings by model size
-# 7B model: 1 GPU
-# 13B model: 1-2 GPU
-# 70B model: 4 GPU (A100) or 8 GPU (A10G)
-# 405B model: 8 GPU (H100)
-
-args:
-  - "--tensor-parallel-size"
-  - "4"  # Adjust to match GPU count
-```
-
-#### KV Cache Management
-
-```yaml
-args:
-  # Allocate 95% of GPU memory to KV cache
-  - "--gpu-memory-utilization"
-  - "0.95"
-
-  # Block size setting (default: 16)
-  - "--block-size"
-  - "16"
-
-  # Swap space setting (CPU memory)
-  - "--swap-space"
-  - "32"  # In GB
-```
-
-#### Prefix Caching
-
-Caching for repeated system prompts:
-
-```yaml
-args:
-  - "--enable-prefix-caching"
-
-# Effect: Reduces Time To First Token (TTFT) by 50-80%
-# for requests using identical system prompts
-```
-
-#### Chunked Prefill
-
-Long context processing optimization:
-
-```yaml
-args:
-  - "--enable-chunked-prefill"
-  - "--max-num-batched-tokens"
-  - "32768"
-
-# Effect: Stabilizes response latency for workloads
-# with mixed long and short prompts
-```
-
-### Model Serving Patterns
-
-#### Single Model Pod
-
-```yaml
-# Simplest pattern: One Pod serving one model
-spec:
-  containers:
-    - name: vllm
-      args:
-        - "--model"
-        - "meta-llama/Meta-Llama-3-8B-Instruct"
-```
-
-#### Disaggregated Serving with llm-d
-
-Separating Prefill and Decode for optimization:
-
-```yaml
-# llm-d-prefill.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llm-d-prefill
-spec:
-  replicas: 2
-  template:
-    spec:
-      containers:
-        - name: llm-d
-          image: llm-d/prefill:latest
-          args:
-            - "--role"
-            - "prefill"
-            - "--model"
-            - "meta-llama/Meta-Llama-3-70B-Instruct"
-          resources:
-            requests:
-              nvidia.com/gpu: 4
----
-# llm-d-decode.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llm-d-decode
-spec:
-  replicas: 4
-  template:
-    spec:
-      containers:
-        - name: llm-d
-          image: llm-d/decode:latest
-          args:
-            - "--role"
-            - "decode"
-            - "--prefill-endpoint"
-            - "http://llm-d-prefill:8000"
-          resources:
-            requests:
-              nvidia.com/gpu: 2
-```
-
----
+Prefix cache reuses supported KV prefixes, not full responses. GPU memory utilization is not solely a KV-cache fraction, and swap-space is absent from current CLI. llm-d disaggregation is not two invented prefill/decode images with role arguments; validate its real release's model server, KV connector, scheduler, gateway and hardware/network combination.
 
 ## 4. Inference Gateway
 
@@ -547,561 +77,78 @@ Extending the Kubernetes Gateway API to efficiently route AI inference workloads
 
 ### Kgateway + InferencePool Architecture
 
-![A client request passes through a Gateway and an HTTPRoute to an InferencePool, where the Endpoint Picker selects one of the vLLM pods using least-loaded or prefix-aware selection.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
+![An HTTPRoute references an InferencePool; the gateway uses EPP selection to proxy to a model Pod. Configuration resources are distinct from proxy hops.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-3.html)
 
-#### InferencePool CRD
+#### InferencePool v1
+
+Gateway API and Gateway API Inference Extension are separate APIs. Extension 1.6.1 uses inference.networking.k8s.io/v1 with targetPorts and endpointPickerRef. The former invented EndpointPicker CRD/endpointPickerConfig is not this schema.
+
+This schema-checked example requires the EPP Service on 9002, model Pods and a supporting gateway controller. InferencePool alone does not configure authentication, rate limits or a prefix-aware selection algorithm.
 
 ```yaml
-# inferencepool.yaml
-apiVersion: inference.networking.x-k8s.io/v1alpha1
+apiVersion: inference.networking.k8s.io/v1
 kind: InferencePool
 metadata:
-  name: llama3-pool
+  name: model-pool
   namespace: ai-inference
 spec:
-  targetPortNumber: 8000
   selector:
     matchLabels:
-      app: vllm
-      model: llama3-70b
-  endpointPickerConfig:
-    # Load balancing strategy
-    extensionRef:
-      name: prefix-aware-picker
-      group: inference.networking.x-k8s.io
-      kind: EndpointPicker
----
-apiVersion: inference.networking.x-k8s.io/v1alpha1
-kind: EndpointPicker
-metadata:
-  name: prefix-aware-picker
-  namespace: ai-inference
-spec:
-  type: PrefixAware
-  config:
-    # Prefix cache hit rate optimization
-    prefixHashBuckets: 1024
-    fallbackStrategy: LeastLoaded
-    loadMetric: pending_requests
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: llama3-route
-  namespace: ai-inference
-spec:
-  parentRefs:
-    - name: ai-gateway
-      namespace: ai-inference
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /v1/chat/completions
-          headers:
-            - name: x-model
-              value: llama3-70b
-      backendRefs:
-        - group: inference.networking.x-k8s.io
-          kind: InferencePool
-          name: llama3-pool
-          port: 8000
+      app: vllm-demo
+  targetPorts:
+    - number: 8000
+  endpointPickerRef:
+    name: model-epp
+    kind: Service
+    group: ""
+    port:
+      number: 9002
+    failureMode: FailClose
 ```
 
-### LiteLLM Integrated Gateway
+The selector only matches same-namespace Pods. EndpointPickerRef defaults to a Service reference and FailClose. Validate HTTPRoute, EPP configuration/version support, TLS and gateway status together. API definitions or Kgateway installation do not enable every plugin capability.
 
-LiteLLM unifies various LLM providers under a single API.
+### LiteLLM 1.100.1 Provider Gateway
+
+LiteLLM provider adaptation and InferencePool endpoint selection are different layers. Provider APIs differ in paths, authentication, payloads, responses and streaming; forwarding OpenAI JSON unchanged to an Anthropic endpoint is not a valid adapter.
+
+The current Router fallback shape is below. Wire proxy command/args to the actual config file and separately supply Redis/database, credentials and callbacks where needed.
 
 ```yaml
-# litellm-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: litellm-gateway
-  namespace: ai-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: litellm
-  template:
-    metadata:
-      labels:
-        app: litellm
-    spec:
-      containers:
-        - name: litellm
-          image: ghcr.io/berriai/litellm:main-v1.55.0
-          ports:
-            - containerPort: 4000
-          env:
-            - name: LITELLM_MASTER_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: litellm-secrets
-                  key: master-key
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: litellm-secrets
-                  key: database-url
-          volumeMounts:
-            - name: config
-              mountPath: /app/config.yaml
-              subPath: config.yaml
-          resources:
-            requests:
-              cpu: "2"
-              memory: "4Gi"
-            limits:
-              cpu: "4"
-              memory: "8Gi"
-      volumes:
-        - name: config
-          configMap:
-            name: litellm-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: litellm-config
-  namespace: ai-gateway
-data:
-  config.yaml: |
-    model_list:
-      # Internal vLLM endpoints
-      - model_name: llama3-70b
-        litellm_params:
-          model: openai/meta-llama/Meta-Llama-3-70B-Instruct
-          api_base: http://vllm-llama3-70b.ai-inference:8000/v1
-          api_key: dummy
-        model_info:
-          max_tokens: 8192
-          input_cost_per_token: 0.0000001
-          output_cost_per_token: 0.0000003
-
-      - model_name: llama3-8b
-        litellm_params:
-          model: openai/meta-llama/Meta-Llama-3-8B-Instruct
-          api_base: http://vllm-llama3-8b.ai-inference:8000/v1
-          api_key: dummy
-        model_info:
-          max_tokens: 8192
-          input_cost_per_token: 0.00000005
-          output_cost_per_token: 0.00000015
-
-      # External providers (for fallback)
-      - model_name: gpt-4o
-        litellm_params:
-          model: gpt-4o
-          api_key: os.environ/OPENAI_API_KEY
-        model_info:
-          max_tokens: 128000
-          input_cost_per_token: 0.000005
-          output_cost_per_token: 0.000015
-
-      - model_name: claude-3-5-sonnet
-        litellm_params:
-          model: anthropic/claude-3-5-sonnet-20241022
-          api_key: os.environ/ANTHROPIC_API_KEY
-        model_info:
-          max_tokens: 200000
-          input_cost_per_token: 0.000003
-          output_cost_per_token: 0.000015
-
-    # Routing settings
-    router_settings:
-      routing_strategy: usage-based-routing-v2
-      enable_pre_call_checks: true
-      redis_host: redis.ai-gateway
-      redis_port: 6379
-
-    # Fallback settings
-    litellm_settings:
-      fallbacks:
-        - model: llama3-70b
-          fallback_models:
-            - gpt-4o
-            - claude-3-5-sonnet
-
-      # Retry settings
-      num_retries: 3
-      request_timeout: 300
-
-      # Cost tracking
-      success_callback: ["langfuse"]
-      failure_callback: ["langfuse"]
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: litellm-gateway
-  namespace: ai-gateway
-spec:
-  selector:
-    app: litellm
-  ports:
-    - port: 4000
-      targetPort: 4000
-  type: ClusterIP
+model_list:
+  - model_name: local-primary
+    litellm_params:
+      model: openai/qwen3-demo
+      api_base: http://vllm-demo.ml-inference:8000/v1
+  - model_name: local-fallback
+    litellm_params:
+      model: openai/qwen3-demo
+      api_base: http://vllm-secondary.ml-inference:8000/v1
+router_settings:
+  fallbacks:
+    - local-primary: [local-fallback]
+  num_retries: 0
 ```
 
-#### LiteLLM Usage Example
+This illustrates configuration, requiring prepared endpoints and authentication. Give application clients scoped credentials rather than the master key. External fallback is a data-egress path: enforce tenant provider/data policy before routing. A model-selected name or client header must not bypass it.
 
-```python
-# litellm_client.py
-from openai import OpenAI
 
-# Using LiteLLM gateway
-client = OpenAI(
-    api_key="sk-litellm-master-key",
-    base_url="http://litellm-gateway.ai-gateway:4000/v1"
-)
+## 5. RAG Data and Retrieval Boundaries
 
-# Call internal model (automatic routing)
-response = client.chat.completions.create(
-    model="llama3-70b",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Explain Kubernetes in simple terms."}
-    ],
-    max_tokens=500
-)
+The latest inspected Milvus release is 3.0.1; the separately reviewed Operator 1.3.9 defaults to Milvus 2.6.11. They are not one version, and a broad compatibility table is not proof of a tested 3.x upgrade. The operator repository is https://zilliztech.github.io/milvus-operator/, separate from the ordinary Milvus chart repository.
 
-print(response.choices[0].message.content)
+Vector dimensions must match actual embedding output. Record revision, dimensions options, tokenizer, normalization and distance metric for ingestion and queries. Index parameters differ; HNSW M/efConstruction cannot simply be reused for GPU_IVF_FLAT. GPU indexing needs compatible images, version, devices and component roles; requesting a GPU on indexNode is not automatic acceleration.
 
-# Automatic fallback to external providers if needed
-# (llama3-70b failure -> gpt-4o -> claude-3-5-sonnet in order)
-```
+A tenant_id field alone does not enforce isolation. Derive scope from authenticated identity, apply server-side retrieval filters and validate returned documents. Manage document deletion/change and embedding-version lifecycle too.
 
----
+### Chunking and Hybrid Search
 
-## 5. RAG Data Layer
+Current splitter imports use langchain_text_splitters. RecursiveCharacterTextSplitter chunk_size defaults to characters, not tokens. Token splitting must match the embedding model's tokenizer and actual input limit. Semantic chunking adds embedding calls/cost and does not guarantee better quality.
 
-### Milvus Vector Database
+Hybrid search requires fusion such as RRF or calibrated scores, not merely two searches, with identical authorization filters. Evaluate recall, precision and latency. Bound retries and abstain when evidence is absent instead of always generating after retry exhaustion.
 
-Milvus is an open-source database for large-scale vector search.
-
-#### Milvus Operator Deployment
-
-```bash
-# Install Milvus Operator
-helm repo add milvus https://zilliztech.github.io/milvus-helm
-helm repo update
-
-helm install milvus-operator milvus/milvus-operator \
-  --namespace milvus-system \
-  --create-namespace
-```
-
-```yaml
-# milvus-cluster.yaml
-apiVersion: milvus.io/v1beta1
-kind: Milvus
-metadata:
-  name: milvus-cluster
-  namespace: ai-data
-spec:
-  mode: cluster
-  dependencies:
-    etcd:
-      inCluster:
-        values:
-          replicaCount: 3
-          persistence:
-            enabled: true
-            size: 50Gi
-    pulsar:
-      inCluster:
-        values:
-          components:
-            autorecovery: false
-          proxy:
-            replicaCount: 2
-          broker:
-            replicaCount: 2
-    storage:
-      inCluster:
-        values:
-          mode: distributed
-          fullnameOverride: milvus-minio
-          persistence:
-            enabled: true
-            size: 500Gi
-  components:
-    # Query Node - Vector search processing
-    queryNode:
-      replicas: 3
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-        limits:
-          cpu: "8"
-          memory: "32Gi"
-
-    # Index Node - Index building (GPU accelerated)
-    indexNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-          nvidia.com/gpu: 1
-        limits:
-          cpu: "8"
-          memory: "32Gi"
-          nvidia.com/gpu: 1
-
-    # Data Node - Data processing
-    dataNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "2"
-          memory: "8Gi"
-        limits:
-          cpu: "4"
-          memory: "16Gi"
-
-    # Proxy - API gateway
-    proxy:
-      replicas: 2
-      serviceType: ClusterIP
-      resources:
-        requests:
-          cpu: "2"
-          memory: "4Gi"
-        limits:
-          cpu: "4"
-          memory: "8Gi"
-  config:
-    common:
-      gracefulTime: 30000
-    queryNode:
-      gracefulTime: 30000
-```
-
-#### Collection Schema Design
-
-```python
-# milvus_schema.py
-from pymilvus import (
-    connections, Collection, FieldSchema,
-    CollectionSchema, DataType, utility
-)
-
-# Connect to Milvus
-connections.connect(
-    alias="default",
-    host="milvus-cluster-proxy.ai-data",
-    port="19530"
-)
-
-# Document collection schema
-fields = [
-    FieldSchema(name="id", dtype=DataType.VARCHAR, max_length=64, is_primary=True),
-    FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
-    FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=1536),
-    FieldSchema(name="metadata", dtype=DataType.JSON),
-    FieldSchema(name="created_at", dtype=DataType.INT64),
-]
-
-schema = CollectionSchema(
-    fields=fields,
-    description="Document embeddings for RAG"
-)
-
-# Create collection
-collection = Collection(
-    name="documents",
-    schema=schema,
-    using="default"
-)
-
-# Create index
-index_params = {
-    "metric_type": "COSINE",
-    "index_type": "HNSW",  # Or GPU_IVF_FLAT for GPU acceleration
-    "params": {
-        "M": 16,
-        "efConstruction": 256
-    }
-}
-
-collection.create_index(
-    field_name="embedding",
-    index_params=index_params
-)
-
-# Load collection
-collection.load()
-```
-
-#### Index Type Comparison
-
-| Index Type | Characteristics | Memory Usage | Search Speed | Use Case |
-|-----------|----------------|--------------|--------------|----------|
-| **FLAT** | Exact search | High | Slow | Small scale, accuracy priority |
-| **IVF_FLAT** | Cluster-based | Medium | Fast | General use |
-| **HNSW** | Graph-based | High | Very fast | Large scale, speed priority |
-| **GPU_IVF_FLAT** | GPU accelerated | Medium | Very fast | Very large scale, GPU usage |
-| **SCANN** | Quantization-based | Low | Fast | Memory-constrained environments |
-
-### Document Ingestion Pipeline
-
-```yaml
-# document-ingestion-job.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: document-ingestion
-  namespace: ai-data
-spec:
-  template:
-    spec:
-      containers:
-        - name: ingestion
-          image: ai-platform/document-ingestion:latest
-          env:
-            - name: S3_BUCKET
-              value: "my-documents-bucket"
-            - name: MILVUS_HOST
-              value: "milvus-cluster-proxy.ai-data"
-            - name: EMBEDDING_MODEL
-              value: "text-embedding-3-large"
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openai-credentials
-                  key: api-key
-          resources:
-            requests:
-              cpu: "4"
-              memory: "16Gi"
-            limits:
-              cpu: "8"
-              memory: "32Gi"
-          volumeMounts:
-            - name: temp-storage
-              mountPath: /tmp/documents
-      volumes:
-        - name: temp-storage
-          emptyDir:
-            sizeLimit: 100Gi
-      restartPolicy: OnFailure
-```
-
-#### Chunking Strategy Implementation
-
-```python
-# chunking_strategies.py
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-    TokenTextSplitter
-)
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_openai import OpenAIEmbeddings
-
-# 1. Fixed-size chunking
-def fixed_chunking(text: str, chunk_size: int = 1000, overlap: int = 200):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=overlap,
-        separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""]
-    )
-    return splitter.split_text(text)
-
-# 2. Token-based chunking (LLM context window optimization)
-def token_chunking(text: str, chunk_size: int = 512, overlap: int = 50):
-    splitter = TokenTextSplitter(
-        encoding_name="cl100k_base",  # GPT-4 tokenizer
-        chunk_size=chunk_size,
-        chunk_overlap=overlap
-    )
-    return splitter.split_text(text)
-
-# 3. Semantic chunking (context preservation optimization)
-def semantic_chunking(text: str):
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    splitter = SemanticChunker(
-        embeddings=embeddings,
-        breakpoint_threshold_type="percentile",
-        breakpoint_threshold_amount=95
-    )
-    return splitter.split_text(text)
-
-# Recommendation: Choose strategy by document type
-CHUNKING_STRATEGIES = {
-    "code": {"strategy": "fixed", "chunk_size": 2000, "overlap": 400},
-    "documentation": {"strategy": "semantic"},
-    "chat_logs": {"strategy": "fixed", "chunk_size": 500, "overlap": 100},
-    "default": {"strategy": "token", "chunk_size": 512, "overlap": 50}
-}
-```
-
-### RAG Workflow
-
-```python
-# rag_workflow.py
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_milvus import Milvus
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
-
-# Vector store connection
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-vectorstore = Milvus(
-    embedding_function=embeddings,
-    collection_name="documents",
-    connection_args={
-        "host": "milvus-cluster-proxy.ai-data",
-        "port": "19530"
-    }
-)
-
-# RAG prompt template
-RAG_PROMPT = PromptTemplate(
-    template="""Answer the question using the following context.
-If you cannot find the answer in the context, say "No information available."
-
-Context:
-{context}
-
-Question: {question}
-
-Answer:""",
-    input_variables=["context", "question"]
-)
-
-# LLM setup (using LiteLLM gateway)
-llm = ChatOpenAI(
-    model="llama3-70b",
-    openai_api_base="http://litellm-gateway.ai-gateway:4000/v1",
-    openai_api_key="sk-litellm-master-key",
-    temperature=0.1
-)
-
-# RAG chain configuration
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 5, "fetch_k": 20}
-    ),
-    chain_type_kwargs={"prompt": RAG_PROMPT},
-    return_source_documents=True
-)
-
-# Execute query
-result = qa_chain.invoke({"query": "How does Pod scheduling work in Kubernetes?"})
-print(result["result"])
-```
-
----
 
 ## 6. AI Agent Deployment (Kagent)
 
@@ -1109,864 +156,190 @@ print(result["result"])
 
 Kagent is a Kubernetes-native AI agent lifecycle management tool.
 
-![A Kagent Controller reconciles an Agent CRD into an Agent Runtime, which the agent's LLM backend, tool set, memory store, and state management components all feed via inference, execution, store/query, and management calls.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
+![The Kagent controller reconciles a v1alpha2 Agent resource and manages an ADK runtime with approved ModelConfig, MCP tools and configured session storage.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-03-agentic-ai-platform-4.html)
 
-### Agent CRD Definition
+### Kagent 0.10.1 Agent API
+
+Kagent is not limited to automatic kubectl execution. Declarative agents use Go/Python ADK runtimes; BYO hosts a user-provided A2A agent. LangGraph is a separately integrated workflow framework, not the same runtime as Kagent.
+
+This Agent references separately approved/configured same-namespace ModelConfig and RemoteMCPServer resources. Supply the actual MCP service/search_documents tool, authentication, TLS and data permissions. It neither creates the tool nor grants Kubernetes write access.
 
 ```yaml
-# agent-crd.yaml
-apiVersion: kagent.dev/v1alpha1
+apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: research-agent
   namespace: ai-agents
 spec:
-  # LLM backend settings
-  llm:
-    provider: litellm
-    model: llama3-70b
-    endpoint: http://litellm-gateway.ai-gateway:4000/v1
-    temperature: 0.7
-    maxTokens: 4096
+  type: Declarative
+  description: Retrieves authorized documents and cites their sources
+  declarative:
+    runtime: go
+    modelConfig: approved-internal-model
+    systemMessage: 'Use approved document tools. Cite retrieved sources.
 
-  # Agent system prompt
-  systemPrompt: |
-    You are a research assistant that helps users find and analyze information.
-    You have access to the following tools:
-    - web_search: Search the web for information
-    - document_search: Search internal documents
-    - calculator: Perform calculations
+      If evidence is missing, say so. Do not execute arbitrary code.
 
-    Always cite your sources and provide accurate information.
-
-  # Tool definitions
-  tools:
-    - name: web_search
-      type: http
-      spec:
-        url: http://search-api.tools:8080/search
-        method: POST
-        headers:
-          Content-Type: application/json
-
-    - name: document_search
-      type: milvus
-      spec:
-        host: milvus-cluster-proxy.ai-data
-        port: 19530
-        collection: documents
-        topK: 5
-
-    - name: calculator
-      type: python
-      spec:
-        code: |
-          def calculate(expression: str) -> str:
-              return str(eval(expression))
-
-  # Memory settings
-  memory:
-    type: redis
-    config:
-      host: redis.ai-agents
-      port: 6379
-      ttl: 3600
-
-  # Resource limits
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
-    limits:
-      cpu: "2"
-      memory: "2Gi"
-
-  # Scaling settings
-  replicas: 2
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 10
-    targetCPUUtilization: 70
+      '
+    tools:
+    - type: McpServer
+      mcpServer:
+        apiGroup: kagent.dev
+        kind: RemoteMCPServer
+        name: document-tools
+        toolNames:
+        - search_documents
+    deployment:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 256Mi
+        limits:
+          cpu: '1'
+          memory: 1Gi
 ```
 
-### LangGraph Workflow Orchestration
+ModelConfig.apiKeySecret does not imply file delivery. The inspected OpenAI translator creates an OPENAI_API_KEY SecretKeyRef environment variable. Under a no-secret-environment policy, use a verified file-credential BYO/runtime or authentication gateway path instead. Enabling apiKeyPassthrough without token-delegation/audience design is not a substitute.
 
-Using LangGraph to implement complex AI workflows.
+An eval() calculator and invented permissions fields are not security boundaries. Implement least privilege, input validation, resource limits, approval and idempotency in the actual tool server. Agent replicas do not automatically make shared memory/session stores highly available.
+
+### Executable LangGraph Control Flow
+
+This local example uses the actual SDK with explicit retrieve/rewrite/generate callbacks. Its demo does not call an LLM or vector DB. It preserves the original question, limits rewrites to two and abstains without documents. The SQLite context manager is used correctly and persisted state was checked after reopening.
 
 ```python
-# langgraph_workflow.py
-from typing import TypedDict, Annotated, Sequence
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolExecutor
-import operator
+from typing import Callable, TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.sqlite import SqliteSaver
 
-# State definition
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    current_step: str
-    iteration: int
-    max_iterations: int
-    tools_output: dict
 
-# LLM setup
-llm = ChatOpenAI(
-    model="llama3-70b",
-    openai_api_base="http://litellm-gateway.ai-gateway:4000/v1",
-    openai_api_key="sk-litellm-master-key"
-)
+class QAState(TypedDict):
+    question: str
+    search_query: str
+    documents: list[str]
+    answer: str
+    retries: int
 
-# Node functions
-def planner(state: AgentState) -> AgentState:
-    """Node that creates task plans"""
-    messages = state["messages"]
 
-    planning_prompt = """Based on the user's request, create a step-by-step plan.
-    Format your response as a numbered list of steps."""
+def build_graph(retrieve: Callable[[str], list[str]],
+                rewrite: Callable[[str], str],
+                generate: Callable[[str, list[str]], str]):
+    def search(state: QAState):
+        return {"documents": retrieve(state["search_query"])}
 
-    response = llm.invoke(messages + [HumanMessage(content=planning_prompt)])
+    def route(state: QAState):
+        if state["documents"]:
+            return "answer"
+        return "rewrite" if state["retries"] < 2 else "abstain"
 
-    return {
-        "messages": [response],
-        "current_step": "execute",
-        "iteration": state["iteration"]
-    }
+    def rewrite_query(state: QAState):
+        return {"search_query": rewrite(state["search_query"]),
+                "retries": state["retries"] + 1}
 
-def executor(state: AgentState) -> AgentState:
-    """Node that executes plans"""
-    messages = state["messages"]
+    def answer(state: QAState):
+        return {"answer": generate(state["question"], state["documents"])}
 
-    execution_prompt = """Execute the current step of the plan.
-    If you need to use a tool, specify the tool and parameters."""
+    def abstain(state: QAState):
+        return {"answer": "No supporting documents were found."}
 
-    response = llm.invoke(messages + [HumanMessage(content=execution_prompt)])
+    graph = StateGraph(QAState)
+    graph.add_node("retrieve", search)
+    graph.add_node("rewrite", rewrite_query)
+    graph.add_node("answer", answer)
+    graph.add_node("abstain", abstain)
+    graph.add_edge(START, "retrieve")
+    graph.add_conditional_edges("retrieve", route,
+                               {"answer": "answer", "rewrite": "rewrite", "abstain": "abstain"})
+    graph.add_edge("rewrite", "retrieve")
+    graph.add_edge("answer", END)
+    graph.add_edge("abstain", END)
+    return graph
 
-    return {
-        "messages": [response],
-        "current_step": "evaluate",
-        "iteration": state["iteration"]
-    }
 
-def evaluator(state: AgentState) -> AgentState:
-    """Node that evaluates results"""
-    messages = state["messages"]
-
-    evaluation_prompt = """Evaluate the execution result.
-    Respond with either:
-    - COMPLETE: if the task is fully done
-    - CONTINUE: if more steps are needed
-    - RETRY: if the current step needs to be retried"""
-
-    response = llm.invoke(messages + [HumanMessage(content=evaluation_prompt)])
-
-    return {
-        "messages": [response],
-        "current_step": "route",
-        "iteration": state["iteration"] + 1
-    }
-
-def router(state: AgentState) -> str:
-    """Router that determines next step"""
-    last_message = state["messages"][-1].content.upper()
-
-    if state["iteration"] >= state["max_iterations"]:
-        return "end"
-
-    if "COMPLETE" in last_message:
-        return "end"
-    elif "RETRY" in last_message:
-        return "execute"
-    else:
-        return "plan"
-
-# Graph construction
-workflow = StateGraph(AgentState)
-
-# Add nodes
-workflow.add_node("plan", planner)
-workflow.add_node("execute", executor)
-workflow.add_node("evaluate", evaluator)
-
-# Add edges
-workflow.set_entry_point("plan")
-workflow.add_edge("plan", "execute")
-workflow.add_edge("execute", "evaluate")
-workflow.add_conditional_edges(
-    "evaluate",
-    router,
-    {
-        "plan": "plan",
-        "execute": "execute",
-        "end": END
-    }
-)
-
-# Compile graph
-app = workflow.compile()
-
-# Execute
-initial_state = {
-    "messages": [HumanMessage(content="Research the latest trends in Kubernetes security")],
-    "current_step": "plan",
-    "iteration": 0,
-    "max_iterations": 5,
-    "tools_output": {}
-}
-
-result = app.invoke(initial_state)
+if __name__ == "__main__":
+    # Deterministic local fixtures, not a vector database or LLM quality test.
+    graph = build_graph(
+        retrieve=lambda query: ["A Pod groups containers."] if query == "pod" else [],
+        rewrite=lambda query: "pod",
+        generate=lambda question, documents: documents[0],
+    )
+    initial = {"question": "What is a Pod?", "search_query": "unknown",
+               "documents": [], "answer": "", "retries": 0}
+    # Server-derived authorized tenant/session identity is required in a real app.
+    config = {"configurable": {"thread_id": "tenant-a/session-1"}, "recursion_limit": 12}
+    with SqliteSaver.from_conn_string("agent-state.sqlite") as saver:
+        app = graph.compile(checkpointer=saver)
+        print(app.invoke(initial, config)["answer"])
+        print(app.get_state(config).values["retries"])
 ```
 
-### Multi-Agent Collaboration Patterns
+Production thread_id must be bound to authenticated tenant/session identity, with DB authorization, encryption, concurrency and retention controls. :memory: does not survive process exit. SqliteSaver cannot use a PostgreSQL DSN; use the appropriate Postgres saver. Reading get_state_history() alone does not restore execution—use checkpoint configuration and actual resume/replay semantics.
 
-#### Supervisor Pattern
+Validate supervisor output against an allowed enum and handle unknown values/budget exhaustion. Substring COMPLETE must not treat INCOMPLETE as success. Asking a model to use a tool does not itself execute or verify the tool.
+
+## 7. Langfuse and Operational Observability
+
+Langfuse SDK 4.15.2 replaces old trace()/generation() APIs with start_as_current_observation(), create_score() and related methods. This audit verified three retrieval/generation/parent spans in one trace using an in-memory exporter, not real server ingestion/storage/authentication.
 
 ```python
-# supervisor_pattern.py
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Literal
-
-class SupervisorState(TypedDict):
-    messages: list
-    next_agent: str
-    task_status: dict
-
-def supervisor(state: SupervisorState) -> SupervisorState:
-    """Supervisor that delegates tasks to appropriate agents"""
-
-    supervisor_prompt = """You are a supervisor managing a team of agents:
-    - researcher: Finds and analyzes information
-    - coder: Writes and reviews code
-    - writer: Creates documentation and reports
-
-    Based on the current task, decide which agent should handle it next.
-    Respond with the agent name or 'FINISH' if the task is complete."""
-
-    response = llm.invoke(state["messages"] + [HumanMessage(content=supervisor_prompt)])
-    next_agent = response.content.strip().lower()
-
-    return {
-        "messages": state["messages"] + [response],
-        "next_agent": next_agent
-    }
-
-def researcher(state: SupervisorState) -> SupervisorState:
-    """Information gathering agent"""
-    research_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Research the topic and provide findings.")]
-    )
-    return {"messages": state["messages"] + [research_response]}
-
-def coder(state: SupervisorState) -> SupervisorState:
-    """Coding agent"""
-    code_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Write or review code for the task.")]
-    )
-    return {"messages": state["messages"] + [code_response]}
-
-def writer(state: SupervisorState) -> SupervisorState:
-    """Documentation agent"""
-    write_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Create documentation or a report.")]
-    )
-    return {"messages": state["messages"] + [write_response]}
-
-def route_to_agent(state: SupervisorState) -> Literal["researcher", "coder", "writer", "end"]:
-    next_agent = state["next_agent"]
-    if next_agent == "finish":
-        return "end"
-    return next_agent
-
-# Graph construction
-supervisor_graph = StateGraph(SupervisorState)
-
-supervisor_graph.add_node("supervisor", supervisor)
-supervisor_graph.add_node("researcher", researcher)
-supervisor_graph.add_node("coder", coder)
-supervisor_graph.add_node("writer", writer)
-
-supervisor_graph.set_entry_point("supervisor")
-
-supervisor_graph.add_conditional_edges(
-    "supervisor",
-    route_to_agent,
-    {
-        "researcher": "researcher",
-        "coder": "coder",
-        "writer": "writer",
-        "end": END
-    }
-)
-
-# Return to supervisor after each agent completes
-for agent in ["researcher", "coder", "writer"]:
-    supervisor_graph.add_edge(agent, "supervisor")
-
-multi_agent_app = supervisor_graph.compile()
-```
-
----
-
-## 7. Monitoring and Operations
-
-### Langfuse GenAI Observability
-
-Langfuse is an observability platform for LLM applications.
-
-```yaml
-# langfuse-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: langfuse
-  namespace: ai-monitoring
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: langfuse
-  template:
-    metadata:
-      labels:
-        app: langfuse
-    spec:
-      containers:
-        - name: langfuse
-          image: langfuse/langfuse:latest
-          ports:
-            - containerPort: 3000
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: database-url
-            - name: NEXTAUTH_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: nextauth-secret
-            - name: NEXTAUTH_URL
-              value: "https://langfuse.example.com"
-            - name: SALT
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: salt
-          resources:
-            requests:
-              cpu: "1"
-              memory: "2Gi"
-            limits:
-              cpu: "2"
-              memory: "4Gi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: langfuse
-  namespace: ai-monitoring
-spec:
-  selector:
-    app: langfuse
-  ports:
-    - port: 3000
-      targetPort: 3000
-  type: ClusterIP
-```
-
-#### Langfuse Integration Code
-
-```python
-# langfuse_integration.py
+from pathlib import Path
 from langfuse import Langfuse
-from langfuse.decorators import observe, langfuse_context
-from openai import OpenAI
 
-# Initialize Langfuse client
-langfuse = Langfuse(
-    public_key="pk-lf-xxx",
-    secret_key="sk-lf-xxx",
-    host="http://langfuse.ai-monitoring:3000"
+# Read existing Secret-volume files; do not put credentials in source.
+client = Langfuse(
+    public_key=Path("/run/secrets/langfuse/public-key").read_text().strip(),
+    secret_key=Path("/run/secrets/langfuse/secret-key").read_text().strip(),
+    base_url="https://langfuse.example.internal",
 )
-
-client = OpenAI(
-    api_key="sk-litellm-master-key",
-    base_url="http://litellm-gateway.ai-gateway:4000/v1"
-)
-
-@observe()
-def rag_query(user_query: str, user_id: str = None) -> str:
-    """Track RAG queries with Langfuse"""
-
-    # Set user ID
-    langfuse_context.update_current_trace(
-        user_id=user_id,
-        tags=["rag", "production"]
-    )
-
-    # Document retrieval (tracked as separate span)
-    with langfuse_context.observe(name="document_retrieval") as span:
-        documents = search_documents(user_query)
-        span.update(
-            input={"query": user_query},
-            output={"doc_count": len(documents)},
-            metadata={"retrieval_method": "mmr"}
-        )
-
-    # LLM call
-    with langfuse_context.observe(name="llm_generation") as span:
-        response = client.chat.completions.create(
-            model="llama3-70b",
-            messages=[
-                {"role": "system", "content": "Answer based on the context."},
-                {"role": "user", "content": f"Context: {documents}\n\nQuestion: {user_query}"}
-            ],
-            max_tokens=1000
-        )
-
-        answer = response.choices[0].message.content
-
-        # Track token usage and cost
-        span.update(
-            input={"messages": messages},
-            output={"response": answer},
-            usage={
-                "input": response.usage.prompt_tokens,
-                "output": response.usage.completion_tokens,
-                "total": response.usage.total_tokens
-            },
-            metadata={
-                "model": "llama3-70b",
-                "temperature": 0.7
-            }
-        )
-
-    return answer
-
-# Collect feedback
-def collect_feedback(trace_id: str, score: float, comment: str = None):
-    """Record user feedback to Langfuse"""
-    langfuse.score(
-        trace_id=trace_id,
-        name="user_feedback",
-        value=score,
-        comment=comment
-    )
+with client.start_as_current_observation(name="rag", as_type="span"):
+    with client.start_as_current_observation(name="retrieve", as_type="span") as span:
+        span.update(metadata={"document_count": 2})
+    with client.start_as_current_observation(name="generate", as_type="generation",
+                                           model="prepared-model-alias") as generation:
+        # Supply actual provider usage; these values only illustrate the shape.
+        generation.update(usage_details={"input": 10, "output": 5})
+client.flush()
+client.shutdown()
 ```
 
-### GPU Monitoring (DCGM)
+Langfuse chart 2.1.0 references app 4.24.0, distinct from latest inspected server 4.35.0. Web/worker, PostgreSQL, Redis/Valkey, object storage and ClickHouse are required. The chart checks ClickHouse Operator/cert-manager prerequisites. Offline rendering supplied simulated API capability information, not a deployed operator. Default charts include secret environment delivery and are not approved file-only credential deployments.
 
-```yaml
-# dcgm-exporter.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  template:
-    metadata:
-      labels:
-        app: dcgm-exporter
-    spec:
-      nodeSelector:
-        nvidia.com/gpu.present: "true"
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-      containers:
-        - name: dcgm-exporter
-          image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.4.0-ubuntu22.04
-          ports:
-            - containerPort: 9400
-              name: metrics
-          env:
-            - name: DCGM_EXPORTER_LISTEN
-              value: ":9400"
-            - name: DCGM_EXPORTER_KUBERNETES
-              value: "true"
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: pod-resources
-              mountPath: /var/lib/kubelet/pod-resources
-      volumes:
-        - name: pod-resources
-          hostPath:
-            path: /var/lib/kubelet/pod-resources
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-  labels:
-    app: dcgm-exporter
-spec:
-  selector:
-    app: dcgm-exporter
-  ports:
-    - port: 9400
-      targetPort: 9400
-      name: metrics
-  clusterIP: None
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  endpoints:
-    - port: metrics
-      interval: 15s
-```
+DCGM FB_USED is a quantity, not a percentage; verify units and total memory. GPU utilization80% or temperature85C are not universal health thresholds. Observe latency/queues/errors/throttling and actual device limits together.
 
-#### Key GPU Metrics
+### Response Caches and Cost
 
-| Metric | Description | Threshold |
-|--------|-------------|-----------|
-| `DCGM_FI_DEV_GPU_UTIL` | GPU utilization | > 80% normal |
-| `DCGM_FI_DEV_MEM_COPY_UTIL` | Memory bandwidth utilization | > 70% caution |
-| `DCGM_FI_DEV_FB_USED` | Frame buffer usage | < 95% recommended |
-| `DCGM_FI_DEV_GPU_TEMP` | GPU temperature | < 85C recommended |
-| `DCGM_FI_DEV_POWER_USAGE` | Power consumption | Below 90% of TDP |
-| `DCGM_FI_DEV_SM_CLOCK` | SM clock speed | Maintain default |
+Cache keys must capture tenant/authorization scope, model/prompt/retrieved-data revision, generation settings and relevant tool state. Shared model+prompt keys can reuse another user's result. Disable caching or define explicit expiry/invalidation for private or changing external state.
 
-### Cost Optimization Strategies
+Token-price estimates are not invoices. Include cache read/write, batch, retries, routing calls and self-hosted fixed costs. Reject a cheapest-model fallback that violates budget, quality or provider policy. A KEDA cron trigger does not impose a lower nighttime cap over other triggers. Define CronJob timezone, concurrency/deadline/retry and persisted results.
 
-#### 1. Prompt Caching
-
-```python
-# prompt_caching.py
-import hashlib
-import redis
-
-redis_client = redis.Redis(host="redis.ai-cache", port=6379)
-
-def get_cached_response(prompt: str, model: str) -> str | None:
-    """Retrieve cached response"""
-    cache_key = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
-    cached = redis_client.get(cache_key)
-    return cached.decode() if cached else None
-
-def cache_response(prompt: str, model: str, response: str, ttl: int = 3600):
-    """Cache response"""
-    cache_key = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
-    redis_client.setex(cache_key, ttl, response)
-
-def query_with_cache(prompt: str, model: str = "llama3-70b") -> str:
-    """Query with caching"""
-    # Check cache
-    cached = get_cached_response(prompt, model)
-    if cached:
-        return cached
-
-    # LLM call
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    result = response.choices[0].message.content
-
-    # Cache result
-    cache_response(prompt, model, result)
-    return result
-```
-
-#### 2. Tiered Model Selection
-
-```python
-# tiered_model_selection.py
-from enum import Enum
-
-class TaskComplexity(Enum):
-    SIMPLE = "simple"      # Classification, extraction, simple QA
-    MODERATE = "moderate"  # Summarization, translation, general conversation
-    COMPLEX = "complex"    # Analysis, reasoning, code generation
-
-MODEL_TIERS = {
-    TaskComplexity.SIMPLE: {
-        "model": "llama3-8b",
-        "cost_per_1k_tokens": 0.0001
-    },
-    TaskComplexity.MODERATE: {
-        "model": "llama3-70b",
-        "cost_per_1k_tokens": 0.0005
-    },
-    TaskComplexity.COMPLEX: {
-        "model": "gpt-4o",
-        "cost_per_1k_tokens": 0.01
-    }
-}
-
-def classify_task_complexity(task: str) -> TaskComplexity:
-    """Classify task complexity (using lightweight model)"""
-    classification_prompt = f"""Classify the complexity of this task as SIMPLE, MODERATE, or COMPLEX:
-    Task: {task}
-
-    SIMPLE: Classification, extraction, simple QA
-    MODERATE: Summarization, translation, general conversation
-    COMPLEX: Analysis, reasoning, code generation
-
-    Respond with only the classification."""
-
-    response = client.chat.completions.create(
-        model="llama3-8b",  # Use small model for classification
-        messages=[{"role": "user", "content": classification_prompt}],
-        max_tokens=10
-    )
-
-    classification = response.choices[0].message.content.strip().upper()
-    return TaskComplexity[classification]
-
-def execute_with_optimal_model(task: str) -> str:
-    """Execute task with optimal model"""
-    complexity = classify_task_complexity(task)
-    model_config = MODEL_TIERS[complexity]
-
-    response = client.chat.completions.create(
-        model=model_config["model"],
-        messages=[{"role": "user", "content": task}]
-    )
-
-    return response.choices[0].message.content
-```
-
-#### 3. Batch Processing
-
-```yaml
-# batch-processing-job.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: batch-inference
-  namespace: ai-batch
-spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: batch-processor
-              image: ai-platform/batch-processor:latest
-              env:
-                - name: BATCH_SIZE
-                  value: "100"
-                - name: MODEL
-                  value: "llama3-70b"
-                - name: QUEUE_URL
-                  value: "redis://redis.ai-batch:6379/0"
-              resources:
-                requests:
-                  cpu: "4"
-                  memory: "8Gi"
-          restartPolicy: OnFailure
-```
-
-#### 4. Spot Instance Utilization
-
-```yaml
-# spot-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-spot
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - g5.xlarge
-            - g5.2xlarge
-            - g6.xlarge
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodes
-      taints:
-        - key: spot-instance
-          value: "true"
-          effect: NoSchedule
-  limits:
-    nvidia.com/gpu: 50
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 1m
-```
-
----
 
 ## 8. Evaluation and Quality Management
 
-### Ragas Framework
+Ragas 0.4.3 failed to import against resolved langchain-community 0.4.2 because it imports a removed vertexai module. In a separate environment pinned to langchain 0.3.27, core 0.3.79, community 0.3.31 and openai integration 0.3.35, imports and SingleTurnSample/EvaluationDataset construction passed. Do not assume this shares one dependency stack with current LangGraph.
 
-Ragas is a framework for evaluating RAG system quality.
+Current collection APIs such as Faithfulness/AnswerRelevancy require explicit LLM/embedding adapters; old ragas.metrics singleton imports emit deprecation warnings. Evaluation needs model-call cost/failure handling, dataset/judge/prompt revisions and missing/NaN treatment. Only metric imports/schema were tested here; no quality score such as 0.92 was measured.
 
-```python
-# ragas_evaluation.py
-from ragas import evaluate
-from ragas.metrics import (
-    faithfulness,
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    answer_correctness
-)
-from datasets import Dataset
+An A/B ConfigMap alone does not route traffic. Implement its real consumer/controller, stable assignment, equivalent authorization/data context, sufficient samples and guardrail metrics. Arbitrary model quality/pricing tables do not establish 30–50% savings.
 
-# Construct evaluation dataset
-eval_data = {
-    "question": [
-        "What is a Kubernetes Pod?",
-        "How does HPA work?"
-    ],
-    "answer": [
-        "A Pod is the smallest deployable computing unit in Kubernetes.",
-        "HPA automatically adjusts the number of Pods based on CPU utilization."
-    ],
-    "contexts": [
-        ["A Pod is a group of one or more containers.", "Pods have shared storage and network."],
-        ["HPA monitors metrics.", "It scales based on configured thresholds."]
-    ],
-    "ground_truth": [
-        "A Pod is the smallest deployable computing unit that can be created and managed in Kubernetes.",
-        "HPA automatically adjusts the number of workload replicas based on observed metrics (CPU, memory, etc.)."
-    ]
-}
+A finance example's compliance_check function does not certify regulatory compliance. Design authenticated account scope, monotonic sensitive/approval conditions (do not overwrite true with false later), side-effect idempotency, audit and human handoff criteria.
 
-dataset = Dataset.from_dict(eval_data)
 
-# Run evaluation
-results = evaluate(
-    dataset,
-    metrics=[
-        faithfulness,        # Is the answer faithful to context
-        answer_relevancy,    # Is the answer relevant to question
-        context_precision,   # Is retrieved context precise
-        context_recall,      # Was all necessary context retrieved
-        answer_correctness   # Does answer match ground truth
-    ]
-)
+## 9. Review Baselines and Validation Scope
 
-print(results)
-# {'faithfulness': 0.92, 'answer_relevancy': 0.88, 'context_precision': 0.85, ...}
-```
+| Component | Baseline | Verified scope |
+| --- | --- | --- |
+| Kagent |0.10.1 / v1alpha2 | Official Helm/CRDs and Agent/ModelConfig/RemoteMCPServer schemas |
+| Inference Extension |1.6.1 / v1 | InferencePool schema; no live EPP/gateway |
+| LiteLLM |1.100.1 | Router fallback configuration; no provider call |
+| Milvus | server/SDK3.0.1; Operator 1.3.9 | Operator Helm/synthetic vector schema; no database |
+| LangGraph |1.2.11 + sqlite saver 3.1.1 | Bounded retrieval, abstention and state recovery |
+| Langfuse | SDK 4.15.2 / chart 2.1.0 | Local trace/spans and offline chart inspection |
+| Ragas |0.4.3 | Compatible isolated imports/schema; no evaluator model calls |
 
-#### Automated Evaluation Pipeline
-
-```yaml
-# ragas-evaluation-cronjob.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: ragas-evaluation
-  namespace: ai-qa
-spec:
-  schedule: "0 6 * * *"  # Daily at 6 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: evaluator
-              image: ai-platform/ragas-evaluator:latest
-              env:
-                - name: EVAL_DATASET_PATH
-                  value: "s3://ai-datasets/eval/golden-set.json"
-                - name: RAG_ENDPOINT
-                  value: "http://rag-api.ai-inference:8000"
-                - name: LANGFUSE_HOST
-                  value: "http://langfuse.ai-monitoring:3000"
-                - name: MIN_FAITHFULNESS
-                  value: "0.85"
-                - name: MIN_RELEVANCY
-                  value: "0.80"
-              resources:
-                requests:
-                  cpu: "2"
-                  memory: "4Gi"
-          restartPolicy: OnFailure
-```
-
-### A/B Testing
-
-```yaml
-# ab-testing-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ab-testing-config
-  namespace: ai-inference
-data:
-  config.yaml: |
-    experiments:
-      - name: llama3-70b-vs-gpt4o
-        traffic_split:
-          variant_a:
-            model: llama3-70b
-            weight: 80
-          variant_b:
-            model: gpt-4o
-            weight: 20
-        metrics:
-          - latency_p99
-          - user_satisfaction
-          - cost_per_query
-        duration_days: 14
-
-      - name: chunk-size-experiment
-        traffic_split:
-          variant_a:
-            chunk_size: 512
-            weight: 50
-          variant_b:
-            chunk_size: 1024
-            weight: 50
-        metrics:
-          - context_precision
-          - answer_relevancy
-        duration_days: 7
-```
-
----
-
-## 9. Core Technology Stack Summary
-
-| Technology | Purpose | Key Features |
-|-----------|---------|--------------|
-| **Kagent** | AI Agent Lifecycle | CRD-based agent management, auto-scaling |
-| **Kgateway** | Inference Gateway | InferencePool, Prefix-aware routing |
-| **Milvus** | Vector Database | Large-scale vector search, GPU-accelerated indexing |
-| **Ragas** | RAG Evaluation | Faithfulness, relevancy, accuracy metrics |
-| **LiteLLM** | LLM Integrated Gateway | Provider abstraction, fallback, cost tracking |
-| **LangGraph** | Workflow Orchestration | State management, conditional branching, error handling |
-| **Langfuse** | GenAI Observability | Request tracing, cost analysis, feedback collection |
-| **vLLM** | High-Performance Inference | PagedAttention, continuous batching, prefix caching |
-| **Karpenter** | Node Provisioning | GPU node auto-scaling, Spot management |
-| **DCGM** | GPU Monitoring | Utilization, temperature, power metrics |
-
----
+Schemas, Helm and local SDK checks do not prove full-platform deployment, authentication, HA or GPU performance. No cloud resources or paid model calls were used.
 
 ## 10. Next Steps
 
@@ -1982,10 +355,11 @@ To verify your understanding of the Agentic AI platform, take the following quiz
 
 ### References
 
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - AWS guide and examples for deploying AI/ML workloads on EKS
-- [vLLM Official Documentation](https://docs.vllm.ai/)
-- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
-- [Milvus Documentation](https://milvus.io/docs)
-- [Langfuse Documentation](https://langfuse.com/docs)
-- [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/)
-- [Gateway API for AI](https://gateway-api.sigs.k8s.io/)
+- [Kagent 0.10.1](https://github.com/kagent-dev/kagent/tree/v0.10.1)
+- [InferencePool v1 API](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.6.1/api/v1/inferencepool_types.go)
+- [Milvus Operator 1.3.9](https://github.com/zilliztech/milvus-operator/tree/milvus-operator-1.3.9)
+- [Langfuse SDK 4.15.2](https://github.com/langfuse/langfuse-python/tree/v4.15.2)
+- [Langfuse Helm2.1.0](https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0)
+- [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence)
+- [LiteLLM Router](https://docs.litellm.ai/docs/routing)
+- [Ragas 0.4.3](https://pypi.org/project/ragas/0.4.3/)

@@ -5,7 +5,7 @@
     "title": "Characteristics of AI/ML Workloads",
     "output": "en-ai-ml-01-ai-ml-workloads-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "locale": "en",
     "legend": {
       "mode": "auto",
@@ -32,7 +32,7 @@
           "cpu",
           "network"
         ],
-        "note": "Resource-intensive workloads call for GPU acceleration, large memory, high-performance CPUs and high-speed networking."
+        "note": "GPU/CPU/memory/network requirements depend on the model and workload stage."
       },
       {
         "id": "workload-types",
@@ -263,7 +263,7 @@
       "id": "resource-to-needs",
       "from": "resource",
       "to": "gpu",
-      "label": "requires",
+      "label": "as required",
       "variant": "emphasis"
     },
     {

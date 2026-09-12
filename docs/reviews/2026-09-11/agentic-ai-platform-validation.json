@@ -1,0 +1,1854 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T21:59:02.419837+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 40,
+    "originalTopicsPerLocale": 20,
+    "figures": 10
+  },
+  "baseline": {
+    "kagent": "0.10.1",
+    "gatewayInferenceExtension": "1.6.1",
+    "kgateway": "2.4.4",
+    "LiteLLM": "1.100.1",
+    "Milvus": "3.0.1 latest;operator1.3.9default2.6.11",
+    "LangGraph": "1.2.11",
+    "SQLiteSaver": "3.1.1",
+    "LangfuseSDK": "4.15.2",
+    "LangfuseChart": "2.1.0 app4.24.0;serverlatest4.35.0",
+    "Ragas": "0.4.3"
+  },
+  "contentPreservation": {
+    "originalUniqueCodeBlocksRead": 136,
+    "originalTopicsRetained": 20,
+    "removedInvalidExamples": "Invented Kagent fields, obsolete InferencePool/LLM routing/Langfuse APIs, invalid Milvus dimensions and unbounded graph/supervisor examples replaced with current schemas, bounded native graph, crosslinks to audited GPU/vLLM examples, and explicit operating requirements. Original GPU, serving, gateways, retrieval, orchestration, observability, cost, evaluation and regulated-use design topics retained.",
+    "unmeasuredClaimsRemoved": "Fixed savings/performance percentages and fabricated evaluator scores; no real model/GPU execution claimed."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/03-agentic-ai-platform.md",
+        "sha256": "245b987544fa1632584083ab4508186f5b4b3b6b0941ae4a528bcd46a099f156",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-기반-agentic-ai-플랫폼-구축"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-agentic-ai-플랫폼-개요"
+          },
+          {
+            "tag": "h3",
+            "id": "agentic-ai란"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes를-선택하는-조건"
+          },
+          {
+            "tag": "h3",
+            "id": "네-가지-핵심-기술-과제"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-gpu와-비용-기준"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-모델-서빙-vllm"
+          },
+          {
+            "tag": "h3",
+            "id": "vllm-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "검토한-서빙-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-추론-게이트웨이-inference-gateway"
+          },
+          {
+            "tag": "h3",
+            "id": "gateway-api-기반-ai-워크로드-라우팅"
+          },
+          {
+            "tag": "h3",
+            "id": "kgateway-inferencepool-아키텍처"
+          },
+          {
+            "tag": "h4",
+            "id": "inferencepool-v1"
+          },
+          {
+            "tag": "h3",
+            "id": "litellm-1-100-1의-provider-gateway"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-rag-데이터와-검색-경계"
+          },
+          {
+            "tag": "h3",
+            "id": "청킹과-hybrid-search"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-ai-에이전트-배포-kagent"
+          },
+          {
+            "tag": "h3",
+            "id": "kagent-개요"
+          },
+          {
+            "tag": "h3",
+            "id": "kagent-0-10-1-agent-api"
+          },
+          {
+            "tag": "h3",
+            "id": "실행-가능한-langgraph-제어-흐름"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-langfuse와-운영-관측성"
+          },
+          {
+            "tag": "h3",
+            "id": "응답-cache와-비용"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-평가와-품질-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-검토-기준과-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-다음-단계"
+          },
+          {
+            "tag": "h3",
+            "id": "실습-퀴즈"
+          },
+          {
+            "tag": "h3",
+            "id": "관련-문서"
+          },
+          {
+            "tag": "h3",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "eks-기반-agentic-ai-플랫폼-구축",
+          "_1-agentic-ai-플랫폼-개요",
+          "agentic-ai란",
+          "kubernetes를-선택하는-조건",
+          "네-가지-핵심-기술-과제",
+          "_2-gpu와-비용-기준",
+          "_3-모델-서빙-vllm",
+          "vllm-아키텍처",
+          "검토한-서빙-경로",
+          "_4-추론-게이트웨이-inference-gateway",
+          "gateway-api-기반-ai-워크로드-라우팅",
+          "kgateway-inferencepool-아키텍처",
+          "inferencepool-v1",
+          "litellm-1-100-1의-provider-gateway",
+          "_5-rag-데이터와-검색-경계",
+          "청킹과-hybrid-search",
+          "_6-ai-에이전트-배포-kagent",
+          "kagent-개요",
+          "kagent-0-10-1-agent-api",
+          "실행-가능한-langgraph-제어-흐름",
+          "_7-langfuse와-운영-관측성",
+          "응답-cache와-비용",
+          "_8-평가와-품질-관리",
+          "_9-검토-기준과-검증-범위",
+          "_10-다음-단계",
+          "실습-퀴즈",
+          "관련-문서",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/ai-ml/03-agentic-ai-platform.md",
+        "sha256": "f616b9a7d17b7da28295ac3dd83dfaaba7359d7fa952a9f2ecae7b47124cc20a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "building-an-agentic-ai-platform-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-agentic-ai-platform-overview"
+          },
+          {
+            "tag": "h3",
+            "id": "what-is-agentic-ai"
+          },
+          {
+            "tag": "h3",
+            "id": "when-to-choose-kubernetes"
+          },
+          {
+            "tag": "h3",
+            "id": "four-key-technical-challenges"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-gpu-and-cost-baselines"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-model-serving-vllm"
+          },
+          {
+            "tag": "h3",
+            "id": "vllm-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "reviewed-serving-path"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-inference-gateway"
+          },
+          {
+            "tag": "h3",
+            "id": "gateway-api-based-ai-workload-routing"
+          },
+          {
+            "tag": "h3",
+            "id": "kgateway-inferencepool-architecture"
+          },
+          {
+            "tag": "h4",
+            "id": "inferencepool-v1"
+          },
+          {
+            "tag": "h3",
+            "id": "litellm-1-100-1-provider-gateway"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-rag-data-and-retrieval-boundaries"
+          },
+          {
+            "tag": "h3",
+            "id": "chunking-and-hybrid-search"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-ai-agent-deployment-kagent"
+          },
+          {
+            "tag": "h3",
+            "id": "kagent-overview"
+          },
+          {
+            "tag": "h3",
+            "id": "kagent-0-10-1-agent-api"
+          },
+          {
+            "tag": "h3",
+            "id": "executable-langgraph-control-flow"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-langfuse-and-operational-observability"
+          },
+          {
+            "tag": "h3",
+            "id": "response-caches-and-cost"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-evaluation-and-quality-management"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-review-baselines-and-validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-next-steps"
+          },
+          {
+            "tag": "h3",
+            "id": "practice-quiz"
+          },
+          {
+            "tag": "h3",
+            "id": "related-documents"
+          },
+          {
+            "tag": "h3",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "building-an-agentic-ai-platform-on-eks",
+          "_1-agentic-ai-platform-overview",
+          "what-is-agentic-ai",
+          "when-to-choose-kubernetes",
+          "four-key-technical-challenges",
+          "_2-gpu-and-cost-baselines",
+          "_3-model-serving-vllm",
+          "vllm-architecture",
+          "reviewed-serving-path",
+          "_4-inference-gateway",
+          "gateway-api-based-ai-workload-routing",
+          "kgateway-inferencepool-architecture",
+          "inferencepool-v1",
+          "litellm-1-100-1-provider-gateway",
+          "_5-rag-data-and-retrieval-boundaries",
+          "chunking-and-hybrid-search",
+          "_6-ai-agent-deployment-kagent",
+          "kagent-overview",
+          "kagent-0-10-1-agent-api",
+          "executable-langgraph-control-flow",
+          "_7-langfuse-and-operational-observability",
+          "response-caches-and-cost",
+          "_8-evaluation-and-quality-management",
+          "_9-review-baselines-and-validation-scope",
+          "_10-next-steps",
+          "practice-quiz",
+          "related-documents",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+        "sha256": "3980a7a49504a661cc58f1ec35894746f980ddd43f1299f3f858f4bb40bd36a7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "agentic-ai-플랫폼-on-eks-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-pagedattention이-주로-개선하는-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-inference-gateway와-학습-실행기의-역할은-어떻게-다른가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-rag-벡터-저장소에서-반드시-맞춰야-할-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-langgraph가-제공하는-제어-모델은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-langfuse와-dcgm의-관측-범위는-어떻게-다른가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-kagent-0-10-1의-agent-예제는-어떤-api-구조를-사용하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-mig-내부-time-slicing은-어떤-격리를-보장하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-continuous-batching은-요청이-절대-대기하지-않는다는-뜻인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-chunk-size-1000을-언제1000token이라고-해석할-수-있나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-vllm-autoscaling에서-확인할-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-kv-cache는-무엇을-저장하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-현재-langfuse의-trace와-span은-어떻게-다루나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-hybrid-search가-두-번의-검색-호출만으로-완성되지-않는-이유는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-sqlitesaver-사용에서-원래-예제가-잘못된-부분은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-tp와-pp의-분할-단위는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_16-실습-현재-vllm-배포를-구성할-때-무엇을-검증하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_17-실습-langfuse-배포와-python-계측에서-무엇을-확인하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_18-실습-rag-재검색이-실패해도-끝없이-반복하거나-무근거-답변을-만들지-않으려면-어떻게-하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_19-심화-금융-상담용-agent의-안전한-경계는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_20-심화-멀티모델-라우팅·a-b·비용-최적화를-어떻게-검증하나요"
+          }
+        ],
+        "renderedIds": [
+          "agentic-ai-플랫폼-on-eks-퀴즈",
+          "_1-pagedattention이-주로-개선하는-것은-무엇인가요",
+          "_2-inference-gateway와-학습-실행기의-역할은-어떻게-다른가요",
+          "_3-rag-벡터-저장소에서-반드시-맞춰야-할-것은-무엇인가요",
+          "_4-langgraph가-제공하는-제어-모델은-무엇인가요",
+          "_5-langfuse와-dcgm의-관측-범위는-어떻게-다른가요",
+          "_6-kagent-0-10-1의-agent-예제는-어떤-api-구조를-사용하나요",
+          "_7-mig-내부-time-slicing은-어떤-격리를-보장하나요",
+          "_8-continuous-batching은-요청이-절대-대기하지-않는다는-뜻인가요",
+          "_9-chunk-size-1000을-언제1000token이라고-해석할-수-있나요",
+          "_10-vllm-autoscaling에서-확인할-것은-무엇인가요",
+          "_11-kv-cache는-무엇을-저장하나요",
+          "_12-현재-langfuse의-trace와-span은-어떻게-다루나요",
+          "_13-hybrid-search가-두-번의-검색-호출만으로-완성되지-않는-이유는-무엇인가요",
+          "_14-sqlitesaver-사용에서-원래-예제가-잘못된-부분은-무엇인가요",
+          "_15-tp와-pp의-분할-단위는-무엇인가요",
+          "_16-실습-현재-vllm-배포를-구성할-때-무엇을-검증하나요",
+          "_17-실습-langfuse-배포와-python-계측에서-무엇을-확인하나요",
+          "_18-실습-rag-재검색이-실패해도-끝없이-반복하거나-무근거-답변을-만들지-않으려면-어떻게-하나요",
+          "_19-심화-금융-상담용-agent의-안전한-경계는-무엇인가요",
+          "_20-심화-멀티모델-라우팅·a-b·비용-최적화를-어떻게-검증하나요"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+        "sha256": "496ae8c8b7381e57b07c23a3d268d30e02b07e0f17f4159cdd18718c5aa3fbb3",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "agentic-ai-platform-on-eks-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-does-pagedattention-primarily-improve"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-how-does-an-inference-gateway-differ-from-a-training-executor"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-what-must-match-in-a-rag-vector-store"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-what-control-model-does-langgraph-provide"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-how-do-langfuse-and-dcgm-differ"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-what-api-shape-does-kagent-0-10-1-use"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-what-isolation-does-time-slicing-inside-mig-provide"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-does-continuous-batching-mean-requests-never-wait"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-when-does-chunk-size-1000-mean-1000-tokens"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-what-must-be-checked-for-vllm-autoscaling"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-what-does-the-kv-cache-store"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-how-are-traces-and-spans-handled-by-the-current-langfuse-sdk"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-why-is-hybrid-search-more-than-two-search-calls"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-what-was-wrong-with-the-original-sqlitesaver-example"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-what-do-tp-and-pp-partition"
+          },
+          {
+            "tag": "h2",
+            "id": "_16-exercise-what-should-a-current-vllm-deployment-validate"
+          },
+          {
+            "tag": "h2",
+            "id": "_17-exercise-what-should-langfuse-deployment-and-python-tracing-validate"
+          },
+          {
+            "tag": "h2",
+            "id": "_18-exercise-how-should-a-rag-retry-loop-terminate-safely-without-evidence"
+          },
+          {
+            "tag": "h2",
+            "id": "_19-advanced-what-boundaries-matter-for-a-financial-consultation-agent"
+          },
+          {
+            "tag": "h2",
+            "id": "_20-advanced-how-should-multi-model-routing-a-b-and-cost-optimization-be-validated"
+          }
+        ],
+        "renderedIds": [
+          "agentic-ai-platform-on-eks-quiz",
+          "_1-what-does-pagedattention-primarily-improve",
+          "_2-how-does-an-inference-gateway-differ-from-a-training-executor",
+          "_3-what-must-match-in-a-rag-vector-store",
+          "_4-what-control-model-does-langgraph-provide",
+          "_5-how-do-langfuse-and-dcgm-differ",
+          "_6-what-api-shape-does-kagent-0-10-1-use",
+          "_7-what-isolation-does-time-slicing-inside-mig-provide",
+          "_8-does-continuous-batching-mean-requests-never-wait",
+          "_9-when-does-chunk-size-1000-mean-1000-tokens",
+          "_10-what-must-be-checked-for-vllm-autoscaling",
+          "_11-what-does-the-kv-cache-store",
+          "_12-how-are-traces-and-spans-handled-by-the-current-langfuse-sdk",
+          "_13-why-is-hybrid-search-more-than-two-search-calls",
+          "_14-what-was-wrong-with-the-original-sqlitesaver-example",
+          "_15-what-do-tp-and-pp-partition",
+          "_16-exercise-what-should-a-current-vllm-deployment-validate",
+          "_17-exercise-what-should-langfuse-deployment-and-python-tracing-validate",
+          "_18-exercise-how-should-a-rag-retry-loop-terminate-safely-without-evidence",
+          "_19-advanced-what-boundaries-matter-for-a-financial-consultation-agent",
+          "_20-advanced-how-should-multi-model-routing-a-b-and-cost-optimization-be-validated"
+        ]
+      }
+    ]
+  },
+  "schemas": {
+    "status": "passed",
+    "kagent": "0.10.1",
+    "inferenceExtension": "1.6.1",
+    "schemaCases": [
+      "ModelConfig",
+      "RemoteMCPServer",
+      "Agent",
+      "InferencePool"
+    ],
+    "scope": "JSON Schema only, not CEL/defaulting/admission/controllers/model/MCP/EPP connectivity. Referenced namespaces, credentials, gateway/model/EPP/MCP backends must be provisioned and authorized separately.",
+    "credentialDeliveryFinding": "Kagent0.10.1 translator turns OpenAI ModelConfig.apiKeySecret into OPENAI_API_KEY SecretKeyRef env. Originalfullfixtureis schema inspection only; publicAgentexamplewillreference separatelyapprovedModelConfig/MCPserver, notclaimfile-onlycredentialcompliance."
+  },
+  "publishedExamples": {
+    "status": "passed",
+    "checks": [
+      {
+        "locale": "ko",
+        "kind": "InferencePool",
+        "schema": "passed"
+      },
+      {
+        "locale": "ko",
+        "kind": "Agent",
+        "schema": "passed"
+      },
+      {
+        "locale": "ko",
+        "kind": "LangGraph",
+        "matchesNativeFixture": true
+      },
+      {
+        "locale": "ko",
+        "kind": "Langfuse published snippet",
+        "spans": 3,
+        "singleTrace": true,
+        "networkCalls": 0,
+        "sourceSha256": "1e6bd520d35de618c30d7063260416a298fd7b841644da8915c848e6b98ac926"
+      },
+      {
+        "locale": "en",
+        "kind": "InferencePool",
+        "schema": "passed"
+      },
+      {
+        "locale": "en",
+        "kind": "Agent",
+        "schema": "passed"
+      },
+      {
+        "locale": "en",
+        "kind": "LangGraph",
+        "matchesNativeFixture": true
+      },
+      {
+        "locale": "en",
+        "kind": "Langfuse published snippet",
+        "spans": 3,
+        "singleTrace": true,
+        "networkCalls": 0,
+        "sourceSha256": "84e9118bf9f69dc7435ca15021f551dd3bb15299649d6d808d40edbeb50dce96"
+      }
+    ],
+    "scope": "Published Agent and InferencePool schema, exact graph-fixture identity, current Langfuse SDK with synthetic file reads and injected in-memory exporter/mock transport. No actual secret files, remote calls, GPU, cloud resources or full platform deployment."
+  },
+  "graph": {
+    "status": "passed",
+    "langgraph": "1.2.11",
+    "sqliteSaver": "3.1.1",
+    "sourceSha256": "947ac31ffe80ccf1521ba24d1887fe06fdb62e3909cbc01b90c1ced68a15916b",
+    "cases": [
+      {
+        "case": "rewrite-success",
+        "retries": 1,
+        "calls": {
+          "generate": 1,
+          "search": 2
+        },
+        "questionPreserved": true,
+        "SQLiteReopenPassed": true,
+        "otherThreadEmpty": true
+      },
+      {
+        "case": "no-evidence",
+        "retries": 2,
+        "calls": {
+          "generate": 0,
+          "search": 3
+        },
+        "questionPreserved": true,
+        "SQLiteReopenPassed": true,
+        "otherThreadEmpty": true
+      }
+    ],
+    "scope": "Native StateGraph+SQLite with deterministic retrieve/rewrite/generate callbacks. No LLM, vector DB, cloud or external calls; thread separation does not itself authenticate users."
+  },
+  "routerAndVectorSchema": {
+    "status": "passed",
+    "litellm": "1.100.1",
+    "fallbacks": [
+      {
+        "local-primary": [
+          "local-fallback"
+        ]
+      }
+    ],
+    "modelAliases": [
+      "local-primary",
+      "local-fallback"
+    ],
+    "pymilvus": "3.0.1",
+    "schemaFields": [
+      "id",
+      "tenant_id",
+      "content",
+      "embedding"
+    ],
+    "fixtureEmbeddingDimension": 3,
+    "scope": "Native Router configuration and Milvus schema construction only; no completion/embedding/vector DB/model/cloud calls. Scalar tenant field requires enforced server-side filtering and is not automatic isolation."
+  },
+  "langfuse": {
+    "status": "passed",
+    "langfuse": "4.15.2",
+    "exportedSpans": 3,
+    "names": [
+      "retrieve",
+      "generate",
+      "rag-fixture"
+    ],
+    "singleTrace": true,
+    "httpCallsIntercepted": [],
+    "scope": "Native current-observation and usage API with in-memory exporter and mockHTTP; no LLM, Langfuse service or cloud calls. Score ingestion and server storage not tested."
+  },
+  "ragas": {
+    "status": "passed",
+    "versions": {
+      "ragas": "0.4.3",
+      "langchain": "0.3.27",
+      "langchain-core": "0.3.79",
+      "langchain-community": "0.3.31",
+      "langchain-openai": "0.3.35"
+    },
+    "sampleFields": [
+      "user_input",
+      "retrieved_contexts",
+      "reference_contexts",
+      "retrieved_context_ids",
+      "reference_context_ids",
+      "response",
+      "multi_responses",
+      "reference",
+      "rubrics",
+      "persona_name",
+      "query_style",
+      "query_length"
+    ],
+    "datasetRows": 1,
+    "metricImportsPassed": [
+      "faithfulness",
+      "answer_relevancy",
+      "context_precision",
+      "context_recall",
+      "answer_correctness"
+    ],
+    "scope": "Native schema and metric imports only; no evaluator/embedding/LLM calls or scores produced. Separate environment resolves the import failure observed with langchain-community0.4.2."
+  },
+  "ragasCollectionAPI": {
+    "Faithfulness": {
+      "exists": true,
+      "signature": "(llm: 'InstructorBaseRagasLLM', name: str = 'faithfulness', **kwargs)"
+    },
+    "AnswerRelevancy": {
+      "exists": true,
+      "signature": "(llm: 'InstructorBaseRagasLLM', embeddings: 'BaseRagasEmbedding', name: str = 'answer_relevancy', strictness: int = 3, **kwargs)"
+    },
+    "ContextPrecision": {
+      "exists": true,
+      "signature": "(llm: 'InstructorBaseRagasLLM', **kwargs)"
+    },
+    "ContextRecall": {
+      "exists": true,
+      "signature": "(llm: 'InstructorBaseRagasLLM', name: str = 'context_recall', **kwargs)"
+    },
+    "AnswerCorrectness": {
+      "exists": true,
+      "signature": "(llm: 'InstructorBaseRagasLLM', embeddings: Optional[ForwardRef('BaseRagasEmbedding')] = None, name: str = 'answer_correctness', weights: List[float] = [0.75, 0.25], beta: float = 1.0, **kwargs)"
+    },
+    "faithfulness": {
+      "exists": true,
+      "signature": null
+    },
+    "answer_relevancy": {
+      "exists": true,
+      "signature": null
+    }
+  },
+  "helm": {
+    "status": "passed",
+    "charts": [
+      {
+        "chart": "kagent",
+        "version": "0.10.1",
+        "sha256": "18ba29b588e04e75c3bcd4466126ddc2291abd773516e58b42a01c884d9c3545",
+        "resourceKinds": {
+          "ServiceAccount": 6,
+          "Secret": 2,
+          "ConfigMap": 4,
+          "PersistentVolumeClaim": 1,
+          "ClusterRole": 6,
+          "ClusterRoleBinding": 5,
+          "Role": 1,
+          "RoleBinding": 1,
+          "Service": 7,
+          "Deployment": 6,
+          "Agent": 10,
+          "ModelConfig": 1,
+          "RemoteMCPServer": 2
+        },
+        "secretEnvironmentReferences": [
+          {
+            "resource": "review-kagent-tools",
+            "container": "tools",
+            "env": "OPENAI_API_KEY"
+          },
+          {
+            "resource": "review-kagent-controller",
+            "container": "controller",
+            "env": "POSTGRES_PASSWORD"
+          },
+          {
+            "resource": "review-kagent-postgresql",
+            "container": "postgresql",
+            "env": "POSTGRES_PASSWORD"
+          }
+        ],
+        "offlineAPIVersionsDeclared": false
+      },
+      {
+        "chart": "kagent-crds",
+        "version": "0.10.1",
+        "sha256": "85ec46a182eb45b329ece794a53aaefa95037cd1d49b806c3a312e73a9863163",
+        "resourceKinds": {
+          "CustomResourceDefinition": 9
+        },
+        "secretEnvironmentReferences": [],
+        "offlineAPIVersionsDeclared": false
+      },
+      {
+        "chart": "milvus-operator",
+        "version": "1.3.9",
+        "sha256": "689bd66bb02644fc8ed7af25395d94470f46599c0d269fee04fe27aa2050bf34",
+        "resourceKinds": {
+          "ServiceAccount": 1,
+          "CustomResourceDefinition": 3,
+          "ClusterRole": 1,
+          "ClusterRoleBinding": 1,
+          "Role": 1,
+          "RoleBinding": 1,
+          "Service": 1,
+          "Deployment": 1
+        },
+        "secretEnvironmentReferences": [],
+        "offlineAPIVersionsDeclared": false
+      },
+      {
+        "chart": "langfuse",
+        "version": "2.1.0",
+        "sha256": "66cea2e1b6fa9f215e5f09b0b378ea1ed755ebe5881c68caa4ceba66774d7258",
+        "resourceKinds": {
+          "PodDisruptionBudget": 2,
+          "ServiceAccount": 3,
+          "Secret": 6,
+          "ConfigMap": 4,
+          "PersistentVolumeClaim": 2,
+          "ClusterRole": 1,
+          "ClusterRoleBinding": 1,
+          "Service": 4,
+          "Deployment": 4,
+          "StatefulSet": 1,
+          "ClickHouseCluster": 1,
+          "KeeperCluster": 1,
+          "Pod": 1,
+          "Job": 1
+        },
+        "secretEnvironmentReferences": [
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "SALT"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "ENCRYPTION_KEY"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "NEXTAUTH_SECRET"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "DATABASE_PASSWORD"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "REDIS_PASSWORD"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "CLICKHOUSE_PASSWORD"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "LANGFUSE_S3_BATCH_EXPORT_ACCESS_KEY_ID"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "LANGFUSE_S3_BATCH_EXPORT_SECRET_ACCESS_KEY"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID"
+          },
+          {
+            "resource": "review-langfuse-web",
+            "container": "langfuse-web",
+            "env": "LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "SALT"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "ENCRYPTION_KEY"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "NEXTAUTH_SECRET"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "DATABASE_PASSWORD"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "REDIS_PASSWORD"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "CLICKHOUSE_PASSWORD"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "LANGFUSE_S3_BATCH_EXPORT_ACCESS_KEY_ID"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "LANGFUSE_S3_BATCH_EXPORT_SECRET_ACCESS_KEY"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID"
+          },
+          {
+            "resource": "review-langfuse-worker",
+            "container": "langfuse-worker",
+            "env": "LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY"
+          },
+          {
+            "resource": "review-langfuse-postgresql",
+            "container": "postgresql",
+            "env": "POSTGRES_PASSWORD"
+          },
+          {
+            "resource": "review-langfuse-postgresql",
+            "container": "postgresql",
+            "env": "POSTGRES_DB"
+          },
+          {
+            "resource": "review-langfuse-postgresql",
+            "container": "postgresql",
+            "env": "USERDB_USER"
+          },
+          {
+            "resource": "review-langfuse-postgresql",
+            "container": "postgresql",
+            "env": "USERDB_PASSWORD"
+          }
+        ],
+        "offlineAPIVersionsDeclared": true
+      }
+    ],
+    "limitations": [
+      "Render only, no deployment or admission; Langfuse initialmissingCRDpreconditionwasobserved andofflineapi-versionssupplied forinspectiononly.",
+      "SomechartoutputsuseSecretKeyRefenvironmentdelivery; theseareinspectionfixtures,notapprovedNoSecretEnvdeployments.",
+      "Defaultchartmodels/tools/databases/storagearetobereviewedbeforeuse; nocloud/LLM/GPUcalls."
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "3f23735bee8027cd3f1724bdc228060b0f2baf822f8ee56d3199da171bc71442"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "3f23735bee8027cd3f1724bdc228060b0f2baf822f8ee56d3199da171bc71442"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "3f23735bee8027cd3f1724bdc228060b0f2baf822f8ee56d3199da171bc71442"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "e6db44f8ba683bf2b85e6981c32db0e6f7f00ee34ed9ac562eb64d2e7755b74a"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "e6db44f8ba683bf2b85e6981c32db0e6f7f00ee34ed9ac562eb64d2e7755b74a"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "e6db44f8ba683bf2b85e6981c32db0e6f7f00ee34ed9ac562eb64d2e7755b74a"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a073dc60d21b4a6ffb72ef9464b426e18033dc232ebbf314b3fc268d24e4090c"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a073dc60d21b4a6ffb72ef9464b426e18033dc232ebbf314b3fc268d24e4090c"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "a073dc60d21b4a6ffb72ef9464b426e18033dc232ebbf314b3fc268d24e4090c"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "7b4912aa177300d55be62c167894906ea5f99f8841d11699d5df8e0ec38cd5c2"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "7b4912aa177300d55be62c167894906ea5f99f8841d11699d5df8e0ec38cd5c2"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "7b4912aa177300d55be62c167894906ea5f99f8841d11699d5df8e0ec38cd5c2"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "59a9356d0a83bb5acd81688b87bcb82682408dc366e10bfc4f06d6ef2f18e03b"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "59a9356d0a83bb5acd81688b87bcb82682408dc366e10bfc4f06d6ef2f18e03b"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "59a9356d0a83bb5acd81688b87bcb82682408dc366e10bfc4f06d6ef2f18e03b"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a3885ee8a2f6ee291b737a472d73fd6ad22a2653e5738bfb0040c79c1ff33662"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a3885ee8a2f6ee291b737a472d73fd6ad22a2653e5738bfb0040c79c1ff33662"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "a3885ee8a2f6ee291b737a472d73fd6ad22a2653e5738bfb0040c79c1ff33662"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "f08fa2710f30238081da551004c70b1f3964f0d68d27fbaba8d9ea0396146d83"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "f08fa2710f30238081da551004c70b1f3964f0d68d27fbaba8d9ea0396146d83"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "f08fa2710f30238081da551004c70b1f3964f0d68d27fbaba8d9ea0396146d83"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c65d4a5f81a29c8330a4f6fd7ded752f94bcfc610fa93ff2ceb20bbc7b95dfe2"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c65d4a5f81a29c8330a4f6fd7ded752f94bcfc610fa93ff2ceb20bbc7b95dfe2"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "c65d4a5f81a29c8330a4f6fd7ded752f94bcfc610fa93ff2ceb20bbc7b95dfe2"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "b08fa663e8f9f156d26824ce25fdfd361b3a11cdea42c25ed1ab4ef788e1063d"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "b08fa663e8f9f156d26824ce25fdfd361b3a11cdea42c25ed1ab4ef788e1063d"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "b08fa663e8f9f156d26824ce25fdfd361b3a11cdea42c25ed1ab4ef788e1063d"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "7a1780f7b5146db17c6415707dd278188380d89dbe767e0e53724df29c0c9783"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "7a1780f7b5146db17c6415707dd278188380d89dbe767e0e53724df29c0c9783"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "7a1780f7b5146db17c6415707dd278188380d89dbe767e0e53724df29c0c9783"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngs": [
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-0.png",
+      "sha256": "5255aaf6fbd072c9e2e052412f5ca3ecc51bef12160acf100e41b5324bb18226"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-1.png",
+      "sha256": "667756c476254ff01d0edc915126b1097a3b0153523e1b5a084a591e65a57c5b"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-2.png",
+      "sha256": "8ce49cbc4a9aae673eabdd45cccdd07cabf659943108c1cac26220cacc08323b"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-3.png",
+      "sha256": "b3c986c8df3a1d801c3b40651c360021cfb8aa805867d519984a35ef4b7316c8"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-4.png",
+      "sha256": "d049b2a3a907365b003a9981bcb174c8a51949f65b9c0c12e6f72aa352f96d2d"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png",
+      "sha256": "ea9c35b2bca9821757e7c0f4d7c7fc1a0c988822d9c54abaede537d0e17cdd11"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png",
+      "sha256": "fbb8804ab8b0c4e459e01cb85ce8f12119ed70136c2c01734431755b03d200e5"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png",
+      "sha256": "96a9687a0151c0319df9c388e2dce9c52dd3be5029b4e50d3adcb5b870aa38df"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png",
+      "sha256": "4695e9d8b70f2c995fc56341d558d5e27a07df08abca4dda314aee366b6f4620"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png",
+      "sha256": "b967ffcaec839db21c8c74c026a75c2646b3b9cebef23edbcca37cf224975751"
+    }
+  ],
+  "publishedReferenceLinks": [
+    {
+      "url": "https://docs.langchain.com/oss/python/langgraph/persistence",
+      "status": 200,
+      "finalUrl": "https://docs.langchain.com/oss/python/langgraph/persistence"
+    },
+    {
+      "url": "https://docs.litellm.ai/docs/routing",
+      "status": 200,
+      "finalUrl": "https://docs.litellm.ai/docs/routing"
+    },
+    {
+      "url": "https://github.com/kagent-dev/kagent/tree/v0.10.1",
+      "status": 200,
+      "finalUrl": "https://github.com/kagent-dev/kagent/tree/v0.10.1"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.6.1/api/v1/inferencepool_types.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.6.1/api/v1/inferencepool_types.go"
+    },
+    {
+      "url": "https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0",
+      "status": 200,
+      "finalUrl": "https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0"
+    },
+    {
+      "url": "https://github.com/langfuse/langfuse-python/tree/v4.15.2",
+      "status": 200,
+      "finalUrl": "https://github.com/langfuse/langfuse-python/tree/v4.15.2"
+    },
+    {
+      "url": "https://github.com/zilliztech/milvus-operator/tree/milvus-operator-1.3.9",
+      "status": 200,
+      "finalUrl": "https://github.com/zilliztech/milvus-operator/tree/milvus-operator-1.3.9"
+    },
+    {
+      "url": "https://pypi.org/project/ragas/0.4.3/",
+      "status": 200,
+      "finalUrl": "https://pypi.org/project/ragas/0.4.3/"
+    }
+  ],
+  "primarySources": [
+    {
+      "file": "kagent-release.json",
+      "url": "https://api.github.com/repos/kagent-dev/kagent/releases/latest",
+      "status": 200,
+      "version": "v0.10.1",
+      "publishedAt": "2026-09-08T20:45:01Z",
+      "sha256": "9f329f065e162937bf28e9ce681e67598950572b2c9f3b4d12dd59ffd94ac4c6"
+    },
+    {
+      "file": "gie-release.json",
+      "url": "https://api.github.com/repos/kubernetes-sigs/gateway-api-inference-extension/releases/latest",
+      "status": 200,
+      "version": "v1.6.1",
+      "publishedAt": "2026-09-11T23:41:33Z",
+      "sha256": "bd8c048ce20fad0649054bd9811b0d003bfcf9728b974779dce81e4fcd5e98f1"
+    },
+    {
+      "file": "kgateway-release.json",
+      "url": "https://api.github.com/repos/kgateway-dev/kgateway/releases/latest",
+      "status": 200,
+      "version": "v2.4.4",
+      "publishedAt": "2026-08-31T22:20:50Z",
+      "sha256": "03d1bcae5d8cb7657170f70491e3271df035feb3ca391c8084d05ba4dd802cf6"
+    },
+    {
+      "file": "litellm-release.json",
+      "url": "https://api.github.com/repos/BerriAI/litellm/releases/latest",
+      "status": 200,
+      "version": "v1.100.1",
+      "publishedAt": "2026-09-10T16:58:02Z",
+      "sha256": "026b9a2db2ea722730403f881d43dbf77a96dde7a71a8e46fabd113136b3d227"
+    },
+    {
+      "file": "milvus-release.json",
+      "url": "https://api.github.com/repos/milvus-io/milvus/releases/latest",
+      "status": 200,
+      "version": "v3.0.1",
+      "publishedAt": "2026-09-09T07:32:57Z",
+      "sha256": "0564cf039ce862c914dbad32944ff3927f2624cbe2ea89cb803ad87dcac58ec8"
+    },
+    {
+      "file": "milvus-operator-release.json",
+      "url": "https://api.github.com/repos/zilliztech/milvus-operator/releases/latest",
+      "status": 200,
+      "version": "milvus-operator-1.3.9",
+      "publishedAt": "2026-08-28T04:18:30Z",
+      "sha256": "e0d42490ae310b35847885fa8b4cd314457bc48ecb3ecabff3f52969d4fbe807"
+    },
+    {
+      "file": "langgraph-pypi.json",
+      "url": "https://pypi.org/pypi/langgraph/json",
+      "status": 200,
+      "version": "1.2.11",
+      "publishedAt": null,
+      "sha256": "9846bf14ed456a4429b90748325127ec5e3570b6892ab54bd17f1b9f5a4f6c48"
+    },
+    {
+      "file": "langfuse-pypi.json",
+      "url": "https://pypi.org/pypi/langfuse/json",
+      "status": 200,
+      "version": "4.15.2",
+      "publishedAt": null,
+      "sha256": "3c90b4284127fb6f17818767fd3212fb84f6fa66b6bef307da26b077f935076f"
+    },
+    {
+      "file": "ragas-pypi.json",
+      "url": "https://pypi.org/pypi/ragas/json",
+      "status": 200,
+      "version": "0.4.3",
+      "publishedAt": null,
+      "sha256": "4afa01af83c12e8c3faef9fb1aeec637bd937575061dcb0ca71b610d07d6a126"
+    },
+    {
+      "file": "pymilvus-pypi.json",
+      "url": "https://pypi.org/pypi/pymilvus/json",
+      "status": 200,
+      "version": "3.0.1",
+      "publishedAt": null,
+      "sha256": "eb601774088d35ba13335f5538c1682c515038cde794fc4f4c83c68cb283e518"
+    },
+    {
+      "file": "kagent-go_api_v1alpha2_agent_types.go",
+      "url": "https://raw.githubusercontent.com/kagent-dev/kagent/v0.10.1/go/api/v1alpha2/agent_types.go",
+      "status": 200,
+      "sha256": "11817a3002d5c0c0ec098b549b26689b0e3cb96b83cbf369a08d3911ed8fd5a0"
+    },
+    {
+      "file": "kagent-go_api_v1alpha2_modelconfig_types.go",
+      "url": "https://raw.githubusercontent.com/kagent-dev/kagent/v0.10.1/go/api/v1alpha2/modelconfig_types.go",
+      "status": 200,
+      "sha256": "8eb9ed9f85d1eac98734f13262bcf4ec77c410ed243faad3ee5f08f8ba71cc0b"
+    },
+    {
+      "file": "kagent-helm_kagent_values.yaml",
+      "url": "https://raw.githubusercontent.com/kagent-dev/kagent/v0.10.1/helm/kagent/values.yaml",
+      "status": 200,
+      "sha256": "2ace2affd7f78dd6c1adb34d3905610451b79a32f9a70fd373b73bd0c36d8ded"
+    },
+    {
+      "file": "kagent-README.md",
+      "url": "https://raw.githubusercontent.com/kagent-dev/kagent/v0.10.1/README.md",
+      "status": 200,
+      "sha256": "e7162053426861c5edb801df94553a5a160ca2da0bb4603e032dbfcbb5a63822"
+    },
+    {
+      "file": "gie-api_v1_inferencepool_types.go",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api-inference-extension/v1.6.1/api/v1/inferencepool_types.go",
+      "status": 200,
+      "sha256": "61458e68f80b6b54d04ce1424e7e6cbceb7f2a0d68268c5ff23f963c2e84762c"
+    },
+    {
+      "file": "milvus-op-charts_milvus-operator_values.yaml",
+      "url": "https://raw.githubusercontent.com/zilliztech/milvus-operator/milvus-operator-1.3.9/charts/milvus-operator/values.yaml",
+      "status": 200,
+      "sha256": "9f43b90ec3f35f16a0dbb557fba26e2d946cee7a045c6ba1fe6e93e3159bdcc1"
+    },
+    {
+      "file": "milvus-op-README.md",
+      "url": "https://raw.githubusercontent.com/zilliztech/milvus-operator/milvus-operator-1.3.9/README.md",
+      "status": 200,
+      "sha256": "1ea0cedb8293328ec4d98a9af612746cffafb05ffc35c155e58f5249f411aed8"
+    },
+    {
+      "file": "kagent-go_api_config_crd_bases_kagent.dev_agents.yaml",
+      "url": "https://raw.githubusercontent.com/kagent-dev/kagent/v0.10.1/go/api/config/crd/bases/kagent.dev_agents.yaml",
+      "status": 200,
+      "sha256": "5cd226e442d2440ecc7fc57a010130a97d910fb66d9f776181a28168f8b0ad5c"
+    },
+    {
+      "file": "kagent-go_api_config_crd_bases_kagent.dev_modelconfigs.yaml",
+      "url": "https://raw.githubusercontent.com/kagent-dev/kagent/v0.10.1/go/api/config/crd/bases/kagent.dev_modelconfigs.yaml",
+      "status": 200,
+      "sha256": "6c61f67955259b917af8f362fc965ab38876d7baadf8db531bcdc9e3ad9652f7"
+    },
+    {
+      "file": "kagent-go_api_config_crd_bases_kagent.dev_remotemcpservers.yaml",
+      "url": "https://raw.githubusercontent.com/kagent-dev/kagent/v0.10.1/go/api/config/crd/bases/kagent.dev_remotemcpservers.yaml",
+      "status": 200,
+      "sha256": "0101c9b7481fe286b1f0193321113800988dc7c1f105599fff2486750a9d9926"
+    },
+    {
+      "file": "langfuse-langfuse__client_client.py",
+      "url": "https://raw.githubusercontent.com/langfuse/langfuse-python/v4.15.2/langfuse/_client/client.py",
+      "status": 200,
+      "sha256": "f70853deb8ec1b9dc1895c6f5e83e02240d67e4b6d57ee598b3c5d33f6b59e58"
+    },
+    {
+      "file": "gie-config_crd_bases_inference.networking.k8s.io_inferencepools.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api-inference-extension/v1.6.1/config/crd/bases/inference.networking.k8s.io_inferencepools.yaml",
+      "status": 200,
+      "sha256": "465ba1b10f419205ac5176accef36aa7ab4e0d0c0e43bf3543b0d697b6b66f65"
+    }
+  ],
+  "limitations": [
+    "No GPU/model/vector DB/MCP/EPP/cloud deployment or real evaluation calls.",
+    "Schema checks do not implement CEL/defaulting/admission/runtime behavior.",
+    "Charts inspected offline; secret-environment defaults are disclosed, not approved under file-only credential policy.",
+    "No full local VitePress build; bounded per-document compilation and viewer checks only.",
+    "HTTP primary-source retrieval and installed release source inspection supplied evidence. No web.run source result was available in this continuation."
+  ]
+}

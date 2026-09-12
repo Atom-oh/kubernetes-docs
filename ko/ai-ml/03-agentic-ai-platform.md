@@ -1,9 +1,9 @@
 # EKS 기반 Agentic AI 플랫폼 구축
 
-> **지원 버전**: EKS 1.31+, vLLM 0.6+, Karpenter 1.0+
-> **마지막 업데이트**: 2026년 9월 9일
+> **검토 기준**: Kagent 0.10.1 / Gateway Inference Extension 1.6.1 / LangGraph 1.2.11 / Langfuse SDK 4.15.2
+> **마지막 업데이트**: 2026년 9월 12일
 
-Agentic AI는 단순한 질의응답을 넘어 자율적으로 계획을 세우고, 도구를 사용하며, 반복적으로 목표를 달성하는 AI 시스템입니다. 이 장에서는 EKS에서 프로덕션 수준의 Agentic AI 플랫폼을 구축하는 방법을 알아보겠습니다.
+Agentic AI는 단순한 질의응답을 넘어 자율적으로 계획을 세우고, 도구를 사용하며, 반복적으로 목표를 달성하는 AI 시스템입니다. 이 장에서는 EKS에서 Agentic AI 플랫폼의 구성과 운영 경계를 설계하는 방법을 알아보겠습니다.
 
 ## 1. Agentic AI 플랫폼 개요
 
@@ -11,7 +11,7 @@ Agentic AI는 단순한 질의응답을 넘어 자율적으로 계획을 세우�
 
 Agentic AI는 다음과 같은 특성을 가진 자율적 AI 시스템입니다:
 
-![자율적 계획 수립, 도구 기반 실행, 반복적 개선, 상태 및 메모리 관리라는 네 가지 Agentic AI 특성이 목표 설정부터 계획, 실행, 평가를 거쳐 완료 또는 재계획으로 이어지는 워크플로우 루프를 뒷받침하는 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-0.png)
+![목표, 계획, 실행과 평가를 연결하고 권한, 근거 및 재시도 한도를 확인해 결과 또는 응답 보류로 종료하는 흐름.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-0.html)
 
@@ -20,7 +20,7 @@ Agentic AI는 다음과 같은 특성을 가진 자율적 AI 시스템입니다:
 3. **반복적 개선**: 실행 결과를 평가하고 필요시 계획을 수정합니다.
 4. **상태 관리**: 장기 실행 작업에서 상태와 메모리를 유지합니다.
 
-### Kubernetes가 필요한 이유
+### Kubernetes를 선택하는 조건
 
 Agentic AI 플랫폼에서 Kubernetes는 다음과 같은 핵심 기능을 제공합니다:
 
@@ -28,267 +28,30 @@ Agentic AI 플랫폼에서 Kubernetes는 다음과 같은 핵심 기능을 제�
 |---------|------------------|
 | GPU 오케스트레이션 | Device Plugin, GPU Operator, MIG |
 | 자동 스케일링 | HPA, VPA, Karpenter |
-| 멀티 테넌트 격리 | Namespace, NetworkPolicy, ResourceQuota |
-| 고가용성 | ReplicaSet, PodDisruptionBudget |
-| 서비스 메시 | Istio, Gateway API |
+| 멀티 테넌트 격리 | RBAC, Namespace, enforced NetworkPolicy, workload identity |
+| 고가용성 | replicas, probes, placement and recovery tests |
+| 서비스 메시 | configured gateway/mesh implementation |
 | 비용 최적화 | Spot 인스턴스, 노드 통합 |
 
 ### 네 가지 핵심 기술 과제
 
 Agentic AI 플랫폼 구축 시 해결해야 할 핵심 과제:
 
-![GPU 리소스 관리, 멀티 LLM 통합, 워크플로우 오케스트레이션, 실시간 비용 최적화라는 네 가지 핵심 기술 과제가 각각 Karpenter, LiteLLM, LangGraph(Kagent), Langfuse 같은 구체적인 해결 도구로 이어지는 매핑을 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-1.png)
+![GPU 배치, provider 통합, 별도 LangGraph와 Kagent ADK runtime, 비용 측정과 예산 제어의 도구 및 검증 조건.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-1.html)
 
 ---
 
-## 2. GPU 인프라 구성
+## 2. GPU와 비용 기준
 
-### GPU 인스턴스 유형 비교
+에이전트가 외부 모델 API만 호출한다면 GPU가 필수는 아닙니다. 자체 추론을 운영할 때 모델 크기·정밀도·KV cache·동시성·CPU 아키텍처와 driver 조건으로 장치를 선택합니다. GPU Operator·device plugin은 [검토한 GPU 가이드](01-ai-ml-workloads.md)를 참고하세요. AL2023 NVIDIA AMI의 driver/toolkit과 중복 설치하지 않아야 합니다.
 
-AWS에서 제공하는 주요 GPU 인스턴스 유형:
+MIG는 지원 장치에서 GPU instance를 분할하며, 같은 MIG instance를 time-slicing으로 공유하면 그 안의 워크로드 사이에 메모리·장애 격리가 새로 생기지는 않습니다. time-slicing은 “소프트웨어 보안 격리”가 아닙니다. 메모리80GB가70B FP16 모델을 담는다는 식의 단정도 피해야 합니다.
 
-| 인스턴스 | GPU | GPU 메모리 | 사용 사례 | 시간당 비용 (On-Demand) |
-|---------|-----|----------|----------|---------------------|
-| **p5.48xlarge** | 8x H100 | 640GB | 대규모 훈련, 초대형 모델 추론 | ~$98.32 |
-| **p4d.24xlarge** | 8x A100 | 320GB | 분산 훈련, 70B+ 모델 추론 | ~$32.77 |
-| **g5.xlarge** | 1x A10G | 24GB | 중소형 모델 추론 | ~$1.01 |
-| **g5.48xlarge** | 8x A10G | 192GB | 다중 모델 서빙 | ~$16.29 |
-| **g6.xlarge** | 1x L4 | 24GB | 비용 효율적 추론 | ~$0.80 |
-| **g6.48xlarge** | 8x L4 | 192GB | 대규모 추론 클러스터 | ~$13.35 |
-| **inf2.xlarge** | 1x Inferentia2 | 32GB | AWS 최적화 추론 | ~$0.76 |
+GPU Operator의 Helm values는 ConfigMap/HelmRelease 매니페스트와 다릅니다. Flux HelmRelease를 helm --values에 넣으면 원하는 설정이 적용되지 않습니다. MIG 설정에는 manager의 ConfigMap 참조, MIG profile 선택 node label과 device plugin 전략이 맞아야 합니다. device-plugin.config node label 값은 ConfigMap 이름이 아닌 내부 configuration key입니다. MIG 재구성은 실행 workload를 방해할 수 있어 별도 운영 절차가 필요하며 이번 검토에서는 실행하지 않았습니다.
 
-### Multi-Instance GPU (MIG) 구성
-
-NVIDIA A100/H100 GPU는 MIG를 통해 물리적으로 분할하여 여러 워크로드를 격리할 수 있습니다.
-
-#### MIG 프로파일 (A100 80GB 기준)
-
-| 프로파일 | GPU 메모리 | SM 수 | 사용 사례 |
-|---------|----------|-------|----------|
-| 1g.10gb | 10GB | 14 | 소형 모델 추론, 개발 |
-| 2g.20gb | 20GB | 28 | 7B 모델 추론 |
-| 3g.40gb | 40GB | 42 | 13B 모델 추론 |
-| 4g.40gb | 40GB | 56 | 대용량 배치 추론 |
-| 7g.80gb | 80GB | 98 | 70B 모델, 훈련 |
-
-#### NVIDIA GPU Operator 배포
-
-```yaml
-# gpu-operator-values.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gpu-operator-config
-  namespace: gpu-operator
-data:
-  mig.strategy: "mixed"  # single 또는 mixed
----
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: gpu-operator
-  namespace: gpu-operator
-spec:
-  interval: 10m
-  chart:
-    spec:
-      chart: gpu-operator
-      version: "v24.9.0"
-      sourceRef:
-        kind: HelmRepository
-        name: nvidia
-        namespace: flux-system
-  values:
-    operator:
-      defaultRuntime: containerd
-    mig:
-      strategy: mixed
-    devicePlugin:
-      enabled: true
-      config:
-        name: time-slicing-config
-        default: any
-    gfd:
-      enabled: true
-    dcgmExporter:
-      enabled: true
-      serviceMonitor:
-        enabled: true
-```
-
-```bash
-# GPU Operator 설치
-helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-helm repo update
-
-helm install gpu-operator nvidia/gpu-operator \
-  --namespace gpu-operator \
-  --create-namespace \
-  --values gpu-operator-values.yaml
-
-# MIG 설정 확인
-kubectl get nodes -l nvidia.com/mig.capable=true \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.status.allocatable}{"\n"}{end}'
-```
-
-#### MIG 파티션 구성
-
-```yaml
-# mig-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mig-parted-config
-  namespace: gpu-operator
-data:
-  config.yaml: |
-    version: v1
-    mig-configs:
-      # 개발 환경: 작은 파티션으로 많은 사용자 지원
-      development:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "1g.10gb": 7
-
-      # 프로덕션: 중간 크기 파티션
-      production-inference:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "2g.20gb": 3
-            "1g.10gb": 1
-
-      # 대규모 모델: 전체 GPU 사용
-      large-model:
-        - devices: [0]
-          mig-enabled: true
-          mig-devices:
-            "7g.80gb": 1
-```
-
-### Time-Slicing 구성
-
-MIG를 지원하지 않는 GPU(A10G, L4 등)에서는 Time-Slicing으로 GPU를 공유할 수 있습니다.
-
-```yaml
-# time-slicing-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: time-slicing-config
-  namespace: gpu-operator
-data:
-  any: |
-    version: v1
-    flags:
-      migStrategy: none
-    sharing:
-      timeSlicing:
-        renameByDefault: false
-        failRequestsGreaterThanOne: false
-        resources:
-          - name: nvidia.com/gpu
-            replicas: 4  # 하나의 GPU를 4개로 분할
----
-# 노드에 Time-Slicing 적용
-apiVersion: v1
-kind: Node
-metadata:
-  name: gpu-node-1
-  labels:
-    nvidia.com/device-plugin.config: time-slicing-config
-```
-
-#### MIG vs Time-Slicing 비교
-
-| 특성 | MIG | Time-Slicing |
-|-----|-----|-------------|
-| **격리 수준** | 하드웨어 격리 (메모리, SM) | 소프트웨어 격리 (시간 분할) |
-| **지원 GPU** | A100, H100 | 모든 NVIDIA GPU |
-| **메모리 보장** | 보장됨 | 공유 (경합 가능) |
-| **오버헤드** | 낮음 | 컨텍스트 스위칭 오버헤드 |
-| **유연성** | 재구성 필요 | 동적 조정 가능 |
-| **사용 사례** | 프로덕션, 멀티테넌트 | 개발, 배치 처리 |
-
-### Karpenter NodePool 구성
-
-```yaml
-# gpu-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-inference
-spec:
-  template:
-    metadata:
-      labels:
-        workload-type: inference
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["on-demand", "spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - g5.xlarge
-            - g5.2xlarge
-            - g5.4xlarge
-            - g6.xlarge
-            - g6.2xlarge
-        - key: "karpenter.k8s.aws/instance-gpu-count"
-          operator: Gt
-          values: ["0"]
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodes
-      taints:
-        - key: nvidia.com/gpu
-          value: "true"
-          effect: NoSchedule
-  limits:
-    nvidia.com/gpu: 100
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 5m
-    budgets:
-      - nodes: "20%"
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-nodes
-spec:
-  amiSelectorTerms:
-    - alias: al2023@latest
-  role: KarpenterNodeRole-${CLUSTER_NAME}
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ${CLUSTER_NAME}
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ${CLUSTER_NAME}
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 200Gi
-        volumeType: gp3
-        iops: 10000
-        throughput: 500
-        deleteOnTermination: true
-  tags:
-    Environment: production
-    Workload: ai-inference
-```
-
----
+가격은 리전·OS·구매 방식·시점·할당량 조건을 명시해 확인해야 합니다. 이전 표의 출처 없는 시간당 가격과 고정 절감률은 현재 가격으로 사용하지 않습니다. 자체 추론은 GPU 유휴 시간, 스토리지·전송·운영·실패 복구를 포함한 총비용을 실제 처리량으로 나눠 비교하세요.
 
 ## 3. 모델 서빙 (vLLM)
 
@@ -296,248 +59,15 @@ spec:
 
 vLLM은 다음과 같은 핵심 기술로 고성능 LLM 추론을 제공합니다:
 
-![PagedAttention, 연속 배치 처리, Prefix 캐싱, Chunked Prefill이라는 vLLM의 네 가지 핵심 기술이 각각 메모리 효율, 처리량 향상, 지연시간 최소화, 긴 컨텍스트 지원이라는 성능 이점으로 이어지는 관계를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-2.png)
+![PagedAttention, continuous batching, prefix cache와 chunked prefill의 기능 및 workload별로 측정할 메모리, 처리량과 지연.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-2.html)
 
-### vLLM Deployment 구성
+### 검토한 서빙 경로
 
-```yaml
-# vllm-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vllm-llama3-70b
-  namespace: ai-inference
-  labels:
-    app: vllm
-    model: llama3-70b
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vllm
-      model: llama3-70b
-  template:
-    metadata:
-      labels:
-        app: vllm
-        model: llama3-70b
-    spec:
-      nodeSelector:
-        workload-type: inference
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Equal
-          value: "true"
-          effect: NoSchedule
-      containers:
-        - name: vllm
-          image: vllm/vllm-openai:v0.6.4
-          ports:
-            - containerPort: 8000
-              name: http
-          env:
-            - name: HUGGING_FACE_HUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: huggingface-token
-                  key: token
-            - name: VLLM_ATTENTION_BACKEND
-              value: "FLASH_ATTN"
-          args:
-            - "--model"
-            - "meta-llama/Meta-Llama-3-70B-Instruct"
-            - "--tensor-parallel-size"
-            - "4"
-            - "--gpu-memory-utilization"
-            - "0.95"
-            - "--max-model-len"
-            - "8192"
-            - "--enable-prefix-caching"
-            - "--enable-chunked-prefill"
-            - "--max-num-batched-tokens"
-            - "32768"
-            - "--trust-remote-code"
-          resources:
-            requests:
-              nvidia.com/gpu: 4
-              memory: "200Gi"
-              cpu: "32"
-            limits:
-              nvidia.com/gpu: 4
-              memory: "250Gi"
-              cpu: "48"
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 300
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 600
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-          volumeMounts:
-            - name: model-cache
-              mountPath: /root/.cache/huggingface
-            - name: shm
-              mountPath: /dev/shm
-      volumes:
-        - name: model-cache
-          persistentVolumeClaim:
-            claimName: model-cache-pvc
-        - name: shm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 64Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-llama3-70b
-  namespace: ai-inference
-spec:
-  selector:
-    app: vllm
-    model: llama3-70b
-  ports:
-    - port: 8000
-      targetPort: 8000
-      name: http
-  type: ClusterIP
-```
+[현재 vLLM 가이드](02-vllm-deployment.md)의0.29.0 이미지·모델 revision, startupProbe, private Service와 실제 CLI를 사용하세요. 이전 예제의 단일 GPU NodePool에는 GPU4개·메모리200Gi를 요구하는 Pod가 들어갈 수 없습니다. TP/PP group과 독립 replica를 구분하고 메모리 요구를 계산해야 합니다.
 
-### 성능 최적화 설정
-
-#### Tensor Parallelism
-
-대규모 모델을 여러 GPU에 분산:
-
-```yaml
-# 모델 크기별 권장 설정
-# 7B 모델: 1 GPU
-# 13B 모델: 1-2 GPU
-# 70B 모델: 4 GPU (A100) 또는 8 GPU (A10G)
-# 405B 모델: 8 GPU (H100)
-
-args:
-  - "--tensor-parallel-size"
-  - "4"  # GPU 수에 맞게 조정
-```
-
-#### KV Cache 관리
-
-```yaml
-args:
-  # GPU 메모리의 95%를 KV 캐시에 할당
-  - "--gpu-memory-utilization"
-  - "0.95"
-
-  # 블록 크기 설정 (기본값: 16)
-  - "--block-size"
-  - "16"
-
-  # 스왑 공간 설정 (CPU 메모리)
-  - "--swap-space"
-  - "32"  # GB 단위
-```
-
-#### Prefix Caching
-
-반복되는 시스템 프롬프트에 대한 캐싱:
-
-```yaml
-args:
-  - "--enable-prefix-caching"
-
-# 효과: 동일한 시스템 프롬프트를 사용하는 요청의
-# 첫 번째 토큰 생성 시간(TTFT)을 50-80% 단축
-```
-
-#### Chunked Prefill
-
-긴 컨텍스트 처리 최적화:
-
-```yaml
-args:
-  - "--enable-chunked-prefill"
-  - "--max-num-batched-tokens"
-  - "32768"
-
-# 효과: 긴 프롬프트와 짧은 프롬프트가 혼합된
-# 워크로드에서 응답 지연시간 안정화
-```
-
-### 모델 서빙 패턴
-
-#### 단일 모델 Pod
-
-```yaml
-# 가장 단순한 패턴: 하나의 Pod에서 하나의 모델 서빙
-spec:
-  containers:
-    - name: vllm
-      args:
-        - "--model"
-        - "meta-llama/Meta-Llama-3-8B-Instruct"
-```
-
-#### llm-d를 활용한 분리 서빙
-
-Prefill과 Decode를 분리하여 최적화:
-
-```yaml
-# llm-d-prefill.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llm-d-prefill
-spec:
-  replicas: 2
-  template:
-    spec:
-      containers:
-        - name: llm-d
-          image: llm-d/prefill:latest
-          args:
-            - "--role"
-            - "prefill"
-            - "--model"
-            - "meta-llama/Meta-Llama-3-70B-Instruct"
-          resources:
-            requests:
-              nvidia.com/gpu: 4
----
-# llm-d-decode.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: llm-d-decode
-spec:
-  replicas: 4
-  template:
-    spec:
-      containers:
-        - name: llm-d
-          image: llm-d/decode:latest
-          args:
-            - "--role"
-            - "decode"
-            - "--prefill-endpoint"
-            - "http://llm-d-prefill:8000"
-          resources:
-            requests:
-              nvidia.com/gpu: 2
-```
-
----
+Prefix cache는 지원 prefix의 KV 재사용이며 응답 cache와 다릅니다. GPU memory utilization을 “KV cache만의 비율”로 설명하거나 제거된 swap-space 옵션을 복사하지 마세요. llm-d의 분리 서빙은 단순한 prefill/decode 이미지 두 개와 role 인자로 완성되지 않습니다. 실제 릴리스의 모델 서버, KV transfer connector, scheduler, gateway와 장치·네트워크 조합을 검증해야 합니다.
 
 ## 4. 추론 게이트웨이 (Inference Gateway)
 
@@ -547,561 +77,78 @@ Kubernetes Gateway API를 확장하여 AI 추론 워크로드를 효율적으로
 
 ### Kgateway + InferencePool 아키텍처
 
-![클라이언트 요청이 Gateway와 HTTPRoute를 거쳐 InferencePool로 전달되고, Endpoint Picker가 least-loaded 또는 prefix-aware 기준으로 풀 안의 vLLM Pod 중 하나를 선택해 라우팅하는 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-3.png)
+![HTTPRoute가 InferencePool을 참조하고 gateway가 EPP 선택을 이용해 model Pod로 요청을 전송하는 경로. 설정 리소스와 실제 proxy 경로는 구분된다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-3.html)
 
-#### InferencePool CRD
+#### InferencePool v1
+
+Gateway API와 Gateway API Inference Extension은 별도 API입니다. 검토한 Extension 1.6.1의 InferencePool은 `inference.networking.k8s.io/v1`, `targetPorts`, `endpointPickerRef`를 사용합니다. 이전 예제의 EndpointPicker CRD와 endpointPickerConfig 형식은 이 스키마가 아닙니다.
+
+다음은 스키마를 확인한 예시이며 EPP Service 9002, model Pods와 이를 지원하는 gateway controller를 별도로 준비해야 합니다. InferencePool만으로 인증·속도 제한·prefix-aware 알고리즘이 자동 구성되지는 않습니다.
 
 ```yaml
-# inferencepool.yaml
-apiVersion: inference.networking.x-k8s.io/v1alpha1
+apiVersion: inference.networking.k8s.io/v1
 kind: InferencePool
 metadata:
-  name: llama3-pool
+  name: model-pool
   namespace: ai-inference
 spec:
-  targetPortNumber: 8000
   selector:
     matchLabels:
-      app: vllm
-      model: llama3-70b
-  endpointPickerConfig:
-    # 로드 밸런싱 전략
-    extensionRef:
-      name: prefix-aware-picker
-      group: inference.networking.x-k8s.io
-      kind: EndpointPicker
----
-apiVersion: inference.networking.x-k8s.io/v1alpha1
-kind: EndpointPicker
-metadata:
-  name: prefix-aware-picker
-  namespace: ai-inference
-spec:
-  type: PrefixAware
-  config:
-    # Prefix 캐시 히트율 최적화
-    prefixHashBuckets: 1024
-    fallbackStrategy: LeastLoaded
-    loadMetric: pending_requests
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: llama3-route
-  namespace: ai-inference
-spec:
-  parentRefs:
-    - name: ai-gateway
-      namespace: ai-inference
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /v1/chat/completions
-          headers:
-            - name: x-model
-              value: llama3-70b
-      backendRefs:
-        - group: inference.networking.x-k8s.io
-          kind: InferencePool
-          name: llama3-pool
-          port: 8000
+      app: vllm-demo
+  targetPorts:
+    - number: 8000
+  endpointPickerRef:
+    name: model-epp
+    kind: Service
+    group: ""
+    port:
+      number: 9002
+    failureMode: FailClose
 ```
 
-### LiteLLM 통합 게이트웨이
+Selector는 같은 namespace의 Pod만 선택합니다. EndpointPickerRef는 기본 Service 참조이고 FailureMode 기본값은 FailClose입니다. HTTPRoute와 EPP 설정·지원 버전, TLS·gateway status를 함께 검증하세요. API 명세나 Kgateway 설치만으로 모든 plugin 기능이 활성화되지는 않습니다.
 
-LiteLLM은 다양한 LLM 프로바이더를 단일 API로 통합합니다.
+### LiteLLM 1.100.1의 provider gateway
+
+LiteLLM의 provider 변환과 InferencePool의 backend 선택은 다른 계층입니다. provider별 API path·인증·요청/응답·streaming 형식이 다르므로 OpenAI JSON을 Anthropic endpoint에 그대로 전달하는 router는 올바른 adapter가 아닙니다.
+
+현재 Router의 fallback 형식은 다음과 같습니다. 실제 proxy가 config 파일을 읽도록 command/args도 연결해야 하며, Redis·DB·credential·callback 의존성을 별도로 준비해야 합니다.
 
 ```yaml
-# litellm-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: litellm-gateway
-  namespace: ai-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: litellm
-  template:
-    metadata:
-      labels:
-        app: litellm
-    spec:
-      containers:
-        - name: litellm
-          image: ghcr.io/berriai/litellm:main-v1.55.0
-          ports:
-            - containerPort: 4000
-          env:
-            - name: LITELLM_MASTER_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: litellm-secrets
-                  key: master-key
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: litellm-secrets
-                  key: database-url
-          volumeMounts:
-            - name: config
-              mountPath: /app/config.yaml
-              subPath: config.yaml
-          resources:
-            requests:
-              cpu: "2"
-              memory: "4Gi"
-            limits:
-              cpu: "4"
-              memory: "8Gi"
-      volumes:
-        - name: config
-          configMap:
-            name: litellm-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: litellm-config
-  namespace: ai-gateway
-data:
-  config.yaml: |
-    model_list:
-      # 내부 vLLM 엔드포인트
-      - model_name: llama3-70b
-        litellm_params:
-          model: openai/meta-llama/Meta-Llama-3-70B-Instruct
-          api_base: http://vllm-llama3-70b.ai-inference:8000/v1
-          api_key: dummy
-        model_info:
-          max_tokens: 8192
-          input_cost_per_token: 0.0000001
-          output_cost_per_token: 0.0000003
-
-      - model_name: llama3-8b
-        litellm_params:
-          model: openai/meta-llama/Meta-Llama-3-8B-Instruct
-          api_base: http://vllm-llama3-8b.ai-inference:8000/v1
-          api_key: dummy
-        model_info:
-          max_tokens: 8192
-          input_cost_per_token: 0.00000005
-          output_cost_per_token: 0.00000015
-
-      # 외부 프로바이더 (폴백용)
-      - model_name: gpt-4o
-        litellm_params:
-          model: gpt-4o
-          api_key: os.environ/OPENAI_API_KEY
-        model_info:
-          max_tokens: 128000
-          input_cost_per_token: 0.000005
-          output_cost_per_token: 0.000015
-
-      - model_name: claude-3-5-sonnet
-        litellm_params:
-          model: anthropic/claude-3-5-sonnet-20241022
-          api_key: os.environ/ANTHROPIC_API_KEY
-        model_info:
-          max_tokens: 200000
-          input_cost_per_token: 0.000003
-          output_cost_per_token: 0.000015
-
-    # 라우팅 설정
-    router_settings:
-      routing_strategy: usage-based-routing-v2
-      enable_pre_call_checks: true
-      redis_host: redis.ai-gateway
-      redis_port: 6379
-
-    # 폴백 설정
-    litellm_settings:
-      fallbacks:
-        - model: llama3-70b
-          fallback_models:
-            - gpt-4o
-            - claude-3-5-sonnet
-
-      # 재시도 설정
-      num_retries: 3
-      request_timeout: 300
-
-      # 비용 추적
-      success_callback: ["langfuse"]
-      failure_callback: ["langfuse"]
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: litellm-gateway
-  namespace: ai-gateway
-spec:
-  selector:
-    app: litellm
-  ports:
-    - port: 4000
-      targetPort: 4000
-  type: ClusterIP
+model_list:
+  - model_name: local-primary
+    litellm_params:
+      model: openai/qwen3-demo
+      api_base: http://vllm-demo.ml-inference:8000/v1
+  - model_name: local-fallback
+    litellm_params:
+      model: openai/qwen3-demo
+      api_base: http://vllm-secondary.ml-inference:8000/v1
+router_settings:
+  fallbacks:
+    - local-primary: [local-fallback]
+  num_retries: 0
 ```
 
-#### LiteLLM 사용 예시
+이는 config 형식 예시이며 미리 준비한 endpoint와 인증을 요구합니다. 운영 client에 master key를 배포하지 말고 제한된 credential을 사용하세요. 외부 provider fallback은 데이터가 외부로 나가는 경로이므로 tenant별 허용 provider·데이터 정책을 먼저 적용해야 합니다. 모델이 고른 이름이나 client header만으로 이 권한을 우회할 수 없어야 합니다.
 
-```python
-# litellm_client.py
-from openai import OpenAI
 
-# LiteLLM 게이트웨이 사용
-client = OpenAI(
-    api_key="sk-litellm-master-key",
-    base_url="http://litellm-gateway.ai-gateway:4000/v1"
-)
+## 5. RAG 데이터와 검색 경계
 
-# 내부 모델 호출 (자동 라우팅)
-response = client.chat.completions.create(
-    model="llama3-70b",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Explain Kubernetes in simple terms."}
-    ],
-    max_tokens=500
-)
+Milvus 최신 확인 릴리스는3.0.1이며, 별도로 검토한 Operator 1.3.9의 기본 Milvus는2.6.11입니다. 같은 버전으로 간주하거나 Operator의 넓은 호환성 표만으로3.x 업그레이드가 검증됐다고 주장하지 마세요. Operator 저장소는 `https://zilliztech.github.io/milvus-operator/`이며 일반 Milvus chart 저장소와 구분됩니다.
 
-print(response.choices[0].message.content)
+벡터 차원은 실제 embedding 출력과 같아야 합니다. 모델 이름뿐 아니라 revision·dimensions 옵션·tokenizer·normalization·metric을 기록하고 ingestion/query가 같은 조건을 쓰도록 하세요. index type에 따라 parameter가 다르므로 HNSW의 M/efConstruction을 GPU_IVF_FLAT에 그대로 적용하지 않습니다. GPU index는 이미지·Milvus 버전·장치와 실제 노드 역할을 확인해야 하며 indexNode에 GPU를 요청한다고 자동 가속되지 않습니다.
 
-# 폴백이 필요한 경우 자동으로 외부 프로바이더 사용
-# (llama3-70b 실패 시 gpt-4o -> claude-3-5-sonnet 순서로 시도)
-```
+tenant_id 필드를 추가하는 것만으로 격리되지 않습니다. 인증된 주체에서 접근 범위를 정하고 retrieval filter를 서버에서 적용한 뒤 결과도 검증해야 합니다. 변경·삭제된 문서와 embedding 버전의 수명 관리도 필요합니다.
 
----
+### 청킹과 hybrid search
 
-## 5. RAG 데이터 레이어
+현재 text splitter 모듈은 `langchain_text_splitters`입니다. RecursiveCharacterTextSplitter의 기본 chunk_size는 문자 수이며 토큰 수가 아닙니다. Token splitter는 대상 embedding 모델의 tokenizer와 실제 최대 입력을 맞춰야 합니다. 의미 기반 chunking은 embedding 호출·비용이 추가되며 정답률 향상을 보장하지 않습니다.
 
-### Milvus 벡터 데이터베이스
+Hybrid search는 dense·sparse 결과를 단순히 두 번 검색하는 것에서 끝나지 않고 RRF나 적절한 score fusion과 동일한 접근 필터가 필요합니다. 단어 검색/벡터 검색의 효과는 recall·precision·latency로 평가하세요. 관련 문서가 없으면 재검색을 제한하고 근거 없음으로 종료해야 하며, retry 한도 후 무조건 LLM 답변을 생성하지 않습니다.
 
-Milvus는 대규모 벡터 검색을 위한 오픈소스 데이터베이스입니다.
-
-#### Milvus Operator 배포
-
-```bash
-# Milvus Operator 설치
-helm repo add milvus https://zilliztech.github.io/milvus-helm
-helm repo update
-
-helm install milvus-operator milvus/milvus-operator \
-  --namespace milvus-system \
-  --create-namespace
-```
-
-```yaml
-# milvus-cluster.yaml
-apiVersion: milvus.io/v1beta1
-kind: Milvus
-metadata:
-  name: milvus-cluster
-  namespace: ai-data
-spec:
-  mode: cluster
-  dependencies:
-    etcd:
-      inCluster:
-        values:
-          replicaCount: 3
-          persistence:
-            enabled: true
-            size: 50Gi
-    pulsar:
-      inCluster:
-        values:
-          components:
-            autorecovery: false
-          proxy:
-            replicaCount: 2
-          broker:
-            replicaCount: 2
-    storage:
-      inCluster:
-        values:
-          mode: distributed
-          fullnameOverride: milvus-minio
-          persistence:
-            enabled: true
-            size: 500Gi
-  components:
-    # Query Node - 벡터 검색 처리
-    queryNode:
-      replicas: 3
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-        limits:
-          cpu: "8"
-          memory: "32Gi"
-
-    # Index Node - 인덱스 빌드 (GPU 가속)
-    indexNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-          nvidia.com/gpu: 1
-        limits:
-          cpu: "8"
-          memory: "32Gi"
-          nvidia.com/gpu: 1
-
-    # Data Node - 데이터 처리
-    dataNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "2"
-          memory: "8Gi"
-        limits:
-          cpu: "4"
-          memory: "16Gi"
-
-    # Proxy - API 게이트웨이
-    proxy:
-      replicas: 2
-      serviceType: ClusterIP
-      resources:
-        requests:
-          cpu: "2"
-          memory: "4Gi"
-        limits:
-          cpu: "4"
-          memory: "8Gi"
-  config:
-    common:
-      gracefulTime: 30000
-    queryNode:
-      gracefulTime: 30000
-```
-
-#### 컬렉션 스키마 설계
-
-```python
-# milvus_schema.py
-from pymilvus import (
-    connections, Collection, FieldSchema,
-    CollectionSchema, DataType, utility
-)
-
-# Milvus 연결
-connections.connect(
-    alias="default",
-    host="milvus-cluster-proxy.ai-data",
-    port="19530"
-)
-
-# 문서 컬렉션 스키마
-fields = [
-    FieldSchema(name="id", dtype=DataType.VARCHAR, max_length=64, is_primary=True),
-    FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
-    FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=1536),
-    FieldSchema(name="metadata", dtype=DataType.JSON),
-    FieldSchema(name="created_at", dtype=DataType.INT64),
-]
-
-schema = CollectionSchema(
-    fields=fields,
-    description="Document embeddings for RAG"
-)
-
-# 컬렉션 생성
-collection = Collection(
-    name="documents",
-    schema=schema,
-    using="default"
-)
-
-# 인덱스 생성
-index_params = {
-    "metric_type": "COSINE",
-    "index_type": "HNSW",  # 또는 GPU_IVF_FLAT for GPU 가속
-    "params": {
-        "M": 16,
-        "efConstruction": 256
-    }
-}
-
-collection.create_index(
-    field_name="embedding",
-    index_params=index_params
-)
-
-# 컬렉션 로드
-collection.load()
-```
-
-#### 인덱스 유형 비교
-
-| 인덱스 유형 | 특성 | 메모리 사용 | 검색 속도 | 사용 사례 |
-|-----------|-----|-----------|----------|----------|
-| **FLAT** | 정확한 검색 | 높음 | 느림 | 소규모, 정확도 우선 |
-| **IVF_FLAT** | 클러스터 기반 | 중간 | 빠름 | 일반적인 사용 |
-| **HNSW** | 그래프 기반 | 높음 | 매우 빠름 | 대규모, 속도 우선 |
-| **GPU_IVF_FLAT** | GPU 가속 | 중간 | 매우 빠름 | 초대규모, GPU 사용 |
-| **SCANN** | 양자화 기반 | 낮음 | 빠름 | 메모리 제한 환경 |
-
-### 문서 수집 파이프라인
-
-```yaml
-# document-ingestion-job.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: document-ingestion
-  namespace: ai-data
-spec:
-  template:
-    spec:
-      containers:
-        - name: ingestion
-          image: ai-platform/document-ingestion:latest
-          env:
-            - name: S3_BUCKET
-              value: "my-documents-bucket"
-            - name: MILVUS_HOST
-              value: "milvus-cluster-proxy.ai-data"
-            - name: EMBEDDING_MODEL
-              value: "text-embedding-3-large"
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openai-credentials
-                  key: api-key
-          resources:
-            requests:
-              cpu: "4"
-              memory: "16Gi"
-            limits:
-              cpu: "8"
-              memory: "32Gi"
-          volumeMounts:
-            - name: temp-storage
-              mountPath: /tmp/documents
-      volumes:
-        - name: temp-storage
-          emptyDir:
-            sizeLimit: 100Gi
-      restartPolicy: OnFailure
-```
-
-#### 청킹 전략 구현
-
-```python
-# chunking_strategies.py
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-    TokenTextSplitter
-)
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_openai import OpenAIEmbeddings
-
-# 1. 고정 크기 청킹
-def fixed_chunking(text: str, chunk_size: int = 1000, overlap: int = 200):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=overlap,
-        separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""]
-    )
-    return splitter.split_text(text)
-
-# 2. 토큰 기반 청킹 (LLM 컨텍스트 윈도우 최적화)
-def token_chunking(text: str, chunk_size: int = 512, overlap: int = 50):
-    splitter = TokenTextSplitter(
-        encoding_name="cl100k_base",  # GPT-4 토크나이저
-        chunk_size=chunk_size,
-        chunk_overlap=overlap
-    )
-    return splitter.split_text(text)
-
-# 3. 의미론적 청킹 (문맥 유지 최적화)
-def semantic_chunking(text: str):
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    splitter = SemanticChunker(
-        embeddings=embeddings,
-        breakpoint_threshold_type="percentile",
-        breakpoint_threshold_amount=95
-    )
-    return splitter.split_text(text)
-
-# 권장: 문서 유형별 전략 선택
-CHUNKING_STRATEGIES = {
-    "code": {"strategy": "fixed", "chunk_size": 2000, "overlap": 400},
-    "documentation": {"strategy": "semantic"},
-    "chat_logs": {"strategy": "fixed", "chunk_size": 500, "overlap": 100},
-    "default": {"strategy": "token", "chunk_size": 512, "overlap": 50}
-}
-```
-
-### RAG 워크플로우
-
-```python
-# rag_workflow.py
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_milvus import Milvus
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
-
-# 벡터 스토어 연결
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-vectorstore = Milvus(
-    embedding_function=embeddings,
-    collection_name="documents",
-    connection_args={
-        "host": "milvus-cluster-proxy.ai-data",
-        "port": "19530"
-    }
-)
-
-# RAG 프롬프트 템플릿
-RAG_PROMPT = PromptTemplate(
-    template="""다음 컨텍스트를 사용하여 질문에 답하세요.
-컨텍스트에서 답을 찾을 수 없으면 "정보가 없습니다"라고 답하세요.
-
-컨텍스트:
-{context}
-
-질문: {question}
-
-답변:""",
-    input_variables=["context", "question"]
-)
-
-# LLM 설정 (LiteLLM 게이트웨이 사용)
-llm = ChatOpenAI(
-    model="llama3-70b",
-    openai_api_base="http://litellm-gateway.ai-gateway:4000/v1",
-    openai_api_key="sk-litellm-master-key",
-    temperature=0.1
-)
-
-# RAG 체인 구성
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 5, "fetch_k": 20}
-    ),
-    chain_type_kwargs={"prompt": RAG_PROMPT},
-    return_source_documents=True
-)
-
-# 질의 실행
-result = qa_chain.invoke({"query": "Kubernetes에서 Pod 스케줄링은 어떻게 동작하나요?"})
-print(result["result"])
-```
-
----
 
 ## 6. AI 에이전트 배포 (Kagent)
 
@@ -1109,864 +156,190 @@ print(result["result"])
 
 Kagent는 Kubernetes 네이티브 AI 에이전트 라이프사이클 관리 도구입니다.
 
-![Kagent Controller가 Agent CRD를 거쳐 Agent Runtime을 기동시키고, LLM 백엔드·도구 세트·메모리 스토어·상태 관리라는 AI 에이전트의 네 가지 구성요소가 각각 추론, 실행, 저장/조회, 관리 역할로 Runtime에 연결되는 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-4.png)
+![Kagent controller가 v1alpha2 Agent 리소스를 조정해 ADK runtime을 관리하고 승인된 ModelConfig와 MCP 도구, 세션 저장 경계를 연결하는 구성.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-4.html)
 
-### Agent CRD 정의
+### Kagent 0.10.1 Agent API
+
+Kagent는 K8s 작업 도구에 한정된 자동 kubectl 실행기가 아닙니다. Declarative agent는 Go/Python ADK runtime, BYO는 사용자가 제공하는 A2A agent를 사용합니다. LangGraph는 별도로 연결할 수 있는 워크플로 도구이며 Kagent와 동일 프레임워크가 아닙니다.
+
+다음 Agent는 별도로 승인·구성된 같은 namespace의 ModelConfig와 RemoteMCPServer를 참조합니다. 실제 MCP service와 search_documents 도구, 인증·TLS·데이터 권한을 준비해야 합니다. 이 예제는 도구를 생성하거나 Kubernetes 쓰기 권한을 부여하지 않습니다.
 
 ```yaml
-# agent-crd.yaml
-apiVersion: kagent.dev/v1alpha1
+apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: research-agent
   namespace: ai-agents
 spec:
-  # LLM 백엔드 설정
-  llm:
-    provider: litellm
-    model: llama3-70b
-    endpoint: http://litellm-gateway.ai-gateway:4000/v1
-    temperature: 0.7
-    maxTokens: 4096
+  type: Declarative
+  description: Retrieves authorized documents and cites their sources
+  declarative:
+    runtime: go
+    modelConfig: approved-internal-model
+    systemMessage: 'Use approved document tools. Cite retrieved sources.
 
-  # 에이전트 시스템 프롬프트
-  systemPrompt: |
-    You are a research assistant that helps users find and analyze information.
-    You have access to the following tools:
-    - web_search: Search the web for information
-    - document_search: Search internal documents
-    - calculator: Perform calculations
+      If evidence is missing, say so. Do not execute arbitrary code.
 
-    Always cite your sources and provide accurate information.
-
-  # 도구 정의
-  tools:
-    - name: web_search
-      type: http
-      spec:
-        url: http://search-api.tools:8080/search
-        method: POST
-        headers:
-          Content-Type: application/json
-
-    - name: document_search
-      type: milvus
-      spec:
-        host: milvus-cluster-proxy.ai-data
-        port: 19530
-        collection: documents
-        topK: 5
-
-    - name: calculator
-      type: python
-      spec:
-        code: |
-          def calculate(expression: str) -> str:
-              return str(eval(expression))
-
-  # 메모리 설정
-  memory:
-    type: redis
-    config:
-      host: redis.ai-agents
-      port: 6379
-      ttl: 3600
-
-  # 리소스 제한
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
-    limits:
-      cpu: "2"
-      memory: "2Gi"
-
-  # 스케일링 설정
-  replicas: 2
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 10
-    targetCPUUtilization: 70
+      '
+    tools:
+    - type: McpServer
+      mcpServer:
+        apiGroup: kagent.dev
+        kind: RemoteMCPServer
+        name: document-tools
+        toolNames:
+        - search_documents
+    deployment:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 256Mi
+        limits:
+          cpu: '1'
+          memory: 1Gi
 ```
 
-### LangGraph 워크플로우 오케스트레이션
+ModelConfig의 apiKeySecret이 반드시 파일 전달이라는 뜻은 아닙니다. 검토한 OpenAI provider translator는 이를 OPENAI_API_KEY SecretKeyRef 환경 변수로 만듭니다. 비밀을 환경 변수로 전달하지 않는 정책에서는 해당 기본 경로가 맞지 않으므로 파일 credential을 처리하는 BYO/runtime·인증 gateway 등 검증한 경로로 설계해야 합니다. 무조건 apiKeyPassthrough를 켜는 것도 token 위임·audience 검토를 대신하지 않습니다.
 
-LangGraph를 사용하여 복잡한 AI 워크플로우를 구현합니다.
+임의 eval() 계산기와 도구 정의 안의 가짜 permissions 필드는 보안 경계가 아닙니다. 실제 tool server의 최소 권한·입력 검증·resource limit·승인·멱등성을 구현해야 합니다. agent replicas는 모든 공유 memory·session 저장소의 HA를 보장하지 않습니다.
+
+### 실행 가능한 LangGraph 제어 흐름
+
+아래는 실제 SDK로 검증한 로컬 예제입니다. retrieval/rewrite/generate는 명시적 callback이며 기본 demo는 LLM이나 벡터 DB를 호출하지 않습니다. 원래 질문을 유지하고 재검색은2회로 제한하며 문서가 없으면 응답을 보류합니다. SQLite 파일은 with context 안에서 사용하고 재접속 후 저장 상태를 확인했습니다.
 
 ```python
-# langgraph_workflow.py
-from typing import TypedDict, Annotated, Sequence
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolExecutor
-import operator
+from typing import Callable, TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.sqlite import SqliteSaver
 
-# 상태 정의
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    current_step: str
-    iteration: int
-    max_iterations: int
-    tools_output: dict
 
-# LLM 설정
-llm = ChatOpenAI(
-    model="llama3-70b",
-    openai_api_base="http://litellm-gateway.ai-gateway:4000/v1",
-    openai_api_key="sk-litellm-master-key"
-)
+class QAState(TypedDict):
+    question: str
+    search_query: str
+    documents: list[str]
+    answer: str
+    retries: int
 
-# 노드 함수들
-def planner(state: AgentState) -> AgentState:
-    """작업 계획을 수립하는 노드"""
-    messages = state["messages"]
 
-    planning_prompt = """Based on the user's request, create a step-by-step plan.
-    Format your response as a numbered list of steps."""
+def build_graph(retrieve: Callable[[str], list[str]],
+                rewrite: Callable[[str], str],
+                generate: Callable[[str, list[str]], str]):
+    def search(state: QAState):
+        return {"documents": retrieve(state["search_query"])}
 
-    response = llm.invoke(messages + [HumanMessage(content=planning_prompt)])
+    def route(state: QAState):
+        if state["documents"]:
+            return "answer"
+        return "rewrite" if state["retries"] < 2 else "abstain"
 
-    return {
-        "messages": [response],
-        "current_step": "execute",
-        "iteration": state["iteration"]
-    }
+    def rewrite_query(state: QAState):
+        return {"search_query": rewrite(state["search_query"]),
+                "retries": state["retries"] + 1}
 
-def executor(state: AgentState) -> AgentState:
-    """계획을 실행하는 노드"""
-    messages = state["messages"]
+    def answer(state: QAState):
+        return {"answer": generate(state["question"], state["documents"])}
 
-    execution_prompt = """Execute the current step of the plan.
-    If you need to use a tool, specify the tool and parameters."""
+    def abstain(state: QAState):
+        return {"answer": "No supporting documents were found."}
 
-    response = llm.invoke(messages + [HumanMessage(content=execution_prompt)])
+    graph = StateGraph(QAState)
+    graph.add_node("retrieve", search)
+    graph.add_node("rewrite", rewrite_query)
+    graph.add_node("answer", answer)
+    graph.add_node("abstain", abstain)
+    graph.add_edge(START, "retrieve")
+    graph.add_conditional_edges("retrieve", route,
+                               {"answer": "answer", "rewrite": "rewrite", "abstain": "abstain"})
+    graph.add_edge("rewrite", "retrieve")
+    graph.add_edge("answer", END)
+    graph.add_edge("abstain", END)
+    return graph
 
-    return {
-        "messages": [response],
-        "current_step": "evaluate",
-        "iteration": state["iteration"]
-    }
 
-def evaluator(state: AgentState) -> AgentState:
-    """결과를 평가하는 노드"""
-    messages = state["messages"]
-
-    evaluation_prompt = """Evaluate the execution result.
-    Respond with either:
-    - COMPLETE: if the task is fully done
-    - CONTINUE: if more steps are needed
-    - RETRY: if the current step needs to be retried"""
-
-    response = llm.invoke(messages + [HumanMessage(content=evaluation_prompt)])
-
-    return {
-        "messages": [response],
-        "current_step": "route",
-        "iteration": state["iteration"] + 1
-    }
-
-def router(state: AgentState) -> str:
-    """다음 단계를 결정하는 라우터"""
-    last_message = state["messages"][-1].content.upper()
-
-    if state["iteration"] >= state["max_iterations"]:
-        return "end"
-
-    if "COMPLETE" in last_message:
-        return "end"
-    elif "RETRY" in last_message:
-        return "execute"
-    else:
-        return "plan"
-
-# 그래프 구성
-workflow = StateGraph(AgentState)
-
-# 노드 추가
-workflow.add_node("plan", planner)
-workflow.add_node("execute", executor)
-workflow.add_node("evaluate", evaluator)
-
-# 엣지 추가
-workflow.set_entry_point("plan")
-workflow.add_edge("plan", "execute")
-workflow.add_edge("execute", "evaluate")
-workflow.add_conditional_edges(
-    "evaluate",
-    router,
-    {
-        "plan": "plan",
-        "execute": "execute",
-        "end": END
-    }
-)
-
-# 그래프 컴파일
-app = workflow.compile()
-
-# 실행
-initial_state = {
-    "messages": [HumanMessage(content="Research the latest trends in Kubernetes security")],
-    "current_step": "plan",
-    "iteration": 0,
-    "max_iterations": 5,
-    "tools_output": {}
-}
-
-result = app.invoke(initial_state)
+if __name__ == "__main__":
+    # Deterministic local fixtures, not a vector database or LLM quality test.
+    graph = build_graph(
+        retrieve=lambda query: ["A Pod groups containers."] if query == "pod" else [],
+        rewrite=lambda query: "pod",
+        generate=lambda question, documents: documents[0],
+    )
+    initial = {"question": "What is a Pod?", "search_query": "unknown",
+               "documents": [], "answer": "", "retries": 0}
+    # Server-derived authorized tenant/session identity is required in a real app.
+    config = {"configurable": {"thread_id": "tenant-a/session-1"}, "recursion_limit": 12}
+    with SqliteSaver.from_conn_string("agent-state.sqlite") as saver:
+        app = graph.compile(checkpointer=saver)
+        print(app.invoke(initial, config)["answer"])
+        print(app.get_state(config).values["retries"])
 ```
 
-### 멀티 에이전트 협업 패턴
+프로덕션에서는 thread_id를 인증된 tenant/session에 바인딩하고 DB 권한·암호화·동시성·보존을 구성해야 합니다. :memory:는 프로세스 종료 후 사라집니다. PostgreSQL에 SqliteSaver를 사용할 수 없으며 별도 Postgres saver가 필요합니다. get_state_history()의 항목을 읽는 것만으로 실행이 복원되지는 않습니다. 저장된 checkpoint config와 실제 resume/replay semantics를 사용해야 합니다.
 
-#### Supervisor 패턴
+Supervisor의 모델 응답은 허용된 enum으로 검증하고 unknown 값·한도 초과를 처리하세요. “INCOMPLETE”에서 COMPLETE 부분 문자열을 발견해 종료하는 방식은 잘못입니다. 모델에게 도구를 쓰라고 요청하는 것만으로 도구 실행이나 검증이 수행되지는 않습니다.
+
+## 7. Langfuse와 운영 관측성
+
+Langfuse SDK 4.15.2에는 예전 trace()/generation()이 없으며 start_as_current_observation(), create_score() 등을 사용합니다. 검토에서는 메모리 exporter로 검색·생성·상위 span3개가 같은 trace로 묶이는 것을 확인했습니다. 실서비스 수집·저장·사용자 인증을 검증한 것은 아닙니다.
 
 ```python
-# supervisor_pattern.py
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Literal
-
-class SupervisorState(TypedDict):
-    messages: list
-    next_agent: str
-    task_status: dict
-
-def supervisor(state: SupervisorState) -> SupervisorState:
-    """작업을 적절한 에이전트에게 위임하는 수퍼바이저"""
-
-    supervisor_prompt = """You are a supervisor managing a team of agents:
-    - researcher: Finds and analyzes information
-    - coder: Writes and reviews code
-    - writer: Creates documentation and reports
-
-    Based on the current task, decide which agent should handle it next.
-    Respond with the agent name or 'FINISH' if the task is complete."""
-
-    response = llm.invoke(state["messages"] + [HumanMessage(content=supervisor_prompt)])
-    next_agent = response.content.strip().lower()
-
-    return {
-        "messages": state["messages"] + [response],
-        "next_agent": next_agent
-    }
-
-def researcher(state: SupervisorState) -> SupervisorState:
-    """정보 수집 에이전트"""
-    research_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Research the topic and provide findings.")]
-    )
-    return {"messages": state["messages"] + [research_response]}
-
-def coder(state: SupervisorState) -> SupervisorState:
-    """코딩 에이전트"""
-    code_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Write or review code for the task.")]
-    )
-    return {"messages": state["messages"] + [code_response]}
-
-def writer(state: SupervisorState) -> SupervisorState:
-    """문서 작성 에이전트"""
-    write_response = llm.invoke(
-        state["messages"] +
-        [HumanMessage(content="Create documentation or a report.")]
-    )
-    return {"messages": state["messages"] + [write_response]}
-
-def route_to_agent(state: SupervisorState) -> Literal["researcher", "coder", "writer", "end"]:
-    next_agent = state["next_agent"]
-    if next_agent == "finish":
-        return "end"
-    return next_agent
-
-# 그래프 구성
-supervisor_graph = StateGraph(SupervisorState)
-
-supervisor_graph.add_node("supervisor", supervisor)
-supervisor_graph.add_node("researcher", researcher)
-supervisor_graph.add_node("coder", coder)
-supervisor_graph.add_node("writer", writer)
-
-supervisor_graph.set_entry_point("supervisor")
-
-supervisor_graph.add_conditional_edges(
-    "supervisor",
-    route_to_agent,
-    {
-        "researcher": "researcher",
-        "coder": "coder",
-        "writer": "writer",
-        "end": END
-    }
-)
-
-# 각 에이전트 작업 후 수퍼바이저로 복귀
-for agent in ["researcher", "coder", "writer"]:
-    supervisor_graph.add_edge(agent, "supervisor")
-
-multi_agent_app = supervisor_graph.compile()
-```
-
----
-
-## 7. 모니터링과 운영
-
-### Langfuse GenAI 관측성
-
-Langfuse는 LLM 애플리케이션을 위한 관측성 플랫폼입니다.
-
-```yaml
-# langfuse-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: langfuse
-  namespace: ai-monitoring
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: langfuse
-  template:
-    metadata:
-      labels:
-        app: langfuse
-    spec:
-      containers:
-        - name: langfuse
-          image: langfuse/langfuse:latest
-          ports:
-            - containerPort: 3000
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: database-url
-            - name: NEXTAUTH_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: nextauth-secret
-            - name: NEXTAUTH_URL
-              value: "https://langfuse.example.com"
-            - name: SALT
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: salt
-          resources:
-            requests:
-              cpu: "1"
-              memory: "2Gi"
-            limits:
-              cpu: "2"
-              memory: "4Gi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: langfuse
-  namespace: ai-monitoring
-spec:
-  selector:
-    app: langfuse
-  ports:
-    - port: 3000
-      targetPort: 3000
-  type: ClusterIP
-```
-
-#### Langfuse 통합 코드
-
-```python
-# langfuse_integration.py
+from pathlib import Path
 from langfuse import Langfuse
-from langfuse.decorators import observe, langfuse_context
-from openai import OpenAI
 
-# Langfuse 클라이언트 초기화
-langfuse = Langfuse(
-    public_key="pk-lf-xxx",
-    secret_key="sk-lf-xxx",
-    host="http://langfuse.ai-monitoring:3000"
+# 기존 Secret 볼륨의 파일을 읽습니다. 실제 값은 코드에 넣지 않습니다.
+client = Langfuse(
+    public_key=Path("/run/secrets/langfuse/public-key").read_text().strip(),
+    secret_key=Path("/run/secrets/langfuse/secret-key").read_text().strip(),
+    base_url="https://langfuse.example.internal",
 )
-
-client = OpenAI(
-    api_key="sk-litellm-master-key",
-    base_url="http://litellm-gateway.ai-gateway:4000/v1"
-)
-
-@observe()
-def rag_query(user_query: str, user_id: str = None) -> str:
-    """RAG 쿼리를 Langfuse로 추적"""
-
-    # 사용자 ID 설정
-    langfuse_context.update_current_trace(
-        user_id=user_id,
-        tags=["rag", "production"]
-    )
-
-    # 문서 검색 (별도 스팬으로 추적)
-    with langfuse_context.observe(name="document_retrieval") as span:
-        documents = search_documents(user_query)
-        span.update(
-            input={"query": user_query},
-            output={"doc_count": len(documents)},
-            metadata={"retrieval_method": "mmr"}
-        )
-
-    # LLM 호출
-    with langfuse_context.observe(name="llm_generation") as span:
-        response = client.chat.completions.create(
-            model="llama3-70b",
-            messages=[
-                {"role": "system", "content": "Answer based on the context."},
-                {"role": "user", "content": f"Context: {documents}\n\nQuestion: {user_query}"}
-            ],
-            max_tokens=1000
-        )
-
-        answer = response.choices[0].message.content
-
-        # 토큰 사용량 및 비용 추적
-        span.update(
-            input={"messages": messages},
-            output={"response": answer},
-            usage={
-                "input": response.usage.prompt_tokens,
-                "output": response.usage.completion_tokens,
-                "total": response.usage.total_tokens
-            },
-            metadata={
-                "model": "llama3-70b",
-                "temperature": 0.7
-            }
-        )
-
-    return answer
-
-# 피드백 수집
-def collect_feedback(trace_id: str, score: float, comment: str = None):
-    """사용자 피드백을 Langfuse에 기록"""
-    langfuse.score(
-        trace_id=trace_id,
-        name="user_feedback",
-        value=score,
-        comment=comment
-    )
+with client.start_as_current_observation(name="rag", as_type="span"):
+    with client.start_as_current_observation(name="retrieve", as_type="span") as span:
+        span.update(metadata={"document_count": 2})
+    with client.start_as_current_observation(name="generate", as_type="generation",
+                                           model="prepared-model-alias") as generation:
+        # 실제 모델 응답의 usage를 넣어야 하며 아래 값은 형식 예시입니다.
+        generation.update(usage_details={"input": 10, "output": 5})
+client.flush()
+client.shutdown()
 ```
 
-### GPU 모니터링 (DCGM)
+Langfuse chart 2.1.0은 app 4.24.0을 가리키며 확인한 최신 server 4.35.0과 별도입니다. 웹·worker, PostgreSQL, Redis/Valkey, 오브젝트 스토리지와 ClickHouse가 필요합니다. 차트는 ClickHouse Operator와 cert-manager 선행 조건을 검사합니다. 이번 오프라인 렌더링은 CRD 존재를 명시한 모의 API 조건으로 수행했으며 실제 설치가 아닙니다. 기본 chart에는 Secret 환경 변수 전달이 있어 파일 전용 정책의 배포본으로 승인한 것이 아닙니다.
 
-```yaml
-# dcgm-exporter.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  template:
-    metadata:
-      labels:
-        app: dcgm-exporter
-    spec:
-      nodeSelector:
-        nvidia.com/gpu.present: "true"
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-      containers:
-        - name: dcgm-exporter
-          image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.4.0-ubuntu22.04
-          ports:
-            - containerPort: 9400
-              name: metrics
-          env:
-            - name: DCGM_EXPORTER_LISTEN
-              value: ":9400"
-            - name: DCGM_EXPORTER_KUBERNETES
-              value: "true"
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: pod-resources
-              mountPath: /var/lib/kubelet/pod-resources
-      volumes:
-        - name: pod-resources
-          hostPath:
-            path: /var/lib/kubelet/pod-resources
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-  labels:
-    app: dcgm-exporter
-spec:
-  selector:
-    app: dcgm-exporter
-  ports:
-    - port: 9400
-      targetPort: 9400
-      name: metrics
-  clusterIP: None
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: dcgm-exporter
-  namespace: gpu-monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  endpoints:
-    - port: metrics
-      interval: 15s
-```
+DCGM의 FB_USED는 사용량이지 백분율이 아니며 device·driver별 단위와 전체 메모리를 확인해야 합니다. GPU 사용률80%나 온도85C를 모든 workload의 정상/장애 기준으로 고정하지 마세요. 모델 지연·queue·오류·throttling과 실제 장치 한도를 함께 관측합니다.
 
-#### 주요 GPU 메트릭
+### 응답 cache와 비용
 
-| 메트릭 | 설명 | 임계값 |
-|-------|-----|-------|
-| `DCGM_FI_DEV_GPU_UTIL` | GPU 사용률 | > 80% 정상 |
-| `DCGM_FI_DEV_MEM_COPY_UTIL` | 메모리 대역폭 사용률 | > 70% 주의 |
-| `DCGM_FI_DEV_FB_USED` | 프레임버퍼 사용량 | < 95% 권장 |
-| `DCGM_FI_DEV_GPU_TEMP` | GPU 온도 | < 85C 권장 |
-| `DCGM_FI_DEV_POWER_USAGE` | 전력 사용량 | TDP의 90% 이하 |
-| `DCGM_FI_DEV_SM_CLOCK` | SM 클럭 속도 | 기본값 유지 |
+응답 cache key에는 tenant/권한 범위, 모델·prompt·검색 데이터 revision, 생성 설정과 tool 상태 등 의미 있는 입력이 포함되어야 합니다. model+prompt만으로 공유하면 다른 사용자의 결과가 재사용될 수 있습니다. 개인 정보나 변하는 외부 상태를 포함한 작업은 cache를 끄거나 수명·무효화를 명시해야 합니다.
 
-### 비용 최적화 전략
+Token 가격표 기반 추정 비용은 청구서와 다릅니다. cache hit/write, batch, 재시도, router 분류 호출, 자체 GPU 고정비도 포함하세요. 가장 싼 모델을 고르는 fallback이 예산·품질·provider 정책을 위반하면 거절해야 합니다. KEDA cron trigger는 다른 trigger보다 낮은 replica를 강제로 적용하는 야간 상한이 아닙니다. CronJob에는 시간대·중복 실행·deadline·retry와 결과 저장을 명시하세요.
 
-#### 1. 프롬프트 캐싱
-
-```python
-# prompt_caching.py
-import hashlib
-import redis
-
-redis_client = redis.Redis(host="redis.ai-cache", port=6379)
-
-def get_cached_response(prompt: str, model: str) -> str | None:
-    """캐시된 응답 조회"""
-    cache_key = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
-    cached = redis_client.get(cache_key)
-    return cached.decode() if cached else None
-
-def cache_response(prompt: str, model: str, response: str, ttl: int = 3600):
-    """응답 캐싱"""
-    cache_key = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
-    redis_client.setex(cache_key, ttl, response)
-
-def query_with_cache(prompt: str, model: str = "llama3-70b") -> str:
-    """캐시를 활용한 쿼리"""
-    # 캐시 확인
-    cached = get_cached_response(prompt, model)
-    if cached:
-        return cached
-
-    # LLM 호출
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    result = response.choices[0].message.content
-
-    # 결과 캐싱
-    cache_response(prompt, model, result)
-    return result
-```
-
-#### 2. 계층형 모델 선택
-
-```python
-# tiered_model_selection.py
-from enum import Enum
-
-class TaskComplexity(Enum):
-    SIMPLE = "simple"      # 분류, 추출, 간단한 QA
-    MODERATE = "moderate"  # 요약, 번역, 일반 대화
-    COMPLEX = "complex"    # 분석, 추론, 코드 생성
-
-MODEL_TIERS = {
-    TaskComplexity.SIMPLE: {
-        "model": "llama3-8b",
-        "cost_per_1k_tokens": 0.0001
-    },
-    TaskComplexity.MODERATE: {
-        "model": "llama3-70b",
-        "cost_per_1k_tokens": 0.0005
-    },
-    TaskComplexity.COMPLEX: {
-        "model": "gpt-4o",
-        "cost_per_1k_tokens": 0.01
-    }
-}
-
-def classify_task_complexity(task: str) -> TaskComplexity:
-    """작업 복잡도 분류 (경량 모델 사용)"""
-    classification_prompt = f"""Classify the complexity of this task as SIMPLE, MODERATE, or COMPLEX:
-    Task: {task}
-
-    SIMPLE: Classification, extraction, simple QA
-    MODERATE: Summarization, translation, general conversation
-    COMPLEX: Analysis, reasoning, code generation
-
-    Respond with only the classification."""
-
-    response = client.chat.completions.create(
-        model="llama3-8b",  # 분류에는 작은 모델 사용
-        messages=[{"role": "user", "content": classification_prompt}],
-        max_tokens=10
-    )
-
-    classification = response.choices[0].message.content.strip().upper()
-    return TaskComplexity[classification]
-
-def execute_with_optimal_model(task: str) -> str:
-    """최적의 모델로 작업 실행"""
-    complexity = classify_task_complexity(task)
-    model_config = MODEL_TIERS[complexity]
-
-    response = client.chat.completions.create(
-        model=model_config["model"],
-        messages=[{"role": "user", "content": task}]
-    )
-
-    return response.choices[0].message.content
-```
-
-#### 3. 배치 처리
-
-```yaml
-# batch-processing-job.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: batch-inference
-  namespace: ai-batch
-spec:
-  schedule: "0 2 * * *"  # 매일 새벽 2시
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: batch-processor
-              image: ai-platform/batch-processor:latest
-              env:
-                - name: BATCH_SIZE
-                  value: "100"
-                - name: MODEL
-                  value: "llama3-70b"
-                - name: QUEUE_URL
-                  value: "redis://redis.ai-batch:6379/0"
-              resources:
-                requests:
-                  cpu: "4"
-                  memory: "8Gi"
-          restartPolicy: OnFailure
-```
-
-#### 4. Spot 인스턴스 활용
-
-```yaml
-# spot-nodepool.yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-spot
-spec:
-  template:
-    spec:
-      requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - g5.xlarge
-            - g5.2xlarge
-            - g6.xlarge
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodes
-      taints:
-        - key: spot-instance
-          value: "true"
-          effect: NoSchedule
-  limits:
-    nvidia.com/gpu: 50
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 1m
-```
-
----
 
 ## 8. 평가와 품질 관리
 
-### Ragas 프레임워크
+Ragas 0.4.3은 이번에 함께 설치된 langchain-community 0.4.2에서 제거된 vertexai 모듈을 import하며 실패했습니다. 별도 환경에서 langchain 0.3.27, core 0.3.79, community 0.3.31, openai integration 0.3.35를 고정하면 import와 SingleTurnSample/EvaluationDataset 구성이 통과했습니다. 이를 최신 LangGraph 환경과 무조건 하나로 합치지 마세요.
 
-Ragas는 RAG 시스템의 품질을 평가하는 프레임워크입니다.
+현재 collection API의 Faithfulness, AnswerRelevancy 등에는 명시적 LLM/embedding adapter가 필요합니다. 이전 ragas.metrics 전역 객체 경로는 deprecated 경고가 있습니다. 평가 실행은 모델 호출·비용과 실패 처리, dataset·judge·prompt revision, missing/NaN 결과 처리가 필요합니다. 이번 검토는 metric import와 schema만 검사했으며0.92 같은 품질 점수를 측정하지 않았습니다.
 
-```python
-# ragas_evaluation.py
-from ragas import evaluate
-from ragas.metrics import (
-    faithfulness,
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    answer_correctness
-)
-from datasets import Dataset
+A/B 실험 설정 ConfigMap만 만들어서는 라우팅이 일어나지 않습니다. 실제 consumer/controller, 안정된 실험군 배정, 동일한 권한·데이터 조건, 충분한 표본과 guardrail 지표를 구현해야 합니다. model별 비용·품질 점수를 임의로 정해 “30–50% 절감”을 결과처럼 제시하지 마세요.
 
-# 평가 데이터셋 구성
-eval_data = {
-    "question": [
-        "Kubernetes Pod란 무엇인가요?",
-        "HPA는 어떻게 동작하나요?"
-    ],
-    "answer": [
-        "Pod는 Kubernetes에서 배포 가능한 가장 작은 컴퓨팅 단위입니다.",
-        "HPA는 CPU 사용률을 기반으로 Pod 수를 자동으로 조정합니다."
-    ],
-    "contexts": [
-        ["Pod는 하나 이상의 컨테이너 그룹입니다.", "Pod는 공유 스토리지와 네트워크를 가집니다."],
-        ["HPA는 메트릭을 모니터링합니다.", "설정된 임계값에 따라 스케일링합니다."]
-    ],
-    "ground_truth": [
-        "Pod는 Kubernetes에서 생성하고 관리할 수 있는 배포 가능한 가장 작은 컴퓨팅 단위입니다.",
-        "HPA는 관측된 메트릭(CPU, 메모리 등)을 기반으로 워크로드의 레플리카 수를 자동으로 조정합니다."
-    ]
-}
+금융 상담 같은 예제도 코드의 compliance_check 함수가 법규 준수를 증명하지 않습니다. 인증된 account 범위, 민감 정보 분기와 승인 조건을 단조롭게 결합하고(기존 true를 뒤에서 false로 덮어쓰지 않음), 외부 작업의 멱등성·감사·사람에게 전달할 기준을 설계해야 합니다.
 
-dataset = Dataset.from_dict(eval_data)
 
-# 평가 실행
-results = evaluate(
-    dataset,
-    metrics=[
-        faithfulness,        # 응답이 컨텍스트에 충실한가
-        answer_relevancy,    # 응답이 질문에 관련있는가
-        context_precision,   # 검색된 컨텍스트가 정확한가
-        context_recall,      # 필요한 컨텍스트를 모두 검색했는가
-        answer_correctness   # 응답이 정답과 일치하는가
-    ]
-)
+## 9. 검토 기준과 검증 범위
 
-print(results)
-# {'faithfulness': 0.92, 'answer_relevancy': 0.88, 'context_precision': 0.85, ...}
-```
+| 구성 | 확인한 기준 | 실제 검증 |
+| --- | --- | --- |
+| Kagent |0.10.1 / v1alpha2 | 공식 Helm·CRD와 Agent/ModelConfig/RemoteMCPServer schema |
+| Inference Extension |1.6.1 / v1 | InferencePool schema; EPP·gateway 실행은 미검증 |
+| LiteLLM |1.100.1 | Router fallback config 생성; provider 호출 없음 |
+| Milvus | server/SDK3.0.1; Operator 1.3.9 | Operator Helm, synthetic vector schema; DB 실행 없음 |
+| LangGraph |1.2.11 + sqlite saver 3.1.1 | 제한된 재검색·응답 보류·상태 복원 |
+| Langfuse | SDK 4.15.2 / chart 2.1.0 | 로컬 trace·span, offline chart 검사 |
+| Ragas |0.4.3 | 분리된 호환 환경의 import/schema; 평가 모델 실행 없음 |
 
-#### 자동화된 평가 파이프라인
-
-```yaml
-# ragas-evaluation-cronjob.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: ragas-evaluation
-  namespace: ai-qa
-spec:
-  schedule: "0 6 * * *"  # 매일 오전 6시
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: evaluator
-              image: ai-platform/ragas-evaluator:latest
-              env:
-                - name: EVAL_DATASET_PATH
-                  value: "s3://ai-datasets/eval/golden-set.json"
-                - name: RAG_ENDPOINT
-                  value: "http://rag-api.ai-inference:8000"
-                - name: LANGFUSE_HOST
-                  value: "http://langfuse.ai-monitoring:3000"
-                - name: MIN_FAITHFULNESS
-                  value: "0.85"
-                - name: MIN_RELEVANCY
-                  value: "0.80"
-              resources:
-                requests:
-                  cpu: "2"
-                  memory: "4Gi"
-          restartPolicy: OnFailure
-```
-
-### A/B 테스팅
-
-```yaml
-# ab-testing-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ab-testing-config
-  namespace: ai-inference
-data:
-  config.yaml: |
-    experiments:
-      - name: llama3-70b-vs-gpt4o
-        traffic_split:
-          variant_a:
-            model: llama3-70b
-            weight: 80
-          variant_b:
-            model: gpt-4o
-            weight: 20
-        metrics:
-          - latency_p99
-          - user_satisfaction
-          - cost_per_query
-        duration_days: 14
-
-      - name: chunk-size-experiment
-        traffic_split:
-          variant_a:
-            chunk_size: 512
-            weight: 50
-          variant_b:
-            chunk_size: 1024
-            weight: 50
-        metrics:
-          - context_precision
-          - answer_relevancy
-        duration_days: 7
-```
-
----
-
-## 9. 핵심 기술 스택 요약
-
-| 기술 | 목적 | 핵심 기능 |
-|-----|-----|----------|
-| **Kagent** | AI 에이전트 라이프사이클 | CRD 기반 에이전트 관리, 자동 스케일링 |
-| **Kgateway** | 추론 게이트웨이 | InferencePool, Prefix-aware 라우팅 |
-| **Milvus** | 벡터 데이터베이스 | 대규모 벡터 검색, GPU 가속 인덱싱 |
-| **Ragas** | RAG 평가 | 충실성, 관련성, 정확도 메트릭 |
-| **LiteLLM** | LLM 통합 게이트웨이 | 프로바이더 추상화, 폴백, 비용 추적 |
-| **LangGraph** | 워크플로우 오케스트레이션 | 상태 관리, 조건 분기, 에러 처리 |
-| **Langfuse** | GenAI 관측성 | 요청 추적, 비용 분석, 피드백 수집 |
-| **vLLM** | 고성능 추론 | PagedAttention, 연속 배치, Prefix 캐싱 |
-| **Karpenter** | 노드 프로비저닝 | GPU 노드 자동 스케일링, Spot 관리 |
-| **DCGM** | GPU 모니터링 | 사용률, 온도, 전력 메트릭 |
-
----
+Kubernetes schema·Helm·로컬 SDK 검증은 전체 플랫폼 배포·인증·HA·GPU 성능을 증명하지 않습니다. 클라우드 리소스나 유료 모델 호출은 수행하지 않았습니다.
 
 ## 10. 다음 단계
 
@@ -1982,10 +355,11 @@ Agentic AI 플랫폼에 대한 이해도를 확인하려면 다음 퀴즈를 풀
 
 ### 참고 자료
 
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/ko/) - AWS에서 제공하는 EKS 기반 AI/ML 워크로드 배포 가이드 및 예제
-- [vLLM 공식 문서](https://docs.vllm.ai/)
-- [LangGraph 문서](https://langchain-ai.github.io/langgraph/)
-- [Milvus 문서](https://milvus.io/docs)
-- [Langfuse 문서](https://langfuse.com/docs)
-- [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/)
-- [Gateway API for AI](https://gateway-api.sigs.k8s.io/)
+- [Kagent 0.10.1](https://github.com/kagent-dev/kagent/tree/v0.10.1)
+- [InferencePool v1 API](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.6.1/api/v1/inferencepool_types.go)
+- [Milvus Operator 1.3.9](https://github.com/zilliztech/milvus-operator/tree/milvus-operator-1.3.9)
+- [Langfuse SDK 4.15.2](https://github.com/langfuse/langfuse-python/tree/v4.15.2)
+- [Langfuse Helm2.1.0](https://github.com/langfuse/langfuse-k8s/releases/tag/langfuse-2.1.0)
+- [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence)
+- [LiteLLM Router](https://docs.litellm.ai/docs/routing)
+- [Ragas 0.4.3](https://pypi.org/project/ragas/0.4.3/)

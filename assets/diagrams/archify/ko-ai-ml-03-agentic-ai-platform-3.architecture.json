@@ -2,190 +2,163 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kgateway + InferencePool 아키텍처",
-    "output": "ko-ai-ml-03-agentic-ai-platform-3.html",
+    "title": "InferencePool v1: 설정과 요청 경로",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
-        },
-        "external": {
-          "label": "외부 시스템"
-        }
-      }
-    }
+    "animation": "none",
+    "viewBox": [
+      1220,
+      610
+    ],
+    "output": "ko-ai-ml-03-agentic-ai-platform-3.html"
   },
   "components": [
     {
       "id": "client",
       "type": "external",
       "label": "클라이언트",
-      "sublabel": "추론 요청",
+      "sublabel": "HTTPS / authorization",
       "pos": [
-        30,
-        220
+        40,
+        80
       ],
       "size": [
-        140,
-        60
+        235,
+        76
       ]
     },
     {
       "id": "gateway",
-      "type": "cloud",
-      "label": "Gateway",
-      "sublabel": "ai-gateway",
+      "type": "backend",
+      "label": "Inference Gateway",
+      "sublabel": "구현의 기능·설정 확인",
       "pos": [
-        220,
-        220
+        475,
+        80
       ],
       "size": [
-        150,
-        60
+        235,
+        76
       ]
     },
     {
-      "id": "httproute",
-      "type": "cloud",
-      "label": "HTTPRoute",
-      "sublabel": "llama3-route",
+      "id": "model",
+      "type": "backend",
+      "label": "선택된 model Pod",
+      "sublabel": "app=vllm :8000",
       "pos": [
-        420,
-        220
+        910,
+        80
       ],
       "size": [
-        150,
-        60
+        235,
+        76
+      ]
+    },
+    {
+      "id": "route",
+      "type": "cloud",
+      "label": "HTTPRoute",
+      "sublabel": "backendRefs → InferencePool",
+      "pos": [
+        40,
+        365
+      ],
+      "size": [
+        235,
+        76
+      ]
+    },
+    {
+      "id": "pool",
+      "type": "cloud",
+      "label": "InferencePool v1",
+      "sublabel": "model-pool / targetPorts:8000",
+      "pos": [
+        475,
+        365
+      ],
+      "size": [
+        235,
+        76
       ]
     },
     {
       "id": "epp",
       "type": "backend",
-      "label": "Endpoint Picker",
-      "sublabel": "prefix-aware-picker",
+      "label": "EPP Service",
+      "sublabel": "model-epp :9002",
       "pos": [
-        660,
-        220
+        910,
+        365
       ],
       "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "pod1",
-      "type": "backend",
-      "label": "vLLM Pod 1",
-      "sublabel": "app=vllm :8000",
-      "pos": [
-        920,
-        80
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "pod2",
-      "type": "backend",
-      "label": "vLLM Pod 2",
-      "sublabel": "app=vllm :8000",
-      "pos": [
-        920,
-        220
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "pod3",
-      "type": "backend",
-      "label": "vLLM Pod 3",
-      "sublabel": "app=vllm :8000",
-      "pos": [
-        920,
-        360
-      ],
-      "size": [
-        150,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "InferencePool llama3-pool",
-      "wraps": [
-        "epp",
-        "pod1",
-        "pod2",
-        "pod3"
+        235,
+        76
       ]
     }
   ],
   "connections": [
     {
-      "id": "client-gateway",
+      "id": "request",
       "from": "client",
       "to": "gateway",
-      "label": "요청",
+      "label": "HTTPS",
       "variant": "emphasis"
     },
     {
-      "id": "gateway-httproute",
+      "id": "proxy",
       "from": "gateway",
-      "to": "httproute",
-      "label": "parentRef",
+      "to": "model",
+      "label": "추론 전송",
       "variant": "emphasis"
     },
     {
-      "id": "httproute-epp",
-      "from": "httproute",
+      "id": "route-pool",
+      "from": "route",
+      "to": "pool",
+      "label": "backendRefs",
+      "variant": "dashed"
+    },
+    {
+      "id": "pool-epp",
+      "from": "pool",
       "to": "epp",
-      "label": "backendRef",
-      "variant": "emphasis"
+      "label": "endpointPickerRef",
+      "variant": "dashed"
     },
     {
-      "id": "epp-pod1",
-      "from": "epp",
-      "to": "pod1",
-      "label": "least-loaded",
-      "fromSide": "top",
+      "id": "gateway-epp",
+      "from": "gateway",
+      "to": "epp",
+      "label": "endpoint 선택 요청",
+      "fromSide": "bottom",
       "toSide": "left"
     },
     {
-      "id": "epp-pod2",
-      "from": "epp",
-      "to": "pod2",
-      "label": "prefix-aware",
-      "variant": "emphasis"
+      "id": "route-gateway",
+      "from": "route",
+      "to": "gateway",
+      "label": "route 설정",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "라우팅 규칙 (HTTPRoute)",
+      "title": "제어 정보와 데이터 경로",
       "items": [
-        "PathPrefix /v1/chat/completions + 헤더 x-model: llama3-70b 매칭",
-        "backendRefs가 Service 대신 InferencePool llama3-pool을 가리킨다"
+        "HTTPRoute/InferencePool은 리소스이며 별도 proxy hop이 아닙니다.",
+        "gateway가 EPP의 선택을 사용해 model Pod로 요청을 보냅니다.",
+        "selector는 같은 namespace의 Pod를 선택합니다."
       ]
     },
     {
-      "dot": "amber",
-      "title": "Endpoint Picker 전략",
+      "dot": "cyan",
+      "title": "명시적으로 준비할 조건",
       "items": [
-        "type: PrefixAware — prefix 캐시 히트율을 높이는 Pod 선택",
-        "fallbackStrategy: LeastLoaded, loadMetric: pending_requests"
+        "예제는 FailClose; EPP 알고리즘·인증·TLS는 별도 구성입니다."
       ]
     }
   ]

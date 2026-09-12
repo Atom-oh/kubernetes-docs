@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-01-ai-ml-workloads-3.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "launch",
@@ -15,7 +15,7 @@
           "launcher",
           "workers"
         ],
-        "note": "The Launcher pod starts the Worker pods with mpirun."
+        "note": "Job controllers create Pods; the launcher starts processes inside workers."
       },
       {
         "id": "collective",
@@ -26,7 +26,7 @@
           "mpi",
           "efa"
         ],
-        "note": "Workers exchange gradients over NCCL, which runs on top of MPI and EFA."
+        "note": "NCCL → AWS OFI NCCL → libfabric → EFA; MPI is not a required transport layer."
       },
       {
         "id": "checkpoint",
@@ -37,7 +37,7 @@
           "s3",
           "ckpt"
         ],
-        "note": "Workers write to FSx for Lustre, which feeds S3 and the checkpoint store."
+        "note": "Checkpoint writes, S3 export and recovery require explicit configuration/testing."
       }
     ]
   },
@@ -87,8 +87,8 @@
     {
       "id": "mpi",
       "type": "messagebus",
-      "label": "MPI",
-      "sublabel": "rank coordination",
+      "label": "AWS OFI NCCL",
+      "sublabel": "libfabric integration",
       "pos": [
         610,
         240
@@ -188,7 +188,7 @@
       "id": "launch-workers",
       "from": "launcher",
       "to": "workers",
-      "label": "launch",
+      "label": "launch processes",
       "fromSide": "bottom",
       "toSide": "top",
       "labelDy": 24
@@ -223,7 +223,11 @@
       "id": "fsx-s3",
       "from": "fsx",
       "to": "s3",
-      "label": "S3 integration"
+      "label": "configured import/export",
+      "labelAt": [
+        600,
+        380
+      ]
     },
     {
       "id": "fsx-ckpt",
@@ -234,18 +238,17 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Communication",
+      "title": "Communication path",
       "items": [
-        "Worker pods exchange gradients over NCCL",
-        "NCCL traffic runs over MPI and the Elastic Fabric Adapter (EFA)"
+        "NCCL can use EFA through AWS OFI NCCL and libfabric.",
+        "Validate devices, drivers, plugins, networking and framework configuration."
       ]
     },
     {
       "dot": "amber",
-      "title": "Storage",
+      "title": "Recovery",
       "items": [
-        "FSx for Lustre provides fast access to large datasets",
-        "S3 integration simplifies data import/export and preserves checkpoints"
+        "FSx attachment alone does not guarantee checkpoint retention or S3 export."
       ]
     }
   ]

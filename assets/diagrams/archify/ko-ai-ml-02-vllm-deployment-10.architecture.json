@@ -2,265 +2,114 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "vLLM 오토스케일링 구조",
-    "output": "ko-ai-ml-02-vllm-deployment-10.html",
+    "title": "vLLM 확장과 용량 경계",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "views": [
-      {
-        "id": "pod-scaling",
-        "label": "파드 스케일링",
-        "focus": [
-          "cpu",
-          "rps",
-          "queue",
-          "gpu",
-          "hpa",
-          "keda",
-          "custom"
-        ],
-        "note": "CPU 사용률은 HPA, 요청 수·큐 길이는 KEDA, GPU 사용률은 커스텀 메트릭이 받아 vLLM 파드 수를 조절한다."
-      },
-      {
-        "id": "node-scaling",
-        "label": "노드 스케일링",
-        "focus": [
-          "hpa",
-          "keda",
-          "custom",
-          "karpenter",
-          "ca",
-          "spot"
-        ],
-        "note": "파드가 늘어나 GPU 노드가 부족해지면 Karpenter 또는 Cluster Autoscaler가 노드를 추가하고, Karpenter는 Spot 인스턴스로 비용을 절감한다."
-      }
-    ],
-    "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
-        },
-        "external": {
-          "label": "외부 시스템"
-        }
-      }
-    }
+    "animation": "none",
+    "viewBox": [
+      1190,
+      430
+    ]
   },
   "components": [
     {
-      "id": "cpu",
+      "id": "metrics",
       "type": "external",
-      "label": "CPU 사용률",
+      "label": "검증한 메트릭",
+      "sublabel": "queue / request / utilization",
       "pos": [
-        40,
-        60
+        30,
+        80
       ],
       "size": [
-        160,
-        56
+        250,
+        75
       ]
     },
     {
-      "id": "rps",
-      "type": "external",
-      "label": "초당 요청 수",
-      "pos": [
-        40,
-        150
-      ],
-      "size": [
-        160,
-        56
-      ]
-    },
-    {
-      "id": "queue",
-      "type": "external",
-      "label": "큐 길이",
-      "pos": [
-        40,
-        240
-      ],
-      "size": [
-        160,
-        56
-      ]
-    },
-    {
-      "id": "gpu",
-      "type": "external",
-      "label": "GPU 사용률",
-      "pos": [
-        40,
-        360
-      ],
-      "size": [
-        160,
-        56
-      ]
-    },
-    {
-      "id": "hpa",
+      "id": "scaler",
       "type": "backend",
-      "label": "HorizontalPodAutoscaler",
-      "sublabel": "autoscaling/v2",
+      "label": "하나의 Pod scaler",
+      "sublabel": "HPA 또는 KEDA / adapter",
       "pos": [
-        360,
-        60
+        465,
+        80
       ],
       "size": [
-        200,
-        56
+        250,
+        75
       ]
     },
     {
-      "id": "keda",
+      "id": "pods",
       "type": "backend",
-      "label": "KEDA",
-      "sublabel": "이벤트 기반 스케일러",
+      "label": "독립 모델 replica",
+      "sublabel": "readiness / load / drain",
       "pos": [
-        360,
-        195
+        900,
+        80
       ],
       "size": [
-        200,
-        56
+        250,
+        75
       ]
     },
     {
-      "id": "custom",
-      "type": "backend",
-      "label": "커스텀 메트릭",
-      "sublabel": "GPU 지표 기반",
-      "pos": [
-        360,
-        360
-      ],
-      "size": [
-        200,
-        56
-      ]
-    },
-    {
-      "id": "karpenter",
+      "id": "capacity",
       "type": "cloud",
-      "label": "Karpenter",
-      "sublabel": "NodePool · EC2NodeClass",
+      "label": "노드 용량 owner",
+      "sublabel": "Karpenter 또는 Cluster Autoscaler",
       "pos": [
-        720,
-        120
+        900,
+        300
       ],
       "size": [
-        200,
-        56
-      ]
-    },
-    {
-      "id": "spot",
-      "type": "cloud",
-      "label": "Spot 인스턴스",
-      "sublabel": "비용 절감",
-      "pos": [
-        720,
-        240
-      ],
-      "size": [
-        200,
-        56
-      ]
-    },
-    {
-      "id": "ca",
-      "type": "cloud",
-      "label": "Cluster Autoscaler",
-      "pos": [
-        720,
-        360
-      ],
-      "size": [
-        200,
-        56
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "스케일링 트리거",
-      "wraps": [
-        "cpu",
-        "rps",
-        "queue",
-        "gpu"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "파드 스케일링",
-      "wraps": [
-        "hpa",
-        "keda",
-        "custom"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "노드 스케일링",
-      "wraps": [
-        "karpenter",
-        "spot",
-        "ca"
+        250,
+        75
       ]
     }
   ],
   "connections": [
     {
-      "id": "cpu-hpa",
-      "from": "cpu",
-      "to": "hpa"
+      "id": "metrics-scaler",
+      "from": "metrics",
+      "to": "scaler",
+      "label": "관측 신호"
     },
     {
-      "id": "rps-keda",
-      "from": "rps",
-      "to": "keda"
+      "id": "scaler-pods",
+      "from": "scaler",
+      "to": "pods",
+      "label": "원하는 replica 수"
     },
     {
-      "id": "queue-keda",
-      "from": "queue",
-      "to": "keda"
-    },
-    {
-      "id": "gpu-custom",
-      "from": "gpu",
-      "to": "custom",
-      "variant": "emphasis"
-    },
-    {
-      "id": "hpa-karpenter",
-      "from": "hpa",
-      "to": "karpenter",
-      "label": "GPU 노드 부족"
-    },
-    {
-      "id": "keda-karpenter",
-      "from": "keda",
-      "to": "karpenter"
-    },
-    {
-      "id": "custom-ca",
-      "from": "custom",
-      "to": "ca"
-    },
-    {
-      "id": "karpenter-spot",
-      "from": "karpenter",
-      "to": "spot",
+      "id": "pods-capacity",
+      "from": "pods",
+      "to": "capacity",
+      "label": "스케줄링 수요",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelAt": [
+        1055,
+        245
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "확장 단위",
+      "items": [
+        "TP/PP worker group은 독립 replica와 다른 lifecycle입니다.",
+        "같은 대상에 여러 scaler나 node owner를 경쟁시키지 않습니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "용량과 비용",
+      "items": [
+        "가용 GPU·할당량·AMI·정책과 모델 로드 시간을 확인합니다.",
+        "Pod가 줄어도 노드 종료 전 EC2 비용이 남을 수 있습니다."
+      ]
     }
   ]
 }

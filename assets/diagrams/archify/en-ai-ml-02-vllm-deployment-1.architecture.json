@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-02-vllm-deployment-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "mode": "auto",
       "entries": {
@@ -32,7 +32,7 @@
           "model-13b",
           "model-70b"
         ],
-        "note": "GPU memory capacity determines which model size tier can be served."
+        "note": "Add architecture-aware KV cache, workspace and communication buffers beyond weights."
       },
       {
         "id": "software-stack",
@@ -42,7 +42,7 @@
           "python",
           "pytorch"
         ],
-        "note": "Minimum software versions required to run vLLM."
+        "note": "0.29 default artifacts use CUDA13.0; cu129 is separate. Verify image-specific compatibility."
       }
     ]
   },
@@ -51,7 +51,7 @@
       "id": "gpu",
       "type": "cloud",
       "label": "NVIDIA GPU",
-      "sublabel": "Volta / Turing / Ampere / Hopper",
+      "sublabel": "compute capability ≥7.5",
       "pos": [
         40,
         70
@@ -94,7 +94,7 @@
       "id": "model-7b",
       "type": "external",
       "label": "7B Model",
-      "sublabel": "Minimum 16GB GPU memory",
+      "sublabel": "FP16 weights ≈14GB + extras",
       "pos": [
         400,
         70
@@ -108,7 +108,7 @@
       "id": "model-13b",
       "type": "external",
       "label": "13B Model",
-      "sublabel": "Minimum 24GB GPU memory",
+      "sublabel": "FP16 weights ≈26GB + extras",
       "pos": [
         400,
         210
@@ -122,7 +122,7 @@
       "id": "model-70b",
       "type": "external",
       "label": "70B Model",
-      "sublabel": "Minimum 80GB GPU memory",
+      "sublabel": "FP16 weights ≈140GB + extras",
       "pos": [
         400,
         350
@@ -130,14 +130,13 @@
       "size": [
         200,
         60
-      ],
-      "tag": "or multi-GPU"
+      ]
     },
     {
       "id": "cuda",
       "type": "backend",
       "label": "CUDA",
-      "sublabel": "12.1 or higher",
+      "sublabel": "explicit cu129 / cu130 variant",
       "pos": [
         760,
         70
@@ -151,7 +150,7 @@
       "id": "python",
       "type": "backend",
       "label": "Python",
-      "sublabel": "3.9 or higher",
+      "sublabel": "package / image version bounds",
       "pos": [
         760,
         210
@@ -165,7 +164,7 @@
       "id": "pytorch",
       "type": "backend",
       "label": "PyTorch",
-      "sublabel": "2.4.0 or higher",
+      "sublabel": "pin with the image",
       "pos": [
         760,
         350
@@ -242,30 +241,18 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "GPU memory thresholds",
+      "title": "Memory estimate",
       "items": [
-        "7B model: minimum 16GB GPU memory",
-        "13B model: minimum 24GB GPU memory",
-        "70B model: minimum 80GB GPU memory (or distributed across multiple GPUs)"
+        "parameter count × stored bytes + KV / activation / workspace",
+        "Qwen2.5-7B GQA: FP16 KV ≈56KiB/token aggregate estimate"
       ]
     },
     {
       "dot": "cyan",
-      "title": "EKS GPU node types",
+      "title": "Device and artifact",
       "items": [
-        "p5.48xlarge: 8x H100, 80GB each",
-        "p4d.24xlarge: 8x A100, 40GB or 80GB each",
-        "g6.12xlarge: 4x L4, 24GB each (cost-effective)",
-        "g6e.12xlarge: 4x L40S, 48GB each"
-      ]
-    },
-    {
-      "dot": "slate",
-      "title": "Software",
-      "items": [
-        "CUDA 12.1 or higher (CUDA 12.4 recommended for FP8)",
-        "Python 3.9 or higher",
-        "PyTorch 2.4.0 or higher"
+        "p4d uses40GB A100s; distinguish80GB p4de.",
+        "V1007.0 is below the current NVIDIA7.5 minimum."
       ]
     }
   ]

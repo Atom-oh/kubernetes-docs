@@ -5,7 +5,7 @@
     "title": "AI/ML 워크로드 배포",
     "output": "ko-ai-ml-01-ai-ml-workloads-2.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "cloud": {
@@ -30,7 +30,7 @@
           "device-plugin",
           "dcgm"
         ],
-        "note": "GPU 운영자가 모든 GPU 노드에 드라이버·Container Toolkit·Device Plugin·DCGM Exporter를 배포한다."
+        "note": "AL2023 NVIDIA AMI의 driver/toolkit 설치는 Operator에서 끄고 중복 owner를 피합니다."
       },
       {
         "id": "kubeflow-stack",
@@ -41,7 +41,7 @@
           "training",
           "pipelines-katib"
         ],
-        "note": "Kubeflow는 노트북, TF/PyTorch 훈련 작업, Pipelines, Katib, KFServing을 제공한다."
+        "note": "현재 Kubeflow의 Trainer·Pipelines·Notebooks·Katib·KServe는 별도 API와 의존성을 가집니다."
       },
       {
         "id": "serving-training",
@@ -51,7 +51,7 @@
           "serving-runtimes",
           "mpi-operator"
         ],
-        "note": "KServe·TorchServe·Triton 등 모델 서빙 옵션을 제공하고, MPI Operator는 MPIJob으로 분산 훈련을 실행한다."
+        "note": "유지보수 runtime과 모델 형식을 확인하며 MPIJob은 설치된 Operator API에 맞춰 작성합니다."
       }
     ]
   },
@@ -74,7 +74,7 @@
       "id": "driver",
       "type": "cloud",
       "label": "NVIDIA 드라이버",
-      "sublabel": "GPU 드라이버 자동 설치",
+      "sublabel": "AL2023 AMI에 사전 설치",
       "pos": [
         300,
         90
@@ -88,7 +88,7 @@
       "id": "toolkit",
       "type": "cloud",
       "label": "NVIDIA Container Toolkit",
-      "sublabel": "컨테이너에서 GPU 사용",
+      "sublabel": "AL2023 AMI에 사전 설치",
       "pos": [
         520,
         90
@@ -130,7 +130,7 @@
       "id": "kubeflow",
       "type": "backend",
       "label": "Kubeflow",
-      "sublabel": "ML 워크플로우 플랫폼 · KFServing",
+      "sublabel": "ML 플랫폼 / 개별 컴포넌트",
       "pos": [
         40,
         240
@@ -157,7 +157,7 @@
     {
       "id": "training",
       "type": "backend",
-      "label": "TF/PyTorch 훈련 작업",
+      "label": "Trainer / 레거시 Jobs",
       "sublabel": "분산 훈련 작업 실행",
       "pos": [
         520,
@@ -199,8 +199,8 @@
     {
       "id": "serving-runtimes",
       "type": "frontend",
-      "label": "TorchServe · Triton",
-      "sublabel": "추론 서버",
+      "label": "검증한 서빙 runtime",
+      "sublabel": "모델·장치·프로토콜 호환",
       "pos": [
         300,
         390
@@ -246,7 +246,7 @@
     },
     {
       "kind": "security-group",
-      "label": "GPU 운영자가 배포하는 구성 요소",
+      "label": "GPU 계층 — owner별 구성",
       "wraps": [
         "driver",
         "toolkit",
@@ -283,7 +283,7 @@
       "id": "gpu-deploys",
       "from": "gpu-operator",
       "to": "driver",
-      "label": "배포",
+      "label": "소유권 확인",
       "variant": "emphasis"
     },
     {
@@ -303,31 +303,18 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "NVIDIA GPU 운영자",
+      "title": "GPU 계층",
       "items": [
-        "NVIDIA 드라이버: GPU 드라이버 자동 설치",
-        "NVIDIA Container Toolkit: 컨테이너에서 GPU 사용 가능하게 함",
-        "NVIDIA Device Plugin: Kubernetes에 GPU 리소스 노출",
-        "NVIDIA DCGM Exporter: GPU 모니터링 메트릭 제공"
-      ]
-    },
-    {
-      "dot": "cyan",
-      "title": "Kubeflow",
-      "items": [
-        "Jupyter Notebooks: 대화형 개발 환경",
-        "TensorFlow/PyTorch 훈련 작업: 분산 훈련 작업 실행",
-        "KFServing: 모델 서빙",
-        "Pipelines: 엔드-투-엔드 ML 워크플로우",
-        "Katib: 하이퍼파라미터 튜닝"
+        "AL2023는 driver/toolkit을 제공; plugin과 관측성은 별도입니다.",
+        "GPU Operator와 standalone plugin은 관리 owner를 중복하지 않습니다."
       ]
     },
     {
       "dot": "amber",
-      "title": "서빙과 분산 훈련",
+      "title": "학습과 서빙",
       "items": [
-        "KServe: TorchServe, Triton Inference Server 등 모델 서빙 옵션",
-        "MPI Operator: MPIJob 리소스로 분산 훈련 오케스트레이션"
+        "KServe는 현재 이름이며 TorchServe는 유지보수 중단 상태입니다.",
+        "리소스 생성은 학습·추론 성공을 보장하지 않습니다."
       ]
     }
   ]

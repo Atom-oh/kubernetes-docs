@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-01-ai-ml-workloads-6.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "metrics-path",
@@ -40,7 +40,7 @@
           "elasticsearch",
           "kibana"
         ],
-        "note": "Fluentd collects container logs and ships them to CloudWatch Logs and ElasticSearch; Kibana queries the index."
+        "note": "Fluent Bit forwards logs through configured parsers, outputs, IAM and access policies."
       }
     ]
   },
@@ -104,7 +104,7 @@
     {
       "id": "alertmanager",
       "type": "backend",
-      "label": "Alert Manager",
+      "label": "Alertmanager",
       "sublabel": "Alert routing",
       "pos": [
         630,
@@ -160,8 +160,8 @@
     {
       "id": "fluentd",
       "type": "backend",
-      "label": "Fluentd",
-      "sublabel": "Container log collection",
+      "label": "Fluent Bit",
+      "sublabel": "CRI / multiline / app logs",
       "pos": [
         40,
         470
@@ -188,7 +188,7 @@
     {
       "id": "elasticsearch",
       "type": "database",
-      "label": "ElasticSearch",
+      "label": "Elasticsearch",
       "sublabel": "Log index",
       "pos": [
         340,
@@ -249,7 +249,7 @@
       "id": "dcgm-prom",
       "from": "dcgm",
       "to": "prometheus",
-      "label": "scrape",
+      "label": "metrics",
       "variant": "emphasis"
     },
     {
@@ -272,8 +272,8 @@
     },
     {
       "id": "prom-grafana",
-      "from": "prometheus",
-      "to": "grafana",
+      "from": "grafana",
+      "to": "prometheus",
       "label": "query",
       "variant": "emphasis"
     },
@@ -309,16 +309,16 @@
       "dot": "cyan",
       "title": "Metrics",
       "items": [
-        "A ServiceMonitor scrapes dcgm-exporter every 15 seconds",
-        "The Grafana GPU dashboard plots metrics such as DCGM_FI_DEV_GPU_UTIL"
+        "ServiceMonitor selects Service labels and named ports.",
+        "GPU utilization differs from model quality and HPA Resource metrics."
       ]
     },
     {
       "dot": "amber",
       "title": "Logs",
       "items": [
-        "Fluentd tails /var/log/containers/*.log and enriches records with Kubernetes metadata",
-        "The cloudwatch_logs plugin ships them to the /eks/ml-cluster/pods log group"
+        "Distinguish CRI framing from application JSON.",
+        "Validate output plugins, permissions, buffers and sensitive-data handling."
       ]
     }
   ]

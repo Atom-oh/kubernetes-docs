@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/ai-ml/03-agentic-ai-platform.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "245b987544fa1632584083ab4508186f5b4b3b6b0941ae4a528bcd46a099f156",
+    "summary": "Reviewed all original prose/136unique snippets; updated Kagent/Gateway/Milvus/LangGraph/Langfuse/Ragas APIs, tool/tenant/credential boundaries, bounded retrieval and evidence-scoped cost/performance claims; all20quiztopics retained;10figures/30responsivecases passed.",
+    "validationReport": "docs/reviews/2026-09-11/agentic-ai-platform-validation.json"
+  },
+  {
+    "path": "en/ai-ml/03-agentic-ai-platform.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f616b9a7d17b7da28295ac3dd83dfaaba7359d7fa952a9f2ecae7b47124cc20a",
+    "summary": "Reviewed all original prose/136unique snippets; updated Kagent/Gateway/Milvus/LangGraph/Langfuse/Ragas APIs, tool/tenant/credential boundaries, bounded retrieval and evidence-scoped cost/performance claims; all20quiztopics retained;10figures/30responsivecases passed.",
+    "validationReport": "docs/reviews/2026-09-11/agentic-ai-platform-validation.json"
+  },
+  {
+    "path": "ko/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3980a7a49504a661cc58f1ec35894746f980ddd43f1299f3f858f4bb40bd36a7",
+    "summary": "Reviewed all original prose/136unique snippets; updated Kagent/Gateway/Milvus/LangGraph/Langfuse/Ragas APIs, tool/tenant/credential boundaries, bounded retrieval and evidence-scoped cost/performance claims; all20quiztopics retained;10figures/30responsivecases passed.",
+    "validationReport": "docs/reviews/2026-09-11/agentic-ai-platform-validation.json"
+  },
+  {
+    "path": "en/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "496ae8c8b7381e57b07c23a3d268d30e02b07e0f17f4159cdd18718c5aa3fbb3",
+    "summary": "Reviewed all original prose/136unique snippets; updated Kagent/Gateway/Milvus/LangGraph/Langfuse/Ragas APIs, tool/tenant/credential boundaries, bounded retrieval and evidence-scoped cost/performance claims; all20quiztopics retained;10figures/30responsivecases passed.",
+    "validationReport": "docs/reviews/2026-09-11/agentic-ai-platform-validation.json"
+  }
+]

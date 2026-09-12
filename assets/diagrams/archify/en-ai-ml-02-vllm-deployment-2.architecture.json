@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-02-vllm-deployment-2.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1000,
       640
@@ -34,7 +34,7 @@
           "s3",
           "ebs"
         ],
-        "note": "Models stored in S3 are downloaded to FSx for Lustre, from which nodes load model weights quickly."
+        "note": "FSx/S3/local caches are options; Hugging Face download differs from S3 transfer."
       },
       {
         "id": "aws-services",
@@ -167,7 +167,7 @@
       "id": "fsx",
       "type": "database",
       "label": "FSx for Lustre",
-      "sublabel": "Model weights (RWX)",
+      "sublabel": "optional shared model storage",
       "pos": [
         720,
         220
@@ -320,30 +320,18 @@
   ],
   "cards": [
     {
-      "dot": "orange",
-      "title": "GPU node types",
-      "items": [
-        "p5.48xlarge: 8x H100 80GB (highest performance)",
-        "p4d.24xlarge: 8x A100 40/80GB",
-        "g6.12xlarge: 4x L4 24GB (cost-effective)",
-        "g5.12xlarge: 4x A10G 24GB"
-      ]
-    },
-    {
       "dot": "cyan",
-      "title": "Model storage",
+      "title": "Model preparation",
       "items": [
-        "FSx for Lustre SCRATCH_2, 1200GiB, ReadWriteMany PVC",
-        "Store Hugging Face models in S3, then download to FSx with a Job"
+        "Workers require the same model revision and path.",
+        "Distinguish static FSx PV/PVC from dynamic provisioning."
       ]
     },
     {
       "dot": "slate",
-      "title": "AWS Services",
+      "title": "Infrastructure",
       "items": [
-        "ECR: vLLM container images",
-        "CloudWatch: metrics and log collection",
-        "IAM: node and pod permissions"
+        "Validate image, AMI, drivers, GPUs, IAM and storage paths together."
       ]
     }
   ]
