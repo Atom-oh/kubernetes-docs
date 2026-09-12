@@ -387,7 +387,7 @@
       "id": "exporter-to-prometheus",
       "from": "exporter",
       "to": "prometheus",
-      "label": "scrape",
+      "label": "metric samples",
       "variant": "dashed",
       "labelDy": -24
     },
@@ -395,7 +395,7 @@
       "id": "prometheus-to-grafana",
       "from": "prometheus",
       "to": "grafana",
-      "label": "query",
+      "label": "query results",
       "variant": "dashed"
     }
   ],

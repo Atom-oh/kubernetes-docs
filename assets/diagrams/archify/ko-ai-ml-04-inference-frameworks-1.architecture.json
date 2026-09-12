@@ -386,7 +386,7 @@
       "id": "exporter-to-prometheus",
       "from": "exporter",
       "to": "prometheus",
-      "label": "스크레이프",
+      "label": "메트릭 샘플",
       "variant": "dashed",
       "labelDy": -24
     },
@@ -394,7 +394,7 @@
       "id": "prometheus-to-grafana",
       "from": "prometheus",
       "to": "grafana",
-      "label": "쿼리",
+      "label": "쿼리 결과",
       "variant": "dashed"
     }
   ],

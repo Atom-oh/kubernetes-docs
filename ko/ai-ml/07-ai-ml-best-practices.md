@@ -156,7 +156,7 @@ def verify_model_cache(root, manifest, expected_revision):
 
 EFA는 선택한 workload의 통신 성능을 높이는 경로이지 모든 DDP 실행의 필수 조건은 아닙니다. 지원 interface·같은 AZ·driver/libfabric/aws-ofi-nccl·Pod 할당·SG와 실제 transport를 확인합니다. instance store RAID0과 subnet tag만으로 활성화되지 않습니다. NCCL_TIMEOUT 같은 미확인 변수나 과거 Ring/Simple/IB_DISABLE 설정을 복사하지 않습니다. torchrun --nnodes는 node 수이며 전체 process WORLD_SIZE가 아닙니다.
 
-Karpenter1.14.1의 실제 placementGroupSelector를 사용합니다. aws:ec2:placement-group tag는 placement API가 아니며 aws: prefix를 사용자 tag로 생성하는 방식도 잘못입니다. 아래는 **스키마 예제**로, AMI/subnet/SG/role와 존재하는 placement group을 승인된 값으로 교체해야 합니다. EFA networkInterfaces 설정까지 완성된 구성은 아닙니다.
+Karpenter1.14.1의 실제 placementGroupSelector를 사용합니다. aws:ec2:placement-group tag는 placement API가 아니며 aws: prefix를 사용자 tag로 생성하는 방식도 잘못입니다. 아래는 **스키마 예제**로, AMI/subnet/SG/role와 존재하는 placement group을 승인된 값으로 교체해야 합니다. 이 예제의 amiFamily는 AL2023이므로 교체한 AMI도 검증한 EKS AL2023 이미지여야 합니다. 다른 OS의 AMI ID를 넣으면 안 됩니다. EFA networkInterfaces 설정까지 완성된 구성은 아닙니다.
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -173,6 +173,7 @@ spec:
   - id: sg-0123456789abcdef0
   placementGroupSelector:
     name: prepared-training-placement-group
+  amiFamily: AL2023
 ```
 
 ### 중단 예산과 Spot
@@ -223,7 +224,7 @@ VPA Off는 CPU/memory 추천을 제공할 뿐 GPU instance 자동 선택기가 �
 
 ## 모델 접근과 secret 관리
 
-S3 ListBucket과 GetObject는 bucket/object ARN과 지원 condition key를 각각 사용합니다. 해당 S3 동작에 지원되지 않는 aws:ResourceTag/Environment 조건으로 접근이 제어된다고 가정하지 않습니다. IAM trust의 ServiceAccount namespace/name, SDK credential chain과 실제 요청 identity를 확인합니다. vLLM이 모든 S3 model URI를 자동 다운로드하는 것은 아닙니다.
+S3 ListBucket과 GetObject는 bucket/object ARN과 지원 condition key를 각각 사용합니다. 일반 목적 버킷도 ABAC를 명시적으로 활성화하면 aws:ResourceTag/Environment 같은 버킷 태그 조건으로 접근을 제어할 수 있습니다. 기본값은 비활성화이므로 기존 예제의 태그 조건만 복사하지 말고 버킷의 ABAC 상태, 태그 변경 권한, identity/bucket policy와 action/resource 조합을 검토하세요. 활성화 자체가 필요한 Allow를 생성하거나 다른 Deny를 무효화하지는 않습니다. IAM trust의 ServiceAccount namespace/name, SDK credential chain과 실제 요청 identity를 확인합니다. vLLM이 모든 S3 model URI를 자동 다운로드하는 것은 아닙니다.
 
 ESO2.10.0의 확인한 CRD는 **v1이 served**, v1beta1은 served=false입니다. 다음 예시는 미리 승인된 같은 namespace SecretStore를 참조합니다. remote key·권한·rotation과 target lifecycle은 별도로 준비해야 합니다.
 
@@ -270,6 +271,7 @@ NetworkPolicy는 실제 CNI가 적용해야 하며 namespaceSelector와podSelect
 - [Karpenter disruption](https://karpenter.sh/docs/concepts/disruption/)
 - [ESO2.10 ExternalSecret CRD](https://github.com/external-secrets/external-secrets/blob/helm-chart-2.10.0/config/crds/bases/external-secrets.io_externalsecrets.yaml)
 - [Kubernetes Secret updates](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [S3 general-purpose bucket ABAC enablement](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html)
 - [EBS gp3 performance](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
 
 ## 퀴즈

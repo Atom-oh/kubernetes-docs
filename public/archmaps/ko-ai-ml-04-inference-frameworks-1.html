@@ -5051,8 +5051,8 @@
         <path data-edge-from="fsx" data-edge-to="s3" data-edge-label="설정된 연동" data-edge-key="7" data-edge-id="fsx-to-s3" data-composition-points="1110,480;1180,480" d="M 1110 480 L 1180 480" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="ngc" data-edge-to="fsx" data-edge-label="모델 다운로드" data-edge-key="8" data-edge-id="ngc-to-fsx" data-composition-points="1030,600;1030,510" d="M 1030 600 L 1030 510" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="container" data-edge-to="exporter" data-edge-label="메트릭 노출" data-edge-key="9" data-edge-id="container-to-exporter" data-composition-points="570,260;570,120" d="M 570 260 L 570 120" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="스크레이프" data-edge-key="10" data-edge-id="exporter-to-prometheus" data-composition-points="650,90;720,90" d="M 650 90 L 720 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="쿼리" data-edge-key="11" data-edge-id="prometheus-to-grafana" data-composition-points="880,90;950,90" d="M 880 90 L 950 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="메트릭 샘플" data-edge-key="10" data-edge-id="exporter-to-prometheus" data-composition-points="650,90;720,90" d="M 650 90 L 720 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="쿼리 결과" data-edge-key="11" data-edge-id="prometheus-to-grafana" data-composition-points="880,90;950,90" d="M 880 90 L 950 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-alb" data-node-id="alb" data-node-label="승인된 진입 경로" tabindex="0" role="button" aria-label="Focus 승인된 진입 경로, 인증·TLS·요청 한도, 인그레스 레이어" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="인증·TLS·요청 한도" data-node-context="인그레스 레이어">
@@ -5241,13 +5241,13 @@
           <rect x="538.6" y="180" width="62.8" height="14" rx="3" class="c-mask"/>
           <text x="570" y="190" class="t-messagebus" font-size="8" text-anchor="middle">메트릭 노출</text>
         </g>
-        <g data-detail="context" data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="스크레이프" data-edge-key="10" data-edge-id="exporter-to-prometheus">
-          <rect x="656" y="46" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="685" y="56" class="t-messagebus" font-size="8" text-anchor="middle">스크레이프</text>
+        <g data-detail="context" data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="메트릭 샘플" data-edge-key="10" data-edge-id="exporter-to-prometheus">
+          <rect x="653.6" y="46" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="685" y="56" class="t-messagebus" font-size="8" text-anchor="middle">메트릭 샘플</text>
         </g>
-        <g data-detail="context" data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="쿼리" data-edge-key="11" data-edge-id="prometheus-to-grafana">
-          <rect x="900" y="70" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="915" y="80" class="t-messagebus" font-size="8" text-anchor="middle">쿼리</text>
+        <g data-detail="context" data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="쿼리 결과" data-edge-key="11" data-edge-id="prometheus-to-grafana">
+          <rect x="888.4" y="70" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="915" y="80" class="t-messagebus" font-size="8" text-anchor="middle">쿼리 결과</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

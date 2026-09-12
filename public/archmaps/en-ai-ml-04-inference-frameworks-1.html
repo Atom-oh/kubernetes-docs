@@ -5051,8 +5051,8 @@
         <path data-edge-from="fsx" data-edge-to="s3" data-edge-label="configured integration" data-edge-key="7" data-edge-id="fsx-to-s3" data-composition-points="1110,480;1180,480" d="M 1110 480 L 1180 480" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="ngc" data-edge-to="fsx" data-edge-label="model download" data-edge-key="8" data-edge-id="ngc-to-fsx" data-composition-points="1030,600;1030,510" d="M 1030 600 L 1030 510" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="container" data-edge-to="exporter" data-edge-label="expose metrics" data-edge-key="9" data-edge-id="container-to-exporter" data-composition-points="570,260;570,120" d="M 570 260 L 570 120" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="scrape" data-edge-key="10" data-edge-id="exporter-to-prometheus" data-composition-points="650,90;720,90" d="M 650 90 L 720 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="query" data-edge-key="11" data-edge-id="prometheus-to-grafana" data-composition-points="880,90;950,90" d="M 880 90 L 950 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="metric samples" data-edge-key="10" data-edge-id="exporter-to-prometheus" data-composition-points="650,90;720,90" d="M 650 90 L 720 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="query results" data-edge-key="11" data-edge-id="prometheus-to-grafana" data-composition-points="880,90;950,90" d="M 880 90 L 950 90" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-alb" data-node-id="alb" data-node-label="Approved entry path" tabindex="0" role="button" aria-label="Focus Approved entry path, authentication / TLS / limits, Ingress Layer" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="authentication / TLS / limits" data-node-context="Ingress Layer">
@@ -5241,13 +5241,13 @@
           <rect x="531.4" y="180" width="77.2" height="14" rx="3" class="c-mask"/>
           <text x="570" y="190" class="t-messagebus" font-size="8" text-anchor="middle">expose metrics</text>
         </g>
-        <g data-detail="context" data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="scrape" data-edge-key="10" data-edge-id="exporter-to-prometheus">
-          <rect x="665.6" y="46" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="685" y="56" class="t-messagebus" font-size="8" text-anchor="middle">scrape</text>
+        <g data-detail="context" data-edge-from="exporter" data-edge-to="prometheus" data-edge-label="metric samples" data-edge-key="10" data-edge-id="exporter-to-prometheus">
+          <rect x="646.4" y="46" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="685" y="56" class="t-messagebus" font-size="8" text-anchor="middle">metric samples</text>
         </g>
-        <g data-detail="context" data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="query" data-edge-key="11" data-edge-id="prometheus-to-grafana">
-          <rect x="898" y="70" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="915" y="80" class="t-messagebus" font-size="8" text-anchor="middle">query</text>
+        <g data-detail="context" data-edge-from="prometheus" data-edge-to="grafana" data-edge-label="query results" data-edge-key="11" data-edge-id="prometheus-to-grafana">
+          <rect x="878.8" y="70" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="915" y="80" class="t-messagebus" font-size="8" text-anchor="middle">query results</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

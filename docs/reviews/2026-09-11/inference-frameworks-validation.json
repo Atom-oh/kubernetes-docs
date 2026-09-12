@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "reviewedAt": "2026-09-12T22:08:39.029080+00:00",
+  "reviewedAt": "2026-09-12T23:08:31.182394+00:00",
   "scope": {
     "documents": 4,
     "quizQuestions": 30,
@@ -743,7 +743,7 @@
           "bottom": 112,
           "left": 16
         },
-        "sourceSha256": "b5f2de0060faa0d8abc6dcc4c0d18d08c211a59483722be7c70f722fd4f6ea86"
+        "sourceSha256": "0fe32b26adde211b06e0da9d898bf0bbb83b0a7f772ca72e64733249ee8ca988"
       },
       {
         "figure": 1,
@@ -763,7 +763,7 @@
           "bottom": 76,
           "left": 32
         },
-        "sourceSha256": "b5f2de0060faa0d8abc6dcc4c0d18d08c211a59483722be7c70f722fd4f6ea86"
+        "sourceSha256": "0fe32b26adde211b06e0da9d898bf0bbb83b0a7f772ca72e64733249ee8ca988"
       },
       {
         "figure": 1,
@@ -783,7 +783,7 @@
           "bottom": 60,
           "left": 1496.359375
         },
-        "sourceSha256": "b5f2de0060faa0d8abc6dcc4c0d18d08c211a59483722be7c70f722fd4f6ea86"
+        "sourceSha256": "0fe32b26adde211b06e0da9d898bf0bbb83b0a7f772ca72e64733249ee8ca988"
       },
       {
         "figure": 1,
@@ -803,7 +803,7 @@
           "bottom": 112,
           "left": 16
         },
-        "sourceSha256": "76117d161f6e087d6c453d0b4b1815964d86b611ad26b91a5b57c5d527629bbd"
+        "sourceSha256": "0c0f9697e552238d095327390d0730e5e69c6e66522fa18894ca1a8c155b2bb1"
       },
       {
         "figure": 1,
@@ -823,7 +823,7 @@
           "bottom": 76,
           "left": 32
         },
-        "sourceSha256": "76117d161f6e087d6c453d0b4b1815964d86b611ad26b91a5b57c5d527629bbd"
+        "sourceSha256": "0c0f9697e552238d095327390d0730e5e69c6e66522fa18894ca1a8c155b2bb1"
       },
       {
         "figure": 1,
@@ -843,7 +843,7 @@
           "bottom": 60,
           "left": 1496.359375
         },
-        "sourceSha256": "76117d161f6e087d6c453d0b4b1815964d86b611ad26b91a5b57c5d527629bbd"
+        "sourceSha256": "0c0f9697e552238d095327390d0730e5e69c6e66522fa18894ca1a8c155b2bb1"
       },
       {
         "figure": 2,
@@ -1095,7 +1095,7 @@
     },
     {
       "path": "ko/.gitbook/assets/ko-ai-ml-04-inference-frameworks-1.png",
-      "sha256": "76948ae0b0bd352776754042534db00a4932da2e38d8a0f1ac744bf57a9287ba"
+      "sha256": "695489351ac5cef8bb19f5fb2d9719f71cfb92f89ba9a815919c284b1e4ac2a6"
     },
     {
       "path": "ko/.gitbook/assets/ko-ai-ml-04-inference-frameworks-2.png",
@@ -1111,7 +1111,7 @@
     },
     {
       "path": "en/.gitbook/assets/en-ai-ml-04-inference-frameworks-1.png",
-      "sha256": "48aa9f9bce0eed79cd7d13be94a73afc33f7020929655e69f84b4a5f179f4a51"
+      "sha256": "cb0b6505eaf6c200c8f4e8623bbb535f1d797243a1068211bda23e9d3c71f273"
     },
     {
       "path": "en/.gitbook/assets/en-ai-ml-04-inference-frameworks-2.png",
@@ -1580,5 +1580,11 @@
     "OfficialAIBrixsamplePodAutoscalerhadstalefields;versionedCRD/typesusedinstead.",
     "NIMHTTP200legacyURLsweremetarefreshstubs;resolved2.0.12pageschecked.",
     "No full local site build; per-file compilation and standalone production-normalized viewers."
+  ],
+  "reviewFixes": [
+    {
+      "id": "AIO-R1-003",
+      "change": "Monitoring arrows explicitly label returned query results and metric samples in both languages; regenerated HTML/PNG and repeated24responsive cases."
+    }
   ]
 }

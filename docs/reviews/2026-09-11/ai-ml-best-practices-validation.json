@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "reviewedAt": "2026-09-12T22:40:03.470387+00:00",
+  "reviewedAt": "2026-09-12T22:54:26.544053+00:00",
   "scope": {
     "documents": 4,
     "quizQuestions": 30,
@@ -20,7 +20,7 @@
     "results": [
       {
         "path": "ko/ai-ml/07-ai-ml-best-practices.md",
-        "sha256": "5f76f567c3c240fa775898b7eff5b49941cc4da94ed4b6be9c116b8459035eb8",
+        "sha256": "5cb43ef54e097879c08669205ce89021dffc5c409d6e57cf4fef00a55ca080b0",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -106,7 +106,7 @@
       },
       {
         "path": "en/ai-ml/07-ai-ml-best-practices.md",
-        "sha256": "02cb5344c83e5d33b7b00e6e3f591b6fa8fd7f2050476742db76dbf6f0d610da",
+        "sha256": "4079a831c6c888adbae27470b7b49b7735704045a50100d023f3a368ef7426ba",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -422,7 +422,7 @@
         "kind": "EC2NodeClass",
         "version": "v1",
         "served": true,
-        "sha256": "92a64d1ca2470eceb97c3eb6278a9b3616c983ba5ee9b5238ff0e04bf7813af4"
+        "sha256": "396ecf23fc666d1989a7666b612e59f04d0384e0361e0ac1987c326174b05d16"
       },
       {
         "kind": "ExternalSecret",
@@ -483,7 +483,7 @@
       {
         "locale": "ko",
         "fixture": "nodeclass.yaml",
-        "sha256": "92a64d1ca2470eceb97c3eb6278a9b3616c983ba5ee9b5238ff0e04bf7813af4"
+        "sha256": "396ecf23fc666d1989a7666b612e59f04d0384e0361e0ac1987c326174b05d16"
       },
       {
         "locale": "ko",
@@ -508,7 +508,7 @@
       {
         "locale": "en",
         "fixture": "nodeclass.yaml",
-        "sha256": "92a64d1ca2470eceb97c3eb6278a9b3616c983ba5ee9b5238ff0e04bf7813af4"
+        "sha256": "396ecf23fc666d1989a7666b612e59f04d0384e0361e0ac1987c326174b05d16"
       },
       {
         "locale": "en",
@@ -1091,6 +1091,18 @@
       "url": "https://karpenter.sh/docs/concepts/disruption/",
       "status": 200,
       "sha256": "4da44184ce253be10227c52fdbb993d6f695f1f2f7bb78babf59eeed637f3b71"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html",
+      "file": "s3-abac-enable.html",
+      "status": 200,
+      "sha256": "7e084a03157fb06004712d9c9f128cdfd88bb8eae124df66236c068c803ff747"
+    },
+    {
+      "url": "https://aws.amazon.com/blogs/aws/introducing-attribute-based-access-control-for-amazon-s3-general-purpose-buckets/",
+      "file": "s3-abac-launch.html",
+      "status": 200,
+      "sha256": "7c4a9e404e99ca94661de7b79254d89a832ccdf464987e9a083741594370abf3"
     }
   ],
   "limitations": [
@@ -1101,5 +1113,33 @@
     "Karpenter/ESOJSONschemaonly;noCEL/admission;placeholderAMI/role/subnet/SGmustbereplaced.",
     "CronchecksareUTCcalendararithmetic,notKarpentercontrollerexecution.",
     "No full local site build."
-  ]
+  ],
+  "amiFamilySemanticValidation": {
+    "status": "passed",
+    "officialRule": {
+      "message": "must specify amiFamily if amiSelectorTerms does not contain an alias",
+      "rule": "self.amiSelectorTerms.exists(x, has(x.alias)) ? true : has(self.amiFamily)"
+    },
+    "publishedExamplePasses": true,
+    "previousExampleRejected": true,
+    "scope": "Exactpresence/aliaslogicsemanticassertionfortheidentifiedCELrule;notgeneralCEL/admissionexecution. AMIplaceholdermustresolveactualEKSAL2023image."
+  },
+  "s3ABACVerification": {
+    "status": "verified",
+    "sources": [
+      {
+        "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html",
+        "file": "s3-abac-enable.html",
+        "status": 200,
+        "sha256": "7e084a03157fb06004712d9c9f128cdfd88bb8eae124df66236c068c803ff747"
+      },
+      {
+        "url": "https://aws.amazon.com/blogs/aws/introducing-attribute-based-access-control-for-amazon-s3-general-purpose-buckets/",
+        "file": "s3-abac-launch.html",
+        "status": 200,
+        "sha256": "7c4a9e404e99ca94661de7b79254d89a832ccdf464987e9a083741594370abf3"
+      }
+    ],
+    "fact": "General-purposebucketABACsupportsexplicitbucketenablementandaws:ResourceTagconditionsincludingGetObject/ListBucket;notenabledbydefault. NoAWSmutation."
+  }
 }

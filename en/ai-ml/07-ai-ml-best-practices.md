@@ -156,7 +156,7 @@ Checkpoints need optimizer/RNG/data-cursor and shard state as in the [training/r
 
 EFA improves communication for suitable workloads; it is not required for every DDP execution. Verify interfaces, same-AZ placement, driver/libfabric/aws-ofi-nccl, Pod resources, security groups and actual transport. RAID0/subnet tags do not enable it. Avoid unverified NCCL_TIMEOUT and blindly copied Ring/Simple/IB_DISABLE settings. torchrun --nnodes counts nodes, not total-process WORLD_SIZE.
 
-Use Karpenter1.14.1's actual placementGroupSelector. An aws:ec2:placement-group tag is not the placement API, and aws: is not a user-tag namespace. This **schema example** requires approved AMI/subnet/SG/role identifiers and an existing placement group. It does not complete EFA networkInterfaces configuration.
+Use Karpenter1.14.1's actual placementGroupSelector. An aws:ec2:placement-group tag is not the placement API, and aws: is not a user-tag namespace. This **schema example** requires approved AMI/subnet/SG/role identifiers and an existing placement group. The example specifies amiFamily AL2023, so the replacement must be a validated EKS AL2023 AMI, not an AMI for another OS. It does not complete EFA networkInterfaces configuration.
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -173,6 +173,7 @@ spec:
   - id: sg-0123456789abcdef0
   placementGroupSelector:
     name: prepared-training-placement-group
+  amiFamily: AL2023
 ```
 
 ### Disruption Budgets and Spot
@@ -223,7 +224,7 @@ Record savings using actual region/OS/purchase terms, utilization, idle/failure 
 
 ## Model Access and Secret Management
 
-S3 ListBucket and GetObject use bucket/object ARNs and supported condition keys respectively. Do not assume an unsupported aws:ResourceTag/Environment condition controls these actions. Verify trust-bound ServiceAccount namespace/name, SDK credential chains and actual request identity. vLLM does not automatically download every S3 model URI.
+S3 ListBucket and GetObject use bucket/object ARNs and supported condition keys respectively. General-purpose buckets can use bucket-tag conditions such as aws:ResourceTag/Environment after ABAC is explicitly enabled. ABAC is disabled by default: verify bucket status, trusted tag-administration permissions, identity/bucket policies and action/resource pairing rather than copying the tag condition alone. Enablement does not create the required Allow or override other Deny policies. Verify trust-bound ServiceAccount namespace/name, SDK credential chains and actual request identity. vLLM does not automatically download every S3 model URI.
 
 The inspected ESO2.10.0 CRD **serves v1**, with v1beta1 served=false. This example references an already approved same-namespace SecretStore. Prepare remote keys, permissions, rotation and target lifecycle separately.
 
@@ -270,6 +271,7 @@ All original guide/quiz prose and87unique code blocks were reviewed. Validation 
 - [Karpenter disruption](https://karpenter.sh/docs/concepts/disruption/)
 - [ESO2.10 ExternalSecret CRD](https://github.com/external-secrets/external-secrets/blob/helm-chart-2.10.0/config/crds/bases/external-secrets.io_externalsecrets.yaml)
 - [Kubernetes Secret updates](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [S3 general-purpose bucket ABAC enablement](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html)
 - [EBS gp3 performance](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
 
 ## Quiz
