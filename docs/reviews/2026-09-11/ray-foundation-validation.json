@@ -1,0 +1,630 @@
+{
+  "reviewedAt": "2026-09-12T19:30:55.997093+00:00",
+  "version": "Ray2.58.0/KubeRay1.7.0",
+  "fullyReadFiles": 6,
+  "quizQuestions": 20,
+  "findings": [
+    "Require.remote;ObjectRefdependenciesandtasksideeffect/retrybounds",
+    "Actorstatebetween callsnotdurability;max_restarts0/constructor/checkpoint boundaries",
+    "Node-localimmutableobjectstores;samenodeNumPyreadonlyzero-copylimitedscope",
+    "GCSGlobalControlServiceandobjectownermetadataareseparate;headcompute/driver/autoscalerconditional",
+    "Task/actorfitsonenode;logicalresourcesnotOSlimits",
+    "GCSRedisvsalphaRocksDBandobject/actorrecoverynotuniversal",
+    "KubeRayinfra reconciler notMLlibrarydispatcher;higherlevelframeworkpoliciesremain"
+  ],
+  "native": {
+    "version": "2.58.0",
+    "cpusConfigured": 2,
+    "objectStoreMiB": 80,
+    "taskRequiresRemote": true,
+    "objectRefDependency": true,
+    "actorStateBetweenCalls": true,
+    "sameNodeNumpyReadOnlyView": true,
+    "scope": "single local Ray instance, small CPU fixtures; no GPU/models/cloud/HA test; memory settings are not an OS hard limit"
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/ray/README.md",
+        "sha256": "d22dfbdaaf62d525bb473b1414e0fbe75ba5c02137983b550f72fbf9b9b658ef",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-on-eks-딥다이브"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "컴포넌트-맵"
+          },
+          {
+            "tag": "h2",
+            "id": "왜-eks에서-운영하는가"
+          },
+          {
+            "tag": "h2",
+            "id": "현재-제공-중인-문서"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          }
+        ],
+        "renderedIds": [
+          "ray-on-eks-딥다이브",
+          "개요",
+          "컴포넌트-맵",
+          "왜-eks에서-운영하는가",
+          "현재-제공-중인-문서",
+          "공식-근거"
+        ]
+      },
+      {
+        "path": "ko/ai-ml/ray/01-architecture.md",
+        "sha256": "defa03c602f971e65ff535b94ca75d045f4e2fc24f3beec6f7f4ab310f01683f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-ray-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "ray란-무엇인가"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-primitive"
+          },
+          {
+            "tag": "h3",
+            "id": "task"
+          },
+          {
+            "tag": "h3",
+            "id": "actor"
+          },
+          {
+            "tag": "h3",
+            "id": "object-store"
+          },
+          {
+            "tag": "h2",
+            "id": "작은-로컬-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "클러스터-아키텍처-head-node와-worker-node"
+          },
+          {
+            "tag": "h3",
+            "id": "자원-배치"
+          },
+          {
+            "tag": "h2",
+            "id": "장애-복구와-상위-라이브러리"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes에서-이-내용이-중요한-이유"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          }
+        ],
+        "renderedIds": [
+          "part-1-ray-아키텍처",
+          "실습-환경-준비",
+          "ray란-무엇인가",
+          "핵심-primitive",
+          "task",
+          "actor",
+          "object-store",
+          "작은-로컬-예제",
+          "클러스터-아키텍처-head-node와-worker-node",
+          "자원-배치",
+          "장애-복구와-상위-라이브러리",
+          "kubernetes에서-이-내용이-중요한-이유",
+          "공식-근거"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/ray/01-architecture-quiz.md",
+        "sha256": "71b6a88831f595b775f1f5ca1468c6dba942c7da39b651a53d0f92958d1f7021",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-아키텍처-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          }
+        ],
+        "renderedIds": [
+          "ray-아키텍처-퀴즈",
+          "객관식-문제",
+          "단답형-문제"
+        ]
+      },
+      {
+        "path": "en/ai-ml/ray/README.md",
+        "sha256": "7ab6fccf2537f2030e927f062db531a64e433b3612e5606b5b914efb954b9ae9",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-on-eks-deep-dive"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "component-map"
+          },
+          {
+            "tag": "h2",
+            "id": "why-run-this-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "currently-covered"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-sources"
+          }
+        ],
+        "renderedIds": [
+          "ray-on-eks-deep-dive",
+          "overview",
+          "component-map",
+          "why-run-this-on-eks",
+          "currently-covered",
+          "primary-sources"
+        ]
+      },
+      {
+        "path": "en/ai-ml/ray/01-architecture.md",
+        "sha256": "309dd696434978798b95f82badac5e9f6a03bb5fd3d64a7f148b26074d0c2782",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-ray-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "what-is-ray"
+          },
+          {
+            "tag": "h2",
+            "id": "core-primitives"
+          },
+          {
+            "tag": "h3",
+            "id": "tasks"
+          },
+          {
+            "tag": "h3",
+            "id": "actors"
+          },
+          {
+            "tag": "h3",
+            "id": "object-store"
+          },
+          {
+            "tag": "h2",
+            "id": "small-local-example"
+          },
+          {
+            "tag": "h2",
+            "id": "cluster-architecture-head-node-and-worker-nodes"
+          },
+          {
+            "tag": "h3",
+            "id": "resource-placement"
+          },
+          {
+            "tag": "h2",
+            "id": "fault-recovery-and-higher-level-libraries"
+          },
+          {
+            "tag": "h2",
+            "id": "why-this-matters-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-sources"
+          }
+        ],
+        "renderedIds": [
+          "part-1-ray-architecture",
+          "lab-environment-setup",
+          "what-is-ray",
+          "core-primitives",
+          "tasks",
+          "actors",
+          "object-store",
+          "small-local-example",
+          "cluster-architecture-head-node-and-worker-nodes",
+          "resource-placement",
+          "fault-recovery-and-higher-level-libraries",
+          "why-this-matters-on-kubernetes",
+          "primary-sources"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/ray/01-architecture-quiz.md",
+        "sha256": "110ef07be34981b2841c2953cff49a8dd6e53dc3fbc745ca2d9ce41badfb884c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-architecture-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "ray-architecture-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "figures": [
+    {
+      "stem": "ko-ai-ml-ray-readme-0",
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "visuallyInspected": true,
+      "pngSha256": "f3fba21c45a26e2fab710a91febea4d42ab9a2d5fbeda481ffb4aa2217ee71db"
+    },
+    {
+      "stem": "ko-ai-ml-ray-01-architecture-0",
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "visuallyInspected": true,
+      "pngSha256": "bfd7220b407ff63d5f0f0e0b70a2772add7e227437e7860edaa7eb881c7c28d2"
+    },
+    {
+      "stem": "en-ai-ml-ray-readme-0",
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "visuallyInspected": true,
+      "pngSha256": "cd098fb0d4280f69998cc84ec598dcc1df6769a16fd1301cbc956d5986c6b52b"
+    },
+    {
+      "stem": "en-ai-ml-ray-01-architecture-0",
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "visuallyInspected": true,
+      "pngSha256": "520d2583a1a8e4943017f03f426466408d99213d5115aafcdfe45d7cd0a69240"
+    }
+  ],
+  "responsive": [
+    {
+      "status": "passed",
+      "cases": [
+        {
+          "locale": "ko",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "0f53a6326e5a9d21d233f7ece3803d9296a0d11374c5916d5762974d42b07020"
+        },
+        {
+          "locale": "ko",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "0f53a6326e5a9d21d233f7ece3803d9296a0d11374c5916d5762974d42b07020"
+        },
+        {
+          "locale": "ko",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "0f53a6326e5a9d21d233f7ece3803d9296a0d11374c5916d5762974d42b07020"
+        },
+        {
+          "locale": "en",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "39a57fcc30b83cf90b73fd879a52f39dff05d156e492e33468b030dbec81d052"
+        },
+        {
+          "locale": "en",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "39a57fcc30b83cf90b73fd879a52f39dff05d156e492e33468b030dbec81d052"
+        },
+        {
+          "locale": "en",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "39a57fcc30b83cf90b73fd879a52f39dff05d156e492e33468b030dbec81d052"
+        }
+      ],
+      "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+    },
+    {
+      "status": "passed",
+      "cases": [
+        {
+          "locale": "ko",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "228f9ef551c3e94deb118a0a83817d5e0982a109961d8c522329284c19ca4936"
+        },
+        {
+          "locale": "ko",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "228f9ef551c3e94deb118a0a83817d5e0982a109961d8c522329284c19ca4936"
+        },
+        {
+          "locale": "ko",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "228f9ef551c3e94deb118a0a83817d5e0982a109961d8c522329284c19ca4936"
+        },
+        {
+          "locale": "en",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "79de54f0e95d16e335fe91115664558f717df8d5cccb106ca19f9a0ba307fb14"
+        },
+        {
+          "locale": "en",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "79de54f0e95d16e335fe91115664558f717df8d5cccb106ca19f9a0ba307fb14"
+        },
+        {
+          "locale": "en",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "79de54f0e95d16e335fe91115664558f717df8d5cccb106ca19f9a0ba307fb14"
+        }
+      ],
+      "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+    }
+  ],
+  "sources": [
+    "https://github.com/ray-project/ray/releases/tag/ray-2.58.0",
+    "https://github.com/ray-project/kuberay/releases/tag/v1.7.0",
+    "https://docs.ray.io/en/releases-2.58.0/ray-core/objects.html",
+    "https://docs.ray.io/en/releases-2.58.0/ray-core/objects/serialization.html",
+    "https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/index.html",
+    "https://docs.ray.io/en/releases-2.58.0/ray-core/scheduling/resources.html",
+    "https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/actors.html",
+    "https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/objects.html",
+    "https://docs.ray.io/en/releases-2.58.0/ray-core/fault_tolerance/gcs.html"
+  ],
+  "limits": [
+    "SinglelocalRayCPUfixture;notmulti-node/GPU/cloud/HAvalidation",
+    "RayresourcevaluesarenotOShardlimits",
+    "Localinstanceclosedviafinallyray.shutdown;temporaryshortsocketaliasremoved;logsremainworkspacecache",
+    "Publicationreview/CIpending"
+  ]
+}

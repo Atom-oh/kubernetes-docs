@@ -1,74 +1,108 @@
 # Part 3: Ray Train and Ray Tune
 
-> **Supported Versions**: Ray 2.57.0
-> **Last Updated**: August 20, 2026
+> **Review baseline**: Ray 2.58.0 · 2026-09-12
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you will need the following tools and environment:
+Validation used Python 3.12 and `ray[train,tune]==2.58.0`. These extras install Ray's Train/Tune dependencies; **frameworks such as PyTorch are separate**. Check the PyTorch, CUDA, and driver pairing for the actual workload.
 
-### Required Tools
+The checks here cover configuration, callback/checkpoint APIs, and a small CPU scalar Tune example. They are not PyTorch training, GPU, distributed-gradient, or EKS autoscaling tests.
 
-* Python 3.10 or later
-* `pip install "ray[train,tune]"`
-* Access to a Ray cluster (see [Part 2: The KubeRay Operator](02-kuberay-operator.md) for standing one up on EKS, or run `ray.init()` locally for the examples in this document)
+## Ray Train V2 and Training-Code Responsibilities
 
-## Ray Train: Distributed Training on Ray's Primitives
+In 2.58.0, V2 is the default when `RAY_TRAIN_V2_ENABLED` is unset. The `ray.train.torch.TorchTrainer` import selects its V2 implementation accordingly. Do not assume identical contracts when an environment variable selects the older implementation.
 
-[Part 1](01-architecture.md) introduced Ray's core primitives: tasks, actors, and the object store. Writing a distributed training job directly against those primitives is possible, but it means hand-rolling a lot of boilerplate: launching one worker process per GPU, setting up the communication group those workers use to synchronize gradients, and coordinating checkpoints across all of them consistently.
+The Trainer coordinates workers and underlying distributed process groups. It does not automatically author models, optimizers, loss/data loops, data partitioning, or state save/restore logic. With PyTorch, use appropriate helpers such as `prepare_model` and `prepare_data_loader` for device/DDP/sampler setup, then verify data duplication, gradient synchronization, and evaluation. Framework collectives cannot all be described as Ray object-store transfers.
 
-**Ray Train** is a library, built on top of Ray's task and actor primitives, that handles that boilerplate. It takes a training function written against a familiar framework API — PyTorch is the most common case, though Ray Train supports other frameworks as well — and runs it across as many distributed workers as you ask for, without the author of the training function needing to manage worker launch, inter-worker communication, or checkpoint coordination directly.
+## ScalingConfig and Resource Demand
 
-### Ray Train V2
+`ScalingConfig` specifies worker counts and per-worker logical CPU/GPU resources. Supported elastic configurations also exist, so check the actual mode and its data/recovery requirements. Setting legacy `trainer_resources` raises a deprecation error in 2.58.0 V2. Distinguish the V2 controller, training workers, and Tune trial-driver resources.
 
-Ray Train's public API has evolved over the project's history. The user-facing import path is still `ray.train.torch.TorchTrainer` for PyTorch training, but the implementation behind that path has been rewritten — this rewrite ("Train V2") consolidated and simplified how the earlier generation of Trainer classes worked internally, and is now the default implementation you get from that same import. If you encounter an older codebase pinned to a Ray release from before this rewrite landed, treat it as running on the earlier implementation rather than assuming it is broken; consult the Ray documentation at docs.ray.io for the specifics, since the exact version where the default flipped is the kind of detail that changes across Ray releases.
+Placement groups and worker bundles need adequate capacity before framework processes can initialize. This neither replaces Kubernetes scheduling nor guarantees atomic scheduling of every Pod. Insufficient GPUs can cause waits, timeouts, or failure; Ray/KubeRay bounds, quotas, image readiness, and EC2 availability matter too.
 
-## Core Ray Train Concepts
+## Checkpoints and Reporting
 
-### Trainer
+`Checkpoint.from_directory()` constructs a checkpoint reference from files you prepare. It does not capture model, optimizer, RNG, scheduler, or dataset position automatically. Save the required state explicitly, then load the checkpoint returned by `train.get_checkpoint()` inside the worker.
 
-A **Trainer** — such as `TorchTrainer` — wraps a user-supplied training function. The training function contains the ordinary model-training logic for the chosen framework: building the model, iterating over batches, computing loss, and stepping the optimizer. The Trainer is responsible for launching that function once per worker, in a distributed process group the underlying framework's data-parallel training expects (for example, a PyTorch DDP process group), so the training function itself does not need to set that up by hand.
+**The 2.58.0 V2 `train.report` call is a barrier that every worker must reach the same number of times.** Even if only rank 0 saves files, other ranks participate with `checkpoint=None`. Skipping reports on some workers can stall training. Metrics are not automatically averaged across workers; compute required aggregates in training code.
 
-### ScalingConfig
+Checkpoint upload defaults to synchronous mode. If using asynchronous upload or validation, check completion, temporary-file lifetime, and feature-specific constraints. Avoid filename collisions when several workers save shards.
 
-A **ScalingConfig** tells the Trainer how many workers to launch and what resources each one needs — for example, how many workers to run and whether each worker requires a GPU. The Trainer uses this configuration to request the corresponding resources from the underlying Ray cluster, the same way any other Ray task or actor would.
+For multiple nodes, set `train.RunConfig(storage_path=...)` to persistent storage accessible by all workers. A local Pod directory does not guarantee recovery after node/Pod deletion. S3 paths still need IAM, networking, and retention configuration.
 
-### Checkpointing
+### Failure Classes and Retries
 
-Ray Train workers can report checkpoints back during training. A checkpoint captures enough state — typically model weights and optimizer state — to resume training from that point rather than from scratch. This serves two purposes: it lets a long-running distributed training job recover after a worker failure without losing all prior progress, and it hands off a trained model to whatever comes next in the workflow, whether that is a later hyperparameter-tuning decision (covered below) or registering the result as a model version (conceptually similar to what this documentation site's MLflow Model Registry material covers, though that material is not Ray-specific).
+The 2.58.0 V2 `FailureConfig` defaults are `max_failures=0` for training-worker errors, `controller_failure_limit=-1` for controller errors, and `max_preemption_failures=-1` for preemption. **Setting only `max_failures=0` does not disable every retry class.** Configure each limit together with RayJob/operational deadlines. Retries cannot recover progress from a missing or incomplete checkpoint.
 
-## Ray Tune: Hyperparameter Search Across the Cluster
+## Ray Tune: Searchers and Schedulers
 
-**Ray Tune** is a hyperparameter tuning library, also built on Ray, that runs many training trials in parallel across the cluster and uses a pluggable search algorithm to decide which hyperparameter combinations to try next. Each trial trains a model with one particular set of hyperparameters and reports back a result Tune's search algorithm can use to decide what to try next.
+Tune manages trial configurations and execution. Searchers select parameter candidates; trial schedulers use intermediate metrics to stop, pause, or continue trials. Grid/random search does not necessarily adapt its next candidate from previous metrics.
 
-This is conceptually parallel to what this documentation site's Kubeflow subtree describes for Katib, except Tune is a library native to the Ray ecosystem rather than a separate Kubernetes CRD-based system.
+Review `max_concurrent_trials`, trial resources, placement groups, and cluster capacity together. Avoid trial drivers occupying all resources needed by their nested Train workers. Summed CPU/GPU counts alone do not guarantee each worker bundle can be placed.
 
-## Combining Ray Train and Ray Tune
+## Small Tune Example
 
-A trial that Ray Tune runs does not have to be a single-process function. A common pattern is to give Tune a Ray Train `Trainer` as the trainable it is searching over: each hyperparameter trial then becomes its own distributed Ray Train run, potentially spanning multiple GPUs or multiple nodes.
+This runs **two scalar-objective trials**, not model training. The actual check collected both results and selected `x=3` with score 0.
 
-This combination matters whenever a model is expensive enough to train that a single trial itself needs distributed training to finish in a reasonable amount of time. Without it, a team would face an awkward choice: tune hyperparameters serially against a distributed training job, or give up distributed training during the search phase. Because both libraries share the same underlying Ray primitives, Tune can drive many concurrent Ray Train runs, each with its own set of distributed workers, without either library needing special-case integration code for the other.
+```python
+from pathlib import Path
+import ray
+from ray import tune
 
-![A Ray Tune driver launches two parallel hyperparameter trials, each running its own Ray Train job with worker actors sharing a per-trial object store, and reports results back so the driver can decide the next round of trials.](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
+def objective(config):
+    for step in range(2):
+        tune.report({"score": -(config["x"] - 3) ** 2, "step": step})
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-03-ray-train-tune-0.html)
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+    tuner = tune.Tuner(
+        tune.with_resources(objective, {"cpu": 1}),
+        param_space={"x": tune.grid_search([1, 3])},
+        tune_config=tune.TuneConfig(
+            metric="score", mode="max", max_concurrent_trials=1),
+        run_config=tune.RunConfig(
+            storage_path=str(Path(".tune-demo").resolve()),
+            name="scalar-example", verbose=0),
+    )
+    results = tuner.fit()
+    assert len(results) == 2 and not results.errors
+    best = results.get_best_result()
+    assert best.config["x"] == 3 and best.metrics["score"] == 0
+finally:
+    ray.shutdown()
+```
 
-## Resource Allocation and the Cluster Autoscaler
+Ray logical resources and object-store size are not OS limits on the whole process. Decide whether you intend a new run or recovery before reusing a result directory.
 
-Both Ray Train and Ray Tune request their workers' CPUs and GPUs through Ray's normal task and actor resource-request mechanism described in [Part 1](01-architecture.md) — there is no separate resource-request path specific to training or tuning. This matters on EKS because it is exactly what lets the KubeRay-managed autoscaler, covered in [Part 2](02-kuberay-operator.md), react to a training or tuning job's actual resource demand. A cluster does not need to be sized up front for the largest job it will ever run; the autoscaler can request more worker nodes as a Ray Tune sweep launches more concurrent trials, and scale back down once trials complete.
+## Current Train/Tune Integration
 
-## Practical Note: Co-Scheduling and GPU Node Lead Time on EKS
+**Do not present passing a V2 Trainer instance directly to `Tuner` as the current recommended path.** The native check raised `TuneError` for a V2 DataParallelTrainer instance. Distinguish older BaseTrainer compatibility/deprecation handling from V2.
 
-The distributed worker processes that make up a single Ray Train run typically need to be co-scheduled — all of them need to be up and holding their allocated GPUs at the same time before the communication group they form can be established, similar to the gang-scheduling needs discussed elsewhere in this documentation site for other distributed training systems. If the cluster's autoscaler cannot provision all the requested GPU workers within a reasonable window, a training run can stall waiting for the last few workers to come up.
+The current documented pattern uses a **function trainable** that constructs a framework Trainer and calls `.fit()`. Pass trial parameters through `train_loop_config` and use unique Train run names and storage paths per trial.
 
-This interacts directly with GPU node pool provisioning lead time: acquiring new GPU capacity from a node pool takes time, and that time is often larger and less predictable than for general-purpose CPU nodes. This documentation site's [Karpenter guide](../../autoscaling/02-karpenter.md) covers the node-provisioning mechanics in depth; the point to carry into Ray Train/Tune planning is that a training job's actual start time on EKS depends on how quickly the cluster can co-schedule every worker it asked for, not just on when the job was submitted.
+To forward intermediate metrics and checkpoint paths, attach `ray.tune.integration.ray_train.TuneReportCallback` through the Train `RunConfig(callbacks=[...])`. Construct it inside a Tune session. The 2.58.0 implementation forwards the first worker metric dictionary, without averaging. It adds an existing checkpoint path to metrics instead of uploading the checkpoint again.
 
-## Next Steps
+Use `tune.RunConfig` for Tuner and `train.RunConfig` for the Trainer. Keep their failure, storage, and callback settings separate. This integration needs explicit wiring and resource planning.
 
-Part 3 covered Ray Train's Trainer, ScalingConfig, and checkpointing, Ray Tune's trial-based hyperparameter search, and how the two combine when a tuning trial itself needs distributed training. [Part 4: Ray Serve](04-ray-serve.md) moves from training to serving: taking a trained (and possibly tuned) model and exposing it behind a scalable inference endpoint.
+![Tune trial functions create separate Train runs, whose workers use framework communication. Checkpoints go to shared persistent storage; a callback forwards metrics and checkpoint paths to Tune.](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
 
-[Return to Main Page](./README.md)
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-03-ray-train-tune-0.html)
 
-## Quiz
+## EKS Operational Checks
 
-Test your understanding with the [Ray Train and Ray Tune quiz](../../quizzes/ai-ml/ray/03-ray-train-tune-quiz.md).
+Inspect Ray resource/placement demand, KubeRay worker-group bounds, Kubernetes Pod placement, and physical node supply separately. Even with capacity available, image pulls, dataset access, framework initialization/communication, and checkpoint permissions can delay startup.
+
+Autoscaling does not provide instant GPUs or an automatic cost/completion bound. Coordinate trial concurrency, workers, max replicas, retry classes, and operational deadlines. Verify result/checkpoint preservation before deleting a RayJob or cluster.
+
+## Primary Sources
+
+- [Train overview](https://docs.ray.io/en/releases-2.58.0/train/overview.html)
+- [Train + Tune](https://docs.ray.io/en/releases-2.58.0/train/user-guides/hyperparameter-optimization.html)
+- [Checkpoints](https://docs.ray.io/en/releases-2.58.0/train/user-guides/checkpoints.html)
+- [Persistent storage](https://docs.ray.io/en/releases-2.58.0/train/user-guides/persistent-storage.html)
+- [Failures/preemption](https://docs.ray.io/en/releases-2.58.0/train/user-guides/fault-tolerance.html)
+- [PyTorch preparation](https://docs.ray.io/en/releases-2.58.0/train/getting-started-pytorch.html)
+- [2.58.0 report implementation](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/train/v2/api/train_fn_utils.py)
+
+[Next: Ray Serve](04-ray-serve.md) · [Main Page](README.md) · [Quiz](../../quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)

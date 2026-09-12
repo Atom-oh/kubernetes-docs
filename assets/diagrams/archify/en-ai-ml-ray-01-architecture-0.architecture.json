@@ -2,26 +2,216 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Ray Cluster Architecture",
-    "output": "en-ai-ml-ray-01-architecture-0.html",
+    "title": "Ray: control, ownership, and per-node object stores",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "none",
+    "viewBox": [
+      1160,
+      650
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Processes"
+        },
+        "database": {
+          "label": "Memory stores"
+        },
+        "external": {
+          "label": "Driver"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "head", "type": "backend", "label": "Head Node", "sublabel": "GCS · Driver · Autoscaler", "pos": [40, 200], "size": [190, 70] },
-    { "id": "worker1", "type": "backend", "label": "Worker Node", "sublabel": "Task / Actor execution", "pos": [380, 60], "size": [190, 60] },
-    { "id": "worker2", "type": "backend", "label": "Worker Node", "sublabel": "Task / Actor execution", "pos": [380, 360], "size": [190, 60] },
-    { "id": "object-store", "type": "database", "label": "Object Store", "sublabel": "distributed, shared", "pos": [690, 200], "size": [190, 70] }
+    {
+      "id": "driver",
+      "type": "external",
+      "label": "Driver",
+      "sublabel": "ObjectRef owner (example)",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        220,
+        80
+      ]
+    },
+    {
+      "id": "gcs",
+      "type": "backend",
+      "label": "GCS",
+      "sublabel": "cluster metadata",
+      "pos": [
+        470,
+        90
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "wa",
+      "type": "backend",
+      "label": "Worker A",
+      "sublabel": "raylet + tasks / actors",
+      "pos": [
+        330,
+        340
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "oa",
+      "type": "database",
+      "label": "Object store A",
+      "sublabel": "local shared memory",
+      "pos": [
+        330,
+        490
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "wb",
+      "type": "backend",
+      "label": "Worker B",
+      "sublabel": "raylet + tasks / actors",
+      "pos": [
+        800,
+        340
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "ob",
+      "type": "database",
+      "label": "Object store B",
+      "sublabel": "local shared memory",
+      "pos": [
+        800,
+        490
+      ],
+      "size": [
+        240,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Head: control shown",
+      "wraps": [
+        "gcs"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node A",
+      "wraps": [
+        "wa",
+        "oa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node B",
+      "wraps": [
+        "wb",
+        "ob"
+      ]
+    }
   ],
   "connections": [
-    { "id": "head-worker1", "from": "head", "to": "worker1", "label": "schedule tasks" },
-    { "id": "head-worker2", "from": "head", "to": "worker2", "label": "schedule tasks" },
-    { "id": "head-store", "from": "head", "to": "object-store", "label": "GCS metadata", "variant": "dashed" },
-    { "id": "worker1-store", "from": "worker1", "to": "object-store", "label": "put / get" },
-    { "id": "worker2-store", "from": "worker2", "to": "object-store", "label": "put / get" }
+    {
+      "id": "lookup",
+      "from": "driver",
+      "to": "gcs",
+      "label": "control lookup",
+      "variant": "dashed"
+    },
+    {
+      "id": "submit",
+      "from": "driver",
+      "to": "wa",
+      "label": "submit + dependency",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gcs-a",
+      "from": "gcs",
+      "to": "wa",
+      "label": "node / actor control",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "gcs-b",
+      "from": "gcs",
+      "to": "wb",
+      "fromSide": "right",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "local-a",
+      "from": "wa",
+      "to": "oa",
+      "label": "local read / store",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        450
+      ]
+    },
+    {
+      "id": "local-b",
+      "from": "wb",
+      "to": "ob",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "transfer",
+      "from": "oa",
+      "to": "ob",
+      "label": "transfer when needed",
+      "variant": "emphasis"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Head Node", "items": ["Global Control Store (GCS) holds cluster metadata", "the driver runs the user program", "the autoscaler adds/removes worker nodes"] },
-    { "dot": "emerald", "title": "Worker Nodes", "items": ["execute scheduled tasks and actors", "read and write shared objects through the distributed object store"] }
+    {
+      "dot": "cyan",
+      "title": "Responsibility boundaries",
+      "items": [
+        "Separate GCS cluster metadata from ObjectRef owner metadata",
+        "Head raylet, local store, and user work are omitted for clarity"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Resources and memory",
+      "items": [
+        "A single task/actor must fit one node",
+        "Distinguish same-node NumPy views from cross-node copies"
+      ]
+    }
   ]
 }

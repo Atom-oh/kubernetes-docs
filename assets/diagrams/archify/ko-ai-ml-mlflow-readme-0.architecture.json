@@ -2,14 +2,14 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Tracking → Model Registry → 서빙",
+    "title": "MLflow: 기록 · 선택적 등록 · 모델 소비",
     "output": "ko-ai-ml-mlflow-readme-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "backend": {
-          "label": "Tracking 서버"
+          "label": "Tracking"
         },
         "database": {
           "label": "Model Registry (핵심 개념)"
@@ -85,14 +85,14 @@
       "id": "tracking-to-registry",
       "from": "tracking",
       "to": "registry",
-      "label": "모델 등록",
+      "label": "선택적 등록",
       "variant": "emphasis"
     },
     {
       "id": "registry-to-serving",
       "from": "registry",
       "to": "serving",
-      "label": "해석 대상",
+      "label": "URI / alias 소비",
       "variant": "dashed"
     }
   ],
@@ -110,7 +110,8 @@
       "title": "Model Registry (Part 2)",
       "items": [
         "특정 학습 실행에 종속되지 않는 안정적이고 버전화된 모델 식별자를 제공한다",
-        "Registered Model, Model Version, 별칭(alias), 계보(lineage)를 다룬다"
+        "Registered Model, Model Version, 별칭(alias), 계보(lineage)를 다룬다",
+        "등록·alias 변경은 자동 배포를 뜻하지 않음"
       ]
     }
   ]

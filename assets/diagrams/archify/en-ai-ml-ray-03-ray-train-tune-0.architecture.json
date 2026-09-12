@@ -2,198 +2,168 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Combining Ray Train and Ray Tune",
-    "locale": "en",
-    "output": "en-ai-ml-ray-03-ray-train-tune-0.html",
+    "title": "Ray Tune functions and Train V2 runs",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "none",
+    "viewBox": [
+      1300,
+      580
+    ],
+    "locale": "en"
   },
   "components": [
     {
-      "id": "driver",
+      "id": "tuner",
       "type": "backend",
-      "label": "Ray Tune Driver",
-      "sublabel": "search algorithm",
-      "tag": "decides next round of trials",
+      "label": "Tuner",
+      "sublabel": "searcher / trial scheduler",
       "pos": [
-        470,
-        50
+        40,
+        70
       ],
       "size": [
-        220,
-        64
+        240,
+        80
       ]
     },
     {
-      "id": "t1w1",
+      "id": "trial",
       "type": "backend",
-      "label": "Worker Actor 1",
-      "sublabel": "Ray Train",
+      "label": "Trial function",
+      "sublabel": "construct Trainer + fit()",
       "pos": [
-        60,
-        240
+        430,
+        70
       ],
       "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "t1w2",
-      "type": "backend",
-      "label": "Worker Actor 2",
-      "sublabel": "Ray Train",
-      "pos": [
         270,
-        240
-      ],
-      "size": [
-        150,
-        60
+        80
       ]
     },
     {
-      "id": "t1os",
-      "type": "database",
-      "label": "Object Store",
-      "sublabel": "shared within the trial",
-      "pos": [
-        165,
-        380
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "t2w1",
+      "id": "workers",
       "type": "backend",
-      "label": "Worker Actor 1",
-      "sublabel": "Ray Train",
+      "label": "Train workers",
+      "sublabel": "model / data / collectives",
       "pos": [
-        740,
-        240
+        870,
+        70
       ],
       "size": [
-        150,
-        60
+        280,
+        80
       ]
     },
     {
-      "id": "t2w2",
-      "type": "backend",
-      "label": "Worker Actor 2",
-      "sublabel": "Ray Train",
-      "pos": [
-        950,
-        240
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "t2os",
+      "id": "store",
       "type": "database",
-      "label": "Object Store",
-      "sublabel": "shared within the trial",
+      "label": "Persistent checkpoint store",
+      "sublabel": "user-authored state / shards",
       "pos": [
-        845,
-        380
+        870,
+        340
       ],
       "size": [
-        150,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Trial 1: Ray Train run",
-      "wraps": [
-        "t1w1",
-        "t1w2",
-        "t1os"
+        280,
+        80
       ]
     },
     {
-      "kind": "region",
-      "label": "Trial 2: Ray Train run",
-      "wraps": [
-        "t2w1",
-        "t2w2",
-        "t2os"
+      "id": "callback",
+      "type": "backend",
+      "label": "TuneReportCallback",
+      "sublabel": "metrics + checkpoint path",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        300,
+        80
       ]
     }
   ],
   "connections": [
     {
-      "id": "launch-a",
-      "from": "driver",
-      "to": "t1w1",
-      "label": "launches with hyperparameter set A",
+      "id": "trial-config",
+      "from": "tuner",
+      "to": "trial",
+      "label": "trial config",
       "variant": "emphasis"
     },
     {
-      "id": "launch-b",
-      "from": "driver",
-      "to": "t2w2",
-      "label": "launches with hyperparameter set B",
+      "id": "train-launch",
+      "from": "trial",
+      "to": "workers",
+      "label": "ScalingConfig",
       "variant": "emphasis"
     },
     {
-      "id": "report-1",
-      "from": "t1w2",
-      "to": "driver",
-      "label": "reports results/checkpoints",
+      "id": "checkpoint",
+      "from": "workers",
+      "to": "store",
+      "label": "checkpoint upload",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1010,
+        245
+      ]
+    },
+    {
+      "id": "report",
+      "from": "workers",
+      "to": "callback",
+      "label": "report callback",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          1010,
+          210
+        ],
+        [
+          550,
+          210
+        ]
+      ],
+      "variant": "dashed",
+      "labelAt": [
+        765,
+        195
+      ]
+    },
+    {
+      "id": "callback-to-tune",
+      "from": "callback",
+      "to": "tuner",
+      "label": "rank 0 metrics / path",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "via": [
+        [
+          160,
+          380
+        ]
+      ],
       "variant": "dashed"
-    },
-    {
-      "id": "report-2",
-      "from": "t2w1",
-      "to": "driver",
-      "label": "reports results/checkpoints",
-      "variant": "dashed"
-    },
-    {
-      "id": "t1w1-os",
-      "from": "t1w1",
-      "to": "t1os",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "t1w2-os",
-      "from": "t1w2",
-      "to": "t1os",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "t2w1-os",
-      "from": "t2w1",
-      "to": "t2os",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "t2w2-os",
-      "from": "t2w2",
-      "to": "t2os",
-      "fromSide": "bottom",
-      "toSide": "top"
     }
   ],
   "cards": [
     {
-      "dot": "amber",
-      "title": "Search loop",
+      "dot": "cyan",
+      "title": "Explicit integration",
       "items": [
-        "The driver takes each trial's reported results/checkpoints and decides the next round of trials",
-        "Each trial is an independent Ray Train run with its own set of distributed workers"
+        "Do not pass a V2 Trainer instance directly to Tuner",
+        "Use a unique Train run name and resource budget per trial"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reporting and recovery",
+      "items": [
+        "2.58.0 V2 report is a barrier reached by every worker",
+        "Callback neither reuploads checkpoints nor averages worker metrics"
       ]
     }
   ]

@@ -2,150 +2,113 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Ray on EKS Component Map",
-    "locale": "en",
-    "output": "en-ai-ml-ray-readme-0.html",
+    "title": "Ray libraries and Kubernetes operations",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "views": [
-      {
-        "id": "operator-path",
-        "label": "Operator path",
-        "focus": [
-          "architecture",
-          "operator"
-        ],
-        "note": "The KubeRay Operator translates a Ray cluster's head/worker shape into RayCluster/RayJob/RayService resources."
-      },
-      {
-        "id": "workloads",
-        "label": "Training and serving",
-        "focus": [
-          "operator",
-          "train",
-          "serve"
-        ],
-        "note": "Distributed training and tuning (Ray Train & Tune) and model/LLM serving (Ray Serve) both run on the same operator."
-      }
-    ]
+    "animation": "none",
+    "viewBox": [
+      1150,
+      460
+    ],
+    "locale": "en"
   },
   "components": [
     {
-      "id": "architecture",
-      "type": "backend",
-      "label": "Ray Architecture",
-      "sublabel": "Tasks / Actors / Object store",
-      "tag": "Part 1",
+      "id": "apps",
+      "type": "external",
+      "label": "Application code",
+      "sublabel": "Train / Tune / Serve / Core",
       "pos": [
         40,
-        250
+        100
       ],
       "size": [
-        220,
-        64
+        260,
+        80
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Ray runtime",
+      "sublabel": "tasks / actors / ObjectRefs",
+      "pos": [
+        420,
+        100
+      ],
+      "size": [
+        280,
+        80
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "cloud",
+      "label": "Ray Pods on Kubernetes",
+      "sublabel": "head / workers",
+      "pos": [
+        830,
+        100
+      ],
+      "size": [
+        260,
+        80
       ]
     },
     {
       "id": "operator",
-      "type": "cloud",
-      "label": "KubeRay Operator",
-      "sublabel": "RayCluster / RayJob / RayService",
-      "tag": "Part 2",
-      "pos": [
-        460,
-        250
-      ],
-      "size": [
-        230,
-        64
-      ]
-    },
-    {
-      "id": "train",
       "type": "backend",
-      "label": "Ray Train & Tune",
-      "sublabel": "Distributed training, hyperparameter tuning",
-      "tag": "Part 3",
+      "label": "KubeRay operator",
+      "sublabel": "RayCluster / RayJob / RayService",
       "pos": [
-        840,
-        120
+        730,
+        300
       ],
       "size": [
-        230,
-        64
-      ]
-    },
-    {
-      "id": "serve",
-      "type": "frontend",
-      "label": "Ray Serve",
-      "sublabel": "Model serving, LLM serving",
-      "tag": "Part 4",
-      "pos": [
-        840,
-        380
-      ],
-      "size": [
-        230,
-        64
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Amazon EKS cluster",
-      "wraps": [
-        "operator",
-        "train",
-        "serve"
+        320,
+        80
       ]
     }
   ],
   "connections": [
     {
-      "id": "arch-to-operator",
-      "from": "architecture",
-      "to": "operator",
-      "label": "as K8s resources",
+      "id": "calls",
+      "from": "apps",
+      "to": "core",
+      "label": "library / Core APIs",
       "variant": "emphasis"
     },
     {
-      "id": "operator-to-train",
-      "from": "operator",
-      "to": "train",
-      "label": "runs training and tuning"
+      "id": "runtime-in-pods",
+      "from": "core",
+      "to": "pods",
+      "label": "runs inside",
+      "variant": "emphasis"
     },
     {
-      "id": "operator-to-serve",
+      "id": "reconcile",
       "from": "operator",
-      "to": "serve",
-      "label": "deploy serving via RayService"
+      "to": "pods",
+      "label": "reconcile resources",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Core primitives",
+      "title": "Application",
       "items": [
-        "Every library builds on tasks, actors, and the shared object store",
-        "A Ray cluster consists of a head node and worker nodes"
+        "Application selects libraries, work, and checkpoint policies",
+        "Framework-specific communication/controllers still exist above Core"
       ]
     },
     {
       "dot": "amber",
-      "title": "KubeRay Operator",
+      "title": "Infrastructure",
       "items": [
-        "Runs Ray clusters declaratively as RayCluster/RayJob/RayService resources",
-        "Two-tier autoscaling pattern together with Karpenter"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Training and serving",
-      "items": [
-        "Ray Train & Tune: distributed model training and hyperparameter search",
-        "Ray Serve: model serving, including dedicated LLM-serving building blocks"
+        "KubeRay does not automatically dispatch between ML libraries",
+        "Ray scheduling, Pod placement, and EC2 provisioning are separate"
       ]
     }
   ]

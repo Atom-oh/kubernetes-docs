@@ -1,0 +1,378 @@
+{
+  "reviewedAt": "2026-09-12T20:15:08.951248+00:00",
+  "versions": "Ray2.58.0/KubeRay1.7.0",
+  "fullyReadFiles": 4,
+  "quizQuestions": 20,
+  "findings": [
+    "DeploymentactorvsK8sDeployment/Pod;proxy/controller/handle paths",
+    "EveryNodeproxydefaultverifiedagainstAPI;stalearchitecturehead-onlyprosecorrected",
+    "Fixed1/manualautoscalingmax1/auto100/target2/maxongoing5/maxqueued-1 distinctions",
+    "Callerqueue/backpressure503orHandleerror;noactor-Pod-node1:1orinstantGPUprovisioning",
+    "LLMdocs/packageincludevLLMandSGLang;enginekwargs/backends/dependencies/APIbeta notuniversallyinterchangeable",
+    "ray[serve]Jinja2dependencygap reproduced;explicit3.1.6fixrecorded",
+    "RayServiceoptionalmanagement/strategy/Gateway/draining/updateboundaries;nozero-downtimeguarantee"
+  ],
+  "nativeConfig": {
+    "rayVersion": "2.58.0",
+    "fixedReplicas": 1,
+    "fixedAutoscaling": null,
+    "manualAutoscalingMax": 1,
+    "autoAutoscalingMax": 100,
+    "targetOngoing": 2,
+    "maxOngoing": 5,
+    "maxQueued": -1,
+    "httpHost": "127.0.0.1",
+    "httpPort": 8000,
+    "invalidConfigsRejected": 3,
+    "dependencyCorrection": "ray[serve] install did not include jinja2; HAProxy module import failed until Jinja2 3.1.6 was installed explicitly",
+    "scope": "Native configuration/decorator checks only; no Serve server/model/LLM/GPU/cloud."
+  },
+  "nativeHttpHandle": {
+    "rayVersion": "2.58.0",
+    "httpStatus": 200,
+    "httpResponse": {
+      "echo": "fixture"
+    },
+    "deploymentHandleResult": 8,
+    "logicalCPUs": 2,
+    "objectStoreMiB": 80,
+    "proxy": "HeadOnly explicitly configured",
+    "httpHost": "127.0.0.1",
+    "scope": "Tiny CPU response/handle fixture; no model, LLM, GPU, cloud, autoscaling or HA proof"
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/ray/04-ray-serve.md",
+        "sha256": "7ddfc7a225cf3d4ad1f92fa79ed3aed436733e7beec5cb71cbf290ae34a4d377",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-ray-serve로-모델-서빙하기"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "deployment-application과-요청-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "작은-로컬-http-handle-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "replica-수-autoscaling과-backpressure"
+          },
+          {
+            "tag": "h2",
+            "id": "eks의-여러-제어-계층"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-추론과-ray-serve-llm"
+          },
+          {
+            "tag": "h2",
+            "id": "rayservice와-운영-업데이트"
+          },
+          {
+            "tag": "h2",
+            "id": "접근-제어와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          }
+        ],
+        "renderedIds": [
+          "part-4-ray-serve로-모델-서빙하기",
+          "실습-환경-준비와-검증-범위",
+          "deployment-application과-요청-경로",
+          "작은-로컬-http-handle-예제",
+          "replica-수-autoscaling과-backpressure",
+          "eks의-여러-제어-계층",
+          "gpu-추론과-ray-serve-llm",
+          "rayservice와-운영-업데이트",
+          "접근-제어와-검증-범위",
+          "공식-근거"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
+        "sha256": "b877ccc170259d1b9365e1ae193d112f391fa70d61b32c994e9ac4a7e16ea021",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-serve-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "서술형-문제"
+          }
+        ],
+        "renderedIds": [
+          "ray-serve-퀴즈",
+          "객관식-문제",
+          "서술형-문제"
+        ]
+      },
+      {
+        "path": "en/ai-ml/ray/04-ray-serve.md",
+        "sha256": "ff0056644ac060a67acc1b5458a7fe542e42e9bd422f12ef102a7153557f2484",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-ray-serve"
+          },
+          {
+            "tag": "h2",
+            "id": "environment-and-validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "deployments-applications-and-request-paths"
+          },
+          {
+            "tag": "h2",
+            "id": "small-local-http-handle-example"
+          },
+          {
+            "tag": "h2",
+            "id": "replicas-autoscaling-and-backpressure"
+          },
+          {
+            "tag": "h2",
+            "id": "control-layers-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-inference-and-ray-serve-llm"
+          },
+          {
+            "tag": "h2",
+            "id": "rayservice-and-operational-updates"
+          },
+          {
+            "tag": "h2",
+            "id": "access-control-and-limits"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-sources"
+          }
+        ],
+        "renderedIds": [
+          "part-4-ray-serve",
+          "environment-and-validation-scope",
+          "deployments-applications-and-request-paths",
+          "small-local-http-handle-example",
+          "replicas-autoscaling-and-backpressure",
+          "control-layers-on-eks",
+          "gpu-inference-and-ray-serve-llm",
+          "rayservice-and-operational-updates",
+          "access-control-and-limits",
+          "primary-sources"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
+        "sha256": "66bea2a55e4919d6490982004cb69effc2f67a7252475d1e692119e4045d61e6",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-serve-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "ray-serve-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "figures": {
+    "ko": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    },
+    "en": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "5883891ee70e568903b83841d244fbab9e6ae86d12a1e381bc58180ea0913fdc"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "5883891ee70e568903b83841d244fbab9e6ae86d12a1e381bc58180ea0913fdc"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "5883891ee70e568903b83841d244fbab9e6ae86d12a1e381bc58180ea0913fdc"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "00ff907b807988d40638265c545602b1842bf7ee8d8eb82deabe508d63340c56"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "00ff907b807988d40638265c545602b1842bf7ee8d8eb82deabe508d63340c56"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "00ff907b807988d40638265c545602b1842bf7ee8d8eb82deabe508d63340c56"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngVisualInspection": "BothfinalPNGsexamined;DeploymentHandlelabeloverlapfixed",
+  "sources": [
+    "https://docs.ray.io/en/releases-2.58.0/serve/index.html",
+    "https://docs.ray.io/en/releases-2.58.0/serve/autoscaling-guide.html",
+    "https://docs.ray.io/en/releases-2.58.0/serve/llm/index.html",
+    "https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py",
+    "https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py",
+    "https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py",
+    "https://github.com/ray-project/kuberay/releases/tag/v1.7.0"
+  ],
+  "limits": [
+    "NoLLM/GPU/cloud/modelweights/autoscalingload/HA/RayService rollouttest",
+    "NativeCPU2/objectstore80MiBarelogical/runtimeconfig,nothardOSlimits",
+    "ServeandRayclosedinfinally;shortsocketaliasremoved",
+    "LLMsource/dependencyinspectiononly;ray[llm]/vLLM/SGLangnotinstalled",
+    "Publicationreview/CIpending"
+  ]
+}

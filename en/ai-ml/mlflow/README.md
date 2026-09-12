@@ -1,11 +1,13 @@
 # MLflow on EKS Deep Dive
 
-> **Supported Versions**: MLflow 3.15.1
-> **Last Updated**: September 2, 2026
+> **Review baseline**: MLflow 3.16.0
+> **Documentation reviewed**: September 12, 2026
 
 ## Overview
 
-MLflow is an open-source platform for managing the machine learning lifecycle — experiment tracking, model packaging and versioning, and (since MLflow 3) GenAI/LLM observability — through a tracking server that any training script or agent can log to over a simple API. Unlike Kubeflow, which bundles a full platform of Kubernetes-native controllers, MLflow is a single service (a tracking server plus its backend/artifact stores) that teams commonly run alongside Kubeflow, a custom training setup, or nothing else at all.
+MLflow provides experiment tracking, model logging and registration, version management, GenAI evaluation, and tracing. Tracing arrived in 2.14.0; 3.x expanded LoggedModel, evaluation, and UI integration. Version 3.16.0 was released on 2026-09-04.
+
+Use it locally with the SDK and SQLite, or operate an HTTP tracking service with separate SQL metadata and artifact stores. A logical service need not be one Pod or storage system. This series covers Tracking, Registry, and EKS deployment; it does not validate every MLflow feature or successful GPU training.
 
 ## Component Map
 
@@ -23,10 +25,18 @@ MLflow is an open-source platform for managing the machine learning lifecycle �
 
 The trade-off is the same one covered elsewhere in this documentation site's data/ML sections: a team already running EKS can reuse the same deployment, IAM (IRSA/Pod Identity), and observability patterns for MLflow's tracking server as for everything else on the cluster, in exchange for operating the tracking server, its backend database, and its artifact store directly rather than using a managed alternative.
 
-For a comparison of a managed MLflow App and MLflow on EKS using one Qwen PII fine-tuning contract, see the [SageMaker AI Qwen PII guidebook](../sagemaker-ai/README.md) and its [Part 3 execution guide](../sagemaker-ai/03-sagemaker-mlflow-execution.md).
+The [SageMaker AI guidebook](../sagemaker-ai/README.md) describes a Qwen comparison design. That example has separate historical version pins and currently blocks GPU execution because its DLC reached end of patch. This series' MLflow 3.16.0 local checks are not end-to-end validation of that example.
+
+Model Registry registration is an optional lifecycle step. Serving systems consume model URIs or aliases through separate configuration; registration or an alias change does not automatically deploy a model.
 
 ## Currently Covered
 
 1. [Part 1: MLflow Tracking](01-tracking.md) — experiments, runs, autologging, the MLflow 3 `LoggedModel` shift, and GenAI tracing
 2. [Part 2: MLflow Model Registry](02-model-registry.md) — Registered Models, Model Versions, aliases, and lineage
 3. [Part 3: Deploying MLflow on EKS](03-eks-deployment.md) — tracking server, PostgreSQL backend store, S3 artifact store, and IAM access
+
+## Primary Sources
+
+- [MLflow 3.16.0 release](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [Tracing introduced in MLflow 2.14.0](https://github.com/mlflow/mlflow/releases/tag/v2.14.0)
+- [Backend store](https://mlflow.org/docs/3.16.0/self-hosting/architecture/backend-store/)

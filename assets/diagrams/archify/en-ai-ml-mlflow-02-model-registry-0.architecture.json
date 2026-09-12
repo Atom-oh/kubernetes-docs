@@ -2,44 +2,44 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Champion / Challenger Alias Routing",
+    "title": "Registry alias resolution and version references",
     "locale": "en",
     "output": "en-ai-ml-mlflow-02-model-registry-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "external": {
-          "label": "Serving system (out of scope for this part)"
+          "label": "Consumer"
         },
         "backend": {
-          "label": "Alias — movable pointer"
+          "label": "Aliases"
         },
         "database": {
-          "label": "Model Version — immutable"
+          "label": "Versions"
         }
       }
     },
     "views": [
       {
         "id": "champion-path",
-        "label": "Live serving path",
+        "label": "Resolve champion",
         "focus": [
           "serving",
           "champion",
           "v2"
         ],
-        "note": "The serving system resolves models:/fraud-detector@champion and loads whichever version currently holds the alias."
+        "note": "Resolution returns a version reference; reloading an existing process is separate."
       },
       {
         "id": "challenger-path",
-        "label": "Promotion review path",
+        "label": "Resolve challenger",
         "focus": [
           "serving",
           "challenger",
           "v4"
         ],
-        "note": "The challenger alias marks the version under evaluation for promotion without disturbing what is currently serving."
+        "note": "An alias does not execute evaluation or configure shadow traffic."
       }
     ]
   },
@@ -47,8 +47,8 @@
     {
       "id": "serving",
       "type": "external",
-      "label": "Serving system",
-      "sublabel": "never hardcodes a version number",
+      "label": "Model consumer",
+      "sublabel": "resolve / reload separately",
       "pos": [
         40,
         210
@@ -156,7 +156,7 @@
       "id": "resolve-champion",
       "from": "serving",
       "to": "champion",
-      "label": "resolves models:/fraud-detector@champion",
+      "label": "resolve @champion",
       "variant": "emphasis",
       "labelAt": [
         295,
@@ -167,7 +167,7 @@
       "id": "evaluate-challenger",
       "from": "serving",
       "to": "challenger",
-      "label": "evaluates via models:/fraud-detector@challenger",
+      "label": "resolve @challenger",
       "variant": "dashed"
     },
     {
@@ -190,18 +190,18 @@
       "dot": "emerald",
       "title": "Alias",
       "items": [
-        "A mutable, named pointer to a specific Model Version",
-        "Moved via set_registered_model_alias only after the evaluation gates pass",
-        "Consumers need no code change"
+        "Points to one version and can be reassigned",
+        "Approval, access checks, and consumer reload are separate",
+        "An alias change is not traffic routing or automatic deployment"
       ]
     },
     {
       "dot": "slate",
       "title": "Model Version",
       "items": [
-        "Immutable, numbered version under a Registered Model name",
-        "A new training result becomes a new version",
-        "Points back to the LoggedModel / Run that produced it"
+        "Numbered record; descriptions and tags can change",
+        "run_id / model_id links are optional",
+        "Manage source immutability, hashes, and retention separately"
       ]
     }
   ]
