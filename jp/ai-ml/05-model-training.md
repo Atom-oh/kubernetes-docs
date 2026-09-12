@@ -1,1679 +1,260 @@
 # EKS でのモデル学習
 
-> **対応バージョン**: Kubernetes 1.31, 1.32, 1.33
-> **最終更新**: February 25, 2026
+> **最終更新**: September 12, 2026
+> **ベースライン**: Slinky1.2.2, MPI Operator0.8.2, Volcano1.15.2, PyTorch2.14.0, Neuron SDK2.32.0
 
-モデル学習は、AI/ML ライフサイクルの中でも最もリソースを多く消費するワークロードの 1 つです。この章では、分散学習戦略、Slinky による Slurm 統合、GPU および Trainium ベースの学習、Amazon EKS 上で大規模な学習ジョブを実行するためのベストプラクティスについて説明します。
+分散学習には、互換性のあるモデルコード、データシャーディング、ランチャー、デバイス割り当て、通信、チェックポイントが必要です。有効な manifest または Running Pod は、学習やリカバリが機能することを証明しません。
 
-## 学習パイプラインの概要
+単一 GPU QLoRA および SageMaker AI/EKS の比較については、イメージのサポートライフサイクルと実行制限を含む [Qwen ガイド](sagemaker-ai/README.md)を参照してください。
 
-Kubernetes 上の典型的なモデル学習パイプラインには、データ準備からモデル評価までの複数のステージが含まれます。
+## 学習パイプライン
 
-```mermaid
-flowchart LR
-    subgraph DataPrep [Data Preparation]
-        S3Data[(S3 Data Lake)]
-        DataLoader[Data Loader Pod]
-        Preprocessing[Preprocessing Job]
-    end
+![バージョン管理されたデータとコードから学習し、完全なチェックポイントを検証してから評価・登録します。パラメータサーバーと collective の経路はアルゴリズムに依存します。](../.gitbook/assets/en-ai-ml-05-model-training-0.png)
 
-    subgraph Training [Distributed Training]
-        Scheduler[Job Scheduler]
-        Workers[Worker Pods]
-        PS[Parameter Server]
-        AllReduce[AllReduce Communication]
-    end
-
-    subgraph Checkpointing [Checkpointing]
-        FSxLustre[(FSx for Lustre)]
-        CheckpointMgr[Checkpoint Manager]
-    end
-
-    subgraph Evaluation [Model Evaluation]
-        EvalJob[Evaluation Job]
-        Metrics[Metrics Collection]
-        ModelRegistry[(Model Registry)]
-    end
-
-    S3Data --> DataLoader
-    DataLoader --> Preprocessing
-    Preprocessing --> Scheduler
-    Scheduler --> Workers
-    Workers <--> PS
-    Workers <--> AllReduce
-    Workers --> FSxLustre
-    FSxLustre --> CheckpointMgr
-    CheckpointMgr --> EvalJob
-    EvalJob --> Metrics
-    Metrics --> ModelRegistry
-
-    classDef dataComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef trainingComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evalComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-
-    class S3Data,DataLoader,Preprocessing dataComponent;
-    class Scheduler,Workers,PS,AllReduce trainingComponent;
-    class FSxLustre,CheckpointMgr storageComponent;
-    class EvalJob,Metrics,ModelRegistry evalComponent;
-```
+[インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-05-model-training-0.html)
 
 ## 分散学習戦略
 
-大規模モデルの学習では、複数の GPU とノードに計算を分散する必要があります。効率的な学習には、さまざまな並列化戦略を理解することが重要です。
+![DP、TP、PP、expert parallel の分割および通信パターンの比較。](../.gitbook/assets/en-ai-ml-05-model-training-1.png)
 
-```mermaid
-flowchart TD
-    subgraph DataParallelism [Data Parallelism]
-        DP_Model1[Model Replica 1]
-        DP_Model2[Model Replica 2]
-        DP_Model3[Model Replica 3]
-        DP_Data1[Data Shard 1]
-        DP_Data2[Data Shard 2]
-        DP_Data3[Data Shard 3]
-        DP_Sync[Gradient Sync<br/>AllReduce]
+[インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-05-model-training-1.html)
 
-        DP_Data1 --> DP_Model1
-        DP_Data2 --> DP_Model2
-        DP_Data3 --> DP_Model3
-        DP_Model1 --> DP_Sync
-        DP_Model2 --> DP_Sync
-        DP_Model3 --> DP_Sync
-    end
+| 戦略 | 分割単位 | 検証する制約 |
+| --- | --- | --- |
+| DDP | 異なるデータバッチ、モデルレプリカ | 学習状態・activation メモリおよび gradient synchronization |
+| FSDP / ZeRO | パラメータ、gradient、optimizer state | ステージ固有の通信およびチェックポイント形式 |
+| TP | レイヤー内の Tensor 演算 | head/hidden 次元、backend、topology |
+| PP | レイヤーステージ | microbatch、pipeline bubble、activation 転送 |
+| Expert parallel | MoE expert および token dispatch | 不均衡、all-to-all、routing capacity |
+| 組み合わせ | DP/TP/PP/context/expert group | サポートされる device mesh および総 rank 数 |
 
-    subgraph TensorParallelism [Tensor Parallelism]
-        TP_Layer[Single Layer]
-        TP_GPU1[GPU 1: Columns 0-N/2]
-        TP_GPU2[GPU 2: Columns N/2-N]
-        TP_Combine[Combine Results]
+100B パラメータを超えれば常に3Dが最適であるとは限りません。weight 以外の optimizer、gradient、activation、通信メモリを考慮し、その上で throughput とリカバリコストを比較してください。DDP all-reduce にパラメータサーバーは必要ありません。
 
-        TP_Layer --> TP_GPU1
-        TP_Layer --> TP_GPU2
-        TP_GPU1 --> TP_Combine
-        TP_GPU2 --> TP_Combine
-    end
+TP8×PP4×DP2 は64rank を意味します。グローバル batch は **microbatch × accumulation × DP replica** です:1×32×2=64であり、すべての TP/PP rank を再度掛けて2048にはなりません。可変長 packing では、sample と token を別々に追跡してください。
 
-    subgraph PipelineParallelism [Pipeline Parallelism]
-        PP_Stage1[Stage 1: Layers 1-4<br/>GPU 1]
-        PP_Stage2[Stage 2: Layers 5-8<br/>GPU 2]
-        PP_Stage3[Stage 3: Layers 9-12<br/>GPU 3]
-        PP_Micro[Micro-batches]
+## Slurm と Slinky
 
-        PP_Micro --> PP_Stage1
-        PP_Stage1 --> PP_Stage2
-        PP_Stage2 --> PP_Stage3
-    end
+公式リポジトリは SlinkyProject/slurm-operator です。Tag1.2.2 とその OCI chart を検証しました。GitHub releases/latest は404を返したため、最新の GitHub release とは説明していません。1.2 のドキュメントでは最小 Kubernetes1.29 および Slurm25.11(data parser0.0.44)が記載されています。最小互換性は運用上のサポートライフサイクルを保証するものではありません。
 
-    subgraph ExpertParallelism [Expert Parallelism - MoE]
-        EP_Router[Router/Gating]
-        EP_Expert1[Expert 1<br/>GPU 1]
-        EP_Expert2[Expert 2<br/>GPU 2]
-        EP_Expert3[Expert 3<br/>GPU 3]
-        EP_Expert4[Expert 4<br/>GPU 4]
-        EP_Output[Combined Output]
+![外部ストレージおよびノードプロビジョニングとともに、Slinky Controller、NodeSet、Accounting、RestApi/LoginSet の役割を示します。](../.gitbook/assets/en-ai-ml-05-model-training-2.png)
 
-        EP_Router --> EP_Expert1
-        EP_Router --> EP_Expert2
-        EP_Router --> EP_Expert3
-        EP_Router --> EP_Expert4
-        EP_Expert1 --> EP_Output
-        EP_Expert2 --> EP_Output
-        EP_Expert3 --> EP_Output
-        EP_Expert4 --> EP_Output
-    end
+[インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-05-model-training-2.html)
 
-    classDef dpComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef tpComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef ppComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef epComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
+### 実際の API とライフサイクル
 
-    class DP_Model1,DP_Model2,DP_Model3,DP_Data1,DP_Data2,DP_Data3,DP_Sync dpComponent;
-    class TP_Layer,TP_GPU1,TP_GPU2,TP_Combine tpComponent;
-    class PP_Stage1,PP_Stage2,PP_Stage3,PP_Micro ppComponent;
-    class EP_Router,EP_Expert1,EP_Expert2,EP_Expert3,EP_Expert4,EP_Output epComponent;
+Version1.2.2 は `slinky.slurm.net/v1beta1` に Controller、NodeSet、Accounting、LoginSet、RestApi、Token を定義します。以前の SlurmCluster/SlurmNodeSet の例はこの API ではありません。NodeSet は controllerRef と Pod template を使用します。デフォルトの scalingMode は StatefulSet のように動作します。DaemonSet mode は一致する Kubernetes node ごとに1つの Pod を作成し、replica を無視します。これらは NodeSet-controller mode であり、slurmd が常に Kubernetes DaemonSet resource として実行される証拠ではありません。
+
+slurmctld は job/node/partition state と scheduling を管理するため、その StateSaveLocation を保持してください。slurmdbd は accounting database へのアクセスと record を処理するものであり、controller state の代替ではありません。login/REST/job identity、filesystem permission、Slurm key/JWT、DB credential の配信・ローテーションをまとめて設計してください。Public NLB SSH 公開はデフォルトの前提条件ではありません。
+
+まず実際の chart を render してください。これらの command はローカルファイルを生成するだけです。運用デプロイには別途、cert-manager/CRD/operator/Slurm の順序、永続化/database、user identity、互換性のある Slurm image が必要です。
+
+```bash
+helm template slurm-api oci://ghcr.io/slinkyproject/charts/slurm-operator-crds   --version 1.2.2 > slurm-crds.yaml
+helm template slurm-control oci://ghcr.io/slinkyproject/charts/slurm-operator   --version 1.2.2 --namespace slinky > slurm-operator.yaml
+helm template slurm-example oci://ghcr.io/slinkyproject/charts/slurm   --version 1.2.2 --namespace slurm   --set-json 'nodesets={"cpu-example":{}}'   --set partitions.all.enabled=true > slurm-example.yaml
 ```
 
-### 並列化戦略の比較
+Argo CD Application は実在する chart path/revision と実際の values を参照する必要があります。作り物の compute.partitions/efa.enabled 設定では構成されません。pruning、CRD/PVC 削除、Slurm draining/requeue、job 終了 timeout をレビューしてください。NodeSet の scale-in と EC2 の終了は別個の control loop です。
 
-| 戦略 | 最適な用途 | メモリ効率 | 通信オーバーヘッド | 実装の複雑さ |
-|----------|----------|-------------------|----------------------|---------------------------|
-| **Data Parallelism** | 単一 GPU メモリに収まるモデル | 低（GPU ごとに完全なモデル） | 中（勾配同期） | 低 |
-| **Tensor Parallelism** | 大きなレイヤー（attention、FFN） | 高（レイヤー分割） | 高（レイヤー内） | 中 |
-| **Pipeline Parallelism** | 非常に深いモデル | 高（ステージを分散） | 低（ステージ境界） | 中 |
-| **Expert Parallelism** | MoE モデル（Mixtral、Switch） | 中 | 中（ルーティング） | 高 |
-| **3D Parallelism** | 100B+ パラメータモデル | 最高 | 複合 | 非常に高 |
+### Slurm からの torchrun 起動
 
-### 適切な戦略の選択
-
-```yaml
-# Decision matrix for parallelism selection
-# Model Size < 10B parameters, fits in single GPU
-strategy: data_parallelism
-reason: Simple, efficient gradient synchronization
-
-# Model Size 10B-100B parameters
-strategy: data_parallelism + tensor_parallelism
-reason: Split attention layers across GPUs within node
-
-# Model Size > 100B parameters
-strategy: 3d_parallelism  # DP + TP + PP
-reason: Combine all strategies for maximum efficiency
-```
-
-## Slinky による EKS 上の Slurm
-
-Slinky は、使い慣れた Slurm ワークロードマネージャーを Kubernetes にもたらし、AI/ML 学習ワークロード向けの HPC スタイルのジョブスケジューリングを可能にします。
-
-### Slinky アーキテクチャ
-
-```mermaid
-flowchart TD
-    subgraph EKSCluster [Amazon EKS Cluster]
-        subgraph SlurmControl [Slurm Control Plane]
-            Slurmctld[slurmctld<br/>Controller Daemon]
-            Slurmdbd[slurmdbd<br/>Database Daemon]
-            SlurmREST[slurmrestd<br/>REST API]
-        end
-
-        subgraph ComputeNodes [Compute Nodes]
-            Slurmd1[slurmd Pod 1<br/>8x A100 GPU]
-            Slurmd2[slurmd Pod 2<br/>8x A100 GPU]
-            Slurmd3[slurmd Pod 3<br/>8x A100 GPU]
-            Slurmd4[slurmd Pod 4<br/>8x A100 GPU]
-        end
-
-        subgraph Access [User Access]
-            LoginPod[Login Pod<br/>SSH via NLB]
-            JupyterHub[JupyterHub]
-        end
-
-        subgraph Storage [Shared Storage]
-            FSxLustre[(FSx for Lustre)]
-        end
-
-        subgraph Scaling [Auto Scaling]
-            Karpenter[Karpenter]
-            NodePool[GPU NodePool]
-        end
-    end
-
-    subgraph External [External Services]
-        ArgoCD[ArgoCD<br/>GitOps Deployment]
-        ECR[Amazon ECR<br/>AWS DLC Images]
-        NLB[Network Load Balancer]
-    end
-
-    ArgoCD --> SlurmControl
-    ECR --> ComputeNodes
-    NLB --> LoginPod
-
-    Slurmctld --> Slurmdbd
-    Slurmctld --> SlurmREST
-    Slurmctld --> Slurmd1
-    Slurmctld --> Slurmd2
-    Slurmctld --> Slurmd3
-    Slurmctld --> Slurmd4
-
-    LoginPod --> Slurmctld
-    JupyterHub --> SlurmREST
-
-    Slurmd1 --> FSxLustre
-    Slurmd2 --> FSxLustre
-    Slurmd3 --> FSxLustre
-    Slurmd4 --> FSxLustre
-
-    Karpenter --> NodePool
-    NodePool --> ComputeNodes
-
-    classDef controlComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef computeComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef accessComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef storageComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef externalComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    class Slurmctld,Slurmdbd,SlurmREST controlComponent;
-    class Slurmd1,Slurmd2,Slurmd3,Slurmd4 computeComponent;
-    class LoginPod,JupyterHub accessComponent;
-    class FSxLustre storageComponent;
-    class ArgoCD,ECR,NLB,Karpenter,NodePool externalComponent;
-```
-
-### Slinky コンポーネント
-
-| コンポーネント | 説明 | Kubernetes Resource |
-|-----------|-------------|---------------------|
-| **slurmctld** | ジョブ、パーティション、リソースを管理する中央コントローラー | PVC 付き StatefulSet |
-| **slurmdbd** | ジョブアカウンティングとクラスタ状態のためのデータベースデーモン | MySQL/MariaDB 付き StatefulSet |
-| **slurmd** | 各ワーカーノードで実行されるコンピュートデーモン | GPU ノード上の DaemonSet |
-| **slurmrestd** | プログラムによるジョブ送信用の REST API | Service 付き Deployment |
-| **Login Pod** | ユーザーがジョブを送信するための SSH アクセスポイント | NLB で公開される Pod |
-
-### Slinky CRD
-
-Slinky は、Slurm クラスタを管理するための Custom Resource Definitions を導入します。
-
-```yaml
-# SlurmCluster CRD - Defines the overall Slurm cluster configuration
-apiVersion: slinky.slurm.net/v1alpha1
-kind: SlurmCluster
-metadata:
-  name: ml-training-cluster
-  namespace: slurm
-spec:
-  clusterName: ml-cluster
-
-  # Controller configuration
-  controller:
-    replicas: 1
-    image: schedmd/slurmctld:24.05
-    resources:
-      requests:
-        cpu: "2"
-        memory: "4Gi"
-      limits:
-        cpu: "4"
-        memory: "8Gi"
-    persistence:
-      storageClass: gp3
-      size: 50Gi
-
-  # Database configuration
-  database:
-    type: mariadb
-    persistence:
-      storageClass: gp3
-      size: 100Gi
-
-  # REST API configuration
-  restApi:
-    enabled: true
-    replicas: 2
-
-  # Shared storage configuration
-  sharedStorage:
-    type: fsx-lustre
-    fileSystemId: fs-0123456789abcdef0
-    mountPath: /shared
----
-# SlurmNodeSet CRD - Defines compute node groups (partitions)
-apiVersion: slinky.slurm.net/v1alpha1
-kind: SlurmNodeSet
-metadata:
-  name: gpu-a100-nodes
-  namespace: slurm
-spec:
-  clusterRef:
-    name: ml-training-cluster
-
-  partition: gpu-a100
-  nodeCount: 4
-
-  nodeTemplate:
-    instanceType: p4d.24xlarge
-    image: schedmd/slurmd:24.05
-
-    # GPU configuration
-    gpus:
-      type: nvidia-a100
-      count: 8
-      mig: false
-
-    # Resource allocation
-    resources:
-      cpus: 96
-      memory: 1152Gi
-      gpuMemory: 320Gi  # 8x 40GB A100
-
-    # Node features for Slurm GRES
-    features:
-      - a100
-      - nvlink
-      - efa
-
-    # Placement for low-latency communication
-    placement:
-      groupName: ml-cluster-pg
-      strategy: cluster
-
-  # Karpenter integration for auto-scaling
-  autoscaling:
-    enabled: true
-    minNodes: 0
-    maxNodes: 16
-    scaleDownDelay: 300s
-    nodePoolRef:
-      name: gpu-a100-nodepool
-```
-
-### ArgoCD による Slinky のデプロイ
-
-```yaml
-# ArgoCD Application for Slinky deployment
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: slinky-slurm
-  namespace: argocd
-spec:
-  project: ml-infrastructure
-
-  source:
-    repoURL: https://github.com/your-org/ml-platform
-    targetRevision: main
-    path: clusters/production/slurm
-
-    helm:
-      values: |
-        cluster:
-          name: ml-training
-
-        controller:
-          nodeSelector:
-            node.kubernetes.io/instance-type: m6i.2xlarge
-
-        compute:
-          partitions:
-            - name: gpu-a100
-              nodeType: p4d.24xlarge
-              maxNodes: 16
-            - name: gpu-h100
-              nodeType: p5.48xlarge
-              maxNodes: 8
-            - name: trainium
-              nodeType: trn1.32xlarge
-              maxNodes: 32
-
-        storage:
-          fsxLustre:
-            fileSystemId: fs-0123456789abcdef0
-            capacity: 4800Gi
-
-        networking:
-          efa:
-            enabled: true
-
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: slurm
-
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-```
-
-### GPU Auto-scaling 用の Karpenter NodePool
-
-```yaml
-# Karpenter NodePool for Slurm GPU nodes
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-a100-nodepool
-spec:
-  template:
-    metadata:
-      labels:
-        slurm.schedmd.com/partition: gpu-a100
-        node-type: gpu-training
-    spec:
-      requirements:
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - p4d.24xlarge
-            - p4de.24xlarge
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values:
-            - on-demand  # Use on-demand for training stability
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-            - us-west-2a  # Single AZ for EFA
-
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-a100-class
-
-      # Taints to ensure only Slurm workloads run here
-      taints:
-        - key: nvidia.com/gpu
-          value: "true"
-          effect: NoSchedule
-        - key: slurm.schedmd.com/partition
-          value: gpu-a100
-          effect: NoSchedule
-
-  limits:
-    nvidia.com/gpu: 128  # Max 16 nodes * 8 GPUs
-
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 10m
-    budgets:
-      - nodes: "0"  # Don't disrupt running training jobs
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-a100-class
-spec:
-  amiFamily: AL2
-
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ml-cluster
-        network-type: efa-enabled
-
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ml-cluster
-
-  # EFA configuration for high-speed networking
-  instanceStorePolicy: RAID0
-
-  # Block device configuration
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 500Gi
-        volumeType: gp3
-        iops: 10000
-        throughput: 500
-        encrypted: true
-
-  # User data for GPU and EFA setup
-  userData: |
-    #!/bin/bash
-    set -ex
-
-    # Install EFA driver
-    curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
-    tar -xf aws-efa-installer-latest.tar.gz
-    cd aws-efa-installer && ./efa_installer.sh -y
-
-    # Configure NVIDIA persistence mode
-    nvidia-smi -pm 1
-
-    # Set GPU clock speeds for consistent performance
-    nvidia-smi -ac 1215,1410
-
-  tags:
-    Environment: production
-    Workload: ml-training
-```
-
-### Slurm へのジョブ送信
+ノードごとに1つの torchrun launcher を実行し、GPU ごとの process をその launcher に作成させます。以前は8つの Slurm task がそれぞれ8 process を起動しており、ノードごとに64process が生成されていました。この例は4node×8process を意図しており、この監査では実際の Slurm/GPU allocation は実行していません。
 
 ```bash
 #!/bin/bash
-# Example Slurm job script for distributed PyTorch training
-
-#SBATCH --job-name=llama3-finetune
-#SBATCH --partition=gpu-a100
+#SBATCH --job-name=distributed-training
 #SBATCH --nodes=4
-#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-node=8
-#SBATCH --cpus-per-task=12
-#SBATCH --mem=1100G
-#SBATCH --time=48:00:00
-#SBATCH --output=/shared/logs/%x-%j.out
-#SBATCH --error=/shared/logs/%x-%j.err
+#SBATCH --cpus-per-task=16
+#SBATCH --time=01:00:00
+set -euo pipefail
 
-# Load required modules
-module load cuda/12.1
-module load nccl/2.18
-
-# Set environment variables
-export MASTER_ADDR=$(scontrol show hostname $SLURM_NODELIST | head -n 1)
+: "${SLURM_NNODES:?Run within an approved Slurm allocation}"
+: "${SLURM_JOB_ID:?}"
+: "${SLURM_JOB_NODELIST:?}"
+export MASTER_ADDR
+MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_PORT=29500
-export WORLD_SIZE=$((SLURM_NNODES * SLURM_NTASKS_PER_NODE))
-export NCCL_DEBUG=INFO
-export NCCL_IB_DISABLE=1
-export NCCL_SOCKET_IFNAME=eth0
 
-# Run distributed training
-srun --ntasks=$WORLD_SIZE \
-     --ntasks-per-node=$SLURM_NTASKS_PER_NODE \
-     torchrun \
-     --nnodes=$SLURM_NNODES \
-     --nproc_per_node=$SLURM_NTASKS_PER_NODE \
-     --rdzv_id=$SLURM_JOB_ID \
-     --rdzv_backend=c10d \
-     --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-     train_llama.py \
-     --model_name_or_path meta-llama/Llama-3-70B \
-     --dataset_path /shared/data/finetune-dataset \
-     --output_dir /shared/checkpoints/llama3-finetuned \
-     --per_device_train_batch_size 1 \
-     --gradient_accumulation_steps 8 \
-     --learning_rate 2e-5 \
-     --num_train_epochs 3 \
-     --bf16 \
-     --deepspeed configs/ds_config_zero3.json
+# One torchrun launcher per Slurm node, eight training processes per launcher.
+# train.py, dependencies, data, credentials and checkpoints must be prepared.
+srun --ntasks="$SLURM_NNODES" --ntasks-per-node=1 bash -c '
+  exec torchrun \
+    --nnodes="$SLURM_NNODES" \
+    --nproc-per-node=8 \
+    --node-rank="$SLURM_PROCID" \
+    --rdzv-id="$SLURM_JOB_ID" \
+    --rdzv-backend=c10d \
+    --rdzv-endpoint="$MASTER_ADDR:$MASTER_PORT" \
+    /workspace/train.py
+'
 ```
 
-## NVIDIA GPU での学習
+Slurm が task ごとの GPU 可視性を制限する場合は、各 launcher が意図する8つすべての GPU を受け取ることを確認してください。train.py は LOCAL_RANK/RANK/WORLD_SIZE、device binding、DDP/sampler、バージョン管理された data/model、resume を実装する必要があります。shell fixture では、4つの launcher、異なる node rank、共通の rendezvous endpoint を検証しました。
 
-NVIDIA GPU は、AI/ML 学習の主要な選択肢であり続けています。NCCL、EFA、マルチノード通信を適切に設定することは、パフォーマンスに不可欠です。
+## GPU 通信と EFA
 
-### マルチノード学習向け NCCL 設定
+FI_PROVIDER=efa は libfabric provider を選択しますが、EFA のインストール、interface のアタッチ、NCCL との統合は行いません。サポートされる EFA 有効 instance、driver/libfabric、aws-ofi-nccl、device plugin/Pod allocation、security group、実際の transport をまとめて検証してください。RAID0 や subnet tag で EFA が有効になるわけではありません。
 
-```yaml
-apiVersion: kubeflow.org/v1
-kind: MPIJob
-metadata:
-  name: bert-large-training
-  namespace: training
-spec:
-  slotsPerWorker: 8
-  runPolicy:
-    cleanPodPolicy: Running
-    ttlSecondsAfterFinished: 86400
+通信する node は同じ AZ を共有する必要があります。パフォーマンスのため cluster placement group が推奨されます。学習 Pod が制限された NodePool を実際に使用することを確認してください。帯域幅と EFA-device 数は instance により異なり、400Gbps が普遍的ではありません。古い Ring/Simple、IB_DISABLE、SOCKET_IFNAME、FI_EFA_USE_DEVICE_RDMA 設定を盲目的に強制すると、現在の plugin に干渉する可能性があります。release documentation、log、collective test を検証してください。
 
-  mpiReplicaSpecs:
-    Launcher:
-      replicas: 1
-      template:
-        spec:
-          containers:
-            - name: mpi-launcher
-              image: 763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-training:2.1.0-gpu-py310-cu121-ubuntu20.04-ec2
-              command:
-                - mpirun
-                - --allow-run-as-root
-                - -np
-                - "32"
-                - -bind-to
-                - none
-                - -map-by
-                - slot
-                - -x
-                - NCCL_DEBUG=INFO
-                - -x
-                - NCCL_ALGO=Ring
-                - -x
-                - NCCL_PROTO=Simple
-                - -x
-                - FI_PROVIDER=efa
-                - -x
-                - FI_EFA_USE_DEVICE_RDMA=1
-                - -x
-                - RDMAV_FORK_SAFE=1
-                - python
-                - /workspace/train_bert.py
-                - --model_name=bert-large-uncased
-                - --batch_size=32
-                - --learning_rate=3e-5
-              resources:
-                limits:
-                  cpu: "4"
-                  memory: "16Gi"
+Karpenter budgets.nodes=0 は自発的な disruption path を制限しますが、Spot reclamation、node failure、強制終了、すべての expiration を防ぐものではありません。do-not-disrupt/PDB と terminationGracePeriod/expireAfter の相互作用を確認し、checkpoint recovery を保持してください。各 bootstrap で浮動 version の driver installer を取得したり、device type をまたいで GPU clock を固定したりすることは避けてください。
 
-    Worker:
-      replicas: 4
-      template:
-        spec:
-          containers:
-            - name: mpi-worker
-              image: 763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-training:2.1.0-gpu-py310-cu121-ubuntu20.04-ec2
-              resources:
-                limits:
-                  nvidia.com/gpu: 8
-                  vpc.amazonaws.com/efa: 4
-                  memory: "1100Gi"
-                  cpu: "96"
-              volumeMounts:
-                - name: shared-storage
-                  mountPath: /shared
-                - name: shm
-                  mountPath: /dev/shm
-          volumes:
-            - name: shared-storage
-              persistentVolumeClaim:
-                claimName: fsx-lustre-pvc
-            - name: shm
-              emptyDir:
-                medium: Memory
-                sizeLimit: 64Gi
+## BioNeMo
 
-          # Node placement for EFA
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node.kubernetes.io/instance-type
-                        operator: In
-                        values:
-                          - p4d.24xlarge
-                          - p4de.24xlarge
-```
+確認した3.0.0 は **BioNeMo Recipes** であり、TransformerEngine ベースの model/checkpoint と、PyTorch、Accelerate、Lightning 向けの recipe を提供します。ESM-2、AMPLIFY、Geneformer などに対する recipe 固有の support を確認してください。BioNeMo1.5 の MegaMolBART module を3.0 API であるかのように実行しないでください。生物学的評価および model/data permission は別途必要であり、GPU allocation だけでは recipe を準備できません。
 
-### EFA ネットワーク設定
+## Trainium と Neuron
 
-```yaml
-# EFA Device Plugin DaemonSet
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: aws-efa-k8s-device-plugin
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      name: aws-efa-k8s-device-plugin
-  template:
-    metadata:
-      labels:
-        name: aws-efa-k8s-device-plugin
-    spec:
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-      priorityClassName: system-node-critical
-      containers:
-        - name: aws-efa-k8s-device-plugin
-          image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efa-k8s-device-plugin:v0.4.4
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-          volumeMounts:
-            - name: device-plugin
-              mountPath: /var/lib/kubelet/device-plugins
-      volumes:
-        - name: device-plugin
-          hostPath:
-            path: /var/lib/kubelet/device-plugins
-      nodeSelector:
-        node.kubernetes.io/instance-type: p4d.24xlarge
-```
+SDK2.32.0 の torch-neuronx、NeuronX Distributed Training/model implementation、Optimum Neuron path を区別してください。transformers-neuronx の inference support は一般的な training support ではありません。古い2.18 DLC に任意の pip package を追加するのではなく、TensorFlow/JAX/PyTorch version を選択した hardware/SDK に照らして確認してください。
 
-### EKS 上の NVIDIA BioNeMo
+Optimum Neuron0.4.5 には NeuronTrainer/NeuronTrainingArguments と、専用の Neuron training-model implementation が含まれます。一般的な BertForPreTraining を読み込み、未定義の dataset/tokenizer variable を渡しても完全な TP training にはなりません。サポートされる model/config、label/collator、tokenizer/revision、optimizer/checkpoint format、launcher を準備してください。CPU 例の PyTorch2.14 は Neuron SDK 互換性を示すものではありません。
 
-BioNeMo は、創薬と分子モデリングのための NVIDIA のフレームワークです。
+### Multi-node Job と事前コンパイル
 
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: bionemo-molecule-generation
-  namespace: ai-research
-spec:
-  backoffLimit: 2
-  template:
-    spec:
-      restartPolicy: OnFailure
-      containers:
-        - name: bionemo
-          image: nvcr.io/nvidia/clara/bionemo-framework:1.5
-          command:
-            - python
-            - -m
-            - bionemo.model.molecule.megamolbart.infer
-            - --config-path=/configs
-            - --config-name=megamolbart_inference
-          env:
-            - name: CUDA_VISIBLE_DEVICES
-              value: "0,1,2,3,4,5,6,7"
-            - name: NVIDIA_VISIBLE_DEVICES
-              value: "all"
-          resources:
-            limits:
-              nvidia.com/gpu: 8
-              memory: "500Gi"
-              cpu: "48"
-          volumeMounts:
-            - name: model-cache
-              mountPath: /models
-            - name: data
-              mountPath: /data
-            - name: configs
-              mountPath: /configs
-            - name: shm
-              mountPath: /dev/shm
-      volumes:
-        - name: model-cache
-          persistentVolumeClaim:
-            claimName: bionemo-models-pvc
-        - name: data
-          persistentVolumeClaim:
-            claimName: molecule-data-pvc
-        - name: configs
-          configMap:
-            name: bionemo-inference-config
-        - name: shm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 32Gi
-      nodeSelector:
-        node.kubernetes.io/instance-type: p4d.24xlarge
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-```
+Job parallelism=4 は4つの Pod を起動するだけで、rank や rendezvous を構成しません。Indexed Job には completionMode/index と1つの共有 master endpoint が必要です。各 Pod の MASTER_ADDR を自身の status.podIP に設定すると、worker は異なる master を参照します。coordinator/controller topology とサポートされる launcher を使用し、train_lora.py、data、compile cache、device を準備してください。
 
-## AWS Trainium/Neuron での学習
+neuron_parallel_compile は graph を抽出・コンパイルするものであり、実際の training の代替ではありません。その後に個別に training を実行し、cache hit、shape、compiler/SDK revision を検証してください。core と device の違いについては、[Neuron unit distinctions](04-inference-frameworks.md)を参照してください。
 
-AWS Trainium チップは、大規模モデルに対してコスト効率の高い学習を提供します。Neuron SDK は、PyTorch および TensorFlow との統合を提供します。
+## Ray Train、MPI、Volcano
 
-### Neuron SDK コンポーネント
+監査済みの Ray2.58/KubeRay1.7 [Train ガイド](ray/03-ray-train-tune.md)を使用してください。worker 間で report-call count を一致させ、実際の Checkpoint object を report してください。get_checkpoint() は以前の recovery state を取得するものであり、新しい save context manager ではありません。resources_per_worker GPU8 を指定しても、1つの worker 内で8つの DDP process が自動的に起動されるわけではありません。
 
-| コンポーネント | 説明 | 目的 |
-|-----------|-------------|---------|
-| **Neuron Compiler** | XLA ベースのコンパイラ | Neuron ハードウェア向けにモデルを最適化 |
-| **Neuron Runtime** | 実行ランタイム | Neuron デバイスと実行を管理 |
-| **Neuron Tools** | プロファイリングとデバッグ | neuron-top, neuron-monitor, neuron-profile |
-| **torch-neuronx** | PyTorch 統合 | Trainium 向けのネイティブ PyTorch API |
-| **transformers-neuronx** | HuggingFace 統合 | Neuron 向けに最適化された transformers |
-| **optimum-neuron** | HuggingFace Optimum | 高レベルの学習および推論 API |
+MPI Operator0.8.2 は kubeflow.org/v2beta1 を使用します。slotsPerWorker は hostfile slot を宣言しますが、mpirun -np、mapping、GPU binding を独立して決定するものではありません。Launcher/Worker code、MPI/SSH implementation、サポートされる image、CRD/RBAC を準備してください。4worker×8slot だけでは32GPU process が保証されません。
 
-### 対応フレームワークとモデル
+Volcano1.15.2 の minAvailable は EC2 node ではなく **Pod/member** を数えます。十分に provision された3 node に4 Pod を配置できる場合があります。gang plugin は minimum-member/resource 条件を適用しますが、同時の container startup や training success を保証するものではありません。追加 worker、elastic-runtime support、RestartJob/requeue の動作をレビューしてください。
 
-```yaml
-# Neuron-supported frameworks and versions
-frameworks:
-  pytorch:
-    versions: ["2.1", "2.0", "1.13"]
-    package: torch-neuronx
-    models:
-      - BERT, RoBERTa, DistilBERT
-      - GPT-2, GPT-NeoX, GPT-J
-      - Llama 2, Llama 3
-      - T5, FLAN-T5
-      - Stable Diffusion, SDXL
+JupyterHub GPU profile は実際の image/device label と authorization に一致する必要があります。g5.xlarge は A100 profile ではなく A10G です。設定を実行中の Hub に組み込み、user ごとの storage、quota、networking、idle culling を構成してください。
 
-  tensorflow:
-    versions: ["2.10"]
-    package: tensorflow-neuronx
-    models:
-      - BERT, DistilBERT
-      - ResNet, EfficientNet
-      - Custom models via SavedModel
+## 学習ストレージとチェックポイント
 
-  jax:
-    versions: ["0.4"]
-    package: jax-neuronx
-    models:
-      - Custom JAX models
-      - Flax-based models
-```
+監査済みの CSI path は [GPU/storage ガイド](01-ai-ml-workloads.md)を使用してください。既存の FSx filesystem を static PV で mount することは、dynamic provisioning で新規作成することとは異なります。FileSystem dataRepositoryAssociations field を作り出したり、SCRATCH_2 と persistent-only throughput setting を混在させたりしないでください。DRA/import/export API、policy、completion を個別に検証してください。
 
-### Trainium での Llama 3 LoRA ファインチューニング
+EFS PVC capacity request は物理ストレージ quota ではありません。access-point UID/GID、directory permission、CSI identity、networking、mount target を検証してください。ローカル checkpoint は S3 transfer が完了するまでリモートで durable ではありません。
 
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: llama3-lora-finetune
-  namespace: training
-spec:
-  parallelism: 4
-  completions: 4
-  template:
-    metadata:
-      labels:
-        app: llama3-training
-        training-type: lora
-    spec:
-      restartPolicy: OnFailure
+recovery には model、optimizer、scheduler、RNG、使用時は scaler、data/sampler cursor、すべての sharded state が必要です。複数の rank が1つの file を上書きすることを避け、framework-aware distributed saving を使用してください。以前の有効な checkpoint を削除する前に、completion manifest/checksum、remote transfer、restore を検証してください。作り物の checkpoint-manager image や auto_resume=true ConfigMap では、これらの機能は実装されません。
 
-      initContainers:
-        # Download model and dataset
-        - name: setup
-          image: amazon/aws-cli:latest
-          command:
-            - /bin/bash
-            - -c
-            - |
-              aws s3 sync s3://my-bucket/llama3-70b /shared/models/llama3-70b
-              aws s3 sync s3://my-bucket/training-data /shared/data
-          volumeMounts:
-            - name: shared-storage
-              mountPath: /shared
+### 実行可能な小規模 CPU 例
 
-      containers:
-        - name: trainer
-          image: 763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-training-neuronx:2.1.0-neuronx-py310-sdk2.18.0-ubuntu20.04
-          command:
-            - neuron_parallel_compile
-            - torchrun
-            - --nproc_per_node=32
-            - --nnodes=4
-            - --node_rank=$(JOB_COMPLETION_INDEX)
-            - --master_addr=$(MASTER_ADDR)
-            - --master_port=29500
-            - train_lora.py
-          args:
-            - --model_id=/shared/models/llama3-70b
-            - --dataset_path=/shared/data/instruct-dataset
-            - --output_dir=/shared/checkpoints/llama3-lora
-            - --lora_rank=16
-            - --lora_alpha=32
-            - --lora_dropout=0.1
-            - --target_modules=q_proj,k_proj,v_proj,o_proj
-            - --per_device_train_batch_size=1
-            - --gradient_accumulation_steps=16
-            - --learning_rate=2e-4
-            - --num_train_epochs=3
-            - --warmup_ratio=0.03
-            - --bf16
-            - --gradient_checkpointing
-            - --save_strategy=steps
-            - --save_steps=500
-          env:
-            - name: NEURON_RT_NUM_CORES
-              value: "32"
-            - name: NEURON_CC_FLAGS
-              value: "--model-type transformer --distribution-strategy llm-training"
-            - name: XLA_USE_BF16
-              value: "1"
-            - name: MASTER_ADDR
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            - name: JOB_COMPLETION_INDEX
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
-          resources:
-            limits:
-              aws.amazon.com/neuron: 16  # 16 Trainium chips = trn1.32xlarge
-              memory: "500Gi"
-              cpu: "128"
-            requests:
-              aws.amazon.com/neuron: 16
-              memory: "450Gi"
-              cpu: "120"
-          volumeMounts:
-            - name: shared-storage
-              mountPath: /shared
-            - name: neuron-cache
-              mountPath: /var/tmp/neuron-compile-cache
-
-      volumes:
-        - name: shared-storage
-          persistentVolumeClaim:
-            claimName: fsx-lustre-pvc
-        - name: neuron-cache
-          emptyDir:
-            sizeLimit: 100Gi
-
-      nodeSelector:
-        node.kubernetes.io/instance-type: trn1.32xlarge
-
-      tolerations:
-        - key: aws.amazon.com/neuron
-          operator: Exists
-          effect: NoSchedule
-```
-
-### NeuronX Distributed による Trainium 上の BERT-Large 学習
+この合成16sample・1 CPU thread の例は、4回の optimizer update を実行します。accumulation、境界付き cosine schedule、一時 file の置換、optimizer/RNG の復元を示します。PyTorch2.14.0+cpu では、中断なしの training と2 step 後の resume で同一の結果が得られました。これは GPU、分散、リモート durability のテストではありません。
 
 ```python
-# train_bert_neuronx.py - Example training script
+from pathlib import Path
+import math
 import os
+import tempfile
 import torch
-import torch_neuronx
-from torch.utils.data import DataLoader
-from transformers import BertForPreTraining, BertTokenizer
-from optimum.neuron import NeuronTrainer, NeuronTrainingArguments
-from optimum.neuron.distributed import lazy_load_for_parallelism
 
-# Initialize distributed training
-torch.distributed.init_process_group(backend='xla')
-world_size = torch.distributed.get_world_size()
-rank = torch.distributed.get_rank()
 
-# Load model with tensor parallelism
-with lazy_load_for_parallelism(tensor_parallel_size=8):
-    model = BertForPreTraining.from_pretrained(
-        "bert-large-uncased",
-        torch_dtype=torch.bfloat16
+def lr_factor(step, warmup_steps, total_steps, min_ratio=0.1):
+    if not 0 <= warmup_steps < total_steps or not 0 <= min_ratio <= 1:
+        raise ValueError("Invalid schedule bounds")
+    if step < 0:
+        raise ValueError("Step must be non-negative")
+    if step < warmup_steps:
+        return step / max(1, warmup_steps)
+    progress = min(1.0, (step - warmup_steps) / (total_steps - warmup_steps))
+    return min_ratio + (1 - min_ratio) * (1 + math.cos(math.pi * progress)) / 2
+
+
+def save_checkpoint(path, state):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as output:
+            temporary = output.name
+            torch.save(state, output)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def train_toy(checkpoint_path, stop_after=4, resume=False):
+    # Tiny deterministic CPU example; no GPU, dataset or model download.
+    torch.set_num_threads(1)
+    torch.manual_seed(17)
+    model = torch.nn.Linear(2, 1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(
+        optimizer, lambda step: lr_factor(step, 1, 4)
     )
+    inputs = torch.arange(32, dtype=torch.float32).reshape(16, 2) / 32
+    targets = inputs.sum(dim=1, keepdim=True)
+    start = 0
+    if resume:
+        saved = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+        model.load_state_dict(saved["model"])
+        optimizer.load_state_dict(saved["optimizer"])
+        scheduler.load_state_dict(saved["scheduler"])
+        torch.set_rng_state(saved["torch_rng"])
+        start = saved["optimizer_step"]
+    if not start <= stop_after <= 4:
+        raise ValueError("Invalid stopping point")
+    for step in range(start, stop_after):
+        optimizer.zero_grad(set_to_none=True)
+        # Two equal-sized microbatches per optimizer update.
+        for microbatch in range(2):
+            offset = step * 4 + microbatch * 2
+            prediction = model(inputs[offset:offset + 2])
+            loss = torch.nn.functional.mse_loss(prediction, targets[offset:offset + 2]) / 2
+            loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        optimizer.step()
+        scheduler.step()
+        save_checkpoint(checkpoint_path, {
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict(),
+            "optimizer_step": step + 1,
+            "torch_rng": torch.get_rng_state(),
+        })
+    return {name: value.detach().clone() for name, value in model.state_dict().items()}
 
-# Configure training arguments
-training_args = NeuronTrainingArguments(
-    output_dir="/shared/checkpoints/bert-large",
-    per_device_train_batch_size=16,
-    gradient_accumulation_steps=4,
-    learning_rate=1e-4,
-    num_train_epochs=3,
-    warmup_steps=1000,
-    weight_decay=0.01,
-    logging_steps=100,
-    save_steps=1000,
-    bf16=True,
-    tensor_parallel_size=8,
-    pipeline_parallel_size=1,
-    zero_1=True,
-)
 
-# Create trainer
-trainer = NeuronTrainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    tokenizer=tokenizer,
-)
-
-# Start training
-trainer.train()
+if __name__ == "__main__":
+    path = Path("toy-training.pt")
+    train_toy(path, stop_after=2)
+    train_toy(path, stop_after=4, resume=True)
+    print("Completed four CPU optimizer updates, including checkpoint resume.")
 ```
 
-### Trainium ノード設定
+この例は1つの filesystem 上での completed-file replacement を示すものであり、filesystem crash/directory metadata durability、S3 transaction、分散 checkpoint protocol を示すものではありません。固定された data order も、一般的な sampler recovery を実装していません。普遍的な500step/five-copy rule ではなく、save latency、failure rate、許容できる失われる作業量、cost を用いて checkpoint interval/retention を選択してください。
 
-```yaml
-# Karpenter NodePool for Trainium instances
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: trainium-nodepool
-spec:
-  template:
-    metadata:
-      labels:
-        accelerator-type: trainium
-        node-type: ml-training
-    spec:
-      requirements:
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values:
-            - trn1.32xlarge
-            - trn1n.32xlarge  # Enhanced networking
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values:
-            - on-demand
-        - key: topology.kubernetes.io/zone
-          operator: In
-          values:
-            - us-east-1a
+## 数値精度とメモリ最適化
 
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: trainium-class
+現在の PyTorch API では torch.amp.autocast と torch.amp.GradScaler を使用します。BF16 は FP32 と exponent-bit count を共有しますが、mantissa precision や正確な maximum finite value は共有しません。一般に FP16 型の loss scaling を回避できますが、hardware、operation、convergence を検証してください。Autocast はすべての weight/optimizer state を BF16 に変換するものではありません。
 
-      taints:
-        - key: aws.amazon.com/neuron
-          value: "true"
-          effect: NoSchedule
+activation checkpointing は backward 中に activation を再計算し、compute と memory をトレードオフします。disk checkpoint とは異なり、3–4x の節約も30% の slowdown も保証しません。use_reentrant を明示的に指定し、gradient、dropout/RNG、stateful layer を検証してください。
 
-  limits:
-    aws.amazon.com/neuron: 256  # Max 16 nodes * 16 chips
+Flash Attention/SDPA backend の選択は dtype、head size、device、mask に依存します。training state を定義し、evaluation 中は dropout_p=0 を渡してください。明示的/causal mask の組み合わせに対する API support を確認してください。use_cache=False だけでは attention backend は導入されません。
 
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 15m
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: trainium-class
-spec:
-  amiFamily: AL2
-  amiSelectorTerms:
-    - id: ami-0123456789abcdef0  # Neuron-optimized AMI
+DeepSpeed0.19.6 の ZeRO1 は optimizer state を partition し、2 は gradient を追加し、3 は parameter を追加します。CPU/NVMe offload は別途構成されるもので、Stage3 により自動で有効になるわけではありません。auto value を置換する上位レベルの integration と、純粋な DeepSpeed configuration を区別してください。buffer、activation、最大 layer により、無制限の memory 削減は妨げられます。
 
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ml-cluster
+scheduler は accumulation microstep ではなく optimizer update によって進めてください。cosine が training horizon 後に再上昇しないよう progress を clamp し、例のように warmup/total-step の境界を検証してください。
 
-  securityGroupSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: ml-cluster
+## 検証範囲
 
-  blockDeviceMappings:
-    - deviceName: /dev/xvda
-      ebs:
-        volumeSize: 500Gi
-        volumeType: gp3
-        iops: 10000
-        encrypted: true
-
-  userData: |
-    #!/bin/bash
-    # Install Neuron drivers and tools
-    . /etc/os-release
-    sudo tee /etc/yum.repos.d/neuron.repo > /dev/null <<EOF
-    [neuron]
-    name=Neuron YUM Repository
-    baseurl=https://yum.repos.neuron.amazonaws.com
-    enabled=1
-    metadata_expire=0
-    EOF
-    sudo rpm --import https://yum.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB
-    sudo yum install -y aws-neuronx-runtime-lib aws-neuronx-collectives
-
-    # Increase ulimits for Neuron
-    echo "* soft nofile 65535" | sudo tee -a /etc/security/limits.conf
-    echo "* hard nofile 65535" | sudo tee -a /etc/security/limits.conf
-```
-
-## 学習インフラストラクチャコンポーネント
-
-### 分散学習向け KubeRay と RayTrain
-
-```yaml
-apiVersion: ray.io/v1
-kind: RayCluster
-metadata:
-  name: raytrain-cluster
-  namespace: training
-spec:
-  rayVersion: '2.9.0'
-
-  headGroupSpec:
-    rayStartParams:
-      dashboard-host: '0.0.0.0'
-      num-cpus: '0'
-    template:
-      spec:
-        containers:
-          - name: ray-head
-            image: rayproject/ray-ml:2.9.0-py310-gpu
-            ports:
-              - containerPort: 6379
-                name: gcs
-              - containerPort: 8265
-                name: dashboard
-              - containerPort: 10001
-                name: client
-            resources:
-              limits:
-                cpu: "8"
-                memory: "32Gi"
-              requests:
-                cpu: "4"
-                memory: "16Gi"
-
-  workerGroupSpecs:
-    - groupName: gpu-workers
-      replicas: 4
-      minReplicas: 1
-      maxReplicas: 16
-      rayStartParams:
-        num-gpus: '8'
-      template:
-        spec:
-          containers:
-            - name: ray-worker
-              image: rayproject/ray-ml:2.9.0-py310-gpu
-              resources:
-                limits:
-                  nvidia.com/gpu: 8
-                  memory: "500Gi"
-                  cpu: "96"
-              volumeMounts:
-                - name: shared-storage
-                  mountPath: /shared
-          volumes:
-            - name: shared-storage
-              persistentVolumeClaim:
-                claimName: fsx-lustre-pvc
-          nodeSelector:
-            node.kubernetes.io/instance-type: p4d.24xlarge
-          tolerations:
-            - key: nvidia.com/gpu
-              operator: Exists
-              effect: NoSchedule
-```
-
-```python
-# ray_train_example.py - RayTrain distributed training
-import ray
-from ray import train
-from ray.train.torch import TorchTrainer
-from ray.train import ScalingConfig, RunConfig, CheckpointConfig
-
-def train_loop_per_worker(config):
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
-
-    # Get distributed context
-    world_size = train.get_context().get_world_size()
-    rank = train.get_context().get_world_rank()
-
-    # Load model
-    model = AutoModelForCausalLM.from_pretrained(
-        config["model_name"],
-        torch_dtype=torch.bfloat16
-    )
-
-    # Training loop
-    for epoch in range(config["epochs"]):
-        # ... training logic ...
-
-        # Report metrics to Ray
-        train.report({"loss": loss, "epoch": epoch})
-
-        # Save checkpoint
-        if rank == 0:
-            with train.get_checkpoint() as checkpoint:
-                torch.save(model.state_dict(), checkpoint.path / "model.pt")
-
-# Configure trainer
-trainer = TorchTrainer(
-    train_loop_per_worker,
-    train_loop_config={
-        "model_name": "meta-llama/Llama-3-8B",
-        "epochs": 3,
-        "learning_rate": 2e-5,
-    },
-    scaling_config=ScalingConfig(
-        num_workers=4,
-        use_gpu=True,
-        resources_per_worker={"GPU": 8, "CPU": 24},
-    ),
-    run_config=RunConfig(
-        name="llama3-training",
-        storage_path="/shared/ray-results",
-        checkpoint_config=CheckpointConfig(
-            num_to_keep=3,
-            checkpoint_frequency=100,
-        ),
-    ),
-)
-
-result = trainer.fit()
-```
-
-### 従来の HPC ワークロード向け MPI Operator
-
-```yaml
-# Install MPI Operator
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: mpi-operator
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mpi-operator
-  namespace: mpi-operator
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mpi-operator
-  template:
-    metadata:
-      labels:
-        app: mpi-operator
-    spec:
-      serviceAccountName: mpi-operator
-      containers:
-        - name: mpi-operator
-          image: mpioperator/mpi-operator:v0.4.0
-          args:
-            - --gpus-per-node=8
-            - --kubectl-delivery-image=mpioperator/kubectl-delivery:v0.4.0
-          imagePullPolicy: Always
-```
-
-### Gang Scheduling 向け Volcano Scheduler
-
-```yaml
-# Volcano configuration for ML training
-apiVersion: scheduling.volcano.sh/v1beta1
-kind: Queue
-metadata:
-  name: ml-training-queue
-spec:
-  weight: 100
-  capability:
-    nvidia.com/gpu: 128
-    cpu: "1000"
-    memory: "8000Gi"
----
-apiVersion: batch.volcano.sh/v1alpha1
-kind: Job
-metadata:
-  name: distributed-training
-  namespace: training
-spec:
-  minAvailable: 4  # Gang scheduling: all 4 pods must be scheduled together
-  schedulerName: volcano
-  queue: ml-training-queue
-
-  policies:
-    - event: PodEvicted
-      action: RestartJob
-    - event: PodFailed
-      action: RestartJob
-
-  tasks:
-    - name: worker
-      replicas: 4
-      template:
-        spec:
-          containers:
-            - name: pytorch
-              image: pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
-              command:
-                - torchrun
-                - --nproc_per_node=8
-                - --nnodes=4
-                - train.py
-              resources:
-                limits:
-                  nvidia.com/gpu: 8
-```
-
-### インタラクティブな学習開発向け JupyterHub
-
-```yaml
-# JupyterHub with GPU support
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: jupyterhub-config
-  namespace: jupyter
-data:
-  jupyterhub_config.py: |
-    c.JupyterHub.spawner_class = 'kubespawner.KubeSpawner'
-
-    # GPU profile
-    c.KubeSpawner.profile_list = [
-        {
-            'display_name': 'GPU Development (1x A100)',
-            'kubespawner_override': {
-                'image': 'jupyter/tensorflow-notebook:latest',
-                'extra_resource_limits': {'nvidia.com/gpu': '1'},
-                'node_selector': {'node.kubernetes.io/instance-type': 'g5.xlarge'},
-            }
-        },
-        {
-            'display_name': 'Multi-GPU Development (8x A100)',
-            'kubespawner_override': {
-                'image': 'jupyter/tensorflow-notebook:latest',
-                'extra_resource_limits': {'nvidia.com/gpu': '8'},
-                'node_selector': {'node.kubernetes.io/instance-type': 'p4d.24xlarge'},
-                'volumes': [
-                    {
-                        'name': 'shared-storage',
-                        'persistentVolumeClaim': {'claimName': 'fsx-lustre-pvc'}
-                    }
-                ],
-                'volume_mounts': [
-                    {'name': 'shared-storage', 'mountPath': '/shared'}
-                ]
-            }
-        },
-        {
-            'display_name': 'Trainium Development (16x Trainium)',
-            'kubespawner_override': {
-                'image': '763104351884.dkr.ecr.us-west-2.amazonaws.com/pytorch-training-neuronx:2.1.0',
-                'extra_resource_limits': {'aws.amazon.com/neuron': '16'},
-                'node_selector': {'node.kubernetes.io/instance-type': 'trn1.32xlarge'},
-            }
-        },
-    ]
-```
-
-## 学習用ストレージ
-
-### FSx for Lustre 設定
-
-```yaml
-# FSx for Lustre file system with S3 data repository
-apiVersion: fsx.services.k8s.aws/v1alpha1
-kind: FileSystem
-metadata:
-  name: ml-training-lustre
-  namespace: storage
-spec:
-  fileSystemType: LUSTRE
-  storageCapacity: 4800
-  subnetIDs:
-    - subnet-0123456789abcdef0
-  securityGroupIDs:
-    - sg-0123456789abcdef0
-
-  lustreConfiguration:
-    deploymentType: PERSISTENT_2
-    perUnitStorageThroughput: 250  # MB/s per TiB
-
-    # S3 data repository association
-    dataRepositoryAssociations:
-      - fileSystemPath: /data
-        dataRepositoryPath: s3://my-ml-data-bucket/training-data
-        batchImportMetaDataOnCreate: true
-        s3:
-          autoImportPolicy:
-            events:
-              - NEW
-              - CHANGED
-          autoExportPolicy:
-            events:
-              - NEW
-              - CHANGED
-              - DELETED
-
-      - fileSystemPath: /checkpoints
-        dataRepositoryPath: s3://my-ml-data-bucket/checkpoints
-        s3:
-          autoExportPolicy:
-            events:
-              - NEW
-              - CHANGED
-
-  tags:
-    - key: Environment
-      value: production
-    - key: Workload
-      value: ml-training
----
-# StorageClass for dynamic FSx provisioning
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-lustre-sc
-provisioner: fsx.csi.aws.com
-parameters:
-  subnetId: subnet-0123456789abcdef0
-  securityGroupIds: sg-0123456789abcdef0
-  deploymentType: SCRATCH_2
-  perUnitStorageThroughput: "200"
-volumeBindingMode: WaitForFirstConsumer
----
-# PVC for FSx Lustre
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: fsx-lustre-pvc
-  namespace: training
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: fsx-lustre-sc
-  resources:
-    requests:
-      storage: 4800Gi
-```
-
-### 共有モデルストレージ用 Amazon EFS
-
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: efs-sc
-provisioner: efs.csi.aws.com
-parameters:
-  provisioningMode: efs-ap
-  fileSystemId: fs-0123456789abcdef0
-  directoryPerms: "755"
-  gidRangeStart: "1000"
-  gidRangeEnd: "2000"
-  basePath: "/ml-models"
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: model-storage-pvc
-  namespace: training
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: efs-sc
-  resources:
-    requests:
-      storage: 1Ti
-```
-
-### チェックポイント管理
-
-```yaml
-# Checkpoint manager sidecar
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: checkpoint-manager-config
-  namespace: training
-data:
-  config.yaml: |
-    checkpoint:
-      # Local path where training writes checkpoints
-      local_path: /checkpoints
-
-      # Remote path for durable storage
-      remote_path: s3://my-bucket/checkpoints
-
-      # Sync settings
-      sync_interval: 300  # seconds
-      max_checkpoints: 5  # keep last N checkpoints
-
-      # Compression
-      compression: true
-      compression_level: 6
-
-      # Resumption
-      auto_resume: true
-      resume_from_latest: true
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: training-with-checkpoint-manager
-spec:
-  template:
-    spec:
-      containers:
-        - name: trainer
-          # ... training container ...
-          volumeMounts:
-            - name: checkpoints
-              mountPath: /checkpoints
-
-        - name: checkpoint-manager
-          image: my-registry/checkpoint-manager:v1
-          args:
-            - --config=/config/config.yaml
-            - --watch
-          volumeMounts:
-            - name: checkpoints
-              mountPath: /checkpoints
-            - name: config
-              mountPath: /config
-
-      volumes:
-        - name: checkpoints
-          emptyDir:
-            sizeLimit: 500Gi
-        - name: config
-          configMap:
-            name: checkpoint-manager-config
-```
-
-## 学習最適化のヒント
-
-### 混合精度学習
-
-```python
-# PyTorch mixed precision with torch.cuda.amp
-import torch
-from torch.cuda.amp import autocast, GradScaler
-
-model = MyModel().cuda()
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-scaler = GradScaler()
-
-for epoch in range(num_epochs):
-    for batch in dataloader:
-        optimizer.zero_grad()
-
-        # Forward pass with automatic mixed precision
-        with autocast(dtype=torch.bfloat16):
-            outputs = model(batch['input_ids'])
-            loss = loss_fn(outputs, batch['labels'])
-
-        # Backward pass with gradient scaling
-        scaler.scale(loss).backward()
-
-        # Gradient clipping
-        scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-
-        # Optimizer step
-        scaler.step(optimizer)
-        scaler.update()
-```
-
-### 勾配累積
-
-```yaml
-# Training configuration with gradient accumulation
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: training-config
-data:
-  config.yaml: |
-    training:
-      # Effective batch size = micro_batch * gradient_accumulation * num_gpus
-      # 1 * 32 * 64 = 2048 effective batch size
-      micro_batch_size: 1
-      gradient_accumulation_steps: 32
-
-      # Memory optimization
-      gradient_checkpointing: true
-      activation_checkpointing_granularity: selective
-
-      # Precision
-      precision: bf16
-
-      # Learning rate
-      learning_rate: 2e-5
-      lr_scheduler: cosine
-      warmup_ratio: 0.03
-
-      # Optimizer
-      optimizer: adamw_torch_fused
-      weight_decay: 0.01
-```
-
-### Flash Attention 設定
-
-```python
-# Enable Flash Attention 2 in transformers
-from transformers import AutoModelForCausalLM
-
-model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-3-70B",
-    torch_dtype=torch.bfloat16,
-    attn_implementation="flash_attention_2",  # Enable Flash Attention
-    use_cache=False,  # Disable KV cache during training
-)
-
-# For custom models, use torch.nn.functional.scaled_dot_product_attention
-import torch.nn.functional as F
-
-def attention_forward(q, k, v, mask=None):
-    # Uses Flash Attention automatically when available
-    return F.scaled_dot_product_attention(
-        q, k, v,
-        attn_mask=mask,
-        dropout_p=0.0 if not training else 0.1,
-        is_causal=True,  # Enable causal masking optimization
-    )
-```
-
-### Learning Rate Scheduling のベストプラクティス
-
-```python
-# Cosine annealing with warmup
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, LambdaLR
-
-def get_cosine_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps, min_lr_ratio=0.1):
-    def lr_lambda(current_step):
-        if current_step < num_warmup_steps:
-            # Linear warmup
-            return float(current_step) / float(max(1, num_warmup_steps))
-
-        # Cosine annealing
-        progress = float(current_step - num_warmup_steps) / float(max(1, num_training_steps - num_warmup_steps))
-        return max(min_lr_ratio, 0.5 * (1.0 + math.cos(math.pi * progress)))
-
-    return LambdaLR(optimizer, lr_lambda)
-
-# Usage
-scheduler = get_cosine_schedule_with_warmup(
-    optimizer,
-    num_warmup_steps=1000,
-    num_training_steps=100000,
-    min_lr_ratio=0.1
-)
-```
-
-### DeepSpeed ZeRO 設定
-
-```json
-{
-  "bf16": {
-    "enabled": true
-  },
-  "zero_optimization": {
-    "stage": 3,
-    "offload_optimizer": {
-      "device": "cpu",
-      "pin_memory": true
-    },
-    "offload_param": {
-      "device": "cpu",
-      "pin_memory": true
-    },
-    "overlap_comm": true,
-    "contiguous_gradients": true,
-    "sub_group_size": 1e9,
-    "reduce_bucket_size": "auto",
-    "stage3_prefetch_bucket_size": "auto",
-    "stage3_param_persistence_threshold": "auto",
-    "stage3_max_live_parameters": 1e9,
-    "stage3_max_reuse_distance": 1e9,
-    "stage3_gather_16bit_weights_on_model_save": true
-  },
-  "gradient_accumulation_steps": 32,
-  "gradient_clipping": 1.0,
-  "train_micro_batch_size_per_gpu": 1,
-  "wall_clock_breakdown": false,
-  "communication_data_type": "bf16"
-}
-```
-
-## ベストプラクティスのまとめ
-
-| カテゴリ | ベストプラクティス | 利点 |
-|----------|--------------|---------|
-| **Parallelism** | 100B+ モデルには 3D parallelism を使用 | 最大限のメモリ効率 |
-| **Communication** | マルチノード学習に EFA を有効化 | 400 Gbps ネットワーク |
-| **Storage** | S3 データリポジトリ付き FSx Lustre を使用 | 高スループット + 耐久性 |
-| **Checkpointing** | N ステップごとに保存し、直近 3〜5 個を保持 | ストレージと復旧のバランス |
-| **Precision** | 安定性のため FP16 より BF16 を使用 | 損失スケーリングが不要 |
-| **Memory** | gradient checkpointing を有効化 | 3〜4 倍のメモリ節約 |
-| **Scheduling** | Gang Scheduling に Volcano を使用 | オールオアナッシングの Pod 配置 |
-| **Scaling** | GPU NodePools と Karpenter を使用 | GPU の自動プロビジョニング |
+すべてのガイド/quiz の prose と76個の一意な original code block をレビューしました。確認範囲には、公式 Slinky Helm/CRD、MPI/Volcano API と SDK source、小規模 CPU training/resume、shell-launcher fixture が含まれます。GPU/Neuron/EFA、Slurm/MPI cluster、実際の pretrained model、cloud resource は実行していません。ローカルの code/schema verification は production deployment validation とは異なります。
 
 ## 参考資料
 
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - EKS 上に AI/ML ワークロードをデプロイするための AWS ガイドと例
-- [Slinky - Slurm on Kubernetes](https://github.com/SchedMD/slurm-operator) - Kubernetes 向け SchedMD の Slurm operator
-- [AWS Neuron Documentation](https://awsdocs.github.io/aws-neuron-documentation/) - Trainium と Inferentia 向け Neuron SDK
-- [NVIDIA NCCL Documentation](https://docs.nvidia.com/deeplearning/nccl/) - Collective communication ライブラリ
-- [DeepSpeed Documentation](https://www.deepspeed.ai/) - Microsoft の分散学習ライブラリ
-- [KubeRay Documentation](https://ray-project.github.io/kuberay/) - Kubernetes 上の Ray
+- [Slinky 1.2.2](https://github.com/SlinkyProject/slurm-operator/tree/v1.2.2)
+- [Slurm controller](https://slurm.schedmd.com/slurmctld.html)
+- [Slurm accounting daemon](https://slurm.schedmd.com/slurmdbd.html)
+- [MPI Operator 0.8.2](https://github.com/kubeflow/mpi-operator/tree/v0.8.2)
+- [Volcano 1.15.2 gang plugin](https://github.com/volcano-sh/volcano/blob/v1.15.2/pkg/scheduler/plugins/gang/gang.go)
+- [EKS EFA networking](https://docs.aws.amazon.com/eks/latest/best-practices/aiml-networking.html)
+- [BioNeMo 3.0.0 recipes](https://github.com/NVIDIA/bionemo-framework/tree/v3.0.0)
+- [Optimum Neuron 0.4.5](https://github.com/huggingface/optimum-neuron/tree/v0.4.5)
+- [Neuron SDK 2.32.0](https://github.com/aws-neuron/aws-neuron-sdk/tree/v2.32.0)
+- [PyTorch 2.14 launcher](https://github.com/pytorch/pytorch/blob/v2.14.0/torch/distributed/run.py)
+- [DeepSpeed 0.19.6 ZeRO configuration](https://github.com/deepspeedai/DeepSpeed/blob/v0.19.6/deepspeed/runtime/zero/config.py)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[モデル学習クイズ](../quizzes/ai-ml/05-model-training-quiz.md) に挑戦してください。
+[モデル学習クイズ](../quizzes/ai-ml/05-model-training-quiz.md)

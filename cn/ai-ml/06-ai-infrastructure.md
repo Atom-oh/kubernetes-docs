@@ -1,2431 +1,450 @@
 # EKS 上的 AI 基础设施
 
-> **支持版本**: Kubernetes 1.31, 1.32, 1.33
-> **最后更新**: February 25, 2026
+> **最后更新**: September12,2026
+> **基线版本**: GPU Operator26.7.0 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
-本指南介绍 Amazon EKS 上全面的 AI/ML 基础设施模式，包括 JARK Stack、Dynamic Resource Allocation (DRA)，以及用于 AI agent 开发的生产就绪平台。
+AI 基础设施结合了笔记本、流水线、分布式运行时、设备/节点、存储/网络和授权。仅列出工具或成功的 Helm release 并不能建立平台安全性、可用性或模型执行能力。
 
-## AI/ML 基础设施架构概览
+## 层级与职责
 
-EKS 上的现代 AI/ML 基础设施采用分层架构，将关注点分离，并支持每一层独立扩展。
+![用于划分工作负载、平台、计算和 EKS 基础职责的层级。](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-0.png)
 
-```mermaid
-flowchart TB
-    subgraph Workloads ["ML Workloads Layer"]
-        direction LR
-        Training["Model Training<br/>PyTorch, TensorFlow"]
-        Inference["Model Inference<br/>vLLM, TensorRT"]
-        Notebooks["Interactive Dev<br/>JupyterHub"]
-        Pipelines["ML Pipelines<br/>Argo Workflows"]
-        Agents["AI Agents<br/>LangChain, CrewAI"]
-    end
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-0.html)
 
-    subgraph Platform ["Platform Services Layer"]
-        direction LR
-        Ray["Ray Cluster<br/>Distributed Compute"]
-        KServe["KServe<br/>Model Serving"]
-        Kubeflow["Kubeflow<br/>ML Platform"]
-        MLflow["MLflow<br/>Experiment Tracking"]
-        VectorDB["Vector DB<br/>Milvus, Pinecone"]
-    end
+工作负载负责模型/数据/执行代码；平台负责工作流、运行时和注册表；计算负责真实设备、Pod 和节点容量。IAM、网络和存储身份跨越这些层级。启用 Spot 的 NodePool 既不保证容量，也不保证恢复能力或节省成本。
 
-    subgraph Compute ["Compute Layer"]
-        direction LR
-        GPU["GPU NodePools<br/>p4d, p5, g5"]
-        Neuron["Neuron NodePools<br/>inf2, trn1"]
-        CPU["CPU NodePools<br/>m6i, c6i, r6i"]
-        Spot["Spot Instances<br/>Cost Optimization"]
-    end
+## JARK 技术栈
 
-    subgraph Base ["EKS Base Layer"]
-        direction LR
-        EKS["EKS Cluster<br/>Control Plane"]
-        Karpenter["Karpenter<br/>Node Provisioning"]
-        Storage["Storage<br/>EFS, FSx, S3"]
-        Network["Networking<br/>VPC, EFA"]
-    end
+JARK 结合 JupyterHub、Argo Workflows、Ray 和 Karpenter。它是一种集成模式，而不是一个自动连接的产品。应明确连接笔记本授权、工作流提交、Ray 作业、Kubernetes 调度和节点预置。
 
-    Workloads --> Platform
-    Platform --> Compute
-    Compute --> Base
+![JupyterHub/Argo/Ray 创建 Kubernetes 工作负载；调度器放置 Pod，Karpenter 预置节点。](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-1.png)
 
-    classDef workload fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef platform fill:#4ECDC4,stroke:#333,stroke-width:2px,color:white;
-    classDef compute fill:#45B7D1,stroke:#333,stroke-width:2px,color:white;
-    classDef base fill:#96CEB4,stroke:#333,stroke-width:2px,color:white;
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-1.html)
 
-    class Training,Inference,Notebooks,Pipelines,Agents workload;
-    class Ray,KServe,Kubeflow,MLflow,VectorDB platform;
-    class GPU,Neuron,CPU,Spot compute;
-    class EKS,Karpenter,Storage,Network base;
+### JupyterHub 身份验证和笔记本配置文件
+
+Chart4.4.2 声明 appVersion5.5.2，这与最新检查的 PyPI Hub6.0.0 不同。本地 API 检查使用 Hub6.0.0/OAuthenticator17.4.0/KubeSpawner7.1.0；请在运行中的 chart 镜像内验证实际的软件包组合。
+
+Cognito 是一种 OIDC provider 选项。匹配回调 URL、token/userInfo 端点、scope 和稳定的用户名 claim，并配置明确的允许策略。MFA/企业联邦必须在 provider 中配置；GenericOAuthenticator 不会自动启用它们。
+
+此 Hub 配置假定已有一个 Secret volume 挂载到 /run/secrets/oidc。不要将真实 secret 放入 ConfigMap、源代码和环境变量中。将此 Python 文件接入 Hub 的实际配置路径，并为你的环境替换 URI/已批准的 sub 值。
+
+```python
+from pathlib import Path
+
+c.JupyterHub.authenticator_class = "oauthenticator.generic.GenericOAuthenticator"
+c.GenericOAuthenticator.client_id = "prepared-client-id"
+c.GenericOAuthenticator.client_secret = Path("/run/secrets/oidc/client-secret").read_text().strip()
+c.GenericOAuthenticator.oauth_callback_url = "https://jupyter.example.com/hub/oauth_callback"
+c.GenericOAuthenticator.authorize_url = "https://prepared-domain.auth.us-west-2.amazoncognito.com/oauth2/authorize"
+c.GenericOAuthenticator.token_url = "https://prepared-domain.auth.us-west-2.amazoncognito.com/oauth2/token"
+c.GenericOAuthenticator.userdata_url = "https://prepared-domain.auth.us-west-2.amazoncognito.com/oauth2/userInfo"
+c.GenericOAuthenticator.scope = ["openid", "profile", "email"]
+c.GenericOAuthenticator.username_claim = "sub"
+c.GenericOAuthenticator.allow_all = False
+c.GenericOAuthenticator.allow_existing_users = False
+c.GenericOAuthenticator.allowed_users = {"replace-with-approved-cognito-sub"}
 ```
 
-**各层职责：**
+该示例设置 allow_all=False、显式 allowed_users 和 allow_existing_users=False。本地检查允许一个已批准的身份，并拒绝未批准/先前的用户。未执行实际的 OAuth 登录/token 交换。
 
-| 层 | 组件 | 目的 |
-|-------|------------|---------|
-| **Workloads** | Training, Inference, Notebooks, Pipelines, Agents | 面向用户的 ML 应用 |
-| **Platform** | Ray, KServe, Kubeflow, MLflow, Vector DBs | 面向 ML 的编排和工具 |
-| **Compute** | GPU/Neuron/CPU NodePools, Spot instances | 硬件加速和成本优化 |
-| **Base** | EKS, Karpenter, Storage, Networking | 基础设施底座 |
+请区分笔记本 CPU/RAM 保证与限制，并匹配实际的 GPU 镜像、标签、toleration 和 driver。不要假设旧版 jupyter/*:gpu tag 提供 CUDA。PVC 必须与消费它的 Pod 共享 namespace；jupyterhub Pod 不能仅通过名称引用 ml-platform PVC。检查每用户 access point、UID/GID、quota 和共享模型的写入权限。EFS storage_capacity 不是物理容量限制。
 
----
+### Argo Workflows 数据流
 
-## JARK Stack：完整的 AI/ML 开发环境
+先前的工作流引用了缺失的 template、artifact 和 script。这个**小型数据流 fixture**有六个阶段。它通过环境变量和 JSON 传递参数，而不是将值注入 Python 源代码。它在两个系数之间选择；它不是真实的图像分类训练、Ray cluster 或外部 registry 流水线。
 
-JARK Stack (JupyterHub + Argo Workflows + Ray + Karpenter) 在 EKS 上提供完整且生产就绪的 AI/ML 开发环境。
-
-### JARK Stack 架构
-
-```mermaid
-flowchart TB
-    subgraph Users ["Data Scientists & ML Engineers"]
-        DS1["Data Scientist 1"]
-        DS2["Data Scientist 2"]
-        MLE["ML Engineer"]
-    end
-
-    subgraph JupyterHub ["JupyterHub"]
-        Hub["Hub Server"]
-        Spawner["KubeSpawner"]
-        Auth["OAuth/Cognito"]
-        subgraph Notebooks ["User Notebooks"]
-            NB1["CPU Notebook"]
-            NB2["GPU Notebook<br/>T4/A10G"]
-            NB3["Multi-GPU Notebook<br/>A100/H100"]
-        end
-    end
-
-    subgraph Argo ["Argo Workflows"]
-        Controller["Workflow Controller"]
-        Server["Argo Server UI"]
-        subgraph Workflows ["ML Workflows"]
-            WF1["Data Preprocessing"]
-            WF2["Model Training"]
-            WF3["Hyperparameter Tuning"]
-            WF4["Model Evaluation"]
-        end
-    end
-
-    subgraph RayCluster ["Ray Cluster"]
-        Head["Ray Head Node"]
-        subgraph Workers ["Ray Workers"]
-            W1["CPU Worker Pool"]
-            W2["GPU Worker Pool"]
-            W3["Neuron Worker Pool"]
-        end
-        subgraph RayApps ["Ray Applications"]
-            RayTrain["Ray Train"]
-            RayTune["Ray Tune"]
-            RayServe["Ray Serve"]
-            RayData["Ray Data"]
-        end
-    end
-
-    subgraph Karpenter ["Karpenter Auto-Scaling"]
-        Provisioner["Node Provisioner"]
-        subgraph NodePools ["NodePools"]
-            CPUPool["CPU NodePool<br/>m6i, c6i"]
-            GPUPool["GPU NodePool<br/>g5, p4d, p5"]
-            NeuronPool["Neuron NodePool<br/>inf2, trn1"]
-        end
-    end
-
-    subgraph Storage ["Shared Storage"]
-        EFS["Amazon EFS<br/>Notebooks & Models"]
-        FSx["FSx for Lustre<br/>Training Data"]
-        S3["Amazon S3<br/>Datasets & Artifacts"]
-    end
-
-    Users --> JupyterHub
-    JupyterHub --> Argo
-    JupyterHub --> RayCluster
-    Argo --> RayCluster
-    RayCluster --> Karpenter
-    JupyterHub --> Storage
-    RayCluster --> Storage
-
-    classDef user fill:#E8E8E8,stroke:#333,stroke-width:1px;
-    classDef jupyter fill:#F37626,stroke:#333,stroke-width:2px,color:white;
-    classDef argo fill:#EF7B4D,stroke:#333,stroke-width:2px,color:white;
-    classDef ray fill:#00A2E8,stroke:#333,stroke-width:2px,color:white;
-    classDef karpenter fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef storage fill:#3F8624,stroke:#333,stroke-width:2px,color:white;
-
-    class DS1,DS2,MLE user;
-    class Hub,Spawner,Auth,NB1,NB2,NB3 jupyter;
-    class Controller,Server,WF1,WF2,WF3,WF4 argo;
-    class Head,W1,W2,W3,RayTrain,RayTune,RayServe,RayData ray;
-    class Provisioner,CPUPool,GPUPool,NeuronPool karpenter;
-    class EFS,FSx,S3 storage;
-```
-
-### JARK Stack 组件
-
-#### 1. JupyterHub - 交互式开发
-
-JupyterHub 提供多用户交互式开发环境，并支持启用 GPU 的 notebook 配置文件。
-
-**带 GPU 配置文件的 JupyterHub 配置：**
-
-```yaml
-# jupyterhub-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: jupyterhub-config
-  namespace: jupyterhub
-data:
-  jupyterhub_config.py: |
-    c.JupyterHub.spawner_class = 'kubespawner.KubeSpawner'
-
-    # Authentication with Amazon Cognito
-    c.JupyterHub.authenticator_class = 'oauthenticator.generic.GenericOAuthenticator'
-    c.GenericOAuthenticator.oauth_callback_url = 'https://jupyter.example.com/hub/oauth_callback'
-    c.GenericOAuthenticator.client_id = 'your-cognito-client-id'
-    c.GenericOAuthenticator.client_secret = 'your-cognito-client-secret'
-    c.GenericOAuthenticator.authorize_url = 'https://your-domain.auth.us-west-2.amazoncognito.com/oauth2/authorize'
-    c.GenericOAuthenticator.token_url = 'https://your-domain.auth.us-west-2.amazoncognito.com/oauth2/token'
-    c.GenericOAuthenticator.userdata_url = 'https://your-domain.auth.us-west-2.amazoncognito.com/oauth2/userInfo'
-
-    # Notebook profile definitions
-    c.KubeSpawner.profile_list = [
-        {
-            'display_name': 'CPU - Small (2 CPU, 4GB RAM)',
-            'slug': 'cpu-small',
-            'kubespawner_override': {
-                'cpu_limit': 2,
-                'cpu_guarantee': 1,
-                'mem_limit': '4G',
-                'mem_guarantee': '2G',
-                'image': 'jupyter/scipy-notebook:latest',
-            }
-        },
-        {
-            'display_name': 'CPU - Large (8 CPU, 32GB RAM)',
-            'slug': 'cpu-large',
-            'kubespawner_override': {
-                'cpu_limit': 8,
-                'cpu_guarantee': 4,
-                'mem_limit': '32G',
-                'mem_guarantee': '16G',
-                'image': 'jupyter/tensorflow-notebook:latest',
-            }
-        },
-        {
-            'display_name': 'GPU - T4 (4 CPU, 16GB RAM, 1x T4)',
-            'slug': 'gpu-t4',
-            'kubespawner_override': {
-                'cpu_limit': 4,
-                'cpu_guarantee': 2,
-                'mem_limit': '16G',
-                'mem_guarantee': '8G',
-                'image': 'jupyter/tensorflow-notebook:gpu',
-                'extra_resource_limits': {'nvidia.com/gpu': '1'},
-                'extra_resource_guarantees': {'nvidia.com/gpu': '1'},
-                'node_selector': {'nvidia.com/gpu.product': 'Tesla-T4'},
-            }
-        },
-        {
-            'display_name': 'GPU - A10G (8 CPU, 64GB RAM, 1x A10G)',
-            'slug': 'gpu-a10g',
-            'kubespawner_override': {
-                'cpu_limit': 8,
-                'cpu_guarantee': 4,
-                'mem_limit': '64G',
-                'mem_guarantee': '32G',
-                'image': 'jupyter/tensorflow-notebook:gpu',
-                'extra_resource_limits': {'nvidia.com/gpu': '1'},
-                'extra_resource_guarantees': {'nvidia.com/gpu': '1'},
-                'node_selector': {'nvidia.com/gpu.product': 'NVIDIA-A10G'},
-            }
-        },
-        {
-            'display_name': 'GPU - A100 (16 CPU, 128GB RAM, 1x A100 80GB)',
-            'slug': 'gpu-a100',
-            'kubespawner_override': {
-                'cpu_limit': 16,
-                'cpu_guarantee': 8,
-                'mem_limit': '128G',
-                'mem_guarantee': '64G',
-                'image': 'jupyter/tensorflow-notebook:gpu',
-                'extra_resource_limits': {'nvidia.com/gpu': '1'},
-                'extra_resource_guarantees': {'nvidia.com/gpu': '1'},
-                'node_selector': {'nvidia.com/gpu.product': 'NVIDIA-A100-SXM4-80GB'},
-            }
-        },
-    ]
-
-    # Persistent storage for notebooks
-    c.KubeSpawner.storage_class = 'efs-sc'
-    c.KubeSpawner.storage_pvc_ensure = True
-    c.KubeSpawner.pvc_name_template = 'claim-{username}'
-    c.KubeSpawner.storage_capacity = '50Gi'
-
-    # Shared read-only datasets mount
-    c.KubeSpawner.volumes = [
-        {
-            'name': 'shared-datasets',
-            'persistentVolumeClaim': {'claimName': 'shared-datasets-pvc'}
-        },
-        {
-            'name': 'shared-models',
-            'persistentVolumeClaim': {'claimName': 'shared-models-pvc'}
-        }
-    ]
-    c.KubeSpawner.volume_mounts = [
-        {'name': 'shared-datasets', 'mountPath': '/home/jovyan/datasets', 'readOnly': True},
-        {'name': 'shared-models', 'mountPath': '/home/jovyan/models', 'readOnly': False}
-    ]
-```
-
-**JupyterHub Helm 安装：**
-
-```bash
-# Add JupyterHub Helm repository
-helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
-helm repo update
-
-# Create namespace
-kubectl create namespace jupyterhub
-
-# Install JupyterHub
-helm upgrade --install jupyterhub jupyterhub/jupyterhub \
-  --namespace jupyterhub \
-  --version 3.2.1 \
-  --values jupyterhub-values.yaml \
-  --timeout 10m
-```
-
-#### 2. Argo Workflows - ML Pipeline 编排
-
-Argo Workflows 支持使用基于 DAG 的 workflow 编排复杂的 ML pipeline。
-
-**ML 训练 Pipeline 示例：**
+Argo4.1.3 离线 lint 和全部六个 Python script body 均已在本地验证。请为 prepared-workflow-runner 准备最小权限，并在运行前分别配置镜像 digest、quota 和 artifact 存储。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: ml-training-pipeline-
+  generateName: toy-dataflow-
   namespace: argo
 spec:
-  entrypoint: ml-pipeline
-  serviceAccountName: argo-workflow
-
-  # Artifact repository configuration
-  artifactRepositoryRef:
-    configMap: artifact-repositories
-    key: default-v1
-
-  # Workflow parameters
+  entrypoint: pipeline
+  serviceAccountName: prepared-workflow-runner
+  parallelism: 1
+  activeDeadlineSeconds: 600
   arguments:
     parameters:
-    - name: model-name
-      value: "resnet50"
-    - name: dataset-path
-      value: "s3://ml-datasets/imagenet"
-    - name: epochs
-      value: "100"
-    - name: batch-size
-      value: "64"
-    - name: learning-rate
-      value: "0.001"
-
+    - name: data
+      value: '[[1,2],[2,4],[3,6],[4,8]]'
   templates:
-  - name: ml-pipeline
+  - name: pipeline
     dag:
       tasks:
-      # Data validation task
-      - name: validate-data
-        template: data-validation
+      - name: validate
+        template: validate
         arguments:
           parameters:
-          - name: dataset-path
-            value: "{{workflow.parameters.dataset-path}}"
-
-      # Data preprocessing task
-      - name: preprocess-data
-        template: data-preprocessing
-        dependencies: [validate-data]
+          - name: data
+            value: '{{workflow.parameters.data}}'
+      - name: prepare
+        template: prepare
         arguments:
           parameters:
-          - name: dataset-path
-            value: "{{workflow.parameters.dataset-path}}"
-
-      # Hyperparameter tuning with Ray Tune
-      - name: hyperparameter-tuning
-        template: ray-tune
-        dependencies: [preprocess-data]
+          - name: data
+            value: '{{tasks.validate.outputs.result}}'
+        dependencies:
+        - validate
+      - name: tune
+        template: tune
         arguments:
           parameters:
-          - name: model-name
-            value: "{{workflow.parameters.model-name}}"
-
-      # Distributed training with Ray Train
-      - name: distributed-training
-        template: ray-train
-        dependencies: [hyperparameter-tuning]
+          - name: data
+            value: '{{tasks.prepare.outputs.result}}'
+        dependencies:
+        - prepare
+      - name: train
+        template: train
         arguments:
           parameters:
-          - name: model-name
-            value: "{{workflow.parameters.model-name}}"
-          - name: epochs
-            value: "{{workflow.parameters.epochs}}"
-          - name: best-params
-            value: "{{tasks.hyperparameter-tuning.outputs.parameters.best-params}}"
-
-      # Model evaluation
-      - name: evaluate-model
-        template: model-evaluation
-        dependencies: [distributed-training]
+          - name: scale
+            value: '{{tasks.tune.outputs.result}}'
+        dependencies:
+        - tune
+      - name: evaluate
+        template: evaluate
         arguments:
-          artifacts:
+          parameters:
           - name: model
-            from: "{{tasks.distributed-training.outputs.artifacts.model}}"
-
-      # Model registration
-      - name: register-model
-        template: model-registration
-        dependencies: [evaluate-model]
-        when: "{{tasks.evaluate-model.outputs.parameters.accuracy}} > 0.95"
+            value: '{{tasks.train.outputs.result}}'
+          - name: data
+            value: '{{tasks.prepare.outputs.result}}'
+        dependencies:
+        - train
+      - name: register
+        template: register
         arguments:
           parameters:
-          - name: accuracy
-            value: "{{tasks.evaluate-model.outputs.parameters.accuracy}}"
-
-  # Data validation template
-  - name: data-validation
+          - name: model
+            value: '{{tasks.train.outputs.result}}'
+        dependencies:
+        - evaluate
+        when: '{{tasks.evaluate.outputs.result}} == 0'
+  - name: validate
     inputs:
       parameters:
-      - name: dataset-path
-    container:
-      image: python:3.11-slim
-      command: [python]
-      args:
-      - -c
-      - |
-        import boto3
-        # Validate dataset exists and has expected structure
-        print(f"Validating dataset at {{inputs.parameters.dataset-path}}")
-        # Add validation logic here
+      - name: data
+    script:
+      image: python:3.12.14-slim-trixie
+      command:
+      - python
+      env:
+      - name: DATA
+        value: '{{inputs.parameters.data}}'
       resources:
         requests:
-          cpu: "1"
-          memory: "2Gi"
-
-  # Data preprocessing template
-  - name: data-preprocessing
-    inputs:
-      parameters:
-      - name: dataset-path
-    outputs:
-      artifacts:
-      - name: processed-data
-        path: /tmp/processed
-        s3:
-          key: processed-data/{{workflow.name}}
-    container:
-      image: pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
-      command: [python]
-      args:
-      - /scripts/preprocess.py
-      - --input={{inputs.parameters.dataset-path}}
-      - --output=/tmp/processed
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
+          cpu: 100m
+          memory: 64Mi
         limits:
-          cpu: "8"
-          memory: "32Gi"
-      volumeMounts:
-      - name: scripts
-        mountPath: /scripts
+          cpu: 500m
+          memory: 128Mi
+      source: 'import json, os
 
-  # Ray Tune hyperparameter optimization template
-  - name: ray-tune
+        rows = json.loads(os.environ["DATA"])
+
+        assert rows and all(len(row) == 2 for row in rows)
+
+        assert all(isinstance(v, (int, float)) for row in rows for v in row)
+
+        print(json.dumps(rows))
+
+        '
+  - name: prepare
     inputs:
       parameters:
-      - name: model-name
-    outputs:
-      parameters:
-      - name: best-params
-        valueFrom:
-          path: /tmp/best_params.json
-    container:
-      image: rayproject/ray-ml:2.9.0-py310-gpu
-      command: [python]
-      args:
-      - -c
-      - |
-        import ray
-        from ray import tune
-        from ray.tune.schedulers import ASHAScheduler
-        import json
-
-        ray.init()
-
-        def train_func(config):
-            # Training function for hyperparameter search
-            accuracy = config["lr"] * 0.5 + config["batch_size"] * 0.001
-            return {"accuracy": accuracy}
-
-        scheduler = ASHAScheduler(max_t=100, grace_period=10)
-
-        analysis = tune.run(
-            train_func,
-            config={
-                "lr": tune.loguniform(1e-5, 1e-1),
-                "batch_size": tune.choice([16, 32, 64, 128]),
-                "hidden_size": tune.choice([64, 128, 256, 512]),
-            },
-            num_samples=50,
-            scheduler=scheduler,
-            resources_per_trial={"cpu": 2, "gpu": 0.5},
-        )
-
-        best_config = analysis.get_best_config(metric="accuracy", mode="max")
-        with open("/tmp/best_params.json", "w") as f:
-            json.dump(best_config, f)
+      - name: data
+    script:
+      image: python:3.12.14-slim-trixie
+      command:
+      - python
+      env:
+      - name: DATA
+        value: '{{inputs.parameters.data}}'
       resources:
         requests:
-          cpu: "4"
-          memory: "16Gi"
-          nvidia.com/gpu: "1"
+          cpu: 100m
+          memory: 64Mi
         limits:
-          nvidia.com/gpu: "1"
+          cpu: 500m
+          memory: 128Mi
+      source: 'import json, os
 
-  # Ray Train distributed training template
-  - name: ray-train
+        rows = json.loads(os.environ["DATA"])
+
+        print(json.dumps({"train": rows[:2], "test": rows[2:]}))
+
+        '
+  - name: tune
     inputs:
       parameters:
-      - name: model-name
-      - name: epochs
-      - name: best-params
-    outputs:
-      artifacts:
+      - name: data
+    script:
+      image: python:3.12.14-slim-trixie
+      command:
+      - python
+      env:
+      - name: DATA
+        value: '{{inputs.parameters.data}}'
+      resources:
+        requests:
+          cpu: 100m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 128Mi
+      source: 'import json, os
+
+        data = json.loads(os.environ["DATA"])
+
+        candidates = [1.0, 2.0]
+
+        loss = lambda scale: sum((scale*x-y)**2 for x,y in data["train"]) / len(data["train"])
+
+        print(min(candidates, key=loss))
+
+        '
+  - name: train
+    inputs:
+      parameters:
+      - name: scale
+    script:
+      image: python:3.12.14-slim-trixie
+      command:
+      - python
+      env:
+      - name: SCALE
+        value: '{{inputs.parameters.scale}}'
+      resources:
+        requests:
+          cpu: 100m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 128Mi
+      source: 'import json, os
+
+        print(json.dumps({"scale": float(os.environ["SCALE"]), "fixture": True}))
+
+        '
+  - name: evaluate
+    inputs:
+      parameters:
       - name: model
-        path: /tmp/model
-    container:
-      image: rayproject/ray-ml:2.9.0-py310-gpu
-      command: [python]
-      args:
-      - -c
-      - |
-        import ray
-        from ray.train.torch import TorchTrainer
-        from ray.train import ScalingConfig
-        import json
-
-        ray.init()
-
-        params = json.loads('{{inputs.parameters.best-params}}')
-
-        def train_loop_per_worker():
-            import torch
-            from torch import nn
-            # Distributed training logic
-            pass
-
-        trainer = TorchTrainer(
-            train_loop_per_worker=train_loop_per_worker,
-            scaling_config=ScalingConfig(
-                num_workers=4,
-                use_gpu=True,
-                resources_per_worker={"CPU": 4, "GPU": 1}
-            ),
-        )
-
-        result = trainer.fit()
-        # Save model
+      - name: data
+    script:
+      image: python:3.12.14-slim-trixie
+      command:
+      - python
+      env:
+      - name: MODEL
+        value: '{{inputs.parameters.model}}'
+      - name: DATA
+        value: '{{inputs.parameters.data}}'
       resources:
         requests:
-          cpu: "8"
-          memory: "32Gi"
-          nvidia.com/gpu: "4"
+          cpu: 100m
+          memory: 64Mi
         limits:
-          nvidia.com/gpu: "4"
-      nodeSelector:
-        nvidia.com/gpu.product: NVIDIA-A100-SXM4-80GB
-```
+          cpu: 500m
+          memory: 128Mi
+      source: 'import json, os
 
-#### 3. Ray (KubeRay) - 分布式计算
+        model = json.loads(os.environ["MODEL"])
 
-Ray 为 ML workload 提供统一的分布式计算能力，包括训练、调优和 serving。
+        held_out = json.loads(os.environ["DATA"])["test"]
 
-**RayCluster 配置：**
+        print(sum((model["scale"]*x-y)**2 for x,y in held_out) / len(held_out))
 
-```yaml
-apiVersion: ray.io/v1
-kind: RayCluster
-metadata:
-  name: ml-cluster
-  namespace: ray-system
-spec:
-  rayVersion: '2.9.0'
-  enableInTreeAutoscaling: true
-
-  # Head node configuration
-  headGroupSpec:
-    serviceType: ClusterIP
-    rayStartParams:
-      dashboard-host: '0.0.0.0'
-      block: 'true'
-    template:
-      spec:
-        containers:
-        - name: ray-head
-          image: rayproject/ray-ml:2.9.0-py310-gpu
-          ports:
-          - containerPort: 6379
-            name: gcs
-          - containerPort: 8265
-            name: dashboard
-          - containerPort: 10001
-            name: client
-          resources:
-            limits:
-              cpu: "8"
-              memory: "32Gi"
-            requests:
-              cpu: "4"
-              memory: "16Gi"
-          env:
-          - name: RAY_GRAFANA_HOST
-            value: "http://grafana.monitoring:3000"
-          - name: RAY_PROMETHEUS_HOST
-            value: "http://prometheus.monitoring:9090"
-          volumeMounts:
-          - name: ray-logs
-            mountPath: /tmp/ray
-        volumes:
-        - name: ray-logs
-          emptyDir: {}
-        nodeSelector:
-          node-type: cpu
-
-  # Worker group specifications
-  workerGroupSpecs:
-  # CPU workers for data processing
-  - replicas: 2
-    minReplicas: 1
-    maxReplicas: 10
-    groupName: cpu-workers
-    rayStartParams:
-      block: 'true'
-    template:
-      spec:
-        containers:
-        - name: ray-worker
-          image: rayproject/ray-ml:2.9.0-py310
-          resources:
-            limits:
-              cpu: "8"
-              memory: "32Gi"
-            requests:
-              cpu: "4"
-              memory: "16Gi"
-          volumeMounts:
-          - name: shared-data
-            mountPath: /data
-        volumes:
-        - name: shared-data
-          persistentVolumeClaim:
-            claimName: ray-shared-data
-        nodeSelector:
-          node-type: cpu
-
-  # GPU workers for training (g5 instances - A10G)
-  - replicas: 2
-    minReplicas: 0
-    maxReplicas: 8
-    groupName: gpu-a10g-workers
-    rayStartParams:
-      block: 'true'
-      num-gpus: '1'
-    template:
-      spec:
-        containers:
-        - name: ray-worker
-          image: rayproject/ray-ml:2.9.0-py310-gpu
-          resources:
-            limits:
-              cpu: "8"
-              memory: "64Gi"
-              nvidia.com/gpu: "1"
-            requests:
-              cpu: "4"
-              memory: "32Gi"
-              nvidia.com/gpu: "1"
-        nodeSelector:
-          nvidia.com/gpu.product: NVIDIA-A10G
-        tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-
-  # High-performance GPU workers (p4d/p5 instances - A100/H100)
-  - replicas: 0
-    minReplicas: 0
-    maxReplicas: 4
-    groupName: gpu-a100-workers
-    rayStartParams:
-      block: 'true'
-      num-gpus: '8'
-    template:
-      spec:
-        containers:
-        - name: ray-worker
-          image: rayproject/ray-ml:2.9.0-py310-gpu
-          resources:
-            limits:
-              cpu: "96"
-              memory: "1024Gi"
-              nvidia.com/gpu: "8"
-            requests:
-              cpu: "48"
-              memory: "512Gi"
-              nvidia.com/gpu: "8"
-        nodeSelector:
-          nvidia.com/gpu.product: NVIDIA-A100-SXM4-80GB
-        tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-
-  # AWS Neuron workers (inf2/trn1 instances)
-  - replicas: 0
-    minReplicas: 0
-    maxReplicas: 4
-    groupName: neuron-workers
-    rayStartParams:
-      block: 'true'
-    template:
-      spec:
-        containers:
-        - name: ray-worker
-          image: public.ecr.aws/neuron/pytorch-training-neuronx:2.1
-          resources:
-            limits:
-              cpu: "32"
-              memory: "128Gi"
-              aws.amazon.com/neuron: "16"
-            requests:
-              cpu: "16"
-              memory: "64Gi"
-              aws.amazon.com/neuron: "16"
-        nodeSelector:
-          node.kubernetes.io/instance-type: trn1.32xlarge
-        tolerations:
-        - key: aws.amazon.com/neuron
-          operator: Exists
-          effect: NoSchedule
-```
-
-#### 4. Karpenter - 智能 Node 预置
-
-Karpenter 提供快速、经济高效的 Node 预置能力，并支持 GPU 和 Neuron。
-
-**GPU 和 Neuron NodePools：**
-
-```yaml
-# GPU NodePool for NVIDIA GPUs
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: gpu-nodepool
-spec:
-  template:
-    metadata:
-      labels:
-        node-type: gpu
-    spec:
-      requirements:
-      - key: kubernetes.io/arch
-        operator: In
-        values: ["amd64"]
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values: ["on-demand", "spot"]
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        # g5 instances (A10G GPU)
-        - g5.xlarge
-        - g5.2xlarge
-        - g5.4xlarge
-        - g5.8xlarge
-        - g5.12xlarge
-        - g5.16xlarge
-        - g5.24xlarge
-        - g5.48xlarge
-        # p4d instances (A100 GPU)
-        - p4d.24xlarge
-        # p5 instances (H100 GPU)
-        - p5.48xlarge
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: gpu-nodeclass
-      taints:
-      - key: nvidia.com/gpu
-        effect: NoSchedule
-
-  limits:
-    cpu: 1000
-    memory: 4000Gi
-    nvidia.com/gpu: 100
-
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 5m
-
-  weight: 10
----
-# EC2NodeClass for GPU instances
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: gpu-nodeclass
-spec:
-  amiFamily: AL2
-  role: KarpenterNodeRole-ml-cluster
-
-  # Use EKS-optimized AMI with GPU drivers
-  amiSelectorTerms:
-  - alias: al2@latest
-
-  subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ml-cluster
-
-  securityGroupSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ml-cluster
-
-  # Install NVIDIA drivers and container toolkit
-  userData: |
-    #!/bin/bash
-    set -e
-
-    # Install NVIDIA driver
-    yum install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
-
-    # Configure containerd for NVIDIA
-    cat <<EOF > /etc/containerd/config.toml
-    version = 2
-    [plugins."io.containerd.grpc.v1.cri".containerd]
-      default_runtime_name = "nvidia"
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
-        runtime_type = "io.containerd.runc.v2"
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
-          BinaryName = "/usr/bin/nvidia-container-runtime"
-    EOF
-
-    systemctl restart containerd
-
-  blockDeviceMappings:
-  - deviceName: /dev/xvda
-    ebs:
-      volumeSize: 200Gi
-      volumeType: gp3
-      iops: 10000
-      throughput: 500
-      encrypted: true
-
-  # Instance store for ephemeral data
-  instanceStorePolicy: RAID0
-
-  tags:
-    Environment: production
-    Team: ml-platform
----
-# Neuron NodePool for AWS Inferentia/Trainium
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: neuron-nodepool
-spec:
-  template:
-    metadata:
-      labels:
-        node-type: neuron
-    spec:
-      requirements:
-      - key: kubernetes.io/arch
-        operator: In
-        values: ["amd64"]
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values: ["on-demand"]
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        # inf2 instances (Inferentia2)
-        - inf2.xlarge
-        - inf2.8xlarge
-        - inf2.24xlarge
-        - inf2.48xlarge
-        # trn1 instances (Trainium)
-        - trn1.2xlarge
-        - trn1.32xlarge
-        - trn1n.32xlarge
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: neuron-nodeclass
-      taints:
-      - key: aws.amazon.com/neuron
-        effect: NoSchedule
-
-  limits:
-    cpu: 500
-    memory: 2000Gi
-    aws.amazon.com/neuron: 64
-
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 10m
-
-  weight: 5
----
-# EC2NodeClass for Neuron instances
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: neuron-nodeclass
-spec:
-  amiFamily: AL2
-  role: KarpenterNodeRole-ml-cluster
-
-  amiSelectorTerms:
-  - alias: al2@latest
-
-  subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ml-cluster
-
-  securityGroupSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ml-cluster
-
-  userData: |
-    #!/bin/bash
-    set -e
-
-    # Install Neuron driver and tools
-    tee /etc/yum.repos.d/neuron.repo > /dev/null <<EOF
-    [neuron]
-    name=Neuron YUM Repository
-    baseurl=https://yum.repos.neuron.amazonaws.com
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://yum.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB
-    EOF
-
-    yum install -y aws-neuronx-dkms aws-neuronx-collectives aws-neuronx-runtime-lib aws-neuronx-tools
-
-    # Configure containerd for Neuron
-    systemctl restart containerd
-
-  blockDeviceMappings:
-  - deviceName: /dev/xvda
-    ebs:
-      volumeSize: 500Gi
-      volumeType: gp3
-      iops: 16000
-      throughput: 1000
-      encrypted: true
-
-  tags:
-    Environment: production
-    Team: ml-platform
-```
-
----
-
-## 面向 GPU 的 Dynamic Resource Allocation (DRA)
-
-Dynamic Resource Allocation (DRA) 是 Kubernetes 面向 GPU 调度的下一代方法，可对 GPU 资源进行细粒度控制，这是传统 device plugin 无法实现的。
-
-### DRA 与传统 GPU 调度对比
-
-```mermaid
-flowchart TB
-    subgraph Traditional ["Traditional Device Plugin Approach"]
-        direction TB
-        T1["Pod requests<br/>nvidia.com/gpu: 1"]
-        T2["Device Plugin<br/>allocates whole GPU"]
-        T3["Container gets<br/>exclusive GPU access"]
-        T4["No sharing<br/>No fine-grained control"]
-
-        T1 --> T2 --> T3 --> T4
-    end
-
-    subgraph DRA ["DRA Approach (Kubernetes 1.31+)"]
-        direction TB
-        D1["Pod creates<br/>ResourceClaim"]
-        D2["DRA Driver<br/>evaluates claim"]
-        D3["ResourceSlice<br/>tracks GPU topology"]
-        D4["Fine-grained allocation<br/>MIG/MPS/Time-slice"]
-        D5["Topology-aware<br/>NVLink/IMEX scheduling"]
-
-        D1 --> D2 --> D3 --> D4 --> D5
-    end
-
-    subgraph Benefits ["DRA Benefits"]
-        direction TB
-        B1["GPU Memory<br/>Partitioning"]
-        B2["Multi-tenant<br/>GPU Sharing"]
-        B3["NVLink Topology<br/>Awareness"]
-        B4["P6e-GB200<br/>UltraServer Support"]
-    end
-
-    Traditional -.->|"Limited"| Benefits
-    DRA -->|"Enables"| Benefits
-
-    classDef traditional fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef dra fill:#4ECDC4,stroke:#333,stroke-width:2px,color:white;
-    classDef benefit fill:#45B7D1,stroke:#333,stroke-width:2px,color:white;
-
-    class T1,T2,T3,T4 traditional;
-    class D1,D2,D3,D4,D5 dra;
-    class B1,B2,B3,B4 benefit;
-```
-
-### 使用 DRA 的 GPU 共享策略
-
-DRA 支持多种 GPU 共享策略，以适配不同使用场景：
-
-| 策略 | 使用场景 | GPU 利用率 | 隔离性 | 延迟 |
-|----------|----------|-----------------|-----------|---------|
-| **Exclusive** | Training, HPC | 100% 专用 | 完全 | 最低 |
-| **MIG** | 多租户推理 | 硬件分区 | 强 | 低 |
-| **Time-Slicing** | 开发、测试 | 时间共享 | 弱 | 可变 |
-| **MPS** | 并行小型 workload | 共享 CUDA 上下文 | 中等 | 中等 |
-
-**用于 GPU 共享的 DRA ResourceClaim：**
-
-```yaml
-# GPU ResourceClaimTemplate with MIG partitioning
-apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClaimTemplate
-metadata:
-  name: gpu-mig-3g20gb
-  namespace: ml-workloads
-spec:
-  spec:
-    devices:
-      requests:
-      - name: gpu
-        deviceClassName: gpu.nvidia.com
-        selectors:
-        - cel:
-            expression: device.attributes["gpu.nvidia.com/mig.profile"] == "3g.20gb"
-      config:
-      - requests: ["gpu"]
-        opaque:
-          driver: gpu.nvidia.com
-          parameters:
-            # MIG profile: 3 GPU instances, 20GB each
-            migProfile: "3g.20gb"
-            # Sharing mode
-            sharingMode: "mig"
----
-# ResourceClaimTemplate for time-slicing
-apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClaimTemplate
-metadata:
-  name: gpu-timeslice
-  namespace: ml-workloads
-spec:
-  spec:
-    devices:
-      requests:
-      - name: gpu
-        deviceClassName: gpu.nvidia.com
-      config:
-      - requests: ["gpu"]
-        opaque:
-          driver: gpu.nvidia.com
-          parameters:
-            sharingMode: "time-slicing"
-            timeSlice: "default"
-            replicas: 4  # 4 pods share one GPU
----
-# ResourceClaimTemplate for MPS
-apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClaimTemplate
-metadata:
-  name: gpu-mps
-  namespace: ml-workloads
-spec:
-  spec:
-    devices:
-      requests:
-      - name: gpu
-        deviceClassName: gpu.nvidia.com
-      config:
-      - requests: ["gpu"]
-        opaque:
-          driver: gpu.nvidia.com
-          parameters:
-            sharingMode: "mps"
-            mpsActiveThreadPercentage: 50
----
-# Pod using DRA ResourceClaim
-apiVersion: v1
-kind: Pod
-metadata:
-  name: inference-pod
-  namespace: ml-workloads
-spec:
-  containers:
-  - name: inference
-    image: nvcr.io/nvidia/pytorch:24.01-py3
-    command: ["python", "/app/inference.py"]
-    resources:
-      claims:
-      - name: gpu-claim
-  resourceClaims:
-  - name: gpu-claim
-    resourceClaimTemplateName: gpu-mig-3g20gb
-```
-
-### 支持 DRA 的 NVIDIA GPU Operator
-
-DRA 需要 NVIDIA GPU Operator v25.3.0 或更高版本才能获得完整支持。
-
-```yaml
-# Install NVIDIA GPU Operator with DRA enabled
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: gpu-operator
----
-# GPU Operator Helm values for DRA
-# helm install gpu-operator nvidia/gpu-operator -n gpu-operator -f values.yaml
-# values.yaml content:
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gpu-operator-values
-  namespace: gpu-operator
-data:
-  values.yaml: |
-    operator:
-      defaultRuntime: containerd
-
-    driver:
-      enabled: true
-      version: "550.90.07"
-
-    toolkit:
-      enabled: true
-      version: "v1.15.0"
-
-    devicePlugin:
-      enabled: true
-      config:
-        name: device-plugin-config
-        default: any
-        data:
-          any: |-
-            version: v1
-            sharing:
-              timeSlicing:
-                renameByDefault: false
-                failRequestsGreaterThanOne: false
-                resources:
-                - name: nvidia.com/gpu
-                  replicas: 4
-          mig-mixed: |-
-            version: v1
-            sharing:
-              mig:
-                strategy: mixed
-
-    # DRA driver configuration (v25.3.0+)
-    draDriver:
-      enabled: true
-      version: "v0.1.0"
-      config:
-        sharing:
-          mps:
-            enabled: true
-          timeSlicing:
-            enabled: true
-          mig:
-            enabled: true
-            strategy: mixed
-
-    # MIG manager for automatic MIG configuration
-    migManager:
-      enabled: true
-      config:
-        default: all-disabled
-        data:
-          all-disabled: |-
-            version: v1
-            mig-configs: {}
-          all-1g.10gb: |-
-            version: v1
-            mig-configs:
-              all-1g.10gb:
-                - devices: all
-                  mig-enabled: true
-                  mig-devices:
-                    1g.10gb: 7
-          all-3g.40gb: |-
-            version: v1
-            mig-configs:
-              all-3g.40gb:
-                - devices: all
-                  mig-enabled: true
-                  mig-devices:
-                    3g.40gb: 2
-
-    # DCGM exporter for GPU metrics
-    dcgmExporter:
-      enabled: true
-      serviceMonitor:
-        enabled: true
-
-    # GPU Feature Discovery
-    gfd:
-      enabled: true
-
-    # Node Feature Discovery
-    nfd:
-      enabled: true
-```
-
-### 面向 NVLink/IMEX 的拓扑感知调度
-
-对于多 GPU 训练 workload，拓扑感知调度可确保通过 NVLink 连接的 GPU 被一起分配。
-
-```yaml
-# ResourceClaim for topology-aware multi-GPU allocation
-apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClaim
-metadata:
-  name: multi-gpu-nvlink
-  namespace: ml-training
-spec:
-  devices:
-    requests:
-    - name: gpu-group
-      deviceClassName: gpu.nvidia.com
-      count: 8  # Request 8 GPUs
-      selectors:
-      # Ensure all GPUs are on the same node
-      - cel:
-          expression: device.topology.node == device.topology.node
-      # Prefer NVLink-connected GPUs
-      - cel:
-          expression: device.attributes["gpu.nvidia.com/nvlink.capable"] == "true"
-    constraints:
-    # All GPUs must be from the same NUMA node for best performance
-    - requests: ["gpu-group"]
-      matchAttribute: device.topology.numa
----
-# Pod for distributed training with topology awareness
-apiVersion: v1
-kind: Pod
-metadata:
-  name: distributed-training
-  namespace: ml-training
-spec:
-  containers:
-  - name: trainer
-    image: nvcr.io/nvidia/pytorch:24.01-py3
-    command:
-    - torchrun
-    - --nproc_per_node=8
-    - --nnodes=1
-    - /app/train.py
-    env:
-    - name: NCCL_DEBUG
-      value: "INFO"
-    - name: NCCL_IB_DISABLE
-      value: "0"
-    - name: NCCL_NVLS_ENABLE
-      value: "1"  # Enable NVLink SHARP
-    resources:
-      claims:
-      - name: gpu-claim
-  resourceClaims:
-  - name: gpu-claim
-    resourceClaimName: multi-gpu-nvlink
-  # Ensure pod scheduling respects GPU topology
-  schedulingGates:
-  - name: gpu-topology
-```
-
-### P6e-GB200 UltraServer 支持
-
-NVIDIA GB200 NVL72 (P6e instances) 由于其具有 72 个互联 GPU 的独特架构，需要使用 DRA 进行适当的资源管理。
-
-```yaml
-# ResourceSlice representing GB200 NVL72 topology
-apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceSlice
-metadata:
-  name: gb200-nvl72-node-1
-spec:
-  nodeName: p6e-gb200-node-1
-  pool:
-    name: gb200-pool
-    generation: 1
-    resourceSliceCount: 1
-  driver: gpu.nvidia.com
-  devices:
-  - name: gpu-0
-    basic:
-      attributes:
-        gpu.nvidia.com/product: "NVIDIA-GB200"
-        gpu.nvidia.com/memory: "192Gi"
-        gpu.nvidia.com/nvlink.version: "5.0"
-        gpu.nvidia.com/nvswitch.connected: "true"
-        gpu.nvidia.com/imex.capable: "true"
-      capacity:
-        gpu.nvidia.com/gpu: 1
----
-# DeviceClass for GB200 GPUs
-apiVersion: resource.k8s.io/v1alpha3
-kind: DeviceClass
-metadata:
-  name: gpu.nvidia.com.gb200
-spec:
-  selectors:
-  - cel:
-      expression: device.attributes["gpu.nvidia.com/product"] == "NVIDIA-GB200"
-  config:
-  - opaque:
-      driver: gpu.nvidia.com
+        '
+  - name: register
+    inputs:
       parameters:
-        # Enable IMEX (In-Memory Exchange) for GB200
-        imexEnabled: true
-        # NVSwitch-based communication
-        nvswitchEnabled: true
-        # Grace-Hopper specific optimizations
-        graceHopperMode: true
----
-# ResourceClaimTemplate for GB200 workloads
-apiVersion: resource.k8s.io/v1alpha3
+      - name: model
+    script:
+      image: python:3.12.14-slim-trixie
+      command:
+      - python
+      env:
+      - name: MODEL
+        value: '{{inputs.parameters.model}}'
+      resources:
+        requests:
+          cpu: 100m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 128Mi
+      source: 'import json, os
+
+        model = json.loads(os.environ["MODEL"])
+
+        print(json.dumps({"candidate": model, "note": "fixture output only; no registry write"}))
+
+        '
+```
+
+fixture MSE0 来自四个合成样本，而不是真实的模型质量测量。生产工作流需要训练/测试分离、数据/模型修订、失败/重试/幂等性规则以及实际的 artifact 交接。artifactRepositoryRef 不会安装 boto3，也不会授予应用程序下载权限。
+
+### Ray 和 Karpenter
+
+使用 [Ray 指南](ray/README.md)中经过审计的 Ray2.58/KubeRay1.7 路径。GCS 表示 Global Control Service；调度会与 raylet 交互。如果 head 声明 CPU，则可能运行工作负载。避免在 CPU/GPU/Neuron worker 间使用未经验证的 Ray/Python 组合；Neuron 镜像还需要 Ray 和兼容的 framework。
+
+Ray autoscaling 表达 worker-Pod 需求，Kubernetes scheduler 放置 Pod，Karpenter 提供受支持的节点容量。Ray worker 不会直接调用 Karpenter API。使内存/GPU 产品标签与真实节点匹配；不要用80GB 标签选择40GB p4d A100。
+
+不要在 AL2023 NVIDIA AMI 上重复安装 driver，也不要覆盖整个 containerd 配置。Karpenter limit 不是绝对的准入/成本上限，consolidation 也不会直接使用 DCGM20% 利用率阈值。检查 request、调度可行性、价格和中断约束。
+
+## DRA API 和支持边界
+
+DRA 通过 DeviceClass、ResourceSlice 和 ResourceClaim/Template 表示设备属性、请求和分配。driver 发布 slice；scheduler/driver component 分配并准备 claim。手写的 ResourceSlice 不会创建真实 GPU。Kubernetes API 成熟度与 NVIDIA-driver 功能成熟度是相互独立的。
+
+![设备插件扩展资源与 DRA DeviceClass/ResourceSlice/ResourceClaim 路径；共享/拓扑取决于 driver、硬件和 feature gate。](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-2.png)
+
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-2.html)
+
+### 当前 Claim 示例
+
+检查的 Kubernetes1.36.2 resource.k8s.io/v1 schema 使用 requests.exactly。NVIDIA driver0.5 前提条件将 GPU 分配(1.34.2+)与 ComputeDomains(1.32+)区分开来。验证 EKS 实际提供的 API 以及 patch/platform 版本。“1.31+ 上的全部 DRA 功能”并不准确。
+
+此**schema 示例**定义了一个 GPU claim 和一个清单命令 Pod。请分别准备 ml-workloads namespace、gpu.nvidia.com DeviceClass、driver/CDI、节点和权限。本审计未执行 GPU。
+
+```yaml
+apiVersion: resource.k8s.io/v1
 kind: ResourceClaimTemplate
 metadata:
-  name: gb200-training
-  namespace: ml-training
+  namespace: ml-workloads
+  name: single-gpu
 spec:
   spec:
     devices:
       requests:
-      - name: gb200-gpus
-        deviceClassName: gpu.nvidia.com.gb200
-        count: 72  # Full NVL72 rack
-      constraints:
-      - requests: ["gb200-gpus"]
-        matchAttribute: device.topology.nvswitch
+      - name: gpu
+        exactly:
+          deviceClassName: gpu.nvidia.com
+          count: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-inventory-demo
+  namespace: ml-workloads
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+  - name: inspect
+    image: ubuntu:24.04
+    command:
+    - nvidia-smi
+    - -L
+    resources:
+      claims:
+      - name: gpu
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+  resourceClaims:
+  - name: gpu
+    resourceClaimTemplateName: single-gpu
+  tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
 ```
 
----
+CEL 必须使用实际发布的类型化属性/domain 结构。之前的 device.topology.node==device.topology.node 既不表达同节点放置，也不匹配 API。matchAttribute 需要实际的限定属性。常规的单 Pod GPU claim 不会自动跨 NVL72 rack 分配72个 GPU。
 
-## EKS 上的 Agents 平台
+### NVIDIA0.5 和 GPU Operator26.7
 
-Agents on EKS 平台为构建和部署 AI agents 提供基础设施，并集成了源代码控制、可观测性、向量存储和工具发现能力。
+0.5 README 仍将 GPU 分配描述为 experimental/default-disabled，这与 installation/chart 和 Operator26.7 文档冲突。实际的 standalone chart 默认设置 resources.gpus.enabled=true，但为避免 device-plugin 冲突，若没有显式 opt-in，便会**拒绝渲染**。不要将默认安装描述为静默禁用 GPU 后成功。
 
-### Agents 平台架构
+Operator26.7 managed path 使用名为 gpu-cluster 的 GPUCluster singleton，它与 ClusterPolicy 互斥。其 preinstalled-driver path 设置 clusterPolicy.deployCR=false、gpuCluster.deployCR=true 和 driver.enabled=false。GPUCluster 不会替代所有 driver/toolkit 准备工作；请提供 driver/CDI 前提条件。不要安装重复的 standalone DRA release。本地渲染模拟了一个被提供服务的 DeviceClass API；它并未启用真实集群功能。
+
+区分 full-GPU/existing-MIG 和 ComputeDomain 支持与 alpha DynamicMIG、MPS 和 TimeSlicingSettings。检查的0.5 feature-gate code 将后三者声明为 false/Alpha。一些文档中的 GA 标签也与源代码中的 Beta 标签不同；请将确切 release 的支持矩阵、代码和配置一并记录。单独使用 GPU Operator25.3 并不能建立对所有功能的支持。
+
+device plugin 也支持 existing MIG、time-slicing 和 experimental MPS 路径；GPU 共享并非 DRA 独有。3g.20gb 指的是一个 instance profile，而不是三个20GB instance。MIG/独占分配不会自动隔离 host、driver、privilege 或所有 side channel；MPS/time-slicing 不是安全边界。
+
+### 多节点 NVLink 和 ComputeDomains
+
+GB200 是 Grace Blackwell，而不是 Grace Hopper。ComputeDomains 在 Pod/节点之间协调 MNNVL/IMEX 资源。请区分 rack、EC2 instance、Kubernetes node 和 Pod，并验证实际的 clique/fabric/device/driver 支持。虚构的 nvswitchEnabled/graceHopperMode 字段或 scheduling gate 不会配置拓扑。没有 controller 来移除的 scheduling gate 会让 Pod 保持等待。
+
+## Agent 平台和 MCP
+
+请在 [Agentic AI 指南](03-agentic-ai-platform.md)中使用当前的 Kagent/LangGraph/Langfuse/Milvus API。GitLab 是可选的源代码/CI 平台；privileged runner 和 public ingress 并非基线要求。分离 job identity、网络、secret 和 image-build 权限，并验证 provider credential 的交付。
+
+MCP 定义了如工具列出/调用等 protocol operation；它不是标准的 Kubernetes auto-discovery controller 或 gateway distribution。之前的 ghcr.io/anthropics/mcp-gateway:latest 镜像和 mcp.anthropic.com/tool label/config 属于未经验证的实现，已被移除。请选择实际的 server/gateway release，并验证 transport、authentication、authorization、timeout 和 tool input schema。一个 URL 环境变量并未实现这些 operation。
+
+为 Milvus 请求 GPU 资源不会启用 GPU indexing。匹配 embedding dimension/model revision、index parameter、删除/更新生命周期和 tenant filter。不要将 Langfuse2.x Deployment 作为当前4.x 平台安装；请检查 backend dependency、file credential、instrumentation API 和敏感数据保留。
+
+## 存储和网络
+
+验证 EFS access-point IAM/UID/GID、目录权限和同 namespace PVC 消费。IAM mount option 本身不会配置 controller/mount-identity credential。
+
+使用受支持的 FSx CSI parameter 和容量单位。不要为 PERSISTENT_2 复制虚构的 s3ImportPath/s3ExportPath 设置或无效的10Ti 容量。在[存储指南](01-ai-ml-workloads.md)中区分现有/静态与新预置的 filesystem、DRA 和 backup compatibility。
+
+Mountpoint CSI2.8.0 支持现有 S3 bucket 的**静态 PV**。StorageClass/PVC-only 动态 bucket 示例已移除。Mountpoint 并非完全 POSIX；检查 rename、random-write、locking 和 checkpoint 行为。2.8 support table 移除了 AL2/Ubuntu22.04，并指示安装应使用 EKS add-on 或官方 chart，而非 repository branch。
+
+不要将 interface count 乘以已经是汇总值的 instance bandwidth。之前的 p4d“4×400Gbps”和 trn1n“16×1600Gbps”数据不正确。有关同 AZ 放置、真实 interface、driver/libfabric/NCCL、device/Pod 分配和 security group，请使用[训练网络指南](05-model-training.md)。RAID0 和 efa-enabled tag 不会启用 EFA。
+
+Subnet 只是隔离的一部分。通过实际 SG/IAM resource 配置工作负载 ingress/egress 和 EFA self-reference 要求。存储在 ConfigMap 中的 Terraform 样式 YAML 不会应用 network rule。避免默认允许来自整个 VPC CIDR 的访问。
+
+## GPU 可观测性和告警
+
+DCGM Exporter4.6.0-4.8.3 将 XID_ERRORS 定义为最后一个错误**代码 gauge**。increase(XID_ERRORS) 不是错误计数，并且可能将31→13的代码变化误读为重置。请观察当前代码，或单独启用 XID_ERRORS_TOTAL counter。并非每个 XID 都表示硬件故障。
+
+FB_USED/FB_FREE 是 MiB gauge；下方比率的范围为0–1。高保留 VRAM 不一定是 OOM：应一并检查分配失败、工作负载行为、模型缓存和可用内存。固定的85C/20% 阈值并非通用的故障/回收标准。在对 PCIe throughput 或 NVLink bandwidth gauge 应用 rate() 前，请检查实际 metric type/unit。
+
+这些规则假设每个 Prometheus 对应一个 cluster。对于合并的 cluster，请在聚合/join 中包含 cluster label。检查实际的 node/UUID/MIG label 以及 kube-state-metrics resource-label normalization。
 
 ```yaml
-# GitLab for Source Control and CI/CD
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: gitlab
----
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: gitlab
-  namespace: gitlab
-spec:
-  interval: 10m
-  chart:
-    spec:
-      chart: gitlab
-      version: "7.8.0"
-      sourceRef:
-        kind: HelmRepository
-        name: gitlab
-        namespace: flux-system
-  values:
-    global:
-      hosts:
-        domain: agents.example.com
-        gitlab:
-          name: gitlab.agents.example.com
-      ingress:
-        configureCertmanager: true
-        class: alb
-        annotations:
-          alb.ingress.kubernetes.io/scheme: internet-facing
-          alb.ingress.kubernetes.io/target-type: ip
-
-    # Runner configuration for CI/CD
-    gitlab-runner:
-      runners:
-        privileged: true
-        config: |
-          [[runners]]
-            [runners.kubernetes]
-              namespace = "gitlab"
-              image = "ubuntu:22.04"
-              [[runners.kubernetes.volumes.pvc]]
-                name = "runner-cache"
-                mount_path = "/cache"
----
-# Langfuse for LLM Observability
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: langfuse
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: langfuse
-  namespace: langfuse
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: langfuse
-  template:
-    metadata:
-      labels:
-        app: langfuse
-    spec:
-      containers:
-      - name: langfuse
-        image: langfuse/langfuse:2.50.0
-        ports:
-        - containerPort: 3000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-secrets
-              key: database-url
-        - name: NEXTAUTH_URL
-          value: "https://langfuse.agents.example.com"
-        - name: NEXTAUTH_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-secrets
-              key: nextauth-secret
-        - name: SALT
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-secrets
-              key: salt
-        - name: ENCRYPTION_KEY
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-secrets
-              key: encryption-key
-        resources:
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
-          limits:
-            cpu: "2"
-            memory: "4Gi"
----
-# Milvus Vector Database for RAG
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: milvus
----
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: milvus
-  namespace: milvus
-spec:
-  interval: 10m
-  chart:
-    spec:
-      chart: milvus
-      version: "4.1.0"
-      sourceRef:
-        kind: HelmRepository
-        name: milvus
-        namespace: flux-system
-  values:
-    cluster:
-      enabled: true
-
-    # Proxy configuration
-    proxy:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "500m"
-          memory: "2Gi"
-        limits:
-          cpu: "2"
-          memory: "8Gi"
-
-    # Query nodes with GPU acceleration
-    queryNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "2"
-          memory: "8Gi"
-          nvidia.com/gpu: "1"
-        limits:
-          nvidia.com/gpu: "1"
-
-    # Index nodes for vector indexing
-    indexNode:
-      replicas: 2
-      resources:
-        requests:
-          cpu: "4"
-          memory: "16Gi"
-          nvidia.com/gpu: "1"
-        limits:
-          nvidia.com/gpu: "1"
-
-    # Storage configuration
-    minio:
-      enabled: false
-
-    externalS3:
-      enabled: true
-      host: s3.us-west-2.amazonaws.com
-      port: 443
-      useSSL: true
-      bucketName: milvus-storage
-      useIAM: true
-
-    # etcd for metadata
-    etcd:
-      replicaCount: 3
-      persistence:
-        enabled: true
-        storageClass: gp3
-        size: 50Gi
----
-# MCP Gateway for Tool Discovery
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: mcp-gateway
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mcp-gateway
-  namespace: mcp-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: mcp-gateway
-  template:
-    metadata:
-      labels:
-        app: mcp-gateway
-    spec:
-      containers:
-      - name: mcp-gateway
-        image: ghcr.io/anthropics/mcp-gateway:latest
-        ports:
-        - containerPort: 8080
-          name: http
-        - containerPort: 9090
-          name: grpc
-        env:
-        - name: REGISTRY_BACKEND
-          value: "kubernetes"
-        - name: DISCOVERY_MODE
-          value: "auto"
-        - name: LOG_LEVEL
-          value: "info"
-        volumeMounts:
-        - name: config
-          mountPath: /etc/mcp-gateway
-        resources:
-          requests:
-            cpu: "250m"
-            memory: "512Mi"
-          limits:
-            cpu: "1"
-            memory: "2Gi"
-      volumes:
-      - name: config
-        configMap:
-          name: mcp-gateway-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mcp-gateway-config
-  namespace: mcp-gateway
-data:
-  config.yaml: |
-    server:
-      http_port: 8080
-      grpc_port: 9090
-
-    registry:
-      type: kubernetes
-      kubernetes:
-        namespace: mcp-tools
-        label_selector: "mcp.anthropic.com/tool=true"
-
-    discovery:
-      enabled: true
-      interval: 30s
-      endpoints:
-      - name: kubernetes
-        type: kubernetes
-        config:
-          namespaces: ["mcp-tools", "ai-agents"]
-
-    auth:
-      enabled: true
-      provider: oidc
-      oidc:
-        issuer: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_xxxxx
-        client_id: mcp-gateway-client
-
-    rate_limiting:
-      enabled: true
-      requests_per_minute: 1000
-
-    telemetry:
-      metrics:
-        enabled: true
-        port: 9091
-      tracing:
-        enabled: true
-        endpoint: http://otel-collector.monitoring:4317
+groups:
+- name: gpu-observations
+  rules:
+  - record: gpu:framebuffer_used_ratio
+    expr: DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE)
+  - alert: GPUReportedXIDCode
+    expr: DCGM_FI_DEV_XID_ERRORS > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Inspect the reported XID code and workload context"
+  - record: namespace:pending_gpu_requesting_pods:count
+    expr: |
+      count by (namespace) (
+        max by (namespace, pod) (kube_pod_status_phase{phase="Pending"} == 1)
+        and on (namespace, pod)
+        max by (namespace, pod) (kube_pod_container_resource_requests{resource="nvidia_com_gpu"} > 0)
+      )
 ```
 
-### AI Agent Deployment 示例
+pending rule 统计请求 GPU 的等待 Pod；它并不能证明 GPU 短缺导致了等待。多个请求 GPU 的 container 按每个 Pod 仅计一次。检查 event、PVC、affinity、taint、quota、claim 和 image pull。不要假定每个告警上都存在 node label。
 
-```yaml
-# AI Agent Deployment with RAG capabilities
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ai-agent
-  namespace: ai-agents
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: ai-agent
-  template:
-    metadata:
-      labels:
-        app: ai-agent
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
-    spec:
-      serviceAccountName: ai-agent
-      containers:
-      - name: agent
-        image: ai-agents/customer-support:v1.2.0
-        ports:
-        - containerPort: 8000
-          name: http
-        env:
-        # LLM configuration
-        - name: LLM_PROVIDER
-          value: "bedrock"
-        - name: LLM_MODEL
-          value: "anthropic.claude-3-5-sonnet-20241022-v2:0"
-        - name: AWS_REGION
-          value: "us-west-2"
+为 DCGM、Ray 和 Karpenter 配置实际的 Prometheus rule selection 以及正确的 Service/port scraping。Grafana file provisioning 不同于 HTTP dashboard wrapper；单独的 label 不会连接 datasource。Neuron monitor output 和 exporter endpoint 需要单独准备。
 
-        # Vector database for RAG
-        - name: MILVUS_HOST
-          value: "milvus.milvus.svc.cluster.local"
-        - name: MILVUS_PORT
-          value: "19530"
-        - name: MILVUS_COLLECTION
-          value: "knowledge_base"
+## 验证范围
 
-        # Langfuse for observability
-        - name: LANGFUSE_HOST
-          value: "https://langfuse.agents.example.com"
-        - name: LANGFUSE_PUBLIC_KEY
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-credentials
-              key: public-key
-        - name: LANGFUSE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-credentials
-              key: secret-key
-
-        # MCP Gateway for tool discovery
-        - name: MCP_GATEWAY_URL
-          value: "http://mcp-gateway.mcp-gateway.svc.cluster.local:8080"
-
-        resources:
-          requests:
-            cpu: "1"
-            memory: "4Gi"
-          limits:
-            cpu: "4"
-            memory: "16Gi"
-
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-
-      # Sidecar for embedding model
-      - name: embeddings
-        image: ai-agents/embeddings:v1.0.0
-        ports:
-        - containerPort: 8001
-          name: grpc
-        env:
-        - name: MODEL_NAME
-          value: "sentence-transformers/all-MiniLM-L6-v2"
-        resources:
-          requests:
-            cpu: "500m"
-            memory: "2Gi"
-          limits:
-            cpu: "2"
-            memory: "8Gi"
-```
-
----
-
-## AI/ML 的存储解决方案
-
-### Amazon EFS 用于共享模型存储
-
-```yaml
-# EFS StorageClass for shared notebooks and models
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: efs-sc
-provisioner: efs.csi.aws.com
-parameters:
-  provisioningMode: efs-ap
-  fileSystemId: fs-xxxxxxxxx
-  directoryPerms: "755"
-  gidRangeStart: "1000"
-  gidRangeEnd: "2000"
-  basePath: "/ml-storage"
-mountOptions:
-  - tls
-  - iam
----
-# Shared models PVC
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: shared-models-pvc
-  namespace: ml-platform
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: efs-sc
-  resources:
-    requests:
-      storage: 500Gi
----
-# Shared datasets PVC (read-only for most users)
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: shared-datasets-pvc
-  namespace: ml-platform
-spec:
-  accessModes:
-    - ReadOnlyMany
-  storageClassName: efs-sc
-  resources:
-    requests:
-      storage: 2Ti
-```
-
-### FSx for Lustre 用于高吞吐训练
-
-```yaml
-# FSx for Lustre StorageClass for training workloads
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fsx-lustre-sc
-provisioner: fsx.csi.aws.com
-parameters:
-  subnetId: subnet-xxxxxxxxx
-  securityGroupIds: sg-xxxxxxxxx
-  deploymentType: PERSISTENT_2
-  perUnitStorageThroughput: "500"  # MB/s per TiB
-  dataCompressionType: LZ4
-  automaticBackupRetentionDays: "7"
-  copyTagsToBackups: "true"
-  s3ImportPath: s3://ml-datasets
-  s3ExportPath: s3://ml-training-outputs
-mountOptions:
-  - flock
----
-# FSx for Lustre PVC for training data
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: training-data-pvc
-  namespace: ml-training
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: fsx-lustre-sc
-  resources:
-    requests:
-      storage: 10Ti
-```
-
-### 与 Mountpoint 的 S3 集成
-
-```yaml
-# S3 CSI Driver StorageClass
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: s3-sc
-provisioner: s3.csi.aws.com
-parameters:
-  bucketName: ml-artifacts
-mountOptions:
-  - allow-delete
-  - allow-other
-  - uid=1000
-  - gid=1000
----
-# S3-backed PVC for model artifacts
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: model-artifacts-pvc
-  namespace: ml-platform
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: s3-sc
-  resources:
-    requests:
-      storage: 1Ti  # Logical size, S3 scales automatically
-```
-
----
-
-## AI Workloads 的网络
-
-### Elastic Fabric Adapter (EFA) 用于多 Node 训练
-
-EFA 提供高带宽、低延迟网络，这是分布式训练的关键能力。
-
-```yaml
-# EFA-enabled NodePool
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: efa-training-nodepool
-spec:
-  template:
-    metadata:
-      labels:
-        node-type: efa-training
-    spec:
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        # EFA-supported GPU instances
-        - p4d.24xlarge   # 4x 400 Gbps EFA
-        - p5.48xlarge    # 32x 400 Gbps EFA
-        - trn1.32xlarge  # 8x 800 Gbps EFA
-        - trn1n.32xlarge # 16x 1600 Gbps EFA
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: efa-nodeclass
-      taints:
-      - key: nvidia.com/gpu
-        effect: NoSchedule
----
-# EC2NodeClass with EFA support
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: efa-nodeclass
-spec:
-  amiFamily: AL2
-  role: KarpenterNodeRole-ml-cluster
-
-  subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ml-cluster
-      efa-enabled: "true"
-
-  securityGroupSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ml-cluster
-      efa-enabled: "true"
-
-  # Enable all available EFA interfaces
-  instanceStorePolicy: RAID0
-
-  blockDeviceMappings:
-  - deviceName: /dev/xvda
-    ebs:
-      volumeSize: 500Gi
-      volumeType: gp3
-      iops: 16000
-      throughput: 1000
----
-# EFA Device Plugin DaemonSet
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: aws-efa-k8s-device-plugin
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      name: aws-efa-k8s-device-plugin
-  template:
-    metadata:
-      labels:
-        name: aws-efa-k8s-device-plugin
-    spec:
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      priorityClassName: system-node-critical
-      containers:
-      - name: aws-efa-k8s-device-plugin
-        image: public.ecr.aws/eks/aws-efa-k8s-device-plugin:v0.5.0
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
-        volumeMounts:
-        - name: device-plugin
-          mountPath: /var/lib/kubelet/device-plugins
-      volumes:
-      - name: device-plugin
-        hostPath:
-          path: /var/lib/kubelet/device-plugins
-      nodeSelector:
-        node-type: efa-training
----
-# Distributed training job with EFA
-apiVersion: kubeflow.org/v1
-kind: PyTorchJob
-metadata:
-  name: distributed-training-efa
-  namespace: ml-training
-spec:
-  nprocPerNode: "8"
-  pytorchReplicaSpecs:
-    Master:
-      replicas: 1
-      restartPolicy: OnFailure
-      template:
-        spec:
-          containers:
-          - name: pytorch
-            image: nvcr.io/nvidia/pytorch:24.01-py3
-            command:
-            - torchrun
-            - --nproc_per_node=8
-            - --nnodes=4
-            - --node_rank=0
-            - --master_addr=$(MASTER_ADDR)
-            - --master_port=29500
-            - /app/train.py
-            env:
-            - name: NCCL_DEBUG
-              value: "INFO"
-            - name: FI_PROVIDER
-              value: "efa"
-            - name: FI_EFA_USE_DEVICE_RDMA
-              value: "1"
-            - name: NCCL_ALGO
-              value: "Ring,Tree"
-            - name: NCCL_PROTO
-              value: "Simple"
-            resources:
-              limits:
-                nvidia.com/gpu: 8
-                vpc.amazonaws.com/efa: 4
-              requests:
-                nvidia.com/gpu: 8
-                vpc.amazonaws.com/efa: 4
-          nodeSelector:
-            node-type: efa-training
-    Worker:
-      replicas: 3
-      restartPolicy: OnFailure
-      template:
-        spec:
-          containers:
-          - name: pytorch
-            image: nvcr.io/nvidia/pytorch:24.01-py3
-            command:
-            - torchrun
-            - --nproc_per_node=8
-            - --nnodes=4
-            - --node_rank=$(RANK)
-            - --master_addr=$(MASTER_ADDR)
-            - --master_port=29500
-            - /app/train.py
-            env:
-            - name: NCCL_DEBUG
-              value: "INFO"
-            - name: FI_PROVIDER
-              value: "efa"
-            - name: FI_EFA_USE_DEVICE_RDMA
-              value: "1"
-            resources:
-              limits:
-                nvidia.com/gpu: 8
-                vpc.amazonaws.com/efa: 4
-              requests:
-                nvidia.com/gpu: 8
-                vpc.amazonaws.com/efa: 4
-          nodeSelector:
-            node-type: efa-training
-```
-
-### 面向 AI Workloads 的 VPC 设计
-
-```yaml
-# VPC Configuration for AI/ML workloads (Terraform reference)
-# Recommended: 2-4 AZs with large CIDR blocks for IP-intensive GPU instances
-
-# Example subnet layout:
-# - Public subnets: NAT gateways, load balancers
-# - Private subnets: EKS nodes, GPU instances
-# - Isolated subnets: FSx for Lustre, EFA traffic
-
-# Security group for GPU instances
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vpc-design-reference
-  namespace: kube-system
-data:
-  security-groups.yaml: |
-    # GPU Node Security Group
-    - name: gpu-nodes-sg
-      description: Security group for GPU nodes
-      ingress:
-        # Allow all traffic within VPC for NCCL/EFA
-        - protocol: -1
-          from_port: 0
-          to_port: 65535
-          cidr_blocks: ["10.0.0.0/16"]
-        # EFA requires all traffic between GPU nodes
-        - protocol: -1
-          from_port: 0
-          to_port: 65535
-          self: true
-      egress:
-        - protocol: -1
-          from_port: 0
-          to_port: 65535
-          cidr_blocks: ["0.0.0.0/0"]
-
-    # EFA Security Group (additional rules)
-    - name: efa-sg
-      description: Security group for EFA traffic
-      ingress:
-        # All traffic from EFA-enabled instances
-        - protocol: -1
-          from_port: 0
-          to_port: 65535
-          self: true
-      egress:
-        - protocol: -1
-          from_port: 0
-          to_port: 65535
-          self: true
-```
-
----
-
-## 监控和可观测性
-
-### Prometheus 和 Grafana Stack
-
-```yaml
-# Prometheus configuration for GPU metrics
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-gpu-config
-  namespace: monitoring
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s
-      evaluation_interval: 15s
-
-    scrape_configs:
-    # DCGM Exporter for NVIDIA GPU metrics
-    - job_name: 'dcgm-exporter'
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        action: keep
-        regex: dcgm-exporter
-      - source_labels: [__meta_kubernetes_pod_container_port_number]
-        action: keep
-        regex: '9400'
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-      - source_labels: [__meta_kubernetes_pod_node_name]
-        target_label: node
-
-    # Neuron Monitor for AWS Inferentia/Trainium
-    - job_name: 'neuron-monitor'
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        action: keep
-        regex: neuron-monitor
-      - source_labels: [__meta_kubernetes_pod_container_port_number]
-        action: keep
-        regex: '8000'
-
-    # Ray metrics
-    - job_name: 'ray-metrics'
-      kubernetes_sd_configs:
-      - role: service
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_service_label_ray_io_cluster]
-        action: keep
-        regex: .+
-      - source_labels: [__meta_kubernetes_service_port_name]
-        action: keep
-        regex: metrics
-
-    # Karpenter metrics
-    - job_name: 'karpenter'
-      kubernetes_sd_configs:
-      - role: pod
-        namespaces:
-          names: ['karpenter']
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-        action: keep
-        regex: karpenter
----
-# DCGM Exporter DaemonSet
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: dcgm-exporter
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: dcgm-exporter
-  template:
-    metadata:
-      labels:
-        app: dcgm-exporter
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9400"
-    spec:
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: dcgm-exporter
-        image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.4.0-ubuntu22.04
-        ports:
-        - containerPort: 9400
-          name: metrics
-        env:
-        - name: DCGM_EXPORTER_LISTEN
-          value: ":9400"
-        - name: DCGM_EXPORTER_KUBERNETES
-          value: "true"
-        - name: DCGM_EXPORTER_COLLECTORS
-          value: "/etc/dcgm-exporter/dcp-metrics-included.csv"
-        securityContext:
-          runAsNonRoot: false
-          runAsUser: 0
-          capabilities:
-            add: ["SYS_ADMIN"]
-        volumeMounts:
-        - name: pod-resources
-          mountPath: /var/lib/kubelet/pod-resources
-      volumes:
-      - name: pod-resources
-        hostPath:
-          path: /var/lib/kubelet/pod-resources
-      nodeSelector:
-        nvidia.com/gpu.present: "true"
----
-# Grafana Dashboard ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-gpu-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  gpu-dashboard.json: |
-    {
-      "dashboard": {
-        "title": "GPU Cluster Overview",
-        "panels": [
-          {
-            "title": "GPU Utilization",
-            "type": "timeseries",
-            "targets": [
-              {
-                "expr": "avg(DCGM_FI_DEV_GPU_UTIL) by (node, gpu)",
-                "legendFormat": "{{node}} - GPU {{gpu}}"
-              }
-            ]
-          },
-          {
-            "title": "GPU Memory Usage",
-            "type": "timeseries",
-            "targets": [
-              {
-                "expr": "DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE) * 100",
-                "legendFormat": "{{node}} - GPU {{gpu}}"
-              }
-            ]
-          },
-          {
-            "title": "GPU Temperature",
-            "type": "gauge",
-            "targets": [
-              {
-                "expr": "avg(DCGM_FI_DEV_GPU_TEMP) by (node)",
-                "legendFormat": "{{node}}"
-              }
-            ]
-          },
-          {
-            "title": "GPU Power Usage",
-            "type": "timeseries",
-            "targets": [
-              {
-                "expr": "sum(DCGM_FI_DEV_POWER_USAGE) by (node)",
-                "legendFormat": "{{node}}"
-              }
-            ]
-          },
-          {
-            "title": "GPU SM Clock",
-            "type": "stat",
-            "targets": [
-              {
-                "expr": "avg(DCGM_FI_DEV_SM_CLOCK)",
-                "legendFormat": "SM Clock (MHz)"
-              }
-            ]
-          },
-          {
-            "title": "NVLink Bandwidth",
-            "type": "timeseries",
-            "targets": [
-              {
-                "expr": "rate(DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL[5m])",
-                "legendFormat": "{{node}} - GPU {{gpu}}"
-              }
-            ]
-          },
-          {
-            "title": "PCIe Bandwidth",
-            "type": "timeseries",
-            "targets": [
-              {
-                "expr": "rate(DCGM_FI_DEV_PCIE_TX_THROUGHPUT[5m]) + rate(DCGM_FI_DEV_PCIE_RX_THROUGHPUT[5m])",
-                "legendFormat": "{{node}} - GPU {{gpu}}"
-              }
-            ]
-          },
-          {
-            "title": "Tensor Core Utilization",
-            "type": "timeseries",
-            "targets": [
-              {
-                "expr": "avg(DCGM_FI_PROF_PIPE_TENSOR_ACTIVE) by (node, gpu) * 100",
-                "legendFormat": "{{node}} - GPU {{gpu}}"
-              }
-            ]
-          }
-        ]
-      }
-    }
-```
-
-### GPU 利用率告警
-
-```yaml
-# PrometheusRule for GPU alerts
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: gpu-alerts
-  namespace: monitoring
-spec:
-  groups:
-  - name: gpu.rules
-    interval: 30s
-    rules:
-    # GPU utilization alerts
-    - alert: GPULowUtilization
-      expr: avg_over_time(DCGM_FI_DEV_GPU_UTIL[30m]) < 20
-      for: 1h
-      labels:
-        severity: warning
-      annotations:
-        summary: "Low GPU utilization on {{ $labels.node }}"
-        description: "GPU {{ $labels.gpu }} on node {{ $labels.node }} has been underutilized (<20%) for over 1 hour. Consider consolidating workloads."
-
-    - alert: GPUHighTemperature
-      expr: DCGM_FI_DEV_GPU_TEMP > 85
-      for: 5m
-      labels:
-        severity: critical
-      annotations:
-        summary: "High GPU temperature on {{ $labels.node }}"
-        description: "GPU {{ $labels.gpu }} on node {{ $labels.node }} temperature is {{ $value }}C, which exceeds the safe threshold."
-
-    - alert: GPUMemoryExhausted
-      expr: (DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE)) * 100 > 95
-      for: 5m
-      labels:
-        severity: critical
-      annotations:
-        summary: "GPU memory nearly exhausted on {{ $labels.node }}"
-        description: "GPU {{ $labels.gpu }} on node {{ $labels.node }} memory usage is at {{ $value }}%."
-
-    - alert: GPUXIDError
-      expr: increase(DCGM_FI_DEV_XID_ERRORS[5m]) > 0
-      for: 1m
-      labels:
-        severity: critical
-      annotations:
-        summary: "GPU XID error detected on {{ $labels.node }}"
-        description: "GPU {{ $labels.gpu }} on node {{ $labels.node }} has reported XID errors, indicating potential hardware issues."
-
-    - alert: GPUECCErrors
-      expr: increase(DCGM_FI_DEV_ECC_DBE_VOL_TOTAL[1h]) > 0
-      for: 1m
-      labels:
-        severity: warning
-      annotations:
-        summary: "GPU ECC double-bit errors on {{ $labels.node }}"
-        description: "GPU {{ $labels.gpu }} on node {{ $labels.node }} has reported ECC double-bit errors."
-
-    # Karpenter scaling alerts
-    - alert: GPUNodePoolExhausted
-      expr: karpenter_nodepools_limit{resource="nvidia.com/gpu"} - karpenter_nodepools_usage{resource="nvidia.com/gpu"} < 2
-      for: 10m
-      labels:
-        severity: warning
-      annotations:
-        summary: "GPU NodePool approaching limit"
-        description: "GPU NodePool {{ $labels.nodepool }} has only {{ $value }} GPUs remaining before hitting its limit."
-
-    - alert: PendingGPUPods
-      expr: sum(kube_pod_status_phase{phase="Pending"} * on(pod, namespace) group_left() kube_pod_container_resource_requests{resource="nvidia.com/gpu"}) > 0
-      for: 15m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Pods pending due to GPU unavailability"
-        description: "{{ $value }} pods requesting GPUs have been pending for over 15 minutes."
-```
-
----
-
-## 最佳实践总结
-
-### 基础设施最佳实践
-
-| 类别 | 建议 | 原因 |
-|----------|---------------|-----------|
-| **Compute** | 对不同 GPU 类型使用带独立 NodePools 的 Karpenter | 更快预置、成本优化 |
-| **Storage** | 共享数据使用 EFS，训练使用 FSx Lustre | 将 I/O 模式与 workload 需求匹配 |
-| **Networking** | 为多 Node 训练启用 EFA | 为 NCCL 提供 400+ Gbps 带宽 |
-| **Scheduling** | 在 Kubernetes 1.31+ 中使用 DRA 进行 GPU 共享 | 细粒度 GPU 分配 |
-| **Monitoring** | 在所有 GPU Node 上部署 DCGM exporter | GPU 专用指标和告警 |
-
-### 成本优化策略
-
-1. **Spot Instances**: 对具备 checkpointing 的容错训练使用 Spot
-2. **Right-sizing**: 将 GPU 类型与 workload 匹配（T4 用于开发，A100 用于生产训练）
-3. **Consolidation**: 使用 Karpenter 的 consolidation 将 GPU workload 打包到更少 Node 上
-4. **Time-slicing**: 使用 DRA 为推理 workload 共享 GPU
-5. **Neuron Instances**: 对推理考虑使用 inf2/trn1（最高可节省 50% 成本）
-
-### 安全注意事项
-
-1. **Network Isolation**: 为 GPU Node 使用专用 subnet
-2. **IAM Roles**: 为 S3/secrets 访问实现最小权限 IRSA
-3. **Encryption**: 为 EBS、EFS 和 S3 启用加密
-4. **Secrets Management**: 使用 External Secrets Operator 管理 API keys
-5. **Container Security**: 扫描 GPU container images 中的漏洞
-
----
+已审查所有原始指南/quiz 说明文字和58个独特 code block。检查涵盖 DRA/Pod schema、官方 Helm、OAuthenticator allow policy、Argo 离线 lint/script body 和 Prometheus fixture。未执行实际的 OAuth/cluster/GPU/DRA allocation、model、S3 mount 或 MCP server；未创建 cloud resource 或付费调用。
 
 ## 参考资料
 
-- [AI on EKS - AWS Labs](https://awslabs.github.io/ai-on-eks/)
-- [NVIDIA GPU Operator Documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/)
-- [Ray on Kubernetes Documentation](https://docs.ray.io/en/latest/cluster/kubernetes/)
-- [Karpenter Documentation](https://karpenter.sh/)
-- [Amazon EKS Best Practices Guide - AI/ML](https://aws.github.io/aws-eks-best-practices/ai-ml/)
-- [NVIDIA DCGM Documentation](https://docs.nvidia.com/datacenter/dcgm/latest/)
-- [Dynamic Resource Allocation KEP](https://github.com/kubernetes/enhancements/tree/master/keps/sig-node/3063-dynamic-resource-allocation)
+- [GPU Operator26.7 DRA 安装](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/26.7/dra-intro-install.html)
+- [NVIDIA DRA0.5 源代码](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/tree/v0.5.0)
+- [DRA0.5 前提条件](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/site/content/docs/prerequisites.md)
+- [DRA0.5 feature gate](https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/pkg/featuregates/featuregates.go)
+- [OAuthenticator17.4](https://github.com/jupyterhub/oauthenticator/tree/17.4.0)
+- [JupyterHub chart4.4.2](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/releases/tag/4.4.2)
+- [Argo Workflows4.1.3](https://github.com/argoproj/argo-workflows/tree/v4.1.3)
+- [Mountpoint CSI2.8.0](https://github.com/awslabs/mountpoint-s3-csi-driver/tree/v2.8.0)
+- [DCGM Exporter counter 定义](https://github.com/NVIDIA/dcgm-exporter/blob/4.6.0-4.8.3/etc/default-counters.csv)
+- [MCP tools 规范](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
 
----
+## 测验
 
-**测验**: 通过 [AI 基础设施测验](../quizzes/ai-ml/06-ai-infrastructure-quiz.md) 测试你的知识
+[AI 基础设施测验](../quizzes/ai-ml/06-ai-infrastructure-quiz.md)
