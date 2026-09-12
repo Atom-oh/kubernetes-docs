@@ -106,32 +106,6 @@
         ]
       },
       {
-        "path": "ko/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
-        "sha256": "b877ccc170259d1b9365e1ae193d112f391fa70d61b32c994e9ac4a7e16ea021",
-        "passed": true,
-        "errors": [],
-        "oneH1": true,
-        "headings": [
-          {
-            "tag": "h1",
-            "id": "ray-serve-퀴즈"
-          },
-          {
-            "tag": "h2",
-            "id": "객관식-문제"
-          },
-          {
-            "tag": "h2",
-            "id": "서술형-문제"
-          }
-        ],
-        "renderedIds": [
-          "ray-serve-퀴즈",
-          "객관식-문제",
-          "서술형-문제"
-        ]
-      },
-      {
         "path": "en/ai-ml/ray/04-ray-serve.md",
         "sha256": "ff0056644ac060a67acc1b5458a7fe542e42e9bd422f12ef102a7153557f2484",
         "passed": true,
@@ -193,8 +167,34 @@
         ]
       },
       {
+        "path": "ko/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
+        "sha256": "b877ccc170259d1b9365e1ae193d112f391fa70d61b32c994e9ac4a7e16ea021",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-serve-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "서술형-문제"
+          }
+        ],
+        "renderedIds": [
+          "ray-serve-퀴즈",
+          "객관식-문제",
+          "서술형-문제"
+        ]
+      },
+      {
         "path": "en/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
-        "sha256": "66bea2a55e4919d6490982004cb69effc2f67a7252475d1e692119e4045d61e6",
+        "sha256": "cc83728674e1ac91c6fe439d7d8321ff01d70bb5a6ee286de6bb33c827eb7d13",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -374,5 +374,10 @@
     "ServeandRayclosedinfinally;shortsocketaliasremoved",
     "LLMsource/dependencyinspectiononly;ray[llm]/vLLM/SGLangnotinstalled",
     "Publicationreview/CIpending"
-  ]
+  ],
+  "reviewFollowup": {
+    "issue": "MLR-R1-001",
+    "correction": "Fresh4documentMarkdowncompileafterfinalEnglishquizspacingcleanup;sourcehashrecordupdated",
+    "status": "rootreportcorrected;notyetinreviewedPRHEAD"
+  }
 }
