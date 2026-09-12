@@ -217,7 +217,7 @@
       },
       {
         "path": "ko/data-on-eks/flink/README.md",
-        "sha256": "f633747ef275bf6c9cd1ef030f0e5edf725e87bee9a2fc3060aee0e7db389f76",
+        "sha256": "5a98178d50e8435c9a7174a21d57e53a6fe83434ec8a981069bb9b46b069c4da",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -248,7 +248,7 @@
       },
       {
         "path": "en/data-on-eks/flink/README.md",
-        "sha256": "0ff647675f675ec2bde00c9da0f8d40eb2b021a2b2345078c5c1758aef1e0ae5",
+        "sha256": "74030331c2c7247a38f133a2a37ab8720f620434d6876da2e1e6cf4d767fc3b1",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -548,5 +548,6 @@
     "https://docs.aws.amazon.com/managed-flink/latest/java/how-scaling-auto.html",
     "https://docs.aws.amazon.com/managed-flink/latest/java/how-scaling.html"
   ],
-  "limits": "Native memory budget computation only with Corretto21/target17;no4GiBallocation,actualRSSmeasurement,Prometheusscrape,Kubernetesdeployment,HAfailover,managedappAPIoperationorcostmeasurement."
+  "limits": "Native memory budget computation only with Corretto21/target17;no4GiBallocation,actualRSSmeasurement,Prometheusscrape,Kubernetesdeployment,HAfailover,managedappAPIoperationorcostmeasurement.",
+  "readmeCompilationScope": "README records freshly compiled from immutablePR234HEADdff67c7b;README filesareunchangedbythiscohort."
 }
