@@ -1,175 +1,163 @@
 # EKS 업그레이드 운영 퀴즈
 
-> **관련 문서**: [EKS 업그레이드 운영](../../ops/11-upgrade-operations.md)
+> **관련 문서**: [EKS 업그레이드](../../ops/11-upgrade-operations.md)
 
-## 객관식 문제
+## 1. EKS 컨트롤 플레인 minor 업그레이드에서 건너뛸 수 있는 중간 버전 수는?
 
-### 1. EKS 업그레이드 전 deprecated API를 확인하기 위해 사용하는 도구는 무엇인가요?
-
-- A) kubectl version
-- B) pluto 또는 kubent
-- C) helm list
-- D) aws eks describe-cluster
+- A) 0개: 다음 minor로 한 단계씩 진행
+- B) 1개
+- C) 2개
+- D) 제한 없음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) pluto 또는 kubent**
+**정답: A**
 
-**설명:**
-pluto와 kubent는 클러스터나 Helm 차트에서 deprecated 또는 removed API를 검색하는 도구입니다. 업그레이드 전에 이 도구들을 실행하여 새 Kubernetes 버전에서 제거될 API를 사용하는 리소스를 미리 파악하고 수정해야 합니다.
+예를 들어 1.34→1.36은 1.35를 거쳐야 합니다. kubelet의 허용 skew와 CP 업그레이드 단계를 구별합니다.
 
 </details>
 
-### 2. Velero를 사용한 백업에서 기본적으로 제외되는 네임스페이스는 무엇인가요?
+## 2. 순수 Auto Mode에서 CoreDNS Deployment가 없을 때 올바른 해석은?
 
-- A) default
-- B) kube-system
-- C) velero
-- D) 모든 네임스페이스 포함
+- A) 항상 DNS 장애다
+- B) 노드 system service의 DNS를 사용하므로 관리 주체와 실제 DNS 동작을 확인한다
+- C) 반드시 자체 Karpenter를 설치한다
+- D) 모든 클러스터에서 CoreDNS Deployment를 삭제한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) velero**
+**정답: B**
 
-**설명:**
-Velero는 기본적으로 자신이 설치된 velero 네임스페이스를 백업에서 제외합니다. kube-system은 필요에 따라 포함하거나 제외할 수 있습니다. 일반적으로 애플리케이션 네임스페이스 중심으로 백업하고, 시스템 네임스페이스는 클러스터 재구성으로 복원합니다.
+일반 노드가 섞인 클러스터는 필요한 DNS Deployment와 애드온을 유지해야 합니다.
 
 </details>
 
-### 3. EKS Auto Mode 업그레이드 시 권장되는 컴포넌트 업그레이드 순서는 무엇인가요?
+## 3. Velero 1.18.2 restore create -o json에 대한 올바른 설명은?
 
-- A) Add-ons → Control Plane → Nodes
-- B) Nodes → Control Plane → Add-ons
-- C) Control Plane → Add-ons → Nodes
-- D) 동시에 모두 업그레이드
+- A) 실제 복원을 완료한다
+- B) 완전히 오프라인으로만 동작한다
+- C) 객체를 생성하지 않지만 discovery/Backup 읽기는 수행할 수 있다
+- D) --dry-run과 함께 써야만 유효하다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Control Plane → Add-ons → Nodes**
+**정답: C**
 
-**설명:**
-EKS 업그레이드는 Control Plane을 먼저 업그레이드하고, 그 다음 Add-ons(CoreDNS, kube-proxy, VPC CNI 등), 마지막으로 Nodes 순서로 진행합니다. Control Plane이 먼저 업그레이드되어야 새 버전의 API를 지원하고, Nodes는 Control Plane과 최대 2개 마이너 버전 차이까지 호환됩니다.
+restore create에는 해당 --dry-run flag가 없습니다. 출력 전용 객체 확인과 실제 격리 복원 시험은 별개입니다.
 
 </details>
 
-### 4. Blue/Green 클러스터 업그레이드 전략의 주요 장점은 무엇인가요?
+## 4. Preflight 도구가 API 오류나 잘못된 kubecontext를 만났을 때 해야 할 일은?
 
-- A) 비용 절감
-- B) 업그레이드 실패 시 빠른 롤백 가능
-- C) 자동 업그레이드
-- D) 다운타임 없는 in-place 업그레이드
+- A) 빈 결과를 정상으로 취급한다
+- B) 상태를 알 수 없거나 context 불일치로 실패시키고 확인한다
+- C) 자동으로 현재 context를 바꿔 업그레이드한다
+- D) PDB를 삭제한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 업그레이드 실패 시 빠른 롤백 가능**
+**정답: B**
 
-**설명:**
-Blue/Green 업그레이드는 새 버전의 클러스터(Green)를 별도로 구축하고 검증한 후 트래픽을 전환합니다. 문제가 발생하면 트래픽을 기존 클러스터(Blue)로 즉시 되돌릴 수 있어 롤백이 빠르고 안전합니다. 단점은 일시적으로 두 클러스터 비용이 발생한다는 것입니다.
+Running만으로 Pod Ready를 보장하지 않으며 Deployment generation과 rollout 상태도 확인해야 합니다.
 
 </details>
 
-### 5. kubectl drain 명령의 --ignore-daemonsets 옵션이 필요한 이유는 무엇인가요?
+## 5. EKS 네이티브 롤백의 기본 자격 조건은?
 
-- A) DaemonSet Pod를 강제 삭제
-- B) DaemonSet Pod는 다른 노드로 이동할 수 없으므로 무시
-- C) DaemonSet을 먼저 업그레이드
-- D) DaemonSet 로그 무시
+- A) 현재 버전으로 새로 만든 모든 클러스터
+- B) 업그레이드 완료 후 7일 안에 이전 minor로 롤백을 시작하는 등 자격 조건 충족
+- C) 언제든 원하는 이전 버전
+- D) etcd 백업이 있으면 모든 제약 우회
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) DaemonSet Pod는 다른 노드로 이동할 수 없으므로 무시**
+**정답: B**
 
-**설명:**
-DaemonSet은 모든 노드에 하나의 Pod를 실행하도록 설계되어 있어 다른 노드로 evict할 수 없습니다. --ignore-daemonsets 옵션을 사용하면 drain 시 DaemonSet Pod를 무시하고 진행합니다. 노드가 다시 Ready가 되면 DaemonSet Pod가 자동으로 재생성됩니다.
+대상 지원 상태, EXTENDED 정책, 현재 ACTIVE 상태와 호환되지 않는 EKS 기능 등도 확인합니다.
 
 </details>
 
-### 6. EKS 버전 업그레이드 시 한 번에 건너뛸 수 있는 마이너 버전 수는 몇 개인가요?
+## 6. Auto Mode 노드 롤백 중 cluster status가 ACTIVE이면?
 
-- A) 제한 없음
-- B) 최대 1개 (순차 업그레이드 필요)
-- C) 최대 2개
-- D) 최대 3개
+- A) 롤백이 모두 끝났다
+- B) CP가 현재 버전으로 서비스 중일 수 있으므로 update ID 상태를 확인한다
+- C) 노드 롤백이 불가능하다
+- D) 즉시 이전 클러스터를 삭제한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 최대 1개 (순차 업그레이드 필요)**
+**정답: B**
 
-**설명:**
-EKS는 한 번에 한 마이너 버전씩만 업그레이드할 수 있습니다. 예를 들어 1.27에서 1.29로 업그레이드하려면 1.27 → 1.28 → 1.29 순서로 두 번 업그레이드해야 합니다. 이는 Kubernetes의 API 호환성 정책 때문입니다.
+Auto Mode는 노드를 먼저 조정합니다. 기본 node timeout은 720분이며 클라이언트 대기 timeout은 AWS 작업 취소가 아닙니다.
 
 </details>
 
-### 7. Velero의 Schedule 리소스의 역할은 무엇인가요?
+## 7. Rollback --force의 범위는?
 
-- A) 복원 일정 관리
-- B) 정기적인 자동 백업 실행
-- C) 업그레이드 일정 관리
-- D) Pod 스케줄링
+- A) 7일 창과 모든 PDB
+- B) 모든 노드 disruption과 데이터 호환성
+- C) Insight 검사이며 자격 조건이나 Auto Mode disruption 제약을 해제하지 않는다
+- D) etcd 데이터 보존
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 정기적인 자동 백업 실행**
+**정답: C**
 
-**설명:**
-Velero Schedule은 cron 표현식을 사용하여 정기적인 백업을 자동으로 실행합니다. 예: `schedule: "0 2 * * *"`는 매일 오전 2시에 백업을 실행합니다. ttl(Time To Live)로 백업 보존 기간도 설정할 수 있습니다.
+ERROR/UNKNOWN은 차단하고 WARNING은 advisory입니다. force를 기본 복구 방법으로 사용하지 않습니다.
 
 </details>
 
-### 8. PodDisruptionBudget(PDB)의 역할과 업그레이드 관련성은 무엇인가요?
+## 8. 네이티브 버전 롤백이 자동으로 과거 상태로 복원하지 않는 것은?
 
-- A) Pod 성능 최적화
-- B) 노드 drain 시 최소 가용 Pod 수를 보장하여 서비스 중단 방지
-- C) Pod 메모리 제한
-- D) Pod 네트워크 정책
+- A) API server minor 버전
+- B) Auto Mode 노드의 버전 조정
+- C) 애드온·앱·etcd 객체·PV 데이터
+- D) 제어 플레인 구성 요소 버전
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 노드 drain 시 최소 가용 Pod 수를 보장하여 서비스 중단 방지**
+**정답: C**
 
-**설명:**
-PDB는 minAvailable 또는 maxUnavailable을 설정하여 voluntary disruption(업그레이드, 노드 drain 등) 시 최소한의 Pod가 항상 실행되도록 보장합니다. 예를 들어 minAvailable: 2면 drain 시에도 최소 2개 Pod가 유지됩니다.
+일반 managed node group은 별도 UpdateNodegroupVersion이 필요합니다. 데이터 snapshot 복원과 버전 롤백을 구별합니다.
 
 </details>
 
-### 9. EKS 업그레이드 후 확인해야 할 항목이 아닌 것은 무엇인가요?
+## 9. NLB TG 가중치 0 전환에 대한 올바른 설명은?
 
-- A) 모든 노드가 Ready 상태인지 확인
-- B) 핵심 Pod들이 Running 상태인지 확인
-- C) 이전 버전 클러스터 즉시 삭제
-- D) Add-on 버전 호환성 확인
+- A) 기존 연결은 무조건 끝까지 유지된다
+- B) 짧은 시간 후 기존 연결도 닫힐 수 있으므로 retry/session 동작을 시험한다
+- C) 가중치 합은 반드시 100이어야 한다
+- D) NLB는 weighted TG를 지원하지 않는다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 이전 버전 클러스터 즉시 삭제**
+**정답: B**
 
-**설명:**
-Blue/Green 업그레이드의 경우 이전 클러스터를 즉시 삭제하지 않고 일정 기간 유지하여 문제 발생 시 롤백할 수 있도록 합니다. 업그레이드 후에는 노드 상태, Pod 상태, Add-on 호환성, 애플리케이션 기능 테스트 등을 확인해야 합니다.
+가중치는 0–999 상대값입니다. 일반 변경과 0 전환을 구별하며 TLS listener의 TG stickiness 미지원도 확인합니다.
 
 </details>
 
-### 10. AWS에서 EKS 버전의 표준 지원 기간은 얼마인가요?
+## 10. Blue 클러스터 정리 전 올바른 확인은?
 
-- A) 6개월
-- B) 12개월
-- C) 14개월 (표준 지원)
-- D) 24개월
+- A) weight가 0이면 즉시 destroy
+- B) 공유 자원/TG 참조·데이터 호환성·복구 기간·소유권을 확인
+- C) HTTP 200 한 번이면 모든 데이터 정합성 보장
+- D) 공유 EFS이면 동시 writer를 검토할 필요 없음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 14개월 (표준 지원)**
+**정답: B**
 
-**설명:**
-EKS의 각 Kubernetes 버전은 출시 후 14개월간 표준 지원을 받습니다. 이후 12개월간 연장 지원(Extended Support)을 받을 수 있지만 추가 비용이 발생합니다. 지원 종료 전에 새 버전으로 업그레이드하는 것이 권장됩니다.
+Auto Mode TGB/클러스터 삭제의 TG 수명주기와 shared listener를 고려합니다. namespace 변경도 consumer/DB/DNS 격리를 보장하지 않습니다.
 
 </details>

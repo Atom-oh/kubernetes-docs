@@ -1,7 +1,7 @@
 # Advanced Topics Quiz
 
 > **Related Document**: [Advanced Topics](../../../networking/calico/07-advanced-topics.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
@@ -17,7 +17,7 @@
 **Answer: B) 64 IPs**
 
 **Explanation:**
-A /26 CIDR block provides 64 IP addresses (2^(32-26) = 2^6 = 64). Calico allocates IP blocks of configurable size to nodes, and then assigns individual IPs from these blocks to pods. The default block size is /26, which balances efficiency with IP utilization.
+An IPv4 /26 contains 64 addresses. This is not always 64 usable Pod addresses: Calico Windows reserves four per owned block. IPv6 defaults use /122, also 64 addresses. Set blockSize when creating a pool; it is not an in-place tuning change.
 
 </details>
 
@@ -33,7 +33,7 @@ A /26 CIDR block provides 64 IP addresses (2^(32-26) = 2^6 = 64). Calico allocat
 **Answer: B) Nodes claim and preferentially use specific IP blocks**
 
 **Explanation:**
-IP block affinity means that when a node needs to allocate pod IPs, it claims one or more IP blocks and preferentially allocates from those blocks. This improves routing efficiency because all pods on a node typically share the same IP prefix, enabling route aggregation.
+Nodes preferentially allocate from their affine blocks, subject to pool selection and limits. A node may have several blocks, and permitted borrowing can create more-specific routes. Block affinity is not the same as Node.spec.podCIDR or a guarantee that every Pod on a node shares one prefix.
 
 </details>
 
@@ -49,27 +49,27 @@ IP block affinity means that when a node needs to allocate pod IPs, it claims on
 **Answer: B) Setting wireguardEnabled: true in FelixConfiguration**
 
 **Explanation:**
-WireGuard encryption is enabled by setting `wireguardEnabled: true` in the FelixConfiguration resource. Calico automatically manages WireGuard key generation and distribution between nodes, creating encrypted tunnels for pod-to-pod traffic across nodes.
+wireguardEnabled enables the supported IPv4 path; wireguardEnabledV6 is separate. Both peers need compatible kernel/network support. Calico manages node keys and publishes public keys. Same-node traffic and unsupported peers are not automatically encrypted by the inter-node tunnel.
 
 </details>
 
-4. What is a key advantage of WireGuard over IPsec for encrypting pod traffic?
+4. Which statement describes WireGuard’s design without claiming a universal performance result?
    - A) WireGuard supports more encryption algorithms
-   - B) WireGuard has simpler configuration and lower CPU overhead
-   - C) WireGuard works without kernel support
+   - B) WireGuard uses a deliberately limited cryptographic design and key configuration
+   - C) Calico WireGuard needs no node or runtime prerequisites
    - D) WireGuard provides better compression
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) WireGuard has simpler configuration and lower CPU overhead**
+**Answer: B) WireGuard uses a deliberately limited cryptographic design and key configuration**
 
 **Explanation:**
-WireGuard offers simpler configuration with fewer options (which reduces misconfiguration risk) and typically lower CPU overhead compared to IPsec. It uses modern cryptographic primitives and has a smaller codebase, making it easier to audit and maintain.
+WireGuard deliberately limits cryptographic choices. CPU cost, throughput, roaming and offload comparisons depend on the implementation and workload. Unversioned code-line counts and the chapter’s unverified performance ranges are not a universal security or speed ranking.
 
 </details>
 
-5. What is the primary use case for Calico's Egress Gateway feature?
+5. What is the primary use case for the documented Calico Enterprise Egress Gateway?
    - A) Load balancing ingress traffic to services
    - B) Providing consistent source IPs for pods accessing external services
    - C) Caching DNS responses for faster resolution
@@ -81,23 +81,23 @@ WireGuard offers simpler configuration with fewer options (which reduces misconf
 **Answer: B) Providing consistent source IPs for pods accessing external services**
 
 **Explanation:**
-Egress Gateway allows pods to access external services using a consistent, predictable source IP address. This is essential when external services use IP-based allowlisting, as it ensures traffic from specific pods always appears to come from known gateway IPs.
+A transit gateway Pod performs SNAT for selected clients, exposing a controlled source-address set. Actual observed addresses depend on pool/upstream NAT and availability. NetworkPolicy Allow and BGP serviceExternalIPs do not create that routing/SNAT behavior. Source allowlisting is not complete compliance or application authorization.
 
 </details>
 
-6. What capability does Calico's multi-cluster federation provide?
-   - A) Automatic failover between clusters
-   - B) Shared network policies and service discovery across clusters
+6. What does the current Calico Enterprise federation feature provide?
+   - A) Automatic replication and failover of application databases
+   - B) Remote endpoint identity and selected Service discovery while policies remain locally applied
    - C) Centralized logging for all clusters
    - D) Unified billing across clusters
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Shared network policies and service discovery across clusters**
+**Answer: B) Remote endpoint identity and selected Service discovery while policies remain locally applied**
 
 **Explanation:**
-Multi-cluster federation allows Calico to share network policies, enable cross-cluster service discovery, and provide consistent networking across multiple Kubernetes clusters. This enables workloads in different clusters to communicate securely using unified policies.
+Federated endpoint identity feeds remote endpoint information into local policy calculation; it does not copy remote policies onto local endpoints. A separate Federated Services Controller reads remote Kubernetes APIs. Routable, source-preserved Pod paths and controller credentials/configuration are prerequisites; Typha is not a shared Federation Controller.
 
 </details>
 
@@ -113,7 +113,7 @@ Multi-cluster federation allows Calico to share network policies, enable cross-c
 **Answer: B) Calico supports Windows nodes with some feature limitations**
 
 **Explanation:**
-Calico supports Windows nodes in Kubernetes clusters, enabling mixed Linux/Windows environments. However, some features like eBPF dataplane are not available on Windows due to OS differences. Windows support covers basic networking and network policy enforcement.
+Calico Windows uses HNS/HostProcess with platform and version limits. IPv4 VXLAN or supported non-overlay BGP are available, but IPv6/dual stack, eBPF, WireGuard, HostEndpoint policy and Service advertisement are excluded in the reviewed Windows guide. Match OS/container builds and the actual provider profile.
 
 </details>
 
@@ -129,27 +129,27 @@ Calico supports Windows nodes in Kubernetes clusters, enabling mixed Linux/Windo
 **Answer: B) Enterprise includes additional security, compliance, and observability features**
 
 **Explanation:**
-Calico Enterprise builds on the open source project and adds features like hierarchical policy tiers, flow visualization, compliance reporting, threat defense, and enterprise support. The core networking dataplane is the same between both versions.
+Open Source 3.32 already includes tiers, Whisker/flow visibility, staged policies and HTTP policy through Istio/Dikastes. Commercial editions add product-specific capabilities such as domain policy, egress gateways, remote identity/services and reporting. Feature/support terms depend on the selected product and version.
 
 </details>
 
-9. What is the Typha sizing formula for large Calico deployments?
-   - A) 1 Typha per 100 nodes
-   - B) 1 Typha per 500 nodes, minimum 3 for HA
-   - C) Typha replicas = nodes / 200, recommended for 1000+ node clusters
-   - D) Fixed at 5 replicas regardless of cluster size
+9. What Typha replica target does Tigera Operator 1.42.6 calculate for 1,000 counted nodes?
+   - A) 5 replicas
+   - B) 3 replicas
+   - C) 7 replicas
+   - D) 10 replicas
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Typha replicas = nodes / 200, recommended for 1000+ node clusters**
+**Answer: C) 7 replicas**
 
 **Explanation:**
-For clusters with 1000+ nodes, Typha becomes essential for scalability. The general sizing formula is approximately 1 Typha replica per 200 nodes, with a minimum of 3 replicas for high availability. Typha fans out datastore updates to Felix instances, reducing API server load.
+For N>4, the reviewed operator uses max(3, floor(N/200)+2), giving 7 at 1,000 nodes. N<=2 gives 1 and N<=4 gives 2. This is an implementation target with node-count/placement conditions, not a measured “200 nodes per Typha” capacity guarantee.
 
 </details>
 
-10. What is required for Calico to support IPv6 and dual-stack networking?
+10. Which pool prerequisite applies to a Calico-IPAM dual-stack deployment?
     - A) A separate IPv6-specific installation
     - B) Configuring IPPools for both IPv4 and IPv6 address ranges
     - C) Using only the eBPF dataplane
@@ -161,7 +161,7 @@ For clusters with 1000+ nodes, Typha becomes essential for scalability. The gene
 **Answer: B) Configuring IPPools for both IPv4 and IPv6 address ranges**
 
 **Explanation:**
-Dual-stack support in Calico requires configuring IPPools for both IPv4 and IPv6 CIDR ranges. Pods can then receive addresses from both pools. The cluster must also have dual-stack enabled at the Kubernetes level, and underlying infrastructure must support IPv6.
+Calico-IPAM dual stack uses IPv4 and IPv6 pools, while Kubernetes, CNI, node addressing and the underlay must also support both families. IPv6-only does not require an IPv4 pool. Felix ipv6Support is a boolean; adding that flag or pools alone does not convert an existing cluster’s IP-family configuration.
 
 </details>
 
@@ -177,22 +177,22 @@ Dual-stack support in Calico requires configuring IPPools for both IPv4 and IPv6
 **Answer: B) Using calicoctl ipam show to view allocation status**
 
 **Explanation:**
-The `calicoctl ipam show` command displays IPAM allocation status including total IPs, allocated IPs, and available IPs across all pools and blocks. The `--show-blocks` flag provides detailed per-node block allocation information, helping identify exhaustion issues.
+ipam show reports allocation usage and --show-blocks adds block detail. Use BlockAffinity for node association and consider eligible pools, reservations and affinity/host limits. Free addresses elsewhere do not guarantee allocation. Clean up only verified stale allocations using a fresh recovery report, not a copied sample IP.
 
 </details>
 
-12. When should you choose etcd as Calico's datastore instead of the Kubernetes API?
+12. Which is a reason to consider a direct-etcd Calico profile?
     - A) For clusters smaller than 100 nodes
     - B) When running in managed Kubernetes services
-    - C) For very large clusters or non-Kubernetes deployments
+    - C) A supported non-Kubernetes deployment with an explicit etcd operating and recovery plan
     - D) When using the eBPF dataplane
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) For very large clusters or non-Kubernetes deployments**
+**Answer: C) A supported non-Kubernetes deployment with an explicit etcd operating and recovery plan**
 
 **Explanation:**
-The etcd datastore is recommended for very large clusters where Kubernetes API server load is a concern, or for non-Kubernetes deployments (bare metal, VMs). For most Kubernetes deployments, the Kubernetes datastore is simpler as it doesn't require managing a separate etcd cluster.
+Direct etcd can be appropriate for a supported separately designed deployment. Kubernetes datastore is simpler for many Kubernetes installations and is required by the current eBPF dataplane. No fixed 5,000-node threshold or universal read-speed comparison determines the choice.
 
 </details>

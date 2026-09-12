@@ -7,8 +7,8 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1220,
-      720
+      1040,
+      460
     ],
     "legend": {
       "mode": "auto",
@@ -29,14 +29,28 @@
     {
       "id": "rules",
       "type": "messagebus",
-      "label": "PrometheusRule CRD",
-      "sublabel": "알림 · 레코딩 규칙",
+      "label": "PrometheusRule",
+      "sublabel": "Kubernetes 규칙 객체",
       "pos": [
-        40,
+        30,
         110
       ],
       "size": [
-        250,
+        210,
+        80
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Prometheus Operator",
+      "sublabel": "선택 · 설정 생성",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        210,
         80
       ]
     },
@@ -44,13 +58,13 @@
       "id": "prometheus",
       "type": "backend",
       "label": "Prometheus",
-      "sublabel": "규칙 주기 평가",
+      "sublabel": "메트릭으로 규칙 평가",
       "pos": [
-        40,
-        350
+        550,
+        110
       ],
       "size": [
-        250,
+        210,
         80
       ]
     },
@@ -58,70 +72,28 @@
       "id": "am",
       "type": "backend",
       "label": "Alertmanager",
-      "sublabel": "그룹화 · 억제 · 라우팅",
+      "sublabel": "그룹 · 억제 · 라우팅",
       "pos": [
-        410,
-        230
+        810,
+        110
       ],
       "size": [
-        260,
-        84
+        200,
+        80
       ]
     },
     {
-      "id": "slack",
+      "id": "receivers",
       "type": "external",
-      "label": "Slack",
-      "sublabel": "warning 기본",
+      "label": "설정한 수신기",
+      "sublabel": "Slack / PagerDuty",
       "pos": [
-        800,
-        90
+        810,
+        300
       ],
       "size": [
-        210,
-        76
-      ]
-    },
-    {
-      "id": "pagerduty",
-      "type": "external",
-      "label": "PagerDuty",
-      "sublabel": "critical 온콜",
-      "pos": [
-        800,
-        230
-      ],
-      "size": [
-        210,
-        76
-      ]
-    },
-    {
-      "id": "email",
-      "type": "external",
-      "label": "Email",
-      "sublabel": "info · 주간 리뷰",
-      "pos": [
-        800,
-        370
-      ],
-      "size": [
-        210,
-        76
-      ]
-    },
-    {
-      "id": "webhook",
-      "type": "external",
-      "label": "Webhook",
-      "sublabel": "사내 시스템 연동",
-      "pos": [
-        800,
-        510
-      ],
-      "size": [
-        210,
-        76
+        200,
+        80
       ]
     }
   ],
@@ -131,75 +103,83 @@
       "label": "Kubernetes 클러스터",
       "wraps": [
         "rules",
+        "operator",
         "prometheus",
         "am"
       ],
-      "pad": 36
+      "pad": 16
     }
   ],
   "connections": [
     {
-      "id": "rules-prom",
+      "id": "rule-operator",
       "from": "rules",
+      "to": "operator",
+      "label": "셀렉터",
+      "labelAt": [
+        265,
+        95
+      ]
+    },
+    {
+      "id": "operator-prom",
+      "from": "operator",
       "to": "prometheus",
-      "label": "레이블 셀렉터로 선택",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDy": 80
+      "label": "규칙 설정",
+      "labelAt": [
+        525,
+        95
+      ]
     },
     {
       "id": "prom-am",
       "from": "prometheus",
       "to": "am",
-      "label": "발생 알림 전송"
+      "label": "알림 갱신",
+      "labelAt": [
+        785,
+        95
+      ]
     },
     {
-      "id": "am-slack",
+      "id": "am-receivers",
       "from": "am",
-      "to": "slack"
-    },
-    {
-      "id": "am-pd",
-      "from": "am",
-      "to": "pagerduty"
-    },
-    {
-      "id": "am-email",
-      "from": "am",
-      "to": "email"
-    },
-    {
-      "id": "am-webhook",
-      "from": "am",
-      "to": "webhook"
+      "to": "receivers",
+      "label": "라우팅 · 전송",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        910,
+        245
+      ]
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "규칙에서 알림까지",
+      "title": "Operator와 Prometheus",
       "items": [
-        "PrometheusRule CRD에 알림 조건과 for 기간, 레이블·어노테이션을 선언한다",
-        "Prometheus가 release 같은 레이블 셀렉터로 자기 규칙을 골라 주기적으로 평가한다",
-        "조건이 for 기간 동안 유지되면 Firing 상태가 되어 Alertmanager로 전송된다"
+        "Operator가 namespace·label 조건에 맞는 규칙을 설정으로 만든다",
+        "Prometheus가 수집한 메트릭으로 규칙을 평가한다",
+        "Firing 상태와 실제 외부 통지 성공은 다르다"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Alertmanager의 역할",
+      "title": "명시적인 전달 정책",
       "items": [
-        "같은 원인의 알림을 그룹화해 폭주를 막는다",
-        "상위 장애가 있을 때 하위 알림을 억제(inhibit)한다",
-        "severity 레이블을 기준으로 수신 채널을 라우팅한다"
+        "그룹화는 설정한 label 값에 따른다. 원인을 자동 판별하지 않는다",
+        "억제는 같은 대상인지 확인한 제한된 조건으로 구성한다",
+        "continue와 최종 fallback 경로를 테스트한다"
       ]
     },
     {
       "dot": "amber",
-      "title": "severity별 대응",
+      "title": "수신기와 운영 기준",
       "items": [
-        "critical — 서비스 중단·데이터 손실 위험, 5분 이내, PagerDuty·전화",
-        "warning — 성능 저하나 잠재 문제, 업무 시간 내, Slack·Email",
-        "info — 정보성 알림, 주간 리뷰, Email·대시보드"
+        "이 예제는 critical을 PagerDuty와 해당 Slack 경로로 보낸다",
+        "Email·다른 Webhook은 별도 인증과 설정이 필요한 대안이다",
+        "severity와 대응 시간은 조직 정책이며 도구의 고정 SLA가 아니다"
       ]
     }
   ]

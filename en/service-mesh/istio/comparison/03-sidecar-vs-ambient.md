@@ -201,10 +201,14 @@ For a fair baseline, explicitly set attempts:0 on write routes such as POST/PUT/
 | Istio sidecar | Workload SPIFFE-certificate mTLS | Per-pod Envoy | Conservative baseline for critical non-idempotent paths |
 | Istio ambient L4 | HBONE workload mTLS between ztunnels | None | First candidate when only Istio mTLS and L4 policy are required |
 | Istio ambient L7 | HBONE plus waypoint Envoy | Shared waypoint | Add only to services requiring HTTP routing or L7 policy |
-| Cilium | Identity mutual authentication and transport encryption such as WireGuard/IPsec are selected separately | None in the L3/L4 encryption layer | Existing Cilium data planes needing identity policy and network encryption |
+| Cilium out-of-band + WireGuard/IPsec | Identity mutual authentication and transport encryption such as WireGuard/IPsec are selected separately | None in the L3/L4 encryption layer | Existing Cilium data planes needing identity policy and network encryption |
 
 
 The Cilium entry concerns its L3/L4 authentication/encryption layer; it does not mean Cilium has no optional L7 proxy features. None of its performance or rollout behavior was measured here.
+
+Cilium 1.20.1 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
+
+The ztunnel beta was not part of the measurements reported in this chapter.
 
 > **Operational rule:** if mTLS is the only requirement, validate ambient L4 first and add waypoints only to services needing L7 policy or east-west HTTP routing. Keep sidecar as a baseline for critical non-idempotent paths when ambient total errors, measured with write retries disabled, exceed the workload error budget. Application retries and idempotency still need independent control.
 

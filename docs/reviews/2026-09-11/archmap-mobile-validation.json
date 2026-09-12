@@ -1,0 +1,1400 @@
+{
+  "date": "2026-09-12",
+  "changes": [
+    "Wrap standalone toolbar and reset positioning at <=960px.",
+    "Keep title clear of controls; constrain popup menus.",
+    "Use flex sizing in mobile presentation mode.",
+    "Apply to generated archmap pages during locale-output merge; embedded toolbars remain hidden."
+  ],
+  "files": [
+    "scripts/lib/archmap-responsive.mjs",
+    "scripts/build-vitepress-locales.mjs",
+    "scripts/__tests__/build-vitepress-locales.test.mjs"
+  ],
+  "validation": {
+    "nodeIntegrationTests": 8,
+    "browserCases": [
+      {
+        "name": "en-ops-12-event-capacity-planning-0.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-13-finops-cost-platform-0.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-0.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-1.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-2.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-3.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-4.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-5.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-gitops-05-feature-flags-9.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-0.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-1.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-3.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-4.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-5.html",
+        "width": 375,
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-12-event-capacity-planning-0.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-13-finops-cost-platform-0.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-0.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-1.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-2.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-3.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-4.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-ops-14-tekton-pipelines-5.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-gitops-05-feature-flags-9.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-0.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-1.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-3.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-4.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-5.html",
+        "width": 768,
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-2.html",
+        "width": 375,
+        "sourceSha256": "e52cf11d4e9f14ae7c5f85291b487922974a281d03d68f3f837618abc5ab3f3d",
+        "viewerSha256": "4d56e6e56e6f248ab573fc06574673a7e46572db5204cce6e7fa17aa2f30feb3",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-ops-14-tekton-pipelines-2.html",
+        "width": 768,
+        "sourceSha256": "e52cf11d4e9f14ae7c5f85291b487922974a281d03d68f3f837618abc5ab3f3d",
+        "viewerSha256": "4d56e6e56e6f248ab573fc06574673a7e46572db5204cce6e7fa17aa2f30feb3",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-01-data-pipeline-anatomy-0.html",
+        "width": 375,
+        "sourceSha256": "943e0a9aa4bcbb0c5ba3a2c150e77ac6098f7a5948ac90ed6a5733e9c3268ff1",
+        "viewerSha256": "310b0a078fbdd87918bdeff82834b3799c31848d5a4c7b2961b8a3c147d5f19c",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-readme-0.html",
+        "width": 375,
+        "sourceSha256": "8bf78d89e85b4860b92d202c38aebae7832c3f39711b300ffd0d14dc5da15465",
+        "viewerSha256": "b097ef7bb387841b4a9dc77001892be4748f1d43afd36c9852b00d542920453a",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-01-data-pipeline-anatomy-0.html",
+        "width": 375,
+        "sourceSha256": "36985be3bcaae10731a02e7cecbb9890277ab3508e6c5e3339b1255f9b59ebf1",
+        "viewerSha256": "7bc4579d37e92b52b67acfe37b7b07e12ee0f70a39dbcca20c707f81b32d166a",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-readme-0.html",
+        "width": 375,
+        "sourceSha256": "58e2c8a4ea11b4c5456c7aeb4ca97fdfdf059abb7aaadcaa549613c5c50af0cc",
+        "viewerSha256": "2653bcf213fa559b517de04f49f8669a399246718d319f781769fdf3cfbadcd8",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-01-data-pipeline-anatomy-0.html",
+        "width": 768,
+        "sourceSha256": "943e0a9aa4bcbb0c5ba3a2c150e77ac6098f7a5948ac90ed6a5733e9c3268ff1",
+        "viewerSha256": "310b0a078fbdd87918bdeff82834b3799c31848d5a4c7b2961b8a3c147d5f19c",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-readme-0.html",
+        "width": 768,
+        "sourceSha256": "8bf78d89e85b4860b92d202c38aebae7832c3f39711b300ffd0d14dc5da15465",
+        "viewerSha256": "b097ef7bb387841b4a9dc77001892be4748f1d43afd36c9852b00d542920453a",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-01-data-pipeline-anatomy-0.html",
+        "width": 768,
+        "sourceSha256": "36985be3bcaae10731a02e7cecbb9890277ab3508e6c5e3339b1255f9b59ebf1",
+        "viewerSha256": "7bc4579d37e92b52b67acfe37b7b07e12ee0f70a39dbcca20c707f81b32d166a",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-readme-0.html",
+        "width": 768,
+        "sourceSha256": "58e2c8a4ea11b4c5456c7aeb4ca97fdfdf059abb7aaadcaa549613c5c50af0cc",
+        "viewerSha256": "2653bcf213fa559b517de04f49f8669a399246718d319f781769fdf3cfbadcd8",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+        "width": 375,
+        "sourceSha256": "ee9752bf43dcebf87b3bebb9aa4dc78a7c092285f91b37a35b453fcec51e3c85",
+        "viewerSha256": "7bdd2de095f5efc2e5d3729a278454fe5692b5ec47e53e3bdf1fe43e5b352048",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+        "width": 375,
+        "sourceSha256": "05f7ad54290f4c91620f7657107a1b25f8bfa7326f62f1d2ea0d225f640d632b",
+        "viewerSha256": "345880783d8e64f4f6188618d47624bf914191554a1f433c3b8a80116ea46d19",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-readme-0.html",
+        "width": 375,
+        "sourceSha256": "4f4e82bf7ceab294f0554d06d3e8c05f482233b11b61bba85d54fb9817b43bd3",
+        "viewerSha256": "8a1f6a895b46bb7c246bef4a69952979d7465db83bb81abbafaf3d152530b106",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+        "width": 768,
+        "sourceSha256": "ee9752bf43dcebf87b3bebb9aa4dc78a7c092285f91b37a35b453fcec51e3c85",
+        "viewerSha256": "7bdd2de095f5efc2e5d3729a278454fe5692b5ec47e53e3bdf1fe43e5b352048",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+        "width": 768,
+        "sourceSha256": "05f7ad54290f4c91620f7657107a1b25f8bfa7326f62f1d2ea0d225f640d632b",
+        "viewerSha256": "345880783d8e64f4f6188618d47624bf914191554a1f433c3b8a80116ea46d19",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-readme-0.html",
+        "width": 768,
+        "sourceSha256": "4f4e82bf7ceab294f0554d06d3e8c05f482233b11b61bba85d54fb9817b43bd3",
+        "viewerSha256": "8a1f6a895b46bb7c246bef4a69952979d7465db83bb81abbafaf3d152530b106",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-kafka-readme-0.html",
+        "width": 375,
+        "sourceSha256": "8e026257d718dd7740b223999cc706cc11064d3ea01dd9284b9b36ca67957454",
+        "viewerSha256": "8334be04a3f1aa4b8ae7679bb0c423a70196c4741af69a972ba4f6538c9096d9",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-kafka-readme-0.html",
+        "width": 768,
+        "sourceSha256": "8e026257d718dd7740b223999cc706cc11064d3ea01dd9284b9b36ca67957454",
+        "viewerSha256": "8334be04a3f1aa4b8ae7679bb0c423a70196c4741af69a972ba4f6538c9096d9",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      }
+    ],
+    "rendererTypes": [
+      "architecture",
+      "sequence",
+      "workflow",
+      "lifecycle",
+      "dataflow"
+    ]
+  },
+  "limits": [
+    "Local checks only; not deployed yet.",
+    "Diagram inner horizontal scrolling and navigation rail scrolling remain intentional for readable wide content."
+  ]
+}

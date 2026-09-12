@@ -1,0 +1,126 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete review; current storage/scaling/rebalance/upgrade behavior and quizzes corrected and locally validated.",
+    "sources": [
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://aws.amazon.com/ebs/pricing/",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaCluster.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaBrokerConfigurationBuilder.java"
+    ],
+    "validation": [
+      "kafka-operations-validation.json"
+    ],
+    "reviewedSha256": "ec8360300691708a143ac049ec0278dde97aed090b643379307aff736ede2a3c",
+    "findings": [
+      "Updatedgp3limits/unitsandio2BlockExpressconditions;separateddurabilityfromAFR/capacityplusIOPScosts.",
+      "Verifiedoriginal117.936TBadditivemarginmathanddistinguished30percentfreecapacity129.6TB;statedsustainedretainedlograteandextraoverhead/skewlimitations.",
+      "CorrectedJBODfewestlogcountplacementnotroundrobin,volumeaddition/removal/metadata/retention;usedmergepatchespreservingPart2TLSauth/topology.",
+      "CorrectedautoRebalancetriggersonexistingpoolreplicaschanges,broker-onlyscope,nonemptychecks/actualremovalIDsandIdlefailuresemantics.",
+      "Addedmanualproposalapprovalandnative-v1scopehelpers;removedunsafehardgoaloverrides/partialKafkaapply.",
+      "Fixedlocal-versusPodfilepaths,adminTLSconfiguration,actualbrokerIDsandCurrent/ProposedJSONextraction;explicitthrottlesand--verifyconfigurationcleanupsideeffects.",
+      "ClarifiedoptionalmetadataVersionpinning/automaticupgradeandcurrent+targetOperatorcompatibilityratherthanalwayslatestfirst;keptrecoverycaveats.",
+      "CorrectedPDBoneperKafkacluster/allpoolsandvoluntaryevictionlimits;removedzerodowntime/zerolossguarantees.",
+      "Updated34questionsandvalidated52fenceswithnative-v1schemasandfixturecopychecks."
+    ]
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete review; current storage/scaling/rebalance/upgrade behavior and quizzes corrected and locally validated.",
+    "sources": [
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://aws.amazon.com/ebs/pricing/",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaCluster.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaBrokerConfigurationBuilder.java"
+    ],
+    "validation": [
+      "kafka-operations-validation.json"
+    ],
+    "reviewedSha256": "af7e7cc931c7979bbe45b57f49e9f968664ed88521bdd17445efa299c33aeccd",
+    "findings": [
+      "Updatedgp3limits/unitsandio2BlockExpressconditions;separateddurabilityfromAFR/capacityplusIOPScosts.",
+      "Verifiedoriginal117.936TBadditivemarginmathanddistinguished30percentfreecapacity129.6TB;statedsustainedretainedlograteandextraoverhead/skewlimitations.",
+      "CorrectedJBODfewestlogcountplacementnotroundrobin,volumeaddition/removal/metadata/retention;usedmergepatchespreservingPart2TLSauth/topology.",
+      "CorrectedautoRebalancetriggersonexistingpoolreplicaschanges,broker-onlyscope,nonemptychecks/actualremovalIDsandIdlefailuresemantics.",
+      "Addedmanualproposalapprovalandnative-v1scopehelpers;removedunsafehardgoaloverrides/partialKafkaapply.",
+      "Fixedlocal-versusPodfilepaths,adminTLSconfiguration,actualbrokerIDsandCurrent/ProposedJSONextraction;explicitthrottlesand--verifyconfigurationcleanupsideeffects.",
+      "ClarifiedoptionalmetadataVersionpinning/automaticupgradeandcurrent+targetOperatorcompatibilityratherthanalwayslatestfirst;keptrecoverycaveats.",
+      "CorrectedPDBoneperKafkacluster/allpoolsandvoluntaryevictionlimits;removedzerodowntime/zerolossguarantees.",
+      "Updated34questionsandvalidated52fenceswithnative-v1schemasandfixturecopychecks."
+    ]
+  },
+  {
+    "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete review; current storage/scaling/rebalance/upgrade behavior and quizzes corrected and locally validated.",
+    "sources": [
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://aws.amazon.com/ebs/pricing/",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaCluster.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaBrokerConfigurationBuilder.java"
+    ],
+    "validation": [
+      "kafka-operations-validation.json"
+    ],
+    "reviewedSha256": "77b30e907f782172d408c75a7ec5d62c90f3535129367e988fc05beda4234c3f",
+    "findings": [
+      "Updatedgp3limits/unitsandio2BlockExpressconditions;separateddurabilityfromAFR/capacityplusIOPScosts.",
+      "Verifiedoriginal117.936TBadditivemarginmathanddistinguished30percentfreecapacity129.6TB;statedsustainedretainedlograteandextraoverhead/skewlimitations.",
+      "CorrectedJBODfewestlogcountplacementnotroundrobin,volumeaddition/removal/metadata/retention;usedmergepatchespreservingPart2TLSauth/topology.",
+      "CorrectedautoRebalancetriggersonexistingpoolreplicaschanges,broker-onlyscope,nonemptychecks/actualremovalIDsandIdlefailuresemantics.",
+      "Addedmanualproposalapprovalandnative-v1scopehelpers;removedunsafehardgoaloverrides/partialKafkaapply.",
+      "Fixedlocal-versusPodfilepaths,adminTLSconfiguration,actualbrokerIDsandCurrent/ProposedJSONextraction;explicitthrottlesand--verifyconfigurationcleanupsideeffects.",
+      "ClarifiedoptionalmetadataVersionpinning/automaticupgradeandcurrent+targetOperatorcompatibilityratherthanalwayslatestfirst;keptrecoverycaveats.",
+      "CorrectedPDBoneperKafkacluster/allpoolsandvoluntaryevictionlimits;removedzerodowntime/zerolossguarantees.",
+      "Updated34questionsandvalidated52fenceswithnative-v1schemasandfixturecopychecks."
+    ]
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete review; current storage/scaling/rebalance/upgrade behavior and quizzes corrected and locally validated.",
+    "sources": [
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+      "https://aws.amazon.com/ebs/pricing/",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaCluster.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaBrokerConfigurationBuilder.java"
+    ],
+    "validation": [
+      "kafka-operations-validation.json"
+    ],
+    "reviewedSha256": "7c0f03f99512b4fa3e6f326738eca3c95e7fb6da8cb4e9722f6ead8238d7bf7e",
+    "findings": [
+      "Updatedgp3limits/unitsandio2BlockExpressconditions;separateddurabilityfromAFR/capacityplusIOPScosts.",
+      "Verifiedoriginal117.936TBadditivemarginmathanddistinguished30percentfreecapacity129.6TB;statedsustainedretainedlograteandextraoverhead/skewlimitations.",
+      "CorrectedJBODfewestlogcountplacementnotroundrobin,volumeaddition/removal/metadata/retention;usedmergepatchespreservingPart2TLSauth/topology.",
+      "CorrectedautoRebalancetriggersonexistingpoolreplicaschanges,broker-onlyscope,nonemptychecks/actualremovalIDsandIdlefailuresemantics.",
+      "Addedmanualproposalapprovalandnative-v1scopehelpers;removedunsafehardgoaloverrides/partialKafkaapply.",
+      "Fixedlocal-versusPodfilepaths,adminTLSconfiguration,actualbrokerIDsandCurrent/ProposedJSONextraction;explicitthrottlesand--verifyconfigurationcleanupsideeffects.",
+      "ClarifiedoptionalmetadataVersionpinning/automaticupgradeandcurrent+targetOperatorcompatibilityratherthanalwayslatestfirst;keptrecoverycaveats.",
+      "CorrectedPDBoneperKafkacluster/allpoolsandvoluntaryevictionlimits;removedzerodowntime/zerolossguarantees.",
+      "Updated34questionsandvalidated52fenceswithnative-v1schemasandfixturecopychecks."
+    ]
+  }
+]

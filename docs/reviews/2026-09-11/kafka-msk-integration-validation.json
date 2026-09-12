@@ -1,0 +1,221 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/06-msk-integration.md",
+    "ko/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+    "en/data-on-eks/kafka/06-msk-integration.md",
+    "en/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md"
+  ],
+  "sources": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-broker-types-express.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/serverless-config.html",
+    "https://aws.amazon.com/msk/pricing/",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html",
+    "https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html",
+    "https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html",
+    "https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/integrations-kinesis-data-firehose.html",
+    "https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html",
+    "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html"
+  ],
+  "findings": [
+    "Separated Provisioned Standard/Express/Serverless and complete pricing dimensions; removed unsubstantiated cost/portability/GitOps claims.",
+    "Corrected Serverless IAM-only/topic-settings/250GiBperpartition+7d retention and separate monitoring/tenancy responsibilities.",
+    "Corrected sameVPCdoesnotguaranteeaccess, alladvertisedbrokers, PrivateLinkmultiVPC, IPv4/public/IPv6endpointportdistinctions.",
+    "Added official OAUTHBEARER/nonJava helpers and PodIdentity/IRSA credential refresh; two Java configs validated againstaws-msk-iam-auth2.3.8.",
+    "Removed AlterCluster/*Topic* grants, added grouppermissions/exactclusterUUID andsplitproducerconsumer policies; idempotent/transactional scope andKafka>=3.8WriteTxnMarkers explained.",
+    "Verified MSKConnectAPIauthNONE/IAM andruntime2.7.1Java11/3.7.xJava17; pluginbytecode belowJava18isnotservicecompatibilityproof; actualS3plugincreation notconnectorcreation and immutableplugincontents.",
+    "Corrected nativeMSKLambda/Firehose integrations, Kinesiscurrentcapacitymodes/retention andpartitioncountsemantics; all36questionsrewritten."
+  ],
+  "validation": {
+    "policyCases": [
+      "producer exact actions/resources",
+      "producer can connect",
+      "producer cannot alter cluster",
+      "producer cannot delete topic",
+      "producer cannot access another cluster generation",
+      "consumer exact actions/resources",
+      "consumer can connect",
+      "consumer cannot alter cluster",
+      "consumer cannot delete topic",
+      "consumer cannot access another cluster generation",
+      "producer can write selected topic",
+      "producer cannot write another topic",
+      "producer has cluster-scoped idempotence",
+      "producer lacks consumer read",
+      "consumer can read topic",
+      "consumer can join selected group",
+      "consumer cannot join another group",
+      "consumer cannot write topic",
+      "invalid/wildcard cluster ARN rejected",
+      "invalid/wildcard cluster ARN rejected",
+      "invalid/wildcard cluster ARN rejected",
+      "invalid/wildcard cluster ARN rejected",
+      "invalid/wildcard topic rejected",
+      "invalid/wildcard topic rejected",
+      "invalid/wildcard topic rejected",
+      "invalid/wildcard topic rejected"
+    ],
+    "javaIAM": "PASS JAAS and classes: AWS_MSK_IAM\nPASS JAAS and classes: OAUTHBEARER\nPASS 2 configurations; no login or token generation invoked\n",
+    "cli": [
+      {
+        "operation": "kafkaconnect create-custom-plugin",
+        "outputKeys": [
+          "customPluginArn",
+          "customPluginState",
+          "name",
+          "revision"
+        ],
+        "mode": "offline output skeleton"
+      },
+      {
+        "operation": "kafka get-bootstrap-brokers",
+        "outputKeys": [
+          "BootstrapBrokerString",
+          "BootstrapBrokerStringIpv6",
+          "BootstrapBrokerStringPublicSaslIam",
+          "BootstrapBrokerStringPublicSaslScram",
+          "BootstrapBrokerStringPublicTls",
+          "BootstrapBrokerStringSaslIam",
+          "BootstrapBrokerStringSaslIamIpv6",
+          "BootstrapBrokerStringSaslScram",
+          "BootstrapBrokerStringSaslScramIpv6",
+          "BootstrapBrokerStringTls",
+          "BootstrapBrokerStringTlsIpv6",
+          "BootstrapBrokerStringVpcConnectivitySaslIam",
+          "BootstrapBrokerStringVpcConnectivitySaslScram",
+          "BootstrapBrokerStringVpcConnectivityTls"
+        ],
+        "mode": "offline output skeleton"
+      },
+      {
+        "operation": "ec2 authorize-security-group-ingress",
+        "outputKeys": [
+          "Return",
+          "SecurityGroupRules"
+        ],
+        "mode": "offline output skeleton"
+      }
+    ],
+    "pluginBytecode": [
+      {
+        "plugin": "debezium",
+        "baseClassVersions": {
+          "61": 1075,
+          "52": 1295
+        },
+        "aboveJava17": []
+      },
+      {
+        "plugin": "aiven",
+        "baseClassVersions": {
+          "55": 197,
+          "52": 22811,
+          "61": 67,
+          "53": 13,
+          "49": 4864,
+          "51": 735,
+          "50": 4208,
+          "47": 460
+        },
+        "aboveJava17": []
+      }
+    ],
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+        "language": "python"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/06-msk-integration.md",
+        "language": "python"
+      },
+      {
+        "path": "en/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/06-msk-integration.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/06-msk-integration.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/06-msk-integration.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+        "language": "properties"
+      }
+    ],
+    "relativeLinks": 10,
+    "quizQuestions": 36,
+    "limitations": "Local explicit-policy scope checks are not an IAM authorization simulation. Native JAAS/class loading invokes no login/token generation. CLI uses output skeleton only; no security-group, S3, plugin, MSK or IAM API mutation or connection."
+  },
+  "javaArtifact": {
+    "url": "https://github.com/aws/aws-msk-iam-auth/releases/download/v2.3.8/aws-msk-iam-auth-2.3.8-all.jar",
+    "sha256": "8c7b14f9fc4c9dc3f78837a970d84f9303b5bf849d272c6c414e5ee49f3e5ac4",
+    "bytes": 10172549,
+    "verifiedGitHubReleaseDigest": true
+  },
+  "sourceCaveats": [
+    "OfficialIAMbroadexamplehasmisleadingtransactional-id/actioncombinations; usedpreciseactiontable+commonusecasesinsteadcopying.",
+    "MSKConnectpluginsdocrecommendsexistingconnectordelete; guideinsteadrequiresreviewedtransitionandpreservedoffsets,nodestructivemutationperformed.",
+    "Debezium3.6.2basebytecode61(Java17),Aiven3.4.3mainclass55(Java11)dependenciesupto61; didnotfalselyclaimJava21required.",
+    "TwoattemptedConnectversionURLsredirectedtorootandwerenotusedasvalidreferences."
+  ]
+}

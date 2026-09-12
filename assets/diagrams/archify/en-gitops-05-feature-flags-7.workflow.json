@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Flagger + Feature Flag Workflow",
+    "title": "Separate workload and flag decisions",
     "locale": "en",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -15,7 +15,7 @@
           "canary",
           "flag_on"
         ],
-        "note": "v2 ships with the flag off; when Flagger starts the canary, the flag is turned on only inside the canary pods."
+        "note": "After code deployment, approve limited flag exposure separately; no automatic webhook wiring is implied."
       },
       {
         "id": "gate",
@@ -27,7 +27,7 @@
           "rollback",
           "expand"
         ],
-        "note": "If error rate and latency stay within thresholds, traffic grows; if not, Flagger rolls back and the flag is turned off."
+        "note": "Workload recovery follows failed-check limits; restoring flag configuration is a separate decision."
       },
       {
         "id": "expand",
@@ -39,7 +39,7 @@
           "flag_full",
           "cleanup"
         ],
-        "note": "Traffic grows by stepWeight while flag targeting widens in step; after 100% promotion the flag code is removed."
+        "note": "Validate workload promotion and full flag exposure separately; retire flags only after consumer and rollback checks."
       }
     ],
     "legend": {
@@ -59,8 +59,8 @@
       }
     },
     "viewBox": [
-      1180,
-      534
+      1200,
+      540
     ]
   },
   "lanes": [
@@ -74,7 +74,7 @@
     },
     {
       "id": "exceptions",
-      "label": "Failure / automatic rollback",
+      "label": "Failure response · separate recovery",
       "variant": "exception"
     }
   ],
@@ -114,7 +114,6 @@
   "mainPath": [
     "deploy",
     "canary",
-    "flag_on",
     "metrics",
     "expand",
     "full",
@@ -145,9 +144,9 @@
       "lane": "flag",
       "col": 1,
       "type": "backend",
-      "label": "Feature flag on",
-      "sublabel": "canary pods only",
-      "tag": "internal users first",
+      "label": "Limited exposure",
+      "sublabel": "trusted app context",
+      "tag": "separate Git change",
       "width": 160
     },
     {
@@ -166,7 +165,7 @@
       "col": 3,
       "type": "cloud",
       "label": "Expand traffic",
-      "sublabel": "stepWeight 10 → maxWeight 50",
+      "sublabel": "example: 10 → 50%",
       "width": 160
     },
     {
@@ -174,8 +173,8 @@
       "lane": "flag",
       "col": 3,
       "type": "backend",
-      "label": "Widen flag targets",
-      "sublabel": "10% of all users",
+      "label": "Expand targets",
+      "sublabel": "separate cohort validation",
       "width": 160
     },
     {
@@ -183,8 +182,8 @@
       "lane": "traffic",
       "col": 4,
       "type": "cloud",
-      "label": "Full release",
-      "sublabel": "100% traffic, v2 promoted",
+      "label": "Workload promoted",
+      "sublabel": "deployment analysis passed",
       "width": 160
     },
     {
@@ -192,8 +191,8 @@
       "lane": "flag",
       "col": 4,
       "type": "backend",
-      "label": "Flag on: all users",
-      "sublabel": "fully exposed",
+      "label": "Approve exposure",
+      "sublabel": "separate flag decision",
       "width": 160
     },
     {
@@ -202,7 +201,7 @@
       "col": 5,
       "type": "backend",
       "label": "Flag cleanup",
-      "sublabel": "remove flag code",
+      "sublabel": "consumers / rollback",
       "width": 160
     },
     {
@@ -210,10 +209,19 @@
       "lane": "exceptions",
       "col": 2,
       "type": "security",
-      "label": "Automatic rollback",
-      "sublabel": "flag turned off",
-      "tag": "canary aborted",
+      "label": "Workload recovery",
+      "sublabel": "inspect surviving traffic",
+      "tag": "flag is separate",
       "width": 160
+    },
+    {
+      "id": "flag_restore",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "backend",
+      "width": 160,
+      "label": "Restore flag config",
+      "sublabel": "separately approved change"
     }
   ],
   "edges": [
@@ -223,14 +231,8 @@
       "to": "canary"
     },
     {
-      "id": "canary-flag_on",
+      "id": "canary-metrics",
       "from": "canary",
-      "to": "flag_on",
-      "label": "flag update"
-    },
-    {
-      "id": "flag_on-metrics",
-      "from": "flag_on",
       "to": "metrics"
     },
     {
@@ -244,15 +246,9 @@
       "id": "metrics-rollback",
       "from": "metrics",
       "to": "rollback",
-      "label": "fail",
+      "label": "failure limit",
       "variant": "security",
       "role": "error"
-    },
-    {
-      "id": "expand-flag_expand",
-      "from": "expand",
-      "to": "flag_expand",
-      "label": "in step"
     },
     {
       "id": "expand-full",
@@ -260,14 +256,40 @@
       "to": "full"
     },
     {
-      "id": "full-flag_full",
-      "from": "full",
+      "id": "deploy-flag",
+      "from": "deploy",
+      "to": "flag_on",
+      "label": "separate PR",
+      "variant": "dashed"
+    },
+    {
+      "id": "flag-expand",
+      "from": "flag_on",
+      "to": "flag_expand"
+    },
+    {
+      "id": "flag-approve",
+      "from": "flag_expand",
       "to": "flag_full"
     },
     {
-      "id": "flag_full-cleanup",
+      "id": "full-approve",
+      "from": "full",
+      "to": "flag_full",
+      "label": "separate approval",
+      "variant": "dashed"
+    },
+    {
+      "id": "flag-cleanup",
       "from": "flag_full",
       "to": "cleanup"
+    },
+    {
+      "id": "restore",
+      "from": "rollback",
+      "to": "flag_restore",
+      "label": "separate change",
+      "variant": "dashed"
     }
   ],
   "cards": [
@@ -275,18 +297,18 @@
       "dot": "amber",
       "title": "Analysis gate (Canary.spec.analysis)",
       "items": [
-        "interval 1m · threshold 5 successful checks to promote",
-        "request-success-rate ≥ 99%",
-        "request-duration ≤ 500ms",
-        "stepWeight 10, maxWeight 50"
+        "threshold 5: cumulative failed-check limit",
+        "Example policy: success ≥99%, latency ≤500ms",
+        "Verify instrumentation and sample volume"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Feature flag alongside the canary",
+      "title": "Independent flag decision",
       "items": [
-        "Flag enabled first for @company.com users on v2 pods, then 10% of all users",
-        "Flagger promotion and 100% flag exposure complete the release"
+        "Promotion does not automatically change flag exposure",
+        "A successful rollback hook requests workload rollback",
+        "Flag restoration and consumer freshness are separate"
       ]
     }
   ]

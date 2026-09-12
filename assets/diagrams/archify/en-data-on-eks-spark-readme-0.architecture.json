@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Spark on Kubernetes Execution Model",
+    "title": "Spark cluster mode: requests, pod placement and tasks",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
@@ -12,9 +12,10 @@
         "focus": [
           "submit",
           "apiserver",
-          "driver"
+          "driver",
+          "placement"
         ],
-        "note": "spark-submit asks the API Server to create a single driver pod. There is no persistent cluster-manager daemon."
+        "note": "In cluster mode the submitter requests a driver pod. Kubernetes scheduler chooses its node; kubelet starts its containers."
       },
       {
         "id": "executors",
@@ -24,9 +25,10 @@
           "apiserver",
           "exec1",
           "exec2",
-          "exec3"
+          "exec3",
+          "placement"
         ],
-        "note": "The driver calls the Kubernetes API itself to create executor pods, based on spark.executor.instances or DRA."
+        "note": "The driver requests executor pods and coordinates Spark tasks; Kubernetes still places the pods."
       },
       {
         "id": "report",
@@ -37,7 +39,7 @@
           "exec3",
           "driver"
         ],
-        "note": "Executors connect directly to the driver to register and report results and status. Kubernetes stays out of task coordination."
+        "note": "Executors register with the driver, execute tasks and report. This drawing shows cluster mode; client mode is also supported."
       }
     ],
     "locale": "en"
@@ -61,7 +63,7 @@
       "id": "apiserver",
       "type": "backend",
       "label": "Kubernetes API Server",
-      "sublabel": "control plane",
+      "sublabel": "auth · admission · API state",
       "pos": [
         460,
         170
@@ -75,7 +77,7 @@
       "id": "driver",
       "type": "cloud",
       "label": "Driver Pod",
-      "sublabel": "cluster manager for the job's duration",
+      "sublabel": "Spark stage/task coordination",
       "pos": [
         80,
         400
@@ -126,6 +128,20 @@
         150,
         60
       ]
+    },
+    {
+      "id": "placement",
+      "type": "backend",
+      "label": "Pod placement and start",
+      "sublabel": "scheduler + node kubelets",
+      "pos": [
+        460,
+        270
+      ],
+      "size": [
+        220,
+        54
+      ]
     }
   ],
   "boundaries": [
@@ -137,7 +153,8 @@
         "driver",
         "exec1",
         "exec2",
-        "exec3"
+        "exec3",
+        "placement"
       ]
     }
   ],
@@ -155,19 +172,19 @@
     },
     {
       "id": "api-to-driver",
-      "from": "apiserver",
+      "from": "placement",
       "to": "driver",
-      "label": "schedule driver pod",
+      "label": "place · start",
       "fromSide": "bottom",
       "toSide": "top",
       "via": [
         [
           570,
-          300
+          350
         ],
         [
           175,
-          300
+          350
         ]
       ]
     },
@@ -196,43 +213,43 @@
     },
     {
       "id": "api-to-exec1",
-      "from": "apiserver",
+      "from": "placement",
       "to": "exec1",
-      "label": "schedule",
+      "label": "place · start",
       "fromSide": "bottom",
       "toSide": "top",
       "via": [
         [
           570,
-          300
+          350
         ],
         [
           405,
-          300
+          350
         ]
       ]
     },
     {
       "id": "api-to-exec2",
-      "from": "apiserver",
+      "from": "placement",
       "to": "exec2",
       "fromSide": "bottom",
       "toSide": "top"
     },
     {
       "id": "api-to-exec3",
-      "from": "apiserver",
+      "from": "placement",
       "to": "exec3",
       "fromSide": "bottom",
       "toSide": "top",
       "via": [
         [
           570,
-          300
+          350
         ],
         [
           735,
-          300
+          350
         ]
       ]
     },
@@ -281,6 +298,16 @@
           175,
           545
         ]
+      ]
+    },
+    {
+      "id": "api-to-placement",
+      "from": "apiserver",
+      "to": "placement",
+      "label": "Pod specs / bindings",
+      "labelAt": [
+        705,
+        250
       ]
     }
   ]

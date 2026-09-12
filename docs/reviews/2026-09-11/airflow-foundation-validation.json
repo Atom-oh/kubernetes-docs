@@ -1,0 +1,923 @@
+{
+  "schemaObjects": [
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-dag-processor"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-create-user-job"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-migrate-database-job"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-scheduler"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ServiceAccount",
+      "name": "airflow-worker"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Secret",
+      "name": "airflow-api-secret-key"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Secret",
+      "name": "airflow-jwt-secret"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ConfigMap",
+      "name": "airflow-config"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "ConfigMap",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Role",
+      "name": "airflow-pod-launcher-role"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Role",
+      "name": "airflow-pod-log-reader-role"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "RoleBinding",
+      "name": "airflow-pod-launcher-rolebinding"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "RoleBinding",
+      "name": "airflow-pod-log-reader-rolebinding"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Service",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Service",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Service",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Deployment",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Deployment",
+      "name": "airflow-dag-processor"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Deployment",
+      "name": "airflow-scheduler"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Deployment",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "StatefulSet",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Secret",
+      "name": "airflow-fernet-key"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Secret",
+      "name": "airflow-broker-url"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Job",
+      "name": "airflow-create-user"
+    },
+    {
+      "source": "kubernetes",
+      "kind": "Job",
+      "name": "airflow-run-airflow-migrations"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-dag-processor"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-create-user-job"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-migrate-database-job"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-scheduler"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "celery",
+      "kind": "ServiceAccount",
+      "name": "airflow-worker"
+    },
+    {
+      "source": "celery",
+      "kind": "Secret",
+      "name": "airflow-api-secret-key"
+    },
+    {
+      "source": "celery",
+      "kind": "Secret",
+      "name": "airflow-jwt-secret"
+    },
+    {
+      "source": "celery",
+      "kind": "ConfigMap",
+      "name": "airflow-config"
+    },
+    {
+      "source": "celery",
+      "kind": "ConfigMap",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "celery",
+      "kind": "Role",
+      "name": "airflow-pod-launcher-role"
+    },
+    {
+      "source": "celery",
+      "kind": "Role",
+      "name": "airflow-pod-log-reader-role"
+    },
+    {
+      "source": "celery",
+      "kind": "RoleBinding",
+      "name": "airflow-pod-launcher-rolebinding"
+    },
+    {
+      "source": "celery",
+      "kind": "RoleBinding",
+      "name": "airflow-pod-log-reader-rolebinding"
+    },
+    {
+      "source": "celery",
+      "kind": "Service",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "celery",
+      "kind": "Service",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "celery",
+      "kind": "Service",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "celery",
+      "kind": "Service",
+      "name": "airflow-worker"
+    },
+    {
+      "source": "celery",
+      "kind": "Deployment",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "celery",
+      "kind": "Deployment",
+      "name": "airflow-dag-processor"
+    },
+    {
+      "source": "celery",
+      "kind": "Deployment",
+      "name": "airflow-scheduler"
+    },
+    {
+      "source": "celery",
+      "kind": "Deployment",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "celery",
+      "kind": "Deployment",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "celery",
+      "kind": "Deployment",
+      "name": "airflow-worker"
+    },
+    {
+      "source": "celery",
+      "kind": "Secret",
+      "name": "airflow-fernet-key"
+    },
+    {
+      "source": "celery",
+      "kind": "Job",
+      "name": "airflow-create-user"
+    },
+    {
+      "source": "celery",
+      "kind": "Job",
+      "name": "airflow-run-airflow-migrations"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-dag-processor"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-create-user-job"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-migrate-database-job"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-scheduler"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ServiceAccount",
+      "name": "airflow-worker"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Secret",
+      "name": "airflow-api-secret-key"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Secret",
+      "name": "airflow-jwt-secret"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ConfigMap",
+      "name": "airflow-config"
+    },
+    {
+      "source": "git-sync",
+      "kind": "ConfigMap",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Role",
+      "name": "airflow-pod-launcher-role"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Role",
+      "name": "airflow-pod-log-reader-role"
+    },
+    {
+      "source": "git-sync",
+      "kind": "RoleBinding",
+      "name": "airflow-pod-launcher-rolebinding"
+    },
+    {
+      "source": "git-sync",
+      "kind": "RoleBinding",
+      "name": "airflow-pod-log-reader-rolebinding"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Service",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Service",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Service",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Deployment",
+      "name": "airflow-api-server"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Deployment",
+      "name": "airflow-dag-processor"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Deployment",
+      "name": "airflow-scheduler"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Deployment",
+      "name": "airflow-statsd"
+    },
+    {
+      "source": "git-sync",
+      "kind": "StatefulSet",
+      "name": "airflow-triggerer"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Secret",
+      "name": "airflow-fernet-key"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Secret",
+      "name": "airflow-broker-url"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Job",
+      "name": "airflow-create-user"
+    },
+    {
+      "source": "git-sync",
+      "kind": "Job",
+      "name": "airflow-run-airflow-migrations"
+    }
+  ],
+  "renderVariants": [
+    {
+      "variant": "kubernetes",
+      "objects": 28,
+      "workloads": [
+        {
+          "name": "airflow-api-server",
+          "kind": "Deployment",
+          "containers": [
+            "api-server"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-dag-processor",
+          "kind": "Deployment",
+          "containers": [
+            "dag-processor",
+            "dag-processor-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-scheduler",
+          "kind": "Deployment",
+          "containers": [
+            "scheduler",
+            "scheduler-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-statsd",
+          "kind": "Deployment",
+          "containers": [
+            "statsd"
+          ],
+          "initContainers": []
+        },
+        {
+          "name": "airflow-triggerer",
+          "kind": "StatefulSet",
+          "containers": [
+            "triggerer",
+            "triggerer-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        }
+      ],
+      "stderr": "",
+      "source": "/tmp/kubernetes-docs-full-review/airflow-foundation-fixtures/kubernetes-values.yaml",
+      "limits": "Offline template only. Referenced connection secrets are intentionally absent; no deployment or image pull."
+    },
+    {
+      "variant": "celery",
+      "objects": 29,
+      "workloads": [
+        {
+          "name": "airflow-api-server",
+          "kind": "Deployment",
+          "containers": [
+            "api-server"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-dag-processor",
+          "kind": "Deployment",
+          "containers": [
+            "dag-processor",
+            "dag-processor-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-scheduler",
+          "kind": "Deployment",
+          "containers": [
+            "scheduler",
+            "scheduler-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-statsd",
+          "kind": "Deployment",
+          "containers": [
+            "statsd"
+          ],
+          "initContainers": []
+        },
+        {
+          "name": "airflow-triggerer",
+          "kind": "Deployment",
+          "containers": [
+            "triggerer",
+            "triggerer-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-worker",
+          "kind": "Deployment",
+          "containers": [
+            "worker"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        }
+      ],
+      "stderr": "",
+      "source": "/tmp/kubernetes-docs-full-review/airflow-foundation-fixtures/celery-values.yaml",
+      "limits": "Offline template only. Referenced connection secrets are intentionally absent; no deployment or image pull."
+    },
+    {
+      "variant": "git-sync",
+      "objects": 28,
+      "workloads": [
+        {
+          "name": "airflow-api-server",
+          "kind": "Deployment",
+          "containers": [
+            "api-server"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-dag-processor",
+          "kind": "Deployment",
+          "containers": [
+            "dag-processor",
+            "git-sync",
+            "dag-processor-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations",
+            "git-sync-init"
+          ]
+        },
+        {
+          "name": "airflow-scheduler",
+          "kind": "Deployment",
+          "containers": [
+            "scheduler",
+            "scheduler-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations"
+          ]
+        },
+        {
+          "name": "airflow-statsd",
+          "kind": "Deployment",
+          "containers": [
+            "statsd"
+          ],
+          "initContainers": []
+        },
+        {
+          "name": "airflow-triggerer",
+          "kind": "StatefulSet",
+          "containers": [
+            "triggerer",
+            "git-sync",
+            "triggerer-log-groomer"
+          ],
+          "initContainers": [
+            "wait-for-airflow-migrations",
+            "git-sync-init"
+          ]
+        }
+      ],
+      "stderr": "",
+      "source": "/tmp/kubernetes-docs-full-review/airflow-foundation-fixtures/git-sync-values.yaml",
+      "limits": "Offline template only. Referenced connection secrets are intentionally absent; no deployment or image pull."
+    }
+  ],
+  "fences": [
+    {
+      "path": "ko/data-on-eks/airflow/01-architecture.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/airflow/01-architecture.md",
+      "language": "bash"
+    }
+  ],
+  "relativeLinks": 24,
+  "quizQuestions": 18,
+  "images": [
+    "en/.gitbook/assets/en-data-on-eks-airflow-01-architecture-0.png",
+    "en/.gitbook/assets/en-data-on-eks-airflow-readme-0.png",
+    "ko/.gitbook/assets/ko-data-on-eks-airflow-01-architecture-0.png",
+    "ko/.gitbook/assets/ko-data-on-eks-airflow-readme-0.png"
+  ],
+  "chart": {
+    "version": "1.22.0",
+    "appVersion": "3.2.2",
+    "sha256": "1f7d1dfe3d58e2c54899950aba907a43625a18c8b6fb3c54760c21592129a5b6",
+    "url": "https://archive.apache.org/dist/airflow/helm-chart/1.22.0/airflow-1.22.0.tgz"
+  },
+  "limits": "Helm renders target Kubernetes1.35.0 and Airflow3.3.1; resource shape checked against cached Kubernetes1.36 OpenAPI. No Airflow installation, live database/task execution, image pull or EKS deployment; connection secrets are placeholders.",
+  "diagrams": [
+    {
+      "stem": "ko-data-on-eks-airflow-readme-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    },
+    {
+      "stem": "ko-data-on-eks-airflow-01-architecture-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    },
+    {
+      "stem": "en-data-on-eks-airflow-readme-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    },
+    {
+      "stem": "en-data-on-eks-airflow-01-architecture-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    }
+  ],
+  "mobile": [
+    {
+      "name": "en-data-on-eks-airflow-01-architecture-0.html",
+      "width": 375,
+      "sourceSha256": "df54fc866fbccdcfc08d42839b4d48e29a42d6749d7afce318440f0fd1568a44",
+      "viewerSha256": "304774dc60c4f21d7a4e05808ba44ba09f7d4c471db960166dfcc36d9ac0798a",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-airflow-readme-0.html",
+      "width": 375,
+      "sourceSha256": "5b59183b74923fd9506c12956a39ca5dfd30a32ba8ea622c3ba3342369c85eee",
+      "viewerSha256": "f6bc17486ec56176d49f1ca821d8cb8a60be3bf6bf0c3a69678b0675407a930a",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-airflow-01-architecture-0.html",
+      "width": 375,
+      "sourceSha256": "6f76db2ab4edddda1c4bd5a5fadf183e1162512e6be8fd3b8b4cc118f398c1c7",
+      "viewerSha256": "c65c4d9ae9cd6fb64ce048006c76758d0ec8ab811d1ef5cf4a96501200ee215a",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-airflow-readme-0.html",
+      "width": 375,
+      "sourceSha256": "417fdb0ab070654cf890100519e518218ebd802962156aa24898fc7dabd5df33",
+      "viewerSha256": "fa6b14a9db926752739a7fd8732e33f4a419f862f307fcdd3888004873f3db02",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-airflow-01-architecture-0.html",
+      "width": 768,
+      "sourceSha256": "df54fc866fbccdcfc08d42839b4d48e29a42d6749d7afce318440f0fd1568a44",
+      "viewerSha256": "304774dc60c4f21d7a4e05808ba44ba09f7d4c471db960166dfcc36d9ac0798a",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-airflow-readme-0.html",
+      "width": 768,
+      "sourceSha256": "5b59183b74923fd9506c12956a39ca5dfd30a32ba8ea622c3ba3342369c85eee",
+      "viewerSha256": "f6bc17486ec56176d49f1ca821d8cb8a60be3bf6bf0c3a69678b0675407a930a",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-airflow-01-architecture-0.html",
+      "width": 768,
+      "sourceSha256": "6f76db2ab4edddda1c4bd5a5fadf183e1162512e6be8fd3b8b4cc118f398c1c7",
+      "viewerSha256": "c65c4d9ae9cd6fb64ce048006c76758d0ec8ab811d1ef5cf4a96501200ee215a",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-airflow-readme-0.html",
+      "width": 768,
+      "sourceSha256": "417fdb0ab070654cf890100519e518218ebd802962156aa24898fc7dabd5df33",
+      "viewerSha256": "fa6b14a9db926752739a7fd8732e33f4a419f862f307fcdd3888004873f3db02",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    }
+  ],
+  "pngVisualInspection": "Four regenerated images inspected in paired Korean/English sheets; routes, text and legends visible without clipping."
+}

@@ -49,7 +49,9 @@ Protocol/routing, 각 TLS 경계의 identity, Region 연결, 운영 주체의 �
 | Consul service mesh | Consul discovery/control plane과 Envoy sidecar | Kubernetes, VM과 다른 runtime 통합; 선택한 edition/version·proxy 호환성 확인 |
 | Cilium | eBPF network datapath와 L7용 Envoy 등의 proxy | 활성화한 component·플랫폼 지원 확인; L7 전체가 proxy 없이 동작하는 것은 아님 |
 
-Cilium 1.20.1의 mutual authentication은 공식 문서상 **Beta**이며 out-of-band handshake를 사용합니다. 트래픽 암호화에는 별도 WireGuard/IPsec 설정이 필요합니다. 모든 앱 연결을 Istio 방식의 TLS session으로 자동 감싸는 기능과 같지 않습니다. 문서화된 Cluster Mesh·외부 mTLS 제약도 확인해야 합니다.
+Cilium 1.20.1의 out-of-band mutual authentication은 공식 문서상 **Beta**이며 out-of-band handshake를 사용합니다. 트래픽 암호화에는 별도 WireGuard/IPsec 설정이 필요합니다. 모든 앱 연결을 Istio 방식의 TLS session으로 자동 감싸는 기능과 같지 않습니다. 문서화된 Cluster Mesh·외부 mTLS 제약도 확인해야 합니다.
+
+Cilium 1.20.1에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
 
 Linkerd의 project milestone version과 실제 설치 artifact는 별도 선택입니다. 공식 release 페이지는 Linkerd 2.20과 대응 edge release를 구분합니다. 오픈소스 project가 edge artifact를 배포하고 stable artifact는 vendor가 제공합니다. Release 권고, Kubernetes 호환성, update/support 조건과 subscription 비용을 확인하며 오래된 문서 링크로 artifact/channel을 추정하지 마세요.
 

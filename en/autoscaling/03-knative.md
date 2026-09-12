@@ -961,7 +961,7 @@ spec:
       name: default
 ```
 
-The example uses a dedicated ServiceAccount with an existing IRSA role. Scope ReceiveMessage/DeleteMessage/GetQueueAttributes/GetQueueUrl permissions to the test queue and validate acknowledgements, visibility timeouts and failure behavior. autoCreateQueue is false. The emitted CloudEvent type/source comes from the adapter; inspect it before copying the manual order-event Trigger filters. EKS Pod Identity is another supported credential option on eligible EC2 Pods, not Fargate.
+The example uses a dedicated ServiceAccount with an existing IRSA role. Scope ReceiveMessage/DeleteMessage/GetQueueAttributes/GetQueueUrl permissions to the test queue and validate acknowledgements, visibility timeouts and failure behavior. autoCreateQueue is false. The emitted CloudEvent type/source comes from the adapter; inspect it before copying the manual order-event Trigger filters. EKS Pod Identity is another credential option where the selected EKS compute, agent and SDK support it; Fargate does not support EKS Pod Identity.
 
 ### Broker/Trigger Pattern
 

@@ -1,0 +1,457 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T07:05:33.886521+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/09-operations.md",
+      "sha256": "f7c72ec9a815021459049dd8c6967ca2c4bd52cbbb37ec9549d9bbf3ce3afa8b"
+    },
+    {
+      "path": "en/quizzes/networking/calico/09-operations-quiz.md",
+      "sha256": "b6f1a23fd7b1d5d7b3ed9220efa2bb5ab9def1d7d6a62ff096e3c9fcbd2d0d00"
+    },
+    {
+      "path": "ko/networking/calico/09-operations.md",
+      "sha256": "181133885498efd934753f701c25152f2b5ab5b8125791287f6450ee77218546"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/09-operations-quiz.md",
+      "sha256": "059d4e5cec6e2b86b1de1bc611d62a09c02064de9b3d1b9084644869843b3afa"
+    }
+  ],
+  "sources": [
+    {
+      "key": "19b968186ad3",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/node/diags.go",
+      "sha256": "f2361b6236b496c2807bea4cb78bdecf423b15f5540c96e343147109860ea59d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "21ca066b1797",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/get.go",
+      "sha256": "97f845abc66d49b4807c6804e2f7e79a5ed9bbd0042feedd4835a547b7831d6f",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "09f7077f0926",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/ipam/split.go",
+      "sha256": "1b5e25e412afbf89035bc9a2ead94ed16d33962f4cd55902f814d92f630d6574",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "44e962f2c44c",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/iptables/table.go",
+      "sha256": "209260a4da81f4ebd452162806a5bfb4c9452f52c552ddd2196eeaadeb127c78",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "5f1da65a0fc3",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/dataplane/linux/int_dataplane.go",
+      "sha256": "80754f573b18c989c2b8b19173244bbcd69e2e5200825864223210ec0626b902",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "286741a28536",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/typha/pkg/syncserver/sync_server.go",
+      "sha256": "c03cf465237ae3ddb772a0d46a7f8a873f1a7a46194fac3a9638205e790cdb95",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "b598a88ecb1c",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/typha/pkg/snapcache/cache.go",
+      "sha256": "98903613f48bc94afa883f82ed3e9c3a5c697e5f52457d11d17bd068d955d783",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "efcfc6e88404",
+      "url": "https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus",
+      "sha256": "b2ec8475cbce79a6743af683680fdaa0ac81565715aac33f053a4876fd4b24c6",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "ced54fbb12a5",
+      "url": "https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting",
+      "sha256": "7718d5344c0ea58c986040e6dd0142f06f407b81d24b7894f7786dee216d28c2",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "1455c0aee33d",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/iptables/cmdshim/cmd_shim.go",
+      "sha256": "d681c7f6e976569d1a85239c5d5d65ee7f537c2c50e4684ae200e974dc34dc80",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "0be67e8f0b4c",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/logutils/logutils.go",
+      "sha256": "cc271e370b2b2dc15d2b79489c29b6010457a862ace11dc0ae0fb7cd04a30022",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "220bddfc6c4d",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/kube-controllers/pkg/controllers/node/ipam.go",
+      "sha256": "0856af6d192281f6ed8a01a5ea6e5dd44a2c8d785bd646413bf694e58ad2e909",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "5272d141a866",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/ipam/show.go",
+      "sha256": "d2bddec28ed404c1893994a9aa5aab8859bb264de128c4993e6e8229779067d3",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "3a8f8dfe25b9",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/libcalico-go/lib/prometheus/summary.go",
+      "sha256": "5006be1d79e2917ff15252f9c4b43cf94c641413ff486581cd94cc0b8a6895ea",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "1c8711e06c88",
+      "url": "https://prometheus-operator.dev/docs/api-reference/api/",
+      "sha256": "1b04241ca20281a4fa9236a06c9d471694a2c6fc820b72b1dbe60c838ef88220",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "01f081fed0ff",
+      "url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
+      "sha256": "47aedb0d8230385c82cf6c1268646fc57aa1c6b71d961120588c72b2af017c30",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "aa8559d5b09f",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/constants/help.go",
+      "sha256": "5c8ea681491e70a0ac1ede3fc6e11440716cd6fc34b84c617cb13fa373fc085a",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "ccc97f588306",
+      "url": "https://docs.tigera.io/calico/latest/operations/datastore-migration",
+      "sha256": "9510055797c13be0427d7010323af7e46d2516b59415aa2e0748ecf1f7a3efd5",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "800e0f9330be",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/pkg/status/populators/bird_conn.go",
+      "sha256": "fa454bba513415658e75e80975b6ec519317ba3546e9b53657e7f3673caadd56",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "7f5cf6296c70",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/filesystem/etc/service/available/bird/log/run",
+      "sha256": "92eeb17d08168bf1c390f867775de46c4d5b70ddb21df046e325fca88eee0aa1",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "fa154fb54f3c",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/filesystem/etc/service/available/bird/run",
+      "sha256": "a3bc53b33fe40eee6e12bae1029c1ce429a03f007ef96ad8af13e752bb13df20",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "80ac902c84f2",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/resourcemgr/resourcemgr.go",
+      "sha256": "ea3aa87e4da1d0f743cc95df38c6b2d4dafe0f05798a54dae0fe80e6a1baab54",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "17d6c65aed35",
+      "url": "https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/querying/functions.md",
+      "sha256": "21a0b70b5178dbe74a0d707818f533f827cee0368133067bda0228aaccb09821",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "92c839cc896d",
+      "url": "https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest",
+      "sha256": "cb5ee2ecb126e14f9357aae662f1ebcbc1ea9494c991d58c49b45babd6eb66fa",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "fa6da790a575",
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/resourcemgr/ipamconfiguration.go",
+      "sha256": "a025b6448f0782f2e4f28d3ff71b60aff0ae51ec580915f84917edf8210847af",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "9669b63a9e26",
+      "url": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml",
+      "sha256": "10a5f90038608d9a2758d5a8700e1be5adbaff5d6355a52fa7b6e8488b71156d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "key": "bfd1c844ebd2",
+      "url": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml",
+      "sha256": "2f2015458b5f70695efc918e2c5ca063563e1dd4c9b1324a28f7a0367de26e88",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24",
+      "sha256": "7fa25ebe3ea0cad2e3308daf97694b165ee24d0769c8e45b6a54cef21764278b",
+      "raw": "/tmp/istio-foundation-sources/6f94a8862c24.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba",
+      "sha256": "32a485a3b17f70904b788b45b8320fcd5454be32bddd4462aa1fd061d7acfc30",
+      "raw": "/tmp/istio-foundation-sources/71a9d6b0ffba.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics",
+      "key": "84f7a45d1395",
+      "sha256": "87d6596864356c9fcc3904727e200e334de889af5ca67f042643309203a8e44d",
+      "raw": "/tmp/istio-foundation-sources/84f7a45d1395.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/felix/prometheus",
+      "key": "b299dee33cd8",
+      "sha256": "46163a64e1b9f103037703ac465c5f51defb89e62da8b557e23c03c9299dbe87",
+      "raw": "/tmp/istio-foundation-sources/b299dee33cd8.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/typha/prometheus",
+      "key": "e9c383f722b2",
+      "sha256": "8dd2d8c93f9c1c4ce91d12ea0152212067ba3b136e1b24cbe8829b670cd50c74",
+      "raw": "/tmp/istio-foundation-sources/e9c383f722b2.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/observability/view-flow-logs",
+      "key": "6fac19fcc17d",
+      "sha256": "163cd7755b0b6d9eb0a2682a237af4db409215e0faf397e550010ee0cf5ddf94",
+      "raw": "/tmp/istio-foundation-sources/6fac19fcc17d.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade",
+      "key": "dd7cf2c86b2a",
+      "sha256": "a8158098f7c0fcf3e431495fb1aafea4bcd3e44d4016f6b503290e66ce6a9752",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d",
+      "sha256": "cb46786692404fb7955c6d31329c667d0dd8f1ff4821dc7869d0156c93d3a859",
+      "raw": "/tmp/istio-foundation-sources/366be3352d5d.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/ipam/release.go",
+      "key": "ab611e781555",
+      "sha256": "0e941e45e1c57a170f3cb68b07714c512aa16d8ec5f1a3220b96ac7791548766",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/ipam/check.go",
+      "key": "b87bc693eaa6",
+      "sha256": "05a9e12a71469c487cf1d17d90c8464941eec4f4367140fa3a0e1a8e30ac6e0c",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    }
+  ],
+  "findings": [
+    "Original EN1207/KO1189 guide lines and198lines/12questions per quiz fully read.24questions retained and aligned; EN lifecycle figure actually viewed and redundant reference removed because footer claimed built-in BIRD metrics and unconditional restore. Asset unchanged.",
+    "Pinned Calico3.32.2/operator1.42.6 with tested Kubernetes1.34–36; separate CRDs and one installation owner. Fresh selfmanaged Linux CalicoCNI/Iptables/VXLAN baseline separated from EKS. Unsupported Typha/minReadySeconds/KubeControllers overrides and production resource presets removed; Helm rendered resources actually validated.",
+    "Corrected local calicoctl node status scope, diags --log-dir input/nooutput-dir plus actualroot/privilegedcontainer/signal effects. CurrentWindowsreleaseasset exists and retained platformcoverage by maintainedinstallation link. ipam show--ip valid;showblocksutilization differsfromBlockAffinity. ipam split requiresNUMBER,locked datastore andsplits pool;release--handle/--blockunsupported.",
+    "Released metric names/types corrected: felix_int_dataplane_failures no_total, dataplane_apply_time_secondsSummary notHistogram, log_errors counts output errors. Felixhasclusterwidegaugestoo;policyinstance sumsnotuniquecounts. Typha default9091disabled,configured9093;droppedcounter isrebalance,updatesreceivednottransmitted. kubecontrollerIPAM pool/node metrics replaceinventedfelix_ipam/calico_ipam names.",
+    "Added complete Service-to-ServiceMonitor port/job wiring withoutoverwritingoperatorServices;Prometheusselectors/RBAC/networkprerequisitesexplicit. Removed assumedBIRD Prometheusexporter metrics andpartialobsoleteGrafanaJSON;retainedsource-backedpanelqueries andactualmean/localquantiledistinction.",
+    "Original zeroendpoint readiness alarm producesfalsepositive onhealthy fixture;newDSavailability/scrapedown/wholejobabsent/retry/mean/IPAMalertstested. Missing/idle/zerocapacity are nothealthyzero. IPAMdedup/pool/node aggregation isaddressutilization,notallocatableheadroom;onecluster/prereqsbounded.",
+    "Logs/diagnostics nowselectaffectednode instead offirstagent;events andactualCNIallocator precedeIPAMactions;processDebuglogsnotperpacketdecisions. FixedgenericFelixMTU/autodetectionfieldclaims andremovedblindaddressrelease/restart.",
+    "Oldhealthscript returns0andHealthCheckCompletewhile suppressinglogAPIerror;fixedscript returns2andchecksDSobservedgeneration/updated/ready/availableandTigeraStatusconditions. ReplacednonworkingCronJobwithvalidatedlocalscriptandexplicitpackaging/read-onlyidentityrequirements,notliveclusterclaim.",
+    "Configurationinventoryisprotected0700/0600,quotespaths,refusesexistingdirectory,marksfailureincomplete,checksumsdeclaredexports;includesnative/stagedpolicyandidentitymetadata. Explicitlynotcompleteatomicdatastorebackup;nooneclickrawrestoreorunconditionaloldoperator/Helmrollback. Migrationlock/export/import scoped toactualetcd→KDDworkflow.",
+    "OSSflowobservabilityusesGoldmane/WhiskerandcurrentTechPreviewstatus;removedoldFile/DNSloggerandfictionalreporterfields. Blanketglobaldeny,canaryagentremoval,DSR/BPF/sysctlpresetsreplacedwithmaintainedscopedproceduresandlimits."
+  ],
+  "checks": {
+    "schemaObjects": 35,
+    "bashBlocks": 30,
+    "quizAnswers": 24,
+    "mergePatches": 4,
+    "scriptCases": [
+      {
+        "script": "status",
+        "fixture": "healthy",
+        "exitCode": 0,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "api-error",
+        "exitCode": 2,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "logs-error",
+        "exitCode": 2,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "zero-desired",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "stale-generation",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "not-updated",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "not-available",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "degraded",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "missing-condition",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "empty-status",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "status",
+        "fixture": "malformed",
+        "exitCode": 1,
+        "passed": true
+      },
+      {
+        "script": "configuration-inventory",
+        "fixture": "success",
+        "exitCode": 0,
+        "protectedPermissions": true,
+        "passed": true
+      },
+      {
+        "script": "configuration-inventory",
+        "fixture": "api-failure",
+        "exitCode": 7,
+        "protectedPermissions": false,
+        "passed": true
+      }
+    ],
+    "promQL": {
+      "tool": "promtool, version 3.14.0 (branch: HEAD, revision: d7598b7141418fa35be2b5ec5d0fefb634199610)",
+      "rulesSyntaxPassed": true,
+      "rules": 6,
+      "fixtureTestsPending": false,
+      "fixtureTestsPassed": true,
+      "scenarios": 12,
+      "alertAssertions": 72,
+      "expressionAssertions": 9,
+      "originalZeroEndpointReadinessRuleFailsHealthyCase": true,
+      "sourceSeriesAreSynthetic": true
+    },
+    "sourceChecks": [
+      {
+        "metric": "felix_int_dataplane_failures",
+        "constructor": "prometheus.NewCounter",
+        "key": "5f1da65a0fc3"
+      },
+      {
+        "metric": "felix_int_dataplane_apply_time_seconds",
+        "constructor": "cprometheus.NewSummary",
+        "key": "5f1da65a0fc3"
+      },
+      {
+        "metric": "felix_iptables_restore_errors",
+        "constructor": "prometheus.NewCounter",
+        "key": "44e962f2c44c"
+      },
+      {
+        "metric": "felix_log_errors",
+        "constructor": "prometheus.NewCounter",
+        "key": "0be67e8f0b4c"
+      },
+      {
+        "metric": "typha_connections_dropped",
+        "constructor": "prometheus.NewCounter",
+        "key": "286741a28536"
+      },
+      {
+        "metric": "typha_connections_streaming",
+        "constructor": "prometheus.NewGaugeVec",
+        "key": "286741a28536"
+      },
+      {
+        "metric": "typha_updates_total",
+        "constructor": "prometheus.NewCounterVec",
+        "key": "b598a88ecb1c"
+      },
+      {
+        "metric": "ipam_allocations_in_use",
+        "constructor": "prometheus.NewGaugeVec",
+        "key": "220bddfc6c4d"
+      },
+      {
+        "metric": "ipam_ippool_size",
+        "constructor": "prometheus.NewGaugeVec",
+        "key": "220bddfc6c4d"
+      }
+    ],
+    "helm": {
+      "renderedObjects": 11,
+      "allSchemaValid": true,
+      "chartVersion": "v3.32.2",
+      "bothLocaleValuesIdentical": true
+    },
+    "monitorContract": {
+      "jobs": {
+        "calico-felix": 9091,
+        "calico-typha": 9093,
+        "calico-kube-controllers": 9094
+      },
+      "operatorServicesNotOverwritten": true,
+      "PrometheusSelectorStillEnvironmentSpecific": true
+    },
+    "healthRegression": {
+      "originalLogReadFailureExit": 0,
+      "originalSaidComplete": true,
+      "originalSuppressedRetrievalError": true,
+      "fixedLogReadFailureExit": 2
+    },
+    "limitations": [
+      "No live Kubernetes/AWS, Calico dataplane, Prometheus server or production recovery tested.",
+      "Metrics names/types checked in released source; monitoring schemas use Prometheus Operator0.94.0 without implying that version is installed.",
+      "Shell tests use deterministic local kubectl/calicoctl fixtures, not a cluster.",
+      "Configuration inventory is not a complete or atomic datastore backup."
+    ]
+  },
+  "validation": [
+    "35 released-schema object checks inclPrometheusOperator0.94CRDs;30bashblocks,4mergedpatches,24quizmatches;codeparityexceptlocalizedcomments.",
+    "ActualHelm3 renderofcached digest-verifiedCalico3.32.2chart:11objectsallvalidated;ServiceMonitor resolves3expectedjobs/ports.",
+    "13nativeBashscriptfixtures;oldlogerrorfalse-successreproduced;newAPI/logfailures,degraded/empty/stale/statuscasesfail;inventorypermissions/checksums/pathspaces/nooverwrite/failuremarkerpassed.",
+    "Promtool3.14.0:6rulessyntaxpass;12actualseriesfixtures,72alertassertions+9expressionassertionspassed;oldzeroendpointreadinessrulefailshealthyfixture. Syntheticseries,notproductionmeasurements.",
+    "4currentMarkdown→Vuecompilationspassed;networking-calico38filemechanicalscan167YAML/149shellblocks0errors;scopedgitdiffcheckclean.",
+    "Clean-envdocs:test118/118,0fail;retryregressionspassing."
+  ],
+  "artifacts": "/home/atomoh/kubernetes-docs/.vitepress/cache/calico-operations-audit",
+  "originals": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3 document_snapshots",
+  "limitations": [
+    "No live Kubernetes/AWS, Calico dataplane, Prometheus server or production recovery tested.",
+    "Metrics names/types checked in released source; monitoring schemas use Prometheus Operator0.94.0 without implying that version is installed.",
+    "Shell tests use deterministic local kubectl/calicoctl fixtures, not a cluster.",
+    "Configuration inventory is not a complete or atomic datastore backup."
+  ],
+  "figureReview": [
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-09-operations-0.png",
+      "actuallyViewed": true,
+      "retained": false,
+      "assetModified": false,
+      "reason": "Redundant overview footer falsely implied built-in BIRD Prometheus metrics and full recovery from configuration exports. Correct replacement text retained lifecycle and state/config distinction; parent owns any asset regeneration/foreign sync."
+    }
+  ]
+}

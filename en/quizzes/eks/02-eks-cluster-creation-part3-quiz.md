@@ -1,37 +1,30 @@
 # EKS Cluster Creation Quiz - Part 3
 
-This quiz tests your understanding of advanced networking, storage configuration, and multi-tenancy related to Amazon EKS cluster creation. It covers topics such as cluster networking, storage options, and multi-tenant environment configuration.
+> **Last Updated**: September 11, 2026
+
+This quiz covers EKS networking, node capacity, multi-tenancy, autoscaling, and node security. Commands and manifests are learning examples; cloud deployment and end-to-end behavior have not been executed during this review. Confirm the target account, Region, kubeconfig, compatible add-on versions, and resource ownership before using them.
 
 ## Basic Concept Questions
 
-1. What is the main factor that limits the number of IP addresses per pod in an Amazon EKS cluster?
-   * A) VPC CIDR block size
-   * B) Node instance type
-   * C) Cluster's Kubernetes version
-   * D) Number of available IP addresses in the subnet
+1. In the conventional IPv4 secondary-IP calculation, what determines ENI and per-ENI address limits?
+   * A) Namespace name
+   * B) EC2 instance type
+   * C) Service name
+   * D) Deployment name
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) Node instance type**
+**Answer: B) EC2 instance type**
 
-**Explanation:** The main factor that limits the number of IP addresses per pod in an Amazon EKS cluster is the node's instance type. The Amazon VPC CNI plugin uses each node's Elastic Network Interfaces (ENIs) and secondary IP addresses to assign IP addresses to pods. Each EC2 instance type supports a different maximum number of ENIs and maximum IP addresses per ENI, which determines the maximum number of pods that can run on a node.
+For Linux IPv4 **secondary-IP mode**, with sufficient subnet addresses and no custom networking or security groups for Pods, the instance type supplies the ENI and per-ENI address limits. This estimates the conventional node Pod limit, not “IP addresses per Pod.”
 
-**Maximum Pod Count Calculation by Instance Type:**
+The conventional formula reserves the primary address of **each** ENI:
 
-The maximum number of pods is calculated using the following formula:
-
+```text
+ENIs × (IPv4 addresses per ENI − 1) + 2
 ```
-(Number of ENIs × IP addresses per ENI - 1) + 2
-```
-
-Where:
-
-* 1 is subtracted because the primary IP address of the primary ENI is used by the node itself.
-* 2 is added because kube-proxy and aws-node pods use host networking.
-
-**Maximum Pod Count for Common Instance Types:**
+The extra two are the historical host-network allowance for `aws-node` and `kube-proxy`. The table preserves this secondary-IP calculation; it is **not** the effective `maxPods` for every AMI, CNI mode, or managed node group.
 
 | Instance Type | Max ENIs | IPs per ENI | Max Pods |
 | ------------- | -------- | ----------- | -------- |
@@ -46,228 +39,110 @@ Where:
 | r5.large      | 3        | 10          | 29       |
 | r5.xlarge     | 4        | 15          | 58       |
 
-**How to Check Maximum Pod Count:**
+**Check actual capacity and EC2 limits:**
 
 ```bash
-# Check maximum pod count for a node
-kubectl get nodes -o jsonpath='{.items[*].status.capacity.pods}'
-
-# Or use the max-pods script
-curl -s https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/scripts/max-pods-calculator.sh | bash -s -- --instance-type m5.large
+kubectl get nodes -o custom-columns=NAME:.metadata.name,TYPE:.metadata.labels.node\\.kubernetes\\.io/instance-type,CAPACITY:.status.capacity.pods,ALLOCATABLE:.status.allocatable.pods
+aws ec2 describe-instance-types --region us-west-2 \
+  --instance-types m5.large m5.4xlarge \
+  --query 'InstanceTypes[].{Type:InstanceType,ENIs:NetworkInfo.MaximumNetworkInterfaces,IPv4PerENI:NetworkInfo.Ipv4AddressesPerInterface}'
 ```
+Subnet exhaustion can stop Pod creation even below the node limit. CPU/memory requests, other host-network Pods, custom networking, security groups for Pods, and kubelet configuration also matter. Managed node groups cap `maxPods` at 110 for instances with fewer than 30 vCPUs and 250 otherwise, independently of the larger formula result.
 
-**Factors Limiting Maximum Pod Count:**
+IPv4 prefix delegation assigns a `/28` to one secondary-address **slot** on an ENI; several prefixes can occupy one ENI. It does not create more subnet address space. See question 5 for prerequisites and migration.
 
-1. **Instance Type**:
-   * Each instance type supports a different maximum number of ENIs and IP addresses per ENI.
-   * Larger instance types generally support more ENIs and IP addresses.
-2. **CNI Configuration**:
-   * The default VPC CNI configuration uses secondary IP addresses rather than allocating a full ENI to each pod.
-   * This behavior can be changed using custom networking.
-3.  **Prefix Delegation**:
-
-    * VPC CNI 1.9.0 and later supports prefix delegation, which allocates a /28 CIDR block (16 IPs) to each ENI.
-    * This can significantly increase the maximum number of pods per node.
-
-    ```bash
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-    ```
-4.  **Custom max-pods Value**:
-
-    * You can use the kubelet's `--max-pods` flag to limit the maximum number of pods per node.
-    * This can be set to a value lower than what the instance type supports.
-
-    ```bash
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-nodegroup \
-      --node-type m5.large \
-      --nodes 3 \
-      --kubelet-extra-args "--max-pods=110"
-    ```
-
-**Issues with Other Options:**
-
-* **VPC CIDR block size**: The VPC CIDR block size limits the total number of IP addresses available in the VPC, but it does not directly limit the maximum number of pods per individual node.
-* **Cluster's Kubernetes version**: The Kubernetes version affects supported features, but it does not directly limit the maximum number of pods per node.
-* **Number of available IP addresses in the subnet**: The number of available IP addresses in a subnet affects the total number of pods that can be deployed in that subnet, but it does not directly limit the maximum number of pods per individual node.
-
-The node's instance type is the main factor that determines the maximum number of pods that can run on a node through the number of ENIs and IP addresses per ENI it supports. Therefore, it is important to select an appropriate instance type that meets your workload requirements.
+For a custom AL2023 AMI, configure `spec.kubelet.config.maxPods` in NodeConfig after calculating and testing a suitable value. With a managed node group and no custom AMI ID, EKS calculates the recommended value. Raising kubelet’s limit alone cannot make IP addresses or compute capacity available. Do not pass the nonexistent eksctl `--kubelet-extra-args` option.
 
 </details>
 
-2\. What is the default network policy for pod-to-pod communication in an Amazon EKS cluster? - A) Allow all pod-to-pod communication - B) Allow communication only between pods in the same namespace - C) Allow only explicitly permitted pod-to-pod communication - D) Block all pod-to-pod communication
+2. With no NetworkPolicy selecting a Pod, what is its NetworkPolicy isolation state?
+   * A) Non-isolated, subject to other network controls
+   * B) Same-namespace traffic only
+   * C) Explicit allow rules required
+   * D) All traffic denied
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: A) Allow all pod-to-pod communication**
+**Answer: A) Non-isolated, subject to other network controls**
 
-**Explanation:** The default network policy for pod-to-pod communication in an Amazon EKS cluster is to allow all pod-to-pod communication. By default, EKS does not implement network policies, and all pods can freely communicate with all other pods in the cluster. This is the default behavior of Kubernetes, and you must explicitly configure network policies to restrict pod-to-pod communication.
+Without a policy selecting a Pod for a traffic direction, Kubernetes NetworkPolicy leaves that direction non-isolated. This does **not** bypass security groups, route tables, NACLs, other policy APIs, or an application's listener.
 
-**Default Networking Behavior in EKS:**
+Amazon VPC CNI has native NetworkPolicy enforcement when enabled on supported Linux EC2 nodes. Current standard/admin policy guidance requires VPC CNI 1.21 or later and kernel 5.10 or later; verify the selected add-on's compatibility. Windows and Fargate are not covered by that enforcement path. Use controller-managed Pods (for example Deployments) and check AWS's interface and Service-port limitations.
 
-1. **Default Allow Policy**:
-   * By default, all pods can communicate with all other pods in the cluster.
-   * Communication between namespaces is also allowed without restrictions.
-   * This follows Kubernetes' "flat network" model.
-2. **Amazon VPC CNI**:
-   * The default CNI plugin for EKS is Amazon VPC CNI.
-   * This plugin assigns VPC IP addresses to pods, making them directly routable within the VPC.
-   * It does not implement network policies by default.
+Calico policy with AWS VPC networking and Cilium AWS-CNI chaining are alternatives with their own installation requirements. Do not install an unconfigured second CNI or stack policy agents unintentionally. AWS Network Firewall filters routed VPC traffic; it does not implement Kubernetes NetworkPolicy selectors.
 
-**How to Implement Network Policies:**
-
-To restrict pod-to-pod communication in EKS, you need to implement one of the following network policy solutions:
-
-1.  **Calico**:
-
-    ```bash
-    # Install Calico
-    kubectl create namespace tigera-operator
-    helm repo add projectcalico https://docs.projectcalico.org/charts
-    helm install calico projectcalico/tigera-operator --namespace tigera-operator
-    ```
-2.  **Cilium**:
-
-    ```bash
-    # Install Cilium
-    helm repo add cilium https://helm.cilium.io/
-    helm install cilium cilium/cilium --namespace kube-system
-    ```
-3. **AWS Network Firewall** (VPC level):
-   * You can use AWS Network Firewall to filter traffic at the VPC level.
-   * This provides subnet-level control rather than fine-grained pod-level control.
-
-**Network Policy Examples:**
-
-1.  **Default Deny Policy**:
-
-    ```yaml
-    # Block all ingress traffic
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: default-deny-ingress
-      namespace: default
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-    ```
-2.  **Allow Communication Between Specific Pods**:
-
-    ```yaml
-    # Allow communication only from frontend to backend
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-frontend-to-backend
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: backend
-      ingress:
-      - from:
-        - podSelector:
-            matchLabels:
-              app: frontend
-        ports:
-        - protocol: TCP
-          port: 8080
-    ```
-3.  **Restrict Cross-Namespace Communication**:
-
-    ```yaml
-    # Allow access only from prod namespace
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-from-prod-namespace
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: database
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              name: prod
-        ports:
-        - protocol: TCP
-          port: 5432
-    ```
-
-**Network Policy Best Practices:**
-
-1. **Apply Default Deny Policy**:
-   * Apply a default deny policy to all namespaces to block all traffic that is not explicitly allowed.
-   * Explicitly allow only necessary communication.
-2. **Apply Least Privilege Principle**:
-   * Allow only the minimum network access that pods require.
-   * Allow only specific ports and protocols.
-3. **Namespace Isolation**:
-   * Use namespaces to logically separate workloads.
-   * Explicitly control communication between namespaces.
-4. **Label-Based Policies**:
-   * Use pod labels to define fine-grained network policies.
-   * Maintain a consistent labeling scheme.
-
-**Issues with Other Options:**
-
-* **Allow communication only between pods in the same namespace**: By default, EKS allows all pod-to-pod communication, including cross-namespace communication.
-* **Allow only explicitly permitted pod-to-pod communication**: This is the behavior after implementing network policies, but it is not the default behavior.
-* **Block all pod-to-pod communication**: By default, EKS does not block pod-to-pod communication.
-
-The default network policy in EKS is to allow all pod-to-pod communication. While this can be convenient in development and test environments, it is important to implement appropriate network policies to enhance security in production environments.
-
-</details>
-
-3. What is required for pods in an Amazon EKS cluster to access the internet outside the VPC?
-   * A) Attach an internet gateway to the subnet where the pod is located
-   * B) Attach a NAT gateway or NAT instance to the subnet where the pod is located
-   * C) Assign a public IP address to the pod
-   * D) Associate an Elastic IP address with the pod
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: B) Attach a NAT gateway or NAT instance to the subnet where the pod is located**
-
-**Explanation:** For pods in an Amazon EKS cluster to access the internet outside the VPC, the subnet where the pod is located must have a NAT gateway or NAT instance attached. This is the standard method for allowing pods in private subnets to access the internet.
-
-**EKS Networking Architecture:**
-
-1. **Pods in Private Subnets**:
-   * EKS worker nodes are typically placed in private subnets for security.
-   * Pods in private subnets cannot directly access the internet.
-   * They must access the internet through a NAT gateway or NAT instance.
-2. **Pods in Public Subnets**:
-   * Even if worker nodes are in public subnets, pods do not receive public IP addresses by default.
-   * Pods access the internet through NAT via the node's network interface.
-
-**NAT Gateway Configuration:**
-
-```bash
-# Create NAT gateway
-aws ec2 create-nat-gateway \
-  --subnet-id subnet-public1 \
-  --allocation-id eipalloc-12345
-
-# Update private subnet routing table
-aws ec2 create-route \
-  --route-table-id rtb-private \
-  --destination-cidr-block 0.0.0.0/0 \
-  --nat-gateway-id nat-12345
-```
-
-**VPC Configuration Example Using CloudFormation:**
+The examples below are for a **new, dedicated** `network-policy-lab` namespace. The first policy isolates ingress only. The next two allow specific traffic; the `prod` peer requires both the built-in namespace label and the backend Pod label.
 
 ```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: network-policy-lab
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: network-policy-lab
+spec:
+  podSelector:
+    matchLabels: {app: backend}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels: {app: frontend}
+    ports:
+    - {protocol: TCP, port: 8080}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prod-to-database
+  namespace: network-policy-lab
+spec:
+  podSelector:
+    matchLabels: {app: database}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: prod
+      podSelector:
+        matchLabels: {app: backend}
+    ports:
+    - {protocol: TCP, port: 5432}
+```
+For egress isolation, separately allow the actual DNS path and application dependencies. A denied connection is meaningful only after baseline connectivity, DNS, readiness, and an allowed positive control succeed. Do not apply blanket deny policies to `kube-system` or a shared `default` namespace as a quick test.
+
+</details>
+
+3. Which is a conventional internet-egress path for a private IPv4 subnet?
+   * A) Attach an IGW to the subnet
+   * B) Route to a public NAT gateway, then to the VPC IGW
+   * C) Give each Pod an Elastic IP
+   * D) A private NAT gateway directly through an IGW
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Route to a public NAT gateway, then to the VPC IGW**
+
+For private IPv4 nodes and Pods that need public IPv4 internet egress, a common design routes the private subnet's default route to a **public NAT gateway in a public subnet**. That public subnet routes to an internet gateway attached to the **VPC**, and the NAT gateway has an Elastic IP. A NAT instance is another design with additional routing, source/destination-check and operational requirements.
+
+With the default IPv4 VPC CNI SNAT behavior, off-VPC Pod traffic first uses the node's primary IPv4 address. Public nodes with a public IPv4 address and an IGW route can use a different path. Native IPv6 egress can use an egress-only internet gateway; AWS service access through VPC endpoints may need no internet NAT. Do not treat NAT as a universal prerequisite for every Pod.
+
+**One-AZ CloudFormation routing example:** this demonstrates public/private route associations; it is not a complete EKS VPC. EKS cluster subnets require at least two AZs. For a zonal NAT design, consider a NAT gateway and private route per AZ to avoid a cross-AZ dependency. NAT gateways and public IPv4 addresses incur charges. Review the complete EKS VPC template in the concept guide for a cluster deployment.
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: One-AZ IPv4 NAT routing demonstration; not a complete EKS VPC
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -285,7 +160,7 @@ Resources:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.0.0/24
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: Public-Subnet-1
@@ -358,1108 +233,662 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway
+
+  PublicSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
 ```
+The `SubnetRouteTableAssociation` resources are essential: creating routes in an unassociated table does not change either subnet's route.
 
-**VPC Configuration Using eksctl:**
-
-```yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: my-cluster
-  region: us-west-2
-vpc:
-  cidr: 192.168.0.0/16
-  nat:
-    gateway: Single  # NAT gateway configuration
-  clusterEndpoints:
-    publicAccess: true
-    privateAccess: true
-```
-
-**Issues with Other Options:**
-
-* **Attach an internet gateway to the subnet where the pod is located**: An internet gateway is attached to public subnets, and resources in private subnets need a NAT gateway to access the internet. Additionally, an internet gateway alone does not allow pods to access the internet.
-* **Assign a public IP address to the pod**: The Amazon VPC CNI plugin does not support assigning public IP addresses to pods. Pods always receive private IP addresses.
-* **Associate an Elastic IP address with the pod**: You cannot directly associate an Elastic IP address with a pod. Elastic IP addresses can only be associated with EC2 instances or network interfaces.
-
-A NAT gateway or NAT instance is the standard method for allowing pods in private subnets to access the internet. It translates the pod's private IP address to the NAT gateway's public IP address to enable internet communication. For production environments, it is recommended to deploy a NAT gateway in each availability zone for high availability.
-
-</details>
-
-4. Which of the following is NOT a requirement for applying security groups to pods using SecurityGroupPolicy in an Amazon EKS cluster?
-   * A) Amazon VPC CNI plugin version 1.7.7 or later
-   * B) ENIConfig resource configuration
-   * C) Setting hostNetwork: true on the pod
-   * D) Specifying a service account for pods to apply security groups
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: C) Setting hostNetwork: true on the pod**
-
-**Explanation:** "Setting hostNetwork: true on the pod" is NOT a requirement for applying security groups to pods using SecurityGroupPolicy in an Amazon EKS cluster. In fact, security groups cannot be applied to pods with hostNetwork: true. To apply security groups to pods, the pods must use their own network namespace.
-
-**Pod Security Group Feature Requirements:**
-
-1.  **Amazon VPC CNI Plugin Version 1.7.7 or Later**:
-
-    * The pod security group feature is supported in Amazon VPC CNI plugin version 1.7.7 and later.
-    * It is recommended to use the latest version.
-
-    ```bash
-    # Check CNI version
-    kubectl describe daemonset aws-node -n kube-system | grep Image
-
-    # Update CNI
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.10.0/config/master/aws-k8s-cni.yaml
-    ```
-2.  **Enable Pod Security Group Feature**:
-
-    ```bash
-    # Enable pod security group feature
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-    # Or use eksctl
-    eksctl utils update-cluster-config \
-      --name my-cluster \
-      --region us-west-2 \
-      --enable-pod-security-groups
-    ```
-3.  **Specifying a Service Account for Pods to Apply Security Groups**:
-
-    * In SecurityGroupPolicy, you must specify pods to apply security groups using a pod selector or service account selector.
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: my-security-group-policy
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: my-app
-      securityGroups:
-        groupIds:
-          - sg-12345
-    ```
-
-**Pod Security Group Configuration Examples:**
-
-1.  **Create SecurityGroupPolicy**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: db-client-policy
-      namespace: default
-    spec:
-      serviceAccountSelector:
-        matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-db-client
-    ```
-2.  **Create Service Account**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: db-client
-      namespace: default
-      labels:
-        role: db-client
-    ```
-3.  **Deploy Pod**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client-pod
-    spec:
-      serviceAccountName: db-client
-      containers:
-      - name: db-client
-        image: mysql:5.7
-        command: ['sleep', '3600']
-    ```
-
-**Issues with hostNetwork: true:**
-
-Pods with `hostNetwork: true` use the node's network namespace, so separate security groups cannot be applied to the pod. Such pods inherit the node's security groups.
-
-```yaml
-# Security groups cannot be applied to this pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: host-network-pod
-spec:
-  hostNetwork: true  # Uses the node's network namespace
-  containers:
-  - name: nginx
-    image: nginx
-```
-
-**ENIConfig Resource Configuration:**
-
-ENIConfig resources are required when configuring custom networking, but they are not a mandatory requirement when using only the pod security groups feature. However, if you are using pod security groups along with custom networking, you must configure ENIConfig resources.
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-12345
-  securityGroups:
-  - sg-12345
-```
-
-**Pod Security Group Limitations:**
-
-1. **Resource Limitations**:
-   * Each node requires additional ENIs for pod security groups.
-   * The maximum number of supported ENIs is limited by instance type.
-2. **Compatibility Limitations**:
-   * Cannot be applied to pods with hostNetwork: true.
-   * Cannot be applied to pods using hostPort.
-   * May not be compatible with some CNI plugins.
-3. **Performance Impact**:
-   * Since additional ENIs are required per pod, pod startup time may be longer.
-   * The maximum number of pods per node may be limited.
-
-The pod security groups feature is a powerful capability that provides granular network security at the pod level. However, since this feature cannot be applied to pods with hostNetwork: true, pods must use their own network namespace to use pod security groups.
-
-</details>
-
-4\. What is NOT a requirement for applying security groups to pods using SecurityGroupPolicy in an Amazon EKS cluster? - A) Amazon VPC CNI plugin version 1.7.7 or higher - B) ENIConfig resource configuration - C) Setting hostNetwork: true on the pod - D) Specifying a service account for pods to which security groups will be applied
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: C) Setting hostNetwork: true on the pod**
-
-**Explanation:** The option that is NOT a requirement for applying security groups to pods using SecurityGroupPolicy in an Amazon EKS cluster is "Setting hostNetwork: true on the pod". In fact, security groups cannot be applied to pods with hostNetwork: true. To apply security groups to pods, the pods must use their own network namespace.
-
-**Pod Security Groups Feature Requirements:**
-
-1.  **Amazon VPC CNI plugin version 1.7.7 or higher**:
-
-    * The pod security groups feature is supported in Amazon VPC CNI plugin version 1.7.7 and later.
-    * Using the latest version is recommended.
-
-    ```bash
-    # Check CNI version
-    kubectl describe daemonset aws-node -n kube-system | grep Image
-
-    # Update CNI
-    kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.10.0/config/master/aws-k8s-cni.yaml
-    ```
-2.  **Enable pod security groups feature**:
-
-    ```bash
-    # Enable pod security groups feature
-    kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-    # Or use eksctl
-    eksctl utils update-cluster-config \
-      --name my-cluster \
-      --region us-west-2 \
-      --enable-pod-security-groups
-    ```
-3.  **Specify service account for pods to which security groups will be applied**:
-
-    * In SecurityGroupPolicy, you must specify pods to which security groups will be applied using pod selector or service account selector.
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: my-security-group-policy
-      namespace: default
-    spec:
-      podSelector:
-        matchLabels:
-          app: my-app
-      securityGroups:
-        groupIds:
-          - sg-12345
-    ```
-
-**Pod Security Group Configuration Examples:**
-
-1.  **Create SecurityGroupPolicy**:
-
-    ```yaml
-    apiVersion: vpcresources.k8s.aws/v1beta1
-    kind: SecurityGroupPolicy
-    metadata:
-      name: db-client-policy
-      namespace: default
-    spec:
-      serviceAccountSelector:
-        matchLabels:
-          role: db-client
-      securityGroups:
-        groupIds:
-          - sg-db-client
-    ```
-2.  **Create Service Account**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: db-client
-      namespace: default
-      labels:
-        role: db-client
-    ```
-3.  **Deploy Pod**:
-
-    ```yaml
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: db-client-pod
-    spec:
-      serviceAccountName: db-client
-      containers:
-      - name: db-client
-        image: mysql:5.7
-        command: ['sleep', '3600']
-    ```
-
-**Issues with hostNetwork: true:**
-
-Pods with `hostNetwork: true` use the node's network namespace, so separate security groups cannot be applied to the pod. Such pods inherit the node's security groups.
-
-```yaml
-# Security groups cannot be applied to this pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: host-network-pod
-spec:
-  hostNetwork: true  # Uses the node's network namespace
-  containers:
-  - name: nginx
-    image: nginx
-```
-
-**ENIConfig Resource Configuration:**
-
-ENIConfig resources are required when configuring custom networking, but they are not a mandatory requirement when using only the pod security groups feature. However, if you are using pod security groups along with custom networking, you must configure ENIConfig resources.
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-12345
-  securityGroups:
-  - sg-12345
-```
-
-**Pod Security Group Limitations:**
-
-1. **Resource Limitations**:
-   * Each node requires additional ENIs for pod security groups.
-   * The maximum number of supported ENIs is limited by instance type.
-2. **Compatibility Limitations**:
-   * Cannot be applied to pods with hostNetwork: true.
-   * Cannot be applied to pods using hostPort.
-   * May not be compatible with some CNI plugins.
-3. **Performance Impact**:
-   * Since additional ENIs are required per pod, pod startup time may be longer.
-   * The maximum number of pods per node may be limited.
-
-The pod security groups feature is a powerful capability that provides granular network security at the pod level. However, since this feature cannot be applied to pods with hostNetwork: true, pods must use their own network namespace to use pod security groups.
-
-</details>
-
-5. What is the main benefit of the Prefix Delegation feature in an Amazon EKS cluster?
-   * A) Improved communication speed between pods
-   * B) Increased maximum number of pods per node
-   * C) Ability to assign public IP addresses to pods
-   * D) Enhanced pod network isolation
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: B) Increased maximum number of pods per node**
-
-**Explanation:** The main benefit of the Prefix Delegation feature in an Amazon EKS cluster is increasing the maximum number of pods per node. This feature allocates /28 CIDR blocks (16 IP addresses) instead of individual IP addresses to each Elastic Network Interface (ENI), significantly increasing the maximum number of pods that a node can support.
-
-**How Prefix Delegation Works:**
-
-1. **Default VPC CNI Behavior**:
-   * By default, VPC CNI allocates secondary IP addresses from the ENI for each pod.
-   * Each EC2 instance type has limits on the maximum number of ENIs and IP addresses per ENI.
-   * This limits the maximum number of pods per node.
-2. **Prefix Delegation Behavior**:
-   * When prefix delegation is enabled, /28 CIDR blocks (16 IPs) are allocated to each ENI instead of individual IP addresses.
-   * This significantly increases the number of IP addresses each ENI can support.
-   * As a result, the maximum number of pods per node increases.
-
-**Enabling Prefix Delegation:**
+After an independently reviewed deployment, inspect its actual IDs and routes. If creating a NAT gateway through the CLI instead, capture its returned ID and wait for `nat-gateway-available` before creating a route. A failed NAT creation must stop the workflow.
 
 ```bash
-# Enable prefix delegation
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# Check prefix delegation status
-kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
+set -euo pipefail
+: "${AWS_REGION:?Set the Region}"
+: "${VPC_ID:?Set the deployed VPC ID}"
+aws ec2 describe-route-tables --region "$AWS_REGION" \
+  --filters "Name=vpc-id,Values=$VPC_ID" \
+  --query 'RouteTables[].{Id:RouteTableId,Associations:Associations,Routes:Routes}'
+aws ec2 describe-nat-gateways --region "$AWS_REGION" \
+  --filter "Name=vpc-id,Values=$VPC_ID" \
+  --query 'NatGateways[].{Id:NatGatewayId,Subnet:SubnetId,State:State}'
 ```
+eksctl's `vpc.nat.gateway: Single` is valid for its managed VPC creation workflow, but introduces a single-AZ dependency. `HighlyAvailable` creates a zonal NAT in each AZ. These options do not repair the routing of arbitrary existing subnets. For a lab stack, delete only the resources you created after removing dependent workloads/ENIs; confirm the NAT and its EIP are released.
 
-**Benefits of Prefix Delegation:**
+</details>
 
-1. **Increased Maximum Pods per Node**:
-   * Using prefix delegation significantly increases the maximum number of pods per node.
-   * For example, for an m5.large instance:
-     * Default configuration: maximum 29 pods
-     * With prefix delegation enabled: over 110 pods maximum
-2. **IP Address Efficiency**:
-   * Optimizes IP address usage in large clusters.
-   * Useful in environments with limited VPC CIDR ranges.
-3. **Improved Node Resource Utilization**:
-   * Running more pods improves node resource utilization.
-   * Helps with cluster cost optimization.
+4. Which Pod setting shares node networking instead of using a Pod branch ENI?
+   * A) A matching Pod label
+   * B) A matching ServiceAccount label
+   * C) hostNetwork: true
+   * D) A selected SecurityGroupPolicy
 
-**Prefix Delegation Limitations:**
+<details>
+<summary>Show Answer</summary>
 
-1. **EC2 Instance Support**:
-   * Only Nitro-based instances support prefix delegation.
-   * Cannot be used with older generation instances.
-2. **VPC CNI Version Requirements**:
-   * VPC CNI version 1.9.0 or higher is required.
-   * This feature cannot be used with earlier versions.
-3. **Subnet Size Requirements**:
-   * Subnets with sufficient IP address space are required.
-   * IP addresses may be exhausted quickly in small subnets.
-4. **Migration Considerations**:
-   * When enabled on existing clusters, only new pods use prefix delegation.
-   * Existing pods must be restarted to apply to all pods.
+**Answer: C) hostNetwork: true**
 
-**Prefix Delegation Configuration Example:**
+A host-network Pod shares the node's network namespace and security groups. Security groups for Pods use branch ENIs for selected Pods with their own network namespace.
+
+Prerequisites for this Linux EC2 example include a supported trunking instance type, a compatible VPC CNI, the cluster role's `AmazonEKSVPCResourceController` permissions, and `ENABLE_POD_ENI=true`. EC2 `t` families and EKS Auto Mode do not support this feature. Verify DNS, control-plane and application rules, branch-ENI capacity, and `POD_SECURITY_GROUP_ENFORCING_MODE`; SNAT and policy behavior differ between modes. Use the add-on owner's configuration workflow instead of applying an old CNI manifest.
+
+SecurityGroupPolicy selects Pods with **either** `podSelector` or `serviceAccountSelector`; a specially created service account is not mandatory for pod selection. `ENIConfig` is a custom-networking resource and is not required merely to use Pod security groups.
+
+For the service-account selector alternative below, first create a dedicated `pod-sg-lab` namespace, replace the SG placeholder with an existing reviewed group in the correct VPC, and meet the prerequisites. This sleeping client demonstrates selection; it does not prove database connectivity. A matching ServiceAccount label and the Pod's `serviceAccountName` are both present.
 
 ```yaml
-# eksctl configuration file
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: db-client-policy
+  namespace: pod-sg-lab
+spec:
+  serviceAccountSelector:
+    matchLabels:
+      role: db-client
+  securityGroups:
+    groupIds:
+    - sg-REPLACE_WITH_REVIEWED_GROUP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: db-client
+  namespace: pod-sg-lab
+  labels:
+    role: db-client
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-client
+  namespace: pod-sg-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: db-client}
+  template:
+    metadata:
+      labels: {app: db-client}
+    spec:
+      serviceAccountName: db-client
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: client
+        image: public.ecr.aws/docker/library/busybox:1.37.0
+        command: [sleep, '3600']
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 32Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
+Alternatively, replace `serviceAccountSelector` with `podSelector: {matchLabels: {app: db-client}}`. Keep the policy and selected Pods in the same namespace. Verify a **newly created** Pod's branch ENI and actual allowed/denied connections; creating a policy does not retrofit running Pods. Clean up only this lab namespace and its policy after testing, and do not delete an SG still used by other resources.
+
+</details>
+
+
+
+5. What is the main capacity benefit of IPv4 prefix delegation?
+   * A) Guaranteed faster Pod-to-Pod traffic
+   * B) More Pod IP capacity per node
+   * C) Public IPv4 addresses for every Pod
+   * D) Automatic network isolation
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) More Pod IP capacity per node**
+
+In Linux IPv4 prefix mode, one `/28` (16 addresses) consumes one ENI secondary-address slot. Multiple prefixes may be attached to an ENI; the maximum ENI count itself does not increase. This can raise IP-based Pod density and reduce address-allocation API work, subject to kubelet and resource limits.
+
+For `m5.large`, the conventional secondary-IP calculation gives 29 Pods. A compatible managed node group in prefix mode can use a recommended `maxPods` of 110, not an unrestricted “over 110.” The theoretical address slots are not an application capacity guarantee.
+
+**Prerequisites and tradeoffs:**
+
+* Use a supported Nitro instance and compatible CNI (the historical Linux IPv4 minimum is 1.9.0; select a currently supported build).
+* The subnet needs contiguous `/28` blocks. A fragmented subnet can fail with `InsufficientCidrBlocks` despite having many free individual IPs. Subnet CIDR reservations can preserve prefix space.
+* Prefixes consume real subnet addresses in blocks. They do not enlarge a CIDR or guarantee lower IP consumption, better utilization, or lower cost.
+* `WARM_PREFIX_TARGET` specifies spare prefixes. `WARM_IP_TARGET` specifies spare IPs; `MINIMUM_IP_TARGET` sets a minimum total allocation. The latter two override `WARM_PREFIX_TARGET` when configured. Tune them against launch latency and unused address consumption.
+* Plan replacement node groups and a controlled cordon/drain migration. Do not just toggle the variable and restart every Pod. Check PDBs, volumes, spare capacity and rollback; validate new nodes before removing old groups.
+
+The following is a **new-cluster configuration example**, not an update command for an existing cluster. It uses private API access, so the administrator needs a routed management path. The compatible EKS default CNI build is selected when no version is supplied; record and review the actual resolved version before deployment. `withOIDC` participates in eksctl's CNI IAM integration; review the resulting role. The size bounds do not install an autoscaler.
+
+```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: my-cluster
+  name: prefix-demo
   region: us-west-2
+  version: "1.36"
 vpc:
   clusterEndpoints:
-    publicAccess: true
+    publicAccess: false
     privateAccess: true
-managedNodeGroups:
-  - name: ng-1
-    instanceType: m5.large
-    minSize: 2
-    maxSize: 5
-    disableIMDSv1: true
 iam:
   withOIDC: true
 addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      {
-        "env": {
-          "ENABLE_PREFIX_DELEGATION": "true"
-        }
-      }
+- name: vpc-cni
+  configurationValues: |
+    {"env":{"ENABLE_PREFIX_DELEGATION":"true","WARM_PREFIX_TARGET":"1"}}
+managedNodeGroups:
+- name: prefix-linux
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+  privateNetworking: true
+  disableIMDSv1: true
 ```
-
-**Issues with Other Options:**
-
-* **Improved communication speed between pods**: Prefix delegation does not directly affect pod-to-pod communication speed. Pod communication performance is primarily determined by network infrastructure and CNI implementation.
-* **Ability to assign public IP addresses to pods**: Prefix delegation does not provide the ability to assign public IP addresses to pods. VPC CNI always assigns private IP addresses to pods.
-* **Enhanced pod network isolation**: Prefix delegation is not related to pod network isolation. Network isolation is implemented through network policies or security groups.
-
-Prefix delegation is a powerful feature that increases the maximum number of pods per node, improving cluster density and efficiency. It is particularly useful in large clusters or environments running high-density workloads.
 
 </details>
 
-6. What is the correct way to customize CoreDNS in an Amazon EKS cluster?
-   * A) Modify CoreDNS settings in the AWS Management Console
-   * B) Modify the CoreDNS ConfigMap
-   * C) Specify CoreDNS configuration during EKS cluster creation
-   * D) Update CoreDNS add-on parameters using the AWS CLI
+6. Which Kubernetes object contains the Corefile consumed by CoreDNS?
+   * A) A node security group
+   * B) The coredns ConfigMap
+   * C) A StorageClass
+   * D) A PodDisruptionBudget
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) Modify the CoreDNS ConfigMap**
+**Answer: B) The coredns ConfigMap**
 
-**Explanation:** The correct way to customize CoreDNS in an Amazon EKS cluster is to modify the CoreDNS ConfigMap. CoreDNS is the cluster DNS server for Kubernetes and is configured through a ConfigMap. In EKS, you can customize CoreDNS behavior by modifying the `coredns` ConfigMap.
+The `coredns` ConfigMap contains `data.Corefile`. The correct **configuration owner** depends on whether CoreDNS is an EKS managed add-on or self-managed.
 
-**How to Modify the CoreDNS ConfigMap:**
+For the managed add-on, both the AWS console and `aws eks update-addon --configuration-values` can customize supported fields. A direct ConfigMap edit can be overwritten on an add-on update: store the complete custom Corefile in the add-on's `corefile` configuration key. Preserve existing configuration keys and review the schema for the exact add-on version.
 
-1.  **Check Current ConfigMap**:
-
-    ```bash
-    kubectl get configmap coredns -n kube-system -o yaml
-    ```
-2.  **Edit ConfigMap**:
-
-    ```bash
-    kubectl edit configmap coredns -n kube-system
-    ```
-3.  **Or Apply a Patch**:
-
-    ```bash
-    kubectl patch configmap coredns -n kube-system --type=merge -p '{"data":{"Corefile":".:53 {\n    errors\n    health {\n        lameduck 5s\n    }\n    ready\n    kubernetes cluster.local in-addr.arpa ip6.arpa {\n        pods insecure\n        fallthrough in-addr.arpa ip6.arpa\n        ttl 30\n    }\n    prometheus :9153\n    forward . /etc/resolv.conf\n    cache 30\n    loop\n    reload\n    loadbalance\n    # Add custom settings\n    hosts {\n        10.0.0.1 example.com\n        fallthrough\n    }\n}"}}'
-    ```
-
-**Common CoreDNS Customization Cases:**
-
-1.  **Adding Custom DNS Records**:
-
-    ```
-    hosts {
-        10.0.0.1 example.com
-        10.0.0.2 api.example.com
-        fallthrough
-    }
-    ```
-2.  **Configuring Forwarding for Specific Domains**:
-
-    ```
-    forward example.org 10.0.0.1:53
-    ```
-3.  **Adjusting DNS Caching**:
-
-    ```
-    cache {
-        success 10000
-        denial 5000
-        prefetch 10 10 10%
-    }
-    ```
-4.  **Configuring Logging**:
-
-    ```
-    log {
-        class error
-    }
-    ```
-5.  **Disabling Autopath**:
-
-    ```
-    kubernetes cluster.local in-addr.arpa ip6.arpa {
-        pods insecure
-        fallthrough in-addr.arpa ip6.arpa
-        ttl 30
-        autopath off
-    }
-    ```
-
-**Applying Changes After CoreDNS Modification:**
-
-After modifying the ConfigMap, you need to restart the CoreDNS pods to apply the changes:
+Use a new local working directory to save the current configuration before editing:
 
 ```bash
-# Check CoreDNS pods
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-# Restart CoreDNS pods
-kubectl rollout restart deployment coredns -n kube-system
-
-# Verify changes are applied
-kubectl logs -n kube-system -l k8s-app=kube-dns
+set -euo pipefail
+: "${EXAMPLE_CLUSTER:?Set the cluster}"
+: "${EXAMPLE_REGION:?Set the Region}"
+: "${EXAMPLE_KUBECONFIG:?Set a private kubeconfig path}"
+aws eks describe-addon --cluster-name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --addon-name coredns > coredns-addon-before.json
+COREDNS_VERSION=$(jq -er '.addon.addonVersion' coredns-addon-before.json)
+aws eks describe-addon-configuration --region "$EXAMPLE_REGION" \
+  --addon-name coredns --addon-version "$COREDNS_VERSION" \
+  --query configurationSchema --output text > coredns-schema.json
+jq -e '(.addon.configurationValues // "{}") | fromjson | select(type == "object")' \
+  coredns-addon-before.json > coredns-values-before.json
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system \
+  get configmap coredns -o json | jq -er '.data.Corefile' > Corefile.reviewed
 ```
+Edit `Corefile.reviewed`, preserving the Kubernetes zone, forwarding, `ready`, health and monitoring plugins required by this installation. These are separate customization examples, not a replacement Corefile:
 
-**CoreDNS Performance Optimization:**
+* Add static records to the existing server block; use the actual internal addresses:
 
-1.  **Configure Auto-scaling**:
+```text
+hosts {
+    10.0.0.1 example.com
+    10.0.0.2 api.example.com
+    fallthrough
+}
+```
+* Use a separate server block for a conditional forwarder; the upstream must be reachable and must not loop back to this CoreDNS service:
 
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: coredns-autoscaler
-      namespace: kube-system
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-    ```
-2.  **Adjust Resource Requests and Limits**:
+```text
+example.org:53 {
+    errors
+    forward . 10.0.0.53
+    cache 30
+}
+```
+* Replace the existing cache stanza instead of adding a duplicate. `prefetch` duration needs a unit:
 
-    ```bash
-    kubectl patch deployment coredns -n kube-system --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {"requests": {"cpu": "100m", "memory": "70Mi"}, "limits": {"cpu": "200m", "memory": "170Mi"}}}]'
-    ```
+```text
+cache {
+    success 10000
+    denial 5000
+    prefetch 10 10m 10%
+}
+```
+* Optional error-class query logging (review volume and sensitive names):
 
-**Issues with Other Options:**
+```text
+log {
+    class error
+}
+```
+`autopath` is a separate plugin for server-side search-path completion, not a `kubernetes` subdirective. `autopath off` inside the Kubernetes block is invalid. To disable an existing `autopath @kubernetes`, remove that directive; do not add it to installations that never enabled it.
 
-* **Modify CoreDNS settings in the AWS Management Console**: The AWS Management Console does not provide an interface to directly modify CoreDNS settings.
-* **Specify CoreDNS configuration during EKS cluster creation**: Detailed CoreDNS configuration cannot be specified during EKS cluster creation. You must modify the ConfigMap after cluster creation.
-* **Update CoreDNS add-on parameters using the AWS CLI**: While you can update the CoreDNS add-on version using the AWS CLI, you cannot modify detailed configuration. Configuration changes must be made through the ConfigMap.
+After schema and syntax review, update the **same** add-on version:
 
 ```bash
-# Update CoreDNS add-on version (not configuration change)
-aws eks update-addon \
-  --cluster-name my-cluster \
-  --addon-name coredns \
-  --addon-version v1.8.7-eksbuild.2 \
-  --resolve-conflicts PRESERVE
+# After reviewing the complete Corefile and existing configuration:
+jq --rawfile corefile Corefile.reviewed '.corefile = $corefile' \
+  coredns-values-before.json > coredns-values-reviewed.json
+COREDNS_UPDATE_ID=$(aws eks update-addon \
+  --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name coredns --addon-version "$COREDNS_VERSION" \
+  --resolve-conflicts PRESERVE \
+  --configuration-values file://coredns-values-reviewed.json \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --addon-name coredns --update-id "$COREDNS_UPDATE_ID" \
+  --query 'update.{status:status,errors:errors}'
 ```
+The response may still be `InProgress`. Recheck this update ID until `Successful`; stop on failure and inspect its errors before making another change. Then verify Deployment readiness, logs, internal Service lookup and the custom DNS cases. Restore the saved configuration through the same owner if needed.
 
-Modifying the CoreDNS ConfigMap is the standard method for customizing DNS settings in an EKS cluster. This enables various customizations such as adding custom DNS records, configuring forwarding for specific domains, and adjusting caching behavior.
+For self-managed CoreDNS, edit the reviewed ConfigMap through its GitOps/manifest owner. With `reload`, Corefile changes are detected after ConfigMap projection and the reload interval; a restart is not universally required. Watch reload errors and DNS behavior. Changes to Deployment settings may still need a rollout.
 
-</details>
-
-7\. What is the most effective way to implement multi-tenancy in an Amazon EKS cluster? - A) Create separate EKS clusters for each tenant - B) Use separate namespaces for each tenant and apply RBAC, network policies, and resource quotas - C) Create separate node groups for each tenant and use node selectors - D) Use separate VPCs for each tenant
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: B) Use separate namespaces for each tenant and apply RBAC, network policies, and resource quotas**
-
-**Explanation:** The most effective way to implement multi-tenancy in an Amazon EKS cluster is to use separate namespaces for each tenant and apply RBAC (Role-Based Access Control), network policies, and resource quotas. This approach efficiently isolates multiple tenants within a single cluster while allowing resource sharing.
-
-**Implementing Namespace-Based Multi-Tenancy:**
-
-1.  **Create Namespaces for Each Tenant**:
-
-    ```bash
-    # Create namespaces for each tenant
-    kubectl create namespace tenant-a
-    kubectl create namespace tenant-b
-    ```
-2.  **Configure RBAC**:
-
-    ```yaml
-    # Create tenant role
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      name: tenant-full-access
-      namespace: tenant-a
-    rules:
-    - apiGroups: ["", "apps", "batch"]
-      resources: ["*"]
-      verbs: ["*"]
-    ---
-    # Bind role to tenant users
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: tenant-a-access
-      namespace: tenant-a
-    subjects:
-    - kind: Group
-      name: tenant-a-users
-      apiGroup: rbac.authorization.k8s.io
-    roleRef:
-      kind: Role
-      name: tenant-full-access
-      apiGroup: rbac.authorization.k8s.io
-    ```
-3.  **Apply Network Policies**:
-
-    ```yaml
-    # Restrict communication between tenants
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    ```
-
-metadata: name: deny-cross-tenant-traffic namespace: tenant-a spec: podSelector: {} policyTypes: - Ingress - Egress ingress: - from: - namespaceSelector: matchLabels: name: tenant-a egress: - to: - namespaceSelector: matchLabels: name: tenant-a - to: - namespaceSelector: matchLabels: name: kube-system
-
-````
-
-4. **Resource Quota Configuration**:
- ```yaml
- # Tenant Resource Quota
- apiVersion: v1
- kind: ResourceQuota
- metadata:
-   name: tenant-quota
-   namespace: tenant-a
- spec:
-   hard:
-     requests.cpu: "10"
-     requests.memory: 20Gi
-     limits.cpu: "20"
-     limits.memory: 40Gi
-     pods: "50"
-     services: "20"
-     persistentvolumeclaims: "30"
-     secrets: "100"
-     configmaps: "100"
-````
-
-5.  **LimitRange Configuration**:
-
-    ```yaml
-    # Default resource limit settings
-    apiVersion: v1
-    kind: LimitRange
-    metadata:
-      name: tenant-limits
-      namespace: tenant-a
-    spec:
-      limits:
-      - default:
-          cpu: 500m
-          memory: 512Mi
-        defaultRequest:
-          cpu: 100m
-          memory: 256Mi
-        type: Container
-    ```
-
-**Benefits of Namespace-Based Multi-Tenancy:**
-
-1. **Resource Efficiency**:
-   * Resource utilization improves as multiple tenants share a single cluster.
-   * Control plane costs are reduced.
-2. **Ease of Management**:
-   * Operational overhead decreases by managing a single cluster.
-   * Centralized monitoring and logging is possible.
-3. **Flexibility**:
-   * Adding and removing tenants is straightforward.
-   * Tenant-specific policies can be easily applied.
-4. **Cost Efficiency**:
-   * Cluster overhead is shared among multiple tenants.
-   * Improved resource utilization leads to cost savings.
-
-**Drawbacks of Namespace-Based Multi-Tenancy:**
-
-1. **Limited Isolation Level**:
-   * Namespaces provide only logical isolation, not complete physical isolation.
-   * May be exposed to kernel-level vulnerabilities.
-2. **Resource Contention**:
-   * Resource contention between tenants can occur.
-   * Noisy Neighbor problems may arise.
-3. **Security Risks**:
-   * Risk of cluster-level privilege escalation exists.
-   * May be exposed to container escape vulnerabilities.
-
-**Other Multi-Tenancy Approaches:**
-
-1. **Cluster-Based Multi-Tenancy (Separate EKS Cluster per Tenant)**:
-   * Provides the strongest isolation
-   * Increased management overhead
-   * Increased costs
-   * Suitable for large enterprise environments or heavily regulated industries
-2. **Node-Based Multi-Tenancy (Separate Node Group per Tenant)**:
-   * Provides intermediate level of isolation
-   * Node-level customization possible per tenant
-   * Reduced resource utilization
-   * Suitable when security requirements are high but cost is also a consideration
-3. **Hybrid Approach**:
-   * Provide dedicated clusters for critical tenants
-   * Separate less critical tenants by namespace in a shared cluster
-   * Balance flexibility and cost efficiency
-
-**Issues with Other Options:**
-
-* **Creating a Separate EKS Cluster per Tenant**: Provides the strongest isolation, but significantly increases management overhead and costs. Scalability issues may arise when there are many tenants.
-* **Creating Separate Node Groups per Tenant and Using Node Selectors**: Provides node-level isolation, but resource utilization decreases and management can become complex. Also, node groups alone do not provide complete isolation.
-* **Using Separate VPCs per Tenant**: Since EKS clusters are created within a single VPC, using separate VPCs per tenant requires creating separate clusters per tenant. This significantly increases management overhead and costs.
-
-Namespace-based multi-tenancy provides the optimal balance between isolation, ease of management, and cost efficiency for most use cases. However, cluster-based multi-tenancy should be considered when security requirements are very high.
-
-</details>
-
-8. Which of the following is NOT a factor to consider when selecting an instance type for a node group in an Amazon EKS cluster?
-   * A) CPU and memory requirements of the workload
-   * B) Cost optimization
-   * C) Kubernetes version of the cluster
-   * D) Required pod density
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: C) Kubernetes version of the cluster**
-
-**Explanation:** The factor that is NOT to be considered when selecting an instance type for a node group in an Amazon EKS cluster is "Kubernetes version of the cluster." While the Kubernetes version affects supported features, it does not directly impact the node group's instance type selection. Instance type is primarily determined by workload requirements, cost, pod density, and other factors.
-
-**Actual Factors to Consider When Selecting Node Group Instance Types:**
-
-1. **CPU and Memory Requirements of the Workload**:
-   * Select instance types that match the resource requirements of your workload
-   * CPU-intensive workloads: Compute-optimized instances such as c5, c6g
-   * Memory-intensive workloads: Memory-optimized instances such as r5, r6g
-   * Balanced workloads: General-purpose instances such as m5, m6g
-   * GPU workloads: Accelerated computing instances such as p3, g4dn
-2. **Cost Optimization**:
-   * On-Demand vs Spot instances
-   * Reserved Instances or Savings Plans
-   * Cost savings through ARM-based Graviton instances (e.g., m6g, c6g)
-   * Selecting appropriately sized instances (avoiding overprovisioning)
-3. **Required Pod Density**:
-   * Maximum supported pods varies by instance type
-   * Consider the number of ENIs per instance type and IP addresses per ENI
-   * For high-density workloads, select instance types that support more ENIs and IP addresses
-4. **Networking Requirements**:
-   * Network bandwidth requirements
-   * Enhanced networking support (ENA, EFA, etc.)
-   * Network performance varies by instance type
-5. **Storage Requirements**:
-   * Whether local instance storage is needed (e.g., i3, d3 instances)
-   * EBS optimization support
-   * Storage throughput and IOPS requirements
-6. **Availability Requirements**:
-   * Regional availability of instance types
-   * Interruption possibility when using Spot instances
-   * Instance type availability by Availability Zone
-
-**Instance Type Selection Examples:**
-
-1.  **Web Application Servers**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: web-servers
-        instanceType: m5.large
-        minSize: 2
-        maxSize: 10
-        labels:
-          role: web
-    ```
-2.  **Database Workloads**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: database-nodes
-        instanceType: r5.xlarge
-        minSize: 3
-        maxSize: 5
-        labels:
-          role: database
-    ```
-3.  **Batch Processing Workloads**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: batch-processors
-        instanceType: c5.2xlarge
-        minSize: 0
-        maxSize: 20
-        labels:
-          role: batch
-    ```
-4.  **Cost-Optimized Workloads**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-    metadata:
-      name: my-cluster
-      region: us-west-2
-    managedNodeGroups:
-      - name: spot-workers
-        instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
-        minSize: 2
-        maxSize: 10
-        spot: true
-        labels:
-          lifecycle: spot
-    ```
-
-**Relationship Between Kubernetes Version and Instance Types:**
-
-The Kubernetes version affects the cluster in the following ways, but does not directly impact instance type selection:
-
-1. **Supported Features**:
-   * New Kubernetes versions provide new features.
-   * Some features are only available in specific versions.
-2. **API Compatibility**:
-   * Some APIs may change or be removed in new versions.
-   * Version selection is important if your application depends on specific APIs.
-3. **Security Patches**:
-   * Latest versions include the latest security patches.
-   * Older versions may be exposed to security vulnerabilities.
-4. **Support Period**:
-   * Each Kubernetes version is supported for a limited period.
-   * EKS supports each version for approximately 14 months.
-
-Instance type selection is primarily determined by workload resource requirements, cost optimization, pod density, and other factors, and is not directly related to the Kubernetes version. Therefore, "Kubernetes version of the cluster" is not a primary factor to consider when selecting a node group's instance type.
-
-</details>
-
-9\. What is the most effective method to minimize pod disruption during node group updates in an Amazon EKS cluster? - A) Using a rolling update strategy - B) Configuring PodDisruptionBudget - C) Manually migrating all pods before node group update - D) Using a blue/green deployment strategy
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: B) Configuring PodDisruptionBudget**
-
-**Explanation:** The most effective method to minimize pod disruption during node group updates in an Amazon EKS cluster is to configure PodDisruptionBudget (PDB). PDB limits the number of pods that can be disrupted simultaneously during voluntary disruptions, ensuring application availability. Since node group updates are considered voluntary disruptions, you can maintain application availability during updates through PDB.
-
-**How PodDisruptionBudget Works:**
-
-1. **PDB Definition**:
-   * `minAvailable`: Specifies the minimum number or percentage of pods that must always be available
-   * `maxUnavailable`: Specifies the maximum number or percentage of pods that can be unavailable simultaneously
-   * Only one of these two options should be specified
-2. **PDB Application**:
-   * Kubernetes respects the PDB during node draining
-   * The draining process pauses if PDB is violated
-   * Draining continues when new pods start running on other nodes
-
-**PodDisruptionBudget Examples:**
+**Scaling and resources:** EKS managed CoreDNS supports an `autoScaling` configuration object when the chosen version meets AWS prerequisites. Keep only one controller responsible for replicas. The following CPU HPA is an **alternative for self-managed CoreDNS**, requiring Metrics Server and CPU requests; do not run it alongside EKS CoreDNS autoscaling:
 
 ```yaml
-# Ensure at least 2 pods are always available
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: coredns-autoscaler
+  namespace: kube-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coredns
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+```
+The 2–10 replica range and 60% target are examples, not measured sizing. Review memory, CPU throttling, cache growth, topology and DNS latency; change resources through the add-on schema or the self-managed workload owner rather than replacing an entire resources object by container array index.
+
+</details>
+
+7. Which combination supports logical isolation for trusted teams sharing one EKS cluster?
+   * A) Namespaces alone
+   * B) Namespaces, RBAC, enforced policies and quotas
+   * C) Node selectors alone
+   * D) A shared cluster-admin role
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Namespaces, RBAC, enforced policies and quotas**
+
+For mutually trusted teams sharing a cluster, namespaces plus RBAC, enforced network policies and quotas provide useful logical separation. They are not a universal solution for hostile tenants.
+
+The platform administrator creates new `tenant-a`/`tenant-b` namespaces and enforces an appropriate Pod Security Admission policy (for this Linux EKS 1.36 example, Restricted with version `v1.36`). The following is the `tenant-a` policy set; apply equivalent, reviewed policy for `tenant-b`. An authenticated group mapping for `tenant-a-users` is also required.
+
+Application permissions are explicit. The tenant cannot directly change ResourceQuota, LimitRange, NetworkPolicy, Roles or RoleBindings through this Role. Cluster-scoped resources remain platform-owned.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-workloads
+  namespace: tenant-a
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "deployments/scale", "statefulsets/scale"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["services", "configmaps", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "events"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-a-access
+  namespace: tenant-a
+subjects:
+- kind: Group
+  name: tenant-a-users
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: tenant-workloads
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-boundary
+  namespace: tenant-a
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  namespace: tenant-a
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "50"
+    services: "20"
+    persistentvolumeclaims: "30"
+    secrets: "100"
+    configmaps: "100"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant-limits
+  namespace: tenant-a
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 256Mi
+    type: Container
+```
+**Limits and validation:**
+
+* Workload creation can still use accessible service accounts and mount Secrets in the namespace. This Role is not a Secret-confidentiality boundary within a tenant. Enforce permitted identities, mounts and security settings with admission policies; keep platform credentials outside tenant namespaces.
+* The DNS rule assumes ordinary CoreDNS Pods labeled `k8s-app=kube-dns` in `kube-system`. Adapt and test for NodeLocal DNSCache or another DNS path. It allows DNS queries, not all egress to system Pods; it does not hide cross-namespace DNS names.
+* Quotas cap admitted resource requests/counts; they do not reserve physical nodes, guarantee bandwidth, or eliminate noisy neighbors. LimitRange values are illustrative defaults.
+* Verify effective permissions and policy enforcement with a tenant identity, allowed connections, denied cross-tenant connections, and quota rejection cases before onboarding.
+* Dedicated node groups reduce some sharing but node selectors/taints alone are not security boundaries. For stronger isolation, evaluate sandboxed runtimes, virtual control planes or separate clusters/accounts/networks, including their shared dependencies and operational costs.
+
+Namespace sharing can reduce control-plane overhead and simplify centralized operations. The required isolation level, not a universal “optimal” claim, determines the design.
+
+</details>
+
+8. Which item does not itself change an EC2 instance type’s technical capacity?
+   * A) vCPU and memory size
+   * B) Network and storage limits
+   * C) A display-only name tag
+   * D) ENI and address limits
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) A display-only name tag**
+
+Instance selection must consider CPU, memory, accelerator needs, architecture-compatible images/AMIs and drivers, Pod density, network bandwidth, EBS/instance-store performance, AZ availability, interruption tolerance and cost. Kubernetes version can matter through supported AMIs, drivers and features; it is not irrelevant.
+
+The original family examples below illustrate workload shapes, not a current price/performance ranking. `m5` is general purpose, `r5` is memory optimized and `c5` is compute optimized. Graviton alternatives require Arm-compatible images and dependencies. GPU workloads additionally need an appropriate accelerated AMI and device plugin. Instance-store data is ephemeral; labels alone do not provide database durability or placement.
+
+These are **alternative node-group configuration files** for an existing, reviewed cluster (`eksctl create nodegroup -f ...`), using unused group names and private subnets with required egress/endpoints. Review actual region/AZ offerings. Bounds do not install Cluster Autoscaler; a batch group at zero needs a correctly configured autoscaler or manual scaling.
+
+**Web servers**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: web-servers
+  instanceType: m5.large
+  minSize: 2
+  maxSize: 10
+  labels:
+    role: web
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**Database workloads**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: database-nodes
+  instanceType: r5.xlarge
+  minSize: 3
+  maxSize: 5
+  labels:
+    role: database
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**Batch processing**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: batch-processors
+  instanceType: c5.2xlarge
+  minSize: 0
+  maxSize: 20
+  labels:
+    role: batch
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+
+**Interruptible Spot workers**
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: spot-workers
+  instanceTypes:
+  - m5.large
+  - m5a.large
+  - m5d.large
+  - m5ad.large
+  minSize: 2
+  maxSize: 10
+  spot: true
+  labels:
+    lifecycle: spot
+  amiFamily: AmazonLinux2023
+  privateNetworking: true
+```
+EKS provides 14 months of standard version support followed by 12 months of extended support. Check the EKS support calendar, upgrade requirements and add-on compatibility separately from upstream Kubernetes releases. These examples do not claim measured cost savings or capacity.
+
+</details>
+
+9. Which Kubernetes object constrains voluntary Pod eviction during a drain?
+   * A) StorageClass
+   * B) PodDisruptionBudget
+   * C) ConfigMap
+   * D) IngressClass
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) PodDisruptionBudget**
+
+A PDB constrains voluntary evictions through the Eviction API. It is one part of an update strategy, not a guarantee of availability. Node failure, direct Pod deletion and a Deployment's own rolling update are not prevented by a PDB.
+
+For a reviewed `update-lab` Deployment with three replicas labeled `app=my-app`, this example permits eviction only when at least two selected healthy Pods remain:
+
+```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: app-pdb
-  namespace: default
+  namespace: update-lab
 spec:
   minAvailable: 2
   selector:
     matchLabels:
       app: my-app
 ```
+An alternative is `maxUnavailable: "50%"`; specify only one budget field. Percentage rounding is **up**, so this allows two unavailable Pods out of three, or one out of one. It is not a promise that at least half remain. Choose budgets against quorum, readiness, workload behavior and spare schedulable capacity.
 
-```yaml
-# Limit only up to 50% of pods to be unavailable simultaneously
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: app-pdb
-  namespace: default
-spec:
-  maxUnavailable: 50%
-  selector:
-    matchLabels:
-      app: my-app
-```
+Managed node-group `DEFAULT` updates launch replacement capacity before draining selected old nodes. `MINIMAL` reduces temporary capacity needs by terminating selected old nodes first. `maxUnavailable` controls concurrent node unavailability; PDBs constrain Pod eviction separately. Avoid `--force` as a routine response to a blocked drain because it can override Pod eviction protection.
 
-**EKS Node Group Update Process:**
-
-1. **Update Start**:
-   * Create new nodes
-   * New nodes join the cluster
-2. **Node Draining**:
-   * Apply cordoning to existing nodes (prevent new pod scheduling)
-   * Drain pods from existing nodes (migrate pods)
-   * Migrate pods while respecting PDB
-3. **Node Termination**:
-   * Terminate nodes after all pods are migrated
-   * Repeat process for the next node
-
-**PDB Configuration Best Practices:**
-
-1. **Set Appropriate Replica Count**:
-   * Sufficient replicas are needed for PDB to work effectively
-   * At least 3 replicas recommended
-2. **Choose Appropriate PDB Values**:
-   * Select values appropriate for application characteristics
-   * Too restrictive values can delay updates
-   * Too loose values can impact availability
-3. **Apply PDB to All Critical Workloads**:
-   * Stateful applications
-   * User-facing services
-   * System components
-4. **Test PDB**:
-   * Test PDB behavior before updates
-   * Verify availability with draining simulation
-
-**Node Group Update Configuration:**
+Configure the node update policy and wait for this specific update to succeed **before** starting a version update:
 
 ```bash
-# Modify managed node group update configuration
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --update-config '{"maxUnavailable": 1}'
-
-# Or using eksctl
-eksctl update nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
-  --max-unavailable 1
+set -euo pipefail
+NODEGROUP_UPDATE_ID=$(aws eks update-nodegroup-config \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --update-config '{"maxUnavailable":1,"updateStrategy":"DEFAULT"}' \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$NODEGROUP_UPDATE_ID" \
+  --query 'update.{status:status,errors:errors}'
 ```
-
-**Issues with Other Options:**
-
-* **Using a Rolling Update Strategy**: EKS managed node groups already use a rolling update strategy by default. However, rolling updates alone cannot control pod disruption, and they must be used together with PDB to be effective.
-* **Manually Migrating All Pods Before Node Group Update**: This is a time-consuming and error-prone manual process. It is also not practical for large clusters.
-* **Using a Blue/Green Deployment Strategy**: Blue/green deployment involves creating a new node group, migrating workloads, and then deleting the existing node group. This is an effective strategy, but has drawbacks of increased costs due to resource duplication and complex implementation. It is also best used together with PDB.
-
-PodDisruptionBudget is a Kubernetes-native way to control pod disruption during node group updates, allowing you to safely update node groups while ensuring application availability. Therefore, the most effective method to minimize pod disruption during node group updates is to configure PodDisruptionBudget.
+Poll `describe-update` for that ID until `Successful`, handling `Failed`/`Cancelled` explicitly. The original eksctl `update nodegroup --max-unavailable` command is not a supported replacement. Check the real PDB `disruptionsAllowed`, readiness, application health and volume relocation; a three-replica layout is an example, not a universal minimum.
 
 </details>
 
-10. Which of the following is NOT used to control Auto Scaling behavior of node groups in an Amazon EKS cluster?
-    * A) Cluster Autoscaler
-    * B) Karpenter
-    * C) Horizontal Pod Autoscaler
-    * D) Vertical Pod Autoscaler
+10. Which controller recommends or changes Pod CPU and memory requests?
+   * A) Cluster Autoscaler
+   * B) Karpenter
+   * C) Horizontal Pod Autoscaler
+   * D) Vertical Pod Autoscaler
 
 <details>
-
 <summary>Show Answer</summary>
 
 **Answer: D) Vertical Pod Autoscaler**
 
-**Explanation:** The one that is NOT used to control Auto Scaling behavior of node groups in an Amazon EKS cluster is Vertical Pod Autoscaler (VPA). VPA is used to automatically adjust the CPU and memory requests of pods, but it is not used to adjust the size of node groups. Node group Auto Scaling is primarily controlled by Cluster Autoscaler, Karpenter, and indirectly by Horizontal Pod Autoscaler (HPA).
+VPA recommends or updates Pod resource requests. HPA changes replica counts. **Both** can indirectly change node demand; neither manages a managed node group's ASG directly.
 
-**Node Group Auto Scaling Tools:**
+| Component | Controlled object |
+| --- | --- |
+| Cluster Autoscaler | Desired capacity of discovered existing node groups/ASGs, based on schedulability and safe removal |
+| Karpenter | Its own NodeClaims/EC2 capacity selected through NodePools and EC2NodeClasses; not managed-node-group ASGs |
+| HPA / KEDA | Workload replicas from resource/custom/external metrics or events |
+| VPA | Pod resource recommendations/requests according to update mode |
 
-1.  **Cluster Autoscaler**:
+**Cluster Autoscaler:** use the same Kubernetes minor as the cluster. For the EKS 1.36 example, chart 9.59.0 must explicitly use image `v1.36.1` (its default image is 1.35.0). First configure a dedicated `cluster-autoscaler` ServiceAccount with the reviewed, tag-scoped IAM permissions and ASG discovery tags. Render and inspect RBAC, image and arguments before installation:
 
-    * A Kubernetes component that automatically adjusts the size of node groups
-    * Adds nodes when pods cannot be scheduled
-    * Removes nodes when they are not sufficiently utilized
-    * Integrates with AWS Auto Scaling Groups
+```bash
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update autoscaler
+helm template cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.59.0 --namespace kube-system \
+  --set-string autoDiscovery.clusterName="${EXAMPLE_CLUSTER:?}" \
+  --set-string awsRegion="${EXAMPLE_REGION:?}" \
+  --set-string image.tag=v1.36.1 \
+  --set rbac.serviceAccount.create=false \
+  --set-string rbac.serviceAccount.name=cluster-autoscaler \
+  > cluster-autoscaler-reviewed.yaml
+```
+Do not disable local-storage safeguards casually or let ASG target-tracking/predictive policies compete with Cluster Autoscaler over the same desired capacity.
 
-    ```yaml
-    # Cluster Autoscaler Deployment
+**Karpenter alternative:** install and authorize a compatible controller separately. Replace the AMI ID, node role and discovery tag values with reviewed resources for this cluster; the AMI must match AL2023, Kubernetes version and architecture. Pin an AMI ID or a tested versioned alias instead of silently selecting `al2023@latest`. Limits and consolidation timing below are examples, not measured sizing or provisioning-speed guarantees.
+
+```yaml
+# Karpenter NodePool (karpenter.sh/v1)
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default-class
+  limits:
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+# Karpenter EC2NodeClass (karpenter.k8s.aws/v1)
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default-class
+spec:
+  amiFamily: AL2023
+  amiSelectorTerms:
+    - id: ami-REPLACE_WITH_VERIFIED_AL2023_AMI
+  role: KarpenterNodeRole-my-cluster
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+```
+**HPA:** this example requires an existing `my-app` Deployment in `autoscaling-lab`, Metrics Server and CPU requests:
+
+```yaml
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+  namespace: autoscaling-lab
+spec:
+  scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    metadata:
-      name: cluster-autoscaler
-      namespace: kube-system
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: cluster-autoscaler
-      template:
-        metadata:
-          labels:
-            app: cluster-autoscaler
-        spec:
-          serviceAccountName: cluster-autoscaler
-          containers:
-          - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-            name: cluster-autoscaler
-            command:
-            - ./cluster-autoscaler
-            - --v=4
-            - --stderrthreshold=info
-            - --cloud-provider=aws
-            - --skip-nodes-with-local-storage=false
-            - --expander=least-waste
-            - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-    ```
-2.  **Karpenter**:
-
-    * AWS's open-source node provisioning project
-    * Selects optimal instance types for workload requirements
-    * Fast node provisioning (in seconds)
-    * Cost optimization and unified lifecycle management
-
-    ```yaml
-    # Karpenter NodePool (karpenter.sh/v1)
-    apiVersion: karpenter.sh/v1
-    kind: NodePool
-    metadata:
-      name: default
-    spec:
-      template:
-        spec:
-          requirements:
-            - key: karpenter.sh/capacity-type
-              operator: In
-              values: ["spot", "on-demand"]
-          nodeClassRef:
-            group: karpenter.k8s.aws
-            kind: EC2NodeClass
-            name: default-class
-      limits:
-        cpu: 1000
-        memory: 1000Gi
-      disruption:
-        consolidationPolicy: WhenEmpty
-        consolidateAfter: 30s
-    ---
-    # Karpenter EC2NodeClass (karpenter.k8s.aws/v1)
-    apiVersion: karpenter.k8s.aws/v1
-    kind: EC2NodeClass
-    metadata:
-      name: default-class
-    spec:
-      amiSelectorTerms:
-        - alias: al2023@latest
-      role: KarpenterNodeRole-my-cluster
-      subnetSelectorTerms:
-        - tags:
-            karpenter.sh/discovery: "true"
-      securityGroupSelectorTerms:
-        - tags:
-            karpenter.sh/discovery: "true"
-    ```
-3.  **Horizontal Pod Autoscaler (HPA)**:
-
-    * Automatically adjusts the number of pod replicas
-    * Based on CPU, memory, or custom metrics
-    * Can indirectly trigger node group Auto Scaling
-    * Works together with Cluster Autoscaler or Karpenter
-
-    ```yaml
-    # Horizontal Pod Autoscaler
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: my-app-hpa
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: my-app
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 70
-    ```
-
-**Vertical Pod Autoscaler (VPA):**
-
-VPA is used to automatically adjust the CPU and memory requests of pods, but does not directly adjust the size of node groups:
+    name: my-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+```
+**VPA:** install the VPA CRD/controllers first. Start in recommendation-only mode and inspect recommendations before choosing an explicit supported update mode:
 
 ```yaml
 # Vertical Pod Autoscaler
@@ -1467,13 +896,14 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: my-app-vpa
+  namespace: autoscaling-lab
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
     name: my-app
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Off"
   resourcePolicy:
     containerPolicies:
     - containerName: '*'
@@ -1485,40 +915,7 @@ spec:
         memory: 500Mi
       controlledResources: ["cpu", "memory"]
 ```
-
-VPA provides the following features:
-
-* Automatic adjustment of pod resource requests
-* Recommendations based on resource usage
-* Resource request updates through pod restarts
-
-However, VPA does not directly adjust the size of node groups and only affects resource allocation at the pod level.
-
-**Node Group Auto Scaling Strategies:**
-
-1. **Reactive Scaling**:
-   * Uses Cluster Autoscaler
-   * Adds nodes when pods cannot be scheduled
-   * Removes nodes when resource utilization is low
-   * Suitable for predictable workloads
-2. **Predictive Scaling**:
-   * Uses AWS Auto Scaling predictive scaling
-   * Predicts future demand based on historical patterns
-   * Secures capacity before demand increases
-   * Suitable for workloads with periodic patterns
-3. **Event-driven Scaling**:
-   * Uses KEDA (Kubernetes Event-driven Autoscaling)
-   * Scaling based on external events or metrics
-   * Scaling based on queue length, event count, etc.
-   * Suitable for batch processing, event processing workloads
-
-**Explanation of Other Options:**
-
-* **Cluster Autoscaler**: A Kubernetes component that directly controls node group Auto Scaling, adding or removing nodes based on pod scheduling requirements.
-* **Karpenter**: An AWS open-source node provisioning project that quickly provisions optimal instances matching workload requirements. It can be used as an alternative to Cluster Autoscaler.
-* **Horizontal Pod Autoscaler**: Automatically adjusts the number of pod replicas, which can indirectly trigger Cluster Autoscaler or Karpenter to adjust node group size when more pods are created.
-
-Vertical Pod Autoscaler is used to adjust pod resource requests but does not directly adjust node group size. Therefore, Vertical Pod Autoscaler is the one that is NOT used to control node group Auto Scaling behavior.
+`Off` changes no Pod resources. Applying recommendations may require recreation or supported in-place resizing, depending on VPA/Kubernetes versions and configuration; do not promise a restart in every mode. Updating CPU requests while a CPU-utilization HPA controls the same workload creates feedback through the utilization denominator. The recommendation-only example avoids that conflict until a coordinated design is reviewed.
 
 </details>
 
@@ -1526,544 +923,562 @@ Vertical Pod Autoscaler is used to adjust pod resource requests but does not dir
 
 ### Exercise 1: Implementing Network Policies in an EKS Cluster
 
-**Scenario:** You are a security engineer at your company and need to restrict network traffic between microservices in an EKS cluster. Specifically, only the frontend service should be able to access the backend API, and the database should only be accessible from the backend API.
+**Scenario:** allow frontend → backend and backend → database while denying frontend → database. Keep the original Calico learning goal using AWS VPC CNI for IP allocation.
 
-**Requirements:**
+**Scope:** an existing disposable Linux IPv4 EKS cluster, no conflicting global/tier policy, standard CoreDNS, and an administrator-reviewed Calico installation. This is a connectivity exercise, not a production microservice/database recipe. Cloud installation and traffic tests were not executed in this audit.
 
-1. Install Calico network policy engine
-2. Implement default deny policy
-3. Allow traffic from frontend to backend
-4. Allow traffic from backend to database
-5. Test policies
-
-**Solution:**
 
 <details>
-
 <summary>Show Solution</summary>
 
-**1. Install Calico Network Policy Engine**
+**1. Prepare the policy engine.** Follow the official Calico EKS **Amazon VPC networking** path. Disable native AWS VPC CNI NetworkPolicy through its configuration owner; it conflicts with Calico enforcement. Preserve `aws-node` networking. Enable its `ANNOTATE_POD_IP=true` setting and grant its ServiceAccount Pod patch permission. This dedicated RBAC example adds that permission without appending malformed YAML to the add-on's ClusterRole:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: calico-vpc-cni-pod-annotation
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: calico-vpc-cni-pod-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-vpc-cni-pod-annotation
+subjects:
+- kind: ServiceAccount
+  name: aws-node
+  namespace: kube-system
+```
+Save and review the RBAC, then apply it only to the intended `aws-node` ServiceAccount; configure the environment variable through the managed add-on or self-managed manifest owner. Do not proceed until its rollout and annotation behavior are healthy. If Calico is already installed, review and reuse it instead of running the new-installation commands below.
 
 ```bash
-# Install Tigera Operator
-kubectl create namespace tigera-operator
-helm repo add projectcalico https://docs.projectcalico.org/charts
-helm install calico projectcalico/tigera-operator --namespace tigera-operator
+# Download pinned manifests for inspection; do not overwrite an existing installation.
+curl --fail --location --output calico-crds.yaml \
+  https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml
+curl --fail --location --output tigera-operator.yaml \
+  https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+# After review, on the intended new lab installation:
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" create -f calico-crds.yaml
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create -f tigera-operator.yaml
+```
+After the operator CRDs are established, create the following reviewed `Installation` and `APIServer` resources. Operator installation alone does not configure AWS VPC networking. The API server is required for the `projectcalico.org/v3` policy examples:
 
-# Verify installation
-kubectl get pods -n calico-system
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  kubernetesProvider: EKS
+  cni:
+    type: AmazonVPC
+  calicoNetwork:
+    bgp: Disabled
+---
+apiVersion: operator.tigera.io/v1
+kind: APIServer
+metadata:
+  name: default
+spec: {}
 ```
 
-**2. Create Namespace and Sample Applications**
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get tigerastatus
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get apiservice v3.projectcalico.org
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n calico-system get pods
+```
+Require the Calico components and aggregated API to be available, then verify actual enforcement below. Node `Ready` alone is insufficient. The optional Goldmane/Whisker UI is not needed for this exercise.
+
+**2. Create an owned namespace and temporary database credential.** Use one Bash session for the remaining snippets. The namespace name and UID are recorded so cleanup cannot intentionally target another namespace:
 
 ```bash
-# Create namespace
-kubectl create namespace microservices
+set -euo pipefail
+umask 077
+: "${EXAMPLE_KUBECONFIG:?Use the reviewed lab cluster kubeconfig}"
+NETWORK_LAB_DIR=$(mktemp -d /tmp/eks-calico-lab.XXXXXX)
+NETWORK_NAMESPACE="calico-quiz-$(date +%s)-$$"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" create namespace "$NETWORK_NAMESPACE"
+NETWORK_NAMESPACE_UID=$(kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" \
+  get namespace "$NETWORK_NAMESPACE" -o jsonpath='{.metadata.uid}')
+: "${NETWORK_NAMESPACE_UID:?}"
+jq -n --arg name "$NETWORK_NAMESPACE" --arg uid "$NETWORK_NAMESPACE_UID" \
+  '{namespace:$name,namespaceUID:$uid}' > "$NETWORK_LAB_DIR/ownership.json"
+openssl rand -hex 32 > "$NETWORK_LAB_DIR/db-password"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+  create secret generic database-auth \
+  --from-file=password="$NETWORK_LAB_DIR/db-password"
+```
+**3. Deploy the three tiers.** Python HTTP servers stand in for frontend/backend so the diagnostic TCP client is available in both containers. The PostgreSQL 17 image uses `POSTGRES_PASSWORD_FILE` and a namespace-local Secret; it performs no external database operation. The DB's `emptyDir` is **lost on Pod replacement**. Do not put valuable data here. The DB image's initialization behavior is retained; this is not a Restricted-profile production database manifest. Major-version image tags are mutable: record resolved digests for a reproducible run.
 
-# Deploy frontend
-cat > frontend.yaml << EOF
+```bash
+# The HTTP layers are diagnostic stand-ins, not business applications.
+for tier in frontend backend; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
-  namespace: microservices
-  labels:
-    app: frontend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: frontend
-  template:
-    metadata:
-      labels:
-        app: frontend
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-  namespace: microservices
-spec:
-  selector:
-    app: frontend
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
-
-kubectl apply -f frontend.yaml
-
-# Deploy backend
-cat > backend.yaml << EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-  namespace: microservices
-  labels:
-    app: backend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-      - name: httpd
-        image: httpd:alpine
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend
-  namespace: microservices
-spec:
-  selector:
-    app: backend
-  ports:
-  - port: 80
-    targetPort: 80
-EOF
-
-kubectl apply -f backend.yaml
-
-# Deploy database
-cat > database.yaml << EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: database
-  namespace: microservices
-  labels:
-    app: database
+  name: $tier
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: database
+    matchLabels: {app: $tier}
   template:
     metadata:
-      labels:
-        app: database
+      labels: {app: $tier}
     spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
       containers:
-      - name: postgres
-        image: postgres:13-alpine
+      - name: diagnostic
+        image: python:3.13-alpine
+        command: [python, -m, http.server, "8080", --directory, /tmp]
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          tcpSocket: {port: 8080}
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 200m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: $tier
+spec:
+  selector: {app: $tier}
+  ports:
+  - {port: 8080, targetPort: 8080, protocol: TCP}
+EOF
+done
+
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: database}
+  template:
+    metadata:
+      labels: {app: database}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector: {kubernetes.io/os: linux}
+      containers:
+      - name: database
+        image: postgres:17-alpine
         env:
-        - name: POSTGRES_PASSWORD
-          value: "password"
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/secrets/postgres/password
         ports:
         - containerPort: 5432
+        readinessProbe:
+          exec:
+            command: [pg_isready, -U, postgres]
+          initialDelaySeconds: 5
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 256Mi}
+        volumeMounts:
+        - {name: data, mountPath: /var/lib/postgresql/data}
+        - {name: auth, mountPath: /run/secrets/postgres, readOnly: true}
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: auth
+        secret: {secretName: database-auth}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: database
-  namespace: microservices
 spec:
-  selector:
-    app: database
+  selector: {app: database}
   ports:
-  - port: 5432
-    targetPort: 5432
+  - {port: 5432, targetPort: 5432, protocol: TCP}
 EOF
 
-kubectl apply -f database.yaml
-
-# Verify deployment
-kubectl get pods -n microservices
-kubectl get services -n microservices
+for tier in frontend backend database; do
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+    rollout status "deployment/$tier" --timeout=180s
+done
 ```
-
-**3. Implement Default Deny Policy**
+**4. Establish the baseline.** All three TCP paths and DNS must work before applying policy. Port 5432 success only proves a TCP connection, not SQL authentication or application correctness.
 
 ```bash
-# Create default deny policy
-cat > default-deny.yaml << EOF
+# Distinguish DNS failure from TCP denial. Status 42 means a TCP failure.
+check_tcp() {
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" \
+    exec "deployment/$1" -c diagnostic -- python -c '
+import socket, sys
+host, port = sys.argv[1], int(sys.argv[2])
+try:
+    address = socket.gethostbyname(host)
+except OSError as error:
+    print("DNS failure:", error, file=sys.stderr)
+    sys.exit(43)
+try:
+    connection = socket.create_connection((address, port), timeout=3)
+    connection.close()
+except OSError as error:
+    print("TCP connection failed:", error, file=sys.stderr)
+    sys.exit(42)
+print("TCP connection succeeded")
+' "$2" "$3"
+}
+
+# Baseline: all three must succeed BEFORE the policy is applied.
+check_tcp frontend backend 8080
+check_tcp backend database 5432
+check_tcp frontend database 5432
+```
+**5. Apply and test the policy.** The selected Pods are isolated in both directions; unmatched traffic is denied. Explicit rules allow the two application paths and UDP/TCP DNS. Namespace selectors are required to reach CoreDNS outside the lab namespace. Adapt the DNS rule for NodeLocal DNSCache or different labels before testing.
+
+```bash
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n "$NETWORK_NAMESPACE" create -f - <<'EOF'
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
-  name: default-deny
-  namespace: microservices
+  name: tier-boundaries
 spec:
   selector: all()
-  types:
-  - Ingress
-  - Egress
-EOF
-
-kubectl apply -f default-deny.yaml
-```
-
-**4. Allow Traffic from Frontend to Backend**
-
-```bash
-# Policy to allow traffic from frontend to backend
-cat > frontend-to-backend.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: frontend-to-backend
-  namespace: microservices
-spec:
-  selector: app == 'backend'
-  types:
-  - Ingress
+  types: [Ingress, Egress]
   ingress:
   - action: Allow
+    protocol: TCP
     source:
       selector: app == 'frontend'
     destination:
-      ports:
-      - 80
-EOF
-
-kubectl apply -f frontend-to-backend.yaml
-
-# Allow frontend egress to external DNS and API
-cat > frontend-egress.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: frontend-egress
-  namespace: microservices
-spec:
-  selector: app == 'frontend'
-  types:
-  - Egress
-  egress:
-  - action: Allow
-    destination:
       selector: app == 'backend'
-      ports:
-      - 80
-  # Allow DNS access
+      ports: [8080]
   - action: Allow
-    destination:
-      selector: k8s-app == 'kube-dns'
-      ports:
-      - 53
-EOF
-
-kubectl apply -f frontend-egress.yaml
-```
-
-**5. Allow Traffic from Backend to Database**
-
-```bash
-# Policy to allow traffic from backend to database
-cat > backend-to-database.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: backend-to-database
-  namespace: microservices
-spec:
-  selector: app == 'database'
-  types:
-  - Ingress
-  ingress:
-  - action: Allow
+    protocol: TCP
     source:
       selector: app == 'backend'
     destination:
-      ports:
-      - 5432
-EOF
-
-kubectl apply -f backend-to-database.yaml
-
-# Allow backend egress to external DNS and database
-cat > backend-egress.yaml << EOF
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: backend-egress
-  namespace: microservices
-spec:
-  selector: app == 'backend'
-  types:
-  - Egress
+      selector: app == 'database'
+      ports: [5432]
   egress:
   - action: Allow
+    protocol: UDP
+    destination:
+      namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+      selector: k8s-app == 'kube-dns'
+      ports: [53]
+  - action: Allow
+    protocol: TCP
+    destination:
+      namespaceSelector: kubernetes.io/metadata.name == 'kube-system'
+      selector: k8s-app == 'kube-dns'
+      ports: [53]
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'frontend'
+    destination:
+      selector: app == 'backend'
+      ports: [8080]
+  - action: Allow
+    protocol: TCP
+    source:
+      selector: app == 'backend'
     destination:
       selector: app == 'database'
-      ports:
-      - 5432
-  # Allow DNS access
-  - action: Allow
-    destination:
-      selector: k8s-app == 'kube-dns'
-      ports:
-      - 53
+      ports: [5432]
 EOF
 
-kubectl apply -f backend-egress.yaml
+# Allow policy propagation, then verify positive controls and the denied path.
+POLICY_VERIFIED=false
+for attempt in $(seq 1 30); do
+  check_tcp frontend backend 8080
+  check_tcp backend database 5432
+  if check_tcp frontend database 5432; then
+    sleep 2
+  else
+    result=$?
+    if [ "$result" -ne 42 ]; then
+      printf '%s\n' 'DNS/exec failure is not proof of policy denial.' >&2
+      exit 1
+    fi
+    # Database availability must still hold after the negative observation.
+    check_tcp backend database 5432
+    POLICY_VERIFIED=true
+    break
+  fi
+done
+[ "$POLICY_VERIFIED" = true ] || {
+  printf '%s\n' 'Expected denial was not observed; inspect policy enforcement.' >&2
+  exit 1
+}
 ```
+Policy propagation is asynchronous. A timeout, DNS failure, absent diagnostic binary, or an unavailable database by itself is not evidence of successful isolation. The procedure uses a working baseline and positive controls; investigate other policies/routes if observations differ.
 
-**6. Test Policies**
+**6. Cleanup.** Delete only the owned namespace after confirming its UID. This removes the test workloads, policy, Secret and ephemeral data, not the cluster-wide Calico installation. Remove the local password file after the exercise. Leave shared CNI/RBAC configuration in place unless a separate administrator-reviewed rollback owns it.
 
 ```bash
-# Get frontend pod name
-FRONTEND_POD=$(kubectl get pods -n microservices -l app=frontend -o jsonpath='{.items[0].metadata.name}')
-
-# Get backend pod name
-BACKEND_POD=$(kubectl get pods -n microservices -l app=backend -o jsonpath='{.items[0].metadata.name}')
-
-# Get database pod name
-DATABASE_POD=$(kubectl get pods -n microservices -l app=database -o jsonpath='{.items[0].metadata.name}')
-
-# Test connection from frontend to backend (should succeed)
-kubectl exec -it $FRONTEND_POD -n microservices -- wget -O- --timeout=2 http://backend
-
-# Test connection from frontend to database (should fail)
-kubectl exec -it $FRONTEND_POD -n microservices -- nc -zv database 5432
-
-# Test connection from backend to database (should succeed)
-kubectl exec -it $BACKEND_POD -n microservices -- nc -zv database 5432
-
-# Test connection from backend to external site (should fail)
-kubectl exec -it $BACKEND_POD -n microservices -- wget -O- --timeout=2 https://www.example.com
-```
-
-**7. Network Policy Visualization (Optional)**
-
-```bash
-# Install Calico network policy visualization tool
-kubectl apply -f https://raw.githubusercontent.com/tigera/ccol/master/manifests/tigera-policies-viewer/tigera-policies-viewer.yaml
-
-# Set up port forwarding
-kubectl port-forward -n tigera-policies-viewer svc/tigera-policies-viewer 8080:8080
-
-# Access http://localhost:8080 in browser to visualize policies
-```
-
-Through this exercise, you learned how to use Calico to restrict network traffic between microservices in an EKS cluster. By implementing default deny policies and explicitly allowing only necessary traffic, you applied the principle of least privilege. These network policies help enhance security by restricting communication between services within the cluster and reducing the potential attack surface.
-
-</details>
-
-\### Exercise 2: Configuring IRSA and S3 Access in an EKS Cluster
-
-**Scenario:** You are a DevOps engineer at your company, and you have applications running in an EKS cluster that need to securely access an S3 bucket. Following security best practices, instead of sharing the node IAM role, you want to use IRSA (IAM Roles for Service Accounts) to grant only the necessary permissions to specific pods.
-
-**Requirements:**
-
-1. Associate OIDC provider with the EKS cluster
-2. Create IAM role with S3 access permissions
-3. Create Kubernetes service account and associate IAM role
-4. Deploy pod using the service account
-5. Test S3 access
-
-**Solution:**
-
-<details>
-
-<summary>Show Solution</summary>
-
-**1. Associate OIDC Provider with the EKS Cluster**
-
-```bash
-# Set cluster name
-CLUSTER_NAME=my-cluster
-REGION=us-west-2
-
-# Get OIDC provider URL
-OIDC_PROVIDER=$(aws eks describe-cluster --name $CLUSTER_NAME --region $REGION --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
-
-# Check if OIDC provider already exists
-aws iam list-open-id-connect-providers | grep $OIDC_PROVIDER
-
-# Create OIDC provider if it doesn't exist
-if [ $? -ne 0 ]; then
-  echo "Creating OIDC provider..."
-  eksctl utils associate-iam-oidc-provider --cluster $CLUSTER_NAME --region $REGION --approve
+CURRENT_NETWORK_UID=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get namespace "${NETWORK_NAMESPACE:?}" --ignore-not-found \
+  -o jsonpath='{.metadata.uid}') || exit 1
+if [ -z "$CURRENT_NETWORK_UID" ]; then
+  printf '%s\n' 'Lab namespace is already absent.'
+elif [ "$CURRENT_NETWORK_UID" = "${NETWORK_NAMESPACE_UID:?Recorded UID required}" ]; then
+  kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" \
+    delete namespace "$NETWORK_NAMESPACE" --wait=true || exit 1
 else
-  echo "OIDC provider already exists."
+  printf '%s\n' 'Namespace UID changed; no deletion attempted.' >&2
+  exit 1
 fi
 ```
 
-**2. Create IAM Role with S3 Access Permissions**
+</details>
+
+### Exercise 2: Configuring IRSA and S3 Access in an EKS Cluster
+
+**Scenario:** give one workload read-only access to an approved `training/` prefix in an existing S3 bucket, using IRSA instead of the node role. Verify the actual assumed-role identity and compare against a deliberately credential-free Pod.
+
+**Prerequisites:** Bash, jq, AWS CLI, eksctl and kubectl; an existing authorized EKS cluster; admin access to a new namespace and IAM role; an approved non-sensitive existing S3 object. This commercial-partition example assumes an object without additional customer-KMS requirements. Bucket/KMS policies, SCPs, DNS, STS and S3 network paths may impose further requirements. No S3 object is created, changed or deleted.
+
+
+<details>
+<summary>Show Solution</summary>
+
+**1. Scope the lab and verify OIDC.** Set `EXAMPLE_CLUSTER`, `EXAMPLE_REGION`, `S3_BUCKET`, and `S3_TEST_KEY` (under `training/`). The OIDC provider is shared cluster infrastructure; do not delete it during cleanup. Stop if namespace creation or provider verification fails.
 
 ```bash
-# Get account ID
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+set -euo pipefail
+umask 077
+# Commercial AWS partition example; use an existing approved S3 training prefix.
+: "${EXAMPLE_CLUSTER:?}"
+: "${EXAMPLE_REGION:?}"
+: "${S3_BUCKET:?Existing bucket containing the approved training object}"
+: "${S3_TEST_KEY:?Existing non-sensitive object key under training/}"
+case "$S3_TEST_KEY" in training/*) ;; *) printf '%s\n' 'Use a training/ key.' >&2; exit 1 ;; esac
+IRSA_LAB_DIR=$(mktemp -d /tmp/eks-irsa-lab.XXXXXX)
+: "${IRSA_LAB_DIR:?}"
+IRSA_LAB_ID="irsa-quiz-$(date +%s)-$$"
+IRSA_NAMESPACE="$IRSA_LAB_ID"
+IRSA_ROLE_NAME="$IRSA_LAB_ID"
+IRSA_SERVICE_ACCOUNT=s3-reader
+IRSA_KUBECONFIG="$IRSA_LAB_DIR/kubeconfig"
 
-# Set namespace and service account name
-NAMESPACE=default
-SERVICE_ACCOUNT_NAME=s3-access-sa
+aws sts get-caller-identity --output json > "$IRSA_LAB_DIR/caller.json" || exit 1
+IRSA_ACCOUNT_ID=$(jq -er '.Account' "$IRSA_LAB_DIR/caller.json") || exit 1
+jq -e '.Arn | startswith("arn:aws:")' "$IRSA_LAB_DIR/caller.json" >/dev/null || exit 1
+aws eks describe-cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query cluster --output json > "$IRSA_LAB_DIR/cluster.json" || exit 1
+IRSA_ISSUER=$(jq -er '.identity.oidc.issuer' "$IRSA_LAB_DIR/cluster.json") || exit 1
+case "$IRSA_ISSUER" in https://*) ;; *) printf '%s\n' 'Invalid OIDC issuer.' >&2; exit 1 ;; esac
+IRSA_ISSUER_HOST="${IRSA_ISSUER#https://}"
+IRSA_PROVIDER_ARN="arn:aws:iam::$IRSA_ACCOUNT_ID:oidc-provider/$IRSA_ISSUER_HOST"
 
-# Create trust policy
-cat > trust-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+aws eks update-kubeconfig --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubeconfig "$IRSA_KUBECONFIG" --alias "$EXAMPLE_CLUSTER" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" create namespace "$IRSA_NAMESPACE" || exit 1
+IRSA_NAMESPACE_UID=$(kubectl --kubeconfig "$IRSA_KUBECONFIG" \
+  get namespace "$IRSA_NAMESPACE" -o jsonpath='{.metadata.uid}') || exit 1
+: "${IRSA_NAMESPACE_UID:?}"
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "$IRSA_NAMESPACE_UID" \
+  '{namespace:$namespace,namespaceUID:$uid}' > "$IRSA_LAB_DIR/ownership.json" || exit 1
+
+# The cluster's provider is shared infrastructure; eksctl checks/associates it.
+eksctl utils associate-iam-oidc-provider --cluster "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --approve || exit 1
+aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$IRSA_PROVIDER_ARN" \
+  --output json > "$IRSA_LAB_DIR/provider.json" || exit 1
+jq -e '.ClientIDList | index("sts.amazonaws.com") != null' \
+  "$IRSA_LAB_DIR/provider.json" >/dev/null || exit 1
+```
+**2. Create a unique, scoped role.** Trust requires both `aud=sts.amazonaws.com` and the exact namespace/ServiceAccount `sub`. Role creation failure stops policy attachment; record the immutable RoleId for cleanup.
+
+```bash
+jq -n --arg provider "${IRSA_PROVIDER_ARN:?}" --arg issuer "${IRSA_ISSUER_HOST:?}" \
+  --arg subject "system:serviceaccount:${IRSA_NAMESPACE:?}:${IRSA_SERVICE_ACCOUNT:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[{
+      Effect:"Allow",
+      Principal:{Federated:$provider},
+      Action:"sts:AssumeRoleWithWebIdentity",
+      Condition:{StringEquals:{
+        ($issuer+":aud"):"sts.amazonaws.com",
+        ($issuer+":sub"):$subject
+      }}
+    }]
+  }' > "${IRSA_LAB_DIR:?}/trust.json" || exit 1
+
+jq -n --arg bucket "${S3_BUCKET:?}" \
+  '{
+    Version:"2012-10-17",
+    Statement:[
+      {
+        Effect:"Allow",Action:"s3:ListBucket",Resource:("arn:aws:s3:::"+$bucket),
+        Condition:{StringLike:{"s3:prefix":["training/","training/*"]}}
       },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${NAMESPACE}:${SERVICE_ACCOUNT_NAME}"
+      {
+        Effect:"Allow",Action:"s3:GetObject",
+        Resource:("arn:aws:s3:::"+$bucket+"/training/*")
+      }
+    ]
+  }' > "$IRSA_LAB_DIR/s3-policy.json" || exit 1
+
+# Stop on creation failure; never attach this policy to a pre-existing role.
+aws iam create-role --role-name "${IRSA_ROLE_NAME:?}" \
+  --assume-role-policy-document "file://$IRSA_LAB_DIR/trust.json" \
+  --tags "Key=TrainingLab,Value=${IRSA_LAB_ID:?}" \
+  --query Role --output json > "$IRSA_LAB_DIR/created-role.json" || exit 1
+IRSA_ROLE_ARN=$(jq -er '.Arn' "$IRSA_LAB_DIR/created-role.json") || exit 1
+IRSA_ROLE_ID=$(jq -er '.RoleId' "$IRSA_LAB_DIR/created-role.json") || exit 1
+jq -n --arg namespace "$IRSA_NAMESPACE" --arg uid "${IRSA_NAMESPACE_UID:?}" \
+  --arg roleName "$IRSA_ROLE_NAME" --arg roleArn "$IRSA_ROLE_ARN" --arg roleId "$IRSA_ROLE_ID" \
+  '{namespace:$namespace,namespaceUID:$uid,roleName:$roleName,roleARN:$roleArn,roleID:$roleId}' \
+  > "$IRSA_LAB_DIR/ownership.json" || exit 1
+aws iam put-role-policy --role-name "$IRSA_ROLE_NAME" \
+  --policy-name ScopedTrainingS3Read \
+  --policy-document "file://$IRSA_LAB_DIR/s3-policy.json" || exit 1
+```
+**3. Deploy and verify.** Allow for IAM propagation before retrying a failed test. The three containers check identity, prefix listing count, and object length without logging object contents or credentials. The identity must match the newly created role; S3 success alone could otherwise come from a broader node role.
+
+```bash
+# JSON construction preserves literal object keys and prevents YAML interpolation errors.
+jq -n --arg ns "${IRSA_NAMESPACE:?}" --arg sa "${IRSA_SERVICE_ACCOUNT:?}" \
+  --arg role "${IRSA_ROLE_ARN:?}" --arg region "${EXAMPLE_REGION:?}" \
+  --arg bucket "${S3_BUCKET:?}" --arg key "${S3_TEST_KEY:?}" '
+  {
+    apiVersion:"v1",kind:"List",items:[
+      {
+        apiVersion:"v1",kind:"ServiceAccount",
+        metadata:{name:$sa,namespace:$ns,annotations:{
+          "eks.amazonaws.com/role-arn":$role,
+          "eks.amazonaws.com/sts-regional-endpoints":"true"
+        }}
+      },
+      {
+        apiVersion:"v1",kind:"Pod",metadata:{name:"irsa-check",namespace:$ns},
+        spec:{
+          serviceAccountName:$sa,nodeSelector:{"kubernetes.io/os":"linux"},restartPolicy:"Never",
+          containers:[
+            {name:"identity",args:["--region",$region,"sts","get-caller-identity"]},
+            {name:"list-prefix",args:["--region",$region,"s3api","list-objects-v2","--bucket",$bucket,
+              "--prefix","training/","--max-keys","1","--query","KeyCount","--output","json"]},
+            {name:"object-metadata",args:["--region",$region,"s3api","head-object","--bucket",$bucket,
+              "--key",$key,"--query","ContentLength","--output","json"]}
+          ] | map(.+{
+            image:"public.ecr.aws/aws-cli/aws-cli:2.36.43",command:["aws"],
+            resources:{requests:{cpu:"100m",memory:"128Mi"},limits:{memory:"256Mi"}}
+          })
         }
       }
-    }
-  ]
+    ]
+  }' > "${IRSA_LAB_DIR:?}/workload.json" || exit 1
+kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" create -f "$IRSA_LAB_DIR/workload.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  wait --for=jsonpath='{.status.phase}'=Succeeded pod/irsa-check --timeout=180s || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  logs irsa-check -c identity > "$IRSA_LAB_DIR/pod-identity.json" || exit 1
+jq -e --arg account "${IRSA_ACCOUNT_ID:?}" --arg role "${IRSA_ROLE_NAME:?}" \
+  '.Account == $account and (.Arn | startswith("arn:aws:sts::"+$account+":assumed-role/"+$role+"/"))' \
+  "$IRSA_LAB_DIR/pod-identity.json" >/dev/null || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c list-prefix
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" logs irsa-check -c object-metadata
+```
+**4. Controlled negative comparison.** The new namespace's default ServiceAccount must have no IRSA annotation or EKS Pod Identity association, and no other credentials may be injected. Disable IMDS fallback in this test client and require the specific missing-credentials failure. A random network or authorization error is not a valid negative result.
+
+```bash
+# Controlled comparison: no IRSA, no Pod Identity association, no IMDS fallback.
+jq -n --arg ns "${IRSA_NAMESPACE:?}" --arg region "${EXAMPLE_REGION:?}" '
+{
+  apiVersion:"v1",kind:"Pod",
+  metadata:{name:"no-role-check",namespace:$ns},
+  spec:{
+    automountServiceAccountToken:false,
+    serviceAccountName:"default",
+    nodeSelector:{"kubernetes.io/os":"linux"},
+    restartPolicy:"Never",
+    containers:[{
+      name:"identity",image:"public.ecr.aws/aws-cli/aws-cli:2.36.43",
+      command:["aws"],args:["--region",$region,"sts","get-caller-identity"],
+      env:[{name:"AWS_EC2_METADATA_DISABLED",value:"true"}],
+      resources:{requests:{cpu:"100m",memory:"128Mi"},limits:{memory:"256Mi"}}
+    }]
+  }
+}' > "${IRSA_LAB_DIR:?}/negative-pod.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" create -f "$IRSA_LAB_DIR/negative-pod.json" || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  wait --for=jsonpath='{.status.phase}'=Failed pod/no-role-check --timeout=180s || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  get pod no-role-check -o json > "$IRSA_LAB_DIR/negative-status.json" || exit 1
+jq -e '.status.containerStatuses[] | select(.name=="identity") |
+  .state.terminated.exitCode == 255' "$IRSA_LAB_DIR/negative-status.json" >/dev/null || exit 1
+kubectl --kubeconfig "$IRSA_KUBECONFIG" -n "$IRSA_NAMESPACE" \
+  logs no-role-check -c identity > "$IRSA_LAB_DIR/negative-log.txt" || exit 1
+grep -F 'Unable to locate credentials' "$IRSA_LAB_DIR/negative-log.txt" >/dev/null || {
+  printf '%s\n' 'Unexpected failure: inspect the saved log; do not claim isolation.' >&2
+  exit 1
 }
-EOF
-
-# Create IAM role
-ROLE_NAME=eks-s3-access-role
-aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://trust-policy.json
-
-# Attach S3 read-only policy
-aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-
-# Get role ARN
-ROLE_ARN=$(aws iam get-role --role-name $ROLE_NAME --query Role.Arn --output text)
-echo "Role ARN: $ROLE_ARN"
 ```
+This is a credential-provider comparison, not proof that arbitrary Pods cannot access IMDS or that containers are security boundaries. Restrict node credentials separately. IRSA uses a projected web-identity token and STS temporary credentials; compatible SDKs refresh them. Do not dump all `AWS_*` environment variables or token files.
 
-**3. Create Kubernetes Service Account and Associate IAM Role**
+**5. Cleanup only owned resources.** Keep the recorded namespace UID and IAM RoleId. The guarded cleanup removes the lab namespace, its inline policy and its unique role; it retains the S3 bucket/object, shared OIDC provider and cluster. If setup only partly succeeded, inspect `ownership.json` and clean up just the resources actually recorded.
 
 ```bash
-# Create service account
-cat > service-account.yaml << EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: ${SERVICE_ACCOUNT_NAME}
-  namespace: ${NAMESPACE}
-  annotations:
-    eks.amazonaws.com/role-arn: ${ROLE_ARN}
-EOF
+# Recover the recorded values from ownership.json if this is a later shell.
+IRSA_CLEANUP_NAMESPACE_OK=false
+if CURRENT_IRSA_UID=$(kubectl --kubeconfig "${IRSA_KUBECONFIG:?}" \
+  get namespace "${IRSA_NAMESPACE:?}" --ignore-not-found -o jsonpath='{.metadata.uid}'); then
+  if [ -z "$CURRENT_IRSA_UID" ]; then
+    IRSA_CLEANUP_NAMESPACE_OK=true
+  elif [ "$CURRENT_IRSA_UID" = "${IRSA_NAMESPACE_UID:?Recorded UID required}" ]; then
+    if kubectl --kubeconfig "$IRSA_KUBECONFIG" delete namespace "$IRSA_NAMESPACE" --wait=true; then
+      IRSA_CLEANUP_NAMESPACE_OK=true
+    else
+      exit 1
+    fi
+  else
+    printf '%s\n' 'Namespace UID mismatch; stop and inspect.' >&2
+    exit 1
+  fi
+else
+  printf '%s\n' 'Namespace lookup failed; stop and inspect.' >&2
+  exit 1
+fi
 
-kubectl apply -f service-account.yaml
-
-# Verify service account
-kubectl get serviceaccount $SERVICE_ACCOUNT_NAME -o yaml
+if [ "$IRSA_CLEANUP_NAMESPACE_OK" = true ]; then
+  CURRENT_IRSA_ROLE_JSON=$(aws iam get-role --role-name "${IRSA_ROLE_NAME:?}" \
+    --query Role --output json) || exit 1
+  CURRENT_IRSA_ROLE_ID=$(printf '%s' "$CURRENT_IRSA_ROLE_JSON" | jq -er '.RoleId') || exit 1
+  if [ "$CURRENT_IRSA_ROLE_ID" = "${IRSA_ROLE_ID:?Recorded IAM RoleId required}" ]; then
+    IRSA_INLINE_POLICIES=$(aws iam list-role-policies --role-name "$IRSA_ROLE_NAME" \
+      --query PolicyNames --output json) || exit 1
+    printf '%s' "$IRSA_INLINE_POLICIES" |
+      jq -e 'all(.[]; . == "ScopedTrainingS3Read")' >/dev/null || exit 1
+    if printf '%s' "$IRSA_INLINE_POLICIES" | jq -e 'index("ScopedTrainingS3Read") != null' >/dev/null; then
+      aws iam delete-role-policy --role-name "$IRSA_ROLE_NAME" \
+        --policy-name ScopedTrainingS3Read || exit 1
+    fi
+    aws iam delete-role --role-name "$IRSA_ROLE_NAME"
+  else
+    printf '%s\n' 'IAM RoleId mismatch; no IAM deletion attempted.' >&2
+    exit 1
+  fi
+fi
 ```
-
-**4. Deploy Pod Using the Service Account**
-
-```bash
-# Deploy test pod
-cat > s3-test-pod.yaml << EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: s3-test-pod
-  namespace: ${NAMESPACE}
-spec:
-  serviceAccountName: ${SERVICE_ACCOUNT_NAME}
-  containers:
-  - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
-  restartPolicy: Never
-EOF
-
-kubectl apply -f s3-test-pod.yaml
-
-# Check pod status
-kubectl get pod s3-test-pod
-kubectl describe pod s3-test-pod
-```
-
-**5. Test S3 Access**
-
-```bash
-# Test listing S3 buckets
-kubectl exec -it s3-test-pod -- aws s3 ls
-
-# Test listing objects in a specific S3 bucket (change bucket name as needed)
-kubectl exec -it s3-test-pod -- aws s3 ls s3://my-bucket/
-
-# Verify AWS credentials
-kubectl exec -it s3-test-pod -- aws sts get-caller-identity
-
-# Check environment variables
-kubectl exec -it s3-test-pod -- env | grep AWS
-```
-
-**6. Deploy a Regular Pod for Comparison**
-
-```bash
-# Deploy a pod using a regular service account
-cat > regular-pod.yaml << EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: regular-pod
-  namespace: ${NAMESPACE}
-spec:
-  containers:
-  - name: aws-cli
-    image: amazon/aws-cli:latest
-    command:
-    - sleep
-    - "3600"
-  restartPolicy: Never
-EOF
-
-kubectl apply -f regular-pod.yaml
-
-# Test S3 access from regular pod (should fail if node IAM role doesn't have S3 access permissions)
-kubectl exec -it regular-pod -- aws s3 ls
-```
-
-**7. Cleanup**
-
-```bash
-# Delete pods
-kubectl delete pod s3-test-pod regular-pod
-
-# Delete service account
-kubectl delete serviceaccount $SERVICE_ACCOUNT_NAME
-
-# Clean up IAM role (optional)
-aws iam detach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-aws iam delete-role --role-name $ROLE_NAME
-```
-
-**How IRSA Works:**
-
-1. **OIDC Provider Connection**:
-   * The EKS cluster is configured as an OIDC provider.
-   * This allows Kubernetes service account tokens to become a trusted authentication mechanism in AWS IAM.
-2. **IAM Role Trust Policy**:
-   * The IAM role's trust policy restricts which Kubernetes service accounts can assume the role.
-   * Conditions are used to limit it to specific service accounts in specific namespaces.
-3. **Service Account Annotation**:
-   * The `eks.amazonaws.com/role-arn` annotation specifies which IAM role the service account should assume.
-   * This annotation is processed by the EKS Pod Identity Webhook.
-4. **Environment Variable Injection**:
-   * The EKS Pod Identity Webhook automatically injects the following environment variables into pods:
-     * `AWS_ROLE_ARN`
-     * `AWS_WEB_IDENTITY_TOKEN_FILE`
-     * `AWS_REGION`
-   * AWS SDKs use these environment variables to obtain credentials.
-5. **Principle of Least Privilege**:
-   * Grant only the minimum permissions required for the application.
-   * In this example, we only granted S3 read-only access permissions.
-
-Through this lab, you learned how to configure IRSA to grant fine-grained permissions to AWS services only to specific pods running in an EKS cluster. This approach is more secure than sharing node IAM roles and follows the principle of least privilege.
 
 </details>
 
@@ -2071,820 +1486,408 @@ Through this lab, you learned how to configure IRSA to grant fine-grained permis
 
 The following questions are about advanced topics related to Amazon EKS cluster creation. This section tests your understanding of advanced concepts and best practices for EKS cluster creation.
 
-1. Which of the following is NOT a change that occurs when enabling Prefix Delegation in an Amazon EKS cluster?
-   * A) Each ENI is assigned a /28 CIDR block (16 IPs)
-   * B) Increased maximum pods per node
-   * C) Reduced pod startup time
-   * D) Improved IP address usage efficiency
+1. Which claim is NOT guaranteed by IPv4 prefix delegation?
+   * A) A prefix uses an ENI address slot
+   * B) More IP capacity can fit on one node
+   * C) Every application becomes ready faster
+   * D) Contiguous subnet blocks are required
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: C) Reduced pod startup time**
+**Answer: C) Every application becomes ready faster**
 
-**Explanation:** The change that does NOT occur when enabling Prefix Delegation in an Amazon EKS cluster is "Reduced pod startup time". In reality, enabling prefix delegation does not reduce pod startup time; it may actually increase it slightly. The main benefits of prefix delegation are increased maximum pods per node and improved IP address usage efficiency.
+Prefix delegation can reduce address-allocation latency: attaching another prefix to an existing ENI avoids some ENI creation/attachment work. AWS documents this benefit, so the original explanation that prefix delegation cannot reduce startup time and must add routing overhead was incorrect.
 
-**Actual Changes When Enabling Prefix Delegation:**
+End-to-end Pod readiness still depends on scheduling, node launch, image pull, volume attachment, initialization, probes and application startup. No before/after benchmark was supplied here, and this audit did not execute one. Do not infer a fixed latency improvement or invent a cause for a slowdown.
 
-1. **Each ENI is assigned a /28 CIDR block (16 IPs)**:
-   * By default, VPC CNI assigns secondary IP addresses from the ENI for each pod.
-   * When prefix delegation is enabled, each ENI is assigned /28 CIDR blocks (16 IPs) instead of individual IP addresses.
-   * This significantly increases the number of IP addresses each ENI can support.
-2. **Increased maximum pods per node**:
-   * Using prefix delegation significantly increases the maximum pods per node.
-   * For example, for an m5.large instance:
-     * Default configuration: maximum 29 pods
-     * With prefix delegation enabled: maximum 110+ pods
-3. **Improved IP address usage efficiency**:
-   * Optimizes IP address usage in large clusters.
-   * Useful in environments with limited VPC CIDR ranges.
-   * Allows running more pods within the same IP address space.
+Each IPv4 `/28` consumes one secondary-address slot and 16 addresses from a contiguous subnet block. It raises IP capacity per node, subject to `maxPods`, compute resources and subnet space. It does not expand the CIDR or guarantee fewer allocated addresses. Warm-pool settings trade spare-address consumption for allocation readiness.
 
-**Impact of Prefix Delegation on Pod Startup Time:**
-
-Prefix delegation does not reduce pod startup time; it may actually increase it slightly for the following reasons:
-
-1. **Additional setup overhead**:
-   * Additional overhead may occur for CIDR block allocation and management.
-   * Time may be needed for routing table updates.
-2. **IP address allocation complexity**:
-   * CIDR block allocation and management can be more complex than individual IP address allocation.
-   * This may cause slight delays during pod startup.
-3. **Initial setup time**:
-   * Initial setup time for allocating CIDR blocks to new ENIs may be longer.
-   * However, once set up, multiple pods can be started quickly on that ENI.
-
-**How to Enable Prefix Delegation:**
-
-```bash
-# Enable prefix delegation
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# Check prefix delegation status
-kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
-```
-
-**Prefix Delegation Limitations:**
-
-1. **EC2 Instance Support**:
-   * Only Nitro-based instances support prefix delegation.
-   * Cannot be used on previous generation instances.
-2. **VPC CNI Version Requirements**:
-   * Requires VPC CNI version 1.9.0 or higher.
-   * This feature is not available in earlier versions.
-3. **Subnet Size Requirements**:
-   * Requires subnets with sufficient IP address space.
-   * IP addresses can be exhausted quickly in small subnets.
-4. **Transition Considerations**:
-   * When enabled on existing clusters, only new pods use prefix delegation.
-   * Existing pods must be restarted to apply to all pods.
-
-Prefix delegation is a powerful feature that increases the maximum pods per node and improves IP address usage efficiency, but it does not reduce pod startup time. Therefore, "Reduced pod startup time" is NOT a change that occurs when enabling prefix delegation.
+Use the prerequisites and new-node-group migration in basic question 5: inspect fragmentation, configure a compatible CNI, validate calculated node capacity and migrate with spare capacity and PDB-aware draining. A blanket restart of existing Pods is not a complete transition plan.
 
 </details>
 
-2\. Which of the following is NOT a main benefit of mixing instance types in an Amazon EKS cluster node group? - A) Cost optimization - B) Improved availability - C) Selecting instance types suited to workload characteristics - D) Simplified cluster management
+2. Which practice is incorrect for mixed-instance managed node groups using Cluster Autoscaler?
+   * A) Use comparable CPU/memory/GPU shapes
+   * B) Verify image and AZ compatibility
+   * C) Separate Spot and On-Demand groups
+   * D) Mix arbitrary shapes because the autoscaler simulates every type
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: D) Simplified cluster management**
+**Answer: D) Mix arbitrary shapes because the autoscaler simulates every type**
 
-**Explanation:** The option that is NOT a main benefit of mixing instance types in an Amazon EKS cluster node group is "Simplified cluster management". In reality, mixing various instance types can make cluster management more complex. The main benefits of mixing instance types are cost optimization, improved availability, and selecting instance types suited to workload characteristics.
+Diversity can improve capacity options, especially for Spot, but must respect the autoscaler's scheduling model. Cluster Autoscaler simulates a mixed group using its first instance type; candidates should have the same CPU, memory and GPU shape. Smaller alternatives can leave Pods pending, while larger ones can waste capacity. Similar names do not guarantee a matching shape: for example, `c5n.large` has different memory from `c5.large`.
 
-**Actual Benefits of Mixing Instance Types:**
+A managed node group has one capacity type. Use **separate groups** for On-Demand baseline and Spot expansion; listing multiple `instanceTypes` does not mix purchase options in one managed group. EKS chooses the managed Spot allocation strategy; `spotAllocationStrategy` is not a supported eksctl `managedNodeGroups` field.
 
-1. **Cost optimization**:
-   * Mix spot instances and on-demand instances
-   * Leverage price differences across various instance families
-   * Select optimal price-to-performance ratio for workload requirements
-   *   Example:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-spot-instances
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m5n.large"]
-           spot: true
-           minSize: 2
-           maxSize: 10
-       ```
-2. **Improved availability**:
-   * Use alternative instance types when specific instance types have insufficient capacity
-   * Can substitute with other types when spot instances are interrupted
-   * Risk distribution through diversification across multiple instance families
-   *   Example:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-instance-types
-           instanceTypes: ["c5.large", "c5a.large", "c5d.large", "c5n.large"]
-           minSize: 3
-           maxSize: 10
-           spotAllocationStrategy: capacity-optimized
-       ```
-3. **Selecting instance types suited to workload characteristics**:
-   * Provide instance types for various workload requirements
-   * C series for compute-intensive workloads
-   * R series for memory-intensive workloads
-   * M series for balanced workloads
-   * G or P series for GPU workloads
-   *   Example:
-
-       ```yaml
-       # Compute optimized node group
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: compute-optimized
-           instanceTypes: ["c5.2xlarge"]
-           minSize: 2
-           maxSize: 10
-           labels:
-             workload-type: compute
-           taints:
-             - key: workload-type
-               value: compute
-               effect: NoSchedule
-
-         # Memory optimized node group
-         - name: memory-optimized
-           instanceTypes: ["r5.2xlarge"]
-           minSize: 2
-           maxSize: 10
-           labels:
-             workload-type: memory
-           taints:
-             - key: workload-type
-               value: memory
-               effect: NoSchedule
-       ```
-
-**Disadvantages of Mixing Instance Types:**
-
-1. **Increased cluster management complexity**:
-   * Requires monitoring and managing various instance types
-   * Troubleshooting complexity due to different performance characteristics
-   * Need to adjust resource requests and limits for various instance types
-2. **Reduced workload predictability**:
-   * Performance characteristics may vary by instance type
-   * Potential workload performance variations, especially when using spot instances
-3. **Resource allocation complexity**:
-   * Difficulty setting pod resource requests and limits for various instance types
-   * Complex scheduling rules needed using node selectors and taints
-4. **Testing and validation burden**:
-   * Need to test applications on various instance types
-   * Increased likelihood of discovering performance and compatibility issues
-
-**Strategies for Mixing Instance Types:**
-
-1.  **Separate node groups by workload**:
-
-    ```yaml
-    # Node group for web servers
-    - name: web-servers
-      instanceTypes: ["c5.large", "c5a.large"]
-      labels:
-        role: web
-
-    # Node group for databases
-    - name: databases
-      instanceTypes: ["r5.xlarge", "r5a.xlarge"]
-      labels:
-        role: database
-    ```
-2.  **Cost optimization strategy**:
-
-    ```yaml
-    # Base on-demand node group
-    - name: on-demand-base
-      instanceTypes: ["m5.large"]
-      minSize: 2
-      maxSize: 5
-      spot: false
-
-    # Spot node group for scaling
-    - name: spot-scaling
-      instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-      minSize: 0
-      maxSize: 20
-      spot: true
-    ```
-3.  **Availability optimization strategy**:
-
-    ```yaml
-    # Diversification across multiple instance families
-    - name: high-availability
-      instanceTypes: ["m5.large", "m5a.large", "c5.large", "c5a.large", "r5.large", "r5a.large"]
-      minSize: 3
-      maxSize: 10
-      spotAllocationStrategy: capacity-optimized
-    ```
-
-Mixing instance types provides benefits such as cost optimization, improved availability, and selecting instance types suited to workload characteristics, but cluster management is not simplified and can actually become more complex. Therefore, "Simplified cluster management" is NOT a main benefit of mixing instance types.
-
-</details>
-
-3. What is the safest node group update strategy in an Amazon EKS cluster?
-   * A) In-place update
-   * B) Blue/Green deployment
-   * C) Canary deployment
-   * D) Rolling update
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: B) Blue/Green deployment**
-
-**Explanation:** The safest node group update strategy in an Amazon EKS cluster is Blue/Green deployment. Blue/Green deployment creates a new node group (green), migrates workloads, and then removes the existing node group (blue). This approach is the safest because you can immediately roll back to the previous environment if issues occur during the update.
-
-**Comparison of Node Group Update Strategies:**
-
-1. **Blue/Green Deployment**:
-   * **How it works**: Create new node group → Migrate workloads → Remove existing node group
-   * **Advantages**:
-     * Immediate rollback possible
-     * Minimal workload disruption during updates
-     * Can compare environments before and after update
-     * Can switch after testing
-   * **Disadvantages**:
-     * Temporarily requires double the resources
-     * Implementation complexity
-     * Increased cost
-   *   **Implementation example**:
-
-       ```bash
-       # 1. Create new node group
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name my-nodegroup-v2 \
-         --node-type m5.large \
-         --nodes 3 \
-         --node-ami-family AmazonLinux2 \
-         --node-labels "version=v2,color=green"
-
-       # 2. Migrate workloads (update node selector)
-       kubectl patch deployment my-app -p '{"spec":{"template":{"spec":{"nodeSelector":{"color":"green"}}}}}'
-
-       # 3. Verify all workloads have moved to new nodes
-       kubectl get pods -o wide
-
-       # 4. Remove existing node group
-       eksctl delete nodegroup --cluster my-cluster --name my-nodegroup-v1
-       ```
-2. **Rolling Update**:
-   * **How it works**: Replace nodes one at a time (cordon → drain → terminate → add new node)
-   * **Advantages**:
-     * No additional resources needed
-     * Default strategy for EKS managed node groups
-     * Simple implementation
-   * **Disadvantages**:
-     * Difficult to rollback
-     * Issues during update can affect entire cluster
-     * Update time can be lengthy
-   *   **Implementation example**:
-
-       ```bash
-       # Update managed node group
-       aws eks update-nodegroup-version \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup
-
-       # Modify update configuration
-       aws eks update-nodegroup-config \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup \
-         --update-config '{"maxUnavailable": 1}'
-       ```
-3. **Canary Deployment**:
-   * **How it works**: Create small new node group → Migrate some workloads → Validate → Complete migration
-   * **Advantages**:
-     * Minimizes risk
-     * Allows gradual validation
-     * Limits impact scope when issues occur
-   * **Disadvantages**:
-     * Implementation complexity
-     * Requires additional resources
-     * Time-consuming until complete migration
-   *   **Implementation example**:
-
-       ```bash
-       # 1. Create small canary node group
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name canary-nodegroup \
-         --node-type m5.large \
-         --nodes 1 \
-         --node-labels "deployment=canary"
-
-       # 2. Migrate some workloads
-       kubectl patch deployment my-app -p '{"spec":{"template":{"spec":{"nodeSelector":{"deployment":"canary"}}}}}'
-
-       # 3. Proceed with complete migration after validation
-       ```
-4. **In-place Update**:
-   * **How it works**: Perform updates directly on existing nodes
-   * **Advantages**:
-     * No additional resources needed
-     * Suitable for simple changes
-   * **Disadvantages**:
-     * High risk
-     * Difficult rollback
-     * Possible node damage if update fails
-     * Not recommended in EKS
-   *   **Implementation example**:
-
-       ```bash
-       # SSH into node for direct update (not recommended)
-       ssh ec2-user@node-ip
-       sudo yum update -y
-       ```
-
-**Why Blue/Green Deployment is the Safest:**
-
-1. **Complete isolation**:
-   * New environment is completely separated from existing environment, minimizing impact
-   * Existing environment is not affected even if issues occur during update
-2. **Immediate rollback**:
-   * Can immediately redirect traffic to existing environment when issues occur
-   * Rollback possible without downtime
-3. **Validation opportunity**:
-   * Can thoroughly test new environment before switching to production traffic
-   * Can validate under conditions identical to actual environment
-4. **Gradual transition**:
-   * Can gradually transition traffic to new environment
-   * Limits impact scope when issues occur
-
-**Blue/Green Deployment Best Practices:**
-
-1. **Automation**:
-   * Minimize human error by automating deployment process
-   * Integrate with CI/CD pipeline
-2. **Enhanced monitoring**:
-   * Monitor performance and error metrics of new environment
-   * Compare and analyze with existing environment
-3. **Gradual transition**:
-   * Gradually transition traffic to new environment
-   * Roll back immediately when issues occur
-4. **Resource optimization**:
-   * Promptly clean up unnecessary resources after transition completes
-   * Cost optimization
-
-Blue/Green deployment has disadvantages of additional resources and implementation complexity, but it is the most excellent approach in terms of safety. It is especially recommended for important production environments or cases where business impact is significant if updates fail.
-
-</details>
-
-4\. Which of the following is NOT a method for optimizing Auto Scaling of node groups in an Amazon EKS cluster? - A) Adjusting Cluster Autoscaler scan interval - B) Configuring pod priority and preemption - C) Tagging Auto Scaling groups per node group - D) Using the same instance type for all nodes
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: D) Using the same instance type for all nodes**
-
-**Explanation:** The option that is NOT a method for optimizing Auto Scaling of node groups in an Amazon EKS cluster is "Using the same instance type for all nodes." In practice, mixing various instance types is a more effective Auto Scaling strategy in terms of cost optimization and availability. Especially when using Spot Instances, specifying multiple instance types is recommended to increase capacity availability and reduce interruption risk.
-
-**Actual Methods for Optimizing Node Group Auto Scaling:**
-
-1. **Adjusting Cluster Autoscaler Scan Interval**:
-   * Cluster Autoscaler periodically scans the cluster to determine if scaling up or down is needed.
-   * You can balance response time and resource usage by adjusting the scan interval.
-   *   Example:
-
-       ```yaml
-       # Cluster Autoscaler deployment configuration
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: cluster-autoscaler
-         namespace: kube-system
-       spec:
-         template:
-           spec:
-             containers:
-             - name: cluster-autoscaler
-               image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-               command:
-               - ./cluster-autoscaler
-               - --v=4
-               - --stderrthreshold=info
-               - --cloud-provider=aws
-               - --scan-interval=30s  # Adjust scan interval (default: 10 seconds)
-               - --max-node-provision-time=15m
-               - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-       ```
-2. **Configuring Pod Priority and Preemption**:
-   * Use pod priority and preemption (PriorityClass) to ensure important workloads are scheduled first.
-   * When resources are insufficient, lower priority pods are preempted to make room for higher priority pods.
-   *   Example:
-
-       ```yaml
-       # Priority class definition
-       apiVersion: scheduling.k8s.io/v1
-       kind: PriorityClass
-       metadata:
-         name: high-priority
-       value: 1000000
-       globalDefault: false
-       description: "High priority pods"
-       ---
-       # High priority pod
-       apiVersion: v1
-       kind: Pod
-       metadata:
-         name: high-priority-pod
-       spec:
-         priorityClassName: high-priority
-         containers:
-         - name: nginx
-           image: nginx
-       ```
-3. **Tagging Auto Scaling Groups per Node Group**:
-   * Tag Auto Scaling groups so that Cluster Autoscaler can identify and manage specific node groups.
-   * Different Auto Scaling behaviors can be configured for each node group.
-   *   Example:
-
-       ```bash
-       # Tag Auto Scaling group
-       aws autoscaling create-or-update-tags \
-         --tags ResourceId=my-asg,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true \
-                ResourceId=my-asg,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/my-cluster,Value=owned,PropagateAtLaunch=true
-
-       # Configure Auto Scaling settings per node group
-       aws autoscaling update-auto-scaling-group \
-         --auto-scaling-group-name my-asg \
-         --min-size 2 \
-         --max-size 10 \
-         --desired-capacity 2
-       ```
-
-**Benefits of Mixing Various Instance Types:**
-
-1. **Cost Optimization**:
-   * Leverage price differences among various instance types
-   * Improved availability when using Spot Instances
-   *   Example:
-
-       ```yaml
-       # Node group using various instance types
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: mixed-instances
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-           minSize: 2
-           maxSize: 10
-           spot: true
-       ```
-2. **Improved Availability**:
-   * Use alternative instance types when specific instance types have insufficient capacity
-   * Can switch to other types when Spot Instances are interrupted
-   *   Example:
-
-       ```yaml
-       # Capacity-optimized Spot allocation strategy
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: spot-nodes
-           instanceTypes: ["c5.large", "c5a.large", "c5d.large", "c5n.large"]
-           minSize: 2
-           maxSize: 10
-           spot: true
-           spotAllocationStrategy: capacity-optimized
-       ```
-3. **Selecting Instance Types Based on Workload Characteristics**:
-   * Provide instance types suitable for various workload requirements
-   * Control workload placement using node selectors and taints
-   *   Example:
-
-       ```yaml
-       # Node groups by workload characteristics
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: general-purpose
-           instanceTypes: ["m5.large"]
-           minSize: 2
-           maxSize: 10
-
-         - name: compute-intensive
-           instanceTypes: ["c5.large"]
-           minSize: 0
-           maxSize: 10
-           labels:
-             workload-type: compute
-       ```
-
-**Additional Strategies for Auto Scaling Optimization:**
-
-1. **Overprovisioning**:
-   * Maintain a certain amount of spare resources to prepare for sudden scaling requests
-   *   Example:
-
-       ```yaml
-       # Overprovisioning pod
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: overprovisioning
-         namespace: kube-system
-       spec:
-         replicas: 1
-         selector:
-           matchLabels:
-             app: overprovisioning
-         template:
-           metadata:
-             labels:
-               app: overprovisioning
-           spec:
-             priorityClassName: overprovisioning
-             containers:
-             - name: reserve-resources
-               image: k8s.gcr.io/pause:3.2
-               resources:
-                 requests:
-                   cpu: 1000m
-                   memory: 1000Mi
-       ```
-2. **Optimizing Scaling Policies**:
-   * Use target tracking scaling policies
-   * Use step scaling policies
-   * Enable predictive scaling
-   *   Example:
-
-       ```bash
-       # Configure target tracking scaling policy
-       aws autoscaling put-scaling-policy \
-         --auto-scaling-group-name my-asg \
-         --policy-name cpu70-target-tracking-scaling-policy \
-         --policy-type TargetTrackingScaling \
-         --target-tracking-configuration '{"PredefinedMetricSpecification":{"PredefinedMetricType":"ASGAverageCPUUtilization"},"TargetValue":70.0,"DisableScaleIn":false}'
-       ```
-3. **Using Karpenter**:
-   * Consider using Karpenter instead of Cluster Autoscaler
-   * Faster node provisioning and more flexible instance type selection
-   *   Example:
-
-       ```yaml
-       # Karpenter NodePool (karpenter.sh/v1)
-       apiVersion: karpenter.sh/v1
-       kind: NodePool
-       metadata:
-         name: default
-       spec:
-         template:
-           spec:
-             requirements:
-               - key: karpenter.sh/capacity-type
-                 operator: In
-                 values: ["spot", "on-demand"]
-               - key: node.kubernetes.io/instance-type
-                 operator: In
-                 values: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
-             nodeClassRef:
-               group: karpenter.k8s.aws
-               kind: EC2NodeClass
-               name: default-class
-         limits:
-           cpu: 1000
-           memory: 1000Gi
-       ```
-
-Using the same instance type for all nodes is not an Auto Scaling optimization strategy; rather, mixing various instance types is more effective in terms of cost optimization and availability. Therefore, "Using the same instance type for all nodes" is NOT a method for optimizing Auto Scaling of node groups.
-
-</details>
-
-5. Which of the following is NOT a security best practice to consider when creating node groups in an Amazon EKS cluster?
-   * A) Requiring IMDSv2
-   * B) Applying least privilege IAM policies
-   * C) Assigning public IP addresses to all nodes
-   * D) Restricting security group rules
-
-<details>
-
-<summary>Show Answer</summary>
-
-**Answer: C) Assigning public IP addresses to all nodes**
-
-**Explanation:** The option that is NOT a security best practice to consider when creating node groups in an Amazon EKS cluster is "Assigning public IP addresses to all nodes." The security best practice is actually the opposite: placing nodes in private subnets and not assigning public IP addresses. This reduces the attack surface by preventing nodes from being directly accessible from the internet.
-
-**Actual Security Best Practices for EKS Node Group Creation:**
-
-1. **Requiring IMDSv2**:
-   * Require Instance Metadata Service version 2 (IMDSv2) to protect against SSRF (Server-Side Request Forgery) attacks
-   * IMDSv2 uses session-based requests for enhanced security
-   *   Example:
-
-       ```yaml
-       # eksctl configuration file
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: secure-nodes
-           instanceType: m5.large
-           minSize: 2
-           maxSize: 5
-           disableIMDSv1: true  # Disable IMDSv1
-           metadataOptions:
-             httpTokens: required  # Require IMDSv2
-             httpPutResponseHopLimit: 1
-       ```
-2. **Applying Least Privilege IAM Policies**:
-   * Grant only the minimum necessary permissions to node IAM roles
-   * Create granular policies when additional permissions beyond default managed policies are needed
-   *   Example:
-
-       ```yaml
-       # Least privilege policy for node IAM role
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: secure-nodes
-           instanceType: m5.large
-           minSize: 2
-           maxSize: 5
-           iam:
-             attachPolicyARNs:
-               - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-               - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-               - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-             withAddonPolicies:
-               imageBuilder: false
-               autoScaler: false
-               externalDNS: false
-               certManager: false
-               appMesh: false
-               ebs: true
-               fsx: false
-               efs: false
-               albIngress: false
-               xRay: false
-               cloudWatch: true
-       ```
-3. **Restricting Security Group Rules**:
-   * Restrict inbound and outbound rules for node security groups
-   * Open only the minimum necessary ports
-   *   Example:
-
-       ```bash
-       # Create security group
-       aws ec2 create-security-group \
-         --group-name eks-node-sg \
-         --description "Security group for EKS nodes" \
-         --vpc-id vpc-12345
-
-       # Add only rules necessary for cluster communication
-       aws ec2 authorize-security-group-ingress \
-         --group-id sg-12345 \
-         --protocol tcp \
-         --port 443 \
-         --source-group sg-cluster
-
-       aws ec2 authorize-security-group-ingress \
-         --group-id sg-12345 \
-         --protocol tcp \
-         --port 10250 \
-         --source-group sg-cluster
-       ```
-
-**Reasons for Not Assigning Public IP Addresses to Nodes:**
-
-1. **Reduced Attack Surface**:
-   * Without public IPs, nodes cannot be directly accessed from the internet
-   * Management tasks such as SSH access are performed through bastion hosts or AWS Systems Manager
-2. **Improved Security Architecture**:
-   * Place nodes in private subnets
-   * Allow only outbound communication through NAT Gateway
-   * Allow inbound traffic only through load balancers
-3. **Regulatory Compliance**:
-   * Many security standards and regulations require minimizing direct internet exposure
-   * Helps with compliance for PCI DSS, HIPAA, and other regulations
-
-**Example of Placing Nodes in Private Subnets:**
+This example retains comparable `m5`-family shapes. It is a node-group configuration for a reviewed existing cluster with unused group names, not evidence of price/performance or guaranteed capacity. Verify per-AZ offerings and image/driver/storage compatibility:
 
 ```yaml
-# eksctl configuration file
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
   name: my-cluster
   region: us-west-2
-vpc:
-  subnets:
-    private:
-      us-west-2a: { id: subnet-private-a }
-      us-west-2b: { id: subnet-private-b }
-    public:
-      us-west-2a: { id: subnet-public-a }
-      us-west-2b: { id: subnet-public-b }
 managedNodeGroups:
-  - name: secure-nodes
-    instanceType: m5.large
-    minSize: 2
-    maxSize: 5
-    privateNetworking: true  # Place nodes in private subnets
+- name: on-demand-base
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  spot: false
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+- name: spot-scaling
+  amiFamily: AmazonLinux2023
+  instanceTypes: [m5.large, m5a.large, m5d.large, m5ad.large, m5n.large]
+  privateNetworking: true
+  spot: true
+  desiredCapacity: 0
+  minSize: 0
+  maxSize: 20
 ```
+Separate different workload shapes instead of combining memory, compute and general-purpose instances into one autoscaled group:
 
-**Additional EKS Security Best Practices:**
-
-1. **Enabling Encryption**:
-   * EBS volume encryption
-   * Secrets encryption
-   *   Example:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       secretsEncryption:
-         keyARN: arn:aws:kms:us-west-2:123456789012:key/key-id
-       nodeGroups:
-         - name: secure-nodes
-           volumeEncrypted: true
-           volumeKmsKeyID: arn:aws:kms:us-west-2:123456789012:key/key-id
-       ```
-2. **Container Security**:
-   * Disable privileged containers
-   * Use read-only root filesystem
-   *   Example:
-
-       ```yaml
-       apiVersion: v1
-       kind: Pod
-       metadata:
-         name: secure-pod
-       spec:
-         containers:
-         - name: secure-container
-           image: nginx
-           securityContext:
-             privileged: false
-             readOnlyRootFilesystem: true
-             allowPrivilegeEscalation: false
-       ```
-3. **Implementing Network Policies**:
-   * Restrict pod-to-pod communication
-   * Apply default deny policies
-   *   Example:
-
-       ```yaml
-       apiVersion: networking.k8s.io/v1
-       kind: NetworkPolicy
-       metadata:
-         name: default-deny
-         namespace: default
-       spec:
-         podSelector: {}
-         policyTypes:
-         - Ingress
-         - Egress
-       ```
-4. **Logging and Monitoring**:
-   * Enable CloudWatch Logs
-   * Enable GuardDuty EKS Protection
-   *   Example:
-
-       ```bash
-       # Enable CloudWatch Logs
-       aws eks update-cluster-config \
-         --name my-cluster \
-         --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-       ```
-
-Assigning public IP addresses to all nodes is not a security best practice; rather, it increases security risk. Therefore, "Assigning public IP addresses to all nodes" is NOT a security best practice to consider when creating node groups in an Amazon EKS cluster.
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: compute-optimized
+  amiFamily: AmazonLinux2023
+  instanceTypes: [c5.2xlarge, c5a.2xlarge]
+  privateNetworking: true
+  minSize: 2
+  maxSize: 10
+  labels: {workload-type: compute}
+  taints:
+  - {key: workload-type, value: compute, effect: NoSchedule}
+- name: memory-optimized
+  amiFamily: AmazonLinux2023
+  instanceTypes: [r5.2xlarge, r5a.2xlarge]
+  privateNetworking: true
+  minSize: 2
+  maxSize: 10
+  labels: {workload-type: memory}
+  taints:
+  - {key: workload-type, value: memory, effect: NoSchedule}
+```
+The workload must have a matching toleration **and** a selector/affinity if it must use a dedicated pool. Labels alone do not schedule it, and taints are not a tenant security boundary. Account for scale-from-zero discovery, daemon overhead, interruption handling, storage persistence and testing across all candidate types. Diversity may add monitoring and troubleshooting work; neither simpler management nor lower cost is automatic.
 
 </details>
+
+3. Which strategy creates a separate replacement node group before retiring the old one?
+   * A) Untracked host package updates
+   * B) Blue/green migration
+   * C) Deleting every node at once
+   * D) Changing only the cluster display name
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Blue/green migration**
+
+Blue/green creates a separate replacement node group and migrates workloads after validation. It can preserve a rollback option while the old group and compatible application/data state remain. Two groups in one cluster still share the control plane and other dependencies; this is not complete isolation or a zero-downtime guarantee.
+
+| Strategy | Benefit | Important limit |
+| --- | --- | --- |
+| Blue/green | Validate replacement capacity before final retirement | Extra cost/capacity; rollback depends on retained nodes and compatible state |
+| Managed rolling update | EKS coordinates gradual node replacement | `DEFAULT` uses temporary extra nodes; PDB/capacity failures can block progress |
+| Canary | Try a separate small workload/group first | Must actually limit workload/traffic scope; it adds validation and routing work |
+| Manual host package mutation | Changes an individual host | Creates drift from the AMI; use a reviewed replacement-image lifecycle instead of an unqualified SSH/yum recipe |
+
+**Replacement group example:** for an existing cluster and unused group name, review this file and use `eksctl create nodegroup -f green-nodegroup.yaml`. Confirm AL2023/architecture compatibility, add-ons, egress, IP space, quotas and storage topology first.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: green-nodegroup
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  desiredCapacity: 3
+  minSize: 3
+  maxSize: 5
+  labels:
+    audit.example.com/pool: green
+```
+**A real canary uses a separate Deployment:** the following is a minimal HTTP probe workload in a dedicated `update-lab` namespace, with unique labels so it does not accidentally join the existing Service. Replace it with a reviewed canary of your actual application before claiming application compatibility. Patching the node selector of the main Deployment rolls **all** of its replicas and is not a limited canary.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-canary
+  namespace: update-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: my-app-canary}
+  template:
+    metadata:
+      labels: {app: my-app-canary}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        audit.example.com/pool: green
+      containers:
+      - name: web
+        image: nginx:1.30.4
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet: {path: /, port: 80}
+        resources:
+          requests: {cpu: 100m, memory: 64Mi}
+          limits: {cpu: 500m, memory: 128Mi}
+```
+Validate readiness, API/CNI/DNS, application errors, resource pressure, persistent volumes and representative traffic over a reviewed observation window. Keep traffic routing explicit; a node label does not switch traffic. Once replacement capacity and workload/data behavior are verified, drain one confirmed old node at a time:
+
+```bash
+# One reviewed node at a time, after validating replacement capacity.
+OLD_NODE_JSON=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get node "${OLD_NODE_NAME:?}" -o json) || exit 1
+OLD_NODE_GROUP=$(printf '%s' "$OLD_NODE_JSON" |
+  jq -er '.metadata.labels["eks.amazonaws.com/nodegroup"]') || exit 1
+if [ "$OLD_NODE_GROUP" != "${OLD_NODEGROUP_NAME:?}" ]; then
+  printf '%s\n' 'Node is not in the intended old managed node group.' >&2
+  exit 1
+fi
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" cordon "$OLD_NODE_NAME" &&
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" drain "$OLD_NODE_NAME" \
+  --ignore-daemonsets --timeout=15m
+```
+A blocked drain requires diagnosis, not `--force` or automatic emptyDir deletion. Confirm all migrated workloads and state before this separate final deletion:
+
+```bash
+# Separate final step, after application/data validation and ownership review.
+if [ "${MIGRATION_VERIFIED:?Set yes only after workload and data checks}" = yes ]; then
+  eksctl delete nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
+    --region "${EXAMPLE_REGION:?}" --name "${OLD_NODEGROUP_NAME:?}" --approve --wait
+fi
+```
+For a managed rolling alternative, complete the `update-nodegroup-config` operation in basic question 9 before submitting `update-nodegroup-version`, then track that returned update ID. A managed group can retain its resource identity while its EC2 nodes are replaced. Once old capacity is deleted or data changed incompatibly, “instant rollback” is no longer available.
+
+</details>
+
+4. Which action can conflict with Cluster Autoscaler ownership of a managed ASG?
+   * A) Review discovery tags
+   * B) Tune scan frequency using observations
+   * C) Use accurate Pod resource requests
+   * D) Add another policy that independently changes the same desired capacity
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: D) Add another policy that independently changes the same desired capacity**
+
+Cluster Autoscaler controls node-group capacity based on scheduling requests, not just average EC2 CPU. A target-tracking or predictive ASG policy changing the same desired capacity can fight that control loop and bypass the expected Kubernetes drain process. Do not directly reset desired capacity to two as an “optimization.”
+
+**Useful controls:**
+
+* Tune scan frequency against reaction time and API load. The documented default is 10 seconds; 30 seconds is an example to test, not a measured optimum. Likewise, provisioning timeouts must match your actual node startup behavior.
+* Use reviewed ASG discovery tags and tag-scoped IAM. Tags identify eligible groups; they do not grant permissions or define a scaling algorithm.
+* Match requests, labels and taints to real capacity. One instance type can be appropriate; comparable-shape diversity is useful when availability/Spot needs justify it (advanced question 2).
+* Use priorities deliberately. Preemption is not an availability guarantee and can disrupt lower-priority workloads. Bind the following class through `priorityClassName` only after evaluating admission and workload policy:
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: audit-high-priority
+value: 1000000
+globalDefault: false
+description: Reviewed priority for critical application Pods
+```
+**Overprovisioning:** reserve requests with preemptible low-priority Pods. For this example, Cluster Autoscaler's configured expendable-Pod cutoff must be below `-5` (for example `-10`), while application Pods must have higher priority. Otherwise the reserve Pods may not trigger replenishment as intended. Use a dedicated namespace and unused PriorityClass name:
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: audit-overprovisioning
+value: -5
+globalDefault: false
+description: Temporary spare capacity for an autoscaling lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overprovisioning
+  namespace: autoscaling-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: overprovisioning}
+  template:
+    metadata:
+      labels: {app: overprovisioning}
+    spec:
+      priorityClassName: audit-overprovisioning
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: reserve
+        image: public.ecr.aws/docker/library/busybox:1.37.0
+        command: [sleep, '86400']
+        resources:
+          requests: {cpu: 1000m, memory: 1000Mi}
+          limits: {cpu: 1000m, memory: 1000Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+```
+This holds 1 CPU and 1000Mi of requested capacity, not pre-warmed application state, and incurs node cost. It does not avoid image pulls, volume attachment or application initialization. Size against observed demand and remove the owned reservation Deployment and PriorityClass after the test.
+
+Use the complete rendered Cluster Autoscaler setup in basic question 10 rather than the old incomplete v1.23 Deployment. Karpenter is an alternative for separately managed capacity; its NodePool must reference a valid, authorized EC2NodeClass. KEDA/HPA scale workload replicas, which can create demand for either node autoscaler. Validate these interacting loops rather than enabling every scaling mechanism on the same resources.
+
+</details>
+
+5. Which is NOT a general security best practice for an EKS node group?
+   * A) Require IMDSv2 and review metadata access
+   * B) Use least-privilege IAM
+   * C) Give every node a public IP
+   * D) Review security-group rules
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) Give every node a public IP**
+
+Giving every node a public IP is not a general security best practice. Private subnets reduce direct internet exposure, but routes, security groups, IAM, software maintenance and workload controls still matter.
+
+**Node identity and metadata:** require IMDSv2 with eksctl's supported `disableIMDSv1` field. A nested `metadataOptions` object is not an eksctl managed-node-group field; custom EC2 MetadataOptions belong in a reviewed launch template. IMDSv2 mitigates some SSRF paths but does not stop every Pod from reaching node credentials, especially host-network Pods. Review metadata access separately from workload identity and host dependencies.
+
+**Least privilege and encrypted root volume:** this existing-cluster node-group example assumes the CNI already has its own IRSA/Pod Identity permissions. EBS CSI, log collectors and applications also need their own reviewed roles; attaching their broad permissions to every node contradicts least privilege.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: secure-nodes
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  desiredCapacity: 2
+  minSize: 2
+  maxSize: 5
+  disableIMDSv1: true
+  volumeEncrypted: true
+  iam:
+    attachPolicyARNs:
+    - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+    - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly
+```
+EBS encryption protects a different layer from Kubernetes API data. EKS 1.28 and later encrypt all Kubernetes API data at rest with default envelope encryption; a customer-managed KMS key is optional, with additional grants/permissions and key lifecycle obligations. Do not disable or delete a cluster's key as routine cleanup.
+
+**Network design:** a private API endpoint requires a routed administrator/node access path. Public API restrictions use `publicAccessCidrs`, not an inbound rule on the cluster SG. Review AWS's complete cluster/node SG requirements: TCP 443, TCP 10250, TCP/UDP 53 and workload-specific paths, with correct directions and peer groups. Two inbound port rules alone are not a complete node networking design.
+
+Private IPv4 internet egress may use NAT; VPC endpoints and native IPv6 have different paths. Inbound traffic may arrive from load balancers or authorized connected networks. A private subnet alone proves neither complete isolation nor regulatory compliance.
+
+**Container controls:** use a workload compatible with non-root and read-only execution. This controller-managed diagnostic Pod runs in a **new dedicated** `security-lab` namespace and needs no network or writable root:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-pod
+  namespace: security-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &id001
+      app: secure-pod
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: secure-container
+        image: public.ecr.aws/docker/library/busybox:1.37.0
+        command:
+        - sh
+        - -c
+        - echo read-only-lab; sleep 3600
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+```
+An enforced deny policy can be demonstrated in that dedicated namespace; add explicit DNS/application allowances before using it for a real workload:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: security-lab
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+```
+**Logging and detection:** control-plane CloudWatch logs have five configurable types:
+
+```bash
+# Enable the reviewed set of log types; this example enables all five.
+if LOG_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}' \
+  --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --update-id "$LOG_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+fi
+```
+Wait for the returned update to succeed and verify actual log delivery and retention. This does not collect every container's application logs. GuardDuty EKS audit-log protection and Runtime Monitoring are distinct capabilities with separate configuration/coverage; enabling control-plane logs alone is not runtime threat detection.
+
+</details>
+
+
+## References
+
+* [EKS prefix mode](https://docs.aws.amazon.com/eks/latest/best-practices/prefix-mode-linux.html)
+* [EKS maxPods and prefix procedure](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)
+* [EKS network policy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+* [NAT gateways](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html)
+* [Subnet route table association](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-subnetroutetableassociation.html)
+* [Security groups for Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+* [CoreDNS managed add-on](https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html)
+* [CoreDNS cache](https://coredns.io/plugins/cache/)
+* [CoreDNS reload](https://coredns.io/plugins/reload/)
+* [Kubernetes multi-tenancy](https://kubernetes.io/docs/concepts/security/multi-tenancy/)
+* [Kubernetes PDB](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)
+* [EKS Cluster Autoscaler](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)
+* [EKS managed node updates](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html)
+* [Calico on EKS](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
+* [Calico NetworkPolicy](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+* [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+* [EKS node IAM role](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)

@@ -20,7 +20,7 @@
           "legacy",
           "response"
         ],
-        "note": "Flag 상태와 무관하게 legacySearch 결과만 사용자에게 반환됩니다."
+        "note": "Flag 평가 후 기존 검색 결과를 반환합니다. 그림자 검증 결과를 사용자 응답으로 대체하지 않습니다."
       },
       {
         "id": "dark-path",
@@ -30,7 +30,7 @@
           "newlogic",
           "compare"
         ],
-        "note": "Flag가 켜지면 새 검색 엔진을 goroutine으로 비동기 실행하고 결과는 비교용으로만 씁니다."
+        "note": "기존 계산 후 여유 슬롯이 있으면 읽기 전용 검증을 비동기로 수행합니다. 한도와 타임아웃을 둡니다."
       }
     ],
     "legend": {
@@ -138,8 +138,8 @@
       "col": 3,
       "type": "backend",
       "label": "새 로직",
-      "sublabel": "newSearchEngine",
-      "tag": "goroutine"
+      "sublabel": "읽기 전용 · 300ms",
+      "tag": "프로세스당 최대 8개"
     },
     {
       "id": "compare",
@@ -172,18 +172,27 @@
       "role": "main"
     },
     {
-      "from": "flag",
+      "from": "legacy",
       "to": "newlogic",
-      "label": "flag = true",
+      "label": "Flag ON + 여유 슬롯",
       "variant": "dashed",
       "role": "async"
     },
     {
       "from": "newlogic",
       "to": "compare",
-      "label": "newResults",
+      "label": "성공한 결과만",
       "variant": "dashed",
       "role": "async"
+    },
+    {
+      "from": "legacy",
+      "to": "compare",
+      "label": "기존 결과",
+      "variant": "dashed",
+      "role": "async",
+      "fromSide": "right",
+      "toSide": "top"
     }
   ],
   "cards": [
@@ -199,16 +208,18 @@
       "dot": "violet",
       "title": "숨겨진 검증",
       "items": [
-        "dark-launch-new-search Flag가 true일 때만 새 검색 엔진 실행",
-        "goroutine으로 비동기 실행해 응답 지연에 영향 없음"
+        "Flag ON + 동시 실행 여유가 있을 때 시작",
+        "독립 타임아웃과 취소를 따르는 읽기 전용 함수",
+        "비동기 작업의 자원 영향도 측정"
       ]
     },
     {
       "dot": "amber",
       "title": "수집 메트릭",
       "items": [
-        "darkLaunchAccuracy: 기존·새 결과의 겹침 비율",
-        "darkLaunchResultDiff: 결과 수 차이"
+        "성공한 새 결과만 기존 결과와 비교",
+        "실패·시간 초과는 비교에서 제외",
+        "사용자 식별자·검색어를 지표 레이블로 사용하지 않음"
       ]
     }
   ]

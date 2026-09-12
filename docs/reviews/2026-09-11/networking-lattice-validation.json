@@ -1,0 +1,660 @@
+{
+  "date": "2026-09-11",
+  "files": [
+    {
+      "path": "en/networking/02-vpc-lattice.md",
+      "sha256": "3210841a9b3fc578d6bca786b539a7443471867e0123f591ea3eb89cbd9f1b70"
+    },
+    {
+      "path": "en/quizzes/networking/02-vpc-lattice-quiz.md",
+      "sha256": "591357e1943a309cf3953597d8915376dbefa0c8a35e542ce00afd449a3aa865"
+    },
+    {
+      "path": "ko/networking/02-vpc-lattice.md",
+      "sha256": "e60b236c1bdc79e9e7765fd5c80b59d0fbb153b8396b7d09ed91e004ea45a717"
+    },
+    {
+      "path": "ko/quizzes/networking/02-vpc-lattice-quiz.md",
+      "sha256": "539d2832a4104abc536f05846cc99ca05e49d490f2e5e4d62c64d3719997ca21"
+    }
+  ],
+  "primarySources": {
+    "controllerRelease": {
+      "url": "https://api.github.com/repos/aws/aws-application-networking-k8s/releases/latest",
+      "key": "9256eee75d68"
+    },
+    "controllerTree": {
+      "url": "https://api.github.com/repos/aws/aws-application-networking-k8s/git/trees/v2.1.3?recursive=1",
+      "key": "ef07a831e089"
+    },
+    "controllerReadme": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/README.md",
+      "key": "d1927ebd8b56"
+    },
+    "controllerGoMod": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/go.mod",
+      "key": "f085cd018e66"
+    },
+    "latticeOverview": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html",
+      "key": "57229010cd53"
+    },
+    "appMeshLifecycle": {
+      "url": "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "key": "0fb9fd13f202"
+    },
+    "authPolicies": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html",
+      "key": "e752f7e7f6fc"
+    },
+    "signing": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html",
+      "key": "3f14f93ec971"
+    },
+    "metrics": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-cloudwatch.html",
+      "key": "263c26800310"
+    },
+    "accessLogs": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html",
+      "key": "5db1a64fe31d"
+    },
+    "health": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-group-health-checks.html",
+      "key": "454d432eef11"
+    },
+    "createListener": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateListener.html",
+      "key": "e9cf4bbf20db"
+    },
+    "updateService": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_UpdateService.html",
+      "key": "d0a2871a15ef"
+    },
+    "createAccessLog": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateAccessLogSubscription.html",
+      "key": "99087707dfba"
+    },
+    "conditionOperators": {
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html",
+      "key": "8995e7359ce0"
+    },
+    "gatewayCRDs150": {
+      "url": "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml",
+      "key": "8feaeefddc76"
+    },
+    "docs/guides/deploy.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/guides/deploy.md",
+      "key": "25548bc07ed7"
+    },
+    "docs/guides/getstarted.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/guides/getstarted.md",
+      "key": "0cc9f013936d"
+    },
+    "docs/concepts/concepts.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/concepts/concepts.md",
+      "key": "cb08d5bd8e59"
+    },
+    "docs/api-types/gateway.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/gateway.md",
+      "key": "6a71cff46ac2"
+    },
+    "docs/api-types/http-route.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/http-route.md",
+      "key": "f06d2a34cf83"
+    },
+    "docs/api-types/service-network.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/service-network.md",
+      "key": "a1aa094c3b94"
+    },
+    "docs/api-types/iam-auth-policy.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/iam-auth-policy.md",
+      "key": "ef2eb46f66de"
+    },
+    "docs/api-types/target-group-policy.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/target-group-policy.md",
+      "key": "f55b43eb6eab"
+    },
+    "docs/api-types/access-log-policy.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/access-log-policy.md",
+      "key": "cd6c0ba32e25"
+    },
+    "docs/guides/https.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/guides/https.md",
+      "key": "facd6b858325"
+    },
+    "docs/guides/custom-domain-name.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/guides/custom-domain-name.md",
+      "key": "62dcfb25da7a"
+    },
+    "docs/guides/upgrading-v2-0-x-to-v2-1-y.md": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/guides/upgrading-v2-0-x-to-v2-1-y.md",
+      "key": "49ce41f66ee1"
+    },
+    "helm/Chart.yaml": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/helm/Chart.yaml",
+      "key": "88bdc01f5329"
+    },
+    "helm/values.yaml": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/helm/values.yaml",
+      "key": "2da5a5a45fa1"
+    },
+    "helm/values.schema.json": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/helm/values.schema.json",
+      "key": "b5e4b88a3b2c"
+    },
+    "files/controller-installation/recommended-inline-policy.json": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/files/controller-installation/recommended-inline-policy.json",
+      "key": "0fe2ed1b9154"
+    },
+    "associations": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html",
+      "key": "2a32f7cebcf9"
+    },
+    "sharing": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/sharing.html",
+      "key": "cfc53ce76798"
+    },
+    "customDomain": {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-custom-domain-name.html",
+      "key": "f3a9078cca94"
+    },
+    "cloudFormationNetwork": {
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-vpclattice-servicenetwork.html",
+      "key": "2896fd95d5c2"
+    },
+    "cloudFormationAssociation": {
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-vpclattice-servicenetworkvpcassociation.html",
+      "key": "d9f84d18056f"
+    },
+    "cwlPermissions": {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-CWL.html",
+      "key": "36904e75d431"
+    },
+    "s3Permissions": {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-S3.html",
+      "key": "d4e978dfb2c1"
+    },
+    "IAMPolicyImplementation": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/pkg/deploy/lattice/iamauthpolicy_manager.go",
+      "key": "d25089dc852e"
+    },
+    "VpcAssociationPolicy": {
+      "url": "https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/docs/api-types/vpc-association-policy.md",
+      "key": "50ed9f367c73"
+    }
+  },
+  "nativeAndSchema": {
+    "helm": {
+      "version": "3.21.3",
+      "objects": 13,
+      "crds": 7,
+      "image": "public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller:v2.1.3",
+      "explicitAccountRegionVpc": true,
+      "IRSAServiceAccountPreserved": true,
+      "webhookSecretCABundleMatch": true,
+      "EndpointSliceAndLeaseRBAC": true
+    },
+    "resourceSchemas": 28,
+    "bashBlocks": 40,
+    "jsonBlocks": 6,
+    "pythonBlocks": 4,
+    "codeParity": true,
+    "cloudformation": {
+      "linter": "1.41.0",
+      "originalUndefinedReferences": 2,
+      "fixedFindings": []
+    },
+    "dashboardDimensionPreservation": true,
+    "awsModelCases": [
+      "vpc-lattice:CreateServiceNetwork",
+      "vpc-lattice:CreateServiceNetworkVpcAssociation",
+      "vpc-lattice:CreateTargetGroup",
+      "vpc-lattice:RegisterTargets",
+      "vpc-lattice:CreateService",
+      "vpc-lattice:PutAuthPolicy",
+      "vpc-lattice:CreateListener",
+      "vpc-lattice:CreateServiceNetworkServiceAssociation",
+      "vpc-lattice:CreateRule",
+      "vpc-lattice:UpdateTargetGroup",
+      "vpc-lattice:UpdateService",
+      "vpc-lattice:CreateAccessLogSubscription",
+      "cloudwatch:PutDashboard",
+      "cloudwatch:PutMetricAlarm",
+      "logs:StartQuery",
+      "logs:GetQueryResults"
+    ],
+    "limits": [
+      "No AWS/EKS deployment, CloudFormation change set, IAM simulator, or production connectivity/load test.",
+      "Resource schemas and explicit relevant TLS constraints checked locally; not full Kubernetes admission/CEL execution.",
+      "AWS models validate fields/types, not service-side IAM permissions or runtime state.",
+      "Controller default certificate generation checked through chart output; no live webhook rotation test."
+    ]
+  },
+  "signedClient": {
+    "sdk": "botocore1.43.93",
+    "python": "3.12.13",
+    "signedHTTPSRequests": [
+      {
+        "path": "/api",
+        "signatureVerified": true
+      },
+      {
+        "path": "/api/child",
+        "signatureVerified": true
+      },
+      {
+        "path": "/api?a=1&b=2",
+        "signatureVerified": true
+      },
+      {
+        "path": "/redirect",
+        "signatureVerified": true
+      },
+      {
+        "path": "/api",
+        "signatureVerified": true
+      }
+    ],
+    "independentHMACVerification": true,
+    "redirectNotFollowed": true,
+    "fourInvalidURLsRejected": true,
+    "mainWithDummyProviderPassed": true,
+    "credentialsPrinted": false,
+    "limits": "Loopback TLS fixture only, explicit fabricated credentials; no AWS endpoint or default credential provider contacted."
+  },
+  "nginx": {
+    "version": "nginx version: nginx/1.30.4",
+    "cases": [
+      {
+        "variant": "stable",
+        "configValid": true,
+        "health200": true,
+        "apiRootAndChild200": true,
+        "unmatched404": true
+      },
+      {
+        "variant": "canary",
+        "configValid": true,
+        "health200": true,
+        "apiRootAndChild200": true,
+        "unmatched404": true
+      }
+    ],
+    "limits": "Exact published config with test-only port, pid/temp/log paths substituted; native image binary loopback test, not a Kubernetes/container securityContext runtime test."
+  },
+  "policyTruthTable": {
+    "cases": [
+      {
+        "role": "MyAppRole",
+        "path": "/api",
+        "apiPolicy": "Allow",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/api/",
+        "apiPolicy": "Allow",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/api/users",
+        "apiPolicy": "Allow",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/apix",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/admin",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/admin/",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/admin/users",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/administrator",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/ADMIN",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "MyAppRole",
+        "path": "/other",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/api",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/api/",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/api/users",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/apix",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/admin",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "Allow"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/admin/",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "Allow"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/admin/users",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "Allow"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/administrator",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/ADMIN",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "AdminRole",
+        "path": "/other",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/api",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/api/",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/api/users",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/apix",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/admin",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "Allow"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/admin/",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "Allow"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/admin/users",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "Allow"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/administrator",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/ADMIN",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "DevOpsRole",
+        "path": "/other",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/api",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/api/",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/api/users",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/apix",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/admin",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/admin/",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/admin/users",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/administrator",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/ADMIN",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      },
+      {
+        "role": "OtherRole",
+        "path": "/other",
+        "apiPolicy": "ImplicitDeny",
+        "adminPolicy": "ImplicitDeny"
+      }
+    ],
+    "before": {
+      "StringEqualsDoesNotWildcard": true,
+      "otherRoleAdminRootWasAllowed": true,
+      "existingExplicitDenyProtectedAdminSubpath": true
+    },
+    "after": {
+      "rootAndSubpathExplicit": true,
+      "otherRolesNoAllow": true,
+      "noBroadGeneralAccess": true
+    },
+    "limits": "A local evaluator for only the exact Principal/Invoke/*/StringEquals/StringNotEquals/StringLike subset in these examples. Not an AWS IAM simulator, full multi-policy authorization test, or path-normalization/encoding security proof."
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/02-vpc-lattice.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/02-vpc-lattice-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/02-vpc-lattice.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/02-vpc-lattice-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "referenceHTTP": [
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-CWL.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/36904e75d431.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-S3.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/d4e978dfb2c1.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/e752f7e7f6fc.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/5db1a64fe31d.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-cloudwatch.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/263c26800310.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/2a32f7cebcf9.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/sharing.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/cfc53ce76798.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/3f14f93ec971.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/57229010cd53.txt"
+    },
+    {
+      "url": "https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/deploy.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/6d5b93dc39f2.txt"
+    },
+    {
+      "url": "https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/https.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/cddc6457108b.txt"
+    },
+    {
+      "url": "https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/upgrading-v2-0-x-to-v2-1-y.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/f4f3c05359f5.txt"
+    },
+    {
+      "url": "https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs/api-types",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/fd5fbabf17f3.txt"
+    }
+  ],
+  "docsTest": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-lattice-validation/docs-test.log",
+    "environment": "login:false; env-i telemetry disabled; escalation allowed local child processes after sandbox EPERM"
+  },
+  "scopeChecks": {
+    "gitDiffCheck": 0,
+    "networkingFoundationDocuments": 12,
+    "yamlBlocks": 48,
+    "shellBlocks": 86,
+    "errors": []
+  },
+  "artifacts": "/tmp/networking-lattice-validation",
+  "figureReview": {
+    "viewed": 8,
+    "retained": [
+      "en-networking-02-vpc-lattice-1",
+      "ko-networking-02-vpc-lattice-1"
+    ],
+    "removedReferences": [
+      "en/ko figures0 (rules incorrectly owned by network),2 (fabricated DNS/process hops),3 (incorrect controller/resource mapping)"
+    ],
+    "replacement": "Resource mapping tables, real DNS retrieval, traffic-flow prose; useful logical-association figure retained with caveat. Assets/foreign prose untouched; parent may regenerate source-aligned translations."
+  }
+}

@@ -1,0 +1,359 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/07-monitoring.md",
+    "ko/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+    "en/data-on-eks/kafka/07-monitoring.md",
+    "en/quizzes/data-on-eks/kafka/07-monitoring-quiz.md"
+  ],
+  "sources": [
+    "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/examples/metrics/kafka-metrics.yaml",
+    "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java",
+    "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/docker-images/kafka-based/kafka/Dockerfile",
+    "https://github.com/danielqsj/kafka_exporter/tree/v1.9.0",
+    "https://github.com/seglo/kafka-lag-exporter",
+    "https://keda.sh/docs/2.20/scalers/apache-kafka/",
+    "https://github.com/kedacore/keda/blob/v2.20.2/pkg/scalers/kafka_scaler.go",
+    "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+    "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/grafana-dashboards",
+    "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards"
+  ],
+  "findings": [
+    "Corrected supported JMX/StrimziMetricsReporter choices, JMX mapping versus target relabeling, CruiseControl nested configuration rather than CRD.",
+    "Replaced archived seglo/kafka-lag-exporter recommendation with Strimzi KafkaExporter1.9.0 automatic internal TLS; actual metric kafka_consumergroup_lag labelconsumergroup.",
+    "Added v1 mergepatch preserving baseline, scoped node/exporter PodMonitors and explicitnamespace/cluster/component/role labels, nofalseServiceMonitorunreliability.",
+    "Verified final JMX1.6/Kafka4.3.1 rules against isolatedrunningbroker andreal15records; committedoffsetsexportlag3/5/5; allstartedprocessesstopped.",
+    "Fixed counter/rate/gauge handling, perclustercontrolleraggregation/duplicateandmissingcases; no splitbrainordatalossclaimfromonecount.",
+    "Defined lagasnextoffsetdistancewithcompaction/transaction/businesscommitlimits; negative/missingoffsetsseparatefromzero.",
+    "Ninealerts108expectationsacross12scenariosinclallabsent, metricmissing, scrapedown, partialreplication, highlag, unknownoffset, transientandotherclusterisolation.",
+    "KEDA2.20.2TLS/SCRAMwithreadonlyKafkaUserandTriggerAuthsameNamespace; aggregateLagThreshold, min1nozero/cooldown andexplicitHPAstabilization; max10within12partitions.",
+    "Updated34quizquestionsandversionedKafka/KRaft/Exporter/Connect/CruiseControldashboardreferences; nofigures."
+  ],
+  "validation": {
+    "schemaObjects": [
+      {
+        "source": "merged Kafka patch",
+        "kind": "Kafka",
+        "name": "my-cluster"
+      },
+      {
+        "source": "metrics-config.yaml",
+        "kind": "ConfigMap",
+        "name": "kafka-metrics"
+      },
+      {
+        "source": "podmonitors.yaml",
+        "kind": "PodMonitor",
+        "name": "kafka-node-metrics"
+      },
+      {
+        "source": "podmonitors.yaml",
+        "kind": "PodMonitor",
+        "name": "kafka-group-lag"
+      },
+      {
+        "source": "alerts.yaml",
+        "kind": "PrometheusRule",
+        "name": "kafka-alerts"
+      },
+      {
+        "source": "keda-auth.yaml",
+        "kind": "KafkaUser",
+        "name": "keda-lag-reader"
+      },
+      {
+        "source": "keda-auth.yaml",
+        "kind": "Secret",
+        "name": "keda-kafka-identity"
+      },
+      {
+        "source": "keda-auth.yaml",
+        "kind": "TriggerAuthentication",
+        "name": "kafka-lag-auth"
+      },
+      {
+        "source": "scaledobject.yaml",
+        "kind": "ScaledObject",
+        "name": "order-consumer-scaler"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "ConfigMap",
+        "name": "kafka-metrics"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "PodMonitor",
+        "name": "kafka-node-metrics"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "PodMonitor",
+        "name": "kafka-group-lag"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "PrometheusRule",
+        "name": "kafka-alerts"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "KafkaUser",
+        "name": "keda-lag-reader"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "Secret",
+        "name": "keda-kafka-identity"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "TriggerAuthentication",
+        "name": "kafka-lag-auth"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/07-monitoring.md",
+        "kind": "ScaledObject",
+        "name": "order-consumer-scaler"
+      },
+      {
+        "source": "ko/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+        "kind": "ScaledObject",
+        "name": "order-consumer-scaler"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "ConfigMap",
+        "name": "kafka-metrics"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "PodMonitor",
+        "name": "kafka-node-metrics"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "PodMonitor",
+        "name": "kafka-group-lag"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "PrometheusRule",
+        "name": "kafka-alerts"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "KafkaUser",
+        "name": "keda-lag-reader"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "Secret",
+        "name": "keda-kafka-identity"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "TriggerAuthentication",
+        "name": "kafka-lag-auth"
+      },
+      {
+        "source": "en/data-on-eks/kafka/07-monitoring.md",
+        "kind": "ScaledObject",
+        "name": "order-consumer-scaler"
+      },
+      {
+        "source": "en/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+        "kind": "ScaledObject",
+        "name": "order-consumer-scaler"
+      }
+    ],
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "promql"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "promql"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/07-monitoring.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "promql"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "promql"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/07-monitoring.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+        "language": "yaml"
+      }
+    ],
+    "questions": 34,
+    "relativeLinks": 16,
+    "nativeMetricNames": [
+      "kafka_server_replicamanager_underreplicatedpartitions",
+      "kafka_server_replicamanager_underminisrpartitioncount",
+      "kafka_controller_kafkacontroller_activecontrollercount",
+      "kafka_controller_kafkacontroller_offlinepartitionscount",
+      "kafka_server_kafkarequesthandlerpool_brokerrequesthandleravgidle_percent",
+      "kafka_server_brokertopicmetrics_bytesin_total",
+      "kafka_server_brokertopicmetrics_bytesout_total",
+      "kafka_server_replicamanager_isrshrinks_total",
+      "kafka_server_replicamanager_isrexpands_total"
+    ],
+    "nativeRuntime": {
+      "versions": {
+        "kafka": "4.3.1",
+        "jmxExporter": "1.6.0",
+        "kafkaExporter": "1.9.0"
+      },
+      "runDirectory": "/tmp/kubernetes-docs-full-review/kafka-monitoring-fixtures/runtime-a993afae",
+      "loopbackOnly": true,
+      "lag": {
+        "0": 3.0,
+        "1": 5.0,
+        "2": 5.0
+      },
+      "selectedJMX": [
+        "kafka_controller_kafkacontroller_activecontrollercount 1.0",
+        "kafka_controller_kafkacontroller_offlinepartitionscount 0.0",
+        "kafka_server_brokertopicmetrics_bytesin_total{topic=\"__consumer_offsets\"} 304.0",
+        "kafka_server_brokertopicmetrics_bytesin_total{topic=\"orders\"} 1260.0",
+        "kafka_server_brokertopicmetrics_bytesout_total{topic=\"orders\"} 1260.0",
+        "kafka_server_kafkarequesthandlerpool_brokerrequesthandleravgidle_percent 0.8910899638350774",
+        "kafka_server_replicamanager_isrexpands_total 0.0",
+        "kafka_server_replicamanager_isrshrinks_total 0.0",
+        "kafka_server_replicamanager_underminisrpartitioncount 0.0",
+        "kafka_server_replicamanager_underreplicatedpartitions 0.0"
+      ],
+      "probe": "PASS local records=15; committed-offset lag expected per partition=3,5,5",
+      "limitations": "Isolated single-node plaintext loopback fixture; validates metric names/mapping and committed-offset lag, not production TLS, KRaft quorum resilience or Strimzi reconciliation."
+    },
+    "prometheusTests": {
+      "scenarios": [
+        "healthy",
+        "under-replicated",
+        "under-min-isr",
+        "no-active-controller",
+        "two-active-observations",
+        "one-node-scrape-failed",
+        "missing-controller-metric",
+        "high-lag",
+        "unknown-committed-offset",
+        "all-data-absent",
+        "transient-urp-does-not-fire",
+        "other-cluster-does-not-contaminate"
+      ],
+      "alertExpectations": 108,
+      "rules": 9,
+      "status": "passed",
+      "prometheusVersion": "3.14.0"
+    },
+    "crossResourceChecks": [
+      "merged patch preserves listener/auth settings",
+      "actual node-pool labels and 3+3 topology",
+      "12 topic partitions and max10",
+      "scaler/auth/Secrets same namespace and SCRAM TLS parameters"
+    ],
+    "limits": "No production or AWS changes. KEDA/PodMonitor/PrometheusRule resource schemas and source parameters validated, not live Operator/HPA/TLS/notification execution."
+  },
+  "artifacts": [
+    {
+      "name": "jmx_prometheus_javaagent-1.6.0.jar",
+      "url": "https://github.com/prometheus/jmx_exporter/releases/download/1.6.0/jmx_prometheus_javaagent-1.6.0.jar",
+      "sha512": "2b1278f76480c0d5053ca0c7622716403de0e6f6f3ee70acda8157cf97cba2c5eeb2234025e5d66b57951429397c38a6770e934e6e8ffc5a75b0337c719530de",
+      "bytes": 10714619,
+      "verifiedAgainstStrimzi120Dockerfile": true
+    },
+    {
+      "name": "kafka_exporter-1.9.0.linux-arm64.tar.gz",
+      "url": "https://github.com/danielqsj/kafka_exporter/releases/download/v1.9.0/kafka_exporter-1.9.0.linux-arm64.tar.gz",
+      "sha512": "d57cd7478f632cd05e8d5296377da59dfe934e154c1c6ccda9f109137c740132e17fc358d4cb29523b0f575a72ac6b7e2bd87b6ecb9363bba86035a8b14df9e4",
+      "bytes": 11862081,
+      "verifiedAgainstStrimzi120Dockerfile": true
+    }
+  ],
+  "notes": [
+    "Strimzi1.2DockerfilepinsJMX1.6.0/KafkaExporter1.9.0;latestupstreamKafkaExporter1.10notincorrectlyclaimedbundled.",
+    "NativebrokerfixturecombinedrolesRF1PLAINTEXTloopbackisolatedonly; allprocessesfinallyterminated; noAWS/userclusterconnections.",
+    "KEDAsource capusesintegerdivision; guideusesexplicitmax10belowbaseline12partitionsratherthanunconditionalnevermorethanpartitionspromise.",
+    "runtimefirstusedfullupstreammapping; secondusedfinalfocusedrules; finalruntime-validation.jsonandnativepromreflectfinalsource."
+  ]
+}

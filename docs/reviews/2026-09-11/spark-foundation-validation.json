@@ -1,0 +1,520 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/spark/README.md",
+    "ko/data-on-eks/spark/01-spark-fundamentals.md",
+    "en/data-on-eks/spark/README.md",
+    "en/data-on-eks/spark/01-spark-fundamentals.md",
+    "ko/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
+    "en/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md"
+  ],
+  "sources": [
+    "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicDriverFeatureStep.scala",
+    "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/core/src/main/scala/org/apache/spark/deploy/k8s/features/BasicExecutorFeatureStep.scala",
+    "https://github.com/apache/spark/blob/v4.2.0/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh",
+    "https://github.com/docker-library/official-images/blob/master/library/spark",
+    "https://spark.apache.org/docs/4.2.0/configuration.html",
+    "https://spark.apache.org/docs/4.2.0/job-scheduling.html#dynamic-resource-allocation",
+    "https://spark.apache.org/docs/4.2.0/running-on-kubernetes.html",
+    "https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-01-spark-fundamentals-0.html"
+  ],
+  "findings": [
+    "ConfirmedSpark4.2.0andKubernetesminimum1.34; correctedclient+clusterdeploysupportsince2.4andremovedAPIServer/driverreplacesKubeschedulerclaims.",
+    "AddedrealofficialSparkPiimage/examplejar,namespaceRBAC,separateddriver/executorSA,templatewiringandexplicitresource/CPUlimits; noanglebracketshellredirectplaceholders.",
+    "NativeCPUlimitnoneunlessconfigured,CPUrequestoverrides≠taskslots,andJVM1g+384MiB=1408MiBmemoryrequest/limitconfirmed.",
+    "CorrectedDRAshuffletrackingdefaulttrue/since3.0,ESSunsupportedstockK8s,alternatives/timeouts/overlaplimits andinitialcountversusmin/staticinstances.",
+    "NativeBasicExecutorFeatureStepautomaticallyinjects/opt/decom.shpreStop whenenabled;officialimagescriptusesSIGPWR. Keptcorrectbehaviorratherthanclaimingmanualhookalwaysrequired.",
+    "Foundandfixedrealtemplateoverride:Spark4.1+terminationGraceconfig(default30s)overridesPodtemplate60. Added spark.kubernetes.executor.terminationGracePeriodSeconds=60s;14nativecasesinclcounterexamplepass.",
+    "Correctedbest-effortdecommission/time/capacity/Spot/drivercheckpointlimitsandnormalversusfailurecleanup/clientmodeownerreferences.",
+    "4diagramspodplacement/scheduler+kubelets separatedfromSparkrequests/taskcoordination, regenerated4PNG andvisuallyinspected;4x9deliverychecks/desktop+8mobilepass.",
+    "6files18quizquestions23schemaobjects12fencesverified;localSparkPipassed(loopback/UIoff),noKubeclientorAWSoperations."
+  ],
+  "validation": {
+    "schemaObjects": [
+      {
+        "source": "rbac.yaml",
+        "kind": "Namespace",
+        "name": "spark-jobs"
+      },
+      {
+        "source": "rbac.yaml",
+        "kind": "ServiceAccount",
+        "name": "spark-driver"
+      },
+      {
+        "source": "rbac.yaml",
+        "kind": "ServiceAccount",
+        "name": "spark-executor"
+      },
+      {
+        "source": "rbac.yaml",
+        "kind": "Role",
+        "name": "spark-driver"
+      },
+      {
+        "source": "rbac.yaml",
+        "kind": "RoleBinding",
+        "name": "spark-driver"
+      },
+      {
+        "source": "driver-template.yaml",
+        "kind": "Pod",
+        "name": "spark-driver-template"
+      },
+      {
+        "source": "executor-template.yaml",
+        "kind": "Pod",
+        "name": "spark-executor-template"
+      },
+      {
+        "source": "executor-template-feature-pod.json",
+        "kind": "Pod",
+        "name": "content-review-2e266ba094683bf5-exec-1"
+      },
+      {
+        "source": "driver-template-feature-pod.json",
+        "kind": "Pod",
+        "name": "content-review-7a41d2a094683be5-driver"
+      },
+      {
+        "source": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Namespace",
+        "name": "spark-jobs"
+      },
+      {
+        "source": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "ServiceAccount",
+        "name": "spark-driver"
+      },
+      {
+        "source": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "ServiceAccount",
+        "name": "spark-executor"
+      },
+      {
+        "source": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Role",
+        "name": "spark-driver"
+      },
+      {
+        "source": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "RoleBinding",
+        "name": "spark-driver"
+      },
+      {
+        "source": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Pod",
+        "name": "spark-driver-template"
+      },
+      {
+        "source": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Pod",
+        "name": "spark-executor-template"
+      },
+      {
+        "source": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Namespace",
+        "name": "spark-jobs"
+      },
+      {
+        "source": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "ServiceAccount",
+        "name": "spark-driver"
+      },
+      {
+        "source": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "ServiceAccount",
+        "name": "spark-executor"
+      },
+      {
+        "source": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Role",
+        "name": "spark-driver"
+      },
+      {
+        "source": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "RoleBinding",
+        "name": "spark-driver"
+      },
+      {
+        "source": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Pod",
+        "name": "spark-driver-template"
+      },
+      {
+        "source": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "kind": "Pod",
+        "name": "spark-executor-template"
+      }
+    ],
+    "fences": [
+      {
+        "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
+        "language": "properties"
+      }
+    ],
+    "relativeLinks": 24,
+    "quizQuestions": 18,
+    "images": [
+      "en/.gitbook/assets/en-data-on-eks-spark-01-spark-fundamentals-0.png",
+      "en/.gitbook/assets/en-data-on-eks-spark-readme-0.png",
+      "ko/.gitbook/assets/ko-data-on-eks-spark-01-spark-fundamentals-0.png",
+      "ko/.gitbook/assets/ko-data-on-eks-spark-readme-0.png"
+    ],
+    "nativePods": {
+      "status": "passed",
+      "stdout": "PASS driver memory includes minimum overhead\nPASS executor memory includes minimum overhead\nPASS driver CPU limit absent unless configured\nPASS executor CPU limit absent unless configured\nPASS default shuffle tracking enabled\nPASS default decommission disabled\nPASS no default decommission preStop hook\nPASS CPU request override independent from executor slots\nPASS decommission flag injects official preStop script\nPASS decommission signal defaults to PWR\nPASS Spark overrides template grace with its default\nPASS driver template security is retained\nPASS executor template grace and token setting retained\nPASS decommission hook injected with provided template\nPASS 14 native Spark feature-step checks; no Kubernetes client created\n",
+      "limits": "Actual Spark4.2 basic feature steps and supplied templates; no Kubernetes client/AWS connection. Feature-step pods are not complete runnable submissions."
+    },
+    "localSparkPi": {
+      "status": "passed",
+      "version": "4.2.0",
+      "command": [
+        "/tmp/kubernetes-docs-full-review/spark-runtime/bin/spark-submit",
+        "--master",
+        "local[2]",
+        "--deploy-mode",
+        "client",
+        "--class",
+        "org.apache.spark.examples.SparkPi",
+        "--conf",
+        "spark.driver.bindAddress=127.0.0.1",
+        "--conf",
+        "spark.driver.host=127.0.0.1",
+        "--conf",
+        "spark.ui.enabled=false",
+        "--conf",
+        "spark.eventLog.enabled=false",
+        "/tmp/kubernetes-docs-full-review/spark-runtime/examples/jars/spark-examples_2.13-4.2.0.jar",
+        "4"
+      ],
+      "result": "Pi is roughly 3.140947852369631",
+      "limits": "Local two-thread JVM job only, UI disabled and driver bound to loopback; no Kubernetes or AWS operations."
+    },
+    "diagrams": [
+      {
+        "stem": "ko-data-on-eks-spark-readme-0",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      },
+      {
+        "stem": "ko-data-on-eks-spark-01-spark-fundamentals-0",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      },
+      {
+        "stem": "en-data-on-eks-spark-readme-0",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      },
+      {
+        "stem": "en-data-on-eks-spark-01-spark-fundamentals-0",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      }
+    ],
+    "mobile": [
+      {
+        "name": "en-data-on-eks-spark-01-spark-fundamentals-0.html",
+        "width": 375,
+        "sourceSha256": "1e1f30c6e266d51d49c8149d25996afc9863c51212e8beb0574a4f3f240867f6",
+        "viewerSha256": "1605b50852f55170ab757f7296cae8f84c1208426ab02d42298e4ce9e54ed09a",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-spark-readme-0.html",
+        "width": 375,
+        "sourceSha256": "bdfa51d9e06067f021901a9cb49e182ddffef3d8f58419c5eba2e4b9fc71f3cc",
+        "viewerSha256": "2ca6ffa77ad7a0a5a66aaac987356e6bd152170ab6ad42167a80b0cf05bb46d1",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-spark-01-spark-fundamentals-0.html",
+        "width": 375,
+        "sourceSha256": "ccabe2825db9387290e6555f5f6511fae32e5c689b78e59ae78779db999a5e80",
+        "viewerSha256": "a442c17ef5b3bb161c25c1632ee629b15d692bffa5e493614c3aaf5d88d4b13f",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-spark-readme-0.html",
+        "width": 375,
+        "sourceSha256": "a606487af68a926ff433a9e4a4e97857f64891c05fe081e224a9ba44ccd2692c",
+        "viewerSha256": "68041f1c2a09e549b07c1c0c0bf1bc2a6e8bf3587f62d45a6e890066e2186263",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-spark-01-spark-fundamentals-0.html",
+        "width": 768,
+        "sourceSha256": "1e1f30c6e266d51d49c8149d25996afc9863c51212e8beb0574a4f3f240867f6",
+        "viewerSha256": "1605b50852f55170ab757f7296cae8f84c1208426ab02d42298e4ce9e54ed09a",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-spark-readme-0.html",
+        "width": 768,
+        "sourceSha256": "bdfa51d9e06067f021901a9cb49e182ddffef3d8f58419c5eba2e4b9fc71f3cc",
+        "viewerSha256": "2ca6ffa77ad7a0a5a66aaac987356e6bd152170ab6ad42167a80b0cf05bb46d1",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-spark-01-spark-fundamentals-0.html",
+        "width": 768,
+        "sourceSha256": "ccabe2825db9387290e6555f5f6511fae32e5c689b78e59ae78779db999a5e80",
+        "viewerSha256": "a442c17ef5b3bb161c25c1632ee629b15d692bffa5e493614c3aaf5d88d4b13f",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-spark-readme-0.html",
+        "width": 768,
+        "sourceSha256": "a606487af68a926ff433a9e4a4e97857f64891c05fe081e224a9ba44ccd2692c",
+        "viewerSha256": "68041f1c2a09e549b07c1c0c0bf1bc2a6e8bf3587f62d45a6e890066e2186263",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      }
+    ],
+    "limits": "No EKS submission or AWS access. Native feature-step pods are configuration test products, not complete runnable submissions. Decommission migration/Spot handling and effective RBAC/network behavior require environment testing."
+  },
+  "binary": {
+    "url": "https://archive.apache.org/dist/spark/spark-4.2.0/spark-4.2.0-bin-hadoop3.tgz",
+    "sha512": "3a6559e8546ff387db8fe7a04b8fe4008853b467b972c2e343df8e14a81450534777719fc5d4998dd96519a86fdf9de140cee753c61e2e94db044d5f9555ddc4",
+    "archiveBytes": 555409690,
+    "selectedFiles": 361,
+    "extractedBytes": 478988337,
+    "destination": "/tmp/kubernetes-docs-full-review/spark-runtime"
+  }
+}

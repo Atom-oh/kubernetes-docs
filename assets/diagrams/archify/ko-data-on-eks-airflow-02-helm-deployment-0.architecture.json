@@ -37,7 +37,7 @@
       "id": "task-a",
       "type": "backend",
       "label": "Pod: task A",
-      "sublabel": "일시적 Pod",
+      "sublabel": "Airflow task runtime",
       "pos": [
         40,
         300
@@ -51,7 +51,7 @@
       "id": "task-b",
       "type": "backend",
       "label": "Pod: task B",
-      "sublabel": "일시적 Pod",
+      "sublabel": "Airflow task runtime",
       "pos": [
         240,
         300
@@ -65,7 +65,7 @@
       "id": "task-c",
       "type": "backend",
       "label": "Pod: task C",
-      "sublabel": "일시적 Pod",
+      "sublabel": "Airflow task runtime",
       "pos": [
         440,
         300
@@ -92,8 +92,8 @@
     {
       "id": "broker",
       "type": "messagebus",
-      "label": "Redis broker",
-      "sublabel": "태스크 큐",
+      "label": "Celery broker",
+      "sublabel": "Redis / RabbitMQ 등",
       "pos": [
         830,
         180
@@ -107,7 +107,7 @@
       "id": "worker-1",
       "type": "backend",
       "label": "Pod: celery worker 1",
-      "sublabel": "상시 실행 warm Pod",
+      "sublabel": "확장 가능한 worker pool",
       "pos": [
         720,
         300
@@ -121,7 +121,7 @@
       "id": "worker-2",
       "type": "backend",
       "label": "Pod: celery worker 2",
-      "sublabel": "상시 실행 warm Pod",
+      "sublabel": "확장 가능한 worker pool",
       "pos": [
         940,
         300
@@ -196,7 +196,7 @@
       "id": "broker-worker-1",
       "from": "broker",
       "to": "worker-1",
-      "label": "warm worker가 가져감",
+      "label": "worker가 소비",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -213,18 +213,18 @@
       "dot": "cyan",
       "title": "KubernetesExecutor",
       "items": [
-        "태스크마다 Pod 1개 — 완료되면 곧바로 삭제",
-        "콜드 스타트 약 1~2분 (Pod 스케줄링, 이미지 풀, 노드 스케일 아웃)",
-        "유휴 비용 없음, 태스크 간 격리 강함"
+        "Task마다 worker Pod; 실패 시 보존 설정 확인",
+        "시작 지연은 image·API·node 여유에 따라 측정",
+        "Control plane·DB·node 비용은 남음"
       ]
     },
     {
       "dot": "orange",
       "title": "CeleryExecutor",
       "items": [
-        "warm worker 풀이 상시 실행 — 초 단위 시작",
-        "Redis/RabbitMQ 브로커 + worker Deployment 추가 필요",
-        "같은 worker의 태스크들이 리소스/의존성 공유 — 격리 약함"
+        "Warm worker 또는 KEDA scale-to-zero",
+        "Broker·result backend·실제 concurrency 구성",
+        "Deployment 또는 StatefulSet; 자원·의존성 공유"
       ]
     }
   ]

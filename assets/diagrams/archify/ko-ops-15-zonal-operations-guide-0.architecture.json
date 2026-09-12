@@ -2,13 +2,13 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Zonal Cell 아키텍처와 가중치 트래픽 전환",
+    "title": "리스너 가중치와 클러스터별 타겟 등록",
     "output": "ko-ops-15-zonal-operations-guide-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1340,
-      800
+      1240,
+      560
     ],
     "legend": {
       "mode": "auto",
@@ -29,25 +29,39 @@
     {
       "id": "users",
       "type": "external",
-      "label": "사용자",
-      "sublabel": "HTTPS 요청",
+      "label": "클라이언트",
+      "sublabel": "새 연결",
       "pos": [
-        40,
-        340
+        35,
+        235
       ],
       "size": [
-        170,
+        150,
         76
       ]
     },
     {
-      "id": "r53",
+      "id": "lb",
       "type": "cloud",
-      "label": "Route 53 + ARC",
-      "sublabel": "가중치 레코드",
+      "label": "ALB / NLB",
+      "sublabel": "가중치 forward action",
       "pos": [
-        250,
-        340
+        265,
+        235
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "tga",
+      "type": "cloud",
+      "label": "Target Group A",
+      "sublabel": "weight 20",
+      "pos": [
+        610,
+        110
       ],
       "size": [
         210,
@@ -55,26 +69,26 @@
       ]
     },
     {
-      "id": "tga",
+      "id": "tgc",
       "type": "cloud",
-      "label": "ALB/NLB + Target Group",
-      "sublabel": "클러스터 외부에서 IaC로 생성",
+      "label": "Target Group C",
+      "sublabel": "weight 80",
       "pos": [
-        580,
-        110
+        610,
+        360
       ],
       "size": [
-        250,
+        210,
         76
       ]
     },
     {
       "id": "cla",
       "type": "backend",
-      "label": "EKS Zonal Cluster",
-      "sublabel": "AZ-a 전용",
+      "label": "클러스터 A 워커",
+      "sublabel": "TGB로 파드 등록",
       "pos": [
-        950,
+        960,
         110
       ],
       "size": [
@@ -83,27 +97,13 @@
       ]
     },
     {
-      "id": "tgc",
-      "type": "cloud",
-      "label": "ALB/NLB + Target Group",
-      "sublabel": "클러스터 외부에서 IaC로 생성",
-      "pos": [
-        580,
-        570
-      ],
-      "size": [
-        250,
-        76
-      ]
-    },
-    {
       "id": "clc",
       "type": "backend",
-      "label": "EKS Zonal Cluster",
-      "sublabel": "AZ-c 전용",
+      "label": "클러스터 C 워커",
+      "sublabel": "TGB로 파드 등록",
       "pos": [
-        950,
-        570
+        960,
+        360
       ],
       "size": [
         230,
@@ -113,94 +113,83 @@
   ],
   "boundaries": [
     {
-      "kind": "region",
-      "label": "VPC (ap-northeast-2)",
-      "wraps": [
-        "tga",
-        "cla",
-        "tgc",
-        "clc"
-      ],
-      "pad": 40
-    },
-    {
       "kind": "security-group",
-      "label": "AZ-a (Cell A, weight 80%)",
+      "label": "AZ-a",
       "wraps": [
-        "tga",
         "cla"
       ],
-      "pad": 18
+      "pad": 22
     },
     {
       "kind": "security-group",
-      "label": "AZ-c (Cell C, weight 20%)",
+      "label": "AZ-c",
       "wraps": [
-        "tgc",
         "clc"
       ],
-      "pad": 18
+      "pad": 22
     }
   ],
   "connections": [
     {
-      "id": "u-r53",
+      "id": "client-lb",
       "from": "users",
-      "to": "r53",
-      "label": "HTTPS",
-      "labelDy": 60
+      "to": "lb",
+      "label": "요청",
+      "labelDy": -22
     },
     {
-      "id": "r53-tga",
-      "from": "r53",
+      "id": "lb-a",
+      "from": "lb",
       "to": "tga",
-      "label": "weight 80%"
+      "label": "20 / 100"
     },
     {
-      "id": "r53-tgc",
-      "from": "r53",
+      "id": "lb-c",
+      "from": "lb",
       "to": "tgc",
-      "label": "weight 20%"
+      "label": "80 / 100"
     },
     {
-      "id": "tga-cla",
+      "id": "a-workers",
       "from": "tga",
       "to": "cla",
-      "label": "TargetGroupBinding"
+      "label": "파드 타겟",
+      "labelDy": -22
     },
     {
-      "id": "tgc-clc",
+      "id": "c-workers",
       "from": "tgc",
       "to": "clc",
-      "label": "TargetGroupBinding"
+      "label": "파드 타겟",
+      "labelDy": -22
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "로드밸런서를 클러스터 밖에 두는 이유",
+      "title": "설정 소유권",
       "items": [
-        "NLB/ALB와 Target Group을 Terraform 등 IaC로 클러스터 외부에 만든다",
-        "클러스터를 지우거나 재생성해도 로드밸런서와 DNS 이름이 그대로 남는다",
-        "각 zonal 클러스터의 Service를 TargetGroupBinding CRD로 해당 Target Group에 붙인다"
+        "LB·타겟 그룹은 클러스터 밖의 IaC로 관리",
+        "TGB는 타겟 등록을 관리하며 weight 필드는 없음",
+        "ALB 비기본 규칙은 해당 rule의 forward action을 변경"
       ]
     },
     {
       "dot": "emerald",
-      "title": "가중치 전환",
+      "title": "전환 검증",
       "items": [
-        "Route 53 가중치 레코드로 셀 사이 트래픽 비율을 조정한다",
-        "새 버전을 한 셀에만 올리고 가중치를 20% → 50% → 100%로 옮긴다",
-        "문제가 보이면 가중치를 0으로 내려 해당 셀을 즉시 격리한다"
+        "weight 0은 잠시 후 기존 연결도 종료하므로 재연결 검증",
+        "NewFlowCount·ActiveFlowCount·헬스를 확인",
+        "AZ별 타겟 배치와 cross-zone 설정을 함께 검증"
       ]
     },
     {
       "dot": "amber",
-      "title": "셀 격리 원칙",
+      "title": "DNS와 복구",
       "items": [
-        "셀은 AZ 경계와 일치시켜 장애 영향 범위를 AZ 하나로 묶는다",
-        "셀 간 공유 자원을 최소화해야 격리가 실제로 성립한다",
-        "Application Recovery Controller(ARC)로 존 시프트를 자동화할 수 있다"
+        "Route 53은 LB endpoint를 선택하며 TG를 직접 가리키지 않음",
+        "EKS zonal shift는 다른 클러스터의 weight를 수정하지 않음",
+        "autoshift 활성화와 정상 셀의 수용 용량은 별도 준비"
       ]
     }
   ]

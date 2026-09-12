@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "CI/CD 분리 아키텍처",
+    "title": "CI와 검증 후 GitOps 승격",
     "output": "ko-ops-14-tekton-pipelines-5.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -20,10 +20,9 @@
           "clone",
           "test",
           "build",
-          "push",
-          "update"
+          "push"
         ],
-        "note": "소스 push가 Webhook으로 Tekton을 트리거하고 클론·테스트·빌드·ECR Push·매니페스트 업데이트가 순서대로 실행된다."
+        "note": "Tekton CI는 승인 소스를 테스트하고 후보 이미지를 게시·스캔합니다."
       },
       {
         "id": "handoff",
@@ -33,7 +32,7 @@
           "gitops",
           "sync"
         ],
-        "note": "CI 마지막 Task가 GitOps 리포지토리의 이미지 태그를 커밋하면 ArgoCD가 변경을 감지한다."
+        "note": "CI 성공과 서명·provenance 검증 후 담당자 또는 별도 workflow가 digest 변경을 리뷰합니다."
       },
       {
         "id": "cd",
@@ -43,7 +42,7 @@
           "sync",
           "deploy"
         ],
-        "note": "ArgoCD가 매니페스트를 동기화하고 클러스터는 ECR에서 새 이미지를 pull해 배포한다."
+        "note": "ArgoCD는 manifest를 동기화하고 kubelet/runtime이 ECR 이미지를 가져옵니다."
       }
     ],
     "legend": {
@@ -138,8 +137,8 @@
     {
       "id": "update",
       "type": "backend",
-      "label": "매니페스트 업데이트",
-      "sublabel": "이미지 태그 갱신",
+      "label": "승격 검증",
+      "sublabel": "CI · scan · 서명",
       "pos": [
         1038,
         60
@@ -167,7 +166,7 @@
       "id": "gitops",
       "type": "external",
       "label": "app-manifests",
-      "sublabel": "GitOps 리포지토리",
+      "sublabel": "검토된 digest 변경",
       "pos": [
         1038,
         230
@@ -194,8 +193,8 @@
     {
       "id": "deploy",
       "type": "backend",
-      "label": "K8s 배포",
-      "sublabel": "클러스터에 롤아웃",
+      "label": "kubelet / runtime",
+      "sublabel": "이미지 pull · Pod 실행",
       "pos": [
         534,
         400
@@ -215,15 +214,28 @@
         "clone",
         "test",
         "build",
-        "push",
-        "update"
+        "push"
       ]
     },
     {
       "kind": "region",
       "label": "ArgoCD (CD)",
       "wraps": [
-        "sync",
+        "sync"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "별도 승격 절차",
+      "wraps": [
+        "update",
+        "gitops"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 실행",
+      "wraps": [
         "deploy"
       ]
     }
@@ -271,7 +283,7 @@
       "id": "update-gitops",
       "from": "update",
       "to": "gitops",
-      "label": "commit",
+      "label": "리뷰·merge",
       "variant": "emphasis",
       "labelDy": 24
     },
@@ -285,7 +297,8 @@
     {
       "id": "sync-deploy",
       "from": "sync",
-      "to": "deploy"
+      "to": "deploy",
+      "label": "manifest"
     },
     {
       "id": "ecr-deploy",
@@ -299,18 +312,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "CI — Tekton",
+      "title": "CI / promotion",
       "items": [
-        "빌드·테스트·이미지 Push까지를 Tekton 파이프라인이 담당한다",
-        "마지막 Task가 GitOps 리포지토리의 이미지 태그를 업데이트하고 커밋/푸시한다"
+        "빌드·스캔 성공과 서명을 각각 확인",
+        "검토된 digest 변경을 Git에 반영"
       ]
     },
     {
       "dot": "emerald",
-      "title": "CD — ArgoCD",
+      "title": "CD",
       "items": [
-        "ArgoCD가 GitOps 리포지토리 변경을 감지해 클러스터를 동기화한다",
-        "CI/CD 분리는 프로덕션에서 가장 권장되는 패턴이다"
+        "ArgoCD가 manifest 동기화",
+        "kubelet이 이미지를 pull하고 실제 건강 상태 확인"
       ]
     }
   ]

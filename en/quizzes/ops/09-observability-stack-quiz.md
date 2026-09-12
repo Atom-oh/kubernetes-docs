@@ -1,175 +1,163 @@
-# Observability Stack Quiz
+# Observability stack quiz
 
-> **Related Document**: [Observability Stack](../../ops/09-observability-stack.md)
+> **Related document**: [Observability stack](../../ops/09-observability-stack.md)
 
-## Multiple Choice Questions
+## 1. Which statement should guide a new Loki deployment?
 
-### 1. What are the components of the LGTM observability stack?
-
-- A) Linux, Git, Terminal, Make
-- B) Loki (logs), Grafana (visualization), Tempo (traces), Mimir/Prometheus (metrics)
-- C) Lambda, Gateway, Transit, Monitor
-- D) Load balancer, Gateway, TLS, Mesh
+- A) SimpleScalable is the permanent default for all new deployments
+- B) SimpleScalable is deprecated and scheduled for removal in 4.0; evaluate alternatives
+- C) Monolithic cannot use object storage
+- D) Three replicas automatically guarantee AZ isolation
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Loki (logs), Grafana (visualization), Tempo (traces), Mimir/Prometheus (metrics)**
+**Answer: B**
 
-**Explanation:**
-LGTM is a Grafana Labs observability stack consisting of Loki for log aggregation, Grafana for visualization and dashboards, Tempo for distributed tracing, and Mimir (or Prometheus) for metrics. These components integrate seamlessly.
+The read/write/backend split describes SSD's architecture. New designs must also assess its lifecycle and the capacity/operational constraints of Monolithic and Distributed modes.
 
 </details>
 
-### 2. What is the difference between Loki's SimpleScalable and Distributed deployment modes?
+## 2. How do Tempo 3 distributed and monolithic modes differ?
 
-- A) SimpleScalable is for testing only
-- B) SimpleScalable separates read/write paths; Distributed adds more granular component separation
-- C) Distributed is deprecated
-- D) They are identical
+- A) Both retain the old ingester
+- B) Monolithic always requires Kafka
+- C) Distributed mode uses Kafka; monolithic can run without Kafka
+- D) Increasing monolithic chart replicas produces supported distributed HA
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) SimpleScalable separates read/write paths; Distributed adds more granular component separation**
+**Answer: C**
 
-**Explanation:**
-SimpleScalable mode splits Loki into read and write paths that can scale independently. Distributed mode further separates components (ingesters, distributors, queriers, etc.) for maximum scalability and operational flexibility at large scale.
+Version 3 uses block-builders/live-stores and backend-scheduler/workers instead of the distributed ingester/compactor architecture. Do not mix its deployment modes.
 
 </details>
 
-### 3. What is the purpose of tail-based sampling in Tempo?
+## 3. Which limitation applies to tail sampling?
 
-- A) To sample the end of log files
-- B) To make sampling decisions after seeing the complete trace
-- C) To reduce query latency
-- D) To compress trace data
+- A) It always preserves every error trace
+- B) It decides from spans received within decision_wait and cannot recover head-dropped data
+- C) Random Service balancing always keeps a trace on one sampler
+- D) num_traces is the trace-per-second rate
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) To make sampling decisions after seeing the complete trace**
+**Answer: B**
 
-**Explanation:**
-Tail-based sampling waits until a trace is complete before deciding whether to store it. This allows keeping all error traces or slow traces while sampling normal traces, which head-based sampling cannot do since it decides at trace start.
+Late spans, buffer limits, restarts and transport failures matter. Multiple samplers require trace-ID-based routing.
 
 </details>
 
-### 4. What role does the OTEL Collector play in the observability stack?
+## 4. What does the batch processor's send_batch_size control?
 
-- A) Storing metrics long-term
-- B) Receiving, processing, and exporting telemetry data from applications
-- C) Creating Grafana dashboards
-- D) Managing user authentication
+- A) Maximum batch size
+- B) Maximum trace duration
+- C) An item-count trigger for sending
+- D) Persistent storage capacity
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Receiving, processing, and exporting telemetry data from applications**
+**Answer: C**
 
-**Explanation:**
-The OpenTelemetry Collector acts as a telemetry pipeline, receiving traces, metrics, and logs from applications, processing them (batching, filtering, enriching), and exporting to backends like Tempo, Prometheus, and Loki.
+send_batch_max_size is the batch-size ceiling. Place batching after memory limiting and sampling/drop processing.
 
 </details>
 
-### 5. How does Amazon Managed Prometheus (AMP) integrate with Prometheus?
+## 5. What happens if every Alloy DaemonSet pod collects every cluster log target?
 
-- A) It replaces Prometheus entirely
-- B) Prometheus uses remote_write to send metrics to AMP for storage
-- C) AMP runs as a Prometheus sidecar
-- D) AMP only works with CloudWatch
+- A) Perfect HA deduplication is automatic
+- B) Collection can duplicate; partition targets or configure source clustering
+- C) The Kubernetes API automatically permits only one collector
+- D) It cannot start because hostPath is always required
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Prometheus uses remote_write to send metrics to AMP for storage**
+**Answer: B**
 
-**Explanation:**
-AMP provides a managed, scalable storage backend for Prometheus metrics. Prometheus continues to scrape and evaluate rules locally, but uses `remote_write` to ship metrics to AMP. Grafana then queries AMP using PromQL.
+The Kubernetes logs API source differs from file tailing. The single Deployment/Recreate example reduces duplication but does not provide HA or uninterrupted collection.
 
 </details>
 
-### 6. What is the recommended Loki label design strategy?
+## 6. What is required for Loki retention?
 
-- A) Use as many labels as possible for flexibility
-- B) Use bounded, low-cardinality labels to avoid index explosion
-- C) Avoid using any labels
-- D) Only use timestamp labels
+- A) Only retention_period
+- B) A 24-hour TSDB index, enabled compactor retention, delete_request_store and retention period
+- C) Expire every object in the bucket at the same age
+- D) The Grafana dashboard time range
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Use bounded, low-cardinality labels to avoid index explosion**
+**Answer: B**
 
-**Explanation:**
-High-cardinality labels (like user IDs or request IDs) create too many streams and bloat the index. Labels should be low-cardinality (namespace, app, environment) while high-cardinality data goes in log content for filtering with LogQL.
+Deletion is delayed and asynchronous, and compactor state/markers must survive restarts. Bucket-wide lifecycle expiration can damage required objects such as indexes.
 
 </details>
 
-### 7. What is the difference between Promtail and Grafana Alloy for log collection?
+## 7. Which labels identify an AMP HA group and its replicas?
 
-- A) Promtail only collects metrics
-- B) Alloy is a unified agent supporting logs, metrics, and traces; Promtail is Loki-specific
-- C) Promtail is newer than Alloy
-- D) Alloy doesn't support Kubernetes
+- A) namespace and pod
+- B) cluster and __replica__
+- C) service and trace_id
+- D) region alone
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Alloy is a unified agent supporting logs, metrics, and traces; Promtail is Loki-specific**
+**Answer: B**
 
-**Explanation:**
-Promtail is purpose-built for shipping logs to Loki. Grafana Alloy (formerly Agent) is a unified collector that handles logs, metrics, and traces using OpenTelemetry and native receivers, reducing the number of agents needed.
+Replicas of the same scrape data share cluster and use distinct __replica__ values. Grouping independent scrape coverage into one HA group can lose data.
 
 </details>
 
-### 8. How do you configure Grafana datasource linking between Loki and Tempo?
+## 8. Which statement about AMP retention is correct?
 
-- A) They automatically link without configuration
-- B) Configure derived fields in Loki datasource pointing to Tempo datasource
-- C) Install a separate linking plugin
-- D) Export data to a common database
+- A) 150 days is an immutable maximum
+- B) It is configurable per workspace up to 1,095 days
+- C) It is always unlimited
+- D) Increasing it restores already deleted metrics
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Configure derived fields in Loki datasource pointing to Tempo datasource**
+**Answer: B**
 
-**Explanation:**
-In Grafana's Loki datasource settings, configure derived fields with a regex to extract trace IDs from logs and link to the Tempo datasource. This creates clickable links from log lines to associated traces.
+Set retention after assessing requirements, cost and service limits. Expired data is not retroactively restored.
 
 </details>
 
-### 9. What is the purpose of Tempo's compactor component?
+## 9. What is needed to link a Loki log to a Tempo trace in Grafana?
 
-- A) To compress network traffic
-- B) To merge trace blocks and manage retention
-- C) To compile TraceQL queries
-- D) To reduce dashboard loading time
+- A) Installing both automatically links them
+- B) Correct trace-ID extraction, explicit datasource UIDs and accessible trace data
+- C) Add trace IDs as ordinary Prometheus labels
+- D) Enable HTTP/2 alone
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) To merge trace blocks and manage retention**
+**Answer: B**
 
-**Explanation:**
-The compactor merges smaller trace blocks into larger ones for storage efficiency and applies retention policies by deleting expired data. It runs as a separate process in distributed mode or within the monolithic binary.
+Match derivedFields/tracesToLogsV2 mappings, time range, tenancy and permissions. Exemplars also require instrumentation, OpenMetrics and storage configuration.
 
 </details>
 
-### 10. When configuring OTEL Collector processors, what does the batch processor do?
+## 10. What must still be checked after chart rendering succeeds?
 
-- A) Assigns batch IDs to traces
-- B) Groups telemetry into batches before export to improve efficiency
-- C) Processes database batch operations
-- D) Creates batch jobs in Kubernetes
+- A) Nothing; all unknown values are applied
+- B) Actual PVCs, Services, identity, backend configuration and write/query paths
+- C) Only YAML indentation
+- D) Replace every image with latest
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Groups telemetry into batches before export to improve efficiency**
+**Answer: B**
 
-**Explanation:**
-The batch processor accumulates telemetry data and sends it in batches based on size or timeout thresholds. This reduces the number of outgoing requests, improves compression, and decreases load on receiving backends.
+Some chart values can be silently ignored. Check claims/accessModes and Service ports, and distinguish native parser validation from live environment connectivity.
 
 </details>

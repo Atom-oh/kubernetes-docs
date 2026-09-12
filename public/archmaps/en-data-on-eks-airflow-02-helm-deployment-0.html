@@ -5039,7 +5039,7 @@
         <path data-edge-from="sched-k8s" data-edge-to="task-b" data-edge-label="creates 1 pod per task" data-edge-key="1" data-edge-id="k8s-task-b" data-composition-points="320,120;320,300" d="M 320 120 L 320 300" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="sched-k8s" data-edge-to="task-c" data-edge-key="2" data-edge-id="k8s-task-c" data-composition-points="327,120;327,210;520,210;520,300" d="M 327 120 L 327 202 Q 327 210 335 210 L 512 210 Q 520 210 520 218 L 520 300" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="sched-celery" data-edge-to="broker" data-edge-label="enqueues task" data-edge-key="3" data-edge-id="celery-enqueue" data-composition-points="920,120;920,180" d="M 920 120 L 920 180" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="broker" data-edge-to="worker-1" data-edge-label="pulled by warm worker" data-edge-key="4" data-edge-id="broker-worker-1" data-composition-points="913,240;913,270;815,270;815,300" d="M 913 240 L 913 262 Q 913 270 905 270 L 823 270 Q 815 270 815 278 L 815 300" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="broker" data-edge-to="worker-1" data-edge-label="worker consumes" data-edge-key="4" data-edge-id="broker-worker-1" data-composition-points="913,240;913,270;815,270;815,300" d="M 913 240 L 913 262 Q 913 270 905 270 L 823 270 Q 815 270 815 278 L 815 300" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="broker" data-edge-to="worker-2" data-edge-key="5" data-edge-id="broker-worker-2" data-composition-points="927,240;927,270;1035,270;1035,300" d="M 927 240 L 927 262 Q 927 270 935 270 L 1027 270 Q 1035 270 1035 278 L 1035 300" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
@@ -5054,37 +5054,37 @@
         <text data-detail="context" x="320" y="104" class="t-muted" font-size="9" text-anchor="middle">creates pods via Kubernetes API</text>
         </g>
 
-        <g id="node-task-a" data-node-id="task-a" data-node-label="Pod: task A" tabindex="0" role="button" aria-label="Focus Pod: task A, ephemeral pod, KubernetesExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ephemeral pod" data-node-context="KubernetesExecutor">
-          <title>Pod: task A · ephemeral pod · KubernetesExecutor</title>
+        <g id="node-task-a" data-node-id="task-a" data-node-label="Pod: task A" tabindex="0" role="button" aria-label="Focus Pod: task A, Airflow task runtime, KubernetesExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Airflow task runtime" data-node-context="KubernetesExecutor">
+          <title>Pod: task A · Airflow task runtime · KubernetesExecutor</title>
           <rect x="40" y="300" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="40" y="300" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(46 306) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="120" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod: task A</text>
-        <text data-detail="context" x="120" y="344" class="t-muted" font-size="9" text-anchor="middle">ephemeral pod</text>
+        <text data-detail="context" x="120" y="344" class="t-muted" font-size="9" text-anchor="middle">Airflow task runtime</text>
         </g>
 
-        <g id="node-task-b" data-node-id="task-b" data-node-label="Pod: task B" tabindex="0" role="button" aria-label="Focus Pod: task B, ephemeral pod, KubernetesExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ephemeral pod" data-node-context="KubernetesExecutor">
-          <title>Pod: task B · ephemeral pod · KubernetesExecutor</title>
+        <g id="node-task-b" data-node-id="task-b" data-node-label="Pod: task B" tabindex="0" role="button" aria-label="Focus Pod: task B, Airflow task runtime, KubernetesExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Airflow task runtime" data-node-context="KubernetesExecutor">
+          <title>Pod: task B · Airflow task runtime · KubernetesExecutor</title>
           <rect x="240" y="300" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="240" y="300" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(246 306) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="320" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod: task B</text>
-        <text data-detail="context" x="320" y="344" class="t-muted" font-size="9" text-anchor="middle">ephemeral pod</text>
+        <text data-detail="context" x="320" y="344" class="t-muted" font-size="9" text-anchor="middle">Airflow task runtime</text>
         </g>
 
-        <g id="node-task-c" data-node-id="task-c" data-node-label="Pod: task C" tabindex="0" role="button" aria-label="Focus Pod: task C, ephemeral pod, KubernetesExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ephemeral pod" data-node-context="KubernetesExecutor">
-          <title>Pod: task C · ephemeral pod · KubernetesExecutor</title>
+        <g id="node-task-c" data-node-id="task-c" data-node-label="Pod: task C" tabindex="0" role="button" aria-label="Focus Pod: task C, Airflow task runtime, KubernetesExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Airflow task runtime" data-node-context="KubernetesExecutor">
+          <title>Pod: task C · Airflow task runtime · KubernetesExecutor</title>
           <rect x="440" y="300" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="440" y="300" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(446 306) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="520" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod: task C</text>
-        <text data-detail="context" x="520" y="344" class="t-muted" font-size="9" text-anchor="middle">ephemeral pod</text>
+        <text data-detail="context" x="520" y="344" class="t-muted" font-size="9" text-anchor="middle">Airflow task runtime</text>
         </g>
 
         <g id="node-sched-celery" data-node-id="sched-celery" data-node-label="Scheduler" tabindex="0" role="button" aria-label="Focus Scheduler, enqueues tasks onto broker, CeleryExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="enqueues tasks onto broker" data-node-context="CeleryExecutor">
@@ -5098,8 +5098,8 @@
         <text data-detail="context" x="920" y="104" class="t-muted" font-size="9" text-anchor="middle">enqueues tasks onto broker</text>
         </g>
 
-        <g id="node-broker" data-node-id="broker" data-node-label="Redis broker" tabindex="0" role="button" aria-label="Focus Redis broker, task queue, CeleryExecutor" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="task queue" data-node-context="CeleryExecutor">
-          <title>Redis broker · task queue · CeleryExecutor</title>
+        <g id="node-broker" data-node-id="broker" data-node-label="Celery broker" tabindex="0" role="button" aria-label="Focus Celery broker, Redis / RabbitMQ etc., CeleryExecutor" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="Redis / RabbitMQ etc." data-node-context="CeleryExecutor">
+          <title>Celery broker · Redis / RabbitMQ etc. · CeleryExecutor</title>
           <rect x="830" y="180" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="830" y="180" width="180" height="60" rx="6" class="c-messagebus" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(836 186) scale(0.6875)">
@@ -5108,30 +5108,30 @@
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="920" y="208" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Redis broker</text>
-        <text data-detail="context" x="920" y="224" class="t-muted" font-size="9" text-anchor="middle">task queue</text>
+          <text data-node-label="" data-detail-anchor="" x="920" y="208" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Celery broker</text>
+        <text data-detail="context" x="920" y="224" class="t-muted" font-size="9" text-anchor="middle">Redis / RabbitMQ etc.</text>
         </g>
 
-        <g id="node-worker-1" data-node-id="worker-1" data-node-label="Pod: celery worker 1" tabindex="0" role="button" aria-label="Focus Pod: celery worker 1, long-running warm pod, CeleryExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="long-running warm pod" data-node-context="CeleryExecutor">
-          <title>Pod: celery worker 1 · long-running warm pod · CeleryExecutor</title>
+        <g id="node-worker-1" data-node-id="worker-1" data-node-label="Pod: celery worker 1" tabindex="0" role="button" aria-label="Focus Pod: celery worker 1, scalable worker pool, CeleryExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="scalable worker pool" data-node-context="CeleryExecutor">
+          <title>Pod: celery worker 1 · scalable worker pool · CeleryExecutor</title>
           <rect x="720" y="300" width="190" height="60" rx="6" class="c-mask"/>
           <rect x="720" y="300" width="190" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(726 306) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="815" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod: celery worker 1</text>
-        <text data-detail="context" x="815" y="344" class="t-muted" font-size="9" text-anchor="middle">long-running warm pod</text>
+        <text data-detail="context" x="815" y="344" class="t-muted" font-size="9" text-anchor="middle">scalable worker pool</text>
         </g>
 
-        <g id="node-worker-2" data-node-id="worker-2" data-node-label="Pod: celery worker 2" tabindex="0" role="button" aria-label="Focus Pod: celery worker 2, long-running warm pod, CeleryExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="long-running warm pod" data-node-context="CeleryExecutor">
-          <title>Pod: celery worker 2 · long-running warm pod · CeleryExecutor</title>
+        <g id="node-worker-2" data-node-id="worker-2" data-node-label="Pod: celery worker 2" tabindex="0" role="button" aria-label="Focus Pod: celery worker 2, scalable worker pool, CeleryExecutor" aria-pressed="false" data-node-kind="backend" data-node-sublabel="scalable worker pool" data-node-context="CeleryExecutor">
+          <title>Pod: celery worker 2 · scalable worker pool · CeleryExecutor</title>
           <rect x="940" y="300" width="190" height="60" rx="6" class="c-mask"/>
           <rect x="940" y="300" width="190" height="60" rx="6" class="c-backend" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(946 306) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1035" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Pod: celery worker 2</text>
-        <text data-detail="context" x="1035" y="344" class="t-muted" font-size="9" text-anchor="middle">long-running warm pod</text>
+        <text data-detail="context" x="1035" y="344" class="t-muted" font-size="9" text-anchor="middle">scalable worker pool</text>
         </g>
 
         <!-- Connection labels -->
@@ -5145,9 +5145,9 @@
           <rect x="883.8" y="150" width="72.4" height="14" rx="3" class="c-mask"/>
           <text x="920" y="160" class="t-backend" font-size="8" text-anchor="middle">enqueues task</text>
         </g>
-        <g data-detail="context" data-edge-from="broker" data-edge-to="worker-1" data-edge-label="pulled by warm worker" data-edge-key="4" data-edge-id="broker-worker-1">
-          <rect x="808.6" y="250" width="110.8" height="14" rx="3" class="c-mask"/>
-          <text x="864" y="260" class="t-muted" font-size="8" text-anchor="middle">pulled by warm worker</text>
+        <g data-detail="context" data-edge-from="broker" data-edge-to="worker-1" data-edge-label="worker consumes" data-edge-key="4" data-edge-id="broker-worker-1">
+          <rect x="823" y="250" width="82" height="14" rx="3" class="c-mask"/>
+          <text x="864" y="260" class="t-muted" font-size="8" text-anchor="middle">worker consumes</text>
         </g>
 
 
@@ -5366,9 +5366,9 @@
           <h3>KubernetesExecutor</h3>
         </div>
         <ul>
-          <li>&bull; One pod per task — torn down on completion</li>
-          <li>&bull; Cold start of roughly 1–2 min (pod scheduling, image pull, node scale-out)</li>
-          <li>&bull; No idle cost, strong isolation between tasks</li>
+          <li>&bull; Per-task worker pods; configurable failure retention</li>
+          <li>&bull; Measure startup against image/API/node availability</li>
+          <li>&bull; Control-plane, DB and node costs remain</li>
         </ul>
       </div>
 
@@ -5378,9 +5378,9 @@
           <h3>CeleryExecutor</h3>
         </div>
         <ul>
-          <li>&bull; Warm worker pool runs continuously — dispatch in seconds</li>
-          <li>&bull; Requires a Redis/RabbitMQ broker + worker Deployment</li>
-          <li>&bull; Tasks on the same worker share resources/deps — weak isolation</li>
+          <li>&bull; Warm workers or KEDA scale-to-zero</li>
+          <li>&bull; Configure broker, result backend and concurrency</li>
+          <li>&bull; Deployment or StatefulSet; shared resources/dependencies</li>
         </ul>
       </div>
     </div>

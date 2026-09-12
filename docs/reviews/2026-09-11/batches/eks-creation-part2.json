@@ -72,8 +72,8 @@
   {
     "path": "en/quizzes/eks/02-eks-cluster-creation-part2-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
+    "status": "fixed",
+    "summary": "Fully reviewed and fixed15questions and2exercises, including verified EKS CLI version flag and previously reported semantic/operational corrections.",
     "sources": [
       "https://docs.aws.amazon.com/eks/latest/userguide/al2023.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
@@ -125,7 +125,8 @@
       "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html",
       "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html",
       "https://docs.aws.amazon.com/eks/latest/eksctl/security.html",
-      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html"
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/create-cluster.html"
     ],
     "findings": [
       "IRSA trust missing aud; stale aws-auth administrator guidance; unqualified isolation/credential claims.",
@@ -154,21 +155,22 @@
       "Resolved every recorded question/exercise defect. Kept original kernel tuning values explicitly unvalidated; did not claim runtime performance.",
       "The original eksctl kubernetesNetworkConfig.ipFamily:IPv6 spelling was valid and preserved; clarified its distinction from the EKS API lowercase value.",
       "Current policy example migrated to policies.kyverno.io/v1 after actualCLI deprecation warning; legacy types deprecated1.19 and scheduled removal1.20 per official migration guide.",
-      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. The interim audit error was corrected in commands, prose and reports; API JSON field version and eksctl --version were preserved."
     ],
     "validation": [
       "Sequential full read1–400,401–800,801–1200,1201–1600,1601–2000,2001–2498. No document commands executed.",
       "Final paired validation:88Bash,10JSON,16eksctl configs,32native Kubernetes objects,4custom-schema checks,10vendor examples,6fragments,2MIME blocks and4local links;15answers/17details per locale; full code parity and scoped diff pass.",
       "Actual offline policy tests:Kyverno1.19.1 CEL ValidatingPolicy v1 with warnings-as-errors andGatekeeper3.23.1 Gator,6cases each. LegacyKyverno6case evidence retained separately. Charts3.9.1/3.23.1 rendered locally forKubernetes1.36.",
       "IRSA workflow:7mocked flow cases+9cleanup cases. Security workflow:11mocked flow cases+4cleanup cases. TwoMIME/base64 encoding cases. Dynamic generated manifests checked againstKubernetes1.36.0.",
-      "No actual AWS provisioning/configuration, node bootstrap, Pod networking, image execution or benchmark. Evidence:/tmp/eks-creation-part2-audit/validation.json and referenced artifacts."
+      "No actual AWS provisioning/configuration, node bootstrap, Pod networking, image execution or benchmark. Evidence:/tmp/eks-creation-part2-audit/validation.json and referenced artifacts.",
+      "Version-option correction independently checked with3distinct literal commands across6paired docs using the actual localAWSCLI2.35.11 input-skeleton parser. --kubernetes-version is required; wrong--version reproduced exit0/CLIversion-only. No AWS calls. Evidence:/tmp/eks-cli-flag-correction-2026-09-11.json."
     ]
   },
   {
     "path": "ko/quizzes/eks/02-eks-cluster-creation-part2-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Reopened: EKS create-cluster CLI version flag must be corrected and revalidated; full read remains complete.",
+    "status": "fixed",
+    "summary": "Fully reviewed and fixed15questions and2exercises, including verified EKS CLI version flag and previously reported semantic/operational corrections.",
     "sources": [
       "https://docs.aws.amazon.com/eks/latest/userguide/al2023.html",
       "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
@@ -220,7 +222,8 @@
       "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html",
       "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html",
       "https://docs.aws.amazon.com/eks/latest/eksctl/security.html",
-      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html"
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/create-cluster.html"
     ],
     "findings": [
       "IRSA trust missing aud; stale aws-auth administrator guidance; unqualified isolation/credential claims.",
@@ -249,14 +252,15 @@
       "Resolved every recorded question/exercise defect. Kept original kernel tuning values explicitly unvalidated; did not claim runtime performance.",
       "The original eksctl kubernetesNetworkConfig.ipFamily:IPv6 spelling was valid and preserved; clarified its distinction from the EKS API lowercase value.",
       "Current policy example migrated to policies.kyverno.io/v1 after actualCLI deprecation warning; legacy types deprecated1.19 and scheduled removal1.20 per official migration guide.",
-      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. Earlier audit changed this incorrectly; fix the command/prose/report while preserving API JSON field version and eksctl --version."
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. The interim audit error was corrected in commands, prose and reports; API JSON field version and eksctl --version were preserved."
     ],
     "validation": [
       "Sequential full read1–400,401–800,801–1200,1201–1600,1601–2000,2001–2493. No document commands executed.",
       "Final paired validation:88Bash,10JSON,16eksctl configs,32native Kubernetes objects,4custom-schema checks,10vendor examples,6fragments,2MIME blocks and4local links;15answers/17details per locale; full code parity and scoped diff pass.",
       "Actual offline policy tests:Kyverno1.19.1 CEL ValidatingPolicy v1 with warnings-as-errors andGatekeeper3.23.1 Gator,6cases each. LegacyKyverno6case evidence retained separately. Charts3.9.1/3.23.1 rendered locally forKubernetes1.36.",
       "IRSA workflow:7mocked flow cases+9cleanup cases. Security workflow:11mocked flow cases+4cleanup cases. TwoMIME/base64 encoding cases. Dynamic generated manifests checked againstKubernetes1.36.0.",
-      "No actual AWS provisioning/configuration, node bootstrap, Pod networking, image execution or benchmark. Evidence:/tmp/eks-creation-part2-audit/validation.json and referenced artifacts."
+      "No actual AWS provisioning/configuration, node bootstrap, Pod networking, image execution or benchmark. Evidence:/tmp/eks-creation-part2-audit/validation.json and referenced artifacts.",
+      "Version-option correction independently checked with3distinct literal commands across6paired docs using the actual localAWSCLI2.35.11 input-skeleton parser. --kubernetes-version is required; wrong--version reproduced exit0/CLIversion-only. No AWS calls. Evidence:/tmp/eks-cli-flag-correction-2026-09-11.json."
     ]
   }
 ]

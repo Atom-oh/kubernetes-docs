@@ -13,229 +13,160 @@
         "label": "PR and CI validation",
         "focus": [
           "pr_create",
-          "schema",
-          "impact"
+          "schema"
         ],
-        "note": "Opening a flag change PR triggers CI schema validation and impact analysis automatically."
+        "note": "Validate rendered definitions, schema, names, defaults, and duplicate keys."
       },
       {
         "id": "review-gate",
         "label": "Review and approval",
         "focus": [
-          "reviewer",
           "approve",
           "merge",
           "pr_create"
         ],
-        "note": "A CODEOWNERS reviewer approves and the PR is merged; a rejection sends it back to the developer."
+        "note": "Configure CODEOWNERS and required review through repository protection."
       },
       {
         "id": "deploy-verify",
         "label": "GitOps deploy and verify",
         "focus": [
           "sync",
-          "apply",
           "verify",
           "notify"
         ],
-        "note": "ArgoCD/Flux syncs the FeatureFlag CR, then health and metrics are confirmed before the notification."
+        "note": "Verify initial deployment and actual SDK propagation; notifications require separate configuration."
       }
     ],
     "legend": {
-      "entries": {
-        "frontend": {
-          "label": "Developer action"
-        },
-        "backend": {
-          "label": "Automated step"
-        },
-        "security": {
-          "label": "Review gate"
-        },
-        "cloud": {
-          "label": "GitOps tooling"
-        },
-        "external": {
-          "label": "Notification channel"
-        }
-      }
-    }
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1180,
+      430
+    ]
   },
   "lanes": [
     {
-      "id": "dev",
-      "label": "Developer"
+      "id": "change",
+      "label": "Change · CI · review"
     },
     {
-      "id": "ci",
-      "label": "CI Pipeline"
-    },
-    {
-      "id": "review",
-      "label": "Review Process"
-    },
-    {
-      "id": "gitops",
-      "label": "GitOps Deployment"
-    },
-    {
-      "id": "verify",
-      "label": "Verification"
+      "id": "delivery",
+      "label": "Delivery · consumer checks"
     }
   ],
   "mainPath": [
     "pr_create",
     "schema",
-    "impact",
-    "reviewer",
     "approve",
     "merge",
     "sync",
-    "apply",
     "verify",
     "notify"
   ],
   "nodes": [
     {
       "id": "pr_create",
-      "lane": "dev",
+      "lane": "change",
       "col": 0,
       "type": "frontend",
-      "label": "Flag Change PR",
-      "sublabel": "edit FeatureFlag YAML",
-      "width": 160
+      "width": 160,
+      "label": "Change PR",
+      "sublabel": "flag definitions"
     },
     {
       "id": "schema",
-      "lane": "ci",
-      "col": 0,
-      "type": "backend",
-      "label": "Flag Schema Check",
-      "sublabel": "kubectl --dry-run=client",
-      "width": 160
-    },
-    {
-      "id": "impact",
-      "lane": "ci",
+      "lane": "change",
       "col": 1,
       "type": "backend",
-      "label": "Impact Analysis",
-      "sublabel": "affected services",
-      "width": 160
-    },
-    {
-      "id": "reviewer",
-      "lane": "review",
-      "col": 1,
-      "type": "security",
-      "label": "Assign Reviewer",
-      "sublabel": "CODEOWNERS",
-      "width": 160
+      "width": 160,
+      "label": "CI checks",
+      "sublabel": "render / schema / policy"
     },
     {
       "id": "approve",
-      "lane": "review",
+      "lane": "change",
       "col": 2,
       "type": "security",
-      "label": "Approval Decision",
-      "sublabel": "code review",
-      "tag": "human gate",
-      "width": 160
+      "width": 160,
+      "label": "Review gate",
+      "sublabel": "repository protection"
     },
     {
       "id": "merge",
-      "lane": "gitops",
-      "col": 2,
+      "lane": "change",
+      "col": 3,
       "type": "backend",
-      "label": "Merge PR",
-      "sublabel": "main branch",
-      "width": 160
+      "width": 160,
+      "label": "Merge",
+      "sublabel": "main branch"
     },
     {
       "id": "sync",
-      "lane": "gitops",
+      "lane": "delivery",
       "col": 3,
       "type": "cloud",
-      "label": "ArgoCD/Flux Sync",
-      "sublabel": "automated sync",
-      "width": 160
-    },
-    {
-      "id": "apply",
-      "lane": "gitops",
-      "col": 4,
-      "type": "cloud",
-      "label": "Apply FeatureFlag",
-      "sublabel": "CR applied to cluster",
-      "width": 160
+      "width": 160,
+      "label": "Sync / apply",
+      "sublabel": "ArgoCD / Flux"
     },
     {
       "id": "verify",
-      "lane": "verify",
+      "lane": "delivery",
       "col": 4,
       "type": "backend",
-      "label": "Health & Metrics",
-      "sublabel": "CR status, flag evaluation",
-      "width": 160
+      "width": 160,
+      "label": "Verify consumers",
+      "sublabel": "Deployment + SDK"
     },
     {
       "id": "notify",
-      "lane": "verify",
+      "lane": "delivery",
       "col": 5,
       "type": "external",
-      "label": "Slack/Teams Alert",
-      "sublabel": "share result",
-      "width": 160
+      "width": 160,
+      "label": "Optional notice",
+      "sublabel": "configure separately"
     }
   ],
   "edges": [
     {
       "from": "pr_create",
       "to": "schema",
-      "toSide": "left"
+      "variant": "emphasis"
     },
     {
       "from": "schema",
-      "to": "impact"
-    },
-    {
-      "from": "impact",
-      "to": "reviewer"
-    },
-    {
-      "from": "reviewer",
-      "to": "approve"
+      "to": "approve",
+      "variant": "emphasis"
     },
     {
       "from": "approve",
       "to": "merge",
-      "variant": "emphasis",
-      "route": "drop",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "variant": "emphasis"
+    },
+    {
+      "from": "merge",
+      "to": "sync",
+      "variant": "emphasis"
+    },
+    {
+      "from": "sync",
+      "to": "verify",
+      "variant": "emphasis"
+    },
+    {
+      "from": "verify",
+      "to": "notify",
+      "variant": "dashed"
     },
     {
       "from": "approve",
       "to": "pr_create",
-      "label": "reject",
+      "label": "revise",
       "variant": "dashed",
       "role": "return"
-    },
-    {
-      "from": "merge",
-      "to": "sync"
-    },
-    {
-      "from": "sync",
-      "to": "apply"
-    },
-    {
-      "from": "apply",
-      "to": "verify"
-    },
-    {
-      "from": "verify",
-      "to": "notify"
     }
   ],
   "cards": [
@@ -243,18 +174,18 @@
       "dot": "cyan",
       "title": "CI validation steps",
       "items": [
-        "YAML syntax check (yamllint)",
-        "FeatureFlag schema check (kubeconform, OpenFeature CRD)",
-        "Targeting-rule validation script"
+        "Render overlays with pinned Kustomize",
+        "JSON Schema plus duplicate/default checks",
+        "Add business-context SDK tests separately"
       ]
     },
     {
       "dot": "emerald",
       "title": "GitOps deployment settings",
       "items": [
-        "ArgoCD automated sync: prune, selfHeal",
-        "Sync retry: limit 3, exponential backoff",
-        "Flux healthChecks on the FeatureFlag CR"
+        "Check ArgoCD/Flux reconciliation and policy",
+        "Flux checks initial flagd Deployment readiness",
+        "Verify cache/rule revision and actual consumers"
       ]
     }
   ]

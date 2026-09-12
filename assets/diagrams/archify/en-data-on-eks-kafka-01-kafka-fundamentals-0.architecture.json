@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Producer -> Partitions -> Consumer Group Flow",
+    "title": "KafkaConsumer partition-assignment example",
     "locale": "en",
     "output": "en-data-on-eks-kafka-01-kafka-fundamentals-0.html",
     "quality_profile": "showcase",
@@ -30,7 +30,7 @@
           "c2",
           "c3"
         ],
-        "note": "Within the order-processor group each partition is read by exactly one consumer, so the three consumers consume in parallel."
+        "note": "An automatic group-assignment example. One consumer can own several partitions; Share Groups are a different model."
       }
     ]
   },
@@ -157,8 +157,8 @@
       ]
     },
     {
-      "kind": "security-group",
-      "label": "Consumer Group: order-processor",
+      "kind": "region",
+      "label": "Logical consumer group: order-processor",
       "wraps": [
         "c1",
         "c2",
@@ -199,7 +199,7 @@
       "id": "fetch-p1",
       "from": "p1",
       "to": "c2",
-      "label": "one partition per consumer"
+      "label": "example 3:3 assignment"
     },
     {
       "id": "fetch-p2",
@@ -210,18 +210,18 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "Partition distribution",
+      "title": "Partitions",
       "items": [
-        "Producers write to a topic; Kafka spreads the messages across brokers at the partition level",
-        "Each partition's leader replica handles all reads and writes"
+        "Writes go to partition leaders",
+        "Configured follower fetching is also possible"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Consumer group",
+      "title": "KafkaConsumer",
       "items": [
-        "Consumers sharing a group.id split the partitions and consume in parallel",
-        "Each partition is read by exactly one consumer in the group"
+        "Three partitions and three consumers are one example",
+        "One consumer can own multiple partitions"
       ]
     }
   ]

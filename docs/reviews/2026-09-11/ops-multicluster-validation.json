@@ -1,0 +1,345 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "checks": [
+    "Helm 10.8.4 SAML/Dex enabled, no fictional OIDC issuer, email-scoped minimal default RBAC",
+    "ESO 2.10.0 chart and two exact v1 CRD schemas; actual controller SA/leader election and no IRSA annotation",
+    "Both full Kustomize NodePool overlays render with matching color/AZ and deletion confirmation",
+    "Eight ApplicationSet instances rendered by actual Go text/template + Sprig and validated as Application CRDs",
+    "7 registration-script mock cases: both clusters, invalid/missing inputs, AWS failure, insecure endpoint; no unintended context mutation or residual temp files",
+    "KO/EN embedded fixture parity, local links and both ten-question quizzes",
+    "Terraform1.15.7 init/validate and two mock AWS/Helm3.3.0 plan tests passed",
+    "34 fences,24 YAML blocks,4 Bash blocks,10 strict Argo3.5.2 CRDs passed",
+    "Six allow/deny cases passed with actual ArgoCD3.5.2 CLI and generated RBAC policy"
+  ],
+  "files": [
+    {
+      "path": "ko/ops/04-gitops-multi-cluster.md",
+      "sha256": "d35d3a309877b0476fea8d14f1e16ae474a8753df6d7bf9bae38b3ba4662cc7e"
+    },
+    {
+      "path": "ko/quizzes/ops/04-gitops-multi-cluster-quiz.md",
+      "sha256": "523c9e760379f5d469c8be9319aeea8bdda4f4b950ac8ae619f2bee30e128790"
+    },
+    {
+      "path": "en/ops/04-gitops-multi-cluster.md",
+      "sha256": "ccaff1f932c1f8e9b82c1ce527a124ba49bdf208d87d997b53fa535d333e4164"
+    },
+    {
+      "path": "en/quizzes/ops/04-gitops-multi-cluster-quiz.md",
+      "sha256": "19f6207b43cad39cfeec0cbf8c9472664a305ec1a9004dce5f679364f070eed5"
+    }
+  ],
+  "limitations": [
+    "No live cluster registration, EKS install, SSO login, secrets read or AWS mutation.",
+    "Auto Mode NodePool schemas checked against documented fields and Kustomize output; no live managed-CRD admission call."
+  ],
+  "evidence": {
+    "render-results.json": [
+      {
+        "name": "argocd-base",
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "name": "argocd-sso",
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "name": "eso",
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "name": "nodepools-blue",
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "name": "nodepools-green",
+        "exitCode": 0,
+        "stderr": ""
+      }
+    ],
+    "rbac-tests.json": [
+      {
+        "subject": "viewer@example.com",
+        "action": "get",
+        "target": "applications/frontend",
+        "allowed": true,
+        "output": "Yes"
+      },
+      {
+        "subject": "viewer@example.com",
+        "action": "sync",
+        "target": "applications/frontend",
+        "allowed": false,
+        "output": "No"
+      },
+      {
+        "subject": "operator@example.com",
+        "action": "sync",
+        "target": "applications/frontend",
+        "allowed": true,
+        "output": "Yes"
+      },
+      {
+        "subject": "operator@example.com",
+        "action": "delete",
+        "target": "applications/frontend",
+        "allowed": false,
+        "output": "No"
+      },
+      {
+        "subject": "operator@example.com",
+        "action": "sync",
+        "target": "infrastructure/nodepools-blue",
+        "allowed": false,
+        "output": "No"
+      },
+      {
+        "subject": "unknown@example.com",
+        "action": "get",
+        "target": "applications/frontend",
+        "allowed": false,
+        "output": "No"
+      }
+    ],
+    "template-outputs.json": [
+      {
+        "id": "cluster-blue-frontend",
+        "rendered": {
+          "metadata": {
+            "name": "workload-blue-frontend"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-blue",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/frontend/overlays/blue",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      },
+      {
+        "id": "cluster-green-frontend",
+        "rendered": {
+          "metadata": {
+            "name": "workload-green-frontend"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-green",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/frontend/overlays/green",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      },
+      {
+        "id": "matrix-blue-frontend",
+        "rendered": {
+          "metadata": {
+            "name": "workload-blue-frontend"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-blue",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/frontend/overlays/blue",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      },
+      {
+        "id": "matrix-blue-backend",
+        "rendered": {
+          "metadata": {
+            "name": "workload-blue-backend"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-blue",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/backend/overlays/blue",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      },
+      {
+        "id": "matrix-blue-worker",
+        "rendered": {
+          "metadata": {
+            "name": "workload-blue-worker"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-blue",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/worker/overlays/blue",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      },
+      {
+        "id": "matrix-green-frontend",
+        "rendered": {
+          "metadata": {
+            "name": "workload-green-frontend"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-green",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/frontend/overlays/green",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      },
+      {
+        "id": "matrix-green-backend",
+        "rendered": {
+          "metadata": {
+            "name": "workload-green-backend"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-green",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/backend/overlays/green",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      },
+      {
+        "id": "matrix-green-worker",
+        "rendered": {
+          "metadata": {
+            "name": "workload-green-worker"
+          },
+          "spec": {
+            "destination": {
+              "name": "workload-green",
+              "namespace": "demo-app"
+            },
+            "project": "applications",
+            "source": {
+              "path": "apps/worker/overlays/green",
+              "repoURL": "https://github.com/REPLACE_ORG/app-manifests.git",
+              "targetRevision": "main"
+            },
+            "syncPolicy": {
+              "automated": {
+                "prune": false,
+                "selfHeal": true
+              }
+            }
+          },
+          "apiVersion": "argoproj.io/v1alpha1",
+          "kind": "Application"
+        }
+      }
+    ]
+  },
+  "sources": [
+    "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+    "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/cmd/argocd-k8s-auth/commands/aws.go",
+    "https://raw.githubusercontent.com/dexidp/dex/v2.45.1/connector/saml/saml.go",
+    "https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html",
+    "https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html",
+    "https://external-secrets.io/v2.10.0/provider/aws-access/",
+    "https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs"
+  ]
+}

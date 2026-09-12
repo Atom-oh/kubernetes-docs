@@ -1,0 +1,228 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T08:06:25.284295+00:00",
+  "files": [
+    {
+      "path": "en/networking/cilium/01-introduction.md",
+      "sha256": "42751451daa6c25515dd425c2c9a4ee07ee0eef7d72c50e28e61e677f9349681"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/01-introduction-quiz.md",
+      "sha256": "5e5ec5d85c317aa6d94c397db7704854c5151cddcc2ace01ae49e3d87130c249"
+    },
+    {
+      "path": "ko/networking/cilium/01-introduction.md",
+      "sha256": "c7776fff115f7ac4d2160d69264d0b1e877cc23714ed0acd5eaba661211a870f"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/01-introduction-quiz.md",
+      "sha256": "48eb64d115d71b536cd300ab5f9a573d132456254140687899ef12ad48c5be7c"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://api.github.com/repos/weaveworks/weave",
+      "key": "fef637b08c69",
+      "sha256": "e471a15e21fddfd117806debc9cafba1f5b18faf0d3bf596b1b6a5b5fd7de847",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/containernetworking/cni/main/README.md",
+      "key": "859e71541490",
+      "sha256": "0629063c7ca5c336452a1a2101215ea79d5419d82d6afdcc5c8c538a50733f9d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://kubernetes.io/releases/version-skew-policy/",
+      "key": "8a9bd073895e",
+      "sha256": "40bdf242d28e933ec1b53e8c4931c5ac62c457f8bbc44a0fff1c32e0b324e556",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/gettingstarted/terminology.rst",
+      "key": "4cb4654d258f",
+      "sha256": "62eaa28de4538d19d401428c0cd1c88b16a84d68b1c752b5893cc1c574fcfada",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_get.md",
+      "key": "4aa397169e78",
+      "sha256": "9b79c4f1ac684838cceff43df2bac6e67b9b0b356d5ccacb42c4ae031077eff5",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_policy_get.md",
+      "key": "79a2d2853229",
+      "sha256": "57646acbf1cce2a4f29fe08a9982dc3508f86f02eb179655d62a9e8f13e29e0d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "key": "68e8148446c9",
+      "sha256": "4119df582c01582bc082c529b6faf29167d07f129c1cec2583117fc37e2e4b13",
+      "raw": "/tmp/istio-foundation-sources/68e8148446c9.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "key": "47d0fa2d6ec0",
+      "sha256": "608ef0b3a0fd0e39ca15044baf83a68f62ec635c50630c747005d920d8f0167d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst",
+      "key": "22e54ce1b17d",
+      "sha256": "04b670a1456958399883f3a99abbb783d9b3df77380de62ccf311d1cbf525ed2",
+      "raw": "/tmp/istio-foundation-sources/22e54ce1b17d.html"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "key": "08a066cf82b7",
+      "sha256": "f4c09257d5b5775267842e5657300738f773f4ba4755d4d56081d21d2957d27c",
+      "raw": "/tmp/istio-foundation-sources/08a066cf82b7.html"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "key": "3439af066be5",
+      "sha256": "f2c086bb65b89696800df59e9f252f12f78fc4bb8b55052366ff367a378d9276",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "key": "f79fc9587de7",
+      "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://helm.cilium.io/cilium-1.20.1.tgz",
+      "artifact": "/tmp/mesh-cilium-tools/cilium-1.20.1.tgz",
+      "sha256": "06210eef7c23d15f7699c79e2fe3a1ec9c389024c5c5c006ea04022d322449a2",
+      "verifiedAgainst": "officialHelmindex"
+    }
+  ],
+  "findings": [
+    "FullyreadoriginalEN164/KO165guidesand406lines/20questionsineachquiz. Preserved40questions(20MCQ,10short,10hands-on) whilecorrectingtheiranswers/explanations.",
+    "Current1.20.1/CLI0.20/Hubble1.19.4baseline,K8stested1.33–36,standardkernel5.10+withvendorbackportexceptionsandkubectlone-minorskewreplaceunboundedcompatibility/kernel4.19. RemovedduplicateuncheckedlatestAMD64downloads;profile-specificpreparedlabvaluesandexplicitcontextprovided.",
+    "CNIruntimeownershipcorrected:KubeletCRI→runtimeCNI,notdirectkubeletCNIflagsafter1.24. CiliumDockerlibnetwork/Mesoscurrenttargetclaimremoved. Calico/Flannel/VPCcomparisonsalignedwithreviewedREADME;originalWeaveupstreamarchivedmetadata verified.",
+    "QuizKafka-awareL7removedin1.20;HTTP/DNSproxyrequirementsandHubbleflowvsapplicationtracing clarified. EncryptionquestionnowasksIPsec/WireGuardpairwithoutfalselydenyingseparateztunnelTLSbeta. XDP/DSR/performance/multiclusterrequirementsbounded.",
+    "Operatornotintrinsicsingleton:actualchartreplicas2;scopeandtaskleadershipqualified. Identityusessecurity-relevantlabels/allocation,notallPodlabelsorpermanentglobalhash;namespace/app-labelassumptionscorrected. Legacyterminologydefaultsnotblindlycopied.",
+    "Labdefines/applystepforcilium-intro-demoNamespaceandpeer-scopedCNP;guides/quizpolicyidentical. Testserver/clientworkloads,defaultlabelhandling,competingpolicies/hosttrafficconditionsareexplicit;noapplicationserverdeploymentorliveenforcementguarantee.",
+    "Hands-onDSRanswerpartialnativeGeneveprofilewithAPIhost/port/nativeCIDRinputsandreturnpathrequirements;rendersseparatelyfromVXLANlab. Currentcilium-dbgendpointgetpod-nameidentifieranddesiredK8spolicyqueriesreplacewrongmanagementcommands/deprecatedpolicyget. ForegroundHubbleportforwardandinstalledclientprerequisitescorrected.",
+    "Twofiguresactuallyviewed;redundantincorrectreferencesremovedduetoobsoletekubelet-CNIcontract,removedKafkaL7andhash/performance/iptablesbypassclaims. Accuratecomponentprosekept;assets/foreignproseunchanged."
+  ],
+  "checks": {
+    "schemaObjects": 6,
+    "bashBlocks": 14,
+    "questions": 40,
+    "multipleChoiceAnswers": 20,
+    "shortAnswers": 10,
+    "handsOnAnswers": 10,
+    "chart": {
+      "version": "1.20.1",
+      "partialQuizValuesRenderedInSeparateNativeFixture": true,
+      "objects": 37,
+      "defaultOperatorReplicas": 2,
+      "selectedConfig": {
+        "routing-mode": "native",
+        "tunnel-protocol": "geneve",
+        "kube-proxy-replacement": "true",
+        "bpf-lb-mode": "dsr",
+        "bpf-lb-dsr-dispatch": "geneve"
+      },
+      "liveNetworkValidated": false
+    },
+    "CLI": [
+      {
+        "arguments": [
+          "install",
+          "--help"
+        ],
+        "requiredFlags": [
+          "--values",
+          "--version",
+          "--context"
+        ],
+        "passed": true
+      },
+      {
+        "arguments": [
+          "status",
+          "--help"
+        ],
+        "requiredFlags": [
+          "--wait",
+          "--verbose"
+        ],
+        "passed": true
+      },
+      {
+        "arguments": [
+          "hubble",
+          "enable",
+          "--help"
+        ],
+        "requiredFlags": [
+          "--ui"
+        ],
+        "passed": true
+      },
+      {
+        "arguments": [
+          "hubble",
+          "port-forward",
+          "--help"
+        ],
+        "requiredFlags": [
+          "--port-forward"
+        ],
+        "passed": true
+      },
+      {
+        "arguments": [
+          "connectivity",
+          "test",
+          "--help"
+        ],
+        "requiredFlags": [],
+        "passed": true
+      }
+    ],
+    "policyScope": {
+      "dedicatedNamespace": true,
+      "peerNamespaceExplicit": true,
+      "guideAndQuizIdentical": true,
+      "onlyIngressTCP8080": true,
+      "otherPolicyAndHostCaveatsReviewed": true
+    },
+    "HubblePodFilter": {
+      "matched": 3,
+      "syntheticFlows": true,
+      "nativeCLI": "1.19.4"
+    },
+    "figures": {
+      "actuallyViewed": 2,
+      "removedReferences": 2,
+      "reason": "Obsolete kubelet-CNI direct contract, removed Kafka L7 and unqualified hash/performance/iptables-bypass claims; accurate roles described in prose. Assets not modified."
+    },
+    "limitations": [
+      "No cluster or application workloads created; no CNI migration, DSR network path or live enforcement tested.",
+      "Lab explicitly requires prepared server/client workloads, namespace, CNI ownership and absence of competing policy grants.",
+      "Partial DSR values rendered offline in a separate native-routing fixture; API host/CIDR and underlay/return-path prerequisites remain real deployment inputs.",
+      "Primary terminology page contains legacy default-label/kvstore details; only core security-relevant-label/allocation concepts used, not those old defaults."
+    ]
+  },
+  "validation": [
+    "6publishedKubernetes/CNPschemaobjects,14bashblocks,40questionstructure/answerchecks,guide/quizpolicyidentityandbilingualcodeparitypassed.",
+    "ReusedidenticalREADMEclusterpoolvaluesvalidation;newpartialDSRsettingsrenderedwithactualchart1.20.1inpreparednativefixture:37objects,selectednative/Geneve/KPRtrue/DSRconfigverified,operatorreplicas2.",
+    "5nativeCLIhelpchecksandnativeHubblePodfilter3syntheticflows passed;noactualinstall/connectivity/DSRtrafficrun.",
+    "4Markdown→Vuecompilationspassed;networking-cilium6filemechanicalscan22YAML/28shellblocks0errors;scopedgitdiffcheckclean. No matching inbound anchors found by targetedlinksearch.",
+    "Clean-envdocs:test118/118,0fail."
+  ],
+  "artifacts": "/home/atomoh/kubernetes-docs/.vitepress/cache/networking-cilium-intro-audit",
+  "originals": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3 document_snapshots",
+  "limitations": [
+    "No cluster or application workloads created; no CNI migration, DSR network path or live enforcement tested.",
+    "Lab explicitly requires prepared server/client workloads, namespace, CNI ownership and absence of competing policy grants.",
+    "Partial DSR values rendered offline in a separate native-routing fixture; API host/CIDR and underlay/return-path prerequisites remain real deployment inputs.",
+    "Primary terminology page contains legacy default-label/kvstore details; only core security-relevant-label/allocation concepts used, not those old defaults."
+  ]
+}

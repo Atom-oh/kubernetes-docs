@@ -1,0 +1,95 @@
+{
+  "reviewDate": "2026-09-12",
+  "diagrams": [
+    {
+      "stem": "ko-ops-12-event-capacity-planning-0",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "capturedViewportsThemes": 4
+    },
+    {
+      "stem": "ko-ops-12-event-capacity-planning-1",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "capturedViewportsThemes": 4
+    },
+    {
+      "stem": "ko-ops-12-event-capacity-planning-2",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "capturedViewportsThemes": 4
+    },
+    {
+      "stem": "en-ops-12-event-capacity-planning-0",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "capturedViewportsThemes": 4
+    },
+    {
+      "stem": "en-ops-12-event-capacity-planning-1",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "capturedViewportsThemes": 4
+    },
+    {
+      "stem": "en-ops-12-event-capacity-planning-2",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "capturedViewportsThemes": 4
+    }
+  ],
+  "images": [
+    {
+      "file": "ko/.gitbook/assets/ko-ops-12-event-capacity-planning-1.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "c6397a2ee1ce96ec32d31953936c31aabe3647a4fd5bed0292b6ba1c61c1131d"
+    },
+    {
+      "file": "ko/.gitbook/assets/ko-ops-12-event-capacity-planning-0.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "520306bf1694dbab6b0f10b9bfe16f24927e5feeea8224b67e02d9eea9612951"
+    },
+    {
+      "file": "ko/.gitbook/assets/ko-ops-12-event-capacity-planning-2.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "a7160247f56331c9f90b9cd86091d8413adb712aa9e17807b89868dd91ffcc6d"
+    },
+    {
+      "file": "en/.gitbook/assets/en-ops-12-event-capacity-planning-1.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "e358d657eb33d30e63aed7e4d9e73c02bda759e5e45f53605c898528308f980f"
+    },
+    {
+      "file": "en/.gitbook/assets/en-ops-12-event-capacity-planning-0.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "eec4c33e7bda2fa6749bb4994e2fbd365969e7cccc2e53045aeb6741a9d91dd6"
+    },
+    {
+      "file": "en/.gitbook/assets/en-ops-12-event-capacity-planning-2.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "923ee2b36fc6432e6892f08587e05e067f9ada5945fce8bc72bfa3df22028a83"
+    }
+  ],
+  "assistantScreenshotInspection": "Completed for all six figures inlight/dark captures;bothfinalmodifiedsequence2PNGsviewedafterlatestlabelchange.",
+  "capturesRoot": "/tmp/kubernetes-docs-full-review/event-fixtures/diagrams",
+  "rendering": "CurrentdeliverySHA/specSHA verified;productionCJKfontnormalizationappliedforvisualchecks;referencedPNGsgeneratedwithfinalsourceHTML.",
+  "limits": "Standalone desktop viewport/theme checks; full-site responsive build still pending."
+}

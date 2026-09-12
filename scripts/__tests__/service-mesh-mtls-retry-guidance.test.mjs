@@ -327,8 +327,17 @@ test('comparison decision summary and Cilium guidance stay in sync across ko/en'
     )
   }
 
-  // Both locales must state the Cilium-vs-Istio decision guidance, not just
-  // the negative "not an automatic replacement" framing.
-  assert.match(enSecurity, /[Cc]hoose (?:Cilium|Istio)/)
-  assert.match(koSecurity, /고르는 경우/)
+  // Keep a substantive decision section in each locale without requiring a
+  // particular translation of "choose". It must cover the available Cilium
+  // encryption choices and the Istio inbound-mTLS boundary.
+  for (const [locale, security] of [['en', enSecurity], ['ko', koSecurity]]) {
+    const decision = security.split(/(?=^### )/m).find(section => {
+      const heading = section.split('\n', 1)[0]
+      return heading.startsWith('### ') && heading.includes('Cilium') && heading.includes('Istio')
+    })
+    assert.ok(decision, `${locale}: missing Cilium/Istio decision section`)
+    for (const concept of [/WireGuard\/IPsec/, /ztunnel/i, /STRICT/, /identity/i, /authorization|인가/]) {
+      assert.match(decision, concept, `${locale}: decision guidance omits ${concept}`)
+    }
+  }
 })

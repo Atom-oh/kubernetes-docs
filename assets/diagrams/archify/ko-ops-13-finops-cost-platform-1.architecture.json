@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "공유 비용 분배 흐름",
+    "title": "가상 USD 10,000의 비용 배분",
     "output": "ko-ops-13-finops-cost-platform-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -43,7 +43,7 @@
           "shared",
           "idle"
         ],
-        "note": "월 $10,000의 클러스터 비용을 직접 65% · 공유 25% · 유휴 10%로 나눈다."
+        "note": "실제 청구서가 아닌, 서로 겹치지 않는 가상 비용 풀입니다."
       },
       {
         "id": "shared-dist",
@@ -55,7 +55,7 @@
           "team-b",
           "team-c"
         ],
-        "note": "kube-system·모니터링 등 공유 인프라 $2,500을 가중치 방식으로 팀에 배분한다."
+        "note": "공유 2,500 USD는 직접 비용 비중에 따라 배분합니다."
       },
       {
         "id": "idle-dist",
@@ -67,7 +67,7 @@
           "team-b",
           "team-c"
         ],
-        "note": "미사용 노드 리소스 $1,000은 노드별 가중치로 배분하며 최적화 대상으로 추적한다."
+        "note": "유휴 1,000 USD는 균등 배분하고 센트 나머지는 합계가 보존되도록 처리합니다."
       }
     ]
   },
@@ -75,8 +75,8 @@
     {
       "id": "total",
       "type": "cloud",
-      "label": "총 클러스터 비용",
-      "sublabel": "$10,000 / 월",
+      "label": "가상 비용 풀",
+      "sublabel": "USD 10,000.00",
       "pos": [
         40,
         248
@@ -133,7 +133,7 @@
       "id": "alloc",
       "type": "security",
       "label": "팀별 비용 합산",
-      "sublabel": "직접 비용 + 공유·유휴 분배분",
+      "sublabel": "공유: 비례 / 유휴: 균등",
       "pos": [
         540,
         248
@@ -147,7 +147,7 @@
       "id": "team-a",
       "type": "frontend",
       "label": "팀 A",
-      "sublabel": "$3,000 + $800 + $320 = $4,120",
+      "sublabel": "USD 4,487.19",
       "pos": [
         800,
         78
@@ -161,7 +161,7 @@
       "id": "team-b",
       "type": "frontend",
       "label": "팀 B",
-      "sublabel": "$2,000 + $600 + $240 = $2,840",
+      "sublabel": "USD 3,102.56",
       "pos": [
         800,
         248
@@ -175,7 +175,7 @@
       "id": "team-c",
       "type": "frontend",
       "label": "팀 C",
-      "sublabel": "$1,500 + $1,100 + $440 = $3,040",
+      "sublabel": "USD 2,410.25",
       "pos": [
         800,
         418
@@ -263,27 +263,25 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "직접 비용 $6,500",
+      "title": "Direct · USD 6,500",
       "items": [
-        "팀 워크로드가 직접 사용한 CPU·메모리·스토리지 비용",
-        "팀 A $3,000 · 팀 B $2,000 · 팀 C $1,500"
+        "A 3,000.00 / B 2,000.00 / C 1,500.00"
       ]
     },
     {
       "dot": "amber",
-      "title": "공유 비용 $2,500",
+      "title": "Shared · USD 2,500",
       "items": [
-        "컨트롤 플레인(kube-system)·서비스 메시: CPU 비용 가중치",
-        "모니터링(Prometheus, Grafana, Loki): 총 비용 가중치",
-        "네트워킹·보안(ALB Controller, cert-manager, OPA): 균등 분배"
+        "A 1,153.85 / B 769.23 / C 576.92",
+        "직접 비용 비중으로 배분"
       ]
     },
     {
       "dot": "slate",
-      "title": "유휴 비용 $1,000",
+      "title": "Idle · USD 1,000",
       "items": [
-        "미사용 노드 리소스는 노드별 가중치로 배분",
-        "팀 합계 $4,120 + $2,840 + $3,040 = $10,000"
+        "A 333.34 / B 333.33 / C 333.33",
+        "균등 배분 · 센트 나머지 보존"
       ]
     }
   ]

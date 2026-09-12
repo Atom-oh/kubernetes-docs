@@ -1,381 +1,215 @@
 # AWS Load Balancer Controller 퀴즈
 
-이 퀴즈는 AWS Load Balancer Controller의 아키텍처, ALB/NLB 설정, 그리고 운영에 대한 이해를 테스트합니다.
+직접 관리하는 LBC v3.5.0 본문을 기준으로 합니다.
 
-## 퀴즈 문제
+## 1. AWS Load Balancer Controller는 무엇을 관리하나요?
 
-### 1. AWS Load Balancer Controller가 대체하는 기존 Kubernetes 컴포넌트는?
-
-A. kube-proxy
-B. in-tree AWS 클라우드 프로바이더
-C. CoreDNS
-D. CNI 플러그인
+- A. 노드 수명주기를 포함한 모든 클라우드 공급자 역할
+- B. Kubernetes 리소스에서 조정하는 지원 AWS 로드밸런서 리소스
+- C. kube-proxy 패킷 전달
+- D. 모든 파드의 CoreDNS 레코드
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. in-tree AWS 클라우드 프로바이더**
-
-**설명:**
-AWS Load Balancer Controller는 기존 Kubernetes in-tree AWS 클라우드 프로바이더의 로드밸런서 기능을 대체합니다:
-- 더 많은 기능 (ALB, NLB 고급 설정)
-- 더 빠른 업데이트 및 버그 수정
-- AWS 서비스와의 더 나은 통합
-
-in-tree 프로바이더는 기본적인 ELB Classic만 지원했지만, AWS Load Balancer Controller는 ALB와 NLB의 모든 기능을 지원합니다.
+B. LBC는 지원되는 ALB/NLB, 대상 그룹, 리스너와 관련 리소스를 관리합니다. kube-proxy, CNI, DNS 또는 모든 클라우드 컨트롤러 책임을 대체하지 않습니다. 기존 AWS 공급자와 EKS Auto Mode는 별도 구현이며 LBC가 모든 ELB 제품의 모든 기능을 구현한다고 설명하면 안 됩니다.
 
 </details>
 
-### 2. ALB Ingress에서 target-type annotation의 `ip`와 `instance` 차이점으로 올바른 것은?
+## 2. ALB의 ip 대상과 instance 대상은 어떻게 다른가요?
 
-A. `ip`는 Pod IP를 직접 타겟으로, `instance`는 NodePort를 통해 라우팅
-B. `ip`는 NodePort를 통해 라우팅, `instance`는 Pod IP를 직접 타겟으로
-C. 두 옵션 모두 동일한 방식으로 동작함
-D. `ip`는 IPv4만, `instance`는 IPv6만 지원
+- A. ip는 파드 IP를 등록하고 instance는 노드 NodePort로 전달
+- B. ip는 항상 NodePort를 사용
+- C. 두 방식은 동일
+- D. instance는 IPv6 전용
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: A. `ip`는 Pod IP를 직접 타겟으로, `instance`는 NodePort를 통해 라우팅**
-
-**설명:**
-Target Type 비교:
-
-| Target Type | 동작 방식 | 장점 | 단점 |
-|-------------|----------|------|------|
-| `ip` | Pod IP 직접 등록 | 낮은 지연, 효율적 | VPC CNI 필요 |
-| `instance` | Node의 NodePort로 라우팅 | 범용적 | 추가 홉 발생 |
-
-`ip` 타입 사용 시 AWS VPC CNI가 필요하며, Pod IP가 직접 Target Group에 등록됩니다.
+A. IP 대상에는 지원되는 VPC 라우팅 가능 파드 주소와 엔드포인트/ENI 탐색이 필요합니다. Amazon VPC CNI가 일반적인 EKS 선택이지만 호환되는 대안 CNI 구성도 가능합니다. Instance 대상에는 NodePort를 사용할 수 있는 Service와 적절한 노드 네트워킹이 필요합니다. 직접 대상 지정만으로 모든 워크로드의 지연 시간 이점이 증명되지는 않습니다.
 
 </details>
 
-### 3. AWS Load Balancer Controller에서 IRSA(IAM Roles for Service Accounts)가 필요한 이유는?
+## 3. 컨트롤러에 IRSA 또는 EKS Pod Identity를 통한 IAM 역할이 필요한 이유는 무엇인가요?
 
-A. Pod 간 통신을 위해
-B. 컨트롤러가 AWS API를 호출하여 리소스를 생성/관리하기 위해
-C. Kubernetes API 서버 인증을 위해
-D. TLS 인증서 관리를 위해
+- A. 파드 네트워킹을 대체하기 위해
+- B. AWS API 호출을 인증하고 인가하기 위해
+- C. Kubernetes RBAC를 대체하기 위해
+- D. 모든 백엔드 요청을 인증하기 위해
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. 컨트롤러가 AWS API를 호출하여 리소스를 생성/관리하기 위해**
-
-**설명:**
-AWS Load Balancer Controller는 다음 작업을 위해 AWS API를 호출해야 합니다:
-- ALB/NLB 생성 및 관리
-- Target Group 생성 및 타겟 등록
-- Listener 및 규칙 설정
-- 보안 그룹 관리
-- ACM 인증서 조회
-
-IRSA를 통해 Service Account에 IAM Role을 연결하면:
-- Pod가 AWS API에 인증 가능
-- 최소 권한 원칙 적용
-- 노드 전체가 아닌 특정 Pod에만 권한 부여
+B. 컨트롤러는 로드밸런서, 대상 그룹, 리스너와 관련 보안 그룹을 만들고 관리하기 위해 AWS API를 호출합니다. IRSA와 지원되는 Pod Identity 구성은 대안입니다. 역할은 연결된 정책의 권한만 부여하며 역할 사용만으로 최소 권한이 자동 보장되지는 않습니다. Kubernetes RBAC와 애플리케이션 인증은 별도입니다.
 
 </details>
 
-### 4. ALB Ingress에서 여러 Ingress 리소스를 하나의 ALB로 통합하는 방법은?
+## 4. 여러 Ingress가 하나의 ALB를 공유하는 방법은 무엇인가요?
 
-A. 같은 namespace에 배포
-B. `alb.ingress.kubernetes.io/group.name` annotation 사용
-C. 같은 IngressClass 사용
-D. ALB는 항상 하나의 Ingress만 지원
+- A. 같은 네임스페이스에 있으면 충분
+- B. 같은 alb.ingress.kubernetes.io/group.name 사용
+- C. 모든 Ingress는 항상 같은 ALB 공유
+- D. 같은 파드 이름 설정
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. `alb.ingress.kubernetes.io/group.name` annotation 사용**
-
-**설명:**
-Ingress Group 기능:
-
-```yaml
-# Ingress 1
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "1"
----
-# Ingress 2
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/group.name: my-app-group
-    alb.ingress.kubernetes.io/group.order: "2"
-```
-
-장점:
-- ALB 비용 절감 (여러 서비스가 하나의 ALB 공유)
-- 중앙집중화된 관리
-- 순서 지정으로 규칙 우선순위 제어
+B. IngressGroup은 ALB와 규칙 공간을 공유합니다. 작은 group.order부터 평가하며 같은 값이면 네임스페이스/이름 순서입니다. 그룹에 참여할 수 있는 비신뢰 사용자가 라우팅에 영향을 줄 수 있으므로 강제된 신뢰 경계 내에서 사용하세요. 모든 배포에서 비용이 줄어든다고 가정하지 말고 어노테이션 병합/독점 동작, 제한과 비용을 검토합니다.
 
 </details>
 
-### 5. NLB Service에서 TLS 종료를 구현하기 위한 annotation은?
+## 5. NLB TLS 인증서를 제공하는 어노테이션은 무엇인가요?
 
-A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`
-B. `alb.ingress.kubernetes.io/certificate-arn`
-C. `service.beta.kubernetes.io/aws-load-balancer-tls-termination`
-D. `nlb.kubernetes.io/ssl-certificate`
+- A. service.beta.kubernetes.io/aws-load-balancer-ssl-cert
+- B. alb.ingress.kubernetes.io/certificate-arn
+- C. service.beta.kubernetes.io/aws-load-balancer-tls-termination
+- D. nlb.kubernetes.io/ssl-certificate
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: A. `service.beta.kubernetes.io/aws-load-balancer-ssl-cert`**
-
-**설명:**
-NLB TLS 종료 설정:
+A. 직접 관리하는 LBC의 완전한 Service 예제는 다음과 같습니다.
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
+  name: nlb-tls-service
+  namespace: default
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:..."
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:ap-northeast-2:123456789012:certificate/12345678-1234-1234-1234-123456789012
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: '443'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  selector:
+    app: my-app
   ports:
-    - port: 443
-      targetPort: 8080
+  - name: https
+    port: 443
+    targetPort: 8080
+    protocol: TCP
 ```
 
-`alb.ingress.kubernetes.io/certificate-arn`은 ALB Ingress용 annotation입니다.
+인증서 ARN을 교체하고 8080에서 수신하는 일치 백엔드 파드를 준비하세요. 클라이언트 TLS는 NLB에서 종료하며 여기서 tcp는 백엔드 연결에 TLS를 적용하지 않습니다. 적절한 인증서/보안 정책과 네트워크 제어가 필요합니다. Auto Mode는 별도의 loadBalancerClass와 지원 어노테이션 집합을 사용합니다.
 
 </details>
 
-### 6. TargetGroupBinding CRD의 주요 용도는?
+## 6. 독립적으로 생성한 TargetGroupBinding의 목적은 무엇인가요?
 
-A. 새로운 Target Group을 자동으로 생성
-B. 기존 AWS Target Group을 Kubernetes Service와 연결
-C. ALB Listener 규칙 정의
-D. 보안 그룹 자동 생성
+- A. 모든 로드밸런서/리스너 자동 생성
+- B. 기존 대상 그룹에 Kubernetes Service 대상 등록
+- C. ALB HTTP 리스너 라우팅 규칙 정의
+- D. IAM 인가 대체
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. 기존 AWS Target Group을 Kubernetes Service와 연결**
-
-**설명:**
-TargetGroupBinding 사용 사례:
-1. 기존 인프라 마이그레이션 - 이미 존재하는 Target Group 활용
-2. 여러 클러스터 공유 - 하나의 ALB/NLB를 여러 클러스터에서 사용
-3. 직접 Target Group 관리가 필요한 경우
+B. 로드밸런서, 리스너와 대상 그룹은 이미 존재하며 Service/대상 프로토콜, 주소 계열과 포트가 맞아야 합니다.
 
 ```yaml
 apiVersion: elbv2.k8s.aws/v1beta1
 kind: TargetGroupBinding
 metadata:
   name: my-tgb
+  namespace: default
 spec:
-  targetGroupARN: arn:aws:elasticloadbalancing:...
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:123456789012:targetgroup/my-tg/1234567890abcdef
   serviceRef:
     name: my-service
     port: 80
   targetType: ip
 ```
 
+여러 클러스터/TGB가 대상 그룹을 공유하면 모든 참여자가 생성 시부터 multiClusterTargetGroup: true를 설정해야 합니다. 기본값은 전체 소유권을 가정하므로 외부 대상을 등록 해제할 수 있습니다. nodeSelector는 instance 대상에 적용되며 IP 모드 파드를 필터링하지 않습니다. TGB 권한은 신뢰할 수 있는 사용자로 제한하세요.
+
 </details>
 
-### 7. ALB Ingress에서 WAF v2를 연동하기 위한 annotation은?
+## 7. ALB에 리전 WAF v2 Web ACL을 연결하는 어노테이션은 무엇인가요?
 
-A. `alb.ingress.kubernetes.io/waf-acl-id`
-B. `alb.ingress.kubernetes.io/wafv2-acl-arn`
-C. `alb.ingress.kubernetes.io/web-acl`
-D. `alb.ingress.kubernetes.io/firewall-rules`
+- A. alb.ingress.kubernetes.io/waf-acl-id
+- B. alb.ingress.kubernetes.io/wafv2-acl-arn
+- C. alb.ingress.kubernetes.io/web-acl
+- D. alb.ingress.kubernetes.io/firewall-rules
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. `alb.ingress.kubernetes.io/wafv2-acl-arn`**
-
-**설명:**
-AWS WAF v2 연동:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:ap-northeast-2:ACCOUNT:regional/webacl/my-acl/xxx
-```
-
-WAF v2 기능:
-- SQL 인젝션, XSS 보호
-- Rate limiting
-- IP 기반 차단/허용
-- 커스텀 규칙
-
-컨트롤러 설치 시 `enableWafv2: true` 설정 필요.
+B. ALB와 같은 리전의 기존 regional Web ACL ARN을 지정하고 규칙 및 컨트롤러 권한을 구성합니다. WAF v2 연동은 활성화되어 있어야 하지만 기본값이 true이므로 enableWafv2를 반드시 명시해야 하는 것은 아닙니다. 연동이 비활성화되면 어노테이션을 적용하지 않습니다. WAF와 유료 Shield Advanced 보호는 서로 다른 기능입니다.
 
 </details>
 
-### 8. AWS Load Balancer Controller에서 서브넷 자동 감지를 위한 태그는?
+## 8. 일반적인 서브넷 역할 태그는 무엇인가요?
 
-A. `kubernetes.io/cluster/<cluster-name>=owned`
-B. `kubernetes.io/role/elb=1` (퍼블릭), `kubernetes.io/role/internal-elb=1` (프라이빗)
-C. `aws:cloudformation:stack-name`
-D. `Name=kubernetes-subnet`
+- A. kubernetes.io/cluster/CLUSTER_NAME만 사용
+- B. 퍼블릭은 kubernetes.io/role/elb, 프라이빗은 kubernetes.io/role/internal-elb
+- C. aws:cloudformation:stack-name
+- D. Name=kubernetes-subnet만 사용
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. `kubernetes.io/role/elb=1` (퍼블릭), `kubernetes.io/role/internal-elb=1` (프라이빗)**
-
-**설명:**
-서브넷 태깅 규칙:
-
-```bash
-# 퍼블릭 서브넷 (internet-facing ALB/NLB용)
-kubernetes.io/role/elb=1
-
-# 프라이빗 서브넷 (internal ALB/NLB용)
-kubernetes.io/role/internal-elb=1
-
-# 클러스터 소유권 (선택)
-kubernetes.io/cluster/<cluster-name>=shared 또는 owned
-```
-
-태그가 없으면 컨트롤러가 적절한 서브넷을 찾지 못해 로드밸런서 생성에 실패할 수 있습니다.
+B. 직접 관리하는 LBC 탐색에서는 값으로 1 또는 빈 문자열을 사용할 수 있습니다. v2.12.1 이상은 일치하는 역할 태그가 없을 때 기본 도달성 기반 fallback으로 라우팅 테이블에서 서브넷을 분류할 수 있습니다. 명시적 서브넷과 IngressClassParams 태그 필터도 선택 경로입니다. Auto Mode에는 여전히 문서화된 태그가 필요합니다. 클러스터 태그, 가용 IP와 AZ 요구사항을 확인하며 태그가 라우팅을 변경하지는 않습니다.
 
 </details>
 
-### 9. ALB Ingress에서 Sticky Session을 활성화하는 annotation은?
+## 9. ALB 고정 세션은 어떻게 구성하나요?
 
-A. `alb.ingress.kubernetes.io/sticky-sessions=true`
-B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`
-C. `alb.ingress.kubernetes.io/session-affinity=cookie`
-D. `alb.ingress.kubernetes.io/cookie-based-routing=true`
+- A. alb.ingress.kubernetes.io/sticky-sessions=true
+- B. target-group-attributes에 stickiness.enabled=true 설정
+- C. Ingress에 session-affinity=cookie 설정
+- D. 항상 기본 활성화
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. `alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true`**
-
-**설명:**
-Sticky Session 설정:
-
-```yaml
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/target-group-attributes: >-
-      stickiness.enabled=true,
-      stickiness.lb_cookie.duration_seconds=3600
-```
-
-Target Group 속성으로 설정:
-- `stickiness.enabled=true` - 활성화
-- `stickiness.lb_cookie.duration_seconds` - 쿠키 유효 시간
-- `stickiness.type` - lb_cookie 또는 app_cookie
-
-Sticky Session은 세션 상태를 유지해야 하는 레거시 애플리케이션에 유용합니다.
+B. alb.ingress.kubernetes.io/target-type: ip를 설정하고 하나의 target-group-attributes 어노테이션에 stickiness.enabled=true와 적절한 쿠키 속성을 함께 넣습니다. 슬로우 스타트나 등록 해제 지연 때문에 같은 YAML 키를 반복하면 설정이 유실될 수 있습니다. 가중치 forward 동작을 사용하면 문서에 따라 해당 동작의 대상 그룹 고정 세션도 일관되게 구성하세요.
 
 </details>
 
-### 10. NLB에서 클라이언트 원본 IP를 보존하는 방법은?
+## 10. NLB 클라이언트 신원에 대한 올바른 설명은 무엇인가요?
 
-A. `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"` 사용
-B. externalTrafficPolicy: Local 사용
-C. 두 방법 모두 가능
-D. NLB는 항상 클라이언트 IP를 보존함
+- A. Proxy Protocol v2가 IP 패킷 소스를 클라이언트 주소로 변경
+- B. externalTrafficPolicy: Local이 모든 대상 모드에서 원본 IP 보장
+- C. Proxy Protocol은 메타데이터를 전달하고 패킷 소스 보존은 네트워크/프로토콜 제약을 가진 별도 설정
+- D. NLB는 항상 클라이언트 IP 보존
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: C. 두 방법 모두 가능**
-
-**설명:**
-클라이언트 IP 보존 방법:
-
-1. **Proxy Protocol v2**:
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: proxy_protocol_v2.enabled=true
-```
-- 애플리케이션이 Proxy Protocol 지원 필요
-
-2. **externalTrafficPolicy: Local**:
-```yaml
-spec:
-  externalTrafficPolicy: Local
-```
-- 추가 홉 없이 동일 노드의 Pod로만 라우팅
-- 불균형한 트래픽 분산 가능성
-
-3. **IP Target Type** (ip 모드):
-```yaml
-annotations:
-  service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-```
+C. 백엔드는 애플리케이션 데이터 전에 Proxy Protocol v2를 해석하고 해당 상태 검사도 지원해야 합니다. preserve_client_ip.enabled는 지원되는 경우 패킷 소스 보존을 제어합니다. Instance/NodePort 모드의 externalTrafficPolicy: Local은 이후 kube-proxy SNAT 홉을 피할 수 있지만 모든 NLB 경로나 IP 계열 변환을 해결하지는 않습니다. NLB 가중치는 일반적으로 새 연결에 영향을 주지만 0으로 설정하면 잠시 후 기존 연결도 닫힙니다.
 
 </details>
 
-### 11. ALB Ingress에서 HTTP를 HTTPS로 리다이렉트하는 annotation은?
+## 11. ALB HTTP→HTTPS 리다이렉트 어노테이션은 무엇인가요?
 
-A. `alb.ingress.kubernetes.io/actions.ssl-redirect`
-B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`
-C. `alb.ingress.kubernetes.io/force-ssl-redirect: "true"`
-D. `alb.ingress.kubernetes.io/http-to-https: "true"`
+- A. alb.ingress.kubernetes.io/force-ssl-redirect
+- B. alb.ingress.kubernetes.io/ssl-redirect: "443"
+- C. alb.ingress.kubernetes.io/http-to-https
+- D. 항상 HTTPRoute가 필요
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. `alb.ingress.kubernetes.io/ssl-redirect: "443"`**
-
-**설명:**
-SSL 리다이렉트 설정:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
-```
-
-동작:
-- HTTP(80)로 들어오는 요청을 HTTPS(443)로 301 리다이렉트
-- 보안 모범 사례로 권장됨
-- ACM 인증서 필요
+B. HTTP와 목적지 HTTPS 리스너 및 적절한 인증서를 구성합니다. 활성화하면 HTTP 리스너는 리다이렉트 기본 동작을 사용하고 다른 라우팅 규칙은 무시합니다. IngressGroup에 영향을 주므로 그룹 전체 동작을 검토하세요. Cognito/OIDC/JWT 인증에는 HTTPS가 필요하며 리다이렉트 자체가 애플리케이션 인가는 아닙니다.
 
 </details>
 
-### 12. AWS Load Balancer Controller에서 ALB가 생성되지 않을 때 확인해야 할 사항이 아닌 것은?
+## 12. ALB가 생성되지 않을 때 먼저 확인할 것은 무엇인가요?
 
-A. IAM 권한 확인
-B. 서브넷 태그 확인
-C. IngressClass 지정 확인
-D. kube-proxy 로그 확인
+- A. kube-proxy 로그만 확인
+- B. 애플리케이션 쿠키 내용
+- C. 컨트롤러 로그/이벤트, 클래스, IAM, 서브넷 적격성, 웹훅/CRD 상태
+- D. 파드 복제본 수만 확인
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: D. kube-proxy 로그 확인**
-
-**설명:**
-ALB 생성 실패 시 확인 사항:
-
-1. **IAM 권한**: Service Account의 IAM Role에 필요한 권한이 있는지
-2. **서브넷 태그**: `kubernetes.io/role/elb=1` 또는 `kubernetes.io/role/internal-elb=1`
-3. **IngressClass**: `ingressClassName: alb` 또는 annotation으로 지정
-4. **컨트롤러 로그**: `kubectl logs -n kube-system deployment/aws-load-balancer-controller`
-5. **Ingress 이벤트**: `kubectl describe ingress <name>`
-
-kube-proxy는 Service의 ClusterIP/NodePort 라우팅을 담당하며, ALB 생성과는 무관합니다.
+C. 먼저 조정·제어 플레인 경로를 확인합니다. kube-proxy나 eBPF 대체 구현은 이후 노드/서비스 트래픽에서 중요할 수 있지만 실패한 AWS CreateLoadBalancer 작업의 첫 진단 대상은 아닙니다. kubectl apply 성공만으로 AWS 조정 성공이 증명되지는 않습니다. 실제 리소스 ID와 네임스페이스를 사용하고 로그 출력 범위를 제한하세요.
 
 </details>
 
----
-
-## 추가 학습 자료
-
-- [AWS Load Balancer Controller 문서](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [EKS 사용자 가이드](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
-- [ALB Annotation 레퍼런스](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.8/guide/ingress/annotations/)
+[본문으로 돌아가기](../../networking/03-aws-lb-controller.md)

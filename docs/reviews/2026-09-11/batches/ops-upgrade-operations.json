@@ -1,0 +1,214 @@
+[
+  {
+    "path": "ko/ops/11-upgrade-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete upgrade guides/quizzes corrected with current AutoMode/native rollback semantics, real CLI parser/output checks, bounded readonly helpers, safe migration ownership and numeric query tests.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-policy/",
+      "https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3",
+      "https://github.com/velero-io/velero/releases/tag/v1.18.2",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_TargetGroupStickinessConfig.html"
+    ],
+    "validation": [
+      "ops-upgrade-validation.json",
+      "50fences20questions10queries;3manifests2nativeGoAppTemplates+missingkey;12assessment5collection5wait13routingcases;7Promcalculations;9AWSrequestshapes;officialCLI2.36.44/Pluto5.24.3/Velero1.18.2"
+    ],
+    "initialCandidates": [
+      "ContradictorycontrolplanenorollbackvsnewnativeRollbacksection;zero-downtimeguarantees;AutoModeupgraderollbacknodeorderingand7dayeligibilityrequirecurrentofficialsource;MNGrollbackpossible;nodeAMIcustomEC2NodeClasswrongforAutoMode.",
+      "VersionpolicyN-3wrong(upstream3total);stale2025matrix1.32Preview/EOLsupport/addonminimums/DRAfeaturetimeline;extended$.60totalnotadditional$.60;describe-addon-versionsnotclustersupportstatus;K8sGA/Beta/AlphaDeprecationruleswrong,removedAPIversiontablefalse.",
+      "AddonclassificationpureAutoDNSnode-localCoreDNS/noaws-node/kube-proxy/PIagentstandardpods;mixmustretainnonAuto. AddonmanagementnotfixedCorednsVPC list;paginatedexactversion/platformarchitecturecomputeTypecompatibilityanderrorsmustnotbeNotInstalled/pass.",
+      "Preflightfailopenpipeerrorsandgrepphaseparse:ReadyconditionTrue/False/Unknown/notNodephase;RunningnotReady/CrashLoop;PDB0notalwaysblocking;Deployment observedGeneration/updated/available andscaled0;capturecontextmustmatchAWSendpoint;notHTTPmissingendpointorCLIerroreqPASS.",
+      "PlutoreleaseURL/architecture/versionpinnedchecksums;detectcommandsactualparserandnonzeroexitfindingsvsoperationalerror;liveAPIserverconvertsversionssoGit/render/Helm/clientwarning/audit/UpgradeInsightsneeded;Velero restore --dry-runverifyactual;namespace restore realworkloadsnotdryrun;backupCompletednotapplicationconsistent/volumeprooffullstate.",
+      "AutoModecontrollernotinstalledKarpenterDeployment/EC2NodeClass;nativeNodeClassAPI,disruptionbudgetsminintersectionnotatleastone,percentroundingUTCscheduledwindowonlyapplieswhenactive;nodepooldo-not-disruptannotationineffective,0budgetonlyvoluntarynotexpiry/Spotrepairforce.",
+      "Terraformunresolvedrefs/v20outdated/oldfieldnames,privatepublicendpointpolicy,fullsavedplanvsrecomputedapproval,versionupgradewaitmusttrackupdateIDterminalfailuretimeoutnotinfiniteACTIVEpoll;update-addonOVERWRITE/destructivecustomconfiganddowngradecompatibilityneedsreview.",
+      "ArgoCDclusterSecretmustapplyhubcontext/validCA/roleAccessEntryRBAC;AppSetGoTemplatedotwithoutgoTemplatewrong;labelsargocdappselectorunpropagated;rollbackCLIexpectsdeploymenthistoryIDnotGitSHA,automatedsyncwillrevert;Helmreposunadded/deprecatedbitnami/certmanageroldkeys;donotautoupgradeallplatformafterCPblindly.",
+      "BlueGreenweightedNLBsupportedbut0..999relativeweightsnotpercent/sum100requirement;weight0closesexistingconnectionsaftershortdelay;noautomatichealthyTGfallback;ALBforwardstickinessnotNLBmaybeverify;TLS/SNIhostLBsmoketestmustuseactualhost/cert;trafficshiftnotDNSpercentageandnotguaranteedzero-disruption.",
+      "TGregistration/TGBownershipmissing;AutoModeTGBdeletiondeletesTG;zero-weightreferencecleanupbeforedecommission;globalNLB/DNSnotownedbyblueclusterstate;sharedRDS/EFSdoesnotremoveappschema/dualwriter/consumer/CronJobmigrationrisks;PVC-onlybackupinsufficient,contextBSLsnapshotsAZKMSpluginchecks.",
+      "PromQLcountReadyfalse/Pendingcounts0gaugevalues;podrestartsnotreschedules;AutoModecontrollercountersnotassumedincluster;before30moffset1hactual[t-90,t-60]not[t-60,t-30];histogramsumleandscopezero traffic/emptyerror/cohorts;72hnotfullweek;partialdashboardJSON/YAMLnotcompleteimport.",
+      "QuizzesVeleroexcludednamespaceclaimverify,skiponeminorwordingambiguousshouldskipzero/upnextone,Nodeversionmax2outdated,DaemonSeteligibleNodes/notallnodes/drainignoredoesnotdeleteorwaitReadyrecreate,PBDisnotuptimeguarantee."
+    ],
+    "reviewedSha256": "34dc1b3897b07ede9a80bbc0a2804fdd075e667de69a6e9aef47b9deb70c5678",
+    "findings": [
+      "ReplacedstaleN-3/fourreleasepolicy,2025matrix/featuretimelines,incorrectdeprecationpolicyandextendedfee;officialupstream3minor,EKS14+12months,extended$.60TOTAL.",
+      "SeparatedpureAutoModeDNSsystemserviceandservice-managedcapabilitiesfromstandard/mixednodes;removedEC2NodeClassAMIcontrolandmandatoryaws-node/kube-proxy/CoreDNSDeployment checks.",
+      "NativeEKSrollbackreal:previousminor/initiatewithin7days/eligibility/extendedpolicy,AutoNodesfirstwhileclusterACTIVE;data/apps/addonsnotrestored,MNGseparateUpdateNodegroupVersion.",
+      "ActualCLI2.35.11doesnotrecognize rollback-config;privateofficialPGPverifiedAWSCLI2.36.44 supportsrollbackConfigandCancelUpdate;globalCLIunchanged. No rollback-clustercommand.",
+      "Upgradeinsightforceenforcementtemporarilysuspendedperofficialguide;differentfromROLLBACK_READINESSERROR/UNKNOWNblockingandWARNINGadvisory. Forcecannotbypasseligibility/disruption.",
+      "AutoRollbackdefault720min,120..10080range/minimumbound;UpdateIDnotclusterACTIVEwait;cancelonlynodephase,besteffort;timeout/cancelnodesdriftcurrentagain;IaCtimeoutnotservercancel.",
+      "Replacedfailopenpreflightwithreadonlyexplicitregion/cluster/contextendpointmatch,JSONReadyconditions,kubeletalignmentreview,PodReady,Deploymentgeneration,scaledzero/PDBcases,exactaddonversions/metadataandAPIerrorsunknown.",
+      "Pluto5.24.3 allfourdetectcommandsvalid;native0cleanitemsomitted,2deprecated,3removed;originaljq length/objectandmisinstalledfallbackwrong;Git/render/APIconversioncoverageexplained.",
+      "Velero1.18.2 restorecreateNOdryrun;outputJSONperformsK8sGETdiscovery/BackupreadswithoutPOST;ScheduleoutputalsoBSLGET. Defaultbackupincludes[*],notautomaticvelerons exclusion. BackupCompletednotdataconsistencyproof.",
+      "NLBweights0..999relative;0transitionclosesexistingconnectionsafterdelay. ForwardTGstickinesssupportednonTLS,DurationSecondsdocumentedALB-only;helperusesEnabledonlyandvalidatesprotocol/weights/ARNs.",
+      "ArgoAppSetGoTemplate/manualsync/labels/Projectprereqs/native2renders+missingkey;preserveResourcesOnDeletionpreventsselectorchangecascadebutownershiphandoffrequired;app rollback historyIDnotSHA.",
+      "BlueGreenstateful/dualwriter/consumer/DNSrisks,sharedNLBtargetregistrationandAutoTGBdeletionownership;noimmediatedestroy/forceddrainautomation/zero-downtimeguarantees.",
+      "PromQLgaugevaluesnotcounts,Readyfalse+unknown,Pendingzeros,missingerrors/zerotraffic/crossclusterP99;[30m]offset1his90–60minago,72hnotweeklycoverage."
+    ]
+  },
+  {
+    "path": "ko/quizzes/ops/11-upgrade-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete upgrade guides/quizzes corrected with current AutoMode/native rollback semantics, real CLI parser/output checks, bounded readonly helpers, safe migration ownership and numeric query tests.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-policy/",
+      "https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3",
+      "https://github.com/velero-io/velero/releases/tag/v1.18.2",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_TargetGroupStickinessConfig.html"
+    ],
+    "validation": [
+      "ops-upgrade-validation.json",
+      "50fences20questions10queries;3manifests2nativeGoAppTemplates+missingkey;12assessment5collection5wait13routingcases;7Promcalculations;9AWSrequestshapes;officialCLI2.36.44/Pluto5.24.3/Velero1.18.2"
+    ],
+    "initialCandidates": [
+      "ContradictorycontrolplanenorollbackvsnewnativeRollbacksection;zero-downtimeguarantees;AutoModeupgraderollbacknodeorderingand7dayeligibilityrequirecurrentofficialsource;MNGrollbackpossible;nodeAMIcustomEC2NodeClasswrongforAutoMode.",
+      "VersionpolicyN-3wrong(upstream3total);stale2025matrix1.32Preview/EOLsupport/addonminimums/DRAfeaturetimeline;extended$.60totalnotadditional$.60;describe-addon-versionsnotclustersupportstatus;K8sGA/Beta/AlphaDeprecationruleswrong,removedAPIversiontablefalse.",
+      "AddonclassificationpureAutoDNSnode-localCoreDNS/noaws-node/kube-proxy/PIagentstandardpods;mixmustretainnonAuto. AddonmanagementnotfixedCorednsVPC list;paginatedexactversion/platformarchitecturecomputeTypecompatibilityanderrorsmustnotbeNotInstalled/pass.",
+      "Preflightfailopenpipeerrorsandgrepphaseparse:ReadyconditionTrue/False/Unknown/notNodephase;RunningnotReady/CrashLoop;PDB0notalwaysblocking;Deployment observedGeneration/updated/available andscaled0;capturecontextmustmatchAWSendpoint;notHTTPmissingendpointorCLIerroreqPASS.",
+      "PlutoreleaseURL/architecture/versionpinnedchecksums;detectcommandsactualparserandnonzeroexitfindingsvsoperationalerror;liveAPIserverconvertsversionssoGit/render/Helm/clientwarning/audit/UpgradeInsightsneeded;Velero restore --dry-runverifyactual;namespace restore realworkloadsnotdryrun;backupCompletednotapplicationconsistent/volumeprooffullstate.",
+      "AutoModecontrollernotinstalledKarpenterDeployment/EC2NodeClass;nativeNodeClassAPI,disruptionbudgetsminintersectionnotatleastone,percentroundingUTCscheduledwindowonlyapplieswhenactive;nodepooldo-not-disruptannotationineffective,0budgetonlyvoluntarynotexpiry/Spotrepairforce.",
+      "Terraformunresolvedrefs/v20outdated/oldfieldnames,privatepublicendpointpolicy,fullsavedplanvsrecomputedapproval,versionupgradewaitmusttrackupdateIDterminalfailuretimeoutnotinfiniteACTIVEpoll;update-addonOVERWRITE/destructivecustomconfiganddowngradecompatibilityneedsreview.",
+      "ArgoCDclusterSecretmustapplyhubcontext/validCA/roleAccessEntryRBAC;AppSetGoTemplatedotwithoutgoTemplatewrong;labelsargocdappselectorunpropagated;rollbackCLIexpectsdeploymenthistoryIDnotGitSHA,automatedsyncwillrevert;Helmreposunadded/deprecatedbitnami/certmanageroldkeys;donotautoupgradeallplatformafterCPblindly.",
+      "BlueGreenweightedNLBsupportedbut0..999relativeweightsnotpercent/sum100requirement;weight0closesexistingconnectionsaftershortdelay;noautomatichealthyTGfallback;ALBforwardstickinessnotNLBmaybeverify;TLS/SNIhostLBsmoketestmustuseactualhost/cert;trafficshiftnotDNSpercentageandnotguaranteedzero-disruption.",
+      "TGregistration/TGBownershipmissing;AutoModeTGBdeletiondeletesTG;zero-weightreferencecleanupbeforedecommission;globalNLB/DNSnotownedbyblueclusterstate;sharedRDS/EFSdoesnotremoveappschema/dualwriter/consumer/CronJobmigrationrisks;PVC-onlybackupinsufficient,contextBSLsnapshotsAZKMSpluginchecks.",
+      "PromQLcountReadyfalse/Pendingcounts0gaugevalues;podrestartsnotreschedules;AutoModecontrollercountersnotassumedincluster;before30moffset1hactual[t-90,t-60]not[t-60,t-30];histogramsumleandscopezero traffic/emptyerror/cohorts;72hnotfullweek;partialdashboardJSON/YAMLnotcompleteimport.",
+      "QuizzesVeleroexcludednamespaceclaimverify,skiponeminorwordingambiguousshouldskipzero/upnextone,Nodeversionmax2outdated,DaemonSeteligibleNodes/notallnodes/drainignoredoesnotdeleteorwaitReadyrecreate,PBDisnotuptimeguarantee."
+    ],
+    "reviewedSha256": "d98b5dd80afbe1dc99f8ef05296a2e9aad427186f442fc614777669bc955fdc0",
+    "findings": [
+      "ReplacedstaleN-3/fourreleasepolicy,2025matrix/featuretimelines,incorrectdeprecationpolicyandextendedfee;officialupstream3minor,EKS14+12months,extended$.60TOTAL.",
+      "SeparatedpureAutoModeDNSsystemserviceandservice-managedcapabilitiesfromstandard/mixednodes;removedEC2NodeClassAMIcontrolandmandatoryaws-node/kube-proxy/CoreDNSDeployment checks.",
+      "NativeEKSrollbackreal:previousminor/initiatewithin7days/eligibility/extendedpolicy,AutoNodesfirstwhileclusterACTIVE;data/apps/addonsnotrestored,MNGseparateUpdateNodegroupVersion.",
+      "ActualCLI2.35.11doesnotrecognize rollback-config;privateofficialPGPverifiedAWSCLI2.36.44 supportsrollbackConfigandCancelUpdate;globalCLIunchanged. No rollback-clustercommand.",
+      "Upgradeinsightforceenforcementtemporarilysuspendedperofficialguide;differentfromROLLBACK_READINESSERROR/UNKNOWNblockingandWARNINGadvisory. Forcecannotbypasseligibility/disruption.",
+      "AutoRollbackdefault720min,120..10080range/minimumbound;UpdateIDnotclusterACTIVEwait;cancelonlynodephase,besteffort;timeout/cancelnodesdriftcurrentagain;IaCtimeoutnotservercancel.",
+      "Replacedfailopenpreflightwithreadonlyexplicitregion/cluster/contextendpointmatch,JSONReadyconditions,kubeletalignmentreview,PodReady,Deploymentgeneration,scaledzero/PDBcases,exactaddonversions/metadataandAPIerrorsunknown.",
+      "Pluto5.24.3 allfourdetectcommandsvalid;native0cleanitemsomitted,2deprecated,3removed;originaljq length/objectandmisinstalledfallbackwrong;Git/render/APIconversioncoverageexplained.",
+      "Velero1.18.2 restorecreateNOdryrun;outputJSONperformsK8sGETdiscovery/BackupreadswithoutPOST;ScheduleoutputalsoBSLGET. Defaultbackupincludes[*],notautomaticvelerons exclusion. BackupCompletednotdataconsistencyproof.",
+      "NLBweights0..999relative;0transitionclosesexistingconnectionsafterdelay. ForwardTGstickinesssupportednonTLS,DurationSecondsdocumentedALB-only;helperusesEnabledonlyandvalidatesprotocol/weights/ARNs.",
+      "ArgoAppSetGoTemplate/manualsync/labels/Projectprereqs/native2renders+missingkey;preserveResourcesOnDeletionpreventsselectorchangecascadebutownershiphandoffrequired;app rollback historyIDnotSHA.",
+      "BlueGreenstateful/dualwriter/consumer/DNSrisks,sharedNLBtargetregistrationandAutoTGBdeletionownership;noimmediatedestroy/forceddrainautomation/zero-downtimeguarantees.",
+      "PromQLgaugevaluesnotcounts,Readyfalse+unknown,Pendingzeros,missingerrors/zerotraffic/crossclusterP99;[30m]offset1his90–60minago,72hnotweeklycoverage."
+    ]
+  },
+  {
+    "path": "en/ops/11-upgrade-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete upgrade guides/quizzes corrected with current AutoMode/native rollback semantics, real CLI parser/output checks, bounded readonly helpers, safe migration ownership and numeric query tests.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-policy/",
+      "https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3",
+      "https://github.com/velero-io/velero/releases/tag/v1.18.2",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_TargetGroupStickinessConfig.html"
+    ],
+    "validation": [
+      "ops-upgrade-validation.json",
+      "50fences20questions10queries;3manifests2nativeGoAppTemplates+missingkey;12assessment5collection5wait13routingcases;7Promcalculations;9AWSrequestshapes;officialCLI2.36.44/Pluto5.24.3/Velero1.18.2"
+    ],
+    "initialCandidates": [
+      "ContradictorycontrolplanenorollbackvsnewnativeRollbacksection;zero-downtimeguarantees;AutoModeupgraderollbacknodeorderingand7dayeligibilityrequirecurrentofficialsource;MNGrollbackpossible;nodeAMIcustomEC2NodeClasswrongforAutoMode.",
+      "VersionpolicyN-3wrong(upstream3total);stale2025matrix1.32Preview/EOLsupport/addonminimums/DRAfeaturetimeline;extended$.60totalnotadditional$.60;describe-addon-versionsnotclustersupportstatus;K8sGA/Beta/AlphaDeprecationruleswrong,removedAPIversiontablefalse.",
+      "AddonclassificationpureAutoDNSnode-localCoreDNS/noaws-node/kube-proxy/PIagentstandardpods;mixmustretainnonAuto. AddonmanagementnotfixedCorednsVPC list;paginatedexactversion/platformarchitecturecomputeTypecompatibilityanderrorsmustnotbeNotInstalled/pass.",
+      "Preflightfailopenpipeerrorsandgrepphaseparse:ReadyconditionTrue/False/Unknown/notNodephase;RunningnotReady/CrashLoop;PDB0notalwaysblocking;Deployment observedGeneration/updated/available andscaled0;capturecontextmustmatchAWSendpoint;notHTTPmissingendpointorCLIerroreqPASS.",
+      "PlutoreleaseURL/architecture/versionpinnedchecksums;detectcommandsactualparserandnonzeroexitfindingsvsoperationalerror;liveAPIserverconvertsversionssoGit/render/Helm/clientwarning/audit/UpgradeInsightsneeded;Velero restore --dry-runverifyactual;namespace restore realworkloadsnotdryrun;backupCompletednotapplicationconsistent/volumeprooffullstate.",
+      "AutoModecontrollernotinstalledKarpenterDeployment/EC2NodeClass;nativeNodeClassAPI,disruptionbudgetsminintersectionnotatleastone,percentroundingUTCscheduledwindowonlyapplieswhenactive;nodepooldo-not-disruptannotationineffective,0budgetonlyvoluntarynotexpiry/Spotrepairforce.",
+      "Terraformunresolvedrefs/v20outdated/oldfieldnames,privatepublicendpointpolicy,fullsavedplanvsrecomputedapproval,versionupgradewaitmusttrackupdateIDterminalfailuretimeoutnotinfiniteACTIVEpoll;update-addonOVERWRITE/destructivecustomconfiganddowngradecompatibilityneedsreview.",
+      "ArgoCDclusterSecretmustapplyhubcontext/validCA/roleAccessEntryRBAC;AppSetGoTemplatedotwithoutgoTemplatewrong;labelsargocdappselectorunpropagated;rollbackCLIexpectsdeploymenthistoryIDnotGitSHA,automatedsyncwillrevert;Helmreposunadded/deprecatedbitnami/certmanageroldkeys;donotautoupgradeallplatformafterCPblindly.",
+      "BlueGreenweightedNLBsupportedbut0..999relativeweightsnotpercent/sum100requirement;weight0closesexistingconnectionsaftershortdelay;noautomatichealthyTGfallback;ALBforwardstickinessnotNLBmaybeverify;TLS/SNIhostLBsmoketestmustuseactualhost/cert;trafficshiftnotDNSpercentageandnotguaranteedzero-disruption.",
+      "TGregistration/TGBownershipmissing;AutoModeTGBdeletiondeletesTG;zero-weightreferencecleanupbeforedecommission;globalNLB/DNSnotownedbyblueclusterstate;sharedRDS/EFSdoesnotremoveappschema/dualwriter/consumer/CronJobmigrationrisks;PVC-onlybackupinsufficient,contextBSLsnapshotsAZKMSpluginchecks.",
+      "PromQLcountReadyfalse/Pendingcounts0gaugevalues;podrestartsnotreschedules;AutoModecontrollercountersnotassumedincluster;before30moffset1hactual[t-90,t-60]not[t-60,t-30];histogramsumleandscopezero traffic/emptyerror/cohorts;72hnotfullweek;partialdashboardJSON/YAMLnotcompleteimport.",
+      "QuizzesVeleroexcludednamespaceclaimverify,skiponeminorwordingambiguousshouldskipzero/upnextone,Nodeversionmax2outdated,DaemonSeteligibleNodes/notallnodes/drainignoredoesnotdeleteorwaitReadyrecreate,PBDisnotuptimeguarantee."
+    ],
+    "reviewedSha256": "93f7b94180b25d80220b15e8e1a4724014f6b99459d75d7ed9b2c71433a351f3",
+    "findings": [
+      "ReplacedstaleN-3/fourreleasepolicy,2025matrix/featuretimelines,incorrectdeprecationpolicyandextendedfee;officialupstream3minor,EKS14+12months,extended$.60TOTAL.",
+      "SeparatedpureAutoModeDNSsystemserviceandservice-managedcapabilitiesfromstandard/mixednodes;removedEC2NodeClassAMIcontrolandmandatoryaws-node/kube-proxy/CoreDNSDeployment checks.",
+      "NativeEKSrollbackreal:previousminor/initiatewithin7days/eligibility/extendedpolicy,AutoNodesfirstwhileclusterACTIVE;data/apps/addonsnotrestored,MNGseparateUpdateNodegroupVersion.",
+      "ActualCLI2.35.11doesnotrecognize rollback-config;privateofficialPGPverifiedAWSCLI2.36.44 supportsrollbackConfigandCancelUpdate;globalCLIunchanged. No rollback-clustercommand.",
+      "Upgradeinsightforceenforcementtemporarilysuspendedperofficialguide;differentfromROLLBACK_READINESSERROR/UNKNOWNblockingandWARNINGadvisory. Forcecannotbypasseligibility/disruption.",
+      "AutoRollbackdefault720min,120..10080range/minimumbound;UpdateIDnotclusterACTIVEwait;cancelonlynodephase,besteffort;timeout/cancelnodesdriftcurrentagain;IaCtimeoutnotservercancel.",
+      "Replacedfailopenpreflightwithreadonlyexplicitregion/cluster/contextendpointmatch,JSONReadyconditions,kubeletalignmentreview,PodReady,Deploymentgeneration,scaledzero/PDBcases,exactaddonversions/metadataandAPIerrorsunknown.",
+      "Pluto5.24.3 allfourdetectcommandsvalid;native0cleanitemsomitted,2deprecated,3removed;originaljq length/objectandmisinstalledfallbackwrong;Git/render/APIconversioncoverageexplained.",
+      "Velero1.18.2 restorecreateNOdryrun;outputJSONperformsK8sGETdiscovery/BackupreadswithoutPOST;ScheduleoutputalsoBSLGET. Defaultbackupincludes[*],notautomaticvelerons exclusion. BackupCompletednotdataconsistencyproof.",
+      "NLBweights0..999relative;0transitionclosesexistingconnectionsafterdelay. ForwardTGstickinesssupportednonTLS,DurationSecondsdocumentedALB-only;helperusesEnabledonlyandvalidatesprotocol/weights/ARNs.",
+      "ArgoAppSetGoTemplate/manualsync/labels/Projectprereqs/native2renders+missingkey;preserveResourcesOnDeletionpreventsselectorchangecascadebutownershiphandoffrequired;app rollback historyIDnotSHA.",
+      "BlueGreenstateful/dualwriter/consumer/DNSrisks,sharedNLBtargetregistrationandAutoTGBdeletionownership;noimmediatedestroy/forceddrainautomation/zero-downtimeguarantees.",
+      "PromQLgaugevaluesnotcounts,Readyfalse+unknown,Pendingzeros,missingerrors/zerotraffic/crossclusterP99;[30m]offset1his90–60minago,72hnotweeklycoverage."
+    ]
+  },
+  {
+    "path": "en/quizzes/ops/11-upgrade-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete upgrade guides/quizzes corrected with current AutoMode/native rollback semantics, real CLI parser/output checks, bounded readonly helpers, safe migration ownership and numeric query tests.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/reference/using-api/deprecation-policy/",
+      "https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3",
+      "https://github.com/velero-io/velero/releases/tag/v1.18.2",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_TargetGroupStickinessConfig.html"
+    ],
+    "validation": [
+      "ops-upgrade-validation.json",
+      "50fences20questions10queries;3manifests2nativeGoAppTemplates+missingkey;12assessment5collection5wait13routingcases;7Promcalculations;9AWSrequestshapes;officialCLI2.36.44/Pluto5.24.3/Velero1.18.2"
+    ],
+    "initialCandidates": [
+      "ContradictorycontrolplanenorollbackvsnewnativeRollbacksection;zero-downtimeguarantees;AutoModeupgraderollbacknodeorderingand7dayeligibilityrequirecurrentofficialsource;MNGrollbackpossible;nodeAMIcustomEC2NodeClasswrongforAutoMode.",
+      "VersionpolicyN-3wrong(upstream3total);stale2025matrix1.32Preview/EOLsupport/addonminimums/DRAfeaturetimeline;extended$.60totalnotadditional$.60;describe-addon-versionsnotclustersupportstatus;K8sGA/Beta/AlphaDeprecationruleswrong,removedAPIversiontablefalse.",
+      "AddonclassificationpureAutoDNSnode-localCoreDNS/noaws-node/kube-proxy/PIagentstandardpods;mixmustretainnonAuto. AddonmanagementnotfixedCorednsVPC list;paginatedexactversion/platformarchitecturecomputeTypecompatibilityanderrorsmustnotbeNotInstalled/pass.",
+      "Preflightfailopenpipeerrorsandgrepphaseparse:ReadyconditionTrue/False/Unknown/notNodephase;RunningnotReady/CrashLoop;PDB0notalwaysblocking;Deployment observedGeneration/updated/available andscaled0;capturecontextmustmatchAWSendpoint;notHTTPmissingendpointorCLIerroreqPASS.",
+      "PlutoreleaseURL/architecture/versionpinnedchecksums;detectcommandsactualparserandnonzeroexitfindingsvsoperationalerror;liveAPIserverconvertsversionssoGit/render/Helm/clientwarning/audit/UpgradeInsightsneeded;Velero restore --dry-runverifyactual;namespace restore realworkloadsnotdryrun;backupCompletednotapplicationconsistent/volumeprooffullstate.",
+      "AutoModecontrollernotinstalledKarpenterDeployment/EC2NodeClass;nativeNodeClassAPI,disruptionbudgetsminintersectionnotatleastone,percentroundingUTCscheduledwindowonlyapplieswhenactive;nodepooldo-not-disruptannotationineffective,0budgetonlyvoluntarynotexpiry/Spotrepairforce.",
+      "Terraformunresolvedrefs/v20outdated/oldfieldnames,privatepublicendpointpolicy,fullsavedplanvsrecomputedapproval,versionupgradewaitmusttrackupdateIDterminalfailuretimeoutnotinfiniteACTIVEpoll;update-addonOVERWRITE/destructivecustomconfiganddowngradecompatibilityneedsreview.",
+      "ArgoCDclusterSecretmustapplyhubcontext/validCA/roleAccessEntryRBAC;AppSetGoTemplatedotwithoutgoTemplatewrong;labelsargocdappselectorunpropagated;rollbackCLIexpectsdeploymenthistoryIDnotGitSHA,automatedsyncwillrevert;Helmreposunadded/deprecatedbitnami/certmanageroldkeys;donotautoupgradeallplatformafterCPblindly.",
+      "BlueGreenweightedNLBsupportedbut0..999relativeweightsnotpercent/sum100requirement;weight0closesexistingconnectionsaftershortdelay;noautomatichealthyTGfallback;ALBforwardstickinessnotNLBmaybeverify;TLS/SNIhostLBsmoketestmustuseactualhost/cert;trafficshiftnotDNSpercentageandnotguaranteedzero-disruption.",
+      "TGregistration/TGBownershipmissing;AutoModeTGBdeletiondeletesTG;zero-weightreferencecleanupbeforedecommission;globalNLB/DNSnotownedbyblueclusterstate;sharedRDS/EFSdoesnotremoveappschema/dualwriter/consumer/CronJobmigrationrisks;PVC-onlybackupinsufficient,contextBSLsnapshotsAZKMSpluginchecks.",
+      "PromQLcountReadyfalse/Pendingcounts0gaugevalues;podrestartsnotreschedules;AutoModecontrollercountersnotassumedincluster;before30moffset1hactual[t-90,t-60]not[t-60,t-30];histogramsumleandscopezero traffic/emptyerror/cohorts;72hnotfullweek;partialdashboardJSON/YAMLnotcompleteimport.",
+      "QuizzesVeleroexcludednamespaceclaimverify,skiponeminorwordingambiguousshouldskipzero/upnextone,Nodeversionmax2outdated,DaemonSeteligibleNodes/notallnodes/drainignoredoesnotdeleteorwaitReadyrecreate,PBDisnotuptimeguarantee."
+    ],
+    "reviewedSha256": "7050d2504497ad54776d9ec68f696e8a97901fe2e5ae042036c027c6ab8251c4",
+    "findings": [
+      "ReplacedstaleN-3/fourreleasepolicy,2025matrix/featuretimelines,incorrectdeprecationpolicyandextendedfee;officialupstream3minor,EKS14+12months,extended$.60TOTAL.",
+      "SeparatedpureAutoModeDNSsystemserviceandservice-managedcapabilitiesfromstandard/mixednodes;removedEC2NodeClassAMIcontrolandmandatoryaws-node/kube-proxy/CoreDNSDeployment checks.",
+      "NativeEKSrollbackreal:previousminor/initiatewithin7days/eligibility/extendedpolicy,AutoNodesfirstwhileclusterACTIVE;data/apps/addonsnotrestored,MNGseparateUpdateNodegroupVersion.",
+      "ActualCLI2.35.11doesnotrecognize rollback-config;privateofficialPGPverifiedAWSCLI2.36.44 supportsrollbackConfigandCancelUpdate;globalCLIunchanged. No rollback-clustercommand.",
+      "Upgradeinsightforceenforcementtemporarilysuspendedperofficialguide;differentfromROLLBACK_READINESSERROR/UNKNOWNblockingandWARNINGadvisory. Forcecannotbypasseligibility/disruption.",
+      "AutoRollbackdefault720min,120..10080range/minimumbound;UpdateIDnotclusterACTIVEwait;cancelonlynodephase,besteffort;timeout/cancelnodesdriftcurrentagain;IaCtimeoutnotservercancel.",
+      "Replacedfailopenpreflightwithreadonlyexplicitregion/cluster/contextendpointmatch,JSONReadyconditions,kubeletalignmentreview,PodReady,Deploymentgeneration,scaledzero/PDBcases,exactaddonversions/metadataandAPIerrorsunknown.",
+      "Pluto5.24.3 allfourdetectcommandsvalid;native0cleanitemsomitted,2deprecated,3removed;originaljq length/objectandmisinstalledfallbackwrong;Git/render/APIconversioncoverageexplained.",
+      "Velero1.18.2 restorecreateNOdryrun;outputJSONperformsK8sGETdiscovery/BackupreadswithoutPOST;ScheduleoutputalsoBSLGET. Defaultbackupincludes[*],notautomaticvelerons exclusion. BackupCompletednotdataconsistencyproof.",
+      "NLBweights0..999relative;0transitionclosesexistingconnectionsafterdelay. ForwardTGstickinesssupportednonTLS,DurationSecondsdocumentedALB-only;helperusesEnabledonlyandvalidatesprotocol/weights/ARNs.",
+      "ArgoAppSetGoTemplate/manualsync/labels/Projectprereqs/native2renders+missingkey;preserveResourcesOnDeletionpreventsselectorchangecascadebutownershiphandoffrequired;app rollback historyIDnotSHA.",
+      "BlueGreenstateful/dualwriter/consumer/DNSrisks,sharedNLBtargetregistrationandAutoTGBdeletionownership;noimmediatedestroy/forceddrainautomation/zero-downtimeguarantees.",
+      "PromQLgaugevaluesnotcounts,Readyfalse+unknown,Pendingzeros,missingerrors/zerotraffic/crossclusterP99;[30m]offset1his90–60minago,72hnotweeklycoverage."
+    ]
+  }
+]

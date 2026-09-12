@@ -4,172 +4,162 @@
 
 ## 객관식 문제
 
-### 1. NLB Weighted Target Group에서 blue/green 배포 시 5:5 비율 설정의 의미는 무엇인가요?
+### 1. NLB 가중치 5:5의 의미는?
 
-- A) 5개의 인스턴스를 각 클러스터에 배포
-- B) 트래픽을 두 클러스터에 50%씩 분배
-- C) 5초마다 트래픽 전환
-- D) 5개의 가용 영역 사용
+- A) 각 클러스터에 노드 5개를 만든다
+- B) 새 플로우를 상대적으로 동일한 비율로 분배하도록 설정한다
+- C) 5초 안에 기존 연결이 모두 이동한다
+- D) 합계가 100이 아니므로 잘못된 값이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 트래픽을 두 클러스터에 50%씩 분배**
+**정답: B) 새 플로우를 상대적으로 동일한 비율로 분배하도록 설정한다**
 
-**설명:**
-NLB의 Weighted Target Group을 사용하면 각 Target Group에 가중치를 부여하여 트래픽을 분배할 수 있습니다. 5:5 비율은 blue 클러스터와 green 클러스터에 각각 50%의 트래픽을 분배한다는 의미입니다. 이를 통해 점진적인 트래픽 전환이나 카나리 배포가 가능합니다.
+NLB 가중치는 0–999 정수의 상대값입니다. 실제 바이트/요청 비율은 플로우 크기·stickiness·관측 기간에 따라 달라질 수 있습니다.
 
 </details>
 
-### 2. Single Zone 클러스터 구축 시 특정 가용 영역에만 노드를 배포하기 위해 사용하는 Kubernetes 기능은 무엇인가요?
+### 2. NLB weight를 0으로 내릴 때 고려할 점은?
 
-- A) PodAffinity
-- B) TopologySpreadConstraints
-- C) NodeSelector 또는 NodeAffinity
-- D) Taints and Tolerations
+- A) 기존 연결은 반드시 자연 종료할 때까지 유지된다
+- B) 현재 가이드는 잠시 후 기존 연결도 종료된다고 설명하므로 재연결 영향을 검증한다
+- C) deregistration delay가 모든 전환 시간을 보장한다
+- D) 변경 API 성공 즉시 모든 트래픽이 이동한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) NodeSelector 또는 NodeAffinity**
+**정답: B) 현재 가이드는 잠시 후 기존 연결도 종료된다고 설명하므로 재연결 영향을 검증한다**
 
-**설명:**
-특정 가용 영역에만 노드를 배포하려면 NodeSelector나 NodeAffinity를 사용합니다. `topology.kubernetes.io/zone: ap-northeast-2a` 같은 레이블을 지정하여 노드가 특정 AZ에만 생성되도록 제한할 수 있습니다. TopologySpreadConstraints는 Pod 분산에 사용됩니다.
+일반 weight 변경과 0 전환을 구분합니다. 제어면 설정 성공과 실제 플로우 전환은 별개이며 NewFlowCount·ActiveFlowCount·오류율·지연을 확인합니다.
 
 </details>
 
-### 3. Route53 Weighted Routing Policy의 주요 용도는 무엇인가요?
+### 3. blue와 green DNS가 같은 공유 NLB를 가리킬 때, DNS weight로 무엇을 할 수 있나요?
 
-- A) 지리적 위치 기반 라우팅
-- B) 장애 조치(Failover) 라우팅
-- C) 여러 엔드포인트에 트래픽 비율 분배
-- D) 지연 시간 기반 라우팅
+- A) NLB 뒤의 타겟 그룹을 독립적으로 선택한다
+- B) DNS 이름만으로 AZ를 고정한다
+- C) 같은 LB를 선택할 뿐 클러스터별 타겟 그룹을 선택하지 못한다
+- D) 동일한 DB 복제본으로 자동 전환한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 여러 엔드포인트에 트래픽 비율 분배**
+**정답: C) 같은 LB를 선택할 뿐 클러스터별 타겟 그룹을 선택하지 못한다**
 
-**설명:**
-Route53 Weighted Routing Policy는 동일한 도메인에 대해 여러 레코드를 생성하고 각각에 가중치를 부여하여 트래픽을 분배합니다. blue/green 배포 시 트래픽 비율을 조절하거나, 새 버전으로 점진적으로 트래픽을 이동할 때 유용합니다.
+DNS 선택을 사용하려면 각 클러스터로 이어지는 별도 실제 LB endpoint가 필요합니다. NLB forward weight와 DNS record weight는 다른 계층의 제어입니다.
 
 </details>
 
-### 4. EKS Auto Mode에서 특정 가용 영역에만 노드를 생성하도록 제한하는 방법은 무엇인가요?
+### 4. 특정 AZ의 Auto Mode 노드를 사용하는 파드 배치에 대한 설명은?
 
-- A) EKS 콘솔에서 직접 설정
-- B) NodePool의 subnet 설정으로 특정 AZ의 서브넷만 지정
-- C) AWS CLI로 노드 수동 생성
-- D) EC2 Auto Scaling Group 설정 변경
+- A) Pod nodeSelector가 혼자 노드를 생성한다
+- B) NodePool에 subnet_ids를 넣으면 된다
+- C) Pod 선택 조건, NodePool requirements, NodeClass subnet 선택을 함께 맞춘다
+- D) blue라는 클러스터 이름만 지정하면 된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) NodePool의 subnet 설정으로 특정 AZ의 서브넷만 지정**
+**정답: C) Pod 선택 조건, NodePool requirements, NodeClass subnet 선택을 함께 맞춘다**
 
-**설명:**
-EKS Auto Mode에서는 NodePool 설정 시 특정 가용 영역의 서브넷만 지정하여 노드 생성 위치를 제한할 수 있습니다. 예를 들어, a 존 전용 클러스터는 ap-northeast-2a의 서브넷만, c 존 전용 클러스터는 ap-northeast-2c의 서브넷만 지정합니다.
+NodeSelector/affinity는 적합한 노드를 고릅니다. 오토스케일러의 생성 범위와 taint/toleration도 맞아야 하며 EKS의 리전 컨트롤 플레인과 워커 배치를 구분합니다.
 
 </details>
 
-### 5. Blue/Green 클러스터 아키텍처에서 데이터 레이어를 클러스터 외부에 두는 이유는 무엇인가요?
+### 5. 외부 IaC가 TG 수명 주기를 소유하는 이 예제의 TGB는?
 
-- A) 비용 절감
-- B) 성능 향상
-- C) 클러스터 전환 시에도 데이터 영속성 유지
-- D) 보안 강화
+- A) Auto Mode 내장 API로 바꿔도 삭제 동작이 항상 같다
+- B) 별도 AWS Load Balancer Controller의 elbv2.k8s.aws/v1beta1이며 내장 Auto Mode TGB와 구분한다
+- C) Service나 targetPort 없이 ARN만 넣으면 된다
+- D) Terraform으로 Pod IP를 영구 고정해야 한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 클러스터 전환 시에도 데이터 영속성 유지**
+**정답: B) 별도 AWS Load Balancer Controller의 elbv2.k8s.aws/v1beta1이며 내장 Auto Mode TGB와 구분한다**
 
-**설명:**
-데이터베이스(RDS, ElastiCache 등)를 클러스터 외부에 두면 blue에서 green으로 클러스터를 전환하거나 클러스터를 재생성해도 데이터가 유지됩니다. 이를 통해 무중단 배포와 롤백이 가능합니다.
+내장 Auto Mode TGB는 eks.amazonaws.com/v1이며 공식 안내에 TG 삭제 동작이 명시되어 있습니다. 여기서는 별도 컨트롤러로 동적 타겟 등록과 networking 규칙을 관리합니다.
 
 </details>
 
-### 6. NLB Health Check 설정에서 unhealthy_threshold의 역할은 무엇인가요?
+### 6. 단일 PostgreSQL StatefulSet과 Retain PVC만 있으면 무엇이 보장되나요?
 
-- A) 건강한 것으로 판단하기 위한 연속 성공 횟수
-- B) 비정상으로 판단하기 위한 연속 실패 횟수
-- C) 헬스 체크 간격
-- D) 헬스 체크 타임아웃
+- A) 클러스터 간 데이터 복제
+- B) AZ 장애 시 무중단 DB 전환
+- C) 기존 연결의 무조건 유지
+- D) 그것만으로 HA·백업·복구를 보장하지 않는다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 비정상으로 판단하기 위한 연속 실패 횟수**
+**정답: D) 그것만으로 HA·백업·복구를 보장하지 않는다**
 
-**설명:**
-unhealthy_threshold는 타겟을 비정상(unhealthy)으로 판단하기 위해 필요한 연속 헬스 체크 실패 횟수입니다. 예를 들어 값이 3이면 3번 연속 헬스 체크에 실패해야 해당 타겟이 비정상으로 표시되고 트래픽이 차단됩니다.
+Retain은 볼륨 회수 정책입니다. 복제·백업·쓰기 소유권·복구 절차가 별도로 필요하며 NLB weight가 볼륨을 다른 AZ로 이동시키지 않습니다.
 
 </details>
 
-### 7. Terraform에서 blue/green 클러스터 전환을 위한 가중치 변경 시 사용하는 접근 방식은 무엇인가요?
+### 7. 알람 입력 SNS와 결과 알림 SNS를 분리하는 이유는?
 
-- A) 클러스터를 삭제하고 재생성
-- B) terraform variable로 가중치를 정의하고 값 변경 후 apply
-- C) AWS 콘솔에서 수동으로 변경
-- D) kubectl로 직접 설정 변경
+- A) 입력으로 다시 전달되어 불필요한 실행·오류가 생기는 것을 막는다
+- B) IAM 권한이 없어도 publish하기 위해
+- C) Lambda를 무한히 재시도하기 위해
+- D) DNS TTL을 없애기 위해
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) terraform variable로 가중치를 정의하고 값 변경 후 apply**
+**정답: A) 입력으로 다시 전달되어 불필요한 실행·오류가 생기는 것을 막는다**
 
-**설명:**
-Terraform에서는 `variable "blue_weight"`, `variable "green_weight"` 같은 변수를 정의하고, Target Group Forward 설정에서 이 변수를 참조합니다. 가중치 변경이 필요하면 변수 값만 수정하고 terraform apply를 실행하면 됩니다.
+이 예제는 SNS envelope만 받습니다. CloudWatch 직접 Lambda 이벤트는 다른 형식이므로 두 경로를 중복 연결하지 않습니다. 결과 알림 실패가 이미 성공한 리스너 변경을 재실행하게 하지도 않습니다.
 
 </details>
 
-### 8. Single Zone 클러스터의 장점이 아닌 것은 무엇인가요?
+### 8. automatic_failover=false 기본값은 무엇을 하나요?
 
-- A) 동일 AZ 내 낮은 네트워크 지연 시간
-- B) Cross-AZ 데이터 전송 비용 절감
-- C) 가용 영역 장애 시에도 서비스 지속 가능
-- D) 데이터 지역성(Data Locality) 확보
+- A) 즉시 모든 트래픽을 Green으로 전환한다
+- B) 변경안을 생성하며 ModifyListener 권한을 주지 않는다
+- C) 헬스 체크를 생략한다
+- D) 사용 가능한 모든 리스너를 수정한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 가용 영역 장애 시에도 서비스 지속 가능**
+**정답: B) 변경안을 생성하며 ModifyListener 권한을 주지 않는다**
 
-**설명:**
-Single Zone 클러스터는 하나의 가용 영역에만 존재하므로 해당 AZ에 장애가 발생하면 서비스가 중단됩니다. 이는 단점이며, 이를 보완하기 위해 다른 AZ에 별도의 클러스터(예: green)를 운영하여 장애 조치할 수 있습니다.
+자동 모드는 목적지 용량·SLO·재연결·변경자 조정 절차를 검증한 후 켭니다. Reserved concurrency=1도 외부 Terraform/수동 변경자를 직렬화하지는 않습니다.
 
 </details>
 
-### 9. NLB Listener Rule에서 forward action의 target_groups 설정 시 weight 속성의 유효 범위는 무엇인가요?
+### 9. 수동 전환 스크립트의 적절한 동작은?
 
-- A) 0-1 (소수점)
-- B) 0-100 (백분율)
-- C) 0-999 (상대적 가중치)
-- D) 1-10 (정수)
+- A) 입력 문자열을 Bash 산술식으로 바로 실행한다
+- B) 현재 상태와 관계없이 100/0에서 시작한다
+- C) 가중치와 목적지 헬스를 확인하고 전체 plan을 검토·승인한다
+- D) STEP=0도 타이머 루프로 반복한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 0-999 (상대적 가중치)**
+**정답: C) 가중치와 목적지 헬스를 확인하고 전체 plan을 검토·승인한다**
 
-**설명:**
-NLB/ALB의 forward action에서 target_groups의 weight는 0부터 999까지의 정수 값을 가집니다. 이는 절대적인 백분율이 아닌 상대적인 가중치이며, 모든 타겟 그룹의 가중치 합계에 대한 비율로 트래픽이 분배됩니다.
+정수 범위를 먼저 확인하고, 필요한 변수 파일·backend를 사용합니다. 단계 사이에 실제 SLO와 데이터 호환성을 검증하며 API/apply 성공만으로 전환 완료라고 판단하지 않습니다.
 
 </details>
 
-### 10. Blue/Green 클러스터 구성에서 공통 인프라로 분리해야 하는 것이 아닌 것은 무엇인가요?
+### 10. Route 53 weight와 TTL에 대한 올바른 설명은?
 
-- A) RDS 데이터베이스
-- B) ElastiCache
-- C) Pod Deployment 설정
-- D) Route53 DNS 레코드
+- A) weight는 0–255 정수이며 TTL만으로 복구 시간을 보장할 수 없다
+- B) weight는 항상 0–999다
+- C) TTL 60초는 복구 SLA 60초다
+- D) 모든 후보가 비정상이면 DNS가 반드시 아무 응답도 하지 않는다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Pod Deployment 설정**
+**정답: A) weight는 0–255 정수이며 TTL만으로 복구 시간을 보장할 수 없다**
 
-**설명:**
-Pod Deployment 설정은 각 클러스터 내부에 존재하는 애플리케이션 워크로드이므로 공통 인프라가 아닙니다. RDS, ElastiCache는 데이터 영속성을 위해, Route53과 NLB는 트래픽 라우팅을 위해 클러스터 외부의 공통 인프라로 분리합니다.
+Alias는 타겟 TTL을 따릅니다. 건강 상태·resolver 캐시·연결 수명·폴백 동작을 고려하며 모든 가중치를 0으로 만드는 것을 트래픽 차단 수단으로 쓰지 않습니다.
 
 </details>

@@ -1,130 +1,298 @@
 # Part 8: 모범 사례
 
-> **지원 버전**: Apache Kafka 3.9, Strimzi 0.45+\
-> **마지막 업데이트**: 2026년 7월 9일
+> **검토 기준**: Kafka 4.3.1, Strimzi 1.2.0\
+> **최종 검토**: 2026년 9월 12일
 
-지금까지 Kafka의 핵심 개념부터 Strimzi 운영, 스키마 레지스트리, Kafka Connect/MirrorMaker, MSK 통합, 모니터링까지 다뤘습니다. 이 마지막 문서는 프로덕션 환경에서 EKS 위의 Kafka 클러스터를 안정적으로 운영하기 위한 모범 사례를 카테고리별로 정리하고, 앞선 7개 문서의 핵심 항목을 하나의 체크리스트로 통합합니다.
+앞 장의 예제를 운영에서 검증할 결정으로 정리합니다. 다음에는
+[벤치마크 장](./09-kafka-benchmark.md)이 이어집니다. 체크리스트만으로 실제 부하와
+장애 시험을 대신할 수는 없습니다.
 
-## 1. 파티션 설계
+## 파티션 설계와 측정
 
-### 파티션 수 산정
+일반적인 컨슈머 그룹에서는 한 파티션을 동시에 최대 한 멤버에게 할당합니다.
+독립적으로 소비하는 멤버 20개를 모두 사용하려면 최소 20개 파티션이 필요합니다.
+파티션당 처리량, 키 편중, 레코드 크기, 복제 비용, 복구 시간과 브로커·컨트롤러
+용량도 함께 측정합니다. Share group이나 애플리케이션 내부 병렬 처리는 의미가
+다르므로 모든 소비 API에 적용되는 규칙으로 일반화하지 않습니다.
 
-파티션 수는 **컨슈머 그룹의 최대 병렬 처리 수**를 기준으로 시작합니다. 하나의 파티션은 동시에 하나의 컨슈머 인스턴스만 소비할 수 있으므로, 컨슈머 그룹을 최대한 어느 규모까지 스케일아웃할지 먼저 결정하고 그 수 이상으로 파티션을 만들어야 합니다. 예를 들어 피크 시점에 컨슈머 20개까지 스케일아웃할 계획이라면 파티션은 최소 20개 이상이어야 합니다.
+파티션이 늘면 metadata, replica, buffer와 복구 작업도 늘어납니다. 비용을
+보편적인 파티션당 메모리·파일 디스크립터 공식으로 계산하지 않습니다. 과거의
+4,000/200,000 경험치를 현재의 공통 한계로 쓰지 말고 정상·장애 부하에서 측정합니다.
+논리 파티션뿐 아니라 브로커당 replica 배치 수도 구분합니다.
 
-파티션을 필요 이상으로 늘리는 것은 다음과 같은 비용을 수반하므로 지양해야 합니다.
+### 토픽 헤더 대신 파티션 세기
 
-- **파일 핸들 증가**: 파티션마다 여러 개의 로그 세그먼트 파일(`.log`, `.index`, `.timeindex`)이 열려 있어야 하므로, 브로커당 열린 파일 디스크립터 수가 선형적으로 증가합니다.
-- **메모리 사용량 증가**: 프로듀서/컨슈머의 배치 버퍼, 브로커의 복제 스레드별 버퍼가 파티션 수에 비례해 늘어납니다.
-- **리밸런스/장애 복구 시간 증가**: 브로커 장애 시 컨트롤러가 처리해야 할 리더 선출 작업량이 파티션 수에 비례하며, 컨슈머 그룹 리밸런스에 걸리는 시간도 늘어납니다.
+`grep -c "PartitionCount"`는 파티션이 아닌 **토픽 요약 줄 수**를 셉니다.
+다음을 `partition_summary.py`로 저장합니다. 현재 CLI의 파티션 줄과
+`Leader: none`을 읽어 논리 파티션, replica 배치와 리더 분포를 따로 계산합니다.
 
-Confluent가 제시했던 전통적인 경험치는 **브로커당 파티션 4,000개, 클러스터당 200,000개** 정도를 소프트 상한선으로 권장하는 것이었습니다. 이는 ZooKeeper 기반 컨트롤러가 메타데이터 전파에 병목이 있던 시절의 가이드라인입니다. KRaft(Kafka 3.x+ 컨트롤러 쿼럼) 기반 클러스터는 컨트롤러 메타데이터 처리 성능이 크게 개선되어 이보다 훨씬 많은 파티션을 처리할 수 있지만, 여전히 파티션 수를 필요 이상으로 늘리지 않는 것이 원칙이며, 브로커당 파티션 수는 실제 워크로드로 부하 테스트를 거쳐 확정해야 합니다.
+```python
+import collections
+import json
+from pathlib import Path
+import re
+import sys
 
-```bash
-# 클러스터의 전체 파티션 수와 브로커당 분포 확인
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe | grep -c "PartitionCount"
+def summarize(text):
+    pattern = re.compile(
+        r"^\s*Topic:\s+(\S+)\s+Partition:\s+(\d+)\s+Leader:\s+(none|-?\d+)"
+        r"\s+Replicas:[ \t]*([\d,]*)[ \t]+Isr:[ \t]*([\d,]*)"
+    )
+    partitions = {}
+    topics = collections.Counter()
+    leaders = collections.Counter()
+    replicas = collections.Counter()
+    offline = []
+    for line in text.splitlines():
+        if not re.search(r"\bPartition:", line):
+            continue
+        match = pattern.match(line)
+        if not match:
+            raise ValueError("Unrecognized partition row; check Kafka CLI version/output.")
+        topic, partition, leader, replica_text, _ = match.groups()
+        key = (topic, int(partition))
+        if key in partitions:
+            raise ValueError("Duplicate topic/partition row.")
+        replica_ids = [int(x) for x in replica_text.split(",") if x]
+        if not replica_ids or len(set(replica_ids)) != len(replica_ids):
+            raise ValueError("Missing or duplicate replica IDs.")
+        partitions[key] = True
+        topics[topic] += 1
+        replicas.update(replica_ids)
+        if leader == "none" or int(leader) < 0:
+            offline.append({"topic": topic, "partition": int(partition)})
+        else:
+            leaders[int(leader)] += 1
+    if not partitions:
+        raise ValueError("No partition rows; empty visibility is not proof of a healthy cluster.")
+    return {
+        "visible_topics": len(topics),
+        "logical_partitions": len(partitions),
+        "replica_assignments": sum(replicas.values()),
+        "partitions_by_topic": dict(sorted(topics.items())),
+        "leaders_by_broker": dict(sorted(leaders.items())),
+        "replicas_by_broker": dict(sorted(replicas.items())),
+        "offline_partitions": offline,
+    }
 
-# 특정 토픽의 파티션/리더 분포 확인
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic orders
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python3 partition_summary.py topics.txt")
+    print(json.dumps(summarize(Path(sys.argv[1]).read_text()), indent=2))
 ```
 
-### 파티션 키 설계
+```bash
+set -euo pipefail
+: "${KAFKA_BOOTSTRAP_SERVERS:?Set the reachable TLS bootstrap endpoints}"
+# Run from a Kafka 4.3.1 client installation. admin.properties is local to this client.
+bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --describe > topics.txt
+python3 partition_summary.py topics.txt
+```
 
-파티션 키는 **높은 카디널리티와 균등한 분포**를 갖도록 선택해야 핫 파티션(hot partition)을 피할 수 있습니다. 기본 파티셔너는 키를 murmur2로 해싱한 뒤 파티션 수로 나눈 나머지를 사용하므로, 카디널리티가 낮은 키(예: `country`, `status` 등 소수의 값만 갖는 필드)를 그대로 키로 사용하면 트래픽이 특정 국가나 상태 값에 몰릴 때 일부 파티션만 과부하되고 나머지는 유휴 상태가 됩니다. `user_id`처럼 카디널리티가 충분히 높은 필드를 키로 사용하거나, 저카디널리티 키에 salt(예: 키 뒤에 랜덤/타임스탬프 접미사 부여)를 추가해 분산을 강제하는 방법을 고려합니다.
+결과는 호출 사용자와 명령 필터에 보이는 토픽 범위이며 반환된 내부 토픽도 포함합니다.
+실패·빈 결과는 파티션 0개나 정상 클러스터의 증거가 아닙니다. 관리 조회에 맞는
+권한을 사용하고 브로커 Pod ID나 평문 localhost:9092를 가정하지 않습니다.
 
-### 파티션 수 변경 시 주의
+### 키의 의미 유지
 
-키가 있는(keyed) 토픽의 파티션 수를 함부로 늘리면 **키-파티션 매핑이 깨집니다**. 파티션 수가 바뀌면 동일한 키라도 `hash(key) % partition_count` 계산 결과가 달라지므로, 변경 이전에 기록된 메시지와 이후에 기록되는 같은 키의 메시지가 서로 다른 파티션에 위치하게 됩니다. 이는 다음 두 가지 문제를 일으킵니다.
+Java 기본 producer의 keyed 배치는 **직렬화한 키 바이트**에
+`toPositive(murmur2(keyBytes)) % partitionCount`를 적용합니다. 명시적 파티션,
+사용자 partitioner나 키 무시 설정이 있으면 달라집니다. 다른 언어 클라이언트도 같은
+배치가 필요하면 partitioner·serializer 호환성을 맞춥니다.
 
-- **순서 보장 붕괴**: Kafka는 파티션 내에서만 순서를 보장하므로, 같은 키의 메시지가 여러 파티션으로 흩어지면 컨슈머가 더 이상 키 단위의 처리 순서를 신뢰할 수 없습니다.
-- **조인/co-partitioning 붕괴**: Kafka Streams 등에서 두 토픽을 키 기준으로 조인하려면 두 토픽의 파티션 수와 파티셔닝 방식이 동일해야 합니다(co-partitioning). 한쪽 토픽만 파티션을 늘리면 조인이 깨집니다.
+카디널리티가 높아도 특정 고객의 트래픽이 많으면 편중됩니다. 랜덤·timestamp salt는
+키 단위 순서, 조인과 compaction의 동일성도 바꿉니다. 데이터 계약이 허용할 때만
+적용하며 필요하면 재결합·순서 복원 전략을 설계합니다.
 
-파티션 수는 반드시 **용량 계획 단계에서 여유를 두고 결정**하고, 이미 프로덕션에 키 기반 순서 보장이나 조인에 의존하는 토픽이라면 파티션 증설 대신 새 토픽을 만들어 마이그레이션하는 방식을 고려해야 합니다.
+파티션 수를 늘리면 일부 키가 재배치될 수 있지만 옛 레코드는 재분배되지 않습니다.
+키 순서와 co-partitioned 조인의 가정이 깨질 수 있으며 요구사항은 조인·토폴로지에
+따라 다릅니다. 모든 Streams 조인이 같은 co-partitioning을 요구하지는 않습니다.
+순서·상태 의존 워크로드는 새 토픽 등을 이용한 재분배·이전을 설계하고 시험합니다.
 
-## 2. 프로듀서 튜닝
+## 프로듀서 튜닝
 
-| 설정 | 권장 값 | 목적 |
-|------|---------|------|
-| `acks` | `all` (내구성이 중요한 토픽) | 모든 인-싱크 레플리카(ISR)의 ack를 받을 때까지 대기하여 브로커 장애 시에도 데이터 손실 방지 |
-| `min.insync.replicas` (토픽/브로커 설정) | `2` (replication.factor=3 기준) | `acks=all`과 함께 사용해 최소 2개 레플리카에 기록될 때까지 쓰기 성공을 보류 — 프로듀서 클라이언트 속성이 아니라 토픽(`kafka-configs.sh --entity-type topics`) 또는 브로커 기본값으로 설정 |
-| `linger.ms` | `5`~`20` | 짧은 지연을 감내하고 더 많은 레코드를 하나의 배치로 묶어 처리량 향상 |
-| `batch.size` | `32768`~`65536` (32~64KB) | 배치당 담을 수 있는 최대 바이트 수를 늘려 요청당 처리량 증가 |
-| `enable.idempotence` | `true` | 재시도로 인한 중복 쓰기 방지 |
-| `compression.type` | `lz4` 또는 `zstd` | 네트워크/스토리지 비용 절감 |
+다음은 기존 인증된 클라이언트 설정에 추가할 측정용 시작 프로필이며 공통 최적값은 아닙니다.
 
 ```properties
-# 내구성이 중요한 토픽(주문, 결제 등)을 위한 프로듀서 설정
-# (min.insync.replicas는 프로듀서가 아니라 토픽/브로커에서 설정하는 값이며, 참고용으로 함께 표기)
 acks=all
 enable.idempotence=true
+max.in.flight.requests.per.connection=5
 compression.type=lz4
 linger.ms=10
 batch.size=32768
-retries=2147483647
 delivery.timeout.ms=120000
 ```
 
-`enable.idempotence=true`는 **Kafka 3.0부터 `acks`나 `retries`를 명시적으로 재정의하지 않는 한 기본값으로 활성화**됩니다. 프로듀서에 고유한 PID(Producer ID)와 시퀀스 번호를 부여해, 네트워크 오류로 인한 재전송이 브로커 측에서 자동으로 중복 제거(dedup)되도록 합니다. 이는 "정확히 한 번(exactly-once) 쓰기"와는 다른 개념으로, 프로듀서→브로커 구간의 중복만 제거하며 end-to-end exactly-once를 보장하려면 트랜잭션 API(`transactional.id`)가 추가로 필요합니다.
+- `acks=all`은 현재 ISR을 기다립니다. RF=3, 토픽·브로커의
+  `min.insync.replicas=2`에서 ISR이 2 미만이면 두 번째 replica를 무기한 기다리는
+  대신 쓰기가 거부됩니다. 남은 replica·quorum과 의존성이 조건을 만족해야 단일
+  장애를 견딜 수 있습니다.
+- `enable.idempotence=true`는 지원되는 producer 재시도 중복을 억제하며 acks·retries·
+  `max.in.flight.requests.per.connection`이 호환되어야 합니다. 호환되는 속성을
+  명시했다고 멱등성이 꺼지는 것은 아닙니다.
+- Kafka 4.3의 기본 linger는 5ms이며 여기의 10ms·32KiB는 튜닝 예시입니다.
+  `batch.size`는 파티션별 배치·할당 설정이지 레코드나 요청 크기의 엄격한 상한이
+  아닙니다. 큐 대기와 전달 기한도 지연에 영향을 줍니다.
+- 실제 데이터·CPU·지연으로 lz4·zstd·gzip·무압축을 비교합니다. 특정 codec이 항상
+  총비용에서 가장 유리하다고 가정하지 않습니다.
 
-압축은 `lz4`가 CPU 오버헤드와 압축률의 균형이 좋아 대부분의 워크로드에 적합하며, JSON/텍스트 페이로드처럼 압축률이 중요한 경우 `zstd`가 더 높은 압축률을 제공하는 대신 CPU 사용량이 다소 늘어납니다. `gzip`은 압축률은 높지만 CPU 비용이 커서 고처리량 환경에는 권장하지 않습니다.
+`min.insync.replicas`는 producer가 아닌 토픽·브로커 속성입니다.
+`delivery.timeout.ms`가 전달 시도 시간을 제한하므로 retries가 커도 무한 재시도는
+아닙니다. send 실패를 반드시 처리합니다.
 
-## 3. 컨슈머 튜닝
+멱등성은 애플리케이션이 임의로 다시 보낸 이벤트나 외부 DB의 부수 효과를
+중복 제거하지 않습니다. Kafka consume-transform-produce의 exactly-once에는
+트랜잭션 수명주기, 출력·입력 오프셋의 원자적 커밋, fencing과 read-committed 소비도
+필요합니다. `transactional.id` 문자열만으로 완성되지 않습니다.
 
-### 리밸런스 스톰 방지
+## 컨슈머 처리와 멤버십
 
-처리 로직이 느려 `max.poll.interval.ms`(기본 5분)를 초과하면 컨슈머가 그룹에서 강제 제외되고 리밸런스가 발생합니다. 다수의 컨슈머가 동시에 느려지면 리밸런스가 연쇄적으로 반복되는 "리밸런스 스톰"이 발생할 수 있습니다.
+다음은 **`group.protocol=classic`**을 명시하여 클라이언트 heartbeat/session
+설정을 적용하는 프로필입니다. `group.protocol=consumer`에서는 해당 간격을
+브로커의 consumer-group 설정으로 제어합니다.
 
 ```properties
-# 배치당 처리 시간을 고려해 poll 관련 설정 조정
+group.id=order-processor
+group.protocol=classic
+enable.auto.commit=false
 max.poll.records=200
 max.poll.interval.ms=600000
 session.timeout.ms=45000
 heartbeat.interval.ms=15000
 ```
 
-`max.poll.records`를 낮추면 한 번의 `poll()` 호출에서 반환되는 레코드 수가 줄어 처리 시간이 짧아지고, `max.poll.interval.ms`를 늘리면 느린 처리를 더 오래 허용합니다. 근본적으로는 무거운 처리 로직을 poll 스레드에서 분리해 별도 워커 스레드/스레드 풀로 넘기는 구조가 더 견고합니다.
+레코드 수뿐 아니라 실제 처리 시간을 제한합니다. 느린 레코드 하나로도
+`max.poll.interval.ms`를 넘을 수 있습니다. 동적·정적 멤버의 재할당 시점은
+같지 않습니다. 정적 멤버는 poll timeout 후 heartbeat를 멈추고 session 만료까지
+재할당이 지연될 수 있습니다.
 
-### 수동 오프셋 커밋
+### 처리가 영속적으로 완료된 뒤 커밋
 
-주문 처리, 결제 등 최소 한 번(at-least-once) 처리가 중요한 파이프라인에서는 자동 커밋(`enable.auto.commit=true`)을 사용하면 실제 처리가 끝나기 전에 오프셋이 커밋되어, 처리 중 컨슈머가 죽으면 해당 레코드가 재처리되지 않고 유실된 것처럼 보일 위험이 있습니다.
-
-```properties
-enable.auto.commit=false
-```
+자동 커밋은 비동기 외부 작업이 언제 끝났는지 알지 못합니다. 순서를 올바르게
+설계한 동기 루프에서 사용할 수는 있지만 worker pool의 완료까지 추적한다고
+가정하지 않습니다. 다음 helper는 auto-commit을 끄고 동기 처리 후 명시적으로
+커밋하는 예입니다.
 
 ```java
-while (true) {
-    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
-    for (ConsumerRecord<String, String> record : records) {
-        process(record);          // 비즈니스 로직 처리
+import java.time.Duration;
+import java.util.Properties;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+public final class ConsumerExamples {
+    public static void setStaticIdentity(Properties props, String instanceId) {
+        if (instanceId == null || instanceId.isBlank() || instanceId.contains("${")) {
+            throw new IllegalArgumentException("Supply a resolved, stable, unique consumer instance ID.");
+        }
+        props.setProperty(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
     }
-    consumer.commitSync();        // 처리 완료 후에만 오프셋 커밋
+
+    public static int processOneBatch(
+            Consumer<String, String> consumer,
+            java.util.function.Consumer<ConsumerRecord<String, String>> processDurably) {
+        var records = consumer.poll(Duration.ofMillis(500));
+        for (var record : records) {
+            processDurably.accept(record);
+        }
+        if (!records.isEmpty()) {
+            consumer.commitSync();
+        }
+        return records.count();
+    }
 }
 ```
 
-### 정적 그룹 멤버십
-
-Kubernetes에서는 롤링 배포, OOMKilled, 노드 교체 등으로 컨슈머 Pod가 자주 재시작됩니다. 기본적으로 컨슈머가 그룹을 떠났다가 재참여하면 리밸런스가 발생하는데, 짧은 재시작마다 매번 전체 리밸런스가 일어나면 불필요한 처리 중단이 반복됩니다. `group.instance.id`로 정적 멤버십을 설정하면 컨슈머가 `session.timeout.ms` 안에 재접속할 경우 기존 파티션 할당을 그대로 유지한 채 리밸런스 없이 복귀합니다.
-
-```properties
-group.instance.id=${POD_NAME}
-session.timeout.ms=45000
+```java
+// props already includes bootstrap, TLS/SCRAM, deserializers and the profile below.
+try (var consumer = new KafkaConsumer<String, String>(props)) {
+    consumer.subscribe(List.of("orders"));
+    while (!Thread.currentThread().isInterrupted()) {
+        ConsumerExamples.processOneBatch(consumer, application::processDurably);
+    }
+}
 ```
 
-`group.instance.id`는 Pod마다 고유해야 하므로, StatefulSet의 Pod 이름이나 다운워드 API로 주입한 값을 사용하는 것이 일반적입니다.
+`application.processDurably`는 필요한 작업이 성공한 뒤에만 반환하는 애플리케이션
+코드입니다. 처리·커밋 실패 시 중단·복구하거나 올바른 위치로 seek해야 하며
+**오류를 잡고 다음 poll로 넘어가지 않습니다**. 재시작하면 이미 처리한 레코드도
+다시 올 수 있으므로 외부 작업의 멱등성·트랜잭션을 설계합니다. 종료는 KafkaConsumer가
+지원하는 wakeup·close 패턴으로 구성합니다.
 
-## 4. 보안
+KafkaConsumer는 일반적으로 thread-safe하지 않습니다. 비동기 처리에는 제한된 큐,
+파티션 순서, consumer 스레드의 pause/resume, 연속 완료 오프셋과 rebalance 처리가
+필요합니다. thread pool로 넘기는 것만으로 안정성이 개선되지는 않습니다.
 
-### mTLS (전송 계층 암호화 + 상호 인증)
+### 안정적인 정적 멤버 ID를 실제 값으로 설정
 
-Strimzi는 클러스터 배포 시 자체 CA(Cluster CA)를 자동으로 생성하고 인증서를 주기적으로 갱신합니다. 리스너 타입을 `tls`로 설정하면 클라이언트-브로커 간 트래픽이 암호화되며, `KafkaUser`에 `tls` 인증 타입을 지정하면 클러스터 CA가 서명한 클라이언트 인증서가 자동 발급됩니다.
+Java `Properties`는 `group.instance.id=${POD_NAME}`을 **환경변수로 치환하지
+않습니다**. 컨슈머를 만들기 전에 애플리케이션·설정 코드에서 값을 넣습니다.
+
+```java
+// One consumer instance per stable logical member in this example.
+ConsumerExamples.setStaticIdentity(props, System.getenv("KAFKA_GROUP_INSTANCE_ID"));
+```
+
+StatefulSet Pod 하나에 컨슈머 하나라면 Downward API의 `metadata.name`을 안정적인
+논리 ID로 사용할 수 있습니다. Deployment Pod 이름은 여러 종류의 rollout에서
+바뀌고, 한 Pod의 여러 컨슈머에는 서로 다른 ID가 필요합니다. 동시에 활성화된
+각 컨슈머는 고유해야 하며 교체 인스턴스가 의도적으로 재사용하도록 설계합니다.
+중복 활성 ID는 fencing을 일으킬 수 있습니다.
+
+정적 멤버십은 조건이 맞는 짧은 재시작의 불필요한 rebalance를 줄이지만 시간 내
+복귀만으로 항상 할당 유지를 보장하지는 않습니다. 토폴로지·멤버·구독도 영향을 주며
+긴 session timeout은 실제 장애 멤버의 복구를 늦춥니다.
+
+## 인증·인가·네트워크
+
+### 두 CA와 listener 속성 구분
+
+기본 Strimzi 관리 CA를 사용할 때:
+
+- **cluster CA**는 브로커·내부 구성요소 인증서에 서명하며 클라이언트는 알맞은
+  서버 인증서 체인을 신뢰합니다.
+- **clients CA**는 mTLS용 `KafkaUser` 클라이언트 인증서에 서명합니다.
+- `user.crt`·`user.key`는 클라이언트 자격증명입니다. 사용자 Secret의 clients CA
+  인증서가 브로커의 신뢰 체인을 대신하지는 않습니다.
+
+listener 노출 방식은 `type: internal`, `loadbalancer` 등입니다. 암호화는
+`tls: true`, 클라이언트 인증은 `authentication.type: tls`로 지정합니다.
+`tls`라는 listener 노출 type은 없습니다.
+
+다음은 기존 `spec.kafka.listeners`에 **추가할 항목 하나**이며 Part 2의
+TLS/SCRAM listener를 대체하지 않습니다. 추가 전에 전체 Kafka 원하는 상태를 검토합니다.
 
 ```yaml
-apiVersion: kafka.strimzi.io/v1beta2
+name: mtls
+port: 9094
+type: internal
+tls: true
+authentication:
+  type: tls
+networkPolicyPeers:
+- namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: kafka-clients
+  podSelector:
+    matchLabels:
+      app: order-service
+```
+
+두 selector가 **한 peer 안**에 있으므로 `kafka-clients` 네임스페이스 **이면서**
+`app=order-service`인 Pod를 선택합니다. peer 두 개로 나누면 OR가 되어 policy
+네임스페이스의 일치 Pod 또는 선택한 네임스페이스의 모든 Pod를 허용합니다.
+NetworkPolicy는 합산되며 CNI 집행이 필요합니다. 다른 정책에서 허용한 트래픽을
+덮어써 거부하지 않습니다. egress와 실제 외부·노드 경로도 확인합니다.
+
+별도의 mTLS 사용자를 만들어 기존 SCRAM 사용자를 보존합니다.
+
+```yaml
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaUser
 metadata:
-  name: order-service
+  name: order-service-mtls
+  namespace: kafka
   labels:
     strimzi.io/cluster: my-cluster
 spec:
@@ -133,120 +301,147 @@ spec:
   authorization:
     type: simple
     acls:
-      - resource:
-          type: topic
-          name: orders
-          patternType: literal
-        operations: ["Read", "Write", "Describe"]
-      - resource:
-          type: group
-          name: order-service-group
-        operations: ["Read"]
+    - resource:
+        type: topic
+        name: orders
+        patternType: literal
+      operations:
+      - Read
+      - Write
+      - Describe
+    - resource:
+        type: group
+        name: order-processor-mtls
+        patternType: literal
+      operations:
+      - Read
+    - resource:
+        type: cluster
+      operations:
+      - IdempotentWrite
 ```
 
-### SASL/SCRAM
+User Operator의 조정과 브로커 simple authorizer 활성화가 필요합니다. 사용자
+자격증명·브로커 신뢰를 애플리케이션 네임스페이스에 배포하고 회전시키는 통제된
+절차를 갖춥니다. Kubernetes는 다른 네임스페이스 Secret을 직접 마운트하지 못합니다.
+현재 generation, TLS·인증과 허용·거부 작업을 검증합니다. YAML 커밋만으로
+동작하는 접근 권한이 완성되지는 않습니다.
 
-인증서 배포·회전을 클라이언트 측에서 관리하기 부담스러운 환경(예: 레거시 애플리케이션, 서드파티 도구)에서는 사용자명/비밀번호 기반의 SASL/SCRAM(`scram-sha-512`)이 대안이 됩니다. Strimzi는 리스너 인증 타입을 `scram-sha-512`로 설정하고, `KafkaUser`의 `authentication.type`을 동일하게 지정하면 Secret에 자격 증명을 자동 생성합니다.
+기존 SCRAM 경로에도 TLS 암호화와 비밀번호 회전이 필요합니다. Kafka ACL과
+NetworkPolicy는 서로를 대신하지 않습니다.
 
-### 선언적 ACL 관리
+### 새 영속 볼륨 암호화를 명시
 
-위 `KafkaUser` 예시처럼 `authorization.type: simple`과 `acls` 목록을 사용하면 브로커에 직접 `kafka-acls.sh`를 실행하는 대신 GitOps 방식으로 ACL을 코드로 관리할 수 있습니다. 신규 서비스가 특정 토픽에 접근해야 할 때는 새 `KafkaUser` 리소스를 커밋하는 것만으로 권한 부여가 끝납니다.
-
-### 네트워크 정책
-
-Strimzi 리스너에는 `networkPolicyPeers`를 지정해 브로커 리스너 포트(예: 9092/9093/9094)에 접근 가능한 Pod를 제한할 수 있습니다.
-
-```yaml
-listeners:
-  - name: tls
-    port: 9093
-    type: internal
-    tls: true
-    networkPolicyPeers:
-      - podSelector:
-          matchLabels:
-            app: order-service
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: kafka-clients
-```
-
-이렇게 하면 Kafka `NetworkPolicy` CRD 필드가 표준 Kubernetes `NetworkPolicy` 리소스를 자동 생성하여, 지정된 레이블/네임스페이스 외에서는 리스너 포트로 접근할 수 없게 됩니다.
-
-### 저장 데이터 암호화
-
-EBS 볼륨 암호화는 EBS CSI 드라이버가 자동으로 처리해주는 기능이 아니며, 다음 중 하나를 명시적으로 설정해야 합니다.
-
-- 계정/리전 수준의 **"기본적으로 EBS 암호화" 설정**을 활성화하면 이후 생성되는 모든 볼륨이 자동으로 암호화됩니다.
-- `StorageClass`에 `encrypted: "true"`(필요 시 `kmsKeyId`)를 명시합니다.
+표준 EBS CSI에서는 암호화 StorageClass와 계정·리전의 EBS encryption-by-default를
+검토합니다. 다음은 볼륨을 Retain하고 스케줄링 후 AZ를 선택하는 예제입니다.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: gp3-encrypted
+  name: gp3-kafka-encrypted
 provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
 parameters:
   type: gp3
-  encrypted: "true"
-  kmsKeyId: arn:aws:kms:ap-northeast-2:123456789012:key/xxxxxxxx
+  encrypted: 'true'
 ```
 
-Kafka는 규정 준수 대상 데이터를 다루는 경우가 많으므로, 브로커 PVC가 사용하는 `StorageClass`는 위와 같이 암호화를 명시적으로 켜는 것을 기본값으로 삼는 것이 안전합니다.
+Auto Mode는 Part 2의 별도 `ebs.csi.eks.amazonaws.com` provisioner·topology
+구성을 사용하면서 `encrypted: "true"`도 명시합니다. Auto Mode의 노드·임시 디스크
+암호화 설명으로 동적 PVC까지 추정하지 않습니다. StorageClass 파라미터 문서는
+encrypted 기본값을 false로 명시하므로 실제 EBS 볼륨의 암호화·KMS 키를 확인합니다.
 
-## 5. 비용 최적화
+고객 관리 키는 `key/xxxxxxxx`가 아닌 실제 ARN과 역할·키 권한이 필요합니다.
+StorageClass나 계정 기본값 변경은 기존 볼륨을 소급 암호화하지 않습니다.
+영속 볼륨 교체 전에 지원되는 데이터·스냅샷 이전과 복구 접근을 검증합니다.
 
-### 인스턴스 타입 선정
+## 용량·tiering·보존
 
-대부분의 Kafka 워크로드는 CPU보다 **메모리(정확히는 OS 페이지 캐시)** 에 훨씬 민감합니다. Kafka는 디스크 읽기의 상당 부분을 페이지 캐시에서 처리하도록 설계되어 있어, 컨슈머가 최신 데이터를 따라가는 일반적인 상황에서는 브로커 힙(보통 4~8GB면 충분)을 넘어서는 나머지 메모리를 페이지 캐시로 활용하는 것이 처리량에 직접적인 영향을 줍니다. 컴퓨팅 최적화 인스턴스보다 메모리 최적화 인스턴스(`r6g`/`r7g` 등 Graviton 계열)가 동일 비용 대비 더 나은 성능을 내는 경우가 많습니다.
+Kafka는 page cache의 도움을 받지만 CPU(TLS·압축 포함), 네트워크, 저장소
+처리량·IOPS나 cgroup 메모리가 병목이 될 수도 있습니다. heap·off-heap·page cache와
+다른 워크로드를 함께 측정합니다. “heap 4~8GB면 충분”이나 메모리 최적화 인스턴스가
+항상 비용에서 유리하다는 규칙은 없습니다.
 
-### 티어드 스토리지 (Tiered Storage)
+Kafka tiered storage는 3.9부터 production-ready이며 Strimzi 1.2도 지원합니다.
+여전히 호환되는 **RemoteStorageManager 플러그인**과 이미지의 의존성, 원격
+접근·권한, 보존·정리·복구 설정이 필요합니다. Strimzi custom 연동은
+`spec.kafka.tieredStorage`의 class/path/config를 사용합니다.
+`remote.log.storage.system.enable`만 켜도 S3와 연결되는 것은 아닙니다.
+해당 버전의 기능 제약을 읽고 원격 저장소 불능·복구를 시험합니다.
 
-KIP-405로 정의된 Kafka 티어드 스토리지는 오래된 로그 세그먼트를 로컬 디스크 대신 S3와 같은 원격 저장소로 오프로드해, 브로커의 로컬 EBS 용량 요구치를 줄이는 기능입니다. 업스트림 Apache Kafka에서는 Kafka 3.6에 얼리 액세스로 도입되었고, **Kafka 3.9부터 프로덕션 준비(GA) 상태**가 되었지만 기본값은 아니므로 여전히 명시적으로 활성화(`remote.log.storage.system.enable=true`)해야 하는 옵트인 기능입니다. Strimzi에서 티어드 스토리지를 사용하려면 해당 버전의 Strimzi 릴리스 노트에서 지원 여부와 성숙도를 먼저 확인하고, 프로덕션 적용 전 별도 클러스터에서 충분히 검증해야 합니다.
+### 보존은 데이터에 관한 결정
 
-### 로그 보존 정책 튜닝
-
-`retention.ms`/`retention.bytes`를 토픽별 실제 요구 사항에 맞게 설정해 비교적 비싼 EBS에 필요 이상으로 데이터를 오래 보관하지 않도록 합니다. 최신 값만 필요한 토픽(예: 상태 스냅샷, 캐시성 데이터)은 `cleanup.policy=compact`로 설정하면 키별 최신 레코드만 유지되어 무한정 증가하는 것을 막을 수 있습니다.
+다음은 기존 토픽을 3일 또는 **파티션당 50GiB** 중 먼저 도달하는 조건으로
+변경하는 예입니다. segment 단위·비동기 삭제이므로 즉시 적용되는 정확한 byte 상한은 아닙니다.
 
 ```bash
-# 토픽별 보존 정책 조정 예시
-kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
-  bin/kafka-configs.sh --bootstrap-server localhost:9092 \
-  --alter --entity-type topics --entity-name application-logs \
+: "${KAFKA_BOOTSTRAP_SERVERS:?Set the reachable TLS bootstrap endpoints}"
+bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --describe \
+  --entity-type topics --entity-name application-logs
+# After reviewing retention/recovery requirements: shortening retention can delete data.
+bin/kafka-configs.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+  --command-config admin.properties --alter \
+  --entity-type topics --entity-name application-logs \
   --add-config retention.ms=259200000,retention.bytes=53687091200
 ```
 
-### Spot 인스턴스 활용
+보존을 줄이면 재처리·복구에 필요한 레코드가 영구 삭제될 수 있습니다.
+`cleanup.policy=compact`도 비동기 정리이며 tombstone·cleaner 동작에 따라 키별
+최신 값을 남깁니다. 키가 계속 늘거나 active·미정리 segment가 있으면 용량도 늘므로
+엄격한 저장소 상한이 아닙니다. `compact,delete`는 삭제 보존도 적용해 오래된 키의
+마지막 값까지 지울 수 있습니다. 상태 복원과 tombstone 보존 요구를 명시합니다.
 
-개발/스테이징 환경이나 중요도가 낮은 Strimzi 클러스터의 브로커 노드 풀은 Spot 인스턴스로 운영해 비용을 크게 줄일 수 있습니다. 다만 **컨트롤러(KRaft controller) 노드 풀은 On-Demand로 유지**해야 합니다. 컨트롤러 쿼럼이 과반수 손실되면 메타데이터 관리 자체가 중단되므로, Spot 회수로 인한 갑작스러운 손실 위험을 감수할 대상이 아닙니다. 브로커 노드 풀에는 Pod Topology Spread Constraints로 여러 AZ/노드에 분산시켜 Spot 회수 시 동시에 여러 레플리카를 잃지 않도록 구성합니다.
+### Spot과 disruption
 
-## 6. 운영 체크리스트
+운영 기준 구성에서는 컨트롤러 quorum에 적절한 안정적 용량을 사용합니다.
+위험을 감수할 수 있는 워크로드는 브로커 Spot을 검토할 수 있지만 Pod 분산만으로
+연관된 회수를 막지는 못합니다. 브로커 rack-aware replica 배치, 노드·AZ 분산,
+EBS 볼륨 AZ의 대체 용량과 검증한 복구·여유 용량을 함께 설계합니다.
 
-이 딥다이브 시리즈(Part 1~8)에서 다룬 핵심 항목을 프로덕션 배포 전 최종 점검 목록으로 정리하면 다음과 같습니다.
+Strimzi 1.2 PDB는 Kafka 클러스터 Pod의 자발적 eviction을 제한합니다.
+강제 삭제, 노드 장애, Spot 회수나 모든 Operator rolling에서 quorum을 보장하지
+않습니다. RF=3/minISR=2, PDB, On-Demand 컨트롤러는 설계 입력이며 무손실·무중단의
+증명은 아닙니다.
 
-- [ ] **아키텍처**: KRaft 모드로 구성했으며, 컨트롤러 노드 풀이 브로커 노드 풀과 분리되어 있다 (Part 1, 2)
-- [ ] **복제**: 프로덕션 토픽의 `replication.factor=3`, `min.insync.replicas=2`로 설정되어 단일 브로커 장애를 견딘다 (Part 1)
-- [ ] **파티션 설계**: 예상 최대 컨슈머 병렬도를 기준으로 파티션 수를 산정했고, 필요 이상으로 세분화하지 않았다 (Part 8)
-- [ ] **Strimzi 버전 고정**: Operator와 Kafka 버전을 명시적으로 고정(pin)하고, 자동 업그레이드에 의존하지 않는다 (Part 2)
-- [ ] **스토리지**: 브로커 `StorageClass`가 gp3(또는 io2) + 암호화(`encrypted: "true"`)로 설정되어 있다 (Part 3, 8)
-- [ ] **PodDisruptionBudget**: 브로커 롤링 재시작/노드 교체 시 과반수 가용성이 항상 유지되도록 PDB가 설정되어 있다 (Part 3)
-- [ ] **무중단 업그레이드 리허설**: 롤링 업그레이드 절차를 스테이징에서 실제로 검증했다 (Part 3)
-- [ ] **스키마 호환성**: 스키마 레지스트리의 호환성 모드(BACKWARD/FORWARD/FULL)를 토픽 특성에 맞게 명시적으로 설정했다 (Part 4)
-- [ ] **DR/복제**: Kafka Connect·MirrorMaker2 기반 재해 복구 또는 지역 간 복제 절차를 문서화하고 페일오버를 검증했다 (Part 5)
-- [ ] **MSK vs 셀프 매니지드 결정**: 운영 부담과 비용을 비교해 관리형 MSK와 Strimzi 셀프 매니지드 중 선택한 근거가 문서화되어 있다 (Part 6)
-- [ ] **모니터링/알림**: 브로커 메트릭과 컨슈머 랙(consumer lag)에 대한 대시보드와 알림 규칙이 구성되어 있다 (Part 7)
-- [ ] **오토스케일링**: 컨슈머 워크로드에 KEDA 등을 연동해 랙 기반 오토스케일링이 동작한다 (Part 7)
-- [ ] **프로듀서/컨슈머 설정 리뷰**: `acks`, `enable.idempotence`, 오프셋 커밋 전략, 정적 그룹 멤버십 등이 워크로드 특성에 맞게 검토되었다 (Part 8)
-- [ ] **보안**: mTLS 또는 SASL/SCRAM, `KafkaUser` 기반 ACL, 리스너 `NetworkPolicy`가 모두 적용되어 있다 (Part 8)
-- [ ] **비용 리뷰**: 인스턴스 타입, 보존 정책, Spot 활용 범위를 주기적으로 재검토하는 프로세스가 있다 (Part 8)
-- [ ] **부하 테스트**: 예상 피크 처리량으로 브로커·컨슈머 스케일을 실제로 부하 테스트했다
+## 운영 투입 전에 남길 증거
 
-이 체크리스트를 모두 충족한다면, 해당 Kafka 클러스터는 EKS 프로덕션 환경에서 안정적으로 운영될 준비가 되었다고 볼 수 있습니다.
+- 버전·API 호환성과 업그레이드·rollback·인증서 회전 리허설.
+- 장애 상황의 파티션·replica·CPU·메모리·네트워크·저장소 한계 측정.
+- 인가 경계, 클라이언트 ID와 Secret·신뢰 회전 검증.
+- 스키마·과거 데이터 호환성, 처리·커밋과 중복 처리 동작.
+- 필요한 스키마·키를 포함한 복구·전환 및 RPO/RTO 측정.
+- 수집·알람·전달 범위, 컨슈머 용량과 애플리케이션 SLO.
+- 보존, 저장소 암호화, 비용 가정과 운영 담당자.
 
----
+워크로드에 맞는 통제를 적용하고 남은 한계를 기록합니다. 공통 체크리스트를 모두
+체크했다는 사실만으로 운영 준비를 인증할 수는 없습니다.
+
+## 참고 자료와 검증 범위
+
+Kafka 4.3.1 설정 클래스, 실제 keyed partitioner, MockConsumer 처리·커밋 테스트,
+릴리스된 리소스 스키마와 토픽 출력 fixture로 예제를 검토했습니다. 실제 TLS/CNI
+집행, 암호화 볼륨 조회, 장애 복구와 애플리케이션 정확성 시험을 대신하지 않습니다.
+
+- [Kafka 4.3 producer configuration](https://kafka.apache.org/43/configuration/producer-configs/)
+- [Kafka 4.3 consumer configuration](https://kafka.apache.org/43/configuration/consumer-configs/)
+- [Kafka 4.3 tiered storage](https://kafka.apache.org/43/operations/tiered-storage/)
+- [Kafka 4.3.1 keyed partitioner](https://github.com/apache/kafka/blob/4.3.1/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java)
+- [Kafka 4.3.1 topic-description output](https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/TopicCommand.java)
+- [Strimzi 1.2.0 deployment, TLS and tiered-storage guide](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Kubernetes NetworkPolicy selector semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [EBS encryption by default](https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html)
+- [EKS Auto Mode StorageClass parameters](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)
+
+## 다음 단계
+
+[Part 9: Kafka 벤치마크](./09-kafka-benchmark.md)
 
 [메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/kafka/08-best-practices-quiz.md)를 풀어보세요.
+[주제 퀴즈](../../quizzes/data-on-eks/kafka/08-best-practices-quiz.md)

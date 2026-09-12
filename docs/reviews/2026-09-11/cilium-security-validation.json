@@ -1,0 +1,500 @@
+{
+  "originalSchemas": [
+    {
+      "kind": "CiliumClusterwideNetworkPolicy",
+      "name": "enforce-mtls",
+      "errors": [
+        "{'endpointSelector': {}, 'authentication': [{'mode': 'required'}]} is not valid under any of the given schemas",
+        "spec.authentication is not a defined field; authentication belongs to individual allow rules."
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "namespace-mtls",
+      "errors": [
+        "[{'mode': 'required'}] is not of type 'object'",
+        "[{'mode': 'required'}] is not of type 'object'"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "service-mtls",
+      "errors": [
+        "[{'mode': 'required'}] is not of type 'object'"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "http-security-policy",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "kafka-security",
+      "errors": [
+        "{'kafka': [{'apiKey': 'produce', 'topic': 'orders'}, {'apiKey': 'produce', 'topic': 'events'}, {'apiKey': 'metadata'}]} is not valid under any of the given schemas",
+        "{'kafka': [{'apiKey': 'fetch', 'topic': 'orders'}, {'apiKey': 'fetch', 'topic': 'events'}, {'apiKey': 'listoffsets', 'topic': 'orders'}, {'apiKey': 'listoffsets', 'topic': 'events'}, {'apiKey': 'metadata'}, {'apiKey': 'findcoordinator'}, {'apiKey': 'joingroup'}, {'apiKey': 'heartbeat'}, {'apiKey': 'leavegroup'}, {'apiKey': 'syncgroup'}, {'apiKey': 'offsetcommit', 'topic': 'orders'}, {'apiKey': 'offsetfetch', 'topic': 'orders'}]} is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "dns-security",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "mutual-auth-policy",
+      "errors": [
+        "[{'mode': 'required'}] is not of type 'object'",
+        "[{'mode': 'optional'}] is not of type 'object'"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "spiffe-auth",
+      "errors": [
+        "[{'mode': 'required'}] is not of type 'object'"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "identity-based-policy",
+      "errors": []
+    },
+    {
+      "kind": "ClusterIssuer",
+      "name": "cilium-ca-issuer",
+      "errors": []
+    },
+    {
+      "kind": "Certificate",
+      "name": "cilium-spire-ca",
+      "errors": []
+    },
+    {
+      "kind": "CiliumClusterwideNetworkPolicy",
+      "name": "default-deny",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "production-security",
+      "errors": [
+        "[{'mode': 'required'}] is not of type 'object'",
+        "[{'mode': 'required'}] is not of type 'object'"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "frontend-policy",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "backend-policy",
+      "errors": [
+        "[{'mode': 'required'}] is not of type 'object'",
+        "[{'mode': 'required'}] is not of type 'object'"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "database-policy",
+      "errors": [
+        "[{'mode': 'required'}] is not of type 'object'"
+      ]
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "audit-policy",
+      "errors": []
+    }
+  ],
+  "helm": [
+    {
+      "name": "original-missing-authentication-flag",
+      "exit": 1,
+      "objects": 0
+    },
+    {
+      "name": "original-auth-with-required-flag",
+      "exit": 0,
+      "objects": 41
+    },
+    {
+      "name": "auth",
+      "exit": 0,
+      "objects": 41
+    },
+    {
+      "name": "wireguard",
+      "exit": 0,
+      "objects": 25
+    },
+    {
+      "name": "node_wireguard",
+      "exit": 0,
+      "objects": 25
+    },
+    {
+      "name": "ipsec",
+      "exit": 0,
+      "objects": 25
+    },
+    {
+      "name": "ztunnel",
+      "exit": 0,
+      "objects": 27
+    },
+    {
+      "name": "monitoring",
+      "exit": 0,
+      "objects": 26
+    },
+    {
+      "name": "ignored-userspace-fallback",
+      "exit": 0,
+      "objects": 25
+    }
+  ],
+  "helmFindings": [
+    "Original SPIRE configuration fails without authentication.enabled; even with that flag, nested server.trustDomain does not change rendered spiffe.cilium domain.",
+    "Correct out-of-band SPIRE overlay renders the StatefulSet; native ztunnel overlay renders ztunnel-cilium without SPIRE and without the external prerequisite Secret.",
+    "WireGuard userspaceFallback is ignored by this chart; original and corrected ConfigMap data are identical for this extra key."
+  ],
+  "correctedModels": [
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "service-auth",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "namespace-auth",
+      "errors": []
+    },
+    {
+      "kind": "CiliumClusterwideNetworkPolicy",
+      "name": "production-backend-auth",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "authentication-exception",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "http-security-policy",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "kafka-network-boundary",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "dns-security",
+      "errors": []
+    },
+    {
+      "kind": "CiliumClusterwideNetworkPolicy",
+      "name": "policy-lab-default-deny",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "policy-lab-dns",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "identity-based-policy",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "production-security",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "frontend-policy",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "backend-policy",
+      "errors": []
+    },
+    {
+      "kind": "CiliumNetworkPolicy",
+      "name": "database-policy",
+      "errors": []
+    },
+    {
+      "kind": "ClusterIssuer",
+      "name": "cilium-ca-issuer",
+      "errors": []
+    },
+    {
+      "kind": "Certificate",
+      "name": "cilium-spire-ca",
+      "errors": []
+    }
+  ],
+  "defaultDeny": "Explicit ingress/egress flags on the empty-rule default-deny policy and egress flag on database policy; released rule_validation.go otherwise derives defaults from nonempty rule counts.",
+  "hubble": [
+    {
+      "args": [
+        "--namespace",
+        "production",
+        "--verdict",
+        "DROPPED"
+      ],
+      "filters": "allowlist:\n    - '{\"source_pod\":[\"production/\"],\"verdict\":[\"DROPPED\"]}'\n    - '{\"destination_pod\":[\"production/\"],\"verdict\":[\"DROPPED\"]}'\n"
+    },
+    {
+      "args": [
+        "--namespace",
+        "production",
+        "--verdict",
+        "DROPPED",
+        "--drop-reason-desc",
+        "POLICY_DENIED"
+      ],
+      "filters": "allowlist:\n    - '{\"source_pod\":[\"production/\"],\"verdict\":[\"DROPPED\"],\"drop_reason_desc\":[\"POLICY_DENIED\"]}'\n    - '{\"destination_pod\":[\"production/\"],\"verdict\":[\"DROPPED\"],\"drop_reason_desc\":[\"POLICY_DENIED\"]}'\n"
+    },
+    {
+      "args": [
+        "--namespace",
+        "policy-lab",
+        "--verdict",
+        "AUDIT"
+      ],
+      "filters": "allowlist:\n    - '{\"source_pod\":[\"policy-lab/\"],\"verdict\":[\"AUDIT\"]}'\n    - '{\"destination_pod\":[\"policy-lab/\"],\"verdict\":[\"AUDIT\"]}'\n"
+    }
+  ],
+  "published": {
+    "en": [
+      {
+        "kind": "CiliumClusterwideNetworkPolicy",
+        "name": "production-backend-auth",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "namespace-auth",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "service-auth",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "http-security-policy",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "kafka-network-boundary",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "dns-security",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "authentication-exception",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "identity-based-policy",
+        "errors": []
+      },
+      {
+        "kind": "ClusterIssuer",
+        "name": "cilium-ca-issuer",
+        "errors": []
+      },
+      {
+        "kind": "Certificate",
+        "name": "cilium-spire-ca",
+        "errors": []
+      },
+      {
+        "kind": "CiliumClusterwideNetworkPolicy",
+        "name": "policy-lab-default-deny",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "policy-lab-dns",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "production-security",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "frontend-policy",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "backend-policy",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "database-policy",
+        "errors": []
+      }
+    ],
+    "ko": [
+      {
+        "kind": "CiliumClusterwideNetworkPolicy",
+        "name": "production-backend-auth",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "namespace-auth",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "service-auth",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "http-security-policy",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "kafka-network-boundary",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "dns-security",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "authentication-exception",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "identity-based-policy",
+        "errors": []
+      },
+      {
+        "kind": "ClusterIssuer",
+        "name": "cilium-ca-issuer",
+        "errors": []
+      },
+      {
+        "kind": "Certificate",
+        "name": "cilium-spire-ca",
+        "errors": []
+      },
+      {
+        "kind": "CiliumClusterwideNetworkPolicy",
+        "name": "policy-lab-default-deny",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "policy-lab-dns",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "production-security",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "frontend-policy",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "backend-policy",
+        "errors": []
+      },
+      {
+        "kind": "CiliumNetworkPolicy",
+        "name": "database-policy",
+        "errors": []
+      }
+    ]
+  },
+  "codeParity": true,
+  "limits": [
+    "No live Cilium/SPIRE/Vault/Kubernetes/AWS deployment or encryption/authentication enforcement test.",
+    "CRD JSON schema is not live admission/CEL evaluation. HCL external-PKI fragment was checked against released SPIRE documentation; no external PKI integration or complete server-config validation claimed.",
+    "Native Helm and CLI filter generation only; values/labels are not readiness proof."
+  ],
+  "date": "2026-09-11",
+  "sources": [
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication-example.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes-ztunnel/generate-secrets.sh",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-wireguard.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ipsec.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/intro.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/option/endpoint.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_config.md",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst",
+    "https://github.com/spiffe/spire/blob/v1.15.2/doc/spire_server.md",
+    "https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_vault.md",
+    "https://github.com/spiffe/spire/blob/v1.15.2/doc/plugin_server_upstreamauthority_disk.md",
+    "https://kafka.apache.org/41/security/authorization-and-acls/",
+    "https://docs.aws.amazon.com/general/latest/gr/sts.html",
+    "https://www.wireguard.com/protocol/",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule_validation.go"
+  ],
+  "docsTest": "118/118",
+  "schemaPerLocale": 16,
+  "quizQuestionsPerLocale": 12,
+  "figures": {
+    "visuallyRead": 10,
+    "retainedPerLocale": [
+      0,
+      1,
+      2,
+      4
+    ],
+    "removedPerLocale": [
+      3
+    ],
+    "reason": "Retaineddiagramsqualifiedaslogical/controlplane/cachedhandshakeandlabelselectorconcepts;removedexplicitidentity=labelhashdiagram."
+  },
+  "limitations": [
+    "No live Cilium/SPIRE/Vault/Kubernetes/AWS deployment or encryption/authentication enforcement test.",
+    "CRD JSON schema is not live admission/CEL evaluation. HCL external-PKI fragment was checked against released SPIRE documentation; no external PKI integration or complete server-config validation claimed.",
+    "Native Helm and CLI filter generation only; values/labels are not readiness proof.",
+    "Original NIST further-reading reference retained; both NIST endpoints returned403 to the audit fetcher, so no claim of reading the publication or proving that link broken.",
+    "The current ztunnel beta is preserved with released restrictions; no live certificate/bootstrap/enrollment or policy interoperability validation."
+  ]
+}

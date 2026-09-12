@@ -1,0 +1,314 @@
+{
+  "cli": [
+    {
+      "operation": "emr-containers create-virtual-cluster",
+      "mode": "offline output skeleton",
+      "status": "CLI sample-response ARN generation failed",
+      "stderr": "aws: [ERROR]: An error occurred (ParamValidation): Parameter validation failed:\nInvalid length for parameter arn, value: 3, valid min length: 60"
+    },
+    {
+      "operation": "emr-containers start-job-run",
+      "mode": "offline output skeleton",
+      "status": "CLI sample-response ARN generation failed",
+      "stderr": "aws: [ERROR]: An error occurred (ParamValidation): Parameter validation failed:\nInvalid length for parameter arn, value: 3, valid min length: 60"
+    },
+    {
+      "operation": "emr-containers describe-virtual-cluster",
+      "mode": "offline output skeleton",
+      "status": "CLI sample-response ARN generation failed",
+      "stderr": "aws: [ERROR]: An error occurred (ParamValidation): Parameter validation failed:\nInvalid length for parameter virtualCluster.arn, value: 3, valid min length: 60"
+    },
+    {
+      "operation": "emr-containers describe-job-run",
+      "mode": "offline output skeleton",
+      "status": "CLI sample-response ARN generation failed",
+      "stderr": "aws: [ERROR]: An error occurred (ParamValidation): Parameter validation failed:\nInvalid length for parameter jobRun.arn, value: 3, valid min length: 60\nInvalid length for parameter jobRun.executionRoleArn, value: 16, valid min length: 20\nInvalid length for parameter jobRun.configurationOverrides.applicationConfiguration[0].properties.KeyName, value: 0, valid min length: 1\nMissing required parameter in jobRun.configurationOverrides.applicationConfiguration[0].configurations[0]: \"classification\"\nInvalid value for parameter jobRun.configurationOverrides.monitoringConfiguration.containerLogRotationConfiguration.maxFilesToKeep, value: 0, valid min value: 1\nInvalid length for parameter jobRun.createdBy, value: 9, valid min length: 20"
+    },
+    {
+      "operation": "emr-containers cancel-job-run",
+      "outputKeys": [
+        "id",
+        "virtualClusterId"
+      ],
+      "mode": "offline output skeleton",
+      "status": "passed"
+    },
+    {
+      "operation": "emr-containers list-job-runs",
+      "mode": "offline output skeleton",
+      "status": "CLI sample-response ARN generation failed",
+      "stderr": "aws: [ERROR]: An error occurred (ParamValidation): Parameter validation failed:\nInvalid length for parameter jobRuns[0].arn, value: 3, valid min length: 60\nInvalid length for parameter jobRuns[0].executionRoleArn, value: 16, valid min length: 20\nInvalid length for parameter jobRuns[0].configurationOverrides.applicationConfiguration[0].properties.KeyName, value: 0, valid min length: 1\nMissing required parameter in jobRuns[0].configurationOverrides.applicationConfiguration[0].configurations[0]: \"classification\"\nInvalid value for parameter jobRuns[0].configurationOverrides.monitoringConfiguration.containerLogRotationConfiguration.maxFilesToKeep, value: 0, valid min value: 1\nInvalid length for parameter jobRuns[0].createdBy, value: 9, valid min length: 20"
+    },
+    {
+      "operation": "emr-containers list-managed-endpoints",
+      "mode": "offline output skeleton",
+      "status": "CLI sample-response ARN generation failed",
+      "stderr": "aws: [ERROR]: An error occurred (ParamValidation): Parameter validation failed:\nInvalid length for parameter endpoints[0].arn, value: 3, valid min length: 60\nInvalid length for parameter endpoints[0].executionRoleArn, value: 16, valid min length: 20\nInvalid length for parameter endpoints[0].certificateArn, value: 14, valid min length: 44\nInvalid length for parameter endpoints[0].certificateAuthority.certificateArn, value: 14, valid min length: 44\nInvalid length for parameter endpoints[0].configurationOverrides.applicationConfiguration[0].properties.KeyName, value: 0, valid min length: 1\nMissing required parameter in endpoints[0].configurationOverrides.applicationConfiguration[0].configurations[0]: \"classification\"\nInvalid value for parameter endpoints[0].configurationOverrides.monitoringConfiguration.containerLogRotationConfiguration.maxFilesToKeep, value: 0, valid min value: 1"
+    },
+    {
+      "operation": "emr-containers delete-virtual-cluster",
+      "outputKeys": [
+        "id"
+      ],
+      "mode": "offline output skeleton",
+      "status": "passed"
+    }
+  ],
+  "awsServiceModel": {
+    "path": "/usr/local/aws-cli/v2/current/dist/awscli/botocore/data/emr-containers/2020-10-01/service-2.json",
+    "sha256": "d5893829c56de4099e4903bcdf31cc6e5434c2ccb059a5d37265e2e74c41a946",
+    "checks": [
+      {
+        "operation": "CreateVirtualCluster",
+        "validRequest": "passed",
+        "unknownFieldRejected": true
+      },
+      {
+        "operation": "StartJobRun",
+        "validRequest": "passed",
+        "unknownFieldRejected": true
+      }
+    ]
+  },
+  "helperChecks": [
+    {
+      "operation": "create-role-associations",
+      "mode": "local help only",
+      "exit": 0,
+      "output": "CREATE-ROLE-ASSOCIATIONS()                          CREATE-ROLE-ASSOCIATIONS()\n\n\n\n\u001b[1mNAME\u001b[0m\n       create-role-associations -\n\n\u001b[1mDESCRIPTION\u001b[0m\n       Creates  role  associations of given IAM role with EMR service accounts\n       such that it can be used with Amazon EMR on EKS with  the  given  name-\n       space from the given EKS cluster.\n\n"
+    },
+    {
+      "operation": "update-role-trust-policy",
+      "mode": "local help only",
+      "exit": 0,
+      "output": "UPDATE-ROLE-TRUST-POLICY()                          UPDATE-ROLE-TRUST-POLICY()\n\n\n\n\u001b[1mNAME\u001b[0m\n       update-role-trust-policy -\n\n\u001b[1mDESCRIPTION\u001b[0m\n       Updates  the  trust  policy  of given IAM role such that it can be used\n       with Amazon EMR on EKS with the given  namespace  from  the  given  EKS\n       cluster.\n\n       \u001b[1mNote:  \u001b[22mTo"
+    }
+  ],
+  "fences": [
+    {
+      "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "json"
+    },
+    {
+      "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "python"
+    },
+    {
+      "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "json"
+    },
+    {
+      "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "json"
+    },
+    {
+      "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "python"
+    },
+    {
+      "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "json"
+    },
+    {
+      "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/03-emr-on-eks.md",
+      "language": "bash"
+    }
+  ],
+  "relativeLinks": 10,
+  "quizQuestions": 36,
+  "images": [
+    "en/.gitbook/assets/en-data-on-eks-spark-03-emr-on-eks-0.png",
+    "ko/.gitbook/assets/ko-data-on-eks-spark-03-emr-on-eks-0.png"
+  ],
+  "limitations": "No IAM/EKS/EMR/S3 mutation or cloud workload submission. AWS CLI output-skeleton checks validate local input only. IAM permissions, EKS capacity/networking and EMR runtime compatibility remain environment-specific.",
+  "localSmoke": {
+    "status": "passed",
+    "runtime": "upstream Spark 4.2.0 / local[2]",
+    "result": "SMOKE_OK rows=10 total=45",
+    "scriptSha256": "f8cfdca67f5a926e4456761d22704e9d4b9a02f46df4a99c2fdcb64595bc68b1",
+    "limits": "Validates Python example logic on local upstream Spark, not the EMR 4.0.2-amzn-0 runtime. Driver bound to loopback, UI/event logging disabled, no cloud credentials or Kubernetes submission.",
+    "command": [
+      "/tmp/kubernetes-docs-full-review/spark-runtime/bin/spark-submit",
+      "--master",
+      "local[2]",
+      "--deploy-mode",
+      "client",
+      "--conf",
+      "spark.driver.bindAddress=127.0.0.1",
+      "--conf",
+      "spark.driver.host=127.0.0.1",
+      "--conf",
+      "spark.ui.enabled=false",
+      "--conf",
+      "spark.eventLog.enabled=false",
+      "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-emr/smoke.py"
+    ]
+  },
+  "diagrams": [
+    {
+      "stem": "ko-data-on-eks-spark-03-emr-on-eks-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    },
+    {
+      "stem": "en-data-on-eks-spark-03-emr-on-eks-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    }
+  ],
+  "mobile": [
+    {
+      "name": "en-data-on-eks-spark-03-emr-on-eks-0.html",
+      "width": 375,
+      "sourceSha256": "37b644fd842a9ec94965583c783c20b9aa4563fe267591a2153a7a35e378a530",
+      "viewerSha256": "43c02fc821b37a48ce8e834ad13dc0f23b78fe2f1e750ff4c7098eb619b18ab6",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-spark-03-emr-on-eks-0.html",
+      "width": 375,
+      "sourceSha256": "a2b0f55b67085c29fbc24d175b960c6922c95372903f269bbddb0c1f5a76644d",
+      "viewerSha256": "a12933fcabfce96640d0a8717ab72d81625e01bbe3e9d46566c6c1591ab1b420",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-spark-03-emr-on-eks-0.html",
+      "width": 768,
+      "sourceSha256": "37b644fd842a9ec94965583c783c20b9aa4563fe267591a2153a7a35e378a530",
+      "viewerSha256": "43c02fc821b37a48ce8e834ad13dc0f23b78fe2f1e750ff4c7098eb619b18ab6",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-spark-03-emr-on-eks-0.html",
+      "width": 768,
+      "sourceSha256": "a2b0f55b67085c29fbc24d175b960c6922c95372903f269bbddb0c1f5a76644d",
+      "viewerSha256": "a12933fcabfce96640d0a8717ab72d81625e01bbe3e9d46566c6c1591ab1b420",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    }
+  ],
+  "pngVisualInspection": "Both regenerated locale figures inspected together: labels/paths legible, no cropped content."
+}

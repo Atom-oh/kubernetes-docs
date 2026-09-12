@@ -1,54 +1,56 @@
 # Zonal Cluster Operations: Traffic Shifting, Upgrade Rollback, and Data-Layer AZ Affinity
 
-> **Supported Versions**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
-> **Last Updated**: July 21, 2026
+> **Review baseline**: EKS rollback and ARC documentation, Strimzi 1.2.0, Valkey GLIDE 2.5.2, AWS Advanced JDBC Wrapper 4.4.0
+> **Last reviewed**: September 11, 2026. Configuration examples were checked; live cluster cutovers and failure experiments were not performed.
 
 < [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) | [Next: Troubleshooting Playbook](16-troubleshooting-playbook.md) >
 
 ***
 
-The single most common theme in customer questions is "operations." One combination keeps coming up: **split clusters by zone to isolate failures, shift traffic with load balancer target group weights, and when something breaks, roll back in place instead of standing up a new cluster.** This guide ties that combination together as a single operational strategy, and adds the piece that's usually missing: **pinning the read path of your DB/cache/messaging layer to a zone.**
+This guide combines **traffic shifting across clusters with AZ-local workers, conditional version rollback, and AZ-aware data reads**. A zonal fleet is not a default architecture for every team. Consider it when you can operate cell capacity, routing, deployments, and data dependencies independently.
 
-The detailed procedures for each piece already live elsewhere in this repo. This document explains why they get used together, and fills in the data-layer gap that didn't exist before.
+Here, zonal describes **worker and application placement**. The [managed EKS control plane](https://docs.aws.amazon.com/eks/latest/userguide/eks-architecture.html) remains distributed across multiple AZs. The entire cluster does not reside inside one AZ.
 
 ## Table of Contents
 
 1. [Why Zonal Operations](#why-zonal-operations)
 2. [Traffic Layer: Target Group + TargetGroupBinding + Weight Shifting](#traffic-layer-target-group--targetgroupbinding--weight-shifting)
-3. [Upgrades: Why In-Place + Native Rollback Became the Default](#upgrades-why-in-place--native-rollback-became-the-default)
-4. [Data Layer: Pinning the Read Path to a Zone](#data-layer-pinning-the-read-path-to-a-zone)
+3. [Upgrades: Conditions for In-Place and Native Rollback](#upgrades-conditions-for-in-place-and-native-rollback)
+4. [Data Layer: Prefer Same-AZ Reads](#data-layer-prefer-same-az-reads)
 5. [Recommended Combination Summary](#recommended-combination-summary)
 
 ***
 
 ## Why Zonal Operations
 
-A multi-AZ single cluster and a fleet of one cluster per AZ (zonal/single-zone) trade off differently.
+| Aspect | Multi-AZ single cluster | Clusters with workers in one AZ each |
+|--------|------------------------|--------------------------------------|
+| Failure isolation | Replicas and spare capacity in healthy AZs handle recovery | A cell can lose all its workers; shared databases, routing, and regional dependencies can affect other cells |
+| Cross-AZ cost | Depends on service and data paths | Local application traffic can decrease, but replication, shared services, and LB forwarding can still cross AZs |
+| Upgrades | Control plane and nodes change in stages, with version skew managed | Sequential cell upgrades need compatible versions and capacity in the remaining cells |
+| Operational complexity | One cluster | Multiple clusters and coordinated routing |
 
-| Aspect | Multi-AZ single cluster | Zonal (single-zone) clusters |
-|--------|--------------------------|-------------------------------|
-| Failure isolation | An AZ failure affects part of the cluster | An AZ failure only affects that zonal cluster; the rest are unaffected |
-| Cross-AZ cost | Pod-to-pod traffic crosses AZ boundaries ($0.01/GB) | Same-AZ traffic only, no inter-AZ transfer cost |
-| Upgrades | Rolling update, the whole cluster moves version at once | Zone-by-zone sequential upgrade, other zones stay on the previous version |
-| Operational complexity | One cluster to manage | N clusters plus a traffic-routing layer to keep in sync |
+See AWS's [Cell-Based Architecture for Amazon EKS Guidance](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/). Minimize dependencies between cells and size healthy cells to absorb the failed cell's traffic. Selecting per-cell LBs through DNS and weighting target groups behind one LB are different routing designs. Measure costs using the actual traffic paths and each service's charging rules.
 
-AWS ships this exact pattern as the [Cell-Based Architecture for Amazon EKS Guidance](https://aws.amazon.com/solutions/guidance/cell-based-architecture-for-amazon-eks/). Here, one zonal cluster is a "cell," and a group of cells within a Region is a "supercell." A routing layer in front of the cells (Route 53 weighted routing plus Application Recovery Controller) handles failover, and an ALB inside each cell distributes traffic within it. The key property: traffic never crosses a cell boundary, so there is no inter-AZ data transfer cost to begin with.
-
-Zonal/blue-green architecture itself is already covered in [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#1-bluegreen-architecture-overview), and the maturity-model view of Multi-AZ/Cell-Based Architecture is in [`eks/10-eks-resiliency.md`](../eks/10-eks-resiliency.md). This guide wires traffic shifting, upgrades, and data reads together into one operational loop on top of that.
+Related guides: [Advanced Infrastructure](02-infrastructure-advanced.md) and [EKS Resiliency](../eks/10-eks-resiliency.md).
 
 ***
 
 ## Traffic Layer: Target Group + TargetGroupBinding + Weight Shifting
 
-![Architecture diagram of Route 53 weighted records splitting traffic 80/20 across per-AZ target groups, each bound to a zonal cluster by TargetGroupBinding.](../.gitbook/assets/en-ops-15-zonal-operations-guide-0.png)
+![One load balancer listener distributes new traffic between two target groups; TargetGroupBinding in each cluster registers its pod targets.](../.gitbook/assets/en-ops-15-zonal-operations-guide-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-0.html)
 
-The standard pattern for moving traffic across multiple zonal clusters:
+For two clusters sharing one LB:
 
-1. Create the NLB/ALB and Target Groups **outside** the cluster with IaC such as Terraform (so the load balancer survives even if a cluster is replaced).
-2. Bind each zonal cluster's Service to its Target Group with the `TargetGroupBinding` CRD.
-3. Move traffic between clusters by adjusting **Target Group weight** on the load balancer, without touching anything inside the clusters.
+1. Create the NLB/ALB and target groups outside the clusters using IaC, so replacing a cluster does not delete the LB.
+2. Bind each cluster's Service to its own target group using `TargetGroupBinding`.
+3. Change weights in the **listener's forward action**. TGB itself has no weight field. Assign ownership of target groups and listener configuration explicitly between IaC and controllers.
+
+The TGB example assumes the `production` namespace, `app-service:80`, an IP target group in the intended VPC, and AWS Load Balancer Controller already exist. Replace the example ARN and verify target health and network access.
+
+This example uses a **separately installed AWS Load Balancer Controller**. Built-in Auto Mode TGB uses eks.amazonaws.com/v1 with different [tag and lifecycle rules](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html). AWS documents target-group deletion when that built-in TGB or cluster is deleted; do not mix that ownership model with this externally managed target group.
 
 ```yaml
 apiVersion: elbv2.k8s.aws/v1beta1
@@ -65,121 +67,144 @@ spec:
 ```
 
 ```bash
-# Adjust weight between target groups in the ALB listener's forward action
+set -euo pipefail
+# NLB listener whose existing default action forwards to these two groups.
+# Nondefault ALB rules require modify-rule, not this operation.
+: "${LISTENER_ARN:?}" "${ZONE_A_TG_ARN:?}" "${ZONE_C_TG_ARN:?}"
+aws elbv2 describe-listeners \
+  --listener-arns "$LISTENER_ARN" \
+  --query 'Listeners[0].DefaultActions' --output json > current-actions.json
+jq -e --arg a "$ZONE_A_TG_ARN" --arg c "$ZONE_C_TG_ARN" '
+  if $a == $c or length != 1 or .[0].Type != "forward"
+     or ([.[0].ForwardConfig.TargetGroups[].TargetGroupArn] | sort)
+        != ([$a, $c] | sort)
+  then error("Expected one forward action with exactly the two selected groups")
+  else
+    .[0].ForwardConfig.TargetGroups |= map(
+      .Weight = (if .TargetGroupArn == $a then 20 else 80 end))
+  end
+' current-actions.json > proposed-actions.json &&
 aws elbv2 modify-listener \
   --listener-arn "$LISTENER_ARN" \
-  --default-actions '[{
-    "Type": "forward",
-    "ForwardConfig": {
-      "TargetGroups": [
-        {"TargetGroupArn": "'"$ZONE_A_TG_ARN"'", "Weight": 20},
-        {"TargetGroupArn": "'"$ZONE_C_TG_ARN"'", "Weight": 80}
-      ]
-    }
-  }]'
+  --default-actions file://proposed-actions.json
 ```
 
-TargetGroupBinding's basic/advanced/multi-port configuration is covered in [`networking/03-aws-lb-controller.md`](../networking/03-aws-lb-controller.md#targetgroupbinding), and the full Terraform setup for NLB weighted target groups plus Route 53 weighted routing is in [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#2-nlb-weighted-target-groups).
+Before execution, reconcile this change with the IaC plan. Ordinary NLB weight changes affect **new flows**, but **weight zero needs separate treatment**. The [current user guide](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html) states that shortly after setting zero, the group receives no new connections and existing connections are closed. Do not assume existing connections survive until natural closure; test application drain, reconnection, and retry behavior before switching to zero. Follow the [official guide](https://aws.amazon.com/blogs/networking-and-content-delivery/network-load-balancers-now-support-weighted-target-groups/) to inspect `NewFlowCount` and `ActiveFlowCount` per target group, health, error rates, and connection draining before changing nodes. Verify target-group protocol/IP-version compatibility and cross-zone settings. With targets confined to different AZs, disabling cross-zone balancing can prevent the intended weight distribution.
 
-**Planned shifts vs. failure-triggered shifts**: weight adjustment is for **planned** transitions like upgrades and deployments. Unplanned situations like an AZ outage are handled by [ARC (Application Recovery Controller) Zonal Shift](../eks/10-eks-resiliency.md#arc-zonal-shift), which detects and shifts automatically — the two mechanisms don't compete, they split planned vs. reactive duty.
+Route 53 weighted records select **LB DNS endpoints**, not target-group ARNs. TTLs, client caches, and long-lived connections also prevent instant DNS cutover. See [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) and [Advanced Infrastructure](02-infrastructure-advanced.md) for the surrounding setup.
 
-> **July 2026 update**: ARC zonal shift/autoshift is [now supported on EKS Auto Mode clusters](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift) as well. On Auto Mode, there are no flags to set and no Karpenter versions to manage — just enable ARC zonal shift on the cluster, and when a shift activates, new-node provisioning in the impaired AZ and voluntary disruptions (consolidation/drift) are halted automatically.
+**Planned shifts and failure response:** weight changes support planned transitions but do not provide automatic failure detection. [ARC zonal shift](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html) is operator initiated. **Zonal autoshift** requires separate activation, practice, and alarm configuration. An EKS resource shift changes impaired-AZ endpoint/node handling within that cluster; it does not rewrite another cluster's target-group weights. Plan the LB resource's shift separately too.
 
-***
-
-## Upgrades: Why In-Place + Native Rollback Became the Default
-
-In July 2026, Amazon EKS [GA'd native Kubernetes version rollback](https://aws.amazon.com/blogs/containers/announcing-amazon-eks-rollback-for-safe-and-reliable-management-of-cluster-upgrades/). If a problem surfaces after an upgrade, you can revert **one minor version at a time, within 7 days**, and Rollback Readiness Insights automatically pre-checks API compatibility, kubelet version skew, and add-on versions before you roll back. On Auto Mode clusters, rollback covers the data plane (worker nodes) as well as the control plane — but if you're upgrading a zonal cluster in place with self-managed node groups (as in the next section), that automatic data-plane rollback doesn't apply; only the control plane reverts, so node/AMI/add-on changes need to be reverted separately. Neither case carries an extra charge.
-
-Before this feature existed, the only answer to "what happens if the new version is bad" was a standing blue/green cluster fleet you could validate against before cutting over. Now, teams already running a zonal (single-zone-per-cluster) setup have a lighter-weight option: upgrade each zonal cluster in place, one zone at a time, and use native rollback as the safety net instead.
-
-| Approach | When it's the right call |
-|----------|---------------------------|
-| **Standing blue/green cluster fleet** | You need to validate the new version against real production traffic on a fully separate cluster before cutting over, or you need to revert node/AMI/add-on changes wholesale (native rollback only reverts the control plane) |
-| **Zonal in-place + native rollback** | You already run zonal clusters for availability reasons (not just for upgrades), you want to avoid the cost of running two full cluster fleets at all times, and you can tolerate the ~7-day rollback eligibility window instead of an instant cluster-level failback |
-| **Route 53 weighted DNS cutover** | Clusters live in entirely different Regions/accounts, or you need to replace the NLB layer itself |
-
-The execution runbook (shift NLB weight -> in-place upgrade -> validate -> restore weight, plus the cases where the full blue/green fleet is still the right call) is already documented in [`ops/11-upgrade-operations.md`'s "Alternative: Zonal In-Place Upgrade with Native Rollback"](11-upgrade-operations.md#alternative-zonal-in-place-upgrade-with-native-rollback) section, so it isn't repeated here. For the exact conditions under which a rollback is eligible (a cluster created at the target version can't roll back, an already re-upgraded cluster can't, etc.), see [`eks/08-eks-upgrades.md`'s Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure).
+> **EKS Auto Mode support:** following the [July 2026 release](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift/), enabling cluster zonal shift lets Auto Mode constrain new provisioning and voluntary disruption in the impaired AZ during a shift. This does not enable autoshift by itself. **Shifting away from the only AZ containing workers can cause an outage.** EKS shift needs healthy-AZ replicas, CoreDNS, and spare capacity. A cell whose workers occupy one AZ needs external cell routing as part of recovery.
 
 ***
 
-## Data Layer: Pinning the Read Path to a Zone
+## Upgrades: Conditions for In-Place and Native Rollback
 
-Traffic shifting and upgrades are usually already in place for a team with a zonal architecture. The **read path of DB/cache/messaging** is the part that quietly gets missed — an application pod may live entirely inside one AZ, but the DB reader, cache replica, or Kafka broker it talks to gets assigned round-robin across AZs, generating inter-AZ cost and latency nobody notices until the bill arrives.
+[EKS native version rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), introduced in July 2026, can return to the **immediately previous minor version if initiated within seven days after upgrade completion**. Seven days is an eligibility window, not a recovery-time guarantee. Check creation version, support status, subsequent upgrades, feature compatibility, and Rollback Readiness Insights.
 
-The underlying principle is the same everywhere: **writes have to go to the leader/primary, so they may cross AZs regardless — but reads can be routed to a same-AZ replica.** For workloads that are mostly reads (caches, lookup queries, consumers), that alone removes a large share of the inter-AZ cost.
+- **Auto Mode:** EKS rolls back Auto Mode nodes first, then the control plane. PDBs and NodePool disruption budgets still apply; rollback is not instantaneous.
+- **Managed node groups:** roll them back separately with `UpdateNodegroupVersion`. Operators prepare self-managed and Hybrid nodes separately. Nodes must not run a version newer than the control plane.
+- **Add-ons, data, and applications:** rollback does not restore add-on versions, etcd data, persistent-volume data, or application changes. Plan compatibility and data-migration recovery independently.
+- **`--force`:** can bypass readiness insights, but not eligibility prerequisites or Auto Mode disruption controls. Resolve issues before following the normal rollback procedure.
 
-![Diagram of the data-layer AZ-affinity path: the app pod reads from the same-AZ Kafka broker, Redis replica, and Aurora reader, and only writes cross-AZ.](../.gitbook/assets/en-ops-15-zonal-operations-guide-1.png)
+There is no additional charge for the rollback feature itself; existing cluster, compute, and traffic charges still apply. Choose in-place or blue/green after validating remaining-cell capacity and recovery objectives.
+
+| Approach | Appropriate conditions |
+|----------|------------------------|
+| **Blue/green clusters** | Validate in a separate environment and retain traffic failback to the old environment; shared data changes need their own recovery plan |
+| **Zonal in-place + native rollback** | An existing cell fleet can absorb traffic, and eligibility, compatibility, and recovery time have been tested |
+| **Route 53 weighted DNS cutover** | Distinct LB endpoints, including cross-Region/account designs, with DNS caching and health behavior considered |
+
+The operational sequence is **check remaining-cell capacity → shift weights → confirm connection draining → upgrade → validate → restore weights**. See [Upgrade Operations](11-upgrade-operations.md) and [EKS Upgrades](../eks/08-eks-upgrades.md) for detailed procedures and node-specific conditions.
+
+***
+
+## Data Layer: Prefer Same-AZ Reads
+
+Prefer local reads when a suitable replica exists in the same AZ and the application accepts its consistency behavior. Writes, replication, initial metadata requests, and failure fallback can still cross AZs. Measure replication lag, errors, actual connection destinations, and transfer volume together.
+
+![The application prefers Kafka, Valkey, and Aurora readers in its AZ; writes and read fallback may still cross AZ boundaries.](../.gitbook/assets/en-ops-15-zonal-operations-guide-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-1.html)
 
-Doing this requires the pod to know which AZ it's in. The Kubernetes Downward API does not inject the node's zone label (`topology.kubernetes.io/zone`) into a pod directly, so one of the following is needed:
+First determine the pod's AZ. The Downward API exposes pod fields; it does not directly query node labels.
 
-- **EC2 IMDS lookup**: the pod or a sidecar calls `http://169.254.169.254/latest/meta-data/placement/availability-zone` directly
-- **Admission-time label injection**: a mutating policy such as Kyverno copies the node's `topology.k8s.aws/zone-id` label onto a pod annotation — the pattern AWS recommends in its [MSK-on-EKS rack awareness guide](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/); see [`security/01-kyverno-policy-management.md`](../security/01-kyverno-policy-management.md) in this repo for how to write the Kyverno policy
-- **Built-in operator support**: operators like Strimzi treat rack-awareness as a first-class feature, so an init-container handles it with no custom implementation
+- **Node metadata injection:** ordinary Pod-create admission occurs before scheduling, so the destination node is not yet known. The [AWS MSK guide](https://aws.amazon.com/blogs/big-data/optimize-traffic-costs-of-amazon-msk-consumers-on-amazon-eks-with-rack-awareness/) handles **`Pod/binding` requests** to read the selected node and inject its AZ ID. Configure Kyverno binding-request filters, node-read RBAC, and completion before pod startup together.
+- **Post-scheduling lookup:** expose `spec.nodeName` through the Downward API and use a trusted initialization component to read node labels. Do not grant all applications broad node-read access.
+- **EC2 IMDSv2:** where EC2 metadata access is intentionally available, obtain a token before reading placement information. Do not assume an IMDSv1 GET works or remove metadata restrictions indiscriminately. This is not directly applicable to Fargate.
+- **Operator support:** Strimzi configures rack awareness for its managed brokers and supported client resources. It does not automatically set `client.rack` in unrelated application Deployments.
+
+**Do not mix AZ names and AZ IDs.** Kafka's `broker.rack` and `client.rack` must use matching strings. If MSK uses AZ IDs, do not substitute a name such as `ap-northeast-2a`. GLIDE's `client_az` must likewise match the AZ values reported by the servers.
 
 ### Kafka: KIP-392 Follower Fetching
 
-[KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica) (Kafka 2.4+) lets a consumer fetch directly from a **follower replica in its own rack (AZ)** instead of always going to the partition leader.
+[KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica), introduced in Kafka 2.4, allows consumers to read from a same-rack replica. This is the feature's introduction version, not a recommendation to deploy Kafka 2.4 today.
 
-![Sequence diagram showing a Kafka consumer in AZ-a fetching from the leader broker in AZ-b, being redirected to a same-AZ follower replica via a rack-aware hint, then re-fetching locally to receive data without paying inter-AZ transfer cost.](../.gitbook/assets/en-ops-15-zonal-operations-guide-10.png)
+![A Kafka consumer receives a preferred-replica hint from the leader, then reads from a same-rack replica. Initial requests and replication can still cross AZs.](../.gitbook/assets/en-ops-15-zonal-operations-guide-10.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-10.html)
 
-- **Brokers**: set `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector`, and give every broker a `broker.rack` (AZ ID)
-- **Consumers**: set the `client.rack` consumer property to the consumer's own AZ ID, obtained via one of the zone-awareness methods above
-- **With Strimzi**, the operator supports this natively:
+- **Brokers:** configure `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` and `broker.rack`.
+- **Consumers:** set `client.rack` to the consumer's rack. If no suitable local replica exists, selection falls back to the leader.
+- **Strimzi 1.2.0:** the following is a **configuration excerpt to merge into an existing Kafka CR**, not a complete deployment. KafkaNodePools, listeners, storage, and other configuration are also required. From Strimzi 1.0 the CR API is `v1`; specify the rack type too.
 
-  ```yaml
-  apiVersion: kafka.strimzi.io/v1beta2
-  kind: Kafka
-  spec:
-    kafka:
-      rack:
-        topologyKey: topology.kubernetes.io/zone
-      config:
-        replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
-  ```
+```yaml
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: my-cluster
+spec:
+  kafka:
+    rack:
+      type: topology-label
+      topologyKey: topology.kubernetes.io/zone
+    config:
+      replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
+```
 
-  Setting `rack.topologyKey` makes Strimzi automatically configure `broker.rack` and inject the client rack via an init-container.
-- Also worth knowing: [KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers) takes this a step further and makes a consumer group's partition assignment itself rack-aware.
+This configures the brokers' `broker.rack`. Set ordinary application consumers' `client.rack` separately. KafkaConnect, MirrorMaker 2, and Bridge have their own CR rack settings. Follow the [Strimzi documentation](https://strimzi.io/docs/operators/1.2.0/configuring.html) to distribute broker placement as well. Follower fetching can increase read latency because of replication lag.
 
-For running Kafka on EKS more broadly, see [`data-on-eks/kafka/`](../data-on-eks/kafka/README.md).
+[KIP-881](https://cwiki.apache.org/confluence/display/KAFKA/KIP-881%3A+Rack-aware+Partition+Assignment+for+Kafka+Consumers) concerns rack-aware partition assignment, a separate mechanism. Check consumer-version and assignor support. See [Kafka on EKS](../data-on-eks/kafka/README.md) for deployment guidance.
 
 ### Redis/Valkey (ElastiCache): AZ-Affinity Read Strategies
 
-The [Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/) client supports four read strategies via its `ReadFrom` setting.
+These are the principal [Valkey GLIDE](https://valkey.io/blog/az-affinity-strategy/) `ReadFrom` choices discussed here. GLIDE 2.5.2 also has `ALL_NODES`; this is not the complete enum list.
 
 | Strategy | Behavior |
 |----------|----------|
-| `PRIMARY` | Always reads from the primary (default, AZ-agnostic) |
-| `PREFER_REPLICA` | Round-robins across replicas, falls back on failure |
-| `AZ_AFFINITY` | Prefers a same-AZ replica, falls back otherwise |
-| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | Same-AZ replica first, then same-AZ primary, then other AZs as a last resort |
+| `PRIMARY` | Read from the primary (default) |
+| `PREFER_REPLICA` | Round-robin across replicas, then primary if no replica is available |
+| `AZ_AFFINITY` | Local replicas first, then other replicas or primary |
+| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | Local replicas → local primary → replicas or primary in other AZs |
 
-For read-heavy workloads (>99% reads), `AZ_AFFINITY_REPLICAS_AND_PRIMARY` is the recommended balance of cost savings and availability.
+Consider replica reads when the application tolerates stale data; read percentage alone does not determine the strategy. Verify server AZ-metadata support/configuration, primary load, and fallback. Design requests needing **freshness or read-after-write** separately, for example with primary reads where appropriate for the data model.
+
+This `valkey-glide==2.5.2` example **creates configuration for cluster mode** without opening a connection. It enables TLS; supply `credentials` where authentication is required. For cluster mode disabled, use `GlideClientConfiguration` and `GlideClient` instead.
 
 ```python
-from glide import GlideClient, GlideClientConfiguration, ReadFrom
+from glide import GlideClusterClientConfiguration, NodeAddress, ReadFrom
 
-config = GlideClientConfiguration(
-    addresses=[...],
-    read_from=ReadFrom.AZ_AFFINITY_REPLICAS_AND_PRIMARY,
-    client_az="ap-northeast-2a",  # the pod's AZ, obtained via one of the methods above
-)
-client = await GlideClient.create(config)
+
+def cache_config(host: str, client_az: str, credentials=None):
+    if not host or not client_az:
+        raise ValueError("Cache endpoint and client AZ are required")
+    return GlideClusterClientConfiguration(
+        addresses=[NodeAddress(host, 6379)],
+        use_tls=True,
+        credentials=credentials,
+        read_from=ReadFrom.AZ_AFFINITY_REPLICAS_AND_PRIMARY,
+        client_az=client_az,
+    )
 ```
 
-As a real-world example, HotelTrader cut inter-AZ data transfer cost by 95% and improved average latency by 49% after adopting Valkey GLIDE's AZ-affinity routing (without AZ awareness, cache requests were distributed randomly across AZs, generating unnecessary transfer costs). See the [AWS database blog post](https://aws.amazon.com/blogs/database/how-hoteltrader-cut-inter-az-cost-95-and-latency-by-49-with-valkey-glide-on-amazon-elasticache/) for details.
+The [HotelTrader case study](https://aws.amazon.com/blogs/database/how-hoteltrader-cut-inter-az-cost-95-and-latency-by-49-with-valkey-glide-on-amazon-elasticache/) reports 95% lower inter-AZ transfer cost and 49% lower average latency after **both AZ-aware routing and request batching**. These are results from that ECS/ElastiCache workload, not guarantees for the routing option alone.
 
-### Aurora/RDS: The Reader Endpoint's Limits, and Workarounds
+### Aurora/RDS: Reader Endpoint Limits and Alternatives
 
-Aurora's default reader endpoint is **round-robin DNS with no AZ awareness** — a replica in the same AZ gets no priority. This isn't a missing feature so much as a current, real constraint; the open [aws-advanced-jdbc-wrapper#1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) issue is asking for AZ affinity itself.
+Aurora's [default reader endpoint](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Reader.html) balances **connections** across read replicas; it does not guarantee AZ preference or per-query balancing. With no replicas, it can connect to the writer. DNS changes alone do not move existing pooled connections to another instance.
 
-Two workarounds exist:
-
-1. **Per-AZ custom endpoints**: group the replica instances in a given AZ into a custom endpoint, and point that AZ's application traffic at it.
+1. **Per-AZ custom endpoints:** explicitly select instance IDs after verifying their AZ and reader role. Replace the names in this creation example with real resources.
 
    ```bash
    aws rds create-db-cluster-endpoint \
@@ -189,29 +214,31 @@ Two workarounds exist:
      --static-members db-instance-az-a-1 db-instance-az-a-2
    ```
 
-2. **AWS Advanced JDBC Wrapper**: provides read/write splitting and a `fastestResponse` reader-selection strategy. It isn't true AZ affinity, but it favors the fastest-responding reader, which is usually the same-AZ one.
+   The CLI/API supports `READER` endpoints. A member promoted to writer is excluded, and new replicas are not automatically added to a static list. Check [membership behavior](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.Considerations.html) and provide an application fallback endpoint or explicit failure policy when no local reader remains.
 
-If you need genuine AZ affinity, option 1 (custom endpoints) is the only reliable route until the open issue above is resolved.
+2. **AWS Advanced JDBC Wrapper 4.4.0:** [`fastestResponse`](https://github.com/aws/aws-advanced-jdbc-wrapper/blob/4.4.0/docs/using-the-jdbc-driver/HostSelectionStrategies.md) selects a host using measured response time. Also load the `fastestResponseStrategy` plugin. This is not an AZ-label constraint; the fastest host is not guaranteed to be local.
+
+[Issue #1139](https://github.com/aws/aws-advanced-jdbc-wrapper/issues/1139) was **closed in May 2025** after discussion that the response-time feature in 2.5.5 met the request. It is not an open feature request proving custom endpoints are the only solution.
 
 ### Complementary Kubernetes Service-Layer Options
 
-To pin Service traffic itself to an AZ at the application layer, see [Topology Aware Routing (GA)](../eks/12-kubernetes-version-roadmap.md); if you run a service mesh, see [Istio Zone-Aware Routing](../service-mesh/istio/resilience/03-zone-aware-routing.md). Combined with the data-layer strategies above, the entire read path from application to cache/DB/messaging stays inside the AZ.
+[Topology Aware Routing](https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/) and [Istio Zone-Aware Routing](../service-mesh/istio/resilience/03-zone-aware-routing.md) complement Service endpoint selection. Local endpoint shortages, health changes, and configuration can send traffic to other AZs. They do not automatically control external DB/cache/Kafka connections. Preference is not a guarantee that the entire read path remains in one AZ.
 
 ***
 
 ## Recommended Combination Summary
 
-| Layer | Recommended as of 2026 | Alternative/fallback |
-|-------|--------------------------|------------------------|
-| Architecture | Zonal (single-zone) clusters + Cell-Based Architecture | Multi-AZ single cluster (smaller ops teams) |
-| Traffic shifting | Target Group + TargetGroupBinding + weight adjustment | Route 53 weighted DNS (different Region/account) |
-| Failure response | ARC Zonal Shift (automatic) | Manual weight adjustment |
-| Upgrades | Zonal in-place + EKS native rollback (7 days) | Standing blue/green cluster fleet (when full pre-validation is required) |
-| Kafka reads | KIP-392 (`client.rack` + `RackAwareReplicaSelector`), or Strimzi's `rack.topologyKey` | Allow region-wide fallback (automatic if no local follower) |
-| Cache reads | Valkey GLIDE `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | `PREFER_REPLICA` (when AZ awareness isn't needed) |
-| DB reads | Aurora per-AZ custom endpoints | AWS Advanced JDBC Wrapper `fastestResponse` |
+| Layer | Selection criteria | Alternative/fallback |
+|-------|--------------------|----------------------|
+| Architecture | Independent cell operations and healthy-cell capacity | A multi-AZ single cluster remains a valid choice |
+| Traffic shifting | LB forward-action weights and TGB target registration | Route 53 selects LB endpoints |
+| Failure response | Manual zonal shift / separately enabled autoshift | Single-AZ worker cells need external cell routing |
+| Upgrades | Tested eligibility, compatibility, and recovery time | Blue/green, with data recovery handled separately |
+| Kafka reads | Broker selector plus matching consumer rack | Leader when no suitable local replica exists |
+| Cache reads | GLIDE strategy matching freshness and AZ metadata | Verify remote fallback and primary load |
+| DB reads | Maintained local reader list or response-time selection | Handle missing local readers and reconnection |
 
-Recommended rollout order is **traffic-shifting layer -> upgrade/rollback -> data read layer**, since it's hard to measure the payoff (especially cost savings) of the later layers without the earlier ones in place.
+Measure load, cost, and recovery-time baselines, then rehearse traffic shifts and rollback outside production. Read-path optimization can also be introduced independently: validate consistency, fallback, and cost on a small scope before expanding.
 
 ***
 

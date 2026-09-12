@@ -1,198 +1,198 @@
 # Operations Quiz
 
 > **Related Document**: [Operations](../../../networking/calico/09-operations.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
-1. What are the three main installation methods for Calico?
-   - A) Docker, Podman, containerd
-   - B) Manifest-based (kubectl), Operator-based (Tigera), Helm
-   - C) CLI, GUI, API
-   - D) Binary, Package manager, Source compilation
+1. Which statement correctly describes Calico installation ownership?
+   - A) Install manifest and Helm operators together for redundancy
+   - B) Choose an operator/Helm or direct-manifest owner that matches the platform
+   - C) Enabling BPF is required for every installation
+   - D) A fresh operator manifest includes every Calico CRD automatically
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Manifest-based (kubectl), Operator-based (Tigera), Helm**
+**Answer: B) Choose an operator/Helm or direct-manifest owner that matches the platform**
 
 **Explanation:**
-Calico can be installed using: 1) Manifest-based installation with kubectl apply on YAML manifests, 2) Operator-based installation using the Tigera Operator (recommended), or 3) Helm charts for customizable deployments. The Operator method is generally recommended for production as it manages the Calico lifecycle.
+The Helm chart installs the Tigera Operator. Use one owner, pin the version, manage matching CRDs, and choose the actual networking profile. The example is full Calico CNI on self-managed Linux; EKS VPC CNI policy-only is a different configuration.
 
 </details>
 
-2. Which calicoctl command shows the status of Calico nodes including BGP peer status?
-   - A) calicoctl get nodes
-   - B) calicoctl node status
-   - C) calicoctl describe node
-   - D) calicoctl show peers
+2. What does `calicoctl node status` inspect?
+   - A) Every node in the kubeconfig context
+   - B) The local node’s BGP status with the required node access
+   - C) Every application’s HTTP readiness
+   - D) All IPAM allocation leaks
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) calicoctl node status**
+**Answer: B) The local node’s BGP status with the required node access**
 
 **Explanation:**
-The `calicoctl node status` command displays the status of the Calico node including BGP peering information, showing which peers are established, their state, and any connection issues. This is essential for troubleshooting BGP routing problems.
+It is a local BGP diagnostic, not a cluster-wide readiness probe. BGP-disabled profiles do not need a BGP success result. Select the affected node and inspect its actual BIRD socket where appropriate.
 
 </details>
 
-3. What command displays IPAM block allocation across nodes?
-   - A) calicoctl ipam show --show-blocks
-   - B) calicoctl get ipamblocks
-   - C) kubectl get ipamblocks -o wide
-   - D) calicoctl describe ipam
+3. What does `calicoctl ipam show --show-blocks` provide?
+   - A) Calico IPAM block utilization, with node affinity inspected separately
+   - B) An automatic safe release of empty blocks
+   - C) All VPC CNI ENI allocations
+   - D) A transactional datastore backup
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) calicoctl ipam show --show-blocks**
+**Answer: A) Calico IPAM block utilization, with node affinity inspected separately**
 
 **Explanation:**
-The `calicoctl ipam show --show-blocks` command displays detailed IPAM information including which IP blocks are allocated to which nodes, the utilization of each block, and overall IP pool statistics. This is crucial for diagnosing IP allocation issues.
+The command reports IP block/pool use. Use BlockAffinity for the block-to-node relationship. It applies to Calico IPAM; inspect the actual allocator for VPC CNI or host-local.
 
 </details>
 
-4. Which Prometheus metrics endpoint exposes Felix performance and policy statistics?
-   - A) :9090/metrics
-   - B) :9091/metrics
-   - C) :9094/metrics
-   - D) :8080/metrics
+4. What is the type of `felix_int_dataplane_apply_time_seconds` in the reviewed release?
+   - A) Counter of denied packets
+   - B) Histogram with mandatory _bucket series
+   - C) Summary with quantiles, _sum and _count
+   - D) Gauge of allocated IP blocks
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) :9091/metrics**
+**Answer: C) Summary with quantiles, _sum and _count**
 
 **Explanation:**
-Felix exposes Prometheus metrics on port 9091 by default. These metrics include policy rule counts, dataplane programming latency, iptables/eBPF statistics, and error counts. This must be enabled in FelixConfiguration with `prometheusMetricsEnabled: true`.
+This is a Summary of incremental dataplane apply time. A local quantile is not a cluster-wide p99. Use sum/count rates for a mean while observations exist; do not invent histogram buckets.
 
 </details>
 
-5. What port does Typha use for its Prometheus metrics endpoint?
-   - A) :9091/metrics
-   - B) :9093/metrics
-   - C) :9094/metrics
-   - D) :9095/metrics
+5. Which statement about Typha metrics ports is correct?
+   - A) The binary defaults to 9091; the guide explicitly configures operator Typha metrics on 9093
+   - B) Every Typha installation uses 9093 automatically
+   - C) Typha always shares kube-controllers port 9094
+   - D) Metrics are enabled merely by creating a Service
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) :9093/metrics**
+**Answer: A) The binary defaults to 9091; the guide explicitly configures operator Typha metrics on 9093**
 
 **Explanation:**
-Typha exposes Prometheus metrics on port 9093 by default. Typha metrics include connection counts to Felix instances, datastore sync latency, and cache statistics. Monitoring Typha is important for understanding datastore fan-out performance in large clusters.
+Typha metrics are disabled by default. The operator’s typhaMetricsPort enables/configures reporting and its Service. A ServiceMonitor must select the matching Service port and be selected by Prometheus.
 
 </details>
 
-6. A pod cannot get an IP address. What is the first thing to check?
-   - A) kube-proxy logs
-   - B) IPPool availability and IPAM block allocation
-   - C) DNS configuration
-   - D) Node CPU usage
+6. What should you check when a Pod has no IP?
+   - A) Immediately release an address and restart every Calico agent
+   - B) Scheduling/events, the selected node, and the actual CNI/IPAM allocator
+   - C) Only DNS records
+   - D) Whether all BGP sessions have the same ASN
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) IPPool availability and IPAM block allocation**
+**Answer: B) Scheduling/events, the selected node, and the actual CNI/IPAM allocator**
 
 **Explanation:**
-When a pod fails to get an IP, first check if the IPPool has available addresses using `calicoctl ipam show`. Verify that IPAM blocks can be allocated to the node and that the IPPool selector matches the node. Also check Felix logs for IPAM-related errors.
+A Pending Pod may not be scheduled yet. For allocation failures, inspect kubelet/CNI and allocator evidence, eligible pools and capacity/affinity constraints. Felix process logs are not the source of every Pod allocation error.
 
 </details>
 
-7. What should you verify when BGP peering between nodes fails to establish?
-   - A) Pod DNS resolution
-   - B) Network connectivity on BGP port (179), BGPConfiguration, and node selectors
-   - C) Persistent volume bindings
-   - D) Service account tokens
+7. What belongs in BGP troubleshooting?
+   - A) Only a successful ping
+   - B) The affected node’s session state, source/peer addresses and ASNs, TCP 179, authentication/TTL and filters
+   - C) Randomly changing every ASN until a session opens
+   - D) Reading the first Calico Pod in the cluster regardless of node
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Network connectivity on BGP port (179), BGPConfiguration, and node selectors**
+**Answer: B) The affected node’s session state, source/peer addresses and ASNs, TCP 179, authentication/TTL and filters**
 
 **Explanation:**
-For BGP peering issues, verify: 1) Network connectivity between nodes on TCP port 179, 2) BGPConfiguration and BGPPeer resources are correctly defined, 3) Node selectors match intended nodes, 4) Check `calicoctl node status` and BIRD logs for specific peering errors.
+A TCP connection does not prove BGP Established or prefix acceptance. Check the expected routes and correct IPv4/IPv6 BIRD socket. Use these checks only when the chosen networking profile enables BGP.
 
 </details>
 
-8. A network policy is applied but traffic is not being blocked. What is a likely cause?
-   - A) The cluster is using too much memory
-   - B) Policy selectors don't match target pods, or policy order/tier is incorrect
-   - C) The nodes need to be rebooted
-   - D) Kubernetes version is too old
+8. Which statement about an apparent policy failure is correct?
+   - A) kube-proxy and Service translation can never affect the investigation
+   - B) Pod annotations list every effective policy decision
+   - C) Felix Debug logs are automatically per-packet deny logs
+   - D) Check endpoint identity, selectors, direction, tier/order, existing flows and the actual Service/dataplane path
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Policy selectors don't match target pods, or policy order/tier is incorrect**
+**Answer: D) Check endpoint identity, selectors, direction, tier/order, existing flows and the actual Service/dataplane path**
 
 **Explanation:**
-When policies don't work as expected, verify: 1) Pod selectors correctly match target pods (check labels), 2) Namespace selectors are correct, 3) Policy tier ordering (higher priority tiers evaluated first), 4) No conflicting Allow policies earlier in evaluation order. Use `calicoctl get policy` to review applied policies.
+Calico enforces policy, while Service translation, endpoint selection and source-address changes can affect which traffic is evaluated. Inspect the complete path and test both allowed and denied cases instead of assuming a component is irrelevant.
 
 </details>
 
-9. What is the recommended procedure for upgrading Calico versions?
-   - A) Delete all resources and reinstall
-   - B) Upgrade in place following version-specific migration guides
-   - C) Create a new cluster and migrate workloads
-   - D) Calico upgrades automatically with Kubernetes
+9. What is required for a Calico upgrade?
+   - A) Patch the managed DaemonSet to remove all canary agents
+   - B) Follow the installation/version-specific CRD, operator and stored-data migration procedure
+   - C) Always set Installation.spec.version before starting
+   - D) Assume Helm rollback reverses all CRD and data changes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Upgrade in place following version-specific migration guides**
+**Answer: B) Follow the installation/version-specific CRD, operator and stored-data migration procedure**
 
 **Explanation:**
-Calico upgrades should follow the official upgrade documentation for your installation method. This typically involves updating the Operator or manifests to the new version. Review version-specific migration notes as some upgrades require additional steps. Test in non-production first.
+Use compatible source/target versions, update the existing installation owner and manage CRDs before new fields are needed. Test the rollout and recovery. An older operator or raw YAML export is not a guaranteed downgrade.
 
 </details>
 
-10. What is the default deny best practice for Calico network policies?
-    - A) Never use deny policies
-    - B) Apply default deny policies to namespaces, then explicitly allow required traffic
-    - C) Only deny traffic from external sources
-    - D) Deny all egress but allow all ingress
+10. How should default-deny policy be introduced?
+   - A) Validate a selected namespace and explicitly permit its required dependencies before expanding scope
+   - B) Immediately apply an empty all-endpoint GlobalNetworkPolicy everywhere
+   - C) Infer API server endpoints from an invented Pod label
+   - D) Use endpoint count zero as proof that denial works
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Apply default deny policies to namespaces, then explicitly allow required traffic**
+**Answer: A) Validate a selected namespace and explicitly permit its required dependencies before expanding scope**
 
 **Explanation:**
-The security best practice is to apply a default deny policy that blocks all ingress (and optionally egress) traffic to pods in a namespace, then create specific policies to allow only required traffic flows. This implements the principle of least privilege for network access.
+DNS, API, identity, monitoring and application paths need explicit review. Test negative and positive cases, preserve a recovery path, and account for workload versus host endpoint policy.
 
 </details>
 
-11. How do you configure Calico to export flow logs for network visibility?
-   - A) Enable in kube-apiserver flags
-   - B) Configure FlowLogsFileReporter or FlowLogsNetworkReporter in FelixConfiguration
-   - C) Flow logs are always enabled by default
-   - D) Install a separate flow log operator
+11. Which description matches current OSS flow observability?
+   - A) FlowLogsFileReporter is the required OSS API field
+   - B) Every flow log is exactly one packet record
+   - C) Operator/Helm can deploy Goldmane and Whisker; the current flow-log guide marks the feature tech preview
+   - D) Flow logs and Felix process logs are identical
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Configure FlowLogsFileReporter or FlowLogsNetworkReporter in FelixConfiguration**
+**Answer: C) Operator/Helm can deploy Goldmane and Whisker; the current flow-log guide marks the feature tech preview**
 
 **Explanation:**
-Flow logs are configured through FelixConfiguration by enabling FlowLogsFileReporter (writes to files) or FlowLogsNetworkReporter (sends to a collector). Configure parameters like log interval, aggregation level, and which flows to capture. Note: Full flow log features require Calico Enterprise.
+Goldmane supplies aggregated flow data to Whisker. It is available in OSS with the documented installation prerequisites; old file/DNS logger fields are not a valid replacement. Protect sensitive flow data and assess the preview status.
 
 </details>
 
-12. What environment variables must be set for calicoctl to connect to the datastore?
-    - A) CALICO_HOST and CALICO_PORT
-    - B) DATASTORE_TYPE and KUBECONFIG (or ETCD_ENDPOINTS for etcd datastore)
-    - C) CALICO_API_SERVER and CALICO_TOKEN
-    - D) CNI_PATH and CNI_CONFIG
+12. How can calicoctl be configured for Kubernetes datastore access?
+   - A) Set CNI_PATH only
+   - B) Use DATASTORE_TYPE=kubernetes with appropriate kubeconfig access, or an explicit supported config file
+   - C) An arbitrary ~/.config path is always auto-discovered
+   - D) A Calico kubeconfig provides access to EKS-managed etcd
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) DATASTORE_TYPE and KUBECONFIG (or ETCD_ENDPOINTS for etcd datastore)**
+**Answer: B) Use DATASTORE_TYPE=kubernetes with appropriate kubeconfig access, or an explicit supported config file**
 
 **Explanation:**
-For calicoctl to connect to the datastore, set `DATASTORE_TYPE=kubernetes` and ensure KUBECONFIG points to a valid kubeconfig file. For etcd datastore, set `DATASTORE_TYPE=etcdv3` along with `ETCD_ENDPOINTS` and optionally TLS-related variables for secure connections.
+The guide shows a typical environment configuration. An explicit --config file is another supported path. Select the intended cluster and RBAC; direct etcdv3 access is a separate deployment configuration.
 
 </details>

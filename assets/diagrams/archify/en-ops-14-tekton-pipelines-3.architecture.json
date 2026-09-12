@@ -17,7 +17,7 @@
           "github-interceptor",
           "cel-interceptor"
         ],
-        "note": "The EventListener receives the webhook, the GitHub Interceptor validates the secret, and the CEL Interceptor filters by branch and action."
+        "note": "After HMAC, require approved repository, main, non-deletion and a 40-character SHA."
       },
       {
         "id": "map-create",
@@ -37,7 +37,7 @@
       "id": "webhook",
       "type": "external",
       "label": "GitHub Webhook",
-      "sublabel": "push / PR event",
+      "sublabel": "protected main push",
       "pos": [
         40,
         90
@@ -65,7 +65,7 @@
       "id": "github-interceptor",
       "type": "security",
       "label": "GitHub Interceptor",
-      "sublabel": "webhook secret check",
+      "sublabel": "HMAC / push type",
       "pos": [
         460,
         90
@@ -79,7 +79,7 @@
       "id": "cel-interceptor",
       "type": "security",
       "label": "CEL Interceptor",
-      "sublabel": "branch / action filter",
+      "sublabel": "repository / ref / SHA",
       "pos": [
         670,
         90
@@ -93,7 +93,7 @@
       "id": "triggerbinding",
       "type": "backend",
       "label": "TriggerBinding",
-      "sublabel": "extract payload params",
+      "sublabel": "full commit SHA",
       "pos": [
         670,
         280
@@ -107,7 +107,7 @@
       "id": "triggertemplate",
       "type": "backend",
       "label": "TriggerTemplate",
-      "sublabel": "PipelineRun template",
+      "sublabel": "fixed execution and roles",
       "pos": [
         880,
         280
@@ -197,19 +197,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Receive and verify",
+      "title": "Validate delivery",
       "items": [
-        "EventListener deploys an HTTP server on Kubernetes that receives webhooks",
-        "The GitHub Interceptor validates the webhook secret and eventTypes",
-        "The CEL Interceptor only passes main-branch pushes and PR opened/synchronize events"
+        "GitHub HMAC and push eventTypes",
+        "Check repository, branch, SHA and deletion state"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Map and create",
+      "title": "Execution scope",
       "items": [
-        "TriggerBinding extracts payload values such as body.after and body.ref as parameters",
-        "TriggerTemplate fills in the parameters and creates the PipelineRun"
+        "Keep Git URL, image and ServiceAccounts fixed",
+        "Separate privileges and execution for external PRs"
       ]
     }
   ]

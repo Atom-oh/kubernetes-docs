@@ -2,97 +2,153 @@
   {
     "path": "ko/gitops/05-feature-flags.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "status": "fixed",
+    "summary": "Fully reviewed and corrected against pinned releases; working SDK/manifest/script examples and diagrams validated with explicit operational limits.",
     "sources": [
-      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
-      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
-      "https://www.cncf.io/projects/openfeature/"
+      "https://github.com/open-feature/flagd/releases/tag/flagd/v0.16.3",
+      "https://github.com/open-feature/open-feature-operator/tree/v0.9.3/docs",
+      "https://flagd.dev/reference/flag-definitions/",
+      "https://flagd.dev/reference/custom-operations/fractional-operation/",
+      "https://flagd.dev/reference/monitoring/",
+      "https://github.com/open-feature/go-sdk-contrib/releases/tag/providers/flagd/v0.6.0",
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://launchdarkly.com/docs/sdk/openfeature",
+      "https://docs.flagsmith.com/integrating-with-flagsmith/openfeature",
+      "https://github.com/Unleash/unleash-openfeature-node-provider"
     ],
     "findings": [
-      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
-      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
-      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
-      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
-      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
-      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
-      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
-      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+      "CurrentProviderconstructors/lifecycle/resolverenumsandtypedexamplescorrectedin4languages.",
+      "FixedinvalidYAML/JSONLogic,membershipmisuseoffractional,missingdefinitions,default-vsSDKfallbacksemantics,andDISABLEDnonerrorbehavior.",
+      "OFO0.9.3realCRDs,chartpaths,imageoverrides,Podannotations,filesources,namespaceandServiceAccountownershipcorrected;removedfictionalflagdHelmchart.",
+      "Removeddouble-paymentshadowpattern;boundedread-onlybackgroundworkandtimeouts.",
+      "Flaggerfailedchecks,independentworkload/flagdecisions,androllbackhooksemanticscorrected.",
+      "RebuiltcompleteGitOps/Kustomize/CIexamples;removedundefinedscriptsandfakevalidationcomments.",
+      "Replacedinventedmetricsandauditclaimswithobservedservermetrics,appinstrumentationandtestedqueries.",
+      "Read-onlyreviewjobandguardedkillswitchreplacebrokenimages/shell/RBAC;removedunsafeDIYcacheanduniversalperformanceclaims.",
+      "Updatedprovidercomparisonanddeadreferences;23diagramsspec+HTML+PNGnowmatchcorrectedsemanticsandfit4viewports."
     ],
     "validation": [
-      "Full source/quiz reads complete; no code or deployment checks yet."
-    ]
+      "feature-flags-validation.json",
+      "feature-flags-diagrams-validation.json",
+      "97fences,45YAML,17Bash,4Python,2XML;26CRDs+10flagdefinitions;0errors.",
+      "4SDKruntimes,12targetingcases,3shadowcases,11PromQLcases,5CIcases,7reviewjobchecks,8guardedkillswitchcases.",
+      "23figures9/9composition+4viewportchecks;allvisuallyinspected,finalchangedfiguresreinspected;23PNGsregeneratedanddecoded.",
+      "Full-sitefinalbuildandsource-to-generatedlocaleupdatesstillpendingglobal_audit."
+    ],
+    "reviewedSha256": "dacf16bf409c0b32d9f6b99c9bec61b3910e4787d2ad07211a52c80b6f816231"
   },
   {
     "path": "ko/quizzes/gitops/05-feature-flags-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "status": "fixed",
+    "summary": "Fully reviewed and corrected against pinned releases; working SDK/manifest/script examples and diagrams validated with explicit operational limits.",
     "sources": [
-      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
-      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
-      "https://www.cncf.io/projects/openfeature/"
+      "https://github.com/open-feature/flagd/releases/tag/flagd/v0.16.3",
+      "https://github.com/open-feature/open-feature-operator/tree/v0.9.3/docs",
+      "https://flagd.dev/reference/flag-definitions/",
+      "https://flagd.dev/reference/custom-operations/fractional-operation/",
+      "https://flagd.dev/reference/monitoring/",
+      "https://github.com/open-feature/go-sdk-contrib/releases/tag/providers/flagd/v0.6.0",
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://launchdarkly.com/docs/sdk/openfeature",
+      "https://docs.flagsmith.com/integrating-with-flagsmith/openfeature",
+      "https://github.com/Unleash/unleash-openfeature-node-provider"
     ],
     "findings": [
-      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
-      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
-      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
-      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
-      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
-      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
-      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
-      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+      "CurrentProviderconstructors/lifecycle/resolverenumsandtypedexamplescorrectedin4languages.",
+      "FixedinvalidYAML/JSONLogic,membershipmisuseoffractional,missingdefinitions,default-vsSDKfallbacksemantics,andDISABLEDnonerrorbehavior.",
+      "OFO0.9.3realCRDs,chartpaths,imageoverrides,Podannotations,filesources,namespaceandServiceAccountownershipcorrected;removedfictionalflagdHelmchart.",
+      "Removeddouble-paymentshadowpattern;boundedread-onlybackgroundworkandtimeouts.",
+      "Flaggerfailedchecks,independentworkload/flagdecisions,androllbackhooksemanticscorrected.",
+      "RebuiltcompleteGitOps/Kustomize/CIexamples;removedundefinedscriptsandfakevalidationcomments.",
+      "Replacedinventedmetricsandauditclaimswithobservedservermetrics,appinstrumentationandtestedqueries.",
+      "Read-onlyreviewjobandguardedkillswitchreplacebrokenimages/shell/RBAC;removedunsafeDIYcacheanduniversalperformanceclaims.",
+      "Updatedprovidercomparisonanddeadreferences;23diagramsspec+HTML+PNGnowmatchcorrectedsemanticsandfit4viewports."
     ],
     "validation": [
-      "Full source/quiz reads complete; no code or deployment checks yet."
-    ]
+      "feature-flags-validation.json",
+      "feature-flags-diagrams-validation.json",
+      "97fences,45YAML,17Bash,4Python,2XML;26CRDs+10flagdefinitions;0errors.",
+      "4SDKruntimes,12targetingcases,3shadowcases,11PromQLcases,5CIcases,7reviewjobchecks,8guardedkillswitchcases.",
+      "23figures9/9composition+4viewportchecks;allvisuallyinspected,finalchangedfiguresreinspected;23PNGsregeneratedanddecoded.",
+      "Full-sitefinalbuildandsource-to-generatedlocaleupdatesstillpendingglobal_audit."
+    ],
+    "reviewedSha256": "96731dd1daf99842c4d9967997eefb7d8271ae1e812c033198f0d5bb37783e93"
   },
   {
     "path": "en/gitops/05-feature-flags.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "status": "fixed",
+    "summary": "Fully reviewed and corrected against pinned releases; working SDK/manifest/script examples and diagrams validated with explicit operational limits.",
     "sources": [
-      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
-      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
-      "https://www.cncf.io/projects/openfeature/"
+      "https://github.com/open-feature/flagd/releases/tag/flagd/v0.16.3",
+      "https://github.com/open-feature/open-feature-operator/tree/v0.9.3/docs",
+      "https://flagd.dev/reference/flag-definitions/",
+      "https://flagd.dev/reference/custom-operations/fractional-operation/",
+      "https://flagd.dev/reference/monitoring/",
+      "https://github.com/open-feature/go-sdk-contrib/releases/tag/providers/flagd/v0.6.0",
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://launchdarkly.com/docs/sdk/openfeature",
+      "https://docs.flagsmith.com/integrating-with-flagsmith/openfeature",
+      "https://github.com/Unleash/unleash-openfeature-node-provider"
     ],
     "findings": [
-      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
-      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
-      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
-      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
-      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
-      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
-      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
-      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+      "CurrentProviderconstructors/lifecycle/resolverenumsandtypedexamplescorrectedin4languages.",
+      "FixedinvalidYAML/JSONLogic,membershipmisuseoffractional,missingdefinitions,default-vsSDKfallbacksemantics,andDISABLEDnonerrorbehavior.",
+      "OFO0.9.3realCRDs,chartpaths,imageoverrides,Podannotations,filesources,namespaceandServiceAccountownershipcorrected;removedfictionalflagdHelmchart.",
+      "Removeddouble-paymentshadowpattern;boundedread-onlybackgroundworkandtimeouts.",
+      "Flaggerfailedchecks,independentworkload/flagdecisions,androllbackhooksemanticscorrected.",
+      "RebuiltcompleteGitOps/Kustomize/CIexamples;removedundefinedscriptsandfakevalidationcomments.",
+      "Replacedinventedmetricsandauditclaimswithobservedservermetrics,appinstrumentationandtestedqueries.",
+      "Read-onlyreviewjobandguardedkillswitchreplacebrokenimages/shell/RBAC;removedunsafeDIYcacheanduniversalperformanceclaims.",
+      "Updatedprovidercomparisonanddeadreferences;23diagramsspec+HTML+PNGnowmatchcorrectedsemanticsandfit4viewports."
     ],
     "validation": [
-      "Full source/quiz reads complete; no code or deployment checks yet."
-    ]
+      "feature-flags-validation.json",
+      "feature-flags-diagrams-validation.json",
+      "97fences,45YAML,17Bash,4Python,2XML;26CRDs+10flagdefinitions;0errors.",
+      "4SDKruntimes,12targetingcases,3shadowcases,11PromQLcases,5CIcases,7reviewjobchecks,8guardedkillswitchcases.",
+      "23figures9/9composition+4viewportchecks;allvisuallyinspected,finalchangedfiguresreinspected;23PNGsregeneratedanddecoded.",
+      "Full-sitefinalbuildandsource-to-generatedlocaleupdatesstillpendingglobal_audit."
+    ],
+    "reviewedSha256": "5cf7966e57b02456552df44fd3accd9735ce3e1f947205f22af17d7284943cfe"
   },
   {
     "path": "en/quizzes/gitops/05-feature-flags-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "summary": "Fully read; no edits yet. Primary release/API verification and executable fixtures pending.",
+    "status": "fixed",
+    "summary": "Fully reviewed and corrected against pinned releases; working SDK/manifest/script examples and diagrams validated with explicit operational limits.",
     "sources": [
-      "https://github.com/open-feature/open-feature-operator/releases/tag/v0.9.3",
-      "https://github.com/open-feature/go-sdk/releases/tag/v1.18.0",
-      "https://www.cncf.io/projects/openfeature/"
+      "https://github.com/open-feature/flagd/releases/tag/flagd/v0.16.3",
+      "https://github.com/open-feature/open-feature-operator/tree/v0.9.3/docs",
+      "https://flagd.dev/reference/flag-definitions/",
+      "https://flagd.dev/reference/custom-operations/fractional-operation/",
+      "https://flagd.dev/reference/monitoring/",
+      "https://github.com/open-feature/go-sdk-contrib/releases/tag/providers/flagd/v0.6.0",
+      "https://github.com/fluxcd/flagger/tree/v1.45.0",
+      "https://launchdarkly.com/docs/sdk/openfeature",
+      "https://docs.flagsmith.com/integrating-with-flagsmith/openfeature",
+      "https://github.com/Unleash/unleash-openfeature-node-provider"
     ],
     "findings": [
-      "Candidate: invented FeatureFlagSource/fields and chart values, CRD-to-ConfigMap claims require primary-code verification.",
-      "Malformed YAML JSON-Logic operators; fractional result treated as list membership.",
-      "Go/Java/Python/Node SDK examples need real compiler/API checks; readiness and provider lifecycle assumptions.",
-      "Flagger threshold/rollback hooks/literal metadata contradict already-verified1.45 behavior.",
-      "Dangerous EN dark-launch example executes both real payment engines; replace with non-mutating shadow evaluation.",
-      "Custom rollout controller/CI scripts missing; raw CRD is not kubeconform JSONschema; kubectl client dryrun requires discovery.",
-      "Metrics/audit events invented or unverified; Grafana JSON wrapper wrong for file provisioning; counters vs rates.",
-      "TTLcache ignores context/default/provider revision, caches failure fallback, grows unbounded; kill switches can be undone by GitOps, no propagation guarantee."
+      "CurrentProviderconstructors/lifecycle/resolverenumsandtypedexamplescorrectedin4languages.",
+      "FixedinvalidYAML/JSONLogic,membershipmisuseoffractional,missingdefinitions,default-vsSDKfallbacksemantics,andDISABLEDnonerrorbehavior.",
+      "OFO0.9.3realCRDs,chartpaths,imageoverrides,Podannotations,filesources,namespaceandServiceAccountownershipcorrected;removedfictionalflagdHelmchart.",
+      "Removeddouble-paymentshadowpattern;boundedread-onlybackgroundworkandtimeouts.",
+      "Flaggerfailedchecks,independentworkload/flagdecisions,androllbackhooksemanticscorrected.",
+      "RebuiltcompleteGitOps/Kustomize/CIexamples;removedundefinedscriptsandfakevalidationcomments.",
+      "Replacedinventedmetricsandauditclaimswithobservedservermetrics,appinstrumentationandtestedqueries.",
+      "Read-onlyreviewjobandguardedkillswitchreplacebrokenimages/shell/RBAC;removedunsafeDIYcacheanduniversalperformanceclaims.",
+      "Updatedprovidercomparisonanddeadreferences;23diagramsspec+HTML+PNGnowmatchcorrectedsemanticsandfit4viewports."
     ],
     "validation": [
-      "Full source/quiz reads complete; no code or deployment checks yet."
-    ]
+      "feature-flags-validation.json",
+      "feature-flags-diagrams-validation.json",
+      "97fences,45YAML,17Bash,4Python,2XML;26CRDs+10flagdefinitions;0errors.",
+      "4SDKruntimes,12targetingcases,3shadowcases,11PromQLcases,5CIcases,7reviewjobchecks,8guardedkillswitchcases.",
+      "23figures9/9composition+4viewportchecks;allvisuallyinspected,finalchangedfiguresreinspected;23PNGsregeneratedanddecoded.",
+      "Full-sitefinalbuildandsource-to-generatedlocaleupdatesstillpendingglobal_audit."
+    ],
+    "reviewedSha256": "06e2cd2a42aaa6109f810e699706168a6869e8fd1bb9c426a9e7909718e0950b"
   }
 ]

@@ -1,7 +1,7 @@
 # Kubernetes/EKS Troubleshooting Playbook: Symptom → Diagnosis → Cause → Fix
 
-> **Supported Versions**: Kubernetes 1.33+ (output verified on Amazon EKS 1.36 — control plane v1.36.2-eks-bca9cf6, platform version eks.9), Karpenter 1.4, VPC CNI v1.21, CoreDNS v1.14
-> **Last Updated**: September 2, 2026
+> **Versions recorded for the original examples**: Original Amazon EKS 1.36 output example — control plane v1.36.2-eks-bca9cf6, platform version eks.9, Karpenter 1.4, VPC CNI v1.21, CoreDNS v1.14
+> **Last reviewed**: September 11, 2026
 
 < [Previous: Zonal Cluster Operations](15-zonal-operations-guide.md) | [Table of Contents](./README.md) >
 
@@ -9,7 +9,7 @@
 
 When the pager goes off at 3 a.m. and you open a terminal, what you need is not a concept explanation but **"the next command to type given what I see right now."** This document starts from **symptoms**, not concepts. For each symptom it bundles "what you see → what you run → what the output looks like → the most common causes and how to fix them" into one block.
 
-The event messages and sample output shown here were captured on September 2, 2026 with `kubectl get/describe/events` against this repo's verification EKS cluster (EKS 1.36 — control plane v1.36.2-eks-bca9cf6, platform version eks.9 — with Karpenter 1.4.0, VPC CNI v1.21.1, CoreDNS v1.14.2), or are strings quoted from the official Kubernetes/AWS documentation listed under [References](#references). Only resource names have been generalized.
+The outputs below illustrate the environment recorded in the original September 2, 2026 document and messages from official documentation. This review did not rerun that cluster or independently verify the original capture logs. In particular, the [Karpenter compatibility matrix](https://karpenter.sh/docs/upgrading/compatibility/) requires Karpenter 1.13 or later for Kubernetes 1.36. Do not reuse the recorded 1.4.0 combination as a supported deployment.
 
 Deep root-cause analysis (control plane logs, CloudWatch Logs Insights queries, the eight causes of node join failure, and so on) already lives in [EKS Troubleshooting](../eks/09-eks-troubleshooting.md) and [EKS Advanced Debugging](../eks/11-eks-advanced-debugging.md). This page sits in front of those: its job is to **decide within 30 seconds which page to open**, so it links into them rather than repeating their content.
 
@@ -37,7 +37,7 @@ Each symptom cell links to its playbook section below.
 | [Requests never reach the Service](#5-service-is-unreachable) | `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` | Selector label mismatch, wrong `targetPort`, NetworkPolicy block, CoreDNS outage |
 | [Node `NotReady`](#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet stopped/network partition, `DiskPressure`, `MemoryPressure`, `PIDPressure` |
 | [PVC `Pending`](#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer` (normal wait), missing/misspelled StorageClass, AZ mismatch |
-| [`AccessDenied` in app logs (AWS API)](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + pod `env \| grep AWS` | IRSA (IAM Roles for Service Accounts) annotation/trust policy error, missing Pod Identity association, pods not restarted |
+| [`AccessDenied` in app logs (AWS API)](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + injected credential-provider fields | IRSA (IAM Roles for Service Accounts) annotation/trust policy error, missing Pod Identity association, pods not restarted |
 | [Stuck in `ContainerCreating` + `failed to assign an IP address`](#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | Subnet IP exhaustion, node max-pods reached, `aws-node` unhealthy |
 | [Karpenter does not launch a node](#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool `limits` reached, requirements/taint mismatch, instance type restriction |
 | [Service creation rejected with `failed calling webhook`](#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | Webhook Deployment unhealthy (CrashLoop) behind a `failurePolicy: Fail` webhook that matches every namespace |
@@ -46,17 +46,25 @@ Each symptom cell links to its playbook section below.
 
 ## Diagnostic Decision Tree
 
-![Decision tree from "Pod not serving" through five gates — Pending, ImagePullBackOff, CrashLoopBackOff, READY 0/1, READY 1/1 but no response — each paired with its first kubectl command.](../.gitbook/assets/en-ops-16-troubleshooting-playbook-0.png)
+![Decision tree distinguishing node assignment, image and setup waits, repeated exits, Pod Ready conditions, and EndpointSlice/network diagnosis.](../.gitbook/assets/en-ops-16-troubleshooting-playbook-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-16-troubleshooting-playbook-0.html)
 
-The entry point of the tree is always the same: filter to unhealthy pods across all namespaces, then read Warning events in time order.
+First confirm context and namespace. Replace placeholders such as `<pod>` and `<ns>` with actual values. Pod phase differs from container state: excluding every `Running` pod misses some CrashLoops and readiness failures. This query excludes completed pods and includes abnormal phases or missing/false Ready conditions.
 
 ```bash
-# Pods that are neither Running nor Succeeded
-kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+# Inspect phase and Ready condition together
+kubectl get pods -A -o json | jq -r '
+  .items[]
+  | select(.status.phase != "Succeeded")
+  | select(.status.phase != "Running" or
+      ([.status.conditions[]? | select(.type == "Ready" and .status == "True")] | length == 0))
+  | [.metadata.namespace, .metadata.name, .status.phase,
+     ([.status.initContainerStatuses[]?, .status.containerStatuses[]?
+       | .state.waiting.reason // empty] | join(","))] | @tsv
+'
 
-# Recent Warning events (cluster-wide, chronological)
+# Recent Warning events (cluster-wide, sorted by lastTimestamp)
 kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | tail -30
 ```
 
@@ -66,9 +74,9 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 
 ### 1. Pod stuck in `Pending`
 
-**Symptom**: STATUS in `kubectl get pods` is `Pending` and READY is `0/1`. No node has been assigned, so `kubectl logs` shows nothing.
+**Symptom**: `Pending` includes both waiting for scheduling and image download/container setup. Check `.spec.nodeName` and the `PodScheduled` condition first. For an unbound pod inspect scheduling events; for a bound pod inspect container, mount, and CNI states.
 
-**Diagnosis**: the answer is always in the last `FailedScheduling` event from `describe`. The scheduler **aggregates, per node, why each node was rejected**.
+**Diagnosis**: for an unscheduled pod, inspect `FailedScheduling`. It aggregates node counts by failure reason; these groups can overlap.
 
 ```bash
 kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
@@ -81,19 +89,19 @@ Warning  FailedScheduling  default-scheduler  0/15 nodes are available: 1 Insuff
   1 No preemption victims found for incoming pod, 14 Preemption is not helpful for scheduling.
 ```
 
-How to read it: of 15 nodes, 8 were rejected by taints, 6 by nodeSelector/affinity, and the 1 remaining node lacked CPU and memory. In other words, **only one node is eligible for this pod and it is full**. `no new claims to deallocate` is appended by the DRA (Dynamic Resource Allocation) plugin; ignore it for pods that do not use ResourceClaims.
+Do not infer from this summary alone that the CPU and memory failures must refer to the same node, or that exactly one node satisfies every other constraint. The [scheduler aggregation code](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/scheduler/framework/types.go) can count multiple reasons for a node. Compare actual node labels, taints, and allocations; interpret DRA messages in the context of ResourceClaim usage.
 
 **Causes and fixes**:
 
 | Message fragment | Cause | Fix |
 |---|---|---|
 | `Insufficient cpu` / `Insufficient memory` | Requests exceed remaining node capacity | Right-size requests, check the autoscaler (→ [10. Karpenter](#10-eks-karpenter-does-not-launch-a-node)), inspect `Allocated resources` in `kubectl describe node` |
-| `Too many pods` | Node max-pods reached (VPC CNI ENI limit) | → [9. ENI/IP exhaustion](#9-eks-enivpc-cni-ip-exhaustion) |
+| `Too many pods` | Configured node max-pods reached; check CNI IP capacity separately | → [9. ENI/IP exhaustion](#9-eks-enivpc-cni-ip-exhaustion) |
 | `node(s) had untolerated taint(s)` | No toleration for the node taints | List taints with `kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints[*].key`, then add a toleration or adjust the NodePool |
-| `node(s) didn't match Pod's node affinity/selector` | No node carries the nodeSelector/affinity label | Check `kubectl get nodes --show-labels`. With Karpenter, the key must appear in NodePool requirements or no node will be created |
+| `node(s) didn't match Pod's node affinity/selector` | No node carries the nodeSelector/affinity label | Check `kubectl get nodes --show-labels`. With Karpenter, check well-known keys and values supplied by NodePool template labels or requirements |
 | `pod has unbound immediate PersistentVolumeClaims` | The PVC is `Pending` | → [7. PVC Pending](#7-pvc-stuck-in-pending) |
 | `node(s) had volume node affinity conflict` | No schedulable node in the AZ where the PV (EBS) lives | Read the PV's `nodeAffinity` zone and provide capacity in that AZ |
-| `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | No node satisfies the spread constraint | Relax with `whenUnsatisfiable: ScheduleAnyway` or add nodes |
+| `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | No node satisfies the spread constraint | Add suitable nodes. For topology spread, consider ScheduleAnyway only after reviewing availability goals; pod anti-affinity has separate required/preferred rules |
 | No events at all | Scheduler problem, or a misspelled `schedulerName` | Check `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'` |
 
 ### 2. `ImagePullBackOff` / `ErrImagePull`
@@ -115,7 +123,7 @@ Normal   BackOff  kubelet  Back-off pulling image "123456789012.dkr.ecr.ap-north
 Warning  Failed   kubelet  Error: ImagePullBackOff
 ```
 
-A healthy pull leaves the pair `Pulling image "..."` → `Successfully pulled image "..." in 4.501s ...`, and an already-cached image logs `Container image "..." already present on machine`. If you see those healthy events and the pod still does not start, the image is not the problem.
+A healthy pull leaves the pair `Pulling image "..."` → `Successfully pulled image "..." in 4.501s ...`, and an already-cached image logs `Container image "..." already present on machine`. A successful pull proves download succeeded; it does not exclude image contents, architecture, or entrypoint problems.
 
 **Causes and fixes**:
 
@@ -123,15 +131,15 @@ A healthy pull leaves the pair `Pulling image "..."` → `Successfully pulled im
 |---|---|---|
 | `not found` / `manifest unknown` | Tag typo, tag not pushed yet, wrong repository | Verify with `aws ecr describe-images --repository-name <repo> --image-ids imageTag=<tag>` |
 | `401 Unauthorized` / `no basic auth credentials` | Private registry authentication failed | For ECR, the node IAM role needs `AmazonEC2ContainerRegistryPullOnly` (or `ReadOnly`); for external registries check `imagePullSecrets` |
-| ECR URL region/account differs from the cluster | No cross-account pull permission | Add the pulling principal to the ECR repository policy |
+| Pull from another ECR Region/account fails | A different address is not itself invalid; check cross-account policy and regional endpoint access | Add the pulling principal to the ECR repository policy |
 | `dial tcp ... i/o timeout` | Private subnet with no NAT/VPC endpoints | Check `com.amazonaws.<region>.ecr.api`, `ecr.dkr`, and the S3 gateway endpoint |
 | `toomanyrequests` | Docker Hub rate limit | Mirror through an ECR pull-through cache |
 
-To reproduce from the node itself, `kubectl debug node/<node> -it --image=busybox --profile=sysadmin`, then `chroot /host crictl pull <image>` pulls over the same path the kubelet uses (`--profile=sysadmin` gives the debug container the privileges `crictl` needs; see the [cheat sheet](#kubectl-diagnostic-cheat-sheet)).
+For node diagnosis, first inspect kubelet events/logs and the credential provider used for image pulls. `crictl pull` does not automatically reuse kubelet’s ECR credential provider or a Pod’s imagePullSecrets, so it does not reproduce the same authentication path. Fargate image pulls use the pod execution role, separately from the application’s IRSA role.
 
 ### 3. `CrashLoopBackOff` (exit 137 `OOMKilled`, probe failures, config errors)
 
-**Symptom**: STATUS `CrashLoopBackOff`, RESTARTS keeps climbing. The restart delay starts at 10 seconds and doubles up to a 5-minute cap, so the pod looks `Running` for a while, then dies again.
+**Symptom**: a container repeatedly exits and RESTARTS grows. The usual backoff doubles from 10 seconds up to 300 seconds, but feature gates and kubelet configuration can change it. Check the restart policy in [Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/).
 
 **Diagnosis**: look at three things in order — **termination reason and exit code**, **logs of the previous container**, **Events**.
 
@@ -146,7 +154,7 @@ kubectl logs <pod> -n <ns> -c <container> --previous --tail=100
 kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
 ```
 
-Real output — a container with a 128Mi memory limit killed by OOM:
+Output recorded in the original document for a container with a 128Mi memory limit:
 
 ```
     Last State:     Terminated
@@ -157,23 +165,23 @@ Real output — a container with a 128Mi memory limit killed by OOM:
     Restart Count:  3
 ```
 
-Read `Started` against `Finished`: this container ran for roughly 36 hours before the kill, which points to a **slow memory leak or a gradual working-set growth**, not a start-up problem. A start-up crash loop looks different — `Finished` comes seconds after `Started`, and RESTARTS climbs within minutes.
+A roughly 36-hour lifetime distinguishes this from an immediate startup failure; it does not prove a memory leak. Also investigate traffic spikes, batch jobs, node OOM, and limit changes using memory time series and kernel/cgroup events.
 
 **Reading exit codes**:
 
 | Exit Code | Reason | Meaning | Fix |
 |---|---|---|---|
-| `0` | `Completed` | Process exited normally — in a Deployment this means the app is not staying in the foreground | Run the entrypoint in daemon/foreground mode, or switch to a Job |
+| `0` | `Completed` | Process exited normally — in a Deployment this means the app is not staying in the foreground | Keep a long-running entrypoint in the foreground, or switch to a Job |
 | `1` | `Error` | App exited on its own (config error, dependency connection failure) | The stack trace is in `logs --previous` |
 | `126` | `Error` | Command found but not executable under a shell entrypoint — missing execute bit, or the shell reporting `cannot execute binary file: Exec format error` (architecture mismatch) | `chmod +x` in the Dockerfile; check arm64/amd64 with `kubectl get nodes -L kubernetes.io/arch` and use a multi-arch image |
 | `127` | `Error` | Command not found under a shell entrypoint — path typo, or the binary was never copied into the final image stage | Compare `command`/`args` with what is actually in the image (`kubectl debug ... -- ls <path>`) |
-| `137` | `OOMKilled` | Kernel SIGKILL after exceeding the memory limit | Raise the limit or fix the leak. For the JVM check `-XX:MaxRAMPercentage` → [Resource Optimization](10-resource-optimization.md) |
+| `137` | `OOMKilled` | OOM termination; distinguish a container limit from node memory pressure | Raise the limit or fix the leak. For the JVM check `-XX:MaxRAMPercentage` → [Resource Optimization](10-resource-optimization.md) |
 | `137` | `Error` | SIGKILL for another reason — liveness failed and the container did not exit within `terminationGracePeriodSeconds` | Review preStop/graceful shutdown |
 | `143` | `Error` | Exited on SIGTERM (may be a normal rollout/eviction) | If it repeats, find who is killing it in Events |
 
 - If the image execs the binary directly (no shell in between), an architecture mismatch does not produce exit 126 at all — the container never starts, and `lastState.terminated` shows Reason `StartError` with `exec format error` in the message. The fix is the same: a multi-arch image, or a nodeSelector on `kubernetes.io/arch`.
 
-**Probe failures**: when these two lines appear as a pair in Events, the problem is usually the probe configuration rather than the application code.
+**Probe failures**: these events show a restart triggered by liveness failure. Causes include wrong paths/ports, but also real application failure, overload, or deadlock. Inspect the response and application before relaxing the probe.
 
 ```
 Warning  Unhealthy  kubelet  Liveness probe failed: HTTP probe failed with statuscode: 503
@@ -194,7 +202,7 @@ Compare names and namespaces with `kubectl get cm,secret -n <ns>` and you are do
 
 ### 4. `Running` but not Ready / empty Endpoints
 
-**Symptom**: STATUS is `Running` but READY is `0/1` (`1/2` with a sidecar). The Service sends no traffic to this pod, so from the user's side it is "deployed, but 503".
+**Symptom**: STATUS is `Running` but READY is `0/1` (`1/2` with a sidecar). Ordinary Service routing excludes not-ready endpoints. Check exceptions such as publishNotReadyAddresses, terminating endpoints, and LB fail-open separately; clients may see errors or timeouts depending on the proxy.
 
 **Diagnosis**:
 
@@ -203,21 +211,16 @@ kubectl describe pod <pod> -n <ns> | grep -E "Ready|Readiness probe"
 kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc>
 ```
 
-A Service with no Ready pod behind it — the symptom you are hunting for — prints `<unset>` in the ENDPOINTS column (and in PORTS too: the EndpointSlice controller drops the port list when there is no endpoint to carry it). Captured on this cluster from a Service whose selector matched no running pod:
+**EndpointSlice addresses and readiness are separate.** Matching not-ready pods can appear with an address and `ready: false`. Do not infer readiness from the ENDPOINTS column; inspect `ready`, `serving`, and `terminating`.
 
-```
-NAME            ADDRESSTYPE   PORTS     ENDPOINTS   AGE
-api-svc-xd28r   IPv4          <unset>   <unset>     145d
-```
-
-For contrast, a healthy Service (kube-dns on the same cluster) lists one IP per Ready pod:
-
-```
-NAME             ADDRESSTYPE   PORTS        ENDPOINTS              AGE
-kube-dns-xc4bb   IPv4          53,53,9153   10.0.2.106,10.0.3.14   145d
+```bash
+kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc> -o json | jq -r '
+  .items[] as $slice | $slice.endpoints[]?
+  | [$slice.metadata.name, (.addresses | join(",")), (.conditions | tojson)] | @tsv
+'
 ```
 
-`<unset>` (or an empty) ENDPOINTS column means no Ready pod stands behind the Service. On Kubernetes 1.33+ `kubectl get endpoints` prints `Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice`, so get used to reading EndpointSlices.
+An unset `ready` is unknown and must be interpreted as ready by consumers. `publishNotReadyAddresses: true` changes readiness filtering; proxies can also handle serving endpoints during termination. For Services without selectors, check manually managed EndpointSlices. The v1 Endpoints API is deprecated since Kubernetes 1.33; use EndpointSlice for new diagnostics.
 
 **Causes and fixes**:
 
@@ -225,12 +228,12 @@ kube-dns-xc4bb   IPv4          53,53,9153   10.0.2.106,10.0.3.14   145d
 |---|---|---|
 | Repeated `Readiness probe failed` in Events | Wrong probe path/port, or the app is still waiting on a dependency (DB, etc.) | Point the probe at the app's real health endpoint. Keep dependency waits in readiness, out of liveness |
 | Condition `Ready False` with reason `ReadinessGatesNotReady` | Waiting on a pod readiness gate — typically the AWS Load Balancer Controller's `target-health.elbv2.k8s.aws/*` gate | Find out why the Target Group health check fails → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
-| `1/2` Running, only the app container Ready | Sidecar (istio-proxy, etc.) not ready, or the sidecar started after the app and initial connections failed | Check sidecar logs; convert the sidecar to a native sidecar (`initContainers` + `restartPolicy: Always`) |
+| `1/2` Running, only the app container Ready | Sidecar (istio-proxy, etc.) not ready, or the sidecar started after the app and initial connections failed | Check sidecar logs; check injector/version-supported startup ordering and readiness; native-sidecar conversion alone does not fix readiness |
 | Ready, yet the EndpointSlice is empty | Service selector does not match the pod labels | → [5. Service unreachable](#5-service-is-unreachable) |
 
 ### 5. Service is unreachable
 
-**Symptom**: every pod is `1/1 Running`, yet `curl http://<svc>.<ns>.svc.cluster.local` times out/refuses, or name resolution fails.
+**Symptom**: containers show `1/1 Running`, yet `curl http://<svc>.<ns>.svc.cluster.local` times out/refuses, or name resolution fails.
 
 **Split the diagnosis into three layers**: (a) Service → pod mapping, (b) network policy, (c) DNS.
 
@@ -255,13 +258,17 @@ kubectl get cm -n kube-system coredns -o jsonpath='{.data.Corefile}'
 | Observation | Cause | Fix |
 |---|---|---|
 | Selector is `{"app":"api"}` but pods are labeled `app=api-server` | Label mismatch → empty EndpointSlice | Unify labels/selector. In Helm charts, `selectorLabels` and `podLabels` drifting apart is a common culprit |
-| EndpointSlice has IPs but `connection refused` | `targetPort` differs from the port the container actually listens on | Compare with `kubectl get pod -o jsonpath='{.spec.containers[*].ports}'`. An app bound only to `127.0.0.1` shows the same symptom |
+| EndpointSlice has IPs but `connection refused` | `targetPort` differs from the port the container actually listens on | Compare with `kubectl get pod <pod> -n <ns> -o jsonpath='{.spec.containers[*].ports}'`. An app bound only to `127.0.0.1` shows the same symptom |
 | Fails only from a particular namespace | A `default-deny` NetworkPolicy exists and the ingress allow rule is missing | Check `podSelector`/`namespaceSelector`. With VPC CNI network policy, `kubectl get policyendpoints -n <ns>` shows what is actually enforced → [Network Policies](../security/04-network-policies.md) |
 | `nslookup <svc>` returns `NXDOMAIN` | Short name used from another namespace, or CoreDNS outage | Use the FQDN (`<svc>.<ns>.svc.cluster.local`). Confirm CoreDNS pods are `Running` and `/etc/resolv.conf` `nameserver` is the kube-dns ClusterIP (`172.20.0.10` on this cluster) |
-| External domain resolution is slow | With the default `ndots:5`, any name with fewer than 5 dots is first tried against every search domain (`<ns>.svc.cluster.local`, `svc.cluster.local`, `cluster.local`, the node's VPC domain) before being queried as an absolute name | Append a trailing `.` to external names, or set `ndots: 2` in `dnsConfig.options` |
-| NodePort/LB works only through some nodes | `externalTrafficPolicy: Local` with no pod on that node | Intended behavior. Switch to `Cluster` to accept on all nodes |
+| External domain resolution is slow | With the default `ndots:5`, any name with fewer than 5 dots is first tried against every search domain (`<ns>.svc.cluster.local`, `svc.cluster.local`, `cluster.local`, the node's VPC domain) before being queried as an absolute name | Append a trailing `.` to external names, or review a dnsConfig.options entry with name ndots and string value "2" |
+| NodePort/LB works only through some nodes | `externalTrafficPolicy: Local` with no pod on that node | Intended behavior. Consider Cluster only after reviewing client-IP preservation and cross-node traffic |
 
 To reproduce DNS from a pod's point of view, start a throwaway pod: `kubectl run -it --rm dns-test --image=busybox:1.36 --restart=Never -- nslookup kubernetes.default.svc.cluster.local`. CoreDNS concepts and the Corefile are covered in [Services and Networking](../core/03-services-networking.md#coredns).
+
+Check both destination ingress and source egress NetworkPolicies. Declaring containerPort does not create a listening socket; inspect app logs or socket state. With NodeLocal DNSCache, resolv.conf can correctly use a nameserver other than the kube-dns ClusterIP.
+
+**Auto Mode DNS:** [Current Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) runs CoreDNS as a node system service. Missing kube-dns Pods/Service alone does not indicate failure on pure Auto Mode. Mixed clusters need the CoreDNS Deployment for ordinary nodes. The Pod/ConfigMap commands above inspect Deployment-based DNS; for Auto Mode, check actual pod resolution, node DNS logs, and upstream resolver reachability.
 
 ### 6. Node `NotReady` / kubelet pressure (`DiskPressure`, `MemoryPressure`, `PIDPressure`)
 
@@ -297,13 +304,13 @@ StorageReady=True (DiskIsReady)
 
 | Condition / reason | Automatic taint | Cause | Fix |
 |---|---|---|---|
-| `Ready=Unknown` (`NodeStatusUnknown`, "Kubelet stopped posting node status.") | `node.kubernetes.io/unreachable` | kubelet process died, instance stopped/network partition, API server auth failure | Check the EC2 instance state → SSM/`kubectl debug node` and `journalctl -u kubelet` |
+| `Ready=Unknown` (`NodeStatusUnknown`, "Kubelet stopped posting node status.") | `node.kubernetes.io/unreachable` | kubelet process died, instance stopped/network partition, API server auth failure | Check the EC2 instance state → use supported log access if the node responds; a dead kubelet may not start a debug Pod |
 | `Ready=False` | `node.kubernetes.io/not-ready` | Container runtime down, CNI not initialized (`aws-node` unhealthy) | `kubectl get pods -n kube-system -l k8s-app=aws-node -o wide` for that node's aws-node |
 | `DiskPressure=True` (`KubeletHasDiskPressure`) | `node.kubernetes.io/disk-pressure` | Image cache/container logs filled the root volume | `crictl rmi --prune`, log rotation, grow the root EBS. Pods are `Evicted` with `The node was low on resource: ephemeral-storage` |
-| `MemoryPressure=True` (`KubeletHasInsufficientMemory`) | `node.kubernetes.io/memory-pressure` | Pods with large limits but no requests piled up, insufficient system reservation | Enforce requests (LimitRange), check `kube-reserved`/`system-reserved` |
+| `MemoryPressure=True` (`KubeletHasInsufficientMemory`) | `node.kubernetes.io/memory-pressure` | Actual usage exceeds reservations, or system reservation is insufficient; a limit without a request can default the request to that limit | Enforce requests (LimitRange), check `kube-reserved`/`system-reserved` |
 | `PIDPressure=True` (`KubeletHasInsufficientPID`) | `node.kubernetes.io/pid-pressure` | Fork storm (thread leak) | Find and restart the offending pod, set `podPidsLimit` |
 
-When you need to look inside a node, use this instead of SSH:
+The following creates a privileged debug Pod and assumes a conventional Linux worker with a host shell, journalctl, and crictl. Do not assume the same chroot procedure works on immutable Bottlerocket/EKS Auto Mode hosts. Use the debug-container and console-log procedures in [Auto Mode troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html).
 
 ```bash
 kubectl debug node/<node> -it --image=busybox --profile=sysadmin -- chroot /host
@@ -334,6 +341,8 @@ gp2    kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   false     
 gp3    ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   76d
 ```
 
+The StorageClass list is an environment example. Distinguish Auto Mode’s ebs.csi.eks.amazonaws.com from the separately installed ebs.csi.aws.com driver. Absence of an ordinary ebs-csi-node DaemonSet on Auto Mode is not by itself a failure. An explicit storageClassName: "" opts out of the default class; it differs from omitting the field.
+
 **Causes and fixes**: the Events message in `describe pvc` is the diagnosis.
 
 | Events message | Cause | Fix |
@@ -357,7 +366,7 @@ An error occurred (AccessDenied) when calling the AssumeRoleWithWebIdentity oper
   Not authorized to perform sts:AssumeRoleWithWebIdentity
 ```
 
-Or the S3/DynamoDB call itself is denied with `... is not authorized to perform: s3:GetObject`, where the denied principal is not the service account role but the **node IAM role** (`assumed-role/<node-role>/i-0abc...`). The latter means credential injection never happened and the SDK fell back to the node role.
+Or the S3/DynamoDB call itself is denied with `... is not authorized to perform: s3:GetObject`, where the denied principal is not the service account role but the **node IAM role** (`assumed-role/<node-role>/i-0abc...`). This indicates that the SDK selected node credentials. Check injection, SDK version, provider precedence, and explicit credentials; node-role fallback is unavailable when IMDS access is blocked.
 
 **Diagnosis** — first determine which mechanism is in use. The pod's environment variables tell you.
 
@@ -366,14 +375,21 @@ Or the S3/DynamoDB call itself is denied with `... is not authorized to perform:
 kubectl get sa <sa> -n <ns> -o jsonpath='{.metadata.annotations.eks\.amazonaws\.com/role-arn}{"\n"}'
 
 # Credential-related env injected into the pod
-kubectl get pod <pod> -n <ns> -o jsonpath='{range .spec.containers[0].env[*]}{.name}={.value}{"\n"}{end}' | grep ^AWS_
+kubectl get pod <pod> -n <ns> -o json | jq -r '
+  (.spec.initContainers[]?, .spec.containers[]?) as $container
+  | $container.env[]?
+  | select(.name == "AWS_ROLE_ARN" or .name == "AWS_WEB_IDENTITY_TOKEN_FILE"
+        or .name == "AWS_CONTAINER_CREDENTIALS_FULL_URI"
+        or .name == "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE")
+  | [$container.name, .name, (.value // "valueFrom")] | @tsv
+'
 ```
 
 | Injected env | Mechanism | Meaning |
 |---|---|---|
 | `AWS_ROLE_ARN=arn:aws:iam::...:role/<role>` + `AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token` | **IRSA** | Injected by pod-identity-webhook. If absent, the SA annotation was added **after** the pod was created, or the SA name differs |
 | `AWS_CONTAINER_CREDENTIALS_FULL_URI` + `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` | **EKS Pod Identity** | `eks-pod-identity-agent` serves credentials at `169.254.170.23`. Injected only when an association exists |
-| Neither | None → node role fallback | See the table below |
+| Neither | Other provider or no credentials | See the table below |
 
 ```bash
 # Pod Identity: agent and association
@@ -389,11 +405,11 @@ aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 
 | Observation | Cause | Fix |
 |---|---|---|
-| No env, but the SA annotation exists | Pod was created before the annotation (the webhook injects only at creation) | `kubectl rollout restart deploy/<name>` |
+| No env, but the SA annotation exists | Creation order, actual serviceAccountName, or webhook injection configuration | Verify/fix configuration, then recreate pods in the correct namespace with rollout impact considered |
 | No env and no association | Pod Identity association not created, or created for a different SA/namespace | `aws eks create-pod-identity-association ...`, then restart the pods |
 | `Not authorized to perform sts:AssumeRoleWithWebIdentity` | IRSA trust policy: wrong `Federated` OIDC provider ARN, or the `sub` (`system:serviceaccount:<ns>:<sa>`)/`aud` (`sts.amazonaws.com`) condition does not match | Fix the trust policy. If the cluster was recreated the OIDC issuer changed, so the provider must be recreated too |
 | Pod Identity, but `AssumeRole` denied | Trust policy principal is not `pods.eks.amazonaws.com`, or `sts:TagSession` is missing | Allow both `sts:AssumeRole` and `sts:TagSession` in the trust policy |
-| Env is fine, only a specific API is `AccessDenied` | The role's permission policy is insufficient (not the trust policy) | Find the `eventName` of the `errorCode: AccessDenied` event in CloudTrail and extend the policy |
+| Env is fine, only a specific API is `AccessDenied` | Denial from identity/resource policies, SCPs, boundaries, session or VPC endpoint policies | Check caller/resource and explicit Deny; relevant CloudTrail data events may require logging configuration |
 | Pod Identity env present but the SDK says `Unable to locate credentials` | SDK too old to support the container credential provider (`FULL_URI`) | Upgrade the SDK — minimum supported versions are listed in the EKS docs |
 
 How IRSA and Pod Identity work and how to set them up is in [EKS Security Best Practices](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts) and [EKS Security](../eks/05-eks-security.md#eks-pod-identity); token expiry and webhook issues are in [EKS Advanced Debugging — Control Plane Debugging](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging).
@@ -408,14 +424,14 @@ Warning  FailedCreatePodSandBox  kubelet  Failed to create pod sandbox: rpc erro
   add cmd: failed to assign an IP address to container
 ```
 
-Or they stay `Pending` at scheduling time with `Too many pods`. Both symptoms share one root: **the node has no IP to hand to the pod**.
+At scheduling time, `Too many pods` means the kubelet pod-count limit was reached. It can relate to IP capacity but is not proof of IP exhaustion. CNI `FailedCreatePodSandBox` occurs after node assignment.
 
 **Diagnosis**:
 
 ```bash
-# Node max-pods (ENIs × (IPs per ENI − 1) + 2). An m6g.large is 29
+# Read the actual pod ceiling; distinguish secondary-IP defaults from prefix/custom networking configuration
 kubectl get node <node> -o jsonpath='{.status.allocatable.pods}{"\n"}'
-kubectl get pods -A --field-selector spec.nodeName=<node> --no-headers | wc -l
+kubectl get pods -A --field-selector spec.nodeName=<node>,status.phase!=Succeeded,status.phase!=Failed --no-headers | wc -l
 
 # aws-node status and IPAM settings
 kubectl get pods -n kube-system -l k8s-app=aws-node -o wide
@@ -425,14 +441,14 @@ kubectl get ds -n kube-system aws-node -o jsonpath='{range .spec.template.spec.c
 aws ec2 describe-subnets --subnet-ids <subnet-id> --query 'Subnets[].{id:SubnetId,az:AvailabilityZone,free:AvailableIpAddressCount}' --output table
 ```
 
-The VPC CNI **default** is `WARM_ENI_TARGET=1` alone (`WARM_IP_TARGET`/`MINIMUM_IP_TARGET` unset). In that state every node keeps **one whole spare ENI** attached (15 IPs per ENI on an m5.xlarge), so in small subnets IPs run out **much faster than the pod count suggests**. By contrast, this cluster's `aws-node` settings (`ENABLE_PREFIX_DELEGATION=false`, `WARM_ENI_TARGET=1`, `WARM_IP_TARGET=3`, `MINIMUM_IP_TARGET=6`) are an example of an already-shrunk warm pool — once `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` are set they take precedence over the warm-ENI rule, so a node keeps only 3 spare IPs beyond what its pods use, and never fewer than 6 IPs allocated in total (`MINIMUM_IP_TARGET` is a floor on the total — in-use plus spare — not on the spare count).
+In IPv4 secondary-IP mode, `WARM_ENI_TARGET=1` is the default target for spare ENI capacity. Each ENI also consumes a primary IP: an m5.xlarge has 15 IPv4 addresses per ENI, of which 14 are secondary addresses for ordinary pods. Positive WARM_IP_TARGET/MINIMUM_IP_TARGET values override the warm-ENI rule. With warm=3 and minimum=6, one used IP can require six total and five spare; five used IPs target eight total and three spare. Spare capacity is not always exactly three. IPAM reconciliation, ENI limits, and prefix allocation granularity affect actual counts.
 
 **Causes and fixes**:
 
 | Observation | Cause | Fix |
 |---|---|---|
 | Subnet `AvailableIpAddressCount` in single digits | The subnet itself is exhausted; the warm pool pre-claims IPs | Shrink the warm pool with `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` (as in the settings above), add a secondary CIDR (e.g. 100.64.0.0/16) with **custom networking** (`ENIConfig`), and IPv6 in the long run |
-| Pods on node = allocatable pods | ENI/IP limit of the instance type | **Prefix delegation** (`ENABLE_PREFIX_DELEGATION=true`, allocates /28 prefixes, requires Nitro instances) plus max-pods recalculation, or a larger instance |
+| Pods on node = allocatable pods | Configured pod-count ceiling; check IP capacity separately | **Prefix delegation** after validating support and subnet capacity (`ENABLE_PREFIX_DELEGATION=true`, allocates /28 prefixes, requires supported instances and contiguous /28 blocks) plus max-pods recalculation, or a larger instance |
 | `aws-node` in `CrashLoopBackOff` on that node | CNI failure itself (missing `AmazonEKS_CNI_Policy`, version mismatch) | `kubectl logs -n kube-system <aws-node-pod> -c aws-node`, and `/var/log/aws-routed-eni/ipamd.log` on the node |
 | Using Security Groups for Pods and short of `vpc.amazonaws.com/pod-eni` | Branch ENI limit | Move to instances that support trunk ENIs; confirm `ENABLE_POD_ENI=true` |
 
@@ -457,7 +473,7 @@ kubectl get nodeclaims -o custom-columns='NAME:.metadata.name,TYPE:.metadata.lab
 kubectl logs -n kube-system -l app.kubernetes.io/name=karpenter --tail=100
 ```
 
-A real Karpenter event (it walks every NodePool for one pod and lists why each was rejected):
+A Karpenter event recorded in the original document, listing rejected NodePools:
 
 ```
 FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool "system",
@@ -469,14 +485,14 @@ FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool 
   node.kubernetes.io/instance-type In [g6e.4xlarge] not in node.kubernetes.io/instance-type In [g6.2xlarge g6.4xlarge g6.xlarge]
 ```
 
-The NodePool status at the same moment showed `graviton` at `CPU_LIMIT 8 / CPU_USED 8` — **exactly at its limit** — which is what `exceed limits` means. Conversely, `Nominated  karpenter  Pod should schedule on: nodeclaim/system-tm4gv` means Karpenter has done its part and is waiting for the node to come up.
+The recorded example has CPU_LIMIT 8 / CPU_USED 8, but `exceed limits` does not require current usage to equal the limit. It also occurs below the limit when every candidate instance exceeds remaining headroom. `Nominated` is a scheduling nomination, not completion; verify NodeClaim Launched, Registered, Initialized, Ready and actual Pod assignment.
 
 **Causes and fixes**:
 
 | Message fragment | Cause | Fix |
 |---|---|---|
-| `all available instance types exceed limits for nodepool "<np>"` | NodePool `spec.limits` (cpu/memory) reached | Raise the limit, or check whether consolidation is reclaiming idle nodes |
-| `label "<key>" does not have known values` | The pod's nodeSelector/affinity key is not in the NodePool `requirements` | Add the key (with its value list) to `spec.template.spec.requirements` of the NodePool |
+| `all available instance types exceed limits for nodepool "<np>"` | Adding any candidate instance would exceed NodePool limits | Raise the limit, or check whether consolidation is reclaiming idle nodes |
+| `label "<key>" does not have known values` | The requested custom label has no values supplied by NodePool template labels/requirements | Add the key (with its value list) to `spec.template.spec.requirements` of the NodePool |
 | `did not tolerate <key>=<value>:NoSchedule` | No toleration for the NodePool `taints` | If the isolation is intentional, use another NodePool; otherwise add the toleration |
 | `key node.kubernetes.io/instance-type, ... In [X] not in ... In [Y Z]` | The pod demands an instance type the NodePool does not allow | Align one side. Usually the pod-side requirement is too narrow |
 | Large `daemonset overhead={...}` and `Insufficient` | Not enough capacity left after subtracting DaemonSet reservations | Include larger instances in the requirements |
@@ -510,7 +526,7 @@ kubectl -n kube-system get pods -l app.kubernetes.io/name=aws-load-balancer-cont
 kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 ```
 
-What this cluster actually looked like on September 2, 2026: `aws-load-balancer-controller` v3.2.1 (2 replicas) had been in **`CrashLoopBackOff` for 48 days with 9,250 restarts**. Every `--previous` log showed the same pattern (some fields other than the timestamps trimmed):
+The original document records repeated LBC v3.2.1 restarts and the following logs on September 2, 2026. This review did not independently verify the historical restart count or duration, so they are not presented as a reproduced result. The actionable evidence is a mismatch between installed CRDs and the API version requested by the controller.
 
 ```
 {"ts":"2026-09-02T07:54:42Z","logger":"setup","msg":"Disabling NLBGatewayAPI: missing required Gateway API CRDs","missing":["TLSRoute","TCPRoute","UDPRoute"]}
@@ -518,33 +534,58 @@ What this cluster actually looked like on September 2, 2026: `aws-load-balancer-
 {"ts":"2026-09-02T07:57:00Z","level":"error","logger":"setup","msg":"problem running manager","error":"failed to wait for gateway.k8s.aws/alb caches to sync kind source: *v1.ListenerSet: timed out waiting for cache to be synced for Kind *v1.ListenerSet"}
 ```
 
-How to read it: the controller's ALB Gateway API controller expects the `ListenerSet` CRD (Gateway API **experimental** channel) and the cluster does not have it. The NLB side disables itself when its CRDs are missing (first line, info), but the ALB side waits for its cache to sync and **the process exits after about 2 min 18 s** — so the pod looks `Running` for a moment, dies again, and the webhook Service's endpoints are empty most of the time. Meanwhile the `mservice.elbv2.k8s.aws` webhook has `failurePolicy: Fail`, `namespaceSelector: {}` (every namespace), `objectSelector: app.kubernetes.io/name NotIn [aws-load-balancer-controller]`, and a rule on Service **CREATE**. In other words, **the availability of this webhook Deployment is the availability of Service creation for the whole cluster**, and the moment it has zero endpoints the API server rejects every matching request. Pod creation was unaffected — pods were created normally in this state.
+These logs show cache synchronization failing because ListenerSet.gateway.networking.k8s.io/v1 cannot be found. **Gateway API 1.5.0 includes ListenerSet in the standard channel.** Check version requirements, standard CRDs, and LBC-specific CRDs in the [LBC v3.2.1 guide](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.2.1/docs/guide/gateway/gateway.md). Review experimental installation requirements when additional APIs such as TCPRoute/UDPRoute are needed. Impact depends on the actual webhook rules, selectors, and failurePolicy. Existing LB data paths can continue while target updates and new-resource reconciliation are impaired.
 
 **Causes and fixes**:
 
 | Observation | Cause | Fix |
 |---|---|---|
-| `no endpoints available for service "aws-load-balancer-webhook-service"` | Zero Ready pods in the webhook Deployment (CrashLoop, unschedulable, replicas 0) | **Make the controller healthy first** (next row). Confirm recovery by `get endpointslices` showing addresses in its ENDPOINTS column |
-| `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` in the logs | The Gateway API CRDs this controller version requires are not installed | (a) Install the Gateway API CRDs that controller version requires — `ListenerSet` is in the experimental channel, (b) until the CRDs are present, disable the controller's Gateway API feature via its Helm feature-gate values (check the exact gate names in that version's `values.yaml`), (c) pin a controller version that matches the installed CRDs |
+| `no endpoints available for service "aws-load-balancer-webhook-service"` | Zero Ready pods in the webhook Deployment (CrashLoop, unschedulable, replicas 0) | **Make the controller healthy first** (next row). Confirm addresses and ready conditions in EndpointSlice and test an actual webhook request |
+| `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` in the logs | The Gateway API CRDs this controller version requires are not installed | (a) Install the Gateway API CRDs that controller version requires — ListenerSet is in the standard channel in Gateway API 1.5.0, (b) until the CRDs are present, disable the controller's Gateway API feature via its Helm feature-gate values (check the exact gate names in that version's `values.yaml`), (c) pin a controller version that matches the installed CRDs |
 | Endpoints exist, but `connection refused` / `context deadline exceeded` / `x509` | Path to the webhook port blocked (NetworkPolicy/security group), certificate expired or mismatched | Check the API server → pod webhook-port path, `clientConfig.caBundle`, and certificate renewal |
 | You must create a Service right now | — | **Only as a conscious emergency measure with the blast radius understood**: patch the `failurePolicy` of `mservice.elbv2.k8s.aws` to `Ignore`. Services created meanwhile do NOT get the controller's mutation (the default `loadBalancerClass` is not injected), so after recovery **revert to `Fail`** and review the Services created in between |
 
-What not to do: label a Service with `app.kubernetes.io/name=aws-load-balancer-controller` to dodge the `objectSelector`. It passes the webhook, but that Service **silently drops out of the controller's management** (no mutation applied) and the label now lies. That selector exists only so the controller's own Service can be created.
+What not to do: label a Service with `app.kubernetes.io/name=aws-load-balancer-controller` to dodge the `objectSelector`. It passes the webhook, but that Service **misses the mutation** and the label now lies. That selector exists only so the controller's own Service can be created.
 
-**Prevention**: (1) alert when the webhook Service has no ready address — with kube-state-metrics `(sum(kube_endpoint_address{namespace="kube-system", endpoint="aws-load-balancer-webhook-service", ready="true"}) or vector(0)) == 0` (the `or vector(0)` matters: with zero addresses the series disappears instead of reading 0) — or on the controller's `CrashLoopBackOff` — this cluster ran 2 replicas and both died for the same reason, so replica count does not protect against this failure. (2) Periodically review `failurePolicy: Fail` webhooks that match every namespace: `kubectl get mutatingwebhookconfigurations -o json | jq '.items[].webhooks[] | select(.failurePolicy=="Fail") | {name, namespaceSelector, rules}'`. (3) Run webhook Deployments with at least 2 replicas spread across AZs plus a PDB — that guards against node/AZ loss; for configuration errors, (1) is the answer.
+If you decide to disable unused Gateway API features temporarily, merge these v3.2.1 chart values with the existing configuration and review the Helm diff. First check whether existing Gateway resources depend on these controllers.
 
-This outage is what prevented the ClusterIP (kube-proxy) measurements in the [Pod Network Benchmark](../networking/06-pod-network-benchmark.md) — the webhook was not bypassed; the benchmark used Pod IPs only.
+```yaml
+controllerConfig:
+  featureGates:
+    ALBGatewayAPI: false
+    NLBGatewayAPI: false
+```
+
+**Prevention**: alert on available replicas and CrashLoop state for the webhook Deployment. For example, configure an alert with a five-minute hold for the following kube-state-metrics expression.
+
+```promql
+kube_deployment_status_replicas_available{
+  namespace="kube-system", deployment="aws-load-balancer-controller"
+} < 1
+```
+
+If metrics are absent, this expression also returns no series; add separate absent_over_time(...[5m]) or scrape-failure monitoring. Deployment availability does not prove Service selectors, certificates, or network paths are correct: inspect EndpointSlice conditions and the webhook path too. Spreading replicas across AZs with a PDB helps with node failures, but not a configuration error shared by every replica.
+
+The original [Pod Network Benchmark](../networking/06-pod-network-benchmark.md) describes its exclusion of ClusterIP measurements. That remains a limitation of the recorded benchmark; this review did not reproduce the incident.
 
 ***
 
 ## kubectl Diagnostic Cheat Sheet
 
-Every command used in this document, grouped by purpose. All of them are read-only.
+Separate inspection from debug actions: get/describe/logs/top inspect resources; kubectl debug and kubectl run create containers or Pods. Ensure copied debug Pod labels do not accidentally match a Service selector, and remove debug Pods after use. Ephemeral containers remain recorded on the original Pod.
 
 ```bash
 # ── Status scan ────────────────────────────────────────────────────────
 # Unhealthy pods only
-kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+kubectl get pods -A -o json | jq -r '
+  .items[]
+  | select(.status.phase != "Succeeded")
+  | select(.status.phase != "Running" or
+      ([.status.conditions[]? | select(.type == "Ready" and .status == "True")] | length == 0))
+  | [.metadata.namespace, .metadata.name, .status.phase,
+     ([.status.initContainerStatuses[]?, .status.containerStatuses[]?
+       | .state.waiting.reason // empty] | join(","))] | @tsv
+'
 # Restart counts ascending, so the 15 worst pods come LAST (after tail) + last termination reason.
 # Reads the first container only ([0]); for multi-container pods check the others separately.
 kubectl get pods -A --sort-by='.status.containerStatuses[0].restartCount' \
@@ -573,10 +614,10 @@ kubectl logs -n kube-system -l k8s-app=kube-dns --tail=50  # several pods by lab
 kubectl logs deploy/<name> --all-containers --since=10m
 
 # ── Debug containers ───────────────────────────────────────────────────
-# Attach an ephemeral container to a distroless pod (shares the process namespace)
+# Attach an ephemeral container (target process namespace requires runtime support)
 kubectl debug -it <pod> --image=nicolaka/netshoot --target=<container>
-# Copy of the pod with a different image/command
-kubectl debug <pod> -it --copy-to=<pod>-debug --container=<container> -- sh
+# Copy with an approved shell-capable debug-image; review copied labels and volume access
+kubectl debug <pod> -it --copy-to=<pod>-debug --container=<container> --set-image=<container>=<debug-image> -- sh
 # Node shell without SSH. --profile=sysadmin is a privileged container
 kubectl debug node/<node> -it --image=busybox --profile=sysadmin -- chroot /host
 
@@ -595,7 +636,7 @@ kubectl rollout status deploy/<name> -n <ns>
 kubectl rollout history deploy/<name> -n <ns>
 ```
 
-Valid `--profile` values for `kubectl debug` are `legacy`, `general`, `baseline`, `restricted`, `netadmin`, and `sysadmin` (the default is `legacy` or `general` depending on your kubectl version — check `kubectl debug --help`); in a namespace with Pod Security Standards enforced, use `restricted` to pass admission.
+Valid `--profile` values for `kubectl debug` are `legacy`, `general`, `baseline`, `restricted`, `netadmin`, and `sysadmin` (the default is `legacy` or `general` depending on your kubectl version — check `kubectl debug --help`); under a restricted policy, use a compatible image/security context with --profile=restricted; other admission policies can still reject it. Privileged node debugging requires separate authorization.
 
 ***
 

@@ -169,7 +169,7 @@ spec:
 
 linkerd2-proxy는 mesh 용도로 작성한 Rust proxy이며 HTTP/1.1, HTTP/2, gRPC와 TCP를 지원합니다. HTTP routing·metric에는 해석 가능한 HTTP가 필요합니다. 앱이 시작한 TLS는 opaque이며 UDP/QUIC·skip 트래픽은 TCP proxy 경로의 범위가 아닙니다.
 
-해당 meshed TCP peer 사이에 transport mTLS를 제공합니다. Unmeshed peer와 명시적인 capture 우회는 별도 고려가 필요합니다. 기본 inbound policy는 unmeshed plaintext를 허용하므로 자동 mTLS가 모든 출발지에 인증을 강제한다는 뜻은 아닙니다.
+해당 meshed TCP peer 사이에 transport mTLS를 제공합니다. 문서화된 mesh 전송은 TLS 1.3이며 애플리케이션이 시작한 TLS passthrough는 별도 계층입니다. Unmeshed peer와 명시적인 capture 우회는 별도 고려가 필요합니다. 기본 inbound policy는 unmeshed plaintext를 허용하므로 자동 mTLS가 모든 출발지에 인증을 강제한다는 뜻은 아닙니다.
 
 Proxy는 HTTP 요청에 지연을 고려한 balancing, opaque TCP에 연결 단위 balancing을 적용합니다. Endpoint weight·routing rule과 runtime 지연 추정은 별개입니다. EWMA를 모든 요청이 항상 가장 빠른 한 endpoint로 간다는 보장으로 해석하지 마세요.
 
@@ -212,14 +212,14 @@ Opaque port는 protocol detection을 생략하면서 proxy 전송 처리를 유�
 linkerd inject web.yaml > web-annotated.yaml
 
 # Manual mode materializes the proxy spec using the selected cluster configuration.
-# Use CLI options for overrides; proxy config annotations are not applied in this mode.
+# Review/remove conflicting input config annotations before selecting CLI flags.
 linkerd inject --manual --native-sidecar \
   --proxy-cpu-request 100m --proxy-memory-request 64Mi \
   --proxy-cpu-limit 1 --proxy-memory-limit 250Mi \
   web.yaml > web-manually-injected.yaml
 ```
 
-기본 inject는 annotation 변환입니다. Manual은 proxy spec을 만들고 override에 CLI option을 사용하며 server-side 주입처럼 proxy 설정 annotation을 적용하지 않습니다. 축약 proxy container를 완전한 설치로 복사하지 말고 생성 결과를 배포 전에 검토하세요.
+기본 inject는 annotation 변환입니다. Edge-26.9.1의 manual 생성도 기존 입력의 설정 annotation을 사용합니다. 실제 검사에서 CPU request annotation 700m가 CLI flag 100m보다 우선했고 log-level annotation도 적용되었습니다. 충돌하는 입력을 수정·제거하고 생성된 proxy 필드를 확인하세요. 수동으로 구체화한 proxy는 나중 annotation 수정만으로 자동 재생성되지 않으므로 축약 container를 복사하지 말고 소유 도구로 생성 workload를 갱신해야 합니다.
 
 ```bash
 : "${APP_POD:?Set an application Pod name in my-app}"

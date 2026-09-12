@@ -1,0 +1,617 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/02-strimzi-operator.md",
+    "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+    "en/data-on-eks/kafka/02-strimzi-operator.md",
+    "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md"
+  ],
+  "versions": {
+    "strimzi": "1.2.0",
+    "kafka": "4.3.1",
+    "minimumKubernetes": "1.30",
+    "schemaValidationKubernetes": "1.36.2"
+  },
+  "chartSha256": "0f8a50b2f19bd99482f9fd6e17cf42902f72f9e594a136813ac3f0b7af422efd",
+  "chartDigestVerifiedAgainstGitHubReleaseMetadata": true,
+  "validation": {
+    "manifests": {
+      "objects": [
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkas.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkaconnects.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "strimzipodsets.core.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkatopics.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkausers.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkanodepools.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkabridges.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkaconnectors.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkamirrormaker2s.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkarebalances.kafka.strimzi.io"
+        },
+        {
+          "source": "default",
+          "kind": "ServiceAccount",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "default",
+          "kind": "ConfigMap",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-namespaced"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-global"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-leader-election"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-watched"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRole",
+          "name": "strimzi-kafka-broker"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRole",
+          "name": "strimzi-entity-operator"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRole",
+          "name": "strimzi-kafka-client"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRoleBinding",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRoleBinding",
+          "name": "strimzi-cluster-operator-kafka-broker-delegation"
+        },
+        {
+          "source": "default",
+          "kind": "ClusterRoleBinding",
+          "name": "strimzi-cluster-operator-kafka-client-delegation"
+        },
+        {
+          "source": "default",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "default",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-leader-election"
+        },
+        {
+          "source": "default",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-watched"
+        },
+        {
+          "source": "default",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-entity-operator-delegation"
+        },
+        {
+          "source": "default",
+          "kind": "Deployment",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkas.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkaconnects.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "strimzipodsets.core.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkatopics.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkausers.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkanodepools.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkabridges.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkaconnectors.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkamirrormaker2s.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "CustomResourceDefinition",
+          "name": "kafkarebalances.kafka.strimzi.io"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ServiceAccount",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ConfigMap",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-namespaced"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-global"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-leader-election"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRole",
+          "name": "strimzi-cluster-operator-watched"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRole",
+          "name": "strimzi-kafka-broker"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRole",
+          "name": "strimzi-entity-operator"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRole",
+          "name": "strimzi-kafka-client"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRoleBinding",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRoleBinding",
+          "name": "strimzi-cluster-operator-kafka-broker-delegation"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "ClusterRoleBinding",
+          "name": "strimzi-cluster-operator-kafka-client-delegation"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-leader-election"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-watched"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-watched"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-entity-operator-delegation"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "RoleBinding",
+          "name": "strimzi-cluster-operator-entity-operator-delegation"
+        },
+        {
+          "source": "additional-namespace",
+          "kind": "Deployment",
+          "name": "strimzi-cluster-operator"
+        },
+        {
+          "source": "controller-pool.yaml",
+          "kind": "KafkaNodePool",
+          "name": "controller"
+        },
+        {
+          "source": "broker-pool.yaml",
+          "kind": "KafkaNodePool",
+          "name": "broker"
+        },
+        {
+          "source": "kafka-cluster.yaml",
+          "kind": "Kafka",
+          "name": "my-cluster"
+        },
+        {
+          "source": "orders-topic.yaml",
+          "kind": "KafkaTopic",
+          "name": "orders"
+        },
+        {
+          "source": "order-service-user.yaml",
+          "kind": "KafkaUser",
+          "name": "order-service"
+        },
+        {
+          "source": "client.yaml",
+          "kind": "ConfigMap",
+          "name": "kafka-client-config"
+        },
+        {
+          "source": "client.yaml",
+          "kind": "Pod",
+          "name": "kafka-client"
+        },
+        {
+          "source": "storageclass.yaml",
+          "kind": "StorageClass",
+          "name": "gp3-kafka"
+        },
+        {
+          "source": "storageclass-auto.yaml",
+          "kind": "StorageClass",
+          "name": "gp3-kafka-auto"
+        },
+        {
+          "source": "merged external listener",
+          "kind": "Kafka",
+          "name": "my-cluster"
+        }
+      ],
+      "helmRenders": [
+        {
+          "variant": "default",
+          "objects": 27,
+          "watchAndRBACNamespaces": [
+            "kafka"
+          ]
+        },
+        {
+          "variant": "additional-namespace",
+          "objects": 30,
+          "watchAndRBACNamespaces": [
+            "kafka",
+            "kafka-staging"
+          ]
+        }
+      ],
+      "semanticChecks": [
+        "v1-only served APIs",
+        "actual watch environment and matching RoleBindings",
+        "both pools have matching labels and minDomains=3",
+        "PVC retention and metadata placement",
+        "TLS+SCRAM listeners with enabled authorizer",
+        "topic/group/idempotent-write ACL scope",
+        "bootstrap and every broker NLB annotations",
+        "client Secret/CA mounts without credential env vars"
+      ],
+      "normalization": "Optional null fields omitted; Kubernetes numeric Quantity/int-or-string decoding modeled.",
+      "limitations": "Local schemas, chart rendering and cross-resource checks only; no live reconciliation or AWS provisioning."
+    },
+    "clientConfig": {
+      "cases": [
+        {
+          "case": "generated-ascii",
+          "passed": true
+        },
+        {
+          "case": "escaped-quotes-backslashes",
+          "passed": true
+        },
+        {
+          "case": "unicode",
+          "passed": true
+        },
+        {
+          "case": "property-separators",
+          "passed": true
+        },
+        {
+          "case": "empty-secret-rejected",
+          "passed": true
+        }
+      ],
+      "nativeParser": "Java21 Properties.load + Kafka4.3.1 ConsumerConfig/JaasContext",
+      "actualSecretsUsed": false,
+      "connectionsMade": false,
+      "limitations": "Parsing and escaping validation only; does not prove TLS handshake or broker ACL enforcement."
+    },
+    "documents": {
+      "fences": [
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "bash"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "bash"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        },
+        {
+          "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+          "language": "bash"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "bash"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "bash"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        },
+        {
+          "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+          "language": "yaml"
+        }
+      ],
+      "strimziV1Objects": 16,
+      "quizQuestions": 40,
+      "relativeLinks": 10,
+      "smokeCommandStdin": "exact expected newline validated with local kubectl function mock",
+      "actualClusterCommands": false
+    }
+  },
+  "sources": [
+    "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-kafka-operator-helm-3-chart-1.2.0.tgz",
+    "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-crds-1.2.0.yaml",
+    "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-cluster-operator-1.2.0.yaml",
+    "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/README.md",
+    "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+    "https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str",
+    "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+    "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/docker-images/kafka-based/kafka/Dockerfile"
+  ],
+  "findings": [
+    "UpdatedtoStrimzi1.2.0/Kafka4.3.1/v1APIswithfresh-installscopeandexplicitbetaCRDmigration;minimumK8s1.30confirmed.",
+    "ValidatedHelmdefault/additionalnamespacewatchandcorrespondingRoleBindings;removedenv-onlywatchchangesandcurlsedapplypath.",
+    "ReplacedplainunauthenticatedtestpathwithTLS/SCRAMlisteners+simpleauthorizer+topic/group/IdempotentWriteACLs.",
+    "AddedmountedSecret/CAclientPodusingstdlibPythoninit;JavaPropertiesandKafkaJAASparsevalidatedASCII/quotes/backslash/Unicode/separatorswithoutactualcredentials.",
+    "UsedmatchedcustompodlabelsandminDomains3forbothcontroller/brokerAZconstraints;rackawareplacementseparate;avoidedper-poolnodeID0assumption.",
+    "SeparatedstandardEBSCSIandAutoModeStorageClasses;verifiedgp3baseline3000IOPS125MiBs;explicitretainandmetadatavolumeplacement.",
+    "CorrectedallbrokerNLBannotationcoverageandcontrollerclass;JSONmergepatchpreservesinternalTLSlistener;alladvertisedendpointsrequired.",
+    "QualifiedReadyTrue/observedGeneration/Podhealth,quorumodd-countreasoning,JBODbalanceandOperatorautomationclaims;updated40quizzes."
+  ],
+  "limitations": [
+    "NoKubernetes/AWSresourcecreation,brokerconnection,realTLS/ACLtest,registryimagepullorrealSecretread.",
+    "Localrendering/schema/crossresource/nativeJAASchecksarenotend-to-enddeploymentproof.",
+    "Nofiguresinthischapter."
+  ]
+}

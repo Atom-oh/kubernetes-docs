@@ -1,0 +1,206 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current compatibility, Kafka semantics, configs, quizzes and diagrams corrected and locally validated.",
+    "sources": [
+      "https://api.github.com/repos/strimzi/strimzi-kafka-operator/releases/latest",
+      "https://kafka.apache.org/downloads/",
+      "https://strimzi.io/docs/operators/latest/overview",
+      "https://strimzi.io/docs/operators/latest/deploying",
+      "https://kafka.apache.org/43/operations/kraft/",
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+      "https://kafka.apache.org/community/downloads/",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/kafka-versions.yaml",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/server.properties",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/controller.properties"
+    ],
+    "validation": [
+      "kafka-foundation-validation.json"
+    ],
+    "reviewedSha256": "5e3620cff3085118df869fcb76a38a82a1bae3ee709c7e27fa84b3b11bfe00da",
+    "findings": [
+      "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
+      "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
+      "Correctedclassicversusconsumerprotocoltimeouts/assignors,staticmembershipmaxpolldelay,andbusinesscompletionversuscommittedoffset.",
+      "SeparatedproducerretryidempotencefromE2EEOS;requiredatomicoutput+inputoffsets/read_committed/fencing;correctedacksconflicts/retrydeadlines.",
+      "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
+      "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
+      "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
+    ]
+  },
+  {
+    "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current compatibility, Kafka semantics, configs, quizzes and diagrams corrected and locally validated.",
+    "sources": [
+      "https://api.github.com/repos/strimzi/strimzi-kafka-operator/releases/latest",
+      "https://kafka.apache.org/downloads/",
+      "https://strimzi.io/docs/operators/latest/overview",
+      "https://strimzi.io/docs/operators/latest/deploying",
+      "https://kafka.apache.org/43/operations/kraft/",
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+      "https://kafka.apache.org/community/downloads/",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/kafka-versions.yaml",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/server.properties",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/controller.properties"
+    ],
+    "validation": [
+      "kafka-foundation-validation.json"
+    ],
+    "reviewedSha256": "2ac02123dcd53a02166bae3adfeacf35ec8d129b0b7ea0f8aaae86a358c09afe",
+    "findings": [
+      "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
+      "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
+      "Correctedclassicversusconsumerprotocoltimeouts/assignors,staticmembershipmaxpolldelay,andbusinesscompletionversuscommittedoffset.",
+      "SeparatedproducerretryidempotencefromE2EEOS;requiredatomicoutput+inputoffsets/read_committed/fencing;correctedacksconflicts/retrydeadlines.",
+      "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
+      "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
+      "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
+    ]
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current compatibility, Kafka semantics, configs, quizzes and diagrams corrected and locally validated.",
+    "sources": [
+      "https://api.github.com/repos/strimzi/strimzi-kafka-operator/releases/latest",
+      "https://kafka.apache.org/downloads/",
+      "https://strimzi.io/docs/operators/latest/overview",
+      "https://strimzi.io/docs/operators/latest/deploying",
+      "https://kafka.apache.org/43/operations/kraft/",
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+      "https://kafka.apache.org/community/downloads/",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/kafka-versions.yaml",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/server.properties",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/controller.properties"
+    ],
+    "validation": [
+      "kafka-foundation-validation.json"
+    ],
+    "reviewedSha256": "fd33b390872cc321f5e1ea57431a4561fa72c3fca64a0cf5237052739abdb8da",
+    "findings": [
+      "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
+      "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
+      "Correctedclassicversusconsumerprotocoltimeouts/assignors,staticmembershipmaxpolldelay,andbusinesscompletionversuscommittedoffset.",
+      "SeparatedproducerretryidempotencefromE2EEOS;requiredatomicoutput+inputoffsets/read_committed/fencing;correctedacksconflicts/retrydeadlines.",
+      "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
+      "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
+      "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
+    ]
+  },
+  {
+    "path": "en/data-on-eks/kafka/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current compatibility, Kafka semantics, configs, quizzes and diagrams corrected and locally validated.",
+    "sources": [
+      "https://api.github.com/repos/strimzi/strimzi-kafka-operator/releases/latest",
+      "https://kafka.apache.org/downloads/",
+      "https://strimzi.io/docs/operators/latest/overview",
+      "https://strimzi.io/docs/operators/latest/deploying",
+      "https://kafka.apache.org/43/operations/kraft/",
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+      "https://kafka.apache.org/community/downloads/",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/kafka-versions.yaml",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/server.properties",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/controller.properties"
+    ],
+    "validation": [
+      "kafka-foundation-validation.json"
+    ],
+    "reviewedSha256": "92dc71ef1e2ca4aca0cab8fa325a7f82ca57f96b1f23db59482b40bafc2b8892",
+    "findings": [
+      "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
+      "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
+      "Correctedclassicversusconsumerprotocoltimeouts/assignors,staticmembershipmaxpolldelay,andbusinesscompletionversuscommittedoffset.",
+      "SeparatedproducerretryidempotencefromE2EEOS;requiredatomicoutput+inputoffsets/read_committed/fencing;correctedacksconflicts/retrydeadlines.",
+      "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
+      "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
+      "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
+    ]
+  },
+  {
+    "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current compatibility, Kafka semantics, configs, quizzes and diagrams corrected and locally validated.",
+    "sources": [
+      "https://api.github.com/repos/strimzi/strimzi-kafka-operator/releases/latest",
+      "https://kafka.apache.org/downloads/",
+      "https://strimzi.io/docs/operators/latest/overview",
+      "https://strimzi.io/docs/operators/latest/deploying",
+      "https://kafka.apache.org/43/operations/kraft/",
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+      "https://kafka.apache.org/community/downloads/",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/kafka-versions.yaml",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/server.properties",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/controller.properties"
+    ],
+    "validation": [
+      "kafka-foundation-validation.json"
+    ],
+    "reviewedSha256": "297ceaf3f41cffdaad36cd65a9869f40e55778650874f374b6de96afa9666824",
+    "findings": [
+      "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
+      "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
+      "Correctedclassicversusconsumerprotocoltimeouts/assignors,staticmembershipmaxpolldelay,andbusinesscompletionversuscommittedoffset.",
+      "SeparatedproducerretryidempotencefromE2EEOS;requiredatomicoutput+inputoffsets/read_committed/fencing;correctedacksconflicts/retrydeadlines.",
+      "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
+      "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
+      "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
+    ]
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current compatibility, Kafka semantics, configs, quizzes and diagrams corrected and locally validated.",
+    "sources": [
+      "https://api.github.com/repos/strimzi/strimzi-kafka-operator/releases/latest",
+      "https://kafka.apache.org/downloads/",
+      "https://strimzi.io/docs/operators/latest/overview",
+      "https://strimzi.io/docs/operators/latest/deploying",
+      "https://kafka.apache.org/43/operations/kraft/",
+      "https://kafka.apache.org/43/configuration/producer-configs/",
+      "https://kafka.apache.org/43/configuration/consumer-configs/",
+      "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+      "https://kafka.apache.org/community/downloads/",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/kafka-versions.yaml",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/server.properties",
+      "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/controller.properties"
+    ],
+    "validation": [
+      "kafka-foundation-validation.json"
+    ],
+    "reviewedSha256": "a937c2d013e05b207cef26ec154b668797584c65307a54ba33267b3c1343ac3f",
+    "findings": [
+      "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
+      "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
+      "Correctedclassicversusconsumerprotocoltimeouts/assignors,staticmembershipmaxpolldelay,andbusinesscompletionversuscommittedoffset.",
+      "SeparatedproducerretryidempotencefromE2EEOS;requiredatomicoutput+inputoffsets/read_committed/fencing;correctedacksconflicts/retrydeadlines.",
+      "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
+      "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
+      "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
+    ]
+  }
+]

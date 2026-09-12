@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Tekton Core CRD Structure",
+    "title": "Tekton definitions, executions and data fields",
     "locale": "en",
     "output": "en-ops-14-tekton-pipelines-0.html",
     "quality_profile": "showcase",
@@ -40,7 +40,7 @@
           "chains",
           "provenance"
         ],
-        "note": "Tekton Chains detects TaskRun completion and automatically signs OCI images and generates SLSA provenance."
+        "note": "Chains processes TaskRuns/PipelineRuns asynchronously; a signature alone does not prove CI success."
       }
     ],
     "legend": {
@@ -177,7 +177,7 @@
       "id": "workspace",
       "type": "database",
       "label": "Workspace / Result",
-      "sublabel": "Shared volume · output values",
+      "sublabel": "volume bindings / result fields",
       "pos": [
         410,
         520
@@ -205,7 +205,7 @@
       "id": "provenance",
       "type": "security",
       "label": "SLSA Provenance / OCI signing",
-      "sublabel": "Cosign · Rekor",
+      "sublabel": "configured signer / OCI storage",
       "pos": [
         830,
         380
@@ -229,7 +229,7 @@
     },
     {
       "kind": "region",
-      "label": "Tekton Core CRDs",
+      "label": "Tekton execution model",
       "wraps": [
         "pipelinerun",
         "pipeline",
@@ -312,14 +312,14 @@
       "id": "task-to-workspace",
       "from": "task",
       "to": "workspace",
-      "label": "data · results",
+      "label": "declares fields",
       "labelDy": 24
     },
     {
       "id": "taskrun-to-chains",
       "from": "taskrun",
       "to": "chains",
-      "label": "on completion",
+      "label": "async processing",
       "variant": "security"
     },
     {
@@ -334,20 +334,16 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Core CRDs",
+      "title": "Definitions and execution",
       "items": [
-        "A Task is a unit of work made of one or more Steps (containers); a TaskRun is its execution instance",
-        "A Pipeline defines the order and dependencies of Tasks; a PipelineRun is its execution instance",
-        "Workspaces share data between Tasks/Pipelines; Results pass values between Tasks"
+        "Definitions are executed as Run instances"
       ]
     },
     {
       "dot": "violet",
-      "title": "Tekton Chains",
+      "title": "Chains",
       "items": [
-        "Runs automatically when a TaskRun completes",
-        "Signs OCI images with Cosign (Sigstore)",
-        "Generates SLSA provenance and in-toto attestations, records them in the Rekor transparency log"
+        "Verify CI success and signatures separately"
       ]
     }
   ]

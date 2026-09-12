@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Tekton Chains Supply Chain Security Flow",
+    "title": "CI status, signature and provenance verification",
     "locale": "en",
     "output": "en-ops-14-tekton-pipelines-4.html",
     "quality_profile": "showcase",
@@ -17,17 +17,17 @@
           "sign",
           "provenance"
         ],
-        "note": "When a TaskRun completes, Chains observes it and produces a Cosign signature plus SLSA provenance / in-toto attestation."
+        "note": "Image signatures and Pipeline provenance have different completion points; check CI success separately."
       },
       {
         "id": "transparency",
-        "label": "Transparency log",
+        "label": "OCI storage",
         "focus": [
           "sign",
           "provenance",
           "rekor"
         ],
-        "note": "Signatures and attestations are recorded in the Rekor transparency log for auditability."
+        "note": "This example uses ECR DSSE storage and an internal key policy with Rekor uploads disabled."
       },
       {
         "id": "deploy-verify",
@@ -38,7 +38,7 @@
           "policy",
           "admission"
         ],
-        "note": "At deploy time cosign verify checks the signature and a Kyverno policy decides allow or deny."
+        "note": "Check the fixed digest, trusted key, approved source and builder; a signed annotation is not approval."
       }
     ]
   },
@@ -46,8 +46,8 @@
     {
       "id": "taskrun",
       "type": "backend",
-      "label": "TaskRun",
-      "sublabel": "image build",
+      "label": "CI execution",
+      "sublabel": "TaskRun / PipelineRun",
       "pos": [
         40,
         250
@@ -60,8 +60,8 @@
     {
       "id": "observer",
       "type": "backend",
-      "label": "Observe TaskRun completion",
-      "sublabel": "Chains Observer",
+      "label": "Chains controller",
+      "sublabel": "async after run completion",
       "pos": [
         330,
         80
@@ -75,7 +75,7 @@
       "id": "sign",
       "type": "security",
       "label": "Sign OCI image",
-      "sublabel": "Cosign",
+      "sublabel": "Task output / KMS",
       "pos": [
         270,
         250
@@ -89,7 +89,7 @@
       "id": "provenance",
       "type": "security",
       "label": "Provenance / Attestation",
-      "sublabel": "SLSA · in-toto",
+      "sublabel": "Pipeline / SLSA v1.0",
       "pos": [
         480,
         250
@@ -102,8 +102,8 @@
     {
       "id": "rekor",
       "type": "external",
-      "label": "Transparency log",
-      "sublabel": "Rekor",
+      "label": "OCI signature storage",
+      "sublabel": "Amazon ECR",
       "pos": [
         380,
         420
@@ -116,8 +116,8 @@
     {
       "id": "verify",
       "type": "security",
-      "label": "Verify image signature",
-      "sublabel": "cosign verify",
+      "label": "CI + signature checks",
+      "sublabel": "success / trusted key",
       "pos": [
         820,
         80
@@ -130,8 +130,8 @@
     {
       "id": "policy",
       "type": "security",
-      "label": "Policy enforcement",
-      "sublabel": "Kyverno",
+      "label": "Provenance policy",
+      "sublabel": "builder / source / digest",
       "pos": [
         820,
         250
@@ -145,7 +145,7 @@
       "id": "admission",
       "type": "security",
       "label": "Admission Control",
-      "sublabel": "allow · deny",
+      "sublabel": "promotion / admission policy",
       "pos": [
         820,
         420
@@ -226,9 +226,12 @@
       "id": "rekor-verify",
       "from": "rekor",
       "to": "verify",
-      "label": "fetch at deploy",
+      "label": "fetch signatures/provenance",
       "variant": "dashed",
-      "labelDy": 59
+      "labelAt": [
+        710,
+        344
+      ]
     },
     {
       "id": "verify-policy",

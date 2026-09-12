@@ -1,0 +1,110 @@
+{
+  "files": [
+    {
+      "path": "en/service-mesh/linkerd/06-multi-cluster.md",
+      "releasedSchemas": 4,
+      "yamlDocuments": 14,
+      "bashBlocks": 11,
+      "quizQuestions": 12
+    },
+    {
+      "path": "ko/service-mesh/linkerd/06-multi-cluster.md",
+      "releasedSchemas": 4,
+      "yamlDocuments": 14,
+      "bashBlocks": 11,
+      "quizQuestions": 12
+    }
+  ],
+  "codeParity": true,
+  "federationConfigChecks": 2,
+  "querySyntaxChecks": 4,
+  "helmRenders": [
+    {
+      "case": "base",
+      "objects": 30,
+      "peerControllers": [],
+      "gateway": true
+    },
+    {
+      "case": "east-imports-west",
+      "objects": 36,
+      "peerControllers": [
+        "controller-west"
+      ],
+      "gateway": true
+    },
+    {
+      "case": "west-imports-east",
+      "objects": 36,
+      "peerControllers": [
+        "controller-east"
+      ],
+      "gateway": true
+    },
+    {
+      "case": "flat-base",
+      "objects": 23,
+      "peerControllers": [],
+      "gateway": false
+    },
+    {
+      "case": "flat-east",
+      "objects": 28,
+      "peerControllers": [
+        "controller-west"
+      ],
+      "gateway": false
+    }
+  ],
+  "nativeLinkGen": {
+    "positive": 2,
+    "negative": 2,
+    "report": "/tmp/mesh-linkerd-multicluster-validation/linkgen-report.json"
+  },
+  "limits": [
+    "No live AWS/Kubernetes provisioning, cluster linking, routing or failover",
+    "Released schemas and chart renders do not execute admission CEL/controller behavior",
+    "Private HTTPS federation requires actual endpoints/CA/credentials; syntax validation is not a scrape test",
+    "Smallstep generation commands checked against primary API/previous installation review, not executed"
+  ],
+  "prometheus": {
+    "fixtures": 5,
+    "assertions": 5,
+    "cases": [
+      "separate-origins-and-all-failure-missing-success",
+      "outbound-and-other-workloads-not-double-counted",
+      "idle-origin-omitted",
+      "absent-is-not-healthy",
+      "client-ttfb-ms-by-origin"
+    ],
+    "promtool": "3.14.0 native linux-arm64",
+    "limits": [
+      "Synthetic series with the documented origin label; not a live federation scrape",
+      "Origin assignment is configured with standard post-scrape metric relabeling, not inferred from workload identity"
+    ]
+  },
+  "sources": [
+    "https://linkerd.io/docs/features/multicluster/",
+    "https://linkerd.io/docs/reference/multicluster/",
+    "https://linkerd.io/docs/tasks/installing-multicluster/",
+    "https://linkerd.io/docs/tasks/multicluster/",
+    "https://linkerd.io/docs/tasks/pod-to-pod-multicluster/",
+    "https://linkerd.io/docs/tasks/federated-services/",
+    "https://linkerd.io/docs/tasks/automatic-failover/",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/cmd/link-gen.go",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/cmd/link.go",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/service-mirror/cluster_watcher.go",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/service-mirror/metrics.go",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/charts/linkerd-multicluster/values.yaml",
+    "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+    "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html",
+    "https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html",
+    "https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html",
+    "https://github.com/prometheus/prometheus/blob/v3.14.0/docs/configuration/configuration.md"
+  ],
+  "testLog": "/tmp/kubernetes-docs-full-review/docs-test-linkerd-multicluster-clean.log",
+  "fullSuiteTail": "adcrumbList with ordered positions\n  ---\n  duration_ms: 0.187625\n  type: 'test'\n  ...\n# Subtest: structuredData omits the breadcrumb node for a page with no trail\nok 118 - structuredData omits the breadcrumb node for a page with no trail\n  ---\n  duration_ms: 0.068942\n  type: 'test'\n  ...\n1..118\n# tests 118\n# suites 0\n# pass 118\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2758.879654\n",
+  "artifacts": "/tmp/mesh-linkerd-multicluster-validation"
+}

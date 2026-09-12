@@ -1,172 +1,326 @@
 # Part 6: MSK 통합
 
-> **지원 버전**: Amazon MSK (Provisioned & Serverless), MSK Connect\
-> **마지막 업데이트**: 2026년 7월 9일
+> **검토 기준**: MSK Standard/Express Provisioned, MSK Serverless, MSK Connect; Java IAM helper 2.3.8\
+> **최종 검토**: 2026년 9월 12일
 
-## 실습 환경 설정
+## 책임과 준비사항
 
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+Amazon MSK의 브로커는 EKS 밖의 AWS 관리 인프라에서 실행됩니다. Strimzi는 팀이
+운영하는 Kubernetes 워크로드로 브로커를 실행합니다. 어느 쪽이든 애플리케이션,
+토픽, 접근 제어, 보존과 복구 설계가 필요합니다. 관리형 브로커가 Kafka 동작에 대한
+이해까지 대신하지는 않습니다.
 
-### 필수 도구
+AWS CLI v2와 EKS 버전에 호환되는 kubectl을 사용합니다. IAM 클라이언트에는 지원되는
+인증 helper와 정상적인 워크로드 자격증명 체인이 필요합니다. EKS Pod Identity나
+IRSA로 임시 자격증명을 제공할 수 있습니다. External Secrets Operator는 다른 비밀
+관리 흐름에서 선택하는 도구이며 IAM 인증의 필수 구성요소가 아닙니다.
 
-* AWS CLI v2 (MSK 클러스터 및 IAM 정책 관리)
-* kubectl v1.28 이상, 작동하는 EKS 클러스터
-* `aws-msk-iam-auth` 클라이언트 라이브러리 (IAM 인증을 사용하는 Kafka 클라이언트용)
-* External Secrets Operator 또는 IRSA가 구성된 EKS 클러스터 (자격 증명 주입용)
+## 실제 MSK 유형 비교
 
-앞선 Part들에서는 EKS 위에 Strimzi로 Kafka를 직접 운영하는 방법을 다뤘습니다. 이번 Part에서는 AWS의 완전관리형 Kafka 서비스인 Amazon MSK를 EKS 워크로드와 통합하는 방법과, Strimzi 셀프 매니지드 대안 사이의 트레이드오프를 다룹니다. 또한 완전히 다른 스트리밍 서비스인 Kinesis Data Streams와 Kafka의 관계도 명확히 정리합니다.
+| 선택지 | 용량과 설정 | 비교할 비용 |
+| --- | --- | --- |
+| MSK Provisioned Standard | 브로커·스토리지를 선택하고 필요 시 저장소 자동 확장을 구성; 지원되는 브로커 설정만 변경 가능 | 브로커 시간, 프로비저닝한 저장소, 선택한 처리량·계층형 저장소, 네트워크 |
+| MSK Provisioned Express | 브로커 컴퓨팅을 선택하며 저장소는 자동 확장·사용량 과금; 설정·처리량 제한 적용 | 브로커 시간, 데이터 입력, 사용 저장소, 해당 네트워크 비용 |
+| MSK Serverless | AWS가 브로커 용량 관리; 사용자도 토픽·파티션·보존·할당량 계획 필요 | **클러스터 시간**, 파티션 시간, 데이터 입력·출력, 사용 저장소, 해당 네트워크 비용 |
+| EKS의 Strimzi | 노드·디스크·브로커/컨트롤러 배치와 Operator 지원 설정 운영 | EKS/EC2/EBS, 네트워크, 여유 용량, 관측과 운영 노력 |
 
-## Amazon MSK vs Strimzi 셀프 매니지드 비교
+Express는 Serverless가 아닌 **Provisioned 브로커 유형**입니다. 현재 공식 문서는
+3개 AZ를 요구하며 KStreams의 불완전한 지원, KIP-932 미지원 등의 제약을 명시합니다.
+모든 Kafka 기능이 동일하게 동작한다고 가정하지 말고 브로커 유형·버전 조합을 확인합니다.
 
-두 방식 모두 "EKS 워크로드가 Kafka를 사용한다"는 목표는 같지만, 브로커가 실제로 어디서 실행되고 누가 그것을 운영하느냐가 다릅니다. MSK는 브로커를 AWS가 관리하는 별도의 인프라에서 실행하고, Strimzi는 브로커를 EKS 클러스터 내부의 Pod로 실행합니다.
+Serverless는 IAM 인증·인가를 요구하며 Kafka ACL을 지원하지 않습니다. 목록에
+명시된 토픽 설정만 변경할 수 있습니다. 예를 들어 보존 설정은 바꿀 수 있지만
+`cleanup.policy`는 토픽 생성 때만 선택합니다. 기본 보존에는 7일뿐 아니라
+**파티션당 250 GiB 크기 제한**도 있어 시간보다 크기 제한에 먼저 도달할 수 있습니다.
+용량 자동 확장이 임의의 파티션 수나 급증 트래픽을 무제한 처리한다는 뜻은 아닙니다.
 
-| 항목 | Amazon MSK (Provisioned) | Amazon MSK Serverless | Strimzi (EKS 셀프 매니지드) |
-| --- | --- | --- | --- |
-| **운영 부담** | AWS가 브로커 패치, 하드웨어 교체, 스토리지 확장을 관리 | AWS가 브로커 사이징 자체를 없앰 (완전 자동 확장) | Operator가 롤링 업그레이드/재조정을 수행하지만, 업그레이드 시점·용량 계획·장애 대응은 사용자 책임 |
-| **비용 모델** | 브로커 시간당 요금 + 스토리지(GB-월) + 데이터 전송 | 처리량 기반 과금(파티션당, GB 인입/유출당) | EC2/EBS 직접 비용. 대규모에서는 보통 더 저렴하지만 운영 인력 비용이 별도로 필요 |
-| **오토스케일링** | 스토리지 자동 확장은 지원, 브로커 스케일은 수동/API 호출 | 파티션 단위로 완전 자동 스케일, 브로커 개념이 사용자에게 노출되지 않음 | Cruise Control 등으로 반자동화 가능하나 기본적으로 사용자가 트리거 |
-| **커스텀 설정** | 브로커 설정(`server.properties`) 커스터마이징 가능 | 커스텀 브로커 설정 불가, 일부 API/기능 제한 (예: 특정 ACL, 커넥터 유형) | 리스너, 인터셉터, KRaft 컨트롤러 튜닝 등 거의 모든 설정을 자유롭게 변경 가능 |
-| **버전 지원** | AWS가 큐레이션한 Kafka 버전 목록만 지원, 업스트림보다 지연될 수 있음 | 특정 고정 버전 사용, 버전 선택권 없음 | Strimzi가 지원하는 범위 내에서 최신 Kafka 버전을 원하는 시점에 채택 가능 |
-| **멀티테넌시** | 클러스터/리소스 정책으로 격리, 세밀한 커스터마이징은 제한적 | 서버리스 특성상 테넌트 격리는 AWS 내부 구현에 위임 | 네임스페이스, `KafkaUser` ACL, 커스텀 리스너로 세밀한 테넌시 설계 가능 |
-| **관측/GitOps 통합** | CloudWatch/Prometheus 익스포터 별도 연동, AWS 콘솔이 주 관리 화면 | 동일 | 나머지 플랫폼(Argo CD, Prometheus Operator 등)과 동일한 GitOps/관측 파이프라인에 자연스럽게 편입 |
+각 서비스는 CloudWatch 지표를 제공하지만 Serverless의 관측 기능은 Provisioned의
+브로커 단위 Prometheus/open monitoring과 같지 않습니다. Serverless의 테넌트별
+IAM 토픽·그룹 정책도 사용자 책임입니다. Strimzi에서도 Kubernetes 네임스페이스만으로
+Kafka 토픽 접근이 인가되는 것은 아닙니다.
 
-### MSK를 선택하는 이유
+MSK도 API와 IaC로 관리할 수 있으므로 GitOps는 Strimzi만의 기능이 아닙니다.
+Strimzi 이식성도 스토리지·네트워크·인증과 Operator 버전에 영향을 받습니다.
+총비용과 복구 요구를 측정해 비교하며 “대규모에서는 항상 자체 운영이 저렴함”,
+“급증 트래픽에는 Serverless가 가장 저렴함”으로 단정하지 않습니다.
 
-* 브로커 운영 지식이 있는 인력이 부족하거나, Kafka 운영을 핵심 역량으로 두고 싶지 않은 조직
-* AWS 콘솔/IAM/CloudWatch 등 기존 AWS 네이티브 운영 체계에 이미 깊게 투자된 환경
-* MSK Serverless처럼 트래픽 예측이 어려운 워크로드에서 브로커 용량 계획 자체를 없애고 싶은 경우
+## EKS에서의 네트워크 연결
 
-### EKS에서 Strimzi로 Kafka를 직접 운영하는 이유 (MSK가 있어도)
+클라이언트는 bootstrap 주소뿐 아니라 **metadata에 광고된 모든 브로커 주소**에
+도달해야 합니다. DNS, 라우트, 보안 그룹, NACL, 실제 Pod·노드 소스와 egress를
+확인합니다. 같은 VPC라는 사실만으로 연결이 완성되지는 않습니다.
 
-* 나머지 플랫폼(다른 워크로드, GitOps, Prometheus/Grafana 관측 스택)과 **동일한 도구·동일한 배포 파이프라인**으로 Kafka를 관리하고 싶은 경우 — 별도의 AWS 콘솔/IAM 표면을 늘리지 않음
-* 특정 클라우드에 종속되지 않는 **이식성**이 필요한 경우 (온프레미스, 멀티클라우드로 이전 가능성)
-* 초대규모 트래픽에서 EC2/EBS를 직접 관리하는 것이 브로커 시간당 과금보다 비용 효율적인 경우
-* MSK가 아직 지원하지 않는 최신 Kafka 기능(신규 KIP, 커스텀 인터셉터, 특정 KRaft 튜닝 옵션)이 필요한 경우
+다른 VPC 연결에는 피어링·Transit Gateway와 지원되는 MSK **multi-VPC private
+connectivity**(PrivateLink) 등이 있습니다. 관리형 multi-VPC 기능은 같은 리전에서
+사용하며 클러스터·인증·AZ/서브넷 조건이 있습니다. 공개 엔드포인트는 지원되는
+클러스터에서 명시적으로 선택하는 기능이지 VPC 간 연결의 필수 조건이 아닙니다.
 
-## EKS에서 MSK에 연결하기
+| 직접 연결 엔드포인트 예시 | 포트 |
+| --- | --- |
+| 프라이빗 IPv4 TLS | 9094 |
+| 프라이빗 IPv4 SASL/SCRAM | 9096 |
+| 프라이빗 IPv4 IAM | 9098 |
+| 지원·활성화된 공개 TLS / SCRAM / IAM | 9194 / 9196 / 9198 |
 
-EKS의 워크로드가 MSK 브로커에 도달하려면 네트워크 경로와 인증 두 가지를 모두 갖춰야 합니다.
-
-### 네트워크 경로
-
-* **같은 VPC**: EKS 클러스터와 MSK 클러스터가 동일 VPC에 있다면 서브넷 라우팅만으로 연결 가능합니다. 가장 단순하고 지연 시간도 가장 낮습니다.
-* **다른 VPC**: VPC 피어링 또는 AWS Transit Gateway로 두 VPC를 연결해야 합니다. MSK는 퍼블릭 액세스를 지원하지만(공용 브로커 엔드포인트), 프로덕션에서는 보통 프라이빗 연결을 권장합니다.
-* **보안 그룹**: MSK 클러스터의 보안 그룹은 EKS 워커 노드(또는 파드가 자체 보안 그룹을 갖는 경우 파드) 보안 그룹으로부터 브로커 포트(플레인텍스트 9092, TLS 9094, SASL/SCRAM 9096, IAM 9098)에 대한 인바운드를 명시적으로 허용해야 합니다. 기본적으로는 아무 트래픽도 허용되지 않습니다.
+IPv6와 관리형 multi-VPC 엔드포인트는 다른 포트를 사용할 수 있습니다. 실제
+bootstrap 응답에서 네트워크·인증 방식에 맞는 필드를 선택하며 모든 주소의 포트를
+9098로 바꾸지 않습니다.
 
 ```bash
-# MSK 클러스터 보안 그룹에 EKS 노드 보안 그룹으로부터의 IAM 인증 포트 허용
+: "${DOCS_AWS_REGION:?Set the MSK region}"
+: "${DOCS_MSK_CLUSTER_ARN:?Set the exact existing cluster ARN}"
+aws kafka get-bootstrap-brokers \
+  --region "$DOCS_AWS_REGION" \
+  --cluster-arn "$DOCS_MSK_CLUSTER_ARN"
+```
+
+같은 VPC에서 프라이빗 IPv4 IAM 주소로 직접 연결한다면 네트워크 관리자가 기존
+규칙을 확인한 뒤 다음과 같이 필요한 소스만 허용할 수 있습니다.
+
+```bash
+: "${DOCS_AWS_REGION:?Set the MSK region}"
+: "${DOCS_MSK_SG_ID:?Set the existing MSK security group ID}"
+: "${DOCS_EKS_SOURCE_SG_ID:?Set the actual EKS source security group ID}"
+# Example: same-VPC, direct private IPv4 IAM endpoint on port 9098.
 aws ec2 authorize-security-group-ingress \
-  --group-id sg-0abcd1234msk \
+  --region "$DOCS_AWS_REGION" \
+  --group-id "$DOCS_MSK_SG_ID" \
   --protocol tcp --port 9098 \
-  --source-group sg-0efgh5678eksnode
+  --source-group "$DOCS_EKS_SOURCE_SG_ID"
 ```
 
-### 인증 방식 비교
+이 명령은 보안 그룹을 **변경**합니다. 실제 경로의 노드·Pod 소스 SG를 사용하며
+다른 VPC의 SG 참조에는 별도 지원 조건이 있습니다. 기존 SG에는 자기 참조 규칙 등
+이미 설정된 규칙이 있을 수 있습니다. TCP/TLS 연결 전에 IAM 인증이 성공할 수는 없습니다.
 
-| 방식 | 동작 방식 | EKS 통합 포인트 |
-| --- | --- | --- |
-| **IAM 인증 (`AWS_MSK_IAM`)** | 클라이언트가 `AWS_MSK_IAM`이라는 전용 SASL 메커니즘을 통해 SigV4 서명된 요청으로 인증, IAM 정책으로 토픽별 권한 제어 | IRSA로 파드에 IAM 역할 부여, 별도 자격 증명 배포 불필요 |
-| **SASL/SCRAM** | 사용자명/패스워드 기반, 자격 증명은 AWS Secrets Manager에 저장 | External Secrets Operator로 Secrets Manager의 SCRAM 자격 증명을 K8s Secret으로 동기화 |
-| **상호 TLS(mTLS)** | 클라이언트 인증서를 AWS Private CA로 발급, 인증서 기반 신원 확인 | cert-manager 또는 External Secrets Operator로 인증서/키를 파드에 마운트 |
+## IAM 인증과 워크로드 ID
 
-IAM 인증은 EKS와 조합했을 때 가장 자연스럽습니다. IRSA(IAM Roles for Service Accounts)로 파드에 세분화된 IAM 역할을 부여하면, 별도의 비밀번호나 인증서를 배포/로테이션할 필요 없이 Kafka 토픽 단위의 접근 제어를 IAM 정책만으로 표현할 수 있습니다.
+| 클라이언트 | 지원되는 IAM 메커니즘 |
+| --- | --- |
+| Java | AWS Java helper로 `AWS_MSK_IAM` 또는 `OAUTHBEARER` |
+| Python, JavaScript, Go, .NET | 해당 언어의 AWS 공식 signer/helper와 `OAUTHBEARER` |
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kafka-cluster:Connect",
-        "kafka-cluster:AlterCluster",
-        "kafka-cluster:DescribeCluster"
-      ],
-      "Resource": "arn:aws:kafka:ap-northeast-2:111122223333:cluster/my-msk-cluster/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kafka-cluster:*Topic*",
-        "kafka-cluster:WriteData",
-        "kafka-cluster:ReadData"
-      ],
-      "Resource": "arn:aws:kafka:ap-northeast-2:111122223333:topic/my-msk-cluster/*/orders"
+`AWS_MSK_IAM`이 모든 언어의 Kafka 클라이언트에 기본 제공되는 것은 아닙니다.
+비 Java helper도 단순한 커뮤니티 대체재가 아닌 AWS 공식 프로젝트입니다.
+Provisioned에서는 지원 조건에 따라 SCRAM·상호 TLS도 사용할 수 있으며 비밀·인증서와
+Kafka ACL을 구성합니다. Serverless에서는 IAM을 대신하는 선택지가 아닙니다.
+
+Kafka 연결 전에 워크로드 역할 연결·신뢰 관계와 임시 자격증명 갱신을 준비합니다.
+상속받은 노드 역할이 의도한 Pod 역할이라고 가정하지 않습니다. 프라이빗 환경에서는
+선택한 provider가 필요한 인증 서비스에도 접근해야 합니다. 자격증명 갱신 후
+재인증을 시험합니다. Java helper는 Pod Identity 등 일부 provider의 session name
+변경 문제를 설명하므로 해당 문제가 발생하면 문서화된 우회 설정을 적용합니다.
+
+### 생산자와 소비자 정책 분리
+
+다음 스크립트는 실제 클러스터 ARN에서 정확한 리소스 ARN을 만듭니다.
+`policies.py`로 저장하면 정책 파일만 생성하며 역할에 연결하지 않습니다.
+기존의 과도한 `AlterCluster`, `*Topic*` 관리 권한을 빼고 컨슈머 그룹 권한을
+넣었습니다. 클러스터 범위 idempotent write와 토픽 범위 쓰기도 구분합니다.
+
+```python
+import json
+import re
+import sys
+from pathlib import Path
+
+def policies(cluster_arn, topic="orders", group="orders-consumer"):
+    match = re.fullmatch(
+        r"arn:(aws(?:-[a-z-]+)?):kafka:([a-z0-9-]+):(\d{12}):cluster/([A-Za-z0-9_-]+)/([A-Za-z0-9-]+)",
+        cluster_arn,
+    )
+    if not match:
+        raise ValueError("Supply an exact MSK cluster ARN, including its cluster UUID.")
+    for name in [topic, group]:
+        if not re.fullmatch(r"[A-Za-z0-9._-]{1,249}", name) or name in [".", ".."]:
+            raise ValueError("Use an explicit topic/group name without wildcards.")
+    partition, region, account, cluster_name, uuid = match.groups()
+    prefix = f"arn:{partition}:kafka:{region}:{account}:"
+    identity = f"{cluster_name}/{uuid}"
+    topic_arn = prefix + f"topic/{identity}/{topic}"
+    group_arn = prefix + f"group/{identity}/{group}"
+    def statement(actions, resource):
+        return {"Effect": "Allow", "Action": ["kafka-cluster:" + a for a in actions], "Resource": resource}
+    return {
+        "producer": {"Version": "2012-10-17", "Statement": [
+            statement(["Connect", "WriteDataIdempotently"], cluster_arn),
+            statement(["DescribeTopic", "WriteData"], topic_arn),
+        ]},
+        "consumer": {"Version": "2012-10-17", "Statement": [
+            statement(["Connect"], cluster_arn),
+            statement(["DescribeTopic", "ReadData"], topic_arn),
+            statement(["DescribeGroup", "AlterGroup"], group_arn),
+        ]},
     }
-  ]
-}
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python3 policies.py EXACT_MSK_CLUSTER_ARN")
+    for name, policy in policies(sys.argv[1]).items():
+        Path(f"msk-{name}-policy.json").write_text(json.dumps(policy, indent=2) + "\n")
 ```
 
-클라이언트 측에서는 `aws-msk-iam-auth` 라이브러리를 클래스패스(또는 언어별 동등한 패키지)에 추가하고, Kafka 클라이언트 설정에 다음을 지정합니다.
+```bash
+: "${DOCS_MSK_CLUSTER_ARN:?Set the exact existing MSK cluster ARN}"
+python3 policies.py "$DOCS_MSK_CLUSTER_ARN"
+# Review msk-producer-policy.json and msk-consumer-policy.json,
+# then attach each to the appropriate workload role through your IAM workflow.
+```
+
+기존 토픽은 `orders`이며 소비자는 `orders-consumer` 그룹을 사용해야 합니다.
+토픽 생성은 별도 관리자 ID에 맡깁니다. 생산자 정책은 공식 IAM 작업 집합에 따른
+**비트랜잭션 idempotent 쓰기**용입니다. 트랜잭션 생산자는 범위를 제한한
+transactional-ID 작업과 호환되는 브로커 지원이 추가로 필요합니다. MSK Kafka 3.8
+이상은 IAM으로 `WriteTxnMarkers`를 지원합니다. 권한 오류를 숨기기 위해 모든
+transactional ID를 허용하거나 idempotence를 끄지 않습니다.
+
+실제 접근은 다른 정책, 명시적 거부, SCP, permissions boundary와 교차 계정 리소스
+정책에도 영향을 받습니다. 이 파일만으로 전체 권한 경계가 완성되지는 않습니다.
+`kafka:GetBootstrapBrokers` 등의 제어 영역 작업은 `kafka-cluster:*` 데이터 영역
+작업과 다르며 배포·운영 ID에 따로 부여할 수 있습니다.
+
+### Java 클라이언트 설정
+
+`software.amazon.msk:aws-msk-iam-auth:2.3.8`과 의존성을 추가하거나 검증한 릴리스의
+all-in-one JAR를 사용합니다. 다음을 `iam.properties`로 저장합니다.
 
 ```properties
 security.protocol=SASL_SSL
 sasl.mechanism=AWS_MSK_IAM
 sasl.jaas.config=software.amazon.msk.auth.iam.IAMLoginModule required;
 sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMClientCallbackHandler
+ssl.endpoint.identification.algorithm=https
 ```
 
-## MSK Connect
+Java에서 OAuth 방식을 선택하면 두 설정을 섞지 말고 다음 대안을 사용합니다.
 
-MSK Connect는 AWS의 완전관리형 Kafka Connect 서비스입니다. Kafka Connect 워커의 프로비저닝, 스케일링, 패치를 AWS가 대신 처리하며, 커넥터 플러그인(JAR 묶음)을 S3에 업로드해 등록하는 방식으로 동작합니다.
+```properties
+security.protocol=SASL_SSL
+sasl.mechanism=OAUTHBEARER
+sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
+sasl.login.callback.handler.class=software.amazon.msk.auth.iam.IAMOAuthBearerLoginCallbackHandler
+sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMOAuthBearerLoginCallbackHandler
+ssl.endpoint.identification.algorithm=https
+```
 
-중요한 점은 MSK Connect가 **MSK 클러스터에만 연결되는 것이 아니라는 것**입니다. 부트스트랩 브로커에 네트워크로 도달할 수 있는 한, MSK Connect는 EKS 위에서 Strimzi로 셀프 매니지드 중인 Kafka 클러스터에도 커넥터를 연결할 수 있습니다.
+애플리케이션에는 선택한 `bootstrap.servers`, 키·값 직렬화기/역직렬화기와
+컨슈머 `group.id`도 필요합니다. JVM이 브로커 TLS 인증서 체인을 신뢰해야 하며
+호스트 이름 검증을 유지합니다. 위 속성은 인증 방식을 구성하며 없는 워크로드
+자격증명이나 IAM 권한을 만들어 주지는 않습니다.
+
+## MSK Connect: 배포 전 호환성 확인
+
+MSK Connect는 관리형 Kafka Connect 워커를 실행하며 독립적으로 운영하는 Kafka도
+대상으로 삼을 수 있습니다. 하지만 **네트워크 접근만으로 충분하지 않습니다**.
+현재 `KafkaClusterClientAuthentication` API는 `NONE`과 `IAM`을 허용합니다.
+브로커 신뢰·인증과 지원되는 워커 설정이 맞아야 합니다. Part 2의 TLS/SCRAM
+Strimzi 리스너는 이름이 조회된다는 이유만으로 바로 연결 가능한 대상이 아닙니다.
+연동을 강제하려고 기존 인증을 제거하지 않습니다.
+
+문서화된 Connect 런타임은 **2.7.1 / Java 11**, **3.7.x / Java 17**입니다.
+이는 Kafka 브로커 버전이나 Part 5의 Kafka 4.3.1 Connect 런타임과 다릅니다.
+플러그인 bytecode·의존성·Connect API와 공급자 지원 표를 확인합니다. Java 17에서
+클래스가 로드되어도 선택한 관리형 런타임의 연동 테스트가 필요합니다.
+
+Part 5 아티팩트에는 Java 17을 넘는 기본 클래스가 없지만 **MSK Connect 호환 인증은
+아닙니다**. 다음은 이러한 검토를 마친 Aiven 3.4.3 ZIP을 등록하는 예제입니다.
+대상 리전의 기존 비공개 S3 버킷과 업로드·플러그인 등록 권한을 전제로 합니다.
 
 ```bash
-# 커스텀 커넥터 플러그인을 S3에 업로드 후 MSK Connect 커스텀 플러그인으로 등록
+: "${DOCS_AWS_REGION:?Set the target region}"
+: "${DOCS_PLUGIN_BUCKET:?Set an existing private S3 bucket in that region}"
+DOCS_PLUGIN_ZIP="s3-sink-connector-for-apache-kafka-3.4.3.zip"
+DOCS_PLUGIN_KEY="plugins/aiven-s3/3.4.3/${DOCS_PLUGIN_ZIP}"
+# Download the reviewed release artifact and verify its published digest first.
+aws s3 cp "$DOCS_PLUGIN_ZIP" "s3://${DOCS_PLUGIN_BUCKET}/${DOCS_PLUGIN_KEY}" \
+  --region "$DOCS_AWS_REGION"
+export DOCS_PLUGIN_BUCKET DOCS_PLUGIN_KEY
+python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+Path("custom-plugin.json").write_text(json.dumps({
+    "name": "aiven-s3-3-4-3-reviewed",
+    "contentType": "ZIP",
+    "location": {"s3Location": {
+        "bucketArn": "arn:aws:s3:::" + os.environ["DOCS_PLUGIN_BUCKET"],
+        "fileKey": os.environ["DOCS_PLUGIN_KEY"]
+    }}
+}, indent=2) + "\n")
+PY
 aws kafkaconnect create-custom-plugin \
-  --name debezium-postgres-plugin \
-  --content-type ZIP \
-  --location s3Location='{bucketArn=arn:aws:s3:::my-connect-plugins,fileKey=debezium-postgres-2.7.zip}'
+  --region "$DOCS_AWS_REGION" \
+  --cli-input-json file://custom-plugin.json
 ```
 
-| 항목 | MSK Connect | Strimzi `KafkaConnect` (EKS 자체 운영) |
+이 명령은 **플러그인**을 업로드·등록하며 커넥터를 실행하지 않습니다. 커넥터 생성에는
+서비스 실행 역할, Kafka·네트워크 설정, 소스·목적지 권한, 용량과 converter 설정이
+필요합니다. MSK Connect의 기본 키·값 converter는 StringConverter이므로 앞의 CDC
+예제에 필요한 JSON schema envelope 설정도 명시해야 합니다.
+
+MSK Connect는 플러그인을 만들 때 S3 객체를 복사합니다. 이후 객체를 덮어써도
+플러그인이 갱신되지 않으며 custom plugin은 제자리 수정이 불가능합니다. 버전을
+구분한 새 플러그인 리소스와 검증한 커넥터 전환 절차를 사용하고 활성 파이프라인을
+교체하기 전에 오프셋을 보존·검증합니다. 자동 확장에도 설정된 한계가 있으며
+단일 태스크 소스를 자동으로 병렬화하지 않습니다.
+
+## Kafka와 Kinesis Data Streams
+
+Kinesis Data Streams는 자체 API를 사용합니다. `bootstrap.servers`를 Kinesis
+주소로 바꿔도 Kafka 클라이언트가 변환되지 않습니다. 커넥터나 명시적인 스트림 처리
+계층이 레코드·키·재시도·체크포인트를 연결해야 합니다.
+
+| 항목 | Kafka / MSK / Strimzi | Kinesis Data Streams |
 | --- | --- | --- |
-| **운영 부담** | 워커 인프라를 AWS가 관리, 사용자는 커넥터 설정만 관리 | 워커 Pod의 스케일링, 모니터링, 리소스 튜닝을 직접 관리 |
-| **유연성** | AWS가 지원하는 커넥터 프레임워크 범위 내로 제한 | 임의의 커넥터, 커스텀 SMT(Single Message Transform), 사이드카 추가 등 자유도 높음 |
-| **이식성** | AWS 전용 서비스, 다른 환경으로 이전 어려움 | 다른 Kubernetes 클러스터로 그대로 이식 가능 |
-| **관측** | CloudWatch Logs/Metrics로 커넥터 상태 확인 | 나머지 EKS 워크로드와 동일한 Prometheus/Grafana 파이프라인으로 통합 |
+| 병렬 처리 | 토픽 파티션; 수를 늘려도 옛 레코드를 재분배하지 않으며 기존 토픽에서 수를 줄이지 못함 | 샤드; Provisioned는 직접 용량 계획, on-demand는 서비스가 용량 관리 |
+| 용량 선택 | Standard·Express·Serverless·자체 운영에 따라 다름 | Provisioned, On-demand Standard, On-demand Advantage |
+| 보존 | 토픽·서비스 설정, 저장소와 cleanup policy; 시간·크기 제한 모두 확인 | 기본 24시간, 최대 365일까지 설정 |
+| AWS 연동 | MSK의 네이티브 Lambda·Firehose 연동과 커넥터 등 | Lambda·Firehose·Managed Service for Apache Flink 네이티브 연동 |
 
-## Kinesis Data Streams와의 비교/연동
+“Kafka는 Connect를 통해서만 AWS와 연동한다”는 설명은 틀립니다. 기존
+Kinesis Data Analytics 대신 현재 명칭인 **Amazon Managed Service for Apache Flink**를
+사용합니다. Kinesis sink는 Kafka 레코드를 Kinesis에 쓰고 source는 반대로 이동합니다.
+유지보수되고 선택한 런타임과 호환되는 플러그인을 고른 뒤 순서, partition key,
+레코드 크기 제한과 중복 처리를 검증합니다. 프로토콜 차이가 특정 브리지 제품
+하나만 사용해야 한다는 뜻은 아닙니다.
 
-Kinesis Data Streams와 Kafka는 자주 같이 언급되지만 **호환 가능한 프로토콜이 아닙니다**. Kinesis는 AWS 네이티브 스트리밍 서비스로 자체 API/SDK를 사용하며, Kafka의 프로듀서/컨슈머 프로토콜을 이해하지 못합니다. MSK가 "Kafka 호환"이라는 표현을 쓴다고 해서 이것이 Kinesis와 상호 운용된다는 의미는 아닙니다 — MSK는 Apache Kafka 프로토콜을 구현한 서비스이고, Kinesis는 완전히 별개의 서비스입니다.
+## 선택 기준
 
-| 항목 | Apache Kafka (MSK/Strimzi) | Kinesis Data Streams |
-| --- | --- | --- |
-| **프로토콜** | 오픈 소스 Kafka 프로토콜, 다양한 클라이언트/생태계와 호환 | AWS 전용 API, Kafka 클라이언트와 호환 불가 |
-| **확장 단위** | 파티션 (토픽 생성 시 정의, 재파티셔닝 가능) | 샤드 (읽기/쓰기 용량 단위, 분할/병합으로 조정) |
-| **운영 복잡도** | 브로커/컨트롤러 운영 필요 (MSK 사용 시 AWS가 대신 관리) | 완전관리형, 서버 개념 자체가 없음 |
-| **AWS 서비스 통합** | 커넥터를 통한 간접 통합 (Kafka Connect, MSK Connect) | Lambda 트리거, Firehose, Kinesis Data Analytics와 네이티브로 직결 |
-| **생태계** | Kafka Streams, ksqlDB, Flink, Debezium 등 광범위한 오픈소스 생태계 | AWS 서비스 중심의 제한적이지만 통합이 간단한 생태계 |
-| **보존 기간** | 사실상 무제한(스토리지 비용만 지불, 기본은 7일) | 기본 24시간, 최대 365일까지 연장 가능(과금 증가) |
+필요한 Kafka API, 데이터량·편중, 파티션·보존 한계, 지연, 복구 목표, 규정, 운영 역량과
+총비용부터 비교합니다. 현재 리전·브로커 버전 지원을 확인합니다. MSK와 Strimzi 모두
+IaC/GitOps로 관리할 수 있습니다. 나중에 서비스를 바꾸려면 데이터·스키마·인증·
+컨슈머 오프셋 이전이 필요하며 자동으로 간단하거나 흔한 다음 단계라고 단정하지 않습니다.
 
-### 두 시스템을 연동하는 실질적인 방법
+## 참고 자료와 검증 범위
 
-Kafka와 Kinesis를 "직접 연동"할 필요가 있다면(마이그레이션, 레거시 Kinesis 컨슈머와의 브리징 등), 실제 패턴은 **Kafka Connect(또는 MSK Connect)의 Kinesis 커넥터**를 사용하는 것입니다.
+정책 생성, Java 클래스·JAAS 설정, 플러그인 bytecode와 CLI 요청 형식은 로컬에서
+검사할 수 있습니다. 이 검사는 실제 IAM 허용, 워크로드 자격증명 갱신, 브로커 접속,
+관리형 커넥터 배포나 데이터 전달의 성공을 의미하지 않습니다.
 
-* **Kinesis Sink 커넥터**: Kafka 토픽의 메시지를 읽어 Kinesis 스트림에 기록 — Kafka 기반 파이프라인의 출력을 Kinesis 소비 생태계(Lambda, Firehose)로 넘길 때 사용
-* **Kinesis Source 커넥터**: Kinesis 스트림의 레코드를 읽어 Kafka 토픽에 기록 — 기존 Kinesis 프로듀서를 유지하면서 점진적으로 Kafka 기반 소비자로 전환할 때 사용
-
-이 커넥터들은 MSK Connect에 배포하거나, Strimzi `KafkaConnect`/`KafkaConnector` CR로 EKS 위에서 직접 운영할 수 있습니다 — 앞서 다룬 MSK Connect vs Strimzi 트레이드오프가 그대로 적용됩니다.
-
-## 의사결정 가이드
-
-아래 체크리스트로 자체 관리 Strimzi, MSK Provisioned, MSK Serverless, Kinesis 중 무엇을 선택할지 좁혀갑니다.
-
-* **팀에 Kafka 운영 전문성이 있고, 세밀한 튜닝/커스텀 설정이 필요한가?** → 예: Strimzi (EKS 셀프 매니지드) / 아니오: MSK로 이동
-* **멀티 클라우드/온프레미스 이식성이 핵심 요구사항인가?** → 예: Strimzi / 아니오: MSK 계열 검토 가능
-* **트래픽이 예측 불가능하거나 스파이크가 크고, 브로커 용량 계획 자체를 없애고 싶은가?** → 예: MSK Serverless / 아니오: MSK Provisioned 또는 Strimzi
-* **이미 Lambda, Firehose 등 AWS 네이티브 이벤트 처리에 깊게 투자되어 있고 Kafka 생태계(Kafka Streams, ksqlDB 등)가 필요 없는가?** → 예: Kinesis Data Streams 검토 / 아니오: Kafka(MSK/Strimzi) 유지
-* **AWS 콘솔/IAM 운영 표면을 늘리지 않고 나머지 EKS 플랫폼과 동일한 GitOps로 관리하고 싶은가?** → 예: Strimzi / 아니오: MSK
-
-정답은 대부분 "혼합"입니다 — 예를 들어 신규 서비스는 MSK Serverless로 빠르게 시작하고, 커스텀 튜닝이 필요해지는 시점에 Strimzi로 이전하는 것도 흔한 경로입니다.
+- [MSK Express brokers](https://docs.aws.amazon.com/msk/latest/developerguide/msk-broker-types-express.html)
+- [MSK Serverless](https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html)
+- [Serverless configuration](https://docs.aws.amazon.com/msk/latest/developerguide/serverless-config.html)
+- [MSK pricing dimensions](https://aws.amazon.com/msk/pricing/)
+- [MSK multi-VPC private connectivity](https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html)
+- [MSK port information](https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html)
+- [IAM client mechanisms and official language helpers](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
+- [MSK IAM action/resource dependencies](https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html)
+- [IAM use cases](https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html)
+- [aws-msk-iam-auth 2.3.8](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8)
+- [MSK Connect](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html)
+- [MSK Connect plugin packaging and Java versions](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html)
+- [MSK Connect client authentication API](https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html)
+- [Lambda with MSK](https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html)
+- [Firehose with MSK](https://docs.aws.amazon.com/msk/latest/developerguide/integrations-kinesis-data-firehose.html)
+- [Kinesis capacity modes](https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html)
+- [Kinesis retention](https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html)
 
 ## 다음 단계
 
-MSK든 Strimzi든 클러스터가 안정적으로 동작하는지 확인하려면 브로커 메트릭과 컨슈머 랙을 지속적으로 관측해야 합니다. 이는 [Part 7: 모니터링](./07-monitoring.md)에서 다룹니다.
+[Part 7: 모니터링](./07-monitoring.md)
 
 [메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)를 풀어보세요.
+[주제 퀴즈](../../quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)

@@ -1,8 +1,8 @@
 # EKS 네트워킹 퀴즈 - Part 2
 
-이 퀴즈는 Amazon EKS의 고급 네트워킹 개념, AWS Load Balancer Controller, Ingress 리소스, 서비스 메시 및 네트워크 보안에 대한 이해를 테스트합니다.
+> **마지막 업데이트**: 2026년 9월 11일
 
-## 객관식 문제
+답안은 [Part 2](../../eks/03-eks-networking-part2.md)의 컨트롤러 소유권과 전제 조건(LBC 3.5.0, Gateway API 1.6.0)을 따릅니다. 명령은 실행 시 리소스를 변경하는 예제이며 로컬 스키마·모의 검증은 EKS 배포 검증이 아닙니다. 계정·리전·리소스 자리표시자를 바꾸고 의도한 kubeconfig와 기존 IAM/Helm/IaC 소유자를 사용하세요.
 
 ### 1. AWS Load Balancer Controller가 Kubernetes Ingress 리소스를 위해 기본적으로 프로비저닝하는 AWS 로드 밸런서 유형은 무엇인가요?
 
@@ -13,11 +13,13 @@ D. Gateway Load Balancer (GWLB)
 
 <details>
 
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: C. Application Load Balancer (ALB)**
 
 **설명:** AWS Load Balancer Controller는 Kubernetes Ingress 리소스를 위해 기본적으로 Application Load Balancer(ALB)를 프로비저닝합니다. ALB는 HTTP/HTTPS 트래픽을 처리하는 Layer 7 로드 밸런서로, 경로 기반 라우팅, 호스트 기반 라우팅, TLS 종료 등의 기능을 제공하여 Ingress 리소스의 요구 사항을 충족합니다.
+
+LBC가 해당 Ingress 클래스를 선택해야 하며 다른 컨트롤러는 Ingress를 다르게 구현할 수 있습니다. 아래 public scheme은 의도한 퍼블릭 서브넷·클라이언트 SG 접근과 준비된 백엔드 Service가 필요합니다.
 
 **주요 특징:**
 
@@ -35,10 +37,10 @@ kind: Ingress
 metadata:
   name: example-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - host: example.com
     http:
@@ -61,7 +63,7 @@ spec:
 
 **주요 어노테이션:**
 
-* `kubernetes.io/ingress.class: alb`: ALB Ingress Controller를 사용하도록 지정
+* `spec.ingressClassName: alb`: 컨트롤러가 `ingress.k8s.aws/alb`인 IngressClass 선택
 * `alb.ingress.kubernetes.io/scheme: internet-facing`: 인터넷 연결 가능한 ALB 생성
 * `alb.ingress.kubernetes.io/target-type: ip`: 파드 IP를 대상으로 사용 (instance 대신)
 * `alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'`: 리스너 포트 구성
@@ -75,34 +77,31 @@ spec:
 
 </details>
 
-### 2. Amazon EKS에서 AWS Load Balancer Controller를 사용하여 내부 Application Load Balancer를 생성하기 위해 Ingress 리소스에 추가해야 하는 어노테이션은 무엇인가요?
+### 2. 내부 ALB를 선택하는 Ingress 어노테이션은 무엇인가요?
 
-A. `service.beta.kubernetes.io/aws-load-balancer-internal: "true"`\
-B. `alb.ingress.kubernetes.io/scheme: internal`\
-C. `kubernetes.io/ingress.class: internal-alb`\
-D. `aws-load-balancer-type: internal`
+- A. Service annotation `aws-load-balancer-internal`
+- B. Ingress annotation `alb.ingress.kubernetes.io/scheme: internal`
+- C. Any class named `internal-alb`
+- D. `aws-load-balancer-type: internal`
 
 <details>
-
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. `alb.ingress.kubernetes.io/scheme: internal`**
 
-**설명:** Amazon EKS에서 AWS Load Balancer Controller를 사용하여 내부 Application Load Balancer를 생성하기 위해서는 Ingress 리소스에 `alb.ingress.kubernetes.io/scheme: internal` 어노테이션을 추가해야 합니다. 이 어노테이션은 ALB가 VPC 내부에서만 접근 가능하도록 설정합니다.
-
-**내부 ALB 구성 예시:**
-
+내부 ALB는 프라이빗 주소를 사용합니다. 경로·DNS·보안 제어가 허용하면 연결된 VPC나 온프레미스 클라이언트도 접근할 수 있으며 Pod나 해당 VPC에서만 접근하도록 정의된 것은 아닙니다.
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: internal-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
-  - host: internal.example.com
+  - host: app.example.com
     http:
       paths:
       - path: /
@@ -113,85 +112,36 @@ spec:
             port:
               number: 80
 ```
-
-**주요 고려 사항:**
-
-1.  **서브넷 선택**: 내부 ALB는 프라이빗 서브넷에 생성됩니다. 서브넷을 명시적으로 지정할 수 있습니다:
-
-    ```yaml
-    alb.ingress.kubernetes.io/subnets: subnet-0123456789abcdef0,subnet-0123456789abcdef1
-    ```
-2.  **보안 그룹**: 내부 ALB에 특정 보안 그룹을 적용할 수 있습니다:
-
-    ```yaml
-    alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0
-    ```
-3.  **인바운드 CIDR 제한**: 특정 CIDR 블록에서만 접근을 허용할 수 있습니다:
-
-    ```yaml
-    alb.ingress.kubernetes.io/inbound-cidrs: 10.0.0.0/16,192.168.0.0/16
-    ```
-4.  **내부 DNS**: 내부 ALB는 VPC 내에서 Route 53 프라이빗 호스팅 영역과 통합할 수 있습니다:
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: routing.http.drop_invalid_header_fields.enabled=true,access_logs.s3.enabled=true
-    ```
-
-**내부 ALB의 사용 사례:**
-
-* 마이크로서비스 간 내부 통신
-* 백엔드 API 서비스
-* 관리 인터페이스
-* 개발 및 테스트 환경
-* 규제 요구 사항이 있는 워크로드
-
-**AWS Load Balancer Controller 설치 확인:**
-
-```bash
-kubectl get deployment -n kube-system aws-load-balancer-controller
-```
-
-다른 옵션들의 문제점:
-
-* **A. `service.beta.kubernetes.io/aws-load-balancer-internal: "true"`**: 이 어노테이션은 Service 타입 LoadBalancer에 사용되며, Ingress 리소스에는 적용되지 않습니다.
-* **C. `kubernetes.io/ingress.class: internal-alb`**: 올바른 ingress.class는 'alb'이며, 'internal-alb'는 유효한 값이 아닙니다.
-* **D. `aws-load-balancer-type: internal`**: 이러한 어노테이션은 존재하지 않습니다.
+디스커버리 또는 명시한 서브넷 ID로 배치 위치를 선택하고 SG로 접근을 제어합니다. `inbound-cidrs`는 컨트롤러가 만드는 프론트엔드 SG에 적용되며 사용자 지정 SG를 주면 무시됩니다. Route 53 프라이빗 alias/CNAME은 별도로 만들어야 하며 ALB 로그 속성은 DNS 레코드를 만들지 않습니다. 실제 IngressClass/컨트롤러 설정이 있다면 `internal-alb` 같은 사용자 지정 이름도 가능하지만 이름만으로 scheme이 선택되지는 않습니다.
 
 </details>
 
-### 3. Amazon EKS에서 AWS Load Balancer Controller를 사용할 때, 파드 IP를 직접 대상으로 사용하도록 구성하는 어노테이션은 무엇인가요?
+### 3. Ingress의 Pod IP 대상을 선택하는 어노테이션은 무엇인가요?
 
-A. `alb.ingress.kubernetes.io/target-type: pod`\
-B. `alb.ingress.kubernetes.io/target-type: ip`\
-C. `service.beta.kubernetes.io/aws-load-balancer-target-type: ip`\
-D. `aws-load-balancer-target-node-labels: ip-mode=true`
+- A. `target-type: pod`
+- B. `alb.ingress.kubernetes.io/target-type: ip`
+- C. `service.beta.kubernetes.io/aws-load-balancer-target-type: ip`
+- D. `aws-load-balancer-target-node-labels: ip-mode=true`
 
 <details>
-
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. `alb.ingress.kubernetes.io/target-type: ip`**
 
-**설명:** Amazon EKS에서 AWS Load Balancer Controller를 사용할 때, 파드 IP를 직접 대상으로 사용하도록 구성하려면 `alb.ingress.kubernetes.io/target-type: ip` 어노테이션을 사용해야 합니다. 이 설정을 통해 로드 밸런서는 노드 IP 대신 파드 IP로 직접 트래픽을 라우팅합니다.
-
-**대상 유형 옵션:**
-
-1. **instance**: (기본값) 노드 IP와 NodePort를 사용하여 트래픽을 라우팅합니다.
-2. **ip**: 파드 IP와 컨테이너 포트를 사용하여 트래픽을 직접 파드로 라우팅합니다.
-
-**IP 모드 구성 예시:**
-
+`ip`는 라우팅 가능한 Pod IP와 Service의 실제 대상 포트를 등록합니다. `instance`는 보통 노드와 NodePort를 등록하며 컨트롤러/IngressClass 기본값의 영향을 받습니다. EKS Fargate에는 IP 대상이 필요합니다. IP 선택만으로 Pod 보안 그룹이 생성되거나 노드 장애가 사라지거나 성능 향상이 보장되지는 않습니다.
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: example-ingress
+  name: ip-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
-  - http:
+  - host: app.example.com
+    http:
       paths:
       - path: /
         pathType: Prefix
@@ -201,236 +151,127 @@ spec:
             port:
               number: 80
 ```
+| 특성 | IP 대상 | Instance 대상 |
+|---|---|---|
+| 경로 | LB → Pod 대상 | LB → NodePort → 선택된 엔드포인트 |
+| 노드 장애 | 해당 Pod 소실; 헬스체크·재조정 후 수렴 | 장애 노드 대상 제거; 다른 정상 노드는 유지 가능 |
+| Service 유형 | ClusterIP로 충분 | NodePort 또는 NodePort가 할당된 LoadBalancer |
+| Fargate | 지원 경로 | EC2 NodePort 대상 없음 |
 
-**IP 모드의 장점:**
-
-1. **노드 장애 복원력**: 노드가 실패해도 다른 노드의 파드로 트래픽이 계속 라우팅됩니다.
-2. **직접 라우팅**: NodePort를 통한 추가 홉 없이 파드로 직접 트래픽이 전달됩니다.
-3. **Fargate 호환성**: AWS Fargate에서 실행되는 파드에 필요합니다.
-4. **보안 그룹 통합**: 파드 수준에서 보안 그룹을 적용할 수 있습니다.
-
-**IP 모드의 요구 사항:**
-
-1. **VPC CNI**: Amazon VPC CNI 플러그인이 필요합니다.
-2. **서브넷 구성**: 파드가 실행되는 서브넷이 로드 밸런서 서브넷과 라우팅 가능해야 합니다.
-3. **보안 그룹 규칙**: 로드 밸런서의 보안 그룹이 파드 IP로의 트래픽을 허용해야 합니다.
-
-**IP 모드와 instance 모드 비교:**
-
-| 특성         | IP 모드   | Instance 모드        |
-| ---------- | ------- | ------------------ |
-| 대상         | 파드 IP   | 노드 IP              |
-| 포트         | 컨테이너 포트 | NodePort           |
-| 트래픽 경로     | LB → 파드 | LB → 노드 → 파드       |
-| 노드 장애 시    | 영향 없음   | 해당 노드의 파드 접근 불가    |
-| 성능         | 더 나은 성능 | 추가 홉으로 인한 약간의 오버헤드 |
-| Fargate 지원 | 지원      | 미지원                |
-
-**추가 구성 옵션:**
-
-```yaml
-# 대상 그룹 속성 설정
-alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30,stickiness.enabled=true
-
-# 상태 확인 설정
-alb.ingress.kubernetes.io/healthcheck-path: /health
-alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
-alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
-alb.ingress.kubernetes.io/success-codes: '200'
-alb.ingress.kubernetes.io/healthy-threshold-count: '2'
-alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
-```
-
-다른 옵션들의 문제점:
-
-* **A. `alb.ingress.kubernetes.io/target-type: pod`**: 올바른 값은 'ip'이며, 'pod'는 유효한 값이 아닙니다.
-* **C. `service.beta.kubernetes.io/aws-load-balancer-target-type: ip`**: 이 어노테이션은 Service 타입 LoadBalancer에 사용되며, Ingress 리소스에는 적용되지 않습니다.
-* **D. `aws-load-balancer-target-node-labels: ip-mode=true`**: 이러한 어노테이션은 존재하지 않습니다.
+VPC에서 라우팅 가능한 Pod 네트워크와 애플리케이션·헬스체크 접근을 준비합니다. 일반 EC2에서는 VPC CNI를 사용하며 지원되는 하이브리드·다른 네트워크 설계는 별도 연결 검증이 필요합니다. NLB Service 대응 어노테이션은 `service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip`이며 `nlb`가 빠진 선택지는 올바르지 않습니다.
 
 </details>
 
-### 4. Amazon EKS에서 Kubernetes Service와 AWS PrivateLink를 통합하여 VPC 엔드포인트 서비스를 생성하는 데 사용되는 어노테이션은 무엇인가요?
+### 4. NLB-IP 어노테이션만으로 PrivateLink 엔드포인트 서비스가 생성되나요?
 
-A. `service.beta.kubernetes.io/aws-load-balancer-type: nlb`\
-B. `service.beta.kubernetes.io/aws-load-balancer-private-link: "true"`\
-C. `service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip`\
-D. `service.beta.kubernetes.io/aws-vpc-endpoint-service: "true"`
+- A. Any `LoadBalancer` Service creates PrivateLink
+- B. `nlb-ip` automatically creates and authorizes it
+- C. Separate NLB, endpoint service and consumer configuration
+- D. Only instance targets can use PrivateLink
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: C. 아니요. NLB, 엔드포인트 서비스 구성, 소비자 접근을 별도로 준비합니다.**
 
-**정답: C. `service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip`**
-
-**설명:** Amazon EKS에서 Kubernetes Service와 AWS PrivateLink를 통합하여 VPC 엔드포인트 서비스를 생성하려면 `service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip` 어노테이션을 사용해야 합니다. 이 어노테이션은 IP 모드의 Network Load Balancer(NLB)를 생성하며, 이는 AWS PrivateLink와 통합하기 위한 필수 조건입니다.
-
-**VPC 엔드포인트 서비스 구성 단계:**
-
-1. **NLB-IP 모드로 Kubernetes Service 생성:**
-
+기존 `nlb-ip` 답안은 대상 선택과 PrivateLink 생성을 혼동했습니다. 엔드포인트 서비스는 NLB(어플라이언스는 GWLB)를 사용하며 IP 대상이나 내부 NLB가 필수는 아닙니다. 이 예제는 프라이빗 Pod 접근을 위해 내부 IP 대상 NLB를 선택합니다.
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: privatelink-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: my-app
   ports:
   - port: 80
     targetPort: 8080
-  selector:
-    app: my-app
 ```
-
-2. **AWS CLI를 사용하여 VPC 엔드포인트 서비스 생성:**
-
+의도한 네임스페이스에서 일치하는 정상 Pod와 함께 Service를 생성하고 NLB 준비를 기다립니다. 호스트명을 하이픈으로 자르지 말고 정확한 DNSName으로 찾습니다:
 ```bash
-# NLB ARN 가져오기
-NLB_ARN=$(aws elbv2 describe-load-balancers --names $(kubectl get svc privatelink-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' | cut -d- -f1) --query 'LoadBalancers[0].LoadBalancerArn' --output text)
-
-# VPC 엔드포인트 서비스 생성
+set -euo pipefail
+: "${AWS_REGION:?Set the provider Region}"
+: "${SERVICE_NAMESPACE:?Set the Service namespace}"
+NLB_DNS=$(kubectl -n "$SERVICE_NAMESPACE" get service privatelink-service \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+test -n "$NLB_DNS"
+aws elbv2 describe-load-balancers --region "$AWS_REGION" --output json > privatelink-load-balancers.json
+NLB_ARN=$(python3 - "$NLB_DNS" <<'PY'
+import json, sys
+with open("privatelink-load-balancers.json") as stream:
+    matches = [lb for lb in json.load(stream)["LoadBalancers"]
+               if lb["DNSName"] == sys.argv[1] and lb["Type"] == "network"]
+if len(matches) != 1:
+    raise SystemExit("Expected exactly one matching NLB; check Region, account and readiness")
+print(matches[0]["LoadBalancerArn"])
+PY
+)
+printf '%s\n' "$NLB_ARN"
+```
+아래 공급자 명령은 과금 리소스를 만들고 소비자 계정 하나에 서비스 접근을 허용합니다. 검토한 인프라 소유자로 실행하고 반환 ID를 저장하며 멱등 명령처럼 생성을 반복하지 마세요. 상용 AWS 파티션 예제이므로 다른 파티션은 ARN을 조정합니다.
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the provider Region}"
+: "${NLB_ARN:?Use the NLB ARN verified above}"
+: "${CONSUMER_ACCOUNT_ID:?Set the allowed consumer account}"
 aws ec2 create-vpc-endpoint-service-configuration \
-  --network-load-balancer-arns $NLB_ARN \
-  --acceptance-required \
-  --private-dns-name service.example.com
-```
-
-3. **VPC 엔드포인트 서비스 허용 목록 구성:**
-
-```bash
+  --region "$AWS_REGION" --network-load-balancer-arns "$NLB_ARN" \
+  --acceptance-required --output json > endpoint-service-created.json
+SERVICE_ID=$(python3 -c 'import json; print(json.load(open("endpoint-service-created.json"))["ServiceConfiguration"]["ServiceId"])')
+SERVICE_NAME=$(python3 -c 'import json; print(json.load(open("endpoint-service-created.json"))["ServiceConfiguration"]["ServiceName"])')
 aws ec2 modify-vpc-endpoint-service-permissions \
-  --service-id vpce-svc-0123456789abcdef0 \
-  --add-allowed-principals arn:aws:iam::111122223333:root
+  --region "$AWS_REGION" --service-id "$SERVICE_ID" \
+  --add-allowed-principals "arn:aws:iam::$CONSUMER_ACCOUNT_ID:root"
+printf 'Service name: %s\n' "$SERVICE_NAME"
 ```
-
-**주요 고려 사항:**
-
-1. **내부 NLB 요구 사항**: PrivateLink는 내부 NLB를 사용해야 하므로, `service.beta.kubernetes.io/aws-load-balancer-internal: "true"` 어노테이션도 필요합니다.
-2. **IP 모드의 중요성**: NLB-IP 모드는 파드 IP를 직접 대상으로 사용하여 노드 장애에 대한 복원력을 제공합니다.
-3. **서비스 이름 해석**: 프라이빗 DNS 이름을 구성하여 VPC 내에서 서비스 이름 해석을 간소화할 수 있습니다.
-4. **접근 제어**: `acceptance-required` 플래그를 사용하여 엔드포인트 연결 요청을 수동으로 승인할 수 있습니다.
-5. **네트워크 ACL 및 보안 그룹**: 적절한 네트워크 ACL 및 보안 그룹 규칙이 구성되어 있는지 확인해야 합니다.
-
-**PrivateLink 통합의 이점:**
-
-* **보안 강화**: 트래픽이 공용 인터넷을 통과하지 않고 AWS 네트워크 내에서 유지됩니다.
-* **규정 준수**: 데이터 주권 및 규정 준수 요구 사항을 충족합니다.
-* **간소화된 네트워킹**: VPC 피어링, Transit Gateway 또는 VPN 연결 없이 서비스에 접근할 수 있습니다.
-* **확장성**: 수천 개의 VPC에서 서비스에 접근할 수 있습니다.
-
-**클라이언트 측 구성:**
-
+소비자 계정에서는 지원 AZ(계정 간에는 AZ ID 비교), 의도한 클라이언트를 허용하는 엔드포인트 SG와 반환된 서비스 이름을 사용합니다. 같은 리전 예제이며 리전 간 PrivateLink를 구성하지 않습니다.
 ```bash
-# VPC 엔드포인트 생성
+set -euo pipefail
+: "${CONSUMER_REGION:?Set the consumer Region}"
+: "${CONSUMER_VPC_ID:?Set the consumer VPC}"
+: "${CONSUMER_SUBNET_A:?Set a subnet in an available service AZ}"
+: "${CONSUMER_SUBNET_B:?Set another supported AZ subnet}"
+: "${CONSUMER_SG_ID:?Set the endpoint security group}"
+: "${SERVICE_NAME:?Copy the exact name returned by the provider}"
 aws ec2 create-vpc-endpoint \
-  --vpc-id vpc-0123456789abcdef0 \
-  --service-name com.amazonaws.vpce.us-east-1.vpce-svc-0123456789abcdef0 \
-  --vpc-endpoint-type Interface \
-  --subnet-ids subnet-0123456789abcdef0 subnet-0123456789abcdef1 \
-  --security-group-ids sg-0123456789abcdef0
+  --region "$CONSUMER_REGION" --vpc-id "$CONSUMER_VPC_ID" \
+  --service-name "$SERVICE_NAME" --vpc-endpoint-type Interface \
+  --subnet-ids "$CONSUMER_SUBNET_A" "$CONSUMER_SUBNET_B" \
+  --security-group-ids "$CONSUMER_SG_ID"
 ```
-
-다른 옵션들의 문제점:
-
-* **A. `service.beta.kubernetes.io/aws-load-balancer-type: nlb`**: 이 어노테이션은 인스턴스 모드의 NLB를 생성하며, PrivateLink와의 통합에 최적화되지 않았습니다.
-* **B. `service.beta.kubernetes.io/aws-load-balancer-private-link: "true"`**: 이러한 어노테이션은 존재하지 않습니다.
-* **D. `service.beta.kubernetes.io/aws-vpc-endpoint-service: "true"`**: 이러한 어노테이션은 존재하지 않습니다.
+승인이 필요하도록 설정했으므로 공급자가 해당 pending 엔드포인트 요청을 승인해야 합니다. 선택적인 프라이빗 DNS는 소비자가 활성화하기 전에 도메인 소유권 검증이 필요합니다. 대상 상태·엔드포인트 상태·애플리케이션 인증을 확인하세요. 대상에서 보이는 PrivateLink 소스 IP는 NLB 주소이며 백엔드가 지원하면 Proxy Protocol v2로 소비자 메타데이터를 받을 수 있습니다. 규정 준수나 애플리케이션 권한을 자동 보장하지 않습니다. 종료 시 소비자 엔드포인트, 서비스 연결, Kubernetes 로드 밸런서를 각 소유 관리 도구로 정리합니다.
 
 </details>
 
-### 5. Amazon EKS에서 Kubernetes NetworkPolicy 리소스를 구현하기 위해 Amazon VPC CNI와 함께 사용할 수 있는 추가 구성 요소는 무엇인가요?
+### 5. Amazon VPC CNI와 함께 사용할 수 있는 추가 정책 엔진은 무엇인가요?
 
-A. AWS Network Firewall\
-B. Calico\
-C. AWS Security Groups for Pods\
-D. VPC Flow Logs
+- A. AWS Network Firewall
+- B. Calico
+- C. Security Groups for Pods
+- D. VPC Flow Logs
 
 <details>
-
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. Calico**
 
-**설명:** Amazon EKS에서 Kubernetes NetworkPolicy 리소스를 구현하기 위해 Amazon VPC CNI와 함께 사용할 수 있는 추가 구성 요소는 Calico입니다. Calico는 Kubernetes NetworkPolicy API를 지원하는 오픈 소스 네트워킹 및 네트워크 보안 솔루션으로, Amazon VPC CNI와 함께 작동하여 EKS 클러스터에서 세밀한 네트워크 정책을 적용할 수 있습니다.
+Calico는 VPC CNI가 IPAM·네트워킹을 담당하는 상태에서 정책을 적용할 수 있습니다. 필수 추가 요소가 아니라 VPC CNI 네이티브 정책 엔진의 대안입니다. 지원 버전, `cni.type: AmazonVPC`, `ANNOTATE_POD_IP`와 Pod patch 권한 등 [공식 EKS 정책 전용 절차](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)를 따릅니다. 두 엔진을 동시에 켜거나 실행 중 클러스터에 VXLAN 교체 매니페스트를 적용하지 마세요.
 
-**Calico 설치 및 구성:**
+Calico API는 순서·계층 규칙, GlobalNetworkPolicy, NetworkSet, ServiceAccount 선택자와 호스트 엔드포인트 정책도 제공합니다. 합집합 방식의 Kubernetes NetworkPolicy와 의미가 다르며 NetworkSet은 Calico 정책에서 참조해야 효과가 있습니다. 전역 allow-all은 최소 권한 기본값이 아닙니다. 모든 VPC CNI 모드와의 호환성을 가정하지 마세요. 현재 Calico EKS 안내는 `ENABLE_V4_EGRESS=true`인 IPv6 Pod의 정책 적용을 지원하지 않는다고 명시합니다.
 
-1. **Calico 설치:**
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-```
-
-2. **설치 확인:**
-
-```bash
-kubectl get pods -n calico-system
-```
-
-3. **기본 NetworkPolicy 예시:**
-
+네임스페이스 소유의 Kubernetes 정책 예제로 `policy-lab`과 `role=frontend` 레이블을 가진 컨트롤러 관리 Pod를 준비합니다. 아래 egress 정책은 일반 CoreDNS와 승인된 HTTPS 목적지를 허용하되 다른 정책의 허용과 합쳐집니다. 문서용 CIDR은 실제 목적지로 바꾸고 NodeLocal DNS 사용 시 경로를 조정하세요.
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: default-deny
-  namespace: default
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-```
-
-**Calico의 주요 기능:**
-
-1. **Kubernetes NetworkPolicy 지원**: 표준 Kubernetes NetworkPolicy API를 완벽하게 구현합니다.
-2. **확장된 정책 기능**: Calico의 GlobalNetworkPolicy 및 NetworkSet과 같은 사용자 정의 리소스를 통해 Kubernetes NetworkPolicy를 넘어선 고급 네트워크 정책을 제공합니다.
-3. **세밀한 제어**: 프로토콜, 포트, CIDR 블록, 서비스 계정 등을 기반으로 트래픽을 필터링할 수 있습니다.
-4. **로깅 및 모니터링**: 네트워크 정책 위반을 로깅하고 모니터링할 수 있습니다.
-5. **호스트 엔드포인트 보호**: Kubernetes 노드 자체에 대한 네트워크 정책을 적용할 수 있습니다.
-
-**Calico 고급 정책 예시:**
-
-```yaml
-# GlobalNetworkPolicy 예시 (클러스터 전체 정책)
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: allow-cluster-internal-traffic
-spec:
-  selector: all()
-  types:
-  - Ingress
-  - Egress
-  ingress:
-  - action: Allow
-    source:
-      selector: all()
-  egress:
-  - action: Allow
-    destination:
-      selector: all()
-
-# 특정 IP 범위에 대한 액세스 제한
-apiVersion: projectcalico.org/v3
-kind: NetworkSet
-metadata:
-  name: external-services
-spec:
-  nets:
-  - 203.0.113.0/24
-  - 198.51.100.0/24
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-external-services
-  namespace: app
+  name: frontend-egress
+  namespace: policy-lab
 spec:
   podSelector:
     matchLabels:
@@ -442,6 +283,9 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     ports:
     - protocol: UDP
       port: 53
@@ -450,453 +294,267 @@ spec:
   - to:
     - ipBlock:
         cidr: 203.0.113.0/24
-    - ipBlock:
-        cidr: 198.51.100.0/24
+    ports:
+    - protocol: TCP
+      port: 443
 ```
-
-**Amazon VPC CNI와 Calico의 통합:**
-
-1. **네트워크 모드**: Calico는 Amazon VPC CNI와 함께 사용할 때 오버레이 모드가 아닌 정책 전용 모드로 작동합니다.
-2. **성능**: Amazon VPC CNI의 네이티브 VPC 네트워킹 성능을 유지하면서 Calico의 네트워크 정책 기능을 활용할 수 있습니다.
-3. **호환성**: Calico는 Amazon VPC CNI의 모든 기능(프리픽스 위임, 사용자 지정 네트워킹 등)과 호환됩니다.
-4. **업그레이드**: Calico와 Amazon VPC CNI는 독립적으로 업그레이드할 수 있습니다.
-
-**모범 사례:**
-
-* 기본 거부 정책으로 시작하여 필요한 통신만 명시적으로 허용합니다.
-* 네임스페이스 간 통신에 대한 명확한 정책을 정의합니다.
-* 정책을 적용하기 전에 로깅 모드에서 테스트합니다.
-* 클러스터 필수 구성 요소에 대한 통신을 항상 허용합니다.
-* 정기적으로 정책을 검토하고 업데이트합니다.
-
-다른 옵션들의 문제점:
-
-* **A. AWS Network Firewall**: AWS Network Firewall은 VPC 수준의 방화벽 서비스로, Kubernetes NetworkPolicy와 직접적인 통합이 없습니다.
-* **C. AWS Security Groups for Pods**: Security Groups for Pods는 파드에 AWS 보안 그룹을 적용하는 기능이지만, Kubernetes NetworkPolicy API를 구현하지는 않습니다.
-* **D. VPC Flow Logs**: VPC Flow Logs는 네트워크 트래픽을 모니터링하는 도구로, 네트워크 정책을 적용하지는 않습니다.
+정책을 신뢰하기 전에 기준 연결과 허용·거부 TCP 경로를 검증합니다. NetworkPolicy에는 이식 가능한 audit-only 모드가 없습니다. 선택한 엔진에서 지원하는 로깅·단계적 적용 기능을 확인하세요. Pod SG·VPC 방화벽은 별도 제어이며 Flow Logs는 이 API를 적용하는 대신 트래픽을 관찰합니다.
 
 </details>
 
-\## 단답형 문제
-
-### 6. Amazon EKS에서 AWS Load Balancer Controller를 사용하여 Application Load Balancer를 생성할 때, 특정 보안 그룹을 할당하는 어노테이션은 무엇인가요?
+### 6. 사용자 지정 ALB 프론트엔드 SG와 백엔드 규칙은 어떻게 다른가요?
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: `alb.ingress.kubernetes.io/security-groups`**
 
-**정답:** `alb.ingress.kubernetes.io/security-groups: sg-xxxx,sg-yyyy`
-
-**상세 설명:**
-
-AWS Load Balancer Controller를 사용하여 Application Load Balancer(ALB)를 생성할 때, `alb.ingress.kubernetes.io/security-groups` 어노테이션을 사용하여 특정 보안 그룹을 할당할 수 있습니다. 이 어노테이션은 ALB에 연결할 보안 그룹의 ID를 쉼표로 구분하여 지정합니다.
-
-**구현 방법:**
-
-1.  **보안 그룹 ID 지정:**
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: example-ingress
-      annotations:
-        kubernetes.io/ingress.class: alb
-        alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0,sg-0123456789abcdef1
-    spec:
-      rules:
-      - http:
-          paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: example-service
-                port:
-                  number: 80
-    ```
-2.  **보안 그룹 이름 지정 (대체 방법):**
-
-    ```yaml
-    alb.ingress.kubernetes.io/security-groups: my-security-group-name
-    ```
-3.  **보안 그룹 자동 생성:**
-
-    ```yaml
+아래 어노테이션 조각을 의도한 Ingress에 병합합니다. SG ID는 명확하며 이름으로 찾을 때는 EC2 `groupName` 속성이 아니라 AWS `Name` 태그를 사용합니다.
+```yaml
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0
     alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
-    ```
-
-**주요 고려 사항:**
-
-1. **보안 그룹 규칙:**
-   * 인바운드 규칙: 클라이언트 트래픽을 허용해야 합니다 (일반적으로 HTTP/80, HTTPS/443).
-   * 아웃바운드 규칙: 대상 그룹(파드 또는 노드)으로의 트래픽을 허용해야 합니다.
-2. **기본 동작:** 어노테이션을 지정하지 않으면, AWS Load Balancer Controller는 자동으로 보안 그룹을 생성하고 필요한 규칙을 구성합니다.
-3. **권한 요구 사항:** AWS Load Balancer Controller의 IAM 역할에는 다음 권한이 필요합니다:
-   * ec2:CreateSecurityGroup
-   * ec2:DeleteSecurityGroup
-   * ec2:DescribeSecurityGroups
-   * ec2:AuthorizeSecurityGroupIngress
-   * ec2:RevokeSecurityGroupIngress
-4.  **보안 그룹 관리:**
-
-    ```yaml
-    # 컨트롤러가 보안 그룹 규칙을 관리하도록 설정
-    alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
-    ```
-5.  **태그 지정:** 생성된 보안 그룹에 태그를 추가할 수 있습니다:
-
-    ```yaml
-    alb.ingress.kubernetes.io/tags: Environment=prod,Team=devops
-    ```
-
-**모범 사례:**
-
-1. **최소 권한 원칙:** 필요한 트래픽만 허용하는 제한적인 보안 그룹 규칙을 사용합니다.
-2. **보안 그룹 재사용:** 여러 Ingress 리소스에서 동일한 보안 그룹을 재사용하여 관리를 간소화합니다.
-3. **문서화:** 사용된 보안 그룹과 해당 규칙을 문서화하여 추적합니다.
-4. **정기적인 검토:** 보안 그룹 규칙을 정기적으로 검토하여 불필요한 액세스를 제거합니다.
-5. **모니터링:** 거부된 연결을 모니터링하여 보안 그룹 규칙의 효과를 평가합니다.
-
-**관련 어노테이션:**
-
-*   **인바운드 CIDR 제한:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/inbound-cidrs: 10.0.0.0/16,192.168.0.0/16
-    ```
-*   **보안 그룹 태그:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: load_balancing.cross_zone.enabled=true
-    ```
-*   **SSL 정책:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
-    ```
-
-AWS Load Balancer Controller를 사용하면 Kubernetes Ingress 리소스를 통해 ALB의 보안 그룹을 세밀하게 제어할 수 있으며, 이를 통해 클러스터의 네트워크 보안 태세를 강화할 수 있습니다.
-
-</details>
-
-### 7. Amazon EKS에서 Kubernetes Service 리소스를 Network Load Balancer로 노출할 때, 클라이언트 IP 주소를 보존하기 위한 어노테이션은 무엇인가요?
-
-<details>
-
-<summary>정답 및 설명</summary>
-
-**정답:** `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true`
-
-**상세 설명:**
-
-Amazon EKS에서 Kubernetes Service 리소스를 Network Load Balancer(NLB)로 노출할 때, 클라이언트 IP 주소를 보존하기 위해서는 `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true` 어노테이션을 사용해야 합니다. 이 설정은 NLB가 원본 클라이언트 IP 주소를 유지하도록 합니다.
-
-**구현 방법:**
-
-1.  **기본 NLB 서비스 구성:**
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: example-service
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-        service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-    spec:
-      type: LoadBalancer
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: example
-    ```
-2.  **IP 모드 NLB와 함께 사용:**
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: example-service
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip
-        service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-    spec:
-      type: LoadBalancer
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: example
-    ```
-
-**클라이언트 IP 보존의 중요성:**
-
-1. **보안 및 액세스 제어:**
-   * 클라이언트 IP 기반 액세스 제어 구현
-   * 의심스러운 IP 주소 차단
-   * IP 기반 속도 제한 적용
-2. **로깅 및 감사:**
-   * 요청 소스 추적
-   * 보안 이벤트 조사
-   * 규정 준수 요구 사항 충족
-3. **지리적 위치 기반 기능:**
-   * 지역별 콘텐츠 제공
-   * 지리적 분석 수행
-
-**작동 방식:**
-
-1. **Instance 모드 (aws-load-balancer-type: nlb):**
-   * TCP 트래픽의 경우 클라이언트 IP가 자동으로 보존됩니다.
-   * UDP 트래픽의 경우 preserve\_client\_ip.enabled=true 설정이 필요합니다.
-2. **IP 모드 (aws-load-balancer-type: nlb-ip):**
-   * TCP 및 UDP 트래픽 모두 preserve\_client\_ip.enabled=true 설정이 필요합니다.
-
-**제한 사항 및 고려 사항:**
-
-1. **프록시 프로토콜:** 클라이언트 IP 보존은 프록시 프로토콜을 사용하지 않고 직접 패킷 라우팅을 통해 이루어집니다.
-2. **대상 그룹 유형:**
-   * Instance 모드: 노드 IP와 NodePort를 사용합니다.
-   * IP 모드: 파드 IP와 포트를 직접 사용합니다.
-3. **성능 영향:** 클라이언트 IP 보존은 약간의 성능 오버헤드를 발생시킬 수 있습니다.
-4. **호환성:** 일부 레거시 애플리케이션은 클라이언트 IP 보존과 호환되지 않을 수 있습니다.
-
-**애플리케이션에서 클라이언트 IP 액세스:**
-
-1.  **HTTP 애플리케이션:**
-
-    ```python
-    # Python Flask 예시
-    from flask import Flask, request
-
-    app = Flask(__name__)
-
-    @app.route('/')
-    def index():
-        client_ip = request.remote_addr
-        return f"Your IP address is: {client_ip}"
-    ```
-2.  **TCP/UDP 애플리케이션:**
-
-    ```go
-    // Go 예시
-    package main
-
-    import (
-        "fmt"
-        "net"
-    )
-
-    func handleConnection(conn net.Conn) {
-        addr := conn.RemoteAddr().String()
-        fmt.Printf("Client connected from: %s\n", addr)
-        // ...
-    }
-    ```
-
-**관련 어노테이션:**
-
-*   **내부 NLB 구성:**
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
-    ```
-*   **교차 영역 로드 밸런싱:**
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: load_balancing.cross_zone.enabled=true
-    ```
-*   **TCP 연결 유지:**
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true,deregistration_delay.timeout_seconds=30
-    ```
-
-클라이언트 IP 보존은 보안, 로깅, 액세스 제어 등 다양한 용도로 중요하며, 적절한 어노테이션을 사용하여 EKS 클러스터에서 쉽게 구성할 수 있습니다.
-
-</details>
-
-### 8. Amazon EKS에서 Kubernetes Ingress 리소스에 AWS WAF(Web Application Firewall)를 연결하기 위한 어노테이션은 무엇인가요?
-
-<details>
-
-<summary>정답 및 설명</summary>
-
-**정답:** `alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:region:account-id:global/webacl/name/id`
-
-**상세 설명:**
-
-Amazon EKS에서 Kubernetes Ingress 리소스에 AWS WAF(Web Application Firewall)를 연결하기 위해서는 `alb.ingress.kubernetes.io/wafv2-acl-arn` 어노테이션을 사용해야 합니다. 이 어노테이션은 AWS Load Balancer Controller가 생성하는 Application Load Balancer(ALB)에 AWS WAF WebACL을 연결합니다.
-
-**구현 방법:**
-
-1.  **AWS WAF WebACL 생성:** 먼저 AWS Management Console, AWS CLI 또는 AWS CloudFormation을 사용하여 WAF WebACL을 생성합니다.
-
-    ```bash
-    # AWS CLI 예시
-    aws wafv2 create-web-acl \
-      --name "eks-ingress-protection" \
-      --scope "REGIONAL" \
-      --default-action Allow={} \
-      --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=eks-ingress-protection \
-      --region us-west-2
-    ```
-2.  **Ingress 리소스에 WAF WebACL ARN 지정:**
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: example-ingress
-      annotations:
-        kubernetes.io/ingress.class: alb
-        alb.ingress.kubernetes.io/scheme: internet-facing
-        alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-west-2:111122223333:regional/webacl/eks-ingress-protection/a1b2c3d4-5678-90ab-cdef
-    spec:
-      rules:
-      - host: example.com
-        http:
-          paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: example-service
-                port:
-                  number: 80
-    ```
-
-**AWS WAF의 주요 보호 기능:**
-
-1. **일반적인 웹 취약점 방어:**
-   * SQL 인젝션 공격
-   * 크로스 사이트 스크립팅(XSS)
-   * 경로 순회 공격
-   * 명령어 인젝션
-2. **봇 트래픽 제어:**
-   * 악성 봇 차단
-   * 스크래핑 방지
-   * 자격 증명 스터핑 공격 방지
-3. **속도 제한:**
-   * DDoS 공격 완화
-   * 브루트 포스 공격 방지
-4. **지리적 제한:**
-   * 특정 국가 또는 지역에서의 액세스 제한
-5. **IP 평판 필터링:**
-   * 알려진 악성 IP 주소 차단
-
-**AWS WAF 규칙 그룹 예시:**
-
-1. **AWS 관리형 규칙:**
-   * AWS Core rule set (CRS)
-   * SQL 데이터베이스 규칙
-   * Linux 운영 체제 규칙
-   * PHP 애플리케이션 규칙
-2.  **사용자 지정 규칙:**
-
-    ```json
-    {
-      "Name": "block-specific-uri-paths",
-      "Priority": 1,
-      "Action": { "Block": {} },
-      "VisibilityConfig": {
-        "SampledRequestsEnabled": true,
-        "CloudWatchMetricsEnabled": true,
-        "MetricName": "block-specific-uri-paths"
-      },
-      "Statement": {
-        "ByteMatchStatement": {
-          "SearchString": "/admin",
-          "FieldToMatch": { "UriPath": {} },
-          "TextTransformations": [
-            { "Priority": 0, "Type": "NONE" }
-          ],
-          "PositionalConstraint": "STARTS_WITH"
-        }
-      }
-    }
-    ```
-
-**모니터링 및 로깅:**
-
-1.  **CloudWatch 로그 활성화:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=my-alb-logs,access_logs.s3.prefix=ingress-logs
-    ```
-2.  **WAF 로깅 구성:**
-
-    ```bash
-    aws wafv2 put-logging-configuration \
-      --logging-configuration ResourceArn=arn:aws:wafv2:us-west-2:111122223333:regional/webacl/eks-ingress-protection/a1b2c3d4-5678-90ab-cdef,LogDestinationConfigs=arn:aws:firehose:us-west-2:111122223333:deliverystream/aws-waf-logs \
-      --region us-west-2
-    ```
-
-**권한 요구 사항:**
-
-AWS Load Balancer Controller의 IAM 역할에는 다음 권한이 필요합니다:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "wafv2:AssociateWebACL",
-        "wafv2:DisassociateWebACL",
-        "wafv2:GetWebACL",
-        "wafv2:GetWebACLForResource"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
+    alb.ingress.kubernetes.io/tags: Environment=training,Team=platform
 ```
+사용자 지정 프론트엔드 inbound/outbound 규칙은 직접 구성합니다. 이 경우 `inbound-cidrs`와 prefix-list 어노테이션은 무시됩니다. `manage-backend-security-group-rules: "true"`는 백엔드 SG 메커니즘으로 대상 접근 규칙을 관리하도록 하며 사용자 지정 프론트엔드 SG의 클라이언트 제한 규칙을 만들어 주지는 않습니다. 이를 사용하지 않으면 노드/Pod SG 접근을 직접 준비해야 합니다. 애플리케이션·헬스체크 포트와 대상 ENI의 여러 SG 중 선택할 태그를 확인하세요.
 
-**모범 사례:**
-
-1. **다층 방어:** WAF를 네트워크 보안, 인증, 권한 부여 등 다른 보안 제어와 함께 사용합니다.
-2. **정기적인 규칙 업데이트:** 새로운 위협에 대응하기 위해 WAF 규칙을 정기적으로 검토하고 업데이트합니다.
-3. **로깅 및 모니터링:** WAF 로그를 분석하여 공격 패턴을 식별하고 규칙을 개선합니다.
-4. **테스트:** 프로덕션 환경에 적용하기 전에 WAF 규칙을 테스트 환경에서 검증합니다.
-5. **카운트 모드:** 새 규칙을 처음 배포할 때는 차단 대신 카운트 모드로 설정하여 오탐을 모니터링합니다.
-
-AWS WAF와 EKS Ingress의 통합은 애플리케이션 보안을 강화하는 강력한 방법이며, 적절한 어노테이션을 사용하여 쉽게 구성할 수 있습니다.
+릴리스 IAM 정책에는 전체 컨트롤러의 EC2/ELB 권한이 포함되며 SG 작업 몇 개를 나열한 것은 완성된 역할 정책이 아닙니다. 신뢰 영역 간 SG 재사용은 노출과 변경 영향 범위를 넓힐 수 있습니다. 실제 규칙과 VPC Flow Log 거부를 검토하세요. `tags`가 지원 리소스 태그를 추가하며 `load_balancing.cross_zone.enabled`는 태그가 아닌 분산 속성입니다. 이전 TLS 정책 이름을 현재 권장값으로 복사하지 말고 클라이언트 호환성과 요구에 맞는 지원 정책을 선택합니다.
 
 </details>
 
-\## 실습 문제
-
-### 9. Amazon EKS 클러스터에서 AWS Load Balancer Controller를 사용하여 Application Load Balancer를 생성하고, 특정 경로에 따라 트래픽을 다른 서비스로 라우팅하는 Ingress 리소스를 작성하세요.
+### 7. NLB 클라이언트 IP 보존 설정과 제약은 무엇인가요?
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true`**
 
-**정답:** 다음은 AWS Load Balancer Controller를 사용하여 Application Load Balancer를 생성하고, 특정 경로에 따라 트래픽을 다른 서비스로 라우팅하는 Ingress 리소스입니다:
+TCP/TLS 대상 그룹에서는 속성을 설정할 수 있으며 instance 대상은 기본 활성, IP 대상은 기본 비활성입니다. UDP/TCP_UDP/QUIC/TCP_QUIC 대상 그룹은 항상 클라이언트 IP를 보존하며 끌 수 없습니다. 아래 IPv4 IP 대상 TCP 예제는 변경 가능한 경우입니다:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+spec:
+  type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: my-app
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+애플리케이션이 보는 주소는 전체 경로에 따라 달라집니다. NodePort 전달 과정은 local 트래픽 정책·토폴로지가 보존하지 않으면 SNAT할 수 있고 ALB는 HTTP 전달 헤더를 사용합니다. IPv6→IPv4 변환과 PrivateLink에서는 원래 패킷 소스가 유지되지 않습니다. 보존에는 같은 VPC 또는 같은 리전 피어링의 지원되는 직접 경로가 필요하며 Transit Gateway 경유는 지원되지 않습니다. 내부 NLB 뒤의 대상이 같은 NLB를 통해 자신에게 연결하는 hairpin 연결도 실패할 수 있습니다.
 
+Proxy Protocol v2는 원본 주소 메타데이터를 전달하지만 호환 리스너·파서가 필요하므로 무조건 켜지 마세요. 프레임워크 `remote_addr`나 TCP `RemoteAddr()`는 직접 연결된 상대 주소이며 인터넷 원본 클라이언트를 자동 식별하지 않습니다. 명시적으로 신뢰한 프록시의 전달 헤더만 사용합니다. 보존 변경은 새 TCP 연결부터 적용됩니다. `deregistration_delay.timeout_seconds`는 TCP keep-alive가 아니라 드레이닝을 제어합니다. 근거 없는 오버헤드 수치 대신 실제 경로에서 측정하세요.
+
+</details>
+
+### 8. LBC가 관리하는 ALB에 AWS WAF를 어떻게 연결하나요?
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: `alb.ingress.kubernetes.io/wafv2-acl-arn` 및 같은 리전의 REGIONAL Web ACL.**
+
+실제 `regional/webacl/...` ARN을 사용합니다. CloudFront의 `global/webacl/...` ARN은 리전 ALB에 연결할 수 없습니다. 이 연결은 해당 ALB를 통과하는 트래픽에 적용되며 Pod·NLB·Kubernetes API 서버에 WAF를 붙이는 것이 아닙니다.
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: multi-path-ingress
-  namespace: default
+  name: waf-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/healthcheck-path: /health
-    alb.ingress.kubernetes.io/success-codes: '200'
-    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
-    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-west-2:123456789012:regional/webacl/eks-ingress-protection/00000000-0000-4000-8000-000000000000
 spec:
+  ingressClassName: alb
   rules:
-  - host: example.com
+  - host: app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: example-service
+            port:
+              number: 80
+```
+규칙이 없고 기본 동작이 Allow인 Web ACL은 아무것도 차단하지 않습니다. 격리된 규칙 개발 예제로 아래 배열을 `waf-rules.json`에 저장합니다. 이 규칙은 `/admin` 접두사를 차단하지 않고 **계수**하며 인증 제어나 완성된 관리형 규칙 기본값이 아닙니다.
+```json
+[
+  {
+    "Name": "count-admin-path",
+    "Priority": 1,
+    "Action": {
+      "Count": {}
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "count-admin-path"
+    },
+    "Statement": {
+      "ByteMatchStatement": {
+        "SearchString": "/admin",
+        "FieldToMatch": {
+          "UriPath": {}
+        },
+        "TextTransformations": [
+          {
+            "Priority": 0,
+            "Type": "NONE"
+          }
+        ],
+        "PositionalConstraint": "STARTS_WITH"
+      }
+    }
+  }
+]
+```
+보안 소유자가 아래 명령으로 교육용 ACL을 만들 수 있으며 연결할 때 반환된 ARN을 사용합니다. binary-format 플래그는 AWS CLI v2가 JSON SearchString을 문자 그대로의 바이트로 읽게 합니다.
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the ALB Region}"
+aws wafv2 create-web-acl --region "$AWS_REGION" \
+  --name eks-ingress-training --scope REGIONAL \
+  --default-action '{"Allow":{}}' --rules file://waf-rules.json \
+  --cli-binary-format raw-in-base64-out \
+  --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=eks-ingress-training
+```
+SQLi/XSS·봇·평판·속도 기반·사용자 지정 규칙은 각각 구성하고 조정해야 해당 보호를 제공하며 기능·요금이 다릅니다. Count 모드에서 오탐을 검토한 뒤 차단을 활성화합니다. 규칙이 계수하는 동안 기본 Allow는 계속 허용합니다.
+
+ALB의 `access_logs.s3.*`는 S3 ALB 접근 로그 설정이지 WAF 로그나 CloudWatch Logs 설정이 아닙니다. WAF 로깅은 승인한 CloudWatch Logs/S3/Firehose 목적지와 권한으로 별도 구성하며 샘플 요청·CloudWatch 메트릭도 전체 요청 로그와 다릅니다. 연결에는 검토한 릴리스 컨트롤러 IAM 정책, ACL 생성·규칙·로깅에는 별도 보안 관리 역할을 사용합니다. 지원되는 리소스 권한은 제한하고 제약 없는 wildcard 조각을 완성된 컨트롤러 역할로 복사하지 마세요.
+
+</details>
+
+### 9. 구별 가능한 백엔드 세 개의 경로 라우팅을 만들고 검증하세요.
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: Ingress + ClusterIP Services + 준비된 HTTP 워크로드.**
+
+전제 조건은 검토한 IAM·서브넷을 사용하는 LBC, 프라이빗 경로의 테스트 클라이언트, 소유한 호스트명의 ACM 인증서와 전용 네임스페이스 생성 권한입니다. 내부 ALB를 생성하며 `/admin`은 라우팅 이름일 뿐 인증되지 않습니다. 제한된 교육 실습이지 프로덕션 준비 검증 결과가 아닙니다. 같은 셸에서 `set -euo pipefail`을 사용하고 정리할 때까지 LAB_NS/LAB_UID를 보존하세요.
+```bash
+set -euo pipefail
+LAB_NS="alb-paths-$(date -u +%Y%m%d%H%M%S)-$RANDOM"
+kubectl create namespace "$LAB_NS"
+LAB_UID=$(kubectl get namespace "$LAB_NS" -o jsonpath='{.metadata.uid}')
+test -n "$LAB_UID"
+kubectl label namespace "$LAB_NS" \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/enforce-version=v1.36
+printf 'Namespace: %s UID: %s\n' "$LAB_NS" "$LAB_UID"
+```
+HTTP 서버는 실제 8080을 리스닝하며 `/health`와 요청 경로에 백엔드 이름으로 응답합니다. `containerPort: 8080` 선언만으로 기본 nginx 서버 포트가 바뀌지는 않습니다. Python 태그는 예시 런타임이므로 반복 실행에는 승인한 이미지 digest를 고정하세요.
+```bash
+for APP in api admin frontend; do
+  kubectl -n "$LAB_NS" apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $APP
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: $APP
+  template:
+    metadata:
+      labels:
+        app: $APP
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: http
+        image: python:3.13-alpine
+        command: ["python", "-u", "-c"]
+        args:
+        - |
+          import os
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+          class Handler(BaseHTTPRequestHandler):
+              def do_GET(self):
+                  self.send_response(200)
+                  self.end_headers()
+                  self.wfile.write((os.environ["APP_NAME"] + "\\n").encode())
+          HTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
+        env:
+        - name: APP_NAME
+          value: $APP
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: $APP-service
+spec:
+  type: ClusterIP
+  selector:
+    app: $APP
+  ports:
+  - port: 80
+    targetPort: http
+EOF
+  kubectl -n "$LAB_NS" rollout status "deployment/$APP" --timeout=180s
+done
+```
+
+```bash
+set -euo pipefail
+: "${LAB_NS:?Run the namespace setup first}"
+: "${LAB_HOST:?Set a DNS hostname you control, for example app.example.com}"
+: "${ACM_CERT_ARN:?Set a matching certificate ARN in the ALB Region}"
+: "${CLIENT_CIDR:?Set the permitted private client CIDR}"
+kubectl -n "$LAB_NS" apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multi-path-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/inbound-cidrs: "$CLIENT_CIDR"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "$ACM_CERT_ARN"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+spec:
+  ingressClassName: alb
+  rules:
+  - host: "$LAB_HOST"
     http:
       paths:
       - path: /api
@@ -920,593 +578,83 @@ spec:
             name: frontend-service
             port:
               number: 80
+EOF
+kubectl -n "$LAB_NS" get ingress multi-path-ingress
+kubectl -n "$LAB_NS" get endpointslices
 ```
+ALB 호스트명, 정상 대상과 컨트롤러 재조정 완료를 기다립니다. 실패 시 Ingress 이벤트, 컨트롤러 로그, EndpointSlice와 SG·헬스체크 경로를 확인하세요. 허용된 프라이빗 클라이언트에서 아래 테스트는 Host 헤더와 TLS SNI를 유지하면서 ALB 호스트명으로 직접 연결합니다. DNS 레코드나 인증서 검증 해제가 필요하지 않습니다.
+```bash
+ALB_DNS=$(kubectl -n "$LAB_NS" get ingress multi-path-ingress \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+test -n "$ALB_DNS"
+for ROUTE in api admin frontend; do
+  URL_PATH="/$ROUTE"
+  test "$ROUTE" != frontend || URL_PATH=/
+  RESPONSE=$(curl --fail --show-error --silent --max-time 15 \
+    --connect-to "$LAB_HOST:443:$ALB_DNS:443" "https://$LAB_HOST$URL_PATH")
+  test "$RESPONSE" = "$ROUTE" || { printf 'Unexpected backend: %s\n' "$RESPONSE"; exit 1; }
+done
+```
+지속적인 DNS에는 적절한 Route 53 alias를 만들며 CNAME은 서브도메인에서 가능하고 존 apex에서는 사용할 수 없습니다. 인증서 불일치를 자리표시자 ARN이나 `curl -k`로 숨기지 마세요.
 
-**상세 설명:**
-
-1. **Ingress 리소스 구성 요소 설명**:
-   * **metadata.annotations**: AWS Load Balancer Controller에 대한 구성 옵션을 지정합니다.
-     * `kubernetes.io/ingress.class: alb`: AWS Load Balancer Controller를 사용하도록 지정합니다.
-     * `alb.ingress.kubernetes.io/scheme: internet-facing`: 인터넷에서 접근 가능한 ALB를 생성합니다.
-     * `alb.ingress.kubernetes.io/target-type: ip`: 파드 IP를 대상으로 사용합니다.
-     * `alb.ingress.kubernetes.io/listen-ports`: HTTP(80)와 HTTPS(443) 포트를 모두 리스닝합니다.
-     * `alb.ingress.kubernetes.io/certificate-arn`: HTTPS에 사용할 ACM 인증서를 지정합니다.
-     * `alb.ingress.kubernetes.io/ssl-redirect`: HTTP 트래픽을 HTTPS로 리디렉션합니다.
-     * `alb.ingress.kubernetes.io/healthcheck-*`: 상태 확인 설정을 구성합니다.
-   * **spec.rules**: 호스트 및 경로 기반 라우팅 규칙을 정의합니다.
-     * `/api` 경로는 `api-service`로 라우팅됩니다.
-     * `/admin` 경로는 `admin-service`로 라우팅됩니다.
-     * `/`(루트) 경로는 `frontend-service`로 라우팅됩니다.
-2.  **구현 단계**:
-
-    a. **필수 서비스 생성**:
-
-    ```yaml
-    # api-service.yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: api-service
-    spec:
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: api
-    ---
-    # admin-service.yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: admin-service
-    spec:
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: admin
-    ---
-    # frontend-service.yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: frontend-service
-    spec:
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: frontend
-    ```
-
-    b. **서비스에 대한 배포 생성**:
-
-    ```yaml
-    # api-deployment.yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: api-deployment
-    spec:
-      replicas: 2
-      selector:
-        matchLabels:
-          app: api
-      template:
-        metadata:
-          labels:
-            app: api
-        spec:
-          containers:
-          - name: api
-            image: nginx
-            ports:
-            - containerPort: 8080
-            readinessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-    ```
-
-    (admin 및 frontend 배포에 대해서도 유사한 구성 필요)
-
-    c. **AWS Load Balancer Controller 설치 확인**:
-
-    ```bash
-    kubectl get deployment -n kube-system aws-load-balancer-controller
-    ```
-
-    d. **Ingress 리소스 적용**:
-
-    ```bash
-    kubectl apply -f multi-path-ingress.yaml
-    ```
-
-    e. **Ingress 상태 확인**:
-
-    ```bash
-    kubectl get ingress multi-path-ingress
-    ```
-3.  **테스트 방법**:
-
-    a. **DNS 설정**: Ingress가 생성한 ALB의 DNS 이름을 가져옵니다:
-
-    ```bash
-    kubectl get ingress multi-path-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
-    ```
-
-    이 DNS 이름을 `example.com`에 대한 CNAME 레코드로 설정합니다.
-
-    b. **경로별 라우팅 테스트**:
-
-    ```bash
-    # API 서비스 테스트
-    curl https://example.com/api
-
-    # 관리자 서비스 테스트
-    curl https://example.com/admin
-
-    # 프론트엔드 서비스 테스트
-    curl https://example.com/
-    ```
-4.  **주의 사항 및 고려 사항**:
-
-    a. **SSL 인증서**: HTTPS를 사용하려면 유효한 SSL 인증서가 필요합니다. AWS Certificate Manager(ACM)에서 인증서를 생성하고 ARN을 어노테이션에 지정합니다.
-
-    b. **IAM 권한**: AWS Load Balancer Controller에는 ALB 및 관련 리소스를 생성하고 관리하기 위한 적절한 IAM 권한이 필요합니다.
-
-    c. **상태 확인**: 각 서비스는 상태 확인 엔드포인트(`/health`)를 제공해야 합니다.
-
-    d. **대상 그룹 설정**: `target-type: ip`를 사용하면 파드 IP가 직접 대상으로 사용됩니다. 이는 Fargate 파드나 노드 장애에 대한 복원력을 제공합니다.
-
-    e. **보안 그룹**: 필요한 경우 ALB에 특정 보안 그룹을 적용할 수 있습니다:
-
-    ```yaml
-    alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0
-    ```
-5.  **추가 구성 옵션**:
-
-    a. **세션 고정성 활성화**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400
-    ```
-
-    b. **액세스 로그 활성화**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=my-alb-logs,access_logs.s3.prefix=ingress-logs
-    ```
-
-    c. **IP 기반 제한**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/inbound-cidrs: 192.168.0.0/16,10.0.0.0/8
-    ```
-
-    d. **가중치 기반 라우팅**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/actions.weighted-routing: >
-      {"Type":"forward","ForwardConfig":{"TargetGroups":[{"ServiceName":"service-v1","ServicePort":"80","Weight":80},{"ServiceName":"service-v2","ServicePort":"80","Weight":20}]}}
-    ```
-
-AWS Load Balancer Controller와 Ingress 리소스를 사용하면 EKS 클러스터에서 복잡한 라우팅 규칙을 구현할 수 있으며, ALB의 다양한 기능을 활용하여 애플리케이션의 가용성, 확장성 및 보안을 향상시킬 수 있습니다.
+선택적인 가중치 라우팅은 기존 `service-v1`/`service-v2`를 사용하는 별도 예제입니다. action은 `use-annotation` 백엔드로 참조해야 하며 어노테이션만 추가하면 효과가 없습니다. 의도한 네임스페이스에서 충돌하는 경로 없이 사용합니다.
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weighted-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/actions.weighted-routing: >-
+      {"type":"forward","forwardConfig":{"targetGroups":[{"serviceName":"service-v1","servicePort":"80","weight":80},{"serviceName":"service-v2","servicePort":"80","weight":20}]}}
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: weighted-routing
+            port:
+              name: use-annotation
+```
+저장한 UID를 확인한 뒤 이 실습 네임스페이스만 정리합니다. 네임스페이스 삭제 전에 LBC가 Ingress 로드 밸런서를 제거하게 합니다. 종료가 실패하면 컨트롤러·IAM·삭제 보호 상태를 진단하고 finalizer를 강제 제거하지 마세요. 이 블록은 공유 인증서·컨트롤러 역할·DNS 레코드를 삭제하지 않습니다.
+```bash
+set -euo pipefail
+: "${LAB_NS:?Use the namespace from this exercise}"
+: "${LAB_UID:?Use the UID saved when that namespace was created}"
+case "$LAB_NS" in alb-paths-*) ;; *) echo "Unexpected namespace"; exit 1 ;; esac
+CURRENT_UID=$(kubectl get namespace "$LAB_NS" -o jsonpath='{.metadata.uid}')
+test "$CURRENT_UID" = "$LAB_UID" || { echo "Namespace identity changed"; exit 1; }
+kubectl -n "$LAB_NS" delete ingress multi-path-ingress --ignore-not-found --wait=true --timeout=300s
+kubectl delete namespace "$LAB_NS" --wait=true --timeout=300s
+```
 
 </details>
 
-## 고급 문제
-
-### 10. Amazon EKS 클러스터에서 서비스 메시(예: Istio, AWS App Mesh)를 구현할 때의 주요 고려 사항과 네트워킹 아키텍처 변화를 설명하세요. 또한, 서비스 메시가 EKS의 기본 네트워킹 모델과 어떻게 통합되는지 설명하세요.
+### 10. 서비스 메시는 EKS 네트워킹을 어떻게 바꾸며 무엇을 검증해야 하나요?
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: 호환되는 Pod 네트워크 위에 트래픽·보안·텔레메트리 처리를 추가합니다.**
 
-**정답:** Amazon EKS 클러스터에서 서비스 메시(예: Istio, AWS App Mesh)를 구현할 때의 주요 고려 사항과 네트워킹 아키텍처 변화, 그리고 서비스 메시가 EKS의 기본 네트워킹 모델과 어떻게 통합되는지에 대한 설명은 다음과 같습니다:
-
-### 1. 서비스 메시 개요 및 주요 구성 요소
-
-**서비스 메시란?** 서비스 메시는 마이크로서비스 간의 통신을 관리하는 인프라 계층으로, 서비스 디스커버리, 트래픽 관리, 보안, 관찰 가능성 등의 기능을 제공합니다.
-
-**주요 구성 요소:**
-
-1. **데이터 플레인**:
-   * 사이드카 프록시(일반적으로 Envoy)가 각 파드에 주입됩니다.
-   * 모든 인바운드 및 아웃바운드 트래픽을 가로채고 처리합니다.
-2. **컨트롤 플레인**:
-   * 정책 및 구성을 관리합니다.
-   * 데이터 플레인 프록시를 구성합니다.
-   * 서비스 디스커버리 및 라우팅 정보를 제공합니다.
-
-### 2. EKS 네트워킹 아키텍처 변화
-
-**기본 EKS 네트워킹 모델:**
-
-* Amazon VPC CNI를 사용하여 파드에 VPC IP 주소를 할당합니다.
-* 파드는 VPC 내에서 직접 통신합니다.
-* Kubernetes Service 리소스가 서비스 디스커버리 및 로드 밸런싱을 제공합니다.
-
-**서비스 메시 도입 후 변화:**
-
-1.  **트래픽 흐름 변경**:
-
-    ```
-    기본 EKS: 클라이언트 → 서비스 → 대상 파드
-    서비스 메시: 클라이언트 → 클라이언트 사이드카 → 서비스 → 대상 사이드카 → 대상 파드
-    ```
-2. **네트워크 토폴로지**:
-   * 각 파드에 사이드카 컨테이너가 추가됩니다.
-   * 파드 내 로컬 네트워크를 통해 애플리케이션과 사이드카가 통신합니다.
-   * 사이드카 간 통신은 여전히 VPC CNI를 통해 이루어집니다.
-3. **포트 할당**:
-   * 사이드카 프록시는 추가 포트를 사용합니다(관리, 메트릭, 상태 확인 등).
-   * 파드 내에서 포트 리디렉션이 발생합니다.
-
-### 3. 주요 서비스 메시 옵션 비교
-
-#### Istio
-
-**아키텍처 통합:**
-
-```yaml
-# Istio 사이드카 주입 예시
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        sidecar.istio.io/inject: "true"  # 사이드카 자동 주입
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
+컨트롤 플레인은 구성·워크로드 신원을 배포하고 데이터 플레인 프록시는 등록된 트래픽을 처리합니다. 사이드카 방식에서는 애플리케이션과 프록시가 **동일한 Pod 네트워크 네임스페이스/IP**를 공유하므로 사이드카 자체가 VPC IP·ENI를 하나 더 소비하지 않습니다. 별도 메시 게이트웨이·컨트롤 플레인 Pod는 자원과 IP를 사용합니다. Ambient 방식은 노드 프록시와 선택적 waypoint를 사용하므로 “모든 Pod에 사이드카”는 보편적 설명이 아닙니다.
+```text
+Client application → client proxy → Pod network → destination proxy → destination application
 ```
+이는 논리적 사이드카 경로이며 모든 패킷이 Service 가상 IP를 지나거나 가로채진다는 보장은 아닙니다. 제외 포트, UDP, host-network 트래픽, 네임스페이스 등록과 모드를 확인합니다. VPC 경로·SG·NetworkPolicy는 계속 적용됩니다. L3/L4 정책은 데이터 플레인·DNS·컨트롤 플레인·헬스체크의 실제 경로를 허용해야 하며 mTLS의 피어 인증·암호화는 애플리케이션 권한 검사를 대체하지 않습니다.
 
-**네트워킹 기능:**
+Istio는 컴퓨팅 유형에 맞는 사이드카/ambient 설치 하나를 선택합니다. Fargate는 일부 모드에 필요한 노드 DaemonSet·특권 구성 요소를 실행할 수 없으므로 보편적 호환성을 주장하지 말고 지원 경로를 확인하세요. 한 네임스페이스에 메시 injector 두 개를 켜지 않습니다. 프록시 자원은 지원되는 Helm·설치·워크로드 설정으로 구성하며 관련 없는 `pilot.resources`로 injector ConfigMap을 덮어쓰지 않습니다. Prometheus·트레이싱 배포와 메시 내보내기 설정도 구분합니다. 제거된 `IstioOperator.addonComponents.prometheus`와 존재하지 않는 App Mesh `Mesh.spec.tracing`는 사용할 수 있는 설치 절차가 아닙니다.
 
-* 고급 트래픽 관리(가중치 기반 라우팅, 카나리 배포)
-* 서킷 브레이커 및 결함 주입
-* mTLS를 통한 서비스 간 암호화
-* 세분화된 액세스 제어
+**이전 제품 비교:** AWS는 **2026년 9월 30일** App Mesh 지원을 종료하며 이후 콘솔·리소스에 접근할 수 없다고 공지했습니다. 감사일 현재 기존 App Mesh 배포에는 이전 계획이 필요하며 새 EKS 기본 선택지로 도입하지 마세요. 과거 Fargate 통합도 향후 지원 보장이 아닙니다. ECS Service Connect는 ECS용이지 EKS의 직접 대체품이 아닙니다. 지원되는 EKS 메시·데이터 플레인 설계에서 라우팅·재시도·인증서·권한·트레이싱·장애 처리의 동등성을 검증합니다.
 
-**EKS 통합 고려 사항:**
+기존 “일반적으로 <10 ms” 지연 및 “10–15%” CPU·메모리 오버헤드 수치는 이 문서에서 검증된 측정 출처가 없습니다. **검증되지 않은 과거 추정값**으로 보존하며 벤치마크나 용량 보장으로 사용하지 않습니다. 등록 전후 동일한 요청 구성·TLS·텔레메트리 샘플링·부하에서 p50/p95/p99 지연, 처리량, 오류와 CPU·메모리를 측정합니다. 프록시 롤아웃, 노드·컨트롤 플레인 장애, 인증서 회전과 재시도 증폭도 테스트하세요.
 
-* 리소스 요구 사항이 높음(특히 컨트롤 플레인)
-* Fargate와의 호환성 제한
-* 복잡한 설정 및 관리
-
-#### AWS App Mesh
-
-**아키텍처 통합:**
-
-```yaml
-# App Mesh 사이드카 주입 예시
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        appmesh.k8s.aws/mesh: my-mesh  # App Mesh 메시 이름
-        appmesh.k8s.aws/virtualNode: example-vn  # 가상 노드 이름
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
-```
-
-**네트워킹 기능:**
-
-* AWS 서비스와의 원활한 통합
-* 교차 계정 및 하이브리드 메시 지원
-* AWS X-Ray와의 통합
-* 상대적으로 간단한 설정
-
-**EKS 통합 고려 사항:**
-
-* AWS 서비스와의 통합이 우수함
-* Fargate와 호환됨
-* 일부 고급 기능이 제한적일 수 있음
-
-### 4. 네트워킹 고려 사항
-
-#### 성능 영향
-
-1. **지연 시간**:
-   * 사이드카 프록시로 인한 추가 홉으로 약간의 지연 시간 증가(일반적으로 <10ms)
-   *   최적화 기법:
-
-       ```yaml
-       # Istio 예시: 프록시 리소스 최적화
-       apiVersion: v1
-       kind: ConfigMap
-       metadata:
-         name: istio-sidecar-injector
-         namespace: istio-system
-       data:
-         values: |-
-           pilot:
-             resources:
-               requests:
-                 cpu: 500m
-                 memory: 2048Mi
-       ```
-2. **리소스 사용량**:
-   * 각 파드에 대한 추가 CPU 및 메모리 오버헤드(일반적으로 10-15%)
-   * 노드 밀도 감소 가능성
-
-#### 네트워크 정책 통합
-
-1. **Kubernetes NetworkPolicy와의 관계**:
-   * 서비스 메시는 L7 정책을 제공하는 반면, NetworkPolicy는 L3/L4 정책을 제공합니다.
-   * 두 정책 유형을 함께 사용하여 심층 방어를 구현할 수 있습니다.
-2.  **정책 예시**:
-
-    ```yaml
-    # Istio 인증 정책
-    apiVersion: security.istio.io/v1beta1
-    kind: PeerAuthentication
-    metadata:
-      name: default
-      namespace: istio-system
-    spec:
-      mtls:
-        mode: STRICT
-    ---
-    # Kubernetes NetworkPolicy
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-same-namespace
-    spec:
-      podSelector: {}
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: default
-    ```
-
-### 5. 서비스 메시 구현 단계
-
-#### 1. 사전 요구 사항 확인
-
-* 클러스터 버전 호환성 확인
-* 리소스 요구 사항 평가
-* 네트워킹 모델 검토
-
-#### 2. 컨트롤 플레인 설치
-
-**Istio 예시:**
-
-```bash
-istioctl install --set profile=default
-```
-
-**App Mesh 예시:**
-
-```bash
-helm repo add eks https://aws.github.io/eks-charts
-helm install appmesh-controller eks/appmesh-controller \
-  --namespace appmesh-system \
-  --create-namespace
-```
-
-#### 3. 사이드카 주입 구성
-
-**자동 주입:**
-
-```yaml
-# 네임스페이스에 레이블 추가
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: my-app
-  labels:
-    istio-injection: enabled  # Istio
-    appmesh.k8s.aws/sidecarInjectorWebhook: enabled  # App Mesh
-```
-
-#### 4. 서비스 메시 리소스 정의
-
-**Istio 가상 서비스 및 대상 규칙:**
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: reviews
-spec:
-  hosts:
-  - reviews
-  http:
-  - route:
-    - destination:
-        host: reviews
-        subset: v1
-      weight: 90
-    - destination:
-        host: reviews
-        subset: v2
-      weight: 10
----
-apiVersion: networking.istio.io/v1alpha3
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  subsets:
-  - name: v1
-    labels:
-      version: v1
-  - name: v2
-    labels:
-      version: v2
-```
-
-**App Mesh 가상 서비스 및 가상 라우터:**
-
-```yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualService
-metadata:
-  name: reviews
-  namespace: my-app
-spec:
-  awsName: reviews.my-app.svc.cluster.local
-  provider:
-    virtualRouter:
-      virtualRouterRef:
-        name: reviews-router
----
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: reviews-router
-  namespace: my-app
-spec:
-  listeners:
-    - portMapping:
-        port: 9080
-        protocol: http
-  routes:
-    - name: reviews-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: reviews-v1
-              weight: 90
-            - virtualNodeRef:
-                name: reviews-v2
-              weight: 10
-```
-
-### 6. 모니터링 및 관찰 가능성
-
-#### 메트릭 수집
-
-**Prometheus 통합:**
-
-```yaml
-# Istio Prometheus 구성
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  addonComponents:
-    prometheus:
-      enabled: true
-```
-
-#### 분산 추적
-
-**X-Ray 통합 (App Mesh):**
-
-```yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  serviceDiscovery:
-    ipPreference: IPv4_PREFERRED
-  egressFilter:
-    type: ALLOW_ALL
-  tracing:
-    awsXRay:
-      logLevel: INFO
-```
-
-### 7. 서비스 메시 도입 모범 사례
-
-1. **점진적 도입**:
-   * 비즈니스에 중요하지 않은 워크로드부터 시작
-   * 단계적으로 확장
-2. **리소스 계획**:
-   * 노드 크기 및 수 증가 고려
-   * 컨트롤 플레인에 전용 노드 그룹 사용
-3. **네트워킹 최적화**:
-   * 불필요한 사이드카 주입 방지
-   * 적절한 타임아웃 및 재시도 정책 구성
-4. **보안 강화**:
-   * mTLS 점진적 도입
-   * 최소 권한 원칙 적용
-5. **모니터링 전략**:
-   * 서비스 메시 도입 전후 성능 비교
-   * 주요 메트릭 대시보드 구성
-
-### 8. EKS 특화 고려 사항
-
-1. **Fargate 호환성**:
-   * Istio: 제한된 지원 (일부 기능 사용 불가)
-   * App Mesh: 완전 지원
-2. **AWS Load Balancer Controller 통합**:
-   *   인그레스 게이트웨이와 ALB 통합:
-
-       ```yaml
-       apiVersion: networking.k8s.io/v1
-       kind: Ingress
-       metadata:
-         annotations:
-           kubernetes.io/ingress.class: alb
-           alb.ingress.kubernetes.io/scheme: internet-facing
-           alb.ingress.kubernetes.io/target-type: ip
-       ```
-3. **IAM 역할 및 권한**:
-   * App Mesh 컨트롤러에 필요한 IAM 권한:
-     * appmesh:\*
-     * servicediscovery:\*
-     * cloudmap:\*
-4. **VPC CNI 설정**:
-   * 서비스 메시로 인한 추가 ENI 및 IP 주소 요구 사항 고려
-   *   프리픽스 위임 활성화 권장:
-
-       ```bash
-       kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-       ```
-
-### 9. 서비스 메시 선택 가이드
-
-| 요소           | Istio  | AWS App Mesh |
-| ------------ | ------ | ------------ |
-| 기능 세트        | 매우 포괄적 | 핵심 기능에 집중    |
-| AWS 통합       | 제3자 통합 | 네이티브 통합      |
-| 복잡성          | 높음     | 중간           |
-| 리소스 요구 사항    | 높음     | 중간           |
-| Fargate 지원   | 제한적    | 완전 지원        |
-| 커뮤니티         | 매우 활발  | 성장 중         |
-| 하이브리드/멀티클라우드 | 강력한 지원 | AWS 중심       |
-
-서비스 메시는 EKS 클러스터의 네트워킹 아키텍처에 상당한 변화를 가져오지만, 마이크로서비스 아키텍처의 복잡성을 관리하는 데 강력한 도구를 제공합니다. 기본 EKS 네트워킹 모델과의 통합은 사이드카 패턴을 통해 이루어지며, 이는 기존 애플리케이션 코드를 변경하지 않고도 고급 네트워킹 기능을 추가할 수 있게 합니다. 서비스 메시 도입 시에는 성능 영향, 운영 복잡성, 리소스 요구 사항을 신중하게 고려해야 하며, 점진적인 접근 방식이 권장됩니다.
+전용 네임스페이스에서 injector 하나, 준비된 워크로드, mTLS와 허용·거부 정책을 검증하고 점진적으로 확장합니다. LBC를 메시 ingress gateway 앞에 둘 때는 해당 gateway Service와 대상 포트·프로브를 확인하며 Ingress API 객체는 또 다른 프록시 홉이 아닌 구성입니다. 필요한 컨트롤러 IAM을 제한하고 `cloudmap:*`를 실제 `servicediscovery` IAM 접두사 대신 사용하지 않습니다. Prefix delegation은 IP 용량 선택이지 사이드카 필수 요건이 아닙니다. 구현은 유지 관리되는 [Istio 설치](../../service-mesh/istio/01-installation.md)와 [AWS 통합](../../service-mesh/istio/04-aws-integration.md) 문서를 참고하세요.
 
 </details>
 
@@ -1516,7 +664,7 @@ A. IngressRoute B. HTTPRoute C. VirtualService D. ServiceRoute
 
 <details>
 
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: B. HTTPRoute**
 
@@ -1528,6 +676,8 @@ A. IngressRoute B. HTTPRoute C. VirtualService D. ServiceRoute
 2. **Gateway**: 실제 로드 밸런서 인스턴스 (리스너 포트, TLS 설정 등)
 3. **HTTPRoute**: L7 라우팅 규칙 (호스트, 경로, 헤더 기반 라우팅)
 4. **TCPRoute**: L4 라우팅 규칙 (TCP 트래픽)
+
+LBC는 ALB와 NLB Gateway를 별도로 사용합니다. 임의의 GatewayClass 이름이 아니라 controllerName이 구현을 선택하며 지원 필터는 릴리스 적합성 표를 확인합니다.
 
 **HTTPRoute의 주요 기능:**
 
@@ -1544,29 +694,19 @@ A. IngressRoute B. HTTPRoute C. VirtualService D. ServiceRoute
 
 </details>
 
-### 12. AWS Load Balancer Controller에서 Gateway API를 활성화하기 위해 필요한 feature gate 플래그는 무엇인가요?
+### 12. LBC 3.5.0의 Gateway 컨트롤러는 어떻게 활성화되나요?
 
-A. `--enable-gateway-api` B. `--feature-gates=EnableGatewayAPI=true` C. `--gateway-api-enabled=true` D. `--enable-feature=gateway-api`
+- A. Always pass `--enable-gateway-api`
+- B. Detect compatible CRDs with the real default-enabled gates
+- C. Use `--feature-gates=EnableGatewayAPI=true`
+- D. Install only experimental CRDs from 1.2.1
 
 <details>
+<summary>정답 보기</summary>
 
-<summary>정답 및 설명</summary>
+**정답: B. 필요한 CRD를 감지하며 ALBGatewayAPI/NLBGatewayAPI는 기본 활성입니다.**
 
-**정답: B. `--feature-gates=EnableGatewayAPI=true`**
-
-**설명:** AWS Load Balancer Controller에서 Gateway API를 활성화하려면 컨트롤러 배포 시 `--feature-gates=EnableGatewayAPI=true` 플래그를 추가해야 합니다. 이 feature gate는 컨트롤러가 Gateway API 리소스(GatewayClass, Gateway, HTTPRoute, TCPRoute 등)를 감시하고 처리하도록 활성화합니다.
-
-**Gateway API 활성화를 위한 전체 사전 요구 사항:**
-
-1. AWS Load Balancer Controller v2.13.0 이상 설치
-2. `--feature-gates=EnableGatewayAPI=true` 플래그 추가
-3. Gateway API Standard CRDs 설치
-4. Experimental CRDs 설치 (TCPRoute 등 사용 시)
-5. AWS LBC 전용 CRDs 설치
-
-다른 옵션들의 문제점:
-
-* **A, C, D**: 이러한 플래그는 AWS Load Balancer Controller에서 사용되지 않는 올바르지 않은 형식입니다.
+릴리스와 호환되는 Gateway API 1.6.0 standard CRD와 LBC 전용 Gateway CRD를 설치합니다. 기본 활성 gate는 `ALBGatewayAPI`, `NLBGatewayAPI`이며 `EnableGatewayAPI`는 알 수 없는 feature 이름입니다. TCPRoute/UDPRoute는 이제 standard 채널에서 v1으로 제공됩니다. 이전 컨트롤러의 호환성·gate 조건은 다르며 L4 지원은 2.13.3, L7 지원은 2.14.0부터입니다. CRD 설치 후 컨트롤러 시작·로그를 확인하고 IAM·서브넷·백엔드도 준비해야 합니다.
 
 </details>
 
@@ -1576,7 +716,7 @@ A. HTTPRoute B. TLSRoute C. TCPRoute D. GRPCRoute
 
 <details>
 
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
 **정답: C. TCPRoute**
 
@@ -1585,10 +725,11 @@ A. HTTPRoute B. TLSRoute C. TCPRoute D. GRPCRoute
 **TCPRoute 설정 예시:**
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: db-route
+  namespace: gateway-demo
 spec:
   parentRefs:
   - name: my-nlb-gateway
@@ -1615,3 +756,38 @@ spec:
 * **D. GRPCRoute**: gRPC 프로토콜 전용 라우팅 리소스입니다.
 
 </details>
+`my-nlb-gateway` 리스너와 백엔드 Service는 `gateway-demo`에 있어야 합니다. 이 구현의 TLSRoute는 NLB의 SNI 기반 라우팅을 제공하지 않으므로 모든 Gateway API 구현이 같다고 가정하지 말고 릴리스별 TLS 동작을 확인합니다.
+
+### 14. LBC 3.5.0은 ALB Gateway의 정적 인증서를 어떻게 구성하나요?
+
+- A. Create any Secret named tls-cert
+- B. Use the ACM ARN in LoadBalancerConfiguration
+- C. Add only a Route hostname
+- D. Set backend Service port 443
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B. `LoadBalancerConfiguration.spec.listenerConfigurations[].defaultCertificate`**
+
+HTTPS 리스너에 같은 리전의 유효한 ACM 인증서 ARN을 사용합니다. 이 구현은 Kubernetes Secret `certificateRefs`를 지원하지 않습니다. 호스트명 디스커버리도 기존의 일치하는 ACM 인증서와 보안 리스너가 필요합니다. 백엔드 포트가 443인 HTTPRoute만으로 클라이언트 HTTPS가 구성되지는 않습니다.
+
+</details>
+
+### 15. frontend 전용 ingress 정책이 기존 같은 네임스페이스 전체 허용 정책을 좁히나요?
+
+- A. Yes, the newest policy wins
+- B. Yes, the most specific selector wins
+- C. No, matching allows form a union
+- D. Only if the policy name sorts first
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C. 아니요. 일치하는 NetworkPolicy 허용은 합집합입니다.**
+
+두 정책이 백엔드를 선택하면 더 넓은 같은 네임스페이스 허용에 의해 다른 호출자도 계속 허용됩니다. 소유 관리 도구로 넓은 정책을 제거하거나 좁힌 뒤 허용·거부 연결을 테스트하세요. Ingress와 egress 격리는 별개이며 DNS egress와 대상 ingress도 테스트 결과에 영향을 줍니다.
+
+</details>
+
+공식 참고: [LBC Gateway API](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/gateway/gateway/), [PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/create-endpoint-service.html), [NLB client IP](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html), [WAF associations](https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html), [App Mesh retirement](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html).

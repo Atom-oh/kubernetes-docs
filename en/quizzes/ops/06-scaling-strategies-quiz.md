@@ -21,37 +21,37 @@ HPA with custom metrics requires a metrics server that implements the custom.met
 
 </details>
 
-### 2. What type of events can KEDA scale on that HPA cannot?
+### 2. What does KEDA add around the native HPA control loop?
 
 - A) CPU utilization
 - B) Memory usage
-- C) External events like SQS queue depth or Kafka lag
+- C) Event-source scalers and activation/scale-to-zero management
 - D) Pod restart counts
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) External events like SQS queue depth or Kafka lag**
+**Answer: C) Event-source scalers and activation/scale-to-zero management**
 
 **Explanation:**
-KEDA (Kubernetes Event-Driven Autoscaling) includes scalers for external systems like AWS SQS, Kafka, RabbitMQ, databases, and more. It can scale to zero and react to events outside the Kubernetes metrics system.
+KEDA (Kubernetes Event-Driven Autoscaling) includes scalers for external systems like AWS SQS, Kafka, RabbitMQ, databases, and more. It supplies external metrics to HPA and manages activation/zero transitions for supported workloads. HPA itself can also consume external metrics through an adapter; KEDA does not make it incapable of reading them.
 
 </details>
 
-### 3. What is the difference between VPA modes: "Auto" and "Off"?
+### 3. What is the difference between VPA modes: "Recreate" and "Off"?
 
-- A) Auto enables HPA, Off disables it
-- B) Auto updates pods in-place, Off only provides recommendations
-- C) Auto requires restart, Off is instant
-- D) Auto uses Spot instances, Off uses On-Demand
+- A) Recreate enables HPA, Off disables it
+- B) Recreate can evict/recreate Pods; Off only provides recommendations
+- C) Recreate guarantees no interruption; Off is instant
+- D) Recreate uses Spot instances; Off uses On-Demand
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Auto updates pods in-place, Off only provides recommendations**
+**Answer: B) Recreate can evict/recreate Pods; Off only provides recommendations**
 
 **Explanation:**
-VPA "Auto" mode automatically evicts and recreates pods with updated resource requests. "Off" mode only generates recommendations without making changes, useful for reviewing suggestions before manual implementation.
+VPA 1.7.1 deprecates Auto, which currently behaves like Recreate. Recreate can update by eviction/recreation; Off leaves recommendations for review. Explicit InPlaceOrRecreate and feature-gated InPlace are separate modes with different fallback behavior.
 
 </details>
 
@@ -68,7 +68,7 @@ VPA "Auto" mode automatically evicts and recreates pods with updated resource re
 **Answer: B) An annotation that influences which pods are removed first during scale-down**
 
 **Explanation:**
-The `controller.kubernetes.io/pod-deletion-cost` annotation assigns a cost value to pods. During scale-down, pods with lower deletion cost are terminated first. This helps preserve pods running important workloads or those with cached data.
+The `controller.kubernetes.io/pod-deletion-cost` annotation assigns a cost value to pods. Within a ReplicaSet, lower costs are preferred after earlier assignment, phase and readiness comparisons. This is best-effort, not protection against eviction, Spot reclamation, Job/StatefulSet behavior or scaling across different Deployments.
 
 </details>
 
@@ -85,7 +85,7 @@ The `controller.kubernetes.io/pod-deletion-cost` annotation assigns a cost value
 **Answer: B) desiredReplicas = ceil(currentReplicas * (currentMetricValue / desiredMetricValue))**
 
 **Explanation:**
-HPA calculates desired replicas by comparing current metric values to target values, then scaling proportionally. The ceiling function ensures at least one additional replica is added when scaling up.
+HPA calculates desired replicas by comparing current metric values to target values, then scaling proportionally. This simplified formula assumes usable metrics and ready Pods. Tolerance, missing data, min/max and scaling behavior can prevent or limit an actual change; the ceiling does not guarantee an extra Pod.
 
 </details>
 
@@ -102,7 +102,7 @@ HPA calculates desired replicas by comparing current metric values to target val
 **Answer: B) Use Pod Disruption Budgets and graceful termination with interruption handlers**
 
 **Explanation:**
-Spot interruption handling combines AWS Node Termination Handler (or Karpenter's native handling), Pod Disruption Budgets to ensure availability, adequate termination grace periods, and workload design that handles preemption gracefully.
+Choose the handling appropriate to the node mode: managed Auto Mode, configured self-managed Karpenter, or a complete Node Termination Handler setup where needed. Avoid duplicate drain controllers. PDBs and grace periods do not prevent Spot loss or guarantee a full two-minute application shutdown window.
 
 </details>
 
@@ -136,7 +136,7 @@ Spot interruption handling combines AWS Node Termination Handler (or Karpenter's
 **Answer: B) In-place Pod Vertical Scaling**
 
 **Explanation:**
-Kubernetes 1.27+ supports in-place vertical scaling through the `resizePolicy` field, allowing CPU and memory changes without pod restart. VPA can leverage this for less disruptive resource adjustments.
+In-place Pod resize progressed from alpha in 1.27 to beta in 1.33 and stable in 1.35. Supported VPA modes can use it, but resizePolicy can still require a container restart and capacity/QoS constraints can defer or reject an update.
 
 </details>
 
@@ -153,7 +153,7 @@ Kubernetes 1.27+ supports in-place vertical scaling through the `resizePolicy` f
 **Answer: B) Support for custom and external metrics beyond CPU/memory**
 
 **Explanation:**
-Metrics-server only provides CPU and memory metrics. Prometheus Adapter exposes any Prometheus metric through the custom.metrics.k8s.io API, enabling HPA to scale on application metrics like requests per second, queue depth, or latency.
+Metrics-server only provides CPU and memory metrics. Prometheus Adapter exposes configured and available series through the custom.metrics.k8s.io API, enabling HPA to scale on application metrics like requests per second, queue depth, or latency.
 
 </details>
 
@@ -170,6 +170,6 @@ Metrics-server only provides CPU and memory metrics. Prometheus Adapter exposes 
 **Answer: B) Configure them on different resource dimensions (HPA on CPU, VPA on memory)**
 
 **Explanation:**
-HPA and VPA can conflict if both try to manage the same resource dimension. A common pattern is using HPA for horizontal scaling based on CPU and VPA in recommendation mode for memory, or using the VPA "Initial" mode which only sets resources at pod creation.
+HPA and VPA can conflict if both try to manage the same resource dimension. Options include recommendation-only VPA or workload metrics such as RPS/backlog for HPA while VPA handles sizing. Initial still changes new Pods' requests and therefore does not eliminate CPU-utilization denominator interactions. Validate restart and scheduling effects too.
 
 </details>

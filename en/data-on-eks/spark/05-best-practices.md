@@ -1,212 +1,534 @@
 # Part 5: Best Practices and Security
 
-> **Last Updated**: July 15, 2026
+> **Review baseline**: September 12, 2026 · upstream Spark 4.2.0 / Hadoop 3.5.0 / AWS SDK v2 2.35.4
 
-Across this five-part series we covered Spark on Kubernetes fundamentals (Part 1), deploying and managing jobs declaratively with the Spark Operator (Part 2), Amazon EMR on EKS as a managed alternative (Part 3), and performance/cost tuning including driver/executor resource sizing (Part 4). This final document rounds things out with what's left before a Spark-on-EKS pipeline is genuinely production-ready: secure, credential-free access to S3, observability that survives a driver pod disappearing, a recap of resource sizing philosophy, and security hardening beyond IAM.
+## Scope
 
-## Lab Environment Setup
+This chapter builds on Part 1's direct Kubernetes submission, covering temporary
+S3 credentials, metrics/event logs, History Server, networking and RBAC. Use
+Kubernetes 1.34+ for Spark 4.2 and compatible kubectl, with the spark-jobs namespace
+and EKS access prepared. Operators and EMR require their own configuration and
+permission paths.
 
-To follow along with the examples in this document, you will need:
+Prepare administrator access for IRSA or Pod Identity, an existing S3 bucket and
+roles, a registry and image-build tools. Apply the PodMonitor example only where
+Prometheus Operator is installed. Account, bucket, image and region values below
+are **examples to replace**. A configuration checklist alone does not establish
+operational safety, recovery or performance.
 
-* kubectl v1.30 or later, pointed at a working Amazon EKS cluster
-* An IAM OIDC provider enabled on the cluster (required for IRSA)
-* An S3 bucket for Spark event logs / checkpoint data, plus permission to create IAM roles and policies
-* Helm 3, if deploying the Spark History Server via a chart rather than a plain `Deployment` manifest
-* A Prometheus/Grafana stack (e.g. the `kube-prometheus-stack` chart), only needed if you want to actually scrape and visualize the metrics endpoints covered below
+## 1. Build a version-compatible S3A image
 
-## 1. Secure S3 Access with IRSA
+The reviewed Spark 4.2 distribution includes Hadoop client 3.5.0, but not all
+additional S3A dependencies. Match hadoop-aws to the **same Hadoop version**.
+The Maven-resolved runtime dependencies for 3.5.0 are:
 
-Driver and executor pods routinely need to talk to S3 — reading input data, writing output, and (as covered in Part 4 and again below) writing checkpoint and event log data. The production-grade way to grant that access on EKS is **IAM Roles for Service Accounts (IRSA)**: bind the Kubernetes service account the driver/executor pods run as to an IAM role, and configure Spark's Hadoop S3A connector to pick up credentials from that binding automatically. No static AWS access keys ever need to exist in a Secret, a ConfigMap, or a container image.
+| Artifact | Version |
+| --- | --- |
+| org.apache.hadoop:hadoop-aws | 3.5.0 |
+| software.amazon.awssdk:bundle | 2.35.4 |
+| software.amazon.s3.analyticsaccelerator:analyticsaccelerator-s3 | 1.3.1 |
+| org.wildfly.openssl:wildfly-openssl | 2.2.5.Final |
 
-The S3A connector doesn't do this by default — you have to point it explicitly at the credentials provider that knows how to exchange the pod's projected service account token for temporary AWS credentials:
+Do not mix arbitrary old AWS SDK JARs or copy only hadoop-aws. This POM resolves
+its runtime dependencies without recopying Hadoop common. Recheck bundled versions
+for a different Spark image or EMR runtime.
 
-```properties
-spark.hadoop.fs.s3a.aws.credentials.provider=com.amazonaws.auth.WebIdentityTokenCredentialsProvider
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>docs.review</groupId>
+  <artifactId>spark-s3a-runtime</artifactId>
+  <version>1.0.0</version>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-aws</artifactId>
+      <version>3.5.0</version>
+    </dependency>
+  </dependencies>
+</project>
 ```
 
-`WebIdentityTokenCredentialsProvider` reads the web identity token that the EKS Pod Identity webhook automatically projects into the pod (as long as the pod's service account is annotated correctly) and calls STS `AssumeRoleWithWebIdentity` behind the scenes, refreshing the resulting temporary credentials as they expire.
+Save as Dockerfile. The chosen image platform must match workload and History Server nodes.
 
-Putting it together, a driver/executor service account looks like this:
+```dockerfile
+FROM spark:4.2.0-scala2.13-java21-ubuntu
+COPY --chown=185:185 s3a-jars/ /opt/spark/jars/
+USER 185
+```
+
+```bash
+# Save the XML below as s3a-pom.xml.
+mvn -f s3a-pom.xml org.apache.maven.plugins:maven-dependency-plugin:3.8.1:copy-dependencies \
+  -DincludeScope=runtime -DoutputDirectory="$PWD/s3a-jars"
+: "${SPARK_S3_IMAGE:?Set a registry/repository/tag you can publish}"
+: "${SPARK_IMAGE_PLATFORM:?Set a platform matching the target nodes, for example linux/amd64}"
+docker build --platform "$SPARK_IMAGE_PLATFORM" --tag "$SPARK_S3_IMAGE" .
+# Authenticate to your registry through your normal procedure, then publish the tested image.
+docker push "$SPARK_S3_IMAGE"
+```
+
+Use the dependency-complete image for driver, executors and History Server.
+--packages resolves dependencies through the submitter; it does not automatically
+install them into a History Server launched with spark-class. Validate registry
+access, image checks, compatibility and actual S3 reads/writes, then pin the
+tested image digest for operations.
+
+## 2. Distinguish IRSA from Pod Identity
+
+For this Hadoop 3.5.0 / SDK v2 combination, use:
+
+| Identity path | fs.s3a.aws.credentials.provider |
+| --- | --- |
+| IRSA | software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider |
+| EKS Pod Identity | software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider |
+
+IRSA uses OIDC trust, a service-account annotation and a projected web-identity
+token. Pod Identity uses an association and the Agent's container-credential path;
+the IRSA annotation does not configure it. Do not blindly combine both paths.
+
+The default S3A chain includes the container/instance credential wrapper, but not
+the web-identity provider. The old com.amazonaws.auth.WebIdentityTokenCredentialsProvider
+was not automatically mapped in this SDK-v2-only combination. Some other legacy
+aliases are mapped, so this is not a claim that all old names always fail.
+An explicit identity path also reduces unintended fallback to other credential
+sources. Temporary credentials still require correct trust, permissions and networking.
+
+Save this **IRSA example** as serviceaccounts.yaml. Replace the roles and first
+configure trust for the cluster's OIDC provider, audience and exact namespace/
+service-account subject. Executors and History Server do not receive the driver's
+Kubernetes management permissions.
 
 ```yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: spark-s3-sa
+  name: spark-data-driver
   namespace: spark-jobs
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/spark-s3-access
-```
-
-```bash
-spark-submit \
-  --master k8s://https://<EKS_API_SERVER_ENDPOINT>:443 \
-  --deploy-mode cluster \
-  --conf spark.kubernetes.namespace=spark-jobs \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark-s3-sa \
-  --conf spark.kubernetes.authenticate.executor.serviceAccountName=spark-s3-sa \
-  --conf spark.hadoop.fs.s3a.aws.credentials.provider=com.amazonaws.auth.WebIdentityTokenCredentialsProvider \
-  --conf spark.hadoop.fs.s3a.endpoint.region=us-east-1 \
-  local:///opt/spark/jobs/etl-job.jar
-```
-
-The IAM role (`spark-s3-access` above) itself needs a trust policy scoped to the cluster's OIDC provider and the specific namespace/service-account subject, plus a permissions policy scoped to only the S3 bucket(s) and prefixes the job actually needs — not a blanket `s3:*` on `*`.
-
-## 2. Observability: Two Ways to Get Prometheus Metrics
-
-Part 2 covered the Spark Operator's Helm chart, which by default wires up metrics through the older pattern: a `JmxSink` inside Spark exposing metrics over JMX, scraped by a standalone **JMX Prometheus Exporter** Java agent (`-javaagent:...jmx_prometheus_javaagent.jar`) attached to the JVM, which translates JMX MBeans into a Prometheus-scrapable HTTP endpoint. It works well and has a mature ecosystem of ready-made Grafana dashboards, but it's an extra moving part: an extra JAR to ship in the image, an extra agent config file, and an extra process attached to each JVM.
-
-Since Spark 3.0, there's a lower-friction alternative built directly into Spark: the native **`PrometheusServlet`**. It exposes metrics in Prometheus text format directly on Spark's existing UI port — no external JAR, no separate agent, nothing extra to attach to the JVM.
-
-```properties
-# metrics.properties
-*.sink.prometheusServlet.class=org.apache.spark.metrics.sink.PrometheusServlet
-*.sink.prometheusServlet.path=/metrics/prometheus
-master.sink.prometheusServlet.path=/metrics/master/prometheus
-applications.sink.prometheusServlet.path=/metrics/applications/prometheus
-```
-
-```bash
-spark-submit \
-  --conf spark.metrics.conf=/opt/spark/conf/metrics.properties \
-  ...
-```
-
-(`metrics.properties` is typically mounted into the driver/executor pods from a `ConfigMap`.)
-
-**Which one to reach for:**
-
-- **`PrometheusServlet`** — simpler operationally (no extra agent/JAR, one less thing to version and patch), a good default for new pipelines that don't already depend on the JMX exporter's dashboard ecosystem.
-- **JmxSink + JMX Prometheus Exporter** — worth keeping if you're already using the Spark Operator's default chart wiring from Part 2, or if you want the broader, more mature set of community Grafana dashboards built specifically around the JMX exporter's metric naming.
-
-Both approaches expose Spark's own metrics (executor task counts, shuffle read/write, JVM GC, etc.) — they differ in transport and packaging, not in what's measured.
-
-## 3. Debugging Finished Jobs with the Spark History Server
-
-Part 1 covered how the driver pod itself does the scheduling — and that also means the driver pod is where the live Spark UI lives. Once a job finishes (or crashes), Kubernetes eventually reclaims that pod, and the UI goes with it. If someone asks "why did last night's job run slowly?" after the driver pod is long gone, there is no live UI left to check.
-
-The **Spark History Server** solves this by reading persisted event logs instead of talking to a live driver. Enable event logging on every job, writing to S3 (using the same IRSA setup from Section 1):
-
-```properties
-spark.eventLog.enabled=true
-spark.eventLog.dir=s3a://my-spark-bucket/spark-events/
-```
-
-Then run a History Server instance — typically a small, always-on `Deployment` on EKS — pointed at the same location:
-
-```properties
-# spark-history-server.conf, mounted into the History Server pod
-spark.history.fs.logDirectory=s3a://my-spark-bucket/spark-events/
-spark.hadoop.fs.s3a.aws.credentials.provider=com.amazonaws.auth.WebIdentityTokenCredentialsProvider
-```
-
-The History Server's own pod needs the same kind of IRSA-bound service account as driver/executor pods, since it's reading the same S3 bucket. Once it's running, it periodically rescans the event log directory and serves a reconstructed UI — job stages, SQL plans, executor timelines — for every completed job, regardless of whether that job's driver pod still exists. This turns "debug a job that already finished" from "impossible, the UI is gone" into "open the History Server and pick the application ID."
-
-## 4. Resource Sizing: A Quick Recap
-
-Part 4 covered this in depth, but it's worth restating as a philosophy going into production: **driver and executor pods are sized for different goals.** The driver isn't doing the heavy data processing — it's coordinating the job, tracking task state, and driving scheduling decisions — so driver sizing prioritizes *stability*: enough memory and CPU headroom that the driver itself never becomes the bottleneck or, worse, gets OOMKilled and takes the whole job down with it. Executors are where the actual work happens, so executor sizing (`spark.executor.memory`, `spark.executor.cores`, mapped onto Kubernetes `resources.requests`/`resources.limits` as covered in Part 1) is tuned for *throughput* against your job's actual shuffle volume and per-task memory footprint.
-
-There still isn't a universal numeric default that fits every job here — the right values come out of benchmarking your actual workload under realistic data volumes, not out of copying another team's `spark-submit` flags.
-
-## 5. Security Beyond IRSA
-
-IRSA locks down what a pod can do *outside* the cluster (in AWS). Two more pieces lock down what pods can do *inside* the cluster.
-
-### Network Policies
-
-By default, any pod in the namespace (or cluster, depending on your CNI's defaults) can reach a Spark driver or executor pod on any port. Driver-executor and executor-executor communication only ever needs a small, fixed set of ports, so pin those ports explicitly and restrict traffic to them:
-
-```properties
-spark.driver.port=7078
-spark.driver.blockManager.port=7079
-spark.blockManager.port=7079
-```
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/docs-spark-driver
+automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: spark-driver-executor-only
+  name: spark-data-executor
   namespace: spark-jobs
-spec:
-  podSelector:
-    matchLabels:
-      spark-role: driver
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              spark-role: executor
-      ports:
-        - protocol: TCP
-          port: 7078
-        - protocol: TCP
-          port: 7079
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/docs-spark-executor
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-data-history
+  namespace: spark-jobs
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/docs-spark-history
+automountServiceAccountToken: false
 ```
 
-A matching policy on executor pods, scoped to `spark-role: driver` and `spark-role: executor` peers on the block manager port, closes off the rest: nothing outside the job's own driver/executor pods can reach these ports at all.
+Separate data permissions by purpose:
 
-### Least-Privilege RBAC for the Driver's Service Account
+- Driver: required input/output access and event-log writes under spark-events.
+  Review S3A rename/multipart requirements and any KMS permissions.
+- Executors: only the buckets/prefixes needed for actual data processing.
+- History Server: list/read the event-log prefix and required KMS decryption.
+  This example disables its cleaner, so it does not need deletion permission.
 
-The driver pod creates and manages its own executor pods by calling the Kubernetes API directly (Part 1) — which means its service account needs *some* pod-management permissions. The mistake is granting that role cluster-wide, or granting more verbs than the driver actually uses. Scope it to exactly what's needed, in exactly the driver's own namespace:
+For Pod Identity, remove IRSA annotations and configure associations, role trust
+and Agent/node EKS Auth permissions for these three service accounts. Also change
+the properties below to ContainerCredentialsProvider. The IAM OIDC provider is
+an IRSA prerequisite, not a universal prerequisite for every identity path.
+
+## 3. Driver RBAC and job configuration
+
+Save as driver-rbac.yaml. This baseline does not create PVCs or enable other
+features requiring additional permissions; review those features before adding rights.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: spark-driver-role
+  name: spark-data-driver
   namespace: spark-jobs
 rules:
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["create", "get", "list", "watch", "delete"]
-  - apiGroups: [""]
-    resources: ["pods/log"]
-    verbs: ["get"]
-  - apiGroups: [""]
-    resources: ["services", "configmaps"]
-    verbs: ["create", "get", "list", "watch", "delete"]
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - services
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: spark-driver-rolebinding
+  name: spark-data-driver
   namespace: spark-jobs
 subjects:
-  - kind: ServiceAccount
-    name: spark-s3-sa
-    namespace: spark-jobs
+- kind: ServiceAccount
+  name: spark-data-driver
+  namespace: spark-jobs
 roleRef:
-  kind: Role
-  name: spark-driver-role
   apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: spark-data-driver
 ```
 
-A `Role` (namespace-scoped) rather than a `ClusterRole`, with verbs limited to what the driver actually does — create/list/watch/delete its own executor pods, read their logs, and manage the headless service and configmaps it uses for executor discovery — means a compromised or misbehaving driver pod can only affect its own namespace, not the rest of the cluster.
+A Role grants rights to the listed resources within its namespace, not only to
+“the driver's own executors.” Kubernetes RBAC does not add pod-label conditions to
+these rules. A ClusterRole bound by a RoleBinding can also scope namespaced
+resource permissions to that namespace. Assess the **rules and binding scope**,
+not only the object's name.
 
-## 6. Checklist
+Pod-creation rights can combine with another service account or host access, so a
+namespaced Role alone is not a complete boundary. Separate trust domains and use
+Pod Security/admission, dangerous-pod-spec restrictions, IAM and networking.
+Disabling automatic API-token mounting is distinct from a separately injected
+IRSA token.
 
-Rolling up the key production-readiness items from Parts 1 through 5 of this deep dive:
+Save as job.properties, replacing bucket and region.
 
-- [ ] **Cluster-mode submission**: jobs submit with `--deploy-mode cluster`, and the driver's service account can create/watch/delete the executor pods it needs (Part 1)
-- [ ] **Dynamic Resource Allocation**: `spark.dynamicAllocation.shuffleTracking.enabled` is set alongside `spark.dynamicAllocation.enabled` wherever DRA is used, given Kubernetes has no External Shuffle Service (Part 1)
-- [ ] **Graceful decommissioning**: `spark.decommission.enabled`/`spark.storage.decommission.enabled` are on for Spot-backed executor pools (Part 1)
-- [ ] **Declarative job management**: production jobs run through the Spark Operator's CRDs rather than ad hoc `spark-submit` invocations (Part 2)
-- [ ] **Resource sizing**: driver sizing is tuned for stability, executor sizing for throughput, and both were validated by benchmarking the actual workload rather than copied from another job (Part 4, Part 5)
-- [ ] **S3 access**: driver/executor pods use IRSA-bound service accounts and `WebIdentityTokenCredentialsProvider` — no static AWS credentials anywhere (Part 5)
-- [ ] **Metrics**: either `PrometheusServlet` or the JMX exporter pattern is wired up and actually being scraped (Part 5)
-- [ ] **Post-hoc debuggability**: the Spark History Server is deployed against the same S3 event log location every job writes to, so finished jobs remain inspectable after their driver pod is gone (Part 5)
-- [ ] **Network policies**: driver↔executor and executor↔executor traffic is restricted to the fixed Spark ports actually in use (Part 5)
-- [ ] **RBAC**: the driver's service account has a namespace-scoped `Role`, not a `ClusterRole`, limited to the verbs it actually needs (Part 5)
+```properties
+spark.kubernetes.namespace=spark-jobs
+spark.kubernetes.authenticate.driver.serviceAccountName=spark-data-driver
+spark.kubernetes.authenticate.executor.serviceAccountName=spark-data-executor
+spark.hadoop.fs.s3a.aws.credentials.provider=software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
+spark.hadoop.fs.s3a.endpoint.region=ap-northeast-2
+spark.eventLog.enabled=true
+spark.eventLog.dir=s3a://my-spark-bucket/spark-events/
+spark.eventLog.logStageExecutorMetrics=true
+spark.metrics.conf.*.sink.prometheusServlet.class=org.apache.spark.metrics.sink.PrometheusServlet
+spark.metrics.conf.*.sink.prometheusServlet.path=/metrics/prometheus
+spark.ui.prometheus.enabled=true
+spark.ui.port=4040
+spark.driver.port=7078
+spark.driver.blockManager.port=7079
+spark.blockManager.port=7079
+spark.port.maxRetries=0
+spark.authenticate=true
+spark.network.crypto.enabled=true
+spark.network.crypto.cipher=AES/GCM/NoPadding
+spark.network.crypto.authEngineVersion=2
+spark.network.crypto.saslFallback=false
+spark.io.encryption.enabled=true
+```
 
-Satisfying this checklist is a reasonable bar for saying a Spark-on-EKS pipeline is ready to run in production.
+spark.authenticate authenticates internal connections, not UI users. In Kubernetes
+mode, generated per-application secrets are propagated to executor environments
+and can be visible to identities allowed to read pods. Review pod-read permissions
+and the alternative of securely generated, mounted Secret files. Do not commit a
+fixed authentication secret in properties or Git.
 
+The RPC encryption settings here target matching current Spark versions; validate
+compatibility with other clients/shuffle services. IO encryption covers supported
+Spark temporary local data, not S3/EBS/KMS or UI TLS. The UI needs a separate
+authentication, authorization and TLS access path.
+
+## 4. Per-run ingress and submission
+
+Selecting only the role label also permits **other jobs' executors** in the same
+namespace. Save this as make-network-policy.py. It uses a unique run ID, created
+before submission, in both pod labels and policies. Replace the Prometheus
+namespace/pod label with the actual installation values.
+
+```python
+import json
+import os
+import re
+from pathlib import Path
+
+run_id = os.environ["SPARK_RUN_ID"]
+if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?", run_id):
+    raise ValueError("SPARK_RUN_ID must be a lowercase DNS label, at most 40 characters")
+monitor_ns = os.environ.get("PROMETHEUS_NAMESPACE", "monitoring")
+def peer(role):
+    return {"podSelector": {"matchLabels": {"docs-job": run_id, "spark-role": role}}}
+def policy(role, ingress):
+    return {
+        "apiVersion": "networking.k8s.io/v1", "kind": "NetworkPolicy",
+        "metadata": {"name": run_id + "-" + role, "namespace": "spark-jobs"},
+        "spec": {"podSelector": {"matchLabels": {"docs-job": run_id, "spark-role": role}},
+                 "policyTypes": ["Ingress"], "ingress": ingress}}
+driver = policy("driver", [
+    {"from": [peer("executor")], "ports": [{"protocol": "TCP", "port": 7078}, {"protocol": "TCP", "port": 7079}]},
+    {"from": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": monitor_ns}},
+               "podSelector": {"matchLabels": {"app.kubernetes.io/name": "prometheus"}}}],
+     "ports": [{"protocol": "TCP", "port": 4040}]},
+])
+executor = policy("executor", [
+    {"from": [peer("driver"), peer("executor")], "ports": [{"protocol": "TCP", "port": 7079}]},
+])
+Path("job-networkpolicy.json").write_text(json.dumps({"apiVersion": "v1", "kind": "List", "items": [driver, executor]}, indent=2) + "\n")
+```
+
+After reviewing/applying the service accounts and RBAC, submit the policy and job with the same run ID.
+
+```bash
+kubectl apply -f serviceaccounts.yaml
+kubectl apply -f driver-rbac.yaml
+```
+
+```bash
+# Set SPARK_S3_IMAGE to the built/published image accessible to your EKS nodes.
+: "${SPARK_S3_IMAGE:?Set the tested Spark S3 image reference}"
+export SPARK_RUN_ID="spark-$(python3 -c 'import uuid; print(uuid.uuid4().hex[:12])')"
+# Set this to the actual namespace/Pod labels of the Prometheus collector.
+export PROMETHEUS_NAMESPACE=monitoring
+python3 make-network-policy.py
+kubectl apply -f job-networkpolicy.json
+
+K8S_API_SERVER="$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
+: "${K8S_API_SERVER:?Select the intended context}"
+spark-submit \
+  --master "k8s://${K8S_API_SERVER}" --deploy-mode cluster \
+  --name "$SPARK_RUN_ID" --properties-file job.properties \
+  --conf "spark.kubernetes.container.image=$SPARK_S3_IMAGE" \
+  --conf "spark.kubernetes.driver.label.docs-job=$SPARK_RUN_ID" \
+  --conf "spark.kubernetes.executor.label.docs-job=$SPARK_RUN_ID" \
+  --conf spark.executor.instances=2 \
+  --conf spark.driver.memory=1g --conf spark.executor.memory=1g \
+  --class org.apache.spark.examples.SparkPi \
+  local:///opt/spark/examples/jars/spark-examples.jar 10
+```
+
+This is an **ingress example**. Restricting egress additionally requires DNS,
+Kubernetes API, S3/STS or EKS Auth/credential endpoints and actual data-source
+paths. An enforcing CNI is required and policies are additive. Consider other
+allow policies, node/hostNetwork behavior and pod creators able to forge labels.
+Labels are not cryptographic job identities or a guarantee against every bypass.
+
+Ports 7078/7079 are fixed and port.maxRetries=0 prevents moving to another port
+after a collision. A busy port makes startup fail. Design separate access for
+Spark Connect, additional plugins or a JMX exporter if used.
+
+## 5. Prometheus: different endpoints
+
+Part 2's chart metrics describe the operator itself; it does not automatically
+install a JMX agent into every Spark JVM. A Java agent runs inside its JVM,
+not as a separate additional process.
+
+| Collection path | Meaning |
+| --- | --- |
+| Driver /metrics/prometheus/ | PrometheusServlet's Dropwizard registry; documented as experimental |
+| Driver /metrics/executors/prometheus/ | Executor aggregates collected by the driver |
+| JmxSink + JMX exporter | Selected JVM MBeans/exporter mappings; requires its JAR and configuration |
+
+Each executor does not get its own Spark UI. Available series, names, labels and
+units are not guaranteed identical across these servlet/JMX paths.
+spark.ui.prometheus.enabled controls the executor aggregate endpoint and defaults
+to true. The driver Dropwizard endpoint uses the separate sink configuration above.
+
+Save as podmonitor.yaml. Its metadata labels and namespace must match the real
+Prometheus podMonitorSelector/podMonitorNamespaceSelector. Collector discovery
+RBAC and the earlier ingress rules must also agree.
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: spark-drivers
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+    - spark-jobs
+  selector:
+    matchLabels:
+      spark-role: driver
+    matchExpressions:
+    - key: docs-job
+      operator: Exists
+  podMetricsEndpoints:
+  - port: spark-ui
+    path: /metrics/prometheus/
+    interval: 30s
+  - port: spark-ui
+    path: /metrics/executors/prometheus/
+    interval: 30s
+```
+
+Verify actual targets are UP and both paths return the expected series. Short jobs
+can finish between scrapes. Metrics retention and event logs complement each other;
+check real series, labels and units before reusing a Grafana dashboard.
+
+## 6. Inspect jobs after completion
+
+When the driver JVM stops, its live UI is gone even if the pod object remains.
+History Server reconstructs a UI from **persisted event logs**, not stdout/stderr,
+Structured Streaming checkpoints, output data or recovery backups. Missing,
+deleted, corrupt, incomplete or unflushed events limit reconstruction.
+Replay cost depends on log volume and concurrency; compaction can discard events.
+Do not assume one small replica always suffices.
+
+Save as history-server.yaml, replacing image, bucket and region. Mounting a file
+alone does not load it: the command explicitly reads it through **--properties-file**.
+spark-class runs in the foreground for container lifecycle management. The S3
+identity is the separate read-only History Server account prepared above.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-history-config
+  namespace: spark-jobs
+data:
+  history.properties: 'spark.history.fs.logDirectory=s3a://my-spark-bucket/spark-events/
+
+    spark.hadoop.fs.s3a.aws.credentials.provider=software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
+
+    spark.hadoop.fs.s3a.endpoint.region=ap-northeast-2
+
+    spark.history.ui.port=18080
+
+    spark.history.fs.cleaner.enabled=false
+
+    '
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-history
+  namespace: spark-jobs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-history
+  template:
+    metadata:
+      labels:
+        app: spark-history
+    spec:
+      serviceAccountName: spark-data-history
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 185
+        fsGroup: 185
+      containers:
+      - name: history
+        image: registry.example.com/team/spark-s3:4.2.0
+        command:
+        - /opt/spark/bin/spark-class
+        args:
+        - org.apache.spark.deploy.history.HistoryServer
+        - --properties-file
+        - /etc/spark/history.properties
+        ports:
+        - name: http
+          containerPort: 18080
+        env:
+        - name: SPARK_DAEMON_MEMORY
+          value: 1g
+        resources:
+          requests:
+            cpu: 250m
+            memory: 1536Mi
+          limits:
+            cpu: '1'
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        volumeMounts:
+        - name: config
+          mountPath: /etc/spark
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: spark-history-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-history
+  namespace: spark-jobs
+spec:
+  type: ClusterIP
+  selector:
+    app: spark-history
+  ports:
+  - name: http
+    port: 18080
+    targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: spark-history-ingress
+  namespace: spark-jobs
+spec:
+  podSelector:
+    matchLabels:
+      app: spark-history
+  policyTypes:
+  - Ingress
+  ingress: []
+```
 
-[Return to Main Page](./README.md)
+```bash
+# Replace the image, bucket, region and IAM role examples before applying.
+kubectl apply -f history-server.yaml
+kubectl -n spark-jobs rollout status deployment/spark-history --timeout=180s
+kubectl -n spark-jobs logs deployment/spark-history
+kubectl -n spark-jobs port-forward --address 127.0.0.1 service/spark-history 18080:18080
+```
 
-## Quiz
+Inspect applications through local port 18080. Port-forwarding lasts until the
+command ends and is a diagnostic path. Use a separately authenticated TLS path
+for operational access. ClusterIP and Spark RPC authentication do not authenticate
+UI users.
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/spark/05-best-practices-quiz.md).
+This example disables the History Server cleaner. Design S3 lifecycle, retention
+and cost policies separately; enabling the cleaner requires review of deletion
+permissions, retention and other consumers. Select only the intended run ID when
+cleaning up completed jobs and their NetworkPolicies.
+
+## Operational validation
+
+Verify effective AWS identity and allowed/denied S3 prefixes in actual pods.
+Test History Server access after driver termination, permission/network failures,
+interruption/retry behavior and data recovery. Size driver/executors using Part 4's
+request/limit and overhead model. Choose a validated direct-submission, operator
+or EMR lifecycle and appropriate client/cluster mode; an operator or cluster mode
+alone is not a universal production prerequisite.
+
+This review checks native provider construction, both live local Spark metrics
+endpoints, event-log replay after job termination, and YAML/policy semantics.
+It does not include an EKS deployment, S3 permission test, image build/publication
+or remote-executor communication test.
+
+
+- [Hadoop 3.5.0 S3A dependencies and credentials](https://hadoop.apache.org/docs/r3.5.0/hadoop-aws/tools/hadoop-aws/index.html)
+- [Hadoop 3.5.0 credential-provider factory](https://github.com/apache/hadoop/blob/rel/release-3.5.0/hadoop-tools/hadoop-aws/src/main/java/org/apache/hadoop/fs/s3a/auth/CredentialProviderListFactory.java)
+- [EKS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+- [Spark 4.2 monitoring and History Server](https://spark.apache.org/docs/4.2.0/monitoring.html)
+- [Spark executor Prometheus configuration](https://github.com/apache/spark/blob/v4.2.0/core/src/main/scala/org/apache/spark/internal/config/UI.scala)
+- [Spark security](https://spark.apache.org/docs/4.2.0/security.html)
+- [Kubernetes NetworkPolicy semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Kubernetes RBAC and RoleBinding scope](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+
+[README](./README.md)
+
+[Quiz](../../quizzes/data-on-eks/spark/05-best-practices-quiz.md)

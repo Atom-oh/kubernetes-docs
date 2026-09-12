@@ -51,7 +51,7 @@ ApplicationSet은 템플릿과 Generator를 사용하여 여러 ArgoCD Applicati
 **정답: C) ArgoCD 컴포넌트 간 상태 공유 및 캐시 저장**
 
 **설명:**
-ArgoCD는 Redis를 사용하여 컴포넌트 간 상태 공유, 애플리케이션 캐시, 클러스터 정보 캐시 등을 저장합니다. HA 구성에서 redis-ha를 사용하면 Redis 장애 시에도 ArgoCD가 정상 작동하고, 여러 ArgoCD 서버 인스턴스가 동일한 상태를 공유할 수 있습니다.
+ArgoCD는 Redis를 사용하여 컴포넌트 간 상태 공유, 애플리케이션 캐시, 클러스터 정보 캐시 등을 저장합니다. Redis는 재구성 가능한 캐시이며 핵심 설정은 Kubernetes 객체에 저장됩니다. redis-ha는 장애 대응력을 높이지만 모든 Redis 장애에서 무중단을 보장하지 않습니다.
 
 </details>
 
@@ -68,7 +68,7 @@ ArgoCD는 Redis를 사용하여 컴포넌트 간 상태 공유, 애플리케이�
 **정답: B) ArgoCD에 등록된 클러스터 목록**
 
 **설명:**
-Cluster Generator는 ArgoCD에 등록된 클러스터 목록을 순회하면서 각 클러스터에 대해 Application을 생성합니다. 클러스터의 이름, URL, 레이블 등의 정보를 템플릿에서 사용할 수 있어 멀티 클러스터 배포에 유용합니다.
+Cluster Generator는 등록 정보와 selector에 맞는 클러스터를 선택합니다. 기본 local cluster에는 Secret이 없을 수 있어 Secret label 조건을 붙이면 포함되지 않을 수 있습니다. 클러스터의 이름, URL, 레이블 등의 정보를 템플릿에서 사용할 수 있어 멀티 클러스터 배포에 유용합니다.
 
 </details>
 
@@ -85,7 +85,7 @@ Cluster Generator는 ArgoCD에 등록된 클러스터 목록을 순회하면서 
 **정답: B) argocd cluster add**
 
 **설명:**
-`argocd cluster add <context-name>` 명령을 사용하여 kubeconfig의 context를 ArgoCD에 클러스터로 등록합니다. 이 명령은 대상 클러스터에 ArgoCD가 사용할 ServiceAccount와 ClusterRoleBinding을 생성하고 연결 정보를 ArgoCD에 저장합니다.
+`argocd cluster add <context-name>` 명령을 사용하여 kubeconfig의 context를 ArgoCD에 클러스터로 등록합니다. 기본 등록 경로는 대상 클러스터의 ServiceAccount/RBAC를 변경할 수 있으므로 권한 범위를 먼저 검토합니다. 이 장은 기존 IAM 역할과 EKS Access Entry/RBAC를 준비한 뒤 선언적 cluster Secret을 등록하는 대안을 사용합니다.
 
 </details>
 
@@ -119,24 +119,23 @@ Git Generator - Directory는 Git 저장소의 특정 경로 아래에 있는 각
 **정답: B) 클러스터 상태가 Git과 다를 때 자동으로 Git 상태로 복원**
 
 **설명:**
-selfHeal: true 설정은 누군가 kubectl로 직접 클러스터 리소스를 수정했을 때 ArgoCD가 자동으로 이를 감지하고 Git에 정의된 상태로 되돌립니다. 이를 통해 Git을 단일 진실 공급원(Single Source of Truth)으로 유지할 수 있습니다.
+자동 동기화가 활성화되고 허용된 상태에서 selfHeal: true는 관리 리소스의 live drift를 감지해 Git 목표 상태로 재동기화합니다. 동기화 제한·무시 설정·오류에 영향을 받으며 애플리케이션 데이터베이스 복구 기능은 아닙니다. 이를 통해 Git을 단일 진실 공급원(Single Source of Truth)으로 유지할 수 있습니다.
 
 </details>
 
-### 8. ArgoCD HA 구성에서 argocd-server의 replicas를 2 이상으로 설정할 때 필요한 추가 구성은 무엇인가요?
+### 8. 이 장의 IAM Identity Center SSO 예제에서 올바른 설명은 무엇인가요?
 
-- A) PodDisruptionBudget만 설정
-- B) Ingress에서 세션 어피니티 또는 스티키 세션 설정
-- C) 각 서버에 고유한 포트 할당
-- D) 추가 구성 불필요
+- A) SAML sign-in URL을 OIDC issuer로 그대로 사용한다
+- B) SAML과 Dex를 사용하며 애플리케이션 할당과 실제 assertion 속성을 따로 확인한다
+- C) Dex를 끄고 dex.config만 입력한다
+- D) 그룹을 할당하면 그룹 표시 이름이 항상 자동 전달된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Ingress에서 세션 어피니티 또는 스티키 세션 설정**
+**정답: B) SAML과 Dex를 사용하며 애플리케이션 할당과 실제 assertion 속성을 따로 확인한다**
 
-**설명:**
-ArgoCD 웹 UI는 WebSocket을 사용하므로 여러 서버 인스턴스가 있을 때 세션 어피니티(스티키 세션)를 설정해야 합니다. 이를 통해 클라이언트가 동일한 서버 인스턴스에 연결을 유지하여 실시간 업데이트가 정상 작동합니다.
+**설명:** 공식 Argo CD Identity Center 가이드의 경로는 SAML + Dex입니다. 전체 PEM의 base64를 caData에 넣고 실제 ACS/audience와 서명 인증서를 맞춥니다. 그룹 attribute 매핑은 AWS 공식 지원 방식으로 단정할 수 없어, 이 장은 검증된 이메일을 명시적으로 RBAC에 매핑합니다.
 
 </details>
 
@@ -170,6 +169,6 @@ Matrix Generator는 두 개의 Generator를 조합하여 가능한 모든 조합
 **정답: B) ApplicationSet의 템플릿과 Generator 파라미터 활용**
 
 **설명:**
-ApplicationSet에서 Generator는 각 클러스터의 메타데이터(이름, 레이블, URL 등)를 파라미터로 제공하고, 템플릿에서 이 파라미터를 사용하여 클러스터별로 다른 설정을 적용할 수 있습니다. 예를 들어, <code v-pre>{{cluster.name}}</code>을 사용하여 클러스터별 values 파일을 지정할 수 있습니다.
+ApplicationSet에서 Generator는 각 클러스터의 메타데이터(이름, 레이블, URL 등)를 파라미터로 제공하고, 템플릿에서 이 파라미터를 사용하여 클러스터별로 다른 설정을 적용할 수 있습니다. 예를 들어, <code v-pre>{{.name}}</code>을 사용하여 클러스터별 values 파일을 지정할 수 있습니다.
 
 </details>

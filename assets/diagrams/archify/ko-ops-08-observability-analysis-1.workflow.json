@@ -3,7 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "상관 분석 워크플로우",
-    "output": "public/archmaps/ko-ops-08-observability-analysis-1.html",
+    "output": "ko-ops-08-observability-analysis-1.html",
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
@@ -31,237 +31,159 @@
     },
     "views": [
       {
-        "id": "alert-to-trace",
-        "label": "알림에서 트레이스로",
+        "id": "observations",
+        "label": "관측 자료",
         "focus": [
-          "alert",
           "metric",
-          "exemplar",
-          "trace_lookup",
-          "trace_search"
+          "trace",
+          "logs"
         ],
-        "note": "Exemplar가 있으면 trace_id로 바로 조회하고, 없으면 시간 범위로 트레이스를 검색한다."
+        "note": "알림·메트릭·트레이스·로그의 시간과 식별자를 맞춰 조사한다."
       },
       {
-        "id": "trace-to-log",
-        "label": "트레이스에서 로그로",
+        "id": "validation",
+        "label": "가설 검증",
         "focus": [
-          "trace_lookup",
-          "trace_search",
-          "span",
-          "log"
-        ],
-        "note": "지연·오류 span을 식별한 뒤 같은 trace_id로 로그를 필터링해 상세 컨텍스트를 확인한다."
-      },
-      {
-        "id": "resolution",
-        "label": "원인 파악과 조치",
-        "focus": [
-          "log",
-          "root_cause",
+          "verify",
           "fix"
         ],
-        "note": "수집한 메트릭·트레이스·로그를 종합해 근본 원인을 도출하고 해결 조치로 마무리한다."
+        "note": "원인 가설을 검증하고 승인한 조치의 효과와 회복을 확인한다."
       }
     ]
   },
   "lanes": [
     {
-      "id": "metrics",
-      "label": "메트릭 · Prometheus / Grafana"
+      "id": "observe",
+      "label": "조사"
     },
     {
-      "id": "traces",
-      "label": "트레이스 · Tempo"
-    },
-    {
-      "id": "logs",
-      "label": "로그 · Loki"
-    },
-    {
-      "id": "resolve",
-      "label": "조치"
+      "id": "verify",
+      "label": "검증"
     }
   ],
   "mainPath": [
-    "alert",
     "metric",
-    "exemplar",
-    "trace_lookup",
-    "span",
-    "log",
-    "root_cause",
+    "trace",
+    "logs",
+    "verify",
     "fix"
   ],
   "semanticChecks": {
     "allowedRoots": [
-      "alert"
+      "metric"
     ],
     "allowedTerminals": [
       "fix"
     ],
     "requiredPaths": [
       {
-        "from": "alert",
+        "from": "metric",
         "to": "fix"
-      },
-      {
-        "from": "trace_search",
-        "to": "span"
       }
     ]
   },
   "nodes": [
     {
-      "id": "alert",
-      "lane": "metrics",
-      "col": 0,
-      "type": "messagebus",
-      "label": "Alert 발생",
-      "sublabel": "Prometheus 알림 트리거",
-      "tag": "시작",
-      "width": 150
-    },
-    {
       "id": "metric",
-      "lane": "metrics",
-      "col": 1,
+      "lane": "observe",
+      "col": 0,
       "type": "frontend",
-      "label": "Metric 확인",
-      "sublabel": "대시보드 이상 패턴",
-      "width": 140
+      "label": "알림·메트릭 확인",
+      "sublabel": "대상·시간·단위",
+      "width": 170
     },
     {
-      "id": "exemplar",
-      "lane": "metrics",
+      "id": "trace",
+      "lane": "observe",
+      "col": 1,
+      "type": "backend",
+      "label": "Trace·Span 분석",
+      "sublabel": "ID·검색·부모 자식",
+      "width": 180
+    },
+    {
+      "id": "logs",
+      "lane": "observe",
+      "col": 2,
+      "type": "database",
+      "label": "관련 로그 조회",
+      "sublabel": "동일 trace_id",
+      "width": 170
+    },
+    {
+      "id": "verify",
+      "lane": "verify",
       "col": 2,
       "type": "security",
-      "label": "Exemplar 있음?",
-      "sublabel": "trace_id 첨부 여부",
-      "tag": "판단",
-      "width": 150
-    },
-    {
-      "id": "trace_search",
-      "lane": "traces",
-      "col": 2,
-      "type": "backend",
-      "label": "시간 범위 Trace 검색",
-      "sublabel": "알림 시각 전후",
-      "width": 160
-    },
-    {
-      "id": "trace_lookup",
-      "lane": "traces",
-      "col": 3,
-      "type": "backend",
-      "label": "Trace 조회",
-      "sublabel": "exemplar의 trace_id",
-      "width": 150
-    },
-    {
-      "id": "span",
-      "lane": "traces",
-      "col": 4,
-      "type": "backend",
-      "label": "Span 분석",
-      "sublabel": "지연·오류 구간 식별",
-      "width": 150
-    },
-    {
-      "id": "log",
-      "lane": "logs",
-      "col": 4,
-      "type": "database",
-      "label": "관련 Log 조회",
-      "sublabel": "trace_id로 필터링",
-      "width": 150
-    },
-    {
-      "id": "root_cause",
-      "lane": "logs",
-      "col": 5,
-      "type": "backend",
-      "label": "근본 원인 파악",
-      "sublabel": "수집 정보 종합",
-      "width": 140
+      "label": "원인 가설 검증",
+      "sublabel": "독립 근거·재현",
+      "width": 170
     },
     {
       "id": "fix",
-      "lane": "resolve",
-      "col": 5,
+      "lane": "verify",
+      "col": 3,
       "type": "external",
-      "label": "해결 조치",
-      "tag": "종료",
-      "width": 120
+      "label": "승인 조치·회복",
+      "sublabel": "효과·부작용 확인",
+      "width": 170
     }
   ],
   "edges": [
     {
-      "from": "alert",
-      "to": "metric",
-      "role": "main",
-      "variant": "emphasis"
-    },
-    {
+      "id": "e0",
       "from": "metric",
-      "to": "exemplar",
+      "to": "trace",
       "role": "main",
       "variant": "emphasis"
     },
     {
-      "from": "exemplar",
-      "to": "trace_lookup",
-      "label": "있음",
+      "id": "e1",
+      "from": "trace",
+      "to": "logs",
       "role": "main",
       "variant": "emphasis"
     },
     {
-      "from": "exemplar",
-      "to": "trace_search",
-      "label": "없음",
-      "role": "branch",
-      "variant": "dashed"
-    },
-    {
-      "from": "trace_search",
-      "to": "span",
-      "role": "branch"
-    },
-    {
-      "from": "trace_lookup",
-      "to": "span",
+      "id": "e2",
+      "from": "logs",
+      "to": "verify",
       "role": "main",
       "variant": "emphasis"
     },
     {
-      "from": "span",
-      "to": "log",
-      "label": "trace_id",
-      "role": "main",
-      "variant": "emphasis"
-    },
-    {
-      "from": "log",
-      "to": "root_cause",
-      "role": "main",
-      "variant": "emphasis"
-    },
-    {
-      "from": "root_cause",
+      "id": "e3",
+      "from": "verify",
       "to": "fix",
       "role": "main",
       "variant": "emphasis"
+    },
+    {
+      "id": "more-evidence",
+      "from": "verify",
+      "to": "metric",
+      "role": "return",
+      "variant": "dashed",
+      "label": "추가 근거"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "상관 연결 키",
+      "title": "연결 키와 대안",
       "items": [
-        "Metric → Trace: 히스토그램 exemplar에 담긴 trace_id",
-        "Trace → Log: 구조화 로그(JSON)의 trace_id · span_id 필드",
-        "Exemplar가 없으면 알림 시각 기준 시간 범위로 Tempo에서 검색"
+        "Exemplar의 trace_id로 조회하거나 시간·서비스로 검색한다",
+        "트레이스가 없으면 샘플링·수집·보존 상태도 확인한다",
+        "로그 ID가 있어도 backend에 trace가 저장됐다는 보장은 없다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "상관관계와 원인",
+      "items": [
+        "같은 시간의 오류만으로 root cause를 확정하지 않는다",
+        "span 관계와 로그를 근거로 가설을 만들고 검증한다",
+        "승인한 조치의 효과·부작용·회복을 확인한다"
       ]
     }
   ]

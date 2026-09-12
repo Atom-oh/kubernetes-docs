@@ -1,143 +1,135 @@
 # FinOps 비용 가시성 플랫폼 퀴즈
 
-1. FinOps의 세 가지 운영 사이클 단계를 올바른 순서로 나열한 것은?
-   - A) Optimize → Inform → Operate
-   - B) Inform → Optimize → Operate
-   - C) Operate → Inform → Optimize
-   - D) Inform → Operate → Optimize
+1. FinOps의 Inform → Optimize → Operate를 가장 잘 설명한 것은?
+   - A) 엔지니어링만 수행하는 일회성 비용 삭감
+   - B) 가시성·개선·공동 책임을 반복하며 기술 지출의 가치를 관리
+   - C) 모든 조직이 6개월 안에 완료하는 단계
+   - D) 재무 부서가 자동으로 모든 Pod를 종료하는 절차
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Inform → Optimize → Operate**
+**정답: B) 가시성·개선·공동 책임을 반복하며 기술 지출의 가치를 관리**
 
-**설명:**
-FinOps 사이클은 Inform(비용 가시성 확보) → Optimize(비용 최적화) → Operate(거버넌스 운영) 순서로 반복됩니다. 먼저 누가, 무엇에, 얼마를 쓰는지 파악한 후 최적화하고, 정책으로 관리합니다.
+제품·비즈니스·엔지니어링·재무가 함께 참여하며 비용뿐 아니라 서비스 수준과 단위 경제성도 검토합니다.
 
 </details>
 
 ---
 
-2. Kubecost에서 AWS CUR(Cost and Usage Report)을 통합하는 주된 이유는?
-   - A) Kubecost 라이선스 비용을 줄이기 위해
-   - B) Kubernetes 외부의 AWS 서비스 비용을 추적하기 위해
-   - C) Pod 레벨의 비용 정확도를 높이기 위해 실제 AWS 비용 데이터와 매칭하기 위해
-   - D) 멀티 클러스터 페더레이션을 활성화하기 위해
+2. OpenCost Cloud Cost의 Athena 설정에서 bucket이 가리키는 곳은?
+   - A) CUR 원본만 저장하는 버킷
+   - B) Athena 조회 결과를 저장하는 버킷과 경로
+   - C) kubeconfig 저장소
+   - D) 모든 계정의 공용 버킷
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Pod 레벨의 비용 정확도를 높이기 위해 실제 AWS 비용 데이터와 매칭하기 위해**
+**정답: B) Athena 조회 결과를 저장하는 버킷과 경로**
 
-**설명:**
-Kubecost 자체는 공개 가격(list price)을 기반으로 비용을 추정합니다. CUR 통합을 통해 Savings Plans, Reserved Instances, 협상 가격 등이 반영된 실제 청구 데이터와 매칭하여 비용 정확도를 크게 향상시킬 수 있습니다.
+CUR 원본 읽기와 결과 쓰기 권한은 별개입니다. 실제 Glue 테이블 생성과 importer 갱신도 확인해야 연결이 완료됩니다.
 
 </details>
 
 ---
 
-3. Kyverno로 비용 추적 레이블을 강제할 때 `validationFailureAction: Enforce`의 의미는?
-   - A) 레이블이 없는 워크로드를 경고만 표시
-   - B) 레이블이 없는 워크로드의 배포를 차단
-   - C) 자동으로 레이블을 추가
-   - D) 기존 워크로드의 레이블을 수정
+3. Kyverno ValidatingPolicy의 validationActions: [Audit]에 대한 올바른 설명은?
+   - A) 모든 기존 Pod를 삭제한다
+   - B) 위반을 차단하지 않으며 보고서를 검토한 후 필요한 정책을 Deny로 전환할 수 있다
+   - C) 부족한 레이블을 자동 추가한다
+   - D) namespaceSelector를 무시한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 레이블이 없는 워크로드의 배포를 차단**
+**정답: B) 위반을 차단하지 않으며 보고서를 검토한 후 필요한 정책을 Deny로 전환할 수 있다**
 
-**설명:**
-`validationFailureAction: Enforce`는 정책을 위반하는 리소스의 생성/수정을 차단합니다. team, service, cost-center 레이블이 없는 Deployment는 배포가 거부됩니다. 초기에는 `Audit` 모드로 경고만 하다가 팀이 준비되면 `Enforce`로 전환하는 것이 권장됩니다.
+Audit와 사용자 경고 Warn은 구분합니다. 로컬 CLI의 실패 반환도 실제 admission 차단과 같은 의미가 아닙니다.
 
 </details>
 
 ---
 
-4. VPA를 `updateMode: "Off"`로 설정하는 이유는?
-   - A) VPA를 비활성화하기 위해
-   - B) 리소스 추천만 제공하고 Pod를 자동 재시작하지 않기 위해
-   - C) CPU만 조정하고 메모리는 고정하기 위해
-   - D) HPA와의 충돌을 방지하기 위해
+4. VPA Off 모드와 이 장의 권장값 스크립트가 실제로 하는 일은?
+   - A) 노드 수와 청구액을 즉시 줄인다
+   - B) 권장값을 관측하고 컨테이너 이름별 변경 제안을 출력한다
+   - C) 자동 PR 생성과 merge를 완료한다
+   - D) upperBound를 모든 컨테이너 limit으로 적용한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 리소스 추천만 제공하고 Pod를 자동 재시작하지 않기 위해**
+**정답: B) 권장값을 관측하고 컨테이너 이름별 변경 제안을 출력한다**
 
-**설명:**
-`updateMode: "Off"`는 VPA가 리소스 사용량을 분석하고 추천값을 제공하지만, Pod를 자동으로 재시작하여 리소스를 변경하지 않습니다. 추천값을 확인한 후 PR을 통해 수동으로 적용하는 안전한 워크플로우에 적합합니다. Goldilocks 대시보드도 이 모드를 활용합니다.
+실제 manifest 변경·PR·성능 검증·배포는 별도 절차입니다. 요청량 감소만으로 비용 절감을 보장하지 않으므로 예상 청구 절감액은 null입니다.
 
 </details>
 
 ---
 
-5. Showback과 Chargeback의 차이점은?
-   - A) Showback은 비용 표시, Chargeback은 비용 숨기기
-   - B) Showback은 비용 가시성 제공, Chargeback은 실제 부서/팀에 비용 청구
-   - C) Showback은 실시간, Chargeback은 월간
-   - D) Showback은 클라우드 전용, Chargeback은 온프레미스 전용
+5. Showback과 Chargeback의 차이는?
+   - A) Showback은 비용 가시성, Chargeback은 합의한 규칙에 따른 내부 배분·청구
+   - B) Showback만 실시간이며 Chargeback은 항상 연간
+   - C) Showback은 AWS만 지원
+   - D) Chargeback은 반올림·크레딧을 고려할 필요가 없음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Showback은 비용 가시성 제공, Chargeback은 실제 부서/팀에 비용 청구**
+**정답: A) Showback은 비용 가시성, Chargeback은 합의한 규칙에 따른 내부 배분·청구**
 
-**설명:**
-Showback은 각 팀/서비스가 사용하는 리소스 비용을 보여주어 인식을 높이는 것이고, Chargeback은 실제로 해당 비용을 부서 예산에서 차감하는 것입니다. 대부분의 조직은 Showback부터 시작하여 비용 문화를 정착시킨 후 Chargeback으로 전환합니다.
+기간·통화·공유/유휴/미귀속 비용·세금·환불·반올림을 합의해야 합니다. 모델 값이 자동으로 내부 청구 금액이 되지는 않습니다.
 
 </details>
 
 ---
 
-6. Goldilocks 대시보드가 네임스페이스의 리소스 추천을 표시하려면 어떤 레이블이 필요한가요?
-   - A) goldilocks.fairwinds.com/vpa-enabled=true
-   - B) goldilocks.fairwinds.com/enabled=true
-   - C) vpa.kubernetes.io/enabled=true
-   - D) monitoring.goldilocks.com/watch=true
+6. Prometheus 현재 비용률에 730을 곱한 패널은 무엇을 의미하는가?
+   - A) 확정된 해당 월 AWS 청구액
+   - B) 고정 730시간 동안 비용률이 유지된다는 가정의 예상
+   - C) 실제 일별 비용의 정확한 합
+   - D) 모든 할인·세금이 반영된 최종 회계 금액
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) goldilocks.fairwinds.com/enabled=true**
+**정답: B) 고정 730시간 동안 비용률이 유지된다는 가정의 예상**
 
-**설명:**
-Goldilocks는 `goldilocks.fairwinds.com/enabled=true` 레이블이 붙은 네임스페이스의 모든 Deployment에 대해 자동으로 VPA를 생성하고, 추천 리소스 값을 웹 대시보드에서 시각화합니다.
+현재 비용률, 기간별 모델 비용, 실제 청구 비용을 구분합니다. 월말 선형 예측도 데이터 누락과 트래픽 변화의 영향을 받습니다.
 
 </details>
 
 ---
 
-7. Kubecost Allocation API에서 `aggregate=label:team`의 의미는?
-   - A) 팀 레이블이 있는 Pod만 필터링
-   - B) 비용을 team 레이블 값별로 그룹화하여 합산
-   - C) 팀별로 별도의 API 호출 생성
-   - D) team 레이블을 자동으로 추가
+7. 팀별 Grafana namespace 변수를 사용하면 팀 데이터 접근 격리가 보장되는가?
+   - A) 그렇다. 변수는 데이터 소스 권한이다
+   - B) 아니다. 서버 측 데이터 소스 권한 또는 테넌트 격리와 거부 테스트가 필요하다
+   - C) 그렇다. 내부 ALB면 인증도 필요 없다
+   - D) 레이블 이름이 길면 보장된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 비용을 team 레이블 값별로 그룹화하여 합산**
+**정답: B) 아니다. 서버 측 데이터 소스 권한 또는 테넌트 격리와 거부 테스트가 필요하다**
 
-**설명:**
-`aggregate=label:team`은 Kubecost가 모든 Pod의 비용을 `team` 레이블 값(예: team-commerce, team-platform)별로 그룹화하여 합산합니다. 이를 통해 팀별 총 비용, CPU 비용, 메모리 비용 등을 한번에 조회할 수 있습니다.
+대시보드의 필터와 폴더는 조회 편의 기능입니다. 같은 데이터 소스에 다른 쿼리를 보낼 수 있는지 확인해야 합니다.
 
 </details>
 
 ---
 
-8. 비용 이상 탐지에서 "네임스페이스 비용이 7일 평균의 2배를 초과"하는 알림을 30분간 유지해야 발화하는 이유는?
-   - A) Prometheus 스크레이프 주기가 30분이라서
-   - B) 일시적 스파이크(배포, 오토스케일링)로 인한 오탐(false positive)을 방지하기 위해
-   - C) Slack API 호출 제한을 피하기 위해
-   - D) Kubecost 데이터 갱신 주기가 30분이라서
+8. 비용률 알림의 for: 30m에 대한 설명으로 옳은 것은?
+   - A) scrape 주기를 30분으로 바꾼다
+   - B) 조건이 지속되기를 요구하여 짧은 급증의 잡음을 줄이지만 오탐을 제거하지는 않는다
+   - C) AWS 청구 데이터 갱신을 즉시 수행한다
+   - D) Slack 전달을 정확히 한 번 보장한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 일시적 스파이크(배포, 오토스케일링)로 인한 오탐(false positive)을 방지하기 위해**
+**정답: B) 조건이 지속되기를 요구하여 짧은 급증의 잡음을 줄이지만 오탐을 제거하지는 않는다**
 
-**설명:**
-배포, 오토스케일링, 배치 작업 등으로 비용이 일시적으로 급등할 수 있습니다. `for: 30m`은 30분 이상 지속적으로 비용이 높은 경우에만 알림을 발화하여, 정상적인 운영 활동으로 인한 불필요한 알림을 줄입니다.
+조건 지속 시간과 데이터 갱신·모델 정확도·알림 전달 보장은 서로 다릅니다. 누락된 지표도 0 비용으로 처리하지 않습니다.
 
 </details>

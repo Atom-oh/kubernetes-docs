@@ -1,209 +1,195 @@
 # Linkerd 보안 퀴즈
 
-이 퀴즈는 Linkerd 보안 기능에 대한 이해를 테스트합니다.
+2026년 9월 11일 검토한 [보안 가이드](../../../service-mesh/linkerd/04-security.md)를 기준으로 합니다.
 
-## 퀴즈 문제
+### 1. Linkerd가 mesh mTLS를 활성화하는 방식은?
 
-### 1. Linkerd에서 mTLS가 활성화되는 방식은?
-
-A. 수동으로 각 서비스에 설정 필요
-B. 자동으로 모든 메시 트래픽에 적용
-C. Kubernetes Secret으로 설정 필요
-D. 네임스페이스별로 활성화 필요
+- A. 각 서비스가 Linkerd TLS를 직접 구현
+- B. 참여하는 mesh Pod 사이의 대상 TCP 트래픽에 자동 적용
+- C. Kubernetes Secret만 있으면 모든 경로가 암호화됨
+- D. 모든 UDP 트래픽 자동 보호
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 자동으로 모든 메시 트래픽에 적용**
+**정답: B**
 
-**설명:**
-Linkerd의 핵심 가치 중 하나는 "보안이 기본값"입니다. 메시에 포함된 모든 서비스 간 트래픽은 별도 설정 없이 자동으로 mTLS가 적용됩니다.
+**설명:** 양쪽 proxy가 참여하고 인증서 체인을 신뢰해야 합니다. Mesh 밖 endpoint와 skip port에 Linkerd mTLS가 자동 적용되지는 않습니다. 기본 설정은 inbound 평문을 허용할 수 있으므로 인증된 접근이 필요하면 적합한 정책으로 강제합니다.
 
 </details>
 
-### 2. Server 리소스의 역할은?
+### 2. Server 리소스가 선택하는 것은?
 
-A. 외부 서버 연결 정의
-B. 인바운드 트래픽 포트 및 프로토콜 정의
-C. 서버 인증서 저장
-D. 로드 밸런서 설정
+- A. 외부 DNS record
+- B. 같은 namespace의 대상 Pod에 있는 inbound port/protocol
+- C. 인증서 Secret
+- D. Outbound 로드 밸런서 알고리즘
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 인바운드 트래픽 포트 및 프로토콜 정의**
+**정답: B**
 
-**설명:**
-Server 리소스는 특정 Pod의 인바운드 트래픽을 정의합니다. podSelector로 대상 Pod를, port로 포트를, proxyProtocol로 프로토콜(HTTP/1, HTTP/2, gRPC, opaque)을 지정합니다.
+**설명:** Server는 Pod/port 대상을 선택합니다. 애플리케이션 port를 선언하고 Server 중복을 피합니다. accessPolicy로 바꾸지 않으면 미일치 트래픽은 기본 거부입니다. Proxy admin port 4191에 Server를 정의해도 interception 우회가 사라지지는 않습니다.
 
 </details>
 
-### 3. ServerAuthorization에서 meshTLS.serviceAccounts가 지정하는 것은?
+### 3. ServerAuthorization의 meshTLS.serviceAccounts가 정의하는 것은?
 
-A. 서버가 사용할 ServiceAccount
-B. 접근이 허용된 클라이언트 ServiceAccount
-C. 인증서 발급 권한이 있는 ServiceAccount
-D. 메트릭 수집 권한이 있는 ServiceAccount
+- A. 서버의 serviceAccountName
+- B. 허용하는 인증된 client ServiceAccount
+- C. 모든 인증서를 발급하는 계정
+- D. 지표 수집 전용 계정
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 접근이 허용된 클라이언트 ServiceAccount**
+**정답: B**
 
-**설명:**
-ServerAuthorization의 meshTLS.serviceAccounts는 해당 Server에 접근할 수 있는 클라이언트의 ServiceAccount를 지정합니다. 지정된 ServiceAccount를 가진 워크로드만 접근이 허용됩니다.
+**설명:** 해당 허용 정책은 일치하는 mesh client identity를 허용합니다. 다른 정책도 접근을 넓힐 수 있습니다. 선택한 버전의 ServerAuthorization은 v1beta1이며 AuthorizationPolicy에서 ServiceAccount를 직접 참조하는 대안도 있습니다.
 
 </details>
 
-### 4. default-deny 정책 모드에서 트래픽 허용 방법은?
+### 4. Default-deny에서 의도한 business 트래픽을 허용하는 방법은?
 
-A. 모든 트래픽이 자동으로 허용됨
-B. 명시적 ServerAuthorization 정의 필요
-C. 네임스페이스 레이블로 허용
-D. ConfigMap에서 화이트리스트 설정
+- A. 모든 요청이 계속 자동 허용됨
+- B. 대상과 일치하는 인가 허용 정책 정의
+- C. 일반 namespace label로 모든 caller 허용
+- D. 임의의 ConfigMap whitelist만 있으면 됨
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 명시적 ServerAuthorization 정의 필요**
+**정답: B**
 
-**설명:**
-default-deny 모드에서는 모든 트래픽이 기본적으로 거부됩니다. 트래픽을 허용하려면 Server와 ServerAuthorization을 명시적으로 정의해야 합니다. 이는 제로 트러스트 보안 모델입니다.
+**설명:** Server와 AuthorizationPolicy를 사용하는 것이 현재 방식이며 ServerAuthorization은 이전 대안입니다. 반드시 순차 연결할 필요는 없습니다. 하나의 AuthorizationPolicy의 requiredAuthenticationRefs는 모두 일치해야 하며 probe 접근도 적절히 처리해야 합니다.
 
 </details>
 
-### 5. Trust Anchor의 권장 유효 기간은?
+### 5. Trust anchor의 수명을 정하는 기준은?
 
-A. 24시간
-B. 1년
-C. 1-10년
-D. 무제한
+- A. 항상 정확히 24시간
+- B. 항상 무제한
+- C. CA 정책·교체·복구 요구사항으로 결정하며 CLI 기본값은 1년
+- D. 모든 cluster에 필수인 범용 1–10년 권장값
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. 1-10년**
+**정답: C**
 
-**설명:**
-Trust Anchor(Root CA)는 장기간 유효해야 합니다. 일반적으로 1-10년을 권장합니다. Trust Anchor 교체는 복잡하므로 충분히 긴 유효 기간을 설정하되, 보안 요구사항에 따라 조정합니다.
+**설명:** 수동으로 10년 root를 제공할 수 있지만 자동적인 모범 사례는 아닙니다. 체인의 모든 만료를 추적하고 issuer 수명과 갱신이 CA에 맞는지 확인합니다. Root 교체에는 linked cluster를 포함한 모든 사용자에게 겹치는 trust bundle을 배포해야 합니다.
 
 </details>
 
-### 6. 비인증 클라이언트(메시 외부)를 허용하는 ServerAuthorization 설정은?
+### 6. ServerAuthorization의 client.unauthenticated:true가 허용하는 것은?
 
-A. `meshTLS.identities: ["*"]`
-B. `unauthenticated: true`
-C. `external: allowed`
-D. `client: any`
+- A. Wildcard에 일치하는 인증된 identity만
+- B. Mesh 인증을 요구하지 않는 client
+- C. 특수 external header가 있는 caller만
+- D. 대상과 무관하게 readiness URL만
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. `unauthenticated: true`**
+**정답: B**
 
-**설명:**
-`client.unauthenticated: true`를 설정하면 mTLS 인증 없는 클라이언트(메시 외부)의 접근을 허용합니다. 헬스체크나 인그레스에서 오는 트래픽에 사용됩니다.
+**설명:** 해당 target 범위에서 mesh 인증 없이 접근을 허용하며 자동으로 health path에만 제한되지는 않습니다. meshTLS.identities:["*"]는 다릅니다. 넓은 mesh identity 집합을 허용하지만 mesh 인증은 계속 요구합니다.
 
 </details>
 
-### 7. Identity Issuer 인증서 갱신 시 필요한 작업은?
+### 7. 같은 신뢰 root 아래에서 유효한 issuer를 갱신하면 보통 어떤 일이 일어나는가?
 
-A. 모든 프록시 재시작 필요
-B. Trust Anchor도 함께 교체 필요
-C. Kubernetes Secret 업데이트 후 Identity Controller 재시작
-D. 클러스터 전체 재시작 필요
+- A. 모든 proxy를 즉시 재시작해야 함
+- B. Root도 항상 교체해야 함
+- C. 소유자가 issuer Secret을 갱신하고 Identity가 파일을 검증/reload하며 proxy는 정상 leaf 갱신 수행
+- D. 전체 cluster 재시작
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. Kubernetes Secret 업데이트 후 Identity Controller 재시작**
+**정답: C**
 
-**설명:**
-Identity Issuer 갱신 시: 1) 새 인증서로 Secret 업데이트, 2) Identity Controller 재시작. 프록시는 자동으로 새 인증서로 갱신됩니다. Trust Anchor가 동일하면 교체 불필요합니다.
+**설명:** IssuerUpdated를 확인하고 skipped/invalid 갱신을 조사합니다. 체인이 유효하면 기존 leaf가 정상 갱신 시점까지 이전 issuer를 사용할 수 있습니다. 매번 Identity 재시작이 필수는 아니며 trust anchor 교체는 별도의 단계적 절차입니다.
 
 </details>
 
-### 8. 정책 모드 중 메시 내부 mTLS 트래픽만 허용하는 것은?
+### 8. 올바르게 신뢰하는 multicluster client를 포함하여 인증된 mesh client를 요구하는 기본 정책은?
 
-A. deny
-B. all-unauthenticated
-C. all-authenticated
-D. cluster-unauthenticated
+- A. deny
+- B. all-unauthenticated
+- C. all-authenticated
+- D. cluster-unauthenticated
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. all-authenticated**
+**정답: C**
 
-**설명:**
-`all-authenticated` 모드는 메시 내부의 mTLS 인증된 트래픽만 허용합니다. 메시 외부에서 오는 비인증 트래픽은 거부됩니다.
+**설명:** all-authenticated는 mesh 인증을 요구하지만 특정 caller만 허용하는 좁은 목록은 아닙니다. 명시적 Server 정책과 인가 허용도 중요하며 namespace 기본 annotation은 proxy 초기화 시 적용됩니다.
 
 </details>
 
-### 9. cert-manager와 Linkerd 통합 시 Certificate 리소스에 필요한 설정은?
+### 9. Cert-manager가 Linkerd signing issuer 인증서를 발급할 때 필요한 것은?
 
-A. isCA: false
-B. isCA: true
-C. usages: [digital signature]
-D. algorithm: RSA
+- A. isCA:false
+- B. isCA:true 및 적절한 ECDSA P-256 credential과 유효한 chain
+- C. 임의의 leaf에 digital-signature usage만
+- D. 항상 RSA private key
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. isCA: true**
+**정답: B**
 
-**설명:**
-Linkerd Identity Issuer는 중간 CA 역할을 하므로 cert-manager Certificate에 `isCA: true`를 설정해야 합니다. 이 인증서가 워크로드 인증서를 서명하기 때문입니다.
+**설명:** Identity에는 workload 인증서에 서명할 intermediate CA가 필요합니다. rotationPolicy, Secret 형식/소유권, CA 수명을 확인하고 Identity가 결과를 읽는지 검증합니다. 요청에 isCA:true가 있다고 일반 Vault leaf 서명 경로가 CA를 발급함이 증명되지는 않습니다.
 
 </details>
 
-### 10. linkerd viz edges 명령어로 확인할 수 있는 것은?
+### 10. linkerd viz edges로 확인할 수 있는 것은?
 
-A. 네트워크 에지 라우터 상태
-B. 서비스 간 mTLS 연결 상태
-C. 클러스터 경계 정책
-D. DNS 엣지 캐시 상태
+- A. 모든 edge router의 hardware 상태
+- B. 관찰된 resource edge와 mTLS/보안 상태
+- C. 가능한 모든 경로와 idle 경로가 암호화되었다는 증명
+- D. 최종 사용자 인증의 전체 감사
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 서비스 간 mTLS 연결 상태**
+**정답: B**
 
-**설명:**
-`linkerd viz edges`는 서비스 간 연결(엣지)을 보여주며, SECURED 열에서 mTLS 적용 여부를 확인할 수 있습니다. 메시 외부 트래픽은 SECURED가 X로 표시됩니다.
+**설명:** SECURED 표시는 관찰된 edge의 근거이며 전체 네트워크 목록은 아닙니다. 공개 인증서는 linkerd identity, 접근 판단은 정책 진단/지표로 확인합니다. CLI 표시를 Prometheus TLS label의 실제 값과 동일시하지 않습니다.
 
 </details>
 
-### 11. Linkerd 보안과 애플리케이션 보안의 관계로 올바른 것은?
+### 11. Linkerd와 애플리케이션 보안의 관계는?
 
-A. Linkerd가 모든 보안을 처리하므로 애플리케이션 보안 불필요
-B. Linkerd는 전송 계층, 애플리케이션은 비즈니스 로직 보안 담당
-C. 애플리케이션 보안만으로 충분하며 Linkerd 보안은 선택적
-D. 두 보안은 완전히 독립적이며 상호작용 없음
+- A. Mesh mTLS가 애플리케이션 보안을 대체
+- B. Mesh의 workload/전송 제어와 사용자·tenant·business 인가가 상호 보완
+- C. 허용된 ServiceAccount이면 모든 caller가 관리자임
+- D. Mesh가 입력을 자동 검증
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. Linkerd는 전송 계층, 애플리케이션은 비즈니스 로직 보안 담당**
+**정답: B**
 
-**설명:**
-심층 방어 원칙에 따라 Linkerd는 전송 암호화(mTLS)와 서비스 인가를 담당하고, 애플리케이션은 사용자 인증(JWT), RBAC, 입력 검증 등 비즈니스 로직 보안을 담당합니다.
+**설명:** Linkerd는 workload 인증, 대상 전송 구간 암호화, inbound 인가를 제공합니다. 애플리케이션은 사용자 credential, 권한, 입력을 계속 검증해야 합니다. Network/admission 제어도 proxy 우회와 mesh 미등록 경로를 다뤄야 합니다.
 
 </details>
 
-### 12. Prometheus 알림으로 모니터링해야 할 Linkerd 보안 메트릭이 아닌 것은?
+### 12. 애플리케이션 계측이나 애플리케이션을 이해하는 별도 출처가 필요한 지표는?
 
-A. 인증서 만료 시간
-B. 비mTLS 트래픽 비율
-C. 애플리케이션 로그인 실패 횟수
-D. 인가 거부된 요청 수
+- A. Proxy workload 인증서 만료
+- B. Mesh client identity가 없는 관찰 HTTP 응답
+- C. 애플리케이션 로그인 실패
+- D. Proxy inbound 인가 거부 counter
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. 애플리케이션 로그인 실패 횟수**
+**정답: C**
 
-**설명:**
-Linkerd 보안 메트릭: 인증서 만료 시간, 비mTLS 트래픽 비율, 인가 거부 요청 수. 애플리케이션 로그인 실패는 애플리케이션 레벨 메트릭으로 Linkerd 범위 외입니다.
+**설명:** Linkerd가 애플리케이션 로그인 결과를 자동으로 알지는 못합니다. 자체 알림에서도 leaf 만료 시각과 issuer TTL 시간을 구분하고 범위를 정한 rate 비율, identity label, 누락/무트래픽 처리를 사용해야 합니다.
 
 </details>

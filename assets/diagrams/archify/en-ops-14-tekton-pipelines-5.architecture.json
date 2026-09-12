@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "CI/CD Separation Architecture",
+    "title": "CI and verified GitOps promotion",
     "locale": "en",
     "output": "en-ops-14-tekton-pipelines-5.html",
     "quality_profile": "showcase",
@@ -21,10 +21,9 @@
           "clone",
           "test",
           "build",
-          "push",
-          "update"
+          "push"
         ],
-        "note": "A source push triggers Tekton via webhook, then clone, test, build, ECR push, and manifest update run in order."
+        "note": "Tekton tests approved source and publishes/scans a candidate image."
       },
       {
         "id": "handoff",
@@ -34,7 +33,7 @@
           "gitops",
           "sync"
         ],
-        "note": "The final CI Task commits the new image tag to the GitOps repository and ArgoCD detects the change."
+        "note": "After successful CI and signature/provenance checks, an owner or separate workflow reviews the digest change."
       },
       {
         "id": "cd",
@@ -44,7 +43,7 @@
           "sync",
           "deploy"
         ],
-        "note": "ArgoCD syncs the manifests and the cluster pulls the new image from ECR to deploy it."
+        "note": "ArgoCD syncs manifests; kubelets/runtimes pull images from ECR."
       }
     ]
   },
@@ -136,8 +135,8 @@
     {
       "id": "update",
       "type": "backend",
-      "label": "Manifest Update",
-      "sublabel": "Bump image tag",
+      "label": "Promotion checks",
+      "sublabel": "CI / scan / signatures",
       "pos": [
         1038,
         60
@@ -165,7 +164,7 @@
       "id": "gitops",
       "type": "external",
       "label": "app-manifests",
-      "sublabel": "GitOps repository",
+      "sublabel": "reviewed digest change",
       "pos": [
         1038,
         230
@@ -192,8 +191,8 @@
     {
       "id": "deploy",
       "type": "backend",
-      "label": "K8s Deploy",
-      "sublabel": "Roll out to cluster",
+      "label": "kubelet / runtime",
+      "sublabel": "pull image / run Pod",
       "pos": [
         534,
         400
@@ -213,15 +212,28 @@
         "clone",
         "test",
         "build",
-        "push",
-        "update"
+        "push"
       ]
     },
     {
       "kind": "region",
       "label": "ArgoCD (CD)",
       "wraps": [
-        "sync",
+        "sync"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Separate promotion",
+      "wraps": [
+        "update",
+        "gitops"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes runtime",
+      "wraps": [
         "deploy"
       ]
     }
@@ -269,7 +281,7 @@
       "id": "update-gitops",
       "from": "update",
       "to": "gitops",
-      "label": "commit",
+      "label": "review / merge",
       "variant": "emphasis",
       "labelDy": 24
     },
@@ -283,7 +295,8 @@
     {
       "id": "sync-deploy",
       "from": "sync",
-      "to": "deploy"
+      "to": "deploy",
+      "label": "manifests"
     },
     {
       "id": "ecr-deploy",
@@ -297,18 +310,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "CI — Tekton",
+      "title": "CI / promotion",
       "items": [
-        "The Tekton pipeline owns build, test, and image push",
-        "Its final Task updates the image tag in the GitOps repository and commits/pushes it"
+        "Check build/scan success and signatures separately",
+        "Commit a reviewed digest change to Git"
       ]
     },
     {
       "dot": "emerald",
-      "title": "CD — ArgoCD",
+      "title": "CD",
       "items": [
-        "ArgoCD detects the GitOps repository change and syncs the cluster",
-        "Separating CI from CD is the most recommended production pattern"
+        "ArgoCD synchronizes manifests",
+        "Kubelets pull images; verify actual application health"
       ]
     }
   ]

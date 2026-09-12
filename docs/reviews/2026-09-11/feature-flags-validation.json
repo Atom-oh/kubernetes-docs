@@ -1,0 +1,35 @@
+{
+  "fences": 97,
+  "yaml": 45,
+  "bash": 17,
+  "python": 4,
+  "xml": 2,
+  "crds": 26,
+  "definitions": 10,
+  "errors": [],
+  "baseline": {
+    "flagd": "0.16.3",
+    "operator": "0.9.3",
+    "flagger": "1.45.0",
+    "Go SDK/provider": "1.18.0/0.6.0",
+    "Java SDK/provider": "1.22.1/0.14.1",
+    "Python SDK/provider": "0.10.0/0.5.2",
+    "Node SDK/provider": "1.23.0/0.16.1"
+  },
+  "sdkRuntime": "Four typed values evaluated in each of four real SDK local-file programs; Java/Go compiled and Node TypeScript checked. Expected Java NOP-logger warnings documented.",
+  "targeting": "12 Go SDK semantic cases, including SemVer, missing target, missing/disabled flags, object targeting, 200-key stickiness (synthetic only).",
+  "shadow": "3 Go behavior tests execute document functions with SDK/business/metric stubs; no payments or network.",
+  "helm": "Operator chart v0.9.3 digest49661088f1caf3d4bddd999499e0b7c5464db7ea6e7c886490f4b9a62daced1d;25objects;sidecar/sharedimages0.16.3;oldmanager.env probeignored.",
+  "kustomize": "5objects and4flags preserved in each dev/production overlay;targetingremoval+defaulton vs5/95verifiednative5.8.1.",
+  "ci": "actionlintpass;5valid/invalidinputcaseswithjsonschema4.26.0.",
+  "runtimeMetrics": "Officialflagd0.16.3,isolatedloopback-onlynetwork/nooutboundroutes;HTTP200and404confirmed;nativePrometheusnamesanderrorlabel/HTTPstatuslimitationsobserved. Metrics localonly;noexternaltelemetry.",
+  "promql": "11expressioncasespassedpromtool3.14.0;missing/zeroNaN,namespace/primaryexclusion,variantshare,p99seconds,renderedMetricTemplates.",
+  "sdkMetrics": "RealGoSDK+Prometheusclient1.24.1 success/error/disabled samplesandduration3samplesverifiedwithregistryonly.",
+  "reviewJob": "5datecases+2pagepagination;namespace-listRBAC;officialPython3.12.13imageindexdigestverified;notdeployed.",
+  "killSwitch": "8fakekubectlcasesverifyactions,flagname/shape,targetingrejection,RVtestandconflict;noKubernetesmutation.",
+  "limitations": [
+    "No real EKS deployment, actual application image, production load, Grafana import, or commercial provider account tested.",
+    "SDK examples use local file mode; native flagd HTTP requests do not verify every SDK RPC/TLS path.",
+    "Full repository build/browser and generated locale synchronization remain part of the ongoing full audit."
+  ]
+}

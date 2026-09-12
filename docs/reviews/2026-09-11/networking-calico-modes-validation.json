@@ -1,0 +1,585 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T03:51:37.280347+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/03-networking-modes.md",
+      "sha256": "1b7cbf20da579f9dacbe4dd3859c525c4bbfd5b8d5dc576dd9c27bcbb58477ae"
+    },
+    {
+      "path": "en/quizzes/networking/calico/03-networking-modes-quiz.md",
+      "sha256": "b81db17076fcf5e5a830b4f1714934fcd459f117e29014356ba823cae364dae7"
+    },
+    {
+      "path": "ko/networking/calico/03-networking-modes.md",
+      "sha256": "60f1e5960bc4ca2be2b16ef31d21af6e786e2d3626d8ee1e643bf07084666b95"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/03-networking-modes-quiz.md",
+      "sha256": "c73e342201583b11c750d995be7b6e482509e0c28770b4bb26b8360509db36f5"
+    }
+  ],
+  "sources": {
+    "MTU": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/mtu",
+      "key": "dca46d8d81f4"
+    },
+    "Overlay": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip",
+      "key": "db51c23ce2ae"
+    },
+    "IPPool": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/ippool",
+      "key": "785bcc7771cb"
+    },
+    "CNI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/configure-cni-plugins",
+      "key": "2f30a04df192"
+    },
+    "NAT": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster",
+      "key": "9b6fa316aca7"
+    },
+    "Topology": {
+      "url": "https://docs.tigera.io/calico/latest/networking/ipam/assign-ip-addresses-topology",
+      "key": "30caef5d7bef"
+    },
+    "IPAMSource": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/libcalico-go/lib/ipam/ipam.go",
+      "key": "45472e3ec04f"
+    },
+    "MigratePools": {
+      "url": "https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools",
+      "key": "fbb869244e05"
+    },
+    "BlockSize": {
+      "url": "https://docs.tigera.io/calico/latest/networking/ipam/change-block-size",
+      "key": "29d1e1119830"
+    },
+    "IPAMShow": {
+      "url": "https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show",
+      "key": "84b51a25ffe5"
+    },
+    "Disruptions": {
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "key": "b2cb58aaf3d9"
+    },
+    "VXLANRFC": {
+      "url": "https://www.rfc-editor.org/rfc/rfc7348",
+      "key": "8065fb579f0a"
+    },
+    "IPIPRFC": {
+      "url": "https://www.rfc-editor.org/rfc/rfc2003",
+      "key": "084e484dcdf0"
+    },
+    "OperatorValidation": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/controller/installation/validation.go",
+      "key": "77173a7e6a83"
+    },
+    "NetperfTree": {
+      "url": "https://api.github.com/repos/HewlettPackard/netperf/git/trees/master?recursive=1",
+      "key": "02309c8c3045"
+    },
+    "NetperfManual": {
+      "url": "https://raw.githubusercontent.com/HewlettPackard/netperf/master/doc/netperf.txt",
+      "key": "4c4e12856f4a"
+    },
+    "EC2Bandwidth": {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "key": "0c9b8701b9e0"
+    },
+    "EKSCalico": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "key": "8b9a045ccc34"
+    },
+    "GKEV2": {
+      "url": "https://cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2",
+      "key": "cf7a046b13c2"
+    },
+    "release": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/latest",
+      "key": "7bc4068c9f42"
+    },
+    "requirements": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24"
+    },
+    "Windows": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+      "key": "d784db9e78d6"
+    },
+    "FelixConfiguration": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/felixconfig",
+      "key": "43fe47250f7c"
+    },
+    "releasedCRDs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d"
+    },
+    "installationAPI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba"
+    }
+  },
+  "findings": [
+    "EntireEN543/KO612guidesandEN202/KO19812-questionquizzesread;all15figuresactuallyviewed.",
+    "Separatedroutingfromencapsulation,IPIPdefault/Alwaysinter-node/CrossSubnetnode-subnetvsAZ/Region,IPv4vsIPv6limits,and3.32FelixclusterRoutingModealternative;BGPnotuniversallymandatoryforinternalDirect/IPIP.",
+    "CorrectedVXLANoverheadINNERethernetvsouterEthernet,IPv4TCP20vsUDP8,outerIPv6overhead,andWireGuardmixedpathMIN-MTUinsteadofblindadditive80byteIPIP+WGclaim.",
+    "Operator/standaloneIPPoolfieldsvocabularyandownershipseparated;duplicateCIDRpoolsreplacedwithalternatives/freshdisjointtopologyexamples;actualcluster/Service/nodeCIDRconstraintsstated.",
+    "Sourceipam.goexplicitrequestedpoolbranchbypassesnode+namespacepoolselectors. CorrectednodeSelector/namespaceannotationsecurityboundaryandexclusiveallocationclaims.",
+    "NATpredicateoutsideALLCalicoIPPoolsincludingdisabledranges;SNATnotnetworkpolicyauthorizationorautomaticinternetreachability.",
+    "Migrationdistinguishesmode-onlypatchfromCIDR/blocksizechanges;preservesCIDR/otherfields,requiresowner/clusterCIDR/allocation/tunnel/LBchecks;operator!allselectorrequiresremovingexplicitoldpoolrequests. RemovedbulkNSrestart/earlypooldelete/instantDSrestartguarantees.",
+    "CorrectedEKSdefaultVPC-CNIvsCalicooverlay,GKEV2Cilium,AzureIPIPsupportandOpenStackNeutronoverlayboundary;noAutoMode/FargatecustomCNIguarantee.",
+    "PreservedALLvaluesfromtwoinconsistentlegacybenchmarkrecordsA(ENc5single60s)andB(KO),nowbothvisibleinbothlanguagesandexplicitlyunverified;netperfTCP_RRdefaultrateisnotp99latency.",
+    "10figuresretainedwithspecificcaptions;5wrong/redundantreferencesremoved;underlyingassetsuntouched. All24quizanswers/explanationsaligned."
+  ],
+  "checks": {
+    "schemaObjects": 32,
+    "bashBlocks": 14,
+    "modeVariants": 10,
+    "benchmarkPreservation": {
+      "en": {
+        "recordAAllValuesPreserved": true,
+        "recordBAllValuesPreserved": true,
+        "differentReportsNotClaimedOneExperiment": true,
+        "rerun": false
+      },
+      "ko": {
+        "recordAAllValuesPreserved": true,
+        "recordBAllValuesPreserved": true,
+        "differentReportsNotClaimedOneExperiment": true,
+        "rerun": false
+      }
+    },
+    "CIDRCases": [
+      {
+        "language": "en",
+        "zones": [
+          "10.244.0.0/18",
+          "10.244.64.0/18"
+        ],
+        "disjoint": true,
+        "fitCluster": true,
+        "cannotCoexistWithParentPool": true
+      },
+      {
+        "language": "ko",
+        "zones": [
+          "10.244.0.0/18",
+          "10.244.64.0/18"
+        ],
+        "disjoint": true,
+        "fitCluster": true,
+        "cannotCoexistWithParentPool": true
+      }
+    ],
+    "IPAMCases": [
+      {
+        "node": "west",
+        "namespace": "blue",
+        "requested": [],
+        "selected": [
+          "west"
+        ],
+        "modelOnly": true
+      },
+      {
+        "node": "east",
+        "namespace": "green",
+        "requested": [],
+        "selected": [
+          "east"
+        ],
+        "modelOnly": true
+      },
+      {
+        "node": "west",
+        "namespace": "green",
+        "requested": [],
+        "selected": [],
+        "modelOnly": true
+      },
+      {
+        "node": "west",
+        "namespace": "blue",
+        "requested": [
+          "east"
+        ],
+        "selected": [
+          "east"
+        ],
+        "modelOnly": true
+      },
+      {
+        "node": "west",
+        "namespace": "blue",
+        "requested": [
+          "manual"
+        ],
+        "selected": [
+          "manual"
+        ],
+        "modelOnly": true
+      },
+      {
+        "node": "west",
+        "namespace": "blue",
+        "requested": [
+          "disabled"
+        ],
+        "selected": "error",
+        "modelOnly": true
+      },
+      {
+        "node": "west",
+        "namespace": "blue",
+        "requested": [
+          "unknown"
+        ],
+        "selected": "error",
+        "modelOnly": true
+      },
+      {
+        "node": "east",
+        "namespace": "green",
+        "requested": [
+          "west"
+        ],
+        "selected": [
+          "west"
+        ],
+        "modelOnly": true
+      }
+    ],
+    "NATCases": [
+      {
+        "destination": "10.244.2.5",
+        "SNATForEligibleSource": false,
+        "includesDisabledPool": true,
+        "defaultRuleModelOnly": true
+      },
+      {
+        "destination": "192.168.1.5",
+        "SNATForEligibleSource": false,
+        "includesDisabledPool": true,
+        "defaultRuleModelOnly": true
+      },
+      {
+        "destination": "198.51.100.10",
+        "SNATForEligibleSource": true,
+        "includesDisabledPool": true,
+        "defaultRuleModelOnly": true
+      }
+    ],
+    "MTUCases": [
+      {
+        "underlayIPMTU": 1500,
+        "encapsulation": "Direct",
+        "overhead": 0,
+        "workloadIPMTU": 1500,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 1500,
+        "encapsulation": "IPIP4",
+        "overhead": 20,
+        "workloadIPMTU": 1480,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 1500,
+        "encapsulation": "VXLAN4",
+        "overhead": 50,
+        "workloadIPMTU": 1450,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 1500,
+        "encapsulation": "VXLAN6",
+        "overhead": 70,
+        "workloadIPMTU": 1430,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 1500,
+        "encapsulation": "WG4",
+        "overhead": 60,
+        "workloadIPMTU": 1440,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 1500,
+        "encapsulation": "WG6",
+        "overhead": 80,
+        "workloadIPMTU": 1420,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9000,
+        "encapsulation": "Direct",
+        "overhead": 0,
+        "workloadIPMTU": 9000,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9000,
+        "encapsulation": "IPIP4",
+        "overhead": 20,
+        "workloadIPMTU": 8980,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9000,
+        "encapsulation": "VXLAN4",
+        "overhead": 50,
+        "workloadIPMTU": 8950,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9000,
+        "encapsulation": "VXLAN6",
+        "overhead": 70,
+        "workloadIPMTU": 8930,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9000,
+        "encapsulation": "WG4",
+        "overhead": 60,
+        "workloadIPMTU": 8940,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9000,
+        "encapsulation": "WG6",
+        "overhead": 80,
+        "workloadIPMTU": 8920,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9001,
+        "encapsulation": "Direct",
+        "overhead": 0,
+        "workloadIPMTU": 9001,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9001,
+        "encapsulation": "IPIP4",
+        "overhead": 20,
+        "workloadIPMTU": 8981,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9001,
+        "encapsulation": "VXLAN4",
+        "overhead": 50,
+        "workloadIPMTU": 8951,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9001,
+        "encapsulation": "VXLAN6",
+        "overhead": 70,
+        "workloadIPMTU": 8931,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9001,
+        "encapsulation": "WG4",
+        "overhead": 60,
+        "workloadIPMTU": 8941,
+        "arithmeticOnly": true
+      },
+      {
+        "underlayIPMTU": 9001,
+        "encapsulation": "WG6",
+        "overhead": 80,
+        "workloadIPMTU": 8921,
+        "arithmeticOnly": true
+      }
+    ],
+    "quizAnswers": 24,
+    "packetLengthModel": {
+      "innerIPv4Packet": 1450,
+      "VXLANouterIPv4Packet": 1500,
+      "EthernetFrameWithoutFCS": 1514,
+      "validPacketOrNetworkTest": false
+    },
+    "figures": {
+      "viewed": 15,
+      "retained": 10,
+      "removed": 5
+    },
+    "limits": [
+      "No live Calico deployment, migration, packet transmission, benchmark rerun or AWS provisioning.",
+      "Schema checks and relationship models do not execute Kubernetes/Calico admission or prove a production rollout.",
+      "IPAM and NAT cases cover reviewed branches and assumptions, not complete allocator/dataplane behavior.",
+      "Legacy reports have no raw results, dates, placement or full version evidence; all their numerical values are preserved as unverified reports.",
+      "Parent owns underlying assets and responsive/mobile renderer validation; this batch only changes Markdown references/captions."
+    ]
+  },
+  "figures": [
+    {
+      "locale": "en",
+      "index": 1,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "The subnet addresses/masks drive this choice. The figure's 1500/1480 values assume an IPv4 1500-byte underlay; workloads should still use the minimum MTU across their possible paths. Their interface MTU does not increase dynamically for a same-subnet flow."
+    },
+    {
+      "locale": "en",
+      "index": 2,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "The “Felix” columns represent kernel routing/policy programmed by Felix; packets do not traverse the Felix daemon. This is the IPv4 inter-node path, not same-node traffic or an encryption mechanism."
+    },
+    {
+      "locale": "en",
+      "index": 3,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "4789 and VNI 4096 are the illustrated defaults. The 50-byte overhead and 1450 MTU apply to an outer-IPv4 1500-byte path with the stated header assumptions, not every network or address family."
+    },
+    {
+      "locale": "en",
+      "index": 4,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "This illustrates a BGP-based design, not a requirement that every Direct design use BGP. The 1500 value assumes that usable path MTU and no other tunnel; eBPF Service handoff or encryption can impose a lower workload MTU."
+    },
+    {
+      "locale": "en",
+      "index": 5,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "These are IPv4 1500-byte-underlay examples. The diagram compares packet wrappers, not measured speed or identical control-plane behavior. Other encapsulations and Service paths must be included when selecting the workload MTU."
+    },
+    {
+      "locale": "en",
+      "index": 6,
+      "actuallyViewed": true,
+      "retained": false,
+      "action": "wrong_or_redundant_reference_removed",
+      "summary": "Provider shortcut and universal best-performance/BGP assumptions are replaced by explicit platform/routing guidance."
+    },
+    {
+      "locale": "en",
+      "index": 7,
+      "actuallyViewed": true,
+      "retained": false,
+      "action": "wrong_or_redundant_reference_removed",
+      "summary": "Duplicate summary has best-performance/BGP claims and omits inner Ethernet in VXLAN description; correct packet table/other original figures retained."
+    },
+    {
+      "locale": "ko",
+      "index": 0,
+      "actuallyViewed": true,
+      "retained": false,
+      "action": "wrong_or_redundant_reference_removed",
+      "summary": "Universal performance ordering/BGP requirements and CrossSubnet classification are replaced by accurate tables."
+    },
+    {
+      "locale": "ko",
+      "index": 1,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "그림의 Always는 대상 노드 간 트래픽을 뜻하며 같은 노드 트래픽까지 터널을 통과한다는 뜻이 아닙니다. 1480은 옵션 없는 IPv4 헤더와 1500바이트 언더레이의 예입니다. tunl0는 캡슐화 장치이며 암호화·보안 경계가 아닙니다."
+    },
+    {
+      "locale": "ko",
+      "index": 2,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "“Felix” 열은 Felix가 프로그래밍한 커널 라우팅·정책을 나타내며 패킷이 Felix 데몬을 경유하지는 않습니다. IPv4 노드 간 경로의 개념도입니다."
+    },
+    {
+      "locale": "ko",
+      "index": 3,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "4789와 VNI 4096은 그림의 기본값 예입니다. 50바이트 오버헤드·1450 MTU는 외부 IPv4, 언더레이 1500과 명시한 헤더 가정에 한정됩니다."
+    },
+    {
+      "locale": "ko",
+      "index": 4,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "BGP를 사용한 설계 예이며 모든 Direct 설계에 BGP가 필수라는 뜻이 아닙니다. 1500은 해당 경로와 다른 터널이 없다는 가정입니다. eBPF Service 전달이나 암호화로 워크로드 MTU가 더 작아질 수 있습니다."
+    },
+    {
+      "locale": "ko",
+      "index": 5,
+      "actuallyViewed": true,
+      "retained": true,
+      "action": "caption_corrected",
+      "summary": "서브넷 판단은 노드 주소·마스크 기준이며 AZ 이름 기준이 아닙니다. 그림의 EKS 문구는 Calico가 네트워킹을 맡는 별도 구성에만 해당하고 기본 VPC CNI를 의미하지 않습니다."
+    },
+    {
+      "locale": "ko",
+      "index": 6,
+      "actuallyViewed": true,
+      "retained": false,
+      "action": "wrong_or_redundant_reference_removed",
+      "summary": "Duplicate CrossSubnet decision figure presents unsupported benchmark/AZ-only claims; raw benchmark values preserved as separate unverified record."
+    },
+    {
+      "locale": "ko",
+      "index": 7,
+      "actuallyViewed": true,
+      "retained": false,
+      "action": "wrong_or_redundant_reference_removed",
+      "summary": "Duplicate summary has best-performance/BGP claims and incomplete VXLAN header description; accurate packet table retained."
+    }
+  ],
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/calico/03-networking-modes.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/calico/03-networking-modes.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/calico/03-networking-modes-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/calico/03-networking-modes-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batchValidation": {
+    "documents": 14,
+    "yamlBlocks": 34,
+    "shellBlocks": 42,
+    "errors": []
+  },
+  "docsTest": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-calico-modes-validation/docs-test.log",
+    "environment": "login:false env-i OTELoff"
+  },
+  "scopeDiffCheck": "passed",
+  "artifacts": "/tmp/networking-calico-modes-validation"
+}

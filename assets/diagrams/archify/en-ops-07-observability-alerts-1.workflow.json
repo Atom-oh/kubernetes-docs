@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Alert Lifecycle",
+    "title": "Rule state and resolution updates",
     "output": "en-ops-07-observability-alerts-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -17,9 +17,6 @@
         },
         "security": {
           "label": "Firing state"
-        },
-        "cloud": {
-          "label": "Resolved state"
         }
       }
     },
@@ -28,14 +25,13 @@
   "lanes": [
     {
       "id": "state",
-      "label": "Notifying state"
+      "label": "Rule state"
     }
   ],
   "mainPath": [
     "inactive",
     "pending",
-    "firing",
-    "resolved"
+    "firing"
   ],
   "nodes": [
     {
@@ -45,7 +41,7 @@
       "type": "external",
       "label": "Inactive",
       "sublabel": "condition not met",
-      "width": 160
+      "width": 220
     },
     {
       "id": "pending",
@@ -53,8 +49,8 @@
       "col": 1,
       "type": "backend",
       "label": "Pending",
-      "sublabel": "waiting out the for duration",
-      "width": 165
+      "sublabel": "for interval",
+      "width": 220
     },
     {
       "id": "firing",
@@ -62,17 +58,8 @@
       "col": 2,
       "type": "security",
       "label": "Firing",
-      "sublabel": "sent to Alertmanager",
-      "width": 175
-    },
-    {
-      "id": "resolved",
-      "lane": "state",
-      "col": 3,
-      "type": "cloud",
-      "label": "Resolved",
-      "sublabel": "condition cleared",
-      "width": 160
+      "sublabel": "delivery is separate",
+      "width": 220
     }
   ],
   "edges": [
@@ -80,19 +67,13 @@
       "id": "t1",
       "from": "inactive",
       "to": "pending",
-      "label": "condition met"
+      "label": "Condition met"
     },
     {
       "id": "t2",
       "from": "pending",
       "to": "firing",
-      "label": "for duration elapsed"
-    },
-    {
-      "id": "t3",
-      "from": "firing",
-      "to": "resolved",
-      "label": "condition cleared"
+      "label": "for elapsed"
     },
     {
       "id": "t4",
@@ -104,9 +85,9 @@
     },
     {
       "id": "t5",
-      "from": "resolved",
+      "from": "firing",
       "to": "inactive",
-      "label": "next evaluation",
+      "label": "firing ends",
       "variant": "dashed",
       "role": "return"
     }
@@ -114,30 +95,29 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "State definitions",
+      "title": "Evaluation states",
       "items": [
-        "Inactive — the alert condition is not met",
-        "Pending — the condition is met but the for duration has not elapsed",
-        "Firing — the alert has fired and gone to Alertmanager",
-        "Resolved — the condition cleared and the alert closed"
+        "Inactive: no currently active alert instance",
+        "Pending: waiting for a continuously satisfied for duration",
+        "Firing: the rule instance is active"
       ]
     },
     {
       "dot": "emerald",
-      "title": "What the for duration buys you",
+      "title": "Timing and missing data",
       "items": [
-        "It stops a transient spike from paging anyone",
-        "If the condition clears inside the window, the alert returns to Inactive without ever firing",
-        "Too long delays detection; too short raises false positives"
+        "A zero for duration can fire on the first matching evaluation",
+        "keep_firing_for optionally holds firing after the condition clears",
+        "A missing series is not proof that the service recovered"
       ]
     },
     {
       "dot": "amber",
-      "title": "What to watch in operations",
+      "title": "Resolved is a delivery update",
       "items": [
-        "The Alerts page in the Prometheus UI shows Pending and Firing directly",
-        "Resolved alerts also reach Alertmanager, so a resolution notice can be sent",
-        "The ALERTS metric tracks alert state itself as a time series"
+        "When firing ends, Prometheus can send a resolution update",
+        "External recovery messages depend on send_resolved and routing",
+        "ALERTS observes Pending/Firing and is not a complete audit trail"
       ]
     }
   ]

@@ -1,209 +1,195 @@
 # Linkerd Traffic Management Quiz
 
-This quiz tests your understanding of Linkerd traffic management.
+Based on the [maintained traffic guide](../../../service-mesh/linkerd/03-traffic-management.md), reviewed September 11, 2026.
 
-## Quiz Questions
+### 1. What cannot be configured per route in a ServiceProfile?
 
-### 1. What cannot be configured per-route in a ServiceProfile?
-
-A. Timeout
-B. Retryability
-C. Load balancer algorithm
-D. Path condition
+- A. Timeout
+- B. Retryability
+- C. Load balancer algorithm
+- D. Path condition
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Load balancer algorithm**
+**Answer: C**
 
-**Explanation:**
-ServiceProfile can configure timeout, retryability (isRetryable), and path conditions (method, pathRegex) per route. The load balancer algorithm is a Linkerd global setting, using EWMA.
+**Explanation:** ServiceProfile routes can specify timeout, isRetryable and method/path conditions. They do not select a load-balancing algorithm. This does not imply a universal global algorithm switch exists.
 
 </details>
 
-### 2. What load balancing algorithm does Linkerd use?
+### 2. What describes Linkerd HTTP load balancing?
 
-A. Round Robin
-B. Least Connections
-C. EWMA (Exponentially Weighted Moving Average)
-D. Random
+- A. Strict round robin
+- B. Always select the fewest connections
+- C. Latency-aware EWMA behavior
+- D. Always select a random endpoint without latency information
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. EWMA (Exponentially Weighted Moving Average)**
+**Answer: C**
 
-**Explanation:**
-Linkerd uses the EWMA algorithm to prefer endpoints with faster response latency. It adapts to endpoint state in real-time and automatically reduces traffic to slow endpoints.
+**Explanation:** EWMA favors suitable low-latency candidates, but it does not guarantee that every request selects the globally lowest displayed score. HTTP is balanced at request granularity; TCP is balanced at connection granularity.
 
 </details>
 
-### 3. What standard specification does TrafficSplit follow?
+### 3. Which specification defines the legacy TrafficSplit resource?
 
-A. CNCF
-B. SMI (Service Mesh Interface)
-C. OpenAPI
-D. gRPC
+- A. CNCF
+- B. SMI (Service Mesh Interface)
+- C. OpenAPI
+- D. gRPC
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. SMI (Service Mesh Interface)**
+**Answer: B**
 
-**Explanation:**
-TrafficSplit is a CRD that follows the SMI (Service Mesh Interface) standard. SMI defines common interfaces for service meshes to provide compatibility between different mesh implementations.
+**Explanation:** TrafficSplit is an SMI resource. Linkerd TrafficSplit/linkerd-smi is deprecated and requires its extension/CRDs. The maintained guide uses supported Gateway API HTTPRoutes for new configurations; applying a legacy resource alone does not install that extension.
 
 </details>
 
-### 4. What does a retryBudget retryRatio of 0.2 mean?
+### 4. What does ServiceProfile retryRatio:0.2 contribute to the retry budget?
 
-A. Only 20% of all requests are retried
-B. Only 20% of failed requests are retried
-C. Up to 20% additional retries allowed relative to original requests
-D. Retry budget resets every 20 seconds
+- A. Exactly 20% of every request stream must be retried
+- B. Only 20% of failed requests may be retried
+- C. A proportional allowance relative to original requests, in addition to minRetriesPerSecond
+- D. A budget reset every 20 seconds
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Up to 20% additional retries allowed relative to original requests**
+**Answer: C**
 
-**Explanation:**
-A retryRatio of 0.2 allows up to 20% additional retries relative to the original number of requests. Example: Up to 20 additional retries allowed for 100 requests. This prevents overload from retries.
+**Explanation:** The proportional contribution is not a strict 20% total cap when minRetriesPerSecond also adds allowance. ttl is the lookback/retention window, not a periodic reset. Eligibility, buffering and deadlines still constrain actual retries.
 
 </details>
 
-### 5. Which is NOT a method to auto-generate a ServiceProfile?
+### 5. Which input alone cannot infer the application operations needed for a ServiceProfile?
 
-A. Generate from OpenAPI/Swagger spec
-B. Generate from live traffic tap
-C. Generate from Protobuf definition
-D. Auto-generate from Kubernetes Service
+- A. An OpenAPI specification
+- B. Observed live traffic via tap
+- C. A protobuf service definition
+- D. A Kubernetes Service selector and port list
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D. Auto-generate from Kubernetes Service**
+**Answer: D**
 
-**Explanation:**
-ServiceProfiles can be generated using `linkerd profile --open-api`, `linkerd viz profile --tap`, and `linkerd profile --proto` commands. They are not auto-generated from Kubernetes Services and must be explicitly defined.
+**Explanation:** The CLI supports OpenAPI/protobuf generation and Viz supports tap-based generation. Use a short Service name with -n; the tap command also needs its positional Service argument. Review generated matches and retry safety because sampled traffic is not a complete API inventory.
 
 </details>
 
-### 6. What should the sum of TrafficSplit backend weights be for canary deployment?
+### 6. Which statement about backend weights is correct?
 
-A. Must be exactly 100
-B. Must be exactly 1
-C. Any value works (calculated as ratio)
-D. Must be exactly 1000
+- A. They must total exactly 100
+- B. They must total exactly 1
+- C. Valid nonnegative relative weights need a usable positive total; 90/10 and 9/1 express the same ratio
+- D. Negative weights and a zero total always work
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Any value works (calculated as ratio)**
+**Answer: C**
 
-**Explanation:**
-TrafficSplit weights are calculated as relative ratios. weight: 90 and weight: 10 is equivalent to weight: 9 and weight: 1. The sum doesn't need to be 100.
+**Explanation:** Weights are relative, subject to the selected resource schema and backend validity. The sum need not be 100, and the configured proportion does not guarantee exact short-window request counts. New examples use HTTPRoute; TrafficSplit is the legacy SMI path.
 
 </details>
 
-### 7. What routing condition is NOT supported in HTTPRoute (Gateway API)?
+### 7. Which is not an HTTPRoute request-match field?
 
-A. Header-based routing
-B. Path-based routing
-C. Cookie-based routing
-D. Source IP-based routing
+- A. HTTP header
+- B. HTTP path
+- C. HTTP method
+- D. Source IP
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D. Source IP-based routing**
+**Answer: D**
 
-**Explanation:**
-HTTPRoute supports header, path, method, and cookie (via headers) based routing. Source IP-based routing is outside the scope of L7 routing and is handled by NetworkPolicy or other mechanisms.
+**Explanation:** HTTPRoute supports header/path/method matching. An exact Cookie header match compares the whole header value, not individual cookie pairs. A caller-controlled cohort/debug header is not authorization. Use suitable network/security policy for source-address restrictions.
 
 </details>
 
-### 8. What metrics server is used when integrating Flagger with Linkerd?
+### 8. Which provider do the guide’s custom Linkerd Flagger MetricTemplates use?
 
-A. Metrics Server
-B. Prometheus
-C. InfluxDB
-D. Datadog
+- A. Kubernetes Metrics Server
+- B. Prometheus
+- C. An undeclared InfluxDB Service
+- D. A mandatory Datadog backend
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Prometheus**
+**Answer: B**
 
-**Explanation:**
-Flagger retrieves metrics (success rate, latency, etc.) from Linkerd Viz's Prometheus for canary analysis. When installing Flagger, connect with `--set metricsServer=http://prometheus.linkerd-viz:9090`.
+**Explanation:** These templates query Linkerd Viz Prometheus with explicit namespace/deployment/direction scope. Flagger supports other providers too. The example uses gatewayapi:v1 routing and custom metric names; meshProvider:linkerd still selects the legacy SMI router in Flagger1.45.0.
 
 </details>
 
-### 9. What happens on a route where ServiceProfile isRetryable is false?
+### 9. What does isRetryable:false mean for a matched ServiceProfile route?
 
-A. All requests fail
-B. No retries occur
-C. Timeouts are ignored
-D. Route is disabled
+- A. All matching requests fail
+- B. The ServiceProfile mechanism does not retry that route
+- C. All timeout policies are ignored
+- D. The route is disabled
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. No retries occur**
+**Answer: B**
 
-**Explanation:**
-isRetryable: false means requests on that route will not be retried even if they fail. This is suitable for non-idempotent operations like POST requests. The request itself is processed normally.
+**Explanation:** The request can still be forwarded normally. This setting does not stop client/SDK/other-proxy retries. In the current annotation path, limit:0 is not a reliable disable switch in edge-26.9.1; keep Service defaults free of retries and opt in only the intended read routes.
 
 </details>
 
-### 10. How is the Circuit Breaker pattern implemented in Linkerd?
+### 10. How is Linkerd HTTP circuit breaking configured?
 
-A. Circuit Breaker CRD
-B. Failure Accrual
-C. Rate Limiter
-D. Timeout Policy
+- A. An automatically installed CircuitBreaker CRD
+- B. Opt-in Service failure-accrual annotations
+- C. An unconditional default five-connection-failure rule
+- D. A periodic synthetic readiness-probe loop
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Failure Accrual**
+**Answer: B**
 
-**Explanation:**
-Linkerd implements the circuit breaker pattern through failure accrual. On consecutive failures, it temporarily excludes the endpoint, retries with exponential backoff, and returns to normal state on success.
+**Explanation:** Failure accrual is disabled by default and is incompatible with a ServiceProfile for the Service. The consecutive policy defaults to seven supported response failures. Recovery probation uses a real application request after backoff, not a periodic synthetic probe.
 
 </details>
 
-### 11. How do you send traffic to a mirror service without traffic splitting?
+### 11. How can a client explicitly call an exported service represented by a multicluster mirror Service?
 
-A. Use TrafficMirror CRD
-B. Call mirror service DNS directly
-C. All traffic is automatically mirrored
-D. Linkerd doesn't support traffic mirroring
+- A. Apply a fictional TrafficMirror CRD
+- B. Call the mirror Service DNS name, with the required connectivity and policy
+- C. Every local request is automatically duplicated
+- D. A mirror Service can never be called
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Call mirror service DNS directly**
+**Answer: B**
 
-**Explanation:**
-Linkerd itself doesn't have traffic mirroring functionality like Istio. Multi-cluster mirror services (e.g., web-west) must be called directly via DNS or configured with TrafficSplit weights.
+**Explanation:** Multicluster service mirroring provides discovery/routing to a remote service. Calling its DNS name sends the request there; it does not inherently duplicate the request for shadow testing. Request mirroring is a separate feature whose support must be checked for the chosen implementation/version.
 
 </details>
 
-### 12. What happens on a route where ServiceProfile timeout is not set?
+### 12. What does omitting timeout on a ServiceProfile route mean?
 
-A. Default 5-second timeout applies
-B. No timeout (unlimited)
-C. Request fails immediately
-D. Global timeout applies
+- A. An automatic five-second profile timeout
+- B. No timeout from that ServiceProfile field
+- C. Immediate failure
+- D. All other layer timeouts are removed
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. No timeout (unlimited)**
+**Answer: B**
 
-**Explanation:**
-Routes without a timeout specified in ServiceProfile wait indefinitely without timeout. This is suitable for streaming or long-running operations, but explicitly setting timeouts is generally recommended.
+**Explanation:** The field adds no route timeout, but application, client, transport, proxy and load-balancer limits may still apply. It is not an unlimited end-to-end guarantee. Streaming deadlines and cancellation need explicit application-aware design.
 
 </details>

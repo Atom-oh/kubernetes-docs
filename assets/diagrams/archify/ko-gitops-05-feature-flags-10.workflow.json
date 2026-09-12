@@ -14,7 +14,7 @@
           "deploy",
           "canary"
         ],
-        "note": "Feature Flag OFF 상태로 코드를 먼저 배포하고, 1% 카나리 트래픽으로 새 버전을 검증한다."
+        "note": "코드 배포와 제한된 트래픽 검증을 수행합니다. 기능 노출은 별도 결정입니다."
       },
       {
         "id": "ring-rollout",
@@ -24,7 +24,7 @@
           "ring2",
           "ring3"
         ],
-        "note": "Flag를 켜서 내부 사용자 → 베타 사용자 10% → 전체 사용자 100% 순으로 기능을 노출한다."
+        "note": "내부·제한된 코호트·전체 노출 순서는 예시이며 각 단계에 관측과 승인이 필요합니다."
       },
       {
         "id": "cleanup",
@@ -33,43 +33,17 @@
           "ring3",
           "cleanup"
         ],
-        "note": "100% 롤아웃이 끝난 Flag는 코드에서 제거해 기술 부채를 해소한다."
+        "note": "전체 노출 뒤에도 남은 소비자와 롤백 기간을 확인한 후 임시 Flag를 정리합니다."
       }
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "처리 단계"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
-        },
-        "frontend": {
-          "label": "시작 · 사용자 단계"
-        },
-        "security": {
-          "label": "판단 · 정책"
-        }
-      }
+      "mode": "hidden"
     }
   },
   "lanes": [
     {
-      "id": "deploy",
-      "label": "코드 배포"
-    },
-    {
-      "id": "canary",
-      "label": "카나리 릴리스"
-    },
-    {
-      "id": "rings",
-      "label": "링 기반 롤아웃"
-    },
-    {
-      "id": "cleanup",
-      "label": "정리"
+      "id": "main",
+      "label": "배포와 별도 노출 결정"
     }
   ],
   "phases": [
@@ -105,7 +79,7 @@
   "nodes": [
     {
       "id": "deploy",
-      "lane": "deploy",
+      "lane": "main",
       "col": 0,
       "type": "backend",
       "label": "코드 배포",
@@ -113,43 +87,43 @@
     },
     {
       "id": "canary",
-      "lane": "canary",
+      "lane": "main",
       "col": 1,
       "type": "cloud",
-      "label": "카나리 릴리스",
-      "sublabel": "1% 트래픽"
+      "label": "카나리",
+      "sublabel": "소량 트래픽 검증"
     },
     {
       "id": "ring1",
-      "lane": "rings",
+      "lane": "main",
       "col": 2,
       "width": 128,
       "type": "frontend",
-      "label": "링 1: 내부 사용자",
+      "label": "내부 사용자",
       "sublabel": "Feature Flag ON"
     },
     {
       "id": "ring2",
-      "lane": "rings",
+      "lane": "main",
       "col": 3,
       "width": 128,
       "type": "frontend",
-      "label": "링 2: 베타 사용자",
-      "sublabel": "10% 롤아웃"
+      "label": "제한 코호트",
+      "sublabel": "승인된 범위 확대"
     },
     {
       "id": "ring3",
-      "lane": "rings",
+      "lane": "main",
       "col": 4,
       "width": 128,
       "type": "frontend",
-      "label": "링 3: 전체 사용자",
+      "label": "전체 사용자",
       "sublabel": "100% 롤아웃",
       "tag": "전체 노출"
     },
     {
       "id": "cleanup",
-      "lane": "cleanup",
+      "lane": "main",
       "col": 5,
       "type": "security",
       "label": "Flag 제거",
@@ -177,7 +151,7 @@
     {
       "from": "ring3",
       "to": "cleanup",
-      "label": "롤아웃 완료"
+      "label": "소비자 검토 후"
     }
   ],
   "cards": [
@@ -185,27 +159,27 @@
       "dot": "cyan",
       "title": "배포와 릴리스 분리",
       "items": [
-        "코드는 Feature Flag OFF 상태로 먼저 프로덕션에 배포",
-        "카나리 1% 트래픽으로 새 버전의 안정성 검증",
-        "기능 노출 시점은 Flag 값으로 별도 제어"
+        "새 코드와 기존 동작의 호환성 확인",
+        "트래픽 범위는 관측과 SLO에 맞게 선택",
+        "기능 노출은 별도 규칙으로 제어"
       ]
     },
     {
       "dot": "amber",
       "title": "링 기반 롤아웃",
       "items": [
-        "링 1: 내부 사용자에게만 Flag ON",
-        "링 2: 베타 사용자 10%로 확대",
-        "링 3: 전체 사용자 100% 롤아웃"
+        "내부 대상부터 검증",
+        "표본과 비즈니스 결과를 확인해 확대",
+        "비율은 정확한 사용자 수를 보장하지 않음"
       ]
     },
     {
       "dot": "slate",
       "title": "Flag 정리",
       "items": [
-        "목적을 달성한 Flag는 코드에서 제거",
-        "남겨둔 Flag는 기술 부채로 누적",
-        "Release Flag는 단기(일~주) 수명을 전제로 관리"
+        "임시 릴리스 Flag와 영구 운영 Flag를 구분",
+        "구버전 소비자와 롤백 기간 확인",
+        "선택한 최종 동작을 유지하며 정리"
       ]
     }
   ]

@@ -1,0 +1,668 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T05:29:53.512215+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/06-ebpf-dataplane.md",
+      "sha256": "0b3d5f2f2aa1737b446f39b41613e7d18c443ce5fb862549766a33fc5209807c"
+    },
+    {
+      "path": "en/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+      "sha256": "506fd2780abadd4416bf46826650217e7fa15acd5f009ec668626072b1181616"
+    },
+    {
+      "path": "ko/networking/calico/06-ebpf-dataplane.md",
+      "sha256": "1755960dcb0ce883de5b355032d2fbd3f50f67f7d404dd5bd74200b3e39bec6c"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+      "sha256": "0b744e57968076c08874a467a0a371ed9fbc7857ea66346a6892a06a32d811c0"
+    }
+  ],
+  "followupFiles": [
+    {
+      "path": "en/networking/calico/05-network-policy.md",
+      "sha256": "a0b4ab9581f80d7f66c36e4e5719593161ff069f53678ceb4c1a5d9959439ba6"
+    },
+    {
+      "path": "ko/networking/calico/05-network-policy.md",
+      "sha256": "2311cdf23eaf0469553d4b8bd4842848051931f1bd17ce049d461a706e8d6642"
+    }
+  ],
+  "sources": {
+    "install": {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/install",
+      "key": "e0b3156ff702",
+      "rawSHA256": "f77d811b04ff9e5b4b0ebabfb5ff2a4a92c764337a78b860f9424edd2d88f4de"
+    },
+    "enabling": {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf",
+      "key": "e67705f5cb65",
+      "rawSHA256": "293fd6379fc6ebb79863aadfa5a43cd88f1fc4f88f5af1ebd10bd2d9cce7ea91"
+    },
+    "useCases": {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf",
+      "key": "9a1c6e81f08d",
+      "rawSHA256": "3c0486f232eb765abcfbf3576603207938e4d6d9fc10f663672bb487c03c2693"
+    },
+    "debug": {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf",
+      "key": "4a069e1d7e63",
+      "rawSHA256": "b880e3f4b6e8588f604692e2e4a32073ed7ef9e7316510156ed2c5744c61521b"
+    },
+    "WireGuard": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/encrypt-cluster-pod-traffic",
+      "key": "94fae3ee7ee0",
+      "rawSHA256": "72ba4b9f01c91b0d5f2371125d531db8c2b3c7e33695509c25fe8f4dade8d331"
+    },
+    "Felix": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/felixconfig",
+      "key": "43fe47250f7c",
+      "rawSHA256": "a0d72bf8a67538ca06e46d7edece729c0c7e22f0dc7f248338917a48aa555cc3"
+    },
+    "Installation": {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba",
+      "rawSHA256": "32a485a3b17f70904b788b45b8320fcd5454be32bddd4462aa1fd061d7acfc30"
+    },
+    "requirements": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24",
+      "rawSHA256": "7fa25ebe3ea0cad2e3308daf97694b165ee24d0769c8e45b6a54cef21764278b"
+    },
+    "Windows": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+      "key": "d784db9e78d6",
+      "rawSHA256": "c009618bb6ee8590a5621ee05768ca7031c96eb181d75da9608a4aa2356ea866"
+    },
+    "BTF": {
+      "url": "https://docs.kernel.org/bpf/btf.html",
+      "key": "cab3d0fec1f4",
+      "rawSHA256": "ca54dafd6c66ce226c490556a56e7448da773ef50239bcfd71b7f0ddb8941183"
+    },
+    "libbpf": {
+      "url": "https://docs.kernel.org/bpf/libbpf/libbpf_overview.html",
+      "key": "a9fdf2d8a555",
+      "rawSHA256": "430a01142c31165cd9f508a60269c10b75b72a59c21c00d586a902b1d099e64f"
+    },
+    "BPFtoolProg": {
+      "url": "https://raw.githubusercontent.com/libbpf/bpftool/main/docs/bpftool-prog.rst",
+      "key": "414dd0996510",
+      "rawSHA256": "0990bd0126fc4c92c2d6ba3326d69996f3801d57426bc4398eab0d8a35103b24"
+    },
+    "BPFtoolMap": {
+      "url": "https://raw.githubusercontent.com/libbpf/bpftool/main/docs/bpftool-map.rst",
+      "key": "ecfb3c1fa440",
+      "rawSHA256": "4abb5f5538e2fe87842d54433fcb828be1ba5245da120a6ac00c3b83c5026d7e"
+    },
+    "RouteMap": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/routes/map.go",
+      "key": "899b7ee87a79",
+      "rawSHA256": "64b7661525bd59b0775571a7adfb5d731a4cff9bfa31dc71639a2e9551dc2bdc"
+    },
+    "ConntrackMap": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/conntrack/map.go",
+      "key": "f9de7979514a",
+      "rawSHA256": "5e2124b2bd7af9183b3fa20c58b8fc5fd5ea4019b5de478e75411fe41de23c8f"
+    },
+    "NATMap": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/nat/maps.go",
+      "key": "59681cd003e8",
+      "rawSHA256": "7dbf2dd430dc2fe96651234a3d1e41ef213dabffcc21ce592a69f2cdbef31895"
+    },
+    "BPFCore": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/bpf.go",
+      "key": "aaa584509f10",
+      "rawSHA256": "7dc8f2884123993c83c2abb622d244512b2bcbdcd3cce23fcd16b249a728d243"
+    },
+    "WireGuardFV": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/fv/wireguard_test.go",
+      "key": "ebe05ff8f7ff",
+      "rawSHA256": "0549eed034ab0541c4ff50d9035d52bf21d14099cfcd7d85f03cf3a6e1609cf9"
+    },
+    "CLIRoot": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/cmd/calico-bpf/commands/root.go",
+      "key": "3a53e6782684",
+      "rawSHA256": "214fb84c2ac9b677834b0b086d64331933827f53e0fd459b60f181732d54cc75"
+    },
+    "CLIPolicy": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/cmd/calico-bpf/commands/policy_debug.go",
+      "key": "1ae025265fd7",
+      "rawSHA256": "da0a685738b1ac22b07f8d005112cad5af4627e001af252f7a4cd1bb8b6105f4"
+    },
+    "CLINAT": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/cmd/calico-bpf/commands/nat.go",
+      "key": "55e12711819b",
+      "rawSHA256": "d3870cf88c30b0f356d6b9155dbcd7895d569920eb9c5f8530d3c22789a9af7a"
+    },
+    "NodeMain": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/cmd/calico-node/main.go",
+      "key": "52644c92375f",
+      "rawSHA256": "066146f376787fe125874efd1f758d0f09ef8f69e1d142dfeb97b489f0af4c2e"
+    },
+    "EndpointManager": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/dataplane/linux/bpf_ep_mgr.go",
+      "key": "c8ffe0b65201",
+      "rawSHA256": "f654f506567f0c24eb94640ab3a606a8aeab1d896b1c2d68f52f7599214d8e4a"
+    },
+    "PolicyCompiler": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/polprog/pol_prog_builder.go",
+      "key": "696361ee9f3e",
+      "rawSHA256": "c90d74082910d17e19e9d3ad2b96795b9db6c18cd50ef94ee061bc0cdc82b41f"
+    },
+    "NodeDockerfile": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/node/Dockerfile",
+      "key": "cb9c759f33c2",
+      "rawSHA256": "fa29a8ca1df4055a9c28612e12c8ba9d8a221ea827770e9cee701aa4ac9aa799"
+    },
+    "releasedCRDs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d",
+      "rawSHA256": "cb46786692404fb7955c6d31329c667d0dd8f1ff4821dc7869d0156c93d3a859"
+    },
+    "sqlite-305be8162af7": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/nat/connecttime.go",
+      "key": "305be8162af7",
+      "rawSHA256": "534b0a3cac7f3ee6cac29b6198267cdf74de91defe20db345247412770e2268d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "sqlite-a778ca4eacd8": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/environment/feature_detect_linux.go",
+      "key": "a778ca4eacd8",
+      "rawSHA256": "debffb1ba3a53ad55d0d3f9f33dfff3dec5d68649d66ef2f6b39a45d1a785765",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "sqlite-148ace054bbb": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/environment/feature_detect_common.go",
+      "key": "148ace054bbb",
+      "rawSHA256": "c7c4f8eebd2b7e630f9bd9bf9231d5aef8367971b56d2b6c14d4b9148a42dae9",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "sqlite-587a754951db": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/conntrack/v4/map.go",
+      "key": "587a754951db",
+      "rawSHA256": "9a8b1a7131d1b834a0a9fd3284e2f2ebbcf02417a96a2533dc815e37551da01d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "sqlite-9dd3169e58d9": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/conntrack/v4/map6.go",
+      "key": "9dd3169e58d9",
+      "rawSHA256": "5511eedc423a6bec56b5d6340a1c5b3fcfd1daecf4ac40212f341f2df9589d96",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "sqlite-adfcd42c8263": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/felix/bpf/libbpf/libbpf.go",
+      "key": "adfcd42c8263",
+      "rawSHA256": "0e7e46b637c6cd9d08f58f24a69dad4b0b1996dd04f93f28cabe3162275c48cb",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    }
+  },
+  "findings": [
+    "All original EN863/KO689 guide lines and EN198/KO198 12-question quizzes fully read before edits.18figuresactuallyviewed.",
+    "CurrentCalico3.32.2/Kubernetes-tested1.34–1.36;genericBPFkernel5.10,RHEL8.4kernel4.18.0-305exception,logging5.16/QoS6.6TCX. GKE,SCTP,etcdandsteady-statemixedBPF/standard/Windowsexcluded;WindowsHNSnotiptables.",
+    "Correctedkernel/userspacecrossings,O1allpolicy/constantmemory/singleprogrampipeline claims. TCpacketandcgroupsocket-addresscontextsseparated;noinventedsk_msgHTTPenforcement. CO-RE/BTFvsverifierandbpffspin-vsreboot clarified.",
+    "Actual3.32.2IPv4ABI:routesLPM8/8prefixlenfirst, NATfrontendLPM16/20,backendHash8/8,conntrackformatv4LRU16/88;policiescompilednotuniversalrulemap. VersionedlayoutsnotpublicwriteABI.",
+    "DSRmodesTunnel/DSRnotDisabled/IPIP;VXLAN/MTUbothpaths;returnNATbyCalico,notPodVIPbinding. DSRbypassesKubernetesingressnode,notarbitrarycloudLB. PrimaryCalicoguideAWSsamesubnet/sourcecheckandAWS/GCPexternalLBreturnpathlimitationspreserved.",
+    "CTLBnewenumTCP/Enabled/Disabled;legacybooleanDEPRECATEDSTILLVALID. HostNetworkedNATWithoutCTLBcomplementarypath,CTLBseparatefromDSR;meshoriginalServiceaddressrequirements explicit.",
+    "xdpEnabledbooleanclassiciptablesuntrackedDenyacceleration;genericXDPEnabledfalse;notEnabled/Offload/BestEffortenum. FullBPFalsohasinternalXDPpaths;genericvsnativeSKBallocation/hardwareoffloadperformancequalified.",
+    "Owner/platform-specificmigration:conditionaloperatorbpfNetworkBootstrap+kubeProxyManagement;manualstableAPIConfigMapplural kubernetes-services-endpoint;IPVSpreparation;managedproxycoexistencecleanupfalse+healthzPort0. Removedglobalproxyshutdownbeforeisolatednodecanary/deletes/scalingnonexistentDeployment;unsupportedsteady-mixedmodeexplicit.",
+    "Rollbackpreservesoriginalselectorsandowner;NodePorttransientdisruptionandexistingconnectionresetsdocumented. HTTPKubernetesAPItestreplacedwithTLS/authandcontrolledServicevalidationrequirements;nozero-downtimeorclean-rebootguarantee.",
+    "BothdistinctlegacybenchmarkrecordsA+Bpreservedinbothlanguageswithallreportednumbers;nohardware/date/version/rawprovenanceinvented. TCP_RRtransactionspersecondnotp99latency;client/servertoolprereqsnotworkstationaptinstall. Removedfixed20–40%performanceexpectation.",
+    "ShippedCLIcalico-node -bpf help;policy dump requiresinterface+hook;natdump0or3args,notnatfrontendlist;IPv6flagafterdebugsubcommand. Actualprogram/mapIDs/layoutsrequired;nonexistentbpf_map_max_entriessysctlremoved. BPFtracevFelixstdout,Off/Info/DebugvalidvsWarn/Warninginvalid.",
+    "WireGuardFVsourcecoversBPF+IPv4/IPv6;removedblanketincompatibility. IPv6/localtrafficflags/affinitycurrentcapabilityandCNI/pathvalidationqualified. Threeactualfelix_bpf_*endpointgaugesreplacefakecalico_bpf_*metricslist. UnsupportedEndpointSlicesflagandwrongtimeoutkeysremoved.",
+    "24quizquestionsreviewedandcorrected;18figures8retainedwithprecisecaptions10wrong/duplicatedrefsremoved. ExactprimaryreferencesandKOPart7navigationfixed. ENquizplain<interface><hook>rendererrorreproducedandfixedwithininlinecode;sharedrendererunchanged.",
+    "Follow-upalreadyfullyreadPolicyguidesexplicitlystateSCTPunsupportedinBPF;last-updatedlabelsretainsite-dateparsingwithoutalteringsharedSEOhelpers."
+  ],
+  "validation": {
+    "schemaObjects": 22,
+    "bashBlocks": 20,
+    "mergePatches": 10,
+    "quizAnswers": 24,
+    "APIFieldCases": [
+      {
+        "fields": {
+          "bpfLogLevel": "Info"
+        },
+        "schemaValid": true,
+        "expected": true
+      },
+      {
+        "fields": {
+          "bpfLogLevel": "Off"
+        },
+        "schemaValid": true,
+        "expected": true
+      },
+      {
+        "fields": {
+          "bpfLogLevel": "Debug"
+        },
+        "schemaValid": true,
+        "expected": true
+      },
+      {
+        "fields": {
+          "bpfLogLevel": "Warn"
+        },
+        "schemaValid": false,
+        "expected": false
+      },
+      {
+        "fields": {
+          "bpfLogLevel": "Warning"
+        },
+        "schemaValid": false,
+        "expected": false
+      },
+      {
+        "fields": {
+          "bpfConnectTimeLoadBalancingEnabled": true
+        },
+        "schemaValid": true,
+        "expected": true
+      },
+      {
+        "fields": {
+          "xdpEnabled": "Enabled"
+        },
+        "schemaValid": false,
+        "expected": false
+      },
+      {
+        "fields": {
+          "xdpEnabled": true,
+          "genericXDPEnabled": false
+        },
+        "schemaValid": true,
+        "expected": true
+      },
+      {
+        "fields": {
+          "bpfKubeProxyEndpointSlicesEnabled": true
+        },
+        "schemaValid": false,
+        "expected": false
+      }
+    ],
+    "benchmarkPreservation": {
+      "en": {
+        "recordAValues": true,
+        "recordBValues": true,
+        "differentUnverifiedRecords": true,
+        "rerun": false
+      },
+      "ko": {
+        "recordAValues": true,
+        "recordBValues": true,
+        "differentUnverifiedRecords": true,
+        "rerun": false
+      }
+    },
+    "ABICases": [
+      {
+        "type": "routeKey",
+        "cidr": "10.244.1.5/32",
+        "hex": "200000000af40105",
+        "bytes": 8,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "type": "routeKey",
+        "cidr": "10.244.0.0/16",
+        "hex": "100000000af40000",
+        "bytes": 8,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "type": "routeKey",
+        "cidr": "0.0.0.0/0",
+        "hex": "0000000000000000",
+        "bytes": 8,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "type": "conntrackV4Key",
+        "hex": "060000000af400010af4000200c0901f",
+        "bytes": 16,
+        "valueBytes": 88,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "type": "natFrontendV4Key",
+        "hex": "380000000a60000a3500110000000000",
+        "bytes": 16,
+        "valueBytes": 20,
+        "sourceDerivedModelOnly": true
+      }
+    ],
+    "bootstrapCases": [
+      {
+        "conditions": {
+          "kubeadm": true,
+          "operator": true,
+          "unmanagedProxy": true,
+          "proxyInKubeSystem": true,
+          "serviceEndpointRead": true
+        },
+        "autoWorkflowEligible": true,
+        "notRuntimeValidation": true
+      },
+      {
+        "conditions": {
+          "kubeadm": false,
+          "operator": true,
+          "unmanagedProxy": true,
+          "proxyInKubeSystem": true,
+          "serviceEndpointRead": true
+        },
+        "autoWorkflowEligible": false,
+        "notRuntimeValidation": true
+      },
+      {
+        "conditions": {
+          "kubeadm": true,
+          "operator": false,
+          "unmanagedProxy": true,
+          "proxyInKubeSystem": true,
+          "serviceEndpointRead": true
+        },
+        "autoWorkflowEligible": false,
+        "notRuntimeValidation": true
+      },
+      {
+        "conditions": {
+          "kubeadm": true,
+          "operator": true,
+          "unmanagedProxy": false,
+          "proxyInKubeSystem": true,
+          "serviceEndpointRead": true
+        },
+        "autoWorkflowEligible": false,
+        "notRuntimeValidation": true
+      },
+      {
+        "conditions": {
+          "kubeadm": true,
+          "operator": true,
+          "unmanagedProxy": true,
+          "proxyInKubeSystem": false,
+          "serviceEndpointRead": true
+        },
+        "autoWorkflowEligible": false,
+        "notRuntimeValidation": true
+      },
+      {
+        "conditions": {
+          "kubeadm": true,
+          "operator": true,
+          "unmanagedProxy": true,
+          "proxyInKubeSystem": true,
+          "serviceEndpointRead": false
+        },
+        "autoWorkflowEligible": false,
+        "notRuntimeValidation": true
+      }
+    ],
+    "selectorRestoreCases": [
+      {
+        "original": {},
+        "restored": {},
+        "modelOnly": true
+      },
+      {
+        "original": {
+          "kubernetes.io/os": "linux"
+        },
+        "restored": {
+          "kubernetes.io/os": "linux"
+        },
+        "modelOnly": true
+      },
+      {
+        "original": {
+          "kubernetes.io/os": "linux",
+          "kubernetes.io/arch": "arm64"
+        },
+        "restored": {
+          "kubernetes.io/os": "linux",
+          "kubernetes.io/arch": "arm64"
+        },
+        "modelOnly": true
+      }
+    ],
+    "verifiedMetricNames": 3,
+    "figures": {
+      "viewed": 18,
+      "retained": 8,
+      "removedReferences": 10
+    },
+    "limitations": [
+      "No live BPF loading, kernel map IO, cluster migration/rollback, cloud LB, WireGuard or performance experiment was run.",
+      "ABI/bootstrap/selector checks are source-derived models; schemas do not replace API admission or dataplane validation.",
+      "Both legacy benchmark records remain explicitly unverified; exact versions/date/hardware/raw output are absent."
+    ]
+  },
+  "originalSchemaFindings": [
+    {
+      "lang": "en",
+      "block": 3,
+      "kind": "FelixConfiguration",
+      "name": "default",
+      "schemaErrors": [
+        "'Enabled' is not of type 'boolean'"
+      ]
+    },
+    {
+      "lang": "en",
+      "block": 6,
+      "yamlError": "expected '<document start>', but found '<block mapping start>'\n  in \"<unicode string>\", line 5, column 1:\n    apiVersion: projectcalico.org/v3\n    ^"
+    },
+    {
+      "lang": "en",
+      "block": 10,
+      "kind": "FelixConfiguration",
+      "name": "default",
+      "schemaErrors": [
+        "'Warn' does not match '^(?i)(Off|Info|Debug)?$'"
+      ]
+    },
+    {
+      "lang": "en",
+      "block": 11,
+      "yamlError": "expected '<document start>', but found '<scalar>'\n  in \"<unicode string>\", line 3, column 1:\n    calico_bpf_map_size_bytes        ... \n    ^"
+    },
+    {
+      "lang": "ko",
+      "block": 7,
+      "kind": "FelixConfiguration",
+      "name": "default",
+      "schemaErrors": [
+        "Additional properties are not allowed ('bpfKubeProxyEndpointSlicesEnabled' was unexpected)"
+      ]
+    },
+    {
+      "lang": "ko",
+      "block": 8,
+      "kind": "Pod",
+      "name": null,
+      "schemaErrors": [
+        "('v1', 'Pod')"
+      ]
+    },
+    {
+      "lang": "ko",
+      "block": 9,
+      "kind": "FelixConfiguration",
+      "name": "default",
+      "schemaErrors": [
+        "Additional properties are not allowed ('icmp', 'tcpClosing', 'udp' were unexpected)",
+        "'Warning' does not match '^(?i)(Off|Info|Debug)?$'"
+      ]
+    }
+  ],
+  "render": {
+    "batchPassed": 4,
+    "batchTotal": 4,
+    "policyFollowupsPassed": 2,
+    "regression": "ENquizliteralangleplaceholderswereparsedasVueelements;wrappedcompleteCLIexampleincode;targetedred-to-greenverified."
+  },
+  "docsTest": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-calico-ebpf-validation/docs-test.log"
+  },
+  "diffCheck": "All assigned source/quiz/lab scopes clean.",
+  "figures": [
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-1.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "GenericBPFloader/JITdiagram; VMshouldbeabstractexecutionmodelnotadditionalJITstage,notCalicoexacthooks.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "FalseO1allpolicy/singleprogram/guaranteedperformance;kernelpathandkubeproxyplacementincorrect.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-11.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "Falsemultiplekernelcrossingsforiptables/O1allBPFpolicy/single-programpath.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-2.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "Falseuniversalpacketpipelineandsockops/sk_msgL7claim;network/socket/cgroupattachmentcontextconflated.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-3.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "ENgenericXDPverdictdiagramnotCalicoactualfullfeaturelist; KOraw/mangle/nat/filterlinearpathwrong.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-6.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "DSRsequenceuseful; distinguishingressKubernetesnodefromcloudLB,CalicoVXLANrequesttunnel andreturn-sourcehandling.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-7.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "CTLBsequenceusefulbutkube-proxyuserprocess/per-packetservice-rulewalkmisleading;statefirstconnectionselection+conntracklater,andCTLBdoesnotremoveallpolicy/CT/NAT.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    },
+    {
+      "path": "en/.gitbook/assets/en-networking-calico-06-ebpf-dataplane-10.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "InvalidXDPenumsetting+bpfEnabledcoupling;generic/native/offloaddistinctionsnotperformanceguarantee.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-0.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "KOoutdated5.3/BTFmandatory/universalBPFperformance/only2dataplanes.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-1.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "GenericBPFloader/JITdiagram; VMshouldbeabstractexecutionmodelnotadditionalJITstage,notCalicoexacthooks.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-2.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "Falseuniversalpacketpipelineandsockops/sk_msgL7claim;network/socket/cgroupattachmentcontextconflated.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-9.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "FalseO1allpolicy/singleprogram/guaranteedperformance;kernelpathandkubeproxyplacementincorrect.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-3.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "ENgenericXDPverdictdiagramnotCalicoactualfullfeaturelist; KOraw/mangle/nat/filterlinearpathwrong.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-4.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "KOallpolicyO1/singleprogramPolicyMapmisrepresentation.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-5.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "KOPolicymapABIinvented;actualTC/socketrolespartlyusefulbutrequiresreplacementtext.",
+      "retained": false,
+      "action": "Removed inaccurate/redundant Markdown/interactive references; replaced by current prose/tables. Underlying asset unchanged."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-6.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "DSRsequenceuseful; distinguishingressKubernetesnodefromcloudLB,CalicoVXLANrequesttunnel andreturn-sourcehandling.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-7.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "CTLBsequenceusefulbutkube-proxyuserprocess/per-packetservice-rulewalkmisleading;statefirstconnectionselection+conntracklater,andCTLBdoesnotremoveallpolicy/CT/NAT.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-8.png",
+      "actuallyViewed": true,
+      "status": "reviewed",
+      "findings": "KOPacketLBsequenceonlywithoutCTLB;NATfrontendLPMnotuniversalhash;backendselectionconfigurable.",
+      "retained": true,
+      "action": "Retained with corrected semantic alt/caption."
+    }
+  ],
+  "artifacts": [
+    "/tmp/networking-calico-ebpf-validation",
+    "/tmp/networking-calico-ebpf-check.py",
+    "/tmp/networking-calico-ebpf-sources.json",
+    "/tmp/mesh-primary-cache.py",
+    "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+  ]
+}

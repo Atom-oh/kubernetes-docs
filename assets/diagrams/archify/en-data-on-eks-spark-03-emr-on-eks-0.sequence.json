@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "EMR on EKS Job Submission Flow — StartJobRun",
+    "title": "EMR on EKS: StartJobRun and Observation",
     "locale": "en",
     "quality_profile": "showcase",
     "column_fit": "spread",
@@ -20,7 +20,7 @@
           "label": "internal call"
         },
         "security": {
-          "label": "role binding"
+          "label": "IAM role credentials"
         },
         "dashed": {
           "label": "async report"
@@ -32,98 +32,125 @@
     {
       "id": "user",
       "type": "external",
-      "label": "User / SDK",
-      "sublabel": "CLI · Console · Step Functions"
+      "label": "Caller / SDK",
+      "sublabel": "AWS API caller"
     },
     {
       "id": "emr",
       "type": "cloud",
-      "label": "EMR Control Plane",
-      "sublabel": "emr-containers API"
+      "label": "EMR control plane",
+      "sublabel": "VC → namespace"
     },
     {
-      "id": "vc",
+      "id": "kube",
       "type": "backend",
-      "label": "Virtual Cluster",
-      "sublabel": "EKS namespace (e.g. emr-spark)"
+      "label": "Kubernetes",
+      "sublabel": "API / placement"
     },
     {
-      "id": "driver",
+      "id": "spark",
       "type": "backend",
-      "label": "Driver Pod",
-      "sublabel": "ordinary EKS pod"
+      "label": "Spark workload",
+      "sublabel": "Submitter / driver / executors"
     },
     {
-      "id": "executor",
-      "type": "backend",
-      "label": "Executor Pods",
-      "sublabel": "requested by driver"
+      "id": "logs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "Configured sink"
     }
   ],
   "messages": [
     {
-      "id": "start-job-run",
+      "id": "start",
       "from": "user",
       "to": "emr",
-      "y": 200,
+      "y": 165,
       "label": "StartJobRun",
       "variant": "emphasis",
-      "note": "virtual-cluster-id · execution-role-arn · release-label"
+      "note": "VC ID · role ARN · release label"
     },
     {
-      "id": "target-namespace",
+      "id": "accepted",
       "from": "emr",
-      "to": "vc",
-      "y": 258,
-      "label": "Target namespace bound to virtual cluster"
+      "to": "user",
+      "y": 204,
+      "label": "Return accepted job ID",
+      "variant": "dashed",
+      "note": "Acceptance is not completion"
     },
     {
-      "id": "create-driver",
-      "from": "vc",
-      "to": "driver",
-      "y": 312,
-      "label": "Create driver pod with job execution role (IRSA-style binding)",
-      "variant": "security"
+      "id": "submit",
+      "from": "emr",
+      "to": "kube",
+      "y": 243,
+      "label": "Create job submitter",
+      "variant": "default"
     },
     {
-      "id": "request-executors",
-      "from": "driver",
-      "to": "executor",
-      "y": 366,
-      "label": "Driver requests executor pods"
+      "id": "place-submitter",
+      "from": "kube",
+      "to": "spark",
+      "y": 282,
+      "label": "Place and start submitter",
+      "variant": "default"
     },
     {
-      "id": "report-back",
-      "from": "driver",
+      "id": "pod-requests",
+      "from": "spark",
+      "to": "kube",
+      "y": 321,
+      "label": "Request driver / executor pods",
+      "variant": "default",
+      "note": "Submitter → driver, driver → executors"
+    },
+    {
+      "id": "pod-starts",
+      "from": "kube",
+      "to": "spark",
+      "y": 360,
+      "label": "Place and start pods",
+      "variant": "security",
+      "note": "IRSA / Pod Identity; driver assigns Spark tasks"
+    },
+    {
+      "id": "log-output",
+      "from": "spark",
+      "to": "logs",
+      "y": 399,
+      "label": "Ship configured job logs",
+      "variant": "dashed",
+      "note": "Submitter / driver / executors"
+    },
+    {
+      "id": "status",
+      "from": "kube",
       "to": "emr",
-      "y": 448,
-      "label": "Status · logs (CloudWatch) · metrics reported back",
+      "y": 438,
+      "label": "Observed pod/job state",
       "variant": "dashed"
+    },
+    {
+      "id": "describe",
+      "from": "user",
+      "to": "emr",
+      "y": 477,
+      "label": "DescribeJobRun",
+      "variant": "emphasis",
+      "note": "Check final state and output"
     }
   ],
   "activations": [
     {
       "participant": "emr",
-      "from": 194,
-      "to": 456,
+      "from": 159,
+      "to": 487,
       "type": "cloud"
     },
     {
-      "participant": "vc",
-      "from": 252,
-      "to": 318,
-      "type": "backend"
-    },
-    {
-      "participant": "driver",
-      "from": 306,
-      "to": 454,
-      "type": "backend"
-    },
-    {
-      "participant": "executor",
-      "from": 360,
-      "to": 454,
+      "participant": "spark",
+      "from": 276,
+      "to": 447,
       "type": "backend"
     }
   ]

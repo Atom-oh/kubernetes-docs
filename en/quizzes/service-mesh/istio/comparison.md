@@ -156,7 +156,7 @@ Sidecar and waypoint Envoy can perform L7 retries; ztunnel cannot interpret HTTP
 
 ### Question 6: Cilium authentication and encryption
 
-For the documented Cilium mutual-authentication mechanism, what does setting authentication to required imply?
+For Cilium's documented out-of-band mutual-authentication mechanism, what does setting authentication to required imply?
 
 A. Every payload automatically uses workload TLS
 
@@ -173,7 +173,7 @@ D. Authorization policy is no longer needed
 
 **Explanation:**
 
-The released Cilium 1.20.1 documentation labels this mechanism Beta and describes an out-of-band handshake separate from the application data path. The authentication policy alone does not encrypt application payloads. Evaluate supported WireGuard/IPsec encryption separately, including its platform and traffic-coverage limits. A different or preview mTLS implementation requires its own feature/platform evidence; it is not automatically enabled by this authentication setting.
+The released Cilium 1.20.1 documentation labels this mechanism Beta and describes an out-of-band handshake separate from the application data path. The authentication policy alone does not encrypt application payloads. Evaluate supported WireGuard/IPsec encryption separately, including its platform and traffic-coverage limits. Cilium 1.20.1 also has a separate ztunnel encryption beta with namespace enrollment, TCP-only and policy/platform restrictions. It is not activated by this out-of-band authentication policy setting.
 
 **References:**
 

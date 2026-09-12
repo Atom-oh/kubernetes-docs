@@ -1,197 +1,329 @@
 # Part 2: Helm Deployment and Executor Choice
 
-> **Supported Versions**: apache/airflow Helm chart 1.22+ (deploys Airflow 3.2.2 by default), Kubernetes 1.30+\
-> **Last Updated**: July 15, 2026
+> **Review baseline**: chart 1.22.0 / Airflow 3.3.1 / KEDA 2.20 · September 12, 2026
 
-## Lab Environment Setup
+## 1. Chart identity and actual defaults
 
-To follow along with the examples in this document, you will need the following tools and environment:
+This guide uses the official chart in the Apache Airflow repository. Registering
+the repository alias apache-airflow makes the Helm chart name
+**apache-airflow/airflow**. Do not mix values from independent charts such as
+airflow-helm/charts; these are not the only charts that exist.
 
-### Required Tools
+Chart 1.22.0 defaults to **Airflow 3.2.2 and CeleryExecutor**, not KubernetesExecutor.
+The examples explicitly align image tag and airflowVersion to 3.3.1 and select an
+executor. Mismatched version fields or digest overrides can make chart-generated
+configuration disagree with the actual image.
 
-* kubectl v1.30 or later
-* Helm v3.19 or later (the official chart's stated minimum)
-* A working Kubernetes cluster (Amazon EKS recommended)
-* KEDA installed on the cluster — only needed if you plan to try the `CeleryExecutor` autoscaling example later in this document
+Use Helm 3.19.0 or later. The release change record specifies this minimum even
+though an older Helm 3.0+ statement remains in the packaged README.
+Airflow 3.3.1's tested Kubernetes list is 1.30–1.35. Chart 1.16.0's README specified
+1.29+, so it did not introduce a 1.30+ requirement. Do not assume Chart.yaml enforces
+every documented minimum: templates rendered for 1.29 during review, which does
+not demonstrate support.
 
-## Two Different Airflow Helm Charts
+## 2. Prepare connections and Secrets
 
-Before installing anything, it's worth being explicit about a common source of confusion: there are **two unrelated Helm charts** for running Airflow on Kubernetes, and mixing up their documentation, values schema, or GitHub issues will send you down the wrong path.
+This lab assumes namespace permissions, a prepared external PostgreSQL database,
+and EKS networking/capacity. Prepare the database schema/user, migration privileges,
+tested connection URI/TLS and backup/retention policies. KEDA is needed only for
+the Celery scaling profile.
 
-* **`apache/airflow`** — the official chart, maintained by the Apache Airflow project itself and published from the `chart` directory of the main `apache/airflow` repository. This is the chart this document uses, and the one the upstream documentation and release notes refer to.
-* **`airflow-helm/charts`** — an older, independently maintained community chart (sometimes referred to by its repo name, `airflow-helm`). It predates the official chart, uses a different values schema, and is not affiliated with the Apache Airflow project. Older tutorials and blog posts frequently reference it, which is the most common cause of values.yaml snippets that don't apply to the official chart.
+Values below reference Secrets instead of embedding passwords. Store the database
+URI as one line in a protected file and URI-encode reserved characters in passwords
+and other fields. Use verified TLS for RDS or other remote databases. Any sslrootcert
+path must be readable by the actual database client. **KEDA is also a database
+client**: Airflow-only CA, DNS, network and access setup is insufficient. The chart
+does not automatically copy CA files into KEDA.
 
-The official chart's release cadence tracks Airflow itself fairly closely. As of this writing, chart version **1.22.0** (released June 2026) is latest, and it deploys **Airflow 3.2.2** by default. The chart declares a minimum Helm version of **3.19.0**, and since chart **1.16.0** it has required **Kubernetes 1.30+** — both are enforced by the chart's own `Chart.yaml` constraints, so an older Helm or cluster version will fail at install time rather than produce a broken deployment.
-
-## Installation
-
-### Add the Repository and Install
+This is a **fresh-install** sequence. It does not overwrite existing Secrets.
+Do not regenerate Fernet/API/JWT keys during ordinary upgrades; manage backup
+and rotation separately.
 
 ```bash
-# Add the official Apache Airflow Helm repository
-helm repo add apache-airflow https://airflow.apache.org/
-helm repo update
+set -euo pipefail
+# Fresh installation only. Keep existing Fernet/API/JWT keys during an ordinary upgrade.
+# AIRFLOW_DB_URI_FILE contains the tested, single-line PostgreSQL URI; do not commit it.
+: "${AIRFLOW_DB_URI_FILE:?Set the path to your protected database connection file}"
+kubectl create namespace airflow --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n airflow create secret generic airflow-metadata \
+  --from-file="connection=$AIRFLOW_DB_URI_FILE"
 
-# Install into a dedicated namespace, pinned to a specific chart version
+umask 077
+AIRFLOW_SECRET_TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$AIRFLOW_SECRET_TMP_DIR"' EXIT
+python3 - "$AIRFLOW_SECRET_TMP_DIR" <<'PY'
+import base64
+from pathlib import Path
+import secrets
+import sys
+folder = Path(sys.argv[1])
+(folder / "fernet-key").write_text(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())
+(folder / "api-secret-key").write_text(secrets.token_urlsafe(48))
+(folder / "jwt-secret").write_text(secrets.token_urlsafe(48))
+PY
+kubectl -n airflow create secret generic airflow-fernet \
+  --from-file="fernet-key=$AIRFLOW_SECRET_TMP_DIR/fernet-key"
+kubectl -n airflow create secret generic airflow-api-secret \
+  --from-file="api-secret-key=$AIRFLOW_SECRET_TMP_DIR/api-secret-key"
+kubectl -n airflow create secret generic airflow-jwt \
+  --from-file="jwt-secret=$AIRFLOW_SECRET_TMP_DIR/jwt-secret"
+```
+
+With metadataSecretName set, metadataConnection is not the authoritative connection
+source. Disabling bundled PostgreSQL alone does not configure an external database.
+For a PostgreSQL URI shared by Airflow and KEDA, verify a scheme both understand,
+such as postgresql://; SQLAlchemy-specific +driver schemes may not work in KEDA.
+
+## 3. Explicit KubernetesExecutor installation
+
+Save as kubernetes-values.yaml. This lab disables triggerer persistence; temporary
+local logs are not durable history. Part 3 prepares DAG delivery and Part 5 covers
+remote logs/storage. Verify post-task log access before production use.
+
+```yaml
+airflowVersion: 3.3.1
+defaultAirflowTag: 3.3.1
+executor: KubernetesExecutor
+postgresql:
+  enabled: false
+redis:
+  enabled: false
+data:
+  metadataSecretName: airflow-metadata
+  metadataConnection:
+    protocol: postgresql
+fernetKeySecretName: airflow-fernet
+apiSecretKeySecretName: airflow-api-secret
+jwtSecretName: airflow-jwt
+createUserJob:
+  enabled: false
+triggerer:
+  persistence:
+    enabled: false
+config:
+  core:
+    auth_manager: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+```
+
+```bash
+helm repo add apache-airflow https://airflow.apache.org
+helm repo update apache-airflow
 helm install airflow apache-airflow/airflow \
-  --namespace airflow \
-  --create-namespace \
-  --version 1.22.0
-
-# Verify the installation
-kubectl get pods -n airflow
+  --namespace airflow --version 1.22.0 \
+  --values kubernetes-values.yaml --wait --timeout 10m
+kubectl -n airflow get deployments,statefulsets,pods,jobs
 helm list -n airflow
 ```
 
-By default this installs the chart's bundled PostgreSQL and the `KubernetesExecutor` — enough to get a working Airflow 3 deployment running for a lab or evaluation. Anything past that (a real metadata database, an executor decision, resource sizing) belongs in a `values.yaml` you pass with `-f`.
+Successful --wait or Running pods do not prove DAG execution. Verify successful
+migration jobs and Ready long-running components, then use Part 3's smoke DAG to
+check worker startup, Execution API communication, results and logs.
 
-### The Key Setting: `executor`
+### Initial user
 
-Every other setting in the chart is secondary to one top-level value, since it changes which supporting components the chart deploys at all:
-
-```yaml
-# values.yaml
-executor: KubernetesExecutor  # or CeleryExecutor
-
-# Only read when executor is CeleryExecutor
-workers:
-  celery:
-    keda:
-      enabled: false  # see the autoscaling section below
-
-# Point at an external metadata DB in anything beyond a lab
-postgresql:
-  enabled: true  # false once you switch to RDS
-```
+The default createUserJob can create admin/admin, so this profile disables it.
+Current values live under createUserJob.defaultUser; webserver.defaultUser is a
+compatibility path. Instead of storing a password in values.yaml or Helm --set,
+use this interactive command for the selected FAB auth manager. Other auth
+managers or SSO require their own user-management procedures.
 
 ```bash
-helm upgrade airflow apache-airflow/airflow \
-  --namespace airflow \
-  --version 1.22.0 \
-  -f values.yaml
+# FAB auth manager, as selected in these values. Password is prompted twice.
+kubectl -n airflow exec -it deployment/airflow-api-server -c api-server -- \
+  airflow users create --username airflow-admin --role Admin \
+  --email admin@example.com --firstname Airflow --lastname Admin
+kubectl -n airflow port-forward --address 127.0.0.1 service/airflow-api-server 8080:8080
 ```
 
-Changing `executor` after tasks are already running is disruptive — the scheduler, and for `CeleryExecutor` the worker Deployment and Redis, are conditionally rendered based on this one field. Decide the executor for a given deployment before it carries production traffic.
+With port-forward running, inspect the UI on local port 8080. Production access
+needs an appropriate authentication/authorization/TLS path; this command does not
+create a public endpoint. API and task-JWT secrets have different roles and need
+stable lifecycle management. Losing or casually replacing a Fernet key can make
+existing encrypted connections/variables unreadable.
 
-### Pointing at an External Metadata Database
+## 4. Choose executors by workload and operations
 
-The bundled PostgreSQL pod (a single replica backed by a PVC) is fine for a lab, but it disappears the moment the release is uninstalled and has no failover. For anything longer-lived, disable it and point the chart at an external Amazon RDS for PostgreSQL instance instead:
+| Aspect | KubernetesExecutor | CeleryExecutor |
+| --- | --- | --- |
+| Worker unit | Pod per task instance | Pool consuming broker work |
+| Startup | Measure image cache, API/scheduler latency and node availability | Warm capacity can reduce startup; scale-to-zero reintroduces cold starts |
+| Idle cost | Control plane, database, nodes and logs remain | Broker, database and node costs remain beyond worker count |
+| Resources/isolation | Depend on pod spec, quotas, service accounts, networking and nodes | Concurrent tasks share worker resources/dependencies |
+| Additional requirements | Task runtime/image, DAG delivery and Kubernetes API rights | Broker, result backend, worker lifecycle, queues and concurrency |
+
+Do not assume a fixed 1–2 minute startup or universal high-volume superiority.
+A KubernetesExecutor worker image needs a compatible **Airflow task runtime and
+DAG dependencies**; it is not an arbitrary GPU/CLI image. KubernetesPodOperator
+launches a separate child pod with a workload image and is a different path.
+Failed-pod retention/deletion also depends on provider configuration.
+
+Concurrent executors are available, but mixed operation is not mandatory for most
+deployments. Compare single-executor simplicity with measured benefits and added
+policies for your actual workload.
+
+![Per-task Kubernetes workers compared with a scalable Celery worker pool.](../../.gitbook/assets/en-data-on-eks-airflow-02-helm-deployment-0.png)
+
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-airflow-02-helm-deployment-0.html)
+
+## 5. Scale Celery workers
+
+Prepare the external broker and result backend first. These Secrets are needed
+only for the Celery profile; validate protocol, TLS and permissions against the
+actual services. A Celery SQLAlchemy database result backend uses a URI such as
+db+postgresql://, so do not blindly copy the metadata connection URI.
+
+```bash
+# Use protected URI files for the chosen external broker and result backend.
+: "${AIRFLOW_BROKER_URI_FILE:?Set the protected broker URI file}"
+: "${AIRFLOW_RESULT_URI_FILE:?Set the protected Celery result-backend URI file}"
+kubectl -n airflow create secret generic airflow-broker \
+  --from-file="connection=$AIRFLOW_BROKER_URI_FILE"
+kubectl -n airflow create secret generic airflow-result-backend \
+  --from-file="connection=$AIRFLOW_RESULT_URI_FILE"
+```
+
+Save as celery-values.yaml, an independent **complete profile**. Select this file in
+the install command for a new deployment. Switching an active deployment requires
+a drain, migration and recovery plan.
 
 ```yaml
-# values.yaml
+airflowVersion: 3.3.1
+defaultAirflowTag: 3.3.1
+executor: CeleryExecutor
 postgresql:
   enabled: false
-
+redis:
+  enabled: false
 data:
+  metadataSecretName: airflow-metadata
   metadataConnection:
-    user: airflow
-    pass: airflow-password   # reference a Secret in a real deployment, not a plaintext value
     protocol: postgresql
-    host: airflow-metadata.xxxxxxxxxxxx.us-east-1.rds.amazonaws.com
-    port: 5432
-    db: airflow
-```
-
-The chart's own PostgreSQL subchart and the external-connection fields are mutually exclusive in practice — once `postgresql.enabled` is `false`, every component (scheduler, api-server, dag-processor, triggerer) reads `data.metadataConnection` instead.
-
-## Choosing an Executor: KubernetesExecutor vs. CeleryExecutor
-
-Part 1 introduced both executors at a high level as part of the component architecture; this is the deeper trade-off you actually need to resolve before deploying.
-
-### KubernetesExecutor
-
-Each task instance gets its own pod, created by the scheduler through the Kubernetes API and torn down on completion.
-
-* **Best fit**: tasks that need runtime isolation, are resource-heavy, or need a per-task container image (a different Python environment, a GPU image, a completely different runtime than the rest of the DAG).
-* **Cost**: a cold-start of roughly **1–2 minutes** even for a trivial task — pod scheduling, image pull if not cached, and potentially a node scale-out event via Karpenter or Cluster Autoscaler if no capacity is free.
-* **Benefit**: no idle worker cost between task bursts, and strong isolation — one task's dependency conflict or memory leak can't affect any other task's pod.
-
-### CeleryExecutor
-
-A pool of warm Celery worker pods stays running continuously and pulls queued tasks off a broker.
-
-* **Best fit**: short, homogeneous tasks where startup latency matters — a DAG with hundreds of small tasks per run feels very different at 1–2 minutes of pod startup per task versus seconds of dispatch to an already-running worker.
-* **Cost**: all tasks routed to a given worker share that worker's resources and installed dependencies — much weaker isolation than a dedicated pod per task.
-* **Requirement**: a message broker (Redis or RabbitMQ) plus a long-running worker Deployment, both of which need their own capacity planning and are additional moving parts to operate.
-
-### The Trade-off, Not a Default Answer
-
-This is a genuine trade-off, not a "pick KubernetesExecutor unless you have a reason not to" situation:
-
-| | KubernetesExecutor | CeleryExecutor |
-|---|---|---|
-| Task startup latency | ~1–2 min cold start | Seconds (warm pool) |
-| Idle cost | None — pods only exist while a task runs | Worker pool runs continuously unless scaled to zero |
-| Isolation | Strong — one pod per task | Weak — tasks share a worker's resources/deps |
-| Extra infrastructure | None beyond the cluster itself | Redis/RabbitMQ broker + worker Deployment |
-| Scaling behavior at high task volume | Predictable — scales with cluster capacity | Can hit worker-pool scaling pain under sustained heavy load |
-
-In practice, teams running high task volumes tend to find `KubernetesExecutor` scales more predictably, since each task's resource footprint is explicit and cluster autoscaling handles the rest; `CeleryExecutor` deployments that grow past their original sizing can run into worker-pool scaling limits that take manual retuning to resolve.
-
-You are not actually forced to choose only one for an entire deployment. Airflow 3's "multiple executors concurrently" feature (introduced in Part 1) lets a single deployment assign an executor per task or per DAG rather than committing to one globally — for example, running most DAGs on a warm `CeleryExecutor` pool for low-latency dispatch, while routing a handful of resource-heavy or GPU tasks to `KubernetesExecutor` for isolation. This is the realistic answer for most non-trivial deployments: pick a sensible default, and override it explicitly for the tasks that need the other executor's behavior.
-
-![Side-by-side comparison of Airflow task execution: KubernetesExecutor, where the scheduler creates one ephemeral pod per task, versus CeleryExecutor, where the scheduler enqueues tasks onto a Redis broker that long-running warm celery worker pods pull from.](../../.gitbook/assets/en-data-on-eks-airflow-02-helm-deployment-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-airflow-02-helm-deployment-0.html)
-
-With `KubernetesExecutor`, every task is a fresh pod that exists only for the task's lifetime. With `CeleryExecutor`, the worker pods are long-lived and pull work from the broker — the pods in the diagram above are already running before any task is queued.
-
-## Autoscaling CeleryExecutor Workers with KEDA
-
-Since Celery workers are a fixed pool by default, sizing the worker Deployment to peak load wastes capacity at idle. KEDA closes that gap by scaling the worker Deployment based on actual queued/running task counts rather than a static replica count.
-
-Enable it in `values.yaml`:
-
-```yaml
+  brokerUrlSecretName: airflow-broker
+  resultBackendSecretName: airflow-result-backend
+fernetKeySecretName: airflow-fernet
+apiSecretKeySecretName: airflow-api-secret
+jwtSecretName: airflow-jwt
+createUserJob:
+  enabled: false
+triggerer:
+  persistence:
+    enabled: false
+config:
+  core:
+    auth_manager: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+  celery:
+    worker_concurrency: 4
 workers:
   celery:
+    persistence:
+      enabled: false
     keda:
       enabled: true
       minReplicaCount: 0
       maxReplicaCount: 20
+      pollingInterval: 10
+      cooldownPeriod: 300
+      advanced:
+        horizontalPodAutoscalerConfig:
+          behavior:
+            scaleDown:
+              stabilizationWindowSeconds: 300
 ```
 
-Once enabled, the chart creates a KEDA `ScaledObject` targeting the worker Deployment. KEDA polls the metadata database roughly **every 10 seconds** with a query along the lines of:
+Concurrency=4 and maxReplicaCount=20 are example bounds, not throughput or cost
+guarantees. Tune worker resources, task memory, database/broker load and node
+limits together. With persistence=false this profile targets a Deployment;
+persistence=true can produce a StatefulSet, which KEDA also supports.
+
+Actual chart defaults are pollingInterval=5s and cooldownPeriod=30s. The example
+**explicitly chooses 10s/300s**. Cooldown governs scaling to zero; distinguish it
+from HPA polling/stabilization above zero. Actual database polling also depends
+on KEDA activity, HPA requests and metric caching, not an exact universal 10-second interval.
+
+This profile renders the following PostgreSQL query:
 
 ```sql
-SELECT ceil(COUNT(*)::decimal / worker_concurrency)
-FROM task_instance
-WHERE state IN ('running', 'queued');
+SELECT ceil(COUNT(*)::decimal / 4) FROM task_instance WHERE (state='running' OR state='queued') AND queue IN ('default')
 ```
 
-The result is the number of worker replicas needed to keep every running/queued task instance covered at the configured `worker_concurrency` per pod. When the count of running/queued tasks drops to zero, the ScaledObject scales the Deployment **down to zero** replicas — but only after task activity has been absent for roughly **5 minutes**, so a brief lull between DAG runs doesn't tear down and immediately recreate the worker pool.
+worker_concurrency is not a database column: the chart inserts the **number 4**.
+It counts running/queued work for this worker queue and computes required replicas.
+A query result of 25 is still bounded by maxReplicaCount=20, leaving possible backlog.
+Do not interpret query or authentication failures as zero work; inspect ScaledObject/HPA status.
 
-### Why KubernetesExecutor Has No Equivalent KEDA Setup
+### Mixed executors and aliases
 
-This section only applies to `CeleryExecutor`, and there's no parallel "KEDA for KubernetesExecutor" pattern to reach for — and that's by design, not a gap. `KubernetesExecutor` scaling is already granular at the pod level: each task creates exactly one pod, so there is no fixed-size worker pool to right-size in the first place. What actually needs to scale under `KubernetesExecutor` is cluster-level compute capacity for those task pods, which is Karpenter's or Cluster Autoscaler's job, not a workload-level autoscaler like KEDA. KEDA's role is specifically to resize a long-running Deployment based on an external metric; `KubernetesExecutor` never has a long-running Deployment to resize.
+Exclude work Celery will not execute when mixing executors. The chart's default
+query excludes the literal KubernetesExecutor, but a stored alias such as k8s can
+still be counted. TaskInstance preserves the task.executor value.
 
-## Verifying the Deployment
+This example query override assumes default CeleryExecutor alongside
+KubernetesExecutor. Update filters when changing queues, aliases or full class
+names, based on actual stored values. NULL represents the default Celery executor
+in this configuration.
+
+```yaml
+executor: CeleryExecutor,KubernetesExecutor
+workers:
+  celery:
+    keda:
+      query: >-
+        SELECT ceil(COUNT(*)::decimal / {{ .Values.config.celery.worker_concurrency }})
+        FROM task_instance
+        WHERE state IN ('running', 'queued')
+        AND queue = 'default'
+        AND (executor IS NULL OR executor = 'CeleryExecutor')
+```
+
+Merge this fragment into the complete Celery profile and inspect the rendered SQL
+and target before changing a deployment. KubernetesExecutor task pods are not a
+replica pool scaled in the same way. Node capacity from Karpenter/Cluster Autoscaler,
+Airflow parallelism/pools/DAG concurrency and API throughput remain separate limits.
+This does not mean KEDA supports only Deployments or cannot be used elsewhere in
+a KubernetesExecutor environment.
+
+## 6. Validation and resource lifecycle
 
 ```bash
-# Confirm every component pod is Running
-kubectl get pods -n airflow
-
-# Confirm no restarts/crashes on the scheduler and dag-processor specifically
-kubectl get pods -n airflow -l component=scheduler
-kubectl get pods -n airflow -l component=dag-processor
-
-# Port-forward the api-server to reach the UI locally
-kubectl port-forward -n airflow svc/airflow-api-server 8080:8080
+kubectl -n airflow rollout status deployment/airflow-api-server --timeout=180s
+kubectl -n airflow rollout status deployment/airflow-scheduler --timeout=180s
+kubectl -n airflow rollout status deployment/airflow-dag-processor --timeout=180s
+kubectl -n airflow get jobs
+kubectl -n airflow logs deployment/airflow-scheduler -c scheduler --tail=100
+kubectl -n airflow logs deployment/airflow-dag-processor -c dag-processor --tail=100
+# Celery/KEDA profile only:
+kubectl -n airflow get scaledobjects,hpa
+kubectl -n airflow describe scaledobject airflow-worker
+kubectl -n airflow get deployments,statefulsets -l component=worker
 ```
 
-With the port-forward active, the UI is reachable at `http://localhost:8080`. The chart creates a default `admin`/`admin` user on first install; change the password by setting `webserver.defaultUser.password` in `values.yaml` before installing (never rely on the default outside a throwaway lab). If `executor: CeleryExecutor` is set, also confirm the worker Deployment and Redis are healthy:
+One successful UI visit or healthy Deployment does not validate migrations, DAG
+delivery, task execution, remote logs and scale-to-zero together. Submit known
+work, inspect worker count/results/logs, then test return to idle and recovery.
 
-```bash
-kubectl get deploy -n airflow -l component=worker
-kubectl get pods -n airflow -l component=redis
-```
+This profile does not use bundled PostgreSQL. The default chart uses an older
+bitnamilegacy PostgreSQL image; a default installation is not a production baseline.
+Removing a database pod with Helm uninstall does not necessarily delete PVC/PV
+data immediately. Inspect PVC retention, StorageClass reclaim policy and external
+database deletion/backups separately rather than indiscriminately deleting the
+namespace, Secrets and database.
 
-## Next Steps
+The review checks chart/KEDA resource shape, public image manifests and 24 SQL
+cases in an actual PostgreSQL engine. It does not execute an EKS/database connection,
+container workload, user creation or KEDA-controller scaling.
 
-This document covered the two Airflow Helm charts and why only `apache/airflow` is official, installed a working Airflow 3 deployment, and worked through the `KubernetesExecutor` vs. `CeleryExecutor` decision in depth, including KEDA-based autoscaling for Celery workers. The next chapter in this section moves on to DAG authoring patterns on Kubernetes — the `KubernetesPodOperator`, task-level executor overrides, and structuring DAGs for the dag-processor introduced in Part 1.
 
-[Return to Main Page](./README.md)
+- [Official chart 1.22.0 parameters](https://airflow.apache.org/docs/helm-chart/1.22.0/parameters-ref.html)
+- [Official chart 1.22.0 production guide](https://airflow.apache.org/docs/helm-chart/1.22.0/production-guide.html)
+- [KEDA configuration in the chart](https://airflow.apache.org/docs/helm-chart/1.22.0/keda.html)
+- [Chart 1.22.0 source](https://github.com/apache/airflow/tree/helm-chart/1.22.0/chart)
+- [KubernetesExecutor requirements](https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/kubernetes_executor.html)
+- [Concurrent executors](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/executor/index.html)
+- [KEDA PostgreSQL scaler](https://keda.sh/docs/2.20/scalers/postgresql/)
+- [KEDA ScaledObject timing and targets](https://keda.sh/docs/2.20/reference/scaledobject-spec/)
 
-## Quiz
+[Part 3: DAG patterns](03-dag-patterns.md)
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md).
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)

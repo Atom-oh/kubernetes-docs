@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Tekton Pipeline Task Graph",
+    "title": "CI dependencies and final reporting",
     "locale": "en",
     "output": "en-ops-14-tekton-pipelines-2.html",
     "quality_profile": "showcase",
@@ -20,7 +20,7 @@
       },
       {
         "id": "converge",
-        "label": "Convergence and deploy",
+        "label": "Build, scan and finish",
         "focus": [
           "test",
           "lint",
@@ -28,17 +28,16 @@
           "scan",
           "deploy"
         ],
-        "note": "build-image waits for both to succeed, then security-scan and deploy follow."
+        "note": "Publish a candidate after test/vet, then scan its digest. Deployment uses a separate promotion procedure."
       },
       {
         "id": "finally",
         "label": "finally Tasks",
         "focus": [
           "deploy",
-          "notify",
-          "cleanup"
+          "notify"
         ],
-        "note": "Notification and cleanup Tasks always run when the Pipeline ends, success or failure."
+        "note": "Report after ordinary Tasks finish; cancellation, timeout or resolution errors can prevent execution."
       }
     ]
   },
@@ -46,7 +45,7 @@
     {
       "id": "clone",
       "type": "backend",
-      "label": "git-clone",
+      "label": "checkout",
       "sublabel": "fetch source",
       "pos": [
         40,
@@ -60,7 +59,7 @@
     {
       "id": "test",
       "type": "backend",
-      "label": "unit-test",
+      "label": "go-test",
       "sublabel": "test suite",
       "pos": [
         240,
@@ -74,7 +73,7 @@
     {
       "id": "lint",
       "type": "backend",
-      "label": "lint",
+      "label": "go-vet",
       "sublabel": "static checks",
       "pos": [
         240,
@@ -89,7 +88,7 @@
       "id": "build",
       "type": "backend",
       "label": "build-image",
-      "sublabel": "image build",
+      "sublabel": "publish candidate",
       "pos": [
         440,
         250
@@ -102,8 +101,8 @@
     {
       "id": "scan",
       "type": "security",
-      "label": "security-scan",
-      "sublabel": "vulnerability scan",
+      "label": "scan-image",
+      "sublabel": "scan by digest",
       "pos": [
         650,
         250
@@ -116,8 +115,8 @@
     {
       "id": "deploy",
       "type": "backend",
-      "label": "deploy",
-      "sublabel": "deploy to cluster",
+      "label": "CI completion",
+      "sublabel": "check success status",
       "pos": [
         850,
         250
@@ -130,25 +129,11 @@
     {
       "id": "notify",
       "type": "backend",
-      "label": "notify-slack",
-      "sublabel": "Slack notification",
+      "label": "report-status",
+      "sublabel": "run name / status",
       "pos": [
         1080,
         140
-      ],
-      "size": [
-        140,
-        60
-      ]
-    },
-    {
-      "id": "cleanup",
-      "type": "backend",
-      "label": "cleanup",
-      "sublabel": "workspace cleanup",
-      "pos": [
-        1080,
-        360
       ],
       "size": [
         140,
@@ -159,7 +144,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "CI/CD Pipeline (tasks)",
+      "label": "CI work and completion",
       "wraps": [
         "clone",
         "test",
@@ -173,8 +158,7 @@
       "kind": "region",
       "label": "finally Tasks",
       "wraps": [
-        "notify",
-        "cleanup"
+        "notify"
       ]
     }
   ],
@@ -216,32 +200,25 @@
       "id": "deploy-notify",
       "from": "deploy",
       "to": "notify",
-      "label": "always runs",
-      "variant": "dashed"
-    },
-    {
-      "id": "deploy-cleanup",
-      "from": "deploy",
-      "to": "cleanup",
+      "label": "finally attempt",
       "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Ordering and parallelism",
+      "title": "Dependencies",
       "items": [
-        "runAfter declares ordering between Tasks",
-        "lint and unit-test run in parallel after git-clone",
-        "build-image starts only after both succeed"
+        "Run vet/test in parallel after checkout",
+        "After both succeed: build → scan"
       ]
     },
     {
       "dot": "amber",
-      "title": "finally Tasks",
+      "title": "finally",
       "items": [
-        "Always execute regardless of Pipeline success or failure",
-        "Used for Slack notification and workspace cleanup"
+        "Execution is not unconditional",
+        "Avoid image Results that may never have been produced"
       ]
     }
   ]

@@ -1,0 +1,298 @@
+{
+  "schemaObjects": [
+    {
+      "source": "nodepools.yaml",
+      "kind": "NodePool",
+      "name": "spark-driver"
+    },
+    {
+      "source": "nodepools.yaml",
+      "kind": "NodePool",
+      "name": "spark-executor"
+    },
+    {
+      "source": "driver-template.yaml",
+      "kind": "Pod",
+      "name": null
+    },
+    {
+      "source": "executor-template.yaml",
+      "kind": "Pod",
+      "name": null
+    },
+    {
+      "source": "native executor pod",
+      "kind": "Pod",
+      "name": "storage-review-029384a09490e1f4-exec-1"
+    },
+    {
+      "source": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "NodePool",
+      "name": "spark-driver"
+    },
+    {
+      "source": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "NodePool",
+      "name": "spark-executor"
+    },
+    {
+      "source": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "Pod",
+      "name": null
+    },
+    {
+      "source": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "Pod",
+      "name": null
+    },
+    {
+      "source": "en/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "NodePool",
+      "name": "spark-driver"
+    },
+    {
+      "source": "en/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "NodePool",
+      "name": "spark-executor"
+    },
+    {
+      "source": "en/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "Pod",
+      "name": null
+    },
+    {
+      "source": "en/data-on-eks/spark/04-performance-tuning.md",
+      "kind": "Pod",
+      "name": null
+    }
+  ],
+  "fences": [
+    {
+      "path": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "language": "properties"
+    },
+    {
+      "path": "ko/data-on-eks/spark/04-performance-tuning.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/04-performance-tuning.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/04-performance-tuning.md",
+      "language": "properties"
+    },
+    {
+      "path": "en/data-on-eks/spark/04-performance-tuning.md",
+      "language": "bash"
+    }
+  ],
+  "relativeLinks": 10,
+  "quizQuestions": 28,
+  "images": [
+    "en/.gitbook/assets/en-data-on-eks-spark-04-performance-tuning-0.png",
+    "ko/.gitbook/assets/ko-data-on-eks-spark-04-performance-tuning-0.png"
+  ],
+  "native": {
+    "checks": 12,
+    "results": [
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-openfeature/java-sdk/jdk/amazon-corretto-21.0.12.9.1-linux-aarch64/bin/java",
+          "-cp",
+          "/tmp/kubernetes-docs-full-review/spark-runtime/jars/*",
+          "scala.tools.nsc.Main",
+          "-usejavacp",
+          "-d",
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-performance/classes",
+          "/tmp/kubernetes-docs-full-review/spark-performance-fixtures/StorageChecks.scala"
+        ],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-openfeature/java-sdk/jdk/amazon-corretto-21.0.12.9.1-linux-aarch64/bin/java",
+          "-cp",
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-performance/classes:/tmp/kubernetes-docs-full-review/spark-runtime/jars/*",
+          "org.apache.spark.deploy.k8s.StorageChecks",
+          "/tmp/kubernetes-docs-full-review/spark-performance-fixtures/native-pods",
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-performance/executor-template.yaml",
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-performance/performance.properties"
+        ],
+        "stdout": "PASS default scratch is emptyDir\nPASS spark.local.dir still creates emptyDir\nPASS spark.local.dir selects emptyDir mount\nPASS tmpfs is memory-backed\nPASS old missing suffix produces duplicate mount path\nPASS recognized prefix reuses one existing scratch volume\nPASS recognized mount sets SPARK_LOCAL_DIRS\nPASS ephemeral-storage request retained\nPASS heap plus overhead is 4505MiB\nPASS CPU limit explicitly set\nPASS native decommission hook plus 120 second grace\nPASS one scratch mount without hostPath\nPASS 12 native storage/resource checks; no Kubernetes client created\n",
+        "stderr": "Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties\n26/09/12 07:41:58 INFO SecurityManager: Changing view acls to: atomoh\n26/09/12 07:41:58 INFO SecurityManager: Changing modify acls to: atomoh\n26/09/12 07:41:58 INFO SecurityManager: Changing view acls groups to: atomoh\n26/09/12 07:41:58 INFO SecurityManager: Changing modify acls groups to: atomoh\n26/09/12 07:41:58 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: atomoh groups with view permissions: EMPTY; users with modify permissions: atomoh; groups with modify permissions: EMPTY; RPC SSL disabled\n26/09/12 07:41:58 INFO ResourceProfile: Default ResourceProfile created, executor resources: Map(cores -> name: cores, amount: 2, script: , vendor: , memory -> name: memory, amount: 4096, script: , vendor: , offHeap -> name: offHeap, amount: 0, script: , vendor: ), task resources: Map(cpus -> name: cpus, amount: 1.0)\n26/09/12 07:41:58 INFO BasicExecutorFeatureStep: Adding decommission script to lifecycle\n"
+      }
+    ],
+    "limits": "Native Spark feature-step construction only; no Kubernetes client, EC2 access, disk formatting or shuffle migration execution."
+  },
+  "limits": "No EC2/Kubernetes deployment, disk formatting, Spot interruption or shuffle performance test. NodeClasses are existing reviewed prerequisites; instanceStorePolicy shown as a field fragment only.",
+  "diagrams": [
+    {
+      "stem": "ko-data-on-eks-spark-04-performance-tuning-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    },
+    {
+      "stem": "en-data-on-eks-spark-04-performance-tuning-0",
+      "deliveryChecks": 9,
+      "desktopVisual": "passed"
+    }
+  ],
+  "mobile": [
+    {
+      "name": "en-data-on-eks-spark-04-performance-tuning-0.html",
+      "width": 375,
+      "sourceSha256": "cd2fc6a322acd50468e115a0c9cb4d90c634cdbd3a656d7d02e6f4b7e1d8e28f",
+      "viewerSha256": "5216974481d7744007ac8cf3781d18f4f33e1c5a995e67230a89b2f530c740c2",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-spark-04-performance-tuning-0.html",
+      "width": 375,
+      "sourceSha256": "1b0c8001c3267e8139f1306369b227d81343bbc967ece51f4938d53289859369",
+      "viewerSha256": "61b97355273664783c662cc47cb4c837913d7d7ce54cd936b5eaf13519140ce8",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-spark-04-performance-tuning-0.html",
+      "width": 768,
+      "sourceSha256": "cd2fc6a322acd50468e115a0c9cb4d90c634cdbd3a656d7d02e6f4b7e1d8e28f",
+      "viewerSha256": "5216974481d7744007ac8cf3781d18f4f33e1c5a995e67230a89b2f530c740c2",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-spark-04-performance-tuning-0.html",
+      "width": 768,
+      "sourceSha256": "1b0c8001c3267e8139f1306369b227d81343bbc967ece51f4938d53289859369",
+      "viewerSha256": "61b97355273664783c662cc47cb4c837913d7d7ce54cd936b5eaf13519140ce8",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    }
+  ],
+  "pngVisualInspection": "Both regenerated locale PNGs inspected together; flow labels and routes visible without clipping."
+}

@@ -1,166 +1,166 @@
 # EKS Integration Quiz
 
 > **Related Document**: [EKS Integration](../../../networking/calico/08-eks-integration.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 12, 2026
 
 ## Quiz
 
-1. What is the typical role separation when using VPC CNI with Calico on EKS?
-   - A) VPC CNI handles policy, Calico handles networking
-   - B) VPC CNI handles networking (IP allocation), Calico handles network policy
-   - C) VPC CNI and Calico both handle networking redundantly
-   - D) Calico completely replaces VPC CNI
+1. What is the role separation in this guide’s ordinary EC2 Linux VPC CNI + Calico configuration?
+   - A) VPC CNI handles policy and Calico allocates VPC IPs
+   - B) VPC CNI handles Pod networking and Calico enforces policy
+   - C) Both CNIs independently configure every Pod interface
+   - D) Calico replaces the AWS-managed EKS control plane
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) VPC CNI handles networking (IP allocation), Calico handles network policy**
+**Answer: B) VPC CNI handles Pod networking and Calico enforces policy**
 
 **Explanation:**
-In the most common EKS configuration, the AWS VPC CNI handles pod networking by allocating IPs from the VPC, while Calico is installed in "policy-only" mode to provide network policy enforcement. This combines native VPC integration with Calico's powerful policy capabilities.
+VPC CNI manages ENIs, Pod IP allocation and connectivity. Calico programs policy rules. This guide keeps Iptables and kube-proxy; selecting an alternate dataplane requires a separate plan.
 
 </details>
 
-2. What are the three main methods to install Calico on EKS?
-   - A) kubectl apply, Docker, AWS CLI
-   - B) EKS Add-on, Tigera Operator, Helm chart
-   - C) CloudFormation, Terraform, Pulumi
-   - D) eksctl, AWS Console, SDK
+2. Which statement correctly describes installing Calico on EKS?
+   - A) Enabling VPC CNI network policy installs Calico
+   - B) The pinned Tigera Operator can be installed by manifests or its Helm chart
+   - C) Every EKS cluster has an AWS-supported add-on named calico
+   - D) A Helm rollback always reverses Calico CRD and data migrations
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) EKS Add-on, Tigera Operator, Helm chart**
+**Answer: B) The pinned Tigera Operator can be installed by manifests or its Helm chart**
 
 **Explanation:**
-Calico can be installed on EKS using: 1) The EKS managed add-on (simplest for policy-only mode), 2) The Tigera Operator (recommended for full Calico features), or 3) Helm charts (flexible configuration). Each method has different trade-offs in terms of simplicity vs customization.
+The Helm chart installs the Tigera Operator. AWS VPC CNI policy is a different implementation. Check the actual catalog and support owner for Marketplace/community products, and use one installation owner.
 
 </details>
 
-3. Starting from which EKS version is the native Network Policy Controller available?
-   - A) EKS 1.12
-   - B) EKS 1.14
-   - C) EKS 1.18
-   - D) EKS 1.24
+3. Which statement matches the current AWS native network policy guidance?
+   - A) EKS 1.14 introduced every current policy feature
+   - B) VPC CNI 1.21+ supports standard and admin policy with the documented platform/kernel prerequisites
+   - C) Native policy supports only namespace-scoped policies forever
+   - D) Native policy and Calico must both enforce the same endpoints
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) EKS 1.14**
+**Answer: B) VPC CNI 1.21+ supports standard and admin policy with the documented platform/kernel prerequisites**
 
 **Explanation:**
-EKS introduced its native Network Policy Controller starting with version 1.14. This controller provides basic Kubernetes NetworkPolicy support. However, Calico offers additional policy features like GlobalNetworkPolicy and policy tiers that go beyond the native controller's capabilities.
+Standard support began in VPC CNI 1.14, not EKS 1.14. Current AWS guidance covers NetworkPolicy and AWS ClusterNetworkPolicy with VPC CNI 1.21+, compatible EKS/platform versions and Linux kernel 5.10+. The APIs differ from Calico’s.
 
 </details>
 
-4. What is a key limitation of running Calico with EKS Fargate?
-   - A) Fargate does not support any networking
-   - B) Calico cannot enforce network policies on Fargate pods
-   - C) Fargate only supports IPv6
-   - D) Calico requires root access which Fargate provides
+4. What is a limitation of network policy on EKS Fargate?
+   - A) Fargate has no networking
+   - B) Neither Calico node-agent policy nor VPC CNI native network policy is enforced inside Fargate Pods
+   - C) All Calico features work if kubernetesProvider is EKS
+   - D) Fargate supports only IPv6
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Calico cannot enforce network policies on Fargate pods**
+**Answer: B) Neither Calico node-agent policy nor VPC CNI native network policy is enforced inside Fargate Pods**
 
 **Explanation:**
-Fargate pods run in isolated microVMs managed by AWS, and users cannot install DaemonSets or modify the underlying host. Since Calico's Felix agent runs as a DaemonSet, it cannot be deployed to Fargate nodes, meaning network policy enforcement is not available for Fargate pods.
+Fargate does not run these node agents. Security groups for Pods are a separate control. Calico can still restrict the EC2 endpoint of a connection involving a Fargate peer; that is not enforcement inside Fargate.
 
 </details>
 
-5. What is IRSA in the context of Calico on EKS?
-   - A) Internal Route Service Allocation
-   - B) IAM Roles for Service Accounts - allowing pods to assume AWS IAM roles
-   - C) Ingress Resource Security Association
-   - D) IP Range Subnet Assignment
+5. When should AWS IAM permissions be assigned in this setup?
+   - A) Every calico-node needs broad EC2 Describe and CloudWatch access
+   - B) Assign permissions to the component that actually calls AWS APIs; basic Calico policy uses Kubernetes RBAC
+   - C) The nodeMetadata Installation field creates an IRSA role
+   - D) Creating an IAM policy automatically associates it with every ServiceAccount
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) IAM Roles for Service Accounts - allowing pods to assume AWS IAM roles**
+**Answer: B) Assign permissions to the component that actually calls AWS APIs; basic Calico policy uses Kubernetes RBAC**
 
 **Explanation:**
-IRSA (IAM Roles for Service Accounts) allows Kubernetes service accounts to assume AWS IAM roles. When Calico components need to access AWS APIs (e.g., for cloud provider integration), IRSA provides secure, fine-grained access without embedding credentials in pods.
+VPC CNI needs its own AWS permissions. An exporter or cloud integration may need a separate role. Use the owning component’s supported IRSA or Pod Identity configuration; basic policy-only Calico does not need a broad AWS role.
 
 </details>
 
-6. How do Security Groups and Calico network policies differ in scope?
-   - A) They are functionally identical
-   - B) Security Groups operate at VPC/ENI level, Calico policies at pod/container level
-   - C) Security Groups are only for ingress, Calico only for egress
-   - D) Security Groups are deprecated in favor of Calico
+6. What does AWS require to combine security groups for Pods with Calico policy?
+   - A) Only POD_SECURITY_GROUP_ENFORCING_MODE=strict
+   - B) VPC CNI 1.11+ and POD_SECURITY_GROUP_ENFORCING_MODE=standard, plus the feature’s other prerequisites
+   - C) A label on the EC2 instance is sufficient
+   - D) Security groups for Pods also work on EKS Auto Mode
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Security Groups operate at VPC/ENI level, Calico policies at pod/container level**
+**Answer: B) VPC CNI 1.11+ and POD_SECURITY_GROUP_ENFORCING_MODE=standard, plus the feature’s other prerequisites**
 
 **Explanation:**
-AWS Security Groups operate at the VPC networking layer, controlling traffic to/from ENIs (Elastic Network Interfaces). Calico network policies operate at the Kubernetes pod level with label-based selectors. Both can be used together for defense-in-depth, with SGs providing VPC-level controls and Calico providing application-level policies.
+In strict mode those Pods are not subject to Calico enforcement. Check supported instances/branch ENIs and replace affected Pods after a mode change. Standard mode with normal external SNAT uses node security groups for traffic leaving the VPC.
 
 </details>
 
-7. What should be considered when upgrading EKS clusters running Calico?
-   - A) Calico must be uninstalled before upgrading
-   - B) Verify Calico version compatibility with the target EKS version
-   - C) EKS upgrades automatically upgrade Calico
-   - D) Calico only supports specific EKS versions ending in even numbers
+7. What is the correct approach to an EKS/Calico upgrade?
+   - A) Always upgrade Calico after EKS, regardless of compatibility
+   - B) Choose a transition-compatible Calico version and review EKS, node, add-on and CRD requirements
+   - C) EKS automatically upgrades and rolls back every third-party component
+   - D) Applying an older operator guarantees a safe downgrade
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Verify Calico version compatibility with the target EKS version**
+**Answer: B) Choose a transition-compatible Calico version and review EKS, node, add-on and CRD requirements**
 
 **Explanation:**
-When upgrading EKS, you should verify that your Calico version is compatible with the target Kubernetes/EKS version. Review Calico's compatibility matrix and upgrade Calico if necessary before or after the EKS upgrade, following the documented upgrade procedures.
+Check compatibility on both sides of the transition. Current EKS has a conditional seven-day rollback window to the previous minor version, but Calico and EKS add-ons do not automatically roll back. Recovery still requires compatibility and readiness checks.
 
 </details>
 
-8. What should the kubernetesProvider setting be configured to for EKS installations?
-   - A) kubernetesProvider: AWS
-   - B) kubernetesProvider: EKS
-   - C) kubernetesProvider: Amazon
-   - D) kubernetesProvider: None (auto-detected)
+8. Which provider value is used in the reviewed Installation?
+   - A) AWS
+   - B) EKS
+   - C) AmazonEKS
+   - D) None
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) kubernetesProvider: EKS**
+**Answer: B) EKS**
 
 **Explanation:**
-When installing Calico on EKS, the `kubernetesProvider` should be set to `EKS` in the Installation resource. This tells Calico to use EKS-specific configurations and optimizations, ensuring proper integration with the managed Kubernetes service.
+Use `spec.kubernetesProvider: EKS`, or `installation.kubernetesProvider: EKS` in Helm values. This selects provider configuration; it does not prove every node type, CNI, dataplane or version is supported.
 
 </details>
 
-9. What does the cni.type setting control in Calico's Installation resource for EKS?
-   - A) The version of the CNI specification to use
-   - B) Whether Calico manages CNI or defers to another CNI plugin
-   - C) The type of network encryption
-   - D) Container runtime integration mode
+9. Which CNI type delegates networking to Amazon VPC CNI?
+   - A) Calico
+   - B) AmazonVPC
+   - C) AWSCNI
+   - D) VPC
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Whether Calico manages CNI or defers to another CNI plugin**
+**Answer: B) AmazonVPC**
 
 **Explanation:**
-The `cni.type` setting determines Calico's CNI behavior. Setting `cni.type: AmazonVPC` tells Calico to defer networking to the VPC CNI while Calico handles policy only. Setting `cni.type: Calico` makes Calico handle both networking and policy.
+Set `spec.cni.type: AmazonVPC` in Installation. Calico policy-only behavior also needs the documented Pod IP annotation/RBAC and a single policy engine; `bgp: Disabled` alone does not select this CNI.
 
 </details>
 
-10. What is "policy-only mode" in Calico on EKS?
-    - A) A mode where only GlobalNetworkPolicies are enforced
-    - B) A mode where Calico handles network policy but not pod networking
-    - C) A mode that disables all egress policies
-    - D) A mode for audit-only policy evaluation
+10. Why must the backend selector and TCP port remain in one destination mapping?
+   - A) YAML requires every field to be repeated
+   - B) A duplicate destination key can discard the selector and allow unintended endpoints
+   - C) The port automatically implies the backend Pod label
+   - D) Duplicate keys always produce a Kubernetes validation error
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) A mode where Calico handles network policy but not pod networking**
+**Answer: B) A duplicate destination key can discard the selector and allow unintended endpoints**
 
 **Explanation:**
-Policy-only mode is a Calico deployment configuration where the VPC CNI continues to handle pod IP allocation and routing, while Calico is responsible only for network policy enforcement. This is the most common Calico deployment pattern on EKS as it preserves native VPC networking benefits.
+Some YAML parsers retain only the last duplicate key. Keep selector and ports together, reject duplicate keys during validation, and test both allowed and denied traffic. A Ready node is not evidence of correct policy enforcement.
 
 </details>

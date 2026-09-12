@@ -1,209 +1,197 @@
 # Cilium Service Mesh 인그레스 & 게이트웨이 퀴즈
 
-이 퀴즈는 Cilium Ingress Controller, Gateway API, TLS 종료, EKS 통합 패턴에 대한 이해를 테스트합니다.
+검토 기준: Cilium 1.20.1, Gateway API 1.6.1, AWS LBC 3.5.0. [본문](../../../service-mesh/cilium-service-mesh/05-ingress-gateway.md)과 공식 근거를 함께 확인합니다.
 
 ## 퀴즈 문제
 
-### 1. Cilium Ingress Controller의 loadbalancerMode 옵션에서 'shared' 모드의 의미는?
+### 1. Cilium Ingress의 `loadbalancerMode: shared`가 공유하는 것은?
 
-A. 각 Ingress마다 별도의 로드밸런서 생성
-B. 모든 Ingress가 하나의 로드밸런서를 공유
-C. 로드밸런서 없이 NodePort만 사용
-D. 내부 트래픽만 처리
+- A. 클러스터의 모든 컨트롤러 프런트엔드
+- B. 해당 모드를 사용하는 리소스의 Cilium Ingress 공유 Service
+- C. 내부 NodePort만
+- D. 모든 Gateway API Gateway의 로드 밸런서
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 모든 Ingress가 하나의 로드밸런서를 공유**
+**정답: B. 해당 모드를 사용하는 리소스의 Cilium Ingress 공유 Service**
 
-**설명:**
-loadbalancerMode: shared 설정은 모든 Ingress 리소스가 하나의 공유 로드밸런서를 사용하도록 합니다. 이는 비용 효율적이며, dedicated 모드는 각 Ingress마다 별도의 로드밸런서를 생성합니다.
+shared 모드로 Cilium이 관리하는 Ingress에 적용됩니다. dedicated 재정의나 다른 컨트롤러는 별개입니다. GatewayClass 공유도 하나의 클라우드 로드 밸런서 공유를 의미하지 않습니다.
 
 </details>
 
-### 2. Gateway API에서 HTTPRoute의 parentRefs 필드의 역할은?
+### 2. HTTPRoute를 Gateway의 HTTPS 리스너에만 명시적으로 연결하는 방법은?
 
-A. 부모 Pod 정의
-B. 이 라우트가 연결될 Gateway 지정
-C. 상위 네임스페이스 참조
-D. 상속할 정책 정의
+- A. 부모 Pod 이름 지정
+- B. `parentRefs`에 Gateway 이름과 `sectionName: https` 지정
+- C. Route 네임스페이스만 지정
+- D. 임의의 리스너 어노테이션 사용
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 이 라우트가 연결될 Gateway 지정**
+**정답: B. `parentRefs`에 Gateway 이름과 `sectionName: https` 지정**
 
-**설명:**
-parentRefs는 HTTPRoute가 어떤 Gateway에 연결될지를 지정합니다. Gateway의 이름과 네임스페이스를 참조하여 라우트가 적용될 리스너를 결정합니다.
+section 이름은 실제 리스너와 일치해야 하고 `allowedRoutes`가 연결을 허용하며 호스트·프로토콜도 호환되어야 합니다. 해당 부모의 Accepted/ResolvedRefs 상태를 확인합니다. 참조만으로 실제 도달성이 보장되지는 않습니다.
 
 </details>
 
-### 3. Cilium Ingress에서 TLS 패스스루를 활성화하는 어노테이션은?
+### 3. Cilium Ingress에서 TLS passthrough를 켜는 어노테이션은?
 
-A. ingress.cilium.io/tls-mode: passthrough
-B. ingress.cilium.io/tls-passthrough: "true"
-C. cilium.io/tls: passthrough
-D. nginx.ingress.kubernetes.io/ssl-passthrough
+- A. `ingress.cilium.io/tls-mode: passthrough`
+- B. `ingress.cilium.io/tls-passthrough: "true"`
+- C. `cilium.io/tls: passthrough`
+- D. nginx 전용 어노테이션
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. ingress.cilium.io/tls-passthrough: "true"**
+**정답: B. `ingress.cilium.io/tls-passthrough: "true"`**
 
-**설명:**
-`ingress.cilium.io/tls-passthrough: "true"` 어노테이션을 사용하여 TLS 트래픽을 종료하지 않고 백엔드 서비스로 직접 전달합니다. 이는 백엔드에서 TLS를 처리해야 하는 경우에 유용합니다.
+백엔드가 TLS를 종료합니다. Ingress에 호스트와 경로 `/`가 필요하며 HTTP 경로가 아니라 SNI로 선택합니다. 백엔드는 원래 클라이언트 소켓 주소가 아닌 Envoy/노드 연결을 봅니다.
 
 </details>
 
-### 4. Gateway API의 Gateway 리소스에서 여러 프로토콜을 지원하기 위해 사용하는 필드는?
+### 4. Gateway의 프로토콜과 포트를 설정하는 위치는?
 
-A. protocols
-B. listeners
-C. endpoints
-D. handlers
+- A. `protocols`
+- B. `listeners`
+- C. `endpoints`
+- D. `handlers`
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. listeners**
+**정답: B. `listeners`**
 
-**설명:**
-Gateway의 listeners 필드에 여러 리스너를 정의하여 HTTP, HTTPS, TCP, TLS 등 다양한 프로토콜을 지원할 수 있습니다. 각 리스너는 protocol, port, hostname 등을 개별적으로 설정할 수 있습니다.
+리스너별로 프로토콜·포트와 해당 호스트·TLS·연결 설정을 정의합니다. 실제 프로토콜 조합은 컨트롤러에 따라 다릅니다. 예를 들어 LBC 3.5는 하나의 Gateway에 L4/NLB와 L7/ALB 리스너를 혼합할 수 없습니다.
 
 </details>
 
-### 5. EKS에서 Cilium Ingress에 NLB를 사용할 때 필요한 어노테이션은?
+### 5. 본문의 Cilium shared Ingress NLB 프런트엔드를 AWS LBC가 관리하도록 선택하는 구성은?
 
-A. service.kubernetes.io/load-balancer-type: nlb
-B. service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-C. eks.amazonaws.com/load-balancer: nlb
-D. aws.load-balancer/type: network
+- A. 과거 `aws-load-balancer-type: nlb` 어노테이션만 사용
+- B. Service의 `spec.loadBalancerClass: service.k8s.aws/nlb`, instance 대상, 할당된 NodePort
+- C. EndpointSlice 확인 없는 IP 대상
+- D. 임의의 EKS 네임스페이스 레이블
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. service.beta.kubernetes.io/aws-load-balancer-type: "nlb"**
+**정답: B. Service의 `spec.loadBalancerClass: service.k8s.aws/nlb`, instance 대상, 할당된 NodePort**
 
-**설명:**
-AWS EKS에서 Network Load Balancer를 사용하려면 `service.beta.kubernetes.io/aws-load-balancer-type: "nlb"` 어노테이션을 서비스에 추가해야 합니다. 추가로 scheme, target-type 등의 어노테이션으로 NLB 동작을 세부 설정할 수 있습니다.
+Helm에서는 `ingressController.service.loadBalancerClass`에 대응합니다. Cilium L7 shared Ingress의 합성 EndpointSlice에는 Pod 대상 참조가 없어 LBC IP 해석기가 건너뜁니다. EC2 instance/NodePort 전제도 검증해야 합니다.
 
 </details>
 
-### 6. Gateway API의 HTTPRoute에서 URL 재작성을 구성할 때 사용하는 filter 타입은?
+### 6. 클라이언트 리다이렉트 없이 업스트림 호스트·경로를 바꾸는 HTTPRoute 필터는?
 
-A. PathRewrite
-B. URLRewrite
-C. RequestTransform
-D. PathModifier
+- A. `PathRewrite`
+- B. `URLRewrite`
+- C. `RequestTransform`
+- D. `RequestRedirect`
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. URLRewrite**
+**정답: B. `URLRewrite`**
 
-**설명:**
-HTTPRoute의 filters 섹션에서 type: URLRewrite를 사용하여 요청 URL을 재작성할 수 있습니다. path와 hostname 모두 변경 가능합니다.
+URLRewrite는 백엔드로 전달하는 요청을 바꿉니다. RequestRedirect는 클라이언트에 리다이렉트를 반환합니다. 본문의 헤더 값은 문자열 리터럴이며 UUID나 지연 시간을 자동 생성하지 않습니다.
 
 </details>
 
-### 7. Cilium Gateway API에서 크로스 네임스페이스 라우팅을 허용하려면 Gateway의 어떤 설정이 필요한가요?
+### 7. 허용한 레이블이 있는 네임스페이스로만 교차 네임스페이스 Route 연결을 제한하는 설정은?
 
-A. allowedRoutes.namespaces.from: All
-B. allowedRoutes.namespaces.from: Selector
-C. crossNamespace: true
-D. routes.scope: cluster
+- A. `allowedRoutes.namespaces.from: All`
+- B. `allowedRoutes.namespaces.from: Selector`와 일치 선택자
+- C. `crossNamespace: true`
+- D. `routes.scope: cluster`
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. allowedRoutes.namespaces.from: Selector**
+**정답: B. `allowedRoutes.namespaces.from: Selector`와 일치 선택자**
 
-**설명:**
-Gateway의 listeners에서 allowedRoutes.namespaces.from: Selector를 설정하고, selector로 특정 레이블을 가진 네임스페이스의 라우트만 허용할 수 있습니다. 'All'은 모든 네임스페이스를 허용하고, 'Same'은 같은 네임스페이스만 허용합니다.
+All도 교차 네임스페이스 연결을 허용하지만 레이블로 제한하지 않습니다. Same은 Gateway 네임스페이스로 제한합니다. 다른 네임스페이스의 백엔드 Service를 참조하면 백엔드 쪽 ReferenceGrant가 추가로 필요하며 이는 별도 검사입니다.
 
 </details>
 
-### 8. CiliumEnvoyConfig에서 서비스 헬스 체크를 구성할 때 사용하는 Envoy 리소스 타입은?
+### 8. Envoy 능동 상태 검사를 설정하는 위치는?
 
-A. envoy.config.listener.v3.Listener
-B. envoy.config.cluster.v3.Cluster
-C. envoy.config.route.v3.Route
-D. envoy.config.endpoint.v3.Endpoint
+- A. Listener 이름
+- B. Cluster의 `health_checks`
+- C. Route 이름
+- D. Endpoint 네임스페이스
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. envoy.config.cluster.v3.Cluster**
+**정답: B. Cluster의 `health_checks`**
 
-**설명:**
-헬스 체크 설정은 Cluster 리소스의 health_checks 필드에 정의합니다. HTTP 헬스 체크, TCP 헬스 체크, 간격, 임계값 등을 설정할 수 있습니다.
+동작하는 CEC에는 Service→Listener→경로→Cluster 연결도 필요합니다. HTTP 상태 검사 호스트·경로가 실제 백엔드에서 동작해야 합니다. 상태 범위 상한은 제외하므로 start 200/end 300이 전체 2xx를 포함합니다.
 
 </details>
 
-### 9. Gateway API에서 HTTP에서 HTTPS로 리다이렉트할 때 권장되는 statusCode는?
+### 9. 요청 메서드·본문을 유지하는 영구 리다이렉트와 HTTP→HTTPS Route의 올바른 연결은?
 
-A. 302 (Found)
-B. 307 (Temporary Redirect)
-C. 301 (Moved Permanently)
-D. 303 (See Other)
+- A. 302를 HTTP와 HTTPS 모두에 연결
+- B. 307을 HTTP와 HTTPS 모두에 연결
+- C. 308을 HTTP 리스너에만 연결
+- D. 303을 HTTPS 리스너에만 연결
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. 301 (Moved Permanently)**
+**정답: C. 308을 HTTP 리스너에만 연결**
 
-**설명:**
-HTTP에서 HTTPS로의 영구 리다이렉트에는 301 상태 코드가 권장됩니다. 이는 브라우저와 검색 엔진에 URL이 영구적으로 변경되었음을 알려, 캐싱과 SEO에 유리합니다.
+308은 메서드·본문을 유지하는 영구 리다이렉트이고 307은 임시 리다이렉트입니다. 스킴 리다이렉트를 HTTP에만 연결하면 HTTPS 자기 리다이렉트 루프를 피합니다. 최초 평문 요청에 이미 실린 데이터까지 보호하지는 못합니다.
 
 </details>
 
-### 10. Cilium과 AWS Load Balancer Controller의 주요 차이점은?
+### 10. 올바른 비용·기능 비교는?
 
-A. Cilium은 L4만 지원
-B. AWS LBC는 더 낮은 지연 시간 제공
-C. Cilium은 추가 LB 비용 없이 노드 리소스만 사용
-D. AWS LBC는 Gateway API를 완전히 지원
+- A. Cilium은 클라우드 로드 밸런서가 절대 필요 없음
+- B. AWS LBC가 항상 더 빠름
+- C. Cilium 노드·프록시 비용과 클라우드 LB 비용이 함께 발생할 수 있으며 버전별 기능 비교가 필요함
+- D. 모든 컨트롤러가 Gateway API 전체 기능 지원
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. Cilium은 추가 LB 비용 없이 노드 리소스만 사용**
+**정답: C. Cilium 노드·프록시 비용과 클라우드 LB 비용이 함께 발생할 수 있으며 버전별 기능 비교가 필요함**
 
-**설명:**
-Cilium Ingress/Gateway는 노드의 eBPF와 Envoy를 사용하여 외부 트래픽을 처리하므로 별도의 AWS 로드밸런서 비용이 발생하지 않습니다. 반면 AWS LBC는 ALB/NLB를 프로비저닝하여 추가 비용이 발생합니다.
+Cilium 앞에 ALB/NLB를 두면 해당 비용도 발생합니다. LBC 3.5는 HTTP/GRPC Route를 ALB, TCP/UDP/TLS Route를 NLB로 구성합니다. 워크로드 mTLS와 ACM 서버 인증서는 다른 메커니즘이며 성능은 동등 조건에서 측정해야 합니다.
 
 </details>
 
-### 11. Gateway API의 TCPRoute는 어떤 용도로 사용되나요?
+### 11. 본문의 Gateway API 1.6.1 기준에서 TCPRoute가 하는 일은?
 
-A. HTTP 트래픽 라우팅
-B. TLS 종료가 필요한 트래픽
-C. 원시 TCP 트래픽 라우팅 (비 HTTP)
-D. UDP 트래픽 전용
+- A. HTTP 경로 검사
+- B. 기본 TLS 종료
+- C. 제공되는 v1 API로 불투명한 TCP 스트림 전달
+- D. UDP 전용 처리
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. 원시 TCP 트래픽 라우팅 (비 HTTP)**
+**정답: C. 제공되는 v1 API로 불투명한 TCP 스트림 전달**
 
-**설명:**
-TCPRoute는 데이터베이스 연결, 메시지 큐 등 HTTP가 아닌 원시 TCP 트래픽을 라우팅하는 데 사용됩니다. Gateway의 TCP 리스너와 함께 사용하여 비 HTTP 서비스에 대한 외부 접근을 제공합니다.
+TCP 안에 HTTP나 TLS가 있어도 TCPRoute가 해당 L7 기능을 갖지는 않습니다. 이 기준에서는 이전 TCPRoute v1alpha2를 제공하지 않습니다. TLSRoute v1의 SNI 라우팅에는 호환되는 TLS passthrough 리스너가 필요합니다.
 
 </details>
 
-### 12. Cilium Ingress에서 클라이언트 IP를 보존하기 위해 사용하는 NLB 설정은?
+### 12. 이 Cilium Ingress 구성에서 NLB PPv2를 켤 때 함께 조정할 것은?
 
-A. X-Forwarded-For 헤더
-B. Proxy Protocol
-C. Source NAT 비활성화
-D. Direct Server Return
+- A. 클라이언트 X-Forwarded-For 헤더만
+- B. NLB 송신과 Cilium `enableProxyProtocol` 수신, 상태 검사, 신뢰한 접근 경로
+- C. 수신 설정은 필요 없음
+- D. 모든 NLB에 PPv2가 필수
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. Proxy Protocol**
+**정답: B. NLB 송신과 Cilium `enableProxyProtocol` 수신, 상태 검사, 신뢰한 접근 경로**
 
-**설명:**
-NLB에서 클라이언트 IP를 보존하려면 Proxy Protocol을 활성화해야 합니다. `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"` 어노테이션을 사용합니다. Envoy가 Proxy Protocol 헤더에서 원본 클라이언트 IP를 추출합니다.
+파서가 PROXY 헤더를 요구하므로 한쪽만 켜면 트래픽이 실패합니다. PPv2는 선택 사항이며 IP 보존은 대상 종류·속성에도 달려 있습니다. AWS LBC는 PPv2·instance 대상·externalTrafficPolicy Local 조합을 경고합니다. PROXY 메타데이터는 인증된 신원이 아닙니다.
 
 </details>

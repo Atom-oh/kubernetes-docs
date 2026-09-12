@@ -71,7 +71,9 @@ Consul은 discovery, configuration과 identity 기능 및 Envoy 지원을 제공
 
 ### 함께 평가할 Cilium
 
-Cilium은 eBPF network datapath와 Envoy 같은 L7 proxy를 조합합니다. L7 전체가 proxy 없이 동작하는 networking은 아닙니다. Cilium 1.20.1 mutual authentication은 Beta이며 out-of-band handshake를 사용합니다. WireGuard/IPsec 암호화는 별도 요구사항입니다. 실제 기능과 Cluster Mesh 제약은 [Cilium mesh 가이드](../../cilium-service-mesh/README.md)를 참고하세요.
+Cilium은 eBPF network datapath와 Envoy 같은 L7 proxy를 조합합니다. L7 전체가 proxy 없이 동작하는 networking은 아닙니다. Cilium 1.20.1 out-of-band mutual authentication은 Beta이며 out-of-band handshake를 사용합니다. WireGuard/IPsec 암호화는 별도 요구사항입니다. 실제 기능과 Cluster Mesh 제약은 [Cilium mesh 가이드](../../cilium-service-mesh/README.md)를 참고하세요.
+
+Cilium 1.20.1에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
 
 ## 성능 근거
 

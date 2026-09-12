@@ -1,209 +1,195 @@
 # Cilium Service Mesh 보안 퀴즈
 
-이 퀴즈는 Cilium Service Mesh의 mTLS, 네트워크 정책, 암호화, ID 기반 보안, 제로 트러스트 네트워킹에 대한 이해를 테스트합니다.
+Cilium 1.20.1 기준입니다. [보안 본문](../../../service-mesh/cilium-service-mesh/03-security.md)에서 out-of-band 인증, 전송 암호화와 ztunnel 베타의 구분 및 공식 근거를 확인하세요.
 
-## 퀴즈 문제
+### 1. Cilium out-of-band 상호 인증에서 SPIRE가 제공하는 것은?
 
-### 1. Cilium Service Mesh에서 투명한 mTLS를 구현하기 위해 사용하는 기술은?
-
-A. Istio sidecar
-B. SPIFFE/SPIRE 통합
-C. Nginx proxy
-D. HAProxy
+- **A.** 모든 Pod의 Istio 사이드카
+- **B.** Agent 인증 메커니즘에 사용할 SVID 신원 증명
+- **C.** 그 자체로 모든 애플리케이션 트래픽의 자동 암호화
+- **D.** Kubernetes API 서버 대체
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. SPIFFE/SPIRE 통합**
+**정답: B. Agent 인증 메커니즘에 사용할 SVID 신원 증명**
 
-**설명:**
-Cilium Service Mesh는 SPIFFE(Secure Production Identity Framework for Everyone)와 SPIRE를 통합하여 투명한 mTLS를 구현합니다. 이를 통해 애플리케이션 코드 변경 없이 워크로드 간 암호화된 통신이 가능합니다.
+Out-of-band 베타 방식에서 SPIRE는 SVID 신원 증명을 제공하고 Cilium Agent는 애플리케이션 연결과 별개로 상대를 인증합니다. WireGuard/IPsec 암호화는 별도 선택입니다. Cilium 1.20.1에는 자체 CA·bootstrap·등록·정책 제약을 가진 별도의 ztunnel mTLS 베타도 있습니다.
 
 </details>
 
 ### 2. CiliumNetworkPolicy에서 authentication mode가 'required'로 설정되면 어떻게 동작하나요?
 
-A. 인증 없이 모든 트래픽 허용
-B. 상호 인증이 성공한 트래픽만 허용
-C. 인증 실패 시 경고만 로깅
-D. mTLS 비활성화
+- **A.** 인증 없이 모든 트래픽 허용
+- **B.** 상호 인증이 성공한 트래픽만 허용
+- **C.** 인증 실패 시 경고만 로깅
+- **D.** mTLS 비활성화
 
 <details>
 <summary>정답 및 설명</summary>
 
 **정답: B. 상호 인증이 성공한 트래픽만 허용**
 
-**설명:**
-authentication mode가 'required'로 설정되면, 상호 인증(mutual authentication)이 성공한 트래픽만 허용됩니다. 인증에 실패한 트래픽은 차단됩니다. 이는 제로 트러스트 보안 모델을 구현하는 데 핵심적입니다.
+일치하는 허용 규칙이 성공적인 인증을 요구합니다. 클러스터 전체 스위치가 아니며 애플리케이션 payload를 자체적으로 TLS 암호화하지 않습니다. 다른 인가·애플리케이션 인증도 필요합니다. API는 배열이 아니라 authentication: {mode: required} 객체입니다.
 
 </details>
 
-### 3. Cilium에서 WireGuard 암호화의 장점이 아닌 것은?
+### 3. Cilium WireGuard만으로 암호화하지 않는 트래픽은?
 
-A. 커널 레벨에서 동작하여 높은 성능
-B. 자동 키 관리
-C. IETF 표준 프로토콜
-D. ChaCha20Poly1305 암호화
+- **A.** 서로 다른 노드 사이의 지원 Pod 트래픽
+- **B.** 노드 암호화가 활성화된 지원 원격 노드 트래픽
+- **C.** 같은 노드의 Pod 트래픽과 외부 클라이언트→클러스터 구간
+- **D.** ClusterIP Service를 통한 지원 원격 Pod 경로
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. IETF 표준 프로토콜**
+**정답: C. 같은 노드의 Pod 트래픽과 외부 클라이언트→클러스터 구간**
 
-**설명:**
-WireGuard는 비표준 프로토콜입니다. IETF 표준 프로토콜은 IPsec입니다. 그러나 WireGuard는 Linux 커널 5.6+에 빌트인되어 있으며, 높은 성능, 자동 키 관리, ChaCha20Poly1305 암호화를 제공합니다.
+Cilium WireGuard는 같은 노드의 Pod 트래픽과 외부 클라이언트→클러스터 구간을 암호화하지 않습니다. 원격 노드 범위는 선택한 모드와 문서화된 예외에 따라 달라집니다. 커널 지원이 필요하며 chart에는 userspaceFallback 옵션이 없습니다.
 
 </details>
 
 ### 4. CiliumNetworkPolicy에서 L7 HTTP 규칙으로 특정 경로와 메서드를 제한하는 올바른 구성은?
 
-A. toEndpoints에 path와 method 지정
-B. toPorts.rules.http에 method와 path 지정
-C. ingress.http에 직접 지정
-D. spec.http에 규칙 정의
+- **A.** toEndpoints에 path와 method 지정
+- **B.** toPorts.rules.http에 method와 path 지정
+- **C.** ingress.http에 직접 지정
+- **D.** spec.http에 규칙 정의
 
 <details>
 <summary>정답 및 설명</summary>
 
 **정답: B. toPorts.rules.http에 method와 path 지정**
 
-**설명:**
-CiliumNetworkPolicy에서 L7 HTTP 규칙은 toPorts 섹션의 rules.http 하위에 정의합니다. 여기서 method(GET, POST 등)와 path(정규식 지원)를 지정하여 세밀한 접근 제어가 가능합니다.
+HTTP 규칙은 ingress/egress의 toPorts.rules.http 아래에 있습니다. 지원되는 method·path·header를 검사하지만 헤더 존재나 Bearer 형태의 문자열로 JWT를 검증하거나 최종 사용자를 인가하지는 못합니다.
 
 </details>
 
-### 5. Cilium Identity 기반 보안의 주요 장점은?
+### 5. Cilium Identity 기반 정책의 이점은?
 
-A. IP 주소 변경에 영향받지 않음
-B. MAC 주소 기반으로 더 안전함
-C. 수동 ID 관리가 가능함
-D. VLAN 태깅 지원
+- **A.** Pod IP 변경에도 정책 레이블 selector를 유지할 수 있음
+- **B.** 레이블 대신 MAC 주소 사용
+- **C.** 모든 숫자 ID를 모든 재시작 뒤 영구 유지
+- **D.** 주소·Identity 상태 갱신 제거
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: A. IP 주소 변경에 영향받지 않음**
+**정답: A. Pod IP 변경에도 정책 레이블 selector를 유지할 수 있음**
 
-**설명:**
-Cilium Identity는 Pod 레이블을 기반으로 생성되므로, Pod가 재시작되어 IP 주소가 변경되어도 동일한 Identity를 유지합니다. 이는 IP 기반 보안 정책의 한계를 극복합니다.
+정책은 Pod IP 목록을 수동 관리하는 대신 Identity 관련 레이블 집합을 사용합니다. 여러 Pod가 Identity를 공유할 수 있지만 Cilium은 주소·Identity 상태를 갱신하고 ID를 정리·재할당할 수 있습니다. 재시작 후 같은 숫자 ID가 영구 유지된다는 보장은 아닙니다.
 
 </details>
 
 ### 6. Cilium에서 DNS L7 정책을 사용하여 외부 도메인 접근을 제한할 때 사용하는 규칙은?
 
-A. toFQDNs와 dns rules 조합
-B. toEndpoints만 사용
-C. toCIDR만 사용
-D. toEntities만 사용
+- **A.** toFQDNs와 dns rules 조합
+- **B.** toEndpoints만 사용
+- **C.** toCIDR만 사용
+- **D.** toEntities만 사용
 
 <details>
 <summary>정답 및 설명</summary>
 
 **정답: A. toFQDNs와 dns rules 조합**
 
-**설명:**
-외부 도메인 접근 제한은 두 단계로 구성합니다: 1) DNS L7 규칙으로 특정 도메인 쿼리만 허용 (toPorts.rules.dns), 2) toFQDNs로 해당 도메인에 대한 실제 연결 허용. 이 조합으로 워크로드의 외부 접근을 세밀하게 제어합니다.
+DNS 규칙은 선택한 resolver의 질의를 제한하고, toFQDNs와 포트 규칙은 학습한 주소로의 연결을 별도로 제어합니다. 실제 UDP/TCP resolver 동작과 검색 목록 이름도 포함해야 합니다. Service 이름에는 서비스와 namespace가 모두 있고 DNS 허용은 범용 연결 허용이 아닙니다.
 
 </details>
 
-### 7. CiliumClusterwideNetworkPolicy로 기본 거부 정책을 구현할 때 일반적으로 허용해야 하는 트래픽은?
+### 7. 기본 거부 정책을 도입할 때 무엇을 허용해야 하나요?
 
-A. 모든 외부 트래픽
-B. DNS 쿼리와 호스트 네트워크 트래픽
-C. 모든 인터넷 트래픽
-D. 특정 IP 대역만
+- **A.** 모든 외부 목적지
+- **B.** 필요한 실제 resolver·probe 등 명시적인 워크로드 의존성
+- **C.** 보편적인 최소 요건으로 모든 호스트 트래픽
+- **D.** DNS가 과거에 반환한 모든 주소
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. DNS 쿼리와 호스트 네트워크 트래픽**
+**정답: B. 필요한 실제 resolver·probe 등 명시적인 워크로드 의존성**
 
-**설명:**
-기본 거부 정책을 구현할 때, 클러스터가 정상 작동하려면 최소한 kube-dns로의 DNS 쿼리(포트 53/UDP)와 호스트 네트워크 트래픽(reserved:host)을 허용해야 합니다. 이 없이는 서비스 디스커버리와 노드 통신이 불가능합니다.
+실제 DNS resolver의 UDP/TCP53, 필요한 probe 등 워크로드·토폴로지에서 확인한 의존성만 허용합니다. 모든 호스트 네트워크 접근이 보편적인 최소 요건은 아닙니다. Cilium 정책의 방향별 규칙 배열이 비어 있으면 enableDefaultDeny를 명시해야 합니다.
 
 </details>
 
 ### 8. SPIRE에서 workload attestation의 역할은?
 
-A. 인증서 발급
-B. 워크로드의 신원 확인
-C. 네트워크 정책 적용
-D. 트래픽 암호화
+- **A.** 인증서 발급
+- **B.** 워크로드의 신원 확인
+- **C.** 네트워크 정책 적용
+- **D.** 트래픽 암호화
 
 <details>
 <summary>정답 및 설명</summary>
 
 **정답: B. 워크로드의 신원 확인**
 
-**설명:**
-Workload attestation은 SPIRE Agent가 워크로드의 신원을 확인하는 프로세스입니다. Kubernetes 환경에서는 Pod의 서비스 어카운트, 네임스페이스, 레이블 등을 검증하여 해당 워크로드에 적절한 SVID(SPIFFE Verifiable Identity Document)를 발급합니다.
+SPIRE Agent는 구성한 attestor·selector로 워크로드를 증명하고, Server는 Agent를 증명하며 SVID에 서명합니다. Cilium out-of-band 통합에는 위임 Identity 조회와 Cilium 보안 Identity 항목도 사용합니다. 애플리케이션 payload의 자동 암호화를 의미하지 않습니다.
 
 </details>
 
 ### 9. Cilium에서 감사 모드(audit mode)로 네트워크 정책을 테스트할 때의 동작은?
 
-A. 모든 트래픽 차단
-B. 정책 위반을 로깅만 하고 트래픽은 허용
-C. 정책 완전 비활성화
-D. 알림만 전송
+- **A.** 모든 트래픽 차단
+- **B.** 정책 위반을 로깅만 하고 트래픽은 허용
+- **C.** 정책 완전 비활성화
+- **D.** 알림만 전송
 
 <details>
 <summary>정답 및 설명</summary>
 
 **정답: B. 정책 위반을 로깅만 하고 트래픽은 허용**
 
-**설명:**
-감사 모드(cilium.io/audit-mode: "true" 어노테이션)에서는 정책 위반 트래픽을 차단하지 않고 로깅만 합니다. 이를 통해 새 정책을 프로덕션에 적용하기 전에 영향을 평가할 수 있습니다.
+실제 변경 가능한 엔드포인트 옵션 PolicyAuditMode로 격리된 시험의 데이터패스 정책 적용을 바꿉니다. cilium.io/audit-mode는 지원되는 정책별 어노테이션이 아닙니다. 시험 후 차단을 복구하고 L7 동작은 별도 검증하세요. enableDefaultDeny:false도 범용 감사 모드가 아닙니다.
 
 </details>
 
-### 10. 3-tier 아키텍처에서 마이크로세그멘테이션을 구현할 때 백엔드 서비스의 올바른 정책은?
+### 10. 3-tier 백엔드의 최소 권한 정책에서 모델링해야 하는 것은?
 
-A. 모든 트래픽 허용
-B. 프론트엔드에서만 인그레스 허용, 데이터베이스로만 이그레스 허용
-C. 모든 인그레스 차단
-D. 인터넷 접근 허용
+- **A.** 제한 없는 모든 트래픽
+- **B.** 필요한 frontend ingress, database egress와 DNS 등 명시적 의존성
+- **C.** Frontend를 포함한 모든 ingress 거부
+- **D.** 무제한 인터넷 접근
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. 프론트엔드에서만 인그레스 허용, 데이터베이스로만 이그레스 허용**
+**정답: B. 필요한 frontend ingress, database egress와 DNS 등 명시적 의존성**
 
-**설명:**
-마이크로세그멘테이션에서 백엔드 서비스는 최소 권한 원칙을 따릅니다: 프론트엔드 티어에서만 인그레스를 허용하고, 데이터베이스 티어로만 이그레스를 허용합니다. 이렇게 하면 각 티어 간의 트래픽이 명확히 정의되고 제어됩니다.
+백엔드는 필요한 frontend 호출자와 database 목적지에 더해 DNS 등의 명시적 의존성을 허용합니다. 본문의 database는 egress 허용 규칙 없이 egress 기본 거부를 명시합니다. 상태 기반 응답은 가능하며 네트워크 분리는 완전한 애플리케이션 인가나 데이터 유출 방지가 아닙니다.
 
 </details>
 
-### 11. Cilium에서 IPsec과 WireGuard 암호화의 차이점으로 올바른 것은?
+### 11. IPsec의 keyRotationDuration: 5m은 무엇을 뜻하나요?
 
-A. IPsec만 커널에서 동작
-B. WireGuard는 수동 키 관리 필요
-C. IPsec은 IETF 표준, WireGuard는 비표준
-D. WireGuard만 노드 간 암호화 지원
+- **A.** 5분마다 새로운 키 생성
+- **B.** 5분마다 모든 워크로드 인증서 교체
+- **C.** 키 변경 후 전환·이전 키 정리 유예 기간
+- **D.** 하나의 글로벌 키를 영구 재사용
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: C. IPsec은 IETF 표준, WireGuard는 비표준**
+**정답: C. 키 변경 후 전환·이전 키 정리 유예 기간**
 
-**설명:**
-IPsec은 IETF 표준 프로토콜이고, WireGuard는 비표준입니다. 둘 다 커널에서 동작하며, WireGuard는 자동 키 관리를 제공합니다. 둘 다 노드 간 암호화를 지원합니다.
+IPsec의 keyRotationDuration은 키 자료 변경 후 전환·이전 키 제거 유예 기간입니다. 주기적으로 키를 생성하지 않습니다. 지원되는 절차로 키·ID를 조율하여 교체하고 '+'가 있는 터널별 파생 키 형식을 사용해야 합니다. WireGuard는 노드가 생성한 키 쌍을 관리합니다.
 
 </details>
 
-### 12. Hubble을 사용하여 정책 위반을 모니터링할 때 사용하는 명령은?
+### 12. 원인을 살펴보기 전에 거부된 flow를 선택하는 Hubble 명령은?
 
-A. hubble observe --verdict FORWARDED
-B. hubble observe --verdict DROPPED
-C. hubble policy list
-D. hubble status --violations
+- **A.** hubble observe --verdict FORWARDED
+- **B.** hubble observe --verdict DROPPED
+- **C.** hubble policy list
+- **D.** hubble status --violations
 
 <details>
 <summary>정답 및 설명</summary>
 
 **정답: B. hubble observe --verdict DROPPED**
 
-**설명:**
-`hubble observe --verdict DROPPED` 명령을 사용하면 네트워크 정책에 의해 거부된(DROPPED) 트래픽을 모니터링할 수 있습니다. 이를 통해 정책 위반을 실시간으로 감지하고 분석할 수 있습니다.
+DROPPED는 다양한 원인의 거부된 flow를 선택합니다. 보고된 정책 거부 drop에는 --drop-reason-desc POLICY_DENIED를 추가하고 L7·애플리케이션 실패는 별도로 관찰하세요. AUDIT는 별도 verdict이며 --last는 제한된 이력으로 Relay의 Hubble 인스턴스마다 반환될 수 있습니다.
 
 </details>

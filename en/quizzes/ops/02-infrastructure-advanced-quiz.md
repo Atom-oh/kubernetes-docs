@@ -4,172 +4,162 @@
 
 ## Multiple Choice Questions
 
-### 1. What is the primary purpose of NLB weighted target groups in a blue/green deployment?
+### 1. What does an NLB weight ratio of 5:5 mean?
 
-- A) To reduce costs by using fewer load balancers
-- B) To control traffic distribution between cluster versions
-- C) To improve SSL termination performance
-- D) To eliminate the need for health checks
+- A) Create five nodes in each cluster
+- B) Configure an equal relative distribution of new flows
+- C) Move every existing connection within five seconds
+- D) It is invalid because the total is not 100
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) To control traffic distribution between cluster versions**
+**Answer: B) Configure an equal relative distribution of new flows**
 
-**Explanation:**
-NLB weighted target groups allow gradual traffic shifting between blue (current) and green (new) clusters. By adjusting weights (e.g., 90:10, 50:50, 0:100), operators can perform controlled rollouts and quickly rollback if issues are detected.
+NLB weights are relative integers 0–999. Observed bytes/requests can differ with flow size, stickiness, and the observation window.
 
 </details>
 
-### 2. In a single-zone EKS cluster strategy, why might you deploy data nodes to only one Availability Zone?
+### 2. What matters when lowering an NLB group weight to zero?
 
-- A) To reduce cross-AZ data transfer costs
-- B) To simplify DNS configuration
-- C) To avoid using multiple subnets
-- D) To eliminate the need for persistent volumes
+- A) Existing connections must survive until natural closure
+- B) The current guide says existing connections also close after a short period, so test reconnection
+- C) Deregistration delay guarantees all transition times
+- D) A successful API response means all traffic already moved
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) To reduce cross-AZ data transfer costs**
+**Answer: B) The current guide says existing connections also close after a short period, so test reconnection**
 
-**Explanation:**
-Cross-AZ data transfer incurs costs in AWS. For data-intensive workloads with local storage (like databases), keeping all replicas in a single AZ eliminates these costs while relying on application-level replication for durability.
+Distinguish ordinary weight changes from zero transitions. Configuration acceptance and data-plane convergence are separate; inspect new/active flows, errors, and latency.
 
 </details>
 
-### 3. What Kubernetes feature ensures pods are distributed across different zones or nodes?
+### 3. If blue and green DNS names point to the same shared NLB, what can DNS weights do?
 
-- A) PodAffinity
-- B) TopologySpreadConstraints
-- C) ResourceQuota
-- D) LimitRange
+- A) Independently select its target groups
+- B) Pin requests to an AZ by hostname alone
+- C) Select the same LB; they do not choose cluster-specific target groups
+- D) Automatically select the same database replica
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) TopologySpreadConstraints**
+**Answer: C) Select the same LB; they do not choose cluster-specific target groups**
 
-**Explanation:**
-TopologySpreadConstraints control how pods are spread across topology domains (zones, nodes, regions). They ensure even distribution for high availability and can be configured with `maxSkew`, `topologyKey`, and `whenUnsatisfiable` parameters.
+DNS-based selection needs distinct real LB endpoints leading to the intended clusters. Listener weights and DNS record weights operate at different layers.
 
 </details>
 
-### 4. How does Route53 weighted routing differ from NLB weighted target groups?
+### 4. How do you place workloads on Auto Mode nodes in a chosen AZ?
 
-- A) Route53 works at DNS level, NLB works at connection level
-- B) Route53 only supports equal weights
-- C) NLB doesn't support health checks
-- D) Route53 requires VPC peering
+- A) Pod nodeSelector creates nodes by itself
+- B) Put subnet_ids in the NodePool
+- C) Align Pod selection, NodePool requirements, NodeClass subnet selection, and tolerations
+- D) Name the cluster blue
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) Route53 works at DNS level, NLB works at connection level**
+**Answer: C) Align Pod selection, NodePool requirements, NodeClass subnet selection, and tolerations**
 
-**Explanation:**
-Route53 weighted routing distributes traffic at DNS resolution time, while NLB weighted target groups distribute at the connection level. DNS-based routing has TTL considerations, while NLB provides more immediate traffic shifting.
+NodeSelector/affinity selects eligible nodes; provisioning constraints and taints/tolerations must also align. Distinguish worker placement from the regional managed control plane.
 
 </details>
 
-### 5. What is the recommended `maxSkew` value for TopologySpreadConstraints in a 3-AZ deployment?
+### 5. Which TGB ownership model does this externally managed TG example use?
 
-- A) 0
-- B) 1
-- C) 3
-- D) 10
+- A) Built-in Auto Mode always has identical deletion behavior
+- B) A separately installed LBC with elbv2.k8s.aws/v1beta1, distinct from built-in Auto Mode
+- C) Only an ARN, with no Service or targetPort prerequisites
+- D) Permanent Pod IPs registered through Terraform
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) 1**
+**Answer: B) A separately installed LBC with elbv2.k8s.aws/v1beta1, distinct from built-in Auto Mode**
 
-**Explanation:**
-A `maxSkew` of 1 ensures pods are evenly distributed with at most one pod difference between topology domains. This provides good balance while still allowing scheduling flexibility when nodes have resource constraints.
+Built-in Auto Mode uses eks.amazonaws.com/v1 and documents TG deletion behavior. This recipe uses a separate controller for dynamic registration and networking rules.
 
 </details>
 
-### 6. In blue/green cluster architecture, what should be shared between clusters?
+### 6. What does a single PostgreSQL StatefulSet plus a Retain PVC guarantee?
 
-- A) Worker nodes
-- B) External DNS and load balancer
-- C) etcd storage
-- D) Kubernetes API server
+- A) Cross-cluster replication
+- B) Zero-downtime DB failover across AZs
+- C) Every connection remains open
+- D) It does not by itself guarantee HA, backup, or recovery
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) External DNS and load balancer**
+**Answer: D) It does not by itself guarantee HA, backup, or recovery**
 
-**Explanation:**
-Blue/green clusters are separate EKS clusters that share external infrastructure like DNS records and load balancers. This allows traffic to be shifted between clusters without changing client-facing endpoints.
+Retain is a reclamation policy. Replication, backup, writer ownership, and recovery procedures are separate. NLB weights do not relocate EBS volumes across AZs.
 
 </details>
 
-### 7. What happens when `whenUnsatisfiable: DoNotSchedule` is set in TopologySpreadConstraints?
+### 7. Why separate alarm-input and decision-notification SNS topics?
 
-- A) Pods are scheduled anywhere regardless of constraints
-- B) Pods remain pending if constraints cannot be satisfied
-- C) Pods are automatically deleted
-- D) The constraint is ignored
+- A) Prevent notifications from returning as new input and causing extra executions/errors
+- B) Allow publishing without IAM permission
+- C) Retry Lambda forever
+- D) Eliminate DNS TTL
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Pods remain pending if constraints cannot be satisfied**
+**Answer: A) Prevent notifications from returning as new input and causing extra executions/errors**
 
-**Explanation:**
-`DoNotSchedule` prevents pod scheduling when the spread constraint would be violated. This ensures strict adherence to topology requirements but may result in pending pods if cluster topology doesn't support the constraint.
+This handler accepts the SNS envelope. Direct CloudWatch Lambda events differ, so do not wire both invocation paths. A notification failure must not replay an already successful listener mutation.
 
 </details>
 
-### 8. For automated failover between blue/green clusters, what AWS service can be used with health checks?
+### 8. What does the default automatic_failover=false do?
 
-- A) AWS Config
-- B) Route53 health checks with failover routing
-- C) AWS Inspector
-- D) AWS Trusted Advisor
+- A) Immediately shift all traffic to Green
+- B) Propose changes without granting ModifyListener permission
+- C) Skip health checks
+- D) Modify every available listener
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Route53 health checks with failover routing**
+**Answer: B) Propose changes without granting ModifyListener permission**
 
-**Explanation:**
-Route53 health checks continuously monitor endpoint availability and can automatically switch traffic to a healthy cluster using failover routing policy. This enables automated disaster recovery without manual intervention.
+Enable automatic mode only after capacity, SLO, reconnection, and writer coordination are tested. Reserved concurrency=1 does not serialize external Terraform or manual writers.
 
 </details>
 
-### 9. What is a key consideration when using NLB cross-zone load balancing?
+### 9. What should a manual transition script do?
 
-- A) It's always free
-- B) It may incur additional data transfer charges
-- C) It requires VPC peering
-- D) It only works with TCP protocol
+- A) Evaluate raw user strings as Bash arithmetic
+- B) Always assume an initial 100/0 state
+- C) Validate weights and destination health, then show and approve the full plan
+- D) Repeat a timer loop with STEP=0
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It may incur additional data transfer charges**
+**Answer: C) Validate weights and destination health, then show and approve the full plan**
 
-**Explanation:**
-When cross-zone load balancing is enabled, NLB distributes traffic evenly across all registered targets in all enabled AZs, which can result in cross-AZ data transfer charges. Consider this cost when architecting multi-AZ deployments.
+Validate numeric bounds first and use the intended variables/backend. Check real SLOs and data compatibility between stages. API/apply success alone does not prove transition completion.
 
 </details>
 
-### 10. In a zonal cluster deployment (a-zone blue, c-zone green), what is the primary benefit?
+### 10. Which statement about Route 53 weight and TTL is correct?
 
-- A) Reduced networking complexity
-- B) Failure isolation and independent upgrade paths
-- C) Lower compute costs
-- D) Automatic data replication
+- A) Weights are integers 0–255; TTL alone is not a recovery-time guarantee
+- B) Weights are always 0–999
+- C) A 60-second TTL is a 60-second recovery SLA
+- D) If all choices are unhealthy, DNS must return no answer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Failure isolation and independent upgrade paths**
+**Answer: A) Weights are integers 0–255; TTL alone is not a recovery-time guarantee**
 
-**Explanation:**
-Zonal clusters provide failure domain isolation - an issue in one zone doesn't affect the other cluster. This also enables independent upgrade testing and gradual rollouts, reducing risk during Kubernetes version upgrades.
+Alias records inherit target TTL. Consider health, resolver caches, connection lifetimes, and fallback behavior. All-zero weights are not a reliable traffic-stop mechanism.
 
 </details>

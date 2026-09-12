@@ -1,0 +1,205 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "files": [
+    {
+      "path": "ko/ops/08-observability-analysis.md",
+      "sha256": "d9cef4f76b1268f06ebbbbdd9209881044aaea32e4e83d6122f7a1df69f2258c"
+    },
+    {
+      "path": "ko/quizzes/ops/08-observability-analysis-quiz.md",
+      "sha256": "703fd5f852b60333986db6f25bee7d013fc8a1fe0af97b6580d5fe8d7dcfe5a0"
+    },
+    {
+      "path": "en/ops/08-observability-analysis.md",
+      "sha256": "a24c422d3e81ac210ec34712ba83e80fe3fbf93d527355f057bc2a5629f10bc3"
+    },
+    {
+      "path": "en/quizzes/ops/08-observability-analysis-quiz.md",
+      "sha256": "7ff1fb4ff33bdbc516c36c5203f5e9805367628fc6daf6d01f0404476a429d29"
+    }
+  ],
+  "checks": [
+    "70sourcefencesparseandmatchtestedfixtures;20quizquestions;locallinks",
+    "PythonSDK1.44/Flask0.65b0memory-onlypropagation/log/exemplar/errorcontracts",
+    "GoSDK1.46/otelhttp0.71/promclient1.24.1memory-onlyserver/manual/client+HEADcontracts",
+    "Logback1.6.3/encoder9.0actualJoranandJSONMDC/newlinechecks",
+    "Collector0.160andAlloy1.19.2nativevalidatepassed",
+    "24fixtureplus34embeddedLogQL/TraceQLqueriespassofficialGrafanaparsersunderNode24.21",
+    "NativeLoki3.7.7loopbackeightqueriespasswithmalformedJSON/nonnumericlatency/unrelatedservice;avg405andp95760.5",
+    "Prometheus3.14config+fiveRecordingRulesandfivecalculationassertionspass",
+    "SixTraceIDregexcases,datasourceUID/mapping/macros,standalonefive-panelJSON/referencechecks",
+    "TwoexistingKOdiagrams9/9+allreportedviewports/themes+human+PNGs;noENfiguresinvented"
+  ],
+  "sources": [
+    "https://github.com/open-telemetry/opentelemetry-go/releases/tag/v1.46.0",
+    "https://pypi.org/project/opentelemetry-sdk/1.44.0/",
+    "https://github.com/open-telemetry/opentelemetry-go-contrib/tree/v1.46.0/instrumentation/net/http/otelhttp",
+    "https://grafana.com/docs/loki/latest/send-data/otel/",
+    "https://grafana.com/docs/loki/latest/send-data/promtail/",
+    "https://github.com/grafana/tempo/blob/v3.0.3/docs/sources/tempo/traceql/construct-traceql-queries.md",
+    "https://raw.githubusercontent.com/grafana/grafana/v13.2.1/docs/sources/datasources/loki/configure/index.md",
+    "https://raw.githubusercontent.com/grafana/grafana/v13.2.1/docs/sources/datasources/tempo/configure-tempo-data-source/provision.md",
+    "https://prometheus.io/docs/prometheus/latest/feature_flags/"
+  ],
+  "evidence": {
+    "python-validation.json": {
+      "status": "passed",
+      "sdk": "1.44.0",
+      "instrumentation": "0.65b0",
+      "checks": [
+        "Incoming W3C trace continues through server, manual span and instrumented outbound HTTP",
+        "JSON log fields and OpenMetrics exemplar share the valid sampled trace ID",
+        "Unsampled valid context remains in logs but creates no exported spans or new exemplar",
+        "Invalid all-zero trace context is replaced with a valid new context",
+        "HTTP dependency failure produces bounded error JSON/logging and error spans",
+        "Health/metrics requests excluded; unmatched routes use a bounded log/metric label",
+        "Logs outside a span omit trace fields instead of inventing zero IDs"
+      ],
+      "telemetryIsolation": "Recording enabled only in this isolated process with explicit InMemorySpanExporter; HTTP uses a fake requests adapter; no OTLP exporter constructed, endpoints inherited or network used.",
+      "sampleServerAttributes": {
+        "http.method": "GET",
+        "http.server_name": "localhost",
+        "http.scheme": "http",
+        "net.host.name": "localhost",
+        "http.host": "localhost",
+        "net.host.port": 80,
+        "http.target": "/api/orders",
+        "net.peer.ip": "127.0.0.1",
+        "http.user_agent": "Werkzeug/3.1.8",
+        "http.flavor": "1.1",
+        "http.route": "/api/orders",
+        "http.status_code": 200
+      }
+    },
+    "go-validation.json": {
+      "status": "passed",
+      "sdk": "1.46.0",
+      "otelhttp": "0.71.0",
+      "prometheusClient": "1.24.1",
+      "go": "1.25.0",
+      "checks": [
+        "Go test ./... passed with in-memory exporter and fake RoundTripper",
+        "W3C server/manual/client parent chain and outbound header match",
+        "JSON trace/span IDs match sampled OpenMetrics exemplar",
+        "Unsampled valid IDs retained in log and excluded from exported spans/exemplars",
+        "Invalid zero context regenerated",
+        "Dependency failure marks manual/server error spans and ERROR log",
+        "Health/metrics excluded; HEAD method correctly labeled"
+      ],
+      "observedServerAttributes": [
+        "client.address",
+        "http.request.method",
+        "http.response.body.size",
+        "http.response.status_code",
+        "http.route",
+        "network.peer.address",
+        "network.peer.port",
+        "network.protocol.version",
+        "server.address",
+        "url.path",
+        "url.scheme"
+      ],
+      "sourceSha256": "fe6d97e37c0bda3c8b6166e8bf6cf2f42cc64b71616ca044acef39e0fba3574c",
+      "testSha256": "68d5c4c4f255b0ab1e26cef565c15686f1f73956888ae63a935228e8df85b521",
+      "isolation": "Only explicit in-memory recording; no OTLP exporter or network. Auto exporters none; no endpoint/resource environment inherited."
+    },
+    "java-validation.json": {
+      "status": "passed",
+      "logback": "1.6.3",
+      "encoder": "9.0",
+      "jdk": "Corretto21.0.12",
+      "checks": [
+        "Joran configuration has no warnings/errors",
+        "JSON keeps trace_id/span_id and shared service_name/timestamp fields",
+        "multiline message encoded as one physical JSON line",
+        "non-allowlisted MDC field excluded"
+      ],
+      "scope": "Encoder and supplied MDC validated; Java-agent propagation was not executed."
+    },
+    "loki-validation.json": {
+      "status": "passed",
+      "loki": "3.7.7",
+      "cases": [
+        {
+          "query": "error logs",
+          "logCount": 1
+        },
+        {
+          "query": "slow completion records",
+          "logCount": 1
+        },
+        {
+          "query": "trace lookup in JSON logs",
+          "logCount": 1
+        },
+        {
+          "query": "format a parsed line",
+          "logCount": 3
+        },
+        {
+          "query": "HTTP failures per second",
+          "value": 0.0033333333333333335
+        },
+        {
+          "query": "hourly error count",
+          "value": 1.0
+        },
+        {
+          "query": "P95 latency in milliseconds",
+          "value": 760.5
+        },
+        {
+          "query": "mean latency in milliseconds",
+          "value": 405.0
+        }
+      ],
+      "isolation": "Synthetic local logs only; loopback listeners; analytics disabled; no alert rules or outbound integrations.",
+      "behavior": "Malformed JSON and non-numeric latency are excluded; unrelated service excluded."
+    },
+    "loki-average-regression.json": {
+      "version": "3.7.7",
+      "input": "10ms,800ms,nonnumeric latency and malformed JSON; unrelated secondservice",
+      "observedBefore": [
+        "Only post-unwrap error filter: mean query returned JSONParserErr",
+        "Added JSON error filter: mean270 instead of405"
+      ],
+      "fix": "Filter latency_ms>=0 and __error__ before unwrap; retain __error__ filter after unwrap",
+      "verifiedAfter": {
+        "meanMs": 405,
+        "p95Ms": 760.5
+      },
+      "evidence": "loki-validation.json"
+    },
+    "config-validation.json": {
+      "status": "passed",
+      "checks": [
+        "Three explicit datasource UIDs and every correlation reference agree",
+        "Six JSON Trace ID regex cases pass, including whitespace and wrong-length rejection",
+        "Grafana provisioning macros preserve $$ escaping",
+        "Trace-to-log attribute mapping matches service_name and does not unnecessarily restrict span_id",
+        "Standalone dashboard JSON has five current panel types, bounded grid positions and no undeclared variables",
+        "Four dashboard PromQL expressions parse and reference defined recording rules",
+        "Namespace-scoped Alloy log-reader identity/RBAC wiring is consistent"
+      ],
+      "limits": [
+        "Grafana's actual running UI and live datasource authentication were not tested.",
+        "Collector/Alloy native config validation does not deploy Kubernetes RBAC, Services or backends."
+      ]
+    },
+    "final-query-validation.json": {
+      "status": "passed",
+      "node": "v24.21.0",
+      "logqlParser": "0.4.2",
+      "traceqlParser": "1.0.3",
+      "queries": 58,
+      "errors": []
+    }
+  },
+  "limitations": [
+    "SDK recording enabled only insideisolatedin-memorytests;allautoexportersnone,noendpoints/resourceattrs inherited;GoRoundTripper/PythonRequestsAdapter fake.",
+    "LocalLoki usedsyntheticlogs,loopbackonly,analyticsfalse,noalert/outboundintegration;serverstopped.",
+    "TraceQLgrammar andprimarysemanticschecked,notactualTempoingest/search;GrafanaUI/liveauthenticationnotrun.",
+    "Collector/AlloyconfigvalidationnotK8sdeployment;backendServices/RBAC/tenant/TLSmustbeconfigured."
+  ]
+}

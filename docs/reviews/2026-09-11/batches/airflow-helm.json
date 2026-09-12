@@ -1,0 +1,26 @@
+[
+  {
+    "path": "ko/data-on-eks/airflow/02-helm-deployment.md",
+    "fullyRead": true,
+    "status": "followup",
+    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+    "fullyRead": true,
+    "status": "followup",
+    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+  },
+  {
+    "path": "en/data-on-eks/airflow/02-helm-deployment.md",
+    "fullyRead": true,
+    "status": "followup",
+    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+  },
+  {
+    "path": "en/quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md",
+    "fullyRead": true,
+    "status": "followup",
+    "summary": "Fullread4files;verifydefaultexecutor,Helm/Kubeconstraintenforcement,DBSecret/TLS/PVCretention/defaultadmin,KEDAquery/filter/StatefulSet/HPAzero,hardsizing-latencyandGPUtaskimages."
+  }
+]

@@ -14,14 +14,18 @@
       "https://istio.io/latest/news/security/istio-security-2026-006/",
       "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
       "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
-      "https://istio.io/latest/get-involved/"
+      "https://istio.io/latest/get-involved/",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "README: stale release-candidate guidance, sidecar-only description, tracing propagation omitted, unsupported general performance guarantees.",
       "Replaced stale RC timeline with GA announcement; official support page dates 1.31 Aug 27 whereas release announcement is Aug 31, so prose attributes the announcement date explicitly.",
       "Corrected blanket mTLS/tracing claims, Cilium authentication vs encryption, service-count thresholds, unsupported performance guarantees, and historical Pilot/Citadel/Galley roles.",
       "Removed unverified Gateway API image path and linked its official explanatory page. Local overview decision diagrams retain illustrative thresholds, now explicitly qualified in prose; no external asset edited.",
-      "Parent image inventory confirmed request-routing.svg also returns 404; removed this redundant figure and replaced it with correct routing text. Replaced unresolved discuss.istio.io community link."
+      "Parent image inventory confirmed request-routing.svg also returns 404; removed this redundant figure and replaced it with correct routing text. Replaced unresolved discuss.istio.io community link.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Entire source read, including code blocks and image descriptions.",
@@ -29,7 +33,8 @@
       "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
       "2 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
       "Cross-checked parent image-validation.json: no known missing external image URL remains in this document. Removed request-routing.svg and gateway-api-topology.svg 404s.",
-      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {
@@ -84,14 +89,18 @@
       "https://istio.io/latest/news/security/istio-security-2026-006/",
       "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
       "https://raw.githubusercontent.com/cilium/cilium/main/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
-      "https://istio.io/latest/get-involved/"
+      "https://istio.io/latest/get-involved/",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "https://github.com/cilium/cilium/blob/v1.20.1/pkg/ztunnel/ca/ca_server.go",
+      "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml"
     ],
     "findings": [
       "README: stale release-candidate guidance, sidecar-only description, tracing propagation omitted, unsupported general performance guarantees.",
       "Replaced stale RC timeline with GA announcement; official support page dates 1.31 Aug 27 whereas release announcement is Aug 31, so prose attributes the announcement date explicitly.",
       "Corrected blanket mTLS/tracing claims, Cilium authentication vs encryption, service-count thresholds, unsupported performance guarantees, and historical Pilot/Citadel/Galley roles.",
       "Removed unverified Gateway API image path and linked its official explanatory page. Local overview decision diagrams retain illustrative thresholds, now explicitly qualified in prose; no external asset edited.",
-      "Parent image inventory confirmed request-routing.svg also returns 404; removed this redundant figure and replaced it with correct routing text. Replaced unresolved discuss.istio.io community link."
+      "Parent image inventory confirmed request-routing.svg also returns 404; removed this redundant figure and replaced it with correct routing text. Replaced unresolved discuss.istio.io community link.",
+      "Security-batch followup:added released Cilium1.20.1ztunnelBeta asdistinctTCPworkloadmTLS option;bothendpointnamespaceenrollment,ClusterMesh/hostNetworkexclusions,L4policyinterferenceexceptHBONE15008,internalCA/bootstraprequirements. NarrowednumericSPIFFE/out-of-bandstatements;preservedhistoricalbenchmarkversions/resultsandexplicitlynomeasurementclaimforztunnelBeta."
     ],
     "validation": [
       "Entire source read, including code blocks and image descriptions.",
@@ -99,7 +108,8 @@
       "All fenced YAML parsed; no AWS provisioning or live Kubernetes mutation commands executed.",
       "2 fenced Istio resources passed released Istio 1.31.0 CRD OpenAPI schemas and offline istioctl 1.30.2 validate; EnvoyFilter advisory warnings retained.",
       "Cross-checked parent image-validation.json: no known missing external image URL remains in this document. Removed request-routing.svg and gateway-api-topology.svg 404s.",
-      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed."
+      "git diff --check passed for assigned paths. All examples remain documentation; no end-to-end EKS cluster deployment was performed.",
+      "2026-09-11 collateralprosefollowup on16previouslyfullyreadpages:verifiedreleased202lineztunnelguide,chartCAdefaultandCAservernamespace/SAidentitysource;gitdiffcheckpassed;fullclean docs:test118/118passed(/tmp/kubernetes-docs-full-review/docs-test-cilium-ztunnel-followup-clean.log). No additionalcoveragecount orliveztunnelvalidationclaim."
     ]
   },
   {

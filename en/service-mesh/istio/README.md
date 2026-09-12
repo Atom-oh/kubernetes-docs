@@ -223,9 +223,13 @@ Cilium provides many features at the **network level** based on eBPF:
 **When Cilium is More Suitable**:
 
 * L3/L4 network policies are the main purpose
-* High performance is a core requirement
-* Avoiding Service Mesh operational burden
-* Network policy and observability are primary needs; Cilium mutual authentication requires separate WireGuard/IPsec encryption for payload confidentiality
+* Measured performance under the required policy/encryption settings meets the workload's needs
+* Reusing an existing Cilium deployment whose supported features meet the requirements
+* Network policy and observability are primary needs; Cilium out-of-band mutual authentication requires separate WireGuard/IPsec encryption for payload confidentiality
+
+Cilium 1.20.1 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
+
+The diagram emphasizes the CNI role; Cilium also has L7 Envoy features. Component count and operational cost depend on the selected mode.
 
 **Reference**: [Cilium Documentation](../../networking/cilium/README.md)
 

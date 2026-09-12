@@ -1,0 +1,102 @@
+{
+  "files": [
+    {
+      "path": "en/service-mesh/linkerd/03-traffic-management.md",
+      "releasedCRDSchemas": 11,
+      "yamlDocuments": 18,
+      "bashBlocks": 7,
+      "quizQuestions": 12
+    },
+    {
+      "path": "ko/service-mesh/linkerd/03-traffic-management.md",
+      "releasedCRDSchemas": 11,
+      "yamlDocuments": 18,
+      "bashBlocks": 7,
+      "quizQuestions": 12
+    }
+  ],
+  "codeParity": true,
+  "chartRender": {
+    "version": "1.45.0",
+    "resources": 8,
+    "createdCRDs": [
+      "canaries.flagger.app",
+      "metrictemplates.flagger.app",
+      "alertproviders.flagger.app"
+    ],
+    "provider": "gatewayapi:v1",
+    "meshedController": true,
+    "vizAuthorizationSchemaAndIdentity": true
+  },
+  "nativeCLIHelp": [
+    [
+      "diagnostics",
+      "policy",
+      "--help"
+    ],
+    [
+      "viz",
+      "stat",
+      "--help"
+    ]
+  ],
+  "nativeProfileGenerators": [
+    "OpenAPI shortServiceName",
+    "protobuf shortServiceName"
+  ],
+  "sourceChecks": [
+    "retry0 filters to unspecified and defaults1 when policy exists",
+    "Flagger source Service parent projection, not actual controller execution"
+  ],
+  "limits": [
+    "No live cluster/AWS/traffic shift/load test",
+    "JSON schema checks do not execute admission CEL or controller reconciliation",
+    "Prometheus actual fixtures recorded separately"
+  ],
+  "prometheus": {
+    "fixtures": 9,
+    "assertions": 23,
+    "promtool": "3.14.0 native linux-arm64",
+    "cases": [
+      "healthy-no-failure-series",
+      "all-failure-no-success-series",
+      "ninety-nine-percent",
+      "outbound-other-namespace-other-deployment-ignored",
+      "low-volume-gate",
+      "idle-not-healthy",
+      "missing-not-healthy",
+      "ttfb-p99-milliseconds",
+      "idle-histogram-is-nan-not-latency-zero"
+    ],
+    "querySource": "actual published EN MetricTemplates; code parity checked against KO",
+    "limits": [
+      "Static sample-series checks, not live Prometheus scrape/Flagger rollout",
+      "Numeric comparisons use absolute tolerance1e-10, not exact floating-point string equality"
+    ]
+  },
+  "sources": [
+    "https://linkerd.io/docs/reference/httproute/",
+    "https://linkerd.io/docs/reference/retries/",
+    "https://linkerd.io/docs/reference/timeouts/",
+    "https://linkerd.io/docs/reference/service-profiles/",
+    "https://linkerd.io/docs/reference/circuit-breaking/",
+    "https://linkerd.io/docs/features/load-balancing/",
+    "https://linkerd.io/docs/features/traffic-split/",
+    "https://linkerd.io/docs/reference/proxy-metrics/",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/policy-controller/k8s/index/src/outbound/index/http.rs",
+    "https://github.com/fluxcd/flagger/releases/tag/v1.45.0",
+    "https://flagger.app/index.yaml",
+    "https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/router/factory.go",
+    "https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/router/gateway_api.go",
+    "https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/controller/scheduler_metrics.go",
+    "https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/metrics/providers/prometheus.go"
+  ],
+  "artifacts": "/tmp/mesh-linkerd-traffic-validation",
+  "testLog": "/tmp/kubernetes-docs-full-review/docs-test-linkerd-traffic-clean.log",
+  "fullSuiteTail": "adcrumbList with ordered positions\n  ---\n  duration_ms: 0.216823\n  type: 'test'\n  ...\n# Subtest: structuredData omits the breadcrumb node for a page with no trail\nok 118 - structuredData omits the breadcrumb node for a page with no trail\n  ---\n  duration_ms: 0.072603\n  type: 'test'\n  ...\n1..118\n# tests 118\n# suites 0\n# pass 118\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2777.702561\n",
+  "timingFollowup": {
+    "source": "https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/http/metrics/src/requests/service.rs",
+    "cache": "/tmp/istio-foundation-sources/31a7bc8a573c.html",
+    "finding": "Official reference has contradictory export timing prose; released code records latency at first ready body frame/drop fallback separately from terminal response classification. Both guides corrected. Query semantics unchanged."
+  }
+}

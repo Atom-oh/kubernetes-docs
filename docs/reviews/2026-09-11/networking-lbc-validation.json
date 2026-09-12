@@ -1,0 +1,369 @@
+{
+  "date": "2026-09-11",
+  "files": [
+    {
+      "path": "en/networking/03-aws-lb-controller.md",
+      "sha256": "7bad0d5b39faf02ae2cf166a6e59047ca92aa058893f2522532252bb1b6a884e"
+    },
+    {
+      "path": "en/quizzes/networking/03-aws-lb-controller-quiz.md",
+      "sha256": "c2436196c0893fed494a3b3d41960649ea5fa75386133df2a44656c614c4df1f"
+    },
+    {
+      "path": "ko/networking/03-aws-lb-controller.md",
+      "sha256": "91c581f4007e0438cc578863b5f1a0852047f389684a5c8331f88b859e441eec"
+    },
+    {
+      "path": "ko/quizzes/networking/03-aws-lb-controller-quiz.md",
+      "sha256": "f33fe6aa6c6b1c7b41f4c99e1fae0b828b3f4aa9d7bfc6d31f055ced7cf7203b"
+    }
+  ],
+  "sources": {
+    "releaseLatest": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/aws-load-balancer-controller/releases/latest",
+      "key": "57bd0bcf4fef"
+    },
+    "release216": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/aws-load-balancer-controller/releases/tags/v2.16.0",
+      "key": "dda47ec059a2"
+    },
+    "release217": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/aws-load-balancer-controller/releases/tags/v2.17.0",
+      "key": "b11c66ead89c"
+    },
+    "chartIndex": {
+      "url": "https://aws.github.io/eks-charts/index.yaml",
+      "key": "af71e1f4f14a"
+    },
+    "install": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/installation.md",
+      "key": "3ef62604e34a"
+    },
+    "config": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/configurations.md",
+      "key": "9c5baf93bb7e"
+    },
+    "subnets": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/subnet_discovery.md",
+      "key": "2fa703af1ee9"
+    },
+    "ingressAnnotations": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/annotations.md",
+      "key": "d3869ecda219"
+    },
+    "serviceAnnotations": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/service/annotations.md",
+      "key": "7d7f113e64bf"
+    },
+    "TGB": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md",
+      "key": "e7eaa2571c61"
+    },
+    "ingressClass": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/ingress_class.md",
+      "key": "23c2a2744e9d"
+    },
+    "globalAccelerator": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/globalaccelerator/aga-controller.md",
+      "key": "ccda2db6537e"
+    },
+    "optimizer": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/alb-target-agent.md",
+      "key": "6c6a5cea9e55"
+    },
+    "policy": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json",
+      "key": "d7bb5794d472"
+    },
+    "gateway": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/gateway/gateway.md",
+      "key": "b20445a2962c"
+    },
+    "nlb": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/service/nlb.md",
+      "key": "125d1f462fc5"
+    },
+    "certificateDiscovery": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/guide/ingress/cert_discovery.md",
+      "key": "e11139048586"
+    },
+    "readinessGate": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/deploy/pod_readiness_gate.md",
+      "key": "01553da7f7ff"
+    },
+    "eksInstall": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html",
+      "key": "d504f734193b"
+    },
+    "autoModeNLB": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html",
+      "key": "52a371f17c4d"
+    },
+    "nlbListeners": {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "key": "650b0f39e45b"
+    },
+    "albAuth": {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html",
+      "key": "b1894f4f0139"
+    },
+    "nlbTargetAttributes": {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html",
+      "key": "bfd1d72ef363"
+    },
+    "secretManager": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/pkg/k8s/secrets_manager.go",
+      "key": "18dabbde7bb1"
+    },
+    "secretStore": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/pkg/k8s/secrets_store.go",
+      "key": "38fce0ddac06"
+    },
+    "authConfigBuilder": {
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/pkg/ingress/auth_config_builder.go",
+      "key": "38310a9b3449"
+    },
+    "AutoModeALB": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html",
+      "key": "267f60e9b2b0"
+    },
+    "GatewayAPI160": {
+      "url": "https://api.github.com/repos/kubernetes-sigs/gateway-api/releases/tags/v1.6.0",
+      "key": "fd2bea20e615"
+    }
+  },
+  "chart": {
+    "apiVersion": "v2",
+    "appVersion": "v3.5.0",
+    "created": "2026-09-10T19:06:46.683798831Z",
+    "description": "AWS Load Balancer Controller Helm chart for Kubernetes",
+    "digest": "45051f634b33e10baccb3354d0681b7de787c60445e599fa276e0c9aedd4ccd5",
+    "home": "https://github.com/aws/eks-charts",
+    "icon": "https://raw.githubusercontent.com/aws/eks-charts/master/docs/logo/aws.png",
+    "keywords": [
+      "eks",
+      "alb",
+      "load balancer",
+      "ingress",
+      "nlb",
+      "gateway api"
+    ],
+    "maintainers": [
+      {
+        "email": "zac-nixon@users.noreply.github.com",
+        "name": "zac-nixon",
+        "url": "https://github.com/zac-nixon"
+      },
+      {
+        "email": "shraddhabang@users.noreply.github.com",
+        "name": "shraddhabang",
+        "url": "https://github.com/shraddhabang"
+      }
+    ],
+    "name": "aws-load-balancer-controller",
+    "sources": [
+      "https://github.com/aws/eks-charts"
+    ],
+    "urls": [
+      "https://aws.github.io/eks-charts/aws-load-balancer-controller-3.5.0.tgz"
+    ],
+    "version": "3.5.0"
+  },
+  "originalDefects": {
+    "en": {
+      "duplicateYAMLBlocks": [
+        {
+          "block": 4,
+          "error": "duplicate key: alb.ingress.kubernetes.io/target-group-attributes"
+        }
+      ],
+      "deploymentSelectorMissingFromTemplate": true
+    },
+    "ko": {
+      "duplicateYAMLBlocks": [
+        {
+          "block": 4,
+          "error": "duplicate key: alb.ingress.kubernetes.io/target-group-attributes"
+        }
+      ],
+      "deploymentSelectorMissingFromTemplate": true
+    }
+  },
+  "validation": {
+    "resourceSchemas": 56,
+    "bashBlocks": 18,
+    "annotationJSON": 16,
+    "uniqueYAMLBlocks": 52,
+    "helm": {
+      "en": {
+        "objects": 18,
+        "image": "public.ecr.aws/eks/aws-load-balancer-controller:v3.5.0",
+        "region": "us-east-1",
+        "ServiceAccountPreserved": true,
+        "EndpointSlicesEnabled": true,
+        "ServiceMutatorDisabled": true,
+        "NoClusterWideSecrets": true,
+        "PDBPresent": true
+      },
+      "ko": {
+        "objects": 18,
+        "image": "public.ecr.aws/eks/aws-load-balancer-controller:v3.5.0",
+        "region": "ap-northeast-2",
+        "ServiceAccountPreserved": true,
+        "EndpointSlicesEnabled": true,
+        "ServiceMutatorDisabled": true,
+        "NoClusterWideSecrets": true,
+        "PDBPresent": true
+      }
+    },
+    "semanticAssertions": [
+      {
+        "locale": "en",
+        "MergedTargetAttributesRetained": true,
+        "MergedLBAttributesRetained": true,
+        "AuthHTTPSPrerequisitePresent": true,
+        "HeaderConditionBackendConnected": true,
+        "ExplicitNLBClassAndTCPUDP": true,
+        "ProxyProtocolDistinguishedFromIPPreservation": true,
+        "WTGImplicit90Canary10": true,
+        "OIDCSecretRoleConstrained": true
+      },
+      {
+        "locale": "ko",
+        "MergedTargetAttributesRetained": true,
+        "MergedLBAttributesRetained": true,
+        "AuthHTTPSPrerequisitePresent": true,
+        "HeaderConditionBackendConnected": true,
+        "ExplicitNLBClassAndTCPUDP": true,
+        "ProxyProtocolDistinguishedFromIPPreservation": true,
+        "WTGImplicit90Canary10": true,
+        "OIDCSecretRoleConstrained": true
+      }
+    ],
+    "limits": [
+      "No AWS/cluster deployment, identity-provider login, IAM simulation, workload load test or live data-plane test.",
+      "Helm and strict public Kubernetes/CRD schemas plus explicit annotation assertions validate local configuration. They do not prove cloud-resource existence or successful reconciliation.",
+      "Source-based Secret get/list/watch permission reasoning uses the v3.5.0 metadata.name-filtered reflector; no live API authorization test.",
+      "Current chart/native validator tested using Kubernetes1.35 rendering/schema context; not a universal compatibility matrix."
+    ]
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/03-aws-lb-controller.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/03-aws-lb-controller-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/03-aws-lb-controller.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/03-aws-lb-controller-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batchCheck": {
+    "batch": "networking-foundation",
+    "documents": 16,
+    "yamlBlocks": 100,
+    "shellBlocks": 104,
+    "errors": []
+  },
+  "referenceHTTP": [
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/267f60e9b2b0.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/52a371f17c4d.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/0c502860fbdf.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/3fc2beb4ac92.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/b1894f4f0139.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/4d297cceaf2b.txt"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/650b0f39e45b.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/79967557e4c2.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/subnet_discovery.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/b1183ff45993.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/80d10019351c.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/7eda9c84bf99.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/c8049191ebc1.txt"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/dfc85d4a5f11.txt"
+    },
+    {
+      "url": "https://kubernetes-sigs.github.io/aws-load-balancer-controller/",
+      "status": 200,
+      "file": "/tmp/istio-foundation-sources/f44b84a5cc6b.txt"
+    }
+  ],
+  "docsTest": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-lbc-validation/docs-test.log",
+    "environment": "login:false/env-i/OTELdisabled; escalation for required local child processes"
+  },
+  "gitDiffCheck": 0,
+  "figures": {
+    "viewed": 4,
+    "retained": 4,
+    "notes": "Both locales figures0/1 retained. Added explicit IP-target and reconciliation/illustrative-sequence qualifiers. Parent owns CJK regeneration; no assets or foreign prose changed."
+  },
+  "artifacts": "/tmp/networking-lbc-validation"
+}

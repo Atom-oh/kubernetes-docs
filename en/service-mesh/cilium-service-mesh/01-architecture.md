@@ -1,172 +1,153 @@
 # Cilium Service Mesh Architecture
 
-> **Supported Versions**: Cilium 1.16+, Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Review baseline**: Cilium 1.20.1, September 11, 2026. Its general Kubernetes test matrix covers 1.33–1.36; the released EKS CI matrix covers 1.33–1.35. Platform, kernel and installation-mode requirements are separate; see the [overview](./README.md).
 
 ## Overview
 
-The architecture of Cilium Service Mesh is fundamentally different from traditional sidecar-based service meshes. It leverages eBPF to process L3/L4 traffic at the kernel level and provides L7 functionality through a single shared Envoy proxy per node. This chapter explains the core architectural components and operations of Cilium Service Mesh in detail.
+Cilium combines an eBPF L3/L4 datapath with Envoy for HTTP and other supported L7 processing. Envoy can run as a process managed by the agent or in a separate `cilium-envoy` DaemonSet. Sharing proxies changes deployment and failure boundaries; it does not establish a fixed memory saving or latency result.
 
 ## Overall Architecture
 
-![Architecture diagram showing how the Kubernetes control plane drives the per-node Cilium Agent and Operator, which program eBPF kernel datapath maps that intercept pod traffic and redirect L7 flows to a shared node-local Envoy proxy.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-0.png)
+![Logical relationship between the Kubernetes control plane, per-node Cilium agents, eBPF datapath and shared Envoy.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-0.html)
 
+The top box groups control-plane functions. The **Kubernetes API server and Cilium Operator are separate components**; the Operator is a Deployment responsible for cluster-wide work, not a per-node agent or an API-server replacement.
+
+| Component | Responsibility |
+|---|---|
+| Cilium Agent | Manages local endpoints, eBPF programs/maps, policy and Envoy configuration |
+| Cilium Operator | Performs cluster-wide work such as identity garbage collection, CRD registration and IP allocation in applicable IPAM modes |
+| Envoy | Handles redirected L7 traffic; a separate DaemonSet allows independent proxy lifecycle management |
+| Kubernetes API | Stores desired resources and reports workload/service state to controllers |
+| Hubble | Observes supported datapath and proxy events; Relay/UI are additional components when enabled |
+
 ## eBPF Datapath
 
-### What is eBPF?
+### Programs and Hooks
 
-eBPF (extended Berkeley Packet Filter) is a technology that enables running sandboxed programs within the Linux kernel. It allows implementing networking, security, and observability features without modifying the kernel.
+eBPF programs run at defined kernel hooks after verification. They can implement packet filtering, redirection and Service translation without adding a userspace proxy hop for every L3/L4 packet.
 
-![Diagram contrasting a traditional application-to-NIC path that always traverses the kernel network stack with an eBPF-based path where kernel-attached programs process packets directly and can bypass the stack.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-1.png)
+![Conceptual comparison of ordinary networking and optional eBPF forwarding shortcuts.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-1.html)
 
-### eBPF Hook Points
+The bypass arrow represents a possible optimization, not a guarantee that Cilium skips every Linux networking layer. Pod socket stacks, routing mode, kernel capabilities and integration requirements still matter.
 
-Cilium utilizes multiple eBPF hook points:
+| Hook or path | Cilium use and qualification |
+|---|---|
+| TC/TCX and endpoint datapath | Packet-level policy, forwarding and Service operations; the attachment mechanism depends on kernel/datapath mode |
+| cgroup socket hooks | Socket-level Service translation, for example at TCP `connect()`; this differs from packet-level TC load balancing |
+| XDP | Optional early processing such as NodePort/LoadBalancer acceleration on supported devices; it is not enabled for every path merely by installing Cilium |
+| veth/netkit | Alternative endpoint device/datapath choices with their own requirements; they do not imply one universal hook sequence |
 
-| Hook Point | Location | Purpose |
-|------------|----------|---------|
-| **XDP (eXpress Data Path)** | NIC Driver | Ultra-fast packet processing, DDoS protection |
-| **TC (Traffic Control)** | Network Stack Entry | Packet filtering, redirection |
-| **Socket Operations** | Socket Level | Socket connection acceleration |
-| **cgroup** | Process Group | Resource control, policy enforcement |
+### Connection Tracking and Policy
 
-![Diagram showing a packet's ingress path from the NIC through the XDP and TC Ingress eBPF hooks, the network stack and socket layer up to the application, and the egress path back down through the TC Egress hook to the NIC.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-2.png)
+Cilium stores connection state in BPF maps. This supports stateful handling, reply recognition and NAT/proxy bookkeeping. It does **not** mean that the first packet permanently caches an allow decision for every subsequent packet: the released endpoint datapath checks policy for both `CT_NEW` and `CT_ESTABLISHED` in the initiating direction, with explicit exceptions. Recognized reply/related traffic follows stateful return handling. Policy updates, proxy redirects and optimized paths need to be assessed in the actual configuration.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-2.html)
+The following table is conceptual, not a C structure or a map ABI:
 
-### L3/L4 Processing
+| Map information | Purpose |
+|---|---|
+| CT tuple key and connection-state value | Identify a flow/direction and maintain its state, lifetime and translation metadata |
+| Service frontend and backend maps | Resolve Service address/port/protocol information to backend entries |
+| Policy map | Represent compiled identity/direction/port/protocol policy and related proxy/authentication metadata |
+| IP cache | Associate addresses/prefixes with security identities and routing information |
 
-L3/L4 processing in eBPF works as follows:
-
-![Sequence diagram showing a packet from the source pod entering the TC eBPF hook, which looks up the CT map, evaluates policy only for a new connection or reuses the cached decision, then delivers the packet to the destination pod.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-3.html)
-
-#### eBPF Map Structure
-
-```c
-// Connection Tracking Map
-struct ct_entry {
-    __u32 src_ip;
-    __u32 dst_ip;
-    __u16 src_port;
-    __u16 dst_port;
-    __u8  protocol;
-    __u64 lifetime;
-    __u32 rx_packets;
-    __u32 tx_packets;
-};
-
-// Service Map
-struct lb_service {
-    __u32 service_ip;
-    __u16 service_port;
-    __u32 backend_count;
-    __u32 backend_slot;
-};
-
-// Policy Map
-struct policy_entry {
-    __u32 identity;
-    __u16 port;
-    __u8  protocol;
-    __u8  action;  // ALLOW, DENY, AUDIT
-};
-```
+Use the released BPF definitions when reading raw maps. IPv4/IPv6 keys, values, byte order and layouts differ; an invented `ct_entry` containing both the tuple and state is not a safe decoding specification.
 
 ### kube-proxy Replacement
 
-Cilium's eBPF-based load balancer can completely replace kube-proxy:
+The following is an **installation-mode fragment**, not a migration procedure. Replace the API host and port with an endpoint reachable before Service translation is available. Port 6443 is illustrative; EKS API endpoints normally use HTTPS port 443. Preserve the chosen platform's IPAM, routing and CNI settings.
 
 ```yaml
-# Enable kube-proxy replacement during Cilium installation
 kubeProxyReplacement: true
-
-# Load balancer algorithm configuration
+k8sServiceHost: <reachable-api-server-host>
+k8sServicePort: 6443
 loadBalancer:
-  algorithm: maglev  # or random
-  mode: dsr          # Direct Server Return
+  algorithm: maglev
 ```
 
-**kube-proxy vs Cilium eBPF Comparison:**
+`loadBalancer.algorithm: maglev` provides consistent backend selection for applicable external north–south traffic. Cilium's socket-level east–west Service connections are not subject to Maglev in this mode. Kubernetes `Service.spec.sessionAffinity: ClientIP` is a separate feature; Maglev is neither cookie persistence nor a promise to preserve connections to a removed backend.
 
-| Feature | kube-proxy (iptables) | Cilium eBPF |
-|---------|----------------------|-------------|
-| Rule Complexity | O(n) - proportional to services | O(1) - hash map lookup |
-| Connection Tracking | conntrack module | eBPF CT Map |
-| DSR Support | Limited | Full support |
-| Session Affinity | iptables-based | Maglev hashing |
-| Performance | Medium | High |
+| Topic | Architectural distinction |
+|---|---|
+| Service translation | kube-proxy implementations include iptables and nftables; Cilium uses BPF and, where enabled, socket-level translation |
+| Connection state | Linux conntrack and Cilium's BPF CT maps are separate mechanisms |
+| DSR | `loadBalancer.mode: dsr` can let backends reply directly using the Service address; supported dispatch/routing combinations, MTU and cloud networking must be checked |
+| Performance | Algorithmic lookup properties alone do not establish whole-request latency, throughput or CPU consumption |
 
-## Per-Node Envoy Proxy
+For Cilium 1.20.1, DSR option dispatch requires native routing; Geneve dispatch supports native or Geneve tunnel routing, while VXLAN tunnel routing is not a supported DSR combination. AWS source/destination checks can also affect DSR. Do not add `mode: dsr` to an arbitrary EKS installation without the [mode-specific requirements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst).
 
-### Sidecar vs Node Proxy
+## Shared Envoy Proxy
 
-![Side-by-side diagram contrasting the sidecar model, where each pod runs its own 50MB Envoy proxy, with the node proxy model, where three pods on a node share a single 100MB Envoy instance.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-4.png)
+### Deployment and Resource Configuration
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-4.html)
-
-### Envoy Deployment Method
-
-Cilium deploys one Envoy proxy per node as a DaemonSet:
-
-```bash
-# Check Envoy DaemonSet
-kubectl get daemonset -n kube-system cilium-envoy
-
-# Expected output
-NAME           DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE
-cilium-envoy   3         3         3       3            3
-```
-
-### L7 Processing Flow
-
-![Sequence diagram showing a client HTTP request passing through the eBPF datapath, which conditionally redirects traffic to the node Envoy for L7 policy enforcement on both the request and response legs before the response reaches the client.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-5.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-5.html)
-
-### Envoy Resource Configuration
+This Helm overlay enables the separate Envoy DaemonSet and direct CEC management for an already planned Cilium installation. Merge it with the installation's reviewed values. The resource numbers are example requests/limits, not benchmark measurements or universal sizing.
 
 ```yaml
-# values.yaml
+l7Proxy: true
+envoyConfig:
+  enabled: true
 envoy:
   enabled: true
   resources:
-    limits:
-      cpu: 2000m
-      memory: 2Gi
     requests:
       cpu: 100m
       memory: 256Mi
-
-  # Envoy concurrent connection settings
-  maxConnectionsPerHost: 1000
-  connectTimeout: 5s
-
-  # Proxy protocol settings
-  proxy:
-    protocol:
-      http2:
-        enabled: true
-      tls:
-        enabled: true
+    limits:
+      cpu: 2000m
+      memory: 2Gi
 ```
+
+```bash
+kubectl -n kube-system get daemonset cilium cilium-envoy
+kubectl -n kube-system get deployment cilium-operator
+kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+```
+
+Desired/ready counts depend on eligible nodes. Embedded Envoy mode has a different process lifecycle and does not require this separate DaemonSet.
+
+### L7 Processing Flow
+
+HTTP L7 network policy redirects the relevant traffic to the enforcement proxy. CEC service load balancing, Ingress and Gateway API can also introduce Envoy into the path. Thus “only traffic with an L7 network policy uses Envoy” is too narrow.
+
+![Illustrative HTTP flow with an egress L7 policy on the client node and a response through the same proxy connection.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-12.html)
+
+This diagram illustrates **egress** policy. An ingress policy is enforced on the receiving side; both can be configured. A proxied HTTP response traverses the established proxy connection. It is not a separate arbitrary decision to redirect or bypass each response. TLS-encrypted application payloads require the corresponding supported TLS/L7 configuration before HTTP fields can be inspected.
+
+### Configuration Ownership
+
+Maintain Helm-generated agent configuration through the installation's values. Replacing `cilium-config` with a short hand-written ConfigMap can omit required platform settings.
+
+The next commands inspect an existing release and agent; set `CILIUM_POD` as shown in the identity section first:
+
+```bash
+helm get values cilium -n kube-system -a
+kubectl -n kube-system get configmap cilium-config -o yaml
+kubectl -n kube-system logs "$CILIUM_POD" -c cilium-agent --since=10m
+```
+
+Chart 1.20.1 uses `envoy.connectTimeoutSeconds`, `envoy.clusterMaxConnections`, `envoy.clusterMaxPendingRequests` and `envoy.clusterMaxRequests`. Keys such as `envoy.connectTimeout`, `maxConnectionsPerHost`, `envoy.cluster.*` and `envoy.proxy.protocol.*` do not implement those controls. HTTP/2 and TLS configuration belongs to supported controller/Envoy APIs, not invented Helm switches.
 
 ## CRD Model
 
-### Cilium CRD Structure
+| Resource | Scope and role |
+|---|---|
+| `CiliumNetworkPolicy` | Namespaced endpoint policy, including supported L7 rules |
+| `CiliumClusterwideNetworkPolicy` | Cluster-scoped endpoint policy; selectors still determine affected endpoints |
+| `CiliumEnvoyConfig` (CEC) | Namespaced low-level Envoy resources and Service redirection |
+| `CiliumClusterwideEnvoyConfig` (CCEC) | Cluster-scoped Envoy configuration; individual Services remain explicitly identified |
+| `CiliumEndpoint` | Namespaced endpoint status maintained by Cilium |
+| `CiliumIdentity` | Cluster-scoped allocation of a security identity for a label set |
 
-![Architecture diagram grouping Cilium CRDs into network policy, Envoy configuration, service mesh, and identity groups, with the policy and Envoy configuration CRDs all resolving to the per-pod CiliumEndpoint beside CiliumIdentity.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-6.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-6.html)
+These resources do not all “resolve into CiliumEndpoint.” Common ingress/routing tasks can use supported Gateway API resources; direct CEC/CCEC management is a lower-level option requiring Envoy expertise.
 
 ### CiliumEnvoyConfig
 
-CiliumEnvoyConfig defines namespace-scoped Envoy configuration:
+This example assumes an existing Cilium-managed **`default/my-service` Service with frontend port 8080 and ready HTTP backends**. It redirects that frontend to a Listener, uses an RDS RouteConfiguration and defines the referenced EDS Cluster. The referenced workloads and Service are prerequisites, not created here.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -175,78 +156,122 @@ metadata:
   name: http-filter
   namespace: default
 spec:
-  # Services this configuration applies to
   services:
   - name: my-service
     namespace: default
-
-  # Envoy resource definitions
+    ports:
+    - 8080
+    listener: http-listener
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
-    name: my-service-listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
+    name: http-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: my-service
-          route_config:
-            name: local_route
-            virtual_hosts:
-            - name: my-service
-              domains: ["*"]
-              routes:
-              - match:
-                  prefix: "/"
-                route:
-                  cluster: default/my-service
+          rds:
+            route_config_name: http-route
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+    name: http-route
+    virtual_hosts:
+    - name: my-service
+      domains:
+      - '*'
+      routes:
+      - match:
+          prefix: /
+        route:
+          cluster: default/my-service
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/my-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
+
+The `services` entry also arranges backend synchronization through EDS. `backendServices` is useful for additional backend Services whose own frontend traffic should not be redirected. A CEC's frontend Service namespace is constrained to the CEC namespace. The Listener's omitted address is intentional: Cilium allocates the proxy port and fills in its xDS sources. This is a Cilium resource, not a standalone Envoy bootstrap file.
 
 ### CiliumClusterwideEnvoyConfig
 
-Cluster-wide Envoy configuration:
+This independent example targets an existing **`default/rate-limited-service:8080`**. It applies a local token bucket with an initial burst of 1,000 requests and refill of 100 tokens per second. It explicitly enables and enforces the filter for 100% of requests.
 
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideEnvoyConfig
 metadata:
-  name: global-ratelimit
+  name: local-rate-limit
 spec:
-  # Apply to all services cluster-wide
   services:
-  - name: "*"
-    namespace: "*"
-
+  - name: rate-limited-service
+    namespace: default
+    ports:
+    - 8080
+    listener: http-listener
   resources:
-  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
-    name: global-listener
+  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
+    name: http-listener
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          stat_prefix: global
+          '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: rate-limited-service
+          rds:
+            route_config_name: http-route
           http_filters:
           - name: envoy.filters.http.local_ratelimit
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+              '@type': type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
               stat_prefix: http_local_rate_limiter
               token_bucket:
                 max_tokens: 1000
                 tokens_per_fill: 100
                 fill_interval: 1s
+              filter_enabled:
+                default_value:
+                  numerator: 100
+                  denominator: HUNDRED
+              filter_enforced:
+                default_value:
+                  numerator: 100
+                  denominator: HUNDRED
+              local_rate_limit_per_downstream_connection: false
           - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  - '@type': type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+    name: http-route
+    virtual_hosts:
+    - name: rate-limited-service
+      domains:
+      - '*'
+      routes:
+      - match:
+          prefix: /
+        route:
+          cluster: default/rate-limited-service
+  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: default/rate-limited-service
+    connect_timeout: 5s
+    type: EDS
+    lb_policy: ROUND_ROBIN
 ```
 
-### CiliumNetworkPolicy (L7)
+CCEC's cluster scope does not make `"*"` a Service/namespace wildcard. Omitting `nodeSelector` distributes this configuration to all applicable nodes; this does not select all Services.
 
-Network policy with L7 rules:
+The bucket above is shared among worker threads **within each Envoy process**, not among every proxy in the cluster. Aggregate allowance depends on traffic distribution and the number of participating processes. It is not a cluster-wide global quota. Both `filter_enabled` and `filter_enforced` otherwise default to 0%; merely adding a bucket is insufficient.
+
+Kubernetes preserves unknown fields inside `spec.resources`; successful `kubectl apply` does not prove Envoy accepted the resources. Inspect agent warnings/errors, xDS acceptance and actual requests. Avoid conflicting direct CEC resources and configuration owned by Ingress/Gateway controllers.
+
+### CiliumNetworkPolicy with HTTP Rules
+
+This policy selects `app=backend` in `default`, permits the listed HTTP operations from `app=frontend` in the same namespace, and allows outbound database traffic plus DNS. It assumes CoreDNS endpoints labeled `k8s-app=kube-dns` in `kube-system`; NodeLocal DNS and other resolver arrangements need their own verified egress rule.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -257,280 +282,206 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: backend
-
+      k8s:app: backend
   ingress:
   - fromEndpoints:
     - matchLabels:
-        app: frontend
+        k8s:app: frontend
+        k8s:io.kubernetes.pod.namespace: default
     toPorts:
     - ports:
-      - port: "8080"
+      - port: '8080'
         protocol: TCP
       rules:
         http:
-        - method: GET
-          path: "/api/v1/.*"
+        - method: ^GET$
+          path: ^/api/v1/.*$
           headers:
-          - name: "X-Request-ID"
-            value: ".*"
-        - method: POST
-          path: "/api/v1/users"
-        - method: DELETE
-          path: "/api/v1/users/[0-9]+"
-
+          - X-Request-ID
+        - method: ^POST$
+          path: ^/api/v1/users$
+        - method: ^DELETE$
+          path: ^/api/v1/users/[0-9]+$
   egress:
   - toEndpoints:
     - matchLabels:
-        app: database
+        k8s:app: database
+        k8s:io.kubernetes.pod.namespace: default
     toPorts:
     - ports:
-      - port: "5432"
+      - port: '5432'
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: '53'
+        protocol: UDP
+      - port: '53'
         protocol: TCP
 ```
 
-## Cilium Agent and Service Mesh
+`headers` is a list of strings. `"X-Request-ID"` requires header presence; it is not proof of identity or authorization. `headerMatches` is the separate structured API for exact values/secrets. HTTP rules are alternatives, so the header requirement above applies only to GET; application authentication and authorization are still required for writes.
 
-### Cilium Agent Role
+The ingress and egress sections enable corresponding default-deny behavior for selected endpoints, subject to other applicable policy grants. This is not a complete application dependency policy: health checks, external services and additional clients must be modeled separately.
 
-![Architecture diagram showing the Kubernetes API server syncing into the Cilium Agent's network management, policy management, and proxy management groups, with network management feeding metrics and policy management feeding flow logs into the agent's observability output.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-7.png)
+## Agent, Identity and SPIFFE
+
+### Agent Responsibilities
+
+![Logical groups of local networking, policy, proxy configuration and observability responsibilities in the Cilium agent.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-7.html)
 
-### Agent Configuration
+The groups describe responsibilities, not exclusive event pipelines: observability can expose events from several datapath and proxy components. Cluster-wide Operator responsibilities remain separate.
 
-```yaml
-# ConfigMap: cilium-config
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Agent basic settings
-  debug: "false"
-  enable-ipv4: "true"
-  enable-ipv6: "false"
+### Security Identities
 
-  # Service mesh settings
-  enable-l7-proxy: "true"
-  enable-envoy-config: "true"
+Cilium allocates a numeric security identity to an identity-relevant label set. Pods sharing that set can share an identity. Namespace and service-account labels can contribute, but the number is neither a user-computed hash nor a permanent per-Pod identifier. Cilium maintains the address-to-identity relationship as endpoints change.
 
-  # kube-proxy replacement
-  kube-proxy-replacement: "true"
-
-  # Observability
-  enable-hubble: "true"
-  hubble-listen-address: ":4244"
-  hubble-metrics-server: ":9965"
-
-  # Encryption
-  enable-wireguard: "true"
-  enable-ipsec: "false"
-```
-
-## Service Identity and SPIFFE
-
-### Cilium Identity
-
-Cilium assigns a unique identity to each workload:
-
-![Diagram showing a pod's labels combining with its namespace and service account to derive a numeric Cilium Identity, which in turn sets the workload's security context.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-8.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-8.html)
-
-### Identity-based Policy
-
-```yaml
-# Check Pod's Identity
-apiVersion: cilium.io/v2
-kind: CiliumIdentity
-metadata:
-  name: "12345"
-  labels:
-    app: frontend
-    k8s:io.kubernetes.pod.namespace: default
-spec:
-  security-labels:
-    k8s:app: frontend
-    k8s:io.kubernetes.pod.namespace: default
-```
+Inspect the allocated identity; do not create a guessed `CiliumIdentity` object to assign an ID:
 
 ```bash
-# List identities
-cilium identity list
-
-# Expected output
-ID      LABELS
-1       reserved:host
-2       reserved:world
-3       reserved:health
-12345   k8s:app=frontend,k8s:io.kubernetes.pod.namespace=default
-12346   k8s:app=backend,k8s:io.kubernetes.pod.namespace=default
+kubectl -n default get ciliumendpoints
+kubectl get ciliumidentities
+CILIUM_POD='<agent-pod-on-the-node-being-inspected>'
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg identity list
+kubectl -n kube-system exec "$CILIUM_POD" -c cilium-agent -- cilium-dbg status --verbose
 ```
 
-### SPIFFE Integration
+For example, reserved IDs 1, 2, 3 and 4 denote `host`, `world`, `unmanaged` and `health` respectively. Dual-stack deployments also have distinct world-family identities. Allocated workload IDs depend on the environment and must not be copied as fixed policy constants.
 
-Workload identity through SPIFFE (Secure Production Identity Framework for Everyone):
+### SPIRE Integration and Security Boundaries
 
-![Diagram showing a workload requesting identity through the SPIRE agent and server, which uses a certificate authority to issue an X.509 SVID that is delivered back to the workload.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-9.png)
+Cilium's beta out-of-band mutual authentication uses Cilium agents to obtain and verify identities on behalf of Cilium security identities. With the default trust domain, the ID is:
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-9.html)
+```text
+spiffe://spiffe.cilium/identity/<numeric-security-identity>
+```
+
+This is different from Istio's namespace/service-account path. Changing `authentication.mutual.spire.trustDomain` changes the trust-domain part.
 
 ```yaml
-# SPIRE integration configuration
 authentication:
+  enabled: true
   mutual:
     spire:
       enabled: true
+      trustDomain: spiffe.cilium
+      agentSocketPath: /run/spire/sockets/agent/agent.sock
       install:
         enabled: true
         server:
           dataStorage:
+            enabled: true
             size: 1Gi
-        agent:
-          socketPath: /run/spire/sockets/agent.sock
 ```
 
-SPIFFE ID format:
-```
-spiffe://cluster.local/ns/<namespace>/sa/<service-account>
-```
+This optional overlay needs a suitable StorageClass/PV for SPIRE's persistent storage and an explicit authentication policy for the selected traffic. Enabling SPIRE alone does not require mutual authentication for every connection.
 
-## Packet Flow Analysis
+The authentication handshake is out of band. **Application traffic encryption is a separate WireGuard/IPsec configuration**, with its own platform and path limitations. Cilium documents this mutual-authentication feature as beta/incomplete, including ClusterMesh and external mTLS interoperability limitations; it should not be described as equivalent to universally applied sidecar mTLS.
 
-### Pod-to-Pod Communication (Same Node)
+### Separate ztunnel Encryption Beta
 
-![Sequence diagram showing a packet moving entirely inside the kernel from a source pod's veth eBPF ingress TC hook, through the connection-tracking and policy maps, to the eBPF egress TC hook on the destination pod's veth on the same node, bypassing the network stack.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-10.png)
+Cilium 1.20.1 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
+
+The numeric SPIFFE identity example above belongs to out-of-band authentication. The ztunnel integration has a separate namespace/service-account workload identity model and defaults to Cilium's internal CA option; SPIRE is not required by that default.
+
+## Packet Flow by Scenario
+
+### Pods on the Same Node
+
+![Illustrative local veth forwarding path with eBPF connection state and policy checks.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-10.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-10.html)
 
-### Pod-to-Pod Communication (Different Nodes)
+This is a simplified veth fast path. BPF host routing can bypass the upper **host** stack and netfilter hooks when its requirements are met; the Pod's own protocol stack still exists. Legacy host routing, netkit, proxy redirection and integrations change the path. Features depending on host netfilter hooks need special care; this diagram does not promise a universal 0.1 ms latency.
 
-![A packet leaves a pod on one node, is policy-evaluated and encapsulated by that node's eBPF, crosses a VXLAN, Geneve, or native route, then is decapsulated and policy-evaluated by eBPF on the destination node before reaching the target pod.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-11.png)
+### Pods on Different Nodes
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-11.html)
+With tunnel routing, the sending node encapsulates traffic in VXLAN or Geneve and the receiving node decapsulates it. Native routing uses underlay routes to Pod addresses without that overlay encapsulation. Node reachability, PodCIDR routing, MTU, firewall rules and optional encryption determine whether the path works.
 
-### When L7 Processing is Required
+### HTTP Policy or Service Proxying
 
-![Sequence diagram of an L7-policy request redirected by the client-side eBPF hook to the node Envoy for HTTP parsing, policy enforcement and metrics, forwarded via the server-side eBPF hook, with the response taking the same detour back.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-12.png)
+The applicable egress/ingress policy or Service frontend can redirect traffic to Envoy. The proxy parses the supported protocol and forwards an allowed/routed request; responses return through its established connection. It does not follow that every flow must cross both a client-side and server-side Envoy.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-12.html)
+## Comparison with Istio
 
-## Comparison with Istio Sidecar Architecture
+| Aspect | Cilium Service Mesh | Istio sidecar mode |
+|---|---|---|
+| Proxy placement | Agent-managed or separate shared node Envoy for applicable L7 traffic | Envoy alongside enrolled workloads |
+| L3/L4 datapath | eBPF networking/policy, with mode-dependent kernel paths | Workload traffic capture and Envoy processing within the mesh scope |
+| L7 configuration | CNP, supported Gateway API/controllers, or direct CEC/CCEC | Gateway API and Istio traffic/security APIs |
+| Authentication and encryption | Out-of-band mutual authentication plus WireGuard/IPsec; separate ztunnel mTLS beta | Envoy workload mTLS |
+| Resource accounting | Include agents, BPF maps, Envoy, Operator and optional Hubble/SPIRE | Include sidecars, control plane and optional gateways/telemetry |
 
-### Architecture Comparison Table
-
-| Aspect | Cilium Service Mesh | Istio Sidecar |
-|--------|---------------------|---------------|
-| **Proxy Location** | 1 per node | 1 per Pod |
-| **Proxy Type** | eBPF + Envoy | Envoy only |
-| **L4 Processing** | Kernel (eBPF) | User space (Envoy) |
-| **L7 Processing** | User space (Envoy) | User space (Envoy) |
-| **Memory Usage** | ~100MB/node | ~50MB/Pod |
-| **CPU Usage** | Low | Medium-High |
-| **Latency** | 0.1-0.5ms | 1-3ms |
-| **Configuration Model** | CiliumEnvoyConfig | VirtualService/DestinationRule |
-| **mTLS Implementation** | eBPF/WireGuard | Envoy |
-| **Injection** | Not required | Sidecar injection required |
-
-### Latency Analysis
-
-![Per-hop latency breakdown showing Istio's sidecar path accumulating about 1.5 ms across two user-space Envoy hops, while Cilium's eBPF path completes the same round trip in about 0.24 ms with the network hop costing the same in both.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-13.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-13.html)
-
-### Resource Efficiency Analysis
-
-For a 100 Pod cluster:
-
-![Diagram comparing resource use on a 100-pod cluster: Istio's per-pod sidecars total about 5GB of memory with high CPU overhead, while Cilium's five node-level Envoy proxies total about 500MB with low CPU overhead.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-14.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-14.html)
+Istio also offers ambient mode with ztunnel and optional waypoint proxies; a sidecar-only comparison does not cover all Istio architectures. Compare equal workloads, traffic, security and observability settings, and record versions, node counts, request rates and latency percentiles. No reproducible benchmark evidence accompanied the former 50 MB/Pod, 100 MB/node or fixed millisecond totals, so those numbers are not sizing guidance.
 
 ## Scalability Considerations
 
-### eBPF Map Sizes
+### BPF Map Capacity
+
+Map capacity depends on concurrent flows, identities, Services/backends and node memory, not just cluster node count. The following explicit Helm values illustrate map controls; they are not a recommendation for every 1,000-node cluster:
 
 ```yaml
-# Cilium ConfigMap settings
-bpf-map-dynamic-size-ratio: "0.0025"
-bpf-ct-global-tcp-max: "524288"
-bpf-ct-global-any-max: "262144"
-bpf-nat-global-max: "524288"
-bpf-policy-map-max: "16384"
+bpf:
+  ctTcpMax: 524288
+  ctAnyMax: 262144
+  natMax: 524288
+  policyMapMax: 16384
 ```
 
-### Large Cluster Configuration
+When explicitly sizing CT/NAT, NAT capacity must not exceed two-thirds of combined TCP and non-TCP CT capacity; the example satisfies that bound. `bpf.mapDynamicSizeRatio` instead derives several map capacities from node memory; 0.0025 means 0.25% for the affected maps, not for the entire Cilium stack. Policy maps are per endpoint and need separate consideration.
+
+Observe pressure and allocation failures before tuning. Increasing/recreating maps can consume significant memory and disrupt existing traffic. `cluster.id` belongs to cluster identity/ClusterMesh design, not a generic performance switch. Obsolete `sockops-enable` and nonexistent `hubble-disable` examples should not be copied.
+
+### Envoy Capacity
+
+Example overlay using actual chart keys:
 
 ```yaml
-# Large cluster (1000+ nodes) configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  # Identity-related settings
-  cluster-id: "1"
-  cluster-name: "production"
-
-  # Connection tracking optimization
-  bpf-ct-global-tcp-max: "1048576"
-  bpf-ct-global-any-max: "524288"
-
-  # NAT table size
-  bpf-nat-global-max: "1048576"
-
-  # Policy map size
-  bpf-policy-map-max: "65536"
-
-  # Performance optimization
-  sockops-enable: "true"
-  bpf-lb-sock: "true"
-
-  # Hubble settings
-  hubble-disable: "false"
-  hubble-socket-path: "/var/run/cilium/hubble.sock"
-```
-
-### Node Envoy Scaling
-
-```yaml
-# Envoy resource scaling
 envoy:
   resources:
-    limits:
-      cpu: 4000m
-      memory: 4Gi
     requests:
       cpu: 500m
       memory: 512Mi
-
-  # Envoy worker threads
-  concurrency: 4
-
-  # Connection limits
-  perConnectionBufferLimitBytes: 32768
-
-  # Cluster settings
-  cluster:
-    connectTimeout: 5s
-    circuitBreakers:
-      maxConnections: 10000
-      maxPendingRequests: 10000
-      maxRequests: 10000
+    limits:
+      cpu: 4000m
+      memory: 4Gi
+  extraArgs:
+  - --concurrency 4
+  connectTimeoutSeconds: 5
+  clusterMaxConnections: 10000
+  clusterMaxPendingRequests: 10000
+  clusterMaxRequests: 10000
 ```
+
+The requests/limits and four workers are illustrative and must match node capacity and measured load. `envoy.extraArgs` passes the worker option to the separate Envoy process; `envoy.concurrency` is not a chart 1.20.1 setting. Agent-managed Envoy configuration uses a different lifecycle. Cluster connection/pending-request limits are circuit-breaker controls, not a whole-mesh global request quota. Per-listener buffering belongs to the corresponding Envoy resource, not `envoy.perConnectionBufferLimitBytes`.
 
 ## Next Steps
 
-- [Traffic Management](./02-traffic-management.md): Configure L7 routing and traffic control
-- [Security](./03-security.md): Set up mTLS and L7 network policies
-- [Observability](./04-observability.md): Monitor service mesh with Hubble
+- [Traffic Management](./02-traffic-management.md)
+- [Security](./03-security.md)
+- [Observability](./04-observability.md)
+- [Architecture Quiz](../../quizzes/service-mesh/cilium-service-mesh/architecture.md)
 
 ## References
 
-- [Cilium Architecture Documentation](https://docs.cilium.io/en/stable/concepts/overview/)
-- [eBPF Documentation](https://ebpf.io/what-is-ebpf/)
-- [Envoy Proxy Architecture](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
-- [SPIFFE Specification](https://spiffe.io/docs/latest/spiffe-about/overview/)
+- [Cilium 1.20.1 architecture and Envoy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst)
+- [kube-proxy replacement, Maglev, DSR and socket LB](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Released datapath policy checks](https://github.com/cilium/cilium/blob/v1.20.1/bpf/bpf_lxc.c)
+- [Routing and encapsulation](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/routing.rst)
+- [eBPF performance options and limitations](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/performance/tuning.rst)
+- [BPF map capacity](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/ebpf/maps.rst)
+- [Cilium Operator](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/internals/cilium_operator.rst)
+- [Envoy traffic-management example](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml)
+- [CEC resource parser](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go)
+- [CEC schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumenvoyconfigs.yaml)
+- [CNP schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+- [Helm 1.20.1 values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [Identity-based security](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/identity.rst)
+- [SPIFFE ID construction](https://github.com/cilium/cilium/blob/v1.20.1/pkg/auth/spire/certificate_provider.go)
+- [Mutual authentication status and limitations](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Envoy 1.37.5 local rate-limit API](https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto)

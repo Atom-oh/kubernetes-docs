@@ -21,7 +21,7 @@ LogQL에서 로그 라인에서 데이터를 추출하기 위해 다양한 파�
 
 </details>
 
-### 2. Tempo에서 Trace ID를 기반으로 특정 트레이스를 조회할 때 사용하는 TraceQL 구문은 무엇인가요?
+### 2. 알고 있는 Trace ID로 특정 트레이스를 조회하는 일반적인 방법은 무엇인가요?
 
 - A) {span.trace_id="..."}
 - B) trace:ID
@@ -34,7 +34,7 @@ LogQL에서 로그 라인에서 데이터를 추출하기 위해 다양한 파�
 **정답: C) 직접 Trace ID를 검색창에 입력**
 
 **설명:**
-Grafana Tempo에서 특정 트레이스를 조회할 때는 Trace ID를 검색창에 직접 입력합니다. TraceQL은 트레이스 검색과 필터링에 사용되지만, 특정 ID로 조회할 때는 ID를 직접 입력하는 것이 가장 간단합니다. Tempo UI나 Grafana Explore에서 지원됩니다.
+Grafana Tempo에서 특정 트레이스를 조회할 때는 Trace ID를 검색창에 직접 입력합니다. TraceQL은 트레이스 검색과 필터링에 사용되지만, 특정 ID로 조회할 때는 ID를 직접 입력하는 것이 가장 간단합니다. Grafana Explore의 Trace ID 조회 모드나 Tempo의 trace-by-ID API를 사용합니다. TraceQL 검색 표현식과 구분합니다.
 
 </details>
 
@@ -68,7 +68,7 @@ rate() 함수는 지정된 시간 범위에서 카운터 메트릭의 초당 평
 **정답: B) Trace ID**
 
 **설명:**
-Trace ID는 분산 시스템에서 하나의 요청이 여러 서비스를 거치는 동안 동일하게 전파됩니다. 로그에 Trace ID를 포함시키면 해당 요청의 로그만 필터링할 수 있고, Prometheus Exemplar를 통해 메트릭에서 트레이스로 연결할 수 있습니다.
+유효한 trace context를 이어가는 서비스들은 같은 Trace ID를 사용합니다. 비동기 처리 등에서 새 trace와 span link를 사용하는 설계는 별도로 고려합니다. 로그에 Trace ID를 포함시키면 해당 요청의 로그만 필터링할 수 있고, Prometheus Exemplar를 통해 메트릭에서 트레이스로 연결할 수 있습니다.
 
 </details>
 
@@ -102,11 +102,11 @@ Trace ID는 분산 시스템에서 하나의 요청이 여러 서비스를 거�
 **정답: B) 메트릭 데이터 포인트에 Trace ID를 연결하여 트레이스로 이동**
 
 **설명:**
-Exemplar는 히스토그램이나 카운터 메트릭의 특정 데이터 포인트에 샘플 Trace ID를 첨부합니다. Grafana에서 메트릭 그래프의 특정 지점을 클릭하면 해당 시점의 실제 요청 트레이스로 바로 이동할 수 있어 문제 원인 분석이 빨라집니다.
+Exemplar는 히스토그램이나 카운터 메트릭의 특정 데이터 포인트에 샘플 Trace ID를 첨부합니다. Grafana에서 메트릭 그래프의 특정 지점을 클릭하면 그 샘플에 연결된 trace를 조회할 수 있습니다. 데이터소스 매핑과 backend 보존이 필요하며 모든 요청이나 정확한 P99 요청이 exemplar로 남는 것은 아닙니다.
 
 </details>
 
-### 7. TraceQL에서 특정 서비스의 500 에러 트레이스를 찾는 쿼리는 무엇인가요?
+### 7. TraceQL에서 특정 서비스의 error 상태 span을 찾는 쿼리는 무엇인가요?
 
 - A) {status=error}
 - B) {resource.service.name="api" && status=error}
@@ -119,7 +119,7 @@ Exemplar는 히스토그램이나 카운터 메트릭의 특정 데이터 포인
 **정답: B) {resource.service.name="api" && status=error}**
 
 **설명:**
-TraceQL에서 `{}`안에 조건을 지정합니다. `resource.service.name`은 서비스 이름을, `status=error`는 에러 상태를 필터링합니다. `&&`로 여러 조건을 AND 결합할 수 있습니다. 이를 통해 특정 서비스의 에러 트레이스만 효과적으로 찾을 수 있습니다.
+TraceQL에서 `{}`안에 조건을 지정합니다. `resource.service.name`은 서비스 이름을, `status=error`는 에러 상태를 필터링합니다. `&&`로 여러 조건을 AND 결합할 수 있습니다. 이 조건은 span의 오류 상태이며 정확한 HTTP 500과 같지는 않습니다. HTTP 코드를 조회하려면 실제 instrumentation이 기록한 HTTP status attribute를 확인합니다.
 
 </details>
 

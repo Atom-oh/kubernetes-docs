@@ -1,0 +1,347 @@
+{
+  "date": "2026-09-11",
+  "originalFullRead": {
+    "README": 511,
+    "quiz": 248,
+    "quizQuestionsPerLocale": 10
+  },
+  "validation": {
+    "coreSchema": [
+      {
+        "path": "en/networking/README.md",
+        "kind": "Service",
+        "name": "my-service",
+        "errors": []
+      },
+      {
+        "path": "en/networking/README.md",
+        "kind": "Service",
+        "name": "my-nodeport-service",
+        "errors": []
+      },
+      {
+        "path": "en/networking/README.md",
+        "kind": "Service",
+        "name": "my-loadbalancer-service",
+        "errors": []
+      },
+      {
+        "path": "en/networking/README.md",
+        "kind": "Ingress",
+        "name": "my-ingress",
+        "errors": []
+      },
+      {
+        "path": "en/networking/README.md",
+        "kind": "Pod",
+        "name": "iperf-server",
+        "errors": []
+      },
+      {
+        "path": "en/networking/README.md",
+        "kind": "Pod",
+        "name": "iperf-client",
+        "errors": []
+      },
+      {
+        "path": "en/networking/README.md",
+        "kind": "NetworkPolicy",
+        "name": "default-deny-all",
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "kind": "Service",
+        "name": "my-service",
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "kind": "Service",
+        "name": "my-nodeport-service",
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "kind": "Service",
+        "name": "my-loadbalancer-service",
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "kind": "Ingress",
+        "name": "my-ingress",
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "kind": "Pod",
+        "name": "iperf-server",
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "kind": "Pod",
+        "name": "iperf-client",
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "kind": "NetworkPolicy",
+        "name": "default-deny-all",
+        "errors": []
+      }
+    ],
+    "eniSchema": [
+      {
+        "locale": "en",
+        "name": "ap-northeast-2a"
+      },
+      {
+        "locale": "en",
+        "name": "ap-northeast-2b"
+      },
+      {
+        "locale": "ko",
+        "name": "ap-northeast-2a"
+      },
+      {
+        "locale": "ko",
+        "name": "ap-northeast-2b"
+      }
+    ],
+    "shellBlocks": 10,
+    "jsonFragments": 8,
+    "codeParity": true,
+    "legacyLimits": [
+      {
+        "instance": "t3.medium",
+        "ENIs": 3,
+        "IPv4Slots": 6,
+        "legacyBootstrapPods": 17
+      },
+      {
+        "instance": "t3.large",
+        "ENIs": 3,
+        "IPv4Slots": 12,
+        "legacyBootstrapPods": 35
+      },
+      {
+        "instance": "m5.large",
+        "ENIs": 3,
+        "IPv4Slots": 10,
+        "legacyBootstrapPods": 29
+      },
+      {
+        "instance": "m5.xlarge",
+        "ENIs": 4,
+        "IPv4Slots": 15,
+        "legacyBootstrapPods": 58
+      },
+      {
+        "instance": "m5.2xlarge",
+        "ENIs": 4,
+        "IPv4Slots": 15,
+        "legacyBootstrapPods": 58
+      },
+      {
+        "instance": "c5.4xlarge",
+        "ENIs": 8,
+        "IPv4Slots": 30,
+        "legacyBootstrapPods": 234
+      }
+    ],
+    "diagnosticImage": {
+      "digest": "sha256:b09d9b21381f47a79b3cbcb30da25266dc17186ea00ae65e99fdc51396f48e70",
+      "platforms": [
+        [
+          "linux",
+          "amd64"
+        ],
+        [
+          "linux",
+          "arm64"
+        ]
+      ],
+      "publisherDockerfileIncludesIperf3": true,
+      "containerExecuted": false
+    },
+    "quizQuestionsPerLocale": 10,
+    "limits": [
+      "Core schemas use official Kubernetes1.36 Swagger with explicit IntOrString handling; no API-server admission/CEL or real resource readiness validated.",
+      "ENIConfig IDs are documented placeholders; no AWS API/resource changes or CNI/policy rollout.",
+      "Published image metadata/source inspected; no cluster benchmark or production performance guarantee.",
+      "Feature comparisons use versioned primary sources and edition/compute-mode limits; current availability does not establish joint compatibility."
+    ]
+  },
+  "batch": {
+    "batch": "networking-foundation",
+    "documents": 4,
+    "yamlBlocks": 10,
+    "shellBlocks": 10,
+    "errors": []
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/README.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/README.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/00-networking-overview-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/00-networking-overview-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "tests": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/kubernetes-docs-full-review/docs-test-networking-overview-clean.log"
+  },
+  "sources": {
+    "networkModel": "https://kubernetes.io/docs/concepts/services-networking/",
+    "service": "https://kubernetes.io/docs/concepts/services-networking/service/",
+    "networkPlugins": "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+    "networkPolicy": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+    "CNI": "https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md",
+    "calicoRelease": "https://api.github.com/repos/projectcalico/calico/releases/latest",
+    "calicoEditions": "https://docs.tigera.io/calico/latest/about",
+    "calicoTiers": "https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy",
+    "calicoWhisker": "https://docs.tigera.io/calico/latest/observability/view-flow-logs",
+    "calicoWireGuard": "https://docs.tigera.io/calico/latest/network-policy/encrypt-cluster-pod-traffic",
+    "calicoDNSPaid": "https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy",
+    "calicoWindows": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+    "flannelRelease": "https://api.github.com/repos/flannel-io/flannel/releases/latest",
+    "flannelREADME": "https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/README.md",
+    "flannelBackends": "https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md",
+    "weaveArchive": "https://api.github.com/repos/weaveworks/weave",
+    "vpcCNI": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+    "vpcValues": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/values.yaml",
+    "vpcLimits": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/vpc/vpc_ip_resource_limit.go",
+    "vpcMaxPods": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/misc/eni-max-pods.txt",
+    "vpcPolicies": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+    "vpcPolicyConfigure": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+    "vpcPrefixes": "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html",
+    "autoNetworking": "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+    "eksAddons": "https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html",
+    "autoDNSBlog": "https://aws.amazon.com/blogs/containers/faster-nodes-smarter-scaling-whats-new-inside-amazon-elastic-kubernetes-service-amazon-eks-auto-mode/",
+    "eksAdminDNSBlog": "https://aws.amazon.com/blogs/containers/enhance-amazon-eks-network-security-posture-with-dns-and-admin-network-policies/",
+    "eksControlPlane": "https://docs.aws.amazon.com/eks/latest/best-practices/control-plane.html",
+    "tetragon": "https://tetragon.io/docs/overview/",
+    "netshootTag": "https://hub.docker.com/v2/repositories/nicolaka/netshoot/tags/v0.16",
+    "netshootDockerfile": "https://raw.githubusercontent.com/nicolaka/netshoot/v0.16/Dockerfile",
+    "kubernetesOpenAPI": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+    "awsLBCNLB": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md",
+    "awsLBCIngress": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md"
+  },
+  "calicoEditionMatrix": [
+    {
+      "feature": "Ingress gateway",
+      "OpenSource": true,
+      "CloudFree": true,
+      "Cloud": true,
+      "Enterprise": true
+    },
+    {
+      "feature": "Cluster mesh",
+      "OpenSource": false,
+      "CloudFree": false,
+      "Cloud": true,
+      "Enterprise": true
+    },
+    {
+      "feature": "Application layer policy",
+      "OpenSource": false,
+      "CloudFree": false,
+      "Cloud": true,
+      "Enterprise": true
+    },
+    {
+      "feature": "DNS/FQDN-based policy",
+      "OpenSource": false,
+      "CloudFree": false,
+      "Cloud": true,
+      "Enterprise": true
+    },
+    {
+      "feature": "Hierarchical tiered network policy",
+      "OpenSource": true,
+      "CloudFree": true,
+      "Cloud": true,
+      "Enterprise": true
+    },
+    {
+      "feature": "Flow logs API",
+      "OpenSource": true,
+      "CloudFree": true,
+      "Cloud": false,
+      "Enterprise": false
+    },
+    {
+      "feature": "Calico Whisker web console",
+      "OpenSource": true,
+      "CloudFree": true,
+      "Cloud": false,
+      "Enterprise": false
+    }
+  ],
+  "figures": {
+    "reviewed": 20,
+    "retainedPerLocale": [
+      1,
+      2,
+      3,
+      9
+    ],
+    "removedPerLocale": [
+      0,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "reason": "Obsolete network-model/CNI ownership, unsourced ranking, outdated CNI selection, incorrect AWS VPC boundaries. Retained diagrams explicitly qualified. Parent source-diagram/foreign backfill ownership preserved."
+  },
+  "finalHashes": {
+    "en/networking/README.md": "b17278f0df3bfebc7ddaeb29e8a80c220c0c9590ffaf194b90f9d85900140489",
+    "ko/networking/README.md": "ed9bb1b8d509b5bf5d4b079ecf5aca454f6c59c7bc9d573dd7551c24d48127f3",
+    "en/quizzes/networking/00-networking-overview-quiz.md": "d96465645e12ad3ea13592fed1ddb17a8abb666603b4e877442b096e3855905c",
+    "ko/quizzes/networking/00-networking-overview-quiz.md": "f3379fac09c59d57fa06ca9fbb83f722a15842b127b5bdf2d590a9d9edebc856"
+  },
+  "artifacts": "/tmp/networking-overview-validation; /tmp/networking-overview-sources.json",
+  "nativePolicyFollowup": {
+    "source": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+    "finding": "Current EKS native policy guidance requires matching Service/container ports and controller-managed Pods; standalone diagnostic Pods are not enforcement tests. Added explicit caveats to general-Service and benchmark sections.",
+    "render": {
+      "results": [
+        {
+          "path": "en/networking/README.md",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "path": "ko/networking/README.md",
+          "passed": true,
+          "errors": []
+        }
+      ],
+      "passed": 2,
+      "total": 2
+    }
+  }
+}

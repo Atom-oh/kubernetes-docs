@@ -1,318 +1,169 @@
 # Helm Deployment and Executor Choice Quiz
 
-This quiz tests your understanding of the two Airflow Helm charts, installation with the official chart, the KubernetesExecutor vs. CeleryExecutor trade-off, and KEDA-based autoscaling for Celery workers.
+Chart 1.22.0 / Airflow 3.3.1 / KEDA 2.20.
 
-## Multiple Choice Questions
-
-1. Which Helm chart is the official one maintained by the Apache Airflow project?
-   - A) `airflow-helm/charts`
-   - B) `apache/airflow`
-   - C) `bitnami/airflow`
-   - D) Both are equally official
+## 1. Which chart and repository alias does this guide use?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: B) `apache/airflow`**
-
-**Explanation:**
-`apache/airflow` is published from the `chart` directory of the main `apache/airflow` repository and is the chart referenced by upstream documentation and release notes. `airflow-helm/charts` is an older, independently maintained community chart with a different values schema and no affiliation with the Apache Airflow project — a common source of confusion when following outdated tutorials.
+The Apache Airflow project's official chart. With the repository registered as apache-airflow, commands use apache-airflow/airflow. Do not mix independent community-chart values.
 
 </details>
 
-2. What is the minimum Helm version required by the official `apache/airflow` chart as of chart 1.22.0?
-   - A) Helm 2.x
-   - B) Helm 3.12.0
-   - C) Helm 3.19.0
-   - D) Any Helm 3.x version
+## 2. What are chart 1.22.0's actual Airflow/executor defaults?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: C) Helm 3.19.0**
-
-**Explanation:**
-The chart declares Helm 3.19.0 as its minimum required version. This constraint is enforced by the chart's own `Chart.yaml`, so installing with an older Helm client fails at install time rather than producing a partially broken deployment.
+Airflow 3.2.2 and CeleryExecutor. The guide explicitly overrides them for its 3.3.1/KubernetesExecutor profile.
 
 </details>
 
-3. Since which chart version has the official `apache/airflow` chart required Kubernetes 1.30+?
-   - A) 1.0.0
-   - B) 1.10.0
-   - C) 1.16.0
-   - D) 1.22.0
+## 3. Does Chart.yaml enforce every documented minimum version?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: C) 1.16.0**
-
-**Explanation:**
-Chart version 1.16.0 introduced the Kubernetes 1.30+ requirement, and it has carried forward into later versions including the current 1.22.0.
+Do not assume so. Use Helm 3.19.0+ and compatible Kubernetes/Airflow. Chart 1.16's README specified Kubernetes 1.29+; even the reviewed 1.22 templates rendered for 1.29, which is not proof of support.
 
 </details>
 
-4. Which single top-level `values.yaml` field determines whether the chart deploys a Celery worker Deployment and Redis broker at all?
-   - A) `workers.replicas`
-   - B) `executor`
-   - C) `postgresql.enabled`
-   - D) `scheduler.replicas`
+## 4. Does executor alone determine Redis and worker resource kinds?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: B) `executor`**
-
-**Explanation:**
-Setting `executor: CeleryExecutor` conditionally renders the worker Deployment and Redis broker; `executor: KubernetesExecutor` renders neither. Because this field changes which components are deployed at all, changing it after a deployment already carries production traffic is disruptive.
+It influences them, but Redis/external-broker settings and worker persistence also matter. Workers can be Deployments or StatefulSets, and Celery can use an external broker.
 
 </details>
 
-5. Roughly how long is a `KubernetesExecutor` task pod's cold-start latency, even for a trivial task?
-   - A) A few milliseconds
-   - B) 1–2 minutes
-   - C) 10–15 minutes
-   - D) There is no cold start with KubernetesExecutor
+## 5. Does disabling PostgreSQL configure an external database?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: B) 1–2 minutes**
-
-**Explanation:**
-Even a trivial task pays for pod scheduling, a potential image pull, and possibly a node scale-out event through Karpenter or Cluster Autoscaler if no spare capacity exists — together this typically costs roughly 1–2 minutes before the task actually starts running.
+No. Prepare the database, migration privileges, URI/TLS and a connection reference such as metadataSecretName. With that Secret set, metadataConnection is not the authoritative source.
 
 </details>
 
-6. What additional infrastructure does `CeleryExecutor` require that `KubernetesExecutor` does not?
-   - A) A dedicated StorageClass
-   - B) A message broker (Redis or RabbitMQ) and a worker Deployment
-   - C) A separate Kubernetes cluster
-   - D) A service mesh
+## 6. Should Fernet/API/JWT keys be regenerated on upgrades?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: B) A message broker (Redis or RabbitMQ) and a worker Deployment**
-
-**Explanation:**
-`CeleryExecutor` needs a broker to queue tasks between the scheduler and workers, plus a long-running worker Deployment that stays warm and pulls tasks from that broker. `KubernetesExecutor` needs neither — the scheduler talks directly to the Kubernetes API to create per-task pods.
+Preserve them during ordinary upgrades. Fernet-key loss can break access to encrypted data, and JWT changes can affect active task authentication. Handle backup and rotation deliberately.
 
 </details>
 
-7. What does the KEDA `ScaledObject` query (`SELECT ceil(COUNT(*)/worker_concurrency) FROM task_instance WHERE state IN (running, queued)`) actually measure to decide the Celery worker replica count?
-   - A) Total number of DAGs ever registered
-   - B) The number of worker replicas needed to cover all currently running/queued task instances at the configured concurrency per pod
-   - C) CPU utilization of the scheduler pod
-   - D) The size of the PostgreSQL database
+## 7. How does the example avoid default admin/admin?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: B) The number of worker replicas needed to cover all currently running/queued task instances at the configured concurrency per pod**
-
-**Explanation:**
-The query counts task instances currently in `running` or `queued` state, then divides by `worker_concurrency` (rounded up) to get the number of worker pods needed to keep up with that workload. KEDA polls this roughly every 10 seconds and resizes the worker Deployment accordingly.
+It disables createUserJob and uses interactive airflow users create for the selected FAB auth manager, prompting twice for the password. Other auth managers/SSO need their own procedures.
 
 </details>
 
-8. After Celery worker task activity drops to zero, roughly how long does KEDA wait before scaling the worker Deployment down to zero replicas?
-   - A) Immediately
-   - B) About 30 seconds
-   - C) About 5 minutes
-   - D) About 1 hour
+## 8. Does KubernetesExecutor always take 1–2 minutes to start?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: C) About 5 minutes**
-
-**Explanation:**
-KEDA waits roughly 5 minutes after the last task activity before scaling the worker Deployment to zero, so a brief lull between DAG runs doesn't cause the worker pool to be torn down and immediately recreated.
+No. Measure image cache/pull, Kubernetes API/scheduler, node availability/provisioning, quotas and runtime initialization. Celery also has cold starts after scale-to-zero.
 
 </details>
 
-9. Why is there no "KEDA for KubernetesExecutor" autoscaling pattern equivalent to the Celery worker setup?
-   - A) KEDA doesn't support Kubernetes-based Airflow deployments at all
-   - B) KubernetesExecutor already creates one pod per task, so there's no fixed-size worker Deployment to resize — the thing that needs to scale is cluster compute capacity via Karpenter/Cluster Autoscaler
-   - C) KubernetesExecutor tasks cannot be scaled under any circumstances
-   - D) KEDA is only compatible with Redis-backed workloads
+## 9. Can KubernetesExecutor use an arbitrary GPU/CLI worker image?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: B) KubernetesExecutor already creates one pod per task, so there's no fixed-size worker Deployment to resize — the thing that needs to scale is cluster compute capacity via Karpenter/Cluster Autoscaler**
-
-**Explanation:**
-KEDA's role is to resize a long-running Deployment based on an external metric. `KubernetesExecutor` never has such a Deployment — scaling is already granular at the pod level, one per task — so the relevant scaling concern shifts to cluster-level compute capacity, which is Karpenter's or Cluster Autoscaler's job rather than a workload autoscaler's.
+The worker needs a compatible Airflow task runtime and DAG/provider dependencies. This differs from KubernetesPodOperator launching a child pod with a workload image.
 
 </details>
 
-10. What does Airflow 3's "multiple executors concurrently" feature allow you to do?
-    - A) Run two independent Airflow installations side by side
-    - B) Assign an executor per task or per DAG instead of committing one executor to the entire deployment
-    - C) Automatically choose the cheaper executor at runtime
-    - D) Replace the scheduler with two redundant instances
+## 10. Does having no worker pods make total Airflow idle cost zero?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: B) Assign an executor per task or per DAG instead of committing one executor to the entire deployment**
-
-**Explanation:**
-This lets a single deployment mix executors — for example, most DAGs on a warm `CeleryExecutor` pool for low-latency dispatch, with a handful of resource-heavy or GPU tasks explicitly routed to `KubernetesExecutor` for isolation — rather than forcing an all-or-nothing choice for the whole deployment.
+Control-plane, database, broker, node, storage and logging costs can remain. Per-pod execution or scale-to-zero does not guarantee zero total cost or complete security isolation.
 
 </details>
 
-## Short Answer Questions
-
-11. What is the name of the older, independently maintained community Helm chart that is often confused with the official `apache/airflow` chart?
+## 11. What are the chart KEDA timing defaults versus the example?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: `airflow-helm/charts`**
-
-**Explanation:**
-It predates the official chart, uses a different values schema, and has no affiliation with the Apache Airflow project — a frequent source of values.yaml snippets that don't apply to `apache/airflow`.
+Defaults are pollingInterval=5s and cooldownPeriod=30s. The example explicitly chooses 10s/300s. Distinguish scale-to-zero cooldown from HPA scaling/stabilization above zero.
 
 </details>
 
-12. What is the minimum `minReplicaCount` value that lets KEDA scale the Celery worker Deployment all the way down when idle?
+## 12. What should worker_concurrency become in the SQL?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: 0**
-
-**Explanation:**
-Setting `workers.celery.keda.minReplicaCount: 0` allows the ScaledObject to scale the worker Deployment to zero replicas after roughly 5 minutes without task activity, eliminating idle worker cost entirely.
+A numeric value rendered by the chart, 4 in this example—not a database column named worker_concurrency. Count the relevant running/queued tasks for the worker's queues/executors, divide and round up.
 
 </details>
 
-13. Which two Kubernetes cluster-level autoscalers handle capacity for `KubernetesExecutor` task pods, since there is no workload-level KEDA scaler for them?
+## 13. Why can a k8s alias cause mixed-executor scaling errors?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: Karpenter and Cluster Autoscaler**
-
-**Explanation:**
-Because `KubernetesExecutor` creates one pod per task rather than maintaining a fixed worker pool, the scaling concern shifts entirely to cluster compute capacity — provisioning enough nodes for those task pods — which is Karpenter's or Cluster Autoscaler's responsibility.
+TaskInstance stores task.executor. If the chart excludes only the literal KubernetesExecutor, tasks stored as k8s can enter the Celery count. Use filters matching actual stored values.
 
 </details>
 
-14. Which two `task_instance` states does the KEDA `ScaledObject` query count when calculating the required Celery worker replica count?
+## 14. What if the query returns 25 with maxReplicaCount=20?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: `running` and `queued`**
-
-**Explanation:**
-The query sums task instances in the `running` or `queued` state and divides by `worker_concurrency` to determine how many worker pods are needed to keep up with current demand.
+The maximum bounds workers, so not all demand is immediately satisfied. Inspect backlog, concurrency, worker resources, database/broker load and node capacity together.
 
 </details>
 
-15. What top-level `values.yaml` field must be set to `CeleryExecutor` before `workers.celery.keda.enabled` has any effect?
+## 15. Is Airflow-pod TLS configuration enough for KEDA database access?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer: `executor`**
-
-**Explanation:**
-The KEDA autoscaling settings under `workers.celery` are only relevant once `executor: CeleryExecutor` is set — `KubernetesExecutor` deployments never render a Celery worker Deployment for KEDA to target.
+KEDA is a separate database client needing DNS, networking, permissions, a compatible URI and CA. A URI's sslrootcert path must be readable by the scaler; the chart does not copy it automatically.
 
 </details>
 
-## Hands-on Questions
-
-16. Write the full command sequence to add the official Apache Airflow Helm repository and install chart version 1.22.0 into a new `airflow` namespace.
+## 16. Is KEDA limited to Deployments?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer:**
-```bash
-# Add the official Apache Airflow Helm repository
-helm repo add apache-airflow https://airflow.apache.org/
-helm repo update
-
-# Install into a dedicated namespace, pinned to a specific chart version
-helm install airflow apache-airflow/airflow \
-  --namespace airflow \
-  --create-namespace \
-  --version 1.22.0
-
-# Verify the installation
-kubectl get pods -n airflow
-helm list -n airflow
-```
-
-**Explanation:**
-`helm repo add` registers the official repository (not to be confused with `airflow-helm/charts`), and `--create-namespace` avoids a separate `kubectl create namespace` step. Pinning `--version 1.22.0` ensures a reproducible deployment rather than whatever happens to be latest at install time.
+No. The chart targets a Deployment or StatefulSet according to Celery persistence. KubernetesExecutor task pods are not the same replica-pool pattern, but that does not prohibit other KEDA uses.
 
 </details>
 
-17. Write a `values.yaml` snippet that selects `KubernetesExecutor` and disables the chart's bundled PostgreSQL (for use with an external RDS instance).
+## 17. Does successful Helm --wait finish validation?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer:**
-```yaml
-executor: KubernetesExecutor
-
-postgresql:
-  enabled: false
-```
-
-**Explanation:**
-`executor: KubernetesExecutor` means no Celery worker Deployment or Redis broker is rendered at all. Setting `postgresql.enabled: false` skips the chart's bundled in-cluster PostgreSQL pod so the deployment can point at an external database via connection settings elsewhere in `values.yaml`.
+Check successful migrations, Ready long-running components, DAG delivery, worker execution, Execution API, results and logs. Test workload-driven scaling, return to idle and recovery for KEDA profiles.
 
 </details>
 
-18. Write a `values.yaml` snippet that selects `CeleryExecutor` and enables KEDA autoscaling for the Celery workers, scaling from zero up to 20 replicas.
+## 18. Does Helm uninstall immediately delete all PostgreSQL data?
 
 <details>
+<summary>Show answer</summary>
 
-<summary>Show Answer</summary>
-
-**Answer:**
-```yaml
-executor: CeleryExecutor
-
-workers:
-  celery:
-    keda:
-      enabled: true
-      minReplicaCount: 0
-      maxReplicaCount: 20
-```
-
-**Explanation:**
-`executor: CeleryExecutor` renders the worker Deployment and Redis broker. `workers.celery.keda.enabled: true` creates a KEDA `ScaledObject` that polls the metadata database roughly every 10 seconds and resizes the worker Deployment between 0 and 20 replicas based on running/queued task counts, scaling to zero after roughly 5 minutes of inactivity.
+Pod removal and PVC/PV data lifecycles differ. Review PVC retention, StorageClass reclaim policy and external-database deletion/backups separately; do not indiscriminately remove shared namespaces, Secrets and databases.
 
 </details>
 
----
+[Guide](../../../data-on-eks/airflow/02-helm-deployment.md)
 
-[Return to Learning Materials](../../../data-on-eks/airflow/02-helm-deployment.md) | [Previous Quiz: Airflow Architecture](./01-architecture-quiz.md)
+[Previous quiz](./01-architecture-quiz.md)

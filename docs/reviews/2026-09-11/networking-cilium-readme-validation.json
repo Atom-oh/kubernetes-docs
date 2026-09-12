@@ -1,0 +1,576 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T07:46:46.852948+00:00",
+  "files": [
+    {
+      "path": "en/networking/cilium/README.md",
+      "sha256": "cbc1b0c410b7c4e0ef2129626451ecdc8e8be1e94eaebbc2f3b186e079e0d00b"
+    },
+    {
+      "path": "ko/networking/cilium/README.md",
+      "sha256": "9c0e23dca228cff65719798ea584f1ac326d6bf69b1daa849a45430c401df9ff"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/latest",
+      "key": "1bf12fa5fb12",
+      "sha256": "1261b0d289f4fad171bcd5c1eb6f11d3aea1db0658beff4c69c76237fb8b1921",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0",
+      "key": "3439af066be5",
+      "sha256": "f2c086bb65b89696800df59e9f252f12f78fc4bb8b55052366ff367a378d9276",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.1",
+      "key": "9a7d974a0eab",
+      "sha256": "1261b0d289f4fad171bcd5c1eb6f11d3aea1db0658beff4c69c76237fb8b1921",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.19.6",
+      "key": "32fb46443794",
+      "sha256": "87a135f189f0f5600ba8fb2d0aaef0e46457819e0e9537487d5a71b08384d099",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.18.12",
+      "key": "4b0ffc67f1ae",
+      "sha256": "5ec4e7d43a9818526292c57141414ad928e95c8c513871662efc6b47160fa91a",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.17.18",
+      "key": "1f8bbdc5b82f",
+      "sha256": "6412c87aa82ad0ee09a3e4a2321966d8ec7e5ed104cb4b0c453ab30e8261b6fe",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.19.7",
+      "key": "777b84fbf229",
+      "sha256": "f7951e889374eb331bf0633a34a10a7b2bd6b43da4800c0f67a48a9f07291b5d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.18.13",
+      "key": "cab5c4ff0f44",
+      "sha256": "934e7df76b3dc7527e04118cc3c56e3ed132cba3e7f79cb7a6cfbf2d1fbc7a47",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/advisories/GHSA-fm8w-2m5w-9j7r",
+      "key": "cb8fbbc2f369",
+      "sha256": "1e0b07fddacc130d08a2a176b8bbe252ee7c55964544bf4c8dd86de5dba056f3",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade.rst",
+      "key": "b2908395146d",
+      "sha256": "0b21f2d581aa95a7558ac17832e2c7ba8682d50265761db1eecb423ad557864d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "key": "f79fc9587de7",
+      "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst",
+      "key": "f6af22ee3d55",
+      "sha256": "3ddff4658197f40b19b9b45570a0aa07fb25aa45f21a90d487c2532acd719ece",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0-rc.0",
+      "key": "7491ba858c9c",
+      "sha256": "bc8be63a6e6217d7239ba8f1a76709d09bc6c6aa53bb0c67b210ab0ceb3ff3c8",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.20.0-rc.1",
+      "key": "7d7ed0fa0506",
+      "sha256": "5aa845e9b166c26ff4e85d2591a8fe1ff4aa7243ca8bdc0f8bd5b2a47f21ea4a",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/releases/tags/v1.21.0-pre.0",
+      "key": "20897da112d2",
+      "sha256": "7866d0dd979a89f201c03e2f5dbe792d8fdd58dcc51b23aeaa24221b48532eca",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_map_list.md",
+      "key": "800901952f1e",
+      "sha256": "2722254537f477b458027fc54645ee1505fa6bb366c1fa145b00b867ecb94fd6",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_metrics_list.md",
+      "key": "bdb9ad224352",
+      "sha256": "d073417c21c17c7dc6aa77b7ad7682835483673f834875a326901bbdd85c3f10",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_endpoint_list.md",
+      "key": "7fd1bba2d393",
+      "sha256": "8f46146fb7a5eb504046c9e4af79b7e37d0c25027ed269baf715ee2fee6817b2",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html",
+      "key": "0b0aeec7654c",
+      "sha256": "f24e249ddf5516d194971815faf71b6644d8cc84fa1428acdbcb9ae97fa9e716",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+      "key": "f8ab97c61343",
+      "sha256": "11af91669e9aa0579305000f96034ab7fbd45b65131b0ea791ff578a8675da0c",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/flannel-io/flannel/master/README.md",
+      "key": "384b535367d6",
+      "sha256": "62e8d595627e470104d92a736d2d191c405b9362e36bde981ff88970d030c602",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/flannel-io/flannel/master/README.md",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/backends.md",
+      "key": "728da895160d",
+      "sha256": "22b0feba271d2a69afe93179fa173cf9d562b04f770088ed08684a8fafc4ca3e",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/backends.md",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://www.eksworkshop.com/beginner/115_cilium/",
+      "key": "8e4db7f40ee2",
+      "sha256": "50d778f81ac64b7180d420a17b3836369e88a9ce38380cc9248cdc642c2f89ee",
+      "status": 200,
+      "finalURL": "https://eksworkshop.com/",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://api.github.com/repos/cilium/cilium/security-advisories/GHSA-fm8w-2m5w-9j7r",
+      "key": "2eab867c62fe",
+      "sha256": "c4b1a92ab2143d26b0c752a1077a3bc18c4b09775d393740fecc01a61b7bc1bb",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/apimachinery/v0.36.0/pkg/api/resource/quantity.go",
+      "key": "6287a8c918fc",
+      "sha256": "9fa46ba76f6dfb0aff6fd63cd7d288531b20ab902d96450980d62c7ee8078110",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "key": "68e8148446c9",
+      "sha256": "4119df582c01582bc082c529b6faf29167d07f129c1cec2583117fc37e2e4b13",
+      "raw": "/tmp/istio-foundation-sources/68e8148446c9.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "key": "47d0fa2d6ec0",
+      "sha256": "608ef0b3a0fd0e39ca15044baf83a68f62ec635c50630c747005d920d8f0167d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/installation/requirements-eks.rst",
+      "key": "28bc1af39e3f",
+      "sha256": "cf51967226ac59045768f2fbdef4093561d9dbd8b04636f01b687195d01464fa",
+      "raw": "/tmp/istio-foundation-sources/28bc1af39e3f.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/eni.rst",
+      "key": "33e43f7a4651",
+      "sha256": "f12cb835749bbf7468c79a4a1d06b7c9aa57224c8f3540769eb09f165c7529e9",
+      "raw": "/tmp/istio-foundation-sources/33e43f7a4651.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "key": "6416838432bd",
+      "sha256": "abbaee5b778369f2b9b2315ff3fc2b392fc167970c3a45c4c0c236939ef34cc8",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "key": "6e8f49a19d70",
+      "sha256": "c88ab82c58090610d4e25c9fab1619884b1570ded4545c95eef3b68d38075f0f",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    }
+  ],
+  "findings": [
+    "Original560linesinbothlanguagesfullyread. CurrentexamplespinnedCilium/chart1.20.1,CLI0.20.0,Hubble1.19.4;Kubernetestested1.33–36andLinux5.10/distributionbackportrequirementsreplaceobsolete1.16/4.9andunboundedcompatibility.",
+    "Historicalreleaseversions/datesretainedandverifiedviaGitHubAPIs(UTC). Gatewayaccesslogsapply1.19.6/1.18.12,notevery1.17release;restart/affinityfixesspecific1.19.6. VRRP/IGMPbackport1.18.13;DeltaADSclaimbelongs1.20announcement. 1100contributorsiscommunitysize,notreleaseauthors;77→16MBreportedbinarysizesretainedasunrepeatedupstreamclaim. KOinplacemigrationno longerpromiseszero downtime.",
+    "Advisorymetadatarequiresdistinction:projectGHSAAPIpublishedJuly6,globalGitHubrecordSept3. Earlyworkerprogressclaimusingglobaldatecorrectedintheconversation,docsandreport. Vulnerable1.19.0–4/fixed1.19.5rangescrosscheckedagainstbothprimaryrecords.",
+    "ActualCNIcomparisonseparatesdataplane/routing/IPAM;CalicoOSSfeatures,FlannelWireGuard/optionalSIGsnetpolcontroller,VPCnativeNPcorrected. Removedunsupportedperformancehierarchy/mandatoryTG/AppMesh/dedicatedCiliumAPIServer assumptions. HubbleflowRelayisnotmetrics pipeline;XDPnotuniversalpacketpath.",
+    "UnverifiedciliumEKSaddon/buildandunsafeaws-nodedeletionrecipe removed. ENIreplacement/chaining/noncloudpoolseparated;actualchartvaluesandIAMroleplaceholder/taint/nodecapacity/API-DNS/CNIownershippreconditions explicit. AutoMode/Fargate/Windows boundaries;HybridAWSbuildmatrixnotarbitraryupstream. ENIIPv6beta-vsEKSIPv4docsconflictdocumented.",
+    "Removedtunnel/strictoptionsandpartialrawConfigMapreplacement;nativechartrejectsbothlegacyoptions. KPRbool/APIbootstrap,IPsecSecret/rotation andXDP/DSRconstraints clarified. Commandsarepreparedclusterexamples,notproductiontestedcloudcreation.",
+    "L4/L7/DNSexamples nowindifferenttestnamespaces;explicitpeerNSpreventsaccidentalL4bypass. DNSresolverpermissionadded,wideamazonawswildcardremoved;DNSderivedIPauthorizationdistinguishedfromTLS/HTTPauthorizationandsharedIPlimitations. L7denialcanbeHTTP403,notDROPPEDverdict.",
+    "HubblemetricsviaHelmhttpV2,notnonexistentCLI--metrics;CLIinstall/Relayportforwardandflowvsmetrics explained. Managementciliumvsagentcilium-dbg commands corrected;performance runnerisconnectivityperf,notfilteredtestname. NativeHubble5syntheticfiltercasespassed.",
+    "Twoarchitectureimagesactuallyviewed;removedredundantincorrectrefsandinteractiveURLs,retainedassets. EKSworkshopoldpathreturns200butredirectshome;replacedwithactualcurrentprimaryEKSsource,notassumedworkingchapter."
+  ],
+  "checks": {
+    "schemaObjects": 93,
+    "bashBlocks": 14,
+    "charts": {
+      "eni": {
+        "objects": 25,
+        "schemaValidated": 25,
+        "unvalidatedKinds": [],
+        "selectedConfig": {
+          "routing-mode": "native",
+          "ipam": "eni",
+          "cni-chaining-mode": null,
+          "kube-proxy-replacement": "false",
+          "hubble-metrics": null
+        }
+      },
+      "chaining": {
+        "objects": 25,
+        "schemaValidated": 25,
+        "unvalidatedKinds": [],
+        "selectedConfig": {
+          "routing-mode": "native",
+          "ipam": "cluster-pool",
+          "cni-chaining-mode": "aws-cni",
+          "kube-proxy-replacement": "false",
+          "hubble-metrics": null
+        }
+      },
+      "base": {
+        "objects": 37,
+        "schemaValidated": 37,
+        "unvalidatedKinds": [],
+        "selectedConfig": {
+          "routing-mode": "tunnel",
+          "ipam": "cluster-pool",
+          "cni-chaining-mode": null,
+          "kube-proxy-replacement": "false",
+          "hubble-metrics": "dns drop tcp flow icmp httpV2"
+        }
+      },
+      "old-tunnel": {
+        "rejected": true,
+        "error": "Error: execution error at (cilium/templates/validate.yaml:41:5): tunnel was deprecated in v1.14 and has been removed in v1.15. For details please refer to https://docs.cilium.io/en/v1.15/operations/upgrade/#helm-options\n\nUse --debug flag to render out invalid YAML"
+      },
+      "old-strict": {
+        "rejected": true,
+        "error": "Error: execution error at (cilium/templates/cilium-configmap.yaml:79:5): kubeProxyReplacement must be explicitly set to a valid value (true or false) to continue.\n\nUse --debug flag to render out invalid YAML"
+      }
+    },
+    "CLIHelp": [
+      {
+        "command": "cilium version --client",
+        "passed": true
+      },
+      {
+        "command": "cilium hubble enable --help",
+        "passed": true
+      },
+      {
+        "command": "cilium hubble port-forward --help",
+        "passed": true
+      },
+      {
+        "command": "cilium hubble ui --help",
+        "passed": true
+      },
+      {
+        "command": "cilium connectivity test --help",
+        "passed": true
+      },
+      {
+        "command": "cilium connectivity perf --help",
+        "passed": true
+      },
+      {
+        "command": "cilium status --help",
+        "passed": true
+      },
+      {
+        "command": "hubble observe --help",
+        "allPublishedFlagsPresent": true
+      }
+    ],
+    "policyChecks": [
+      {
+        "language": "en",
+        "separateL4L7DNSNamespaces": true,
+        "L7PeerNamespaceExplicit": true,
+        "resolverPermissionPresent": true,
+        "broadAWSWildcardRemoved": true
+      },
+      {
+        "language": "ko",
+        "separateL4L7DNSNamespaces": true,
+        "L7PeerNamespaceExplicit": true,
+        "resolverPermissionPresent": true,
+        "broadAWSWildcardRemoved": true
+      }
+    ],
+    "historicalEvidence": [
+      {
+        "version": "v1.20.0-rc.0",
+        "publishedAt": "2026-07-14T02:52:53Z",
+        "primaryKey": "7491ba858c9c"
+      },
+      {
+        "version": "v1.20.0-rc.1",
+        "publishedAt": "2026-07-21T23:28:11Z",
+        "primaryKey": "7d7ed0fa0506"
+      },
+      {
+        "version": "v1.20.0",
+        "publishedAt": "2026-07-29T15:00:29Z",
+        "primaryKey": "3439af066be5"
+      },
+      {
+        "version": "v1.21.0-pre.0",
+        "publishedAt": "2026-08-03T19:58:45Z",
+        "primaryKey": "20897da112d2"
+      },
+      {
+        "version": "v1.20.1",
+        "publishedAt": "2026-08-18T10:36:16Z",
+        "primaryKey": "9a7d974a0eab"
+      },
+      {
+        "version": "v1.19.7",
+        "publishedAt": "2026-08-18T10:35:54Z",
+        "primaryKey": "777b84fbf229"
+      },
+      {
+        "version": "v1.18.13",
+        "publishedAt": "2026-08-18T10:35:40Z",
+        "primaryKey": "cab5c4ff0f44"
+      }
+    ],
+    "schemaNormalization": [
+      {
+        "chart": "eni",
+        "kind": "Namespace",
+        "name": "cilium-secrets",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "eni",
+        "kind": "Secret",
+        "name": "hubble-server-certs",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "eni",
+        "kind": "DaemonSet",
+        "name": "cilium-envoy",
+        "field": "spec.template.metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "chaining",
+        "kind": "Namespace",
+        "name": "cilium-secrets",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "chaining",
+        "kind": "Secret",
+        "name": "hubble-server-certs",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "chaining",
+        "kind": "DaemonSet",
+        "name": "cilium-envoy",
+        "field": "spec.template.metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Namespace",
+        "name": "cilium-secrets",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Secret",
+        "name": "hubble-relay-client-certs",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Secret",
+        "name": "hubble-server-certs",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Service",
+        "name": "hubble-relay",
+        "field": "metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "DaemonSet",
+        "name": "cilium-envoy",
+        "field": "spec.template.metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Deployment",
+        "name": "hubble-relay",
+        "field": "spec.template.metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Deployment",
+        "name": "hubble-relay",
+        "field": "spec.template.spec.priorityClassName",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Deployment",
+        "name": "hubble-ui",
+        "field": "spec.template.metadata.annotations",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Deployment",
+        "name": "hubble-ui",
+        "field": "spec.template.spec.priorityClassName",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      },
+      {
+        "chart": "base",
+        "kind": "Deployment",
+        "name": "hubble-ui",
+        "field": "spec.template.spec.containers.1.volumeMounts",
+        "nullTreatedAsAbsentForSchemaOnly": true
+      }
+    ],
+    "schemaNotes": [
+      "Kubernetes0.36 Quantity JSON decoder accepts numeric quantities; strict OpenAPI check adjusted for the chart cpu:1 value. Known optional null fields of built-in Kubernetes resources normalized as omitted for schema checking, matching typed JSON decoding; required/unknown fields and raw chart preserved."
+    ],
+    "HubbleFilters": [
+      {
+        "arguments": [
+          "--namespace",
+          "cilium-l7-demo"
+        ],
+        "matched": 3,
+        "syntheticInput": true
+      },
+      {
+        "arguments": [
+          "--protocol",
+          "http"
+        ],
+        "matched": 2,
+        "syntheticInput": true
+      },
+      {
+        "arguments": [
+          "--http-status",
+          "403"
+        ],
+        "matched": 1,
+        "syntheticInput": true
+      },
+      {
+        "arguments": [
+          "--verdict",
+          "DROPPED"
+        ],
+        "matched": 1,
+        "syntheticInput": true
+      },
+      {
+        "arguments": [
+          "--from-label",
+          "k8s:app=frontend",
+          "--to-label",
+          "k8s:app=backend"
+        ],
+        "matched": 2,
+        "syntheticInput": true
+      }
+    ],
+    "advisoryMetadata": {
+      "projectPublishedAt": "2026-07-06T13:15:48Z",
+      "globalRecordPublishedAt": "2026-09-03T17:17:47Z",
+      "explicitDisagreementRecorded": true
+    },
+    "figures": {
+      "actuallyViewed": 2,
+      "removedRedundantIncorrectReferences": 2,
+      "reason": "Wrong mandatory Cilium API Server and metrics-through-Hubble-Relay model; replaced with accurate component/flow text. Assets untouched."
+    },
+    "limitations": [
+      "No AWS/Kubernetes deployment, CNI migration, actual dataplane policy enforcement or performance run.",
+      "Helm rendered offline; IAM role/interface, CIDRs, taints, bootstrap/API/DNS, topology and support boundaries remain environment-specific.",
+      "Cilium ENI IPv6 beta reference conflicts with EKS prerequisites IPv4-only text; IPv4 example retained.",
+      "Hubble fixtures are synthetic observations, not proof of kernel/proxy enforcement.",
+      "Project/global advisory publication metadata differ; project disclosure date used without inventing a new fix date."
+    ]
+  },
+  "validation": [
+    "93schemaobjectchecks:6publishedpolicies+87objectsfrom3actualHelmrenders(25ENI,25chaining,37clusterpool). Builtinoptionalnull/Quantitydecodingnormalizationdocumented;rawchartoutputsretained.",
+    "14bashblocksandbothlocale codeparitychecked. ActualchartrejectslegacytunnelandkubeProxyReplacement=strict;3newprofilesrendercorrectselectedconfiguration.",
+    "NativeCLI8help/versionchecksand5HubbleprotobufJSONfiltercasespass. No live cluster or performance commands executed.",
+    "2currentMarkdown→Vuecompilationspass;networking-cilium2filemechanicalscan12YAML/14shellblocks0errors;scopedgitdiffcheckclean.",
+    "Clean-envdocs:test118/118,0fail;earlierretryregressionsremainpassing."
+  ],
+  "tools": [
+    {
+      "project": "cilium-cli",
+      "version": "v0.20.0",
+      "binary": "/tmp/mesh-cilium-tools/cilium-v0.20.0",
+      "archiveSHA256": "9a9281dc79bd10a61fa35078b8ab63eaf491ab2f47edc6b9a3541b2fe4ede3ff",
+      "source": "https://github.com/cilium/cilium-cli/releases/download/v0.20.0/cilium-linux-arm64.tar.gz",
+      "verification": "GitHub release asset digest and official sha256sum manifest"
+    },
+    {
+      "project": "hubble",
+      "version": "v1.19.4",
+      "binary": "/tmp/mesh-cilium-tools/hubble-v1.19.4",
+      "archiveSHA256": "ba7f521458147de327cdb0f4bf73abea5bb6c29c1fb8a1e0e16d9bfb50951b31",
+      "source": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-arm64.tar.gz",
+      "verification": "GitHub release asset digest and official sha256sum manifest"
+    },
+    {
+      "project": "cilium Helm chart",
+      "version": "1.20.1",
+      "archive": "/tmp/mesh-cilium-tools/cilium-1.20.1.tgz",
+      "archiveSHA256": "06210eef7c23d15f7699c79e2fe3a1ec9c389024c5c5c006ea04022d322449a2",
+      "source": "https://helm.cilium.io/cilium-1.20.1.tgz",
+      "verification": "official Helm index digest"
+    }
+  ],
+  "artifacts": "/home/atomoh/kubernetes-docs/.vitepress/cache/networking-cilium-readme-audit",
+  "originals": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3 document_snapshots",
+  "limitations": [
+    "No AWS/Kubernetes deployment, CNI migration, actual dataplane policy enforcement or performance run.",
+    "Helm rendered offline; IAM role/interface, CIDRs, taints, bootstrap/API/DNS, topology and support boundaries remain environment-specific.",
+    "Cilium ENI IPv6 beta reference conflicts with EKS prerequisites IPv4-only text; IPv4 example retained.",
+    "Hubble fixtures are synthetic observations, not proof of kernel/proxy enforcement.",
+    "Project/global advisory publication metadata differ; project disclosure date used without inventing a new fix date."
+  ]
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "OpenFeature Operator Structure",
+    "title": "OpenFeature Operator · file source",
     "locale": "en",
     "output": "en-gitops-05-feature-flags-6.html",
     "quality_profile": "showcase",
@@ -19,7 +19,7 @@
           "configmap",
           "pod"
         ],
-        "note": "The Controller Manager watches FeatureFlag/FeatureFlagSource CR changes; the Reconciler generates or updates the ConfigMap flagd reads."
+        "note": "File-source path: the Operator supplies CR definitions through ConfigMap volumes."
       },
       {
         "id": "sidecar-injection",
@@ -29,19 +29,26 @@
           "webhook",
           "pod"
         ],
-        "note": "When a pod carrying the openfeature.dev/enabled annotation is created, the Mutating Webhook injects the flagd container."
+        "note": "Configure enabled and featureflagsource Pod annotations and inspect actual injection."
       }
-    ]
+    ],
+    "viewBox": [
+      1240,
+      500
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {
       "id": "featureflag",
       "type": "external",
       "label": "FeatureFlag",
-      "sublabel": "Flag definition CR",
+      "sublabel": "flag definitions",
       "pos": [
-        40,
-        150
+        30,
+        110
       ],
       "size": [
         200,
@@ -52,10 +59,10 @@
       "id": "ffsource",
       "type": "external",
       "label": "FeatureFlagSource",
-      "sublabel": "flagd source config CR",
+      "sublabel": "file source configuration",
       "pos": [
-        40,
-        330
+        30,
+        300
       ],
       "size": [
         200,
@@ -66,10 +73,10 @@
       "id": "controller",
       "type": "backend",
       "label": "Controller Manager",
-      "sublabel": "watches CR changes",
+      "sublabel": "watch CR changes",
       "pos": [
-        390,
-        90
+        340,
+        40
       ],
       "size": [
         210,
@@ -80,10 +87,10 @@
       "id": "reconciler",
       "type": "backend",
       "label": "Reconciler",
-      "sublabel": "generates / updates ConfigMap",
+      "sublabel": "manage ConfigMap",
       "pos": [
-        390,
-        250
+        340,
+        190
       ],
       "size": [
         210,
@@ -94,10 +101,10 @@
       "id": "webhook",
       "type": "security",
       "label": "Mutating Webhook",
-      "sublabel": "sidecar injection",
+      "sublabel": "Pod admission",
       "pos": [
-        390,
-        490
+        340,
+        340
       ],
       "size": [
         210,
@@ -108,10 +115,10 @@
       "id": "configmap",
       "type": "database",
       "label": "ConfigMap",
-      "sublabel": "flag definitions read by flagd",
+      "sublabel": "file source",
       "pos": [
-        750,
-        250
+        700,
+        100
       ],
       "size": [
         210,
@@ -122,10 +129,10 @@
       "id": "pod",
       "type": "backend",
       "label": "Pod + flagd sidecar",
-      "sublabel": "live reload via file watch",
+      "sublabel": "async file read",
       "pos": [
-        750,
-        410
+        980,
+        230
       ],
       "size": [
         210,
@@ -136,10 +143,10 @@
       "id": "deployment",
       "type": "backend",
       "label": "Deployment",
-      "sublabel": "openfeature.dev/enabled: \"true\"",
+      "sublabel": "Pod template settings",
       "pos": [
-        750,
-        570
+        700,
+        360
       ],
       "size": [
         210,
@@ -182,7 +189,10 @@
       "to": "controller",
       "label": "watch",
       "variant": "emphasis",
-      "labelDx": -50
+      "labelAt": [
+        260,
+        155
+      ]
     },
     {
       "id": "ffs-to-controller",
@@ -196,7 +206,10 @@
       "to": "reconciler",
       "label": "reconcile",
       "variant": "emphasis",
-      "labelDy": 24
+      "labelAt": [
+        445,
+        147
+      ]
     },
     {
       "id": "reconciler-to-configmap",
@@ -210,8 +223,7 @@
       "from": "configmap",
       "to": "pod",
       "label": "volume mount",
-      "variant": "dashed",
-      "labelDy": 24
+      "variant": "dashed"
     },
     {
       "id": "deployment-to-webhook",
@@ -225,7 +237,9 @@
       "from": "webhook",
       "to": "pod",
       "label": "inject flagd container",
-      "variant": "security"
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
     }
   ],
   "cards": [
@@ -233,17 +247,18 @@
       "dot": "cyan",
       "title": "CRDs introduced by the operator",
       "items": [
-        "FeatureFlag: declares flag keys, variants and targeting rules inline",
-        "FeatureFlagSource: points flagd at its flag sources (kubernetes / http / grpc) and ports"
+        "FeatureFlag: definitions and targeting",
+        "FeatureFlagSource: source and daemon configuration",
+        "Flagd / InProcessConfiguration support other placements"
       ]
     },
     {
       "dot": "rose",
       "title": "Pod auto-injection",
       "items": [
-        "Enabled per namespace label or per pod annotation openfeature.dev/enabled: \"true\"",
-        "A second pod annotation names the FeatureFlagSource to use",
-        "When a CR changes the ConfigMap is regenerated and flagd picks it up without a pod restart"
+        "A namespace label alone does not enable injection",
+        "Both Pod annotations and referenced resources are needed",
+        "Volume changes are asynchronous; check rollout for image changes"
       ]
     }
   ]

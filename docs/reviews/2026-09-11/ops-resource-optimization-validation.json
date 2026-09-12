@@ -1,0 +1,141 @@
+{
+  "status": "passed_with_stated_limits",
+  "reviewDate": "2026-09-11",
+  "fences": 62,
+  "quizQuestions": 20,
+  "nativeAndCustomObjects": 11,
+  "standalonePromqlQueries": 8,
+  "runtimeChecks": [
+    {
+      "runtime": "Corretto21.0.12.1/SpringBoot4.1.1/JMX1.6.0",
+      "status": "pass",
+      "checks": [
+        "probes",
+        "five timed requests",
+        "actual Micrometer histogram names",
+        "six JMX metrics",
+        "JAVA_TOOL_OPTIONS applied",
+        "NMT summary",
+        "JFR capture/readback"
+      ]
+    },
+    {
+      "runtime": "Python3.12.13/Flask3.1.3/Gunicorn26.2.0",
+      "status": "pass",
+      "checks": [
+        "WEB_CONCURRENCY respected",
+        "three invalid worker cases",
+        "two live probes",
+        "graceful shutdown",
+        "explicit tracemalloc delta"
+      ]
+    },
+    {
+      "runtime": "Node24.21.0",
+      "status": "pass",
+      "checks": [
+        "two live probes",
+        "graceful SIGTERM",
+        "invalid port rejection"
+      ]
+    },
+    {
+      "runtime": "Rust1.98.0/Tokio1.53.1",
+      "status": "pass",
+      "checks": [
+        "environment selects two workers",
+        "zero/invalid rejected",
+        "timer executed"
+      ]
+    }
+  ],
+  "go": {
+    "version": "1.27.1",
+    "cases": [
+      {
+        "env": {},
+        "result": {
+          "go_managed_bytes": 4454664,
+          "go_soft_memory_limit": 9223372036854775807,
+          "gomaxprocs": 16,
+          "goroutines": 1,
+          "runtime_version": "go1.27.1"
+        }
+      },
+      {
+        "env": {
+          "GOMAXPROCS": "2",
+          "GOMEMLIMIT": "450MiB"
+        },
+        "result": {
+          "go_managed_bytes": 3913992,
+          "go_soft_memory_limit": 471859200,
+          "gomaxprocs": 2,
+          "goroutines": 1,
+          "runtime_version": "go1.27.1"
+        }
+      }
+    ],
+    "limitation": "No cgroup quota mutation; explicit overrides/runtime memory reporting tested; container-default semantics checked from primary source."
+  },
+  "promql": {
+    "recordingRules": 12,
+    "alerts": 3,
+    "calculationCases": 9,
+    "status": "passed",
+    "coverage": [
+      "duplicate scrape labels",
+      "cross-cluster isolation",
+      "zero request exclusion",
+      "historical OOM without restart",
+      "recent restart with latest OOM",
+      "Pending zero-valued gauges",
+      "per-node pod count"
+    ]
+  },
+  "micrometerArtifacts": [
+    "micrometer-observation-1.17.1.jar",
+    "micrometer-commons-1.17.1.jar",
+    "micrometer-jakarta9-1.17.1.jar",
+    "micrometer-registry-prometheus-1.17.1.jar",
+    "micrometer-core-1.17.1.jar"
+  ],
+  "findings": [
+    "Reworkedresource/QoS/cgroupv1v2semantics:requestsnotexclusiveallocation;evictionnotabsoluteQoSorder;memoryOOMreactiveandcontainerreasonnotPodphase;removedmemorythresholdlivenessrestart.",
+    "Replaceduniversalp70/p99/heap75/workerformulas/languageperformanceclaimswithmeasuredsizingandfailurecapacitymath;20%capacityreserve1000/(200*.8)=7.",
+    "VPAupperBoundnotlimit;Auto deprecatedRecreate,InitialcanalterHPAdenominator;currentVPA/GoldilocksreferencesfromOps06.",
+    "JVMusesJAVA_TOOL_OPTIONS/directjavaentrypoint;completeBoot4.1.1project/deploymentandcurrentActuatorproperties/probes;heapoutsideRSS/NMT/JFR/SIGKILLlimitations.",
+    "NativeJMXtestprovedGCObjectNameordernamefirst/typeGarbageCollectorsecondandscalarattributeformat;6JMXmetricsverifiedandCollectionTimemsconvertedseconds. Originalheapregexwasvalid.",
+    "Micrometernamesverifiedactualruntime:loadedclassesgaugevsjvm_classes_loaded_count_classes_totalcounter;process_cpu_time_ns_total;explicitGCpausehistograms;pausewalltimedoesnotmeasureGCprocessCPUratio.",
+    "Node24 NODE_OPTIONS --expose-gc is VALID (avoidedfalsefinding);forcedGCnotuniversalleakfix;oldspace!=RSS,multipleworkerbudgetsandUVthreadpoolscopeexplained;boundedserverhealth/SIGTERMtested.",
+    "Flask3before_first_requestremoved;completeFlask/Gunicorn26WSGIappactualWEB_CONCURRENCY/configandgracefulstop;explicitlocaltracemallocnotpublicdebugendpoint;Gunicorn26nativeASGIsupportpreserved;controlsockdisabled.",
+    "Go1.25+container-awaredefaultsrequirelanguageversion/GODEBUGcontext;Go1.27.1tested;manualoverrideupdatesandGOMAXPROCS0querycorrect;GOMEMLIMITsoftmanagedmemorynotRSScap;missingimports/cgroupDIYremoved.",
+    "JDK21ZGenerationalvalid,JDK24obsolete,JDK25stillobsoletewarningexpiryundefined:didnotfalselyclaim25startuprejection. Java17doesnotsupportsameflag.",
+    "RustnoGCnotdeterministicmemory/latency;Tokio1.53.1testedexplicitENVworkers;builderoverrideandblockingpooldistinction;removeduniversalallocatorperformanceclaims.",
+    "PromQL9calculationcasescheckduplicates/crosscluster/zerodenom/oldOOM/recentrestart/Pendingvalues/nodepodcounts. Latestreasonnotcounterorcompleteeventhistory;ownershipregexandrawheatmapclaimsremoved.",
+    "CompleteK8sobjectswithimages/selectors;AutoModeNodePoolkarpenter.sh/v1+NodeClasseksgroup/default;actualallocatable/overheadbinpacking;placeholdernotEC2reservation,PriorityNevernotvictimprotection. Pause3.10.2confirmedK8s1.36.2source."
+  ],
+  "fixtureSha256": {
+    ".vitepress/cache/content-review-optimization/jmx-config.yaml": "93a8aee943b908618966bf9c64c0da90afe11b58a7e9f112e2df5fb49dcd3728",
+    ".vitepress/cache/content-review-optimization/java/pom.xml": "5d94675de7ffed6ca36bbfe6fad6d1a7d9805e1b7a3649addc5d10551b9d2692",
+    ".vitepress/cache/content-review-optimization/java/src/main/java/example/ResourceApi.java": "2a6d334667340558c9acc3888b220a58ef736b37431c0c0f84cfd6477e11503b",
+    ".vitepress/cache/content-review-optimization/java/src/main/resources/application.yaml": "e9933521920098bd976b05cf32521fb01587919d9807119deb52460e4eff3923",
+    ".vitepress/cache/content-review-optimization/python/app.py": "46f7ca51a185abd427f69001ef8513b5dadad1eea8895ed5ccdc19ffabd078b7",
+    ".vitepress/cache/content-review-optimization/python/gunicorn.conf.py": "0b09afb129d0a8815ff24bd54440fac3cceac3b93566bf79af1079126764ab7b",
+    ".vitepress/cache/content-review-optimization/python/profile_allocations.py": "e7414eda9d50973048eae1881b838ad400a39c8ba4d1d025f2a2dd40e9d2ff98",
+    ".vitepress/cache/content-review-optimization/node/server.cjs": "c9fc89ace4e9d295604225528c788b0fb24578d9a7bb2a02848450f19d40b446",
+    ".vitepress/cache/content-review-optimization/go/main.go": "41981c71f54722ce8faa8085a99dffa89e6027b49cbe17b2da29a963826d6e43",
+    ".vitepress/cache/content-review-optimization/go/go.mod": "18dff56d425717e630cb551c3e662b098dd0223aa3766a745f07e36442c34cb4",
+    ".vitepress/cache/content-review-optimization/rust/Cargo.toml": "2bdcdbcbeedad1026c95edf45bfac17d93479f87f3c52d79ebc7cfee1daaece6",
+    ".vitepress/cache/content-review-optimization/rust/Cargo.lock": "83cc4a36e3dfa3287f01d6033546c727fb1f12ed857052038385319f088855bb",
+    ".vitepress/cache/content-review-optimization/rust/src/main.rs": "b5f85c12d743a92e49567844b52f668d6a038810cdd942a979840e83c99a271c",
+    ".vitepress/cache/content-review-optimization/resource-rules.yaml": "69230c454377af1cd566cf7d5523f3fbd05a0441e74d2f865fa9bd5647d04261"
+  },
+  "limitations": [
+    "No actual EKS deployment, cloud calls, image builds/pushes or cgroup changes.",
+    "No forced OOM, performance benchmark, capacity guarantee or production leak proof.",
+    "Kubernetes/CRD OpenAPI checks do not execute CEL/admission or prove Auto Mode/IAM/resource availability.",
+    "All runtime servers were loopback-only and stopped in finally; empty telemetry environment; no outbound collector.",
+    "No source image references in this chapter."
+  ]
+}

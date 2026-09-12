@@ -2,216 +2,137 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "KEDA + Karpenter Coordination — Pod-Level and Node-Level Scaling",
     "quality_profile": "showcase",
     "column_fit": "spread",
-    "viewBox": [
-      1080,
-      680
-    ],
     "animation": "trace",
-    "views": [
-      {
-        "id": "pre-event",
-        "label": "30 min before event (Cron)",
-        "focus": [
-          "keda",
-          "hpa",
-          "scheduler"
-        ],
-        "note": "The cron trigger pushes desiredReplicas to 200; 195 new Pods cannot fit on existing Nodes and go Pending."
-      },
-      {
-        "id": "node-provision",
-        "label": "Node provisioning",
-        "focus": [
-          "scheduler",
-          "karpenter",
-          "ec2"
-        ],
-        "note": "Karpenter detects the Pending Pods and requests 20 EC2 Nodes; once they are Ready after 60-90s the Pending Pods get scheduled."
-      },
-      {
-        "id": "event-start",
-        "label": "Event starts (metric)",
-        "focus": [
-          "keda",
-          "hpa",
-          "scheduler",
-          "karpenter",
-          "ec2"
-        ],
-        "note": "The metric trigger raises the target to 250, and only 5 more Nodes are needed for the 50 additional Pending Pods."
-      }
+    "viewBox": [
+      1040,
+      640
     ],
-    "locale": "en"
+    "title": "From metrics to ready Pods"
   },
   "participants": [
     {
       "id": "keda",
       "type": "messagebus",
       "label": "KEDA",
-      "sublabel": "event trigger"
+      "sublabel": "Metrics adapter"
     },
     {
       "id": "hpa",
       "type": "backend",
       "label": "HPA",
-      "sublabel": "autoscaler"
+      "sublabel": "Recommendation"
     },
     {
-      "id": "scheduler",
+      "id": "k8s",
       "type": "backend",
-      "label": "K8s Scheduler",
-      "sublabel": "Pod placement"
+      "label": "Kubernetes",
+      "sublabel": "Controllers / scheduler"
     },
     {
       "id": "karpenter",
       "type": "cloud",
-      "label": "Karpenter",
-      "sublabel": "Node provisioner"
+      "label": "Karpenter"
     },
     {
-      "id": "ec2",
+      "id": "nodes",
       "type": "external",
-      "label": "AWS EC2",
-      "sublabel": "instances"
+      "label": "EC2 / nodes",
+      "sublabel": "Bootstrap / kubelet"
     }
   ],
   "segments": [
     {
-      "from": 165,
-      "to": 410,
-      "label": "30 min before event (Cron trigger)"
+      "from": 155,
+      "to": 295,
+      "label": "Demand and scheduling needs"
     },
     {
-      "from": 434,
-      "to": 592,
-      "label": "Event starts (Metric trigger)"
+      "from": 310,
+      "to": 520,
+      "label": "Prepare nodes and apps; measure lead time"
     }
   ],
   "messages": [
     {
-      "id": "cron-replicas",
+      "id": "metrics",
       "from": "keda",
       "to": "hpa",
-      "y": 195,
-      "label": "desiredReplicas: 200",
-      "variant": "emphasis"
+      "y": 185,
+      "label": "Expose metrics"
     },
     {
-      "id": "create-pods",
+      "id": "replicas",
       "from": "hpa",
-      "to": "scheduler",
-      "y": 232,
-      "label": "Request 195 new Pods",
-      "note": "Cannot fit on existing Nodes → Pending"
-    },
-    {
-      "id": "detect-pending",
-      "from": "scheduler",
-      "to": "karpenter",
-      "y": 280,
-      "label": "Detect Pending Pods"
-    },
-    {
-      "id": "provision-nodes",
-      "from": "karpenter",
-      "to": "ec2",
-      "y": 316,
-      "label": "Request 20 Nodes",
+      "to": "k8s",
+      "y": 230,
+      "label": "Update the scale target",
       "variant": "emphasis"
     },
     {
-      "id": "nodes-ready",
-      "from": "ec2",
-      "to": "karpenter",
-      "y": 352,
-      "label": "Nodes Ready (~60-90s)",
+      "id": "watch",
+      "from": "karpenter",
+      "to": "k8s",
+      "y": 275,
+      "label": "Observe unschedulable Pods"
+    },
+    {
+      "id": "launch",
+      "from": "karpenter",
+      "to": "nodes",
+      "y": 340,
+      "label": "Launch instances",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-ready",
+      "from": "nodes",
+      "to": "k8s",
+      "y": 390,
+      "label": "Register / Node Ready",
       "variant": "return"
     },
     {
-      "id": "register-nodes",
-      "from": "karpenter",
-      "to": "scheduler",
-      "y": 388,
-      "label": "Register new Nodes",
-      "variant": "return",
-      "note": "Schedule Pending Pods"
+      "id": "schedule",
+      "from": "k8s",
+      "to": "nodes",
+      "y": 440,
+      "label": "Bind / start Pods"
     },
     {
-      "id": "metric-replicas",
-      "from": "keda",
-      "to": "hpa",
-      "y": 464,
-      "label": "desiredReplicas: 250 (metric-based)",
-      "variant": "emphasis"
-    },
-    {
-      "id": "more-pods",
-      "from": "hpa",
-      "to": "scheduler",
-      "y": 500,
-      "label": "Request 50 additional Pods"
-    },
-    {
-      "id": "more-pending",
-      "from": "scheduler",
-      "to": "karpenter",
-      "y": 536,
-      "label": "Detect additional Pending"
-    },
-    {
-      "id": "more-nodes",
-      "from": "karpenter",
-      "to": "ec2",
-      "y": 572,
-      "label": "Provision 5 more Nodes",
-      "variant": "emphasis"
+      "id": "pod-ready",
+      "from": "nodes",
+      "to": "k8s",
+      "y": 490,
+      "label": "Report Pod readiness",
+      "variant": "return"
     }
   ],
   "activations": [
     {
       "participant": "hpa",
-      "from": 190,
-      "to": 237,
+      "from": 180,
+      "to": 235,
       "type": "backend"
     },
     {
-      "participant": "scheduler",
-      "from": 227,
-      "to": 395,
+      "participant": "k8s",
+      "from": 225,
+      "to": 505,
       "type": "backend"
     },
     {
       "participant": "karpenter",
-      "from": 275,
-      "to": 393,
+      "from": 270,
+      "to": 345,
       "type": "cloud"
     },
     {
-      "participant": "ec2",
-      "from": 311,
-      "to": 357,
+      "participant": "nodes",
+      "from": 335,
+      "to": 505,
       "type": "external"
-    },
-    {
-      "participant": "hpa",
-      "from": 459,
-      "to": 507,
-      "type": "backend"
-    },
-    {
-      "participant": "scheduler",
-      "from": 495,
-      "to": 543,
-      "type": "backend"
-    },
-    {
-      "participant": "karpenter",
-      "from": 531,
-      "to": 579,
-      "type": "cloud"
     }
   ]
 }

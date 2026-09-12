@@ -156,7 +156,7 @@ Sidecar와 waypoint Envoy는 L7 retry를 수행하지만 ztunnel은 HTTP 503을 
 
 ### 문제 6: Cilium 인증과 암호화
 
-문서화된 Cilium mutual authentication에서 authentication을 required로 설정하면 무엇을 의미하나요?
+문서화된 Cilium out-of-band mutual authentication에서 authentication을 required로 설정하면 무엇을 의미하나요?
 
 A. 모든 payload가 자동으로 workload TLS를 사용한다
 
@@ -173,7 +173,7 @@ D. 인가 정책이 더 이상 필요 없다
 
 **해설:**
 
-릴리스 Cilium 1.20.1 문서는 이 방식을 Beta로 표시하고 애플리케이션 데이터 경로와 분리된 out-of-band handshake로 설명합니다. 인증 정책만으로 payload가 암호화되지는 않습니다. 지원되는 WireGuard/IPsec 암호화의 플랫폼·트래픽 범위 제한을 별도로 확인하세요. 다른 구현이나 preview mTLS는 자체 기능·플랫폼 근거가 필요하며 이 authentication 설정으로 자동 활성화되지 않습니다.
+릴리스 Cilium 1.20.1 문서는 이 방식을 Beta로 표시하고 애플리케이션 데이터 경로와 분리된 out-of-band handshake로 설명합니다. 인증 정책만으로 payload가 암호화되지는 않습니다. 지원되는 WireGuard/IPsec 암호화의 플랫폼·트래픽 범위 제한을 별도로 확인하세요. Cilium 1.20.1에는 namespace 등록, TCP 전용, 정책·플랫폼 제약을 가진 별도의 ztunnel 암호화 베타도 있습니다. 이 out-of-band 인증 정책 설정으로 활성화되는 기능은 아닙니다.
 
 **참고 자료:**
 

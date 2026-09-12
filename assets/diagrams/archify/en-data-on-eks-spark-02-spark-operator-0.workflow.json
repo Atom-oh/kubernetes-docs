@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "How the Spark Operator Works",
+    "title": "Kubeflow Spark Operator Lifecycle",
     "locale": "en",
     "output": "en-data-on-eks-spark-02-spark-operator-0.html",
     "quality_profile": "showcase",
@@ -10,34 +10,35 @@
     "views": [
       {
         "id": "submit",
-        "label": "Submit and watch",
+        "label": "Submit and admit",
         "focus": [
           "apply",
           "watch",
           "webhook",
           "driver"
         ],
-        "note": "kubectl apply creates the SparkApplication CR; the Controller watches it and creates the driver Pod through the webhook."
+        "note": "The controller invokes spark-submit; Kubernetes admission processes the pod request."
       },
       {
         "id": "run",
-        "label": "Driver-led execution",
+        "label": "Run Spark tasks",
         "focus": [
           "driver",
           "executor",
           "run"
         ],
-        "note": "The Operator only touches the driver Pod directly; the driver requests executor Pods from the Kubernetes API itself."
+        "note": "The driver requests executors and assigns Spark tasks; Kubernetes places the pods."
       },
       {
         "id": "loop",
-        "label": "Status reporting loop",
+        "label": "Reconcile and retry",
         "focus": [
-          "run",
+          "driver",
+          "executor",
           "status",
           "watch"
         ],
-        "note": "Progress is written back to the CR .status and control returns to the Controller's watch loop."
+        "note": "The operator observes driver and executor state, updates the CR, and manages retries and cleanup."
       }
     ],
     "legend": {
@@ -68,15 +69,15 @@
     },
     {
       "id": "operator",
-      "label": "Spark Operator"
+      "label": "Kubeflow Controller"
     },
     {
       "id": "admission",
-      "label": "Mutating Admission Webhook"
+      "label": "Kubernetes Admission"
     },
     {
       "id": "spark",
-      "label": "Spark Driver / Executor"
+      "label": "Spark Pods on Kubernetes"
     }
   ],
   "mainPath": [
@@ -103,8 +104,8 @@
       "lane": "operator",
       "col": 1,
       "type": "backend",
-      "label": "Controller watches CR",
-      "sublabel": "reconcile loop",
+      "label": "Controller submits",
+      "sublabel": "spark-submit",
       "tag": "control loop",
       "width": 176
     },
@@ -113,17 +114,17 @@
       "lane": "admission",
       "col": 2,
       "type": "security",
-      "label": "Customize pods",
-      "sublabel": "driver/executor pod",
+      "label": "Kubernetes admission",
+      "sublabel": "Kubeflow Pod mutator",
       "width": 176
     },
     {
       "id": "driver",
-      "lane": "operator",
+      "lane": "spark",
       "col": 3,
-      "type": "backend",
-      "label": "Create Driver Pod",
-      "sublabel": "spark-driver",
+      "type": "cloud",
+      "label": "Driver pod starts",
+      "sublabel": "placed by Kubernetes",
       "width": 176
     },
     {
@@ -131,8 +132,8 @@
       "lane": "spark",
       "col": 4,
       "type": "cloud",
-      "label": "Request Executor Pods",
-      "sublabel": "requested by the driver",
+      "label": "Request executors",
+      "sublabel": "driver → Kubernetes API",
       "width": 176
     },
     {
@@ -140,8 +141,8 @@
       "lane": "spark",
       "col": 5,
       "type": "cloud",
-      "label": "Spark job runs",
-      "sublabel": "on the executors",
+      "label": "Execute Spark tasks",
+      "sublabel": "tasks assigned by driver",
       "width": 176
     },
     {
@@ -149,8 +150,8 @@
       "lane": "operator",
       "col": 5,
       "type": "database",
-      "label": "Write progress",
-      "sublabel": "CR .status",
+      "label": "Observe pod states",
+      "sublabel": "driver + executor → CR",
       "width": 176
     }
   ],
@@ -170,15 +171,13 @@
     {
       "id": "webhook-to-driver",
       "from": "webhook",
-      "to": "driver",
-      "fromSide": "right",
-      "toSide": "bottom"
+      "to": "driver"
     },
     {
       "id": "driver-to-executor",
       "from": "driver",
       "to": "executor",
-      "label": "Kubernetes API"
+      "label": "admission + placement"
     },
     {
       "id": "executor-to-run",
@@ -189,13 +188,13 @@
       "id": "run-to-status",
       "from": "run",
       "to": "status",
-      "label": "report status"
+      "label": "Pod watch"
     },
     {
       "id": "status-to-watch",
       "from": "status",
       "to": "watch",
-      "label": "watch again",
+      "label": "reconcile / retry",
       "variant": "dashed",
       "role": "return"
     }

@@ -1,0 +1,146 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full benchmark/quiz review; historical data preserved, interpretations/reproduction/diagrams corrected and locally validated.",
+    "sources": [
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-0.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-1.html",
+      "https://github.com/Atom-oh/kubernetes-docs/pull/166",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ProducerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ConsumerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/server/ReplicaManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/cluster/Partition.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/docker/jvm/Dockerfile",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "https://www.kernel.org/doc/html/latest/admin-guide/iostats.html"
+    ],
+    "findings": [
+      "Preserved14coremeasurementtables and attributedhistoricalsingle-runresults toPR166; rawtelemetry/payloadhashnotbundled and noAWSrerunclaimed.",
+      "Corrected30M×1024B=28.610GiB, F6+10.12percent, RF4/F1=2.507, CPUmidpoint39.19percent, E4drop44.49percent; costsasattributed730hplanningnotbill/currentpricequote.",
+      "Removedcertified130-135MiBsceiling/10GiBthreshold/noise/tail-only/codec-order-transfer/exclusiveIObottleneckclaims; controlledRFacks/defaultidempotence/duration/cache/sharedclient/ratetimebases discussed.",
+      "CorrectedEC2directionalnetworkcredits: F1rx136=1.141Gbps/tx108=.906Gbps EACHbelow1.25; sumwasnotburstevidence. m5xlargeEBSbaseline137.09/max566.24MiBs/currentgp3max2000conditional.",
+      "VerifiedperformanceCLIunits,payloadgenerationbeforelatency,periodicsampling,callbackfailurenotcounted,consumerpollovershoot; updateddeprecatedflagsandtested10nativecaseswithoutclients.",
+      "ReproducedpublishedAWKlocally20000valid1008BJSONrows/padding63.17percent; localzlib15.92/6.53differsreported18.5/7.8, preservedprovenanceanddidnotclaimhistoricalhash.",
+      "ReproductionmanifestnowexplicitAZ/gp3performance+encryption/headlessDNS/readiness/privatebenchmarkNetworkPolicy/tokenautomountfalse; changedtemplateclearlydisclosed. Scriptscreate/populatetopics,checksuccessfulcounts,finitewalltimeout,verifieddevice/actualmonotonicsampletiming; onlyreadonlylocalhostsamplertested.",
+      "Corrected4diagramsone-partitionversusclusteraggregate/FetchResponsedirection/backgroundwriteback/HW>=lastOffset+1; sourceKafkaReplicaManager/Partitionconfirmed.",
+      "4figures9of9delivery+desktopvisual+8mobilecases/menus/zoom/theme/presentation; PNGsregeneratedandpairedvisuallyinspected.",
+      "Updated16quizquestions;18schemaobjects16fences14preservedtables5successcountcases passed."
+    ],
+    "validation": [
+      "kafka-benchmark-validation.json"
+    ],
+    "reviewedSha256": "d9b4a352c5db776ffc3efd112b5f88a8c0e95de674b306e861e41d1361625417"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full benchmark/quiz review; historical data preserved, interpretations/reproduction/diagrams corrected and locally validated.",
+    "sources": [
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-0.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-1.html",
+      "https://github.com/Atom-oh/kubernetes-docs/pull/166",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ProducerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ConsumerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/server/ReplicaManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/cluster/Partition.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/docker/jvm/Dockerfile",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "https://www.kernel.org/doc/html/latest/admin-guide/iostats.html"
+    ],
+    "findings": [
+      "Preserved14coremeasurementtables and attributedhistoricalsingle-runresults toPR166; rawtelemetry/payloadhashnotbundled and noAWSrerunclaimed.",
+      "Corrected30M×1024B=28.610GiB, F6+10.12percent, RF4/F1=2.507, CPUmidpoint39.19percent, E4drop44.49percent; costsasattributed730hplanningnotbill/currentpricequote.",
+      "Removedcertified130-135MiBsceiling/10GiBthreshold/noise/tail-only/codec-order-transfer/exclusiveIObottleneckclaims; controlledRFacks/defaultidempotence/duration/cache/sharedclient/ratetimebases discussed.",
+      "CorrectedEC2directionalnetworkcredits: F1rx136=1.141Gbps/tx108=.906Gbps EACHbelow1.25; sumwasnotburstevidence. m5xlargeEBSbaseline137.09/max566.24MiBs/currentgp3max2000conditional.",
+      "VerifiedperformanceCLIunits,payloadgenerationbeforelatency,periodicsampling,callbackfailurenotcounted,consumerpollovershoot; updateddeprecatedflagsandtested10nativecaseswithoutclients.",
+      "ReproducedpublishedAWKlocally20000valid1008BJSONrows/padding63.17percent; localzlib15.92/6.53differsreported18.5/7.8, preservedprovenanceanddidnotclaimhistoricalhash.",
+      "ReproductionmanifestnowexplicitAZ/gp3performance+encryption/headlessDNS/readiness/privatebenchmarkNetworkPolicy/tokenautomountfalse; changedtemplateclearlydisclosed. Scriptscreate/populatetopics,checksuccessfulcounts,finitewalltimeout,verifieddevice/actualmonotonicsampletiming; onlyreadonlylocalhostsamplertested.",
+      "Corrected4diagramsone-partitionversusclusteraggregate/FetchResponsedirection/backgroundwriteback/HW>=lastOffset+1; sourceKafkaReplicaManager/Partitionconfirmed.",
+      "4figures9of9delivery+desktopvisual+8mobilecases/menus/zoom/theme/presentation; PNGsregeneratedandpairedvisuallyinspected.",
+      "Updated16quizquestions;18schemaobjects16fences14preservedtables5successcountcases passed."
+    ],
+    "validation": [
+      "kafka-benchmark-validation.json"
+    ],
+    "reviewedSha256": "d5eb3ac5dfd5c5f88310d2af4de7e444b63f022b40276d3f0674853b212a7e3d"
+  },
+  {
+    "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full benchmark/quiz review; historical data preserved, interpretations/reproduction/diagrams corrected and locally validated.",
+    "sources": [
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-0.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-1.html",
+      "https://github.com/Atom-oh/kubernetes-docs/pull/166",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ProducerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ConsumerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/server/ReplicaManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/cluster/Partition.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/docker/jvm/Dockerfile",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "https://www.kernel.org/doc/html/latest/admin-guide/iostats.html"
+    ],
+    "findings": [
+      "Preserved14coremeasurementtables and attributedhistoricalsingle-runresults toPR166; rawtelemetry/payloadhashnotbundled and noAWSrerunclaimed.",
+      "Corrected30M×1024B=28.610GiB, F6+10.12percent, RF4/F1=2.507, CPUmidpoint39.19percent, E4drop44.49percent; costsasattributed730hplanningnotbill/currentpricequote.",
+      "Removedcertified130-135MiBsceiling/10GiBthreshold/noise/tail-only/codec-order-transfer/exclusiveIObottleneckclaims; controlledRFacks/defaultidempotence/duration/cache/sharedclient/ratetimebases discussed.",
+      "CorrectedEC2directionalnetworkcredits: F1rx136=1.141Gbps/tx108=.906Gbps EACHbelow1.25; sumwasnotburstevidence. m5xlargeEBSbaseline137.09/max566.24MiBs/currentgp3max2000conditional.",
+      "VerifiedperformanceCLIunits,payloadgenerationbeforelatency,periodicsampling,callbackfailurenotcounted,consumerpollovershoot; updateddeprecatedflagsandtested10nativecaseswithoutclients.",
+      "ReproducedpublishedAWKlocally20000valid1008BJSONrows/padding63.17percent; localzlib15.92/6.53differsreported18.5/7.8, preservedprovenanceanddidnotclaimhistoricalhash.",
+      "ReproductionmanifestnowexplicitAZ/gp3performance+encryption/headlessDNS/readiness/privatebenchmarkNetworkPolicy/tokenautomountfalse; changedtemplateclearlydisclosed. Scriptscreate/populatetopics,checksuccessfulcounts,finitewalltimeout,verifieddevice/actualmonotonicsampletiming; onlyreadonlylocalhostsamplertested.",
+      "Corrected4diagramsone-partitionversusclusteraggregate/FetchResponsedirection/backgroundwriteback/HW>=lastOffset+1; sourceKafkaReplicaManager/Partitionconfirmed.",
+      "4figures9of9delivery+desktopvisual+8mobilecases/menus/zoom/theme/presentation; PNGsregeneratedandpairedvisuallyinspected.",
+      "Updated16quizquestions;18schemaobjects16fences14preservedtables5successcountcases passed."
+    ],
+    "validation": [
+      "kafka-benchmark-validation.json"
+    ],
+    "reviewedSha256": "ed85958234f5fa5e1d229a4724be75eea82b5fa18e1b21e06a3c2f6a9a282ae1"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full benchmark/quiz review; historical data preserved, interpretations/reproduction/diagrams corrected and locally validated.",
+    "sources": [
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-0.html",
+      "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-1.html",
+      "https://github.com/Atom-oh/kubernetes-docs/pull/166",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ProducerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ConsumerPerformance.java",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/server/ReplicaManager.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/cluster/Partition.scala",
+      "https://github.com/apache/kafka/blob/4.3.1/docker/jvm/Dockerfile",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+      "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "https://www.kernel.org/doc/html/latest/admin-guide/iostats.html"
+    ],
+    "findings": [
+      "Preserved14coremeasurementtables and attributedhistoricalsingle-runresults toPR166; rawtelemetry/payloadhashnotbundled and noAWSrerunclaimed.",
+      "Corrected30M×1024B=28.610GiB, F6+10.12percent, RF4/F1=2.507, CPUmidpoint39.19percent, E4drop44.49percent; costsasattributed730hplanningnotbill/currentpricequote.",
+      "Removedcertified130-135MiBsceiling/10GiBthreshold/noise/tail-only/codec-order-transfer/exclusiveIObottleneckclaims; controlledRFacks/defaultidempotence/duration/cache/sharedclient/ratetimebases discussed.",
+      "CorrectedEC2directionalnetworkcredits: F1rx136=1.141Gbps/tx108=.906Gbps EACHbelow1.25; sumwasnotburstevidence. m5xlargeEBSbaseline137.09/max566.24MiBs/currentgp3max2000conditional.",
+      "VerifiedperformanceCLIunits,payloadgenerationbeforelatency,periodicsampling,callbackfailurenotcounted,consumerpollovershoot; updateddeprecatedflagsandtested10nativecaseswithoutclients.",
+      "ReproducedpublishedAWKlocally20000valid1008BJSONrows/padding63.17percent; localzlib15.92/6.53differsreported18.5/7.8, preservedprovenanceanddidnotclaimhistoricalhash.",
+      "ReproductionmanifestnowexplicitAZ/gp3performance+encryption/headlessDNS/readiness/privatebenchmarkNetworkPolicy/tokenautomountfalse; changedtemplateclearlydisclosed. Scriptscreate/populatetopics,checksuccessfulcounts,finitewalltimeout,verifieddevice/actualmonotonicsampletiming; onlyreadonlylocalhostsamplertested.",
+      "Corrected4diagramsone-partitionversusclusteraggregate/FetchResponsedirection/backgroundwriteback/HW>=lastOffset+1; sourceKafkaReplicaManager/Partitionconfirmed.",
+      "4figures9of9delivery+desktopvisual+8mobilecases/menus/zoom/theme/presentation; PNGsregeneratedandpairedvisuallyinspected.",
+      "Updated16quizquestions;18schemaobjects16fences14preservedtables5successcountcases passed."
+    ],
+    "validation": [
+      "kafka-benchmark-validation.json"
+    ],
+    "reviewedSha256": "1ceed2b8d56412aec1bcec166acb72ec298313dbecd1d4c8ea6d30973ce04cdf"
+  }
+]

@@ -7,17 +7,17 @@
 ### 1. CPU Throttling을 탐지하기 위한 PromQL 메트릭은 무엇인가요?
 
 - A) container_cpu_usage_seconds_total
-- B) container_cpu_cfs_throttled_periods_total / container_cpu_cfs_periods_total
+- B) rate(container_cpu_cfs_throttled_periods_total[5m]) / rate(container_cpu_cfs_periods_total[5m])
 - C) node_cpu_seconds_total
 - D) kube_pod_container_resource_limits
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) container_cpu_cfs_throttled_periods_total / container_cpu_cfs_periods_total**
+**정답: B) rate(container_cpu_cfs_throttled_periods_total[5m]) / rate(container_cpu_cfs_periods_total[5m])**
 
 **설명:**
-CPU Throttling 비율은 `container_cpu_cfs_throttled_periods_total`(스로틀된 기간)을 `container_cpu_cfs_periods_total`(전체 기간)로 나누어 계산합니다. 이 비율이 높으면(예: 25% 이상) 컨테이너가 CPU limit에 의해 제한받고 있음을 의미하며, limit 증가를 고려해야 합니다.
+두 counter의 rate를 같은 label 집합으로 집계하고 양수인 분모로 나눕니다. 이는 스로틀링이 관측된 CFS 기간의 비율이며 CPU 시간 손실률과 같지 않습니다. 실제 서비스 영향과 quota를 확인한 뒤 limits 변경을 판단합니다.
 
 </details>
 
@@ -102,11 +102,11 @@ predict_linear 함수는 지정된 기간의 메트릭 추세를 기반으로 �
 **정답: B) 특정 알림이 활성화되면 관련된 다른 알림을 억제**
 
 **설명:**
-inhibit_rules는 상위 레벨 알림이 발생했을 때 하위 레벨 알림을 억제합니다. 예를 들어, 노드가 다운되면(NodeDown) 해당 노드의 Pod 관련 알림(PodNotReady)을 억제하여 알림 폭풍을 방지하고 근본 원인에 집중할 수 있게 합니다.
+inhibit_rules는 상위 레벨 알림이 발생했을 때 하위 레벨 알림을 억제합니다. source/target matcher와 equal label을 명시적으로 구성합니다. 양쪽에 cluster와 대상 식별자가 실제로 있어야 다른 대상의 알림을 억제하지 않습니다. 도구가 root cause를 자동 판별하는 기능은 아닙니다.
 
 </details>
 
-### 7. severity 레이블 값으로 일반적으로 사용되는 레벨이 아닌 것은 무엇인가요?
+### 7. 이 장의 예제에서 채택한 severity 레벨이 아닌 것은 무엇인가요?
 
 - A) critical
 - B) warning
@@ -119,7 +119,7 @@ inhibit_rules는 상위 레벨 알림이 발생했을 때 하위 레벨 알림�
 **정답: D) debug**
 
 **설명:**
-알림의 severity 레벨로는 일반적으로 critical(즉각 대응 필요), warning(주의 필요), info(정보성)를 사용합니다. debug는 로그 레벨에서 사용되지만 알림 심각도로는 적합하지 않습니다. 각 레벨에 따라 다른 알림 채널(PagerDuty, Slack 등)로 라우팅할 수 있습니다.
+알림의 severity 레벨로는 일반적으로 critical(즉각 대응 필요), warning(주의 필요), info(정보성)를 사용합니다. 이 예제는 debug를 사용하지 않습니다. severity는 조직이 정하는 문자열 label이며 고정 enum이나 보장된 대응 시간은 아닙니다. 각 레벨에 따라 다른 알림 채널(PagerDuty, Slack 등)로 라우팅할 수 있습니다.
 
 </details>
 
@@ -136,7 +136,7 @@ inhibit_rules는 상위 레벨 알림이 발생했을 때 하위 레벨 알림�
 **정답: B) rate() 함수로 초당 바이트 전송량 계산 후 임계값 비교**
 
 **설명:**
-네트워크 대역폭 사용량은 `rate(node_network_transmit_bytes_total[5m])`로 초당 바이트 전송량을 계산합니다. 이 값을 인스턴스 타입별 네트워크 대역폭 제한(예: c5.xlarge는 최대 10Gbps)과 비교하여 임계값 초과 시 알림을 발생시킵니다.
+네트워크 대역폭 사용량은 `rate(node_network_transmit_bytes_total[5m])`로 초당 바이트 전송량을 계산합니다. bits/s로 비교하려면 8을 곱하고, 실제 인스턴스의 baseline/burst·경로 제한과 단위를 맞춥니다. 가상 NIC의 표시 속도나 모든 노드에 공통인 10Gbps를 실제 한도로 가정하지 않습니다.
 
 </details>
 
@@ -170,6 +170,6 @@ annotations는 알림에 추가 정보를 제공합니다. summary(요약), desc
 **정답: B) kube_pod_container_status_last_terminated_reason**
 
 **설명:**
-`kube_pod_container_status_last_terminated_reason` 메트릭은 컨테이너의 마지막 종료 이유를 나타냅니다. 이 메트릭에서 reason="OOMKilled"인 경우를 필터링하면 메모리 부족으로 종료된 컨테이너를 찾을 수 있습니다. OOMKilled가 발생하면 메모리 limit 증가나 메모리 누수 조사가 필요합니다.
+`kube_pod_container_status_last_terminated_reason` 메트릭은 컨테이너의 마지막 종료 이유를 나타냅니다. `reason="OOMKilled"`와 값 `== 1`을 확인하되 마지막 종료 이유가 오래 남아 있을 수 있습니다. 재시작·종료 시각·Events를 함께 보고, 단독으로 최근 발생 횟수나 메모리 누수를 확정하지 않습니다.
 
 </details>

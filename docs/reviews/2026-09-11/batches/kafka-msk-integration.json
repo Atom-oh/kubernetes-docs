@@ -1,0 +1,154 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/06-msk-integration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete guide/quiz review; policy scope, native Java config and offline CLI validation passed.",
+    "sources": [
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-broker-types-express.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless-config.html",
+      "https://aws.amazon.com/msk/pricing/",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html",
+      "https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html",
+      "https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/integrations-kinesis-data-firehose.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html"
+    ],
+    "findings": [
+      "Separated Provisioned Standard/Express/Serverless and complete pricing dimensions; removed unsubstantiated cost/portability/GitOps claims.",
+      "Corrected Serverless IAM-only/topic-settings/250GiBperpartition+7d retention and separate monitoring/tenancy responsibilities.",
+      "Corrected sameVPCdoesnotguaranteeaccess, alladvertisedbrokers, PrivateLinkmultiVPC, IPv4/public/IPv6endpointportdistinctions.",
+      "Added official OAUTHBEARER/nonJava helpers and PodIdentity/IRSA credential refresh; two Java configs validated againstaws-msk-iam-auth2.3.8.",
+      "Removed AlterCluster/*Topic* grants, added grouppermissions/exactclusterUUID andsplitproducerconsumer policies; idempotent/transactional scope andKafka>=3.8WriteTxnMarkers explained.",
+      "Verified MSKConnectAPIauthNONE/IAM andruntime2.7.1Java11/3.7.xJava17; pluginbytecode belowJava18isnotservicecompatibilityproof; actualS3plugincreation notconnectorcreation and immutableplugincontents.",
+      "Corrected nativeMSKLambda/Firehose integrations, Kinesiscurrentcapacitymodes/retention andpartitioncountsemantics; all36questionsrewritten."
+    ],
+    "validation": [
+      "kafka-msk-integration-validation.json"
+    ],
+    "reviewedSha256": "8d1713003a3c4a90abfe1799209678d00929f2ff0d51893c1039636ff2b51e32"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete guide/quiz review; policy scope, native Java config and offline CLI validation passed.",
+    "sources": [
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-broker-types-express.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless-config.html",
+      "https://aws.amazon.com/msk/pricing/",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html",
+      "https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html",
+      "https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/integrations-kinesis-data-firehose.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html"
+    ],
+    "findings": [
+      "Separated Provisioned Standard/Express/Serverless and complete pricing dimensions; removed unsubstantiated cost/portability/GitOps claims.",
+      "Corrected Serverless IAM-only/topic-settings/250GiBperpartition+7d retention and separate monitoring/tenancy responsibilities.",
+      "Corrected sameVPCdoesnotguaranteeaccess, alladvertisedbrokers, PrivateLinkmultiVPC, IPv4/public/IPv6endpointportdistinctions.",
+      "Added official OAUTHBEARER/nonJava helpers and PodIdentity/IRSA credential refresh; two Java configs validated againstaws-msk-iam-auth2.3.8.",
+      "Removed AlterCluster/*Topic* grants, added grouppermissions/exactclusterUUID andsplitproducerconsumer policies; idempotent/transactional scope andKafka>=3.8WriteTxnMarkers explained.",
+      "Verified MSKConnectAPIauthNONE/IAM andruntime2.7.1Java11/3.7.xJava17; pluginbytecode belowJava18isnotservicecompatibilityproof; actualS3plugincreation notconnectorcreation and immutableplugincontents.",
+      "Corrected nativeMSKLambda/Firehose integrations, Kinesiscurrentcapacitymodes/retention andpartitioncountsemantics; all36questionsrewritten."
+    ],
+    "validation": [
+      "kafka-msk-integration-validation.json"
+    ],
+    "reviewedSha256": "53a9a41a9f6e6c14c43391e34affbe9e4c47c9a0f07bf5f05741de21245dc279"
+  },
+  {
+    "path": "en/data-on-eks/kafka/06-msk-integration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete guide/quiz review; policy scope, native Java config and offline CLI validation passed.",
+    "sources": [
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-broker-types-express.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless-config.html",
+      "https://aws.amazon.com/msk/pricing/",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html",
+      "https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html",
+      "https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/integrations-kinesis-data-firehose.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html"
+    ],
+    "findings": [
+      "Separated Provisioned Standard/Express/Serverless and complete pricing dimensions; removed unsubstantiated cost/portability/GitOps claims.",
+      "Corrected Serverless IAM-only/topic-settings/250GiBperpartition+7d retention and separate monitoring/tenancy responsibilities.",
+      "Corrected sameVPCdoesnotguaranteeaccess, alladvertisedbrokers, PrivateLinkmultiVPC, IPv4/public/IPv6endpointportdistinctions.",
+      "Added official OAUTHBEARER/nonJava helpers and PodIdentity/IRSA credential refresh; two Java configs validated againstaws-msk-iam-auth2.3.8.",
+      "Removed AlterCluster/*Topic* grants, added grouppermissions/exactclusterUUID andsplitproducerconsumer policies; idempotent/transactional scope andKafka>=3.8WriteTxnMarkers explained.",
+      "Verified MSKConnectAPIauthNONE/IAM andruntime2.7.1Java11/3.7.xJava17; pluginbytecode belowJava18isnotservicecompatibilityproof; actualS3plugincreation notconnectorcreation and immutableplugincontents.",
+      "Corrected nativeMSKLambda/Firehose integrations, Kinesiscurrentcapacitymodes/retention andpartitioncountsemantics; all36questionsrewritten."
+    ],
+    "validation": [
+      "kafka-msk-integration-validation.json"
+    ],
+    "reviewedSha256": "b145248f30a2ca61d35ccd29a7da76e3da53a048b951e9ba9b02544fbdc94de0"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/06-msk-integration-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Complete guide/quiz review; policy scope, native Java config and offline CLI validation passed.",
+    "sources": [
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-broker-types-express.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/serverless-config.html",
+      "https://aws.amazon.com/msk/pricing/",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html",
+      "https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html",
+      "https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html",
+      "https://docs.aws.amazon.com/msk/latest/developerguide/integrations-kinesis-data-firehose.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html",
+      "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html"
+    ],
+    "findings": [
+      "Separated Provisioned Standard/Express/Serverless and complete pricing dimensions; removed unsubstantiated cost/portability/GitOps claims.",
+      "Corrected Serverless IAM-only/topic-settings/250GiBperpartition+7d retention and separate monitoring/tenancy responsibilities.",
+      "Corrected sameVPCdoesnotguaranteeaccess, alladvertisedbrokers, PrivateLinkmultiVPC, IPv4/public/IPv6endpointportdistinctions.",
+      "Added official OAUTHBEARER/nonJava helpers and PodIdentity/IRSA credential refresh; two Java configs validated againstaws-msk-iam-auth2.3.8.",
+      "Removed AlterCluster/*Topic* grants, added grouppermissions/exactclusterUUID andsplitproducerconsumer policies; idempotent/transactional scope andKafka>=3.8WriteTxnMarkers explained.",
+      "Verified MSKConnectAPIauthNONE/IAM andruntime2.7.1Java11/3.7.xJava17; pluginbytecode belowJava18isnotservicecompatibilityproof; actualS3plugincreation notconnectorcreation and immutableplugincontents.",
+      "Corrected nativeMSKLambda/Firehose integrations, Kinesiscurrentcapacitymodes/retention andpartitioncountsemantics; all36questionsrewritten."
+    ],
+    "validation": [
+      "kafka-msk-integration-validation.json"
+    ],
+    "reviewedSha256": "262ef5382e6b8b34519f9783f5291ef7f6e39a9c48408595f399eb8a721ce9c3"
+  }
+]
