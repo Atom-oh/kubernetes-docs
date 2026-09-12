@@ -2,74 +2,84 @@
 
 ## 객관식 문제
 
-1. 모델 출력 계약으로 올바른 것은 무엇인가요?
-   - A) 자유 형식 Markdown
-   - B) JSON object
-   - C) 한 줄당 `TYPE<TAB>ORIGINAL`
-   - D) 최종 치환 문서
+1. 모델 출력 계약은 무엇이며 어떤 한계가 있나요?
+
+   - A) 최종 익명화 문서를 항상 정확히 생성한다
+   - B) 원문에 있는 모든 문자열은 실제 PII다
+   - C) 후보 TYPE/TAB/ORIGINAL 행이며 누락·오분류는 별도 평가한다
+   - D) Project membership을 반환한다
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: C**
 
-허용 유형과 원문 값을 tab으로 구분해 출력합니다.
+Source 일치는 값의 존재를 확인할 뿐 의미적 정답이나 전체 PII 탐지를 보장하지 않습니다.
+
 </details>
 
-2. source-containment 검사의 목적은 무엇인가요?
-   - A) 모델이 만든 새로운 값을 허용
-   - B) 원문에 없는 환각 값을 제거
-   - C) 데이터셋을 압축
-   - D) GPU 메모리를 측정
+2. 다른 공백 표기의 이름과 기존 [PERSON_1]을 어떻게 처리하나요?
+
+   - A) 모든 표기를 같은 mapping 값으로 덮어쓴다
+   - B) 실제 표기별로 복원 가능한 token을 만들고 기존 marker와 이름 충돌을 피한다
+   - C) 기존 marker를 새 이름으로 무조건 복원한다
+   - D) 원문을 NFC 대신 임의로 줄인다
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: B**
 
-추출값 또는 허용 변형이 source에 있어야 치환 후보가 됩니다.
+같은 type/표기는 재사용하지만 다른 표기는 별도 token이며 mapping은 실제 source 표기를 저장합니다.
+
 </details>
 
-3. 데이터 split은 무엇인가요?
-   - A) 1,600 / 200 / 400
-   - B) 2,000 / 100 / 100
-   - C) 1,100 / 550 / 550
-   - D) 400 / 200 / 1,600
+3. 데이터 split과 검증 범위에 대한 설명으로 맞는 것은 무엇인가요?
+
+   - A) 1,600/200/400개이며 같은 template·이름이 split 사이에 공유될 수 있다
+   - B) Hash가 다르면 실제 업무 일반화가 증명된다
+   - C) Checksum 실패가 공식 미할당 번호임을 증명한다
+   - D) 모든 PHONE 값은 공식 예약 번호다
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: A**
 
-Train/Validation/Test는 1,600/200/400이며 총 2,200개입니다.
+Generator 1.0.0의 기존 해시는 유지했지만 합성 template 데이터와 실제 업무 평가는 구분합니다.
+
 </details>
 
-4. 결정론적 토큰화에 포함되는 검사는 무엇인가요?
-   - A) 엔터티 순서를 바꾸면 다른 결과가 나와야 함
-   - B) mapping으로 복원한 결과가 원문과 같은지 확인
-   - C) fuzzy matching을 무제한 적용
-   - D) token mapping을 MLflow tag로 기록
+4. 정답 Alpha Beta 중 Alpha만 가렸을 때 수정한 누출 평가는 어떻게 동작하나요?
+
+   - A) 전체 문자열이 사라졌으므로 항상 누출 0
+   - B) Source의 정답 구간에 미가림이 남아 있음을 감지한다
+   - C) Placeholder 이름에서만 정답을 찾는다
+   - D) Round-trip이 성공하면 누출 0으로 바꾼다
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: B**
 
-round-trip 검사는 치환이 원문 정보를 손실하지 않았는지 확인합니다.
+실제 치환 구간의 합집합으로 모든 정답 발생 구간이 완전히 덮였는지 확인합니다. 복원과 탐지 완전성은 다른 지표입니다.
+
 </details>
 
-5. fine-tuned F1 값이 없는 이유는 무엇인가요?
-   - A) F1 코드가 없음
-   - B) 테스트 데이터가 없음
-   - C) GPU 학습과 tuned evaluation이 미실행
-   - D) 엔터티 유형이 하나뿐임
+5. 정답 TSV를 입력한 2,200개 oracle 점검의 의미는 무엇인가요?
+
+   - A) Fine-tuned 모델 F1 측정이다
+   - B) GPU 처리량 측정이다
+   - C) 평가기·복원·해시의 sanity check이며 모델 출력 측정이 아니다
+   - D) 모든 실제 PII가 탐지된다는 보장이다
 
 <details>
 <summary>정답 보기</summary>
 
 **정답: C**
 
-평가 구현은 검증됐지만 학습이 실행되지 않아 tuned 측정값은 없습니다.
+로컬 테스트 50개와 oracle 점검이 통과했지만 GPU 학습이나 fine-tuned 평가를 실행하지 않았습니다.
+
 </details>
 
 ---

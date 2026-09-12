@@ -1,12 +1,12 @@
 # Part 5: Factual SageMaker Qwen PII Validation Results
 
-> **Last Updated**: September 2, 2026
+> **Documentation Reviewed**: September 12, 2026
 > **AWS Validation Date**: September 1, 2026
-> **Final Status**: blocked before GPU training
+> **Historical Status**: blocked before GPU training; residual-resource record dated September 2
 
 ## Conclusion
 
-The synthetic dataset, deterministic tokenization, evaluation code, and SageMaker/EKS request contracts were validated locally. In AWS, the quota checks, SageMaker MLflow App, Unified Studio project-creation path, and teardown behavior were exercised.
+This chapter describes the repository's **September 1–2, 2026 experiment records**. It preserves the local checks, AWS provisioning attempts, and partial cleanup observed then; it is not a fresh account-state query. The September 12 source review found additional tokenization, evaluation, execution, and cleanup defects that the original 30 tests did not catch.
 
 The third provisioning attempt omitted project membership, leaving the caller unable to delete the created project. Further resource creation stopped, so **neither the SageMaker Training Job nor the EKS GPU Job was executed**.
 
@@ -18,7 +18,7 @@ The third provisioning attempt omitted project membership, leaving the caller un
 | Synthetic records | 2,200 |
 | Train / Validation / Test | 1,600 / 200 / 400 |
 | Korean / English | 80% / 20% |
-| Python contract and regression tests | 30 passed |
+| Historical Python contract and regression tests | 30 passed; not evidence of GPU execution or absence of all defects |
 | Extraction contract | `TYPE<TAB>ORIGINAL` |
 | Observed SageMaker MLflow App version | `3.10.1` |
 | SageMaker training executed | `false` |
@@ -27,7 +27,7 @@ The third provisioning attempt omitted project membership, leaving the caller un
 
 ## Actual Execution Trace
 
-The following figure is not the target architecture. It shows the **local validation, AWS preflight, three provisioning attempts, cleanup, and actual stop point**. The trace terminates before GPU training.
+The figure shows the **local checks, AWS preflight, three provisioning attempts, cleanup, and stop point** in the stored records. It terminates before GPU training. No GPU execution does not imply zero total experiment cost.
 
 ![Actual validation workflow showing local validation, three SageMaker and Unified Studio provisioning attempts, partial cleanup, one ACTIVE project, and GPU training not executed.](../../.gitbook/assets/en-ai-ml-sagemaker-ai-04-validation-results-0.png)
 
@@ -43,19 +43,15 @@ The following figure is not the target architecture. It shows the **local valida
 
 ## Corrections Applied
 
-- treat `Created`/`Updated` as ready MLflow App states;
-- treat `Deleted` as the deletion terminal state;
-- support domains that reject custom project tags;
-- assign the caller IAM role group profile as `PROJECT_OWNER` at project creation;
-- use an authorized `ListProjects` result for existence verification;
-- use adaptive retry for Service Quotas calls;
-- write the latest inventory and run teardown on errors or interrupts.
+The historical report recorded changes to App readiness, project-tag handling, owner membership, and retries. That statement does not prove the current automation is complete.
 
-The corrections are implemented and contract-tested, but the run was not retried while the project remained.
+The September 12 follow-up found possible deletion of preexisting resources, permission errors treated as absence, a wrong config path, lost EKS adapters, and interruption gaps. Follow the corrected execution and export procedure in the [execution chapter](03-sagemaker-mlflow-execution.md). The new checks use local fixtures and mocked APIs; they are not an AWS rerun.
+
+Absence from `ListProjects` alone does not prove deletion. Check visibility, filters, and pagination, then use an authorized direct query or administrator confirmation. Permission errors and timeouts remain **unknown**.
 
 ## September 2, 2026 Cleanup State
 
-Read-only recheck:
+Stored September 2 read-only recheck:
 
 | Resource Type | State |
 |---|---|
@@ -65,7 +61,7 @@ Read-only recheck:
 | EKS cluster / GPU instance | never created |
 | Unified Studio `qwen-pii-*` project | 1 `ACTIVE` |
 
-A domain owner must delete the remaining project, or add the current execution role's group profile as project-owner membership and then delete it.
+If that state still exists, the domain administrator and existing project owner must verify permissions and ownership before cleanup. Do not infer historical membership or ownership from a new role name.
 
 ## What Was Not Measured
 
@@ -76,6 +72,7 @@ A domain owner must delete the remaining project, or add the current execution r
 | training duration | no SageMaker or EKS training Job executed |
 | peak GPU memory | no GPU process executed |
 | GPU cost | no GPU Job started, so there is no comparable measured result |
+| Total experiment cost | no reconciled billing report for other resources such as the MLflow App and S3 |
 
 A configured maximum runtime or step count is a design input, not an observed result.
 
@@ -83,12 +80,12 @@ A configured maximum runtime or step count is a design input, not an observed re
 
 Complete every condition in order:
 
-1. verify that no `qwen-pii-*` Unified Studio project remains;
-2. pass read-only preflight;
-3. include owner membership for the execution role group profile in project creation;
-4. complete a SageMaker smoke run;
-5. pass raw-PII logging scans in CloudWatch and MLflow;
-6. only then run the full SageMaker Job.
+1. Reconcile the old inventory with actual resources and resolve remaining or unknown **experiment-owned resources**. A shared name prefix does not authorize deletion.
+2. Recheck the current account, Region, quotas, image, domain, profile, and owner membership.
+3. Freeze the reviewed configuration, source, and dataset hashes; verify uploaded objects.
+4. Run the billable SageMaker smoke job and preserve its result files.
+5. Review CloudWatch and MLflow for raw-data leakage. Success status or allowed filenames alone do not satisfy this check.
+6. Decide whether to execute the full Job from the verified smoke evidence.
 
 Run the EKS comparison as a separate smoke/full sequence after freezing the SageMaker smoke result and dataset hashes.
 

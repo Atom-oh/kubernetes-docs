@@ -1,79 +1,87 @@
 # SageMaker Qwen Platform Architecture Quiz
 
-This quiz checks the target architecture's responsibility boundaries and the SageMaker AI/EKS path split.
-
 ## Multiple Choice Questions
 
-1. What does the Qwen model directly emit?
-   - A) The final masked document
-   - B) `TYPE<TAB>ORIGINAL` entity rows
-   - C) A Unified Studio project
-   - D) An S3 deletion report
+1. How do model output and Python processing relate in this design?
+
+   - A) The model certainly removes all PII
+   - B) The model emits candidate TSV and code validates/replaces it; missed detection is evaluated separately
+   - C) A round trip proves anonymity
+   - D) The model deletes projects
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-The model extracts entities; deterministic Python code validates, orders, and replaces them.
+Deterministic replacement does not automatically recover entities the model missed.
+
 </details>
 
-2. How should the Part 1 diagram be interpreted?
-   - A) Evidence that both GPU paths completed
-   - B) A target design for a rerun
-   - C) A measured GPU cost comparison
-   - D) Production deployment approval
+2. How should the diagram and validation record be interpreted?
+
+   - A) Both GPU paths were validated
+   - B) It is a target design; distinguish local tests from historical AWS observations
+   - C) It shows live residual-project counts
+   - D) It reports trained F1 and costs
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-The diagram is a target design and neither GPU training path was executed.
+The 2026-09-01 record stopped before training. Current AWS state and GPU outcomes are not proven by local tests.
+
 </details>
 
-3. What makes the two execution paths comparable?
-   - A) Different dataset splits
-   - B) Frozen model ID, seed, hashes, dependencies, and QLoRA settings
-   - C) MLflow only on EKS
-   - D) Starting with a full run
+3. Do identical model IDs and seeds fully reproduce results across environments?
+
+   - A) Always
+   - B) No; also verify revisions, data hashes, images/dependencies, CUDA/hardware and execution conditions
+   - C) Only EKS needs a seed
+   - D) The tokenizer does not matter for QLoRA
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-Only the environment should vary when comparing the paths.
+Direct package pins are not a full transitive lock, and GPU determinism has additional requirements.
+
 </details>
 
-4. Which value must not be logged to a SageMaker MLflow App?
-   - A) Dataset SHA-256
-   - B) LoRA rank
-   - C) Raw source text and token mapping
-   - D) Dependency version
+4. What should be excluded from ordinary MLflow logs/public reports?
+
+   - A) Dataset hashes
+   - B) Reviewed LoRA settings
+   - C) Raw source/completions, token mappings and presigned URLs
+   - D) Non-sensitive aggregates
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C**
 
-MLflow receives aggregate and non-sensitive experiment information only.
+Distinguish necessary private inventory IDs/ARNs from public disclosure, and verify autologging/tracing.
+
 </details>
 
-5. Why is project governance checked before GPU training?
-   - A) To accelerate model downloads
-   - B) A project without membership can become inaccessible to automation
-   - C) QLoRA requires a project profile
-   - D) EKS only runs inside DataZone
+5. Which statement about governance and model size is correct?
+
+   - A) QLoRA always requires a Unified Studio project
+   - B) Governance is this experiment's chosen procedure; 3.3B active does not represent total model memory
+   - C) Owner assignment atomically rolls back every partial failure
+   - D) A three-hour job limit caps all experiment costs
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B**
 
-Owner membership at creation prevents an inaccessible project after partial provisioning.
+The model card lists 30.5B total/3.3B active. Verify readiness/ownership and actual GPU memory/cost separately.
+
 </details>
 
 ---
 
-[Return to learning materials](../../../ai-ml/sagemaker-ai/01-platform-architecture.md)
+[Return to Learning Materials](../../../ai-ml/sagemaker-ai/01-platform-architecture.md)
