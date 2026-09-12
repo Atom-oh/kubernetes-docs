@@ -1,0 +1,317 @@
+{
+  "checkedAt": "2026-09-12T22:31:41.951859+00:00",
+  "pr": 230,
+  "reviewedHead": "62f5858441c07b5120efba29b4171f14043ff6d0",
+  "mergeCommit": "510b24c3b751dc25e2959040b551391f8f22d217",
+  "deploymentRun": 34722505116,
+  "deploymentStatus": "success",
+  "pages": [
+    {
+      "path": "en/ai-ml/01-ai-ml-workloads.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/01-ai-ml-workloads",
+      "status": 200,
+      "baselineVisible": "26.7",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-01-ai-ml-workloads-0.rgO_22bD.png",
+          "status": 200,
+          "sha256": "05e30a94f73a31a88d13b73a075d104ea114f3e63d8cff795ff3f9423be43ad6",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-01-ai-ml-workloads-1.CZfFuSak.png",
+          "status": 200,
+          "sha256": "477bc335aebb09e2972ce639784959e52cf3a9dae70fe15b24767ca465c4dfab",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-01-ai-ml-workloads-2.DPkUQUI5.png",
+          "status": 200,
+          "sha256": "aa12410dc8771cce4c836d1db3ac9c76edf0e84317d2682e34134ec707120c1c",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-01-ai-ml-workloads-3.Cuunji_O.png",
+          "status": 200,
+          "sha256": "4366964b9bbfd4a7bd878a47f165ab88a2ed7453184d43a7a28a405b4730a9d6",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-01-ai-ml-workloads-4.CnpR-Dc8.png",
+          "status": 200,
+          "sha256": "1c0dfea12da5a80da2d26a18d6267c791c30cba96e6db481df47378175487a55",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-01-ai-ml-workloads-5.DOtguuFr.png",
+          "status": 200,
+          "sha256": "3fb422388b52504fe252782dcd4b335a1ef41cb09248cfbcad5f52238ef268fc",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-01-ai-ml-workloads-6.D4gKPw81.png",
+          "status": 200,
+          "sha256": "b63eb22c56d2a2edad76b350f19b0bb1f136e53f93fddbf714f65dc0453973dd",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/02-vllm-deployment.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/02-vllm-deployment",
+      "status": 200,
+      "baselineVisible": "0.29.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-0.CscroDCK.png",
+          "status": 200,
+          "sha256": "4ff86bcdee062071430b639cb061ee9db96a0a75d64ab90ab3c5d2f6425cba83",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-1.Dq6pAKk6.png",
+          "status": 200,
+          "sha256": "e1308861c69628753c6a8c892061df00768cf135e8b5892f9bf0013b5a8d9956",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-2.B9MiIhzy.png",
+          "status": 200,
+          "sha256": "6c08dabd82fce6b833e1b923b51f2353588c56f2f11352616635a6d67a32be1d",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-3.Cv3aEyZd.png",
+          "status": 200,
+          "sha256": "626af6b86de7229429f9939a4037b5f2eb06d0445cd082ba0888db6df808da25",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-4.ByuQGDYI.png",
+          "status": 200,
+          "sha256": "6cc848a0028a6cc3df5feb25eaec6a6b3ffa3c8b6105792b30f893cc3e67def2",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-6.BRiCSNZ9.png",
+          "status": 200,
+          "sha256": "44a235bd65261ad865f99edf2f26718fbf5103ed2289867a4045638a281b2da7",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-5.7Y1ZM1Mz.png",
+          "status": 200,
+          "sha256": "36cda77c7ab396b1b9f8a3516a42a27b9fbb2da96c687ad15da4fdbc9fc880b4",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-10.TEk67h6Y.png",
+          "status": 200,
+          "sha256": "0bc752be1b6bd47c589ea52975290c9ba14a10b756fdb40f3fe7c0239457a526",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-02-vllm-deployment-7.C9K-Mpmf.png",
+          "status": 200,
+          "sha256": "a1fd16d1bedeffa0211063a3e903f8cc833be2bb5e4e969a46a947c9c6fea3c1",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/03-agentic-ai-platform.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/03-agentic-ai-platform",
+      "status": 200,
+      "baselineVisible": "0.10.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-03-agentic-ai-platform-0.BGySJRNP.png",
+          "status": 200,
+          "sha256": "ea9c35b2bca9821757e7c0f4d7c7fc1a0c988822d9c54abaede537d0e17cdd11",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-03-agentic-ai-platform-1.D3edOpXq.png",
+          "status": 200,
+          "sha256": "fbb8804ab8b0c4e459e01cb85ce8f12119ed70136c2c01734431755b03d200e5",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-03-agentic-ai-platform-2.BLeEhagS.png",
+          "status": 200,
+          "sha256": "96a9687a0151c0319df9c388e2dce9c52dd3be5029b4e50d3adcb5b870aa38df",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-03-agentic-ai-platform-3.DIUorTOv.png",
+          "status": 200,
+          "sha256": "7931c885f8e9b6f43a86ab3f32cae4e932b5e43acea698fcb39a19360cf36ca9",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-03-agentic-ai-platform-4.BuXoUok9.png",
+          "status": 200,
+          "sha256": "b967ffcaec839db21c8c74c026a75c2646b3b9cebef23edbcca37cf224975751",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/01-ai-ml-workloads.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/01-ai-ml-workloads",
+      "status": 200,
+      "baselineVisible": "26.7",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-01-ai-ml-workloads-0.CYpG00SB.png",
+          "status": 200,
+          "sha256": "98c5c999b0b3f336bb1d5bbaef3be325b0e301ff9ef4a856e1a4d0fb955a54ac",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-01-ai-ml-workloads-1.CTh5uhwN.png",
+          "status": 200,
+          "sha256": "d8b497d0e692a1c07d7e8639ab2db4e79c0307b77baf15e346b3b82aade33c9d",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-01-ai-ml-workloads-2.HJq4odxv.png",
+          "status": 200,
+          "sha256": "1b49221d19e08eefa685cf297d354b051453f0b8243394835892dd10dffc0d81",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-01-ai-ml-workloads-3.qoSVcvNH.png",
+          "status": 200,
+          "sha256": "5350652c223affcb6af6ee3d81efa59ab87c15d2fc9ee40b27dcc8046a7bf9a9",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-01-ai-ml-workloads-4.B36afgBy.png",
+          "status": 200,
+          "sha256": "90ac6fc0f7f36b1a1f1cbf6e54a2e1d59c7213d4792a87d5581be69c452ab77d",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-01-ai-ml-workloads-5.CBRO9NvK.png",
+          "status": 200,
+          "sha256": "b0c0e7a9340a977107c8d303d940c9fa4362154bbbf424f591135f392427b8b5",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-01-ai-ml-workloads-6.Cta7h0yM.png",
+          "status": 200,
+          "sha256": "28965d1a7ff0040ea568523f10fc681c87d05845b14457fbe74599db381f85ae",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/02-vllm-deployment.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/02-vllm-deployment",
+      "status": 200,
+      "baselineVisible": "0.29.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-0.CSyhrGHW.png",
+          "status": 200,
+          "sha256": "37fb62ba5bb0487417d1bb59cdf5080fea479872996a7266230ac2f853c2e0c9",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-1.Db3i5Q4u.png",
+          "status": 200,
+          "sha256": "5651554f2583c9d6311f63b63b4b0cc33417e996aa7d6e7236d25874faa68379",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-2.YwtgAzb4.png",
+          "status": 200,
+          "sha256": "7ca755b65667e8ab1440573fba890e3cd4126cdaabcd81fb1b114670bacaf0fa",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-3.CoQoKp13.png",
+          "status": 200,
+          "sha256": "bdfa50d027fd951489dfa0b5e4240fbae8396233256afa595c8bb3f12b12d981",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-4.BvILOk6m.png",
+          "status": 200,
+          "sha256": "f86a1a21d64c0836fbff85e4cde7799e11ca73a58d7a2d6ed07d6b5893ca57d9",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-6.Dia_Kbrb.png",
+          "status": 200,
+          "sha256": "5ff4c18c303ae1a994381f1502f49ba76b94778210ddd79683d0e3e4c1c6a12f",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-5.DfF3tyKr.png",
+          "status": 200,
+          "sha256": "650dbb3e47afb4c74ef1818ea1043d26cfa50d4d60b0ea77d38dfcca06607e10",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-10.UtTelRdj.png",
+          "status": 200,
+          "sha256": "f0cbe43ec202179d1a0cb73391808397c945d7bd8f431a09b1e9968093271c4b",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-02-vllm-deployment-7.BecNXQ2T.png",
+          "status": 200,
+          "sha256": "f9c60576acba9377adffc853b55a0992ae99e7108e2baac937b3dac189c1566f",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/03-agentic-ai-platform.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/03-agentic-ai-platform",
+      "status": 200,
+      "baselineVisible": "0.10.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-03-agentic-ai-platform-0.DQLddYf2.png",
+          "status": 200,
+          "sha256": "5255aaf6fbd072c9e2e052412f5ca3ecc51bef12160acf100e41b5324bb18226",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-03-agentic-ai-platform-1.BcspIuuc.png",
+          "status": 200,
+          "sha256": "667756c476254ff01d0edc915126b1097a3b0153523e1b5a084a591e65a57c5b",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-03-agentic-ai-platform-2.COy00KCE.png",
+          "status": 200,
+          "sha256": "8ce49cbc4a9aae673eabdd45cccdd07cabf659943108c1cac26220cacc08323b",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-03-agentic-ai-platform-3.BBek_SoW.png",
+          "status": 200,
+          "sha256": "e4ff1913b9156301e87b32d6f2440761a47a48ea0eb11f3992aedd4ee6322b37",
+          "matchesReviewedPNG": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-03-agentic-ai-platform-4.DR405ndf.png",
+          "status": 200,
+          "sha256": "d049b2a3a907365b003a9981bcb174c8a51949f65b9c0c12e6f72aa352f96d2d",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "scope": "HTTP fetch only. No browser JavaScript or synthetic GA4 events. Published hashed img URLs verified against reviewed PNGs."
+}

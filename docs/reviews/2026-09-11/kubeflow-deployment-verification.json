@@ -1,0 +1,221 @@
+{
+  "checkedAt": "2026-09-12T22:00:28.015420+00:00",
+  "pr": 229,
+  "reviewedHead": "63bb21e6ce99675e213460a08925b85b2f0e2e08",
+  "mergeCommit": "248dab9501ce65ef89f0aab49d553c2762ac02e8",
+  "deploymentRun": 34721055670,
+  "deploymentStatus": "success",
+  "pages": [
+    {
+      "path": "en/ai-ml/kubeflow/01-architecture-installation.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/kubeflow/01-architecture-installation",
+      "status": 200,
+      "baselineVisible": "26.03.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-kubeflow-01-architecture-installation-0.CBl8BnVp.png",
+          "status": 200,
+          "sha256": "e746c2b025710e543177c8fc47da06ec66448ec20361eb5c4091eae2e42e57b6",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/kubeflow/02-pipelines.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/kubeflow/02-pipelines",
+      "status": 200,
+      "baselineVisible": "2.16.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-kubeflow-02-pipelines-0.CsD9UfHB.png",
+          "status": 200,
+          "sha256": "cf18a9881d38866391b40416442cf515ca9a1e7cf280272bf7585d8270f5b1bb",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/kubeflow/03-notebooks.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/kubeflow/03-notebooks",
+      "status": 200,
+      "baselineVisible": "1.11.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-kubeflow-03-notebooks-0.dLbBKpfW.png",
+          "status": 200,
+          "sha256": "4806a253dde42c5f1ef3e2406068563ca6f7738b87f198128a31883605486e77",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/kubeflow/04-katib.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/kubeflow/04-katib",
+      "status": 200,
+      "baselineVisible": "0.19",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-kubeflow-04-katib-0.BUXkRhka.png",
+          "status": 200,
+          "sha256": "25d17ab8b4e5e25c2ca26ce8f41172decacdf368a557ed1dde3c79870a832706",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/kubeflow/05-training-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/kubeflow/05-training-operator",
+      "status": 200,
+      "baselineVisible": "2.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-kubeflow-05-training-operator-0.C1B5l8Y1.png",
+          "status": 200,
+          "sha256": "5d6f289979f61cd8a67ddc1f7d9f77b224e31baec23e95a66c2ceb8bc1a3a7b8",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/kubeflow/06-kserve.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/kubeflow/06-kserve",
+      "status": 200,
+      "baselineVisible": "0.18",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-kubeflow-06-kserve-0.MHWxMB85.png",
+          "status": 200,
+          "sha256": "c27f2f36867ce90ded0a70893b4aea481f42486ad0617f4b62d0295d3dfeccf0",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "en/ai-ml/kubeflow/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/kubeflow/",
+      "status": 200,
+      "baselineVisible": "26.03.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-kubeflow-readme-0.C4fXWNA1.png",
+          "status": 200,
+          "sha256": "f23cca16cd92377afe54737d374a428c8974301090f3dc1b43f5e98c5b5ced3c",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/kubeflow/01-architecture-installation.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/kubeflow/01-architecture-installation",
+      "status": 200,
+      "baselineVisible": "26.03.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-kubeflow-01-architecture-installation-0.DPFwzPd3.png",
+          "status": 200,
+          "sha256": "3ebc6fb03df6f5492fa82b9ba724caddf406d7ecd3bdde712fa9072cb6886df8",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/kubeflow/02-pipelines.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/kubeflow/02-pipelines",
+      "status": 200,
+      "baselineVisible": "2.16.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-kubeflow-02-pipelines-0.CfxEsb58.png",
+          "status": 200,
+          "sha256": "93efe18fcefd7e223a865359f0c5c679085e37be0bfa58c738d9fcba5d2ce492",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/kubeflow/03-notebooks.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/kubeflow/03-notebooks",
+      "status": 200,
+      "baselineVisible": "1.11.0",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-kubeflow-03-notebooks-0.Db9L7sOT.png",
+          "status": 200,
+          "sha256": "947446ed6e388fa0ae25d5e68e8ae558492328498f6cdfb9413dbc76e20a097a",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/kubeflow/04-katib.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/kubeflow/04-katib",
+      "status": 200,
+      "baselineVisible": "0.19",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-kubeflow-04-katib-0.BFMyAUEM.png",
+          "status": 200,
+          "sha256": "a79f982cff7c6776ca5686f3a51d1f624d045a9c69bd7723d4177c595c4625a5",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/kubeflow/05-training-operator.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/kubeflow/05-training-operator",
+      "status": 200,
+      "baselineVisible": "2.2",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-kubeflow-05-training-operator-0.DEp5IzMT.png",
+          "status": 200,
+          "sha256": "706a4a598cc897385979d7fa5ee49dddf00319de5072d7b95ffc547fa6c547a3",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/kubeflow/06-kserve.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/kubeflow/06-kserve",
+      "status": 200,
+      "baselineVisible": "0.18",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-kubeflow-06-kserve-0.B0Sr_CWU.png",
+          "status": 200,
+          "sha256": "16883bb93da865df753db7f707a928878d4f7d47a3e1224583ca90eaa1d27981",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "path": "ko/ai-ml/kubeflow/README.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/kubeflow/",
+      "status": 200,
+      "baselineVisible": "26.03.1",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-kubeflow-readme-0.NU9an9X0.png",
+          "status": 200,
+          "sha256": "e1dad1fec704f95affc0b720d1eb3d31bba7e67e84f0a3d176789ef9e315ea72",
+          "matchesReviewedPNG": true
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "scope": "HTTP fetch only. No browser JavaScript or synthetic GA4 events. Published hashed img URLs verified against reviewed PNGs."
+}

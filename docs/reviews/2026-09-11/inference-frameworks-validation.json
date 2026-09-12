@@ -1,0 +1,1584 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T22:08:39.029080+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 30,
+    "originalTopicsPerLocale": 15,
+    "frameworkTopics": 9,
+    "figures": 8
+  },
+  "contentPreservation": {
+    "originalUniqueCodeBlocksRead": 78,
+    "originalGuidesLines": [
+      1772,
+      2629
+    ],
+    "originalQuizLinesEach": 788,
+    "preserved": "All9frameworktopicsand15quiztopics;English-onlyGrafana,KVmetadata,autoscalingandNeuroncompilationtopicsincludedinbothlanguages.",
+    "changes": "Replace invented Dynamo/AIBrix APIs, malformed Neuron deployment and stale Ray examples; remove unsourced performance/cost tables; current NIM profiles/backend/metrics, TGImaintenance, SGLanggrammar/prefixlimits, Ollamaauth/preparation, and exact Inf2 chip/core/HBM/host-RAM distinction."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/04-inference-frameworks.md",
+        "sha256": "26645e389fe09f779328531e49fe6ea34bd4bd639da0a8b44be3e6b899a3085d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "llm-서빙을-위한-추론-프레임워크"
+          },
+          {
+            "tag": "h2",
+            "id": "추론-프레임워크-생태계"
+          },
+          {
+            "tag": "h2",
+            "id": "nvidia-nim"
+          },
+          {
+            "tag": "h3",
+            "id": "배포-준비와-profile"
+          },
+          {
+            "tag": "h3",
+            "id": "메트릭과-genai-perf"
+          },
+          {
+            "tag": "h2",
+            "id": "nvidia-dynamo"
+          },
+          {
+            "tag": "h3",
+            "id": "실제-dgd-구조"
+          },
+          {
+            "tag": "h2",
+            "id": "aibrix"
+          },
+          {
+            "tag": "h3",
+            "id": "modeladapter와-podautoscaler"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-serve-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "sglang"
+          },
+          {
+            "tag": "h3",
+            "id": "구조화-요청-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "hugging-face-tgi"
+          },
+          {
+            "tag": "h2",
+            "id": "ollama"
+          },
+          {
+            "tag": "h2",
+            "id": "litellm"
+          },
+          {
+            "tag": "h2",
+            "id": "aws-neuron과-inferentia2"
+          },
+          {
+            "tag": "h3",
+            "id": "장치-할당과-plugin-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "성능·비용-비교와-운영"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "llm-서빙을-위한-추론-프레임워크",
+          "추론-프레임워크-생태계",
+          "nvidia-nim",
+          "배포-준비와-profile",
+          "메트릭과-genai-perf",
+          "nvidia-dynamo",
+          "실제-dgd-구조",
+          "aibrix",
+          "modeladapter와-podautoscaler",
+          "ray-serve-통합",
+          "sglang",
+          "구조화-요청-예제",
+          "hugging-face-tgi",
+          "ollama",
+          "litellm",
+          "aws-neuron과-inferentia2",
+          "장치-할당과-plugin-경로",
+          "성능·비용-비교와-운영",
+          "검증-범위",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/04-inference-frameworks.md",
+        "sha256": "7cf4307deead70faf4db5d1d9cbbf6496c9f03d145c33ff8b6c68b47799ec81e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "inference-frameworks-for-llm-serving"
+          },
+          {
+            "tag": "h2",
+            "id": "inference-framework-landscape"
+          },
+          {
+            "tag": "h2",
+            "id": "nvidia-nim"
+          },
+          {
+            "tag": "h3",
+            "id": "deployment-preparation-and-profiles"
+          },
+          {
+            "tag": "h3",
+            "id": "metrics-and-genai-perf"
+          },
+          {
+            "tag": "h2",
+            "id": "nvidia-dynamo"
+          },
+          {
+            "tag": "h3",
+            "id": "actual-dgd-structure"
+          },
+          {
+            "tag": "h2",
+            "id": "aibrix"
+          },
+          {
+            "tag": "h3",
+            "id": "modeladapter-and-podautoscaler"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-serve-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "sglang"
+          },
+          {
+            "tag": "h3",
+            "id": "structured-request-example"
+          },
+          {
+            "tag": "h2",
+            "id": "hugging-face-tgi"
+          },
+          {
+            "tag": "h2",
+            "id": "ollama"
+          },
+          {
+            "tag": "h2",
+            "id": "litellm"
+          },
+          {
+            "tag": "h2",
+            "id": "aws-neuron-and-inferentia2"
+          },
+          {
+            "tag": "h3",
+            "id": "device-allocation-and-plugin-paths"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-cost-and-operations"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "inference-frameworks-for-llm-serving",
+          "inference-framework-landscape",
+          "nvidia-nim",
+          "deployment-preparation-and-profiles",
+          "metrics-and-genai-perf",
+          "nvidia-dynamo",
+          "actual-dgd-structure",
+          "aibrix",
+          "modeladapter-and-podautoscaler",
+          "ray-serve-integration",
+          "sglang",
+          "structured-request-example",
+          "hugging-face-tgi",
+          "ollama",
+          "litellm",
+          "aws-neuron-and-inferentia2",
+          "device-allocation-and-plugin-paths",
+          "performance-cost-and-operations",
+          "verification-scope",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/04-inference-frameworks-quiz.md",
+        "sha256": "b50a9e32253b5828387984486a1fd1771e77b371ebba422267b0ee72adebad90",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "추론-프레임워크-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-nim의-주요-이점과-배포-시-확인할-조건은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-dynamo의-분리형-서빙이란-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-aibrix-0-7-0에서-lora를-어떻게-선언하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-ray-serve를-kubernetes에서-운영하는-controller와-확장-계층은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-inf2-선택-시-비용과-장치-수를-어떻게-평가하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-ttft-itl과-end-to-end-latency는-어떻게-다른가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-dynamo의-kv-aware-routing은-무엇을-고려하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-neuron-device-plugin을-설치하기-전에-무엇을-확인하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-aibrix의-autoscaler-설정은-어떤-구조인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-ngc와-nim-profile의-역할-및-credential-경계는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-dynamo의-여러-backend-지원은-자유로운-혼합을-뜻하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-모델-cache를-어떤-기준으로-선택하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-genai-perf-cli와-측정-결과에서-주의할-점은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-statefulset만으로-분산-vllm이-완성되나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-neuron-rt-visible-cores와-kubernetes-resource-요청의-관계는-무엇인가요"
+          }
+        ],
+        "renderedIds": [
+          "추론-프레임워크-퀴즈",
+          "_1-nim의-주요-이점과-배포-시-확인할-조건은-무엇인가요",
+          "_2-dynamo의-분리형-서빙이란-무엇인가요",
+          "_3-aibrix-0-7-0에서-lora를-어떻게-선언하나요",
+          "_4-ray-serve를-kubernetes에서-운영하는-controller와-확장-계층은-무엇인가요",
+          "_5-inf2-선택-시-비용과-장치-수를-어떻게-평가하나요",
+          "_6-ttft-itl과-end-to-end-latency는-어떻게-다른가요",
+          "_7-dynamo의-kv-aware-routing은-무엇을-고려하나요",
+          "_8-neuron-device-plugin을-설치하기-전에-무엇을-확인하나요",
+          "_9-aibrix의-autoscaler-설정은-어떤-구조인가요",
+          "_10-ngc와-nim-profile의-역할-및-credential-경계는-무엇인가요",
+          "_11-dynamo의-여러-backend-지원은-자유로운-혼합을-뜻하나요",
+          "_12-모델-cache를-어떤-기준으로-선택하나요",
+          "_13-genai-perf-cli와-측정-결과에서-주의할-점은-무엇인가요",
+          "_14-statefulset만으로-분산-vllm이-완성되나요",
+          "_15-neuron-rt-visible-cores와-kubernetes-resource-요청의-관계는-무엇인가요"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/04-inference-frameworks-quiz.md",
+        "sha256": "a2658712eee830734bce06c51e6b95cc762e530ca49f9e59a063d605f0714954",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "inference-frameworks-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-does-nim-provide-and-what-must-be-verified"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-what-is-dynamo-disaggregated-serving"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-how-is-a-lora-adapter-declared-in-aibrix0-7-0"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-which-controller-and-scaling-layers-operate-ray-serve-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-how-should-inf2-cost-and-hardware-be-evaluated"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-how-do-ttft-itl-and-end-to-end-latency-differ"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-what-does-dynamo-kv-aware-routing-consider"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-what-should-be-checked-before-installing-the-neuron-device-plugin"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-what-is-the-aibrix-autoscaler-configuration-shape"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-what-are-ngc-profile-roles-and-credential-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-does-multiple-backend-support-imply-arbitrary-mixing"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-how-should-model-caching-be-selected"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-what-matters-in-genai-perf-commands-and-results"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-does-statefulset-alone-implement-distributed-vllm"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-how-does-neuron-rt-visible-cores-relate-to-kubernetes-allocation"
+          }
+        ],
+        "renderedIds": [
+          "inference-frameworks-quiz",
+          "_1-what-does-nim-provide-and-what-must-be-verified",
+          "_2-what-is-dynamo-disaggregated-serving",
+          "_3-how-is-a-lora-adapter-declared-in-aibrix0-7-0",
+          "_4-which-controller-and-scaling-layers-operate-ray-serve-on-kubernetes",
+          "_5-how-should-inf2-cost-and-hardware-be-evaluated",
+          "_6-how-do-ttft-itl-and-end-to-end-latency-differ",
+          "_7-what-does-dynamo-kv-aware-routing-consider",
+          "_8-what-should-be-checked-before-installing-the-neuron-device-plugin",
+          "_9-what-is-the-aibrix-autoscaler-configuration-shape",
+          "_10-what-are-ngc-profile-roles-and-credential-boundaries",
+          "_11-does-multiple-backend-support-imply-arbitrary-mixing",
+          "_12-how-should-model-caching-be-selected",
+          "_13-what-matters-in-genai-perf-commands-and-results",
+          "_14-does-statefulset-alone-implement-distributed-vllm",
+          "_15-how-does-neuron-rt-visible-cores-relate-to-kubernetes-allocation"
+        ]
+      }
+    ]
+  },
+  "native": {
+    "status": "passed",
+    "schemas": [
+      {
+        "kind": "ModelAdapter",
+        "status": "passed",
+        "sha256": "6ea6d6d59e18a08663b02433a97f81d8b0f9d9ae4f8023bc768946e5e79af756"
+      },
+      {
+        "case": "ModelAdapter replicas2 rejected",
+        "passed": true
+      },
+      {
+        "kind": "PodAutoscaler",
+        "status": "passed",
+        "sha256": "b2c27744c98028962ecf0e7f705a6ef00c379876e592afd47382cbbae820e94d"
+      },
+      {
+        "kind": "DynamoGraphDeployment",
+        "status": "passed",
+        "sha256": "f6dc65d048e804bb23a90a141882c7e0d71331c634dc56a1d7eaa5399f3b5779"
+      }
+    ],
+    "helm": [
+      {
+        "chart": "dynamo",
+        "resourceKinds": {
+          "ServiceAccount": 2,
+          "ConfigMap": 1,
+          "ClusterRole": 13,
+          "ClusterRoleBinding": 11,
+          "Role": 1,
+          "RoleBinding": 1,
+          "Service": 2,
+          "Deployment": 1,
+          "MutatingWebhookConfiguration": 1,
+          "ValidatingWebhookConfiguration": 1
+        },
+        "images": [
+          "nvcr.io/nvidia/ai-dynamo/kubernetes-operator:1.4.2"
+        ],
+        "secretEnv": [],
+        "privilegedResources": [],
+        "initContainers": [
+          {
+            "resource": "audit-dynamo-operator-controller-manager",
+            "name": "crd-apply"
+          }
+        ],
+        "sha256": "064298855112c138c25a6f38f64699484352494d34d14e4bae8075c98d11858c"
+      },
+      {
+        "chart": "aibrix",
+        "resourceKinds": {
+          "CustomResourceDefinition": 8,
+          "ServiceAccount": 4,
+          "Secret": 1,
+          "ClusterRole": 4,
+          "ClusterRoleBinding": 4,
+          "Role": 1,
+          "RoleBinding": 1,
+          "Service": 6,
+          "Deployment": 5,
+          "BackendTrafficPolicy": 1,
+          "ClientTrafficPolicy": 1,
+          "EnvoyExtensionPolicy": 2,
+          "EnvoyPatchPolicy": 1,
+          "EnvoyProxy": 1,
+          "Gateway": 1,
+          "GatewayClass": 1,
+          "HTTPRoute": 2,
+          "MutatingWebhookConfiguration": 1,
+          "ValidatingWebhookConfiguration": 1
+        },
+        "images": [
+          "aibrix/controller-manager:v0.7.0",
+          "aibrix/gateway-plugins:v0.7.0",
+          "aibrix/kvcache:20241120",
+          "aibrix/metadata-service:v0.7.0",
+          "aibrix/runtime:v0.7.0",
+          "busybox:stable",
+          "envoyproxy/envoy:v1.33.2",
+          "envoyproxy/gateway:v1.2.8",
+          "redis:7.4"
+        ],
+        "secretEnv": [],
+        "privilegedResources": [],
+        "initContainers": [
+          {
+            "resource": "audit-aibrix-gateway-plugins",
+            "name": "init-c"
+          },
+          {
+            "resource": "audit-aibrix-metadata-service",
+            "name": "init-redis"
+          }
+        ],
+        "sha256": "d6f7e3a5fe76ec92dfbc116a301dfe8b593159a804296b1d2f78341d7f4f3d13"
+      },
+      {
+        "chart": "neuron",
+        "resourceKinds": {
+          "ServiceAccount": 2,
+          "ConfigMap": 1,
+          "ClusterRole": 1,
+          "ClusterRoleBinding": 2,
+          "DaemonSet": 2,
+          "Pod": 1
+        },
+        "images": [
+          "public.ecr.aws/neuron/neuron-device-plugin:2.32.0.0",
+          "public.ecr.aws/neuron/neuron-node-recovery:1.12.0",
+          "public.ecr.aws/neuron/pytorch-inference-neuronx:2.1.2-neuronx-py310-sdk2.19.1-ubuntu20.04",
+          "registry.k8s.io/node-problem-detector/node-problem-detector:v1.36.0"
+        ],
+        "secretEnv": [],
+        "privilegedResources": [
+          "node-problem-detector"
+        ],
+        "initContainers": [],
+        "sha256": "5fbd1904d4bf014e2da1e7d49bc57e4e2006f23ce185182ca211475dd36f991c"
+      }
+    ],
+    "genaiPerf": "0.0.16 published-wheel AST/options inspection; not full CLI execution or load generation.",
+    "scope": "Offline official Helm rendering and JSONschema only; no controllers/admission/defaulting/CEL/GPU/Neuron/model execution."
+  },
+  "client": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "case": "success",
+        "passed": true
+      },
+      {
+        "locale": "ko",
+        "case": "truncated",
+        "passed": true
+      },
+      {
+        "locale": "ko",
+        "case": "invalid-shape",
+        "passed": true
+      },
+      {
+        "locale": "en",
+        "case": "success",
+        "passed": true
+      },
+      {
+        "locale": "en",
+        "case": "truncated",
+        "passed": true
+      },
+      {
+        "locale": "en",
+        "case": "invalid-shape",
+        "passed": true
+      }
+    ],
+    "requests": 6,
+    "sourceSha256": "3a969d126e7cb655c054536e271fcedb32de7140f9fd127d2d7096a14ebe4b0d",
+    "scope": "Exact published urllib client with redirected loopback HTTP and synthetic secret-file read. No remote inference, real credentials, GPU/Neuron or model calls."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "3d5189ac9b06c6342a889c43c57473f5f97ee8beb02e421eef97f52a8a7b3af0"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "3d5189ac9b06c6342a889c43c57473f5f97ee8beb02e421eef97f52a8a7b3af0"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "3d5189ac9b06c6342a889c43c57473f5f97ee8beb02e421eef97f52a8a7b3af0"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "e6819f9848ab5a0598c4f2ac624d54e3161c609e7d04e93aa99997d0f98407c0"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "e6819f9848ab5a0598c4f2ac624d54e3161c609e7d04e93aa99997d0f98407c0"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "e6819f9848ab5a0598c4f2ac624d54e3161c609e7d04e93aa99997d0f98407c0"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "b5f2de0060faa0d8abc6dcc4c0d18d08c211a59483722be7c70f722fd4f6ea86"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "b5f2de0060faa0d8abc6dcc4c0d18d08c211a59483722be7c70f722fd4f6ea86"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "b5f2de0060faa0d8abc6dcc4c0d18d08c211a59483722be7c70f722fd4f6ea86"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "76117d161f6e087d6c453d0b4b1815964d86b611ad26b91a5b57c5d527629bbd"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "76117d161f6e087d6c453d0b4b1815964d86b611ad26b91a5b57c5d527629bbd"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "76117d161f6e087d6c453d0b4b1815964d86b611ad26b91a5b57c5d527629bbd"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "85ce5fb1e1f680eaba221be35a537b1a928623165e8f5addde4e2c30c72076a1"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "85ce5fb1e1f680eaba221be35a537b1a928623165e8f5addde4e2c30c72076a1"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "85ce5fb1e1f680eaba221be35a537b1a928623165e8f5addde4e2c30c72076a1"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "d3cc3556ad4586b3c4dfd68dc0f45788d6cae2f2f03485f2ccbdd4391fdd154b"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "d3cc3556ad4586b3c4dfd68dc0f45788d6cae2f2f03485f2ccbdd4391fdd154b"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "d3cc3556ad4586b3c4dfd68dc0f45788d6cae2f2f03485f2ccbdd4391fdd154b"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "ca7ebc32a88202da4c6cd333f8d1a2a35eead47a5981b4c2eaddf0cd36da3055"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "ca7ebc32a88202da4c6cd333f8d1a2a35eead47a5981b4c2eaddf0cd36da3055"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "ca7ebc32a88202da4c6cd333f8d1a2a35eead47a5981b4c2eaddf0cd36da3055"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c727ec9e4e2593dc44b39263b3bf79ff76c78a9fa721ba1a964c0cbe8b361774"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c727ec9e4e2593dc44b39263b3bf79ff76c78a9fa721ba1a964c0cbe8b361774"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "c727ec9e4e2593dc44b39263b3bf79ff76c78a9fa721ba1a964c0cbe8b361774"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngs": [
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-04-inference-frameworks-0.png",
+      "sha256": "a221778ad65449b749e27c8993d44770dd0ede97dcd059fb949ac324d183743e"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-04-inference-frameworks-1.png",
+      "sha256": "76948ae0b0bd352776754042534db00a4932da2e38d8a0f1ac744bf57a9287ba"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-04-inference-frameworks-2.png",
+      "sha256": "6171a65a46cf8464476203785bcb6ae1632d9e92c89e09f8cc94641d88a0d49f"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-04-inference-frameworks-3.png",
+      "sha256": "20ab9840500d59d6bb23a4beadf346bf3160b7814f23044794ee5b33cc6071a6"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-04-inference-frameworks-0.png",
+      "sha256": "279264beeac50d00be2874c55ac93e86879497a4788adbd375d24ec36ce3f2c1"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-04-inference-frameworks-1.png",
+      "sha256": "48aa9f9bce0eed79cd7d13be94a73afc33f7020929655e69f84b4a5f179f4a51"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-04-inference-frameworks-2.png",
+      "sha256": "f36faa0d9d088774cf7ac50f648bb073311d9292ccdc2ff2193cba6c051ee502"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-04-inference-frameworks-3.png",
+      "sha256": "33e73b1946d5c22a73383c739e9686ab2766221ff0408c77403e456e6602b3a2"
+    }
+  ],
+  "publishedLinks": [
+    {
+      "url": "https://awsdocs-neuron.readthedocs-hosted.com/en/latest/about-neuron/arch/neuron-hardware/inf2-arch.html",
+      "status": 200,
+      "bytes": 235983
+    },
+    {
+      "url": "https://docs.nvidia.com/nim/large-language-models/2.0.12/about-nim-llm/release-notes.html",
+      "status": 200,
+      "bytes": 44608
+    },
+    {
+      "url": "https://docs.nvidia.com/nim/large-language-models/2.0.12/reference/environment-variables.html",
+      "status": 200,
+      "bytes": 129306
+    },
+    {
+      "url": "https://docs.nvidia.com/nim/large-language-models/2.0.12/reference/logging-and-observability.html",
+      "status": 200,
+      "bytes": 46799
+    },
+    {
+      "url": "https://docs.ollama.com/api/authentication",
+      "status": 200,
+      "bytes": 257350
+    },
+    {
+      "url": "https://docs.ollama.com/faq",
+      "status": 200,
+      "bytes": 481261
+    },
+    {
+      "url": "https://github.com/ai-dynamo/dynamo/tree/v1.4.2",
+      "status": 200,
+      "bytes": 479523
+    },
+    {
+      "url": "https://github.com/aibrix/aibrix/tree/v0.7.0",
+      "status": 200,
+      "bytes": 356573
+    },
+    {
+      "url": "https://github.com/aws-neuron/aws-neuron-sdk/blob/v2.32.0/libraries/vllm-neuron/neuron-inference-overview.rst",
+      "status": 200,
+      "bytes": 286212
+    },
+    {
+      "url": "https://github.com/aws-neuron/neuron-helm-charts",
+      "status": 200,
+      "bytes": 267691
+    },
+    {
+      "url": "https://github.com/huggingface/text-generation-inference",
+      "status": 200,
+      "bytes": 434924
+    },
+    {
+      "url": "https://github.com/ollama/ollama/tree/v0.34.0",
+      "status": 200,
+      "bytes": 505645
+    },
+    {
+      "url": "https://github.com/sgl-project/sglang/blob/v0.5.19/docs/docs/advanced_features/structured_outputs.mdx",
+      "status": 200,
+      "bytes": 530126
+    },
+    {
+      "url": "https://pypi.org/project/genai-perf/0.0.16/",
+      "status": 200,
+      "bytes": 3038
+    }
+  ],
+  "primarySources": [
+    {
+      "file": "dynamo-release.json",
+      "url": "https://api.github.com/repos/ai-dynamo/dynamo/releases/latest",
+      "status": 200,
+      "sha256": "b745f122a6dd930e6bbed57a26ea82b38a6ecf228884bfb3be23d5f23eeb069e",
+      "version": "v1.4.2",
+      "publishedAt": "2026-08-29T01:29:24Z"
+    },
+    {
+      "file": "aibrix-release.json",
+      "url": "https://api.github.com/repos/aibrix/aibrix/releases/latest",
+      "status": 200,
+      "sha256": "9b0358a2176887c7a625dc95d39cb881f6908e403bf8495a6fb9b8f4bf3234c0",
+      "version": "v0.7.0",
+      "publishedAt": "2026-06-18T00:23:05Z"
+    },
+    {
+      "file": "sglang-release.json",
+      "url": "https://api.github.com/repos/sgl-project/sglang/releases/latest",
+      "status": 200,
+      "sha256": "06835ca6b72b488b0434dfb67232aa7edbaf969d4eca1f7cf933c43d2f462488",
+      "version": "v0.5.19",
+      "publishedAt": "2026-09-05T02:27:42Z"
+    },
+    {
+      "file": "tgi-release.json",
+      "url": "https://api.github.com/repos/huggingface/text-generation-inference/releases/latest",
+      "status": 200,
+      "sha256": "d6ea0096e24f7e441961e35ae9bdaa4dce9cee2c8b3de63afa10a77d384566b0",
+      "version": "v3.3.7",
+      "publishedAt": "2025-12-19T14:35:25Z"
+    },
+    {
+      "file": "ollama-release.json",
+      "url": "https://api.github.com/repos/ollama/ollama/releases/latest",
+      "status": 200,
+      "sha256": "28cdef9ac8b014d1bcf621604eed38d31e6d6d45ec77301c64e3004a03003f29",
+      "version": "v0.34.0",
+      "publishedAt": "2026-09-05T23:49:00Z"
+    },
+    {
+      "file": "nim-operator-release.json",
+      "url": "https://api.github.com/repos/NVIDIA/k8s-nim-operator/releases/latest",
+      "status": 200,
+      "sha256": "abc103272bfcd138b30afa0fa6204df64c399f208e1b5aa3751ea5d60d185d65",
+      "version": "v3.1.2",
+      "publishedAt": "2026-08-12T07:20:03Z"
+    },
+    {
+      "file": "neuron-release.json",
+      "url": "https://api.github.com/repos/aws-neuron/aws-neuron-sdk/releases/latest",
+      "status": 200,
+      "sha256": "dd7fef72664acd33fe58d7383e1cda770b542168b3035c7b5b5b365eeb5862d7",
+      "version": "v2.32.0",
+      "publishedAt": "2026-08-18T00:45:50Z"
+    },
+    {
+      "file": "tgi-readme.md",
+      "url": "https://raw.githubusercontent.com/huggingface/text-generation-inference/main/README.md",
+      "status": 200,
+      "sha256": "cc6b8a68200acc247cbd1d3cf5ca6c54b5b043040cc6193b58ff16afd80ee040"
+    },
+    {
+      "file": "nim-config.html",
+      "url": "https://docs.nvidia.com/nim/large-language-models/latest/configuration.html",
+      "status": 200,
+      "sha256": "4359eb8844eebc068092c8c8a9cf3ebf5c95dae486dd42026f5028c42a3fe8ac"
+    },
+    {
+      "file": "nim-profiles.html",
+      "url": "https://docs.nvidia.com/nim/large-language-models/latest/profiles.html",
+      "status": 200,
+      "sha256": "8d78378fee3069683c25aec1df4095414bdf89e09a7bb3daae122cdbc63c7523"
+    },
+    {
+      "file": "nim-metrics.html",
+      "url": "https://docs.nvidia.com/nim/large-language-models/latest/observability.html",
+      "status": 200,
+      "sha256": "2be668b6f25f2233a1adca2752e4606d0e2df4f43d6f5af6517a963bff93ff4e"
+    },
+    {
+      "file": "neuron-inf2.html",
+      "url": "https://awsdocs-neuron.readthedocs-hosted.com/en/latest/about-neuron/arch/neuron-hardware/inf2-arch.html",
+      "status": 200,
+      "sha256": "0096d6752c7f1d7b7ea85134fcb9dab9906ac3cbb8bbbc17e76069a41a07c608"
+    },
+    {
+      "file": "neuron-k8s.html",
+      "url": "https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/kubernetes-getting-started.html",
+      "status": 200,
+      "sha256": "6bc071b87473f1087281e6cc89f3da81bdc024ce7b1818f2e3f52641781b8910"
+    },
+    {
+      "file": "genai-perf-pypi.json",
+      "url": "https://pypi.org/pypi/genai-perf/json",
+      "status": 200,
+      "sha256": "7d3fe311cae271b89a55814587f112e2a0e21d2cda3f593a1e883de64df6e4a6",
+      "version": "0.0.16",
+      "publishedAt": null
+    },
+    {
+      "file": "dynamo-README.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/README.md",
+      "status": 200,
+      "sha256": "889c116dbaf8e28b2c91374cd95552666d636bf528e60425361212c766c4f2c9"
+    },
+    {
+      "file": "dynamo-deploy_helm_README.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/deploy/helm/README.md",
+      "status": 200,
+      "sha256": "a7d6fa44763f8ffe3c2c21063c6ddc0eb01b4bc36d80d5f69581acbfe794423b"
+    },
+    {
+      "file": "dynamo-deploy_helm_charts_platform_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/deploy/helm/charts/platform/Chart.yaml",
+      "status": 200,
+      "sha256": "e036125fc02d8526ad5b7051a978efe5499fee80ffae094bf0e846c80d27b74b"
+    },
+    {
+      "file": "dynamo-deploy_helm_charts_platform_values.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/deploy/helm/charts/platform/values.yaml",
+      "status": 200,
+      "sha256": "4163f5193dd2c00125295fd1ec71398166f0d23ae585784cd5fec96034b8a983"
+    },
+    {
+      "file": "dynamo-components_src_dynamo_router_README.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/components/src/dynamo/router/README.md",
+      "status": 200,
+      "sha256": "6902e30b46dd4565a85907b1e40b71d7d90d1de9071455cb8fc7e33163782cc3"
+    },
+    {
+      "file": "dynamo-components_src_dynamo_planner_README.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/components/src/dynamo/planner/README.md",
+      "status": 200,
+      "sha256": "1bc80b203185ad264d42d2ab603ea76b63faadeca0ed8fb2a8e8f0900f8e64b9"
+    },
+    {
+      "file": "aibrix-docs_source_getting_started_installation_installation.rst",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/docs/source/getting_started/installation/installation.rst",
+      "status": 200,
+      "sha256": "a7a0f6c481be8c2a596e8f127081271589b6f6fd738dd5b7601d724f81474478"
+    },
+    {
+      "file": "aibrix-docs_source_getting_started_quickstart.rst",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/docs/source/getting_started/quickstart.rst",
+      "status": 200,
+      "sha256": "cde61e1b53ec8af339b62d997f20253711838867a2b3505d6176010977af1e3f"
+    },
+    {
+      "file": "aibrix-config_samples_model_v1alpha1_modeladapter.yaml",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/config/samples/model_v1alpha1_modeladapter.yaml",
+      "status": 200,
+      "sha256": "4ce36bd543c7627453333663b25b7a4295d46b74238d83d2568adadd5fe5caa2"
+    },
+    {
+      "file": "aibrix-config_samples_autoscaling_v1alpha1_podautoscaler.yaml",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/config/samples/autoscaling_v1alpha1_podautoscaler.yaml",
+      "status": 200,
+      "sha256": "007adb7cc054603ff6989c68fe414f84db22680393200ded44791b38ca6cc752"
+    },
+    {
+      "file": "aibrix-api_model_v1alpha1_modeladapter_types.go",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/api/model/v1alpha1/modeladapter_types.go",
+      "status": 200,
+      "sha256": "689ed14ace47a597716fa0c1d214e8e7949fd6558a33e6420bd63cbedbd2278c"
+    },
+    {
+      "file": "aibrix-api_autoscaling_v1alpha1_podautoscaler_types.go",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/api/autoscaling/v1alpha1/podautoscaler_types.go",
+      "status": 200,
+      "sha256": "6b29d4fe4332a38e480748ac51a5d7bcb24035f32560e9e6b60550ebe92aba95"
+    },
+    {
+      "file": "aibrix-config_crd_model_model.aibrix.ai_modeladapters.yaml",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/config/crd/model/model.aibrix.ai_modeladapters.yaml",
+      "status": 200,
+      "sha256": "f0da6bf3dd25054dd26d6f01f98fb4d21eba7cb3ab7c049e6703c2423d319ae5"
+    },
+    {
+      "file": "aibrix-config_crd_autoscaling_autoscaling.aibrix.ai_podautoscalers.yaml",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/config/crd/autoscaling/autoscaling.aibrix.ai_podautoscalers.yaml",
+      "status": 200,
+      "sha256": "699ff989b08b1a7a5bbdc62c248403f1a4246fe0ef25d4a9bec9842fc81a1531"
+    },
+    {
+      "file": "aibrix-dist_chart_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/dist/chart/Chart.yaml",
+      "status": 200,
+      "sha256": "3afe0591bd5a9b66cdfb089a76456cbde93c0a0a6414d384edd1e8d2260a6d18"
+    },
+    {
+      "file": "aibrix-dist_chart_values.yaml",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/dist/chart/values.yaml",
+      "status": 200,
+      "sha256": "d5f7bbac93e8c34e38774bf1454b794a873ce57f29aa636f529b0ba49980d17e"
+    },
+    {
+      "file": "aibrix-pkg_controller_modeladapter_README.md",
+      "url": "https://raw.githubusercontent.com/aibrix/aibrix/v0.7.0/pkg/controller/modeladapter/README.md",
+      "status": 200,
+      "sha256": "cc9d660d8d987c01c979ac8a020d9882c4760a12e0ed17119da9bbd9b97d342d"
+    },
+    {
+      "file": "sglang-README.md",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.19/README.md",
+      "status": 200,
+      "sha256": "ee6908559f95fe54c3f6773ed23e163d76c984f4750445830a343eac6edca1d0"
+    },
+    {
+      "file": "sglang-python_sglang___init__.py",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.19/python/sglang/__init__.py",
+      "status": 200,
+      "sha256": "0c6bd1b5bc75da013d49d26f7799ca36d682779293405dce1adc193b97a0e6bd"
+    },
+    {
+      "file": "sglang-python_sglang_srt_server_args.py",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.19/python/sglang/srt/server_args.py",
+      "status": 200,
+      "sha256": "204fe57ba81acc25b7badcabf3b4b741021767c91f1d64e0df949cb175464b7c"
+    },
+    {
+      "file": "neuron-about-neuron_arch_neuron-hardware_inferentia2.rst",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/about-neuron/arch/neuron-hardware/inferentia2.rst",
+      "status": 200,
+      "sha256": "5bc2c5b00307174cae88aafcafb79fabb9a1c3b41a8e8eaaabf96f533fd68191"
+    },
+    {
+      "file": "neuron-deploy_eks_helm-chart.rst",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/deploy/eks/helm-chart.rst",
+      "status": 200,
+      "sha256": "37a7257b0d6f0019178a735fa5df310a32b4d29e085154485198a95ad016843a"
+    },
+    {
+      "file": "neuron-deploy_includes_k8s-neuron-device-plugin.rst",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/deploy/includes/k8s-neuron-device-plugin.rst",
+      "status": 200,
+      "sha256": "675bc4cb1e8b39bf6fe33b0fd4dd289a233db3b69c66b02219d81b5e7c17c6a3"
+    },
+    {
+      "file": "neuron-src_k8_k8s-neuron-device-plugin.yml",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/src/k8/k8s-neuron-device-plugin.yml",
+      "status": 200,
+      "sha256": "dbe47ed8dd19317685344755f6e2c5127ca45df5203e8a75feb7a2b1465a00ad"
+    },
+    {
+      "file": "neuron-libraries_nxd-inference_developer_guides_vllm-user-guide-v1.rst",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/libraries/nxd-inference/developer_guides/vllm-user-guide-v1.rst",
+      "status": 200,
+      "sha256": "b8f2d48acfd9601fc39f601c887860264251afca88a3ff8a3949d218115a5af7"
+    },
+    {
+      "file": "neuron-libraries_vllm-neuron_neuron-inference-overview.rst",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/libraries/vllm-neuron/neuron-inference-overview.rst",
+      "status": 200,
+      "sha256": "749c719d07b6817be1a90644087e54fc29f7f05e7e3f4ecd011a46feff2bc3d4"
+    },
+    {
+      "file": "neuron-release-notes_components_vllm-neuron.rst",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/release-notes/components/vllm-neuron.rst",
+      "status": 200,
+      "sha256": "65835552c7063c9e46277af565b6e89c3e7d78ff55c71b5780b370a3641c958e"
+    },
+    {
+      "file": "neuron-about-neuron_announcements_neuron2.x_announcement-end-of-support-vllm-v0.rst",
+      "url": "https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/v2.32.0/about-neuron/announcements/neuron2.x/announcement-end-of-support-vllm-v0.rst",
+      "status": 200,
+      "sha256": "ac75ecd06113c33839719686d08618afdf31a0c57cd4dede9665baa67d0838d3"
+    },
+    {
+      "file": "nimop-README.md",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-nim-operator/v3.1.2/README.md",
+      "status": 200,
+      "sha256": "f388a9b8d9d0fdc11658bfbea45e79963028a4dd5460080f653ee1d1e858c14b"
+    },
+    {
+      "file": "nimop-config_samples_nim_caching_ngc_nimcache.yaml",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-nim-operator/v3.1.2/config/samples/nim/caching/ngc/nimcache.yaml",
+      "status": 200,
+      "sha256": "c6c8661f830d69eb69aab4cd20c2d113d1e27ce217b925b5f16b0bc9f15c2f11"
+    },
+    {
+      "file": "nimop-api_apps_v1alpha1_nimservice_types.go",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-nim-operator/v3.1.2/api/apps/v1alpha1/nimservice_types.go",
+      "status": 200,
+      "sha256": "55d64900e6cd9d9bbfbb5fcbc2d533565a9a287a9563a9efcd6ee9b31b38d978"
+    },
+    {
+      "file": "nimop-config_crd_bases_apps.nvidia.com_nimservices.yaml",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-nim-operator/v3.1.2/config/crd/bases/apps.nvidia.com_nimservices.yaml",
+      "status": 200,
+      "sha256": "00f621d838202c3c189f18c7308186563a0fa80fa6b71db398501466e8ed3305"
+    },
+    {
+      "file": "nim-profiles-resolved.html",
+      "url": "https://docs.nvidia.com/nim/large-language-models/latest/deployment/model-profiles-and-selection.html",
+      "status": 200,
+      "sha256": "0fda2ae7bec14b022c2a79f1b7688a4ae534ab7bb9beea346f94390f910f12fb"
+    },
+    {
+      "file": "nim-metrics-resolved.html",
+      "url": "https://docs.nvidia.com/nim/large-language-models/latest/reference/logging-and-observability.html",
+      "status": 200,
+      "sha256": "f92a643423b6eb312c2ee18378497e9fa54fa12fe0e0b34e41ec4fe57c287c27"
+    },
+    {
+      "file": "nim-config-resolved.html",
+      "url": "https://docs.nvidia.com/nim/large-language-models/latest/reference/environment-variables.html",
+      "status": 200,
+      "sha256": "558a30b6776584454054a04d2d8e5abb1912960e60799b07eafe796ca5a6c8c2"
+    },
+    {
+      "file": "dynamo-docs_fern_pages_kubernetes_getting-started_quickstart.mdx",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/docs/fern/pages/kubernetes/getting-started/quickstart.mdx",
+      "status": 200,
+      "sha256": "d3b316a188610629e695f4b91d2bbad6a7d7e8779193d2a56d6777576c23e8a5"
+    },
+    {
+      "file": "dynamo-examples_backends_vllm_deploy_v1beta1_agg.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/examples/backends/vllm/deploy/v1beta1/agg.yaml",
+      "status": 200,
+      "sha256": "db2821588edcf4d635420a95a79182cc3159e9b7dd5146ce8df6ce4a0c1ee9da"
+    },
+    {
+      "file": "dynamo-examples_backends_vllm_deploy_v1beta1_disagg.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/examples/backends/vllm/deploy/v1beta1/disagg.yaml",
+      "status": 200,
+      "sha256": "eab9b1a1bf10020b008813dbefebc5d49e95ef0371daf6a7954508372e4caaef"
+    },
+    {
+      "file": "dynamo-deploy_operator_config_crd_bases_nvidia.com_dynamographdeployments.yaml",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/deploy/operator/config/crd/bases/nvidia.com_dynamographdeployments.yaml",
+      "status": 200,
+      "sha256": "cb078c7bff9b3b751875411b466ee7369be7635ea8e8580c7a5123a1a48c38af"
+    },
+    {
+      "file": "dynamo-deploy_helm_charts_platform_README.md",
+      "url": "https://raw.githubusercontent.com/ai-dynamo/dynamo/v1.4.2/deploy/helm/charts/platform/README.md",
+      "status": 200,
+      "sha256": "4a74b774da2c767b39fedc809388aba3bba89e4ca1f1cb167666d7c46215be2c"
+    },
+    {
+      "file": "sglang-docs_docs_advanced_features_structured_outputs.mdx",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.19/docs/docs/advanced_features/structured_outputs.mdx",
+      "status": 200,
+      "sha256": "9fb9d9ca32edb79f329e6284be9fa4a79dbe489e7a7ccd39a2ecd4940ddeafa6"
+    },
+    {
+      "file": "sglang-docs_docs_basic_usage_openai_api.mdx",
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.19/docs/docs/basic_usage/openai_api.mdx",
+      "status": 200,
+      "sha256": "3a2183a075d335e2b6bbd5bf031e91edf6ab1532e608ee3ec536791d9e4554e4"
+    },
+    {
+      "file": "ollama-docs_api.md",
+      "url": "https://raw.githubusercontent.com/ollama/ollama/v0.34.0/docs/api.md",
+      "status": 200,
+      "sha256": "469b874b7c32e407114cc4024d48eb607e3c6793e70edf98d35b294acffe4878"
+    },
+    {
+      "file": "ollama-envconfig_config.go",
+      "url": "https://raw.githubusercontent.com/ollama/ollama/v0.34.0/envconfig/config.go",
+      "status": 200,
+      "sha256": "2263acbd4a6f93607594abe5632e5dbc1e17d69a804d55aa7245613bca05b2a7"
+    },
+    {
+      "file": "neuron-README.md",
+      "url": "https://raw.githubusercontent.com/aws-neuron/neuron-helm-charts/main/README.md",
+      "status": 200,
+      "sha256": "833184fac50164906c2d358343d5c191bb7a96d375724225c2dd5efa2701f171"
+    },
+    {
+      "file": "nimop-config_samples_nim_serving_advanced_epp_nimservice.yaml",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-nim-operator/v3.1.2/config/samples/nim/serving/advanced/epp/nimservice.yaml",
+      "status": 200,
+      "sha256": "eb3952f4209f4b63a9cce3e232b28c01016c55fe28e3128ae0cbda3559382668"
+    }
+  ],
+  "limitations": [
+    "NoGPU/Neuron/model/paidAPI/cloudexecution;noactualperformance/costmeasurements.",
+    "GenAI-Perf0.0.16wheel/parserinspectiononly;notnativeCLIloadtest.",
+    "Chart/CRDschemaonly:notadmission/CEL/controller/runtime/deploymentverification.",
+    "Dynamoexampleistemplatewithpublicmodelandboundedsettings;image/modeldigestandhardwarevalidationstillrequired.",
+    "OfficialAIBrixsamplePodAutoscalerhadstalefields;versionedCRD/typesusedinstead.",
+    "NIMHTTP200legacyURLsweremetarefreshstubs;resolved2.0.12pageschecked.",
+    "No full local site build; per-file compilation and standalone production-normalized viewers."
+  ]
+}

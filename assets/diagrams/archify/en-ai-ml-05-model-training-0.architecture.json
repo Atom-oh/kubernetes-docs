@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-05-model-training-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1200,
       560
@@ -31,7 +31,7 @@
           "ps",
           "allreduce"
         ],
-        "note": "Worker pods placed by the job scheduler synchronize through the parameter server and AllReduce."
+        "note": "DDP collectives do not require a parameter server; verify the chosen algorithm and data sharding."
       },
       {
         "id": "checkpointing",
@@ -41,7 +41,7 @@
           "fsx",
           "ckptmgr"
         ],
-        "note": "Workers save checkpoints to FSx for Lustre, which the checkpoint manager tracks."
+        "note": "Verify completion of all state, remote transfer and actual restore."
       },
       {
         "id": "evaluation",
@@ -107,7 +107,8 @@
       "size": [
         170,
         60
-      ]
+      ],
+      "sublabel": "algorithm-specific option"
     },
     {
       "id": "allreduce",
@@ -120,7 +121,8 @@
       "size": [
         170,
         60
-      ]
+      ],
+      "sublabel": "collectives such as DDP"
     },
     {
       "id": "workers",
@@ -152,8 +154,8 @@
     {
       "id": "fsx",
       "type": "database",
-      "label": "FSx for Lustre",
-      "sublabel": "checkpoint store",
+      "label": "Checkpoint store",
+      "sublabel": "selected FS / object path",
       "pos": [
         760,
         240
@@ -166,7 +168,7 @@
     {
       "id": "ckptmgr",
       "type": "backend",
-      "label": "Checkpoint Manager",
+      "label": "Save / restore checks",
       "pos": [
         760,
         400
@@ -284,7 +286,12 @@
       "id": "workers-ps",
       "from": "workers",
       "to": "ps",
-      "label": "parameter sync"
+      "label": "when applicable",
+      "variant": "dashed",
+      "labelAt": [
+        385,
+        180
+      ]
     },
     {
       "id": "workers-allreduce",
@@ -320,6 +327,16 @@
       "from": "metrics",
       "to": "registry",
       "label": "register"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Recovery unit",
+      "items": [
+        "model + optimizer + scheduler + RNG + data cursor + shard state",
+        "Atomic local replacement differs from remote durability."
+      ]
     }
   ]
 }

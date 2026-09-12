@@ -1,0 +1,1157 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T22:28:55.128083+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 30,
+    "originalTopicsPerLocale": 15,
+    "figures": 6
+  },
+  "contentPreservation": {
+    "originalUniqueBlocksRead": 58,
+    "originalGuidesLines": [
+      1614,
+      2266
+    ],
+    "originalQuizLinesEach": 659,
+    "preserved": "All15quiztopics:JARK/JupyterHubOAuth/Argo/Ray/Karpenter/DRA/GPUsharing/GB200/MCPplatform/storage/EFA/monitoring;English-onlyMountpointandVPCtopicsincludedinbothguides.",
+    "changes": "ReplaceinventedDRAv1alpha3/opaqueconfig,tautologyCEL/handwrittenhardwareSlice,brokenDAG/missingtemplates,secretConfigMap,inventedMCPgateway;correctEFAaggregatebandwidth,staticS3CSI,DCGMgaugeandGPU-Pendingjoinsemantics;recordDRAREADME/chart/sourcecontradictions."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/06-ai-infrastructure.md",
+        "sha256": "44938780ddea89080385667f35f64e70257b4a2e2e3b4d11f444d9d4914373b4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-기반-ai-인프라"
+          },
+          {
+            "tag": "h2",
+            "id": "계층과-책임"
+          },
+          {
+            "tag": "h2",
+            "id": "jark-스택"
+          },
+          {
+            "tag": "h3",
+            "id": "jupyterhub-인증과-notebook-profile"
+          },
+          {
+            "tag": "h3",
+            "id": "argo-workflows-데이터-흐름"
+          },
+          {
+            "tag": "h3",
+            "id": "ray와-karpenter"
+          },
+          {
+            "tag": "h2",
+            "id": "dra의-api와-지원-범위"
+          },
+          {
+            "tag": "h3",
+            "id": "현재-claim-예제"
+          },
+          {
+            "tag": "h3",
+            "id": "nvidia0-5와-gpu-operator26-7의-차이"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-node-nvlink와-computedomain"
+          },
+          {
+            "tag": "h2",
+            "id": "에이전트-플랫폼과-mcp"
+          },
+          {
+            "tag": "h2",
+            "id": "저장소와-네트워크"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-관측과-경보"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "eks-기반-ai-인프라",
+          "계층과-책임",
+          "jark-스택",
+          "jupyterhub-인증과-notebook-profile",
+          "argo-workflows-데이터-흐름",
+          "ray와-karpenter",
+          "dra의-api와-지원-범위",
+          "현재-claim-예제",
+          "nvidia0-5와-gpu-operator26-7의-차이",
+          "multi-node-nvlink와-computedomain",
+          "에이전트-플랫폼과-mcp",
+          "저장소와-네트워크",
+          "gpu-관측과-경보",
+          "검증-범위",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/06-ai-infrastructure.md",
+        "sha256": "3b0a3283b947c59c7474674a1e93c4cca7228f1b18c0d8297d1d9cdc6503c9b5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-infrastructure-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "layers-and-responsibilities"
+          },
+          {
+            "tag": "h2",
+            "id": "jark-stack"
+          },
+          {
+            "tag": "h3",
+            "id": "jupyterhub-authentication-and-notebook-profiles"
+          },
+          {
+            "tag": "h3",
+            "id": "argo-workflows-data-flow"
+          },
+          {
+            "tag": "h3",
+            "id": "ray-and-karpenter"
+          },
+          {
+            "tag": "h2",
+            "id": "dra-apis-and-support-boundaries"
+          },
+          {
+            "tag": "h3",
+            "id": "current-claim-example"
+          },
+          {
+            "tag": "h3",
+            "id": "nvidia0-5-and-gpu-operator26-7"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-node-nvlink-and-computedomains"
+          },
+          {
+            "tag": "h2",
+            "id": "agent-platforms-and-mcp"
+          },
+          {
+            "tag": "h2",
+            "id": "storage-and-networking"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-observability-and-alerts"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "ai-infrastructure-on-eks",
+          "layers-and-responsibilities",
+          "jark-stack",
+          "jupyterhub-authentication-and-notebook-profiles",
+          "argo-workflows-data-flow",
+          "ray-and-karpenter",
+          "dra-apis-and-support-boundaries",
+          "current-claim-example",
+          "nvidia0-5-and-gpu-operator26-7",
+          "multi-node-nvlink-and-computedomains",
+          "agent-platforms-and-mcp",
+          "storage-and-networking",
+          "gpu-observability-and-alerts",
+          "verification-scope",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/06-ai-infrastructure-quiz.md",
+        "sha256": "59c08586eeab985281ba7c12223209a1dd7a0861dab13c4c992e11e33949ea98",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-기반-ai-인프라-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-jark는-무엇이며-자동으로-완성되는-플랫폼인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-jupyterhub-cognito-인증에서-명시할-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-ray-head와-karpenter의-역할은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-dra와-device-plugin의-차이를-어떻게-설명해야-하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-mig-profile과-격리-범위에서-주의할-점은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-gpu-operator-버전-하나로-전체-dra-지원을-판정할-수-있나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-langfuse를-현재-platform에-연결할-때-무엇을-확인하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-efs-fsx-mountpoint를-어떤-기준으로-선택하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-efa-대역폭과-interface-수를-어떻게-해석하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-gpu-메모리와-xid-지표는-어떻게-해석하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-karpenter-consolidation은-gpu-사용률-지표로-동작하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-resourceslice는-누가-만들며-무엇을-나타내나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-milvus에-gpu를-요청하면-rag가-완성되나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-pending-gpu-pod와-node-실패는-어떻게-조사하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-mcp-protocol이-kubernetes-자동검색-gateway를-제공하나요"
+          }
+        ],
+        "renderedIds": [
+          "eks-기반-ai-인프라-퀴즈",
+          "_1-jark는-무엇이며-자동으로-완성되는-플랫폼인가요",
+          "_2-jupyterhub-cognito-인증에서-명시할-것은-무엇인가요",
+          "_3-ray-head와-karpenter의-역할은-무엇인가요",
+          "_4-dra와-device-plugin의-차이를-어떻게-설명해야-하나요",
+          "_5-mig-profile과-격리-범위에서-주의할-점은-무엇인가요",
+          "_6-gpu-operator-버전-하나로-전체-dra-지원을-판정할-수-있나요",
+          "_7-langfuse를-현재-platform에-연결할-때-무엇을-확인하나요",
+          "_8-efs-fsx-mountpoint를-어떤-기준으로-선택하나요",
+          "_9-efa-대역폭과-interface-수를-어떻게-해석하나요",
+          "_10-gpu-메모리와-xid-지표는-어떻게-해석하나요",
+          "_11-karpenter-consolidation은-gpu-사용률-지표로-동작하나요",
+          "_12-resourceslice는-누가-만들며-무엇을-나타내나요",
+          "_13-milvus에-gpu를-요청하면-rag가-완성되나요",
+          "_14-pending-gpu-pod와-node-실패는-어떻게-조사하나요",
+          "_15-mcp-protocol이-kubernetes-자동검색-gateway를-제공하나요"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/06-ai-infrastructure-quiz.md",
+        "sha256": "d7588534019c0673dca5f1b34c8c2cad1273da9157ce70da2a8d1a44eb5c0c54",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-infrastructure-on-eks-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-is-jark-and-is-it-automatically-complete"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-what-must-be-configured-for-jupyterhub-with-cognito"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-what-are-the-roles-of-the-ray-head-and-karpenter"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-how-should-dra-and-device-plugins-be-compared"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-what-matters-about-mig-profiles-and-isolation"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-can-one-gpu-operator-version-establish-all-dra-support"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-what-should-be-checked-when-integrating-langfuse"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-how-should-efs-fsx-and-mountpoint-be-selected"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-how-should-efa-bandwidth-and-interface-counts-be-interpreted"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-how-should-gpu-memory-and-xid-metrics-be-interpreted"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-does-karpenter-consolidation-directly-use-gpu-utilization-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-who-publishes-resourceslices-and-what-do-they-represent"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-does-requesting-a-gpu-for-milvus-complete-rag"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-how-should-pending-gpu-pods-and-node-failures-be-investigated"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-does-mcp-provide-a-standard-kubernetes-auto-discovery-gateway"
+          }
+        ],
+        "renderedIds": [
+          "ai-infrastructure-on-eks-quiz",
+          "_1-what-is-jark-and-is-it-automatically-complete",
+          "_2-what-must-be-configured-for-jupyterhub-with-cognito",
+          "_3-what-are-the-roles-of-the-ray-head-and-karpenter",
+          "_4-how-should-dra-and-device-plugins-be-compared",
+          "_5-what-matters-about-mig-profiles-and-isolation",
+          "_6-can-one-gpu-operator-version-establish-all-dra-support",
+          "_7-what-should-be-checked-when-integrating-langfuse",
+          "_8-how-should-efs-fsx-and-mountpoint-be-selected",
+          "_9-how-should-efa-bandwidth-and-interface-counts-be-interpreted",
+          "_10-how-should-gpu-memory-and-xid-metrics-be-interpreted",
+          "_11-does-karpenter-consolidation-directly-use-gpu-utilization-metrics",
+          "_12-who-publishes-resourceslices-and-what-do-they-represent",
+          "_13-does-requesting-a-gpu-for-milvus-complete-rag",
+          "_14-how-should-pending-gpu-pods-and-node-failures-be-investigated",
+          "_15-does-mcp-provide-a-standard-kubernetes-auto-discovery-gateway"
+        ]
+      }
+    ]
+  },
+  "schemaHelm": {
+    "status": "passed",
+    "schemaCases": [
+      {
+        "kind": "ResourceClaimTemplate",
+        "passed": true
+      },
+      {
+        "kind": "Pod",
+        "passed": true
+      }
+    ],
+    "charts": [
+      {
+        "name": "dra-optin",
+        "kinds": {
+          "ServiceAccount": 3,
+          "ClusterRole": 3,
+          "ClusterRoleBinding": 3,
+          "Role": 2,
+          "RoleBinding": 2,
+          "DaemonSet": 1,
+          "Deployment": 1,
+          "DeviceClass": 5,
+          "ValidatingAdmissionPolicy": 1,
+          "ValidatingAdmissionPolicyBinding": 1
+        },
+        "sha256": "248dea1ff5ad2faedfde6d20a7c87c38bd4749f27daa024de30f7a2192a07a27"
+      },
+      {
+        "name": "gpu-operator-dra",
+        "kinds": {
+          "ServiceAccount": 4,
+          "ConfigMap": 2,
+          "ClusterRole": 5,
+          "ClusterRoleBinding": 5,
+          "Role": 2,
+          "RoleBinding": 2,
+          "DaemonSet": 1,
+          "Deployment": 3,
+          "GPUCluster": 1,
+          "Job": 3
+        },
+        "sha256": "893fd8e669ca4878c60d707a8f4de215a4a47c286d8eacafc9d096e75705cdfe"
+      },
+      {
+        "name": "hub-default",
+        "kinds": {
+          "NetworkPolicy": 3,
+          "PodDisruptionBudget": 2,
+          "ServiceAccount": 5,
+          "Secret": 1,
+          "ConfigMap": 2,
+          "PersistentVolumeClaim": 1,
+          "ClusterRole": 1,
+          "ClusterRoleBinding": 1,
+          "Role": 2,
+          "RoleBinding": 2,
+          "Service": 3,
+          "DaemonSet": 2,
+          "Deployment": 3,
+          "StatefulSet": 1,
+          "Job": 1
+        },
+        "sha256": "13429d5999789ef2d86d64934ecf50502487a02d87fa251251c55449ef646b0d"
+      }
+    ],
+    "standaloneDefaultDRA": "HelmrejectsdefaultGPUpathwithoutoverridebecauseofdeviceplugincoexistenceguard;optinrenderedofflineonly",
+    "operatorDRA": "26.7GPUClusterpathwithpreinstalleddriverandmockDeviceClassAPIcapability;notactualclusterinstalled",
+    "JupyterVersions": "Chart4.4.2app5.5.2;SDKfixture6.0.0separate",
+    "scope": "OfficialKubernetes1.36.2OpenAPIJSONschemaandHelmrenderingonly;noCEL/admission/allocation/GPU/Podspawn/OAuthproviderverification."
+  },
+  "authentication": {
+    "status": "passed",
+    "jupyterhub": "6.0.0",
+    "oauthenticator": "17.4.0",
+    "kubespawner": "7.1.0",
+    "authorizationCases": 3,
+    "configSourceSha256": "64cb095f8fa0daa7d2ceafe26e7cb5dfd61bb8551b17e58c9ccd4674ac0dffcd",
+    "scope": "ActualGenericOAuthenticatorconfig+allowcheckswithsyntheticsecretfilereadandmockauthmodels,KubeSpawnertraitassignment.NoOAuthprovider/token/userInfo/networkorPodspawn."
+  },
+  "workflow": {
+    "status": "passed",
+    "argoCLI": "4.1.3 offline lint",
+    "pythonScriptBodies": 6,
+    "fixtureMSE": 0,
+    "sourceSha256": "b99a757cdfaaa25b863abd04f459f79df192de53317210b73f40bb1dccd65277",
+    "scope": "ActualArgoofflinevalidationand6unchangedstdlibscriptbodieswithsyntheticdata/localenvparameterhandoff. NoKubernetes/Argoexecution,realMLmodel,registry/cloudwriteorpaidcall;zeroMSEistinyfixtureonly."
+  },
+  "promql": {
+    "status": "passed",
+    "version": "promtool, version 3.14.0 (branch: HEAD, revision: d7598b7141418fa35be2b5ec5d0fefb634199610)\n  build user:       root@f423027f4410\n  build date:       20260817-16:52:05\n  go version:       go1.26.6\n  platform:         linux/arm64\n  tags:             netgo,builtinassets\n",
+    "rules": 3,
+    "assertions": 3,
+    "testFileSha256": "fd9575690d62912b246980e4b62704f1eba623b111d54eb608e6fd4fddfe0c22",
+    "scope": "Localpromtoolcheckrulesandtestruleswithsyntheticseries;notrealPrometheusscrapeorGPUs."
+  },
+  "publishedExamples": {
+    "status": "passed",
+    "checks": [
+      {
+        "locale": "ko",
+        "fixture": "jupyter-auth.py",
+        "sourceSha256": "64cb095f8fa0daa7d2ceafe26e7cb5dfd61bb8551b17e58c9ccd4674ac0dffcd",
+        "exactNativeFixtureMatch": true
+      },
+      {
+        "locale": "ko",
+        "fixture": "toy-workflow.yaml",
+        "sourceSha256": "b99a757cdfaaa25b863abd04f459f79df192de53317210b73f40bb1dccd65277",
+        "exactNativeFixtureMatch": true
+      },
+      {
+        "locale": "ko",
+        "fixture": "dra-example.yaml",
+        "sourceSha256": "d26f402a42937a75c6b3d862897a0606821a5803e4f387b1123404a64fc8577e",
+        "exactNativeFixtureMatch": true
+      },
+      {
+        "locale": "ko",
+        "fixture": "gpu-rules.yaml",
+        "sourceSha256": "4b7cf3ddc82db265866a5d16dd13f702d9f2b27d243e1c8251f2aca1a46d4f1b",
+        "exactNativeFixtureMatch": true
+      },
+      {
+        "locale": "en",
+        "fixture": "jupyter-auth.py",
+        "sourceSha256": "64cb095f8fa0daa7d2ceafe26e7cb5dfd61bb8551b17e58c9ccd4674ac0dffcd",
+        "exactNativeFixtureMatch": true
+      },
+      {
+        "locale": "en",
+        "fixture": "toy-workflow.yaml",
+        "sourceSha256": "b99a757cdfaaa25b863abd04f459f79df192de53317210b73f40bb1dccd65277",
+        "exactNativeFixtureMatch": true
+      },
+      {
+        "locale": "en",
+        "fixture": "dra-example.yaml",
+        "sourceSha256": "d26f402a42937a75c6b3d862897a0606821a5803e4f387b1123404a64fc8577e",
+        "exactNativeFixtureMatch": true
+      },
+      {
+        "locale": "en",
+        "fixture": "gpu-rules.yaml",
+        "sourceSha256": "4b7cf3ddc82db265866a5d16dd13f702d9f2b27d243e1c8251f2aca1a46d4f1b",
+        "exactNativeFixtureMatch": true
+      }
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "9a8adc1ba2912c13dc1035b55904a3c7483f207b4bc49c3c96ac0f83ad5f1e74"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "9a8adc1ba2912c13dc1035b55904a3c7483f207b4bc49c3c96ac0f83ad5f1e74"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "9a8adc1ba2912c13dc1035b55904a3c7483f207b4bc49c3c96ac0f83ad5f1e74"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "65a49db97af654eaa22857985578af025b829aba339eeefd7d5fc528aea5bf40"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "65a49db97af654eaa22857985578af025b829aba339eeefd7d5fc528aea5bf40"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "65a49db97af654eaa22857985578af025b829aba339eeefd7d5fc528aea5bf40"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "4165c8ac9a3447fed35dc67d38ee28e9aaf8437558ff111655b41e8371cc09aa"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "4165c8ac9a3447fed35dc67d38ee28e9aaf8437558ff111655b41e8371cc09aa"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "4165c8ac9a3447fed35dc67d38ee28e9aaf8437558ff111655b41e8371cc09aa"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "0e385a728569cd6356f13d7595bc78972fb0065d55800128efc2c2f8bb7c6a09"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "0e385a728569cd6356f13d7595bc78972fb0065d55800128efc2c2f8bb7c6a09"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "0e385a728569cd6356f13d7595bc78972fb0065d55800128efc2c2f8bb7c6a09"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "db752ed45ee2bbdf8514b9ec07b0958856d6958ae1a0ddcd80ed5433ab75e340"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "db752ed45ee2bbdf8514b9ec07b0958856d6958ae1a0ddcd80ed5433ab75e340"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "db752ed45ee2bbdf8514b9ec07b0958856d6958ae1a0ddcd80ed5433ab75e340"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "b82681c4ddbbfef36f8bc7ceb8256ff049886178b1efe971b6e423cf86f5ff87"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "b82681c4ddbbfef36f8bc7ceb8256ff049886178b1efe971b6e423cf86f5ff87"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "b82681c4ddbbfef36f8bc7ceb8256ff049886178b1efe971b6e423cf86f5ff87"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngs": [
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-06-ai-infrastructure-0.png",
+      "sha256": "884ebd60e5a55f7776d30dad96c52765208c6cad996bc9c355af6351d8f9fa33"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-06-ai-infrastructure-1.png",
+      "sha256": "a837e50b32833a2f8a80f01441b8f4e6d7dc85d848410c22fbd92fc6e121bb6a"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-06-ai-infrastructure-2.png",
+      "sha256": "4c7a59ec5f5df8e795dc6677cb4f0fc0e851baaf19b70d4004b165c2a433f141"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-06-ai-infrastructure-0.png",
+      "sha256": "29464e53ca9b75ecc16b28593d5cb94f27bb4de90e1121cef13bd515435859c2"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-06-ai-infrastructure-1.png",
+      "sha256": "b9e662f313fa2ff96ed22cd788b6059f25a0e7af1288774c0935d1f4c93df040"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-06-ai-infrastructure-2.png",
+      "sha256": "e2a71754358aa7c1bb29518ac2e6d0e0dae40c5e03dd2d40dedaebba614f2b94"
+    }
+  ],
+  "publishedLinks": [
+    {
+      "url": "https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/26.7/dra-intro-install.html",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/NVIDIA/dcgm-exporter/blob/4.6.0-4.8.3/etc/default-counters.csv",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/argoproj/argo-workflows/tree/v4.1.3",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/awslabs/mountpoint-s3-csi-driver/tree/v2.8.0",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/jupyterhub/oauthenticator/tree/17.4.0",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/jupyterhub/zero-to-jupyterhub-k8s/releases/tag/4.4.2",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/pkg/featuregates/featuregates.go",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/blob/v0.5.0/site/content/docs/prerequisites.md",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/dra-driver-nvidia-gpu/tree/v0.5.0",
+      "status": 200
+    },
+    {
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/server/tools",
+      "status": 200
+    }
+  ],
+  "primarySources": [
+    {
+      "file": "nvidia-dra-release.json",
+      "url": "https://api.github.com/repos/NVIDIA/k8s-dra-driver-gpu/releases/latest",
+      "status": 200,
+      "sha256": "558a4ef97ab15d765e1380a7ecbb58d96e50178fc19e42d66573539af920cd10",
+      "version": "v0.5.0",
+      "publishedAt": "2026-08-19T17:17:40Z"
+    },
+    {
+      "file": "jupyterhub-release.json",
+      "url": "https://api.github.com/repos/jupyterhub/jupyterhub/releases/latest",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "oauthenticator-release.json",
+      "url": "https://api.github.com/repos/jupyterhub/oauthenticator/releases/latest",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "kubespawner-release.json",
+      "url": "https://api.github.com/repos/jupyterhub/kubespawner/releases/latest",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "argo-release.json",
+      "url": "https://api.github.com/repos/argoproj/argo-workflows/releases/latest",
+      "status": 200,
+      "sha256": "5026f962e948dbaa9270464847b54fed8d763770d822bb509f3144192643c89b",
+      "version": "v4.1.3",
+      "publishedAt": "2026-09-11T11:21:22Z"
+    },
+    {
+      "file": "dcgm-exporter-release.json",
+      "url": "https://api.github.com/repos/NVIDIA/dcgm-exporter/releases/latest",
+      "error": "HTTP Error 403: rate limit exceeded"
+    },
+    {
+      "file": "mountpoint-release.json",
+      "url": "https://api.github.com/repos/awslabs/mountpoint-s3-csi-driver/releases/latest",
+      "error": "HTTP Error 403: rate limit exceeded"
+    },
+    {
+      "file": "nvidia-dra-readme.md",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-dra-driver-gpu/main/README.md",
+      "status": 200,
+      "sha256": "203da4d353d649ea8c13be1ec2a371e589321ee2715559fe9558f4b0799c240b"
+    },
+    {
+      "file": "gpuoperator-dra.html",
+      "url": "https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/dra-intro.html",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "eks-dra.html",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/dra.html",
+      "status": 200,
+      "sha256": "15e2da409662e85e6608b468822bc6dd667c65dfc18ef4fcc3801978da1db2e2"
+    },
+    {
+      "file": "dra-demo_specs_quickstart_v1_gpu-test1.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/dra-driver-nvidia-gpu/v0.5.0/demo/specs/quickstart/v1/gpu-test1.yaml",
+      "status": 200,
+      "sha256": "c9b12c587b2943688e7160ebf40ac2943526ea70e03263ab5d39d71a58b630ce"
+    },
+    {
+      "file": "dra-demo_specs_quickstart_v1_gpu-test2.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/dra-driver-nvidia-gpu/v0.5.0/demo/specs/quickstart/v1/gpu-test2.yaml",
+      "status": 200,
+      "sha256": "335f3b7a412dc7b3693766634f2847369fd3fec7e4aa8eb61a2551d28dd47310"
+    },
+    {
+      "file": "dra-demo_specs_quickstart_v1_gpu-test-mps.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/dra-driver-nvidia-gpu/v0.5.0/demo/specs/quickstart/v1/gpu-test-mps.yaml",
+      "status": 200,
+      "sha256": "f87b45d1163b6737cb12cf08433127a45b1ef0f8b0644154d94828ff446ebda5"
+    },
+    {
+      "file": "dra-demo_specs_quickstart_v1_imex-test1.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/dra-driver-nvidia-gpu/v0.5.0/demo/specs/quickstart/v1/imex-test1.yaml",
+      "status": 200,
+      "sha256": "2abdaee21cbbaac5f5c8c5c55c72d15132eca017850a57fe6bc3aa2c8ca1dc72"
+    },
+    {
+      "file": "dra-deployments_helm_dra-driver-nvidia-gpu_values.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/dra-driver-nvidia-gpu/v0.5.0/deployments/helm/dra-driver-nvidia-gpu/values.yaml",
+      "status": 200,
+      "sha256": "f2d94e4b86757a585fed19b2f0d90f58fc78e1e78c2b6c859bdeb901883c579c"
+    },
+    {
+      "file": "dra-site_content_docs_install.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/dra-driver-nvidia-gpu/v0.5.0/site/content/docs/install.md",
+      "status": 200,
+      "sha256": "1b403d2e85714a69cd11f33ab978e746dc8df8ad292bfe40dfb33d663a1c3d5f"
+    },
+    {
+      "file": "oauth-oauthenticator_generic.py",
+      "url": "https://raw.githubusercontent.com/jupyterhub/oauthenticator/17.4.0/oauthenticator/generic.py",
+      "status": 200,
+      "sha256": "620b57a3026495231f45da6c91218ae7d9f79e010af6f100e94bab71c5f07c38"
+    },
+    {
+      "file": "oauth-oauthenticator_oauth2.py",
+      "url": "https://raw.githubusercontent.com/jupyterhub/oauthenticator/17.4.0/oauthenticator/oauth2.py",
+      "status": 200,
+      "sha256": "67b093c95b92549da5e9aa33af34daf7d94dc5ee5b40da365987bc1b1f64e2b7"
+    },
+    {
+      "file": "spawner-kubespawner_spawner.py",
+      "url": "https://raw.githubusercontent.com/jupyterhub/kubespawner/7.1.0/kubespawner/spawner.py",
+      "status": 200,
+      "sha256": "753d0dbcc4c9f07435a4aecccce0a09bc22ded8c4a6e48fd92f66962c79bd5ce"
+    },
+    {
+      "file": "argo-api_openapi-spec_swagger.json",
+      "url": "https://raw.githubusercontent.com/argoproj/argo-workflows/v4.1.3/api/openapi-spec/swagger.json",
+      "status": 200,
+      "sha256": "c75ea5e10cbca5a251019c0f5dafef98449551562403e9e903a53db985d5e6b8"
+    },
+    {
+      "file": "mountpoint-examples_kubernetes_static_provisioning_static_provisioning.yaml",
+      "url": "https://raw.githubusercontent.com/awslabs/mountpoint-s3-csi-driver/v2.8.0/examples/kubernetes/static_provisioning/static_provisioning.yaml",
+      "status": 200,
+      "sha256": "b916abb485cb84a32f5fdbc925a0b5dd8204081b215bfbee415dfa634eea7a68"
+    },
+    {
+      "file": "mountpoint-docs_CONFIGURATION.md",
+      "url": "https://raw.githubusercontent.com/awslabs/mountpoint-s3-csi-driver/v2.8.0/docs/CONFIGURATION.md",
+      "status": 200,
+      "sha256": "b7d2e04906e0079e8b07b71bd5d006ef9428783eb00affed21362074b3b056cc"
+    },
+    {
+      "file": "jupyterhub-chart-index.yaml",
+      "url": "https://hub.jupyter.org/helm-chart/index.yaml",
+      "status": 200,
+      "sha256": "7176fd5b602e1f96f5013a3b71bf7910d1b21ea3f847e196725ab2c919625d14"
+    },
+    {
+      "file": "k8s-resource-v1.json",
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/api/openapi-spec/v3/apis__resource.k8s.io__v1_openapi.json",
+      "status": 200,
+      "sha256": "db24d1cb24681696af6478da11d530d0b6c288b172526d1425453761fb131e00"
+    },
+    {
+      "file": "eks-dra-dynamic.html",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/dynamic-resource-allocation.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/"
+    },
+    {
+      "file": "dra-v050-readme.md",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-dra-driver-gpu/v0.5.0/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/NVIDIA/k8s-dra-driver-gpu/v0.5.0/README.md"
+    },
+    {
+      "file": "gpuoperator-dra-doc.html",
+      "url": "https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/dra.html",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "dcgm-default.csv",
+      "url": "https://raw.githubusercontent.com/NVIDIA/dcgm-exporter/4.6.0-4.8.3/etc/default-counters.csv",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/NVIDIA/dcgm-exporter/4.6.0-4.8.3/etc/default-counters.csv"
+    },
+    {
+      "file": "mountpoint-readme.md",
+      "url": "https://raw.githubusercontent.com/awslabs/mountpoint-s3-csi-driver/v2.8.0/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/awslabs/mountpoint-s3-csi-driver/v2.8.0/README.md"
+    }
+  ],
+  "limitations": [
+    "NoOAuthprovider/tokenexchange,Kubernetesspawn,DRAallocation,GPU/Neuron/model/S3mount/MCPserver/cloudmutationsorpaidcalls.",
+    "HelmGPUClusterpathusedsimulatedservedDeviceClassAPI;notarealfeatureenablement.",
+    "StandaloneDRA0.5defaultguardrejectedrendering;explicitoptinrenderedonlyforinspection.",
+    "DRAREADME,Operator26.7docsandfeaturegatecodematuritydifferencesdisclosed.",
+    "SDKHub6.0.0differsfromHelm4.4.2app5.5.2.",
+    "SyntheticworkflowMSE0isnotrealmodelquality.",
+    "Promqlfixturesinglecluster;aggregateclusterlabelsrequiredformulticluster.",
+    "No full local VitePress build."
+  ]
+}

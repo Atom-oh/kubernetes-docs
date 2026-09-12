@@ -5,7 +5,7 @@
     "title": "EKS에서의 NVIDIA NIM 배포",
     "output": "ko-ai-ml-04-inference-frameworks-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "request-path",
@@ -17,7 +17,7 @@
           "engine",
           "cache"
         ],
-        "note": "ALB와 Nginx Ingress를 거친 요청이 NIM 컨테이너의 TensorRT-LLM 엔진에서 처리된다."
+        "note": "인증된 route에서 선택한 NIM backend로 요청을 전달합니다."
       },
       {
         "id": "gpu-nodes",
@@ -38,7 +38,7 @@
           "s3",
           "ngc"
         ],
-        "note": "NGC Catalog에서 받은 모델을 FSx for Lustre에 캐시하고 S3에 보관한다."
+        "note": "모델 다운로드·공유·S3 연동은 준비한 저장소 경로에 따라 다릅니다."
       },
       {
         "id": "monitoring",
@@ -49,7 +49,7 @@
           "prometheus",
           "grafana"
         ],
-        "note": "NIM 메트릭을 Prometheus가 수집하고 Grafana 대시보드로 시각화한다."
+        "note": "2.0.12의 /v1/metrics와 backend 이름·단위를 실제로 확인합니다."
       }
     ],
     "viewBox": [
@@ -61,8 +61,8 @@
     {
       "id": "alb",
       "type": "cloud",
-      "label": "Application Load Balancer",
-      "sublabel": "외부 진입점",
+      "label": "승인된 진입 경로",
+      "sublabel": "인증·TLS·요청 한도",
       "pos": [
         30,
         260
@@ -75,8 +75,8 @@
     {
       "id": "nginx",
       "type": "cloud",
-      "label": "Nginx Ingress Controller",
-      "sublabel": "요청 라우팅",
+      "label": "지원 gateway controller",
+      "sublabel": "검증한 route 설정",
       "pos": [
         240,
         260
@@ -103,8 +103,8 @@
     {
       "id": "engine",
       "type": "backend",
-      "label": "TensorRT-LLM 엔진",
-      "sublabel": "최적화된 추론",
+      "label": "선택된 NIM backend",
+      "sublabel": "2.0.12: vLLM0.27.1",
       "pos": [
         720,
         260
@@ -159,8 +159,8 @@
     {
       "id": "fsx",
       "type": "database",
-      "label": "FSx for Lustre",
-      "sublabel": "공유 파일시스템",
+      "label": "선택한 cache 저장소",
+      "sublabel": "local / EBS / shared FS",
       "pos": [
         950,
         450
@@ -188,7 +188,7 @@
       "id": "ngc",
       "type": "external",
       "label": "NGC Catalog",
-      "sublabel": "NIM 이미지 · 모델",
+      "sublabel": "승인된 이미지·모델 원본",
       "pos": [
         950,
         600
@@ -201,8 +201,8 @@
     {
       "id": "exporter",
       "type": "backend",
-      "label": "NIM 메트릭 익스포터",
-      "sublabel": ":8000/metrics",
+      "label": "NIM 메트릭 endpoint",
+      "sublabel": ":8000/v1/metrics",
       "pos": [
         490,
         60
@@ -252,7 +252,7 @@
     },
     {
       "kind": "region",
-      "label": "NIM 파드 (replicas: 2)",
+      "label": "검증할 NIM 구성",
       "wraps": [
         "container",
         "engine",
@@ -349,7 +349,12 @@
       "id": "fsx-to-s3",
       "from": "fsx",
       "to": "s3",
-      "label": "동기화"
+      "label": "설정된 연동",
+      "variant": "dashed",
+      "labelAt": [
+        1145,
+        430
+      ]
     },
     {
       "id": "ngc-to-fsx",
@@ -391,6 +396,17 @@
       "to": "grafana",
       "label": "쿼리",
       "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "배포 경계",
+      "items": [
+        "profile·revision·GPU·cache·probe를 함께 검증합니다.",
+        "공유 EBS RWO 볼륨은 여러 노드의 replica에 맞지 않습니다.",
+        "NGC secret 환경 전달은 파일 전용 credential 정책과 다릅니다."
+      ]
     }
   ]
 }
