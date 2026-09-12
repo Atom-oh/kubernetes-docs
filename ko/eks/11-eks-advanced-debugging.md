@@ -1746,7 +1746,7 @@ OTLP client는 certificate를 신뢰하고 생성 Service·protocol·4317/4318 p
 
 ### Alertmanager: 실제로 읽히는 설정·Secret File
 
-Prometheus Operator에서는 alertmanager.yaml key가 있는 Secret을 기존 Alertmanager의 spec.configSecret으로 지정합니다. Alertmanager-config라는 ConfigMap만 만들어도 자동으로 읽히지 않습니다. 다음은 검토한 Helm/operator 관리 설정에 통합할 **spec fragment**이며 새로운 완전한 배포가 아닙니다. 별도 Secret은 url/key entry를 제공하고 /etc/alertmanager/secrets/<secret-name>/ 아래 mount되어야 합니다.
+Prometheus Operator에서는 alertmanager.yaml key가 있는 Secret을 기존 Alertmanager의 spec.configSecret으로 지정합니다. Alertmanager-config라는 ConfigMap만 만들어도 자동으로 읽히지 않습니다. 다음은 검토한 Helm/operator 관리 설정에 통합할 **spec fragment**이며 새로운 완전한 배포가 아닙니다. 별도 Secret은 url/key entry를 제공하고 `/etc/alertmanager/secrets/<secret-name>/` 아래 mount되어야 합니다.
 
 ```yaml
 spec:

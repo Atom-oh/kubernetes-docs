@@ -1746,7 +1746,7 @@ The built-in cri multiline parser handles the CRI stream/partial-record format u
 
 ### Alertmanager: Loaded Configuration and Secret Files
 
-For Prometheus Operator, use a Secret containing the key alertmanager.yaml and reference it with the existing Alertmanager spec.configSecret. A ConfigMap named alertmanager-config is not automatically consumed. The following is a **spec fragment** to integrate with the reviewed Helm/operator owner, not a new complete Alertmanager deployment. The separate Secrets must supply url/key entries, mounted under /etc/alertmanager/secrets/<secret-name>/.
+For Prometheus Operator, use a Secret containing the key alertmanager.yaml and reference it with the existing Alertmanager spec.configSecret. A ConfigMap named alertmanager-config is not automatically consumed. The following is a **spec fragment** to integrate with the reviewed Helm/operator owner, not a new complete Alertmanager deployment. The separate Secrets must supply url/key entries, mounted under `/etc/alertmanager/secrets/<secret-name>/`.
 
 ```yaml
 spec:
