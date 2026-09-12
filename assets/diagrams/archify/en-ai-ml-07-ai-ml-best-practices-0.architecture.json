@@ -5,7 +5,7 @@
     "title": "AI/ML Best Practices on EKS and Expected Outcomes",
     "output": "en-ai-ml-07-ai-ml-best-practices-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1380,
       720
@@ -61,7 +61,7 @@
           "cost",
           "cost-savings"
         ],
-        "note": "Cost optimization maps directly to cost savings."
+        "note": "Validate savings against actual workloads, SLOs and total cost."
       }
     ],
     "locale": "en"
@@ -205,7 +205,7 @@
         260,
         54
       ],
-      "sublabel": "5 contributing practices"
+      "sublabel": "latency / goodput / success"
     },
     {
       "id": "reliability",
@@ -233,7 +233,7 @@
         260,
         54
       ],
-      "sublabel": "$/token · $/epoch"
+      "sublabel": "measured cost / successful work"
     }
   ],
   "boundaries": [
@@ -253,7 +253,7 @@
     },
     {
       "kind": "region",
-      "label": "Expected Outcomes",
+      "label": "Outcomes to validate",
       "wraps": [
         "efficiency",
         "performance",
@@ -328,6 +328,16 @@
       "id": "cost-to-cost-savings",
       "from": "cost",
       "to": "cost-savings"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Measurement criteria",
+      "items": [
+        "No fixed speedup or savings percentage is guaranteed.",
+        "Include failure, idle time, recovery, transfer and operations."
+      ]
     }
   ]
 }

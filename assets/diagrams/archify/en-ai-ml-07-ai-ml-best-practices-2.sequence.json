@@ -10,7 +10,7 @@
       1040,
       650
     ],
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "schedule",
@@ -19,7 +19,7 @@
           "scheduler",
           "kubelet"
         ],
-        "note": "Node selection takes ~100ms, negligible in the overall cold start."
+        "note": "Pending time can include capacity, PVC, quota and taint constraints."
       },
       {
         "id": "pull",
@@ -28,7 +28,7 @@
           "kubelet",
           "registry"
         ],
-        "note": "Pulling a 10-50GB image takes 2-10 minutes and is the biggest bottleneck."
+        "note": "Measure fetch, unpack, cache hits and lazy loading separately."
       },
       {
         "id": "load",
@@ -37,9 +37,10 @@
           "runtime",
           "app"
         ],
-        "note": "Container creation takes ~5s, but loading weights into GPU memory takes 1-5 minutes."
+        "note": "Measure model preparation, loading and probes without fixed-time assumptions."
       }
-    ]
+    ],
+    "output": "en-ai-ml-07-ai-ml-best-practices-2.html"
   },
   "participants": [
     {
@@ -77,22 +78,22 @@
     {
       "from": 160,
       "to": 220,
-      "label": "Node selection: ~100ms"
+      "label": "Pod placement: measured waiting"
     },
     {
       "from": 235,
       "to": 345,
-      "label": "Image pull: 2-10 minutes (10-50GB images)"
+      "label": "Image fetch / unpack: cache and network"
     },
     {
       "from": 360,
       "to": 420,
-      "label": "Container creation: ~5s"
+      "label": "Container creation: runtime configuration"
     },
     {
       "from": 435,
       "to": 565,
-      "label": "Model loading: 1-5 minutes (load weights into GPU memory) → Health check pass: ~30s"
+      "label": "Model loading and readiness: per workload"
     }
   ],
   "messages": [
@@ -108,9 +109,8 @@
       "from": "kubelet",
       "to": "registry",
       "y": 267,
-      "label": "Pull image request",
-      "variant": "emphasis",
-      "note": "10-50GB image, takes 2-10 minutes"
+      "label": "CRI image preparation",
+      "variant": "emphasis"
     },
     {
       "id": "image-layers",
@@ -133,17 +133,15 @@
       "to": "app",
       "y": 475,
       "label": "Start process",
-      "variant": "emphasis",
-      "note": "Loads model weights into GPU memory, takes 1-5 minutes"
+      "variant": "emphasis"
     },
     {
       "id": "ready",
       "from": "app",
-      "to": "runtime",
+      "to": "kubelet",
       "y": 550,
-      "label": "Ready",
-      "variant": "return",
-      "note": "Health check pass: ~30s"
+      "label": "readiness probe result",
+      "variant": "return"
     }
   ],
   "activations": [
@@ -174,12 +172,12 @@
   ],
   "cards": [
     {
-      "dot": "amber",
-      "title": "Total cold start time: 5-15 minutes",
+      "dot": "cyan",
+      "title": "Startup measurement",
       "items": [
-        "Total for large AI/ML images",
-        "Image pull (2-10 min) and model loading (1-5 min) account for most of it",
-        "Node selection, container creation and health check add up to under a minute"
+        "These are logical stages; the runtime performs the actual image pull.",
+        "SOCI indexing/prefetch does not guarantee80–95% improvement.",
+        "Immediate reads of all weights can limit lazy-loading benefits."
       ]
     }
   ]

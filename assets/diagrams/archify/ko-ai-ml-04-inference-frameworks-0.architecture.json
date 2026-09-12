@@ -5,7 +5,7 @@
     "title": "LLM 추론 프레임워크 생태계",
     "output": "ko-ai-ml-04-inference-frameworks-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "frontend": {
@@ -32,7 +32,7 @@
           "vllm",
           "sglang"
         ],
-        "note": "LiteLLM 게이트웨이가 100+ 모델 공급자 통합과 비용 추적을 맡고, 요청을 NIM·vLLM·SGLang 백엔드로 라우팅한다."
+        "note": "provider별 형식과 인증을 변환하며 지원 기능을 확인합니다."
       },
       {
         "id": "dynamo",
@@ -44,7 +44,7 @@
           "vllm",
           "sglang"
         ],
-        "note": "NVIDIA Dynamo는 분리형 서빙과 지능형 라우팅으로 vLLM·SGLang·TensorRT-LLM 엔진을 오케스트레이션하고, NIM은 TensorRT-LLM 엔진을 사용한다."
+        "note": "Dynamo는 호환되는 backend를 조율합니다. NIM2.0.12는 vLLM0.27.1을 설명합니다."
       },
       {
         "id": "distributed",
@@ -56,7 +56,7 @@
           "vllm",
           "sglang"
         ],
-        "note": "KubeRay Operator가 관리하는 Ray Serve와 AIBrix가 vLLM·SGLang 위에서 대규모 분산 추론과 LoRA 멀티테넌트를 구성한다."
+        "note": "KubeRay·Ray Serve·AIBrix는 운영과 실행 계층이 다르며 tenant 권한은 별도입니다."
       },
       {
         "id": "provision",
@@ -67,7 +67,7 @@
           "rayserve",
           "neuron"
         ],
-        "note": "Karpenter가 NVIDIA 스택, 오픈소스 프레임워크, AWS Neuron·Inferentia2 워크로드에 필요한 노드를 프로비저닝한다."
+        "note": "Karpenter는 지원 노드를 공급하며 engine이나 model replica를 직접 관리하지 않습니다."
       }
     ]
   },
@@ -90,7 +90,7 @@
       "id": "ollama",
       "type": "external",
       "label": "Ollama",
-      "sublabel": "llama.cpp 기반 로컬 실행",
+      "sublabel": "모델별 local/runtime backend",
       "pos": [
         60,
         400
@@ -118,7 +118,7 @@
       "id": "aibrix",
       "type": "backend",
       "label": "AIBrix",
-      "sublabel": "LoRA 관리 · 이기종 GPU",
+      "sublabel": "adapter / routing / scaling",
       "pos": [
         480,
         280
@@ -216,7 +216,7 @@
       "id": "karpenter",
       "type": "cloud",
       "label": "Karpenter",
-      "sublabel": "GPU 노드 오토스케일링",
+      "sublabel": "노드 공급·회수",
       "pos": [
         780,
         640
@@ -304,11 +304,6 @@
       "to": "nim"
     },
     {
-      "id": "nim-trt",
-      "from": "nim",
-      "to": "trt"
-    },
-    {
       "id": "dynamo-trt",
       "from": "dynamo",
       "to": "trt"
@@ -345,21 +340,6 @@
       "to": "rayserve"
     },
     {
-      "id": "karpenter-rayserve",
-      "from": "karpenter",
-      "to": "rayserve",
-      "variant": "dashed"
-    },
-    {
-      "id": "karpenter-dynamo",
-      "from": "karpenter",
-      "to": "dynamo",
-      "variant": "dashed",
-      "label": "GPU 노드 프로비저닝",
-      "fromSide": "top",
-      "toSide": "bottom"
-    },
-    {
       "id": "karpenter-neuron",
       "from": "karpenter",
       "to": "neuron",
@@ -368,13 +348,12 @@
   ],
   "cards": [
     {
-      "dot": "emerald",
-      "title": "프레임워크 선택 가이드",
+      "dot": "cyan",
+      "title": "선택 기준",
       "items": [
-        "NVIDIA GPU 엔터프라이즈 프로덕션 → NVIDIA NIM (최적화된 컨테이너, 지원, 모니터링)",
-        "KV 캐시 최적화가 필요한 고처리량 → NVIDIA Dynamo (분리형 서빙, 지능형 라우팅)",
-        "대규모 분산 추론 → Ray Serve + vLLM / LoRA 멀티테넌트 → AIBrix",
-        "AWS 실리콘 비용 최적화 → AWS Neuron + Inferentia2 (GPU 대비 40-70% 절감)"
+        "기능별 고정 성능 배수·비용 절감률은 보장하지 않습니다.",
+        "Neuron:Inf2용 NxD와 Trn2/3용 새 베타를 구분합니다.",
+        "TGI는 유지보수 모드이며 기존 배포의 전환을 검토합니다."
       ]
     }
   ]
