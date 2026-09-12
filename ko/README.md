@@ -25,6 +25,12 @@
 3. [컨테이너 기술](./basics/03-container-technology.md) | [퀴즈](./quizzes/basics/03-container-technology-quiz.md) | [실습](./labs/basics/03-container-technology-lab.md)
 4. [eBPF 기초와 실무 활용](./basics/05-ebpf-fundamentals.md) | [퀴즈](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
+### Linux 커널
+1. [Linux 커널 개요](./kernel/README.md)
+2. [컨테이너를 지탱하는 커널 기능](./kernel/01-container-primitives.md) | [퀴즈](./quizzes/kernel/01-container-primitives-quiz.md)
+3. [커널 네트워킹 스택](./kernel/02-network-stack.md) | [퀴즈](./quizzes/kernel/02-network-stack-quiz.md)
+4. [EKS 노드 커널 튜닝](./kernel/03-eks-node-tuning.md) | [퀴즈](./quizzes/kernel/03-eks-node-tuning-quiz.md)
+
 ### Kubernetes 핵심 개념
 1. [Kubernetes 소개](./basics/04-kubernetes-introduction.md) | [퀴즈](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 2. [클러스터 아키텍처](./core/01-cluster-architecture.md) | [퀴즈](./quizzes/core/01-cluster-architecture-quiz.md)
@@ -162,6 +168,7 @@
    - [기반 개념 — link-local과 SNI](./service-mesh/vpc-lattice/04-networking-basics.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
    - [워크로드 신원 모델 전환](./service-mesh/vpc-lattice/05-spiffe-to-iam.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
    - [제약사항과 의사결정 포인트](./service-mesh/vpc-lattice/06-constraints.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
+   - [커널 데이터패스](./service-mesh/vpc-lattice/07-kernel-datapath.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
 
 ### Storage
 1. [Storage 개요](./storage/README.md)
@@ -170,6 +177,13 @@
 ### Database
 1. [Database on Kubernetes 개요](./database/README.md)
 2. [ClickHouse on EKS 실측 벤치마크](./database/01-clickhouse-on-eks.md) | [퀴즈](./quizzes/database/01-clickhouse-on-eks-quiz.md)
+
+### 블록체인
+1. [블록체인 개요](./blockchain/README.md)
+2. [블록체인 기초 개념](./blockchain/01-fundamentals.md) | [퀴즈](./quizzes/blockchain/01-fundamentals-quiz.md)
+3. [EKS에서 블록체인 노드 운영](./blockchain/02-nodes-on-eks.md) | [퀴즈](./quizzes/blockchain/02-nodes-on-eks-quiz.md)
+4. [Amazon Managed Blockchain](./blockchain/03-managed-blockchain.md) | [퀴즈](./quizzes/blockchain/03-managed-blockchain-quiz.md)
+5. [금융권 관점](./blockchain/04-financial-services.md) | [퀴즈](./quizzes/blockchain/04-financial-services-quiz.md)
 
 ### Data Pipeline
 1. [Data on EKS 개요](./data-on-eks/README.md)

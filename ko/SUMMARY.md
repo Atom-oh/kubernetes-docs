@@ -17,6 +17,13 @@
 * [컨테이너 기술](basics/03-container-technology.md)
 * [eBPF 기초와 실무 활용](basics/05-ebpf-fundamentals.md)
 
+## Linux 커널
+
+* [Linux 커널 개요](kernel/README.md)
+* [컨테이너를 지탱하는 커널 기능](kernel/01-container-primitives.md)
+* [커널 네트워킹 스택](kernel/02-network-stack.md)
+* [EKS 노드 커널 튜닝](kernel/03-eks-node-tuning.md)
+
 ## Kubernetes 핵심 개념
 
 * [Kubernetes 소개](basics/04-kubernetes-introduction.md)
@@ -198,6 +205,7 @@
   * [기반 개념 — link-local과 SNI](service-mesh/vpc-lattice/04-networking-basics.md)
   * [워크로드 신원 모델 전환](service-mesh/vpc-lattice/05-spiffe-to-iam.md)
   * [제약사항과 의사결정 포인트](service-mesh/vpc-lattice/06-constraints.md)
+  * [커널 데이터패스](service-mesh/vpc-lattice/07-kernel-datapath.md)
 
 ## Storage
 
@@ -208,6 +216,14 @@
 
 * [Database on Kubernetes 개요](database/README.md)
 * [ClickHouse on EKS 실측 벤치마크](database/01-clickhouse-on-eks.md)
+
+## 블록체인
+
+* [블록체인 개요](blockchain/README.md)
+* [블록체인 기초 개념](blockchain/01-fundamentals.md)
+* [EKS에서 블록체인 노드 운영](blockchain/02-nodes-on-eks.md)
+* [Amazon Managed Blockchain](blockchain/03-managed-blockchain.md)
+* [금융권 관점](blockchain/04-financial-services.md)
 
 ## Data Pipeline
 
@@ -408,6 +424,15 @@
   * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF 기초와 실무 활용 퀴즈](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+  * Linux 커널
+    * [컨테이너를 지탱하는 커널 기능 퀴즈](quizzes/kernel/01-container-primitives-quiz.md)
+    * [커널 네트워킹 스택 퀴즈](quizzes/kernel/02-network-stack-quiz.md)
+    * [EKS 노드 커널 튜닝 퀴즈](quizzes/kernel/03-eks-node-tuning-quiz.md)
+  * 블록체인
+    * [블록체인 기초 개념 퀴즈](quizzes/blockchain/01-fundamentals-quiz.md)
+    * [EKS 블록체인 노드 운영 퀴즈](quizzes/blockchain/02-nodes-on-eks-quiz.md)
+    * [Amazon Managed Blockchain 퀴즈](quizzes/blockchain/03-managed-blockchain-quiz.md)
+    * [금융권 관점 퀴즈](quizzes/blockchain/04-financial-services-quiz.md)
   * [네트워크 기초 Part 1 퀴즈](quizzes/basics/06-network-fundamentals-part1-quiz.md)
   * [네트워크 기초 Part 2 퀴즈](quizzes/basics/06-network-fundamentals-part2-quiz.md)
   * [네트워크 기초 Part 3 퀴즈](quizzes/basics/06-network-fundamentals-part3-quiz.md)
@@ -584,6 +609,7 @@
     * [link-local과 SNI 퀴즈](quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
     * [워크로드 신원 모델 전환 퀴즈](quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
     * [제약사항과 의사결정 퀴즈](quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
+    * [커널 데이터패스 퀴즈](quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
 * Storage
   * [EBS gp2 vs gp3 실측 벤치마크 퀴즈](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
 * Database

@@ -112,3 +112,17 @@
   docs: [platform-engineering/07-crossplane.md]
 - keywords: [backstage]
   docs: [platform-engineering/06-backstage-idp.md]
+
+- keywords: [linux kernel, cgroup, cgroup v2, namespace 격리, conntrack, nf_conntrack]
+  docs: [kernel/01-container-primitives.md]
+- keywords: [xdp, af_xdp, qdisc, napi, tcp congestion, bbr]
+  docs: [kernel/02-network-stack.md]
+- keywords: [kube-proxy nftables, kube-proxy ipvs, amazon linux 2023 kernel, al2023 kernel, eevdf, node tuning, 커널 튜닝]
+  docs: [kernel/03-eks-node-tuning.md]
+
+- keywords: [blockchain, 블록체인, hyperledger fabric, ethereum, 이더리움]
+  docs: [blockchain/01-fundamentals.md]
+- keywords: [ethereum node, validator, 검증자, hard fork, 하드포크, pectra, fusaka, peerdas]
+  docs: [blockchain/02-nodes-on-eks.md]
+- keywords: [amazon managed blockchain, amb access, amb query, qldb]
+  docs: [blockchain/03-managed-blockchain.md]

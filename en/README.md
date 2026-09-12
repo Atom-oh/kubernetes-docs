@@ -25,6 +25,12 @@ This training content provides quizzes for each topic along with the learning ma
 3. [Container Technology](./basics/03-container-technology.md) | [Quiz](./quizzes/basics/03-container-technology-quiz.md) | [Lab](./labs/basics/03-container-technology-lab.md)
 4. [eBPF Fundamentals and Practical Applications](./basics/05-ebpf-fundamentals.md) | [Quiz](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
+### Linux Kernel
+1. [Linux Kernel Overview](./kernel/README.md)
+2. [Kernel Features Behind Containers](./kernel/01-container-primitives.md) | [Quiz](./quizzes/kernel/01-container-primitives-quiz.md)
+3. [Kernel Networking Stack](./kernel/02-network-stack.md) | [Quiz](./quizzes/kernel/02-network-stack-quiz.md)
+4. [EKS Node Kernel Tuning](./kernel/03-eks-node-tuning.md) | [Quiz](./quizzes/kernel/03-eks-node-tuning-quiz.md)
+
 ### Kubernetes Core Concepts
 1. [Introduction to Kubernetes](./basics/04-kubernetes-introduction.md) | [Quiz](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 2. [Cluster Architecture](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
@@ -162,6 +168,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Foundations — Link-Local and SNI](./service-mesh/vpc-lattice/04-networking-basics.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
    - [Workload Identity Migration](./service-mesh/vpc-lattice/05-spiffe-to-iam.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
    - [Constraints and Decision Points](./service-mesh/vpc-lattice/06-constraints.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
+   - [Kernel Datapath](./service-mesh/vpc-lattice/07-kernel-datapath.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
 
 ### Storage
 1. [Storage Overview](./storage/README.md)
@@ -170,6 +177,13 @@ This training content provides quizzes for each topic along with the learning ma
 ### Database
 1. [Databases on Kubernetes Overview](./database/README.md)
 2. [ClickHouse on EKS Measured Benchmark](./database/01-clickhouse-on-eks.md) | [Quiz](./quizzes/database/01-clickhouse-on-eks-quiz.md)
+
+### Blockchain
+1. [Blockchain Overview](./blockchain/README.md)
+2. [Blockchain Fundamentals](./blockchain/01-fundamentals.md) | [Quiz](./quizzes/blockchain/01-fundamentals-quiz.md)
+3. [Running Blockchain Nodes on EKS](./blockchain/02-nodes-on-eks.md) | [Quiz](./quizzes/blockchain/02-nodes-on-eks-quiz.md)
+4. [Amazon Managed Blockchain](./blockchain/03-managed-blockchain.md) | [Quiz](./quizzes/blockchain/03-managed-blockchain-quiz.md)
+5. [Financial Services Perspective](./blockchain/04-financial-services.md) | [Quiz](./quizzes/blockchain/04-financial-services-quiz.md)
 
 ### Data Pipeline
 1. [Data on EKS Overview](./data-on-eks/README.md)
