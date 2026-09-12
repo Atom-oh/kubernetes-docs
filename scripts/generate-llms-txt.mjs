@@ -65,7 +65,7 @@ export function sectionBundleUrl(locale, slug) {
   return `${SITE_BASE}/llms-full-${locale}-${slug}.txt`
 }
 
-const NOT_MIRRORED = /^(?:(quizzes|labs)\/|statistics\.md$)/
+const NOT_MIRRORED = /^(quizzes|labs)\//
 
 // The same publication boundary is used by raw Markdown, manifests and MCP.
 function isContentPage(group, mdPath) {
@@ -281,7 +281,7 @@ export function buildLlmsFull(locale, groups, readPage) {
   for (const { group, items } of groups) {
     if (QUIZ_GROUP.test(group)) continue
     for (const { path: mdPath } of items) {
-      if (mdPath === ROOT_INDEX || mdPath === 'statistics.md') continue
+      if (mdPath === ROOT_INDEX) continue
 
       const content = readPage(mdPath)
       if (content === null) {
