@@ -706,7 +706,7 @@ Use the generic capture/select/update/wait process above for each EKS-owned add-
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns -o wide
-kubectl --context "$KUBE_CONTEXT" -n kube-system get daemonset kube-proxy,aws-node -o wide
+kubectl --context "$KUBE_CONTEXT" -n kube-system get daemonset kube-proxy aws-node -o wide
 ```
 
 ### Add-on Upgrade Troubleshooting
