@@ -36,6 +36,8 @@ flowchart LR
   G -->|TLS| S["Dynatrace environment"]
 ```
 
+<span id="despliegue-en-eks-con-helm"></span>
+
 ## Despliegue de EKS con Helm
 
 ### 1. Instalar Dynatrace Operator
@@ -125,6 +127,8 @@ helm install dynatrace-operator \
   --version 1.10.2 --namespace dynatrace \
   --values values-fullstack.yaml --atomic --timeout 10m
 ```
+
+<span id="_6-configuracion-de-dynakube-cr"></span>
 
 ### 6. Configuración del CR de DynaKube
 
@@ -429,6 +433,8 @@ python3 deployment_event.py --entity-id SERVICE-0123456789ABCDEF --version 2.3.0
 
 El ID anterior es ilustrativo: reemplácelo por una entidad verificada de su entorno antes de cualquier envío. Para enviar, agregue explícitamente `--send --environment-url https://ENVIRONMENTID.live.dynatrace.com --token-file /protected/path/events-token` y el esquema correcto. No reutilice una credencial de Operator para esta responsabilidad independiente de CI.
 
+<span id="auto-instrumentation"></span>
+
 ## Instrumentación automática
 
 ### Tecnologías compatibles
@@ -443,6 +449,8 @@ OneAgent admite varias familias de tecnologías. Compruebe las versiones exactas
 | .NET | Tiempo de ejecución de .NET, ASP.NET Core frente al despliegue de Windows/.NET Framework |
 | Go | Versión de Go, flags de compilación/build e instrumentación de framework HTTP compatible |
 | PHP | Versiones de tiempo de ejecución PHP y framework Laravel/Symfony |
+
+<span id="verificar-auto-instrumentation"></span>
 
 ### Verificar la instrumentación automática
 
@@ -584,6 +592,8 @@ La antigua fórmula `max(memory/16, vCPU/1.5)` era incorrecta. Las [unidades de 
 | 2 vCPU, 8 GiB RAM | 0.5 HU | 8 GiB-horas de memoria |
 
 Para hosts físicos/virtuales de DPS, las [reglas de Full-Stack](https://docs.dynatrace.com/docs/license/capabilities/app-infra-observability/full-stack-monitoring) redondean la memoria hacia arriba a incrementos de un cuarto de GiB con un mínimo de 4 GiB, y facturan los **intervalos de calendario de 15 minutos** cubiertos. Para memoria fija, el uso es `max(4, ceil(memoryGiB × 4) / 4) × coveredIntervals × 0.25`. Cuente los intervalos de calendario en lugar de simplemente redondear el tiempo total de ejecución: cruzar un límite puede cubrir dos intervalos. Los cálculos de solo aplicaciones/contenedores tienen mínimos y reglas de medición/versión diferentes; no les aplique esta fórmula de host.
+
+<span id="integracion-con-opentelemetry"></span>
 
 ## Integración de OpenTelemetry
 

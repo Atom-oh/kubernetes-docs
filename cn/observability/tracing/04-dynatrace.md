@@ -36,6 +36,8 @@ flowchart LR
   G -->|TLS| S["Dynatrace environment"]
 ```
 
+<span id="使用-helm-部署到-eks"></span>
+
 ## 使用 Helm 部署 EKS
 
 ### 1. 安装 Dynatrace Operator
@@ -283,6 +285,8 @@ spec:
       monitoring.example.com/dynatrace-host: 'true'
 ```
 
+<span id="davis-ai-根本原因分析"></span>
+
 ## Davis AI 根因分析
 
 ### Davis AI 的工作原理
@@ -431,6 +435,8 @@ python3 deployment_event.py --entity-id SERVICE-0123456789ABCDEF --version 2.3.0
 
 ## 自动插桩
 
+<span id="支持的技术"></span>
+
 ### 受支持的技术
 
 OneAgent 支持多个技术系列。请在[支持矩阵](https://docs.dynatrace.com/docs/ingest-from/technology-support/support-model-and-issues)中检查确切的运行时/framework 版本、架构和部署模式，而不要将以下示例视为与版本无关的承诺。
@@ -550,6 +556,8 @@ spec:
 
 ## 成本结构
 
+<span id="许可模型"></span>
+
 ### 许可模式
 
 区分现代 **Dynatrace Platform Subscription (DPS)** 用量和仍使用 **Classic licensing** 的合同。请查阅您的 rate card 和[当前 capability unit](https://www.dynatrace.com/pricing/)；这里不假定固定美元价格或保证节省。
@@ -572,6 +580,8 @@ Full-stack 并不承诺无限制的 log ingest、retention、query、RUM 或 syn
 - 根据遥测数据量调整 agent resource；agent container 的 memory limit 不是受监控 host RAM 的计费限制。
 - 使用当前 capability setting 和隐私要求控制 log volume、retention、query pattern 和可选 session replay。
 - 对于 application-only 模式，请考虑其独立的 memory measurement/minimum 规则以及不包含主机基础设施监控这一事实。
+
+<span id="host-unit-计算"></span>
 
 ### 主机单位计算
 
@@ -654,6 +664,8 @@ ActiveGate ingest endpoint 具有不同的 port/path 和 capability/storage 要�
 | 无外部连接 | DNS、已批准的 egress/proxy 和可信 certificate chain。proxy 不是真正断开连接的 SaaS 部署。 |
 
 ActiveGate 可以缓冲遥测数据，并且某些 ingest 配置需要 persistent storage，但它不是长期 Grail lakehouse。请检查当前 Pod/workload status，而不要调用 container 中未记录的 Java CLI path。
+
+<span id="日志收集验证"></span>
 
 ### Log 收集验证
 

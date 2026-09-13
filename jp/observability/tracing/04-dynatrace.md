@@ -36,6 +36,8 @@ flowchart LR
   G -->|TLS| S["Dynatrace environment"]
 ```
 
+<span id="helm-を使用した-eks-へのデプロイ"></span>
+
 ## Helm を使用した EKS デプロイメント
 
 ### 1. Dynatrace Operator をインストールする
@@ -283,6 +285,8 @@ spec:
       monitoring.example.com/dynatrace-host: 'true'
 ```
 
+<span id="davis-ai-による根本原因分析"></span>
+
 ## Davis AI の根本原因分析
 
 ### Davis AI の仕組み
@@ -292,6 +296,8 @@ spec:
 ![テレメトリーとトポロジーから問題カード、影響分析、修復提案への概念的な Davis AI 相関。](../../.gitbook/assets/en-observability-tracing-04-dynatrace-1.png)
 
 [インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-04-dynatrace-1.html)
+
+<span id="問題アラートの設定"></span>
 
 ### Problem Alert の設定
 
@@ -585,6 +591,8 @@ full-stack は、無制限の log ingestion、retention、query、RUM、syntheti
 
 DPS の物理/仮想 host では、[Full-Stack rule](https://docs.dynatrace.com/docs/license/capabilities/app-infra-observability/full-stack-monitoring)により、memory は 4-GiB minimum で quarter-GiB increment に切り上げられ、対象となる **15-minute calendar interval** が課金されます。固定 memory の場合、usage は `max(4, ceil(memoryGiB × 4) / 4) × coveredIntervals × 0.25` です。総実行時間を単純に丸めるのではなく、calendar interval を数えてください。境界をまたぐと、2 interval が対象になることがあります。application-only/container の計算には異なる minimum および measurement/version rule が適用されます。この host 式をそれらに適用しないでください。
 
+<span id="opentelemetry-との統合"></span>
+
 ## OpenTelemetry 統合
 
 Dynatrace の[native OTLP endpoint](https://docs.dynatrace.com/docs/ingest-from/opentelemetry/otlp-api)は、native gRPC や JSON ではなく、**binary Protobuf を使用した HTTP**を受け入れます。Collector はローカル gRPC を受け入れ、HTTP を export できます。以下の完全な設定は Contrib **0.160.0** で解析されました。本番環境では、Dynatrace は独自のサポート対象 Collector distribution と component/version matrix を推奨しています。
@@ -654,6 +662,8 @@ ActiveGate ingest endpoint には異なる port/path と capability/storage requ
 | 外部接続がない | DNS、承認済み egress/proxy、信頼された certificate chain。proxy は真に切断された SaaS deployment ではありません。 |
 
 ActiveGate はテレメトリーを buffer でき、一部の ingest 設定には persistent storage が必要ですが、長期的な Grail lakehouse ではありません。container 内で文書化されていない Java CLI path を呼び出すのではなく、現在の Pod/workload status を確認してください。
+
+<span id="log-収集の検証"></span>
 
 ### Log Collection の検証
 
